@@ -2,7 +2,7 @@
 #define XSOLVER_MONITOR_H
 
 // Includes
-#include <IReactionNetwork.h>
+#include <experimental/IReactionNetwork.h>
 
 namespace xolotlSolver {
 
@@ -20,7 +20,7 @@ namespace xolotlSolver {
  * @param network The network to write.
  */
 void writeNetwork(MPI_Comm _comm, std::string srcFileName,
-		std::string targetFileName, IReactionNetwork& network);
+		std::string targetFileName, experimental::IReactionNetwork& network);
 
 } // namespace xolotlSolver
 

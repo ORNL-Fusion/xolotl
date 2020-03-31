@@ -121,7 +121,7 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	// Access the solution data for the current grid point.
 	gridPointSolution = solutionArray[0];
 
-	for (auto l = 0; l < dof; ++l) {
+	for (auto l = 0; l < dof + 1; ++l) {
 		if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 			concs[0].emplace_back(l, gridPointSolution[l]);
 		}
@@ -769,34 +769,32 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			PETSC_IGNORE, PETSC_IGNORE);
 			checkPetscError(ierr, "setupPetsc0DMonitor: DMDAGetInfo failed.");
 
-			// Get the solver handler
+			// Get the solver handler and network
 			auto& solverHandler = PetscSolver::getSolverHandler();
+			auto& network = solverHandler.getExpNetwork();
 
 			// Get the physical grid (which is empty)
 			auto grid = solverHandler.getXGrid();
 
-//			// Get the compostion list and save it
-//			auto compList = network.getCompositionList();
-//
-//			// Create and initialize a checkpoint file.
-//			// We do this in its own scope so that the file
-//			// is closed when the file object goes out of scope.
-//			// We want it to close before we (potentially) copy
-//			// the network from another file using a single-process
-//			// MPI communicator.
-//			{
-//				xolotlCore::XFile checkpointFile(hdf5OutputName0D, grid,
-//						compList, PETSC_COMM_WORLD);
-//			}
-//
-//			// Copy the network group from the given file (if it has one).
-//			// We open the files using a single-process MPI communicator
-//			// because it is faster for a single process to do the
-//			// copy with HDF5's H5Ocopy implementation than it is
-//			// when all processes call the copy function.
-//			// The checkpoint file must be closed before doing this.
-//			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
-//					hdf5OutputName0D, network);
+			// Create and initialize a checkpoint file.
+			// We do this in its own scope so that the file
+			// is closed when the file object goes out of scope.
+			// We want it to close before we (potentially) copy
+			// the network from another file using a single-process
+			// MPI communicator.
+			{
+				xolotlCore::XFile checkpointFile(hdf5OutputName0D, grid,
+						PETSC_COMM_WORLD);
+			}
+
+			// Copy the network group from the given file (if it has one).
+			// We open the files using a single-process MPI communicator
+			// because it is faster for a single process to do the
+			// copy with HDF5's H5Ocopy implementation than it is
+			// when all processes call the copy function.
+			// The checkpoint file must be closed before doing this.
+			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+					hdf5OutputName0D, network);
 		}
 
 		// startStop0D will be called at each timestep

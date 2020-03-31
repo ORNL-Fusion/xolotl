@@ -25,6 +25,7 @@ public:
     using OwnedFluxesView = Kokkos::View<double*>;
     using Connectivity = detail::ClusterConnectivity<>;
     using SparseFillMap = std::unordered_map<int, std::vector<int>>;
+    using Bounds = std::vector<std::vector<AmountType>>;
 
     static
     constexpr IndexType
@@ -135,6 +136,9 @@ public:
 
     virtual ClusterCommon<plsm::OnHost>
     getSingleVacancy() = 0;
+
+    virtual Bounds
+    getAllClusterBounds() = 0;
 
     virtual void
     computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,

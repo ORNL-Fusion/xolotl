@@ -96,12 +96,15 @@ NEClusterNetworkLoader::NEClusterNetworkLoader(
 
 std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::load(
 		const IOptions& options) {
+
+	// TODO: make a general method in experimental
+
 	// Get the dataset from the HDF5 files
 	int normalSize = 0, superSize = 0;
 	XFile networkFile(fileName);
 	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
 	assert(networkGroup);
-	networkGroup->readNetworkSize(normalSize, superSize);
+//	networkGroup->readNetworkSize(normalSize, superSize);
 
 	// Initialization
 	int numXe = 0;
@@ -128,61 +131,61 @@ std::unique_ptr<IReactionNetwork> NEClusterNetworkLoader::load(
 	// Set the density in a bubble
 	network->setDensity(options.getDensity());
 
-	// Loop on the clusters
-	for (int i = 0; i < normalSize + superSize; i++) {
-		// Open the cluster group
-		XFile::ClusterGroup clusterGroup(*networkGroup, i);
-
-		if (i < normalSize) {
-			// Normal cluster
-			// Read the composition
-			auto comp = clusterGroup.readCluster(formationEnergy,
-					migrationEnergy, diffusionFactor);
-			numXe = comp[toCompIdx(Species::Xe)];
-
-			// Create the cluster
-			auto nextCluster = createNECluster(numXe, 0, 0, *network);
-
-			// Set the formation energy
-			nextCluster->setFormationEnergy(formationEnergy);
-			// Set the diffusion factor and migration energy
-			nextCluster->setMigrationEnergy(migrationEnergy);
-			nextCluster->setDiffusionFactor(diffusionFactor);
-
-			if (numXe == 1) {
-				// If the diffusivity is given
-				if (options.getXenonDiffusivity() > 0.0) {
-					nextCluster->setDiffusionFactor(
-							options.getXenonDiffusivity());
-					nextCluster->setMigrationEnergy(-1.0);
-				}
-			}
-
-			// Save it in the network
-			pushNECluster(network, reactants, nextCluster);
-		} else {
-			// Super cluster
-			int nTot = 0, maxXe = 0;
-			clusterGroup.readNESuperCluster(nTot, maxXe);
-
-			// Create the cluster
-			auto nextCluster = createNESuperCluster(nTot, maxXe, *network);
-
-			// Save it in the network
-			pushNECluster(network, reactants, nextCluster);
-		}
-	}
-
-	// Ask reactants to update now that they are in network.
-	for (IReactant& currReactant : reactants) {
-		currReactant.updateFromNetwork();
-	}
-
-	// Set the reactions
-	networkGroup->readReactions(*network);
-
-	// Recompute Ids and network size
-	network->reinitializeNetwork();
+//	// Loop on the clusters
+//	for (int i = 0; i < normalSize + superSize; i++) {
+//		// Open the cluster group
+//		XFile::ClusterGroup clusterGroup(*networkGroup, i);
+//
+//		if (i < normalSize) {
+//			// Normal cluster
+//			// Read the composition
+//			auto comp = clusterGroup.readCluster(formationEnergy,
+//					migrationEnergy, diffusionFactor);
+//			numXe = comp[toCompIdx(Species::Xe)];
+//
+//			// Create the cluster
+//			auto nextCluster = createNECluster(numXe, 0, 0, *network);
+//
+//			// Set the formation energy
+//			nextCluster->setFormationEnergy(formationEnergy);
+//			// Set the diffusion factor and migration energy
+//			nextCluster->setMigrationEnergy(migrationEnergy);
+//			nextCluster->setDiffusionFactor(diffusionFactor);
+//
+//			if (numXe == 1) {
+//				// If the diffusivity is given
+//				if (options.getXenonDiffusivity() > 0.0) {
+//					nextCluster->setDiffusionFactor(
+//							options.getXenonDiffusivity());
+//					nextCluster->setMigrationEnergy(-1.0);
+//				}
+//			}
+//
+//			// Save it in the network
+//			pushNECluster(network, reactants, nextCluster);
+//		} else {
+//			// Super cluster
+//			int nTot = 0, maxXe = 0;
+//			clusterGroup.readNESuperCluster(nTot, maxXe);
+//
+//			// Create the cluster
+//			auto nextCluster = createNESuperCluster(nTot, maxXe, *network);
+//
+//			// Save it in the network
+//			pushNECluster(network, reactants, nextCluster);
+//		}
+//	}
+//
+//	// Ask reactants to update now that they are in network.
+//	for (IReactant& currReactant : reactants) {
+//		currReactant.updateFromNetwork();
+//	}
+//
+//	// Set the reactions
+//	networkGroup->readReactions(*network);
+//
+//	// Recompute Ids and network size
+//	network->reinitializeNetwork();
 
 	// Need to use move() because return type uses smart pointer to base class,
 	// not derived class that we created.

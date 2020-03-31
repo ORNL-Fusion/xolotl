@@ -194,7 +194,7 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 }
 
 void writeNetwork(MPI_Comm _comm, std::string srcFileName,
-		std::string targetFileName, IReactionNetwork& network) {
+		std::string targetFileName, experimental::IReactionNetwork& network) {
 
 	int procId;
 	MPI_Comm_rank(_comm, &procId);

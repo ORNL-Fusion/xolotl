@@ -106,12 +106,14 @@ FeClusterNetworkLoader::FeClusterNetworkLoader(
 
 std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::load(
 		const IOptions& options) {
+	// TODO: make a general method in experimental
+
 	// Get the dataset from the HDF5 files
 	int normalSize = 0, superSize = 0;
 	XFile networkFile(fileName);
 	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
 	assert(networkGroup);
-	networkGroup->readNetworkSize(normalSize, superSize);
+//	networkGroup->readNetworkSize(normalSize, superSize);
 
 	// Initialization
 	int numHe = 0, numV = 0, numI = 0;
@@ -135,61 +137,61 @@ std::unique_ptr<IReactionNetwork> FeClusterNetworkLoader::load(
 		radius = heliumRadius;
 	network->setImpurityRadius(radius);
 
-	// Loop on the clusters
-	for (int i = 0; i < normalSize + superSize; i++) {
-		// Open the cluster group
-		XFile::ClusterGroup clusterGroup(*networkGroup, i);
-
-		if (i < normalSize) {
-			// Normal cluster
-			// Read the composition
-			auto comp = clusterGroup.readCluster(formationEnergy,
-					migrationEnergy, diffusionFactor);
-			numHe = comp[toCompIdx(Species::He)];
-			numV = comp[toCompIdx(Species::V)];
-			numI = comp[toCompIdx(Species::I)];
-
-			// Create the cluster
-			auto nextCluster = createFeCluster(numHe, numV, numI, *network);
-
-			// Set the formation energy
-			nextCluster->setFormationEnergy(formationEnergy);
-			// Set the diffusion factor and migration energy
-			nextCluster->setMigrationEnergy(migrationEnergy);
-			nextCluster->setDiffusionFactor(diffusionFactor);
-
-			// Save access to it so we can trigger updates once
-			// all are added to the network.
-			reactants.emplace_back(*nextCluster);
-
-			// Give the cluster to the network
-			network->add(std::move(nextCluster));
-		} else {
-			// Super cluster
-			auto bounds = clusterGroup.readFeSuperCluster();
-
-			// Create the cluster
-			auto nextCluster = createFeSuperCluster(bounds, *network);
-
-			// Save access to it so we can trigger updates once
-			// all are added to the network.
-			reactants.emplace_back(*nextCluster);
-
-			// Give the cluster to the network
-			network->add(std::move(nextCluster));
-		}
-	}
-
-	// Ask reactants to update now that they are in network.
-	for (IReactant& currReactant : reactants) {
-		currReactant.updateFromNetwork();
-	}
-
-	// Set the reactions
-	networkGroup->readReactions(*network);
-
-	// Recompute Ids and network size
-	network->reinitializeNetwork();
+//	// Loop on the clusters
+//	for (int i = 0; i < normalSize + superSize; i++) {
+//		// Open the cluster group
+//		XFile::ClusterGroup clusterGroup(*networkGroup, i);
+//
+//		if (i < normalSize) {
+//			// Normal cluster
+//			// Read the composition
+//			auto comp = clusterGroup.readCluster(formationEnergy,
+//					migrationEnergy, diffusionFactor);
+//			numHe = comp[toCompIdx(Species::He)];
+//			numV = comp[toCompIdx(Species::V)];
+//			numI = comp[toCompIdx(Species::I)];
+//
+//			// Create the cluster
+//			auto nextCluster = createFeCluster(numHe, numV, numI, *network);
+//
+//			// Set the formation energy
+//			nextCluster->setFormationEnergy(formationEnergy);
+//			// Set the diffusion factor and migration energy
+//			nextCluster->setMigrationEnergy(migrationEnergy);
+//			nextCluster->setDiffusionFactor(diffusionFactor);
+//
+//			// Save access to it so we can trigger updates once
+//			// all are added to the network.
+//			reactants.emplace_back(*nextCluster);
+//
+//			// Give the cluster to the network
+//			network->add(std::move(nextCluster));
+//		} else {
+//			// Super cluster
+//			auto bounds = clusterGroup.readFeSuperCluster();
+//
+//			// Create the cluster
+//			auto nextCluster = createFeSuperCluster(bounds, *network);
+//
+//			// Save access to it so we can trigger updates once
+//			// all are added to the network.
+//			reactants.emplace_back(*nextCluster);
+//
+//			// Give the cluster to the network
+//			network->add(std::move(nextCluster));
+//		}
+//	}
+//
+//	// Ask reactants to update now that they are in network.
+//	for (IReactant& currReactant : reactants) {
+//		currReactant.updateFromNetwork();
+//	}
+//
+//	// Set the reactions
+//	networkGroup->readReactions(*network);
+//
+//	// Recompute Ids and network size
+//	network->reinitializeNetwork();
 
 	// Need to use move() because return type uses smart pointer to base class,
 	// not derived class that we created.

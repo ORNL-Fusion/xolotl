@@ -249,6 +249,29 @@ public:
         return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
     }
 
+    Bounds
+    getAllClusterBounds() override
+    {
+        // Create the object to return
+        Bounds bounds;
+
+        // Loop on all the clusters
+        constexpr auto speciesRange = getSpeciesRange();
+        auto tiles = _subpaving.getTiles(plsm::onHost);
+        for (IndexType i = 0; i < _numClusters; ++i) {
+            const auto& clReg = tiles(i).getRegion();
+            Composition lo = clReg.getOrigin();
+            Composition hi = clReg.getUpperLimitPoint();
+            std::vector<AmountType> boundVector;
+            for (auto j : speciesRange) {
+                boundVector.push_back(lo[j]);
+                boundVector.push_back(hi[j] - 1);
+            }
+            bounds.push_back(boundVector);
+        }
+        return bounds;
+    }
+
     KOKKOS_INLINE_FUNCTION
     Cluster<plsm::OnDevice>
     getCluster(IndexType clusterId, plsm::OnDevice)

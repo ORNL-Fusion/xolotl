@@ -107,12 +107,14 @@ AlloyClusterNetworkLoader::AlloyClusterNetworkLoader(
 
 std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::load(
 		const IOptions& options) {
+	// TODO: make a general method in experimental
+
 	// Get the dataset from the HDF5 files
 	int normalSize = 0, superSize = 0;
 	XFile networkFile(fileName);
 	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
 	assert(networkGroup);
-	networkGroup->readNetworkSize(normalSize, superSize);
+//	networkGroup->readNetworkSize(normalSize, superSize);
 
 	// Initialization
 	int numV = 0, numI = 0, numVoid = 0, numFaulted = 0, numFrank = 0,
@@ -131,60 +133,60 @@ std::unique_ptr<IReactionNetwork> AlloyClusterNetworkLoader::load(
 		latticeParam = alloyLatticeConstant;
 	network->setLatticeParameter(latticeParam);
 
-	// Loop on the clusters
-	for (int i = 0; i < normalSize + superSize; i++) {
-		// Open the cluster group
-		XFile::ClusterGroup clusterGroup(*networkGroup, i);
-
-		if (i < normalSize) {
-			// Normal cluster
-			// Read the composition
-			auto comp = clusterGroup.readCluster(formationEnergy,
-					migrationEnergy, diffusionFactor);
-			numV = comp[toCompIdx(Species::V)];
-			numI = comp[toCompIdx(Species::I)];
-			numFaulted = comp[toCompIdx(Species::Faulted)];
-			numFrank = comp[toCompIdx(Species::Frank)];
-			numVoid = comp[toCompIdx(Species::Void)];
-			numPerfect = comp[toCompIdx(Species::Perfect)];
-
-			// Create the cluster
-			auto nextCluster = createAlloyCluster(numV, numI, numVoid,
-					numFaulted, numFrank, numPerfect, *network);
-
-			// Set the formation energy
-			nextCluster->setFormationEnergy(formationEnergy);
-			// Set the diffusion factor and migration energy
-			nextCluster->setMigrationEnergy(migrationEnergy);
-			nextCluster->setDiffusionFactor(diffusionFactor);
-
-			// Save it in the network
-			pushAlloyCluster(network, reactants, nextCluster);
-		} else {
-			// Super cluster
-			int nTot = 0, maxAtom = 0;
-			ReactantType type;
-			clusterGroup.readAlloySuperCluster(nTot, maxAtom, type);
-
-			// Create the cluster
-			auto nextCluster = createAlloySuperCluster(nTot, maxAtom, type,
-					*network);
-
-			// Save it in the network
-			pushAlloyCluster(network, reactants, nextCluster);
-		}
-	}
-
-	// Ask reactants to update now that they are in network.
-	for (IReactant& currReactant : reactants) {
-		currReactant.updateFromNetwork();
-	}
-
-	// Set the reactions
-	networkGroup->readReactions(*network);
-
-	// Recompute Ids and network size
-	network->reinitializeNetwork();
+//	// Loop on the clusters
+//	for (int i = 0; i < normalSize + superSize; i++) {
+//		// Open the cluster group
+//		XFile::ClusterGroup clusterGroup(*networkGroup, i);
+//
+//		if (i < normalSize) {
+//			// Normal cluster
+//			// Read the composition
+//			auto comp = clusterGroup.readCluster(formationEnergy,
+//					migrationEnergy, diffusionFactor);
+//			numV = comp[toCompIdx(Species::V)];
+//			numI = comp[toCompIdx(Species::I)];
+//			numFaulted = comp[toCompIdx(Species::Faulted)];
+//			numFrank = comp[toCompIdx(Species::Frank)];
+//			numVoid = comp[toCompIdx(Species::Void)];
+//			numPerfect = comp[toCompIdx(Species::Perfect)];
+//
+//			// Create the cluster
+//			auto nextCluster = createAlloyCluster(numV, numI, numVoid,
+//					numFaulted, numFrank, numPerfect, *network);
+//
+//			// Set the formation energy
+//			nextCluster->setFormationEnergy(formationEnergy);
+//			// Set the diffusion factor and migration energy
+//			nextCluster->setMigrationEnergy(migrationEnergy);
+//			nextCluster->setDiffusionFactor(diffusionFactor);
+//
+//			// Save it in the network
+//			pushAlloyCluster(network, reactants, nextCluster);
+//		} else {
+//			// Super cluster
+//			int nTot = 0, maxAtom = 0;
+//			ReactantType type;
+//			clusterGroup.readAlloySuperCluster(nTot, maxAtom, type);
+//
+//			// Create the cluster
+//			auto nextCluster = createAlloySuperCluster(nTot, maxAtom, type,
+//					*network);
+//
+//			// Save it in the network
+//			pushAlloyCluster(network, reactants, nextCluster);
+//		}
+//	}
+//
+//	// Ask reactants to update now that they are in network.
+//	for (IReactant& currReactant : reactants) {
+//		currReactant.updateFromNetwork();
+//	}
+//
+//	// Set the reactions
+//	networkGroup->readReactions(*network);
+//
+//	// Recompute Ids and network size
+//	network->reinitializeNetwork();
 
 	// Need to use move() because return type uses smart pointer to base class,
 	// not derived class that we created.

@@ -200,7 +200,7 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 			temperature[i - xs + 1] = temp;
 
 			// Boundary conditions
-			if (i < surfacePosition[j] || i > nX - 1 || i < xs || i >= xs + xm)
+			if (i < xs || i >= xs + xm)
 				continue;
 
 			concOffset = concentrations[j][i];

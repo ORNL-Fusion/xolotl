@@ -55,6 +55,13 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
+    double
+    getMigrationEnergy()
+    {
+        return asDerived()->_data.migrationEnergy(_id);
+    }
+
+    KOKKOS_INLINE_FUNCTION
     IndexType
     getId() const noexcept
     {

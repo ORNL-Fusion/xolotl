@@ -7,7 +7,7 @@
 #include <set>
 #include "xolotlCore/io/HDF5File.h"
 #include "xolotlCore/io/HDF5Exception.h"
-#include <IReactionNetwork.h>
+#include <experimental/IReactionNetwork.h>
 #include <MathUtils.h>
 
 namespace xolotlCore {
@@ -20,6 +20,7 @@ namespace xolotlCore {
 // access to let one process write. (?)
 class XFile: public HDF5File {
 public:
+	using NetworkType = experimental::IReactionNetwork;
 
 	// A group with info about a specific time step.
 	class ConcentrationGroup;
@@ -72,7 +73,7 @@ public:
 		 * @return A string to use for the name of the time step group for
 		 *          the given time step.
 		 */
-		static std::string makeGroupName(const ConcentrationGroup& concGroup,
+		static std::string makeGroupName(const ConcentrationGroup &concGroup,
 				int timeStep);
 
 	public:
@@ -98,7 +99,7 @@ public:
 		 * Default and copy constructors explicitly disallowed.
 		 */
 		TimestepGroup(void) = delete;
-		TimestepGroup(const TimestepGroup& other) = delete;
+		TimestepGroup(const TimestepGroup &other) = delete;
 
 		/**
 		 * Create and populate a Timestep group within the given
@@ -109,7 +110,7 @@ public:
 		 * @param previousTime The physical time at the previous time step
 		 * @param deltaTime The physical length of the time step
 		 */
-		TimestepGroup(const ConcentrationGroup& concGroup, int timeStep,
+		TimestepGroup(const ConcentrationGroup &concGroup, int timeStep,
 				double time, double previousTime, double deltaTime);
 
 		/**
@@ -117,7 +118,7 @@ public:
 		 *
 		 * @param timeStep The time step of the desired group.
 		 */
-		TimestepGroup(const ConcentrationGroup& concGroup, int timeStep);
+		TimestepGroup(const ConcentrationGroup &concGroup, int timeStep);
 
 		/**
 		 * Save the surface positions to our timestep group.
@@ -136,8 +137,8 @@ public:
 		 * @param nInter The quantity of interstitial at each surface position
 		 * @param previousFlux The previous I flux at each surface position
 		 */
-		void writeSurface2D(const Surface2DType& iSurface,
-				const Data2DType& nInter, const Data2DType& previousFlux) const;
+		void writeSurface2D(const Surface2DType &iSurface,
+				const Data2DType &nInter, const Data2DType &previousFlux) const;
 
 		/**
 		 * Save the surface positions to our timestep group.
@@ -146,8 +147,8 @@ public:
 		 * @param nInter The quantity of interstitial at each surface position
 		 * @param previousFlux The previous I flux at each surface position
 		 */
-		void writeSurface3D(const Surface3DType& iSurface,
-				const Data3DType& nInter, const Data3DType& previousFlux) const;
+		void writeSurface3D(const Surface3DType &iSurface,
+				const Data3DType &nInter, const Data3DType &previousFlux) const;
 
 		/**
 		 * Save the bottom informations to our timestep group.
@@ -179,10 +180,10 @@ public:
 		 * @param nT The quantity of tritium at the bottom
 		 * @param previousTFlux The previous T flux
 		 */
-		void writeBottom2D(const Data2DType& nHe,
-				const Data2DType& previousHeFlux, const Data2DType& nD,
-				const Data2DType& previousDFlux, const Data2DType& nT,
-				const Data2DType& previousTFlux);
+		void writeBottom2D(const Data2DType &nHe,
+				const Data2DType &previousHeFlux, const Data2DType &nD,
+				const Data2DType &previousDFlux, const Data2DType &nT,
+				const Data2DType &previousTFlux);
 
 		/**
 		 * Add a concentration dataset at a specific grid point.
@@ -216,8 +217,8 @@ public:
 		// TODO measure performance gain when caller gives us
 		// flattened array instead of having us convert to/from flat
 		// representation.
-		void writeConcentrations(const XFile& file, int baseX,
-				const Concs1DType& concs) const;
+		void writeConcentrations(const XFile &file, int baseX,
+				const Concs1DType &concs) const;
 
 		/**
 		 * Read concentration dataset for our grid points in a 1D problem.
@@ -232,7 +233,7 @@ public:
 		 *              Element i contains concentration data for
 		 *              (baseX + i)
 		 */
-		Concs1DType readConcentrations(const XFile& file, int baseX,
+		Concs1DType readConcentrations(const XFile &file, int baseX,
 				int numX) const;
 
 		/**
@@ -281,7 +282,7 @@ public:
 		 * @param dataName The name of the data we want
 		 * @return The value of the data
 		 */
-		Data1DType readData1D(const std::string& dataName) const;
+		Data1DType readData1D(const std::string &dataName) const;
 
 		/**
 		 * Read some data from our concentration group in
@@ -290,7 +291,7 @@ public:
 		 * @param dataName The name of the data we want
 		 * @return The vector of the data
 		 */
-		Data2DType readData2D(const std::string& dataName) const;
+		Data2DType readData2D(const std::string &dataName) const;
 
 		/**
 		 * Read some data from our concentration group file in
@@ -299,7 +300,7 @@ public:
 		 * @param dataName The name of the data we want
 		 * @return The vector of vector of data
 		 */
-		Data3DType readData3D(const std::string& dataName) const;
+		Data3DType readData3D(const std::string &dataName) const;
 
 		/**
 		 * Read our (i,j,k)-th grid point concentrations.
@@ -326,8 +327,8 @@ public:
 
 		// Create or open the concentrationsGroup.
 		ConcentrationGroup(void) = delete;
-		ConcentrationGroup(const ConcentrationGroup& other) = delete;
-		ConcentrationGroup(const XFile& file, bool create = false);
+		ConcentrationGroup(const ConcentrationGroup &other) = delete;
+		ConcentrationGroup(const XFile &file, bool create = false);
 
 		/**
 		 * Add a concentration timestep group for the given time step.
@@ -376,14 +377,8 @@ public:
 
 	// Our header group.
 	class HeaderGroup: public HDF5File::Group {
-	public:
-		// Concise name for type of network compositions
-		// in HDF5 class method parameters.
-		using NetworkCompsType = std::vector<std::vector<int>>;
 
 	private:
-		// Name of network composition dataset within our group.
-		static const std::string netCompsDatasetName;
 
 		// Names of grid-specification attributes.
 		static const std::string nxAttrName;
@@ -392,13 +387,6 @@ public:
 		static const std::string hyAttrName;
 		static const std::string nzAttrName;
 		static const std::string hzAttrName;
-
-		/**
-		 * Initialize the list of cluster compositions.
-		 *
-		 * @param compVec The vector of composition
-		 */
-		void initNetworkComps(const NetworkCompsType& compVec) const;
 
 	public:
 		// Path of the header group within the file.
@@ -409,7 +397,7 @@ public:
 		 * Default and copy constructors explicitly disallowed.
 		 */
 		HeaderGroup(void) = delete;
-		HeaderGroup(const HeaderGroup& other) = delete;
+		HeaderGroup(const HeaderGroup &other) = delete;
 
 		/**
 		 * Create and initialize the header group with the number of
@@ -422,13 +410,13 @@ public:
 		 * @param nz The number of grid points in the z direction
 		 * @param hz The step size in the z direction
 		 */
-		HeaderGroup(const XFile& file, const std::vector<double>& grid, int ny,
-				double hy, int nz, double hz, const NetworkCompsType& compVec);
+		HeaderGroup(const XFile &file, const std::vector<double> &grid, int ny,
+				double hy, int nz, double hz);
 
 		/**
 		 * Open an existing header group.
 		 */
-		HeaderGroup(const XFile& file);
+		HeaderGroup(const XFile &file);
 
 		/**
 		 * Read our file header.
@@ -442,22 +430,18 @@ public:
 		 */
 		void read(int &nx, double &hx, int &ny, double &hy, int &nz,
 				double &hz) const;
-
-		/**
-		 * Read our network compositions.
-		 *
-		 * @return The compositions of our network.
-		 */
-		NetworkCompsType readNetworkComps(void) const;
 	};
 
 	// A group describing a network within our HDF5 file.
 	class NetworkGroup: public HDF5File::Group {
+	public:
+		// Concise name for type of network bounds
+		// in HDF5 class method parameters.
+		using NetworkBoundsType = std::vector<std::vector<experimental::IReactionNetwork::AmountType>>;
+
 	private:
-		// Names of network attributes.
-		static const std::string normalSizeAttrName;
-		static const std::string superSizeAttrName;
-		static const std::string phaseSpaceAttrName;
+		// Names of network attribute.
+		static const std::string sizeAttrName;
 
 	public:
 
@@ -465,14 +449,14 @@ public:
 		static const fs::path path;
 
 		NetworkGroup(void) = delete;
-		NetworkGroup(const NetworkGroup& other) = delete;
+		NetworkGroup(const NetworkGroup &other) = delete;
 
 		/**
 		 * Open an existing network group.
 		 *
 		 * @param file The file whose network group to open.
 		 */
-		NetworkGroup(const XFile& file);
+		NetworkGroup(const XFile &file);
 
 		/**
 		 * Creating a new network group.
@@ -480,23 +464,22 @@ public:
 		 * @param file The file where to create the network group.
 		 * @param network The network to write.
 		 */
-		NetworkGroup(const XFile& file, IReactionNetwork& network);
+		NetworkGroup(const XFile &file,
+				experimental::IReactionNetwork &network);
 
 		/**
 		 * Read the network sizes from our group.
 		 *
-		 * @param normalSize The number of normal clusters.
-		 * @param superSize The number of super clusters.
-		 * @return The phase space parameters
+		 * @return The total size
 		 */
-		Array<int, 5> readNetworkSize(int &normalSize, int &superSize) const;
+		int readNetworkSize() const;
 
 		/**
 		 * Read the reactions for every cluster.
 		 *
 		 * @param network The network that need the reactions.
 		 */
-		void readReactions(IReactionNetwork& network) const;
+		void readReactions(experimental::IReactionNetwork &network) const;
 
 		/**
 		 * Copy ourself to the given file.
@@ -504,36 +487,27 @@ public:
 		 *
 		 * @param target The file to copy ourself to.
 		 */
-		void copyTo(const XFile& target) const;
+		void copyTo(const XFile &target) const;
 	};
 
 	// A group describing a cluster within our HDF5 file.
 	class ClusterGroup: public HDF5File::Group {
 	public:
-		// Concise name for cluster representations.
-		using clusterComp = std::vector<int>;
-		using clusterList = std::set<std::tuple<int, int, int, int> >;
+		// Concise name for type of network bounds
+		// in HDF5 class method parameters.
+		using ClusterBoundsType = std::vector<experimental::IReactionNetwork::AmountType>;
 
 	private:
 		// Names of cluster attributes.
 		static const std::string formationEnergyAttrName;
 		static const std::string migrationEnergyAttrName;
 		static const std::string diffusionFactorAttrName;
-		static const std::string compositionAttrName;
-		static const std::string heVListDataName;
 		static const std::string boundsAttrName;
-		static const std::string nTotAttrName;
-		static const std::string numAtomAttrName;
-		static const std::string typeAttrName;
-		static const std::string productionDataName;
-		static const std::string combinationDataName;
-		static const std::string dissociationDataName;
-		static const std::string emissionDataName;
 
 	public:
 
 		ClusterGroup(void) = delete;
-		ClusterGroup(const ClusterGroup& other) = delete;
+		ClusterGroup(const ClusterGroup &other) = delete;
 
 		/**
 		 * Open a cluster group.
@@ -541,15 +515,21 @@ public:
 		 * @param networkGroup The group in which the cluster is located.
 		 * @param id The id of the cluster.
 		 */
-		ClusterGroup(const NetworkGroup& networkGroup, int id);
+		ClusterGroup(const NetworkGroup &networkGroup, int id);
 
 		/**
 		 * Create a cluster group.
 		 *
 		 * @param networkGroup The group in which to write.
-		 * @param cluster The cluster.
+		 * @param id The Cluster id
+		 * @param bounds The bounds on the region covered by the cluster.
+		 * @param formation The formation energy.
+		 * @param migration The migration energy.
+		 * @param diffusion The diffusion factor.
 		 */
-		ClusterGroup(const NetworkGroup& networkGroup, IReactant& cluster);
+		ClusterGroup(const NetworkGroup &networkGroup, int id,
+				ClusterBoundsType bounds, double formation, double migration,
+				double diffusion);
 
 		/**
 		 * Construct the group name for the given time step.
@@ -565,50 +545,10 @@ public:
 		 * @param formationEnergy The formation energy.
 		 * @param migrationEnergy The migration energy.
 		 * @param diffusionFactor The diffusion factor.
-		 * @return The cluster composition.
+		 * @return The cluster bounds.
 		 */
-		clusterComp readCluster(double &formationEnergy,
+		ClusterBoundsType readCluster(double &formationEnergy,
 				double &migrationEnergy, double &diffusionFactor) const;
-
-		/**
-		 * Read the cluster properties from our group.
-		 *
-		 * @return The list of clusters that it contains.
-		 */
-		clusterList readPSISuperCluster() const;
-
-		/**
-		 * Read the cluster properties from our group.
-		 *
-		 * @return The bounds on the clusters that it contains.
-		 */
-		Array<int, 4> readFeSuperCluster() const;
-
-		/**
-		 * Read the cluster properties from our group.
-		 *
-		 * @param nTot The total number of clusters it contains.
-		 * @param maxXe The maximum value
-		 */
-		void readNESuperCluster(int &nTot, int &maxXe) const;
-
-		/**
-		 * Read the cluster properties from our group.
-		 *
-		 * @param nTot The total number of clusters it contains.
-		 * @param maxAtom The maximum value
-		 * @param type The type of cluster
-		 */
-		void readAlloySuperCluster(int &nTot, int &maxXe,
-				ReactantType &type) const;
-
-		/**
-		 * Read the reactions from our group.
-		 *
-		 * @param network The network that need the reactions.
-		 * @param cluster The cluster that needs reactions
-		 */
-		void readReactions(IReactionNetwork& network, IReactant& cluster) const;
 	};
 
 private:
@@ -637,7 +577,6 @@ public:
 	 *
 	 * @param path Path of file to create.
 	 * @param grid The grid points in the x direction (depth)
-	 * @param compVec The composition vector.
 	 * @param _comm The MPI communicator used to access the file.
 	 * @param ny The number of grid points in the y direction
 	 * @param hy The step size in the y direction
@@ -646,10 +585,8 @@ public:
 	 * @param mode Access mode for file.  Only HDF5File Create* modes
 	 *              are supported.
 	 */
-	XFile(fs::path path, const std::vector<double>& grid,
-			const HeaderGroup::NetworkCompsType& compVec, MPI_Comm _comm =
-			MPI_COMM_WORLD, int ny = 0, double hy = 0.0, int nz = 0, double hz =
-					0.0,
+	XFile(fs::path path, const std::vector<double> &grid, MPI_Comm _comm =
+	MPI_COMM_WORLD, int ny = 0, double hy = 0.0, int nz = 0, double hz = 0.0,
 			AccessMode mode = AccessMode::CreateOrTruncateIfExists);
 
 	/**

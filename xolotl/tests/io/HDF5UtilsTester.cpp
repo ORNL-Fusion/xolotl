@@ -3,7 +3,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/framework.hpp>
-#include <PSIClusterReactionNetwork.h>
+#include <experimental/PSIReactionNetwork.h>
 #include <DummyHandlerRegistry.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
@@ -16,6 +16,18 @@
 using namespace std;
 using namespace xolotlCore;
 
+class KokkosContext {
+public:
+	KokkosContext() {
+		::Kokkos::initialize();
+	}
+
+	~KokkosContext() {
+		::Kokkos::finalize();
+	}
+};
+BOOST_GLOBAL_FIXTURE(KokkosContext);
+
 // Initialize MPI before running any tests; finalize it running all tests.
 BOOST_GLOBAL_FIXTURE(MPIFixture);
 
@@ -25,13 +37,14 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 BOOST_AUTO_TEST_SUITE(HDF5_testSuite)
 
 /**
- * Create a faux network composition vector.
+ * Create a faux network bound vector.
  */
-xolotlCore::XFile::HeaderGroup::NetworkCompsType createTestNetworkComps(void) {
+xolotlCore::XFile::NetworkGroup::NetworkBoundsType createTestNetworkBounds(
+		void) {
 
-	std::vector<std::vector<int>> testCompsVec { { 1, 2, 3, 4 }, { 5, 6, 7, 8 },
-			{ 9, 10, 11, 12 } };
-	return testCompsVec;
+	xolotlCore::XFile::NetworkGroup::NetworkBoundsType testBoundsVec { { 1, 2,
+			3, 4 }, { 5, 6, 7, 8 }, { 9, 10, 11, 12 } };
+	return testBoundsVec;
 }
 
 /**
@@ -65,26 +78,33 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	argv[2] = 0; // null-terminate the array
 	opts.readParams(2, argv);
 
-	// Create the network loader
-	HDF5NetworkLoader loader = HDF5NetworkLoader(
-			make_shared<xolotlPerf::DummyHandlerRegistry>());
-	// Create the network
-	auto network = loader.generate(opts);
-	// Initialize the rates
-	network->addGridPoints(1);
-	// Get the size of the network
-	int networkSize = network->size();
-
-	// Set the time step number
-	int timeStep = 0;
-
 	// Set the number of grid points and step size
 	int nGrid = 5;
 	double stepSize = 0.5;
 	std::vector<double> grid;
+	std::vector<double> temperatures;
 	for (int i = 0; i < nGrid + 2; i++) {
 		grid.push_back((double) i * stepSize);
+		temperatures.push_back(1000.0);
 	}
+
+	// Create the network
+	using NetworkType =
+	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = opts.getMaxImpurity();
+	NetworkType::AmountType maxD = opts.getMaxD();
+	NetworkType::AmountType maxT = opts.getMaxT();
+	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+	// Get the size of the network
+	int networkSize = network.getNumClusters();
+
+	// Set the time step number
+	int timeStep = 0;
+
 	// Set the time information
 	double currentTime = 0.0001;
 	double previousTime = 0.00001;
@@ -101,7 +121,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 
 	// Define a faux network composition vector.
 	BOOST_TEST_MESSAGE("Creating faux comp vec.");
-	auto testCompsVec = createTestNetworkComps();
+	auto testBoundsVec = createTestNetworkBounds();
 
 	// Create and populate a Xolotl HDF5 file.
 	// We do it in its own scope so that the file is closed
@@ -109,9 +129,9 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	const std::string testFileName = "test_basic.h5";
 	{
 		BOOST_TEST_MESSAGE("Creating file.");
-		xolotlCore::XFile testFile(testFileName, grid, testCompsVec,
+		xolotlCore::XFile testFile(testFileName, grid,
 		MPI_COMM_WORLD);
-		xolotlCore::XFile::NetworkGroup netGroup(testFile, *network);
+		xolotlCore::XFile::NetworkGroup netGroup(testFile, network);
 	}
 
 	// Define the concentration dataset size.
@@ -240,58 +260,34 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		auto networkGroup =
 				testFile.getGroup<xolotlCore::XFile::NetworkGroup>();
 		BOOST_REQUIRE(networkGroup);
-		int normalSize = 0, superSize = 0;
-		networkGroup->readNetworkSize(normalSize, superSize);
-		// Get all the reactants
-		auto const& reactants = network->getAll();
-		// Check the network vector
-		for (IReactant& it : reactants) {
+		int networkSize = networkGroup->readNetworkSize();
+		constexpr auto speciesRange = network.getSpeciesRange();
+		// Loop on the clusters
+		for (int i = 0; i < networkSize; i++) {
 			// Get the i-th reactant in the network
-			auto& reactant = (PSICluster&) it;
-			int id = reactant.getId() - 1;
+			auto cluster = network.getClusterCommon(i);
 			// Open the cluster group
-			XFile::ClusterGroup clusterGroup(*networkGroup, id);
+			XFile::ClusterGroup clusterGroup(*networkGroup, i);
 
-			if (id < normalSize) {
-				// Normal cluster
-				// Read the composition
-				double formationEnergy = 0.0, migrationEnergy = 0.0,
-						diffusionFactor = 0.0;
-				auto comp = clusterGroup.readCluster(formationEnergy,
-						migrationEnergy, diffusionFactor);
-				// Check the composition
-				auto& composition = reactant.getComposition();
-				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::He)],
-						composition[toCompIdx(Species::He)]);
-				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::D)],
-						composition[toCompIdx(Species::D)]);
-				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::T)],
-						composition[toCompIdx(Species::T)]);
-				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::V)],
-						composition[toCompIdx(Species::V)]);
-				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::I)],
-						composition[toCompIdx(Species::I)]);
-				// Check the formation energy
-				BOOST_REQUIRE_EQUAL(reactant.getFormationEnergy(),
-						formationEnergy);
-				// Check the migration energy
-				BOOST_REQUIRE_EQUAL(reactant.getMigrationEnergy(),
-						migrationEnergy);
-				// Check the diffusion factor
-				BOOST_REQUIRE_EQUAL(reactant.getDiffusionFactor(),
-						diffusionFactor);
-			}
-		}
+			// Check the attributes
+			double formationEnergy = 0.0, migrationEnergy = 0.0,
+					diffusionFactor = 0.0;
+			auto comp = clusterGroup.readCluster(formationEnergy,
+					migrationEnergy, diffusionFactor);
+			// Check the formation energy
+			BOOST_REQUIRE_EQUAL(cluster.getFormationEnergy(), formationEnergy);
+			// Check the migration energy
+			BOOST_REQUIRE_EQUAL(cluster.getMigrationEnergy(), migrationEnergy);
+			// Check the diffusion factor
+			BOOST_REQUIRE_EQUAL(cluster.getDiffusionFactor(), diffusionFactor);
 
-		// Test the composition vector.
-		BOOST_TEST_MESSAGE(
-				"Checking test file last time step composition vectors.");
-		auto readCompsVec = headerGroup->readNetworkComps();
-		BOOST_REQUIRE_EQUAL(readCompsVec.size(), testCompsVec.size());
-		for (auto i = 0; i < testCompsVec.size(); ++i) {
-			BOOST_REQUIRE_EQUAL(readCompsVec[i].size(), testCompsVec[i].size());
-			for (auto j = 0; j < testCompsVec[i].size(); ++j) {
-				BOOST_REQUIRE_EQUAL(readCompsVec[i][j], testCompsVec[i][j]);
+			// Check the bounds
+			const auto &clReg = network.getCluster(i, plsm::onHost).getRegion();
+			NetworkType::Composition lo = clReg.getOrigin();
+			NetworkType::Composition hi = clReg.getUpperLimitPoint();
+			for (auto j : speciesRange) {
+				BOOST_REQUIRE_EQUAL(comp[2 * j()], lo[j]);
+				BOOST_REQUIRE_EQUAL(comp[2 * j() + 1], hi[j] - 1);
 			}
 		}
 
@@ -365,7 +361,7 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 		for (int i = 0; i < nGrid + 2; i++)
 			grid.push_back((double) i * stepSize);
 
-		xolotlCore::XFile testFile(testFileName, grid, createTestNetworkComps(),
+		xolotlCore::XFile testFile(testFileName, grid,
 		MPI_COMM_WORLD);
 	}
 
@@ -463,7 +459,7 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 		for (int i = 0; i < nGrid + 2; i++)
 			grid.push_back((double) i * stepSize);
 
-		xolotlCore::XFile testFile(testFileName, grid, createTestNetworkComps(),
+		xolotlCore::XFile testFile(testFileName, grid,
 		MPI_COMM_WORLD);
 	}
 

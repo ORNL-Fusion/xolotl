@@ -177,7 +177,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 					gridPointSolution = solutionArray[k][j][i];
 
 					// Loop on the concentrations
-					for (int l = 0; l < dof; l++) {
+					for (int l = 0; l < dof + 1; l++) {
 						if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 							// Increase concSize
 							concSize++;
@@ -1535,29 +1535,26 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			double hy = solverHandler.getStepSizeY();
 			double hz = solverHandler.getStepSizeZ();
 
-//			// Get the compostion list and save it
-//			auto compList = network.getCompositionList();
-//
-//			// Create a checkpoint file.
-//			// Create and initialize a checkpoint file.
-//			// We do this in its own scope so that the file
-//			// is closed when the file object goes out of scope.
-//			// We want it to close before we (potentially) copy
-//			// the network from another file using a single-process
-//			// MPI communicator.
-//			{
-//				xolotlCore::XFile checkpointFile(hdf5OutputName3D, grid,
-//						compList, PETSC_COMM_WORLD, My, hy, Mz, hz);
-//			}
-//
-//			// Copy the network group from the given file (if it has one).
-//			// We open the files using a single-process MPI communicator
-//			// because it is faster for a single process to do the
-//			// copy with HDF5's H5Ocopy implementation than it is
-//			// when all processes call the copy function.
-//			// The checkpoint file must be closed before doing this.
-//			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
-//					hdf5OutputName3D, network);
+			// Create a checkpoint file.
+			// Create and initialize a checkpoint file.
+			// We do this in its own scope so that the file
+			// is closed when the file object goes out of scope.
+			// We want it to close before we (potentially) copy
+			// the network from another file using a single-process
+			// MPI communicator.
+			{
+				xolotlCore::XFile checkpointFile(hdf5OutputName3D, grid,
+						PETSC_COMM_WORLD, My, hy, Mz, hz);
+			}
+
+			// Copy the network group from the given file (if it has one).
+			// We open the files using a single-process MPI communicator
+			// because it is faster for a single process to do the
+			// copy with HDF5's H5Ocopy implementation than it is
+			// when all processes call the copy function.
+			// The checkpoint file must be closed before doing this.
+			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+					hdf5OutputName3D, network);
 		}
 
 		// startStop3D will be called at each timestep
