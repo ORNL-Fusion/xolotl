@@ -2,6 +2,12 @@
 
 #include <Kokkos_Core.hpp>
 
+#if defined(KOKKOS_ENABLE_CUDA) && defined(KOKKOS_ENABLE_CUDA_LAMBDA)
+#define DEVICE_LAMBDA [=] __device__
+#else
+#define DEVICE_LAMBDA [=]
+#endif
+
 #include <experimental/ReactionNetworkTraits.h>
 
 namespace xolotlCore
@@ -41,14 +47,13 @@ public:
     }
 
     template <typename F>
-    KOKKOS_INLINE_FUNCTION
     void
     apply(const F& func)
     {
         auto prodReactions = _prodReactions;
         auto dissReactions = _dissReactions;
         auto numProdReactions = _numProdReactions;
-        Kokkos::parallel_for(_numReactions, KOKKOS_LAMBDA (const IndexType i) {
+        Kokkos::parallel_for(_numReactions, DEVICE_LAMBDA (const IndexType i) {
             if (i < numProdReactions) {
                 func(prodReactions(i));
             }
@@ -59,7 +64,6 @@ public:
     }
 
     template <typename F, typename T>
-    KOKKOS_INLINE_FUNCTION
     void
     reduce(const F& func, T& out)
     {
@@ -67,7 +71,7 @@ public:
         auto dissReactions = _dissReactions;
         auto numProdReactions = _numProdReactions;
         Kokkos::parallel_reduce(_numReactions,
-                KOKKOS_LAMBDA (const IndexType i, T& local) {
+                DEVICE_LAMBDA (const IndexType i, T& local) {
             if (i < numProdReactions) {
                 func(prodReactions(i), local);
             }

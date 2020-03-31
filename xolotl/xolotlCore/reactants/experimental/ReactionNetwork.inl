@@ -124,7 +124,7 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 
     auto reactionData = _reactionData;
     auto clusterData = _clusterData;
-    _reactions.apply(KOKKOS_LAMBDA (auto&& reaction) {
+    _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.updateData(reactionData, clusterData);
     });
     Kokkos::fence();
@@ -140,7 +140,7 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 
     updateDiffusionCoefficients();
 
-    _reactions.apply(KOKKOS_LAMBDA (auto&& reaction) {
+    _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.updateRates();
     });
     Kokkos::fence();
@@ -165,7 +165,7 @@ void
 ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
     FluxesView fluxes, IndexType gridIndex)
 {
-    _reactions.apply(KOKKOS_LAMBDA (auto&& reaction) {
+    _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.contributeFlux(concentrations, fluxes, gridIndex);
     });
     Kokkos::fence();
@@ -184,7 +184,7 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
     });
 
     auto connectivity = _reactionData.connectivity;
-    _reactions.apply(KOKKOS_LAMBDA (auto&& reaction) {
+    _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.contributePartialDerivatives(concentrations, values,
             connectivity, gridIndex);
     });
@@ -217,7 +217,7 @@ ReactionNetwork<TImpl>::getLeftSideRate(ConcentrationsView concentrations,
     // Get the extent of the reactions
     double leftSideRate = 0.0;
     // Loop on all the rates to get the maximum
-    _reactions.reduce(KOKKOS_LAMBDA (auto&& reaction, double& lsum) {
+    _reactions.reduce(DEVICE_LAMBDA (auto&& reaction, double& lsum) {
         lsum += reaction.contributeLeftSideRate(concentrations, clusterId,
             gridIndex);
     }, leftSideRate);
