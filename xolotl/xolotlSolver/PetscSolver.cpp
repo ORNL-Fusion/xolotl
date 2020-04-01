@@ -473,10 +473,11 @@ bool PetscSolver::getConvergenceStatus() {
 	// Share the information with all the processes
 	bool totalReason = false;
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
-	MPI_Allreduce(&userReason, &totalReason, 1, MPIU_BOOL, MPI_LOR,
+	MPI_Allreduce(&userReason, &totalReason, 1, MPI_C_BOOL, MPI_LOR,
 			xolotlComm);
 
-	if (totalReason) return false;
+	if (totalReason)
+		return false;
 
 	return true;
 }
