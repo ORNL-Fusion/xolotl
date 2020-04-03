@@ -2,7 +2,7 @@
 #include "PSIReactionHandlerFactory.h"
 #include "NEReactionHandlerFactory.h"
 //#include "AlloyReactionHandlerFactory.h"
-//#include "FeReactionHandlerFactory.h"
+#include "FeReactionHandlerFactory.h"
 
 namespace xolotlFactory {
 
@@ -20,9 +20,9 @@ std::shared_ptr<IReactionHandlerFactory> IReactionHandlerFactory::createNetworkF
 //	// Alloy case
 //	else if (problemType == "800H")
 //		theReactionFactory = std::make_shared<AlloyReactionHandlerFactory>();
-//	// Fe case
-//	else if (problemType == "Fe")
-//		theReactionFactory = std::make_shared<FeReactionHandlerFactory>();
+	// Fe case
+	else if (problemType == "Fe")
+		theReactionFactory = std::make_shared<FeReactionHandlerFactory>();
 	// The type is not supported
 	else {
 		throw std::string(

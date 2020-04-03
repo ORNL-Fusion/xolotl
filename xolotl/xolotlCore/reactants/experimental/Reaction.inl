@@ -1267,7 +1267,7 @@ DissociationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
     double E_b = this->asDerived()->computeBindingEnergy();
 
     constexpr double k_B = ::xolotlCore::kBoltzmann;
-
+    
     double kMinus = (1.0 / omega) * kPlus * std::exp(-E_b / (k_B * T));
 
     return kMinus;

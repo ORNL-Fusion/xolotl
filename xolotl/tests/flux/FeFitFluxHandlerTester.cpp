@@ -4,7 +4,6 @@
 #include <boost/test/unit_test.hpp>
 #include "FeFitFluxHandler.h"
 #include <mpi.h>
-#include <FeClusterNetworkLoader.h>
 #include <DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
 #include <Options.h>
@@ -59,15 +58,12 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	int surfacePos = 0;
 
 	// Create the network
-	// TODO: change to Fe
 	using NetworkType =
-	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	experimental::FeReactionNetwork<experimental::FeFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
-	NetworkType::AmountType maxD = opts.getMaxD();
-	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	NetworkType network( { maxHe, maxV, maxI }, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size

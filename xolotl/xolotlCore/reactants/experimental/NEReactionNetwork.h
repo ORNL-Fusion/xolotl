@@ -23,6 +23,9 @@ public:
     using Subpaving = typename Superclass::Subpaving;
     using Composition = typename Superclass::Composition;
     using Species = typename Superclass::Species;
+    using IndexType = typename Superclass::IndexType;
+    using ConcentrationsView = typename Superclass::ConcentrationsView;
+    using FluxesView = typename Superclass::FluxesView;
 
     using Superclass::Superclass;
 
@@ -42,6 +45,20 @@ private:
             return xenonRadius;
         }
         return impurityRadius;
+    }
+
+    void
+    addReactionFluxes(ConcentrationsView concentrations, FluxesView fluxes,
+        IndexType gridIndex)
+    {
+        // Does nothing
+    }
+
+    void
+    addReactionPartials(ConcentrationsView concentrations,
+        Kokkos::View<double*> values, IndexType gridIndex)
+    {
+        // Does nothing
     }
 
     detail::NEReactionGenerator

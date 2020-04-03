@@ -394,14 +394,16 @@ private:
 
 private:
     Subpaving _subpaving;
-
-    ClusterData _clusterData;
     ClusterDataMirror _clusterDataMirror;
 
-    detail::ReactionData _reactionData;
     ReactionCollection _reactions;
 
     detail::ReactionNetworkWorker<TImpl> _worker;
+
+protected:
+    detail::ReactionData _reactionData;
+
+    ClusterData _clusterData;
 };
 
 

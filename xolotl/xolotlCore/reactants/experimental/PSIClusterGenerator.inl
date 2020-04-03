@@ -401,9 +401,6 @@ PSIClusterGenerator<PSIFullSpeciesList>::getReactionRadius(
     double latticeParameter, double interstitialBias, double impurityRadius)
     const noexcept
 {
-    // TODO: get this factor in and from the network
-    double hydrogenFactor = 0.25;
-
     const auto& reg = cluster.getRegion();
     double radius = 0.0;
     if (reg.isSimplex()) {
@@ -433,7 +430,7 @@ PSIClusterGenerator<PSIFullSpeciesList>::getReactionRadius(
                     (1.0 / 3.0));
             double termTwo = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed,
                     (1.0 / 3.0));
-            radius = (impurityRadius + termOne - termTwo) * hydrogenFactor;
+            radius = (impurityRadius + termOne - termTwo) * _hydrogenRadiusFactor;
         }
         else if (comp.isOnAxis(Species::T)) {
             double FourPi = 4.0 * xolotlCore::pi;
@@ -442,7 +439,7 @@ PSIClusterGenerator<PSIFullSpeciesList>::getReactionRadius(
                     (1.0 / 3.0));
             double termTwo = pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed,
                     (1.0 / 3.0));
-            radius = (impurityRadius + termOne - termTwo) * hydrogenFactor;
+            radius = (impurityRadius + termOne - termTwo) * _hydrogenRadiusFactor;
         }
         else {
             radius = (sqrt(3.0) / 4.0) * latticeParameter
@@ -452,6 +449,19 @@ PSIClusterGenerator<PSIFullSpeciesList>::getReactionRadius(
                     - pow((3.0 * pow(latticeParameter, 3.0)) / (8.0 * xolotlCore::pi),
                             (1.0 / 3.0));
         }
+    }
+    else {
+        // Loop on the V range
+        for (auto j : makeIntervalRange(reg[Species::V])) {
+            radius += (sqrt(3.0) / 4.0) * latticeParameter
+                    + pow(
+                            (3.0 * pow(latticeParameter, 3.0) * (double) j)
+                                    / (8.0 * xolotlCore::pi), (1.0 / 3.0))
+                    - pow((3.0 * pow(latticeParameter, 3.0)) / (8.0 * xolotlCore::pi),
+                            (1.0 / 3.0));
+        }
+        // Average the radius
+        radius /= reg[Species::V].length();
     }
 
     return radius;

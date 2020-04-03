@@ -147,7 +147,6 @@ public:
         if (reg.isSimplex()) {
             Composition comp(reg.getOrigin());
             // Compute the reaction radius
-            // TODO: change the hard coded value to get the density from the network/options
             radius = pow(
                 (3.0 * (double) comp[Species::Xe]) / (FourPi * _density),
                 (1.0 / 3.0));

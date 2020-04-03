@@ -1,8 +1,8 @@
 #pragma once
 
 #include <experimental/ReactionNetwork.h>
-#include <experimental/PSIReaction.h>
-#include <experimental/PSITraits.h>
+#include <experimental/FeReaction.h>
+#include <experimental/FeTraits.h>
 
 namespace xolotlCore
 {
@@ -11,18 +11,18 @@ namespace experimental
 namespace detail
 {
 template <typename TSpeciesEnum>
-class PSIReactionGenerator;
+class FeReactionGenerator;
 }
 
 template <typename TSpeciesEnum>
-class PSIReactionNetwork :
-    public ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>
+class FeReactionNetwork :
+    public ReactionNetwork<FeReactionNetwork<TSpeciesEnum>>
 {
-    friend class ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
-    friend class detail::ReactionNetworkWorker<PSIReactionNetwork<TSpeciesEnum>>;
+    friend class ReactionNetwork<FeReactionNetwork<TSpeciesEnum>>;
+    friend class detail::ReactionNetworkWorker<FeReactionNetwork<TSpeciesEnum>>;
 
 public:
-    using Superclass = ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
+    using Superclass = ReactionNetwork<FeReactionNetwork<TSpeciesEnum>>;
     using Subpaving = typename Superclass::Subpaving;
     using Composition = typename Superclass::Composition;
     using Species = typename Superclass::Species;
@@ -30,6 +30,7 @@ public:
     using IndexType = typename Superclass::IndexType;
     using ConcentrationsView = typename Superclass::ConcentrationsView;
     using FluxesView = typename Superclass::FluxesView;
+    using ClusterDataRef = typename Superclass::ClusterDataRef;
 
     using Superclass::Superclass;
 
@@ -56,37 +57,37 @@ private:
     addReactionFluxes(ConcentrationsView concentrations, FluxesView fluxes,
         IndexType gridIndex)
     {
-        // Does nothing
+        return;
     }
 
     void
     addReactionPartials(ConcentrationsView concentrations,
         Kokkos::View<double*> values, IndexType gridIndex)
     {
-        // Does nothing
+        return;
     }
 
-    detail::PSIReactionGenerator<Species>
+    detail::FeReactionGenerator<Species>
     getReactionGenerator() const noexcept
     {
-        return detail::PSIReactionGenerator<Species>{*this};
+        return detail::FeReactionGenerator<Species>{*this};
     }
 };
 
 namespace detail
 {
 template <typename TSpeciesEnum>
-class PSIReactionGenerator : public
-    ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,
-        PSIReactionGenerator<TSpeciesEnum>>
+class FeReactionGenerator : public
+    ReactionGenerator<FeReactionNetwork<TSpeciesEnum>,
+        FeReactionGenerator<TSpeciesEnum>>
 {
 public:
-    using Network = PSIReactionNetwork<TSpeciesEnum>;
+    using Network = FeReactionNetwork<TSpeciesEnum>;
     using Subpaving = typename Network::Subpaving;
     using IndexType = typename Network::IndexType;
 
-    using Superclass = ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,
-        PSIReactionGenerator<TSpeciesEnum>>;
+    using Superclass = ReactionGenerator<FeReactionNetwork<TSpeciesEnum>,
+        FeReactionGenerator<TSpeciesEnum>>;
 
     using Superclass::Superclass;
 
@@ -99,5 +100,5 @@ public:
 }
 }
 
-#include <experimental/PSIClusterGenerator.h>
-#include <experimental/PSIReactionNetwork.inl>
+#include <experimental/FeClusterGenerator.h>
+#include <experimental/FeReactionNetwork.inl>

@@ -19,6 +19,7 @@
 #include "xolotlSolver/monitor/Monitor.h"
 #include <experimental/NEReactionNetwork.h>
 #include <experimental/PSIReactionNetwork.h>
+#include <experimental/FeReactionNetwork.h>
 
 namespace xolotlSolver {
 
@@ -58,7 +59,7 @@ std::vector<double> radii0D;
  * This is a monitoring method that update an hdf5 file at each time step.
  */
 PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declaration
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
@@ -87,10 +88,10 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
-	auto& network = solverHandler.getExpNetwork();
+	auto &network = solverHandler.getExpNetwork();
 	const int dof = network.getDOF();
 
 	// Create an array for the concentration
@@ -145,14 +146,14 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that will compute the xenon retention
  */
 PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declarations
 	PetscErrorCode ierr;
 
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the da from ts
 	DM da;
@@ -165,7 +166,7 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	using Composition = typename NetworkType::Composition;
 
 	// Degrees of freedom is the total number of clusters in the network
-	auto& network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
 	const int dof = network.getDOF();
 
 	// Get the array of concentration
@@ -480,7 +481,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
  * distribution.
  */
 PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
@@ -501,14 +502,14 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
 	using NetworkType =
 	experimental::NEReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Region = typename NetworkType::Region;
-	auto& network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
 	int networkSize = network.getNumClusters();
 
 	// Create a Point vector to store the data to give to the data provider
@@ -522,7 +523,7 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 		// Create a Point with the concentration[i] as the value
 		// and add it to myPoints
 		auto cluster = network.getCluster(i);
-		const Region& clReg = cluster.getRegion();
+		const Region &clReg = cluster.getRegion();
 		for (std::size_t j : makeIntervalRange(clReg[Spec::Xe])) {
 			xolotlViz::Point aPoint;
 			aPoint.value = gridPointSolution[i];
@@ -579,9 +580,9 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
-//	// Don't do anything if it is not on the stride
-//	if (timestep % 10 != 0)
-//		PetscFunctionReturn(0);
+	// Don't do anything if it is not on the stride
+	if (timestep % 10 != 0)
+		PetscFunctionReturn(0);
 
 	// Get the da from ts
 	DM da;
@@ -593,17 +594,17 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
 	using NetworkType =
-	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	experimental::FeReactionNetwork<experimental::FeFullSpeciesList>;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using Region = typename NetworkType::Region;
 
 	// Get the network and its size
-	auto& network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
 	const int networkSize = network.getNumClusters();
 
 	// Create the output file
@@ -620,10 +621,14 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Consider each cluster.
 	for (int i = 0; i < networkSize; i++) {
-		auto cluster = network.getCluster(i);
-		const Region& clReg = cluster.getRegion();
+		auto cluster = network.getCluster(i, plsm::onHost);
+		const Region &clReg = cluster.getRegion();
 		Composition lo = clReg.getOrigin();
 		Composition hi = clReg.getUpperLimitPoint();
+
+		if (lo.isOnAxis(Species::I) || lo.isOnAxis(Species::V)
+				|| lo.isOnAxis(Species::He))
+			continue;
 
 		// For compatibility with previous versions, we output
 		// the value of a closed upper bound of the He and V intervals.
@@ -694,7 +699,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			"setupPetsc0DMonitor: PetscOptionsHasName (-xenon_retention) failed.");
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Determine if we have an existing restart file,
 	// and if so, it it has had timesteps written to it.
@@ -770,8 +775,8 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			checkPetscError(ierr, "setupPetsc0DMonitor: DMDAGetInfo failed.");
 
 			// Get the solver handler and network
-			auto& solverHandler = PetscSolver::getSolverHandler();
-			auto& network = solverHandler.getExpNetwork();
+			auto &solverHandler = PetscSolver::getSolverHandler();
+			auto &network = solverHandler.getExpNetwork();
 
 			// Get the physical grid (which is empty)
 			auto grid = solverHandler.getXGrid();

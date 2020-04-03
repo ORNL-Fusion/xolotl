@@ -168,6 +168,8 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
     _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.contributeFlux(concentrations, fluxes, gridIndex);
     });
+    asDerived()->addReactionFluxes(concentrations, fluxes, gridIndex);
+
     Kokkos::fence();
 }
 
@@ -188,6 +190,8 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
         reaction.contributePartialDerivatives(concentrations, values,
             connectivity, gridIndex);
     });
+    asDerived()->addReactionPartials(concentrations, values, gridIndex);
+    
     Kokkos::fence();
 }
 
