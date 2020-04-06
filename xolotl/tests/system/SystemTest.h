@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -21,9 +22,13 @@ constexpr double defaultTolerance = 1.0e-10;
 double tolerance = defaultTolerance;
 
 bool
-runXolotl(const std::string& paramsFileName)
+runXolotl(const std::string& caseName)
 {
-    int retCode = std::system((binDir + "/xolotl " + paramsFileName).c_str());
+    auto exec = binDir + "/xolotl";
+    auto paramsFileName = dataDir + "/params_" + caseName + ".txt";
+    auto consoleFileName = binDir + "/tests/system/cout_" + caseName + ".txt";
+    auto command = exec + " " + paramsFileName + " > " + consoleFileName;
+    int retCode = std::system(command.c_str());
     return (retCode == 0);
 }
 
@@ -85,7 +90,7 @@ void
 runSystemTestCase(const std::string& caseName, double tol = defaultTolerance)
 {
     tolerance = tol;
-    BOOST_REQUIRE(runXolotl(dataDir + "/params_" + caseName + ".txt"));
+    BOOST_REQUIRE(runXolotl(caseName));
 
     auto argc = boost::unit_test::framework::master_test_suite().argc;
     auto argv = boost::unit_test::framework::master_test_suite().argv;
