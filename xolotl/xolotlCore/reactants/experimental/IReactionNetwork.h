@@ -155,6 +155,9 @@ public:
     getLeftSideRate(ConcentrationsView concentrations,
         IndexType clusterId, IndexType gridIndex) = 0;
 
+    virtual void
+    addModifiedReactions() = 0;
+
     /**
      * Get the diagonal fill for the Jacobian, corresponding to the reactions.
      * Also populates the inverse map.

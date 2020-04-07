@@ -128,6 +128,9 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	// TODO: do we need the ghost points?
 	expNetwork.setGridSize(xm + 2);
 
+	// Initialize the modified reactions in the network
+	expNetwork.addModifiedReactions();
+
 	// Get the diagonal fill
 	auto nPartials = expNetwork.getDiagonalFill(dfill);
 

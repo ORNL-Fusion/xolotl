@@ -314,6 +314,9 @@ public:
     getLeftSideRate(ConcentrationsView concentrations,
         IndexType clusterId, IndexType gridIndex) override;
 
+    void
+    addModifiedReactions() override;
+
     IndexType
     getDiagonalFill(SparseFillMap& fillMap) override;
 

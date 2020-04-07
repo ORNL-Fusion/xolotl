@@ -337,6 +337,13 @@ ReactionNetwork<TImpl>::defineReactions()
 }
 
 template <typename TImpl>
+void
+ReactionNetwork<TImpl>::addModifiedReactions()
+{
+    asDerived()->initializeModifiedReactions();
+}
+
+template <typename TImpl>
 typename ReactionNetwork<TImpl>::IndexType
 ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
 {

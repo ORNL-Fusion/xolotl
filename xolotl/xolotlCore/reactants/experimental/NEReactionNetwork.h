@@ -48,6 +48,12 @@ private:
     }
 
     void
+    initializeModifiedReactions()
+    {
+        // Does nothing
+    }
+
+    void
     addReactionFluxes(ConcentrationsView concentrations, FluxesView fluxes,
         IndexType gridIndex)
     {

@@ -34,6 +34,38 @@ public:
 
     using Superclass::Superclass;
 
+    void
+    addReactionFluxes(ConcentrationsView concentrations, FluxesView fluxes,
+        IndexType gridIndex)
+    {
+        auto nValues = this->_sinkingIds.extent(0);
+        auto sinkingIds = this->_sinkingIds;
+        auto sinkStrengths = this->_sinkStrengths;
+        auto diffusionCoefficients = this->_clusterData.diffusionCoefficient;
+        Kokkos::parallel_for(nValues, KOKKOS_LAMBDA (const IndexType i) {
+            Kokkos::atomic_sub(&fluxes(sinkingIds(i)), concentrations(sinkingIds(i)) * sinkStrengths(i)
+                * diffusionCoefficients(sinkingIds(i), gridIndex));
+        });
+
+        return;
+    }
+
+    void
+    addReactionPartials(ConcentrationsView concentrations,
+        Kokkos::View<double*> values, IndexType gridIndex)
+    {
+        auto nValues = this->_sinkingIds.extent(0);
+        auto sinkingIds = this->_sinkingIds;
+        auto sinkStrengths = this->_sinkStrengths;
+        auto diffusionCoefficients = this->_clusterData.diffusionCoefficient;
+        auto connectivity = this->_reactionData.connectivity;
+        Kokkos::parallel_for(nValues, KOKKOS_LAMBDA (const IndexType i) {
+            Kokkos::atomic_sub(&values(connectivity(sinkingIds(i), sinkingIds(i))), sinkStrengths(i)
+                * diffusionCoefficients(sinkingIds(i), gridIndex));
+        });
+        return;
+    }
+
 private:
     double
     checkLatticeParameter(double latticeParameter)
@@ -54,16 +86,59 @@ private:
     }
 
     void
-    addReactionFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-        IndexType gridIndex)
+    initializeModifiedReactions()
     {
-        return;
-    }
+		double r0 = this->_latticeParameter * 0.75 * sqrt(3.0);
+		double rho = 0.0003;
+        // Initialize the views
+        IndexType nSink = 5;
+        _sinkingIds = Kokkos::View<IndexType*> ("sinkingIds", nSink);
+        _sinkStrengths = Kokkos::View<double*> ("sinkStrengths", nSink);
+        // Create mirror views
+        auto hSinkingIds = create_mirror_view(_sinkingIds);
+        auto hSinkStrengths = create_mirror_view(_sinkStrengths);
 
-    void
-    addReactionPartials(ConcentrationsView concentrations,
-        Kokkos::View<double*> values, IndexType gridIndex)
-    {
+        // Look for the sinking clusters
+        Composition comp = Composition::zero();
+        comp[Species::I] = 1;
+        auto cluster = this->findCluster(comp, plsm::onHost);
+        hSinkingIds(0) = cluster.getId();
+        hSinkStrengths(0) = 1.05 * -4.0 * xolotlCore::pi * rho
+            / log(xolotlCore::pi * rho * (cluster.getReactionRadius() + r0)
+            * (cluster.getReactionRadius() + r0));
+
+        comp[Species::I] = 0;
+        comp[Species::V] = 1;
+        cluster = this->findCluster(comp, plsm::onHost);
+        hSinkingIds(1) = cluster.getId();
+        hSinkStrengths(1) = -4.0 * xolotlCore::pi * rho
+                / log(xolotlCore::pi * rho * (cluster.getReactionRadius() + r0)
+                * (cluster.getReactionRadius() + r0));
+
+        comp[Species::V] = 2;
+        cluster = this->findCluster(comp, plsm::onHost);
+        hSinkingIds(2) = cluster.getId();
+        hSinkStrengths(2) = -4.0 * xolotlCore::pi * rho
+                / log(xolotlCore::pi * rho * (cluster.getReactionRadius() + r0)
+                * (cluster.getReactionRadius() + r0));
+
+        comp[Species::V] = 3;
+        cluster = this->findCluster(comp, plsm::onHost);
+        hSinkingIds(3) = cluster.getId();
+        hSinkStrengths(3) = -4.0 * xolotlCore::pi * rho
+                / log(xolotlCore::pi * rho * (cluster.getReactionRadius() + r0)
+                * (cluster.getReactionRadius() + r0));
+
+        comp[Species::V] = 4;
+        cluster = this->findCluster(comp, plsm::onHost);
+        hSinkingIds(4) = cluster.getId();
+        hSinkStrengths(4) = -4.0 * xolotlCore::pi * rho
+                / log(xolotlCore::pi * rho * (cluster.getReactionRadius() + r0)
+                * (cluster.getReactionRadius() + r0));
+
+        deep_copy(_sinkingIds, hSinkingIds);
+        deep_copy(_sinkStrengths, hSinkStrengths);
+
         return;
     }
 
@@ -72,6 +147,11 @@ private:
     {
         return detail::FeReactionGenerator<Species>{*this};
     }
+
+public:
+
+    Kokkos::View<IndexType*> _sinkingIds;
+    Kokkos::View<double*> _sinkStrengths;
 };
 
 namespace detail
