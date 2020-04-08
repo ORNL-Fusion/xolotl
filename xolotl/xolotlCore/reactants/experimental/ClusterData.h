@@ -96,6 +96,7 @@ public:
         numClusters(numClusters_),
         gridSize(gridSize_),
         atomicVolume("Atomic Volume" + labelStr(label)),
+        latticeParameter("Lattice Parameter" + labelStr(label)),
         temperature("Temperature" + labelStr(label), gridSize),
         reactionRadius("Reaction Radius" + labelStr(label), numClusters),
         formationEnergy("Formation Energy" + labelStr(label), numClusters),
@@ -119,6 +120,13 @@ public:
         return atomicVolume(0);
     }
 
+    KOKKOS_INLINE_FUNCTION
+    double
+    getLatticeParamter() const
+    {
+        return latticeParameter(0);
+    }
+
     void
     setGridSize(IndexType gridSize_) {
         gridSize = gridSize_;
@@ -130,6 +138,7 @@ public:
     IndexType numClusters {};
     IndexType gridSize {};
     View<double[1]> atomicVolume;
+    View<double[1]> latticeParameter;
     View<double*> temperature;
     View<double*> reactionRadius;
     View<double*> formationEnergy;
@@ -204,6 +213,7 @@ struct ClusterDataCommonRef
         numClusters(data.numClusters),
         gridSize(data.gridSize),
         atomicVolume(data.atomicVolume),
+        latticeParameter(data.latticeParameter),
         temperature(data.temperature),
         reactionRadius(data.reactionRadius),
         formationEnergy(data.formationEnergy),
@@ -227,9 +237,17 @@ struct ClusterDataCommonRef
         return atomicVolume(0);
     }
 
+    KOKKOS_INLINE_FUNCTION
+    double
+    getLatticeParameter() const
+    {
+        return latticeParameter(0);
+    }
+
     IndexType numClusters {};
     IndexType gridSize {};
     View<double[1]> atomicVolume;
+    View<double[1]> latticeParameter;
     View<double*> temperature;
     View<double*> reactionRadius;
     View<double**> diffusionCoefficient;

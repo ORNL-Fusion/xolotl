@@ -6,11 +6,10 @@ namespace experimental
 {
 namespace detail
 {
-template <typename TSpeciesEnum>
 template <typename TTag>
 KOKKOS_INLINE_FUNCTION
 void
-FeReactionGenerator<TSpeciesEnum>::operator()(IndexType i, IndexType j,
+FeReactionGenerator::operator()(IndexType i, IndexType j,
     TTag tag) const
 {
     using Species = typename Network::Species;
@@ -151,6 +150,36 @@ FeReactionGenerator<TSpeciesEnum>::operator()(IndexType i, IndexType j,
         }
     }
 }
+
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+FeReactionGenerator::addSinks(IndexType i, TTag tag) const
+{
+    using Species = typename Network::Species;
+    using Composition = typename Network::Composition;
+    constexpr auto invalidIndex = Network::invalidIndex();
+    
+    const auto& clReg = this->getCluster(i).getRegion();
+    Composition lo = clReg.getOrigin();
+
+    // I
+    if (clReg.isSimplex() && lo.isOnAxis(Species::I)) {
+        this->addSinkReaction(tag, {i, invalidIndex});
+    }
+
+    // V
+    if (clReg.isSimplex() && lo.isOnAxis(Species::V)) {
+        if (lo[Species::V] < 5) this->addSinkReaction(tag, {i, invalidIndex});
+    }
+}
+
+}
+inline
+detail::FeReactionGenerator
+FeReactionNetwork::getReactionGenerator() const noexcept
+{
+    return detail::FeReactionGenerator{*this};
 }
 }
 }

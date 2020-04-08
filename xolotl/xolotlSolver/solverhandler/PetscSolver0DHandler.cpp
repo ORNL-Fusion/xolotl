@@ -48,9 +48,6 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	// because it adds connectivity
 	nucleationHandler->initialize(expNetwork, dfill);
 
-	// Initialize the modified reactions in the network
-	expNetwork.addModifiedReactions();
-
 	// Get the diagonal fill
 	auto nPartials = expNetwork.getDiagonalFill(dfill);
 

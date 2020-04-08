@@ -68,6 +68,7 @@ public:
     using ClusterDataRef = typename Types::ClusterDataRef;
     using ProductionReactionType = typename Traits::ProductionReactionType;
     using DissociationReactionType = typename Traits::DissociationReactionType;
+    using SinkReactionType = typename Traits::SinkReactionType;
     using ReactionCollection = detail::ReactionCollection<Traits>;
 
     template <typename PlsmContext>
@@ -314,9 +315,6 @@ public:
     getLeftSideRate(ConcentrationsView concentrations,
         IndexType clusterId, IndexType gridIndex) override;
 
-    void
-    addModifiedReactions() override;
-
     IndexType
     getDiagonalFill(SparseFillMap& fillMap) override;
 
@@ -400,6 +398,7 @@ private:
     ClusterDataMirror _clusterDataMirror;
 
     ReactionCollection _reactions;
+    Kokkos::View<SinkReactionType*> _sinkReactions;
 
     detail::ReactionNetworkWorker<TImpl> _worker;
 

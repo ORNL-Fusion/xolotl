@@ -38,5 +38,16 @@ public:
             cl.getFormationEnergy();
     }
 };
+
+class NESinkReaction :
+    public SinkReaction<NEReactionNetwork, NESinkReaction>
+{
+public:
+    using Superclass =
+        SinkReaction<NEReactionNetwork, NESinkReaction>;
+
+    using Superclass::Superclass;
+};
+
 }
 }

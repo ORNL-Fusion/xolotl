@@ -211,6 +211,15 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(IndexType i, IndexType j,
         }
     }
 }
+
+template <typename TSpeciesEnum>
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+PSIReactionGenerator<TSpeciesEnum>::addSinks(IndexType i, TTag tag) const
+{
+    // Nothing
+}
 }
 }
 }

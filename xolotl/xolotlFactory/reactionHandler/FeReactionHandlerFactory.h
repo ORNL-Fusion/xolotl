@@ -43,7 +43,7 @@ public:
 		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
 		using NetworkType =
-		xolotlCore::experimental::FeReactionNetwork<xolotlCore::experimental::FeFullSpeciesList>;
+		xolotlCore::experimental::FeReactionNetwork;
 
 		// Get the boundaries from the options
 		NetworkType::AmountType maxV = options.getMaxV();

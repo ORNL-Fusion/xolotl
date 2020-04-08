@@ -4,19 +4,13 @@ namespace xolotlCore
 {
 namespace experimental
 {
-template <typename TSpeciesEnum>
 class FeReactionNetwork;
-
-template <typename TSpeciesEnum>
 class FeProductionReaction;
-
-template <typename TSpeciesEnum>
 class FeDissociationReaction;
-
-template <typename TSpeciesEnum>
+class FeSinkReaction;
 class FeClusterGenerator;
 
-enum class FeFullSpeciesList
+enum class FeSpeciesList
 {
     He,
     V,
@@ -24,22 +18,22 @@ enum class FeFullSpeciesList
 };
 
 template <>
-struct HasInterstitial<FeFullSpeciesList> : std::true_type
+struct HasInterstitial<FeSpeciesList> : std::true_type
 {
 };
 
-template <typename TSpeciesEnum>
-struct ReactionNetworkTraits<FeReactionNetwork<TSpeciesEnum>>
+template <>
+struct ReactionNetworkTraits<FeReactionNetwork>
 {
-    using Species = TSpeciesEnum;
+    using Species = FeSpeciesList;
 
     static constexpr std::size_t numSpecies = 3;
 
-    // using ReactionType = FeReaction<Species>;
-    using ProductionReactionType = FeProductionReaction<Species>;
-    using DissociationReactionType = FeDissociationReaction<Species>;
+    using ProductionReactionType = FeProductionReaction;
+    using DissociationReactionType = FeDissociationReaction;
+    using SinkReactionType = FeSinkReaction;
 
-    using ClusterGenerator = FeClusterGenerator<Species>;
+    using ClusterGenerator = FeClusterGenerator;
 };
 }
 }

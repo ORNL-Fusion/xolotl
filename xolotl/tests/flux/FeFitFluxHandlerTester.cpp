@@ -59,7 +59,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 
 	// Create the network
 	using NetworkType =
-	experimental::FeReactionNetwork<experimental::FeFullSpeciesList>;
+	experimental::FeReactionNetwork;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();

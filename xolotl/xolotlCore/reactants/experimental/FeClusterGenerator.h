@@ -4,20 +4,15 @@ namespace xolotlCore
 {
 namespace experimental
 {
-template <typename TSpeciesEnum>
-class FeClusterGenerator
-{
-};
 
-template <>
-class FeClusterGenerator<FeFullSpeciesList> :
+class FeClusterGenerator :
     public
-    plsm::refine::Detector<FeClusterGenerator<FeFullSpeciesList>>
+    plsm::refine::Detector<FeClusterGenerator>
 {
 public:
-    using Species = FeFullSpeciesList;
-    using Superclass = plsm::refine::Detector<FeClusterGenerator<Species>>;
-    using NetworkType = FeReactionNetwork<Species>;
+    using Species = FeSpeciesList;
+    using Superclass = plsm::refine::Detector<FeClusterGenerator>;
+    using NetworkType = FeReactionNetwork;
 
     template <typename PlsmContext>
     using Cluster = typename NetworkType::Cluster<PlsmContext>;

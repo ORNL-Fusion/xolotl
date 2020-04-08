@@ -145,27 +145,30 @@ struct ReactionData
     ReactionData() = default;
 
     ReactionData(IndexType numProductionReactions,
-            IndexType numDissociationReactions, std::size_t numSpeciesNoI,
+    		IndexType numDissociationReactions, IndexType numSinkReactions,
+			std::size_t numSpeciesNoI,
             IndexType gridSize)
         :
         coeffExtent(numSpeciesNoI + 1),
         numReactions(numProductionReactions + numDissociationReactions),
+        numRates(numProductionReactions + numDissociationReactions + numSinkReactions),
         productionCoeffs("Production Coefficients",
             numProductionReactions, coeffExtent, coeffExtent, 4, coeffExtent),
         dissociationCoeffs("Dissociation Coefficients",
             numDissociationReactions, coeffExtent, 1, 3, coeffExtent),
         widths("Reaction Rates", numReactions, numSpeciesNoI),
-        rates("Reaction Rates", numReactions, gridSize)
+        rates("Reaction Rates", numRates, gridSize)
     {
     }
 
     void
     setGridSize(IndexType gridSize) {
-        rates = Kokkos::View<double**>("Reaction Rates", numReactions, gridSize);
+        rates = Kokkos::View<double**>("Reaction Rates", numRates, gridSize);
     }
 
     std::size_t coeffExtent {};
     IndexType numReactions {};
+    IndexType numRates {};
     Kokkos::View<double*****> productionCoeffs;
     Kokkos::View<double*****> dissociationCoeffs;
     Kokkos::View<double**> widths;

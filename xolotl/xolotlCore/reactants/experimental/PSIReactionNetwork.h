@@ -52,26 +52,6 @@ private:
         return impurityRadius;
     }
 
-    void
-    initializeModifiedReactions()
-    {
-        // Does nothing
-    }
-
-    void
-    addReactionFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-        IndexType gridIndex)
-    {
-        // Does nothing
-    }
-
-    void
-    addReactionPartials(ConcentrationsView concentrations,
-        Kokkos::View<double*> values, IndexType gridIndex)
-    {
-        // Does nothing
-    }
-
     detail::PSIReactionGenerator<Species>
     getReactionGenerator() const noexcept
     {
@@ -100,6 +80,11 @@ public:
     KOKKOS_INLINE_FUNCTION
     void
     operator()(IndexType i, IndexType j, TTag tag) const;
+
+    template <typename TTag>
+    KOKKOS_INLINE_FUNCTION
+    void
+    addSinks(IndexType i, TTag tag) const;
 };
 }
 }

@@ -6,6 +6,7 @@ namespace experimental
 {
 class NEProductionReaction;
 class NEDissociationReaction;
+class NESinkReaction;
 class NEReactionNetwork;
 class NEClusterGenerator;
 
@@ -29,6 +30,7 @@ struct ReactionNetworkTraits<NEReactionNetwork>
     // using ReactionType = NEReaction;
     using ProductionReactionType = NEProductionReaction;
     using DissociationReactionType = NEDissociationReaction;
+    using SinkReactionType = NESinkReaction;
 
     using ClusterGenerator = NEClusterGenerator;
 };

@@ -14,6 +14,9 @@ template <typename TSpeciesEnum>
 class PSIDissociationReaction;
 
 template <typename TSpeciesEnum>
+class PSISinkReaction;
+
+template <typename TSpeciesEnum>
 class PSIClusterGenerator;
 
 enum class PSIFullSpeciesList
@@ -40,6 +43,7 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
     // using ReactionType = PSIReaction<Species>;
     using ProductionReactionType = PSIProductionReaction<Species>;
     using DissociationReactionType = PSIDissociationReaction<Species>;
+    using SinkReactionType = PSISinkReaction<Species>;
 
     using ClusterGenerator = PSIClusterGenerator<Species>;
 };

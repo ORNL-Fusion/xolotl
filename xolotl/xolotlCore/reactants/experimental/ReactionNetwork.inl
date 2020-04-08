@@ -127,6 +127,11 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
     _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.updateData(reactionData, clusterData);
     });
+    auto sinks = _sinkReactions;
+    auto numSinks = sinks.extent(0);
+    Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
+        sinks(i).updateData(reactionData, clusterData);
+    });
     Kokkos::fence();
 }
 
@@ -142,6 +147,11 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 
     _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.updateRates();
+    });
+    auto sinks = _sinkReactions;
+    auto numSinks = sinks.extent(0);
+    Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
+        sinks(i).updateRates();
     });
     Kokkos::fence();
 }
@@ -168,7 +178,11 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
     _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.contributeFlux(concentrations, fluxes, gridIndex);
     });
-    asDerived()->addReactionFluxes(concentrations, fluxes, gridIndex);
+    auto sinks = _sinkReactions;
+    auto numSinks = sinks.extent(0);
+    Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
+        sinks(i).contributeFlux(concentrations, fluxes, gridIndex);
+    });
 
     Kokkos::fence();
 }
@@ -190,7 +204,12 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
         reaction.contributePartialDerivatives(concentrations, values,
             connectivity, gridIndex);
     });
-    asDerived()->addReactionPartials(concentrations, values, gridIndex);
+    auto sinks = _sinkReactions;
+    auto numSinks = sinks.extent(0);
+    Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
+        sinks(i).contributePartialDerivatives(concentrations, values,
+                connectivity, gridIndex);
+    });
     
     Kokkos::fence();
 }
@@ -337,13 +356,6 @@ ReactionNetwork<TImpl>::defineReactions()
 }
 
 template <typename TImpl>
-void
-ReactionNetwork<TImpl>::addModifiedReactions()
-{
-    asDerived()->initializeModifiedReactions();
-}
-
-template <typename TImpl>
 typename ReactionNetwork<TImpl>::IndexType
 ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
 {
@@ -460,6 +472,7 @@ ReactionNetworkWorker<TImpl>::defineReactions()
     _nw._reactionData = generator.getReactionData();
     _nw._reactions = ReactionCollection(generator.getProductionReactions(),
         generator.getDissociationReactions());
+    _nw._sinkReactions = generator.getSinkReactions();
 }
 
 template <typename TImpl>

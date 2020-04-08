@@ -8,7 +8,7 @@ namespace experimental
 {
 KOKKOS_INLINE_FUNCTION
 bool
-FeClusterGenerator<FeFullSpeciesList>::intersect(const Region& region) const
+FeClusterGenerator::intersect(const Region& region) const
 {
     // I is never grouped
     if (region[Species::I].begin() > 0) {
@@ -32,7 +32,7 @@ FeClusterGenerator<FeFullSpeciesList>::intersect(const Region& region) const
 
 KOKKOS_INLINE_FUNCTION
 bool
-FeClusterGenerator<FeFullSpeciesList>::select(const Region& region) const
+FeClusterGenerator::select(const Region& region) const
 {
     // Remove 0
     if (region[Species::He].end() == 1 && region[Species::V].end() == 1 &&
@@ -64,7 +64,7 @@ FeClusterGenerator<FeFullSpeciesList>::select(const Region& region) const
 template <typename PlsmContext>
 KOKKOS_INLINE_FUNCTION
 double
-FeClusterGenerator<FeFullSpeciesList>::getMigrationEnergy(
+FeClusterGenerator::getMigrationEnergy(
     const Cluster<PlsmContext>& cluster) const noexcept
 {
     // I migration energy in eV
@@ -106,7 +106,7 @@ FeClusterGenerator<FeFullSpeciesList>::getMigrationEnergy(
 template <typename PlsmContext>
 KOKKOS_INLINE_FUNCTION
 double
-FeClusterGenerator<FeFullSpeciesList>::getDiffusionFactor(
+FeClusterGenerator::getDiffusionFactor(
     const Cluster<PlsmContext>& cluster) const noexcept
 {
     // I diffusion factors in nm^2/s
@@ -149,7 +149,7 @@ FeClusterGenerator<FeFullSpeciesList>::getDiffusionFactor(
 template <typename PlsmContext>
 KOKKOS_INLINE_FUNCTION
 double
-FeClusterGenerator<FeFullSpeciesList>::getReactionRadius(
+FeClusterGenerator::getReactionRadius(
     const Cluster<PlsmContext>& cluster,
     double latticeParameter, double interstitialBias, double impurityRadius)
     const noexcept

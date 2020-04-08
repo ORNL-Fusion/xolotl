@@ -55,6 +55,14 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
         }
     }
 }
+
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+NEReactionGenerator::addSinks(IndexType i, TTag tag) const
+{
+    // Nothing
+}
 }
 
 inline

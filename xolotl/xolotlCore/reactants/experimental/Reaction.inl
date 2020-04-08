@@ -1512,5 +1512,90 @@ DissociationReaction<TNetwork, TDerived>::computeLeftSideRate(
     // This cluster is not part of the reaction
     return 0.0;
 }
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+SinkReaction<TNetwork, TDerived>::SinkReaction(
+        detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
+        IndexType reactionId, IndexType cluster0)
+    :
+    Superclass(reactionData, clusterData, reactionId),
+    _reactant(cluster0)
+{
+    this->copyMomentIds(_reactant, _reactantMomentIds);
+
+    this->initialize();
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+SinkReaction<TNetwork, TDerived>::SinkReaction(
+        detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
+        IndexType reactionId, const detail::ClusterSet& clusterSet)
+    :
+    SinkReaction(reactionData, clusterData, reactionId,
+        clusterSet.cluster0)
+{
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+SinkReaction<TNetwork, TDerived>::computeCoefficients()
+{
+    // No coefs
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+double
+SinkReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+{
+    double r0 = this->_clusterData.getLatticeParameter() * 0.75 * sqrt(3.0);
+    double rho = 0.0003;
+    
+    auto cl = this->_clusterData.getCluster(_reactant);
+    double r = cl.getReactionRadius();
+    double dc = cl.getDiffusionCoefficient(gridIndex);
+
+    constexpr double pi = ::xolotlCore::pi;
+    
+    // TODO: add 5% bias for I
+    
+    double strength = -4.0 * pi * rho
+            / log(pi * rho * (r + r0)
+            * (r + r0)) * dc;
+    
+    return strength;
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+SinkReaction<TNetwork, TDerived>::computeConnectivity(
+    const Connectivity& connectivity)
+{
+    // The reactant connects with the reactant
+    this->addConnectivity(_reactant, _reactant, connectivity);
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+SinkReaction<TNetwork, TDerived>::computeFlux(
+    ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
+{
+    Kokkos::atomic_sub(&fluxes(_reactant), concentrations(_reactant) * this->_rate(gridIndex));
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+SinkReaction<TNetwork, TDerived>::computePartialDerivatives(
+    ConcentrationsView concentrations, Kokkos::View<double*> values,
+    Connectivity connectivity, IndexType gridIndex)
+{
+    Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)), this->_rate(gridIndex));
+}
 }
 }

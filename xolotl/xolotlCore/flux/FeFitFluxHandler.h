@@ -50,15 +50,13 @@ public:
 
 		// TODO: this needs to be a Fe network
 		using NetworkType =
-		experimental::FeReactionNetwork<experimental::FeFullSpeciesList>;
+		experimental::FeReactionNetwork;
 		auto feNetwork = dynamic_cast<NetworkType*>(&network);
 
 		// Set the flux index corresponding the the single helium cluster here
 		NetworkType::Composition comp = NetworkType::Composition::zero();
 		comp[NetworkType::Species::He] = 1;
 		auto cluster = feNetwork->findCluster(comp, plsm::onHost);
-		// Check that the helium cluster is present in the network
-		// TODO: is there a way to do that in experimental?
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::string(
 					"\nThe single helium cluster is not present in the network, "

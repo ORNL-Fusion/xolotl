@@ -598,7 +598,7 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the network
 	using NetworkType =
-	experimental::FeReactionNetwork<experimental::FeFullSpeciesList>;
+	experimental::FeReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using Region = typename NetworkType::Region;
