@@ -192,10 +192,18 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	for (PetscInt j = ys; j < ys + ym; j++)
 		for (PetscInt i = xs - 1; i <= xs + xm; i++) {
 			// Temperature
-			xolotlCore::Point<3> gridPosition { ((grid[i] + grid[i + 1]) / 2.0
-					- grid[surfacePosition[j] + 1])
-					/ (grid[grid.size() - 1] - grid[surfacePosition[j] + 1]), j
-					* hY, 0.0 };
+			xolotlCore::Point<3> gridPosition { 0.0, j * hY, 0.0 };
+			if (i < 0)
+				gridPosition[0] =
+						(grid[0] - grid[surfacePosition[j] + 1])
+								/ (grid[grid.size() - 1]
+										- grid[surfacePosition[j] + 1]);
+			else
+				gridPosition[0] =
+						((grid[i] + grid[i + 1]) / 2.0
+								- grid[surfacePosition[j] + 1])
+								/ (grid[grid.size() - 1]
+										- grid[surfacePosition[j] + 1]);
 			auto temp = temperatureHandler->getTemperature(gridPosition, 0.0);
 			temperature[i - xs + 1] = temp;
 
