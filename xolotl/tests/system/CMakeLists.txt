@@ -21,6 +21,7 @@ target_compile_definitions(SystemTest INTERFACE
     -DTEST_DATA_DIR="${__test_data_dir}"
     -DBUILD_DIR="${CMAKE_BINARY_DIR}"
 )
+add_dependencies(SystemTest xolotl)
 
 add_executable(SystemTester SystemTester.cpp)
 target_link_libraries(SystemTester SystemTest xolotlIO)
