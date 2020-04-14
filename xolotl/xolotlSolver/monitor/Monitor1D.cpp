@@ -241,7 +241,7 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
 	xolotlCore::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {
 			(hsize_t) numGridpointsWithConcs, numValsPerGridpoint };
-	xolotlCore::HDF5File::SimpleDataSpace < 2 > concsDsetSpace(concsDsetDims);
+	xolotlCore::HDF5File::SimpleDataSpace<2> concsDsetSpace(concsDsetDims);
 
 	const std::string concsDsetName = "concs";
 	xolotlCore::HDF5File::DataSet<double> concsDset(tdFile, concsDsetName,
@@ -253,8 +253,8 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 	auto myEndIdx = (xs + xm);  // "end" in the C++ sense; i.e., one-past-last
 	auto myNumPointsToWrite =
 			(myEndIdx > myFirstIdxToWrite) ? (myEndIdx - myFirstIdxToWrite) : 0;
-	xolotlCore::HDF5File::DataSet<double>::DataType2D < numValsPerGridpoint
-			> myConcs(myNumPointsToWrite);
+	xolotlCore::HDF5File::DataSet<double>::DataType2D<numValsPerGridpoint> myConcs(
+			myNumPointsToWrite);
 
 	for (auto xi = myFirstIdxToWrite; xi < myEndIdx; ++xi) {
 
@@ -290,8 +290,8 @@ PetscErrorCode computeTRIDYN1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Write the concs dataset in parallel.
 	// (We write only our part.)
-	concsDset.parWrite2D < numValsPerGridpoint
-			> (PETSC_COMM_WORLD, myFirstIdxToWrite - firstIdxToWrite, myConcs);
+	concsDset.parWrite2D<numValsPerGridpoint>(PETSC_COMM_WORLD,
+			myFirstIdxToWrite - firstIdxToWrite, myConcs);
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
@@ -1855,11 +1855,11 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				} else if (xi - 1 < 0) {
-					hxLeft = grid[xi + 1] - grid[xi];
+					hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				} else {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-					hxRight = grid[xi + 1] - grid[xi];
+					hxRight = (grid[xi + 1] - grid[xi]) / 2;
 				}
 				double factor = 2.0 / (hxLeft * (hxLeft + hxRight));
 				// Compute the flux going to the left

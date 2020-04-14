@@ -900,11 +900,11 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 					} else if (xi - 1 < 0) {
-						hxLeft = grid[xi + 1] - grid[xi];
+						hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
 						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 					} else {
 						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-						hxRight = grid[xi + 1] - grid[xi];
+						hxRight = (grid[xi + 1] - grid[xi]) / 2;
 					}
 					double factor = 2.0 / (hxLeft + hxRight);
 

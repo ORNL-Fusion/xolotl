@@ -325,32 +325,36 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		temperatureHandler->updateSurfacePosition(surfacePosition[yj]);
 		bool tempHasChanged = false;
 		for (PetscInt xi = xs - 1; xi <= xs + xm; xi++) {
-			// Compute the old and new array offsets
-			concOffset = concs[yj][xi];
-			updatedConcOffset = updatedConcs[yj][xi];
-
-			// Fill the concVector with the pointer to the middle, left, and right grid points
-			concVector[0] = concOffset; // middle
-			concVector[1] = concs[yj][xi - 1]; // left
-			concVector[2] = concs[yj][xi + 1]; // right
-			concVector[3] = concs[yj - 1][xi]; // bottom
-			concVector[4] = concs[yj + 1][xi]; // top
-
-			// Compute the left and right hx
-			double hxLeft = 0.0, hxRight = 0.0;
-			if (xi - 1 >= 0 && xi < nX) {
-				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-			} else if (xi - 1 < 0) {
-				hxLeft = grid[xi + 1] - grid[xi];
-				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-			} else {
-				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = grid[xi + 1] - grid[xi];
-			}
 
 			// Heat condition
 			if (xi == surfacePosition[yj] && xi >= xs && xi < xs + xm) {
+				// Compute the old and new array offsets
+				concOffset = concs[yj][xi];
+				updatedConcOffset = updatedConcs[yj][xi];
+
+				// Fill the concVector with the pointer to the middle, left, and right grid points
+				concVector[0] = concOffset; // middle
+				concVector[1] = concs[yj][xi - 1]; // left
+				concVector[2] = concs[yj][xi + 1]; // right
+				concVector[3] = concs[yj - 1][xi]; // bottom
+				concVector[4] = concs[yj + 1][xi]; // top
+
+				// Compute the left and right hx
+				double hxLeft = 0.0, hxRight = 0.0;
+				if (xi - 1 >= 0 && xi < nX) {
+					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				} else if (xi == -1) {
+					hxLeft = 0.0;
+					hxRight = (grid[xi + 2] + grid[xi + 1]) / 2.0;
+				} else if (xi - 1 < 0) {
+					hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
+					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				} else {
+					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+					hxRight = (grid[xi + 1] - grid[xi]) / 2;
+				}
+
 				temperatureHandler->computeTemperature(concVector,
 						updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
 			}
@@ -371,6 +375,29 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			}
 			if (skip)
 				continue;
+			// Compute the old and new array offsets
+			concOffset = concs[yj][xi];
+			updatedConcOffset = updatedConcs[yj][xi];
+
+			// Fill the concVector with the pointer to the middle, left, and right grid points
+			concVector[0] = concOffset; // middle
+			concVector[1] = concs[yj][xi - 1]; // left
+			concVector[2] = concs[yj][xi + 1]; // right
+			concVector[3] = concs[yj - 1][xi]; // bottom
+			concVector[4] = concs[yj + 1][xi]; // top
+
+			// Compute the left and right hx
+			double hxLeft = 0.0, hxRight = 0.0;
+			if (xi - 1 >= 0 && xi < nX) {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else if (xi - 1 < 0) {
+				hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = (grid[xi + 1] - grid[xi]) / 2;
+			}
 
 			// Set the grid fraction
 			gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
@@ -488,11 +515,11 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			} else if (xi - 1 < 0) {
-				hxLeft = grid[xi + 1] - grid[xi];
+				hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			} else {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = grid[xi + 1] - grid[xi];
+				hxRight = (grid[xi + 1] - grid[xi]) / 2;
 			}
 
 			// Boundary conditions
@@ -637,12 +664,15 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 			if (xi - 1 >= 0 && xi < nX) {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else if (xi == -1) {
+				hxLeft = 0.0;
+				hxRight = (grid[xi + 2] + grid[xi + 1]) / 2.0;
 			} else if (xi - 1 < 0) {
-				hxLeft = grid[xi + 1] - grid[xi];
+				hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			} else {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = grid[xi + 1] - grid[xi];
+				hxRight = (grid[xi + 1] - grid[xi]) / 2;
 			}
 
 			// Heat condition
@@ -788,11 +818,11 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			} else if (xi - 1 < 0) {
-				hxLeft = grid[xi + 1] - grid[xi];
+				hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			} else {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = grid[xi + 1] - grid[xi];
+				hxRight = (grid[xi + 1] - grid[xi]) / 2;
 			}
 
 			// Boundary conditions

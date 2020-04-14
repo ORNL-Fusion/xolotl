@@ -28,6 +28,11 @@ enum class PSIFullSpeciesList
     I
 };
 
+inline const char* toString(PSIFullSpeciesList specie) {
+    static const char* nameArray[] = {"He", "D", "T", "V", "I"};
+    return nameArray[static_cast<int>(specie)];
+}
+
 template <>
 struct HasInterstitial<PSIFullSpeciesList> : std::true_type
 {

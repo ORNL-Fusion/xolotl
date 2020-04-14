@@ -17,6 +17,11 @@ enum class FeSpeciesList
     I
 };
 
+inline const char* toString(FeSpeciesList specie) {
+    static const char* nameArray[] = {"He", "V", "I"};
+    return nameArray[static_cast<int>(specie)];
+}
+
 template <>
 struct HasInterstitial<FeSpeciesList> : std::true_type
 {

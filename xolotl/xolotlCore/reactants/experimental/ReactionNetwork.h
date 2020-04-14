@@ -273,6 +273,21 @@ public:
         return bounds;
     }
 
+    PhaseSpace
+    getPhaseSpace() override
+    {
+        // Create the object to return
+        PhaseSpace space;
+
+        // Loop on all the clusters
+        constexpr auto speciesRange = getSpeciesRange();
+        for (auto j : speciesRange) {
+            space.push_back(toString(j));
+        }
+        return space;
+    }
+
+
     KOKKOS_INLINE_FUNCTION
     Cluster<plsm::OnDevice>
     getCluster(IndexType clusterId, plsm::OnDevice)

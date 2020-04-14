@@ -442,6 +442,7 @@ public:
 	private:
 		// Names of network attribute.
 		static const std::string sizeAttrName;
+		static const std::string phaseSpaceAttrName;
 
 	public:
 

@@ -153,6 +153,7 @@ void XFile::HeaderGroup::read(int &nx, double &hx, int &ny, double &hy, int &nz,
 //
 const fs::path XFile::NetworkGroup::path = "/networkGroup";
 const std::string XFile::NetworkGroup::sizeAttrName = "totalSize";
+const std::string XFile::NetworkGroup::phaseSpaceAttrName = "phaseSpace";
 
 XFile::NetworkGroup::NetworkGroup(const XFile &file) :
 		HDF5File::Group(file, NetworkGroup::path, false) {
@@ -165,11 +166,21 @@ XFile::NetworkGroup::NetworkGroup(const XFile &file,
 		HDF5File::Group(file, NetworkGroup::path, true) {
 	// Base class created the group.
 
+	// Get the phase space information
+	auto phaseSpace = network.getPhaseSpace();
+	// Write it as an attribute
+//	H5::StrType datatype(H5::PredType::C_S1, H5T_VARIABLE);
+//	std::array<hsize_t, 1> dim { phaseSpace.size() };
+//	XFile::SimpleDataSpace<1> phaseDSpace(dim);
+//	hid_t attrId = H5Acreate2(getId(), phaseSpaceAttrName.c_str(), datatype,
+//			phaseDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
+//	auto status = H5Awrite(attrId, datatype, phaseSpace.data());
+//	status = H5Aclose(attrId);
+
+	// Get the bounds for each cluster
+	auto bounds = network.getAllClusterBounds();
 	// Get the size information
 	int totalSize = network.getNumClusters();
-
-	// Get the phase space information
-	auto bounds = network.getAllClusterBounds();
 
 	// Build a dataspace for our scalar attributes.
 	XFile::ScalarDataSpace scalarDSpace;

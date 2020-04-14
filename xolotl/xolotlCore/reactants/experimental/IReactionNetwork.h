@@ -26,6 +26,7 @@ public:
     using Connectivity = detail::ClusterConnectivity<>;
     using SparseFillMap = std::unordered_map<int, std::vector<int>>;
     using Bounds = std::vector<std::vector<AmountType>>;
+    using PhaseSpace = std::vector<const char*>;
 
     static
     constexpr IndexType
@@ -139,6 +140,9 @@ public:
 
     virtual Bounds
     getAllClusterBounds() = 0;
+
+    virtual PhaseSpace
+    getPhaseSpace() = 0;
 
     virtual void
     computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,

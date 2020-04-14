@@ -15,6 +15,11 @@ enum class NESpecies
     Xe
 };
 
+inline const char* toString(NESpecies specie) {
+    static const char* nameArray[] = {"Xe"};
+    return nameArray[static_cast<int>(specie)];
+}
+
 template <>
 struct HasInterstitial<NESpecies> : std::false_type
 {
