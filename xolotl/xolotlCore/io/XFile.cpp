@@ -169,13 +169,14 @@ XFile::NetworkGroup::NetworkGroup(const XFile &file,
 	// Get the phase space information
 	auto phaseSpace = network.getPhaseSpace();
 	// Write it as an attribute
-//	H5::StrType datatype(H5::PredType::C_S1, H5T_VARIABLE);
-//	std::array<hsize_t, 1> dim { phaseSpace.size() };
-//	XFile::SimpleDataSpace<1> phaseDSpace(dim);
-//	hid_t attrId = H5Acreate2(getId(), phaseSpaceAttrName.c_str(), datatype,
-//			phaseDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
-//	auto status = H5Awrite(attrId, datatype, phaseSpace.data());
-//	status = H5Aclose(attrId);
+	hid_t datatype = H5Tcopy(H5T_C_S1);
+	H5Tset_size(datatype, H5T_VARIABLE);
+	std::array<hsize_t, 1> dim { phaseSpace.size() };
+	XFile::SimpleDataSpace<1> phaseDSpace(dim);
+	hid_t attrId = H5Acreate2(getId(), phaseSpaceAttrName.c_str(), datatype,
+			phaseDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
+	auto status = H5Awrite(attrId, datatype, phaseSpace.data());
+	status = H5Aclose(attrId);
 
 	// Get the bounds for each cluster
 	auto bounds = network.getAllClusterBounds();
