@@ -38,7 +38,8 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	xolotlCore::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=8 0 0 10 6" << std::endl;
+	paramFile << "netParam=8 0 0 10 6" << std::endl << "process=reaction"
+			<< std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -132,7 +133,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 5.57453e+23, 0.01);	// Create I
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[16], -5.57453e+23, 0.01);	// He
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[17], 5.57453e+23, 0.01);	// Create HeV
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[17], 5.57453e+23, 0.01);// Create HeV
 
 	// Get the offset for the eleventh grid point
 	concOffset = conc + 11 * dof;

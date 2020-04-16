@@ -49,5 +49,15 @@ public:
     using Superclass::Superclass;
 };
 
+class NEReSolutionReaction :
+    public ReSolutionReaction<NEReactionNetwork, NEReSolutionReaction>
+{
+public:
+    using Superclass =
+        ReSolutionReaction<NEReactionNetwork, NEReSolutionReaction>;
+
+    using Superclass::Superclass;
+};
+
 }
 }

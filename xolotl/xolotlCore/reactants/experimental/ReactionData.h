@@ -145,17 +145,19 @@ struct ReactionData
     ReactionData() = default;
 
     ReactionData(IndexType numProductionReactions,
-    		IndexType numDissociationReactions, IndexType numSinkReactions,
-			std::size_t numSpeciesNoI,
+            IndexType numDissociationReactions, IndexType numSinkReactions,
+            IndexType numReSoReactions, std::size_t numSpeciesNoI,
             IndexType gridSize)
         :
         coeffExtent(numSpeciesNoI + 1),
-        numReactions(numProductionReactions + numDissociationReactions),
-        numRates(numProductionReactions + numDissociationReactions + numSinkReactions),
+        numReactions(numProductionReactions + numDissociationReactions + numReSoReactions),
+        numRates(numProductionReactions + numDissociationReactions + numSinkReactions + numReSoReactions),
         productionCoeffs("Production Coefficients",
             numProductionReactions, coeffExtent, coeffExtent, 4, coeffExtent),
         dissociationCoeffs("Dissociation Coefficients",
             numDissociationReactions, coeffExtent, 1, 3, coeffExtent),
+        resolutionCoeffs("ReSolution Coefficients",
+            numReSoReactions, coeffExtent, 1, 3, coeffExtent),
         widths("Reaction Rates", numReactions, numSpeciesNoI),
         rates("Reaction Rates", numRates, gridSize)
     {
@@ -171,6 +173,7 @@ struct ReactionData
     IndexType numRates {};
     Kokkos::View<double*****> productionCoeffs;
     Kokkos::View<double*****> dissociationCoeffs;
+    Kokkos::View<double*****> resolutionCoeffs;
     Kokkos::View<double**> widths;
     Kokkos::View<double**> rates;
     ClusterConnectivity<> connectivity;
@@ -187,6 +190,7 @@ struct ReactionDataRef
         :
         productionCoeffs(data.productionCoeffs),
         dissociationCoeffs(data.dissociationCoeffs),
+        resolutionCoeffs(data.resolutionCoeffs),
         widths(data.widths),
         rates(data.rates),
         connectivity(data.connectivity)
@@ -201,9 +205,15 @@ struct ReactionDataRef
             return Kokkos::subview(productionCoeffs, reactionId, Kokkos::ALL,
                 Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
         }
-        else {
+        else if (reactionId < productionCoeffs.extent(0) + dissociationCoeffs.extent(0)) {
+            // TODO: can we use the same indices for dissociation and re-solution as the coefs are the same?
             reactionId -= productionCoeffs.extent(0);
             return Kokkos::subview(dissociationCoeffs, reactionId, Kokkos::ALL,
+                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+        }
+        else {
+            reactionId -= productionCoeffs.extent(0) + dissociationCoeffs.extent(0);
+            return Kokkos::subview(resolutionCoeffs, reactionId, Kokkos::ALL,
                 Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
         }
     }
@@ -224,6 +234,7 @@ struct ReactionDataRef
 
     Kokkos::View<double*****, Kokkos::MemoryUnmanaged> productionCoeffs;
     Kokkos::View<double*****, Kokkos::MemoryUnmanaged> dissociationCoeffs;
+    Kokkos::View<double*****, Kokkos::MemoryUnmanaged> resolutionCoeffs;
     Kokkos::View<double**, Kokkos::MemoryUnmanaged> widths;
     Kokkos::View<double**, Kokkos::MemoryUnmanaged> rates;
     ClusterConnectivity<> connectivity;

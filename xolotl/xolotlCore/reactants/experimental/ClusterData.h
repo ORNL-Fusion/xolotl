@@ -97,6 +97,8 @@ public:
         gridSize(gridSize_),
         atomicVolume("Atomic Volume" + labelStr(label)),
         latticeParameter("Lattice Parameter" + labelStr(label)),
+        isReaction("Reaction Process" + labelStr(label)),
+        isReSolution("Re-Solution Process" + labelStr(label)),
         temperature("Temperature" + labelStr(label), gridSize),
         reactionRadius("Reaction Radius" + labelStr(label), numClusters),
         formationEnergy("Formation Energy" + labelStr(label), numClusters),
@@ -127,6 +129,20 @@ public:
         return latticeParameter(0);
     }
 
+    KOKKOS_INLINE_FUNCTION
+    bool
+    getIsReaction() const
+    {
+        return isReaction(0);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    bool
+    getIsReSolution() const
+    {
+        return isReSolution(0);
+    }
+
     void
     setGridSize(IndexType gridSize_) {
         gridSize = gridSize_;
@@ -139,6 +155,8 @@ public:
     IndexType gridSize {};
     View<double[1]> atomicVolume;
     View<double[1]> latticeParameter;
+    View<bool[1]> isReaction;
+    View<bool[1]> isReSolution;
     View<double*> temperature;
     View<double*> reactionRadius;
     View<double*> formationEnergy;
@@ -214,6 +232,8 @@ struct ClusterDataCommonRef
         gridSize(data.gridSize),
         atomicVolume(data.atomicVolume),
         latticeParameter(data.latticeParameter),
+        isReaction(data.isReaction),
+        isReSolution(data.isReSolution),
         temperature(data.temperature),
         reactionRadius(data.reactionRadius),
         formationEnergy(data.formationEnergy),
@@ -244,10 +264,26 @@ struct ClusterDataCommonRef
         return latticeParameter(0);
     }
 
+    KOKKOS_INLINE_FUNCTION
+    bool
+    getIsReaction() const
+    {
+        return isReaction(0);
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    bool
+    getIsReSolution() const
+    {
+        return isReSolution(0);
+    }
+
     IndexType numClusters {};
     IndexType gridSize {};
     View<double[1]> atomicVolume;
     View<double[1]> latticeParameter;
+    View<bool[1]> isReaction;
+    View<bool[1]> isReSolution;
     View<double*> temperature;
     View<double*> reactionRadius;
     View<double**> diffusionCoefficient;

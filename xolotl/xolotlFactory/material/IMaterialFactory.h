@@ -7,7 +7,6 @@
 #include <IAdvectionHandler.h>
 #include <IDiffusionHandler.h>
 #include <ITrapMutationHandler.h>
-#include <IReSolutionHandler.h>
 #include <IHeterogeneousNucleationHandler.h>
 
 namespace xolotlFactory {
@@ -59,13 +58,6 @@ public:
 	 * @return The trap mutation handler.
 	 */
 	virtual std::shared_ptr<xolotlCore::ITrapMutationHandler> getTrapMutationHandler() const = 0;
-
-	/**
-	 * Return the re-solution handler.
-	 *
-	 * @return The re-solution handler.
-	 */
-	virtual std::shared_ptr<xolotlCore::IReSolutionHandler> getReSolutionHandler() const = 0;
 
 	/**
 	 * Return the heterogeneous nucleation handler.

@@ -50,6 +50,18 @@ public:
 };
 
 template <typename TSpeciesEnum>
+class PSIReSolutionReaction :
+    public ReSolutionReaction<PSIReactionNetwork<TSpeciesEnum>,
+        PSIReSolutionReaction<TSpeciesEnum>>
+{
+public:
+    using Superclass = ReSolutionReaction<PSIReactionNetwork<TSpeciesEnum>,
+        PSIReSolutionReaction<TSpeciesEnum>>;
+
+    using Superclass::Superclass;
+};
+
+template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 double
 PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()

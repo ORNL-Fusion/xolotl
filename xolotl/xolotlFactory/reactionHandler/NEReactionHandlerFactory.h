@@ -49,16 +49,23 @@ public:
 		NetworkType::AmountType maxXe = options.getMaxImpurity();
 		NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
 		// Take care of the case with no grouping
-		if (options.getGroupingMin() > maxXe) groupingWidth = 1;
-		NetworkType::AmountType refine = (maxXe + 1) / groupingWidth;
+		if (options.getGroupingMin() > maxXe)
+			groupingWidth = maxXe + 1;
+		else {
+			// Adapt maxXe
+			int i = 0;
+			while (maxXe + 1 > pow(groupingWidth, i)) {
+				++i;
+			}
+			maxXe = pow(groupingWidth, i) - 1;
+		}
 
 		// The number of grid points is set to 1 here but can be changed later
-		std::unique_ptr<NetworkType> rNetwork(
-					new NetworkType( { maxXe }, { { refine }, { groupingWidth } }, 1,
-				options));
+		std::unique_ptr<NetworkType> rNetwork(new NetworkType( { maxXe }, { {
+				groupingWidth } }, 1, options));
 		rNetwork->syncClusterDataOnHost();
 		rNetwork->getSubpaving().syncZones(plsm::onHost);
-		theNetworkHandler = std::move( rNetwork );
+		theNetworkHandler = std::move(rNetwork);
 
 		if (procId == 0) {
 			std::cout << "\nFactory Message: "

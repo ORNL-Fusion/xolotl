@@ -21,6 +21,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     setInterstitialBias(options.getBiasFactor());
     setImpurityRadius(options.getImpurityRadius());
     setLatticeParameter(options.getLatticeParameter());
+    auto map = options.getProcesses();
+    setIsReaction(map["reaction"]);
+    setIsReSolution(map["resolution"]);
+    
     auto tiles = subpaving.getTiles(plsm::onDevice);
     _numClusters = tiles.extent(0);
     
@@ -105,12 +109,35 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
 {
     auto lParam = asDerived()->checkLatticeParameter(latticeParameter);
     this->_latticeParameter = lParam;
+    auto mirror = Kokkos::create_mirror_view(_clusterData.latticeParameter);
+    mirror(0) = this->_latticeParameter;
+    Kokkos::deep_copy(_clusterData.latticeParameter, mirror);
 
     this->_atomicVolume =
         0.5 * lParam * lParam * lParam;
-    auto mirror = Kokkos::create_mirror_view(_clusterData.atomicVolume);
+    mirror = Kokkos::create_mirror_view(_clusterData.atomicVolume);
     mirror(0) = this->_atomicVolume;
     Kokkos::deep_copy(_clusterData.atomicVolume, mirror);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setIsReaction(bool reaction)
+{
+    this->_isReaction = reaction;
+    auto mirror = Kokkos::create_mirror_view(_clusterData.isReaction);
+    mirror(0) = this->_isReaction;
+    Kokkos::deep_copy(_clusterData.isReaction, mirror);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setIsReSolution(bool reso)
+{
+    this->_isReSolution = reso;
+    auto mirror = Kokkos::create_mirror_view(_clusterData.isReSolution);
+    mirror(0) = this->_isReSolution;
+    Kokkos::deep_copy(_clusterData.isReSolution, mirror);
 }
 
 template <typename TImpl>
@@ -132,6 +159,11 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
     Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
         sinks(i).updateData(reactionData, clusterData);
     });
+    auto resos = _resoReactions;
+    auto numReSos = resos.extent(0);
+    Kokkos::parallel_for(numReSos, KOKKOS_LAMBDA (const IndexType i) {
+        resos(i).updateData(reactionData, clusterData);
+    });
     Kokkos::fence();
 }
 
@@ -152,6 +184,11 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
     auto numSinks = sinks.extent(0);
     Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
         sinks(i).updateRates();
+    });
+    auto resos = _resoReactions;
+    auto numReSos = resos.extent(0);
+    Kokkos::parallel_for(numReSos, KOKKOS_LAMBDA (const IndexType i) {
+        resos(i).updateRates();
     });
     Kokkos::fence();
 }
@@ -183,6 +220,11 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
     Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
         sinks(i).contributeFlux(concentrations, fluxes, gridIndex);
     });
+    auto resos = _resoReactions;
+    auto numReSos = resos.extent(0);
+    Kokkos::parallel_for(numReSos, KOKKOS_LAMBDA (const IndexType i) {
+        resos(i).contributeFlux(concentrations, fluxes, gridIndex);
+    });
 
     Kokkos::fence();
 }
@@ -208,6 +250,12 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
     auto numSinks = sinks.extent(0);
     Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
         sinks(i).contributePartialDerivatives(concentrations, values,
+                connectivity, gridIndex);
+    });
+    auto resos = _resoReactions;
+    auto numReSos = resos.extent(0);
+    Kokkos::parallel_for(numReSos, KOKKOS_LAMBDA (const IndexType i) {
+        resos(i).contributePartialDerivatives(concentrations, values,
                 connectivity, gridIndex);
     });
     
@@ -473,6 +521,7 @@ ReactionNetworkWorker<TImpl>::defineReactions()
     _nw._reactions = ReactionCollection(generator.getProductionReactions(),
         generator.getDissociationReactions());
     _nw._sinkReactions = generator.getSinkReactions();
+    _nw._resoReactions = generator.getReSoReactions();
 }
 
 template <typename TImpl>

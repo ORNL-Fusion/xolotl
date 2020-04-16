@@ -52,6 +52,8 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
         // Is the size of one of them one?
         if (lo1[Species::Xe] == 1 || lo2[Species::Xe] == 1) {
             this->addDissociationReaction(tag, {k, i, j});
+            // Also add re-solution
+            this->addReSoReaction(tag, {k, i, j});
         }
     }
 }

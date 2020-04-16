@@ -69,6 +69,7 @@ public:
     using ProductionReactionType = typename Traits::ProductionReactionType;
     using DissociationReactionType = typename Traits::DissociationReactionType;
     using SinkReactionType = typename Traits::SinkReactionType;
+    using ReSolutionReactionType = typename Traits::ReSolutionReactionType;
     using ReactionCollection = detail::ReactionCollection<Traits>;
 
     template <typename PlsmContext>
@@ -132,6 +133,12 @@ public:
     }
 
     void
+    setIsReaction(bool reaction) override;
+
+    void
+    setIsReSolution(bool reso) override;
+
+    void
     setGridSize(IndexType gridSize) override;
 
     void
@@ -188,6 +195,7 @@ public:
         _subpaving.syncTiles(plsm::onHost);
         auto mirror = ClusterDataMirror(_subpaving, this->_gridSize);
         Kokkos::deep_copy(mirror.atomicVolume, _clusterData.atomicVolume);
+        Kokkos::deep_copy(mirror.latticeParameter, _clusterData.latticeParameter);
         Kokkos::deep_copy(mirror.temperature, _clusterData.temperature);
         Kokkos::deep_copy(mirror.momentIds, _clusterData.momentIds);
         Kokkos::deep_copy(mirror.reactionRadius, _clusterData.reactionRadius);
@@ -414,6 +422,7 @@ private:
 
     ReactionCollection _reactions;
     Kokkos::View<SinkReactionType*> _sinkReactions;
+    Kokkos::View<ReSolutionReactionType*> _resoReactions;
 
     detail::ReactionNetworkWorker<TImpl> _worker;
 

@@ -35,10 +35,10 @@ protected:
 	std::string networkName;
 
 	//! The original network created from the network loader.
-	xolotlCore::IReactionNetwork& network;
+	xolotlCore::IReactionNetwork &network;
 
 	//! The original network created from the network loader.
-	NetworkType& expNetwork;
+	NetworkType &expNetwork;
 
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
@@ -81,13 +81,10 @@ protected:
 	xolotlCore::IDiffusionHandler *diffusionHandler;
 
 	//! The vector of advection handlers.
-	std::vector<xolotlCore::IAdvectionHandler *> advectionHandlers;
+	std::vector<xolotlCore::IAdvectionHandler*> advectionHandlers;
 
 	//! The original modified trap-mutation handler created.
 	xolotlCore::ITrapMutationHandler *mutationHandler;
-
-	//! The original re-solution handler created.
-	xolotlCore::IReSolutionHandler *resolutionHandler;
 
 	//! The original heterogeneous nucleation handler created.
 	xolotlCore::IHeterogeneousNucleationHandler *nucleationHandler;
@@ -393,17 +390,17 @@ protected:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	SolverHandler(xolotlCore::IReactionNetwork& _network, NetworkType& _expNetwork) :
-			network(_network), expNetwork(_expNetwork),networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
-					0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
-					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
-					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
-					0.0), useRegularGrid(""), readInGrid(false), movingSurface(
+	SolverHandler(xolotlCore::IReactionNetwork &_network,
+			NetworkType &_expNetwork) :
+			network(_network), expNetwork(_expNetwork), networkName(""), nX(0), nY(
+					0), nZ(0), hX(0.0), hY(0.0), hZ(0.0), leftOffset(1), rightOffset(
+					1), bottomOffset(1), topOffset(1), frontOffset(1), backOffset(
+					1), initialVConc(0.0), electronicStoppingPower(0.0), dimension(
+					-1), portion(0.0), useRegularGrid(""), readInGrid(false), movingSurface(
 					false), bubbleBursting(false), useAttenuation(false), sputteringYield(
 					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
-					nullptr), mutationHandler(nullptr), resolutionHandler(
-					nullptr), nucleationHandler(nullptr), tauBursting(10.0), rngSeed(
-					0) {
+					nullptr), mutationHandler(nullptr), nucleationHandler(
+					nullptr), tauBursting(10.0), rngSeed(0) {
 	}
 
 public:
@@ -471,15 +468,15 @@ public:
 
 		// Set the flux handler
 		fluxHandler =
-				(xolotlCore::IFluxHandler *) material->getFluxHandler().get();
+				(xolotlCore::IFluxHandler*) material->getFluxHandler().get();
 
 		// Set the temperature handler
 		temperatureHandler =
-				(xolotlCore::ITemperatureHandler *) tempHandler.get();
+				(xolotlCore::ITemperatureHandler*) tempHandler.get();
 
 		// Set the diffusion handler
 		diffusionHandler =
-				(xolotlCore::IDiffusionHandler *) material->getDiffusionHandler().get();
+				(xolotlCore::IDiffusionHandler*) material->getDiffusionHandler().get();
 
 		// Set the advection handlers
 		auto handlers = material->getAdvectionHandler();
@@ -489,17 +486,11 @@ public:
 
 		// Set the modified trap-mutation handler
 		mutationHandler =
-				(xolotlCore::ITrapMutationHandler *) material->getTrapMutationHandler().get();
-
-		// Set the re-solution handler
-		resolutionHandler =
-				(xolotlCore::IReSolutionHandler *) material->getReSolutionHandler().get();
-		// Set its minimum size
-		resolutionHandler->setMinSize(options.getResoMinSize());
+				(xolotlCore::ITrapMutationHandler*) material->getTrapMutationHandler().get();
 
 		// Set the heterogeneous nucleation handler
 		nucleationHandler =
-				(xolotlCore::IHeterogeneousNucleationHandler *) material->getNucleationHandler().get();
+				(xolotlCore::IHeterogeneousNucleationHandler*) material->getNucleationHandler().get();
 
 		// Set the minimum size for the average radius compuation
 		minRadiusSizes = options.getRadiusMinSizes();
@@ -680,7 +671,7 @@ public:
 	 * Get the flux handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IFluxHandler *getFluxHandler() const override {
+	xolotlCore::IFluxHandler* getFluxHandler() const override {
 		return fluxHandler;
 	}
 
@@ -688,7 +679,7 @@ public:
 	 * Get the temperature handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::ITemperatureHandler *getTemperatureHandler() const override {
+	xolotlCore::ITemperatureHandler* getTemperatureHandler() const override {
 		return temperatureHandler;
 	}
 
@@ -696,7 +687,7 @@ public:
 	 * Get the diffusion handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IDiffusionHandler *getDiffusionHandler() const override {
+	xolotlCore::IDiffusionHandler* getDiffusionHandler() const override {
 		return diffusionHandler;
 	}
 
@@ -704,7 +695,7 @@ public:
 	 * Get the advection handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IAdvectionHandler *getAdvectionHandler() const override {
+	xolotlCore::IAdvectionHandler* getAdvectionHandler() const override {
 		return advectionHandlers[0];
 	}
 
@@ -712,7 +703,7 @@ public:
 	 * Get the advection handlers.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<xolotlCore::IAdvectionHandler *> getAdvectionHandlers() const
+	std::vector<xolotlCore::IAdvectionHandler*> getAdvectionHandlers() const
 			override {
 		return advectionHandlers;
 	}
@@ -721,23 +712,15 @@ public:
 	 * Get the modified trap-mutation handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::ITrapMutationHandler *getMutationHandler() const override {
+	xolotlCore::ITrapMutationHandler* getMutationHandler() const override {
 		return mutationHandler;
-	}
-
-	/**
-	 * Get the re-solution handler.
-	 * \see ISolverHandler.h
-	 */
-	xolotlCore::IReSolutionHandler *getReSolutionHandler() const override {
-		return resolutionHandler;
 	}
 
 	/**
 	 * Get the heterogeneous nucleation handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IHeterogeneousNucleationHandler *getHeterogeneousNucleationHandler() const
+	xolotlCore::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const
 			override {
 		return nucleationHandler;
 	}

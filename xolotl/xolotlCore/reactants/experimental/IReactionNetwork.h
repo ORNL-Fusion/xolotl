@@ -117,6 +117,26 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
+    bool
+    getIsReaction() const noexcept
+    {
+        return _isReaction;
+    }
+
+    virtual void
+    setIsReaction(bool reaction) = 0;
+
+    KOKKOS_INLINE_FUNCTION
+    bool
+    getIsReSolution() const noexcept
+    {
+        return _isReSolution;
+    }
+
+    virtual void
+    setIsReSolution(bool reso) = 0;
+
+    KOKKOS_INLINE_FUNCTION
     IndexType
     getGridSize() const noexcept
     {
@@ -174,6 +194,8 @@ protected:
     double _atomicVolume {};
     double _interstitialBias {};
     double _impurityRadius {};
+    bool _isReaction {};
+    bool _isReSolution{};
 
     IndexType _gridSize {};
     IndexType _numDOFs {};

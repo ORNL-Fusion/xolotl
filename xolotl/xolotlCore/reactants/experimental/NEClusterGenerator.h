@@ -47,10 +47,13 @@ public:
     bool
     intersect(const Region& region) const
     {
-        if (region[Species::Xe].end() < _groupingMin) {
+        if (region[Species::Xe].begin() < _groupingMin) {
             return true;
         }
-        if (region[Species::Xe].length() == _groupingWidth) {
+        if (region[Species::Xe].end() > _maxXe) {
+            return true;
+        }
+        if (region[Species::Xe].length() < max((double) (_groupingWidth + 1), region[Species::Xe].begin() * 1.0e-2)) {
             return false;
         }
         return true;
@@ -62,6 +65,10 @@ public:
     {
         // Remove 0
         if (region[Species::Xe].end() == 1) {
+            return false;
+        }
+
+        if (region[Species::Xe].begin() > _maxXe) {
             return false;
         }
 

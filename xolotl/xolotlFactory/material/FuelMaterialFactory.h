@@ -4,7 +4,6 @@
 #include <memory>
 #include <MaterialFactory.h>
 #include <FuelFitFluxHandler.h>
-#include <ReSolutionHandler.h>
 #include <HeterogeneousNucleationHandler.h>
 #include <DummyAdvectionHandler.h>
 #include <DummyTrapMutationHandler.h>
@@ -39,8 +38,6 @@ public:
 				std::make_shared<xolotlCore::DummyAdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				xolotlCore::DummyTrapMutationHandler>();
-		theReSolutionHandler =
-				std::make_shared<xolotlCore::ReSolutionHandler>();
 		theNucleationHandler = std::make_shared<
 				xolotlCore::HeterogeneousNucleationHandler>();
 
@@ -90,8 +87,7 @@ public:
 		theFluxHandler->setFluxAmplitude(
 				options.getFluxAmplitude() * options.getFissionYield());
 
-		// Pass the fission yield to the re-solution and heterogenenous nucletation handlers
-		theReSolutionHandler->setFissionYield(options.getFissionYield());
+		// Pass the fission yield to the heterogenenous nucletation handler
 		theNucleationHandler->setFissionYield(options.getFissionYield());
 
 		return;

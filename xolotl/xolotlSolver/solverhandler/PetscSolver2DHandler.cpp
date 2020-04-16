@@ -104,10 +104,6 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	mutationHandler->initializeIndex2D(surfacePosition, expNetwork,
 			advectionHandlers, grid, xm, xs, ym, hY, ys);
 
-	// Initialize the re-solution handler here
-	// because it adds connectivity
-	resolutionHandler->initialize(expNetwork, dfill, electronicStoppingPower);
-
 	// Tell the network the number of grid points on this process with ghosts
 	// TODO: do we need the ghost points?
 	expNetwork.setGridSize(xm + 2);
@@ -269,9 +265,6 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
 	checkPetscError(ierr, "PetscSolver2DHandler::initializeConcentration: "
 			"DMDAVecRestoreArrayDOF failed.");
-
-	// Set the rate for re-solution
-	resolutionHandler->updateReSolutionRate(fluxHandler->getFluxAmplitude());
 
 	return;
 }
@@ -560,10 +553,6 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			// ----- Compute the modified trap-mutation over the locally owned part of the grid -----
 			mutationHandler->computeTrapMutation(expNetwork, concOffset,
 					updatedConcOffset, xi - xs, yj - ys);
-
-			// ----- Compute the re-solution over the locally owned part of the grid -----
-			resolutionHandler->computeReSolution(expNetwork, concOffset,
-					updatedConcOffset, xi, xs, yj);
 
 			// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 			using HostUnmanaged =
@@ -1219,52 +1208,6 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				checkPetscError(ierr,
 						"PetscSolver2DHandler::computeDiagonalJacobian: "
 								"MatSetValuesStencil (I trap-mutation) failed.");
-			}
-
-			// ----- Take care of the re-solution for all the reactants -----
-
-			// Store the total number of Xe clusters in the network
-			int nXenon = resolutionHandler->getNumberOfReSoluting();
-
-			// Arguments for MatSetValuesStencil called below
-			PetscScalar resolutionVals[10 * nXenon];
-			PetscInt resolutionIndices[5 * nXenon];
-			MatStencil rowIds[5];
-
-			// Compute the partial derivative from re-solution at this grid point
-			int nResoluting = resolutionHandler->computePartialsForReSolution(
-					expNetwork, resolutionVals, resolutionIndices, xi, xs, yj);
-
-			// Loop on the number of xenon to set the values in the Jacobian
-			for (int i = 0; i < nResoluting; i++) {
-				// Set grid coordinate and component number for the row and column
-				// corresponding to the clusters involved in re-solution
-				rowIds[0].i = xi;
-				rowIds[0].j = yj;
-				rowIds[0].c = resolutionIndices[5 * i];
-				rowIds[1].i = xi;
-				rowIds[1].j = yj;
-				rowIds[1].c = resolutionIndices[(5 * i) + 1];
-				rowIds[2].i = xi;
-				rowIds[2].j = yj;
-				rowIds[2].c = resolutionIndices[(5 * i) + 2];
-				rowIds[3].i = xi;
-				rowIds[3].j = yj;
-				rowIds[3].c = resolutionIndices[(5 * i) + 3];
-				rowIds[4].i = xi;
-				rowIds[4].j = yj;
-				rowIds[4].c = resolutionIndices[(5 * i) + 4];
-				colIds[0].i = xi;
-				colIds[0].j = yj;
-				colIds[0].c = resolutionIndices[5 * i];
-				colIds[1].i = xi;
-				colIds[1].j = yj;
-				colIds[1].c = resolutionIndices[(5 * i) + 1];
-				ierr = MatSetValuesStencil(J, 5, rowIds, 2, colIds,
-						resolutionVals + (10 * i), ADD_VALUES);
-				checkPetscError(ierr,
-						"PetscSolver2DHandler::computeDiagonalJacobian: "
-								"MatSetValuesStencil (Xe re-solution) failed.");
 			}
 		}
 	}

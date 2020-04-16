@@ -37,8 +37,6 @@ public:
 				std::make_shared<xolotlCore::W211AdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				xolotlCore::W211TrapMutationHandler>();
-		theReSolutionHandler = std::make_shared<
-				xolotlCore::DummyReSolutionHandler>();
 		theNucleationHandler = std::make_shared<
 				xolotlCore::DummyNucleationHandler>();
 

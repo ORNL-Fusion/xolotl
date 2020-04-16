@@ -6,7 +6,6 @@
 #include <DummyDiffusionHandler.h>
 #include <DummyAdvectionHandler.h>
 #include <DummyTrapMutationHandler.h>
-#include <DummyReSolutionHandler.h>
 #include <DummyNucleationHandler.h>
 #include <TokenizedLineReader.h>
 #include <XGBAdvectionHandler.h>
@@ -33,9 +32,6 @@ protected:
 
 	//! The modified trap-mutation handler
 	std::shared_ptr<xolotlCore::ITrapMutationHandler> theTrapMutationHandler;
-
-	//! The re-solution handler
-	std::shared_ptr<xolotlCore::IReSolutionHandler> theReSolutionHandler;
 
 	//! The heterogeneous nucleation handler
 	std::shared_ptr<xolotlCore::IHeterogeneousNucleationHandler> theNucleationHandler;
@@ -91,9 +87,6 @@ public:
 					xolotlCore::DummyTrapMutationHandler>();
 		if (!map["attenuation"])
 			theTrapMutationHandler->setAttenuation(false);
-		if (!map["resolution"])
-			theReSolutionHandler = std::make_shared<
-					xolotlCore::DummyReSolutionHandler>();
 		if (!map["heterogeneous"])
 			theNucleationHandler = std::make_shared<
 					xolotlCore::DummyNucleationHandler>();
@@ -190,15 +183,6 @@ public:
 	 */
 	std::shared_ptr<xolotlCore::ITrapMutationHandler> getTrapMutationHandler() const {
 		return theTrapMutationHandler;
-	}
-
-	/**
-	 * Return the Re-solution handler.
-	 *
-	 *  @return The re-solution handler.
-	 */
-	std::shared_ptr<xolotlCore::IReSolutionHandler> getReSolutionHandler() const {
-		return theReSolutionHandler;
 	}
 
 	/**

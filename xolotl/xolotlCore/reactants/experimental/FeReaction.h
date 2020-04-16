@@ -129,5 +129,15 @@ public:
     using Superclass::Superclass;
 };
 
+class FeReSolutionReaction :
+    public ReSolutionReaction<FeReactionNetwork, FeReSolutionReaction>
+{
+public:
+    using Superclass =
+        ReSolutionReaction<FeReactionNetwork, FeReSolutionReaction>;
+
+    using Superclass::Superclass;
+};
+
 }
 }
