@@ -133,6 +133,9 @@ public:
     }
 
     void
+    setFissionRate(double rate) override;
+
+    void
     setIsReaction(bool reaction) override;
 
     void
@@ -196,6 +199,9 @@ public:
         auto mirror = ClusterDataMirror(_subpaving, this->_gridSize);
         Kokkos::deep_copy(mirror.atomicVolume, _clusterData.atomicVolume);
         Kokkos::deep_copy(mirror.latticeParameter, _clusterData.latticeParameter);
+        Kokkos::deep_copy(mirror.fissionRate, _clusterData.fissionRate);
+        Kokkos::deep_copy(mirror.isReaction, _clusterData.isReaction);
+        Kokkos::deep_copy(mirror.isReSolution, _clusterData.isReSolution);
         Kokkos::deep_copy(mirror.temperature, _clusterData.temperature);
         Kokkos::deep_copy(mirror.momentIds, _clusterData.momentIds);
         Kokkos::deep_copy(mirror.reactionRadius, _clusterData.reactionRadius);

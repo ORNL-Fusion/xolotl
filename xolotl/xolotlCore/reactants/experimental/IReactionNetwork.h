@@ -117,6 +117,16 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
+    double
+    getFissionRate() const noexcept
+    {
+        return _fissionRate;
+    }
+
+    virtual void
+    setFissionRate(double rate) = 0;
+
+    KOKKOS_INLINE_FUNCTION
     bool
     getIsReaction() const noexcept
     {
@@ -194,6 +204,7 @@ protected:
     double _atomicVolume {};
     double _interstitialBias {};
     double _impurityRadius {};
+    double _fissionRate {};
     bool _isReaction {};
     bool _isReSolution{};
 

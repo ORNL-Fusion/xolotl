@@ -1563,9 +1563,7 @@ SinkReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 
     constexpr double pi = ::xolotlCore::pi;
     
-    // TODO: add 5% bias for I
-    
-    double strength = -4.0 * pi * rho
+    double strength = this->asDerived()->getSinkBias() * -4.0 * pi * rho
             / log(pi * rho * (r + r0)
             * (r + r0)) * dc;
     
@@ -1765,7 +1763,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
         + (y0 - a1) / (1.0 + c * pow(radius, 2.0))
         * exp(-b2 * pow(radius, 2.0))) * 1.0e-4;
     // Resolution rate depends on fission rate
-    double resolutionRate = 1.0e8 * 8.0e-9;
+    double resolutionRate = 1.0e8 * this->_clusterData.fissionRate(0);
     
     return fractionRate * resolutionRate;
 }

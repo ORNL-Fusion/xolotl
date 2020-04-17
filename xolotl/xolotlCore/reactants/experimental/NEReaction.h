@@ -47,6 +47,13 @@ public:
         SinkReaction<NEReactionNetwork, NESinkReaction>;
 
     using Superclass::Superclass;
+
+    KOKKOS_INLINE_FUNCTION
+    double
+    getSinkBias()
+    {
+        return 1.0;
+    }
 };
 
 class NEReSolutionReaction :

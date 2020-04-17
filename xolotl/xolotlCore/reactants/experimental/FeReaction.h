@@ -31,7 +31,6 @@ public:
     double
     computeBindingEnergy()
     {
-//        using NetworkType = typename Superclass::NetworkType;
         using Species = typename Superclass::Species;
         using Composition = typename Superclass::Composition;
 
@@ -127,6 +126,28 @@ public:
         SinkReaction<FeReactionNetwork, FeSinkReaction>;
 
     using Superclass::Superclass;
+
+    KOKKOS_INLINE_FUNCTION
+    double
+    getSinkBias()
+    {
+        using Species = typename Superclass::Species;
+        using Composition = typename Superclass::Composition;
+
+        double bias = 1.0;
+
+        auto cl = this->_clusterData.getCluster(this->_reactant);
+
+        auto clReg = cl.getRegion();
+        if (clReg.isSimplex()) {
+            Composition comp = clReg.getOrigin();
+            if (comp.isOnAxis(Species::I)) {
+                bias = 1.05;
+            }
+        }
+
+        return bias;
+    }
 };
 
 class FeReSolutionReaction :

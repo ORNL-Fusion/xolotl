@@ -21,6 +21,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     setInterstitialBias(options.getBiasFactor());
     setImpurityRadius(options.getImpurityRadius());
     setLatticeParameter(options.getLatticeParameter());
+    setFissionRate(options.getFluxAmplitude());
     auto map = options.getProcesses();
     setIsReaction(map["reaction"]);
     setIsReSolution(map["resolution"]);
@@ -118,6 +119,16 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
     mirror = Kokkos::create_mirror_view(_clusterData.atomicVolume);
     mirror(0) = this->_atomicVolume;
     Kokkos::deep_copy(_clusterData.atomicVolume, mirror);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setFissionRate(double rate)
+{
+    this->_fissionRate = rate;
+    auto mirror = Kokkos::create_mirror_view(_clusterData.fissionRate);
+    mirror(0) = this->_fissionRate;
+    Kokkos::deep_copy(_clusterData.fissionRate, mirror);
 }
 
 template <typename TImpl>

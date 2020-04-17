@@ -97,6 +97,7 @@ public:
         gridSize(gridSize_),
         atomicVolume("Atomic Volume" + labelStr(label)),
         latticeParameter("Lattice Parameter" + labelStr(label)),
+        fissionRate("Fission Rate" + labelStr(label)),
         isReaction("Reaction Process" + labelStr(label)),
         isReSolution("Re-Solution Process" + labelStr(label)),
         temperature("Temperature" + labelStr(label), gridSize),
@@ -130,6 +131,13 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
+    double
+    getFissionRate() const
+    {
+        return fissionRate(0);
+    }
+
+    KOKKOS_INLINE_FUNCTION
     bool
     getIsReaction() const
     {
@@ -155,6 +163,7 @@ public:
     IndexType gridSize {};
     View<double[1]> atomicVolume;
     View<double[1]> latticeParameter;
+    View<double[1]> fissionRate;
     View<bool[1]> isReaction;
     View<bool[1]> isReSolution;
     View<double*> temperature;
@@ -232,6 +241,7 @@ struct ClusterDataCommonRef
         gridSize(data.gridSize),
         atomicVolume(data.atomicVolume),
         latticeParameter(data.latticeParameter),
+        fissionRate(data.fissionRate),
         isReaction(data.isReaction),
         isReSolution(data.isReSolution),
         temperature(data.temperature),
@@ -265,6 +275,13 @@ struct ClusterDataCommonRef
     }
 
     KOKKOS_INLINE_FUNCTION
+    double
+    getFissionRate() const
+    {
+        return fissionRate(0);
+    }
+
+    KOKKOS_INLINE_FUNCTION
     bool
     getIsReaction() const
     {
@@ -282,6 +299,7 @@ struct ClusterDataCommonRef
     IndexType gridSize {};
     View<double[1]> atomicVolume;
     View<double[1]> latticeParameter;
+    View<double[1]> fissionRate;
     View<bool[1]> isReaction;
     View<bool[1]> isReSolution;
     View<double*> temperature;
