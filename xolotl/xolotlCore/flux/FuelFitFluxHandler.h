@@ -73,6 +73,11 @@ public:
 		// Skip if no index was set
 		if (fluxIndices.size() == 0) return;
 
+		// Recompute the flux vector if a time profile is used
+		if (useTimeProfile) {
+			fluxAmplitude = getProfileAmplitude(currentTime);
+		}
+
 		// 0D Case
 		if (xGrid.size() == 0) {
 			updatedConcOffset[fluxIndices[0]] += fluxAmplitude;

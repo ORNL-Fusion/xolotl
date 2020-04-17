@@ -67,6 +67,8 @@ public:
 					<< "Master loaded network of size "
 					<< theNetworkHandler->size() << "." << std::endl;
 		}
+		// Set the fission rate in the network
+		theNetworkHandler->setFissionRate(options.getFluxAmplitude());
 	}
 
 	/**

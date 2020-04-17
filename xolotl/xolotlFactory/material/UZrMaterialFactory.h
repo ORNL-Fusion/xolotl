@@ -40,6 +40,22 @@ public:
 	 */
 	~UZrMaterialFactory() {
 	}
+
+	/**
+	 * Initialize the material conditions with the different given options.
+	 * \see IMaterialFactory.h
+	 */
+	void initializeMaterial(const xolotlCore::Options &options) {
+		// Call the mother method
+		MaterialFactory::initializeMaterial(options);
+
+		// Change the flux amplitude because we have to take into account
+		// that there are one xenon created every 4 fissions.
+		theFluxHandler->setFluxAmplitude(
+				options.getFluxAmplitude() * options.getFissionYield());
+
+		return;
+	}
 };
 
 } // end namespace xolotlFactory

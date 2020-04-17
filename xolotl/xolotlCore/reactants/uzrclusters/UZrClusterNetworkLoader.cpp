@@ -61,12 +61,87 @@ UZrClusterNetworkLoader::UZrClusterNetworkLoader(
 
 std::unique_ptr<IReactionNetwork> UZrClusterNetworkLoader::load(
 		const IOptions &options) {
-	// Needed for restart, will implement it in the future
+	// Get the dataset from the HDF5 files
+	int normalSize = 0, superSize = 0;
+	XFile networkFile(fileName);
+	auto networkGroup = networkFile.getGroup<XFile::NetworkGroup>();
+	assert(networkGroup);
+	networkGroup->readNetworkSize(normalSize, superSize);
+
+	// Initialization
+	int numXe = 0, numV = 0;
+	double formationEnergy = 0.0, migrationEnergy = 0.0;
+	double diffusionFactor = 0.0;
 	std::vector<std::reference_wrapper<Reactant> > reactants;
 
 	// Prepare the network
 	std::unique_ptr<UZrClusterReactionNetwork> network(
 			new UZrClusterReactionNetwork(handlerRegistry));
+
+	// Set the lattice parameter in the network
+	double latticeParam = options.getLatticeParameter();
+	if (!(latticeParam > 0.0))
+		latticeParam = uraniumZirconiumLatticeConstant;
+	network->setLatticeParameter(latticeParam);
+
+	// Set the xenon radius in the network
+	double radius = options.getImpurityRadius();
+	if (!(radius > 0.0))
+		radius = xenonRadius;
+	network->setImpurityRadius(radius);
+
+	// Loop on the clusters
+	for (int i = 0; i < normalSize + superSize; i++) {
+		// Open the cluster group
+		XFile::ClusterGroup clusterGroup(*networkGroup, i);
+
+		if (i < normalSize) {
+			// Normal cluster
+			// Read the composition
+			auto comp = clusterGroup.readCluster(formationEnergy,
+					migrationEnergy, diffusionFactor);
+			numXe = comp[toCompIdx(Species::Xe)];
+			numV = comp[toCompIdx(Species::V)];
+
+			// Create the cluster
+			auto nextCluster = createUZrCluster(numXe, numV, *network);
+
+			// Set the formation energy
+			nextCluster->setFormationEnergy(formationEnergy);
+			// Set the diffusion factor and migration energy
+			nextCluster->setMigrationEnergy(migrationEnergy);
+			nextCluster->setDiffusionFactor(diffusionFactor);
+
+			if (numXe == 1) {
+				// If the diffusivity is given
+				if (options.getXenonDiffusivity() > 0.0) {
+					nextCluster->setDiffusionFactor(
+							options.getXenonDiffusivity());
+					nextCluster->setMigrationEnergy(-1.0);
+				}
+			}
+
+			// Save access to it so we can trigger updates once
+			// added to the network.
+			reactants.emplace_back(*nextCluster);
+
+			// Give the cluster to the network
+			network->add(std::move(nextCluster));
+		} else {
+			// This is not happening yet
+		}
+	}
+
+	// Ask reactants to update now that they are in network.
+	for (IReactant &currReactant : reactants) {
+		currReactant.updateFromNetwork();
+	}
+
+	// Set the reactions
+	networkGroup->readReactions(*network);
+
+	// Recompute Ids and network size
+	network->reinitializeNetwork();
 
 	return std::move(network);
 }
