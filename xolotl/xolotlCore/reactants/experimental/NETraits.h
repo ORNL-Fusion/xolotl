@@ -10,6 +10,10 @@ class NESinkReaction;
 class NEReSolutionReaction;
 class NEReactionNetwork;
 class NEClusterGenerator;
+namespace detail
+{
+class NEClusterUpdater;
+}
 
 enum class NESpecies
 {
@@ -40,6 +44,7 @@ struct ReactionNetworkTraits<NEReactionNetwork>
     using ReSolutionReactionType = NEReSolutionReaction;
 
     using ClusterGenerator = NEClusterGenerator;
+    using ClusterUpdater = detail::NEClusterUpdater;
 };
 }
 }

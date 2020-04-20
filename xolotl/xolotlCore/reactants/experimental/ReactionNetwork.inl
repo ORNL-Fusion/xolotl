@@ -428,12 +428,14 @@ void
 ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
 {
     using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
-    auto data = _nw._clusterData;
-    Kokkos::parallel_for(Range2D({0, 0}, {data.numClusters, data.gridSize}),
+    auto clusterData = _nw._clusterData;
+    auto updater = typename Network::ClusterUpdater{};
+    Kokkos::parallel_for(
+            Range2D({0, 0}, {clusterData.numClusters, clusterData.gridSize}),
             KOKKOS_LAMBDA (IndexType i, IndexType j) {
-        if (!xolotlCore::equal(data.diffusionFactor(i), 0.0))
-            data.diffusionCoefficient(i,j) = data.diffusionFactor(i) * std::exp(
-                -data.migrationEnergy(i) / (kBoltzmann * data.temperature(j)));
+        if (!xolotlCore::equal(clusterData.diffusionFactor(i), 0.0)) {
+            updater.updateDiffusionCoefficient(clusterData, i, j);
+        }
     });
 }
 

@@ -53,6 +53,7 @@ public:
     using SpeciesSequence = SpeciesEnumSequence<Species, numSpecies>;
     using SpeciesRange = EnumSequenceRange<Species, numSpecies>;
     using ClusterGenerator = typename Traits::ClusterGenerator;
+    using ClusterUpdater = typename Types::ClusterUpdater;
     using AmountType = typename IReactionNetwork::AmountType;
     using IndexType = typename IReactionNetwork::IndexType;
     using Subpaving = typename Types::Subpaving;
@@ -474,6 +475,27 @@ struct ReactionNetworkWorker
 
     IndexType
     getDiagonalFill(typename Network::SparseFillMap& fillMap);
+};
+
+template <typename TImpl>
+class DefaultClusterUpdater
+{
+public:
+    using Network = ReactionNetwork<TImpl>;
+    using Types = ReactionNetworkTypes<TImpl>;
+    using ClusterData = typename Types::ClusterData;
+    using IndexType = typename Types::IndexType;
+
+    KOKKOS_INLINE_FUNCTION
+    void
+    updateDiffusionCoefficient(const ClusterData& data, IndexType clusterId,
+        IndexType gridIndex) const
+    {
+        data.diffusionCoefficient(clusterId, gridIndex) =
+            data.diffusionFactor(clusterId) * exp(
+                -data.migrationEnergy(clusterId) /
+                (kBoltzmann * data.temperature(gridIndex)));
+    }
 };
 }
 }

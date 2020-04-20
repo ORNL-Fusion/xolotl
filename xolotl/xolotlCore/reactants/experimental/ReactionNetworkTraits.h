@@ -31,6 +31,28 @@ template <typename TNetwork, typename PlsmContext>
 class ClusterDataRef;
 
 template <typename TImpl>
+class DefaultClusterUpdater;
+
+/*!
+ * Stand-in for C++17 std::void_t
+ */
+template <typename...>
+using VoidType = void; 
+
+template <typename TImpl, typename = VoidType<>>
+struct ClusterUpdaterHelper
+{
+    using Type = DefaultClusterUpdater<TImpl>;
+};
+
+template <typename TImpl>
+struct ClusterUpdaterHelper<TImpl,
+    VoidType<typename ReactionNetworkTraits<TImpl>::ClusterUpdater>>
+{
+    using Type = typename ReactionNetworkTraits<TImpl>::ClusterUpdater;
+};
+
+template <typename TImpl>
 struct ReactionNetworkTypes
 {
     using IndexType = ReactionNetworkIndexType;
@@ -43,6 +65,7 @@ struct ReactionNetworkTypes
     using ClusterData = detail::ClusterData<TImpl, plsm::OnDevice>;
     using ClusterDataMirror = detail::ClusterData<TImpl, plsm::OnHost>;
     using ClusterDataRef = detail::ClusterDataRef<TImpl, plsm::OnDevice>;
+    using ClusterUpdater = typename ClusterUpdaterHelper<TImpl>::Type;
 };
 
 template <typename TImpl>

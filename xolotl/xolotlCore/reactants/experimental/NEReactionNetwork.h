@@ -11,6 +11,8 @@ namespace experimental
 namespace detail
 {
 class NEReactionGenerator;
+
+class NEClusterUpdater;
 }
 
 class NEReactionNetwork : public ReactionNetwork<NEReactionNetwork>
@@ -73,6 +75,25 @@ public:
     KOKKOS_INLINE_FUNCTION
     void
     addSinks(IndexType i, TTag tag) const;
+};
+
+class NEClusterUpdater
+{
+public:
+    using Network = NEReactionNetwork;
+    using ClusterData = typename Network::ClusterData;
+    using IndexType = typename Network::IndexType;
+
+    KOKKOS_INLINE_FUNCTION
+    void
+    updateDiffusionCoefficient(const ClusterData& data, IndexType clusterId,
+        IndexType gridIndex) const
+    {
+        data.diffusionCoefficient(clusterId, gridIndex) =
+            data.diffusionFactor(clusterId) * exp(
+                -data.migrationEnergy(clusterId) /
+                (kBoltzmann * data.temperature(gridIndex)));
+    }
 };
 }
 }
