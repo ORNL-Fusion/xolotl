@@ -110,7 +110,7 @@ public:
     double
     getMigrationEnergy(const Cluster<PlsmContext>& cluster) const noexcept
     {
-        constexpr double xeOneMigration = 0.0;
+        constexpr double xeOneMigration = 1.0;
 
         const auto& reg = cluster.getRegion();
         double migrationEnergy = std::numeric_limits<double>::infinity();

@@ -89,10 +89,29 @@ public:
     updateDiffusionCoefficient(const ClusterData& data, IndexType clusterId,
         IndexType gridIndex) const
     {
-        data.diffusionCoefficient(clusterId, gridIndex) =
-            data.diffusionFactor(clusterId) * exp(
-                -data.migrationEnergy(clusterId) /
-                (kBoltzmann * data.temperature(gridIndex)));
+        // If the diffusivity is given
+        if (data.migrationEnergy(clusterId) > 0.0) {
+
+            // Intrinsic diffusion
+            double kernel = -3.04 / (kBoltzmann * data.temperature(gridIndex));
+            double D3 = 7.6e8 * exp(kernel); // nm2/s
+
+            // We need the fission rate now
+            double fissionRate = data.fissionRate(0) * 1.0e27; // #/m3/s
+
+            // Athermal diffusion
+            double D1 = (8e-40 * fissionRate) * 1.0e18; // nm2/s
+
+            // Radiation-enhanced diffusion
+            kernel = -1.2 / (kBoltzmann * data.temperature(gridIndex));
+            double D2 = (5.6e-25 * sqrt(fissionRate) * exp(kernel)) * 1.0e18; // nm2/s
+
+            data.diffusionCoefficient(clusterId, gridIndex) = D1 + D2 + D3;
+
+            return;
+        }
+
+        data.diffusionCoefficient(clusterId, gridIndex) = data.diffusionFactor(clusterId);
     }
 };
 }
