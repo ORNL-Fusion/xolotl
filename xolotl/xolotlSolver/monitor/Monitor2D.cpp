@@ -587,7 +587,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 					Spec::Xe, 0) * hx * hy;
 			radii += network.getTotalRadiusConcentration(dConcs, Spec::Xe, 0)
 					* hx * hy;
-			partialBubbleConcentration = network.getTotalConcentration(dConcs,
+			partialBubbleConcentration += network.getTotalConcentration(dConcs,
 					Spec::Xe, minSizes[0]) * hx * hy;
 			partialRadii += network.getTotalRadiusConcentration(dConcs,
 					Spec::Xe, minSizes[0]) * hx * hy;
