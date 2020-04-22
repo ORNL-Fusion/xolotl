@@ -137,10 +137,10 @@ public:
     setFissionRate(double rate) override;
 
     void
-    setIsReaction(bool reaction) override;
+    setEnableStdReaction(bool reaction) override;
 
     void
-    setIsReSolution(bool reso) override;
+    setEnableReSolution(bool reso) override;
 
     void
     setGridSize(IndexType gridSize) override;
@@ -201,8 +201,8 @@ public:
         Kokkos::deep_copy(mirror.atomicVolume, _clusterData.atomicVolume);
         Kokkos::deep_copy(mirror.latticeParameter, _clusterData.latticeParameter);
         Kokkos::deep_copy(mirror.fissionRate, _clusterData.fissionRate);
-        Kokkos::deep_copy(mirror.isReaction, _clusterData.isReaction);
-        Kokkos::deep_copy(mirror.isReSolution, _clusterData.isReSolution);
+        Kokkos::deep_copy(mirror.enableStdReaction, _clusterData.enableStdReaction);
+        Kokkos::deep_copy(mirror.enableReSolution, _clusterData.enableReSolution);
         Kokkos::deep_copy(mirror.temperature, _clusterData.temperature);
         Kokkos::deep_copy(mirror.momentIds, _clusterData.momentIds);
         Kokkos::deep_copy(mirror.reactionRadius, _clusterData.reactionRadius);

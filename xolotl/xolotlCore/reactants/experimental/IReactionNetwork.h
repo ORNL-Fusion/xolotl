@@ -128,23 +128,23 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     bool
-    getIsReaction() const noexcept
+    getEnableStdReaction() const noexcept
     {
-        return _isReaction;
+        return _enableStdReaction;
     }
 
     virtual void
-    setIsReaction(bool reaction) = 0;
+    setEnableStdReaction(bool reaction) = 0;
 
     KOKKOS_INLINE_FUNCTION
     bool
-    getIsReSolution() const noexcept
+    getEnableReSolution() const noexcept
     {
-        return _isReSolution;
+        return _enableReSolution;
     }
 
     virtual void
-    setIsReSolution(bool reso) = 0;
+    setEnableReSolution(bool reso) = 0;
 
     KOKKOS_INLINE_FUNCTION
     IndexType
@@ -205,8 +205,8 @@ protected:
     double _interstitialBias {};
     double _impurityRadius {};
     double _fissionRate {};
-    bool _isReaction {};
-    bool _isReSolution{};
+    bool _enableStdReaction {};
+    bool _enableReSolution{};
 
     IndexType _gridSize {};
     IndexType _numDOFs {};

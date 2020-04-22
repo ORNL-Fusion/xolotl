@@ -23,8 +23,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     setLatticeParameter(options.getLatticeParameter());
     setFissionRate(options.getFluxAmplitude());
     auto map = options.getProcesses();
-    setIsReaction(map["reaction"]);
-    setIsReSolution(map["resolution"]);
+    setEnableStdReaction(map["reaction"]);
+    setEnableReSolution(map["resolution"]);
     
     auto tiles = subpaving.getTiles(plsm::onDevice);
     _numClusters = tiles.extent(0);
@@ -133,22 +133,22 @@ ReactionNetwork<TImpl>::setFissionRate(double rate)
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setIsReaction(bool reaction)
+ReactionNetwork<TImpl>::setEnableStdReaction(bool reaction)
 {
-    this->_isReaction = reaction;
-    auto mirror = Kokkos::create_mirror_view(_clusterData.isReaction);
-    mirror(0) = this->_isReaction;
-    Kokkos::deep_copy(_clusterData.isReaction, mirror);
+    this->_enableStdReaction = reaction;
+    auto mirror = Kokkos::create_mirror_view(_clusterData.enableStdReaction);
+    mirror(0) = this->_enableStdReaction;
+    Kokkos::deep_copy(_clusterData.enableStdReaction, mirror);
 }
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setIsReSolution(bool reso)
+ReactionNetwork<TImpl>::setEnableReSolution(bool reso)
 {
-    this->_isReSolution = reso;
-    auto mirror = Kokkos::create_mirror_view(_clusterData.isReSolution);
-    mirror(0) = this->_isReSolution;
-    Kokkos::deep_copy(_clusterData.isReSolution, mirror);
+    this->_enableReSolution = reso;
+    auto mirror = Kokkos::create_mirror_view(_clusterData.enableReSolution);
+    mirror(0) = this->_enableReSolution;
+    Kokkos::deep_copy(_clusterData.enableReSolution, mirror);
 }
 
 template <typename TImpl>

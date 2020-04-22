@@ -98,8 +98,8 @@ public:
         atomicVolume("Atomic Volume" + labelStr(label)),
         latticeParameter("Lattice Parameter" + labelStr(label)),
         fissionRate("Fission Rate" + labelStr(label)),
-        isReaction("Reaction Process" + labelStr(label)),
-        isReSolution("Re-Solution Process" + labelStr(label)),
+        enableStdReaction("Enable Std Reaction" + labelStr(label)),
+        enableReSolution("Enable Re-Solution Process" + labelStr(label)),
         temperature("Temperature" + labelStr(label), gridSize),
         reactionRadius("Reaction Radius" + labelStr(label), numClusters),
         formationEnergy("Formation Energy" + labelStr(label), numClusters),
@@ -139,16 +139,16 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     bool
-    getIsReaction() const
+    getEnableStdReaction() const
     {
-        return isReaction(0);
+        return enableStdReaction(0);
     }
 
     KOKKOS_INLINE_FUNCTION
     bool
-    getIsReSolution() const
+    getEnableReSolution() const
     {
-        return isReSolution(0);
+        return enableReSolution(0);
     }
 
     void
@@ -164,8 +164,8 @@ public:
     View<double[1]> atomicVolume;
     View<double[1]> latticeParameter;
     View<double[1]> fissionRate;
-    View<bool[1]> isReaction;
-    View<bool[1]> isReSolution;
+    View<bool[1]> enableStdReaction;
+    View<bool[1]> enableReSolution;
     View<double*> temperature;
     View<double*> reactionRadius;
     View<double*> formationEnergy;
@@ -242,8 +242,8 @@ struct ClusterDataCommonRef
         atomicVolume(data.atomicVolume),
         latticeParameter(data.latticeParameter),
         fissionRate(data.fissionRate),
-        isReaction(data.isReaction),
-        isReSolution(data.isReSolution),
+        enableStdReaction(data.enableStdReaction),
+        enableReSolution(data.enableReSolution),
         temperature(data.temperature),
         reactionRadius(data.reactionRadius),
         formationEnergy(data.formationEnergy),
@@ -283,16 +283,16 @@ struct ClusterDataCommonRef
 
     KOKKOS_INLINE_FUNCTION
     bool
-    getIsReaction() const
+    getEnableStdReaction() const
     {
-        return isReaction(0);
+        return enableStdReaction(0);
     }
 
     KOKKOS_INLINE_FUNCTION
     bool
-    getIsReSolution() const
+    getEnableReSolution() const
     {
-        return isReSolution(0);
+        return enableReSolution(0);
     }
 
     IndexType numClusters {};
@@ -300,8 +300,8 @@ struct ClusterDataCommonRef
     View<double[1]> atomicVolume;
     View<double[1]> latticeParameter;
     View<double[1]> fissionRate;
-    View<bool[1]> isReaction;
-    View<bool[1]> isReSolution;
+    View<bool[1]> enableStdReaction;
+    View<bool[1]> enableReSolution;
     View<double*> temperature;
     View<double*> reactionRadius;
     View<double**> diffusionCoefficient;

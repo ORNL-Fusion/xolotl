@@ -417,7 +417,7 @@ public:
     void
     addProductionReaction(Count, const ClusterSet& clusterSet) const
     {
-        if (!_clusterData.isReaction(0)) return;
+        if (!_clusterData.enableStdReaction(0)) return;
 
         Kokkos::atomic_increment(
             &_clusterProdReactionCounts(clusterSet.cluster0));
@@ -427,7 +427,7 @@ public:
     void
     addProductionReaction(Construct, const ClusterSet& clusterSet) const
     {
-        if (!_clusterData.isReaction(0)) return;
+        if (!_clusterData.enableStdReaction(0)) return;
 
         auto id = _prodCrsRowMap(clusterSet.cluster0);
         for (; !Kokkos::atomic_compare_exchange_strong(
@@ -443,7 +443,7 @@ public:
     void
     addDissociationReaction(Count, const ClusterSet& clusterSet) const
     {
-        if (!_clusterData.isReaction(0)) return;
+        if (!_clusterData.enableStdReaction(0)) return;
 
         Kokkos::atomic_increment(
             &_clusterDissReactionCounts(clusterSet.cluster1));
@@ -453,7 +453,7 @@ public:
     void
     addDissociationReaction(Construct, const ClusterSet& clusterSet) const
     {
-        if (!_clusterData.isReaction(0)) return;
+        if (!_clusterData.enableStdReaction(0)) return;
 
         auto id = _dissCrsRowMap(clusterSet.cluster1);
         for (; !Kokkos::atomic_compare_exchange_strong(
@@ -469,7 +469,7 @@ public:
     void
     addSinkReaction(Count, const ClusterSet& clusterSet) const
     {
-        if (!_clusterData.isReaction(0)) return;
+        if (!_clusterData.enableStdReaction(0)) return;
 
         Kokkos::atomic_increment(
             &_clusterSinkReactionCounts(clusterSet.cluster0));
@@ -479,7 +479,7 @@ public:
     void
     addSinkReaction(Construct, const ClusterSet& clusterSet) const
     {
-        if (!_clusterData.isReaction(0)) return;
+        if (!_clusterData.enableStdReaction(0)) return;
 
         auto id = _sinkCrsRowMap(clusterSet.cluster0);
         for (; !Kokkos::atomic_compare_exchange_strong(
@@ -495,7 +495,7 @@ public:
     void
     addReSoReaction(Count, const ClusterSet& clusterSet) const
     {
-        if (!_clusterData.isReSolution(0)) return;
+        if (!_clusterData.enableReSolution(0)) return;
 
         Kokkos::atomic_increment(
             &_clusterReSoReactionCounts(clusterSet.cluster0));
@@ -505,7 +505,7 @@ public:
     void
     addReSoReaction(Construct, const ClusterSet& clusterSet) const
     {
-        if (!_clusterData.isReSolution(0)) return;
+        if (!_clusterData.enableReSolution(0)) return;
 
         auto id = _resoCrsRowMap(clusterSet.cluster0);
         for (; !Kokkos::atomic_compare_exchange_strong(
