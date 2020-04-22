@@ -7,6 +7,10 @@
 
 BOOST_AUTO_TEST_SUITE(System_testSuite)
 
+BOOST_AUTO_TEST_CASE(system_NE_0) {
+    testUtils::runSystemTestCase("system_NE_0");
+}
+
 BOOST_AUTO_TEST_CASE(system_NE_1) {
 	// 0D + heterogeneous nucleation
     testUtils::runSystemTestCase("system_NE_1");

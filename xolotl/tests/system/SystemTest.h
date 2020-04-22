@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <string>
@@ -64,25 +65,82 @@ readOutputFile(const std::string& fileName)
     return ret;
 }
 
+double
+diff2Norm(const std::vector<double>& data,
+    const std::vector<double>& expectedData)
+{
+    double diffNorm = 0.0;
+    double expectNorm = 0.0;
+    auto sz = data.size();
+    for (std::size_t i = 0; i < sz; ++i) {
+        auto diff = data[i] - expectedData[i];
+        auto expect = expectedData[i];
+        if (std::isnan(expectedData[i])) {
+            expect = 0.0;
+            if (std::isnan(data[i])) {
+                diff = 0.0;
+            }
+        }
+        if (std::isinf(expectedData[i])) {
+            expect = 0.0;
+            if (std::isinf(data[i])) {
+                diff = 0.0;
+            }
+        }
+        diffNorm += diff*diff;
+        expectNorm += expect*expect;
+    }
+    diffNorm = std::sqrt(diffNorm);
+    expectNorm = std::sqrt(expectNorm);
+    diffNorm /= expectNorm;
+    return diffNorm;
+}
+
+double
+diffInfNorm(const std::vector<double>& data,
+    const std::vector<double>& expectedData)
+{
+    double diffNorm = 0.0;
+    double expectNorm = 0.0;
+    auto sz = data.size();
+    for (std::size_t i = 0; i < sz; ++i) {
+        auto diff = std::abs(data[i] - expectedData[i]);
+        auto expect = std::abs(expectedData[i]);
+        if (std::isnan(expectedData[i])) {
+            expect = 0.0;
+            if (std::isnan(data[i])) {
+                diff = 0.0;
+            }
+        }
+        if (std::isinf(expectedData[i])) {
+            expect = 0.0;
+            if (std::isinf(data[i])) {
+                diff = 0.0;
+            }
+        }
+        diffNorm = std::max(diffNorm, diff);
+        expectNorm = std::max(expectNorm, expect);
+    }
+    diffNorm /= expectNorm;
+    return diffNorm;
+}
+
+double
+computeDiffNorm(const std::vector<double>& data,
+    const std::vector<double>& expectedData)
+{
+    return diff2Norm(data, expectedData);
+}
+
 void
 checkOutput(const std::string& outputFileName,
     const std::string& expectedOutputFileName)
 {
     auto expectedData = readOutputFile(expectedOutputFileName);
     auto data = readOutputFile(outputFileName);
-    auto sz = expectedData.size();
-    BOOST_REQUIRE(sz == data.size());
-    double diffNorm = 0.0;
-    for (std::size_t i = 0; i < sz; ++i) {
-        auto diff = std::abs(data[i] - expectedData[i]);
-        if (std::isnan(data[i]) && std::isnan(expectedData[i])) {
-            diff = 0.0;
-        }
-        if (std::isinf(data[i]) && std::isinf(expectedData[i])) {
-            diff = 0.0;
-        }
-        diffNorm = std::max(diffNorm, diff);
-    }
+    BOOST_REQUIRE(expectedData.size() == data.size());
+    auto diffNorm = computeDiffNorm(data, expectedData);
+    std::cout << std::scientific << std::setprecision(12) << diffNorm << " < " << tolerance << std::endl;
     BOOST_REQUIRE(diffNorm < tolerance);
 }
 
