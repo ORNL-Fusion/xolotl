@@ -57,8 +57,10 @@ max(const T& a, const T& b)
  * (e.g., less than 1).  It is not an effective test if values are large.
  * A relative error test would be more effective.
  */
-inline bool equal(double a, double b) {
-	return std::fabs(b - a) < std::numeric_limits<double>::epsilon();
+KOKKOS_INLINE_FUNCTION
+bool equal(double a, double b) {
+    constexpr double eps = std::numeric_limits<double>::epsilon();
+	return std::fabs(b - a) < eps;
 }
 
 /**
