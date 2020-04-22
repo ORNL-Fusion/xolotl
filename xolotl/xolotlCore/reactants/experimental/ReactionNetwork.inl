@@ -1,7 +1,5 @@
 #pragma once
 
-#include <boost/timer/timer.hpp>
-
 #include <Constants.h>
 
 namespace xolotlCore
@@ -44,16 +42,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 //    }
     std::cout << "num: " << _numClusters << std::endl;
 
-    {
-    boost::timer::auto_cpu_timer t;
     generateClusterData(ClusterGenerator{options});
     defineMomentIds();
-    }
 
-    {
-    boost::timer::auto_cpu_timer t;
     defineReactions();
-    }
 }
 
 template <typename TImpl>
@@ -73,7 +65,6 @@ ReactionNetwork<TImpl>::ReactionNetwork(
     ReactionNetwork(
         [&]() -> Subpaving
         {
-            boost::timer::auto_cpu_timer t;
             Region latticeRegion{};
             for (std::size_t i = 0; i < getNumberOfSpecies(); ++i) {
                 latticeRegion[i] = Ival{0, maxSpeciesAmounts[i] + 1};
@@ -236,7 +227,6 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
     Kokkos::parallel_for(numReSos, KOKKOS_LAMBDA (const IndexType i) {
         resos(i).contributeFlux(concentrations, fluxes, gridIndex);
     });
-
     Kokkos::fence();
 }
 
@@ -288,6 +278,8 @@ ReactionNetwork<TImpl>::getLargestRate()
         if (reactionRates(i, j) > max) max = reactionRates(i, j);
     }, Kokkos::Max<double>(largestRate));
 
+    Kokkos::fence();
+
     return largestRate;
 }
 
@@ -310,59 +302,25 @@ ReactionNetwork<TImpl>::getLeftSideRate(ConcentrationsView concentrations,
 template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getTotalConcentration(ConcentrationsView concentrations,
-        Species type, AmountType minSize)
+    Species type, AmountType minSize)
 {
-    auto tiles = _subpaving.getTiles(plsm::onDevice);
-    double conc = 0.0;
-    Kokkos::parallel_reduce(_numClusters,
-            KOKKOS_LAMBDA (IndexType i, double &lsum) {
-    	const Region& clReg = tiles(i).getRegion();
-    	const auto factor = clReg.volume() / clReg[type].length();
-    	for (AmountType j : makeIntervalRange(clReg[type])) {
-    		if (j >= minSize) lsum += concentrations(i) * factor;
-    	}
-    }, conc);
-
-    return conc;
+    return _worker.getTotalConcentration(concentrations, type, minSize);
 }
 
 template <typename TImpl>
 double
-ReactionNetwork<TImpl>::getTotalRadiusConcentration(ConcentrationsView concentrations,
-        Species type, AmountType minSize)
+ReactionNetwork<TImpl>::getTotalRadiusConcentration(
+    ConcentrationsView concentrations, Species type, AmountType minSize)
 {
-    auto tiles = _subpaving.getTiles(plsm::onDevice);
-    double conc = 0.0;
-    auto clusterData = _clusterData;
-    Kokkos::parallel_reduce(_numClusters,
-            KOKKOS_LAMBDA (IndexType i, double &lsum) {
-    	const Region& clReg = tiles(i).getRegion();
-    	const auto factor = clReg.volume() / clReg[type].length();
-    	for (AmountType j : makeIntervalRange(clReg[type])) {
-    		if (j >= minSize) lsum += concentrations(i) * clusterData.reactionRadius(i) * factor;
-    	}
-    }, conc);
-
-    return conc;
+    return _worker.getTotalRadiusConcentration(concentrations, type, minSize);
 }
 
 template <typename TImpl>
 double
-ReactionNetwork<TImpl>::getTotalAtomConcentration(ConcentrationsView concentrations,
-        Species type, AmountType minSize)
+ReactionNetwork<TImpl>::getTotalAtomConcentration(
+    ConcentrationsView concentrations, Species type, AmountType minSize)
 {
-    auto tiles = _subpaving.getTiles(plsm::onDevice);
-    double conc = 0.0;
-    Kokkos::parallel_reduce(_numClusters,
-            KOKKOS_LAMBDA (IndexType i, double &lsum) {
-    	const Region& clReg = tiles(i).getRegion();
-    	const auto factor = clReg.volume() / clReg[type].length();
-    	for (AmountType j : makeIntervalRange(clReg[type])) {
-    		if (j >= minSize) lsum += concentrations(i) * j * factor;
-    	}
-    }, conc);
-
-    return conc;
+    return _worker.getTotalAtomConcentration(concentrations, type, minSize);
 }
 
 template <typename TImpl>
@@ -396,6 +354,8 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(ConcentrationsView conc
             }
         }
     }, conc);
+
+    Kokkos::fence();
 
     return conc;
 }
@@ -437,6 +397,7 @@ ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
             updater.updateDiffusionCoefficient(clusterData, i, j);
         }
     });
+    Kokkos::fence();
 }
 
 template <typename TImpl>
@@ -560,6 +521,70 @@ ReactionNetworkWorker<TImpl>::getDiagonalFill(
     }
 
     return hConnEntries.extent(0);
+}
+
+template <typename TImpl>
+double
+ReactionNetworkWorker<TImpl>::getTotalConcentration(
+    ConcentrationsView concentrations, Species type, AmountType minSize)
+{
+    auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+    double conc = 0.0;
+    Kokkos::parallel_reduce(_nw._numClusters,
+            KOKKOS_LAMBDA (IndexType i, double& lsum) {
+    	const auto& clReg = tiles(i).getRegion();
+    	const auto factor = clReg.volume() / clReg[type].length();
+    	for (AmountType j : makeIntervalRange(clReg[type])) {
+    		if (j >= minSize) lsum += concentrations(i) * factor;
+    	}
+    }, conc);
+
+    Kokkos::fence();
+
+    return conc;
+}
+
+template <typename TImpl>
+double
+ReactionNetworkWorker<TImpl>::getTotalRadiusConcentration(
+    ConcentrationsView concentrations, Species type, AmountType minSize)
+{
+    auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+    double conc = 0.0;
+    auto clusterData = _nw._clusterData;
+    Kokkos::parallel_reduce(_nw._numClusters,
+            KOKKOS_LAMBDA (IndexType i, double& lsum) {
+    	const auto& clReg = tiles(i).getRegion();
+    	const auto factor = clReg.volume() / clReg[type].length();
+    	for (AmountType j : makeIntervalRange(clReg[type])) {
+    		if (j >= minSize) lsum += concentrations(i) * clusterData.reactionRadius(i) * factor;
+    	}
+    }, conc);
+
+    Kokkos::fence();
+
+    return conc;
+}
+
+template <typename TImpl>
+double
+ReactionNetworkWorker<TImpl>::getTotalAtomConcentration(
+    ConcentrationsView concentrations, Species type, AmountType minSize)
+{
+    auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+    double conc = 0.0;
+    Kokkos::parallel_reduce(_nw._numClusters,
+            KOKKOS_LAMBDA (IndexType i, double &lsum) {
+    	const auto& clReg = tiles(i).getRegion();
+    	const auto factor = clReg.volume() / clReg[type].length();
+    	for (AmountType j : makeIntervalRange(clReg[type])) {
+    		if (j >= minSize) lsum += concentrations(i) * j * factor;
+    	}
+    }, conc);
+
+    Kokkos::fence();
+
+    return conc;
 }
 }
 }

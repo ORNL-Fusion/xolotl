@@ -447,11 +447,14 @@ struct ReactionNetworkWorker
 {
     using Network = ReactionNetwork<TImpl>;
     using Types = ReactionNetworkTypes<TImpl>;
+    using Species = typename Types::Species;
     using ClusterData = typename Types::ClusterData;
     using ClusterDataRef = typename Types::ClusterDataRef;
     using IndexType = typename Types::IndexType;
+    using AmountType = typename Types::AmountType;
     using ReactionCollection =
         detail::ReactionCollection<typename Types::Traits>;
+    using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
 
     Network& _nw;
 
@@ -475,6 +478,18 @@ struct ReactionNetworkWorker
 
     IndexType
     getDiagonalFill(typename Network::SparseFillMap& fillMap);
+
+    double
+    getTotalConcentration(ConcentrationsView concentrations, Species type,
+        AmountType minSize = 0);
+
+    double
+    getTotalAtomConcentration(ConcentrationsView concentrations,
+            Species type, AmountType minSize = 0);
+
+    double
+    getTotalRadiusConcentration(ConcentrationsView concentrations,
+            Species type, AmountType minSize = 0);
 };
 
 template <typename TImpl>
