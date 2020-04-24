@@ -126,6 +126,9 @@ public:
     virtual void
     setFissionRate(double rate) = 0;
 
+    virtual void
+    setZeta(double z) = 0;
+
     KOKKOS_INLINE_FUNCTION
     bool
     getEnableStdReaction() const noexcept

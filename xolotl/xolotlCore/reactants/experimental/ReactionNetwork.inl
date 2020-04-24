@@ -20,6 +20,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     setImpurityRadius(options.getImpurityRadius());
     setLatticeParameter(options.getLatticeParameter());
     setFissionRate(options.getFluxAmplitude());
+    setZeta(options.getZeta());
     auto map = options.getProcesses();
     setEnableStdReaction(map["reaction"]);
     setEnableReSolution(map["resolution"]);
@@ -120,6 +121,15 @@ ReactionNetwork<TImpl>::setFissionRate(double rate)
     auto mirror = Kokkos::create_mirror_view(_clusterData.fissionRate);
     mirror(0) = this->_fissionRate;
     Kokkos::deep_copy(_clusterData.fissionRate, mirror);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setZeta(double z)
+{
+    auto mirror = Kokkos::create_mirror_view(_clusterData.zeta);
+    mirror(0) = z;
+    Kokkos::deep_copy(_clusterData.zeta, mirror);
 }
 
 template <typename TImpl>

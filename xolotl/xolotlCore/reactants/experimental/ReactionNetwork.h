@@ -137,6 +137,9 @@ public:
     setFissionRate(double rate) override;
 
     void
+    setZeta(double zeta) override;
+
+    void
     setEnableStdReaction(bool reaction) override;
 
     void

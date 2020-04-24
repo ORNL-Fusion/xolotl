@@ -98,6 +98,7 @@ public:
         atomicVolume("Atomic Volume" + labelStr(label)),
         latticeParameter("Lattice Parameter" + labelStr(label)),
         fissionRate("Fission Rate" + labelStr(label)),
+        zeta("Zeta" + labelStr(label)),
         enableStdReaction("Enable Std Reaction" + labelStr(label)),
         enableReSolution("Enable Re-Solution Process" + labelStr(label)),
         temperature("Temperature" + labelStr(label), gridSize),
@@ -138,6 +139,13 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
+    double
+    getZeta() const
+    {
+        return zeta(0);
+    }
+
+    KOKKOS_INLINE_FUNCTION
     bool
     getEnableStdReaction() const
     {
@@ -164,6 +172,7 @@ public:
     View<double[1]> atomicVolume;
     View<double[1]> latticeParameter;
     View<double[1]> fissionRate;
+    View<double[1]> zeta;
     View<bool[1]> enableStdReaction;
     View<bool[1]> enableReSolution;
     View<double*> temperature;
@@ -242,6 +251,7 @@ struct ClusterDataCommonRef
         atomicVolume(data.atomicVolume),
         latticeParameter(data.latticeParameter),
         fissionRate(data.fissionRate),
+        zeta(data.zeta),
         enableStdReaction(data.enableStdReaction),
         enableReSolution(data.enableReSolution),
         temperature(data.temperature),
@@ -282,6 +292,13 @@ struct ClusterDataCommonRef
     }
 
     KOKKOS_INLINE_FUNCTION
+    double
+    getZeta() const
+    {
+        return zeta(0);
+    }
+
+    KOKKOS_INLINE_FUNCTION
     bool
     getEnableStdReaction() const
     {
@@ -300,6 +317,7 @@ struct ClusterDataCommonRef
     View<double[1]> atomicVolume;
     View<double[1]> latticeParameter;
     View<double[1]> fissionRate;
+    View<double[1]> zeta;
     View<bool[1]> enableStdReaction;
     View<bool[1]> enableReSolution;
     View<double*> temperature;

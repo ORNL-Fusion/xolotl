@@ -1754,8 +1754,29 @@ KOKKOS_INLINE_FUNCTION
 double
 ReSolutionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 {
-    // Fit coefs
-    double y0 = 9.1816, a1 = 0.949, b1 = 0.0703, b2 = 0.0371, c = 7.982;
+    // Get Zeta
+    auto zeta = this->_clusterData.zeta(0);
+    // Set the fit variables depending on the electronic stopping power (zeta)
+    double y0 = 0.0, a1 = 0.0, b1 = 0.0, b2 = 0.0, c = 0.0;
+    if (zeta > 0.87) {
+        y0 = 11.0851, a1 = 1.5052, b1 = 0.0362, b2 = 0.0203, c = 3.4123;
+    } else if (zeta > 0.82) {
+        y0 = 10.6297, a1 = 1.3479, b1 = 0.0438, b2 = 0.0241, c = 4.2214;
+    } else if (zeta > 0.77) {
+        y0 = 10.1521, a1 = 1.1986, b1 = 0.0546, b2 = 0.0299, c = 5.4612;
+    } else if (zeta > 0.71) {
+        y0 = 9.1816, a1 = 0.949, b1 = 0.0703, b2 = 0.0371, c = 7.982;
+    } else if (zeta > 0.67) {
+        y0 = 8.6745, a1 = 0.8401, b1 = 0.0792, b2 = 0.0407, c = 9.6585;
+    } else if (zeta > 0.62) {
+        y0 = 7.6984, a1 = 0.6721, b1 = 0.1028, b2 = 0.0526, c = 14.272;
+    } else if (zeta > 0.57) {
+        y0 = 6.3925, a1 = 0.5025, b1 = 0.1411, b2 = 0.0727, c = 23.1967;
+    } else if (zeta > 0.52) {
+        y0 = 4.6175, a1 = 0.3433, b1 = 0.2284, b2 = 0.1276, c = 45.6624;
+    } else {
+        y0 = 2.3061, a1 = 0.2786, b1 = 1.1008, b2 = 1.605, c = 150.6689;
+    }
     // Compute the fraction rate
     auto cl = this->_clusterData.getCluster(_reactant);
     auto radius = cl.getReactionRadius();
