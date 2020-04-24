@@ -213,18 +213,18 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	double temperature = temperatureHandler->getTemperature(gridPosition,
 			ftime);
 
-	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature[0] - temperature) > 0.1) {
-		network.setTemperature(temperature);
-		lastTemperature[0] = temperature;
-	}
-
 	// Copy data into the ReactionNetwork so that it can
 	// compute the fluxes properly. The network is only used to compute the
 	// fluxes and hold the state data from the last time step. I'm reusing
 	// it because it cuts down on memory significantly (about 400MB per
 	// grid point) at the expense of being a little tricky to comprehend.
 	network.updateConcentrationsFromArray(concOffset);
+
+	// Update the network if the temperature changed
+//	if (std::fabs(lastTemperature[0] - temperature) > 0.1) {
+		network.setTemperature(temperature);
+		lastTemperature[0] = temperature;
+//	}
 
 	// ----- Account for flux of incoming particles -----
 	fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, 0, 0);
@@ -300,15 +300,15 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	double temperature = temperatureHandler->getTemperature(gridPosition,
 			ftime);
 
-	// Update the network if the temperature changed
-	if (std::fabs(lastTemperature[0] - temperature) > 0.1) {
-		network.setTemperature(temperature);
-		lastTemperature[0] = temperature;
-	}
-
 	// Copy data into the ReactionNetwork so that it can
 	// compute the new concentrations.
 	network.updateConcentrationsFromArray(concOffset);
+
+	// Update the network if the temperature changed
+//	if (std::fabs(lastTemperature[0] - temperature) > 0.1) {
+		network.setTemperature(temperature);
+		lastTemperature[0] = temperature;
+//	}
 
 	// ----- Take care of the reactions for all the reactants -----
 

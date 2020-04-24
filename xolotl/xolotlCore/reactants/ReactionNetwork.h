@@ -179,6 +179,11 @@ protected:
 	double interstitialBias;
 
 	/**
+	 * The monomer concentration.
+	 */
+	double monomerConc;
+
+	/**
 	 * Are dissociations enabled?
 	 */
 	bool dissociationsEnabled;
@@ -753,6 +758,15 @@ public:
 	 */
 	double getInterstitialBias() const override {
 		return interstitialBias;
+	}
+
+	/**
+	 * This operation sets the monomer concentration
+	 *
+	 * @param conc The concentration
+	 */
+	virtual void setMonomerConc(double conc) override {
+		monomerConc = conc;
 	}
 
 	/**

@@ -251,6 +251,10 @@ void UZrClusterReactionNetwork::updateConcentrationsFromArray(
 				currReactant.setConcentration(concentrations[id]);
 			});
 
+	// Set the Xe monomer concentration
+	auto singleXeCluster = get(Species::Xe, 1);
+	setMonomerConc(singleXeCluster->getConcentration());
+
 	return;
 }
 
@@ -448,6 +452,8 @@ void UZrClusterReactionNetwork::computeAllPartials(
 
 double UZrClusterReactionNetwork::computeBindingEnergy(
 		const DissociationReaction &reaction) const {
+	// Get the monomer concentration
+	auto conc = monomerConc;
 
 	// TODO: change to the desired formula or base it on formation energies
 	double bindingEnergy = 5.0;

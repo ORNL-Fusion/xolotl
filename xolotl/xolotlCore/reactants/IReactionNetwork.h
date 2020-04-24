@@ -444,6 +444,13 @@ public:
 	virtual double getInterstitialBias() const = 0;
 
 	/**
+	 * This operation sets the monomer concentration
+	 *
+	 * @param conc The concentration
+	 */
+	virtual void setMonomerConc(double conc) = 0;
+
+	/**
 	 * Dump a representation of the network to the given output stream.
 	 *
 	 * @param os Output stream on which to write network description.
