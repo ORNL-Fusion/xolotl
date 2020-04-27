@@ -80,6 +80,10 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	Options opts;
 	opts.readParams(argc, argv);
 
+	// Set up our dummy performance and visualization infrastructures
+	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
+	xolotlFactory::initializeVizHandler(false);
+
 	// Create the network loader
 	std::shared_ptr<HDF5NetworkLoader> loader = std::make_shared<
 			HDF5NetworkLoader>(make_shared<xolotlPerf::DummyHandlerRegistry>());
@@ -117,10 +121,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(*theSolverHandler,
 					make_shared<xolotlPerf::DummyHandlerRegistry>()));
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
@@ -229,10 +229,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(*theSolverHandler,
 					make_shared<xolotlPerf::DummyHandlerRegistry>()));
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
@@ -343,10 +339,6 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 			new xolotlSolver::PetscSolver(*theSolverHandler,
 					make_shared<xolotlPerf::DummyHandlerRegistry>()));
 
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
-
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
 	solver->initialize();
@@ -442,10 +434,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(*theSolverHandler,
 					make_shared<xolotlPerf::DummyHandlerRegistry>()));
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
@@ -543,10 +531,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(*theSolverHandler,
 					make_shared<xolotlPerf::DummyHandlerRegistry>()));
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
