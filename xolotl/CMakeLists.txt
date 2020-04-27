@@ -50,6 +50,7 @@ endif()
 # Make sure that we only pull the static HDF5
 #set(HDF5_USE_STATIC_LIBRARIES yes)
 # Find HDF5 - Optional for now until we actually require it
+set(HDF5_PREFER_PARALLEL ON)
 FIND_PACKAGE(HDF5 REQUIRED)
 # Check for parallel I/O support in the HDF5 installation.
 IF (NOT HDF5_IS_PARALLEL)
