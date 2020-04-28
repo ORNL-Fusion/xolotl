@@ -53,25 +53,26 @@ public:
 		NetworkType::AmountType groupingWidthV = options.getGroupingWidthB();
 		// Take care of the case with no grouping
 		if (options.getGroupingMin() > maxV) {
-			groupingWidthHe = 1;
-			groupingWidthV = 1;
+			groupingWidthHe = maxHe + 1;
+			groupingWidthV = maxV + 1;
 		}
-		NetworkType::AmountType refineHe = (maxHe + 1) / groupingWidthHe;
-		NetworkType::AmountType refineV = (maxV + 1) / groupingWidthV;
-		NetworkType::AmountType refineI = (maxI + 1);
-
-		if (maxHe + 1 != groupingWidthHe * refineHe) {
-			maxHe = groupingWidthHe * (refineHe + 1) - 1;
-			refineHe++;
-		}
-		if (maxV + 1 != groupingWidthV * refineV) {
-			maxV = groupingWidthV * (refineV + 1) - 1;
-			refineV++;
+		else {
+			// Adapt maxHe and maxV
+			int i = 0;
+			while (maxHe + 1 > pow(groupingWidthHe, i)) {
+				++i;
+			}
+			maxHe = pow(groupingWidthV, i) - 1;
+			i = 0;
+			while (maxV + 1 > pow(groupingWidthV, i)) {
+				++i;
+			}
+			maxV = pow(groupingWidthV, i) - 1;
 		}
 
 		std::unique_ptr<NetworkType> rNetwork(new NetworkType( { maxHe, maxV,
-				maxI }, { { refineHe, refineV, refineI }, { groupingWidthHe,
-				groupingWidthV, 1 } }, 1, options));
+				maxI }, { { groupingWidthHe,
+				groupingWidthV, maxI + 1 } }, 1, options));
 		rNetwork->syncClusterDataOnHost();
 		rNetwork->getSubpaving().syncZones(plsm::onHost);
 		theNetworkHandler = std::move(rNetwork);

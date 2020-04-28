@@ -52,6 +52,12 @@ private:
         return impurityRadius;
     }
 
+    void
+    checkTiles(const IOptions& options)
+    {
+        return;
+    }
+
     detail::PSIReactionGenerator<Species>
     getReactionGenerator() const noexcept
     {

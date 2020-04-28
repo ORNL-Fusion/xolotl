@@ -26,8 +26,8 @@ public:
         _maxHe(options.getMaxImpurity()),
         _maxV(options.getMaxV()),
         _groupingMin(options.getGroupingMin()),
-        _groupingWidthA(options.getGroupingWidthA()),
-        _groupingWidthB(options.getGroupingWidthB())
+        _groupingWidthHe(options.getGroupingWidthA()),
+        _groupingWidthV(options.getGroupingWidthB())
     {
     }
 
@@ -37,8 +37,8 @@ public:
         _maxHe(options.getMaxImpurity()),
         _maxV(options.getMaxV()),
         _groupingMin(options.getGroupingMin()),
-        _groupingWidthA(options.getGroupingWidthA()),
-        _groupingWidthB(options.getGroupingWidthB())
+        _groupingWidthHe(options.getGroupingWidthA()),
+        _groupingWidthV(options.getGroupingWidthB())
     {
     }
 
@@ -85,8 +85,8 @@ private:
     AmountType _maxHe {8};
     AmountType _maxV {0};
     AmountType _groupingMin;
-    AmountType _groupingWidthA;
-    AmountType _groupingWidthB;
+    AmountType _groupingWidthHe;
+    AmountType _groupingWidthV;
 };
 }
 }

@@ -28,6 +28,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     auto tiles = subpaving.getTiles(plsm::onDevice);
     _numClusters = tiles.extent(0);
     
+    asDerived()->checkTiles(options);
+    
 //    // PRINT ALL THE CLUSTERS
 //    constexpr auto speciesRange = getSpeciesRange();
 //    for (IndexType i = 0; i < _numClusters; ++i) {

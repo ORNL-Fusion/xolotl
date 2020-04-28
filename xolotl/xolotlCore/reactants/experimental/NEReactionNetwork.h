@@ -49,6 +49,12 @@ private:
         return impurityRadius;
     }
 
+    void
+    checkTiles(const IOptions& options)
+    {
+        return;
+    }
+
     detail::NEReactionGenerator
     getReactionGenerator() const noexcept;
 };

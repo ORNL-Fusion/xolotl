@@ -20,11 +20,26 @@ FeClusterGenerator::intersect(const Region& region) const
                 region[Species::I].begin() == 0) {
         return true;
     }
+//    if (region[Species::V].end() > _maxV) {
+//        return true;
+//    }
 
     //He is never grouped
     if (region[Species::He].end() > 1 && region[Species::V].begin() == 0 &&
                 region[Species::I].begin() == 0) {
         return true;
+    }
+//    if (region[Species::He].end() > _maxHe) {
+//        return true;
+//    }
+    
+    // HeV
+    if (region[Species::He].begin() < _groupingMin && region[Species::V].begin() < _groupingMin) {
+        return true;
+    }
+    if (region[Species::He].length() < max((double) (_groupingWidthHe + 1), pow((double) region[Species::He].begin(), 1.0) * 0.1) 
+            || region[Species::V].length() < max((double) (_groupingWidthV + 1), pow((double) region[Species::V].begin(), 1.0) * 0.1)) {
+        return false;
     }
 
     return true;
@@ -51,10 +66,16 @@ FeClusterGenerator::select(const Region& region) const
             region[Species::I].end() == 1) {
         return false;
     }
+    if (region[Species::He].begin() > _maxHe) {
+        return false;
+    }
 
     // Vacancy
     if (region[Species::V].begin() > 10 && region[Species::He].end() == 1 &&
             region[Species::I].end() == 1) {
+        return false;
+    }
+    if (region[Species::V].begin() > _maxV) {
         return false;
     }
 

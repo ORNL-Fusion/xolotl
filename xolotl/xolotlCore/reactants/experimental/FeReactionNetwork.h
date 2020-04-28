@@ -32,12 +32,41 @@ public:
 
     using Superclass::Superclass;
 
+    void
+    checkTiles(const IOptions& options)
+    {
+        auto maxHe = options.getMaxImpurity() + 1;
+        auto maxV = options.getMaxV() + 1;
+        auto& tiles = this->getSubpaving().getTiles(plsm::onDevice);
+        auto numClusters = tiles.extent(0);
+        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (const IndexType i) {
+            auto clReg = tiles(i).getRegion();
+            if (clReg[Species::He].end() > maxHe) {
+                Region r({Ival{clReg[Species::He].begin(), maxHe},
+                    Ival{clReg[Species::V].begin(), clReg[Species::V].end()},
+                    Ival{clReg[Species::I].begin(), clReg[Species::I].end()}});
+                auto id = tiles(i).getOwningZoneIndex();
+                auto newTile = plsm::Tile<Region>(r, id);
+                tiles(i) = newTile;
+            }
+            clReg = tiles(i).getRegion();
+            if (clReg[Species::V].end() > maxV) {
+                Region r({Ival{clReg[Species::He].begin(), clReg[Species::He].end()},
+                    Ival{clReg[Species::V].begin(), maxV},
+                    Ival{clReg[Species::I].begin(), clReg[Species::I].end()}});
+                auto id = tiles(i).getOwningZoneIndex();
+                auto newTile = plsm::Tile<Region>(r, id);
+                tiles(i) = newTile;
+            }
+        });
+    }
+
 private:
     double
     checkLatticeParameter(double latticeParameter)
     {
         if (latticeParameter <= 0.0) {
-            return tungstenLatticeConstant;
+            return ironLatticeConstant;
         }
         return latticeParameter;
     }
