@@ -21,7 +21,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/)
 
 #Add a library to hold the command line handling code
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} ${Boost_LIBRARIES})
+target_link_libraries(${LIBRARY_NAME} ${Boost_LIBRARIES} MPI::MPI_CXX)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

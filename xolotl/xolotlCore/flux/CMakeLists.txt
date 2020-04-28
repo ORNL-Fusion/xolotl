@@ -20,7 +20,7 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
 
 #Add the libraries
 add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} plsm)
+target_link_libraries(${LIBRARY_NAME} plsm MPI::MPI_CXX)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)
