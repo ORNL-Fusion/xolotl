@@ -71,7 +71,7 @@ public:
     using DissociationReactionType = typename Traits::DissociationReactionType;
     using SinkReactionType = typename Traits::SinkReactionType;
     using ReSolutionReactionType = typename Traits::ReSolutionReactionType;
-    using ReactionCollection = detail::ReactionCollection<Traits>;
+    using ReactionCollection = detail::ReactionCollection<TImpl>;
 
     template <typename PlsmContext>
     using Cluster = Cluster<TImpl, PlsmContext>;
@@ -431,8 +431,6 @@ private:
     ClusterDataMirror _clusterDataMirror;
 
     ReactionCollection _reactions;
-    Kokkos::View<SinkReactionType*> _sinkReactions;
-    Kokkos::View<ReSolutionReactionType*> _resoReactions;
 
     detail::ReactionNetworkWorker<TImpl> _worker;
 
@@ -455,8 +453,7 @@ struct ReactionNetworkWorker
     using ClusterDataRef = typename Types::ClusterDataRef;
     using IndexType = typename Types::IndexType;
     using AmountType = typename Types::AmountType;
-    using ReactionCollection =
-        detail::ReactionCollection<typename Types::Traits>;
+    using ReactionCollection = detail::ReactionCollection<TImpl>;
     using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
 
     Network& _nw;

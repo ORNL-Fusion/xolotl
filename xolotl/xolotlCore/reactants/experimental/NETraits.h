@@ -43,6 +43,10 @@ struct ReactionNetworkTraits<NEReactionNetwork>
     using SinkReactionType = NESinkReaction;
     using ReSolutionReactionType = NEReSolutionReaction;
 
+    using ReactionTypeList =
+        std::tuple<ProductionReactionType, DissociationReactionType,
+            ReSolutionReactionType>;
+
     using ClusterGenerator = NEClusterGenerator;
     using ClusterUpdater = detail::NEClusterUpdater;
 };

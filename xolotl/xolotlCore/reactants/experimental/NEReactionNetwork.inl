@@ -65,6 +65,15 @@ NEReactionGenerator::addSinks(IndexType i, TTag tag) const
 {
     // Nothing
 }
+
+inline
+ReactionCollection<NEReactionGenerator::Network>
+NEReactionGenerator::getReactionCollection() const
+{
+    ReactionCollection<Network> ret(this->getProductionReactions(),
+        this->getDissociationReactions(), this->getReSoReactions());
+    return ret;
+}
 }
 
 inline

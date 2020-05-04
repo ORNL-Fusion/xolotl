@@ -168,16 +168,6 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
     _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.updateData(reactionData, clusterData);
     });
-    auto sinks = _sinkReactions;
-    auto numSinks = sinks.extent(0);
-    Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
-        sinks(i).updateData(reactionData, clusterData);
-    });
-    auto resos = _resoReactions;
-    auto numReSos = resos.extent(0);
-    Kokkos::parallel_for(numReSos, KOKKOS_LAMBDA (const IndexType i) {
-        resos(i).updateData(reactionData, clusterData);
-    });
     Kokkos::fence();
 }
 
@@ -193,16 +183,6 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 
     _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.updateRates();
-    });
-    auto sinks = _sinkReactions;
-    auto numSinks = sinks.extent(0);
-    Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
-        sinks(i).updateRates();
-    });
-    auto resos = _resoReactions;
-    auto numReSos = resos.extent(0);
-    Kokkos::parallel_for(numReSos, KOKKOS_LAMBDA (const IndexType i) {
-        resos(i).updateRates();
     });
     Kokkos::fence();
 }
@@ -229,16 +209,6 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
     _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.contributeFlux(concentrations, fluxes, gridIndex);
     });
-    auto sinks = _sinkReactions;
-    auto numSinks = sinks.extent(0);
-    Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
-        sinks(i).contributeFlux(concentrations, fluxes, gridIndex);
-    });
-    auto resos = _resoReactions;
-    auto numReSos = resos.extent(0);
-    Kokkos::parallel_for(numReSos, KOKKOS_LAMBDA (const IndexType i) {
-        resos(i).contributeFlux(concentrations, fluxes, gridIndex);
-    });
     Kokkos::fence();
 }
 
@@ -258,18 +228,6 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
     _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.contributePartialDerivatives(concentrations, values,
             connectivity, gridIndex);
-    });
-    auto sinks = _sinkReactions;
-    auto numSinks = sinks.extent(0);
-    Kokkos::parallel_for(numSinks, KOKKOS_LAMBDA (const IndexType i) {
-        sinks(i).contributePartialDerivatives(concentrations, values,
-                connectivity, gridIndex);
-    });
-    auto resos = _resoReactions;
-    auto numReSos = resos.extent(0);
-    Kokkos::parallel_for(numReSos, KOKKOS_LAMBDA (const IndexType i) {
-        resos(i).contributePartialDerivatives(concentrations, values,
-                connectivity, gridIndex);
     });
     
     Kokkos::fence();
@@ -504,10 +462,7 @@ ReactionNetworkWorker<TImpl>::defineReactions()
     generator.generateReactions();
 
     _nw._reactionData = generator.getReactionData();
-    _nw._reactions = ReactionCollection(generator.getProductionReactions(),
-        generator.getDissociationReactions());
-    _nw._sinkReactions = generator.getSinkReactions();
-    _nw._resoReactions = generator.getReSoReactions();
+    _nw._reactions = generator.getReactionCollection();
 }
 
 template <typename TImpl>

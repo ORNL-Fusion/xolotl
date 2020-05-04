@@ -81,6 +81,9 @@ public:
     KOKKOS_INLINE_FUNCTION
     void
     addSinks(IndexType i, TTag tag) const;
+
+    ReactionCollection<Network>
+    getReactionCollection() const;
 };
 
 class NEClusterUpdater

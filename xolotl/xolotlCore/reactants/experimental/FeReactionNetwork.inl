@@ -174,7 +174,17 @@ FeReactionGenerator::addSinks(IndexType i, TTag tag) const
     }
 }
 
+inline
+ReactionCollection<FeReactionGenerator::Network>
+FeReactionGenerator::getReactionCollection() const
+{
+    ReactionCollection<Network> ret(this->getProductionReactions(),
+        this->getDissociationReactions(), this->getSinkReactions(),
+        this->getReSoReactions());
+    return ret;
 }
+}
+
 inline
 detail::FeReactionGenerator
 FeReactionNetwork::getReactionGenerator() const noexcept

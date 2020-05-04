@@ -40,6 +40,10 @@ struct ReactionNetworkTraits<FeReactionNetwork>
     using SinkReactionType = FeSinkReaction;
     using ReSolutionReactionType = FeReSolutionReaction;
 
+    using ReactionTypeList =
+        std::tuple<ProductionReactionType, DissociationReactionType,
+            SinkReactionType, ReSolutionReactionType>;
+
     using ClusterGenerator = FeClusterGenerator;
 };
 }

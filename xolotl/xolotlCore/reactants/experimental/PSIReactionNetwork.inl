@@ -220,6 +220,16 @@ PSIReactionGenerator<TSpeciesEnum>::addSinks(IndexType i, TTag tag) const
 {
     // Nothing
 }
+
+template <typename TSpeciesEnum>
+inline
+ReactionCollection<typename PSIReactionGenerator<TSpeciesEnum>::Network>
+PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
+{
+    ReactionCollection<Network> ret(this->getProductionReactions(),
+        this->getDissociationReactions());
+    return ret;
+}
 }
 }
 }

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <tuple>
+
 namespace xolotlCore
 {
 namespace experimental
@@ -53,6 +55,9 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
     using DissociationReactionType = PSIDissociationReaction<Species>;
     using SinkReactionType = PSISinkReaction<Species>;
     using ReSolutionReactionType = PSIReSolutionReaction<Species>;
+
+    using ReactionTypeList =
+        std::tuple<ProductionReactionType, DissociationReactionType>;
 
     using ClusterGenerator = PSIClusterGenerator<Species>;
 };
