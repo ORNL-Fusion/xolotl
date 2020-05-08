@@ -123,8 +123,9 @@ void Options::readParams(int argc, char *argv[]) {
 			"All the arguments that will be given to PETSc.")("process",
 			bpo::value<string>(),
 			"List of all the processes to use in the simulation (reaction, diff, "
-					"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, heterogeneous).")(
-			"grain", bpo::value<string>(&gbList),
+					"advec, modifiedTM, movingSurface, bursting, attenuation, oneResolution, "
+					"fullResolution, heterogeneous).")("grain",
+			bpo::value<string>(&gbList),
 			"This option allows the user to add GB in the X, Y, or Z directions. "
 					"To do so, simply write the direction followed "
 					"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")(
@@ -359,7 +360,8 @@ void Options::readParams(int argc, char *argv[]) {
 			processMap["movingSurface"] = false;
 			processMap["bursting"] = false;
 			processMap["attenuation"] = false;
-			processMap["resolution"] = false;
+			processMap["fullResolution"] = false;
+			processMap["oneResolution"] = false;
 			processMap["heterogeneous"] = false;
 
 			// Loop on the tokens

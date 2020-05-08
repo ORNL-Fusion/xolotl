@@ -2,7 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
-#include <ReSolutionHandler.h>
+#include <OneReSolutionHandler.h>
 #include <NEClusterNetworkLoader.h>
 #include <XolotlConfig.h>
 #include <Options.h>
@@ -15,9 +15,9 @@ using namespace std;
 using namespace xolotlCore;
 
 /**
- * This suite is responsible for testing the ReSolutionHandler.
+ * This suite is responsible for testing the OneReSolutionHandler.
  */
-BOOST_AUTO_TEST_SUITE(ReSolutionHandler_testSuite)
+BOOST_AUTO_TEST_SUITE(OneReSolutionHandler_testSuite)
 
 /**
  * Method checking the initialization and the compute re-solution methods.
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(checkReSolution) {
 	int surfacePos = 0;
 
 	// Create the re-solution handler
-	ReSolutionHandler reSolutionHandler;
+	OneReSolutionHandler reSolutionHandler;
 
 	// Initialize it
 	reSolutionHandler.initialize(*network, 0.73);
@@ -188,7 +188,7 @@ BOOST_AUTO_TEST_CASE(checkMinimumSize) {
 	int surfacePos = 0;
 
 	// Create the re-solution handler
-	ReSolutionHandler reSolutionHandler;
+	OneReSolutionHandler reSolutionHandler;
 
 	// Initialize it
 	reSolutionHandler.initialize(*network, 0.73);
@@ -303,7 +303,7 @@ BOOST_AUTO_TEST_CASE(checkDifferentFit) {
 	int surfacePos = 0;
 
 	// Create the re-solution handler
-	ReSolutionHandler reSolutionHandler;
+	OneReSolutionHandler reSolutionHandler;
 
 	// Initialize it
 	reSolutionHandler.initialize(*network, 1.0);

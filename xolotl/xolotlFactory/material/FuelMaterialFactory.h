@@ -4,7 +4,9 @@
 #include <memory>
 #include <MaterialFactory.h>
 #include <FuelFitFluxHandler.h>
-#include <ReSolutionHandler.h>
+#include <OneReSolutionHandler.h>
+#include <FullReSolutionHandler.h>
+#include <DummyReSolutionHandler.h>
 #include <HeterogeneousNucleationHandler.h>
 #include <DummyAdvectionHandler.h>
 #include <DummyTrapMutationHandler.h>
@@ -29,10 +31,19 @@ public:
 				std::make_shared<xolotlCore::DummyAdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				xolotlCore::DummyTrapMutationHandler>();
-		theReSolutionHandler =
-				std::make_shared<xolotlCore::ReSolutionHandler>();
 		theNucleationHandler = std::make_shared<
 				xolotlCore::HeterogeneousNucleationHandler>();
+		// Check which re-solution we want
+		auto map = options.getProcesses();
+		if (map["oneResolution"])
+			theReSolutionHandler = std::make_shared<
+					xolotlCore::OneReSolutionHandler>();
+		else if (map["fullResolution"])
+			theReSolutionHandler = std::make_shared<
+					xolotlCore::FullReSolutionHandler>();
+		else
+			theReSolutionHandler = std::make_shared<
+					xolotlCore::DummyReSolutionHandler>();
 
 		return;
 	}

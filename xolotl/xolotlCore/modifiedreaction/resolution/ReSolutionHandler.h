@@ -104,7 +104,7 @@ public:
 	 *
 	 * \see IReSolutionHandler.h
 	 */
-	void updateReSolutionRate(double rate);
+	virtual void updateReSolutionRate(double rate);
 
 	/**
 	 * This method updates the fission yield.
