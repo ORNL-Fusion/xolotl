@@ -75,8 +75,6 @@ Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
         // More complicated with X_[3,5) + X_[5,7) ⇄ X_[9,11)
         // 3+6, 4+5, 4+6, width is 3
 
-        AmountType width{};
-
         // Special case for I
         if (isVacancy(i)) {
             auto iSize = getISizeForOverlap(singleClReg, pairCl1Reg, pairCl2Reg);

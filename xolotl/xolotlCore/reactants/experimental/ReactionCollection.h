@@ -135,6 +135,7 @@ public:
     }
 
 private:
+    KOKKOS_INLINE_FUNCTION
     IndexType
     getIndexBegin() const noexcept
     {
@@ -258,6 +259,7 @@ public:
     }
 
 private:
+    KOKKOS_INLINE_FUNCTION
     IndexType
     getIndexBegin() const noexcept
     {
