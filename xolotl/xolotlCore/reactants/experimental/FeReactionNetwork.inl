@@ -133,9 +133,6 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
             // Increase nProd
             nProd++;
             this->addProductionReaction(tag, {i, j, k});
-            if (!cl1Reg.isSimplex() || !cl2Reg.isSimplex() || !prodReg.isSimplex()) {
-                continue;
-            }
             // Loop on the species
             bool isOnAxis1 = false, isOnAxis2 = false;
             for (auto l : species) {

@@ -40,11 +40,11 @@ BOOST_AUTO_TEST_CASE(FeNetwork) {
     Kokkos::View<SinkReaction*> sinkReactions("sink", 5);
 
     auto rColl = ReactionCollection(prodReactions, dissReactions, sinkReactions);
-    rColl.apply(DEVICE_LAMBDA (auto&& reaction) {
-        //FIXME: Can't use typeid in device code. Use an array of three and
-        //specialized structs to convert between reaction types and indices
-        std::cout << typeid(reaction).name() << '\n';
-    });
+//    rColl.apply(DEVICE_LAMBDA (auto&& reaction) {
+//        //FIXME: Can't use typeid in device code. Use an array of three and
+//        //specialized structs to convert between reaction types and indices
+//        std::cout << typeid(reaction).name() << '\n';
+//    });
     int numReactions = 0;
     rColl.reduce(DEVICE_LAMBDA (auto&& reaction, int& local) {
         ++local;

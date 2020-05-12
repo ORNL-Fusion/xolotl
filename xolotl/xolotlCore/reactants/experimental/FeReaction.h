@@ -97,25 +97,23 @@ public:
             Composition prod1Comp = prod1Reg.getOrigin();
             Composition prod2Comp = prod2Reg.getOrigin();
             // HeV
+            double amtHe = (double) (lo[Species::He] + hi[Species::He] - 1) / 2.0,
+                amtV = (double) (lo[Species::V] + hi[Species::V] - 1) / 2.0;
             if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-                double amtHe = (double) (lo[Species::He] + hi[Species::He] - 1) / 2.0,
-                    amtV = (double) (lo[Species::V] + hi[Species::V] - 1) / 2.0;
                 be = 1.73 - 2.59
-                    * (pow((double) amtV, 2.0 / 3.0)
-                    - pow((double) amtV - 1.0, 2.0 / 3.0))
-                    + 2.5 * log(1.0 + ((double) amtHe / (double) amtV));
+                    * (pow(amtV, 2.0 / 3.0)
+                    - pow(amtV - 1.0, 2.0 / 3.0))
+                    + 2.5 * log(1.0 + (amtHe / amtV));
             }
             if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
-                double amtHe = (double) (lo[Species::He] + hi[Species::He] - 1) / 2.0,
-                    amtV = (double) (lo[Species::V] + hi[Species::V] - 1) / 2.0;
                 be = 4.88 + 2.59
-                    * (pow((double) amtV, 2.0 / 3.0)
-                    - pow((double) amtV - 1.0, 2.0 / 3.0))
-                    - 2.5 * log(1.0 + ((double) amtHe / (double) amtV));
+                    * (pow(amtV, 2.0 / 3.0)
+                    - pow(amtV - 1.0, 2.0 / 3.0))
+                    - 2.5 * log(1.0 + (amtHe / amtV));
             }
         }
 
-        return max(be, -5.0);
+        return min(5.0, max(be, -5.0));
     }
 };
 

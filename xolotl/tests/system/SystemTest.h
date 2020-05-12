@@ -19,6 +19,7 @@ const std::string dataDir = TEST_DATA_DIR;
 const std::string binDir = BUILD_DIR;
 
 constexpr double defaultTolerance = 1.0e-10;
+const std::string defaultFileName = "retentionOut.txt";
 
 double tolerance = defaultTolerance;
 
@@ -145,7 +146,8 @@ checkOutput(const std::string& outputFileName,
 }
 
 void
-runSystemTestCase(const std::string& caseName, double tol = defaultTolerance)
+runSystemTestCase(const std::string& caseName, const std::string& fileName = defaultFileName,
+		double tol = defaultTolerance)
 {
     tolerance = tol;
     BOOST_REQUIRE(runXolotl(caseName));
@@ -153,13 +155,13 @@ runSystemTestCase(const std::string& caseName, double tol = defaultTolerance)
     auto argc = boost::unit_test::framework::master_test_suite().argc;
     auto argv = boost::unit_test::framework::master_test_suite().argv;
     if (argc == 2 && std::strcmp(argv[1], "--approve") == 0) {
-        fs::copy_file("./retentionOut.txt",
-            dataDir + "/output/retention_" + caseName + ".txt",
+        fs::copy_file("./" + fileName,
+            dataDir + "/output/" + caseName + ".txt",
             fs::copy_option::overwrite_if_exists);
     }
     else {
-        checkOutput("./retentionOut.txt",
-            dataDir + "/output/retention_" + caseName + ".txt");
+        checkOutput("./" + fileName,
+            dataDir + "/output/" + caseName + ".txt");
     }
 }
 }

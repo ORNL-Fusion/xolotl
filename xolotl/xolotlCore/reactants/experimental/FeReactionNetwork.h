@@ -50,9 +50,27 @@ public:
                 tiles(i) = newTile;
             }
             clReg = tiles(i).getRegion();
+            if (clReg[Species::He].begin() == 0 && clReg[Species::V].begin() > 10) {
+                Region r({Ival{1, clReg[Species::He].end()},
+                    Ival{clReg[Species::V].begin(), clReg[Species::V].end()},
+                    Ival{clReg[Species::I].begin(), clReg[Species::I].end()}});
+                auto id = tiles(i).getOwningZoneIndex();
+                auto newTile = plsm::Tile<Region>(r, id);
+                tiles(i) = newTile;
+            }
+            clReg = tiles(i).getRegion();
             if (clReg[Species::V].end() > maxV) {
                 Region r({Ival{clReg[Species::He].begin(), clReg[Species::He].end()},
                     Ival{clReg[Species::V].begin(), maxV},
+                    Ival{clReg[Species::I].begin(), clReg[Species::I].end()}});
+                auto id = tiles(i).getOwningZoneIndex();
+                auto newTile = plsm::Tile<Region>(r, id);
+                tiles(i) = newTile;
+            }
+            clReg = tiles(i).getRegion();
+            if (clReg[Species::V].begin() == 0 && clReg[Species::He].begin() > 8) {
+                Region r({Ival{clReg[Species::He].begin(), clReg[Species::He].end()},
+                    Ival{1, clReg[Species::V].end()},
                     Ival{clReg[Species::I].begin(), clReg[Species::I].end()}});
                 auto id = tiles(i).getOwningZoneIndex();
                 auto newTile = plsm::Tile<Region>(r, id);

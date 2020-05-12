@@ -1,0 +1,11 @@
+dimensions=0
+process=reaction
+netParam=200 0 0 200 1
+vizHandler=dummy
+perfHandler=dummy
+material=Fe
+startTemp=703
+flux=8.46e-6
+grouping=30 2 2
+#-snes_test_display -snes_test_jacobian_view -snes_test_jacobian 1.0e-10
+petscArgs=-snes_force_iteration -bubble -ts_max_steps 50 -ts_max_time 5.0e2 -snes_stol 1.0e-12 -ts_adapt_time_step_increase_delay 4 -ts_adapt_dt_max 20.0 -ts_adapt_wnormtype INFINITY -fieldsplit_0_pc_type sor -ts_max_snes_failures -1 -pc_fieldsplit_detect_coupling -ts_dt 1.0e-9 -ts_exact_final_time matchstep -ts_monitor -pc_type fieldsplit -fieldsplit_1_pc_type redundant

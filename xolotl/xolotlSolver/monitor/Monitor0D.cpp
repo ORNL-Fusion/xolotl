@@ -581,8 +581,8 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Don't do anything if it is not on the stride
-	if (timestep % 10 != 0)
-		PetscFunctionReturn(0);
+//	if (timestep % 10 != 0)
+//		PetscFunctionReturn(0);
 
 	// Get the da from ts
 	DM da;
@@ -629,6 +629,11 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 		if (lo.isOnAxis(Species::I) || lo.isOnAxis(Species::V)
 				|| lo.isOnAxis(Species::He))
 			continue;
+//		double amtHe = (double) (lo[Spec::He] + hi[Spec::He] - 1) / 2.0,
+//				amtV = (double) (lo[Spec::V] + hi[Spec::V] - 1) / 2.0;
+//		double be = 4.88
+//				+ 2.59 * (pow(amtV, 2.0 / 3.0) - pow(amtV - 1.0, 2.0 / 3.0))
+//				- 2.5 * log(1.0 + (amtHe / amtV));
 
 		// For compatibility with previous versions, we output
 		// the value of a closed upper bound of the He and V intervals.
