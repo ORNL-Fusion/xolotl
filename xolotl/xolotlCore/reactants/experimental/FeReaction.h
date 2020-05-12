@@ -1,6 +1,7 @@
 #pragma once
 
 #include <experimental/FeTraits.h>
+#include <experimental/SinkReaction.h>
 
 namespace xolotlCore
 {
@@ -149,16 +150,5 @@ public:
         return bias;
     }
 };
-
-class FeReSolutionReaction :
-    public ReSolutionReaction<FeReactionNetwork, FeReSolutionReaction>
-{
-public:
-    using Superclass =
-        ReSolutionReaction<FeReactionNetwork, FeReSolutionReaction>;
-
-    using Superclass::Superclass;
-};
-
 }
 }

@@ -12,13 +12,13 @@ using namespace xolotlCore;
 
 class KokkosContext {
 public:
-	KokkosContext() {
-		::Kokkos::initialize();
-	}
+    KokkosContext() {
+        ::Kokkos::initialize();
+    }
 
-	~KokkosContext() {
-		::Kokkos::finalize();
-	}
+    ~KokkosContext() {
+        ::Kokkos::finalize();
+    }
 };
 BOOST_GLOBAL_FIXTURE(KokkosContext);
 
@@ -32,21 +32,17 @@ BOOST_AUTO_TEST_CASE(FeNetwork) {
     using ProdReaction = typename NetworkType::Traits::ProductionReactionType;
     using DissReaction = typename NetworkType::Traits::DissociationReactionType;
     using SinkReaction = typename NetworkType::Traits::SinkReactionType;
-    using ReSoReaction = typename NetworkType::Traits::ReSolutionReactionType;
+
+    using ReactionTypes = std::tuple<ProdReaction, DissReaction, SinkReaction>;
 
     Kokkos::View<ProdReaction*> prodReactions("prod", 3);
     Kokkos::View<DissReaction*> dissReactions("diss", 4);
     Kokkos::View<SinkReaction*> sinkReactions("sink", 5);
-    Kokkos::View<ReSoReaction*> resoReactions("reso", 6);
 
-    ReactionCollection rColl;
-    rColl.setView(dissReactions);
-    rColl.setView(prodReactions);
-    rColl.setView(Kokkos::View<DissReaction*>{});
-    // auto rColl = ReactionCollection(prodReactions, dissReactions, sinkReactions,
-    //     resoReactions);
-    std::cout << rColl.getDeviceMemorySize() << '\n';
+    auto rColl = ReactionCollection(prodReactions, dissReactions, sinkReactions);
     rColl.apply(DEVICE_LAMBDA (auto&& reaction) {
+        //FIXME: Can't use typeid in device code. Use an array of three and
+        //specialized structs to convert between reaction types and indices
         std::cout << typeid(reaction).name() << '\n';
     });
     int numReactions = 0;
@@ -54,13 +50,13 @@ BOOST_AUTO_TEST_CASE(FeNetwork) {
         ++local;
     }, numReactions);
     Kokkos::fence();
-    // BOOST_REQUIRE(numReactions == prodReactions.size() + dissReactions.size() +
-    //     sinkReactions.size() + resoReactions.size());
+    BOOST_REQUIRE(numReactions == prodReactions.size() + dissReactions.size() +
+        sinkReactions.size());
 
-    // auto prodView = rColl.getView<ProdReaction>();
-    // BOOST_REQUIRE(prodView.size() == prodReactions.size());
-    // auto resoView = rColl.getView<ReSoReaction>();
-    // BOOST_REQUIRE(resoView.size() == resoReactions.size());
+    auto prodView = rColl.getView<ProdReaction>();
+    BOOST_REQUIRE(prodView.size() == prodReactions.size());
+    auto sinkView = rColl.getView<SinkReaction>();
+    BOOST_REQUIRE(sinkView.size() == sinkReactions.size());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

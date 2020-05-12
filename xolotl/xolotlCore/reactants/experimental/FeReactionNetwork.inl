@@ -9,8 +9,7 @@ namespace detail
 template <typename TTag>
 KOKKOS_INLINE_FUNCTION
 void
-FeReactionGenerator::operator()(IndexType i, IndexType j,
-    TTag tag) const
+FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
     using Species = typename Network::Species;
     using Composition = typename Network::Composition;
@@ -19,6 +18,10 @@ FeReactionGenerator::operator()(IndexType i, IndexType j,
     constexpr auto species = Network::getSpeciesRange();
     constexpr auto speciesNoI = Network::getSpeciesRangeNoI();
     constexpr auto invalidIndex = Network::invalidIndex();
+
+    if (i == j) {
+        addSinks(i, tag);
+    }
 
     auto numClusters = this->getNumberOfClusters();
 
@@ -140,8 +143,8 @@ FeReactionGenerator::operator()(IndexType i, IndexType j,
                 if (lo2.isOnAxis(l()) && lo2[l()] == 1) isOnAxis2 = true;
             }
             if (isOnAxis1 || isOnAxis2) {
-                if (lo1.isOnAxis(Species::He) && lo2.isOnAxis(Species::He) 
-                        && lo1[Species::He] == 1 && lo2[Species::He] == 1) {
+                if (lo1.isOnAxis(Species::He) && lo2.isOnAxis(Species::He) &&
+                        lo1[Species::He] == 1 && lo2[Species::He] == 1) {
                     continue;
                 }
 
@@ -159,7 +162,7 @@ FeReactionGenerator::addSinks(IndexType i, TTag tag) const
     using Species = typename Network::Species;
     using Composition = typename Network::Composition;
     constexpr auto invalidIndex = Network::invalidIndex();
-    
+
     const auto& clReg = this->getCluster(i).getRegion();
     Composition lo = clReg.getOrigin();
 
@@ -179,8 +182,7 @@ ReactionCollection<FeReactionGenerator::Network>
 FeReactionGenerator::getReactionCollection() const
 {
     ReactionCollection<Network> ret(this->getProductionReactions(),
-        this->getDissociationReactions(), this->getSinkReactions(),
-        this->getReSoReactions());
+        this->getDissociationReactions(), this->getSinkReactions());
     return ret;
 }
 }

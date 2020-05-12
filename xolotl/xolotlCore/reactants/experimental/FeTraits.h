@@ -8,7 +8,7 @@ class FeReactionNetwork;
 class FeProductionReaction;
 class FeDissociationReaction;
 class FeSinkReaction;
-class FeReSolutionReaction;
+// class FeReSolutionReaction;
 class FeClusterGenerator;
 
 enum class FeSpeciesList
@@ -38,11 +38,10 @@ struct ReactionNetworkTraits<FeReactionNetwork>
     using ProductionReactionType = FeProductionReaction;
     using DissociationReactionType = FeDissociationReaction;
     using SinkReactionType = FeSinkReaction;
-    using ReSolutionReactionType = FeReSolutionReaction;
 
     using ReactionTypeList =
         std::tuple<ProductionReactionType, DissociationReactionType,
-            SinkReactionType, ReSolutionReactionType>;
+            SinkReactionType>;
 
     using ClusterGenerator = FeClusterGenerator;
 };

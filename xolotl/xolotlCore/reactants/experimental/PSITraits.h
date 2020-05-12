@@ -16,12 +16,6 @@ template <typename TSpeciesEnum>
 class PSIDissociationReaction;
 
 template <typename TSpeciesEnum>
-class PSISinkReaction;
-
-template <typename TSpeciesEnum>
-class PSIReSolutionReaction;
-
-template <typename TSpeciesEnum>
 class PSIClusterGenerator;
 
 enum class PSIFullSpeciesList
@@ -50,11 +44,8 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 
     static constexpr std::size_t numSpecies = 5;
 
-    // using ReactionType = PSIReaction<Species>;
     using ProductionReactionType = PSIProductionReaction<Species>;
     using DissociationReactionType = PSIDissociationReaction<Species>;
-    using SinkReactionType = PSISinkReaction<Species>;
-    using ReSolutionReactionType = PSIReSolutionReaction<Species>;
 
     using ReactionTypeList =
         std::tuple<ProductionReactionType, DissociationReactionType>;

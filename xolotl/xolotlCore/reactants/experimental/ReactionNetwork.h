@@ -30,7 +30,7 @@ template <typename TImpl>
 struct ReactionNetworkWorker;
 
 template <typename TImpl, typename TDerived>
-class ReactionGenerator;
+class ReactionGeneratorBase;
 }
 
 template <typename TImpl>
@@ -38,7 +38,7 @@ class ReactionNetwork : public IReactionNetwork
 {
     friend class detail::ReactionNetworkWorker<TImpl>;
     template <typename, typename>
-    friend class detail::ReactionGenerator;
+    friend class detail::ReactionGeneratorBase;
 
 public:
     using Traits = ReactionNetworkTraits<TImpl>;
@@ -67,10 +67,6 @@ public:
     using ClusterData = typename Types::ClusterData;
     using ClusterDataMirror = typename Types::ClusterDataMirror;
     using ClusterDataRef = typename Types::ClusterDataRef;
-    using ProductionReactionType = typename Traits::ProductionReactionType;
-    using DissociationReactionType = typename Traits::DissociationReactionType;
-    using SinkReactionType = typename Traits::SinkReactionType;
-    using ReSolutionReactionType = typename Traits::ReSolutionReactionType;
     using ReactionCollection = detail::ReactionCollection<TImpl>;
 
     template <typename PlsmContext>
@@ -516,5 +512,5 @@ public:
 }
 }
 
-#include <experimental/ReactionGenerator.h>
+#include <experimental/detail/ReactionGenerator.h>
 #include <experimental/ReactionNetwork.inl>

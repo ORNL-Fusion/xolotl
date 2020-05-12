@@ -53,17 +53,9 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
         if (lo1[Species::Xe] == 1 || lo2[Species::Xe] == 1) {
             this->addDissociationReaction(tag, {k, i, j});
             // Also add re-solution
-            this->addReSoReaction(tag, {k, i, j});
+            this->addReSolutionReaction(tag, {k, i, j});
         }
     }
-}
-
-template <typename TTag>
-KOKKOS_INLINE_FUNCTION
-void
-NEReactionGenerator::addSinks(IndexType i, TTag tag) const
-{
-    // Nothing
 }
 
 inline
@@ -71,7 +63,7 @@ ReactionCollection<NEReactionGenerator::Network>
 NEReactionGenerator::getReactionCollection() const
 {
     ReactionCollection<Network> ret(this->getProductionReactions(),
-        this->getDissociationReactions(), this->getReSoReactions());
+        this->getDissociationReactions(), this->getReSolutionReactions());
     return ret;
 }
 }

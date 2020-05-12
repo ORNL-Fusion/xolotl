@@ -1,6 +1,7 @@
 #pragma once
 
 #include <experimental/NETraits.h>
+#include <experimental/ReSolutionReaction.h>
 
 namespace xolotlCore
 {
@@ -36,23 +37,6 @@ public:
         auto prod2 = this->_clusterData.getCluster(this->_products[1]);
         return prod1.getFormationEnergy() + prod2.getFormationEnergy() -
             cl.getFormationEnergy();
-    }
-};
-
-class NESinkReaction :
-    public SinkReaction<NEReactionNetwork, NESinkReaction>
-{
-public:
-    using Superclass =
-        SinkReaction<NEReactionNetwork, NESinkReaction>;
-
-    using Superclass::Superclass;
-
-    KOKKOS_INLINE_FUNCTION
-    double
-    getSinkBias()
-    {
-        return 1.0;
     }
 };
 

@@ -1,6 +1,5 @@
 #pragma once
 
-#include <tuple>
 #include <type_traits>
 
 #include <Kokkos_Core.hpp>
@@ -12,6 +11,7 @@
 #endif
 
 #include <experimental/ReactionNetworkTraits.h>
+#include <experimental/TupleUtility.h>
 
 namespace xolotlCore
 {
@@ -281,25 +281,6 @@ template <typename TReactionTypeList>
 using ReactionSetChain =
     typename ReactionSetChainHelper<TReactionTypeList>::Type;
 
-template <typename TNetwork, typename = VoidType<>>
-struct ReactionTypeListHelper
-{
-    using Traits = ReactionNetworkTraits<TNetwork>;
-    using Type =
-        std::tuple<typename Traits::ProductionReactionType,
-            typename Traits::DissociationReactionType>;
-};
-
-template <typename TNetwork>
-struct ReactionTypeListHelper<TNetwork,
-    VoidType<typename ReactionNetworkTraits<TNetwork>::ReactionTypeList>>
-{
-    using Type = typename ReactionNetworkTraits<TNetwork>::ReactionTypeList;
-};
-
-template <typename TNetwork>
-using ReactionTypeList = typename ReactionTypeListHelper<TNetwork>::Type;
-
 template <typename TNetwork>
 class ReactionCollection
 {
@@ -307,6 +288,8 @@ public:
     using NetworkType = TNetwork;
     using IndexType = detail::ReactionNetworkIndexType;
     using ReactionTypes = ReactionTypeList<NetworkType>;
+    using Types = ReactionNetworkTypes<NetworkType>;
+    using ClusterDataRef = typename Types::ClusterDataRef;
 
     ReactionCollection() = default;
 
@@ -349,13 +332,28 @@ public:
         _numReactions = _chain.getNumberOfReactions();
     }
 
+    void
+    construct(ReactionDataRef reactionData, ClusterDataRef clusterData,
+        Kokkos::View<ClusterSet*> clusterSets)
+    {
+        auto chain = _chain;
+        Kokkos::parallel_for(_numReactions, DEVICE_LAMBDA (const IndexType i) {
+            chain.apply(DEVICE_LAMBDA (auto& reaction) {
+                using ReactionType =
+                    std::remove_reference_t<decltype(reaction)>;
+                reaction =
+                    ReactionType(reactionData, clusterData, i, clusterSets(i));
+            }, i);
+        });
+    }
+
     template <typename F>
     void
     apply(const F& func)
     {
-        auto mixer = _chain;
+        auto chain = _chain;
         Kokkos::parallel_for(_numReactions, DEVICE_LAMBDA (const IndexType i) {
-            mixer.apply(func, i);
+            chain.apply(func, i);
         });
     }
 
@@ -363,10 +361,10 @@ public:
     void
     reduce(const F& func, T& out)
     {
-        auto mixer = _chain;
+        auto chain = _chain;
         Kokkos::parallel_reduce(_numReactions,
                 DEVICE_LAMBDA (const IndexType i, T& local) {
-            mixer.reduce(func, i, local);
+            chain.reduce(func, i, local);
         }, out);
     }
 
@@ -374,88 +372,6 @@ private:
     ReactionSetChain<ReactionTypes> _chain;
     IndexType _numReactions {};
 };
-
-
-
-
-
-
-
-
-
-
-
-// template <typename TTraits>
-// class ReactionCollection
-// {
-// public:
-//     using Traits = TTraits;
-//     using IndexType = detail::ReactionNetworkIndexType;
-//     using ProductionReactionType = typename Traits::ProductionReactionType;
-//     using DissociationReactionType = typename Traits::DissociationReactionType;
-
-//     ReactionCollection() = default;
-
-//     ReactionCollection(Kokkos::View<ProductionReactionType*> prodReactions,
-//             Kokkos::View<DissociationReactionType*> dissReactions)
-//         :
-//         _prodReactions(prodReactions),
-//         _dissReactions(dissReactions),
-//         _numProdReactions(prodReactions.size()),
-//         _numReactions(_numProdReactions + dissReactions.size())
-//     {
-//     }
-
-//     std::uint64_t
-//     getDeviceMemorySize() const noexcept
-//     {
-//         std::uint64_t ret {};
-//         ret += _prodReactions.required_allocation_size(_prodReactions.size());
-//         ret += _dissReactions.required_allocation_size(_dissReactions.size());
-//         return ret;
-//     }
-
-//     template <typename F>
-//     void
-//     apply(const F& func)
-//     {
-//         auto prodReactions = _prodReactions;
-//         auto dissReactions = _dissReactions;
-//         auto numProdReactions = _numProdReactions;
-//         Kokkos::parallel_for(_numReactions, DEVICE_LAMBDA (const IndexType i) {
-//             if (i < numProdReactions) {
-//                 func(prodReactions(i));
-//             }
-//             else {
-//                 func(dissReactions(i - numProdReactions));
-//             }
-//         });
-//     }
-
-//     template <typename F, typename T>
-//     void
-//     reduce(const F& func, T& out)
-//     {
-//         auto prodReactions = _prodReactions;
-//         auto dissReactions = _dissReactions;
-//         auto numProdReactions = _numProdReactions;
-//         Kokkos::parallel_reduce(_numReactions,
-//                 DEVICE_LAMBDA (const IndexType i, T& local) {
-//             if (i < numProdReactions) {
-//                 func(prodReactions(i), local);
-//             }
-//             else {
-//                 func(dissReactions(i - numProdReactions), local);
-//             }
-//         }, out);
-//     }
-
-// private:
-//     Kokkos::View<ProductionReactionType*> _prodReactions;
-//     Kokkos::View<DissociationReactionType*> _dissReactions;
-//     IndexType _numProdReactions;
-//     IndexType _numReactions;
-// };
 }
 }
 }

@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <tuple>
 
 #include <plsm/Subpaving.h>
 
@@ -87,6 +88,25 @@ struct InvalidSpeciesAmount
 {
     static constexpr auto value = plsm::invalid<CompositionAmountType>;
 };
+
+template <typename TNetwork, typename = VoidType<>>
+struct ReactionTypeListHelper
+{
+    using Traits = ReactionNetworkTraits<TNetwork>;
+    using Type =
+        std::tuple<typename Traits::ProductionReactionType,
+            typename Traits::DissociationReactionType>;
+};
+
+template <typename TNetwork>
+struct ReactionTypeListHelper<TNetwork,
+    VoidType<typename ReactionNetworkTraits<TNetwork>::ReactionTypeList>>
+{
+    using Type = typename ReactionNetworkTraits<TNetwork>::ReactionTypeList;
+};
+
+template <typename TNetwork>
+using ReactionTypeList = typename ReactionTypeListHelper<TNetwork>::Type;
 }
 }
 }

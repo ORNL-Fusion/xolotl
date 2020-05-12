@@ -35,8 +35,8 @@ public:
     void
     checkTiles(const IOptions& options)
     {
-        auto maxHe = options.getMaxImpurity() + 1;
-        auto maxV = options.getMaxV() + 1;
+        auto maxHe = static_cast<AmountType>(options.getMaxImpurity() + 1);
+        auto maxV = static_cast<AmountType>(options.getMaxV() + 1);
         auto& tiles = this->getSubpaving().getTiles(plsm::onDevice);
         auto numClusters = tiles.extent(0);
         Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (const IndexType i) {
@@ -86,9 +86,8 @@ private:
 
 namespace detail
 {
-class FeReactionGenerator : public
-    ReactionGenerator<FeReactionNetwork,
-        FeReactionGenerator>
+class FeReactionGenerator :
+    public ReactionGenerator<FeReactionNetwork, FeReactionGenerator>
 {
 public:
     using Network = FeReactionNetwork;
