@@ -65,8 +65,8 @@ class NEReactionGenerator :
     public ReactionGenerator<NEReactionNetwork, NEReactionGenerator>
 {
 public:
-    using Network = NEReactionNetwork;
-    using Subpaving = typename Network::Subpaving;
+    using NetworkType = NEReactionNetwork;
+    using Subpaving = typename NetworkType::Subpaving;
     using Superclass =
         ReactionGenerator<NEReactionNetwork, NEReactionGenerator>;
 
@@ -82,16 +82,16 @@ public:
     void
     addSinks(IndexType i, TTag tag) const;
 
-    ReactionCollection<Network>
+    ReactionCollection<NetworkType>
     getReactionCollection() const;
 };
 
 class NEClusterUpdater
 {
 public:
-    using Network = NEReactionNetwork;
-    using ClusterData = typename Network::ClusterData;
-    using IndexType = typename Network::IndexType;
+    using NetworkType = NEReactionNetwork;
+    using ClusterData = typename NetworkType::ClusterData;
+    using IndexType = typename NetworkType::IndexType;
 
     KOKKOS_INLINE_FUNCTION
     void

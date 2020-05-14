@@ -108,9 +108,9 @@ class FeReactionGenerator :
     public ReactionGenerator<FeReactionNetwork, FeReactionGenerator>
 {
 public:
-    using Network = FeReactionNetwork;
-    using Subpaving = typename Network::Subpaving;
-    using IndexType = typename Network::IndexType;
+    using NetworkType = FeReactionNetwork;
+    using Subpaving = typename NetworkType::Subpaving;
+    using IndexType = typename NetworkType::IndexType;
 
     using Superclass = ReactionGenerator<FeReactionNetwork,
         FeReactionGenerator>;
@@ -127,7 +127,7 @@ public:
     void
     addSinks(IndexType i, TTag tag) const;
 
-    ReactionCollection<Network>
+    ReactionCollection<NetworkType>
     getReactionCollection() const;
 };
 }

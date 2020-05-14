@@ -38,7 +38,7 @@ class DefaultClusterUpdater;
  * Stand-in for C++17 std::void_t
  */
 template <typename...>
-using VoidType = void; 
+using VoidType = void;
 
 template <typename TImpl, typename = VoidType<>>
 struct ClusterUpdaterHelper

@@ -13,13 +13,13 @@ void
 PSIReactionGenerator<TSpeciesEnum>::operator()(IndexType i, IndexType j,
     TTag tag) const
 {
-    using Species = typename Network::Species;
-    using Composition = typename Network::Composition;
-    using AmountType = typename Network::AmountType;
+    using Species = typename NetworkType::Species;
+    using Composition = typename NetworkType::Composition;
+    using AmountType = typename NetworkType::AmountType;
 
-    constexpr auto species = Network::getSpeciesRange();
-    constexpr auto speciesNoI = Network::getSpeciesRangeNoI();
-    constexpr auto invalidIndex = Network::invalidIndex();
+    constexpr auto species = NetworkType::getSpeciesRange();
+    constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
+    constexpr auto invalidIndex = NetworkType::invalidIndex();
 
     auto numClusters = this->getNumberOfClusters();
 
@@ -91,7 +91,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(IndexType i, IndexType j,
     }
 
     // General case
-    constexpr auto numSpeciesNoI = Network::getNumberOfSpeciesNoI();
+    constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
     using BoundsArray =
         Kokkos::Array<Kokkos::pair<AmountType, AmountType>, numSpeciesNoI>;
     plsm::EnumIndexed<BoundsArray, Species> bounds;
@@ -214,10 +214,10 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(IndexType i, IndexType j,
 
 template <typename TSpeciesEnum>
 inline
-ReactionCollection<typename PSIReactionGenerator<TSpeciesEnum>::Network>
+ReactionCollection<typename PSIReactionGenerator<TSpeciesEnum>::NetworkType>
 PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 {
-    ReactionCollection<Network> ret(this->getProductionReactions(),
+    ReactionCollection<NetworkType> ret(this->getProductionReactions(),
         this->getDissociationReactions());
     return ret;
 }

@@ -11,9 +11,9 @@ KOKKOS_INLINE_FUNCTION
 void
 NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
-    using Species = typename Network::Species;
-    using Composition = typename Network::Composition;
-    using AmountType = typename Network::AmountType;
+    using Species = typename NetworkType::Species;
+    using Composition = typename NetworkType::Composition;
+    using AmountType = typename NetworkType::AmountType;
 
     auto numClusters = this->getNumberOfClusters();
 
@@ -59,10 +59,10 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 }
 
 inline
-ReactionCollection<NEReactionGenerator::Network>
+ReactionCollection<NEReactionGenerator::NetworkType>
 NEReactionGenerator::getReactionCollection() const
 {
-    ReactionCollection<Network> ret(this->getProductionReactions(),
+    ReactionCollection<NetworkType> ret(this->getProductionReactions(),
         this->getDissociationReactions(), this->getReSolutionReactions());
     return ret;
 }

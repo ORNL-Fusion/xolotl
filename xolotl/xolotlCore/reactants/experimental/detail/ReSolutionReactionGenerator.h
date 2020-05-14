@@ -13,17 +13,17 @@ class ReSolutionReactionGenerator : public TBase
 {
 public:
     using Superclass = TBase;
-    using Network = typename TBase::Network;
-    using NetworkTraits = ReactionNetworkTraits<Network>;
+    using NetworkType = typename TBase::NetworkType;
+    using NetworkTraits = ReactionNetworkTraits<NetworkType>;
     using ReSolutionReactionType =
         typename NetworkTraits::ReSolutionReactionType;
-    using IndexType = typename Network::IndexType;
+    using IndexType = typename NetworkType::IndexType;
     using IndexView = typename Superclass::IndexView;
     using ClusterSetSubView = typename Superclass::ClusterSetSubView;
     using Count = typename Superclass::Count;
     using Construct = typename Superclass::Construct;
 
-    ReSolutionReactionGenerator(const Network& network)
+    ReSolutionReactionGenerator(const NetworkType& network)
         :
         Superclass(network),
         _clusterReSoReactionCounts("ReSolution Reaction Counts",
@@ -71,8 +71,8 @@ public:
 
         auto id = _reSoCrsRowMap(clusterSet.cluster0);
         for (; !Kokkos::atomic_compare_exchange_strong(
-                    &_reSoCrsClusterSets(id).cluster0, Network::invalidIndex(),
-                    clusterSet.cluster0);
+                    &_reSoCrsClusterSets(id).cluster0,
+                    NetworkType::invalidIndex(), clusterSet.cluster0);
                 ++id)
         {
         }

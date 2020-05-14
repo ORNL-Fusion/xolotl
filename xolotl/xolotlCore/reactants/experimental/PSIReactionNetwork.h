@@ -73,9 +73,9 @@ class PSIReactionGenerator : public
         PSIReactionGenerator<TSpeciesEnum>>
 {
 public:
-    using Network = PSIReactionNetwork<TSpeciesEnum>;
-    using Subpaving = typename Network::Subpaving;
-    using IndexType = typename Network::IndexType;
+    using NetworkType = PSIReactionNetwork<TSpeciesEnum>;
+    using Subpaving = typename NetworkType::Subpaving;
+    using IndexType = typename NetworkType::IndexType;
 
     using Superclass = ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,
         PSIReactionGenerator<TSpeciesEnum>>;
@@ -92,7 +92,7 @@ public:
     void
     addSinks(IndexType i, TTag tag) const;
 
-    ReactionCollection<Network>
+    ReactionCollection<NetworkType>
     getReactionCollection() const;
 };
 }

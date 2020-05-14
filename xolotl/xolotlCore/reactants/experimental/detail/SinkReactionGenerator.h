@@ -13,16 +13,16 @@ class SinkReactionGenerator : public TBase
 {
 public:
     using Superclass = TBase;
-    using Network = typename TBase::Network;
-    using NetworkTraits = ReactionNetworkTraits<Network>;
+    using NetworkType = typename TBase::NetworkType;
+    using NetworkTraits = ReactionNetworkTraits<NetworkType>;
     using SinkReactionType = typename NetworkTraits::SinkReactionType;
-    using IndexType = typename Network::IndexType;
+    using IndexType = typename NetworkType::IndexType;
     using IndexView = typename Superclass::IndexView;
     using ClusterSetSubView = typename Superclass::ClusterSetSubView;
     using Count = typename Superclass::Count;
     using Construct = typename Superclass::Construct;
 
-    SinkReactionGenerator(const Network& network)
+    SinkReactionGenerator(const NetworkType& network)
         :
         Superclass(network),
         _clusterSinkReactionCounts("Sink Reaction Counts",
@@ -70,8 +70,8 @@ public:
 
         auto id = _sinkCrsRowMap(clusterSet.cluster0);
         for (; !Kokkos::atomic_compare_exchange_strong(
-                    &_sinkCrsClusterSets(id).cluster0, Network::invalidIndex(),
-                    clusterSet.cluster0);
+                    &_sinkCrsClusterSets(id).cluster0,
+                    NetworkType::invalidIndex(), clusterSet.cluster0);
                 ++id)
         {
         }
