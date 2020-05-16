@@ -58,6 +58,7 @@ class Reaction
 protected:
     static constexpr auto invalidIndex = detail::InvalidIndex::value;
     static constexpr auto nMomentIds = Props::numSpeciesNoI;
+    static constexpr auto coeffsSingleExtent = Props::numSpeciesNoI + 1;
 
 public:
     using NetworkType = TNetwork;
@@ -70,16 +71,17 @@ public:
     using ConcentrationsView = IReactionNetwork::ConcentrationsView;
     using FluxesView = IReactionNetwork::FluxesView;
     using Connectivity = typename IReactionNetwork::Connectivity;
+    using ReactionDataRef = typename Types::ReactionDataRef;
 
     Reaction() = default;
 
     KOKKOS_INLINE_FUNCTION
-    Reaction(detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
+    Reaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
         IndexType reactionId);
 
     KOKKOS_INLINE_FUNCTION
     void
-    updateData(detail::ReactionDataRef reactionData,
+    updateData(ReactionDataRef reactionData,
         ClusterDataRef clusterData);
 
     KOKKOS_INLINE_FUNCTION
@@ -179,17 +181,17 @@ protected:
 
     //! Reaction rate (k)
     using RateSubView = decltype(
-        std::declval<detail::ReactionDataRef>().getRates(0));
+        std::declval<ReactionDataRef>().getRates(0));
     RateSubView _rate;
 
     //! Reaction widths
     using WidthSubView = decltype(
-        std::declval<detail::ReactionDataRef>().getWidths(0));
+        std::declval<ReactionDataRef>().getWidths(0));
     WidthSubView _widths;
 
     //! Flux coefficients
     using CoefsSubView = decltype(
-        std::declval<detail::ReactionDataRef>().getCoefficients(0));
+        std::declval<ReactionDataRef>().getCoefficients(0));
     CoefsSubView _coefs;
 };
 
@@ -209,19 +211,29 @@ public:
     using Composition = typename Superclass::Composition;
     using Region = typename Superclass::Region;
     using AmountType = typename Superclass::AmountType;
+    using ReactionDataRef = typename Superclass::ReactionDataRef;
 
     ProductionReaction() = default;
 
     KOKKOS_INLINE_FUNCTION
-    ProductionReaction(detail::ReactionDataRef reactionData,
+    ProductionReaction(ReactionDataRef reactionData,
         ClusterDataRef clusterData, IndexType reactionId,
         IndexType cluster0, IndexType cluster1,
         IndexType cluster2 = invalidIndex, IndexType cluster3 = invalidIndex);
 
     KOKKOS_INLINE_FUNCTION
-    ProductionReaction(detail::ReactionDataRef reactionData,
+    ProductionReaction(ReactionDataRef reactionData,
         ClusterDataRef clusterData, IndexType reactionId,
         const detail::ClusterSet& clusterSet);
+
+    static
+    detail::CoefficientsView
+    allocateCoefficientsView(IndexType size)
+    {
+        return detail::CoefficientsView("Production Coefficients", size,
+            Superclass::coeffsSingleExtent, Superclass::coeffsSingleExtent, 4,
+            Superclass::coeffsSingleExtent);
+    }
 
 private:
     KOKKOS_INLINE_FUNCTION
@@ -276,18 +288,28 @@ public:
     using ConcentrationsView = typename Superclass::ConcentrationsView;
     using FluxesView = typename Superclass::FluxesView;
     using AmountType = typename Superclass::AmountType;
+    using ReactionDataRef = typename Superclass::ReactionDataRef;
 
     DissociationReaction() = default;
 
     KOKKOS_INLINE_FUNCTION
-    DissociationReaction(detail::ReactionDataRef reactionData,
+    DissociationReaction(ReactionDataRef reactionData,
         ClusterDataRef clusterData, IndexType reactionId,
         IndexType cluster0, IndexType cluster1, IndexType cluster2);
 
     KOKKOS_INLINE_FUNCTION
-    DissociationReaction(detail::ReactionDataRef reactionData,
+    DissociationReaction(ReactionDataRef reactionData,
         ClusterDataRef clusterData, IndexType reactionId,
         const detail::ClusterSet& clusterSet);
+
+    static
+    detail::CoefficientsView
+    allocateCoefficientsView(IndexType size)
+    {
+        return detail::CoefficientsView("Dissociation Coefficients", size,
+            Superclass::coeffsSingleExtent, 1, 3,
+            Superclass::coeffsSingleExtent);
+    }
 
 private:
     KOKKOS_INLINE_FUNCTION

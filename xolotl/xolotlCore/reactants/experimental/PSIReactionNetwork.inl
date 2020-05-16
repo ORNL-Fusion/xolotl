@@ -217,8 +217,8 @@ inline
 ReactionCollection<typename PSIReactionGenerator<TSpeciesEnum>::NetworkType>
 PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 {
-    ReactionCollection<NetworkType> ret(this->getProductionReactions(),
-        this->getDissociationReactions());
+    ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
+        this->getProductionReactions(), this->getDissociationReactions());
     return ret;
 }
 }

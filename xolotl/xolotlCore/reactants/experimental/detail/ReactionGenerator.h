@@ -53,7 +53,7 @@ public:
     {
     }
 
-    void
+    ReactionCollection<NetworkType>
     generateReactions()
     {
         auto numClusters = _clusterData.numClusters;
@@ -74,7 +74,6 @@ public:
         Kokkos::fence();
 
         setupCrs();
-        setupReactionData();
 
         generator = *(this->asDerived());
 
@@ -90,13 +89,17 @@ public:
         });
         Kokkos::fence();
 
+        //TODO: Should this be done in the ReactionCollection constructor?
+        //      - Constructing all reactions
+        //      - Generating connectivity
         auto reactionCollection = this->asDerived()->getReactionCollection();
-        reactionCollection.construct(_reactionDataRef, _clusterData,
-            _allClusterSets);
+        reactionCollection.constructAll(_clusterData, _allClusterSets);
 
         Kokkos::fence();
 
-        static_cast<TDerived*>(this)->generateConnectivity();
+        generateConnectivity(reactionCollection);
+
+        return reactionCollection;
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -153,16 +156,6 @@ public:
             this->asDerived()->getRowMapAndTotalReactionCount();
         _allClusterSets = ClusterSetView("Cluster Sets", numTotalReactions);
         this->asDerived()->setupCrsClusterSetSubView();
-    }
-
-    void
-    setupReactionData()
-    {
-        _reactionData = detail::ReactionData(_numProdReactions,
-            _numDissReactions, this->asDerived()->getNumberOfSinkReactions(),
-            this->asDerived()->getNumberOfReSolutionReactions(),
-            NetworkType::getNumberOfSpeciesNoI(), _clusterData.gridSize);
-        _reactionDataRef = detail::ReactionDataRef(_reactionData);
     }
 
     IndexType
@@ -236,12 +229,6 @@ public:
         _dissCrsClusterSets(id) = clusterSet;
     }
 
-    detail::ReactionData
-    getReactionData() const
-    {
-        return _reactionData;
-    }
-
     Kokkos::View<ProductionReactionType*>
     getProductionReactions() const
     {
@@ -255,12 +242,10 @@ public:
     }
 
     void
-    generateConnectivity()
+    generateConnectivity(ReactionCollection<NetworkType>& reactionCollection)
     {
         using RowMap = typename Connectivity::row_map_type;
         using Entries = typename Connectivity::entries_type;
-
-        auto reactionCollection = this->asDerived()->getReactionCollection();
 
         Connectivity tmpConn;
         //Count connectivity entries
@@ -339,7 +324,7 @@ public:
         });
         nEntries = connectivity.entries.extent(0);
 
-        this->_reactionData.connectivity = connectivity;
+        reactionCollection.setConnectivity(connectivity);
     }
 
 protected:
@@ -369,8 +354,7 @@ protected:
     Kokkos::View<ProductionReactionType*> _prodReactions;
     Kokkos::View<DissociationReactionType*> _dissReactions;
 
-    detail::ReactionData _reactionData;
-    detail::ReactionDataRef _reactionDataRef;
+    // detail::ReactionData _reactionData;
 };
 
 template <typename TNetwork, typename TReaction,

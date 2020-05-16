@@ -24,7 +24,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     auto map = options.getProcesses();
     setEnableStdReaction(map["reaction"]);
     setEnableReSolution(map["resolution"]);
-    
+
     auto tiles = subpaving.getTiles(plsm::onDevice);
     _numClusters = tiles.extent(0);
     
@@ -161,13 +161,8 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
     _gridSize = gridSize;
     _clusterData.setGridSize(_gridSize);
     _clusterDataMirror.setGridSize(_gridSize);
-    _reactionData.setGridSize(_gridSize);
-
-    auto reactionData = _reactionData;
-    auto clusterData = _clusterData;
-    _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
-        reaction.updateData(reactionData, clusterData);
-    });
+    _reactions.setGridSize(_gridSize);
+    _reactions.updateAll(_clusterData);
     Kokkos::fence();
 }
 
@@ -224,12 +219,12 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
         values(i) = 0.0;
     });
 
-    auto connectivity = _reactionData.connectivity;
+    auto connectivity = _reactions.getConnectivity();
     _reactions.apply(DEVICE_LAMBDA (auto&& reaction) {
         reaction.contributePartialDerivatives(concentrations, values,
             connectivity, gridIndex);
     });
-    
+
     Kokkos::fence();
 }
 
@@ -237,20 +232,7 @@ template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getLargestRate()
 {
-    // Get the extent of the reactions rates view and grid
-    auto reactionRates = _reactionData.rates;
-    const auto& nRates = reactionRates.extent(0);
-    double largestRate = 0.0;
-    // Loop on all the rates to get the maximum
-    using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
-    Kokkos::parallel_reduce(Range2D({0, 0}, {nRates, _gridSize}),
-            KOKKOS_LAMBDA (IndexType i, IndexType j, double &max) {
-        if (reactionRates(i, j) > max) max = reactionRates(i, j);
-    }, Kokkos::Max<double>(largestRate));
-
-    Kokkos::fence();
-
-    return largestRate;
+    return _reactions.getLargestRate();
 }
 
 template <typename TImpl>
@@ -459,10 +441,10 @@ void
 ReactionNetworkWorker<TImpl>::defineReactions()
 {
     auto generator = _nw.asDerived()->getReactionGenerator();
-    generator.generateReactions();
+    _nw._reactions = generator.generateReactions();
 
-    _nw._reactionData = generator.getReactionData();
-    _nw._reactions = generator.getReactionCollection();
+    // _nw._reactionData = generator.getReactionData();
+    // _nw._reactions = generator.getReactionCollection();
 }
 
 template <typename TImpl>
@@ -470,7 +452,7 @@ typename ReactionNetworkWorker<TImpl>::IndexType
 ReactionNetworkWorker<TImpl>::getDiagonalFill(
     typename Network::SparseFillMap& fillMap)
 {
-    auto connectivity = _nw._reactionData.connectivity;
+    auto connectivity = _nw._reactions.getConnectivity();
     auto hConnRowMap = create_mirror_view(connectivity.row_map);
     deep_copy(hConnRowMap, connectivity.row_map);
     auto hConnEntries = create_mirror_view(connectivity.entries);

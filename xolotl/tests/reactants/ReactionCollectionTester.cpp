@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(FeNetwork) {
     Kokkos::View<DissReaction*> dissReactions("diss", 4);
     Kokkos::View<SinkReaction*> sinkReactions("sink", 5);
 
-    auto rColl = ReactionCollection(prodReactions, dissReactions, sinkReactions);
+    auto rColl = ReactionCollection(0, prodReactions, dissReactions, sinkReactions);
 //    rColl.apply(DEVICE_LAMBDA (auto&& reaction) {
 //        //FIXME: Can't use typeid in device code. Use an array of three and
 //        //specialized structs to convert between reaction types and indices

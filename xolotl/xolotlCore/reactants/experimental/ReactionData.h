@@ -5,6 +5,7 @@
 #include <plsm/Utility.h>
 
 #include <experimental/MemorySpace.h>
+#include <experimental/ReactionNetworkTraits.h>
 
 namespace xolotlCore
 {
@@ -12,6 +13,10 @@ namespace experimental
 {
 namespace detail
 {
+using CoefficientsView = Kokkos::View<double*****>;
+using CoefficientsViewUnmanaged =
+    Kokkos::View<double*****, Kokkos::MemoryUnmanaged>;
+
 template <typename TMemSpace = DefaultMemorySpace>
 class ClusterConnectivity :
     public Kokkos::Crs<ReactionNetworkIndexType, TMemSpace>
@@ -138,83 +143,101 @@ private:
     IndexType _avgRowSize {};
 };
 
+
+template <typename TNetwork>
 struct ReactionData
 {
+    using NetworkType = TNetwork;
     using IndexType = ReactionNetworkIndexType;
+    using ReactionTypes = ReactionTypeList<NetworkType>;
+
+    static constexpr std::size_t numReactionTypes =
+        std::tuple_size<ReactionTypes>::value;
+
+    static constexpr std::size_t numSpeciesNoI =
+        NetworkType::getNumberOfSpeciesNoI();
 
     ReactionData() = default;
 
-    ReactionData(IndexType numProductionReactions,
-            IndexType numDissociationReactions, IndexType numSinkReactions,
-            IndexType numReSoReactions, std::size_t numSpeciesNoI,
-            IndexType gridSize)
+    ReactionData(IndexType nReactions, IndexType gridSize,
+            const Kokkos::Array<IndexType, numReactionTypes+1>& rBeginIds)
         :
-        coeffExtent(numSpeciesNoI + 1),
-        numReactions(numProductionReactions + numDissociationReactions + numReSoReactions),
-        numRates(numProductionReactions + numDissociationReactions + numSinkReactions + numReSoReactions),
-        productionCoeffs("Production Coefficients",
-            numProductionReactions, coeffExtent, coeffExtent, 4, coeffExtent),
-        dissociationCoeffs("Dissociation Coefficients",
-            numDissociationReactions, coeffExtent, 1, 3, coeffExtent),
-        resolutionCoeffs("ReSolution Coefficients",
-            numReSoReactions, coeffExtent, 1, 3, coeffExtent),
-        widths("Reaction Rates", numReactions, numSpeciesNoI),
-        rates("Reaction Rates", numRates, gridSize)
+        numReactions(nReactions),
+        widths("Reaction Widths", numReactions, numSpeciesNoI),
+        rates("Reaction Rates", numReactions, gridSize),
+        reactionBeginIndices(rBeginIds)
     {
     }
 
-    void
-    setGridSize(IndexType gridSize) {
-        rates = Kokkos::View<double**>("Reaction Rates", numRates, gridSize);
+    std::uint64_t
+    getDeviceMemorySize() const noexcept
+    {
+        std::uint64_t ret = sizeof(numReactions);
+        ret += sizeof(reactionBeginIndices);
+        ret += widths.required_allocation_size(widths.extent(0),
+            widths.extent(1));
+        ret += rates.required_allocation_size(rates.extent(0), rates.extent(1));
+
+        for (std::size_t r = 0; r < numReactionTypes; ++r) {
+            ret += coeffs[r].required_allocation_size(coeffs[r].extent(0),
+                coeffs[r].extent(1), coeffs[r].extent(2),
+                coeffs[r].extent(3), coeffs[r].extent(4));
+        }
+
+        ret += connectivity.getDeviceMemorySize();
+
+        return ret;
     }
 
-    std::size_t coeffExtent {};
+    void
+    setGridSize(IndexType gridSize)
+    {
+        rates = Kokkos::View<double**>("Reaction Rates", numReactions, gridSize);
+    }
+
     IndexType numReactions {};
-    IndexType numRates {};
-    Kokkos::View<double*****> productionCoeffs;
-    Kokkos::View<double*****> dissociationCoeffs;
-    Kokkos::View<double*****> resolutionCoeffs;
     Kokkos::View<double**> widths;
     Kokkos::View<double**> rates;
+    Kokkos::Array<IndexType, numReactionTypes+1> reactionBeginIndices;
+    Kokkos::Array<CoefficientsView, numReactionTypes> coeffs;
     ClusterConnectivity<> connectivity;
 };
 
+template <typename TNetwork>
 struct ReactionDataRef
 {
+    using NetworkType = TNetwork;
     using IndexType = ReactionNetworkIndexType;
+    using ReactionTypes = ReactionTypeList<NetworkType>;
+
+    static constexpr std::size_t numReactionTypes =
+        std::tuple_size<ReactionTypes>::value;
 
     ReactionDataRef() = default;
 
     KOKKOS_INLINE_FUNCTION
-    ReactionDataRef(const ReactionData& data)
+    ReactionDataRef(const ReactionData<NetworkType>& data)
         :
-        productionCoeffs(data.productionCoeffs),
-        dissociationCoeffs(data.dissociationCoeffs),
-        resolutionCoeffs(data.resolutionCoeffs),
         widths(data.widths),
         rates(data.rates),
+        reactionBeginIndices(data.reactionBeginIndices),
         connectivity(data.connectivity)
     {
+        for (std::size_t r = 0; r < numReactionTypes; ++r) {
+            coeffs[r] = data.coeffs[r];
+        }
     }
 
     KOKKOS_INLINE_FUNCTION
     auto
     getCoefficients(IndexType reactionId)
     {
-        if (reactionId < productionCoeffs.extent(0)) {
-            return Kokkos::subview(productionCoeffs, reactionId, Kokkos::ALL,
-                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-        }
-        else if (reactionId < productionCoeffs.extent(0) + dissociationCoeffs.extent(0)) {
-            // TODO: can we use the same indices for dissociation and re-solution as the coefs are the same?
-            reactionId -= productionCoeffs.extent(0);
-            return Kokkos::subview(dissociationCoeffs, reactionId, Kokkos::ALL,
-                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
-        }
-        else {
-            reactionId -= productionCoeffs.extent(0) + dissociationCoeffs.extent(0);
-            return Kokkos::subview(resolutionCoeffs, reactionId, Kokkos::ALL,
-                Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+        for (std::size_t r = 0; r < numReactionTypes; ++r) {
+            if (reactionId < reactionBeginIndices[r+1]) {
+                return Kokkos::subview(coeffs[r],
+                    reactionId - reactionBeginIndices[r], Kokkos::ALL,
+                    Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+            }
         }
     }
 
@@ -232,11 +255,11 @@ struct ReactionDataRef
         return Kokkos::subview(rates, reactionId, Kokkos::ALL);
     }
 
-    Kokkos::View<double*****, Kokkos::MemoryUnmanaged> productionCoeffs;
-    Kokkos::View<double*****, Kokkos::MemoryUnmanaged> dissociationCoeffs;
-    Kokkos::View<double*****, Kokkos::MemoryUnmanaged> resolutionCoeffs;
     Kokkos::View<double**, Kokkos::MemoryUnmanaged> widths;
     Kokkos::View<double**, Kokkos::MemoryUnmanaged> rates;
+    Kokkos::Array<IndexType, numReactionTypes+1> reactionBeginIndices;
+    Kokkos::Array<CoefficientsViewUnmanaged, numReactionTypes> coeffs;
+    //TODO: Enable unmanaged version of connectivity
     ClusterConnectivity<> connectivity;
 };
 }

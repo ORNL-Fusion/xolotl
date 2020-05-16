@@ -7,7 +7,7 @@ namespace experimental
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
-        detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
+        ReactionDataRef reactionData, ClusterDataRef clusterData,
         IndexType reactionId, IndexType cluster0, IndexType cluster1,
         IndexType cluster2)
     :
@@ -26,7 +26,7 @@ ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
-        detail::ReactionDataRef reactionData, ClusterDataRef clusterData,
+        ReactionDataRef reactionData, ClusterDataRef clusterData,
         IndexType reactionId, const detail::ClusterSet& clusterSet)
     :
     ReSolutionReaction(reactionData, clusterData, reactionId,

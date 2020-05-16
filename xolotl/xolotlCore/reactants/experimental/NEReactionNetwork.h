@@ -64,6 +64,8 @@ namespace detail
 class NEReactionGenerator :
     public ReactionGenerator<NEReactionNetwork, NEReactionGenerator>
 {
+    friend class ReactionGeneratorBase<NEReactionNetwork, NEReactionGenerator>;
+
 public:
     using NetworkType = NEReactionNetwork;
     using Subpaving = typename NetworkType::Subpaving;
@@ -82,6 +84,7 @@ public:
     void
     addSinks(IndexType i, TTag tag) const;
 
+private:
     ReactionCollection<NetworkType>
     getReactionCollection() const;
 };

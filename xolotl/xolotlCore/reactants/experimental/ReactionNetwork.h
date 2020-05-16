@@ -67,7 +67,7 @@ public:
     using ClusterData = typename Types::ClusterData;
     using ClusterDataMirror = typename Types::ClusterDataMirror;
     using ClusterDataRef = typename Types::ClusterDataRef;
-    using ReactionCollection = detail::ReactionCollection<TImpl>;
+    using ReactionCollection = typename Types::ReactionCollection;
 
     template <typename PlsmContext>
     using Cluster = Cluster<TImpl, PlsmContext>;
@@ -169,24 +169,6 @@ public:
             _clusterData.diffusionCoefficient.extent(0),
             _clusterData.diffusionCoefficient.extent(1));
 
-        ret += sizeof(_reactionData.coeffExtent);
-        ret += sizeof(_reactionData.numReactions);
-        ret += _reactionData.productionCoeffs.required_allocation_size(
-            _reactionData.productionCoeffs.extent(0),
-            _reactionData.productionCoeffs.extent(1),
-            _reactionData.productionCoeffs.extent(2),
-            _reactionData.productionCoeffs.extent(3),
-            _reactionData.productionCoeffs.extent(4));
-        ret += _reactionData.dissociationCoeffs.required_allocation_size(
-            _reactionData.dissociationCoeffs.extent(0),
-            _reactionData.dissociationCoeffs.extent(1),
-            _reactionData.dissociationCoeffs.extent(2),
-            _reactionData.dissociationCoeffs.extent(3),
-            _reactionData.dissociationCoeffs.extent(4));
-        ret += _reactionData.rates.required_allocation_size(
-            _reactionData.rates.extent(0), _reactionData.rates.extent(1));
-
-        ret += _reactionData.connectivity.getDeviceMemorySize();
         ret += _reactions.getDeviceMemorySize();
 
         return ret;
@@ -431,8 +413,6 @@ private:
     detail::ReactionNetworkWorker<TImpl> _worker;
 
 protected:
-    detail::ReactionData _reactionData;
-
     ClusterData _clusterData;
 };
 
@@ -449,7 +429,7 @@ struct ReactionNetworkWorker
     using ClusterDataRef = typename Types::ClusterDataRef;
     using IndexType = typename Types::IndexType;
     using AmountType = typename Types::AmountType;
-    using ReactionCollection = detail::ReactionCollection<TImpl>;
+    using ReactionCollection = typename Types::ReactionCollection;
     using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
 
     Network& _nw;

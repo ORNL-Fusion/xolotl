@@ -10,6 +10,7 @@
 #define DEVICE_LAMBDA [=]
 #endif
 
+#include <experimental/ReactionData.h>
 #include <experimental/ReactionNetworkTraits.h>
 #include <experimental/TupleUtility.h>
 
@@ -33,6 +34,12 @@ public:
         _reactions(rView),
         _numReactions(rView.size())
     {
+    }
+
+    void
+    allocateCoefficients(CoefficientsView& coeffs) const
+    {
+        coeffs = ReactionType::allocateCoefficientsView(_numReactions);
     }
 
     std::uint64_t
@@ -81,10 +88,10 @@ private:
     IndexType _numReactions {};
 };
 
-template <typename... TReactions>
+template <std::size_t NumReactionTypes, typename... TReactions>
 class ReactionSetMixinChain
 {
-    template <typename...>
+    template <std::size_t, typename...>
     friend class ReactionSetMixinChain;
 
 public:
@@ -104,6 +111,12 @@ public:
     }
 
     void
+    allocateCoefficients(Kokkos::Array<CoefficientsView, NumReactionTypes>&)
+        const
+    {
+    }
+
+    void
     getView() const
     {
     }
@@ -118,6 +131,13 @@ public:
     getNumberOfReactions() const noexcept
     {
         return 0;
+    }
+
+    void
+    getReactionBeginIndices(Kokkos::Array<IndexType, NumReactionTypes+1>& ids)
+        const
+    {
+        ids[NumReactionTypes] = _indexBegin;
     }
 
     template <typename F>
@@ -146,22 +166,34 @@ private:
     IndexType _indexBegin {};
 };
 
-template <typename TReaction, typename... TOtherReactions>
-class ReactionSetMixinChain<TReaction, TOtherReactions...> :
-    public ReactionSet<TReaction>, ReactionSetMixinChain<TOtherReactions...>
+template <std::size_t NumReactionTypes, typename TReaction,
+    typename... TOtherReactions>
+class ReactionSetMixinChain<NumReactionTypes, TReaction, TOtherReactions...> :
+    public
+        ReactionSet<TReaction>,
+        ReactionSetMixinChain<NumReactionTypes, TOtherReactions...>
 {
-    template <typename...>
+    template <std::size_t, typename...>
     friend class ReactionSetMixinChain;
 
 public:
     using IndexType = ReactionNetworkIndexType;
     using Head = ReactionSet<TReaction>;
-    using Tail = ReactionSetMixinChain<TOtherReactions...>;
+    using Tail = ReactionSetMixinChain<NumReactionTypes, TOtherReactions...>;
 
+private:
+    static constexpr std::size_t
+    getReactionTypeIndex()
+    {
+        return NumReactionTypes - (sizeof...(TOtherReactions) + 1);
+    }
+
+public:
     ReactionSetMixinChain() = default;
 
     template <typename THeadView, typename... TTailViews>
-    ReactionSetMixinChain(IndexType indexBegin, THeadView view, TTailViews... views)
+    ReactionSetMixinChain(IndexType indexBegin, THeadView view,
+            TTailViews... views)
         :
         Head(view),
         Tail(indexBegin + view.size(), views...),
@@ -220,6 +252,14 @@ public:
         Tail::setView(view);
     }
 
+    void
+    allocateCoefficients(
+        Kokkos::Array<CoefficientsView, NumReactionTypes>& coeffs) const
+    {
+        Head::allocateCoefficients(coeffs[getReactionTypeIndex()]);
+        Tail::allocateCoefficients(coeffs);
+    }
+
     std::uint64_t
     getDeviceMemorySize() const noexcept
     {
@@ -230,6 +270,20 @@ public:
     getNumberOfReactions() const noexcept
     {
         return Head::getNumberOfReactions() + Tail::getNumberOfReactions();
+    }
+
+    IndexType
+    getNumberOfRates() const noexcept
+    {
+        return Head::getNumberOfRates() + Tail::getNumberOfRates();
+    }
+
+    void
+    getReactionBeginIndices(Kokkos::Array<IndexType, NumReactionTypes+1>& ids)
+        const
+    {
+        ids[getReactionTypeIndex()] = _indexBegin;
+        Tail::getReactionBeginIndices(ids);
     }
 
     template <typename F>
@@ -276,7 +330,7 @@ struct ReactionSetChainHelper;
 template <typename... TReactions>
 struct ReactionSetChainHelper<std::tuple<TReactions...>>
 {
-    using Type = ReactionSetMixinChain<TReactions...>;
+    using Type = ReactionSetMixinChain<sizeof...(TReactions), TReactions...>;
 };
 
 template <typename TReactionTypeList>
@@ -293,30 +347,60 @@ public:
     using Types = ReactionNetworkTypes<NetworkType>;
     using ClusterDataRef = typename Types::ClusterDataRef;
 
+private:
+    static constexpr std::size_t numReactionTypes =
+        std::tuple_size<ReactionTypes>::value;
+
+    static constexpr std::size_t numSpeciesNoI =
+        NetworkType::getNumberOfSpeciesNoI();
+
+public:
     ReactionCollection() = default;
 
     template <typename... TViews>
-    ReactionCollection(TViews... views)
+    ReactionCollection(IndexType gridSize, TViews... views)
         :
         _chain(views...),
-        _numReactions(_chain.getNumberOfReactions())
+        _data(_chain.getNumberOfReactions(), gridSize,
+            getReactionBeginIndices())
     {
-        static_assert(
-            sizeof...(TViews) == std::tuple_size<ReactionTypes>::value,
+        static_assert(sizeof...(TViews) == numReactionTypes,
             "Construction from views requires the number of views to match the "
             "number of reaction types in the ReactionCollection");
+
+        _chain.allocateCoefficients(_data.coeffs);
+    }
+
+    void
+    setGridSize(IndexType gridSize)
+    {
+        _data.setGridSize(gridSize);
+    }
+
+    const ClusterConnectivity<>&
+    getConnectivity() const
+    {
+        return _data.connectivity;
+    }
+
+    void
+    setConnectivity(const ClusterConnectivity<>& connectivity)
+    {
+        _data.connectivity = connectivity;
     }
 
     std::uint64_t
     getDeviceMemorySize() const noexcept
     {
-        return _chain.getDeviceMemorySize();
+        std::uint64_t ret = _chain.getDeviceMemorySize();
+        ret += _data.getDeviceMemorySize();
+        return ret;
     }
 
     IndexType
     getNumberOfReactions() const noexcept
     {
-        return _numReactions;
+        return _data.numReactions;
     }
 
     template <typename TReaction>
@@ -331,15 +415,17 @@ public:
     setView(Kokkos::View<TReaction*> view)
     {
         _chain.setView(view);
-        _numReactions = _chain.getNumberOfReactions();
+        _data.numReactions = _chain.getNumberOfReactions();
     }
 
     void
-    construct(ReactionDataRef reactionData, ClusterDataRef clusterData,
+    constructAll(ClusterDataRef clusterData,
         Kokkos::View<ClusterSet*> clusterSets)
     {
         auto chain = _chain;
-        Kokkos::parallel_for(_numReactions, DEVICE_LAMBDA (const IndexType i) {
+        auto reactionData = ReactionDataRef<NetworkType>(_data);
+        Kokkos::parallel_for(_data.numReactions,
+                DEVICE_LAMBDA (const IndexType i) {
             chain.apply(DEVICE_LAMBDA (auto& reaction) {
                 using ReactionType =
                     std::remove_reference_t<decltype(reaction)>;
@@ -349,12 +435,40 @@ public:
         });
     }
 
+    void
+    updateAll(ClusterDataRef clusterData)
+    {
+        auto reactionData = ReactionDataRef<NetworkType>(_data);
+        apply(DEVICE_LAMBDA (auto&& reaction) {
+            reaction.updateData(reactionData, clusterData);
+        });
+    }
+
+    double
+    getLargestRate() const
+    {
+        using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
+        double largestRate = 0.0;
+        auto rates = _data.rates;
+        auto nRates = rates.extent(0);
+        auto gridSize = rates.extent(1);
+        Kokkos::parallel_reduce(Range2D({0, 0}, {nRates, gridSize}),
+                KOKKOS_LAMBDA (const IndexType i, const IndexType j,
+                    double& max) {
+            if (rates(i, j) > max) {
+                max = rates(i, j);
+            }
+        }, Kokkos::Max<double>(largestRate));
+        Kokkos::fence();
+        return largestRate;
+    }
+
     template <typename F>
     void
     apply(const F& func)
     {
         auto chain = _chain;
-        Kokkos::parallel_for(_numReactions, DEVICE_LAMBDA (const IndexType i) {
+        Kokkos::parallel_for(_data.numReactions, DEVICE_LAMBDA (const IndexType i) {
             chain.apply(func, i);
         });
     }
@@ -364,15 +478,24 @@ public:
     reduce(const F& func, T& out)
     {
         auto chain = _chain;
-        Kokkos::parallel_reduce(_numReactions,
+        Kokkos::parallel_reduce(_data.numReactions,
                 DEVICE_LAMBDA (const IndexType i, T& local) {
             chain.reduce(func, i, local);
         }, out);
     }
 
 private:
+    Kokkos::Array<IndexType, numReactionTypes+1>
+    getReactionBeginIndices() const
+    {
+        Kokkos::Array<IndexType, numReactionTypes+1> ret;
+        _chain.getReactionBeginIndices(ret);
+        return ret;
+    }
+
+private:
     ReactionSetChain<ReactionTypes> _chain;
-    IndexType _numReactions {};
+    ReactionData<NetworkType> _data;
 };
 }
 }

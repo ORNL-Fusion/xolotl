@@ -107,6 +107,8 @@ namespace detail
 class FeReactionGenerator :
     public ReactionGenerator<FeReactionNetwork, FeReactionGenerator>
 {
+    friend class ReactionGeneratorBase<FeReactionNetwork, FeReactionGenerator>;
+
 public:
     using NetworkType = FeReactionNetwork;
     using Subpaving = typename NetworkType::Subpaving;
@@ -127,6 +129,7 @@ public:
     void
     addSinks(IndexType i, TTag tag) const;
 
+private:
     ReactionCollection<NetworkType>
     getReactionCollection() const;
 };

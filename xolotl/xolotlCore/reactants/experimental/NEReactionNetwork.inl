@@ -62,8 +62,9 @@ inline
 ReactionCollection<NEReactionGenerator::NetworkType>
 NEReactionGenerator::getReactionCollection() const
 {
-    ReactionCollection<NetworkType> ret(this->getProductionReactions(),
-        this->getDissociationReactions(), this->getReSolutionReactions());
+    ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
+        this->getProductionReactions(), this->getDissociationReactions(),
+        this->getReSolutionReactions());
     return ret;
 }
 }

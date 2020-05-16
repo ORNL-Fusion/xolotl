@@ -72,6 +72,9 @@ class PSIReactionGenerator : public
     ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,
         PSIReactionGenerator<TSpeciesEnum>>
 {
+    friend class ReactionGeneratorBase<PSIReactionNetwork<TSpeciesEnum>,
+        PSIReactionGenerator<TSpeciesEnum>>;
+
 public:
     using NetworkType = PSIReactionNetwork<TSpeciesEnum>;
     using Subpaving = typename NetworkType::Subpaving;
@@ -92,6 +95,7 @@ public:
     void
     addSinks(IndexType i, TTag tag) const;
 
+private:
     ReactionCollection<NetworkType>
     getReactionCollection() const;
 };

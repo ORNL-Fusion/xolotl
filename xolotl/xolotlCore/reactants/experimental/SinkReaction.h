@@ -20,11 +20,12 @@ public:
     using ConcentrationsView = typename Superclass::ConcentrationsView;
     using FluxesView = typename Superclass::FluxesView;
     using AmountType = typename Superclass::AmountType;
+    using ReactionDataRef = typename Superclass::ReactionDataRef;
 
     SinkReaction() = default;
 
     KOKKOS_INLINE_FUNCTION
-    SinkReaction(detail::ReactionDataRef reactionData,
+    SinkReaction(ReactionDataRef reactionData,
             ClusterDataRef clusterData, IndexType reactionId,
             IndexType cluster0)
         :
@@ -35,12 +36,19 @@ public:
     }
 
     KOKKOS_INLINE_FUNCTION
-    SinkReaction(detail::ReactionDataRef reactionData,
+    SinkReaction(ReactionDataRef reactionData,
             ClusterDataRef clusterData, IndexType reactionId,
             const detail::ClusterSet& clusterSet)
         :
         SinkReaction(reactionData, clusterData, reactionId, clusterSet.cluster0)
     {
+    }
+
+    static
+    detail::CoefficientsView
+    allocateCoefficientsView(IndexType)
+    {
+        return detail::CoefficientsView();
     }
 
 private:

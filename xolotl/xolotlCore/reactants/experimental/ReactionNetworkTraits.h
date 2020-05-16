@@ -6,14 +6,12 @@
 
 #include <plsm/Subpaving.h>
 
-#include <experimental/ClusterData.h>
 #include <experimental/SpeciesEnumSequence.h>
 
 namespace xolotlCore
 {
 namespace experimental
 {
-
 template <typename TImpl>
 struct ReactionNetworkTraits
 {
@@ -31,8 +29,14 @@ class ClusterData;
 template <typename TNetwork, typename PlsmContext>
 class ClusterDataRef;
 
-template <typename TImpl>
+template <typename TNetwork>
+struct ReactionDataRef;
+
+template <typename TNetwork>
 class DefaultClusterUpdater;
+
+template <typename TNetwork>
+class ReactionCollection;
 
 /*!
  * Stand-in for C++17 std::void_t
@@ -67,6 +71,8 @@ struct ReactionNetworkTypes
     using ClusterDataMirror = detail::ClusterData<TImpl, plsm::OnHost>;
     using ClusterDataRef = detail::ClusterDataRef<TImpl, plsm::OnDevice>;
     using ClusterUpdater = typename ClusterUpdaterHelper<TImpl>::Type;
+    using ReactionCollection = detail::ReactionCollection<TImpl>;
+    using ReactionDataRef = typename detail::ReactionDataRef<TImpl>;
 };
 
 template <typename TImpl>

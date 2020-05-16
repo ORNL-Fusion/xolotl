@@ -18,18 +18,28 @@ public:
     using ConcentrationsView = typename Superclass::ConcentrationsView;
     using FluxesView = typename Superclass::FluxesView;
     using AmountType = typename Superclass::AmountType;
+    using ReactionDataRef = typename Superclass::ReactionDataRef;
 
     ReSolutionReaction() = default;
 
     KOKKOS_INLINE_FUNCTION
-    ReSolutionReaction(detail::ReactionDataRef reactionData,
+    ReSolutionReaction(ReactionDataRef reactionData,
         ClusterDataRef clusterData, IndexType reactionId,
         IndexType cluster0, IndexType cluster1, IndexType cluster2);
 
     KOKKOS_INLINE_FUNCTION
-    ReSolutionReaction(detail::ReactionDataRef reactionData,
+    ReSolutionReaction(ReactionDataRef reactionData,
         ClusterDataRef clusterData, IndexType reactionId,
         const detail::ClusterSet& clusterSet);
+
+    static
+    detail::CoefficientsView
+    allocateCoefficientsView(IndexType size)
+    {
+        return detail::CoefficientsView("ReSolution Coefficients", size,
+            Superclass::coeffsSingleExtent, 1, 3,
+            Superclass::coeffsSingleExtent);
+    }
 
 private:
     KOKKOS_INLINE_FUNCTION

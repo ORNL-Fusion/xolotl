@@ -178,8 +178,9 @@ inline
 ReactionCollection<FeReactionGenerator::NetworkType>
 FeReactionGenerator::getReactionCollection() const
 {
-    ReactionCollection<NetworkType> ret(this->getProductionReactions(),
-        this->getDissociationReactions(), this->getSinkReactions());
+    ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
+        this->getProductionReactions(), this->getDissociationReactions(),
+        this->getSinkReactions());
     return ret;
 }
 }
