@@ -28,7 +28,7 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver0DHandler(NetworkType& _network) :
+	PetscSolver0DHandler(NetworkType &_network) :
 			PetscSolverHandler(
 					*(std::make_shared<xolotlCore::NEClusterReactionNetwork>(
 							std::make_shared<xolotlPerf::DummyHandlerRegistry>())),

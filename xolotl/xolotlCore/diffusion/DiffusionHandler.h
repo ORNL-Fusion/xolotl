@@ -18,10 +18,14 @@ protected:
 	//! Collection of diffusing clusters.
 	std::vector<std::size_t> diffusingClusters;
 
+	//! Migration energy threshold
+	double migrationThreshold;
+
 public:
 
 	//! The Constructor
-	DiffusionHandler() {
+	DiffusionHandler(double threshold) :
+			migrationThreshold(threshold) {
 	}
 
 	//! The Destructor
@@ -37,22 +41,23 @@ public:
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for diffusing clusters.
 	 */
-	virtual void initializeOFill(const experimental::IReactionNetwork& network,
-			experimental::IReactionNetwork::SparseFillMap& ofillMap) override {
+	virtual void initializeOFill(const experimental::IReactionNetwork &network,
+			experimental::IReactionNetwork::SparseFillMap &ofillMap) override {
 
 		// Clear the index vector
 		diffusingClusters.clear();
 
 		// Consider each cluster
 		for (std::size_t i = 0; i < network.getNumClusters(); i++) {
-
 			auto cluster = network.getClusterCommon(i);
 
-			// Get its diffusion coefficient
+			// Get its diffusion factor and migration energy
 			double diffFactor = cluster.getDiffusionFactor();
+			double migration = cluster.getMigrationEnergy();
 
 			// Don't do anything if the diffusion factor is 0.0
-			if (xolotlCore::equal(diffFactor, 0.0))
+			if (xolotlCore::equal(diffFactor, 0.0)
+					|| migration > migrationThreshold)
 				continue;
 
 			// Note that cluster is diffusing.

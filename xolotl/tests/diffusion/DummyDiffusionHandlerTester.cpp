@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	const int dof = network.getDOF();
 
 	// Create the diffusion handler
-	DummyDiffusionHandler diffusionHandler;
+	DummyDiffusionHandler diffusionHandler(opts.getMigrationThreshold());
 
 	// Create ofill
 	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;

@@ -307,6 +307,7 @@ void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 
 	// Variable for the loop on reactants
 	int startingIdx = 0;
+
 	// Update the column in the Jacobian that represents each DOF
 	for (int i = 0; i < dof; i++) {
 		// Set grid coordinate and component number for the row

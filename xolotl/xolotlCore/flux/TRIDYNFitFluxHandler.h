@@ -129,7 +129,8 @@ public:
 			// And start looping on the lines
 			int index = 0;
 			while (tokens.size() > 0) {
-				NetworkType::Composition comp = NetworkType::Composition::zero();
+				NetworkType::Composition comp =
+						NetworkType::Composition::zero();
 
 				// Read the cluster type
 				NetworkType::Species clusterSpecies;

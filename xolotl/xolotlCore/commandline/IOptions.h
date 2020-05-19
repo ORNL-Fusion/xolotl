@@ -30,7 +30,7 @@ public:
 	 *
 	 * @param argv Vector of argument strings
 	 */
-	virtual void readParams(int argc, char* argv[]) = 0;
+	virtual void readParams(int argc, char *argv[]) = 0;
 
 	/**
 	 * Should the program run after parsing the parameter file?
@@ -480,6 +480,13 @@ public:
 	 * @return The number of xenon per fission
 	 */
 	virtual double getFissionYield() const = 0;
+
+	/**
+	 * Obtain the value of the migration energy threshold for effective diffusivity.
+	 *
+	 * @return The value of the threshold
+	 */
+	virtual double getMigrationThreshold() const = 0;
 
 };
 //end class IOptions
