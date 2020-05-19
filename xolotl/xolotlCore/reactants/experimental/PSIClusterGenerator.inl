@@ -337,7 +337,7 @@ template <typename PlsmContext>
 KOKKOS_INLINE_FUNCTION
 double
 PSIClusterGenerator<PSIFullSpeciesList>::getDiffusionFactor(
-    const Cluster<PlsmContext>& cluster) const noexcept
+    const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
     // I diffusion factors in nm^2/s
     constexpr Kokkos::Array<double, 6> iDiffusion = {

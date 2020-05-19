@@ -79,7 +79,7 @@ public:
     template <typename PlsmContext>
     KOKKOS_INLINE_FUNCTION
     double
-    getDiffusionFactor(const Cluster<PlsmContext>& cluster) const noexcept;
+    getDiffusionFactor(const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept;
 
     template <typename PlsmContext>
     KOKKOS_INLINE_FUNCTION

@@ -150,7 +150,7 @@ template <typename PlsmContext>
 KOKKOS_INLINE_FUNCTION
 double
 FeClusterGenerator::getDiffusionFactor(
-    const Cluster<PlsmContext>& cluster) const noexcept
+    const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
     // I diffusion factors in nm^2/s
     constexpr double iOneDiffusionFactor = 1.0e+11;

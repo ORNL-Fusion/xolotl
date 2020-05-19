@@ -3,8 +3,7 @@
 
 #include <memory>
 #include "IReactionHandlerFactory.h"
-#include <AlloyClusterNetworkLoader.h>
-#include <AlloyClusterReactionNetwork.h>
+#include <experimental/AlloyReactionNetwork.h>
 
 namespace xolotlFactory {
 
@@ -14,11 +13,8 @@ namespace xolotlFactory {
 class AlloyReactionHandlerFactory: public IReactionHandlerFactory {
 protected:
 
-	//! The network loader handler
-	std::shared_ptr<xolotlCore::INetworkLoader> theNetworkLoaderHandler;
-
 	//! The network handler
-	std::shared_ptr<xolotlCore::IReactionNetwork> theNetworkHandler;
+	std::unique_ptr<xolotlCore::experimental::IReactionNetwork> theNetworkHandler;
 
 public:
 
@@ -46,40 +42,33 @@ public:
 		int procId;
 		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
-		// Create a AlloyClusterNetworkLoader
-		auto tempNetworkLoader = std::make_shared<
-				xolotlCore::AlloyClusterNetworkLoader>(registry);
-		// Give the networkFilename to the network loader
-		tempNetworkLoader->setFilename(options.getNetworkFilename());
-		// Set the options for the grouping scheme
-		tempNetworkLoader->setMin(options.getGroupingMin());
-		tempNetworkLoader->setWidth(options.getGroupingWidthA());
-		theNetworkLoaderHandler = tempNetworkLoader;
+		using NetworkType =
+		xolotlCore::experimental::AlloyReactionNetwork;
 
-		// Check if we want dummy reactions
-		auto map = options.getProcesses();
-		if (!map["reaction"])
-			theNetworkLoaderHandler->setDummyReactions();
-		// Load the network
-		if (options.useHDF5())
-			theNetworkHandler = theNetworkLoaderHandler->load(options);
-		else
-			theNetworkHandler = theNetworkLoaderHandler->generate(options);
+		// Get the boundaries from the options
+		NetworkType::AmountType maxV = options.getMaxV();
+		NetworkType::AmountType maxI = options.getMaxI();
+		NetworkType::AmountType maxSize = options.getMaxImpurity();
+		NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
+		// Take care of the case with no grouping
+		if (options.getGroupingMin() > maxSize) {
+			groupingWidth = maxSize + 1;
+		}
+
+		std::unique_ptr<NetworkType> rNetwork(
+				new NetworkType( { maxV, maxSize, maxSize, maxI, maxSize,
+						maxSize }, { { maxV + 1, groupingWidth,
+						groupingWidth, maxI + 1, groupingWidth, groupingWidth } }, 1,
+						options));
+		rNetwork->syncClusterDataOnHost();
+		rNetwork->getSubpaving().syncZones(plsm::onHost);
+		theNetworkHandler = std::move(rNetwork);
 
 		if (procId == 0) {
 			std::cout << "\nFactory Message: "
 					<< "Master loaded network of size "
-					<< theNetworkHandler->size() << "." << std::endl;
+					<< theNetworkHandler->getDOF() << "." << std::endl;
 		}
-	}
-
-	/**
-	 * Return the network loader.
-	 *
-	 * @return The network loader.
-	 */
-	std::shared_ptr<xolotlCore::INetworkLoader> getNetworkLoaderHandler() const {
-		return theNetworkLoaderHandler;
 	}
 
 	/**
@@ -87,7 +76,7 @@ public:
 	 *
 	 * @return The network.
 	 */
-	xolotlCore::IReactionNetwork& getNetworkHandler() const {
+	xolotlCore::experimental::IReactionNetwork& getNetworkHandler() const {
 		return *theNetworkHandler;
 	}
 

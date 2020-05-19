@@ -33,7 +33,12 @@ inline const char* toString(PSIFullSpeciesList specie) {
 }
 
 template <>
-struct HasInterstitial<PSIFullSpeciesList> : std::true_type
+struct NumberOfInterstitialSpecies<PSIFullSpeciesList> : std::integral_constant<std::size_t,1>
+{
+};
+
+template <>
+struct NumberOfVacancySpecies<PSIFullSpeciesList> : std::integral_constant<std::size_t,1>
 {
 };
 

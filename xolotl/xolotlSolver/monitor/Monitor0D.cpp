@@ -20,6 +20,7 @@
 #include <experimental/NEReactionNetwork.h>
 #include <experimental/PSIReactionNetwork.h>
 #include <experimental/FeReactionNetwork.h>
+#include <experimental/AlloyReactionNetwork.h>
 
 namespace xolotlSolver {
 
@@ -258,217 +259,129 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
-//	// Get the solver handler
-//	auto& solverHandler = PetscSolver::getSolverHandler();
-//
-//	// Get the physical grid and its length
-//	auto grid = solverHandler.getXGrid();
-//	int xSize = grid.size();
-//
-//	// Get the position of the surface
-//	int surfacePos = solverHandler.getSurfacePosition();
-//
-//	// Get the da from ts
-//	DM da;
-//	ierr = TSGetDM(ts, &da);
-//	CHKERRQ(ierr);
-//
-//	// Get the array of concentration
-//	PetscReal **solutionArray;
-//	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-//	CHKERRQ(ierr);
-//
-//	// Get the network
-//	auto& network = solverHandler.getNetwork();
-//
-//	// Get degrees of freedom
-//	auto dof = network.getDOF();
-//
-//	// Initial declarations for the density and diameter
-//	double iDensity = 0.0, vDensity = 0.0, voidDensity = 0.0,
-//			frankDensity = 0.0, faultedDensity = 0.0, perfectDensity = 0.0,
-//			voidPartialDensity = 0.0, frankPartialDensity = 0.0,
-//			faultedPartialDensity = 0.0, perfectPartialDensity = 0.0,
-//			iDiameter = 0.0, vDiameter = 0.0, voidDiameter = 0.0,
-//			frankDiameter = 0.0, faultedDiameter = 0.0, perfectDiameter = 0.0,
-//			voidPartialDiameter = 0.0, frankPartialDiameter = 0.0,
-//			faultedPartialDiameter = 0.0, perfectPartialDiameter = 0.0;
-//
-//	// Get the minimum size for the loop densities and diameters
-//	auto minSizes = solverHandler.getMinSizes();
-//
-//	// Declare the pointer for the concentrations at a specific grid point
-//	PetscReal *gridPointSolution;
-//
-//	// Get the pointer to the beginning of the solution data for this grid point
-//	gridPointSolution = solutionArray[0];
-//
-//	// Update the concentration in the network
-//	network.updateConcentrationsFromArray(gridPointSolution);
-//
-//	// Loop on I
-//	for (auto const& iMapItem : network.getAll(ReactantType::I)) {
-//		// Get the cluster
-//		auto const& cluster = *(iMapItem.second);
-//		iDensity += gridPointSolution[cluster.getId() - 1];
-//		iDiameter += gridPointSolution[cluster.getId() - 1]
-//				* cluster.getReactionRadius() * 2.0;
-//	}
-//
-//	// Loop on V
-//	for (auto const& vMapItem : network.getAll(ReactantType::V)) {
-//		// Get the cluster
-//		auto const& cluster = *(vMapItem.second);
-//		vDensity += gridPointSolution[cluster.getId() - 1];
-//		vDiameter += gridPointSolution[cluster.getId() - 1]
-//				* cluster.getReactionRadius() * 2.0;
-//	}
-//
-//	// Loop on Void
-//	for (auto const& voidMapItem : network.getAll(ReactantType::Void)) {
-//		// Get the cluster
-//		auto const& cluster = *(voidMapItem.second);
-//		voidDensity += gridPointSolution[cluster.getId() - 1];
-//		voidDiameter += gridPointSolution[cluster.getId() - 1]
-//				* cluster.getReactionRadius() * 2.0;
-//		if (cluster.getSize() >= minSizes[0]) {
-//			voidPartialDensity += gridPointSolution[cluster.getId() - 1];
-//			voidPartialDiameter += gridPointSolution[cluster.getId() - 1]
-//					* cluster.getReactionRadius() * 2.0;
-//		}
-//	}
-//	for (auto const& voidMapItem : network.getAll(ReactantType::VoidSuper)) {
-//		// Get the cluster
-//		auto const& cluster =
-//				static_cast<AlloySuperCluster&>(*(voidMapItem.second));
-//		voidDensity += cluster.getTotalConcentration();
-//		voidDiameter += cluster.getTotalConcentration()
-//				* cluster.getReactionRadius() * 2.0;
-//		if (cluster.getSize() >= minSizes[0]) {
-//			voidPartialDensity += cluster.getTotalConcentration();
-//			voidPartialDiameter += cluster.getTotalConcentration()
-//					* cluster.getReactionRadius() * 2.0;
-//		}
-//	}
-//
-//	// Loop on Faulted
-//	for (auto const& faultedMapItem : network.getAll(ReactantType::Faulted)) {
-//		// Get the cluster
-//		auto const& cluster = *(faultedMapItem.second);
-//		faultedDensity += gridPointSolution[cluster.getId() - 1];
-//		faultedDiameter += gridPointSolution[cluster.getId() - 1]
-//				* cluster.getReactionRadius() * 2.0;
-//		if (cluster.getSize() >= minSizes[1]) {
-//			faultedPartialDensity += gridPointSolution[cluster.getId() - 1];
-//			faultedPartialDiameter += gridPointSolution[cluster.getId() - 1]
-//					* cluster.getReactionRadius() * 2.0;
-//		}
-//	}
-//	for (auto const& faultedMapItem : network.getAll(ReactantType::FaultedSuper)) {
-//		// Get the cluster
-//		auto const& cluster =
-//				static_cast<AlloySuperCluster&>(*(faultedMapItem.second));
-//		faultedDensity += cluster.getTotalConcentration();
-//		faultedDiameter += cluster.getTotalConcentration()
-//				* cluster.getReactionRadius() * 2.0;
-//		if (cluster.getSize() >= minSizes[1]) {
-//			faultedPartialDensity += cluster.getTotalConcentration();
-//			faultedPartialDiameter += cluster.getTotalConcentration()
-//					* cluster.getReactionRadius() * 2.0;
-//		}
-//	}
-//
-//	// Loop on Perfect
-//	for (auto const& perfectMapItem : network.getAll(ReactantType::Perfect)) {
-//		// Get the cluster
-//		auto const& cluster = *(perfectMapItem.second);
-//		perfectDensity += gridPointSolution[cluster.getId() - 1];
-//		perfectDiameter += gridPointSolution[cluster.getId() - 1]
-//				* cluster.getReactionRadius() * 2.0;
-//		if (cluster.getSize() >= minSizes[2]) {
-//			perfectPartialDensity += gridPointSolution[cluster.getId() - 1];
-//			perfectPartialDiameter += gridPointSolution[cluster.getId() - 1]
-//					* cluster.getReactionRadius() * 2.0;
-//		}
-//	}
-//	for (auto const& perfectMapItem : network.getAll(ReactantType::PerfectSuper)) {
-//		// Get the cluster
-//		auto const& cluster =
-//				static_cast<AlloySuperCluster&>(*(perfectMapItem.second));
-//		perfectDensity += cluster.getTotalConcentration();
-//		perfectDiameter += cluster.getTotalConcentration()
-//				* cluster.getReactionRadius() * 2.0;
-//		if (cluster.getSize() >= minSizes[2]) {
-//			perfectPartialDensity += cluster.getTotalConcentration();
-//			perfectPartialDiameter += cluster.getTotalConcentration()
-//					* cluster.getReactionRadius() * 2.0;
-//		}
-//	}
-//
-//	// Loop on Frank
-//	for (auto const& frankMapItem : network.getAll(ReactantType::Frank)) {
-//		// Get the cluster
-//		auto const& cluster = *(frankMapItem.second);
-//		frankDensity += gridPointSolution[cluster.getId() - 1];
-//		frankDiameter += gridPointSolution[cluster.getId() - 1]
-//				* cluster.getReactionRadius() * 2.0;
-//		if (cluster.getSize() >= minSizes[3]) {
-//			frankPartialDensity += gridPointSolution[cluster.getId() - 1];
-//			frankPartialDiameter += gridPointSolution[cluster.getId() - 1]
-//					* cluster.getReactionRadius() * 2.0;
-//		}
-//	}
-//	for (auto const& frankMapItem : network.getAll(ReactantType::FrankSuper)) {
-//		// Get the cluster
-//		auto const& cluster =
-//				static_cast<AlloySuperCluster&>(*(frankMapItem.second));
-//		frankDensity += cluster.getTotalConcentration();
-//		frankDiameter += cluster.getTotalConcentration()
-//				* cluster.getReactionRadius() * 2.0;
-//		if (cluster.getSize() >= minSizes[3]) {
-//			frankPartialDensity += cluster.getTotalConcentration();
-//			frankPartialDiameter += cluster.getTotalConcentration()
-//					* cluster.getReactionRadius() * 2.0;
-//		}
-//	}
-//
-//	// Set the output precision
-//	const int outputPrecision = 5;
-//
-//	// Average the diameters
-//	iDiameter = iDiameter / iDensity;
-//	vDiameter = vDiameter / vDensity;
-//	voidDiameter = voidDiameter / voidDensity;
-//	perfectDiameter = perfectDiameter / perfectDensity;
-//	faultedDiameter = faultedDiameter / faultedDensity;
-//	frankDiameter = frankDiameter / frankDensity;
-//	voidPartialDiameter = voidPartialDiameter / voidPartialDensity;
-//	perfectPartialDiameter = perfectPartialDiameter / perfectPartialDensity;
-//	faultedPartialDiameter = faultedPartialDiameter / faultedPartialDensity;
-//	frankPartialDiameter = frankPartialDiameter / frankPartialDensity;
-//
-//	// Open the output file
-//	std::fstream outputFile;
-//	outputFile.open("Alloy.dat", std::fstream::out | std::fstream::app);
-//	outputFile << std::setprecision(outputPrecision);
-//
-//	// Output the data
-//	outputFile << timestep << " " << time << " " << iDensity << " " << iDiameter
-//			<< " " << vDensity << " " << vDiameter << " " << voidDensity << " "
-//			<< voidDiameter << " " << faultedDensity << " " << faultedDiameter
-//			<< " " << perfectDensity << " " << perfectDiameter << " "
-//			<< frankDensity << " " << frankDiameter << " " << voidPartialDensity
-//			<< " " << voidPartialDiameter << " " << faultedPartialDensity << " "
-//			<< faultedPartialDiameter << " " << perfectPartialDensity << " "
-//			<< perfectPartialDiameter << " " << frankPartialDensity << " "
-//			<< frankPartialDiameter << std::endl;
-//
-//	// Close the output file
-//	outputFile.close();
-//
-//	// Restore the PETSC solution array
-//	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-//	CHKERRQ(ierr);
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the physical grid and its length
+	auto grid = solverHandler.getXGrid();
+	int xSize = grid.size();
+
+	// Get the position of the surface
+	int surfacePos = solverHandler.getSurfacePosition();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the array of concentration
+	PetscReal **solutionArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	using NetworkType =
+	experimental::AlloyReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	// Degrees of freedom is the total number of clusters in the network
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	const int dof = network.getDOF();
+
+	// Initial declarations for the density and diameter
+	double iDensity = 0.0, vDensity = 0.0, voidDensity = 0.0,
+			frankDensity = 0.0, faultedDensity = 0.0, perfectDensity = 0.0,
+			voidPartialDensity = 0.0, frankPartialDensity = 0.0,
+			faultedPartialDensity = 0.0, perfectPartialDensity = 0.0,
+			iDiameter = 0.0, vDiameter = 0.0, voidDiameter = 0.0,
+			frankDiameter = 0.0, faultedDiameter = 0.0, perfectDiameter = 0.0,
+			voidPartialDiameter = 0.0, frankPartialDiameter = 0.0,
+			faultedPartialDiameter = 0.0, perfectPartialDiameter = 0.0;
+
+	// Get the minimum size for the loop densities and diameters
+	auto minSizes = solverHandler.getMinSizes();
+
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal *gridPointSolution;
+
+	// Get the pointer to the beginning of the solution data for this grid point
+	gridPointSolution = solutionArray[0];
+
+	using HostUnmanaged =
+	Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(gridPointSolution, dof);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+	deep_copy(dConcs, hConcs);
+
+	// I
+	iDensity = network.getTotalConcentration(dConcs, Spec::I, 1);
+	iDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::I, 1);
+
+	// V
+	vDensity = network.getTotalConcentration(dConcs, Spec::V, 1);
+	vDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::V, 1);
+
+	// Void
+	voidDensity = network.getTotalConcentration(dConcs, Spec::Void, 1);
+	voidDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Void, 1);
+	voidPartialDensity = network.getTotalConcentration(dConcs, Spec::Void, minSizes[0]);
+	voidPartialDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Void, minSizes[0]);
+
+	// Faulted
+	faultedDensity = network.getTotalConcentration(dConcs, Spec::Faulted, 1);
+	faultedDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Faulted, 1);
+	faultedPartialDensity = network.getTotalConcentration(dConcs, Spec::Faulted, minSizes[1]);
+	faultedPartialDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Faulted, minSizes[1]);
+
+	// Perfect
+	perfectDensity = network.getTotalConcentration(dConcs, Spec::Perfect, 1);
+	perfectDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Perfect, 1);
+	perfectPartialDensity = network.getTotalConcentration(dConcs, Spec::Perfect, minSizes[2]);
+	perfectPartialDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Perfect, minSizes[2]);
+
+	// Frank
+	frankDensity = network.getTotalConcentration(dConcs, Spec::Frank, 1);
+	frankDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Frank, 1);
+	frankPartialDensity = network.getTotalConcentration(dConcs, Spec::Frank, minSizes[3]);
+	frankPartialDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Frank, minSizes[3]);
+
+	// Set the output precision
+	const int outputPrecision = 5;
+
+	// Average the diameters
+	iDiameter = iDiameter / iDensity;
+	vDiameter = vDiameter / vDensity;
+	voidDiameter = voidDiameter / voidDensity;
+	perfectDiameter = perfectDiameter / perfectDensity;
+	faultedDiameter = faultedDiameter / faultedDensity;
+	frankDiameter = frankDiameter / frankDensity;
+	voidPartialDiameter = voidPartialDiameter / voidPartialDensity;
+	perfectPartialDiameter = perfectPartialDiameter / perfectPartialDensity;
+	faultedPartialDiameter = faultedPartialDiameter / faultedPartialDensity;
+	frankPartialDiameter = frankPartialDiameter / frankPartialDensity;
+
+	// Open the output file
+	std::fstream outputFile;
+	outputFile.open("Alloy.dat", std::fstream::out | std::fstream::app);
+	outputFile << std::setprecision(outputPrecision);
+
+	// Output the data
+	outputFile << timestep << " " << time << " " << iDensity << " " << iDiameter
+			<< " " << vDensity << " " << vDiameter << " " << voidDensity << " "
+			<< voidDiameter << " " << faultedDensity << " " << faultedDiameter
+			<< " " << perfectDensity << " " << perfectDiameter << " "
+			<< frankDensity << " " << frankDiameter << " " << voidPartialDensity
+			<< " " << voidPartialDiameter << " " << faultedPartialDensity << " "
+			<< faultedPartialDiameter << " " << perfectPartialDensity << " "
+			<< perfectPartialDiameter << " " << frankPartialDensity << " "
+			<< frankPartialDiameter << std::endl;
+
+	// Close the output file
+	outputFile.close();
+
+	// Restore the PETSC solution array
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
 

@@ -26,7 +26,12 @@ inline const char* toString(NESpecies specie) {
 }
 
 template <>
-struct HasInterstitial<NESpecies> : std::false_type
+struct NumberOfInterstitialSpecies<NESpecies> : std::integral_constant<std::size_t,0>
+{
+};
+
+template <>
+struct NumberOfVacancySpecies<NESpecies> : std::integral_constant<std::size_t,0>
 {
 };
 

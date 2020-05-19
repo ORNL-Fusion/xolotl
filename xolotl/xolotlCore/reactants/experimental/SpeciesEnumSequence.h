@@ -8,24 +8,47 @@ namespace xolotlCore
 {
 namespace experimental
 {
+
 template <typename TSpeciesEnum>
-struct HasInterstitial : std::false_type
+struct NumberOfInterstitialSpecies : std::integral_constant<std::size_t,0>
+{
+};
+
+template <typename TSpeciesEnum>
+struct NumberOfVacancySpecies : std::integral_constant<std::size_t,0>
 {
 };
 
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
-constexpr bool
-hasInterstitial() noexcept
+constexpr std::size_t
+numberOfInterstitialSpecies() noexcept
 {
-    return HasInterstitial<TSpeciesEnum>::value;
+    return NumberOfInterstitialSpecies<TSpeciesEnum>::value;
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+constexpr std::size_t
+numberOfVacancySpecies() noexcept
+{
+    return NumberOfVacancySpecies<TSpeciesEnum>::value;
 }
 
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 constexpr bool
 isVacancy(TSpeciesEnum val,
-    std::enable_if_t<hasInterstitial<TSpeciesEnum>(), int> = 0) noexcept
+    std::enable_if_t<(numberOfInterstitialSpecies<TSpeciesEnum>() > 1), int> = 0) noexcept
+{
+    return val == TSpeciesEnum::V || val == TSpeciesEnum::Void || val == TSpeciesEnum::Faulted;
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+constexpr bool
+isVacancy(TSpeciesEnum val,
+    std::enable_if_t<numberOfInterstitialSpecies<TSpeciesEnum>() == 1, int> = 0) noexcept
 {
     return val == TSpeciesEnum::V;
 }
@@ -34,7 +57,7 @@ template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 constexpr bool
 isVacancy(TSpeciesEnum val,
-    std::enable_if_t<!hasInterstitial<TSpeciesEnum>(), int> = 0) noexcept
+    std::enable_if_t<numberOfInterstitialSpecies<TSpeciesEnum>() == 0, int> = 0) noexcept
 {
     return false;
 }
@@ -60,7 +83,7 @@ public:
     constexpr std::size_t
     sizeNoI() noexcept
     {
-        return hasInterstitial<TSpeciesEnum>() ? N - 1 : N;
+        return N - numberOfInterstitialSpecies<TSpeciesEnum>() - numberOfVacancySpecies<TSpeciesEnum>() + 1;
     }
 
     KOKKOS_INLINE_FUNCTION
@@ -68,8 +91,9 @@ public:
     constexpr Sequence
     lastNoI() noexcept
     {
-        return hasInterstitial<TSpeciesEnum>() ?
-            Sequence::last() - 1 : Sequence::last();
+        return numberOfInterstitialSpecies<TSpeciesEnum>() > 0 ?
+            Sequence::last() - numberOfInterstitialSpecies<TSpeciesEnum>()
+			- numberOfVacancySpecies<TSpeciesEnum>() + 1 : Sequence::last();
     }
 };
 }

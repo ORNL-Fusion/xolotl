@@ -48,7 +48,6 @@ public:
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
-		// TODO: this needs to be a Fe network
 		using NetworkType =
 		experimental::FeReactionNetwork;
 		auto feNetwork = dynamic_cast<NetworkType*>(&network);

@@ -24,7 +24,12 @@ inline const char* toString(FeSpeciesList specie) {
 }
 
 template <>
-struct HasInterstitial<FeSpeciesList> : std::true_type
+struct NumberOfInterstitialSpecies<FeSpeciesList> : std::integral_constant<std::size_t,1>
+{
+};
+
+template <>
+struct NumberOfVacancySpecies<FeSpeciesList> : std::integral_constant<std::size_t,1>
 {
 };
 

@@ -52,4 +52,9 @@ BOOST_AUTO_TEST_CASE(system_Fe_1) {
     testUtils::runSystemTestCase("system_Fe_1", "bubble_36.dat");
 }
 
+BOOST_AUTO_TEST_CASE(system_Alloy_1) {
+	// 0D
+    testUtils::runSystemTestCase("system_Alloy_1", "Alloy.dat");
+}
+
 BOOST_AUTO_TEST_SUITE_END()

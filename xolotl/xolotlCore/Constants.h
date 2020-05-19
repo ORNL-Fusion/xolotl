@@ -27,7 +27,7 @@ constexpr double pi = 3.1415926535897932;
 constexpr double tungstenLatticeConstant = 0.31700000000000000;
 
 //! Lattice Parameter. Given in units here of nm.
-static const double alloyLatticeConstant = 0.36000000000000000;
+constexpr double alloyLatticeConstant = 0.36000000000000000;
 
 //! Lattice Parameter for UO2
 constexpr double uraniumDioxydeLatticeConstant = 0.57400000000000000;
@@ -36,13 +36,13 @@ constexpr double uraniumDioxydeLatticeConstant = 0.57400000000000000;
 constexpr double ironLatticeConstant = 0.28700000000000000;
 
 //! Core radius. Given in units here of nm.
-static const double alloyCoreRadius = 0.36000000000000000;
+constexpr double alloyCoreRadius = 0.36000000000000000;
 
 //! Single helium radius. Given in units here of nm.
-static const double heliumRadius = 0.30000000000000000;
+constexpr double heliumRadius = 0.30000000000000000;
 
 //! Single xenon radius. Given in units here of nm.
-static const double xenonRadius = 0.30000000000000000;
+constexpr double xenonRadius = 0.30000000000000000;
 
 // Tungsten heat coefficient = lambda / (rho * C) in nm2 s-1
 constexpr double tungstenHeatCoefficient = 6.835e13;
@@ -54,7 +54,7 @@ constexpr double uo2HeatCoefficient = 0.0;
 constexpr double feHeatCoefficient = 0.0;
 
 // Alloy heat coefficient = lambda / (rho * C) in nm2 s-1
-static const double alloyHeatCoefficient = 0.0;
+constexpr double alloyHeatCoefficient = 0.0;
 
 // Tungsten heat conductivity = lambda in W K-1 nm-1
 constexpr double tungstenHeatConductivity = 173 * 1.0e-9;
@@ -66,7 +66,16 @@ constexpr double uo2HeatConductivity = 0.0;
 constexpr double feHeatConductivity = 0.0;
 
 // Alloy heat conductivity = lambda in W K-1 m-1
-static const double alloyHeatConductivity = 0.0;
+constexpr double alloyHeatConductivity = 0.0;
+
+// Burgers vector magnitudes for loops in Alloy case
+// In lattice parameter units
+constexpr double perfectBurgers = 0.5;
+constexpr double faultedBurgers = 0.333;
+constexpr double frankBurgers = 0.333;
+
+// Sink strength for Alloy case in nm^-2
+constexpr double alloysinkStrength = 1.0e-5;
 
 } /* end namespace xolotlCore */
 #endif /* CONSTANTS_H_ */

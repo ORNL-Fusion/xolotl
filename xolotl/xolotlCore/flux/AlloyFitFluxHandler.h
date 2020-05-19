@@ -7,6 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <algorithm>
+#include <experimental/AlloyReactionNetwork.h>
 
 namespace xolotlCore {
 
@@ -16,6 +17,9 @@ namespace xolotlCore {
  */
 class AlloyFitFluxHandler: public FluxHandler {
 private:
+
+	//! The time parameter for attenuation
+	double tauFlux;
 
 	/**
 	 * Function that calculate the flux at a given position x (in nm).
@@ -28,10 +32,10 @@ private:
 	}
 
 	std::vector<double> AlloyDamageFunction(const double x) {
-		std::vector<double> damage = { 0.0, 0.0, 0.0, 0.0 };
+		std::vector<double> damage;
 		auto srimDamage = srim.getDamage();
 		for (int it = 0; it < srimDamage.size(); ++it) {
-			damage[it] = srimDamage[it][0];
+			damage.push_back(srimDamage[it][0]);
 			for (int it2 = 1; it2 < srimDamage[it].size(); ++it2) {
 				damage[it] += srimDamage[it][it2] * pow(x, double(it2));
 			}
@@ -90,7 +94,7 @@ private:
 		return damageRate;
 	}
 
-	void AlloyAddImplantation(std::vector<double> & input) {
+	void AlloyAddImplantation(std::vector<double> &input) {
 		// Change this to grab the actual surface position
 		int surfacePos = 0;
 
@@ -117,7 +121,8 @@ public:
 	/**
 	 * The constructor
 	 */
-	AlloyFitFluxHandler() {
+	AlloyFitFluxHandler() :
+			tauFlux(0.0) {
 	}
 
 	/**
@@ -130,15 +135,14 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(experimental::IReactionNetwork& network, int surfacePos,
-			std::vector<double> grid) {
+	void initializeFluxHandler(experimental::IReactionNetwork &network,
+			int surfacePos, std::vector<double> grid) {
 
 		// Setup the ion damage and implantation depth profile
 		if (false) {
 			srim.setInSitu();
 			cascade.setBulk();
-		}
-		else if (true) {
+		} else if (true) {
 			srim.setBulk();
 			cascade.setBulk();
 		}
@@ -154,87 +158,104 @@ public:
 			cascade.setOverlap();
 		}
 
+		using NetworkType =
+		experimental::AlloyReactionNetwork;
+		auto alloyNetwork = dynamic_cast<NetworkType*>(&network);
+
 		// Iterate over all produced cluster species
 		for (int it = 0; it < cascade.clusterSizes.size(); ++it) {
 
 			// Get the size of the cluster
 			int size = cascade.clusterSizes[it];
-//
-//			// Check if cluster is interstitial type
-//			if (size > 0) {
-//				// See if theres an iType cluster of size
-//				auto fluxCluster = network.get(toSpecies(ReactantType::I),
-//						size);
-//				if (fluxCluster) {
-//					(ionDamage.fluxIndex).push_back(fluxCluster->getId() - 1);
-//					(ionDamage.damageRate).push_back(
-//							AlloySetGeneration(size, it, 1.0));
-//					if (size == 1 && implant) {
-//						AlloyAddImplantation(ionDamage.damageRate.back());
-//					}
-//				}
-//				// Otherwise the clusters must be frank and perfect type
-//				else {
-//					auto fluxCluster1 = network.get(
-//							toSpecies(ReactantType::Frank), size);
-//					auto fluxCluster2 = network.get(
-//							toSpecies(ReactantType::Perfect), size);
-//					if (!fluxCluster1 || !fluxCluster2) {
-//						// Throw error -> missing type
-//						std::cout << "Error: no flux cluster of size " << size
-//								<< std::endl;
-//					} else {
-//						// Frank loop
-//						(ionDamage.fluxIndex).push_back(
-//								fluxCluster1->getId() - 1);
-//						double frac = 1.0 - cascade.perfectFraction;
-//						(ionDamage.damageRate).push_back(
-//								AlloySetGeneration(size, it, frac));
-//						// Perfect loop
-//						(ionDamage.fluxIndex).push_back(
-//								fluxCluster2->getId() - 1);
-//						frac = cascade.perfectFraction;
-//						(ionDamage.damageRate).push_back(
-//								AlloySetGeneration(size, it, frac));
-//					}
-//				}
-//			}
-//			// Check if cluster is vacancy type
-//			else if (size < 0) {
-//				size = -size;
-//				// See if theres an vType cluster of size
-//				auto fluxCluster = network.get(toSpecies(ReactantType::V),
-//						size);
-//				if (fluxCluster) {
-//					(ionDamage.fluxIndex).push_back(fluxCluster->getId() - 1);
-//					(ionDamage.damageRate).push_back(
-//							AlloySetGeneration(size, it, 1.0));
-//				}
-//				// Otherwise the clusters must be faulted type
-//				else {
-//					fluxCluster = network.get(toSpecies(ReactantType::Faulted),
-//							size);
-//					if (!fluxCluster) {
-//						// Throw error -> no available type
-//						std::cout << "Error: no flux cluster of size " << -size
-//								<< std::endl;
-//					} else {
-//						// Faulted loop
-//						(ionDamage.fluxIndex).push_back(
-//								fluxCluster->getId() - 1);
-//						(ionDamage.damageRate).push_back(
-//								AlloySetGeneration(size, it, 1.0));
-//					}
-//				}
-//			}
-//			// Neither interstitial nor vacancy type cluster
-//			else {
-//				// Throw error for size 0 cluster
-//			}
+
+			// Check if cluster is interstitial type
+			if (size > 0) {
+				// See if theres an iType cluster of size
+				NetworkType::Composition comp =
+						NetworkType::Composition::zero();
+				comp[NetworkType::Species::I] = size;
+				auto fluxCluster = alloyNetwork->findCluster(comp,
+						plsm::onHost);
+				if (fluxCluster.getId() != NetworkType::invalidIndex()) {
+					(ionDamage.fluxIndex).push_back(fluxCluster.getId());
+					(ionDamage.damageRate).push_back(
+							AlloySetGeneration(size, it, 1.0));
+					if (size == 1 && implant) {
+						AlloyAddImplantation(ionDamage.damageRate.back());
+					}
+				}
+				// Otherwise the clusters must be frank and perfect type
+				else {
+					comp[NetworkType::Species::I] = 0;
+					comp[NetworkType::Species::Frank] = size;
+					auto fluxCluster1 = alloyNetwork->findCluster(comp,
+							plsm::onHost);
+					comp[NetworkType::Species::Frank] = 0;
+					comp[NetworkType::Species::Perfect] = size;
+					auto fluxCluster2 = alloyNetwork->findCluster(comp,
+							plsm::onHost);
+					if (fluxCluster1.getId() == NetworkType::invalidIndex()
+							|| fluxCluster2.getId()
+									== NetworkType::invalidIndex()) {
+						// Throw error -> missing type
+						std::cout << "Error: no flux cluster of size " << size
+								<< std::endl;
+					} else {
+						// Frank loop
+						(ionDamage.fluxIndex).push_back(
+								fluxCluster1.getId());
+						double frac = 1.0 - cascade.perfectFraction;
+						(ionDamage.damageRate).push_back(
+								AlloySetGeneration(size, it, frac));
+						// Perfect loop
+						(ionDamage.fluxIndex).push_back(
+								fluxCluster2.getId());
+						frac = cascade.perfectFraction;
+						(ionDamage.damageRate).push_back(
+								AlloySetGeneration(size, it, frac));
+					}
+				}
+			}
+			// Check if cluster is vacancy type
+			else if (size < 0) {
+				size = -size;
+				// See if theres an vType cluster of size
+				NetworkType::Composition comp =
+						NetworkType::Composition::zero();
+				comp[NetworkType::Species::V] = size;
+				auto fluxCluster = alloyNetwork->findCluster(comp,
+						plsm::onHost);
+				if (fluxCluster.getId() != NetworkType::invalidIndex()) {
+					(ionDamage.fluxIndex).push_back(fluxCluster.getId());
+					(ionDamage.damageRate).push_back(
+							AlloySetGeneration(size, it, 1.0));
+				}
+				// Otherwise the clusters must be faulted type
+				else {
+					comp[NetworkType::Species::V] = 0;
+					comp[NetworkType::Species::Faulted] = size;
+					fluxCluster = alloyNetwork->findCluster(comp, plsm::onHost);
+					if (fluxCluster.getId() == NetworkType::invalidIndex()) {
+						// Throw error -> no available type
+						std::cout << "Error: no flux cluster of size " << -size
+								<< std::endl;
+					} else {
+						// Faulted loop
+						(ionDamage.fluxIndex).push_back(
+								fluxCluster.getId());
+						(ionDamage.damageRate).push_back(
+								AlloySetGeneration(size, it, 1.0));
+					}
+				}
+			}
+			// Neither interstitial nor vacancy type cluster
+			else {
+				// Throw error for size 0 cluster
+			}
 
 		}
 
-//		// record the results in a files
+		// TODO: record the results in a files
 //		std::ofstream outfile;
 //		outfile.open("alloyFlux.dat");
 //		auto clusters = network.getAll();
@@ -245,8 +266,9 @@ public:
 //			}
 //			// find the corresponding flux clusters
 //			std::for_each(clusters.begin(), clusters.end(),
-//					[&outfile, &i, this](IReactant& currReactant) {
-//						if (currReactant.getId() - 1 == ionDamage.fluxIndex[i]) {
+//					[&outfile, &i, this](IReactant &currReactant) {
+//						if (currReactant.getId()
+//								== ionDamage.fluxIndex[i]) {
 //							outfile << " " << currReactant.getName();
 //						}
 //					});
@@ -264,12 +286,27 @@ public:
 	void computeIncidentFlux(double currentTime, double *updatedConcOffset,
 			int xi, int surfacePos) {
 
+		// Attenuation factor to model reduced production of new point defects
+		// with increasing dose (or time).
+		double attenuation = 1.0;
+		if (tauFlux > 0.0 && currentTime > 0.0)
+			attenuation = 1.0 - exp((-1.0 * tauFlux) / currentTime);
+
 		// Update the concentration array
 		for (int it = 0; it < ionDamage.fluxIndex.size(); ++it) {
-			updatedConcOffset[ionDamage.fluxIndex[it]] +=
-					ionDamage.damageRate[it][xi - surfacePos];
+			updatedConcOffset[ionDamage.fluxIndex[it]] += attenuation
+					* ionDamage.damageRate[it][xi - surfacePos];
 		}
 
+		return;
+	}
+
+	/**
+	 * This operation sets the attenuation parameter.
+	 * \see IFluxHandler.h
+	 */
+	void setTauFlux(double tau) {
+		tauFlux = tau;
 		return;
 	}
 

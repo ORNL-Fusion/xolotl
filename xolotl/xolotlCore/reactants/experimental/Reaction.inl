@@ -37,7 +37,20 @@ Reaction<TNetwork, TDerived>::updateData(ReactionDataRef reactionData,
 
 template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
-std::enable_if_t<hasInterstitial<typename TRegion::EnumIndex>(),
+std::enable_if_t<(numberOfInterstitialSpecies<typename TRegion::EnumIndex>() > 1),
+    plsm::DifferenceType<typename TRegion::ScalarType> >
+getISizeForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
+    const TRegion& pairCl2Reg)
+{
+    using Species = typename TRegion::EnumIndex;
+    return pairCl1Reg[Species::I].begin() + pairCl1Reg[Species::Perfect].begin() + pairCl1Reg[Species::Frank].begin() 
+    		+ pairCl2Reg[Species::I].begin() + pairCl2Reg[Species::Perfect].begin() + pairCl2Reg[Species::Frank].begin() -
+        (singleClReg[Species::I].begin() + singleClReg[Species::Perfect].begin() + singleClReg[Species::Frank].begin());
+}
+
+template <typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<numberOfInterstitialSpecies<typename TRegion::EnumIndex>() == 1,
     plsm::DifferenceType<typename TRegion::ScalarType> >
 getISizeForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
     const TRegion& pairCl2Reg)
@@ -49,9 +62,98 @@ getISizeForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
 
 template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
-std::enable_if_t<!hasInterstitial<typename TRegion::EnumIndex>(),
+std::enable_if_t<numberOfInterstitialSpecies<typename TRegion::EnumIndex>() == 0,
     plsm::DifferenceType<typename TRegion::ScalarType> >
 getISizeForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
+    const TRegion& pairCl2Reg)
+{
+    return 0;
+}
+
+template <typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() > 1),
+    plsm::DifferenceType<typename TRegion::ScalarType> >
+getVWidthForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
+    const TRegion& pairCl2Reg)
+{
+	typename TRegion::ScalarType width = 0;
+    using Species = typename TRegion::EnumIndex;
+    bool singleIsV = (singleClReg.getOrigin().isOnAxis(Species::V) || singleClReg.getOrigin().isOnAxis(Species::Void)
+    		|| singleClReg.getOrigin().isOnAxis(Species::Faulted)),
+    	cl1IsV = (pairCl1Reg.getOrigin().isOnAxis(Species::V) || pairCl1Reg.getOrigin().isOnAxis(Species::Void)
+    		|| pairCl1Reg.getOrigin().isOnAxis(Species::Faulted)),
+		cl2IsV = (pairCl2Reg.getOrigin().isOnAxis(Species::V) || pairCl2Reg.getOrigin().isOnAxis(Species::Void)
+		    || pairCl2Reg.getOrigin().isOnAxis(Species::Faulted));
+    // Get the bounds of each cluster
+    typename TRegion::ScalarType loSingle = singleClReg[Species::V].begin()+ singleClReg[Species::Void].begin()
+    		+ singleClReg[Species::Faulted].begin() + singleClReg[Species::I].begin()
+			+ singleClReg[Species::Perfect].begin() + singleClReg[Species::Frank].begin(), 
+			hiSingle = singleClReg[Species::V].end()+ singleClReg[Species::Void].end()
+    		+ singleClReg[Species::Faulted].end() + singleClReg[Species::I].end()
+			+ singleClReg[Species::Perfect].end() + singleClReg[Species::Frank].end() - 6, 
+			loCl1 = pairCl1Reg[Species::V].begin()+ pairCl1Reg[Species::Void].begin()
+    		+ pairCl1Reg[Species::Faulted].begin() + pairCl1Reg[Species::I].begin()
+			+ pairCl1Reg[Species::Perfect].begin() + pairCl1Reg[Species::Frank].begin(), 
+			hiCl1 = pairCl1Reg[Species::V].end()+ pairCl1Reg[Species::Void].end()
+    		+ pairCl1Reg[Species::Faulted].end() + pairCl1Reg[Species::I].end()
+			+ pairCl1Reg[Species::Perfect].end() + pairCl1Reg[Species::Frank].end() - 6, 
+			loCl2 = pairCl2Reg[Species::V].begin()+ pairCl2Reg[Species::Void].begin()
+    		+ pairCl2Reg[Species::Faulted].begin() + pairCl2Reg[Species::I].begin()
+			+ pairCl2Reg[Species::Perfect].begin() + pairCl2Reg[Species::Frank].begin(), 
+			hiCl2 = pairCl2Reg[Species::V].end()+ pairCl2Reg[Species::Void].end()
+    		+ pairCl2Reg[Species::Faulted].end() + pairCl2Reg[Species::I].end()
+			+ pairCl2Reg[Species::Perfect].end() + pairCl2Reg[Species::Frank].end() - 6;
+    
+    // All clusters are the same type
+    if ((singleIsV && cl1IsV && cl2IsV) || (!singleIsV && !cl1IsV && !cl2IsV)) {
+    	for (typename TRegion::ScalarType j = loCl1; j <= hiCl1; j++) {
+    		width += min(hiSingle, hiCl2 + j) - max (loSingle, loCl2 + j) + 1;
+    	}
+    }
+    else if ((singleIsV && cl2IsV) || (!singleIsV && !cl2IsV)) {
+    	for (typename TRegion::ScalarType j = loCl1; j <= hiCl1; j++) {
+    		width += min(hiSingle, hiCl2 - j) - max (loSingle, loCl2 - j) + 1;
+    	}
+    }
+    else {
+    	for (typename TRegion::ScalarType j = loCl2; j <= hiCl2; j++) {
+    		width += min(hiSingle, hiCl1 - j) - max (loSingle, loCl1 - j) + 1;
+    	}
+    }
+    
+    return width;
+}
+
+template <typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1,
+    plsm::DifferenceType<typename TRegion::ScalarType> >
+getVWidthForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
+    const TRegion& pairCl2Reg)
+{
+	typename TRegion::ScalarType width = 0;
+    using Species = typename TRegion::EnumIndex;
+    auto iSize = getISizeForOverlap(singleClReg, pairCl1Reg, pairCl2Reg);
+    for (auto j : makeIntervalRange(pairCl1Reg[Species::V])) {
+        auto tempWidth = min(singleClReg[Species::V].end() - 1.0, pairCl2Reg[Species::V].end() - 1.0 + j - iSize)
+                    - max(singleClReg[Species::V].begin(), pairCl2Reg[Species::V].begin() + j - iSize)
+                    + 1.0;
+        if (iSize > 0 && singleClReg[Species::V].end() - 1 > 0) {
+        	width += tempWidth;
+        }
+        else {
+        	width += max(0.0, tempWidth);
+        }
+    }
+    return width;
+}
+
+template <typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<numberOfVacancySpecies<typename TRegion::EnumIndex>() == 0,
+    plsm::DifferenceType<typename TRegion::ScalarType> >
+getVWidthForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
     const TRegion& pairCl2Reg)
 {
     return 0;
@@ -77,18 +179,7 @@ Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
 
         // Special case for I
         if (isVacancy(i)) {
-            auto iSize = getISizeForOverlap(singleClReg, pairCl1Reg, pairCl2Reg);
-            for (auto j : makeIntervalRange(pairCl1Reg[i])) {
-                auto tempWidth = min(singleClReg[i].end() - 1.0, pairCl2Reg[i].end() - 1.0 + j - iSize)
-                            - max(singleClReg[i].begin(), pairCl2Reg[i].begin() + j - iSize)
-                            + 1.0;
-                if (iSize > 0 && singleClReg[i].end() - 1 > 0) {
-                    _widths(i()) += tempWidth;
-                }
-                else {
-                    _widths(i()) += max(0.0, tempWidth);
-                }
-            }
+            _widths(i()) = static_cast<double>(getVWidthForOverlap(singleClReg, pairCl1Reg, pairCl2Reg));
         }
         else {
             //TODO: Would be nice to loop on the cluster with the smaller tile
@@ -516,6 +607,61 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
     }
 }
 
+template <typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() > 1),
+    double >
+getRateForProduction(const TRegion& pairCl0Reg,
+    const TRegion& pairCl1Reg, const double r0, const double r1, const double dc0, const double dc1)
+{
+    constexpr double pi = ::xolotlCore::pi;
+    constexpr double rCore = ::xolotlCore::alloyCoreRadius;
+	const double zs = 4.0 * pi
+			* (r0 + r1 + rCore);
+    using Species = typename TRegion::EnumIndex;
+    bool cl0IsSphere = (pairCl0Reg.getOrigin().isOnAxis(Species::V) || pairCl0Reg.getOrigin().isOnAxis(Species::Void)
+    		|| pairCl0Reg.getOrigin().isOnAxis(Species::I)),
+		cl1IsSphere = (pairCl1Reg.getOrigin().isOnAxis(Species::V) || pairCl1Reg.getOrigin().isOnAxis(Species::Void)
+		    || pairCl1Reg.getOrigin().isOnAxis(Species::I));
+    
+    // Simple case
+    if (cl0IsSphere && cl1IsSphere) {
+    	return zs * (dc0 + dc1);
+    }
+    
+    double p = 0.0, zl = 0.0;
+    if (r0 < r1) {
+        p = 1.0 / (1.0 + pow(r1 / (3.0 * (r0 + rCore)), 2.0));
+        zl = 4.0 * pow(pi, 2.0) * r1 / log(1.0 + 8.0 * r1 / (r0 + rCore));
+    }
+    else {
+        p = 1.0 / (1.0 + pow(r0 / (3.0 * (r1 + rCore)), 2.0));
+        zl = 4.0 * pow(pi, 2.0) * r0 / log(1.0 + 8.0 * r0 / (r1 + rCore));
+    }
+    
+    double k_plus = (dc0 + dc1) * (p * zs + (1.0 - p) * zl);
+    double bias = 1.0;
+    if (pairCl0Reg.getOrigin().isOnAxis(Species::I) || pairCl1Reg.getOrigin().isOnAxis(Species::I)) {
+    	bias = 1.2;
+    }
+
+    return k_plus * bias;
+}
+
+template <typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() < 2),
+    double >
+getRateForProduction(const TRegion& pairCl0Reg,
+    const TRegion& pairCl1Reg, const double r0, const double r1, const double dc0, const double dc1)
+{
+    constexpr double pi = ::xolotlCore::pi;
+
+    double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
+
+    return kPlus;
+}
+
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
@@ -530,11 +676,7 @@ ProductionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
     double dc0 = cl0.getDiffusionCoefficient(gridIndex);
     double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-    constexpr double pi = ::xolotlCore::pi;
-
-    double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
-
-    return kPlus;
+    return getRateForProduction(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 }
 
 template <typename TNetwork, typename TDerived>
@@ -1264,9 +1406,7 @@ DissociationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
     double dc0 = cl0.getDiffusionCoefficient(gridIndex);
     double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-    constexpr double pi = ::xolotlCore::pi;
-
-    double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
+    double kPlus = getRateForProduction(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
     double E_b = this->asDerived()->computeBindingEnergy();
 
     constexpr double k_B = ::xolotlCore::kBoltzmann;

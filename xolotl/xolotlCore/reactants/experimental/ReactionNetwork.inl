@@ -30,7 +30,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     
     asDerived()->checkTiles(options);
     
-//    // PRINT ALL THE CLUSTERS
+    // PRINT ALL THE CLUSTERS
 //    constexpr auto speciesRange = getSpeciesRange();
 //    for (IndexType i = 0; i < _numClusters; ++i) {
 //        const auto& clReg = tiles(i).getRegion();
@@ -43,7 +43,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 //        for (auto j : speciesRange) std::cout << hi[j] - 1 << " ";
 //        std::cout << std::endl;
 //    }
-    std::cout << "num: " << _numClusters << std::endl;
+//    std::cout << "num: " << _numClusters << std::endl;
 
     generateClusterData(ClusterGenerator{options});
     defineMomentIds();
@@ -375,7 +375,7 @@ ReactionNetworkWorker<TImpl>::generateClusterData(
         auto cluster = data.getCluster(i);
         data.formationEnergy(i) = generator.getFormationEnergy(cluster);
         data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);
-        data.diffusionFactor(i) = generator.getDiffusionFactor(cluster);
+        data.diffusionFactor(i) = generator.getDiffusionFactor(cluster, latticeParameter);
         data.reactionRadius(i) = generator.getReactionRadius(cluster,
             latticeParameter, interstitialBias, impurityRadius);
     });
@@ -506,7 +506,8 @@ ReactionNetworkWorker<TImpl>::getTotalRadiusConcentration(
     	const auto& clReg = tiles(i).getRegion();
     	const auto factor = clReg.volume() / clReg[type].length();
     	for (AmountType j : makeIntervalRange(clReg[type])) {
-    		if (j >= minSize) lsum += concentrations(i) * clusterData.reactionRadius(i) * factor;
+    		if (j >= minSize) 
+    			lsum += concentrations(i) * clusterData.reactionRadius(i) * factor;
     	}
     }, conc);
 

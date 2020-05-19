@@ -1,6 +1,7 @@
 #pragma once
 
 #include <experimental/Reaction.h>
+#include <experimental/SpeciesEnumSequence.h>
 
 namespace xolotlCore
 {
@@ -61,23 +62,7 @@ private:
 
     KOKKOS_INLINE_FUNCTION
     double
-    computeRate(IndexType gridIndex)
-    {
-        double r0 = this->_clusterData.getLatticeParameter() * 0.75 * sqrt(3.0);
-        double rho = 0.0003;
-
-        auto cl = this->_clusterData.getCluster(_reactant);
-        double r = cl.getReactionRadius();
-        double dc = cl.getDiffusionCoefficient(gridIndex);
-
-        constexpr double pi = ::xolotlCore::pi;
-
-        double strength = this->asDerived()->getSinkBias() * -4.0 * pi * rho
-                / log(pi * rho * (r + r0)
-                * (r + r0)) * dc;
-
-        return strength;
-    }
+    computeRate(IndexType gridIndex);
 
     KOKKOS_INLINE_FUNCTION
     void
@@ -121,4 +106,5 @@ protected:
 }
 }
 
+#include <experimental/SinkReaction.inl>
 #include <experimental/detail/SinkReactionGenerator.h>
