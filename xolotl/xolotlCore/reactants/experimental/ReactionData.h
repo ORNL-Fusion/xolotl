@@ -232,13 +232,15 @@ struct ReactionDataRef
     auto
     getCoefficients(IndexType reactionId)
     {
-        for (std::size_t r = 0; r < numReactionTypes; ++r) {
+        std::size_t r = 0;
+        for (; r < numReactionTypes; ++r) {
             if (reactionId < reactionBeginIndices[r+1]) {
-                return Kokkos::subview(coeffs[r],
-                    reactionId - reactionBeginIndices[r], Kokkos::ALL,
-                    Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
+                break;
             }
         }
+        assert(r < numReactionTypes);
+        return Kokkos::subview(coeffs[r], reactionId - reactionBeginIndices[r],
+            Kokkos::ALL, Kokkos::ALL, Kokkos::ALL, Kokkos::ALL);
     }
 
     KOKKOS_INLINE_FUNCTION
