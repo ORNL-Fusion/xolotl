@@ -587,38 +587,45 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	return;
 }
 
-void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
-		Mat &J, PetscReal ftime) {
+void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
+		PetscReal ftime) {
 	PetscErrorCode ierr;
 
 	// Get the distributed array
 	DM da;
 	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeOffDiagonalJacobian: "
+	checkPetscError(ierr, "PetscSolver2DHandler::computeJacobian: "
 			"TSGetDM failed.");
 
-	// Setup some step size variables
-	double sy = 1.0 / (hY * hY);
-
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = expNetwork.getDOF();
-
-	// Pointers to the PETSc arrays that start at the beginning (xs) of the
-	// local array!
-	PetscScalar ***concs = nullptr;
 	// Get pointers to vector data
+	PetscScalar ***concs = nullptr;
 	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeOffDiagonalJacobian: "
-			"DMDAVecGetArrayDOFRead (localC) failed.");
-
-	// Pointer to the concentrations at a given grid point
-	PetscScalar *concOffset = nullptr;
+	checkPetscError(ierr, "PetscSolver2DHandler::computeJacobian: "
+			"DMDAVecGetArrayDOFRead failed.");
 
 	// Get local grid boundaries
 	PetscInt xs, xm, ys, ym;
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeOffDiagonalJacobian: "
+	checkPetscError(ierr, "PetscSolver2DHandler::computeJacobian: "
 			"DMDAGetCorners failed.");
+
+	// The degree of freedom is the size of the network
+	const int dof = expNetwork.getDOF();
+
+	// Setup some step size variables
+	double sy = 1.0 / (hY * hY);
+
+	// Pointer to the concentrations at a given grid point
+	PetscScalar *concOffset = nullptr;
+
+	// Arguments for MatSetValuesStencil called below
+	MatStencil rowId;
+	MatStencil colIds[dof];
+	int pdColIdsVectorSize = 0;
+
+	// Declarations for variables used in the loop
+	double atomConc = 0.0, totalAtomConc = 0.0;
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the total number of diffusing clusters
 	const int nDiff = max(diffusionHandler->getNumberOfDiffusing(), 0);
@@ -639,7 +646,6 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	PetscInt diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
 	PetscInt advecIndices[nAdvec];
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	/*
 	 Loop over grid points for the temperature, including ghosts
@@ -699,7 +705,7 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					ierr = MatSetValuesStencil(J, 1, &row, 5, cols, tempVals,
 							ADD_VALUES);
 					checkPetscError(ierr,
-							"PetscSolver2DHandler::computeOffDiagonalJacobian: "
+							"PetscSolver2DHandler::computeJacobian: "
 									"MatSetValuesStencil (temperature) failed.");
 				}
 			}
@@ -774,243 +780,12 @@ void PetscSolver2DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					ierr = MatSetValuesStencil(J, 1, &row, 5, cols, tempVals,
 							ADD_VALUES);
 					checkPetscError(ierr,
-							"PetscSolver2DHandler::computeOffDiagonalJacobian: "
+							"PetscSolver2DHandler::computeJacobian: "
 									"MatSetValuesStencil (temperature) failed.");
 				}
 			}
 		}
 
-		if (tempHasChanged) {
-			// Update the network with the temperature
-			expNetwork.setTemperatures(temperature);
-			expNetwork.syncClusterDataOnHost();
-		}
-	}
-
-	/*
-	 Loop over grid points computing Jacobian terms for diffusion and advection
-	 at each grid point
-	 */
-	for (PetscInt yj = ys; yj < ys + ym; yj++) {
-		// Set the grid position
-		gridPosition[1] = yj * hY;
-
-		// Initialize the advection and temperature handlers which depend
-		// on the surface position at Y
-		advectionHandlers[0]->setLocation(
-				grid[surfacePosition[yj] + 1] - grid[1]);
-
-		for (PetscInt xi = xs; xi < xs + xm; xi++) {
-			// Compute the left and right hx
-			double hxLeft = 0.0, hxRight = 0.0;
-			if (xi - 1 >= 0 && xi < nX) {
-				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-			} else if (xi - 1 < 0) {
-				hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
-				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-			} else {
-				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = (grid[xi + 1] - grid[xi]) / 2;
-			}
-
-			// Boundary conditions
-			// Everything to the left of the surface is empty
-			if (xi < surfacePosition[yj] + leftOffset
-					|| xi > nX - 1 - rightOffset || yj < bottomOffset
-					|| yj > nY - 1 - topOffset)
-				continue;
-			// Free surface GB
-			bool skip = false;
-			for (auto &pair : gbVector) {
-				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
-					skip = true;
-					break;
-				}
-			}
-			if (skip)
-				continue;
-
-			// Get the partial derivatives for the diffusion
-			diffusionHandler->computePartialsForDiffusion(expNetwork, diffVals,
-					diffIndices, hxLeft, hxRight, xi - xs, sy, yj - ys);
-
-			// Loop on the number of diffusion cluster to set the values in the Jacobian
-			for (int i = 0; i < nDiff; i++) {
-				// Set grid coordinate and component number for the row
-				row.i = xi;
-				row.j = yj;
-				row.c = diffIndices[i];
-
-				// Set grid coordinates and component numbers for the columns
-				// corresponding to the middle, left, right, bottom, and top grid points
-				cols[0].i = xi; // middle
-				cols[0].j = yj;
-				cols[0].c = diffIndices[i];
-				cols[1].i = xi - 1; // left
-				cols[1].j = yj;
-				cols[1].c = diffIndices[i];
-				cols[2].i = xi + 1; // right
-				cols[2].j = yj;
-				cols[2].c = diffIndices[i];
-				cols[3].i = xi; // bottom
-				cols[3].j = yj - 1;
-				cols[3].c = diffIndices[i];
-				cols[4].i = xi; // top
-				cols[4].j = yj + 1;
-				cols[4].c = diffIndices[i];
-
-				ierr = MatSetValuesStencil(J, 1, &row, 5, cols,
-						diffVals + (5 * i), ADD_VALUES);
-				checkPetscError(ierr,
-						"PetscSolver2DHandler::computeOffDiagonalJacobian: "
-								"MatSetValuesStencil (diffusion) failed.");
-			}
-
-			// Get the partial derivatives for the advection
-			// Set the grid position
-			gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
-			for (int l = 0; l < advectionHandlers.size(); l++) {
-				advectionHandlers[l]->computePartialsForAdvection(expNetwork,
-						advecVals, advecIndices, gridPosition, hxLeft, hxRight,
-						xi - xs, hY, yj - ys);
-
-				// Get the stencil indices to know where to put the partial derivatives in the Jacobian
-				auto advecStencil =
-						advectionHandlers[l]->getStencilForAdvection(
-								gridPosition);
-
-				// Get the number of advecting clusters
-				nAdvec = advectionHandlers[l]->getNumberOfAdvecting();
-
-				// Loop on the number of advecting cluster to set the values in the Jacobian
-				for (int i = 0; i < nAdvec; i++) {
-					// Set grid coordinate and component number for the row
-					row.i = xi;
-					row.j = yj;
-					row.c = advecIndices[i];
-
-					// If we are on the sink, the partial derivatives are not the same
-					// Both sides are giving their concentrations to the center
-					if (advectionHandlers[l]->isPointOnSink(gridPosition)) {
-						cols[0].i = xi - advecStencil[0]; // left?
-						cols[0].j = yj - advecStencil[1]; // bottom?
-						cols[0].c = advecIndices[i];
-						cols[1].i = xi + advecStencil[0]; // right?
-						cols[1].j = yj + advecStencil[1]; // top?
-						cols[1].c = advecIndices[i];
-					} else {
-						// Set grid coordinates and component numbers for the columns
-						// corresponding to the middle and other grid points
-						cols[0].i = xi; // middle
-						cols[0].j = yj;
-						cols[0].c = advecIndices[i];
-						cols[1].i = xi + advecStencil[0]; // left or right?
-						cols[1].j = yj + advecStencil[1]; // bottom or top?
-						cols[1].c = advecIndices[i];
-					}
-
-					// Update the matrix
-					ierr = MatSetValuesStencil(J, 1, &row, 2, cols,
-							advecVals + (2 * i), ADD_VALUES);
-					checkPetscError(ierr,
-							"PetscSolver2DHandler::computeOffDiagonalJacobian: "
-									"MatSetValuesStencil (advection) failed.");
-				}
-			}
-		}
-	}
-
-	// Restore the array
-	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeOffDiagonalJacobian: "
-			"DMDAVecRestoreArrayDOFRead (localC) failed.");
-
-	return;
-}
-
-void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
-		PetscReal ftime) {
-	PetscErrorCode ierr;
-
-	// Get the distributed array
-	DM da;
-	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
-			"TSGetDM failed.");
-
-	// Get pointers to vector data
-	PetscScalar ***concs = nullptr;
-	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
-			"DMDAVecGetArrayDOFRead failed.");
-
-	// Get local grid boundaries
-	PetscInt xs, xm, ys, ym;
-	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
-			"DMDAGetCorners failed.");
-
-	// The degree of freedom is the size of the network
-	const int dof = expNetwork.getDOF();
-
-	// Pointer to the concentrations at a given grid point
-	PetscScalar *concOffset = nullptr;
-
-	// Arguments for MatSetValuesStencil called below
-	MatStencil rowId;
-	MatStencil colIds[dof];
-	int pdColIdsVectorSize = 0;
-
-	// Declarations for variables used in the loop
-	double atomConc = 0.0, totalAtomConc = 0.0;
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
-
-	// Loop over grid points first for the temperature, including the ghost points in X
-	for (PetscInt yj = ys; yj < ys + ym; yj++) {
-		temperatureHandler->updateSurfacePosition(surfacePosition[yj]);
-		bool tempHasChanged = false;
-		for (PetscInt xi = xs - 1; xi <= xs + xm; xi++) {
-			// Boundary conditions
-			// Everything to the left of the surface is empty
-			if (xi < surfacePosition[yj] + leftOffset
-					|| xi > nX - 1 - rightOffset) {
-				continue;
-			}
-			// Free surface GB
-			bool skip = false;
-			for (auto &pair : gbVector) {
-				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
-					skip = true;
-					break;
-				}
-			}
-			if (skip)
-				continue;
-
-			// Get the concentrations at this grid point
-			concOffset = concs[yj][xi];
-
-			// Set the grid fraction
-			gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
-					- grid[surfacePosition[yj] + 1])
-					/ (grid[grid.size() - 1] - grid[surfacePosition[yj] + 1]);
-			gridPosition[1] = yj / nY;
-
-			// Get the temperature from the temperature handler
-			temperatureHandler->setTemperature(concOffset);
-			double temp = temperatureHandler->getTemperature(gridPosition,
-					ftime);
-
-			// Update the network if the temperature changed
-			if (std::fabs(temperature[xi + 1 - xs] - temp) > 0.1) {
-				temperature[xi + 1 - xs] = temp;
-				tempHasChanged = true;
-			}
-		}
-
-		// TODO: it is updated T more than once per MPI process in preparation
-		// of T depending on more than X
 		if (tempHasChanged) {
 			// Update the network with the temperature
 			expNetwork.setTemperatures(temperature);
@@ -1076,6 +851,11 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		// Set the grid position
 		gridPosition[1] = yj * hY;
 
+		// Initialize the advection and temperature handlers which depend
+		// on the surface position at Y
+		advectionHandlers[0]->setLocation(
+				grid[surfacePosition[yj] + 1] - grid[1]);
+
 		for (PetscInt xi = xs; xi < xs + xm; xi++) {
 			// Boundary conditions
 			// Everything to the left of the surface is empty
@@ -1094,10 +874,106 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 			if (skip)
 				continue;
 
-			// Set the grid fraction
-			gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
-					- grid[surfacePosition[yj] + 1])
-					/ (grid[grid.size() - 1] - grid[surfacePosition[yj] + 1]);
+			// Compute the left and right hx
+			double hxLeft = 0.0, hxRight = 0.0;
+			if (xi - 1 >= 0 && xi < nX) {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else if (xi - 1 < 0) {
+				hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = (grid[xi + 1] - grid[xi]) / 2;
+			}
+
+			// Get the partial derivatives for the diffusion
+			diffusionHandler->computePartialsForDiffusion(expNetwork, diffVals,
+					diffIndices, hxLeft, hxRight, xi - xs, sy, yj - ys);
+
+			// Loop on the number of diffusion cluster to set the values in the Jacobian
+			for (int i = 0; i < nDiff; i++) {
+				// Set grid coordinate and component number for the row
+				row.i = xi;
+				row.j = yj;
+				row.c = diffIndices[i];
+
+				// Set grid coordinates and component numbers for the columns
+				// corresponding to the middle, left, right, bottom, and top grid points
+				cols[0].i = xi; // middle
+				cols[0].j = yj;
+				cols[0].c = diffIndices[i];
+				cols[1].i = xi - 1; // left
+				cols[1].j = yj;
+				cols[1].c = diffIndices[i];
+				cols[2].i = xi + 1; // right
+				cols[2].j = yj;
+				cols[2].c = diffIndices[i];
+				cols[3].i = xi; // bottom
+				cols[3].j = yj - 1;
+				cols[3].c = diffIndices[i];
+				cols[4].i = xi; // top
+				cols[4].j = yj + 1;
+				cols[4].c = diffIndices[i];
+
+				ierr = MatSetValuesStencil(J, 1, &row, 5, cols,
+						diffVals + (5 * i), ADD_VALUES);
+				checkPetscError(ierr,
+						"PetscSolver2DHandler::computeJacobian: "
+								"MatSetValuesStencil (diffusion) failed.");
+			}
+
+			// Get the partial derivatives for the advection
+			// Set the grid position
+			gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
+			for (int l = 0; l < advectionHandlers.size(); l++) {
+				advectionHandlers[l]->computePartialsForAdvection(expNetwork,
+						advecVals, advecIndices, gridPosition, hxLeft, hxRight,
+						xi - xs, hY, yj - ys);
+
+				// Get the stencil indices to know where to put the partial derivatives in the Jacobian
+				auto advecStencil =
+						advectionHandlers[l]->getStencilForAdvection(
+								gridPosition);
+
+				// Get the number of advecting clusters
+				nAdvec = advectionHandlers[l]->getNumberOfAdvecting();
+
+				// Loop on the number of advecting cluster to set the values in the Jacobian
+				for (int i = 0; i < nAdvec; i++) {
+					// Set grid coordinate and component number for the row
+					row.i = xi;
+					row.j = yj;
+					row.c = advecIndices[i];
+
+					// If we are on the sink, the partial derivatives are not the same
+					// Both sides are giving their concentrations to the center
+					if (advectionHandlers[l]->isPointOnSink(gridPosition)) {
+						cols[0].i = xi - advecStencil[0]; // left?
+						cols[0].j = yj - advecStencil[1]; // bottom?
+						cols[0].c = advecIndices[i];
+						cols[1].i = xi + advecStencil[0]; // right?
+						cols[1].j = yj + advecStencil[1]; // top?
+						cols[1].c = advecIndices[i];
+					} else {
+						// Set grid coordinates and component numbers for the columns
+						// corresponding to the middle and other grid points
+						cols[0].i = xi; // middle
+						cols[0].j = yj;
+						cols[0].c = advecIndices[i];
+						cols[1].i = xi + advecStencil[0]; // left or right?
+						cols[1].j = yj + advecStencil[1]; // bottom or top?
+						cols[1].c = advecIndices[i];
+					}
+
+					// Update the matrix
+					ierr = MatSetValuesStencil(J, 1, &row, 2, cols,
+							advecVals + (2 * i), ADD_VALUES);
+					checkPetscError(ierr,
+							"PetscSolver2DHandler::computeJacobian: "
+									"MatSetValuesStencil (advection) failed.");
+				}
+			}
 
 			// Get the concentations
 			concOffset = concs[yj][xi];
@@ -1147,7 +1023,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 							colIds, reactingPartialsForCluster.data(),
 							ADD_VALUES);
 					checkPetscError(ierr,
-							"PetscSolver2DHandler::computeDiagonalJacobian: "
+							"PetscSolver2DHandler::computeJacobian: "
 									"MatSetValuesStencil (reactions) failed.");
 
 					// Increase the starting index
@@ -1186,7 +1062,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
 						mutationVals + (3 * i), ADD_VALUES);
 				checkPetscError(ierr,
-						"PetscSolver2DHandler::computeDiagonalJacobian: "
+						"PetscSolver2DHandler::computeJacobian: "
 								"MatSetValuesStencil (He trap-mutation) failed.");
 
 				// Set component number for the row
@@ -1196,7 +1072,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
 						mutationVals + (3 * i) + 1, ADD_VALUES);
 				checkPetscError(ierr,
-						"PetscSolver2DHandler::computeDiagonalJacobian: "
+						"PetscSolver2DHandler::computeJacobian: "
 								"MatSetValuesStencil (HeV trap-mutation) failed.");
 
 				// Set component number for the row
@@ -1206,7 +1082,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 				ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
 						mutationVals + (3 * i) + 2, ADD_VALUES);
 				checkPetscError(ierr,
-						"PetscSolver2DHandler::computeDiagonalJacobian: "
+						"PetscSolver2DHandler::computeJacobian: "
 								"MatSetValuesStencil (I trap-mutation) failed.");
 			}
 		}
@@ -1216,7 +1092,7 @@ void PetscSolver2DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	 Restore vectors
 	 */
 	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeDiagonalJacobian: "
+	checkPetscError(ierr, "PetscSolver2DHandler::computeJacobian: "
 			"DMDAVecRestoreArrayDOFRead failed.");
 
 	return;

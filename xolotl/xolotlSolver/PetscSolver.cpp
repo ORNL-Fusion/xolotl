@@ -143,18 +143,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	// Get the solver handler
 	auto& solverHandler = Solver::getSolverHandler();
 
-	// TODO: merge off and on because it is just a waste to separate them
-
-	/* ----- Compute the off-diagonal part of the Jacobian ----- */
-	solverHandler.computeOffDiagonalJacobian(ts, localC, J, ftime);
-
-	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
-	CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
-	CHKERRQ(ierr);
-
 	/* ----- Compute the partial derivatives for the reaction term ----- */
-	solverHandler.computeDiagonalJacobian(ts, localC, J, ftime);
+	solverHandler.computeJacobian(ts, localC, J, ftime);
 
 	// Return the local vector
 	ierr = DMRestoreLocalVector(da, &localC);

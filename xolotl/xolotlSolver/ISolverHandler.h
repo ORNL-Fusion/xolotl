@@ -77,25 +77,14 @@ public:
 			PetscReal ftime) = 0;
 
 	/**
-	 * Compute the off-diagonal part of the Jacobian which is related to cluster's motion.
+	 * Compute the full Jacobian.
 	 *
 	 * @param ts The PETSc time stepper
 	 * @param localC The PETSc local solution vector
 	 * @param J The Jacobian
 	 * @param ftime The real time
 	 */
-	virtual void computeOffDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
-			PetscReal ftime) = 0;
-
-	/**
-	 * Compute the diagonal part of the Jacobian which is related to cluster reactions.
-	 *
-	 * @param ts The PETSc time stepper
-	 * @param localC The PETSc local solution vector
-	 * @param J The Jacobian
-	 * @param ftime The real time
-	 */
-	virtual void computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
+	virtual void computeJacobian(TS &ts, Vec &localC, Mat &J,
 			PetscReal ftime) = 0;
 
 	/**

@@ -634,39 +634,46 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	return;
 }
 
-void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
-		Mat &J, PetscReal ftime) {
+void PetscSolver3DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
+		PetscReal ftime) {
 	PetscErrorCode ierr;
 
 	// Get the distributed array
 	DM da;
 	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr, "PetscSolver3DHandler::computeOffDiagonalJacobian: "
+	checkPetscError(ierr, "PetscSolver3DHandler::computeJacobian: "
 			"TSGetDM failed.");
+
+	// Get pointers to vector data
+	PetscScalar ****concs = nullptr;
+	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
+	checkPetscError(ierr, "PetscSolver3DHandler::computeJacobian: "
+			"DMDAVecGetArrayDOFRead failed.");
+
+	// Get local grid boundaries
+	PetscInt xs, xm, ys, ym, zs, zm;
+	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
+	checkPetscError(ierr, "PetscSolver3DHandler::computeJacobian: "
+			"DMDAGetCorners failed.");
+
+	// The degree of freedom is the size of the network
+	const int dof = expNetwork.getDOF();
 
 	// Setup some step size variables
 	double sy = 1.0 / (hY * hY);
 	double sz = 1.0 / (hZ * hZ);
 
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = expNetwork.getDOF();
-
-	// Pointers to the PETSc arrays that start at the beginning (xs) of the
-	// local array!
-	PetscScalar ****concs = nullptr;
-	// Get pointers to vector data
-	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr, "PetscSolver3DHandler::computeOffDiagonalJacobian: "
-			"DMDAVecGetArrayDOFRead (localC) failed.");
-
 	// Pointer to the concentrations at a given grid point
 	PetscScalar *concOffset = nullptr;
 
-	// Get local grid boundaries
-	PetscInt xs, xm, ys, ym, zs, zm;
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	checkPetscError(ierr, "PetscSolver3DHandler::computeOffDiagonalJacobian: "
-			"DMDAGetCorners failed.");
+	// Arguments for MatSetValuesStencil called below
+	MatStencil rowId;
+	MatStencil colIds[dof];
+	int pdColIdsVectorSize = 0;
+
+	// Declarations for variables used in the loop
+	double atomConc = 0.0, totalAtomConc = 0.0;
+	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the total number of diffusing clusters
 	const int nDiff = max(diffusionHandler->getNumberOfDiffusing(), 0);
@@ -687,7 +694,6 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 	PetscInt diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
 	PetscInt advecIndices[nAdvec];
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	/*
 	 Loop over grid points for the temperature, including ghosts
@@ -763,7 +769,7 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 						ierr = MatSetValuesStencil(J, 1, &row, 7, cols,
 								tempVals, ADD_VALUES);
 						checkPetscError(ierr,
-								"PetscSolver3DHandler::computeOffDiagonalJacobian: "
+								"PetscSolver3DHandler::computeJacobian: "
 										"MatSetValuesStencil (temperature) failed.");
 					}
 				}
@@ -855,29 +861,84 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 						ierr = MatSetValuesStencil(J, 1, &row, 7, cols,
 								tempVals, ADD_VALUES);
 						checkPetscError(ierr,
-								"PetscSolver3DHandler::computeOffDiagonalJacobian: "
+								"PetscSolver3DHandler::computeJacobian: "
 										"MatSetValuesStencil (temperature) failed.");
 					}
 				}
 			}
 
+			// TODO: it is updated T more than once per MPI process in preparation
+			// of T depending on more than X
 			if (tempHasChanged) {
 				// Update the network with the temperature
 				expNetwork.setTemperatures(temperature);
 				expNetwork.syncClusterDataOnHost();
+				// Update the modified trap-mutation rate
+				// that depends on the network reaction rates
+				// TODO: is this just the local largest rate? Is it correct?
+				mutationHandler->updateTrapMutationRate(
+						expNetwork.getLargestRate());
 			}
 		}
 
-	/*
-	 Loop over grid points computing Jacobian terms for diffusion and advection
-	 at each grid point
-	 */
-	for (PetscInt zk = zs; zk < zs + zm; zk++) {
-		// Set the grid position
-		gridPosition[2] = zk * hZ;
-		for (PetscInt yj = ys; yj < ys + ym; yj++) {
+	// Loop over the grid points
+	for (PetscInt zk = frontOffset; zk < nZ - backOffset; zk++)
+		for (PetscInt yj = bottomOffset; yj < nY - topOffset; yj++) {
+
+			// Computing the trapped atom concentration is only needed for the attenuation
+			if (useAttenuation) {
+				// Compute the total concentration of atoms contained in bubbles
+				atomConc = 0.0;
+
+				// Loop over grid points
+				for (int xi = surfacePosition[yj][zk] + leftOffset;
+						xi < nX - rightOffset; xi++) {
+					// We are only interested in the helium near the surface
+					if ((grid[xi] + grid[xi + 1]) / 2.0
+							- grid[surfacePosition[yj][zk] + 1] > 2.0)
+						continue;
+
+					// Check if we are on the right processor
+					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
+							&& zk >= zs && zk < zs + zm) {
+						// Get the concentrations at this grid point
+						concOffset = concs[zk][yj][xi];
+
+						// Sum the total atom concentration
+						using NetworkType =
+						xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+						using Spec = typename NetworkType::Species;
+						using HostUnmanaged =
+						Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+						auto hConcs = HostUnmanaged(concOffset, dof);
+						auto dConcs = Kokkos::View<double*>("Concentrations",
+								dof);
+						deep_copy(dConcs, hConcs);
+						// TODO: how to not have to cast the network here?
+						auto &psiNetwork =
+								dynamic_cast<NetworkType&>(expNetwork);
+						atomConc += psiNetwork.getTotalTrappedAtomConcentration(
+								dConcs, Spec::He, 0)
+								* (grid[xi + 1] - grid[xi]);
+					}
+				}
+
+				// Share the concentration with all the processes
+				totalAtomConc = 0.0;
+				MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
+						MPI_COMM_WORLD);
+
+				// Set the disappearing rate in the modified TM handler
+				mutationHandler->updateDisappearingRate(totalAtomConc);
+			}
+
+			// Skip if we are not on the right process
+			if (yj < ys || yj >= ys + ym || zk < zs || zk >= zs + zm)
+				continue;
+
 			// Set the grid position
 			gridPosition[1] = yj * hY;
+			gridPosition[2] = zk * hZ;
 
 			// Initialize the advection and temperature handlers which depend
 			// on the surface position at Y
@@ -965,7 +1026,7 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 					ierr = MatSetValuesStencil(J, 1, &row, 7, cols,
 							diffVals + (7 * i), ADD_VALUES);
 					checkPetscError(ierr,
-							"PetscSolver3DHandler::computeOffDiagonalJacobian: "
+							"PetscSolver3DHandler::computeJacobian: "
 									"MatSetValuesStencil (diffusion) failed.");
 				}
 
@@ -1021,198 +1082,10 @@ void PetscSolver3DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
 						ierr = MatSetValuesStencil(J, 1, &row, 2, cols,
 								advecVals + (2 * i), ADD_VALUES);
 						checkPetscError(ierr,
-								"PetscSolver3DHandler::computeOffDiagonalJacobian: "
+								"PetscSolver3DHandler::computeJacobian: "
 										"MatSetValuesStencil (advection) failed.");
 					}
 				}
-			}
-		}
-	}
-
-	// Restore the array
-	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr, "PetscSolver3DHandler::computeOffDiagonalJacobian: "
-			"DMDAVecRestoreArrayDOFRead (localC) failed.");
-
-	return;
-}
-
-void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
-		PetscReal ftime) {
-	PetscErrorCode ierr;
-
-	// Get the distributed array
-	DM da;
-	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr, "PetscSolver3DHandler::computeDiagonalJacobian: "
-			"TSGetDM failed.");
-
-	// Get pointers to vector data
-	PetscScalar ****concs = nullptr;
-	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr, "PetscSolver3DHandler::computeDiagonalJacobian: "
-			"DMDAVecGetArrayDOFRead failed.");
-
-	// Get local grid boundaries
-	PetscInt xs, xm, ys, ym, zs, zm;
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	checkPetscError(ierr, "PetscSolver3DHandler::computeDiagonalJacobian: "
-			"DMDAGetCorners failed.");
-
-	// The degree of freedom is the size of the network
-	const int dof = expNetwork.getDOF();
-
-	// Pointer to the concentrations at a given grid point
-	PetscScalar *concOffset = nullptr;
-
-	// Arguments for MatSetValuesStencil called below
-	MatStencil rowId;
-	MatStencil colIds[dof];
-	int pdColIdsVectorSize = 0;
-
-	// Declarations for variables used in the loop
-	double atomConc = 0.0, totalAtomConc = 0.0;
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
-
-	// Loop over grid points first for the temperature, including the ghost points in X
-	for (PetscInt zk = zs; zk < zs + zm; zk++)
-		for (PetscInt yj = ys; yj < ys + ym; yj++) {
-			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
-			bool tempHasChanged = false;
-			for (PetscInt xi = xs - 1; xi <= xs + xm; xi++) {
-				// Boundary conditions
-				// Everything to the left of the surface is empty
-				if (xi < surfacePosition[yj][zk] + leftOffset
-						|| xi > nX - 1 - rightOffset) {
-					continue;
-				}
-				// Free surface GB
-				bool skip = false;
-				for (auto &pair : gbVector) {
-					if (xi == std::get<0>(pair) && yj == std::get<1>(pair)
-							&& zk == std::get<2>(pair)) {
-						skip = true;
-						break;
-					}
-				}
-				if (skip)
-					continue;
-
-				// Get the concentrations at this grid point
-				concOffset = concs[zk][yj][xi];
-
-				// Set the grid fraction
-				gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0
-						- grid[surfacePosition[yj][zk] + 1])
-						/ (grid[grid.size() - 1]
-								- grid[surfacePosition[yj][zk] + 1]);
-				gridPosition[1] = yj / nY;
-				gridPosition[2] = zk / nZ;
-
-				// Get the temperature from the temperature handler
-				temperatureHandler->setTemperature(concOffset);
-				double temp = temperatureHandler->getTemperature(gridPosition,
-						ftime);
-
-				// Update the network if the temperature changed
-				if (std::fabs(temperature[xi + 1 - xs] - temp) > 0.1) {
-					temperature[xi + 1 - xs] = temp;
-					tempHasChanged = true;
-				}
-			}
-
-			// TODO: it is updated T more than once per MPI process in preparation
-			// of T depending on more than X
-			if (tempHasChanged) {
-				// Update the network with the temperature
-				expNetwork.setTemperatures(temperature);
-				expNetwork.syncClusterDataOnHost();
-				// Update the modified trap-mutation rate
-				// that depends on the network reaction rates
-				// TODO: is this just the local largest rate? Is it correct?
-				mutationHandler->updateTrapMutationRate(
-						expNetwork.getLargestRate());
-			}
-		}
-
-	// Loop over the grid points
-	for (PetscInt zk = frontOffset; zk < nZ - backOffset; zk++)
-		for (PetscInt yj = bottomOffset; yj < nY - topOffset; yj++) {
-
-			// Computing the trapped atom concentration is only needed for the attenuation
-			if (useAttenuation) {
-				// Compute the total concentration of atoms contained in bubbles
-				atomConc = 0.0;
-
-				// Loop over grid points
-				for (int xi = surfacePosition[yj][zk] + leftOffset;
-						xi < nX - rightOffset; xi++) {
-					// We are only interested in the helium near the surface
-					if ((grid[xi] + grid[xi + 1]) / 2.0
-							- grid[surfacePosition[yj][zk] + 1] > 2.0)
-						continue;
-
-					// Check if we are on the right processor
-					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym
-							&& zk >= zs && zk < zs + zm) {
-						// Get the concentrations at this grid point
-						concOffset = concs[zk][yj][xi];
-
-						// Sum the total atom concentration
-						using NetworkType =
-						xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
-						using Spec = typename NetworkType::Species;
-						using HostUnmanaged =
-						Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-						auto hConcs = HostUnmanaged(concOffset, dof);
-						auto dConcs = Kokkos::View<double*>("Concentrations",
-								dof);
-						deep_copy(dConcs, hConcs);
-						// TODO: how to not have to cast the network here?
-						auto &psiNetwork =
-								dynamic_cast<NetworkType&>(expNetwork);
-						atomConc += psiNetwork.getTotalTrappedAtomConcentration(
-								dConcs, Spec::He, 0)
-								* (grid[xi + 1] - grid[xi]);
-					}
-				}
-
-				// Share the concentration with all the processes
-				totalAtomConc = 0.0;
-				MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-						MPI_COMM_WORLD);
-
-				// Set the disappearing rate in the modified TM handler
-				mutationHandler->updateDisappearingRate(totalAtomConc);
-			}
-
-			// Skip if we are not on the right process
-			if (yj < ys || yj >= ys + ym || zk < zs || zk >= zs + zm)
-				continue;
-
-			// Set the grid position
-			gridPosition[1] = yj * hY;
-			gridPosition[2] = zk * hZ;
-
-			for (PetscInt xi = xs; xi < xs + xm; xi++) {
-				// Boundary conditions
-				// Everything to the left of the surface is empty
-				if (xi < surfacePosition[yj][zk] + leftOffset
-						|| xi > nX - 1 - rightOffset || yj < bottomOffset
-						|| yj > nY - 1 - topOffset || zk < frontOffset
-						|| zk > nZ - 1 - backOffset)
-					continue;
-				// Free surface GB
-				bool skip = false;
-				for (auto &pair : gbVector) {
-					if (xi == std::get<0>(pair) && yj == std::get<1>(pair)
-							&& zk == std::get<2>(pair)) {
-						skip = true;
-						break;
-					}
-				}
-				if (skip)
-					continue;
 
 				// Get the concentration
 				concOffset = concs[zk][yj][xi];
@@ -1264,7 +1137,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 								pdColIdsVectorSize, colIds,
 								reactingPartialsForCluster.data(), ADD_VALUES);
 						checkPetscError(ierr,
-								"PetscSolver3DHandler::computeDiagonalJacobian: "
+								"PetscSolver3DHandler::computeJacobian: "
 										"MatSetValuesStencil (reactions) failed.");
 
 						// Increase the starting index
@@ -1305,7 +1178,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
 							mutationVals + (3 * i), ADD_VALUES);
 					checkPetscError(ierr,
-							"PetscSolver3DHandler::computeDiagonalJacobian: "
+							"PetscSolver3DHandler::computeJacobian: "
 									"MatSetValuesStencil (He trap-mutation) failed.");
 
 					// Set component number for the row
@@ -1315,7 +1188,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
 							mutationVals + (3 * i) + 1, ADD_VALUES);
 					checkPetscError(ierr,
-							"PetscSolver3DHandler::computeDiagonalJacobian: "
+							"PetscSolver3DHandler::computeJacobian: "
 									"MatSetValuesStencil (HeV trap-mutation) failed.");
 
 					// Set component number for the row
@@ -1325,7 +1198,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
 							mutationVals + (3 * i) + 2, ADD_VALUES);
 					checkPetscError(ierr,
-							"PetscSolver3DHandler::computeDiagonalJacobian: "
+							"PetscSolver3DHandler::computeJacobian: "
 									"MatSetValuesStencil (I trap-mutation) failed.");
 				}
 			}
@@ -1335,7 +1208,7 @@ void PetscSolver3DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 	 Restore vectors
 	 */
 	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr, "PetscSolver3DHandler::computeDiagonalJacobian: "
+	checkPetscError(ierr, "PetscSolver3DHandler::computeJacobian: "
 			"DMDAVecRestoreArrayDOFRead failed.");
 
 	return;

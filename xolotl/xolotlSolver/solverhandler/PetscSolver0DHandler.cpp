@@ -240,14 +240,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	return;
 }
 
-void PetscSolver0DHandler::computeOffDiagonalJacobian(TS &ts, Vec &localC,
-		Mat &J, PetscReal ftime) {
-	// Does nothing in 0D
-
-	return;
-}
-
-void PetscSolver0DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
+void PetscSolver0DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 		PetscReal ftime) {
 	PetscErrorCode ierr;
 

@@ -60,17 +60,10 @@ public:
 	void updateConcentration(TS &ts, Vec &localC, Vec &F, PetscReal ftime);
 
 	/**
-	 * Compute the off-diagonal part of the Jacobian which is related to cluster's motion.
+	 * Compute the full Jacobian.
 	 * \see ISolverHandler.h
 	 */
-	void computeOffDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
-			PetscReal ftime);
-
-	/**
-	 * Compute the diagonal part of the Jacobian which is related to cluster reactions.
-	 * \see ISolverHandler.h
-	 */
-	void computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J, PetscReal ftime);
+	void computeJacobian(TS &ts, Vec &localC, Mat &J, PetscReal ftime);
 
 	/**
 	 * Get the position of the surface.
