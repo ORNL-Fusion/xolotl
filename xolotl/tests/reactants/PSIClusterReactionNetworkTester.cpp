@@ -9,7 +9,7 @@
 #include <PSIVCluster.h>
 #include <PSIInterstitialCluster.h>
 #include <PSIHeInterstitialCluster.h>
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 
 using namespace std;
 using namespace xolotlCore;

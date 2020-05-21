@@ -5,7 +5,7 @@
 #include "PulsedFitFluxHandler.h"
 #include <mpi.h>
 #include <HDF5NetworkLoader.h>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
 #include <Options.h>
 #include <iostream>

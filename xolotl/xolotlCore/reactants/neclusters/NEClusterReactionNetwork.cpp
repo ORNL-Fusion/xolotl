@@ -1,6 +1,6 @@
 #include "NEClusterReactionNetwork.h"
 #include "NESuperCluster.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <sstream>
 #include <Constants.h>
 

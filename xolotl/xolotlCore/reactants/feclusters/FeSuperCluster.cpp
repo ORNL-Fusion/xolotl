@@ -2,7 +2,7 @@
 #include "FeSuperCluster.h"
 #include "FeClusterReactionNetwork.h"
 #include <MathUtils.h>
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 
 using namespace xolotlCore;
 

@@ -7,12 +7,10 @@ SET(PACKAGE_DESCRIPTION "Xolotl Temperature")
 #and glob them in HEADERS
 file(GLOB HEADERS *.h)
 
-#Include directories
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
+add_library(xolotlTemperature INTERFACE)
+target_include_directories(xolotlTemperature INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

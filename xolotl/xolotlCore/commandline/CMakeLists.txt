@@ -12,16 +12,15 @@ file(GLOB HEADERS *.h)
 #Grab all of the source files
 file(GLOB SRC *.cpp)
 
-# Where to look for include files
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/)
-
 #Add a library to hold the command line handling code
-add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} ${Boost_LIBRARIES} MPI::MPI_CXX)
+add_library(xolotlCL STATIC ${SRC})
+target_link_libraries(xolotlCL PUBLIC
+    xolotlIO
+    xolotlPerf
+    Boost::program_options
+    MPI::MPI_CXX
+)
+target_include_directories(xolotlCL PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

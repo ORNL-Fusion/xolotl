@@ -4,7 +4,7 @@
 // Includes
 #include <sstream>
 #include "PSICluster.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 
 namespace xolotlCore {
 

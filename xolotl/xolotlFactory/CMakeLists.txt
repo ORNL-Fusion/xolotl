@@ -14,39 +14,6 @@ solverHandler/*.h reactionHandler/*.h)
 file(GLOB SRC material/*.cpp vizHandler/*.cpp temperatureHandler/*.cpp
 solverHandler/*.cpp reactionHandler/*.cpp)
 
-#Include directories
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}
-                    ${CMAKE_CURRENT_SOURCE_DIR}/material
-                    ${CMAKE_SOURCE_DIR}/xolotlCore
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/io
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/advection
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/flux
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/diffusion
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/heterogeneousnucleation
-                    ${CMAKE_SOURCE_DIR}/xolotlPerf
-                    ${CMAKE_CURRENT_SOURCE_DIR}/vizHandler
-                    ${CMAKE_BINARY_DIR}/xolotlFactory
-                    ${CMAKE_SOURCE_DIR}/xolotlViz
-                    ${CMAKE_SOURCE_DIR}/xolotlViz/dummy
-                    ${CMAKE_CURRENT_SOURCE_DIR}/temperatureHandler
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/temperature
-                    ${CMAKE_CURRENT_SOURCE_DIR}/solverHandler
-                    ${CMAKE_SOURCE_DIR}/xolotlSolver
-                    ${CMAKE_SOURCE_DIR}/xolotlSolver/solverhandler
-                    ${CMAKE_SOURCE_DIR}
-                    ${CMAKE_BINARY_DIR}
-                    ${Boost_INCLUDE_DIR}
-                    ${PETSC_INCLUDES})
-
-
 # Find VTKm
 if(VTKM_DIR)
     include(${CMAKE_SOURCE_DIR}/cmake-modules/SetupVTKm.cmake)
@@ -54,14 +21,29 @@ else()
     message(STATUS "Visualization support needs explicit VTKm_DIR.")
 endif()
 
-if(VTKM_FOUND)
-    include_directories(${CMAKE_SOURCE_DIR}/xolotlViz/standard)
-endif(VTKM_FOUND)
-
-
 #Add a library to hold the factory code
-add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} xolotlViz xolotlSolver)
+add_library(xolotlFactory STATIC ${SRC})
+target_link_libraries(xolotlFactory PUBLIC
+    xolotlIO
+    xolotlAdvection
+    xolotlFlux
+    xolotlDiffusion
+    xolotlCL
+    xolotlReactants
+    xolotlModified
+    xolotlPerf
+    xolotlViz
+    xolotlSolver
+)
+target_include_directories(xolotlFactory PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/material
+    ${CMAKE_CURRENT_SOURCE_DIR}/reactionHandler
+    ${CMAKE_CURRENT_SOURCE_DIR}/solverHandler
+    ${CMAKE_CURRENT_SOURCE_DIR}/temperatureHandler
+    ${CMAKE_CURRENT_SOURCE_DIR}/vizHandler
+    ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

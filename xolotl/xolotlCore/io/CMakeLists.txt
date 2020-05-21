@@ -6,15 +6,16 @@ SET(PACKAGE_DESCRIPTION "Xolotl I/O")
 SET(LIBRARY_NAME "xolotlIO")
 
 # Define our library and specify the sources needed to build it.
-add_library(${LIBRARY_NAME} STATIC
-            HDF5File.cpp
-            HDF5FileType.cpp
-            HDF5FileAttribute.cpp
-            HDF5FileGroup.cpp
-            HDF5FileDataSpace.cpp
-            HDF5FileDataSet.cpp
-            XFile.cpp
-            MPIUtils.cpp)
+add_library(xolotlIO STATIC
+    HDF5File.cpp
+    HDF5FileType.cpp
+    HDF5FileAttribute.cpp
+    HDF5FileGroup.cpp
+    HDF5FileDataSpace.cpp
+    HDF5FileDataSet.cpp
+    XFile.cpp
+    MPIUtils.cpp
+)
 
 # We need a filesystem library.
 # We can use one of several such libraries (because the APIs are so similar).
@@ -53,11 +54,11 @@ endif()
 if (Boost_FILESYSTEM_FOUND)
     message(STATUS "Have Boost filesystem library.")
     set(HAVE_BOOST_FILESYSTEM ON)
-    include_directories(${Boost_INCLUDE_DIR})
+    target_link_libraries(xolotlIO PUBLIC Boost::filesystem)
 endif()
 
 # Set a single variable indicating whether we have a filesystem library.
-set (HAVE_FILESYSTEM_LIBRARY (HAVE_STD_FILESYSTEM OR HAVE_STD_EXPERIMENTAL_FILESYSTEM OR Boost_FILESYSTEM_FOUND))
+set(HAVE_FILESYSTEM_LIBRARY (HAVE_STD_FILESYSTEM OR HAVE_STD_EXPERIMENTAL_FILESYSTEM OR Boost_FILESYSTEM_FOUND))
 
 #Collect all header filenames in this project 
 #and glob them in HEADERS
@@ -65,19 +66,17 @@ set (HAVE_FILESYSTEM_LIBRARY (HAVE_STD_FILESYSTEM OR HAVE_STD_EXPERIMENTAL_FILES
 # so no need to figure out headers.
 #file(GLOB HEADERS *.h)
 
-# Where to find include files.
-include_directories(${CMAKE_SOURCE_DIR}
-                    ${CMAKE_BINARY_DIR}
-                    ${MPI_INCLUDE_PATH}
-                    ${HDF5_INCLUDE_DIR}
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters/
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters/
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters/
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters/)
-target_link_libraries(${LIBRARY_NAME} ${HDF5_LIBRARIES} MPI::MPI_CXX
-    Kokkos::kokkos plsm)
+target_link_libraries(xolotlIO PUBLIC
+    xolotlReactants
+    ${HDF5_LIBRARIES}
+    MPI::MPI_CXX
+    Kokkos::kokkos
+    plsm
+)
+target_include_directories(xolotlIO PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}
+    ${HDF5_INCLUDE_DIR}
+)
 
 add_subdirectory(XConvHDF5)
 
@@ -88,5 +87,6 @@ add_subdirectory(XConvHDF5)
 # Configure file for the I/O library.
 # Note: this must be done after all other checks, or the contents of the
 # generated file doesn't take the check results into account.
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/XDMConfig.h.in" "${CMAKE_CURRENT_BINARY_DIR}/XDMConfig.h")
-
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/XDMConfig.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/XDMConfig.h"
+)

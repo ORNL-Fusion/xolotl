@@ -1,6 +1,6 @@
 #include "AlloyClusterReactionNetwork.h"
 #include "AlloySuperCluster.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <sstream>
 #include <Constants.h>
 #include "AlloyCases.h"

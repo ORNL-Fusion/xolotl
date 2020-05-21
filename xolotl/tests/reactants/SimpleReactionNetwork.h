@@ -5,8 +5,8 @@
 #include <NEClusterReactionNetwork.h>
 #include <FeClusterReactionNetwork.h>
 #include <AlloyClusterReactionNetwork.h>
-#include <xolotlPerf.h>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/xolotlPerf.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 
 namespace testUtils {
 

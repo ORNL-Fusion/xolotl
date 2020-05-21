@@ -7,7 +7,7 @@
 #include <typeinfo>
 #include <limits>
 #include <XolotlConfig.h>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <Options.h>
 #include <fstream>
 #include <iostream>

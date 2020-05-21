@@ -1,5 +1,5 @@
 #include "ReactionNetwork.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <iostream>
 #include <cassert>
 

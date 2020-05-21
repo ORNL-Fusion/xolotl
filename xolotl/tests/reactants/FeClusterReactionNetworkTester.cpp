@@ -8,7 +8,7 @@
 #include <FeHeCluster.h>
 #include <FeVCluster.h>
 #include <FeInterstitialCluster.h>
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 
 using namespace std;
 using namespace xolotlCore;

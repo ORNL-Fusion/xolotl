@@ -5,7 +5,7 @@
 #include <NEClusterReactionNetwork.h>
 #include <NEXeCluster.h>
 #include <NESuperCluster.h>
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include "xolotlCore/io/XFile.h"
 
 namespace xolotlCore {

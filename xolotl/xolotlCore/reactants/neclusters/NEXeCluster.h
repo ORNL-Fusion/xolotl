@@ -3,7 +3,7 @@
 
 // Includes
 #include "NECluster.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <Constants.h>
 
 namespace xolotlCore {

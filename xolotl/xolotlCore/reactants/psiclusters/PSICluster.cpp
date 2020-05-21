@@ -2,7 +2,7 @@
 #include <cassert>
 #include <iterator>
 #include "PSICluster.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <Constants.h>
 #include <MathUtils.h>
 

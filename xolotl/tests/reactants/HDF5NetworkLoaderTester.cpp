@@ -3,7 +3,7 @@
 
 #include <boost/test/unit_test.hpp>
 #include <PSIClusterReactionNetwork.h>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
 #include <mpi.h>

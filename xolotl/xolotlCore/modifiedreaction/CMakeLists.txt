@@ -12,18 +12,19 @@ file(GLOB HEADERS trapmutation/*.h heterogeneousnucleation/*.h)
 #Grab all of the source files
 file(GLOB SRC trapmutation/*.cpp heterogeneousnucleation/*.cpp)
 
-#Include directories
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/heterogeneousnucleation)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-
 #Add a library
-add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} xolotlAdvection MPI::MPI_CXX)
+add_library(xolotlModified STATIC ${SRC})
+target_link_libraries(xolotlModified PUBLIC
+    xolotlAdvection
+    xolotlCL
+    xolotlReactants
+    xolotlPerf
+)
+target_include_directories(xolotlModified PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/heterogeneousnucleation
+    ${CMAKE_CURRENT_SOURCE_DIR}/trapmutation
+)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

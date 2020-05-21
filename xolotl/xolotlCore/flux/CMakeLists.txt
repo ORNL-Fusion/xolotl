@@ -12,15 +12,14 @@ file(GLOB HEADERS *.h)
 #Grab all of the source files
 file(GLOB SRC *.cpp)
 
-#Include directories
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/commandline)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
-include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf)
-
 #Add the libraries
-add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} plsm MPI::MPI_CXX)
+add_library(xolotlFlux STATIC ${SRC})
+target_link_libraries(xolotlFlux PUBLIC
+    xolotlReactants
+    xolotlCL
+    xolotlPerf
+)
+target_include_directories(xolotlFlux PUBLIC ${CMAKE_CURRENT_LIST_DIR})
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)

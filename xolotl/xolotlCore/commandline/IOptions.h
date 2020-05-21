@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <map>
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <NDArray.h>
 
 namespace xolotlCore {

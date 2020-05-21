@@ -3,7 +3,7 @@
 #include "PSIClusterReactionNetwork.h"
 #include "PSICluster.h"
 #include "PSISuperCluster.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <Constants.h>
 #include <MathUtils.h>
 

@@ -2,7 +2,7 @@
 #define NETWORKLOADER_H
 
 #include "INetworkLoader.h"
-#include <IHandlerRegistry.h>
+#include <xolotlPerf/IHandlerRegistry.h>
 
 namespace xolotlCore {
 

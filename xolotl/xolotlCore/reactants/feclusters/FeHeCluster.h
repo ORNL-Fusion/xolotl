@@ -4,7 +4,7 @@
 // Includes
 #include <sstream>
 #include "FeCluster.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include "FeClusterReactionNetwork.h"
 
 namespace xolotlCore {

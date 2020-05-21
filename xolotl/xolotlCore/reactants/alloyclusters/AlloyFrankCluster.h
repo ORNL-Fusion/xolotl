@@ -3,7 +3,7 @@
 
 // Includes
 #include "AlloyCluster.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 
 namespace xolotlCore {
 

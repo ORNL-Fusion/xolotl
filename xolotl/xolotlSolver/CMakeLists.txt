@@ -13,42 +13,29 @@ file(GLOB HEADERS *.h solverhandler/*.h monitor/*.h)
 #and glob them in SRC
 file(GLOB SRC *.cpp solverhandler/*.cpp monitor/*.cpp)
 
-#Include headers so that the solvers can be built
-include_directories(${CMAKE_SOURCE_DIR}
-                    ${CMAKE_SOURCE_DIR}/xolotlSolver
-                    ${CMAKE_SOURCE_DIR}/xolotlSolver/solverhandler
-                    ${CMAKE_SOURCE_DIR}/xolotlSolver/monitor
-                    ${CMAKE_SOURCE_DIR}/xolotlCore
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/io
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/diffusion
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/advection
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/flux
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/temperature
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/heterogeneousnucleation
-                    ${CMAKE_SOURCE_DIR}/xolotlViz
-                    ${CMAKE_SOURCE_DIR}/xolotlViz/dataprovider
-                    ${CMAKE_SOURCE_DIR}/xolotlPerf
-                    ${CMAKE_SOURCE_DIR}/xolotlFactory/material
-                    ${CMAKE_SOURCE_DIR}/xolotlFactory/vizHandler
-                    ${CMAKE_BINARY_DIR}
-                    ${Boost_INCLUDE_DIR}
-                    ${PETSC_INCLUDES})
-
 #Add the library
-add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME}
-    xolotlReactants xolotlIO xolotlCL xolotlDiffusion
-    xolotlAdvection xolotlFlux xolotlModified ${PETSC_LIBRARIES} xolotlPerf
-    xolotlViz MPI::MPI_CXX)
+add_library(xolotlSolver STATIC ${SRC})
+target_link_libraries(xolotlSolver PUBLIC
+    xolotlReactants
+    xolotlIO
+    xolotlCL
+    xolotlDiffusion
+    xolotlAdvection
+    xolotlFlux
+    xolotlModified
+    xolotlTemperature
+    xolotlFactory
+    xolotlPerf
+    xolotlViz
+    ${PETSC_LIBRARIES}
+)
+target_include_directories(xolotlSolver PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/solverhandler
+    ${CMAKE_CURRENT_SOURCE_DIR}/monitor
+    ${PETSC_INCLUDES}
+)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)
-install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
+install(TARGETS xolotlSolver DESTINATION lib)

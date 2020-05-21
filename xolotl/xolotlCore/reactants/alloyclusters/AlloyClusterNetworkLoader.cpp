@@ -6,7 +6,7 @@
 #include <AlloySuperCluster.h>
 #include <AlloyVacCluster.h>
 #include <AlloyVoidCluster.h>
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include "xolotlCore/io/XFile.h"
 
 using namespace xolotlCore;

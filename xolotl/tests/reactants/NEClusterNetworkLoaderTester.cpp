@@ -5,7 +5,7 @@
 #include <NEClusterReactionNetwork.h>
 #include <NEClusterNetworkLoader.h>
 #include <NECluster.h>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
 #include <mpi.h>
 #include <memory>

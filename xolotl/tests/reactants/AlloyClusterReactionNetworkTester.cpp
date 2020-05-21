@@ -6,7 +6,7 @@
 #include "SimpleReactionNetwork.h"
 #include <AlloyVacCluster.h>
 #include <AlloyIntCluster.h>
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 
 using namespace std;
 using namespace xolotlCore;

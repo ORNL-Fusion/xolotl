@@ -13,26 +13,24 @@ file(GLOB HEADERS *.h psiclusters/*.h neclusters/*.h feclusters/*.h alloycluster
 #and the psiclusters folder and glob them in SRC
 file(GLOB SRC *.cpp psiclusters/*.cpp neclusters/*.cpp feclusters/*.cpp alloyclusters/*.cpp)
 
-#Include this directory so that the psiclusters can be built
-include_directories(${CMAKE_SOURCE_DIR}
-                    ${CMAKE_SOURCE_DIR}/xolotlCore
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/io
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/feclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/alloyclusters
-                    ${CMAKE_SOURCE_DIR}/xolotlPerf
-                    ${CMAKE_SOURCE_DIR}/xolotlPerf/dummy
-                    ${CMAKE_SOURCE_DIR}/xolotlPerf/standard
-                    ${CMAKE_BINARY_DIR}
-                    ${Boost_INCLUDE_DIR})
-
 #Add the library
-add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} xolotlPerf xolotlIO plsm MPI::MPI_CXX)
+add_library(xolotlReactants STATIC ${SRC})
+target_link_libraries(xolotlReactants PUBLIC
+    xolotlPerf
+    xolotlIO
+    xolotlCL
+    plsm
+    MPI::MPI_CXX
+)
+target_include_directories(xolotlReactants PUBLIC
+    ${CMAKE_SOURCE_DIR}/xolotlCore
+    ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
+    ${CMAKE_CURRENT_SOURCE_DIR}/psiclusters
+    ${CMAKE_CURRENT_SOURCE_DIR}/neclusters
+    ${CMAKE_CURRENT_SOURCE_DIR}/feclusters
+    ${CMAKE_CURRENT_SOURCE_DIR}/alloyclusters
+)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)
-install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
+install(TARGETS xolotlReactants DESTINATION lib)

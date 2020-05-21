@@ -9,7 +9,7 @@
 #include <FeHeVCluster.h>
 #include <FeSuperCluster.h>
 #include <FeClusterReactionNetwork.h>
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <MathUtils.h>
 #include <cassert>
 #include "xolotlCore/io/XFile.h"

@@ -1,13 +1,9 @@
 #Set the package name
-SET(PACKAGE_NAME "xolotl.performance")
+set(PACKAGE_NAME "xolotl.performance")
 #Set the description
-SET(PACKAGE_DESCRIPTION "Xolotl Perf")
+set(PACKAGE_DESCRIPTION "Xolotl Perf")
 #Set the library name
-SET(LIBRARY_NAME "xolotlPerf")
-
-#Include headers in order to build
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_BINARY_DIR})
+set(LIBRARY_NAME "xolotlPerf")
 
 # Always use the sources and headers common to all registry types.
 file(GLOB COMMONHEADERS *.h)
@@ -28,10 +24,12 @@ set(OS_HEADERS os/OSHandlerRegistry.h os/OSTimer.h)
 set(OS_SRC os/OSHandlerRegistry.cpp os/OSTimer.cpp)
 
 # Check whether PAPI is available.
-FIND_PACKAGE(PAPI)
+find_package(PAPI)
 if(PAPI_FOUND)
     message(STATUS "PAPI includes = ${PAPI_INCLUDE_DIRS}")
     message(STATUS "PAPI libraries = ${PAPI_LIBRARIES}")
+
+    # FIXME
 
     include_directories(${PAPI_INCLUDE_DIRS})
 
@@ -48,24 +46,25 @@ if(PAPI_FOUND)
 
 endif(PAPI_FOUND)
 
-
 set(HEADERS ${COMMONHEADERS} ${DUMMYHEADERS} ${STD_HEADERS} ${OS_HEADERS}
 ${PAPI_HEADERS})
 set(SRC ${COMMONSRC} ${DUMMYSRC} ${STD_SRC} ${OS_SRC} ${PAPI_SRC})
 
-
 # Specify the library to build
-add_library(${LIBRARY_NAME} STATIC ${SRC})
-target_link_libraries(${LIBRARY_NAME} ${MAYBE_PAPI} ${MAYBE_RT} MPI::MPI_CXX)
+add_library(xolotlPerf STATIC ${SRC})
+target_link_libraries(xolotlPerf PUBLIC ${MAYBE_PAPI} MPI::MPI_CXX)
+target_include_directories(xolotlPerf PUBLIC
+    ${CMAKE_SOURCE_DIR}
+    ${CMAKE_BINARY_DIR}
+)
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)
-install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
-
+install(TARGETS xolotlPerf DESTINATION lib)
 
 # Configure file for the performance library.
 # Note: must do this after all the other checks, or else the 
 # contents of the generated file won't take the check results into account.
-configure_file( "${CMAKE_CURRENT_SOURCE_DIR}/perfConfig.h.in" "${CMAKE_CURRENT_BINARY_DIR}/perfConfig.h")
-
-
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/perfConfig.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/perfConfig.h"
+)

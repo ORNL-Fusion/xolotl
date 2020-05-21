@@ -1,7 +1,7 @@
 // Includes
 #include "Reactant.h"
 #include "ReactionNetwork.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <iostream>
 #include <math.h>
 #include <MathUtils.h>

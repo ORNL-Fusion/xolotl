@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <cassert>
 #include "FeCluster.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <Constants.h>
 #include <MathUtils.h>
 

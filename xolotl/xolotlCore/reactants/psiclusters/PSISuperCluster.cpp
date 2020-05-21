@@ -2,7 +2,7 @@
 #include <iterator>
 #include "PSISuperCluster.h"
 #include "PSIClusterReactionNetwork.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 
 using namespace xolotlCore;
 

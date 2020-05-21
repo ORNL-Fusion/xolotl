@@ -7,7 +7,7 @@
 #include <NEClusterNetworkLoader.h>
 #include <NEXeCluster.h>
 #include <XolotlConfig.h>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <Constants.h>
 #include <Options.h>
 #include <fstream>

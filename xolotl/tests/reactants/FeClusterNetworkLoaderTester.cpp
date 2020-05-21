@@ -5,7 +5,7 @@
 #include <FeClusterReactionNetwork.h>
 #include <FeClusterNetworkLoader.h>
 #include <FeCluster.h>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
 #include <mpi.h>
 #include <memory>

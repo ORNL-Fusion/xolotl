@@ -2,8 +2,8 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
-#include <xolotlPerf.h>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/xolotlPerf.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <NECluster.h>
 #include <NEClusterReactionNetwork.h>
 #include <memory>

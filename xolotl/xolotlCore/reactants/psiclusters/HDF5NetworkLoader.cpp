@@ -4,7 +4,7 @@
 #include <algorithm>
 #include <vector>
 #include "PSIClusterReactionNetwork.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include "xolotlCore/io/XFile.h"
 
 namespace xolotlCore {

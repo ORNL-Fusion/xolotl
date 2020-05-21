@@ -6,11 +6,6 @@ SET(PACKAGE_DESCRIPTION "Xolotl Visualization")
 SET(LIBRARY_NAME "xolotlViz")
 
 #Include headers in order to build
-include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/dataprovider)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/labelprovider)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/dummy)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 # Always include the Dummy (stub) classes.
 file(GLOB HEADERS *.h dummy/*.h dataprovider/*.h labelprovider/*.h)
@@ -24,8 +19,8 @@ else()
 endif()
 
 if(VTKM_FOUND)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/standard)
-    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/standard/plot)
+    # FIXME
+
     include_directories(${VTKm_INCLUDE_DIRS})
 
     # Add the standard classes to the HEADERS and SRCS.
@@ -43,16 +38,29 @@ endif(VTKM_FOUND)
 
 
 #Add the library
-add_library(${LIBRARY_NAME} STATIC ${SRC})
-message('${SRC}')
-message('${HEADERS}')
-target_link_libraries(${LIBRARY_NAME} ${MAYBE_VTKM})
+add_library(xolotlViz STATIC ${SRC})
+target_link_libraries(xolotlViz PUBLIC ${MAYBE_VTKM} xolotlReactants)
+target_include_directories(xolotlViz PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/dataprovider
+    ${CMAKE_CURRENT_SOURCE_DIR}/labelprovider
+    ${CMAKE_CURRENT_SOURCE_DIR}/dummy
+)
+if(VTKM_FOUND)
+    target_include_directories(xolotlViz PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/standard
+        ${CMAKE_CURRENT_SOURCE_DIR}/standard/plot
+    )
+endif()
 
 #Install the xolotl header files
 install(FILES ${HEADERS} DESTINATION include)
-install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
+install(TARGETS xolotlViz DESTINATION lib)
 
 # Configure file for the performance library.
 # Note: must do this after all the other checks, or else the
 # contents of the generated file won't take the check results into account.
-configure_file( "${CMAKE_SOURCE_DIR}/xolotlFactory/vizHandler/XolotlConfigViz.h.in" "${CMAKE_BINARY_DIR}/xolotlFactory/XolotlConfigViz.h" )
+configure_file(
+    "${CMAKE_SOURCE_DIR}/xolotlFactory/vizHandler/XolotlConfigViz.h.in"
+    "${CMAKE_BINARY_DIR}/xolotlFactory/XolotlConfigViz.h"
+)

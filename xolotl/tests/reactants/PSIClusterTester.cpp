@@ -8,8 +8,8 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
-#include <xolotlPerf.h>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/xolotlPerf.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <PSICluster.h>
 #include <PSIClusterReactionNetwork.h>
 #include <memory>

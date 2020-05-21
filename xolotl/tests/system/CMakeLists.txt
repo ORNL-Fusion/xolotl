@@ -2,12 +2,11 @@ set(PACKAGE_NAME "xolotl.tests.system")
 
 set(PACKAGE_DESCRIPTION "Xolotl System Tests")
 
-if(NOT Boost_FOUND)
-    return()
-endif()
-
 add_library(SystemTest INTERFACE)
-target_link_libraries(SystemTest INTERFACE ${Boost_LIBRARIES})
+target_link_libraries(SystemTest INTERFACE
+    Boost::filesystem
+    Boost::unit_test_framework
+)
 target_include_directories(SystemTest INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_BINARY_DIR}

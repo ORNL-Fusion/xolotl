@@ -10,7 +10,7 @@
 #include <mpi.h>
 #include <MPIUtils.h>
 #include <Options.h>
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <IMaterialFactory.h>
 #include <TemperatureHandlerFactory.h>
 #include <VizHandlerRegistryFactory.h>

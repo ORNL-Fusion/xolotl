@@ -11,8 +11,8 @@
 #include <PSIClusterReactionNetwork.h>
 #include <PetscSolver.h>
 #include <XolotlConfig.h>
-#include <xolotlPerf.h>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/xolotlPerf.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <HDF5NetworkLoader.h>
 #include <Options.h>
 #include <PetscSolver0DHandler.h>

@@ -6,7 +6,7 @@
 #include <memory>
 #include <typeinfo>
 #include <limits>
-#include <DummyHandlerRegistry.h>
+#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <PSIClusterReactionNetwork.h>
 #include <Options.h>
 #include "tests/utils/MPIFixture.h"

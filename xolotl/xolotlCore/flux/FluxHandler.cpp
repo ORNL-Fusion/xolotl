@@ -1,5 +1,5 @@
 #include "FluxHandler.h"
-#include <xolotlPerf.h>
+#include <xolotlPerf/xolotlPerf.h>
 #include <Reactant.h>
 #include <iostream>
 #include <fstream>
