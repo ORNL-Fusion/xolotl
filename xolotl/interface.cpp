@@ -78,14 +78,14 @@ void XolotlInterface::initializeXolotl(int argc, char **argv, MPI_Comm comm,
 						opts.getMaterial());
 		// Build a reaction network
 		networkFactory->initializeReactionNetwork(opts, handlerRegistry);
-		auto& network = networkFactory->getNetworkHandler();
+		auto &network = networkFactory->getNetworkHandler();
 
 		// Initialize and get the solver handler
 		if (!xolotlFactory::initializeDimension(opts, network)) {
 			std::cerr << "Unable to initialize dimension from inputs. "
 					<< "Aborting" << std::endl;
 		}
-		auto& solvHandler = xolotlFactory::getSolverHandler();
+		auto &solvHandler = xolotlFactory::getSolverHandler();
 		// Initialize the solver handler
 		solvHandler.initializeHandlers(materialFactory, tempHandler, opts);
 
@@ -95,10 +95,10 @@ void XolotlInterface::initializeXolotl(int argc, char **argv, MPI_Comm comm,
 		// Initialize the solver
 		solver->setCommandLineOptions(opts.getPetscArg());
 		solver->initialize(isStandalone);
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -113,10 +113,10 @@ void XolotlInterface::setTimes(double finalTime, double dt) {
 	try {
 		// Set the time in the solver
 		solver->setTimes(finalTime, dt);
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -130,10 +130,10 @@ void XolotlInterface::solveXolotl() {
 	try {
 		// Launch the PetscSolver
 		solver->solve();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -154,13 +154,13 @@ std::vector<
 									std::tuple<double, double, double, double> > > >();
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto &solverHandler = solver->getSolverHandler();
 		// Get the rate vector
 		toReturn = solverHandler.getLocalNE();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -177,13 +177,13 @@ void XolotlInterface::setLocalNE(
 						std::vector<std::tuple<double, double, double, double> > > > rateVector) {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto &solverHandler = solver->getSolverHandler();
 		// Set the rate vector
 		solverHandler.setLocalNE(rateVector);
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -198,13 +198,13 @@ void XolotlInterface::getLocalCoordinates(int &xs, int &xm, int &Mx, int &ys,
 		int &ym, int &My, int &zs, int &zm, int &Mz) {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto &solverHandler = solver->getSolverHandler();
 		// Get the local coordinates
 		solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -218,13 +218,13 @@ void XolotlInterface::getLocalCoordinates(int &xs, int &xm, int &Mx, int &ys,
 void XolotlInterface::setGBLocation(int i, int j, int k) {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto &solverHandler = solver->getSolverHandler();
 		// Set the coordinate of the GB
 		solverHandler.setGBLocation(i, j, k);
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -238,13 +238,13 @@ void XolotlInterface::setGBLocation(int i, int j, int k) {
 void XolotlInterface::resetGBVector() {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto &solverHandler = solver->getSolverHandler();
 		// Reset the location
 		solverHandler.resetGBVector();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -258,10 +258,10 @@ void XolotlInterface::resetGBVector() {
 void XolotlInterface::initGBLocation() {
 	try {
 		solver->initGBLocation();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -277,10 +277,10 @@ std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > X
 	try {
 		// Get the vector
 		toReturn = solver->getConcVector();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -297,10 +297,10 @@ void XolotlInterface::setConcVector(
 	try {
 		// Set the vector
 		solver->setConcVector(concVector);
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -315,12 +315,12 @@ double XolotlInterface::getPreviousTime() {
 	double toReturn = 0.0;
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto &solverHandler = solver->getSolverHandler();
 		toReturn = solverHandler.getPreviousTime();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -334,12 +334,12 @@ double XolotlInterface::getPreviousTime() {
 void XolotlInterface::setPreviousTime(double time) {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto &solverHandler = solver->getSolverHandler();
 		solverHandler.setPreviousTime(time, true); // Update the fluence from here
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -354,10 +354,10 @@ double XolotlInterface::getCurrentDt() {
 	double toReturn = 0.0;
 	try {
 		toReturn = solver->getCurrentDt();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -371,10 +371,10 @@ double XolotlInterface::getCurrentDt() {
 void XolotlInterface::setCurrentTimes(double time, double dt) {
 	try {
 		solver->setCurrentTimes(time, dt);
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -389,12 +389,12 @@ double XolotlInterface::getNXeGB() {
 	double toReturn = 0.0;
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto &solverHandler = solver->getSolverHandler();
 		toReturn = solverHandler.getNXeGB();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -408,12 +408,12 @@ double XolotlInterface::getNXeGB() {
 void XolotlInterface::setNXeGB(double nXe) {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto &solverHandler = solver->getSolverHandler();
 		solverHandler.setNXeGB(nXe);
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -429,16 +429,16 @@ std::vector<double> XolotlInterface::getGridInfo(double &hy, double &hz) {
 	std::vector<double> toReturn;
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto &solverHandler = solver->getSolverHandler();
 		// Get the grid
 		toReturn = solverHandler.getXGrid();
 		// Get the step size
 		hy = solverHandler.getStepSizeY();
 		hz = solverHandler.getStepSizeZ();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -453,10 +453,10 @@ bool XolotlInterface::getConvergenceStatus() {
 	bool toReturn = true;
 	try {
 		toReturn = solver->getConvergenceStatus();
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {
@@ -470,7 +470,8 @@ bool XolotlInterface::getConvergenceStatus() {
 void XolotlInterface::finalizeXolotl(bool isStandalone) {
 	try {
 		// Call solver finalize
-		solver->finalize(isStandalone);
+		if (isStandalone)
+			solver->finalize(isStandalone);
 
 		// Report statistics about the performance data collected during
 		// the run we just completed.
@@ -491,10 +492,10 @@ void XolotlInterface::finalizeXolotl(bool isStandalone) {
 					counterStats, hwCtrStats);
 		}
 
-	} catch (const std::exception& e) {
+	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;
-	} catch (const std::string& error) {
+	} catch (const std::string &error) {
 		std::cerr << error << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	} catch (...) {

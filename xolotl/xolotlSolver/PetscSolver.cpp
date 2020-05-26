@@ -36,6 +36,9 @@ std::shared_ptr<xolotlPerf::ITimer> RHSFunctionTimer;
 //!Timer for RHSJacobian()
 std::shared_ptr<xolotlPerf::ITimer> RHSJacobianTimer;
 
+//!Timer for solve()
+std::shared_ptr<xolotlPerf::ITimer> SolveTimer;
+
 //! Help message
 static char help[] =
 		"Solves C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.\n";
@@ -189,6 +192,7 @@ PetscSolver::PetscSolver(ISolverHandler &_solverHandler,
 		Solver(_solverHandler, registry) {
 	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
 	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
+	SolveTimer = handlerRegistry->getTimer("SolveTimer");
 }
 
 PetscSolver::~PetscSolver() {
@@ -400,6 +404,8 @@ void PetscSolver::setCurrentTimes(double time, double dt) {
 
 void PetscSolver::solve() {
 	PetscErrorCode ierr;
+	// Start the solve Timer
+	SolveTimer->start();
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Solve the ODE system
@@ -452,6 +458,8 @@ void PetscSolver::solve() {
 		throw std::string(
 				"PetscSolver Exception: Unable to solve! Data not configured properly.");
 	}
+	// Stop the timer
+	SolveTimer->stop();
 
 	return;
 }
