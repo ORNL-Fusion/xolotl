@@ -35,7 +35,7 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	 *  In this case ofill has only a few diagonal entries since the only spatial
 	 *  coupling is regular diffusion.
 	 */
-	xolotlCore::IReactionNetwork::SparseFillMap ofill;
+	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(dof, ofill, dfill);

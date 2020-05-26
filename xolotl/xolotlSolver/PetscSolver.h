@@ -14,7 +14,7 @@ namespace xolotlSolver {
  * @param errorCode The PETSc error code.
  * @param errMsg The error message in the thrown exception.
  */
-inline void checkPetscError(PetscErrorCode errorCode, const char* errorMsg) {
+inline void checkPetscError(PetscErrorCode errorCode, const char *errorMsg) {
 	if (PetscUnlikely(errorCode))
 		throw std::string(errorMsg);
 }
@@ -44,7 +44,7 @@ public:
 	PetscSolver() = delete;
 
 	//! The Constructor
-	PetscSolver(ISolverHandler& _solverHandler,
+	PetscSolver(ISolverHandler &_solverHandler,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	//! The Destructor
@@ -59,7 +59,7 @@ public:
 	 * for keys and associated values mapped to those keys. A relevant example
 	 * is "startTime" and "0.01" where both are of type std::string.
 	 */
-	void setOptions(const std::map<std::string, std::string>& options) override;
+	void setOptions(const std::map<std::string, std::string> &options) override;
 
 	/**
 	 * This operation sets up the mesh that will be used by the solver and

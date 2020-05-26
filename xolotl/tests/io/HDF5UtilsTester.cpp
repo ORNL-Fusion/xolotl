@@ -5,7 +5,6 @@
 #include <boost/test/framework.hpp>
 #include <experimental/PSIReactionNetwork.h>
 #include <xolotlPerf/dummy/DummyHandlerRegistry.h>
-#include <HDF5NetworkLoader.h>
 #include <XolotlConfig.h>
 #include <mpi.h>
 #include <memory>

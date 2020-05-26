@@ -17,7 +17,7 @@ protected:
 	std::string optionsString;
 
 	//! The original solver handler.
-	static ISolverHandler* solverHandler;
+	static ISolverHandler *solverHandler;
 
 public:
 
@@ -27,7 +27,7 @@ public:
 	Solver() = delete;
 
 	//! Constuct a solver.
-	Solver(ISolverHandler& _solverHandler,
+	Solver(ISolverHandler &_solverHandler,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	//! The Destructor

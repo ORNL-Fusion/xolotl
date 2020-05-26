@@ -7,7 +7,6 @@
 #include "xolotlCore/io/XFile.h"
 #include <Constants.h>
 #include <TokenizedLineReader.h>
-#include <experimental/NEReactionNetwork.h>
 
 namespace xolotlSolver {
 
@@ -33,9 +32,6 @@ protected:
 
 	//! The name of the network file
 	std::string networkName;
-
-	//! The original network created from the network loader.
-	xolotlCore::IReactionNetwork &network;
 
 	//! The original network created from the network loader.
 	NetworkType &expNetwork;
@@ -390,13 +386,12 @@ protected:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	SolverHandler(xolotlCore::IReactionNetwork &_network,
-			NetworkType &_expNetwork) :
-			network(_network), expNetwork(_expNetwork), networkName(""), nX(0), nY(
-					0), nZ(0), hX(0.0), hY(0.0), hZ(0.0), leftOffset(1), rightOffset(
-					1), bottomOffset(1), topOffset(1), frontOffset(1), backOffset(
-					1), initialVConc(0.0), electronicStoppingPower(0.0), dimension(
-					-1), portion(0.0), useRegularGrid(""), readInGrid(false), movingSurface(
+	SolverHandler(NetworkType &_expNetwork) :
+			expNetwork(_expNetwork), networkName(""), nX(0), nY(0), nZ(0), hX(
+					0.0), hY(0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
+					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
+					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
+					0.0), useRegularGrid(""), readInGrid(false), movingSurface(
 					false), bubbleBursting(false), useAttenuation(false), sputteringYield(
 					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
 					nullptr), mutationHandler(nullptr), nucleationHandler(
@@ -723,14 +718,6 @@ public:
 	xolotlCore::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const
 			override {
 		return nucleationHandler;
-	}
-
-	/**
-	 * Get the network.
-	 * \see ISolverHandler.h
-	 */
-	xolotlCore::IReactionNetwork& getNetwork() const override {
-		return network;
 	}
 
 	/**

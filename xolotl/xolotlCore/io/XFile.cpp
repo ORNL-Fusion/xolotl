@@ -5,10 +5,6 @@
 #include "hdf5.h"
 #include "mpi.h"
 #include "xolotlCore/io/XFile.h"
-#include <PSISuperCluster.h>
-#include <FeSuperCluster.h>
-#include <NESuperCluster.h>
-#include <AlloySuperCluster.h>
 
 namespace xolotlCore {
 

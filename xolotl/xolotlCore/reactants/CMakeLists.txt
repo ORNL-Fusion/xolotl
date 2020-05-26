@@ -25,10 +25,6 @@ target_link_libraries(xolotlReactants PUBLIC
 target_include_directories(xolotlReactants PUBLIC
     ${CMAKE_SOURCE_DIR}/xolotlCore
     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
-    ${CMAKE_CURRENT_SOURCE_DIR}/psiclusters
-    ${CMAKE_CURRENT_SOURCE_DIR}/neclusters
-    ${CMAKE_CURRENT_SOURCE_DIR}/feclusters
-    ${CMAKE_CURRENT_SOURCE_DIR}/alloyclusters
 )
 
 #Install the xolotl header files

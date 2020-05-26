@@ -45,7 +45,7 @@ public:
 	 * is "startTime" and "0.01" where both are of type std::string.
 	 */
 	virtual void setOptions(
-			const std::map<std::string, std::string>& options) = 0;
+			const std::map<std::string, std::string> &options) = 0;
 
 	/**
 	 * This operation sets up the mesh that will be used by the solver and

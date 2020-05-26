@@ -5,9 +5,9 @@ using namespace xolotlCore;
 
 namespace xolotlSolver {
 
-ISolverHandler* Solver::solverHandler = nullptr;
+ISolverHandler *Solver::solverHandler = nullptr;
 
-Solver::Solver(ISolverHandler& _solverHandler,
+Solver::Solver(ISolverHandler &_solverHandler,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		optionsString(""), handlerRegistry(registry) {
 

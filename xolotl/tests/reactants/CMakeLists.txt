@@ -7,10 +7,6 @@ SET(PACKAGE_DESCRIPTION "Tests for the Xolotl reactants package")
 #Get the test files
 file(GLOB tests *Tester.cpp)
 
-#Create the utility library
-add_library(testUtils STATIC SimpleReactionNetwork.cpp)
-target_link_libraries(testUtils xolotlReactants)
-
 #Make executables and link libraries for testers
 foreach(test ${tests})
     message(STATUS "Making test ${test}")
@@ -20,7 +16,6 @@ foreach(test ${tests})
         xolotlReactants
         xolotlCL
         xolotlPerf
-        testUtils
         Boost::unit_test_framework
     )
     add_test(${testName} ${testName}) 

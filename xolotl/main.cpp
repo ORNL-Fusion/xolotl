@@ -5,7 +5,6 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
-#include <Reactant.h>
 #include <PetscSolver.h>
 #include <mpi.h>
 #include <MPIUtils.h>
@@ -14,8 +13,6 @@
 #include <IMaterialFactory.h>
 #include <TemperatureHandlerFactory.h>
 #include <VizHandlerRegistryFactory.h>
-#include <INetworkLoader.h>
-#include <IReactionNetwork.h>
 #include <SolverHandlerFactory.h>
 #include <ISolverHandler.h>
 #include <IReactionHandlerFactory.h>

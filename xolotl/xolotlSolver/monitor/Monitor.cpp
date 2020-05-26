@@ -57,7 +57,7 @@ PetscErrorCode checkTimeStep(TS ts) {
  * because multiple monitors need the previous time value from the previous timestep.
  * This monitor must be called last when needed.
  */
-PetscErrorCode monitorTime(TS, PetscInt, PetscReal time, Vec, void *) {
+PetscErrorCode monitorTime(TS, PetscInt, PetscReal time, Vec, void*) {
 	PetscFunctionBeginUser;
 
 	// Set the previous time to the current time for the next timestep
@@ -71,11 +71,11 @@ PetscErrorCode monitorTime(TS, PetscInt, PetscReal time, Vec, void *) {
 /**
  * This is a monitoring method that will compute the total helium fluence
  */
-PetscErrorCode computeFluence(TS, PetscInt, PetscReal time, Vec, void *) {
+PetscErrorCode computeFluence(TS, PetscInt, PetscReal time, Vec, void*) {
 	PetscFunctionBeginUser;
 
 	// Get the solver handler and the flux handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 	auto fluxHandler = solverHandler.getFluxHandler();
 
 	// The length of the time step
@@ -93,7 +93,7 @@ PetscErrorCode computeFluence(TS, PetscInt, PetscReal time, Vec, void *) {
  * This is a monitoring method that will save 1D plots of one performance timer
  */
 PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
-		void *) {
+		void*) {
 	// To check PETSc errors
 	PetscInt ierr;
 
@@ -138,7 +138,7 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 	solverTimer->start();
 
 	// Collect all sampled timer values to rank 0.
-	double* allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
+	double *allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
 	MPI_Gather(&solverTimerValue,  // send buffer
 			1,// number of values to send
 			MPI_DOUBLE,// type of items in send buffer
@@ -194,7 +194,7 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 }
 
 void writeNetwork(MPI_Comm _comm, std::string srcFileName,
-		std::string targetFileName, experimental::IReactionNetwork& network) {
+		std::string targetFileName, experimental::IReactionNetwork &network) {
 
 	int procId;
 	MPI_Comm_rank(_comm, &procId);

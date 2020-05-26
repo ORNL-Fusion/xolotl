@@ -4,8 +4,6 @@
 #include <boost/test/unit_test.hpp>
 #include "W211FitFluxHandler.h"
 #include <mpi.h>
-#include <HDF5NetworkLoader.h>
-#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 #include <XolotlConfig.h>
 #include <Options.h>
 #include <fstream>

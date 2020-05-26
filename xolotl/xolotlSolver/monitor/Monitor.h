@@ -20,7 +20,7 @@ namespace xolotlSolver {
  * @param network The network to write.
  */
 void writeNetwork(MPI_Comm _comm, std::string srcFileName,
-		std::string targetFileName, experimental::IReactionNetwork& network);
+		std::string targetFileName, experimental::IReactionNetwork &network);
 
 } // namespace xolotlSolver
 

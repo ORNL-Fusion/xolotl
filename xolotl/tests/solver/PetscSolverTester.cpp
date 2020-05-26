@@ -2,18 +2,14 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
-#include <PSIClusterNetworkLoader.h>
 #include <memory>
 #include <typeinfo>
 #include <limits>
 #include <string.h>
-#include <PSIClusterNetworkLoader.h>
-#include <PSIClusterReactionNetwork.h>
 #include <PetscSolver.h>
 #include <XolotlConfig.h>
 #include <xolotlPerf/xolotlPerf.h>
 #include <xolotlPerf/dummy/DummyHandlerRegistry.h>
-#include <HDF5NetworkLoader.h>
 #include <Options.h>
 #include <PetscSolver0DHandler.h>
 #include <PetscSolver1DHandler.h>

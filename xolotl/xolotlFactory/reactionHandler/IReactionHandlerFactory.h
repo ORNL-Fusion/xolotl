@@ -2,7 +2,6 @@
 #define IREACTIONHANDLERFACTORY_H
 
 #include <Options.h>
-#include <INetworkLoader.h>
 #include <experimental/IReactionNetwork.h>
 
 namespace xolotlFactory {

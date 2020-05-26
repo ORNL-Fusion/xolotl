@@ -12,7 +12,6 @@
 #include <ITrapMutationHandler.h>
 #include <IHeterogeneousNucleationHandler.h>
 #include <IMaterialFactory.h>
-#include <IReactionNetwork.h>
 #include <experimental/IReactionNetwork.h>
 #include <NDArray.h>
 
@@ -194,56 +193,49 @@ public:
 	 *
 	 * @return The flux handler
 	 */
-	virtual xolotlCore::IFluxHandler *getFluxHandler() const = 0;
+	virtual xolotlCore::IFluxHandler* getFluxHandler() const = 0;
 
 	/**
 	 * Get the temperature handler.
 	 *
 	 * @return The temperature handler
 	 */
-	virtual xolotlCore::ITemperatureHandler *getTemperatureHandler() const = 0;
+	virtual xolotlCore::ITemperatureHandler* getTemperatureHandler() const = 0;
 
 	/**
 	 * Get the diffusion handler.
 	 *
 	 * @return The diffusion handler
 	 */
-	virtual xolotlCore::IDiffusionHandler *getDiffusionHandler() const = 0;
+	virtual xolotlCore::IDiffusionHandler* getDiffusionHandler() const = 0;
 
 	/**
 	 * Get the advection handler.
 	 *
 	 * @return The first advection handler
 	 */
-	virtual xolotlCore::IAdvectionHandler *getAdvectionHandler() const = 0;
+	virtual xolotlCore::IAdvectionHandler* getAdvectionHandler() const = 0;
 
 	/**
 	 * Get the advection handlers.
 	 *
 	 * @return The first advection handlers
 	 */
-	virtual std::vector<xolotlCore::IAdvectionHandler *> getAdvectionHandlers() const = 0;
+	virtual std::vector<xolotlCore::IAdvectionHandler*> getAdvectionHandlers() const = 0;
 
 	/**
 	 * Get the modified trap-mutation handler.
 	 *
 	 * @return The modified trap-mutation handler
 	 */
-	virtual xolotlCore::ITrapMutationHandler *getMutationHandler() const = 0;
+	virtual xolotlCore::ITrapMutationHandler* getMutationHandler() const = 0;
 
 	/**
 	 * Get the heterogeneous nucleation handler.
 	 *
 	 * @return The heterogeneous nucleation handler
 	 */
-	virtual xolotlCore::IHeterogeneousNucleationHandler *getHeterogeneousNucleationHandler() const = 0;
-
-	/**
-	 * Get the network.
-	 *
-	 * @return The network
-	 */
-	virtual xolotlCore::IReactionNetwork& getNetwork() const = 0;
+	virtual xolotlCore::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const = 0;
 
 	/**
 	 * Get the network.

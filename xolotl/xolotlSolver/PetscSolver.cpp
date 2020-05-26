@@ -46,7 +46,7 @@ extern PetscErrorCode setupPetsc3DMonitor(TS);
 
 void PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Initialize the concentrations in the solution vector
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 	solverHandler.initializeConcentration(da, C);
 
 	return;
@@ -69,7 +69,7 @@ void PetscSolver::setupInitialConditions(DM da, Vec C) {
  .  F - function values
  */
 /* ------------------------------------------------------------------- */
-PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
+PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void*) {
 	// Start the RHSFunction Timer
 	RHSFunctionTimer->start();
 
@@ -98,7 +98,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 	CHKERRQ(ierr);
 
 	// Compute the new concentrations
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 	solverHandler.updateConcentration(ts, localC, F, ftime);
 
 	// Stop the RHSFunction Timer
@@ -116,8 +116,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 /*
  Compute the Jacobian entries based on IFunction() and insert them into the matrix
  */
-PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
-		void *) {
+PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void*) {
 	// Start the RHSJacobian timer
 	RHSJacobianTimer->start();
 
@@ -141,7 +140,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 
 	/* ----- Compute the partial derivatives for the reaction term ----- */
 	solverHandler.computeJacobian(ts, localC, J, ftime);
@@ -170,7 +169,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	PetscFunctionReturn(0);
 }
 
-PetscSolver::PetscSolver(ISolverHandler& _solverHandler,
+PetscSolver::PetscSolver(ISolverHandler &_solverHandler,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		Solver(_solverHandler, registry) {
 	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");

@@ -3,8 +3,6 @@
 
 // Includes
 #include "PetscSolverHandler.h"
-#include <neclusters/NEClusterReactionNetwork.h>
-#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
 
 namespace xolotlSolver {
 
@@ -29,11 +27,8 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver2DHandler(NetworkType& _network) :
-			PetscSolverHandler(
-					*(std::make_shared<xolotlCore::NEClusterReactionNetwork>(
-							std::make_shared<xolotlPerf::DummyHandlerRegistry>())),
-					_network) {
+	PetscSolver2DHandler(NetworkType &_network) :
+			PetscSolverHandler(_network) {
 	}
 
 	//! The Destructor

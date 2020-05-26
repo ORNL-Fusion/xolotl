@@ -74,7 +74,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	 *  In this case ofill has only a few diagonal entries since the only spatial
 	 *  coupling is regular diffusion.
 	 */
-	xolotlCore::IReactionNetwork::SparseFillMap ofill;
+	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(dof, ofill, dfill);
@@ -624,9 +624,8 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 				ierr = MatSetValuesStencil(J, 1, &row, 3, cols, tempVals,
 						ADD_VALUES);
-				checkPetscError(ierr,
-						"PetscSolver1DHandler::computeJacobian: "
-								"MatSetValuesStencil (temperature) failed.");
+				checkPetscError(ierr, "PetscSolver1DHandler::computeJacobian: "
+						"MatSetValuesStencil (temperature) failed.");
 			}
 		}
 
@@ -684,9 +683,8 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 				ierr = MatSetValuesStencil(J, 1, &row, 3, cols, tempVals,
 						ADD_VALUES);
-				checkPetscError(ierr,
-						"PetscSolver1DHandler::computeJacobian: "
-								"MatSetValuesStencil (temperature) failed.");
+				checkPetscError(ierr, "PetscSolver1DHandler::computeJacobian: "
+						"MatSetValuesStencil (temperature) failed.");
 			}
 		}
 	}
@@ -801,9 +799,8 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 			ierr = MatSetValuesStencil(J, 1, &row, 3, cols, diffVals + (3 * i),
 					ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeJacobian: "
-							"MatSetValuesStencil (diffusion) failed.");
+			checkPetscError(ierr, "PetscSolver1DHandler::computeJacobian: "
+					"MatSetValuesStencil (diffusion) failed.");
 		}
 
 		// Get the partial derivatives for the advection
@@ -846,9 +843,8 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 				// Update the matrix
 				ierr = MatSetValuesStencil(J, 1, &row, 2, cols,
 						advecVals + (2 * i), ADD_VALUES);
-				checkPetscError(ierr,
-						"PetscSolver1DHandler::computeJacobian: "
-								"MatSetValuesStencil (advection) failed.");
+				checkPetscError(ierr, "PetscSolver1DHandler::computeJacobian: "
+						"MatSetValuesStencil (advection) failed.");
 			}
 		}
 
@@ -894,9 +890,8 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 				// Update the matrix
 				ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize,
 						colIds, reactingPartialsForCluster.data(), ADD_VALUES);
-				checkPetscError(ierr,
-						"PetscSolverExpHandler::computeJacobian: "
-								"MatSetValuesStencil (reactions) failed.");
+				checkPetscError(ierr, "PetscSolverExpHandler::computeJacobian: "
+						"MatSetValuesStencil (reactions) failed.");
 
 				// Increase the starting index
 				startingIdx += pdColIdsVectorSize;
@@ -930,9 +925,8 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
 					mutationVals + (3 * i), ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeJacobian: "
-							"MatSetValuesStencil (He trap-mutation) failed.");
+			checkPetscError(ierr, "PetscSolver1DHandler::computeJacobian: "
+					"MatSetValuesStencil (He trap-mutation) failed.");
 
 			// Set component number for the row
 			// corresponding to the HeV cluster created through trap-mutation
@@ -940,9 +934,8 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
 					mutationVals + (3 * i) + 1, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeJacobian: "
-							"MatSetValuesStencil (HeV trap-mutation) failed.");
+			checkPetscError(ierr, "PetscSolver1DHandler::computeJacobian: "
+					"MatSetValuesStencil (HeV trap-mutation) failed.");
 
 			// Set component number for the row
 			// corresponding to the interstitial created through trap-mutation
@@ -950,9 +943,8 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 			ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
 					mutationVals + (3 * i) + 2, ADD_VALUES);
-			checkPetscError(ierr,
-					"PetscSolver1DHandler::computeJacobian: "
-							"MatSetValuesStencil (I trap-mutation) failed.");
+			checkPetscError(ierr, "PetscSolver1DHandler::computeJacobian: "
+					"MatSetValuesStencil (I trap-mutation) failed.");
 		}
 	}
 

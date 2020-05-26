@@ -95,7 +95,7 @@ protected:
 	 *      PETSc's DMDASetBlockFillsSparse() expects.
 	 */
 	static std::vector<PetscInt> ConvertToPetscSparseFillMap(size_t dof,
-			const xolotlCore::IReactionNetwork::SparseFillMap &fillMap);
+			const xolotlCore::experimental::IReactionNetwork::SparseFillMap &fillMap);
 
 public:
 
@@ -109,9 +109,8 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolverHandler(xolotlCore::IReactionNetwork &_network,
-			NetworkType &_expNetwork) :
-			SolverHandler(_network, _expNetwork), fluxTimer(
+	PetscSolverHandler(NetworkType &_expNetwork) :
+			SolverHandler(_expNetwork), fluxTimer(
 					xolotlPerf::getHandlerRegistry()->getTimer("Flux")), partialDerivativeTimer(
 					xolotlPerf::getHandlerRegistry()->getTimer(
 							"Partial Derivatives")), fluxCounter(

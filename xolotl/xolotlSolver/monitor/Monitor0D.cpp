@@ -260,7 +260,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the physical grid and its length
 	auto grid = solverHandler.getXGrid();
@@ -323,27 +323,43 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Void
 	voidDensity = network.getTotalConcentration(dConcs, Spec::Void, 1);
-	voidDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Void, 1);
-	voidPartialDensity = network.getTotalConcentration(dConcs, Spec::Void, minSizes[0]);
-	voidPartialDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Void, minSizes[0]);
+	voidDiameter = 2.0
+			* network.getTotalRadiusConcentration(dConcs, Spec::Void, 1);
+	voidPartialDensity = network.getTotalConcentration(dConcs, Spec::Void,
+			minSizes[0]);
+	voidPartialDiameter = 2.0
+			* network.getTotalRadiusConcentration(dConcs, Spec::Void,
+					minSizes[0]);
 
 	// Faulted
 	faultedDensity = network.getTotalConcentration(dConcs, Spec::Faulted, 1);
-	faultedDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Faulted, 1);
-	faultedPartialDensity = network.getTotalConcentration(dConcs, Spec::Faulted, minSizes[1]);
-	faultedPartialDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Faulted, minSizes[1]);
+	faultedDiameter = 2.0
+			* network.getTotalRadiusConcentration(dConcs, Spec::Faulted, 1);
+	faultedPartialDensity = network.getTotalConcentration(dConcs, Spec::Faulted,
+			minSizes[1]);
+	faultedPartialDiameter = 2.0
+			* network.getTotalRadiusConcentration(dConcs, Spec::Faulted,
+					minSizes[1]);
 
 	// Perfect
 	perfectDensity = network.getTotalConcentration(dConcs, Spec::Perfect, 1);
-	perfectDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Perfect, 1);
-	perfectPartialDensity = network.getTotalConcentration(dConcs, Spec::Perfect, minSizes[2]);
-	perfectPartialDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Perfect, minSizes[2]);
+	perfectDiameter = 2.0
+			* network.getTotalRadiusConcentration(dConcs, Spec::Perfect, 1);
+	perfectPartialDensity = network.getTotalConcentration(dConcs, Spec::Perfect,
+			minSizes[2]);
+	perfectPartialDiameter = 2.0
+			* network.getTotalRadiusConcentration(dConcs, Spec::Perfect,
+					minSizes[2]);
 
 	// Frank
 	frankDensity = network.getTotalConcentration(dConcs, Spec::Frank, 1);
-	frankDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Frank, 1);
-	frankPartialDensity = network.getTotalConcentration(dConcs, Spec::Frank, minSizes[3]);
-	frankPartialDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Frank, minSizes[3]);
+	frankDiameter = 2.0
+			* network.getTotalRadiusConcentration(dConcs, Spec::Frank, 1);
+	frankPartialDensity = network.getTotalConcentration(dConcs, Spec::Frank,
+			minSizes[3]);
+	frankPartialDiameter = 2.0
+			* network.getTotalRadiusConcentration(dConcs, Spec::Frank,
+					minSizes[3]);
 
 	// Set the output precision
 	const int outputPrecision = 5;
@@ -539,8 +555,8 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 		Composition lo = clReg.getOrigin();
 		Composition hi = clReg.getUpperLimitPoint();
 
-		if (lo.isOnAxis(Species::I) || lo.isOnAxis(Species::V)
-				|| lo.isOnAxis(Species::He))
+		if (lo.isOnAxis(Spec::I) || lo.isOnAxis(Spec::V)
+				|| lo.isOnAxis(Spec::He))
 			continue;
 //		double amtHe = (double) (lo[Spec::He] + hi[Spec::He] - 1) / 2.0,
 //				amtV = (double) (lo[Spec::V] + hi[Spec::V] - 1) / 2.0;
