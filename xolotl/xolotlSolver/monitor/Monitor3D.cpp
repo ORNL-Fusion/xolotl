@@ -115,7 +115,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
-	auto &network = solverHandler.getExpNetwork();
+	auto &network = solverHandler.getNetwork();
 	const int dof = network.getDOF();
 
 	// Create an array for the concentration
@@ -261,7 +261,7 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 	xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
-	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int dof = network.getDOF();
 
 	// Setup step size variables
@@ -421,7 +421,7 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	using Composition = typename NetworkType::Composition;
 
 	// Degrees of freedom is the total number of clusters in the network
-	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int dof = network.getDOF();
 
 	// Get the array of concentration
@@ -831,7 +831,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	auto &network = solverHandler.getExpNetwork();
+	auto &network = solverHandler.getNetwork();
 
 	// Get the physical grid and step size
 	auto grid = solverHandler.getXGrid();
@@ -1106,7 +1106,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	auto &network = solverHandler.getExpNetwork();
+	auto &network = solverHandler.getNetwork();
 	int dof = network.getDOF();
 
 	// Get the physical grid
@@ -1363,8 +1363,8 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 	}
 
 	mutationHandler->initializeIndex3D(surfaceIndices,
-			solverHandler.getExpNetwork(), advecHandlers, grid, xm, xs, ym, hy,
-			ys, zm, hz, zs);
+			solverHandler.getNetwork(), advecHandlers, grid, xm, xs, ym, hy, ys,
+			zm, hz, zs);
 
 	// Write the surface positions
 	if (procId == 0) {
@@ -1453,7 +1453,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto &network = solverHandler.getExpNetwork();
+	auto &network = solverHandler.getNetwork();
 
 	// Determine if we have an existing restart file,
 	// and if so, it it has had timesteps written to it.

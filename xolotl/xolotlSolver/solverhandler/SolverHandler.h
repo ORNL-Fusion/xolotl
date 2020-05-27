@@ -34,7 +34,7 @@ protected:
 	std::string networkName;
 
 	//! The original network created from the network loader.
-	NetworkType &expNetwork;
+	NetworkType &network;
 
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
@@ -386,9 +386,9 @@ protected:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	SolverHandler(NetworkType &_expNetwork) :
-			expNetwork(_expNetwork), networkName(""), nX(0), nY(0), nZ(0), hX(
-					0.0), hY(0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
+	SolverHandler(NetworkType &_network) :
+			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
+					0.0), hZ(0.0), leftOffset(1), rightOffset(1), bottomOffset(
 					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
 					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
 					0.0), useRegularGrid(""), readInGrid(false), movingSurface(
@@ -724,9 +724,9 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	virtual xolotlCore::experimental::IReactionNetwork& getExpNetwork() const
+	virtual xolotlCore::experimental::IReactionNetwork& getNetwork() const
 			override {
-		return expNetwork;
+		return network;
 	}
 
 	/**

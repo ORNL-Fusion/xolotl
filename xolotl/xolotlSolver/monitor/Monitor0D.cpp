@@ -92,7 +92,7 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
-	auto &network = solverHandler.getExpNetwork();
+	auto &network = solverHandler.getNetwork();
 	const int dof = network.getDOF();
 
 	// Create an array for the concentration
@@ -167,7 +167,7 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	using Composition = typename NetworkType::Composition;
 
 	// Degrees of freedom is the total number of clusters in the network
-	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int dof = network.getDOF();
 
 	// Get the array of concentration
@@ -285,7 +285,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 	using Composition = typename NetworkType::Composition;
 
 	// Degrees of freedom is the total number of clusters in the network
-	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int dof = network.getDOF();
 
 	// Initial declarations for the density and diameter
@@ -438,7 +438,7 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 	experimental::NEReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Region = typename NetworkType::Region;
-	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	int networkSize = network.getNumClusters();
 
 	// Create a Point vector to store the data to give to the data provider
@@ -533,7 +533,7 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 	using Region = typename NetworkType::Region;
 
 	// Get the network and its size
-	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int networkSize = network.getNumClusters();
 
 	// Create the output file
@@ -710,7 +710,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 
 			// Get the solver handler and network
 			auto &solverHandler = PetscSolver::getSolverHandler();
-			auto &network = solverHandler.getExpNetwork();
+			auto &network = solverHandler.getNetwork();
 
 			// Get the physical grid (which is empty)
 			auto grid = solverHandler.getXGrid();

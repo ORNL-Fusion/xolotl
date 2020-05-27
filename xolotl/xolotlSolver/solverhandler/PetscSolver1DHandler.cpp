@@ -12,7 +12,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = expNetwork.getDOF();
+	const int dof = network.getDOF();
 
 	// Set the position of the surface
 	surfacePosition = 0;
@@ -80,10 +80,10 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 	temperatureHandler->initializeTemperature(dof, ofill, dfill);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents diffusion
-	diffusionHandler->initializeOFill(expNetwork, ofill);
+	diffusionHandler->initializeOFill(network, ofill);
 	// Loop on the advection handlers to account the other "off-diagonal" elements
 	for (int i = 0; i < advectionHandlers.size(); i++) {
-		advectionHandlers[i]->initialize(expNetwork, ofill);
+		advectionHandlers[i]->initialize(network, ofill);
 	}
 
 	// Get the local boundaries
@@ -94,16 +94,16 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 
 	// Initialize the modified trap-mutation handler here
 	// because it adds connectivity
-	mutationHandler->initialize(expNetwork, dfill, xm);
-	mutationHandler->initializeIndex1D(surfacePosition, expNetwork,
+	mutationHandler->initialize(network, dfill, xm);
+	mutationHandler->initializeIndex1D(surfacePosition, network,
 			advectionHandlers, grid, xm, xs);
 
 	// Tell the network the number of grid points on this process with ghosts
 	// TODO: do we need the ghost points?
-	expNetwork.setGridSize(xm + 2);
+	network.setGridSize(xm + 2);
 
 	// Get the diagonal fill
-	auto nPartials = expNetwork.getDiagonalFill(dfill);
+	auto nPartials = network.getDiagonalFill(dfill);
 
 	// Load up the block fills
 	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
@@ -113,7 +113,7 @@ void PetscSolver1DHandler::createSolverContext(DM &da) {
 			"DMDASetBlockFills failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-	expVals = Kokkos::View<double*>("solverPartials", nPartials);
+	vals = Kokkos::View<double*>("solverPartials", nPartials);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
@@ -156,7 +156,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	temperatureHandler->updateSurfacePosition(surfacePosition);
 
 	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(expNetwork, surfacePosition, grid);
+	fluxHandler->initializeFluxHandler(network, surfacePosition, grid);
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, xm, xs);
@@ -170,10 +170,10 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Degrees of freedom is the total number of clusters in the network
 	// + the super clusters
-	const int dof = expNetwork.getDOF();
+	const int dof = network.getDOF();
 
 	// Get the single vacancy ID
-	auto singleVacancyCluster = expNetwork.getSingleVacancy();
+	auto singleVacancyCluster = network.getSingleVacancy();
 	auto vacancyIndex = NetworkType::invalidIndex();
 	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
 		vacancyIndex = singleVacancyCluster.getId();
@@ -236,11 +236,11 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Update the network with the temperature
-	expNetwork.setTemperatures(temperature);
-	expNetwork.syncClusterDataOnHost();
+	network.setTemperatures(temperature);
+	network.syncClusterDataOnHost();
 	// Update the modified trap-mutation rate
 	// that depends on the network reaction rates
-	mutationHandler->updateTrapMutationRate(expNetwork.getLargestRate());
+	mutationHandler->updateTrapMutationRate(network.getLargestRate());
 
 	/*
 	 Restore vectors
@@ -285,7 +285,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = expNetwork.getDOF();
+	const int dof = network.getDOF();
 
 	// Computing the trapped atom concentration is only needed for the attenuation
 	if (useAttenuation) {
@@ -317,7 +317,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 			deep_copy(dConcs, hConcs);
 			// TODO: how to not have to cast the network here?
-			auto &psiNetwork = dynamic_cast<NetworkType&>(expNetwork);
+			auto &psiNetwork = dynamic_cast<NetworkType&>(network);
 			atomConc += psiNetwork.getTotalTrappedAtomConcentration(dConcs,
 					Spec::He, 0) * (grid[xi + 1] - grid[xi]);
 		}
@@ -432,12 +432,12 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 	if (tempHasChanged) {
 		// Update the network with the temperature
-		expNetwork.setTemperatures(temperature);
-		expNetwork.syncClusterDataOnHost();
+		network.setTemperatures(temperature);
+		network.syncClusterDataOnHost();
 		// Update the modified trap-mutation rate
 		// that depends on the network reaction rates
 		// TODO: is this just the local largest rate? Is it correct?
-		mutationHandler->updateTrapMutationRate(expNetwork.getLargestRate());
+		mutationHandler->updateTrapMutationRate(network.getLargestRate());
 	}
 
 	// Loop over grid points computing ODE terms for each grid point
@@ -485,19 +485,19 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				surfacePosition);
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
-		diffusionHandler->computeDiffusion(expNetwork, concVector,
+		diffusionHandler->computeDiffusion(network, concVector,
 				updatedConcOffset, hxLeft, hxRight, xi - xs);
 
 		// ---- Compute advection over the locally owned part of the grid -----
 		// Set the grid position
 		gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 		for (int i = 0; i < advectionHandlers.size(); i++) {
-			advectionHandlers[i]->computeAdvection(expNetwork, gridPosition,
+			advectionHandlers[i]->computeAdvection(network, gridPosition,
 					concVector, updatedConcOffset, hxLeft, hxRight, xi - xs);
 		}
 
 		// ----- Compute the modified trap-mutation over the locally owned part of the grid -----
-		mutationHandler->computeTrapMutation(expNetwork, concOffset,
+		mutationHandler->computeTrapMutation(network, concOffset,
 				updatedConcOffset, xi - xs);
 
 		// ----- Compute the reaction fluxes over the locally owned part of the grid -----
@@ -511,7 +511,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		deep_copy(dFlux, hFlux);
 		fluxCounter->increment();
 		fluxTimer->start();
-		expNetwork.computeAllFluxes(dConcs, dFlux, xi + 1 - xs);
+		network.computeAllFluxes(dConcs, dFlux, xi + 1 - xs);
 		fluxTimer->stop();
 		deep_copy(hFlux, dFlux);
 	}
@@ -558,7 +558,7 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	PetscScalar *concOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = expNetwork.getDOF();
+	const int dof = network.getDOF();
 
 	// Get the total number of diffusing clusters
 	const int nDiff = max(diffusionHandler->getNumberOfDiffusing(), 0);
@@ -691,12 +691,12 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 	if (tempHasChanged) {
 		// Update the network with the temperature
-		expNetwork.setTemperatures(temperature);
-		expNetwork.syncClusterDataOnHost();
+		network.setTemperatures(temperature);
+		network.syncClusterDataOnHost();
 		// Update the modified trap-mutation rate
 		// that depends on the network reaction rates
 		// TODO: is this just the local largest rate? Is it correct?
-		mutationHandler->updateTrapMutationRate(expNetwork.getLargestRate());
+		mutationHandler->updateTrapMutationRate(network.getLargestRate());
 	}
 
 	// Computing the trapped atom concentration is only needed for the attenuation
@@ -729,7 +729,7 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 			deep_copy(dConcs, hConcs);
 			// TODO: how to not have to cast the network here?
-			auto &psiNetwork = dynamic_cast<NetworkType&>(expNetwork);
+			auto &psiNetwork = dynamic_cast<NetworkType&>(network);
 			atomConc += psiNetwork.getTotalTrappedAtomConcentration(dConcs,
 					Spec::He, 0) * (grid[xi + 1] - grid[xi]);
 		}
@@ -779,7 +779,7 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 		}
 
 		// Get the partial derivatives for the diffusion
-		diffusionHandler->computePartialsForDiffusion(expNetwork, diffVals,
+		diffusionHandler->computePartialsForDiffusion(network, diffVals,
 				diffIndices, hxLeft, hxRight, xi - xs);
 
 		// Loop on the number of diffusion cluster to set the values in the Jacobian
@@ -807,7 +807,7 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 		// Set the grid position
 		gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 		for (int l = 0; l < advectionHandlers.size(); l++) {
-			advectionHandlers[l]->computePartialsForAdvection(expNetwork,
+			advectionHandlers[l]->computePartialsForAdvection(network,
 					advecVals, advecIndices, gridPosition, hxLeft, hxRight,
 					xi - xs);
 
@@ -859,10 +859,10 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 		deep_copy(dConcs, hConcs);
 		partialDerivativeCounter->increment();
 		partialDerivativeTimer->start();
-		expNetwork.computeAllPartials(dConcs, expVals, xi + 1 - xs);
+		network.computeAllPartials(dConcs, vals, xi + 1 - xs);
 		partialDerivativeTimer->stop();
-		auto hPartials = create_mirror_view(expVals);
-		deep_copy(hPartials, expVals);
+		auto hPartials = create_mirror_view(vals);
+		deep_copy(hPartials, vals);
 
 		// Variable for the loop on reactants
 		int startingIdx = 0;
@@ -910,8 +910,8 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 		PetscInt mutationIndices[3 * nHelium];
 
 		// Compute the partial derivative from modified trap-mutation at this grid point
-		int nMutating = mutationHandler->computePartialsForTrapMutation(
-				expNetwork, concOffset, mutationVals, mutationIndices, xi - xs);
+		int nMutating = mutationHandler->computePartialsForTrapMutation(network,
+				concOffset, mutationVals, mutationIndices, xi - xs);
 
 		// Loop on the number of helium undergoing trap-mutation to set the values
 		// in the Jacobian

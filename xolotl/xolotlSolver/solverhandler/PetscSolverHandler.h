@@ -32,7 +32,7 @@ class PetscSolverHandler: public SolverHandler {
 protected:
 
 	//! Partial derivatives for all reactions at one grid point.
-	Kokkos::View<double*> expVals;
+	Kokkos::View<double*> vals;
 
 	//! Map of connectivities
 	SparseFillMap dfill;
@@ -109,8 +109,8 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolverHandler(NetworkType &_expNetwork) :
-			SolverHandler(_expNetwork), fluxTimer(
+	PetscSolverHandler(NetworkType &_network) :
+			SolverHandler(_network), fluxTimer(
 					xolotlPerf::getHandlerRegistry()->getTimer("Flux")), partialDerivativeTimer(
 					xolotlPerf::getHandlerRegistry()->getTimer(
 							"Partial Derivatives")), fluxCounter(

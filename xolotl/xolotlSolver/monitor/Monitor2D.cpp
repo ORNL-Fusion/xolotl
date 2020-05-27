@@ -125,7 +125,7 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and dof
-	auto &network = solverHandler.getExpNetwork();
+	auto &network = solverHandler.getNetwork();
 	const int dof = network.getDOF();
 
 	// Create an array for the concentration
@@ -271,7 +271,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 	xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
-	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int dof = network.getDOF();
 
 	// Get the array of concentration
@@ -551,7 +551,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	using Composition = typename NetworkType::Composition;
 
 	// Degrees of freedom is the total number of clusters in the network
-	auto &network = dynamic_cast<NetworkType&>(solverHandler.getExpNetwork());
+	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int dof = network.getDOF();
 
 	// Get the array of concentration
@@ -840,7 +840,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	auto &network = solverHandler.getExpNetwork();
+	auto &network = solverHandler.getNetwork();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
@@ -1153,7 +1153,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	auto &network = solverHandler.getExpNetwork();
+	auto &network = solverHandler.getNetwork();
 	int dof = network.getDOF();
 
 	// Get the physical grid
@@ -1394,7 +1394,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 	}
 
 	mutationHandler->initializeIndex2D(surfaceIndices,
-			solverHandler.getExpNetwork(), advecHandlers, grid, xm, xs, ym, hy,
+			solverHandler.getNetwork(), advecHandlers, grid, xm, xs, ym, hy,
 			ys);
 
 	// Write the surface positions
@@ -1476,7 +1476,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto &network = solverHandler.getExpNetwork();
+	auto &network = solverHandler.getNetwork();
 
 	// Determine if we have an existing restart file,
 	// and if so, it it has had timesteps written to it.

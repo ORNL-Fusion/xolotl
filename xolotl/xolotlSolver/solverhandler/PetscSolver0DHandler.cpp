@@ -9,7 +9,7 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = expNetwork.getDOF();
+	const int dof = network.getDOF();
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create distributed array (DMDA) to manage parallel grid and vectors
@@ -42,10 +42,10 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 
 	// Initialize the nucleation handler here
 	// because it adds connectivity
-	nucleationHandler->initialize(expNetwork, dfill);
+	nucleationHandler->initialize(network, dfill);
 
 	// Get the diagonal fill
-	auto nPartials = expNetwork.getDiagonalFill(dfill);
+	auto nPartials = network.getDiagonalFill(dfill);
 
 	// Load up the block fills
 	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
@@ -55,7 +55,7 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 			"DMDASetBlockFills failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-	expVals = Kokkos::View<double*>("solverPartials", nPartials);
+	vals = Kokkos::View<double*>("solverPartials", nPartials);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
@@ -76,17 +76,17 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 			"DMDAVecGetArrayDOF failed.");
 
 	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(expNetwork, 0, grid);
+	fluxHandler->initializeFluxHandler(network, 0, grid);
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar *concOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
 	// + the super clusters
-	const int dof = expNetwork.getDOF();
+	const int dof = network.getDOF();
 
 	// Get the single vacancy ID
-	auto singleVacancyCluster = expNetwork.getSingleVacancy();
+	auto singleVacancyCluster = network.getSingleVacancy();
 	auto vacancyIndex = NetworkType::invalidIndex();
 	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
 		vacancyIndex = singleVacancyCluster.getId();
@@ -141,8 +141,8 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Update the network with the temperature
-	expNetwork.setTemperatures(temperature);
-	expNetwork.syncClusterDataOnHost();
+	network.setTemperatures(temperature);
+	network.syncClusterDataOnHost();
 
 	/*
 	 Restore vectors
@@ -185,7 +185,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = expNetwork.getDOF();
+	const int dof = network.getDOF();
 
 	// Set the grid position
 	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
@@ -201,15 +201,15 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// Update the network if the temperature changed
 	if (std::fabs(temperature[0] - temp) > 0.1) {
 		temperature[0] = temp;
-		expNetwork.setTemperatures(temperature);
-		expNetwork.syncClusterDataOnHost();
+		network.setTemperatures(temperature);
+		network.syncClusterDataOnHost();
 	}
 
 	// ----- Account for flux of incoming particles -----
 	fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, 0, 0);
 
 	// ----- Compute the heterogeneous nucleation -----
-	nucleationHandler->computeHeterogeneousNucleation(expNetwork, concOffset,
+	nucleationHandler->computeHeterogeneousNucleation(network, concOffset,
 			updatedConcOffset, 0, 0);
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
@@ -223,7 +223,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	deep_copy(dFlux, hFlux);
 	fluxCounter->increment();
 	fluxTimer->start();
-	expNetwork.computeAllFluxes(dConcs, dFlux, 0);
+	network.computeAllFluxes(dConcs, dFlux, 0);
 	fluxTimer->stop();
 	deep_copy(hFlux, dFlux);
 
@@ -260,7 +260,7 @@ void PetscSolver0DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	PetscScalar *concOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = expNetwork.getDOF();
+	const int dof = network.getDOF();
 
 	// Arguments for MatSetValuesStencil called below
 	MatStencil rowId;
@@ -279,8 +279,8 @@ void PetscSolver0DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	// Update the network if the temperature changed
 	if (std::fabs(temperature[0] - temp) > 0.1) {
 		temperature[0] = temp;
-		expNetwork.setTemperatures(temperature);
-		expNetwork.syncClusterDataOnHost();
+		network.setTemperatures(temperature);
+		network.syncClusterDataOnHost();
 	}
 
 	// ----- Take care of the reactions for all the reactants -----
@@ -293,10 +293,10 @@ void PetscSolver0DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	deep_copy(dConcs, hConcs);
 	partialDerivativeCounter->increment();
 	partialDerivativeTimer->start();
-	expNetwork.computeAllPartials(dConcs, expVals, 0);
+	network.computeAllPartials(dConcs, vals, 0);
 	partialDerivativeTimer->stop();
-	auto hPartials = create_mirror_view(expVals);
-	deep_copy(hPartials, expVals);
+	auto hPartials = create_mirror_view(vals);
+	deep_copy(hPartials, vals);
 
 	// Variable for the loop on reactants
 	int startingIdx = 0;
@@ -341,7 +341,7 @@ void PetscSolver0DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	MatStencil rowIds[2];
 
 	// Compute the partial derivative from nucleation at this grid point
-	if (nucleationHandler->computePartialsForHeterogeneousNucleation(expNetwork,
+	if (nucleationHandler->computePartialsForHeterogeneousNucleation(network,
 			concOffset, nucleationVals, nucleationIndices, 0, 0)) {
 
 		// Set grid coordinate and component number for the row and column
