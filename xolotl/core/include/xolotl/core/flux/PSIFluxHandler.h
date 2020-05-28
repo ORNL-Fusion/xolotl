@@ -1,0 +1,70 @@
+#ifndef PSIFLUXHANDLER_H
+#define PSIFLUXHANDLER_H
+
+#include <vector>
+#include <memory>
+#include <xolotl/core/flux/FluxHandler.h>
+#include <xolotl/core/Constants.h>
+#include <xolotl/core/MathUtils.h>
+#include <xolotl/core/reactants/PSIReactionNetwork.h>
+
+namespace xolotlCore {
+
+/**
+ * Realizations of this interface are responsible for handling the incident (incoming)
+ * flux calculations in tungsten.
+ */
+class PSIFluxHandler: public FluxHandler {
+
+public:
+
+	PSIFluxHandler() :
+			FluxHandler() {
+	}
+
+	~PSIFluxHandler() {
+	}
+
+	/**
+	 * Compute and store the incident flux values at each grid point.
+	 * \see IFluxHandler.h
+	 */
+	void initializeFluxHandler(experimental::IReactionNetwork& network,
+			int surfacePos, std::vector<double> grid) {
+		// Call the general method
+		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
+
+		// Skip if the flux amplitude is 0.0 and we are not using a time profile
+		if (equal(fluxAmplitude, 0.0) && !useTimeProfile)
+			return;
+
+		// Set the flux index corresponding the the single helium cluster here
+		using NetworkType =
+		experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+
+		// Set the flux index corresponding the the single helium cluster here
+		NetworkType::Composition comp;
+		// Initialize the composition
+		for (auto i : psiNetwork->getSpeciesRange()) {
+			comp[i] = 0;
+		}
+		comp[NetworkType::Species::He] = 1;
+		auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
+		// Check that the helium cluster is present in the network
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::string(
+					"\nThe single helium cluster is not present in the network, "
+							"cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		return;
+	}
+
+};
+//end class PSIFluxHandler
+
+}
+
+#endif

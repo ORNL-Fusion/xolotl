@@ -5,18 +5,18 @@
 #include <iostream>
 #include <fstream>
 #include <cassert>
-#include <PetscSolver.h>
-#include <mpi.h>
-#include <MPIUtils.h>
-#include <Options.h>
-#include <xolotlPerf/xolotlPerf.h>
-#include <IMaterialFactory.h>
-#include <TemperatureHandlerFactory.h>
-#include <VizHandlerRegistryFactory.h>
-#include <SolverHandlerFactory.h>
-#include <ISolverHandler.h>
-#include <IReactionHandlerFactory.h>
 #include <ctime>
+#include <mpi.h>
+#include <xolotl/solver/PetscSolver.h>
+#include <xolotl/io/MPIUtils.h>
+#include <xolotl/options/Options.h>
+#include <xolotl/perf/xolotlPerf.h>
+#include <xolotl/factory/material/IMaterialFactory.h>
+#include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
+#include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
+#include <xolotl/factory/solver/SolverHandlerFactory.h>
+#include <xolotl/solver/handler/ISolverHandler.h>
+#include <xolotl/factory/reaction/IReactionHandlerFactory.h>
 
 using namespace std;
 using std::shared_ptr;
