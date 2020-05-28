@@ -2,7 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
-#include <TokenizedLineReader.h>
+#include <xolotl/io/TokenizedLineReader.h>
 
 using namespace std;
 using namespace xolotlCore;

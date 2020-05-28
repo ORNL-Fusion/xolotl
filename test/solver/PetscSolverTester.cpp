@@ -2,24 +2,24 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
+#include <cassert>
 #include <memory>
 #include <typeinfo>
 #include <limits>
 #include <string.h>
-#include <PetscSolver.h>
-#include <XolotlConfig.h>
-#include <xolotlPerf/xolotlPerf.h>
-#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
-#include <Options.h>
-#include <PetscSolver0DHandler.h>
-#include <PetscSolver1DHandler.h>
-#include <PetscSolver2DHandler.h>
-#include <PetscSolver3DHandler.h>
-#include <IMaterialFactory.h>
-#include <TemperatureHandlerFactory.h>
-#include <IReactionHandlerFactory.h>
-#include <VizHandlerRegistryFactory.h>
-#include <cassert>
+#include <xolotl/solver/PetscSolver.h>
+#include <xolotl/config.h>
+#include <xolotl/perf/xolotlPerf.h>
+#include <xolotl/perf/dummy/DummyHandlerRegistry.h>
+#include <xolotl/options/Options.h>
+#include <xolotl/solver/handler/PetscSolver0DHandler.h>
+#include <xolotl/solver/handler/PetscSolver1DHandler.h>
+#include <xolotl/solver/handler/PetscSolver2DHandler.h>
+#include <xolotl/solver/handler/PetscSolver3DHandler.h>
+#include <xolotl/factory/material/IMaterialFactory.h>
+#include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
+#include <xolotl/factory/reaction/IReactionHandlerFactory.h>
+#include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
 
 using namespace std;
 using namespace xolotlCore;

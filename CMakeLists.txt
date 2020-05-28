@@ -128,6 +128,6 @@ add_subdirectory(xolotl)
 add_subdirectory(xconv)
 
 include(CTest)
-# add_subdirectory(test)
+add_subdirectory(test)
 
 add_subdirectory(doc)

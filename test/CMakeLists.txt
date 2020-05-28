@@ -1,13 +1,13 @@
-#Add the test subdirectories
+if(NOT ${BUILD_TESTING})
+    return()
+endif()
+
+set(XOLOTL_TEST_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_subdirectory(core)
 add_subdirectory(io)
-add_subdirectory(reactants)
-add_subdirectory(diffusion)
-add_subdirectory(advection)
+add_subdirectory(options)
+add_subdirectory(perf)
 add_subdirectory(solver)
-add_subdirectory(performance)
-add_subdirectory(commandline)
-add_subdirectory(visualization)
-add_subdirectory(temperature)
-add_subdirectory(flux)
-add_subdirectory(modifiedreaction)
+add_subdirectory(viz)
 add_subdirectory(system)

@@ -1,4 +1,11 @@
-file(GLOB tests *Tester.cpp)
+file(GLOB tests
+    advection/*Tester.cpp
+    diffusion/*Tester.cpp
+    flux/*Tester.cpp
+    modifiedreaction/*Tester.cpp
+    reactants/*Tester.cpp
+    temperature/*Tester.cpp
+)
 
 foreach(test ${tests})
     get_filename_component(testName ${test} NAME_WE)
@@ -6,12 +13,10 @@ foreach(test ${tests})
     target_link_libraries(${testName}
         xolotlCore
         xolotlOptions
-        xolotlIO
         xolotlPerf
         Boost::unit_test_framework
     )
-    target_include_directories(${testName} PUBLIC ${XOLOTL_TEST_INCLUDE_DIR})
     add_test(${testName} ${testName}) 
     #add a label so the tests can be run separately
-    set_property(TEST ${testName} PROPERTY LABELS "xolotl.tests.io")
+    set_property(TEST ${testName} PROPERTY LABELS "xolotl.tests.core")
 endforeach()

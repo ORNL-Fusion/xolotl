@@ -3,14 +3,14 @@
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/framework.hpp>
-#include <experimental/PSIReactionNetwork.h>
-#include <xolotlPerf/dummy/DummyHandlerRegistry.h>
-#include <XolotlConfig.h>
 #include <mpi.h>
 #include <memory>
-#include <Options.h>
-#include "xolotlCore/io/XFile.h"
-#include "tests/utils/MPIFixture.h"
+#include <xolotl/core/reactants/PSIReactionNetwork.h>
+#include <xolotl/perf/dummy/DummyHandlerRegistry.h>
+#include <xolotl/config.h>
+#include <xolotl/options/Options.h>
+#include <xolotl/io/XFile.h>
+#include <xolotl/test/MPIFixture.h>
 
 using namespace std;
 using namespace xolotlCore;
