@@ -25,10 +25,3 @@ target_link_libraries(xolotl
     xolotlViz
 )
 target_include_directories(xolotl PUBLIC ${XOLOTL_BINARY_INCLUDE_DIR})
-
-if(Boost_UNIT_TEST_FRAMEWORK_FOUND)
-    message(STATUS "Tests will be built since Boost unit test framework found.")
-    # add_subdirectory(tests)
-endif()
-
-# add_subdirectory(../doc doc)

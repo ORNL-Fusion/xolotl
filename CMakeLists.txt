@@ -130,4 +130,4 @@ add_subdirectory(xconv)
 include(CTest)
 # add_subdirectory(test)
 
-# add_subdirectory(doc)
+add_subdirectory(doc)
