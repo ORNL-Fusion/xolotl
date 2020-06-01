@@ -5,8 +5,8 @@
 #include <fstream>
 #include <mpi.h>
 #include <xolotl/core/temperature/TemperatureProfileHandler.h>
-#include <xolotl/config.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/test/config.h>
 
 using namespace std;
 using namespace xolotlCore;

@@ -6,8 +6,8 @@
 #include <xolotl/core/temperature/HeatEquation1DHandler.h>
 #include <xolotl/core/temperature/HeatEquation2DHandler.h>
 #include <xolotl/core/temperature/HeatEquation3DHandler.h>
-#include <xolotl/config.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/test/config.h>
 
 using namespace std;
 using namespace xolotlCore;

@@ -1,10 +1,5 @@
 set(XOLOTL_BINARY_INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
-execute_process(COMMAND
-    ${CMAKE_COMMAND} -E make_directory ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl
-)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
-    "${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/config.h"
-)
+set(XOLOTL_BINARY_INCLUDE_DIR ${XOLOTL_BINARY_INCLUDE_DIR} PARENT_SCOPE)
 
 add_subdirectory(perf)
 add_subdirectory(core)
@@ -24,4 +19,3 @@ target_link_libraries(xolotl
     xolotlPerf
     xolotlViz
 )
-target_include_directories(xolotl PUBLIC ${XOLOTL_BINARY_INCLUDE_DIR})

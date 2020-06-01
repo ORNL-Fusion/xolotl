@@ -7,8 +7,8 @@
 #include <iostream>
 #include <xolotl/core/diffusion/Diffusion3DHandler.h>
 #include <xolotl/core/reactants/PSIReactionNetwork.h>
-#include <xolotl/config.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/test/config.h>
 
 using namespace std;
 using namespace xolotlCore;

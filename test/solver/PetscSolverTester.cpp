@@ -8,7 +8,6 @@
 #include <limits>
 #include <string.h>
 #include <xolotl/solver/PetscSolver.h>
-#include <xolotl/config.h>
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/perf/dummy/DummyHandlerRegistry.h>
 #include <xolotl/options/Options.h>
@@ -20,6 +19,7 @@
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
 #include <xolotl/factory/reaction/IReactionHandlerFactory.h>
 #include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
+#include <xolotl/test/config.h>
 
 using namespace std;
 using namespace xolotlCore;

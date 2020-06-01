@@ -1,12 +1,5 @@
 ## NOTE: internal library (?)
 
-execute_process(COMMAND
-    ${CMAKE_COMMAND} -E make_directory ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/io
-)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
-    "${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/io/config.h"
-)
-
 set(XOLOTL_IO_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(XOLOTL_IO_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(XOLOTL_IO_HEADER_DIR ${XOLOTL_IO_INCLUDE_DIR}/xolotl/io)
@@ -45,11 +38,9 @@ target_link_libraries(xolotlIO PUBLIC
     MPI::MPI_CXX
     Kokkos::kokkos
     plsm
+    Boost::filesystem
 )
 target_include_directories(xolotlIO PUBLIC
     ${XOLOTL_IO_INCLUDE_DIR}
     ${HDF5_INCLUDE_DIR}
 )
-if(Boost_FILESYSTEM_FOUND)
-    target_link_libraries(xolotlIO PUBLIC Boost::filesystem)
-endif(Boost_FILESYSTEM_FOUND)
