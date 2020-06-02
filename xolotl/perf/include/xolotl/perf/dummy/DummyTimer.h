@@ -2,7 +2,7 @@
 #define DUMMYTIMER_H
 
 #include <xolotl/perf/ITimer.h>
-#include <xolotl/core/Identifiable.h>
+#include <xolotl/util/Identifiable.h>
 
 using namespace std;
 
@@ -14,7 +14,7 @@ namespace dummy {
  * The DummyTimer class is instantiated by the DummerHandlerRegistry class
  * and realizes the DummyTimer interface.
  */
-class DummyTimer: public ITimer, public core::Identifiable {
+class DummyTimer: public ITimer, public util::Identifiable {
 private:
 
 	/**
@@ -22,7 +22,7 @@ private:
 	 *  must be initialized with a name.
 	 */
 	DummyTimer(void) :
-			core::Identifiable("unused") {
+			util::Identifiable("unused") {
 	}
 
 public:
@@ -34,7 +34,7 @@ public:
 	 * @param name The DummyTimer's name
 	 */
 	DummyTimer(const std::string& name) :
-			core::Identifiable("unused") {
+			util::Identifiable("unused") {
 	}
 
 	/**

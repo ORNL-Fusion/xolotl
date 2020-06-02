@@ -11,7 +11,8 @@
 #include <xolotl/options/Options.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace advection;
 
 using Kokkos::ScopeGuard;
@@ -79,8 +80,8 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	advectionHandler.setDimension(3);
 
 	// Check if grid points are on the sink
-	Point<3> pos0 { 0.1, 3.0, 0.0 };
-	Point<3> pos1 { 2.0, 2.0, 2.0 };
+    util::Point<3> pos0 { 0.1, 3.0, 0.0 };
+    util::Point<3> pos1 { 2.0, 2.0, 2.0 };
 	BOOST_REQUIRE_EQUAL(advectionHandler.isPointOnSink(pos0), false);
 	BOOST_REQUIRE_EQUAL(advectionHandler.isPointOnSink(pos1), true);
 
@@ -130,7 +131,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	concVector[6] = conc + 22 * dof; // back
 
 	// Set the grid position
-	Point<3> gridPosition { hx, hy, hz };
+    util::Point<3> gridPosition { hx, hy, hz };
 
 	// Compute the advection at this grid point
 	advectionHandler.computeAdvection(network, gridPosition, concVector,

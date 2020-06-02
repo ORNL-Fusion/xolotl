@@ -5,7 +5,7 @@
 #include <vector>
 #include <array>
 #include <mpi.h>
-#include <xolotl/io/Filesystem.h>
+#include <xolotl/util/Filesystem.h>
 #include <xolotl/io/HDF5Object.h>
 
 

@@ -5,8 +5,8 @@
 #include <memory>
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/core/Constants.h>
-#include <xolotl/core/MathUtils.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl {
 namespace core {
@@ -37,7 +37,7 @@ public:
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
 		// Skip if the flux amplitude is 0.0 and we are not using a time profile
-		if (equal(fluxAmplitude, 0.0) && !useTimeProfile)
+		if (util::equal(fluxAmplitude, 0.0) && !useTimeProfile)
 			return;
 
 		// Set the flux index corresponding the the single helium cluster here

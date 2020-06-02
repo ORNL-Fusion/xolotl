@@ -2,7 +2,7 @@
 #define HEATEQUATION2DHANDLER_H
 
 #include <xolotl/core/temperature/ITemperatureHandler.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 #include <xolotl/core/Constants.h>
 
 namespace xolotl {
@@ -109,9 +109,9 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const Point<3>&, double time) const {
-		return equal(time, 0.0) * bulkTemperature
-				+ !equal(time, 0.0) * localTemperature;
+	virtual double getTemperature(const util::Point<3>&, double time) const {
+		return util::equal(time, 0.0) * bulkTemperature
+				+ !util::equal(time, 0.0) * localTemperature;
 	}
 
 	/**

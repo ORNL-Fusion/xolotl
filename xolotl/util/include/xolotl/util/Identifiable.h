@@ -1,10 +1,10 @@
 #ifndef IDENTIFIABLE_H
 #define IDENTIFIABLE_H
 
-#include <xolotl/core/IIdentifiable.h>
+#include <xolotl/util/IIdentifiable.h>
 
 namespace xolotl {
-namespace core {
+namespace util {
 
 /**
  * An Identifiable implements the IIdentifiable interface, so
@@ -33,7 +33,7 @@ public:
 	}
 };
 
-} /* end namespace core */
+} /* end namespace util */
 } /* end namespace xolotl */
 
 #endif // IDENTIFIABLE_H

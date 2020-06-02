@@ -3,7 +3,7 @@
 
 #include <mpi.h>
 #include <limits.h>
-#include <xolotl/core/IIdentifiable.h>
+#include <xolotl/util/IIdentifiable.h>
 
 namespace xolotl {
 namespace perf {
@@ -12,7 +12,7 @@ namespace perf {
  * Realizations of this interface are responsible for the collection
  * of event performance counter data.
  */
-class IEventCounter: public virtual core::IIdentifiable {
+class IEventCounter: public virtual util::IIdentifiable {
 
 public:
 	/**

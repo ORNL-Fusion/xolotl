@@ -4,7 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
-#include <xolotl/core/Identifiable.h>
+#include <xolotl/util/Identifiable.h>
 #include <xolotl/perf/IHardwareCounter.h>
 
 namespace xolotl {
@@ -16,7 +16,7 @@ namespace dummy {
  * and realizes the DummyHardwareCounter interface.
  */
 class DummyHardwareCounter: public IHardwareCounter,
-		public core::Identifiable {
+		public util::Identifiable {
 
 private:
 
@@ -38,7 +38,7 @@ private:
 	 * be monitored.
 	 */
 	DummyHardwareCounter() :
-			core::Identifiable("unused") {
+			util::Identifiable("unused") {
 	}
 
 public:
@@ -52,7 +52,7 @@ public:
 	 */
 	DummyHardwareCounter(const std::string& counterName,
 			const IHardwareCounter::SpecType& ctrSpec) :
-			core::Identifiable("unused") {
+			util::Identifiable("unused") {
 	}
 
 	/**

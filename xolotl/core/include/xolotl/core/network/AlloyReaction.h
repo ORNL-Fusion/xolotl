@@ -101,7 +101,7 @@ public:
 //            }
 //        }
 
-        return max(0.1, be);
+        return util::max(0.1, be);
     }
 };
 

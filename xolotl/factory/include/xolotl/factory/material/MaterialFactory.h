@@ -13,7 +13,7 @@
 #include <xolotl/core/diffusion/Diffusion1DHandler.h>
 #include <xolotl/core/diffusion/Diffusion2DHandler.h>
 #include <xolotl/core/diffusion/Diffusion3DHandler.h>
-#include <xolotl/io/TokenizedLineReader.h>
+#include <xolotl/util/TokenizedLineReader.h>
 
 namespace xolotl {
 namespace factory {
@@ -129,7 +129,7 @@ public:
 		// Set-up the grain boundaries from the options
 		std::string gbString = opts.getGbString();
 		// Build an input stream from the GB string.
-		io::TokenizedLineReader<std::string> reader;
+		util::TokenizedLineReader<std::string> reader;
 		auto argSS = std::make_shared<std::istringstream>(gbString);
 		reader.setInputStream(argSS);
 		// Break the string into tokens.

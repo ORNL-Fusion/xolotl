@@ -7,7 +7,7 @@
 #include <array>
 
 namespace xolotl {
-namespace core {
+namespace util {
 
 // Forward declaration, apparently needed for the rest to
 // compile successfully with some compilers (e.g., clang++ 6).
@@ -93,7 +93,7 @@ Array<T, N0> operator+(const Array<T, N0>& a, const Array<T, N0>& b) {
 	return ret;
 }
 
-} /* end namespace core */
+} /* end namespace util */
 } /* end namespace xolotl */
 
 #endif // XCORE_NDARRAY_H

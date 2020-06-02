@@ -2,10 +2,10 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
-#include <xolotl/io/TokenizedLineReader.h>
+#include <xolotl/util/TokenizedLineReader.h>
 
 using namespace std;
-using namespace xolotl::io;
+using namespace xolotl::util;
 
 // Test data
 const string doubleString =

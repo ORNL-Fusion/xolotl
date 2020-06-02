@@ -8,7 +8,7 @@
 #include <ctime>
 #include <mpi.h>
 #include <xolotl/solver/PetscSolver.h>
-#include <xolotl/io/MPIUtils.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/factory/material/IMaterialFactory.h>

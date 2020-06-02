@@ -3,7 +3,7 @@
 
 // Includes
 #include <xolotl/core/advection/AdvectionHandler.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl {
 namespace core {
@@ -63,7 +63,7 @@ public:
 	 * \see IAdvectionHandler.h
 	 */
 	void computeAdvection(network::IReactionNetwork& network,
-			const Point<3>& pos, double **concVector, double *updatedConcOffset,
+			const util::Point<3>& pos, double **concVector, double *updatedConcOffset,
 			double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const override;
 
@@ -78,7 +78,7 @@ public:
 	 */
 	void computePartialsForAdvection(
 			network::IReactionNetwork& network, double *val,
-			int *indices, const Point<3>& pos, double hxLeft, double hxRight,
+			int *indices, const util::Point<3>& pos, double hxLeft, double hxRight,
 			int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
 			int iz = 0) const override;
 
@@ -91,7 +91,7 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	std::array<int, 3> getStencilForAdvection(const Point<3>& pos) const
+	std::array<int, 3> getStencilForAdvection(const util::Point<3>& pos) const
 			override;
 
 	/**
@@ -99,7 +99,7 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	bool isPointOnSink(const Point<3>& pos) const override {
+	bool isPointOnSink(const util::Point<3>& pos) const override {
 		// Return true if pos[0] is equal to location
 		return fabs(location - pos[0]) < 0.001;
 	}

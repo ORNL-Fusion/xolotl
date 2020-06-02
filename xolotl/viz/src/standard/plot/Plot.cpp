@@ -7,7 +7,7 @@ namespace standard {
 namespace plot {
 
 Plot::Plot(const std::string& name) :
-		core::Identifiable(name), plotStyle(PlottingStyle::LINE) {
+		util::Identifiable(name), plotStyle(PlottingStyle::LINE) {
 }
 
 Plot::~Plot() {

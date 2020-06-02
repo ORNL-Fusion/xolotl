@@ -4,8 +4,7 @@
 #include <array>
 
 namespace xolotl {
-namespace solver {
-namespace handler {
+namespace util {
 
 // Simple class to wrap a random number generator.
 // Intended mainly to allow us to retain the seed used and last few
@@ -62,8 +61,7 @@ public:
 	}
 };
 
-} /* namespace handler */
-} /* namespace solver */
+} /* namespace util */
 } /* namespace xolotl */
 
 #endif // XSOLVER_RANDOMNUMBERGENERATOR_H

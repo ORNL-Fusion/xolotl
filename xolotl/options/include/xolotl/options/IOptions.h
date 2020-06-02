@@ -6,7 +6,7 @@
 #include <string>
 #include <map>
 #include <xolotl/perf/xolotlPerf.h>
-#include <xolotl/core/NDArray.h>
+#include <xolotl/util/NDArray.h>
 
 namespace xolotl {
 namespace options {
@@ -417,7 +417,7 @@ public:
 	 *
 	 * @return The size
 	 */
-	virtual core::Array<int, 4> getRadiusMinSizes() const = 0;
+	virtual util::Array<int, 4> getRadiusMinSizes() const = 0;
 
 	/**
 	 * Obtain the value of the density of a bubble.

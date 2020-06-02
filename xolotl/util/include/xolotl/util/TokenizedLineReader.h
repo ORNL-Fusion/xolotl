@@ -9,7 +9,7 @@
 
 namespace xolotl
 {
-namespace io
+namespace util
 {
 
 /**
@@ -253,7 +253,7 @@ public:
 };
 //end class TokenizedLineReader
 
-} // namespace io
+} // namespace util
 } // namespace xolotl
 
 #endif

@@ -7,7 +7,7 @@
 #include <xolotl/viz/PlottingStyle.h>
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/viz/dataprovider/IDataProvider.h>
-#include <xolotl/core/IIdentifiable.h>
+#include <xolotl/util/IIdentifiable.h>
 
 namespace xolotl {
 namespace viz {
@@ -17,7 +17,7 @@ namespace viz {
  * The user interacts with it through different method where he/she could set the data to plot,
  * title, legend, plotting style, etc.
  */
-class IPlot : public virtual core::IIdentifiable {
+class IPlot : public virtual util::IIdentifiable {
 
 public:
 

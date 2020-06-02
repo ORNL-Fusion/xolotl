@@ -3,7 +3,7 @@
 #include <plsm/EnumIndexed.h>
 
 #include <xolotl/core/Constants.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl
 {

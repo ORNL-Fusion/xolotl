@@ -3,7 +3,7 @@
 
 #include <numeric>
 #include <boost/range/counting_range.hpp>
-#include <xolotl/core/DoInOrder.h>
+#include <xolotl/util/DoInOrder.h>
 
 namespace xolotl
 {
@@ -292,7 +292,7 @@ HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX,
     MPI_Comm_size(comm, &commSize);
 
 #if READY
-    DoInOrder([baseX, &data]() {
+    doInOrder([baseX, &data]() {
                     for(auto i = 0; i < data.size(); ++i) {
                         std::cout << baseX + i << ": ";
                         for(auto const& p : data[i]) {
@@ -312,7 +312,7 @@ HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX,
     assert(myNumItemsByPoint.size() == myNumPoints);
 
 #if READY
-    DoInOrder([commRank, &myNumItemsByPoint]() {
+    doInOrder([commRank, &myNumItemsByPoint]() {
                     std::cout << commRank << ": ";
                     for(auto const& p : myNumItemsByPoint) {
                         std::cout << ' ' << p;
@@ -335,7 +335,7 @@ HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX,
     myStartingIndices.resize(myNumPoints);
 
 #if READY
-    DoInOrder([commRank, &myStartingIndices]() {
+    doInOrder([commRank, &myStartingIndices]() {
                     std::cout << commRank << ": ";
                     for(auto const& p : myStartingIndices) {
                         std::cout << ' ' << p;
@@ -420,7 +420,7 @@ HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX,
     }
     SimpleDataSpace<1> indexMemspace(indexCounts);
 #if READY
-    DoInOrder([commRank, &globalStartingIndices]() {
+    doInOrder([commRank, &globalStartingIndices]() {
                     std::cout << commRank << ": ";
                     for(auto const& p : globalStartingIndices) {
                         std::cout << ' ' << p;
@@ -432,7 +432,7 @@ HDF5File::RaggedDataSet2D<T>::writeStartingIndices(int baseX,
 #endif // READY
 
 #if READY
-    DoInOrder([commRank, baseX, &indexCounts]() {
+    doInOrder([commRank, baseX, &indexCounts]() {
                     std::cout << commRank << ": "
                         << '[' << baseX << ", " << (baseX + indexCounts[0]) << ')'
                         << std::endl;
@@ -536,7 +536,7 @@ HDF5File::RaggedDataSet2D<T>::read(int baseX, int numX) const {
     // Read our part of the actual data.
     auto ret = readData(globalStartingIndices);
 #if READY
-    DoInOrder([baseX, numX, &ret]() {
+    doInOrder([baseX, numX, &ret]() {
                     for(auto i = 0; i < numX; ++i ) {
                         std::cout << baseX + i << ':';
                         for(const auto& currData : ret[i]) {
@@ -605,7 +605,7 @@ HDF5File::RaggedDataSet2D<T>::readStartingIndices(int baseX, int numX) const {
                 globalStartingIndices.data());
 
 #if READY
-    DoInOrder([commRank, &globalStartingIndices]() {
+    doInOrder([commRank, &globalStartingIndices]() {
                         std::cout << commRank << ": ";
                         for(auto const& p : globalStartingIndices) {
                             std::cout << ' ' << p;
@@ -654,7 +654,7 @@ HDF5File::RaggedDataSet2D<T>::readData(
                 plist.getId(),
                 flatData.data());
 #if READY
-    DoInOrder([commRank, &flatData]() {
+    doInOrder([commRank, &flatData]() {
                     std::cout << commRank << ": ";
                     for(auto const& d : flatData){
                         std::cout << ' ' << d;
@@ -715,7 +715,7 @@ HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
 #if READY
     int cwRank;
     MPI_Comm_rank(comm, &cwRank);
-    DoInOrder([cwRank, &dataFileSpace,&dataOffsets,&dataCounts]() {
+    doInOrder([cwRank, &dataFileSpace,&dataOffsets,&dataCounts]() {
                     const auto totalDims = dataFileSpace.getDims();
                     std::cout << cwRank << ": " 
                         << "fileDims: " << totalDims[0] << ", " << totalDims[1]
@@ -749,7 +749,7 @@ HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
     }
 
 #if READY
-    DoInOrder([cwRank, &flatData]() {
+    doInOrder([cwRank, &flatData]() {
                     std::cout << cwRank << ": ";
                     for(const auto& currDataItem: flatData) {
                         std::cout << ' ' << currDataItem;

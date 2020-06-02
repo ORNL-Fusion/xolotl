@@ -9,7 +9,7 @@
 #include <string>
 #include <map>
 #include <xolotl/perf/IHardwareCounter.h>
-#include <xolotl/core/Identifiable.h>
+#include <xolotl/util/Identifiable.h>
 
 namespace xolotl {
 namespace perf {
@@ -17,7 +17,7 @@ namespace papi {
 
 /// A collection of hardware performance counters.
 class PAPIHardwareCounter: public IHardwareCounter,
-		public core::Identifiable {
+		public util::Identifiable {
 private:
 	/// Information about a single hardware counter.
 	struct CounterSpecInfo {
@@ -54,7 +54,7 @@ private:
 	/// The default constructor is private to force callers to
 	/// provide a name and a collection of hardware counters to monitor.
 	PAPIHardwareCounter(void) :
-			core::Identifiable("unused") {
+			util::Identifiable("unused") {
 	}
 
 	/// Initialize our collection of specifications for the

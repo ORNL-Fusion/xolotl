@@ -2,8 +2,7 @@
 #define XCORE_DOINORDER_H
 
 namespace xolotl {
-namespace core {
-
+namespace util {
 
 /**
  * Have each MPI rank execute the given function in rank order.
@@ -20,7 +19,7 @@ namespace core {
  */
 template<typename F>
 void
-DoInOrder(F func,
+doInOrder(F func,
             MPI_Comm comm = MPI_COMM_WORLD,
             std::string msg = "",
             std::ostream& os = std::cout) {
@@ -49,7 +48,7 @@ DoInOrder(F func,
     }
 }
 
-} /* end namespace core */
+} /* end namespace util */
 } /* end namespace xolotl */
 
 #endif // XCORE_DOINORDER_H

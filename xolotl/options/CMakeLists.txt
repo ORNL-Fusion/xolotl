@@ -16,7 +16,6 @@ add_library(xolotlOptions STATIC
     ${XOLOTL_OPTIONS_HEADERS}
 )
 target_link_libraries(xolotlOptions PUBLIC
-    xolotlIO
     xolotlPerf
     Boost::program_options
     MPI::MPI_CXX

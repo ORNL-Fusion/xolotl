@@ -13,7 +13,7 @@ add_library(xolotlFactory STATIC
     ${XOLOTL_FACTORY_HEADERS}
 )
 target_link_libraries(xolotlFactory PUBLIC
-    xolotlIO
+    # xolotlIO
     xolotlCore
     xolotlOptions
     xolotlPerf

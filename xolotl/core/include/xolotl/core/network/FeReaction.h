@@ -115,7 +115,7 @@ public:
             }
         }
 
-        return min(5.0, max(be, -5.0));
+        return util::min(5.0, util::max(be, -5.0));
     }
 };
 

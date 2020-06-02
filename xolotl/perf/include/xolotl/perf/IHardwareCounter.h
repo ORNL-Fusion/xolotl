@@ -4,7 +4,7 @@
 #include <mpi.h>
 #include <vector>
 #include <limits.h>
-#include <xolotl/core/IIdentifiable.h>
+#include <xolotl/util/IIdentifiable.h>
 
 namespace xolotl {
 namespace perf {
@@ -12,7 +12,7 @@ namespace perf {
 /**
  * A counter that can sample hardware counter values.
  */
-class IHardwareCounter: public virtual core::IIdentifiable {
+class IHardwareCounter: public virtual util::IIdentifiable {
 
 public:
 

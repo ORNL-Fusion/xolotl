@@ -18,7 +18,7 @@
 #include <Kokkos_Array.hpp>
 
 namespace xolotl {
-namespace core {
+namespace util {
 
 //@{
 /**
@@ -197,7 +197,7 @@ double secondOrderOffsetSum(double alpha, double beta, double mean1,
 	return toReturn;
 }
 
-} /* end namespace core */
+} /* end namespace util */
 } /* end namespace xolotl */
 
 #endif /* MATHUTILS_H_ */

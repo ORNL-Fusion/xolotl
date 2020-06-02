@@ -4,7 +4,6 @@
 // Includes
 #include <vector>
 #include <xolotl/viz/standard/plot/Plot.h>
-#include <xolotl/core/Identifiable.h>
 
 namespace xolotl {
 namespace viz {

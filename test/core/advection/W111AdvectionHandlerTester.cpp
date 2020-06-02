@@ -11,7 +11,8 @@
 #include <xolotl/options/Options.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace advection;
 
 using Kokkos::ScopeGuard;
@@ -124,7 +125,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	concVector[2] = conc + 2 * dof; // right
 
 	// Set the grid position
-	Point<3> gridPosition { hx, 0.0, 0.0 };
+    util::Point<3> gridPosition { hx, 0.0, 0.0 };
 
 	// Compute the advection at this grid point
 	advectionHandler.computeAdvection(network, gridPosition, concVector,

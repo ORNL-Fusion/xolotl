@@ -3,7 +3,7 @@
 
 // Includes
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl {
 namespace core {
@@ -58,7 +58,7 @@ public:
 			double migration = cluster.getMigrationEnergy();
 
 			// Don't do anything if the diffusion factor is 0.0
-			if (equal(diffFactor, 0.0)
+			if (util::equal(diffFactor, 0.0)
 					|| migration > migrationThreshold)
 				continue;
 

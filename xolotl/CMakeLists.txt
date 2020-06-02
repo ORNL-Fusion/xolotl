@@ -1,6 +1,7 @@
 set(XOLOTL_BINARY_INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
 set(XOLOTL_BINARY_INCLUDE_DIR ${XOLOTL_BINARY_INCLUDE_DIR} PARENT_SCOPE)
 
+add_subdirectory(util)
 add_subdirectory(perf)
 add_subdirectory(core)
 add_subdirectory(io)

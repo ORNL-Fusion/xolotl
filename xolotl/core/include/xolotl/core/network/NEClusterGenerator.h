@@ -55,7 +55,7 @@ public:
         if (region[Species::Xe].end() > _maxXe) {
             return true;
         }
-        if (region[Species::Xe].length() < max((double) (_groupingWidth + 1), region[Species::Xe].begin() * 1.0e-2)) {
+        if (region[Species::Xe].length() < util::max((double) (_groupingWidth + 1), region[Species::Xe].begin() * 1.0e-2)) {
             return false;
         }
         return true;

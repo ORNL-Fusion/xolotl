@@ -67,7 +67,7 @@ public:
 	 * \see IAdvectionHandler.h
 	 */
 	void computeAdvection(network::IReactionNetwork& network,
-			const Point<3>& pos, double **concVector, double *updatedConcOffset,
+			const util::Point<3>& pos, double **concVector, double *updatedConcOffset,
 			double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const override {
 		// Doesn't do anything
@@ -83,7 +83,7 @@ public:
 	 */
 	void computePartialsForAdvection(
 			network::IReactionNetwork& network, double *val,
-			int *indices, const Point<3>& pos, double hxLeft, double hxRight,
+			int *indices, const util::Point<3>& pos, double hxLeft, double hxRight,
 			int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
 			int iz = 0) const override {
 		// Doesn't do anything

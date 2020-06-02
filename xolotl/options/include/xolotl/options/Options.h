@@ -269,7 +269,7 @@ protected:
 	/**
 	 * Average radius computation minimum size
 	 */
-    core::Array<int, 4> radiusMinSizes;
+    util::Array<int, 4> radiusMinSizes;
 
 	/**
 	 * Density of atom in a bubble in nm-3.
@@ -784,7 +784,7 @@ public:
 	 * Obtain the minimum size for the average radius computation.
 	 * \see IOptions.h
 	 */
-	virtual core::Array<int, 4> getRadiusMinSizes() const override {
+	virtual util::Array<int, 4> getRadiusMinSizes() const override {
 		return radiusMinSizes;
 	}
 

@@ -347,7 +347,7 @@ ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
     Kokkos::parallel_for(
             Range2D({0, 0}, {clusterData.numClusters, clusterData.gridSize}),
             KOKKOS_LAMBDA (IndexType i, IndexType j) {
-        if (!equal(clusterData.diffusionFactor(i), 0.0)) {
+        if (!util::equal(clusterData.diffusionFactor(i), 0.0)) {
             updater.updateDiffusionCoefficient(clusterData, i, j);
         }
     });

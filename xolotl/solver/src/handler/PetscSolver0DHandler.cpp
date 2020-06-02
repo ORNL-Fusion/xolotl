@@ -1,6 +1,6 @@
 // Includes
 #include <xolotl/solver/handler/PetscSolver0DHandler.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 #include <xolotl/core/Constants.h>
 
 namespace xolotl {
@@ -102,7 +102,7 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Temperature
-	core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	util::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 	concOffset[dof] = temperatureHandler->getTemperature(gridPosition, 0.0);
 	temperature[0] = concOffset[dof];
 
@@ -190,7 +190,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	const int dof = network.getDOF();
 
 	// Set the grid position
-	core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	util::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the old and new array offsets
 	concOffset = concs[0];
@@ -271,7 +271,7 @@ void PetscSolver0DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	int pdColIdsVectorSize = 0;
 
 	// Set the grid position
-	core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	util::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the temperature from the temperature handler
 	concOffset = concs[0];

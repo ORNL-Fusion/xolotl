@@ -3,7 +3,7 @@
 
 // Includes
 #include <xolotl/viz/dataprovider/IDataProvider.h>
-#include <xolotl/core/Identifiable.h>
+#include <xolotl/util/Identifiable.h>
 
 namespace xolotl {
 namespace viz {
@@ -14,7 +14,7 @@ namespace dataprovider {
  *  to actually get data from the data provider, one needs to use the subclasses.
  */
 class DataProvider: public virtual IDataProvider,
-		public core::Identifiable {
+		public util::Identifiable {
 
 protected:
 
@@ -22,7 +22,7 @@ protected:
 	 * Declare the constructor as private to force the use of a name
 	 */
 	DataProvider() :
-			core::Identifiable("unused") {
+			util::Identifiable("unused") {
 	}
 
 	/**

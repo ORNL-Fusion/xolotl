@@ -8,7 +8,7 @@
 #include <xolotl/io/HDF5File.h>
 #include <xolotl/io/HDF5Exception.h>
 #include <xolotl/core/network/IReactionNetwork.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl
 {

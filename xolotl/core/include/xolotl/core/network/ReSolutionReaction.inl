@@ -59,9 +59,9 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
         auto factor = nOverlap / this->_widths[i()];
         // First order sum
         for (double l : makeIntervalRange(prod1Reg[i])) {
-            this->_coefs(i() + 1, 0, 0, 0) += factor * firstOrderSum(
-                max(static_cast<double>(clReg[i].begin()), prod2Reg[i].begin() + l),
-                min(static_cast<double>(clReg[i].end() - 1), prod2Reg[i].end() - 1 + l),
+            this->_coefs(i() + 1, 0, 0, 0) += factor * util::firstOrderSum(
+                util::max(static_cast<double>(clReg[i].begin()), prod2Reg[i].begin() + l),
+                util::min(static_cast<double>(clReg[i].end() - 1), prod2Reg[i].end() - 1 + l),
                 static_cast<double>(clReg[i].end() - 1 + clReg[i].begin()) / 2.0);
         }
     }
@@ -74,18 +74,18 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 
         // First product
         for (double l : makeIntervalRange(prod2Reg[k])) {
-            this->_coefs(0, 0, 1, k() + 1) += factor * firstOrderSum(
-                max(clReg[k].begin() - l, static_cast<double>(prod1Reg[k].begin())),
-                min(clReg[k].end() - 1 - l, static_cast<double>(prod1Reg[k].end() - 1)),
+            this->_coefs(0, 0, 1, k() + 1) += factor * util::firstOrderSum(
+                util::max(clReg[k].begin() - l, static_cast<double>(prod1Reg[k].begin())),
+                util::min(clReg[k].end() - 1 - l, static_cast<double>(prod1Reg[k].end() - 1)),
                 static_cast<double>(prod1Reg[k].end() - 1 + prod1Reg[k].begin()) / 2.0);
         }
         this->_coefs(0, 0, 1, k() + 1) /= prod1Disp[k()];
 
         // Second product
         for (double l : makeIntervalRange(prod1Reg[k])) {
-            this->_coefs(0, 0, 2, k() + 1) += factor * firstOrderSum(
-                max(clReg[k].begin() - l, static_cast<double>(prod2Reg[k].begin())),
-                min(clReg[k].end() - 1 - l, static_cast<double>(prod2Reg[k].end() - 1)),
+            this->_coefs(0, 0, 2, k() + 1) += factor * util::firstOrderSum(
+                util::max(clReg[k].begin() - l, static_cast<double>(prod2Reg[k].begin())),
+                util::min(clReg[k].end() - 1 - l, static_cast<double>(prod2Reg[k].end() - 1)),
                 static_cast<double>(prod2Reg[k].end() - 1 + prod2Reg[k].begin()) / 2.0);
         }
         this->_coefs(0, 0, 2, k() + 1) /= prod2Disp[k()];
@@ -101,9 +101,9 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
             // Second order sum
             if (k == i) {
                 for (double l : makeIntervalRange(prod1Reg[i])) {
-                    this->_coefs(i() + 1, 0, 0, k() + 1) += factor * secondOrderSum(
-                        max(static_cast<double>(clReg[i].begin()), prod2Reg[i].begin() + l),
-                        min(static_cast<double>(clReg[i].end() - 1), prod2Reg[i].end() - 1 + l),
+                    this->_coefs(i() + 1, 0, 0, k() + 1) += factor * util::secondOrderSum(
+                        util::max(static_cast<double>(clReg[i].begin()), prod2Reg[i].begin() + l),
+                        util::min(static_cast<double>(clReg[i].end() - 1), prod2Reg[i].end() - 1 + l),
                         static_cast<double>(clReg[i].end() - 1 + clReg[i].begin()) / 2.0);
                 }
                 this->_coefs(i() + 1, 0, 0, k() + 1) /= clDisp[k()];
@@ -119,9 +119,9 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
             // Second order sum
             if (k == i) {
                 for (double l : makeIntervalRange(prod2Reg[i])) {
-                    this->_coefs(i() + 1, 0, 1, k() + 1) += factor * secondOrderOffsetSum(
-                        max(static_cast<double>(clReg[i].begin()), prod1Reg[i].begin() + l),
-                        min(static_cast<double>(clReg[i].end() - 1), prod1Reg[i].end() - 1 + l),
+                    this->_coefs(i() + 1, 0, 1, k() + 1) += factor * util::secondOrderOffsetSum(
+                        util::max(static_cast<double>(clReg[i].begin()), prod1Reg[i].begin() + l),
+                        util::min(static_cast<double>(clReg[i].end() - 1), prod1Reg[i].end() - 1 + l),
                         static_cast<double>(clReg[i].end() - 1 + clReg[i].begin()) / 2.0,
                         static_cast<double>(prod1Reg[i].end() - 1 + prod1Reg[i].begin())
                             / 2.0, -l);
@@ -139,9 +139,9 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
             // Second order sum
             if (k == i) {
                 for (double l : makeIntervalRange(prod1Reg[i])) {
-                    this->_coefs(i() + 1, 0, 2, k() + 1) += factor * secondOrderOffsetSum(
-                        max(static_cast<double>(clReg[i].begin()), prod2Reg[i].begin() + l),
-                        min(static_cast<double>(clReg[i].end() - 1), prod2Reg[i].end() - 1 + l),
+                    this->_coefs(i() + 1, 0, 2, k() + 1) += factor * util::secondOrderOffsetSum(
+                        util::max(static_cast<double>(clReg[i].begin()), prod2Reg[i].begin() + l),
+                        util::min(static_cast<double>(clReg[i].end() - 1), prod2Reg[i].end() - 1 + l),
                         static_cast<double>(clReg[i].end() - 1 + clReg[i].begin()) / 2.0,
                         static_cast<double>(prod2Reg[i].end() - 1 + prod2Reg[i].begin())
                             / 2.0, -l);

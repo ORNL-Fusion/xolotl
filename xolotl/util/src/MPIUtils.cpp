@@ -1,12 +1,10 @@
-#include <xolotl/io/MPIUtils.h>
 #include <fstream>
 #include <sstream>
+#include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
 {
-namespace io
-{
-namespace mpiutils
+namespace util
 {
 
 std::shared_ptr<std::istream> broadcastStream(
@@ -62,6 +60,5 @@ std::shared_ptr<std::istream> broadcastStream(
 	return bufferSS;
 }
 
-} // namespace mpiutils
-} // namespace io
+} // namespace util
 } // namespace xolotl

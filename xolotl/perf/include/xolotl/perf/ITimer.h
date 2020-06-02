@@ -4,7 +4,7 @@
 #include <mpi.h>
 #include <string>
 #include <float.h>
-#include <xolotl/core/IIdentifiable.h>
+#include <xolotl/util/IIdentifiable.h>
 
 namespace xolotl {
 namespace perf {
@@ -13,7 +13,7 @@ namespace perf {
  * Realizations of this interface are responsible for the collection
  * of performance timing statistics.
  */
-class ITimer: public virtual core::IIdentifiable {
+class ITimer: public virtual util::IIdentifiable {
 
 public:
 

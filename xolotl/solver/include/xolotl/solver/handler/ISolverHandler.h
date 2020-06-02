@@ -13,7 +13,8 @@
 #include <xolotl/core/modified/IHeterogeneousNucleationHandler.h>
 #include <xolotl/factory/material/IMaterialFactory.h>
 #include <xolotl/core/network/IReactionNetwork.h>
-#include <xolotl/core/NDArray.h>
+#include <xolotl/util/NDArray.h>
+#include <xolotl/util/RandomNumberGenerator.h>
 
 namespace xolotl {
 namespace solver {
@@ -188,7 +189,7 @@ public:
 	 *
 	 * @return The minimum size
 	 */
-	virtual core::Array<int, 4> getMinSizes() const = 0;
+	virtual util::Array<int, 4> getMinSizes() const = 0;
 
 	/**
 	 * Get the flux handler.
@@ -259,7 +260,7 @@ public:
 	 *
 	 * @return The RandomNumberGenerator object to use.
 	 */
-	virtual RandomNumberGenerator<int, unsigned int>& getRNG(void) const = 0;
+	virtual util::RandomNumberGenerator<int, unsigned int>& getRNG(void) const = 0;
 
 	/**
 	 * Get the vector containing the location of GB.

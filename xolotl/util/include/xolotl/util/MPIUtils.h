@@ -8,9 +8,7 @@
 
 namespace xolotl
 {
-namespace io
-{
-namespace mpiutils
+namespace util
 {
 
 	/**
@@ -27,7 +25,6 @@ namespace mpiutils
 	std::shared_ptr<std::istream> broadcastStream(
 		std::shared_ptr<std::istream> stream, int root);
 
-} // namespace mpiutils
-} // namespace io
+} // namespace util
 } // namespace xolotl
 #endif

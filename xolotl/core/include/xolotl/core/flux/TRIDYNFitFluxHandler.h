@@ -7,7 +7,7 @@
 #include <fstream>
 #include <mpi.h>
 #include <xolotl/core/flux/FluxHandler.h>
-#include <xolotl/io/TokenizedLineReader.h>
+#include <xolotl/util/TokenizedLineReader.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 
 namespace xolotl {
@@ -115,7 +115,7 @@ public:
 						<< std::endl;
 		} else {
 			// Build an input stream from the string
-			io::TokenizedLineReader<std::string> reader;
+			util::TokenizedLineReader<std::string> reader;
 			// Get the line
 			std::string line;
 			getline(paramFile, line);

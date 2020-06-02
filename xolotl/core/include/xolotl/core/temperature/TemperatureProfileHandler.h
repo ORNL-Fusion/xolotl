@@ -111,7 +111,7 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const Point<3>&, double currentTime) const {
+	virtual double getTemperature(const util::Point<3>&, double currentTime) const {
 		// Initialize the value to return
 		double f = 0.0;
 

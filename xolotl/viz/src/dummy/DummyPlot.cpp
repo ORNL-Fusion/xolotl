@@ -6,7 +6,7 @@ namespace viz {
 namespace dummy {
 
 DummyPlot::DummyPlot(const std::string&) :
-		core::Identifiable("unused") {
+		util::Identifiable("unused") {
 }
 
 DummyPlot::~DummyPlot() {

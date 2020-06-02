@@ -3,7 +3,7 @@
 
 // Includes
 #include <string>
-#include <xolotl/core/Identifiable.h>
+#include <xolotl/util/Identifiable.h>
 
 namespace xolotl {
 namespace viz {
@@ -12,7 +12,7 @@ namespace viz {
  * LabelProvider provides a series of labels to print on the plots.
  * One Plot must have only one LabelProvider.
  */
-class LabelProvider: public core::Identifiable {
+class LabelProvider: public util::Identifiable {
 
 private:
 
@@ -20,9 +20,8 @@ private:
 	 * Declare the constructor as private to force the use of a name
 	 */
 	LabelProvider() :
-			core::Identifiable("unused") {
+			util::Identifiable("unused") {
 	}
-	;
 
 public:
 
@@ -70,7 +69,7 @@ public:
 	 * The default constructor
 	 */
 	LabelProvider(const std::string& name) :
-			core::Identifiable(name), axis1Label(" "), axis2Label(" "), axis3Label(
+			util::Identifiable(name), axis1Label(" "), axis2Label(" "), axis3Label(
 					" "), axis4Label(" "), titleLabel(" "), unitLabel(" "), timeLabel(
 					" "), timeStepLabel(" ") {
 	}

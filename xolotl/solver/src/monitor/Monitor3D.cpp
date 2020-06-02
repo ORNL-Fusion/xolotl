@@ -15,10 +15,10 @@
 #include <xolotl/viz/dataprovider/CvsXYDataProvider.h>
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/core/Constants.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
+#include <xolotl/util/RandomNumberGenerator.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/solver/handler/RandomNumberGenerator.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/monitor/Monitor.h>
 
@@ -850,7 +850,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 	// Work of the moving surface first
 	if (solverHandler.moveSurface()) {
 		// Write the initial surface positions
-		if (procId == 0 && core::equal(time, 0.0)) {
+		if (procId == 0 && util::equal(time, 0.0)) {
 			std::ofstream outputFile;
 			outputFile.open("surface.txt", std::ios::app);
 			outputFile << time << " ";

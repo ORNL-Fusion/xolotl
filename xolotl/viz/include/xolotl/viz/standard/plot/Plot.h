@@ -3,7 +3,7 @@
 
 // Includes
 #include <xolotl/viz/IPlot.h>
-#include <xolotl/core/Identifiable.h>
+#include <xolotl/util/Identifiable.h>
 
 namespace xolotl {
 namespace viz {
@@ -15,7 +15,7 @@ namespace plot {
  * It is a general class that provides general methods, but to actual plot anything,
  * the user needs to use one of its subclasses.
  */
-class Plot: public IPlot, public core::Identifiable {
+class Plot: public IPlot, public util::Identifiable {
 
 protected:
 
@@ -23,7 +23,7 @@ protected:
 	 * Declare the constructor as private to force the use of a name
 	 */
 	Plot() :
-			core::Identifiable("unused") {
+			util::Identifiable("unused") {
 	}
 
 	/**

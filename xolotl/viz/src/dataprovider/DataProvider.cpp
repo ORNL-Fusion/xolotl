@@ -5,7 +5,7 @@ namespace xolotl {
 namespace viz {
 namespace dataprovider {
 
-DataProvider::DataProvider(const std::string& name) : core::Identifiable(name) {
+DataProvider::DataProvider(const std::string& name) : util::Identifiable(name) {
 }
 
 DataProvider::~DataProvider() {

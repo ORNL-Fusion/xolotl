@@ -3,10 +3,10 @@
 
 // Includes
 #include <xolotl/solver/handler/ISolverHandler.h>
-#include <xolotl/solver/handler/RandomNumberGenerator.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/core/Constants.h>
-#include <xolotl/io/TokenizedLineReader.h>
+#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/RandomNumberGenerator.h>
 
 namespace xolotl {
 namespace solver {
@@ -118,10 +118,10 @@ protected:
 	unsigned int rngSeed;
 
 	//! The minimum sizes for average radius computation.
-	core::Array<int, 4> minRadiusSizes;
+	util::Array<int, 4> minRadiusSizes;
 
 	//! The random number generator to use.
-	std::unique_ptr<RandomNumberGenerator<int, unsigned int>> rng;
+	std::unique_ptr<util::RandomNumberGenerator<int, unsigned int>> rng;
 
 	/**
 	 * Method generating the grid in the x direction
@@ -148,7 +148,7 @@ protected:
 			getline(inputFile, line);
 
 			// Break the line into a vector
-			io::TokenizedLineReader<double> reader;
+			util::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(line);
 			reader.setInputStream(argSS);
 			auto tokens = reader.loadLine();
@@ -436,8 +436,8 @@ public:
 			std::cout << "Proc " << myProcId << " using RNG seed value "
 					<< rngSeed << std::endl;
 		}
-		rng = std::unique_ptr<RandomNumberGenerator<int, unsigned int>>(
-				new RandomNumberGenerator<int, unsigned int>(
+		rng = std::unique_ptr<util::RandomNumberGenerator<int, unsigned int>>(
+				new util::RandomNumberGenerator<int, unsigned int>(
 						rngSeed + myProcId));
 
 		// Set the network loader
@@ -660,7 +660,7 @@ public:
 	 * Get the minimum size for computing average radius.
 	 * \see ISolverHandler.h
 	 */
-	core::Array<int, 4> getMinSizes() const override {
+	util::Array<int, 4> getMinSizes() const override {
 		return minRadiusSizes;
 	}
 
@@ -745,7 +745,7 @@ public:
 	 *
 	 * @return The RandomNumberGenerator object to use.
 	 */
-	RandomNumberGenerator<int, unsigned int>& getRNG(void) const override {
+    util::RandomNumberGenerator<int, unsigned int>& getRNG(void) const override {
 		return *rng;
 	}
 

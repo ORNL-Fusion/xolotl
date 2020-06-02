@@ -2,7 +2,7 @@
 #define DUMMYEVENTCOUNTER_H
 
 #include <string>
-#include <xolotl/core/Identifiable.h>
+#include <xolotl/util/Identifiable.h>
 #include <xolotl/perf/IEventCounter.h>
 
 namespace xolotl {
@@ -13,7 +13,7 @@ namespace dummy {
  * The DummyEventCounter class is instantiated by the DummyHandlerRegistry
  * class and realizes the DummyEventCounter interface.
  */
-class DummyEventCounter: public IEventCounter, public core::Identifiable {
+class DummyEventCounter: public IEventCounter, public util::Identifiable {
 
 private:
 
@@ -22,7 +22,7 @@ private:
 	 *  must be initialized with a name.
 	 */
 	DummyEventCounter(void) :
-			core::Identifiable("unused") {
+			util::Identifiable("unused") {
 	}
 
 public:
@@ -32,7 +32,7 @@ public:
 	 * doesn't do anything with it
 	 */
 	DummyEventCounter(const std::string& name) :
-			core::Identifiable("unused") {
+			util::Identifiable("unused") {
 	}
 
 	/**

@@ -6,7 +6,7 @@
 #include <string>
 #include <memory>
 #include <xolotl/viz/dataprovider/Point.h>
-#include <xolotl/core/IIdentifiable.h>
+#include <xolotl/util/IIdentifiable.h>
 
 namespace xolotl {
 namespace viz {
@@ -16,7 +16,7 @@ namespace dataprovider {
  * IDataProvider describes the structure needed as a link between Xololt outputs
  * and quantities that the user wants to plot.
  */
-class IDataProvider : public virtual core::IIdentifiable {
+class IDataProvider : public virtual util::IIdentifiable {
 
 public:
 

@@ -8,7 +8,7 @@
 #include <xolotl/core/temperature/TemperatureHandler.h>
 #include <xolotl/core/temperature/TemperatureProfileHandler.h>
 #include <xolotl/core/temperature/TemperatureGradientHandler.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl {
 namespace factory {
@@ -36,7 +36,7 @@ bool initializeTempHandler(const options::Options &opts) {
 		auto temp = opts.getConstTemperature();
 		// Check if we want a temperature gradient
 		double bulkTemp = opts.getBulkTemperature();
-		if (core::equal(bulkTemp, 0.0)) {
+		if (util::equal(bulkTemp, 0.0)) {
 			// we are to use a constant temperature handler
 			theTemperatureHandler = std::make_shared<
 					core::temperature::TemperatureHandler>(temp);
@@ -50,7 +50,7 @@ bool initializeTempHandler(const options::Options &opts) {
 		theTemperatureHandler = std::make_shared<
 				core::temperature::TemperatureProfileHandler>(tempFileName);
 	} else if (opts.useHeatEquationHandlers()) {
-		if (core::equal(opts.getConstTemperature(), 0.0)) {
+		if (util::equal(opts.getConstTemperature(), 0.0)) {
 			// We are to use a constant temperature handler because the flux is 0.0
 			theTemperatureHandler = std::make_shared<
 					core::temperature::TemperatureHandler>(

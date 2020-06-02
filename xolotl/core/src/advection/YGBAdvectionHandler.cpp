@@ -37,7 +37,7 @@ void YGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 		double diffFactor = cluster.getDiffusionFactor();
 
 		// Don't do anything if the diffusion factor is 0.0
-		if (equal(diffFactor, 0.0))
+		if (util::equal(diffFactor, 0.0))
 			continue;
 
 		// Switch on the size to get the sink strength (in eV.nm3)
@@ -67,7 +67,7 @@ void YGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 		}
 
 		// If the sink strength is still 0.0, this cluster is not advecting
-		if (equal(sinkStrength, 0.0))
+		if (util::equal(sinkStrength, 0.0))
 			continue;
 
 		// Get its id
@@ -87,7 +87,7 @@ void YGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 }
 
 void YGBAdvectionHandler::computeAdvection(
-		network::IReactionNetwork& network, const Point<3>& pos,
+		network::IReactionNetwork& network, const util::Point<3>& pos,
 		double **concVector, double *updatedConcOffset, double hxLeft,
 		double hxRight, int ix, double hy, int iy, double hz, int iz) const {
 
@@ -147,7 +147,7 @@ void YGBAdvectionHandler::computeAdvection(
 
 void YGBAdvectionHandler::computePartialsForAdvection(
 		network::IReactionNetwork& network, double *val, int *indices,
-		const Point<3>& pos, double hxLeft, double hxRight, int ix, double hy,
+		const util::Point<3>& pos, double hxLeft, double hxRight, int ix, double hy,
 		int iy, double hz, int iz) const {
 
 	// Consider each advecting cluster.
@@ -201,7 +201,7 @@ void YGBAdvectionHandler::computePartialsForAdvection(
 }
 
 std::array<int, 3> YGBAdvectionHandler::getStencilForAdvection(
-		const Point<3>& pos) const {
+		const util::Point<3>& pos) const {
 
 	// The second index is positive by convention if we are on the sink
 	if (isPointOnSink(pos))

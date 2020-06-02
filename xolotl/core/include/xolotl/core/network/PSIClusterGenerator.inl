@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl
 {
@@ -307,7 +307,7 @@ PSIClusterGenerator<PSIFullSpeciesList>::getMigrationEnergy(
                 migrationEnergy = iMigration[amtI];
             }
             else {
-                migrationEnergy = min((double) amtI, 15.0) * 0.1;
+                migrationEnergy = util::min((double) amtI, 15.0) * 0.1;
             }
         }
         else if (comp.isOnAxis(Species::He)) {
@@ -556,22 +556,22 @@ PSIClusterGenerator<PSIFullSpeciesList>::getHeVFormationEnergy(Composition comp)
             // Compute the vacancy number
             y = 2.0 * ((numV - 1.0) / 26.0) - 1.0;
             // Get the coefficients
-            coefficients[0] = computeNthOrderLegendre<5>(x, c0CoefficientsLow);
-            coefficients[1] = computeNthOrderLegendre<5>(x, c1CoefficientsLow);
-            coefficients[2] = computeNthOrderLegendre<5>(x, c2CoefficientsLow);
-            coefficients[3] = computeNthOrderLegendre<5>(x, c3CoefficientsLow);
+            coefficients[0] = util::computeNthOrderLegendre<5>(x, c0CoefficientsLow);
+            coefficients[1] = util::computeNthOrderLegendre<5>(x, c1CoefficientsLow);
+            coefficients[2] = util::computeNthOrderLegendre<5>(x, c2CoefficientsLow);
+            coefficients[3] = util::computeNthOrderLegendre<5>(x, c3CoefficientsLow);
         }
         else {
             // Compute the vacancy number
             y = 2.0 * ((numV - 1.0) / 451.0) - 1.0;
             // Get the coefficients
-            coefficients[0] = computeNthOrderLegendre<5>(x, c0CoefficientsHigh);
-            coefficients[1] = computeNthOrderLegendre<5>(x, c1CoefficientsHigh);
-            coefficients[2] = computeNthOrderLegendre<5>(x, c2CoefficientsHigh);
-            coefficients[3] = computeNthOrderLegendre<5>(x, c3CoefficientsHigh);
+            coefficients[0] = util::computeNthOrderLegendre<5>(x, c0CoefficientsHigh);
+            coefficients[1] = util::computeNthOrderLegendre<5>(x, c1CoefficientsHigh);
+            coefficients[2] = util::computeNthOrderLegendre<5>(x, c2CoefficientsHigh);
+            coefficients[3] = util::computeNthOrderLegendre<5>(x, c3CoefficientsHigh);
         }
 
-        energy = computeNthOrderLegendre<3>(y, coefficients);
+        energy = util::computeNthOrderLegendre<3>(y, coefficients);
     }
     else if ((numV == 1 && numHe < heV1FormationEnergies.size()) ||
             (numV == 2 && numHe < heV2FormationEnergies.size())) {

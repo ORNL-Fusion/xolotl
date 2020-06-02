@@ -11,7 +11,6 @@ set(XOLOTL_SOLVER_HEADERS
     ${XOLOTL_SOLVER_HEADER_DIR}/handler/PetscSolver2DHandler.h
     ${XOLOTL_SOLVER_HEADER_DIR}/handler/PetscSolver3DHandler.h
     ${XOLOTL_SOLVER_HEADER_DIR}/handler/PetscSolverHandler.h
-    ${XOLOTL_SOLVER_HEADER_DIR}/handler/RandomNumberGenerator.h
     ${XOLOTL_SOLVER_HEADER_DIR}/handler/SolverHandler.h
     ${XOLOTL_SOLVER_HEADER_DIR}/monitor/Monitor.h
 )

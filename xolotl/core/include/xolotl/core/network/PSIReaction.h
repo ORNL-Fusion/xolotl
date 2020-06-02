@@ -123,7 +123,7 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
             cl.getFormationEnergy();
     }
 
-    return max(be, -5.0);
+    return util::max(be, -5.0);
 }
 }
 }

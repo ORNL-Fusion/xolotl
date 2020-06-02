@@ -3,7 +3,7 @@
 #include <fstream>
 #include <boost/program_options.hpp>
 #include <xolotl/options/Options.h>
-#include <xolotl/io/TokenizedLineReader.h>
+#include <xolotl/util/TokenizedLineReader.h>
 
 namespace bpo = boost::program_options;
 
@@ -205,7 +205,7 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the temperature
 		if (opts.count("startTemp")) {
 			// Build an input stream from the argument string.
-			io::TokenizedLineReader<double> reader;
+			util::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
 					opts["startTemp"].as<std::string>());
 			reader.setInputStream(argSS);
@@ -243,7 +243,7 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the heat
 		if (opts.count("heat")) {
 			// Build an input stream from the argument string.
-			io::TokenizedLineReader<double> reader;
+			util::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
 					opts["heat"].as<std::string>());
 			reader.setInputStream(argSS);
@@ -328,7 +328,7 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the radius minimum size
 		if (opts.count("radiusSize")) {
 			// Build an input stream from the argument string.
-			io::TokenizedLineReader<int> reader;
+			util::TokenizedLineReader<int> reader;
 			auto argSS = std::make_shared<std::istringstream>(
 					opts["radiusSize"].as<std::string>());
 			reader.setInputStream(argSS);
@@ -337,7 +337,7 @@ void Options::readParams(int argc, char *argv[]) {
 			auto tokens = reader.loadLine();
 
 			// Create the array of sizes
-            core::Array<int, 4> sizes;
+            util::Array<int, 4> sizes;
 			sizes.Init(0);
 
 			// Set the values
@@ -350,7 +350,7 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the processes
 		if (opts.count("process")) {
 			// Build an input stream from the argument string.
-			io::TokenizedLineReader<std::string> reader;
+			util::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
 					opts["process"].as<std::string>());
 			reader.setInputStream(argSS);
@@ -389,7 +389,7 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the gouping
 		if (opts.count("grouping")) {
 			// Build an input stream from the argument string.
-			io::TokenizedLineReader<int> reader;
+			util::TokenizedLineReader<int> reader;
 			auto argSS = std::make_shared<std::istringstream>(
 					opts["grouping"].as<std::string>());
 			reader.setInputStream(argSS);
@@ -409,7 +409,7 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the network parameters
 		if (opts.count("netParam")) {
 			// Build an input stream from the argument string.
-			io::TokenizedLineReader<std::string> reader;
+			util::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
 					opts["netParam"].as<std::string>());
 			reader.setInputStream(argSS);
@@ -445,7 +445,7 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the grid
 		if (opts.count("grid")) {
 			// Build an input stream from the argument string.
-			io::TokenizedLineReader<std::string> reader;
+			util::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
 					opts["grid"].as<std::string>());
 			reader.setInputStream(argSS);
@@ -475,7 +475,7 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the boundary conditions
 		if (opts.count("boundary")) {
 			// Build an input stream from the argument string.
-			io::TokenizedLineReader<int> reader;
+			util::TokenizedLineReader<int> reader;
 			auto argSS = std::make_shared<std::istringstream>(
 					opts["boundary"].as<std::string>());
 			reader.setInputStream(argSS);
@@ -504,7 +504,7 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the rng
 		if (opts.count("rng")) {
 			// Build an input stream from the argument string.
-			io::TokenizedLineReader<std::string> reader;
+			util::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
 					opts["rng"].as<std::string>());
 			reader.setInputStream(argSS);
@@ -547,7 +547,7 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the flux pulse
 		if (opts.count("pulse")) {
 			// Build an input stream from the argument string.
-			io::TokenizedLineReader<double> reader;
+			util::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
 					opts["pulse"].as<std::string>());
 			reader.setInputStream(argSS);

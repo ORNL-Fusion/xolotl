@@ -4,7 +4,7 @@
 #include <mpi.h>
 #include <xolotl/core/modified/TrapMutationHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl {
 namespace core {

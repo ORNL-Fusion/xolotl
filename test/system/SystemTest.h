@@ -11,7 +11,7 @@
 #include <string>
 #include <vector>
 
-#include <xolotl/io/Filesystem.h>
+#include <xolotl/util/Filesystem.h>
 
 namespace testUtils
 {

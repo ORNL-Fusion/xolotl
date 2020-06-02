@@ -1,6 +1,6 @@
 // Includes
 #include <xolotl/solver/handler/PetscSolver1DHandler.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 
@@ -181,7 +181,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 	// Loop on all the grid points
 	for (PetscInt i = xs - 1; i <= xs + xm; i++) {
 		// Temperature
-		core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+		util::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 		if (i < 0)
 			gridPosition[0] = (grid[0] - grid[surfacePosition + 1])
 					/ (grid[grid.size() - 1] - grid[surfacePosition + 1]);
@@ -333,7 +333,7 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 	// Declarations for variables used in the loop
 	double **concVector = new double*[3];
-	core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	util::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Loop over grid points first for the temperature, including the ghost points
 	bool tempHasChanged = false;
@@ -579,7 +579,7 @@ void PetscSolver1DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	PetscInt diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
 	PetscInt advecIndices[nAdvec];
-	core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	util::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	/*
 	 Loop over grid points for the temperature, including ghosts

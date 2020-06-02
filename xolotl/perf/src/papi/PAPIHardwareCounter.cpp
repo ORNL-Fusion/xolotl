@@ -13,7 +13,7 @@ PAPIHardwareCounter::CounterSpecMap PAPIHardwareCounter::csMap;
 
 PAPIHardwareCounter::PAPIHardwareCounter(const std::string& name,
 		const IHardwareCounter::SpecType& cset) :
-		core::Identifiable(name), spec(cset), eventSet(PAPI_NULL) {
+		util::Identifiable(name), spec(cset), eventSet(PAPI_NULL) {
 	assert(PAPI_is_initialized());
 
 	// Ensure our counter spec map has been initialized.

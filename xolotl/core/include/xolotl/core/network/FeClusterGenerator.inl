@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl
 {
@@ -45,25 +45,25 @@ FeClusterGenerator::intersect(const Region& region) const
     auto distance = abs(ibe - 1.0);
     if (distance * 0.2 < 1.0) {
     if (region[Species::He].begin() < _groupingMin) {
-        if (region[Species::V].length() < max(_groupingWidthV + 1, (AmountType) ((region[Species::V].begin() - _groupingMin) * 0.1))) {
+        if (region[Species::V].length() < util::max(_groupingWidthV + 1, (AmountType) ((region[Species::V].begin() - _groupingMin) * 0.1))) {
             return false;
         }
         else return true;
     }
     if (region[Species::V].begin() < _groupingMin) {
-        if (region[Species::He].length() < max(_groupingWidthHe + 1, (AmountType) ((region[Species::He].begin() - _groupingMin) * 0.1))) {
+        if (region[Species::He].length() < util::max(_groupingWidthHe + 1, (AmountType) ((region[Species::He].begin() - _groupingMin) * 0.1))) {
             return false;
         }
         else return true;
     }
-    if (region[Species::He].length() < max(_groupingWidthHe + 1, (AmountType) ((amt - _groupingMin) * 0.1)) 
-            || region[Species::V].length() < max(_groupingWidthV + 1, (AmountType) ((amt - _groupingMin) * 0.1))) {
+    if (region[Species::He].length() < util::max(_groupingWidthHe + 1, (AmountType) ((amt - _groupingMin) * 0.1)) 
+            || region[Species::V].length() < util::max(_groupingWidthV + 1, (AmountType) ((amt - _groupingMin) * 0.1))) {
         return false;
     }
     }
     else {
-    if (region[Species::He].length() < max(_groupingWidthHe + 1, (AmountType) exp(distance * 1.0) * _groupingWidthHe * 2)
-            || region[Species::V].length() < max(_groupingWidthV + 1, (AmountType) exp(distance * 1.0) * _groupingWidthV * 2)) return false;
+    if (region[Species::He].length() < util::max(_groupingWidthHe + 1, (AmountType) exp(distance * 1.0) * _groupingWidthHe * 2)
+            || region[Species::V].length() < util::max(_groupingWidthV + 1, (AmountType) exp(distance * 1.0) * _groupingWidthV * 2)) return false;
     }
     
     return true;

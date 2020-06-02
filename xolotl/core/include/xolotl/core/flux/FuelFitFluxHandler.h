@@ -3,7 +3,7 @@
 
 #include <cmath>
 #include <xolotl/core/flux/FluxHandler.h>
-#include <xolotl/core/MathUtils.h>
+#include <xolotl/util/MathUtils.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 
 namespace xolotl {
@@ -52,7 +52,7 @@ public:
 		xGrid = grid;
 
 		// Skip if the flux amplitude is 0.0 and we are not using a time profile
-		if (equal(fluxAmplitude, 0.0) && !useTimeProfile)
+		if (util::equal(fluxAmplitude, 0.0) && !useTimeProfile)
 			return;
 
 		// Set the flux index corresponding the the single xenon cluster here
