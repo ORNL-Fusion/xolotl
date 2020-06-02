@@ -9,7 +9,7 @@ target_include_directories(SystemTest INTERFACE
     ${CMAKE_SOURCE_DIR}/xolotlCore/io
 )
 get_filename_component(__test_data_dir
-    "${CMAKE_SOURCE_DIR}/../benchmarks"
+    "${CMAKE_SOURCE_DIR}/benchmarks"
     ABSOLUTE
 )
 target_compile_definitions(SystemTest INTERFACE

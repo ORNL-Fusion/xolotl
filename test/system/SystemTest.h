@@ -26,9 +26,9 @@ double tolerance = defaultTolerance;
 bool
 runXolotl(const std::string& caseName)
 {
-    auto exec = binDir + "/xolotl";
+    auto exec = binDir + "/xolotl/xolotl";
     auto paramsFileName = dataDir + "/params_" + caseName + ".txt";
-    auto consoleFileName = binDir + "/tests/system/cout_" + caseName + ".txt";
+    auto consoleFileName = binDir + "/test/system/cout_" + caseName + ".txt";
     auto command = exec + " " + paramsFileName + " > " + consoleFileName;
     int retCode = std::system(command.c_str());
     return (retCode == 0);
