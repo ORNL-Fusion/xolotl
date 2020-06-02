@@ -10,7 +10,9 @@
 #include <xolotl/perf/standard/StdHandlerRegistry.h>
 #include <xolotl/perf/EventCounter.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace standard {
 
 StdHandlerRegistry::StdHandlerRegistry(void) {
 	// nothing else to do
@@ -344,5 +346,6 @@ void StdHandlerRegistry::reportStatistics(std::ostream& os,
 	}
 }
 
-} // namespace xolotlPerf
-
+} // namespace standard
+} // namespace perf
+} // namespace xolotl

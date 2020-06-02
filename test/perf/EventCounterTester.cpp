@@ -8,7 +8,7 @@
 #include <xolotl/perf/EventCounter.h>
 
 using namespace std;
-using namespace xolotlPerf;
+using namespace xolotl::perf;
 
 /**
  * This suite is responsible for testing the EventCounter.

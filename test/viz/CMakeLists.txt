@@ -1,5 +1,5 @@
 if(VTKM_FOUND)
-    file(GLOB tests *.cpp)
+    file(GLOB tests *Tester.cpp)
 else(VTKM_FOUND)
     file(GLOB tests DummyPlotTester.cpp DummyDataProviderTester.cpp)
 endif(VTKM_FOUND)

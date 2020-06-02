@@ -1,10 +1,12 @@
 // Includes
 #include <xolotl/core/diffusion/Diffusion2DHandler.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace diffusion {
 
 void Diffusion2DHandler::initializeDiffusionGrid(
-		std::vector<IAdvectionHandler *> advectionHandlers,
+		std::vector<advection::IAdvectionHandler *> advectionHandlers,
 		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
 		int nz, double hz, int zs) {
 	// Get the number of diffusing clusters
@@ -66,7 +68,7 @@ void Diffusion2DHandler::initializeDiffusionGrid(
 	return;
 }
 
-void Diffusion2DHandler::computeDiffusion(experimental::IReactionNetwork& network,
+void Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
 		double **concVector, double *updatedConcOffset, double hxLeft,
 		double hxRight, int ix, double sy, int iy, double, int) const {
 
@@ -115,7 +117,7 @@ void Diffusion2DHandler::computeDiffusion(experimental::IReactionNetwork& networ
 }
 
 void Diffusion2DHandler::computePartialsForDiffusion(
-		experimental::IReactionNetwork& network, double *val, int *indices,
+		network::IReactionNetwork& network, double *val, int *indices,
 		double hxLeft, double hxRight, int ix, double sy, int iy, double,
 		int) const {
 
@@ -163,4 +165,6 @@ void Diffusion2DHandler::computePartialsForDiffusion(
 	return;
 }
 
-}/* end namespace xolotlCore */
+}/* end namespace diffusion */
+}/* end namespace core */
+}/* end namespace xolotl */

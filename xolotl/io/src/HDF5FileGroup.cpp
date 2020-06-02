@@ -2,7 +2,9 @@
 #include <xolotl/io/HDF5File.h>
 #include <xolotl/io/HDF5Exception.h>
 
-namespace xolotlCore
+namespace xolotl
+{
+namespace io
 {
 
 HDF5File::Group::Group(const HDF5Object& _location,
@@ -33,4 +35,5 @@ HDF5File::Group::Group(const HDF5Object& _location,
     }
 }
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl

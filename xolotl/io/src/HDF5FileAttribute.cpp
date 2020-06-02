@@ -2,7 +2,10 @@
 #include <sstream>
 #include <xolotl/io/HDF5File.h>
 
-namespace xolotlCore {
+namespace xolotl
+{
+namespace io
+{
 
 HDF5File::AttributeBase::AttributeBase(const HDF5Object& _target,
 		std::string _attrName, bool /* ignored */) :
@@ -125,4 +128,5 @@ void HDF5File::Attribute<std::vector<std::string> >::setTo(
 	}
 }
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl

@@ -1,10 +1,12 @@
 // Includes
 #include <xolotl/viz/dummy/DummyPlot.h>
 
-using namespace xolotlViz;
+namespace xolotl {
+namespace viz {
+namespace dummy {
 
 DummyPlot::DummyPlot(const std::string&) :
-		xolotlCore::Identifiable("unused") {
+		core::Identifiable("unused") {
 }
 
 DummyPlot::~DummyPlot() {
@@ -26,12 +28,12 @@ PlottingStyle DummyPlot::getPlottingStyle() {
 	return PlottingStyle();
 }
 
-void DummyPlot::setDataProvider(std::shared_ptr<IDataProvider> dataProvider) {
+void DummyPlot::setDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider) {
 	plotDataProvider = dataProvider;
 	return;
 }
 
-std::shared_ptr<IDataProvider> DummyPlot::getDataProvider() const {
+std::shared_ptr<dataprovider::IDataProvider> DummyPlot::getDataProvider() const {
 	return plotDataProvider;
 }
 
@@ -56,14 +58,18 @@ void DummyPlot::setLogScale(bool) {
 	return;
 }
 
-void DummyPlot::addDataProvider(std::shared_ptr<IDataProvider> dataProvider) {
+void DummyPlot::addDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider) {
 	plotDataProvider = dataProvider;
 }
 
-std::shared_ptr<IDataProvider> DummyPlot::getDataProvider(int) const {
+std::shared_ptr<dataprovider::IDataProvider> DummyPlot::getDataProvider(int) const {
 	return plotDataProvider;
 }
 
 int DummyPlot::getDataProviderNumber() const {
 	return 0;
+}
+
+}
+}
 }

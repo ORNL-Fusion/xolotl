@@ -5,9 +5,11 @@
 #include <xolotl/factory/material/MaterialFactory.h>
 #include <xolotl/core/flux/PulsedFitFluxHandler.h>
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
-#include <xolotl/core/modifiedreaction/trapmutation/DummyTrapMutationHandler.h>
+#include <xolotl/core/modified/DummyTrapMutationHandler.h>
 
-namespace xolotlFactory {
+namespace xolotl {
+namespace factory {
+namespace material {
 
 /**
  * Subclass of MaterialFactory for a tungsten material with
@@ -21,15 +23,15 @@ public:
 	 *
 	 * @param dim The number of dimensions for the problem
 	 */
-	PulsedMaterialFactory(const xolotlCore::Options &options) :
-			MaterialFactory(options) {
-		theFluxHandler = std::make_shared<xolotlCore::PulsedFitFluxHandler>();
+	PulsedMaterialFactory(const options::Options &opts) :
+			MaterialFactory(opts) {
+		theFluxHandler = std::make_shared<core::flux::PulsedFitFluxHandler>();
 		theAdvectionHandler.push_back(
-				std::make_shared<xolotlCore::DummyAdvectionHandler>());
+				std::make_shared<core::advection::DummyAdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
-				xolotlCore::DummyTrapMutationHandler>();
+				core::modified::DummyTrapMutationHandler>();
 		theNucleationHandler = std::make_shared<
-				xolotlCore::DummyNucleationHandler>();
+				core::modified::DummyNucleationHandler>();
 
 		return;
 	}
@@ -45,16 +47,18 @@ public:
 	 *
 	 * @param options The Xolotl options.
 	 */
-	void initializeMaterial(const xolotlCore::Options &options) {
+	void initializeMaterial(const options::Options &opts) {
 		// Call the general method first
-		MaterialFactory::initializeMaterial(options);
+		MaterialFactory::initializeMaterial(opts);
 
 		// Set the pulse parameters
-		theFluxHandler->setPulseTime(options.getPulseTime());
-		theFluxHandler->setProportion(options.getPulseProportion());
+		theFluxHandler->setPulseTime(opts.getPulseTime());
+		theFluxHandler->setProportion(opts.getPulseProportion());
 	}
 };
 
-} // end namespace xolotlFactory
+} // end namespace material
+} // end namespace factory
+} // end namespace xolotl
 
 #endif // PULSEDMATERIALHANDLERFACTORY_H

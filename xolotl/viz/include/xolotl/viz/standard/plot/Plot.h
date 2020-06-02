@@ -5,14 +5,17 @@
 #include <xolotl/viz/IPlot.h>
 #include <xolotl/core/Identifiable.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace standard {
+namespace plot {
 
 /**
  * Plot is the class that realizes the interface IPlot.
  * It is a general class that provides general methods, but to actual plot anything,
  * the user needs to use one of its subclasses.
  */
-class Plot: public IPlot, public xolotlCore::Identifiable {
+class Plot: public IPlot, public core::Identifiable {
 
 protected:
 
@@ -20,7 +23,7 @@ protected:
 	 * Declare the constructor as private to force the use of a name
 	 */
 	Plot() :
-			xolotlCore::Identifiable("unused") {
+			core::Identifiable("unused") {
 	}
 
 	/**
@@ -143,6 +146,9 @@ public:
 
 //end class Plot
 
-} /* namespace xolotlViz */
+} /* namespace plot */
+} /* namespace standard */
+} /* namespace viz */
+} /* namespace xolotl */
 
 #endif

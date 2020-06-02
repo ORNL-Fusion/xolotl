@@ -5,7 +5,9 @@
 #include <boost/range/counting_range.hpp>
 #include <xolotl/core/DoInOrder.h>
 
-namespace xolotlCore
+namespace xolotl
+{
+namespace io
 {
 
 template<typename T>
@@ -776,6 +778,7 @@ HDF5File::DataSet<T>::parWrite2D(MPI_Comm comm,
     }
 }
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl
 
 #endif // XCORE_HDF5FILE_DATASET_H

@@ -7,14 +7,16 @@
 #include <xolotl/core/Identifiable.h>
 #include <xolotl/perf/IHardwareCounter.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace dummy {
 
 /**
  * The DummyHardwareCounter class is instantiated by the DummyHandlerRegistry class
  * and realizes the DummyHardwareCounter interface.
  */
 class DummyHardwareCounter: public IHardwareCounter,
-		public xolotlCore::Identifiable {
+		public core::Identifiable {
 
 private:
 
@@ -36,7 +38,7 @@ private:
 	 * be monitored.
 	 */
 	DummyHardwareCounter() :
-			xolotlCore::Identifiable("unused") {
+			core::Identifiable("unused") {
 	}
 
 public:
@@ -50,7 +52,7 @@ public:
 	 */
 	DummyHardwareCounter(const std::string& counterName,
 			const IHardwareCounter::SpecType& ctrSpec) :
-			xolotlCore::Identifiable("unused") {
+			core::Identifiable("unused") {
 	}
 
 	/**
@@ -107,6 +109,8 @@ public:
 	}
 };
 
-}  //end namespace xolotlPerf
+}//end namespace dummy
+}//end namespace perf
+}//end namespace xolotl
 
 #endif

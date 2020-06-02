@@ -9,7 +9,7 @@
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/perf/PerfObjStatistics.h>
 
-namespace xperf = xolotlPerf;
+using namespace xolotl;
 
 // our coordinates in the MPI world
 int cwRank = -1;
@@ -47,11 +47,11 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg) {
 	unsigned int nGoodInits = 0;
 
 	try {
-		xperf::initialize(xperf::IHandlerRegistry::dummy);
+		perf::initialize(perf::IHandlerRegistry::dummy);
 		nGoodInits++;
 
-		std::shared_ptr<xperf::IHandlerRegistry> reg =
-				xperf::getHandlerRegistry();
+		std::shared_ptr<perf::IHandlerRegistry> reg =
+				perf::getHandlerRegistry();
 		if (reg) {
 			nGoodInits++;
 		}
@@ -69,11 +69,11 @@ BOOST_AUTO_TEST_CASE(createStdHandlerReg) {
 	unsigned int nGoodInits = 0;
 
 	try {
-		xperf::initialize(xperf::IHandlerRegistry::std);
+		perf::initialize(perf::IHandlerRegistry::std);
 		nGoodInits++;
 
-		std::shared_ptr<xperf::IHandlerRegistry> reg =
-				xperf::getHandlerRegistry();
+		std::shared_ptr<perf::IHandlerRegistry> reg =
+				perf::getHandlerRegistry();
 		if (reg) {
 			nGoodInits++;
 		}
@@ -90,11 +90,11 @@ BOOST_AUTO_TEST_CASE(createOSHandlerReg) {
 	unsigned int nGoodInits = 0;
 
 	try {
-		xperf::initialize(xperf::IHandlerRegistry::os);
+		perf::initialize(perf::IHandlerRegistry::os);
 		nGoodInits++;
 
-		std::shared_ptr<xperf::IHandlerRegistry> reg =
-				xperf::getHandlerRegistry();
+		std::shared_ptr<perf::IHandlerRegistry> reg =
+				perf::getHandlerRegistry();
 		if (reg) {
 			nGoodInits++;
 		}
@@ -109,17 +109,17 @@ BOOST_AUTO_TEST_CASE(createOSHandlerReg) {
 
 BOOST_AUTO_TEST_CASE(aggregateStats) {
 	try {
-		xperf::initialize(xperf::IHandlerRegistry::std);
-		std::shared_ptr<xperf::IHandlerRegistry> reg =
-				xperf::getHandlerRegistry();
+		perf::initialize(perf::IHandlerRegistry::std);
+		std::shared_ptr<perf::IHandlerRegistry> reg =
+				perf::getHandlerRegistry();
 
-		std::shared_ptr<xperf::IEventCounter> ctr = reg->getEventCounter(
+		std::shared_ptr<perf::IEventCounter> ctr = reg->getEventCounter(
 				"testCounter");
 		if (!ctr) {
 			throw std::runtime_error("Failed to create EventCounter");
 		}
 
-		std::shared_ptr<xperf::ITimer> timer = reg->getTimer("testTimer");
+		std::shared_ptr<perf::ITimer> timer = reg->getTimer("testTimer");
 		if (!timer) {
 			throw std::runtime_error("Failed to create Timer");
 		}
@@ -141,9 +141,9 @@ BOOST_AUTO_TEST_CASE(aggregateStats) {
 		BOOST_TEST_MESSAGE("done.");
 
 		// compute statistics about the program's event counts
-		xperf::PerfObjStatsMap<xperf::ITimer::ValType> timerStats;
-		xperf::PerfObjStatsMap<xperf::IEventCounter::ValType> ctrStats;
-		xperf::PerfObjStatsMap<xperf::IHardwareCounter::CounterType> hwCtrStats;
+		perf::PerfObjStatsMap<perf::ITimer::ValType> timerStats;
+		perf::PerfObjStatsMap<perf::IEventCounter::ValType> ctrStats;
+		perf::PerfObjStatsMap<perf::IHardwareCounter::CounterType> hwCtrStats;
 		reg->collectStatistics(timerStats, ctrStats, hwCtrStats);
 
 		// Verify the statistics collected.
@@ -152,7 +152,7 @@ BOOST_AUTO_TEST_CASE(aggregateStats) {
 			// First check times.  Should be very close to the nTimedSeconds
 			// with little spread.
 			BOOST_REQUIRE_EQUAL(timerStats.size(), 1U);
-			xperf::PerfObjStatistics<xperf::ITimer::ValType>& timerStatsObj =
+			perf::PerfObjStatistics<perf::ITimer::ValType>& timerStatsObj =
 					timerStats.begin()->second;
 
 			BOOST_TEST_MESSAGE("timer name: " << timerStatsObj.name);
@@ -186,7 +186,7 @@ BOOST_AUTO_TEST_CASE(aggregateStats) {
 					(squaredCountSum / cwSize) - expAverage * expAverage);
 
 			BOOST_REQUIRE_EQUAL(ctrStats.size(), 1U);
-			xperf::PerfObjStatistics<xperf::IEventCounter::ValType>& ctrStatsObj =
+			perf::PerfObjStatistics<perf::IEventCounter::ValType>& ctrStatsObj =
 					ctrStats.begin()->second;
 
 			BOOST_TEST_MESSAGE("ctr name: " << ctrStatsObj.name);

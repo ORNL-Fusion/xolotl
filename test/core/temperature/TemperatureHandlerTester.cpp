@@ -5,7 +5,8 @@
 #include <xolotl/core/temperature/TemperatureHandler.h>
 
 using namespace std;
-using namespace xolotlCore;
+using namespace xolotl::core;
+using namespace temperature;
 
 /**
  * The test suite is responsible for testing the TemperatureHandler.

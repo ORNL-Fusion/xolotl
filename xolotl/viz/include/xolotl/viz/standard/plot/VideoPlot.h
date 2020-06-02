@@ -6,7 +6,10 @@
 #include <xolotl/viz/standard/plot/Plot.h>
 #include <xolotl/core/Identifiable.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace standard {
+namespace plot {
 
 /**
  * Plot the data value as a function of two different spatial dimensions for each time step
@@ -63,6 +66,9 @@ public:
 
 //end class VideoPlot
 
-} /* namespace xolotlViz */
+} /* namespace plot */
+} /* namespace standard */
+} /* namespace viz */
+} /* namespace xolotl */
 
 #endif

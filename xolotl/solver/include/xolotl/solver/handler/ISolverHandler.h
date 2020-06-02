@@ -9,13 +9,15 @@
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/core/advection/IAdvectionHandler.h>
-#include <xolotl/core/modifiedreaction/trapmutation/ITrapMutationHandler.h>
-#include <xolotl/core/modifiedreaction/heterogeneousnucleation/IHeterogeneousNucleationHandler.h>
+#include <xolotl/core/modified/ITrapMutationHandler.h>
+#include <xolotl/core/modified/IHeterogeneousNucleationHandler.h>
 #include <xolotl/factory/material/IMaterialFactory.h>
-#include <xolotl/core/reactants/IReactionNetwork.h>
+#include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/NDArray.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace handler {
 
 template<typename ValueType, typename SeedType>
 class RandomNumberGenerator;
@@ -44,9 +46,9 @@ public:
 	 * @param options The Xolotl options
 	 */
 	virtual void initializeHandlers(
-			std::shared_ptr<xolotlFactory::IMaterialFactory> material,
-			std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-			const xolotlCore::Options &options) = 0;
+			std::shared_ptr<factory::material::IMaterialFactory> material,
+			std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
+			const options::Options &opts) = 0;
 
 	/**
 	 * Create everything needed before starting to solve.
@@ -186,63 +188,63 @@ public:
 	 *
 	 * @return The minimum size
 	 */
-	virtual xolotlCore::Array<int, 4> getMinSizes() const = 0;
+	virtual core::Array<int, 4> getMinSizes() const = 0;
 
 	/**
 	 * Get the flux handler.
 	 *
 	 * @return The flux handler
 	 */
-	virtual xolotlCore::IFluxHandler* getFluxHandler() const = 0;
+	virtual core::flux::IFluxHandler* getFluxHandler() const = 0;
 
 	/**
 	 * Get the temperature handler.
 	 *
 	 * @return The temperature handler
 	 */
-	virtual xolotlCore::ITemperatureHandler* getTemperatureHandler() const = 0;
+	virtual core::temperature::ITemperatureHandler* getTemperatureHandler() const = 0;
 
 	/**
 	 * Get the diffusion handler.
 	 *
 	 * @return The diffusion handler
 	 */
-	virtual xolotlCore::IDiffusionHandler* getDiffusionHandler() const = 0;
+	virtual core::diffusion::IDiffusionHandler* getDiffusionHandler() const = 0;
 
 	/**
 	 * Get the advection handler.
 	 *
 	 * @return The first advection handler
 	 */
-	virtual xolotlCore::IAdvectionHandler* getAdvectionHandler() const = 0;
+	virtual core::advection::IAdvectionHandler* getAdvectionHandler() const = 0;
 
 	/**
 	 * Get the advection handlers.
 	 *
 	 * @return The first advection handlers
 	 */
-	virtual std::vector<xolotlCore::IAdvectionHandler*> getAdvectionHandlers() const = 0;
+	virtual std::vector<core::advection::IAdvectionHandler*> getAdvectionHandlers() const = 0;
 
 	/**
 	 * Get the modified trap-mutation handler.
 	 *
 	 * @return The modified trap-mutation handler
 	 */
-	virtual xolotlCore::ITrapMutationHandler* getMutationHandler() const = 0;
+	virtual core::modified::ITrapMutationHandler* getMutationHandler() const = 0;
 
 	/**
 	 * Get the heterogeneous nucleation handler.
 	 *
 	 * @return The heterogeneous nucleation handler
 	 */
-	virtual xolotlCore::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const = 0;
+	virtual core::modified::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const = 0;
 
 	/**
 	 * Get the network.
 	 *
 	 * @return The network
 	 */
-	virtual xolotlCore::experimental::IReactionNetwork& getNetwork() const = 0;
+	virtual core::network::IReactionNetwork& getNetwork() const = 0;
 
 	/**
 	 * Get the network name.
@@ -269,5 +271,7 @@ public:
 };
 //end class ISolverHandler
 
-} /* namespace xolotlSolver */
+} /* namespace handler */
+} /* namespace solver */
+} /* namespace xolotl */
 #endif

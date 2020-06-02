@@ -2,11 +2,13 @@
 #define IDIFFUSIONHANDLER_H
 
 // Includes
-#include <xolotl/core/reactants/IReactionNetwork.h>
+#include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <memory>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace diffusion {
 
 /**
  * Realizations of this interface are responsible for all the physical parts
@@ -30,8 +32,8 @@ public:
 	 * @param network The network
 	 * @param ofill Map of connectivity for diffusing clusters.
 	 */
-	virtual void initializeOFill(const experimental::IReactionNetwork& network,
-			experimental::IReactionNetwork::SparseFillMap& ofillMap) = 0;
+	virtual void initializeOFill(const network::IReactionNetwork& network,
+			network::IReactionNetwork::SparseFillMap& ofillMap) = 0;
 
 	/**
 	 * Initialize an array of the dimension of the physical domain times the number of diffusion
@@ -49,7 +51,7 @@ public:
 	 * @param zs The beginning of the grid on this process
 	 */
 	virtual void initializeDiffusionGrid(
-			std::vector<IAdvectionHandler *> advectionHandlers,
+			std::vector<advection::IAdvectionHandler *> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny = 0, double hy =
 					0.0, int ys = 0, int nz = 0, double hz = 0.0,
 			int zs = 0) = 0;
@@ -72,7 +74,7 @@ public:
 	 * @param sz The space parameter, depending on the grid step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	virtual void computeDiffusion(experimental::IReactionNetwork& network,
+	virtual void computeDiffusion(network::IReactionNetwork& network,
 			double **concVector, double *updatedConcOffset, double hxLeft,
 			double hxRight, int ix, double sy = 0.0, int iy = 0,
 			double sz = 0.0, int iz = 0) const = 0;
@@ -96,7 +98,7 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void computePartialsForDiffusion(
-			experimental::IReactionNetwork& network, double *val,
+			network::IReactionNetwork& network, double *val,
 			int *indices, double hxLeft, double hxRight, int ix,
 			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const = 0;
 
@@ -110,5 +112,7 @@ public:
 };
 //end class IDiffusionHandler
 
-} /* namespace xolotlCore */
+} /* end namespace diffusion */
+} /* end namespace core */
+} /* end namespace xolotl */
 #endif

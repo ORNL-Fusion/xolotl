@@ -4,7 +4,9 @@
 #include <xolotl/perf/papi/PAPIHardwareCounter.h>
 #include <xolotl/perf/RuntimeError.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace papi {
 
 PAPIHandlerRegistry::PAPIHandlerRegistry(void) {
 	int ret;
@@ -55,5 +57,6 @@ std::shared_ptr<IHardwareCounter> PAPIHandlerRegistry::getHardwareCounter(
 	return ret;
 }
 
-} // namespace xolotlPerf
-
+} // namespace papi
+} // namespace perf
+} // namespace xolotl

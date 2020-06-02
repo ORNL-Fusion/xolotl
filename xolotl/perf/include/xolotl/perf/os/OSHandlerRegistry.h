@@ -3,14 +3,16 @@
 
 #include <xolotl/perf/standard/StdHandlerRegistry.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace os {
 
 /**
  * Factory for building performance data collection objects that 
  * use an OS/runtime timer API.  No hardware performance counters
  * are available.
  */
-class OSHandlerRegistry: public StdHandlerRegistry {
+class OSHandlerRegistry: public standard::StdHandlerRegistry {
 public:
 
 	/// Construct a handler registry.
@@ -42,6 +44,8 @@ public:
             const IHardwareCounter::SpecType& ctrSpec) override;
 };
 
-} // namespace xolotlPerf
+} // namespace os
+} // namespace perf
+} // namespace xolotl
 
 #endif // OSHandlerRegistry

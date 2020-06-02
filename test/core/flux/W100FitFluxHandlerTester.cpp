@@ -10,7 +10,8 @@
 #include <xolotl/options/Options.h>
 
 using namespace std;
-using namespace xolotlCore;
+using namespace xolotl::core;
+using namespace flux;
 
 class KokkosContext {
 public:
@@ -31,7 +32,7 @@ BOOST_AUTO_TEST_SUITE (W100FitFluxHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Create the option to create a network
-	xolotlCore::Options opts;
+    xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
@@ -60,8 +61,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType =
-	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
@@ -116,7 +116,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid) {
 
 	// Create the option to create a network
-	xolotlCore::Options opts;
+    xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
@@ -140,8 +140,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid) {
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType =
-	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
@@ -188,7 +187,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid) {
 BOOST_AUTO_TEST_CASE(checkFluence) {
 
 	// Create the option to create a network
-	xolotlCore::Options opts;
+    xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
@@ -215,8 +214,7 @@ BOOST_AUTO_TEST_CASE(checkFluence) {
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType =
-	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
@@ -250,7 +248,7 @@ BOOST_AUTO_TEST_CASE(checkFluence) {
 BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 
 	// Create the option to create a network
-	xolotlCore::Options opts;
+    xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
@@ -277,8 +275,7 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType =
-	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
@@ -337,7 +334,7 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 
 	// Create the option to create a network
-	xolotlCore::Options opts;
+    xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
@@ -364,8 +361,7 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType =
-	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();

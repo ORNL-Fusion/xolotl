@@ -6,7 +6,10 @@
 #include <mpi.h>
 #include <xolotl/io/XFile.h>
 
-namespace xolotlCore {
+namespace xolotl
+{
+namespace io
+{
 
 HDF5File::AccessMode XFile::EnsureCreateAccessMode(HDF5File::AccessMode mode) {
 
@@ -158,7 +161,7 @@ XFile::NetworkGroup::NetworkGroup(const XFile &file) :
 }
 
 XFile::NetworkGroup::NetworkGroup(const XFile &file,
-		experimental::IReactionNetwork &network) :
+		core::network::IReactionNetwork &network) :
 		HDF5File::Group(file, NetworkGroup::path, true) {
 	// Base class created the group.
 
@@ -187,7 +190,7 @@ XFile::NetworkGroup::NetworkGroup(const XFile &file,
 			scalarDSpace);
 	normalSizeAttr.setTo(totalSize);
 
-	for (experimental::IReactionNetwork::IndexType i = 0; i < totalSize; i++) {
+	for (core::network::IReactionNetwork::IndexType i = 0; i < totalSize; i++) {
 		auto cluster = network.getClusterCommon(i);
 		// Create and initialize the cluster group
 		ClusterGroup clusterGroup(*this, i, bounds[i],
@@ -203,7 +206,7 @@ int XFile::NetworkGroup::readNetworkSize() const {
 }
 
 void XFile::NetworkGroup::readReactions(
-		experimental::IReactionNetwork &network) const {
+		core::network::IReactionNetwork &network) const {
 	// Doesn't do anything for now
 
 	return;
@@ -923,5 +926,6 @@ auto XFile::TimestepGroup::readGridPoint(int i, int j, int k) const ->
 	return toReturn;
 }
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl
 

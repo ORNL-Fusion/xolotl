@@ -2,12 +2,15 @@
 #include <fstream>
 #include <sstream>
 
-using namespace xolotlCore;
-using std::shared_ptr;
+namespace xolotl
+{
+namespace io
+{
+namespace mpiutils
+{
 
-
-shared_ptr<std::istream> MPIUtils::broadcastStream(
-	shared_ptr<std::istream> stream, int master) {
+std::shared_ptr<std::istream> broadcastStream(
+	std::shared_ptr<std::istream> stream, int master) {
 	// Local declarations
 	int rank;
 	int tasks;
@@ -58,3 +61,7 @@ shared_ptr<std::istream> MPIUtils::broadcastStream(
 	
 	return bufferSS;
 }
+
+} // namespace mpiutils
+} // namespace io
+} // namespace xolotl

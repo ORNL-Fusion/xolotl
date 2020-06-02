@@ -3,7 +3,9 @@
 
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace temperature {
 
 /**
  * This class realizes the ITemperatureHandler, it is responsible for the
@@ -61,8 +63,8 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void initializeTemperature(const int _dof,
-			experimental::IReactionNetwork::SparseFillMap& ofillMap,
-			experimental::IReactionNetwork::SparseFillMap& dfillMap) {
+			network::IReactionNetwork::SparseFillMap& ofillMap,
+			network::IReactionNetwork::SparseFillMap& dfillMap) {
 
 		// Set dof
 		dof = _dof;
@@ -154,6 +156,8 @@ public:
 };
 //end class TemperatureGradientHandler
 
+}
+}
 }
 
 #endif

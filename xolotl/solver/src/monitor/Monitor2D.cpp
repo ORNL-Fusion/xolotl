@@ -16,13 +16,15 @@
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/MathUtils.h>
-#include <xolotl/core/reactants/NEReactionNetwork.h>
-#include <xolotl/core/reactants/PSIReactionNetwork.h>
+#include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/solver/handler/RandomNumberGenerator.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/monitor/Monitor.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace monitor {
 
 // Declaration of the functions defined in Monitor.cpp
 extern PetscErrorCode checkTimeStep(TS ts);
@@ -34,7 +36,7 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx);
 
 // Declaration of the variables defined in Monitor.cpp
-extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
+extern std::shared_ptr<viz::IPlot> perfPlot;
 extern double previousTime;
 extern double timeStepThreshold;
 
@@ -45,7 +47,7 @@ PetscInt hdf5Previous2D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName2D = "xolotlStop.h5";
 //! The pointer to the 2D plot used in MonitorSurface.
-std::shared_ptr<xolotlViz::IPlot> surfacePlot2D;
+std::shared_ptr<viz::IPlot> surfacePlot2D;
 //! The variable to store the interstitial flux at the previous time step.
 std::vector<double> previousIFlux2D;
 //! The variable to store the total number of interstitials going through the surface.
@@ -138,8 +140,8 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Open the existing checkpoint file.
-	xolotlCore::XFile checkpointFile(hdf5OutputName2D, PETSC_COMM_WORLD,
-			xolotlCore::XFile::AccessMode::OpenReadWrite);
+	io::XFile checkpointFile(hdf5OutputName2D, PETSC_COMM_WORLD,
+			io::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
 	double currentTimeStep;
@@ -148,7 +150,7 @@ PetscErrorCode startStop2D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Add a concentration sub group
 	auto concGroup = checkpointFile.getGroup<
-			xolotlCore::XFile::ConcentrationGroup>();
+			io::XFile::ConcentrationGroup>();
 	assert(concGroup);
 	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
 			currentTimeStep);
@@ -268,7 +270,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 
 	// Get the network
 	using NetworkType =
-	xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+	core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
@@ -491,7 +493,7 @@ PetscErrorCode computeHeliumRetention2D(TS ts, PetscInt, PetscReal time,
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
-		outputFile.open("retentionOut.txt", ios::app);
+		outputFile.open("retentionOut.txt", std::ios::app);
 		outputFile << fluence << " " << totalHeConcentration << " "
 				<< totalDConcentration << " " << totalTConcentration << " "
 				<< totalHeBulk << " " << totalDBulk << " " << totalTBulk
@@ -546,7 +548,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 	double hy = solverHandler.getStepSizeY();
 
 	using NetworkType =
-	experimental::NEReactionNetwork;
+	core::network::NEReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 
@@ -624,7 +626,7 @@ PetscErrorCode computeXenonRetention2D(TS ts, PetscInt timestep, PetscReal time,
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
-		outputFile.open("retentionOut.txt", ios::app);
+		outputFile.open("retentionOut.txt", std::ios::app);
 		outputFile << time << " " << totalConcData[0] << " "
 				<< totalConcData[2] / totalConcData[1] << " "
 				<< averagePartialRadius << std::endl;
@@ -694,9 +696,9 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Create a Point vector to store the data to give to the data provider
 	// for the visualization
-	auto myPoints = std::make_shared<std::vector<xolotlViz::Point> >();
+	auto myPoints = std::make_shared<std::vector<viz::dataprovider::Point> >();
 	// Create a point here so that it is not created and deleted in the loop
-	xolotlViz::Point thePoint;
+    viz::dataprovider::Point thePoint;
 
 	// Loop on the full grid
 	for (PetscInt j = 0; j < My; j++) {
@@ -857,9 +859,9 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 	// Work of the moving surface first
 	if (solverHandler.moveSurface()) {
 		// Write the initial surface positions
-		if (procId == 0 && xolotlCore::equal(time, 0.0)) {
+		if (procId == 0 && core::equal(time, 0.0)) {
 			std::ofstream outputFile;
-			outputFile.open("surface.txt", ios::app);
+			outputFile.open("surface.txt", std::ios::app);
 			outputFile << time << " ";
 
 			// Loop on the possible yj
@@ -1010,7 +1012,7 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 	// Now work on the bubble bursting
 	if (solverHandler.burstBubbles()) {
 		using NetworkType =
-		xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+		core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
 		using Spec = typename NetworkType::Species;
 		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 		auto dof = network.getDOF();
@@ -1060,8 +1062,8 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					double radius = (sqrt(3.0) / 4) * latticeParam
 							+ cbrt(
 									(3.0 * tlcCubed * nV)
-											/ (8.0 * xolotlCore::pi))
-							- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
+											/ (8.0 * core::pi))
+							- cbrt((3.0 * tlcCubed) / (8.0 * core::pi));
 
 					// If the radius is larger than the distance to the surface, burst
 					if (radius > distance) {
@@ -1163,7 +1165,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 
 	// Take care of bursting
 	using NetworkType =
-	xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+	core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
@@ -1311,9 +1313,9 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 			// Initialize the vacancy concentration and the temperature on the new grid points
 			// Get the single vacancy ID
 			auto singleVacancyCluster = network.getSingleVacancy();
-			auto vacancyIndex = experimental::IReactionNetwork::invalidIndex();
+			auto vacancyIndex = core::network::IReactionNetwork::invalidIndex();
 			if (singleVacancyCluster.getId()
-					!= experimental::IReactionNetwork::invalidIndex())
+					!= core::network::IReactionNetwork::invalidIndex())
 				vacancyIndex = singleVacancyCluster.getId();
 			// Get the surface temperature
 			double temp = 0.0;
@@ -1400,7 +1402,7 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 	// Write the surface positions
 	if (procId == 0) {
 		std::ofstream outputFile;
-		outputFile.open("surface.txt", ios::app);
+		outputFile.open("surface.txt", std::ios::app);
 		outputFile << time << " ";
 
 		// Loop on the possible yj
@@ -1434,7 +1436,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
 
 	// Get the xolotlViz handler registry
-	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
+	auto vizHandlerRegistry = factory::viz::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flagPerf, flagHeRetention, flagXeRetention, flagStatus,
@@ -1480,14 +1482,14 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 
 	// Determine if we have an existing restart file,
 	// and if so, it it has had timesteps written to it.
-	std::unique_ptr<xolotlCore::XFile> networkFile;
-	std::unique_ptr<xolotlCore::XFile::TimestepGroup> lastTsGroup;
+	std::unique_ptr<io::XFile> networkFile;
+	std::unique_ptr<io::XFile::TimestepGroup> lastTsGroup;
 	std::string networkName = solverHandler.getNetworkName();
 	bool hasConcentrations = false;
 	if (not networkName.empty()) {
-		networkFile.reset(new xolotlCore::XFile(networkName));
+		networkFile.reset(new io::XFile(networkName));
 		auto concGroup = networkFile->getGroup<
-				xolotlCore::XFile::ConcentrationGroup>();
+				io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		if (hasConcentrations) {
 			lastTsGroup = concGroup->getLastTimestepGroup();
@@ -1561,7 +1563,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			// the network from another file using a single-process
 			// MPI communicator.
 			{
-				xolotlCore::XFile checkpointFile(hdf5OutputName2D, grid,
+				io::XFile checkpointFile(hdf5OutputName2D, grid,
 						PETSC_COMM_WORLD, My, hy);
 			}
 
@@ -1641,10 +1643,10 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		if (procId == 0) {
 			// Create a ScatterPlot
 			perfPlot = vizHandlerRegistry->getPlot("perfPlot",
-					xolotlViz::PlotType::SCATTER);
+					viz::PlotType::SCATTER);
 
 			// Create and set the label provider
-			auto labelProvider = std::make_shared<xolotlViz::LabelProvider>(
+			auto labelProvider = std::make_shared<viz::LabelProvider>(
 					"labelProvider");
 			labelProvider->axis1Label = "Process ID";
 			labelProvider->axis2Label = "Solver Time";
@@ -1653,7 +1655,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			perfPlot->setLabelProvider(labelProvider);
 
 			// Create the data provider
-			auto dataProvider = std::make_shared<xolotlViz::CvsXDataProvider>(
+			auto dataProvider = std::make_shared<viz::dataprovider::CvsXDataProvider>(
 					"dataProvider");
 
 			// Give it to the plot
@@ -1775,10 +1777,10 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 		if (procId == 0) {
 			// Create a SurfacePlot
 			surfacePlot2D = vizHandlerRegistry->getPlot("surfacePlot2D",
-					xolotlViz::PlotType::SURFACE);
+					viz::PlotType::SURFACE);
 
 			// Create and set the label provider
-			auto labelProvider = std::make_shared<xolotlViz::LabelProvider>(
+			auto labelProvider = std::make_shared<viz::LabelProvider>(
 					"labelProvider");
 			labelProvider->axis1Label = "Depth (nm)";
 			labelProvider->axis2Label = "Y (nm)";
@@ -1788,7 +1790,7 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 			surfacePlot2D->setLabelProvider(labelProvider);
 
 			// Create the data provider
-			auto dataProvider = std::make_shared<xolotlViz::CvsXYDataProvider>(
+			auto dataProvider = std::make_shared<viz::dataprovider::CvsXYDataProvider>(
 					"dataProvider");
 
 			// Give it to the plot
@@ -1810,6 +1812,6 @@ PetscErrorCode setupPetsc2DMonitor(TS ts) {
 	PetscFunctionReturn(0);
 }
 
-}
-
-/* end namespace xolotlSolver */
+} /* end namespace monitor */
+} /* end namespace solver */
+} /* end namespace xolotl */

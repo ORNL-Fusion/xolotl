@@ -5,7 +5,9 @@
 #include <vector>
 #include <xolotl/viz/dataprovider/DataProvider.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace dataprovider {
 
 /**
  * Subclass of DataProvider that will provide the methods to give the value (concentration here)
@@ -61,6 +63,8 @@ public:
 
 //end class CvsXYDataProvider
 
-} /* namespace xolotlViz */
+} /* namespace dataprovider */
+} /* namespace viz */
+} /* namespace xolotl */
 
 #endif

@@ -2,7 +2,9 @@
 #include <xolotl/io/HDF5File.h>
 #include <xolotl/io/HDF5Exception.h>
 
-namespace xolotlCore
+namespace xolotl
+{
+namespace io
 {
 
 template<>
@@ -27,5 +29,5 @@ HDF5File::TypeInMemory<std::string>::TypeInMemory(void)
     }
 }
 
-} // namespace xolotlCore
-
+} // namespace io
+} // namespace xolotl

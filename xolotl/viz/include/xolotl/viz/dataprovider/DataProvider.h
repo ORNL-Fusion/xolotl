@@ -5,14 +5,16 @@
 #include <xolotl/viz/dataprovider/IDataProvider.h>
 #include <xolotl/core/Identifiable.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace dataprovider {
 
 /**
  *  Realization of the IDataProvider interface. This is a general class with general methods,
  *  to actually get data from the data provider, one needs to use the subclasses.
  */
 class DataProvider: public virtual IDataProvider,
-		public xolotlCore::Identifiable {
+		public core::Identifiable {
 
 protected:
 
@@ -20,7 +22,7 @@ protected:
 	 * Declare the constructor as private to force the use of a name
 	 */
 	DataProvider() :
-			xolotlCore::Identifiable("unused") {
+			core::Identifiable("unused") {
 	}
 
 	/**
@@ -122,5 +124,7 @@ public:
 
 //end class DataProvider
 
-} /* namespace xolotlViz */
+} /* namespace dataprovider */
+} /* namespace viz */
+} /* namespace xolotl */
 #endif

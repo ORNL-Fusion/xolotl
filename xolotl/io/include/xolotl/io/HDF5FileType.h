@@ -3,7 +3,9 @@
 
 #include <xolotl/io/HDF5Exception.h>
 
-namespace xolotlCore
+namespace xolotl
+{
+namespace io
 {
 
 
@@ -138,6 +140,7 @@ HDF5File::TypeInMemory<std::vector<T> >::TypeInMemory(void)
     }
 }
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl
 
 #endif // XCORE_HDF5FILE_TYPE_H

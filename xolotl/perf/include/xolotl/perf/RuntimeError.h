@@ -3,7 +3,8 @@
 
 #include <stdexcept>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
 
 /// A std::runtime_error that also maintains an error code.
 /// Exceptions of this type are thrown by some of the xolotlPerf
@@ -31,6 +32,7 @@ public:
 	}
 };
 
-} // namespace xolotlPerf
+}//end namespace perf
+}//end namespace xolotl
 
 #endif // XPERF_RUNTIME_ERROR_H

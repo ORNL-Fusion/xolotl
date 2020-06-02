@@ -13,12 +13,12 @@ set(XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/NDPoint.h
 )
 
-include(src/reactants/Include.cmake)
+include(src/network/Include.cmake)
 include(src/diffusion/Include.cmake)
 include(src/advection/Include.cmake)
 include(src/flux/Include.cmake)
 include(src/temperature/Include.cmake)
-include(src/modifiedreaction/Include.cmake)
+include(src/modified/Include.cmake)
 
 add_library(xolotlCore STATIC ${XOLOTL_CORE_SOURCES} ${XOLOTL_CORE_HEADERS})
 target_link_libraries(xolotlCore PUBLIC

@@ -5,7 +5,9 @@
 #include <xolotl/solver/handler/PetscSolverHandler.h>
 #include <xolotl/perf/dummy/DummyHandlerRegistry.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace handler {
 
 /**
  * This class is a subclass of PetscSolverHandler and implement all the methods needed
@@ -79,5 +81,7 @@ public:
 };
 //end class PetscSolver0DHandler
 
-} /* end namespace xolotlSolver */
+} /* namespace handler */
+} /* namespace solver */
+} /* namespace xolotl */
 #endif

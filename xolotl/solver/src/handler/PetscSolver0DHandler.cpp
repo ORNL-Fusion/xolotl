@@ -3,7 +3,9 @@
 #include <xolotl/core/MathUtils.h>
 #include <xolotl/core/Constants.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace handler {
 
 void PetscSolver0DHandler::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
@@ -35,7 +37,7 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	 *  In this case ofill has only a few diagonal entries since the only spatial
 	 *  coupling is regular diffusion.
 	 */
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
+    core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(dof, ofill, dfill);
@@ -100,18 +102,18 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	}
 
 	// Temperature
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 	concOffset[dof] = temperatureHandler->getTemperature(gridPosition, 0.0);
 	temperature[0] = concOffset[dof];
 
 	// Get the last time step written in the HDF5 file
 	bool hasConcentrations = false;
-	std::unique_ptr<xolotlCore::XFile> xfile;
-	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
+	std::unique_ptr<io::XFile> xfile;
+	std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
 	if (not networkName.empty()) {
 
-		xfile.reset(new xolotlCore::XFile(networkName));
-		concGroup = xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
+		xfile.reset(new io::XFile(networkName));
+		concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
 
@@ -188,7 +190,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	const int dof = network.getDOF();
 
 	// Set the grid position
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the old and new array offsets
 	concOffset = concs[0];
@@ -269,7 +271,7 @@ void PetscSolver0DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	int pdColIdsVectorSize = 0;
 
 	// Set the grid position
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the temperature from the temperature handler
 	concOffset = concs[0];
@@ -368,4 +370,6 @@ void PetscSolver0DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	return;
 }
 
-} /* end namespace xolotlSolver */
+} /* end namespace handler */
+} /* end namespace solver */
+} /* end namespace xolotl */

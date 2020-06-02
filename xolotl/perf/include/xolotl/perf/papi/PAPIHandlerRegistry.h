@@ -3,7 +3,9 @@
 
 #include <xolotl/perf/standard/StdHandlerRegistry.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace papi {
 
 /**
  * Factory for building performance data collection objects that 
@@ -40,6 +42,8 @@ public:
 			const std::string& name, const IHardwareCounter::SpecType& ctrSpec);
 };
 
-} // namespace xolotlPerf
+} // namespace papi
+} // namespace perf
+} // namespace xolotl
 
 #endif // PAPIHandlerRegistry

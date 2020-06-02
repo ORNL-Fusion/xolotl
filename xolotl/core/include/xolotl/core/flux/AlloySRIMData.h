@@ -1,7 +1,9 @@
 #ifndef ALLOYSRIMDATA_H
 #define ALLOYSRIMDATA_H
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace flux {
 
 // begin class Cascade
 class Cascade {
@@ -559,6 +561,8 @@ public:
  };
  // end class BulkIon
  */
+}
+}
 }
 
 #endif

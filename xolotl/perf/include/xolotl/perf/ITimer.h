@@ -6,13 +6,14 @@
 #include <float.h>
 #include <xolotl/core/IIdentifiable.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
 
 /**
  * Realizations of this interface are responsible for the collection
  * of performance timing statistics.
  */
-class ITimer: public virtual xolotlCore::IIdentifiable {
+class ITimer: public virtual core::IIdentifiable {
 
 public:
 
@@ -70,6 +71,7 @@ public:
 };
 //end class ITimer
 
-}//end namespace xolotlPerf
+}//end namespace perf
+}//end namespace xolotl
 
 #endif

@@ -4,7 +4,10 @@
 #include <string>
 #include <hdf5.h>
 
-namespace xolotlCore {
+namespace xolotl
+{
+namespace io
+{
 
 // Base class for HDF5 files and objects within them.
 class HDF5Object {
@@ -109,7 +112,8 @@ public:
     const HDF5Object& getLocation(void) const { return location; }
 };
 
-} /* namespace xolotlCore */
+} // namespace io
+} // namespace xolotl
 
 #endif // XCORE_HDF5OBJECT_H
 

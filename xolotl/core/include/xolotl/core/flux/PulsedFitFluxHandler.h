@@ -4,9 +4,11 @@
 #include <cmath>
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/core/MathUtils.h>
-#include <xolotl/core/reactants/PSIReactionNetwork.h>
+#include <xolotl/core/network/PSIReactionNetwork.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace flux {
 
 /**
  * This class realizes the IFluxHandler interface to calculate the incident V and I flux
@@ -64,7 +66,7 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(experimental::IReactionNetwork& network,
+	void initializeFluxHandler(network::IReactionNetwork& network,
 			int surfacePos, std::vector<double> grid) {
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
@@ -75,7 +77,7 @@ public:
 
 		// Set the flux index corresponding the the single vacancy cluster here
 		using NetworkType =
-		experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 		// Set the flux index corresponding the the single helium cluster here
@@ -155,6 +157,8 @@ public:
 };
 //end class PulsedFitFluxHandler
 
+}
+}
 }
 
 #endif

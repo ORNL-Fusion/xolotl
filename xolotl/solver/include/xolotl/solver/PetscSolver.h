@@ -4,7 +4,8 @@
 // Includes
 #include <xolotl/solver/Solver.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
 
 #ifndef CHECK_PETSC_ERROR
 #define CHECK_PETSC_ERROR
@@ -44,8 +45,8 @@ public:
 	PetscSolver() = delete;
 
 	//! The Constructor
-	PetscSolver(ISolverHandler &_solverHandler,
-			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+	PetscSolver(handler::ISolverHandler &_solverHandler,
+			std::shared_ptr<perf::IHandlerRegistry> registry);
 
 	//! The Destructor
 	~PetscSolver();
@@ -93,7 +94,8 @@ public:
 };
 //end class PetscSolver
 
-} /* end namespace xolotlSolver */
+} /* namespace solver */
+} /* namespace xolotl */
 
 // Some compilers (e.g., recent versions of Intel) define __func__ 
 // to include the namespace or class scope when compiled with the C++11

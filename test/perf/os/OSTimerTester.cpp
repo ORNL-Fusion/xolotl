@@ -6,7 +6,7 @@
 #include <xolotl/perf/os/OSTimer.h>
 
 using namespace std;
-namespace xperf = xolotlPerf;
+using namespace xolotl;
 
 /**
  * This suite is responsible for testing the OSTimer.
@@ -15,7 +15,7 @@ BOOST_AUTO_TEST_SUITE (OSTimer_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkName) {
 
-	xperf::OSTimer tester("test");
+	perf::os::OSTimer tester("test");
 
 	BOOST_TEST_MESSAGE(
 			"\n" << "OSTimer Message: \n" << "tester.getName() = " << tester.getName() << "\n");
@@ -26,7 +26,7 @@ BOOST_AUTO_TEST_CASE(checkName) {
 
 BOOST_AUTO_TEST_CASE(checkTiming) {
 
-	xperf::OSTimer tester("test");
+	perf::os::OSTimer tester("test");
 	double sleepSeconds = 2.0;
 
 	// Simulate some computation/communication with a sleep of known duration.
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(checkTiming) {
 }
 
 BOOST_AUTO_TEST_CASE(accumulate) {
-	xperf::OSTimer tester("test");
+	perf::os::OSTimer tester("test");
 
 	const unsigned int sleepSeconds = 2;
 
@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE(accumulate) {
 }
 
 BOOST_AUTO_TEST_CASE(reset) {
-	xperf::OSTimer tester("test");
+	perf::os::OSTimer tester("test");
 
 	const unsigned int sleepSeconds = 2;
 

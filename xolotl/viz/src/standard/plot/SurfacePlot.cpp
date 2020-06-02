@@ -29,7 +29,10 @@
 #include <vtkm/rendering/MapperRayTracer.h>
 #include <vtkm/io/writer/VTKDataSetWriter.h>
 
-using namespace xolotlViz;
+namespace xolotl {
+namespace viz {
+namespace standard {
+namespace plot {
 
 #define W_WIDTH 1024
 #define W_HEIGHT 1024
@@ -168,4 +171,9 @@ void SurfacePlot::render(const std::string& fileName) {
 	view->SaveAs(fileName);
 
 	return;
+}
+
+}
+}
+}
 }

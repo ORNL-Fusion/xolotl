@@ -6,14 +6,13 @@
 #include <limits.h>
 #include <xolotl/core/IIdentifiable.h>
 
-using namespace std;
-
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
 
 /**
  * A counter that can sample hardware counter values.
  */
-class IHardwareCounter: public virtual xolotlCore::IIdentifiable {
+class IHardwareCounter: public virtual core::IIdentifiable {
 
 public:
 
@@ -93,6 +92,7 @@ public:
 			IHardwareCounter::CounterSpec cs) const = 0;
 };
 
-}  //end namespace xolotlPerf
+}//end namespace perf
+}//end namespace xolotl
 
 #endif

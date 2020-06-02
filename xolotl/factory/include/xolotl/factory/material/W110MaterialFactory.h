@@ -5,9 +5,11 @@
 #include <xolotl/factory/material/MaterialFactory.h>
 #include <xolotl/core/flux/W110FitFluxHandler.h>
 #include <xolotl/core/advection/W110AdvectionHandler.h>
-#include <xolotl/core/modifiedreaction/trapmutation/W110TrapMutationHandler.h>
+#include <xolotl/core/modified/W110TrapMutationHandler.h>
 
-namespace xolotlFactory {
+namespace xolotl {
+namespace factory {
+namespace material {
 
 /**
  * Subclass of MaterialFactory for a (110) oriented tungsten material.
@@ -21,15 +23,15 @@ public:
 	 *
 	 * @param dim The number of dimensions for the problem
 	 */
-	W110MaterialFactory(const xolotlCore::Options &options) :
-			MaterialFactory(options) {
-		theFluxHandler = std::make_shared<xolotlCore::W110FitFluxHandler>();
+	W110MaterialFactory(const options::Options &opts) :
+			MaterialFactory(opts) {
+		theFluxHandler = std::make_shared<core::flux::W110FitFluxHandler>();
 		theAdvectionHandler.push_back(
-				std::make_shared<xolotlCore::W110AdvectionHandler>());
+				std::make_shared<core::advection::W110AdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
-				xolotlCore::W110TrapMutationHandler>();
+				core::modified::W110TrapMutationHandler>();
 		theNucleationHandler = std::make_shared<
-				xolotlCore::DummyNucleationHandler>();
+				core::modified::DummyNucleationHandler>();
 
 		return;
 	}
@@ -41,6 +43,8 @@ public:
 	}
 };
 
-} // end namespace xolotlFactory
+} // end namespace material
+} // end namespace factory
+} // end namespace xolotl
 
 #endif // W110MATERIALHANDLERFACTORY_H

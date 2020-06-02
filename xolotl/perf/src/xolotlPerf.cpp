@@ -9,7 +9,8 @@
 #include "xolotlPerf/papi/PAPIHandlerRegistry.h"
 #endif // defined(HAVE_PAPI)
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
 
 static std::shared_ptr<IHandlerRegistry> theHandlerRegistry;
 
@@ -17,20 +18,20 @@ static std::shared_ptr<IHandlerRegistry> theHandlerRegistry;
 void initialize(IHandlerRegistry::RegistryType rtype) {
 	switch (rtype) {
 	case IHandlerRegistry::dummy:
-		theHandlerRegistry = std::make_shared<DummyHandlerRegistry>();
+		theHandlerRegistry = std::make_shared<dummy::DummyHandlerRegistry>();
 		break;
 
 	case IHandlerRegistry::std:
-		theHandlerRegistry = std::make_shared<OSHandlerRegistry>();
+		theHandlerRegistry = std::make_shared<os::OSHandlerRegistry>();
 		break;
 
 	case IHandlerRegistry::os:
-		theHandlerRegistry = std::make_shared<OSHandlerRegistry>();
+		theHandlerRegistry = std::make_shared<os::OSHandlerRegistry>();
 		break;
 
 	case IHandlerRegistry::papi:
 #if defined(HAVE_PAPI)
-		theHandlerRegistry = std::make_shared<PAPIHandlerRegistry>();
+		theHandlerRegistry = std::make_shared<papi::PAPIHandlerRegistry>();
 #else
 		throw std::invalid_argument(
 				"PAPI handler registry requested but no PAPI support was found when the program was built.");
@@ -61,5 +62,5 @@ const MPI_Datatype ITimer::MPIValType = MPI_DOUBLE;
 const MPI_Datatype IEventCounter::MPIValType = MPI_UNSIGNED_LONG;
 const MPI_Datatype IHardwareCounter::MPIValType = MPI_LONG_LONG_INT;
 
-} // end namespace xolotlPerf
-
+} // end namespace perf
+} // end namespace xolotl

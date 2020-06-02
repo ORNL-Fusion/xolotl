@@ -5,7 +5,8 @@
 #include <map>
 #include <iostream>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
 
 /**
  * Statistics (min,max,avg,stdev) for a performance metric we collected
@@ -73,6 +74,7 @@ struct PerfObjStatistics {
 template<typename T>
 using PerfObjStatsMap = std::map<std::string, PerfObjStatistics<T> >;
 
-} // namespace xolotlPerf
+}//end namespace perf
+}//end namespace xolotl
 
 #endif // PERFOBJSTATISTICS_H

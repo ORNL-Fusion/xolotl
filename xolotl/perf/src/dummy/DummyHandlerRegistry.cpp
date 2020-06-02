@@ -1,6 +1,8 @@
 #include <xolotl/perf/dummy/DummyHandlerRegistry.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace dummy {
 
 // Obtain a Timer by name.
 std::shared_ptr<ITimer> DummyHandlerRegistry::getTimer(
@@ -46,5 +48,6 @@ void DummyHandlerRegistry::reportStatistics(std::ostream&,
 	return;
 }
 
-} // namespace xolotlPerf
-
+} // namespace dummy
+} // namespace perf
+} // namespace xolotl

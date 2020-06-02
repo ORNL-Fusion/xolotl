@@ -3,7 +3,9 @@
 #include <iostream>
 #include <xolotl/viz/dataprovider/CvsXYDataProvider.h>
 
-using namespace xolotlViz;
+namespace xolotl {
+namespace viz {
+namespace dataprovider {
 
 CvsXYDataProvider::CvsXYDataProvider(const std::string& name) : DataProvider(name) {
 }
@@ -82,4 +84,8 @@ void CvsXYDataProvider::addValue(std::vector<double>& vector, double value) cons
 	if (it == vector.end()) vector.push_back(value);
 
 	return;
+}
+
+}
+}
 }

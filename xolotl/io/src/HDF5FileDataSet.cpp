@@ -1,7 +1,11 @@
 #include <xolotl/io/HDF5File.h>
 
-namespace xolotlCore {
+namespace xolotl
+{
+namespace io
+{
 
 const std::string HDF5File::RaggedDataSetBase::startIndicesDatasetNameSuffix = "_startingIndices";
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl

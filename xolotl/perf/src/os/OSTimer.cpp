@@ -1,7 +1,9 @@
 #include <stdexcept>
 #include <xolotl/perf/os/OSTimer.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace os {
 
 const OSTimer::Timestamp OSTimer::invalidTimestamp = 
                             std::numeric_limits<Timestamp>::max();
@@ -46,5 +48,6 @@ std::string OSTimer::getUnits(void) const {
 	return std::string("s");
 }
 
-} // namespace xolotlPerf
-
+} // namespace os
+} // namespace perf
+} // namespace xolotl

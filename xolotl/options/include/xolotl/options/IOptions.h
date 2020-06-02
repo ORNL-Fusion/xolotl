@@ -8,7 +8,8 @@
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/core/NDArray.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace options {
 
 /**
  * IOptions describes the structure needed for the options in Xolotl.
@@ -152,7 +153,7 @@ public:
 	 *
 	 * @return The type of performance handler registry to use
 	 */
-	virtual xolotlPerf::IHandlerRegistry::RegistryType getPerfHandlerType(
+	virtual perf::IHandlerRegistry::RegistryType getPerfHandlerType(
 			void) const = 0;
 
 	/**
@@ -416,7 +417,7 @@ public:
 	 *
 	 * @return The size
 	 */
-	virtual Array<int, 4> getRadiusMinSizes() const = 0;
+	virtual core::Array<int, 4> getRadiusMinSizes() const = 0;
 
 	/**
 	 * Obtain the value of the density of a bubble.
@@ -491,6 +492,7 @@ public:
 };
 //end class IOptions
 
-} /* namespace xolotlCore */
+} /* namespace options */
+} /* namespace xolotl */
 
 #endif

@@ -5,9 +5,11 @@
 #include <xolotl/factory/material/MaterialFactory.h>
 #include <xolotl/core/flux/AlloyFitFluxHandler.h>
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
-#include <xolotl/core/modifiedreaction/trapmutation/DummyTrapMutationHandler.h>
+#include <xolotl/core/modified/DummyTrapMutationHandler.h>
 
-namespace xolotlFactory {
+namespace xolotl {
+namespace factory {
+namespace material {
 
 /**
  * Subclass of MaterialFactory for an alloy material.
@@ -20,15 +22,15 @@ public:
 	 *
 	 * @param dim The number of dimensions for the problem
 	 */
-	AlloyMaterialFactory(const xolotlCore::Options &options) :
-			MaterialFactory(options) {
-		theFluxHandler = std::make_shared<xolotlCore::AlloyFitFluxHandler>();
+	AlloyMaterialFactory(const options::Options &opts) :
+			MaterialFactory(opts) {
+		theFluxHandler = std::make_shared<core::flux::AlloyFitFluxHandler>();
 		theAdvectionHandler.push_back(
-				std::make_shared<xolotlCore::DummyAdvectionHandler>());
+				std::make_shared<core::advection::DummyAdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
-				xolotlCore::DummyTrapMutationHandler>();
+				core::modified::DummyTrapMutationHandler>();
 		theNucleationHandler = std::make_shared<
-				xolotlCore::DummyNucleationHandler>();
+				core::modified::DummyNucleationHandler>();
 
 		return;
 	}
@@ -40,6 +42,8 @@ public:
 	}
 };
 
-} // end namespace xolotlFactory
+} // end namespace material
+} // end namespace factory
+} // end namespace xolotl
 
 #endif // ALLOYMATERIALHANDLERFACTORY_H

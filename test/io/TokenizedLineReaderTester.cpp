@@ -5,7 +5,7 @@
 #include <xolotl/io/TokenizedLineReader.h>
 
 using namespace std;
-using namespace xolotlCore;
+using namespace xolotl::io;
 
 // Test data
 const string doubleString =

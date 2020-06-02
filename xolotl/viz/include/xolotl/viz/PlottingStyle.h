@@ -1,7 +1,8 @@
 #ifndef PLOTTINGSTYLE_H
 #define PLOTTINGSTYLE_H
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
 
 /**
  * Enumeration of the different plotting styles available.
@@ -34,6 +35,7 @@ enum PlottingStyle {
 
 //end enum PlottingStyle
 
-} /* namespace xolotlViz */
+} /* namespace viz */
+} /* namespace xolotl */
 
 #endif

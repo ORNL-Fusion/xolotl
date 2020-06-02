@@ -3,7 +3,9 @@
 
 #include <array>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace handler {
 
 // Simple class to wrap a random number generator.
 // Intended mainly to allow us to retain the seed used and last few
@@ -60,6 +62,8 @@ public:
 	}
 };
 
-} // namespace xolotlSolver
+} /* namespace handler */
+} /* namespace solver */
+} /* namespace xolotl */
 
 #endif // XSOLVER_RANDOMNUMBERGENERATOR_H

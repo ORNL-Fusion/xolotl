@@ -8,13 +8,15 @@
 #include <xolotl/viz/dataprovider/Point.h>
 #include <xolotl/core/IIdentifiable.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace dataprovider {
 
 /**
  * IDataProvider describes the structure needed as a link between Xololt outputs
  * and quantities that the user wants to plot.
  */
-class IDataProvider : public virtual xolotlCore::IIdentifiable {
+class IDataProvider : public virtual core::IIdentifiable {
 
 public:
 
@@ -84,5 +86,7 @@ public:
 
 //end class IDataProvider
 
-} /* namespace xolotlViz */
+} /* namespace dataprovider */
+} /* namespace viz */
+} /* namespace xolotl */
 #endif

@@ -3,9 +3,11 @@
 
 #include <cmath>
 #include <xolotl/core/flux/FluxHandler.h>
-#include <xolotl/core/reactants/FeReactionNetwork.h>
+#include <xolotl/core/network/FeReactionNetwork.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace flux {
 
 /**
  * This class realizes the IFluxHandler interface to calculate the incident fluxes
@@ -43,13 +45,13 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(experimental::IReactionNetwork &network,
+	void initializeFluxHandler(network::IReactionNetwork &network,
 			int surfacePos, std::vector<double> grid) {
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
 		using NetworkType =
-		experimental::FeReactionNetwork;
+		network::FeReactionNetwork;
 		auto feNetwork = dynamic_cast<NetworkType*>(&network);
 
 		// Set the flux index corresponding the the single helium cluster here
@@ -157,6 +159,8 @@ public:
 };
 //end class FeFitFluxHandler
 
+}
+}
 }
 
 #endif

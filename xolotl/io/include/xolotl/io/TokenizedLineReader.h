@@ -7,7 +7,10 @@
 #include <iostream>
 #include <sstream>
 
-namespace xolotlCore {
+namespace xolotl
+{
+namespace io
+{
 
 /**
  * This is a simple class for parsing lines from an input stream and
@@ -250,6 +253,7 @@ public:
 };
 //end class TokenizedLineReader
 
-}// end namespace xolotCore.io
+} // namespace io
+} // namespace xolotl
 
 #endif

@@ -1,6 +1,8 @@
 #include <xolotl/viz/dummy/DummyHandlerRegistry.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace dummy {
 
 DummyHandlerRegistry::DummyHandlerRegistry() {
 }
@@ -13,5 +15,6 @@ std::shared_ptr<IPlot> DummyHandlerRegistry::getPlot(const std::string& name,
 	return std::make_shared<DummyPlot>(name);
 }
 
-}    //end namespace xolotlViz
-
+}
+}
+}

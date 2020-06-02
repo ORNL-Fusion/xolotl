@@ -7,7 +7,9 @@
 #include <xolotl/viz/dataprovider/DataProvider.h>
 #include <xolotl/viz/LabelProvider.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace standard {
 
 StandardHandlerRegistry::StandardHandlerRegistry() {
 }
@@ -31,5 +33,6 @@ std::shared_ptr<IPlot> StandardHandlerRegistry::getPlot(const std::string& name,
 	}
 }
 
-}    //end namespace xolotlViz
-
+}
+}
+}

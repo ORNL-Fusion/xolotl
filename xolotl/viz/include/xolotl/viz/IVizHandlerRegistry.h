@@ -9,7 +9,8 @@
 #include <xolotl/viz/PlotType.h>
 
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
 
 /**
  * Factory for building plots, dataprovider, and labelprovider.
@@ -30,6 +31,7 @@ public:
 
 }; //end class IVizHandlerRegistry
 
-} //end namespace xolotlViz
+} /* namespace viz */
+} /* namespace xolotl */
 
 #endif

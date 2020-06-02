@@ -4,7 +4,9 @@
 // Includes
 #include <xolotl/solver/handler/SolverHandler.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace handler {
 
 #ifndef CHECK_PETSC_ERROR
 #define CHECK_PETSC_ERROR
@@ -80,10 +82,10 @@ protected:
 	std::vector<PetscScalar> reactionVals;
 
 	//! Times and counters
-	std::shared_ptr<xolotlPerf::ITimer> fluxTimer;
-	std::shared_ptr<xolotlPerf::ITimer> partialDerivativeTimer;
-	std::shared_ptr<xolotlPerf::IEventCounter> fluxCounter;
-	std::shared_ptr<xolotlPerf::IEventCounter> partialDerivativeCounter;
+	std::shared_ptr<perf::ITimer> fluxTimer;
+	std::shared_ptr<perf::ITimer> partialDerivativeTimer;
+	std::shared_ptr<perf::IEventCounter> fluxCounter;
+	std::shared_ptr<perf::IEventCounter> partialDerivativeCounter;
 
 	/**
 	 * Convert a C++ sparse fill map representation to the one that
@@ -95,7 +97,7 @@ protected:
 	 *      PETSc's DMDASetBlockFillsSparse() expects.
 	 */
 	static std::vector<PetscInt> ConvertToPetscSparseFillMap(size_t dof,
-			const xolotlCore::experimental::IReactionNetwork::SparseFillMap &fillMap);
+			const core::network::IReactionNetwork::SparseFillMap &fillMap);
 
 public:
 
@@ -111,16 +113,18 @@ public:
 	 */
 	PetscSolverHandler(NetworkType &_network) :
 			SolverHandler(_network), fluxTimer(
-					xolotlPerf::getHandlerRegistry()->getTimer("Flux")), partialDerivativeTimer(
-					xolotlPerf::getHandlerRegistry()->getTimer(
+					perf::getHandlerRegistry()->getTimer("Flux")), partialDerivativeTimer(
+					perf::getHandlerRegistry()->getTimer(
 							"Partial Derivatives")), fluxCounter(
-					xolotlPerf::getHandlerRegistry()->getEventCounter("Flux")), partialDerivativeCounter(
-					xolotlPerf::getHandlerRegistry()->getEventCounter(
+					perf::getHandlerRegistry()->getEventCounter("Flux")), partialDerivativeCounter(
+					perf::getHandlerRegistry()->getEventCounter(
 							"Partial Derivatives")) {
 	}
 
 };
 //end class PetscSolverHandler
 
-} /* end namespace xolotlSolver */
+} /* namespace handler */
+} /* namespace solver */
+} /* namespace xolotl */
 #endif

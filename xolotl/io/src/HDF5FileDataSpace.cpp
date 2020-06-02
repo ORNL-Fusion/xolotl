@@ -3,7 +3,9 @@
 #include <xolotl/io/HDF5File.h>
 #include <xolotl/io/HDF5Exception.h>
 
-namespace xolotlCore
+namespace xolotl
+{
+namespace io
 {
 
 HDF5File::ScalarDataSpace::ScalarDataSpace(void)
@@ -15,5 +17,5 @@ HDF5File::ScalarDataSpace::ScalarDataSpace(void)
     }
 }
 
-} // namespace xolotlCore
-
+} // namespace io
+} // namespace xolotl

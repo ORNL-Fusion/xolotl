@@ -9,41 +9,43 @@
 #include <xolotl/factory/material/AlloyMaterialFactory.h>
 #include <xolotl/factory/material/FeMaterialFactory.h>
 
-namespace xolotlFactory {
+namespace xolotl {
+namespace factory {
+namespace material {
 
 static std::shared_ptr<IMaterialFactory> theMaterialFactory;
 
 std::shared_ptr<IMaterialFactory> IMaterialFactory::createMaterialFactory(
-		const xolotlCore::Options &options) {
+		const options::Options &opts) {
 	// Get the material type
-	const auto &materialType = options.getMaterial();
+	const auto &materialType = opts.getMaterial();
 	// W100 case
 	if (materialType == "W100")
-		theMaterialFactory = std::make_shared<W100MaterialFactory>(options);
+		theMaterialFactory = std::make_shared<W100MaterialFactory>(opts);
 	// W110 case
 	else if (materialType == "W110")
-		theMaterialFactory = std::make_shared<W110MaterialFactory>(options);
+		theMaterialFactory = std::make_shared<W110MaterialFactory>(opts);
 	// W111 case
 	else if (materialType == "W111")
-		theMaterialFactory = std::make_shared<W111MaterialFactory>(options);
+		theMaterialFactory = std::make_shared<W111MaterialFactory>(opts);
 	// W211 case
 	else if (materialType == "W211")
-		theMaterialFactory = std::make_shared<W211MaterialFactory>(options);
+		theMaterialFactory = std::make_shared<W211MaterialFactory>(opts);
 	// Fuel case
 	else if (materialType == "Fuel")
-		theMaterialFactory = std::make_shared<FuelMaterialFactory>(options);
+		theMaterialFactory = std::make_shared<FuelMaterialFactory>(opts);
 	// TRIDYN case
 	else if (materialType == "TRIDYN")
-		theMaterialFactory = std::make_shared<TRIDYNMaterialFactory>(options);
+		theMaterialFactory = std::make_shared<TRIDYNMaterialFactory>(opts);
 	// Pulsed case
 	else if (materialType == "Pulsed")
-		theMaterialFactory = std::make_shared<PulsedMaterialFactory>(options);
+		theMaterialFactory = std::make_shared<PulsedMaterialFactory>(opts);
 	// Alloy case
 	else if (materialType == "800H")
-		theMaterialFactory = std::make_shared<AlloyMaterialFactory>(options);
+		theMaterialFactory = std::make_shared<AlloyMaterialFactory>(opts);
 	// Fe case
 	else if (materialType == "Fe")
-		theMaterialFactory = std::make_shared<FeMaterialFactory>(options);
+		theMaterialFactory = std::make_shared<FeMaterialFactory>(opts);
 	// The type is not supported
 	else {
 		throw std::string(
@@ -53,4 +55,6 @@ std::shared_ptr<IMaterialFactory> IMaterialFactory::createMaterialFactory(
 	return theMaterialFactory;
 }
 
-} // end namespace xolotlFactory
+} // end namespace material
+} // end namespace factory
+} // end namespace xolotl

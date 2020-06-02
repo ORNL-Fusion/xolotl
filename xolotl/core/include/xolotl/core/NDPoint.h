@@ -3,7 +3,8 @@
 
 #include <array>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
 
 /**
  * Nice name for coordinates of a 3D point.
@@ -11,6 +12,7 @@ namespace xolotlCore {
 template<uint32_t N>
 using Point = std::array<double, N>;
 
-} // namespace xolotlCore
+} /* end namespace core */
+} /* end namespace xolotl */
 
 #endif // XCORE_NDPOINT_H

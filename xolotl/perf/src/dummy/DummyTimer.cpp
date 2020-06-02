@@ -1,6 +1,8 @@
 #include <xolotl/perf/dummy/DummyTimer.h>
 
-using namespace xolotlPerf;
+namespace xolotl {
+namespace perf {
+namespace dummy {
 
 void DummyTimer::start(void) {
 	// nothing to do in this stub routine
@@ -22,3 +24,6 @@ std::string DummyTimer::getUnits(void) const {
 	return "";
 }
 
+} // namespace dummy
+} // namespace perf
+} // namespace xolotl

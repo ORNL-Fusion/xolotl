@@ -2,8 +2,8 @@ file(GLOB tests
     advection/*Tester.cpp
     diffusion/*Tester.cpp
     flux/*Tester.cpp
-    modifiedreaction/*Tester.cpp
-    reactants/*Tester.cpp
+    modified/*Tester.cpp
+    network/*Tester.cpp
     temperature/*Tester.cpp
 )
 

@@ -4,7 +4,9 @@
 #include <xolotl/viz/IVizHandlerRegistry.h>
 #include <xolotl/viz/dummy/DummyPlot.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace dummy {
 
 /**
  * Factory for creating plots that are dummies, meaning that they have the
@@ -37,6 +39,8 @@ public:
 };
 //end class DummyHandlerRegistry
 
-}//end namespace xolotlViz
+}//end namespace dummy
+}//end namespace viz
+}//end namespace xolotl
 
 #endif

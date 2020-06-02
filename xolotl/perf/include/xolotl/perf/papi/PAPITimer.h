@@ -10,11 +10,13 @@
 #include <xolotl/core/Identifiable.h>
 #include <papi.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace papi {
 
 /// A timer that measures how long something takes to execute.
 /// Uses PAPI for sampling the system's timer.
-class PAPITimer: public ITimer, public xolotlCore::Identifiable {
+class PAPITimer: public ITimer, public core::Identifiable {
 private:
 	/// The type PAPI uses for timestamps.
 	typedef long long Timestamp;
@@ -32,7 +34,7 @@ private:
 	/// Construct a timer.
 	/// The default constructor is private to force callers to provide a name for the timer object.
 	PAPITimer(void) :
-			xolotlCore::Identifiable("unused"), val(0) {
+			core::Identifiable("unused"), val(0) {
 	}
 
 	/// Sample the current time.
@@ -57,7 +59,7 @@ public:
 	///
 	/// @param name The name to associate with the timer.
 	PAPITimer(const std::string& name) :
-			xolotlCore::Identifiable(name), val(0), startTime(invalidValue) {
+			core::Identifiable(name), val(0), startTime(invalidValue) {
 	}
 
 	///
@@ -117,6 +119,8 @@ public:
 	}
 };
 
-} // namespace xolotlPerf
+} // namespace papi
+} // namespace perf
+} // namespace xolotl
 
 #endif // PAPITIMER_H

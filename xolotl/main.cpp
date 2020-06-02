@@ -16,11 +16,10 @@
 #include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
 #include <xolotl/factory/solver/SolverHandlerFactory.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
-#include <xolotl/factory/reaction/IReactionHandlerFactory.h>
+#include <xolotl/factory/network/IReactionHandlerFactory.h>
 
 using namespace std;
-using std::shared_ptr;
-namespace xperf = xolotlPerf;
+using namespace xolotl;
 
 //! This operation prints the start message
 void printStartMessage() {
@@ -32,11 +31,11 @@ void printStartMessage() {
 	std::cout << std::asctime(std::localtime(&currentTime)); // << std::endl;
 }
 
-std::shared_ptr<xolotlFactory::IMaterialFactory> initMaterial(
-		const Options &options) {
+std::shared_ptr<xolotl::factory::material::IMaterialFactory> initMaterial(
+		const xolotl::options::Options &options) {
 	// Create the material factory
 	auto materialFactory =
-			xolotlFactory::IMaterialFactory::createMaterialFactory(options);
+			factory::material::IMaterialFactory::createMaterialFactory(options);
 
 	// Initialize it with the options
 	materialFactory->initializeMaterial(options);
@@ -44,9 +43,9 @@ std::shared_ptr<xolotlFactory::IMaterialFactory> initMaterial(
 	return materialFactory;
 }
 
-bool initTemp(const Options &options) {
+bool initTemp(const xolotl::options::Options &options) {
 
-	bool tempInitOK = xolotlFactory::initializeTempHandler(options);
+	bool tempInitOK = factory::temperature::initializeTempHandler(options);
 	if (!tempInitOK) {
 		std::cerr << "Unable to initialize requested temperature.  Aborting"
 				<< std::endl;
@@ -57,7 +56,7 @@ bool initTemp(const Options &options) {
 
 bool initViz(bool opts) {
 
-	bool vizInitOK = xolotlFactory::initializeVizHandler(opts);
+	bool vizInitOK = factory::viz::initializeVizHandler(opts);
 	if (!vizInitOK) {
 		std::cerr
 				<< "Unable to initialize requested visualization infrastructure. "
@@ -67,11 +66,12 @@ bool initViz(bool opts) {
 		return vizInitOK;
 }
 
-std::unique_ptr<xolotlSolver::PetscSolver> setUpSolver(
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry,
-		std::shared_ptr<xolotlFactory::IMaterialFactory> material,
-		std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-		xolotlSolver::ISolverHandler &solvHandler, const Options &options) {
+std::unique_ptr<xolotl::solver::PetscSolver> setUpSolver(
+		std::shared_ptr<xolotl::perf::IHandlerRegistry> handlerRegistry,
+		std::shared_ptr<factory::material::IMaterialFactory> material,
+		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
+		xolotl::solver::handler::ISolverHandler &solvHandler,
+        const xolotl::options::Options &options) {
 	// Initialize the solver handler
 	solvHandler.initializeHandlers(material, tempHandler, options);
 
@@ -79,8 +79,8 @@ std::unique_ptr<xolotlSolver::PetscSolver> setUpSolver(
 	auto solverInitTimer = handlerRegistry->getTimer("initSolver");
 	solverInitTimer->start();
 	// Once we have widespread C++14 support, use std::make_unique.
-	std::unique_ptr<xolotlSolver::PetscSolver> solver(
-			new xolotlSolver::PetscSolver(solvHandler, handlerRegistry));
+	std::unique_ptr<xolotl::solver::PetscSolver> solver(
+			new xolotl::solver::PetscSolver(solvHandler, handlerRegistry));
 	solver->setCommandLineOptions(options.getPetscArg());
 	solver->initialize();
 	solverInitTimer->stop();
@@ -88,13 +88,13 @@ std::unique_ptr<xolotlSolver::PetscSolver> setUpSolver(
 	return solver;
 }
 
-void launchPetscSolver(xolotlSolver::PetscSolver &solver,
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry) {
+void launchPetscSolver(xolotl::solver::PetscSolver &solver,
+		std::shared_ptr<xolotl::perf::IHandlerRegistry> handlerRegistry) {
 
-	xperf::IHardwareCounter::SpecType hwctrSpec;
-	hwctrSpec.push_back(xperf::IHardwareCounter::FPOps);
-	hwctrSpec.push_back(xperf::IHardwareCounter::Cycles);
-	hwctrSpec.push_back(xperf::IHardwareCounter::L3CacheMisses);
+	perf::IHardwareCounter::SpecType hwctrSpec;
+	hwctrSpec.push_back(perf::IHardwareCounter::FPOps);
+	hwctrSpec.push_back(perf::IHardwareCounter::Cycles);
+	hwctrSpec.push_back(perf::IHardwareCounter::L3CacheMisses);
 
 	// Launch the PetscSolver
 	auto solverTimer = handlerRegistry->getTimer("solve");
@@ -107,10 +107,10 @@ void launchPetscSolver(xolotlSolver::PetscSolver &solver,
 }
 
 //! Run the Xolotl simulation.
-int runXolotl(const Options &opts) {
+int runXolotl(const xolotl::options::Options &opts) {
 
 	// Set up our performance data infrastructure.
-	xperf::initialize(opts.getPerfHandlerType());
+	perf::initialize(opts.getPerfHandlerType());
 
 	// Get the MPI rank
 	int rank;
@@ -139,17 +139,17 @@ int runXolotl(const Options &opts) {
 		}
 
 		// Access the temperature handler registry to get the temperature
-		auto tempHandler = xolotlFactory::getTemperatureHandler();
+		auto tempHandler = factory::temperature::getTemperatureHandler();
 
 		// Access our performance handler registry to obtain a Timer
 		// measuring the runtime of the entire program.
-		auto handlerRegistry = xolotlPerf::getHandlerRegistry();
+		auto handlerRegistry = xolotl::perf::getHandlerRegistry();
 		auto totalTimer = handlerRegistry->getTimer("total");
 		totalTimer->start();
 
 		// Create the network handler factory
 		auto networkFactory =
-				xolotlFactory::IReactionHandlerFactory::createNetworkFactory(
+				factory::network::IReactionHandlerFactory::createNetworkFactory(
 						opts.getMaterial());
 
 		// Build a reaction network
@@ -168,12 +168,12 @@ int runXolotl(const Options &opts) {
 		auto &rNetwork = networkFactory->getNetworkHandler();
 
 		// Initialize and get the solver handler
-		bool dimOK = xolotlFactory::initializeDimension(opts, rNetwork);
+		bool dimOK = factory::solver::initializeDimension(opts, rNetwork);
 		if (!dimOK) {
 			throw std::runtime_error(
 					"Unable to initialize dimension from inputs.");
 		}
-		auto &solvHandler = xolotlFactory::getSolverHandler();
+		auto &solvHandler = factory::solver::getSolverHandler();
 
 		// Setup the solver
 		auto solver = setUpSolver(handlerRegistry, material, tempHandler,
@@ -192,9 +192,9 @@ int runXolotl(const Options &opts) {
 
 		// Report statistics about the performance data collected during
 		// the run we just completed.
-		xperf::PerfObjStatsMap<xperf::ITimer::ValType> timerStats;
-		xperf::PerfObjStatsMap<xperf::IEventCounter::ValType> counterStats;
-		xperf::PerfObjStatsMap<xperf::IHardwareCounter::CounterType> hwCtrStats;
+		perf::PerfObjStatsMap<perf::ITimer::ValType> timerStats;
+		perf::PerfObjStatsMap<perf::IEventCounter::ValType> counterStats;
+		perf::PerfObjStatsMap<perf::IHardwareCounter::CounterType> hwCtrStats;
 		handlerRegistry->collectStatistics(timerStats, counterStats,
 				hwCtrStats);
 		if (rank == 0) {
@@ -202,8 +202,8 @@ int runXolotl(const Options &opts) {
 					counterStats, hwCtrStats);
 		}
 
-		xolotlFactory::destroySolverHandler();
-		xolotlFactory::IReactionHandlerFactory::resetNetworkFactory();
+        factory::solver::destroySolverHandler();
+        factory::network::IReactionHandlerFactory::resetNetworkFactory();
 	}
 
 	// Finalize kokkos
@@ -227,7 +227,7 @@ int main(int argc, char **argv) {
 
 	try {
 		// Check the command line arguments.
-		Options opts;
+        xolotl::options::Options opts;
 		opts.readParams(argc, argv);
 		if (opts.shouldRun()) {
 			// Skip the name of the parameter file that was just used.

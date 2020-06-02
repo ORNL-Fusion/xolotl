@@ -4,11 +4,13 @@
 #include <memory>
 #include <xolotl/factory/material/MaterialFactory.h>
 #include <xolotl/core/flux/FuelFitFluxHandler.h>
-#include <xolotl/core/modifiedreaction/heterogeneousnucleation/HeterogeneousNucleationHandler.h>
+#include <xolotl/core/modified/HeterogeneousNucleationHandler.h>
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
-#include <xolotl/core/modifiedreaction/trapmutation/DummyTrapMutationHandler.h>
+#include <xolotl/core/modified/DummyTrapMutationHandler.h>
 
-namespace xolotlFactory {
+namespace xolotl {
+namespace factory {
+namespace material {
 
 /**
  * Subclass of MaterialFactory for a nuclear fuel material.
@@ -21,15 +23,15 @@ public:
 	 *
 	 * @param dim The number of dimensions for the problem
 	 */
-	FuelMaterialFactory(const xolotlCore::Options &options) :
+	FuelMaterialFactory(const options::Options &options) :
 			MaterialFactory(options) {
-		theFluxHandler = std::make_shared<xolotlCore::FuelFitFluxHandler>();
+		theFluxHandler = std::make_shared<core::flux::FuelFitFluxHandler>();
 		theAdvectionHandler.push_back(
-				std::make_shared<xolotlCore::DummyAdvectionHandler>());
+				std::make_shared<core::advection::DummyAdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
-				xolotlCore::DummyTrapMutationHandler>();
+				core::modified::DummyTrapMutationHandler>();
 		theNucleationHandler = std::make_shared<
-				xolotlCore::HeterogeneousNucleationHandler>();
+				core::modified::HeterogeneousNucleationHandler>();
 
 		return;
 	}
@@ -44,7 +46,7 @@ public:
 	 * Initialize the material conditions with the different given options.
 	 * \see IMaterialFactory.h
 	 */
-	void initializeMaterial(const xolotlCore::Options &options) {
+	void initializeMaterial(const options::Options &options) {
 		// Call the mother method
 		MaterialFactory::initializeMaterial(options);
 
@@ -60,6 +62,8 @@ public:
 	}
 };
 
-} // end namespace xolotlFactory
+} // end namespace material
+} // end namespace factory
+} // end namespace xolotl
 
 #endif // FUELMATERIALHANDLERFACTORY_H

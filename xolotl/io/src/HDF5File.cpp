@@ -5,7 +5,10 @@
 #include <xolotl/io/HDF5Exception.h>
 
 
-namespace xolotlCore {
+namespace xolotl
+{
+namespace io
+{
 
 unsigned int
 HDF5File::toHDF5AccessMode(AccessMode mode) {
@@ -130,5 +133,6 @@ HDF5File::hasGroup(fs::path path) const {
     return (cret != 0);
 }
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl
 

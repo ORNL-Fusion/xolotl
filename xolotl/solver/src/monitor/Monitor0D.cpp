@@ -17,12 +17,14 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/monitor/Monitor.h>
-#include <xolotl/core/reactants/NEReactionNetwork.h>
-#include <xolotl/core/reactants/PSIReactionNetwork.h>
-#include <xolotl/core/reactants/FeReactionNetwork.h>
-#include <xolotl/core/reactants/AlloyReactionNetwork.h>
+#include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/core/network/PSIReactionNetwork.h>
+#include <xolotl/core/network/FeReactionNetwork.h>
+#include <xolotl/core/network/AlloyReactionNetwork.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace monitor {
 
 // Declaration of the functions defined in Monitor.cpp
 extern PetscErrorCode checkTimeStep(TS ts);
@@ -34,12 +36,12 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx);
 
 // Declaration of the variables defined in Monitor.cpp
-extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
+extern std::shared_ptr<viz::IPlot> perfPlot;
 extern double previousTime;
 extern double timeStepThreshold;
 
 //! The pointer to the plot used in monitorScatter0D.
-std::shared_ptr<xolotlViz::IPlot> scatterPlot0D;
+std::shared_ptr<viz::IPlot> scatterPlot0D;
 //! How often HDF5 file is written
 PetscReal hdf5Stride0D = 0.0;
 //! Previous time for HDF5
@@ -99,8 +101,8 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	double concArray[dof][2];
 
 	// Open the existing HDF5 file
-	xolotlCore::XFile checkpointFile(hdf5OutputName0D, PETSC_COMM_WORLD,
-			xolotlCore::XFile::AccessMode::OpenReadWrite);
+	io::XFile checkpointFile(hdf5OutputName0D, PETSC_COMM_WORLD,
+			io::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
 	double currentTimeStep;
@@ -109,7 +111,7 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Add a concentration time step group for the current time step.
 	auto concGroup = checkpointFile.getGroup<
-			xolotlCore::XFile::ConcentrationGroup>();
+			io::XFile::ConcentrationGroup>();
 	assert(concGroup);
 	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
 			currentTimeStep);
@@ -118,7 +120,7 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	// We only examine and collect the grid points we own.
 	// TODO measure impact of us building the flattened representation
 	// rather than a ragged 2D representation.
-	XFile::TimestepGroup::Concs1DType concs(1);
+    io::XFile::TimestepGroup::Concs1DType concs(1);
 
 	// Access the solution data for the current grid point.
 	gridPointSolution = solutionArray[0];
@@ -162,7 +164,7 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 
 	using NetworkType =
-	experimental::NEReactionNetwork;
+	core::network::NEReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 
@@ -220,7 +222,7 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 
 	// Uncomment to write the content in a file
 	std::ofstream outputFile;
-	outputFile.open("retentionOut.txt", ios::app);
+	outputFile.open("retentionOut.txt", std::ios::app);
 	outputFile << time << " " << xeConcentration << " "
 			<< radii / bubbleConcentration << " " << averagePartialRadius << " "
 			<< partialBubbleConcentration << " " << averagePartialSize
@@ -280,7 +282,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	using NetworkType =
-	experimental::AlloyReactionNetwork;
+	core::network::AlloyReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 
@@ -435,7 +437,7 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the network and its size
 	using NetworkType =
-	experimental::NEReactionNetwork;
+	core::network::NEReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Region = typename NetworkType::Region;
 	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
@@ -443,7 +445,7 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Create a Point vector to store the data to give to the data provider
 	// for the visualization
-	auto myPoints = std::make_shared<std::vector<xolotlViz::Point> >();
+	auto myPoints = std::make_shared<std::vector<viz::dataprovider::Point> >();
 
 	// Get the pointer to the beginning of the solution data for this grid point
 	gridPointSolution = solutionArray[0];
@@ -454,7 +456,7 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 		auto cluster = network.getCluster(i);
 		const Region &clReg = cluster.getRegion();
 		for (std::size_t j : makeIntervalRange(clReg[Spec::Xe])) {
-			xolotlViz::Point aPoint;
+            viz::dataprovider::Point aPoint;
 			aPoint.value = gridPointSolution[i];
 			aPoint.t = time;
 			aPoint.x = (double) j;
@@ -527,7 +529,7 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the network
 	using NetworkType =
-	experimental::FeReactionNetwork;
+	core::network::FeReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using Region = typename NetworkType::Region;
@@ -591,7 +593,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	PetscErrorCode ierr;
 
 	// Get xolotlViz handler registry
-	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
+	auto vizHandlerRegistry = factory::viz::getVizHandlerRegistry();
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flag1DPlot, flagBubble, flagPerf, flagStatus,
@@ -637,14 +639,13 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 
 	// Determine if we have an existing restart file,
 	// and if so, it it has had timesteps written to it.
-	std::unique_ptr<xolotlCore::XFile> networkFile;
-	std::unique_ptr<xolotlCore::XFile::TimestepGroup> lastTsGroup;
+	std::unique_ptr<io::XFile> networkFile;
+	std::unique_ptr<io::XFile::TimestepGroup> lastTsGroup;
 	std::string networkName = solverHandler.getNetworkName();
 	bool hasConcentrations = false;
 	if (not networkName.empty()) {
-		networkFile.reset(new xolotlCore::XFile(networkName));
-		auto concGroup = networkFile->getGroup<
-				xolotlCore::XFile::ConcentrationGroup>();
+		networkFile.reset(new io::XFile(networkName));
+		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		if (hasConcentrations) {
 			lastTsGroup = concGroup->getLastTimestepGroup();
@@ -722,7 +723,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			// the network from another file using a single-process
 			// MPI communicator.
 			{
-				xolotlCore::XFile checkpointFile(hdf5OutputName0D, grid,
+				io::XFile checkpointFile(hdf5OutputName0D, grid,
 						PETSC_COMM_WORLD);
 			}
 
@@ -746,12 +747,12 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	if (flag1DPlot) {
 		// Create a ScatterPlot
 		scatterPlot0D = vizHandlerRegistry->getPlot("scatterPlot0D",
-				xolotlViz::PlotType::SCATTER);
+				viz::PlotType::SCATTER);
 
 //		scatterPlot0D->setLogScale();
 
 		// Create and set the label provider
-		auto labelProvider = std::make_shared<xolotlViz::LabelProvider>(
+		auto labelProvider = std::make_shared<viz::LabelProvider>(
 				"labelProvider");
 		labelProvider->axis1Label = "Xenon Size";
 		labelProvider->axis2Label = "Concentration";
@@ -760,7 +761,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		scatterPlot0D->setLabelProvider(labelProvider);
 
 		// Create the data provider
-		auto dataProvider = std::make_shared<xolotlViz::CvsXDataProvider>(
+		auto dataProvider = std::make_shared<viz::dataprovider::CvsXDataProvider>(
 				"dataProvider");
 
 		// Give it to the plot
@@ -776,10 +777,10 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	if (flagPerf) {
 		// Create a ScatterPlot
 		perfPlot = vizHandlerRegistry->getPlot("perfPlot",
-				xolotlViz::PlotType::SCATTER);
+				viz::PlotType::SCATTER);
 
 		// Create and set the label provider
-		auto labelProvider = std::make_shared<xolotlViz::LabelProvider>(
+		auto labelProvider = std::make_shared<viz::LabelProvider>(
 				"labelProvider");
 		labelProvider->axis1Label = "Process ID";
 		labelProvider->axis2Label = "Solver Time";
@@ -788,7 +789,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		perfPlot->setLabelProvider(labelProvider);
 
 		// Create the data provider
-		auto dataProvider = std::make_shared<xolotlViz::CvsXDataProvider>(
+		auto dataProvider = std::make_shared<viz::dataprovider::CvsXDataProvider>(
 				"dataProvider");
 
 		// Give it to the plot
@@ -861,6 +862,6 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	PetscFunctionReturn(0);
 }
 
-}
-
-/* end namespace xolotlSolver */
+} /* end namespace monitor */
+} /* end namespace solver */
+} /* end namespace xolotl */

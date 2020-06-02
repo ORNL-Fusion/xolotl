@@ -7,11 +7,13 @@
 #include <xolotl/perf/ITimer.h>
 #include <xolotl/core/Identifiable.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace os {
 
 /// A timer that measures how long something takes to execute.
 /// Uses an operating system/runtime timer interface.
-class OSTimer: public ITimer, public xolotlCore::Identifiable {
+class OSTimer: public ITimer, public core::Identifiable {
 private:
     /// Concise name for type of our time source.
     using Clock = std::chrono::system_clock;
@@ -35,7 +37,7 @@ private:
 	/// Construct a timer.
 	/// The default constructor is private to force callers to provide a name for the timer object.
 	OSTimer(void) :
-			xolotlCore::Identifiable("unused"), val(0) {
+			core::Identifiable("unused"), val(0) {
 	}
 public:
 	///
@@ -43,7 +45,7 @@ public:
 	///
 	/// @param name The name to associate with the timer.
 	OSTimer(const std::string& name) :
-			xolotlCore::Identifiable(name),
+			core::Identifiable(name),
             val(0),
             startTime(invalidTimestamp) {
 	}
@@ -105,6 +107,8 @@ public:
 	}
 };
 
-} // namespace xolotlPerf
+} // namespace os
+} // namespace perf
+} // namespace xolotl
 
 #endif // OSTIMER_H

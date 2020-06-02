@@ -6,7 +6,9 @@
 #include <xolotl/io/HDF5File.h>
 #include <xolotl/io/HDF5Exception.h>
 
-namespace xolotlCore
+namespace xolotl
+{
+namespace io
 {
 
 template<uint32_t Rank>
@@ -109,6 +111,7 @@ HDF5File::SimpleDataSpace<Rank>::setDims(const Dimensions& _dims)
     dims = _dims;
 }
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl
 
 #endif // XCORE_HDF5FILE_DATASPACE_H

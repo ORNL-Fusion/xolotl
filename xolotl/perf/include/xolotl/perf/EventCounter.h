@@ -4,14 +4,15 @@
 #include <xolotl/core/Identifiable.h>
 #include <xolotl/perf/IEventCounter.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
 
 /**
  * An EventCounter keeps a count.  Code using an EventCounter can
  * increment the counter whenever an event of interest occurs, and
  * retrieve the count whenever it is desired.
  */
-class EventCounter: public IEventCounter, public xolotlCore::Identifiable {
+class EventCounter: public IEventCounter, public core::Identifiable {
 private:
 
 	/**
@@ -24,7 +25,7 @@ private:
 	 * client code to provide a name when creating EventCounters.
 	 */
 	EventCounter(void) :
-			xolotlCore::Identifiable("unused"), value(0) {
+			core::Identifiable("unused"), value(0) {
 	}
 
 public:
@@ -35,7 +36,7 @@ public:
 	 * @param name The EventCounter's name
 	 */
 	EventCounter(const std::string& name) :
-			xolotlCore::Identifiable(name), value(0) {
+			core::Identifiable(name), value(0) {
 	}
 
 	/**
@@ -62,6 +63,7 @@ public:
 };
 //end class EventCounter
 
-}//end namespace xolotlPerf
+}//end namespace perf
+}//end namespace xolotl
 
 #endif

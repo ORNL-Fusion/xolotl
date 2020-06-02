@@ -17,12 +17,12 @@
 #include <xolotl/solver/handler/PetscSolver3DHandler.h>
 #include <xolotl/factory/material/IMaterialFactory.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
-#include <xolotl/factory/reaction/IReactionHandlerFactory.h>
+#include <xolotl/factory/network/IReactionHandlerFactory.h>
 #include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
 #include <xolotl/test/config.h>
 
 using namespace std;
-using namespace xolotlCore;
+using namespace xolotl::core;
 
 /**
  * The test suite configuration

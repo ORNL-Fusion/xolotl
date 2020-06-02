@@ -8,9 +8,11 @@
 #include <xolotl/viz/standard/StandardHandlerRegistry.h>
 #endif // defined(HAVE_VIZLIB_STD)
 
-namespace xolotlFactory {
+namespace xolotl {
+namespace factory {
+namespace viz {
 
-static std::shared_ptr<xolotlViz::IVizHandlerRegistry> theHandlerRegistry;
+static std::shared_ptr<xolotl::viz::IVizHandlerRegistry> theHandlerRegistry;
 
 // Create the desired type of handler registry.
 bool initializeVizHandler(bool useStdRegistry) {
@@ -19,7 +21,7 @@ bool initializeVizHandler(bool useStdRegistry) {
 	if (useStdRegistry) {
 #if defined(HAVE_VIZLIB_STD)
 		// we are to use a standard handler registry
-		theHandlerRegistry = std::make_shared<xolotlViz::StandardHandlerRegistry>();
+		theHandlerRegistry = std::make_shared<xolotl::viz::standard::StandardHandlerRegistry>();
 #else
 		// Get the current process ID
 		int procId;
@@ -34,14 +36,14 @@ bool initializeVizHandler(bool useStdRegistry) {
 #endif // defined(HAVE_VIZLIB_STD)
 	} else {
 		// we are to use a dummy handler registry
-		theHandlerRegistry = std::make_shared<xolotlViz::DummyHandlerRegistry>();
+		theHandlerRegistry = std::make_shared<xolotl::viz::dummy::DummyHandlerRegistry>();
 	}
 
 	return ret;
 }
 
 // Provide access to our handler registry.
-std::shared_ptr<xolotlViz::IVizHandlerRegistry> getVizHandlerRegistry(void) {
+std::shared_ptr<xolotl::viz::IVizHandlerRegistry> getVizHandlerRegistry(void) {
 	if (!theHandlerRegistry) {
 		// Throw an error since we have not yet been initialized
 		throw std::string(
@@ -51,4 +53,6 @@ std::shared_ptr<xolotlViz::IVizHandlerRegistry> getVizHandlerRegistry(void) {
 	return theHandlerRegistry;
 }
 
-} // end namespace xolotlFactory
+} // end namespace viz
+} // end namespace factory
+} // end namespace xolotl

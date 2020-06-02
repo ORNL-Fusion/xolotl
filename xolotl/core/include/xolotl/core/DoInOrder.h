@@ -1,8 +1,8 @@
 #ifndef XCORE_DOINORDER_H
 #define XCORE_DOINORDER_H
 
-namespace xolotlCore
-{
+namespace xolotl {
+namespace core {
 
 
 /**
@@ -49,6 +49,7 @@ DoInOrder(F func,
     }
 }
 
-} // namespace xolotlCore
+} /* end namespace core */
+} /* end namespace xolotl */
 
 #endif // XCORE_DOINORDER_H

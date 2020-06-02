@@ -5,7 +5,8 @@
 #include <xolotl/perf/dummy/DummyHardwareCounter.h>
 
 using namespace std;
-using namespace xolotlPerf;
+using namespace xolotl::perf;
+using namespace dummy;
 
 const IHardwareCounter::SpecType test_hwCtrSpec =
 		{ IHardwareCounter::Instructions, IHardwareCounter::Cycles,

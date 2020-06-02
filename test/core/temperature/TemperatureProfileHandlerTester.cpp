@@ -9,7 +9,7 @@
 #include <xolotl/test/config.h>
 
 using namespace std;
-using namespace xolotlCore;
+using namespace xolotl;
 
 /**
  * The test suite is responsible for testing the TemperatureHandler.
@@ -38,13 +38,13 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	writeTempFile.close();
 
 	// Create ofill and dfill
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap dfill;
+    core::network::IReactionNetwork::SparseFillMap ofill;
+    core::network::IReactionNetwork::SparseFillMap dfill;
 
 	// Create and initialize the temperature profile handler
-	auto testTemp = make_shared<TemperatureProfileHandler>("tempFile.dat");
+	auto testTemp = make_shared<core::temperature::TemperatureProfileHandler>("tempFile.dat");
 	testTemp->initializeTemperature(dof, ofill, dfill);
-	Point<3> pos { 1.142857142857143, 0.0, 0.0 };
+    core::Point<3> pos { 1.142857142857143, 0.0, 0.0 };
 
 	// Vector to hold the user defined time values
 	std::vector<double> t;

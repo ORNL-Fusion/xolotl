@@ -4,7 +4,6 @@
 #include <xolotl/io/XFile.h>
 
 namespace bpo = boost::program_options;
-namespace xcore = xolotlCore;
 
 int main(int argc, char* argv[]) {
 
@@ -54,19 +53,19 @@ int main(int argc, char* argv[]) {
 			std::string fname = opts["infile"].as<std::string>();
 
 			// Open the file.
-			xcore::XFile xfile(fname,
-			MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadWrite);
+            xolotl::io::XFile xfile(fname,
+			MPI_COMM_WORLD, xolotl::io::XFile::AccessMode::OpenReadWrite);
 
 			// Determine the number of grid points.
-			auto headerGroup = xfile.getGroup<xcore::XFile::HeaderGroup>();
+			auto headerGroup = xfile.getGroup<xolotl::io::XFile::HeaderGroup>();
 			assert(headerGroup);
-			xcore::HDF5File::Attribute<int> nxAttr(*headerGroup, "nx");
+            xolotl::io::HDF5File::Attribute<int> nxAttr(*headerGroup, "nx");
 			auto nx = nxAttr.get();
 
 			// Determine the last timestep written to the file.
-			auto concGroup = xfile.getGroup<xcore::XFile::ConcentrationGroup>();
+			auto concGroup = xfile.getGroup<xolotl::io::XFile::ConcentrationGroup>();
 			assert(concGroup);
-			xcore::HDF5File::Attribute<int> lastTimestepAttr(*concGroup,
+            xolotl::io::HDF5File::Attribute<int> lastTimestepAttr(*concGroup,
 					"lastTimeStep");
 			auto lastTimeStep = lastTimestepAttr.get();
 
@@ -80,7 +79,7 @@ int main(int argc, char* argv[]) {
 
 			// Convert the last written timestep's concentrations to
 			// the new representation.
-			xcore::XFile::TimestepGroup::Concs1DType allConcs(nx);
+            xolotl::io::XFile::TimestepGroup::Concs1DType allConcs(nx);
 			for (auto x = 0; x < nx; ++x) {
 				// Read the concentrations for the current position.
 				std::ostringstream dsNameStr;

@@ -2,9 +2,11 @@
 #include <xolotl/solver/handler/PetscSolver2DHandler.h>
 #include <xolotl/core/MathUtils.h>
 #include <xolotl/core/Constants.h>
-#include <xolotl/core/reactants/PSIReactionNetwork.h>
+#include <xolotl/core/network/PSIReactionNetwork.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace handler {
 
 void PetscSolver2DHandler::createSolverContext(DM &da) {
 	PetscErrorCode ierr;
@@ -26,9 +28,9 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	// if we are using a restart file
 	if (not networkName.empty() and movingSurface) {
 
-		xolotlCore::XFile xfile(networkName);
+		io::XFile xfile(networkName);
 		auto concGroup =
-				xfile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
+				xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 
 			auto tsGroup = concGroup->getLastTimestepGroup();
@@ -81,7 +83,7 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	 *  In this case ofill has only a few diagonal entries since the only spatial
 	 *  coupling is regular diffusion.
 	 */
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
+    core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(dof, ofill, dfill);
@@ -149,11 +151,11 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 
 	// Get the last time step written in the HDF5 file
 	bool hasConcentrations = false;
-	std::unique_ptr<xolotlCore::XFile> xfile;
-	std::unique_ptr<xolotlCore::XFile::ConcentrationGroup> concGroup;
+	std::unique_ptr<io::XFile> xfile;
+	std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
 	if (not networkName.empty()) {
-		xfile.reset(new xolotlCore::XFile(networkName));
-		concGroup = xfile->getGroup<xolotlCore::XFile::ConcentrationGroup>();
+		xfile.reset(new io::XFile(networkName));
+		concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
 
@@ -188,7 +190,7 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	for (PetscInt j = ys; j < ys + ym; j++)
 		for (PetscInt i = xs - 1; i <= xs + xm; i++) {
 			// Temperature
-			xolotlCore::Point<3> gridPosition { 0.0, j * hY, 0.0 };
+			core::Point<3> gridPosition { 0.0, j * hY, 0.0 };
 			if (i < 0)
 				gridPosition[0] =
 						(grid[0] - grid[surfacePosition[j] + 1])
@@ -306,7 +308,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 	// Declarations for variables used in the loop
 	double **concVector = new double*[5];
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 	std::vector<double> incidentFluxVector;
 	double atomConc = 0.0, totalAtomConc = 0.0;
 
@@ -452,7 +454,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 					// Sum the total atom concentration
 					using NetworkType =
-					xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+					core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
 					using Spec = typename NetworkType::Species;
 					using HostUnmanaged =
 					Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
@@ -623,10 +625,10 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 	// Declarations for variables used in the loop
 	double atomConc = 0.0, totalAtomConc = 0.0;
-	xolotlCore::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	core::Point<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the total number of diffusing clusters
-	const int nDiff = max(diffusionHandler->getNumberOfDiffusing(), 0);
+	const int nDiff = std::max(diffusionHandler->getNumberOfDiffusing(), 0);
 
 	// Get the total number of advecting clusters
 	int nAdvec = 0;
@@ -818,7 +820,7 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 					// Sum the total atom concentration
 					using NetworkType =
-					xolotlCore::experimental::PSIReactionNetwork<xolotlCore::experimental::PSIFullSpeciesList>;
+					core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
 					using Spec = typename NetworkType::Species;
 					using HostUnmanaged =
 					Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
@@ -1091,4 +1093,6 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	return;
 }
 
-} /* end namespace xolotlSolver */
+} /* end namespace handler */
+} /* end namespace solver */
+} /* end namespace xolotl */

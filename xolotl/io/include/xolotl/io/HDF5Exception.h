@@ -3,7 +3,9 @@
 
 #include <stdexcept>
 
-namespace xolotlCore
+namespace xolotl
+{
+namespace io
 {
 
 class HDF5Exception : public std::runtime_error
@@ -32,6 +34,7 @@ public:
     HDF5Exception(const HDF5Exception& other) = default;
 };
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl
 
 #endif // XCORE_HDF5EXCEPTION_H

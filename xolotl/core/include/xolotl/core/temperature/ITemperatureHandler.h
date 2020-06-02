@@ -3,10 +3,12 @@
 
 #include <vector>
 #include <memory>
-#include <xolotl/core/reactants/IReactionNetwork.h>
+#include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/NDPoint.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace temperature {
 
 /**
  * Realizations of this interface are responsible for handling the temperature.
@@ -30,8 +32,8 @@ public:
 	 * @param dfillMap Map indicating row/column of diffusing variables in diagonal fill map.
 	 */
 	virtual void initializeTemperature(const int dof,
-			experimental::IReactionNetwork::SparseFillMap& ofillMap,
-			experimental::IReactionNetwork::SparseFillMap& dfillMap) = 0;
+			network::IReactionNetwork::SparseFillMap& ofillMap,
+			network::IReactionNetwork::SparseFillMap& dfillMap) = 0;
 
 	/**
 	 * This operation returns the temperature at the given position
@@ -116,6 +118,8 @@ public:
 };
 //end class ITemperatureHandler
 
+}
+}
 }
 
 #endif

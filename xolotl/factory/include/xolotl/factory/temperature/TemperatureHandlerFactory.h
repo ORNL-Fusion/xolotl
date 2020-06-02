@@ -5,7 +5,9 @@
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 #include <xolotl/options/Options.h>
 
-namespace xolotlFactory {
+namespace xolotl {
+namespace factory {
+namespace temperature {
 
 /**
  * Build the desired type of handler registry.
@@ -13,15 +15,17 @@ namespace xolotlFactory {
  * @param options Options for the program
  * @return True iff the handler registry was created successfully.
  */
-bool initializeTempHandler(const xolotlCore::Options &options);
+bool initializeTempHandler(const options::Options &opts);
 
 /**
  * Access the handler registry.
  *
  *  @return The handler registry object.
  */
-std::shared_ptr<xolotlCore::ITemperatureHandler> getTemperatureHandler();
+std::shared_ptr<core::temperature::ITemperatureHandler> getTemperatureHandler();
 
-} // end namespace xolotlPerf
+} // end namespace temperature
+} // end namespace factory
+} // end namespace xolotl
 
 #endif /* TEMPERATUREHANDLERFACTORY_H */

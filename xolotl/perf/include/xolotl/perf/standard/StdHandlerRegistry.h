@@ -6,7 +6,9 @@
 #include <xolotl/perf/IHandlerRegistry.h>
 #include <xolotl/perf/PerfObjStatistics.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace standard {
 
 /**
  * Base class for for building performance data collection objects that
@@ -147,6 +149,8 @@ public:
 
 };
 
-} // namespace xolotlPerf
+} // namespace standard
+} // namespace perf
+} // namespace xolotl
 
 #endif // STDHANDLERREGISTRY_H

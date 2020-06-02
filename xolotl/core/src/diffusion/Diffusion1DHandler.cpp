@@ -3,10 +3,12 @@
 #include <array>
 #include <xolotl/core/diffusion/Diffusion1DHandler.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace diffusion {
 
 void Diffusion1DHandler::initializeDiffusionGrid(
-		std::vector<IAdvectionHandler *> advectionHandlers,
+		std::vector<advection::IAdvectionHandler *> advectionHandlers,
 		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
 		int nz, double hz, int zs) {
 	// Get the number of diffusing clusters
@@ -60,7 +62,7 @@ void Diffusion1DHandler::initializeDiffusionGrid(
 }
 
 void Diffusion1DHandler::computeDiffusion(
-		experimental::IReactionNetwork& network, double **concVector,
+		network::IReactionNetwork& network, double **concVector,
 		double *updatedConcOffset, double hxLeft, double hxRight, int ix,
 		double, int, double, int) const {
 
@@ -105,7 +107,7 @@ void Diffusion1DHandler::computeDiffusion(
 }
 
 void Diffusion1DHandler::computePartialsForDiffusion(
-		experimental::IReactionNetwork& network, double *val,
+		network::IReactionNetwork& network, double *val,
 		int *indices, double hxLeft, double hxRight, int ix, double, int,
 		double, int) const {
 
@@ -148,4 +150,6 @@ void Diffusion1DHandler::computePartialsForDiffusion(
 	return;
 }
 
-}/* end namespace xolotlCore */
+}/* end namespace diffusion */
+}/* end namespace core */
+}/* end namespace xolotl */

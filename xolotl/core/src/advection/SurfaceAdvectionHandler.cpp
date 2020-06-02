@@ -1,7 +1,9 @@
 // Includes
 #include <xolotl/core/advection/SurfaceAdvectionHandler.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace advection {
 
 void SurfaceAdvectionHandler::initializeAdvectionGrid(
 		std::vector<IAdvectionHandler*> advectionHandlers,
@@ -80,7 +82,7 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 }
 
 void SurfaceAdvectionHandler::computeAdvection(
-		experimental::IReactionNetwork &network, const Point<3> &pos,
+		network::IReactionNetwork &network, const Point<3> &pos,
 		double **concVector, double *updatedConcOffset, double hxLeft,
 		double hxRight, int ix, double hy, int iy, double hz, int iz) const {
 
@@ -110,7 +112,7 @@ void SurfaceAdvectionHandler::computeAdvection(
 				* cluster.getDiffusionCoefficient(ix + 1))
 				* ((oldRightConc / pow(pos[0] - location + hxRight, 4))
 						- (oldConc / pow(pos[0] - location, 4)))
-				/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1)
+				/ (kBoltzmann * cluster.getTemperature(ix + 1)
 						* hxRight);
 
 		conc +=
@@ -119,7 +121,7 @@ void SurfaceAdvectionHandler::computeAdvection(
 								/ cluster.getTemperature(ix + 2)
 								- cluster.getDiffusionCoefficient(ix + 1)
 										/ cluster.getTemperature(ix + 1))
-						/ (xolotlCore::kBoltzmann * hxRight
+						/ (kBoltzmann * hxRight
 								* pow(pos[0] - location, 4));
 
 		// Update the concentration of the cluster
@@ -132,7 +134,7 @@ void SurfaceAdvectionHandler::computeAdvection(
 }
 
 void SurfaceAdvectionHandler::computePartialsForAdvection(
-		experimental::IReactionNetwork &network, double *val, int *indices,
+		network::IReactionNetwork &network, double *val, int *indices,
 		const Point<3> &pos, double hxLeft, double hxRight, int ix, double hy,
 		int iy, double hz, int iz) const {
 
@@ -162,7 +164,7 @@ void SurfaceAdvectionHandler::computePartialsForAdvection(
 		// Compute the partial derivatives for advection of this cluster as
 		// explained in the description of this method
 		val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff)
-				/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1)
+				/ (kBoltzmann * cluster.getTemperature(ix + 1)
 						* hxRight * pow(pos[0] - location, 4))
 				* advectionGrid[iz + 1][iy + 1][ix + 1][advClusterIdx]; // middle
 		val[advClusterIdx * 2] += (3.0 * sinkStrength)
@@ -170,10 +172,10 @@ void SurfaceAdvectionHandler::computePartialsForAdvection(
 						/ cluster.getTemperature(ix + 2)
 						- cluster.getDiffusionCoefficient(ix + 1)
 								/ cluster.getTemperature(ix + 1))
-				/ (xolotlCore::kBoltzmann * hxRight * pow(pos[0] - location, 4))
+				/ (kBoltzmann * hxRight * pow(pos[0] - location, 4))
 				* advectionGrid[iz + 1][iy + 1][ix + 1][advClusterIdx]; // middle
 		val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff)
-				/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1)
+				/ (kBoltzmann * cluster.getTemperature(ix + 1)
 						* hxRight * pow(pos[0] - location + hxRight, 4))
 				* advectionGrid[iz + 1][iy + 1][ix + 2][advClusterIdx]; // right
 
@@ -183,4 +185,6 @@ void SurfaceAdvectionHandler::computePartialsForAdvection(
 	return;
 }
 
-}/* end namespace xolotlCore */
+}/* end namespace advection */
+}/* end namespace core */
+}/* end namespace xolotl */

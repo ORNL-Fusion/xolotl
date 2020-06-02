@@ -4,9 +4,11 @@
 #include <cmath>
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/core/MathUtils.h>
-#include <xolotl/core/reactants/NEReactionNetwork.h>
+#include <xolotl/core/network/NEReactionNetwork.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace flux {
 
 /**
  * This class realizes the IFluxHandler interface to calculate the incident xenon flux
@@ -44,7 +46,7 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(experimental::IReactionNetwork& network,
+	void initializeFluxHandler(network::IReactionNetwork& network,
 			int surfacePos, std::vector<double> grid) {
 		// Set the grid
 		xGrid = grid;
@@ -54,7 +56,7 @@ public:
 			return;
 
 		// Set the flux index corresponding the the single xenon cluster here
-		using NetworkType = experimental::NEReactionNetwork;
+		using NetworkType = network::NEReactionNetwork;
 		auto& neNetwork = dynamic_cast<NetworkType&>(network);
 		NetworkType::Composition comp;
 		// Initialize the composition
@@ -99,6 +101,8 @@ public:
 };
 //end class FuelFitFluxHandler
 
+}
+}
 }
 
 #endif

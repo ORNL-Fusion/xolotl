@@ -1,7 +1,10 @@
 #ifndef XCORE_XFILE_TYPE_H
 #define XCORE_XFILE_TYPE_H
 
-namespace xolotlCore {
+namespace xolotl
+{
+namespace io
+{
 
 //----------------------------------------------------------------------------
 // XFile::TimestepGroup::ConcType
@@ -53,6 +56,7 @@ HDF5File::TypeInMemory<XFile::TimestepGroup::ConcType>::TypeInMemory(void)
           true)
 { }
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl
 
 #endif // XCORE_XFILE_TYPE_H

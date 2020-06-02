@@ -9,7 +9,10 @@
 #include <xolotl/io/HDF5Object.h>
 
 
-namespace xolotlCore {
+namespace xolotl
+{
+namespace io
+{
 
 class HDF5File : public HDF5Object {
 public:
@@ -751,7 +754,8 @@ public:
 	}
 };
 
-} /* namespace xolotlCore */
+} // namespace io
+} // namespace xolotl
 
 // Ensure we have implementations of template classes.
 #include <xolotl/io/HDF5FileType.h>

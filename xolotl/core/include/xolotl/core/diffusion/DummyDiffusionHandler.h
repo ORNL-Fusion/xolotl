@@ -4,7 +4,9 @@
 // Includes
 #include <xolotl/core/diffusion/DiffusionHandler.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace diffusion {
 
 /**
  * This class realizes the IDiffusionHandler interface responsible for all
@@ -33,8 +35,8 @@ public:
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for diffusing clusters.
 	 */
-	void initializeOFill(const experimental::IReactionNetwork &network,
-			experimental::IReactionNetwork::SparseFillMap &ofillMap) override {
+	void initializeOFill(const network::IReactionNetwork &network,
+			network::IReactionNetwork::SparseFillMap &ofillMap) override {
 		// Clear the index vector
 		diffusingClusters.clear();
 
@@ -58,7 +60,7 @@ public:
 	 * @param zs The beginning of the grid on this process
 	 */
 	void initializeDiffusionGrid(
-			std::vector<IAdvectionHandler*> advectionHandlers,
+			std::vector<advection::IAdvectionHandler*> advectionHandlers,
 			std::vector<double> grid, int nx, int xs, int ny = 0, double hy =
 					0.0, int ys = 0, int nz = 0, double hz = 0.0, int zs = 0)
 					override {
@@ -86,7 +88,7 @@ public:
 	 * @param sz The space parameter, depending on the grid step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	void computeDiffusion(experimental::IReactionNetwork &network,
+	void computeDiffusion(network::IReactionNetwork &network,
 			double **concVector, double *updatedConcOffset, double hxLeft,
 			double hxRight, int ix, double sy = 0.0, int iy = 0,
 			double sz = 0.0, int iz = 0) const override {
@@ -113,7 +115,7 @@ public:
 	 * @param sz The space parameter, depending on the grid step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	void computePartialsForDiffusion(experimental::IReactionNetwork &network,
+	void computePartialsForDiffusion(network::IReactionNetwork &network,
 			double *val, int *indices, double hxLeft, double hxRight, int ix,
 			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const
 					override {
@@ -123,5 +125,7 @@ public:
 };
 //end class DummyDiffusionHandler
 
-} /* end namespace xolotlCore */
+} /* end namespace diffusion */
+} /* end namespace core */
+} /* end namespace xolotl */
 #endif

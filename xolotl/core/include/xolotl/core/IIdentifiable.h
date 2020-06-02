@@ -3,7 +3,8 @@
 
 #include <string>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
 
 /**
  * An Identifiable is an object that has some identification (e.g., a name
@@ -18,6 +19,7 @@ public:
 	virtual std::string getName(void) const = 0;
 };
 
-} // end namespace xolotlCore
+} /* end namespace core */
+} /* end namespace xolotl */
 
 #endif // IIDENTIFIABLE_H

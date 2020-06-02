@@ -5,7 +5,9 @@
 #include <xolotl/core/MathUtils.h>
 #include <xolotl/core/Constants.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace temperature {
 
 /**
  * This class realizes the ITemperatureHandler, it is responsible for the
@@ -86,8 +88,8 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual void initializeTemperature(const int _dof,
-			experimental::IReactionNetwork::SparseFillMap& ofillMap,
-			experimental::IReactionNetwork::SparseFillMap& dfillMap) {
+			network::IReactionNetwork::SparseFillMap& ofillMap,
+			network::IReactionNetwork::SparseFillMap& dfillMap) {
 
 		// Set dof
 		dof = _dof;
@@ -108,8 +110,8 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	virtual double getTemperature(const Point<3>&, double time) const {
-		return xolotlCore::equal(time, 0.0) * bulkTemperature
-				+ !xolotlCore::equal(time, 0.0) * localTemperature;
+		return equal(time, 0.0) * bulkTemperature
+				+ !equal(time, 0.0) * localTemperature;
 	}
 
 	/**
@@ -214,6 +216,8 @@ public:
 };
 //end class HeatEquation1DHandler
 
+}
+}
 }
 
 #endif

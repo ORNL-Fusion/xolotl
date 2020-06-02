@@ -6,7 +6,7 @@
 #include <xolotl/perf/dummy/DummyTimer.h>
 
 using namespace std;
-using namespace xolotlPerf;
+using namespace xolotl::perf::dummy;
 
 /**
  * This suite is responsible for testing the DummyTimer.

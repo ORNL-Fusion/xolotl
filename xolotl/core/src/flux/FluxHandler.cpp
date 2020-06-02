@@ -6,7 +6,9 @@
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/perf/xolotlPerf.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace flux {
 
 FluxHandler::FluxHandler() :
 		fluence(0.0), fluxAmplitude(0.0), useTimeProfile(false), normFactor(0.0) {
@@ -14,7 +16,7 @@ FluxHandler::FluxHandler() :
 }
 
 void FluxHandler::initializeFluxHandler(
-		experimental::IReactionNetwork& network, int surfacePos,
+		network::IReactionNetwork& network, int surfacePos,
 		std::vector<double> grid) {
 	// Set the grid
 	xGrid = grid;
@@ -192,4 +194,6 @@ double FluxHandler::getFluxRate() const {
 	return fluxAmplitude / normFactor;
 }
 
-} // end namespace xolotlCore
+} // end namespace flux
+} // end namespace core
+} // end namespace xolotl

@@ -27,7 +27,10 @@
 #include <vtkm/rendering/TextAnnotation.h>
 #include <vtkm/rendering/View1D.h>
 
-using namespace xolotlViz;
+namespace xolotl {
+namespace viz {
+namespace standard {
+namespace plot {
 
 #define W_WIDTH 1024
 #define W_HEIGHT 1024
@@ -152,4 +155,9 @@ void ScatterPlot::render(const std::string& fileName) {
   // Save the final buffer as an image
   view->SaveAs(fileName);
 	return;
+}
+
+}
+}
+}
 }

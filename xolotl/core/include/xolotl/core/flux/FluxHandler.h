@@ -6,7 +6,9 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/flux/IFluxHandler.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace flux {
 
 /**
  * Realizations of this interface are responsible for handling the incident (incoming)
@@ -105,7 +107,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	virtual void initializeFluxHandler(
-			experimental::IReactionNetwork& network, int surfacePos,
+			network::IReactionNetwork& network, int surfacePos,
 			std::vector<double> grid);
 
 	/**
@@ -171,6 +173,8 @@ public:
 };
 //end class FluxHandler
 
+}
+}
 }
 
 #endif

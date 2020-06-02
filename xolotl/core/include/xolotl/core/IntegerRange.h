@@ -4,7 +4,8 @@
 #include <tuple>
 #include <stdexcept>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
 
 /**
  * A range of integers [l, h).
@@ -103,6 +104,7 @@ public:
 	}
 };
 
-} // namespace xolotlCore
+} /* end namespace core */
+} /* end namespace xolotl */
 
 #endif // XCORE_INTEGER_RANGE_H

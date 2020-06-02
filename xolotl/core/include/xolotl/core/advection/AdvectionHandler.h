@@ -5,7 +5,9 @@
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/Constants.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace advection {
 
 /**
  * This class realizes the IAdvectionHandler interface responsible for all
@@ -86,5 +88,7 @@ public:
 };
 //end class AdvectionHandler
 
-} /* end namespace xolotlCore */
+} /* end namespace advection */
+} /* end namespace core */
+} /* end namespace xolotl */
 #endif

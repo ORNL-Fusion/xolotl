@@ -1,9 +1,10 @@
 #ifndef OPTIONS_H
 #define OPTIONS_H
 
-#include "IOptions.h"
+#include <xolotl/options/IOptions.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace options {
 
 /**
  * Options realizes the IOptions interface.
@@ -86,7 +87,7 @@ protected:
 	/**
 	 * Which type of performance infrastructure should we use?
 	 */
-	xolotlPerf::IHandlerRegistry::RegistryType perfRegistryType;
+	perf::IHandlerRegistry::RegistryType perfRegistryType;
 
 	/**
 	 * Use the "standard" set of handlers for the visualization infrastructure?
@@ -268,7 +269,7 @@ protected:
 	/**
 	 * Average radius computation minimum size
 	 */
-	Array<int, 4> radiusMinSizes;
+    core::Array<int, 4> radiusMinSizes;
 
 	/**
 	 * Density of atom in a bubble in nm-3.
@@ -472,7 +473,7 @@ public:
 	 * Which type of performance handlers should we use?
 	 * \see IOptions.h
 	 */
-	xolotlPerf::IHandlerRegistry::RegistryType getPerfHandlerType(void) const
+	perf::IHandlerRegistry::RegistryType getPerfHandlerType(void) const
 			override {
 		return perfRegistryType;
 	}
@@ -783,7 +784,7 @@ public:
 	 * Obtain the minimum size for the average radius computation.
 	 * \see IOptions.h
 	 */
-	virtual Array<int, 4> getRadiusMinSizes() const override {
+	virtual core::Array<int, 4> getRadiusMinSizes() const override {
 		return radiusMinSizes;
 	}
 
@@ -870,6 +871,7 @@ public:
 };
 //end class Options
 
-} /* namespace xolotlCore */
+} /* namespace options */
+} /* namespace xolotl */
 
 #endif // OPTIONS_H

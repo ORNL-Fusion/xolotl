@@ -5,13 +5,15 @@
 #include <xolotl/core/Identifiable.h>
 #include <xolotl/viz/IPlot.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace dummy {
 
 /**
  * The DummyPlot class is instantiated by the DummyHandlerRegistry
  * class and realizes the IPlot interface.
  */
-class DummyPlot: public IPlot, public xolotlCore::Identifiable {
+class DummyPlot: public IPlot, public core::Identifiable {
 
 private:
 
@@ -19,13 +21,13 @@ private:
 	 * Declare the constructor as private to force the use of a name.
 	 */
 	DummyPlot() :
-			xolotlCore::Identifiable("unused") {
+			core::Identifiable("unused") {
 	}
 
 	/**
 	 * Data provider used for the plot.
 	 */
-	std::shared_ptr<IDataProvider> plotDataProvider;
+	std::shared_ptr<dataprovider::IDataProvider> plotDataProvider;
 
 public:
 
@@ -67,25 +69,25 @@ public:
 	 * Sets the data provider used for the plots.
 	 * \see IPlot.h
 	 */
-	void setDataProvider(std::shared_ptr<IDataProvider> dataProvider);
+	void setDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider);
 
 	/**
 	 * Method adding one data provider to the vector plotDataProviders
 	 * \see IPlot.h
 	 */
-	void addDataProvider(std::shared_ptr<IDataProvider> dataProvider);
+	void addDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider);
 
 	/**
 	 * Gets the data provider used.
 	 * \see IPlot.h
 	 */
-	std::shared_ptr<IDataProvider> getDataProvider() const;
+	std::shared_ptr<dataprovider::IDataProvider> getDataProvider() const;
 
 	/**
 	 * Method getting the i-th data provider for SeriesPlot
 	 * \see IPlot.h
 	 */
-	std::shared_ptr<IDataProvider> getDataProvider(int i) const;
+	std::shared_ptr<dataprovider::IDataProvider> getDataProvider(int i) const;
 
 	/**
 	 * Method getting the total number of data providers
@@ -126,6 +128,8 @@ public:
 };
 //end class DummyPlot
 
-}//end namespace xolotlViz
+}//end namespace dummy
+}//end namespace viz
+}//end namespace xolotl
 
 #endif

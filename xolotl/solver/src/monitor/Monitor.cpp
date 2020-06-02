@@ -15,10 +15,12 @@
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/monitor/Monitor.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace monitor {
 
 //! The pointer to the plot that will be used to visualize performance data.
-std::shared_ptr<xolotlViz::IPlot> perfPlot;
+std::shared_ptr<viz::IPlot> perfPlot;
 
 //! The variable to store the time at the previous time step.
 double previousTime = 0.0;
@@ -132,7 +134,7 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 	// timer here since the main function is using it to get an
 	// overall elapsed time measurement of the solve.
 	//
-	auto solverTimer = xolotlPerf::getHandlerRegistry()->getTimer("solve");
+	auto solverTimer = perf::getHandlerRegistry()->getTimer("solve");
 	solverTimer->stop();
 	double solverTimerValue = solverTimer->getValue();
 	solverTimer->start();
@@ -149,10 +151,10 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 			PETSC_COMM_WORLD);// communicator defining processes involved in the operation
 
 	if (cwRank == 0) {
-		auto allPoints = std::make_shared<std::vector<xolotlViz::Point> >();
+		auto allPoints = std::make_shared<std::vector<viz::dataprovider::Point> >();
 
 		for (int i = 0; i < cwSize; ++i) {
-			xolotlViz::Point aPoint;
+            viz::dataprovider::Point aPoint;
 			aPoint.value = allTimerValues[i];
 			aPoint.x = i;
 			aPoint.t = time;
@@ -194,7 +196,7 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 }
 
 void writeNetwork(MPI_Comm _comm, std::string srcFileName,
-		std::string targetFileName, experimental::IReactionNetwork &network) {
+		std::string targetFileName, core::network::IReactionNetwork &network) {
 
 	int procId;
 	MPI_Comm_rank(_comm, &procId);
@@ -209,30 +211,31 @@ void writeNetwork(MPI_Comm _comm, std::string srcFileName,
 			// communicator because the HDF5 copy operation
 			// is not parallelized and gives very poor performance
 			// if used with a file opened for parallel access.
-			xolotlCore::XFile srcFile(srcFileName,
-			MPI_COMM_SELF, xolotlCore::XFile::AccessMode::OpenReadOnly);
+			io::XFile srcFile(srcFileName,
+			MPI_COMM_SELF, io::XFile::AccessMode::OpenReadOnly);
 
 			// Check if given file even has a network group.
 			auto srcNetGroup =
-					srcFile.getGroup<xolotlCore::XFile::NetworkGroup>();
+					srcFile.getGroup<io::XFile::NetworkGroup>();
 			if (srcNetGroup) {
 				// Given file has a network group.  Copy it.
 				// First open the checkpoint file using a single-process
 				// communicator...
-				xolotlCore::XFile checkpointFile(targetFileName,
-				MPI_COMM_SELF, xolotlCore::XFile::AccessMode::OpenReadWrite);
+				io::XFile checkpointFile(targetFileName,
+				MPI_COMM_SELF, io::XFile::AccessMode::OpenReadWrite);
 
 				// ...then do the copy.
 				srcNetGroup->copyTo(checkpointFile);
 			}
 		} else {
 			// Write from scratch
-			xolotlCore::XFile checkpointFile(targetFileName,
-			MPI_COMM_SELF, xolotlCore::XFile::AccessMode::OpenReadWrite);
-			xolotlCore::XFile::NetworkGroup netGroup(checkpointFile, network);
+			io::XFile checkpointFile(targetFileName,
+			MPI_COMM_SELF, io::XFile::AccessMode::OpenReadWrite);
+			io::XFile::NetworkGroup netGroup(checkpointFile, network);
 		}
 	}
 }
 
-}
-/* end namespace xolotlSolver */
+} /* end namespace monitor */
+} /* end namespace solver */
+} /* end namespace xolotl */

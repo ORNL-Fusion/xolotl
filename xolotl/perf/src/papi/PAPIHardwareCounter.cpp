@@ -5,13 +5,15 @@
 #include <xolotl/perf/papi/PAPIHardwareCounter.h>
 #include <xolotl/perf/RuntimeError.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace papi {
 
 PAPIHardwareCounter::CounterSpecMap PAPIHardwareCounter::csMap;
 
 PAPIHardwareCounter::PAPIHardwareCounter(const std::string& name,
 		const IHardwareCounter::SpecType& cset) :
-		xolotlCore::Identifiable(name), spec(cset), eventSet(PAPI_NULL) {
+		core::Identifiable(name), spec(cset), eventSet(PAPI_NULL) {
 	assert(PAPI_is_initialized());
 
 	// Ensure our counter spec map has been initialized.
@@ -117,5 +119,6 @@ PAPIHardwareCounter::operator+=(const IHardwareCounter& c) {
 	return *this;
 }
 
-}  //end namespace xolotlPerf
-
+} // namespace papi
+} // namespace perf
+} // namespace xolotl

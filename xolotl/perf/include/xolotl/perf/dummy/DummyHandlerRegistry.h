@@ -6,7 +6,9 @@
 #include <xolotl/perf/dummy/DummyEventCounter.h> //Dependency Generated Source:DummyHandlerRegistry Target:DummyEventCounter
 #include <xolotl/perf/dummy/DummyHardwareCounter.h> //Dependency Generated Source:DummyHandlerRegistry Target:DummyHardwareCounter
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace dummy {
 
 // Factory for creating timers, event counters, and hardware counter objects
 // that are dummies, i.e., they provide the right interface but don't do
@@ -64,6 +66,8 @@ public:
 			const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) const;
 };
 
-} //end namespace xolotlPerf
+}//end namespace dummy
+}//end namespace perf
+}//end namespace xolotl
 
 #endif

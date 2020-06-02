@@ -5,29 +5,33 @@
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/options/Options.h>
 
-namespace xolotlFactory {
+namespace xolotl {
+namespace factory {
+namespace solver {
 
 /**
  * Build the desired type of solver.
  *
- * @param options Options for the program
+ * @param opts Options for the program
  * @return True if the solver handler was created successfully.
  */
-bool initializeDimension(const xolotlCore::Options &options,
-		xolotlCore::experimental::IReactionNetwork& network);
+bool initializeDimension(const options::Options &opts,
+		core::network::IReactionNetwork& network);
 
 /**
  * Access the created solver handler.
  *
  *  @return The solver handler.
  */
-xolotlSolver::ISolverHandler& getSolverHandler();
+::xolotl::solver::handler::ISolverHandler& getSolverHandler();
 
 /**
  * Destroy the solver handler
  */
 void destroySolverHandler();
 
+}
+}
 }
 
 #endif /* SOLVERHANDLERFACTORY_H */

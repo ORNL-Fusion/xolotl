@@ -5,7 +5,9 @@
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/core/MathUtils.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace diffusion {
 
 /**
  * This class realizes the IDiffusionHandler interface responsible for all
@@ -41,8 +43,8 @@ public:
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for diffusing clusters.
 	 */
-	virtual void initializeOFill(const experimental::IReactionNetwork &network,
-			experimental::IReactionNetwork::SparseFillMap &ofillMap) override {
+	virtual void initializeOFill(const network::IReactionNetwork &network,
+			network::IReactionNetwork::SparseFillMap &ofillMap) override {
 
 		// Clear the index vector
 		diffusingClusters.clear();
@@ -56,7 +58,7 @@ public:
 			double migration = cluster.getMigrationEnergy();
 
 			// Don't do anything if the diffusion factor is 0.0
-			if (xolotlCore::equal(diffFactor, 0.0)
+			if (equal(diffFactor, 0.0)
 					|| migration > migrationThreshold)
 				continue;
 
@@ -82,5 +84,7 @@ public:
 };
 //end class DiffusionHandler
 
-} /* end namespace xolotlCore */
+} /* end namespace diffusion */
+} /* end namespace core */
+} /* end namespace xolotl */
 #endif

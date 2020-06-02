@@ -1,7 +1,10 @@
 // Includes
 #include <xolotl/viz/standard/plot/VideoPlot.h>
 
-using namespace xolotlViz;
+namespace xolotl {
+namespace viz {
+namespace standard {
+namespace plot {
 
 VideoPlot::VideoPlot(const std::string& name) :
 		Plot(name), frameRate(0.0) {
@@ -20,4 +23,9 @@ void VideoPlot::setFrameRate(double fRate) {
 
 double VideoPlot::getFrameRate() const {
 	return frameRate;
+}
+
+}
+}
+}
 }

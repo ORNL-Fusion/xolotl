@@ -6,12 +6,13 @@
 #include <fstream>
 #include <iostream>
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
-#include <xolotl/core/reactants/PSIReactionNetwork.h>
+#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/config.h>
 
 using namespace std;
-using namespace xolotlCore;
+using namespace xolotl::core;
+using namespace advection;
 
 class KokkosContext {
 public:
@@ -35,7 +36,7 @@ BOOST_AUTO_TEST_SUITE(DummyAdvectionHandler_testSuite)
  */
 BOOST_AUTO_TEST_CASE(checkAdvection) {
 	// Create the option to create a network
-	xolotlCore::Options opts;
+    xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 1 0" << std::endl;
@@ -64,8 +65,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	}
 
 	// Create the network
-	using NetworkType =
-	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection) {
 	DummyAdvectionHandler advectionHandler;
 
 	// Create ofill
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
+	network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize it
 	advectionHandler.initialize(network, ofill);

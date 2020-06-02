@@ -10,7 +10,8 @@
 #include <xolotl/options/Options.h>
 
 using namespace std;
-using namespace xolotlCore;
+using namespace xolotl::core;
+using namespace flux;
 
 class KokkosContext {
 public:
@@ -31,7 +32,7 @@ BOOST_AUTO_TEST_SUITE (FuelFitFluxHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Create the option to create a network
-	xolotlCore::Options opts;
+    xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=100 0 0 0 0" << std::endl;
@@ -60,7 +61,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType = experimental::NEReactionNetwork;
+	using NetworkType = network::NEReactionNetwork;
 	NetworkType::AmountType maxXe = opts.getMaxImpurity();
 	NetworkType network( { maxXe }, grid.size(), opts);
 	network.syncClusterDataOnHost();

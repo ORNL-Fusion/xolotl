@@ -4,7 +4,9 @@
 // Includes
 #include <string>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace dataprovider {
 
 /**
  * Class describing the structure of data points.
@@ -55,6 +57,8 @@ public:
 
 //end class Point
 
-} /* namespace xolotlViz */
+} /* namespace dataprovider */
+} /* namespace viz */
+} /* namespace xolotl */
 
 #endif

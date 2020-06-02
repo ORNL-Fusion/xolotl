@@ -11,7 +11,8 @@
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
 
 //! Definitions of fundamental constants used in Xolotl
 
@@ -77,5 +78,6 @@ constexpr double frankBurgers = 0.333;
 // Sink strength for Alloy case in nm^-2
 constexpr double alloysinkStrength = 1.0e-5;
 
-} /* end namespace xolotlCore */
+} /* end namespace core */
+} /* end namespace xolotl */
 #endif /* CONSTANTS_H_ */

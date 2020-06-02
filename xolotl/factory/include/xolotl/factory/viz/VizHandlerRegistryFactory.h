@@ -6,7 +6,11 @@
 #include <xolotl/viz/IVizHandlerRegistry.h>
 
 
-namespace xolotlFactory
+namespace xolotl
+{
+namespace factory
+{
+namespace viz
 {
 
 /**
@@ -19,8 +23,10 @@ bool initializeVizHandler(bool useStdRegistry);
  * Access the handler registry.
  * @return The handler registry object.
  */
-std::shared_ptr<xolotlViz::IVizHandlerRegistry> getVizHandlerRegistry();
+std::shared_ptr<::xolotl::viz::IVizHandlerRegistry> getVizHandlerRegistry();
 
-} // end namespace xolotlFactory
+} // end namespace viz
+} // end namespace factory
+} // end namespace xolotl
 
 #endif // VIZHANDLERREGISTRYFACTORY_H

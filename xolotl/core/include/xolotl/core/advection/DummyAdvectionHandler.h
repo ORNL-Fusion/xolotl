@@ -4,7 +4,9 @@
 // Includes
 #include <xolotl/core/advection/SurfaceAdvectionHandler.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace advection {
 
 /**
  * This class realizes the IAdvectionHandler interface responsible for all
@@ -32,8 +34,8 @@ public:
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for advecting clusters.
 	 */
-	void initialize(experimental::IReactionNetwork& network,
-			experimental::IReactionNetwork::SparseFillMap& ofillMap) override {
+	void initialize(network::IReactionNetwork& network,
+			network::IReactionNetwork::SparseFillMap& ofillMap) override {
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();
 		sinkStrengthVector.clear();
@@ -64,7 +66,7 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computeAdvection(experimental::IReactionNetwork& network,
+	void computeAdvection(network::IReactionNetwork& network,
 			const Point<3>& pos, double **concVector, double *updatedConcOffset,
 			double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const override {
@@ -80,7 +82,7 @@ public:
 	 * \see IAdvectionHandler.h
 	 */
 	void computePartialsForAdvection(
-			experimental::IReactionNetwork& network, double *val,
+			network::IReactionNetwork& network, double *val,
 			int *indices, const Point<3>& pos, double hxLeft, double hxRight,
 			int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
 			int iz = 0) const override {
@@ -91,5 +93,7 @@ public:
 };
 //end class DummyAdvectionHandler
 
-} /* end namespace xolotlCore */
+} /* end namespace advection */
+} /* end namespace core */
+} /* end namespace xolotl */
 #endif

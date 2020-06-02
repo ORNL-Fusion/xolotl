@@ -10,7 +10,8 @@
 #include <xolotl/perf/IHardwareCounter.h>
 #include <xolotl/perf/PerfObjStatistics.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
 
 /**
  * Factory for building performance data collection objects, such
@@ -81,6 +82,7 @@ public:
 
 };
 
-} //end namespace xolotlPerf
+}//end namespace perf
+}//end namespace xolotl
 
 #endif

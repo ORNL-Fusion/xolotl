@@ -6,9 +6,8 @@
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/options/Options.h>
 
-using namespace xolotlCore;
-
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
 
 /**
  * Realizations of this interface are responsible for solving the set of
@@ -79,5 +78,6 @@ public:
 };
 //end class ISolver
 
-} /* namespace xolotlSolver */
+} /* namespace solver */
+} /* namespace xolotl */
 #endif

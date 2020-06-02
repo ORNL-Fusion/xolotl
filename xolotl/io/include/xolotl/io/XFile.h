@@ -7,10 +7,13 @@
 #include <set>
 #include <xolotl/io/HDF5File.h>
 #include <xolotl/io/HDF5Exception.h>
-#include <xolotl/core/reactants/IReactionNetwork.h>
+#include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/MathUtils.h>
 
-namespace xolotlCore {
+namespace xolotl
+{
+namespace io
+{
 
 // Class for reading and writing an HDF5 file with Xolotl data.
 // Note: the class stores 1D data as an attribute on a group instead
@@ -20,7 +23,7 @@ namespace xolotlCore {
 // access to let one process write. (?)
 class XFile: public HDF5File {
 public:
-	using NetworkType = experimental::IReactionNetwork;
+	using NetworkType = core::network::IReactionNetwork;
 
 	// A group with info about a specific time step.
 	class ConcentrationGroup;
@@ -437,7 +440,7 @@ public:
 	public:
 		// Concise name for type of network bounds
 		// in HDF5 class method parameters.
-		using NetworkBoundsType = std::vector<std::vector<experimental::IReactionNetwork::AmountType>>;
+		using NetworkBoundsType = std::vector<std::vector<core::network::IReactionNetwork::AmountType>>;
 
 	private:
 		// Names of network attribute.
@@ -466,7 +469,7 @@ public:
 		 * @param network The network to write.
 		 */
 		NetworkGroup(const XFile &file,
-				experimental::IReactionNetwork &network);
+				core::network::IReactionNetwork &network);
 
 		/**
 		 * Read the network sizes from our group.
@@ -480,7 +483,7 @@ public:
 		 *
 		 * @param network The network that need the reactions.
 		 */
-		void readReactions(experimental::IReactionNetwork &network) const;
+		void readReactions(core::network::IReactionNetwork &network) const;
 
 		/**
 		 * Copy ourself to the given file.
@@ -496,7 +499,7 @@ public:
 	public:
 		// Concise name for type of network bounds
 		// in HDF5 class method parameters.
-		using ClusterBoundsType = std::vector<experimental::IReactionNetwork::AmountType>;
+		using ClusterBoundsType = std::vector<core::network::IReactionNetwork::AmountType>;
 
 	private:
 		// Names of cluster attributes.
@@ -630,7 +633,8 @@ public:
 	}
 };
 
-} /* namespace xolotlCore */
+} // namespace io
+} // namespace xolotl
 
 // Ensure we have definitions of template classes/methods.
 #include <xolotl/io/XFileType.h>

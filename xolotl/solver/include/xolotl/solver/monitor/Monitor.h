@@ -2,9 +2,11 @@
 #define XSOLVER_MONITOR_H
 
 // Includes
-#include <xolotl/core/reactants/IReactionNetwork.h>
+#include <xolotl/core/network/IReactionNetwork.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace monitor {
 
 /**
  * Copy the network group (if it exists) from one file to another,
@@ -20,8 +22,10 @@ namespace xolotlSolver {
  * @param network The network to write.
  */
 void writeNetwork(MPI_Comm _comm, std::string srcFileName,
-		std::string targetFileName, experimental::IReactionNetwork &network);
+		std::string targetFileName, core::network::IReactionNetwork &network);
 
-} // namespace xolotlSolver
+} // namespace monitor
+} // namespace solver
+} // namespace xolotl
 
 #endif // XSOLVER_MONITOR_H

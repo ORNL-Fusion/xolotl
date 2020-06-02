@@ -5,13 +5,14 @@
 #include <limits.h>
 #include <xolotl/core/IIdentifiable.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
 
 /**
  * Realizations of this interface are responsible for the collection
  * of event performance counter data.
  */
-class IEventCounter: public virtual xolotlCore::IIdentifiable {
+class IEventCounter: public virtual core::IIdentifiable {
 
 public:
 	/**
@@ -54,6 +55,7 @@ public:
 };
 //end class IEventCounter
 
-}//end namespace xolotlPerf
+}//end namespace perf
+}//end namespace xolotl
 
 #endif

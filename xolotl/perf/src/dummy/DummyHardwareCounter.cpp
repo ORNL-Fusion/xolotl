@@ -1,9 +1,12 @@
 #include <xolotl/perf/dummy/DummyHardwareCounter.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace dummy {
 
 IHardwareCounter::ValType DummyHardwareCounter::dummyVals;
 IHardwareCounter::SpecType DummyHardwareCounter::dummySpec;
 
-} // namespace xolotlPerf
-
+} // namespace dummy
+} // namespace perf
+} // namespace xolotl

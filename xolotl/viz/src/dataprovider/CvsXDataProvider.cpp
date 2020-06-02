@@ -1,7 +1,9 @@
 // Includes
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 
-using namespace xolotlViz;
+namespace xolotl {
+namespace viz {
+namespace dataprovider {
 
 CvsXDataProvider::CvsXDataProvider(const std::string& name) : DataProvider(name) {
 }
@@ -35,4 +37,8 @@ std::vector<double> CvsXDataProvider::getAxis2Vector() const {
 	}
 
 	return concentrationVector;
+}
+
+}
+}
 }

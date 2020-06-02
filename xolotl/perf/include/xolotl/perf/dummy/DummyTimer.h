@@ -6,13 +6,15 @@
 
 using namespace std;
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace dummy {
 
 /**
  * The DummyTimer class is instantiated by the DummerHandlerRegistry class
  * and realizes the DummyTimer interface.
  */
-class DummyTimer: public ITimer, public xolotlCore::Identifiable {
+class DummyTimer: public ITimer, public core::Identifiable {
 private:
 
 	/**
@@ -20,7 +22,7 @@ private:
 	 *  must be initialized with a name.
 	 */
 	DummyTimer(void) :
-			xolotlCore::Identifiable("unused") {
+			core::Identifiable("unused") {
 	}
 
 public:
@@ -32,7 +34,7 @@ public:
 	 * @param name The DummyTimer's name
 	 */
 	DummyTimer(const std::string& name) :
-			xolotlCore::Identifiable("unused") {
+			core::Identifiable("unused") {
 	}
 
 	/**
@@ -69,6 +71,8 @@ public:
 };
 //end class DummyTimer
 
-}//end namespace xolotlPerf
+}//end namespace dummy
+}//end namespace perf
+}//end namespace xolotl
 
 #endif

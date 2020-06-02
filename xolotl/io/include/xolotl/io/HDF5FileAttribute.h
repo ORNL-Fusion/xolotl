@@ -6,7 +6,10 @@
 #include <boost/range/counting_range.hpp>
 #include <xolotl/io/HDF5FileType.h>
 
-namespace xolotlCore {
+namespace xolotl
+{
+namespace io
+{
 
 template<typename T>
 HDF5File::Attribute<T>::Attribute(const HDF5Object& target,
@@ -333,6 +336,7 @@ void
 HDF5File::Attribute<std::vector<std::string>>::setTo(
 		const std::vector<std::string>& value) const;
 
-} // namespace xolotlCore
+} // namespace io
+} // namespace xolotl
 
 #endif // XCORE_HDF5FILE_ATTRIBUTE_H

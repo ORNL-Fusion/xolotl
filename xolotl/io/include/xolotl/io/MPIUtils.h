@@ -6,9 +6,12 @@
 #include <iostream>
 
 
-namespace xolotlCore {
-
-namespace MPIUtils {
+namespace xolotl
+{
+namespace io
+{
+namespace mpiutils
+{
 
 	/**
 	 * Sends the input buffer from the master task to all the slaves
@@ -23,7 +26,8 @@ namespace MPIUtils {
 	 */
 	std::shared_ptr<std::istream> broadcastStream(
 		std::shared_ptr<std::istream> stream, int root);
-}
 
-} /* namespace xolotlCore */
+} // namespace mpiutils
+} // namespace io
+} // namespace xolotl
 #endif

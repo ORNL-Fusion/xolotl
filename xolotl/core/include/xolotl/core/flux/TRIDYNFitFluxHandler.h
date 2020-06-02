@@ -8,9 +8,11 @@
 #include <mpi.h>
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/io/TokenizedLineReader.h>
-#include <xolotl/core/reactants/PSIReactionNetwork.h>
+#include <xolotl/core/network/PSIReactionNetwork.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace flux {
 
 /**
  * This class realizes the IFluxHandler interface to calculate the incident helium flux
@@ -83,7 +85,7 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(experimental::IReactionNetwork &network,
+	void initializeFluxHandler(network::IReactionNetwork &network,
 			int surfacePos, std::vector<double> grid) {
 		// Clear everything
 		incidentFluxVec.clear();
@@ -113,7 +115,7 @@ public:
 						<< std::endl;
 		} else {
 			// Build an input stream from the string
-			xolotlCore::TokenizedLineReader<std::string> reader;
+			io::TokenizedLineReader<std::string> reader;
 			// Get the line
 			std::string line;
 			getline(paramFile, line);
@@ -121,7 +123,7 @@ public:
 			reader.setInputStream(lineSS);
 
 			using NetworkType =
-			experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+			network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 			auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 			// Read the first line
@@ -340,6 +342,8 @@ public:
 };
 //end class TRIDYNFitFluxHandler
 
+}
+}
 }
 
 #endif

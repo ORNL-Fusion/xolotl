@@ -3,7 +3,7 @@ set(XOLOTL_FACTORY_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(XOLOTL_FACTORY_HEADER_DIR ${XOLOTL_FACTORY_INCLUDE_DIR}/xolotl/factory)
 
 include(src/material/Include.cmake)
-include(src/reaction/Include.cmake)
+include(src/network/Include.cmake)
 include(src/solver/Include.cmake)
 include(src/temperature/Include.cmake)
 include(src/viz/Include.cmake)

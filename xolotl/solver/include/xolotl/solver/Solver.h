@@ -4,7 +4,8 @@
 // Includes
 #include <xolotl/solver/ISolver.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
 
 /**
  * This class and its subclasses realize the ISolver interface to solve the
@@ -17,7 +18,7 @@ protected:
 	std::string optionsString;
 
 	//! The original solver handler.
-	static ISolverHandler *solverHandler;
+	static handler::ISolverHandler *solverHandler;
 
 public:
 
@@ -27,8 +28,8 @@ public:
 	Solver() = delete;
 
 	//! Constuct a solver.
-	Solver(ISolverHandler &_solverHandler,
-			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
+	Solver(handler::ISolverHandler &_solverHandler,
+			std::shared_ptr<perf::IHandlerRegistry> registry);
 
 	//! The Destructor
 	virtual ~Solver() {
@@ -50,7 +51,7 @@ public:
 	 * ISolver interface.
 	 * @return The advection handler for this solver
 	 */
-	static ISolverHandler& getSolverHandler() {
+	static handler::ISolverHandler& getSolverHandler() {
 		return *solverHandler;
 	}
 
@@ -60,10 +61,11 @@ protected:
 	 * The performance handler registry that will be used
 	 * for this class.
 	 */
-	std::shared_ptr<xolotlPerf::IHandlerRegistry> handlerRegistry;
+	std::shared_ptr<perf::IHandlerRegistry> handlerRegistry;
 
 };
 //end class Solver
 
-} /* end namespace xolotlSolver */
+} /* namespace solver */
+} /* namespace xolotl */
 #endif

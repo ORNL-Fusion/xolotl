@@ -8,7 +8,9 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/io/TokenizedLineReader.h>
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
+namespace handler {
 
 /**
  * This class and its subclasses realize the ISolverHandler interface to solve the
@@ -16,7 +18,7 @@ namespace xolotlSolver {
  */
 class SolverHandler: public ISolverHandler {
 public:
-	using NetworkType = xolotlCore::experimental::IReactionNetwork;
+	using NetworkType = core::network::IReactionNetwork;
 
 	using ConcentrationsView = typename NetworkType::ConcentrationsView;
 	using FluxesView = typename NetworkType::FluxesView;
@@ -68,22 +70,22 @@ protected:
 	double electronicStoppingPower;
 
 	//! The original flux handler created.
-	xolotlCore::IFluxHandler *fluxHandler;
+    core::flux::IFluxHandler *fluxHandler;
 
 	//! The original temperature handler created.
-	xolotlCore::ITemperatureHandler *temperatureHandler;
+    core::temperature::ITemperatureHandler *temperatureHandler;
 
 	//! The original diffusion handler created.
-	xolotlCore::IDiffusionHandler *diffusionHandler;
+    core::diffusion::IDiffusionHandler *diffusionHandler;
 
 	//! The vector of advection handlers.
-	std::vector<xolotlCore::IAdvectionHandler*> advectionHandlers;
+	std::vector<core::advection::IAdvectionHandler*> advectionHandlers;
 
 	//! The original modified trap-mutation handler created.
-	xolotlCore::ITrapMutationHandler *mutationHandler;
+    core::modified::ITrapMutationHandler *mutationHandler;
 
 	//! The original heterogeneous nucleation handler created.
-	xolotlCore::IHeterogeneousNucleationHandler *nucleationHandler;
+    core::modified::IHeterogeneousNucleationHandler *nucleationHandler;
 
 	//! The number of dimensions for the problem.
 	int dimension;
@@ -116,7 +118,7 @@ protected:
 	unsigned int rngSeed;
 
 	//! The minimum sizes for average radius computation.
-	xolotlCore::Array<int, 4> minRadiusSizes;
+	core::Array<int, 4> minRadiusSizes;
 
 	//! The random number generator to use.
 	std::unique_ptr<RandomNumberGenerator<int, unsigned int>> rng;
@@ -146,7 +148,7 @@ protected:
 			getline(inputFile, line);
 
 			// Break the line into a vector
-			xolotlCore::TokenizedLineReader<double> reader;
+			io::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(line);
 			reader.setInputStream(argSS);
 			auto tokens = reader.loadLine();
@@ -193,7 +195,7 @@ protected:
 						(hx / 2.0)
 								* (1.0
 										- cos(
-												xolotlCore::pi * double(l)
+												core::pi * double(l)
 														/ double(nx - 1))));
 			}
 			// The last grid point will be at x = hx
@@ -411,9 +413,9 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void initializeHandlers(
-			std::shared_ptr<xolotlFactory::IMaterialFactory> material,
-			std::shared_ptr<xolotlCore::ITemperatureHandler> tempHandler,
-			const xolotlCore::Options &options) override {
+			std::shared_ptr<factory::material::IMaterialFactory> material,
+			std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
+			const options::Options &opts) override {
 
 		// Determine who I am.
 		int myProcId = -1;
@@ -422,7 +424,7 @@ public:
 		// Initialize our random number generator.
 		bool useRNGSeedFromOptions = false;
 		bool printRNGSeed = false;
-		std::tie(useRNGSeedFromOptions, rngSeed) = options.getRNGSeed();
+		std::tie(useRNGSeedFromOptions, rngSeed) = opts.getRNGSeed();
 		if (not useRNGSeedFromOptions) {
 			// User didn't give a seed value to use, so
 			// use something based on current time and our proc id
@@ -430,7 +432,7 @@ public:
 			// be different across all processes within a given run.
 			rngSeed = time(NULL);
 		}
-		if (options.printRNGSeed()) {
+		if (opts.printRNGSeed()) {
 			std::cout << "Proc " << myProcId << " using RNG seed value "
 					<< rngSeed << std::endl;
 		}
@@ -439,20 +441,20 @@ public:
 						rngSeed + myProcId));
 
 		// Set the network loader
-		networkName = options.getNetworkFilename();
+		networkName = opts.getNetworkFilename();
 
 		// Set the grid options
 		// Take the parameter file option by default
-		nX = options.getNX(), nY = options.getNY(), nZ = options.getNZ();
-		hX = options.getXStepSize(), hY = options.getYStepSize(), hZ =
-				options.getZStepSize();
+		nX = opts.getNX(), nY = opts.getNY(), nZ = opts.getNZ();
+		hX = opts.getXStepSize(), hY = opts.getYStepSize(), hZ =
+				opts.getZStepSize();
 		// Update them if we use an HDF5 file with header group
-		if (options.useHDF5()) {
+		if (opts.useHDF5()) {
 			int nx = 0, ny = 0, nz = 0;
 			double hx = 0.0, hy = 0.0, hz = 0.0;
 
-			xolotlCore::XFile xfile(networkName);
-			auto headerGroup = xfile.getGroup<xolotlCore::XFile::HeaderGroup>();
+			io::XFile xfile(networkName);
+			auto headerGroup = xfile.getGroup<io::XFile::HeaderGroup>();
 			if (headerGroup) {
 				headerGroup->read(nx, hx, ny, hy, nz, hz);
 
@@ -463,15 +465,15 @@ public:
 
 		// Set the flux handler
 		fluxHandler =
-				(xolotlCore::IFluxHandler*) material->getFluxHandler().get();
+				(core::flux::IFluxHandler*) material->getFluxHandler().get();
 
 		// Set the temperature handler
 		temperatureHandler =
-				(xolotlCore::ITemperatureHandler*) tempHandler.get();
+				(core::temperature::ITemperatureHandler*) tempHandler.get();
 
 		// Set the diffusion handler
 		diffusionHandler =
-				(xolotlCore::IDiffusionHandler*) material->getDiffusionHandler().get();
+				(core::diffusion::IDiffusionHandler*) material->getDiffusionHandler().get();
 
 		// Set the advection handlers
 		auto handlers = material->getAdvectionHandler();
@@ -481,60 +483,60 @@ public:
 
 		// Set the modified trap-mutation handler
 		mutationHandler =
-				(xolotlCore::ITrapMutationHandler*) material->getTrapMutationHandler().get();
+				(core::modified::ITrapMutationHandler*) material->getTrapMutationHandler().get();
 
 		// Set the heterogeneous nucleation handler
 		nucleationHandler =
-				(xolotlCore::IHeterogeneousNucleationHandler*) material->getNucleationHandler().get();
+				(core::modified::IHeterogeneousNucleationHandler*) material->getNucleationHandler().get();
 
 		// Set the minimum size for the average radius compuation
-		minRadiusSizes = options.getRadiusMinSizes();
+		minRadiusSizes = opts.getRadiusMinSizes();
 
 		// Set the initial vacancy concentration
-		initialVConc = options.getInitialVConcentration();
+		initialVConc = opts.getInitialVConcentration();
 
 		// Set the electronic stopping power
-		electronicStoppingPower = options.getZeta();
+		electronicStoppingPower = opts.getZeta();
 
 		// Set the number of dimension
-		dimension = options.getDimensionNumber();
+		dimension = opts.getDimensionNumber();
 
 		// Set the void portion
-		portion = options.getVoidPortion();
+		portion = opts.getVoidPortion();
 
 		// Set the sputtering yield
-		sputteringYield = options.getSputteringYield();
+		sputteringYield = opts.getSputteringYield();
 
 		// Set the sputtering yield
-		tauBursting = options.getBurstingDepth();
+		tauBursting = opts.getBurstingDepth();
 
 		// Look at if the user wants to use a regular grid in the x direction
-		if (options.useRegularXGrid())
+		if (opts.useRegularXGrid())
 			useRegularGrid = "regular";
-		else if (options.getMaterial() == "Fuel")
+		else if (opts.getMaterial() == "Fuel")
 			useRegularGrid = "NE";
 		else
 			useRegularGrid = "PSI";
 		// Look at if the user wants to use a Chebyshev grid in the x direction
-		if (options.useChebyshevGrid())
+		if (opts.useChebyshevGrid())
 			useRegularGrid = "cheby";
 
 		// Look at if the user wants to read in the grid in the x direction
-		if (options.useReadInGrid()) {
+		if (opts.useReadInGrid()) {
 			readInGrid = true;
-			useRegularGrid = options.getGridFilename();
+			useRegularGrid = opts.getGridFilename();
 		}
 
 		// Set the boundary conditions (= 1: free surface; = 0: mirror)
-		leftOffset = options.getLeftBoundary();
-		rightOffset = options.getRightBoundary();
-		bottomOffset = options.getBottomBoundary();
-		topOffset = options.getTopBoundary();
-		frontOffset = options.getFrontBoundary();
-		backOffset = options.getBackBoundary();
+		leftOffset = opts.getLeftBoundary();
+		rightOffset = opts.getRightBoundary();
+		bottomOffset = opts.getBottomBoundary();
+		topOffset = opts.getTopBoundary();
+		frontOffset = opts.getFrontBoundary();
+		backOffset = opts.getBackBoundary();
 
 		// Should we be able to move the surface?
-		auto map = options.getProcesses();
+		auto map = opts.getProcesses();
 		movingSurface = map["movingSurface"];
 		// Should we be able to burst bubbles?
 		bubbleBursting = map["bursting"];
@@ -658,7 +660,7 @@ public:
 	 * Get the minimum size for computing average radius.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::Array<int, 4> getMinSizes() const override {
+	core::Array<int, 4> getMinSizes() const override {
 		return minRadiusSizes;
 	}
 
@@ -666,7 +668,7 @@ public:
 	 * Get the flux handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IFluxHandler* getFluxHandler() const override {
+    core::flux::IFluxHandler* getFluxHandler() const override {
 		return fluxHandler;
 	}
 
@@ -674,7 +676,7 @@ public:
 	 * Get the temperature handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::ITemperatureHandler* getTemperatureHandler() const override {
+    core::temperature::ITemperatureHandler* getTemperatureHandler() const override {
 		return temperatureHandler;
 	}
 
@@ -682,7 +684,7 @@ public:
 	 * Get the diffusion handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IDiffusionHandler* getDiffusionHandler() const override {
+    core::diffusion::IDiffusionHandler* getDiffusionHandler() const override {
 		return diffusionHandler;
 	}
 
@@ -690,7 +692,7 @@ public:
 	 * Get the advection handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IAdvectionHandler* getAdvectionHandler() const override {
+    core::advection::IAdvectionHandler* getAdvectionHandler() const override {
 		return advectionHandlers[0];
 	}
 
@@ -698,7 +700,7 @@ public:
 	 * Get the advection handlers.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<xolotlCore::IAdvectionHandler*> getAdvectionHandlers() const
+	std::vector<core::advection::IAdvectionHandler*> getAdvectionHandlers() const
 			override {
 		return advectionHandlers;
 	}
@@ -707,7 +709,7 @@ public:
 	 * Get the modified trap-mutation handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::ITrapMutationHandler* getMutationHandler() const override {
+    core::modified::ITrapMutationHandler* getMutationHandler() const override {
 		return mutationHandler;
 	}
 
@@ -715,7 +717,7 @@ public:
 	 * Get the heterogeneous nucleation handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const
+    core::modified::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const
 			override {
 		return nucleationHandler;
 	}
@@ -724,7 +726,7 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	virtual xolotlCore::experimental::IReactionNetwork& getNetwork() const
+	virtual core::network::IReactionNetwork& getNetwork() const
 			override {
 		return network;
 	}
@@ -759,5 +761,7 @@ public:
 ;
 //end class SolverHandler
 
-} /* end namespace xolotlSolver */
+} /* namespace handler */
+} /* namespace solver */
+} /* namespace xolotl */
 #endif

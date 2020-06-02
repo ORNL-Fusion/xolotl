@@ -7,7 +7,8 @@
 #include <xolotl/perf/ITimer.h>
 #include <xolotl/perf/RuntimeError.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
 
 /**
  * Detect the type of performance handlers registry to create based
@@ -81,6 +82,7 @@ struct ScopedTimer {
     }
 };
 
-} // end namespace xolotlPerf
+}//end namespace perf
+}//end namespace xolotl
 
 #endif // XOLOTLPERF_H

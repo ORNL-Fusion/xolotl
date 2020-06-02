@@ -7,14 +7,15 @@
 
 namespace bpo = boost::program_options;
 
-namespace xolotlCore {
+namespace xolotl {
+namespace options {
 
 Options::Options() :
 		shouldRunFlag(true), exitCode(EXIT_SUCCESS), petscArg(""), networkFilename(
 				""), constTempFlag(false), constTemperature(1000.0), tempProfileFlag(
 				false), tempProfileFilename(""), heatFlag(false), bulkTemperature(
 				0.0), fluxFlag(false), fluxAmplitude(0.0), fluxProfileFlag(
-				false), perfRegistryType(xolotlPerf::IHandlerRegistry::std), vizStandardHandlersFlag(
+				false), perfRegistryType(perf::IHandlerRegistry::std), vizStandardHandlersFlag(
 				false), materialName(""), initialVConcentration(0.0), voidPortion(
 				50.0), dimensionNumber(1), useRegularGridFlag(true), useChebyshevGridFlag(
 				false), readInGridFlag(false), gridFilename(""), gbList(""), groupingMin(
@@ -49,7 +50,7 @@ void Options::readParams(int argc, char *argv[]) {
 	}
 
 	// Check that the file exist
-	ifstream ifs(argv[1]);
+    std::ifstream ifs(argv[1]);
 	if (!ifs) {
 		std::cerr << "Options: unable to open parameter file: " << argv[1]
 				<< std::endl;
@@ -59,7 +60,7 @@ void Options::readParams(int argc, char *argv[]) {
 	}
 
 	// The name of the parameter file
-	string param_file;
+    std::string param_file;
 
 	// Parse the command line options.
 	bpo::options_description desc("Command line options");
@@ -80,34 +81,34 @@ void Options::readParams(int argc, char *argv[]) {
 	// allowed both on command line and in
 	// config file
 	bpo::options_description config("Parameters");
-	config.add_options()("networkFile", bpo::value<string>(&networkFilename),
+	config.add_options()("networkFile", bpo::value<std::string>(&networkFilename),
 			"The network will be loaded from this HDF5 file.")("startTemp",
-			bpo::value<string>(),
+			bpo::value<std::string>(),
 			"The temperature (in Kelvin) will be the constant floating point value specified. "
 					"(default = 1000). If two values are given, the second one is interpreted "
 					"as the bulk temperature and a gradient will be used. (NOTE: Use only ONE temperature option)")(
-			"tempFile", bpo::value<string>(&tempProfileFilename),
+			"tempFile", bpo::value<std::string>(&tempProfileFilename),
 			"A temperature profile is given by the specified file, "
 					"then linear interpolation is used to fit the data."
 					"(NOTE: If a temperature file is given, "
 					"a constant temperature should NOT be given)")("heat",
-			bpo::value<string>(),
+			bpo::value<std::string>(),
 			"The heat flux (in W nm-2) at the surface and the temperature in the bulk (Kelvin).")(
 			"flux", bpo::value<double>(&fluxAmplitude),
 			"The value of the incoming flux in #/nm2/s. If the Fuel case is used it actually "
 					"corresponds to the fission rate in #/nm3/s.")("fluxFile",
-			bpo::value<string>(&fluxProfileFilename),
+			bpo::value<std::string>(&fluxProfileFilename),
 			"A time profile for the flux is given by the specified file, "
 					"then linear interpolation is used to fit the data."
 					"(NOTE: If a flux profile file is given, "
 					"a constant flux should NOT be given)")("perfHandler",
-			bpo::value<string>()->default_value("std"),
+			bpo::value<std::string>()->default_value("std"),
 			"Which set of performance handlers to use. (default = std, available std,dummy,os,papi).")(
-			"vizHandler", bpo::value<string>()->default_value("dummy"),
+			"vizHandler", bpo::value<std::string>()->default_value("dummy"),
 			"Which set of handlers to use for the visualization. (default = dummy, available std,dummy).")(
 			"dimensions", bpo::value<int>(&dimensionNumber),
 			"Number of dimensions for the simulation.")("material",
-			bpo::value<string>(&materialName),
+			bpo::value<std::string>(&materialName),
 			"The material options are as follows: {W100, W110, W111, "
 					"W211, Fuel, TRIDYN, Fe, 800H}, where W is for tungsten and "
 					"the numbers correspond to the surface orientation.")(
@@ -117,35 +118,35 @@ void Options::readParams(int argc, char *argv[]) {
 			"The value of the electronic stopping power in the material (0.73 by default).")(
 			"voidPortion", bpo::value<double>(&voidPortion),
 			"The value (in %) of the void portion at the start of the simulation.")(
-			"regularGrid", bpo::value<string>(),
+			"regularGrid", bpo::value<std::string>(),
 			"Will the grid be regularly spaced in the x direction? (available yes,no,cheby,<filename>)")(
-			"petscArgs", bpo::value<string>(&petscArg),
+			"petscArgs", bpo::value<std::string>(&petscArg),
 			"All the arguments that will be given to PETSc.")("process",
-			bpo::value<string>(),
+			bpo::value<std::string>(),
 			"List of all the processes to use in the simulation (reaction, diff, "
 					"advec, modifiedTM, movingSurface, bursting, attenuation, oneResolution, "
 					"fullResolution, heterogeneous).")("grain",
-			bpo::value<string>(&gbList),
+			bpo::value<std::string>(&gbList),
 			"This option allows the user to add GB in the X, Y, or Z directions. "
 					"To do so, simply write the direction followed "
 					"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")(
-			"grouping", bpo::value<string>(),
+			"grouping", bpo::value<std::string>(),
 			"This option allows the use a grouping scheme starting at the cluster "
 					"with 'min' size and with the given width.")("sputtering",
 			bpo::value<double>(&sputteringYield),
 			"This option allows the user to add a sputtering yield (atoms/ion).")(
-			"netParam", bpo::value<string>(),
+			"netParam", bpo::value<std::string>(),
 			"This option allows the user to define the boundaries of the network. "
 					"To do so, simply write the values in order "
 					"maxHe/Xe maxD maxT maxV maxI bool .")("grid",
-			bpo::value<string>(),
+			bpo::value<std::string>(),
 			"This option allows the user to define the boundaries of the grid. "
 					"To do so, simply write the values in order "
 					"nX xStepSize nY yStepSize nZ zStepSize .")("radiusSize",
-			bpo::value<string>(),
+			bpo::value<std::string>(),
 			"This option allows the user a minimum size for the computation "
 					"for the average radius (default is 0).")("boundary",
-			bpo::value<string>(),
+			bpo::value<std::string>(),
 			"This option allows the user to choose the boundary conditions. "
 					"The first one correspond to the left side (surface) "
 					"and second one to the right (bulk), "
@@ -153,7 +154,7 @@ void Options::readParams(int argc, char *argv[]) {
 					"0 means mirror or periodic, 1 means free surface.")(
 			"burstingDepth", bpo::value<double>(&burstingDepth),
 			"This option allows the user to set a depth in nm "
-					"for the bubble bursting.")("rng", bpo::value<string>(),
+					"for the bubble bursting.")("rng", bpo::value<std::string>(),
 			"Allows user to specify seed used to initialize random number "
 					"generator (default = determined from current time) and "
 					"whether each process should print the seed value "
@@ -163,7 +164,7 @@ void Options::readParams(int argc, char *argv[]) {
 			"density", bpo::value<double>(&density),
 			"This option allows the user to set a density in nm-3 "
 					"for the number of xenon per volume in a bubble.")("pulse",
-			bpo::value<string>(),
+			bpo::value<std::string>(),
 			"The total length of the pulse (in s) and the proportion of it that is ON.")(
 			"lattice", bpo::value<double>(&latticeParameter),
 			"This option allows the user to set the length of the lattice side in nm.")(
@@ -191,7 +192,7 @@ void Options::readParams(int argc, char *argv[]) {
 	}
 
 	if (shouldRunFlag) {
-		ifstream ifs(param_file.c_str());
+        std::ifstream ifs(param_file.c_str());
 		if (!ifs) {
 			std::cerr << "Options: unable to open parameter file: " <<
 				param_file << std::endl;
@@ -204,9 +205,9 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the temperature
 		if (opts.count("startTemp")) {
 			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<double> reader;
+			io::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["startTemp"].as<string>());
+					opts["startTemp"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -242,9 +243,9 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the heat
 		if (opts.count("heat")) {
 			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<double> reader;
+			io::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["heat"].as<string>());
+					opts["heat"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -278,9 +279,9 @@ void Options::readParams(int argc, char *argv[]) {
 		if (opts.count("perfHandler")) {
 			try {
 				// Determine the type of handlers we are being asked to use
-				xolotlPerf::IHandlerRegistry::RegistryType rtype =
-						xolotlPerf::toPerfRegistryType(
-								opts["perfHandler"].as<string>());
+				perf::IHandlerRegistry::RegistryType rtype =
+						perf::toPerfRegistryType(
+								opts["perfHandler"].as<std::string>());
 				perfRegistryType = rtype;
 			} catch (const std::invalid_argument &e) {
 				std::cerr
@@ -294,9 +295,9 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the visualization handler
 		if (opts.count("vizHandler")) {
 			// Determine the type of handlers we are being asked to use
-			if (opts["vizHandler"].as<string>() == "std") {
+			if (opts["vizHandler"].as<std::string>() == "std") {
 				vizStandardHandlersFlag = true;
-			} else if (opts["vizHandler"].as<string>() == "dummy") {
+			} else if (opts["vizHandler"].as<std::string>() == "dummy") {
 				vizStandardHandlersFlag = false;
 			} else {
 				std::cerr
@@ -309,7 +310,7 @@ void Options::readParams(int argc, char *argv[]) {
 
 		// Take care of the grid
 		if (opts.count("regularGrid")) {
-			auto arg = opts["regularGrid"].as<string>();
+			auto arg = opts["regularGrid"].as<std::string>();
 			// Determine the type of handlers we are being asked to use
 			if (arg == "yes") {
 				useRegularGridFlag = true;
@@ -327,16 +328,16 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the radius minimum size
 		if (opts.count("radiusSize")) {
 			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<int> reader;
+			io::TokenizedLineReader<int> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["radiusSize"].as<string>());
+					opts["radiusSize"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
 			auto tokens = reader.loadLine();
 
 			// Create the array of sizes
-			Array<int, 4> sizes;
+            core::Array<int, 4> sizes;
 			sizes.Init(0);
 
 			// Set the values
@@ -349,9 +350,9 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the processes
 		if (opts.count("process")) {
 			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<string> reader;
+			io::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["process"].as<string>());
+					opts["process"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -388,9 +389,9 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the gouping
 		if (opts.count("grouping")) {
 			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<int> reader;
+			io::TokenizedLineReader<int> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["grouping"].as<string>());
+					opts["grouping"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -408,9 +409,9 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the network parameters
 		if (opts.count("netParam")) {
 			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<string> reader;
+			io::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["netParam"].as<string>());
+					opts["netParam"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -444,9 +445,9 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the grid
 		if (opts.count("grid")) {
 			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<string> reader;
+			io::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["grid"].as<string>());
+					opts["grid"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -474,9 +475,9 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the boundary conditions
 		if (opts.count("boundary")) {
 			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<int> reader;
+			io::TokenizedLineReader<int> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["boundary"].as<string>());
+					opts["boundary"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -503,9 +504,9 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the rng
 		if (opts.count("rng")) {
 			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<string> reader;
+			io::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["rng"].as<string>());
+					opts["rng"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -546,9 +547,9 @@ void Options::readParams(int argc, char *argv[]) {
 		// Take care of the flux pulse
 		if (opts.count("pulse")) {
 			// Build an input stream from the argument string.
-			xolotlCore::TokenizedLineReader<double> reader;
+			io::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["pulse"].as<string>());
+					opts["pulse"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -562,4 +563,5 @@ void Options::readParams(int argc, char *argv[]) {
 	return;
 }
 
-} // end namespace xolotlCore
+} // end namespace options
+} // end namespace xolotl

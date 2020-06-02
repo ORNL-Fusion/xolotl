@@ -7,6 +7,7 @@
 #include <xolotl/options/Options.h>
 
 using namespace std;
+using namespace xolotl::options;
 
 /**
  * Test suite for the Options class.
@@ -14,7 +15,7 @@ using namespace std;
 BOOST_AUTO_TEST_SUITE (Options_testSuite)
 
 BOOST_AUTO_TEST_CASE(noOptions) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Build a fake, empty command line.
 	// Here, "empty" is what the shell would give us if no arguments
@@ -36,7 +37,7 @@ BOOST_AUTO_TEST_CASE(noOptions) {
 }
 
 BOOST_AUTO_TEST_CASE(badParamFileName) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	string pathToFile("bla.txt");
 	string filename = pathToFile;
@@ -59,7 +60,7 @@ BOOST_AUTO_TEST_CASE(badParamFileName) {
 
 BOOST_AUTO_TEST_CASE(badParamFile) {
 	try {
-		xolotlCore::Options opts;
+		Options opts;
 
 		// Create a bad parameter file
 		std::ofstream badParamFile("param_bad.txt");
@@ -94,7 +95,7 @@ BOOST_AUTO_TEST_CASE(badParamFile) {
 }
 
 BOOST_AUTO_TEST_CASE(goodParamFile) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a good parameter file
 	std::ofstream goodParamFile("param_good.txt");
@@ -153,7 +154,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerType(),
-			xolotlPerf::IHandlerRegistry::std);
+			xolotl::perf::IHandlerRegistry::std);
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.useVizStandardHandlers(), true);
@@ -255,7 +256,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile) {
 }
 
 BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a good parameter file
 	std::ofstream goodParamFile("param_good.txt");
@@ -304,7 +305,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5) {
 }
 
 BOOST_AUTO_TEST_CASE(wrongPerfHandler) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a parameter file with a wrong performance handler name
 	std::ofstream paramFile("param_perf_wrong.txt");
@@ -335,7 +336,7 @@ BOOST_AUTO_TEST_CASE(wrongPerfHandler) {
 }
 
 BOOST_AUTO_TEST_CASE(wrongVizHandler) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a parameter file with a wrong visualization handler name
 	std::ofstream paramFile("param_viz_wrong.txt");
@@ -394,7 +395,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles) {
 			"4.0 0.0";
 	writeFluxFile.close();
 
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a parameter file using these two profile files
 	std::ofstream paramFile("param_good_profiles.txt");
@@ -442,7 +443,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles) {
 }
 
 BOOST_AUTO_TEST_CASE(readGridIn) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a parameter file with a file name for the grid
 	std::ofstream paramFile("param_read_in_grid.txt");
@@ -477,7 +478,7 @@ BOOST_AUTO_TEST_CASE(readGridIn) {
 }
 
 BOOST_AUTO_TEST_CASE(wrongFluxProfile) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a parameter file with a wrong flux profile file name name
 	std::ofstream paramFile("param_flux_wrong.txt");
@@ -508,7 +509,7 @@ BOOST_AUTO_TEST_CASE(wrongFluxProfile) {
 }
 
 BOOST_AUTO_TEST_CASE(wrongTempProfile) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a parameter file with a wrong temperature profile file name name
 	std::ofstream paramFile("param_temp_wrong.txt");
@@ -539,7 +540,7 @@ BOOST_AUTO_TEST_CASE(wrongTempProfile) {
 }
 
 BOOST_AUTO_TEST_CASE(papiPerfHandler) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a parameter file using the PAPI performance handlers
 	std::ofstream paramFile("param_good_perf_papi.txt");
@@ -566,7 +567,7 @@ BOOST_AUTO_TEST_CASE(papiPerfHandler) {
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerType(),
-			xolotlPerf::IHandlerRegistry::papi);
+			xolotl::perf::IHandlerRegistry::papi);
 
 	// Remove the created file
 	std::string tempFile = "param_good_perf_papi.txt";
@@ -574,7 +575,7 @@ BOOST_AUTO_TEST_CASE(papiPerfHandler) {
 }
 
 BOOST_AUTO_TEST_CASE(osPerfHandler) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a parameter file using the OS performance handlers
 	std::ofstream paramFile("param_good_perf_os.txt");
@@ -601,7 +602,7 @@ BOOST_AUTO_TEST_CASE(osPerfHandler) {
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerType(),
-			xolotlPerf::IHandlerRegistry::os);
+			xolotl::perf::IHandlerRegistry::os);
 
 	// Remove the created file
 	std::string tempFile = "param_good_perf_os.txt";
@@ -609,7 +610,7 @@ BOOST_AUTO_TEST_CASE(osPerfHandler) {
 }
 
 BOOST_AUTO_TEST_CASE(dummyPerfHandler) {
-	xolotlCore::Options opts;
+	Options opts;
 
 	// Create a parameter file using the dummy performance handlers
 	std::ofstream paramFile("param_good_perf_dummy.txt");
@@ -636,7 +637,7 @@ BOOST_AUTO_TEST_CASE(dummyPerfHandler) {
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerType(),
-			xolotlPerf::IHandlerRegistry::dummy);
+			xolotl::perf::IHandlerRegistry::dummy);
 
 	// Remove the created file
 	std::string tempFile = "param_good_perf_dummy.txt";

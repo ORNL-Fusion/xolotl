@@ -5,9 +5,11 @@
 #include <array>
 #include <memory>
 #include <xolotl/core/NDPoint.h>
-#include <xolotl/core/reactants/IReactionNetwork.h>
+#include <xolotl/core/network/IReactionNetwork.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace advection {
 
 /**
  * Realizations of this interface are responsible for all the physical parts
@@ -31,8 +33,8 @@ public:
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for advecting clusters.
 	 */
-	virtual void initialize(experimental::IReactionNetwork& network,
-			experimental::IReactionNetwork::SparseFillMap& ofillMap) = 0;
+	virtual void initialize(network::IReactionNetwork& network,
+			network::IReactionNetwork::SparseFillMap& ofillMap) = 0;
 
 	/**
 	 * Set the number of dimension
@@ -88,7 +90,7 @@ public:
 	 * @param hz The step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	virtual void computeAdvection(experimental::IReactionNetwork& network,
+	virtual void computeAdvection(network::IReactionNetwork& network,
 			const Point<3>& pos, double **concVector, double *updatedConcOffset,
 			double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
 			double hz = 0.0, int iz = 0) const = 0;
@@ -114,7 +116,7 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void computePartialsForAdvection(
-			experimental::IReactionNetwork& network, double *val,
+			network::IReactionNetwork& network, double *val,
 			int *indices, const Point<3>& pos, double hxLeft, double hxRight,
 			int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
 			int iz = 0) const = 0;
@@ -162,5 +164,7 @@ public:
 };
 //end class IAdvectionHandler
 
-} /* namespace xolotlCore */
+} /* namespace advection */
+} /* namespace core */
+} /* namespace xolotl */
 #endif

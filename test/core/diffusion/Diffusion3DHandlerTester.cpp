@@ -6,12 +6,13 @@
 #include <fstream>
 #include <iostream>
 #include <xolotl/core/diffusion/Diffusion3DHandler.h>
-#include <xolotl/core/reactants/PSIReactionNetwork.h>
+#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/config.h>
 
 using namespace std;
-using namespace xolotlCore;
+using namespace xolotl::core;
+using namespace diffusion;
 
 class KokkosContext {
 public:
@@ -36,7 +37,7 @@ BOOST_AUTO_TEST_SUITE(Diffusion3DHandler_testSuite)
  */
 BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	// Create the option to create a network
-	xolotlCore::Options opts;
+    xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 1 0" << std::endl;
@@ -65,8 +66,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	}
 
 	// Create the network
-	using NetworkType =
-	experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
@@ -82,10 +82,10 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	Diffusion3DHandler diffusionHandler(opts.getMigrationThreshold());
 
 	// Create a collection of advection handlers
-	std::vector<IAdvectionHandler*> advectionHandlers;
+	std::vector<advection::IAdvectionHandler*> advectionHandlers;
 
 	// Create ofill
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
+	network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize it
 	diffusionHandler.initializeOFill(network, ofill);

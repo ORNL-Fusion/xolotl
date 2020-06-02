@@ -4,7 +4,9 @@
 #include <cmath>
 #include <xolotl/core/flux/PSIFluxHandler.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace flux {
 
 /**
  * This class realizes the IFluxHandler interface to calculate the incident helium flux
@@ -53,6 +55,8 @@ public:
 };
 //end class W110FitFluxHandler
 
+}
+}
 }
 
 #endif

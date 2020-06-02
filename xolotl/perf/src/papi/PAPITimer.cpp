@@ -2,7 +2,9 @@
 #include <stdexcept>
 #include <xolotl/perf/papi/PAPITimer.h>
 
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace papi {
 
 PAPITimer::Timestamp PAPITimer::invalidValue = -1;
 
@@ -46,5 +48,6 @@ std::string PAPITimer::getUnits(void) const {
 	return std::string("s");
 }
 
-} // namespace xolotlPerf
-
+} // namespace papi
+} // namespace perf
+} // namespace xolotl

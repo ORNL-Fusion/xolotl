@@ -5,8 +5,6 @@
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/io/XFile.h>
 
-using namespace xolotlCore;
-
 /*
  C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.
 
@@ -24,24 +22,27 @@ using namespace xolotlCore;
 
  */
 
-namespace xolotlSolver {
+namespace xolotl {
+namespace solver {
 
 //Timer for RHSFunction()
-std::shared_ptr<xolotlPerf::ITimer> RHSFunctionTimer;
+std::shared_ptr<perf::ITimer> RHSFunctionTimer;
 
 ////Timer for RHSJacobian()
-std::shared_ptr<xolotlPerf::ITimer> RHSJacobianTimer;
+std::shared_ptr<perf::ITimer> RHSJacobianTimer;
 
 //! Help message
 static char help[] =
 		"Solves C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.\n";
 
 // ----- GLOBAL VARIABLES ----- //
+namespace monitor {
 extern PetscErrorCode setupPetsc0DMonitor(TS);
 extern PetscErrorCode setupPetsc1DMonitor(TS,
-		std::shared_ptr<xolotlPerf::IHandlerRegistry>);
+		std::shared_ptr<perf::IHandlerRegistry>);
 extern PetscErrorCode setupPetsc2DMonitor(TS);
 extern PetscErrorCode setupPetsc3DMonitor(TS);
+}
 
 void PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Initialize the concentrations in the solution vector
@@ -168,8 +169,8 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void*) {
 	PetscFunctionReturn(0);
 }
 
-PetscSolver::PetscSolver(ISolverHandler &_solverHandler,
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+PetscSolver::PetscSolver(handler::ISolverHandler &_solverHandler,
+		std::shared_ptr<perf::IHandlerRegistry> registry) :
 		Solver(_solverHandler, registry) {
 	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
 	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
@@ -251,8 +252,8 @@ void PetscSolver::solve() {
 	double time = 0.0, deltaTime = 1.0e-12;
 	if (!fileName.empty()) {
 
-		XFile xfile(fileName);
-		auto concGroup = xfile.getGroup<XFile::ConcentrationGroup>();
+        io::XFile xfile(fileName);
+		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 			auto tsGroup = concGroup->getLastTimestepGroup();
 			assert(tsGroup);
@@ -272,25 +273,25 @@ void PetscSolver::solve() {
 	switch (dim) {
 	case 0:
 		// One dimension
-		ierr = setupPetsc0DMonitor(ts);
+		ierr = monitor::setupPetsc0DMonitor(ts);
 		checkPetscError(ierr,
 				"PetscSolver::solve: setupPetsc0DMonitor failed.");
 		break;
 	case 1:
 		// One dimension
-		ierr = setupPetsc1DMonitor(ts, handlerRegistry);
+		ierr = monitor::setupPetsc1DMonitor(ts, handlerRegistry);
 		checkPetscError(ierr,
 				"PetscSolver::solve: setupPetsc1DMonitor failed.");
 		break;
 	case 2:
 		// Two dimensions
-		ierr = setupPetsc2DMonitor(ts);
+		ierr = monitor::setupPetsc2DMonitor(ts);
 		checkPetscError(ierr,
 				"PetscSolver::solve: setupPetsc2DMonitor failed.");
 		break;
 	case 3:
 		// Three dimensions
-		ierr = setupPetsc3DMonitor(ts);
+		ierr = monitor::setupPetsc3DMonitor(ts);
 		checkPetscError(ierr,
 				"PetscSolver::solve: setupPetsc3DMonitor failed.");
 		break;
@@ -371,4 +372,5 @@ void PetscSolver::finalize() {
 	return;
 }
 
-} /* end namespace xolotlSolver */
+} /* end namespace solver */
+} /* end namespace xolotl */

@@ -7,9 +7,11 @@
 #include <algorithm>
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/core/flux/AlloySRIMData.h>
-#include <xolotl/core/reactants/AlloyReactionNetwork.h>
+#include <xolotl/core/network/AlloyReactionNetwork.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace flux {
 
 /**
  * This class realizes the IFluxHandler interface to calculate the incident fluxes
@@ -135,7 +137,7 @@ public:
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(experimental::IReactionNetwork &network,
+	void initializeFluxHandler(network::IReactionNetwork &network,
 			int surfacePos, std::vector<double> grid) {
 
 		// Setup the ion damage and implantation depth profile
@@ -159,7 +161,7 @@ public:
 		}
 
 		using NetworkType =
-		experimental::AlloyReactionNetwork;
+		network::AlloyReactionNetwork;
 		auto alloyNetwork = dynamic_cast<NetworkType*>(&network);
 
 		// Iterate over all produced cluster species
@@ -313,6 +315,8 @@ public:
 };
 // end class AlloyFitFluxHandler
 
+}
+}
 }
 
 #endif

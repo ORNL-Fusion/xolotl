@@ -1,14 +1,13 @@
 // Includes
 #include <xolotl/solver/Solver.h>
 
-using namespace xolotlCore;
+namespace xolotl {
+namespace solver {
 
-namespace xolotlSolver {
+handler::ISolverHandler *Solver::solverHandler = nullptr;
 
-ISolverHandler *Solver::solverHandler = nullptr;
-
-Solver::Solver(ISolverHandler &_solverHandler,
-		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
+Solver::Solver(handler::ISolverHandler &_solverHandler,
+		std::shared_ptr<perf::IHandlerRegistry> registry) :
 		optionsString(""), handlerRegistry(registry) {
 
 	solverHandler = &_solverHandler;
@@ -19,4 +18,5 @@ void Solver::setCommandLineOptions(std::string arg) {
 	optionsString = arg;
 }
 
-} /* end namespace xolotlSolver */
+} /* end namespace solver */
+} /* end namespace xolotl */

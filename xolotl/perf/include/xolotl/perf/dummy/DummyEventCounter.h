@@ -5,15 +5,15 @@
 #include <xolotl/core/Identifiable.h>
 #include <xolotl/perf/IEventCounter.h>
 
-using namespace std;
-
-namespace xolotlPerf {
+namespace xolotl {
+namespace perf {
+namespace dummy {
 
 /**
  * The DummyEventCounter class is instantiated by the DummyHandlerRegistry
  * class and realizes the DummyEventCounter interface.
  */
-class DummyEventCounter: public IEventCounter, public xolotlCore::Identifiable {
+class DummyEventCounter: public IEventCounter, public core::Identifiable {
 
 private:
 
@@ -22,7 +22,7 @@ private:
 	 *  must be initialized with a name.
 	 */
 	DummyEventCounter(void) :
-			xolotlCore::Identifiable("unused") {
+			core::Identifiable("unused") {
 	}
 
 public:
@@ -32,7 +32,7 @@ public:
 	 * doesn't do anything with it
 	 */
 	DummyEventCounter(const std::string& name) :
-			xolotlCore::Identifiable("unused") {
+			core::Identifiable("unused") {
 	}
 
 	/**
@@ -58,6 +58,8 @@ public:
 };
 //end class DummyEventCounter
 
-}//end namespace xolotlPerf
+}//end namespace dummy
+}//end namespace perf
+}//end namespace xolotl
 
 #endif

@@ -10,7 +10,8 @@
 #include <xolotl/test/config.h>
 
 using namespace std;
-using namespace xolotlCore;
+using namespace xolotl::core;
+using namespace temperature;
 
 /**
  * This suite is responsible for testing the HeatEquationHandler.
@@ -27,8 +28,8 @@ BOOST_AUTO_TEST_CASE(checkHeat1D) {
 
 	// Create the heat handler
 	HeatEquation1DHandler heatHandler = HeatEquation1DHandler(5.0e-12, 1000.0);
-	heatHandler.setHeatCoefficient(xolotlCore::tungstenHeatCoefficient);
-	heatHandler.setHeatConductivity(xolotlCore::tungstenHeatConductivity);
+	heatHandler.setHeatCoefficient(tungstenHeatCoefficient);
+	heatHandler.setHeatConductivity(tungstenHeatConductivity);
 
 	// Check the initial temperatures
 	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature( { 0.0, 0.0, 0.0 }, 0.0),
@@ -37,9 +38,9 @@ BOOST_AUTO_TEST_CASE(checkHeat1D) {
 			1000.0, 0.01);
 
 	// Create ofill
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
+	network::IReactionNetwork::SparseFillMap ofill;
 	// Create dfill
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap dfill;
+	network::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize it
 	heatHandler.initializeTemperature(dof, ofill, dfill);
@@ -116,8 +117,8 @@ BOOST_AUTO_TEST_CASE(checkHeat2D) {
 
 	// Create the heat handler
 	HeatEquation2DHandler heatHandler = HeatEquation2DHandler(5.0e-12, 1000.0);
-	heatHandler.setHeatCoefficient(xolotlCore::tungstenHeatCoefficient);
-	heatHandler.setHeatConductivity(xolotlCore::tungstenHeatConductivity);
+	heatHandler.setHeatCoefficient(tungstenHeatCoefficient);
+	heatHandler.setHeatConductivity(tungstenHeatConductivity);
 
 	// Check the initial temperatures
 	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature( { 0.0, 0.0, 0.0 }, 0.0),
@@ -126,9 +127,9 @@ BOOST_AUTO_TEST_CASE(checkHeat2D) {
 			1000.0, 0.01);
 
 	// Create ofill
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
+	network::IReactionNetwork::SparseFillMap ofill;
 	// Create dfill
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap dfill;
+	network::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize it
 	heatHandler.initializeTemperature(dof, ofill, dfill);
@@ -214,8 +215,8 @@ BOOST_AUTO_TEST_CASE(checkHeat3D) {
 
 	// Create the heat handler
 	HeatEquation3DHandler heatHandler = HeatEquation3DHandler(5.0e-12, 1000.0);
-	heatHandler.setHeatCoefficient(xolotlCore::tungstenHeatCoefficient);
-	heatHandler.setHeatConductivity(xolotlCore::tungstenHeatConductivity);
+	heatHandler.setHeatCoefficient(tungstenHeatCoefficient);
+	heatHandler.setHeatConductivity(tungstenHeatConductivity);
 
 	// Check the initial temperatures
 	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature( { 0.0, 0.0, 0.0 }, 0.0),
@@ -224,9 +225,9 @@ BOOST_AUTO_TEST_CASE(checkHeat3D) {
 			1000.0, 0.01);
 
 	// Create ofill
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap ofill;
+	network::IReactionNetwork::SparseFillMap ofill;
 	// Create dfill
-	xolotlCore::experimental::IReactionNetwork::SparseFillMap dfill;
+	network::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize it
 	heatHandler.initializeTemperature(dof, ofill, dfill);

@@ -1,7 +1,8 @@
 #ifndef PLOTTYPE_H
 #define PLOTTYPE_H
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
 
 /**
  * Enumeration of the different standard plot types available.
@@ -32,6 +33,7 @@ enum PlotType {
 
 //end enum PlotType
 
-} /* namespace xolotlViz */
+} /* namespace viz */
+} /* namespace xolotl */
 
 #endif

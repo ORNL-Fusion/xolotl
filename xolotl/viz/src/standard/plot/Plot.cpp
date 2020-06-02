@@ -1,10 +1,13 @@
 // Includes
 #include <xolotl/viz/standard/plot/Plot.h>
 
-using namespace xolotlViz;
+namespace xolotl {
+namespace viz {
+namespace standard {
+namespace plot {
 
 Plot::Plot(const std::string& name) :
-		xolotlCore::Identifiable(name), plotStyle(PlottingStyle::LINE) {
+		core::Identifiable(name), plotStyle(PlottingStyle::LINE) {
 }
 
 Plot::~Plot() {
@@ -70,4 +73,9 @@ std::shared_ptr<IDataProvider> Plot::getDataProvider(int) const {
 
 int Plot::getDataProviderNumber() const {
 	return 0;
+}
+
+}
+}
+}
 }

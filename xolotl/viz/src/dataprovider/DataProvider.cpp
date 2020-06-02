@@ -1,9 +1,11 @@
 // Includes
 #include <xolotl/viz/dataprovider/DataProvider.h>
 
-using namespace xolotlViz;
+namespace xolotl {
+namespace viz {
+namespace dataprovider {
 
-DataProvider::DataProvider(const std::string& name) : xolotlCore::Identifiable(name) {
+DataProvider::DataProvider(const std::string& name) : core::Identifiable(name) {
 }
 
 DataProvider::~DataProvider() {
@@ -37,4 +39,8 @@ double DataProvider::getDataMean() const {
 	double result = (double) valueSum / size;
 
 	return result;
+}
+
+}
+}
 }

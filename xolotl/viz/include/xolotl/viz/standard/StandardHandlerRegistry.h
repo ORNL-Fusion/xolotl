@@ -6,7 +6,9 @@
 #include <map>
 #include <xolotl/viz/IVizHandlerRegistry.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace standard {
 
 /**
  * Factory for creating standard plots using EAVL and MESA libraries.
@@ -39,6 +41,8 @@ public:
 };
 //end class StandardHandlerRegistry
 
-}//end namespace xolotlViz
+} /* namespace standard */
+} /* namespace viz */
+} /* namespace xolotl */
 
 #endif

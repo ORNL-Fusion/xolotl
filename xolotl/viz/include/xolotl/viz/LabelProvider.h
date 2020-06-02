@@ -5,13 +5,14 @@
 #include <string>
 #include <xolotl/core/Identifiable.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
 
 /**
  * LabelProvider provides a series of labels to print on the plots.
  * One Plot must have only one LabelProvider.
  */
-class LabelProvider: public xolotlCore::Identifiable {
+class LabelProvider: public core::Identifiable {
 
 private:
 
@@ -19,7 +20,7 @@ private:
 	 * Declare the constructor as private to force the use of a name
 	 */
 	LabelProvider() :
-			xolotlCore::Identifiable("unused") {
+			core::Identifiable("unused") {
 	}
 	;
 
@@ -69,7 +70,7 @@ public:
 	 * The default constructor
 	 */
 	LabelProvider(const std::string& name) :
-			xolotlCore::Identifiable(name), axis1Label(" "), axis2Label(" "), axis3Label(
+			core::Identifiable(name), axis1Label(" "), axis2Label(" "), axis3Label(
 					" "), axis4Label(" "), titleLabel(" "), unitLabel(" "), timeLabel(
 					" "), timeStepLabel(" ") {
 	}
@@ -84,6 +85,7 @@ public:
 
 //end class LabelProvider
 
-} /* namespace xolotlViz */
+} /* namespace viz */
+} /* namespace xolotl */
 
 #endif

@@ -6,7 +6,10 @@
 #include <xolotl/viz/standard/plot/Plot.h>
 #include <xolotl/core/Identifiable.h>
 
-namespace xolotlViz {
+namespace xolotl {
+namespace viz {
+namespace standard {
+namespace plot {
 
 /**
  * Plot the different data values as a function of one dimension. Available PlottingStyle are POINTS or LINE.
@@ -70,6 +73,9 @@ public:
 
 //end class SeriesPlot
 
-} /* namespace xolotlViz */
+} /* namespace plot */
+} /* namespace standard */
+} /* namespace viz */
+} /* namespace xolotl */
 
 #endif

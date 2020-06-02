@@ -3,7 +3,8 @@
 
 #include <xolotl/core/IIdentifiable.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
 
 /**
  * An Identifiable implements the IIdentifiable interface, so
@@ -32,6 +33,7 @@ public:
 	}
 };
 
-} // end namespace xolotlCore
+} /* end namespace core */
+} /* end namespace xolotl */
 
 #endif // IDENTIFIABLE_H

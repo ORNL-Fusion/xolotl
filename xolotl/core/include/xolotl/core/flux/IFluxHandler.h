@@ -3,9 +3,11 @@
 
 #include <vector>
 #include <string>
-#include <xolotl/core/reactants/IReactionNetwork.h>
+#include <xolotl/core/network/IReactionNetwork.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace flux {
 
 /**
  * Realizations of this interface are responsible for handling the incident (incoming)
@@ -26,7 +28,7 @@ public:
 	 * @param grid The grid on the x axis
 	 */
 	virtual void initializeFluxHandler(
-			experimental::IReactionNetwork& network, int surfacePos,
+			network::IReactionNetwork& network, int surfacePos,
 			std::vector<double> grid) = 0;
 
 	/**
@@ -102,6 +104,8 @@ public:
 };
 //end class IFluxHandler
 
+}
+}
 }
 
 #endif

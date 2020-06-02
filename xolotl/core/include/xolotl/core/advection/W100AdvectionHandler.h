@@ -5,7 +5,9 @@
 #include <xolotl/core/advection/SurfaceAdvectionHandler.h>
 #include <xolotl/core/MathUtils.h>
 
-namespace xolotlCore {
+namespace xolotl {
+namespace core {
+namespace advection {
 
 /**
  * This class realizes the IAdvectionHandler interface responsible for all
@@ -35,14 +37,14 @@ public:
 	// TODO this is nearly identical for the W100, W110, W111, and W211
 	// cases.  Factor the identical parts to a base class, and only
 	// have these classes differ in the sinkStrength identification.
-	void initialize(experimental::IReactionNetwork& network,
-			experimental::IReactionNetwork::SparseFillMap& ofillMap) override {
+	void initialize(network::IReactionNetwork& network,
+			network::IReactionNetwork::SparseFillMap& ofillMap) override {
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();
 		sinkStrengthVector.clear();
 
 		using NetworkType =
-		experimental::PSIReactionNetwork<experimental::PSIFullSpeciesList>;
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 		// Initialize the composition
@@ -64,7 +66,7 @@ public:
 			double diffFactor = cluster.getDiffusionFactor();
 
 			// Don't do anything if the diffusion factor is 0.0
-			if (xolotlCore::equal(diffFactor, 0.0))
+			if (equal(diffFactor, 0.0))
 				continue;
 
 			// Switch on the size to get the sink strength (in eV.nm3)
@@ -94,7 +96,7 @@ public:
 			}
 
 			// If the sink strength is still 0.0, this cluster is not advecting
-			if (xolotlCore::equal(sinkStrength, 0.0))
+			if (equal(sinkStrength, 0.0))
 				continue;
 
 			// Get its id
@@ -116,5 +118,7 @@ public:
 };
 //end class W100AdvectionHandler
 
-} /* end namespace xolotlCore */
+} /* end namespace advection */
+} /* end namespace core */
+} /* end namespace xolotl */
 #endif
