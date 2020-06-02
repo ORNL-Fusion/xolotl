@@ -31,12 +31,12 @@ PlottingStyle Plot::getPlottingStyle() {
 	return plotStyle;
 }
 
-void Plot::setDataProvider(std::shared_ptr<IDataProvider> dataProvider) {
+void Plot::setDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider) {
 	plotDataProvider = dataProvider;
 	return;
 }
 
-std::shared_ptr<IDataProvider> Plot::getDataProvider() const {
+std::shared_ptr<dataprovider::IDataProvider> Plot::getDataProvider() const {
 	return plotDataProvider;
 }
 
@@ -63,11 +63,11 @@ void Plot::setLogScale(bool logScale) {
 	return;
 }
 
-void Plot::addDataProvider(std::shared_ptr<IDataProvider>) {
+void Plot::addDataProvider(std::shared_ptr<dataprovider::IDataProvider>) {
 	return;
 }
 
-std::shared_ptr<IDataProvider> Plot::getDataProvider(int) const {
+std::shared_ptr<dataprovider::IDataProvider> Plot::getDataProvider(int) const {
 	return plotDataProvider;
 }
 

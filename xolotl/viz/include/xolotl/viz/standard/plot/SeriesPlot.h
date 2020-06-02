@@ -31,7 +31,7 @@ private:
 	/**
 	 * Container of data providers used for the plot.
 	 */
-	std::shared_ptr<std::vector<std::shared_ptr<IDataProvider> > > plotDataProviders;
+	std::shared_ptr<std::vector<std::shared_ptr<dataprovider::IDataProvider> > > plotDataProviders;
 
 public:
 
@@ -54,14 +54,14 @@ public:
 	 * Method adding one data provider to the vector plotDataProviders
 	 * @ param dataProvider The data provider to add.
 	 */
-	void addDataProvider(std::shared_ptr<IDataProvider> dataProvider);
+	void addDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider);
 
 	/**
 	 * Method getting the i-th data provider
 	 * @ param i The number of the data provider to be returned.
 	 * @ return The ith data provider.
 	 */
-	std::shared_ptr<IDataProvider> getDataProvider(int i) const;
+	std::shared_ptr<dataprovider::IDataProvider> getDataProvider(int i) const;
 
 	/**
 	 * Method getting the total number of data providers

@@ -24,7 +24,7 @@ PAPIHardwareCounter::PAPIHardwareCounter(const std::string& name,
 	// Build the PAPI event set for our events.
 	int err = PAPI_create_eventset(&eventSet);
 	if (err != PAPI_OK) {
-		throw xolotlPerf::runtime_error("Failed to create PAPI eventset", err);
+		throw xolotl::perf::runtime_error("Failed to create PAPI eventset", err);
 	}
 	for (SpecType::const_iterator iter = spec.begin(); iter != spec.end();
 			++iter) {
@@ -36,7 +36,7 @@ PAPIHardwareCounter::PAPIHardwareCounter(const std::string& name,
 		CounterSpecInfo* currCounterSpecInfo = miter->second;
 		err = PAPI_add_event(eventSet, currCounterSpecInfo->papiEventID);
 		if (err != PAPI_OK) {
-			throw xolotlPerf::runtime_error(
+			throw xolotl::perf::runtime_error(
 					"Failed to add event to PAPI eventset", err);
 		}
 	}
@@ -57,7 +57,7 @@ PAPIHardwareCounter::~PAPIHardwareCounter(void) {
 void PAPIHardwareCounter::start(void) {
 	int err = PAPI_start(eventSet);
 	if (err != PAPI_OK) {
-		throw xolotlPerf::runtime_error(
+		throw xolotl::perf::runtime_error(
 				"Failed to start collecting configured PAPI events", err);
 	}
 }
@@ -66,7 +66,7 @@ void PAPIHardwareCounter::stop(void) {
 	assert(vals.size() > 0);
 	int err = PAPI_stop(eventSet, &(vals.front()));
 	if (err != PAPI_OK) {
-		throw xolotlPerf::runtime_error(
+		throw xolotl::perf::runtime_error(
 				"Failed to stop collecting configured PAPI events", err);
 	}
 }

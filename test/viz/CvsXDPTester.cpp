@@ -5,7 +5,8 @@
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 
 using namespace std;
-using namespace xolotlViz;
+using namespace xolotl::viz;
+using namespace dataprovider;
 
 /**
  * This suite is responsible for testing the CvsXDataProvider.

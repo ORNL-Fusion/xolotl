@@ -2,14 +2,16 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include <Plot.h>
-#include <ScatterPlot.h>
-#include <PlottingStyle.h>
-#include <DataProvider.h>
-#include <LabelProvider.h>
+#include <xolotl/viz/standard/plot/Plot.h>
+#include <xolotl/viz/standard/plot/ScatterPlot.h>
+#include <xolotl/viz/PlottingStyle.h>
+#include <xolotl/viz/LabelProvider.h>
+#include <xolotl/viz/dataprovider/DataProvider.h>
 
 using namespace std;
-using namespace xolotlViz;
+using namespace xolotl::viz;
+using namespace dataprovider;
+using namespace standard::plot;
 
 /**
  * This suite is responsible for testing the Plot class.

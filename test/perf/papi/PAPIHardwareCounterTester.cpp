@@ -7,9 +7,10 @@
 #include <boost/test/included/unit_test.hpp>
 #include <papi.h>
 #include <xolotl/perf/papi/PAPIHardwareCounter.h>
-#include <tests/perf/perfTestConfig.h>
+#include <xolotl/test/perf/config.h>
 
-using namespace xolotlPerf;
+using namespace xolotl::perf;
+using namespace papi;
 
 const IHardwareCounter::SpecType test_ctrSpec = {
 		IHardwareCounter::Instructions, IHardwareCounter::Cycles,

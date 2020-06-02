@@ -20,8 +20,12 @@ else(CMAKE_BUILD_TYPE MATCHES "^Debug$")
     set(XOLOTL_TEST_HWCTR_TOL 5)
 endif(CMAKE_BUILD_TYPE MATCHES "^Debug$")
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/perfTestConfig.h.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/perfTestConfig.h"
+execute_process(COMMAND
+    ${CMAKE_COMMAND} -E make_directory
+    ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/test/perf
+)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
+    "${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/test/perf/config.h"
 )
 
 foreach(test ${tests})

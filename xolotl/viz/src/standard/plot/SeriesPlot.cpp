@@ -39,7 +39,7 @@ namespace plot {
 
 SeriesPlot::SeriesPlot(const std::string& name) :
 		Plot(name), plotDataProviders(
-				std::make_shared<std::vector<std::shared_ptr<IDataProvider> > >()) {
+				std::make_shared<std::vector<std::shared_ptr<dataprovider::IDataProvider> > >()) {
 }
 
 SeriesPlot::~SeriesPlot() {
@@ -195,12 +195,12 @@ void SeriesPlot::render(const std::string& fileName) {
 	return;
 }
 
-void SeriesPlot::addDataProvider(std::shared_ptr<IDataProvider> dataProvider) {
+void SeriesPlot::addDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider) {
 	plotDataProviders->push_back(dataProvider);
 	return;
 }
 
-std::shared_ptr<IDataProvider> SeriesPlot::getDataProvider(int i) const {
+std::shared_ptr<dataprovider::IDataProvider> SeriesPlot::getDataProvider(int i) const {
 	return plotDataProviders->at(i);
 }
 

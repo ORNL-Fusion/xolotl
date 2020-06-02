@@ -6,7 +6,7 @@
 #include <xolotl/perf/os/OSHandlerRegistry.h>
 
 #if defined(HAVE_PAPI)
-#include "xolotlPerf/papi/PAPIHandlerRegistry.h"
+#include <xolotl/perf/papi/PAPIHandlerRegistry.h>
 #endif // defined(HAVE_PAPI)
 
 namespace xolotl {

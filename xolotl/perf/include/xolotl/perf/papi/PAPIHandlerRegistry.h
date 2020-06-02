@@ -12,7 +12,7 @@ namespace papi {
  * use the Performance API (PAPI) library for access to timers and
  * hardware counters.
  */
-class PAPIHandlerRegistry: public StdHandlerRegistry {
+class PAPIHandlerRegistry: public standard::StdHandlerRegistry {
 public:
 
 	/// Construct a handler registry.

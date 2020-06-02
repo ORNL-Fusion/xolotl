@@ -5,7 +5,8 @@
 #include <xolotl/viz/dataprovider/DataProvider.h>
 
 using namespace std;
-using namespace xolotlViz;
+using namespace xolotl::viz;
+using namespace dataprovider;
 
 /**
  * This suite is responsible for testing the DataProvider.

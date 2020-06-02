@@ -1,7 +1,7 @@
 #include <xolotl/perf/papi/PAPIHandlerRegistry.h>
 #include <xolotl/perf/papi/PAPITimer.h>
-#include <xolotl/perf/standard/EventCounter.h>
 #include <xolotl/perf/papi/PAPIHardwareCounter.h>
+#include <xolotl/perf/EventCounter.h>
 #include <xolotl/perf/RuntimeError.h>
 
 namespace xolotl {
@@ -12,7 +12,7 @@ PAPIHandlerRegistry::PAPIHandlerRegistry(void) {
 	int ret;
 	ret = PAPI_library_init(PAPI_VER_CURRENT);
 	if (ret != PAPI_VER_CURRENT) {
-		throw xolotlPerf::runtime_error(
+		throw xolotl::perf::runtime_error(
 				"Unable to initialize PAPI library for performance data collection",
 				ret);
 	}

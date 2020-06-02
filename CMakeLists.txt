@@ -57,12 +57,21 @@ if(NOT HDF5_IS_PARALLEL)
    message(STATUS "WARNING! Detected HDF5 installation does not support parallel I/O!")
 endif()
 
-## PAPI
-find_package(PAPI)
-
 ## plsm
 list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
 find_package(plsm REQUIRED)
+
+## PAPI
+find_package(PAPI)
+
+# Find VTKm
+if(VTKm_DIR OR VTKM_DIR)
+    # include(SetupVTKm)
+    list(APPEND CMAKE_PREFIX_PATH ${VTKm_DIR} ${VTKM_DIR})
+    find_package(VTKm REQUIRED)
+else()
+    message(STATUS "Visualization support needs explicit VTKm_DIR.")
+endif()
 
 ## xolotl
 add_subdirectory(xolotl)

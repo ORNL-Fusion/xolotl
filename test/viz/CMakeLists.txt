@@ -1,8 +1,8 @@
-if(VTKM_FOUND)
+if(VTKm_FOUND)
     file(GLOB tests *Tester.cpp)
-else(VTKM_FOUND)
+else(VTKm_FOUND)
     file(GLOB tests DummyPlotTester.cpp DummyDataProviderTester.cpp)
-endif(VTKM_FOUND)
+endif(VTKm_FOUND)
 
 foreach(test ${tests})
     get_filename_component(testName ${test} NAME_WE)

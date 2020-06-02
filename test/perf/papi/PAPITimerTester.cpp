@@ -6,7 +6,8 @@
 #include <xolotl/perf/papi/PAPITimer.h>
 
 using namespace std;
-using namespace xolotlPerf;
+using namespace xolotl::perf;
+using namespace papi;
 
 /**
  * This suite is responsible for testing the PAPITimer.
