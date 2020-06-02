@@ -10,17 +10,8 @@ using namespace std;
 using namespace xolotl::core;
 using namespace network;
 
-class KokkosContext {
-public:
-	KokkosContext() {
-		::Kokkos::initialize();
-	}
-
-	~KokkosContext() {
-		::Kokkos::finalize();
-	}
-};
-BOOST_GLOBAL_FIXTURE(KokkosContext);
+using Kokkos::ScopeGuard;
+BOOST_GLOBAL_FIXTURE(ScopeGuard);
 
 /**
  * This suite is responsible for testing the experimental networks.

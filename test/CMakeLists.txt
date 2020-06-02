@@ -5,6 +5,7 @@ endif()
 find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 
 set(XOLOTL_TEST_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
 execute_process(COMMAND
     ${CMAKE_COMMAND} -E make_directory ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/test
 )

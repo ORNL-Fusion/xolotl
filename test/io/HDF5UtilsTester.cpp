@@ -15,17 +15,8 @@
 using namespace std;
 using namespace xolotl::io;
 
-class KokkosContext {
-public:
-	KokkosContext() {
-		::Kokkos::initialize();
-	}
-
-	~KokkosContext() {
-		::Kokkos::finalize();
-	}
-};
-BOOST_GLOBAL_FIXTURE(KokkosContext);
+using Kokkos::ScopeGuard;
+BOOST_GLOBAL_FIXTURE(ScopeGuard);
 
 // Initialize MPI before running any tests; finalize it running all tests.
 BOOST_GLOBAL_FIXTURE(MPIFixture);
