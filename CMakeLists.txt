@@ -58,6 +58,9 @@ if(NOT HDF5_IS_PARALLEL)
 endif()
 
 ## plsm
+if(NOT plsm_DIR)
+    include(Getplsm)
+endif()
 list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
 find_package(plsm REQUIRED)
 
