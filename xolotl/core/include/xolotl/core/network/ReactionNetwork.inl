@@ -110,8 +110,7 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
     mirror(0) = this->_latticeParameter;
     Kokkos::deep_copy(_clusterData.latticeParameter, mirror);
 
-    this->_atomicVolume =
-        0.5 * lParam * lParam * lParam;
+    this->_atomicVolume = asDerived()->computeAtomicVolume(lParam);
     mirror = Kokkos::create_mirror_view(_clusterData.atomicVolume);
     mirror(0) = this->_atomicVolume;
     Kokkos::deep_copy(_clusterData.atomicVolume, mirror);

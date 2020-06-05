@@ -43,6 +43,13 @@ private:
         return latticeParameter;
     }
 
+    double
+    computeAtomicVolume(double latticeParameter)
+    {
+        // 4 atoms per cell
+        return 0.25 * latticeParameter * latticeParameter * latticeParameter;
+    }
+
     double checkImpurityRadius(double impurityRadius)
     {
         if (impurityRadius <= 0.0) {
