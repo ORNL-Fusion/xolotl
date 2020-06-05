@@ -124,7 +124,7 @@ void Options::readParams(int argc, char *argv[]) {
 			bpo::value<string>(),
 			"List of all the processes to use in the simulation (reaction, diff, "
 					"advec, modifiedTM, movingSurface, bursting, attenuation, oneResolution, "
-					"fullResolution, heterogeneous).")("grain",
+					"partialResolution, fullResolution, heterogeneous).")("grain",
 			bpo::value<string>(&gbList),
 			"This option allows the user to add GB in the X, Y, or Z directions. "
 					"To do so, simply write the direction followed "
@@ -361,6 +361,7 @@ void Options::readParams(int argc, char *argv[]) {
 			processMap["bursting"] = false;
 			processMap["attenuation"] = false;
 			processMap["fullResolution"] = false;
+			processMap["partialResolution"] = false;
 			processMap["oneResolution"] = false;
 			processMap["heterogeneous"] = false;
 

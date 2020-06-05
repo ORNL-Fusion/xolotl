@@ -121,7 +121,7 @@ public:
 					xolotlCore::DummyTrapMutationHandler>();
 		if (!map["attenuation"])
 			theTrapMutationHandler->setAttenuation(false);
-		if (!map["oneResolution"] && !map["fullResolution"])
+		if (!map["oneResolution"] && !map["partialResolution"] && !map["fullResolution"])
 			theReSolutionHandler = std::make_shared<
 					xolotlCore::DummyReSolutionHandler>();
 		if (!map["heterogeneous"])

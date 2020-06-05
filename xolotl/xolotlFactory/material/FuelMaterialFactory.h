@@ -5,6 +5,7 @@
 #include <MaterialFactory.h>
 #include <FuelFitFluxHandler.h>
 #include <OneReSolutionHandler.h>
+#include <PartialReSolutionHandler.h>
 #include <FullReSolutionHandler.h>
 #include <DummyReSolutionHandler.h>
 #include <HeterogeneousNucleationHandler.h>
@@ -38,6 +39,9 @@ public:
 		if (map["oneResolution"])
 			theReSolutionHandler = std::make_shared<
 					xolotlCore::OneReSolutionHandler>();
+		else if (map["partialResolution"])
+			theReSolutionHandler = std::make_shared<
+					xolotlCore::PartialReSolutionHandler>();
 		else if (map["fullResolution"])
 			theReSolutionHandler = std::make_shared<
 					xolotlCore::FullReSolutionHandler>();

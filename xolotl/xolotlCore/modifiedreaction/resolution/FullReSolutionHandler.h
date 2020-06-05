@@ -64,7 +64,7 @@ public:
 					if (size > 1) {
 
 						// Initialize the coefficients
-						Array<double, 10> coefs;
+						Array<double, 11> coefs;
 						coefs.Init(0.0);
 						// Different if it is a super cluster
 						if (cluster.getType() == ReactantType::NESuper) {
@@ -90,7 +90,7 @@ public:
 								coefs[3] += factor;
 								coefs[4] += distance;
 								coefs[5] += distance * factor;
-								coefs[6] += (double) i;
+								coefs[10] += (double) i;
 							}
 
 							// Set the connectivities
@@ -107,7 +107,7 @@ public:
 							coefs[3] = coefs[3] / ((double) sectionWidth);
 							coefs[4] = coefs[4] / ((double) sectionWidth);
 							coefs[5] = coefs[5] / ((double) sectionWidth);
-							coefs[6] = coefs[6] / ((double) sectionWidth);
+							coefs[10] = coefs[10] / ((double) sectionWidth);
 							// Compute the fraction rate
 							auto radius = cluster.getReactionRadius();
 							double fractionRate = 4.0 * xolotlCore::pi * mu
@@ -122,7 +122,7 @@ public:
 							singleXenon->setDissociationConnectivity(
 									cluster.getId());
 							// Add the size to the vector
-							coefs[0] = 1.0, coefs[2] = 1.0, coefs[6] = size;
+							coefs[0] = 1.0, coefs[2] = 1.0, coefs[10] = size;
 							// Compute the fraction rate
 							auto radius = cluster.getReactionRadius();
 							double fractionRate = 4.0 * xolotlCore::pi * mu
@@ -182,7 +182,7 @@ public:
 			auto cluster = currPair.larger;
 			int id = cluster->getId() - 1;
 			int momId = cluster->getMomentId() - 1;
-			double size = currPair.coefs[6];
+			double size = currPair.coefs[10];
 			double rate = currPair.fractionRate * resolutionRate;
 
 			// Get the initial concentration of the larger xenon cluster
@@ -225,7 +225,7 @@ public:
 			auto cluster = currPair.larger;
 			int id = cluster->getId() - 1;
 			int momId = cluster->getMomentId() - 1;
-			double size = currPair.coefs[6];
+			double size = currPair.coefs[10];
 			double rate = currPair.fractionRate * resolutionRate;
 
 			// Set the partial derivatives
