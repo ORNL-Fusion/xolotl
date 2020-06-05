@@ -110,8 +110,7 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Add a concentration time step group for the current time step.
-	auto concGroup = checkpointFile.getGroup<
-			io::XFile::ConcentrationGroup>();
+	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
 	assert(concGroup);
 	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
 			currentTimeStep);
@@ -120,7 +119,7 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	// We only examine and collect the grid points we own.
 	// TODO measure impact of us building the flattened representation
 	// rather than a ragged 2D representation.
-    io::XFile::TimestepGroup::Concs1DType concs(1);
+	io::XFile::TimestepGroup::Concs1DType concs(1);
 
 	// Access the solution data for the current grid point.
 	gridPointSolution = solutionArray[0];
@@ -198,9 +197,9 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	deep_copy(dConcs, hConcs);
 
 	// Get the concentrations
-	xeConcentration = network.getTotalAtomConcentration(dConcs, Spec::Xe, 0);
-	bubbleConcentration = network.getTotalConcentration(dConcs, Spec::Xe, 0);
-	radii = network.getTotalRadiusConcentration(dConcs, Spec::Xe, 0);
+	xeConcentration = network.getTotalAtomConcentration(dConcs, Spec::Xe, 1);
+	bubbleConcentration = network.getTotalConcentration(dConcs, Spec::Xe, 1);
+	radii = network.getTotalRadiusConcentration(dConcs, Spec::Xe, 1);
 	partialBubbleConcentration = network.getTotalConcentration(dConcs, Spec::Xe,
 			minSizes[0]);
 	partialRadii = network.getTotalRadiusConcentration(dConcs, Spec::Xe,
@@ -229,18 +228,6 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 			<< std::endl;
 	outputFile.close();
 
-//	std::ofstream outFile;
-//	outFile.open("size.txt");
-//	for (unsigned int i = 0; i < network.getNumClusters(); i++) {
-//		// Add the current concentration times the number of xenon in the cluster
-//		// (from the weight vector)
-//		double conc = gridPointSolution[i];
-//		const auto& clReg = network.getCluster(i, plsm::onHost).getRegion();
-//		Composition lo = clReg.getOrigin();
-//		outFile << lo[Spec::Xe] << " " << conc << std::endl;
-//	}
-//	outFile.close();
-
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
@@ -263,10 +250,6 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the solver handler
 	auto &solverHandler = PetscSolver::getSolverHandler();
-
-	// Get the physical grid and its length
-	auto grid = solverHandler.getXGrid();
-	int xSize = grid.size();
 
 	// Get the position of the surface
 	int surfacePos = solverHandler.getSurfacePosition();
@@ -456,7 +439,7 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 		auto cluster = network.getCluster(i);
 		const Region &clReg = cluster.getRegion();
 		for (std::size_t j : makeIntervalRange(clReg[Spec::Xe])) {
-            viz::dataprovider::Point aPoint;
+			viz::dataprovider::Point aPoint;
 			aPoint.value = gridPointSolution[i];
 			aPoint.t = time;
 			aPoint.x = (double) j;
@@ -560,11 +543,6 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 		if (lo.isOnAxis(Spec::I) || lo.isOnAxis(Spec::V)
 				|| lo.isOnAxis(Spec::He))
 			continue;
-//		double amtHe = (double) (lo[Spec::He] + hi[Spec::He] - 1) / 2.0,
-//				amtV = (double) (lo[Spec::V] + hi[Spec::V] - 1) / 2.0;
-//		double be = 4.88
-//				+ 2.59 * (pow(amtV, 2.0 / 3.0) - pow(amtV - 1.0, 2.0 / 3.0))
-//				- 2.5 * log(1.0 + (amtHe / amtV));
 
 		// For compatibility with previous versions, we output
 		// the value of a closed upper bound of the He and V intervals.
@@ -761,8 +739,9 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		scatterPlot0D->setLabelProvider(labelProvider);
 
 		// Create the data provider
-		auto dataProvider = std::make_shared<viz::dataprovider::CvsXDataProvider>(
-				"dataProvider");
+		auto dataProvider =
+				std::make_shared<viz::dataprovider::CvsXDataProvider>(
+						"dataProvider");
 
 		// Give it to the plot
 		scatterPlot0D->setDataProvider(dataProvider);
@@ -789,8 +768,9 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		perfPlot->setLabelProvider(labelProvider);
 
 		// Create the data provider
-		auto dataProvider = std::make_shared<viz::dataprovider::CvsXDataProvider>(
-				"dataProvider");
+		auto dataProvider =
+				std::make_shared<viz::dataprovider::CvsXDataProvider>(
+						"dataProvider");
 
 		// Give it to the plot
 		perfPlot->setDataProvider(dataProvider);

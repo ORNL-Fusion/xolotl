@@ -81,6 +81,15 @@ public:
 		return diffusingClusters.size();
 	}
 
+	/**
+	 * Get the vector of IDs of diffusing clusters in the network.
+	 *
+	 * @return The vector
+	 */
+	virtual std::vector<std::size_t> getDiffusingIds() const override {
+		return diffusingClusters;
+	}
+
 };
 //end class DiffusionHandler
 

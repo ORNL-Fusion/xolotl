@@ -109,6 +109,15 @@ public:
 	 */
 	virtual int getNumberOfDiffusing() const = 0;
 
+	/**
+	 * Get the vector of IDs of diffusing clusters in the network.
+	 *
+	 * @return The vector
+	 */
+	virtual std::vector<std::size_t> getDiffusingIds() const = 0;
+
+
+
 };
 //end class IDiffusionHandler
 

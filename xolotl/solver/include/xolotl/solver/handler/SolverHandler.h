@@ -70,22 +70,22 @@ protected:
 	double electronicStoppingPower;
 
 	//! The original flux handler created.
-    core::flux::IFluxHandler *fluxHandler;
+	core::flux::IFluxHandler *fluxHandler;
 
 	//! The original temperature handler created.
-    core::temperature::ITemperatureHandler *temperatureHandler;
+	core::temperature::ITemperatureHandler *temperatureHandler;
 
 	//! The original diffusion handler created.
-    core::diffusion::IDiffusionHandler *diffusionHandler;
+	core::diffusion::IDiffusionHandler *diffusionHandler;
 
 	//! The vector of advection handlers.
 	std::vector<core::advection::IAdvectionHandler*> advectionHandlers;
 
 	//! The original modified trap-mutation handler created.
-    core::modified::ITrapMutationHandler *mutationHandler;
+	core::modified::ITrapMutationHandler *mutationHandler;
 
 	//! The original heterogeneous nucleation handler created.
-    core::modified::IHeterogeneousNucleationHandler *nucleationHandler;
+	core::modified::IHeterogeneousNucleationHandler *nucleationHandler;
 
 	//! The number of dimensions for the problem.
 	int dimension;
@@ -668,7 +668,7 @@ public:
 	 * Get the flux handler.
 	 * \see ISolverHandler.h
 	 */
-    core::flux::IFluxHandler* getFluxHandler() const override {
+	core::flux::IFluxHandler* getFluxHandler() const override {
 		return fluxHandler;
 	}
 
@@ -676,7 +676,8 @@ public:
 	 * Get the temperature handler.
 	 * \see ISolverHandler.h
 	 */
-    core::temperature::ITemperatureHandler* getTemperatureHandler() const override {
+	core::temperature::ITemperatureHandler* getTemperatureHandler() const
+			override {
 		return temperatureHandler;
 	}
 
@@ -684,7 +685,7 @@ public:
 	 * Get the diffusion handler.
 	 * \see ISolverHandler.h
 	 */
-    core::diffusion::IDiffusionHandler* getDiffusionHandler() const override {
+	core::diffusion::IDiffusionHandler* getDiffusionHandler() const override {
 		return diffusionHandler;
 	}
 
@@ -692,7 +693,7 @@ public:
 	 * Get the advection handler.
 	 * \see ISolverHandler.h
 	 */
-    core::advection::IAdvectionHandler* getAdvectionHandler() const override {
+	core::advection::IAdvectionHandler* getAdvectionHandler() const override {
 		return advectionHandlers[0];
 	}
 
@@ -709,7 +710,7 @@ public:
 	 * Get the modified trap-mutation handler.
 	 * \see ISolverHandler.h
 	 */
-    core::modified::ITrapMutationHandler* getMutationHandler() const override {
+	core::modified::ITrapMutationHandler* getMutationHandler() const override {
 		return mutationHandler;
 	}
 
@@ -717,7 +718,7 @@ public:
 	 * Get the heterogeneous nucleation handler.
 	 * \see ISolverHandler.h
 	 */
-    core::modified::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const
+	core::modified::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const
 			override {
 		return nucleationHandler;
 	}
@@ -726,8 +727,7 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	virtual core::network::IReactionNetwork& getNetwork() const
-			override {
+	virtual core::network::IReactionNetwork& getNetwork() const override {
 		return network;
 	}
 
@@ -745,7 +745,8 @@ public:
 	 *
 	 * @return The RandomNumberGenerator object to use.
 	 */
-    util::RandomNumberGenerator<int, unsigned int>& getRNG(void) const override {
+	util::RandomNumberGenerator<int, unsigned int>& getRNG(void) const
+			override {
 		return *rng;
 	}
 

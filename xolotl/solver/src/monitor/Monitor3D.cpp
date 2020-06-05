@@ -145,8 +145,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Add a concentration sub group
-	auto concGroup = checkpointFile.getGroup<
-			io::XFile::ConcentrationGroup>();
+	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
 	assert(concGroup);
 	auto tsGroup = concGroup->addTimestepGroup(timestep, time, previousTime,
 			currentTimeStep);
@@ -306,11 +305,11 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 
 				// Get the total concentrations at this grid point
 				heConcentration += network.getTotalAtomConcentration(dConcs,
-						Spec::He, 0) * hx * hy * hz;
+						Spec::He, 1) * hx * hy * hz;
 				dConcentration += network.getTotalAtomConcentration(dConcs,
-						Spec::D, 0) * hx * hy * hz;
+						Spec::D, 1) * hx * hy * hz;
 				tConcentration += network.getTotalAtomConcentration(dConcs,
-						Spec::T, 0) * hx * hy * hz;
+						Spec::T, 1) * hx * hy * hz;
 			}
 		}
 	}
@@ -456,11 +455,11 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 
 				// Get the concentrations
 				xeConcentration += network.getTotalAtomConcentration(dConcs,
-						Spec::Xe, 0) * hx * hy * hz;
+						Spec::Xe, 1) * hx * hy * hz;
 				bubbleConcentration += network.getTotalConcentration(dConcs,
-						Spec::Xe, 0) * hx * hy * hz;
+						Spec::Xe, 1) * hx * hy * hz;
 				radii += network.getTotalRadiusConcentration(dConcs, Spec::Xe,
-						0) * hx * hy * hz;
+						1) * hx * hy * hz;
 				partialBubbleConcentration += network.getTotalConcentration(
 						dConcs, Spec::Xe, minSizes[0]) * hx * hy * hz;
 				partialRadii += network.getTotalRadiusConcentration(dConcs,
@@ -572,7 +571,7 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
 	// for the visualization
 	auto myPoints = std::make_shared<std::vector<viz::dataprovider::Point> >();
 	// Create a point here so that it is not created and deleted in the loop
-    viz::dataprovider::Point thePoint;
+	viz::dataprovider::Point thePoint;
 
 	// Loop on the full grid, Y and X first because they are the axis of the plot
 	for (PetscInt j = 0; j < My; j++) {
@@ -710,7 +709,7 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 	// for the visualization
 	auto myPoints = std::make_shared<std::vector<viz::dataprovider::Point> >();
 	// Create a point here so that it is not created and deleted in the loop
-    viz::dataprovider::Point thePoint;
+	viz::dataprovider::Point thePoint;
 
 	// Loop on the full grid, Z and X first because they are the axis of the plot
 	for (PetscInt k = 0; k < Mz; k++) {
@@ -999,7 +998,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 						// Compute the helium density at this grid point
 						double heDensity =
 								psiNetwork->getTotalAtomConcentration(dConcs,
-										Spec::He, 0);
+										Spec::He, 1);
 
 						// Compute the radius of the bubble from the number of helium
 						double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
@@ -1008,12 +1007,8 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 						double tlcCubed = latticeParam * latticeParam
 								* latticeParam;
 						double radius = (sqrt(3.0) / 4) * latticeParam
-								+ cbrt(
-										(3.0 * tlcCubed * nV)
-												/ (8.0 * core::pi))
-								- cbrt(
-										(3.0 * tlcCubed)
-												/ (8.0 * core::pi));
+								+ cbrt((3.0 * tlcCubed * nV) / (8.0 * core::pi))
+								- cbrt((3.0 * tlcCubed) / (8.0 * core::pi));
 
 						// If the radius is larger than the distance to the surface, burst
 						if (radius > distance) {
@@ -1465,8 +1460,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 	bool hasConcentrations = false;
 	if (not networkName.empty()) {
 		networkFile.reset(new io::XFile(networkName));
-		auto concGroup = networkFile->getGroup<
-				io::XFile::ConcentrationGroup>();
+		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		if (hasConcentrations) {
 			lastTsGroup = concGroup->getLastTimestepGroup();
@@ -1641,8 +1635,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			perfPlot->setLabelProvider(labelProvider);
 
 			// Create the data provider
-			auto dataProvider = std::make_shared<viz::dataprovider::CvsXDataProvider>(
-					"dataProvider");
+			auto dataProvider = std::make_shared<
+					viz::dataprovider::CvsXDataProvider>("dataProvider");
 
 			// Give it to the plot
 			perfPlot->setDataProvider(dataProvider);
@@ -1750,8 +1744,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			surfacePlotXY3D->setLabelProvider(labelProvider);
 
 			// Create the data provider
-			auto dataProvider = std::make_shared<viz::dataprovider::CvsXYDataProvider>(
-					"dataProvider");
+			auto dataProvider = std::make_shared<
+					viz::dataprovider::CvsXYDataProvider>("dataProvider");
 
 			// Give it to the plot
 			surfacePlotXY3D->setDataProvider(dataProvider);
@@ -1782,8 +1776,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			surfacePlotXZ3D->setLabelProvider(labelProvider);
 
 			// Create the data provider
-			auto dataProvider = std::make_shared<viz::dataprovider::CvsXYDataProvider>(
-					"dataProvider");
+			auto dataProvider = std::make_shared<
+					viz::dataprovider::CvsXYDataProvider>("dataProvider");
 
 			// Give it to the plot
 			surfacePlotXZ3D->setDataProvider(dataProvider);
