@@ -208,7 +208,7 @@ void PetscSolver3DHandler::initializeConcentration(DM &da, Vec &C) {
 		for (PetscInt j = ys; j < ys + ym; j++)
 			for (PetscInt i = xs - 1; i <= xs + xm; i++) {
 				// Temperature
-				util::Point<3> gridPosition { 0.0, j * hY, k * hZ };
+                plsm::SpaceVector<double, 3> gridPosition { 0.0, j * hY, k * hZ };
 				if (i < 0)
 					gridPosition[0] =
 							(grid[0] - grid[surfacePosition[j][k] + 1])
@@ -332,7 +332,7 @@ void PetscSolver3DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 	// Declarations for variables used in the loop
 	double **concVector = new double*[7];
-	util::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+    plsm::SpaceVector<double, 3> gridPosition { 0.0, 0.0, 0.0 };
 	std::vector<double> incidentFluxVector;
 	double atomConc = 0.0, totalAtomConc = 0.0;
 
@@ -674,7 +674,7 @@ void PetscSolver3DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 	// Declarations for variables used in the loop
 	double atomConc = 0.0, totalAtomConc = 0.0;
-	util::Point<3> gridPosition { 0.0, 0.0, 0.0 };
+    plsm::SpaceVector<double, 3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the total number of diffusing clusters
 	const int nDiff = std::max(diffusionHandler->getNumberOfDiffusing(), 0);

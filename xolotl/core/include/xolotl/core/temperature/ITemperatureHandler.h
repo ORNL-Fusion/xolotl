@@ -3,8 +3,8 @@
 
 #include <vector>
 #include <memory>
+#include <plsm/SpaceVector.h>
 #include <xolotl/core/network/IReactionNetwork.h>
-#include <xolotl/util/NDPoint.h>
 
 namespace xolotl {
 namespace core {
@@ -43,7 +43,7 @@ public:
 	 * @param currentTime The time
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const util::Point<3>& fraction,
+	virtual double getTemperature(const plsm::SpaceVector<double, 3>& fraction,
 			double currentTime) const = 0;
 
 	/**

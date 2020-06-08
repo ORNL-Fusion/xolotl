@@ -84,7 +84,7 @@ public:
 	 *
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const util::Point<3>& fraction, double) const {
+	virtual double getTemperature(const plsm::SpaceVector<double, 3>& fraction, double) const {
 		return surfaceTemperature
 				+ (bulkTemperature - surfaceTemperature) * fraction[0];
 	}

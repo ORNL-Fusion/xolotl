@@ -109,7 +109,7 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const util::Point<3>&, double time) const {
+	virtual double getTemperature(const plsm::SpaceVector<double, 3>&, double time) const {
 		return util::equal(time, 0.0) * bulkTemperature
 				+ !util::equal(time, 0.0) * localTemperature;
 	}

@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(checkHeat1D) {
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
 	// Check the updated temperature
-    util::Point<3> pos { 1.0, 0.0, 0.0 };
+    plsm::SpaceVector<double, 3> pos { 1.0, 0.0, 0.0 };
 	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature(pos, 1.0), 361.0, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
@@ -184,7 +184,7 @@ BOOST_AUTO_TEST_CASE(checkHeat2D) {
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
 	// Check the updated temperature
-    util::Point<3> pos { 1.0, 0.0, 0.0 };
+    plsm::SpaceVector<double, 3> pos { 1.0, 0.0, 0.0 };
 	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature(pos, 1.0), 2401, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_CASE(checkHeat3D) {
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
 	// Check the updated temperature
-    util::Point<3> pos { 1.0, 0.0, 0.0 };
+    plsm::SpaceVector<double, 3> pos { 1.0, 0.0, 0.0 };
 	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature(pos, 1.0), 1932.1, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian

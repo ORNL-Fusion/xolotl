@@ -13,7 +13,7 @@
 #include <xolotl/core/modified/IHeterogeneousNucleationHandler.h>
 #include <xolotl/factory/material/IMaterialFactory.h>
 #include <xolotl/core/network/IReactionNetwork.h>
-#include <xolotl/util/NDArray.h>
+#include <xolotl/util/Array.h>
 #include <xolotl/util/RandomNumberGenerator.h>
 
 namespace xolotl {

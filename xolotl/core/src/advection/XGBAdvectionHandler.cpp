@@ -87,7 +87,7 @@ void XGBAdvectionHandler::initialize(
 }
 
 void XGBAdvectionHandler::computeAdvection(
-		network::IReactionNetwork& network, const util::Point<3>& pos,
+		network::IReactionNetwork& network, const plsm::SpaceVector<double, 3>& pos,
 		double **concVector, double *updatedConcOffset, double hxLeft,
 		double hxRight, int ix, double hy, int iy, double hz, int iz) const {
 
@@ -150,7 +150,7 @@ void XGBAdvectionHandler::computeAdvection(
 
 void XGBAdvectionHandler::computePartialsForAdvection(
 		network::IReactionNetwork& network, double *val,
-		int *indices, const util::Point<3>& pos, double hxLeft, double hxRight,
+		int *indices, const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight,
 		int ix, double hy, int iy, double hz, int iz) const {
 
 	// Consider each advecting cluster.
@@ -216,7 +216,7 @@ void XGBAdvectionHandler::computePartialsForAdvection(
 }
 
 std::array<int, 3> XGBAdvectionHandler::getStencilForAdvection(
-		const util::Point<3>& pos) const {
+		const plsm::SpaceVector<double, 3>& pos) const {
 
 	// The first index is positive by convention if we are on the sink
 	if (isPointOnSink(pos))

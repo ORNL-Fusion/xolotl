@@ -6,7 +6,7 @@
 #include <string>
 #include <map>
 #include <xolotl/perf/xolotlPerf.h>
-#include <xolotl/util/NDArray.h>
+#include <xolotl/util/Array.h>
 
 namespace xolotl {
 namespace options {
