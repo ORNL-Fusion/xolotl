@@ -5,7 +5,6 @@ foreach(test ${tests})
     add_executable(${testName} ${test})
     target_link_libraries(${testName}
         xolotlOptions
-        MPI::MPI_CXX
         Boost::unit_test_framework
     )
     add_test(${testName} ${testName})

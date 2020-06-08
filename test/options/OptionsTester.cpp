@@ -1,7 +1,8 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/included/unit_test.hpp>
+#include <boost/test/unit_test.hpp>
+#include <boost/test/framework.hpp>
 #include <fstream>
 #include <iostream>
 #include <xolotl/options/Options.h>
@@ -12,7 +13,7 @@ using namespace xolotl::options;
 /**
  * Test suite for the Options class.
  */
-BOOST_AUTO_TEST_SUITE (Options_testSuite)
+BOOST_AUTO_TEST_SUITE(Options_testSuite)
 
 BOOST_AUTO_TEST_CASE(noOptions) {
 	Options opts;
@@ -91,7 +92,7 @@ BOOST_AUTO_TEST_CASE(badParamFile) {
 	}
 
 	// Should not get here
-	BOOST_TEST(false);
+	BOOST_REQUIRE(false);
 }
 
 BOOST_AUTO_TEST_CASE(goodParamFile) {
