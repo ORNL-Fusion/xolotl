@@ -84,7 +84,9 @@ public:
     constexpr std::size_t
     sizeNoI() noexcept
     {
-        return N - numberOfInterstitialSpecies<TSpeciesEnum>() - numberOfVacancySpecies<TSpeciesEnum>() + 1;
+        return numberOfVacancySpecies<TSpeciesEnum>()> 0 ?
+            N - numberOfInterstitialSpecies<TSpeciesEnum>() - numberOfVacancySpecies<TSpeciesEnum>() + 1
+            : N;
     }
 
     KOKKOS_INLINE_FUNCTION
