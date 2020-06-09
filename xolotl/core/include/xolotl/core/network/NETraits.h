@@ -1,5 +1,10 @@
 #pragma once
 
+#include <tuple>
+
+#include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/core/network/SpeciesEnumSequence.h>
+
 namespace xolotl
 {
 namespace core

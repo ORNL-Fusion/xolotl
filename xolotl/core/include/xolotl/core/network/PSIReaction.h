@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/PSITraits.h>
+#include <xolotl/core/network/Reaction.h>
 
 namespace xolotl
 {

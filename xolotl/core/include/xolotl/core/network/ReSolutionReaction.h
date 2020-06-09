@@ -1,5 +1,7 @@
 #pragma once
 
+#include <xolotl/core/network/Reaction.h>
+
 namespace xolotl
 {
 namespace core

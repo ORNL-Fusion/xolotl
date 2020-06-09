@@ -3,6 +3,7 @@
 #include <utility>
 #include <type_traits>
 
+#include <xolotl/core/network/detail/ReactionCollection.h>
 #include <xolotl/core/network/ReactionNetworkTraits.h>
 
 namespace xolotl
