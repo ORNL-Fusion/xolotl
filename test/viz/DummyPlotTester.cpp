@@ -55,11 +55,11 @@ BOOST_AUTO_TEST_CASE(checkDataProvider) {
 	// Create myDataProvider
 	auto myDataProvider = make_shared<DataProvider>("myDataProvider");
 
-	// Create a Point vector
-	auto myPoints = make_shared< vector <Point> >();
+	// Create a DataPoint vector
+	auto myPoints = make_shared<vector<DataPoint>>();
 
-	// And fill it with some Point
-	Point aPoint;
+	// And fill it with some DataPoint
+	DataPoint aPoint;
 	aPoint.value = 3.0; aPoint.t = 1.0; aPoint.x = 2.0;
 	myPoints->push_back(aPoint);
 	aPoint.value = 2.0; aPoint.t = 3.0; aPoint.x = 2.0;
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(checkDataProvider) {
 	myPoints->push_back(aPoint);
 
 	// Set these points in the myDataProvider
-	myDataProvider->setPoints(myPoints);
+	myDataProvider->setDataPoints(myPoints);
 
 	// Set myDataProvider in myDummyPlot
 	myDummyPlot->setDataProvider(myDataProvider);

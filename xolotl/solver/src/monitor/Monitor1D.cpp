@@ -1374,10 +1374,10 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 
 	// If the middle is on this process
 	if (ix >= xs && ix < xs + xm) {
-		// Create a Point vector to store the data to give to the data provider
+		// Create a DataPoint vector to store the data to give to the data provider
 		// for the visualization
 		auto myPoints =
-				std::make_shared<std::vector<viz::dataprovider::Point> >();
+				std::make_shared<std::vector<viz::dataprovider::DataPoint>>();
 
 		// Get the pointer to the beginning of the solution data for this grid point
 		gridPointSolution = solutionArray[ix];
@@ -1388,7 +1388,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 			auto cluster = network.getCluster(i);
 			const Region &clReg = cluster.getRegion();
 			for (std::size_t j : makeIntervalRange(clReg[Spec::Xe])) {
-				viz::dataprovider::Point aPoint;
+				viz::dataprovider::DataPoint aPoint;
 				aPoint.value = gridPointSolution[i];
 				aPoint.t = time;
 				aPoint.x = (double) j;
@@ -1397,7 +1397,7 @@ PetscErrorCode monitorScatter1D(TS ts, PetscInt timestep, PetscReal time,
 		}
 
 		// Get the data provider and give it the points
-		scatterPlot1D->getDataProvider()->setPoints(myPoints);
+		scatterPlot1D->getDataProvider()->setDataPoints(myPoints);
 
 		// Change the title of the plot and the name of the data
 		std::stringstream title;
@@ -1488,9 +1488,9 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 	const int loopSize = std::min(18, networkSize);
 
 	if (procId == 0) {
-		// Create a Point vector to store the data to give to the data provider
+		// Create a DataPoint vector to store the data to give to the data provider
 		// for the visualization
-		std::vector<std::vector<viz::dataprovider::Point> > myPoints(loopSize);
+		std::vector<std::vector<viz::dataprovider::DataPoint>> myPoints(loopSize);
 
 		// Loop on the grid
 		for (xi = xs; xi < xs + xm; xi++) {
@@ -1498,9 +1498,9 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 			gridPointSolution = solutionArray[xi];
 
 			for (int i = 0; i < loopSize; i++) {
-				// Create a Point with the concentration[i] as the value
+				// Create a DataPoint with the concentration[i] as the value
 				// and add it to myPoints
-				viz::dataprovider::Point aPoint;
+				viz::dataprovider::DataPoint aPoint;
 				aPoint.value = gridPointSolution[i];
 				aPoint.t = time;
 				aPoint.x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
@@ -1529,7 +1529,7 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 
 					// Create a Point with the concentration[i] as the value
 					// and add it to myPoints
-					viz::dataprovider::Point aPoint;
+					viz::dataprovider::DataPoint aPoint;
 					aPoint.value = conc;
 					aPoint.t = time;
 					aPoint.x = x;
@@ -1541,8 +1541,8 @@ PetscErrorCode monitorSeries1D(TS ts, PetscInt timestep, PetscReal time,
 		for (int i = 0; i < loopSize; i++) {
 			// Get the data provider and give it the points
 			auto thePoints = std::make_shared<
-					std::vector<viz::dataprovider::Point> >(myPoints[i]);
-			seriesPlot1D->getDataProvider(i)->setPoints(thePoints);
+					std::vector<viz::dataprovider::DataPoint>>(myPoints[i]);
+			seriesPlot1D->getDataProvider(i)->setDataPoints(thePoints);
 			// TODO: get the name or comp of the cluster
 			seriesPlot1D->getDataProvider(i)->setDataName(std::to_string(i));
 		}

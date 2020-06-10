@@ -1,9 +1,9 @@
 list(APPEND XOLOTL_VIZ_HEADERS
     ${XOLOTL_VIZ_HEADER_DIR}/dataprovider/CvsXDataProvider.h
     ${XOLOTL_VIZ_HEADER_DIR}/dataprovider/CvsXYDataProvider.h
+    ${XOLOTL_VIZ_HEADER_DIR}/dataprovider/DataPoint.h
     ${XOLOTL_VIZ_HEADER_DIR}/dataprovider/DataProvider.h
     ${XOLOTL_VIZ_HEADER_DIR}/dataprovider/IDataProvider.h
-    ${XOLOTL_VIZ_HEADER_DIR}/dataprovider/Point.h
 )
 
 list(APPEND XOLOTL_VIZ_SOURCES

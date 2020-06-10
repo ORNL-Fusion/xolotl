@@ -21,7 +21,6 @@ set(XOLOTL_VIZ_HEADERS
     ${XOLOTL_VIZ_HEADER_DIR}/LabelProvider.h
     ${XOLOTL_VIZ_HEADER_DIR}/PlottingStyle.h
     ${XOLOTL_VIZ_HEADER_DIR}/PlotType.h
-    ${XOLOTL_VIZ_HEADER_DIR}/Point.h
 )
 
 include(src/dataprovider/Include.cmake)

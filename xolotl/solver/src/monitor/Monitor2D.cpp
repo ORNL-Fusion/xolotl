@@ -669,11 +669,11 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	// Choice of the cluster to be plotted
 	int iCluster = 0;
 
-	// Create a Point vector to store the data to give to the data provider
+	// Create a DataPoint vector to store the data to give to the data provider
 	// for the visualization
-	auto myPoints = std::make_shared<std::vector<viz::dataprovider::Point> >();
+	auto myPoints = std::make_shared<std::vector<viz::dataprovider::DataPoint>>();
 	// Create a point here so that it is not created and deleted in the loop
-	viz::dataprovider::Point thePoint;
+	viz::dataprovider::DataPoint thePoint;
 
 	// Loop on the full grid
 	for (PetscInt j = 0; j < My; j++) {
@@ -738,7 +738,7 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 	// Plot everything from procId == 0
 	if (procId == 0) {
 		// Get the data provider and give it the points
-		surfacePlot2D->getDataProvider()->setPoints(myPoints);
+		surfacePlot2D->getDataProvider()->setDataPoints(myPoints);
 
 		// Change the title of the plot and the name of the data
 		std::stringstream title;

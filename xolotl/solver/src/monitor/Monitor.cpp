@@ -151,10 +151,10 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 			PETSC_COMM_WORLD);// communicator defining processes involved in the operation
 
 	if (cwRank == 0) {
-		auto allPoints = std::make_shared<std::vector<viz::dataprovider::Point> >();
+		auto allPoints = std::make_shared<std::vector<viz::dataprovider::DataPoint>>();
 
 		for (int i = 0; i < cwSize; ++i) {
-            viz::dataprovider::Point aPoint;
+            viz::dataprovider::DataPoint aPoint;
 			aPoint.value = allTimerValues[i];
 			aPoint.x = i;
 			aPoint.t = time;
@@ -165,7 +165,7 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 		delete[] allTimerValues;
 
 		// Provide the data provider the points.
-		perfPlot->getDataProvider()->setPoints(allPoints);
+		perfPlot->getDataProvider()->setDataPoints(allPoints);
 		perfPlot->getDataProvider()->setDataName("SolverTimer");
 
 		// Change the title of the plot

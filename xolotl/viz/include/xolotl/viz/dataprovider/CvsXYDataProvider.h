@@ -35,20 +35,20 @@ public:
 	~CvsXYDataProvider();
 
 	/**
-	 * Method returning a vector containing the 'x' field of the collection of Point of the DataProvider.
-	 * @return The vector of Point x value.
+	 * Method returning a vector containing the 'x' field of the collection of DataPoint of the DataProvider.
+	 * @return The vector of DataPoint x value.
 	 */
 	virtual std::vector<double> getAxis1Vector() const;
 
 	/**
-	 * Method returning a vector containing the 'y' field of the collection of Point of the DataProvider.
-	 * @return The vector of Point y value.
+	 * Method returning a vector containing the 'y' field of the collection of DataPoint of the DataProvider.
+	 * @return The vector of DataPoint y value.
 	 */
 	virtual std::vector<double> getAxis2Vector() const;
 
 	/**
-	 * Method returning a vector containing the 'Value' field of the collection of Point of the DataProvider.
-	 * @return The vector of Point value.
+	 * Method returning a vector containing the 'Value' field of the collection of DataPoint of the DataProvider.
+	 * @return The vector of DataPoint value.
 	 */
 	virtual std::vector<double> getAxis3Vector() const;
 

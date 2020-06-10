@@ -28,7 +28,7 @@ protected:
 	/**
 	 * Collection of data points.
 	 */
-	std::shared_ptr<std::vector<Point> > dataPoints;
+	std::shared_ptr<std::vector<DataPoint> > dataPoints;
 
 public:
 
@@ -51,13 +51,13 @@ public:
 	 * Returns a collection of the data points.
 	 * \see IDataProvider.h
 	 */
-	std::shared_ptr<std::vector<Point> > getDataPoints() const;
+	std::shared_ptr<std::vector<DataPoint> > getDataPoints() const;
 
 	/**
 	 * Method filling the data collection.
 	 * \see IDataProvider.h
 	 */
-	void setPoints(std::shared_ptr<std::vector<Point> > points);
+	void setDataPoints(std::shared_ptr<std::vector<DataPoint> > points);
 
 	/**
 	 * Returns the value of the mean of all the data points.

@@ -5,7 +5,7 @@
 #include <vector>
 #include <string>
 #include <memory>
-#include <xolotl/viz/dataprovider/Point.h>
+#include <xolotl/viz/dataprovider/DataPoint.h>
 #include <xolotl/util/IIdentifiable.h>
 
 namespace xolotl {
@@ -27,9 +27,9 @@ public:
 
 	/**
 	 * Returns a collection of the data points.
-	 * @return The collection of Point.
+	 * @return The collection of DataPoint.
 	 */
-	virtual std::shared_ptr< std::vector<Point> > getDataPoints() const = 0;
+	virtual std::shared_ptr< std::vector<DataPoint> > getDataPoints() const = 0;
 
 	/**
 	 * Returns the value of the mean of all the data points.
@@ -39,9 +39,9 @@ public:
 
 	/**
 	 * Method filling the data collection.
-	 * @param points A collection of Point.
+	 * @param points A collection of DataPoint.
 	 */
-	virtual void setPoints(std::shared_ptr< std::vector<Point> > points) = 0;
+	virtual void setDataPoints(std::shared_ptr< std::vector<DataPoint> > points) = 0;
 
 	/**
 	 * Method returning the vector of quantity that will be plotted on the X axis.

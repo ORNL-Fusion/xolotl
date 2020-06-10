@@ -426,20 +426,20 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 	auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	int networkSize = network.getNumClusters();
 
-	// Create a Point vector to store the data to give to the data provider
+	// Create a DataPoint vector to store the data to give to the data provider
 	// for the visualization
-	auto myPoints = std::make_shared<std::vector<viz::dataprovider::Point> >();
+	auto myPoints = std::make_shared<std::vector<viz::dataprovider::DataPoint>>();
 
 	// Get the pointer to the beginning of the solution data for this grid point
 	gridPointSolution = solutionArray[0];
 
 	for (int i = 0; i < networkSize; i++) {
-		// Create a Point with the concentration[i] as the value
+		// Create a DataPoint with the concentration[i] as the value
 		// and add it to myPoints
 		auto cluster = network.getCluster(i);
 		const Region &clReg = cluster.getRegion();
 		for (std::size_t j : makeIntervalRange(clReg[Spec::Xe])) {
-			viz::dataprovider::Point aPoint;
+			viz::dataprovider::DataPoint aPoint;
 			aPoint.value = gridPointSolution[i];
 			aPoint.t = time;
 			aPoint.x = (double) j;
@@ -448,7 +448,7 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Get the data provider and give it the points
-	scatterPlot0D->getDataProvider()->setPoints(myPoints);
+	scatterPlot0D->getDataProvider()->setDataPoints(myPoints);
 
 	// Change the title of the plot and the name of the data
 	std::stringstream title;
