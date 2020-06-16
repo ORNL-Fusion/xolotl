@@ -169,6 +169,12 @@ public:
     }
 
     IndexType
+    getNumberOfNucleationReactions() const noexcept
+    {
+        return 0;
+    }
+
+    IndexType
     getNumberOfReSolutionReactions() const noexcept
     {
         return 0;

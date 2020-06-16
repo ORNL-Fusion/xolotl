@@ -141,7 +141,10 @@ public:
     setEnableStdReaction(bool reaction) override;
 
     void
-    setEnableReSolution(bool reso) override;
+    setEnableReSolution(bool reaction) override;
+
+    void
+    setEnableNucleation(bool reaction) override;
 
     void
     setGridSize(IndexType gridSize) override;
@@ -186,6 +189,7 @@ public:
         Kokkos::deep_copy(mirror.fissionRate, _clusterData.fissionRate);
         Kokkos::deep_copy(mirror.enableStdReaction, _clusterData.enableStdReaction);
         Kokkos::deep_copy(mirror.enableReSolution, _clusterData.enableReSolution);
+        Kokkos::deep_copy(mirror.enableNucleation, _clusterData.enableNucleation);
         Kokkos::deep_copy(mirror.temperature, _clusterData.temperature);
         Kokkos::deep_copy(mirror.momentIds, _clusterData.momentIds);
         Kokkos::deep_copy(mirror.reactionRadius, _clusterData.reactionRadius);

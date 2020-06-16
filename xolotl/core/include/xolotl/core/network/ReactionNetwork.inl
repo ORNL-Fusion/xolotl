@@ -32,6 +32,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
     auto map = opts.getProcesses();
     setEnableStdReaction(map["reaction"]);
     setEnableReSolution(map["resolution"]);
+    setEnableNucleation(map["heterogeneous"]);
 
     auto tiles = subpaving.getTiles(plsm::onDevice);
     _numClusters = tiles.extent(0);
@@ -153,12 +154,22 @@ ReactionNetwork<TImpl>::setEnableStdReaction(bool reaction)
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setEnableReSolution(bool reso)
+ReactionNetwork<TImpl>::setEnableReSolution(bool reaction)
 {
-    this->_enableReSolution = reso;
+    this->_enableReSolution = reaction;
     auto mirror = Kokkos::create_mirror_view(_clusterData.enableReSolution);
     mirror(0) = this->_enableReSolution;
     Kokkos::deep_copy(_clusterData.enableReSolution, mirror);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableNucleation(bool reaction)
+{
+    this->_enableNucleation = reaction;
+    auto mirror = Kokkos::create_mirror_view(_clusterData.enableNucleation);
+    mirror(0) = this->_enableNucleation;
+    Kokkos::deep_copy(_clusterData.enableNucleation, mirror);
 }
 
 template <typename TImpl>

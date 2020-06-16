@@ -1,6 +1,7 @@
 list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterSet.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/MemorySpace.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/NucleationReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionCollection.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionGenerator.h
@@ -27,6 +28,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/NEReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NEReactionNetwork.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/NETraits.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/NucleationReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/PSIClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/PSIClusterGenerator.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/PSIReaction.h

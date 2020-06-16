@@ -10,7 +10,6 @@
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/modified/ITrapMutationHandler.h>
-#include <xolotl/core/modified/IHeterogeneousNucleationHandler.h>
 #include <xolotl/factory/material/IMaterialFactory.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/util/Array.h>
@@ -232,13 +231,6 @@ public:
 	 * @return The modified trap-mutation handler
 	 */
 	virtual core::modified::ITrapMutationHandler* getMutationHandler() const = 0;
-
-	/**
-	 * Get the heterogeneous nucleation handler.
-	 *
-	 * @return The heterogeneous nucleation handler
-	 */
-	virtual core::modified::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const = 0;
 
 	/**
 	 * Get the network.

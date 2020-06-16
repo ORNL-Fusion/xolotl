@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined) {
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
 	BOOST_REQUIRE(deviceMemorySize > 32000);
-	BOOST_REQUIRE(deviceMemorySize < 34000);
+	BOOST_REQUIRE(deviceMemorySize < 36000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.574, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.047279806, 0.01);
@@ -660,7 +660,7 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo) {
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
 	BOOST_REQUIRE(deviceMemorySize > 40000);
-	BOOST_REQUIRE(deviceMemorySize < 45000);
+	BOOST_REQUIRE(deviceMemorySize < 47000);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();

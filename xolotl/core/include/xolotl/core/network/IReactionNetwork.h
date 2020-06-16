@@ -151,6 +151,16 @@ public:
     setEnableReSolution(bool reso) = 0;
 
     KOKKOS_INLINE_FUNCTION
+    bool
+    getEnableNucleation() const noexcept
+    {
+        return _enableNucleation;
+    }
+
+    virtual void
+    setEnableNucleation(bool reso) = 0;
+
+    KOKKOS_INLINE_FUNCTION
     IndexType
     getGridSize() const noexcept
     {
@@ -211,6 +221,7 @@ protected:
     double _fissionRate {};
     bool _enableStdReaction {};
     bool _enableReSolution{};
+    bool _enableNucleation{};
 
     IndexType _gridSize {};
     IndexType _numDOFs {};

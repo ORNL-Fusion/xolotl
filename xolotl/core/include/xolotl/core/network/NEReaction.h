@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/NETraits.h>
 #include <xolotl/core/network/ReSolutionReaction.h>
+#include <xolotl/core/network/NucleationReaction.h>
 
 namespace xolotl
 {
@@ -48,6 +49,16 @@ class NEReSolutionReaction :
 public:
     using Superclass =
         ReSolutionReaction<NEReactionNetwork, NEReSolutionReaction>;
+
+    using Superclass::Superclass;
+};
+
+class NENucleationReaction :
+    public NucleationReaction<NEReactionNetwork, NENucleationReaction>
+{
+public:
+    using Superclass =
+        NucleationReaction<NEReactionNetwork, NENucleationReaction>;
 
     using Superclass::Superclass;
 };

@@ -103,6 +103,7 @@ public:
         zeta("Zeta" + labelStr(label)),
         enableStdReaction("Enable Std Reaction" + labelStr(label)),
         enableReSolution("Enable Re-Solution Process" + labelStr(label)),
+        enableNucleation("Enable Nucleation Process" + labelStr(label)),
         temperature("Temperature" + labelStr(label), gridSize),
         reactionRadius("Reaction Radius" + labelStr(label), numClusters),
         formationEnergy("Formation Energy" + labelStr(label), numClusters),
@@ -161,6 +162,13 @@ public:
         return enableReSolution(0);
     }
 
+    KOKKOS_INLINE_FUNCTION
+    bool
+    getEnableNucleation() const
+    {
+        return enableNucleation(0);
+    }
+
     void
     setGridSize(IndexType gridSize_) {
         gridSize = gridSize_;
@@ -177,6 +185,7 @@ public:
     View<double[1]> zeta;
     View<bool[1]> enableStdReaction;
     View<bool[1]> enableReSolution;
+    View<bool[1]> enableNucleation;
     View<double*> temperature;
     View<double*> reactionRadius;
     View<double*> formationEnergy;
@@ -256,6 +265,7 @@ struct ClusterDataCommonRef
         zeta(data.zeta),
         enableStdReaction(data.enableStdReaction),
         enableReSolution(data.enableReSolution),
+        enableNucleation(data.enableNucleation),
         temperature(data.temperature),
         reactionRadius(data.reactionRadius),
         formationEnergy(data.formationEnergy),
@@ -314,6 +324,13 @@ struct ClusterDataCommonRef
         return enableReSolution(0);
     }
 
+    KOKKOS_INLINE_FUNCTION
+    bool
+    getEnableNucleation() const
+    {
+        return enableNucleation(0);
+    }
+
     IndexType numClusters {};
     IndexType gridSize {};
     View<double[1]> atomicVolume;
@@ -322,6 +339,7 @@ struct ClusterDataCommonRef
     View<double[1]> zeta;
     View<bool[1]> enableStdReaction;
     View<bool[1]> enableReSolution;
+    View<bool[1]> enableNucleation;
     View<double*> temperature;
     View<double*> reactionRadius;
     View<double**> diffusionCoefficient;

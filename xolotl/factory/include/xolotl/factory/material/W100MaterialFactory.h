@@ -29,8 +29,6 @@ public:
 				std::make_shared<core::advection::W100AdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				core::modified::W100TrapMutationHandler>();
-		theNucleationHandler = std::make_shared<
-				core::modified::DummyNucleationHandler>();
 
 		return;
 	}

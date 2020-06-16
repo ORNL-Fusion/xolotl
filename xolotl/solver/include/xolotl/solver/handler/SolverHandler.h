@@ -84,9 +84,6 @@ protected:
 	//! The original modified trap-mutation handler created.
 	core::modified::ITrapMutationHandler *mutationHandler;
 
-	//! The original heterogeneous nucleation handler created.
-	core::modified::IHeterogeneousNucleationHandler *nucleationHandler;
-
 	//! The number of dimensions for the problem.
 	int dimension;
 
@@ -396,8 +393,7 @@ protected:
 					0.0), useRegularGrid(""), readInGrid(false), movingSurface(
 					false), bubbleBursting(false), useAttenuation(false), sputteringYield(
 					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
-					nullptr), mutationHandler(nullptr), nucleationHandler(
-					nullptr), tauBursting(10.0), rngSeed(0) {
+					nullptr), mutationHandler(nullptr), tauBursting(10.0), rngSeed(0) {
 	}
 
 public:
@@ -484,10 +480,6 @@ public:
 		// Set the modified trap-mutation handler
 		mutationHandler =
 				(core::modified::ITrapMutationHandler*) material->getTrapMutationHandler().get();
-
-		// Set the heterogeneous nucleation handler
-		nucleationHandler =
-				(core::modified::IHeterogeneousNucleationHandler*) material->getNucleationHandler().get();
 
 		// Set the minimum size for the average radius compuation
 		minRadiusSizes = opts.getRadiusMinSizes();
@@ -712,15 +704,6 @@ public:
 	 */
 	core::modified::ITrapMutationHandler* getMutationHandler() const override {
 		return mutationHandler;
-	}
-
-	/**
-	 * Get the heterogeneous nucleation handler.
-	 * \see ISolverHandler.h
-	 */
-	core::modified::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const
-			override {
-		return nucleationHandler;
 	}
 
 	/**

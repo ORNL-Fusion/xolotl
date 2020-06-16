@@ -66,7 +66,11 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
             continue;
         }
 
-        this->addProductionReaction(tag, {i, j, k});
+        if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1[Species::Xe] == 1 && lo2[Species::Xe] == 1) {
+            if (this->_clusterData.enableNucleation(0)) this->addNucleationReaction(tag, {i, k});
+            else this->addProductionReaction(tag, {i, j, k});
+        }
+        else this->addProductionReaction(tag, {i, j, k});
 
         if (!cl1Reg.isSimplex() && !cl2Reg.isSimplex()) {
             continue;
@@ -86,7 +90,7 @@ NEReactionGenerator::getReactionCollection() const
 {
     ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
         this->getProductionReactions(), this->getDissociationReactions(),
-        this->getReSolutionReactions());
+        this->getReSolutionReactions(), this->getNucleationReactions());
     return ret;
 }
 }

@@ -42,10 +42,6 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(dof, ofill, dfill);
 
-	// Initialize the nucleation handler here
-	// because it adds connectivity
-	nucleationHandler->initialize(network, dfill);
-
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
 
@@ -153,10 +149,6 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	checkPetscError(ierr, "PetscSolver0DHandler::initializeConcentration: "
 			"DMDAVecRestoreArrayDOF failed.");
 
-	// Set the rate for nucleation
-	nucleationHandler->updateHeterogeneousNucleationRate(
-			fluxHandler->getFluxAmplitude());
-
 	return;
 }
 
@@ -209,10 +201,6 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 	// ----- Account for flux of incoming particles -----
 	fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, 0, 0);
-
-	// ----- Compute the heterogeneous nucleation -----
-	nucleationHandler->computeHeterogeneousNucleation(network, concOffset,
-			updatedConcOffset, 0, 0);
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 	using HostUnmanaged =
@@ -333,31 +321,6 @@ void PetscSolver0DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 			// Increase the starting index
 			startingIdx += pdColIdsVectorSize;
 		}
-	}
-
-	// ----- Take care of the nucleation for all the reactants -----
-
-	// Arguments for MatSetValuesStencil called below
-	PetscScalar nucleationVals[2];
-	PetscInt nucleationIndices[2];
-	MatStencil rowIds[2];
-
-	// Compute the partial derivative from nucleation at this grid point
-	if (nucleationHandler->computePartialsForHeterogeneousNucleation(network,
-			concOffset, nucleationVals, nucleationIndices, 0, 0)) {
-
-		// Set grid coordinate and component number for the row and column
-		// corresponding to the clusters involved in re-solution
-		rowIds[0].i = 0;
-		rowIds[0].c = nucleationIndices[0];
-		rowIds[1].i = 0;
-		rowIds[1].c = nucleationIndices[1];
-		colIds[0].i = 0;
-		colIds[0].c = nucleationIndices[0];
-		ierr = MatSetValuesStencil(J, 2, rowIds, 1, colIds, nucleationVals,
-				ADD_VALUES);
-		checkPetscError(ierr, "PetscSolver0DHandler::computeDiagonalJacobian: "
-				"MatSetValuesStencil (Xe nucleation) failed.");
 	}
 
 	/*

@@ -4,7 +4,6 @@
 #include <memory>
 #include <xolotl/factory/material/MaterialFactory.h>
 #include <xolotl/core/flux/FuelFitFluxHandler.h>
-#include <xolotl/core/modified/HeterogeneousNucleationHandler.h>
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
 #include <xolotl/core/modified/DummyTrapMutationHandler.h>
 
@@ -30,8 +29,6 @@ public:
 				std::make_shared<core::advection::DummyAdvectionHandler>());
 		theTrapMutationHandler = std::make_shared<
 				core::modified::DummyTrapMutationHandler>();
-		theNucleationHandler = std::make_shared<
-				core::modified::HeterogeneousNucleationHandler>();
 
 		return;
 	}
@@ -54,9 +51,6 @@ public:
 		// that there are one xenon created every 4 fissions.
 		theFluxHandler->setFluxAmplitude(
 				options.getFluxAmplitude() * options.getFissionYield());
-
-		// Pass the fission yield to the heterogenenous nucletation handler
-		theNucleationHandler->setFissionYield(options.getFissionYield());
 
 		return;
 	}

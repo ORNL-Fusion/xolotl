@@ -7,7 +7,6 @@
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/core/modified/ITrapMutationHandler.h>
-#include <xolotl/core/modified/IHeterogeneousNucleationHandler.h>
 
 namespace xolotl {
 namespace factory {
@@ -60,13 +59,6 @@ public:
 	 * @return The trap mutation handler.
 	 */
 	virtual std::shared_ptr<core::modified::ITrapMutationHandler> getTrapMutationHandler() const = 0;
-
-	/**
-	 * Return the heterogeneous nucleation handler.
-	 *
-	 * @return The nucleation handler.
-	 */
-	virtual std::shared_ptr<core::modified::IHeterogeneousNucleationHandler> getNucleationHandler() const = 0;
 
 	/**
 	 * Function that create the wanted material factory depending on the given type.

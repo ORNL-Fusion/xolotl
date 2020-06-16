@@ -6,7 +6,6 @@
 #include <xolotl/core/diffusion/DummyDiffusionHandler.h>
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
 #include <xolotl/core/modified/DummyTrapMutationHandler.h>
-#include <xolotl/core/modified/DummyNucleationHandler.h>
 #include <xolotl/core/advection/XGBAdvectionHandler.h>
 #include <xolotl/core/advection/YGBAdvectionHandler.h>
 #include <xolotl/core/advection/ZGBAdvectionHandler.h>
@@ -37,9 +36,6 @@ protected:
 
 	//! The modified trap-mutation handler
 	std::shared_ptr<core::modified::ITrapMutationHandler> theTrapMutationHandler;
-
-	//! The heterogeneous nucleation handler
-	std::shared_ptr<core::modified::IHeterogeneousNucleationHandler> theNucleationHandler;
 
 public:
 
@@ -119,9 +115,6 @@ public:
 					core::modified::DummyTrapMutationHandler>();
 		if (!map["attenuation"])
 			theTrapMutationHandler->setAttenuation(false);
-		if (!map["heterogeneous"])
-			theNucleationHandler = std::make_shared<
-					core::modified::DummyNucleationHandler>();
 
 		// Get the number of dimensions
 		int dim = opts.getDimensionNumber();
@@ -217,14 +210,6 @@ public:
 		return theTrapMutationHandler;
 	}
 
-	/**
-	 * Return the heterogeneous nucleation handler.
-	 *
-	 *  @return The nucleation handler.
-	 */
-	std::shared_ptr<core::modified::IHeterogeneousNucleationHandler> getNucleationHandler() const {
-		return theNucleationHandler;
-	}
 };
 
 } // end namespace material

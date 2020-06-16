@@ -13,8 +13,8 @@ namespace network
 {
 class NEProductionReaction;
 class NEDissociationReaction;
-class NESinkReaction;
 class NEReSolutionReaction;
+class NENucleationReaction;
 class NEReactionNetwork;
 class NEClusterGenerator;
 namespace detail
@@ -52,12 +52,12 @@ struct ReactionNetworkTraits<NEReactionNetwork>
     // using ReactionType = NEReaction;
     using ProductionReactionType = NEProductionReaction;
     using DissociationReactionType = NEDissociationReaction;
-    using SinkReactionType = NESinkReaction;
     using ReSolutionReactionType = NEReSolutionReaction;
+    using NucleationReactionType = NENucleationReaction;
 
     using ReactionTypeList =
         std::tuple<ProductionReactionType, DissociationReactionType,
-            ReSolutionReactionType>;
+            ReSolutionReactionType, NucleationReactionType>;
 
     using ClusterGenerator = NEClusterGenerator;
     using ClusterUpdater = detail::NEClusterUpdater;
