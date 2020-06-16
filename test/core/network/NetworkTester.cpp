@@ -20,8 +20,8 @@ BOOST_GLOBAL_FIXTURE(ScopeGuard);
  */
 BOOST_AUTO_TEST_SUITE(Network_testSuite)
 
-typedef boost::mpl::list<NEReactionNetwork, AlloyReactionNetwork,
-		FeReactionNetwork, PSIReactionNetwork<PSIFullSpeciesList>> network_types;
+using network_types = std::tuple<NEReactionNetwork, AlloyReactionNetwork,
+		FeReactionNetwork, PSIReactionNetwork<PSIFullSpeciesList>>;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE( defaut_constructor, T, network_types )
 {
