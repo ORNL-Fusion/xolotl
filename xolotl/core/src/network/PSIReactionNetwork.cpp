@@ -21,6 +21,11 @@ ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::ReactionNetwork(
     const options::IOptions& opts);
 
 template
+ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::Cluster<plsm::OnHost>
+ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::findCluster(
+    const Composition& comp, plsm::OnHost context);
+
+template
 double
 ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::getTotalConcentration(
     ConcentrationsView concentrations, Species type, AmountType minSize);

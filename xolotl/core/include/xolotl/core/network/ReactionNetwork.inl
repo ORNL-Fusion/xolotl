@@ -198,6 +198,139 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 }
 
 template <typename TImpl>
+std::uint64_t
+ReactionNetwork<TImpl>::getDeviceMemorySize() const noexcept
+{
+    std::uint64_t ret = _subpaving.getDeviceMemorySize();
+
+    ret += sizeof(_clusterData.numClusters);
+    ret += sizeof(_clusterData.gridSize);
+    ret += _clusterData.atomicVolume.required_allocation_size();
+    ret += _clusterData.temperature.required_allocation_size(
+        _clusterData.temperature.extent(0));
+    ret += _clusterData.reactionRadius.required_allocation_size(
+        _clusterData.reactionRadius.extent(0));
+    ret += _clusterData.formationEnergy.required_allocation_size(
+        _clusterData.formationEnergy.extent(0));
+    ret += _clusterData.migrationEnergy.required_allocation_size(
+        _clusterData.migrationEnergy.extent(0));
+    ret += _clusterData.diffusionFactor.required_allocation_size(
+        _clusterData.diffusionFactor.extent(0));
+    ret += _clusterData.diffusionCoefficient.required_allocation_size(
+        _clusterData.diffusionCoefficient.extent(0),
+        _clusterData.diffusionCoefficient.extent(1));
+
+    ret += _reactions.getDeviceMemorySize();
+
+    return ret;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::syncClusterDataOnHost()
+{
+    _subpaving.syncTiles(plsm::onHost);
+    auto mirror = ClusterDataMirror(_subpaving, this->_gridSize);
+    Kokkos::deep_copy(mirror.atomicVolume, _clusterData.atomicVolume);
+    Kokkos::deep_copy(mirror.latticeParameter, _clusterData.latticeParameter);
+    Kokkos::deep_copy(mirror.fissionRate, _clusterData.fissionRate);
+    Kokkos::deep_copy(mirror.enableStdReaction, _clusterData.enableStdReaction);
+    Kokkos::deep_copy(mirror.enableReSolution, _clusterData.enableReSolution);
+    Kokkos::deep_copy(mirror.enableNucleation, _clusterData.enableNucleation);
+    Kokkos::deep_copy(mirror.temperature, _clusterData.temperature);
+    Kokkos::deep_copy(mirror.momentIds, _clusterData.momentIds);
+    Kokkos::deep_copy(mirror.reactionRadius, _clusterData.reactionRadius);
+    Kokkos::deep_copy(mirror.formationEnergy, _clusterData.formationEnergy);
+    Kokkos::deep_copy(mirror.migrationEnergy, _clusterData.migrationEnergy);
+    Kokkos::deep_copy(mirror.diffusionFactor, _clusterData.diffusionFactor);
+    Kokkos::deep_copy(mirror.diffusionCoefficient, _clusterData.diffusionCoefficient);
+    _clusterDataMirror = mirror;
+}
+
+template <typename TImpl>
+KOKKOS_INLINE_FUNCTION
+typename ReactionNetwork<TImpl>::template Cluster<plsm::OnDevice>
+ReactionNetwork<TImpl>::findCluster(const Composition& comp,
+    plsm::OnDevice context)
+{
+    return Cluster<plsm::OnDevice>(_clusterData,
+        _subpaving.findTileId(comp, context));
+}
+
+template <typename TImpl>
+typename ReactionNetwork<TImpl>::template Cluster<plsm::OnHost>
+ReactionNetwork<TImpl>::findCluster(const Composition& comp,
+    plsm::OnHost context)
+{
+    return Cluster<plsm::OnHost>(_clusterDataMirror,
+        _subpaving.findTileId(comp, context));
+}
+
+template <typename TImpl>
+ClusterCommon<plsm::OnHost>
+ReactionNetwork<TImpl>::getSingleVacancy()
+{
+    Composition comp = Composition::zero();
+
+    // Find the vacancy index
+    constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
+    bool hasVacancy = false;
+    Species vIndex;
+    for (auto i : speciesRangeNoI) {
+        if (isVacancy(i)) {
+            hasVacancy = true;
+            vIndex = i;
+        }
+    }
+
+    // Update the composition if there is vacancy in the network
+    if (hasVacancy) comp[vIndex] = 1;
+
+    auto clusterId = findCluster(comp, plsm::onHost).getId();
+
+    return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
+}
+
+template <typename TImpl>
+typename ReactionNetwork<TImpl>::Bounds
+ReactionNetwork<TImpl>::getAllClusterBounds()
+{
+    // Create the object to return
+    Bounds bounds;
+
+    // Loop on all the clusters
+    constexpr auto speciesRange = getSpeciesRange();
+    auto tiles = _subpaving.getTiles(plsm::onHost);
+    for (IndexType i = 0; i < _numClusters; ++i) {
+        const auto& clReg = tiles(i).getRegion();
+        Composition lo = clReg.getOrigin();
+        Composition hi = clReg.getUpperLimitPoint();
+        std::vector<AmountType> boundVector;
+        for (auto j : speciesRange) {
+            boundVector.push_back(lo[j]);
+            boundVector.push_back(hi[j] - 1);
+        }
+        bounds.push_back(boundVector);
+    }
+    return bounds;
+}
+
+template <typename TImpl>
+typename ReactionNetwork<TImpl>::PhaseSpace
+ReactionNetwork<TImpl>::getPhaseSpace()
+{
+    // Create the object to return
+    PhaseSpace space;
+
+    // Loop on all the clusters
+    constexpr auto speciesRange = getSpeciesRange();
+    for (auto j : speciesRange) {
+        space.push_back(toString(j));
+    }
+    return space;
+}
+
+template <typename TImpl>
 void
 ReactionNetwork<TImpl>::updateDiffusionCoefficients()
 {
