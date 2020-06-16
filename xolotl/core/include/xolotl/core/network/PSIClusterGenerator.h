@@ -40,7 +40,7 @@ public:
     bool
     select(const Region& region) const;
 
-    KOKKOS_INLINE_FUNCTION
+    KOKKOS_FUNCTION
     static
     AmountType
     getMaxHePerV(AmountType amtV) noexcept;

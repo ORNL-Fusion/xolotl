@@ -227,7 +227,7 @@ PSIClusterGenerator<PSIFullSpeciesList>::select(const Region& region) const
     return true;
 }
 
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 typename PSIClusterGenerator<PSIFullSpeciesList>::AmountType
 PSIClusterGenerator<PSIFullSpeciesList>::getMaxHePerV(AmountType amtV) noexcept
 {
