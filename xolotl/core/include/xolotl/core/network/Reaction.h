@@ -321,5 +321,3 @@ protected:
 }
 }
 }
-
-// #include <xolotl/core/network/Reaction.inl>

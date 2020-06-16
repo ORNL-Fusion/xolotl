@@ -1,6 +1,8 @@
 #pragma once
 
+#include <xolotl/core/network/Reaction.inl>
 #include <xolotl/core/network/ReSolutionReaction.inl>
+#include <xolotl/core/network/NucleationReaction.inl>
 
 namespace xolotl
 {

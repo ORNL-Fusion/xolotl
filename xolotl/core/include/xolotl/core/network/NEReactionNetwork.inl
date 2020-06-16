@@ -1,5 +1,7 @@
 #pragma once
 
+#include <xolotl/core/network/detail/NucleationReactionGenerator.inl>
+#include <xolotl/core/network/detail/ReSolutionReactionGenerator.inl>
 #include <xolotl/core/network/NEClusterGenerator.inl>
 #include <xolotl/core/network/NEReaction.inl>
 #include <xolotl/core/network/ReactionNetwork.inl>

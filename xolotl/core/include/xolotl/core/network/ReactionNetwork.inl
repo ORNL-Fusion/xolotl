@@ -2,6 +2,7 @@
 
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/detail/ReactionGenerator.h>
+#include <xolotl/core/network/detail/ReactionGenerator.inl>
 #include <xolotl/core/network/Reaction.inl>
 
 namespace xolotl

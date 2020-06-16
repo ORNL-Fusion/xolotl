@@ -45,66 +45,10 @@ public:
     {
     };
 
-    ReactionGeneratorBase(const TNetwork& network)
-        :
-        _subpaving(network._subpaving),
-        _clusterData(network._clusterData),
-        _numDOFs(network.getDOF()),
-        _clusterProdReactionCounts("Production Reaction Counts",
-            _clusterData.numClusters),
-        _clusterDissReactionCounts("Dissociation Reaction Counts",
-            _clusterData.numClusters)
-    {
-    }
+    ReactionGeneratorBase(const TNetwork& network);
 
     ReactionCollection<NetworkType>
-    generateReactions()
-    {
-        auto numClusters = _clusterData.numClusters;
-        auto diffusionFactor = _clusterData.diffusionFactor;
-        auto generator = *(this->asDerived());
-        using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
-        auto range2d = Range2D({0, 0}, {numClusters, numClusters});
-        Kokkos::parallel_for(range2d,
-                KOKKOS_LAMBDA (IndexType i, IndexType j) {
-            if (j < i) {
-                return;
-            }
-            if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-                return;
-            }
-            generator(i, j, Count{});
-        });
-        Kokkos::fence();
-
-        setupCrs();
-
-        generator = *(this->asDerived());
-
-        Kokkos::parallel_for(range2d,
-                KOKKOS_LAMBDA (IndexType i, IndexType j) {
-            if (j < i) {
-                return;
-            }
-            if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-                return;
-            }
-            generator(i, j, Construct{});
-        });
-        Kokkos::fence();
-
-        //TODO: Should this be done in the ReactionCollection constructor?
-        //      - Constructing all reactions
-        //      - Generating connectivity
-        auto reactionCollection = this->asDerived()->getReactionCollection();
-        reactionCollection.constructAll(_clusterData, _allClusterSets);
-
-        Kokkos::fence();
-
-        generateConnectivity(reactionCollection);
-
-        return reactionCollection;
-    }
+    generateReactions();
 
     KOKKOS_INLINE_FUNCTION
     const Subpaving&
@@ -121,20 +65,7 @@ public:
     }
 
     IndexType
-    getRowMapAndTotalReactionCount()
-    {
-        _numProdReactions = Kokkos::get_crs_row_map_from_counts(_prodCrsRowMap,
-            _clusterProdReactionCounts);
-        _numDissReactions = Kokkos::get_crs_row_map_from_counts(_dissCrsRowMap,
-            _clusterDissReactionCounts);
-
-        _prodReactions = Kokkos::View<ProductionReactionType*>(
-            "Production Reactions", _numProdReactions);
-        _dissReactions = Kokkos::View<DissociationReactionType*>(
-            "Dissociation Reactions", _numDissReactions);
-
-        return _numProdReactions + _numDissReactions;
-    }
+    getRowMapAndTotalReactionCount();
 
     ClusterSetSubView
     getClusterSetSubView(std::pair<IndexType, IndexType> indexRange)
@@ -143,24 +74,10 @@ public:
     }
 
     void
-    setupCrsClusterSetSubView()
-    {
-        _prodCrsClusterSets = getClusterSetSubView(
-            std::make_pair(static_cast<IndexType>(0), _numProdReactions));
-
-        _dissCrsClusterSets = getClusterSetSubView(
-            std::make_pair(_numProdReactions,
-                _numProdReactions + _numDissReactions));
-    }
+    setupCrsClusterSetSubView();
 
     void
-    setupCrs()
-    {
-        auto numTotalReactions =
-            this->asDerived()->getRowMapAndTotalReactionCount();
-        _allClusterSets = ClusterSetView("Cluster Sets", numTotalReactions);
-        this->asDerived()->setupCrsClusterSetSubView();
-    }
+    setupCrs();
 
     IndexType
     getNumberOfSinkReactions() const noexcept
@@ -189,55 +106,19 @@ public:
 
     KOKKOS_INLINE_FUNCTION
     void
-    addProductionReaction(Count, const ClusterSet& clusterSet) const
-    {
-        if (!_clusterData.enableStdReaction(0)) return;
-
-        Kokkos::atomic_increment(
-            &_clusterProdReactionCounts(clusterSet.cluster0));
-    }
+    addProductionReaction(Count, const ClusterSet& clusterSet) const;
 
     KOKKOS_INLINE_FUNCTION
     void
-    addProductionReaction(Construct, const ClusterSet& clusterSet) const
-    {
-        if (!_clusterData.enableStdReaction(0)) return;
-
-        auto id = _prodCrsRowMap(clusterSet.cluster0);
-        for (; !Kokkos::atomic_compare_exchange_strong(
-                    &_prodCrsClusterSets(id).cluster0,
-                    NetworkType::invalidIndex(), clusterSet.cluster0);
-                ++id)
-        {
-        }
-        _prodCrsClusterSets(id) = clusterSet;
-    }
+    addProductionReaction(Construct, const ClusterSet& clusterSet) const;
 
     KOKKOS_INLINE_FUNCTION
     void
-    addDissociationReaction(Count, const ClusterSet& clusterSet) const
-    {
-        if (!_clusterData.enableStdReaction(0)) return;
-
-        Kokkos::atomic_increment(
-            &_clusterDissReactionCounts(clusterSet.cluster1));
-    }
+    addDissociationReaction(Count, const ClusterSet& clusterSet) const;
 
     KOKKOS_INLINE_FUNCTION
     void
-    addDissociationReaction(Construct, const ClusterSet& clusterSet) const
-    {
-        if (!_clusterData.enableStdReaction(0)) return;
-
-        auto id = _dissCrsRowMap(clusterSet.cluster1);
-        for (; !Kokkos::atomic_compare_exchange_strong(
-                    &_dissCrsClusterSets(id).cluster1, NetworkType::invalidIndex(),
-                    clusterSet.cluster1);
-                ++id)
-        {
-        }
-        _dissCrsClusterSets(id) = clusterSet;
-    }
+    addDissociationReaction(Construct, const ClusterSet& clusterSet) const;
 
     Kokkos::View<ProductionReactionType*>
     getProductionReactions() const
@@ -252,90 +133,7 @@ public:
     }
 
     void
-    generateConnectivity(ReactionCollection<NetworkType>& reactionCollection)
-    {
-        using RowMap = typename Connectivity::row_map_type;
-        using Entries = typename Connectivity::entries_type;
-
-        Connectivity tmpConn;
-        //Count connectivity entries
-        //NOTE: We're using row_map for counts because
-        //      Reaction::contributeConnectivity expects the connectivity CRS
-        tmpConn.row_map =
-            RowMap(Kokkos::ViewAllocateWithoutInitializing("tmp counts"),
-                this->_numDOFs);
-        // Even if there is no reaction each dof should connect with itself (for PETSc)
-        Kokkos::parallel_for(this->_numDOFs, KOKKOS_LAMBDA (const IndexType i) {
-            tmpConn.row_map(i) = 1;
-        });
-        reactionCollection.apply(DEVICE_LAMBDA (auto&& reaction) {
-            reaction.contributeConnectivity(tmpConn);
-        });
-
-        Kokkos::fence();
-        //Get row map
-        auto counts = tmpConn.row_map;
-        auto nEntries = Kokkos::get_crs_row_map_from_counts(tmpConn.row_map,
-            counts);
-        //Reset counts view
-        counts = RowMap();
-        //Initialize entries to invalid
-        tmpConn.entries = Entries(
-            Kokkos::ViewAllocateWithoutInitializing("connectivity entries"),
-            nEntries);
-        Kokkos::parallel_for(nEntries, KOKKOS_LAMBDA (IndexType i) {
-            tmpConn.entries(i) = NetworkType::invalidIndex();
-        });
-        // Even if there is no reaction each dof should connect with itself (for PETSc)
-        Kokkos::parallel_for(this->_numDOFs, KOKKOS_LAMBDA (const IndexType i) {
-            auto id = tmpConn.row_map(i);
-            for (; !Kokkos::atomic_compare_exchange_strong(
-                        &tmpConn.entries(id), NetworkType::invalidIndex(), i);
-                        ++id) {
-                if (tmpConn.entries(id) == i) {
-                    break;
-                }
-            }
-        });
-        //Fill entries (column ids)
-        reactionCollection.apply(DEVICE_LAMBDA (auto&& reaction) {
-            reaction.contributeConnectivity(tmpConn);
-        });
-
-        Kokkos::fence();
-
-        //Shrink to fit
-        Connectivity connectivity;
-        Kokkos::count_and_fill_crs(connectivity, this->_numDOFs,
-                KOKKOS_LAMBDA (IndexType i, IndexType* fill) {
-            IndexType ret = 0;
-            if (fill == nullptr) {
-                auto jStart = tmpConn.row_map(i);
-                auto jEnd = tmpConn.row_map(i+1);
-                ret = jEnd - jStart;
-                for (IndexType j = jStart; j < jEnd; ++j) {
-                    if (tmpConn.entries(j) == NetworkType::invalidIndex()) {
-                        ret = j - jStart;
-                        break;
-                    }
-                }
-            }
-            else {
-                auto tmpStart = tmpConn.row_map(i);
-                for (IndexType j = tmpStart; j < tmpConn.row_map(i+1); ++j) {
-                    auto entry = tmpConn.entries(j);
-                    if (entry == NetworkType::invalidIndex()) {
-                        break;
-                    }
-                    fill[j - tmpStart] = entry;
-                }
-            }
-            return ret;
-        });
-        nEntries = connectivity.entries.extent(0);
-
-        reactionCollection.setConnectivity(connectivity);
-    }
+    generateConnectivity(ReactionCollection<NetworkType>& reactionCollection);
 
 protected:
     TDerived*
@@ -401,8 +199,6 @@ struct ReactionGeneratorTypeBuilderImpl<TReactionGeneratorParent,
                 TReactionGeneratorParent, TuplePopFront<ExtraReactions>>::Type>
                     ::Type;
 };
-
-class NoneSuch { public: using NetworkType = void; };
 
 template <typename TNetwork, typename TDerived>
 struct ReactionGeneratorTypeBuilder
