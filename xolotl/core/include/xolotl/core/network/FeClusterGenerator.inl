@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/util/MathUtils.h>
+#include <xolotl/core/Constants.h>
 
 namespace xolotl
 {

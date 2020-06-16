@@ -1,6 +1,8 @@
 list(APPEND XOLOTL_CORE_HEADERS
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterSet.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/MemorySpace.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionCollection.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReSolutionReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/SinkReactionGenerator.h
@@ -33,7 +35,6 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/PSITraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/Reaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/Reaction.inl
-    ${XOLOTL_CORE_HEADER_DIR}/network/ReactionData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/ReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/ReactionNetwork.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/ReactionNetworkTraits.h
@@ -42,4 +43,11 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/SinkReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SinkReaction.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesEnumSequence.h
+)
+
+list(APPEND XOLOTL_CORE_SOURCES
+    ${XOLOTL_CORE_SOURCE_DIR}/network/AlloyReactionNetwork.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/FeReactionNetwork.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/NEReactionNetwork.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetwork.cpp
 )

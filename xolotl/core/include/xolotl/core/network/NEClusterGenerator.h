@@ -1,6 +1,8 @@
 #pragma once
 
 #include <plsm/refine/Detector.h>
+#include <xolotl/util/MathUtils.h>
+#include <xolotl/core/Constants.h>
 
 namespace xolotl
 {

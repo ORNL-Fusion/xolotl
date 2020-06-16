@@ -10,8 +10,9 @@
 #define DEVICE_LAMBDA [=]
 #endif
 
-#include <xolotl/core/network/ReactionData.h>
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/core/network/detail/ClusterSet.h>
+#include <xolotl/core/network/detail/ReactionData.h>
 #include <xolotl/core/network/detail/TupleUtility.h>
 
 namespace xolotl

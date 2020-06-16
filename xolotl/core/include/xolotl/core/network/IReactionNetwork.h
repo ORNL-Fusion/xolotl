@@ -7,7 +7,7 @@
 
 #include <xolotl/core/network/ClusterData.h>
 #include <xolotl/core/network/Cluster.h>
-#include <xolotl/core/network/ReactionData.h>
+#include <xolotl/core/network/detail/ReactionData.h>
 
 namespace xolotl
 {

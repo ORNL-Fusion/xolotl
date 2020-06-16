@@ -1,11 +1,31 @@
 #pragma once
 
+#include <xolotl/core/network/ReactionNetwork.inl>
+
 namespace xolotl
 {
 namespace core
 {
 namespace network
 {
+double
+AlloyReactionNetwork::checkLatticeParameter(double latticeParameter)
+{
+    if (latticeParameter <= 0.0) {
+        return alloyLatticeConstant;
+    }
+    return latticeParameter;
+}
+
+double
+AlloyReactionNetwork::checkImpurityRadius(double impurityRadius)
+{
+    if (impurityRadius <= 0.0) {
+        return alloyCoreRadius;
+    }
+    return impurityRadius;
+}
+
 namespace detail
 {
 template <typename TTag>

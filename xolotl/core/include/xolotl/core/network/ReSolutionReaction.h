@@ -87,5 +87,5 @@ protected:
 }
 }
 
-#include <xolotl/core/network/ReSolutionReaction.inl>
+// #include <xolotl/core/network/ReSolutionReaction.inl>
 #include <xolotl/core/network/detail/ReSolutionReactionGenerator.h>

@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/AlloyTraits.h>
 #include <xolotl/core/network/SinkReaction.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl
 {

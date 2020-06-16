@@ -109,5 +109,5 @@ protected:
 }
 }
 
-#include <xolotl/core/network/SinkReaction.inl>
+// #include <xolotl/core/network/SinkReaction.inl>
 #include <xolotl/core/network/detail/SinkReactionGenerator.h>

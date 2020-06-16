@@ -482,18 +482,9 @@ public:
     KOKKOS_INLINE_FUNCTION
     void
     updateDiffusionCoefficient(const ClusterData& data, IndexType clusterId,
-        IndexType gridIndex) const
-    {
-        data.diffusionCoefficient(clusterId, gridIndex) =
-            data.diffusionFactor(clusterId) * exp(
-                -data.migrationEnergy(clusterId) /
-                (kBoltzmann * data.temperature(gridIndex)));
-    }
+        IndexType gridIndex) const;
 };
 }
 }
 }
 }
-
-#include <xolotl/core/network/detail/ReactionGenerator.h>
-#include <xolotl/core/network/ReactionNetwork.inl>

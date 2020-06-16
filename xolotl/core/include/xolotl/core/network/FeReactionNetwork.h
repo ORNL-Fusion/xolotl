@@ -35,61 +35,11 @@ public:
     using Superclass::Superclass;
 
     void
-    checkTiles(const options::IOptions& options)
-    {
-        auto maxHe = static_cast<AmountType>(options.getMaxImpurity() + 1);
-        auto maxV = static_cast<AmountType>(options.getMaxV() + 1);
-        auto& tiles = this->getSubpaving().getTiles(plsm::onDevice);
-        auto numClusters = tiles.extent(0);
-        Kokkos::parallel_for(numClusters, KOKKOS_LAMBDA (const IndexType i) {
-            auto clReg = tiles(i).getRegion();
-            if (clReg[Species::He].end() > maxHe) {
-                Region r({Ival{clReg[Species::He].begin(), maxHe},
-                    Ival{clReg[Species::V].begin(), clReg[Species::V].end()},
-                    Ival{clReg[Species::I].begin(), clReg[Species::I].end()}});
-                auto id = tiles(i).getOwningZoneIndex();
-                auto newTile = plsm::Tile<Region>(r, id);
-                tiles(i) = newTile;
-            }
-            clReg = tiles(i).getRegion();
-            if (clReg[Species::He].begin() == 0 && clReg[Species::V].begin() > 10) {
-                Region r({Ival{1, clReg[Species::He].end()},
-                    Ival{clReg[Species::V].begin(), clReg[Species::V].end()},
-                    Ival{clReg[Species::I].begin(), clReg[Species::I].end()}});
-                auto id = tiles(i).getOwningZoneIndex();
-                auto newTile = plsm::Tile<Region>(r, id);
-                tiles(i) = newTile;
-            }
-            clReg = tiles(i).getRegion();
-            if (clReg[Species::V].end() > maxV) {
-                Region r({Ival{clReg[Species::He].begin(), clReg[Species::He].end()},
-                    Ival{clReg[Species::V].begin(), maxV},
-                    Ival{clReg[Species::I].begin(), clReg[Species::I].end()}});
-                auto id = tiles(i).getOwningZoneIndex();
-                auto newTile = plsm::Tile<Region>(r, id);
-                tiles(i) = newTile;
-            }
-            clReg = tiles(i).getRegion();
-            if (clReg[Species::V].begin() == 0 && clReg[Species::He].begin() > 8) {
-                Region r({Ival{clReg[Species::He].begin(), clReg[Species::He].end()},
-                    Ival{1, clReg[Species::V].end()},
-                    Ival{clReg[Species::I].begin(), clReg[Species::I].end()}});
-                auto id = tiles(i).getOwningZoneIndex();
-                auto newTile = plsm::Tile<Region>(r, id);
-                tiles(i) = newTile;
-            }
-        });
-    }
+    checkTiles(const options::IOptions& options);
 
 private:
     double
-    checkLatticeParameter(double latticeParameter)
-    {
-        if (latticeParameter <= 0.0) {
-            return ironLatticeConstant;
-        }
-        return latticeParameter;
-    }
+    checkLatticeParameter(double latticeParameter);
 
     double
     computeAtomicVolume(double latticeParameter)
@@ -99,13 +49,7 @@ private:
     }
 
     double
-    checkImpurityRadius(double impurityRadius)
-    {
-        if (impurityRadius <= 0.0) {
-            return heliumRadius;
-        }
-        return impurityRadius;
-    }
+    checkImpurityRadius(double impurityRadius);
 
     detail::FeReactionGenerator
     getReactionGenerator() const noexcept;
@@ -148,4 +92,4 @@ private:
 }
 
 #include <xolotl/core/network/FeClusterGenerator.h>
-#include <xolotl/core/network/FeReactionNetwork.inl>
+// #include <xolotl/core/network/FeReactionNetwork.inl>

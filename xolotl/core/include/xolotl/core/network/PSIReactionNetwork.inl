@@ -1,11 +1,33 @@
 #pragma once
 
+#include <xolotl/core/network/ReactionNetwork.inl>
+
 namespace xolotl
 {
 namespace core
 {
 namespace network
 {
+template <typename TSpeciesEnum>
+double
+PSIReactionNetwork<TSpeciesEnum>::checkLatticeParameter(double latticeParameter)
+{
+    if (latticeParameter <= 0.0) {
+        return tungstenLatticeConstant;
+    }
+    return latticeParameter;
+}
+
+template <typename TSpeciesEnum>
+double
+PSIReactionNetwork<TSpeciesEnum>::checkImpurityRadius(double impurityRadius)
+{
+    if (impurityRadius <= 0.0) {
+        return heliumRadius;
+    }
+    return impurityRadius;
+}
+
 namespace detail
 {
 template <typename TSpeciesEnum>

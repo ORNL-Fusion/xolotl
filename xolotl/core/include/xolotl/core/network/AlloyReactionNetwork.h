@@ -35,13 +35,7 @@ public:
 
 private:
     double
-    checkLatticeParameter(double latticeParameter)
-    {
-        if (latticeParameter <= 0.0) {
-            return alloyLatticeConstant;
-        }
-        return latticeParameter;
-    }
+    checkLatticeParameter(double latticeParameter);
 
     double
     computeAtomicVolume(double latticeParameter)
@@ -50,13 +44,8 @@ private:
         return 0.25 * latticeParameter * latticeParameter * latticeParameter;
     }
 
-    double checkImpurityRadius(double impurityRadius)
-    {
-        if (impurityRadius <= 0.0) {
-            return alloyCoreRadius;
-        }
-        return impurityRadius;
-    }
+    double
+    checkImpurityRadius(double impurityRadius);
 
     void
     checkTiles(const options::IOptions& options)
@@ -108,4 +97,4 @@ public:
 }
 
 #include <xolotl/core/network/AlloyClusterGenerator.h>
-#include <xolotl/core/network/AlloyReactionNetwork.inl>
+// #include <xolotl/core/network/AlloyReactionNetwork.inl>

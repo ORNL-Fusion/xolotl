@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/detail/ReactionGenerator.h>
 #include <xolotl/core/network/ReactionNetwork.h>
 #include <xolotl/core/network/PSIReaction.h>
 #include <xolotl/core/network/PSITraits.h>
@@ -37,13 +38,7 @@ public:
 
 private:
     double
-    checkLatticeParameter(double latticeParameter)
-    {
-        if (latticeParameter <= 0.0) {
-            return tungstenLatticeConstant;
-        }
-        return latticeParameter;
-    }
+    checkLatticeParameter(double latticeParameter);
 
     double
     computeAtomicVolume(double latticeParameter)
@@ -53,13 +48,7 @@ private:
     }
 
     double
-    checkImpurityRadius(double impurityRadius)
-    {
-        if (impurityRadius <= 0.0) {
-            return heliumRadius;
-        }
-        return impurityRadius;
-    }
+    checkImpurityRadius(double impurityRadius);
 
     void
     checkTiles(const options::IOptions&)
@@ -114,4 +103,4 @@ private:
 }
 
 #include <xolotl/core/network/PSIClusterGenerator.h>
-#include <xolotl/core/network/PSIReactionNetwork.inl>
+// #include <xolotl/core/network/PSIReactionNetwork.inl>

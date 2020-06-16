@@ -5,9 +5,10 @@
 #include <plsm/detail/KokkosExtension.h>
 #include <plsm/Utility.h>
 
+#include <xolotl/core/network/detail/ClusterSet.h>
+#include <xolotl/core/network/detail/ReactionData.h>
 #include <xolotl/core/network/Cluster.h>
 #include <xolotl/core/network/IReactionNetwork.h>
-#include <xolotl/core/network/ReactionData.h>
 #include <xolotl/core/network/ReactionNetworkTraits.h>
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 
@@ -17,40 +18,6 @@ namespace core
 {
 namespace network
 {
-namespace detail
-{
-struct ClusterSet
-{
-    using IndexType = ReactionNetworkIndexType;
-    static constexpr IndexType invalidIndex = IReactionNetwork::invalidIndex();
-
-    IndexType cluster0 {invalidIndex};
-    IndexType cluster1 {invalidIndex};
-    IndexType cluster2 {invalidIndex};
-    IndexType cluster3 {invalidIndex};
-
-    ClusterSet() = default;
-
-    KOKKOS_INLINE_FUNCTION
-    ClusterSet(IndexType cl0, IndexType cl1, IndexType cl2 = invalidIndex,
-            IndexType cl3 = invalidIndex)
-        :
-        cluster0{cl0},
-        cluster1{cl1},
-        cluster2{cl2},
-        cluster3{cl3}
-    {
-    }
-
-    KOKKOS_INLINE_FUNCTION
-    bool
-    valid() const noexcept
-    {
-        return cluster0 != invalidIndex;
-    }
-};
-}
-
 template <typename TNetwork, typename TDerived>
 class Reaction
 {
@@ -355,4 +322,4 @@ protected:
 }
 }
 
-#include <xolotl/core/network/Reaction.inl>
+// #include <xolotl/core/network/Reaction.inl>

@@ -1,6 +1,12 @@
 #pragma once
 
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/network/detail/ReactionGenerator.h>
+#include <xolotl/core/network/Reaction.inl>
+#include <xolotl/core/network/ReSolutionReaction.h>
+#include <xolotl/core/network/ReSolutionReaction.inl>
+#include <xolotl/core/network/SinkReaction.h>
+#include <xolotl/core/network/SinkReaction.inl>
 
 namespace xolotl
 {
@@ -536,6 +542,18 @@ ReactionNetworkWorker<TImpl>::getTotalAtomConcentration(
     Kokkos::fence();
 
     return conc;
+}
+
+template <typename TImpl>
+KOKKOS_INLINE_FUNCTION
+void
+DefaultClusterUpdater<TImpl>::updateDiffusionCoefficient(
+    const ClusterData& data, IndexType clusterId, IndexType gridIndex) const
+{
+    data.diffusionCoefficient(clusterId, gridIndex) =
+        data.diffusionFactor(clusterId) * exp(
+            -data.migrationEnergy(clusterId) /
+            (kBoltzmann * data.temperature(gridIndex)));
 }
 }
 }
