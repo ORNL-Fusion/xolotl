@@ -28,32 +28,9 @@ public:
     using Composition = typename NetworkType::Composition;
     using AmountType = typename NetworkType::AmountType;
 
-    PSIClusterGenerator(const options::IOptions& opts)
-        :
-        _hydrogenRadiusFactor(opts.getHydrogenFactor()),
-        _maxHe(opts.getMaxImpurity()),
-        _maxD(opts.getMaxD()),
-        _maxT(opts.getMaxT()),
-        _maxV(opts.getMaxV()),
-        _groupingMin(opts.getGroupingMin()),
-        _groupingWidthA(opts.getGroupingWidthA()),
-        _groupingWidthB(opts.getGroupingWidthB())
-    {
-    }
+    PSIClusterGenerator(const options::IOptions& opts);
 
-    PSIClusterGenerator(const options::IOptions& opts, std::size_t refineDepth)
-        :
-        Superclass(refineDepth),
-        _hydrogenRadiusFactor(opts.getHydrogenFactor()),
-        _maxHe(opts.getMaxImpurity()),
-        _maxD(opts.getMaxD()),
-        _maxT(opts.getMaxT()),
-        _maxV(opts.getMaxV()),
-        _groupingMin(opts.getGroupingMin()),
-        _groupingWidthA(opts.getGroupingWidthA()),
-        _groupingWidthB(opts.getGroupingWidthB())
-    {
-    }
+    PSIClusterGenerator(const options::IOptions& opts, std::size_t refineDepth);
 
     KOKKOS_INLINE_FUNCTION
     bool
@@ -111,5 +88,3 @@ private:
 }
 }
 }
-
-#include <xolotl/core/network/PSIClusterGenerator.inl>

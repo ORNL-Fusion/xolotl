@@ -1,8 +1,8 @@
 #pragma once
 
-#include <xolotl/core/network/ReactionNetwork.h>
 #include <xolotl/core/network/FeReaction.h>
 #include <xolotl/core/network/FeTraits.h>
+#include <xolotl/core/network/ReactionNetwork.h>
 
 namespace xolotl
 {
@@ -92,4 +92,3 @@ private:
 }
 
 #include <xolotl/core/network/FeClusterGenerator.h>
-// #include <xolotl/core/network/FeReactionNetwork.inl>

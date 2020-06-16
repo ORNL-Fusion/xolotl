@@ -1,5 +1,7 @@
 #pragma once
 
+#include <xolotl/core/network/ReactionNetworkTraits.h>
+
 namespace xolotl
 {
 namespace core
@@ -10,7 +12,6 @@ class FeReactionNetwork;
 class FeProductionReaction;
 class FeDissociationReaction;
 class FeSinkReaction;
-// class FeReSolutionReaction;
 class FeClusterGenerator;
 
 enum class FeSpeciesList

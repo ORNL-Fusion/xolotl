@@ -9,6 +9,35 @@ namespace core
 {
 namespace network
 {
+PSIClusterGenerator<PSIFullSpeciesList>::PSIClusterGenerator(
+        const options::IOptions& opts)
+    :
+    _hydrogenRadiusFactor(opts.getHydrogenFactor()),
+    _maxHe(opts.getMaxImpurity()),
+    _maxD(opts.getMaxD()),
+    _maxT(opts.getMaxT()),
+    _maxV(opts.getMaxV()),
+    _groupingMin(opts.getGroupingMin()),
+    _groupingWidthA(opts.getGroupingWidthA()),
+    _groupingWidthB(opts.getGroupingWidthB())
+{
+}
+
+PSIClusterGenerator<PSIFullSpeciesList>::PSIClusterGenerator(
+        const options::IOptions& opts, std::size_t refineDepth)
+    :
+    Superclass(refineDepth),
+    _hydrogenRadiusFactor(opts.getHydrogenFactor()),
+    _maxHe(opts.getMaxImpurity()),
+    _maxD(opts.getMaxD()),
+    _maxT(opts.getMaxT()),
+    _maxV(opts.getMaxV()),
+    _groupingMin(opts.getGroupingMin()),
+    _groupingWidthA(opts.getGroupingWidthA()),
+    _groupingWidthB(opts.getGroupingWidthB())
+{
+}
+
 KOKKOS_INLINE_FUNCTION
 bool
 PSIClusterGenerator<PSIFullSpeciesList>::intersect(const Region& region) const

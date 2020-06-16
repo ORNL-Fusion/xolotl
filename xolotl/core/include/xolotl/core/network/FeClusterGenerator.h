@@ -1,14 +1,15 @@
 #pragma once
 
+#include <plsm/refine/Detector.h>
+#include <xolotl/core/network/FeTraits.h>
+
 namespace xolotl
 {
 namespace core
 {
 namespace network
 {
-class FeClusterGenerator :
-    public
-    plsm::refine::Detector<FeClusterGenerator>
+class FeClusterGenerator : public plsm::refine::Detector<FeClusterGenerator>
 {
 public:
     using Species = FeSpeciesList;
@@ -22,26 +23,10 @@ public:
     using Composition = typename NetworkType::Composition;
     using AmountType = typename NetworkType::AmountType;
 
-    FeClusterGenerator(const options::IOptions& options)
-        :
-        _maxHe(options.getMaxImpurity()),
-        _maxV(options.getMaxV()),
-        _groupingMin(options.getGroupingMin()),
-        _groupingWidthHe(options.getGroupingWidthA()),
-        _groupingWidthV(options.getGroupingWidthB())
-    {
-    }
+    FeClusterGenerator(const options::IOptions& options);
 
-    FeClusterGenerator(const options::IOptions& options, std::size_t refineDepth)
-        :
-        Superclass(refineDepth),
-        _maxHe(options.getMaxImpurity()),
-        _maxV(options.getMaxV()),
-        _groupingMin(options.getGroupingMin()),
-        _groupingWidthHe(options.getGroupingWidthA()),
-        _groupingWidthV(options.getGroupingWidthB())
-    {
-    }
+    FeClusterGenerator(const options::IOptions& options,
+        std::size_t refineDepth);
 
     KOKKOS_INLINE_FUNCTION
     bool
@@ -92,5 +77,3 @@ private:
 }
 }
 }
-
-#include <xolotl/core/network/FeClusterGenerator.inl>

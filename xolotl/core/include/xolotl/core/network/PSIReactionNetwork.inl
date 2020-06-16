@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/PSIClusterGenerator.inl>
 #include <xolotl/core/network/PSIReaction.inl>
 #include <xolotl/core/network/ReactionNetwork.inl>
 

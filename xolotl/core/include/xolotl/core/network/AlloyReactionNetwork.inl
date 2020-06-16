@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/AlloyClusterGenerator.inl>
 #include <xolotl/core/network/AlloyReaction.inl>
 #include <xolotl/core/network/ReactionNetwork.inl>
 
@@ -78,7 +79,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
         }
         return;
     }
-    
+
     // vac + void = void
     if ((lo1.isOnAxis(Species::Void) && lo2.isOnAxis(Species::V))
     		|| (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Void))) {
@@ -96,7 +97,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
         }
         return;
     }
-    
+
     // vac + faulted = faulted
     if ((lo1.isOnAxis(Species::Faulted) && lo2.isOnAxis(Species::V))
     		|| (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Faulted))) {
@@ -114,7 +115,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
         }
         return;
     }
-    
+
     // vac + int = vac | int | recombine
     if (((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
              (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I)))) {
@@ -152,7 +153,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
         }
         return;
     }
-    
+
     // vac + perfect = perfect | int
     if (((lo1.isOnAxis(Species::Perfect) && lo2.isOnAxis(Species::V)) ||
              (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Perfect)))) {
@@ -182,7 +183,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
         }
         return;
     }
-    
+
     // vac + frank = frank | int
     if (((lo1.isOnAxis(Species::Frank) && lo2.isOnAxis(Species::V)) ||
              (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Frank)))) {
