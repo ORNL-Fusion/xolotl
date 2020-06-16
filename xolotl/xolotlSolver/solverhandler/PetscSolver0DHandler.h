@@ -26,7 +26,7 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver0DHandler(xolotlCore::IReactionNetwork& _network) :
+	PetscSolver0DHandler(xolotlCore::IReactionNetwork &_network) :
 			PetscSolverHandler(_network) {
 	}
 

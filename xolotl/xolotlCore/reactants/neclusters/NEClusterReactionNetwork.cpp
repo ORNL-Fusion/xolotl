@@ -25,8 +25,8 @@ double NEClusterReactionNetwork::calculateDissociationConstant(
 	if (!dissociationsEnabled)
 		return 0.0;
 
-	// Compute the atomic volume
-	double atomicVolume = 0.5 * latticeParameter * latticeParameter
+	// Compute the atomic volume, 4 U per cell
+	double atomicVolume = 0.25 * latticeParameter * latticeParameter
 			* latticeParameter;
 
 	// Get the rate constant from the reverse reaction

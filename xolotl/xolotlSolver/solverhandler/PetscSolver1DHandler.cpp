@@ -233,7 +233,7 @@ void PetscSolver1DHandler::initializeConcentration(DM &da, Vec &C) {
 		for (auto i = 0; i < localXM; ++i) {
 			concOffset = concentrations[localXS + i];
 
-			for (auto const& currConcData : myConcs[i]) {
+			for (auto const &currConcData : myConcs[i]) {
 				concOffset[currConcData.first] = currConcData.second;
 			}
 			// Set the temperature in the network
@@ -276,7 +276,7 @@ void PetscSolver1DHandler::initGBLocation(DM &da, Vec &C) {
 	const int dof = network.getDOF();
 
 	// Loop on the GB
-	for (auto const& pair : gbVector) {
+	for (auto const &pair : gbVector) {
 		// Get the coordinate of the point
 		int xi = std::get<0>(pair);
 		// Check if we are on the right process
@@ -315,7 +315,7 @@ std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > P
 			"DMDAVecGetArrayDOFRead failed.");
 
 	// Get the network and dof
-	auto& network = getNetwork();
+	auto &network = getNetwork();
 	const int dof = network.getDOF();
 
 	// Create the vector for the concentrations
@@ -349,7 +349,7 @@ std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > P
 
 void PetscSolver1DHandler::setConcVector(DM &da, Vec &C,
 		std::vector<
-				std::vector<std::vector<std::vector<std::pair<int, double> > > > > & concVector) {
+				std::vector<std::vector<std::vector<std::pair<int, double> > > > > &concVector) {
 	PetscErrorCode ierr;
 
 	// Pointer for the concentration vector
@@ -604,7 +604,10 @@ void PetscSolver1DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 				updatedConcOffset, xi, localXS);
 
 		// ----- Compute the reaction fluxes over the locally owned part of the grid -----
+		fluxCounter->increment();
+		fluxTimer->start();
 		network.computeAllFluxes(updatedConcOffset, xi + 1 - localXS);
+		fluxTimer->stop();
 	}
 
 	/*
@@ -970,8 +973,11 @@ void PetscSolver1DHandler::computeDiagonalJacobian(TS &ts, Vec &localC, Mat &J,
 		// ----- Take care of the reactions for all the reactants -----
 
 		// Compute all the partial derivatives for the reactions
+		partialDerivativeCounter->increment();
+		partialDerivativeTimer->start();
 		network.computeAllPartials(reactionStartingIdx, reactionIndices,
 				reactionVals, xi + 1 - localXS);
+		partialDerivativeTimer->stop();
 
 		// Update the column in the Jacobian that represents each DOF
 		for (int i = 0; i < dof - 1; i++) {

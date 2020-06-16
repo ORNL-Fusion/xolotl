@@ -80,6 +80,10 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	Options opts;
 	opts.readParams(argc, argv);
 
+	// Set up our dummy performance and visualization infrastructures
+	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
+	xolotlFactory::initializeVizHandler(false);
+
 	// Create the network loader
 	std::shared_ptr<HDF5NetworkLoader> loader = std::make_shared<
 			HDF5NetworkLoader>(make_shared<xolotlPerf::DummyHandlerRegistry>());
@@ -92,8 +96,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 
 	// Create the material factory
 	auto materialFactory =
-			xolotlFactory::IMaterialFactory::createMaterialFactory(
-					opts.getMaterial(), opts.getDimensionNumber());
+			xolotlFactory::IMaterialFactory::createMaterialFactory(opts);
 
 	// Initialize and get the temperature handler
 	xolotlFactory::initializeTempHandler(opts);
@@ -106,7 +109,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	networkFactory->initializeReactionNetwork(opts,
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Get the network
-	auto& network = networkFactory->getNetworkHandler();
+	auto &network = networkFactory->getNetworkHandler();
 
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver0DHandler(network);
@@ -118,10 +121,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(*theSolverHandler,
 					make_shared<xolotlPerf::DummyHandlerRegistry>()));
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
@@ -205,8 +204,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 
 	// Create the material factory
 	auto materialFactory =
-			xolotlFactory::IMaterialFactory::createMaterialFactory(
-					opts.getMaterial(), opts.getDimensionNumber());
+			xolotlFactory::IMaterialFactory::createMaterialFactory(opts);
 
 	// Initialize and get the temperature handler
 	xolotlFactory::initializeTempHandler(opts);
@@ -219,7 +217,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	networkFactory->initializeReactionNetwork(opts,
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Get the network
-	auto& network = networkFactory->getNetworkHandler();
+	auto &network = networkFactory->getNetworkHandler();
 
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver1DHandler(network);
@@ -231,10 +229,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(*theSolverHandler,
 					make_shared<xolotlPerf::DummyHandlerRegistry>()));
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
@@ -319,8 +313,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 
 	// Create the material factory
 	auto materialFactory =
-			xolotlFactory::IMaterialFactory::createMaterialFactory(
-					opts.getMaterial(), opts.getDimensionNumber());
+			xolotlFactory::IMaterialFactory::createMaterialFactory(opts);
 
 	// Initialize and get the temperature handler
 	xolotlFactory::initializeTempHandler(opts);
@@ -333,7 +326,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 	networkFactory->initializeReactionNetwork(opts,
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Get the network
-	auto& network = networkFactory->getNetworkHandler();
+	auto &network = networkFactory->getNetworkHandler();
 
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver1DHandler(network);
@@ -345,10 +338,6 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(*theSolverHandler,
 					make_shared<xolotlPerf::DummyHandlerRegistry>()));
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
@@ -420,8 +409,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 
 	// Create the material factory
 	auto materialFactory =
-			xolotlFactory::IMaterialFactory::createMaterialFactory(
-					opts.getMaterial(), opts.getDimensionNumber());
+			xolotlFactory::IMaterialFactory::createMaterialFactory(opts);
 
 	// Initialize and get the temperature handler
 	xolotlFactory::initializeTempHandler(opts);
@@ -434,7 +422,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	networkFactory->initializeReactionNetwork(opts,
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Get the network
-	auto& network = networkFactory->getNetworkHandler();
+	auto &network = networkFactory->getNetworkHandler();
 
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver2DHandler(network);
@@ -446,10 +434,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(*theSolverHandler,
 					make_shared<xolotlPerf::DummyHandlerRegistry>()));
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
@@ -522,8 +506,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 
 	// Create the material factory
 	auto materialFactory =
-			xolotlFactory::IMaterialFactory::createMaterialFactory(
-					opts.getMaterial(), opts.getDimensionNumber());
+			xolotlFactory::IMaterialFactory::createMaterialFactory(opts);
 
 	// Initialize and get the temperature handler
 	bool tempInitOK = xolotlFactory::initializeTempHandler(opts);
@@ -536,7 +519,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 	networkFactory->initializeReactionNetwork(opts,
 			make_shared<xolotlPerf::DummyHandlerRegistry>());
 	// Get the network
-	auto& network = networkFactory->getNetworkHandler();
+	auto &network = networkFactory->getNetworkHandler();
 
 	// Create a solver handler and initialize it
 	auto rawSolverHandler = new xolotlSolver::PetscSolver3DHandler(network);
@@ -548,10 +531,6 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 	std::unique_ptr<xolotlSolver::PetscSolver> solver(
 			new xolotlSolver::PetscSolver(*theSolverHandler,
 					make_shared<xolotlPerf::DummyHandlerRegistry>()));
-
-	// Set up our dummy performance and visualization infrastructures
-	xolotlPerf::initialize(xolotlPerf::toPerfRegistryType("dummy"));
-	xolotlFactory::initializeVizHandler(false);
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());

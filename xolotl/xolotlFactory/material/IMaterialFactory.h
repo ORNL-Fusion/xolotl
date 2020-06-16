@@ -77,12 +77,11 @@ public:
 	/**
 	 * Function that create the wanted material factory depending on the given type.
 	 *
-	 * @param materialType The type of wanted material.
-	 * @param dimension The number of dimensions of the problem.
+	 * @param options The options
 	 * @return The material factory.
 	 */
 	static std::shared_ptr<IMaterialFactory> createMaterialFactory(
-			const std::string& materialType, int dimension);
+			const xolotlCore::Options &options);
 
 };
 

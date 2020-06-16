@@ -51,8 +51,7 @@ void XolotlInterface::initializeXolotl(int argc, char **argv, MPI_Comm comm,
 
 		// Create the material factory
 		auto materialFactory =
-				xolotlFactory::IMaterialFactory::createMaterialFactory(
-						opts.getMaterial(), opts.getDimensionNumber());
+				xolotlFactory::IMaterialFactory::createMaterialFactory(opts);
 		// Initialize it with the options
 		materialFactory->initializeMaterial(opts);
 
