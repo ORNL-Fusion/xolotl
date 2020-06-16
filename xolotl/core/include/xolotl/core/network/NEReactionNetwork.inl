@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/NEReaction.inl>
 #include <xolotl/core/network/ReactionNetwork.inl>
 
 namespace xolotl

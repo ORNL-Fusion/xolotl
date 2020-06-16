@@ -3,10 +3,6 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/detail/ReactionGenerator.h>
 #include <xolotl/core/network/Reaction.inl>
-#include <xolotl/core/network/ReSolutionReaction.h>
-#include <xolotl/core/network/ReSolutionReaction.inl>
-#include <xolotl/core/network/SinkReaction.h>
-#include <xolotl/core/network/SinkReaction.inl>
 
 namespace xolotl
 {

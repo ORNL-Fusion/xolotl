@@ -51,7 +51,7 @@ SinkReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
     using Region = typename Types::Region;
 
     double strength = this->asDerived()->getSinkBias() * getRateForSink<Region>(r, dc, this->_clusterData.getLatticeParameter());
-    
+
     return strength;
 }
 }
