@@ -25,7 +25,6 @@ AlloyDissociationReaction::computeBindingEnergy()
     auto clReg = cl.getRegion();
     auto prod1Reg = prod1.getRegion();
     auto prod2Reg = prod2.getRegion();
-    bool useTable = false;
     if (clReg.isSimplex() && prod1Reg.isSimplex() && prod2Reg.isSimplex()) {
         Composition comp = clReg.getOrigin();
         Composition prod1Comp = prod1Reg.getOrigin();

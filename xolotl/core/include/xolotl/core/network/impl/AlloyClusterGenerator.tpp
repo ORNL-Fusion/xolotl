@@ -181,12 +181,13 @@ AlloyClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
     / ::xolotl::core::pi;
     const auto& reg = cluster.getRegion();
     Composition comp(reg.getOrigin());
-    if (comp.isOnAxis(Species::Perfect))
-        return sqrt(((double) comp[Species::Perfect] * prefactor) / ::xolotl::core::perfectBurgers); 0.5 * latticeParameter;
+    if (comp.isOnAxis(Species::Perfect)) {
+        return sqrt(((double) comp[Species::Perfect] * prefactor) / ::xolotl::core::perfectBurgers);
+    }
     if (comp.isOnAxis(Species::Frank))
-        return sqrt(((double) comp[Species::Frank] * prefactor) / ::xolotl::core::frankBurgers); 0.5 * latticeParameter;
+        return sqrt(((double) comp[Species::Frank] * prefactor) / ::xolotl::core::frankBurgers);
     if (comp.isOnAxis(Species::Faulted))
-        return sqrt(((double) comp[Species::Faulted] * prefactor) / ::xolotl::core::faultedBurgers); 0.5 * latticeParameter;
+        return sqrt(((double) comp[Species::Faulted] * prefactor) / ::xolotl::core::faultedBurgers);
     if (comp.isOnAxis(Species::Void))
         return pow(0.75 * prefactor * latticeParameter * (double) comp[Species::Void],
                 1.0 / 3.0);
