@@ -1,8 +1,8 @@
 #pragma once
 
-#include <xolotl/core/network/PSIClusterGenerator.inl>
-#include <xolotl/core/network/PSIReaction.inl>
-#include <xolotl/core/network/ReactionNetwork.inl>
+#include <xolotl/core/network/impl/PSIClusterGenerator.tpp>
+#include <xolotl/core/network/impl/PSIReaction.tpp>
+#include <xolotl/core/network/impl/ReactionNetwork.tpp>
 
 namespace xolotl
 {

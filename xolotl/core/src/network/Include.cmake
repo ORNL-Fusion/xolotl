@@ -11,40 +11,54 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReactionNetwork.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReactionNetwork.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyTraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/Cluster.h
     ${XOLOTL_CORE_HEADER_DIR}/network/ClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/EnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeClusterGenerator.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/FeClusterGenerator.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/FeReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeReactionNetwork.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/FeReactionNetwork.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/FeTraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/IReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NEClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NEReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NEReactionNetwork.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/NEReactionNetwork.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/NETraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NucleationReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/PSIClusterGenerator.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/PSIClusterGenerator.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/PSIReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/PSIReactionNetwork.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/PSIReactionNetwork.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/PSITraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/Reaction.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/Reaction.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/ReactionNetwork.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/ReactionNetwork.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/ReactionNetworkTraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/ReSolutionReaction.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/ReSolutionReaction.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/SinkReaction.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/SinkReaction.inl
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesEnumSequence.h
+)
+
+list(APPEND XOLOTL_CORE_TPP_FILES
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyClusterGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyReactionNetwork.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/FeClusterGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/FeReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/FeReactionNetwork.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/NEClusterGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/NEReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/NEReactionNetwork.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/NucleationReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/PSIClusterGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/PSIReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/PSIReactionNetwork.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/Reaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/ReactionNetwork.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/ReSolutionReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/SinkReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/NucleationReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReSolutionReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/SinkReactionGenerator.tpp
 )
 
 list(APPEND XOLOTL_CORE_SOURCES

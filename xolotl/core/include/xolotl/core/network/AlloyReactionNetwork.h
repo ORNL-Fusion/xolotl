@@ -97,4 +97,3 @@ public:
 }
 
 #include <xolotl/core/network/AlloyClusterGenerator.h>
-// #include <xolotl/core/network/AlloyReactionNetwork.inl>

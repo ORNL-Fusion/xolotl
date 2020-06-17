@@ -1,10 +1,10 @@
 #pragma once
 
-#include <xolotl/core/network/detail/NucleationReactionGenerator.inl>
-#include <xolotl/core/network/detail/ReSolutionReactionGenerator.inl>
-#include <xolotl/core/network/NEClusterGenerator.inl>
-#include <xolotl/core/network/NEReaction.inl>
-#include <xolotl/core/network/ReactionNetwork.inl>
+#include <xolotl/core/network/detail/impl/NucleationReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/ReSolutionReactionGenerator.tpp>
+#include <xolotl/core/network/impl/NEClusterGenerator.tpp>
+#include <xolotl/core/network/impl/NEReaction.tpp>
+#include <xolotl/core/network/impl/ReactionNetwork.tpp>
 
 namespace xolotl
 {

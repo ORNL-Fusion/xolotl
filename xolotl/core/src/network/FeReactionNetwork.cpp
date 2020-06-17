@@ -1,5 +1,5 @@
 #include <xolotl/core/network/FeReactionNetwork.h>
-#include <xolotl/core/network/FeReactionNetwork.inl>
+#include <xolotl/core/network/impl/FeReactionNetwork.tpp>
 
 namespace xolotl
 {

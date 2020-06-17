@@ -1,9 +1,9 @@
 #pragma once
 
-#include <xolotl/core/network/detail/SinkReactionGenerator.inl>
-#include <xolotl/core/network/AlloyClusterGenerator.inl>
-#include <xolotl/core/network/AlloyReaction.inl>
-#include <xolotl/core/network/ReactionNetwork.inl>
+#include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
+#include <xolotl/core/network/impl/AlloyClusterGenerator.tpp>
+#include <xolotl/core/network/impl/AlloyReaction.tpp>
+#include <xolotl/core/network/impl/ReactionNetwork.tpp>
 
 namespace xolotl
 {

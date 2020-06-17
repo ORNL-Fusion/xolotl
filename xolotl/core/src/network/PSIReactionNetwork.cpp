@@ -1,5 +1,5 @@
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/core/network/PSIReactionNetwork.inl>
+#include <xolotl/core/network/impl/PSIReactionNetwork.tpp>
 
 namespace xolotl
 {

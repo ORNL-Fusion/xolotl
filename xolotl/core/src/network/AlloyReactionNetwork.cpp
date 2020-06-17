@@ -1,5 +1,5 @@
 #include <xolotl/core/network/AlloyReactionNetwork.h>
-#include <xolotl/core/network/AlloyReactionNetwork.inl>
+#include <xolotl/core/network/impl/AlloyReactionNetwork.tpp>
 
 namespace xolotl
 {

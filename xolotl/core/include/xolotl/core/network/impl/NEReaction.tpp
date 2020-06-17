@@ -1,8 +1,8 @@
 #pragma once
 
-#include <xolotl/core/network/Reaction.inl>
-#include <xolotl/core/network/ReSolutionReaction.inl>
-#include <xolotl/core/network/NucleationReaction.inl>
+#include <xolotl/core/network/impl/Reaction.tpp>
+#include <xolotl/core/network/impl/ReSolutionReaction.tpp>
+#include <xolotl/core/network/impl/NucleationReaction.tpp>
 
 namespace xolotl
 {

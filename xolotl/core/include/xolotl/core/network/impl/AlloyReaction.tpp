@@ -1,7 +1,7 @@
 #pragma once
 
 #include <xolotl/util/MathUtils.h>
-#include <xolotl/core/network/SinkReaction.inl>
+#include <xolotl/core/network/impl/SinkReaction.tpp>
 
 namespace xolotl
 {

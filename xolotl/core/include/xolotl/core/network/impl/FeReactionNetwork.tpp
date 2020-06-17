@@ -1,10 +1,10 @@
 #pragma once
 
 #include <xolotl/core/Constants.h>
-#include <xolotl/core/network/detail/SinkReactionGenerator.inl>
-#include <xolotl/core/network/FeClusterGenerator.inl>
-#include <xolotl/core/network/FeReaction.inl>
-#include <xolotl/core/network/ReactionNetwork.inl>
+#include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
+#include <xolotl/core/network/impl/FeClusterGenerator.tpp>
+#include <xolotl/core/network/impl/FeReaction.tpp>
+#include <xolotl/core/network/impl/ReactionNetwork.tpp>
 
 namespace xolotl
 {

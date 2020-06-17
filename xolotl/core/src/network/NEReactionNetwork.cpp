@@ -1,5 +1,5 @@
 #include <xolotl/core/network/NEReactionNetwork.h>
-#include <xolotl/core/network/NEReactionNetwork.inl>
+#include <xolotl/core/network/impl/NEReactionNetwork.tpp>
 
 namespace xolotl
 {
