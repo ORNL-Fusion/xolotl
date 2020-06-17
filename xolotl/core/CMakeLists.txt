@@ -13,7 +13,11 @@ include(src/flux/Include.cmake)
 include(src/temperature/Include.cmake)
 include(src/modified/Include.cmake)
 
-add_library(xolotlCore STATIC ${XOLOTL_CORE_SOURCES} ${XOLOTL_CORE_HEADERS})
+add_library(xolotlCore STATIC
+    ${XOLOTL_CORE_SOURCES}
+    ${XOLOTL_CORE_HEADERS}
+    ${XOLOTL_CORE_TPP_FILES}
+)
 target_link_libraries(xolotlCore PUBLIC
     xolotlPerf
     xolotlOptions
