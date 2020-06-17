@@ -39,7 +39,6 @@ endif(PAPI_FOUND)
 
 add_library(xolotlPerf STATIC ${XOLOTL_PERF_SOURCES} ${XOLOTL_PERF_HEADERS})
 target_link_libraries(xolotlPerf PUBLIC
-    xolotlCore
     xolotlUtil
 )
 target_include_directories(xolotlPerf PUBLIC
