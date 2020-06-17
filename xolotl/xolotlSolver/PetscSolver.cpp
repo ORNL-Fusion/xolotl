@@ -259,12 +259,6 @@ void PetscSolver::initialize(bool isStandalone) {
 	ierr = TSSetSolution(ts, C);
 	checkPetscError(ierr, "PetscSolver::initialize: TSSetSolution failed.");
 
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 Set solver options
-	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = TSSetFromOptions(ts);
-	checkPetscError(ierr, "PetscSolver::initialize: TSSetFromOptions failed.");
-
 	// Read the times if the information is in the HDF5 file
 	auto fileName = getSolverHandler().getNetworkName();
 	double time = 0.0, deltaTime = 1.0e-12;
@@ -285,6 +279,12 @@ void PetscSolver::initialize(bool isStandalone) {
 					"PetscSolver::initialize: TSSetTimeStep failed.");
 		}
 	}
+
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Set solver options
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	ierr = TSSetFromOptions(ts);
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetFromOptions failed.");
 
 	// Switch on the number of dimensions to set the monitors
 	int dim = getSolverHandler().getDimension();

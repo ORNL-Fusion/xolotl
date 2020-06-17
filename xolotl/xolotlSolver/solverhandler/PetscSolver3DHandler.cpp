@@ -13,36 +13,6 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	// Degrees of freedom is the total number of clusters in the network
 	const int dof = network.getDOF();
 
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 Create distributed array (DMDA) to manage parallel grid and vectors
-	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-	// Get the MPI communicator on which to create the DMDA
-	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
-	if (isMirror) {
-		ierr = DMDACreate3d(xolotlComm, DM_BOUNDARY_MIRROR,
-				DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR,
-				nX, nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1,
-				NULL,
-				NULL, NULL, &da);
-		checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
-				"DMDACreate3d failed.");
-	} else {
-		ierr = DMDACreate3d(xolotlComm, DM_BOUNDARY_PERIODIC,
-				DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR,
-				nX, nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1,
-				NULL,
-				NULL, NULL, &da);
-		checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
-				"DMDACreate3d failed.");
-	}
-	ierr = DMSetFromOptions(da);
-	checkPetscError(ierr,
-			"PetscSolver3DHandler::createSolverContext: DMSetFromOptions failed.");
-	ierr = DMSetUp(da);
-	checkPetscError(ierr,
-			"PetscSolver3DHandler::createSolverContext: DMSetUp failed.");
-
 	// Set the position of the surface
 	// Loop on Y
 	for (int j = 0; j < nY; j++) {
@@ -88,6 +58,7 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 	}
 
 	// Prints the grid on one process
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
@@ -96,6 +67,34 @@ void PetscSolver3DHandler::createSolverContext(DM &da) {
 		}
 		std::cout << std::endl;
 	}
+
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Create distributed array (DMDA) to manage parallel grid and vectors
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+
+	if (isMirror) {
+		ierr = DMDACreate3d(xolotlComm, DM_BOUNDARY_MIRROR,
+				DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR,
+				nX, nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1,
+				NULL,
+				NULL, NULL, &da);
+		checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
+				"DMDACreate3d failed.");
+	} else {
+		ierr = DMDACreate3d(xolotlComm, DM_BOUNDARY_PERIODIC,
+				DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR,
+				nX, nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof, 1,
+				NULL,
+				NULL, NULL, &da);
+		checkPetscError(ierr, "PetscSolver3DHandler::createSolverContext: "
+				"DMDACreate3d failed.");
+	}
+	ierr = DMSetFromOptions(da);
+	checkPetscError(ierr,
+			"PetscSolver3DHandler::createSolverContext: DMSetFromOptions failed.");
+	ierr = DMSetUp(da);
+	checkPetscError(ierr,
+			"PetscSolver3DHandler::createSolverContext: DMSetUp failed.");
 
 	// Initialize the surface of the first advection handler corresponding to the
 	// advection toward the surface (or a dummy one if it is deactivated)
