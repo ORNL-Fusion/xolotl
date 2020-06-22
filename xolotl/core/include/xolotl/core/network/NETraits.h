@@ -24,44 +24,48 @@ class NEClusterUpdater;
 
 enum class NESpecies
 {
-    Xe
+	Xe
 };
 
-inline const char* toString(NESpecies specie) {
-    static const char* nameArray[] = {"Xe"};
-    return nameArray[static_cast<int>(specie)];
+inline const char*
+toString(NESpecies specie)
+{
+	static const char* nameArray[] = {"Xe"};
+	return nameArray[static_cast<int>(specie)];
 }
 
 template <>
-struct NumberOfInterstitialSpecies<NESpecies> : std::integral_constant<std::size_t,0>
+struct NumberOfInterstitialSpecies<NESpecies> :
+	std::integral_constant<std::size_t, 0>
 {
 };
 
 template <>
-struct NumberOfVacancySpecies<NESpecies> : std::integral_constant<std::size_t,0>
+struct NumberOfVacancySpecies<NESpecies> :
+	std::integral_constant<std::size_t, 0>
 {
 };
 
 template <>
 struct ReactionNetworkTraits<NEReactionNetwork>
 {
-    using Species = NESpecies;
+	using Species = NESpecies;
 
-    static constexpr std::size_t numSpecies = 1;
+	static constexpr std::size_t numSpecies = 1;
 
-    // using ReactionType = NEReaction;
-    using ProductionReactionType = NEProductionReaction;
-    using DissociationReactionType = NEDissociationReaction;
-    using ReSolutionReactionType = NEReSolutionReaction;
-    using NucleationReactionType = NENucleationReaction;
+	// using ReactionType = NEReaction;
+	using ProductionReactionType = NEProductionReaction;
+	using DissociationReactionType = NEDissociationReaction;
+	using ReSolutionReactionType = NEReSolutionReaction;
+	using NucleationReactionType = NENucleationReaction;
 
-    using ReactionTypeList =
-        std::tuple<ProductionReactionType, DissociationReactionType,
-            ReSolutionReactionType, NucleationReactionType>;
+	using ReactionTypeList =
+		std::tuple<ProductionReactionType, DissociationReactionType,
+			ReSolutionReactionType, NucleationReactionType>;
 
-    using ClusterGenerator = NEClusterGenerator;
-    using ClusterUpdater = detail::NEClusterUpdater;
+	using ClusterGenerator = NEClusterGenerator;
+	using ClusterUpdater = detail::NEClusterUpdater;
 };
-}
-}
-}
+} // namespace network
+} // namespace core
+} // namespace xolotl

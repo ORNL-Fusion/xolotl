@@ -1,75 +1,107 @@
 // Includes
 #include <xolotl/viz/dummy/DummyPlot.h>
 
-namespace xolotl {
-namespace viz {
-namespace dummy {
-
-DummyPlot::DummyPlot(const std::string&) :
-		util::Identifiable("unused") {
+namespace xolotl
+{
+namespace viz
+{
+namespace dummy
+{
+DummyPlot::DummyPlot(const std::string&) : util::Identifiable("unused")
+{
 }
 
-DummyPlot::~DummyPlot() {
+DummyPlot::~DummyPlot()
+{
 }
 
-void DummyPlot::render(const std::string&) {
+void
+DummyPlot::render(const std::string&)
+{
 	return;
 }
 
-void DummyPlot::write(const std::string&) {
+void
+DummyPlot::write(const std::string&)
+{
 	return;
 }
 
-void DummyPlot::setPlottingStyle(PlottingStyle) {
+void DummyPlot::setPlottingStyle(PlottingStyle)
+{
 	return;
 }
 
-PlottingStyle DummyPlot::getPlottingStyle() {
+PlottingStyle
+DummyPlot::getPlottingStyle()
+{
 	return PlottingStyle();
 }
 
-void DummyPlot::setDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider) {
+void
+DummyPlot::setDataProvider(
+	std::shared_ptr<dataprovider::IDataProvider> dataProvider)
+{
 	plotDataProvider = dataProvider;
 	return;
 }
 
-std::shared_ptr<dataprovider::IDataProvider> DummyPlot::getDataProvider() const {
+std::shared_ptr<dataprovider::IDataProvider>
+DummyPlot::getDataProvider() const
+{
 	return plotDataProvider;
 }
 
-void DummyPlot::setLabelProvider(std::shared_ptr<LabelProvider> labelProvider) {
+void
+DummyPlot::setLabelProvider(std::shared_ptr<LabelProvider> labelProvider)
+{
 	plotLabelProvider = labelProvider;
 	return;
 }
 
-std::shared_ptr<LabelProvider> DummyPlot::getLabelProvider() const {
+std::shared_ptr<LabelProvider>
+DummyPlot::getLabelProvider() const
+{
 	return plotLabelProvider;
 }
 
-void DummyPlot::showLegend(bool) {
+void
+DummyPlot::showLegend(bool)
+{
 	return;
 }
 
-std::string DummyPlot::getLegend() const {
+std::string
+DummyPlot::getLegend() const
+{
 	return " ";
 }
 
-void DummyPlot::setLogScale(bool) {
+void
+DummyPlot::setLogScale(bool)
+{
 	return;
 }
 
-void DummyPlot::addDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider) {
+void
+DummyPlot::addDataProvider(
+	std::shared_ptr<dataprovider::IDataProvider> dataProvider)
+{
 	plotDataProvider = dataProvider;
 }
 
-std::shared_ptr<dataprovider::IDataProvider> DummyPlot::getDataProvider(int) const {
+std::shared_ptr<dataprovider::IDataProvider>
+DummyPlot::getDataProvider(int) const
+{
 	return plotDataProvider;
 }
 
-int DummyPlot::getDataProviderNumber() const {
+int
+DummyPlot::getDataProviderNumber() const
+{
 	return 0;
 }
 
-}
-}
-}
+} // namespace dummy
+} // namespace viz
+} // namespace xolotl

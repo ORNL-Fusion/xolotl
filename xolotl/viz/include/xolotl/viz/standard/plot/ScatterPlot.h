@@ -3,30 +3,33 @@
 
 // Includes
 #include <vector>
+
 #include <xolotl/viz/standard/plot/Plot.h>
 
-namespace xolotl {
-namespace viz {
-namespace standard {
-namespace plot {
-
+namespace xolotl
+{
+namespace viz
+{
+namespace standard
+{
+namespace plot
+{
 /**
- * Plot the data value as a function of one dimension. Available PlottingStyle are POINTS or LINE.
- * It can be associated to QvsXDataProvider, QvsYDataProvider, QvsZDataProvider, or QvsTimeDataProvider.
+ * Plot the data value as a function of one dimension. Available PlottingStyle
+ * are POINTS or LINE. It can be associated to QvsXDataProvider,
+ * QvsYDataProvider, QvsZDataProvider, or QvsTimeDataProvider.
  */
-class ScatterPlot: public Plot {
-
+class ScatterPlot : public Plot
+{
 private:
-
 	/**
 	 * Declare the constructor as private to force the use of a name
 	 */
-	ScatterPlot() :
-			Plot() {
+	ScatterPlot() : Plot()
+	{
 	}
 
 public:
-
 	/**
 	 * The default constructor
 	 */
@@ -40,11 +43,11 @@ public:
 	/**
 	 * Method managing everything that is related to the rendering of a plot.
 	 */
-	void render(const std::string& fileName = "fileName");
-
+	void
+	render(const std::string& fileName = "fileName");
 };
 
-//end class ScatterPlot
+// end class ScatterPlot
 
 } /* namespace plot */
 } /* namespace standard */

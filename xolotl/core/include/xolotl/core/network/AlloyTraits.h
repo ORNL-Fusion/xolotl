@@ -20,46 +20,50 @@ class AlloyClusterGenerator;
 
 enum class AlloySpecies
 {
-    V,
-    Void,
-    Faulted,
-    I,
-    Perfect,
-    Frank
+	V,
+	Void,
+	Faulted,
+	I,
+	Perfect,
+	Frank
 };
 
-inline const char* toString(AlloySpecies specie) {
-    static const char* nameArray[] = {"V", "Void", "Faulted", "I", "Perfect", "Frank"};
-    return nameArray[static_cast<int>(specie)];
+inline const char*
+toString(AlloySpecies specie)
+{
+	static const char* nameArray[] = {
+		"V", "Void", "Faulted", "I", "Perfect", "Frank"};
+	return nameArray[static_cast<int>(specie)];
 }
 
 template <>
-struct NumberOfInterstitialSpecies<AlloySpecies> : std::integral_constant<std::size_t,3>
+struct NumberOfInterstitialSpecies<AlloySpecies> :
+	std::integral_constant<std::size_t, 3>
 {
 };
 
 template <>
-struct NumberOfVacancySpecies<AlloySpecies> : std::integral_constant<std::size_t,3>
+struct NumberOfVacancySpecies<AlloySpecies> :
+	std::integral_constant<std::size_t, 3>
 {
 };
 
 template <>
 struct ReactionNetworkTraits<AlloyReactionNetwork>
 {
-    using Species = AlloySpecies;
+	using Species = AlloySpecies;
 
-    static constexpr std::size_t numSpecies = 6;
+	static constexpr std::size_t numSpecies = 6;
 
-    using ProductionReactionType = AlloyProductionReaction;
-    using DissociationReactionType = AlloyDissociationReaction;
-    using SinkReactionType = AlloySinkReaction;
+	using ProductionReactionType = AlloyProductionReaction;
+	using DissociationReactionType = AlloyDissociationReaction;
+	using SinkReactionType = AlloySinkReaction;
 
-    using ReactionTypeList =
-        std::tuple<ProductionReactionType, DissociationReactionType,
-            SinkReactionType>;
+	using ReactionTypeList = std::tuple<ProductionReactionType,
+		DissociationReactionType, SinkReactionType>;
 
-    using ClusterGenerator = AlloyClusterGenerator;
+	using ClusterGenerator = AlloyClusterGenerator;
 };
-}
-}
-}
+} // namespace network
+} // namespace core
+} // namespace xolotl

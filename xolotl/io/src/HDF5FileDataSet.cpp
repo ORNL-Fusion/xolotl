@@ -4,8 +4,8 @@ namespace xolotl
 {
 namespace io
 {
-
-const std::string HDF5File::RaggedDataSetBase::startIndicesDatasetNameSuffix = "_startingIndices";
+const std::string HDF5File::RaggedDataSetBase::startIndicesDatasetNameSuffix =
+	"_startingIndices";
 
 } // namespace io
 } // namespace xolotl

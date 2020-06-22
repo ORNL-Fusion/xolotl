@@ -3,13 +3,15 @@
 
 #include <memory>
 #include <sstream>
+
 #include <xolotl/perf/IHandlerRegistry.h>
 #include <xolotl/perf/ITimer.h>
 #include <xolotl/perf/RuntimeError.h>
 
-namespace xolotl {
-namespace perf {
-
+namespace xolotl
+{
+namespace perf
+{
 /**
  * Detect the type of performance handlers registry to create based
  * on a string argument (e.g., taken from the command line).
@@ -23,19 +25,24 @@ namespace perf {
  * @param arg String description of performance handler registry to create.
  * @return The performance handler registry type to create.
  */
-inline IHandlerRegistry::RegistryType toPerfRegistryType(
-		const std::string& arg) {
+inline IHandlerRegistry::RegistryType
+toPerfRegistryType(const std::string& arg)
+{
 	IHandlerRegistry::RegistryType ret;
 
 	if (arg == "dummy") {
 		ret = IHandlerRegistry::dummy;
-	} else if (arg == "std") {
+	}
+	else if (arg == "std") {
 		ret = IHandlerRegistry::std;
-	} else if (arg == "os") {
+	}
+	else if (arg == "os") {
 		ret = IHandlerRegistry::os;
-	} else if (arg == "papi") {
+	}
+	else if (arg == "papi") {
 		ret = IHandlerRegistry::papi;
-	} else {
+	}
+	else {
 		std::ostringstream estr;
 		estr << "Invalid performance handler argument \"" << arg << "\" seen.";
 		throw std::invalid_argument(estr.str());
@@ -50,7 +57,8 @@ inline IHandlerRegistry::RegistryType toPerfRegistryType(
  *
  * @param rtype Type of handlerRegistry to create.
  */
-void initialize(IHandlerRegistry::RegistryType rtype);
+void
+initialize(IHandlerRegistry::RegistryType rtype);
 
 /**
  * Access the handler registry.
@@ -59,7 +67,8 @@ void initialize(IHandlerRegistry::RegistryType rtype);
  *
  *  @return The handler registry object.
  */
-std::shared_ptr<IHandlerRegistry> getHandlerRegistry(void);
+std::shared_ptr<IHandlerRegistry>
+getHandlerRegistry(void);
 
 /**
  * A class for managing timer start/stop lifetime by code scope.
@@ -67,22 +76,23 @@ std::shared_ptr<IHandlerRegistry> getHandlerRegistry(void);
  * enter a scope, and stopping timer when leave the scope regardless
  * of how we leave the scope).
  */
-struct ScopedTimer {
-    /// The timer that should be active in the struct's scope.
-    std::shared_ptr<ITimer> timer;
+struct ScopedTimer
+{
+	/// The timer that should be active in the struct's scope.
+	std::shared_ptr<ITimer> timer;
 
-    ScopedTimer(std::shared_ptr<ITimer> _timer)
-      : timer(_timer) {
+	ScopedTimer(std::shared_ptr<ITimer> _timer) : timer(_timer)
+	{
+		timer->start();
+	}
 
-          timer->start();
-    }
-
-    ~ScopedTimer(void) {
-        timer->stop();
-    }
+	~ScopedTimer(void)
+	{
+		timer->stop();
+	}
 };
 
-}//end namespace perf
-}//end namespace xolotl
+} // end namespace perf
+} // end namespace xolotl
 
 #endif // XOLOTLPERF_H

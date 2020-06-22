@@ -2,36 +2,39 @@
 #define SOLVERHANDLER_H
 
 // Includes
-#include <xolotl/solver/handler/ISolverHandler.h>
-#include <xolotl/io/XFile.h>
 #include <xolotl/core/Constants.h>
-#include <xolotl/util/TokenizedLineReader.h>
-#include <xolotl/util/RandomNumberGenerator.h>
+#include <xolotl/io/XFile.h>
+#include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/util/RandomNumberGenerator.h>
+#include <xolotl/util/TokenizedLineReader.h>
 
-namespace xolotl {
-namespace solver {
-namespace handler {
-
+namespace xolotl
+{
+namespace solver
+{
+namespace handler
+{
 /**
- * This class and its subclasses realize the ISolverHandler interface to solve the
- * advection-diffusion-reaction problem with currently supported solvers.
+ * This class and its subclasses realize the ISolverHandler interface to solve
+ * the advection-diffusion-reaction problem with currently supported solvers.
  */
-class SolverHandler: public ISolverHandler {
+class SolverHandler : public ISolverHandler
+{
 public:
 	using NetworkType = core::network::IReactionNetwork;
 
 	using ConcentrationsView = typename NetworkType::ConcentrationsView;
 	using FluxesView = typename NetworkType::FluxesView;
 	using SparseFillMap = typename NetworkType::SparseFillMap;
-protected:
 
+protected:
 	/**
 	 * The vector to know where the GB are.
 	 *
 	 * The first pair is the location of a grid point (X,Y),
 	 */
-	std::vector<std::tuple<int, int, int> > gbVector;
+	std::vector<std::tuple<int, int, int>> gbVector;
 
 	//! The name of the network file
 	std::string networkName;
@@ -40,7 +43,7 @@ protected:
 	std::string gbFileName;
 
 	//! The original network created from the network loader.
-	NetworkType &network;
+	NetworkType& network;
 
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
@@ -81,35 +84,38 @@ protected:
 	//! The local width of grid points in the Z direction.
 	int localZM;
 
-	//! The number of grid points by which the boundary condition should be shifted at this side.
+	//! The number of grid points by which the boundary condition should be
+	//! shifted at this side.
 	int leftOffset, rightOffset, bottomOffset, topOffset, frontOffset,
-			backOffset;
+		backOffset;
 
 	//! The initial vacancy concentration.
 	double initialVConc;
 
 	//! The vector of quantities to pass to MOOSE.
-	// 0: Xe rate, 1: previous flux, 2: monomer concentration, 3: volume fraction
+	// 0: Xe rate, 1: previous flux, 2: monomer concentration, 3: volume
+	// fraction
 	std::vector<
-			std::vector<std::vector<std::tuple<double, double, double, double> > > > localNE;
+		std::vector<std::vector<std::tuple<double, double, double, double>>>>
+		localNE;
 
 	//! The electronic stopping power for re-solution
 	double electronicStoppingPower;
 
 	//! The original flux handler created.
-	core::flux::IFluxHandler *fluxHandler;
+	core::flux::IFluxHandler* fluxHandler;
 
 	//! The original temperature handler created.
-	core::temperature::ITemperatureHandler *temperatureHandler;
+	core::temperature::ITemperatureHandler* temperatureHandler;
 
 	//! The original diffusion handler created.
-	core::diffusion::IDiffusionHandler *diffusionHandler;
+	core::diffusion::IDiffusionHandler* diffusionHandler;
 
 	//! The vector of advection handlers.
 	std::vector<core::advection::IAdvectionHandler*> advectionHandlers;
 
 	//! The original modified trap-mutation handler created.
-	core::modified::ITrapMutationHandler *mutationHandler;
+	core::modified::ITrapMutationHandler* mutationHandler;
 
 	//! The number of dimensions for the problem.
 	int dimension;
@@ -164,7 +170,9 @@ protected:
 	 * @param surfacePos The position of the surface on the grid
 	 * @param isPSI To know if we want a PSI grid or a NE grid
 	 */
-	void generateGrid(int nx, double hx, int surfacePos) {
+	void
+	generateGrid(int nx, double hx, int surfacePos)
+	{
 		// Clear the grid
 		grid.clear();
 
@@ -173,9 +181,10 @@ protected:
 			// Open the corresponding file
 			std::ifstream inputFile(useRegularGrid.c_str());
 			if (!inputFile)
-				std::cerr
-						<< "\nCould not open the file containing the grid spacing information. "
-								"Aborting!\n" << std::endl;
+				std::cerr << "\nCould not open the file containing the grid "
+							 "spacing information. "
+							 "Aborting!\n"
+						  << std::endl;
 			// Get the data
 			std::string line;
 			getline(inputFile, line);
@@ -187,9 +196,10 @@ protected:
 			auto tokens = reader.loadLine();
 
 			if (tokens.size() == 0)
-				std::cerr
-						<< "\nDid not read correctly the file containing the grid spacing information. "
-								"Aborting!\n" << std::endl;
+				std::cerr << "\nDid not read correctly the file containing the "
+							 "grid spacing information. "
+							 "Aborting!\n"
+						  << std::endl;
 
 			// Compute the offset to add to the grid for boundary conditions
 			double offset = tokens[1] - tokens[0];
@@ -206,9 +216,8 @@ protected:
 			}
 
 			// Add the last grid point for boundary conditions
-			grid.push_back(
-					2.0 * tokens[tokens.size() - 1] - tokens[tokens.size() - 2]
-							+ offset);
+			grid.push_back(2.0 * tokens[tokens.size() - 1] -
+				tokens[tokens.size() - 2] + offset);
 
 			// Set the number of grid points
 			nX = grid.size() - 2;
@@ -224,12 +233,8 @@ protected:
 
 			// In that case hx correspond to the full length of the grid
 			for (int l = 1; l <= nx - 1; l++) {
-				grid.push_back(
-						(hx / 2.0)
-								* (1.0
-										- cos(
-												core::pi * double(l)
-														/ double(nx - 1))));
+				grid.push_back((hx / 2.0) *
+					(1.0 - cos(core::pi * double(l) / double(nx - 1))));
 			}
 			// The last grid point will be at x = hx
 			grid.push_back(hx);
@@ -240,7 +245,7 @@ protected:
 		if (useRegularGrid == "regular") {
 			// The grid will me made of nx + 1 points separated by hx nm
 			for (int l = 0; l <= nx + 1; l++) {
-				grid.push_back((double) l * hx);
+				grid.push_back((double)l * hx);
 			}
 
 			return;
@@ -421,36 +426,67 @@ protected:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	SolverHandler(NetworkType &_network) :
-			network(_network), networkName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
-					0.0), hZ(0.0), localXS(0), localXM(0), localYS(
-							0), localYM(0), localZS(0), localZM(0), leftOffset(1), rightOffset(1), bottomOffset(
-					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
-					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
-					0.0), useRegularGrid(""), readInGrid(false), movingSurface(
-					false), bubbleBursting(false), isMirror(true), useAttenuation(false), sputteringYield(
-					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
-					nullptr), mutationHandler(nullptr), tauBursting(10.0), rngSeed(0), previousTime(0.0), nXeGB(
-							0.0) {
+	SolverHandler(NetworkType& _network) :
+		network(_network),
+		networkName(""),
+		nX(0),
+		nY(0),
+		nZ(0),
+		hX(0.0),
+		hY(0.0),
+		hZ(0.0),
+		localXS(0),
+		localXM(0),
+		localYS(0),
+		localYM(0),
+		localZS(0),
+		localZM(0),
+		leftOffset(1),
+		rightOffset(1),
+		bottomOffset(1),
+		topOffset(1),
+		frontOffset(1),
+		backOffset(1),
+		initialVConc(0.0),
+		electronicStoppingPower(0.0),
+		dimension(-1),
+		portion(0.0),
+		useRegularGrid(""),
+		readInGrid(false),
+		movingSurface(false),
+		bubbleBursting(false),
+		isMirror(true),
+		useAttenuation(false),
+		sputteringYield(0.0),
+		fluxHandler(nullptr),
+		temperatureHandler(nullptr),
+		diffusionHandler(nullptr),
+		mutationHandler(nullptr),
+		tauBursting(10.0),
+		rngSeed(0),
+		previousTime(0.0),
+		nXeGB(0.0)
+	{
 	}
 
 public:
-
 	//! The Constructor
 	SolverHandler() = delete;
 
-	~SolverHandler() {
+	~SolverHandler()
+	{
 	}
 
 	/**
-	 * Initialize all the physics handlers that are needed to solve the ADR equations.
-	 * \see ISolverHandler.h
+	 * Initialize all the physics handlers that are needed to solve the ADR
+	 * equations. \see ISolverHandler.h
 	 */
-	void initializeHandlers(
-			std::shared_ptr<factory::material::IMaterialFactory> material,
-			std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
-			const options::Options &opts) override {
-
+	void
+	initializeHandlers(
+		std::shared_ptr<factory::material::IMaterialFactory> material,
+		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
+		const options::Options& opts) override
+	{
 		// Determine who I am.
 		int myProcId = -1;
 		auto xolotlComm = util::getMPIComm();
@@ -469,11 +505,11 @@ public:
 		}
 		if (opts.printRNGSeed()) {
 			std::cout << "Proc " << myProcId << " using RNG seed value "
-					<< rngSeed << std::endl;
+					  << rngSeed << std::endl;
 		}
 		rng = std::unique_ptr<util::RandomNumberGenerator<int, unsigned int>>(
-				new util::RandomNumberGenerator<int, unsigned int>(
-						rngSeed + myProcId));
+			new util::RandomNumberGenerator<int, unsigned int>(
+				rngSeed + myProcId));
 
 		// Set the network loader
 		networkName = opts.getNetworkFilename();
@@ -481,8 +517,8 @@ public:
 		// Set the grid options
 		// Take the parameter file option by default
 		nX = opts.getNX(), nY = opts.getNY(), nZ = opts.getNZ();
-		hX = opts.getXStepSize(), hY = opts.getYStepSize(), hZ =
-				opts.getZStepSize();
+		hX = opts.getXStepSize(), hY = opts.getYStepSize(),
+		hZ = opts.getZStepSize();
 		// Update them if we use an HDF5 file with header group
 		if (opts.useHDF5()) {
 			int nx = 0, ny = 0, nz = 0;
@@ -500,15 +536,16 @@ public:
 
 		// Set the flux handler
 		fluxHandler =
-				(core::flux::IFluxHandler*) material->getFluxHandler().get();
+			(core::flux::IFluxHandler*)material->getFluxHandler().get();
 
 		// Set the temperature handler
 		temperatureHandler =
-				(core::temperature::ITemperatureHandler*) tempHandler.get();
+			(core::temperature::ITemperatureHandler*)tempHandler.get();
 
 		// Set the diffusion handler
 		diffusionHandler =
-				(core::diffusion::IDiffusionHandler*) material->getDiffusionHandler().get();
+			(core::diffusion::IDiffusionHandler*)material->getDiffusionHandler()
+				.get();
 
 		// Set the advection handlers
 		auto handlers = material->getAdvectionHandler();
@@ -517,8 +554,9 @@ public:
 		}
 
 		// Set the modified trap-mutation handler
-		mutationHandler =
-				(core::modified::ITrapMutationHandler*) material->getTrapMutationHandler().get();
+		mutationHandler = (core::modified::ITrapMutationHandler*)material
+							  ->getTrapMutationHandler()
+							  .get();
 
 		// Set the minimum size for the average radius compuation
 		minRadiusSizes = opts.getRadiusMinSizes();
@@ -580,25 +618,28 @@ public:
 		useAttenuation = map["attenuation"];
 
 		// Some safeguards about what to use with what
-		if (leftOffset == 0
-				&& (map["advec"] || map["modifiedTM"] || map["movingSurface"]
-						|| map["bursting"])) {
-			throw std::string(
-					"\nThe left side of the grid is set to use a reflective boundary condition "
-							"but you want to use processes that are intrinsically related to "
-							"a free surface (advection, modified trap mutation, moving surface, bubble bursting).");
+		if (leftOffset == 0 &&
+			(map["advec"] || map["modifiedTM"] || map["movingSurface"] ||
+				map["bursting"])) {
+			throw std::string("\nThe left side of the grid is set to use a "
+							  "reflective boundary condition "
+							  "but you want to use processes that are "
+							  "intrinsically related to "
+							  "a free surface (advection, modified trap "
+							  "mutation, moving surface, bubble bursting).");
 		}
 
 		// Complains if processes that should not be used together are used
 		if (map["attenuation"] && !map["modifiedTM"]) {
-			throw std::string(
-					"\nYou want to use the attenuation on the modified trap mutation "
-							"but you are not using the modifiedTM process, it doesn't make any sense.");
+			throw std::string("\nYou want to use the attenuation on the "
+							  "modified trap mutation "
+							  "but you are not using the modifiedTM process, "
+							  "it doesn't make any sense.");
 		}
 		if (map["modifiedTM"] && !map["reaction"]) {
-			throw std::string(
-					"\nYou want to use the modified trap mutation but the reaction process is not set,"
-							" it doesn't make any sense.");
+			throw std::string("\nYou want to use the modified trap mutation "
+							  "but the reaction process is not set,"
+							  " it doesn't make any sense.");
 		}
 
 		return;
@@ -608,7 +649,9 @@ public:
 	 * Get the grid in the x direction.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<double> getXGrid() const override {
+	std::vector<double>
+	getXGrid() const override
+	{
 		return grid;
 	}
 
@@ -616,7 +659,9 @@ public:
 	 * Get the step size in the y direction.
 	 * \see ISolverHandler.h
 	 */
-	double getStepSizeY() const override {
+	double
+	getStepSizeY() const override
+	{
 		return hY;
 	}
 
@@ -624,7 +669,9 @@ public:
 	 * Get the step size in the z direction.
 	 * \see ISolverHandler.h
 	 */
-	double getStepSizeZ() const override {
+	double
+	getStepSizeZ() const override
+	{
 		return hZ;
 	}
 
@@ -632,7 +679,9 @@ public:
 	 * Get the number of dimensions of the problem.
 	 * \see ISolverHandler.h
 	 */
-	int getDimension() const override {
+	int
+	getDimension() const override
+	{
 		return dimension;
 	}
 
@@ -640,7 +689,9 @@ public:
 	 * Get the initial vacancy concentration.
 	 * \see ISolverHandler.h
 	 */
-	double getInitialVConc() const override {
+	double
+	getInitialVConc() const override
+	{
 		return initialVConc;
 	}
 
@@ -648,7 +699,9 @@ public:
 	 * Get the sputtering yield.
 	 * \see ISolverHandler.h
 	 */
-	double getSputteringYield() const override {
+	double
+	getSputteringYield() const override
+	{
 		return sputteringYield;
 	}
 
@@ -656,7 +709,9 @@ public:
 	 * Get the depth parameter for bursting.
 	 * \see ISolverHandler.h
 	 */
-	double getTauBursting() const override {
+	double
+	getTauBursting() const override
+	{
 		return tauBursting;
 	}
 
@@ -664,13 +719,17 @@ public:
 	 * Create the local Xe rate vector.
 	 * \see ISolverHandler.h
 	 */
-	void createLocalNE(int a, int b = 1, int c = 1) override {
+	void
+	createLocalNE(int a, int b = 1, int c = 1) override
+	{
 		localNE.clear();
 		// Create the vector of vectors and fill it with 0.0
 		for (int i = 0; i < a; i++) {
-			std::vector<std::vector<std::tuple<double, double, double, double> > > tempTempVector;
+			std::vector<std::vector<std::tuple<double, double, double, double>>>
+				tempTempVector;
 			for (int j = 0; j < b; j++) {
-				std::vector<std::tuple<double, double, double, double> > tempVector;
+				std::vector<std::tuple<double, double, double, double>>
+					tempVector;
 				for (int k = 0; k < c; k++) {
 					tempVector.push_back(std::make_tuple(0.0, 0.0, 0.0, 0.0));
 				}
@@ -684,7 +743,9 @@ public:
 	 * Set the latest value of the local Xe rate.
 	 * \see ISolverHandler.h
 	 */
-	void setLocalXeRate(double rate, int i, int j = 0, int k = 0) override {
+	void
+	setLocalXeRate(double rate, int i, int j = 0, int k = 0) override
+	{
 		std::get<0>(localNE[i][j][k]) += rate;
 	}
 
@@ -692,12 +753,11 @@ public:
 	 * Set the whole vector of local Xe rate.
 	 * \see ISolverHandler.h
 	 */
-	void setLocalNE(
-			std::vector<
-					std::vector<
-							std::vector<
-									std::tuple<double, double, double, double> > > > rateVector)
-					override {
+	void
+	setLocalNE(std::vector<
+		std::vector<std::vector<std::tuple<double, double, double, double>>>>
+			rateVector) override
+	{
 		localNE = rateVector;
 	}
 
@@ -706,8 +766,9 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	std::vector<
-			std::vector<std::vector<std::tuple<double, double, double, double> > > > & getLocalNE()
-			override {
+		std::vector<std::vector<std::tuple<double, double, double, double>>>>&
+	getLocalNE() override
+	{
 		return localNE;
 	}
 
@@ -715,7 +776,9 @@ public:
 	 * Set the latest value of the Xe flux.
 	 * \see ISolverHandler.h
 	 */
-	void setPreviousXeFlux(double flux, int i, int j = 0, int k = 0) override {
+	void
+	setPreviousXeFlux(double flux, int i, int j = 0, int k = 0) override
+	{
 		std::get<1>(localNE[i][j][k]) = flux;
 	}
 
@@ -723,7 +786,9 @@ public:
 	 * Set the latest value of the Xe monomer concentration.
 	 * \see ISolverHandler.h
 	 */
-	void setMonomerConc(double conc, int i, int j = 0, int k = 0) override {
+	void
+	setMonomerConc(double conc, int i, int j = 0, int k = 0) override
+	{
 		std::get<2>(localNE[i][j][k]) = conc;
 	}
 
@@ -731,7 +796,9 @@ public:
 	 * Set the latest value of the volume fraction.
 	 * \see ISolverHandler.h
 	 */
-	void setVolumeFraction(double frac, int i, int j = 0, int k = 0) override {
+	void
+	setVolumeFraction(double frac, int i, int j = 0, int k = 0) override
+	{
 		std::get<3>(localNE[i][j][k]) = frac;
 	}
 
@@ -739,8 +806,10 @@ public:
 	 * Set the coordinates covered by the local grid.
 	 * \see ISolverHandler.h
 	 */
-	void setLocalCoordinates(int xs, int xm, int ys = 0, int ym = 0, int zs = 0,
-			int zm = 0) override {
+	void
+	setLocalCoordinates(
+		int xs, int xm, int ys = 0, int ym = 0, int zs = 0, int zm = 0) override
+	{
 		localXS = xs;
 		localXM = xm;
 		localYS = ys;
@@ -782,8 +851,10 @@ public:
 	 * Get the coordinates covered by the local grid.
 	 * \see ISolverHandler.h
 	 */
-	void getLocalCoordinates(int &xs, int &xm, int &Mx, int &ys, int &ym,
-			int &My, int &zs, int &zm, int &Mz) override {
+	void
+	getLocalCoordinates(int& xs, int& xm, int& Mx, int& ys, int& ym, int& My,
+		int& zs, int& zm, int& Mz) override
+	{
 		xs = localXS;
 		xm = localXM;
 		Mx = nX;
@@ -799,7 +870,9 @@ public:
 	 * Get the grid left offset.
 	 * \see ISolverHandler.h
 	 */
-	int getLeftOffset() const override {
+	int
+	getLeftOffset() const override
+	{
 		return leftOffset;
 	}
 
@@ -807,7 +880,9 @@ public:
 	 * Get the grid right offset.
 	 * \see ISolverHandler.h
 	 */
-	int getRightOffset() const override {
+	int
+	getRightOffset() const override
+	{
 		return rightOffset;
 	}
 
@@ -815,7 +890,9 @@ public:
 	 * To know if the surface should be able to move.
 	 * \see ISolverHandler.h
 	 */
-	bool moveSurface() const override {
+	bool
+	moveSurface() const override
+	{
 		return movingSurface;
 	}
 
@@ -823,7 +900,9 @@ public:
 	 * To know if the bubble bursting should be used.
 	 * \see ISolverHandler.h
 	 */
-	bool burstBubbles() const override {
+	bool
+	burstBubbles() const override
+	{
 		return bubbleBursting;
 	}
 
@@ -831,7 +910,9 @@ public:
 	 * Get the previous time.
 	 * \see ISolverHandler.h
 	 */
-	double getPreviousTime() override {
+	double
+	getPreviousTime() override
+	{
 		return previousTime;
 	}
 
@@ -839,7 +920,9 @@ public:
 	 * Set the previous time.
 	 * \see ISolverHandler.h
 	 */
-	void setPreviousTime(double time, bool updateFluence = false) override {
+	void
+	setPreviousTime(double time, bool updateFluence = false) override
+	{
 		previousTime = time;
 		if (updateFluence)
 			fluxHandler->computeFluence(time);
@@ -849,7 +932,9 @@ public:
 	 * Get the number of Xe that went to the GB.
 	 * \see ISolverHandler.h
 	 */
-	double getNXeGB() override {
+	double
+	getNXeGB() override
+	{
 		return nXeGB;
 	}
 
@@ -857,7 +942,9 @@ public:
 	 * Set the number of Xe that went to the GB.
 	 * \see ISolverHandler.h
 	 */
-	void setNXeGB(double nXe) override {
+	void
+	setNXeGB(double nXe) override
+	{
 		nXeGB = nXe;
 	}
 
@@ -865,7 +952,9 @@ public:
 	 * Get the minimum size for computing average radius.
 	 * \see ISolverHandler.h
 	 */
-	util::Array<int, 4> getMinSizes() const override {
+	util::Array<int, 4>
+	getMinSizes() const override
+	{
 		return minRadiusSizes;
 	}
 
@@ -873,7 +962,9 @@ public:
 	 * Get the flux handler.
 	 * \see ISolverHandler.h
 	 */
-	core::flux::IFluxHandler* getFluxHandler() const override {
+	core::flux::IFluxHandler*
+	getFluxHandler() const override
+	{
 		return fluxHandler;
 	}
 
@@ -881,8 +972,9 @@ public:
 	 * Get the temperature handler.
 	 * \see ISolverHandler.h
 	 */
-	core::temperature::ITemperatureHandler* getTemperatureHandler() const
-			override {
+	core::temperature::ITemperatureHandler*
+	getTemperatureHandler() const override
+	{
 		return temperatureHandler;
 	}
 
@@ -890,7 +982,9 @@ public:
 	 * Get the diffusion handler.
 	 * \see ISolverHandler.h
 	 */
-	core::diffusion::IDiffusionHandler* getDiffusionHandler() const override {
+	core::diffusion::IDiffusionHandler*
+	getDiffusionHandler() const override
+	{
 		return diffusionHandler;
 	}
 
@@ -898,7 +992,9 @@ public:
 	 * Get the advection handler.
 	 * \see ISolverHandler.h
 	 */
-	core::advection::IAdvectionHandler* getAdvectionHandler() const override {
+	core::advection::IAdvectionHandler*
+	getAdvectionHandler() const override
+	{
 		return advectionHandlers[0];
 	}
 
@@ -906,8 +1002,9 @@ public:
 	 * Get the advection handlers.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<core::advection::IAdvectionHandler*> getAdvectionHandlers() const
-			override {
+	std::vector<core::advection::IAdvectionHandler*>
+	getAdvectionHandlers() const override
+	{
 		return advectionHandlers;
 	}
 
@@ -915,7 +1012,9 @@ public:
 	 * Get the modified trap-mutation handler.
 	 * \see ISolverHandler.h
 	 */
-	core::modified::ITrapMutationHandler* getMutationHandler() const override {
+	core::modified::ITrapMutationHandler*
+	getMutationHandler() const override
+	{
 		return mutationHandler;
 	}
 
@@ -923,7 +1022,9 @@ public:
 	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
-	virtual core::network::IReactionNetwork& getNetwork() const override {
+	virtual core::network::IReactionNetwork&
+	getNetwork() const override
+	{
 		return network;
 	}
 
@@ -931,7 +1032,9 @@ public:
 	 * Get the network name.
 	 * \see ISolverHandler.h
 	 */
-	std::string getNetworkName() const override {
+	std::string
+	getNetworkName() const override
+	{
 		return networkName;
 	}
 
@@ -941,8 +1044,9 @@ public:
 	 *
 	 * @return The RandomNumberGenerator object to use.
 	 */
-	util::RandomNumberGenerator<int, unsigned int>& getRNG(void) const
-			override {
+	util::RandomNumberGenerator<int, unsigned int>&
+	getRNG(void) const override
+	{
 		return *rng;
 	}
 
@@ -951,7 +1055,9 @@ public:
 	 *
 	 * @param name The filename
 	 */
-	void setGBFileName(std::string name) override {
+	void
+	setGBFileName(std::string name) override
+	{
 		gbFileName = name;
 	}
 
@@ -960,7 +1066,9 @@ public:
 	 *
 	 * @return The GB vector
 	 */
-	std::vector<std::tuple<int, int, int> > getGBVector() const override {
+	std::vector<std::tuple<int, int, int>>
+	getGBVector() const override
+	{
 		return gbVector;
 	}
 
@@ -969,11 +1077,13 @@ public:
 	 *
 	 * @param i, j, k The coordinate of the GB
 	 */
-	void setGBLocation(int i, int j = 0, int k = 0) override {
+	void
+	setGBLocation(int i, int j = 0, int k = 0) override
+	{
 		// Add the coordinates to the GB vector
-		if (i >= localXS && i < localXS + std::max(localXM, 1) && j >= localYS
-				&& j < localYS + std::max(localYM, 1) && k >= localZS
-				&& k < localZS + std::max(localZM, 1)) {
+		if (i >= localXS && i < localXS + std::max(localXM, 1) &&
+			j >= localYS && j < localYS + std::max(localYM, 1) &&
+			k >= localZS && k < localZS + std::max(localZM, 1)) {
 			gbVector.push_back(std::make_tuple(i, j, k));
 		}
 	}
@@ -981,32 +1091,38 @@ public:
 	/**
 	 * Reset the GB vector.
 	 */
-	void resetGBVector() override {
+	void
+	resetGBVector() override
+	{
 		gbVector.clear();
 	}
 
-        /** 
-         * Get the coordinates covered by the local grid using copying method.
-         * \see ISolverHandler.h
-         */
-        void getLocalCoordinatesCpy(int *xs, int *xm, int *Mx, int *ys, int *ym,
-                        int *My, int *zs, int *zm, int *Mz) override {
-                *xs = localXS;
-                *xm = localXM;
-                *Mx = nX; 
-                *ys = localYS;
-                *ym = localYM;
-                *My = nY; 
-                *zs = localZS;
-                *zm = localZM;
-                *Mz = nZ; 
-        }
+	/**
+	 * Get the coordinates covered by the local grid using copying method.
+	 * \see ISolverHandler.h
+	 */
+	void
+	getLocalCoordinatesCpy(int* xs, int* xm, int* Mx, int* ys, int* ym, int* My,
+		int* zs, int* zm, int* Mz) override
+	{
+		*xs = localXS;
+		*xm = localXM;
+		*Mx = nX;
+		*ys = localYS;
+		*ym = localYM;
+		*My = nY;
+		*zs = localZS;
+		*zm = localZM;
+		*Mz = nZ;
+	}
 
 	/**
 	 * Passing the XeRate at i,j,k point.
 	 * \see ISolverHandler.h
 	 */
-        double getXeRatePoint(int i, int j, int k) override {
+	double
+	getXeRatePoint(int i, int j, int k) override
+	{
 		return std::get<0>(localNE[i][j][k]);
 	}
 
@@ -1014,7 +1130,9 @@ public:
 	 * Passing the XeFlux at i,j,k point.
 	 * \see ISolverHandler.h
 	 */
-        double getXeFluxPoint(int i, int j, int k) override {
+	double
+	getXeFluxPoint(int i, int j, int k) override
+	{
 		return std::get<1>(localNE[i][j][k]);
 	}
 
@@ -1022,7 +1140,9 @@ public:
 	 * Passing the XeConc at i,j,k point.
 	 * \see ISolverHandler.h
 	 */
-        double getXeConcPoint(int i, int j, int k) override {
+	double
+	getXeConcPoint(int i, int j, int k) override
+	{
 		return std::get<2>(localNE[i][j][k]);
 	}
 
@@ -1030,12 +1150,13 @@ public:
 	 * Passing the XeVolFrac at i,j,k point.
 	 * \see ISolverHandler.h
 	 */
-        double getXeVolFracPoint(int i, int j, int k) override {
+	double
+	getXeVolFracPoint(int i, int j, int k) override
+	{
 		return std::get<3>(localNE[i][j][k]);
 	}
-}
-;
-//end class SolverHandler
+};
+// end class SolverHandler
 
 } /* namespace handler */
 } /* namespace solver */

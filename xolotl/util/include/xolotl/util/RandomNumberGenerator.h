@@ -3,16 +3,18 @@
 
 #include <array>
 
-namespace xolotl {
-namespace util {
-
+namespace xolotl
+{
+namespace util
+{
 // Simple class to wrap a random number generator.
 // Intended mainly to allow us to retain the seed used and last few
 // values, to support reproducibility.
 // But also helps encapsulate the RNG used, so that we can switch
 // to a different one if the default rand() proves insufficient.
-template<typename ValueType, typename SeedType>
-class RandomNumberGenerator {
+template <typename ValueType, typename SeedType>
+class RandomNumberGenerator
+{
 private:
 	static constexpr uint32_t nValuesToSave = 3;
 
@@ -23,7 +25,9 @@ private:
 	SeedType seed;
 	RecentValuesType recentValues;
 
-	ValueType GetRandomValue(void) {
+	ValueType
+	GetRandomValue(void)
+	{
 		// Shift recent values to make space for new sample.
 		// Be sure to shift from the right so we don't just
 		// keep overwriting with the value at slot 0.
@@ -36,15 +40,17 @@ private:
 		return recentValues[0];
 	}
 
-	void SeedGenerator(void) const {
+	void
+	SeedGenerator(void) const
+	{
 		std::srand(seed);
 	}
 
 public:
 	RandomNumberGenerator(void) = delete;
 
-	RandomNumberGenerator(SeedType _seed) :
-			seed(_seed) {
+	RandomNumberGenerator(SeedType _seed) : seed(_seed)
+	{
 		SeedGenerator();
 
 		for (auto i = 0; i < nValuesToSave; ++i) {
@@ -52,11 +58,15 @@ public:
 		}
 	}
 
-	double GetRandomDouble(void) {
-		return ((double) GetRandomValue()) / RAND_MAX;
+	double
+	GetRandomDouble(void)
+	{
+		return ((double)GetRandomValue()) / RAND_MAX;
 	}
 
-	const RecentValuesType& GetRecentValues(void) const {
+	const RecentValuesType&
+	GetRecentValues(void) const
+	{
 		return recentValues;
 	}
 };

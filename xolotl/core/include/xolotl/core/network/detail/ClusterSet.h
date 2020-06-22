@@ -12,35 +12,31 @@ namespace detail
 {
 struct ClusterSet
 {
-    using IndexType = IReactionNetwork::IndexType;
-    static constexpr IndexType invalidIndex = IReactionNetwork::invalidIndex();
+	using IndexType = IReactionNetwork::IndexType;
+	static constexpr IndexType invalidIndex = IReactionNetwork::invalidIndex();
 
-    IndexType cluster0 {invalidIndex};
-    IndexType cluster1 {invalidIndex};
-    IndexType cluster2 {invalidIndex};
-    IndexType cluster3 {invalidIndex};
+	IndexType cluster0{invalidIndex};
+	IndexType cluster1{invalidIndex};
+	IndexType cluster2{invalidIndex};
+	IndexType cluster3{invalidIndex};
 
-    ClusterSet() = default;
+	ClusterSet() = default;
 
-    KOKKOS_INLINE_FUNCTION
-    ClusterSet(IndexType cl0, IndexType cl1, IndexType cl2 = invalidIndex,
-            IndexType cl3 = invalidIndex)
-        :
-        cluster0{cl0},
-        cluster1{cl1},
-        cluster2{cl2},
-        cluster3{cl3}
-    {
-    }
+	KOKKOS_INLINE_FUNCTION
+	ClusterSet(IndexType cl0, IndexType cl1, IndexType cl2 = invalidIndex,
+		IndexType cl3 = invalidIndex) :
+		cluster0{cl0}, cluster1{cl1}, cluster2{cl2}, cluster3{cl3}
+	{
+	}
 
-    KOKKOS_INLINE_FUNCTION
-    bool
-    valid() const noexcept
-    {
-        return cluster0 != invalidIndex;
-    }
+	KOKKOS_INLINE_FUNCTION
+	bool
+	valid() const noexcept
+	{
+		return cluster0 != invalidIndex;
+	}
 };
-}
-}
-}
-}
+} // namespace detail
+} // namespace network
+} // namespace core
+} // namespace xolotl

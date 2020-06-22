@@ -6,73 +6,79 @@
 
 using namespace std;
 
-namespace xolotl {
-namespace perf {
-namespace dummy {
-
+namespace xolotl
+{
+namespace perf
+{
+namespace dummy
+{
 /**
  * The DummyTimer class is instantiated by the DummerHandlerRegistry class
  * and realizes the DummyTimer interface.
  */
-class DummyTimer: public ITimer, public util::Identifiable {
+class DummyTimer : public ITimer, public util::Identifiable
+{
 private:
-
 	/**
 	 * The default constructor is declared as private since Timers
 	 *  must be initialized with a name.
 	 */
-	DummyTimer(void) :
-			util::Identifiable("unused") {
+	DummyTimer(void) : util::Identifiable("unused")
+	{
 	}
 
 public:
-
 	/**
 	 * DummyTimer constructor that takes the argument timerName
 	 * to distinguish specific DummyTimer.
 	 *
 	 * @param name The DummyTimer's name
 	 */
-	DummyTimer(const std::string& name) :
-			util::Identifiable("unused") {
+	DummyTimer(const std::string& name) : util::Identifiable("unused")
+	{
 	}
 
 	/**
 	 * Destroy the timer.
 	 */
-	virtual ~DummyTimer(void) {
+	virtual ~DummyTimer(void)
+	{
 	}
 
 	/**
 	 * Start the timer.
 	 */
-	virtual void start(void);
+	virtual void
+	start(void);
 
 	/**
 	 * Stop the timer.
 	 */
-	virtual void stop(void);
+	virtual void
+	stop(void);
 
 	/**
 	 * Reset the timer's value.
 	 */
-	virtual void reset(void);
+	virtual void
+	reset(void);
 
 	/**
 	 * Obtain the timer's value.
 	 */
-	virtual ITimer::ValType getValue(void) const;
+	virtual ITimer::ValType
+	getValue(void) const;
 
 	/**
 	 * Obtain a string describing the units of the timer's value.
 	 */
-	virtual std::string getUnits(void) const;
-
+	virtual std::string
+	getUnits(void) const;
 };
-//end class DummyTimer
+// end class DummyTimer
 
-}//end namespace dummy
-}//end namespace perf
-}//end namespace xolotl
+} // end namespace dummy
+} // end namespace perf
+} // end namespace xolotl
 
 #endif

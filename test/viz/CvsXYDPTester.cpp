@@ -2,6 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
+
 #include <xolotl/viz/dataprovider/CvsXYDataProvider.h>
 
 using namespace std;
@@ -16,9 +17,11 @@ BOOST_AUTO_TEST_SUITE(CvsXYDataProvider_testSuite)
 /**
  * Method checking the ability to use a name.
  */
-BOOST_AUTO_TEST_CASE(checkName) {
+BOOST_AUTO_TEST_CASE(checkName)
+{
 	// Create myCvsXYDataProvider
-	auto myCvsXYDataProvider = make_shared<CvsXYDataProvider>("myCvsXYDataProvider");
+	auto myCvsXYDataProvider =
+		make_shared<CvsXYDataProvider>("myCvsXYDataProvider");
 
 	BOOST_REQUIRE_EQUAL("myCvsXYDataProvider", myCvsXYDataProvider->getName());
 }
@@ -26,26 +29,46 @@ BOOST_AUTO_TEST_CASE(checkName) {
 /**
  * Method checking you can get the axis vectors.
  */
-BOOST_AUTO_TEST_CASE(checkGetVector) {
+BOOST_AUTO_TEST_CASE(checkGetVector)
+{
 	// Create myCvsXYDataProvider
-	auto myCvsXYDataProvider = make_shared<CvsXYDataProvider>("myCvsXYDataProvider");
+	auto myCvsXYDataProvider =
+		make_shared<CvsXYDataProvider>("myCvsXYDataProvider");
 
 	// Create a Point vector
-	auto myPoints = make_shared< vector <Point> >();
+	auto myPoints = make_shared<vector<Point>>();
 
 	// And fill it with some Point
 	Point aPoint;
-	aPoint.value = 3.0; aPoint.t = 1.0; aPoint.x = 1.0; aPoint.y = 1.0;
+	aPoint.value = 3.0;
+	aPoint.t = 1.0;
+	aPoint.x = 1.0;
+	aPoint.y = 1.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = 2.0; aPoint.t = 3.0; aPoint.x = 2.0; aPoint.y = 1.0;
+	aPoint.value = 2.0;
+	aPoint.t = 3.0;
+	aPoint.x = 2.0;
+	aPoint.y = 1.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = 5.0; aPoint.t = 6.0; aPoint.x = 3.0; aPoint.y = 1.0;
+	aPoint.value = 5.0;
+	aPoint.t = 6.0;
+	aPoint.x = 3.0;
+	aPoint.y = 1.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = 8.0; aPoint.t = 8.0; aPoint.x = 1.0; aPoint.y = 2.0;
+	aPoint.value = 8.0;
+	aPoint.t = 8.0;
+	aPoint.x = 1.0;
+	aPoint.y = 2.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = 1.0e-20; aPoint.t = 7.0; aPoint.x = 2.0; aPoint.y = 2.0;
+	aPoint.value = 1.0e-20;
+	aPoint.t = 7.0;
+	aPoint.x = 2.0;
+	aPoint.y = 2.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = -1.0; aPoint.t = 7.0; aPoint.x = 3.0; aPoint.y = 2.0;
+	aPoint.value = -1.0;
+	aPoint.t = 7.0;
+	aPoint.x = 3.0;
+	aPoint.y = 2.0;
 	myPoints->push_back(aPoint);
 
 	// Set these points in the myDataProvider

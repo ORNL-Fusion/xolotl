@@ -1,7 +1,9 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <string>
+
 #include <boost/test/included/unit_test.hpp>
+
 #include <xolotl/perf/config.h>
 #include <xolotl/perf/os/OSTimer.h>
 
@@ -11,21 +13,22 @@ using namespace xolotl;
 /**
  * This suite is responsible for testing the OSTimer.
  */
-BOOST_AUTO_TEST_SUITE (OSTimer_testSuite)
+BOOST_AUTO_TEST_SUITE(OSTimer_testSuite)
 
-BOOST_AUTO_TEST_CASE(checkName) {
-
+BOOST_AUTO_TEST_CASE(checkName)
+{
 	perf::os::OSTimer tester("test");
 
-	BOOST_TEST_MESSAGE(
-			"\n" << "OSTimer Message: \n" << "tester.getName() = " << tester.getName() << "\n");
+	BOOST_TEST_MESSAGE("\n"
+		<< "OSTimer Message: \n"
+		<< "tester.getName() = " << tester.getName() << "\n");
 
-	//Require that the name of this Timer is "test"
+	// Require that the name of this Timer is "test"
 	BOOST_REQUIRE_EQUAL("test", tester.getName());
 }
 
-BOOST_AUTO_TEST_CASE(checkTiming) {
-
+BOOST_AUTO_TEST_CASE(checkTiming)
+{
 	perf::os::OSTimer tester("test");
 	double sleepSeconds = 2.0;
 
@@ -35,17 +38,24 @@ BOOST_AUTO_TEST_CASE(checkTiming) {
 	sleep(sleepSeconds);
 	tester.stop();
 
-	//Output the difference between the wallclock timestamps when the timer was started and stopped
-	BOOST_TEST_MESSAGE(
-			"\n" << "OSTimer Message: \n" << "tester.getName() = " << tester.getName() << "\n" << "tester.getValue() = " << tester.getValue() << "s" << "\n" << "tester.getValue() - " << sleepSeconds << "s = " << tester.getValue()-sleepSeconds << "s");
+	// Output the difference between the wallclock timestamps when the timer was
+	// started and stopped
+	BOOST_TEST_MESSAGE("\n"
+		<< "OSTimer Message: \n"
+		<< "tester.getName() = " << tester.getName() << "\n"
+		<< "tester.getValue() = " << tester.getValue() << "s"
+		<< "\n"
+		<< "tester.getValue() - " << sleepSeconds
+		<< "s = " << tester.getValue() - sleepSeconds << "s");
 
-	// Require that the value of this Timer is within 3% of the 
+	// Require that the value of this Timer is within 3% of the
 	// duration of the sleep.
 	BOOST_REQUIRE_CLOSE(sleepSeconds, tester.getValue(), 0.03);
 	BOOST_REQUIRE_EQUAL("s", tester.getUnits());
 }
 
-BOOST_AUTO_TEST_CASE(accumulate) {
+BOOST_AUTO_TEST_CASE(accumulate)
+{
 	perf::os::OSTimer tester("test");
 
 	const unsigned int sleepSeconds = 2;
@@ -58,11 +68,12 @@ BOOST_AUTO_TEST_CASE(accumulate) {
 	tester.stop();
 
 	double timerValue = tester.getValue();
-	double expValue = 2 * sleepSeconds;   // we had two sleep intervals
+	double expValue = 2 * sleepSeconds; // we had two sleep intervals
 	BOOST_REQUIRE_CLOSE(expValue, timerValue, 0.03);
 }
 
-BOOST_AUTO_TEST_CASE(reset) {
+BOOST_AUTO_TEST_CASE(reset)
+{
 	perf::os::OSTimer tester("test");
 
 	const unsigned int sleepSeconds = 2;

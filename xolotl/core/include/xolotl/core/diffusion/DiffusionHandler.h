@@ -5,18 +5,20 @@
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/util/MathUtils.h>
 
-namespace xolotl {
-namespace core {
-namespace diffusion {
-
+namespace xolotl
+{
+namespace core
+{
+namespace diffusion
+{
 /**
  * This class realizes the IDiffusionHandler interface responsible for all
  * the physical parts for the diffusion of mobile clusters. It needs to have
  * subclasses implementing the compute diffusion methods.
  */
-class DiffusionHandler: public IDiffusionHandler {
+class DiffusionHandler : public IDiffusionHandler
+{
 protected:
-
 	//! Collection of diffusing clusters.
 	std::vector<std::size_t> diffusingClusters;
 
@@ -24,28 +26,30 @@ protected:
 	double migrationThreshold;
 
 public:
-
 	//! The Constructor
-	DiffusionHandler(double threshold) :
-			migrationThreshold(threshold) {
+	DiffusionHandler(double threshold) : migrationThreshold(threshold)
+	{
 	}
 
 	//! The Destructor
-	~DiffusionHandler() {
+	~DiffusionHandler()
+	{
 	}
 
 	/**
-	 * Initialize the off-diagonal part of the Jacobian. If this step is skipped it
-	 * won't be possible to set the partial derivatives for the diffusion.
+	 * Initialize the off-diagonal part of the Jacobian. If this step is skipped
+	 * it won't be possible to set the partial derivatives for the diffusion.
 	 *
-	 * The value 1 is set in ofillMap if a cluster has a non zero diffusion coefficient.
+	 * The value 1 is set in ofillMap if a cluster has a non zero diffusion
+	 * coefficient.
 	 *
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for diffusing clusters.
 	 */
-	virtual void initializeOFill(const network::IReactionNetwork &network,
-			network::IReactionNetwork::SparseFillMap &ofillMap) override {
-
+	virtual void
+	initializeOFill(const network::IReactionNetwork& network,
+		network::IReactionNetwork::SparseFillMap& ofillMap) override
+	{
 		// Clear the index vector
 		diffusingClusters.clear();
 
@@ -58,8 +62,7 @@ public:
 			double migration = cluster.getMigrationEnergy();
 
 			// Don't do anything if the diffusion factor is 0.0
-			if (util::equal(diffFactor, 0.0)
-					|| migration > migrationThreshold)
+			if (util::equal(diffFactor, 0.0) || migration > migrationThreshold)
 				continue;
 
 			// Note that cluster is diffusing.
@@ -77,7 +80,9 @@ public:
 	 *
 	 * @return The number of diffusing clusters
 	 */
-	int getNumberOfDiffusing() const override {
+	int
+	getNumberOfDiffusing() const override
+	{
 		return diffusingClusters.size();
 	}
 
@@ -86,12 +91,13 @@ public:
 	 *
 	 * @return The vector
 	 */
-	virtual std::vector<std::size_t> getDiffusingIds() const override {
+	virtual std::vector<std::size_t>
+	getDiffusingIds() const override
+	{
 		return diffusingClusters;
 	}
-
 };
-//end class DiffusionHandler
+// end class DiffusionHandler
 
 } /* end namespace diffusion */
 } /* end namespace core */

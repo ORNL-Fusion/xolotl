@@ -1,12 +1,15 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/unit_test.hpp>
-#include <mpi.h>
-#include <iostream>
 #include <fstream>
-#include <xolotl/core/flux/W100FitFluxHandler.h>
+#include <iostream>
+
+#include <mpi.h>
+
+#include <boost/test/unit_test.hpp>
+
 #include <xolotl/config.h>
+#include <xolotl/core/flux/W100FitFluxHandler.h>
 #include <xolotl/options/Options.h>
 
 using namespace std;
@@ -19,11 +22,12 @@ BOOST_GLOBAL_FIXTURE(ScopeGuard);
 /**
  * The test suite is responsible for testing the W100FitFluxHandler.
  */
-BOOST_AUTO_TEST_SUITE (W100FitFluxHandlerTester_testSuite)
+BOOST_AUTO_TEST_SUITE(W100FitFluxHandlerTester_testSuite)
 
-BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
+BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
+{
 	// Create the option to create a network
-    xolotl::options::Options opts;
+	xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
@@ -31,7 +35,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 
 	// Create a fake command line to read the options
 	int argc = 2;
-	char **argv = new char*[3];
+	char** argv = new char*[3];
 	std::string appName = "fakeXolotlAppNameForTests";
 	argv[0] = new char[appName.length() + 1];
 	strcpy(argv[0], appName.c_str());
@@ -46,19 +50,20 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	// Create a grid
 	std::vector<double> grid;
 	for (int l = 0; l < 7; l++) {
-		grid.push_back((double) l * 1.25);
+		grid.push_back((double)l * 1.25);
 	}
 	// Specify the surface position
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+	using NetworkType =
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -83,18 +88,18 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	}
 
 	// The pointer to the grid point we want
-	double *updatedConc = &newConcentration[0];
-	double *updatedConcOffset = updatedConc + dof;
+	double* updatedConc = &newConcentration[0];
+	double* updatedConcOffset = updatedConc + dof;
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 1, surfacePos);
 	updatedConcOffset = updatedConc + 2 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 2, surfacePos);
 	updatedConcOffset = updatedConc + 3 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.444777, 0.01);
@@ -104,10 +109,10 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	return;
 }
 
-BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid) {
-
+BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid)
+{
 	// Create the option to create a network
-    xolotl::options::Options opts;
+	xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
@@ -115,7 +120,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid) {
 
 	// Create a fake command line to read the options
 	int argc = 2;
-	char **argv = new char*[3];
+	char** argv = new char*[3];
 	std::string appName = "fakeXolotlAppNameForTests";
 	argv[0] = new char[appName.length() + 1];
 	strcpy(argv[0], appName.c_str());
@@ -131,13 +136,14 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid) {
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+	using NetworkType =
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -162,12 +168,12 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid) {
 	}
 
 	// The pointer to the grid point we want
-	double *updatedConc = &newConcentration[0];
-	double *updatedConcOffset = updatedConc;
+	double* updatedConc = &newConcentration[0];
+	double* updatedConcOffset = updatedConc;
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 0,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 0, surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[0], 1.0, 0.01);
@@ -175,10 +181,10 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid) {
 	return;
 }
 
-BOOST_AUTO_TEST_CASE(checkFluence) {
-
+BOOST_AUTO_TEST_CASE(checkFluence)
+{
 	// Create the option to create a network
-    xolotl::options::Options opts;
+	xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
@@ -186,7 +192,7 @@ BOOST_AUTO_TEST_CASE(checkFluence) {
 
 	// Create a fake command line to read the options
 	int argc = 2;
-	char **argv = new char*[3];
+	char** argv = new char*[3];
 	std::string appName = "fakeXolotlAppNameForTests";
 	argv[0] = new char[appName.length() + 1];
 	strcpy(argv[0], appName.c_str());
@@ -199,19 +205,20 @@ BOOST_AUTO_TEST_CASE(checkFluence) {
 	// Create a grid
 	std::vector<double> grid;
 	for (int l = 0; l < 7; l++) {
-		grid.push_back((double) l * 1.25);
+		grid.push_back((double)l * 1.25);
 	}
 	// Specify the surface position
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+	using NetworkType =
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -236,10 +243,10 @@ BOOST_AUTO_TEST_CASE(checkFluence) {
 	return;
 }
 
-BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
-
+BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
+{
 	// Create the option to create a network
-    xolotl::options::Options opts;
+	xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
@@ -247,7 +254,7 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 
 	// Create a fake command line to read the options
 	int argc = 2;
-	char **argv = new char*[3];
+	char** argv = new char*[3];
 	std::string appName = "fakeXolotlAppNameForTests";
 	argv[0] = new char[appName.length() + 1];
 	strcpy(argv[0], appName.c_str());
@@ -260,19 +267,20 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 	// Create a grid
 	std::vector<double> grid;
 	for (int l = 0; l < 7; l++) {
-		grid.push_back((double) l * 1.25);
+		grid.push_back((double)l * 1.25);
 	}
 	// Specify the surface position
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+	using NetworkType =
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -301,18 +309,18 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 	}
 
 	// The pointer to the grid point we want
-	double *updatedConc = &newConcentration[0];
-	double *updatedConcOffset = updatedConc + dof;
+	double* updatedConc = &newConcentration[0];
+	double* updatedConcOffset = updatedConc + dof;
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 1, surfacePos);
 	updatedConcOffset = updatedConc + 2 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 2, surfacePos);
 	updatedConcOffset = updatedConc + 3 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[9], 1.111943, 0.01);
@@ -322,10 +330,10 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude) {
 	return;
 }
 
-BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
-
+BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
+{
 	// Create the option to create a network
-    xolotl::options::Options opts;
+	xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
@@ -333,7 +341,7 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 
 	// Create a fake command line to read the options
 	int argc = 2;
-	char **argv = new char*[3];
+	char** argv = new char*[3];
 	std::string appName = "fakeXolotlAppNameForTests";
 	argv[0] = new char[appName.length() + 1];
 	strcpy(argv[0], appName.c_str());
@@ -346,19 +354,20 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	// Create a grid
 	std::vector<double> grid;
 	for (int l = 0; l < 7; l++) {
-		grid.push_back((double) l * 1.25);
+		grid.push_back((double)l * 1.25);
 	}
 	// Specify the surface position
 	int surfacePos = 0;
 
 	// Create the network
-	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+	using NetworkType =
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -369,10 +378,10 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	// the amplitude (in He/nm2/s) at that time.
 	std::ofstream writeFluxFile("fluxFile.dat");
 	writeFluxFile << "0.0 1000.0 \n"
-			"1.0 4000.0 \n"
-			"2.0 2000.0 \n"
-			"3.0 3000.0 \n"
-			"4.0 0.0";
+					 "1.0 4000.0 \n"
+					 "2.0 2000.0 \n"
+					 "3.0 3000.0 \n"
+					 "4.0 0.0";
 	writeFluxFile.close();
 
 	auto testFitFlux = make_shared<W100FitFluxHandler>();
@@ -393,18 +402,18 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 	}
 
 	// The pointer to the grid point we want
-	double *updatedConc = &newConcentration[0];
-	double *updatedConcOffset = updatedConc + dof;
+	double* updatedConc = &newConcentration[0];
+	double* updatedConcOffset = updatedConc + dof;
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 1, surfacePos);
 	updatedConcOffset = updatedConc + 2 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 2, surfacePos);
 	updatedConcOffset = updatedConc + 3 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[9], 1111.94, 0.01);
@@ -423,14 +432,14 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux) {
 
 	// Update the concentrations at some grid points
 	updatedConcOffset = updatedConc + dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 1,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 1, surfacePos);
 	updatedConcOffset = updatedConc + 2 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 2,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 2, surfacePos);
 	updatedConcOffset = updatedConc + 3 * dof;
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 3,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[9], 667.166, 0.01);

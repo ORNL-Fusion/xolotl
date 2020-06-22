@@ -1,71 +1,121 @@
 #include <cassert>
-#include <limits>
 #include <fstream>
+#include <limits>
+
 #include <boost/program_options.hpp>
+
 #include <xolotl/options/Options.h>
 #include <xolotl/util/TokenizedLineReader.h>
 
 namespace bpo = boost::program_options;
 
-namespace xolotl {
-namespace options {
-
+namespace xolotl
+{
+namespace options
+{
 Options::Options() :
-		shouldRunFlag(true), exitCode(EXIT_SUCCESS), petscArg(""), networkFilename(
-				""), constTempFlag(false), constTemperature(1000.0), tempProfileFlag(
-				false), tempProfileFilename(""), heatFlag(false), bulkTemperature(
-				0.0), fluxFlag(false), fluxAmplitude(0.0), fluxProfileFlag(
-				false), perfRegistryType(perf::IHandlerRegistry::std), vizStandardHandlersFlag(
-				false), materialName(""), initialVConcentration(0.0), voidPortion(
-				50.0), dimensionNumber(1), useRegularGridFlag(true), useChebyshevGridFlag(
-				false), readInGridFlag(false), gridFilename(""), gbList(""), groupingMin(
-				std::numeric_limits<int>::max()), groupingWidthA(1), groupingWidthB(
-				0), sputteringYield(0.0), useHDF5Flag(true), usePhaseCutFlag(
-				false), maxImpurity(8), maxD(0), maxT(0), maxV(20), maxI(6), nX(
-				10), nY(0), nZ(0), xStepSize(0.5), yStepSize(0.0), zStepSize(
-				0.0), leftBoundary(1), rightBoundary(1), bottomBoundary(1), topBoundary(
-				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), rngUseSeed(
-				false), rngSeed(0), rngPrintSeed(false), zeta(0.73), resoMinSize(
-				0), density(10.162795276841), pulseTime(0.0), pulseProportion(
-				0.0), latticeParameter(-1.0), impurityRadius(-1.0), biasFactor(
-				1.15), hydrogenFactor(0.25), xenonDiffusivity(-1.0), fissionYield(
-				0.25), migrationThreshold(
-				std::numeric_limits<double>::infinity()) {
+	shouldRunFlag(true),
+	exitCode(EXIT_SUCCESS),
+	petscArg(""),
+	networkFilename(""),
+	constTempFlag(false),
+	constTemperature(1000.0),
+	tempProfileFlag(false),
+	tempProfileFilename(""),
+	heatFlag(false),
+	bulkTemperature(0.0),
+	fluxFlag(false),
+	fluxAmplitude(0.0),
+	fluxProfileFlag(false),
+	perfRegistryType(perf::IHandlerRegistry::std),
+	vizStandardHandlersFlag(false),
+	materialName(""),
+	initialVConcentration(0.0),
+	voidPortion(50.0),
+	dimensionNumber(1),
+	useRegularGridFlag(true),
+	useChebyshevGridFlag(false),
+	readInGridFlag(false),
+	gridFilename(""),
+	gbList(""),
+	groupingMin(std::numeric_limits<int>::max()),
+	groupingWidthA(1),
+	groupingWidthB(0),
+	sputteringYield(0.0),
+	useHDF5Flag(true),
+	usePhaseCutFlag(false),
+	maxImpurity(8),
+	maxD(0),
+	maxT(0),
+	maxV(20),
+	maxI(6),
+	nX(10),
+	nY(0),
+	nZ(0),
+	xStepSize(0.5),
+	yStepSize(0.0),
+	zStepSize(0.0),
+	leftBoundary(1),
+	rightBoundary(1),
+	bottomBoundary(1),
+	topBoundary(1),
+	frontBoundary(1),
+	backBoundary(1),
+	burstingDepth(10.0),
+	rngUseSeed(false),
+	rngSeed(0),
+	rngPrintSeed(false),
+	zeta(0.73),
+	resoMinSize(0),
+	density(10.162795276841),
+	pulseTime(0.0),
+	pulseProportion(0.0),
+	latticeParameter(-1.0),
+	impurityRadius(-1.0),
+	biasFactor(1.15),
+	hydrogenFactor(0.25),
+	xenonDiffusivity(-1.0),
+	fissionYield(0.25),
+	migrationThreshold(std::numeric_limits<double>::infinity())
+{
 	radiusMinSizes.Init(0);
 
 	return;
 }
 
-Options::~Options(void) {
+Options::~Options(void)
+{
 }
 
-void Options::readParams(int argc, char *argv[]) {
+void
+Options::readParams(int argc, char* argv[])
+{
 	// Check that a file name is given
 	if (argc < 2) {
 		std::cerr << "Options: parameter file name must not be empty"
-				<< std::endl;
+				  << std::endl;
 		shouldRunFlag = false;
 		exitCode = EXIT_FAILURE;
 		return;
 	}
 
 	// Check that the file exist
-    std::ifstream ifs(argv[1]);
+	std::ifstream ifs(argv[1]);
 	if (!ifs) {
 		std::cerr << "Options: unable to open parameter file: " << argv[1]
-				<< std::endl;
+				  << std::endl;
 		shouldRunFlag = false;
 		exitCode = EXIT_FAILURE;
 		return;
 	}
 
 	// The name of the parameter file
-    std::string param_file;
+	std::string param_file;
 
 	// Parse the command line options.
 	bpo::options_description desc("Command line options");
 	desc.add_options()("help", "show this help message")("parameterFile",
-			bpo::value<std::string>(&param_file), "input file name");
+		bpo::value<std::string>(&param_file), "input file name");
 
 	bpo::positional_options_description p;
 	p.add("parameterFile", -1);
@@ -73,114 +123,124 @@ void Options::readParams(int argc, char *argv[]) {
 	bpo::variables_map opts;
 
 	bpo::store(
-			bpo::command_line_parser(argc, argv).options(desc).positional(p).run(),
-			opts);
+		bpo::command_line_parser(argc, argv).options(desc).positional(p).run(),
+		opts);
 	bpo::notify(opts);
 
 	// Declare a group of options that will be
 	// allowed both on command line and in
 	// config file
 	bpo::options_description config("Parameters");
-	config.add_options()("networkFile", bpo::value<std::string>(&networkFilename),
-			"The network will be loaded from this HDF5 file.")("startTemp",
-			bpo::value<std::string>(),
-			"The temperature (in Kelvin) will be the constant floating point value specified. "
-					"(default = 1000). If two values are given, the second one is interpreted "
-					"as the bulk temperature and a gradient will be used. (NOTE: Use only ONE temperature option)")(
-			"tempFile", bpo::value<std::string>(&tempProfileFilename),
-			"A temperature profile is given by the specified file, "
-					"then linear interpolation is used to fit the data."
-					"(NOTE: If a temperature file is given, "
-					"a constant temperature should NOT be given)")("heat",
-			bpo::value<std::string>(),
-			"The heat flux (in W nm-2) at the surface and the temperature in the bulk (Kelvin).")(
-			"flux", bpo::value<double>(&fluxAmplitude),
-			"The value of the incoming flux in #/nm2/s. If the Fuel case is used it actually "
-					"corresponds to the fission rate in #/nm3/s.")("fluxFile",
-			bpo::value<std::string>(&fluxProfileFilename),
-			"A time profile for the flux is given by the specified file, "
-					"then linear interpolation is used to fit the data."
-					"(NOTE: If a flux profile file is given, "
-					"a constant flux should NOT be given)")("perfHandler",
-			bpo::value<std::string>()->default_value("std"),
-			"Which set of performance handlers to use. (default = std, available std,dummy,os,papi).")(
-			"vizHandler", bpo::value<std::string>()->default_value("dummy"),
-			"Which set of handlers to use for the visualization. (default = dummy, available std,dummy).")(
-			"dimensions", bpo::value<int>(&dimensionNumber),
-			"Number of dimensions for the simulation.")("material",
-			bpo::value<std::string>(&materialName),
-			"The material options are as follows: {W100, W110, W111, "
-					"W211, Fuel, TRIDYN, Fe, 800H}, where W is for tungsten and "
-					"the numbers correspond to the surface orientation.")(
-			"initialV", bpo::value<double>(&initialVConcentration),
-			"The value of the initial concentration of vacancies in the material.")(
-			"zeta", bpo::value<double>(&zeta)->default_value(0.73),
-			"The value of the electronic stopping power in the material (0.73 by default).")(
-			"voidPortion", bpo::value<double>(&voidPortion),
-			"The value (in %) of the void portion at the start of the simulation.")(
-			"regularGrid", bpo::value<std::string>(),
-			"Will the grid be regularly spaced in the x direction? (available yes,no,cheby,<filename>)")(
-			"petscArgs", bpo::value<std::string>(&petscArg),
-			"All the arguments that will be given to PETSc.")("process",
-			bpo::value<std::string>(),
-			"List of all the processes to use in the simulation (reaction, diff, "
-					"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, "
-					"heterogeneous).")("grain",
-			bpo::value<std::string>(&gbList),
-			"This option allows the user to add GB in the X, Y, or Z directions. "
-					"To do so, simply write the direction followed "
-					"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")(
-			"grouping", bpo::value<std::string>(),
-			"This option allows the use a grouping scheme starting at the cluster "
-					"with 'min' size and with the given width.")("sputtering",
-			bpo::value<double>(&sputteringYield),
-			"This option allows the user to add a sputtering yield (atoms/ion).")(
-			"netParam", bpo::value<std::string>(),
-			"This option allows the user to define the boundaries of the network. "
-					"To do so, simply write the values in order "
-					"maxHe/Xe maxD maxT maxV maxI bool .")("grid",
-			bpo::value<std::string>(),
-			"This option allows the user to define the boundaries of the grid. "
-					"To do so, simply write the values in order "
-					"nX xStepSize nY yStepSize nZ zStepSize .")("radiusSize",
-			bpo::value<std::string>(),
-			"This option allows the user a minimum size for the computation "
-					"for the average radius (default is 0).")("boundary",
-			bpo::value<std::string>(),
-			"This option allows the user to choose the boundary conditions. "
-					"The first one correspond to the left side (surface) "
-					"and second one to the right (bulk), "
-					"then two for Y and two for Z. "
-					"0 means mirror or periodic, 1 means free surface.")(
-			"burstingDepth", bpo::value<double>(&burstingDepth),
-			"This option allows the user to set a depth in nm "
-					"for the bubble bursting.")("rng", bpo::value<std::string>(),
-			"Allows user to specify seed used to initialize random number "
-					"generator (default = determined from current time) and "
-					"whether each process should print the seed value "
-					"it uses (default = don't print)")("resoSize",
-			bpo::value<int>(&resoMinSize)->default_value(0),
-			"This option allows the user a minimum size for the re-solution (default is 0).")(
-			"density", bpo::value<double>(&density),
-			"This option allows the user to set a density in nm-3 "
-					"for the number of xenon per volume in a bubble.")("pulse",
-			bpo::value<std::string>(),
-			"The total length of the pulse (in s) and the proportion of it that is ON.")(
-			"lattice", bpo::value<double>(&latticeParameter),
-			"This option allows the user to set the length of the lattice side in nm.")(
-			"impurityRadius", bpo::value<double>(&impurityRadius),
-			"This option allows the user to set the radius of the main impurity (He or Xe) in nm.")(
-			"biasFactor", bpo::value<double>(&biasFactor),
-			"This option allows the user to set the bias factor reflecting the fact that interstitial "
-					"clusters have a larger surrounding strain field.")(
-			"hydrogenFactor", bpo::value<double>(&hydrogenFactor),
-			"This option allows the user to set the factor between the size of He and H.")(
-			"xenonDiffusivity", bpo::value<double>(&xenonDiffusivity),
-			"This option allows the user to set the diffusion coefficient for xenon in nm2 s-1.")(
-			"fissionYield", bpo::value<double>(&fissionYield),
-			"This option allows the user to set the number of xenon created for each fission.")(
-			"migrationThreshold", bpo::value<double>(&migrationThreshold),
-			"This option allows the user to set a limit on the migration energy above which the diffusion will be ignored.");
+	config.add_options()("networkFile",
+		bpo::value<std::string>(&networkFilename),
+		"The network will be loaded from this HDF5 file.")("startTemp",
+		bpo::value<std::string>(),
+		"The temperature (in Kelvin) will be the constant floating point value "
+		"specified. "
+		"(default = 1000). If two values are given, the second one is "
+		"interpreted "
+		"as the bulk temperature and a gradient will be used. (NOTE: Use only "
+		"ONE temperature option)")("tempFile",
+		bpo::value<std::string>(&tempProfileFilename),
+		"A temperature profile is given by the specified file, "
+		"then linear interpolation is used to fit the data."
+		"(NOTE: If a temperature file is given, "
+		"a constant temperature should NOT be given)")("heat",
+		bpo::value<std::string>(),
+		"The heat flux (in W nm-2) at the surface and the temperature in the "
+		"bulk (Kelvin).")("flux", bpo::value<double>(&fluxAmplitude),
+		"The value of the incoming flux in #/nm2/s. If the Fuel case is used "
+		"it actually "
+		"corresponds to the fission rate in #/nm3/s.")("fluxFile",
+		bpo::value<std::string>(&fluxProfileFilename),
+		"A time profile for the flux is given by the specified file, "
+		"then linear interpolation is used to fit the data."
+		"(NOTE: If a flux profile file is given, "
+		"a constant flux should NOT be given)")("perfHandler",
+		bpo::value<std::string>()->default_value("std"),
+		"Which set of performance handlers to use. (default = std, available "
+		"std,dummy,os,papi).")("vizHandler",
+		bpo::value<std::string>()->default_value("dummy"),
+		"Which set of handlers to use for the visualization. (default = dummy, "
+		"available std,dummy).")("dimensions",
+		bpo::value<int>(&dimensionNumber),
+		"Number of dimensions for the simulation.")("material",
+		bpo::value<std::string>(&materialName),
+		"The material options are as follows: {W100, W110, W111, "
+		"W211, Fuel, TRIDYN, Fe, 800H}, where W is for tungsten and "
+		"the numbers correspond to the surface orientation.")("initialV",
+		bpo::value<double>(&initialVConcentration),
+		"The value of the initial concentration of vacancies in the material.")(
+		"zeta", bpo::value<double>(&zeta)->default_value(0.73),
+		"The value of the electronic stopping power in the material (0.73 by "
+		"default).")("voidPortion", bpo::value<double>(&voidPortion),
+		"The value (in %) of the void portion at the start of the simulation.")(
+		"regularGrid", bpo::value<std::string>(),
+		"Will the grid be regularly spaced in the x direction? (available "
+		"yes,no,cheby,<filename>)")("petscArgs",
+		bpo::value<std::string>(&petscArg),
+		"All the arguments that will be given to PETSc.")("process",
+		bpo::value<std::string>(),
+		"List of all the processes to use in the simulation (reaction, diff, "
+		"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, "
+		"heterogeneous).")("grain", bpo::value<std::string>(&gbList),
+		"This option allows the user to add GB in the X, Y, or Z directions. "
+		"To do so, simply write the direction followed "
+		"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")("grouping",
+		bpo::value<std::string>(),
+		"This option allows the use a grouping scheme starting at the cluster "
+		"with 'min' size and with the given width.")("sputtering",
+		bpo::value<double>(&sputteringYield),
+		"This option allows the user to add a sputtering yield (atoms/ion).")(
+		"netParam", bpo::value<std::string>(),
+		"This option allows the user to define the boundaries of the network. "
+		"To do so, simply write the values in order "
+		"maxHe/Xe maxD maxT maxV maxI bool .")("grid",
+		bpo::value<std::string>(),
+		"This option allows the user to define the boundaries of the grid. "
+		"To do so, simply write the values in order "
+		"nX xStepSize nY yStepSize nZ zStepSize .")("radiusSize",
+		bpo::value<std::string>(),
+		"This option allows the user a minimum size for the computation "
+		"for the average radius (default is 0).")("boundary",
+		bpo::value<std::string>(),
+		"This option allows the user to choose the boundary conditions. "
+		"The first one correspond to the left side (surface) "
+		"and second one to the right (bulk), "
+		"then two for Y and two for Z. "
+		"0 means mirror or periodic, 1 means free surface.")("burstingDepth",
+		bpo::value<double>(&burstingDepth),
+		"This option allows the user to set a depth in nm "
+		"for the bubble bursting.")("rng", bpo::value<std::string>(),
+		"Allows user to specify seed used to initialize random number "
+		"generator (default = determined from current time) and "
+		"whether each process should print the seed value "
+		"it uses (default = don't print)")("resoSize",
+		bpo::value<int>(&resoMinSize)->default_value(0),
+		"This option allows the user a minimum size for the re-solution "
+		"(default is 0).")("density", bpo::value<double>(&density),
+		"This option allows the user to set a density in nm-3 "
+		"for the number of xenon per volume in a bubble.")("pulse",
+		bpo::value<std::string>(),
+		"The total length of the pulse (in s) and the proportion of it that is "
+		"ON.")("lattice", bpo::value<double>(&latticeParameter),
+		"This option allows the user to set the length of the lattice side in "
+		"nm.")("impurityRadius", bpo::value<double>(&impurityRadius),
+		"This option allows the user to set the radius of the main impurity "
+		"(He or Xe) in nm.")("biasFactor", bpo::value<double>(&biasFactor),
+		"This option allows the user to set the bias factor reflecting the "
+		"fact that interstitial "
+		"clusters have a larger surrounding strain field.")("hydrogenFactor",
+		bpo::value<double>(&hydrogenFactor),
+		"This option allows the user to set the factor between the size of He "
+		"and H.")("xenonDiffusivity", bpo::value<double>(&xenonDiffusivity),
+		"This option allows the user to set the diffusion coefficient for "
+		"xenon in nm2 s-1.")("fissionYield", bpo::value<double>(&fissionYield),
+		"This option allows the user to set the number of xenon created for "
+		"each fission.")("migrationThreshold",
+		bpo::value<double>(&migrationThreshold),
+		"This option allows the user to set a limit on the migration energy "
+		"above which the diffusion will be ignored.");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);
@@ -192,10 +252,10 @@ void Options::readParams(int argc, char *argv[]) {
 	}
 
 	if (shouldRunFlag) {
-        std::ifstream ifs(param_file.c_str());
+		std::ifstream ifs(param_file.c_str());
 		if (!ifs) {
-			std::cerr << "Options: unable to open parameter file: " <<
-				param_file << std::endl;
+			std::cerr << "Options: unable to open parameter file: "
+					  << param_file << std::endl;
 			exitCode = EXIT_FAILURE;
 			return;
 		}
@@ -207,7 +267,7 @@ void Options::readParams(int argc, char *argv[]) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["startTemp"].as<std::string>());
+				opts["startTemp"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -229,12 +289,14 @@ void Options::readParams(int argc, char *argv[]) {
 			// Check that the profile file exists
 			std::ifstream inFile(tempProfileFilename.c_str());
 			if (!inFile) {
-				std::cerr
-						<< "\nOptions: could not open file containing temperature profile data. "
-								"Aborting!\n" << std::endl;
+				std::cerr << "\nOptions: could not open file containing "
+							 "temperature profile data. "
+							 "Aborting!\n"
+						  << std::endl;
 				shouldRunFlag = false;
 				exitCode = EXIT_FAILURE;
-			} else {
+			}
+			else {
 				// Set the flag to use a temperature profile to true
 				tempProfileFlag = true;
 			}
@@ -245,7 +307,7 @@ void Options::readParams(int argc, char *argv[]) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["heat"].as<std::string>());
+				opts["heat"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -264,12 +326,14 @@ void Options::readParams(int argc, char *argv[]) {
 			// Check that the profile file exists
 			std::ifstream inFile(fluxProfileFilename.c_str());
 			if (!inFile) {
-				std::cerr
-						<< "\nOptions: could not open file containing flux profile data. "
-								"Aborting!\n" << std::endl;
+				std::cerr << "\nOptions: could not open file containing flux "
+							 "profile data. "
+							 "Aborting!\n"
+						  << std::endl;
 				shouldRunFlag = false;
 				exitCode = EXIT_FAILURE;
-			} else {
+			}
+			else {
 				// Set the flag to use a flux profile to true
 				fluxProfileFlag = true;
 			}
@@ -280,13 +344,15 @@ void Options::readParams(int argc, char *argv[]) {
 			try {
 				// Determine the type of handlers we are being asked to use
 				perf::IHandlerRegistry::RegistryType rtype =
-						perf::toPerfRegistryType(
-								opts["perfHandler"].as<std::string>());
+					perf::toPerfRegistryType(
+						opts["perfHandler"].as<std::string>());
 				perfRegistryType = rtype;
-			} catch (const std::invalid_argument &e) {
-				std::cerr
-						<< "\nOptions: could not understand the performance handler type. "
-								"Aborting!\n" << std::endl;
+			}
+			catch (const std::invalid_argument& e) {
+				std::cerr << "\nOptions: could not understand the performance "
+							 "handler type. "
+							 "Aborting!\n"
+						  << std::endl;
 				shouldRunFlag = false;
 				exitCode = EXIT_FAILURE;
 			}
@@ -297,12 +363,15 @@ void Options::readParams(int argc, char *argv[]) {
 			// Determine the type of handlers we are being asked to use
 			if (opts["vizHandler"].as<std::string>() == "std") {
 				vizStandardHandlersFlag = true;
-			} else if (opts["vizHandler"].as<std::string>() == "dummy") {
+			}
+			else if (opts["vizHandler"].as<std::string>() == "dummy") {
 				vizStandardHandlersFlag = false;
-			} else {
-				std::cerr
-						<< "\nOptions: unrecognized argument in the visualization option handler."
-								"Aborting!\n" << std::endl;
+			}
+			else {
+				std::cerr << "\nOptions: unrecognized argument in the "
+							 "visualization option handler."
+							 "Aborting!\n"
+						  << std::endl;
 				shouldRunFlag = false;
 				exitCode = EXIT_FAILURE;
 			}
@@ -314,11 +383,14 @@ void Options::readParams(int argc, char *argv[]) {
 			// Determine the type of handlers we are being asked to use
 			if (arg == "yes") {
 				useRegularGridFlag = true;
-			} else if (arg == "no") {
+			}
+			else if (arg == "no") {
 				useRegularGridFlag = false;
-			} else if (arg == "cheby") {
+			}
+			else if (arg == "cheby") {
 				useChebyshevGridFlag = true;
-			} else {
+			}
+			else {
 				// Read it as a file name
 				gridFilename = arg;
 				readInGridFlag = true;
@@ -330,18 +402,18 @@ void Options::readParams(int argc, char *argv[]) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<int> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["radiusSize"].as<std::string>());
+				opts["radiusSize"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
 			auto tokens = reader.loadLine();
 
 			// Create the array of sizes
-            util::Array<int, 4> sizes;
+			util::Array<int, 4> sizes;
 			sizes.Init(0);
 
 			// Set the values
-			for (int i = 0; i < std::min((int) tokens.size(), 4); i++) {
+			for (int i = 0; i < std::min((int)tokens.size(), 4); i++) {
 				sizes[i] = tokens[i];
 			}
 			radiusMinSizes = sizes;
@@ -352,7 +424,7 @@ void Options::readParams(int argc, char *argv[]) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["process"].as<std::string>());
+				opts["process"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -375,11 +447,13 @@ void Options::readParams(int argc, char *argv[]) {
 				if (processMap.find(tokens[i]) == processMap.end()) {
 					// Send an error
 					std::cerr << "\nOptions: The process name is not known: "
-							<< tokens[i] << std::endl << "Aborting!\n"
-							<< std::endl;
+							  << tokens[i] << std::endl
+							  << "Aborting!\n"
+							  << std::endl;
 					shouldRunFlag = false;
 					exitCode = EXIT_FAILURE;
-				} else {
+				}
+				else {
 					// Switch the value to true in the map
 					processMap[tokens[i]] = true;
 				}
@@ -391,7 +465,7 @@ void Options::readParams(int argc, char *argv[]) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<int> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["grouping"].as<std::string>());
+				opts["grouping"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -411,7 +485,7 @@ void Options::readParams(int argc, char *argv[]) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["netParam"].as<std::string>());
+				opts["netParam"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -447,7 +521,7 @@ void Options::readParams(int argc, char *argv[]) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["grid"].as<std::string>());
+				opts["grid"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -477,7 +551,7 @@ void Options::readParams(int argc, char *argv[]) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<int> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["boundary"].as<std::string>());
+				opts["boundary"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -506,7 +580,7 @@ void Options::readParams(int argc, char *argv[]) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<std::string> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["rng"].as<std::string>());
+				opts["rng"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
@@ -524,21 +598,24 @@ void Options::readParams(int argc, char *argv[]) {
 
 				if (currIdx < tokens.size()) {
 					// Convert arg to an integer.
-					char *ep = NULL;
+					char* ep = NULL;
 					auto useed = strtoul(tokens[currIdx].c_str(), &ep, 10);
-					if (ep
-							!= (tokens[currIdx].c_str()
-									+ tokens[currIdx].length())) {
+					if (ep !=
+						(tokens[currIdx].c_str() + tokens[currIdx].length())) {
 						std::cerr
-								<< "\nOptions: Invalid random number generator seed, must be a non-negative integer."
-										"Aborting!\n" << std::endl;
+							<< "\nOptions: Invalid random number generator "
+							   "seed, must be a non-negative integer."
+							   "Aborting!\n"
+							<< std::endl;
 					}
 					setRNGSeed(useed);
 				}
-			} catch (const std::invalid_argument &e) {
+			}
+			catch (const std::invalid_argument& e) {
 				std::cerr
-						<< "\nOptions: unrecognized argument in setting the rng."
-								"Aborting!\n" << std::endl;
+					<< "\nOptions: unrecognized argument in setting the rng."
+					   "Aborting!\n"
+					<< std::endl;
 				shouldRunFlag = false;
 				exitCode = EXIT_FAILURE;
 			}
@@ -549,7 +626,7 @@ void Options::readParams(int argc, char *argv[]) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-					opts["pulse"].as<std::string>());
+				opts["pulse"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.

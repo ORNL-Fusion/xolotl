@@ -14,65 +14,65 @@ template <typename TBase>
 class NucleationReactionGenerator : public TBase
 {
 public:
-    using Superclass = TBase;
-    using NetworkType = typename TBase::NetworkType;
-    using NetworkTraits = ReactionNetworkTraits<NetworkType>;
-    using NucleationReactionType =
-        typename NetworkTraits::NucleationReactionType;
-    using IndexType = typename NetworkType::IndexType;
-    using IndexView = typename Superclass::IndexView;
-    using ClusterSetSubView = typename Superclass::ClusterSetSubView;
-    using Count = typename Superclass::Count;
-    using Construct = typename Superclass::Construct;
+	using Superclass = TBase;
+	using NetworkType = typename TBase::NetworkType;
+	using NetworkTraits = ReactionNetworkTraits<NetworkType>;
+	using NucleationReactionType =
+		typename NetworkTraits::NucleationReactionType;
+	using IndexType = typename NetworkType::IndexType;
+	using IndexView = typename Superclass::IndexView;
+	using ClusterSetSubView = typename Superclass::ClusterSetSubView;
+	using Count = typename Superclass::Count;
+	using Construct = typename Superclass::Construct;
 
-    NucleationReactionGenerator(const NetworkType& network);
+	NucleationReactionGenerator(const NetworkType& network);
 
-    IndexType
-    getRowMapAndTotalReactionCount();
+	IndexType
+	getRowMapAndTotalReactionCount();
 
-    void
-    setupCrsClusterSetSubView();
+	void
+	setupCrsClusterSetSubView();
 
-    KOKKOS_INLINE_FUNCTION
-    void
-    addNucleationReaction(Count, const ClusterSet& clusterSet) const;
+	KOKKOS_INLINE_FUNCTION
+	void
+	addNucleationReaction(Count, const ClusterSet& clusterSet) const;
 
-    KOKKOS_INLINE_FUNCTION
-    void
-    addNucleationReaction(Construct, const ClusterSet& clusterSet) const;
+	KOKKOS_INLINE_FUNCTION
+	void
+	addNucleationReaction(Construct, const ClusterSet& clusterSet) const;
 
-    Kokkos::View<NucleationReactionType*>
-    getNucleationReactions() const
-    {
-        return _nucleationReactions;
-    }
+	Kokkos::View<NucleationReactionType*>
+	getNucleationReactions() const
+	{
+		return _nucleationReactions;
+	}
 
-    IndexType
-    getNumberOfNucleationReactions() const
-    {
-        return _nucleationReactions.size();
-    }
+	IndexType
+	getNumberOfNucleationReactions() const
+	{
+		return _nucleationReactions.size();
+	}
 
 private:
-    IndexView _clusterNucleationReactionCounts;
+	IndexView _clusterNucleationReactionCounts;
 
-    IndexType _numPrecedingReactions {};
-    IndexType _numNucleationReactions {};
+	IndexType _numPrecedingReactions{};
+	IndexType _numNucleationReactions{};
 
-    IndexView _nucleationCrsRowMap;
-    ClusterSetSubView _nucleationCrsClusterSets;
+	IndexView _nucleationCrsRowMap;
+	ClusterSetSubView _nucleationCrsClusterSets;
 
-    Kokkos::View<NucleationReactionType*> _nucleationReactions;
+	Kokkos::View<NucleationReactionType*> _nucleationReactions;
 };
 
 template <typename TNetwork, typename TReaction, typename TBase>
 struct WrapTypeSpecificReactionGenerator<TNetwork, TReaction, TBase,
-    std::enable_if_t<
-        std::is_base_of<NucleationReaction<TNetwork, TReaction>, TReaction>::value>>
+	std::enable_if_t<std::is_base_of<NucleationReaction<TNetwork, TReaction>,
+		TReaction>::value>>
 {
-    using Type = NucleationReactionGenerator<TBase>;
+	using Type = NucleationReactionGenerator<TBase>;
 };
-}
-}
-}
-}
+} // namespace detail
+} // namespace network
+} // namespace core
+} // namespace xolotl

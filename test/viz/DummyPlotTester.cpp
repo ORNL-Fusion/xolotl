@@ -2,9 +2,10 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
-#include <xolotl/viz/dummy/DummyPlot.h>
+
 #include <xolotl/viz/PlottingStyle.h>
 #include <xolotl/viz/dataprovider/DataProvider.h>
+#include <xolotl/viz/dummy/DummyPlot.h>
 
 using namespace std;
 using namespace xolotl::viz;
@@ -19,8 +20,8 @@ BOOST_AUTO_TEST_SUITE(DummyPlot_testSuite)
 /**
  * Method checking the non-ability to use a name.
  */
-BOOST_AUTO_TEST_CASE(checkName) {
-
+BOOST_AUTO_TEST_CASE(checkName)
+{
 	// Create myDummyPlot
 	auto myDummyPlot = make_shared<DummyPlot>("myDummyPlot");
 
@@ -30,8 +31,8 @@ BOOST_AUTO_TEST_CASE(checkName) {
 /**
  * Method checking the non-ability to choose a PlottingStyle.
  */
-BOOST_AUTO_TEST_CASE(checkPlottingStyle) {
-
+BOOST_AUTO_TEST_CASE(checkPlottingStyle)
+{
 	// Create myDummyPlot
 	auto myDummyPlot = make_shared<DummyPlot>("myDummyPlot");
 
@@ -47,8 +48,8 @@ BOOST_AUTO_TEST_CASE(checkPlottingStyle) {
 /**
  * Method checking everything related to the data provider.
  */
-BOOST_AUTO_TEST_CASE(checkDataProvider) {
-
+BOOST_AUTO_TEST_CASE(checkDataProvider)
+{
 	// Create myDummyPlot
 	auto myDummyPlot = make_shared<DummyPlot>("myDummyPlot");
 
@@ -60,15 +61,25 @@ BOOST_AUTO_TEST_CASE(checkDataProvider) {
 
 	// And fill it with some DataPoint
 	DataPoint aPoint;
-	aPoint.value = 3.0; aPoint.t = 1.0; aPoint.x = 2.0;
+	aPoint.value = 3.0;
+	aPoint.t = 1.0;
+	aPoint.x = 2.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = 2.0; aPoint.t = 3.0; aPoint.x = 2.0;
+	aPoint.value = 2.0;
+	aPoint.t = 3.0;
+	aPoint.x = 2.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = 5.0; aPoint.t = 6.0; aPoint.x = -2.0;
+	aPoint.value = 5.0;
+	aPoint.t = 6.0;
+	aPoint.x = -2.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = -8.0; aPoint.t = 8.0; aPoint.x = 5.0;
+	aPoint.value = -8.0;
+	aPoint.t = 8.0;
+	aPoint.x = 5.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = -7.0; aPoint.t = 7.0; aPoint.x = 7.0;
+	aPoint.value = -7.0;
+	aPoint.t = 7.0;
+	aPoint.x = 7.0;
 	myPoints->push_back(aPoint);
 
 	// Set these points in the myDataProvider
@@ -82,7 +93,6 @@ BOOST_AUTO_TEST_CASE(checkDataProvider) {
 
 	// Loop on all the points in dataPoints
 	for (unsigned int i = 0; i < dataPoints->size(); i++) {
-
 		// Check that all the fields are the same
 		BOOST_REQUIRE_EQUAL(dataPoints->at(i).value, myPoints->at(i).value);
 		BOOST_REQUIRE_EQUAL(dataPoints->at(i).t, myPoints->at(i).t);
@@ -95,7 +105,7 @@ BOOST_AUTO_TEST_CASE(checkDataProvider) {
 ///**
 // * Method checking the writing of the file.
 // */
-//BOOST_AUTO_TEST_CASE(checkWrite) {
+// BOOST_AUTO_TEST_CASE(checkWrite) {
 //    BOOST_FAIL("checkWrite not implement yet");
 //}
 

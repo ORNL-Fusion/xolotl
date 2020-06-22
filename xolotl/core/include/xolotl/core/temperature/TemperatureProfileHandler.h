@@ -1,23 +1,25 @@
 #ifndef TEMPERATUREPROFILEHANDLER_H
 #define TEMPERATUREPROFILEHANDLER_H
 
-#include <string>
-#include <iostream>
 #include <fstream>
+#include <iostream>
+#include <string>
+
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 
-namespace xolotl {
-namespace core {
-namespace temperature {
-
+namespace xolotl
+{
+namespace core
+{
+namespace temperature
+{
 /**
  * This class realizes the ITemperatureHandler, it is responsible for the
  * handling of a temperature changing with time.
  */
-class TemperatureProfileHandler: public ITemperatureHandler {
-
+class TemperatureProfileHandler : public ITemperatureHandler
+{
 private:
-
 	/**
 	 * The name of the file were the profile is stored.
 	 */
@@ -32,8 +34,8 @@ private:
 	 * The default constructor is private because the TemperatureProfileHandler
 	 * must be initialized with an input file.
 	 */
-	TemperatureProfileHandler() :
-			tempFile(""), dof(0) {
+	TemperatureProfileHandler() : tempFile(""), dof(0)
+	{
 	}
 
 	/**
@@ -49,20 +51,21 @@ private:
 	std::vector<double> temp;
 
 public:
-
 	/**
 	 * The constructor.
 	 *
 	 * @param profileFileName The name of the profile file
 	 */
 	TemperatureProfileHandler(const std::string& profileFileName) :
-			tempFile(profileFileName), dof(0) {
+		tempFile(profileFileName), dof(0)
+	{
 	}
 
 	/**
 	 * The destructor.
 	 */
-	virtual ~TemperatureProfileHandler() {
+	virtual ~TemperatureProfileHandler()
+	{
 	}
 
 	/**
@@ -73,10 +76,11 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void initializeTemperature(const int _dof,
-			network::IReactionNetwork::SparseFillMap& ofillMap,
-			network::IReactionNetwork::SparseFillMap& dfillMap) {
-
+	virtual void
+	initializeTemperature(const int _dof,
+		network::IReactionNetwork::SparseFillMap& ofillMap,
+		network::IReactionNetwork::SparseFillMap& dfillMap)
+	{
 		// Set dof
 		dof = _dof;
 
@@ -111,7 +115,10 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const plsm::SpaceVector<double, 3>&, double currentTime) const {
+	virtual double
+	getTemperature(
+		const plsm::SpaceVector<double, 3>&, double currentTime) const
+	{
 		// Initialize the value to return
 		double f = 0.0;
 
@@ -133,9 +140,9 @@ public:
 
 			// Compute the amplitude following a linear interpolation between
 			// the two stored values
-			f = temp[k]
-					+ (temp[k + 1] - temp[k]) * (currentTime - time[k])
-							/ (time[k + 1] - time[k]);
+			f = temp[k] +
+				(temp[k + 1] - temp[k]) * (currentTime - time[k]) /
+					(time[k + 1] - time[k]);
 			break;
 		}
 
@@ -148,7 +155,9 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void setTemperature(double * solution) {
+	virtual void
+	setTemperature(double* solution)
+	{
 		return;
 	}
 
@@ -157,7 +166,9 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void setHeatCoefficient(double coef) {
+	virtual void
+	setHeatCoefficient(double coef)
+	{
 		return;
 	}
 
@@ -166,7 +177,9 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void setHeatConductivity(double cond) {
+	virtual void
+	setHeatConductivity(double cond)
+	{
 		return;
 	}
 
@@ -176,7 +189,9 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void updateSurfacePosition(int surfacePos) {
+	virtual void
+	updateSurfacePosition(int surfacePos)
+	{
 		return;
 	}
 
@@ -187,9 +202,11 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void computeTemperature(double **concVector,
-			double *updatedConcOffset, double hxLeft, double hxRight, int xi,
-			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) {
+	virtual void
+	computeTemperature(double** concVector, double* updatedConcOffset,
+		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
+		double sz = 0.0, int iz = 0)
+	{
 		return;
 	}
 
@@ -200,17 +217,18 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual bool computePartialsForTemperature(double *val, int *indices,
-			double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
-			double sz = 0.0, int iz = 0) {
+	virtual bool
+	computePartialsForTemperature(double* val, int* indices, double hxLeft,
+		double hxRight, int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0)
+	{
 		return false;
 	}
-
 };
-//end class TemperatureProfileHandler
+// end class TemperatureProfileHandler
 
-}
-}
-}
+} // namespace temperature
+} // namespace core
+} // namespace xolotl
 
 #endif

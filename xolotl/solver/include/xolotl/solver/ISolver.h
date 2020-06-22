@@ -3,25 +3,27 @@
 
 // Includes
 #include <map>
-#include <xolotl/solver/handler/ISolverHandler.h>
+
 #include <xolotl/options/Options.h>
+#include <xolotl/solver/handler/ISolverHandler.h>
 
-namespace xolotl {
-namespace solver {
-
+namespace xolotl
+{
+namespace solver
+{
 /**
  * Realizations of this interface are responsible for solving the set of
  * advection-diffusion-reaction equations that govern the evolution of
  * clusters in plasma surface interactions.
  */
-class ISolver {
-
+class ISolver
+{
 public:
-
 	/**
 	 * The destructor
 	 */
-	virtual ~ISolver() {
+	virtual ~ISolver()
+	{
 	}
 
 	/**
@@ -32,7 +34,8 @@ public:
 	 *
 	 * @param arg The string containing all the solver options
 	 */
-	virtual void setCommandLineOptions(std::string arg) = 0;
+	virtual void
+	setCommandLineOptions(std::string arg) = 0;
 
 	/**
 	 * This operation sets the run-time options of the solver. The map is a set
@@ -43,15 +46,16 @@ public:
 	 * for keys and associated values mapped to those keys. A relevant example
 	 * is "startTime" and "0.01" where both are of type std::string.
 	 */
-	virtual void setOptions(
-			const std::map<std::string, std::string> &options) = 0;
+	virtual void
+	setOptions(const std::map<std::string, std::string>& options) = 0;
 
 	/**
 	 * This operation sets up the mesh that will be used by the solver and
 	 * initializes the data on that mesh. This operation will throw an exception
 	 * of type std::string if the mesh can not be setup.
 	 */
-	virtual void setupMesh() = 0;
+	virtual void
+	setupMesh() = 0;
 
 	/**
 	 * This operation performs all necessary initialization for the solver
@@ -59,9 +63,11 @@ public:
 	 * conditions. If the solver can not be initialized, this operation will
 	 * throw an exception of type std::string.
 	 *
-	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
+	 * @param isStandalone To know is Xolotl is used as a subcomponent of
+	 * another code
 	 */
-	virtual void initialize(bool isStandalone) = 0;
+	virtual void
+	initialize(bool isStandalone) = 0;
 
 	/**
 	 * This operation sets the wanted final time and max time step allowed.
@@ -69,12 +75,14 @@ public:
 	 * @param finalTime The wanted final time.
 	 * @param dt The wanted max time step.
 	 */
-	virtual void setTimes(double finalTime, double dt) = 0;
+	virtual void
+	setTimes(double finalTime, double dt) = 0;
 
 	/**
 	 * This operation resets the concentrations where the GB are located.
 	 */
-	virtual void initGBLocation() = 0;
+	virtual void
+	initGBLocation() = 0;
 
 	/**
 	 * This operation get the concentration vector with the ids.
@@ -82,24 +90,26 @@ public:
 	 * @return The concentration vector
 	 */
 	virtual std::vector<
-			std::vector<std::vector<std::vector<std::pair<int, double> > > > > getConcVector() = 0;
+		std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+	getConcVector() = 0;
 
 	/**
-	 * This operation sets the concentration vector in the current state of the simulation.
+	 * This operation sets the concentration vector in the current state of the
+	 * simulation.
 	 *
 	 * @param The concentration vector
 	 */
-	virtual void setConcVector(
-			std::vector<
-					std::vector<
-							std::vector<std::vector<std::pair<int, double> > > > > & concVector) = 0;
+	virtual void
+	setConcVector(std::vector<std::vector<
+			std::vector<std::vector<std::pair<int, double>>>>>& concVector) = 0;
 
 	/**
 	 * Get the current dt.
 	 *
 	 * @return  The current time step
 	 */
-	virtual double getCurrentDt() = 0;
+	virtual double
+	getCurrentDt() = 0;
 
 	/**
 	 * Set the current time and dt.
@@ -107,13 +117,15 @@ public:
 	 * @param currentTime The time
 	 * @param currentDt The current time step
 	 */
-	virtual void setCurrentTimes(double currentTime, double currentDt) = 0;
+	virtual void
+	setCurrentTimes(double currentTime, double currentDt) = 0;
 
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
 	 */
-	virtual void solve() = 0;
+	virtual void
+	solve() = 0;
 
 	/**
 	 * This operation checks the solver convergence status to decide whether
@@ -121,7 +133,8 @@ public:
 	 *
 	 * @return true if it converged
 	 */
-	virtual bool getConvergenceStatus() = 0;
+	virtual bool
+	getConvergenceStatus() = 0;
 
 	/**
 	 * This operation performs all necessary finalization for the solver
@@ -129,23 +142,27 @@ public:
 	 * printing diagnostic information. If the solver can not be finalized,
 	 * this operation will throw an exception of type std::string.
 	 *
-	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
+	 * @param isStandalone To know is Xolotl is used as a subcomponent of
+	 * another code
 	 */
-	virtual void finalize(bool isStandalone) = 0;
+	virtual void
+	finalize(bool isStandalone) = 0;
 
 	/**
 	 * Get the TS.
 	 *
 	 * @return The TS
 	 */
-	virtual TS & getTS() = 0;
+	virtual TS&
+	getTS() = 0;
 
-        /** 
-         * This operation returns the most recent time that solver converged.
-         */
-        virtual double getXolotlTime() = 0;
+	/**
+	 * This operation returns the most recent time that solver converged.
+	 */
+	virtual double
+	getXolotlTime() = 0;
 };
-//end class ISolver
+// end class ISolver
 
 } /* namespace solver */
 } /* namespace xolotl */

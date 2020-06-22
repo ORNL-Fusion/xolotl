@@ -2,34 +2,39 @@
 #define NEREACTIONHANDLERFACTORY_H
 
 #include <memory>
-#include <xolotl/factory/network/IReactionHandlerFactory.h>
+
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/factory/network/IReactionHandlerFactory.h>
 
-namespace xolotl {
-namespace factory {
-namespace network {
-
+namespace xolotl
+{
+namespace factory
+{
+namespace network
+{
 /**
- * Realizes the IReactionHandlerFactory interface. Handles the network for a NE problem.
+ * Realizes the IReactionHandlerFactory interface. Handles the network for a NE
+ * problem.
  */
-class NEReactionHandlerFactory: public IReactionHandlerFactory {
+class NEReactionHandlerFactory : public IReactionHandlerFactory
+{
 protected:
-
 	//! The network handler
 	std::unique_ptr<core::network::IReactionNetwork> theNetworkHandler;
 
 public:
-
 	/**
 	 * The constructor creates the handlers.
 	 */
-	NEReactionHandlerFactory() {
+	NEReactionHandlerFactory()
+	{
 	}
 
 	/**
 	 * The destructor
 	 */
-	~NEReactionHandlerFactory() {
+	~NEReactionHandlerFactory()
+	{
 	}
 
 	/**
@@ -38,14 +43,15 @@ public:
 	 * @param options The options.
 	 * @param registry The performance registry.
 	 */
-	void initializeReactionNetwork(const options::Options &opts,
-			std::shared_ptr<perf::IHandlerRegistry> registry) {
+	void
+	initializeReactionNetwork(const options::Options& opts,
+		std::shared_ptr<perf::IHandlerRegistry> registry)
+	{
 		// Get the current process ID
 		int procId;
 		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
-		using NetworkType =
-		core::network::NEReactionNetwork;
+		using NetworkType = core::network::NEReactionNetwork;
 
 		// Get the boundaries from the options
 		NetworkType::AmountType maxXe = opts.getMaxImpurity();
@@ -63,19 +69,20 @@ public:
 		}
 
 		// The number of grid points is set to 1 here but can be changed later
-		std::unique_ptr<NetworkType> rNetwork(new NetworkType( { maxXe }, { {
-				groupingWidth } }, 1, opts));
+		std::unique_ptr<NetworkType> rNetwork(
+			new NetworkType({maxXe}, {{groupingWidth}}, 1, opts));
 		rNetwork->syncClusterDataOnHost();
 		rNetwork->getSubpaving().syncZones(plsm::onHost);
 		theNetworkHandler = std::move(rNetwork);
 
 		if (procId == 0) {
 			std::cout << "\nFactory Message: "
-					<< "Master loaded network of size "
-					<< theNetworkHandler->getDOF() << "." << std::endl;
+					  << "Master loaded network of size "
+					  << theNetworkHandler->getDOF() << "." << std::endl;
 		}
-//		// Set the fission rate in the network to compute the diffusion coefficient correctly
-//		theNetworkHandler->setFissionRate(opts.getFluxAmplitude());
+		//		// Set the fission rate in the network to compute the diffusion
+		//coefficient correctly
+		//		theNetworkHandler->setFissionRate(opts.getFluxAmplitude());
 	}
 
 	/**
@@ -83,10 +90,11 @@ public:
 	 *
 	 * @return The network.
 	 */
-    core::network::IReactionNetwork& getNetworkHandler() const {
+	core::network::IReactionNetwork&
+	getNetworkHandler() const
+	{
 		return *theNetworkHandler;
 	}
-
 };
 
 } // end namespace network

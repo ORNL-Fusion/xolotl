@@ -1,21 +1,25 @@
 #include <iostream>
 #include <sstream>
+
 #include <xolotl/perf/config.h>
-#include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/perf/dummy/DummyHandlerRegistry.h>
 #include <xolotl/perf/os/OSHandlerRegistry.h>
+#include <xolotl/perf/xolotlPerf.h>
 
 #if defined(HAVE_PAPI)
 #include <xolotl/perf/papi/PAPIHandlerRegistry.h>
 #endif // defined(HAVE_PAPI)
 
-namespace xolotl {
-namespace perf {
-
+namespace xolotl
+{
+namespace perf
+{
 static std::shared_ptr<IHandlerRegistry> theHandlerRegistry;
 
 // Create the desired type of handler registry.
-void initialize(IHandlerRegistry::RegistryType rtype) {
+void
+initialize(IHandlerRegistry::RegistryType rtype)
+{
 	switch (rtype) {
 	case IHandlerRegistry::dummy:
 		theHandlerRegistry = std::make_shared<dummy::DummyHandlerRegistry>();
@@ -34,22 +38,26 @@ void initialize(IHandlerRegistry::RegistryType rtype) {
 		theHandlerRegistry = std::make_shared<papi::PAPIHandlerRegistry>();
 #else
 		throw std::invalid_argument(
-				"PAPI handler registry requested but no PAPI support was found when the program was built.");
+			"PAPI handler registry requested but no PAPI support was found "
+			"when the program was built.");
 #endif // defined(HAVE_PAPI)
 		break;
 
 	default:
 		throw std::invalid_argument(
-				"unrecognized performance handler registry type requested");
+			"unrecognized performance handler registry type requested");
 		break;
 	}
 }
 
 // Provide access to our handler registry.
-std::shared_ptr<IHandlerRegistry> getHandlerRegistry(void) {
+std::shared_ptr<IHandlerRegistry>
+getHandlerRegistry(void)
+{
 	if (!theHandlerRegistry) {
 		throw std::runtime_error(
-				"Request for xolotlPerf handler registry before xolotlPerf library has been initialized");
+			"Request for xolotlPerf handler registry before xolotlPerf library "
+			"has been initialized");
 	}
 	return theHandlerRegistry;
 }

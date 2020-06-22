@@ -1,21 +1,21 @@
 #include <iostream>
 #include <sstream>
+
 #include <xolotl/io/HDF5File.h>
 
 namespace xolotl
 {
 namespace io
 {
-
-HDF5File::AttributeBase::AttributeBase(const HDF5Object& _target,
-		std::string _attrName, bool /* ignored */) :
-		LocatedHDF5Object(_target, _attrName) {
-	setId(H5Aopen(getLocation().getId(), getName().c_str(),
-	H5P_DEFAULT));
+HDF5File::AttributeBase::AttributeBase(
+	const HDF5Object& _target, std::string _attrName, bool /* ignored */) :
+	LocatedHDF5Object(_target, _attrName)
+{
+	setId(H5Aopen(getLocation().getId(), getName().c_str(), H5P_DEFAULT));
 	if (getId() < 0) {
 		std::ostringstream estr;
 		estr << "Unable to open attribute " << getName() << " on group "
-				<< getLocation().getName();
+			 << getLocation().getName();
 		throw HDF5Exception(estr.str());
 	}
 }
@@ -23,8 +23,10 @@ HDF5File::AttributeBase::AttributeBase(const HDF5Object& _target,
 //----------------------------------------------------------------------------
 // Full specialization for string.
 
-template<>
-void HDF5File::Attribute<std::string>::setTo(const std::string& value) const {
+template <>
+void
+HDF5File::Attribute<std::string>::setTo(const std::string& value) const
+{
 	const char* pvalue = value.c_str();
 	TypeInMemory<std::string> memType;
 	auto status = H5Awrite(getId(), memType.getId(), &pvalue);
@@ -35,8 +37,10 @@ void HDF5File::Attribute<std::string>::setTo(const std::string& value) const {
 	}
 }
 
-template<>
-std::string HDF5File::Attribute<std::string>::get(void) const {
+template <>
+std::string
+HDF5File::Attribute<std::string>::get(void) const
+{
 	std::string ret;
 
 	char* pvalue = nullptr;
@@ -56,27 +60,26 @@ std::string HDF5File::Attribute<std::string>::get(void) const {
 //----------------------------------------------------------------------------
 // Full specialization for vector of strings.
 
-template<>
-HDF5File::Attribute<std::vector<std::string> >::Attribute(
-		const HDF5Object& target, std::string attrName, const DataSpace& ds) :
-		AttributeBase(target, attrName) {
+template <>
+HDF5File::Attribute<std::vector<std::string>>::Attribute(
+	const HDF5Object& target, std::string attrName, const DataSpace& ds) :
+	AttributeBase(target, attrName)
+{
 	TypeInFile<std::string> ftype;
-	setId(
-			H5Acreate(target.getId(), getName().c_str(), ftype.getId(),
-					ds.getId(),
-					H5P_DEFAULT,
-					H5P_DEFAULT));
+	setId(H5Acreate(target.getId(), getName().c_str(), ftype.getId(),
+		ds.getId(), H5P_DEFAULT, H5P_DEFAULT));
 	if (getId() < 0) {
 		std::ostringstream estr;
 		estr << "Unable to create attribute " << getName() << " on group "
-				<< target.getName();
+			 << target.getName();
 		throw HDF5Exception(estr.str());
 	}
 }
 
-template<>
-std::vector<std::string> HDF5File::Attribute<std::vector<std::string> >::get(
-		void) const {
+template <>
+std::vector<std::string>
+HDF5File::Attribute<std::vector<std::string>>::get(void) const
+{
 	std::vector<std::string> ret;
 
 	// Determine how many strings there are.
@@ -92,7 +95,7 @@ std::vector<std::string> HDF5File::Attribute<std::vector<std::string> >::get(
 		if (status < 0) {
 			std::ostringstream estr;
 			estr << "Failed to read vector of strings from attribute "
-					<< getName();
+				 << getName();
 			throw HDF5Exception(estr.str());
 		}
 
@@ -110,9 +113,11 @@ std::vector<std::string> HDF5File::Attribute<std::vector<std::string> >::get(
 	return ret;
 }
 
-template<>
-void HDF5File::Attribute<std::vector<std::string> >::setTo(
-		const std::vector<std::string>& value) const {
+template <>
+void
+HDF5File::Attribute<std::vector<std::string>>::setTo(
+	const std::vector<std::string>& value) const
+{
 	std::vector<const char*> cpdata(value.size());
 	for (auto i : boost::counting_range<uint32_t>(0, value.size())) {
 		cpdata[i] = value[i].c_str();

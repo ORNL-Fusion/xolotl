@@ -5,15 +5,16 @@
  *      Author: bkj
  */
 
-#include <memory>
 #include <cmath>
+#include <memory>
 
 #ifndef CONSTANTS_H_
 #define CONSTANTS_H_
 
-namespace xolotl {
-namespace core {
-
+namespace xolotl
+{
+namespace core
+{
 //! Definitions of fundamental constants used in Xolotl
 
 //! The Boltzmann constant in units of eV K^-1.

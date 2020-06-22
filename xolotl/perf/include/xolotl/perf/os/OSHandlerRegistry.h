@@ -3,24 +3,28 @@
 
 #include <xolotl/perf/standard/StdHandlerRegistry.h>
 
-namespace xolotl {
-namespace perf {
-namespace os {
-
+namespace xolotl
+{
+namespace perf
+{
+namespace os
+{
 /**
- * Factory for building performance data collection objects that 
+ * Factory for building performance data collection objects that
  * use an OS/runtime timer API.  No hardware performance counters
  * are available.
  */
-class OSHandlerRegistry: public standard::StdHandlerRegistry {
+class OSHandlerRegistry : public standard::StdHandlerRegistry
+{
 public:
-
 	/// Construct a handler registry.
-	OSHandlerRegistry(void) {
+	OSHandlerRegistry(void)
+	{
 	}
 
 	/// Destroy the handler registry.
-	virtual ~OSHandlerRegistry(void) {
+	virtual ~OSHandlerRegistry(void)
+	{
 	}
 
 	/**
@@ -30,7 +34,8 @@ public:
 	 * @param name The object's name.
 	 * @return The object with the given name.
 	 */
-	std::shared_ptr<ITimer> getTimer(const std::string& name) override;
+	std::shared_ptr<ITimer>
+	getTimer(const std::string& name) override;
 
 	/**
 	 * Look up and return a hardware counter set in the current scope.
@@ -39,9 +44,9 @@ public:
 	 * @param name The object's name.
 	 * @return The object with the given name.
 	 */
-	std::shared_ptr<IHardwareCounter> getHardwareCounter(
-			const std::string& name,
-            const IHardwareCounter::SpecType& ctrSpec) override;
+	std::shared_ptr<IHardwareCounter>
+	getHardwareCounter(const std::string& name,
+		const IHardwareCounter::SpecType& ctrSpec) override;
 };
 
 } // namespace os

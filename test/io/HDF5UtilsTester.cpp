@@ -1,15 +1,18 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/unit_test.hpp>
-#include <boost/test/framework.hpp>
-#include <mpi.h>
 #include <memory>
-#include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/perf/dummy/DummyHandlerRegistry.h>
+
+#include <mpi.h>
+
+#include <boost/test/framework.hpp>
+#include <boost/test/unit_test.hpp>
+
 #include <xolotl/config.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/io/XFile.h>
+#include <xolotl/options/Options.h>
+#include <xolotl/perf/dummy/DummyHandlerRegistry.h>
 #include <xolotl/test/MPIFixture.h>
 
 using namespace std;
@@ -29,19 +32,19 @@ BOOST_AUTO_TEST_SUITE(HDF5_testSuite)
 /**
  * Create a faux network bound vector.
  */
-XFile::NetworkGroup::NetworkBoundsType createTestNetworkBounds(
-		void) {
-
-	XFile::NetworkGroup::NetworkBoundsType testBoundsVec { { 1, 2,
-			3, 4 }, { 5, 6, 7, 8 }, { 9, 10, 11, 12 } };
+XFile::NetworkGroup::NetworkBoundsType
+createTestNetworkBounds(void)
+{
+	XFile::NetworkGroup::NetworkBoundsType testBoundsVec{
+		{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}};
 	return testBoundsVec;
 }
 
 /**
  * Method checking the writing and reading of the HDF5 file.
  */
-BOOST_AUTO_TEST_CASE(checkIO) {
-
+BOOST_AUTO_TEST_CASE(checkIO)
+{
 	// Determine where we are in the MPI world.
 	int commRank = -1;
 	int commSize = -1;
@@ -51,14 +54,14 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	double const factor = 1.5;
 
 	// Create the option to create a network
-    xolotl::options::Options opts;
+	xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 1 0" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	char **argv = new char*[3];
+	char** argv = new char*[3];
 	std::string appName = "fakeXolotlAppNameForTests";
 	argv[0] = new char[appName.length() + 1];
 	strcpy(argv[0], appName.c_str());
@@ -74,20 +77,19 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	std::vector<double> grid;
 	std::vector<double> temperatures;
 	for (int i = 0; i < nGrid + 2; i++) {
-		grid.push_back((double) i * stepSize);
+		grid.push_back((double)i * stepSize);
 		temperatures.push_back(1000.0);
 	}
 
 	// Create the network
-	using NetworkType =
-        xolotl::core::network::PSIReactionNetwork<
-            xolotl::core::network::PSIFullSpeciesList>;
+	using NetworkType = xolotl::core::network::PSIReactionNetwork<
+		xolotl::core::network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get the size of the network
@@ -120,8 +122,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	const std::string testFileName = "test_basic.h5";
 	{
 		BOOST_TEST_MESSAGE("Creating file.");
-		XFile testFile(testFileName, grid,
-		MPI_COMM_WORLD);
+		XFile testFile(testFileName, grid, MPI_COMM_WORLD);
 		XFile::NetworkGroup netGroup(testFile, network);
 	}
 
@@ -150,28 +151,28 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	// is closed once the object goes out of scope.
 	{
 		BOOST_TEST_MESSAGE("Opening test file to add a timestep");
-		XFile testFile(testFileName,
-		MPI_COMM_WORLD, XFile::AccessMode::OpenReadWrite);
+		XFile testFile(
+			testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadWrite);
 
 		// Add a TimestepGroup.
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
-		auto tsGroup = concGroup->addTimestepGroup(timeStep, currentTime,
-				previousTime, currentTimeStep);
+		auto tsGroup = concGroup->addTimestepGroup(
+			timeStep, currentTime, previousTime, currentTimeStep);
 
 		// Write the surface information
 		tsGroup->writeSurface1D(iSurface, nInter, previousIFlux);
 
 		// Write the bulk information
 		tsGroup->writeBottom1D(nHe, previousHeFlux, 0.0, 0.0, 0.0, 0.0, nV,
-				previousVFlux, 0.0, 0.0);
+			previousVFlux, 0.0, 0.0);
 
 #if READY
 		// Fill it
 		for (int i = 0; i < length; i++) {
 			// Fill the concArray
-			concArray[i][0] = (double) i;
-			concArray[i][1] = (double) i * 10.0 - 5.0;
+			concArray[i][0] = (double)i;
+			concArray[i][1] = (double)i * 10.0 - 5.0;
 		}
 #endif // READY
 
@@ -185,8 +186,8 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	// Now check the test file's contents.
 	{
 		BOOST_TEST_MESSAGE("Opening test file to check its contents.");
-		XFile testFile(testFileName,
-		MPI_COMM_WORLD, XFile::AccessMode::OpenReadOnly);
+		XFile testFile(
+			testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadOnly);
 
 		// Read the header of the written file
 		BOOST_TEST_MESSAGE("Checking test file header.");
@@ -222,27 +223,27 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 
 		// Read the surface information
 		BOOST_TEST_MESSAGE(
-				"Checking test file last time step surface position.");
+			"Checking test file last time step surface position.");
 		BOOST_REQUIRE_EQUAL(tsGroup->readSurface1D(), iSurface);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterstitial"), nInter,
-				0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousIFlux"), previousIFlux,
-				0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("nInterstitial"), nInter, 0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousIFlux"), previousIFlux, 0.0001);
 
 		// Read the bulk information
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHelium"), nHe, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousHeFlux"),
-				previousHeFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousHeFlux"), previousHeFlux, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuterium"), 0.0, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousDFlux"), 0.0, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritium"), 0.0, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousTFlux"), 0.0, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancy"), nV, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousVFlux"), previousVFlux,
-				0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousVFlux"), previousVFlux, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nIBulk"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousIBulkFlux"), 0.0,
-				0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousIBulkFlux"), 0.0, 0.0001);
 
 		// Read the network of the written file
 		BOOST_TEST_MESSAGE("Checking test file last time step network.");
@@ -259,9 +260,9 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 
 			// Check the attributes
 			double formationEnergy = 0.0, migrationEnergy = 0.0,
-					diffusionFactor = 0.0;
-			auto comp = clusterGroup.readCluster(formationEnergy,
-					migrationEnergy, diffusionFactor);
+				   diffusionFactor = 0.0;
+			auto comp = clusterGroup.readCluster(
+				formationEnergy, migrationEnergy, diffusionFactor);
 			// Check the formation energy
 			BOOST_REQUIRE_EQUAL(cluster.getFormationEnergy(), formationEnergy);
 			// Check the migration energy
@@ -270,7 +271,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 			BOOST_REQUIRE_EQUAL(cluster.getDiffusionFactor(), diffusionFactor);
 
 			// Check the bounds
-			const auto &clReg = network.getCluster(i, plsm::onHost).getRegion();
+			const auto& clReg = network.getCluster(i, plsm::onHost).getRegion();
 			NetworkType::Composition lo = clReg.getOrigin();
 			NetworkType::Composition hi = clReg.getUpperLimitPoint();
 			for (auto j : speciesRange) {
@@ -286,7 +287,6 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		// I suppose it is that one can have a timestep but not
 		// have any concentration datasets.
 		if (tsGroup) {
-
 			BOOST_TEST_MESSAGE("Testing grid point concentrations.");
 
 #if READY
@@ -297,28 +297,27 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 			BOOST_REQUIRE_EQUAL(returnedVector.size(), length);
 			// Check the values
 			for (unsigned int i = 0; i < returnedVector.size(); i++) {
-				BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(0), concArray[i][0],
-						0.0001);
-				BOOST_REQUIRE_CLOSE(returnedVector.at(i).at(1), concArray[i][1],
-						0.0001);
+				BOOST_REQUIRE_CLOSE(
+					returnedVector.at(i).at(0), concArray[i][0], 0.0001);
+				BOOST_REQUIRE_CLOSE(
+					returnedVector.at(i).at(1), concArray[i][1], 0.0001);
 			}
 #endif // READY
 
 			BOOST_TEST_MESSAGE("Testing grid point concentrations.");
 
 			// Read and check our part of the concentrations.
-			auto readConcs = tsGroup->readConcentrations(testFile, baseX,
-					nGridPointsPerRank);
+			auto readConcs = tsGroup->readConcentrations(
+				testFile, baseX, nGridPointsPerRank);
 			BOOST_REQUIRE_EQUAL(readConcs.size(), myConcs.size());
 			for (auto ptIdx = 0; ptIdx < nGridPointsPerRank; ++ptIdx) {
-
-				BOOST_REQUIRE_EQUAL(readConcs[ptIdx].size(),
-						myConcs[ptIdx].size());
+				BOOST_REQUIRE_EQUAL(
+					readConcs[ptIdx].size(), myConcs[ptIdx].size());
 				for (auto i = 0; i < myConcs[ptIdx].size(); ++i) {
-					BOOST_REQUIRE_EQUAL(readConcs[ptIdx][i].first,
-							myConcs[ptIdx][i].first);
+					BOOST_REQUIRE_EQUAL(
+						readConcs[ptIdx][i].first, myConcs[ptIdx][i].first);
 					BOOST_REQUIRE_CLOSE(readConcs[ptIdx][i].second,
-							myConcs[ptIdx][i].second, 0.0001);
+						myConcs[ptIdx][i].second, 0.0001);
 				}
 			}
 		}
@@ -333,8 +332,8 @@ BOOST_AUTO_TEST_CASE(checkIO) {
  * Method checking the writing and reading of the surface position specifically
  * in the case of a 2D grid.
  */
-BOOST_AUTO_TEST_CASE(checkSurface2D) {
-
+BOOST_AUTO_TEST_CASE(checkSurface2D)
+{
 	// Create the test HDF5 file.
 	// Done in its own scope so that it closes when the
 	// object goes out of scope.
@@ -347,10 +346,9 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 		double stepSize = 0.5;
 		std::vector<double> grid;
 		for (int i = 0; i < nGrid + 2; i++)
-			grid.push_back((double) i * stepSize);
+			grid.push_back((double)i * stepSize);
 
-		XFile testFile(testFileName, grid,
-		MPI_COMM_WORLD);
+		XFile testFile(testFileName, grid, MPI_COMM_WORLD);
 	}
 
 	// Set the time information
@@ -359,9 +357,9 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 	double currentTimeStep = 0.000001;
 
 	// Define the 2D surface information.
-	XFile::TimestepGroup::Surface2DType iSurface = { 2, 3, 2, 0, 5 };
-	XFile::TimestepGroup::Data2DType nInter = { 0.0, 0.0, 0.5, 0.6, 0.5 };
-	XFile::TimestepGroup::Data2DType previousIFlux = { 0.0, 0.1, 3.0, -1.0, 5.0 };
+	XFile::TimestepGroup::Surface2DType iSurface = {2, 3, 2, 0, 5};
+	XFile::TimestepGroup::Data2DType nInter = {0.0, 0.0, 0.5, 0.6, 0.5};
+	XFile::TimestepGroup::Data2DType previousIFlux = {0.0, 0.1, 3.0, -1.0, 5.0};
 
 	// Open the file to add concentrations.
 	// Done in its own scope so that it closes when the
@@ -369,8 +367,8 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 	{
 		BOOST_TEST_MESSAGE("Adding 2D timestep group");
 
-		XFile testFile(testFileName,
-		MPI_COMM_WORLD, XFile::AccessMode::OpenReadWrite);
+		XFile testFile(
+			testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadWrite);
 
 		// Set the time step number
 		int timeStep = 0;
@@ -378,8 +376,8 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 		// Add the concentration sub group
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
-		auto tsGroup = concGroup->addTimestepGroup(timeStep, currentTime,
-				previousTime, currentTimeStep);
+		auto tsGroup = concGroup->addTimestepGroup(
+			timeStep, currentTime, previousTime, currentTimeStep);
 		BOOST_REQUIRE(tsGroup);
 
 		// Write the surface position
@@ -390,7 +388,8 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 	{
 		BOOST_TEST_MESSAGE("Opening 2D file to check its contents.");
 
-		XFile testFile(testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadOnly);
+		XFile testFile(
+			testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadOnly);
 
 		// Access the last written timestep group.
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
@@ -425,8 +424,8 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
  * Method checking the writing and reading of the surface position specifically
  * in the case of a 3D grid.
  */
-BOOST_AUTO_TEST_CASE(checkSurface3D) {
-
+BOOST_AUTO_TEST_CASE(checkSurface3D)
+{
 	const std::string testFileName = "test_surface3D.h5";
 
 	// Create test file.
@@ -440,10 +439,9 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 		double stepSize = 0.5;
 		std::vector<double> grid;
 		for (int i = 0; i < nGrid + 2; i++)
-			grid.push_back((double) i * stepSize);
+			grid.push_back((double)i * stepSize);
 
-		XFile testFile(testFileName, grid,
-		MPI_COMM_WORLD);
+		XFile testFile(testFileName, grid, MPI_COMM_WORLD);
 	}
 
 	// Set the time information
@@ -453,13 +451,11 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 
 	// Set the 3D surface information.
 	XFile::TimestepGroup::Surface3DType iSurface = {
-			{ 2, 4, 1, 0, 5 }, { 2, 3, 2, 0, 5 }, { 6, 1, 2, 3, 2 } };
-	XFile::TimestepGroup::Data3DType nInter =
-			{ { 0.0, 0.0, 0.0, 0.0, 0.0 }, { 2.0, 3.0, 2.0, 0.0, 0.5 }, { 0.0,
-					0.0, 0.0, 0.0, 0.0 } };
-	XFile::TimestepGroup::Data3DType previousIFlux = { { 0.0, 0.0,
-			0.0, 0.0, 0.0 }, { -2.0, 3.0, 2.0, 0.0, -0.5 }, { 0.0, 0.0, 0.0,
-			0.0, 0.0 } };
+		{2, 4, 1, 0, 5}, {2, 3, 2, 0, 5}, {6, 1, 2, 3, 2}};
+	XFile::TimestepGroup::Data3DType nInter = {{0.0, 0.0, 0.0, 0.0, 0.0},
+		{2.0, 3.0, 2.0, 0.0, 0.5}, {0.0, 0.0, 0.0, 0.0, 0.0}};
+	XFile::TimestepGroup::Data3DType previousIFlux = {{0.0, 0.0, 0.0, 0.0, 0.0},
+		{-2.0, 3.0, 2.0, 0.0, -0.5}, {0.0, 0.0, 0.0, 0.0, 0.0}};
 
 	// Open test file to add timestep group with concentrations.
 	// Done in its own scope so that it closes when the
@@ -467,7 +463,8 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 	{
 		BOOST_TEST_MESSAGE("Adding 3D timestep group");
 
-		XFile testFile(testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadWrite);
+		XFile testFile(
+			testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadWrite);
 
 		// Set the time step number
 		int timeStep = 0;
@@ -476,8 +473,8 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 
-		auto tsGroup = concGroup->addTimestepGroup(timeStep, currentTime,
-				previousTime, currentTimeStep);
+		auto tsGroup = concGroup->addTimestepGroup(
+			timeStep, currentTime, previousTime, currentTimeStep);
 		BOOST_REQUIRE(tsGroup);
 
 		// Write the surface position
@@ -487,7 +484,8 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 	// Check contents of file we wrote.
 	{
 		BOOST_TEST_MESSAGE("Opening 3D file to check its contents.");
-		XFile testFile(testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadOnly);
+		XFile testFile(
+			testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadOnly);
 
 		// Access the last written timestep group.
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
@@ -514,8 +512,8 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 		// Check all the values
 		for (int i = 0; i < previousIFlux.size(); i++) {
 			for (int j = 0; j < previousIFlux[0].size(); j++) {
-				BOOST_REQUIRE_CLOSE(previousIFlux[i][j], previousIFlux[i][j],
-						0.0001);
+				BOOST_REQUIRE_CLOSE(
+					previousIFlux[i][j], previousIFlux[i][j], 0.0001);
 			}
 		}
 	}

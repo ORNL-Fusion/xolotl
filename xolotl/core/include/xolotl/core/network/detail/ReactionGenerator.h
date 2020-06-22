@@ -1,11 +1,11 @@
 #pragma once
 
-#include <utility>
 #include <type_traits>
+#include <utility>
 
-#include <xolotl/core/network/detail/ReactionCollection.h>
 #include <xolotl/core/network/Reaction.h>
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/core/network/detail/ReactionCollection.h>
 
 namespace xolotl
 {
@@ -19,161 +19,161 @@ template <typename TNetwork, typename TDerived>
 class ReactionGeneratorBase
 {
 public:
-    using NetworkType = TNetwork;
-    using NetworkTraits = ReactionNetworkTraits<NetworkType>;
-    using ClusterData = typename NetworkType::ClusterData;
-    using ClusterDataRef = typename NetworkType::ClusterDataRef;
-    using Cluster = typename ClusterData::ClusterType;
-    using ProductionReactionType =
-        typename NetworkTraits::ProductionReactionType;
-    using DissociationReactionType =
-        typename NetworkTraits::DissociationReactionType;
-    using Subpaving = typename NetworkType::Subpaving;
-    using IndexType = typename NetworkType::IndexType;
-    using IndexView = Kokkos::View<IndexType*>;
-    using ClusterSetView = Kokkos::View<ClusterSet*>;
-    using ClusterSetSubView = decltype(Kokkos::subview(
-        std::declval<ClusterSetView>(),
-        std::declval<std::pair<IndexType, IndexType>>()));
-    using Connectivity = typename NetworkType::Connectivity;
+	using NetworkType = TNetwork;
+	using NetworkTraits = ReactionNetworkTraits<NetworkType>;
+	using ClusterData = typename NetworkType::ClusterData;
+	using ClusterDataRef = typename NetworkType::ClusterDataRef;
+	using Cluster = typename ClusterData::ClusterType;
+	using ProductionReactionType =
+		typename NetworkTraits::ProductionReactionType;
+	using DissociationReactionType =
+		typename NetworkTraits::DissociationReactionType;
+	using Subpaving = typename NetworkType::Subpaving;
+	using IndexType = typename NetworkType::IndexType;
+	using IndexView = Kokkos::View<IndexType*>;
+	using ClusterSetView = Kokkos::View<ClusterSet*>;
+	using ClusterSetSubView =
+		decltype(Kokkos::subview(std::declval<ClusterSetView>(),
+			std::declval<std::pair<IndexType, IndexType>>()));
+	using Connectivity = typename NetworkType::Connectivity;
 
-    struct Count
-    {
-    };
+	struct Count
+	{
+	};
 
-    struct Construct
-    {
-    };
+	struct Construct
+	{
+	};
 
-    ReactionGeneratorBase(const TNetwork& network);
+	ReactionGeneratorBase(const TNetwork& network);
 
-    ReactionCollection<NetworkType>
-    generateReactions();
+	ReactionCollection<NetworkType>
+	generateReactions();
 
-    KOKKOS_INLINE_FUNCTION
-    const Subpaving&
-    getSubpaving() const
-    {
-        return _subpaving;
-    }
+	KOKKOS_INLINE_FUNCTION
+	const Subpaving&
+	getSubpaving() const
+	{
+		return _subpaving;
+	}
 
-    KOKKOS_INLINE_FUNCTION
-    Cluster
-    getCluster(IndexType i) const
-    {
-        return _clusterData.getCluster(i);
-    }
+	KOKKOS_INLINE_FUNCTION
+	Cluster
+	getCluster(IndexType i) const
+	{
+		return _clusterData.getCluster(i);
+	}
 
-    IndexType
-    getRowMapAndTotalReactionCount();
+	IndexType
+	getRowMapAndTotalReactionCount();
 
-    ClusterSetSubView
-    getClusterSetSubView(std::pair<IndexType, IndexType> indexRange)
-    {
-        return Kokkos::subview(_allClusterSets, indexRange);
-    }
+	ClusterSetSubView
+	getClusterSetSubView(std::pair<IndexType, IndexType> indexRange)
+	{
+		return Kokkos::subview(_allClusterSets, indexRange);
+	}
 
-    void
-    setupCrsClusterSetSubView();
+	void
+	setupCrsClusterSetSubView();
 
-    void
-    setupCrs();
+	void
+	setupCrs();
 
-    IndexType
-    getNumberOfSinkReactions() const noexcept
-    {
-        return 0;
-    }
+	IndexType
+	getNumberOfSinkReactions() const noexcept
+	{
+		return 0;
+	}
 
-    IndexType
-    getNumberOfNucleationReactions() const noexcept
-    {
-        return 0;
-    }
+	IndexType
+	getNumberOfNucleationReactions() const noexcept
+	{
+		return 0;
+	}
 
-    IndexType
-    getNumberOfReSolutionReactions() const noexcept
-    {
-        return 0;
-    }
+	IndexType
+	getNumberOfReSolutionReactions() const noexcept
+	{
+		return 0;
+	}
 
-    KOKKOS_INLINE_FUNCTION
-    IndexType
-    getNumberOfClusters() const noexcept
-    {
-        return _clusterData.numClusters;
-    }
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	getNumberOfClusters() const noexcept
+	{
+		return _clusterData.numClusters;
+	}
 
-    KOKKOS_INLINE_FUNCTION
-    void
-    addProductionReaction(Count, const ClusterSet& clusterSet) const;
+	KOKKOS_INLINE_FUNCTION
+	void
+	addProductionReaction(Count, const ClusterSet& clusterSet) const;
 
-    KOKKOS_INLINE_FUNCTION
-    void
-    addProductionReaction(Construct, const ClusterSet& clusterSet) const;
+	KOKKOS_INLINE_FUNCTION
+	void
+	addProductionReaction(Construct, const ClusterSet& clusterSet) const;
 
-    KOKKOS_INLINE_FUNCTION
-    void
-    addDissociationReaction(Count, const ClusterSet& clusterSet) const;
+	KOKKOS_INLINE_FUNCTION
+	void
+	addDissociationReaction(Count, const ClusterSet& clusterSet) const;
 
-    KOKKOS_INLINE_FUNCTION
-    void
-    addDissociationReaction(Construct, const ClusterSet& clusterSet) const;
+	KOKKOS_INLINE_FUNCTION
+	void
+	addDissociationReaction(Construct, const ClusterSet& clusterSet) const;
 
-    Kokkos::View<ProductionReactionType*>
-    getProductionReactions() const
-    {
-        return _prodReactions;
-    }
+	Kokkos::View<ProductionReactionType*>
+	getProductionReactions() const
+	{
+		return _prodReactions;
+	}
 
-    Kokkos::View<DissociationReactionType*>
-    getDissociationReactions() const
-    {
-        return _dissReactions;
-    }
+	Kokkos::View<DissociationReactionType*>
+	getDissociationReactions() const
+	{
+		return _dissReactions;
+	}
 
-    void
-    generateConnectivity(ReactionCollection<NetworkType>& reactionCollection);
-
-protected:
-    TDerived*
-    asDerived()
-    {
-        return static_cast<TDerived*>(this);
-    }
+	void
+	generateConnectivity(ReactionCollection<NetworkType>& reactionCollection);
 
 protected:
-    Subpaving _subpaving;
-    ClusterData _clusterData;
-    IndexType _numDOFs;
-    IndexView _clusterProdReactionCounts;
-    IndexView _clusterDissReactionCounts;
+	TDerived*
+	asDerived()
+	{
+		return static_cast<TDerived*>(this);
+	}
 
-    IndexType _numProdReactions;
-    IndexType _numDissReactions;
+protected:
+	Subpaving _subpaving;
+	ClusterData _clusterData;
+	IndexType _numDOFs;
+	IndexView _clusterProdReactionCounts;
+	IndexView _clusterDissReactionCounts;
 
-    Kokkos::View<IndexType*> _prodCrsRowMap;
-    Kokkos::View<IndexType*> _dissCrsRowMap;
+	IndexType _numProdReactions;
+	IndexType _numDissReactions;
 
-    ClusterSetView _allClusterSets;
-    ClusterSetSubView _prodCrsClusterSets;
-    ClusterSetSubView _dissCrsClusterSets;
+	Kokkos::View<IndexType*> _prodCrsRowMap;
+	Kokkos::View<IndexType*> _dissCrsRowMap;
 
-    Kokkos::View<ProductionReactionType*> _prodReactions;
-    Kokkos::View<DissociationReactionType*> _dissReactions;
+	ClusterSetView _allClusterSets;
+	ClusterSetSubView _prodCrsClusterSets;
+	ClusterSetSubView _dissCrsClusterSets;
 
-    // detail::ReactionData _reactionData;
+	Kokkos::View<ProductionReactionType*> _prodReactions;
+	Kokkos::View<DissociationReactionType*> _dissReactions;
+
+	// detail::ReactionData _reactionData;
 };
 
 template <typename TNetwork, typename TReaction,
-    typename TReactionGeneratorParent, typename = void>
+	typename TReactionGeneratorParent, typename = void>
 struct WrapTypeSpecificReactionGenerator
 {
-    // WrapTypeSpecificReactionGenerator()
-    // {
-    //     static_assert(false,
-    //         "No type-specific reaction generator for this reaction type");
-    // }
+	// WrapTypeSpecificReactionGenerator()
+	// {
+	//     static_assert(false,
+	//         "No type-specific reaction generator for this reaction type");
+	// }
 };
 
 template <typename TReactionGeneratorParent, typename TExtraReactionTypes>
@@ -182,52 +182,50 @@ struct ReactionGeneratorTypeBuilderImpl;
 template <typename TReactionGeneratorParent>
 struct ReactionGeneratorTypeBuilderImpl<TReactionGeneratorParent, std::tuple<>>
 {
-    using NetworkType = typename TReactionGeneratorParent::NetworkType;
-    using Type = TReactionGeneratorParent;
+	using NetworkType = typename TReactionGeneratorParent::NetworkType;
+	using Type = TReactionGeneratorParent;
 };
 
 template <typename TReactionGeneratorParent, typename... TExtraReactions>
 struct ReactionGeneratorTypeBuilderImpl<TReactionGeneratorParent,
-    std::tuple<TExtraReactions...>>
+	std::tuple<TExtraReactions...>>
 {
-    using NetworkType = typename TReactionGeneratorParent::NetworkType;
-    using ExtraReactions = std::tuple<TExtraReactions...>;
-    using FrontReaction = std::tuple_element_t<0, ExtraReactions>;
-    using Type =
-        typename WrapTypeSpecificReactionGenerator<NetworkType, FrontReaction,
-            typename ReactionGeneratorTypeBuilderImpl<
-                TReactionGeneratorParent, TuplePopFront<ExtraReactions>>::Type>
-                    ::Type;
+	using NetworkType = typename TReactionGeneratorParent::NetworkType;
+	using ExtraReactions = std::tuple<TExtraReactions...>;
+	using FrontReaction = std::tuple_element_t<0, ExtraReactions>;
+	using Type =
+		typename WrapTypeSpecificReactionGenerator<NetworkType, FrontReaction,
+			typename ReactionGeneratorTypeBuilderImpl<TReactionGeneratorParent,
+				TuplePopFront<ExtraReactions>>::Type>::Type;
 };
 
 template <typename TNetwork, typename TDerived>
 struct ReactionGeneratorTypeBuilder
 {
-    using NetworkType = TNetwork;
-    using ReactionTypes = ReactionTypeList<NetworkType>;
-    using ReactionFirst = std::tuple_element_t<0, ReactionTypes>;
-    using ReactionSecond = std::tuple_element_t<1, ReactionTypes>;
+	using NetworkType = TNetwork;
+	using ReactionTypes = ReactionTypeList<NetworkType>;
+	using ReactionFirst = std::tuple_element_t<0, ReactionTypes>;
+	using ReactionSecond = std::tuple_element_t<1, ReactionTypes>;
 
-    static_assert(
-        std::is_base_of<ProductionReaction<TNetwork, ReactionFirst>,
-            ReactionFirst>::value,
-        "First reaction type must be a ProductionReaction");
+	static_assert(std::is_base_of<ProductionReaction<TNetwork, ReactionFirst>,
+					  ReactionFirst>::value,
+		"First reaction type must be a ProductionReaction");
 
-    static_assert(
-        std::is_base_of<DissociationReaction<TNetwork, ReactionSecond>,
-            ReactionSecond>::value,
-        "Second reaction type must be a DissociationReaction");
+	static_assert(
+		std::is_base_of<DissociationReaction<TNetwork, ReactionSecond>,
+			ReactionSecond>::value,
+		"Second reaction type must be a DissociationReaction");
 
-    using ExtraReactionTypes = TuplePopFront<TuplePopFront<ReactionTypes>>;
-    using Type = typename ReactionGeneratorTypeBuilderImpl<
-        ReactionGeneratorBase<TNetwork, TDerived>,
-        TupleReverse<ExtraReactionTypes>>::Type;
+	using ExtraReactionTypes = TuplePopFront<TuplePopFront<ReactionTypes>>;
+	using Type = typename ReactionGeneratorTypeBuilderImpl<
+		ReactionGeneratorBase<TNetwork, TDerived>,
+		TupleReverse<ExtraReactionTypes>>::Type;
 };
 
 template <typename TNetwork, typename TDerived>
 using ReactionGenerator =
-    typename ReactionGeneratorTypeBuilder<TNetwork, TDerived>::Type;
-}
-}
-}
-}
+	typename ReactionGeneratorTypeBuilder<TNetwork, TDerived>::Type;
+} // namespace detail
+} // namespace network
+} // namespace core
+} // namespace xolotl

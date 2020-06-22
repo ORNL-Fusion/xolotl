@@ -1,24 +1,30 @@
-#include <sstream>
-#include <iostream>
-#include <cassert>
-#include <tuple>
-#include <unistd.h>
 #include <float.h>
 #include <math.h>
 #include <string.h>
-#include <xolotl/perf/standard/StdHandlerRegistry.h>
+#include <unistd.h>
+
+#include <cassert>
+#include <iostream>
+#include <sstream>
+#include <tuple>
+
 #include <xolotl/perf/EventCounter.h>
+#include <xolotl/perf/standard/StdHandlerRegistry.h>
 #include <xolotl/util/MPIUtils.h>
 
-namespace xolotl {
-namespace perf {
-namespace standard {
-
-StdHandlerRegistry::StdHandlerRegistry(void) {
+namespace xolotl
+{
+namespace perf
+{
+namespace standard
+{
+StdHandlerRegistry::StdHandlerRegistry(void)
+{
 	// nothing else to do
 }
 
-StdHandlerRegistry::~StdHandlerRegistry(void) {
+StdHandlerRegistry::~StdHandlerRegistry(void)
+{
 	// Release the objects we have been tracking.
 	// Because we use shared_ptrs for these objects,
 	// we do not need to explicitly delete the objects themselves.
@@ -29,8 +35,9 @@ StdHandlerRegistry::~StdHandlerRegistry(void) {
 
 // We can create the EventCounters, since they don't depend on
 // more specialized functionality from any of our subclasses.
-std::shared_ptr<IEventCounter> StdHandlerRegistry::getEventCounter(
-		const std::string& name) {
+std::shared_ptr<IEventCounter>
+StdHandlerRegistry::getEventCounter(const std::string& name)
+{
 	// TODO - associate the object we create with the current region
 	std::shared_ptr<IEventCounter> ret;
 
@@ -40,7 +47,8 @@ std::shared_ptr<IEventCounter> StdHandlerRegistry::getEventCounter(
 		// We have already created an event counter with this name.
 		// Return name.
 		ret = iter->second;
-	} else {
+	}
+	else {
 		// We have not yet created an event counter with this name.
 		// Build one and keep track of it.
 		ret = std::make_shared<EventCounter>(name);
@@ -49,10 +57,12 @@ std::shared_ptr<IEventCounter> StdHandlerRegistry::getEventCounter(
 	return ret;
 }
 
-template<typename T, typename V>
-void StdHandlerRegistry::CollectAllObjectNames(int myRank,
-		const std::map<std::string, std::shared_ptr<T> >& myObjs,
-		std::map<std::string, PerfObjStatistics<V> >& stats) const {
+template <typename T, typename V>
+void
+StdHandlerRegistry::CollectAllObjectNames(int myRank,
+	const std::map<std::string, std::shared_ptr<T>>& myObjs,
+	std::map<std::string, PerfObjStatistics<V>>& stats) const
+{
 	// Collect my own object's names.
 	std::vector<std::string> myNames;
 	CollectMyObjectNames(myObjs, myNames);
@@ -62,23 +72,23 @@ void StdHandlerRegistry::CollectAllObjectNames(int myRank,
 	// Determine amount of space required for names
 	unsigned int nBytes = 0;
 	for (auto nameIter = myNames.begin(); nameIter != myNames.end();
-			++nameIter) {
+		 ++nameIter) {
 		// Add enough space for the name plus a NUL terminating character.
 		nBytes += (nameIter->length() + 1);
 	}
 
 	// Let root know how much space it needs to collect all object names
 	unsigned int totalNumBytes = 0;
-	MPI_Reduce(&nBytes, &totalNumBytes, 1, MPI_UNSIGNED, MPI_SUM, 0,
-			xolotlComm);
+	MPI_Reduce(
+		&nBytes, &totalNumBytes, 1, MPI_UNSIGNED, MPI_SUM, 0, xolotlComm);
 
 	// Marshal all our object names.
 	char* myNamesBuf = new char[nBytes];
 	char* pName = myNamesBuf;
 	for (auto nameIter = myNames.begin(); nameIter != myNames.end();
-			++nameIter) {
+		 ++nameIter) {
 		strcpy(pName, nameIter->c_str());
-		pName += (nameIter->length() + 1);   // skip the NUL terminator
+		pName += (nameIter->length() + 1); // skip the NUL terminator
 	}
 	assert(pName == (myNamesBuf + nBytes));
 
@@ -102,7 +112,7 @@ void StdHandlerRegistry::CollectAllObjectNames(int myRank,
 
 	// Finally, gather all names to the root process.
 	MPI_Gatherv(myNamesBuf, nBytes, MPI_CHAR, allNames, allNameCounts,
-			allNameDispls, MPI_CHAR, 0, xolotlComm);
+		allNameDispls, MPI_CHAR, 0, xolotlComm);
 
 	if (myRank == 0) {
 		// Process the gathered names to determine the
@@ -113,9 +123,8 @@ void StdHandlerRegistry::CollectAllObjectNames(int myRank,
 			if (iter == stats.end()) {
 				// This is an object  name we have not seen before.
 				// Add it to the statistics map.
-				stats.insert(
-						std::pair<std::string, PerfObjStatistics<V> >(pName,
-								PerfObjStatistics<V>(pName)));
+				stats.insert(std::pair<std::string, PerfObjStatistics<V>>(
+					pName, PerfObjStatistics<V>(pName)));
 			}
 
 			// Advance to next object name
@@ -131,26 +140,30 @@ void StdHandlerRegistry::CollectAllObjectNames(int myRank,
 	delete[] allNameDispls;
 }
 
-template<typename T>
-void StdHandlerRegistry::CollectMyObjectNames(
-		const std::map<std::string, std::shared_ptr<T> >& myObjs,
-		std::vector<std::string>& objNames) const {
+template <typename T>
+void
+StdHandlerRegistry::CollectMyObjectNames(
+	const std::map<std::string, std::shared_ptr<T>>& myObjs,
+	std::vector<std::string>& objNames) const
+{
 	for (auto oiter = myObjs.begin(); oiter != myObjs.end(); ++oiter) {
 		objNames.push_back(oiter->first);
 	}
 }
 
-// Specialize for hardware counter objects, since a given object name 
+// Specialize for hardware counter objects, since a given object name
 // represents multiple hardware counters.
-template<>
-void StdHandlerRegistry::CollectMyObjectNames<IHardwareCounter>(
-		const std::map<std::string, std::shared_ptr<IHardwareCounter> >& myObjs,
-		std::vector<std::string>& objNames) const {
+template <>
+void
+StdHandlerRegistry::CollectMyObjectNames<IHardwareCounter>(
+	const std::map<std::string, std::shared_ptr<IHardwareCounter>>& myObjs,
+	std::vector<std::string>& objNames) const
+{
 	for (auto oiter = myObjs.begin(); oiter != myObjs.end(); ++oiter) {
 		std::string baseName = oiter->first;
 
 		const IHardwareCounter::SpecType& spec =
-				oiter->second->getSpecification();
+			oiter->second->getSpecification();
 		for (auto siter = spec.begin(); siter != spec.end(); ++siter) {
 			std::ostringstream namestr;
 			namestr << baseName << ':' << oiter->second->getCounterName(*siter);
@@ -159,16 +172,19 @@ void StdHandlerRegistry::CollectMyObjectNames<IHardwareCounter>(
 	}
 }
 
-template<typename T, typename V>
-std::pair<bool, V> StdHandlerRegistry::GetObjValue(
-		const std::map<std::string, std::shared_ptr<T> >& myObjs,
-		const std::string& objName) const {
+template <typename T, typename V>
+std::pair<bool, V>
+StdHandlerRegistry::GetObjValue(
+	const std::map<std::string, std::shared_ptr<T>>& myObjs,
+	const std::string& objName) const
+{
 	auto currObjIter = myObjs.find(objName);
 	bool found = currObjIter != myObjs.end();
 	V val = V();
 	if (found) {
 		val = currObjIter->second->getValue();
-	} else {
+	}
+	else {
 		// val's value is undefined.
 		// Callers must test the found part of the return pair to
 		// know whether the value part is valid.
@@ -176,10 +192,12 @@ std::pair<bool, V> StdHandlerRegistry::GetObjValue(
 	return std::make_pair(found, val);
 }
 
-template<>
-std::pair<bool, IHardwareCounter::CounterType> StdHandlerRegistry::GetObjValue(
-		const std::map<std::string, std::shared_ptr<IHardwareCounter> >& myObjs,
-		const std::string& objName) const {
+template <>
+std::pair<bool, IHardwareCounter::CounterType>
+StdHandlerRegistry::GetObjValue(
+	const std::map<std::string, std::shared_ptr<IHardwareCounter>>& myObjs,
+	const std::string& objName) const
+{
 	// Split the objName into an IHardwareCounter object name and a
 	// hardware counter name.
 	size_t idx = objName.find_last_of(':');
@@ -213,10 +231,12 @@ std::pair<bool, IHardwareCounter::CounterType> StdHandlerRegistry::GetObjValue(
 	return std::make_pair(found, val);
 }
 
-template<typename T, typename V>
-void StdHandlerRegistry::AggregateStatistics(int myRank,
-		const std::map<std::string, std::shared_ptr<T> >& myObjs,
-		std::map<std::string, PerfObjStatistics<V> >& stats) const {
+template <typename T, typename V>
+void
+StdHandlerRegistry::AggregateStatistics(int myRank,
+	const std::map<std::string, std::shared_ptr<T>>& myObjs,
+	std::map<std::string, PerfObjStatistics<V>>& stats) const
+{
 	// Determine the set of object names known across all processes.
 	// Since some processes may define an object that others don't, we
 	// have to form the union across all processes.
@@ -243,42 +263,41 @@ void StdHandlerRegistry::AggregateStatistics(int myRank,
 		// we can safely cast away const on the tsiter data string because
 		// the only process that accesses that string is rank 0,
 		// and it only reads the data.
-		char* objName =
-				(myRank == 0) ?
-						const_cast<char*>(tsiter->second.name.c_str()) :
-						new char[nameLen + 1];
+		char* objName = (myRank == 0) ?
+			const_cast<char*>(tsiter->second.name.c_str()) :
+			new char[nameLen + 1];
 		MPI_Bcast(objName, nameLen + 1, MPI_CHAR, 0, xolotlComm);
 
 		// do we know about the current object?
 		bool knowObject;
 		V myVal;
-		std::tie<bool, V>(knowObject, myVal) = GetObjValue<T, V>(myObjs,
-				objName);
+		std::tie<bool, V>(knowObject, myVal) =
+			GetObjValue<T, V>(myObjs, objName);
 
 		// collect count of processes knowing the current object
 		unsigned int* pcount =
-				(myRank == 0) ? &(tsiter->second.processCount) : NULL;
+			(myRank == 0) ? &(tsiter->second.processCount) : NULL;
 		int knowObjVal = knowObject ? 1 : 0;
 		MPI_Reduce(&knowObjVal, pcount, 1, MPI_INT, MPI_SUM, 0, xolotlComm);
 
 		// collect min value of current object
 		V* pMinVal = (myRank == 0) ? &(tsiter->second.min) : NULL;
 		V reduceVal = knowObject ? myVal : T::MaxValue;
-		MPI_Reduce(&reduceVal, pMinVal, 1, T::MPIValType, MPI_MIN, 0,
-				xolotlComm);
+		MPI_Reduce(
+			&reduceVal, pMinVal, 1, T::MPIValType, MPI_MIN, 0, xolotlComm);
 
 		// collect max value of current object
 		V* pMaxVal = (myRank == 0) ? &(tsiter->second.max) : NULL;
 		reduceVal = knowObject ? myVal : T::MinValue;
-		MPI_Reduce(&reduceVal, pMaxVal, 1, T::MPIValType, MPI_MAX, 0,
-				xolotlComm);
+		MPI_Reduce(
+			&reduceVal, pMaxVal, 1, T::MPIValType, MPI_MAX, 0, xolotlComm);
 
 		// collect sum of current object's values (for computing avg and stdev)
 		double valSum;
 		// use the same myVal as for max: actual value if known, 0 otherwise
-		double myValAsDouble = (double) reduceVal;
-		MPI_Reduce(&myValAsDouble, &valSum, 1, MPI_DOUBLE, MPI_SUM, 0,
-				xolotlComm);
+		double myValAsDouble = (double)reduceVal;
+		MPI_Reduce(
+			&myValAsDouble, &valSum, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 		if (myRank == 0) {
 			tsiter->second.average = valSum / tsiter->second.processCount;
 		}
@@ -287,13 +306,11 @@ void StdHandlerRegistry::AggregateStatistics(int myRank,
 		double valSquaredSum;
 		double myValSquared = myValAsDouble * myValAsDouble;
 		MPI_Reduce(&myValSquared, &valSquaredSum, 1, MPI_DOUBLE, MPI_SUM, 0,
-				xolotlComm);
+			xolotlComm);
 		if (myRank == 0) {
 			tsiter->second.stdev =
-					sqrt(
-							(valSquaredSum / tsiter->second.processCount)
-									- (tsiter->second.average
-											* tsiter->second.average));
+				sqrt((valSquaredSum / tsiter->second.processCount) -
+					(tsiter->second.average * tsiter->second.average));
 		}
 
 		// clean up
@@ -308,10 +325,12 @@ void StdHandlerRegistry::AggregateStatistics(int myRank,
 	}
 }
 
-void StdHandlerRegistry::collectStatistics(
-		PerfObjStatsMap<ITimer::ValType>& timerStats,
-		PerfObjStatsMap<IEventCounter::ValType>& counterStats,
-		PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) {
+void
+StdHandlerRegistry::collectStatistics(
+	PerfObjStatsMap<ITimer::ValType>& timerStats,
+	PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+	PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats)
+{
 	// Get the MPI communicator
 	auto xolotlComm = util::getMPIComm();
 	int myRank;
@@ -322,18 +341,20 @@ void StdHandlerRegistry::collectStatistics(
 	AggregateStatistics<ITimer, ITimer::ValType>(myRank, allTimers, timerStats);
 
 	// ...next event counters...
-	AggregateStatistics<IEventCounter, IEventCounter::ValType>(myRank,
-			allEventCounters, counterStats);
+	AggregateStatistics<IEventCounter, IEventCounter::ValType>(
+		myRank, allEventCounters, counterStats);
 
 	// ...finally hardware counters.
-	AggregateStatistics<IHardwareCounter, IHardwareCounter::CounterType>(myRank,
-			allHWCounterSets, hwCounterStats);
+	AggregateStatistics<IHardwareCounter, IHardwareCounter::CounterType>(
+		myRank, allHWCounterSets, hwCounterStats);
 }
 
-void StdHandlerRegistry::reportStatistics(std::ostream& os,
-		const PerfObjStatsMap<ITimer::ValType>& timerStats,
-		const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
-		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) const {
+void
+StdHandlerRegistry::reportStatistics(std::ostream& os,
+	const PerfObjStatsMap<ITimer::ValType>& timerStats,
+	const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
+	const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) const
+{
 	os << "\nTimers:\n";
 	for (auto iter = timerStats.begin(); iter != timerStats.end(); ++iter) {
 		iter->second.outputTo(os);
@@ -346,7 +367,7 @@ void StdHandlerRegistry::reportStatistics(std::ostream& os,
 
 	os << "\nHardwareCounters:\n";
 	for (auto iter = hwCounterStats.begin(); iter != hwCounterStats.end();
-			++iter) {
+		 ++iter) {
 		iter->second.outputTo(os);
 	}
 }

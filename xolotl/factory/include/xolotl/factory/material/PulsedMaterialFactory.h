@@ -2,34 +2,37 @@
 #define PULSEDMATERIALHANDLERFACTORY_H
 
 #include <memory>
-#include <xolotl/factory/material/MaterialFactory.h>
-#include <xolotl/core/flux/PulsedFitFluxHandler.h>
+
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
+#include <xolotl/core/flux/PulsedFitFluxHandler.h>
 #include <xolotl/core/modified/DummyTrapMutationHandler.h>
+#include <xolotl/factory/material/MaterialFactory.h>
 
-namespace xolotl {
-namespace factory {
-namespace material {
-
+namespace xolotl
+{
+namespace factory
+{
+namespace material
+{
 /**
  * Subclass of MaterialFactory for a tungsten material with
  * a intermittent incoming flux.
  */
-class PulsedMaterialFactory: public MaterialFactory {
+class PulsedMaterialFactory : public MaterialFactory
+{
 public:
-
 	/**
 	 * The constructor creates the handlers.
 	 *
 	 * @param dim The number of dimensions for the problem
 	 */
-	PulsedMaterialFactory(const options::Options &opts) :
-			MaterialFactory(opts) {
+	PulsedMaterialFactory(const options::Options& opts) : MaterialFactory(opts)
+	{
 		theFluxHandler = std::make_shared<core::flux::PulsedFitFluxHandler>();
 		theAdvectionHandler.push_back(
-				std::make_shared<core::advection::DummyAdvectionHandler>());
-		theTrapMutationHandler = std::make_shared<
-				core::modified::DummyTrapMutationHandler>();
+			std::make_shared<core::advection::DummyAdvectionHandler>());
+		theTrapMutationHandler =
+			std::make_shared<core::modified::DummyTrapMutationHandler>();
 
 		return;
 	}
@@ -37,7 +40,8 @@ public:
 	/**
 	 * The destructor
 	 */
-	~PulsedMaterialFactory() {
+	~PulsedMaterialFactory()
+	{
 	}
 
 	/**
@@ -45,7 +49,9 @@ public:
 	 *
 	 * @param options The Xolotl options.
 	 */
-	void initializeMaterial(const options::Options &opts) {
+	void
+	initializeMaterial(const options::Options& opts)
+	{
 		// Call the general method first
 		MaterialFactory::initializeMaterial(opts);
 

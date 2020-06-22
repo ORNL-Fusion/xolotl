@@ -3,28 +3,28 @@
 
 // Includes
 #include <string>
+
 #include <xolotl/util/Identifiable.h>
 
-namespace xolotl {
-namespace viz {
-
+namespace xolotl
+{
+namespace viz
+{
 /**
  * LabelProvider provides a series of labels to print on the plots.
  * One Plot must have only one LabelProvider.
  */
-class LabelProvider: public util::Identifiable {
-
+class LabelProvider : public util::Identifiable
+{
 private:
-
 	/**
 	 * Declare the constructor as private to force the use of a name
 	 */
-	LabelProvider() :
-			util::Identifiable("unused") {
+	LabelProvider() : util::Identifiable("unused")
+	{
 	}
 
 public:
-
 	/**
 	 * The label of the X axis of the plot.
 	 */
@@ -69,20 +69,27 @@ public:
 	 * The default constructor
 	 */
 	LabelProvider(const std::string& name) :
-			util::Identifiable(name), axis1Label(" "), axis2Label(" "), axis3Label(
-					" "), axis4Label(" "), titleLabel(" "), unitLabel(" "), timeLabel(
-					" "), timeStepLabel(" ") {
+		util::Identifiable(name),
+		axis1Label(" "),
+		axis2Label(" "),
+		axis3Label(" "),
+		axis4Label(" "),
+		titleLabel(" "),
+		unitLabel(" "),
+		timeLabel(" "),
+		timeStepLabel(" ")
+	{
 	}
 
 	/**
 	 * The destructor
 	 */
-	~LabelProvider() {
+	~LabelProvider()
+	{
 	}
-
 };
 
-//end class LabelProvider
+// end class LabelProvider
 
 } /* namespace viz */
 } /* namespace xolotl */

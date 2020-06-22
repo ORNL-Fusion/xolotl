@@ -2,42 +2,45 @@
 #define ADVECTIONHANDLER_H
 
 // Includes
-#include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/advection/IAdvectionHandler.h>
 
-namespace xolotl {
-namespace core {
-namespace advection {
-
+namespace xolotl
+{
+namespace core
+{
+namespace advection
+{
 /**
  * This class realizes the IAdvectionHandler interface responsible for all
- * the physical parts for the advection of mobile helium clusters. It needs to have subclasses
- * that implement the initialize method.
+ * the physical parts for the advection of mobile helium clusters. It needs to
+ * have subclasses that implement the initialize method.
  */
-class AdvectionHandler: public IAdvectionHandler {
+class AdvectionHandler : public IAdvectionHandler
+{
 protected:
-
 	//! The location of the sink
 	double location;
 
 	//! The collection of advecting clusters.
 	std::vector<std::size_t> advectingClusters;
 
-	//! The vector containing the value of the sink strength (called A) of the advecting clusters
+	//! The vector containing the value of the sink strength (called A) of the
+	//! advecting clusters
 	std::vector<double> sinkStrengthVector;
 
 	//! The number of dimensions of the problem
 	int dimension;
 
 public:
-
 	//! The Constructor
-	AdvectionHandler() :
-			location(0.0), dimension(0) {
+	AdvectionHandler() : location(0.0), dimension(0)
+	{
 	}
 
 	//! The Destructor
-	~AdvectionHandler() {
+	~AdvectionHandler()
+	{
 	}
 
 	/**
@@ -45,7 +48,9 @@ public:
 	 *
 	 * @param dim The number of dimensions of the problem
 	 */
-	void setDimension(int dim) override {
+	void
+	setDimension(int dim) override
+	{
 		dimension = dim;
 	}
 
@@ -54,7 +59,9 @@ public:
 	 *
 	 * @param pos The location of the sink
 	 */
-	void setLocation(double pos) override {
+	void
+	setLocation(double pos) override
+	{
 		location = pos;
 	}
 
@@ -63,7 +70,9 @@ public:
 	 *
 	 * @return The number of advecting clusters
 	 */
-	int getNumberOfAdvecting() const override {
+	int
+	getNumberOfAdvecting() const override
+	{
 		return advectingClusters.size();
 	}
 
@@ -72,7 +81,9 @@ public:
 	 *
 	 * @return The vector of advecting clusters
 	 */
-	const std::vector<std::size_t>& getAdvectingClusters() override {
+	const std::vector<std::size_t>&
+	getAdvectingClusters() override
+	{
 		return advectingClusters;
 	}
 
@@ -81,12 +92,13 @@ public:
 	 *
 	 * @return The location
 	 */
-	double getLocation() const override {
+	double
+	getLocation() const override
+	{
 		return location;
 	}
-
 };
-//end class AdvectionHandler
+// end class AdvectionHandler
 
 } /* end namespace advection */
 } /* end namespace core */

@@ -1,22 +1,23 @@
 #ifndef HEATEQUATION3DHANDLER_H
 #define HEATEQUATION3DHANDLER_H
 
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 #include <xolotl/util/MathUtils.h>
-#include <xolotl/core/Constants.h>
 
-namespace xolotl {
-namespace core {
-namespace temperature {
-
+namespace xolotl
+{
+namespace core
+{
+namespace temperature
+{
 /**
  * This class realizes the ITemperatureHandler, it is responsible for the
  * handling of the heat equation in 3D.
  */
-class HeatEquation3DHandler: public ITemperatureHandler {
-
+class HeatEquation3DHandler : public ITemperatureHandler
+{
 private:
-
 	/**
 	 * The heat flux in W.m-2
 	 */
@@ -57,12 +58,17 @@ private:
 	 * must be initialized with a temperature
 	 */
 	HeatEquation3DHandler() :
-			heatFlux(0.0), bulkTemperature(0.0), localTemperature(0.0), dof(0), surfacePosition(
-					0.0), heatCoef(0.0), heatConductivity(0.0) {
+		heatFlux(0.0),
+		bulkTemperature(0.0),
+		localTemperature(0.0),
+		dof(0),
+		surfacePosition(0.0),
+		heatCoef(0.0),
+		heatConductivity(0.0)
+	{
 	}
 
 public:
-
 	/**
 	 * The constructor
 	 *
@@ -70,15 +76,21 @@ public:
 	 * @param bulkTemp The temperature in the bulk
 	 */
 	HeatEquation3DHandler(double flux, double bulkTemp) :
-			heatFlux(flux), bulkTemperature(bulkTemp), localTemperature(0.0), dof(
-					0), surfacePosition(0.0), heatCoef(0.0), heatConductivity(
-					0.0) {
+		heatFlux(flux),
+		bulkTemperature(bulkTemp),
+		localTemperature(0.0),
+		dof(0),
+		surfacePosition(0.0),
+		heatCoef(0.0),
+		heatConductivity(0.0)
+	{
 	}
 
 	/**
 	 * The destructor.
 	 */
-	virtual ~HeatEquation3DHandler() {
+	virtual ~HeatEquation3DHandler()
+	{
 	}
 
 	/**
@@ -87,10 +99,11 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void initializeTemperature(const int _dof,
-			network::IReactionNetwork::SparseFillMap& ofillMap,
-			network::IReactionNetwork::SparseFillMap& dfillMap) {
-
+	virtual void
+	initializeTemperature(const int _dof,
+		network::IReactionNetwork::SparseFillMap& ofillMap,
+		network::IReactionNetwork::SparseFillMap& dfillMap)
+	{
 		// Set dof
 		dof = _dof;
 
@@ -109,9 +122,11 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double getTemperature(const plsm::SpaceVector<double, 3>&, double time) const {
-		return util::equal(time, 0.0) * bulkTemperature
-				+ !util::equal(time, 0.0) * localTemperature;
+	virtual double
+	getTemperature(const plsm::SpaceVector<double, 3>&, double time) const
+	{
+		return util::equal(time, 0.0) * bulkTemperature +
+			!util::equal(time, 0.0) * localTemperature;
 	}
 
 	/**
@@ -119,7 +134,9 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void setTemperature(double * solution) {
+	virtual void
+	setTemperature(double* solution)
+	{
 		localTemperature = solution[dof];
 	}
 
@@ -128,7 +145,9 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void setHeatCoefficient(double coef) {
+	virtual void
+	setHeatCoefficient(double coef)
+	{
 		heatCoef = coef;
 	}
 
@@ -137,7 +156,9 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void setHeatConductivity(double cond) {
+	virtual void
+	setHeatConductivity(double cond)
+	{
 		heatConductivity = cond;
 	}
 
@@ -146,7 +167,9 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void updateSurfacePosition(int surfacePos) {
+	virtual void
+	updateSurfacePosition(int surfacePos)
+	{
 		surfacePosition = surfacePos;
 	}
 
@@ -156,9 +179,11 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void computeTemperature(double **concVector,
-			double *updatedConcOffset, double hxLeft, double hxRight, int xi,
-			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) {
+	virtual void
+	computeTemperature(double** concVector, double* updatedConcOffset,
+		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
+		double sz = 0.0, int iz = 0)
+	{
 		// Initial declaration
 		int index = dof;
 
@@ -174,29 +199,24 @@ public:
 		// Boundary condition with heat flux
 		if (xi == surfacePosition) {
 			// Include the flux boundary condition
-			updatedConcOffset[index] +=
-					heatCoef
-							* ((2.0 / hxLeft)
-									* ((heatFlux / heatConductivity)
-											+ (oldRightConc - oldConc) / hxRight)
-									+ sy
-											* (oldBottomConc + oldTopConc
-													- 2.0 * oldConc)
-									+ sz
-											* (oldFrontConc + oldBackConc
-													- 2.0 * oldConc));
+			updatedConcOffset[index] += heatCoef *
+				((2.0 / hxLeft) *
+						((heatFlux / heatConductivity) +
+							(oldRightConc - oldConc) / hxRight) +
+					sy * (oldBottomConc + oldTopConc - 2.0 * oldConc) +
+					sz * (oldFrontConc + oldBackConc - 2.0 * oldConc));
 
 			return;
 		}
 
 		// Use a simple midpoint stencil to compute the concentration
-		updatedConcOffset[index] += heatCoef
-				* (2.0
-						* (oldLeftConc + (hxLeft / hxRight) * oldRightConc
-								- (1.0 + (hxLeft / hxRight)) * oldConc)
-						/ (hxLeft * (hxLeft + hxRight))
-						+ sy * (oldBottomConc + oldTopConc - 2.0 * oldConc)
-						+ sz * (oldFrontConc + oldBackConc - 2.0 * oldConc));
+		updatedConcOffset[index] += heatCoef *
+			(2.0 *
+					(oldLeftConc + (hxLeft / hxRight) * oldRightConc -
+						(1.0 + (hxLeft / hxRight)) * oldConc) /
+					(hxLeft * (hxLeft + hxRight)) +
+				sy * (oldBottomConc + oldTopConc - 2.0 * oldConc) +
+				sz * (oldFrontConc + oldBackConc - 2.0 * oldConc));
 
 		return;
 	}
@@ -207,16 +227,19 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual bool computePartialsForTemperature(double *val, int *indices,
-			double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
-			double sz = 0.0, int iz = 0) {
+	virtual bool
+	computePartialsForTemperature(double* val, int* indices, double hxLeft,
+		double hxRight, int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0)
+	{
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
 		indices[0] = dof;
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, and right grid point
-		val[0] = -2.0 * heatCoef * (1.0 / (hxLeft * hxRight) + sy + sz); // middle
+		val[0] =
+			-2.0 * heatCoef * (1.0 / (hxLeft * hxRight) + sy + sz); // middle
 		val[1] = heatCoef * 2.0 / (hxLeft * (hxLeft + hxRight)); // left
 		val[2] = heatCoef * 2.0 / (hxRight * (hxLeft + hxRight)); // right
 		val[3] = heatCoef * sy; // bottom
@@ -231,12 +254,11 @@ public:
 
 		return true;
 	}
-
 };
-//end class HeatEquation3DHandler
+// end class HeatEquation3DHandler
 
-}
-}
-}
+} // namespace temperature
+} // namespace core
+} // namespace xolotl
 
 #endif

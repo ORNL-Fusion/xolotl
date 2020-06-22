@@ -1,23 +1,29 @@
-#include <iostream>
-#include <fstream>
 #include <cmath>
+#include <fstream>
+#include <iostream>
 #include <limits>
+
 #include <mpi.h>
+
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/perf/xolotlPerf.h>
 
-namespace xolotl {
-namespace core {
-namespace flux {
-
+namespace xolotl
+{
+namespace core
+{
+namespace flux
+{
 FluxHandler::FluxHandler() :
-		fluence(0.0), fluxAmplitude(0.0), useTimeProfile(false), normFactor(0.0) {
+	fluence(0.0), fluxAmplitude(0.0), useTimeProfile(false), normFactor(0.0)
+{
 	return;
 }
 
-void FluxHandler::initializeFluxHandler(
-		network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid) {
+void
+FluxHandler::initializeFluxHandler(network::IReactionNetwork& network,
+	int surfacePos, std::vector<double> grid)
+{
 	// Set the grid
 	xGrid = grid;
 
@@ -50,11 +56,13 @@ void FluxHandler::initializeFluxHandler(
 
 	// Clear the flux vector
 	incidentFluxVec.clear();
-	// The first value corresponding to the surface position should always be 0.0
+	// The first value corresponding to the surface position should always be
+	// 0.0
 	std::vector<double> tempVector;
 	tempVector.push_back(0.0);
 
-	// Starts a i = surfacePos + 1 because the first value was already put in the vector
+	// Starts a i = surfacePos + 1 because the first value was already put in
+	// the vector
 	for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 		// Get the x position
 		auto x = (xGrid[i] + xGrid[i + 1]) / 2.0 - xGrid[surfacePos + 1];
@@ -74,13 +82,16 @@ void FluxHandler::initializeFluxHandler(
 	return;
 }
 
-void FluxHandler::recomputeFluxHandler(int surfacePos) {
+void
+FluxHandler::recomputeFluxHandler(int surfacePos)
+{
 	// Factor the incident flux will be multiplied by
 	double fluxNormalized = 0.0;
 	if (normFactor > 0.0)
 		fluxNormalized = fluxAmplitude / normFactor;
 
-	// Starts at i = surfacePos + 1 because the first values were already put in the vector
+	// Starts at i = surfacePos + 1 because the first values were already put in
+	// the vector
 	for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
 		// Get the x position
 		auto x = (xGrid[i] + xGrid[i + 1]) / 2.0 - xGrid[surfacePos + 1];
@@ -94,7 +105,9 @@ void FluxHandler::recomputeFluxHandler(int surfacePos) {
 	return;
 }
 
-void FluxHandler::initializeTimeProfile(const std::string& fileName) {
+void
+FluxHandler::initializeTimeProfile(const std::string& fileName)
+{
 	// Set use time profile to true
 	useTimeProfile = true;
 
@@ -115,7 +128,9 @@ void FluxHandler::initializeTimeProfile(const std::string& fileName) {
 	return;
 }
 
-double FluxHandler::getProfileAmplitude(double currentTime) const {
+double
+FluxHandler::getProfileAmplitude(double currentTime) const
+{
 	// Initialize the amplitude to return
 	double f = 0.0;
 
@@ -137,17 +152,19 @@ double FluxHandler::getProfileAmplitude(double currentTime) const {
 
 		// Compute the amplitude following a linear interpolation between
 		// the two stored values
-		f = amplitudes[k]
-				+ (amplitudes[k + 1] - amplitudes[k]) * (currentTime - time[k])
-						/ (time[k + 1] - time[k]);
+		f = amplitudes[k] +
+			(amplitudes[k + 1] - amplitudes[k]) * (currentTime - time[k]) /
+				(time[k + 1] - time[k]);
 		break;
 	}
 
 	return f;
 }
 
-void FluxHandler::computeIncidentFlux(double currentTime,
-		double *updatedConcOffset, int xi, int surfacePos) {
+void
+FluxHandler::computeIncidentFlux(
+	double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+{
 	// Skip if no index was set
 	if (fluxIndices.size() == 0)
 		return;
@@ -169,33 +186,45 @@ void FluxHandler::computeIncidentFlux(double currentTime,
 	return;
 }
 
-void FluxHandler::incrementFluence(double dt) {
+void
+FluxHandler::incrementFluence(double dt)
+{
 	// The fluence is the flux times the time
 	fluence += fluxAmplitude * dt;
 
 	return;
 }
 
-void FluxHandler::computeFluence(double time) {
+void
+FluxHandler::computeFluence(double time)
+{
 	// The fluence is the flux times the time
 	fluence = fluxAmplitude * time;
 
 	return;
 }
 
-double FluxHandler::getFluence() const {
+double
+FluxHandler::getFluence() const
+{
 	return fluence;
 }
 
-void FluxHandler::setFluxAmplitude(double flux) {
+void
+FluxHandler::setFluxAmplitude(double flux)
+{
 	fluxAmplitude = flux;
 }
 
-double FluxHandler::getFluxAmplitude() const {
+double
+FluxHandler::getFluxAmplitude() const
+{
 	return fluxAmplitude;
 }
 
-double FluxHandler::getFluxRate() const {
+double
+FluxHandler::getFluxRate() const
+{
 	if (incidentFluxVec[0].size() == 0)
 		return fluxAmplitude;
 	return fluxAmplitude / normFactor;

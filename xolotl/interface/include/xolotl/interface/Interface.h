@@ -2,13 +2,15 @@
 #define INTERFACE_H
 #include <xolotl/solver/PetscSolver.h>
 
-namespace xolotl {
-namespace interface {
-
+namespace xolotl
+{
+namespace interface
+{
 /**
  * Class defining the method to be coupled to another code through MOOSEApps
  */
-class XolotlInterface {
+class XolotlInterface
+{
 private:
 	/**
 	 * The solver
@@ -16,34 +18,38 @@ private:
 	std::shared_ptr<solver::PetscSolver> solver;
 
 public:
-
 	/**
 	 * The default constructor
 	 */
-	XolotlInterface() {
+	XolotlInterface()
+	{
 	}
 
 	/**
 	 * The destructor
 	 */
-	~XolotlInterface() {
+	~XolotlInterface()
+	{
 	}
 
 	/**
 	 * Print something
 	 */
-	void printSomething();
+	void
+	printSomething();
 
 	/**
 	 * Initialize all the options and handlers
 	 *
 	 * @param argc, argv The command line arguments
 	 * @param MPI_Comm The communicator to use
-	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
+	 * @param isStandalone To know is Xolotl is used as a subcomponent of
+	 * another code
 	 * @return The pointer to the solver
 	 */
-	void initializeXolotl(int argc, char **argv, MPI_Comm comm = MPI_COMM_WORLD,
-			bool isStandalone = true);
+	void
+	initializeXolotl(int argc, char** argv, MPI_Comm comm = MPI_COMM_WORLD,
+		bool isStandalone = true);
 
 	/**
 	 * Set the final time and the dt.
@@ -51,12 +57,14 @@ public:
 	 * @param finalTime The wanted final time
 	 * @param dt The wanted max time step
 	 */
-	void setTimes(double finalTime, double dt);
+	void
+	setTimes(double finalTime, double dt);
 
 	/**
 	 * Run the PETSc solve
 	 */
-	void solveXolotl();
+	void
+	solveXolotl();
 
 	/**
 	 * Get the local Xe rate that needs to be passed
@@ -64,86 +72,97 @@ public:
 	 * @return The vector
 	 */
 	std::vector<
-			std::vector<std::vector<std::tuple<double, double, double, double> > > > getLocalNE();
+		std::vector<std::vector<std::tuple<double, double, double, double>>>>
+	getLocalNE();
 
 	/**
 	 * Set the local Xe rate
 	 *
 	 * @param The vector
 	 */
-	void setLocalNE(
-			std::vector<
-					std::vector<
-							std::vector<
-									std::tuple<double, double, double, double> > > > rateVector);
+	void
+	setLocalNE(std::vector<
+		std::vector<std::vector<std::tuple<double, double, double, double>>>>
+			rateVector);
 
 	/**
 	 * Get the local Xe rate that needs to be passed
 	 *
-	 * @param xs, xm The start and width in the X direction on the local MPI process
+	 * @param xs, xm The start and width in the X direction on the local MPI
+	 * process
 	 * @param Mx The total width in the X direction
-	 * @param ys, ym The start and width in the Y direction on the local MPI process
+	 * @param ys, ym The start and width in the Y direction on the local MPI
+	 * process
 	 * @param My The total width in the Y direction
-	 * @param zs, zm The start and width in the Z direction on the local MPI process
+	 * @param zs, zm The start and width in the Z direction on the local MPI
+	 * process
 	 * @param Mz The total width in the Z direction
 	 */
-	void getLocalCoordinates(int &xs, int &xm, int &Mx, int &ys, int &ym,
-			int &My, int &zs, int &zm, int &Mz);
+	void
+	getLocalCoordinates(int& xs, int& xm, int& Mx, int& ys, int& ym, int& My,
+		int& zs, int& zm, int& Mz);
 
 	/**
 	 * Set the location of one GB grid point.
 	 *
 	 * @param i, j, k The coordinate of the GB
 	 */
-	void setGBLocation(int i, int j = 0, int k = 0);
+	void
+	setGBLocation(int i, int j = 0, int k = 0);
 
 	/**
 	 * Reset the GB vector.
 	 */
-	void resetGBVector();
+	void
+	resetGBVector();
 
 	/**
 	 * Set the concentrations to 0.0 where the GBs are.
 	 */
-	void initGBLocation();
+	void
+	initGBLocation();
 
 	/**
 	 * Get the concentrations and their ids.
 	 *
 	 * @return The concentration vector from the current state of the simulation
 	 */
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > getConcVector();
+	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+	getConcVector();
 
 	/**
 	 * Set the concentrations and their ids.
 	 *
 	 * @ param concVector A given state of the concentrations
 	 */
-	void setConcVector(
-			std::vector<
-					std::vector<
-							std::vector<std::vector<std::pair<int, double> > > > > concVector);
+	void
+	setConcVector(std::vector<
+		std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+			concVector);
 
 	/**
 	 * Get the previous time.
 	 *
 	 * @return The previous time
 	 */
-	double getPreviousTime();
+	double
+	getPreviousTime();
 
 	/**
 	 * Set the previous time.
 	 *
 	 * @param time The previous time
 	 */
-	void setPreviousTime(double time);
+	void
+	setPreviousTime(double time);
 
 	/**
 	 * Get the current dt.
 	 *
 	 * @return  The current time step
 	 */
-	double getCurrentDt();
+	double
+	getCurrentDt();
 
 	/**
 	 * Set the current time and dt.
@@ -151,28 +170,33 @@ public:
 	 * @param currentTime The time
 	 * @param currentDt The current time step
 	 */
-	void setCurrentTimes(double currentTime, double currentDt);
+	void
+	setCurrentTimes(double currentTime, double currentDt);
 
 	/**
 	 * Get the number of Xe that went to the GB.
 	 *
 	 * @return The number of Xenon
 	 */
-	double getNXeGB();
+	double
+	getNXeGB();
 
 	/**
 	 * Set the number of Xe that went to the GB.
 	 *
 	 * @param nXe The number of Xenon
 	 */
-	void setNXeGB(double nXe);
+	void
+	setNXeGB(double nXe);
 
 	/**
 	 * Get the TS from the solver.
 	 *
 	 * @return The TS
 	 */
-	TS& getTS() {
+	TS&
+	getTS()
+	{
 		return solver->getTS();
 	}
 
@@ -183,22 +207,25 @@ public:
 	 * @param hz The spacing in the Z direction
 	 * @return The grid in the X direction
 	 */
-	std::vector<double> getGridInfo(double &hy, double &hz);
+	std::vector<double>
+	getGridInfo(double& hy, double& hz);
 
 	/**
 	 * Get whether the solve converged or not.
 	 *
 	 * @return true if it converged
 	 */
-	bool getConvergenceStatus();
+	bool
+	getConvergenceStatus();
 
 	/**
 	 * Finalize the solve
 	 *
-	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
+	 * @param isStandalone To know is Xolotl is used as a subcomponent of
+	 * another code
 	 */
-	void finalizeXolotl(bool isStandalone = true);
-
+	void
+	finalizeXolotl(bool isStandalone = true);
 };
 // End class interface
 

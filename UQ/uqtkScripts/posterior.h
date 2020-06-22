@@ -3,8 +3,9 @@
  Copyright (2013) Sandia Corporation
  http://www.sandia.gov/UQToolkit/
 
- Copyright (2013) Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000
- with Sandia Corporation, the U.S. Government retains certain rights in this software.
+ Copyright (2013) Sandia Corporation. Under the terms of Contract
+ DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains certain
+ rights in this software.
 
  This file is part of The UQ Toolkit (UQTk)
 
@@ -23,9 +24,11 @@
 
  Questions? Contact Bert Debusschere <bjdebus@sandia.gov>
  Sandia National Laboratories, Livermore, CA, USA
- ===================================================================================== */
+ =====================================================================================
+ */
 
-struct postAux {
+struct postAux
+{
 	Array2D<double> data;
 	Array1D<double> modelparams;
 	Array1D<string> modelparamnames;
@@ -41,17 +44,19 @@ struct postAux {
 
 /// \brief Evaluate the log of the posterior for a given set of model
 /// and nuisance parameters
-double LogPosterior(Array1D<double>& m, void *info);
+double
+LogPosterior(Array1D<double>& m, void* info);
 
-double LogPosterior(Array1D<double>& m, void *info) {
+double
+LogPosterior(Array1D<double>& m, void* info)
+{
 	double pi = 4. * atan(1.);
 
-	postAux* pinfo = (postAux*) info;
+	postAux* pinfo = (postAux*)info;
 
 	double logprior = 0;
 
 	for (int ic = 0; ic < m.Length(); ic++) {
-
 		// For uniform priors
 		if (!strcmp(pinfo->priortype(ic).c_str(), "uniform")) {
 			double a = pinfo->priorparam1(ic);
@@ -71,7 +76,8 @@ double LogPosterior(Array1D<double>& m, void *info) {
 
 			logprior -= 0.5 * log(2. * pi * sig * sig);
 			logprior -= 0.5 * pow((m(ic) - mu) / sig, 2.0);
-		} else
+		}
+		else
 			throw Tantrum("Only unifrom or normal priors are implemented!");
 	}
 
@@ -83,8 +89,8 @@ double LogPosterior(Array1D<double>& m, void *info) {
 		modelparams(pinfo->chainParamInd(ic)) = m(ic);
 
 	// Posterior parameter
-	// Either proportionaly constant between signal and noise for likelihood construction
-	// or standard deviation itself
+	// Either proportionaly constant between signal and noise for likelihood
+	// construction or standard deviation itself
 	double stdpar = pinfo->postparams(0);
 
 	// Compare the model data with measurement data according to the noise model
@@ -104,19 +110,21 @@ double LogPosterior(Array1D<double>& m, void *info) {
 
 		if (!strcmp(pinfo->noisetype.c_str(), "const_stn")) {
 			std = stdpar * fabs(modelval);
-		} else if (!strcmp(pinfo->noisetype.c_str(), "const_stdev")) {
+		}
+		else if (!strcmp(pinfo->noisetype.c_str(), "const_stdev")) {
 			std = stdpar;
-		} else if (!strcmp(pinfo->noisetype.c_str(), "infer_stdev")) {
+		}
+		else if (!strcmp(pinfo->noisetype.c_str(), "infer_stdev")) {
 			std = exp(m(chaindim - 1));
-		} else
+		}
+		else
 			throw Tantrum("Noise type is not recognized!");
 
 		double var = std * std;
 
 		double err = data(it, nDim) - modelval;
-		sum = sum - 0.5 * log(2 * pi) - 0.5 * log(var)
-				- pow(err, 2) / (2.0 * var);
-
+		sum = sum - 0.5 * log(2 * pi) - 0.5 * log(var) -
+			pow(err, 2) / (2.0 * var);
 	}
 
 	return sum;

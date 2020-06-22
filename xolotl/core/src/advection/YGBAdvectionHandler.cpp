@@ -2,19 +2,22 @@
 #include <xolotl/core/advection/YGBAdvectionHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 
-namespace xolotl {
-namespace core {
-namespace advection {
-
-void YGBAdvectionHandler::initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) {
-
+namespace xolotl
+{
+namespace core
+{
+namespace advection
+{
+void
+YGBAdvectionHandler::initialize(network::IReactionNetwork& network,
+	network::IReactionNetwork::SparseFillMap& ofillMap)
+{
 	// Clear the index and sink strength vectors
 	advectingClusters.clear();
 	sinkStrengthVector.clear();
 
 	using NetworkType =
-	network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Initialize the composition
@@ -27,10 +30,10 @@ void YGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 
 		// Check that the helium cluster is present in the network
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string(
-					"\nThe helium cluster of size " + std::to_string(i)
-							+ "is not present in the network, "
-									"cannot use the advection option!");
+			throw std::string("\nThe helium cluster of size " +
+				std::to_string(i) +
+				"is not present in the network, "
+				"cannot use the advection option!");
 		}
 
 		// Get its diffusion coefficient
@@ -86,11 +89,12 @@ void YGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 	return;
 }
 
-void YGBAdvectionHandler::computeAdvection(
-		network::IReactionNetwork& network, const plsm::SpaceVector<double, 3>& pos,
-		double **concVector, double *updatedConcOffset, double hxLeft,
-		double hxRight, int ix, double hy, int iy, double hz, int iz) const {
-
+void
+YGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
+	const plsm::SpaceVector<double, 3>& pos, double** concVector,
+	double* updatedConcOffset, double hxLeft, double hxRight, int ix, double hy,
+	int iy, double hz, int iz) const
+{
 	// Consider each advecting cluster.
 	// TODO Maintaining a separate index assumes that advectingClusters is
 	// visited in same order as advectionGrid array for given point
@@ -100,7 +104,6 @@ void YGBAdvectionHandler::computeAdvection(
 	// Maybe with a zip? or a std::transform?
 	int advClusterIdx = 0;
 	for (auto const& currId : advectingClusters) {
-
 		auto cluster = network.getClusterCommon(currId);
 
 		// If we are on the sink, the behavior is not the same
@@ -109,10 +112,10 @@ void YGBAdvectionHandler::computeAdvection(
 			double oldBottomConc = concVector[3][currId]; // bottom
 			double oldTopConc = concVector[4][currId]; // top
 
-			double conc = (3.0 * sinkStrengthVector[advClusterIdx]
-					* cluster.getDiffusionCoefficient(ix + 1))
-					* ((oldBottomConc / pow(hy, 5)) + (oldTopConc / pow(hy, 5)))
-					/ (kBoltzmann * cluster.getTemperature(ix + 1));
+			double conc = (3.0 * sinkStrengthVector[advClusterIdx] *
+							  cluster.getDiffusionCoefficient(ix + 1)) *
+				((oldBottomConc / pow(hy, 5)) + (oldTopConc / pow(hy, 5))) /
+				(kBoltzmann * cluster.getTemperature(ix + 1));
 
 			// Update the concentration of the cluster
 			updatedConcOffset[currId] += conc;
@@ -121,19 +124,19 @@ void YGBAdvectionHandler::computeAdvection(
 		else {
 			// Get the initial concentrations
 			double oldConc = concVector[0][currId]; // middle
-			double oldRightConc = concVector[4 * (pos[1] > location)
-					+ 3 * (pos[1] < location)][currId]; // top or bottom
+			double oldRightConc = concVector[4 * (pos[1] > location) +
+				3 * (pos[1] < location)][currId]; // top or bottom
 
 			// Get the a=d and b=d+h positions
 			double a = fabs(location - pos[1]);
 			double b = fabs(location - pos[1]) + hy;
 
-			// Compute the concentration as explained in the description of the method
-			double conc = (3.0 * sinkStrengthVector[advClusterIdx]
-					* cluster.getDiffusionCoefficient(ix + 1))
-					* ((oldRightConc / pow(b, 4)) - (oldConc / pow(a, 4)))
-					/ (kBoltzmann * cluster.getTemperature(ix + 1)
-							* hy);
+			// Compute the concentration as explained in the description of the
+			// method
+			double conc = (3.0 * sinkStrengthVector[advClusterIdx] *
+							  cluster.getDiffusionCoefficient(ix + 1)) *
+				((oldRightConc / pow(b, 4)) - (oldConc / pow(a, 4))) /
+				(kBoltzmann * cluster.getTemperature(ix + 1) * hy);
 
 			// Update the concentration of the cluster
 			updatedConcOffset[currId] += conc;
@@ -145,11 +148,12 @@ void YGBAdvectionHandler::computeAdvection(
 	return;
 }
 
-void YGBAdvectionHandler::computePartialsForAdvection(
-		network::IReactionNetwork& network, double *val, int *indices,
-		const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight, int ix, double hy,
-		int iy, double hz, int iz) const {
-
+void
+YGBAdvectionHandler::computePartialsForAdvection(
+	network::IReactionNetwork& network, double* val, int* indices,
+	const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight,
+	int ix, double hy, int iy, double hz, int iz) const
+{
 	// Consider each advecting cluster.
 	// TODO Maintaining a separate index assumes that advectingClusters is
 	// visited in same order as advectionGrid array for given point
@@ -159,7 +163,6 @@ void YGBAdvectionHandler::computePartialsForAdvection(
 	// Maybe with a zip? or a std::transform?
 	int advClusterIdx = 0;
 	for (auto const& currId : advectingClusters) {
-
 		auto cluster = network.getClusterCommon(currId);
 		// Get the diffusion coefficient of the cluster
 		double diffCoeff = cluster.getDiffusionCoefficient(ix + 1);
@@ -173,10 +176,11 @@ void YGBAdvectionHandler::computePartialsForAdvection(
 		// If we are on the sink, the partial derivatives are not the same
 		// Both sides are giving their concentrations to the center
 		if (isPointOnSink(pos)) {
-			val[advClusterIdx * 2] = (3.0 * sinkStrength * diffCoeff)
-					/ (kBoltzmann * cluster.getTemperature(ix + 1)
-							* pow(hy, 5)); // top or bottom
-			val[(advClusterIdx * 2) + 1] = val[advClusterIdx * 2]; // top or bottom
+			val[advClusterIdx * 2] = (3.0 * sinkStrength * diffCoeff) /
+				(kBoltzmann * cluster.getTemperature(ix + 1) *
+					pow(hy, 5)); // top or bottom
+			val[(advClusterIdx * 2) + 1] =
+				val[advClusterIdx * 2]; // top or bottom
 		}
 		// Here we are NOT on the GB sink
 		else {
@@ -186,12 +190,12 @@ void YGBAdvectionHandler::computePartialsForAdvection(
 
 			// Compute the partial derivatives for advection of this cluster as
 			// explained in the description of this method
-			val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff)
-					/ (kBoltzmann * cluster.getTemperature(ix + 1)
-							* hy * pow(a, 4)); // middle
-			val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff)
-					/ (kBoltzmann * cluster.getTemperature(ix + 1)
-							* hy * pow(b, 4)); // top or bottom
+			val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff) /
+				(kBoltzmann * cluster.getTemperature(ix + 1) * hy *
+					pow(a, 4)); // middle
+			val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff) /
+				(kBoltzmann * cluster.getTemperature(ix + 1) * hy *
+					pow(b, 4)); // top or bottom
 		}
 
 		++advClusterIdx;
@@ -200,9 +204,10 @@ void YGBAdvectionHandler::computePartialsForAdvection(
 	return;
 }
 
-std::array<int, 3> YGBAdvectionHandler::getStencilForAdvection(
-		const plsm::SpaceVector<double, 3>& pos) const {
-
+std::array<int, 3>
+YGBAdvectionHandler::getStencilForAdvection(
+	const plsm::SpaceVector<double, 3>& pos) const
+{
 	// The second index is positive by convention if we are on the sink
 	if (isPointOnSink(pos))
 		return {0, 1, 0};
@@ -211,6 +216,6 @@ std::array<int, 3> YGBAdvectionHandler::getStencilForAdvection(
 	return {0, (pos[1] > location) - (pos[1] < location), 0};
 }
 
-}/* end namespace advection */
-}/* end namespace core */
-}/* end namespace xolotl */
+} /* end namespace advection */
+} /* end namespace core */
+} /* end namespace xolotl */

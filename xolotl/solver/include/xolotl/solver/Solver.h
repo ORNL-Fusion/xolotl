@@ -4,37 +4,35 @@
 // Includes
 #include <xolotl/solver/ISolver.h>
 
-namespace xolotl {
-namespace solver {
-
+namespace xolotl
+{
+namespace solver
+{
 /**
  * This class and its subclasses realize the ISolver interface to solve the
  * advection-diffusion-reaction problem with currently supported solvers.
  */
-class Solver: public ISolver {
+class Solver : public ISolver
+{
 protected:
-
 	//! The string of option
 	std::string optionsString;
 
 	//! The original solver handler.
-	static handler::ISolverHandler *solverHandler;
+	static handler::ISolverHandler* solverHandler;
 
 public:
-
 	/**
 	 * Default constructor, deleted because we must have arguments to construct.
 	 */
 	Solver() = delete;
 
 	//! Constuct a solver.
-	Solver(handler::ISolverHandler &_solverHandler,
-			std::shared_ptr<perf::IHandlerRegistry> registry);
+	Solver(handler::ISolverHandler& _solverHandler,
+		std::shared_ptr<perf::IHandlerRegistry> registry);
 
 	//! The Destructor
-	virtual ~Solver() {
-	}
-	;
+	virtual ~Solver(){};
 
 	/**
 	 * This operation transfers the input arguments passed to the program on
@@ -43,7 +41,8 @@ public:
 	 * change.
 	 * @param arg The string of arguments
 	 */
-	void setCommandLineOptions(std::string arg);
+	void
+	setCommandLineOptions(std::string arg);
 
 	/**
 	 * This operation returns the solver handler for this solver. This
@@ -51,20 +50,20 @@ public:
 	 * ISolver interface.
 	 * @return The advection handler for this solver
 	 */
-	static handler::ISolverHandler& getSolverHandler() {
+	static handler::ISolverHandler&
+	getSolverHandler()
+	{
 		return *solverHandler;
 	}
 
 protected:
-
 	/**
 	 * The performance handler registry that will be used
 	 * for this class.
 	 */
 	std::shared_ptr<perf::IHandlerRegistry> handlerRegistry;
-
 };
-//end class Solver
+// end class Solver
 
 } /* namespace solver */
 } /* namespace xolotl */

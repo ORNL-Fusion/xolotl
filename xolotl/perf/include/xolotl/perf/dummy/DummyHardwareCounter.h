@@ -1,25 +1,26 @@
 #ifndef DUMMYHARDWARECOUNTER_H
 #define DUMMYHARDWARECOUNTER_H
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include <xolotl/util/Identifiable.h>
+
 #include <xolotl/perf/IHardwareCounter.h>
+#include <xolotl/util/Identifiable.h>
 
-namespace xolotl {
-namespace perf {
-namespace dummy {
-
+namespace xolotl
+{
+namespace perf
+{
+namespace dummy
+{
 /**
- * The DummyHardwareCounter class is instantiated by the DummyHandlerRegistry class
- * and realizes the DummyHardwareCounter interface.
+ * The DummyHardwareCounter class is instantiated by the DummyHandlerRegistry
+ * class and realizes the DummyHardwareCounter interface.
  */
-class DummyHardwareCounter: public IHardwareCounter,
-		public util::Identifiable {
-
+class DummyHardwareCounter : public IHardwareCounter, public util::Identifiable
+{
 private:
-
 	/**
 	 * An empty collection of values, used by getValues to avoid
 	 * returning a reference to a temporary.
@@ -37,35 +38,39 @@ private:
 	 * must always be given a name and a vector of quantities to
 	 * be monitored.
 	 */
-	DummyHardwareCounter() :
-			util::Identifiable("unused") {
+	DummyHardwareCounter() : util::Identifiable("unused")
+	{
 	}
 
 public:
-
 	/**
 	 * DummyHardwareCounter constructor that takes the name and a
 	 * list of the different quantities it should monitor.
 	 *
 	 * @param counterName The DummyHardwareCounter's name
-	 * @param counterQuantities The vector of quantities the DummyHardwareCounter will monitor
+	 * @param counterQuantities The vector of quantities the
+	 * DummyHardwareCounter will monitor
 	 */
 	DummyHardwareCounter(const std::string& counterName,
-			const IHardwareCounter::SpecType& ctrSpec) :
-			util::Identifiable("unused") {
+		const IHardwareCounter::SpecType& ctrSpec) :
+		util::Identifiable("unused")
+	{
 	}
 
 	/**
 	 * The destructor
 	 */
-	virtual ~DummyHardwareCounter() {
+	virtual ~DummyHardwareCounter()
+	{
 	}
 
 	/**
 	 * Start collecting performance counter data.
 	 * This class' implementation is a stub.
 	 */
-	virtual void start(void) {
+	virtual void
+	start(void)
+	{
 		// nothing to do - this is a stub
 	}
 
@@ -73,7 +78,9 @@ public:
 	 * Stop collecting performance counter data.
 	 * This class' implementation is a stub.
 	 */
-	virtual void stop(void) {
+	virtual void
+	stop(void)
+	{
 		// nothing to do - this is a stub
 	}
 
@@ -83,7 +90,9 @@ public:
 	 *
 	 * @return An empty collection of values.
 	 */
-	virtual const ValType& getValues(void) const {
+	virtual const ValType&
+	getValues(void) const
+	{
 		// nothing to do - this is a stub
 		return dummyVals;
 	}
@@ -94,7 +103,9 @@ public:
 	 *
 	 * @return Any empty collection of specifications.
 	 */
-	virtual const SpecType& getSpecification(void) const {
+	virtual const SpecType&
+	getSpecification(void) const
+	{
 		return dummySpec;
 	}
 
@@ -104,13 +115,15 @@ public:
 	 *
 	 * @return An empty string.
 	 */
-	virtual std::string getCounterName(IHardwareCounter::CounterSpec cs) const {
+	virtual std::string
+	getCounterName(IHardwareCounter::CounterSpec cs) const
+	{
 		return std::string();
 	}
 };
 
-}//end namespace dummy
-}//end namespace perf
-}//end namespace xolotl
+} // end namespace dummy
+} // end namespace perf
+} // end namespace xolotl
 
 #endif

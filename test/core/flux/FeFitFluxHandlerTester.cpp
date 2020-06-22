@@ -1,12 +1,15 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/unit_test.hpp>
-#include <mpi.h>
 #include <fstream>
 #include <iostream>
-#include <xolotl/core/flux/FeFitFluxHandler.h>
+
+#include <mpi.h>
+
+#include <boost/test/unit_test.hpp>
+
 #include <xolotl/config.h>
+#include <xolotl/core/flux/FeFitFluxHandler.h>
 #include <xolotl/options/Options.h>
 
 using namespace std;
@@ -19,11 +22,12 @@ BOOST_GLOBAL_FIXTURE(ScopeGuard);
 /**
  * The test suite is responsible for testing the FeFitFluxHandler.
  */
-BOOST_AUTO_TEST_SUITE (FeFitFluxHandlerTester_testSuite)
+BOOST_AUTO_TEST_SUITE(FeFitFluxHandlerTester_testSuite)
 
-BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
+BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
+{
 	// Create the option to create a network
-    xolotl::options::Options opts;
+	xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=10 0 0 10 10" << std::endl;
@@ -31,7 +35,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 
 	// Create a fake command line to read the options
 	int argc = 2;
-	char **argv = new char*[3];
+	char** argv = new char*[3];
 	std::string appName = "fakeXolotlAppNameForTests";
 	argv[0] = new char[appName.length() + 1];
 	strcpy(argv[0], appName.c_str());
@@ -53,7 +57,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
-	NetworkType network( { maxHe, maxV, maxI }, grid.size(), opts);
+	NetworkType network({maxHe, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -78,12 +82,12 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux) {
 	}
 
 	// The pointer to the grid point we want
-	double *updatedConc = &newConcentration[0];
-	double *updatedConcOffset = updatedConc;
+	double* updatedConc = &newConcentration[0];
+	double* updatedConcOffset = updatedConc;
 
 	// Update the concentrations
-	testFitFlux->computeIncidentFlux(currTime, updatedConcOffset, 0,
-			surfacePos);
+	testFitFlux->computeIncidentFlux(
+		currTime, updatedConcOffset, 0, surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[0], 1.49e-05, 0.01); // I

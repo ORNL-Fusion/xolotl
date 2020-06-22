@@ -4,34 +4,37 @@
 // Includes
 #include <xolotl/core/diffusion/DiffusionHandler.h>
 
-namespace xolotl {
-namespace core {
-namespace diffusion {
-
+namespace xolotl
+{
+namespace core
+{
+namespace diffusion
+{
 /**
- * This class is a subclass of DiffusionHandler for the isotropic diffusion of mobile
- * clusters in 3D.
+ * This class is a subclass of DiffusionHandler for the isotropic diffusion of
+ * mobile clusters in 3D.
  */
-class Diffusion3DHandler: public DiffusionHandler {
+class Diffusion3DHandler : public DiffusionHandler
+{
 private:
-
 	//! The vector to know which clusters are diffusing where
-	std::vector<std::vector<std::vector<std::vector<bool> > > > diffusionGrid;
+	std::vector<std::vector<std::vector<std::vector<bool>>>> diffusionGrid;
 
 public:
-
 	//! The Constructor
-	Diffusion3DHandler(double threshold) :
-			DiffusionHandler(threshold) {
+	Diffusion3DHandler(double threshold) : DiffusionHandler(threshold)
+	{
 	}
 
 	//! The Destructor
-	~Diffusion3DHandler() {
+	~Diffusion3DHandler()
+	{
 	}
 
 	/**
-	 * Initialize an array of the dimension of the physical domain times the number of diffusion
-	 * clusters. For each location, True means the cluster is diffusion, False means it is not.
+	 * Initialize an array of the dimension of the physical domain times the
+	 * number of diffusion clusters. For each location, True means the cluster
+	 * is diffusion, False means it is not.
 	 *
 	 * @param advectionHandlers The vector of advection handlers
 	 * @param grid The spatial grid in the depth direction
@@ -44,50 +47,56 @@ public:
 	 * @param hz The step size in the Z direction
 	 * @param zs The beginning of the grid on this process
 	 */
-	void initializeDiffusionGrid(
-			std::vector<advection::IAdvectionHandler*> advectionHandlers,
-			std::vector<double> grid, int nx, int xs, int ny = 0, double hy =
-					0.0, int ys = 0, int nz = 0, double hz = 0.0, int zs = 0)
-					override;
+	void
+	initializeDiffusionGrid(
+		std::vector<advection::IAdvectionHandler*> advectionHandlers,
+		std::vector<double> grid, int nx, int xs, int ny = 0, double hy = 0.0,
+		int ys = 0, int nz = 0, double hz = 0.0, int zs = 0) override;
 
 	/**
-	 * Compute the flux due to the diffusion for all the clusters that are diffusing,
-	 * given the space parameters.
-	 * This method is called by the RHSFunction from the PetscSolver.
+	 * Compute the flux due to the diffusion for all the clusters that are
+	 * diffusing, given the space parameters. This method is called by the
+	 * RHSFunction from the PetscSolver.
 	 *
 	 * If D is the diffusion coefficient, C_l, C_r, C_b, C_t, C_f, C_ba, C_m the
-	 * left, right, bottom, top, front, back, and middle concentration of this cluster,
-	 * the value of the flux is:
+	 * left, right, bottom, top, front, back, and middle concentration of this
+	 * cluster, the value of the flux is:
 	 *
 	 * D * [(2.0 / [a * (a + b)]) * (C_l + [a/b] * C_r - [1.0 + (a/b)] * C_m)
 	 * 	   + sy * (C_b + C_t - 2*C_m)
 	 *     + sz * (C_f + C_ba - 2*C_m)]
 	 *
 	 * @param network The network
-	 * @param concVector The pointer to the pointer of arrays of concentration at middle,
-	 * left, right, bottom, top, front, and back grid points
-	 * @param updatedConcOffset The pointer to the array of the concentration at the grid
-	 * point where the diffusion is computed used to find the next solution
-	 * @param hxLeft The step size on the left side of the point in the x direction (a)
-	 * @param hxRight The step size on the right side of the point in the x direction (b)
+	 * @param concVector The pointer to the pointer of arrays of concentration
+	 * at middle, left, right, bottom, top, front, and back grid points
+	 * @param updatedConcOffset The pointer to the array of the concentration at
+	 * the grid point where the diffusion is computed used to find the next
+	 * solution
+	 * @param hxLeft The step size on the left side of the point in the x
+	 * direction (a)
+	 * @param hxRight The step size on the right side of the point in the x
+	 * direction (b)
 	 * @param ix The position on the x grid
-	 * @param sy The space parameter, depending on the grid step size in the y direction
+	 * @param sy The space parameter, depending on the grid step size in the y
+	 * direction
 	 * @param iy The position on the y grid
-	 * @param sz The space parameter, depending on the grid step size in the z direction
+	 * @param sz The space parameter, depending on the grid step size in the z
+	 * direction
 	 * @param iz The position on the z grid
 	 */
-	void computeDiffusion(network::IReactionNetwork &network,
-			double **concVector, double *updatedConcOffset, double hxLeft,
-			double hxRight, int ix, double sy = 0.0, int iy = 0,
-			double sz = 0.0, int iz = 0) const override;
+	void
+	computeDiffusion(network::IReactionNetwork& network, double** concVector,
+		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
+		double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0) const override;
 
 	/**
-	 * Compute the partials due to the diffusion of all the diffusing clusters given
-	 * the space parameters.
-	 * This method is called by the RHSJacobian from the PetscSolver.
+	 * Compute the partials due to the diffusion of all the diffusing clusters
+	 * given the space parameters. This method is called by the RHSJacobian from
+	 * the PetscSolver.
 	 *
-	 * Using the same notation as for computeDiffusion, the partial derivative on the
-	 * left grid point should be:
+	 * Using the same notation as for computeDiffusion, the partial derivative
+	 * on the left grid point should be:
 	 *
 	 * D * (2.0 / [a * (a + b)])
 	 *
@@ -108,25 +117,28 @@ public:
 	 * - 2.0 * D * [(1.0 / [a*b]) + sy + sz]
 	 *
 	 * @param network The network
-	 * @param val The pointer to the array that will contain the values of partials
-	 * for the diffusion
-	 * @param indices The pointer to the array that will contain the indices of the
-	 * diffusing clusters in the network
-	 * @param hxLeft The step size on the left side of the point in the x direction (a)
-	 * @param hxRight The step size on the right side of the point in the x direction (b)
+	 * @param val The pointer to the array that will contain the values of
+	 * partials for the diffusion
+	 * @param indices The pointer to the array that will contain the indices of
+	 * the diffusing clusters in the network
+	 * @param hxLeft The step size on the left side of the point in the x
+	 * direction (a)
+	 * @param hxRight The step size on the right side of the point in the x
+	 * direction (b)
 	 * @param ix The position on the x grid
-	 * @param sy The space parameter, depending on the grid step size in the y direction
+	 * @param sy The space parameter, depending on the grid step size in the y
+	 * direction
 	 * @param iy The position on the y grid
-	 * @param sz The space parameter, depending on the grid step size in the z direction
+	 * @param sz The space parameter, depending on the grid step size in the z
+	 * direction
 	 * @param iz The position on the z grid
 	 */
-	void computePartialsForDiffusion(network::IReactionNetwork &network,
-			double *val, int *indices, double hxLeft, double hxRight, int ix,
-			double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const
-					override;
-
+	void
+	computePartialsForDiffusion(network::IReactionNetwork& network, double* val,
+		int* indices, double hxLeft, double hxRight, int ix, double sy = 0.0,
+		int iy = 0, double sz = 0.0, int iz = 0) const override;
 };
-//end class Diffusion3DHandler
+// end class Diffusion3DHandler
 
 } /* end namespace diffusion */
 } /* end namespace core */

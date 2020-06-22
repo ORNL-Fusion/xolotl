@@ -14,31 +14,31 @@ class PSIReactionNetwork;
 
 template <typename TSpeciesEnum>
 class PSIProductionReaction :
-    public ProductionReaction<PSIReactionNetwork<TSpeciesEnum>,
-        PSIProductionReaction<TSpeciesEnum>>
+	public ProductionReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSIProductionReaction<TSpeciesEnum>>
 {
 public:
-    using Superclass = ProductionReaction<PSIReactionNetwork<TSpeciesEnum>,
-        PSIProductionReaction<TSpeciesEnum>>;
+	using Superclass = ProductionReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSIProductionReaction<TSpeciesEnum>>;
 
-    using Superclass::Superclass;
+	using Superclass::Superclass;
 };
 
 template <typename TSpeciesEnum>
 class PSIDissociationReaction :
-    public DissociationReaction<PSIReactionNetwork<TSpeciesEnum>,
-        PSIDissociationReaction<TSpeciesEnum>>
+	public DissociationReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSIDissociationReaction<TSpeciesEnum>>
 {
 public:
-    using Superclass = DissociationReaction<PSIReactionNetwork<TSpeciesEnum>,
-            PSIDissociationReaction<TSpeciesEnum>>;
+	using Superclass = DissociationReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSIDissociationReaction<TSpeciesEnum>>;
 
-    using Superclass::Superclass;
+	using Superclass::Superclass;
 
-    KOKKOS_INLINE_FUNCTION
-    double
-    computeBindingEnergy();
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeBindingEnergy();
 };
-}
-}
-}
+} // namespace network
+} // namespace core
+} // namespace xolotl

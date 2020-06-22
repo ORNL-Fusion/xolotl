@@ -2,6 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
+
 #include <xolotl/util/TokenizedLineReader.h>
 
 using namespace std;
@@ -9,18 +10,19 @@ using namespace xolotl::util;
 
 // Test data
 const string doubleString =
-		"0.0 1.0 5.0\n0.11 0.55 22.86 99.283\n# Comment\n 0.000382 883.33 74.832\n";
+	"0.0 1.0 5.0\n0.11 0.55 22.86 99.283\n# Comment\n 0.000382 883.33 74.832\n";
 const string doubleCSVDoubleSlashCommentString =
-		"0.0,1.0,5.0\n0.11,0.55,22.86,99.283\n// Comment\n0.000382,883.33,74.832\n";
+	"0.0,1.0,5.0\n0.11,0.55,22.86,99.283\n// Comment\n0.000382,883.33,74.832\n";
 const string intString = "1 3 5 7 9\n# Comment\n 0 2 4 6 \n";
 const string intCSVString = "1,3,5,7,9\n# Comment\n0,2,4,6\n";
 const string equalDelimiterString =
-		"arg=many different strings\nno equal sign here\n";
+	"arg=many different strings\nno equal sign here\n";
 
 BOOST_AUTO_TEST_SUITE(TokenizedLineReader_testSuite)
 
 /**This operation checks default parsing setup of the TokenizedLineReader.*/
-BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
+BOOST_AUTO_TEST_CASE(checkDefaultParsing)
+{
 	// Local Declarations
 	TokenizedLineReader<double> doubleReader;
 	TokenizedLineReader<int> intReader;
@@ -31,7 +33,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 
 	// Create the input stream
 	shared_ptr<stringstream> doubleTestStream(
-			new stringstream(stringstream::in | stringstream::out));
+		new stringstream(stringstream::in | stringstream::out));
 	*doubleTestStream << doubleString;
 	// Load the double reader
 	doubleReader.setInputStream(doubleTestStream);
@@ -66,7 +68,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 
 	// Create the input stream
 	shared_ptr<stringstream> intTestStream(
-			new stringstream(stringstream::in | stringstream::out));
+		new stringstream(stringstream::in | stringstream::out));
 	*intTestStream << intString;
 	// Load the int reader
 	intReader.setInputStream(intTestStream);
@@ -94,8 +96,10 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing) {
 	return;
 }
 
-/**This operation checks the TokenizedLineReader when the token is changed to a comma.*/
-BOOST_AUTO_TEST_CASE(checkCSVParsing) {
+/**This operation checks the TokenizedLineReader when the token is changed to a
+ * comma.*/
+BOOST_AUTO_TEST_CASE(checkCSVParsing)
+{
 	// Local Declarations
 	TokenizedLineReader<int> intReader;
 	vector<int> iLine;
@@ -104,7 +108,7 @@ BOOST_AUTO_TEST_CASE(checkCSVParsing) {
 
 	// Create the input stream
 	shared_ptr<stringstream> intTestStream(
-			new stringstream(stringstream::in | stringstream::out));
+		new stringstream(stringstream::in | stringstream::out));
 	*intTestStream << intCSVString;
 	// Configure the delimiter
 	intReader.setDelimiter(",");
@@ -134,8 +138,10 @@ BOOST_AUTO_TEST_CASE(checkCSVParsing) {
 	return;
 }
 
-/**This operation checks the TokenizedLineReader when the comment token is changed.*/
-BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
+/**This operation checks the TokenizedLineReader when the comment token is
+ * changed.*/
+BOOST_AUTO_TEST_CASE(checkCommentDelimiter)
+{
 	// Local Declarations
 	TokenizedLineReader<double> doubleReader;
 	vector<double> dLine;
@@ -144,7 +150,7 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 
 	// Create the input stream
 	shared_ptr<stringstream> doubleTestStream(
-			new stringstream(stringstream::in | stringstream::out));
+		new stringstream(stringstream::in | stringstream::out));
 	*doubleTestStream << doubleCSVDoubleSlashCommentString;
 	// Set the delimiter
 	doubleReader.setDelimiter(",");
@@ -182,15 +188,17 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter) {
 	return;
 }
 
-/**This operation checks the TokenizedLineReader when the delimiter is changed to a the equal sign.*/
-BOOST_AUTO_TEST_CASE(checkDelimiterParsing) {
+/**This operation checks the TokenizedLineReader when the delimiter is changed
+ * to a the equal sign.*/
+BOOST_AUTO_TEST_CASE(checkDelimiterParsing)
+{
 	// Local Declarations
 	TokenizedLineReader<std::string> stringReader;
 	vector<std::string> iLine;
 
 	// Create the input stream
 	shared_ptr<stringstream> stringTestStream(
-			new stringstream(stringstream::in | stringstream::out));
+		new stringstream(stringstream::in | stringstream::out));
 	*stringTestStream << equalDelimiterString;
 	// Configure the delimiter
 	stringReader.setDelimiter("=");

@@ -1,13 +1,16 @@
 #define BOOST_TEST_MODULE Regression
 
+#include <math.h>
+#include <unistd.h>
+
 #include <iostream>
 #include <sstream>
 #include <string>
-#include <math.h>
-#include <unistd.h>
+
 #include <boost/test/included/unit_test.hpp>
-#include <xolotl/perf/xolotlPerf.h>
+
 #include <xolotl/perf/PerfObjStatistics.h>
+#include <xolotl/perf/xolotlPerf.h>
 
 using namespace xolotl;
 
@@ -18,32 +21,37 @@ int cwSize = -1;
 /**
  * Test suite for HandlerRegistry classes (mainly StdHandlerRegistry).
  */
-BOOST_AUTO_TEST_SUITE (StdHandlerRegistry_testSuite)
+BOOST_AUTO_TEST_SUITE(StdHandlerRegistry_testSuite)
 
-struct MPIFixture {
-	MPIFixture(void) {
+struct MPIFixture
+{
+	MPIFixture(void)
+	{
 		MPI_Init(&boost::unit_test::framework::master_test_suite().argc,
-				&boost::unit_test::framework::master_test_suite().argv);
+			&boost::unit_test::framework::master_test_suite().argv);
 
 		MPI_Comm_rank(MPI_COMM_WORLD, &cwRank);
 		MPI_Comm_size(MPI_COMM_WORLD, &cwSize);
 	}
 
-	~MPIFixture(void) {
+	~MPIFixture(void)
+	{
 		MPI_Finalize();
 	}
 };
 
 #if BOOST_VERSION >= 105900
-// In Boost 1.59, the semicolon at the end of the definition of BOOST_GLOBAL_FIXTURE is removed
+// In Boost 1.59, the semicolon at the end of the definition of
+// BOOST_GLOBAL_FIXTURE is removed
 BOOST_GLOBAL_FIXTURE(MPIFixture);
 #else
-// With earlier Boost versions, naively adding a semicolon to our code will generate compiler
-// warnings about redundant semicolons
-BOOST_GLOBAL_FIXTURE (MPIFixture)
+// With earlier Boost versions, naively adding a semicolon to our code will
+// generate compiler warnings about redundant semicolons
+BOOST_GLOBAL_FIXTURE(MPIFixture)
 #endif
 
-BOOST_AUTO_TEST_CASE(createDummyHandlerReg) {
+BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
+{
 	unsigned int nGoodInits = 0;
 
 	try {
@@ -51,21 +59,23 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg) {
 		nGoodInits++;
 
 		std::shared_ptr<perf::IHandlerRegistry> reg =
-				perf::getHandlerRegistry();
+			perf::getHandlerRegistry();
 		if (reg) {
 			nGoodInits++;
 		}
 
 		BOOST_TEST_MESSAGE("Dummy handler registry created successfully.");
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		BOOST_TEST_MESSAGE(
-				"DummyHandlerRegistry creation failed: " << e.what());
+			"DummyHandlerRegistry creation failed: " << e.what());
 	}
 
 	BOOST_REQUIRE_EQUAL(nGoodInits, 2U);
 }
 
-BOOST_AUTO_TEST_CASE(createStdHandlerReg) {
+BOOST_AUTO_TEST_CASE(createStdHandlerReg)
+{
 	unsigned int nGoodInits = 0;
 
 	try {
@@ -73,20 +83,22 @@ BOOST_AUTO_TEST_CASE(createStdHandlerReg) {
 		nGoodInits++;
 
 		std::shared_ptr<perf::IHandlerRegistry> reg =
-				perf::getHandlerRegistry();
+			perf::getHandlerRegistry();
 		if (reg) {
 			nGoodInits++;
 		}
 
 		BOOST_TEST_MESSAGE("Standard handler registry created successfully.");
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		BOOST_TEST_MESSAGE("StdHandlerRegistry creation failed: " << e.what());
 	}
 
 	BOOST_REQUIRE_EQUAL(nGoodInits, 2U);
 }
 
-BOOST_AUTO_TEST_CASE(createOSHandlerReg) {
+BOOST_AUTO_TEST_CASE(createOSHandlerReg)
+{
 	unsigned int nGoodInits = 0;
 
 	try {
@@ -94,27 +106,29 @@ BOOST_AUTO_TEST_CASE(createOSHandlerReg) {
 		nGoodInits++;
 
 		std::shared_ptr<perf::IHandlerRegistry> reg =
-				perf::getHandlerRegistry();
+			perf::getHandlerRegistry();
 		if (reg) {
 			nGoodInits++;
 		}
 
 		BOOST_TEST_MESSAGE("OS handler registry created successfully.");
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		BOOST_TEST_MESSAGE("OSHandlerRegistry creation failed: " << e.what());
 	}
 
 	BOOST_REQUIRE_EQUAL(nGoodInits, 2U);
 }
 
-BOOST_AUTO_TEST_CASE(aggregateStats) {
+BOOST_AUTO_TEST_CASE(aggregateStats)
+{
 	try {
 		perf::initialize(perf::IHandlerRegistry::std);
 		std::shared_ptr<perf::IHandlerRegistry> reg =
-				perf::getHandlerRegistry();
+			perf::getHandlerRegistry();
 
-		std::shared_ptr<perf::IEventCounter> ctr = reg->getEventCounter(
-				"testCounter");
+		std::shared_ptr<perf::IEventCounter> ctr =
+			reg->getEventCounter("testCounter");
 		if (!ctr) {
 			throw std::runtime_error("Failed to create EventCounter");
 		}
@@ -153,19 +167,19 @@ BOOST_AUTO_TEST_CASE(aggregateStats) {
 			// with little spread.
 			BOOST_REQUIRE_EQUAL(timerStats.size(), 1U);
 			perf::PerfObjStatistics<perf::ITimer::ValType>& timerStatsObj =
-					timerStats.begin()->second;
+				timerStats.begin()->second;
 
 			BOOST_TEST_MESSAGE("timer name: " << timerStatsObj.name);
 			BOOST_TEST_MESSAGE(
-					"timer process count: " << timerStatsObj.processCount);
+				"timer process count: " << timerStatsObj.processCount);
 			BOOST_TEST_MESSAGE("timer average: " << timerStatsObj.average);
 			BOOST_TEST_MESSAGE("timer min: " << timerStatsObj.min);
 			BOOST_TEST_MESSAGE("timer max: " << timerStatsObj.max);
 			BOOST_TEST_MESSAGE("timer stdev: " << timerStatsObj.stdev);
 
 			BOOST_REQUIRE_EQUAL(timerStatsObj.name, "testTimer");
-			BOOST_REQUIRE_EQUAL(timerStatsObj.processCount,
-					(unsigned int )cwSize);
+			BOOST_REQUIRE_EQUAL(
+				timerStatsObj.processCount, (unsigned int)cwSize);
 			BOOST_REQUIRE_CLOSE(timerStatsObj.average, nTimedSeconds, 0.03);
 			BOOST_REQUIRE_CLOSE(timerStatsObj.min, nTimedSeconds, 0.03);
 			BOOST_REQUIRE_CLOSE(timerStatsObj.max, nTimedSeconds, 0.03);
@@ -182,32 +196,32 @@ BOOST_AUTO_TEST_CASE(aggregateStats) {
 			double expAverage = (countSum / cwSize);
 			unsigned int expMin = 0;
 			unsigned int expMax = cwSize - 1;
-			double expStdev = sqrt(
-					(squaredCountSum / cwSize) - expAverage * expAverage);
+			double expStdev =
+				sqrt((squaredCountSum / cwSize) - expAverage * expAverage);
 
 			BOOST_REQUIRE_EQUAL(ctrStats.size(), 1U);
 			perf::PerfObjStatistics<perf::IEventCounter::ValType>& ctrStatsObj =
-					ctrStats.begin()->second;
+				ctrStats.begin()->second;
 
 			BOOST_TEST_MESSAGE("ctr name: " << ctrStatsObj.name);
 			BOOST_TEST_MESSAGE(
-					"ctr process count: " << ctrStatsObj.processCount);
+				"ctr process count: " << ctrStatsObj.processCount);
 			BOOST_TEST_MESSAGE("ctr average: " << ctrStatsObj.average);
 			BOOST_TEST_MESSAGE("ctr min: " << ctrStatsObj.min);
 			BOOST_TEST_MESSAGE("ctr max: " << ctrStatsObj.max);
 			BOOST_TEST_MESSAGE("ctr stdev: " << ctrStatsObj.stdev);
 
 			BOOST_REQUIRE_EQUAL(ctrStatsObj.name, "testCounter");
-			BOOST_REQUIRE_EQUAL(ctrStatsObj.processCount,
-					(unsigned int )cwSize);
+			BOOST_REQUIRE_EQUAL(ctrStatsObj.processCount, (unsigned int)cwSize);
 			BOOST_REQUIRE_EQUAL(ctrStatsObj.min, expMin);
 			BOOST_REQUIRE_EQUAL(ctrStatsObj.max, expMax);
 			BOOST_REQUIRE_CLOSE(ctrStatsObj.average, expAverage, 0.01);
 			BOOST_REQUIRE_CLOSE(ctrStatsObj.stdev, expStdev, 0.01);
 		}
-	} catch (const std::exception& e) {
+	}
+	catch (const std::exception& e) {
 		BOOST_TEST_MESSAGE(
-				"Test of aggregating counter stats failed: " << e.what());
+			"Test of aggregating counter stats failed: " << e.what());
 	}
 }
 

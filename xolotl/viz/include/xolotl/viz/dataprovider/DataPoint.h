@@ -13,27 +13,27 @@ struct DataPoint
 	/**
 	 * The time step.
 	 */
-	double t {};
+	double t{};
 
 	/**
 	 * The X position on the grid.
 	 */
-	double x {};
+	double x{};
 
 	/**
 	 * The Y position on the grid.
 	 */
-	double y {};
+	double y{};
 
 	/**
 	 * The Z position on the grid.
 	 */
-	double z {};
+	double z{};
 
 	/**
 	 * Scalar field value at time step t and grid position x,y,z.
 	 */
-	double value {};
+	double value{};
 };
 } // namespace dataprovider
 } // namespace viz

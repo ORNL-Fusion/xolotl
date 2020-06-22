@@ -1,14 +1,18 @@
 // Includes
 #include <xolotl/core/diffusion/Diffusion2DHandler.h>
 
-namespace xolotl {
-namespace core {
-namespace diffusion {
-
-void Diffusion2DHandler::initializeDiffusionGrid(
-		std::vector<advection::IAdvectionHandler *> advectionHandlers,
-		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
-		int nz, double hz, int zs) {
+namespace xolotl
+{
+namespace core
+{
+namespace diffusion
+{
+void
+Diffusion2DHandler::initializeDiffusionGrid(
+	std::vector<advection::IAdvectionHandler*> advectionHandlers,
+	std::vector<double> grid, int nx, int xs, int ny, double hy, int ys, int nz,
+	double hz, int zs)
+{
 	// Get the number of diffusing clusters
 	int nDiff = diffusingClusters.size();
 
@@ -16,7 +20,7 @@ void Diffusion2DHandler::initializeDiffusionGrid(
 	diffusionGrid.clear();
 	// Initialize it to True
 	for (int j = 0; j < ny + 2; j++) {
-		std::vector<std::vector<bool> > tempGridBis;
+		std::vector<std::vector<bool>> tempGridBis;
 		for (int i = 0; i < nx + 2; i++) {
 			tempGridBis.emplace_back(nDiff, true);
 		}
@@ -24,34 +28,33 @@ void Diffusion2DHandler::initializeDiffusionGrid(
 	}
 
 	// Initialize the grid position
-    plsm::SpaceVector<double, 3> gridPosition { 0.0, 0.0, 0.0 };
+	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
 	// Loop on the advection handlers
 	for (auto const& currAdvectionHandler : advectionHandlers) {
 		// Get the list of advecting clusters
 		auto const& advecClusters =
-				currAdvectionHandler->getAdvectingClusters();
+			currAdvectionHandler->getAdvectingClusters();
 
 		// Loop on the spatial grid
 		for (int j = -1; j < ny + 1; j++) {
 			// Set the grid position
-			gridPosition[1] = hy * (double) (j + ys);
+			gridPosition[1] = hy * (double)(j + ys);
 			for (int i = 0; i < nx; i++) {
 				// Set the grid position
-				gridPosition[0] = (grid[i + xs] + grid[i + xs + 1]) / 2.0
-						- grid[1];
+				gridPosition[0] =
+					(grid[i + xs] + grid[i + xs + 1]) / 2.0 - grid[1];
 
 				// Check if we are on a sink
 				if (currAdvectionHandler->isPointOnSink(gridPosition)) {
-					// We have to find the corresponding reactant in the 
+					// We have to find the corresponding reactant in the
 					// diffusion cluster collection.
 					for (auto const& currAdvCluster : advecClusters) {
 						// Initialize n the index in the diffusion index vector
 						// TODO use std::find or std::find_if
 						int n = 0;
 						while (n < nDiff) {
-							auto const currDiffCluster =
-									diffusingClusters[n];
+							auto const currDiffCluster = diffusingClusters[n];
 							if (currDiffCluster == currAdvCluster) {
 								break;
 							}
@@ -68,10 +71,11 @@ void Diffusion2DHandler::initializeDiffusionGrid(
 	return;
 }
 
-void Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
-		double **concVector, double *updatedConcOffset, double hxLeft,
-		double hxRight, int ix, double sy, int iy, double, int) const {
-
+void
+Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
+	double** concVector, double* updatedConcOffset, double hxLeft,
+	double hxRight, int ix, double sy, int iy, double, int) const
+{
 	// Consider each diffusing cluster.
 	// TODO Maintaining a separate index assumes that diffusingClusters is
 	// visited in same order as diffusionGrid array for given point.
@@ -80,32 +84,31 @@ void Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
 	// Maybe with a zip? or a std::transform?
 	int diffClusterIdx = 0;
 	for (auto const& currId : diffusingClusters) {
-
 		auto cluster = network.getClusterCommon(currId);
 
 		// Get the initial concentrations
-		double oldConc = concVector[0][currId]
-				* diffusionGrid[iy + 1][ix + 1][diffClusterIdx]; // middle
-		double oldLeftConc = concVector[1][currId]
-				* diffusionGrid[iy + 1][ix][diffClusterIdx]; // left
-		double oldRightConc = concVector[2][currId]
-				* diffusionGrid[iy + 1][ix + 2][diffClusterIdx]; // right
-		double oldBottomConc = concVector[3][currId]
-				* diffusionGrid[iy][ix + 1][diffClusterIdx]; // bottom
-		double oldTopConc = concVector[4][currId]
-				* diffusionGrid[iy + 2][ix + 1][diffClusterIdx]; // top
+		double oldConc = concVector[0][currId] *
+			diffusionGrid[iy + 1][ix + 1][diffClusterIdx]; // middle
+		double oldLeftConc = concVector[1][currId] *
+			diffusionGrid[iy + 1][ix][diffClusterIdx]; // left
+		double oldRightConc = concVector[2][currId] *
+			diffusionGrid[iy + 1][ix + 2][diffClusterIdx]; // right
+		double oldBottomConc = concVector[3][currId] *
+			diffusionGrid[iy][ix + 1][diffClusterIdx]; // bottom
+		double oldTopConc = concVector[4][currId] *
+			diffusionGrid[iy + 2][ix + 1][diffClusterIdx]; // top
 
 		// Use a simple midpoint stencil to compute the concentration
-		double conc = cluster.getDiffusionCoefficient(ix + 1)
-				* (2.0
-						* (oldLeftConc + (hxLeft / hxRight) * oldRightConc
-								- (1.0 + (hxLeft / hxRight)) * oldConc)
-						/ (hxLeft * (hxLeft + hxRight))
-						+ sy * (oldBottomConc + oldTopConc - 2.0 * oldConc))
-				+ ((cluster.getDiffusionCoefficient(ix + 2)
-						- cluster.getDiffusionCoefficient(ix))
-						* (oldRightConc - oldLeftConc)
-						/ ((hxLeft + hxRight) * (hxLeft + hxRight)));
+		double conc = cluster.getDiffusionCoefficient(ix + 1) *
+				(2.0 *
+						(oldLeftConc + (hxLeft / hxRight) * oldRightConc -
+							(1.0 + (hxLeft / hxRight)) * oldConc) /
+						(hxLeft * (hxLeft + hxRight)) +
+					sy * (oldBottomConc + oldTopConc - 2.0 * oldConc)) +
+			((cluster.getDiffusionCoefficient(ix + 2) -
+				 cluster.getDiffusionCoefficient(ix)) *
+				(oldRightConc - oldLeftConc) /
+				((hxLeft + hxRight) * (hxLeft + hxRight)));
 
 		// Update the concentration of the cluster
 		updatedConcOffset[currId] += conc;
@@ -116,11 +119,11 @@ void Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
 	return;
 }
 
-void Diffusion2DHandler::computePartialsForDiffusion(
-		network::IReactionNetwork& network, double *val, int *indices,
-		double hxLeft, double hxRight, int ix, double sy, int iy, double,
-		int) const {
-
+void
+Diffusion2DHandler::computePartialsForDiffusion(
+	network::IReactionNetwork& network, double* val, int* indices,
+	double hxLeft, double hxRight, int ix, double sy, int iy, double, int) const
+{
 	// Consider each diffusing cluster.
 	// TODO Maintaining a separate index assumes that diffusingClusters is
 	// visited in same order as diffusionGrid array for given point.
@@ -129,7 +132,6 @@ void Diffusion2DHandler::computePartialsForDiffusion(
 	// Maybe with a zip? or a std::transform?
 	int diffClusterIdx = 0;
 	for (auto const& currId : diffusingClusters) {
-
 		auto cluster = network.getClusterCommon(currId);
 
 		// Set the cluster index, the PetscSolver will use it to compute
@@ -138,25 +140,30 @@ void Diffusion2DHandler::computePartialsForDiffusion(
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, right, bottom, and top grid point
-		val[diffClusterIdx * 5] = -2.0 * cluster.getDiffusionCoefficient(ix + 1)
-				* ((1.0 / (hxLeft * hxRight)) + sy)
-				* diffusionGrid[iy + 1][ix + 1][diffClusterIdx]; // middle
-		val[(diffClusterIdx * 5) + 1] = (cluster.getDiffusionCoefficient(ix + 1)
-				* 2.0 / (hxLeft * (hxLeft + hxRight))
-				+ (cluster.getDiffusionCoefficient(ix)
-						- cluster.getDiffusionCoefficient(ix + 2))
-						/ ((hxLeft + hxRight) * (hxLeft + hxRight)))
-				* diffusionGrid[iy + 1][ix][diffClusterIdx]; // left
-		val[(diffClusterIdx * 5) + 2] = (cluster.getDiffusionCoefficient(ix + 1)
-				* 2.0 / (hxRight * (hxLeft + hxRight))
-				+ (cluster.getDiffusionCoefficient(ix + 2)
-						- cluster.getDiffusionCoefficient(ix))
-						/ ((hxLeft + hxRight) * (hxLeft + hxRight)))
-				* diffusionGrid[iy + 1][ix + 2][diffClusterIdx]; // right
-		val[(diffClusterIdx * 5) + 3] = cluster.getDiffusionCoefficient(ix + 1)
-				* sy * diffusionGrid[iy][ix + 1][diffClusterIdx]; // bottom
-		val[(diffClusterIdx * 5) + 4] = cluster.getDiffusionCoefficient(ix + 1)
-				* sy * diffusionGrid[iy + 2][ix + 1][diffClusterIdx]; // top
+		val[diffClusterIdx * 5] = -2.0 *
+			cluster.getDiffusionCoefficient(ix + 1) *
+			((1.0 / (hxLeft * hxRight)) + sy) *
+			diffusionGrid[iy + 1][ix + 1][diffClusterIdx]; // middle
+		val[(diffClusterIdx * 5) + 1] =
+			(cluster.getDiffusionCoefficient(ix + 1) * 2.0 /
+					(hxLeft * (hxLeft + hxRight)) +
+				(cluster.getDiffusionCoefficient(ix) -
+					cluster.getDiffusionCoefficient(ix + 2)) /
+					((hxLeft + hxRight) * (hxLeft + hxRight))) *
+			diffusionGrid[iy + 1][ix][diffClusterIdx]; // left
+		val[(diffClusterIdx * 5) + 2] =
+			(cluster.getDiffusionCoefficient(ix + 1) * 2.0 /
+					(hxRight * (hxLeft + hxRight)) +
+				(cluster.getDiffusionCoefficient(ix + 2) -
+					cluster.getDiffusionCoefficient(ix)) /
+					((hxLeft + hxRight) * (hxLeft + hxRight))) *
+			diffusionGrid[iy + 1][ix + 2][diffClusterIdx]; // right
+		val[(diffClusterIdx * 5) + 3] =
+			cluster.getDiffusionCoefficient(ix + 1) * sy *
+			diffusionGrid[iy][ix + 1][diffClusterIdx]; // bottom
+		val[(diffClusterIdx * 5) + 4] =
+			cluster.getDiffusionCoefficient(ix + 1) * sy *
+			diffusionGrid[iy + 2][ix + 1][diffClusterIdx]; // top
 
 		// Increase the index
 		diffClusterIdx++;
@@ -165,6 +172,6 @@ void Diffusion2DHandler::computePartialsForDiffusion(
 	return;
 }
 
-}/* end namespace diffusion */
-}/* end namespace core */
-}/* end namespace xolotl */
+} /* end namespace diffusion */
+} /* end namespace core */
+} /* end namespace xolotl */

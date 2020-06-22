@@ -1,25 +1,29 @@
 // Includes
-#include <petscts.h>
 #include <petscsys.h>
-#include <sstream>
+#include <petscts.h>
+
 #include <fstream>
-#include <iostream>
 #include <iomanip>
-#include <vector>
+#include <iostream>
 #include <memory>
-#include <xolotl/solver/PetscSolver.h>
-#include <xolotl/perf/xolotlPerf.h>
+#include <sstream>
+#include <vector>
+
 #include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
-#include <xolotl/viz/dataprovider/CvsXDataProvider.h>
-#include <xolotl/viz/LabelProvider.h>
 #include <xolotl/io/XFile.h>
+#include <xolotl/perf/xolotlPerf.h>
+#include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/Monitor.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/viz/LabelProvider.h>
+#include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 
-namespace xolotl {
-namespace solver {
-namespace monitor {
-
+namespace xolotl
+{
+namespace solver
+{
+namespace monitor
+{
 //! The pointer to the plot that will be used to visualize performance data.
 std::shared_ptr<viz::IPlot> perfPlot;
 
@@ -31,7 +35,9 @@ double timeStepThreshold = 0.0;
 /**
  * This is a method that decides when to extend the network
  */
-PetscErrorCode checkTimeStep(TS ts) {
+PetscErrorCode
+checkTimeStep(TS ts)
+{
 	// Initial declarations
 	PetscErrorCode ierr;
 
@@ -54,11 +60,13 @@ PetscErrorCode checkTimeStep(TS ts) {
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorTime")
 /**
- * This is a monitoring method set the previous time to the time. This is needed here
- * because multiple monitors need the previous time value from the previous timestep.
- * This monitor must be called last when needed.
+ * This is a monitoring method set the previous time to the time. This is needed
+ * here because multiple monitors need the previous time value from the previous
+ * timestep. This monitor must be called last when needed.
  */
-PetscErrorCode monitorTime(TS, PetscInt, PetscReal time, Vec, void*) {
+PetscErrorCode
+monitorTime(TS, PetscInt, PetscReal time, Vec, void*)
+{
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
@@ -74,11 +82,13 @@ PetscErrorCode monitorTime(TS, PetscInt, PetscReal time, Vec, void*) {
 /**
  * This is a monitoring method that will compute the total helium fluence
  */
-PetscErrorCode computeFluence(TS, PetscInt, PetscReal time, Vec, void*) {
+PetscErrorCode
+computeFluence(TS, PetscInt, PetscReal time, Vec, void*)
+{
 	PetscFunctionBeginUser;
 
 	// Get the solver handler and the flux handler
-	auto &solverHandler = PetscSolver::getSolverHandler();
+	auto& solverHandler = PetscSolver::getSolverHandler();
 	auto fluxHandler = solverHandler.getFluxHandler();
 
 	// The length of the time step
@@ -95,8 +105,9 @@ PetscErrorCode computeFluence(TS, PetscInt, PetscReal time, Vec, void*) {
 /**
  * This is a monitoring method that will save 1D plots of one performance timer
  */
-PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
-		void*) {
+PetscErrorCode
+monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec, void*)
+{
 	// To check PETSc errors
 	PetscInt ierr;
 
@@ -112,8 +123,8 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 	// Print a warning if only one process
 	if (cwSize == 1) {
 		std::cout
-				<< "You are trying to plot things that don't have any sense!! "
-				<< "\nRemove -plot_perf or run in parallel." << std::endl;
+			<< "You are trying to plot things that don't have any sense!! "
+			<< "\nRemove -plot_perf or run in parallel." << std::endl;
 		PetscFunctionReturn(0);
 	}
 
@@ -142,21 +153,23 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 	solverTimer->start();
 
 	// Collect all sampled timer values to rank 0.
-	double *allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
-	MPI_Gather(&solverTimerValue,  // send buffer
-			1,// number of values to send
-			MPI_DOUBLE,// type of items in send buffer
-			allTimerValues,// receive buffer (only valid at root)
-			1,// number of values to receive from each process
-			MPI_DOUBLE,// type of items in receive buffer
-			0,// root of MPI collective operation
-			xolotlComm);// communicator defining processes involved in the operation
+	double* allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
+	MPI_Gather(&solverTimerValue, // send buffer
+		1, // number of values to send
+		MPI_DOUBLE, // type of items in send buffer
+		allTimerValues, // receive buffer (only valid at root)
+		1, // number of values to receive from each process
+		MPI_DOUBLE, // type of items in receive buffer
+		0, // root of MPI collective operation
+		xolotlComm); // communicator defining processes involved in the
+					 // operation
 
 	if (cwRank == 0) {
-		auto allPoints = std::make_shared<std::vector<viz::dataprovider::DataPoint>>();
+		auto allPoints =
+			std::make_shared<std::vector<viz::dataprovider::DataPoint>>();
 
 		for (int i = 0; i < cwSize; ++i) {
-            viz::dataprovider::DataPoint aPoint;
+			viz::dataprovider::DataPoint aPoint;
 			aPoint.value = allTimerValues[i];
 			aPoint.x = i;
 			aPoint.t = time;
@@ -185,7 +198,7 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 		// Give the timestep to the label provider
 		std::ostringstream timeStepLabel;
 		timeStepLabel << "dt: " << std::setprecision(4) << currentTimeStep
-				<< "s";
+					  << "s";
 		perfPlot->plotLabelProvider->timeStepLabel = timeStepLabel.str();
 
 		// Render and save in file
@@ -197,9 +210,10 @@ PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec,
 	PetscFunctionReturn(0);
 }
 
-void writeNetwork(MPI_Comm _comm, std::string srcFileName,
-		std::string targetFileName, core::network::IReactionNetwork &network) {
-
+void
+writeNetwork(MPI_Comm _comm, std::string srcFileName,
+	std::string targetFileName, core::network::IReactionNetwork& network)
+{
 	int procId;
 	MPI_Comm_rank(_comm, &procId);
 
@@ -207,32 +221,31 @@ void writeNetwork(MPI_Comm _comm, std::string srcFileName,
 	// another object into our new checkpoint file.
 	if (procId == 0) {
 		if (not srcFileName.empty()) {
-
 			// Copy the network from the given file.
 			// Note that we do this using a single-process
 			// communicator because the HDF5 copy operation
 			// is not parallelized and gives very poor performance
 			// if used with a file opened for parallel access.
-			io::XFile srcFile(srcFileName,
-			MPI_COMM_SELF, io::XFile::AccessMode::OpenReadOnly);
+			io::XFile srcFile(srcFileName, MPI_COMM_SELF,
+				io::XFile::AccessMode::OpenReadOnly);
 
 			// Check if given file even has a network group.
-			auto srcNetGroup =
-					srcFile.getGroup<io::XFile::NetworkGroup>();
+			auto srcNetGroup = srcFile.getGroup<io::XFile::NetworkGroup>();
 			if (srcNetGroup) {
 				// Given file has a network group.  Copy it.
 				// First open the checkpoint file using a single-process
 				// communicator...
-				io::XFile checkpointFile(targetFileName,
-				MPI_COMM_SELF, io::XFile::AccessMode::OpenReadWrite);
+				io::XFile checkpointFile(targetFileName, MPI_COMM_SELF,
+					io::XFile::AccessMode::OpenReadWrite);
 
 				// ...then do the copy.
 				srcNetGroup->copyTo(checkpointFile);
 			}
-		} else {
+		}
+		else {
 			// Write from scratch
-			io::XFile checkpointFile(targetFileName,
-			MPI_COMM_SELF, io::XFile::AccessMode::OpenReadWrite);
+			io::XFile checkpointFile(targetFileName, MPI_COMM_SELF,
+				io::XFile::AccessMode::OpenReadWrite);
 			io::XFile::NetworkGroup netGroup(checkpointFile, network);
 		}
 	}

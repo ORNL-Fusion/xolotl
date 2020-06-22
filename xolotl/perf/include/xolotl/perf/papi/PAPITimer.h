@@ -3,20 +3,25 @@
 
 #include <xolotl/perf/config.h>
 #if !defined(HAVE_PAPI)
-#  error "Using PAPI-based handler registry classes but PAPI was not found when configured."
+#error \
+	"Using PAPI-based handler registry classes but PAPI was not found when configured."
 #endif // !defined(HAVE_PAPI)
+
+#include <papi.h>
 
 #include <xolotl/perf/ITimer.h>
 #include <xolotl/util/Identifiable.h>
-#include <papi.h>
 
-namespace xolotl {
-namespace perf {
-namespace papi {
-
+namespace xolotl
+{
+namespace perf
+{
+namespace papi
+{
 /// A timer that measures how long something takes to execute.
 /// Uses PAPI for sampling the system's timer.
-class PAPITimer: public ITimer, public util::Identifiable {
+class PAPITimer : public ITimer, public util::Identifiable
+{
 private:
 	/// The type PAPI uses for timestamps.
 	typedef long long Timestamp;
@@ -32,15 +37,18 @@ private:
 	Timestamp startTime;
 
 	/// Construct a timer.
-	/// The default constructor is private to force callers to provide a name for the timer object.
-	PAPITimer(void) :
-			util::Identifiable("unused"), val(0) {
+	/// The default constructor is private to force callers to provide a name
+	/// for the timer object.
+	PAPITimer(void) : util::Identifiable("unused"), val(0)
+	{
 	}
 
 	/// Sample the current time.
 	///
 	/// @return The current time.
-	Timestamp GetCurrentTime(void) const {
+	Timestamp
+	GetCurrentTime(void) const
+	{
 		return PAPI_get_real_nsec();
 	}
 
@@ -48,7 +56,9 @@ private:
 	///
 	/// @param t A timestamp to be converted to seconds.
 	/// @return t in terms of seconds.
-	static ITimer::ValType ToSeconds(Timestamp t) {
+	static ITimer::ValType
+	ToSeconds(Timestamp t)
+	{
 		// The timer we use - PAPI_get_real_nsec - gives time in nanoseconds.
 		return t / 1.0e9;
 	}
@@ -59,7 +69,8 @@ public:
 	///
 	/// @param name The name to associate with the timer.
 	PAPITimer(const std::string& name) :
-			util::Identifiable(name), val(0), startTime(invalidValue) {
+		util::Identifiable(name), val(0), startTime(invalidValue)
+	{
 	}
 
 	///
@@ -71,26 +82,31 @@ public:
 	/// Start the timer.
 	/// Throws std::runtime_error if starting a timer that was already started.
 	///
-	virtual void start(void);
+	virtual void
+	start(void);
 
 	///
 	/// Stop the timer.
 	/// Throws std::runtime_error if stopping a timer that was not running.
 	///
-	virtual void stop(void);
+	virtual void
+	stop(void);
 
 	///
 	/// Reset the timer.
 	/// Throws std::runtime_error if timer is running.
 	///
-	virtual void reset(void);
+	virtual void
+	reset(void);
 
 	///
 	/// Determine if the Timer is currently running.
 	///
 	/// @return true if the Timer is running, false otherwise.
 	///
-	virtual bool isRunning(void) const {
+	virtual bool
+	isRunning(void) const
+	{
 		return (startTime != invalidValue);
 	}
 
@@ -100,7 +116,9 @@ public:
 	///
 	/// @return The elapsed time measured by this timer.
 	///
-	virtual ValType getValue(void) const {
+	virtual ValType
+	getValue(void) const
+	{
 		return val;
 	}
 
@@ -108,12 +126,15 @@ public:
 	/// Retrieve the Timer value's units.
 	/// @return The units in which the timer's value is given.
 	///
-	virtual std::string getUnits(void) const;
+	virtual std::string
+	getUnits(void) const;
 
 	/// Add the given Timer's value to my value.
 	/// @param t The timer whose value should be added to my value.
 	/// @return Myself after adding the given timer's value.
-	virtual ITimer& operator+=(const ITimer& t) {
+	virtual ITimer&
+	operator+=(const ITimer& t)
+	{
 		val += t.getValue();
 		return *this;
 	}

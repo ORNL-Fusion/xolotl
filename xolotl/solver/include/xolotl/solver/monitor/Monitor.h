@@ -4,10 +4,12 @@
 // Includes
 #include <xolotl/core/network/IReactionNetwork.h>
 
-namespace xolotl {
-namespace solver {
-namespace monitor {
-
+namespace xolotl
+{
+namespace solver
+{
+namespace monitor
+{
 /**
  * Copy the network group (if it exists) from one file to another,
  * or write it from scratch.
@@ -21,8 +23,9 @@ namespace monitor {
  *                  should be copied.
  * @param network The network to write.
  */
-void writeNetwork(MPI_Comm _comm, std::string srcFileName,
-		std::string targetFileName, core::network::IReactionNetwork &network);
+void
+writeNetwork(MPI_Comm _comm, std::string srcFileName,
+	std::string targetFileName, core::network::IReactionNetwork& network);
 
 } // namespace monitor
 } // namespace solver

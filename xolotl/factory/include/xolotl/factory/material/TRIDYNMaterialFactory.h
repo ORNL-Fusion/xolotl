@@ -2,34 +2,37 @@
 #define TRIDYNMATERIALHANDLERFACTORY_H
 
 #include <memory>
-#include <xolotl/factory/material/MaterialFactory.h>
-#include <xolotl/core/flux/TRIDYNFitFluxHandler.h>
+
 #include <xolotl/core/advection/W100AdvectionHandler.h>
+#include <xolotl/core/flux/TRIDYNFitFluxHandler.h>
 #include <xolotl/core/modified/W100TrapMutationHandler.h>
+#include <xolotl/factory/material/MaterialFactory.h>
 
-namespace xolotl {
-namespace factory {
-namespace material {
-
+namespace xolotl
+{
+namespace factory
+{
+namespace material
+{
 /**
  * Subclass of MaterialFactory for a (100) oriented tungsten material with
  * a TRIDYN input file.
  */
-class TRIDYNMaterialFactory: public MaterialFactory {
+class TRIDYNMaterialFactory : public MaterialFactory
+{
 public:
-
 	/**
 	 * The constructor creates the handlers.
 	 *
 	 * @param dim The number of dimensions for the problem
 	 */
-	TRIDYNMaterialFactory(const options::Options &opts) :
-			MaterialFactory(opts) {
+	TRIDYNMaterialFactory(const options::Options& opts) : MaterialFactory(opts)
+	{
 		theFluxHandler = std::make_shared<core::flux::TRIDYNFitFluxHandler>();
 		theAdvectionHandler.push_back(
-				std::make_shared<core::advection::W100AdvectionHandler>());
-		theTrapMutationHandler = std::make_shared<
-				core::modified::W100TrapMutationHandler>();
+			std::make_shared<core::advection::W100AdvectionHandler>());
+		theTrapMutationHandler =
+			std::make_shared<core::modified::W100TrapMutationHandler>();
 
 		return;
 	}
@@ -37,7 +40,8 @@ public:
 	/**
 	 * The destructor
 	 */
-	~TRIDYNMaterialFactory() {
+	~TRIDYNMaterialFactory()
+	{
 	}
 };
 

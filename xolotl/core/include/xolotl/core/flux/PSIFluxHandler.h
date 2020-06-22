@@ -1,38 +1,43 @@
 #ifndef PSIFLUXHANDLER_H
 #define PSIFLUXHANDLER_H
 
-#include <vector>
 #include <memory>
-#include <xolotl/core/flux/FluxHandler.h>
+#include <vector>
+
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/util/MathUtils.h>
 
-namespace xolotl {
-namespace core {
-namespace flux {
-
+namespace xolotl
+{
+namespace core
+{
+namespace flux
+{
 /**
- * Realizations of this interface are responsible for handling the incident (incoming)
- * flux calculations in tungsten.
+ * Realizations of this interface are responsible for handling the incident
+ * (incoming) flux calculations in tungsten.
  */
-class PSIFluxHandler: public FluxHandler {
-
+class PSIFluxHandler : public FluxHandler
+{
 public:
-
-	PSIFluxHandler() :
-			FluxHandler() {
+	PSIFluxHandler() : FluxHandler()
+	{
 	}
 
-	~PSIFluxHandler() {
+	~PSIFluxHandler()
+	{
 	}
 
 	/**
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	void initializeFluxHandler(network::IReactionNetwork& network,
-			int surfacePos, std::vector<double> grid) {
+	void
+	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
+		std::vector<double> grid)
+	{
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
@@ -42,7 +47,7 @@ public:
 
 		// Set the flux index corresponding the the single helium cluster here
 		using NetworkType =
-		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+			network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 		// Set the flux index corresponding the the single helium cluster here
@@ -56,19 +61,18 @@ public:
 		// Check that the helium cluster is present in the network
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::string(
-					"\nThe single helium cluster is not present in the network, "
-							"cannot use the flux option!");
+				"\nThe single helium cluster is not present in the network, "
+				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
 
 		return;
 	}
-
 };
-//end class PSIFluxHandler
+// end class PSIFluxHandler
 
-}
-}
-}
+} // namespace flux
+} // namespace core
+} // namespace xolotl
 
 #endif

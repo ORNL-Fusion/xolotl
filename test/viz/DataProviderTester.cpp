@@ -2,6 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/included/unit_test.hpp>
+
 #include <xolotl/viz/dataprovider/DataProvider.h>
 
 using namespace std;
@@ -16,8 +17,8 @@ BOOST_AUTO_TEST_SUITE(DataProvider_testSuite)
 /**
  * Method checking the ability to use a name.
  */
-BOOST_AUTO_TEST_CASE(checkName) {
-
+BOOST_AUTO_TEST_CASE(checkName)
+{
 	// Create myDataProvider
 	auto myDataProvider = make_shared<DataProvider>("myDataProvider");
 
@@ -25,27 +26,38 @@ BOOST_AUTO_TEST_CASE(checkName) {
 }
 
 /**
- * Method checking you can add points to the data, get the data, and getDataMean().
+ * Method checking you can add points to the data, get the data, and
+ * getDataMean().
  */
-BOOST_AUTO_TEST_CASE(checkData) {
-
+BOOST_AUTO_TEST_CASE(checkData)
+{
 	// Create myDataProvider
 	auto myDataProvider = make_shared<DataProvider>("myDataProvider");
 
 	// Create a Point vector
-	auto myPoints = make_shared< vector <Point> >();
+	auto myPoints = make_shared<vector<Point>>();
 
 	// And fill it with some Point
 	Point aPoint;
-	aPoint.value = 3.0; aPoint.t = 1.0; aPoint.x = 2.0;
+	aPoint.value = 3.0;
+	aPoint.t = 1.0;
+	aPoint.x = 2.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = 2.0; aPoint.t = 3.0; aPoint.x = 2.0;
+	aPoint.value = 2.0;
+	aPoint.t = 3.0;
+	aPoint.x = 2.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = 5.0; aPoint.t = 6.0; aPoint.x = -2.0;
+	aPoint.value = 5.0;
+	aPoint.t = 6.0;
+	aPoint.x = -2.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = -8.0; aPoint.t = 8.0; aPoint.x = 5.0;
+	aPoint.value = -8.0;
+	aPoint.t = 8.0;
+	aPoint.x = 5.0;
 	myPoints->push_back(aPoint);
-	aPoint.value = 7.0; aPoint.t = 7.0; aPoint.x = 7.0;
+	aPoint.value = 7.0;
+	aPoint.t = 7.0;
+	aPoint.x = 7.0;
 	myPoints->push_back(aPoint);
 
 	// Set these points in the myDataProvider
@@ -59,7 +71,6 @@ BOOST_AUTO_TEST_CASE(checkData) {
 
 	// Loop on all the points in dataPoints
 	for (unsigned int i = 0; i < dataPoints->size(); i++) {
-
 		// Check that all the fields are the same
 		BOOST_REQUIRE_EQUAL(dataPoints->at(i).value, myPoints->at(i).value);
 		BOOST_REQUIRE_EQUAL(dataPoints->at(i).t, myPoints->at(i).t);

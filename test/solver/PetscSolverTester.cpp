@@ -1,24 +1,27 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/unit_test.hpp>
+#include <string.h>
+
 #include <cassert>
+#include <limits>
 #include <memory>
 #include <typeinfo>
-#include <limits>
-#include <string.h>
-#include <xolotl/solver/PetscSolver.h>
-#include <xolotl/perf/xolotlPerf.h>
-#include <xolotl/perf/dummy/DummyHandlerRegistry.h>
+
+#include <boost/test/unit_test.hpp>
+
+#include <xolotl/factory/material/IMaterialFactory.h>
+#include <xolotl/factory/network/IReactionHandlerFactory.h>
+#include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
+#include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/perf/dummy/DummyHandlerRegistry.h>
+#include <xolotl/perf/xolotlPerf.h>
+#include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/handler/PetscSolver0DHandler.h>
 #include <xolotl/solver/handler/PetscSolver1DHandler.h>
 #include <xolotl/solver/handler/PetscSolver2DHandler.h>
 #include <xolotl/solver/handler/PetscSolver3DHandler.h>
-#include <xolotl/factory/material/IMaterialFactory.h>
-#include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
-#include <xolotl/factory/network/IReactionHandlerFactory.h>
-#include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
 #include <xolotl/test/config.h>
 
 using namespace std;
@@ -27,13 +30,13 @@ using namespace xolotl::core;
 /**
  * The test suite configuration
  */
-BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
+BOOST_AUTO_TEST_SUITE(PetscSolverTester_testSuite)
 
 /**
  * This operation checks the concentration of clusters after solving a test case
  * in 0D.
  */
-//BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
+// BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 //	// Local Declarations
 //	string sourceDir(XolotlSourceDirectory);
 //
@@ -55,7 +58,8 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 //	"-ts_exact_final_time stepover" << std::endl
 //	<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
 //	<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
-//	<< "dimensions=0" << std::endl << "process=reaction" << std::endl<< "regularGrid=yes" << std::endl
+//	<< "dimensions=0" << std::endl << "process=reaction" << std::endl<<
+//"regularGrid=yes" << std::endl
 //	<< "networkFile=" << networkFilename << std::endl;
 //	paramFile.close();
 //
@@ -80,7 +84,8 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 //			HDF5NetworkLoader>(make_shared<xolotlPerf::DummyHandlerRegistry>());
 //
 //	BOOST_TEST_MESSAGE(
-//			"PetscSolverTester Message: Network filename is: " << networkFilename);
+//			"PetscSolverTester Message: Network filename is: " <<
+//networkFilename);
 //
 //	// Give the filename to the network loader
 //	loader->setFilename(networkFilename);
@@ -143,10 +148,11 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 //}
 //
 ///**
-// * This operation checks the concentration of clusters after solving a test case
+// * This operation checks the concentration of clusters after solving a test
+// case
 // * in 1D.
 // */
-//BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
+// BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 //	// Local Declarations
 //	string sourceDir(XolotlSourceDirectory);
 //
@@ -169,7 +175,8 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 //	<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
 //	<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
 //	<< "dimensions=1" << std::endl << "process=diff advec reaction"
-//	<< std::endl << "voidPortion=0.0" << std::endl<< "regularGrid=yes" << std::endl << "networkFile="
+//	<< std::endl << "voidPortion=0.0" << std::endl<< "regularGrid=yes" <<
+//std::endl << "networkFile="
 //	<< networkFilename << std::endl;
 //	paramFile.close();
 //
@@ -193,7 +200,8 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 //			HDF5NetworkLoader>(make_shared<xolotlPerf::DummyHandlerRegistry>());
 //
 //	BOOST_TEST_MESSAGE(
-//			"PetscSolverTester Message: Network filename is: " << networkFilename);
+//			"PetscSolverTester Message: Network filename is: " <<
+//networkFilename);
 //
 //	// Give the filename to the network loader
 //	loader->setFilename(networkFilename);
@@ -256,10 +264,11 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 //}
 //
 ///**
-// * This operation checks the concentration of clusters after solving a test case
+// * This operation checks the concentration of clusters after solving a test
+// case
 // * in 1D with an irregular grid spacing in the x direction.
 // */
-//BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
+// BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 //	// Local Declarations
 //	string sourceDir(XolotlSourceDirectory);
 //
@@ -307,7 +316,8 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 //			HDF5NetworkLoader>(make_shared<xolotlPerf::DummyHandlerRegistry>());
 //
 //	BOOST_TEST_MESSAGE(
-//			"PetscSolverTester Message: Network filename is: " << networkFilename);
+//			"PetscSolverTester Message: Network filename is: " <<
+//networkFilename);
 //
 //	// Give the filename to the network loader
 //	loader->setFilename(networkFilename);
@@ -370,10 +380,11 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 //}
 //
 ///**
-// * This operation checks the concentration of clusters after solving a test case
+// * This operation checks the concentration of clusters after solving a test
+// case
 // * in 2D.
 // */
-//BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
+// BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 //	// Create the parameter file
 //	std::ofstream paramFile("param.txt");
 //	paramFile << "vizHandler=dummy" << std::endl
@@ -471,10 +482,11 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 //}
 //
 ///**
-// * This operation checks the concentration of clusters after solving a test case
+// * This operation checks the concentration of clusters after solving a test
+// case
 // * in 3D.
 // */
-//BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
+// BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 //
 //	// Create the parameter file
 //	std::ofstream paramFile("param.txt");
@@ -491,7 +503,8 @@ BOOST_AUTO_TEST_SUITE (PetscSolverTester_testSuite)
 //	<< "startTemp=900" << std::endl << "perfHandler=dummy" << std::endl
 //	<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
 //	<< "dimensions=3" << std::endl << "process=diff advec reaction"
-//	<< std::endl << "voidPortion=0.0" << std::endl << "netParam=8 0 0 2 6" << std::endl << "grid=10 0.5 6 1.0 3 2.0"
+//	<< std::endl << "voidPortion=0.0" << std::endl << "netParam=8 0 0 2 6" <<
+//std::endl << "grid=10 0.5 6 1.0 3 2.0"
 //	<< std::endl;
 //	paramFile.close();
 //

@@ -1,8 +1,9 @@
 #include <xolotl/interface/Interface.h>
 
 //! Main program
-int main(int argc, char **argv) {
-
+int
+main(int argc, char** argv)
+{
 	// Initialize MPI
 	MPI_Init(&argc, &argv);
 
@@ -10,7 +11,8 @@ int main(int argc, char **argv) {
 	Kokkos::initialize();
 
 	// Create an interface to control the solver
-	xolotl::interface::XolotlInterface interface = xolotl::interface::XolotlInterface();
+	xolotl::interface::XolotlInterface interface =
+		xolotl::interface::XolotlInterface();
 
 	// Initialize it
 	interface.initializeXolotl(argc, argv);

@@ -1,13 +1,16 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/unit_test.hpp>
-#include <mpi.h>
 #include <fstream>
 #include <iostream>
+
+#include <mpi.h>
+
+#include <boost/test/unit_test.hpp>
+
+#include <xolotl/config.h>
 #include <xolotl/core/diffusion/DummyDiffusionHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/config.h>
 #include <xolotl/options/Options.h>
 
 using namespace std;
@@ -26,9 +29,10 @@ BOOST_AUTO_TEST_SUITE(DummyDiffusionHandler_testSuite)
  * Method checking the initialization of the off-diagonal part of the Jacobian,
  * and the compute diffusion methods for the dummy handler.
  */
-BOOST_AUTO_TEST_CASE(checkDiffusion) {
+BOOST_AUTO_TEST_CASE(checkDiffusion)
+{
 	// Create the option to create a network
-    xolotl::options::Options opts;
+	xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 1 0" << std::endl;
@@ -36,7 +40,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Create a fake command line to read the options
 	int argc = 2;
-	char **argv = new char*[3];
+	char** argv = new char*[3];
 	std::string appName = "fakeXolotlAppNameForTests";
 	argv[0] = new char[appName.length() + 1];
 	strcpy(argv[0], appName.c_str());
@@ -52,18 +56,19 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	std::vector<double> grid;
 	std::vector<double> temperatures;
 	for (int l = 0; l < 5; l++) {
-		grid.push_back((double) l);
+		grid.push_back((double)l);
 		temperatures.push_back(1000.0);
 	}
 
 	// Create the network
-	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+	using NetworkType =
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -90,7 +95,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 
 	// Initialize their values
 	for (int i = 0; i < 3 * dof; i++) {
-		concentration[i] = (double) i * i;
+		concentration[i] = (double)i * i;
 		newConcentration[i] = 0.0;
 	}
 
@@ -99,24 +104,25 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	network.syncClusterDataOnHost();
 
 	// Get pointers
-	double *conc = &concentration[0];
-	double *updatedConc = &newConcentration[0];
+	double* conc = &concentration[0];
+	double* updatedConc = &newConcentration[0];
 
 	// Get the offset for the grid point in the middle
 	// Supposing the 3 grid points are laid-out as follow:
 	// 0 | 1 | 2
-	double *concOffset = conc + dof;
-	double *updatedConcOffset = updatedConc + dof;
+	double* concOffset = conc + dof;
+	double* updatedConcOffset = updatedConc + dof;
 
-	// Fill the concVector with the pointer to the middle, left, and right grid points
-	double **concVector = new double*[3];
+	// Fill the concVector with the pointer to the middle, left, and right grid
+	// points
+	double** concVector = new double*[3];
 	concVector[0] = concOffset; // middle
 	concVector[1] = conc; // left
 	concVector[2] = conc + 2 * dof; // right
 
 	// Compute the diffusion at this grid point
-	diffusionHandler.computeDiffusion(network, concVector, updatedConcOffset,
-			hx, hx, 1, 1);
+	diffusionHandler.computeDiffusion(
+		network, concVector, updatedConcOffset, hx, hx, 1, 1);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 0.0, 0.01); // Does not diffuse

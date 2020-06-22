@@ -1,16 +1,18 @@
 #include <xolotl/solver/handler/PetscSolverHandler.h>
 
-namespace xolotl {
-namespace solver {
-namespace handler {
-
-std::vector<PetscInt> PetscSolverHandler::ConvertToPetscSparseFillMap(
-		size_t dof,
-		const core::network::IReactionNetwork::SparseFillMap &fillMap) {
-
+namespace xolotl
+{
+namespace solver
+{
+namespace handler
+{
+std::vector<PetscInt>
+PetscSolverHandler::ConvertToPetscSparseFillMap(
+	size_t dof, const core::network::IReactionNetwork::SparseFillMap& fillMap)
+{
 	// Determine number of non-zeros
 	uint64_t nNonZeros = 0;
-	for (auto const &currMapItem : fillMap) {
+	for (auto const& currMapItem : fillMap) {
 		nNonZeros += currMapItem.second.size();
 	}
 

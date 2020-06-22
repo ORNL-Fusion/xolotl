@@ -1,30 +1,36 @@
 // Includes
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+
 #include <mpi.h>
+
 #include <xolotl/core/modified/TrapMutationHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/util/MathUtils.h>
 
-namespace xolotl {
-namespace core {
-namespace modified {
-
-void TrapMutationHandler::initialize(network::IReactionNetwork &network,
-		network::IReactionNetwork::SparseFillMap &dfill,
-		int nx, int ny, int nz) {
-	// This method fills two vectors to define the modified trap-mutation: for the first one,
-	// the first value corresponds to the depth at which the He1 cluster undergo trap-mutation
-	// (if the value is negative it means that it doesn't TM), the second value correspond
-	// to He2, etc.; the second vector gives the size of the vacancies into which He
-	// trap-mutates. Information about desorption is also initialized here.
+namespace xolotl
+{
+namespace core
+{
+namespace modified
+{
+void
+TrapMutationHandler::initialize(network::IReactionNetwork& network,
+	network::IReactionNetwork::SparseFillMap& dfill, int nx, int ny, int nz)
+{
+	// This method fills two vectors to define the modified trap-mutation: for
+	// the first one, the first value corresponds to the depth at which the He1
+	// cluster undergo trap-mutation (if the value is negative it means that it
+	// doesn't TM), the second value correspond to He2, etc.; the second vector
+	// gives the size of the vacancies into which He trap-mutates. Information
+	// about desorption is also initialized here.
 	initializeDepthSize(network.getClusterCommon(0).getTemperature(0));
 
 	// Add the needed reaction (dissociation) connectivity
 	// Each (He_i)(V) cluster and I clusters are connected to He_i
 
 	using NetworkType =
-	network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Initialize the composition
@@ -43,10 +49,10 @@ void TrapMutationHandler::initialize(network::IReactionNetwork &network,
 		auto heClusterId = heCluster.getId();
 		// Check that the helium cluster is present in the network
 		if (heClusterId == NetworkType::invalidIndex()) {
-			throw std::string(
-					"\nThe helium cluster of size " + std::to_string(i)
-							+ "is not present in the network, "
-									"cannot use the trap-mutation option!");
+			throw std::string("\nThe helium cluster of size " +
+				std::to_string(i) +
+				"is not present in the network, "
+				"cannot use the trap-mutation option!");
 		}
 
 		// The helium cluster is connected to itself
@@ -67,11 +73,10 @@ void TrapMutationHandler::initialize(network::IReactionNetwork &network,
 		auto iClusterId = iCluster.getId();
 		// Check that the interstital cluster is present in the network
 		if (iClusterId == NetworkType::invalidIndex()) {
-			throw std::string(
-					"\nThe interstital cluster of size "
-							+ std::to_string(trapSize)
-							+ "is not present in the network, "
-									"cannot use the trap-mutation option!");
+			throw std::string("\nThe interstital cluster of size " +
+				std::to_string(trapSize) +
+				"is not present in the network, "
+				"cannot use the trap-mutation option!");
 		}
 
 		// The interstitial cluster is connected to He
@@ -85,11 +90,10 @@ void TrapMutationHandler::initialize(network::IReactionNetwork &network,
 		auto heVClusterId = heVCluster.getId();
 		// Check that the HeV cluster is present in the network
 		if (heVClusterId == NetworkType::invalidIndex()) {
-			throw std::string(
-					"\nThe HeV cluster of sizes " + std::to_string(i) + " "
-							+ std::to_string(trapSize)
-							+ "is not present in the network, "
-									"cannot use the trap-mutation option!");
+			throw std::string("\nThe HeV cluster of sizes " +
+				std::to_string(i) + " " + std::to_string(trapSize) +
+				"is not present in the network, "
+				"cannot use the trap-mutation option!");
 		}
 
 		// The HeV cluster is connected to He
@@ -102,16 +106,18 @@ void TrapMutationHandler::initialize(network::IReactionNetwork &network,
 	return;
 }
 
-void TrapMutationHandler::initializeIndex1D(int surfacePos,
-		network::IReactionNetwork &network,
-		std::vector<advection::IAdvectionHandler*> advectionHandlers,
-		std::vector<double> grid, int nx, int xs) {
+void
+TrapMutationHandler::initializeIndex1D(int surfacePos,
+	network::IReactionNetwork& network,
+	std::vector<advection::IAdvectionHandler*> advectionHandlers,
+	std::vector<double> grid, int nx, int xs)
+{
 	// Clear the vector of HeV indices created by He undergoing trap-mutation
 	// at each grid point
 	tmBubbles.clear();
 
 	using NetworkType =
-	network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// No GB trap mutation handler in 1D for now
@@ -131,18 +137,18 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 		}
 
 		// Get the depth
-		double depth = (grid[i + xs] + grid[i + xs + 1]) / 2.0
-				- grid[surfacePos + 1];
-		double previousDepth = (grid[i + xs - 1] + grid[i + xs]) / 2.0
-				- grid[surfacePos + 1];
+		double depth =
+			(grid[i + xs] + grid[i + xs + 1]) / 2.0 - grid[surfacePos + 1];
+		double previousDepth =
+			(grid[i + xs - 1] + grid[i + xs]) / 2.0 - grid[surfacePos + 1];
 
 		// Loop on the depth vector
-		std::vector<std::tuple<std::size_t, std::size_t, std::size_t> > indices;
+		std::vector<std::tuple<std::size_t, std::size_t, std::size_t>> indices;
 		for (int l = 0; l < depthVec.size(); l++) {
 			// Check if a helium cluster undergo TM at this depth
-			if (std::fabs(depth - depthVec[l]) < 0.01
-					|| (depthVec[l] - 0.01 < depth
-							&& depthVec[l] - 0.01 > previousDepth)) {
+			if (std::fabs(depth - depthVec[l]) < 0.01 ||
+				(depthVec[l] - 0.01 < depth &&
+					depthVec[l] - 0.01 > previousDepth)) {
 				// Add the bubble of size l+1 to the indices
 				NetworkType::Composition comp;
 				for (auto i : psiNetwork->getSpeciesRange()) {
@@ -156,9 +162,8 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 				comp[NetworkType::Species::I] = sizeVec[l];
 				comp[NetworkType::Species::He] = 0;
 				auto iCluster = psiNetwork->findCluster(comp, plsm::onHost);
-				indices.emplace_back(
-						std::make_tuple(heVCluster.getId(), heCluster.getId(),
-								iCluster.getId()));
+				indices.emplace_back(std::make_tuple(
+					heVCluster.getId(), heCluster.getId(), iCluster.getId()));
 			}
 		}
 
@@ -175,16 +180,18 @@ void TrapMutationHandler::initializeIndex1D(int surfacePos,
 	return;
 }
 
-void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
-		network::IReactionNetwork &network,
-		std::vector<advection::IAdvectionHandler*> advectionHandlers,
-		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys) {
+void
+TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
+	network::IReactionNetwork& network,
+	std::vector<advection::IAdvectionHandler*> advectionHandlers,
+	std::vector<double> grid, int nx, int xs, int ny, double hy, int ys)
+{
 	// Clear the vector of HeV indices created by He undergoing trap-mutation
 	// at each grid point
 	tmBubbles.clear();
 
 	using NetworkType =
-	network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Create a Sigma 3 trap mutation handler because it is the
@@ -199,14 +206,14 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 	// Loop on the grid points in the Y direction
 	temp2DVector.reserve(ny);
 	for (int j = 0; j < ny; j++) {
-
 		// Create the temporary 1D vector
 		ReactantRefVector1D temp1DVector;
 
 		// Loop on the grid points in the depth direction
 		for (int i = 0; i < nx; i++) {
 			// Create the list (vector) of indices at this grid point
-			std::vector<std::tuple<std::size_t, std::size_t, std::size_t> > indices;
+			std::vector<std::tuple<std::size_t, std::size_t, std::size_t>>
+				indices;
 
 			// If we are on the left side of the surface there is no
 			// modified trap-mutation
@@ -216,17 +223,17 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 			}
 
 			// Get the depth
-			double depth = (grid[i + xs] + grid[i + xs + 1]) / 2.0
-					- grid[surfacePos[j + ys] + 1];
-			double previousDepth = (grid[i + xs - 1] + grid[i + xs]) / 2.0
-					- grid[surfacePos[j + ys] + 1];
+			double depth = (grid[i + xs] + grid[i + xs + 1]) / 2.0 -
+				grid[surfacePos[j + ys] + 1];
+			double previousDepth = (grid[i + xs - 1] + grid[i + xs]) / 2.0 -
+				grid[surfacePos[j + ys] + 1];
 
 			// Loop on the depth vector
 			for (int l = 0; l < depthVec.size(); l++) {
 				// Check if a helium cluster undergo TM at this depth
-				if (std::fabs(depth - depthVec[l]) < 0.01
-						|| (depthVec[l] - 0.01 < depth
-								&& depthVec[l] - 0.01 > previousDepth)) {
+				if (std::fabs(depth - depthVec[l]) < 0.01 ||
+					(depthVec[l] - 0.01 < depth &&
+						depthVec[l] - 0.01 > previousDepth)) {
 					// Add the bubble of size l+1 to the indices
 					NetworkType::Composition comp;
 					for (auto i : psiNetwork->getSpeciesRange()) {
@@ -234,22 +241,21 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 					}
 					comp[NetworkType::Species::He] = l + 1;
 					comp[NetworkType::Species::V] = sizeVec[l];
-					auto heVCluster = psiNetwork->findCluster(comp,
-							plsm::onHost);
+					auto heVCluster =
+						psiNetwork->findCluster(comp, plsm::onHost);
 					comp[NetworkType::Species::V] = 0;
-					auto heCluster = psiNetwork->findCluster(comp,
-							plsm::onHost);
+					auto heCluster =
+						psiNetwork->findCluster(comp, plsm::onHost);
 					comp[NetworkType::Species::I] = sizeVec[l];
 					comp[NetworkType::Species::He] = 0;
 					auto iCluster = psiNetwork->findCluster(comp, plsm::onHost);
-					indices.emplace_back(
-							std::make_tuple(heVCluster.getId(),
-									heCluster.getId(), iCluster.getId()));
+					indices.emplace_back(std::make_tuple(heVCluster.getId(),
+						heCluster.getId(), iCluster.getId()));
 				}
 			}
 
 			// Get the Y position
-			double yPos = (double) (j + ys) * hy;
+			double yPos = (double)(j + ys) * hy;
 			// Loop on the GB advection handlers
 			for (int n = 1; n < advectionHandlers.size(); n++) {
 				// Get the location of the GB
@@ -267,21 +273,21 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 						}
 						comp[NetworkType::Species::He] = l + 1;
 						comp[NetworkType::Species::V] = sigma3SizeVec[l];
-						auto heVCluster = psiNetwork->findCluster(comp,
-								plsm::onHost);
+						auto heVCluster =
+							psiNetwork->findCluster(comp, plsm::onHost);
 						comp[NetworkType::Species::V] = 0;
-						auto heCluster = psiNetwork->findCluster(comp,
-								plsm::onHost);
+						auto heCluster =
+							psiNetwork->findCluster(comp, plsm::onHost);
 						comp[NetworkType::Species::I] = sizeVec[l];
 						comp[NetworkType::Species::He] = 0;
-						auto iCluster = psiNetwork->findCluster(comp,
-								plsm::onHost);
+						auto iCluster =
+							psiNetwork->findCluster(comp, plsm::onHost);
 						auto tempTuple = std::make_tuple(heVCluster.getId(),
-								heCluster.getId(), iCluster.getId());
+							heCluster.getId(), iCluster.getId());
 						// Check if this bubble is already
 						// associated with this grid point.
-						auto iter = std::find(indices.begin(), indices.end(),
-								tempTuple);
+						auto iter = std::find(
+							indices.begin(), indices.end(), tempTuple);
 						if (iter == indices.end()) {
 							// Add this bubble to the indices
 							indices.emplace_back(tempTuple);
@@ -307,18 +313,19 @@ void TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 	return;
 }
 
-void TrapMutationHandler::initializeIndex3D(
-		std::vector<std::vector<int> > surfacePos,
-		network::IReactionNetwork &network,
-		std::vector<advection::IAdvectionHandler*> advectionHandlers,
-		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
-		int nz, double hz, int zs) {
+void
+TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
+	network::IReactionNetwork& network,
+	std::vector<advection::IAdvectionHandler*> advectionHandlers,
+	std::vector<double> grid, int nx, int xs, int ny, double hy, int ys, int nz,
+	double hz, int zs)
+{
 	// Clear the vector of HeV indices created by He undergoing trap-mutation
 	// at each grid point
 	tmBubbles.clear();
 
 	using NetworkType =
-	network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Create a Sigma 3 trap mutation handler because it is the
@@ -330,7 +337,6 @@ void TrapMutationHandler::initializeIndex3D(
 	// Loop on the grid points in the Z direction
 	tmBubbles.reserve(nz);
 	for (int k = 0; k < nz; k++) {
-
 		// Create the temporary 2D vector
 		ReactantRefVector2D temp2DVector;
 
@@ -343,7 +349,8 @@ void TrapMutationHandler::initializeIndex3D(
 			// Loop on the grid points in the depth direction
 			for (int i = 0; i < nx; i++) {
 				// Create the list (vector) of indices at this grid point
-				std::vector<std::tuple<std::size_t, std::size_t, std::size_t> > indices;
+				std::vector<std::tuple<std::size_t, std::size_t, std::size_t>>
+					indices;
 
 				// If we are on the left side of the surface there is no
 				// modified trap-mutation
@@ -353,17 +360,17 @@ void TrapMutationHandler::initializeIndex3D(
 				}
 
 				// Get the depth
-				double depth = (grid[i + xs] + grid[i + xs + 1]) / 2.0
-						- grid[surfacePos[j + ys][k + zs] + 1];
-				double previousDepth = (grid[i + xs - 1] + grid[i + xs]) / 2.0
-						- grid[surfacePos[j + ys][k + zs] + 1];
+				double depth = (grid[i + xs] + grid[i + xs + 1]) / 2.0 -
+					grid[surfacePos[j + ys][k + zs] + 1];
+				double previousDepth = (grid[i + xs - 1] + grid[i + xs]) / 2.0 -
+					grid[surfacePos[j + ys][k + zs] + 1];
 
 				// Loop on the depth vector
 				for (int l = 0; l < depthVec.size(); l++) {
 					// Check if a helium cluster undergo TM at this depth
-					if (std::fabs(depth - depthVec[l]) < 0.01
-							|| (depthVec[l] - 0.01 < depth
-									&& depthVec[l] - 0.01 > previousDepth)) {
+					if (std::fabs(depth - depthVec[l]) < 0.01 ||
+						(depthVec[l] - 0.01 < depth &&
+							depthVec[l] - 0.01 > previousDepth)) {
 						// Add the bubble of size l+1 to the indices
 						NetworkType::Composition comp;
 						for (auto i : psiNetwork->getSpeciesRange()) {
@@ -371,23 +378,22 @@ void TrapMutationHandler::initializeIndex3D(
 						}
 						comp[NetworkType::Species::He] = l + 1;
 						comp[NetworkType::Species::V] = sizeVec[l];
-						auto heVCluster = psiNetwork->findCluster(comp,
-								plsm::onHost);
+						auto heVCluster =
+							psiNetwork->findCluster(comp, plsm::onHost);
 						comp[NetworkType::Species::V] = 0;
-						auto heCluster = psiNetwork->findCluster(comp,
-								plsm::onHost);
+						auto heCluster =
+							psiNetwork->findCluster(comp, plsm::onHost);
 						comp[NetworkType::Species::I] = sizeVec[l];
 						comp[NetworkType::Species::He] = 0;
-						auto iCluster = psiNetwork->findCluster(comp,
-								plsm::onHost);
-						indices.emplace_back(
-								std::make_tuple(heVCluster.getId(),
-										heCluster.getId(), iCluster.getId()));
+						auto iCluster =
+							psiNetwork->findCluster(comp, plsm::onHost);
+						indices.emplace_back(std::make_tuple(heVCluster.getId(),
+							heCluster.getId(), iCluster.getId()));
 					}
 				}
 
 				// Get the Y position
-				double yPos = (double) (j + ys) * hy;
+				double yPos = (double)(j + ys) * hy;
 				// Loop on the GB advection handlers
 				for (int n = 1; n < advectionHandlers.size(); n++) {
 					// Get the location of the GB
@@ -406,21 +412,21 @@ void TrapMutationHandler::initializeIndex3D(
 							}
 							comp[NetworkType::Species::He] = l + 1;
 							comp[NetworkType::Species::V] = sigma3SizeVec[l];
-							auto heVCluster = psiNetwork->findCluster(comp,
-									plsm::onHost);
+							auto heVCluster =
+								psiNetwork->findCluster(comp, plsm::onHost);
 							comp[NetworkType::Species::V] = 0;
-							auto heCluster = psiNetwork->findCluster(comp,
-									plsm::onHost);
+							auto heCluster =
+								psiNetwork->findCluster(comp, plsm::onHost);
 							comp[NetworkType::Species::I] = sizeVec[l];
 							comp[NetworkType::Species::He] = 0;
-							auto iCluster = psiNetwork->findCluster(comp,
-									plsm::onHost);
+							auto iCluster =
+								psiNetwork->findCluster(comp, plsm::onHost);
 							auto tempTuple = std::make_tuple(heVCluster.getId(),
-									heCluster.getId(), iCluster.getId());
+								heCluster.getId(), iCluster.getId());
 							// Check if this bubble is already
 							// associated with this grid point.
-							auto iter = std::find(indices.begin(),
-									indices.end(), tempTuple);
+							auto iter = std::find(
+								indices.begin(), indices.end(), tempTuple);
 							if (iter == indices.end()) {
 								// Add this bubble to the indices
 								indices.emplace_back(tempTuple);
@@ -447,7 +453,9 @@ void TrapMutationHandler::initializeIndex3D(
 	return;
 }
 
-void TrapMutationHandler::updateTrapMutationRate(const double rate) {
+void
+TrapMutationHandler::updateTrapMutationRate(const double rate)
+{
 	// Multiply the biggest rate in the network by 1000.0
 	// so that trap-mutation overcomes any other reaction
 	kMutation = 1000.0 * rate;
@@ -455,13 +463,17 @@ void TrapMutationHandler::updateTrapMutationRate(const double rate) {
 	return;
 }
 
-void TrapMutationHandler::setAttenuation(bool isAttenuation) {
+void
+TrapMutationHandler::setAttenuation(bool isAttenuation)
+{
 	attenuation = isAttenuation;
 
 	return;
 }
 
-void TrapMutationHandler::updateDisappearingRate(double conc) {
+void
+TrapMutationHandler::updateDisappearingRate(double conc)
+{
 	// Set the rate to have an exponential decrease
 	if (attenuation)
 		kDis = exp(-4.0 * conc);
@@ -469,10 +481,10 @@ void TrapMutationHandler::updateDisappearingRate(double conc) {
 	return;
 }
 
-void TrapMutationHandler::computeTrapMutation(
-		network::IReactionNetwork &network, double *concOffset,
-		double *updatedConcOffset, int xi, int yj, int zk) {
-
+void
+TrapMutationHandler::computeTrapMutation(network::IReactionNetwork& network,
+	double* concOffset, double* updatedConcOffset, int xi, int yj, int zk)
+{
 	// Initialize the rate of the reaction
 	double rate = 0.0;
 
@@ -488,8 +500,8 @@ void TrapMutationHandler::computeTrapMutation(
 		// Check the desorption
 		if (heIndex == desorp.id) {
 			auto dof = network.getDOF();
-			using HostUnmanaged =
-			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+			using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
+				Kokkos::MemoryUnmanaged>;
 			auto hConcs = HostUnmanaged(concOffset, dof);
 			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 			deep_copy(dConcs, hConcs);
@@ -497,11 +509,13 @@ void TrapMutationHandler::computeTrapMutation(
 			double totalRate = network.getLeftSideRate(dConcs, heIndex, xi + 1);
 			// Define the trap-mutation rate taking into account the desorption
 			rate = kDis * totalRate * (1.0 - desorp.portion) / desorp.portion;
-		} else {
+		}
+		else {
 			rate = kDis * kMutation;
 		}
 
-		// Update the concentrations (the helium cluster loses its concentration)
+		// Update the concentrations (the helium cluster loses its
+		// concentration)
 		updatedConcOffset[heIndex] -= rate * oldConc;
 		updatedConcOffset[bubbleIndex] += rate * oldConc;
 		updatedConcOffset[iIndex] += rate * oldConc;
@@ -510,10 +524,11 @@ void TrapMutationHandler::computeTrapMutation(
 	return;
 }
 
-int TrapMutationHandler::computePartialsForTrapMutation(
-		network::IReactionNetwork &network, double *concOffset,
-		double *val, int *indices, int xi, int yj, int zk) {
-
+int
+TrapMutationHandler::computePartialsForTrapMutation(
+	network::IReactionNetwork& network, double* concOffset, double* val,
+	int* indices, int xi, int yj, int zk)
+{
 	// Initialize the rate of the reaction
 	double rate = 0.0;
 
@@ -529,8 +544,8 @@ int TrapMutationHandler::computePartialsForTrapMutation(
 		// Check the desorption
 		if (heIndex == desorp.id) {
 			auto dof = network.getDOF();
-			using HostUnmanaged =
-			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+			using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
+				Kokkos::MemoryUnmanaged>;
 			auto hConcs = HostUnmanaged(concOffset, dof);
 			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 			deep_copy(dConcs, hConcs);
@@ -538,7 +553,8 @@ int TrapMutationHandler::computePartialsForTrapMutation(
 			double totalRate = network.getLeftSideRate(dConcs, heIndex, xi + 1);
 			// Define the trap-mutation rate taking into account the desorption
 			rate = kDis * totalRate * (1.0 - desorp.portion) / desorp.portion;
-		} else {
+		}
+		else {
 			rate = kDis * kMutation;
 		}
 
@@ -562,7 +578,6 @@ int TrapMutationHandler::computePartialsForTrapMutation(
 	return (tmBubbles[zk][yj][xi]).size();
 }
 
-}/* end namespace modified */
-}/* end namespace core */
-}/* end namespace xolotl */
-
+} /* end namespace modified */
+} /* end namespace core */
+} /* end namespace xolotl */

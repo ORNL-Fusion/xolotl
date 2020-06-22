@@ -2,6 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
+
 #include <xolotl/core/temperature/TemperatureHandler.h>
 
 using namespace std;
@@ -12,16 +13,17 @@ using namespace temperature;
 /**
  * The test suite is responsible for testing the TemperatureHandler.
  */
-BOOST_AUTO_TEST_SUITE (TemperatureHandlerTester_testSuite)
+BOOST_AUTO_TEST_SUITE(TemperatureHandlerTester_testSuite)
 
-BOOST_AUTO_TEST_CASE(check_getTemperature) {
+BOOST_AUTO_TEST_CASE(check_getTemperature)
+{
 	// Create the temperature handler
 	auto testTemp = make_shared<TemperatureHandler>(1000.0);
 
 	// Create a time
 	double currTime = 1.0;
 
-    plsm::SpaceVector<double, 3> x { 1.0, 0.0, 0.0 };
+	plsm::SpaceVector<double, 3> x{1.0, 0.0, 0.0};
 
 	// Check the temperature
 	double temp = testTemp->getTemperature(x, currTime);

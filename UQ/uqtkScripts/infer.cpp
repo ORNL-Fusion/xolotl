@@ -3,8 +3,9 @@
  Copyright (2013) Sandia Corporation
  http://www.sandia.gov/UQToolkit/
 
- Copyright (2013) Sandia Corporation. Under the terms of Contract DE-AC04-94AL85000
- with Sandia Corporation, the U.S. Government retains certain rights in this software.
+ Copyright (2013) Sandia Corporation. Under the terms of Contract
+ DE-AC04-94AL85000 with Sandia Corporation, the U.S. Government retains certain
+ rights in this software.
 
  This file is part of The UQ Toolkit (UQTk)
 
@@ -23,31 +24,35 @@
 
  Questions? Contact Bert Debusschere <bjdebus@sandia.gov>
  Sandia National Laboratories, Livermore, CA, USA
- ===================================================================================== */
-
-#include <math.h>
-#include "XMLUtils.h"
-#include "uqtktools.h"
-#include "uqtkmcmc.h"
+ =====================================================================================
+ */
 
 #include "PCSet.h"
-#include "posterior.h"
+#include "XMLUtils.h"
 #include "XMLreader.h"
+#include "posterior.h"
+#include "uqtkmcmc.h"
+#include "uqtktools.h"
+#include <math.h>
 
 using namespace std;
 
 /// Main program: MCMC inference of the model parameters given data
-int main(int argc, char *argv[]) {
+int
+main(int argc, char* argv[])
+{
 	// Pointer to posterior information
 	postAux* pinfo = new postAux;
 	// Read the xml tree
-	RefPtr < XMLElement > xmlTree = readXMLTree("infer.xml");
-	// Read the model specification and send them to the posterior information structure
+	RefPtr<XMLElement> xmlTree = readXMLTree("infer.xml");
+	// Read the model specification and send them to the posterior information
+	// structure
 	readXMLModelInput(xmlTree, pinfo->modelparams, pinfo->modelparamnames,
-			pinfo->modelauxparams);
-	// Read specific information needed by inference, e.g. data and the parameters to be inferred
-	readXMLDataInput(xmlTree, pinfo->data, pinfo->postparams,
-			&(pinfo->noisetype));
+		pinfo->modelauxparams);
+	// Read specific information needed by inference, e.g. data and the
+	// parameters to be inferred
+	readXMLDataInput(
+		xmlTree, pinfo->data, pinfo->postparams, &(pinfo->noisetype));
 
 	int order = pinfo->modelauxparams(0);
 	int dim = pinfo->modelauxparams(1);
@@ -62,10 +67,10 @@ int main(int argc, char *argv[]) {
 	// Array to hold the starting values of the chain
 	Array1D<double> chstart;
 	// Define the MCMC object
-	MCMC mchain(LogPosterior, (void*) pinfo);
+	MCMC mchain(LogPosterior, (void*)pinfo);
 	// Read the xml file for MCMC-specific information
 	readXMLChainInput(xmlTree, &mchain, chstart, &nsteps, pinfo->chainParamInd,
-			pinfo->priortype, pinfo->priorparam1, pinfo->priorparam2);
+		pinfo->priortype, pinfo->priorparam1, pinfo->priorparam2);
 
 	// Prepend the parameter names to the output file
 	FILE* f_out;
@@ -77,7 +82,7 @@ int main(int argc, char *argv[]) {
 	fprintf(f_out, "%s ", "Step");
 	for (int i = 0; i < chdim; i++)
 		fprintf(f_out, "%21s ",
-				pinfo->modelparamnames(pinfo->chainParamInd(i)).c_str());
+			pinfo->modelparamnames(pinfo->chainParamInd(i)).c_str());
 	fprintf(f_out, "%24s %24s \n", "Accept_prob", "Log_posterior");
 	fclose(f_out);
 

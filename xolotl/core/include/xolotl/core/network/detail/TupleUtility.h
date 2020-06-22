@@ -16,7 +16,7 @@ struct TuplePushFrontHelper;
 template <typename T, typename... Ts>
 struct TuplePushFrontHelper<T, std::tuple<Ts...>>
 {
-    using Type = std::tuple<T, Ts...>;
+	using Type = std::tuple<T, Ts...>;
 };
 
 template <typename T, typename TTuple>
@@ -28,7 +28,7 @@ struct TuplePopFrontHelper;
 template <typename T, typename... Ts>
 struct TuplePopFrontHelper<std::tuple<T, Ts...>>
 {
-    using Type = std::tuple<Ts...>;
+	using Type = std::tuple<Ts...>;
 };
 
 template <typename TTuple>
@@ -40,7 +40,7 @@ struct TuplePushBackHelper;
 template <typename... Ts, typename T>
 struct TuplePushBackHelper<std::tuple<Ts...>, T>
 {
-    using Type = std::tuple<Ts..., T>;
+	using Type = std::tuple<Ts..., T>;
 };
 
 template <typename TTuple, typename T>
@@ -52,14 +52,14 @@ struct TuplePopBackHelper;
 template <typename T>
 struct TuplePopBackHelper<std::tuple<T>>
 {
-    using Type = std::tuple<>;
+	using Type = std::tuple<>;
 };
 
 template <typename T, typename... Ts>
 struct TuplePopBackHelper<std::tuple<T, Ts...>>
 {
-    using Type = TuplePushFront<T,
-        typename TuplePopBackHelper<std::tuple<Ts...>>::Type>;
+	using Type =
+		TuplePushFront<T, typename TuplePopBackHelper<std::tuple<Ts...>>::Type>;
 };
 
 template <typename TTuple>
@@ -71,19 +71,19 @@ struct TupleReverseHelper;
 template <>
 struct TupleReverseHelper<std::tuple<>>
 {
-    using Type = std::tuple<>;
+	using Type = std::tuple<>;
 };
 
 template <typename T, typename... Ts>
 struct TupleReverseHelper<std::tuple<T, Ts...>>
 {
-    using Type =
-        TuplePushBack<typename TupleReverseHelper<std::tuple<Ts...>>::Type, T>;
+	using Type =
+		TuplePushBack<typename TupleReverseHelper<std::tuple<Ts...>>::Type, T>;
 };
 
 template <typename TTuple>
 using TupleReverse = typename TupleReverseHelper<TTuple>::Type;
-}
-}
-}
-}
+} // namespace detail
+} // namespace network
+} // namespace core
+} // namespace xolotl

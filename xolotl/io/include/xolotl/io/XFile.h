@@ -1,35 +1,36 @@
 #ifndef XCORE_XFILE_H
 #define XCORE_XFILE_H
 
-#include <string>
-#include <vector>
-#include <tuple>
 #include <set>
-#include <xolotl/io/HDF5File.h>
-#include <xolotl/io/HDF5Exception.h>
+#include <string>
+#include <tuple>
+#include <vector>
+
 #include <xolotl/core/network/IReactionNetwork.h>
+#include <xolotl/io/HDF5Exception.h>
+#include <xolotl/io/HDF5File.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
 {
 namespace io
 {
-
 // Class for reading and writing an HDF5 file with Xolotl data.
 // Note: the class stores 1D data as an attribute on a group instead
 // of as a dataset.
 // TODO Why?  because it is an attribute, every process must have same
-// data to write.  As opposed to dataset, where can use independent file 
+// data to write.  As opposed to dataset, where can use independent file
 // access to let one process write. (?)
-class XFile: public HDF5File {
+class XFile : public HDF5File
+{
 public:
 	using NetworkType = core::network::IReactionNetwork;
 
 	// A group with info about a specific time step.
 	class ConcentrationGroup;
-	class TimestepGroup: public HDF5File::Group {
+	class TimestepGroup : public HDF5File::Group
+	{
 	private:
-
 		// Prefix to use when constructing group names.
 		static const std::string groupNamePrefix;
 
@@ -76,8 +77,8 @@ public:
 		 * @return A string to use for the name of the time step group for
 		 *          the given time step.
 		 */
-		static std::string makeGroupName(const ConcentrationGroup &concGroup,
-				int timeStep);
+		static std::string
+		makeGroupName(const ConcentrationGroup& concGroup, int timeStep);
 
 	public:
 		// Concise name for surface representations.
@@ -102,7 +103,7 @@ public:
 		 * Default and copy constructors explicitly disallowed.
 		 */
 		TimestepGroup(void) = delete;
-		TimestepGroup(const TimestepGroup &other) = delete;
+		TimestepGroup(const TimestepGroup& other) = delete;
 
 		/**
 		 * Create and populate a Timestep group within the given
@@ -113,15 +114,15 @@ public:
 		 * @param previousTime The physical time at the previous time step
 		 * @param deltaTime The physical length of the time step
 		 */
-		TimestepGroup(const ConcentrationGroup &concGroup, int timeStep,
-				double time, double previousTime, double deltaTime);
+		TimestepGroup(const ConcentrationGroup& concGroup, int timeStep,
+			double time, double previousTime, double deltaTime);
 
 		/**
 		 * Open a TimestepGroup within the given concentration group.
 		 *
 		 * @param timeStep The time step of the desired group.
 		 */
-		TimestepGroup(const ConcentrationGroup &concGroup, int timeStep);
+		TimestepGroup(const ConcentrationGroup& concGroup, int timeStep);
 
 		/**
 		 * Save the surface positions to our timestep group.
@@ -130,8 +131,9 @@ public:
 		 * @param nInter The quantity of interstitial at each surface position
 		 * @param previousFlux The previous I flux at each surface position
 		 */
-		void writeSurface1D(Surface1DType iSurface, Data1DType nInter,
-				Data1DType previousFlux) const;
+		void
+		writeSurface1D(Surface1DType iSurface, Data1DType nInter,
+			Data1DType previousFlux) const;
 
 		/**
 		 * Save the surface positions to our timestep group.
@@ -140,8 +142,9 @@ public:
 		 * @param nInter The quantity of interstitial at each surface position
 		 * @param previousFlux The previous I flux at each surface position
 		 */
-		void writeSurface2D(const Surface2DType &iSurface,
-				const Data2DType &nInter, const Data2DType &previousFlux) const;
+		void
+		writeSurface2D(const Surface2DType& iSurface, const Data2DType& nInter,
+			const Data2DType& previousFlux) const;
 
 		/**
 		 * Save the surface positions to our timestep group.
@@ -150,8 +153,9 @@ public:
 		 * @param nInter The quantity of interstitial at each surface position
 		 * @param previousFlux The previous I flux at each surface position
 		 */
-		void writeSurface3D(const Surface3DType &iSurface,
-				const Data3DType &nInter, const Data3DType &previousFlux) const;
+		void
+		writeSurface3D(const Surface3DType& iSurface, const Data3DType& nInter,
+			const Data3DType& previousFlux) const;
 
 		/**
 		 * Save the bottom informations to our timestep group.
@@ -167,11 +171,11 @@ public:
 		 * @param nI The quantity of int at the bottom
 		 * @param previousIFlux The previous I flux
 		 */
-		void writeBottom1D(Data1DType nHe, Data1DType previousHeFlux,
-				Data1DType nD, Data1DType previousDFlux, Data1DType nT,
-				Data1DType previousTFlux, Data1DType nV,
-				Data1DType previousVFlux, Data1DType nI,
-				Data1DType previousIFlux);
+		void
+		writeBottom1D(Data1DType nHe, Data1DType previousHeFlux, Data1DType nD,
+			Data1DType previousDFlux, Data1DType nT, Data1DType previousTFlux,
+			Data1DType nV, Data1DType previousVFlux, Data1DType nI,
+			Data1DType previousIFlux);
 
 		/**
 		 * Save the bottom informations to our timestep group.
@@ -183,10 +187,10 @@ public:
 		 * @param nT The quantity of tritium at the bottom
 		 * @param previousTFlux The previous T flux
 		 */
-		void writeBottom2D(const Data2DType &nHe,
-				const Data2DType &previousHeFlux, const Data2DType &nD,
-				const Data2DType &previousDFlux, const Data2DType &nT,
-				const Data2DType &previousTFlux);
+		void
+		writeBottom2D(const Data2DType& nHe, const Data2DType& previousHeFlux,
+			const Data2DType& nD, const Data2DType& previousDFlux,
+			const Data2DType& nT, const Data2DType& previousTFlux);
 
 		/**
 		 * Add a concentration dataset at a specific grid point.
@@ -199,8 +203,9 @@ public:
 		 * @param k The index of the position on the grid on the z direction
 		 */
 		// TODO this should go away.
-		void writeConcentrationDataset(int size, double concArray[][2],
-				bool write, int i, int j = -1, int k = -1);
+		void
+		writeConcentrationDataset(int size, double concArray[][2], bool write,
+			int i, int j = -1, int k = -1);
 
 		/**
 		 * Add a concentration dataset for all grid points in a 1D problem.
@@ -220,8 +225,9 @@ public:
 		// TODO measure performance gain when caller gives us
 		// flattened array instead of having us convert to/from flat
 		// representation.
-		void writeConcentrations(const XFile &file, int baseX,
-				const Concs1DType &concs) const;
+		void
+		writeConcentrations(
+			const XFile& file, int baseX, const Concs1DType& concs) const;
 
 		/**
 		 * Read concentration dataset for our grid points in a 1D problem.
@@ -236,8 +242,8 @@ public:
 		 *              Element i contains concentration data for
 		 *              (baseX + i)
 		 */
-		Concs1DType readConcentrations(const XFile &file, int baseX,
-				int numX) const;
+		Concs1DType
+		readConcentrations(const XFile& file, int baseX, int numX) const;
 
 		/**
 		 * Read the times from our timestep group.
@@ -245,14 +251,16 @@ public:
 		 * @return pair(time, deltaTime) containing the physical time to
 		 *          be changed and the time step length to be changed.
 		 */
-		std::pair<double, double> readTimes(void) const;
+		std::pair<double, double>
+		readTimes(void) const;
 
 		/**
 		 * Read the previous time from our concentration group.
 		 *
 		 * @return The physical time at the previous timestep
 		 */
-		double readPreviousTime(void) const;
+		double
+		readPreviousTime(void) const;
 
 		/**
 		 * Read the surface position from our concentration group in
@@ -260,7 +268,8 @@ public:
 		 *
 		 * @return The index of the surface position
 		 */
-		Surface1DType readSurface1D(void) const;
+		Surface1DType
+		readSurface1D(void) const;
 
 		/**
 		 * Read the surface position from our concentration group in
@@ -268,7 +277,8 @@ public:
 		 *
 		 * @return The vector of indices of the surface position
 		 */
-		Surface2DType readSurface2D(void) const;
+		Surface2DType
+		readSurface2D(void) const;
 
 		/**
 		 * Read the surface position from our concentration group in
@@ -276,7 +286,8 @@ public:
 		 *
 		 * @return The vector of vector of indices of the surface position
 		 */
-		Surface3DType readSurface3D(void) const;
+		Surface3DType
+		readSurface3D(void) const;
 
 		/**
 		 * Read some data from our concentration
@@ -285,7 +296,8 @@ public:
 		 * @param dataName The name of the data we want
 		 * @return The value of the data
 		 */
-		Data1DType readData1D(const std::string &dataName) const;
+		Data1DType
+		readData1D(const std::string& dataName) const;
 
 		/**
 		 * Read some data from our concentration group in
@@ -294,7 +306,8 @@ public:
 		 * @param dataName The name of the data we want
 		 * @return The vector of the data
 		 */
-		Data2DType readData2D(const std::string &dataName) const;
+		Data2DType
+		readData2D(const std::string& dataName) const;
 
 		/**
 		 * Read some data from our concentration group file in
@@ -303,7 +316,8 @@ public:
 		 * @param dataName The name of the data we want
 		 * @return The vector of vector of data
 		 */
-		Data3DType readData3D(const std::string &dataName) const;
+		Data3DType
+		readData3D(const std::string& dataName) const;
 
 		/**
 		 * Read our (i,j,k)-th grid point concentrations.
@@ -315,11 +329,13 @@ public:
 		 */
 		// TODO remove once have added support for 0D, 2D, and 3D
 		// parallel reads of concentrations.
-		Data3DType readGridPoint(int i, int j = -1, int k = -1) const;
+		Data3DType
+		readGridPoint(int i, int j = -1, int k = -1) const;
 	};
 
 	// Our concentrations group.
-	class ConcentrationGroup: public HDF5File::Group {
+	class ConcentrationGroup : public HDF5File::Group
+	{
 	private:
 		// Name of our last timestep attribute.
 		static const std::string lastTimestepAttrName;
@@ -330,8 +346,8 @@ public:
 
 		// Create or open the concentrationsGroup.
 		ConcentrationGroup(void) = delete;
-		ConcentrationGroup(const ConcentrationGroup &other) = delete;
-		ConcentrationGroup(const XFile &file, bool create = false);
+		ConcentrationGroup(const ConcentrationGroup& other) = delete;
+		ConcentrationGroup(const XFile& file, bool create = false);
 
 		/**
 		 * Add a concentration timestep group for the given time step.
@@ -341,22 +357,26 @@ public:
 		 * @param previousTime The physical time at the previous time step
 		 * @param deltaTime The physical length of the time step
 		 */
-		std::unique_ptr<TimestepGroup> addTimestepGroup(int timeStep,
-				double time, double previousTime, double deltaTime) const;
+		std::unique_ptr<TimestepGroup>
+		addTimestepGroup(int timeStep, double time, double previousTime,
+			double deltaTime) const;
 
 		/**
 		 * Obtain the last timestep known to our group.
 		 *
 		 * @return Time step of last TimestepGroup written to our group.
 		 */
-		int getLastTimeStep(void) const;
+		int
+		getLastTimeStep(void) const;
 
 		/**
 		 * Determine if we have any TimestepGroups.
 		 *
 		 * @return True iff any TimestepGroups have been written.
 		 */
-		bool hasTimesteps(void) const {
+		bool
+		hasTimesteps(void) const
+		{
 			return getLastTimeStep() >= 0;
 		}
 
@@ -367,7 +387,8 @@ public:
 		 * @return TimestepGroup associated with the given time step.  Empty
 		 *          pointer if the given time step is not known to us.
 		 */
-		std::unique_ptr<TimestepGroup> getTimestepGroup(int timeStep) const;
+		std::unique_ptr<TimestepGroup>
+		getTimestepGroup(int timeStep) const;
 
 		/**
 		 * Access the TimestepGroup associated with the last known time step.
@@ -375,14 +396,14 @@ public:
 		 * @return TimestepGroup associated with the last known time step.
 		 *          Empty pointer if we do not yet have any time steps.
 		 */
-		std::unique_ptr<TimestepGroup> getLastTimestepGroup(void) const;
+		std::unique_ptr<TimestepGroup>
+		getLastTimestepGroup(void) const;
 	};
 
 	// Our header group.
-	class HeaderGroup: public HDF5File::Group {
-
+	class HeaderGroup : public HDF5File::Group
+	{
 	private:
-
 		// Names of grid-specification attributes.
 		static const std::string nxAttrName;
 		static const std::string hxAttrName;
@@ -400,7 +421,7 @@ public:
 		 * Default and copy constructors explicitly disallowed.
 		 */
 		HeaderGroup(void) = delete;
-		HeaderGroup(const HeaderGroup &other) = delete;
+		HeaderGroup(const HeaderGroup& other) = delete;
 
 		/**
 		 * Create and initialize the header group with the number of
@@ -413,13 +434,13 @@ public:
 		 * @param nz The number of grid points in the z direction
 		 * @param hz The step size in the z direction
 		 */
-		HeaderGroup(const XFile &file, const std::vector<double> &grid, int ny,
-				double hy, int nz, double hz);
+		HeaderGroup(const XFile& file, const std::vector<double>& grid, int ny,
+			double hy, int nz, double hz);
 
 		/**
 		 * Open an existing header group.
 		 */
-		HeaderGroup(const XFile &file);
+		HeaderGroup(const XFile& file);
 
 		/**
 		 * Read our file header.
@@ -431,16 +452,19 @@ public:
 		 * @param nz The number of grid points in the z direction
 		 * @param hz The step size in the z direction
 		 */
-		void read(int &nx, double &hx, int &ny, double &hy, int &nz,
-				double &hz) const;
+		void
+		read(int& nx, double& hx, int& ny, double& hy, int& nz,
+			double& hz) const;
 	};
 
 	// A group describing a network within our HDF5 file.
-	class NetworkGroup: public HDF5File::Group {
+	class NetworkGroup : public HDF5File::Group
+	{
 	public:
 		// Concise name for type of network bounds
 		// in HDF5 class method parameters.
-		using NetworkBoundsType = std::vector<std::vector<core::network::IReactionNetwork::AmountType>>;
+		using NetworkBoundsType = std::vector<
+			std::vector<core::network::IReactionNetwork::AmountType>>;
 
 	private:
 		// Names of network attribute.
@@ -448,19 +472,18 @@ public:
 		static const std::string phaseSpaceAttrName;
 
 	public:
-
 		// Path to the network group within our HDF5 file.
 		static const fs::path path;
 
 		NetworkGroup(void) = delete;
-		NetworkGroup(const NetworkGroup &other) = delete;
+		NetworkGroup(const NetworkGroup& other) = delete;
 
 		/**
 		 * Open an existing network group.
 		 *
 		 * @param file The file whose network group to open.
 		 */
-		NetworkGroup(const XFile &file);
+		NetworkGroup(const XFile& file);
 
 		/**
 		 * Creating a new network group.
@@ -468,22 +491,24 @@ public:
 		 * @param file The file where to create the network group.
 		 * @param network The network to write.
 		 */
-		NetworkGroup(const XFile &file,
-				core::network::IReactionNetwork &network);
+		NetworkGroup(
+			const XFile& file, core::network::IReactionNetwork& network);
 
 		/**
 		 * Read the network sizes from our group.
 		 *
 		 * @return The total size
 		 */
-		int readNetworkSize() const;
+		int
+		readNetworkSize() const;
 
 		/**
 		 * Read the reactions for every cluster.
 		 *
 		 * @param network The network that need the reactions.
 		 */
-		void readReactions(core::network::IReactionNetwork &network) const;
+		void
+		readReactions(core::network::IReactionNetwork& network) const;
 
 		/**
 		 * Copy ourself to the given file.
@@ -491,15 +516,18 @@ public:
 		 *
 		 * @param target The file to copy ourself to.
 		 */
-		void copyTo(const XFile &target) const;
+		void
+		copyTo(const XFile& target) const;
 	};
 
 	// A group describing a cluster within our HDF5 file.
-	class ClusterGroup: public HDF5File::Group {
+	class ClusterGroup : public HDF5File::Group
+	{
 	public:
 		// Concise name for type of network bounds
 		// in HDF5 class method parameters.
-		using ClusterBoundsType = std::vector<core::network::IReactionNetwork::AmountType>;
+		using ClusterBoundsType =
+			std::vector<core::network::IReactionNetwork::AmountType>;
 
 	private:
 		// Names of cluster attributes.
@@ -509,9 +537,8 @@ public:
 		static const std::string boundsAttrName;
 
 	public:
-
 		ClusterGroup(void) = delete;
-		ClusterGroup(const ClusterGroup &other) = delete;
+		ClusterGroup(const ClusterGroup& other) = delete;
 
 		/**
 		 * Open a cluster group.
@@ -519,7 +546,7 @@ public:
 		 * @param networkGroup The group in which the cluster is located.
 		 * @param id The id of the cluster.
 		 */
-		ClusterGroup(const NetworkGroup &networkGroup, int id);
+		ClusterGroup(const NetworkGroup& networkGroup, int id);
 
 		/**
 		 * Create a cluster group.
@@ -531,9 +558,9 @@ public:
 		 * @param migration The migration energy.
 		 * @param diffusion The diffusion factor.
 		 */
-		ClusterGroup(const NetworkGroup &networkGroup, int id,
-				ClusterBoundsType bounds, double formation, double migration,
-				double diffusion);
+		ClusterGroup(const NetworkGroup& networkGroup, int id,
+			ClusterBoundsType bounds, double formation, double migration,
+			double diffusion);
 
 		/**
 		 * Construct the group name for the given time step.
@@ -541,7 +568,8 @@ public:
 		 * @param id The id of the cluster.
 		 * @return A string to use for the name of the cluster group.
 		 */
-		static std::string makeGroupName(int id);
+		static std::string
+		makeGroupName(int id);
 
 		/**
 		 * Read the cluster properties from our group.
@@ -551,12 +579,12 @@ public:
 		 * @param diffusionFactor The diffusion factor.
 		 * @return The cluster bounds.
 		 */
-		ClusterBoundsType readCluster(double &formationEnergy,
-				double &migrationEnergy, double &diffusionFactor) const;
+		ClusterBoundsType
+		readCluster(double& formationEnergy, double& migrationEnergy,
+			double& diffusionFactor) const;
 	};
 
 private:
-
 	/**
 	 * Pass through only Create* access modes.
 	 *
@@ -564,7 +592,8 @@ private:
 	 * @return The given access mode if it is a Create* mode.  Otherwise,
 	 *          throws an exception.
 	 */
-	static AccessMode EnsureCreateAccessMode(AccessMode mode);
+	static AccessMode
+	EnsureCreateAccessMode(AccessMode mode);
 
 	/**
 	 * Pass through only Open* access modes.
@@ -573,7 +602,8 @@ private:
 	 * @return The given access mode if it is a Open* mode.  Otherwise,
 	 *          throws an exception.
 	 */
-	static AccessMode EnsureOpenAccessMode(AccessMode mode);
+	static AccessMode
+	EnsureOpenAccessMode(AccessMode mode);
 
 public:
 	/**
@@ -589,9 +619,10 @@ public:
 	 * @param mode Access mode for file.  Only HDF5File Create* modes
 	 *              are supported.
 	 */
-	XFile(fs::path path, const std::vector<double> &grid, MPI_Comm _comm =
-	MPI_COMM_WORLD, int ny = 0, double hy = 0.0, int nz = 0, double hz = 0.0,
-			AccessMode mode = AccessMode::CreateOrTruncateIfExists);
+	XFile(fs::path path, const std::vector<double>& grid,
+		MPI_Comm _comm = MPI_COMM_WORLD, int ny = 0, double hy = 0.0,
+		int nz = 0, double hz = 0.0,
+		AccessMode mode = AccessMode::CreateOrTruncateIfExists);
 
 	/**
 	 * Open an existing checkpoint or network file.
@@ -601,17 +632,18 @@ public:
 	 * @param mode Access mode for file.  Only HDFFile Open* modes
 	 *              are supported.
 	 */
-	XFile(fs::path path, MPI_Comm _comm = MPI_COMM_WORLD, AccessMode mode =
-			AccessMode::OpenReadOnly);
+	XFile(fs::path path, MPI_Comm _comm = MPI_COMM_WORLD,
+		AccessMode mode = AccessMode::OpenReadOnly);
 
 	/**
 	 * Check whether we have one of our top-level Groups.
 	 *
 	 * @return True iff we have the desired group.
 	 */
-	template<typename T>
-	bool hasGroup(void) const {
-
+	template <typename T>
+	bool
+	hasGroup(void) const
+	{
 		return HDF5File::hasGroup(T::path);
 	}
 
@@ -620,9 +652,10 @@ public:
 	 *
 	 * @return The group object if we can open the group, else an empty pointer.
 	 */
-	template<typename T>
-	std::unique_ptr<T> getGroup(void) const {
-
+	template <typename T>
+	std::unique_ptr<T>
+	getGroup(void) const
+	{
 		std::unique_ptr<T> group;
 
 		if (hasGroup<T>()) {
@@ -640,4 +673,3 @@ public:
 #include <xolotl/io/XFileType.h>
 
 #endif // XCORE_XFILE_H
-

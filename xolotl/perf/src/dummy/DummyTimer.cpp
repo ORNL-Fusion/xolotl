@@ -1,26 +1,38 @@
 #include <xolotl/perf/dummy/DummyTimer.h>
 
-namespace xolotl {
-namespace perf {
-namespace dummy {
-
-void DummyTimer::start(void) {
+namespace xolotl
+{
+namespace perf
+{
+namespace dummy
+{
+void
+DummyTimer::start(void)
+{
 	// nothing to do in this stub routine
 }
 
-void DummyTimer::stop(void) {
+void
+DummyTimer::stop(void)
+{
 	// nothing to do in this stub routine
 }
 
-void DummyTimer::reset(void) {
+void
+DummyTimer::reset(void)
+{
 	// nothing to do in this stub routine
 }
 
-double DummyTimer::getValue(void) const {
+double
+DummyTimer::getValue(void) const
+{
 	return 0;
 }
 
-std::string DummyTimer::getUnits(void) const {
+std::string
+DummyTimer::getUnits(void) const
+{
 	return "";
 }
 

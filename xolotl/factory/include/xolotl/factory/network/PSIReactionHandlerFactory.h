@@ -2,34 +2,39 @@
 #define PSIREACTIONHANDLERFACTORY_H
 
 #include <memory>
-#include <xolotl/factory/network/IReactionHandlerFactory.h>
+
 #include <xolotl/core/network/PSIReactionNetwork.h>
+#include <xolotl/factory/network/IReactionHandlerFactory.h>
 
-namespace xolotl {
-namespace factory {
-namespace network {
-
+namespace xolotl
+{
+namespace factory
+{
+namespace network
+{
 /**
- * Realizes the IReactionHandlerFactory interface. Handles the network for a PSI problem.
+ * Realizes the IReactionHandlerFactory interface. Handles the network for a PSI
+ * problem.
  */
-class PSIReactionHandlerFactory: public IReactionHandlerFactory {
+class PSIReactionHandlerFactory : public IReactionHandlerFactory
+{
 protected:
-
 	//! The network handler
 	std::unique_ptr<core::network::IReactionNetwork> theNetworkHandler;
 
 public:
-
 	/**
 	 * The constructor creates the handlers.
 	 */
-	PSIReactionHandlerFactory() {
+	PSIReactionHandlerFactory()
+	{
 	}
 
 	/**
 	 * The destructor
 	 */
-	~PSIReactionHandlerFactory() {
+	~PSIReactionHandlerFactory()
+	{
 	}
 
 	/**
@@ -38,28 +43,28 @@ public:
 	 * @param opts The options.
 	 * @param registry The performance registry.
 	 */
-	void initializeReactionNetwork(const options::Options &opts,
-			std::shared_ptr<perf::IHandlerRegistry> registry) {
+	void
+	initializeReactionNetwork(const options::Options& opts,
+		std::shared_ptr<perf::IHandlerRegistry> registry)
+	{
 		// Get the current process ID
 		int procId;
 		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 
-		using NetworkType =
-		core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
+		using NetworkType = core::network::PSIReactionNetwork<
+			core::network::PSIFullSpeciesList>;
 
 		// Get the boundaries from the options
 		NetworkType::AmountType maxV = opts.getMaxV();
 		NetworkType::AmountType maxI = opts.getMaxI();
-		NetworkType::AmountType maxHe =
-				core::network::PSIClusterGenerator<
-						core::network::PSIFullSpeciesList>::getMaxHePerV(
-						maxV);
-		NetworkType::AmountType maxD = 2.0 / 3.0 * (double) maxHe;
-		NetworkType::AmountType maxT = 2.0 / 3.0 * (double) maxHe;
+		NetworkType::AmountType maxHe = core::network::PSIClusterGenerator<
+			core::network::PSIFullSpeciesList>::getMaxHePerV(maxV);
+		NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
+		NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 		NetworkType::AmountType groupingWidthHe = opts.getGroupingWidthA();
 		NetworkType::AmountType groupingWidthD = opts.getGroupingWidthA();
 		NetworkType::AmountType groupingWidthT = opts.getGroupingWidthA();
-		NetworkType::AmountType groupingWidthV= opts.getGroupingWidthB();
+		NetworkType::AmountType groupingWidthV = opts.getGroupingWidthB();
 		if (opts.getMaxImpurity() <= 0) {
 			maxHe = 0;
 			groupingWidthHe = 1;
@@ -107,18 +112,20 @@ public:
 			refineV++;
 		}
 
-		std::unique_ptr<NetworkType> rNetwork(new NetworkType( { maxHe, maxD,
-				maxT, maxV, maxI }, { { refineHe, refineD, refineT, refineV,
-				refineI }, { groupingWidthHe, groupingWidthD, groupingWidthT,
-				groupingWidthV, 1 } }, 1, opts));
+		std::unique_ptr<NetworkType> rNetwork(
+			new NetworkType({maxHe, maxD, maxT, maxV, maxI},
+				{{refineHe, refineD, refineT, refineV, refineI},
+					{groupingWidthHe, groupingWidthD, groupingWidthT,
+						groupingWidthV, 1}},
+				1, opts));
 		rNetwork->syncClusterDataOnHost();
 		rNetwork->getSubpaving().syncZones(plsm::onHost);
 		theNetworkHandler = std::move(rNetwork);
 
 		if (procId == 0) {
 			std::cout << "\nFactory Message: "
-					<< "Master loaded network of size "
-					<< theNetworkHandler->getDOF() << "." << std::endl;
+					  << "Master loaded network of size "
+					  << theNetworkHandler->getDOF() << "." << std::endl;
 		}
 	}
 
@@ -127,10 +134,11 @@ public:
 	 *
 	 * @return The network.
 	 */
-    core::network::IReactionNetwork& getNetworkHandler() const {
+	core::network::IReactionNetwork&
+	getNetworkHandler() const
+	{
 		return *theNetworkHandler;
 	}
-
 };
 
 } // end namespace network

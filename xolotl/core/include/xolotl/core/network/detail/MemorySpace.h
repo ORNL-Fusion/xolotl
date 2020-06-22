@@ -12,6 +12,6 @@ namespace detail
 {
 using DefaultMemorySpace = typename Kokkos::View<int*>::traits::memory_space;
 }
-}
-}
-}
+} // namespace network
+} // namespace core
+} // namespace xolotl

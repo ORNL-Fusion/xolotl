@@ -4,35 +4,40 @@
 // Includes
 #include <xolotl/solver/handler/SolverHandler.h>
 
-namespace xolotl {
-namespace solver {
-namespace handler {
-
+namespace xolotl
+{
+namespace solver
+{
+namespace handler
+{
 #ifndef CHECK_PETSC_ERROR
 #define CHECK_PETSC_ERROR
 /**
- * This operation checks a PETSc error code and throws an exception with given error message.
+ * This operation checks a PETSc error code and throws an exception with given
+ * error message.
  *
  * @param errorCode The PETSc error code.
  * @param errMsg The error message in the thrown exception.
  */
-inline void checkPetscError(PetscErrorCode errorCode, const char *errorMsg) {
+inline void
+checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
+{
 	if (PetscUnlikely(errorCode))
 		throw std::string(errorMsg);
 }
 #endif
 
 /**
- * This class and its subclasses realize the ISolverHandler interface to solve the
- * advection-diffusion-reaction problem with the PETSc solvers from Argonne
+ * This class and its subclasses realize the ISolverHandler interface to solve
+ * the advection-diffusion-reaction problem with the PETSc solvers from Argonne
  * National Laboratory.
  *
  * This class does NOT implement most of the methods that are needed by the
  * PetscSolver. Only subclasses of this class must be used by the PetscSolver.
  */
-class PetscSolverHandler: public SolverHandler {
+class PetscSolverHandler : public SolverHandler
+{
 protected:
-
 	//! Partial derivatives for all reactions at one grid point.
 	Kokkos::View<double*> vals;
 
@@ -96,11 +101,11 @@ protected:
 	 * @return The information from the fill map, in the format that
 	 *      PETSc's DMDASetBlockFillsSparse() expects.
 	 */
-	static std::vector<PetscInt> ConvertToPetscSparseFillMap(size_t dof,
-			const core::network::IReactionNetwork::SparseFillMap &fillMap);
+	static std::vector<PetscInt>
+	ConvertToPetscSparseFillMap(size_t dof,
+		const core::network::IReactionNetwork::SparseFillMap& fillMap);
 
 public:
-
 	/**
 	 * Default constructor, deleted because we need to construct with objects.
 	 */
@@ -111,18 +116,18 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolverHandler(NetworkType &_network) :
-			SolverHandler(_network), fluxTimer(
-					perf::getHandlerRegistry()->getTimer("Flux")), partialDerivativeTimer(
-					perf::getHandlerRegistry()->getTimer(
-							"Partial Derivatives")), fluxCounter(
-					perf::getHandlerRegistry()->getEventCounter("Flux")), partialDerivativeCounter(
-					perf::getHandlerRegistry()->getEventCounter(
-							"Partial Derivatives")) {
+	PetscSolverHandler(NetworkType& _network) :
+		SolverHandler(_network),
+		fluxTimer(perf::getHandlerRegistry()->getTimer("Flux")),
+		partialDerivativeTimer(
+			perf::getHandlerRegistry()->getTimer("Partial Derivatives")),
+		fluxCounter(perf::getHandlerRegistry()->getEventCounter("Flux")),
+		partialDerivativeCounter(
+			perf::getHandlerRegistry()->getEventCounter("Partial Derivatives"))
+	{
 	}
-
 };
-//end class PetscSolverHandler
+// end class PetscSolverHandler
 
 } /* namespace handler */
 } /* namespace solver */

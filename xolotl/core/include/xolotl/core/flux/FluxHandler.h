@@ -1,28 +1,30 @@
 #ifndef FLUXHANDLER_H
 #define FLUXHANDLER_H
 
-#include <vector>
 #include <memory>
+#include <vector>
+
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/flux/IFluxHandler.h>
 
-namespace xolotl {
-namespace core {
-namespace flux {
-
+namespace xolotl
+{
+namespace core
+{
+namespace flux
+{
 /**
- * Realizations of this interface are responsible for handling the incident (incoming)
- * flux calculations.
+ * Realizations of this interface are responsible for handling the incident
+ * (incoming) flux calculations.
  */
-class FluxHandler: public IFluxHandler {
-
+class FluxHandler : public IFluxHandler
+{
 protected:
-
 	/**
 	 * Vector to hold the incident flux values at each grid
 	 * point (x position).
 	 */
-	std::vector<std::vector<double> > incidentFluxVec;
+	std::vector<std::vector<double>> incidentFluxVec;
 
 	/**
 	 * Vector to hold the position at each grid
@@ -46,7 +48,8 @@ protected:
 	std::vector<int> fluxIndices;
 
 	/**
-	 * Are we using a time profile for the amplitude of the helium incoming flux?
+	 * Are we using a time profile for the amplitude of the helium incoming
+	 * flux?
 	 */
 	bool useTimeProfile;
 
@@ -74,18 +77,21 @@ protected:
 	 * @param x The position where to evaluate the fit
 	 * @return The evaluated value
 	 */
-	virtual double FitFunction(double) {
+	virtual double
+	FitFunction(double)
+	{
 		return 0.0;
 	}
 
 	/**
-	 * This method returns the value of the helium incident flux amplitude at the
-	 * given time when a time profile is used.
+	 * This method returns the value of the helium incident flux amplitude at
+	 * the given time when a time profile is used.
 	 *
 	 * @param currentTime The time
 	 * @return The value of the helium flux at this time
 	 */
-	double getProfileAmplitude(double currentTime) const;
+	double
+	getProfileAmplitude(double currentTime) const;
 
 	/**
 	 * This method recomputes the values of the incident flux vector when
@@ -93,78 +99,88 @@ protected:
 	 *
 	 * @param surfacePos The current position of the surface
 	 */
-	void recomputeFluxHandler(int surfacePos);
+	void
+	recomputeFluxHandler(int surfacePos);
 
 public:
-
 	FluxHandler();
 
-	~FluxHandler() {
+	~FluxHandler()
+	{
 	}
 
 	/**
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
-	virtual void initializeFluxHandler(
-			network::IReactionNetwork& network, int surfacePos,
-			std::vector<double> grid);
+	virtual void
+	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
+		std::vector<double> grid);
 
 	/**
-	 * This method reads the values on the time profile file and store them in the
-	 * time and amplitude vectors.
-	 * \see IFluxHandler.h
+	 * This method reads the values on the time profile file and store them in
+	 * the time and amplitude vectors. \see IFluxHandler.h
 	 */
-	virtual void initializeTimeProfile(const std::string& fileName);
+	virtual void
+	initializeTimeProfile(const std::string& fileName);
 
 	/**
-	 * This operation computes the flux due to incoming particles at a given grid point.
-	 * \see IFluxHandler.h
+	 * This operation computes the flux due to incoming particles at a given
+	 * grid point. \see IFluxHandler.h
 	 */
-	virtual void computeIncidentFlux(double currentTime,
-			double *updatedConcOffset, int xi, int surfacePos);
+	virtual void
+	computeIncidentFlux(
+		double currentTime, double* updatedConcOffset, int xi, int surfacePos);
 
 	/**
 	 * This operation increments the fluence at the current time step.
 	 * \see IFluxHandler.h
 	 */
-	virtual void incrementFluence(double dt);
+	virtual void
+	incrementFluence(double dt);
 
 	/**
 	 * This operation computes the fluence at the given time.
 	 * \see IFluxHandler.h
 	 */
-	virtual void computeFluence(double time);
+	virtual void
+	computeFluence(double time);
 
 	/**
 	 * This operation returns the fluence.
 	 * \see IFluxHandler.h
 	 */
-	virtual double getFluence() const;
+	virtual double
+	getFluence() const;
 
 	/**
 	 * This operation sets the factor to change the intensity of the flux.
 	 * \see IFluxHandler.h
 	 */
-	virtual void setFluxAmplitude(double flux);
+	virtual void
+	setFluxAmplitude(double flux);
 
 	/**
 	 * This operation gets the factor that changes the flux intensity/amplitude.
 	 * \see IFluxHandler.h
 	 */
-	virtual double getFluxAmplitude() const;
+	virtual double
+	getFluxAmplitude() const;
 
 	/**
 	 * This operation gets the flux rate used for re-solution.
 	 * \see IFluxHandler.h
 	 */
-	virtual double getFluxRate() const;
+	virtual double
+	getFluxRate() const;
 
 	/**
 	 * This operation sets the time of the pulse.
 	 * \see IFluxHandler.h
 	 */
-	virtual void setPulseTime(double time) {
+	virtual void
+	setPulseTime(double time)
+	{
 		return;
 	}
 
@@ -172,15 +188,16 @@ public:
 	 * This operation sets proportion of the pulse that is on.
 	 * \see IFluxHandler.h
 	 */
-	virtual void setProportion(double a) {
+	virtual void
+	setProportion(double a)
+	{
 		return;
 	}
-
 };
-//end class FluxHandler
+// end class FluxHandler
 
-}
-}
-}
+} // namespace flux
+} // namespace core
+} // namespace xolotl
 
 #endif

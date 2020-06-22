@@ -1,16 +1,19 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/unit_test.hpp>
-#include <mpi.h>
 #include <fstream>
 #include <iostream>
-#include <xolotl/core/modified/DummyTrapMutationHandler.h>
-#include <xolotl/core/modified/Sigma3TrapMutationHandler.h>
+
+#include <mpi.h>
+
+#include <boost/test/unit_test.hpp>
+
 #include <xolotl/config.h>
-#include <xolotl/options/Options.h>
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
 #include <xolotl/core/advection/YGBAdvectionHandler.h>
+#include <xolotl/core/modified/DummyTrapMutationHandler.h>
+#include <xolotl/core/modified/Sigma3TrapMutationHandler.h>
+#include <xolotl/options/Options.h>
 
 using namespace std;
 using namespace xolotl::core;
@@ -25,20 +28,22 @@ BOOST_GLOBAL_FIXTURE(ScopeGuard);
 BOOST_AUTO_TEST_SUITE(Sigma3TrapMutationHandler_testSuite)
 
 /**
- * Method checking the initialization and the compute modified trap-mutation methods.
+ * Method checking the initialization and the compute modified trap-mutation
+ * methods.
  */
-BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
+BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
+{
 	// Create the option to create a network
-    xolotl::options::Options opts;
+	xolotl::options::Options opts;
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
-	paramFile << "netParam=8 0 0 10 6" << std::endl << "process=reaction"
-			<< std::endl;
+	paramFile << "netParam=8 0 0 10 6" << std::endl
+			  << "process=reaction" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
 	int argc = 2;
-	char **argv = new char*[3];
+	char** argv = new char*[3];
 	std::string appName = "fakeXolotlAppNameForTests";
 	argv[0] = new char[appName.length() + 1];
 	strcpy(argv[0], appName.c_str());
@@ -56,20 +61,21 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	std::vector<double> grid;
 	std::vector<double> temperatures;
 	for (int l = 0; l < nGrid; l++) {
-		grid.push_back((double) l * 0.1);
+		grid.push_back((double)l * 0.1);
 		temperatures.push_back(1000.0);
 	}
 	// Set the surface position
-	std::vector<int> surfacePos = { 0, 0, 0, 0, 0 };
+	std::vector<int> surfacePos = {0, 0, 0, 0, 0};
 
 	// Create the network
-	using NetworkType = network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+	using NetworkType =
+		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network( { maxHe, maxD, maxT, maxV, maxI }, grid.size(), opts);
+	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
@@ -78,7 +84,8 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	// Create the modified trap-mutation handler
 	DummyTrapMutationHandler trapMutationHandler;
 
-	// Create the advection handlers needed to initialize the trap mutation handler
+	// Create the advection handlers needed to initialize the trap mutation
+	// handler
 	std::vector<advection::IAdvectionHandler*> advectionHandlers;
 	advectionHandlers.push_back(new advection::DummyAdvectionHandler());
 	auto advecHandler = new advection::YGBAdvectionHandler();
@@ -89,8 +96,8 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	// Initialize it
 	network::IReactionNetwork::SparseFillMap dfill;
 	trapMutationHandler.initialize(network, dfill, 11, 5);
-	trapMutationHandler.initializeIndex2D(surfacePos, network,
-			advectionHandlers, grid, 11, 0, 5, 0.5, 0);
+	trapMutationHandler.initializeIndex2D(
+		surfacePos, network, advectionHandlers, grid, 11, 0, 5, 0.5, 0);
 
 	// Check some values in dfill
 	BOOST_REQUIRE_EQUAL(dfill[1][0], 1);
@@ -107,25 +114,25 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 
 	// Initialize their values
 	for (int i = 0; i < nGrid * 5 * dof; i++) {
-		concentration[i] = (double) i * i;
+		concentration[i] = (double)i * i;
 		newConcentration[i] = 0.0;
 	}
 
 	// Get pointers
-	double *conc = &concentration[0];
-	double *updatedConc = &newConcentration[0];
+	double* conc = &concentration[0];
+	double* updatedConc = &newConcentration[0];
 
 	// Get the offset for the sixth grid point on the second row
-	double *concOffset = conc + (nGrid * 1 + 5) * dof;
-	double *updatedConcOffset = updatedConc + (nGrid * 1 + 5) * dof;
+	double* concOffset = conc + (nGrid * 1 + 5) * dof;
+	double* updatedConcOffset = updatedConc + (nGrid * 1 + 5) * dof;
 
 	// Set the temperature to compute the rates
 	network.setTemperatures(temperatures);
 	network.syncClusterDataOnHost();
 
 	// Compute the modified trap mutation at the sixth grid point
-	trapMutationHandler.computeTrapMutation(network, concOffset,
-			updatedConcOffset, 5, 1);
+	trapMutationHandler.computeTrapMutation(
+		network, concOffset, updatedConcOffset, 5, 1);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 8.0900e+22, 0.01); // Create I
@@ -137,26 +144,29 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	updatedConcOffset = updatedConc + (nGrid * 3 + 8) * dof;
 
 	// Compute the modified trap mutation at the ninth grid point
-	trapMutationHandler.computeTrapMutation(network, concOffset,
-			updatedConcOffset, 8, 3);
+	trapMutationHandler.computeTrapMutation(
+		network, concOffset, updatedConcOffset, 8, 3);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 5.5031e+23, 0.01); // Create I
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // He3
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[17], 0.0, 0.01); // Doesn't create He3V
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffset[17], 0.0, 0.01); // Doesn't create He3V
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -1.3760e+23, 0.01); // He7
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[21], 1.3760e+23, 0.01); // Create He7V2
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffset[21], 1.3760e+23, 0.01); // Create He7V2
 
 	// Initialize the indices and values to set in the Jacobian
 	int indices[3 * maxHe];
 	double val[3 * maxHe];
 	// Get the pointer on them for the compute modified trap-mutation method
-	int *indicesPointer = &indices[0];
-	double *valPointer = &val[0];
+	int* indicesPointer = &indices[0];
+	double* valPointer = &val[0];
 
-	// Compute the partial derivatives for the modified trap-mutation at the grid point 8
-	int nMutating = trapMutationHandler.computePartialsForTrapMutation(network,
-			concOffset, valPointer, indicesPointer, 8, 3);
+	// Compute the partial derivatives for the modified trap-mutation at the
+	// grid point 8
+	int nMutating = trapMutationHandler.computePartialsForTrapMutation(
+		network, concOffset, valPointer, indicesPointer, 8, 3);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(nMutating, 4);
@@ -186,8 +196,8 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation) {
 	trapMutationHandler.updateTrapMutationRate(network.getLargestRate());
 
 	// Compute the partial derivatives for the bursting a the grid point 8
-	nMutating = trapMutationHandler.computePartialsForTrapMutation(network,
-			concOffset, valPointer, indicesPointer, 8, 3);
+	nMutating = trapMutationHandler.computePartialsForTrapMutation(
+		network, concOffset, valPointer, indicesPointer, 8, 3);
 
 	// Check values
 	BOOST_REQUIRE_EQUAL(nMutating, 4);

@@ -2,22 +2,25 @@
 #define STANDARDHANDLERREGISTRY_H
 
 #include <iostream>
-#include <string>
 #include <map>
+#include <string>
+
 #include <xolotl/viz/IVizHandlerRegistry.h>
 
-namespace xolotl {
-namespace viz {
-namespace standard {
-
+namespace xolotl
+{
+namespace viz
+{
+namespace standard
+{
 /**
  * Factory for creating standard plots using EAVL and MESA libraries.
  * This is used only if the libraries are present and if the user uses
  * the standard registry.
  */
-class StandardHandlerRegistry: public IVizHandlerRegistry {
+class StandardHandlerRegistry : public IVizHandlerRegistry
+{
 public:
-
 	/**
 	 * Construct a StandardHandlerRegistry.
 	 */
@@ -35,11 +38,10 @@ public:
 	 * @param type The type of plot to return.
 	 * @return A shared pointer to the newly-created Plot.
 	 */
-	virtual std::shared_ptr<IPlot> getPlot(const std::string& name,
-			PlotType type);
-
+	virtual std::shared_ptr<IPlot>
+	getPlot(const std::string& name, PlotType type);
 };
-//end class StandardHandlerRegistry
+// end class StandardHandlerRegistry
 
 } /* namespace standard */
 } /* namespace viz */

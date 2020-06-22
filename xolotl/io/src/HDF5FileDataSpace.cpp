@@ -1,20 +1,19 @@
 #include <iostream>
 #include <sstream>
-#include <xolotl/io/HDF5File.h>
+
 #include <xolotl/io/HDF5Exception.h>
+#include <xolotl/io/HDF5File.h>
 
 namespace xolotl
 {
 namespace io
 {
-
-HDF5File::ScalarDataSpace::ScalarDataSpace(void)
-  : DataSpace(H5Screate(H5S_SCALAR))
+HDF5File::ScalarDataSpace::ScalarDataSpace(void) :
+	DataSpace(H5Screate(H5S_SCALAR))
 {
-    if(getId() < 0)
-    {
-        throw HDF5Exception("Failed to create scalar DataSpace");
-    }
+	if (getId() < 0) {
+		throw HDF5Exception("Failed to create scalar DataSpace");
+	}
 }
 
 } // namespace io

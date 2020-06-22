@@ -5,43 +5,47 @@
 #include <xolotl/core/advection/SurfaceAdvectionHandler.h>
 #include <xolotl/util/MathUtils.h>
 
-namespace xolotl {
-namespace core {
-namespace advection {
-
+namespace xolotl
+{
+namespace core
+{
+namespace advection
+{
 /**
  * This class realizes the IAdvectionHandler interface responsible for all
  * the physical parts for the advection of mobile helium cluster.
  */
-class W211AdvectionHandler: public SurfaceAdvectionHandler {
-
+class W211AdvectionHandler : public SurfaceAdvectionHandler
+{
 public:
-
 	//! The Constructor
-	W211AdvectionHandler() :
-			SurfaceAdvectionHandler() {
+	W211AdvectionHandler() : SurfaceAdvectionHandler()
+	{
 	}
 
 	//! The Destructor
-	~W211AdvectionHandler() {
+	~W211AdvectionHandler()
+	{
 	}
 
 	/**
-	 * This function initialize the list of clusters that will move through advection for a
-	 * (211) tungsten material.
+	 * This function initialize the list of clusters that will move through
+	 * advection for a (211) tungsten material.
 	 *
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for advecting clusters.
 	 * of the advecting clusters
 	 */
-	void initialize(network::IReactionNetwork& network,
-			network::IReactionNetwork::SparseFillMap& ofillMap) override {
+	void
+	initialize(network::IReactionNetwork& network,
+		network::IReactionNetwork::SparseFillMap& ofillMap) override
+	{
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();
 		sinkStrengthVector.clear();
 
 		using NetworkType =
-		network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+			network::PSIReactionNetwork<network::PSIFullSpeciesList>;
 		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 		// Initialize the composition
@@ -54,10 +58,10 @@ public:
 
 			// Check that the helium cluster is present in the network
 			if (cluster.getId() == NetworkType::invalidIndex()) {
-				throw std::string(
-						"\nThe helium cluster of size " + std::to_string(i)
-								+ "is not present in the network, "
-										"cannot use the advection option!");
+				throw std::string("\nThe helium cluster of size " +
+					std::to_string(i) +
+					"is not present in the network, "
+					"cannot use the advection option!");
 			}
 
 			// Get its diffusion coefficient
@@ -112,9 +116,8 @@ public:
 
 		return;
 	}
-
 };
-//end class W211AdvectionHandler
+// end class W211AdvectionHandler
 
 } /* end namespace advection */
 } /* end namespace core */

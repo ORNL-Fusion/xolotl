@@ -1,24 +1,29 @@
-#include <xolotl/perf/papi/PAPIHandlerRegistry.h>
-#include <xolotl/perf/papi/PAPITimer.h>
-#include <xolotl/perf/papi/PAPIHardwareCounter.h>
 #include <xolotl/perf/EventCounter.h>
 #include <xolotl/perf/RuntimeError.h>
+#include <xolotl/perf/papi/PAPIHandlerRegistry.h>
+#include <xolotl/perf/papi/PAPIHardwareCounter.h>
+#include <xolotl/perf/papi/PAPITimer.h>
 
-namespace xolotl {
-namespace perf {
-namespace papi {
-
-PAPIHandlerRegistry::PAPIHandlerRegistry(void) {
+namespace xolotl
+{
+namespace perf
+{
+namespace papi
+{
+PAPIHandlerRegistry::PAPIHandlerRegistry(void)
+{
 	int ret;
 	ret = PAPI_library_init(PAPI_VER_CURRENT);
 	if (ret != PAPI_VER_CURRENT) {
 		throw xolotl::perf::runtime_error(
-				"Unable to initialize PAPI library for performance data collection",
-				ret);
+			"Unable to initialize PAPI library for performance data collection",
+			ret);
 	}
 }
 
-std::shared_ptr<ITimer> PAPIHandlerRegistry::getTimer(const std::string& name) {
+std::shared_ptr<ITimer>
+PAPIHandlerRegistry::getTimer(const std::string& name)
+{
 	// TODO - associate the object we create with the current region.
 	std::shared_ptr<ITimer> ret;
 
@@ -28,7 +33,8 @@ std::shared_ptr<ITimer> PAPIHandlerRegistry::getTimer(const std::string& name) {
 		// We have already created a timer with this name.
 		// Return it.
 		ret = iter->second;
-	} else {
+	}
+	else {
 		// We have not yet created a timer with this name.
 		// Build one, and keep track of it.
 		ret = std::make_shared<PAPITimer>(name);
@@ -37,8 +43,10 @@ std::shared_ptr<ITimer> PAPIHandlerRegistry::getTimer(const std::string& name) {
 	return ret;
 }
 
-std::shared_ptr<IHardwareCounter> PAPIHandlerRegistry::getHardwareCounter(
-		const std::string& name, const IHardwareCounter::SpecType& ctrSpec) {
+std::shared_ptr<IHardwareCounter>
+PAPIHandlerRegistry::getHardwareCounter(
+	const std::string& name, const IHardwareCounter::SpecType& ctrSpec)
+{
 	// TODO - associate the object we create with the current region
 	std::shared_ptr<IHardwareCounter> ret;
 
@@ -48,7 +56,8 @@ std::shared_ptr<IHardwareCounter> PAPIHandlerRegistry::getHardwareCounter(
 		// We have already created a hw counter set with this name.
 		// Return it.
 		ret = iter->second;
-	} else {
+	}
+	else {
 		// We have not yet created a hw counter set with this name.
 		// Build one and keep track of it.
 		ret = std::make_shared<PAPIHardwareCounter>(name, ctrSpec);

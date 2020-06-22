@@ -1,11 +1,12 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/unit_test.hpp>
 #include <boost/mpl/list.hpp>
-#include <xolotl/core/network/NEReactionNetwork.h>
+#include <boost/test/unit_test.hpp>
+
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
+#include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 
 using namespace std;
@@ -21,9 +22,9 @@ BOOST_GLOBAL_FIXTURE(ScopeGuard);
 BOOST_AUTO_TEST_SUITE(Network_testSuite)
 
 using network_types = std::tuple<NEReactionNetwork, AlloyReactionNetwork,
-		FeReactionNetwork, PSIReactionNetwork<PSIFullSpeciesList>>;
+	FeReactionNetwork, PSIReactionNetwork<PSIFullSpeciesList>>;
 
-BOOST_AUTO_TEST_CASE_TEMPLATE( defaut_constructor, T, network_types )
+BOOST_AUTO_TEST_CASE_TEMPLATE(defaut_constructor, T, network_types)
 {
 	using NetworkType = T;
 	constexpr auto speciesRange = NetworkType::getSpeciesRange();
@@ -32,8 +33,8 @@ BOOST_AUTO_TEST_CASE_TEMPLATE( defaut_constructor, T, network_types )
 	for (auto i : speciesRange) {
 		maxSpeciesAmounts.push_back(1);
 	}
-	NetworkType network = NetworkType(maxSpeciesAmounts, 1,
-			xolotl::options::Options { });
+	NetworkType network =
+		NetworkType(maxSpeciesAmounts, 1, xolotl::options::Options{});
 
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);

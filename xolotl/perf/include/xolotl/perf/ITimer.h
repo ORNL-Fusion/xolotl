@@ -1,22 +1,25 @@
 #ifndef ITIMER_H
 #define ITIMER_H
 
-#include <mpi.h>
-#include <string>
 #include <float.h>
+
+#include <string>
+
+#include <mpi.h>
+
 #include <xolotl/util/IIdentifiable.h>
 
-namespace xolotl {
-namespace perf {
-
+namespace xolotl
+{
+namespace perf
+{
 /**
  * Realizations of this interface are responsible for the collection
  * of performance timing statistics.
  */
-class ITimer: public virtual util::IIdentifiable {
-
+class ITimer : public virtual util::IIdentifiable
+{
 public:
-
 	/**
 	 * The type of a timer value.
 	 */
@@ -40,38 +43,43 @@ public:
 	/**
 	 * Destroy the timer.
 	 */
-	virtual ~ITimer(void) {
+	virtual ~ITimer(void)
+	{
 	}
 
 	/**
 	 * Start the timer.
 	 */
-	virtual void start(void) = 0;
+	virtual void
+	start(void) = 0;
 
 	/**
 	 * Stop the timer.
 	 */
-	virtual void stop(void) = 0;
+	virtual void
+	stop(void) = 0;
 
 	/**
 	 * Access the timer's value.  (Only valid if timer is not running.)
 	 */
-	virtual ValType getValue(void) const = 0;
+	virtual ValType
+	getValue(void) const = 0;
 
 	/**
 	 * Reset the timer's value.  Only valid if timer is not running.
 	 */
-	virtual void reset(void) = 0;
+	virtual void
+	reset(void) = 0;
 
 	/**
 	 * Obtain a string describing the units of the timer's value.
 	 */
-	virtual std::string getUnits(void) const = 0;
-
+	virtual std::string
+	getUnits(void) const = 0;
 };
-//end class ITimer
+// end class ITimer
 
-}//end namespace perf
-}//end namespace xolotl
+} // end namespace perf
+} // end namespace xolotl
 
 #endif

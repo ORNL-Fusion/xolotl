@@ -1,9 +1,12 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/unit_test.hpp>
 #include <fstream>
+
 #include <mpi.h>
+
+#include <boost/test/unit_test.hpp>
+
 #include <xolotl/core/temperature/TemperatureProfileHandler.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/config.h>
@@ -16,9 +19,10 @@ using namespace temperature;
 /**
  * The test suite is responsible for testing the TemperatureHandler.
  */
-BOOST_AUTO_TEST_SUITE (TemperatureProfileHandlerTester_testSuite)
+BOOST_AUTO_TEST_SUITE(TemperatureProfileHandlerTester_testSuite)
 
-BOOST_AUTO_TEST_CASE(check_getTemperature) {
+BOOST_AUTO_TEST_CASE(check_getTemperature)
+{
 	// Set the DOF
 	const int dof = 9;
 
@@ -27,26 +31,26 @@ BOOST_AUTO_TEST_CASE(check_getTemperature) {
 	// the temperature at that time.
 	std::ofstream writeTempFile("tempFile.dat");
 	writeTempFile << "0.0 2.0 \n"
-			"1.0 1.99219766723 \n"
-			"2.0 1.87758256189 \n"
-			"3.0 1.4311765168 \n"
-			"4.0 0.583853163453 \n"
-			"5.0 0.000137654918313 \n"
-			"6.0 0.789204200569 \n"
-			"7.0 1.9875147713 \n"
-			"8.0 0.854499966191 \n"
-			"9.0 0.235300873168 \n"
-			"10.0 1.99779827918";
+					 "1.0 1.99219766723 \n"
+					 "2.0 1.87758256189 \n"
+					 "3.0 1.4311765168 \n"
+					 "4.0 0.583853163453 \n"
+					 "5.0 0.000137654918313 \n"
+					 "6.0 0.789204200569 \n"
+					 "7.0 1.9875147713 \n"
+					 "8.0 0.854499966191 \n"
+					 "9.0 0.235300873168 \n"
+					 "10.0 1.99779827918";
 	writeTempFile.close();
 
 	// Create ofill and dfill
-    network::IReactionNetwork::SparseFillMap ofill;
-    network::IReactionNetwork::SparseFillMap dfill;
+	network::IReactionNetwork::SparseFillMap ofill;
+	network::IReactionNetwork::SparseFillMap dfill;
 
 	// Create and initialize the temperature profile handler
 	auto testTemp = make_shared<TemperatureProfileHandler>("tempFile.dat");
 	testTemp->initializeTemperature(dof, ofill, dfill);
-    plsm::SpaceVector<double, 3> pos { 1.142857142857143, 0.0, 0.0 };
+	plsm::SpaceVector<double, 3> pos{1.142857142857143, 0.0, 0.0};
 
 	// Vector to hold the user defined time values
 	std::vector<double> t;

@@ -9,44 +9,38 @@ namespace network
 {
 template class PSIReactionNetwork<PSIFullSpeciesList>;
 
-template
-ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::ReactionNetwork(
-    const std::vector<AmountType>& maxSpeciesAmounts,
-    const std::vector<SubdivisionRatio>& subdivisionRatios, IndexType gridSize,
-    const options::IOptions& opts);
+template ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
+	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+		const std::vector<SubdivisionRatio>& subdivisionRatios,
+		IndexType gridSize, const options::IOptions& opts);
 
-template
-ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::ReactionNetwork(
-    const std::vector<AmountType>& maxSpeciesAmounts, IndexType gridSize,
-    const options::IOptions& opts);
+template ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
+	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+		IndexType gridSize, const options::IOptions& opts);
 
-template
-ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::Cluster<plsm::OnHost>
+template ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::Cluster<
+	plsm::OnHost>
 ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::findCluster(
-    const Composition& comp, plsm::OnHost context);
+	const Composition& comp, plsm::OnHost context);
 
-template
-double
+template double
 ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::getTotalConcentration(
-    ConcentrationsView concentrations, Species type, AmountType minSize);
+	ConcentrationsView concentrations, Species type, AmountType minSize);
 
-template
-double
-ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>
-    ::getTotalRadiusConcentration(ConcentrationsView concentrations,
-        Species type, AmountType minSize);
+template double
+ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
+	getTotalRadiusConcentration(
+		ConcentrationsView concentrations, Species type, AmountType minSize);
 
-template
-double
-ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>
-    ::getTotalAtomConcentration(ConcentrationsView concentrations,
-        Species type, AmountType minSize);
+template double
+ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
+	getTotalAtomConcentration(
+		ConcentrationsView concentrations, Species type, AmountType minSize);
 
-template
-double
-ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>
-    ::getTotalTrappedAtomConcentration(ConcentrationsView concentrations,
-        Species type, AmountType minSize);
-}
-}
-}
+template double
+ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
+	getTotalTrappedAtomConcentration(
+		ConcentrationsView concentrations, Species type, AmountType minSize);
+} // namespace network
+} // namespace core
+} // namespace xolotl

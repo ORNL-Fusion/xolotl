@@ -5,10 +5,12 @@
 #include <xolotl/core/advection/AdvectionHandler.h>
 #include <xolotl/util/MathUtils.h>
 
-namespace xolotl {
-namespace core {
-namespace advection {
-
+namespace xolotl
+{
+namespace core
+{
+namespace advection
+{
 /**
  * This class realizes the IAdvectionHandler interface responsible for all
  * the physical parts for the advection of mobile helium cluster.
@@ -17,39 +19,41 @@ namespace advection {
  * don't diffuse anymore once on the GB, the diffusion is thus cancelled out
  * here on the GB.
  */
-class XGBAdvectionHandler: public AdvectionHandler {
+class XGBAdvectionHandler : public AdvectionHandler
+{
 public:
-
 	//! The Constructor
-	XGBAdvectionHandler() :
-			AdvectionHandler() {
+	XGBAdvectionHandler() : AdvectionHandler()
+	{
 	}
 
 	//! The Destructor
-	~XGBAdvectionHandler() {
+	~XGBAdvectionHandler()
+	{
 	}
 
 	/**
-	 * This function initialize the list of clusters that will move through advection for
-	 * grain boundaries.
+	 * This function initialize the list of clusters that will move through
+	 * advection for grain boundaries.
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void initialize(network::IReactionNetwork& network,
-			network::IReactionNetwork::SparseFillMap& ofillMap) override;
+	void
+	initialize(network::IReactionNetwork& network,
+		network::IReactionNetwork::SparseFillMap& ofillMap) override;
 
 	/**
-	 * Initialize an array of the dimension of the physical domain times the number of advecting
-	 * clusters. For each location, True means the cluster is moving, False means it is not.
-	 * Don't do anything here.
+	 * Initialize an array of the dimension of the physical domain times the
+	 * number of advecting clusters. For each location, True means the cluster
+	 * is moving, False means it is not. Don't do anything here.
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void initializeAdvectionGrid(
-			std::vector<IAdvectionHandler *> advectionHandlers,
-			std::vector<double> grid, int nx, int xs, int ny = 1, double hy =
-					0.0, int ys = 0, int nz = 1, double hz = 0.0, int zs = 0)
-					override {
+	void
+	initializeAdvectionGrid(std::vector<IAdvectionHandler*> advectionHandlers,
+		std::vector<double> grid, int nx, int xs, int ny = 1, double hy = 0.0,
+		int ys = 0, int nz = 1, double hz = 0.0, int zs = 0) override
+	{
 		return;
 	}
 
@@ -57,55 +61,58 @@ public:
 	 * Compute the flux due to the advection for all the helium clusters,
 	 * given the space parameters and the position.
 	 * This method is called by the RHSFunction from the PetscSolver.
-	 * This method also removes the flux from diffusion of the advecting clusters
-	 * on the GB.
+	 * This method also removes the flux from diffusion of the advecting
+	 * clusters on the GB.
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computeAdvection(network::IReactionNetwork& network,
-			const plsm::SpaceVector<double, 3>& pos, double **concVector, double *updatedConcOffset,
-			double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
-			double hz = 0.0, int iz = 0) const override;
+	void
+	computeAdvection(network::IReactionNetwork& network,
+		const plsm::SpaceVector<double, 3>& pos, double** concVector,
+		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
+		double hy = 0.0, int iy = 0, double hz = 0.0,
+		int iz = 0) const override;
 
 	/**
-	 * Compute the partials due to the advection of all the helium clusters given
-	 * the space parameters and the position.
-	 * This method is called by the RHSJacobian from the PetscSolver.
-	 * This method also removes the partials from diffusion of the advecting clusters
-	 * on the GB.
+	 * Compute the partials due to the advection of all the helium clusters
+	 * given the space parameters and the position. This method is called by the
+	 * RHSJacobian from the PetscSolver. This method also removes the partials
+	 * from diffusion of the advecting clusters on the GB.
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	void computePartialsForAdvection(
-			network::IReactionNetwork& network, double *val,
-			int *indices, const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight,
-			int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
-			int iz = 0) const override;
+	void
+	computePartialsForAdvection(network::IReactionNetwork& network, double* val,
+		int* indices, const plsm::SpaceVector<double, 3>& pos, double hxLeft,
+		double hxRight, int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
+		int iz = 0) const override;
 
 	/**
-	 * Compute the indices that will determine where the partial derivatives will
-	 * be put in the Jacobian.
-	 * This method is called by the RHSJacobian from the PetscSolver.
+	 * Compute the indices that will determine where the partial derivatives
+	 * will be put in the Jacobian. This method is called by the RHSJacobian
+	 * from the PetscSolver.
 	 *
 	 * Here we consider GB in the X direction.
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	std::array<int, 3> getStencilForAdvection(const plsm::SpaceVector<double, 3>& pos) const
-			override;
+	std::array<int, 3>
+	getStencilForAdvection(
+		const plsm::SpaceVector<double, 3>& pos) const override;
 
 	/**
 	 * Check whether the grid point is located on the sink surface or not.
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	bool isPointOnSink(const plsm::SpaceVector<double, 3>& pos) const override {
+	bool
+	isPointOnSink(const plsm::SpaceVector<double, 3>& pos) const override
+	{
 		// Return true if pos[0] is equal to location
 		return fabs(location - pos[0]) < 0.001;
 	}
-
 };
-//end class XGBAdvectionHandler
+// end class XGBAdvectionHandler
 
 } /* end namespace advection */
 } /* end namespace core */

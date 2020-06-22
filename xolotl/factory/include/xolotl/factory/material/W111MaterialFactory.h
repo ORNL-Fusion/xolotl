@@ -2,34 +2,37 @@
 #define W111MATERIALHANDLERFACTORY_H
 
 #include <memory>
-#include <xolotl/factory/material/MaterialFactory.h>
-#include <xolotl/core/flux/W111FitFluxHandler.h>
+
 #include <xolotl/core/advection/W111AdvectionHandler.h>
+#include <xolotl/core/flux/W111FitFluxHandler.h>
 #include <xolotl/core/modified/W111TrapMutationHandler.h>
+#include <xolotl/factory/material/MaterialFactory.h>
 
-namespace xolotl {
-namespace factory {
-namespace material {
-
+namespace xolotl
+{
+namespace factory
+{
+namespace material
+{
 /**
  * Subclass of MaterialFactory for a (111) oriented tungsten material.
  */
-class W111MaterialFactory: public MaterialFactory {
-
+class W111MaterialFactory : public MaterialFactory
+{
 public:
-
 	/**
 	 * The constructor creates the handlers.
 	 *
 	 * @param dim The number of dimensions for the problem
 	 */
 	W111MaterialFactory(const options::Options& options) :
-			MaterialFactory(options) {
+		MaterialFactory(options)
+	{
 		theFluxHandler = std::make_shared<core::flux::W111FitFluxHandler>();
 		theAdvectionHandler.push_back(
-				std::make_shared<core::advection::W111AdvectionHandler>());
-		theTrapMutationHandler = std::make_shared<
-				core::modified::W111TrapMutationHandler>();
+			std::make_shared<core::advection::W111AdvectionHandler>());
+		theTrapMutationHandler =
+			std::make_shared<core::modified::W111TrapMutationHandler>();
 
 		return;
 	}
@@ -37,7 +40,8 @@ public:
 	/**
 	 * The destructor
 	 */
-	~W111MaterialFactory() {
+	~W111MaterialFactory()
+	{
 	}
 };
 
