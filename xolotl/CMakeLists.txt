@@ -9,14 +9,9 @@ add_subdirectory(options)
 add_subdirectory(viz)
 add_subdirectory(factory)
 add_subdirectory(solver)
+add_subdirectory(interface)
 
 add_executable(xolotl main.cpp)
 target_link_libraries(xolotl
-    xolotlCore
-    xolotlFactory
-    xolotlSolver
-    xolotlIO
-    xolotlOptions
-    xolotlPerf
-    xolotlViz
+    xolotlInterface
 )

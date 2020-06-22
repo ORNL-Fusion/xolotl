@@ -17,7 +17,9 @@ void PetscSolver0DHandler::createSolverContext(DM &da) {
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	ierr = DMDACreate1d(PETSC_COMM_WORLD, DM_BOUNDARY_NONE, 1, dof + 1, 0,
+	// Get the MPI communicator on which to create the DMDA
+	auto xolotlComm = util::getMPIComm();
+	ierr = DMDACreate1d(xolotlComm, DM_BOUNDARY_NONE, 1, dof + 1, 0,
 	NULL, &da);
 	checkPetscError(ierr, "PetscSolver0DHandler::createSolverContext: "
 			"DMDACreate1d failed.");
@@ -152,6 +154,88 @@ void PetscSolver0DHandler::initializeConcentration(DM &da, Vec &C) {
 	return;
 }
 
+std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > PetscSolver0DHandler::getConcVector(
+		DM &da, Vec &C) {
+
+	// Initial declaration
+	PetscErrorCode ierr;
+	const double *gridPointSolution = nullptr;
+
+	// Pointer for the concentration vector
+	PetscScalar **concentrations = nullptr;
+	ierr = DMDAVecGetArrayDOFRead(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver0DHandler::getConcVector: "
+			"DMDAVecGetArrayDOFRead failed.");
+
+	// Get the network and dof
+	auto& network = getNetwork();
+	const int dof = network.getDOF();
+
+	// Create the vector for the concentrations
+	std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > toReturn;
+
+	// Access the solution data for the current grid point.
+	gridPointSolution = concentrations[0];
+
+	// Create the temporary vector for this grid point
+	std::vector<std::pair<int, double> > tempVector;
+	for (auto l = 0; l < dof; ++l) {
+		if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
+			tempVector.push_back(std::make_pair(l, gridPointSolution[l]));
+		}
+	}
+	std::vector<std::vector<std::pair<int, double> > > tempTempVector;
+	tempTempVector.push_back(tempVector);
+	std::vector<std::vector<std::vector<std::pair<int, double> > > > tempTempTempVector;
+	tempTempTempVector.push_back(tempTempVector);
+	toReturn.push_back(tempTempTempVector);
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver0DHandler::getConcVector: "
+			"DMDAVecRestoreArrayDOFRead failed.");
+
+	return toReturn;
+}
+
+void PetscSolver0DHandler::setConcVector(DM &da, Vec &C,
+		std::vector<
+				std::vector<std::vector<std::vector<std::pair<int, double> > > > > & concVector) {
+	PetscErrorCode ierr;
+
+	// Pointer for the concentration vector
+	PetscScalar *gridPointSolution = nullptr;
+	PetscScalar **concentrations = nullptr;
+	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver0DHandler::setConcVector: "
+			"DMDAVecGetArrayDOF failed.");
+
+	// Get the DOF of the network
+	const int dof = network.getDOF();
+
+	// Get the local concentration
+	gridPointSolution = concentrations[0];
+
+	// Loop on the given vector
+	for (int l = 0; l < concVector[0][0][0].size(); l++) {
+		gridPointSolution[concVector[0][0][0][l].first] =
+				concVector[0][0][0][l].second;
+	}
+
+	// Set the temperature in the network
+	temperature[0] = gridPointSolution[dof];
+	network.setTemperatures(temperature);
+
+	/*
+	 Restore vectors
+	 */
+	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver0DHandler::setConcVector: "
+			"DMDAVecRestoreArrayDOF failed.");
+
+	return;
+}
+
 void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		PetscReal ftime) {
 	PetscErrorCode ierr;
@@ -162,7 +246,7 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	checkPetscError(ierr, "PetscSolver0DHandler::updateConcentration: "
 			"TSGetDM failed.");
 
-	// Pointers to the PETSc arrays that start at the beginning (xs) of the
+	// Pointers to the PETSc arrays that start at the beginning of the
 	// local array!
 	PetscScalar **concs = nullptr, **updatedConcs = nullptr;
 	// Get pointers to vector data
@@ -178,15 +262,16 @@ void PetscSolver0DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	// current grid point. They are accessed just like regular arrays.
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
-
 	// Set the grid position
     plsm::SpaceVector<double, 3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Get the old and new array offsets
 	concOffset = concs[0];
 	updatedConcOffset = updatedConcs[0];
+
+	// Degrees of freedom is the total number of clusters in the network
+	const int dof = network.getDOF();
+
 
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);

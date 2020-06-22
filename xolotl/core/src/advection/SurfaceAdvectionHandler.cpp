@@ -86,9 +86,6 @@ void SurfaceAdvectionHandler::computeAdvection(
 		double **concVector, double *updatedConcOffset, double hxLeft,
 		double hxRight, int ix, double hy, int iy, double hz, int iz) const {
 
-	// Get the number of advecting cluster
-	int nAdvec = advectingClusters.size();
-
 	// Consider each advecting cluster
 	// TODO Maintaining a separate index assumes that advectingClusters is
 	// visited in same order as advectionGrid array for given point

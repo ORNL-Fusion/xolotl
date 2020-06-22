@@ -5,9 +5,9 @@
 #include <string.h>
 #include <iostream>
 #include <fstream>
-#include <mpi.h>
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 
 namespace xolotl {
@@ -105,7 +105,8 @@ public:
 
 		// Gets the process ID
 		int procId;
-		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+		auto xolotlComm = util::getMPIComm();
+		MPI_Comm_rank(xolotlComm, &procId);
 
 		if (!paramFile.good()) {
 			// Print a message

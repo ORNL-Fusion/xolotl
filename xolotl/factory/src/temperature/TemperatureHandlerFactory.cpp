@@ -1,6 +1,5 @@
 #include <fstream>
 #include <iostream>
-#include <mpi.h>
 #include <xolotl/core/temperature/HeatEquation1DHandler.h>
 #include <xolotl/core/temperature/HeatEquation2DHandler.h>
 #include <xolotl/core/temperature/HeatEquation3DHandler.h>
@@ -9,6 +8,7 @@
 #include <xolotl/core/temperature/TemperatureProfileHandler.h>
 #include <xolotl/core/temperature/TemperatureGradientHandler.h>
 #include <xolotl/util/MathUtils.h>
+#include <xolotl/util/MPIUtils.h>
 
 namespace xolotl {
 namespace factory {
@@ -20,7 +20,8 @@ static std::shared_ptr<core::temperature::ITemperatureHandler> theTemperatureHan
 bool initializeTempHandler(const options::Options &opts) {
 	// Get the current process ID
 	int procId;
-	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+	auto xolotlComm = util::getMPIComm();
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	bool ret = true;
 

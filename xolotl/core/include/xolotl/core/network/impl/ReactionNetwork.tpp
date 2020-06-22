@@ -461,6 +461,14 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(ConcentrationsView conc
 }
 
 template <typename TImpl>
+double
+ReactionNetwork<TImpl>::getTotalVolumeFraction(
+    ConcentrationsView concentrations, Species type, AmountType minSize)
+{
+    return _worker.getTotalVolumeFraction(concentrations, type, minSize);
+}
+
+template <typename TImpl>
 void
 ReactionNetwork<TImpl>::defineMomentIds()
 {
@@ -683,6 +691,31 @@ ReactionNetworkWorker<TImpl>::getTotalAtomConcentration(
     Kokkos::fence();
 
     return conc;
+}
+
+template <typename TImpl>
+double
+ReactionNetworkWorker<TImpl>::getTotalVolumeFraction(
+    ConcentrationsView concentrations, Species type, AmountType minSize)
+{
+    auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+    double conc = 0.0;
+    auto clusterData = _nw._clusterData;
+    Kokkos::parallel_reduce(_nw._numClusters,
+            KOKKOS_LAMBDA (IndexType i, double& lsum) {
+    	const auto& clReg = tiles(i).getRegion();
+    	const auto factor = clReg.volume() / clReg[type].length();
+    	for (AmountType j : makeIntervalRange(clReg[type])) {
+    		if (j >= minSize)
+    			lsum += concentrations(i) * pow(clusterData.reactionRadius(i), 3.0) * factor;
+    	}
+    }, conc);
+
+    Kokkos::fence();
+
+    double sphereFactor = 4.0 * ::xolotl::core::pi / 3.0;
+
+    return conc * sphereFactor;
 }
 
 template <typename TImpl>

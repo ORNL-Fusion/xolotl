@@ -131,6 +131,12 @@ public:
 	virtual void incrementFluence(double dt);
 
 	/**
+	 * This operation computes the fluence at the given time.
+	 * \see IFluxHandler.h
+	 */
+	virtual void computeFluence(double time);
+
+	/**
 	 * This operation returns the fluence.
 	 * \see IFluxHandler.h
 	 */

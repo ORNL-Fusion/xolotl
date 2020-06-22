@@ -45,8 +45,9 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	}
 
 	// Prints the grid on one process
+	auto xolotlComm = util::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
 		for (int i = 1; i < grid.size() - 1; i++) {
 			std::cout << grid[i] - grid[surfacePosition[0] + 1] << " ";
@@ -57,12 +58,21 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-
-	ierr = DMDACreate2d(PETSC_COMM_WORLD, DM_BOUNDARY_MIRROR,
-			DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX, nY, PETSC_DECIDE,
-			PETSC_DECIDE, dof + 1, 1, NULL, NULL, &da);
-	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
-			"DMDACreate2d failed.");
+	if (isMirror) {
+		ierr = DMDACreate2d(xolotlComm, DM_BOUNDARY_MIRROR,
+				DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX, nY, PETSC_DECIDE,
+				PETSC_DECIDE, dof + 1, 1, NULL,
+				NULL, &da);
+		checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
+				"DMDACreate2d failed.");
+	} else {
+		ierr = DMDACreate2d(xolotlComm, DM_BOUNDARY_PERIODIC,
+				DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX, nY, PETSC_DECIDE,
+				PETSC_DECIDE, dof + 1, 1, NULL,
+				NULL, &da);
+		checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
+				"DMDACreate2d failed.");
+	}
 	ierr = DMSetFromOptions(da);
 	checkPetscError(ierr,
 			"PetscSolver2DHandler::createSolverContext: DMSetFromOptions failed.");
@@ -98,17 +108,19 @@ void PetscSolver2DHandler::createSolverContext(DM &da) {
 	// Get the local boundaries
 	PetscInt xs, xm, ys, ym;
 	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
-	checkPetscError(ierr, "PetscSolver2DHandler::initializeConcentration: "
+	checkPetscError(ierr, "PetscSolver2DHandler::createSolverContext: "
 			"DMDAGetCorners failed.");
+	// Set it in the handler
+	setLocalCoordinates(xs, xm, ys, ym);
 
 	// Initialize the modified trap-mutation handler because it adds connectivity
-	mutationHandler->initialize(network, dfill, xm, ym);
+	mutationHandler->initialize(network, dfill, localXM, localYM);
 	mutationHandler->initializeIndex2D(surfacePosition, network,
-			advectionHandlers, grid, xm, xs, ym, hY, ys);
+			advectionHandlers, grid, localXM, localXS, localYM, hY, localYS);
 
 	// Tell the network the number of grid points on this process with ghosts
 	// TODO: do we need the ghost points?
-	network.setGridSize(xm + 2);
+	network.setGridSize(localXM + 2);
 
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
@@ -138,14 +150,8 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	checkPetscError(ierr, "PetscSolver2DHandler::initializeConcentration: "
 			"DMDAVecGetArrayDOF failed.");
 
-	// Get the local boundaries
-	PetscInt xs, xm, ys, ym;
-	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
-	checkPetscError(ierr, "PetscSolver2DHandler::initializeConcentration: "
-			"DMDAGetCorners failed.");
-
 	// Initialize the last temperature at each grid point on this process
-	for (int i = 0; i < xm + 2; i++) {
+	for (int i = 0; i < localXM + 2; i++) {
 		temperature.push_back(0.0);
 	}
 
@@ -166,12 +172,12 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	fluxHandler->initializeFluxHandler(network, surfacePosition[0], grid);
 
 	// Initialize the grid for the diffusion
-	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, xm, xs,
-			ym, hY, ys);
+	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, localXM,
+			localXS, localYM, hY, localYS);
 
 	// Initialize the grid for the advection
-	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid, xm,
-			xs, ym, hY, ys);
+	advectionHandlers[0]->initializeAdvectionGrid(advectionHandlers, grid,
+			localXM, localXS, localYM, hY, localYS);
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar *concOffset = nullptr;
@@ -183,12 +189,13 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	// Get the single vacancy ID
 	auto singleVacancyCluster = network.getSingleVacancy();
 	auto vacancyIndex = NetworkType::invalidIndex();
-	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
+	if (singleVacancyCluster.getId() != NetworkType::invalidIndex()) {
 		vacancyIndex = singleVacancyCluster.getId();
+	}
 
 	// Loop on all the grid points
-	for (PetscInt j = ys; j < ys + ym; j++)
-		for (PetscInt i = xs - 1; i <= xs + xm; i++) {
+	for (int j = localYS; j < localYS + localYM; j++)
+		for (int i = localXS; i < localXS + localXM; i++) {
 			// Temperature
             plsm::SpaceVector<double, 3> gridPosition { 0.0, j * hY, 0.0 };
 			if (i < 0)
@@ -203,10 +210,10 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 								/ (grid[grid.size() - 1]
 										- grid[surfacePosition[j] + 1]);
 			auto temp = temperatureHandler->getTemperature(gridPosition, 0.0);
-			temperature[i - xs + 1] = temp;
+			temperature[i - localXS + 1] = temp;
 
 			// Boundary conditions
-			if (i < xs || i >= xs + xm)
+			if (i < localXS || i >= localXS + localXM)
 				continue;
 
 			concOffset = concentrations[j][i];
@@ -226,6 +233,7 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 			}
 		}
 
+
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
 
@@ -240,7 +248,8 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 				auto concVector = tsGroup->readGridPoint(i, j);
 
 				// Change the concentration only if we are on the locally owned part of the grid
-				if (i >= xs && i < xs + xm && j >= ys && j < ys + ym) {
+				if (i >= localXS && i < localXS + localXM && j >= localYS
+						&& j < localYS + localYM) {
 					concOffset = concentrations[j][i];
 					// Loop on the concVector size
 					for (unsigned int l = 0; l < concVector.size(); l++) {
@@ -249,7 +258,7 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 					}
 					// Get the temperature
 					double temp = concVector.at(concVector.size() - 1).at(1);
-					temperature[i - xs + 1] = temp;
+					temperature[i - localXS + 1] = temp;
 				}
 			}
 	}
@@ -271,6 +280,177 @@ void PetscSolver2DHandler::initializeConcentration(DM &da, Vec &C) {
 	return;
 }
 
+void PetscSolver2DHandler::initGBLocation(DM &da, Vec &C) {
+	PetscErrorCode ierr;
+
+	// Pointer for the concentration vector
+	PetscScalar ***concentrations = nullptr;
+	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver2DHandler::initGBLocation: "
+			"DMDAVecGetArrayDOF failed.");
+
+	// Pointer for the concentration vector at a specific grid point
+	PetscScalar *concOffset = nullptr;
+
+	// Degrees of freedom is the total number of clusters in the network
+	// + the super clusters
+	const int dof = network.getDOF();
+
+	// Loop on the GB
+	for (auto const& pair : gbVector) {
+		// Get the coordinate of the point
+		int xi = std::get<0>(pair);
+		int yj = std::get<1>(pair);
+		// Check if we are on the right process
+		if (xi >= localXS && xi < localXS + localXM && yj >= localYS
+				&& yj < localYS + localYM) {
+			// Get the local concentration
+			concOffset = concentrations[yj][xi];
+
+			// Loop on all the clusters to initialize at 0.0
+			for (int n = 0; n < dof - 1; n++) {
+				concOffset[n] = 0.0;
+			}
+		}
+	}
+
+	/*
+	 Restore vectors
+	 */
+	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver2DHandler::initGBLocation: "
+			"DMDAVecRestoreArrayDOF failed.");
+
+	return;
+}
+
+std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > PetscSolver2DHandler::getConcVector(
+		DM &da, Vec &C) {
+
+	// Initial declaration
+	PetscErrorCode ierr;
+	const double *gridPointSolution = nullptr;
+
+	// Pointer for the concentration vector
+	PetscScalar ***concentrations = nullptr;
+	ierr = DMDAVecGetArrayDOFRead(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver2DHandler::getConcVector: "
+			"DMDAVecGetArrayDOFRead failed.");
+
+	// Get the network and dof
+	auto& network = getNetwork();
+	const int dof = network.getDOF();
+
+	// Create the vector for the concentrations
+	std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > toReturn;
+	std::vector<std::vector<std::vector<std::pair<int, double> > > > tempTempTempVector;
+
+	// Loop on the grid points
+	for (auto j = 0; j < localYM; ++j) {
+		std::vector<std::vector<std::pair<int, double> > > tempTempVector;
+		for (auto i = 0; i < localXM; ++i) {
+			gridPointSolution = concentrations[localYS + j][localXS + i];
+
+			// Create the temporary vector for this grid point
+			std::vector<std::pair<int, double> > tempVector;
+			for (auto l = 0; l < dof; ++l) {
+				if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
+					tempVector.push_back(
+							std::make_pair(l, gridPointSolution[l]));
+				}
+			}
+			tempTempVector.push_back(tempVector);
+		}
+		tempTempTempVector.push_back(tempTempVector);
+	}
+	toReturn.push_back(tempTempTempVector);
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver2DHandler::getConcVector: "
+			"DMDAVecRestoreArrayDOFRead failed.");
+
+	return toReturn;
+}
+
+void PetscSolver2DHandler::setConcVector(DM &da, Vec &C,
+		std::vector<
+				std::vector<std::vector<std::vector<std::pair<int, double> > > > > & concVector) {
+	PetscErrorCode ierr;
+
+	// Pointer for the concentration vector
+	PetscScalar *gridPointSolution = nullptr;
+	PetscScalar ***concentrations = nullptr;
+	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver2DHandler::setConcVector: "
+			"DMDAVecGetArrayDOF failed.");
+
+	// Loop on the grid points
+	for (auto j = 0; j < localYM; ++j) {
+		for (auto i = 0; i < localXM; ++i) {
+			gridPointSolution = concentrations[localYS + j][localXS + i];
+
+			// Loop on the given vector
+			for (int l = 0; l < concVector[0][j][i].size(); l++) {
+				gridPointSolution[concVector[0][j][i][l].first] =
+						concVector[0][j][i][l].second;
+			}
+		}
+	}
+
+	/*
+	 Restore vectors
+	 */
+	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
+	checkPetscError(ierr, "PetscSolver2DHandler::setConcVector: "
+			"DMDAVecRestoreArrayDOF failed.");
+
+	// Get the complete data array, including ghost cells to set the temperature at the ghost points
+	Vec localSolution;
+	ierr = DMGetLocalVector(da, &localSolution);
+	checkPetscError(ierr, "PetscSolver2DHandler::setConcVector: "
+			"DMGetLocalVector failed.");
+	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localSolution);
+	checkPetscError(ierr, "PetscSolver2DHandler::setConcVector: "
+			"DMGlobalToLocalBegin failed.");
+	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localSolution);
+	checkPetscError(ierr, "PetscSolver2DHandler::setConcVector: "
+			"DMGlobalToLocalEnd failed.");
+	// Get the array of concentration
+	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &concentrations);
+	checkPetscError(ierr, "PetscSolver2DHandler::setConcVector: "
+			"DMDAVecGetArrayDOFRead failed.");
+
+	// Getthe DOF of the network
+	const int dof = network.getDOF();
+
+	// Loop on the grid points
+	for (auto j = 0; j < localYM; ++j) {
+		for (auto i = -1; i <= localXM; ++i) {
+			gridPointSolution = concentrations[localYS + j][localXS + i];
+
+			// Get the temperature
+			temperature[i + 1] = gridPointSolution[dof];
+		}
+		// Update the network with the temperature
+		network.setTemperatures(temperature);
+		network.syncClusterDataOnHost();
+		// Update the modified trap-mutation rate
+		// that depends on the network reaction rates
+		mutationHandler->updateTrapMutationRate(network.getLargestRate());
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations);
+	checkPetscError(ierr, "PetscSolver2DHandler::setConcVector: "
+			"DMDAVecRestoreArrayDOFRead failed.");
+	ierr = DMRestoreLocalVector(da, &localSolution);
+	checkPetscError(ierr, "PetscSolver2DHandler::setConcVector: "
+			"DMRestoreLocalVector failed.");
+
+	return;
+}
+
 void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		PetscReal ftime) {
 	PetscErrorCode ierr;
@@ -281,7 +461,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	checkPetscError(ierr,
 			"PetscSolver2DHandler::updateConcentration: TSGetDM failed.");
 
-	// Pointers to the PETSc arrays that start at the beginning (xs, ys) of the
+	// Pointers to the PETSc arrays that start at the beginning (localXS, localYS) of the
 	// local array!
 	PetscScalar ***concs = nullptr, ***updatedConcs = nullptr;
 	// Get pointers to vector data
@@ -292,16 +472,13 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	checkPetscError(ierr, "PetscSolver2DHandler::updateConcentration: "
 			"DMDAVecGetArrayDOF (F) failed.");
 
-	// Get local grid boundaries
-	PetscInt xs, xm, ys, ym;
-	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
-	checkPetscError(ierr, "PetscSolver2DHandler::updateConcentration: "
-			"DMDAGetCorners failed.");
-
 	// The following pointers are set to the first position in the conc or
 	// updatedConc arrays that correspond to the beginning of the data for the
 	// current grid point. They are accessed just like regular arrays.
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
+
+	// Degrees of freedom is the total number of clusters in the network
+	const int dof = network.getDOF();
 
 	// Set some step size variable
 	double sy = 1.0 / (hY * hY);
@@ -312,17 +489,14 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	std::vector<double> incidentFluxVector;
 	double atomConc = 0.0, totalAtomConc = 0.0;
 
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
-
 	// Loop over grid points first for the temperature, including the ghost points in X
-	for (PetscInt yj = ys; yj < ys + ym; yj++) {
+	for (PetscInt yj = localYS; yj < localYS + localYM; yj++) {
 		temperatureHandler->updateSurfacePosition(surfacePosition[yj]);
 		bool tempHasChanged = false;
-		for (PetscInt xi = xs - 1; xi <= xs + xm; xi++) {
+		for (PetscInt xi = localXS - 1; xi <= localXS + localXM; xi++) {
 
 			// Heat condition
-			if (xi == surfacePosition[yj] && xi >= xs && xi < xs + xm) {
+			if (xi == surfacePosition[yj] && xi >= localXS && xi < localXS + localXM) {
 				// Compute the old and new array offsets
 				concOffset = concs[yj][xi];
 				updatedConcOffset = updatedConcs[yj][xi];
@@ -406,13 +580,13 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					ftime);
 
 			// Update the network if the temperature changed
-			if (std::fabs(temperature[xi + 1 - xs] - temp) > 0.1) {
-				temperature[xi + 1 - xs] = temp;
+			if (std::fabs(temperature[xi + 1 - localXS] - temp) > 0.1) {
+				temperature[xi + 1 - localXS] = temp;
 				tempHasChanged = true;
 			}
 
 			// ---- Compute the temperature over the locally owned part of the grid -----
-			if (xi >= xs && xi < xs + xm) {
+			if (xi >= localXS && xi < localXS + localXM) {
 				temperatureHandler->computeTemperature(concVector,
 						updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
 			}
@@ -432,7 +606,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 	}
 
 	// Loop over grid points
-	for (PetscInt yj = bottomOffset; yj < nY - topOffset; yj++) {
+	for (int yj = bottomOffset; yj < nY - topOffset; yj++) {
 
 		// Computing the trapped atom concentration is only needed for the attenuation
 		if (useAttenuation) {
@@ -448,7 +622,8 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 					continue;
 
 				// Check if we are on the right processor
-				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+				if (xi >= localXS && xi < localXS + localXM && yj >= localYS
+						&& yj < localYS + localYM) {
 					// Get the concentrations at this grid point
 					concOffset = concs[yj][xi];
 
@@ -470,15 +645,16 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 			// Share the concentration with all the processes
 			totalAtomConc = 0.0;
+			auto xolotlComm = util::getMPIComm();
 			MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-					MPI_COMM_WORLD);
+					xolotlComm);
 
 			// Set the disappearing rate in the modified TM handler
 			mutationHandler->updateDisappearingRate(totalAtomConc);
 		}
 
 		// Skip if we are not on the right process
-		if (yj < ys || yj >= ys + ym)
+		if (yj < localYS || yj >= localYS + localYM)
 			continue;
 
 		// Set the grid position
@@ -490,7 +666,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 		advectionHandlers[0]->setLocation(
 				grid[surfacePosition[yj] + 1] - grid[1]);
 
-		for (PetscInt xi = xs; xi < xs + xm; xi++) {
+		for (int xi = localXS; xi < localXS + localXM; xi++) {
 			// Compute the old and new array offsets
 			concOffset = concs[yj][xi];
 			updatedConcOffset = updatedConcs[yj][xi];
@@ -539,20 +715,21 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 
 			// ---- Compute diffusion over the locally owned part of the grid -----
 			diffusionHandler->computeDiffusion(network, concVector,
-					updatedConcOffset, hxLeft, hxRight, xi - xs, sy, yj - ys);
+					updatedConcOffset, hxLeft, hxRight, xi - localXS, sy,
+					yj - localYS);
 
 			// ---- Compute advection over the locally owned part of the grid -----
 			// Set the grid position
 			gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 			for (int i = 0; i < advectionHandlers.size(); i++) {
 				advectionHandlers[i]->computeAdvection(network, gridPosition,
-						concVector, updatedConcOffset, hxLeft, hxRight, xi - xs,
-						hY, yj - ys);
+						concVector, updatedConcOffset, hxLeft, hxRight,
+						xi - localXS, hY, yj - localYS);
 			}
 
 			// ----- Compute the modified trap-mutation over the locally owned part of the grid -----
 			mutationHandler->computeTrapMutation(network, concOffset,
-					updatedConcOffset, xi - xs, yj - ys);
+					updatedConcOffset, xi - localXS, yj - localYS);
 
 			// ----- Compute the reaction fluxes over the locally owned part of the grid -----
 			using HostUnmanaged =
@@ -565,7 +742,7 @@ void PetscSolver2DHandler::updateConcentration(TS &ts, Vec &localC, Vec &F,
 			deep_copy(dFlux, hFlux);
 			fluxCounter->increment();
 			fluxTimer->start();
-			network.computeAllFluxes(dConcs, dFlux, xi + 1 - xs);
+			network.computeAllFluxes(dConcs, dFlux, xi + 1 - localXS);
 			fluxTimer->stop();
 			deep_copy(hFlux, dFlux);
 		}
@@ -602,12 +779,6 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
 	checkPetscError(ierr, "PetscSolver2DHandler::computeJacobian: "
 			"DMDAVecGetArrayDOFRead failed.");
-
-	// Get local grid boundaries
-	PetscInt xs, xm, ys, ym;
-	ierr = DMDAGetCorners(da, &xs, &ys, NULL, &xm, &ym, NULL);
-	checkPetscError(ierr, "PetscSolver2DHandler::computeJacobian: "
-			"DMDAGetCorners failed.");
 
 	// The degree of freedom is the size of the network
 	const int dof = network.getDOF();
@@ -650,10 +821,10 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 	/*
 	 Loop over grid points for the temperature, including ghosts
 	 */
-	for (PetscInt yj = ys; yj < ys + ym; yj++) {
+	for (PetscInt yj = localYS; yj < localYS + localYM; yj++) {
 		temperatureHandler->updateSurfacePosition(surfacePosition[yj]);
 		bool tempHasChanged = false;
-		for (PetscInt xi = xs - 1; xi <= xs + xm; xi++) {
+		for (PetscInt xi = localXS - 1; xi <= localXS + localXM; xi++) {
 			// Compute the left and right hx
 			double hxLeft = 0.0, hxRight = 0.0;
 			if (xi - 1 >= 0 && xi < nX) {
@@ -671,7 +842,7 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 			}
 
 			// Heat condition
-			if (xi == surfacePosition[yj] && xi >= xs && xi < xs + xm) {
+			if (xi == surfacePosition[yj] && xi >= localXS && xi < localXS + localXM) {
 				// Get the partial derivatives for the temperature
 				auto setValues =
 						temperatureHandler->computePartialsForTemperature(
@@ -741,13 +912,13 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 					ftime);
 
 			// Update the network if the temperature changed
-			if (std::fabs(temperature[xi + 1 - xs] - temp) > 0.1) {
-				temperature[xi + 1 - xs] = temp;
+			if (std::fabs(temperature[xi + 1 - localXS] - temp) > 0.1) {
+				temperature[xi + 1 - localXS] = temp;
 				tempHasChanged = true;
 			}
 
 			// Get the partial derivatives for the temperature
-			if (xi >= xs && xi < xs + xm) {
+			if (xi >= localXS && xi < localXS + localXM) {
 				auto setValues =
 						temperatureHandler->computePartialsForTemperature(
 								tempVals, tempIndices, hxLeft, hxRight, xi, sy,
@@ -814,7 +985,7 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 					continue;
 
 				// Check if we are on the right processor
-				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+				if (xi >= localXS && xi < localXS + localXM && yj >= localYS && yj < localYS + localYM) {
 					// Get the concentrations at this grid point
 					concOffset = concs[yj][xi];
 
@@ -836,15 +1007,16 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Share the concentration with all the processes
 			totalAtomConc = 0.0;
+			auto xolotlComm = util::getMPIComm();
 			MPI_Allreduce(&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM,
-					MPI_COMM_WORLD);
+					xolotlComm);
 
 			// Set the disappearing rate in the modified TM handler
 			mutationHandler->updateDisappearingRate(totalAtomConc);
 		}
 
 		// Skip if we are not on the right process
-		if (yj < ys || yj >= ys + ym)
+		if (yj < localYS || yj >= localYS + localYM)
 			continue;
 
 		// Set the grid position
@@ -855,7 +1027,7 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 		advectionHandlers[0]->setLocation(
 				grid[surfacePosition[yj] + 1] - grid[1]);
 
-		for (PetscInt xi = xs; xi < xs + xm; xi++) {
+		for (PetscInt xi = localXS; xi < localXS + localXM; xi++) {
 			// Boundary conditions
 			// Everything to the left of the surface is empty
 			if (xi < surfacePosition[yj] + leftOffset
@@ -888,7 +1060,8 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Get the partial derivatives for the diffusion
 			diffusionHandler->computePartialsForDiffusion(network, diffVals,
-					diffIndices, hxLeft, hxRight, xi - xs, sy, yj - ys);
+					diffIndices, hxLeft, hxRight, xi - localXS, sy,
+					yj - localYS);
 
 			// Loop on the number of diffusion cluster to set the values in the Jacobian
 			for (int i = 0; i < nDiff; i++) {
@@ -927,7 +1100,7 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 			for (int l = 0; l < advectionHandlers.size(); l++) {
 				advectionHandlers[l]->computePartialsForAdvection(network,
 						advecVals, advecIndices, gridPosition, hxLeft, hxRight,
-						xi - xs, hY, yj - ys);
+						xi - localXS, hY, yj - localYS);
 
 				// Get the stencil indices to know where to put the partial derivatives in the Jacobian
 				auto advecStencil =
@@ -986,7 +1159,7 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 			deep_copy(dConcs, hConcs);
 			partialDerivativeCounter->increment();
 			partialDerivativeTimer->start();
-			network.computeAllPartials(dConcs, vals, xi + 1 - xs);
+			network.computeAllPartials(dConcs, vals, xi + 1 - localXS);
 			partialDerivativeTimer->stop();
 			auto hPartials = create_mirror_view(vals);
 			deep_copy(hPartials, vals);
@@ -1042,8 +1215,8 @@ void PetscSolver2DHandler::computeJacobian(TS &ts, Vec &localC, Mat &J,
 
 			// Compute the partial derivative from modified trap-mutation at this grid point
 			int nMutating = mutationHandler->computePartialsForTrapMutation(
-					network, concOffset, mutationVals, mutationIndices, xi - xs,
-					yj - ys);
+					network, concOffset, mutationVals, mutationIndices, xi - localXS,
+					yj - localYS);
 
 			// Loop on the number of helium undergoing trap-mutation to set the values
 			// in the Jacobian

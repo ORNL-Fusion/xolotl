@@ -21,6 +21,7 @@
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
 #include <xolotl/core/network/AlloyReactionNetwork.h>
+#include <xolotl/util/MPIUtils.h>
 
 namespace xolotl {
 namespace solver {
@@ -37,7 +38,6 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<viz::IPlot> perfPlot;
-extern double previousTime;
 extern double timeStepThreshold;
 
 //! The pointer to the plot used in monitorScatter0D.
@@ -48,13 +48,60 @@ PetscReal hdf5Stride0D = 0.0;
 PetscInt hdf5Previous0D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName0D = "xolotlStop.h5";
-// Declare the vector that will store the Id of the helium clusters
-std::vector<int> indices0D;
-// Declare the vector that will store the weight of the helium clusters
-// (their He composition)
-std::vector<int> weights0D;
-// Declare the vector that will store the radii of bubbles
-std::vector<double> radii0D;
+// The id of the largest cluster
+int largestClusterId0D = -1;
+// The concentration threshold for the largest cluster
+double largestThreshold0D = 1.0e-12;
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorLargest0D")
+/**
+ * This is a monitoring method that looks at the largest cluster concentration
+ */
+PetscErrorCode monitorLargest0D(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void*) {
+	// Initial declaration
+	PetscErrorCode ierr;
+	double **solutionArray, *gridPointSolution;
+	PetscInt xs, xm;
+
+	PetscFunctionBeginUser;
+
+	// Get the MPI communicator
+	auto xolotlComm = util::getMPIComm();
+	// Get the number of processes
+	int worldSize;
+	MPI_Comm_size(xolotlComm, &worldSize);
+	// Gets the process ID (important when it is running in parallel)
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the solutionArray
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Get the pointer to the beginning of the solution data for this grid point
+	gridPointSolution = solutionArray[0];
+	// Check the concentration
+	if (gridPointSolution[largestClusterId0D] > largestThreshold0D) {
+		ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
+		CHKERRQ(ierr);
+		// Send an error
+		throw std::string(
+				"\nxolotlSolver::Monitor0D: The largest cluster concentration is too high!!");
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop0D")
@@ -69,7 +116,11 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Get the solver handler
+	auto &solverHandler = PetscSolver::getSolverHandler();
+
 	// Compute the dt
+	double previousTime = solverHandler.getPreviousTime();
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
@@ -90,18 +141,16 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the solver handler
-	auto &solverHandler = PetscSolver::getSolverHandler();
-
 	// Get the network and dof
 	auto &network = solverHandler.getNetwork();
 	const int dof = network.getDOF();
 
 	// Create an array for the concentration
-	double concArray[dof][2];
+	double concArray[dof+1][2];
 
 	// Open the existing HDF5 file
-	io::XFile checkpointFile(hdf5OutputName0D, PETSC_COMM_WORLD,
+	auto xolotlComm = util::getMPIComm();
+	io::XFile checkpointFile(hdf5OutputName0D, xolotlComm,
 			io::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
@@ -575,7 +624,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flag1DPlot, flagBubble, flagPerf, flagStatus,
-			flagAlloy, flagXeRetention;
+			flagAlloy, flagXeRetention, flagLargest;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
@@ -611,6 +660,11 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			&flagXeRetention);
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-xenon_retention) failed.");
+
+	// Check the option -largest_conc
+	ierr = PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest);
+	checkPetscError(ierr,
+			"setupPetsc0DMonitor: PetscOptionsHasName (-largest_conc) failed.");
 
 	// Get the solver handler
 	auto &solverHandler = PetscSolver::getSolverHandler();
@@ -665,7 +719,8 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			previousTime = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			hdf5Previous0D = (int) (previousTime / hdf5Stride0D);
 		}
 
@@ -694,6 +749,9 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			// Get the physical grid (which is empty)
 			auto grid = solverHandler.getXGrid();
 
+			// Get the MPI communicator
+			auto xolotlComm = util::getMPIComm();
+
 			// Create and initialize a checkpoint file.
 			// We do this in its own scope so that the file
 			// is closed when the file object goes out of scope.
@@ -702,7 +760,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			// MPI communicator.
 			{
 				io::XFile checkpointFile(hdf5OutputName0D, grid,
-						PETSC_COMM_WORLD);
+						xolotlComm);
 			}
 
 			// Copy the network group from the given file (if it has one).
@@ -711,7 +769,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			// copy with HDF5's H5Ocopy implementation than it is
 			// when all processes call the copy function.
 			// The checkpoint file must be closed before doing this.
-			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
 					hdf5OutputName0D, network);
 		}
 
@@ -810,16 +868,12 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO isn't this the same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->computeFluence(previousTime);
 		}
 
 		// computeXenonRetention0D will be called at each timestep
@@ -833,11 +887,59 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		outputFile.close();
 	}
 
+	// Set the monitor to monitor the concentration of the largest cluster
+	if (flagLargest) {
+		// Look for the largest cluster
+		int largestSize = 0;
+		// TODO: make it general for any type of network
+		using NetworkType =
+		core::network::NEReactionNetwork;
+		using Spec = typename NetworkType::Species;
+		using Composition = typename NetworkType::Composition;
+		auto &network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
+		for (std::size_t i = 0; i < network.getNumClusters(); i++) {
+	        const auto& clReg = network.getCluster(i).getRegion();
+	        Composition hi = clReg.getUpperLimitPoint();
+	        int size = hi[Spec::Xe];
+			if (size > largestSize) {
+				largestClusterId0D = i;
+				largestSize = size;
+			}
+		}
+
+		// Find the threshold
+		PetscBool flag;
+		ierr = PetscOptionsGetReal(NULL, NULL, "-largest_conc",
+				&largestThreshold0D, &flag);
+		checkPetscError(ierr,
+				"setupPetsc0DMonitor: PetscOptionsGetReal (-largest_conc) failed.");
+
+		// monitorLargest1D will be called at each timestep
+		ierr = TSMonitorSet(ts, monitorLargest0D, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc0DMonitor: TSMonitorSet (monitorLargest0D) failed.");
+	}
+
 	// Set the monitor to simply change the previous time to the new time
 	// monitorTime will be called at each timestep
 	ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: TSMonitorSet (monitorTime) failed.");
+
+	PetscFunctionReturn(0);
+}
+
+/**
+ * This operation resets all the global variables to their original values.
+ * @return A standard PETSc error code
+ */
+PetscErrorCode reset0DMonitor() {
+	timeStepThreshold = 0.0;
+	hdf5Stride0D = 0.0;
+	hdf5Previous0D = 0;
+	hdf5OutputName0D = "xolotlStop.h5";
+	largestClusterId0D = -1;
+	largestThreshold0D = 1.0e-12;
 
 	PetscFunctionReturn(0);
 }

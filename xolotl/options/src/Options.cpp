@@ -124,8 +124,8 @@ void Options::readParams(int argc, char *argv[]) {
 			"All the arguments that will be given to PETSc.")("process",
 			bpo::value<std::string>(),
 			"List of all the processes to use in the simulation (reaction, diff, "
-					"advec, modifiedTM, movingSurface, bursting, attenuation, oneResolution, "
-					"fullResolution, heterogeneous).")("grain",
+					"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, "
+					"heterogeneous).")("grain",
 			bpo::value<std::string>(&gbList),
 			"This option allows the user to add GB in the X, Y, or Z directions. "
 					"To do so, simply write the direction followed "

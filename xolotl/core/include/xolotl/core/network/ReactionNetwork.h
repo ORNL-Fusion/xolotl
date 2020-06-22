@@ -238,7 +238,7 @@ public:
      * @param concentration The vector of concentrations
      * @param type The type of atom we want the concentration of
      * @param minSize The minimum number of atom to start counting
-     * @return The total accumulated concentration times the size of the cluster
+     * @return The total accumulated concentration
      */
     double
     getTotalConcentration(ConcentrationsView concentrations,
@@ -250,7 +250,7 @@ public:
      * @param concentration The vector of concentrations
      * @param type The type of atom we want the concentration of
      * @param minSize The minimum number of atom to start counting
-     * @return The total accumulated concentration times the size of the cluster
+     * @return The total accumulated concentration times the radius of the cluster
      */
     double
     getTotalRadiusConcentration(ConcentrationsView concentrations,
@@ -278,6 +278,18 @@ public:
      */
     double
     getTotalTrappedAtomConcentration(ConcentrationsView concentrations,
+            Species type, AmountType minSize = 0);
+
+    /**
+     * Get the total concentration of a given type of clusters times their volume.
+     *
+     * @param concentration The vector of concentrations
+     * @param type The type of atom we want the concentration of
+     * @param minSize The minimum number of atom to start counting
+     * @return The total accumulated volume fraction
+     */
+    double
+    getTotalVolumeFraction(ConcentrationsView concentrations,
             Species type, AmountType minSize = 0);
 
 private:
@@ -368,6 +380,10 @@ struct ReactionNetworkWorker
 
     double
     getTotalRadiusConcentration(ConcentrationsView concentrations,
+            Species type, AmountType minSize = 0);
+
+    double
+    getTotalVolumeFraction(ConcentrationsView concentrations,
             Species type, AmountType minSize = 0);
 };
 
