@@ -27,7 +27,10 @@ set(XOLOTL_IO_SOURCES
     ${XOLOTL_IO_SOURCE_DIR}/XFile.cpp
 )
 
-add_library(xolotlIO STATIC ${XOLOTL_IO_SOURCES} ${XOLOTL_IO_HEADERS})
+add_library(xolotlIO STATIC
+    ${XOLOTL_IO_SOURCES}
+    ${XOLOTL_IO_HEADERS}
+)
 target_link_libraries(xolotlIO PUBLIC
     xolotlCore
     xolotlUtil

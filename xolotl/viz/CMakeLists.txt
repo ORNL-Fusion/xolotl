@@ -29,7 +29,10 @@ if(VTKm_FOUND)
     include(src/standard/Include.cmake)
 endif(VTKm_FOUND)
 
-add_library(xolotlViz STATIC ${XOLOTL_VIZ_SOURCES} ${XOLOTL_VIZ_HEADERS})
+add_library(xolotlViz STATIC
+    ${XOLOTL_VIZ_SOURCES}
+    ${XOLOTL_VIZ_HEADERS}
+)
 target_link_libraries(xolotlViz PUBLIC xolotlCore)
 target_include_directories(xolotlViz PUBLIC
     ${XOLOTL_VIZ_INCLUDE_DIR}

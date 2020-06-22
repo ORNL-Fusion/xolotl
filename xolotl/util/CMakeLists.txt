@@ -18,7 +18,10 @@ set(XOLOTL_UTIL_SOURCES
     ${XOLOTL_UTIL_SOURCE_DIR}/MPIUtils.cpp
 )
 
-add_library(xolotlUtil STATIC ${XOLOTL_UTIL_SOURCES} ${XOLOTL_UTIL_HEADERS})
+add_library(xolotlUtil STATIC
+    ${XOLOTL_UTIL_SOURCES}
+    ${XOLOTL_UTIL_HEADERS}
+)
 target_link_libraries(xolotlUtil PUBLIC
     MPI::MPI_CXX
     Boost::filesystem
