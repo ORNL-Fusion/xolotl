@@ -20,7 +20,8 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(xolotl C CXX)
+# project(xolotl C CXX)
+project(xolotl CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 
@@ -52,6 +53,7 @@ find_package(Boost REQUIRED COMPONENTS
 ## HDF5
 #set(HDF5_USE_STATIC_LIBRARIES yes)
 set(HDF5_PREFER_PARALLEL ON)
+enable_language(C)
 find_package(HDF5 REQUIRED)
 if(NOT HDF5_IS_PARALLEL)
    message(STATUS "WARNING! Detected HDF5 installation does not support parallel I/O!")

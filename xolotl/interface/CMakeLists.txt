@@ -10,11 +10,12 @@ set(XOLOTL_INTERFACE_SOURCES
     ${XOLOTL_INTERFACE_SOURCE_DIR}/Interface.cpp
 )
 
-add_library(xolotlInterface STATIC
+add_library(xolotlInterface SHARED
     ${XOLOTL_INTERFACE_SOURCES}
     ${XOLOTL_INTERFACE_HEADERS}
 )
-target_link_libraries(xolotlInterface PUBLIC
+target_link_libraries(xolotlInterface
+    PRIVATE
     xolotlCore
     xolotlFactory
     xolotlSolver
@@ -22,7 +23,30 @@ target_link_libraries(xolotlInterface PUBLIC
     xolotlOptions
     xolotlPerf
     xolotlViz
+    PUBLIC
+    plsm
+    MPI::MPI_CXX
+    ${PETSC_LIBRARIES}
 )
-target_include_directories(xolotlInterface PUBLIC ${XOLOTL_INTERFACE_INCLUDE_DIR})
+target_include_directories(xolotlInterface PUBLIC
+    $<BUILD_INTERFACE:${XOLOTL_UTIL_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${XOLOTL_OPTIONS_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${XOLOTL_CORE_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${XOLOTL_PERF_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${XOLOTL_SOLVER_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${XOLOTL_FACTORY_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${XOLOTL_INTERFACE_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include>
+    ${PETSC_INCLUDES}
+)
+set_target_properties(xolotlInterface PROPERTIES
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+)
 
-install(FILES ${HEADERS} DESTINATION include)
+install(TARGETS xolotlInterface
+    EXPORT Xolotl
+    LIBRARY DESTINATION lib
+)
+install(DIRECTORY ${XOLOTL_INTERFACE_INCLUDE_DIR}/xolotl
+    DESTINATION include
+)

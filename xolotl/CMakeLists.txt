@@ -1,3 +1,5 @@
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 set(XOLOTL_BINARY_INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
 set(XOLOTL_BINARY_INCLUDE_DIR ${XOLOTL_BINARY_INCLUDE_DIR} PARENT_SCOPE)
 
@@ -12,6 +14,24 @@ add_subdirectory(solver)
 add_subdirectory(interface)
 
 add_executable(xolotl main.cpp)
-target_link_libraries(xolotl
-    xolotlInterface
+target_link_libraries(xolotl xolotlInterface)
+
+install(TARGETS xolotl
+    EXPORT Xolotl
+    RUNTIME DESTINATION bin
+)
+install(EXPORT Xolotl DESTINATION lib/xolotl)
+
+include(CMakePackageConfigHelpers)
+configure_package_config_file(${CMAKE_SOURCE_DIR}/CMake/XolotlConfig.cmake.in
+    ${CMAKE_CURRENT_BINARY_DIR}/CMake/XolotlConfig.cmake
+    INSTALL_DESTINATION lib/xolotl
+)
+install(FILES
+    ${CMAKE_CURRENT_BINARY_DIR}/CMake/XolotlConfig.cmake
+    ${CMAKE_SOURCE_DIR}/CMake/FindPETSc.cmake
+    ${CMAKE_SOURCE_DIR}/CMake/FindPackageMultipass.cmake
+    ${CMAKE_SOURCE_DIR}/CMake/ResolveCompilerPaths.cmake
+    ${CMAKE_SOURCE_DIR}/CMake/CorrectWindowsPaths.cmake
+    DESTINATION lib/xolotl
 )

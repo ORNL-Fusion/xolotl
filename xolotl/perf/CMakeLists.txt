@@ -12,6 +12,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
 
 set(XOLOTL_PERF_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(XOLOTL_PERF_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
+set(XOLOTL_PERF_INCLUDE_DIR ${XOLOTL_PERF_INCLUDE_DIR} PARENT_SCOPE)
 set(XOLOTL_PERF_HEADER_DIR ${XOLOTL_PERF_INCLUDE_DIR}/xolotl/perf)
 
 set(XOLOTL_PERF_HEADERS
@@ -53,3 +54,14 @@ if(PAPI_FOUND)
     target_link_libraries(xolotlPerf PUBLIC ${PAPI_LIBRARIES})
     target_include_directories(xolotlPerf PUBLIC ${PAPI_INCLUDE_DIRS})
 endif(PAPI_FOUND)
+
+install(FILES
+    ${XOLOTL_PERF_HEADER_DIR}/xolotlPerf.h
+    ${XOLOTL_PERF_HEADER_DIR}/IEventCounter.h
+    ${XOLOTL_PERF_HEADER_DIR}/IHandlerRegistry.h
+    ${XOLOTL_PERF_HEADER_DIR}/IHardwareCounter.h
+    ${XOLOTL_PERF_HEADER_DIR}/ITimer.h
+    ${XOLOTL_PERF_HEADER_DIR}/PerfObjStatistics.h
+    ${XOLOTL_PERF_HEADER_DIR}/RuntimeError.h
+    DESTINATION include/xolotl/perf
+)

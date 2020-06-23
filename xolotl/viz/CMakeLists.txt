@@ -42,6 +42,3 @@ if(VTKm_FOUND)
     # target_include_directories(xolotlViz PUBLIC ${VTKm_INCLUDE_DIRS})
     target_link_libraries(xolotlViz PUBLIC vtkm_cont vtkm_rendering)
 endif(VTKm_FOUND)
-
-install(FILES ${XOLOTL_VIZ_HEADERS} DESTINATION include)
-install(TARGETS xolotlViz DESTINATION lib)
