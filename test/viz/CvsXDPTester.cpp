@@ -37,11 +37,11 @@ BOOST_AUTO_TEST_CASE(checkGetVector)
 	auto myCvsXDataProvider =
 		make_shared<CvsXDataProvider>("myCvsXDataProvider");
 
-	// Create a Point vector
-	auto myPoints = make_shared<vector<Point>>();
+	// Create a DataPoint vector
+	auto myPoints = make_shared<vector<DataPoint>>();
 
 	// And fill it with some Point
-	Point aPoint;
+	DataPoint aPoint;
 	aPoint.value = 3.0;
 	aPoint.t = 1.0;
 	aPoint.x = 2.0;
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(checkGetVector)
 	myPoints->push_back(aPoint);
 
 	// Set these points in the myDataProvider
-	myCvsXDataProvider->setPoints(myPoints);
+	myCvsXDataProvider->setDataPoints(myPoints);
 
 	// Get the vectors back
 	auto axis1Vector = myCvsXDataProvider->getAxis1Vector();
