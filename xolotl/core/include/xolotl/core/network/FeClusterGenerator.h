@@ -23,6 +23,7 @@ public:
 	using Region = typename NetworkType::Region;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
+	using BoolArray = typename Superclass::BoolVec<Region>;
 
 	FeClusterGenerator(const options::IOptions& options);
 
@@ -31,7 +32,7 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	bool
-	intersect(const Region& region) const;
+	refine(const Region& region, BoolArray& result) const;
 
 	KOKKOS_INLINE_FUNCTION
 	bool

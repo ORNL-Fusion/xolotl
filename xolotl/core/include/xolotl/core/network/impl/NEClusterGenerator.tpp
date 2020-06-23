@@ -33,19 +33,23 @@ NEClusterGenerator::NEClusterGenerator(
 
 KOKKOS_INLINE_FUNCTION
 bool
-NEClusterGenerator::intersect(const Region& region) const
+NEClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
 	if (region[Species::Xe].begin() < _groupingMin) {
+		result[0] = true;
 		return true;
 	}
 	if (region[Species::Xe].end() > _maxXe) {
+		result[0] = true;
 		return true;
 	}
 	if (region[Species::Xe].length() <
 		util::max((double)(_groupingWidth + 1),
 			region[Species::Xe].begin() * 1.0e-2)) {
+		result[0] = false;
 		return false;
 	}
+	result[0] = true;
 	return true;
 }
 

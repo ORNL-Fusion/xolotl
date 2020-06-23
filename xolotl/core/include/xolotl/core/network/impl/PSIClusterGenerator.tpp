@@ -38,8 +38,13 @@ PSIClusterGenerator<PSIFullSpeciesList>::PSIClusterGenerator(
 
 KOKKOS_INLINE_FUNCTION
 bool
-PSIClusterGenerator<PSIFullSpeciesList>::intersect(const Region& region) const
+PSIClusterGenerator<PSIFullSpeciesList>::refine(const Region& region, BoolArray& result) const
 {
+	result[0] = true;
+	result[1] = true;
+	result[2] = true;
+	result[3] = true;
+	result[4] = true;
 	// I is never grouped
 	if (region[Species::I].begin() > 0) {
 		return true;
@@ -118,18 +123,38 @@ PSIClusterGenerator<PSIFullSpeciesList>::intersect(const Region& region) const
 	}
 
 	if (region[Species::V].length() == _groupingWidthB) {
+		result[0] = false;
+		result[1] = false;
+		result[2] = false;
+		result[3] = false;
+		result[4] = false;
 		return false;
 	}
 
 	if (region[Species::He].length() == _groupingWidthA) {
+		result[0] = false;
+		result[1] = false;
+		result[2] = false;
+		result[3] = false;
+		result[4] = false;
 		return false;
 	}
 
 	if (region[Species::D].length() == _groupingWidthA) {
+		result[0] = false;
+		result[1] = false;
+		result[2] = false;
+		result[3] = false;
+		result[4] = false;
 		return false;
 	}
 
 	if (region[Species::T].length() == _groupingWidthA) {
+		result[0] = false;
+		result[1] = false;
+		result[2] = false;
+		result[3] = false;
+		result[4] = false;
 		return false;
 	}
 

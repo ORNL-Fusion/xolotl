@@ -31,8 +31,11 @@ FeClusterGenerator::FeClusterGenerator(
 
 KOKKOS_INLINE_FUNCTION
 bool
-FeClusterGenerator::intersect(const Region& region) const
+FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
+	result[0] = true;
+	result[1] = true;
+	result[2] = true;
 	// I is never grouped
 	if (region[Species::I].begin() > 0) {
 		return true;
@@ -70,6 +73,9 @@ FeClusterGenerator::intersect(const Region& region) const
 				util::max(_groupingWidthV + 1,
 					(AmountType)(
 						(region[Species::V].begin() - _groupingMin) * 0.1))) {
+				result[0] = false;
+				result[1] = false;
+				result[2] = false;
 				return false;
 			}
 			else
@@ -80,6 +86,9 @@ FeClusterGenerator::intersect(const Region& region) const
 				util::max(_groupingWidthHe + 1,
 					(AmountType)(
 						(region[Species::He].begin() - _groupingMin) * 0.1))) {
+				result[0] = false;
+				result[1] = false;
+				result[2] = false;
 				return false;
 			}
 			else
@@ -91,6 +100,9 @@ FeClusterGenerator::intersect(const Region& region) const
 			region[Species::V].length() <
 				util::max(_groupingWidthV + 1,
 					(AmountType)((amt - _groupingMin) * 0.1))) {
+			result[0] = false;
+			result[1] = false;
+			result[2] = false;
 			return false;
 		}
 	}
@@ -100,8 +112,12 @@ FeClusterGenerator::intersect(const Region& region) const
 					(AmountType)exp(distance * 1.0) * _groupingWidthHe * 2) ||
 			region[Species::V].length() <
 				util::max(_groupingWidthV + 1,
-					(AmountType)exp(distance * 1.0) * _groupingWidthV * 2))
+					(AmountType)exp(distance * 1.0) * _groupingWidthV * 2)) {
+			result[0] = false;
+			result[1] = false;
+			result[2] = false;
 			return false;
+		}
 	}
 
 	return true;
