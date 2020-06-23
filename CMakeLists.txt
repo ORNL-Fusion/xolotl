@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.4)
+cmake_minimum_required(VERSION 3.13)
 
 # Fix cmake behavior for CMAKE_CXX_STANDARD with clang on Mac OS X.
 # See cmake documentation on CMP0025 policy for details.
@@ -58,12 +58,26 @@ find_package(plsm REQUIRED)
 ## PAPI
 find_package(PAPI)
 
-# Find VTKm
+## VTKm
 if(VTKm_DIR OR VTKM_DIR)
     list(APPEND CMAKE_PREFIX_PATH ${VTKm_DIR} ${VTKM_DIR})
     find_package(VTKm REQUIRED)
 else()
     message(STATUS "Visualization support needs explicit VTKm_DIR.")
+endif()
+
+# Code Coverage
+option(CODE_COVERAGE "Add build flags for code coverage?" OFF)
+if(${CODE_COVERAGE})
+    if(CMAKE_COMPILER_IS_GNUCXX)
+        if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
+            message(WARNING "Code coverage results with an optimized \
+                (non-Debug) build may be misleading")
+        endif()
+
+        add_compile_options(--coverage)
+        add_link_options(--coverage)
+    endif()
 endif()
 
 ## xolotl
