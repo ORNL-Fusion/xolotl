@@ -1,6 +1,5 @@
 set(XOLOTL_UTIL_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(XOLOTL_UTIL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(XOLOTL_UTIL_INCLUDE_DIR ${XOLOTL_UTIL_INCLUDE_DIR} PARENT_SCOPE)
 set(XOLOTL_UTIL_HEADER_DIR ${XOLOTL_UTIL_INCLUDE_DIR}/xolotl/util)
 
 set(XOLOTL_UTIL_HEADERS
@@ -29,10 +28,3 @@ target_link_libraries(xolotlUtil PUBLIC
     Kokkos::kokkos
 )
 target_include_directories(xolotlUtil PUBLIC ${XOLOTL_UTIL_INCLUDE_DIR})
-
-install(FILES
-    ${XOLOTL_UTIL_HEADER_DIR}/Array.h
-    ${XOLOTL_UTIL_HEADER_DIR}/IIdentifiable.h
-    ${XOLOTL_UTIL_HEADER_DIR}/RandomNumberGenerator.h
-    DESTINATION include/xolotl/util
-)

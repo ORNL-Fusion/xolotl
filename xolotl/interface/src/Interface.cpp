@@ -10,6 +10,7 @@
 #include <xolotl/interface/Interface.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/perf/xolotlPerf.h>
+#include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/MPIUtils.h>
 
@@ -17,6 +18,10 @@ namespace xolotl
 {
 namespace interface
 {
+XolotlInterface::XolotlInterface() = default;
+
+XolotlInterface::~XolotlInterface() = default;
+
 void
 XolotlInterface::printSomething()
 {
@@ -510,6 +515,12 @@ XolotlInterface::setNXeGB(double nXe)
 	}
 
 	return;
+}
+
+TS&
+XolotlInterface::getTS()
+{
+    return solver->getTS();
 }
 
 std::vector<double>

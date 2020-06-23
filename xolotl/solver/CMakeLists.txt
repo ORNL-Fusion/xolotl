@@ -1,6 +1,5 @@
 set(XOLOTL_SOLVER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(XOLOTL_SOLVER_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
-set(XOLOTL_SOLVER_INCLUDE_DIR ${XOLOTL_SOLVER_INCLUDE_DIR} PARENT_SCOPE)
 set(XOLOTL_SOLVER_HEADER_DIR ${XOLOTL_SOLVER_INCLUDE_DIR}/xolotl/solver)
 
 set(XOLOTL_SOLVER_HEADERS
@@ -48,15 +47,4 @@ target_link_libraries(xolotlSolver PUBLIC
 target_include_directories(xolotlSolver PUBLIC
     ${XOLOTL_SOLVER_INCLUDE_DIR}
     ${PETSC_INCLUDES}
-)
-
-install(FILES
-    ${XOLOTL_SOLVER_HEADER_DIR}/PetscSolver.h
-    ${XOLOTL_SOLVER_HEADER_DIR}/Solver.h
-    ${XOLOTL_SOLVER_HEADER_DIR}/ISolver.h
-    DESTINATION include/xolotl/solver
-)
-install(FILES
-    ${XOLOTL_SOLVER_HEADER_DIR}/handler/ISolverHandler.h
-    DESTINATION include/xolotl/solver/handler
 )

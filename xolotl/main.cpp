@@ -1,5 +1,7 @@
 #include <xolotl/interface/Interface.h>
 
+#include <Kokkos_Core.hpp>
+
 //! Main program
 int
 main(int argc, char** argv)

@@ -14,7 +14,13 @@ add_subdirectory(solver)
 add_subdirectory(interface)
 
 add_executable(xolotl main.cpp)
-target_link_libraries(xolotl xolotlInterface)
+target_link_libraries(xolotl
+    xolotlInterface
+    Kokkos::kokkos
+)
+set_target_properties(xolotl PROPERTIES
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+)
 
 install(TARGETS xolotl
     EXPORT Xolotl

@@ -1,9 +1,20 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
-#include <xolotl/solver/PetscSolver.h>
+
+#include <memory>
+#include <vector>
+
+#include <mpi.h>
+
+#include <petscts.h>
 
 namespace xolotl
 {
+namespace solver
+{
+class PetscSolver;
+}
+
 namespace interface
 {
 /**
@@ -21,16 +32,12 @@ public:
 	/**
 	 * The default constructor
 	 */
-	XolotlInterface()
-	{
-	}
+	XolotlInterface();
 
 	/**
 	 * The destructor
 	 */
-	~XolotlInterface()
-	{
-	}
+	~XolotlInterface();
 
 	/**
 	 * Print something
@@ -195,10 +202,7 @@ public:
 	 * @return The TS
 	 */
 	TS&
-	getTS()
-	{
-		return solver->getTS();
-	}
+	getTS();
 
 	/**
 	 * Get the grid information
