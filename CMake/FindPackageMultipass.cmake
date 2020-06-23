@@ -99,6 +99,8 @@ macro (MULTIPASS_SOURCE_RUNS includes libraries source runs language)
     check_cxx_source_runs ("${source}" ${testname})
   endif()
   set (${runs} "${${testname}}")
+  unset(CMAKE_REQUIRED_INCLUDES)
+  unset(CMAKE_REQUIRED_LIBRARIES)
 endmacro (MULTIPASS_SOURCE_RUNS)
 
 macro (MULTIPASS_C_SOURCE_RUNS includes libraries source runs)

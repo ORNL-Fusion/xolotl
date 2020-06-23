@@ -29,18 +29,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
 find_package(MPI REQUIRED)
 
 ## PETSc
-# We need to save and restore CMAKE_REQUIRED_{INCLUDES,LIBRARIES}
-# because the FindPETSc.cmake module sets during its operation
-# but does not reset them, and the leftover state then messes with
-# our subsequent configuration checks.
-set(SAVED_CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES})
-set(SAVED_CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES})
 find_package(PETSc REQUIRED)
-if(PETSC_FOUND)
-    include_directories(${PETSC_INCLUDES})
-    set(CMAKE_REQUIRED_INCLUDES ${SAVED_CMAKE_REQUIRED_INCLUDES})
-    set(CMAKE_REQUIRED_LIBRARIES ${SAVED_CMAKE_REQUIRED_LIBRARIES})
-endif()
 
 ## Boost
 # Note that we only need to list Boost component libraries that have a
@@ -71,7 +60,6 @@ find_package(PAPI)
 
 # Find VTKm
 if(VTKm_DIR OR VTKM_DIR)
-    # include(SetupVTKm)
     list(APPEND CMAKE_PREFIX_PATH ${VTKm_DIR} ${VTKM_DIR})
     find_package(VTKm REQUIRED)
 else()
