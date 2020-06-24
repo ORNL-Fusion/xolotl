@@ -81,7 +81,7 @@ public:
 					  << theNetworkHandler->getDOF() << "." << std::endl;
 		}
 		//		// Set the fission rate in the network to compute the diffusion
-		//coefficient correctly
+		// coefficient correctly
 		//		theNetworkHandler->setFissionRate(opts.getFluxAmplitude());
 	}
 

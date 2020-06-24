@@ -67,7 +67,7 @@ public:
 	 * another code
 	 */
 	virtual void
-	initialize(bool isStandalone) = 0;
+	initialize() = 0;
 
 	/**
 	 * This operation sets the wanted final time and max time step allowed.
@@ -141,12 +141,9 @@ public:
 	 * including but not limited to cleaning up memory, finalizing MPI and
 	 * printing diagnostic information. If the solver can not be finalized,
 	 * this operation will throw an exception of type std::string.
-	 *
-	 * @param isStandalone To know is Xolotl is used as a subcomponent of
-	 * another code
 	 */
 	virtual void
-	finalize(bool isStandalone) = 0;
+	finalize() = 0;
 
 	/**
 	 * Get the TS.

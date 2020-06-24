@@ -978,7 +978,8 @@ computeXenonRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 		// Set the volume fraction
 		//		double volumeFrac = network.getTotalVolumeFraction(dConcs,
-		//Spec::Xe, minSizes[0]); 		solverHandler.setVolumeFraction(volumeFrac, xi
+		// Spec::Xe, minSizes[0]);
+		// solverHandler.setVolumeFraction(volumeFrac, xi
 		//- xs);
 		// Set the monomer concentration
 		solverHandler.setMonomerConc(
@@ -1953,7 +1954,8 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 				// Compute the radius of the bubble from the number of helium
 				double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
-				//			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1]
+				//			double nV = pow(heDensity / 5.0, 1.163) * (grid[xi +
+				// 1]
 				//- grid[xi]);
 				double latticeParam = network.getLatticeParameter();
 				double tlcCubed = latticeParam * latticeParam * latticeParam;

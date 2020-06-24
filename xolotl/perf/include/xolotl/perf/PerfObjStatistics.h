@@ -18,13 +18,13 @@ struct PerfObjStatistics
 {
 	std::string name; //< name of the metric
 	unsigned int processCount; //< number of processes that collected data for
-							   //this metric
+							   // this metric
 	T min; //< min value across all processes that collected data for the metric
 	T max; //< max value across all processes that collected data for the metric
 	double average; //< average value across all processes that collected data
-					//for the metric
+					// for the metric
 	double stdev; //< standard deviation of values across all processes that
-				  //collected data for the metric
+				  // collected data for the metric
 
 	/**
 	 * Construct a PerfObjStatistics struct with default values.

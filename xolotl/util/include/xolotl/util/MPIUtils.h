@@ -11,12 +11,12 @@ namespace xolotl
 namespace util
 {
 /**
- * Initialize the MPI communicator
+ * Specify the MPI communicator
  *
  * @param comm The communicator we want to use.
  */
 void
-initialize(MPI_Comm comm);
+setMPIComm(MPI_Comm comm);
 
 /**
  * Access the MPI communicator.

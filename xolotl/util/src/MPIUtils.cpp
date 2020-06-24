@@ -11,7 +11,7 @@ namespace util
 static MPI_Comm xolotlMPIComm = MPI_COMM_WORLD;
 
 void
-initialize(MPI_Comm comm)
+setMPIComm(MPI_Comm comm)
 {
 	xolotlMPIComm = comm;
 

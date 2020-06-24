@@ -38,7 +38,8 @@ PSIClusterGenerator<PSIFullSpeciesList>::PSIClusterGenerator(
 
 KOKKOS_INLINE_FUNCTION
 bool
-PSIClusterGenerator<PSIFullSpeciesList>::refine(const Region& region, BoolArray& result) const
+PSIClusterGenerator<PSIFullSpeciesList>::refine(
+	const Region& region, BoolArray& result) const
 {
 	result[0] = true;
 	result[1] = true;

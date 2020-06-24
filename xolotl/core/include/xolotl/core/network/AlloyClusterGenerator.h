@@ -24,7 +24,6 @@ public:
 	using AmountType = typename NetworkType::AmountType;
 	using BoolArray = typename Superclass::BoolVec<Region>;
 
-
 	AlloyClusterGenerator(const options::IOptions& options);
 
 	AlloyClusterGenerator(

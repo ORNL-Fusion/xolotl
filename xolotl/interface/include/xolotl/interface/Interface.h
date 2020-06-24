@@ -1,12 +1,12 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
+#include <petscts.h>
+
 #include <memory>
 #include <vector>
 
 #include <mpi.h>
-
-#include <petscts.h>
 
 namespace xolotl
 {
@@ -17,12 +17,24 @@ class PetscSolver;
 
 namespace interface
 {
+class Context;
+
 /**
  * Class defining the method to be coupled to another code through MOOSEApps
  */
 class XolotlInterface
 {
 private:
+	/**
+	 * Have we initialized xolotl?
+	 */
+	bool initialized{false};
+
+	/**
+	 * The MPI and Kokkos environment
+	 */
+	std::unique_ptr<Context> context;
+
 	/**
 	 * The solver
 	 */
@@ -33,6 +45,11 @@ public:
 	 * The default constructor
 	 */
 	XolotlInterface();
+
+	/**
+	 * The initializing constructor
+	 */
+	XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm = MPI_COMM_WORLD);
 
 	/**
 	 * The destructor
@@ -50,13 +67,10 @@ public:
 	 *
 	 * @param argc, argv The command line arguments
 	 * @param MPI_Comm The communicator to use
-	 * @param isStandalone To know is Xolotl is used as a subcomponent of
-	 * another code
 	 * @return The pointer to the solver
 	 */
 	void
-	initializeXolotl(int argc, char** argv, MPI_Comm comm = MPI_COMM_WORLD,
-		bool isStandalone = true);
+	initializeXolotl(int argc, char* argv[], MPI_Comm comm = MPI_COMM_WORLD);
 
 	/**
 	 * Set the final time and the dt.
@@ -224,12 +238,9 @@ public:
 
 	/**
 	 * Finalize the solve
-	 *
-	 * @param isStandalone To know is Xolotl is used as a subcomponent of
-	 * another code
 	 */
 	void
-	finalizeXolotl(bool isStandalone = true);
+	finalizeXolotl();
 };
 // End class interface
 

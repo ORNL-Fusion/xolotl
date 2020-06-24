@@ -218,16 +218,27 @@ PetscSolver::setupMesh()
 {
 }
 
+inline bool
+isPetscInitialized()
+{
+	PetscBool ret;
+	PetscInitialized(&ret);
+	return ret;
+}
+
 void
-PetscSolver::initialize(bool isStandalone)
+PetscSolver::initialize()
 {
 	PetscErrorCode ierr;
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	if (isStandalone) {
-		PetscInitialize(NULL, NULL, NULL, help);
+	if (!isPetscInitialized()) {
+		ierr = PetscInitialize(NULL, NULL, NULL, help);
+		checkPetscError(
+			ierr, "PetscSolver::initialize: PetscInitialize failed.");
+		petscInitializedHere = true;
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -525,7 +536,7 @@ PetscSolver::getConvergenceStatus()
 }
 
 void
-PetscSolver::finalize(bool isStandalone)
+PetscSolver::finalize()
 {
 	PetscErrorCode ierr;
 
@@ -569,7 +580,7 @@ PetscSolver::finalize(bool isStandalone)
 	ierr = DMDestroy(&da);
 	checkPetscError(ierr, "PetscSolver::solve: DMDestroy failed.");
 
-	if (isStandalone) {
+	if (petscInitializedHere) {
 		ierr = PetscFinalize();
 		checkPetscError(ierr, "PetscSolver::finalize: PetscFinalize failed.");
 	}

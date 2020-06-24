@@ -18,9 +18,61 @@ namespace xolotl
 {
 namespace interface
 {
+class Context
+{
+public:
+	Context(int argc, char* argv[]) : _kokkosContext(argc, argv)
+	{
+		if (!initialized()) {
+			MPI_Init(&argc, &argv);
+			_mpiInitializedHere = true;
+		}
+	}
+
+	~Context()
+	{
+		if (_mpiInitializedHere) {
+			if (!finalized()) {
+				MPI_Finalize();
+			}
+		}
+	}
+
+	static bool
+	initialized()
+	{
+		int flag;
+		MPI_Initialized(&flag);
+		return flag != 0;
+	}
+
+	static bool
+	finalized()
+	{
+		int flag;
+		MPI_Finalized(&flag);
+		return flag != 0;
+	}
+
+private:
+	bool _mpiInitializedHere{false};
+	Kokkos::ScopeGuard _kokkosContext;
+};
+
 XolotlInterface::XolotlInterface() = default;
 
-XolotlInterface::~XolotlInterface() = default;
+XolotlInterface::XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm)
+{
+	initializeXolotl(argc, argv, mpiComm);
+    initGBLocation();
+}
+
+XolotlInterface::~XolotlInterface()
+{
+	if (initialized) {
+		finalizeXolotl();
+	}
+}
 
 void
 XolotlInterface::printSomething()
@@ -30,11 +82,12 @@ XolotlInterface::printSomething()
 }
 
 void
-XolotlInterface::initializeXolotl(
-	int argc, char** argv, MPI_Comm comm, bool isStandalone)
+XolotlInterface::initializeXolotl(int argc, char* argv[], MPI_Comm comm)
 {
+	context = std::make_unique<Context>(argc, argv);
+
 	// Initialize the MPI communicator to use
-	util::initialize(comm);
+	util::setMPIComm(comm);
 	auto xolotlComm = util::getMPIComm();
 
 	// Get the MPI rank
@@ -102,11 +155,13 @@ XolotlInterface::initializeXolotl(
 		solvHandler.initializeHandlers(materialFactory, tempHandler, opts);
 
 		// Setup the solver
-		solver = std::move(std::unique_ptr<solver::PetscSolver>(
-			new solver::PetscSolver(solvHandler, handlerRegistry)));
+		solver =
+			std::make_shared<solver::PetscSolver>(solvHandler, handlerRegistry);
 		// Initialize the solver
 		solver->setCommandLineOptions(opts.getPetscArg());
-		solver->initialize(isStandalone);
+		solver->initialize();
+
+		initialized = true;
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
@@ -520,7 +575,7 @@ XolotlInterface::setNXeGB(double nXe)
 TS&
 XolotlInterface::getTS()
 {
-    return solver->getTS();
+	return solver->getTS();
 }
 
 std::vector<double>
@@ -577,12 +632,11 @@ XolotlInterface::getConvergenceStatus()
 }
 
 void
-XolotlInterface::finalizeXolotl(bool isStandalone)
+XolotlInterface::finalizeXolotl()
 {
 	try {
 		// Call solver finalize
-		if (isStandalone)
-			solver->finalize(isStandalone);
+		solver->finalize();
 
 		// Report statistics about the performance data collected during
 		// the run we just completed.
@@ -605,6 +659,8 @@ XolotlInterface::finalizeXolotl(bool isStandalone)
 
 		factory::solver::destroySolverHandler();
 		factory::network::IReactionHandlerFactory::resetNetworkFactory();
+
+		initialized = false;
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;

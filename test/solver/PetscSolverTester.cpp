@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_SUITE(PetscSolverTester_testSuite)
 //
 //	BOOST_TEST_MESSAGE(
 //			"PetscSolverTester Message: Network filename is: " <<
-//networkFilename);
+// networkFilename);
 //
 //	// Give the filename to the network loader
 //	loader->setFilename(networkFilename);
@@ -176,7 +176,7 @@ BOOST_AUTO_TEST_SUITE(PetscSolverTester_testSuite)
 //	<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
 //	<< "dimensions=1" << std::endl << "process=diff advec reaction"
 //	<< std::endl << "voidPortion=0.0" << std::endl<< "regularGrid=yes" <<
-//std::endl << "networkFile="
+// std::endl << "networkFile="
 //	<< networkFilename << std::endl;
 //	paramFile.close();
 //
@@ -201,7 +201,7 @@ BOOST_AUTO_TEST_SUITE(PetscSolverTester_testSuite)
 //
 //	BOOST_TEST_MESSAGE(
 //			"PetscSolverTester Message: Network filename is: " <<
-//networkFilename);
+// networkFilename);
 //
 //	// Give the filename to the network loader
 //	loader->setFilename(networkFilename);
@@ -317,7 +317,7 @@ BOOST_AUTO_TEST_SUITE(PetscSolverTester_testSuite)
 //
 //	BOOST_TEST_MESSAGE(
 //			"PetscSolverTester Message: Network filename is: " <<
-//networkFilename);
+// networkFilename);
 //
 //	// Give the filename to the network loader
 //	loader->setFilename(networkFilename);
@@ -504,7 +504,7 @@ BOOST_AUTO_TEST_SUITE(PetscSolverTester_testSuite)
 //	<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
 //	<< "dimensions=3" << std::endl << "process=diff advec reaction"
 //	<< std::endl << "voidPortion=0.0" << std::endl << "netParam=8 0 0 2 6" <<
-//std::endl << "grid=10 0.5 6 1.0 3 2.0"
+// std::endl << "grid=10 0.5 6 1.0 3 2.0"
 //	<< std::endl;
 //	paramFile.close();
 //

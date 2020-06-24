@@ -40,58 +40,58 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	result[4] = true;
 	result[5] = true;
 
-//	// 0 case
-//	if ((region[Species::V].begin()== 0) &&
-//			(region[Species::I].begin()== 0) &&
-//			(region[Species::Perfect].begin() == 0) &&
-//			(region[Species::Frank].begin() == 0) &&
-//			(region[Species::Faulted].begin() == 0) &&
-//			(region[Species::Void].begin() == 0))
-//		return true;
-//
-//	int nAxis = (region[Species::V].begin() > 0) +
-//		(region[Species::I].begin() > 0) +
-//		(region[Species::Perfect].begin() > 0) +
-//		(region[Species::Frank].begin() > 0) +
-//		(region[Species::Faulted].begin() > 0) +
-//		(region[Species::Void].begin() > 0);
-//
-//	if (nAxis > 1) {
-//		return true;
-//	}
-//	else {
-//		// V, I, and Perfect are always refined
-//		if (region[Species::V].begin() > 0) return true;
-//		if (region[Species::I].begin() > 0) return true;
-//		if (region[Species::Perfect].begin() > 0) return true;
-//
-//		// Smaller that the minimum size for grouping
-//		if (region[Species::Void].begin() < _groupingMin ||
-//				region[Species::Faulted].begin() < _groupingMin ||
-//				region[Species::Frank].begin() < _groupingMin) {
-//			return true;
-//		}
-//
-//		// Grouping
-//		if (region[Species::Void].length() <
-//			util::max((double)(_groupingWidth + 1),
-//				region[Species::Void].begin() * 1.0e-2)) {
-//			result[1] = false;
-//			return false;
-//		}
-//		if (region[Species::Faulted].length() <
-//			util::max((double)(_groupingWidth + 1),
-//				region[Species::Faulted].begin() * 1.0e-2)) {
-//			result[2] = false;
-//			return false;
-//		}
-//		if (region[Species::Frank].length() <
-//			util::max((double)(_groupingWidth + 1),
-//				region[Species::Frank].begin() * 1.0e-2)) {
-//			result[5] = false;
-//			return false;
-//		}
-//	}
+	//	// 0 case
+	//	if ((region[Species::V].begin()== 0) &&
+	//			(region[Species::I].begin()== 0) &&
+	//			(region[Species::Perfect].begin() == 0) &&
+	//			(region[Species::Frank].begin() == 0) &&
+	//			(region[Species::Faulted].begin() == 0) &&
+	//			(region[Species::Void].begin() == 0))
+	//		return true;
+	//
+	//	int nAxis = (region[Species::V].begin() > 0) +
+	//		(region[Species::I].begin() > 0) +
+	//		(region[Species::Perfect].begin() > 0) +
+	//		(region[Species::Frank].begin() > 0) +
+	//		(region[Species::Faulted].begin() > 0) +
+	//		(region[Species::Void].begin() > 0);
+	//
+	//	if (nAxis > 1) {
+	//		return true;
+	//	}
+	//	else {
+	//		// V, I, and Perfect are always refined
+	//		if (region[Species::V].begin() > 0) return true;
+	//		if (region[Species::I].begin() > 0) return true;
+	//		if (region[Species::Perfect].begin() > 0) return true;
+	//
+	//		// Smaller that the minimum size for grouping
+	//		if (region[Species::Void].begin() < _groupingMin ||
+	//				region[Species::Faulted].begin() < _groupingMin ||
+	//				region[Species::Frank].begin() < _groupingMin) {
+	//			return true;
+	//		}
+	//
+	//		// Grouping
+	//		if (region[Species::Void].length() <
+	//			util::max((double)(_groupingWidth + 1),
+	//				region[Species::Void].begin() * 1.0e-2)) {
+	//			result[1] = false;
+	//			return false;
+	//		}
+	//		if (region[Species::Faulted].length() <
+	//			util::max((double)(_groupingWidth + 1),
+	//				region[Species::Faulted].begin() * 1.0e-2)) {
+	//			result[2] = false;
+	//			return false;
+	//		}
+	//		if (region[Species::Frank].length() <
+	//			util::max((double)(_groupingWidth + 1),
+	//				region[Species::Frank].begin() * 1.0e-2)) {
+	//			result[5] = false;
+	//			return false;
+	//		}
+	//	}
 	return true;
 }
 
@@ -107,55 +107,55 @@ AlloyClusterGenerator::select(const Region& region) const
 		(region[Species::Void].begin() > 0);
 
 	if (region.isSimplex()) {
-	// Each cluster should be on one axis and one axis only
-	if (nAxis != 1) {
-		return false;
+		// Each cluster should be on one axis and one axis only
+		if (nAxis != 1) {
+			return false;
+		}
+
+		// I
+		if (region[Species::I].begin() > _maxI)
+			return false;
+
+		// V
+		if (region[Species::V].begin() > _maxV)
+			return false;
+
+		// Perfect
+		if (region[Species::Perfect].begin() > 0 &&
+			region[Species::Perfect].begin() < _maxI)
+			return false;
+		if (region[Species::Perfect].begin() > 0 &&
+			region[Species::Perfect].begin() > 45)
+			return false;
+
+		// Frank
+		if (region[Species::Frank].begin() > 0 &&
+			region[Species::Frank].begin() <= _maxI)
+			return false;
+		if (region[Species::Frank].begin() > 0 &&
+			region[Species::Frank].begin() > _maxSize)
+			return false;
+
+		// Faulted
+		if (region[Species::Faulted].begin() > 0 &&
+			region[Species::Faulted].begin() <= _maxV)
+			return false;
+		if (region[Species::Faulted].begin() > 0 &&
+			region[Species::Faulted].begin() > _maxSize)
+			return false;
+
+		// Void
+		if (region[Species::Void].begin() > 0 &&
+			region[Species::Void].begin() <= _maxV)
+			return false;
+		if (region[Species::Void].begin() > 0 &&
+			region[Species::Void].begin() > _maxSize)
+			return false;
 	}
 
-	// I
-	if (region[Species::I].begin() > _maxI)
-		return false;
-
-	// V
-	if (region[Species::V].begin() > _maxV)
-		return false;
-
-	// Perfect
-	if (region[Species::Perfect].begin() > 0 &&
-		region[Species::Perfect].begin() < _maxI)
-		return false;
-	if (region[Species::Perfect].begin() > 0 &&
-		region[Species::Perfect].begin() > 45)
-		return false;
-
-	// Frank
-	if (region[Species::Frank].begin() > 0 &&
-		region[Species::Frank].begin() <= _maxI)
-		return false;
-	if (region[Species::Frank].begin() > 0 &&
-		region[Species::Frank].begin() > _maxSize)
-		return false;
-
-	// Faulted
-	if (region[Species::Faulted].begin() > 0 &&
-		region[Species::Faulted].begin() <= _maxV)
-		return false;
-	if (region[Species::Faulted].begin() > 0 &&
-		region[Species::Faulted].begin() > _maxSize)
-		return false;
-
-	// Void
-	if (region[Species::Void].begin() > 0 &&
-		region[Species::Void].begin() <= _maxV)
-		return false;
-	if (region[Species::Void].begin() > 0 &&
-		region[Species::Void].begin() > _maxSize)
-		return false;
-	}
-
-//	if (nAxis == 6) {
-//		return false;
-//	}
+	//	if (nAxis == 6) {
+	//		return false;
+	//	}
 
 	return true;
 }

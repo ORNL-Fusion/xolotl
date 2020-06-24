@@ -33,6 +33,8 @@ checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
 class PetscSolver : public Solver
 {
 private:
+	bool petscInitializedHere{false};
+
 	/**
 	 * Distributed array that will contain the solution.
 	 */
@@ -100,12 +102,9 @@ public:
 	 * possibly including but not limited to setting up MPI and loading initial
 	 * conditions. If the solver can not be initialized, this operation will
 	 * throw an exception of type std::string.
-	 *
-	 * @param isStandalone To know is Xolotl is used as a subcomponent of
-	 * another code
 	 */
 	void
-	initialize(bool isStandalone) override;
+	initialize() override;
 
 	/**
 	 * This operation sets the wanted final time and max time step allowed.
@@ -180,12 +179,9 @@ public:
 	 * including but not limited to cleaning up memory, finalizing MPI and
 	 * printing diagnostic information. If the solver can not be finalized,
 	 * this operation will throw an exception of type std::string.
-	 *
-	 * @param isStandalone To know is Xolotl is used as a subcomponent of
-	 * another code
 	 */
 	void
-	finalize(bool isStandalone) override;
+	finalize() override;
 
 	/**
 	 * This operation gets the TS.
