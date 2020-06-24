@@ -66,19 +66,8 @@ else()
     message(STATUS "Visualization support needs explicit VTKm_DIR.")
 endif()
 
-# Code Coverage
-option(CODE_COVERAGE "Add build flags for code coverage?" OFF)
-if(${CODE_COVERAGE})
-    if(CMAKE_COMPILER_IS_GNUCXX)
-        if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug")
-            message(WARNING "Code coverage results with an optimized \
-                (non-Debug) build may be misleading")
-        endif()
-
-        add_compile_options(--coverage)
-        add_link_options(--coverage)
-    endif()
-endif()
+include(CTest)
+include(XolotlExtraTesting)
 
 ## xolotl
 add_subdirectory(xolotl)
@@ -86,7 +75,6 @@ add_subdirectory(xolotl)
 ## xconv
 add_subdirectory(xconv)
 
-include(CTest)
 add_subdirectory(test)
 
 add_subdirectory(doc)
