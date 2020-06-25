@@ -283,6 +283,12 @@ void PetscSolver1DHandler::initGBLocation(DM &da, Vec &C) {
 			// Get the local concentration
 			concOffset = concentrations[xi];
 
+			// Update the concentration in the network
+			network.updateConcentrationsFromArray(concOffset);
+
+			// Add this Xe concentration to the Xe rate
+			setLocalXeRate(network.getTotalAtomConcentration(), xi - localXS);
+
 			// Loop on all the clusters to initialize at 0.0
 			for (int n = 0; n < dof - 1; n++) {
 				concOffset[n] = 0.0;
