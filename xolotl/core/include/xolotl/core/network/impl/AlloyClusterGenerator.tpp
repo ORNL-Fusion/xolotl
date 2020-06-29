@@ -40,58 +40,57 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	result[4] = true;
 	result[5] = true;
 
-	//	// 0 case
-	//	if ((region[Species::V].begin()== 0) &&
-	//			(region[Species::I].begin()== 0) &&
-	//			(region[Species::Perfect].begin() == 0) &&
-	//			(region[Species::Frank].begin() == 0) &&
-	//			(region[Species::Faulted].begin() == 0) &&
-	//			(region[Species::Void].begin() == 0))
-	//		return true;
-	//
-	//	int nAxis = (region[Species::V].begin() > 0) +
-	//		(region[Species::I].begin() > 0) +
-	//		(region[Species::Perfect].begin() > 0) +
-	//		(region[Species::Frank].begin() > 0) +
-	//		(region[Species::Faulted].begin() > 0) +
-	//		(region[Species::Void].begin() > 0);
-	//
-	//	if (nAxis > 1) {
-	//		return true;
-	//	}
-	//	else {
-	//		// V, I, and Perfect are always refined
-	//		if (region[Species::V].begin() > 0) return true;
-	//		if (region[Species::I].begin() > 0) return true;
-	//		if (region[Species::Perfect].begin() > 0) return true;
-	//
-	//		// Smaller that the minimum size for grouping
-	//		if (region[Species::Void].begin() < _groupingMin ||
-	//				region[Species::Faulted].begin() < _groupingMin ||
-	//				region[Species::Frank].begin() < _groupingMin) {
-	//			return true;
-	//		}
-	//
-	//		// Grouping
-	//		if (region[Species::Void].length() <
-	//			util::max((double)(_groupingWidth + 1),
-	//				region[Species::Void].begin() * 1.0e-2)) {
-	//			result[1] = false;
-	//			return false;
-	//		}
-	//		if (region[Species::Faulted].length() <
-	//			util::max((double)(_groupingWidth + 1),
-	//				region[Species::Faulted].begin() * 1.0e-2)) {
-	//			result[2] = false;
-	//			return false;
-	//		}
-	//		if (region[Species::Frank].length() <
-	//			util::max((double)(_groupingWidth + 1),
-	//				region[Species::Frank].begin() * 1.0e-2)) {
-	//			result[5] = false;
-	//			return false;
-	//		}
-	//	}
+	int nAxis = (region[Species::V].begin() > 0) +
+		(region[Species::I].begin() > 0) +
+		(region[Species::Perfect].begin() > 0) +
+		(region[Species::Frank].begin() > 0) +
+		(region[Species::Faulted].begin() > 0) +
+		(region[Species::Void].begin() > 0);
+
+	if (nAxis > 1) {
+		result[0] = false;
+		result[1] = false;
+		result[2] = false;
+		result[3] = false;
+		result[4] = false;
+		result[5] = false;
+		return false;
+	}
+
+	if (nAxis == 0)
+		return true;
+
+	// V, I, and Perfect are always refined
+	if (region[Species::V].begin() > 0)
+		return true;
+	if (region[Species::I].begin() > 0)
+		return true;
+	if (region[Species::Perfect].begin() > 0)
+		return true;
+
+	// Smaller that the minimum size for grouping
+	if (region[Species::Void].begin() < _groupingMin &&
+		region[Species::Faulted].begin() < _groupingMin &&
+		region[Species::Frank].begin() < _groupingMin) {
+		return true;
+	}
+
+	if (region[Species::Void].begin() > 0 &&
+		region[Species::Void].length() <
+			util::max((double)(_groupingWidth + 1),
+				region[Species::Void].begin() * 1.0e-2))
+		result[1] = false;
+	if (region[Species::Faulted].begin() > 0 &&
+		region[Species::Faulted].length() <
+			util::max((double)(_groupingWidth + 1),
+				region[Species::Faulted].begin() * 1.0e-2))
+		result[2] = false;
+	if (region[Species::Frank].begin() > 0 &&
+		region[Species::Frank].length() <
+			util::max((double)(_groupingWidth + 1),
+				region[Species::Frank].begin() * 1.0e-2))
+		result[5] = false;
+
 	return true;
 }
 
@@ -105,6 +104,10 @@ AlloyClusterGenerator::select(const Region& region) const
 		(region[Species::Frank].begin() > 0) +
 		(region[Species::Faulted].begin() > 0) +
 		(region[Species::Void].begin() > 0);
+
+	if (nAxis > 1) {
+		return false;
+	}
 
 	if (region.isSimplex()) {
 		// Each cluster should be on one axis and one axis only
@@ -125,7 +128,8 @@ AlloyClusterGenerator::select(const Region& region) const
 			region[Species::Perfect].begin() < _maxI)
 			return false;
 		if (region[Species::Perfect].begin() > 0 &&
-			region[Species::Perfect].begin() > 45)
+			region[Species::Perfect].begin() >
+				util::min((AmountType)45, _maxSize))
 			return false;
 
 		// Frank
@@ -153,9 +157,19 @@ AlloyClusterGenerator::select(const Region& region) const
 			return false;
 	}
 
-	//	if (nAxis == 6) {
-	//		return false;
-	//	}
+	if (region[Species::V].begin() == 0 && region[Species::I].begin() == 0 &&
+		region[Species::Void].end() - 1 <= _maxV &&
+		region[Species::Faulted].end() - 1 <= _maxV &&
+		region[Species::Perfect].end() - 1 < _maxI &&
+		region[Species::Frank].end() - 1 <= _maxI)
+		return false;
+
+	if (region[Species::Void].begin() > _maxSize ||
+		region[Species::Faulted].begin() > _maxSize ||
+		region[Species::Perfect].begin() >
+			util::min((AmountType)45, _maxSize) ||
+		region[Species::Frank].begin() > _maxSize)
+		return false;
 
 	return true;
 }
@@ -167,21 +181,44 @@ AlloyClusterGenerator::getFormationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
 	const auto& reg = cluster.getRegion();
-	Composition comp(reg.getOrigin());
-	if (comp.isOnAxis(Species::Perfect))
-		return 3.4 +
-			2.0 * (pow((double)comp[Species::Perfect], 2.0 / 3.0) - 1.0);
-	if (comp.isOnAxis(Species::Frank))
-		return 3.4 + 2.0 * (pow((double)comp[Species::Frank], 2.0 / 3.0) - 1.0);
-	if (comp.isOnAxis(Species::Faulted))
-		return 1.9 +
-			2.0 * (pow((double)comp[Species::Faulted], 2.0 / 3.0) - 1.0);
-	if (comp.isOnAxis(Species::Void))
-		return 1.9 + 3.4 * (pow((double)comp[Species::Void], 2.0 / 3.0) - 1.0);
-	if (comp.isOnAxis(Species::V))
-		return 1.9 + 3.4 * (pow((double)comp[Species::V], 2.0 / 3.0) - 1.0);
-	if (comp.isOnAxis(Species::I))
-		return 3.4 + 3.5 * (pow((double)comp[Species::I], 2.0 / 3.0) - 1.0);
+	Composition lo(reg.getOrigin());
+	double energy = 0.0;
+	if (lo.isOnAxis(Species::Perfect)) {
+		for (auto j : makeIntervalRange(reg[Species::Perfect])) {
+			energy += 3.4 + 2.0 * (pow((double)j, 2.0 / 3.0) - 1.0);
+		}
+		return energy / reg[Species::Perfect].length();
+	}
+	if (lo.isOnAxis(Species::Frank)) {
+		for (auto j : makeIntervalRange(reg[Species::Frank])) {
+			energy += 3.4 + 2.0 * (pow((double)j, 2.0 / 3.0) - 1.0);
+		}
+		return energy / reg[Species::Frank].length();
+	}
+	if (lo.isOnAxis(Species::Faulted)) {
+		for (auto j : makeIntervalRange(reg[Species::Faulted])) {
+			energy += 1.9 + 2.0 * (pow((double)j, 2.0 / 3.0) - 1.0);
+		}
+		return energy / reg[Species::Faulted].length();
+	}
+	if (lo.isOnAxis(Species::Void)) {
+		for (auto j : makeIntervalRange(reg[Species::Void])) {
+			energy += 1.9 + 3.4 * (pow((double)j, 2.0 / 3.0) - 1.0);
+		}
+		return energy / reg[Species::Void].length();
+	}
+	if (lo.isOnAxis(Species::V)) {
+		for (auto j : makeIntervalRange(reg[Species::V])) {
+			energy += 1.9 + 3.4 * (pow((double)j, 2.0 / 3.0) - 1.0);
+		}
+		return energy / reg[Species::V].length();
+	}
+	if (lo.isOnAxis(Species::I)) {
+		for (auto j : makeIntervalRange(reg[Species::I])) {
+			energy += 3.4 + 3.5 * (pow((double)j, 2.0 / 3.0) - 1.0);
+		}
+		return energy / reg[Species::I].length();
+	}
 	return 0.0;
 }
 
@@ -254,34 +291,53 @@ AlloyClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	double latticeParameter, double interstitialBias,
 	double impurityRadius) const noexcept
 {
-	double radius = 0.0;
 	const double prefactor =
 		0.25 * latticeParameter * latticeParameter / ::xolotl::core::pi;
 	const auto& reg = cluster.getRegion();
-	Composition comp(reg.getOrigin());
-	if (comp.isOnAxis(Species::Perfect)) {
-		return sqrt(((double)comp[Species::Perfect] * prefactor) /
-			::xolotl::core::perfectBurgers);
+	Composition lo(reg.getOrigin());
+	double radius = 0.0;
+	if (lo.isOnAxis(Species::Perfect)) {
+		for (auto j : makeIntervalRange(reg[Species::Perfect])) {
+			radius +=
+				sqrt(((double)j * prefactor) / ::xolotl::core::perfectBurgers);
+		}
+		return radius / reg[Species::Perfect].length();
 	}
-	if (comp.isOnAxis(Species::Frank))
-		return sqrt(((double)comp[Species::Frank] * prefactor) /
-			::xolotl::core::frankBurgers);
-	if (comp.isOnAxis(Species::Faulted))
-		return sqrt(((double)comp[Species::Faulted] * prefactor) /
-			::xolotl::core::faultedBurgers);
-	if (comp.isOnAxis(Species::Void))
-		return pow(
-			0.75 * prefactor * latticeParameter * (double)comp[Species::Void],
-			1.0 / 3.0);
-	if (comp.isOnAxis(Species::V))
-		return pow(
-			0.75 * prefactor * latticeParameter * (double)comp[Species::V],
-			1.0 / 3.0);
-	if (comp.isOnAxis(Species::I))
-		return pow(
-			0.75 * prefactor * latticeParameter * (double)comp[Species::I],
-			1.0 / 3.0);
-	;
+	if (lo.isOnAxis(Species::Frank)) {
+		for (auto j : makeIntervalRange(reg[Species::Frank])) {
+			radius +=
+				sqrt(((double)j * prefactor) / ::xolotl::core::frankBurgers);
+		}
+		return radius / reg[Species::Frank].length();
+	}
+	if (lo.isOnAxis(Species::Faulted)) {
+		for (auto j : makeIntervalRange(reg[Species::Faulted])) {
+			radius +=
+				sqrt(((double)j * prefactor) / ::xolotl::core::faultedBurgers);
+		}
+		return radius / reg[Species::Faulted].length();
+	}
+	if (lo.isOnAxis(Species::Void)) {
+		for (auto j : makeIntervalRange(reg[Species::Void])) {
+			radius +=
+				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+		}
+		return radius / reg[Species::Void].length();
+	}
+	if (lo.isOnAxis(Species::V)) {
+		for (auto j : makeIntervalRange(reg[Species::V])) {
+			radius +=
+				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+		}
+		return radius / reg[Species::V].length();
+	}
+	if (lo.isOnAxis(Species::I)) {
+		for (auto j : makeIntervalRange(reg[Species::I])) {
+			radius +=
+				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+		}
+		return radius / reg[Species::I].length();
+	}
 
 	return radius;
 }

@@ -84,10 +84,10 @@ PSIClusterGenerator<PSIFullSpeciesList>::refine(
 		return true;
 	}
 
-	// Don't group above maxV so that the cluster are rejected by select
-	if (region[Species::V].begin() >= _maxV) {
-		return true;
-	}
+	//	// Don't group above maxV so that the cluster are rejected by select
+	//	if (region[Species::V].begin() >= _maxV) {
+	//		return true;
+	//	}
 
 	// Else refine around the edge
 	auto maxDPerV = KOKKOS_LAMBDA(AmountType amtV)
@@ -123,40 +123,34 @@ PSIClusterGenerator<PSIFullSpeciesList>::refine(
 		}
 	}
 
-	if (region[Species::V].length() == _groupingWidthB) {
-		result[0] = false;
-		result[1] = false;
-		result[2] = false;
+	if (region[Species::V].length() <
+		util::max((double)(_groupingWidthB + 1),
+			region[Species::V].begin() * 1.0e-2)) {
 		result[3] = false;
-		result[4] = false;
-		return false;
 	}
 
-	if (region[Species::He].length() == _groupingWidthA) {
-		result[0] = false;
-		result[1] = false;
-		result[2] = false;
-		result[3] = false;
-		result[4] = false;
-		return false;
+	// Edge case
+	if (region[Species::V].begin() <= _maxV &&
+		region[Species::V].end() > _maxV) {
+		result[3] = true;
 	}
 
-	if (region[Species::D].length() == _groupingWidthA) {
+	if (region[Species::He].length() <
+		util::max((double)(_groupingWidthA + 1),
+			region[Species::He].begin() * 1.0e-2)) {
 		result[0] = false;
-		result[1] = false;
-		result[2] = false;
-		result[3] = false;
-		result[4] = false;
-		return false;
 	}
 
-	if (region[Species::T].length() == _groupingWidthA) {
-		result[0] = false;
+	if (region[Species::D].length() <
+		util::max((double)(_groupingWidthA + 1),
+			region[Species::D].begin() * 1.0e-2)) {
 		result[1] = false;
+	}
+
+	if (region[Species::T].length() <
+		util::max((double)(_groupingWidthA + 1),
+			region[Species::T].begin() * 1.0e-2)) {
 		result[2] = false;
-		result[3] = false;
-		result[4] = false;
-		return false;
 	}
 
 	return true;

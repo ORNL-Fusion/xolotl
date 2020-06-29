@@ -1,7 +1,7 @@
 dimensions=0
 process=reaction
 netParam=50 0 0 6 4
-grouping=506 1
+grouping=506 2
 #networkFile=network0-100000.h5
 vizHandler=dummy
 perfHandler=dummy

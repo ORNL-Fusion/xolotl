@@ -57,11 +57,13 @@ public:
 		NetworkType::AmountType maxV = opts.getMaxV();
 		NetworkType::AmountType maxI = opts.getMaxI();
 		NetworkType::AmountType maxSize = opts.getMaxImpurity();
-		NetworkType::AmountType groupingWidth = opts.getGroupingWidthA();
-		// Take care of the case with no grouping
-		if (opts.getGroupingMin() > maxSize) {
-			groupingWidth = maxSize + 1;
+		NetworkType::AmountType groupingWidth =
+			opts.getGroupingWidthA(); // Adapt maxSize
+		int i = 0;
+		while (maxSize + 1 > pow(groupingWidth, i)) {
+			++i;
 		}
+		maxSize = pow(groupingWidth, i) - 1;
 
 		std::unique_ptr<NetworkType> rNetwork(
 			new NetworkType({maxV, maxSize, maxSize, maxI, maxSize, maxSize},

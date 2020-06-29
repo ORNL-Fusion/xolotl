@@ -33,6 +33,9 @@ public:
 
 	using Superclass::Superclass;
 
+	void
+	checkTiles(const options::IOptions&);
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);
@@ -46,12 +49,6 @@ private:
 
 	double
 	checkImpurityRadius(double impurityRadius);
-
-	void
-	checkTiles(const options::IOptions&)
-	{
-		return;
-	}
 
 	detail::NEReactionGenerator
 	getReactionGenerator() const noexcept;

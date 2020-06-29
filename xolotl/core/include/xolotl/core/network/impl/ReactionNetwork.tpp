@@ -35,20 +35,22 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 
 	asDerived()->checkTiles(opts);
 
-	// PRINT ALL THE CLUSTERS
-	//    constexpr auto speciesRange = getSpeciesRange();
-	//    for (IndexType i = 0; i < _numClusters; ++i) {
-	//        const auto& clReg = tiles(i).getRegion();
-	//        Composition lo = clReg.getOrigin();
-	//        Composition hi = clReg.getUpperLimitPoint();
+	//		// PRINT ALL THE CLUSTERS
+	//		    constexpr auto speciesRange = getSpeciesRange();
+	//		    for (IndexType i = 0; i < _numClusters; ++i) {
+	//		        const auto& clReg = tiles(i).getRegion();
+	//		        Composition lo = clReg.getOrigin();
+	//		        Composition hi = clReg.getUpperLimitPoint();
+	//		        if (clReg.volume() > 1) {
 	//
-	//        std::cout << i << ": " << std::endl;
-	//        for (auto j : speciesRange) std::cout << lo[j] << " ";
-	//        std::cout << std::endl;
-	//        for (auto j : speciesRange) std::cout << hi[j] - 1 << " ";
-	//        std::cout << std::endl;
-	//    }
-	//    std::cout << "num: " << _numClusters << std::endl;
+	//		        std::cout << i << ": " << std::endl;
+	//		        for (auto j : speciesRange) std::cout << lo[j] << " ";
+	//		        std::cout << std::endl;
+	//		        for (auto j : speciesRange) std::cout << hi[j] - 1 << " ";
+	//		        std::cout << std::endl;
+	//		        }
+	//		    }
+	//		    std::cout << "num: " << _numClusters << std::endl;
 
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
@@ -545,7 +547,7 @@ template <typename TImpl>
 void
 ReactionNetworkWorker<TImpl>::defineMomentIds()
 {
-	constexpr auto speciesRangeNoI = Network::getSpeciesRangeNoI();
+	constexpr auto speciesRange = Network::getSpeciesRange();
 
 	ClusterDataRef data(_nw._clusterData);
 
@@ -558,7 +560,7 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 		KOKKOS_LAMBDA(const IndexType i, IndexType& running) {
 			const auto& reg = data.getCluster(i).getRegion();
 			IndexType count = 0;
-			for (auto k : speciesRangeNoI) {
+			for (auto k : speciesRange) {
 				if (reg[k].length() != 1) {
 					++count;
 				}
@@ -582,7 +584,7 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 		nClusters, KOKKOS_LAMBDA(const IndexType i) {
 			const auto& reg = data.getCluster(i).getRegion();
 			IndexType current = counts(i);
-			for (auto k : speciesRangeNoI) {
+			for (auto k : speciesRange) {
 				if (reg[k].length() == 1) {
 					data.momentIds(i, k()) = Network::invalidIndex();
 				}

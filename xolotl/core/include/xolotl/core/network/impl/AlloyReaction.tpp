@@ -25,68 +25,39 @@ AlloyDissociationReaction::computeBindingEnergy()
 	auto clReg = cl.getRegion();
 	auto prod1Reg = prod1.getRegion();
 	auto prod2Reg = prod2.getRegion();
-	if (clReg.isSimplex() && prod1Reg.isSimplex() && prod2Reg.isSimplex()) {
-		Composition comp = clReg.getOrigin();
-		Composition prod1Comp = prod1Reg.getOrigin();
-		Composition prod2Comp = prod2Reg.getOrigin();
-		if (comp.isOnAxis(Species::Void)) {
-			double n = comp[Species::Void];
-			if (prod1Comp.isOnAxis(Species::I) ||
-				prod2Comp.isOnAxis(Species::I)) {
-				be = 3.5 - 3.45 * (pow(n + 1.0, 2.0 / 3.0) - pow(n, 2.0 / 3.0));
-			}
-			else if (prod1Comp.isOnAxis(Species::V) ||
-				prod2Comp.isOnAxis(Species::V)) {
-				be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
-			}
+	Composition lo = clReg.getOrigin();
+	Composition hi = clReg.getUpperLimitPoint();
+	Composition prod1Comp = prod1Reg.getOrigin();
+	Composition prod2Comp = prod2Reg.getOrigin();
+	if (lo.isOnAxis(Species::Void)) {
+		double n = (double)(lo[Species::Void] + hi[Species::Void] - 1) / 2.0;
+		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
+			be = 3.5 - 3.45 * (pow(n + 1.0, 2.0 / 3.0) - pow(n, 2.0 / 3.0));
 		}
-		else if (comp.isOnAxis(Species::Faulted)) {
-			double n = comp[Species::Faulted];
-			if (prod1Comp.isOnAxis(Species::V) ||
-				prod2Comp.isOnAxis(Species::V)) {
-				be = 1.9 - 3.2 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
-			}
-		}
-		else if (comp.isOnAxis(Species::V)) {
-			double n = comp[Species::V];
-			if (prod1Comp.isOnAxis(Species::V) ||
-				prod2Comp.isOnAxis(Species::V)) {
-				be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
-			}
-		}
-		else if (comp.isOnAxis(Species::I)) {
-			double n = comp[Species::I];
-			if (prod1Comp.isOnAxis(Species::I) ||
-				prod2Comp.isOnAxis(Species::I)) {
-				be = 3.5 - 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
-			}
+		else if (prod1Comp.isOnAxis(Species::V) ||
+			prod2Comp.isOnAxis(Species::V)) {
+			be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
 		}
 	}
-	//        else {
-	//            Composition lo = clReg.getOrigin();
-	//            Composition hi = clReg.getUpperLimitPoint();
-	//            Composition prod1Comp = prod1Reg.getOrigin();
-	//            Composition prod2Comp = prod2Reg.getOrigin();
-	//            // HeV
-	//            double amtHe = (double) (lo[Species::He] + hi[Species::He] -
-	//            1) / 2.0,
-	//                amtV = (double) (lo[Species::V] + hi[Species::V] - 1)
-	//                / 2.0;
-	//            if (prod1Comp.isOnAxis(Species::V) ||
-	//            prod2Comp.isOnAxis(Species::V)) {
-	//                be = 1.73 - 2.59
-	//                    * (pow(amtV, 2.0 / 3.0)
-	//                    - pow(amtV - 1.0, 2.0 / 3.0))
-	//                    + 2.5 * log(1.0 + (amtHe / amtV));
-	//            }
-	//            if (prod1Comp.isOnAxis(Species::I) ||
-	//            prod2Comp.isOnAxis(Species::I)) {
-	//                be = 4.88 + 2.59
-	//                    * (pow(amtV, 2.0 / 3.0)
-	//                    - pow(amtV - 1.0, 2.0 / 3.0))
-	//                    - 2.5 * log(1.0 + (amtHe / amtV));
-	//            }
-	//        }
+	else if (lo.isOnAxis(Species::Faulted)) {
+		double n =
+			(double)(lo[Species::Faulted] + hi[Species::Faulted] - 1) / 2.0;
+		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
+			be = 1.9 - 3.2 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+		}
+	}
+	else if (lo.isOnAxis(Species::V)) {
+		double n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
+		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
+			be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+		}
+	}
+	else if (lo.isOnAxis(Species::I)) {
+		double n = (double)(lo[Species::I] + hi[Species::I] - 1) / 2.0;
+		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
+			be = 3.5 - 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+		}
+	}
 
 	return util::max(0.1, be);
 }

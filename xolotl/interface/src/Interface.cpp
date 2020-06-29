@@ -64,7 +64,7 @@ XolotlInterface::XolotlInterface() = default;
 XolotlInterface::XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm)
 {
 	initializeXolotl(argc, argv, mpiComm);
-    initGBLocation();
+	initGBLocation();
 }
 
 XolotlInterface::~XolotlInterface()
