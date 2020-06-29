@@ -82,6 +82,24 @@ FeReactionNetwork::checkImpurityRadius(double impurityRadius)
 	return impurityRadius;
 }
 
+FeReactionNetwork::IndexType
+FeReactionNetwork::checkLargestClusterId()
+{
+	AmountType largestSize = 0;
+	auto largestClusterId = invalidIndex();
+	for (IndexType i = 0; i < this->getNumClusters(); i++) {
+		const auto& clReg = this->getCluster(i).getRegion();
+		Composition hi = clReg.getUpperLimitPoint();
+		auto size = hi[Species::He] + hi[Species::V];
+		if (size > largestSize) {
+			largestClusterId = i;
+			largestSize = size;
+		}
+	}
+
+	return largestClusterId;
+}
+
 namespace detail
 {
 template <typename TTag>

@@ -48,6 +48,24 @@ NEReactionNetwork::checkImpurityRadius(double impurityRadius)
 	return impurityRadius;
 }
 
+NEReactionNetwork::IndexType
+NEReactionNetwork::checkLargestClusterId()
+{
+	AmountType largestSize = 0;
+	auto largestClusterId = invalidIndex();
+	for (IndexType i = 0; i < this->getNumClusters(); i++) {
+		const auto& clReg = this->getCluster(i).getRegion();
+		Composition hi = clReg.getUpperLimitPoint();
+		auto size = hi[Species::Xe];
+		if (size > largestSize) {
+			largestClusterId = i;
+			largestSize = size;
+		}
+	}
+
+	return largestClusterId;
+}
+
 namespace detail
 {
 template <typename TTag>

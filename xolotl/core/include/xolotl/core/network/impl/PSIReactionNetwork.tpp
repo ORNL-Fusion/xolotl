@@ -30,6 +30,26 @@ PSIReactionNetwork<TSpeciesEnum>::checkImpurityRadius(double impurityRadius)
 	return impurityRadius;
 }
 
+template <typename TSpeciesEnum>
+typename PSIReactionNetwork<TSpeciesEnum>::IndexType
+PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
+{
+	AmountType largestSize = 0;
+	auto largestClusterId = PSIReactionNetwork<TSpeciesEnum>::invalidIndex();
+	for (IndexType i = 0; i < this->getNumClusters(); i++) {
+		const auto& clReg = this->getCluster(i).getRegion();
+		Composition hi = clReg.getUpperLimitPoint();
+		auto size =
+			hi[Species::He] + hi[Species::D] + hi[Species::T] + hi[Species::V];
+		if (size > largestSize) {
+			largestClusterId = i;
+			largestSize = size;
+		}
+	}
+
+	return largestClusterId;
+}
+
 namespace detail
 {
 template <typename TSpeciesEnum>

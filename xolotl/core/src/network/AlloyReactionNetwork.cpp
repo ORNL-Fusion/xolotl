@@ -35,6 +35,10 @@ ReactionNetwork<AlloyReactionNetwork>::getTotalAtomConcentration(
 template double
 ReactionNetwork<AlloyReactionNetwork>::getTotalTrappedAtomConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<AlloyReactionNetwork>::getTotalVolumeFraction(
+	ConcentrationsView concentrations, Species type, AmountType minSize);
 } // namespace network
 } // namespace core
 } // namespace xolotl

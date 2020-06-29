@@ -50,6 +50,9 @@ private:
 	double
 	checkImpurityRadius(double impurityRadius);
 
+	IndexType
+	checkLargestClusterId();
+
 	detail::NEReactionGenerator
 	getReactionGenerator() const noexcept;
 };

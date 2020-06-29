@@ -41,6 +41,10 @@ template double
 ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
 	getTotalTrappedAtomConcentration(
 		ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::getTotalVolumeFraction(
+	ConcentrationsView concentrations, Species type, AmountType minSize);
 } // namespace network
 } // namespace core
 } // namespace xolotl

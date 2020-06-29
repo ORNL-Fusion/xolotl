@@ -57,6 +57,9 @@ private:
 		return;
 	}
 
+	IndexType
+	checkLargestClusterId();
+
 	detail::PSIReactionGenerator<Species>
 	getReactionGenerator() const noexcept
 	{

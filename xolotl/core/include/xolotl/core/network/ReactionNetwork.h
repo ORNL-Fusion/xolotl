@@ -176,6 +176,12 @@ public:
 	ClusterCommon<plsm::OnHost>
 	getSingleVacancy() override;
 
+	IndexType
+	getLargestClusterId() override
+	{
+		return asDerived()->checkLargestClusterId();
+	}
+
 	Bounds
 	getAllClusterBounds() override;
 

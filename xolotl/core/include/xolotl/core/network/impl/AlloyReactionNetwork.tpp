@@ -29,6 +29,25 @@ AlloyReactionNetwork::checkImpurityRadius(double impurityRadius)
 	return impurityRadius;
 }
 
+AlloyReactionNetwork::IndexType
+AlloyReactionNetwork::checkLargestClusterId()
+{
+	AmountType largestSize = 0;
+	auto largestClusterId = invalidIndex();
+	for (IndexType i = 0; i < this->getNumClusters(); i++) {
+		const auto& clReg = this->getCluster(i).getRegion();
+		Composition hi = clReg.getUpperLimitPoint();
+		auto size =
+			hi[Species::Void] + hi[Species::Frank] + hi[Species::Faulted];
+		if (size > largestSize) {
+			largestClusterId = i;
+			largestSize = size;
+		}
+	}
+
+	return largestClusterId;
+}
+
 namespace detail
 {
 template <typename TTag>

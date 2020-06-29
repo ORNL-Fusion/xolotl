@@ -560,11 +560,10 @@ computeXenonRetention3D(
 					hx * hy * hz;
 
 				// Set the volume fraction
-				//				double volumeFrac =
-				// network.getTotalVolumeFraction(dConcs, Spec::Xe,
-				// minSizes[0]); 				solverHandler.setVolumeFraction(volumeFrac,
-				// xi -
-				// xs, yj - ys, zk - zs);
+				double volumeFrac = network.getTotalVolumeFraction(
+					dConcs, Spec::Xe, minSizes[0]);
+				solverHandler.setVolumeFraction(
+					volumeFrac, xi - xs, yj - ys, zk - zs);
 				// Set the monomer concentration
 				solverHandler.setMonomerConc(
 					gridPointSolution[xeCluster.getId()], xi - xs, yj - ys,
@@ -1693,6 +1692,11 @@ setupPetsc3DMonitor(TS ts)
 	checkPetscError(
 		ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-start_stop) failed.");
 
+	// Check the option -largest_conc
+	ierr = PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest);
+	checkPetscError(ierr,
+		"setupPetsc3DMonitor: PetscOptionsHasName (-largest_conc) failed.");
+
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
@@ -1703,11 +1707,6 @@ setupPetsc3DMonitor(TS ts)
 	// and if so, it it has had timesteps written to it.
 	std::unique_ptr<io::XFile> networkFile;
 	std::unique_ptr<io::XFile::TimestepGroup> lastTsGroup;
-
-	// Check the option -largest_conc
-	ierr = PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest);
-	checkPetscError(ierr,
-		"setupPetsc3DMonitor: PetscOptionsHasName (-largest_conc) failed.");
 
 	std::string networkName = solverHandler.getNetworkName();
 	bool hasConcentrations = false;
@@ -2059,21 +2058,8 @@ setupPetsc3DMonitor(TS ts)
 	// Set the monitor to monitor the concentration of the largest cluster
 	if (flagLargest) {
 		// Look for the largest cluster
-		int largestSize = 0;
-		// TODO: make it general for any type of network
-		using NetworkType = core::network::NEReactionNetwork;
-		using Spec = typename NetworkType::Species;
-		using Composition = typename NetworkType::Composition;
-		auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-		for (std::size_t i = 0; i < network.getNumClusters(); i++) {
-			const auto& clReg = network.getCluster(i).getRegion();
-			Composition hi = clReg.getUpperLimitPoint();
-			int size = hi[Spec::Xe];
-			if (size > largestSize) {
-				largestClusterId3D = i;
-				largestSize = size;
-			}
-		}
+		auto& network = solverHandler.getNetwork();
+		largestClusterId3D = network.getLargestClusterId();
 
 		// Find the threshold
 		PetscBool flag;

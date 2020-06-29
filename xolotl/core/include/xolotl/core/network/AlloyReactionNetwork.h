@@ -53,6 +53,9 @@ private:
 		return;
 	}
 
+	IndexType
+	checkLargestClusterId();
+
 	detail::AlloyReactionGenerator
 	getReactionGenerator() const noexcept;
 };

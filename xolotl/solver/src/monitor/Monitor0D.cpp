@@ -899,21 +899,8 @@ setupPetsc0DMonitor(TS ts)
 	// Set the monitor to monitor the concentration of the largest cluster
 	if (flagLargest) {
 		// Look for the largest cluster
-		int largestSize = 0;
-		// TODO: make it general for any type of network
-		using NetworkType = core::network::NEReactionNetwork;
-		using Spec = typename NetworkType::Species;
-		using Composition = typename NetworkType::Composition;
-		auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-		for (std::size_t i = 0; i < network.getNumClusters(); i++) {
-			const auto& clReg = network.getCluster(i).getRegion();
-			Composition hi = clReg.getUpperLimitPoint();
-			int size = hi[Spec::Xe];
-			if (size > largestSize) {
-				largestClusterId0D = i;
-				largestSize = size;
-			}
-		}
+		auto& network = solverHandler.getNetwork();
+		largestClusterId0D = network.getLargestClusterId();
 
 		// Find the threshold
 		PetscBool flag;

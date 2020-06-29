@@ -177,6 +177,9 @@ public:
 	virtual ClusterCommon<plsm::OnHost>
 	getSingleVacancy() = 0;
 
+	virtual IndexType
+	getLargestClusterId() = 0;
+
 	virtual Bounds
 	getAllClusterBounds() = 0;
 
