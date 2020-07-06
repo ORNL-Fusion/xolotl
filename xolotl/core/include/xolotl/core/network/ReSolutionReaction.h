@@ -21,8 +21,11 @@ public:
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using Composition = typename Superclass::Composition;
+	using Region = typename Superclass::Region;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ReflectedRegion = typename Superclass::ReflectedRegion;
 
 	ReSolutionReaction() = default;
 

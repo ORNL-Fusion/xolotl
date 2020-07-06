@@ -1,5 +1,7 @@
 #pragma once
 
+#include <xolotl/core/network/detail/ReactionUtility.h>
+
 namespace xolotl
 {
 namespace core
@@ -39,6 +41,9 @@ KOKKOS_INLINE_FUNCTION
 void
 ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 {
+	// static
+	const auto dummyRegion = Region(Composition{});
+
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 	auto clReg = this->_clusterData.getCluster(_reactant).getRegion();
@@ -47,25 +52,24 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 	const auto& clDisp = clReg.dispersion();
 	const auto& prod1Disp = prod1Reg.dispersion();
 	const auto& prod2Disp = prod2Reg.dispersion();
+	auto cl2Reg = dummyRegion;
+
+	// Initialize the reflected regions
+	auto rRegions = detail::updateReflectedRegionsForCoefs<nMomentIds>(
+		prod1Reg, prod2Reg, clReg, cl2Reg);
+	auto clRR = std::get<2>(rRegions), cl2RR = std::get<3>(rRegions),
+		 pr1RR = std::get<0>(rRegions), pr2RR = std::get<1>(rRegions);
 
 	auto nOverlap =
-		static_cast<double>(this->computeOverlap(clReg, prod1Reg, prod2Reg));
+		static_cast<double>(this->computeOverlap(pr1RR, pr2RR, clRR, cl2RR));
 
 	// The first coefficient is simply the overlap because it is the sum over 1
 	this->_coefs(0, 0, 0, 0) = nOverlap;
 	for (auto i : speciesRangeNoI) {
 		auto factor = nOverlap / this->_widths[i()];
 		// First order sum
-		for (double l : makeIntervalRange(prod1Reg[i])) {
-			this->_coefs(i() + 1, 0, 0, 0) += factor *
-				util::firstOrderSum(
-					util::max(static_cast<double>(clReg[i].begin()),
-						prod2Reg[i].begin() + l),
-					util::min(static_cast<double>(clReg[i].end() - 1),
-						prod2Reg[i].end() - 1 + l),
-					static_cast<double>(clReg[i].end() - 1 + clReg[i].begin()) /
-						2.0);
-		}
+		this->_coefs(i() + 1, 0, 0, 0) = factor *
+			detail::computeFirstOrderSum(i(), clRR, cl2RR, pr2RR, pr1RR);
 	}
 
 	// First moments
@@ -76,32 +80,14 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 			this->_coefs(k() + 1, 0, 0, 0) / clDisp[k()];
 
 		// First product
-		for (double l : makeIntervalRange(prod2Reg[k])) {
-			this->_coefs(0, 0, 1, k() + 1) += factor *
-				util::firstOrderSum(
-					util::max(clReg[k].begin() - l,
-						static_cast<double>(prod1Reg[k].begin())),
-					util::min(clReg[k].end() - 1 - l,
-						static_cast<double>(prod1Reg[k].end() - 1)),
-					static_cast<double>(
-						prod1Reg[k].end() - 1 + prod1Reg[k].begin()) /
-						2.0);
-		}
-		this->_coefs(0, 0, 1, k() + 1) /= prod1Disp[k()];
+		this->_coefs(0, 0, 1, k() + 1) = factor *
+			detail::computeFirstOrderSum(k(), pr1RR, pr2RR, clRR, cl2RR) /
+			prod1Disp[k()];
 
 		// Second product
-		for (double l : makeIntervalRange(prod1Reg[k])) {
-			this->_coefs(0, 0, 2, k() + 1) += factor *
-				util::firstOrderSum(
-					util::max(clReg[k].begin() - l,
-						static_cast<double>(prod2Reg[k].begin())),
-					util::min(clReg[k].end() - 1 - l,
-						static_cast<double>(prod2Reg[k].end() - 1)),
-					static_cast<double>(
-						prod2Reg[k].end() - 1 + prod2Reg[k].begin()) /
-						2.0);
-		}
-		this->_coefs(0, 0, 2, k() + 1) /= prod2Disp[k()];
+		this->_coefs(0, 0, 2, k() + 1) = factor *
+			detail::computeFirstOrderSum(k(), pr2RR, pr1RR, clRR, cl2RR) /
+			prod2Disp[k()];
 	}
 
 	// Now we loop over the 1 dimension of the coefs to compute all the
@@ -113,18 +99,10 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 		for (auto k : speciesRangeNoI) {
 			// Second order sum
 			if (k == i) {
-				for (double l : makeIntervalRange(prod1Reg[i])) {
-					this->_coefs(i() + 1, 0, 0, k() + 1) += factor *
-						util::secondOrderSum(
-							util::max(static_cast<double>(clReg[i].begin()),
-								prod2Reg[i].begin() + l),
-							util::min(static_cast<double>(clReg[i].end() - 1),
-								prod2Reg[i].end() - 1 + l),
-							static_cast<double>(
-								clReg[i].end() - 1 + clReg[i].begin()) /
-								2.0);
-				}
-				this->_coefs(i() + 1, 0, 0, k() + 1) /= clDisp[k()];
+				this->_coefs(i() + 1, 0, 0, k() + 1) = factor *
+					detail::computeSecondOrderSum(
+						i(), clRR, cl2RR, pr2RR, pr1RR) /
+					clDisp[k()];
 			}
 			else {
 				this->_coefs(i() + 1, 0, 0, k() + 1) =
@@ -137,22 +115,10 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 		for (auto k : speciesRangeNoI) {
 			// Second order sum
 			if (k == i) {
-				for (double l : makeIntervalRange(prod2Reg[i])) {
-					this->_coefs(i() + 1, 0, 1, k() + 1) += factor *
-						util::secondOrderOffsetSum(
-							util::max(static_cast<double>(clReg[i].begin()),
-								prod1Reg[i].begin() + l),
-							util::min(static_cast<double>(clReg[i].end() - 1),
-								prod1Reg[i].end() - 1 + l),
-							static_cast<double>(
-								clReg[i].end() - 1 + clReg[i].begin()) /
-								2.0,
-							static_cast<double>(
-								prod1Reg[i].end() - 1 + prod1Reg[i].begin()) /
-								2.0,
-							-l);
-				}
-				this->_coefs(i() + 1, 0, 1, k() + 1) /= prod1Disp[k()];
+				this->_coefs(i() + 1, 0, 1, k() + 1) = factor *
+					detail::computeSecondOrderOffsetSum(
+						i(), clRR, cl2RR, pr1RR, pr2RR) /
+					prod1Disp[k()];
 			}
 			else {
 				this->_coefs(i() + 1, 0, 1, k() + 1) =
@@ -165,22 +131,10 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 		for (auto k : speciesRangeNoI) {
 			// Second order sum
 			if (k == i) {
-				for (double l : makeIntervalRange(prod1Reg[i])) {
-					this->_coefs(i() + 1, 0, 2, k() + 1) += factor *
-						util::secondOrderOffsetSum(
-							util::max(static_cast<double>(clReg[i].begin()),
-								prod2Reg[i].begin() + l),
-							util::min(static_cast<double>(clReg[i].end() - 1),
-								prod2Reg[i].end() - 1 + l),
-							static_cast<double>(
-								clReg[i].end() - 1 + clReg[i].begin()) /
-								2.0,
-							static_cast<double>(
-								prod2Reg[i].end() - 1 + prod2Reg[i].begin()) /
-								2.0,
-							-l);
-				}
-				this->_coefs(i() + 1, 0, 2, k() + 1) /= prod2Disp[k()];
+				this->_coefs(i() + 1, 0, 2, k() + 1) = factor *
+					detail::computeSecondOrderOffsetSum(
+						i(), clRR, cl2RR, pr2RR, pr1RR) /
+					prod2Disp[k()];
 			}
 			else {
 				this->_coefs(i() + 1, 0, 2, k() + 1) =

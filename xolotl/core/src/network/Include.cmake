@@ -5,6 +5,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionCollection.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionUtility.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReSolutionReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/SinkReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TupleUtility.h

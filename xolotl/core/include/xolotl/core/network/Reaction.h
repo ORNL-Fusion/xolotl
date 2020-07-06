@@ -41,6 +41,9 @@ public:
 	using FluxesView = IReactionNetwork::FluxesView;
 	using Connectivity = typename IReactionNetwork::Connectivity;
 	using ReactionDataRef = typename Types::ReactionDataRef;
+	using ReflectedRegion =
+		plsm::Region<plsm::DifferenceType<typename Region::ScalarType>,
+			Props::numSpeciesNoI>;
 
 	Reaction() = default;
 
@@ -113,8 +116,8 @@ protected:
 
 	KOKKOS_INLINE_FUNCTION
 	AmountType
-	computeOverlap(const Region& singleClReg, const Region& pairCl1Reg,
-		const Region& pairCl2Reg);
+	computeOverlap(const ReflectedRegion& cl1RR, const ReflectedRegion& cl2RR,
+		const ReflectedRegion& pr1RR, const ReflectedRegion& pr2RR);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -178,6 +181,7 @@ public:
 	using Region = typename Superclass::Region;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ReflectedRegion = typename Superclass::ReflectedRegion;
 
 	ProductionReaction() = default;
 
@@ -247,11 +251,14 @@ public:
 	using Superclass = Reaction<TNetwork, TDerived>;
 	using ClusterDataRef = typename Superclass::ClusterDataRef;
 	using IndexType = typename Superclass::IndexType;
+	using Region = typename Superclass::Region;
+	using Composition = typename Superclass::Composition;
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ReflectedRegion = typename Superclass::ReflectedRegion;
 
 	DissociationReaction() = default;
 

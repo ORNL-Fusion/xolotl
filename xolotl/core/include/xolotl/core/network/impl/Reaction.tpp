@@ -6,7 +6,7 @@
 #include <plsm/EnumIndexed.h>
 
 #include <xolotl/core/Constants.h>
-#include <xolotl/util/MathUtils.h>
+#include <xolotl/core/network/detail/ReactionUtility.h>
 
 namespace xolotl
 {
@@ -36,161 +36,12 @@ Reaction<TNetwork, TDerived>::updateData(
 	_rate = reactionData.getRates(_reactionId);
 }
 
-template <typename TRegion>
-KOKKOS_INLINE_FUNCTION
-std::enable_if_t<(numberOfInterstitialSpecies<typename TRegion::EnumIndex>() >
-					 1),
-	plsm::DifferenceType<typename TRegion::ScalarType>>
-getISizeForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
-	const TRegion& pairCl2Reg)
-{
-	using Species = typename TRegion::EnumIndex;
-	return pairCl1Reg[Species::I].begin() +
-		pairCl1Reg[Species::Perfect].begin() +
-		pairCl1Reg[Species::Frank].begin() + pairCl2Reg[Species::I].begin() +
-		pairCl2Reg[Species::Perfect].begin() +
-		pairCl2Reg[Species::Frank].begin() -
-		(singleClReg[Species::I].begin() +
-			singleClReg[Species::Perfect].begin() +
-			singleClReg[Species::Frank].begin());
-}
-
-template <typename TRegion>
-KOKKOS_INLINE_FUNCTION
-std::enable_if_t<numberOfInterstitialSpecies<typename TRegion::EnumIndex>() ==
-		1,
-	plsm::DifferenceType<typename TRegion::ScalarType>>
-getISizeForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
-	const TRegion& pairCl2Reg)
-{
-	using Species = typename TRegion::EnumIndex;
-	return pairCl1Reg[Species::I].begin() + pairCl2Reg[Species::I].begin() -
-		singleClReg[Species::I].begin();
-}
-
-template <typename TRegion>
-KOKKOS_INLINE_FUNCTION
-std::enable_if_t<numberOfInterstitialSpecies<typename TRegion::EnumIndex>() ==
-		0,
-	plsm::DifferenceType<typename TRegion::ScalarType>>
-getISizeForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
-	const TRegion& pairCl2Reg)
-{
-	return 0;
-}
-
-template <typename TRegion>
-KOKKOS_INLINE_FUNCTION
-std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() > 1),
-	plsm::DifferenceType<typename TRegion::ScalarType>>
-getVWidthForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
-	const TRegion& pairCl2Reg)
-{
-	typename TRegion::ScalarType width = 0;
-	using Species = typename TRegion::EnumIndex;
-	bool singleIsV = (singleClReg.getOrigin().isOnAxis(Species::V) ||
-			 singleClReg.getOrigin().isOnAxis(Species::Void) ||
-			 singleClReg.getOrigin().isOnAxis(Species::Faulted)),
-		 cl1IsV = (pairCl1Reg.getOrigin().isOnAxis(Species::V) ||
-			 pairCl1Reg.getOrigin().isOnAxis(Species::Void) ||
-			 pairCl1Reg.getOrigin().isOnAxis(Species::Faulted)),
-		 cl2IsV = (pairCl2Reg.getOrigin().isOnAxis(Species::V) ||
-			 pairCl2Reg.getOrigin().isOnAxis(Species::Void) ||
-			 pairCl2Reg.getOrigin().isOnAxis(Species::Faulted));
-	// Get the bounds of each cluster
-	typename TRegion::ScalarType loSingle = singleClReg[Species::V].begin() +
-		singleClReg[Species::Void].begin() +
-		singleClReg[Species::Faulted].begin() +
-		singleClReg[Species::I].begin() +
-		singleClReg[Species::Perfect].begin() +
-		singleClReg[Species::Frank].begin(),
-								 hiSingle = singleClReg[Species::V].end() +
-		singleClReg[Species::Void].end() + singleClReg[Species::Faulted].end() +
-		singleClReg[Species::I].end() + singleClReg[Species::Perfect].end() +
-		singleClReg[Species::Frank].end() - 6,
-								 loCl1 = pairCl1Reg[Species::V].begin() +
-		pairCl1Reg[Species::Void].begin() +
-		pairCl1Reg[Species::Faulted].begin() + pairCl1Reg[Species::I].begin() +
-		pairCl1Reg[Species::Perfect].begin() +
-		pairCl1Reg[Species::Frank].begin(),
-								 hiCl1 = pairCl1Reg[Species::V].end() +
-		pairCl1Reg[Species::Void].end() + pairCl1Reg[Species::Faulted].end() +
-		pairCl1Reg[Species::I].end() + pairCl1Reg[Species::Perfect].end() +
-		pairCl1Reg[Species::Frank].end() - 6,
-								 loCl2 = pairCl2Reg[Species::V].begin() +
-		pairCl2Reg[Species::Void].begin() +
-		pairCl2Reg[Species::Faulted].begin() + pairCl2Reg[Species::I].begin() +
-		pairCl2Reg[Species::Perfect].begin() +
-		pairCl2Reg[Species::Frank].begin(),
-								 hiCl2 = pairCl2Reg[Species::V].end() +
-		pairCl2Reg[Species::Void].end() + pairCl2Reg[Species::Faulted].end() +
-		pairCl2Reg[Species::I].end() + pairCl2Reg[Species::Perfect].end() +
-		pairCl2Reg[Species::Frank].end() - 6;
-
-	// All clusters are the same type
-	if ((singleIsV && cl1IsV && cl2IsV) || (!singleIsV && !cl1IsV && !cl2IsV)) {
-		for (typename TRegion::ScalarType j = loCl1; j <= hiCl1; j++) {
-			width += util::min(hiSingle, hiCl2 + j) -
-				util::max(loSingle, loCl2 + j) + 1;
-		}
-	}
-	else if ((singleIsV && cl2IsV) || (!singleIsV && !cl2IsV)) {
-		for (typename TRegion::ScalarType j = loCl1; j <= hiCl1; j++) {
-			width += util::min(hiSingle, hiCl2 - j) -
-				util::max(loSingle, loCl2 - j) + 1;
-		}
-	}
-	else {
-		for (typename TRegion::ScalarType j = loCl2; j <= hiCl2; j++) {
-			width += util::min(hiSingle, hiCl1 - j) -
-				util::max(loSingle, loCl1 - j) + 1;
-		}
-	}
-
-	return width;
-}
-
-template <typename TRegion>
-KOKKOS_INLINE_FUNCTION
-std::enable_if_t<numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1,
-	plsm::DifferenceType<typename TRegion::ScalarType>>
-getVWidthForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
-	const TRegion& pairCl2Reg)
-{
-	typename TRegion::ScalarType width = 0;
-	using Species = typename TRegion::EnumIndex;
-	auto iSize = getISizeForOverlap(singleClReg, pairCl1Reg, pairCl2Reg);
-	for (auto j : makeIntervalRange(pairCl1Reg[Species::V])) {
-		auto tempWidth = util::min(singleClReg[Species::V].end() - 1.0,
-							 pairCl2Reg[Species::V].end() - 1.0 + j - iSize) -
-			util::max(singleClReg[Species::V].begin(),
-				pairCl2Reg[Species::V].begin() + j - iSize) +
-			1.0;
-		if (iSize > 0 && singleClReg[Species::V].end() - 1 > 0) {
-			width += tempWidth;
-		}
-		else {
-			width += util::max(0.0, tempWidth);
-		}
-	}
-	return width;
-}
-
-template <typename TRegion>
-KOKKOS_INLINE_FUNCTION
-std::enable_if_t<numberOfVacancySpecies<typename TRegion::EnumIndex>() == 0,
-	plsm::DifferenceType<typename TRegion::ScalarType>>
-getVWidthForOverlap(const TRegion& singleClReg, const TRegion& pairCl1Reg,
-	const TRegion& pairCl2Reg)
-{
-	return 0;
-}
-
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 typename Reaction<TNetwork, TDerived>::AmountType
-Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
-	const Region& pairCl1Reg, const Region& pairCl2Reg)
+Reaction<TNetwork, TDerived>::computeOverlap(const ReflectedRegion& cl1RR,
+	const ReflectedRegion& cl2RR, const ReflectedRegion& pr1RR,
+	const ReflectedRegion& pr2RR)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -204,59 +55,60 @@ Reaction<TNetwork, TDerived>::computeOverlap(const Region& singleClReg,
 		// More complicated with X_[3,5) + X_[5,7) ⇄ X_[9,11)
 		// 3+6, 4+5, 4+6, width is 3
 
-		// Special case for I
-		if (isVacancy(i)) {
-			_widths(i()) = static_cast<double>(
-				getVWidthForOverlap(singleClReg, pairCl1Reg, pairCl2Reg));
-		}
-		else {
-			// TODO: Would be nice to loop on the cluster with the smaller tile
-			for (auto j : makeIntervalRange(pairCl1Reg[i])) {
+		for (auto m : makeIntervalRange(pr2RR[i()]))
+			for (auto l : makeIntervalRange(cl2RR[i()])) {
 				_widths(i()) += util::max(0.0,
-					util::min(singleClReg[i].end() - 1.0,
-						pairCl2Reg[i].end() - 1.0 + j) -
+					util::min(
+						cl1RR[i()].end() - 1 + l, pr1RR[i()].end() - 1 + m) -
 						util::max(
-							singleClReg[i].begin(), pairCl2Reg[i].begin() + j) +
+							cl1RR[i()].begin() + l, pr1RR[i()].begin() + m) +
 						1.0);
 			}
-		}
+
 		nOverlap *= _widths(i());
 	}
 
-	//    if (nOverlap <= 0) {
-	//        constexpr auto speciesRange = NetworkType::getSpeciesRange();
-	//    	std::cout << "first reactant: ";
-	//        for (auto i : speciesRange) {
-	//        std::cout << pairCl1Reg[i].begin() << ", ";
-	//        }
-	//        std::cout << std::endl;
-	//        for (auto i : speciesRange) {
-	//        std::cout << pairCl1Reg[i].end() - 1 << ", ";
-	//        }
-	//        std::cout << std::endl << "second reactant: ";
-	//        for (auto i : speciesRange) {
-	//        std::cout << pairCl2Reg[i].begin() << ", ";
-	//        }
-	//        std::cout << std::endl;
-	//        for (auto i : speciesRange) {
-	//        std::cout << pairCl2Reg[i].end() - 1 << ", ";
-	//        }
-	//        std::cout << std::endl << "product: ";
-	//        for (auto i : speciesRange) {
-	//        std::cout << singleClReg[i].begin() << ", ";
-	//        }
-	//        std::cout << std::endl;
-	//        for (auto i : speciesRange) {
-	//        std::cout << singleClReg[i].end() - 1 << ", ";
-	//        }
-	//        std::cout << std::endl;
-	//        std::cout << "Overlap: " << nOverlap << std::endl;
-	//        std::cout << "Widths: ";
-	//        for (auto i : speciesRangeNoI) {
-	//        	std::cout << _widths(i()) << ", ";
-	//        }
-	//        std::cout << std::endl;
-	//    }
+	//	if (nOverlap <= 0) {
+	//			std::cout << "first reactant: ";
+	//			for (auto i : speciesRangeNoI) {
+	//				std::cout << cl1RR[i()].begin() << ", ";
+	//			}
+	//			std::cout << std::endl;
+	//			for (auto i : speciesRangeNoI) {
+	//				std::cout << cl1RR[i()].end() - 1 << ", ";
+	//			}
+	//			std::cout << std::endl << "second reactant: ";
+	//			for (auto i : speciesRangeNoI) {
+	//				std::cout << cl2RR[i()].begin() << ", ";
+	//			}
+	//			std::cout << std::endl;
+	//			for (auto i : speciesRangeNoI) {
+	//				std::cout << cl2RR[i()].end() - 1 << ", ";
+	//			}
+	//			std::cout << std::endl << "product: ";
+	//			for (auto i : speciesRangeNoI) {
+	//				std::cout << pr1RR[i()].begin() << ", ";
+	//			}
+	//			std::cout << std::endl;
+	//			for (auto i : speciesRangeNoI) {
+	//				std::cout << pr1RR[i()].end() - 1 << ", ";
+	//			}
+	//			std::cout << std::endl << "second product: ";
+	//			for (auto i : speciesRangeNoI) {
+	//				std::cout << pr2RR[i()].begin() << ", ";
+	//			}
+	//			std::cout << std::endl;
+	//			for (auto i : speciesRangeNoI) {
+	//				std::cout << pr2RR[i()].end() - 1 << ", ";
+	//			}
+	//			std::cout << std::endl;
+	//			std::cout << "Overlap: " << nOverlap << std::endl;
+	//			std::cout << "Widths: ";
+	//			for (auto i : speciesRangeNoI) {
+	//				std::cout << _widths(i()) << ", ";
+	//			}
+	//			std::cout << std::endl;
+	//	}
 	assert(nOverlap > 0);
 
 	return nOverlap;
@@ -306,76 +158,47 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 		this->_clusterData.getCluster(_reactants[0]).getRegion();
 	const auto& cl2Reg =
 		this->_clusterData.getCluster(_reactants[1]).getRegion();
-	const auto& prod1Reg = (_products[0] == invalidIndex) ?
+	const auto& pr1Reg = (_products[0] == invalidIndex) ?
 		dummyRegion :
 		this->_clusterData.getCluster(_products[0]).getRegion();
-	const auto& prod2Reg = (_products[1] == invalidIndex) ?
+	const auto& pr2Reg = (_products[1] == invalidIndex) ?
 		dummyRegion :
 		this->_clusterData.getCluster(_products[1]).getRegion();
 	const auto& cl1Disp = cl1Reg.dispersion();
 	const auto& cl2Disp = cl2Reg.dispersion();
 
+	// Initialize the reflected regions
+	auto rRegions = detail::updateReflectedRegionsForCoefs<nMomentIds>(
+		cl1Reg, cl2Reg, pr1Reg, pr2Reg);
+	auto cl1RR = std::get<0>(rRegions), cl2RR = std::get<1>(rRegions),
+		 pr1RR = std::get<2>(rRegions), pr2RR = std::get<3>(rRegions);
+
 	// If there is no product the overlap is 1
 	double nOverlap = 1.0;
-	// General case
-	if (_products[0] != invalidIndex && _products[1] == invalidIndex)
-		nOverlap =
-			static_cast<double>(this->computeOverlap(prod1Reg, cl1Reg, cl2Reg));
-	// Special case with two products
-	else if (_products[0] != invalidIndex && _products[1] != invalidIndex) {
-		// Combine the regions
-		auto ilist = Kokkos::Array<plsm::Interval<AmountType>,
-			NetworkType::getNumberOfSpecies()>();
-		for (auto i : NetworkType::getSpeciesRange()) {
-			auto inter = plsm::Interval<AmountType>(
-				prod1Reg[i].begin() + prod2Reg[i].begin(),
-				prod1Reg[i].end() + prod2Reg[i].end() - 1);
-			ilist[i()] = inter;
-		}
-		auto prodReg = Region(ilist);
-		nOverlap =
-			static_cast<double>(this->computeOverlap(prodReg, cl1Reg, cl2Reg));
-	}
 	// No product case
-	else {
+	if (_products[0] == invalidIndex && _products[1] == invalidIndex) {
 		for (auto i : speciesRangeNoI) {
 			this->_widths[i()] = 1.0;
 		}
 	}
+	// General case
+	else
+		nOverlap = static_cast<double>(
+			this->computeOverlap(cl1RR, cl2RR, pr1RR, pr2RR));
 
 	this->_coefs(0, 0, 0, 0) = nOverlap;
 	for (auto i : speciesRangeNoI) {
 		// First order sum on the first reactant
 		auto factor = nOverlap / this->_widths[i()];
-		for (double m : makeIntervalRange(prod2Reg[i]))
-			for (double l : makeIntervalRange(cl2Reg[i])) {
-				this->_coefs(i() + 1, 0, 0, 0) += factor *
-					util::firstOrderSum(
-						util::max(prod1Reg[i].begin() + m - l,
-							static_cast<double>(cl1Reg[i].begin())),
-						util::min(prod1Reg[i].end() - 1 + m - l,
-							static_cast<double>(cl1Reg[i].end() - 1)),
-						static_cast<double>(
-							cl1Reg[i].end() - 1 + cl1Reg[i].begin()) /
-							2.0);
-			}
+		this->_coefs(i() + 1, 0, 0, 0) = factor *
+			detail::computeFirstOrderSum(i(), cl1RR, cl2RR, pr1RR, pr2RR);
 
 		this->_coefs(0, 0, 0, i() + 1) =
 			this->_coefs(i() + 1, 0, 0, 0) / cl1Disp[i()];
 
 		// First order sum on the second reactant
-		for (double m : makeIntervalRange(prod2Reg[i]))
-			for (double l : makeIntervalRange(cl1Reg[i])) {
-				this->_coefs(0, i() + 1, 0, 0) += factor *
-					util::firstOrderSum(
-						util::max(prod1Reg[i].begin() + m - l,
-							static_cast<double>(cl2Reg[i].begin())),
-						util::min(prod1Reg[i].end() - 1 + m - l,
-							static_cast<double>(cl2Reg[i].end() - 1)),
-						static_cast<double>(
-							cl2Reg[i].end() - 1 + cl2Reg[i].begin()) /
-							2.0);
-			}
+		this->_coefs(0, i() + 1, 0, 0) = factor *
+			detail::computeFirstOrderSum(i(), cl2RR, cl1RR, pr1RR, pr2RR);
 
 		this->_coefs(0, 0, 1, i() + 1) =
 			this->_coefs(0, i() + 1, 0, 0) / cl2Disp[i()];
@@ -388,72 +211,33 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 			}
 
 			// Get the regions in the right order
-			const auto& thisReg =
-				(prodId == _products[0]) ? prod1Reg : prod2Reg;
-			const auto& otherReg =
-				(prodId == _products[0]) ? prod2Reg : prod1Reg;
+			const auto& thisRR = (prodId == _products[0]) ? pr1RR : pr2RR;
+			const auto& otherRR = (prodId == _products[0]) ? pr2RR : pr1RR;
 			// Get the dispersion
-			const auto& thisDispersion = thisReg.dispersion();
+			const auto& thisDispersion = (prodId == _products[0]) ?
+				pr1Reg.dispersion() :
+				pr2Reg.dispersion();
 
-			// First order sum on the other product
-			for (double m : makeIntervalRange(otherReg[i]))
-				for (double l : makeIntervalRange(cl1Reg[i])) {
-					this->_coefs(0, 0, p + 2, i() + 1) += factor *
-						util::firstOrderSum( // p+2 because 0 and 1 are used for
-											 // reactants
-							util::max(static_cast<double>(thisReg[i].begin()),
-								cl2Reg[i].begin() + l - m),
-							util::min(static_cast<double>(thisReg[i].end() - 1),
-								cl2Reg[i].end() - 1 + l - m),
-							static_cast<double>(
-								thisReg[i].end() - 1 + thisReg[i].begin()) /
-								2.0);
-				}
-			this->_coefs(0, 0, p + 2, i() + 1) /= thisDispersion[i()];
+			// First order sum on the other product (p+2) because 0 and 1 are
+			// used for reactants)
+			this->_coefs(0, 0, p + 2, i() + 1) = factor *
+				detail::computeFirstOrderSum(
+					i(), thisRR, otherRR, cl2RR, cl1RR) /
+				thisDispersion[i()];
 
 			// Products first moments
 			for (auto k : speciesRangeNoI) {
 				// Second order sum
 				if (k == i) {
-					for (double m : makeIntervalRange(otherReg[i]))
-						for (double l : makeIntervalRange(cl2Reg[i])) {
-							this->_coefs(i() + 1, 0, p + 2, k() + 1) += factor *
-								util::secondOrderOffsetSum(
-									util::max(thisReg[i].begin() + m - l,
-										static_cast<double>(cl1Reg[i].begin())),
-									util::min(thisReg[i].end() - 1 + m - l,
-										static_cast<double>(
-											cl1Reg[i].end() - 1)),
-									static_cast<double>(cl1Reg[i].end() - 1 +
-										cl1Reg[i].begin()) /
-										2.0,
-									static_cast<double>(thisReg[i].end() - 1 +
-										thisReg[i].begin()) /
-										2.0,
-									l - m);
-						}
-					this->_coefs(i() + 1, 0, p + 2, k() + 1) /=
-						thisDispersion[k()];
+					this->_coefs(i() + 1, 0, p + 2, k() + 1) = factor *
+						detail::computeSecondOrderOffsetSum(
+							i(), cl1RR, cl2RR, thisRR, otherRR) /
+						thisDispersion[i()];
 
-					for (double m : makeIntervalRange(otherReg[i]))
-						for (double l : makeIntervalRange(cl1Reg[i])) {
-							this->_coefs(0, i() + 1, p + 2, k() + 1) += factor *
-								util::secondOrderOffsetSum(
-									util::max(thisReg[i].begin() + m - l,
-										static_cast<double>(cl2Reg[i].begin())),
-									util::min(thisReg[i].end() - 1 + m - l,
-										static_cast<double>(
-											cl2Reg[i].end() - 1)),
-									static_cast<double>(cl2Reg[i].end() - 1 +
-										cl2Reg[i].begin()) /
-										2.0,
-									static_cast<double>(thisReg[i].end() - 1 +
-										thisReg[i].begin()) /
-										2.0,
-									l - m);
-						}
-					this->_coefs(0, i() + 1, p + 2, k() + 1) /=
-						thisDispersion[k()];
+					this->_coefs(0, i() + 1, p + 2, k() + 1) = factor *
+						detail::computeSecondOrderOffsetSum(
+							i(), cl2RR, cl1RR, thisRR, otherRR) /
+						thisDispersion[i()];
 				}
 				else {
 					this->_coefs(i() + 1, 0, p + 2, k() + 1) =
@@ -474,19 +258,10 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 		// First reactant first moments
 		for (auto k : speciesRangeNoI) {
 			if (k == i) {
-				for (double m : makeIntervalRange(prod2Reg[i]))
-					for (double l : makeIntervalRange(cl2Reg[i])) {
-						this->_coefs(i() + 1, 0, 0, k() + 1) += factor *
-							util::secondOrderSum(
-								util::max(prod1Reg[i].begin() + m - l,
-									static_cast<double>(cl1Reg[i].begin())),
-								util::min(prod1Reg[i].end() - 1 + m - l,
-									static_cast<double>(cl1Reg[i].end() - 1)),
-								static_cast<double>(
-									cl1Reg[i].end() - 1 + cl1Reg[i].begin()) /
-									2.0);
-					}
-				this->_coefs(i() + 1, 0, 0, k() + 1) /= cl1Disp[k()];
+				this->_coefs(i() + 1, 0, 0, k() + 1) = factor *
+					detail::computeSecondOrderSum(
+						i(), cl1RR, cl2RR, pr1RR, pr2RR) /
+					cl1Disp[i()];
 			}
 			else {
 				this->_coefs(i() + 1, 0, 0, k() + 1) =
@@ -501,19 +276,10 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 		// Second reactant partial derivatives
 		for (auto k : speciesRangeNoI) {
 			if (k == i) {
-				for (double m : makeIntervalRange(prod2Reg[i]))
-					for (double l : makeIntervalRange(cl1Reg[i])) {
-						this->_coefs(0, i() + 1, 1, k() + 1) += factor *
-							util::secondOrderSum(
-								util::max(prod1Reg[i].begin() + m - l,
-									static_cast<double>(cl2Reg[i].begin())),
-								util::min(prod1Reg[i].end() - 1 + m - l,
-									static_cast<double>(cl2Reg[i].end() - 1)),
-								static_cast<double>(
-									cl2Reg[i].end() - 1 + cl2Reg[i].begin()) /
-									2.0);
-					}
-				this->_coefs(0, i() + 1, 1, k() + 1) /= cl2Disp[k()];
+				this->_coefs(0, i() + 1, 1, k() + 1) = factor *
+					detail::computeSecondOrderSum(
+						i(), cl2RR, cl1RR, pr1RR, pr2RR) /
+					cl2Disp[i()];
 			}
 			else {
 				this->_coefs(0, i() + 1, 1, k() + 1) =
@@ -533,21 +299,21 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 		for (auto j : speciesRangeNoI) {
 			// Second order sum
 			if (i == j) {
-				for (double m : makeIntervalRange(prod2Reg[j]))
-					for (double l : makeIntervalRange(cl1Reg[j])) {
+				for (double m : makeIntervalRange(pr2RR[j()]))
+					for (double l : makeIntervalRange(cl1RR[j()])) {
 						this->_coefs(i() + 1, j() + 1, 0, 0) +=
 							(l -
 								static_cast<double>(
-									cl1Reg[j].end() - 1 + cl1Reg[j].begin()) /
+									cl1RR[j()].end() - 1 + cl1RR[j()].begin()) /
 									2.0) *
 							factor *
 							util::firstOrderSum(
-								util::max(prod1Reg[j].begin() + m - l,
-									static_cast<double>(cl2Reg[j].begin())),
-								util::min(prod1Reg[j].end() - 1 + m - l,
-									static_cast<double>(cl2Reg[j].end() - 1)),
+								util::max(pr1RR[j()].begin() + m - l,
+									static_cast<double>(cl2RR[j()].begin())),
+								util::min(pr1RR[j()].end() - 1 + m - l,
+									static_cast<double>(cl2RR[j()].end() - 1)),
 								static_cast<double>(
-									cl2Reg[j].end() - 1 + cl2Reg[j].begin()) /
+									cl2RR[j()].end() - 1 + cl2RR[j()].begin()) /
 									2.0);
 					}
 			}
@@ -567,37 +333,37 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 				}
 
 				// Get the regions in the right order
-				const auto& thisReg =
-					(prodId == _products[0]) ? prod1Reg : prod2Reg;
-				const auto& otherReg =
-					(prodId == _products[0]) ? prod2Reg : prod1Reg;
+				const auto& thisRR = (prodId == _products[0]) ? pr1RR : pr2RR;
+				const auto& otherRR = (prodId == _products[0]) ? pr2RR : pr1RR;
 				// Get the dispersion
-				const auto& thisDispersion = thisReg.dispersion();
+				const auto& thisDispersion = (prodId == _products[0]) ?
+					pr1Reg.dispersion() :
+					pr2Reg.dispersion();
 
 				for (auto k : speciesRangeNoI) {
 					// Third order sum
 					if (i == j && j == k) {
-						for (double m : makeIntervalRange(otherReg[i]))
-							for (double l : makeIntervalRange(cl1Reg[i])) {
+						for (double m : makeIntervalRange(otherRR[i()]))
+							for (double l : makeIntervalRange(cl1RR[i()])) {
 								this->_coefs(
 									i() + 1, j() + 1, p + 2, k() + 1) +=
 									(l -
-										static_cast<double>(cl1Reg[i].end() -
-											1 + cl1Reg[i].begin()) /
+										static_cast<double>(cl1RR[i()].end() -
+											1 + cl1RR[i()].begin()) /
 											2.0) *
 									factor *
 									util::secondOrderOffsetSum(
-										util::max(thisReg[i].begin() + m - l,
+										util::max(thisRR[i()].begin() + m - l,
 											static_cast<double>(
-												cl2Reg[i].begin())),
-										util::min(thisReg[i].end() - 1 + m - l,
+												cl2RR[i()].begin())),
+										util::min(thisRR[i()].end() - 1 + m - l,
 											static_cast<double>(
-												cl2Reg[i].end() - 1)),
-										static_cast<double>(cl2Reg[i].end() -
-											1 + cl2Reg[i].begin()) /
+												cl2RR[i()].end() - 1)),
+										static_cast<double>(cl2RR[i()].end() -
+											1 + cl2RR[i()].begin()) /
 											2.0,
-										static_cast<double>(thisReg[i].end() -
-											1 + thisReg[i].begin()) /
+										static_cast<double>(thisRR[i()].end() -
+											1 + thisRR[i()].begin()) /
 											2.0,
 										l - m);
 							}
@@ -628,29 +394,10 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 			for (auto k : speciesRangeNoI) {
 				// Third order sum
 				if (i == j && j == k) {
-					for (double m : makeIntervalRange(prod2Reg[i]))
-						for (double l : makeIntervalRange(cl1Reg[i])) {
-							this->_coefs(i() + 1, j() + 1, 0, k() + 1) +=
-								(l -
-									static_cast<double>(cl1Reg[i].end() - 1 +
-										cl1Reg[i].begin()) /
-										2.0) *
-								(l -
-									static_cast<double>(cl1Reg[i].end() - 1 +
-										cl1Reg[i].begin()) /
-										2.0) *
-								factor *
-								util::firstOrderSum(
-									util::max(prod1Reg[i].begin() + m - l,
-										static_cast<double>(cl2Reg[i].begin())),
-									util::min(prod1Reg[i].end() - 1 + m - l,
-										static_cast<double>(
-											cl2Reg[i].end() - 1)),
-									static_cast<double>(cl2Reg[i].end() - 1 +
-										cl2Reg[i].begin()) /
-										2.0);
-						}
-					this->_coefs(i() + 1, j() + 1, 0, k() + 1) /= cl1Disp[k()];
+					this->_coefs(i() + 1, j() + 1, 0, k() + 1) = factor *
+						detail::computeThirdOrderSum(
+							i(), cl2RR, cl1RR, pr1RR, pr2RR) /
+						cl1Disp[i()];
 				}
 				else if (i == k) {
 					this->_coefs(i() + 1, j() + 1, 0, k() + 1) =
@@ -675,29 +422,10 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 			for (auto k : speciesRangeNoI) {
 				// Third order sum
 				if (i == j && j == k) {
-					for (double m : makeIntervalRange(prod2Reg[i]))
-						for (double l : makeIntervalRange(cl2Reg[i])) {
-							this->_coefs(i() + 1, j() + 1, 1, k() + 1) +=
-								(l -
-									static_cast<double>(cl2Reg[i].end() - 1 +
-										cl2Reg[i].begin()) /
-										2.0) *
-								(l -
-									static_cast<double>(cl2Reg[i].end() - 1 +
-										cl2Reg[i].begin()) /
-										2.0) *
-								factor *
-								util::firstOrderSum(
-									util::max(prod1Reg[i].begin() + m - l,
-										static_cast<double>(cl1Reg[i].begin())),
-									util::min(prod1Reg[i].end() - 1 + m - l,
-										static_cast<double>(
-											cl1Reg[i].end() - 1)),
-									(double)(cl1Reg[i].end() - 1 +
-										cl1Reg[i].begin()) /
-										2.0);
-						}
-					this->_coefs(i() + 1, j() + 1, 1, k() + 1) /= cl2Disp[k()];
+					this->_coefs(i() + 1, j() + 1, 1, k() + 1) = factor *
+						detail::computeThirdOrderSum(
+							i(), cl1RR, cl2RR, pr1RR, pr2RR) /
+						cl2Disp[i()];
 				}
 				else if (i == k) {
 					this->_coefs(i() + 1, j() + 1, 1, k() + 1) =
@@ -1481,6 +1209,9 @@ KOKKOS_INLINE_FUNCTION
 void
 DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 {
+	// static
+	const auto dummyRegion = Region(Composition{});
+
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 	auto clReg = this->_clusterData.getCluster(_reactant).getRegion();
@@ -1489,25 +1220,24 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 	const auto& clDisp = clReg.dispersion();
 	const auto& prod1Disp = prod1Reg.dispersion();
 	const auto& prod2Disp = prod2Reg.dispersion();
+	auto cl2Reg = dummyRegion;
+
+	// Initialize the reflected regions
+	auto rRegions = detail::updateReflectedRegionsForCoefs<nMomentIds>(
+		prod1Reg, prod2Reg, clReg, cl2Reg);
+	auto clRR = std::get<2>(rRegions), cl2RR = std::get<3>(rRegions),
+		 pr1RR = std::get<0>(rRegions), pr2RR = std::get<1>(rRegions);
 
 	auto nOverlap =
-		static_cast<double>(this->computeOverlap(clReg, prod1Reg, prod2Reg));
+		static_cast<double>(this->computeOverlap(pr1RR, pr2RR, clRR, cl2RR));
 
 	// The first coefficient is simply the overlap because it is the sum over 1
 	this->_coefs(0, 0, 0, 0) = nOverlap;
 	for (auto i : speciesRangeNoI) {
 		auto factor = nOverlap / this->_widths[i()];
 		// First order sum
-		for (double l : makeIntervalRange(prod1Reg[i])) {
-			this->_coefs(i() + 1, 0, 0, 0) += factor *
-				util::firstOrderSum(
-					util::max(static_cast<double>(clReg[i].begin()),
-						prod2Reg[i].begin() + l),
-					util::min(static_cast<double>(clReg[i].end() - 1),
-						prod2Reg[i].end() - 1 + l),
-					static_cast<double>(clReg[i].end() - 1 + clReg[i].begin()) /
-						2.0);
-		}
+		this->_coefs(i() + 1, 0, 0, 0) = factor *
+			detail::computeFirstOrderSum(i(), clRR, cl2RR, pr2RR, pr1RR);
 	}
 
 	// First moments
@@ -1518,32 +1248,14 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 			this->_coefs(k() + 1, 0, 0, 0) / clDisp[k()];
 
 		// First product
-		for (double l : makeIntervalRange(prod2Reg[k])) {
-			this->_coefs(0, 0, 1, k() + 1) += factor *
-				util::firstOrderSum(
-					util::max(clReg[k].begin() - l,
-						static_cast<double>(prod1Reg[k].begin())),
-					util::min(clReg[k].end() - 1 - l,
-						static_cast<double>(prod1Reg[k].end() - 1)),
-					static_cast<double>(
-						prod1Reg[k].end() - 1 + prod1Reg[k].begin()) /
-						2.0);
-		}
-		this->_coefs(0, 0, 1, k() + 1) /= prod1Disp[k()];
+		this->_coefs(0, 0, 1, k() + 1) = factor *
+			detail::computeFirstOrderSum(k(), pr1RR, pr2RR, clRR, cl2RR) /
+			prod1Disp[k()];
 
 		// Second product
-		for (double l : makeIntervalRange(prod1Reg[k])) {
-			this->_coefs(0, 0, 2, k() + 1) += factor *
-				util::firstOrderSum(
-					util::max(clReg[k].begin() - l,
-						static_cast<double>(prod2Reg[k].begin())),
-					util::min(clReg[k].end() - 1 - l,
-						static_cast<double>(prod2Reg[k].end() - 1)),
-					static_cast<double>(
-						prod2Reg[k].end() - 1 + prod2Reg[k].begin()) /
-						2.0);
-		}
-		this->_coefs(0, 0, 2, k() + 1) /= prod2Disp[k()];
+		this->_coefs(0, 0, 2, k() + 1) = factor *
+			detail::computeFirstOrderSum(k(), pr2RR, pr1RR, clRR, cl2RR) /
+			prod2Disp[k()];
 	}
 
 	// Now we loop over the 1 dimension of the coefs to compute all the
@@ -1555,18 +1267,10 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 		for (auto k : speciesRangeNoI) {
 			// Second order sum
 			if (k == i) {
-				for (double l : makeIntervalRange(prod1Reg[i])) {
-					this->_coefs(i() + 1, 0, 0, k() + 1) += factor *
-						util::secondOrderSum(
-							util::max(static_cast<double>(clReg[i].begin()),
-								prod2Reg[i].begin() + l),
-							util::min(static_cast<double>(clReg[i].end() - 1),
-								prod2Reg[i].end() - 1 + l),
-							static_cast<double>(
-								clReg[i].end() - 1 + clReg[i].begin()) /
-								2.0);
-				}
-				this->_coefs(i() + 1, 0, 0, k() + 1) /= clDisp[k()];
+				this->_coefs(i() + 1, 0, 0, k() + 1) = factor *
+					detail::computeSecondOrderSum(
+						i(), clRR, cl2RR, pr2RR, pr1RR) /
+					clDisp[k()];
 			}
 			else {
 				this->_coefs(i() + 1, 0, 0, k() + 1) =
@@ -1579,22 +1283,10 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 		for (auto k : speciesRangeNoI) {
 			// Second order sum
 			if (k == i) {
-				for (double l : makeIntervalRange(prod2Reg[i])) {
-					this->_coefs(i() + 1, 0, 1, k() + 1) += factor *
-						util::secondOrderOffsetSum(
-							util::max(static_cast<double>(clReg[i].begin()),
-								prod1Reg[i].begin() + l),
-							util::min(static_cast<double>(clReg[i].end() - 1),
-								prod1Reg[i].end() - 1 + l),
-							static_cast<double>(
-								clReg[i].end() - 1 + clReg[i].begin()) /
-								2.0,
-							static_cast<double>(
-								prod1Reg[i].end() - 1 + prod1Reg[i].begin()) /
-								2.0,
-							-l);
-				}
-				this->_coefs(i() + 1, 0, 1, k() + 1) /= prod1Disp[k()];
+				this->_coefs(i() + 1, 0, 1, k() + 1) = factor *
+					detail::computeSecondOrderOffsetSum(
+						i(), clRR, cl2RR, pr1RR, pr2RR) /
+					prod1Disp[k()];
 			}
 			else {
 				this->_coefs(i() + 1, 0, 1, k() + 1) =
@@ -1607,22 +1299,10 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 		for (auto k : speciesRangeNoI) {
 			// Second order sum
 			if (k == i) {
-				for (double l : makeIntervalRange(prod1Reg[i])) {
-					this->_coefs(i() + 1, 0, 2, k() + 1) += factor *
-						util::secondOrderOffsetSum(
-							util::max(static_cast<double>(clReg[i].begin()),
-								prod2Reg[i].begin() + l),
-							util::min(static_cast<double>(clReg[i].end() - 1),
-								prod2Reg[i].end() - 1 + l),
-							static_cast<double>(
-								clReg[i].end() - 1 + clReg[i].begin()) /
-								2.0,
-							static_cast<double>(
-								prod2Reg[i].end() - 1 + prod2Reg[i].begin()) /
-								2.0,
-							-l);
-				}
-				this->_coefs(i() + 1, 0, 2, k() + 1) /= prod2Disp[k()];
+				this->_coefs(i() + 1, 0, 2, k() + 1) = factor *
+					detail::computeSecondOrderOffsetSum(
+						i(), clRR, cl2RR, pr2RR, pr1RR) /
+					prod2Disp[k()];
 			}
 			else {
 				this->_coefs(i() + 1, 0, 2, k() + 1) =
