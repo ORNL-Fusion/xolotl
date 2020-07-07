@@ -103,6 +103,20 @@ public:
 			Sequence::last();
 	}
 };
+
+template <typename TSpeciesEnum, std::size_t N>
+struct SpeciesForGrouping
+{
+	using Sequence = SpeciesEnumSequence<TSpeciesEnum, N>;
+	static constexpr auto first = Sequence::first();
+	static constexpr auto last = Sequence::lastNoI();
+
+	static constexpr std::underlying_type_t<TSpeciesEnum>
+	mapToMomentId(EnumSequence<TSpeciesEnum, N> value)
+	{
+		return value();
+	}
+};
 } // namespace network
 } // namespace core
 } // namespace xolotl

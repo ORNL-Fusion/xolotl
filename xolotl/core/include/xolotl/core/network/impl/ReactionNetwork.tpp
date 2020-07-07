@@ -547,7 +547,7 @@ template <typename TImpl>
 void
 ReactionNetworkWorker<TImpl>::defineMomentIds()
 {
-	constexpr auto speciesRange = Network::getSpeciesRange();
+	constexpr auto speciesRange = Network::getSpeciesRangeForGrouping();
 
 	ClusterDataRef data(_nw._clusterData);
 
@@ -586,10 +586,12 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 			IndexType current = counts(i);
 			for (auto k : speciesRange) {
 				if (reg[k].length() == 1) {
-					data.momentIds(i, k()) = Network::invalidIndex();
+					data.momentIds(i, Network::mapToMomentId(k)) =
+						Network::invalidIndex();
 				}
 				else {
-					data.momentIds(i, k()) = nClusters + current;
+					data.momentIds(i, Network::mapToMomentId(k)) =
+						nClusters + current;
 					++current;
 				}
 			}

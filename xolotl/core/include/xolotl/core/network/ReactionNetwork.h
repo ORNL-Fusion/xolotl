@@ -116,6 +116,24 @@ public:
 			SpeciesSequence::first(), SpeciesSequence::lastNoI());
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	static constexpr SpeciesRange
+	getSpeciesRangeForGrouping() noexcept
+	{
+		using GroupingRange =
+			SpeciesForGrouping<Species, SpeciesSequence::size()>;
+		return SpeciesRange(GroupingRange::first, GroupingRange::last);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	static constexpr std::underlying_type_t<Species>
+	mapToMomentId(EnumSequence<Species, SpeciesSequence::size()> value)
+	{
+		using GroupingRange =
+			SpeciesForGrouping<Species, SpeciesSequence::size()>;
+		return GroupingRange::mapToMomentId(value);
+	}
+
 	void
 	setLatticeParameter(double latticeParameter) override;
 
