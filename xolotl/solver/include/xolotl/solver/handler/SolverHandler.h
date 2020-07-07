@@ -483,7 +483,7 @@ public:
 	 */
 	void
 	initializeHandlers(
-		std::shared_ptr<factory::material::IMaterialFactory> material,
+		std::shared_ptr<core::material::IMaterialHandler> material,
 		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
 		const options::Options& opts) override
 	{
@@ -535,17 +535,13 @@ public:
 		}
 
 		// Set the flux handler
-		fluxHandler =
-			(core::flux::IFluxHandler*)material->getFluxHandler().get();
+		fluxHandler = material->getFluxHandler().get();
 
 		// Set the temperature handler
-		temperatureHandler =
-			(core::temperature::ITemperatureHandler*)tempHandler.get();
+		temperatureHandler = tempHandler.get();
 
 		// Set the diffusion handler
-		diffusionHandler =
-			(core::diffusion::IDiffusionHandler*)material->getDiffusionHandler()
-				.get();
+		diffusionHandler = material->getDiffusionHandler().get();
 
 		// Set the advection handlers
 		auto handlers = material->getAdvectionHandler();
@@ -554,9 +550,7 @@ public:
 		}
 
 		// Set the modified trap-mutation handler
-		mutationHandler = (core::modified::ITrapMutationHandler*)material
-							  ->getTrapMutationHandler()
-							  .get();
+		mutationHandler = material->getTrapMutationHandler().get();
 
 		// Set the minimum size for the average radius compuation
 		minRadiusSizes = opts.getRadiusMinSizes();

@@ -18,9 +18,14 @@ set(XOLOTL_VIZ_HEADERS
     ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/viz/config.h
     ${XOLOTL_VIZ_HEADER_DIR}/IPlot.h
     ${XOLOTL_VIZ_HEADER_DIR}/IVizHandlerRegistry.h
+    ${XOLOTL_VIZ_HEADER_DIR}/VizHandlerRegistry.h
     ${XOLOTL_VIZ_HEADER_DIR}/LabelProvider.h
     ${XOLOTL_VIZ_HEADER_DIR}/PlottingStyle.h
     ${XOLOTL_VIZ_HEADER_DIR}/PlotType.h
+)
+
+set(XOLOTL_VIZ_SOURCES
+    ${XOLOTL_VIZ_SOURCE_DIR}/VizHandlerRegistry.cpp
 )
 
 include(src/dataprovider/Include.cmake)
@@ -29,16 +34,24 @@ if(VTKm_FOUND)
     include(src/standard/Include.cmake)
 endif(VTKm_FOUND)
 
-add_library(xolotlViz STATIC
+add_library(xolotlViz SHARED
     ${XOLOTL_VIZ_SOURCES}
     ${XOLOTL_VIZ_HEADERS}
 )
 target_link_libraries(xolotlViz PUBLIC xolotlCore)
 target_include_directories(xolotlViz PUBLIC
-    ${XOLOTL_VIZ_INCLUDE_DIR}
-    ${XOLOTL_BINARY_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${XOLOTL_VIZ_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${XOLOTL_BINARY_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include>
 )
+set_target_properties(xolotlViz PROPERTIES
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
 if(VTKm_FOUND)
     # target_include_directories(xolotlViz PUBLIC ${VTKm_INCLUDE_DIRS})
     target_link_libraries(xolotlViz PUBLIC vtkm_cont vtkm_rendering)
 endif(VTKm_FOUND)
+
+install(TARGETS xolotlViz EXPORT Xolotl LIBRARY DESTINATION lib)

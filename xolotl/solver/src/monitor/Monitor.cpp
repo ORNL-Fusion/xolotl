@@ -15,6 +15,7 @@
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/Monitor.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/viz/IPlot.h>
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 

@@ -18,14 +18,33 @@ protected:
 	//! The string of option
 	std::string optionsString;
 
+	//! The network
+	std::shared_ptr<core::network::IReactionNetwork> network;
+
+	//! The material handler
+	std::shared_ptr<core::material::IMaterialHandler> materialHandler;
+
+	//! The temperature handler
+	std::shared_ptr<core::temperature::ITemperatureHandler> temperatureHandler;
+
 	//! The original solver handler.
-	static handler::ISolverHandler* solverHandler;
+	std::shared_ptr<handler::ISolverHandler> solverHandler;
+
+	//! Static global reference to current solver handler
+	static handler::ISolverHandler* staticSolverHandler;
 
 public:
+	using SolverHandlerGenerator =
+		std::function<std::shared_ptr<handler::ISolverHandler>(
+			core::network::IReactionNetwork&)>;
+
 	/**
 	 * Default constructor, deleted because we must have arguments to construct.
 	 */
 	Solver() = delete;
+
+	Solver(const options::Options& options,
+		SolverHandlerGenerator handlerGenerator);
 
 	//! Constuct a solver.
 	Solver(handler::ISolverHandler& _solverHandler,
@@ -53,7 +72,7 @@ public:
 	static handler::ISolverHandler&
 	getSolverHandler()
 	{
-		return *solverHandler;
+		return *staticSolverHandler;
 	}
 
 protected:

@@ -77,6 +77,14 @@ public:
 	getNetworkFilename() const = 0;
 
 	/**
+	 * Get the name of the solver to use
+	 *
+	 * @return the name of the solver
+	 */
+	virtual std::string
+	getSolverName() const = 0;
+
+	/**
 	 * Get the Arguments for PETSc.
 	 *
 	 * @return arg
@@ -261,7 +269,7 @@ public:
 	 *
 	 * @return The map
 	 */
-	virtual std::map<std::string, bool>
+	virtual const std::map<std::string, bool>&
 	getProcesses() const = 0;
 
 	/**

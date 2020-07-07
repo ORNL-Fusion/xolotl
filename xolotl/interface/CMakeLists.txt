@@ -33,6 +33,7 @@ target_include_directories(xolotlInterface PUBLIC
     ${PETSC_INCLUDES}
 )
 set_target_properties(xolotlInterface PROPERTIES
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
     INSTALL_RPATH_USE_LINK_PATH TRUE
 )
 

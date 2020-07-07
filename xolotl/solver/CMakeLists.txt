@@ -31,7 +31,7 @@ set(XOLOTL_SOLVER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/Monitor3D.cpp
 )
 
-add_library(xolotlSolver STATIC
+add_library(xolotlSolver SHARED
     ${XOLOTL_SOLVER_SOURCES}
     ${XOLOTL_SOLVER_HEADERS}
 )
@@ -45,6 +45,13 @@ target_link_libraries(xolotlSolver PUBLIC
     ${PETSC_LIBRARIES}
 )
 target_include_directories(xolotlSolver PUBLIC
-    ${XOLOTL_SOLVER_INCLUDE_DIR}
     ${PETSC_INCLUDES}
+    $<BUILD_INTERFACE:${XOLOTL_SOLVER_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include>
 )
+set_target_properties(xolotlSolver PROPERTIES
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
+install(TARGETS xolotlSolver EXPORT Xolotl LIBRARY DESTINATION lib)

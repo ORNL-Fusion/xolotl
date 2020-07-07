@@ -5,6 +5,10 @@
 
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/PetscSolver.h>
+#include <xolotl/solver/handler/PetscSolver0DHandler.h>
+#include <xolotl/solver/handler/PetscSolver1DHandler.h>
+#include <xolotl/solver/handler/PetscSolver2DHandler.h>
+#include <xolotl/solver/handler/PetscSolver3DHandler.h>
 #include <xolotl/util/MPIUtils.h>
 
 /*
@@ -193,6 +197,33 @@ RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void*)
 	RHSJacobianTimer->stop();
 
 	PetscFunctionReturn(0);
+}
+
+PetscSolver::PetscSolver(const options::Options& options) :
+	Solver(options,
+		[&options](core::network::IReactionNetwork& network)
+			-> std::shared_ptr<handler::ISolverHandler> {
+			switch (options.getDimensionNumber()) {
+			case 0:
+				return std::make_shared<handler::PetscSolver0DHandler>(network);
+			case 1:
+				return std::make_shared<handler::PetscSolver1DHandler>(network);
+			case 2:
+				return std::make_shared<handler::PetscSolver2DHandler>(network);
+			case 3:
+				return std::make_shared<handler::PetscSolver3DHandler>(network);
+			default:
+				// The asked dimension is not good (e.g. -1, 4)
+				throw std::string(
+					"\nxolotlFactory: Bad dimension for the solver handler.");
+			}
+		})
+{
+	this->setCommandLineOptions(options.getPetscArg());
+
+	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
+	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
+	SolveTimer = handlerRegistry->getTimer("SolveTimer");
 }
 
 PetscSolver::PetscSolver(handler::ISolverHandler& _solverHandler,
@@ -600,5 +631,11 @@ PetscSolver::getXolotlTime()
 	return CurrentXolotlTime;
 }
 
+namespace detail
+{
+auto petscSolverRegistrations =
+	xolotl::factory::solver::SolverFactory::RegistrationCollection<PetscSolver>(
+		{"PETSc"});
+}
 } /* end namespace solver */
 } /* end namespace xolotl */

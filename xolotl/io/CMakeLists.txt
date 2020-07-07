@@ -27,7 +27,7 @@ set(XOLOTL_IO_SOURCES
     ${XOLOTL_IO_SOURCE_DIR}/XFile.cpp
 )
 
-add_library(xolotlIO STATIC
+add_library(xolotlIO SHARED
     ${XOLOTL_IO_SOURCES}
     ${XOLOTL_IO_HEADERS}
 )
@@ -37,6 +37,13 @@ target_link_libraries(xolotlIO PUBLIC
     ${HDF5_LIBRARIES}
 )
 target_include_directories(xolotlIO PUBLIC
-    ${XOLOTL_IO_INCLUDE_DIR}
     ${HDF5_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${XOLOTL_IO_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include>
 )
+set_target_properties(xolotlIO PROPERTIES
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
+install(TARGETS xolotlIO EXPORT Xolotl LIBRARY DESTINATION lib)

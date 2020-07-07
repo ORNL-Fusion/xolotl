@@ -10,6 +10,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/SinkReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TupleUtility.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyClusterGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/AlloyNetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyTraits.h
@@ -17,16 +18,21 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/ClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/EnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeClusterGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/FeNetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeTraits.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/INetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/IReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NEClusterGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/NENetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NEReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NEReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NETraits.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/NetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NucleationReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/PSIClusterGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/PSINetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/PSIReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/PSIReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/PSITraits.h
@@ -63,8 +69,13 @@ list(APPEND XOLOTL_CORE_TPP_FILES
 )
 
 list(APPEND XOLOTL_CORE_SOURCES
+    ${XOLOTL_CORE_SOURCE_DIR}/network/AlloyNetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/AlloyReactionNetwork.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/FeNetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/FeReactionNetwork.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/NENetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/NEReactionNetwork.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/NetworkHandler.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/PSINetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetwork.cpp
 )

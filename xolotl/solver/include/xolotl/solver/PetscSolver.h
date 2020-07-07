@@ -2,6 +2,7 @@
 #define PETSCSOLVER_H
 
 // Includes
+#include <xolotl/factory/solver/SolverFactory.h>
 #include <xolotl/solver/Solver.h>
 
 namespace xolotl
@@ -69,6 +70,8 @@ public:
 	 * Default constructor, deleted because we must construct using arguments.
 	 */
 	PetscSolver() = delete;
+
+	PetscSolver(const options::Options& options);
 
 	//! The Constructor
 	PetscSolver(handler::ISolverHandler& _solverHandler,
@@ -199,7 +202,6 @@ public:
 	getXolotlTime() override;
 };
 // end class PetscSolver
-
 } /* namespace solver */
 } /* namespace xolotl */
 

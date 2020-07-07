@@ -14,14 +14,15 @@
 #include <xolotl/core/network/FeReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/Monitor.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/viz/IPlot.h>
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/viz/PlotType.h>
+#include <xolotl/viz/VizHandlerRegistry.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 #include <xolotl/viz/dataprovider/CvsXYDataProvider.h>
 
@@ -628,7 +629,7 @@ setupPetsc0DMonitor(TS ts)
 	PetscErrorCode ierr;
 
 	// Get xolotlViz handler registry
-	auto vizHandlerRegistry = factory::viz::getVizHandlerRegistry();
+	auto vizHandlerRegistry = viz::VizHandlerRegistry::get();
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flag1DPlot, flagBubble, flagPerf, flagStatus,

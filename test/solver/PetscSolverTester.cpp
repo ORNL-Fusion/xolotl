@@ -10,8 +10,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/factory/material/IMaterialFactory.h>
-#include <xolotl/factory/network/IReactionHandlerFactory.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
 #include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
 #include <xolotl/options/Options.h>

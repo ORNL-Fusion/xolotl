@@ -10,10 +10,11 @@
 
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
+#include <xolotl/core/material/IMaterialHandler.h>
 #include <xolotl/core/modified/ITrapMutationHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/temperature/ITemperatureHandler.h>
-#include <xolotl/factory/material/IMaterialFactory.h>
+#include <xolotl/options/Options.h>
 #include <xolotl/util/Array.h>
 #include <xolotl/util/RandomNumberGenerator.h>
 
@@ -54,7 +55,7 @@ public:
 	 */
 	virtual void
 	initializeHandlers(
-		std::shared_ptr<factory::material::IMaterialFactory> material,
+		std::shared_ptr<core::material::IMaterialHandler> material,
 		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
 		const options::Options& opts) = 0;
 

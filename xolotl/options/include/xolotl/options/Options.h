@@ -392,6 +392,12 @@ public:
 		return networkFilename;
 	}
 
+	std::string
+	getSolverName() const override
+	{
+		return "PETSc";
+	}
+
 	/**
 	 * Get the Arguments for PETSc.
 	 * \see IOptions.h
@@ -619,7 +625,7 @@ public:
 	 *
 	 * @return The map
 	 */
-	std::map<std::string, bool>
+	const std::map<std::string, bool>&
 	getProcesses() const override
 	{
 		return processMap;

@@ -2,15 +2,16 @@
 #include <ctime>
 #include <iostream>
 
-#include <xolotl/factory/material/IMaterialFactory.h>
-#include <xolotl/factory/network/IReactionHandlerFactory.h>
-#include <xolotl/factory/solver/SolverHandlerFactory.h>
+#include <xolotl/core/network/INetworkHandler.h>
+#include <xolotl/factory/material/MaterialHandlerFactory.h>
+#include <xolotl/factory/network/NetworkHandlerFactory.h>
+#include <xolotl/factory/solver/SolverFactory.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
 #include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
 #include <xolotl/interface/Interface.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/perf/xolotlPerf.h>
-#include <xolotl/solver/PetscSolver.h>
+#include <xolotl/solver/Solver.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/MPIUtils.h>
 
@@ -113,52 +114,16 @@ XolotlInterface::initializeXolotl(int argc, char* argv[], MPI_Comm comm)
 
 		// Set up our performance data infrastructure.
 		perf::initialize(opts.getPerfHandlerType());
-		auto handlerRegistry = perf::getHandlerRegistry();
-
-		// Create the material factory
-		auto materialFactory =
-			factory::material::IMaterialFactory::createMaterialFactory(opts);
-		// Initialize it with the options
-		materialFactory->initializeMaterial(opts);
-
-		// Initialize the temperature
-		if (!factory::temperature::initializeTempHandler(opts)) {
-			std::cerr << "Unable to initialize requested temperature.  Aborting"
-					  << std::endl;
-		}
-		// Get the temperature handler
-		auto tempHandler = factory::temperature::getTemperatureHandler();
 
 		// Initialize the visualization
-		if (!factory::viz::initializeVizHandler(
-				opts.useVizStandardHandlers())) {
-			std::cerr << "Unable to initialize requested visualization "
-						 "infrastructure. "
-					  << "Aborting" << std::endl;
-		}
-
-		// Create the network handler factory
-		auto networkFactory =
-			factory::network::IReactionHandlerFactory::createNetworkFactory(
-				opts.getMaterial());
-		// Build a reaction network
-		networkFactory->initializeReactionNetwork(opts, handlerRegistry);
-		auto& network = networkFactory->getNetworkHandler();
-
-		// Initialize and get the solver handler
-		if (!factory::solver::initializeDimension(opts, network)) {
-			std::cerr << "Unable to initialize dimension from inputs. "
-					  << "Aborting" << std::endl;
-		}
-		auto& solvHandler = factory::solver::getSolverHandler();
-		// Initialize the solver handler
-		solvHandler.initializeHandlers(materialFactory, tempHandler, opts);
+		auto vizHandler = factory::viz::VizHandlerRegistryFactory::get()
+							  .generateVizHandlerRegistry(opts);
 
 		// Setup the solver
-		solver =
-			std::make_shared<solver::PetscSolver>(solvHandler, handlerRegistry);
+		solver = std::dynamic_pointer_cast<solver::Solver>(
+			factory::solver::SolverFactory::get().generateSolver(opts));
+		assert(solver);
 		// Initialize the solver
-		solver->setCommandLineOptions(opts.getPetscArg());
 		solver->initialize();
 
 		initialized = true;
@@ -657,8 +622,7 @@ XolotlInterface::finalizeXolotl()
 				std::cout, timerStats, counterStats, hwCtrStats);
 		}
 
-		factory::solver::destroySolverHandler();
-		factory::network::IReactionHandlerFactory::resetNetworkFactory();
+		solver.reset();
 
 		initialized = false;
 	}

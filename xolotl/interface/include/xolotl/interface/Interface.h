@@ -10,9 +10,16 @@
 
 namespace xolotl
 {
+namespace core
+{
+namespace network
+{
+class IReactionNetwork;
+}
+} // namespace core
 namespace solver
 {
-class PetscSolver;
+class Solver;
 }
 
 namespace interface
@@ -38,7 +45,7 @@ private:
 	/**
 	 * The solver
 	 */
-	std::shared_ptr<solver::PetscSolver> solver;
+	std::shared_ptr<solver::Solver> solver;
 
 public:
 	/**

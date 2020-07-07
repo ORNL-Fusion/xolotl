@@ -12,7 +12,6 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/solver/PetscSolver.h>
@@ -20,8 +19,10 @@
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
 #include <xolotl/util/RandomNumberGenerator.h>
+#include <xolotl/viz/IPlot.h>
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/viz/PlotType.h>
+#include <xolotl/viz/VizHandlerRegistry.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 #include <xolotl/viz/dataprovider/CvsXYDataProvider.h>
 
@@ -1629,7 +1630,7 @@ setupPetsc2DMonitor(TS ts)
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the xolotlViz handler registry
-	auto vizHandlerRegistry = factory::viz::getVizHandlerRegistry();
+	auto vizHandlerRegistry = viz::VizHandlerRegistry::get();
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flagPerf, flagHeRetention, flagXeRetention, flagStatus,

@@ -37,7 +37,7 @@ if(PAPI_FOUND)
     include(src/papi/Include.cmake)
 endif(PAPI_FOUND)
 
-add_library(xolotlPerf STATIC
+add_library(xolotlPerf SHARED
     ${XOLOTL_PERF_SOURCES}
     ${XOLOTL_PERF_HEADERS}
 )
@@ -45,11 +45,18 @@ target_link_libraries(xolotlPerf PUBLIC
     xolotlUtil
 )
 target_include_directories(xolotlPerf PUBLIC
-    ${XOLOTL_PERF_INCLUDE_DIR}
-    ${XOLOTL_BINARY_INCLUDE_DIR}
+    $<BUILD_INTERFACE:${XOLOTL_PERF_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${XOLOTL_BINARY_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
+set_target_properties(xolotlPerf PROPERTIES
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+    INSTALL_RPATH_USE_LINK_PATH TRUE
 )
 
 if(PAPI_FOUND)
     target_link_libraries(xolotlPerf PUBLIC ${PAPI_LIBRARIES})
     target_include_directories(xolotlPerf PUBLIC ${PAPI_INCLUDE_DIRS})
 endif(PAPI_FOUND)
+
+install(TARGETS xolotlPerf EXPORT Xolotl LIBRARY DESTINATION lib)

@@ -18,7 +18,7 @@ set(XOLOTL_UTIL_SOURCES
     ${XOLOTL_UTIL_SOURCE_DIR}/MPIUtils.cpp
 )
 
-add_library(xolotlUtil STATIC
+add_library(xolotlUtil SHARED
     ${XOLOTL_UTIL_SOURCES}
     ${XOLOTL_UTIL_HEADERS}
 )
@@ -27,4 +27,13 @@ target_link_libraries(xolotlUtil PUBLIC
     Boost::filesystem
     Kokkos::kokkos
 )
-target_include_directories(xolotlUtil PUBLIC ${XOLOTL_UTIL_INCLUDE_DIR})
+target_include_directories(xolotlUtil PUBLIC
+    $<BUILD_INTERFACE:${XOLOTL_UTIL_INCLUDE_DIR}>
+    $<INSTALL_INTERFACE:include>
+)
+set_target_properties(xolotlUtil PROPERTIES
+    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+    INSTALL_RPATH_USE_LINK_PATH TRUE
+)
+
+install(TARGETS xolotlUtil EXPORT Xolotl LIBRARY DESTINATION lib)

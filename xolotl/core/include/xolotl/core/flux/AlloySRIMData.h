@@ -1,6 +1,8 @@
 #ifndef ALLOYSRIMDATA_H
 #define ALLOYSRIMDATA_H
 
+#include <vector>
+
 namespace xolotl
 {
 namespace core
