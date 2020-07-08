@@ -12,24 +12,6 @@ namespace core
 {
 namespace network
 {
-void
-NEReactionNetwork::checkTiles(const options::IOptions& options)
-{
-	auto maxXe = static_cast<AmountType>(options.getMaxImpurity() + 1);
-	auto& tiles = this->getSubpaving().getTiles(plsm::onDevice);
-	auto numClusters = tiles.extent(0);
-	Kokkos::parallel_for(
-		numClusters, KOKKOS_LAMBDA(const IndexType i) {
-			auto clReg = tiles(i).getRegion();
-			if (clReg[Species::Xe].end() > maxXe) {
-				Region r({Ival{clReg[Species::Xe].begin(), maxXe}});
-				auto id = tiles(i).getOwningZoneIndex();
-				auto newTile = plsm::Tile<Region>(r, id);
-				tiles(i) = newTile;
-			}
-		});
-}
-
 double
 NEReactionNetwork::checkLatticeParameter(double latticeParameter)
 {

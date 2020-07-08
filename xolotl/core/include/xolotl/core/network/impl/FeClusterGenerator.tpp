@@ -58,6 +58,14 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 		region[Species::V].begin() < _groupingMin) {
 		return true;
 	}
+
+	// Edges
+	if (region[Species::He].end() > _maxHe + 1 &&
+		region[Species::V].end() > _maxV + 1) {
+		return true;
+	}
+
+	// Middle
 	Composition lo = region.getOrigin();
 	Composition hi = region.getUpperLimitPoint();
 	double amtHe = (double)(lo[Species::He] + hi[Species::He] - 1) / 2.0,
@@ -68,56 +76,46 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 		2.5 * log(1.0 + (amtHe / amtV));
 	auto distance = abs(ibe - 1.0);
 	if (distance * 0.2 < 1.0) {
-		if (region[Species::He].begin() < _groupingMin) {
-			if (region[Species::V].length() <
-				util::max(_groupingWidthV + 1,
-					(AmountType)(
-						(region[Species::V].begin() - _groupingMin) * 0.1))) {
-				result[0] = false;
-				result[1] = false;
-				result[2] = false;
-				return false;
-			}
-			else
-				return true;
-		}
-		if (region[Species::V].begin() < _groupingMin) {
-			if (region[Species::He].length() <
-				util::max(_groupingWidthHe + 1,
-					(AmountType)(
-						(region[Species::He].begin() - _groupingMin) * 0.1))) {
-				result[0] = false;
-				result[1] = false;
-				result[2] = false;
-				return false;
-			}
-			else
-				return true;
-		}
 		if (region[Species::He].length() <
-				util::max(_groupingWidthHe + 1,
-					(AmountType)((amt - _groupingMin) * 0.1)) ||
-			region[Species::V].length() <
-				util::max(_groupingWidthV + 1,
-					(AmountType)((amt - _groupingMin) * 0.1))) {
+			util::max(_groupingWidthHe + 1,
+				(AmountType)((amt - _groupingMin) * 0.1))) {
 			result[0] = false;
+		}
+		if (region[Species::V].length() <
+			util::max(_groupingWidthV + 1,
+				(AmountType)((amt - _groupingMin) * 0.1))) {
 			result[1] = false;
-			result[2] = false;
-			return false;
 		}
 	}
 	else {
 		if (region[Species::He].length() <
-				util::max(_groupingWidthHe + 1,
-					(AmountType)exp(distance * 1.0) * _groupingWidthHe * 2) ||
-			region[Species::V].length() <
-				util::max(_groupingWidthV + 1,
-					(AmountType)exp(distance * 1.0) * _groupingWidthV * 2)) {
+			util::max(_groupingWidthHe + 1,
+				(AmountType)exp(distance * 1.0) * _groupingWidthHe * 2)) {
 			result[0] = false;
-			result[1] = false;
-			result[2] = false;
-			return false;
 		}
+		if (region[Species::V].length() <
+			util::max(_groupingWidthV + 1,
+				(AmountType)exp(distance * 1.0) * _groupingWidthV * 2)) {
+			result[1] = false;
+		}
+	}
+
+	// Edges
+	if (region[Species::He].begin() == 0) {
+		result[0] = true;
+	}
+	if (region[Species::V].begin() == 0) {
+		result[1] = true;
+	}
+	if (region[Species::He].end() > _maxHe + 1) {
+		result[0] = true;
+	}
+	if (region[Species::V].end() > _maxV + 1) {
+		result[1] = true;
+	}
+
+	if (!result[0] && !result[1]) {
+		return false;
 	}
 
 	return true;

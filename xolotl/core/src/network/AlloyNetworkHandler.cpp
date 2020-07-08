@@ -15,10 +15,12 @@ auto alloyNetworkGenerator = [](const options::Options& options) {
 	NetworkType::AmountType maxI = options.getMaxI();
 	NetworkType::AmountType maxSize = options.getMaxImpurity();
 	NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
-	// Take care of the case with no grouping
-	if (options.getGroupingMin() > maxSize) {
-		groupingWidth = maxSize + 1;
+	// Adapt maxSize
+	int i = 0;
+	while (maxSize + 1 > pow(groupingWidth, i)) {
+		++i;
 	}
+	maxSize = pow(groupingWidth, i) - 1;
 
 	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
 		maxV, maxSize, maxSize, maxI, maxSize, maxSize};

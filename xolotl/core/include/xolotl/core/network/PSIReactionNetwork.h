@@ -51,12 +51,6 @@ private:
 	double
 	checkImpurityRadius(double impurityRadius);
 
-	void
-	checkTiles(const options::IOptions&)
-	{
-		return;
-	}
-
 	IndexType
 	checkLargestClusterId();
 

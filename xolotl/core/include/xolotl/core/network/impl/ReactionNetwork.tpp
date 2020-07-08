@@ -33,24 +33,22 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	auto tiles = subpaving.getTiles(plsm::onDevice);
 	_numClusters = tiles.extent(0);
 
-	asDerived()->checkTiles(opts);
-
-	//		// PRINT ALL THE CLUSTERS
-	//		    constexpr auto speciesRange = getSpeciesRange();
-	//		    for (IndexType i = 0; i < _numClusters; ++i) {
-	//		        const auto& clReg = tiles(i).getRegion();
-	//		        Composition lo = clReg.getOrigin();
-	//		        Composition hi = clReg.getUpperLimitPoint();
-	//		        if (clReg.volume() > 1) {
+	//	// PRINT ALL THE CLUSTERS
+	//	constexpr auto speciesRange = getSpeciesRange();
+	//	for (IndexType i = 0; i < _numClusters; ++i) {
+	//		const auto& clReg = tiles(i).getRegion();
+	//		Composition lo = clReg.getOrigin();
+	//		Composition hi = clReg.getUpperLimitPoint();
 	//
-	//		        std::cout << i << ": " << std::endl;
-	//		        for (auto j : speciesRange) std::cout << lo[j] << " ";
-	//		        std::cout << std::endl;
-	//		        for (auto j : speciesRange) std::cout << hi[j] - 1 << " ";
-	//		        std::cout << std::endl;
-	//		        }
-	//		    }
-	//		    std::cout << "num: " << _numClusters << std::endl;
+	//		std::cout << i << ": " << std::endl;
+	//		for (auto j : speciesRange)
+	//			std::cout << lo[j] << " ";
+	//		std::cout << std::endl;
+	//		for (auto j : speciesRange)
+	//			std::cout << hi[j] - 1 << " ";
+	//		std::cout << std::endl;
+	//	}
+	std::cout << "num: " << _numClusters << std::endl;
 
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();

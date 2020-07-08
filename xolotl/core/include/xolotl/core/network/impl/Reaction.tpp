@@ -69,45 +69,45 @@ Reaction<TNetwork, TDerived>::computeOverlap(const ReflectedRegion& cl1RR,
 	}
 
 	//	if (nOverlap <= 0) {
-	//			std::cout << "first reactant: ";
-	//			for (auto i : speciesRangeNoI) {
-	//				std::cout << cl1RR[i()].begin() << ", ";
-	//			}
-	//			std::cout << std::endl;
-	//			for (auto i : speciesRangeNoI) {
-	//				std::cout << cl1RR[i()].end() - 1 << ", ";
-	//			}
-	//			std::cout << std::endl << "second reactant: ";
-	//			for (auto i : speciesRangeNoI) {
-	//				std::cout << cl2RR[i()].begin() << ", ";
-	//			}
-	//			std::cout << std::endl;
-	//			for (auto i : speciesRangeNoI) {
-	//				std::cout << cl2RR[i()].end() - 1 << ", ";
-	//			}
-	//			std::cout << std::endl << "product: ";
-	//			for (auto i : speciesRangeNoI) {
-	//				std::cout << pr1RR[i()].begin() << ", ";
-	//			}
-	//			std::cout << std::endl;
-	//			for (auto i : speciesRangeNoI) {
-	//				std::cout << pr1RR[i()].end() - 1 << ", ";
-	//			}
-	//			std::cout << std::endl << "second product: ";
-	//			for (auto i : speciesRangeNoI) {
-	//				std::cout << pr2RR[i()].begin() << ", ";
-	//			}
-	//			std::cout << std::endl;
-	//			for (auto i : speciesRangeNoI) {
-	//				std::cout << pr2RR[i()].end() - 1 << ", ";
-	//			}
-	//			std::cout << std::endl;
-	//			std::cout << "Overlap: " << nOverlap << std::endl;
-	//			std::cout << "Widths: ";
-	//			for (auto i : speciesRangeNoI) {
-	//				std::cout << _widths(i()) << ", ";
-	//			}
-	//			std::cout << std::endl;
+	//		std::cout << "first reactant: ";
+	//		for (auto i : speciesRangeNoI) {
+	//			std::cout << cl1RR[i()].begin() << ", ";
+	//		}
+	//		std::cout << std::endl;
+	//		for (auto i : speciesRangeNoI) {
+	//			std::cout << cl1RR[i()].end() - 1 << ", ";
+	//		}
+	//		std::cout << std::endl << "second reactant: ";
+	//		for (auto i : speciesRangeNoI) {
+	//			std::cout << cl2RR[i()].begin() << ", ";
+	//		}
+	//		std::cout << std::endl;
+	//		for (auto i : speciesRangeNoI) {
+	//			std::cout << cl2RR[i()].end() - 1 << ", ";
+	//		}
+	//		std::cout << std::endl << "product: ";
+	//		for (auto i : speciesRangeNoI) {
+	//			std::cout << pr1RR[i()].begin() << ", ";
+	//		}
+	//		std::cout << std::endl;
+	//		for (auto i : speciesRangeNoI) {
+	//			std::cout << pr1RR[i()].end() - 1 << ", ";
+	//		}
+	//		std::cout << std::endl << "second product: ";
+	//		for (auto i : speciesRangeNoI) {
+	//			std::cout << pr2RR[i()].begin() << ", ";
+	//		}
+	//		std::cout << std::endl;
+	//		for (auto i : speciesRangeNoI) {
+	//			std::cout << pr2RR[i()].end() - 1 << ", ";
+	//		}
+	//		std::cout << std::endl;
+	//		std::cout << "Overlap: " << nOverlap << std::endl;
+	//		std::cout << "Widths: ";
+	//		for (auto i : speciesRangeNoI) {
+	//			std::cout << _widths(i()) << ", ";
+	//		}
+	//		std::cout << std::endl;
 	//	}
 	assert(nOverlap > 0);
 

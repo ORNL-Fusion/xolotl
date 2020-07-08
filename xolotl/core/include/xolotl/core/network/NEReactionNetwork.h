@@ -33,9 +33,6 @@ public:
 
 	using Superclass::Superclass;
 
-	void
-	checkTiles(const options::IOptions&);
-
 private:
 	double
 	checkLatticeParameter(double latticeParameter);
