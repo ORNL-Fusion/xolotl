@@ -540,7 +540,6 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 	if (solverHandler.getLeftOffset() == 1) {
 		// Set the surface position
 		int xi = surfacePos + 1;
-		;
 
 		// Value to know on which processor is the surface
 		int surfaceProc = 0;
@@ -584,6 +583,8 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 			// Get the sink strengths and advecting clusters
 			auto sinkStrengths = advecHandler->getSinkStrengths();
 			auto advecClusters = advecHandler->getAdvectingClusters();
+			// Set the distance from the surface
+			double distance = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1] - advecHandler->getLocation();
 			// Loop on them
 			int advClusterIdx = 0;
 			for (IReactant const& currReactant : advecClusters) {
@@ -601,7 +602,7 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 							* sinkStrengths[advClusterIdx] * conc
 							/ (xolotlCore::kBoltzmann
 									* cluster.getTemperature(xi - xs)
-									* pow(hxLeft, 4.0));
+									* pow(distance, 4.0));
 
 				++advClusterIdx;
 			}
