@@ -2319,6 +2319,8 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	// Gets the process ID
 	int procId;
 	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	int worldSize;
+	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
 
 	// Get the da from ts
 	DM da;
@@ -2367,6 +2369,12 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	// The number of He per V in a bubble
 	double heVRatio = solverHandler.getHeVRatio();
 
+	// Create the vector in which the data about each bursting cluster will be saved to write in the HDF5 file
+	std::vector<xolotlCore::Array<double, 4> > bubbleInfo;
+	int nBurst = 0;
+	std::vector<int> burstIndex = {0};
+	std::vector<int> burstPosition;
+
 	// Take care of bursting
 	double localNHe = 0.0, localND = 0.0, localNT = 0.0;
 
@@ -2387,9 +2395,6 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 		} else {
 			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 		}
-
-		// Create the vector in which the data about each cluster will be saved to write in the HDF5 file
-		std::vector<xolotlCore::Array<double, 4> > bubbleInfo;
 
 		// Pinhole case
 		// Consider each He with size larger than minSizeBursting to reset
@@ -2546,20 +2551,53 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 		// Check the size of the bubble info vector
 		const hsize_t nBubble = bubbleInfo.size();
-		if (nBubble > 0) {
+		if (nBubble > burstIndex[burstIndex.size()-1]) {
+			// Update the statistics
+			nBurst++;
+			burstIndex.push_back(nBubble);
+			burstPosition.push_back(xi);
+		}
+	}
 
-			// First open the file for serial file access.
-			xolotlCore::HDF5File burstingFile("bursting.h5",
-					xolotlCore::HDF5File::AccessMode::OpenReadWrite,
-					PETSC_COMM_WORLD, false);
+	// Gather the bursting info to write
+	int nBursts[worldSize];
+	MPI_Allgather(&nBurst, 1, MPI_INT, &nBursts, 1, MPI_INT, PETSC_COMM_WORLD);
 
+	// Loop on the world
+	for (int i = 0; i < worldSize; i++) {
+		// No data
+		auto localBursts = nBursts[i];
+		if (localBursts == 0) continue;
+
+		// Create the parallel property list
+		hid_t propertyListId = H5Pcreate(H5P_DATASET_XFER);
+		auto status = H5Pset_dxpl_mpio(propertyListId, H5FD_MPIO_COLLECTIVE);
+
+		// Open the file with parallel access
+		xolotlCore::HDF5File burstingFile("bursting.h5",
+				xolotlCore::HDF5File::AccessMode::OpenReadWrite,
+				PETSC_COMM_WORLD, true);
+
+		// Create and fill the data array
+		int dataArray[(2 * localBursts) + 1];
+		if (procId == i) {
+			dataArray[localBursts] = 0;
+			for (int j = 0; j < localBursts; j++) {
+				dataArray[j] = burstPosition[j];
+				dataArray[j + localBursts + 1] = burstIndex[j+1];
+			}
+		}
+		// Broadcasts
+		MPI_Bcast(&dataArray, (2 * localBursts) + 1, MPI_INT, i, PETSC_COMM_WORLD);
+
+		// Loop on the local number of bursting
+		for (int j = 0; j < localBursts; j++) {
 			// Create the group for this bursting event
+			auto xi = dataArray[j];
 			std::ostringstream groupStr;
 			groupStr << "/" << TSNumber << "_" << xi;
-			;
 			xolotlCore::HDF5File::Group group(burstingFile, groupStr.str(),
 					true);
-
 			// Make a scalar dataspace for 1D attributes.
 			xolotlCore::HDF5File::ScalarDataSpace scalarDSpace;
 			// Create, write, and close the time attribute
@@ -2567,25 +2605,33 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 					scalarDSpace);
 			timeAttr.setTo(time);
 			// Create, write, and close the depth attribute
+			double distance = (grid[xi] + grid[xi + 1]) / 2.0
+					- grid[surfacePos + 1];
 			xolotlCore::HDF5File::Attribute<double> depthAttr(group, "depth",
 					scalarDSpace);
 			depthAttr.setTo(distance);
+
 			// Create, write, and close the bubble dataset
-			double bubbleArray[nBubble][4];
-			for (int i = 0; i < nBubble; i++) {
-				bubbleArray[i][0] = bubbleInfo[i][0];
-				bubbleArray[i][1] = bubbleInfo[i][1];
-				bubbleArray[i][2] = bubbleInfo[i][2];
-				bubbleArray[i][3] = bubbleInfo[i][3];
-			}
+			auto nBubble = dataArray[localBursts + j + 1] - dataArray[localBursts + j];
 			std::array<hsize_t, 2> dims { nBubble, 4 };
 			xolotlCore::HDF5File::SimpleDataSpace<2> bubbleDSpace(dims);
 			hid_t datasetId = H5Dcreate2(group.getId(), "bubbles",
 			H5T_IEEE_F64LE, bubbleDSpace.getId(), H5P_DEFAULT,
 			H5P_DEFAULT,
 			H5P_DEFAULT);
-			auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &bubbleArray);
+
+			// Locally
+			if (procId == i) {
+				double bubbleArray[nBubble][4];
+				for (int k = 0; k < nBubble; k++) {
+					bubbleArray[k][0] = bubbleInfo[k+dataArray[localBursts + j]][0];
+					bubbleArray[k][1] = bubbleInfo[k+dataArray[localBursts + j]][1];
+					bubbleArray[k][2] = bubbleInfo[k+dataArray[localBursts + j]][2];
+					bubbleArray[k][3] = bubbleInfo[k+dataArray[localBursts + j]][3];
+				}
+				auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+						H5P_DEFAULT, &bubbleArray);
+			}
 			status = H5Dclose(datasetId);
 		}
 	}
