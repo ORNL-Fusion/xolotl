@@ -65,12 +65,13 @@ XolotlInterface::XolotlInterface() = default;
 XolotlInterface::XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm)
 {
 	initializeXolotl(argc, argv, mpiComm);
+    initializedHere = true;
 	initGBLocation();
 }
 
 XolotlInterface::~XolotlInterface()
 {
-	if (initialized) {
+	if (initializedHere) {
 		finalizeXolotl();
 	}
 }
@@ -125,8 +126,6 @@ XolotlInterface::initializeXolotl(int argc, char* argv[], MPI_Comm comm)
 		assert(solver);
 		// Initialize the solver
 		solver->initialize();
-
-		initialized = true;
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
@@ -623,8 +622,6 @@ XolotlInterface::finalizeXolotl()
 		}
 
 		solver.reset();
-
-		initialized = false;
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
