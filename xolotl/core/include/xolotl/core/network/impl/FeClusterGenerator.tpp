@@ -75,27 +75,27 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 		2.59 * (pow(amtV, 2.0 / 3.0) - pow(amtV - 1.0, 2.0 / 3.0)) -
 		2.5 * log(1.0 + (amtHe / amtV));
 	auto distance = abs(ibe - 1.0);
-	if (distance * 0.2 < 1.0) {
+	if (distance * 0.15 < 1.0) {
 		if (region[Species::He].length() <
-			util::max(_groupingWidthHe + 1,
-				(AmountType)((amt - _groupingMin) * 0.1))) {
+			util::max(
+				_groupingWidthHe + 1, (AmountType)(pow(amt, 3) * 1.0e-6))) {
 			result[0] = false;
 		}
 		if (region[Species::V].length() <
-			util::max(_groupingWidthV + 1,
-				(AmountType)((amt - _groupingMin) * 0.1))) {
+			util::max(
+				_groupingWidthV + 1, (AmountType)(pow(amt, 3) * 1.0e-6))) {
 			result[1] = false;
 		}
 	}
 	else {
 		if (region[Species::He].length() <
-			util::max(_groupingWidthHe + 1,
-				(AmountType)exp(distance * 1.0) * _groupingWidthHe * 2)) {
+			util::max(
+				_groupingWidthHe + 1, (AmountType)(pow(amt, 3) * 1.0e-4))) {
 			result[0] = false;
 		}
 		if (region[Species::V].length() <
-			util::max(_groupingWidthV + 1,
-				(AmountType)exp(distance * 1.0) * _groupingWidthV * 2)) {
+			util::max(
+				_groupingWidthV + 1, (AmountType)(pow(amt, 3) * 1.0e-4))) {
 			result[1] = false;
 		}
 	}

@@ -85,17 +85,17 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	if (region[Species::Void].begin() > 0 &&
 		region[Species::Void].length() <
 			util::max((double)(_groupingWidth + 1),
-				region[Species::Void].begin() * 1.0e-2))
+				pow(region[Species::Void].begin(), 3) * 1.0e-7))
 		result[1] = false;
 	if (region[Species::Faulted].begin() > 0 &&
 		region[Species::Faulted].length() <
 			util::max((double)(_groupingWidth + 1),
-				region[Species::Faulted].begin() * 1.0e-2))
+				pow(region[Species::Faulted].begin(), 3) * 1.0e-7))
 		result[2] = false;
 	if (region[Species::Frank].begin() > 0 &&
 		region[Species::Frank].length() <
 			util::max((double)(_groupingWidth + 1),
-				region[Species::Frank].begin() * 1.0e-2))
+				pow(region[Species::Frank].begin(), 3) * 1.0e-7))
 		result[5] = false;
 
 	return true;
