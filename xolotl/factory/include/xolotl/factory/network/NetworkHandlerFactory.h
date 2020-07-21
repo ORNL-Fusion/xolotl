@@ -1,12 +1,6 @@
 #pragma once
 
-#include <functional>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
-
-#include <xolotl/options/Options.h>
+#include <xolotl/factory/Factory.h>
 
 namespace xolotl
 {
@@ -22,65 +16,22 @@ namespace factory
 {
 namespace network
 {
-class NetworkHandlerFactory
+class NetworkHandlerFactory :
+	public Factory<NetworkHandlerFactory, core::network::INetworkHandler>
 {
 public:
-	using Generator =
-		std::function<std::shared_ptr<core::network::INetworkHandler>(
-			const options::Options&)>;
-
-	template <typename THandler>
-	struct Registration
+	static std::string
+	getFactoryName() noexcept
 	{
-		Registration(const std::string& name);
-	};
-
-	template <typename THandler>
-	struct RegistrationCollection
-	{
-		RegistrationCollection(const std::vector<std::string>& names);
-
-		std::vector<Registration<THandler>> registrations;
-	};
-
-	NetworkHandlerFactory(const NetworkHandlerFactory&) = delete;
-
-	static NetworkHandlerFactory&
-	get();
-
-	std::shared_ptr<core::network::INetworkHandler>
-	generateNetworkHandler(const options::Options& options);
-
-	bool
-	registerGenerator(const std::string& name, const Generator& generator);
-
-private:
-	NetworkHandlerFactory();
-
-	~NetworkHandlerFactory();
-
-private:
-	std::unordered_map<std::string, Generator> _generators;
-};
-
-template <typename THandler>
-NetworkHandlerFactory::Registration<THandler>::Registration(
-	const std::string& name)
-{
-	NetworkHandlerFactory::get().registerGenerator(
-		name, [](const options::Options& options) {
-			return std::make_shared<THandler>(options);
-		});
-}
-
-template <typename THandler>
-NetworkHandlerFactory::RegistrationCollection<THandler>::RegistrationCollection(
-	const std::vector<std::string>& names)
-{
-	for (const auto& name : names) {
-		registrations.emplace_back(name);
+		return "NetworkHandlerFactory";
 	}
-}
+
+	static std::string
+	getName(const options::Options& options)
+	{
+		return options.getMaterial();
+	}
+};
 } // namespace network
 } // namespace factory
 } // namespace xolotl

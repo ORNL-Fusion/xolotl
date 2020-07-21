@@ -1,43 +1,22 @@
-#include <iostream>
-
+#include <xolotl/factory/impl/Factory.tpp>
 #include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
-#include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
 {
 namespace factory
 {
-namespace viz
-{
-VizHandlerRegistryFactory::VizHandlerRegistryFactory() = default;
+using viz::VizHandlerRegistryFactory;
+using xolotl::viz::IVizHandlerRegistry;
 
-VizHandlerRegistryFactory::~VizHandlerRegistryFactory() = default;
+template VizHandlerRegistryFactory&
+Factory<VizHandlerRegistryFactory, IVizHandlerRegistry>::get();
 
-VizHandlerRegistryFactory&
-VizHandlerRegistryFactory::get()
-{
-	static VizHandlerRegistryFactory factory;
-	return factory;
-}
+template std::shared_ptr<IVizHandlerRegistry>
+Factory<VizHandlerRegistryFactory, IVizHandlerRegistry>::generate(
+	const options::Options&);
 
-std::shared_ptr<xolotl::viz::IVizHandlerRegistry>
-VizHandlerRegistryFactory::generateVizHandlerRegistry(
-	const options::Options& options)
-{
-	const std::string name = "";
-	auto it = _generators.find(name);
-	if (it == _generators.end()) {
-		throw std::runtime_error("No viz handler found for \"" + name + "\"");
-	}
-	return it->second(options);
-}
-
-bool
-VizHandlerRegistryFactory::registerGenerator(
-	const std::string& name, const Generator& generator)
-{
-	return _generators.emplace(name, generator).second;
-}
-} // end namespace viz
+template bool
+Factory<VizHandlerRegistryFactory, IVizHandlerRegistry>::registerGenerator(
+	const std::string&, const Generator&);
 } // end namespace factory
 } // end namespace xolotl

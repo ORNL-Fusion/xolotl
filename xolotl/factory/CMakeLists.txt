@@ -2,6 +2,11 @@ set(XOLOTL_FACTORY_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(XOLOTL_FACTORY_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 set(XOLOTL_FACTORY_HEADER_DIR ${XOLOTL_FACTORY_INCLUDE_DIR}/xolotl/factory)
 
+list(APPEND XOLOTL_FACTORY_HEADERS
+    ${XOLOTL_FACTORY_HEADER_DIR}/Factory.h
+    ${XOLOTL_FACTORY_HEADER_DIR}/impl/Factory.tpp
+)
+
 include(src/material/Include.cmake)
 include(src/network/Include.cmake)
 include(src/solver/Include.cmake)

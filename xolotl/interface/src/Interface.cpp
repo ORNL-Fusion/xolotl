@@ -117,11 +117,11 @@ XolotlInterface::initializeXolotl(int argc, char* argv[], MPI_Comm comm)
 		perf::initialize(opts.getPerfHandlerType());
 
 		// Initialize the visualization
-		auto vizHandler = factory::viz::VizHandlerRegistryFactory::get()
-							  .generateVizHandlerRegistry(opts);
+		auto vizHandler =
+			factory::viz::VizHandlerRegistryFactory::get().generate(opts);
 
 		// Setup the solver
-		solver = factory::solver::SolverFactory::get().generateSolver(opts);
+		solver = factory::solver::SolverFactory::get().generate(opts);
 		assert(solver);
 		// Initialize the solver
 		solver->initialize();

@@ -1,40 +1,22 @@
+#include <xolotl/factory/impl/Factory.tpp>
 #include <xolotl/factory/material/MaterialHandlerFactory.h>
 
 namespace xolotl
 {
 namespace factory
 {
-namespace material
-{
-MaterialHandlerFactory::MaterialHandlerFactory() = default;
+using core::material::IMaterialHandler;
+using material::MaterialHandlerFactory;
 
-MaterialHandlerFactory::~MaterialHandlerFactory() = default;
+template MaterialHandlerFactory&
+Factory<MaterialHandlerFactory, IMaterialHandler>::get();
 
-MaterialHandlerFactory&
-MaterialHandlerFactory::get()
-{
-	static MaterialHandlerFactory factory;
-	return factory;
-}
+template std::shared_ptr<IMaterialHandler>
+Factory<MaterialHandlerFactory, IMaterialHandler>::generate(
+	const options::Options&);
 
-std::shared_ptr<core::material::IMaterialHandler>
-MaterialHandlerFactory::generateMaterialHandler(const options::Options& options)
-{
-	const auto& materialName = options.getMaterial();
-	auto it = _generators.find(materialName);
-	if (it == _generators.end()) {
-		throw std::runtime_error(
-			"No material handler found for material \"" + materialName + "\"");
-	}
-	return it->second(options);
-}
-
-bool
-MaterialHandlerFactory::registerGenerator(
-	const std::string& name, const Generator& generator)
-{
-	return _generators.emplace(name, generator).second;
-}
-} // namespace material
+template bool
+Factory<MaterialHandlerFactory, IMaterialHandler>::registerGenerator(
+	const std::string&, const Generator&);
 } // namespace factory
 } // namespace xolotl

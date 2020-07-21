@@ -1,40 +1,22 @@
+#include <xolotl/factory/impl/Factory.tpp>
 #include <xolotl/factory/network/NetworkHandlerFactory.h>
 
 namespace xolotl
 {
 namespace factory
 {
-namespace network
-{
-NetworkHandlerFactory::NetworkHandlerFactory() = default;
+using core::network::INetworkHandler;
+using network::NetworkHandlerFactory;
 
-NetworkHandlerFactory::~NetworkHandlerFactory() = default;
+template NetworkHandlerFactory&
+Factory<NetworkHandlerFactory, INetworkHandler>::get();
 
-NetworkHandlerFactory&
-NetworkHandlerFactory::get()
-{
-	static NetworkHandlerFactory factory;
-	return factory;
-}
+template std::shared_ptr<INetworkHandler>
+Factory<NetworkHandlerFactory, INetworkHandler>::generate(
+	const options::Options&);
 
-std::shared_ptr<core::network::INetworkHandler>
-NetworkHandlerFactory::generateNetworkHandler(const options::Options& options)
-{
-	const auto& materialName = options.getMaterial();
-	auto it = _generators.find(materialName);
-	if (it == _generators.end()) {
-		throw std::runtime_error(
-			"No network handler found for material \"" + materialName + "\"");
-	}
-	return it->second(options);
-}
-
-bool
-NetworkHandlerFactory::registerGenerator(
-	const std::string& name, const Generator& generator)
-{
-	return _generators.emplace(name, generator).second;
-}
-} // namespace network
+template bool
+Factory<NetworkHandlerFactory, INetworkHandler>::registerGenerator(
+	const std::string&, const Generator&);
 } // namespace factory
 } // namespace xolotl

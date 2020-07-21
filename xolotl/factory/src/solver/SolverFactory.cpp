@@ -1,40 +1,21 @@
+#include <xolotl/factory/impl/Factory.tpp>
 #include <xolotl/factory/solver/SolverFactory.h>
 
 namespace xolotl
 {
 namespace factory
 {
-namespace solver
-{
-SolverFactory::SolverFactory() = default;
+using solver::SolverFactory;
+using xolotl::solver::ISolver;
 
-SolverFactory::~SolverFactory() = default;
+template SolverFactory&
+Factory<SolverFactory, ISolver>::get();
 
-SolverFactory&
-SolverFactory::get()
-{
-	static SolverFactory factory;
-	return factory;
-}
+template std::shared_ptr<ISolver>
+Factory<SolverFactory, ISolver>::generate(const options::Options&);
 
-std::shared_ptr<xolotl::solver::ISolver>
-SolverFactory::generateSolver(const options::Options& options)
-{
-	const auto& solverName = options.getSolverName();
-	auto it = _generators.find(solverName);
-	if (it == _generators.end()) {
-		throw std::runtime_error(
-			"No solver found for name \"" + solverName + "\"");
-	}
-	return it->second(options);
-}
-
-bool
-SolverFactory::registerGenerator(
-	const std::string& name, const Generator& generator)
-{
-	return _generators.emplace(name, generator).second;
-}
-} // namespace solver
+template bool
+Factory<SolverFactory, ISolver>::registerGenerator(
+	const std::string&, const Generator&);
 } // namespace factory
 } // namespace xolotl

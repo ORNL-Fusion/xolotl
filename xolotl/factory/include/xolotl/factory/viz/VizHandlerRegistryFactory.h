@@ -1,13 +1,6 @@
-#ifndef VIZHANDLERREGISTRYFACTORY_H
-#define VIZHANDLERREGISTRYFACTORY_H
+#pragma once
 
-#include <functional>
-#include <memory>
-#include <string>
-#include <unordered_map>
-#include <vector>
-
-#include <xolotl/options/Options.h>
+#include <xolotl/factory/Factory.h>
 
 namespace xolotl
 {
@@ -20,67 +13,22 @@ namespace factory
 {
 namespace viz
 {
-class VizHandlerRegistryFactory
+class VizHandlerRegistryFactory :
+	public Factory<VizHandlerRegistryFactory, xolotl::viz::IVizHandlerRegistry>
 {
 public:
-	using Generator =
-		std::function<std::shared_ptr<xolotl::viz::IVizHandlerRegistry>(
-			const options::Options&)>;
-
-	template <typename THandler>
-	struct Registration
+	static std::string
+	getFactoryName() noexcept
 	{
-		Registration(const std::string& name);
-	};
-
-	template <typename THandler>
-	struct RegistrationCollection
-	{
-		RegistrationCollection(const std::vector<std::string>& names);
-
-		std::vector<Registration<THandler>> registrations;
-	};
-
-	VizHandlerRegistryFactory(const VizHandlerRegistryFactory&) = delete;
-
-	static VizHandlerRegistryFactory&
-	get();
-
-	std::shared_ptr<xolotl::viz::IVizHandlerRegistry>
-	generateVizHandlerRegistry(const options::Options& options);
-
-	bool
-	registerGenerator(const std::string& name, const Generator& generator);
-
-private:
-	VizHandlerRegistryFactory();
-
-	~VizHandlerRegistryFactory();
-
-private:
-	std::unordered_map<std::string, Generator> _generators;
-};
-
-template <typename THandler>
-VizHandlerRegistryFactory::Registration<THandler>::Registration(
-	const std::string& name)
-{
-	VizHandlerRegistryFactory::get().registerGenerator(
-		name, [](const options::Options& options) {
-			return std::make_shared<THandler>(options);
-		});
-}
-
-template <typename THandler>
-VizHandlerRegistryFactory::RegistrationCollection<
-	THandler>::RegistrationCollection(const std::vector<std::string>& names)
-{
-	for (const auto& name : names) {
-		registrations.emplace_back(name);
+		return "VizHandlerRegistryFactory";
 	}
-}
+
+	static std::string
+	getName(const options::Options& options)
+	{
+		return "";
+	}
+};
 } // end namespace viz
 } // end namespace factory
 } // end namespace xolotl
-
-#endif // VIZHANDLERREGISTRYFACTORY_H

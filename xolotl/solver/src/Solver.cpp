@@ -14,12 +14,13 @@ handler::ISolverHandler* Solver::staticSolverHandler = nullptr;
 Solver::Solver(
 	const options::Options& options, SolverHandlerGenerator handlerGenerator) :
 	network(factory::network::NetworkHandlerFactory::get()
-				.generateNetworkHandler(options)
+				.generate(options)
 				->getNetwork()),
-	materialHandler(factory::material::MaterialHandlerFactory::get()
-						.generateMaterialHandler(options)),
-	temperatureHandler(factory::temperature::TemperatureHandlerFactory::get()
-						   .generateTemperatureHandler(options)),
+	materialHandler(
+		factory::material::MaterialHandlerFactory::get().generate(options)),
+	temperatureHandler(
+		factory::temperature::TemperatureHandlerFactory::get().generate(
+			options)),
 	solverHandler(handlerGenerator(*network)),
 	handlerRegistry(perf::getHandlerRegistry())
 
