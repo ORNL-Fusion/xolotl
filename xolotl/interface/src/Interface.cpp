@@ -65,7 +65,7 @@ XolotlInterface::XolotlInterface() = default;
 XolotlInterface::XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm)
 {
 	initializeXolotl(argc, argv, mpiComm);
-    initializedHere = true;
+	initializedHere = true;
 	initGBLocation();
 }
 
@@ -121,8 +121,7 @@ XolotlInterface::initializeXolotl(int argc, char* argv[], MPI_Comm comm)
 							  .generateVizHandlerRegistry(opts);
 
 		// Setup the solver
-		solver = std::dynamic_pointer_cast<solver::Solver>(
-			factory::solver::SolverFactory::get().generateSolver(opts));
+		solver = factory::solver::SolverFactory::get().generateSolver(opts);
 		assert(solver);
 		// Initialize the solver
 		solver->initialize();
@@ -197,7 +196,7 @@ XolotlInterface::getLocalNE()
 			std::vector<std::tuple<double, double, double, double>>>>();
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto& solverHandler = solver::Solver::getSolverHandler();
 		// Get the rate vector
 		toReturn = solverHandler.getLocalNE();
 	}
@@ -224,7 +223,7 @@ XolotlInterface::setLocalNE(std::vector<
 {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto& solverHandler = solver::Solver::getSolverHandler();
 		// Set the rate vector
 		solverHandler.setLocalNE(rateVector);
 	}
@@ -250,7 +249,7 @@ XolotlInterface::getLocalCoordinates(int& xs, int& xm, int& Mx, int& ys,
 {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto& solverHandler = solver::Solver::getSolverHandler();
 		// Get the local coordinates
 		solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 	}
@@ -275,7 +274,7 @@ XolotlInterface::setGBLocation(int i, int j, int k)
 {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto& solverHandler = solver::Solver::getSolverHandler();
 		// Set the coordinate of the GB
 		solverHandler.setGBLocation(i, j, k);
 	}
@@ -300,7 +299,7 @@ XolotlInterface::resetGBVector()
 {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto& solverHandler = solver::Solver::getSolverHandler();
 		// Reset the location
 		solverHandler.resetGBVector();
 	}
@@ -398,7 +397,7 @@ XolotlInterface::getPreviousTime()
 	double toReturn = 0.0;
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto& solverHandler = solver::Solver::getSolverHandler();
 		toReturn = solverHandler.getPreviousTime();
 	}
 	catch (const std::exception& e) {
@@ -422,7 +421,7 @@ XolotlInterface::setPreviousTime(double time)
 {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto& solverHandler = solver::Solver::getSolverHandler();
 		solverHandler.setPreviousTime(
 			time, true); // Update the fluence from here
 	}
@@ -493,7 +492,7 @@ XolotlInterface::getNXeGB()
 	double toReturn = 0.0;
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto& solverHandler = solver::Solver::getSolverHandler();
 		toReturn = solverHandler.getNXeGB();
 	}
 	catch (const std::exception& e) {
@@ -517,7 +516,7 @@ XolotlInterface::setNXeGB(double nXe)
 {
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto& solverHandler = solver::Solver::getSolverHandler();
 		solverHandler.setNXeGB(nXe);
 	}
 	catch (const std::exception& e) {
@@ -549,7 +548,7 @@ XolotlInterface::getGridInfo(double& hy, double& hz)
 	std::vector<double> toReturn;
 	try {
 		// Get the solver handler
-		auto& solverHandler = solver->getSolverHandler();
+		auto& solverHandler = solver::Solver::getSolverHandler();
 		// Get the grid
 		toReturn = solverHandler.getXGrid();
 		// Get the step size

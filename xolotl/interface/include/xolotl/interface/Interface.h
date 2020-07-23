@@ -19,7 +19,7 @@ class IReactionNetwork;
 } // namespace core
 namespace solver
 {
-class Solver;
+class ISolver;
 }
 
 namespace interface
@@ -45,7 +45,7 @@ private:
 	/**
 	 * The solver
 	 */
-	std::shared_ptr<solver::Solver> solver;
+	std::shared_ptr<solver::ISolver> solver;
 
 public:
 	/**
