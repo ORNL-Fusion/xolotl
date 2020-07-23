@@ -7,6 +7,13 @@ namespace core
 {
 namespace network
 {
+namespace detail
+{
+auto feNetworkHandlerRegistrations =
+	xolotl::factory::network::NetworkHandlerFactory::RegistrationCollection<
+		FeNetworkHandler>({"Fe"});
+}
+
 auto feNetworkGenerator = [](const options::Options& options) {
 	using NetworkType = core::network::FeReactionNetwork;
 

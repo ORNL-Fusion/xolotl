@@ -21,13 +21,6 @@ public:
 		_fluxHandler->setProportion(options.getPulseProportion());
 	}
 };
-
-namespace detail
-{
-auto pulsedMaterialHandlerRegistrations =
-	xolotl::factory::material::MaterialHandlerFactory::RegistrationCollection<
-		PulsedMaterialHandler>({"Pulsed"});
-}
 } // namespace material
 } // namespace core
 } // namespace xolotl

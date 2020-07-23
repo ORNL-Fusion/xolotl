@@ -80,13 +80,6 @@ public:
 private:
 	std::shared_ptr<ITemperatureHandler> _strategy;
 };
-
-namespace detail
-{
-auto defaultTemperatureHandlerRegistration =
-	xolotl::factory::temperature::TemperatureHandlerFactory::Registration<
-		TemperatureHandler>("");
-}
 } // namespace temperature
 } // namespace core
 } // namespace xolotl

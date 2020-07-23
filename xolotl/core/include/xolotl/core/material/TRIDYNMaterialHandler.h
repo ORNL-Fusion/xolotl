@@ -23,13 +23,6 @@ public:
 	{
 	}
 };
-
-namespace detail
-{
-auto tridynMaterialHandlerRegistrations =
-	xolotl::factory::material::MaterialHandlerFactory::RegistrationCollection<
-		TRIDYNMaterialHandler>({"TRIDYN"});
-}
 } // namespace material
 } // namespace core
 } // namespace xolotl

@@ -19,13 +19,6 @@ public:
 	{
 	}
 };
-
-namespace detail
-{
-auto alloyMaterialHandlerRegistrations =
-	xolotl::factory::material::MaterialHandlerFactory::RegistrationCollection<
-		AlloyMaterialHandler>({"800H"});
-}
 } // namespace material
 } // namespace core
 } // namespace xolotl

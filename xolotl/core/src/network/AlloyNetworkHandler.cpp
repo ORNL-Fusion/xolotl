@@ -7,6 +7,13 @@ namespace core
 {
 namespace network
 {
+namespace detail
+{
+auto alloyNetworkHandlerRegistrations =
+	xolotl::factory::network::NetworkHandlerFactory::RegistrationCollection<
+		AlloyNetworkHandler>({"800H"});
+}
+
 auto alloyNetworkGenerator = [](const options::Options& options) {
 	using NetworkType = AlloyReactionNetwork;
 

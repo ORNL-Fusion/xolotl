@@ -11,6 +11,13 @@ namespace xolotl
 {
 namespace viz
 {
+namespace detail
+{
+auto defaultVizHandlerRegistryRegistration =
+	xolotl::factory::viz::VizHandlerRegistryFactory::Registration<
+		VizHandlerRegistry>("");
+}
+
 std::shared_ptr<IVizHandlerRegistry>
 	VizHandlerRegistry::staticVizHandlerRegistry;
 
@@ -47,13 +54,6 @@ std::shared_ptr<IPlot>
 VizHandlerRegistry::getPlot(const std::string& name, PlotType type)
 {
 	return staticVizHandlerRegistry->getPlot(name, type);
-}
-
-namespace detail
-{
-auto defaultVizHandlerRegistryRegistration =
-	xolotl::factory::viz::VizHandlerRegistryFactory::Registration<
-		VizHandlerRegistry>("");
 }
 } // namespace viz
 } // namespace xolotl

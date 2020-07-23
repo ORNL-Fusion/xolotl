@@ -19,13 +19,6 @@ public:
 	{
 	}
 };
-
-namespace detail
-{
-auto feMaterialHandlerRegistrations =
-	xolotl::factory::material::MaterialHandlerFactory::RegistrationCollection<
-		FeMaterialHandler>({"Fe"});
-}
 } // namespace material
 } // namespace core
 } // namespace xolotl

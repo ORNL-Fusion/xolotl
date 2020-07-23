@@ -14,13 +14,6 @@ class FeNetworkHandler : public NetworkHandler
 public:
 	FeNetworkHandler(const options::Options& options);
 };
-
-namespace detail
-{
-auto feNetworkHandlerRegistrations =
-	xolotl::factory::network::NetworkHandlerFactory::RegistrationCollection<
-		FeNetworkHandler>({"Fe"});
-}
 } // namespace network
 } // namespace core
 } // namespace xolotl

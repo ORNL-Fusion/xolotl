@@ -33,6 +33,13 @@ namespace xolotl
 {
 namespace solver
 {
+namespace detail
+{
+auto petscSolverRegistrations =
+	xolotl::factory::solver::SolverFactory::RegistrationCollection<PetscSolver>(
+		{"PETSc"});
+}
+
 // Timer for RHSFunction()
 std::shared_ptr<perf::ITimer> RHSFunctionTimer;
 
@@ -629,13 +636,6 @@ PetscSolver::getXolotlTime()
 	ierr = TSGetTime(ts, &CurrentXolotlTime);
 	checkPetscError(ierr, "PetscSolver::getXolotlTime: TSGetTime failed.");
 	return CurrentXolotlTime;
-}
-
-namespace detail
-{
-auto petscSolverRegistrations =
-	xolotl::factory::solver::SolverFactory::RegistrationCollection<PetscSolver>(
-		{"PETSc"});
 }
 } /* end namespace solver */
 } /* end namespace xolotl */

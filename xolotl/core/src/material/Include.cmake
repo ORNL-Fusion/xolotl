@@ -20,6 +20,7 @@ list(APPEND XOLOTL_CORE_SOURCES
     ${XOLOTL_CORE_SOURCE_DIR}/material/PulsedMaterialHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/material/TRIDYNMaterialHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/material/W100MaterialHandler.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/material/W110MaterialHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/material/W111MaterialHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/material/W211MaterialHandler.cpp
 )

@@ -23,13 +23,6 @@ public:
 	{
 	}
 };
-
-namespace detail
-{
-auto w100MaterialHandlerRegistrations =
-	xolotl::factory::material::MaterialHandlerFactory::RegistrationCollection<
-		W100MaterialHandler>({"W100"});
-}
 } // namespace material
 } // namespace core
 } // namespace xolotl

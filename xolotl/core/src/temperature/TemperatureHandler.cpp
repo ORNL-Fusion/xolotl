@@ -18,6 +18,13 @@ namespace core
 {
 namespace temperature
 {
+namespace detail
+{
+auto defaultTemperatureHandlerRegistration =
+	xolotl::factory::temperature::TemperatureHandlerFactory::Registration<
+		TemperatureHandler>("");
+}
+
 TemperatureHandler::TemperatureHandler(const options::Options& options)
 {
 	// Get the current process ID

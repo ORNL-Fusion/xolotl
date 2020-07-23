@@ -1,4 +1,4 @@
-#include <xolotl/core/material/TRIDYNMaterialHandler.h>
+#include <xolotl/core/material/W110MaterialHandler.h>
 
 namespace xolotl
 {
@@ -8,9 +8,9 @@ namespace material
 {
 namespace detail
 {
-auto tridynMaterialHandlerRegistrations =
+auto w110MaterialHandlerRegistrations =
 	xolotl::factory::material::MaterialHandlerFactory::RegistrationCollection<
-		TRIDYNMaterialHandler>({"TRIDYN"});
+		W110MaterialHandler>({"W110"});
 }
 } // namespace material
 } // namespace core

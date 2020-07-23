@@ -7,6 +7,13 @@ namespace core
 {
 namespace network
 {
+namespace detail
+{
+auto neNetworkHandlerRegistrations =
+	xolotl::factory::network::NetworkHandlerFactory::RegistrationCollection<
+		NENetworkHandler>({"Fuel"});
+}
+
 auto neNetworkGenerator = [](const options::Options& options) {
 	using NetworkType = core::network::NEReactionNetwork;
 

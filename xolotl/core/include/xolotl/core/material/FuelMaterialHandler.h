@@ -23,13 +23,6 @@ public:
 			options.getFluxAmplitude() * options.getFissionYield());
 	}
 };
-
-namespace detail
-{
-auto fuelMaterialHandlerRegistrations =
-	xolotl::factory::material::MaterialHandlerFactory::RegistrationCollection<
-		FuelMaterialHandler>({"Fuel"});
-}
 } // namespace material
 } // namespace core
 } // namespace xolotl
