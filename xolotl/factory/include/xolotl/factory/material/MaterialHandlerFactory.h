@@ -17,20 +17,20 @@ namespace factory
 namespace material
 {
 class MaterialHandlerFactory :
-    public Factory<MaterialHandlerFactory, core::material::IMaterialHandler>
+	public Factory<MaterialHandlerFactory, core::material::IMaterialHandler>
 {
 public:
-    static std::string
-    getFactoryName() noexcept
-    {
-        return "MaterialHandlerFactory";
-    }
+	static std::string
+	getFactoryName() noexcept
+	{
+		return "MaterialHandlerFactory";
+	}
 
-    static std::string
-    getName(const options::Options& options)
-    {
-        return options.getMaterial();
-    }
+	static std::string
+	getName(const options::Options& options)
+	{
+		return options.getMaterial();
+	}
 };
 } // namespace material
 } // namespace factory

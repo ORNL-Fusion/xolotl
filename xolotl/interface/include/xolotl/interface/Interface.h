@@ -32,10 +32,10 @@ class Context;
 class XolotlInterface
 {
 private:
-    /**
-     * Did this object initialize xolotl?
-     */
-    bool initializedHere {false};
+	/**
+	 * Did this object initialize xolotl?
+	 */
+	bool initializedHere{false};
 
 	/**
 	 * The MPI and Kokkos environment
