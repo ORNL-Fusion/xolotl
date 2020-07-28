@@ -210,6 +210,33 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	return initReflectedRegions<Dim>(cl1Reg, cl2Reg, pr1Reg, pr2Reg);
 }
 
+template <std::size_t Dim, typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<((numberOfVacancySpecies<typename TRegion::EnumIndex>() > 1)),
+	plsm::SpaceVector<double, Dim>>
+getReflectedDispersionForCoefs(const TRegion& clReg)
+{
+	using Species = typename TRegion::EnumIndex;
+	auto disp = clReg.dispersion();
+	auto vIndex = static_cast<std::underlying_type_t<Species>>(Species::V);
+	for (auto i = 0; i < Dim; i++) {
+		if (i == vIndex)
+			continue;
+		disp[vIndex] += disp[i];
+	}
+	disp[vIndex] -= Dim - 1.0;
+	return disp;
+}
+
+template <std::size_t Dim, typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() <= 1),
+	plsm::SpaceVector<double, Dim>>
+getReflectedDispersionForCoefs(const TRegion& clReg)
+{
+	return clReg.dispersion();
+}
+
 template <typename TRRegion>
 KOKKOS_INLINE_FUNCTION
 double

@@ -49,9 +49,15 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 	auto clReg = this->_clusterData.getCluster(_reactant).getRegion();
 	auto prod1Reg = this->_clusterData.getCluster(_products[0]).getRegion();
 	auto prod2Reg = this->_clusterData.getCluster(_products[1]).getRegion();
-	const auto& clDisp = clReg.dispersion();
-	const auto& prod1Disp = prod1Reg.dispersion();
-	const auto& prod2Disp = prod2Reg.dispersion();
+	const auto& clDisp =
+		detail::getReflectedDispersionForCoefs<NetworkType::Traits::numSpecies>(
+			clReg);
+	const auto& prod1Disp =
+		detail::getReflectedDispersionForCoefs<NetworkType::Traits::numSpecies>(
+			prod1Reg);
+	const auto& prod2Disp =
+		detail::getReflectedDispersionForCoefs<NetworkType::Traits::numSpecies>(
+			prod2Reg);
 	auto cl2Reg = dummyRegion;
 
 	// Initialize the reflected regions

@@ -164,8 +164,12 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 	const auto& pr2Reg = (_products[1] == invalidIndex) ?
 		dummyRegion :
 		this->_clusterData.getCluster(_products[1]).getRegion();
-	const auto& cl1Disp = cl1Reg.dispersion();
-	const auto& cl2Disp = cl2Reg.dispersion();
+	const auto& cl1Disp =
+		detail::getReflectedDispersionForCoefs<NetworkType::Traits::numSpecies>(
+			cl1Reg);
+	const auto& cl2Disp =
+		detail::getReflectedDispersionForCoefs<NetworkType::Traits::numSpecies>(
+			cl2Reg);
 
 	// Initialize the reflected regions
 	auto rRegions = detail::updateReflectedRegionsForCoefs<nMomentIds>(
@@ -215,8 +219,10 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 			const auto& otherRR = (prodId == _products[0]) ? pr2RR : pr1RR;
 			// Get the dispersion
 			const auto& thisDispersion = (prodId == _products[0]) ?
-				pr1Reg.dispersion() :
-				pr2Reg.dispersion();
+				detail::getReflectedDispersionForCoefs<
+					NetworkType::Traits::numSpecies>(pr1Reg) :
+				detail::getReflectedDispersionForCoefs<
+					NetworkType::Traits::numSpecies>(pr2Reg);
 
 			// First order sum on the other product (p+2) because 0 and 1 are
 			// used for reactants)
@@ -342,8 +348,10 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 				const auto& otherRR = (prodId == _products[0]) ? pr2RR : pr1RR;
 				// Get the dispersion
 				const auto& thisDispersion = (prodId == _products[0]) ?
-					pr1Reg.dispersion() :
-					pr2Reg.dispersion();
+					detail::getReflectedDispersionForCoefs<
+						NetworkType::Traits::numSpecies>(pr1Reg) :
+					detail::getReflectedDispersionForCoefs<
+						NetworkType::Traits::numSpecies>(pr2Reg);
 
 				for (auto k : speciesRangeNoI) {
 					// Third order sum
@@ -1222,9 +1230,15 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 	auto clReg = this->_clusterData.getCluster(_reactant).getRegion();
 	auto prod1Reg = this->_clusterData.getCluster(_products[0]).getRegion();
 	auto prod2Reg = this->_clusterData.getCluster(_products[1]).getRegion();
-	const auto& clDisp = clReg.dispersion();
-	const auto& prod1Disp = prod1Reg.dispersion();
-	const auto& prod2Disp = prod2Reg.dispersion();
+	const auto& clDisp =
+		detail::getReflectedDispersionForCoefs<NetworkType::Traits::numSpecies>(
+			clReg);
+	const auto& prod1Disp =
+		detail::getReflectedDispersionForCoefs<NetworkType::Traits::numSpecies>(
+			prod1Reg);
+	const auto& prod2Disp =
+		detail::getReflectedDispersionForCoefs<NetworkType::Traits::numSpecies>(
+			prod2Reg);
 	auto cl2Reg = dummyRegion;
 
 	// Initialize the reflected regions
