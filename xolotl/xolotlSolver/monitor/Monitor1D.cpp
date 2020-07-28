@@ -558,8 +558,17 @@ PetscErrorCode computeHeliumRetention1D(TS ts, PetscInt, PetscReal time,
 			gridPointSolution = solutionArray[xi];
 
 			// Factor for finite difference
-			double hxLeft = grid[xi + 1] - grid[xi];
-			double hxRight = grid[xi + 2] - grid[xi + 1];
+			double hxLeft = 0.0, hxRight = 0.0;
+			if (xi - 1 >= 0 && xi < Mx) {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else if (xi - 1 < 0) {
+				hxLeft = grid[xi + 1] - grid[xi];
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			} else {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = grid[xi + 1] - grid[xi];
+			}
 			double factor = 2.0 / (hxLeft + hxRight);
 
 			// Initialize the value for the flux
