@@ -345,7 +345,7 @@ PetscSolver3DHandler::initGBLocation(DM& da, Vec& C)
 			concOffset = concentrations[zk][yj][xi];
 
 			// Loop on all the clusters to initialize at 0.0
-			for (int n = 0; n < dof - 1; n++) {
+			for (int n = 0; n < dof; n++) {
 				concOffset[n] = 0.0;
 			}
 		}
@@ -396,7 +396,7 @@ PetscSolver3DHandler::getConcVector(DM& da, Vec& C)
 
 				// Create the temporary vector for this grid point
 				std::vector<std::pair<int, double>> tempVector;
-				for (auto l = 0; l < dof; ++l) {
+				for (auto l = 0; l < dof + 1; ++l) {
 					if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 						tempVector.push_back(
 							std::make_pair(l, gridPointSolution[l]));
@@ -840,11 +840,11 @@ PetscSolver3DHandler::updateConcentration(
 				// of the grid -----
 				using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
 					Kokkos::MemoryUnmanaged>;
-				auto hConcs = HostUnmanaged(concOffset, dof + 1);
-				auto dConcs = Kokkos::View<double*>("Concentrations", dof + 1);
+				auto hConcs = HostUnmanaged(concOffset, dof);
+				auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 				deep_copy(dConcs, hConcs);
-				auto hFlux = HostUnmanaged(updatedConcOffset, dof + 1);
-				auto dFlux = Kokkos::View<double*>("Fluxes", dof + 1);
+				auto hFlux = HostUnmanaged(updatedConcOffset, dof);
+				auto dFlux = Kokkos::View<double*>("Fluxes", dof);
 				deep_copy(dFlux, hFlux);
 				fluxCounter->increment();
 				fluxTimer->start();
@@ -1346,8 +1346,8 @@ PetscSolver3DHandler::computeJacobian(
 				// Compute all the partial derivatives for the reactions
 				using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
 					Kokkos::MemoryUnmanaged>;
-				auto hConcs = HostUnmanaged(concOffset, dof + 1);
-				auto dConcs = Kokkos::View<double*>("Concentrations", dof + 1);
+				auto hConcs = HostUnmanaged(concOffset, dof);
+				auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 				deep_copy(dConcs, hConcs);
 				partialDerivativeCounter->increment();
 				partialDerivativeTimer->start();

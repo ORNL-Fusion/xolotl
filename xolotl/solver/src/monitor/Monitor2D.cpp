@@ -206,7 +206,7 @@ startStop2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	const int dof = network.getDOF();
 
 	// Create an array for the concentration
-	double concArray[dof][2];
+	double concArray[dof + 1][2];
 
 	// Get the vector of positions of the surface
 	std::vector<int> surfaceIndices;
