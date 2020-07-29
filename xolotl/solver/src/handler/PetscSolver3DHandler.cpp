@@ -1,5 +1,6 @@
 // Includes
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/solver/handler/PetscSolver3DHandler.h>
 #include <xolotl/util/MathUtils.h>
@@ -332,6 +333,11 @@ PetscSolver3DHandler::initGBLocation(DM& da, Vec& C)
 	// + the super clusters
 	const int dof = network.getDOF();
 
+	// Need to use the NE network here
+	using NetworkType = core::network::NEReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	auto& neNetwork = dynamic_cast<NetworkType&>(network);
+
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Get the coordinate of the point
@@ -343,6 +349,17 @@ PetscSolver3DHandler::initGBLocation(DM& da, Vec& C)
 			yj < localYS + localYM && zk >= localZS && zk < localZS + localZM) {
 			// Get the local concentration
 			concOffset = concentrations[zk][yj][xi];
+
+			using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
+				Kokkos::MemoryUnmanaged>;
+			auto hConcs = HostUnmanaged(concOffset, dof);
+			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+			deep_copy(dConcs, hConcs);
+
+			// Transfer the local amount of Xe clusters
+			setLocalXeRate(
+				neNetwork.getTotalAtomConcentration(dConcs, Spec::Xe, 1),
+				xi - localXS, yj - localYS, zk - localZS);
 
 			// Loop on all the clusters to initialize at 0.0
 			for (int n = 0; n < dof; n++) {
