@@ -33,19 +33,25 @@ FeReactionNetwork::checkImpurityRadius(double impurityRadius)
 FeReactionNetwork::IndexType
 FeReactionNetwork::checkLargestClusterId()
 {
-	AmountType largestSize = 0;
-	auto largestClusterId = invalidIndex();
-	for (IndexType i = 0; i < this->getNumClusters(); i++) {
-		const auto& clReg = this->getCluster(i).getRegion();
-		Composition hi = clReg.getUpperLimitPoint();
-		auto size = hi[Species::He] + hi[Species::V];
-		if (size > largestSize) {
-			largestClusterId = i;
-			largestSize = size;
-		}
-	}
+	// Copy the cluster data for the parallel loop
+	auto clData = ClusterDataRef(_clusterData);
+	using Reducer = Kokkos::MaxLoc<FeReactionNetwork::AmountType,
+		FeReactionNetwork::IndexType>;
+	Reducer::value_type maxLoc;
+	Kokkos::parallel_reduce(
+		_numClusters,
+		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
+			const Region& clReg = clData.getCluster(i).getRegion();
+			Composition hi = clReg.getUpperLimitPoint();
+			auto size = hi[Species::He] + hi[Species::V];
+			if (size > update.val) {
+				update.val = size;
+				update.loc = i;
+			}
+		},
+		Reducer(maxLoc));
 
-	return largestClusterId;
+	return maxLoc.loc;
 }
 
 namespace detail

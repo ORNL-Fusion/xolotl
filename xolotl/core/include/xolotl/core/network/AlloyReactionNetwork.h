@@ -33,6 +33,9 @@ public:
 
 	using Superclass::Superclass;
 
+	IndexType
+	checkLargestClusterId();
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);
@@ -46,9 +49,6 @@ private:
 
 	double
 	checkImpurityRadius(double impurityRadius);
-
-	IndexType
-	checkLargestClusterId();
 
 	detail::AlloyReactionGenerator
 	getReactionGenerator() const noexcept;

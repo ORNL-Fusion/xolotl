@@ -33,19 +33,24 @@ NEReactionNetwork::checkImpurityRadius(double impurityRadius)
 NEReactionNetwork::IndexType
 NEReactionNetwork::checkLargestClusterId()
 {
-	AmountType largestSize = 0;
-	auto largestClusterId = invalidIndex();
-	for (IndexType i = 0; i < this->getNumClusters(); i++) {
-		const auto& clReg = this->getCluster(i).getRegion();
-		Composition hi = clReg.getUpperLimitPoint();
-		auto size = hi[Species::Xe];
-		if (size > largestSize) {
-			largestClusterId = i;
-			largestSize = size;
-		}
-	}
+	// Copy the cluster data for the parallel loop
+	auto clData = ClusterDataRef(_clusterData);
+	using Reducer = Kokkos::MaxLoc<NEReactionNetwork::AmountType,
+		NEReactionNetwork::IndexType>;
+	Reducer::value_type maxLoc;
+	Kokkos::parallel_reduce(
+		_numClusters,
+		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
+			const Region& clReg = clData.getCluster(i).getRegion();
+			Composition hi = clReg.getUpperLimitPoint();
+			if (hi[Species::Xe] > update.val) {
+				update.val = hi[Species::Xe];
+				update.loc = i;
+			}
+		},
+		Reducer(maxLoc));
 
-	return largestClusterId;
+	return maxLoc.loc;
 }
 
 namespace detail

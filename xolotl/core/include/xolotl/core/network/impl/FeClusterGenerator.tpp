@@ -75,7 +75,7 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 		2.59 * (pow(amtV, 2.0 / 3.0) - pow(amtV - 1.0, 2.0 / 3.0)) -
 		2.5 * log(1.0 + (amtHe / amtV));
 	auto distance = abs(ibe - 1.5);
-//	if (distance < 1.2) {
+	//	if (distance < 1.2) {
 	if (distance < 1.5) {
 		if (region[Species::He].length() <
 			util::max(

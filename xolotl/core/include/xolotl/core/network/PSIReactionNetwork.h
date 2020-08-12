@@ -37,6 +37,9 @@ public:
 
 	using Superclass::Superclass;
 
+	IndexType
+	checkLargestClusterId();
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);
@@ -50,9 +53,6 @@ private:
 
 	double
 	checkImpurityRadius(double impurityRadius);
-
-	IndexType
-	checkLargestClusterId();
 
 	detail::PSIReactionGenerator<Species>
 	getReactionGenerator() const noexcept
