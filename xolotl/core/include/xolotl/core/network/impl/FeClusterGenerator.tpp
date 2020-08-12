@@ -68,35 +68,33 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 	// Middle
 	Composition lo = region.getOrigin();
 	Composition hi = region.getUpperLimitPoint();
-	double amtHe = (double)(lo[Species::He] + hi[Species::He] - 1) / 2.0,
-		   amtV = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
-	double amt = sqrt(pow(amtHe, 2.0) + pow(amtV, 2.0));
+	auto amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
+	auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
+	double amt = sqrt(amtHe*amtHe + amtV*amtV);
 	double ibe = 4.88 +
-		2.59 * (pow(amtV, 2.0 / 3.0) - pow(amtV - 1.0, 2.0 / 3.0)) -
+		2.59 * (cbrt(amtV*amtV) - cbrt((amtV - 1.0)*(amtV - 1.0))) -
 		2.5 * log(1.0 + (amtHe / amtV));
-	auto distance = abs(ibe - 1.5);
+	auto distance = fabs(ibe - 1.5);
 	//	if (distance < 1.2) {
 	if (distance < 1.5) {
+        auto comp = amt * amt * amt * 1.0e-6;
 		if (region[Species::He].length() <
-			util::max(
-				_groupingWidthHe + 1, (AmountType)(pow(amt, 3) * 1.0e-6))) {
+                util::max(_groupingWidthHe + 1.0, comp)) {
 			result[0] = false;
 		}
 		if (region[Species::V].length() <
-			util::max(
-				_groupingWidthV + 1, (AmountType)(pow(amt, 3) * 1.0e-6))) {
+                util::max(_groupingWidthV + 1.0, comp)) {
 			result[1] = false;
 		}
 	}
 	else {
+        auto comp = amt * amt * amt * 1.0e-4;
 		if (region[Species::He].length() <
-			util::max(
-				_groupingWidthHe + 1, (AmountType)(pow(amt, 3) * 1.0e-4))) {
+                util::max(_groupingWidthHe + 1.0, comp)) {
 			result[0] = false;
 		}
 		if (region[Species::V].length() <
-			util::max(
-				_groupingWidthV + 1, (AmountType)(pow(amt, 3) * 1.0e-4))) {
+                util::max(_groupingWidthV + 1.0, comp)) {
 			result[1] = false;
 		}
 	}
@@ -115,11 +113,7 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 		result[1] = true;
 	}
 
-	if (!result[0] && !result[1]) {
-		return false;
-	}
-
-	return true;
+	return (result[0] && result[1]);
 }
 
 KOKKOS_INLINE_FUNCTION
