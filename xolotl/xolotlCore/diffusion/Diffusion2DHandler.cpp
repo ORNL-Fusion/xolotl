@@ -22,7 +22,7 @@ void Diffusion2DHandler::initializeDiffusionGrid(
 	}
 
 	// Initialize the grid position
-	Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	NDPoint<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Loop on the advection handlers
 	for (auto const& currAdvectionHandler : advectionHandlers) {

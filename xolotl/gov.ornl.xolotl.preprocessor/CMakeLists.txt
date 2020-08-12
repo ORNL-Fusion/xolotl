@@ -35,7 +35,7 @@ get_target_property(_classDir xolotlPreprocessor CLASSDIR)
 # The preprocessor .class files will be written to preprocessor/CMakeFiles/xolotlPreprocessor.dir/gov/ornl/xolotl/preprocessor
 message(STATUS "xolotlPreprocessor class compiled to ${_classDir}")
 
-if ( ( DEFINED ENV{JUNIT_JAR} ) AND (DEFINED ENV{HAMCREST_JAR} ) )
+if ( ( DEFINED ENV{JUNIT_JAR} ) AND (DEFINED ENV{HAMCREST_JAR}) AND (BUILD_TESTS) )
     message(STATUS "Building Java JUnit tests since JUNIT_JAR and HAMCREST_JAR are defined.")
 
     include(JUnit)

@@ -44,7 +44,8 @@ public:
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
 		// Get the current process ID
 		int procId;
-		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+		auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+		MPI_Comm_rank(xolotlComm, &procId);
 
 		// Create a AlloyClusterNetworkLoader
 		auto tempNetworkLoader = std::make_shared<

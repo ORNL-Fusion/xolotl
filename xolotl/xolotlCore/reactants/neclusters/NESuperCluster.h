@@ -390,7 +390,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to dissociation of other clusters
 	 */
-	double getDissociationFlux(int i);
+	double getDissociationFlux(int i) override;
 
 	/**
 	 * This operation returns the total change in this cluster due its
@@ -400,7 +400,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	double getEmissionFlux(int i);
+	double getEmissionFlux(int i) override;
 
 	/**
 	 * This operation returns the total change in this cluster due to
@@ -410,7 +410,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster being produced
 	 */
-	double getProductionFlux(int i);
+	double getProductionFlux(int i) override;
 
 	/**
 	 * This operation returns the total change in this cluster due to
@@ -420,7 +420,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster combining with other clusters
 	 */
-	double getCombinationFlux(int i);
+	double getCombinationFlux(int i) override;
 
 	/**
 	 * This operation returns the total change for its moment.

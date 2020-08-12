@@ -20,7 +20,7 @@ protected:
 	 * Vector to hold the incident flux values at each grid
 	 * point (x position).
 	 */
-	std::vector<double> incidentFluxVec;
+	std::vector<std::vector<double> > incidentFluxVec;
 
 	/**
 	 * Vector to hold the position at each grid
@@ -126,6 +126,12 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	virtual void incrementFluence(double dt);
+
+	/**
+	 * This operation computes the fluence at the given time.
+	 * \see IFluxHandler.h
+	 */
+	virtual void computeFluence(double time);
 
 	/**
 	 * This operation returns the fluence.

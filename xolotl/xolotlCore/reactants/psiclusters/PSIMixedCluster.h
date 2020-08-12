@@ -14,20 +14,6 @@ namespace xolotlCore {
 class PSIMixedCluster: public PSICluster {
 
 private:
-	// TODO do we need to keep these species counts here,
-	// since they are in the composition?
-
-	//! The number of helium atoms in this cluster.
-	int numHe;
-
-	//! The number of deuterium atoms in this cluster.
-	int numD;
-
-	//! The number of tritium atoms in this cluster.
-	int numT;
-
-	//! The number of atomic vacancies in this cluster.
-	int numV;
 
 	static std::string buildName(IReactant::SizeType nHe,
 			IReactant::SizeType nD, IReactant::SizeType nT,
@@ -61,8 +47,7 @@ public:
 	PSIMixedCluster(int numHe, int numD, int numT, int numV,
 			IReactionNetwork& _network,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
-			PSICluster(_network, registry, buildName(numHe, numD, numT, numV)), numHe(
-					numHe), numD(numD), numT(numT), numV(numV) {
+			PSICluster(_network, registry, buildName(numHe, numD, numT, numV)) {
 		// Set the cluster size as the sum of
 		// the number of Helium, Hydrogen, Vacancies
 		size = numHe + numD + numT + numV;

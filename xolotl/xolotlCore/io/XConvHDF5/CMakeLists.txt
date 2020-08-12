@@ -1,7 +1,8 @@
-
 if (HAVE_FILESYSTEM_LIBRARY AND Boost_PROGRAM_OPTIONS_FOUND)
-
     message(STATUS "Building XConvHDF5 utility")
+
+	# Where to find include files.
+	include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io/)
 
     # Define the executable and the sources needed to build it.
     add_executable(xconv main.cpp)

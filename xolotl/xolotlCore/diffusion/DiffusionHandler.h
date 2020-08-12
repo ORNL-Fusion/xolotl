@@ -18,10 +18,14 @@ protected:
 	//! Collection of diffusing clusters.
 	IReactant::ConstRefVector diffusingClusters;
 
+	//! Migration energy threshold
+	double migrationThreshold;
+
 public:
 
 	//! The Constructor
-	DiffusionHandler() {
+	DiffusionHandler(double threshold) :
+			migrationThreshold(threshold) {
 	}
 
 	//! The Destructor
@@ -37,24 +41,24 @@ public:
 	 * @param network The network
 	 * @param ofillMap Map of connectivity for diffusing clusters.
 	 */
-	virtual void initializeOFill(const IReactionNetwork& network,
-			IReactionNetwork::SparseFillMap& ofillMap) override {
-
-		int dof = network.getDOF();
+	virtual void initializeOFill(const IReactionNetwork &network,
+			IReactionNetwork::SparseFillMap &ofillMap) override {
 
 		// Clear the index vector
 		diffusingClusters.clear();
 
 		// Consider each cluster.
-		for (IReactant const& currReactant : network.getAll()) {
+		for (IReactant const &currReactant : network.getAll()) {
 
-			auto const& cluster = static_cast<IReactant const&>(currReactant);
+			auto const &cluster = static_cast<IReactant const&>(currReactant);
 
-			// Get its diffusion coefficient
+			// Get its diffusion factor and migration energy
 			double diffFactor = cluster.getDiffusionFactor();
+			double migration = cluster.getMigrationEnergy();
 
 			// Don't do anything if the diffusion factor is 0.0
-			if (xolotlCore::equal(diffFactor, 0.0))
+			if (xolotlCore::equal(diffFactor, 0.0)
+					|| migration > migrationThreshold)
 				continue;
 
 			// Note that cluster is diffusing.

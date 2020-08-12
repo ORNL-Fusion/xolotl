@@ -206,11 +206,11 @@ public:
 	Reactant(Reactant &other) :
 			concentration(other.concentration), name(other.name), type(
 					other.type), id(other.id), temperature(other.temperature), network(
-					other.network), handlerRegistry(other.handlerRegistry), size(
-					other.size), composition(other.composition), formationEnergy(
-					other.formationEnergy), diffusionFactor(
+					other.network), composition(other.composition), handlerRegistry(
+					other.handlerRegistry), size(other.size), diffusionFactor(
 					other.diffusionFactor), diffusionCoefficient(
-					other.diffusionCoefficient), migrationEnergy(
+					other.diffusionCoefficient), formationEnergy(
+					other.formationEnergy), migrationEnergy(
 					other.migrationEnergy), reactionRadius(
 					other.reactionRadius), reactionConnectivitySet(
 					other.reactionConnectivitySet), dissociationConnectivitySet(

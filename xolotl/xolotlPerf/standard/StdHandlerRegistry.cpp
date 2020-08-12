@@ -2,13 +2,14 @@
 #include <iostream>
 #include <cassert>
 #include <tuple>
-#include "mpi.h"
+#include <mpi.h>
 #include <unistd.h>
 #include <float.h>
 #include <math.h>
 #include <string.h>
-#include "xolotlPerf/standard/StdHandlerRegistry.h"
-#include "xolotlPerf/standard/EventCounter.h"
+#include <StdHandlerRegistry.h>
+#include <EventCounter.h>
+#include <MPIUtils.h>
 
 namespace xolotlPerf {
 
@@ -54,6 +55,8 @@ void StdHandlerRegistry::CollectAllObjectNames(int myRank,
 	// Collect my own object's names.
 	std::vector<std::string> myNames;
 	CollectMyObjectNames(myObjs, myNames);
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 
 	// Determine amount of space required for names
 	unsigned int nBytes = 0;
@@ -66,7 +69,7 @@ void StdHandlerRegistry::CollectAllObjectNames(int myRank,
 	// Let root know how much space it needs to collect all object names
 	unsigned int totalNumBytes = 0;
 	MPI_Reduce(&nBytes, &totalNumBytes, 1, MPI_UNSIGNED, MPI_SUM, 0,
-			MPI_COMM_WORLD);
+			xolotlComm);
 
 	// Marshal all our object names.
 	char* myNamesBuf = new char[nBytes];
@@ -81,13 +84,12 @@ void StdHandlerRegistry::CollectAllObjectNames(int myRank,
 	// Provide all names to root.
 	// First, provide the amount of data from each process.
 	int cwSize;
-	MPI_Comm_size(MPI_COMM_WORLD, &cwSize);
+	MPI_Comm_size(xolotlComm, &cwSize);
 	char* allNames = (myRank == 0) ? new char[totalNumBytes] : NULL;
 	int* allNameCounts = (myRank == 0) ? new int[cwSize] : NULL;
 	int* allNameDispls = (myRank == 0) ? new int[cwSize] : NULL;
 
-	MPI_Gather(&nBytes, 1, MPI_INT, allNameCounts, 1, MPI_INT, 0,
-			MPI_COMM_WORLD);
+	MPI_Gather(&nBytes, 1, MPI_INT, allNameCounts, 1, MPI_INT, 0, xolotlComm);
 
 	// Next, root computes the displacements for data from each process.
 	if (myRank == 0) {
@@ -99,7 +101,7 @@ void StdHandlerRegistry::CollectAllObjectNames(int myRank,
 
 	// Finally, gather all names to the root process.
 	MPI_Gatherv(myNamesBuf, nBytes, MPI_CHAR, allNames, allNameCounts,
-			allNameDispls, MPI_CHAR, 0, MPI_COMM_WORLD);
+			allNameDispls, MPI_CHAR, 0, xolotlComm);
 
 	if (myRank == 0) {
 		// Process the gathered names to determine the
@@ -220,13 +222,15 @@ void StdHandlerRegistry::AggregateStatistics(int myRank,
 	// Unfortunately, because the strings are of different lengths,
 	// we have a more difficult marshal/unmarshal problem than we'd like.
 	CollectAllObjectNames<T, V>(myRank, myObjs, stats);
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 
 	// Let all processes know how many statistics we will be collecting.
 	int nObjs;
 	if (myRank == 0) {
 		nObjs = stats.size();
 	}
-	MPI_Bcast(&nObjs, 1, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(&nObjs, 1, MPI_INT, 0, xolotlComm);
 	assert(nObjs >= 0);
 
 	// Collect and compute statistics for each object.
@@ -234,7 +238,7 @@ void StdHandlerRegistry::AggregateStatistics(int myRank,
 	for (int idx = 0; idx < nObjs; ++idx) {
 		// broadcast the current object's name
 		int nameLen = (myRank == 0) ? tsiter->second.name.length() : -1;
-		MPI_Bcast(&nameLen, 1, MPI_INT, 0, MPI_COMM_WORLD);
+		MPI_Bcast(&nameLen, 1, MPI_INT, 0, xolotlComm);
 		// we can safely cast away const on the tsiter data string because
 		// the only process that accesses that string is rank 0,
 		// and it only reads the data.
@@ -242,7 +246,7 @@ void StdHandlerRegistry::AggregateStatistics(int myRank,
 				(myRank == 0) ?
 						const_cast<char*>(tsiter->second.name.c_str()) :
 						new char[nameLen + 1];
-		MPI_Bcast(objName, nameLen + 1, MPI_CHAR, 0, MPI_COMM_WORLD);
+		MPI_Bcast(objName, nameLen + 1, MPI_CHAR, 0, xolotlComm);
 
 		// do we know about the current object?
 		bool knowObject;
@@ -254,26 +258,26 @@ void StdHandlerRegistry::AggregateStatistics(int myRank,
 		unsigned int* pcount =
 				(myRank == 0) ? &(tsiter->second.processCount) : NULL;
 		int knowObjVal = knowObject ? 1 : 0;
-		MPI_Reduce(&knowObjVal, pcount, 1, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD);
+		MPI_Reduce(&knowObjVal, pcount, 1, MPI_INT, MPI_SUM, 0, xolotlComm);
 
 		// collect min value of current object
 		V* pMinVal = (myRank == 0) ? &(tsiter->second.min) : NULL;
 		V reduceVal = knowObject ? myVal : T::MaxValue;
 		MPI_Reduce(&reduceVal, pMinVal, 1, T::MPIValType, MPI_MIN, 0,
-				MPI_COMM_WORLD);
+				xolotlComm);
 
 		// collect max value of current object
 		V* pMaxVal = (myRank == 0) ? &(tsiter->second.max) : NULL;
 		reduceVal = knowObject ? myVal : T::MinValue;
 		MPI_Reduce(&reduceVal, pMaxVal, 1, T::MPIValType, MPI_MAX, 0,
-				MPI_COMM_WORLD);
+				xolotlComm);
 
 		// collect sum of current object's values (for computing avg and stdev)
 		double valSum;
 		// use the same myVal as for max: actual value if known, 0 otherwise
 		double myValAsDouble = (double) reduceVal;
 		MPI_Reduce(&myValAsDouble, &valSum, 1, MPI_DOUBLE, MPI_SUM, 0,
-				MPI_COMM_WORLD);
+				xolotlComm);
 		if (myRank == 0) {
 			tsiter->second.average = valSum / tsiter->second.processCount;
 		}
@@ -282,7 +286,7 @@ void StdHandlerRegistry::AggregateStatistics(int myRank,
 		double valSquaredSum;
 		double myValSquared = myValAsDouble * myValAsDouble;
 		MPI_Reduce(&myValSquared, &valSquaredSum, 1, MPI_DOUBLE, MPI_SUM, 0,
-				MPI_COMM_WORLD);
+				xolotlComm);
 		if (myRank == 0) {
 			tsiter->second.stdev =
 					sqrt(
@@ -307,8 +311,10 @@ void StdHandlerRegistry::collectStatistics(
 		PerfObjStatsMap<ITimer::ValType>& timerStats,
 		PerfObjStatsMap<IEventCounter::ValType>& counterStats,
 		PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) {
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int myRank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &myRank);
+	MPI_Comm_rank(xolotlComm, &myRank);
 
 	// Aggregate statistics about counters in all processes.
 	// First, timers...

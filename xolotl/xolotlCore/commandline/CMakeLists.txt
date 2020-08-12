@@ -24,4 +24,4 @@ add_library(${LIBRARY_NAME} STATIC ${SRC})
 target_link_libraries(${LIBRARY_NAME} ${Boost_LIBRARIES})
 
 #Install the xolotl header files
-install(FILES ${HEADERS} DESTINATION include)
+install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)

@@ -17,7 +17,7 @@ using namespace std;
 using namespace xolotlCore;
 
 // Initialize MPI before running any tests; finalize it running all tests.
-BOOST_GLOBAL_FIXTURE (MPIFixture);
+BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 /**
  * This suite is responsible for testing the HDF5 classes.
@@ -114,7 +114,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	{
 		BOOST_TEST_MESSAGE("Creating file.");
 		xolotlCore::XFile testFile(testFileName, grid, testCompsVec,
-				MPI_COMM_WORLD);
+		MPI_COMM_WORLD);
 		xolotlCore::XFile::NetworkGroup netGroup(testFile, *network);
 	}
 
@@ -144,18 +144,19 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	{
 		BOOST_TEST_MESSAGE("Opening test file to add a timestep");
 		xolotlCore::XFile testFile(testFileName,
-				MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadWrite);
+		MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 		// Add a TimestepGroup.
 		auto concGroup =
-		testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
+				testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 		auto tsGroup = concGroup->addTimestepGroup(timeStep, currentTime,
 				previousTime, currentTimeStep);
 
 		// Write the surface information
 		tsGroup->writeSurface1D(iSurface, nInter, previousFlux, nHe,
-				previousHeFlux, nD, previousDFlux, nT, previousTFlux);
+				previousHeFlux, nD, previousDFlux, nT, previousTFlux, nV,
+				previousVFlux, nInter, previousFlux);
 
 		// Write the bulk information
 		tsGroup->writeBottom1D(nHe, previousHeFlux, 0.0, 0.0, 0.0, 0.0, nV,
@@ -181,7 +182,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	{
 		BOOST_TEST_MESSAGE("Opening test file to check its contents.");
 		xolotlCore::XFile testFile(testFileName,
-				MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadOnly);
+		MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadOnly);
 
 		// Read the header of the written file
 		BOOST_TEST_MESSAGE("Checking test file header.");
@@ -202,7 +203,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		// Access the last-written timestep group.
 		BOOST_TEST_MESSAGE("Checking test file last time step.");
 		auto concGroup =
-		testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
+				testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 		auto tsGroup = concGroup->getLastTimestepGroup();
 		BOOST_REQUIRE(tsGroup);
@@ -219,27 +220,40 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		// Read the surface information
 		BOOST_TEST_MESSAGE(
 				"Checking test file last time step surface position.");
-		auto surfacePos = tsGroup->readSurface1D();
-		BOOST_REQUIRE_EQUAL(surfacePos, iSurface);
-		auto nInterstitial = tsGroup->readData1D("nInterstitial");
-		BOOST_REQUIRE_CLOSE(nInterstitial, nInter, 0.0001);
-		auto previousIFlux = tsGroup->readData1D("previousIFlux");
-		BOOST_REQUIRE_CLOSE(previousIFlux, previousFlux, 0.0001);
-		auto nHeSurf = tsGroup->readData1D("nHeliumSurf");
-		BOOST_REQUIRE_CLOSE(nHeSurf, nHe, 0.0001);
-		auto previousHeSurfFlux = tsGroup->readData1D("previousHeSurfFlux");
-		BOOST_REQUIRE_CLOSE(previousHeSurfFlux, previousHeFlux, 0.0001);
-		auto nDSurf = tsGroup->readData1D("nDeuteriumSurf");
-		BOOST_REQUIRE_CLOSE(nDSurf, nD, 0.0001);
-		auto previousDSurfFlux = tsGroup->readData1D("previousDSurfFlux");
-		BOOST_REQUIRE_CLOSE(previousDSurfFlux, previousDFlux, 0.0001);
-		auto nTSurf = tsGroup->readData1D("nTritiumSurf");
-		BOOST_REQUIRE_CLOSE(nTSurf, nT, 0.0001);
-		auto previousTSurfFlux = tsGroup->readData1D("previousTSurfFlux");
-		BOOST_REQUIRE_CLOSE(previousTSurfFlux, previousTFlux, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancyBulk"), nV, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousVBulkFlux"), previousVFlux,
+		BOOST_REQUIRE_EQUAL(tsGroup->readSurface1D(), iSurface);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterstitial"), nInter,
 				0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousIFlux"), previousFlux,
+				0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHeliumSurf"), nHe, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousHeSurfFlux"),
+				previousHeFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuteriumSurf"), nD, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousDSurfFlux"),
+				previousDFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritiumSurf"), nT, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousTSurfFlux"),
+				previousTFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancySurf"), nV, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousVSurfFlux"),
+				previousVFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterSurf"), nInter, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousISurfFlux"),
+				previousFlux, 0.0001);
+
+		// Read the bulk information
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHeliumBulk"), nHe, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousHeBulkFlux"),
+				previousHeFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuteriumBulk"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousDBulkFlux"), 0.0,
+				0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritiumBulk"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousTBulkFlux"), 0.0,
+				0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancyBulk"), nV, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousVBulkFlux"),
+				previousVFlux, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterBulk"), 0.0, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousIBulkFlux"), 0.0,
 				0.0001);
@@ -247,16 +261,16 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		// Read the network of the written file
 		BOOST_TEST_MESSAGE("Checking test file last time step network.");
 		auto networkGroup =
-		testFile.getGroup<xolotlCore::XFile::NetworkGroup>();
+				testFile.getGroup<xolotlCore::XFile::NetworkGroup>();
 		BOOST_REQUIRE(networkGroup);
 		int normalSize = 0, superSize = 0;
 		networkGroup->readNetworkSize(normalSize, superSize);
 		// Get all the reactants
-		auto const& reactants = network->getAll();
+		auto const &reactants = network->getAll();
 		// Check the network vector
-		for (IReactant& it : reactants) {
+		for (IReactant &it : reactants) {
 			// Get the i-th reactant in the network
-			auto& reactant = (PSICluster&) it;
+			auto &reactant = (PSICluster&) it;
 			int id = reactant.getId() - 1;
 			// Open the cluster group
 			XFile::ClusterGroup clusterGroup(*networkGroup, id);
@@ -265,11 +279,11 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 				// Normal cluster
 				// Read the composition
 				double formationEnergy = 0.0, migrationEnergy = 0.0,
-				diffusionFactor = 0.0;
+						diffusionFactor = 0.0;
 				auto comp = clusterGroup.readCluster(formationEnergy,
 						migrationEnergy, diffusionFactor);
 				// Check the composition
-				auto& composition = reactant.getComposition();
+				auto &composition = reactant.getComposition();
 				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::He)],
 						composition[toCompIdx(Species::He)]);
 				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::D)],
@@ -372,10 +386,10 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 		double stepSize = 0.5;
 		std::vector<double> grid;
 		for (int i = 0; i < nGrid + 2; i++)
-		grid.push_back((double) i * stepSize);
+			grid.push_back((double) i * stepSize);
 
 		xolotlCore::XFile testFile(testFileName, grid, createTestNetworkComps(),
-				MPI_COMM_WORLD);
+		MPI_COMM_WORLD);
 	}
 
 	// Set the time information
@@ -397,14 +411,14 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 		BOOST_TEST_MESSAGE("Adding 2D timestep group");
 
 		xolotlCore::XFile testFile(testFileName,
-				MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadWrite);
+		MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 		// Set the time step number
 		int timeStep = 0;
 
 		// Add the concentration sub group
 		auto concGroup =
-		testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
+				testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 		auto tsGroup = concGroup->addTimestepGroup(timeStep, currentTime,
 				previousTime, currentTimeStep);
@@ -419,11 +433,11 @@ BOOST_AUTO_TEST_CASE(checkSurface2D) {
 		BOOST_TEST_MESSAGE("Opening 2D file to check its contents.");
 
 		xolotlCore::XFile testFile(testFileName,
-				MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadOnly);
+		MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadOnly);
 
 		// Access the last written timestep group.
 		auto concGroup =
-		testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
+				testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 		auto tsGroup = concGroup->getLastTimestepGroup();
 		BOOST_REQUIRE(tsGroup);
@@ -470,10 +484,10 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 		double stepSize = 0.5;
 		std::vector<double> grid;
 		for (int i = 0; i < nGrid + 2; i++)
-		grid.push_back((double) i * stepSize);
+			grid.push_back((double) i * stepSize);
 
 		xolotlCore::XFile testFile(testFileName, grid, createTestNetworkComps(),
-				MPI_COMM_WORLD);
+		MPI_COMM_WORLD);
 	}
 
 	// Set the time information
@@ -498,14 +512,14 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 		BOOST_TEST_MESSAGE("Adding 3D timestep group");
 
 		xolotlCore::XFile testFile(testFileName,
-				MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadWrite);
+		MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 		// Set the time step number
 		int timeStep = 0;
 
 		// Add the concentration sub group
 		auto concGroup =
-		testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
+				testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 
 		auto tsGroup = concGroup->addTimestepGroup(timeStep, currentTime,
@@ -520,11 +534,11 @@ BOOST_AUTO_TEST_CASE(checkSurface3D) {
 	{
 		BOOST_TEST_MESSAGE("Opening 3D file to check its contents.");
 		xolotlCore::XFile testFile(testFileName,
-				MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadOnly);
+		MPI_COMM_WORLD, xolotlCore::XFile::AccessMode::OpenReadOnly);
 
 		// Access the last written timestep group.
 		auto concGroup =
-		testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
+				testFile.getGroup<xolotlCore::XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 		auto tsGroup = concGroup->getLastTimestepGroup();
 		BOOST_REQUIRE(tsGroup);

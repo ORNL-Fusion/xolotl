@@ -37,8 +37,6 @@ public:
 	// have these classes differ in the sinkStrength identification.
 	void initialize(const IReactionNetwork& network,
 			IReactionNetwork::SparseFillMap& ofillMap) override {
-		// Get all the reactants and their number
-		int dof = network.getDOF();
 
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();

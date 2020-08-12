@@ -14,7 +14,7 @@ namespace xolotlSolver {
  * @param errorCode The PETSc error code.
  * @param errMsg The error message in the thrown exception.
  */
-inline void checkPetscError(PetscErrorCode errorCode, const char* errorMsg) {
+inline void checkPetscError(PetscErrorCode errorCode, const char *errorMsg) {
 	if (PetscUnlikely(errorCode))
 		throw std::string(errorMsg);
 }
@@ -27,6 +27,26 @@ inline void checkPetscError(PetscErrorCode errorCode, const char* errorMsg) {
  */
 class PetscSolver: public Solver {
 private:
+
+	/**
+	 * Distributed array that will contain the solution.
+	 */
+	DM da;
+
+	/**
+	 * Time stepper.
+	 */
+	TS ts;
+
+	/**
+	 * Global solution vector.
+	 */
+	Vec C;
+
+	/**
+	 * Options.
+	 */
+	PetscOptions petscOptions;
 
 	/**
 	 * This operation configures the initial conditions of the grid in Xolotl.
@@ -44,7 +64,7 @@ public:
 	PetscSolver() = delete;
 
 	//! The Constructor
-	PetscSolver(ISolverHandler& _solverHandler,
+	PetscSolver(ISolverHandler &_solverHandler,
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry);
 
 	//! The Destructor
@@ -59,7 +79,7 @@ public:
 	 * for keys and associated values mapped to those keys. A relevant example
 	 * is "startTime" and "0.01" where both are of type std::string.
 	 */
-	void setOptions(const std::map<std::string, std::string>& options) override;
+	void setOptions(const std::map<std::string, std::string> &options) override;
 
 	/**
 	 * This operation sets up the mesh that will be used by the solver and
@@ -77,18 +97,88 @@ public:
 	void initialize() override;
 
 	/**
+	 * This operation sets the wanted final time and max time step allowed.
+	 *
+	 * @param finalTime The wanted final time.
+	 * @param dt The wanted max time step.
+	 */
+	void setTimes(double finalTime, double dt) override;
+
+	/**
+	 * This operation resets the concentrations where the GB are located.
+	 */
+	void initGBLocation() override;
+
+	/**
+	 * This operation get the concentration vector with the ids.
+	 *
+	 * @return The concentration vector
+	 */
+	virtual std::vector<
+			std::vector<std::vector<std::vector<std::pair<int, double> > > > > getConcVector()
+			override;
+
+	/**
+	 * This operation sets the concentration vector in the current state of the simulation.
+	 *
+	 * @param The concentration vector
+	 */
+	virtual void setConcVector(
+			std::vector<
+					std::vector<
+							std::vector<std::vector<std::pair<int, double> > > > > &concVector)
+					override;
+
+	/**
+	 * Get the current dt.
+	 *
+	 * @return  The current time step
+	 */
+	virtual double getCurrentDt() override;
+
+	/**
+	 * Set the current time and dt.
+	 *
+	 * @param currentTime The time
+	 * @param currentDt The current time step
+	 */
+	virtual void setCurrentTimes(double currentTime, double currentDt) override;
+
+	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::string.
 	 */
 	void solve() override;
 
 	/**
+	 * This operation checks the solver convergence status to decide whether
+	 * it converged or not.
+	 *
+	 * @return true if it converged
+	 */
+	bool getConvergenceStatus() override;
+
+	/**
 	 * This operation performs all necessary finalization for the solver
 	 * including but not limited to cleaning up memory, finalizing MPI and
 	 * printing diagnostic information. If the solver can not be finalized,
 	 * this operation will throw an exception of type std::string.
+	 *
+	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
 	 */
-	void finalize() override;
+	void finalize(bool isStandalone) override;
+
+	/**
+	 * This operation gets the TS.
+	 */
+	TS& getTS() override {
+		return ts;
+	}
+
+	/**
+	 * This operation returns the most recent time that solver converged.
+	 */
+	double getXolotlTime() override;
 
 };
 //end class PetscSolver

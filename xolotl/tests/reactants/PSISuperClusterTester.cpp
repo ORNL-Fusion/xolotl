@@ -65,7 +65,11 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	network->reinitializeConnectivities();
 
 	// Get the super cluster
-	auto& reactant = network->getAll(ReactantType::PSISuper).begin()->second;
+	IReactant::Composition composition;
+	composition[toCompIdx(Species::He)] = 18;
+	composition[toCompIdx(Species::V)] = 5;
+	composition[toCompIdx(Species::I)] = 4;
+	auto reactant = network->get(ReactantType::PSISuper, composition);
 
 	// Check the type name
 	BOOST_REQUIRE(ReactantType::PSISuper == reactant->getType());
@@ -129,9 +133,13 @@ BOOST_AUTO_TEST_CASE(checkTotalFlux) {
 	network->reinitializeConnectivities();
 
 	// Get the super cluster
-	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
+	IReactant::Composition composition;
+	composition[toCompIdx(Species::He)] = 18;
+	composition[toCompIdx(Species::V)] = 5;
+	composition[toCompIdx(Species::I)] = 4;
+	auto cluster = network->get(ReactantType::PSISuper, composition);
 	// Get one that it combines with (He)
-	auto secondCluster = (PSICluster *) network->get(Species::He, 1);
+	auto secondCluster = (PSICluster*) network->get(Species::He, 1);
 
 	// Set the concentrations
 	cluster->setConcentration(0.5);
@@ -190,7 +198,11 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	network->reinitializeConnectivities();
 
 	// Get the super cluster
-	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
+	IReactant::Composition composition;
+	composition[toCompIdx(Species::He)] = 18;
+	composition[toCompIdx(Species::V)] = 5;
+	composition[toCompIdx(Species::I)] = 4;
+	auto cluster = network->get(ReactantType::PSISuper, composition);
 
 	// The vector of partial derivatives to compare with
 	double knownPartials[] = { 1.65696e+10, 5.64406e+09, 1.16845e+09, 0, 0, 0,
@@ -271,7 +283,11 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	auto network = loader.generate(opts);
 
 	// Get the super cluster
-	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
+	IReactant::Composition composition;
+	composition[toCompIdx(Species::He)] = 18;
+	composition[toCompIdx(Species::V)] = 5;
+	composition[toCompIdx(Species::I)] = 4;
+	auto cluster = network->get(ReactantType::PSISuper, composition);
 
 	// Check the radius
 	BOOST_REQUIRE_CLOSE(0.248079, cluster->getReactionRadius(), 0.001);
@@ -317,22 +333,26 @@ BOOST_AUTO_TEST_CASE(checkGetConcentrations) {
 	// Add a grid point for the rates
 	network->addGridPoints(1);
 
-	// Get a super cluster
-	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
-	auto& superCluster = static_cast<PSISuperCluster&>(*cluster);
+	// Get the super cluster
+	IReactant::Composition composition;
+	composition[toCompIdx(Species::He)] = 18;
+	composition[toCompIdx(Species::V)] = 5;
+	composition[toCompIdx(Species::I)] = 4;
+	auto superCluster = (PSISuperCluster*) network->get(ReactantType::PSISuper,
+			composition);
 
 	// Set the concentration in the cluster
-	superCluster.setZerothMoment(4.5);
-	superCluster.setMoment(1.0, 0); // He
-	superCluster.setMoment(1.0, 3); // V
+	superCluster->setZerothMoment(4.5);
+	superCluster->setMoment(1.0, 0); // He
+	superCluster->setMoment(1.0, 3); // V
 
 	// Check the different concentrations
-	BOOST_REQUIRE_CLOSE(18.0, superCluster.getTotalConcentration(), 0.001);
-	BOOST_REQUIRE_CLOSE(336.33, superCluster.getTotalAtomConcentration(0),
+	BOOST_REQUIRE_CLOSE(18.0, superCluster->getTotalConcentration(), 0.001);
+	BOOST_REQUIRE_CLOSE(336.33, superCluster->getTotalAtomConcentration(0),
 			0.001); // He
-	BOOST_REQUIRE_CLOSE(90.0, superCluster.getTotalVacancyConcentration(),
+	BOOST_REQUIRE_CLOSE(90.0, superCluster->getTotalVacancyConcentration(),
 			0.001);
-	BOOST_REQUIRE_CLOSE(0.0, superCluster.getIntegratedVConcentration(1),
+	BOOST_REQUIRE_CLOSE(0.0, superCluster->getIntegratedVConcentration(1),
 			0.001);
 
 	return;
@@ -374,23 +394,26 @@ BOOST_AUTO_TEST_CASE(checkBoundaries) {
 	// Generate the network from the options
 	auto network = loader.generate(opts);
 
-	// Get a super cluster
-	auto& cluster = network->getAll(ReactantType::PSISuper).begin()->second;
-	auto& superCluster = static_cast<PSISuperCluster&>(*cluster);
+	IReactant::Composition composition;
+	composition[toCompIdx(Species::He)] = 18;
+	composition[toCompIdx(Species::V)] = 5;
+	composition[toCompIdx(Species::I)] = 4;
+	auto superCluster = (PSISuperCluster*) network->get(ReactantType::PSISuper,
+			composition);
 
 	// Check the different numbers
-	BOOST_REQUIRE_CLOSE(5.0, superCluster.getNumV(), 0.001);
-	BOOST_REQUIRE_CLOSE(4.0, superCluster.getNTot(), 0.001);
-	auto bounds = superCluster.getBounds(0); // He
+	BOOST_REQUIRE_CLOSE(5.0, superCluster->getNumV(), 0.001);
+	BOOST_REQUIRE_CLOSE(4.0, superCluster->getNTot(), 0.001);
+	auto bounds = superCluster->getBounds(0); // He
 	BOOST_REQUIRE_EQUAL(17, *(bounds.begin()));
 	BOOST_REQUIRE_EQUAL(21, *(bounds.end()));
-	bounds = superCluster.getBounds(1); // D
+	bounds = superCluster->getBounds(1); // D
 	BOOST_REQUIRE_EQUAL(0, *(bounds.begin()));
 	BOOST_REQUIRE_EQUAL(1, *(bounds.end()));
-	bounds = superCluster.getBounds(2); // T
+	bounds = superCluster->getBounds(2); // T
 	BOOST_REQUIRE_EQUAL(0, *(bounds.begin()));
 	BOOST_REQUIRE_EQUAL(1, *(bounds.end()));
-	bounds = superCluster.getBounds(3); // V
+	bounds = superCluster->getBounds(3); // V
 	BOOST_REQUIRE_EQUAL(5, *(bounds.begin()));
 	BOOST_REQUIRE_EQUAL(6, *(bounds.end()));
 

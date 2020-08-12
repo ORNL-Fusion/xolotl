@@ -18,6 +18,7 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore/flux
                     ${CMAKE_SOURCE_DIR}/xolotlCore/temperature
                     ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline/optionhandlers
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/heterogeneousnucleation

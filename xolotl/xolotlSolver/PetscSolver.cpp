@@ -5,6 +5,7 @@
 #include <iostream>
 #include "xolotlCore/io/XFile.h"
 #include <TokenizedLineReader.h>
+#include <MPIUtils.h>
 
 using namespace xolotlCore;
 
@@ -27,26 +28,36 @@ using namespace xolotlCore;
 
 namespace xolotlSolver {
 
-//Timer for RHSFunction()
+//! PETSc options object
+PetscOptions *petscOptions = nullptr;
+
+//!Timer for RHSFunction()
 std::shared_ptr<xolotlPerf::ITimer> RHSFunctionTimer;
 
-////Timer for RHSJacobian()
+//!Timer for RHSJacobian()
 std::shared_ptr<xolotlPerf::ITimer> RHSJacobianTimer;
+
+//!Timer for solve()
+std::shared_ptr<xolotlPerf::ITimer> SolveTimer;
 
 //! Help message
 static char help[] =
 		"Solves C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.\n";
 
 // ----- GLOBAL VARIABLES ----- //
-extern PetscErrorCode setupPetsc0DMonitor(TS);
-extern PetscErrorCode setupPetsc1DMonitor(TS,
+extern PetscErrorCode setupPetsc0DMonitor(TS&);
+extern PetscErrorCode setupPetsc1DMonitor(TS&,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry>);
-extern PetscErrorCode setupPetsc2DMonitor(TS);
-extern PetscErrorCode setupPetsc3DMonitor(TS);
+extern PetscErrorCode setupPetsc2DMonitor(TS&);
+extern PetscErrorCode setupPetsc3DMonitor(TS&);
+extern PetscErrorCode reset0DMonitor();
+extern PetscErrorCode reset1DMonitor();
+extern PetscErrorCode reset2DMonitor();
+extern PetscErrorCode reset3DMonitor();
 
 void PetscSolver::setupInitialConditions(DM da, Vec C) {
 	// Initialize the concentrations in the solution vector
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 	solverHandler.initializeConcentration(da, C);
 
 	return;
@@ -69,7 +80,7 @@ void PetscSolver::setupInitialConditions(DM da, Vec C) {
  .  F - function values
  */
 /* ------------------------------------------------------------------- */
-PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
+PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void*) {
 	// Start the RHSFunction Timer
 	RHSFunctionTimer->start();
 
@@ -98,7 +109,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 	CHKERRQ(ierr);
 
 	// Compute the new concentrations
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 	solverHandler.updateConcentration(ts, localC, F, ftime);
 
 	// Stop the RHSFunction Timer
@@ -116,8 +127,7 @@ PetscErrorCode RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void *) {
 /*
  Compute the Jacobian entries based on IFunction() and insert them into the matrix
  */
-PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
-		void *) {
+PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void*) {
 	// Start the RHSJacobian timer
 	RHSJacobianTimer->start();
 
@@ -141,7 +151,7 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = Solver::getSolverHandler();
+	auto &solverHandler = Solver::getSolverHandler();
 
 	/* ----- Compute the off-diagonal part of the Jacobian ----- */
 	solverHandler.computeOffDiagonalJacobian(ts, localC, J, ftime);
@@ -178,11 +188,12 @@ PetscErrorCode RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J,
 	PetscFunctionReturn(0);
 }
 
-PetscSolver::PetscSolver(ISolverHandler& _solverHandler,
+PetscSolver::PetscSolver(ISolverHandler &_solverHandler,
 		std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) :
 		Solver(_solverHandler, registry) {
 	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
 	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
+	SolveTimer = handlerRegistry->getTimer("SolveTimer");
 }
 
 PetscSolver::~PetscSolver() {
@@ -195,6 +206,8 @@ void PetscSolver::setupMesh() {
 }
 
 void PetscSolver::initialize() {
+	PetscErrorCode ierr;
+
 	// Build an input stream from the argument string.
 	int numCLIArgs;
 	char **CLIArgs;
@@ -236,60 +249,38 @@ void PetscSolver::initialize() {
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	PetscInitialize(&numCLIArgs, &CLIArgs, (char*) 0, help);
 
-	return;
-}
-
-void PetscSolver::solve() {
-	PetscErrorCode ierr;
-
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 Create the solver options
-	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-//	PetscOptions petscOptions;
-//	ierr = PetscOptionsCreate(&petscOptions);
-//	checkPetscError(ierr,
-//			"PetscSolver::initialize: PetscOptionsCreate failed.");
-//	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
-//	checkPetscError(ierr,
-//			"PetscSolver::initialize: PetscOptionsInsertString failed.");
-//	ierr = PetscOptionsPush(petscOptions);
-//	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPush failed.");
 	// Create the solver context
-	DM da;
 	getSolverHandler().createSolverContext(da);
 
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Extract global vector from DMDA to hold solution
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	Vec C;
 	ierr = DMCreateGlobalVector(da, &C);
-	checkPetscError(ierr, "PetscSolver::solve: DMCreateGlobalVector failed.");
+	checkPetscError(ierr,
+			"PetscSolver::initialize: DMCreateGlobalVector failed.");
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create timestepping solver context
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	TS ts;
-	ierr = TSCreate(PETSC_COMM_WORLD, &ts);
-	checkPetscError(ierr, "PetscSolver::solve: TSCreate failed.");
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	ierr = TSCreate(xolotlComm, &ts);
+	checkPetscError(ierr, "PetscSolver::initialize: TSCreate failed.");
 	ierr = TSSetType(ts, TSARKIMEX);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetType failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetType failed.");
 	ierr = TSARKIMEXSetFullyImplicit(ts, PETSC_TRUE);
 	checkPetscError(ierr,
-			"PetscSolver::solve: TSARKIMEXSetFullyImplicit failed.");
+			"PetscSolver::initialize: TSARKIMEXSetFullyImplicit failed.");
 	ierr = TSSetDM(ts, da);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetDM failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetDM failed.");
 	ierr = TSSetProblemType(ts, TS_NONLINEAR);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetProblemType failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetProblemType failed.");
 	ierr = TSSetRHSFunction(ts, NULL, RHSFunction, NULL);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetRHSFunction failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetRHSFunction failed.");
 	ierr = TSSetRHSJacobian(ts, NULL, NULL, RHSJacobian, NULL);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetRHSJacobian failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetRHSJacobian failed.");
 	ierr = TSSetSolution(ts, C);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetSolution failed.");
-
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 Set solver options
-	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetSolution failed.");
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = getSolverHandler().getNetworkName();
@@ -302,15 +293,21 @@ void PetscSolver::solve() {
 			auto tsGroup = concGroup->getLastTimestepGroup();
 			assert(tsGroup);
 			std::tie(time, deltaTime) = tsGroup->readTimes();
+
+			// Give the values to the solver
+			ierr = TSSetTime(ts, time);
+			checkPetscError(ierr, "PetscSolver::initialize: TSSetTime failed.");
+			ierr = TSSetTimeStep(ts, deltaTime);
+			checkPetscError(ierr,
+					"PetscSolver::initialize: TSSetTimeStep failed.");
 		}
 	}
 
-	ierr = TSSetTime(ts, time);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetTime failed.");
-	ierr = TSSetTimeStep(ts, deltaTime);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetTimeStep failed.");
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Set solver options
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	ierr = TSSetFromOptions(ts);
-	checkPetscError(ierr, "PetscSolver::solve: TSSetFromOptions failed.");
+	checkPetscError(ierr, "PetscSolver::initialize: TSSetFromOptions failed.");
 
 	// Switch on the number of dimensions to set the monitors
 	int dim = getSolverHandler().getDimension();
@@ -319,25 +316,25 @@ void PetscSolver::solve() {
 		// One dimension
 		ierr = setupPetsc0DMonitor(ts);
 		checkPetscError(ierr,
-				"PetscSolver::solve: setupPetsc0DMonitor failed.");
+				"PetscSolver::initialize: setupPetsc0DMonitor failed.");
 		break;
 	case 1:
 		// One dimension
 		ierr = setupPetsc1DMonitor(ts, handlerRegistry);
 		checkPetscError(ierr,
-				"PetscSolver::solve: setupPetsc1DMonitor failed.");
+				"PetscSolver::initialize: setupPetsc1DMonitor failed.");
 		break;
 	case 2:
 		// Two dimensions
 		ierr = setupPetsc2DMonitor(ts);
 		checkPetscError(ierr,
-				"PetscSolver::solve: setupPetsc2DMonitor failed.");
+				"PetscSolver::initialize: setupPetsc2DMonitor failed.");
 		break;
 	case 3:
 		// Three dimensions
 		ierr = setupPetsc3DMonitor(ts);
 		checkPetscError(ierr,
-				"PetscSolver::solve: setupPetsc3DMonitor failed.");
+				"PetscSolver::initialize: setupPetsc3DMonitor failed.");
 		break;
 	default:
 		throw std::string("PetscSolver Exception: Wrong number of dimensions "
@@ -352,10 +349,93 @@ void PetscSolver::solve() {
 	// Set the output precision for std::out
 	std::cout.precision(16);
 
+	return;
+}
+
+void PetscSolver::setTimes(double finalTime, double dt) {
+	PetscErrorCode ierr;
+
+	// Get the default values for the dt
+	TSAdapt adapt;
+	ierr = TSGetAdapt(ts, &adapt);
+	checkPetscError(ierr, "PetscSolver::setTimes: TSGetAdapt failed.");
+	PetscReal hmin, hmax;
+	ierr = TSAdaptGetStepLimits(adapt, &hmin, &hmax);
+	checkPetscError(ierr,
+			"PetscSolver::setTimes: TSAdaptGetStepLimits failed.");
+	// Set the new max value
+	ierr = TSAdaptSetStepLimits(adapt, hmin, dt);
+	checkPetscError(ierr,
+			"PetscSolver::setTimes: TSAdaptSetStepLimits failed.");
+
+	// Give the final time value to the solver
+	ierr = TSSetMaxTime(ts, finalTime);
+	checkPetscError(ierr, "PetscSolver::setTimes: TSSetMaxTime failed.");
+
+	return;
+}
+
+void PetscSolver::initGBLocation() {
+	// Initialize the concentrations in the solution vector
+	auto &solverHandler = Solver::getSolverHandler();
+	solverHandler.initGBLocation(da, C);
+
+	return;
+}
+
+std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > PetscSolver::getConcVector() {
+	auto &solverHandler = Solver::getSolverHandler();
+
+	return solverHandler.getConcVector(da, C);
+}
+
+void PetscSolver::setConcVector(
+		std::vector<
+				std::vector<std::vector<std::vector<std::pair<int, double> > > > > &concVector) {
+	auto &solverHandler = Solver::getSolverHandler();
+
+	return solverHandler.setConcVector(da, C, concVector);
+}
+
+double PetscSolver::getCurrentDt() {
+	PetscErrorCode ierr;
+
+	// Get the value from the solver
+	double currentTimeStep;
+	ierr = TSGetTimeStep(ts, &currentTimeStep);
+	checkPetscError(ierr, "PetscSolver::getCurrentDt: TSGetTimeStep failed.");
+
+	return currentTimeStep;
+}
+
+void PetscSolver::setCurrentTimes(double time, double dt) {
+	PetscErrorCode ierr;
+
+	// Give the values to the solver
+	ierr = TSSetTime(ts, time);
+	checkPetscError(ierr, "PetscSolver::setCurrentTimes: TSSetTime failed.");
+	ierr = TSSetTimeStep(ts, dt);
+	checkPetscError(ierr,
+			"PetscSolver::setCurrentTimes: TSSetTimeStep failed.");
+
+	return;
+}
+
+void PetscSolver::solve() {
+	PetscErrorCode ierr;
+	// Start the solve Timer
+	SolveTimer->start();
+
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Solve the ODE system
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	if (ts != NULL && C != NULL) {
+//		// Push the options for the solve
+//		ierr = PetscOptionsPush(petscOptions);
+//		checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPush failed.");
+		// Reset the time step number
+		ierr = TSSetStepNumber(ts, 0);
+		checkPetscError(ierr, "PetscSolver::solve: Reset Step Number failed.");
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr, "PetscSolver::solve: TSSolve failed.");
 
@@ -389,10 +469,48 @@ void PetscSolver::solve() {
 
 			outputFile.close();
 		}
+
+//		// Popping the option database
+//		ierr = PetscOptionsPop();
+//		checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPop failed.");
 	} else {
 		throw std::string(
 				"PetscSolver Exception: Unable to solve! Data not configured properly.");
 	}
+	// Stop the timer
+	SolveTimer->stop();
+
+	return;
+}
+
+bool PetscSolver::getConvergenceStatus() {
+	PetscErrorCode ierr;
+
+	// Get the converged reason from PETSc
+	TSConvergedReason reason;
+	ierr = TSGetConvergedReason(ts, &reason);
+	checkPetscError(ierr,
+			"PetscSolver::getConvergenceStatus: TSGetConvergedReason failed.");
+
+	// Check if it was sent by the user
+	bool userReason = false;
+	if (reason == TS_CONVERGED_USER)
+		userReason = true;
+
+	// Share the information with all the processes
+	bool totalReason = false;
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	MPI_Allreduce(&userReason, &totalReason, 1, MPI_C_BOOL, MPI_LOR,
+			xolotlComm);
+
+	if (totalReason)
+		return false;
+
+	return true;
+}
+
+void PetscSolver::finalize(bool isStandalone) {
+	PetscErrorCode ierr;
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Free work space.
@@ -404,16 +522,22 @@ void PetscSolver::solve() {
 	ierr = DMDestroy(&da);
 	checkPetscError(ierr, "PetscSolver::solve: DMDestroy failed.");
 
+	if (isStandalone) {
+		ierr = PetscFinalize();
+		checkPetscError(ierr, "PetscSolver::finalize: PetscFinalize failed.");
+	}
+
 	return;
 }
 
-void PetscSolver::finalize() {
+double PetscSolver::getXolotlTime() {
 	PetscErrorCode ierr;
 
-	ierr = PetscFinalize();
-	checkPetscError(ierr, "PetscSolver::finalize: PetscFinalize failed.");
-
-	return;
+	// The most recent time that Xolotl converged
+	PetscReal CurrentXolotlTime;
+	ierr = TSGetTime(ts, &CurrentXolotlTime);
+	checkPetscError(ierr, "PetscSolver::getXolotlTime: TSGetTime failed.");
+	return CurrentXolotlTime;
 }
 
 } /* end namespace xolotlSolver */

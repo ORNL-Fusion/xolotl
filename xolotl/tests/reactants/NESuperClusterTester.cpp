@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(checkConnectivity) {
 	network->reinitializeConnectivities();
 
 	// Check the reaction connectivity of the super cluster
-	auto& reactant = network->getAll(ReactantType::NESuper).begin()->second;
+	auto &reactant = network->getAll(ReactantType::NESuper).begin()->second;
 
 	// Check the type name
 	BOOST_REQUIRE(ReactantType::NESuper == reactant->getType());
@@ -122,10 +122,10 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 	network->reinitializeConnectivities();
 
 	// Get the super cluster
-	auto& cluster = network->getAll(ReactantType::NESuper).begin()->second;
+	auto &cluster = network->getAll(ReactantType::NESuper).begin()->second;
 
 	// Get one that it combines with (Xe1)
-	auto secondCluster = (NECluster *) network->get(Species::Xe, 1);
+	auto secondCluster = (NECluster*) network->get(Species::Xe, 1);
 	// Set the temperature and concentration
 	network->setTemperature(1000.0, 0);
 	cluster->setConcentration(0.5);
@@ -148,8 +148,9 @@ BOOST_AUTO_TEST_CASE(checkFluxCalculations) {
 BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	// Local Declarations
 	// The vector of partial derivatives to compare with
-	double knownPartials[] = {0.0707013, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -6.28937e-37,
-		6.56326e-37, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 6.28937e-37, -6.56326e-37, 0, 0};
+	double knownPartials[] = { 0.0707013, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			-1.257873e-36, 1.31265139e-36, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+			1.257873e-36, -1.31265139e-36, 0, 0 };
 
 	// Create the parameter file
 	std::ofstream paramFile("param.txt");
@@ -192,7 +193,7 @@ BOOST_AUTO_TEST_CASE(checkPartialDerivatives) {
 	network->reinitializeConnectivities();
 
 	// Check the reaction connectivity of the super cluster
-	auto& cluster = network->getAll(ReactantType::NESuper).begin()->second;
+	auto &cluster = network->getAll(ReactantType::NESuper).begin()->second;
 	// Set the cluster concentration
 	cluster->setConcentration(0.5);
 
@@ -249,7 +250,7 @@ BOOST_AUTO_TEST_CASE(checkReactionRadius) {
 	auto network = loader.generate(opts);
 
 	// Check the reaction radius of the super cluster
-	auto& cluster = network->getAll(ReactantType::NESuper).begin()->second;
+	auto &cluster = network->getAll(ReactantType::NESuper).begin()->second;
 	BOOST_REQUIRE_CLOSE(1.258960425, cluster->getReactionRadius(), 0.001);
 
 	// Remove the created file

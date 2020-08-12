@@ -117,7 +117,7 @@ protected:
 	 * Private nullary constructor.
 	 */
 	PSIClusterNetworkLoader() :
-			NetworkLoader(), vMin(1000000), maxHe(0), maxI(0), maxV(0), maxD(0), maxT(0) {
+			NetworkLoader(), vMin(1000000), maxHe(0), maxD(0), maxT(0), maxI(0), maxV(0) {
 	}
 
 	/**

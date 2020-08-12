@@ -25,8 +25,8 @@ double NEClusterReactionNetwork::calculateDissociationConstant(
 	if (!dissociationsEnabled)
 		return 0.0;
 
-	// Compute the atomic volume
-	double atomicVolume = 0.5 * latticeParameter * latticeParameter
+	// Compute the atomic volume, 4 U per cell
+	double atomicVolume = 0.25 * latticeParameter * latticeParameter
 			* latticeParameter;
 
 	// Get the rate constant from the reverse reaction
@@ -282,12 +282,9 @@ IReactant * NEClusterReactionNetwork::getSuperFromComp(IReactant::SizeType nXe,
 
 void NEClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 
-	// Degrees of freedom is the total number of clusters in the network
-	const int dof = getDOF();
-
 	// Get the connectivity for each reactant
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&fillMap, &dof, this](const IReactant& reactant) {
+			[&fillMap, this](const IReactant& reactant) {
 				// Get the reactant and its connectivity
 				auto const& connectivity = reactant.getConnectivity();
 				auto connectivityLength = connectivity.size();

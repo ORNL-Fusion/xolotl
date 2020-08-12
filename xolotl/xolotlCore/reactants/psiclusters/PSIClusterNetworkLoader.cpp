@@ -15,6 +15,7 @@
 #include <PSIDCluster.h>
 #include <PSITCluster.h>
 #include <MathUtils.h>
+#include <MPIUtils.h>
 #include <cassert>
 
 using namespace xolotlCore;
@@ -229,7 +230,7 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::load(
 
 	std::string error(
 			"PSIClusterNetworkLoader Exception: Insufficient or erroneous data.");
-	int numHe = 0, numV = 0, numI = 0, numW = 0, numD = 0, numT = 0;
+	int numHe = 0, numV = 0, numI = 0, numD = 0, numT = 0;
 	double formationEnergy = 0.0, migrationEnergy = 0.0;
 	double diffusionFactor = 0.0;
 	std::vector<std::reference_wrapper<Reactant> > reactants;
@@ -302,7 +303,8 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::load(
 
 //	// Dump the network we've created, if desired.
 //	int rank;
-//	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+//	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+//	MPI_Comm_rank(xolotlComm, &rank);
 //	if (rank == 0) {
 //		// Dump the network we've created for comparison with baseline.
 //		std::ofstream networkStream(netDebugOpts.second);
@@ -779,7 +781,8 @@ std::unique_ptr<IReactionNetwork> PSIClusterNetworkLoader::generate(
 
 //	// Dump the network we've created, if desired.
 //	int rank;
-//	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+//	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+//	MPI_Comm_rank(xolotlComm, &rank);
 //	if (rank == 0) {
 //		// Dump the network we've created for comparison with baseline.
 //		std::ofstream networkStream(netDebugOpts.second);
@@ -927,7 +930,9 @@ void PSIClusterNetworkLoader::applySectionalGrouping(
 
 	// Print the total size before grouping
 	int procId;
-	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0)
 		std::cout << "Total size: " << network.size() + heVList.size()
 				<< std::endl;

@@ -330,6 +330,11 @@ protected:
 	 */
 	double heVRatio;
 
+	/**
+	 * Migration energy above which the diffusion will be ignored
+	 */
+	double migrationThreshold;
+
 public:
 
 	/**
@@ -347,7 +352,7 @@ public:
 	 * xolotl options.
 	 * \see IOptions.h
 	 */
-	void readParams(int argc, char* argv[]) override;
+	void readParams(int argc, char *argv[]) override;
 
 	/**
 	 * Should the program run after parsing the parameter file?
@@ -891,6 +896,14 @@ public:
 	 */
 	virtual double getHeVRatio() const override {
 		return heVRatio;
+	}
+
+	/**
+	 * Obtain the value of the migration threshold
+	 * \see IOptions.h
+	 */
+	virtual double getMigrationThreshold() const override {
+		return migrationThreshold;
 	}
 
 };

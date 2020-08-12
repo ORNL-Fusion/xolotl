@@ -20,6 +20,7 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlSolver/monitor
                     ${CMAKE_SOURCE_DIR}/xolotlCore
                     ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline/optionhandlers
                     ${CMAKE_SOURCE_DIR}/xolotlCore/io
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters
@@ -48,5 +49,4 @@ target_link_libraries(${LIBRARY_NAME} xolotlReactants xolotlIO xolotlCL xolotlDi
 xolotlAdvection xolotlFlux xolotlModified ${PETSC_LIBRARIES} xolotlPerf xolotlViz)
 
 #Install the xolotl header files
-install(FILES ${HEADERS} DESTINATION include)
-install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)

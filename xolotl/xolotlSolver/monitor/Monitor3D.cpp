@@ -18,6 +18,7 @@
 #include <PSISuperCluster.h>
 #include <NESuperCluster.h>
 #include <MathUtils.h>
+#include <MPIUtils.h>
 #include "RandomNumberGenerator.h"
 #include "xolotlCore/io/XFile.h"
 #include "xolotlSolver/monitor/Monitor.h"
@@ -35,7 +36,6 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
-extern double previousTime;
 extern double timeStepThreshold;
 
 //! How often HDF5 file is written
@@ -63,6 +63,70 @@ std::vector<int> indices3D;
 std::vector<int> weights3D;
 // Declare the vector that will store the radii of bubbles
 std::vector<double> radii3D;
+// The id of the largest cluster
+int largestClusterId3D = -1;
+// The concentration threshold for the largest cluster
+double largestThreshold3D = 1.0e-12;
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorLargest3D")
+/**
+ * This is a monitoring method that looks at the largest cluster concentration
+ */
+PetscErrorCode monitorLargest3D(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void*) {
+	// Initial declaration
+	PetscErrorCode ierr;
+	double ****solutionArray, *gridPointSolution;
+	PetscInt xs, xm, ys, ym, zs, zm;
+
+	PetscFunctionBeginUser;
+
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	// Get the number of processes
+	int worldSize;
+	MPI_Comm_size(xolotlComm, &worldSize);
+	// Gets the process ID (important when it is running in parallel)
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the solutionArray
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Get the corners of the grid
+	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
+	CHKERRQ(ierr);
+
+	// Loop on the local grid
+	for (PetscInt k = zs; k < zs + zm; k++)
+		for (PetscInt j = ys; j < ys + ym; j++)
+			for (PetscInt i = xs; i < xs + xm; i++) {
+				// Get the pointer to the beginning of the solution data for this grid point
+				gridPointSolution = solutionArray[k][j][i];
+				// Check the concentration
+				if (gridPointSolution[largestClusterId3D]
+						> largestThreshold3D) {
+					ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
+					CHKERRQ(ierr);
+					// Send an error
+					throw std::string(
+							"\nxolotlSolver::Monitor3D: The largest cluster concentration is too high!!");
+				}
+			}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop3D")
@@ -70,7 +134,7 @@ std::vector<double> radii3D;
  * This is a monitoring method that will update an hdf5 file at each time step.
  */
 PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double ****solutionArray, *gridPointSolution;
@@ -78,7 +142,11 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
+	// Get the solver handler
+	auto &solverHandler = PetscSolver::getSolverHandler();
+
 	// Compute the dt
+	double previousTime = solverHandler.getPreviousTime();
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
@@ -90,13 +158,10 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	if ((int) ((time + dt / 10.0) / hdf5Stride3D) > hdf5Previous3D)
 		hdf5Previous3D++;
 
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
-
 	// Gets the process ID (important when it is running in parallel)
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -112,15 +177,12 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
-
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 
 	// Network size
 	const int dof = network.getDOF();
@@ -141,7 +203,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Open the existing HDF5 file.
-	xolotlCore::XFile checkpointFile(hdf5OutputName3D, PETSC_COMM_WORLD,
+	xolotlCore::XFile checkpointFile(hdf5OutputName3D, xolotlComm,
 			xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
@@ -167,7 +229,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 		for (PetscInt j = 0; j < My; j++) {
 			for (PetscInt i = 0; i < Mx; i++) {
 				// Wait for all the processes
-				MPI_Barrier (PETSC_COMM_WORLD);
+				MPI_Barrier(xolotlComm);
 
 				// Size of the concentration that will be stored
 				int concSize = -1;
@@ -204,10 +266,10 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
 				// Get which processor will send the information
 				int concProc = 0;
 				MPI_Allreduce(&concId, &concProc, 1, MPI_INT, MPI_SUM,
-						PETSC_COMM_WORLD);
+						xolotlComm);
 
 				// Broadcast the size
-				MPI_Bcast(&concSize, 1, MPI_INT, concProc, PETSC_COMM_WORLD);
+				MPI_Bcast(&concSize, 1, MPI_INT, concProc, xolotlComm);
 
 				// Skip the grid point if the size is 0
 				if (concSize == 0)
@@ -233,7 +295,7 @@ PetscErrorCode startStop3D(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that will compute the helium retention.
  */
 PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm, ys, ym, zs, zm, Mx, My, Mz;
@@ -241,7 +303,7 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the flux handler that will be used to compute fluxes.
 	auto fluxHandler = solverHandler.getFluxHandler();
@@ -256,15 +318,15 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 	// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid in the x direction
 	auto grid = solverHandler.getXGrid();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 
 	// Setup step size variables
 	double hy = solverHandler.getStepSizeY();
@@ -313,8 +375,9 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 	}
 
 	// Get the current process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Determine total concentrations for He, D, T.
 	std::array<double, 3> myConcData { heConcentration, dConcentration,
@@ -323,7 +386,7 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 	MPI_DOUBLE,
-	MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_SUM, 0, xolotlComm);
 
 	// Extract total He, D, T concentrations.  Values are valid only on rank 0.
 	double totalHeConcentration = totalConcData[0];
@@ -336,8 +399,8 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
 		// Get the total size of the grid rescale the concentrations
 		PetscInt Mx, My, Mz;
 		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 		CHKERRQ(ierr);
 
 		// Compute the total surface irradiated by the helium flux
@@ -380,7 +443,7 @@ PetscErrorCode computeHeliumRetention3D(TS ts, PetscInt, PetscReal time,
  * This is a monitoring method that will compute the xenon retention
  */
 PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -389,7 +452,7 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the da from ts
 	DM da;
@@ -403,8 +466,8 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	// Get the total size of the grid
 	PetscInt Mx, My, Mz;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -415,11 +478,19 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 	double hz = solverHandler.getStepSizeZ();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	ierr = DMGetLocalVector(da, &localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
 	// Get the array of concentration
 	PetscReal ****solutionArray, *gridPointSolution;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
@@ -428,6 +499,7 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 
 	// Get the minimum size for the radius
 	auto minSizes = solverHandler.getMinSizes();
+	double sphereFactor = 4.0 * xolotlCore::pi / 3.0;
 
 	// Loop on the grid
 	for (PetscInt zk = zs; zk < zs + zm; zk++) {
@@ -442,6 +514,9 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 				// Update the concentration in the network
 				network.updateConcentrationsFromArray(gridPointSolution);
 
+				// Initialize the volume fraction
+				double volumeFrac = 0.0;
+
 				// Loop on all the indices
 				for (unsigned int i = 0; i < indices3D.size(); i++) {
 					// Add the current concentration times the number of xenon in the cluster
@@ -453,13 +528,21 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 					if (weights3D[i] >= minSizes[0] && conc > 1.0e-16) {
 						partialBubbleConcentration += conc * hx * hy * hz;
 						partialRadii += conc * radii3D[i] * hx * hy * hz;
+						// Update the volume fraction
+						volumeFrac += gridPointSolution[indices3D[i]]
+								* sphereFactor * pow(radii3D[i], 3.0);
 					}
+					// Set the monomer concentration
+					if (weights3D[i] == 1)
+						solverHandler.setMonomerConc(
+								gridPointSolution[indices3D[i]], xi - xs,
+								yj - ys, zk - zs);
 				}
 
 				// Loop on all the super clusters
-				for (auto const& superMapItem : network.getAll(
+				for (auto const &superMapItem : network.getAll(
 						ReactantType::NESuper)) {
-					auto const& cluster =
+					auto const &cluster =
 							static_cast<NESuperCluster&>(*(superMapItem.second));
 					double conc = cluster.getTotalConcentration();
 					xeConcentration += cluster.getTotalXenonConcentration() * hx
@@ -470,33 +553,159 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 						partialBubbleConcentration += conc * hx * hy * hz;
 						partialRadii += conc * cluster.getReactionRadius() * hx
 								* hy * hz;
+						// Update the volume fraction
+						volumeFrac += cluster.getTotalConcentration()
+								* sphereFactor
+								* pow(cluster.getReactionRadius(), 3.0);
 					}
 				}
+
+				// Set the volume fraction
+				solverHandler.setVolumeFraction(volumeFrac, xi - xs, yj - ys,
+						zk - zs);
 			}
 		}
 	}
 
 	// Get the current process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Sum all the concentrations through MPI reduce
 	std::array<double, 5> myConcData { xeConcentration, bubbleConcentration,
 			radii, partialBubbleConcentration, partialRadii };
 	std::array<double, 5> totalConcData { 0.0, 0.0, 0.0, 0.0, 0.0 };
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
-	MPI_DOUBLE, MPI_SUM, 0, PETSC_COMM_WORLD);
+	MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
-	// Master process
+	// GB
+	// Get the delta time from the previous timestep to this timestep
+	double dt = time - solverHandler.getPreviousTime();
+	// Sum and gather the previous flux
+	double globalXeFlux = 0.0;
+	// Get the vector from the solver handler
+	auto gbVector = solverHandler.getGBVector();
+	// Get the previous flux vector
+	auto &localNE = solverHandler.getLocalNE();
+	// Loop on the GB
+	for (auto const &pair : gbVector) {
+		// Middle
+		int xi = std::get<0>(pair);
+		int yj = std::get<1>(pair);
+		int zk = std::get<2>(pair);
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
+				&& zk < zs + zm) {
+			double previousXeFlux = std::get<1>(
+					localNE[xi - xs][yj - ys][zk - zs]);
+			globalXeFlux += previousXeFlux * (grid[xi + 1] - grid[xi]) * hy
+					* hz;
+			// Set the amount in the vector we keep
+			solverHandler.setLocalXeRate(previousXeFlux * dt, xi - xs, yj - ys,
+					zk - zs);
+		}
+	}
+	double totalXeFlux = 0.0;
+	MPI_Reduce(&globalXeFlux, &totalXeFlux, 1, MPI_DOUBLE, MPI_SUM, 0,
+			xolotlComm);
+// Master process
+	if (procId == 0) {
+		// Get the previous value of Xe that went to the GB
+		double nXenon = solverHandler.getNXeGB();
+		// Compute the total number of Xe that went to the GB
+		nXenon += totalXeFlux * dt;
+		solverHandler.setNXeGB(nXenon);
+	}
+
+// Loop on the GB
+	for (auto const &pair : gbVector) {
+		// Local rate
+		double localRate = 0.0;
+		// Define left and right with reference to the middle point
+		// Middle
+		int xi = std::get<0>(pair);
+		int yj = std::get<1>(pair);
+		int zk = std::get<2>(pair);
+		double hxLeft = grid[xi + 1] - grid[xi];
+		double hxRight = grid[xi + 2] - grid[xi + 1];
+
+		// Check we are on the right proc
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
+				&& zk < zs + zm) {
+
+			// X segment
+			// Left
+			xi = std::get<0>(pair) - 1;
+			// Get the Xe_1 cluster
+			auto const &cluster = *(network.get(Species::Xe, 1));
+			// Get its id
+			int id = cluster.getId() - 1;
+			// Get its size and diffusion coefficient
+			int size = cluster.getSize();
+			// Compute the flux coming from the left
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+					/ ((hxLeft + hxRight) * hxLeft);
+
+			// Right
+			xi = std::get<0>(pair) + 1;
+			// Compute the flux coming from the right
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
+					/ ((hxLeft + hxRight) * hxRight);
+
+			// Y segment
+			// Bottom
+			xi = std::get<0>(pair);
+			yj = std::get<1>(pair) - 1;
+			// Compute the flux coming from the bottom
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hy * hy);
+
+			// Top
+			yj = std::get<1>(pair) + 1;
+			// Compute the flux coming from the top
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hy * hy);
+
+			// Z segment
+			// Back
+			yj = std::get<1>(pair);
+			zk = std::get<2>(pair) - 1;
+			// Compute the flux coming from the back
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hz * hz);
+
+			// Front
+			zk = std::get<2>(pair) + 1;
+			// Compute the flux coming from the front
+			localRate += (double) size * solutionArray[zk][yj][xi][id]
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) / (hz * hz);
+
+			// Middle
+			xi = std::get<0>(pair);
+			yj = std::get<1>(pair);
+			zk = std::get<2>(pair);
+			solverHandler.setPreviousXeFlux(localRate, xi - xs, yj - ys,
+					zk - zs);
+		}
+	}
+
+// Master process
 	if (procId == 0) {
 		// Compute the total surface irradiated
 		double surface = (double) My * hy * (double) Mz * hz;
+		// Get the number of Xe that went to the GB
+		double nXenon = solverHandler.getNXeGB();
 
 		totalConcData[0] = totalConcData[0] / surface;
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
 		std::cout << "Xenon concentration = " << totalConcData[0] << std::endl
+				<< std::endl;
+		std::cout << "Xenon GB = " << nXenon / surface << std::endl
 				<< std::endl;
 
 		// Make sure the average partial radius makes sense
@@ -514,12 +723,14 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		outputFile.open("retentionOut.txt", ios::app);
 		outputFile << time << " " << totalConcData[0] << " "
 				<< totalConcData[2] / totalConcData[1] << " "
-				<< averagePartialRadius << std::endl;
+				<< averagePartialRadius << " " << nXenon / surface << std::endl;
 		outputFile.close();
 	}
 
-	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray);
+	CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(da, &localSolution);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
@@ -532,51 +743,52 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
  */
 PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 		Vec solution, void *ictx) {
-	// Initial declarations
+// Initial declarations
 	PetscErrorCode ierr;
 	PetscInt xs, xm, ys, ym, zs, zm;
 
 	PetscFunctionBeginUser;
 
-	// Get the number of processes
+// Get the number of processes
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int worldSize;
-	MPI_Comm_size(PETSC_COMM_WORLD, &worldSize);
+	MPI_Comm_size(xolotlComm, &worldSize);
 
-	// Gets the process ID
+// Gets the process ID
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+// Get the solver handler
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the network
-	auto& network = solverHandler.getNetwork();
+// Get the network
+	auto &network = solverHandler.getNetwork();
 
-	// Get the da from ts
+// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
+// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
 	CHKERRQ(ierr);
 
-	// Get the total size of the grid rescale the concentrations
+// Get the total size of the grid rescale the concentrations
 	PetscInt Mx, My, Mz;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
-	// Get the physical grid
+// Get the physical grid
 	auto grid = solverHandler.getXGrid();
 
-	// Get the array of concentration
+// Get the array of concentration
 	double ****solutionArray, *gridPointSolution;
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Create the output file
+// Create the output file
 	std::ofstream outputFile;
 	if (procId == 0) {
 		std::stringstream name;
@@ -584,7 +796,7 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 		outputFile.open(name.str());
 	}
 
-	// Loop on the entire grid
+// Loop on the entire grid
 	for (int xi = 0; xi < Mx; xi++) {
 		// Set x
 		double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
@@ -628,9 +840,9 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 
 		MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 		MPI_DOUBLE,
-		MPI_SUM, 0, PETSC_COMM_WORLD);
+		MPI_SUM, 0, xolotlComm);
 
-		// The master process writes computes the cumulative value and writes in the file
+		// The master process writes the cumulative value and writes in the file
 		if (procId == 0) {
 			outputFile
 					<< x
@@ -644,12 +856,12 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
 		}
 	}
 
-	// Close the file
+// Close the file
 	if (procId == 0) {
 		outputFile.close();
 	}
 
-	// Restore the solutionArray
+// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
@@ -663,8 +875,8 @@ PetscErrorCode computeTRIDYN3D(TS ts, PetscInt timestep, PetscReal time,
  * a specific cluster at each grid point on the XY surface, integrating over Z.
  */
 PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
-	// Initial declarations
+		Vec solution, void*) {
+// Initial declarations
 	PetscErrorCode ierr;
 	const double ****solutionArray, *gridPointSolution;
 	PetscInt xs, xm, Mx, ys, ym, My, zs, zm, Mz;
@@ -672,54 +884,55 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
-	// Don't do anything if it is not on the stride
+// Don't do anything if it is not on the stride
 	if (timestep % 10 != 0)
 		PetscFunctionReturn(0);
 
-	// Gets the process ID
+// Gets the process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Get the da from ts
+// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
-	// Get the solutionArray
+// Get the solutionArray
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
+// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
 	CHKERRQ(ierr);
-	// Get the size of the total grid
+// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+// Get the solver handler
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the network
-	auto& network = solverHandler.getNetwork();
+// Get the network
+	auto &network = solverHandler.getNetwork();
 
-	// Get the physical grid in the x direction
+// Get the physical grid in the x direction
 	auto grid = solverHandler.getXGrid();
 
-	// Setup step size variables
+// Setup step size variables
 	double hy = solverHandler.getStepSizeY();
 
-	// Choice of the cluster to be plotted
+// Choice of the cluster to be plotted
 	int iCluster = 0;
 
-	// Create a Point vector to store the data to give to the data provider
-	// for the visualization
+// Create a Point vector to store the data to give to the data provider
+// for the visualization
 	auto myPoints = std::make_shared<std::vector<xolotlViz::Point> >();
-	// Create a point here so that it is not created and deleted in the loop
+// Create a point here so that it is not created and deleted in the loop
 	xolotlViz::Point thePoint;
 
-	// Loop on the full grid, Y and X first because they are the axis of the plot
+// Loop on the full grid, Y and X first because they are the axis of the plot
 	for (PetscInt j = 0; j < My; j++) {
 		// Compute y
 		y = (double) j * hy;
@@ -746,7 +959,7 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
 			// Sum all the concentration on Z
 			double totalConc = 0.0;
 			MPI_Reduce(&conc, &totalConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-					PETSC_COMM_WORLD);
+					xolotlComm);
 
 			// If it is procId == 0 just store the integrated value in the myPoints vector
 			if (procId == 0) {
@@ -759,14 +972,14 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
 		}
 	}
 
-	// Plot everything from procId == 0
+// Plot everything from procId == 0
 	if (procId == 0) {
 		// Get the data provider and give it the points
 		surfacePlotXY3D->getDataProvider()->setPoints(myPoints);
 
 		// Get the iCluster cluster to have access to its name
-		auto const& reactants = network.getAll();
-		IReactant const& cluster = reactants.at(iCluster);
+		auto const &reactants = network.getAll();
+		IReactant const &cluster = reactants.at(iCluster);
 
 		// Change the title of the plot and the name of the data
 		std::stringstream title;
@@ -794,7 +1007,7 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
 		surfacePlotXY3D->write(fileName.str());
 	}
 
-	// Restore the solutionArray
+// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
@@ -808,8 +1021,8 @@ PetscErrorCode monitorSurfaceXY3D(TS ts, PetscInt timestep, PetscReal time,
  * a specific cluster at each grid point on the XZ surface, integrating over Y.
  */
 PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
-	// Initial declarations
+		Vec solution, void*) {
+// Initial declarations
 	PetscErrorCode ierr;
 	const double ****solutionArray, *gridPointSolution;
 	PetscInt xs, xm, Mx, ys, ym, My, zs, zm, Mz;
@@ -817,54 +1030,55 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 
 	PetscFunctionBeginUser;
 
-	// Don't do anything if it is not on the stride
+// Don't do anything if it is not on the stride
 	if (timestep % 10 != 0)
 		PetscFunctionReturn(0);
 
-	// Gets the process ID
+// Gets the process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Get the da from ts
+// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
-	// Get the solutionArray
+// Get the solutionArray
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
+// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
 	CHKERRQ(ierr);
-	// Get the size of the total grid
+// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+// Get the solver handler
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the network
-	auto& network = solverHandler.getNetwork();
+// Get the network
+	auto &network = solverHandler.getNetwork();
 
-	// Get the physical grid in the x direction
+// Get the physical grid in the x direction
 	auto grid = solverHandler.getXGrid();
 
-	// Setup step size variables
+// Setup step size variables
 	double hz = solverHandler.getStepSizeZ();
 
-	// Choice of the cluster to be plotted
+// Choice of the cluster to be plotted
 	int iCluster = 0;
 
-	// Create a Point vector to store the data to give to the data provider
-	// for the visualization
+// Create a Point vector to store the data to give to the data provider
+// for the visualization
 	auto myPoints = std::make_shared<std::vector<xolotlViz::Point> >();
-	// Create a point here so that it is not created and deleted in the loop
+// Create a point here so that it is not created and deleted in the loop
 	xolotlViz::Point thePoint;
 
-	// Loop on the full grid, Z and X first because they are the axis of the plot
+// Loop on the full grid, Z and X first because they are the axis of the plot
 	for (PetscInt k = 0; k < Mz; k++) {
 		// Compute z
 		z = (double) k * hz;
@@ -891,7 +1105,7 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 			// Sum all the concentration on Y
 			double totalConc = 0.0;
 			MPI_Reduce(&conc, &totalConc, 1, MPI_DOUBLE, MPI_SUM, 0,
-					PETSC_COMM_WORLD);
+					xolotlComm);
 
 			// If it is procId == 0 just store the integrated value in the myPoints vector
 			if (procId == 0) {
@@ -904,14 +1118,14 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 		}
 	}
 
-	// Plot everything from procId == 0
+// Plot everything from procId == 0
 	if (procId == 0) {
 		// Get the data provider and give it the points
 		surfacePlotXZ3D->getDataProvider()->setPoints(myPoints);
 
 		// Get the iCluster cluster to have access to its name
-		auto const& reactants = network.getAll();
-		IReactant const& cluster = reactants.at(iCluster);
+		auto const &reactants = network.getAll();
+		IReactant const &cluster = reactants.at(iCluster);
 
 		// Change the title of the plot and the name of the data
 		std::stringstream title;
@@ -939,7 +1153,7 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
 		surfacePlotXZ3D->write(fileName.str());
 	}
 
-	// Restore the solutionArray
+// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
@@ -952,8 +1166,8 @@ PetscErrorCode monitorSurfaceXZ3D(TS ts, PetscInt timestep, PetscReal time,
  * This is a method that checks if the surface should move or bursting happen
  */
 PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
-		PetscScalar *fvalue, void *) {
-	// Initial declaration
+		PetscScalar *fvalue, void*) {
+// Initial declaration
 	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
 	PetscInt xs, xm, xi, Mx, ys, ym, yj, My, zs, zm, zk, Mz;
@@ -962,47 +1176,48 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 
 	PetscFunctionBeginUser;
 
-	// Gets the process ID
+// Gets the process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Get the da from ts
+// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
-	// Get the solutionArray
+// Get the solutionArray
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
+// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
 	CHKERRQ(ierr);
 
-	// Get the size of the total grid
+// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+// Get the solver handler
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the network
-	auto& network = solverHandler.getNetwork();
-	// Get the physical grid and step size
+// Get the network
+	auto &network = solverHandler.getNetwork();
+// Get the physical grid and step size
 	auto grid = solverHandler.getXGrid();
 	double hy = solverHandler.getStepSizeY();
 	double hz = solverHandler.getStepSizeZ();
 
-	// Get the flux handler to know the flux amplitude.
+// Get the flux handler to know the flux amplitude.
 	auto fluxHandler = solverHandler.getFluxHandler();
 	double heliumFluxAmplitude = fluxHandler->getFluxAmplitude();
 
-	// Get the delta time from the previous timestep to this timestep
-	double dt = time - previousTime;
+// Get the delta time from the previous timestep to this timestep
+	double dt = time - solverHandler.getPreviousTime();
 
-	// Work of the moving surface first
+// Work of the moving surface first
 	if (solverHandler.moveSurface()) {
 		// Write the initial surface positions
 		if (procId == 0 && xolotlCore::equal(time, 0.0)) {
@@ -1066,9 +1281,9 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 					double factor = 2.0 / (hxLeft + hxRight);
 
 					// Loop on all the interstitial clusters to add the contribution from deeper
-					for (auto const& iMapItem : network.getAll(ReactantType::I)) {
+					for (auto const &iMapItem : network.getAll(ReactantType::I)) {
 						// Get the cluster
-						auto const& cluster = *(iMapItem.second);
+						auto const &cluster = *(iMapItem.second);
 						// Get its id and concentration
 						int id = cluster.getId() - 1;
 						double conc = gridPointSolution[id];
@@ -1083,7 +1298,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 				// Gather newFlux values at this position
 				double newTotalFlux = 0.0;
 				MPI_Allreduce(&newFlux, &newTotalFlux, 1, MPI_DOUBLE, MPI_SUM,
-						PETSC_COMM_WORLD);
+						xolotlComm);
 
 				// Update the previous flux
 				previousIFlux3D[yj][zk] = newTotalFlux;
@@ -1107,7 +1322,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 		}
 	}
 
-	// Now work on the bubble bursting
+// Now work on the bubble bursting
 	if (solverHandler.burstBubbles()) {
 		// Compute the prefactor for the probability (arbitrary)
 		double prefactor = heliumFluxAmplitude * dt
@@ -1199,7 +1414,7 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 		}
 	}
 
-	// Restore the solutionArray
+// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
@@ -1214,62 +1429,63 @@ PetscErrorCode eventFunction3D(TS ts, PetscReal time, Vec solution,
 PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 		PetscInt eventList[], PetscReal time, Vec solution, PetscBool, void*) {
 
-	// Initial declaration
+// Initial declaration
 	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
 	PetscInt xs, xm, xi, Mx, ys, ym, yj, My, zs, zm, zk, Mz;
 
 	PetscFunctionBeginUser;
 
-	// Call monitor time hear because it is skipped when post event is used
+// Call monitor time hear because it is skipped when post event is used
 	ierr = computeFluence(ts, 0, time, solution, NULL);
 	CHKERRQ(ierr);
 	ierr = monitorTime(ts, 0, time, solution, NULL);
 	CHKERRQ(ierr);
 
-	// Check if the surface has moved
+// Check if the surface has moved
 	if (nevents == 0)
 		PetscFunctionReturn(0);
 
-	// Gets the process ID
+// Gets the process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Get the da from ts
+// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
-	// Get the solutionArray
+// Get the solutionArray
 	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
+// Get the corners of the grid
 	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
 	CHKERRQ(ierr);
 
-	// Get the size of the total grid
+// Get the size of the total grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+// Get the solver handler
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
-	// Get the network
-	auto& network = solverHandler.getNetwork();
+// Get the network
+	auto &network = solverHandler.getNetwork();
 	int dof = network.getDOF();
 
-	// Get the physical grid
+// Get the physical grid
 	auto grid = solverHandler.getXGrid();
-	// Get the step sizes
+// Get the step sizes
 	double hy = solverHandler.getStepSizeY();
 	double hz = solverHandler.getStepSizeZ();
 
-	// Take care of bursting
+// Take care of bursting
 
-	// Loop on each bursting depth
+// Loop on each bursting depth
 	for (int i = 0; i < depthPositions3D.size(); i++) {
 		// Get the coordinates of the point
 		int xi = std::get<2>(depthPositions3D[i]), yj = std::get<1>(
@@ -1290,22 +1506,22 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 
 		// Pinhole case
 		// Consider each He to reset their concentration at this grid point
-		for (auto const& heMapItem : network.getAll(ReactantType::He)) {
-			auto const& cluster = *(heMapItem.second);
+		for (auto const &heMapItem : network.getAll(ReactantType::He)) {
+			auto const &cluster = *(heMapItem.second);
 
 			int id = cluster.getId() - 1;
 			gridPointSolution[id] = 0.0;
 		}
 		// Consider each D to reset their concentration at this grid point
-		for (auto const& dMapItem : network.getAll(ReactantType::D)) {
-			auto const& cluster = *(dMapItem.second);
+		for (auto const &dMapItem : network.getAll(ReactantType::D)) {
+			auto const &cluster = *(dMapItem.second);
 
 			int id = cluster.getId() - 1;
 			gridPointSolution[id] = 0.0;
 		}
 		// Consider each T to reset their concentration at this grid point
-		for (auto const& tMapItem : network.getAll(ReactantType::T)) {
-			auto const& cluster = *(tMapItem.second);
+		for (auto const &tMapItem : network.getAll(ReactantType::T)) {
+			auto const &cluster = *(tMapItem.second);
 
 			int id = cluster.getId() - 1;
 			gridPointSolution[id] = 0.0;
@@ -1313,11 +1529,11 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 
 		// Consider each HeV cluster to transfer their concentration to the V cluster of the
 		// same size at this grid point
-		for (auto const& heVMapItem : network.getAll(ReactantType::PSIMixed)) {
-			auto const& cluster = *(heVMapItem.second);
+		for (auto const &heVMapItem : network.getAll(ReactantType::PSIMixed)) {
+			auto const &cluster = *(heVMapItem.second);
 
 			// Get the V cluster of the same size
-			auto const & comp = cluster.getComposition();
+			auto const &comp = cluster.getComposition();
 			auto vCluster = network.get(Species::V,
 					comp[toCompIdx(Species::V)]);
 			int vId = vCluster->getId() - 1;
@@ -1328,12 +1544,12 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 
 		// Loop on the super clusters to transfer their concentration to the V cluster of the
 		// same size at this grid point
-		for (auto const& superMapItem : network.getAll(ReactantType::PSISuper)) {
-			auto const& cluster =
+		for (auto const &superMapItem : network.getAll(ReactantType::PSISuper)) {
+			auto const &cluster =
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
 
 			// Loop on the V boundaries
-			for (auto const& j : cluster.getBounds(3)) {
+			for (auto const &j : cluster.getBounds(3)) {
 				// Get the total concentration at this v
 				double conc = cluster.getIntegratedVConcentration(j);
 				// Get the corresponding V cluster and its Id
@@ -1357,14 +1573,14 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 		}
 	}
 
-	// Now takes care of moving surface
+// Now takes care of moving surface
 	bool moving = false;
 	for (int i = 0; i < nevents; i++) {
 		if (eventList[i] == 0)
 			moving = true;
 	}
 
-	// Skip if nothing is moving
+// Skip if nothing is moving
 	if (!moving) {
 		// Restore the solutionArray
 		ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
@@ -1373,10 +1589,10 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 		PetscFunctionReturn(0);
 	}
 
-	// Get the initial vacancy concentration
+// Get the initial vacancy concentration
 	double initialVConc = solverHandler.getInitialVConc();
 
-	// Loop on the possible zk and yj
+// Loop on the possible zk and yj
 	for (zk = 0; zk < Mz; zk++) {
 		for (yj = 0; yj < My; yj++) {
 			// Get the position of the surface at yj
@@ -1445,7 +1661,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 				}
 				double surfTemp = 0.0;
 				MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM,
-						PETSC_COMM_WORLD);
+						xolotlComm);
 				// Loop on the new grid points
 				while (nGridPoints >= 0) {
 					// Position of the newly created grid point
@@ -1509,11 +1725,11 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 			}
 		}
 	}
-	// Get the modified trap-mutation handler to reinitialize it
+// Get the modified trap-mutation handler to reinitialize it
 	auto mutationHandler = solverHandler.getMutationHandler();
 	auto advecHandlers = solverHandler.getAdvectionHandlers();
 
-	// Get the vector of positions of the surface
+// Get the vector of positions of the surface
 	std::vector<std::vector<int> > surfaceIndices;
 	for (PetscInt i = 0; i < My; i++) {
 		// Create a temporary vector
@@ -1528,7 +1744,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 	mutationHandler->initializeIndex3D(surfaceIndices, network, advecHandlers,
 			grid, xm, xs, ym, hy, ys, zm, hz, zs);
 
-	// Write the surface positions
+// Write the surface positions
 	if (procId == 0) {
 		std::ofstream outputFile;
 		outputFile.open("surface.txt", ios::app);
@@ -1547,7 +1763,7 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
 		outputFile.close();
 	}
 
-	// Restore the solutionArray
+// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
@@ -1560,70 +1776,76 @@ PetscErrorCode postEventFunction3D(TS ts, PetscInt nevents,
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
-PetscErrorCode setupPetsc3DMonitor(TS ts) {
+PetscErrorCode setupPetsc3DMonitor(TS &ts) {
 	PetscErrorCode ierr;
 
-	// Get the process ID
+// Get the process ID
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
-	MPI_Comm_rank(PETSC_COMM_WORLD, &procId);
+	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Get the xolotlViz handler registry
+// Get the xolotlViz handler registry
 	auto vizHandlerRegistry = xolotlFactory::getVizHandlerRegistry();
 
-	// Flags to launch the monitors or not
+// Flags to launch the monitors or not
 	PetscBool flagCheck, flagPerf, flagHeRetention, flagXeRetention, flagStatus,
-			flag2DXYPlot, flag2DXZPlot, flagTRIDYN;
+			flag2DXYPlot, flag2DXZPlot, flagTRIDYN, flagLargest;
 
-	// Check the option -check_collapse
+// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-check_collapse) failed.");
 
-	// Check the option -plot_perf
+// Check the option -plot_perf
 	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-plot_perf) failed.");
 
-	// Check the option -plot_2d_xy
+// Check the option -plot_2d_xy
 	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d_xy", &flag2DXYPlot);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xy) failed.");
 
-	// Check the option -plot_2d_xz
+// Check the option -plot_2d_xz
 	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d_xz", &flag2DXZPlot);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xz) failed.");
 
-	// Check the option -helium_retention
+// Check the option -helium_retention
 	ierr = PetscOptionsHasName(NULL, NULL, "-helium_retention",
 			&flagHeRetention);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-helium_retention) failed.");
 
-	// Check the option -xenon_retention
+// Check the option -xenon_retention
 	ierr = PetscOptionsHasName(NULL, NULL, "-xenon_retention",
 			&flagXeRetention);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-xenon_retention) failed.");
 
-	// Check the option -start_stop
+// Check the option -start_stop
 	ierr = PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-start_stop) failed.");
 
-	// Check the option -tridyn
+// Check the option -tridyn
 	ierr = PetscOptionsHasName(NULL, NULL, "-tridyn", &flagTRIDYN);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: PetscOptionsHasName (-tridyn) failed.");
 
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	// Check the option -largest_conc
+	ierr = PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest);
+	checkPetscError(ierr,
+			"setupPetsc3DMonitor: PetscOptionsHasName (-largest_conc) failed.");
 
-	// Get the network and its size
-	auto& network = solverHandler.getNetwork();
+// Get the solver handler
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
-	// Determine if we have an existing restart file,
-	// and if so, it it has had timesteps written to it.
+// Get the network and its size
+	auto &network = solverHandler.getNetwork();
+
+// Determine if we have an existing restart file,
+// and if so, it it has had timesteps written to it.
 	std::unique_ptr<xolotlCore::XFile> networkFile;
 	std::unique_ptr<xolotlCore::XFile::TimestepGroup> lastTsGroup;
 	std::string networkName = solverHandler.getNetworkName();
@@ -1638,28 +1860,28 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		}
 	}
 
-	// Get the da from ts
+// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 	checkPetscError(ierr, "setupPetsc3DMonitor: TSGetDM failed.");
 
-	// Get the total size of the grid
+// Get the total size of the grid
 	PetscInt Mx, My, Mz;
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+	PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 	checkPetscError(ierr, "setupPetsc3DMonitor: DMDAGetInfo failed.");
 
-	// Set the post step processing to stop the solver if the time step collapses
+// Set the post step processing to stop the solver if the time step collapses
 	if (flagCheck) {
 		// Find the threshold
 		PetscBool flag;
 		ierr = PetscOptionsGetReal(NULL, NULL, "-check_collapse",
 				&timeStepThreshold, &flag);
 		checkPetscError(ierr,
-				"setupPetsc3DMonitor: PetscOptionsGetInt (-check_collapse) failed.");
+				"setupPetsc3DMonitor: PetscOptionsGetReal (-check_collapse) failed.");
 		if (!flag)
 			timeStepThreshold = 1.0e-16;
 
@@ -1669,14 +1891,14 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 				"setupPetsc3DMonitor: TSSetPostStep (checkTimeStep) failed.");
 	}
 
-	// Set the monitor to save the status of the simulation in hdf5 file
+// Set the monitor to save the status of the simulation in hdf5 file
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
 		ierr = PetscOptionsGetReal(NULL, NULL, "-start_stop", &hdf5Stride3D,
 				&flag);
 		checkPetscError(ierr,
-				"setupPetsc3DMonitor: PetscOptionsGetInt (-start_stop) failed.");
+				"setupPetsc3DMonitor: PetscOptionsGetReal (-start_stop) failed.");
 		if (!flag)
 			hdf5Stride3D = 1.0;
 
@@ -1685,7 +1907,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			previousTime = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			hdf5Previous3D = (int) (previousTime / hdf5Stride3D);
 		}
 
@@ -1693,7 +1916,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		if (hdf5OutputName3D != solverHandler.getNetworkName()) {
 
 			// Get the solver handler
-			auto& solverHandler = PetscSolver::getSolverHandler();
+			auto &solverHandler = PetscSolver::getSolverHandler();
 
 			// Get the physical grid in the x direction
 			auto grid = solverHandler.getXGrid();
@@ -1714,7 +1937,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			// MPI communicator.
 			{
 				xolotlCore::XFile checkpointFile(hdf5OutputName3D, grid,
-						compList, PETSC_COMM_WORLD, My, hy, Mz, hz);
+						compList, xolotlComm, My, hy, Mz, hz);
 			}
 
 			// Copy the network group from the given file (if it has one).
@@ -1723,7 +1946,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			// copy with HDF5's H5Ocopy implementation than it is
 			// when all processes call the copy function.
 			// The checkpoint file must be closed before doing this.
-			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
 					hdf5OutputName3D, network);
 		}
 
@@ -1733,7 +1956,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 				"setupPetsc3DMonitor: TSMonitorSet (startStop3D) failed.");
 	}
 
-	// If the user wants the surface to be able to move
+// If the user wants the surface to be able to move
 	if (solverHandler.moveSurface() || solverHandler.burstBubbles()) {
 		// Surface
 		if (solverHandler.moveSurface()) {
@@ -1758,7 +1981,8 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 				// Get the previous I flux from the HDF5 file
 				previousIFlux3D = lastTsGroup->readData3D("previousIFlux");
 				// Get the previous time from the HDF5 file
-				previousTime = lastTsGroup->readPreviousTime();
+				double previousTime = lastTsGroup->readPreviousTime();
+				solverHandler.setPreviousTime(previousTime);
 			}
 
 			// Get the sputtering yield
@@ -1791,7 +2015,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 				"setupPetsc3DMonitor: TSSetEventHandler (eventFunction3D) failed.");
 	}
 
-	// Set the monitor to save performance plots (has to be in parallel)
+// Set the monitor to save performance plots (has to be in parallel)
 	if (flagPerf) {
 		// Only the master process will create the plot
 		if (procId == 0) {
@@ -1822,22 +2046,18 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 				"setupPetsc3DMonitor: TSMonitorSet (monitorPerf) failed.");
 	}
 
-	// Set the monitor to compute the helium fluence for the retention calculation
+// Set the monitor to compute the helium fluence for the retention calculation
 	if (flagHeRetention) {
 
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO is this same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->computeFluence(previousTime);
 		}
 
 		// computeFluence will be called at each timestep
@@ -1859,12 +2079,12 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		}
 	}
 
-	// Set the monitor to compute the xenon fluence and the retention
-	// for the retention calculation
+// Set the monitor to compute the xenon fluence and the retention
+// for the retention calculation
 	if (flagXeRetention) {
 		// Loop on the xenon clusters
-		for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-			auto const& cluster = *(xeMapItem.second);
+		for (auto const &xeMapItem : network.getAll(ReactantType::Xe)) {
+			auto const &cluster = *(xeMapItem.second);
 
 			int id = cluster.getId() - 1;
 			// Add the Id to the vector
@@ -1874,22 +2094,29 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 			radii3D.push_back(cluster.getReactionRadius());
 		}
 
+		// Get the da from ts
+		DM da;
+		ierr = TSGetDM(ts, &da);
+		checkPetscError(ierr, "setupPetsc3DMonitor: TSGetDM failed.");
+		// Get the local boundaries
+		PetscInt xm, ym, zm;
+		ierr = DMDAGetCorners(da, NULL, NULL, NULL, &xm, &ym, &zm);
+		checkPetscError(ierr, "setupPetsc3DMonitor: DMDAGetCorners failed.");
+		// Create the local vectors on each process
+		solverHandler.createLocalNE(xm, ym, zm);
+
 		// Get the previous time if concentrations were stored and initialize the fluence
 		if (hasConcentrations) {
 
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO isn't this the same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->computeFluence(previousTime);
 		}
 
 		// computeFluence will be called at each timestep
@@ -1911,7 +2138,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 		}
 	}
 
-	// Set the monitor to save surface plots of clusters concentration
+// Set the monitor to save surface plots of clusters concentration
 	if (flag2DXYPlot) {
 		// Only the master process will create the plot
 		if (procId == 0) {
@@ -1943,7 +2170,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 				"setupPetsc3DMonitor: TSMonitorSet (monitorSurfaceXY3D) failed.");
 	}
 
-	// Set the monitor to save surface plots of clusters concentration
+// Set the monitor to save surface plots of clusters concentration
 	if (flag2DXZPlot) {
 		// Only the master process will create the plot
 		if (procId == 0) {
@@ -1975,7 +2202,7 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 				"setupPetsc3DMonitor: TSMonitorSet (monitorSurfaceXZ3D) failed.");
 	}
 
-	// Set the monitor to output data for TRIDYN
+// Set the monitor to output data for TRIDYN
 	if (flagTRIDYN) {
 		// computeTRIDYN3D will be called at each timestep
 		ierr = TSMonitorSet(ts, computeTRIDYN3D, NULL, NULL);
@@ -1983,8 +2210,35 @@ PetscErrorCode setupPetsc3DMonitor(TS ts) {
 				"setupPetsc3DMonitor: TSMonitorSet (computeTRIDYN3D) failed.");
 	}
 
-	// Set the monitor to simply change the previous time to the new time
-	// monitorTime will be called at each timestep
+	// Set the monitor to monitor the concentration of the largest cluster
+	if (flagLargest) {
+		// Look for the largest cluster
+		int largestSize = 0;
+		auto const &reactants = network.getAll();
+		for (int i = 0; i < reactants.size(); i++) {
+			IReactant const &cluster = reactants.at(i);
+			auto size = cluster.getSize();
+			if (size > largestSize) {
+				largestClusterId3D = cluster.getId() - 1;
+				largestSize = size;
+			}
+		}
+
+		// Find the threshold
+		PetscBool flag;
+		ierr = PetscOptionsGetReal(NULL, NULL, "-largest_conc",
+				&largestThreshold3D, &flag);
+		checkPetscError(ierr,
+				"setupPetsc3DMonitor: PetscOptionsGetReal (-largest_conc) failed.");
+
+		// monitorLargest3D will be called at each timestep
+		ierr = TSMonitorSet(ts, monitorLargest3D, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc3DMonitor: TSMonitorSet (monitorLargest3D) failed.");
+	}
+
+// Set the monitor to simply change the previous time to the new time
+// monitorTime will be called at each timestep
 	ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);
 	checkPetscError(ierr,
 			"setupPetsc3DMonitor: TSMonitorSet (monitorTime) failed.");

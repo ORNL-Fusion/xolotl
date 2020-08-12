@@ -4,6 +4,7 @@
 #include <memory>
 #include "IReactionHandlerFactory.h"
 #include <HDF5NetworkLoader.h>
+#include <MPIUtils.h>
 
 namespace xolotlFactory {
 
@@ -43,7 +44,8 @@ public:
 			std::shared_ptr<xolotlPerf::IHandlerRegistry> registry) {
 		// Get the current process ID
 		int procId;
-		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+		auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+		MPI_Comm_rank(xolotlComm, &procId);
 
 		// Create a HDF5NetworkLoader
 		auto tempNetworkLoader =

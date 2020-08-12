@@ -3,6 +3,7 @@
 #include <DummyHandlerRegistry.h>
 #include <iostream>
 #include <mpi.h>
+#include <MPIUtils.h>
 
 #if defined(HAVE_VIZLIB_STD)
 #include <StandardHandlerRegistry.h>
@@ -23,7 +24,8 @@ bool initializeVizHandler(bool useStdRegistry) {
 #else
 		// Get the current process ID
 		int procId;
-		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+		auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+		MPI_Comm_rank(xolotlComm, &procId);
 		// Only print the error message once when running in parallel
 		if (procId == 0) {
 			// it is not possible to use the standard registry

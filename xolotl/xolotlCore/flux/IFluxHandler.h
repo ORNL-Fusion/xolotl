@@ -56,6 +56,13 @@ public:
 	virtual void incrementFluence(double dt) = 0;
 
 	/**
+	 * This operation computes the fluence at the given time.
+	 *
+	 * @param time The current time
+	 */
+	virtual void computeFluence(double time) = 0;
+
+	/**
 	 * This operation returns the fluence.
 	 *
 	 * @return The fluence

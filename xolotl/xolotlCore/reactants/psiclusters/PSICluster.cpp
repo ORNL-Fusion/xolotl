@@ -763,7 +763,7 @@ void PSICluster::updateFromNetwork() {
 	return;
 }
 
-double PSICluster::getDissociationFlux(int xi) const {
+double PSICluster::getDissociationFlux(int xi) {
 
 	// Sum dissociation flux over all our dissociating clusters.
 	double flux = std::accumulate(dissociatingPairs.begin(),
@@ -790,7 +790,7 @@ double PSICluster::getDissociationFlux(int xi) const {
 	return flux;
 }
 
-double PSICluster::getEmissionFlux(int xi) const {
+double PSICluster::getEmissionFlux(int xi) {
 
 	// Sum rate constants from all emission pair reactions.
 	double flux =
@@ -802,7 +802,7 @@ double PSICluster::getEmissionFlux(int xi) const {
 	return flux * concentration;
 }
 
-double PSICluster::getProductionFlux(int xi) const {
+double PSICluster::getProductionFlux(int xi) {
 
 	// Sum production flux over all reacting pairs.
 	double flux = std::accumulate(reactingPairs.begin(), reactingPairs.end(),
@@ -834,7 +834,7 @@ double PSICluster::getProductionFlux(int xi) const {
 	return flux;
 }
 
-double PSICluster::getCombinationFlux(int xi) const {
+double PSICluster::getCombinationFlux(int xi) {
 
 	// Sum combination flux over all clusters that combine with us.
 	double flux = std::accumulate(combiningReactants.begin(),

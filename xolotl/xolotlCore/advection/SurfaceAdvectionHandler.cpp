@@ -27,7 +27,7 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 	}
 
 	// Initialize the grid position
-	Point<3> gridPosition { 0.0, 0.0, 0.0 };
+	NDPoint<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Consider each advection handler.
 	for (auto const& currAdvecHandler : advectionHandlers) {
@@ -80,12 +80,9 @@ void SurfaceAdvectionHandler::initializeAdvectionGrid(
 }
 
 void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
-		const Point<3>& pos, double **concVector, double *updatedConcOffset,
+		const NDPoint<3>& pos, double **concVector, double *updatedConcOffset,
 		double hxLeft, double hxRight, int ix, double hy, int iy, double hz,
 		int iz) const {
-
-	// Get the number of advecting cluster
-	int nAdvec = advectingClusters.size();
 
 	// Consider each advecting cluster
 	// TODO Maintaining a separate index assumes that advectingClusters is
@@ -133,12 +130,8 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 
 void SurfaceAdvectionHandler::computePartialsForAdvection(
 		const IReactionNetwork& network, double *val, int *indices,
-		const Point<3>& pos, double hxLeft, double hxRight, int ix, double hy,
+		const NDPoint<3>& pos, double hxLeft, double hxRight, int ix, double hy,
 		int iy, double hz, int iz) const {
-
-	// Get the number of advecting cluster
-	int nAdvec = advectingClusters.size();
-
 	// Consider each advecting cluster.
 	// TODO Maintaining a separate index assumes that advectingClusters is
 	// visited in same order as advectionGrid array for given point

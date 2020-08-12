@@ -109,8 +109,8 @@ public:
 			return;
 
 		// Update the concentration array
-		updatedConcOffset[fluxIndices[0]] += incidentFluxVec[xi - surfacePos]; // V
-		updatedConcOffset[fluxIndices[1]] += incidentFluxVec[xi - surfacePos]; // I
+		updatedConcOffset[fluxIndices[0]] += incidentFluxVec[0][xi - surfacePos]; // V
+		updatedConcOffset[fluxIndices[1]] += incidentFluxVec[0][xi - surfacePos]; // I
 
 		return;
 	}

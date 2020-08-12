@@ -20,6 +20,9 @@ endif()
 # Set a name for this project.
 PROJECT ( xolotl C CXX )
 
+# Build the tests by default
+option(BUILD_TESTS "Build test programs" ON)
+
 # Include the modules to find PETSC, ITAPS, etc. from Jed Brown
 list (APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake-modules")
 
@@ -68,8 +71,12 @@ IF (Boost_FOUND)
     INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 ENDIF()
 IF (Boost_UNIT_TEST_FRAMEWORK_FOUND)
-    message(STATUS "Tests will be built since Boost unit test framework found.")
-    add_subdirectory(tests)
+    IF (BUILD_TESTS)
+        # Enable testing.
+        enable_testing()
+    	message(STATUS "Tests will be built since Boost unit test framework found.")
+    	add_subdirectory(tests)
+	ENDIF()
 ENDIF()
 
 # Add the preprocessor first, it is independent of the other parts of the code
@@ -112,6 +119,7 @@ include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore
                     ${CMAKE_SOURCE_DIR}/xolotlCore/io
                     ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline/optionhandlers
                     ${CMAKE_SOURCE_DIR}/xolotlCore/diffusion
                     ${CMAKE_SOURCE_DIR}/xolotlCore/advection
                     ${CMAKE_SOURCE_DIR}/xolotlCore/reactants
@@ -132,15 +140,24 @@ include_directories(${CMAKE_SOURCE_DIR}
 
 configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_BINARY_DIR}/XolotlConfig.h")
 
+# Set the library name
+SET(LIBRARY_NAME "xolotlInter")
+
+# Collect the header 
+file(GLOB HEADERS interface.h)
+# Grab all of the source files
+file(GLOB SRC interface.cpp)
+# Add a library 
+add_library(${LIBRARY_NAME} STATIC ${SRC})
+target_link_libraries(${LIBRARY_NAME} xolotlFactory)
+
 # Setup the library list
 set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
-xolotlFactory xolotlCL ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
-if(Boost_FOUND)
-    set(XOLOTL_LIBS ${XOLOTL_LIBS} ${Boost_LIBRARIES})
-endif()
+xolotlFactory xolotlCL xolotlInter ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
 
 # Add an executable for the main program
 ADD_EXECUTABLE (xolotl main.cpp)
 
-# Link the reactants library
+# Link the libraries
 target_link_libraries(xolotl ${XOLOTL_LIBS})
+

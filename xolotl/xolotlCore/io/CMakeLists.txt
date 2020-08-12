@@ -81,11 +81,9 @@ target_link_libraries(${LIBRARY_NAME} ${MPI_LIBRARIES} ${HDF5_LIBRARIES})
 add_subdirectory(XConvHDF5)
 
 #Install the xolotl header files
-# TODO we don't need to install anything when building this internal library?
-#install(FILES ${HEADERS} DESTINATION include)
+install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)
 
 # Configure file for the I/O library.
 # Note: this must be done after all other checks, or the contents of the
 # generated file doesn't take the check results into account.
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/XDMConfig.h.in" "${CMAKE_CURRENT_BINARY_DIR}/XDMConfig.h")
-

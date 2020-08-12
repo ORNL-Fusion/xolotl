@@ -1,6 +1,7 @@
 // Includes
 #include <TrapMutationHandler.h>
 #include <MathUtils.h>
+#include <MPIUtils.h>
 #include <iostream>
 #include <algorithm>
 #include <mpi.h>
@@ -67,7 +68,9 @@ void TrapMutationHandler::initialize(const IReactionNetwork& network, int nx,
 		}
 		// Inform the user
 		int procId;
-		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+		// Get the MPI communicator
+		auto xolotlComm = MPIUtils::getMPIComm();
+		MPI_Comm_rank(xolotlComm, &procId);
 		if (procId == 0)
 			std::cout
 					<< "The modified trap-mutation won't happen because "

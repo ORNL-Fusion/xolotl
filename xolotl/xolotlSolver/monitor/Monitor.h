@@ -3,6 +3,7 @@
 
 // Includes
 #include <IReactionNetwork.h>
+#include <MPIUtils.h>
 
 namespace xolotlSolver {
 

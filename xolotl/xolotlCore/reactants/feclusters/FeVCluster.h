@@ -92,7 +92,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	double getEmissionFlux(int i) const override {
+	double getEmissionFlux(int i) override {
 		// Initial declarations
 		double flux = FeCluster::getEmissionFlux(i);
 

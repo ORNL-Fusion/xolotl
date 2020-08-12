@@ -49,8 +49,7 @@ message('${HEADERS}')
 target_link_libraries(${LIBRARY_NAME} ${MAYBE_VTKM})
 
 #Install the xolotl header files
-install(FILES ${HEADERS} DESTINATION include)
-install(TARGETS ${LIBRARY_NAME} DESTINATION lib)
+install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)
 
 # Configure file for the performance library.
 # Note: must do this after all the other checks, or else the

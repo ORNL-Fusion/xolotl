@@ -63,10 +63,14 @@ public:
 		static const std::string nTBurstAttrName;
 
 		// Names of the vacancy attributes.
+		static const std::string nVSurfAttrName;
+		static const std::string prevVSurfFluxAttrName;
 		static const std::string nVBulkAttrName;
 		static const std::string prevVBulkFluxAttrName;
 
 		// Names of the int attributes
+		static const std::string nIntersSurfAttrName;
+		static const std::string prevISurfFluxAttrName;
 		static const std::string nIntersBulkAttrName;
 		static const std::string prevIBulkFluxAttrName;
 
@@ -140,12 +144,18 @@ public:
 		 * @param previousDFlux The previous D flux
 		 * @param nT The quantity of tritium at the surface
 		 * @param previousTFlux The previous T flux
+		 * @param nV The quantity of vacancy at the surface
+		 * @param previousVFlux The previous V flux
+		 * @param nI The quantity of interstitial at the surface
+		 * @param previousIFlux The previous I flux
 		 */
 		void writeSurface1D(Surface1DType iSurface, Data1DType nInter,
 				Data1DType previousFlux, Data1DType nHe,
 				Data1DType previousHeFlux, Data1DType nD,
 				Data1DType previousDFlux, Data1DType nT,
-				Data1DType previousTFlux) const;
+				Data1DType previousTFlux, Data1DType nV,
+				Data1DType previousVFlux, Data1DType nI,
+				Data1DType previousIFlux) const;
 
 		/**
 		 * Save the surface positions to our timestep group.

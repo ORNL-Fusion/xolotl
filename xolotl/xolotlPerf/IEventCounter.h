@@ -3,7 +3,7 @@
 
 #include "mpi.h"
 #include <limits.h>
-#include "../xolotlCore/IIdentifiable.h"
+#include <IIdentifiable.h>
 
 namespace xolotlPerf {
 

@@ -39,7 +39,6 @@ extern PetscErrorCode monitorPerf(TS ts, PetscInt timestep, PetscReal time,
 
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<xolotlViz::IPlot> perfPlot;
-extern double previousTime;
 extern double timeStepThreshold;
 
 //! The pointer to the plot used in monitorScatter0D.
@@ -57,6 +56,60 @@ std::vector<int> indices0D;
 std::vector<int> weights0D;
 // Declare the vector that will store the radii of bubbles
 std::vector<double> radii0D;
+// The id of the largest cluster
+int largestClusterId0D = -1;
+// The concentration threshold for the largest cluster
+double largestThreshold0D = 1.0e-12;
+
+#undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorLargest0D")
+/**
+ * This is a monitoring method that looks at the largest cluster concentration
+ */
+PetscErrorCode monitorLargest0D(TS ts, PetscInt timestep, PetscReal time,
+		Vec solution, void*) {
+	// Initial declaration
+	PetscErrorCode ierr;
+	double **solutionArray, *gridPointSolution;
+	PetscInt xs, xm;
+
+	PetscFunctionBeginUser;
+
+	// Get the MPI communicator
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	// Get the number of processes
+	int worldSize;
+	MPI_Comm_size(xolotlComm, &worldSize);
+	// Gets the process ID (important when it is running in parallel)
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the solutionArray
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Get the pointer to the beginning of the solution data for this grid point
+	gridPointSolution = solutionArray[0];
+	// Check the concentration
+	if (gridPointSolution[largestClusterId0D] > largestThreshold0D) {
+		ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
+		CHKERRQ(ierr);
+		// Send an error
+		throw std::string(
+				"\nxolotlSolver::Monitor0D: The largest cluster concentration is too high!!");
+	}
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop0D")
@@ -64,14 +117,18 @@ std::vector<double> radii0D;
  * This is a monitoring method that update an hdf5 file at each time step.
  */
 PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declaration
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
 
 	PetscFunctionBeginUser;
 
+	// Get the solver handler
+	auto &solverHandler = PetscSolver::getSolverHandler();
+
 	// Compute the dt
+	double previousTime = solverHandler.getPreviousTime();
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
@@ -92,18 +149,16 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
-
 	// Get the network and dof
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 	const int dof = network.getDOF();
 
 	// Create an array for the concentration
 	double concArray[dof][2];
 
 	// Open the existing HDF5 file
-	xolotlCore::XFile checkpointFile(hdf5OutputName0D, PETSC_COMM_WORLD,
+	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
+	xolotlCore::XFile checkpointFile(hdf5OutputName0D, xolotlComm,
 			xolotlCore::XFile::AccessMode::OpenReadWrite);
 
 	// Get the current time step
@@ -151,14 +206,14 @@ PetscErrorCode startStop0D(TS ts, PetscInt timestep, PetscReal time,
  * This is a monitoring method that will compute the xenon retention
  */
 PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declarations
 	PetscErrorCode ierr;
 
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the da from ts
 	DM da;
@@ -166,7 +221,7 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 
 	// Get the array of concentration
 	PetscReal **solutionArray;
@@ -206,8 +261,8 @@ PetscErrorCode computeXenonRetention0D(TS ts, PetscInt, PetscReal time,
 	}
 
 	// Loop on all the super clusters
-	for (auto const& superMapItem : network.getAll(ReactantType::NESuper)) {
-		auto const& cluster =
+	for (auto const &superMapItem : network.getAll(ReactantType::NESuper)) {
+		auto const &cluster =
 				static_cast<NESuperCluster&>(*(superMapItem.second));
 		double conc = cluster.getTotalConcentration();
 		xeConcentration += cluster.getTotalXenonConcentration();
@@ -264,7 +319,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 	PetscFunctionBeginUser;
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the physical grid and its length
 	auto grid = solverHandler.getXGrid();
@@ -284,7 +339,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 
 	// Get degrees of freedom
 	auto dof = network.getDOF();
@@ -312,27 +367,27 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 	network.updateConcentrationsFromArray(gridPointSolution);
 
 	// Loop on I
-	for (auto const& iMapItem : network.getAll(ReactantType::I)) {
+	for (auto const &iMapItem : network.getAll(ReactantType::I)) {
 		// Get the cluster
-		auto const& cluster = *(iMapItem.second);
+		auto const &cluster = *(iMapItem.second);
 		iDensity += gridPointSolution[cluster.getId() - 1];
 		iDiameter += gridPointSolution[cluster.getId() - 1]
 				* cluster.getReactionRadius() * 2.0;
 	}
 
 	// Loop on V
-	for (auto const& vMapItem : network.getAll(ReactantType::V)) {
+	for (auto const &vMapItem : network.getAll(ReactantType::V)) {
 		// Get the cluster
-		auto const& cluster = *(vMapItem.second);
+		auto const &cluster = *(vMapItem.second);
 		vDensity += gridPointSolution[cluster.getId() - 1];
 		vDiameter += gridPointSolution[cluster.getId() - 1]
 				* cluster.getReactionRadius() * 2.0;
 	}
 
 	// Loop on Void
-	for (auto const& voidMapItem : network.getAll(ReactantType::Void)) {
+	for (auto const &voidMapItem : network.getAll(ReactantType::Void)) {
 		// Get the cluster
-		auto const& cluster = *(voidMapItem.second);
+		auto const &cluster = *(voidMapItem.second);
 		voidDensity += gridPointSolution[cluster.getId() - 1];
 		voidDiameter += gridPointSolution[cluster.getId() - 1]
 				* cluster.getReactionRadius() * 2.0;
@@ -342,9 +397,9 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 					* cluster.getReactionRadius() * 2.0;
 		}
 	}
-	for (auto const& voidMapItem : network.getAll(ReactantType::VoidSuper)) {
+	for (auto const &voidMapItem : network.getAll(ReactantType::VoidSuper)) {
 		// Get the cluster
-		auto const& cluster =
+		auto const &cluster =
 				static_cast<AlloySuperCluster&>(*(voidMapItem.second));
 		voidDensity += cluster.getTotalConcentration();
 		voidDiameter += cluster.getTotalConcentration()
@@ -357,9 +412,9 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Loop on Faulted
-	for (auto const& faultedMapItem : network.getAll(ReactantType::Faulted)) {
+	for (auto const &faultedMapItem : network.getAll(ReactantType::Faulted)) {
 		// Get the cluster
-		auto const& cluster = *(faultedMapItem.second);
+		auto const &cluster = *(faultedMapItem.second);
 		faultedDensity += gridPointSolution[cluster.getId() - 1];
 		faultedDiameter += gridPointSolution[cluster.getId() - 1]
 				* cluster.getReactionRadius() * 2.0;
@@ -369,9 +424,9 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 					* cluster.getReactionRadius() * 2.0;
 		}
 	}
-	for (auto const& faultedMapItem : network.getAll(ReactantType::FaultedSuper)) {
+	for (auto const &faultedMapItem : network.getAll(ReactantType::FaultedSuper)) {
 		// Get the cluster
-		auto const& cluster =
+		auto const &cluster =
 				static_cast<AlloySuperCluster&>(*(faultedMapItem.second));
 		faultedDensity += cluster.getTotalConcentration();
 		faultedDiameter += cluster.getTotalConcentration()
@@ -384,9 +439,9 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Loop on Perfect
-	for (auto const& perfectMapItem : network.getAll(ReactantType::Perfect)) {
+	for (auto const &perfectMapItem : network.getAll(ReactantType::Perfect)) {
 		// Get the cluster
-		auto const& cluster = *(perfectMapItem.second);
+		auto const &cluster = *(perfectMapItem.second);
 		perfectDensity += gridPointSolution[cluster.getId() - 1];
 		perfectDiameter += gridPointSolution[cluster.getId() - 1]
 				* cluster.getReactionRadius() * 2.0;
@@ -396,9 +451,9 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 					* cluster.getReactionRadius() * 2.0;
 		}
 	}
-	for (auto const& perfectMapItem : network.getAll(ReactantType::PerfectSuper)) {
+	for (auto const &perfectMapItem : network.getAll(ReactantType::PerfectSuper)) {
 		// Get the cluster
-		auto const& cluster =
+		auto const &cluster =
 				static_cast<AlloySuperCluster&>(*(perfectMapItem.second));
 		perfectDensity += cluster.getTotalConcentration();
 		perfectDiameter += cluster.getTotalConcentration()
@@ -411,9 +466,9 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 	}
 
 	// Loop on Frank
-	for (auto const& frankMapItem : network.getAll(ReactantType::Frank)) {
+	for (auto const &frankMapItem : network.getAll(ReactantType::Frank)) {
 		// Get the cluster
-		auto const& cluster = *(frankMapItem.second);
+		auto const &cluster = *(frankMapItem.second);
 		frankDensity += gridPointSolution[cluster.getId() - 1];
 		frankDiameter += gridPointSolution[cluster.getId() - 1]
 				* cluster.getReactionRadius() * 2.0;
@@ -423,9 +478,9 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
 					* cluster.getReactionRadius() * 2.0;
 		}
 	}
-	for (auto const& frankMapItem : network.getAll(ReactantType::FrankSuper)) {
+	for (auto const &frankMapItem : network.getAll(ReactantType::FrankSuper)) {
 		// Get the cluster
-		auto const& cluster =
+		auto const &cluster =
 				static_cast<AlloySuperCluster&>(*(frankMapItem.second));
 		frankDensity += cluster.getTotalConcentration();
 		frankDiameter += cluster.getTotalConcentration()
@@ -486,7 +541,7 @@ PetscErrorCode computeAlloy0D(TS ts, PetscInt timestep, PetscReal time,
  * distribution.
  */
 PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
-		Vec solution, void *) {
+		Vec solution, void*) {
 	// Initial declarations
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
@@ -507,12 +562,12 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 	int networkSize = network.size();
-	auto& superClusters = network.getAll(ReactantType::NESuper);
+	auto &superClusters = network.getAll(ReactantType::NESuper);
 
 	// Create a Point vector to store the data to give to the data provider
 	// for the visualization
@@ -535,9 +590,9 @@ PetscErrorCode monitorScatter0D(TS ts, PetscInt timestep, PetscReal time,
 	}
 	int nXe = networkSize - superClusters.size() + 1;
 	// Loop on the super clusters
-	for (auto const& superMapItem : superClusters) {
+	for (auto const &superMapItem : superClusters) {
 		// Get the cluster
-		auto const& cluster =
+		auto const &cluster =
 				static_cast<NESuperCluster&>(*(superMapItem.second));
 		// Get the width
 		int width = cluster.getSectionWidth();
@@ -619,10 +674,10 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 	CHKERRQ(ierr);
 
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 	int dof = network.getDOF();
 
 	// Create the output file
@@ -641,13 +696,13 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
 	double concTot = 0.0, heliumTot = 0.0;
 
 	// Consider each super cluster.
-	for (auto const& superMapItem : network.getAll(ReactantType::FeSuper)) {
+	for (auto const &superMapItem : network.getAll(ReactantType::FeSuper)) {
 		// Get the super cluster
-		auto const& superCluster =
+		auto const &superCluster =
 				static_cast<FeSuperCluster&>(*(superMapItem.second));
 		// Get its boundaries
-		auto const& heBounds = superCluster.getHeBounds();
-		auto const& vBounds = superCluster.getVBounds();
+		auto const &heBounds = superCluster.getHeBounds();
+		auto const &vBounds = superCluster.getVBounds();
 		// Get its diameter
 		double diam = 2.0 * superCluster.getReactionRadius();
 		// Get its concentration
@@ -676,7 +731,7 @@ PetscErrorCode monitorBubble0D(TS ts, PetscInt timestep, PetscReal time,
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
-PetscErrorCode setupPetsc0DMonitor(TS ts) {
+PetscErrorCode setupPetsc0DMonitor(TS &ts) {
 	PetscErrorCode ierr;
 
 	// Get xolotlViz handler registry
@@ -684,7 +739,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flag1DPlot, flagBubble, flagPerf, flagStatus,
-			flagAlloy, flagXeRetention;
+			flagAlloy, flagXeRetention, flagLargest;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
@@ -721,11 +776,16 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	checkPetscError(ierr,
 			"setupPetsc0DMonitor: PetscOptionsHasName (-xenon_retention) failed.");
 
+	// Check the option -largest_conc
+	ierr = PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest);
+	checkPetscError(ierr,
+			"setupPetsc0DMonitor: PetscOptionsHasName (-largest_conc) failed.");
+
 	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
+	auto &solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network and its size
-	auto& network = solverHandler.getNetwork();
+	auto &network = solverHandler.getNetwork();
 	const int networkSize = network.size();
 
 	// Determine if we have an existing restart file,
@@ -779,7 +839,8 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			previousTime = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			hdf5Previous0D = (int) (previousTime / hdf5Stride0D);
 		}
 
@@ -796,19 +857,22 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 
 			// Get the size of the total grid
 			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-					PETSC_IGNORE, PETSC_IGNORE);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+			PETSC_IGNORE, PETSC_IGNORE);
 			checkPetscError(ierr, "setupPetsc0DMonitor: DMDAGetInfo failed.");
 
 			// Get the solver handler
-			auto& solverHandler = PetscSolver::getSolverHandler();
+			auto &solverHandler = PetscSolver::getSolverHandler();
 
 			// Get the physical grid (which is empty)
 			auto grid = solverHandler.getXGrid();
 
 			// Get the compostion list and save it
 			auto compList = network.getCompositionList();
+
+			// Get the MPI communicator
+			auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 
 			// Create and initialize a checkpoint file.
 			// We do this in its own scope so that the file
@@ -818,7 +882,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			// MPI communicator.
 			{
 				xolotlCore::XFile checkpointFile(hdf5OutputName0D, grid,
-						compList, PETSC_COMM_WORLD);
+						compList, xolotlComm);
 			}
 
 			// Copy the network group from the given file (if it has one).
@@ -827,7 +891,7 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			// copy with HDF5's H5Ocopy implementation than it is
 			// when all processes call the copy function.
 			// The checkpoint file must be closed before doing this.
-			writeNetwork(PETSC_COMM_WORLD, solverHandler.getNetworkName(),
+			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
 					hdf5OutputName0D, network);
 		}
 
@@ -920,8 +984,8 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 	// for the retention calculation
 	if (flagXeRetention) {
 		// Loop on the xenon clusters
-		for (auto const& xeMapItem : network.getAll(ReactantType::Xe)) {
-			auto const& cluster = *(xeMapItem.second);
+		for (auto const &xeMapItem : network.getAll(ReactantType::Xe)) {
+			auto const &cluster = *(xeMapItem.second);
 
 			int id = cluster.getId() - 1;
 			// Add the Id to the vector
@@ -937,16 +1001,12 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
-			double time = lastTsGroup->readPreviousTime();
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
 			// Initialize the fluence
 			auto fluxHandler = solverHandler.getFluxHandler();
-			// The length of the time step
-			double dt = time;
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->incrementFluence(dt);
-			// Get the previous time from the HDF5 file
-			// TODO isn't this the same as 'time' above?
-			previousTime = lastTsGroup->readPreviousTime();
+			fluxHandler->computeFluence(previousTime);
 		}
 
 		// computeFluence will be called at each timestep
@@ -963,6 +1023,33 @@ PetscErrorCode setupPetsc0DMonitor(TS ts) {
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt");
 		outputFile.close();
+	}
+
+	// Set the monitor to monitor the concentration of the largest cluster
+	if (flagLargest) {
+		// Look for the largest cluster
+		int largestSize = 0;
+		auto const &reactants = network.getAll();
+		for (int i = 0; i < reactants.size(); i++) {
+			IReactant const &cluster = reactants.at(i);
+			auto size = cluster.getSize();
+			if (size > largestSize) {
+				largestClusterId0D = cluster.getId() - 1;
+				largestSize = size;
+			}
+		}
+
+		// Find the threshold
+		PetscBool flag;
+		ierr = PetscOptionsGetReal(NULL, NULL, "-largest_conc",
+				&largestThreshold0D, &flag);
+		checkPetscError(ierr,
+				"setupPetsc0DMonitor: PetscOptionsGetReal (-largest_conc) failed.");
+
+		// monitorLargest1D will be called at each timestep
+		ierr = TSMonitorSet(ts, monitorLargest0D, NULL, NULL);
+		checkPetscError(ierr,
+				"setupPetsc0DMonitor: TSMonitorSet (monitorLargest0D) failed.");
 	}
 
 	// Set the monitor to simply change the previous time to the new time

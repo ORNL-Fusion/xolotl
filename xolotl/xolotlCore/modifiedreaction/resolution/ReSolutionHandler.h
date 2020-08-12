@@ -37,14 +37,15 @@ protected:
 		 * 0-1 is for Xe_1
 		 * 2-5 is for larger
 		 * 6-9 is for smaller
+		 * 10 for psi
 		 */
-		Array<double, 10> coefs;
+		Array<double, 11> coefs;
 
 		//! The constructor
 		ReSolutionBase(IReactant* _larger, IReactant* _smaller, double _rate,
-				Array<double, 10> _coefs) :
+				Array<double, 11> _coefs) :
 				larger(_larger), smaller(_smaller), fractionRate(_rate) {
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 11; i++) {
 				coefs[i] = _coefs[i];
 			}
 		}
@@ -56,7 +57,7 @@ protected:
 		ReSolutionBase(const ReSolutionBase& other) :
 				larger(other.larger), smaller(other.smaller), fractionRate(
 						other.fractionRate) {
-			for (int i = 0; i < 10; i++) {
+			for (int i = 0; i < 11; i++) {
 				coefs[i] = other.coefs[i];
 			}
 		}
@@ -104,7 +105,7 @@ public:
 	 *
 	 * \see IReSolutionHandler.h
 	 */
-	void updateReSolutionRate(double rate);
+	virtual void updateReSolutionRate(double rate);
 
 	/**
 	 * This method updates the fission yield.

@@ -21,10 +21,11 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/neclusters)
 include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/advection)
+include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
 
 #Add a library
 add_library(${LIBRARY_NAME} STATIC ${SRC})
 target_link_libraries(${LIBRARY_NAME} xolotlAdvection)
 
 #Install the xolotl header files
-install(FILES ${HEADERS} DESTINATION include)
+install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)

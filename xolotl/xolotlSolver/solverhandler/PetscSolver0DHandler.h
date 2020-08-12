@@ -26,7 +26,7 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver0DHandler(xolotlCore::IReactionNetwork& _network) :
+	PetscSolver0DHandler(xolotlCore::IReactionNetwork &_network) :
 			PetscSolverHandler(_network) {
 	}
 
@@ -45,6 +45,31 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void initializeConcentration(DM &da, Vec &C);
+
+	/**
+	 * Set the concentrations to 0.0 where the GBs are.
+	 * \see ISolverHandler.h
+	 */
+	void initGBLocation(DM &da, Vec &C) {
+		// Doesn't do anything in 0D
+		return;
+	}
+
+	/**
+	 * This operation get the concentration vector with the ids.
+	 * \see ISolverHandler.h
+	 */
+	std::vector<std::vector<std::vector<std::vector<std::pair<int, double> > > > > getConcVector(
+			DM &da, Vec &C);
+
+	/**
+	 * This operation sets the concentration vector in the current state of the simulation.
+	 * \see ISolverHandler.h
+	 */
+	void setConcVector(DM &da, Vec &C,
+			std::vector<
+					std::vector<
+							std::vector<std::vector<std::pair<int, double> > > > > & concVector);
 
 	/**
 	 * Compute the new concentrations for the RHS function given an initial

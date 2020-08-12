@@ -82,7 +82,7 @@ public:
 	 *
 	 * @return The temperature
 	 */
-	virtual double getTemperature(const Point<3>& fraction, double) const {
+	virtual double getTemperature(const NDPoint<3>& fraction, double) const {
 		return surfaceTemperature
 				+ (bulkTemperature - surfaceTemperature) * fraction[0];
 	}

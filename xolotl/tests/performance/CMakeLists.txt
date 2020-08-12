@@ -12,6 +12,9 @@ if(Boost_FOUND)
 
     # Look for headers in the source tree and binary tree.
     include_directories(${CMAKE_SOURCE_DIR})
+    include_directories(${CMAKE_SOURCE_DIR}/xolotlCore)
+    include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/io)
+    include_directories(${CMAKE_SOURCE_DIR}/xolotlPerf/standard)
     include_directories(${CMAKE_BINARY_DIR})
 
     # Always build tests for the dummy classes.
@@ -53,7 +56,7 @@ if(Boost_FOUND)
         message(STATUS "Defining test ${test}")
         get_filename_component(testName ${test} NAME_WE)
         add_executable(${testName} ${test})
-        target_link_libraries(${testName} xolotlPerf ${MAYBE_PAPI} ${MAYBE_RT})
+        target_link_libraries(${testName} xolotlPerf xolotlIO ${MAYBE_PAPI} ${MAYBE_RT})
         add_test(${testName} ${testName})
         #add a label so the tests can be run separately
         set_property(TEST ${testName} PROPERTY LABELS ${PACKAGE_NAME})

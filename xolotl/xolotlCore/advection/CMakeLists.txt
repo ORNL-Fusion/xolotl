@@ -21,4 +21,4 @@ include_directories(${CMAKE_SOURCE_DIR}/xolotlCore/reactants/psiclusters)
 add_library(${LIBRARY_NAME} STATIC ${SRC})
 
 #Install the xolotl header files
-install(FILES ${HEADERS} DESTINATION include)
+install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)

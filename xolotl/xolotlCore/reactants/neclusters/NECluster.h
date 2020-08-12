@@ -373,7 +373,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to dissociation of other clusters
 	 */
-	virtual double getDissociationFlux(int i) const;
+	virtual double getDissociationFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due its
@@ -382,7 +382,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to its dissociation
 	 */
-	virtual double getEmissionFlux(int i) const;
+	virtual double getEmissionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
@@ -391,7 +391,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster being produced
 	 */
-	virtual double getProductionFlux(int i) const;
+	virtual double getProductionFlux(int i);
 
 	/**
 	 * This operation returns the total change in this cluster due to
@@ -400,7 +400,7 @@ public:
 	 * @param i The location on the grid in the depth direction
 	 * @return The flux due to this cluster combining with other clusters
 	 */
-	virtual double getCombinationFlux(int i) const;
+	virtual double getCombinationFlux(int i);
 
 	/**
 	 * This operation returns the list of partial derivatives of this cluster

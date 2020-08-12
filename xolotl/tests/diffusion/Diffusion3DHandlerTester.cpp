@@ -62,10 +62,10 @@ BOOST_AUTO_TEST_CASE(checkDiffusion) {
 	}
 
 	// Create the diffusion handler
-	Diffusion3DHandler diffusionHandler;
+	Diffusion3DHandler diffusionHandler(opts.getMigrationThreshold());
 
 	// Create a collection of advection handlers
-	std::vector<IAdvectionHandler *> advectionHandlers;
+	std::vector<IAdvectionHandler*> advectionHandlers;
 
 	// Create ofill
 	xolotlCore::IReactionNetwork::SparseFillMap ofill;

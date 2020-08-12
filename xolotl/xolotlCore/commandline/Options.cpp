@@ -28,7 +28,8 @@ Options::Options() :
 				false), zeta(0.73), resoMinSize(0), density(10.162795276841), pulseTime(
 				0.0), pulseProportion(0.0), latticeParameter(-1.0), impurityRadius(
 				-1.0), biasFactor(1.15), hydrogenFactor(0.25), xenonDiffusivity(
-				-1.0), fissionYield(0.25), heVRatio(4.0) {
+				-1.0), fissionYield(0.25), heVRatio(4.0), migrationThreshold(
+						std::numeric_limits<double>::infinity()) {
 	radiusMinSizes.Init(0);
 
 	return;
@@ -37,7 +38,26 @@ Options::Options() :
 Options::~Options(void) {
 }
 
-void Options::readParams(int argc, char* argv[]) {
+void Options::readParams(int argc, char *argv[]) {
+	// Check that a file name is given
+	if (argc < 2) {
+		std::cerr << "Options: parameter file name must not be empty"
+				<< std::endl;
+		shouldRunFlag = false;
+		exitCode = EXIT_FAILURE;
+		return;
+	}
+
+	// Check that the file exist
+	ifstream ifs(argv[1]);
+	if (!ifs) {
+		std::cerr << "Options: unable to open parameter file: " << argv[1]
+				<< std::endl;
+		shouldRunFlag = false;
+		exitCode = EXIT_FAILURE;
+		return;
+	}
+
 	// The name of the parameter file
 	string param_file;
 
@@ -103,8 +123,9 @@ void Options::readParams(int argc, char* argv[]) {
 			"All the arguments that will be given to PETSc.")("process",
 			bpo::value<string>(),
 			"List of all the processes to use in the simulation (reaction, diff, "
-					"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, heterogeneous).")(
-			"grain", bpo::value<string>(&gbList),
+					"advec, modifiedTM, movingSurface, bursting, attenuation, oneResolution, "
+					"partialResolution, fullResolution, heterogeneous).")("grain",
+			bpo::value<string>(&gbList),
 			"This option allows the user to add GB in the X, Y, or Z directions. "
 					"To do so, simply write the direction followed "
 					"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")(
@@ -163,21 +184,15 @@ void Options::readParams(int argc, char* argv[]) {
 			"fissionYield", bpo::value<double>(&fissionYield),
 			"This option allows the user to set the number of xenon created for each fission.")(
 			"heVRatio", bpo::value<double>(&heVRatio),
-			"This option allows the user to set the number of He atoms allowed per V in a bubble.");
+			"This option allows the user to set the number of He atoms allowed per V in a bubble.")(
+			"migrationThreshold", bpo::value<double>(&migrationThreshold),
+			"This option allows the user to set a limit on the migration energy above which the diffusion will be ignored.");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);
 
 	if (opts.count("help")) {
 		std::cout << visible << '\n';
-		shouldRunFlag = false;
-		exitCode = EXIT_FAILURE;
-	}
-
-	if ((opts.count("parameterFile") == 0)
-			or opts["parameterFile"].as<std::string>().empty()) {
-		std::cerr << "Options: parameter file name must not be empty"
-				<< std::endl;
 		shouldRunFlag = false;
 		exitCode = EXIT_FAILURE;
 	}
@@ -269,7 +284,7 @@ void Options::readParams(int argc, char* argv[]) {
 						xolotlPerf::toPerfRegistryType(
 								opts["perfHandler"].as<string>());
 				perfRegistryType = rtype;
-			} catch (const std::invalid_argument& e) {
+			} catch (const std::invalid_argument &e) {
 				std::cerr
 						<< "\nOptions: could not understand the performance handler type. "
 								"Aborting!\n" << std::endl;
@@ -352,7 +367,9 @@ void Options::readParams(int argc, char* argv[]) {
 			processMap["movingSurface"] = false;
 			processMap["bursting"] = false;
 			processMap["attenuation"] = false;
-			processMap["resolution"] = false;
+			processMap["fullResolution"] = false;
+			processMap["partialResolution"] = false;
+			processMap["oneResolution"] = false;
 			processMap["heterogeneous"] = false;
 
 			// Loop on the tokens
@@ -510,7 +527,7 @@ void Options::readParams(int argc, char* argv[]) {
 
 				if (currIdx < tokens.size()) {
 					// Convert arg to an integer.
-					char* ep = NULL;
+					char *ep = NULL;
 					auto useed = strtoul(tokens[currIdx].c_str(), &ep, 10);
 					if (ep
 							!= (tokens[currIdx].c_str()
@@ -521,7 +538,7 @@ void Options::readParams(int argc, char* argv[]) {
 					}
 					setRNGSeed(useed);
 				}
-			} catch (const std::invalid_argument& e) {
+			} catch (const std::invalid_argument &e) {
 				std::cerr
 						<< "\nOptions: unrecognized argument in setting the rng."
 								"Aborting!\n" << std::endl;

@@ -429,7 +429,7 @@ double NECluster::getTotalFlux(int i) {
 	return prodFlux - combFlux + dissFlux - emissFlux;
 }
 
-double NECluster::getDissociationFlux(int xi) const {
+double NECluster::getDissociationFlux(int xi) {
 
 	// Sum dissociation flux over all pairs that dissociate to form this one.
 	double flux =
@@ -447,7 +447,7 @@ double NECluster::getDissociationFlux(int xi) const {
 	return flux;
 }
 
-double NECluster::getEmissionFlux(int xi) const {
+double NECluster::getEmissionFlux(int xi) {
 
 	// Sum reaction rate constants over all emission pair reactions.
 	double flux = std::accumulate(emissionPairs.begin(), emissionPairs.end(),
@@ -458,7 +458,7 @@ double NECluster::getEmissionFlux(int xi) const {
 	return flux * concentration;
 }
 
-double NECluster::getProductionFlux(int xi) const {
+double NECluster::getProductionFlux(int xi) {
 	// Local declarations
 	double flux = 0.0;
 
@@ -480,7 +480,7 @@ double NECluster::getProductionFlux(int xi) const {
 	return flux;
 }
 
-double NECluster::getCombinationFlux(int xi) const {
+double NECluster::getCombinationFlux(int xi) {
 
 	double flux = std::accumulate(combiningReactants.begin(),
 			combiningReactants.end(), 0.0,

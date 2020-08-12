@@ -8,6 +8,7 @@ SET(PACKAGE_DESCRIPTION "Xolotl Modified Reaction tests")
 include_directories(${CMAKE_SOURCE_DIR}
                     ${CMAKE_SOURCE_DIR}/xolotlCore
                     ${CMAKE_SOURCE_DIR}/xolotlCore/commandline
+                    ${CMAKE_SOURCE_DIR}/xolotlCore/commandline/optionhandlers
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/trapmutation
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/resolution
                     ${CMAKE_SOURCE_DIR}/xolotlCore/modifiedreaction/heterogeneousnucleation

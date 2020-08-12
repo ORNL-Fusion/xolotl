@@ -36,8 +36,8 @@ HDF5File::AccessMode XFile::EnsureOpenAccessMode(HDF5File::AccessMode mode) {
 	return mode;
 }
 
-XFile::XFile(fs::path _path, const std::vector<double>& grid,
-		const XFile::HeaderGroup::NetworkCompsType& compVec, MPI_Comm _comm,
+XFile::XFile(fs::path _path, const std::vector<double> &grid,
+		const XFile::HeaderGroup::NetworkCompsType &compVec, MPI_Comm _comm,
 		int ny, double hy, int nz, double hz, AccessMode _mode) :
 		HDF5File(_path, EnsureCreateAccessMode(_mode), _comm, true) {
 	// Create and initialize the header group.
@@ -65,9 +65,9 @@ const std::string XFile::HeaderGroup::hyAttrName = "hy";
 const std::string XFile::HeaderGroup::nzAttrName = "nz";
 const std::string XFile::HeaderGroup::hzAttrName = "hz";
 
-XFile::HeaderGroup::HeaderGroup(const XFile& file,
-		const std::vector<double>& grid, int ny, double hy, int nz, double hz,
-		const NetworkCompsType& compVec) :
+XFile::HeaderGroup::HeaderGroup(const XFile &file,
+		const std::vector<double> &grid, int ny, double hy, int nz, double hz,
+		const NetworkCompsType &compVec) :
 		HDF5File::Group(file, HeaderGroup::path, true) {
 
 	// Base class created the group.
@@ -121,14 +121,14 @@ XFile::HeaderGroup::HeaderGroup(const XFile& file,
 	initNetworkComps(compVec);
 }
 
-XFile::HeaderGroup::HeaderGroup(const XFile& file) :
+XFile::HeaderGroup::HeaderGroup(const XFile &file) :
 		HDF5File::Group(file, HeaderGroup::path, false) {
 
 	// Base class opened the group, so nothing else to do.
 }
 
 void XFile::HeaderGroup::initNetworkComps(
-		const NetworkCompsType& compVec) const {
+		const NetworkCompsType &compVec) const {
 
 	// Create the array that will store the compositions and fill it
 	int dof = compVec.size();
@@ -224,13 +224,13 @@ const std::string XFile::NetworkGroup::normalSizeAttrName = "normalSize";
 const std::string XFile::NetworkGroup::superSizeAttrName = "superSize";
 const std::string XFile::NetworkGroup::phaseSpaceAttrName = "phaseSpace";
 
-XFile::NetworkGroup::NetworkGroup(const XFile& file) :
+XFile::NetworkGroup::NetworkGroup(const XFile &file) :
 		HDF5File::Group(file, NetworkGroup::path, false) {
 
 	// Base class opened the group, so nothing else to do.
 }
 
-XFile::NetworkGroup::NetworkGroup(const XFile& file, IReactionNetwork& network) :
+XFile::NetworkGroup::NetworkGroup(const XFile &file, IReactionNetwork &network) :
 		HDF5File::Group(file, NetworkGroup::path, true) {
 	// Base class created the group.
 
@@ -261,11 +261,10 @@ XFile::NetworkGroup::NetworkGroup(const XFile& file, IReactionNetwork& network) 
 	status = H5Aclose(attrId);
 
 	// Loop on all the clusters
-	auto& allReactants = network.getAll();
+	auto &allReactants = network.getAll();
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[this](IReactant& currReactant) {
+			[this](IReactant &currReactant) {
 				// Create and initialize the cluster group
-				int id = currReactant.getId() - 1;
 				ClusterGroup clusterGroup(*this, currReactant);
 			});
 }
@@ -283,18 +282,17 @@ Array<int, 5> XFile::NetworkGroup::readNetworkSize(int &normalSize,
 	// Read the phase space attirbute
 	Array<int, 5> list;
 	hid_t attributeId = H5Aopen_name(getId(), phaseSpaceAttrName.c_str());
-	hid_t dataspaceId = H5Aget_space(attributeId);
 	herr_t status = H5Aread(attributeId, H5T_STD_I32LE, &list);
 	status = H5Aclose(attributeId);
 
 	return list;
 }
 
-void XFile::NetworkGroup::readReactions(IReactionNetwork& network) const {
+void XFile::NetworkGroup::readReactions(IReactionNetwork &network) const {
 	// Loop on the reactants
-	auto& allReactants = network.getAll();
+	auto &allReactants = network.getAll();
 	std::for_each(allReactants.begin(), allReactants.end(),
-			[&allReactants, &network, this](IReactant& currReactant) {
+			[&network, this](IReactant &currReactant) {
 				// Open the corresponding group
 				int id = currReactant.getId() - 1;
 				ClusterGroup clusterGroup(*this, id);
@@ -305,7 +303,7 @@ void XFile::NetworkGroup::readReactions(IReactionNetwork& network) const {
 	return;
 }
 
-void XFile::NetworkGroup::copyTo(const XFile& target) const {
+void XFile::NetworkGroup::copyTo(const XFile &target) const {
 
 	H5Ocopy(getLocation().getId(), NetworkGroup::path.string().c_str(),
 			target.getId(), NetworkGroup::path.string().c_str(),
@@ -333,22 +331,22 @@ const std::string XFile::ClusterGroup::combinationDataName = "comb";
 const std::string XFile::ClusterGroup::dissociationDataName = "disso";
 const std::string XFile::ClusterGroup::emissionDataName = "emit";
 
-XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup, int id) :
+XFile::ClusterGroup::ClusterGroup(const NetworkGroup &networkGroup, int id) :
 		HDF5File::Group(networkGroup, makeGroupName(id), false) {
 }
 
-XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
-		IReactant& cluster) :
+XFile::ClusterGroup::ClusterGroup(const NetworkGroup &networkGroup,
+		IReactant &cluster) :
 		HDF5File::Group(networkGroup, makeGroupName(cluster.getId() - 1), true) {
 	// Super PSI cluster case
 	if (cluster.getType() == ReactantType::PSISuper) {
 		// Write the dataset with the coordinate of each contained cluster
-		auto& currCluster = static_cast<PSISuperCluster&>(cluster);
+		auto &currCluster = static_cast<PSISuperCluster&>(cluster);
 		int nTot = currCluster.getNTot();
 		int heVArray[nTot][4];
-		auto& heVList = currCluster.getCoordList();
+		auto &heVList = currCluster.getCoordList();
 		int i = 0;
-		for (auto const& pair : heVList) {
+		for (auto const &pair : heVList) {
 			heVArray[i][0] = std::get<0>(pair);
 			heVArray[i][1] = std::get<1>(pair);
 			heVArray[i][2] = std::get<2>(pair);
@@ -370,7 +368,7 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 	// Super Fe cluster case
 	else if (cluster.getType() == ReactantType::FeSuper) {
 		// Write the bounds
-		auto& currCluster = static_cast<FeSuperCluster&>(cluster);
+		auto &currCluster = static_cast<FeSuperCluster&>(cluster);
 		auto bounds = currCluster.getBounds();
 		std::array<hsize_t, 1> dim { 4 };
 		XFile::SimpleDataSpace<1> boundDSpace(dim);
@@ -381,7 +379,7 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 	}
 	// Super NE cluster case
 	else if (cluster.getType() == ReactantType::NESuper) {
-		auto& currCluster = static_cast<NESuperCluster&>(cluster);
+		auto &currCluster = static_cast<NESuperCluster&>(cluster);
 		// Build a dataspace for our scalar attributes.
 		XFile::ScalarDataSpace scalarDSpace;
 
@@ -401,7 +399,7 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 			|| cluster.getType() == ReactantType::FrankSuper
 			|| cluster.getType() == ReactantType::PerfectSuper
 			|| cluster.getType() == ReactantType::FaultedSuper) {
-		auto& currCluster = static_cast<AlloySuperCluster&>(cluster);
+		auto &currCluster = static_cast<AlloySuperCluster&>(cluster);
 		// Build a dataspace for our scalar attributes.
 		XFile::ScalarDataSpace scalarDSpace;
 
@@ -430,7 +428,7 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup,
 	// Normal cluster case
 	else {
 		// Write the composition attribute
-		auto& comp = cluster.getComposition();
+		auto &comp = cluster.getComposition();
 		std::array<hsize_t, 1> dim { (hsize_t) comp.size() };
 		int compArray[dim[0]];
 		for (int i = 0; i < dim[0]; i++) {
@@ -629,7 +627,6 @@ Array<int, 4> XFile::ClusterGroup::readFeSuperCluster() const {
 	// Read the bounds attribute
 	Array<int, 4> bounds;
 	hid_t attributeId = H5Aopen_name(getId(), boundsAttrName.c_str());
-	hid_t dataspaceId = H5Aget_space(attributeId);
 	herr_t status = H5Aread(attributeId, H5T_STD_I32LE, &bounds);
 	status = H5Aclose(attributeId);
 
@@ -681,10 +678,10 @@ void XFile::ClusterGroup::readAlloySuperCluster(int &nTot, int &maxAtom,
 	return;
 }
 
-void XFile::ClusterGroup::readReactions(IReactionNetwork& network,
+void XFile::ClusterGroup::readReactions(IReactionNetwork &network,
 		IReactant &cluster) const {
 	// Get all the reactants
-	auto& allReactants = network.getAll();
+	auto &allReactants = network.getAll();
 
 	// Read the production dataset
 	bool datasetExist = H5Lexists(getId(), productionDataName.c_str(),
@@ -703,13 +700,13 @@ void XFile::ClusterGroup::readReactions(IReactionNetwork& network,
 		// Loop on the prod vector
 		for (int i = 0; i < dims[0]; i++) {
 			// Get pointers to the 2 reactants
-			auto& firstReactant = allReactants.at(prodVec[i][0]);
-			auto& secondReactant = allReactants.at(prodVec[i][1]);
+			auto &firstReactant = allReactants.at(prodVec[i][0]);
+			auto &secondReactant = allReactants.at(prodVec[i][1]);
 
 			// Create and add the reaction to the network
 			std::unique_ptr<ProductionReaction> reaction(
 					new ProductionReaction(firstReactant, secondReactant));
-			auto& prref = network.add(std::move(reaction));
+			auto &prref = network.add(std::move(reaction));
 
 			// Add the reaction to the cluster
 			cluster.resultFrom(prref, &(prodVec[i][2]));
@@ -733,12 +730,12 @@ void XFile::ClusterGroup::readReactions(IReactionNetwork& network,
 		// Loop on the prod vector
 		for (int i = 0; i < dims[0]; i++) {
 			// Get pointers to the combining reactant
-			auto& firstReactant = allReactants.at(combVec[i][0]);
+			auto &firstReactant = allReactants.at(combVec[i][0]);
 
 			// Create and add the reaction to the network
 			std::unique_ptr<ProductionReaction> reaction(
 					new ProductionReaction(firstReactant, cluster));
-			auto& prref = network.add(std::move(reaction));
+			auto &prref = network.add(std::move(reaction));
 
 			// Add the reaction to the cluster
 			cluster.participateIn(prref, &(combVec[i][1]));
@@ -762,17 +759,17 @@ void XFile::ClusterGroup::readReactions(IReactionNetwork& network,
 		// Loop on the prod vector
 		for (int i = 0; i < dims[0]; i++) {
 			// Get pointers to the other reactants
-			auto& emittingReactant = allReactants.at(dissoVec[i][0]);
-			auto& secondReactant = allReactants.at(dissoVec[i][1]);
+			auto &emittingReactant = allReactants.at(dissoVec[i][0]);
+			auto &secondReactant = allReactants.at(dissoVec[i][1]);
 
 			// Create and add the reaction to the network
 			std::unique_ptr<ProductionReaction> reaction(
 					new ProductionReaction(cluster, secondReactant));
-			auto& prref = network.add(std::move(reaction));
+			auto &prref = network.add(std::move(reaction));
 			std::unique_ptr<DissociationReaction> dissociationReaction(
 					new DissociationReaction(emittingReactant, prref.first,
 							prref.second, &prref));
-			auto& drref = network.add(std::move(dissociationReaction));
+			auto &drref = network.add(std::move(dissociationReaction));
 
 			// Add the reaction to the cluster
 			cluster.participateIn(drref, &(dissoVec[i][2]));
@@ -796,17 +793,17 @@ void XFile::ClusterGroup::readReactions(IReactionNetwork& network,
 		// Loop on the prod vector
 		for (int i = 0; i < dims[0]; i++) {
 			// Get pointers to the other reactants
-			auto& firstReactant = allReactants.at(emitVec[i][0]);
-			auto& secondReactant = allReactants.at(emitVec[i][1]);
+			auto &firstReactant = allReactants.at(emitVec[i][0]);
+			auto &secondReactant = allReactants.at(emitVec[i][1]);
 
 			// Create and add the reaction to the network
 			std::unique_ptr<ProductionReaction> reaction(
 					new ProductionReaction(firstReactant, secondReactant));
-			auto& prref = network.add(std::move(reaction));
+			auto &prref = network.add(std::move(reaction));
 			std::unique_ptr<DissociationReaction> dissociationReaction(
 					new DissociationReaction(cluster, prref.first, prref.second,
 							&prref));
-			auto& drref = network.add(std::move(dissociationReaction));
+			auto &drref = network.add(std::move(dissociationReaction));
 
 			// Add the reaction to the cluster
 			cluster.emitFrom(drref, &(emitVec[i][2]));
@@ -821,7 +818,7 @@ const fs::path XFile::ConcentrationGroup::path = "/concentrationsGroup";
 const std::string XFile::ConcentrationGroup::lastTimestepAttrName =
 		"lastTimeStep";
 
-XFile::ConcentrationGroup::ConcentrationGroup(const XFile& file, bool create) :
+XFile::ConcentrationGroup::ConcentrationGroup(const XFile &file, bool create) :
 		HDF5File::Group(file, ConcentrationGroup::path, create) {
 
 	if (create) {
@@ -866,7 +863,7 @@ std::unique_ptr<XFile::TimestepGroup> XFile::ConcentrationGroup::getTimestepGrou
 	try {
 		// Open the sub-group associated with the desired time step.
 		tsGroup.reset(new TimestepGroup(*this, timeStep));
-	} catch (HDF5Exception& e) {
+	} catch (HDF5Exception &e) {
 		// We were unable to open the group associated with the given time step.
 		assert(not tsGroup);
 	}
@@ -886,7 +883,7 @@ std::unique_ptr<XFile::TimestepGroup> XFile::ConcentrationGroup::getLastTimestep
 		if (lastTimeStep >= 0) {
 			tsGroup.reset(new TimestepGroup(*this, lastTimeStep));
 		}
-	} catch (HDF5Exception& e) {
+	} catch (HDF5Exception &e) {
 		// We were unable to open the group associated with the given time step.
 		assert(not tsGroup);
 	}
@@ -913,6 +910,12 @@ const std::string XFile::TimestepGroup::prevDSurfFluxAttrName =
 const std::string XFile::TimestepGroup::nTSurfAttrName = "nTritiumSurf";
 const std::string XFile::TimestepGroup::prevTSurfFluxAttrName =
 		"previousTSurfFlux";
+const std::string XFile::TimestepGroup::nVSurfAttrName = "nVacancySurf";
+const std::string XFile::TimestepGroup::prevVSurfFluxAttrName =
+		"previousVSurfFlux";
+const std::string XFile::TimestepGroup::nIntersSurfAttrName = "nInterSurf";
+const std::string XFile::TimestepGroup::prevISurfFluxAttrName =
+		"previousISurfFlux";
 const std::string XFile::TimestepGroup::nHeBulkAttrName = "nHeliumBulk";
 const std::string XFile::TimestepGroup::prevHeBulkFluxAttrName =
 		"previousHeBulkFlux";
@@ -935,14 +938,14 @@ const std::string XFile::TimestepGroup::nTBurstAttrName = "nTritiumBurst";
 const std::string XFile::TimestepGroup::concDatasetName = "concs";
 
 std::string XFile::TimestepGroup::makeGroupName(
-		const XFile::ConcentrationGroup& concGroup, int timeStep) {
+		const XFile::ConcentrationGroup &concGroup, int timeStep) {
 
 	std::ostringstream namestr;
 	namestr << concGroup.getName() << '/' << groupNamePrefix << timeStep;
 	return namestr.str();
 }
 
-XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
+XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup &concGroup,
 		int timeStep, double time, double previousTime, double deltaTime) :
 		HDF5File::Group(concGroup, makeGroupName(concGroup, timeStep), true) {
 
@@ -964,7 +967,7 @@ XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
 	deltaTimeAttr.setTo(deltaTime);
 }
 
-XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
+XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup &concGroup,
 		int timeStep) :
 		HDF5File::Group(concGroup, makeGroupName(concGroup, timeStep), false) {
 
@@ -974,7 +977,9 @@ XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
 void XFile::TimestepGroup::writeSurface1D(Surface1DType iSurface,
 		Data1DType nInter, Data1DType previousFlux, Data1DType nHe,
 		Data1DType previousHeFlux, Data1DType nD, Data1DType previousDFlux,
-		Data1DType nT, Data1DType previousTFlux) const {
+		Data1DType nT, Data1DType previousTFlux, Data1DType nV,
+		Data1DType previousVFlux, Data1DType nI,
+		Data1DType previousIFlux) const {
 
 	// Make a scalar dataspace for 1D attributes.
 	XFile::ScalarDataSpace scalarDSpace;
@@ -1018,11 +1023,29 @@ void XFile::TimestepGroup::writeSurface1D(Surface1DType iSurface,
 			scalarDSpace);
 	prevTFluxAttr.setTo(previousTFlux);
 
+	// Add quantity of vacancy attribute
+	Attribute<Data1DType> nVAttr(*this, nVSurfAttrName, scalarDSpace);
+	nVAttr.setTo(nV);
+
+	// Add flux of vacancy attribute
+	Attribute<Data1DType> prevVFluxAttr(*this, prevVSurfFluxAttrName,
+			scalarDSpace);
+	prevVFluxAttr.setTo(previousVFlux);
+
+	// Add quantity of interstitial attribute
+	Attribute<Data1DType> nISurfAttr(*this, nIntersSurfAttrName, scalarDSpace);
+	nISurfAttr.setTo(nI);
+
+	// Add flux of interstitial attribute
+	Attribute<Data1DType> prevISurfFluxAttr(*this, prevISurfFluxAttrName,
+			scalarDSpace);
+	prevISurfFluxAttr.setTo(previousIFlux);
+
 	return;
 }
 
-void XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
-		const Data2DType& nInter, const Data2DType& previousFlux) const {
+void XFile::TimestepGroup::writeSurface2D(const Surface2DType &iSurface,
+		const Data2DType &nInter, const Data2DType &previousFlux) const {
 
 	// Create the array that will store the indices and fill it
 	int size = iSurface.size();
@@ -1077,8 +1100,8 @@ void XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
 	status = H5Dclose(datasetId);
 }
 
-void XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
-		const Data3DType& nInter, const Data3DType& previousFlux) const {
+void XFile::TimestepGroup::writeSurface3D(const Surface3DType &iSurface,
+		const Data3DType &nInter, const Data3DType &previousFlux) const {
 
 	// Create the array that will store the indices and fill it
 	int xSize = iSurface.size();
@@ -1178,7 +1201,8 @@ void XFile::TimestepGroup::writeBottom1D(Data1DType nHe,
 	nVAttr.setTo(nV);
 
 	// Add flux of vacancy attribute
-	Attribute<Data1DType> prevVFluxAttr(*this, prevVBulkFluxAttrName, scalarDSpace);
+	Attribute<Data1DType> prevVFluxAttr(*this, prevVBulkFluxAttrName,
+			scalarDSpace);
 	prevVFluxAttr.setTo(previousVFlux);
 
 	// Add quantity of int attribute
@@ -1191,10 +1215,10 @@ void XFile::TimestepGroup::writeBottom1D(Data1DType nHe,
 	prevIFluxAttr.setTo(previousIFlux);
 }
 
-void XFile::TimestepGroup::writeBottom2D(const Data2DType& nHe,
-		const Data2DType& previousHeFlux, const Data2DType& nD,
-		const Data2DType& previousDFlux, const Data2DType& nT,
-		const Data2DType& previousTFlux) {
+void XFile::TimestepGroup::writeBottom2D(const Data2DType &nHe,
+		const Data2DType &previousHeFlux, const Data2DType &nD,
+		const Data2DType &previousDFlux, const Data2DType &nT,
+		const Data2DType &previousTFlux) {
 
 	// Find out the size of the arrays
 	const int size = nHe.size();
@@ -1319,8 +1343,8 @@ void XFile::TimestepGroup::writeConcentrationDataset(int size,
 // a 1D dataset and add a 1D "starting index" array.
 // Assumes that grid point slabs are assigned to processes in 
 // MPI rank order.
-void XFile::TimestepGroup::writeConcentrations(const XFile& file, int baseX,
-		const Concs1DType& raggedConcs) const {
+void XFile::TimestepGroup::writeConcentrations(const XFile &file, int baseX,
+		const Concs1DType &raggedConcs) const {
 
 	// Create and write the ragged dataset.
 	RaggedDataSet2D<ConcType> dataset(file.getComm(), *this, concDatasetName,
@@ -1332,7 +1356,7 @@ void XFile::TimestepGroup::writeConcentrations(const XFile& file, int baseX,
 }
 
 XFile::TimestepGroup::Concs1DType XFile::TimestepGroup::readConcentrations(
-		const XFile& file, int baseX, int numX) const {
+		const XFile &file, int baseX, int numX) const {
 
 	// Open and read the ragged dataset.
 	RaggedDataSet2D<ConcType> dataset(file.getComm(), *this, concDatasetName);
@@ -1405,23 +1429,23 @@ auto XFile::TimestepGroup::readSurface3D(void) const -> Surface3DType {
 	return toReturn;
 }
 
-auto XFile::TimestepGroup::readData1D(
-		const std::string& dataName) const -> Data1DType {
+auto XFile::TimestepGroup::readData1D(const std::string &dataName) const ->
+		Data1DType {
 
 	Attribute<Data1DType> attr(*this, dataName);
 	return attr.get();
 
 }
 
-auto XFile::TimestepGroup::readData2D(
-		const std::string& dataName) const -> Data2DType {
+auto XFile::TimestepGroup::readData2D(const std::string &dataName) const ->
+		Data2DType {
 
 	DataSet<Data2DType> dataset(*this, dataName);
 	return dataset.read();
 }
 
-auto XFile::TimestepGroup::readData3D(
-		const std::string& dataName) const -> Data3DType {
+auto XFile::TimestepGroup::readData3D(const std::string &dataName) const ->
+		Data3DType {
 
 	// Open the dataset
 	hid_t datasetId = H5Dopen(getId(), dataName.c_str(), H5P_DEFAULT);
@@ -1457,8 +1481,8 @@ auto XFile::TimestepGroup::readData3D(
 	return toReturn;
 }
 
-auto XFile::TimestepGroup::readGridPoint(int i, int j,
-		int k) const -> Data3DType {
+auto XFile::TimestepGroup::readGridPoint(int i, int j, int k) const ->
+		Data3DType {
 
 	// Set the dataset name
 	std::stringstream datasetName;

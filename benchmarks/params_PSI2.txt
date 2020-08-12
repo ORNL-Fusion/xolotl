@@ -1,4 +1,4 @@
-petscArgs=-ts_adapt_time_step_increase_delay 5 -snes_force_iteration -helium_retention -ts_max_time 1000.0 -ts_adapt_dt_max 2.0e-3 -ts_adapt_wnormtype INFINITY -ts_exact_final_time stepover -fieldsplit_0_pc_type sor -ts_max_snes_failures -1 -pc_fieldsplit_detect_coupling -ts_monitor -pc_type fieldsplit -fieldsplit_1_pc_type redundant -ts_max_steps 100
+petscArgs=-ts_dt 1.0e-12 -ts_adapt_time_step_increase_delay 5 -snes_force_iteration -helium_retention -ts_max_time 1000.0 -ts_adapt_dt_max 2.0e-3 -ts_adapt_wnormtype INFINITY -ts_exact_final_time stepover -fieldsplit_0_pc_type sor -ts_max_snes_failures -1 -pc_fieldsplit_detect_coupling -ts_monitor -pc_type fieldsplit -fieldsplit_1_pc_type redundant -ts_max_steps 100
 vizHandler=dummy
 flux=4.0e5
 netParam=8 0 0 50 6 false

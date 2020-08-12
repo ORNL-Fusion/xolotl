@@ -33,9 +33,7 @@ public:
 	 * of the advecting clusters
 	 */
 	void initialize(const IReactionNetwork& network,
-                    IReactionNetwork::SparseFillMap& ofillMap) override {
-
-		int dof = network.getDOF();
+			IReactionNetwork::SparseFillMap& ofillMap) override {
 
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();
@@ -100,7 +98,7 @@ public:
 			// Get its id
 			int index = cluster.getId() - 1;
 			// Set the ofill value to 1 for this cluster
-            ofillMap[index].emplace_back(index);
+			ofillMap[index].emplace_back(index);
 		}
 
 		return;
