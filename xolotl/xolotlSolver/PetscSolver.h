@@ -93,8 +93,10 @@ public:
 	 * possibly including but not limited to setting up MPI and loading initial
 	 * conditions. If the solver can not be initialized, this operation will
 	 * throw an exception of type std::string.
+	 *
+	 * @param isStandalone To know is Xolotl is used as a subcomponent of another code
 	 */
-	void initialize() override;
+	void initialize(bool isStandalone) override;
 
 	/**
 	 * This operation sets the wanted final time and max time step allowed.

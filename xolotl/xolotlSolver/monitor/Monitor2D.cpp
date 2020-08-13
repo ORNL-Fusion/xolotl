@@ -79,6 +79,8 @@ std::vector<double> radii2D;
 int largestClusterId2D = -1;
 // The concentration threshold for the largest cluster
 double largestThreshold2D = 1.0e-12;
+// Tracks the previous TS number
+int previousTSNumber2D = -1;
 
 // Timers
 std::shared_ptr<xperf::ITimer> gbTimer;
@@ -1141,6 +1143,16 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 
 	PetscFunctionBeginUser;
 
+	PetscInt TSNumber = -1;
+	ierr = TSGetStepNumber(ts, &TSNumber);
+
+	// Skip if it is the same TS as before
+	if (TSNumber == previousTSNumber2D)
+		PetscFunctionReturn(0);
+
+	// Set the previous TS number
+	previousTSNumber2D = TSNumber;
+
 	// Gets the process ID
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
 	int procId;
@@ -1368,18 +1380,12 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					double distance = (grid[xi] + grid[xi + 1]) / 2.0
 							- grid[surfacePos + 1];
 
-					// Hard cut-off of 5 tau, no bursting deeper
-					if (distance > 5.0 * depthParam)
-						continue;
-
 					// Compute the helium density at this grid point
 					double heDensity = network.getTotalAtomConcentration();
 
 					// Compute the radius of the bubble from the number of helium
-					double nV = heDensity * (grid[xi + 1] - grid[xi])
+					double nV = heDensity * (grid[xi + 1] - grid[xi]) * hy
 							/ heVRatio;
-					//				double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
-
 					double latticeParam = network.getLatticeParameter();
 					double tlcCubed = latticeParam * latticeParam
 							* latticeParam;
@@ -1441,12 +1447,6 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 	PetscInt xs, xm, xi, Mx, ys, ym, yj, My;
 
 	PetscFunctionBeginUser;
-
-	// Call monitor time hear because it is skipped when post event is used
-	ierr = computeFluence(ts, 0, time, solution, NULL);
-	CHKERRQ(ierr);
-	ierr = monitorTime(ts, 0, time, solution, NULL);
-	CHKERRQ(ierr);
 
 	// Check if the surface has moved
 	if (nevents == 0)

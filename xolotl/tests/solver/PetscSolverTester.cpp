@@ -124,7 +124,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver0DHandler) {
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
-	solver->initialize();
+	solver->initialize(true);
 
 	// Solve and finalize
 	solver->solve();
@@ -232,7 +232,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver1DHandler) {
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
-	solver->initialize();
+	solver->initialize(true);
 
 	// Solve and finalize
 	solver->solve();
@@ -341,7 +341,7 @@ BOOST_AUTO_TEST_CASE(checkIrregularPetscSolver1DHandler) {
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
-	solver->initialize();
+	solver->initialize(true);
 
 	// Solve and finalize
 	solver->solve();
@@ -437,7 +437,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver2DHandler) {
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
-	solver->initialize();
+	solver->initialize(true);
 
 	// Solve and finalize
 	solver->solve();
@@ -534,7 +534,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 
 	// Set the solver command line to give the PETSc options and initialize it
 	solver->setCommandLineOptions(opts.getPetscArg());
-	solver->initialize();
+	solver->initialize(true);
 
 	// Solve and finalize
 	solver->solve();

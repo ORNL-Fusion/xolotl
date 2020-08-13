@@ -93,7 +93,7 @@ void XolotlInterface::initializeXolotl(int argc, char **argv, MPI_Comm comm,
 				new xolotlSolver::PetscSolver(solvHandler, handlerRegistry));
 		// Initialize the solver
 		solver->setCommandLineOptions(opts.getPetscArg());
-		solver->initialize();
+		solver->initialize(isStandalone);
 	} catch (const std::exception &e) {
 		std::cerr << e.what() << std::endl;
 		std::cerr << "Aborting." << std::endl;

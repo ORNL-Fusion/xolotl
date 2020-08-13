@@ -87,7 +87,7 @@ std::vector<double> radii1D;
 // The vector of depths at which bursting happens
 std::vector<int> depthPositions1D;
 // Tracks the previous TS number
-int previousTSNumber = -1;
+int previousTSNumber1D = -1;
 // The id of the largest cluster
 int largestClusterId1D = -1;
 // The concentration threshold for the largest cluster
@@ -2274,11 +2274,11 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 	ierr = TSGetStepNumber(ts, &TSNumber);
 
 	// Skip if it is the same TS as before
-	if (TSNumber == previousTSNumber)
+	if (TSNumber == previousTSNumber1D)
 		PetscFunctionReturn(0);
 
 	// Set the previous TS number
-	previousTSNumber = TSNumber;
+	previousTSNumber1D = TSNumber;
 
 	// Gets the process ID
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
@@ -2347,10 +2347,10 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 
 			// Compute the total density of intersitials that escaped from the
 			// surface since last timestep using the stored flux
-			nInterSurf1D += previousISurfFlux1D * dt;
+			nInterEvent1D += previousIEventFlux1D * dt;
 
 			// Remove the sputtering yield since last timestep
-			nInterSurf1D -= sputteringYield1D * heliumFluxAmplitude * dt;
+			nInterEvent1D -= sputteringYield1D * heliumFluxAmplitude * dt;
 
 			// Initialize the value for the flux
 			double newFlux = 0.0;
@@ -2384,7 +2384,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 			}
 
 			// Update the previous flux
-			previousISurfFlux1D = newFlux;
+			previousIEventFlux1D = newFlux;
 
 			// Set the surface processor
 			surfaceProc = procId;
@@ -2395,7 +2395,7 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 		MPI_Allreduce(&surfaceProc, &surfaceId, 1, MPI_INT, MPI_SUM,
 				xolotlComm);
 
-		// Send the information about nInterSurf1D and previousFlux1D
+		// Send the information about nInterEvent1D and previousFlux1D
 		// to the other processes
 		MPI_Bcast(&nInterEvent1D, 1, MPI_DOUBLE, surfaceId, xolotlComm);
 		MPI_Bcast(&previousIEventFlux1D, 1, MPI_DOUBLE, surfaceId, xolotlComm);
@@ -2408,13 +2408,13 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 
 		// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 		double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
-		if (nInterSurf1D > threshold) {
+		if (nInterEvent1D > threshold) {
 			// The surface is moving
 			fvalue[0] = 0;
 		}
 
 		// Moving the surface back
-		else if (nInterSurf1D < -threshold / 10.0) {
+		else if (nInterEvent1D < -threshold / 10.0) {
 			// The surface is moving
 			fvalue[1] = 0;
 		}
@@ -2428,8 +2428,6 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 
 		// The depth parameter to know where the bursting should happen
 		double depthParam = solverHandler.getTauBursting();			// nm
-		// The minimum size at which the bursting could start, 0 for this step
-		int minSizeBursting = 0;
 		// The number of He per V in a bubble
 		double heVRatio = solverHandler.getHeVRatio();
 
@@ -2447,22 +2445,16 @@ PetscErrorCode eventFunction1D(TS ts, PetscReal time, Vec solution,
 				double distance = (grid[xi] + grid[xi + 1]) / 2.0
 						- grid[surfacePos + 1];
 
-				// Hard cut-off of 5 tau, no bursting deeper
-				if (distance > 5.0 * depthParam)
-					continue;
-
 				// Get the pointer to the beginning of the solution data for this grid point
 				gridPointSolution = solutionArray[xi];
 				// Update the concentration in the network
 				network.updateConcentrationsFromArray(gridPointSolution);
 
 				// Compute the helium density at this grid point
-				double heDensity = network.getTotalTrappedAtomConcentration(0,
-						minSizeBursting)
-						/ network.getTotalBubbleConcentration(minSizeBursting);
+				double heDensity = network.getTotalAtomConcentration();
 
 				// Compute the radius of the bubble from the number of helium
-				double nV = heDensity / heVRatio;
+				double nV = heDensity * (grid[xi + 1] - grid[xi]) / heVRatio;
 				double latticeParam = network.getLatticeParameter();
 				double tlcCubed = latticeParam * latticeParam * latticeParam;
 				double radius = (sqrt(3.0) / 4) * latticeParam
@@ -2542,9 +2534,6 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
-	PetscInt TSNumber = -1;
-	ierr = TSGetStepNumber(ts, &TSNumber);
-
 	// Get the solutionArray
 	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
@@ -2574,23 +2563,6 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	double previousTime = solverHandler.getPreviousTime();
 	double dt = time - previousTime;
 
-	// Compute the prefactor for the probability (arbitrary)
-	double prefactor = heliumFluxAmplitude * dt
-			* solverHandler.getBurstingFactor();
-
-	// The depth parameter to know where the bursting should happen
-	double depthParam = solverHandler.getTauBursting();			// nm
-	// The minimum size at which the bursting could start
-	int minSizeBursting = solverHandler.getMinSizeBursting();
-	// The number of He per V in a bubble
-	double heVRatio = solverHandler.getHeVRatio();
-
-	// Create the vector in which the data about each bursting cluster will be saved to write in the HDF5 file
-	std::vector<xolotlCore::Array<double, 4> > bubbleInfo;
-	int nBurst = 0;
-	std::vector<int> burstIndex = { 0 };
-	std::vector<int> burstPosition;
-
 	// Take care of bursting
 	double localNHe = 0.0, localND = 0.0, localNT = 0.0;
 
@@ -2612,9 +2584,46 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 		}
 
+		// Write the bursting information
+		std::ofstream outputFile;
+		outputFile.open("bursting.txt", ios::app);
+		outputFile << time << " " << distance << std::endl;
+		outputFile.close();
+
 		// Pinhole case
-		// Consider each He with size larger than minSizeBursting to reset
-		// their concentration at this grid point
+		// Consider each He to reset their concentration at this grid point
+		for (auto const &heMapItem : network.getAll(ReactantType::He)) {
+			auto const &cluster = *(heMapItem.second);
+			int id = cluster.getId() - 1;
+
+			// Compute the number of atoms released
+			localNHe += gridPointSolution[id] * (double) cluster.getSize()
+					* hxLeft;
+
+			gridPointSolution[id] = 0.0;
+		}
+		// Consider each D to reset their concentration at this grid point
+		for (auto const &dMapItem : network.getAll(ReactantType::D)) {
+			auto const &cluster = *(dMapItem.second);
+			int id = cluster.getId() - 1;
+
+			// Compute the number of atoms released
+			localND += gridPointSolution[id] * (double) cluster.getSize()
+					* hxLeft;
+
+			gridPointSolution[id] = 0.0;
+		}
+		// Consider each T to reset their concentration at this grid point
+		for (auto const &tMapItem : network.getAll(ReactantType::T)) {
+			auto const &cluster = *(tMapItem.second);
+			int id = cluster.getId() - 1;
+
+			// Compute the number of atoms released
+			localNT += gridPointSolution[id] * (double) cluster.getSize()
+					* hxLeft;
+
+			gridPointSolution[id] = 0.0;
+		}
 
 		// Consider each HeV cluster to transfer their concentration to the V cluster of the
 		// same size at this grid point
@@ -2623,67 +2632,25 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 
 			// Get the composition
 			auto const &comp = cluster.getComposition();
-			int heSize = comp[toCompIdx(Species::He)];
 
-			// Check the size
-			if (heSize >= minSizeBursting) {
+			// Get the V cluster of the same size
+			auto vCluster = network.get(Species::V,
+					comp[toCompIdx(Species::V)]);
+			int vId = vCluster->getId() - 1;
+			int id = cluster.getId() - 1;
 
-				// To know if this location is bursting
-				bool localBurst = false;
-				// Compute the radius of the bubble from the number of helium
-				double nV = heSize / heVRatio;
-				double latticeParam = network.getLatticeParameter();
-				double tlcCubed = latticeParam * latticeParam * latticeParam;
-				double radius = (sqrt(3.0) / 4) * latticeParam
-						+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
-						- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
+			// Compute the number of atoms released
+			localNHe += gridPointSolution[id]
+					* (double) comp[toCompIdx(Species::He)] * hxLeft;
+			localND += gridPointSolution[id]
+					* (double) comp[toCompIdx(Species::D)] * hxLeft;
+			localNT += gridPointSolution[id]
+					* (double) comp[toCompIdx(Species::T)] * hxLeft;
 
-				// If the radius is larger than the distance to the surface, burst
-				if (radius > distance) {
-					localBurst = true;
-				}
-				// Add randomness
-				double prob = prefactor * (1.0 - (distance - radius) / distance)
-						* min(1.0,
-								exp(
-										-(distance - depthParam)
-												/ (depthParam * 2.0)));
-				double test = solverHandler.getRNG().GetRandomDouble();
+			// Transfer the concentration
+			gridPointSolution[vId] += gridPointSolution[id];
+			gridPointSolution[id] = 0.0;
 
-				if (prob > test) {
-					localBurst = true;
-				}
-
-				if (!localBurst)
-					continue;
-
-				// Get the V cluster of the same size
-				auto vCluster = network.get(Species::V,
-						comp[toCompIdx(Species::V)]);
-				int vId = vCluster->getId() - 1;
-				int id = cluster.getId() - 1;
-				// Compute the number of atoms released
-				double heConc = gridPointSolution[id] * (double) heSize;
-				localNHe += heConc * hxLeft;
-				localND += gridPointSolution[id]
-						* (double) comp[toCompIdx(Species::D)] * hxLeft;
-				localNT += gridPointSolution[id]
-						* (double) comp[toCompIdx(Species::T)] * hxLeft;
-
-				// Fill the bubble info vector
-				if (heConc > 1.0e-16) {
-					xolotlCore::Array<double, 4> temp;
-					temp[0] = heSize;
-					temp[1] = comp[toCompIdx(Species::V)];
-					temp[2] = radius;
-					temp[3] = heConc * hxLeft;
-					bubbleInfo.push_back(temp);
-				}
-
-				// Transfer the concentration
-				gridPointSolution[vId] += gridPointSolution[id];
-				gridPointSolution[id] = 0.0;
-			}
 		}
 
 		// Loop on the super clusters to transfer their concentration to the V cluster of the
@@ -2692,171 +2659,33 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 			auto const &cluster =
 					static_cast<PSISuperCluster&>(*(superMapItem.second));
 
-			// Check the size
-			int heSize = *(cluster.getBounds(0).begin());
-			if (heSize >= minSizeBursting) {
+			// Compute the number of atoms released
+			localNHe += cluster.getTotalAtomConcentration(0) * hxLeft;
+			localND += cluster.getTotalAtomConcentration(1) * hxLeft;
+			localNT += cluster.getTotalAtomConcentration(2) * hxLeft;
 
-				// To know if this location is bursting
-				bool localBurst = false;
-				double nV = heSize / heVRatio;
-				double latticeParam = network.getLatticeParameter();
-				double tlcCubed = latticeParam * latticeParam * latticeParam;
-				double radius = (sqrt(3.0) / 4) * latticeParam
-						+ cbrt((3.0 * tlcCubed * nV) / (8.0 * xolotlCore::pi))
-						- cbrt((3.0 * tlcCubed) / (8.0 * xolotlCore::pi));
-
-				// If the radius is larger than the distance to the surface, burst
-				if (radius > distance) {
-					localBurst = true;
-				}
-				// Add randomness
-				double prob = prefactor * (1.0 - (distance - radius) / distance)
-						* min(1.0,
-								exp(
-										-(distance - depthParam)
-												/ (depthParam * 2.0)));
-				double test = solverHandler.getRNG().GetRandomDouble();
-
-				if (prob > test) {
-					localBurst = true;
-				}
-
-				if (!localBurst)
-					continue;
-
-				// Compute the number of atoms released
-				double heConc = cluster.getTotalAtomConcentration(0);
-				localNHe += heConc * hxLeft;
-				localND += cluster.getTotalAtomConcentration(1) * hxLeft;
-				localNT += cluster.getTotalAtomConcentration(2) * hxLeft;
-
-				// Fill the bubble info vector
-				if (heConc > 1.0e-16) {
-					xolotlCore::Array<double, 4> temp;
-					temp[0] = heSize;
-					temp[1] = *(cluster.getBounds(3).begin());
-					temp[2] = radius;
-					temp[3] = heConc * hxLeft;
-					bubbleInfo.push_back(temp);
-				}
-
-				// Loop on the V boundaries
-				for (auto const &j : cluster.getBounds(3)) {
-					// Get the total concentration at this v
-					double conc = cluster.getIntegratedVConcentration(j);
-					// Get the corresponding V cluster and its Id
-					auto vCluster = network.get(Species::V, j);
-					int vId = vCluster->getId() - 1;
-					// Add the concentration
-					gridPointSolution[vId] += conc;
-				}
-
-				// Reset the super cluster concentration
-				int id = cluster.getId() - 1;
-				gridPointSolution[id] = 0.0;
-				id = cluster.getMomentId(0) - 1;
-				gridPointSolution[id] = 0.0;
-				id = cluster.getMomentId(1) - 1;
-				gridPointSolution[id] = 0.0;
-				id = cluster.getMomentId(2) - 1;
-				gridPointSolution[id] = 0.0;
-				id = cluster.getMomentId(3) - 1;
-				gridPointSolution[id] = 0.0;
+			// Loop on the V boundaries
+			for (auto const &j : cluster.getBounds(3)) {
+				// Get the total concentration at this v
+				double conc = cluster.getIntegratedVConcentration(j);
+				// Get the corresponding V cluster and its Id
+				auto vCluster = network.get(Species::V, j);
+				int vId = vCluster->getId() - 1;
+				// Add the concentration
+				gridPointSolution[vId] += conc;
 			}
-		}
 
-		// Check the size of the bubble info vector
-		const hsize_t nBubble = bubbleInfo.size();
-		if (nBubble > burstIndex[burstIndex.size() - 1]) {
-			// Update the statistics
-			nBurst++;
-			burstIndex.push_back(nBubble);
-			burstPosition.push_back(xi);
-		}
-	}
-
-	// Gather the bursting info to write
-	int nBursts[worldSize];
-	MPI_Allgather(&nBurst, 1, MPI_INT, &nBursts, 1, MPI_INT, xolotlComm);
-
-	// Loop on the world
-	for (int i = 0; i < worldSize; i++) {
-		// No data
-		auto localBursts = nBursts[i];
-		if (localBursts == 0)
-			continue;
-
-		// Create the parallel property list
-		hid_t propertyListId = H5Pcreate(H5P_DATASET_XFER);
-		auto status = H5Pset_dxpl_mpio(propertyListId, H5FD_MPIO_COLLECTIVE);
-
-		// Open the file with parallel access
-		xolotlCore::HDF5File burstingFile("bursting.h5",
-				xolotlCore::HDF5File::AccessMode::OpenReadWrite,
-				xolotlComm, true);
-
-		// Create and fill the data array
-		int dataArray[(2 * localBursts) + 1];
-		if (procId == i) {
-			dataArray[localBursts] = 0;
-			for (int j = 0; j < localBursts; j++) {
-				dataArray[j] = burstPosition[j];
-				dataArray[j + localBursts + 1] = burstIndex[j + 1];
-			}
-		}
-		// Broadcasts
-		MPI_Bcast(&dataArray, (2 * localBursts) + 1, MPI_INT, i,
-				xolotlComm);
-
-		// Loop on the local number of bursting
-		for (int j = 0; j < localBursts; j++) {
-			// Create the group for this bursting event
-			auto xi = dataArray[j];
-			std::ostringstream groupStr;
-			groupStr << "/" << TSNumber << "_" << xi;
-			xolotlCore::HDF5File::Group group(burstingFile, groupStr.str(),
-					true);
-			// Make a scalar dataspace for 1D attributes.
-			xolotlCore::HDF5File::ScalarDataSpace scalarDSpace;
-			// Create, write, and close the time attribute
-			xolotlCore::HDF5File::Attribute<double> timeAttr(group, "time",
-					scalarDSpace);
-			timeAttr.setTo(time);
-			// Create, write, and close the depth attribute
-			double distance = (grid[xi] + grid[xi + 1]) / 2.0
-					- grid[surfacePos + 1];
-			xolotlCore::HDF5File::Attribute<double> depthAttr(group, "depth",
-					scalarDSpace);
-			depthAttr.setTo(distance);
-
-			// Create, write, and close the bubble dataset
-			auto nBubble = dataArray[localBursts + j + 1]
-					- dataArray[localBursts + j];
-			std::array<hsize_t, 2> dims { nBubble, 4 };
-			xolotlCore::HDF5File::SimpleDataSpace<2> bubbleDSpace(dims);
-			hid_t datasetId = H5Dcreate2(group.getId(), "bubbles",
-			H5T_IEEE_F64LE, bubbleDSpace.getId(), H5P_DEFAULT,
-			H5P_DEFAULT,
-			H5P_DEFAULT);
-
-			// Locally
-			if (procId == i) {
-				double bubbleArray[nBubble][4];
-				for (int k = 0; k < nBubble; k++) {
-					bubbleArray[k][0] = bubbleInfo[k
-							+ dataArray[localBursts + j]][0];
-					bubbleArray[k][1] = bubbleInfo[k
-							+ dataArray[localBursts + j]][1];
-					bubbleArray[k][2] = bubbleInfo[k
-							+ dataArray[localBursts + j]][2];
-					bubbleArray[k][3] = bubbleInfo[k
-							+ dataArray[localBursts + j]][3];
-				}
-				auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL,
-				H5S_ALL,
-				H5P_DEFAULT, &bubbleArray);
-			}
-			status = H5Dclose(datasetId);
+			// Reset the super cluster concentration
+			int id = cluster.getId() - 1;
+			gridPointSolution[id] = 0.0;
+			id = cluster.getMomentId(0) - 1;
+			gridPointSolution[id] = 0.0;
+			id = cluster.getMomentId(1) - 1;
+			gridPointSolution[id] = 0.0;
+			id = cluster.getMomentId(2) - 1;
+			gridPointSolution[id] = 0.0;
+			id = cluster.getMomentId(3) - 1;
+			gridPointSolution[id] = 0.0;
 		}
 	}
 
@@ -2900,13 +2729,13 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	if (movingUp) {
 		int nGridPoints = 0;
 		// Move the surface up until it is smaller than the next threshold
-		while (nInterSurf1D > threshold) {
+		while (nInterEvent1D > threshold) {
 			// Move the surface higher
 			surfacePos--;
 			xi = surfacePos + solverHandler.getLeftOffset();
 			nGridPoints++;
 			// Update the number of interstitials
-			nInterSurf1D -= threshold;
+			nInterEvent1D -= threshold;
 			// Update the thresold
 			threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
 		}
@@ -2979,7 +2808,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 	// Moving the surface back
 	else {
 		// Move it back as long as the number of interstitials in negative
-		while (nInterSurf1D < 0.0) {
+		while (nInterEvent1D < 0.0) {
 			// Compute the threshold to a deeper grid point
 			threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
 			// Set all the concentrations to 0.0 at xi = surfacePos + 1
@@ -2997,7 +2826,7 @@ PetscErrorCode postEventFunction1D(TS ts, PetscInt nevents,
 			surfacePos++;
 			xi = surfacePos + solverHandler.getLeftOffset();
 			// Update the number of interstitials
-			nInterSurf1D += threshold;
+			nInterEvent1D += threshold;
 		}
 
 		// Printing information about the extension of the material
@@ -3078,8 +2907,8 @@ PetscErrorCode setupPetsc1DMonitor(TS &ts,
 
 	// Flags to launch the monitors or not
 	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,
-			flagPerf, flagHeRetention, flagStatus,
-			flagXeRetention, flagTRIDYN, flagAlloy, flagTemp, flagLargest;
+			flagPerf, flagHeRetention, flagStatus, flagXeRetention, flagTRIDYN,
+			flagAlloy, flagTemp, flagLargest;
 
 	// Check the option -check_negative
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_negative", &flagNeg);
@@ -3293,9 +3122,9 @@ PetscErrorCode setupPetsc1DMonitor(TS &ts,
 				assert(lastTsGroup);
 
 				// Get the interstitial quantity from the HDF5 file
-				nInterSurf1D = lastTsGroup->readData1D("nInterstitial");
+				nInterEvent1D = lastTsGroup->readData1D("nInterstitial");
 				// Get the previous I flux from the HDF5 file
-				previousISurfFlux1D = lastTsGroup->readData1D("previousIFlux");
+				previousIEventFlux1D = lastTsGroup->readData1D("previousIFlux");
 				// Get the previous time from the HDF5 file
 				double previousTime = lastTsGroup->readPreviousTime();
 				solverHandler.setPreviousTime(previousTime);
@@ -3326,10 +3155,10 @@ PetscErrorCode setupPetsc1DMonitor(TS &ts,
 				"setupPetsc1DMonitor: TSSetEventHandler (eventFunction1D) failed.");
 
 		if (solverHandler.burstBubbles() && procId == 0) {
-			// First create the file for parallel file access.
-			xolotlCore::HDF5File burstingFile("bursting.h5",
-					xolotlCore::HDF5File::AccessMode::CreateOrTruncateIfExists,
-					xolotlComm, false);
+			// Uncomment to clear the file where the bursting info will be written
+			std::ofstream outputFile;
+			outputFile.open("bursting.txt");
+			outputFile.close();
 		}
 	}
 
