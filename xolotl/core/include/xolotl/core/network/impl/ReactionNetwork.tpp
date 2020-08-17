@@ -14,13 +14,13 @@ namespace network
 template <typename TImpl>
 ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	IndexType gridSize, const options::IOptions& opts) :
-	IReactionNetwork(gridSize),
+	Superclass(gridSize),
 	_subpaving(subpaving),
 	_clusterData(_subpaving, gridSize),
 	_worker(*this)
 {
 	// Set constants
-	setInterstitialBias(opts.getBiasFactor());
+	this->setInterstitialBias(opts.getBiasFactor());
 	setImpurityRadius(opts.getImpurityRadius());
 	setLatticeParameter(opts.getLatticeParameter());
 	setFissionRate(opts.getFluxAmplitude());
@@ -31,7 +31,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	setEnableNucleation(map["heterogeneous"]);
 
 	auto tiles = subpaving.getTiles(plsm::onDevice);
-	_numClusters = tiles.extent(0);
+	this->_numClusters = tiles.extent(0);
 
 	//	// PRINT ALL THE CLUSTERS
 	//	constexpr auto speciesRange = getSpeciesRange();
@@ -48,7 +48,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	//			std::cout << hi[j] - 1 << " ";
 	//		std::cout << std::endl;
 	//	}
-	std::cout << "num: " << _numClusters << std::endl;
+	std::cout << "num: " << this->_numClusters << std::endl;
 
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
@@ -168,10 +168,10 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 {
-	_gridSize = gridSize;
-	_clusterData.setGridSize(_gridSize);
-	_clusterDataMirror.setGridSize(_gridSize);
-	_reactions.setGridSize(_gridSize);
+	this->_gridSize = gridSize;
+	_clusterData.setGridSize(gridSize);
+	_clusterDataMirror.setGridSize(gridSize);
+	_reactions.setGridSize(gridSize);
 	_reactions.updateAll(_clusterData);
 	Kokkos::fence();
 }
@@ -297,7 +297,7 @@ ReactionNetwork<TImpl>::getAllClusterBounds()
 	// Loop on all the clusters
 	constexpr auto speciesRange = getSpeciesRange();
 	auto tiles = _subpaving.getTiles(plsm::onHost);
-	for (IndexType i = 0; i < _numClusters; ++i) {
+	for (IndexType i = 0; i < this->_numClusters; ++i) {
 		const auto& clReg = tiles(i).getRegion();
 		Composition lo = clReg.getOrigin();
 		Composition hi = clReg.getUpperLimitPoint();
@@ -443,7 +443,7 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(
 	auto tiles = _subpaving.getTiles(plsm::onDevice);
 	double conc = 0.0;
 	Kokkos::parallel_reduce(
-		_numClusters,
+		this->_numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
 			const Region& clReg = tiles(i).getRegion();
 			if (clReg[vIndex].begin() > 0) {

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/PSIReaction.h>
 #include <xolotl/core/network/PSITraits.h>
 #include <xolotl/core/network/ReactionNetwork.h>
@@ -16,6 +17,12 @@ namespace detail
 template <typename TSpeciesEnum>
 class PSIReactionGenerator;
 }
+
+template <typename TSpeciesEnum>
+struct ReactionNetworkInterface<PSIReactionNetwork<TSpeciesEnum>>
+{
+	using Type = IPSIReactionNetwork;
+};
 
 template <typename TSpeciesEnum>
 class PSIReactionNetwork :
@@ -36,6 +43,32 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 
 	using Superclass::Superclass;
+
+    SpeciesId
+    getHeliumSpeciesId() const override
+    {
+        return SpeciesId{Species::He, this->getNumberOfSpecies()};
+    }
+
+    SpeciesId
+    getInterstitialSpeciesId() const override
+    {
+        return SpeciesId{Species::I, this->getNumberOfSpecies()};
+    }
+
+    SpeciesId
+    getVacancySpeciesId() const override
+    {
+        return SpeciesId{Species::V, this->getNumberOfSpecies()};
+    }
+
+	double
+	getTotalTrappedHeliumConcentration(
+		ConcentrationsView concs, AmountType minSize = 0) override
+	{
+		return this->getTotalTrappedAtomConcentration(
+			concs, Species::He, minSize);
+	}
 
 	IndexType
 	checkLargestClusterId();

@@ -675,8 +675,8 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	CHKERRQ(ierr);
 
 	// Store the concentration over the grid
-	double heConcentration = 0.0, dConcentration = 0.0, tConcentration = 0.0,
-		   vConcentration = 0.0, iConcentration = 0.0;
+	auto numSpecies = network.getSpeciesListSize();
+	auto myConcData = std::vector<double>(numSpecies, 0.0);
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal* gridPointSolution;
@@ -701,16 +701,10 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		deep_copy(dConcs, hConcs);
 
 		// Get the total concentrations at this grid point
-		heConcentration +=
-			network.getTotalAtomConcentration(dConcs, Spec::He, 1) * hx;
-		dConcentration +=
-			network.getTotalAtomConcentration(dConcs, Spec::D, 1) * hx;
-		tConcentration +=
-			network.getTotalAtomConcentration(dConcs, Spec::T, 1) * hx;
-		vConcentration +=
-			network.getTotalAtomConcentration(dConcs, Spec::V, 1) * hx;
-		iConcentration +=
-			network.getTotalAtomConcentration(dConcs, Spec::I, 1) * hx;
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			myConcData[id()] +=
+				network.getTotalAtomConcentration(dConcs, id, 1) * hx;
+		}
 	}
 
 	// Get the current process ID
@@ -719,19 +713,10 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Determine total concentrations for He, D, T.
-	std::array<double, 5> myConcData{heConcentration, dConcentration,
-		tConcentration, vConcentration, iConcentration};
-	std::array<double, 5> totalConcData;
+	auto totalConcData = std::vector<double>(numSpecies, 0.0);
 
-	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
-		MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
-
-	// Extract total He, D, T concentrations.  Values are valid only on rank 0.
-	double totalHeConcentration = totalConcData[0];
-	double totalDConcentration = totalConcData[1];
-	double totalTConcentration = totalConcData[2];
-	double totalVConcentration = totalConcData[3];
-	double totalIConcentration = totalConcData[4];
+	MPI_Reduce(myConcData.data(), totalConcData.data(), numSpecies, MPI_DOUBLE,
+		MPI_SUM, 0, xolotlComm);
 
 	// Look at the fluxes going in the bulk if the bottom is a free surface
 	if (solverHandler.getRightOffset() == 1) {
@@ -842,6 +827,22 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	if (procId == 0) {
 		// Get the fluence
 		double fluence = fluxHandler->getFluence();
+
+		//
+		// TODO: Function in IReactionNetwork to get species name
+		//      Want label string and full name string
+		//      IReactionNetwork::getSpeciesLabel()
+		//      IReactionNetwork::getSpeciesName()
+		//      toLabelString(species)
+		//      toNameString(species)
+
+		// Extract total He, D, T concentrations.  Values are valid only on rank
+		// 0.
+		double totalHeConcentration = totalConcData[0];
+		double totalDConcentration = totalConcData[1];
+		double totalTConcentration = totalConcData[2];
+		double totalVConcentration = totalConcData[3];
+		double totalIConcentration = totalConcData[4];
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;

@@ -7,6 +7,7 @@
 
 #include <xolotl/core/network/Cluster.h>
 #include <xolotl/core/network/ClusterData.h>
+#include <xolotl/core/network/SpeciesId.h>
 #include <xolotl/core/network/detail/ReactionData.h>
 
 namespace xolotl
@@ -54,6 +55,9 @@ public:
 	{
 		return 0;
 	}
+
+	virtual std::size_t
+	getSpeciesListSize() const noexcept = 0;
 
 	KOKKOS_INLINE_FUNCTION
 	IndexType
@@ -171,6 +175,9 @@ public:
 	virtual void
 	syncClusterDataOnHost() = 0;
 
+    virtual IndexType
+    findClusterId(const std::vector<AmountType>& composition) = 0;
+
 	virtual ClusterCommon<plsm::OnHost>
 	getClusterCommon(IndexType clusterId) const = 0;
 
@@ -210,6 +217,10 @@ public:
 	 */
 	virtual IndexType
 	getDiagonalFill(SparseFillMap& fillMap) = 0;
+
+	virtual double
+	getTotalAtomConcentration(ConcentrationsView concentrations,
+		SpeciesId species, AmountType minSize = 0) = 0;
 
 protected:
 	double _latticeParameter{};
