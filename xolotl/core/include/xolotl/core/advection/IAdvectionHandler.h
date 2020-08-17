@@ -171,6 +171,14 @@ public:
 	getAdvectingClusters() = 0;
 
 	/**
+	 * Get the vector of sink strength.
+	 *
+	 * @return The vector of sink strength
+	 */
+	virtual const std::vector<double>
+	getSinkStrengths() = 0;
+
+	/**
 	 * Get the location of the sink.
 	 *
 	 * @return The location

@@ -128,7 +128,10 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 				  << "grouping=11 2 4" << std::endl
 				  << "sputtering=0.5" << std::endl
 				  << "boundary=1 1" << std::endl
+				  << std::endl
 				  << "burstingDepth=5.0" << std::endl
+				  << "burstingMin=3" << std::endl
+				  << "burstingFactor=2.5" << std::endl
 				  << "zeta=0.6" << std::endl
 				  << "resoSize=10" << std::endl
 				  << "radiusSize=5" << std::endl
@@ -139,6 +142,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 				  << "hydrogenFactor=0.5" << std::endl
 				  << "xenonDiffusivity=3.0" << std::endl
 				  << "fissionYield=0.3" << std::endl
+				  << "heVRatio=5.0" << std::endl
 				  << "migrationThreshold=1.0" << std::endl;
 	goodParamFile.close();
 
@@ -205,6 +209,12 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Check the bursting depth option
 	BOOST_REQUIRE_EQUAL(opts.getBurstingDepth(), 5.0);
 
+	// Check the bursting size option
+	BOOST_REQUIRE_EQUAL(opts.getBurstingSize(), 3);
+
+	// Check the bursting factor option
+	BOOST_REQUIRE_EQUAL(opts.getBurstingFactor(), 2.5);
+
 	// Check the boundary conditions
 	BOOST_REQUIRE_EQUAL(opts.getLeftBoundary(), 1);
 	BOOST_REQUIRE_EQUAL(opts.getRightBoundary(), 1);
@@ -246,6 +256,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 
 	// Check the fission yield option
 	BOOST_REQUIRE_EQUAL(opts.getFissionYield(), 0.3);
+
+	// Check the HeV ration option
+	BOOST_REQUIRE_EQUAL(opts.getHeVRatio(), 5.0);
 
 	// Check the migration threshold option
 	BOOST_REQUIRE_EQUAL(opts.getMigrationThreshold(), 1.0);

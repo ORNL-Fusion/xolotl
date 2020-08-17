@@ -22,7 +22,8 @@ generatePSIReactionNetwork(const options::Options& options)
 	// Get the boundaries from the options
 	AmountType maxV = options.getMaxV();
 	AmountType maxI = options.getMaxI();
-	AmountType maxHe = PSIClusterGenerator<TSpeciesEnum>::getMaxHePerV(maxV);
+	AmountType maxHe = PSIClusterGenerator<TSpeciesEnum>::getMaxHePerV(
+		maxV, options.getHeVRatio());
 	AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	AmountType groupingWidthHe = options.getGroupingWidthA();

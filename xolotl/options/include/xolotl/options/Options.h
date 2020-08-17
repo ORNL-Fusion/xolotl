@@ -247,6 +247,16 @@ protected:
 	double burstingDepth;
 
 	/**
+	 * Minimum size for the bursting.
+	 */
+	int burstingMinSize;
+
+	/**
+	 * Factor used in bursting probability.
+	 */
+	double burstingFactor;
+
+	/**
 	 * An explicitly-given value to use to seed the random number generator.
 	 * Only used if rngUseSeed is true.
 	 */
@@ -317,6 +327,11 @@ protected:
 	 * Fission yield, how many xenon atoms are created per fission
 	 */
 	double fissionYield;
+
+	/**
+	 * HeV ration, how many He per V are allowed
+	 */
+	double heVRatio;
 
 	/**
 	 * Migration energy above which the diffusion will be ignored
@@ -857,6 +872,16 @@ public:
 	}
 
 	/**
+	 * Obtain the value of the factor in the bursting probability.
+	 * \see IOptions.h
+	 */
+	double
+	getBurstingFactor() const override
+	{
+		return burstingFactor;
+	}
+
+	/**
 	 * Set the seed that should be used for initializing the random
 	 * number generator.
 	 * \see IOptions.h
@@ -932,6 +957,16 @@ public:
 	}
 
 	/**
+	 * Obtain the value of the minimum size at which the bursting is happening.
+	 * \see IOptions.h
+	 */
+	int
+	getBurstingSize() const override
+	{
+		return burstingMinSize;
+	}
+
+	/**
 	 * Obtain the value of the proportion the flux pulse (on).
 	 * \see IOptions.h
 	 */
@@ -999,6 +1034,16 @@ public:
 	getFissionYield() const override
 	{
 		return fissionYield;
+	}
+
+	/**
+	 * Obtain the value of the HeV ratio.
+	 * \see IOptions.h
+	 */
+	virtual double
+	getHeVRatio() const override
+	{
+		return heVRatio;
 	}
 
 	/**

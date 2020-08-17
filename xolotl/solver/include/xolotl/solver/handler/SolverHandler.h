@@ -147,6 +147,15 @@ protected:
 	//! The depth parameter for the bubble bursting.
 	double tauBursting;
 
+	//! The minimum size for the bubble bursting.
+	int minSizeBursting;
+
+	//! The factor involved in computing bursting likelihood.
+	double burstingFactor;
+
+	//! The ratio of He per V in a bubble.
+	double heVRatio;
+
 	//! The value to use to seed the random number generator.
 	unsigned int rngSeed;
 
@@ -463,7 +472,10 @@ protected:
 		diffusionHandler(nullptr),
 		mutationHandler(nullptr),
 		tauBursting(10.0),
+		minSizeBursting(0),
+		burstingFactor(0.1),
 		rngSeed(0),
+		heVRatio(4.0),
 		previousTime(0.0),
 		nXeGB(0.0)
 	{
@@ -572,6 +584,15 @@ public:
 
 		// Set the sputtering yield
 		tauBursting = opts.getBurstingDepth();
+
+		// Set minimum size for bursting
+		minSizeBursting = opts.getBurstingSize();
+
+		// Set the bursting factor
+		burstingFactor = opts.getBurstingFactor();
+
+		// Set the HeV ratio
+		heVRatio = opts.getHeVRatio();
 
 		// Look at if the user wants to use a regular grid in the x direction
 		if (opts.useRegularXGrid())
@@ -707,6 +728,36 @@ public:
 	getTauBursting() const override
 	{
 		return tauBursting;
+	}
+
+	/**
+	 * Get the bursting minimum size parameter.
+	 * \see ISolverHandler.h
+	 */
+	int
+	getMinSizeBursting() const override
+	{
+		return minSizeBursting;
+	}
+
+	/**
+	 * Get the bursting factor.
+	 * \see ISolverHandler.h
+	 */
+	double
+	getBurstingFactor() const override
+	{
+		return burstingFactor;
+	}
+
+	/**
+	 * Get the HeV ratio.
+	 * \see ISolverHandler.h
+	 */
+	double
+	getHeVRatio() const override
+	{
+		return heVRatio;
 	}
 
 	/**

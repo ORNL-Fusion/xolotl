@@ -42,7 +42,7 @@ public:
 
 	KOKKOS_FUNCTION
 	static AmountType
-	getMaxHePerV(AmountType amtV) noexcept;
+	getMaxHePerV(AmountType amtV, double ratio) noexcept;
 
 	template <typename PlsmContext>
 	KOKKOS_INLINE_FUNCTION
@@ -84,6 +84,7 @@ private:
 	AmountType _groupingMin;
 	AmountType _groupingWidthA;
 	AmountType _groupingWidthB;
+	double _hevRatio{4.0};
 };
 } // namespace network
 } // namespace core

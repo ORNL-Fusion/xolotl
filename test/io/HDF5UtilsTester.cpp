@@ -106,9 +106,13 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	// Set the surface information
 	XFile::TimestepGroup::Surface1DType iSurface = 3;
 	XFile::TimestepGroup::Data1DType nInter = 1.0;
-	XFile::TimestepGroup::Data1DType previousIFlux = 0.1;
-	XFile::TimestepGroup::Data1DType nHe = 3.0;
-	XFile::TimestepGroup::Data1DType previousHeFlux = 0.2;
+	XFile::TimestepGroup::Data1DType previousFlux = 0.1;
+	XFile::TimestepGroup::Data1DType nHe = 1.0;
+	XFile::TimestepGroup::Data1DType previousHeFlux = 5.0;
+	XFile::TimestepGroup::Data1DType nD = 0.0;
+	XFile::TimestepGroup::Data1DType previousDFlux = 0.0;
+	XFile::TimestepGroup::Data1DType nT = 0.0;
+	XFile::TimestepGroup::Data1DType previousTFlux = 0.0;
 	XFile::TimestepGroup::Data1DType nV = 0.5;
 	XFile::TimestepGroup::Data1DType previousVFlux = 0.01;
 
@@ -161,7 +165,9 @@ BOOST_AUTO_TEST_CASE(checkIO)
 			timeStep, currentTime, previousTime, currentTimeStep);
 
 		// Write the surface information
-		tsGroup->writeSurface1D(iSurface, nInter, previousIFlux);
+		tsGroup->writeSurface1D(iSurface, nInter, previousFlux, nHe,
+			previousHeFlux, nD, previousDFlux, nT, previousTFlux, nV,
+			previousVFlux, nInter, previousFlux);
 
 		// Write the bulk information
 		tsGroup->writeBottom1D(nHe, previousHeFlux, 0.0, 0.0, 0.0, 0.0, nV,
@@ -228,20 +234,37 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		BOOST_REQUIRE_CLOSE(
 			tsGroup->readData1D("nInterstitial"), nInter, 0.0001);
 		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousIFlux"), previousIFlux, 0.0001);
+			tsGroup->readData1D("previousIFlux"), previousFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHeliumSurf"), nHe, 0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousHeSurfFlux"), previousHeFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuteriumSurf"), nD, 0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousDSurfFlux"), previousDFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritiumSurf"), nT, 0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousTSurfFlux"), previousTFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancySurf"), nV, 0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousVSurfFlux"), previousVFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterSurf"), nInter, 0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousISurfFlux"), previousFlux, 0.0001);
 
 		// Read the bulk information
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHelium"), nHe, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHeliumBulk"), nHe, 0.0001);
 		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousHeFlux"), previousHeFlux, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuterium"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousDFlux"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritium"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousTFlux"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancy"), nV, 0.0001);
+			tsGroup->readData1D("previousHeBulkFlux"), previousHeFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuteriumBulk"), 0.0, 0.0001);
 		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousVFlux"), previousVFlux, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nIBulk"), 0.0, 0.0001);
+			tsGroup->readData1D("previousDBulkFlux"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritiumBulk"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousTBulkFlux"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancyBulk"), nV, 0.0001);
+		BOOST_REQUIRE_CLOSE(
+			tsGroup->readData1D("previousVBulkFlux"), previousVFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterBulk"), 0.0, 0.0001);
 		BOOST_REQUIRE_CLOSE(
 			tsGroup->readData1D("previousIBulkFlux"), 0.0, 0.0001);
 

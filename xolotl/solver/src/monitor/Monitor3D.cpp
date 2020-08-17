@@ -72,6 +72,8 @@ std::vector<int> iClusterIds3D;
 int largestClusterId3D = -1;
 // The concentration threshold for the largest cluster
 double largestThreshold3D = 1.0e-12;
+// Tracks the previous TS number
+int previousTSNumber3D = -1;
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorLargest3D")
@@ -1037,6 +1039,16 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 	PetscFunctionBeginUser;
 
+	PetscInt TSNumber = -1;
+	ierr = TSGetStepNumber(ts, &TSNumber);
+
+	// Skip if it is the same TS as before
+	if (TSNumber == previousTSNumber3D)
+		PetscFunctionReturn(0);
+
+	// Set the previous TS number
+	previousTSNumber3D = TSNumber;
+
 	// Gets the process ID
 	auto xolotlComm = util::getMPIComm();
 	int procId;
@@ -1196,10 +1208,13 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 		auto dof = network.getDOF();
 
 		// Compute the prefactor for the probability (arbitrary)
-		double prefactor = heliumFluxAmplitude * dt * 0.1;
+		double prefactor =
+			heliumFluxAmplitude * dt * solverHandler.getBurstingFactor();
 
 		// The depth parameter to know where the bursting should happen
 		double depthParam = solverHandler.getTauBursting(); // nm
+		// The number of He per V in a bubble
+		double heVRatio = solverHandler.getHeVRatio();
 
 		// For now we are not bursting
 		bool burst = false;
@@ -1236,10 +1251,8 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 						// Compute the radius of the bubble from the number of
 						// helium
-						double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
-						//					double nV = pow(heDensity
-						/// 5.0, 1.163)
-						//* (grid[xi + 1] - grid[xi]);
+						double nV = heDensity * (grid[xi + 1] - grid[xi]) * hy *
+							hz / heVRatio;
 						double latticeParam = network.getLatticeParameter();
 						double tlcCubed =
 							latticeParam * latticeParam * latticeParam;
@@ -1303,12 +1316,6 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 	PetscInt xs, xm, xi, Mx, ys, ym, yj, My, zs, zm, zk, Mz;
 
 	PetscFunctionBeginUser;
-
-	// Call monitor time hear because it is skipped when post event is used
-	ierr = computeFluence(ts, 0, time, solution, NULL);
-	CHKERRQ(ierr);
-	ierr = monitorTime(ts, 0, time, solution, NULL);
-	CHKERRQ(ierr);
 
 	// Check if the surface has moved
 	if (nevents == 0)
@@ -2079,28 +2086,6 @@ setupPetsc3DMonitor(TS ts)
 	ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);
 	checkPetscError(
 		ierr, "setupPetsc3DMonitor: TSMonitorSet (monitorTime) failed.");
-
-	PetscFunctionReturn(0);
-}
-
-/**
- * This operation resets all the global variables to their original values.
- * @return A standard PETSc error code
- */
-PetscErrorCode
-reset3DMonitor()
-{
-	timeStepThreshold = 0.0;
-	hdf5Stride3D = 0.0;
-	hdf5Previous3D = 0;
-	hdf5OutputName3D = "xolotlStop.h5";
-	previousIFlux3D.clear();
-	nInterstitial3D.clear();
-	sputteringYield3D = 0.0;
-	depthPositions3D.clear();
-	iClusterIds3D.clear();
-	largestClusterId3D = -1;
-	largestThreshold3D = 1.0e-12;
 
 	PetscFunctionReturn(0);
 }

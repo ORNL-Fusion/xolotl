@@ -63,14 +63,6 @@ extern PetscErrorCode setupPetsc0DMonitor(TS);
 extern PetscErrorCode setupPetsc1DMonitor(TS);
 extern PetscErrorCode setupPetsc2DMonitor(TS);
 extern PetscErrorCode setupPetsc3DMonitor(TS);
-extern PetscErrorCode
-reset0DMonitor();
-extern PetscErrorCode
-reset1DMonitor();
-extern PetscErrorCode
-reset2DMonitor();
-extern PetscErrorCode
-reset3DMonitor();
 } // namespace monitor
 
 void
@@ -577,34 +569,6 @@ void
 PetscSolver::finalize()
 {
 	PetscErrorCode ierr;
-
-	// Switch on the number of dimensions to set the monitors
-	int dim = getSolverHandler().getDimension();
-	switch (dim) {
-	case 0:
-		// One dimension
-		ierr = monitor::reset0DMonitor();
-		checkPetscError(ierr, "PetscSolver::finalize: reset0DMonitor failed.");
-		break;
-	case 1:
-		// One dimension
-		ierr = monitor::reset1DMonitor();
-		checkPetscError(ierr, "PetscSolver::finalize: reset1DMonitor failed.");
-		break;
-	case 2:
-		// Two dimensions
-		ierr = monitor::reset2DMonitor();
-		checkPetscError(ierr, "PetscSolver::finalize: reset2DMonitor failed.");
-		break;
-	case 3:
-		// Three dimensions
-		ierr = monitor::reset3DMonitor();
-		checkPetscError(ierr, "PetscSolver::finalize: reset3DMonitor failed.");
-		break;
-	default:
-		throw std::string("PetscSolver Exception: Wrong number of dimensions "
-						  "to reset the monitors.");
-	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Free work space.

@@ -48,7 +48,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe =
-		PSIClusterGenerator<PSIFullSpeciesList>::getMaxHePerV(maxV);
+		PSIClusterGenerator<PSIFullSpeciesList>::getMaxHePerV(
+			maxV, opts.getHeVRatio());
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);

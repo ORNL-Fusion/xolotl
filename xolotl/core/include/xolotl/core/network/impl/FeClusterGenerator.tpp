@@ -70,31 +70,31 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 	Composition hi = region.getUpperLimitPoint();
 	auto amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
 	auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
-	double amt = sqrt(amtHe*amtHe + amtV*amtV);
+	double amt = sqrt(amtHe * amtHe + amtV * amtV);
 	double ibe = 4.88 +
-		2.59 * (cbrt(amtV*amtV) - cbrt((amtV - 1.0)*(amtV - 1.0))) -
+		2.59 * (cbrt(amtV * amtV) - cbrt((amtV - 1.0) * (amtV - 1.0))) -
 		2.5 * log(1.0 + (amtHe / amtV));
 	auto distance = fabs(ibe - 1.5);
 	//	if (distance < 1.2) {
 	if (distance < 1.5) {
-        auto comp = amt * amt * amt * 1.0e-6;
+		auto comp = amt * amt * amt * 1.0e-6;
 		if (region[Species::He].length() <
-                util::max(_groupingWidthHe + 1.0, comp)) {
+			util::max(_groupingWidthHe + 1.0, comp)) {
 			result[0] = false;
 		}
 		if (region[Species::V].length() <
-                util::max(_groupingWidthV + 1.0, comp)) {
+			util::max(_groupingWidthV + 1.0, comp)) {
 			result[1] = false;
 		}
 	}
 	else {
-        auto comp = amt * amt * amt * 1.0e-4;
+		auto comp = amt * amt * amt * 1.0e-4;
 		if (region[Species::He].length() <
-                util::max(_groupingWidthHe + 1.0, comp)) {
+			util::max(_groupingWidthHe + 1.0, comp)) {
 			result[0] = false;
 		}
 		if (region[Species::V].length() <
-                util::max(_groupingWidthV + 1.0, comp)) {
+			util::max(_groupingWidthV + 1.0, comp)) {
 			result[1] = false;
 		}
 	}
