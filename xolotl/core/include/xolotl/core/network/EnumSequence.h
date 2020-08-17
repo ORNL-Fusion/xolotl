@@ -1,5 +1,7 @@
 #pragma once
 
+#include <type_traits>
+
 namespace xolotl
 {
 namespace core
@@ -73,8 +75,9 @@ struct EnumSequence
 	EnumSequence
 	operator++(int)
 	{
+        EnumSequence ret = *this;
 		++static_cast<Rep&>(value);
-		return *this;
+		return ret;
 	}
 
 	Enum value;

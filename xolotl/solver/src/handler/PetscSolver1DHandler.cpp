@@ -1,7 +1,7 @@
 // Includes
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
-#include <xolotl/core/network/PSIReactionNetwork.h>
+#include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/solver/handler/PetscSolver1DHandler.h>
 #include <xolotl/util/MathUtils.h>
 
@@ -522,18 +522,15 @@ PetscSolver1DHandler::updateConcentration(
 			concOffset = concs[xi];
 
 			// Sum the total atom concentration
-			using NetworkType = core::network::PSIReactionNetwork<
-				core::network::PSIFullSpeciesList>;
-			using Spec = typename NetworkType::Species;
 			using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
 				Kokkos::MemoryUnmanaged>;
 			auto hConcs = HostUnmanaged(concOffset, dof);
 			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 			deep_copy(dConcs, hConcs);
-			// TODO: how to not have to cast the network here?
-			auto& psiNetwork = dynamic_cast<NetworkType&>(network);
-			atomConc += psiNetwork.getTotalTrappedAtomConcentration(
-							dConcs, Spec::He, 0) *
+			auto& psiNetwork =
+				dynamic_cast<core::network::IPSIReactionNetwork&>(network);
+			atomConc +=
+				psiNetwork.getTotalTrappedHeliumConcentration(dConcs, 0) *
 				(grid[xi + 1] - grid[xi]);
 		}
 
@@ -954,18 +951,15 @@ PetscSolver1DHandler::computeJacobian(
 			concOffset = concs[xi];
 
 			// Sum the total atom concentration
-			using NetworkType = core::network::PSIReactionNetwork<
-				core::network::PSIFullSpeciesList>;
-			using Spec = typename NetworkType::Species;
 			using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
 				Kokkos::MemoryUnmanaged>;
 			auto hConcs = HostUnmanaged(concOffset, dof);
 			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 			deep_copy(dConcs, hConcs);
-			// TODO: how to not have to cast the network here?
-			auto& psiNetwork = dynamic_cast<NetworkType&>(network);
-			atomConc += psiNetwork.getTotalTrappedAtomConcentration(
-							dConcs, Spec::He, 0) *
+			auto& psiNetwork =
+				dynamic_cast<core::network::IPSIReactionNetwork&>(network);
+			atomConc +=
+				psiNetwork.getTotalTrappedHeliumConcentration(dConcs, 0) *
 				(grid[xi + 1] - grid[xi]);
 		}
 

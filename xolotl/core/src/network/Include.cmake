@@ -23,6 +23,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/FeReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeTraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/INetworkHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/IPSIReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/IReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NEClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NENetworkHandler.h
@@ -42,6 +43,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/ReSolutionReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SinkReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesEnumSequence.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesId.h
 )
 
 list(APPEND XOLOTL_CORE_TPP_FILES

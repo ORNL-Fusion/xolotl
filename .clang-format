@@ -41,7 +41,6 @@ BreakBeforeBinaryOperators: None
 BreakBeforeBraces: Custom
 BreakBeforeInheritanceComma: false
 BreakBeforeTernaryOperators: false
-# BreakConstructorInitializersBeforeComma: false
 BreakConstructorInitializers: AfterColon
 BreakInheritanceList: AfterColon
 BreakStringLiterals: true
@@ -51,6 +50,7 @@ CommentPragmas:  '^ IWYU pragma:'
 
 # NOTE: Would like one per line always (with the colon on its own line)
 ConstructorInitializerAllOnOneLineOrOnePerLine: true
+AllowAllConstructorInitializersOnNextLine: false
 
 # ConstructorInitializerIndentWidth: 4
 # ContinuationIndentWidth: 4
