@@ -95,13 +95,15 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	ClusterCommon(const ClusterData& data, IndexType id) :
-		Superclass(id), _data{data}
+		Superclass(id),
+		_data{data}
 	{
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	ClusterCommon(const ClusterDataRef& data, IndexType id) :
-		Superclass(id), _data{data}
+		Superclass(id),
+		_data{data}
 	{
 	}
 
@@ -133,7 +135,8 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	Cluster(const ClusterDataRef& data, IndexType id) :
-		Superclass(id), _data{data}
+		Superclass(id),
+		_data{data}
 	{
 	}
 

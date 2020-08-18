@@ -31,7 +31,12 @@ struct PerfObjStatistics
 	 * @param _name The metric name.
 	 */
 	PerfObjStatistics(const std::string& _name) :
-		name(_name), processCount(0), min(0), max(0), average(0), stdev(0)
+		name(_name),
+		processCount(0),
+		min(0),
+		max(0),
+		average(0),
+		stdev(0)
 	{
 	}
 

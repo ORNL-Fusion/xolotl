@@ -1,7 +1,7 @@
 // Includes
 #include <xolotl/core/Constants.h>
-#include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
+#include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/solver/handler/PetscSolver2DHandler.h>
 #include <xolotl/util/MathUtils.h>
 

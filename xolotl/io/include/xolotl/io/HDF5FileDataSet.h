@@ -174,7 +174,8 @@ HDF5File::RaggedDataSet2D<T>::RaggedDataSet2D(MPI_Comm _comm,
 template <typename T>
 HDF5File::RaggedDataSet2D<T>::RaggedDataSet2D(
 	MPI_Comm _comm, const HDF5Object& loc, std::string dsetName) :
-	RaggedDataSetBase(_comm), DataSetTBase<T>(loc, dsetName)
+	RaggedDataSetBase(_comm),
+	DataSetTBase<T>(loc, dsetName)
 {
 	// Nothing else to do.
 }

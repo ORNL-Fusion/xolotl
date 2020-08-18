@@ -44,23 +44,23 @@ public:
 
 	using Superclass::Superclass;
 
-    SpeciesId
-    getHeliumSpeciesId() const override
-    {
-        return SpeciesId{Species::He, this->getNumberOfSpecies()};
-    }
+	SpeciesId
+	getHeliumSpeciesId() const override
+	{
+		return SpeciesId{Species::He, this->getNumberOfSpecies()};
+	}
 
-    SpeciesId
-    getInterstitialSpeciesId() const override
-    {
-        return SpeciesId{Species::I, this->getNumberOfSpecies()};
-    }
+	SpeciesId
+	getInterstitialSpeciesId() const override
+	{
+		return SpeciesId{Species::I, this->getNumberOfSpecies()};
+	}
 
-    SpeciesId
-    getVacancySpeciesId() const override
-    {
-        return SpeciesId{Species::V, this->getNumberOfSpecies()};
-    }
+	SpeciesId
+	getVacancySpeciesId() const override
+	{
+		return SpeciesId{Species::V, this->getNumberOfSpecies()};
+	}
 
 	double
 	getTotalTrappedHeliumConcentration(

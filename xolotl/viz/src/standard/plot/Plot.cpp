@@ -10,7 +10,8 @@ namespace standard
 namespace plot
 {
 Plot::Plot(const std::string& name) :
-	util::Identifiable(name), plotStyle(PlottingStyle::LINE)
+	util::Identifiable(name),
+	plotStyle(PlottingStyle::LINE)
 {
 }
 

@@ -75,7 +75,7 @@ struct EnumSequence
 	EnumSequence
 	operator++(int)
 	{
-        EnumSequence ret = *this;
+		EnumSequence ret = *this;
 		++static_cast<Rep&>(value);
 		return ret;
 	}
@@ -211,7 +211,8 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	explicit constexpr EnumSequenceRange(Sequence first, Sequence last) :
-		_first{first}, _last{last}
+		_first{first},
+		_last{last}
 	{
 	}
 

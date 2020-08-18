@@ -30,7 +30,8 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	SinkReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
 		IndexType reactionId, IndexType cluster0) :
-		Superclass(reactionData, clusterData, reactionId), _reactant(cluster0)
+		Superclass(reactionData, clusterData, reactionId),
+		_reactant(cluster0)
 	{
 		this->initialize();
 	}

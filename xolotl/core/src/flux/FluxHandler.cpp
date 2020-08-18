@@ -15,7 +15,10 @@ namespace core
 namespace flux
 {
 FluxHandler::FluxHandler() :
-	fluence(0.0), fluxAmplitude(0.0), useTimeProfile(false), normFactor(0.0)
+	fluence(0.0),
+	fluxAmplitude(0.0),
+	useTimeProfile(false),
+	normFactor(0.0)
 {
 	return;
 }

@@ -46,7 +46,8 @@ public:
 	 * @param _id The HDF5 id associated with the object.
 	 */
 	HDF5Object(std::string _name, hid_t _id = H5I_INVALID_HID) :
-		name(_name), id(_id)
+		name(_name),
+		id(_id)
 	{
 	}
 
@@ -109,7 +110,8 @@ public:
 	 */
 	LocatedHDF5Object(const HDF5Object& _location, std::string _name,
 		hid_t _id = H5I_INVALID_HID) :
-		HDF5Object(_name, _id), location(_location)
+		HDF5Object(_name, _id),
+		location(_location)
 	{
 	}
 

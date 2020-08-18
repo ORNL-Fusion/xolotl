@@ -43,7 +43,9 @@ protected:
 
 		//! The constructor
 		Desorption(int s, double p) :
-			size(s), portion(p), id(network::IReactionNetwork::invalidIndex())
+			size(s),
+			portion(p),
+			id(network::IReactionNetwork::invalidIndex())
 		{
 		}
 	};
@@ -108,7 +110,10 @@ public:
 	 * The constructor
 	 */
 	TrapMutationHandler() :
-		kMutation(0.0), kDis(1.0), attenuation(true), desorp(0, 0.0)
+		kMutation(0.0),
+		kDis(1.0),
+		attenuation(true),
+		desorp(0, 0.0)
 	{
 	}
 

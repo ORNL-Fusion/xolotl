@@ -146,11 +146,11 @@ public:
 		return GroupingRange::mapToMomentId(value);
 	}
 
-    std::size_t
-    getSpeciesListSize() const noexcept override
-    {
-        return getNumberOfSpecies();
-    }
+	std::size_t
+	getSpeciesListSize() const noexcept override
+	{
+		return getNumberOfSpecies();
+	}
 
 	void
 	setLatticeParameter(double latticeParameter) override;
@@ -203,16 +203,16 @@ public:
 		return findCluster(comp, plsm::onDevice);
 	}
 
-    IndexType
-    findClusterId(const std::vector<AmountType>& composition) override
-    {
-        assert(composition.size() == getNumberOfSpecies());
-        Composition comp;
-        for (std::size_t i = 0; i < composition.size(); ++i) {
-            comp[i] = composition[i];
-        }
-        return findCluster(comp, plsm::onHost).getId();
-    }
+	IndexType
+	findClusterId(const std::vector<AmountType>& composition) override
+	{
+		assert(composition.size() == getNumberOfSpecies());
+		Composition comp;
+		for (std::size_t i = 0; i < composition.size(); ++i) {
+			comp[i] = composition[i];
+		}
+		return findCluster(comp, plsm::onHost).getId();
+	}
 
 	ClusterCommon<plsm::OnHost>
 	getClusterCommon(IndexType clusterId) const override
@@ -322,10 +322,10 @@ public:
 	double
 	getTotalAtomConcentration(ConcentrationsView concentrations,
 		SpeciesId species, AmountType minSize = 0) override
-    {
-        auto type = species.cast<Species>();
-        return getTotalAtomConcentration(concentrations, type, minSize);
-    }
+	{
+		auto type = species.cast<Species>();
+		return getTotalAtomConcentration(concentrations, type, minSize);
+	}
 
 	/**
 	 * Get the total concentration of a given type of clusters only if it is

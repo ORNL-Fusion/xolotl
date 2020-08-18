@@ -33,7 +33,8 @@ public:
 	ReactionSet() = default;
 
 	ReactionSet(Kokkos::View<ReactionType*> rView) :
-		_reactions(rView), _numReactions(rView.size())
+		_reactions(rView),
+		_numReactions(rView.size())
 	{
 	}
 

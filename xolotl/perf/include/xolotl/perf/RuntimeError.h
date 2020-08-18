@@ -23,7 +23,8 @@ public:
 	/// @param _what The context or error string associated with the exception.
 	/// @param _code The error code associated with the exception.
 	runtime_error(const std::string& _what, int _code) :
-		std::runtime_error(_what), code(_code)
+		std::runtime_error(_what),
+		code(_code)
 	{
 	}
 

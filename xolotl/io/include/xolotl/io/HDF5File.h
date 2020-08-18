@@ -141,7 +141,8 @@ public:
 	public:
 		TypeBase(void) = delete;
 		TypeBase(std::string _name, hid_t _hid, bool _shouldClose) :
-			HDF5Object(_name, _hid), shouldClose(_shouldClose)
+			HDF5Object(_name, _hid),
+			shouldClose(_shouldClose)
 		{
 		}
 		TypeBase(const TypeBase& other) = delete;
@@ -754,7 +755,8 @@ public:
 	 */
 	HDF5File(fs::path _path, AccessMode _mode, MPI_Comm _comm = MPI_COMM_WORLD,
 		bool par = true) :
-		HDF5Object("/"), comm(_comm)
+		HDF5Object("/"),
+		comm(_comm)
 	{
 		Open(_path, _mode, _comm, par);
 	}

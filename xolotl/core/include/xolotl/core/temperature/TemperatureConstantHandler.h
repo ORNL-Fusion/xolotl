@@ -40,7 +40,8 @@ public:
 	 * @param constTemperature the temperature
 	 */
 	TemperatureConstantHandler(double constTemperature) :
-		temperature(constTemperature), dof(0)
+		temperature(constTemperature),
+		dof(0)
 	{
 	}
 

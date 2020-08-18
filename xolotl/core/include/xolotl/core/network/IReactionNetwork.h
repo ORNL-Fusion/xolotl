@@ -175,8 +175,8 @@ public:
 	virtual void
 	syncClusterDataOnHost() = 0;
 
-    virtual IndexType
-    findClusterId(const std::vector<AmountType>& composition) = 0;
+	virtual IndexType
+	findClusterId(const std::vector<AmountType>& composition) = 0;
 
 	virtual ClusterCommon<plsm::OnHost>
 	getClusterCommon(IndexType clusterId) const = 0;

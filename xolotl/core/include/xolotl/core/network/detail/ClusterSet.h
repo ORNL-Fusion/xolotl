@@ -25,7 +25,10 @@ struct ClusterSet
 	KOKKOS_INLINE_FUNCTION
 	ClusterSet(IndexType cl0, IndexType cl1, IndexType cl2 = invalidIndex,
 		IndexType cl3 = invalidIndex) :
-		cluster0{cl0}, cluster1{cl1}, cluster2{cl2}, cluster3{cl3}
+		cluster0{cl0},
+		cluster1{cl1},
+		cluster2{cl2},
+		cluster3{cl3}
 	{
 	}
 

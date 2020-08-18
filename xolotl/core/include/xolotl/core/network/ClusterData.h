@@ -366,7 +366,9 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	ClusterDataRef(const ClusterData<TNetwork, PlsmContext>& data) :
-		Superclass(data), tiles(data.tiles), momentIds(data.momentIds)
+		Superclass(data),
+		tiles(data.tiles),
+		momentIds(data.momentIds)
 	{
 	}
 

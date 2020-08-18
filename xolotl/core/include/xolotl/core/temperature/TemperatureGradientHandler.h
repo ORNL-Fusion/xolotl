@@ -36,7 +36,9 @@ private:
 	 * must be initialized with a temperature
 	 */
 	TemperatureGradientHandler() :
-		surfaceTemperature(0.0), bulkTemperature(0.0), dof(0)
+		surfaceTemperature(0.0),
+		bulkTemperature(0.0),
+		dof(0)
 	{
 	}
 
@@ -48,7 +50,9 @@ public:
 	 * @param grad The bulk temperature
 	 */
 	TemperatureGradientHandler(double surfTemp, double bulkTemp) :
-		surfaceTemperature(surfTemp), bulkTemperature(bulkTemp), dof(0)
+		surfaceTemperature(surfTemp),
+		bulkTemperature(bulkTemp),
+		dof(0)
 	{
 	}
 

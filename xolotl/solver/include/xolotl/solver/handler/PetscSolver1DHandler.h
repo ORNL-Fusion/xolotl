@@ -33,7 +33,8 @@ public:
 	 * @param _network The reaction network to use.
 	 */
 	PetscSolver1DHandler(NetworkType& _network) :
-		PetscSolverHandler(_network), surfacePosition(0)
+		PetscSolverHandler(_network),
+		surfacePosition(0)
 	{
 	}
 

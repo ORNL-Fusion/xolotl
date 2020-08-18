@@ -32,7 +32,9 @@ private:
 
 		CounterSpecInfo(const std::string& _name, const std::string& _papiName,
 			int _papiEventID) :
-			name(_name), papiName(_papiName), papiEventID(_papiEventID)
+			name(_name),
+			papiName(_papiName),
+			papiEventID(_papiEventID)
 		{
 		}
 	};

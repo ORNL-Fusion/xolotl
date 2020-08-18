@@ -51,7 +51,9 @@ public:
 	///
 	/// @param name The name to associate with the timer.
 	OSTimer(const std::string& name) :
-		util::Identifiable(name), val(0), startTime(invalidTimestamp)
+		util::Identifiable(name),
+		val(0),
+		startTime(invalidTimestamp)
 	{
 	}
 

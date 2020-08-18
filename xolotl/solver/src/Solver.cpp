@@ -33,7 +33,8 @@ Solver::Solver(
 
 Solver::Solver(handler::ISolverHandler& _solverHandler,
 	std::shared_ptr<perf::IHandlerRegistry> registry) :
-	optionsString(""), handlerRegistry(registry)
+	optionsString(""),
+	handlerRegistry(registry)
 {
 	staticSolverHandler = &_solverHandler;
 }

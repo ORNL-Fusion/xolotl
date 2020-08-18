@@ -1071,23 +1071,37 @@ computeXenonRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		// Define left and right with reference to the middle point
 		// Middle
 		int xi = std::get<0>(pair);
-		double hxLeft = grid[xi + 1] - grid[xi];
-		double hxRight = grid[xi + 2] - grid[xi + 1];
+
+		// Factor for finite difference
+		double hxLeft = 0.0, hxRight = 0.0;
+		if (xi - 1 >= 0 && xi < Mx) {
+			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+		}
+		else if (xi - 1 < 0) {
+			hxLeft = grid[xi + 1] - grid[xi];
+			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+		}
+		else {
+			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+			hxRight = grid[xi + 1] - grid[xi];
+		}
+		double factor = 2.0 / (hxLeft + hxRight);
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
 			// Left
 			xi = std::get<0>(pair) - 1;
 			// Compute the flux coming from the left
 			localRate += solutionArray[xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0 /
-				((hxLeft + hxRight) * hxLeft);
+				xeCluster.getDiffusionCoefficient(xi + 1 - xs) * factor /
+				hxLeft;
 
 			// Right
 			xi = std::get<0>(pair) + 1;
 			// Compute the flux coming from the left
 			localRate += solutionArray[xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0 /
-				((hxLeft + hxRight) * hxRight);
+				xeCluster.getDiffusionCoefficient(xi + 1 - xs) * factor /
+				hxRight;
 
 			// Middle
 			xi = std::get<0>(pair);
@@ -1893,10 +1907,12 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			if (xi - 1 >= 0 && xi < Mx) {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-			} else if (xi - 1 < 0) {
+			}
+			else if (xi - 1 < 0) {
 				hxLeft = grid[xi + 1] - grid[xi];
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-			} else {
+			}
+			else {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 				hxRight = grid[xi + 1] - grid[xi];
 			}

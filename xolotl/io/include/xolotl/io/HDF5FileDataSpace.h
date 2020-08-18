@@ -13,7 +13,8 @@ namespace io
 {
 template <uint32_t Rank>
 HDF5File::SimpleDataSpace<Rank>::SimpleDataSpace(const Dimensions& _dims) :
-	DataSpace(H5Screate_simple(Rank, _dims.data(), nullptr)), dims(_dims)
+	DataSpace(H5Screate_simple(Rank, _dims.data(), nullptr)),
+	dims(_dims)
 {
 	if (getId() < 0) {
 		std::ostringstream estr;

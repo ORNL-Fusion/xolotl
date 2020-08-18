@@ -69,7 +69,9 @@ public:
 	///
 	/// @param name The name to associate with the timer.
 	PAPITimer(const std::string& name) :
-		util::Identifiable(name), val(0), startTime(invalidValue)
+		util::Identifiable(name),
+		val(0),
+		startTime(invalidValue)
 	{
 	}
 
