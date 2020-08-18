@@ -629,8 +629,20 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 		int xi = std::get<0>(pair);
 		int yj = std::get<1>(pair);
 		int zk = std::get<2>(pair);
-		double hxLeft = grid[xi + 1] - grid[xi];
-		double hxRight = grid[xi + 2] - grid[xi + 1];
+
+		// Factor for finite difference
+		double hxLeft = 0.0, hxRight = 0.0;
+		if (xi - 1 >= 0 && xi < Mx) {
+			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+		} else if (xi - 1 < 0) {
+			hxLeft = grid[xi + 1] - grid[xi];
+			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+		} else {
+			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+			hxRight = grid[xi + 1] - grid[xi];
+		}
+		double factor = 2.0 / (hxLeft + hxRight);
 
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs
@@ -647,15 +659,15 @@ PetscErrorCode computeXenonRetention3D(TS ts, PetscInt timestep, PetscReal time,
 			int size = cluster.getSize();
 			// Compute the flux coming from the left
 			localRate += (double) size * solutionArray[zk][yj][xi][id]
-					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-					/ ((hxLeft + hxRight) * hxLeft);
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) * factor
+					/ hxLeft;
 
 			// Right
 			xi = std::get<0>(pair) + 1;
 			// Compute the flux coming from the right
 			localRate += (double) size * solutionArray[zk][yj][xi][id]
-					* cluster.getDiffusionCoefficient(xi + 1 - xs) * 2.0
-					/ ((hxLeft + hxRight) * hxRight);
+					* cluster.getDiffusionCoefficient(xi + 1 - xs) * factor
+					/ hxRight;
 
 			// Y segment
 			// Bottom
