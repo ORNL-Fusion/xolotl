@@ -141,6 +141,15 @@ protected:
 	//! The depth parameter for the bubble bursting.
 	double tauBursting;
 
+	//! The minimum size for the bubble bursting.
+	int minSizeBursting;
+
+	//! The factor involved in computing bursting likelihood.
+	double burstingFactor;
+
+	//! The ratio of He per V in a bubble.
+	double heVRatio;
+
 	//! The value to use to seed the random number generator.
 	unsigned int rngSeed;
 
@@ -422,19 +431,18 @@ protected:
 	 * @param _network The reaction network to use.
 	 */
 	SolverHandler(xolotlCore::IReactionNetwork& _network) :
-			network(_network), networkName(""), gbFileName(""), nX(0), nY(0), nZ(
-					0), hX(0.0), hY(0.0), hZ(0.0), localXS(0), localXM(0), localYS(
-					0), localYM(0), localZS(0), localZM(0), leftOffset(1), rightOffset(
-					1), bottomOffset(1), topOffset(1), frontOffset(1), backOffset(
-					1), initialVConc(0.0), electronicStoppingPower(0.0), dimension(
-					-1), portion(0.0), useRegularGrid(""), readInGrid(false), movingSurface(
-					false), bubbleBursting(false), isMirror(true), useAttenuation(
-					false), sputteringYield(0.0), fluxHandler(nullptr), temperatureHandler(
-					nullptr), diffusionHandler(nullptr), mutationHandler(
-					nullptr), resolutionHandler(nullptr), nucleationHandler(
-					nullptr), tauBursting(10.0), rngSeed(0), previousTime(0.0), nXeGB(
-					0.0) {
-	}
+			network(_network), networkName(""), gbFileName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
+					0.0), hZ(0.0), localXS(0), localXM(0), localYS(
+							0), localYM(0), localZS(0), localZM(0), leftOffset(1), rightOffset(1), bottomOffset(
+					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
+					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
+					0.0), useRegularGrid(""), readInGrid(false), movingSurface(
+					false), bubbleBursting(false), useAttenuation(false), sputteringYield(
+					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
+					nullptr), mutationHandler(nullptr), resolutionHandler(
+					nullptr), nucleationHandler(nullptr), tauBursting(10.0), minSizeBursting(
+					0), burstingFactor(0.1), rngSeed(0), heVRatio(4.0), previousTime(0.0), nXeGB(
+							0.0) {}
 
 public:
 
@@ -549,8 +557,17 @@ public:
 		// Set the sputtering yield
 		sputteringYield = options.getSputteringYield();
 
-		// Set the sputtering yield
+		// Set the bursting depth
 		tauBursting = options.getBurstingDepth();
+
+		// Set minimum size for bursting
+		minSizeBursting = options.getBurstingSize();
+
+		// Set the bursting factor
+		burstingFactor = options.getBurstingFactor();
+
+		// Set the HeV ratio
+		heVRatio = options.getHeVRatio();
 
 		// Look at if the user wants to use a regular grid in the x direction
 		if (options.useRegularXGrid())
@@ -669,6 +686,30 @@ public:
 	 */
 	double getTauBursting() const override {
 		return tauBursting;
+	}
+
+	/**
+	 * Get the bursting minimum size parameter.
+	 * \see ISolverHandler.h
+	 */
+	int getMinSizeBursting() const override {
+		return minSizeBursting;
+	}
+
+	/**
+	 * Get the bursting factor.
+	 * \see ISolverHandler.h
+	 */
+	double getBurstingFactor() const override {
+		return burstingFactor;
+	}
+
+	/**
+	 * Get the HeV ratio.
+	 * \see ISolverHandler.h
+	 */
+	double getHeVRatio() const override {
+		return heVRatio;
 	}
 
 	/**

@@ -292,10 +292,11 @@ public:
 
 	/**
 	 * This operation returns the current total concentration of xenon in the group.
-
+	 *
+	 * @param minSize The minimum size to take into account
 	 * @return The concentration
 	 */
-	double getTotalXenonConcentration() const;
+	double getTotalXenonConcentration(int minSize = 0) const;
 
 	/**
 	 * This operation returns the distance to the mean.

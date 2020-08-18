@@ -17,18 +17,8 @@ if(POLICY CMP0074)
     cmake_policy(SET CMP0074 NEW)
 endif()
 
-option(DYNAMIC_LOADING "Build dynamic loadable" OFF)
-if(DYNAMIC_LOADING)
-    SET(CMAKE_POSITION_INDEPENDENT_CODE True)
-    SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH True)
-    message(STATUS "Build for dynamic loading method")
-    message(STATUS "CMAKE_POSITION_INDEPENDENT_CODE = ${CMAKE_POSITION_INDEPENDENT_CODE}")
-    message(STATUS "CMAKE_INSTALL_RPATH_USE_LINK_PATH = ${CMAKE_INSTALL_RPATH_USE_LINK_PATH}")
-endif()
-
 # Set a name for this project.
 PROJECT ( xolotl C CXX )
-
 
 # Build the tests by default
 option(BUILD_TESTS "Build test programs" ON)
@@ -150,60 +140,24 @@ include_directories(${CMAKE_SOURCE_DIR}
 
 configure_file ("${CMAKE_SOURCE_DIR}/XolotlConfig.h.in" "${CMAKE_BINARY_DIR}/XolotlConfig.h")
 
-# Decide whether to build as a library
-option(BUILD_SHARED_LIBS "Build as a shared library")
+# Set the library name
+SET(LIBRARY_NAME "xolotlInter")
 
-if(BUILD_SHARED_LIBS)
-    message(STATUS "----- Building shared libraries -----")
+# Collect the header 
+file(GLOB HEADERS interface.h)
+# Grab all of the source files
+file(GLOB SRC interface.cpp)
+# Add a library 
+add_library(${LIBRARY_NAME} STATIC ${SRC})
+target_link_libraries(${LIBRARY_NAME} xolotlFactory)
 
-    # Set the library name
-    SET(LIBRARY_NAME "xolotlInter")
+# Setup the library list
+set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
+xolotlFactory xolotlCL xolotlInter ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
 
-    if(DYNAMIC_LOADING)
-        # Collect the header 
-        file(GLOB HEADERS XolotlDLinterface.h)
-        # Grab all of the source files
-        file(GLOB SRC DLinterface.cpp)
-        #dkim_test
-        set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
-        xolotlFactory xolotlCL ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
-        # Add a library 
-        add_library(${LIBRARY_NAME} SHARED ${SRC})
-        target_link_libraries(${LIBRARY_NAME} ${XOLOTL_LIBS})
-    else(DYNAMIC_LOADING)
-        # Collect the header 
-        file(GLOB HEADERS interface.h)
-        # Grab all of the source files
-        file(GLOB SRC interface.cpp)
-        # Add a library 
-        add_library(${LIBRARY_NAME} SHARED ${SRC})
-        target_link_libraries(${LIBRARY_NAME} xolotlFactory)
-    endif(DYNAMIC_LOADING)
-    
-    #Install the xolotl header files
-    install(FILES ${HEADERS} DESTINATION ${PROJECT_BINARY_DIR}/include)
-    install(TARGETS ${LIBRARY_NAME} DESTINATION ${PROJECT_BINARY_DIR}/lib)
-    
-else(BUILD_SHARED_LIBS)
-    # Set the library name
-    SET(LIBRARY_NAME "xolotlInter")
+# Add an executable for the main program
+ADD_EXECUTABLE (xolotl main.cpp)
 
-    # Collect the header 
-    file(GLOB HEADERS interface.h)
-    # Grab all of the source files
-    file(GLOB SRC interface.cpp)
-    # Add a library 
-    add_library(${LIBRARY_NAME} STATIC ${SRC})
-    target_link_libraries(${LIBRARY_NAME} xolotlFactory)
+# Link the libraries
+target_link_libraries(xolotl ${XOLOTL_LIBS})
 
-    # Setup the library list
-    set(XOLOTL_LIBS xolotlReactants xolotlSolver xolotlIO xolotlPerf xolotlViz 
-    xolotlFactory xolotlCL xolotlInter ${PETSC_LIBRARIES} ${HDF5_LIBRARIES})
-   
-    # Add an executable for the main program
-    ADD_EXECUTABLE (xolotl main.cpp)
-
-    # Link the libraries
-    target_link_libraries(xolotl ${XOLOTL_LIBS})
-
-endif(BUILD_SHARED_LIBS)

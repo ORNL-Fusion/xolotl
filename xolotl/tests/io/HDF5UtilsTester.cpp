@@ -22,7 +22,7 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 /**
  * This suite is responsible for testing the HDF5 classes.
  */
-BOOST_AUTO_TEST_SUITE(HDF5_testSuite)
+BOOST_AUTO_TEST_SUITE (HDF5_testSuite)
 
 /**
  * Create a faux network composition vector.
@@ -93,9 +93,13 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 	// Set the surface information
 	xolotlCore::XFile::TimestepGroup::Surface1DType iSurface = 3;
 	xolotlCore::XFile::TimestepGroup::Data1DType nInter = 1.0;
-	xolotlCore::XFile::TimestepGroup::Data1DType previousIFlux = 0.1;
-	xolotlCore::XFile::TimestepGroup::Data1DType nHe = 3.0;
-	xolotlCore::XFile::TimestepGroup::Data1DType previousHeFlux = 0.2;
+	xolotlCore::XFile::TimestepGroup::Data1DType previousFlux = 0.1;
+	xolotlCore::XFile::TimestepGroup::Data1DType nHe = 1.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType previousHeFlux = 5.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType nD = 0.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType previousDFlux = 0.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType nT = 0.0;
+	xolotlCore::XFile::TimestepGroup::Data1DType previousTFlux = 0.0;
 	xolotlCore::XFile::TimestepGroup::Data1DType nV = 0.5;
 	xolotlCore::XFile::TimestepGroup::Data1DType previousVFlux = 0.01;
 
@@ -150,7 +154,9 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 				previousTime, currentTimeStep);
 
 		// Write the surface information
-		tsGroup->writeSurface1D(iSurface, nInter, previousIFlux);
+		tsGroup->writeSurface1D(iSurface, nInter, previousFlux, nHe,
+				previousHeFlux, nD, previousDFlux, nT, previousTFlux, nV,
+				previousVFlux, nInter, previousFlux);
 
 		// Write the bulk information
 		tsGroup->writeBottom1D(nHe, previousHeFlux, 0.0, 0.0, 0.0, 0.0, nV,
@@ -217,21 +223,38 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		BOOST_REQUIRE_EQUAL(tsGroup->readSurface1D(), iSurface);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterstitial"), nInter,
 				0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousIFlux"), previousIFlux,
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousIFlux"), previousFlux,
 				0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHeliumSurf"), nHe, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousHeSurfFlux"),
+				previousHeFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuteriumSurf"), nD, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousDSurfFlux"),
+				previousDFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritiumSurf"), nT, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousTSurfFlux"),
+				previousTFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancySurf"), nV, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousVSurfFlux"),
+				previousVFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterSurf"), nInter, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousISurfFlux"),
+				previousFlux, 0.0001);
 
 		// Read the bulk information
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHelium"), nHe, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousHeFlux"),
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHeliumBulk"), nHe, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousHeBulkFlux"),
 				previousHeFlux, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuterium"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousDFlux"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritium"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousTFlux"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancy"), nV, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousVFlux"), previousVFlux,
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuteriumBulk"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousDBulkFlux"), 0.0,
 				0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nIBulk"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritiumBulk"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousTBulkFlux"), 0.0,
+				0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancyBulk"), nV, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousVBulkFlux"),
+				previousVFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterBulk"), 0.0, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousIBulkFlux"), 0.0,
 				0.0001);
 
@@ -243,11 +266,11 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 		int normalSize = 0, superSize = 0;
 		networkGroup->readNetworkSize(normalSize, superSize);
 		// Get all the reactants
-		auto const& reactants = network->getAll();
+		auto const &reactants = network->getAll();
 		// Check the network vector
-		for (IReactant& it : reactants) {
+		for (IReactant &it : reactants) {
 			// Get the i-th reactant in the network
-			auto& reactant = (PSICluster&) it;
+			auto &reactant = (PSICluster&) it;
 			int id = reactant.getId() - 1;
 			// Open the cluster group
 			XFile::ClusterGroup clusterGroup(*networkGroup, id);
@@ -260,7 +283,7 @@ BOOST_AUTO_TEST_CASE(checkIO) {
 				auto comp = clusterGroup.readCluster(formationEnergy,
 						migrationEnergy, diffusionFactor);
 				// Check the composition
-				auto& composition = reactant.getComposition();
+				auto &composition = reactant.getComposition();
 				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::He)],
 						composition[toCompIdx(Species::He)]);
 				BOOST_REQUIRE_EQUAL(comp[toCompIdx(Species::D)],

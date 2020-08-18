@@ -23,13 +23,13 @@ Options::Options() :
 				false), maxImpurity(8), maxD(0), maxT(0), maxV(20), maxI(6), nX(
 				10), nY(0), nZ(0), xStepSize(0.5), yStepSize(0.0), zStepSize(
 				0.0), leftBoundary(1), rightBoundary(1), bottomBoundary(1), topBoundary(
-				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), rngUseSeed(
-				false), rngSeed(0), rngPrintSeed(false), zeta(0.73), resoMinSize(
-				0), density(10.162795276841), pulseTime(0.0), pulseProportion(
-				0.0), latticeParameter(-1.0), impurityRadius(-1.0), biasFactor(
-				1.15), hydrogenFactor(0.25), xenonDiffusivity(-1.0), fissionYield(
-				0.25), migrationThreshold(
-				std::numeric_limits<double>::infinity()) {
+				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), burstingMinSize(
+				0), burstingFactor(0.1), rngUseSeed(false), rngSeed(0), rngPrintSeed(
+				false), zeta(0.73), resoMinSize(0), density(10.162795276841), pulseTime(
+				0.0), pulseProportion(0.0), latticeParameter(-1.0), impurityRadius(
+				-1.0), biasFactor(1.15), hydrogenFactor(0.25), xenonDiffusivity(
+				-1.0), fissionYield(0.25), heVRatio(4.0), migrationThreshold(
+						std::numeric_limits<double>::infinity()) {
 	radiusMinSizes.Init(0);
 
 	return;
@@ -153,7 +153,12 @@ void Options::readParams(int argc, char *argv[]) {
 					"0 means mirror or periodic, 1 means free surface.")(
 			"burstingDepth", bpo::value<double>(&burstingDepth),
 			"This option allows the user to set a depth in nm "
-					"for the bubble bursting.")("rng", bpo::value<string>(),
+					"for the bubble bursting.")("burstingMin",
+			bpo::value<int>(&burstingMinSize),
+			"This option allows the user to set a minimum size for the bubble bursting.")(
+			"burstingFactor", bpo::value<double>(&burstingFactor),
+			"This option allows the user to set the factor used in computing the likelihood of a bursting event.")(
+			"rng", bpo::value<string>(),
 			"Allows user to specify seed used to initialize random number "
 					"generator (default = determined from current time) and "
 					"whether each process should print the seed value "
@@ -178,6 +183,8 @@ void Options::readParams(int argc, char *argv[]) {
 			"This option allows the user to set the diffusion coefficient for xenon in nm2 s-1.")(
 			"fissionYield", bpo::value<double>(&fissionYield),
 			"This option allows the user to set the number of xenon created for each fission.")(
+			"heVRatio", bpo::value<double>(&heVRatio),
+			"This option allows the user to set the number of He atoms allowed per V in a bubble.")(
 			"migrationThreshold", bpo::value<double>(&migrationThreshold),
 			"This option allows the user to set a limit on the migration energy above which the diffusion will be ignored.");
 

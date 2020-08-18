@@ -413,7 +413,7 @@ double NESuperCluster::getTotalConcentration() const {
 	return conc;
 }
 
-double NESuperCluster::getTotalXenonConcentration() const {
+double NESuperCluster::getTotalXenonConcentration(int minSize) const {
 	// Initial declarations
 	int index = 0;
 	double distance = 0.0, conc = 0.0;
@@ -427,7 +427,8 @@ double NESuperCluster::getTotalXenonConcentration() const {
 		distance = getDistance(index);
 
 		// Add the concentration of each cluster in the group times the number of xenon atoms
-		conc += getConcentration(distance) * (double) index;
+		if (index >= minSize)
+			conc += getConcentration(distance) * (double) index;
 	}
 
 	return conc;

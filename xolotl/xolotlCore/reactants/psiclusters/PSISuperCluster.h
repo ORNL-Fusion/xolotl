@@ -432,11 +432,12 @@ private:
 	/**
 	 * Obtain total concentration for desired species type.
 	 *
+	 * @param minSize The minimum size to take into account
 	 * @return Total concentration of species indicated by Axis
 	 * template parameter.
 	 */
 	template<uint32_t Axis>
-	double getTotalAtomConcHelper() const;
+	double getTotalAtomConcHelper(int minSize = 0) const;
 
 public:
 
@@ -673,18 +674,20 @@ public:
 
 	/**
 	 * This operation returns the current total concentration of clusters in the group.
-
+	 *
+	 * @param minSize The minimum size to take into account
 	 * @return The concentration
 	 */
-	double getTotalConcentration() const;
+	double getTotalConcentration(int minSize = 0) const;
 
 	/**
 	 * This operation returns the current total concentration of given atom in the group.
 	 *
 	 * @param axis The given atom
+	 * @param minSize The minimum size to take into account
 	 * @return The concentration
 	 */
-	double getTotalAtomConcentration(int axis = 0) const;
+	double getTotalAtomConcentration(int axis = 0, int minSize = 0) const;
 
 	/**
 	 * This operation returns the current total concentration of vacancies in the group.

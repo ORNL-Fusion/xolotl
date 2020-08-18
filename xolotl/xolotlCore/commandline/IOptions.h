@@ -379,6 +379,20 @@ public:
 	virtual double getBurstingDepth() const = 0;
 
 	/**
+	 * Obtain the value of the minimum size at which the bursting is happening.
+	 *
+	 * @return The size
+	 */
+	virtual int getBurstingSize() const = 0;
+
+	/**
+	 * Obtain the value of the factor in the bursting probability.
+	 *
+	 * @return The factor
+	 */
+	virtual double getBurstingFactor() const = 0;
+
+	/**
 	 * Set the seed that should be used for initializing the random
 	 * number generator.
 	 *
@@ -480,6 +494,13 @@ public:
 	 * @return The number of xenon per fission
 	 */
 	virtual double getFissionYield() const = 0;
+
+	/**
+	 * Obtain the value of the HeV ratio.
+	 *
+	 * @return The ratio
+	 */
+	virtual double getHeVRatio() const = 0;
 
 	/**
 	 * Obtain the value of the migration energy threshold for effective diffusivity.

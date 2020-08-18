@@ -244,20 +244,24 @@ public:
 	virtual void getDiagonalFill(SparseFillMap& sfm) = 0;
 
 	/**
-	 * Get the total concentration of atoms in the network.
+	 * Get the total concentration of atoms in the network, starting at size minSize.
 	 *
 	 * @param i Index to switch between the different types of atoms
+	 * @param minSize The minimum size to take into account
 	 * @return The total concentration
 	 */
-	virtual double getTotalAtomConcentration(int i = 0) = 0;
+	virtual double getTotalAtomConcentration(int i = 0, int minSize = 0) = 0;
 
 	/**
-	 * Get the total concentration of atoms contained in bubbles in the network.
+	 * Get the total concentration of atoms contained in bubbles in the network,
+	 * starting at size minSize.
 	 *
 	 * @param i Index to switch between the different types of atoms
+	 * @param minSize The minimum size to take into account
 	 * @return The total concentration
 	 */
-	virtual double getTotalTrappedAtomConcentration(int i = 0) = 0;
+	virtual double getTotalTrappedAtomConcentration(int i = 0,
+			int minSize = 0) = 0;
 
 	/**
 	 * Get the total concentration of vacancies in the network.
@@ -272,6 +276,15 @@ public:
 	 * @return The total concentration
 	 */
 	virtual double getTotalIConcentration() = 0;
+
+	/**
+	 * Get the total concentration of bubbles in the network,
+	 * starting at size minSize.
+	 *
+	 * @param minSize The minimum size to take into account
+	 * @return The total concentration
+	 */
+	virtual double getTotalBubbleConcentration(int minSize = 0) = 0;
 
 	/**
 	 * Calculate all the rate constants for the reactions and dissociations of the network.

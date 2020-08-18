@@ -1555,7 +1555,8 @@ void PSIClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 	return;
 }
 
-double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
+double PSIClusterReactionNetwork::getTotalAtomConcentration(int i,
+		int minSize) {
 	// Initial declarations
 	double atomConc = 0.0;
 	ReactantType type;
@@ -1584,7 +1585,8 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
 		double size = cluster.getSize();
 
 		// Add the concentration times the He content to the total helium concentration
-		atomConc += cluster.getConcentration() * size;
+		if (size >= minSize)
+			atomConc += cluster.getConcentration() * size;
 	}
 
 	// Sum over all Mixed clusters.
@@ -1593,10 +1595,11 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		auto& comp = cluster.getComposition();
+		double size = comp[toCompIdx(toSpecies(type))];
 
 		// Add the concentration times the He content to the total helium concentration
-		atomConc += cluster.getConcentration()
-				* comp[toCompIdx(toSpecies(type))];
+		if (size >= minSize)
+			atomConc += cluster.getConcentration() * size;
 	}
 
 	// Sum over all super clusters.
@@ -1607,13 +1610,14 @@ double PSIClusterReactionNetwork::getTotalAtomConcentration(int i) {
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		// Add its total atom concentration
-		atomConc += cluster.getTotalAtomConcentration(i);
+		atomConc += cluster.getTotalAtomConcentration(i, minSize);
 	}
 
 	return atomConc;
 }
 
-double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
+double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i,
+		int minSize) {
 	// Initial declarations
 	double atomConc = 0.0;
 	ReactantType type;
@@ -1640,10 +1644,11 @@ double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		auto& comp = cluster.getComposition();
+		double size = comp[toCompIdx(toSpecies(type))];
 
 		// Add the concentration times the He content to the total helium concentration
-		atomConc += cluster.getConcentration()
-				* comp[toCompIdx(toSpecies(type))];
+		if (size >= minSize)
+			atomConc += cluster.getConcentration() * size;
 	}
 
 	// Sum over all super clusters.
@@ -1654,7 +1659,7 @@ double PSIClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 				static_cast<PSISuperCluster&>(*(currMapItem.second));
 
 		// Add its total helium concentration helium concentration
-		atomConc += cluster.getTotalAtomConcentration(i);
+		atomConc += cluster.getTotalAtomConcentration(i, minSize);
 	}
 
 	return atomConc;
@@ -1712,6 +1717,37 @@ double PSIClusterReactionNetwork::getTotalIConcentration() {
 	}
 
 	return iConc;
+}
+
+double PSIClusterReactionNetwork::getTotalBubbleConcentration(int minSize) {
+	// Initial declarations
+	double conc = 0.0;
+
+	// Sum over all Mixed clusters.
+	for (auto const& currMapItem : getAll(ReactantType::PSIMixed)) {
+
+		// Get the cluster and its composition
+		auto const& cluster = *(currMapItem.second);
+		auto& comp = cluster.getComposition();
+		double size = comp[toCompIdx(Species::He)];
+
+		// Add the concentration to the total bubble concentration
+		if (size >= minSize)
+			conc += cluster.getConcentration();
+	}
+
+	// Sum over all super clusters.
+	for (auto const& currMapItem : getAll(ReactantType::PSISuper)) {
+
+		// Get the cluster
+		auto const& cluster =
+				static_cast<PSISuperCluster&>(*(currMapItem.second));
+
+		// Add its total concentration to the concentration
+		conc += cluster.getTotalConcentration(minSize);
+	}
+
+	return conc;
 }
 
 void PSIClusterReactionNetwork::computeAllFluxes(double *updatedConcOffset,

@@ -559,10 +559,11 @@ public:
 
 	/**
 	 * This operation returns the current total concentration of helium in the group.
-
+	 *
+	 * @param minSize The minimum size to take into account
 	 * @return The concentration
 	 */
-	double getTotalHeliumConcentration() const;
+	double getTotalHeliumConcentration(int minSize = 0) const;
 
 	/**
 	 * This operation returns the current total concentration of vacancies in the group.

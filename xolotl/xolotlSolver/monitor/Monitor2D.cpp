@@ -79,6 +79,8 @@ std::vector<double> radii2D;
 int largestClusterId2D = -1;
 // The concentration threshold for the largest cluster
 double largestThreshold2D = 1.0e-12;
+// Tracks the previous TS number
+int previousTSNumber2D = -1;
 
 // Timers
 std::shared_ptr<xperf::ITimer> gbTimer;
@@ -1061,14 +1063,14 @@ PetscErrorCode monitorSurface2D(TS ts, PetscInt timestep, PetscReal time,
 			else if (procId == 0) {
 				// Get the position
 				MPI_Recv(&x, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 10, xolotlComm,
-						MPI_STATUS_IGNORE);
+				MPI_STATUS_IGNORE);
 				MPI_Recv(&y, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 11, xolotlComm,
-						MPI_STATUS_IGNORE);
+				MPI_STATUS_IGNORE);
 
 				// and the concentration
 				double conc = 0.0;
 				MPI_Recv(&conc, 1, MPI_DOUBLE, MPI_ANY_SOURCE, 12, xolotlComm,
-						MPI_STATUS_IGNORE);
+				MPI_STATUS_IGNORE);
 
 				// Modify the Point with the received values and add it to myPoints
 				thePoint.value = conc;
@@ -1140,6 +1142,16 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 	depthPositions2D.clear();
 
 	PetscFunctionBeginUser;
+
+	PetscInt TSNumber = -1;
+	ierr = TSGetStepNumber(ts, &TSNumber);
+
+	// Skip if it is the same TS as before
+	if (TSNumber == previousTSNumber2D)
+		PetscFunctionReturn(0);
+
+	// Set the previous TS number
+	previousTSNumber2D = TSNumber;
 
 	// Gets the process ID
 	auto xolotlComm = xolotlCore::MPIUtils::getMPIComm();
@@ -1339,10 +1351,13 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 	// Now work on the bubble bursting
 	if (solverHandler.burstBubbles()) {
 		// Compute the prefactor for the probability (arbitrary)
-		double prefactor = heliumFluxAmplitude * dt * 0.1;
+		double prefactor = heliumFluxAmplitude * dt
+				* solverHandler.getBurstingFactor();
 
 		// The depth parameter to know where the bursting should happen
 		double depthParam = solverHandler.getTauBursting(); // nm
+		// The number of He per V in a bubble
+		double heVRatio = solverHandler.getHeVRatio();
 
 		// For now we are not bursting
 		bool burst = false;
@@ -1369,9 +1384,8 @@ PetscErrorCode eventFunction2D(TS ts, PetscReal time, Vec solution,
 					double heDensity = network.getTotalAtomConcentration();
 
 					// Compute the radius of the bubble from the number of helium
-					double nV = heDensity * (grid[xi + 1] - grid[xi]) / 4.0;
-					//				double nV = pow(heDensity / 5.0, 1.163) * (grid[xi + 1] - grid[xi]);
-
+					double nV = heDensity * (grid[xi + 1] - grid[xi]) * hy
+							/ heVRatio;
 					double latticeParam = network.getLatticeParameter();
 					double tlcCubed = latticeParam * latticeParam
 							* latticeParam;
@@ -1433,12 +1447,6 @@ PetscErrorCode postEventFunction2D(TS ts, PetscInt nevents,
 	PetscInt xs, xm, xi, Mx, ys, ym, yj, My;
 
 	PetscFunctionBeginUser;
-
-	// Call monitor time hear because it is skipped when post event is used
-	ierr = computeFluence(ts, 0, time, solution, NULL);
-	CHKERRQ(ierr);
-	ierr = monitorTime(ts, 0, time, solution, NULL);
-	CHKERRQ(ierr);
 
 	// Check if the surface has moved
 	if (nevents == 0)
@@ -2204,32 +2212,6 @@ PetscErrorCode setupPetsc2DMonitor(TS &ts) {
 	ierr = TSMonitorSet(ts, monitorTime, NULL, NULL);
 	checkPetscError(ierr,
 			"setupPetsc2DMonitor: TSMonitorSet (monitorTime) failed.");
-
-	PetscFunctionReturn(0);
-}
-
-/**
- * This operation resets all the global variables to their original values.
- * @return A standard PETSc error code
- */
-PetscErrorCode reset2DMonitor() {
-	timeStepThreshold = 0.0;
-	hdf5Stride2D = 0.0;
-	hdf5Previous2D = 0;
-	hdf5OutputName2D = "xolotlStop.h5";
-	previousIFlux2D.clear();
-	nInterstitial2D.clear();
-	previousHeFlux2D.clear();
-	nHelium2D.clear();
-	previousDFlux2D.clear();
-	nDeuterium2D.clear();
-	previousTFlux2D.clear();
-	nTritium2D.clear();
-	sputteringYield2D = 0.0;
-	depthPositions2D.clear();
-	indices2D.clear();
-	weights2D.clear();
-	radii2D.clear();
 
 	PetscFunctionReturn(0);
 }

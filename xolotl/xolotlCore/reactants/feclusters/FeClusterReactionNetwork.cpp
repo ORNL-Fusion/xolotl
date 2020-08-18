@@ -716,7 +716,7 @@ void FeClusterReactionNetwork::getDiagonalFill(SparseFillMap& fillMap) {
 	return;
 }
 
-double FeClusterReactionNetwork::getTotalAtomConcentration(int i) {
+double FeClusterReactionNetwork::getTotalAtomConcentration(int i, int minSize) {
 	// Initial declarations
 	double heliumConc = 0.0;
 
@@ -728,7 +728,8 @@ double FeClusterReactionNetwork::getTotalAtomConcentration(int i) {
 		double size = cluster.getSize();
 
 		// Add the concentration times the He content to the total helium concentration
-		heliumConc += cluster.getConcentration() * size;
+		if (size >= minSize)
+			heliumConc += cluster.getConcentration() * size;
 	}
 
 	// Sum over all HeV clusters.
@@ -737,9 +738,11 @@ double FeClusterReactionNetwork::getTotalAtomConcentration(int i) {
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		auto& comp = cluster.getComposition();
+		double size = comp[toCompIdx(Species::He)];
 
 		// Add the concentration times the He content to the total helium concentration
-		heliumConc += cluster.getConcentration() * comp[toCompIdx(Species::He)];
+		if (size >= minSize)
+			heliumConc += cluster.getConcentration() * size;
 	}
 
 	// Sum over all super clusters.
@@ -750,13 +753,14 @@ double FeClusterReactionNetwork::getTotalAtomConcentration(int i) {
 				static_cast<FeSuperCluster&>(*(currMapItem.second));
 
 		// Add its total helium concentration helium concentration
-		heliumConc += cluster.getTotalHeliumConcentration();
+		heliumConc += cluster.getTotalHeliumConcentration(minSize);
 	}
 
 	return heliumConc;
 }
 
-double FeClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
+double FeClusterReactionNetwork::getTotalTrappedAtomConcentration(int i,
+		int minSize) {
 	// Initial declarations
 	double heliumConc = 0.0;
 
@@ -765,9 +769,11 @@ double FeClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 		// Get the cluster and its composition
 		auto const& cluster = *(currMapItem.second);
 		auto& comp = cluster.getComposition();
+		double size = comp[toCompIdx(Species::He)];
 
 		// Add the concentration times the He content to the total helium concentration
-		heliumConc += cluster.getConcentration() * comp[toCompIdx(Species::He)];
+		if (size >= minSize)
+			heliumConc += cluster.getConcentration() * size;
 	}
 
 	// Sum over all super clusters.
@@ -777,7 +783,7 @@ double FeClusterReactionNetwork::getTotalTrappedAtomConcentration(int i) {
 				static_cast<FeSuperCluster&>(*(currMapItem.second));
 
 		// Add its total helium concentration
-		heliumConc += cluster.getTotalHeliumConcentration();
+		heliumConc += cluster.getTotalHeliumConcentration(minSize);
 	}
 
 	return heliumConc;

@@ -111,14 +111,13 @@ void SurfaceAdvectionHandler::computeAdvection(const IReactionNetwork& network,
 				/ (xolotlCore::kBoltzmann * cluster.getTemperature(ix + 1)
 						* hxRight);
 
-		conc +=
-				(3.0 * sinkStrengthVector[advClusterIdx] * oldConc)
-						* (cluster.getDiffusionCoefficient(ix + 2)
-								/ cluster.getTemperature(ix + 2)
-								- cluster.getDiffusionCoefficient(ix + 1)
-										/ cluster.getTemperature(ix + 1))
-						/ (xolotlCore::kBoltzmann * hxRight
-								* pow(pos[0] - location, 4));
+		conc += (3.0 * sinkStrengthVector[advClusterIdx] * oldConc)
+				* (cluster.getDiffusionCoefficient(ix + 2)
+						/ cluster.getTemperature(ix + 2)
+						- cluster.getDiffusionCoefficient(ix + 1)
+								/ cluster.getTemperature(ix + 1))
+				/ (xolotlCore::kBoltzmann * hxRight
+						* pow(pos[0] - location, 4.0));
 
 		// Update the concentration of the cluster
 		updatedConcOffset[index] += conc;

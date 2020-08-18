@@ -75,6 +75,15 @@ public:
 	}
 
 	/**
+	 * Get the vector of sink strength.
+	 *
+	 * @return The vector of sink strength
+	 */
+	const std::vector<double> getSinkStrengths() override {
+		return sinkStrengthVector;
+	}
+
+	/**
 	 * Get the location of the sink.
 	 *
 	 * @return The location
