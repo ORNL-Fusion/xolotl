@@ -855,39 +855,22 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		// Get the fluence
 		double fluence = fluxHandler->getFluence();
 
-		//
-		// TODO: Function in IReactionNetwork to get species name
-		//      Want label string and full name string
-		//      IReactionNetwork::getSpeciesLabel()
-		//      IReactionNetwork::getSpeciesName()
-		//      toLabelString(species)
-		//      toNameString(species)
-
-		// Extract total He, D, T concentrations.  Values are valid only on rank
-		// 0.
-		double totalHeConcentration = totalConcData[0];
-		double totalDConcentration = totalConcData[1];
-		double totalTConcentration = totalConcData[2];
-		double totalVConcentration = totalConcData[3];
-		double totalIConcentration = totalConcData[4];
-
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Helium content = " << totalHeConcentration << std::endl;
-		std::cout << "Deuterium content = " << totalDConcentration << std::endl;
-		std::cout << "Tritium content = " << totalTConcentration << std::endl;
-		std::cout << "Vacancy content = " << totalVConcentration << std::endl;
-		std::cout << "Interstitial content = " << totalIConcentration
-				  << std::endl;
-		std::cout << "Fluence = " << fluence << "\n" << std::endl;
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+            std::cout << network.getSpeciesName(id) << " content = " <<
+                totalConcData[id()] << '\n';
+        }
+		std::cout << "Fluence = " << fluence << '\n' << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << fluence << " " << totalHeConcentration << " "
-				   << totalDConcentration << " " << totalTConcentration << " "
-				   << totalVConcentration << " " << totalIConcentration << " "
-				   << nHeliumBulk1D << " " << nDeuteriumBulk1D << " "
+        outputFile << fluence << ' ';
+        for (std::size_t i = 0; i < numSpecies; ++i) {
+            outputFile << totalConcData[i] << ' ';
+        }
+		outputFile << nHeliumBulk1D << " " << nDeuteriumBulk1D << " "
 				   << nTritiumBulk1D << " " << nVacancyBulk1D << " "
 				   << nInterBulk1D << " " << nHeliumSurf1D << " "
 				   << nDeuteriumSurf1D << " " << nTritiumSurf1D << " "
