@@ -84,6 +84,20 @@ ReactionNetwork<TImpl>::ReactionNetwork(
 }
 
 template <typename TImpl>
+const std::string&
+ReactionNetwork<TImpl>::getSpeciesLabel(SpeciesId id) const
+{
+    return toLabelString(id.cast<Species>());
+}
+
+template <typename TImpl>
+const std::string&
+ReactionNetwork<TImpl>::getSpeciesName(SpeciesId id) const
+{
+    return toNameString(id.cast<Species>());
+}
+
+template <typename TImpl>
 SpeciesId
 ReactionNetwork<TImpl>::parseSpeciesId(const std::string& speciesLabel) const
 {
@@ -316,7 +330,7 @@ ReactionNetwork<TImpl>::getPhaseSpace()
 	// Loop on all the clusters
 	constexpr auto speciesRange = getSpeciesRange();
 	for (auto j : speciesRange) {
-		space.push_back(toString(j));
+		space.push_back(toLabelString(j));
 	}
 	return space;
 }
@@ -471,7 +485,7 @@ ReactionNetwork<TImpl>::createSpeciesLabelMap() noexcept
     std::map<std::string, SpeciesId> labelMap;
     for (auto s : getSpeciesRange()) {
         labelMap.emplace(
-            toString(s.value), SpeciesId(s.value, getNumberOfSpecies()));
+            toLabelString(s.value), SpeciesId(s.value, getNumberOfSpecies()));
     }
     return labelMap;
 }

@@ -21,11 +21,19 @@ enum class FeSpeciesList
 	I
 };
 
-inline const char*
-toString(FeSpeciesList specie)
+inline const std::string&
+toLabelString(FeSpeciesList species)
 {
-	static const char* nameArray[] = {"He", "V", "I"};
-	return nameArray[static_cast<int>(specie)];
+	static const std::string labelArray[] = {"He", "V", "I"};
+	return labelArray[static_cast<int>(species)];
+}
+
+inline const std::string&
+toNameString(FeSpeciesList species)
+{
+	static const std::string nameArray[] = {
+		"Helium", "Vacancy", "Interstitial"};
+	return nameArray[static_cast<int>(species)];
 }
 
 template <>

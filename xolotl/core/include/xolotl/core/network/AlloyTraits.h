@@ -27,12 +27,20 @@ enum class AlloySpecies
 	Frank
 };
 
-inline const char*
-toString(AlloySpecies specie)
+inline const std::string&
+toLabelString(AlloySpecies species)
 {
-	static const char* nameArray[] = {
+	static const std::string labelArray[] = {
 		"V", "Void", "Faulted", "I", "Perfect", "Frank"};
-	return nameArray[static_cast<int>(specie)];
+	return labelArray[static_cast<int>(species)];
+}
+
+inline const std::string&
+toNameString(AlloySpecies species)
+{
+	static const std::string nameArray[] = {
+		"Vacancy", "Void", "Faulted", "Interstitial", "Perfect", "Frank"};
+	return nameArray[static_cast<int>(species)];
 }
 
 template <>

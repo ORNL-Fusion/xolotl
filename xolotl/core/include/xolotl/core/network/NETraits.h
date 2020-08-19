@@ -3,7 +3,6 @@
 #include <tuple>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
-// #include <xolotl/core/network/SpeciesEnumSequence.h>
 
 namespace xolotl
 {
@@ -27,11 +26,18 @@ enum class NESpecies
 	Xe
 };
 
-inline const char*
-toString(NESpecies specie)
+inline const std::string&
+toLabelString(NESpecies species)
 {
-	static const char* nameArray[] = {"Xe"};
-	return nameArray[static_cast<int>(specie)];
+	static const std::string labelArray[] = {"Xe"};
+	return labelArray[static_cast<int>(species)];
+}
+
+inline const std::string&
+toNameString(NESpecies species)
+{
+	static const std::string nameArray[] = {"Xenon"};
+	return nameArray[static_cast<int>(species)];
 }
 
 template <>

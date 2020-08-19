@@ -152,6 +152,12 @@ public:
 		return getNumberOfSpecies();
 	}
 
+	const std::string&
+	getSpeciesLabel(SpeciesId id) const override;
+
+	const std::string&
+	getSpeciesName(SpeciesId id) const override;
+
 	SpeciesId
 	parseSpeciesId(const std::string& speciesLabel) const override;
 

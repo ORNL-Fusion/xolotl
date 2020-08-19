@@ -28,7 +28,7 @@ public:
 	using Connectivity = detail::ClusterConnectivity<>;
 	using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 	using Bounds = std::vector<std::vector<AmountType>>;
-	using PhaseSpace = std::vector<const char*>;
+	using PhaseSpace = std::vector<std::string>;
 
 	static constexpr IndexType
 	invalidIndex() noexcept
@@ -59,8 +59,14 @@ public:
 	virtual std::size_t
 	getSpeciesListSize() const noexcept = 0;
 
-    virtual SpeciesId
-    parseSpeciesId(const std::string& label) const = 0;
+	virtual SpeciesId
+	parseSpeciesId(const std::string& label) const = 0;
+
+	virtual const std::string&
+	getSpeciesLabel(SpeciesId id) const = 0;
+
+	virtual const std::string&
+	getSpeciesName(SpeciesId id) const = 0;
 
 	KOKKOS_INLINE_FUNCTION
 	IndexType

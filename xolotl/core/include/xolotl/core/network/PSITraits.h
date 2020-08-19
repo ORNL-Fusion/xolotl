@@ -3,7 +3,6 @@
 #include <tuple>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
-#include <xolotl/core/network/SpeciesEnumSequence.h>
 
 namespace xolotl
 {
@@ -32,11 +31,19 @@ enum class PSIFullSpeciesList
 	I
 };
 
-inline const char*
-toString(PSIFullSpeciesList specie)
+inline const std::string&
+toLabelString(PSIFullSpeciesList species)
 {
-	static const char* nameArray[] = {"He", "D", "T", "V", "I"};
-	return nameArray[static_cast<int>(specie)];
+	static const std::string labelArray[] = {"He", "D", "T", "V", "I"};
+	return labelArray[static_cast<int>(species)];
+}
+
+inline const std::string&
+toNameString(PSIFullSpeciesList species)
+{
+	static const std::string nameArray[] = {
+		"Helium", "Deuterium", "Tritium", "Vacancy", "Interstitial"};
+	return nameArray[static_cast<int>(species)];
 }
 
 template <>
