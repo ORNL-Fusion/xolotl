@@ -17,7 +17,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	Superclass(gridSize),
 	_subpaving(subpaving),
 	_clusterData(_subpaving, gridSize),
-	_worker(*this)
+	_worker(*this),
+    _speciesLabelMap(createSpeciesLabelMap())
 {
 	// Set constants
 	this->setInterstitialBias(opts.getBiasFactor());
@@ -32,23 +33,6 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 
 	auto tiles = subpaving.getTiles(plsm::onDevice);
 	this->_numClusters = tiles.extent(0);
-
-	//	// PRINT ALL THE CLUSTERS
-	//	constexpr auto speciesRange = getSpeciesRange();
-	//	for (IndexType i = 0; i < _numClusters; ++i) {
-	//		const auto& clReg = tiles(i).getRegion();
-	//		Composition lo = clReg.getOrigin();
-	//		Composition hi = clReg.getUpperLimitPoint();
-	//
-	//		std::cout << i << ": " << std::endl;
-	//		for (auto j : speciesRange)
-	//			std::cout << lo[j] << " ";
-	//		std::cout << std::endl;
-	//		for (auto j : speciesRange)
-	//			std::cout << hi[j] - 1 << " ";
-	//		std::cout << std::endl;
-	//	}
-	std::cout << "num: " << this->_numClusters << std::endl;
 
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
@@ -97,6 +81,17 @@ ReactionNetwork<TImpl>::ReactionNetwork(
 		}(),
 		gridSize, opts)
 {
+}
+
+template <typename TImpl>
+SpeciesId
+ReactionNetwork<TImpl>::parseSpeciesId(const std::string& speciesLabel) const
+{
+	auto it = _speciesLabelMap.find(speciesLabel);
+	if (it == _speciesLabelMap.end()) {
+		throw InvalidSpeciesId("Unrecognized species type: " + speciesLabel);
+	}
+	return it->second;
 }
 
 template <typename TImpl>
@@ -467,6 +462,18 @@ ReactionNetwork<TImpl>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
 {
 	return _worker.getTotalVolumeFraction(concentrations, type, minSize);
+}
+
+template <typename TImpl>
+std::map<std::string, SpeciesId>
+ReactionNetwork<TImpl>::createSpeciesLabelMap() noexcept
+{
+    std::map<std::string, SpeciesId> labelMap;
+    for (auto s : getSpeciesRange()) {
+        labelMap.emplace(
+            toString(s.value), SpeciesId(s.value, getNumberOfSpecies()));
+    }
+    return labelMap;
 }
 
 template <typename TImpl>

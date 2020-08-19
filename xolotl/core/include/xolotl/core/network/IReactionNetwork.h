@@ -59,6 +59,9 @@ public:
 	virtual std::size_t
 	getSpeciesListSize() const noexcept = 0;
 
+    virtual SpeciesId
+    parseSpeciesId(const std::string& label) const = 0;
+
 	KOKKOS_INLINE_FUNCTION
 	IndexType
 	getDOF() const noexcept

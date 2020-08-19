@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <type_traits>
 
 #include <xolotl/core/network/EnumSequence.h>
@@ -10,6 +11,10 @@ namespace core
 {
 namespace network
 {
+template <typename TSpeciesEnum>
+std::string
+getSpeciesLabel(TSpeciesEnum species);
+
 template <typename TSpeciesEnum>
 struct NumberOfInterstitialSpecies : std::integral_constant<std::size_t, 0>
 {

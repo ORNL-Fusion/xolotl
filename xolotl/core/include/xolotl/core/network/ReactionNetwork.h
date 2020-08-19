@@ -152,6 +152,9 @@ public:
 		return getNumberOfSpecies();
 	}
 
+	SpeciesId
+	parseSpeciesId(const std::string& speciesLabel) const override;
+
 	void
 	setLatticeParameter(double latticeParameter) override;
 
@@ -361,6 +364,9 @@ private:
 		return static_cast<TImpl*>(this);
 	}
 
+	static std::map<std::string, SpeciesId>
+	createSpeciesLabelMap() noexcept;
+
 	void
 	defineMomentIds();
 
@@ -390,6 +396,8 @@ private:
 
 protected:
 	ClusterData _clusterData;
+
+	std::map<std::string, SpeciesId> _speciesLabelMap;
 };
 
 namespace detail
