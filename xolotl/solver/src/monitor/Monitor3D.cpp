@@ -67,7 +67,7 @@ double sputteringYield3D = 0.0;
 // The vector of depths at which bursting happens
 std::vector<std::tuple<int, int, int>> depthPositions3D;
 // The vector of ids for diffusing interstitial clusters
-std::vector<int> iClusterIds3D;
+std::vector<size_t> iClusterIds3D;
 // The id of the largest cluster
 int largestClusterId3D = -1;
 // The concentration threshold for the largest cluster
@@ -625,10 +625,17 @@ computeXenonRetention3D(
 		solverHandler.setNXeGB(nXenon);
 	}
 
+	// Get the number of species
+	auto numSpecies = network.getSpeciesListSize();
+
+	// Get the vector of diffusing clusters
+	auto diffusionHandler = solverHandler.getDiffusionHandler();
+	auto diffusingIds = diffusionHandler->getDiffusingIds();
+
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Local rate
-		double localRate = 0.0;
+		auto myRate = std::vector<double>(numSpecies, 0.0);
 		// Define left and right with reference to the middle point
 		// Middle
 		int xi = std::get<0>(pair);
@@ -657,52 +664,58 @@ computeXenonRetention3D(
 			// X segment
 			// Left
 			xi = std::get<0>(pair) - 1;
+			// Get the pointer to the beginning of the solution data for this
+			// grid point
+			gridPointSolution = solutionArray[zk][yj][xi];
 			// Compute the flux coming from the left
-			localRate += solutionArray[zk][yj][xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) * factor /
-				hxLeft;
+			network.updateOutgoingDiffFluxes(gridPointSolution, factor / hxLeft,
+				diffusingIds, myRate, xi + 1 - xs);
 
 			// Right
 			xi = std::get<0>(pair) + 1;
+			gridPointSolution = solutionArray[zk][yj][xi];
 			// Compute the flux coming from the right
-			localRate += solutionArray[zk][yj][xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) * factor /
-				hxRight;
+			network.updateOutgoingDiffFluxes(gridPointSolution,
+				factor / hxRight, diffusingIds, myRate, xi + 1 - xs);
 
 			// Y segment
 			// Bottom
 			xi = std::get<0>(pair);
 			yj = std::get<1>(pair) - 1;
+			gridPointSolution = solutionArray[zk][yj][xi];
 			// Compute the flux coming from the bottom
-			localRate += solutionArray[zk][yj][xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) / (hy * hy);
+			network.updateOutgoingDiffFluxes(gridPointSolution, 1.0 / (hy * hy),
+				diffusingIds, myRate, xi + 1 - xs);
 
 			// Top
 			yj = std::get<1>(pair) + 1;
+			gridPointSolution = solutionArray[zk][yj][xi];
 			// Compute the flux coming from the top
-			localRate += solutionArray[zk][yj][xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) / (hy * hy);
+			network.updateOutgoingDiffFluxes(gridPointSolution, 1.0 / (hy * hy),
+				diffusingIds, myRate, xi + 1 - xs);
 
 			// Z segment
 			// Back
 			yj = std::get<1>(pair);
 			zk = std::get<2>(pair) - 1;
+			gridPointSolution = solutionArray[zk][yj][xi];
 			// Compute the flux coming from the back
-			localRate += solutionArray[zk][yj][xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) / (hz * hz);
+			network.updateOutgoingDiffFluxes(gridPointSolution, 1.0 / (hz * hz),
+				diffusingIds, myRate, xi + 1 - xs);
 
 			// Front
 			zk = std::get<2>(pair) + 1;
+			gridPointSolution = solutionArray[zk][yj][xi];
 			// Compute the flux coming from the front
-			localRate += solutionArray[zk][yj][xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) / (hz * hz);
+			network.updateOutgoingDiffFluxes(gridPointSolution, 1.0 / (hz * hz),
+				diffusingIds, myRate, xi + 1 - xs);
 
 			// Middle
 			xi = std::get<0>(pair);
 			yj = std::get<1>(pair);
 			zk = std::get<2>(pair);
 			solverHandler.setPreviousXeFlux(
-				localRate, xi - xs, yj - ys, zk - zs);
+				myRate[0], xi - xs, yj - ys, zk - zs);
 		}
 	}
 
@@ -1091,7 +1104,11 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	using NetworkType = core::network::IPSIReactionNetwork;
+	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
+	// Get the number of species
+	auto numSpecies = network.getSpeciesListSize();
+	auto specIdI = network.getInterstitialSpeciesId();
 
 	// Get the physical grid and step size
 	auto grid = solverHandler.getXGrid();
@@ -1145,7 +1162,7 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 				xi = surfacePos + solverHandler.getLeftOffset();
 
 				// Initialize the value for the flux
-				double newFlux = 0.0;
+				auto myFlux = std::vector<double>(numSpecies, 0.0);
 
 				// if xi is on this process
 				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym &&
@@ -1169,25 +1186,14 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 					}
 					double factor = 2.0 / (hxLeft + hxRight);
 
-					// Consider each interstitial cluster.
-					for (int i = 0; i < iClusterIds3D.size(); i++) {
-						auto currId = iClusterIds3D[i];
-						// Get the cluster
-						auto cluster = network.getClusterCommon(currId);
-						// Get its concentration
-						double conc = gridPointSolution[currId];
-						// Get its size and diffusion coefficient
-						int size = i + 1;
-						double coef = cluster.getDiffusionCoefficient(xi - xs);
-						// Compute the flux going to the left
-						newFlux += (double)size * factor * coef * conc * hxLeft;
-					}
+					network.updateOutgoingDiffFluxes(gridPointSolution, factor,
+						iClusterIds3D, myFlux, xi - xs);
 				}
 
 				// Gather newFlux values at this position
 				double newTotalFlux = 0.0;
-				MPI_Allreduce(&newFlux, &newTotalFlux, 1, MPI_DOUBLE, MPI_SUM,
-					xolotlComm);
+				MPI_Allreduce(&myFlux[specIdI()], &newTotalFlux, 1, MPI_DOUBLE,
+					MPI_SUM, xolotlComm);
 
 				// Update the previous flux
 				previousIFlux3D[yj][zk] = newTotalFlux;
@@ -1839,6 +1845,31 @@ setupPetsc3DMonitor(TS ts)
 	if (solverHandler.moveSurface() || solverHandler.burstBubbles()) {
 		// Surface
 		if (solverHandler.moveSurface()) {
+			using NetworkType = core::network::IPSIReactionNetwork;
+			using AmountType = NetworkType::AmountType;
+			auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+			// Get the number of species
+			auto numSpecies = psiNetwork->getSpeciesListSize();
+			auto specIdI = psiNetwork->getInterstitialSpeciesId();
+
+			// Initialize the composition
+			auto comp = std::vector<AmountType>(numSpecies, 0);
+
+			// Loop on interstital clusters
+			bool iClusterExists = true;
+			AmountType iSize = 1;
+			while (iClusterExists) {
+				comp[specIdI] = iSize;
+				auto clusterId = psiNetwork->findClusterId(comp);
+				// Check that the helium cluster is present in the network
+				if (clusterId != NetworkType::invalidIndex()) {
+					iClusterIds3D.push_back(clusterId);
+					iSize++;
+				}
+				else
+					iClusterExists = false;
+			}
+
 			// Initialize nInterstitial3D and previousIFlux3D before monitoring
 			// the interstitial flux
 			for (PetscInt j = 0; j < My; j++) {

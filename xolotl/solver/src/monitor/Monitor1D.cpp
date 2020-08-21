@@ -77,7 +77,7 @@ std::string hdf5OutputName1D = "xolotlStop.h5";
 // The vector of depths at which bursting happens
 std::vector<int> depthPositions1D;
 // The vector of ids for diffusing interstitial clusters
-std::vector<int> iClusterIds1D;
+std::vector<size_t> iClusterIds1D;
 // Tracks the previous TS number
 int previousTSNumber1D = -1;
 // The id of the largest cluster
@@ -1778,7 +1778,11 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 	xi = surfacePos + solverHandler.getLeftOffset();
 
 	// Get the network
-	auto& network = solverHandler.getNetwork();
+	using NetworkType = core::network::IPSIReactionNetwork;
+	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
+	// Get the number of species
+	auto numSpecies = network.getSpeciesListSize();
+	auto specIdI = network.getInterstitialSpeciesId();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
@@ -1818,7 +1822,7 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			nInterEvent1D -= sputteringYield1D * heliumFluxAmplitude * dt;
 
 			// Initialize the value for the flux
-			double newFlux = 0.0;
+			auto myFlux = std::vector<double>(numSpecies, 0.0);
 
 			// Factor for finite difference
 			double hxLeft = 0.0, hxRight = 0.0;
@@ -1836,22 +1840,10 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			}
 			double factor = 2.0 / (hxLeft + hxRight);
 
-			// Consider each interstitial cluster.
-			for (int i = 0; i < iClusterIds1D.size(); i++) {
-				auto currId = iClusterIds1D[i];
-				// Get the cluster
-				auto cluster = network.getClusterCommon(currId);
-				// Get its concentration
-				double conc = gridPointSolution[currId];
-				// Get its size and diffusion coefficient
-				int size = i + 1;
-				double coef = cluster.getDiffusionCoefficient(xi - xs);
-				// Compute the flux going to the left
-				newFlux += (double)size * factor * coef * conc;
-			}
-
+			network.updateOutgoingDiffFluxes(
+				gridPointSolution, factor, iClusterIds1D, myFlux, xi - xs);
 			// Update the previous flux
-			previousIEventFlux1D = newFlux;
+			previousIEventFlux1D = myFlux[specIdI()];
 
 			// Set the surface processor
 			surfaceProc = procId;
@@ -2600,22 +2592,25 @@ setupPetsc1DMonitor(TS ts)
 	if (solverHandler.moveSurface() || solverHandler.burstBubbles()) {
 		// Surface
 		if (solverHandler.moveSurface()) {
-			using NetworkType = core::network::PSIReactionNetwork<
-				core::network::PSIFullSpeciesList>;
+			using NetworkType = core::network::IPSIReactionNetwork;
+			using AmountType = NetworkType::AmountType;
 			auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+			// Get the number of species
+			auto numSpecies = psiNetwork->getSpeciesListSize();
+			auto specIdI = psiNetwork->getInterstitialSpeciesId();
 
 			// Initialize the composition
-			NetworkType::Composition comp = NetworkType::Composition::zero();
+			auto comp = std::vector<AmountType>(numSpecies, 0);
 
 			// Loop on interstital clusters
 			bool iClusterExists = true;
-			int iSize = 1;
+			AmountType iSize = 1;
 			while (iClusterExists) {
-				comp[NetworkType::Species::I] = iSize;
-				auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
+				comp[specIdI] = iSize;
+				auto clusterId = psiNetwork->findClusterId(comp);
 				// Check that the helium cluster is present in the network
-				if (cluster.getId() != NetworkType::invalidIndex()) {
-					iClusterIds1D.push_back(cluster.getId());
+				if (clusterId != NetworkType::invalidIndex()) {
+					iClusterIds1D.push_back(clusterId);
 					iSize++;
 				}
 				else
