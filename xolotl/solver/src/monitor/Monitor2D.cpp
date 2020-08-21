@@ -726,10 +726,17 @@ computeXenonRetention2D(
 		solverHandler.setNXeGB(nXenon);
 	}
 
+	// Get the number of species
+	auto numSpecies = network.getSpeciesListSize();
+
+	// Get the vector of diffusing clusters
+	auto diffusionHandler = solverHandler.getDiffusionHandler();
+	auto diffusingIds = diffusionHandler->getDiffusingIds();
+
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Local rate
-		double localRate = 0.0;
+		auto myRate = std::vector<double>(numSpecies, 0.0);
 		// Define left and right with reference to the middle point
 		// Middle
 		int xi = std::get<0>(pair);
@@ -756,36 +763,40 @@ computeXenonRetention2D(
 			// X segment
 			// Left
 			xi = std::get<0>(pair) - 1;
+			// Get the pointer to the beginning of the solution data for this
+			// grid point
+			gridPointSolution = solutionArray[yj][xi];
 			// Compute the flux coming from the left
-			localRate += solutionArray[yj][xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) * factor /
-				hxLeft;
+			network.updateOutgoingDiffFluxes(gridPointSolution, factor / hxLeft,
+				diffusingIds, myRate, xi + 1 - xs);
 
 			// Right
 			xi = std::get<0>(pair) + 1;
+			gridPointSolution = solutionArray[yj][xi];
 			// Compute the flux coming from the right
-			localRate += solutionArray[yj][xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) * factor /
-				hxRight;
+			network.updateOutgoingDiffFluxes(gridPointSolution,
+				factor / hxRight, diffusingIds, myRate, xi + 1 - xs);
 
 			// Y segment
 			// Bottom
 			xi = std::get<0>(pair);
 			yj = std::get<1>(pair) - 1;
+			gridPointSolution = solutionArray[yj][xi];
 			// Compute the flux coming from the bottom
-			localRate += solutionArray[yj][xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) / (hy * hy);
+			network.updateOutgoingDiffFluxes(gridPointSolution, 1.0 / (hy * hy),
+				diffusingIds, myRate, xi + 1 - xs);
 
 			// Top
 			yj = std::get<1>(pair) + 1;
+			gridPointSolution = solutionArray[yj][xi];
 			// Compute the flux coming from the top
-			localRate += solutionArray[yj][xi][xeId] *
-				xeCluster.getDiffusionCoefficient(xi + 1 - xs) / (hy * hy);
+			network.updateOutgoingDiffFluxes(gridPointSolution, 1.0 / (hy * hy),
+				diffusingIds, myRate, xi + 1 - xs);
 
 			// Middle
 			xi = std::get<0>(pair);
 			yj = std::get<1>(pair);
-			solverHandler.setPreviousXeFlux(localRate, xi - xs, yj - ys);
+			solverHandler.setPreviousXeFlux(myRate[0], xi - xs, yj - ys);
 		}
 	}
 

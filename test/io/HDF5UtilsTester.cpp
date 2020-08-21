@@ -164,14 +164,20 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		auto tsGroup = concGroup->addTimestepGroup(
 			timeStep, currentTime, previousTime, currentTimeStep);
 
+		std::vector<double> nSurf = {nHe, nD, nT, nV};
+		std::vector<double> previousSurfFlux = {
+			previousHeFlux, previousDFlux, previousTFlux, previousVFlux};
+		std::vector<std::string> surfNames = {
+			"Helium", "Deuterium", "Tritium", "Vacancy"};
 		// Write the surface information
-		tsGroup->writeSurface1D(iSurface, nInter, previousFlux, nHe,
-			previousHeFlux, nD, previousDFlux, nT, previousTFlux, nV,
-			previousVFlux, nInter, previousFlux);
+		tsGroup->writeSurface1D(
+			iSurface, nInter, previousFlux, nSurf, previousSurfFlux, surfNames);
 
+		std::vector<double> nBulk = {nHe, nV};
+		std::vector<double> previousBulkFlux = {previousHeFlux, previousVFlux};
+		std::vector<std::string> bulkNames = {"Helium", "Vacancy"};
 		// Write the bulk information
-		tsGroup->writeBottom1D(nHe, previousHeFlux, 0.0, 0.0, 0.0, 0.0, nV,
-			previousVFlux, 0.0, 0.0);
+		tsGroup->writeBottom1D(nBulk, previousBulkFlux, bulkNames);
 
 #if READY
 		// Fill it
@@ -234,39 +240,27 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		BOOST_REQUIRE_CLOSE(
 			tsGroup->readData1D("nInterstitial"), nInter, 0.0001);
 		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousIFlux"), previousFlux, 0.0001);
+			tsGroup->readData1D("previousFluxI"), previousFlux, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHeliumSurf"), nHe, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousHeSurfFlux"), previousHeFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousFluxHeliumSurf"),
+			previousHeFlux, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuteriumSurf"), nD, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousDSurfFlux"), previousDFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousFluxDeuteriumSurf"),
+			previousDFlux, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritiumSurf"), nT, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousTSurfFlux"), previousTFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousFluxTritiumSurf"),
+			previousTFlux, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancySurf"), nV, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousVSurfFlux"), previousVFlux, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterSurf"), nInter, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousISurfFlux"), previousFlux, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousFluxVacancySurf"),
+			previousVFlux, 0.0001);
 
 		// Read the bulk information
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHeliumBulk"), nHe, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousHeBulkFlux"), previousHeFlux, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nDeuteriumBulk"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousDBulkFlux"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nTritiumBulk"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousTBulkFlux"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousFluxHeliumBulk"),
+			previousHeFlux, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nVacancyBulk"), nV, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousVBulkFlux"), previousVFlux, 0.0001);
-		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nInterBulk"), 0.0, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousIBulkFlux"), 0.0, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousFluxVacancyBulk"),
+			previousVFlux, 0.0001);
 
 		// Read the network of the written file
 		BOOST_TEST_MESSAGE("Checking test file last time step network.");
@@ -435,7 +429,7 @@ BOOST_AUTO_TEST_CASE(checkSurface2D)
 		}
 
 		// Read the interstitial flux
-		auto previousIFlux = tsGroup->readData2D("previousIFlux");
+		auto previousIFlux = tsGroup->readData2D("previousFluxI");
 		// Check all the values
 		for (int i = 0; i < previousIFlux.size(); i++) {
 			BOOST_REQUIRE_CLOSE(previousIFlux[i], previousIFlux[i], 0.0001);
@@ -531,7 +525,7 @@ BOOST_AUTO_TEST_CASE(checkSurface3D)
 				BOOST_REQUIRE_CLOSE(nInterstitial[i][j], nInter[i][j], 0.0001);
 			}
 		}
-		auto previousIFlux = tsGroup->readData3D("previousIFlux");
+		auto previousIFlux = tsGroup->readData3D("previousFluxI");
 		// Check all the values
 		for (int i = 0; i < previousIFlux.size(); i++) {
 			for (int j = 0; j < previousIFlux[0].size(); j++) {

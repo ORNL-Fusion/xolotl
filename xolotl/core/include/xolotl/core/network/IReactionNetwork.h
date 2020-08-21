@@ -231,6 +231,16 @@ public:
 	getTotalAtomConcentration(ConcentrationsView concentrations,
 		SpeciesId species, AmountType minSize = 0) = 0;
 
+	virtual void
+	updateOutgoingDiffFluxes(double* gridPointSolution, double factor,
+		std::vector<IndexType> diffusingIds, std::vector<double>& fluxes,
+		IndexType gridIndex) = 0;
+
+	virtual void
+	updateOutgoingAdvecFluxes(double* gridPointSolution, double factor,
+		std::vector<IndexType> advectingIds, std::vector<double> sinkStrengths,
+		std::vector<double>& fluxes, IndexType gridIndex) = 0;
+
 protected:
 	double _latticeParameter{};
 	double _atomicVolume{};

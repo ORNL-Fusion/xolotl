@@ -362,6 +362,16 @@ public:
 	getTotalVolumeFraction(ConcentrationsView concentrations, Species type,
 		AmountType minSize = 0);
 
+	void
+	updateOutgoingDiffFluxes(double* gridPointSolution, double factor,
+		std::vector<IndexType> diffusingIds, std::vector<double>& fluxes,
+		IndexType gridIndex) override;
+
+	void
+	updateOutgoingAdvecFluxes(double* gridPointSolution, double factor,
+		std::vector<IndexType> advectingIds, std::vector<double> sinkStrengths,
+		std::vector<double>& fluxes, IndexType gridIndex) override;
+
 private:
 	KOKKOS_INLINE_FUNCTION
 	TImpl*

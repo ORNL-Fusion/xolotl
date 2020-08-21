@@ -18,7 +18,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	_subpaving(subpaving),
 	_clusterData(_subpaving, gridSize),
 	_worker(*this),
-    _speciesLabelMap(createSpeciesLabelMap())
+	_speciesLabelMap(createSpeciesLabelMap())
 {
 	// Set constants
 	this->setInterstitialBias(opts.getBiasFactor());
@@ -87,14 +87,14 @@ template <typename TImpl>
 const std::string&
 ReactionNetwork<TImpl>::getSpeciesLabel(SpeciesId id) const
 {
-    return toLabelString(id.cast<Species>());
+	return toLabelString(id.cast<Species>());
 }
 
 template <typename TImpl>
 const std::string&
 ReactionNetwork<TImpl>::getSpeciesName(SpeciesId id) const
 {
-    return toNameString(id.cast<Species>());
+	return toNameString(id.cast<Species>());
 }
 
 template <typename TImpl>
@@ -471,6 +471,88 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(
 }
 
 template <typename TImpl>
+void
+ReactionNetwork<TImpl>::updateOutgoingDiffFluxes(double* gridPointSolution,
+	double factor, std::vector<IndexType> diffusingIds,
+	std::vector<double>& fluxes, IndexType gridIndex)
+{
+	// Loop on the diffusing clusters
+	for (auto l : diffusingIds) {
+		// Get the cluster and composition
+		auto cluster = this->getClusterCommon(l);
+		auto reg = this->getCluster(l, plsm::onHost).getRegion();
+		Composition comp = reg.getOrigin();
+		// Get its concentration
+		double conc = gridPointSolution[l];
+		// Get its size and diffusion coefficient
+		int size = 0;
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			auto type = id.cast<Species>();
+			size += comp[type];
+		}
+		double coef = cluster.getDiffusionCoefficient(gridIndex);
+		// Compute the flux
+		double newFlux = (double)size * factor * coef * conc;
+
+		// Check the cluster type
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			auto type = id.cast<Species>();
+			if (comp.isOnAxis(type)) {
+				fluxes[id()] += newFlux;
+				break;
+			}
+		}
+	}
+
+	return;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::updateOutgoingAdvecFluxes(double* gridPointSolution,
+	double factor, std::vector<IndexType> advectingIds,
+	std::vector<double> sinkStrengths, std::vector<double>& fluxes,
+	IndexType gridIndex)
+{
+	int advClusterIdx = 0;
+	// Loop on the advecting clusters
+	for (auto l : advectingIds) {
+		// Get the cluster and composition
+		auto cluster = this->getClusterCommon(l);
+		auto reg = this->getCluster(l, plsm::onHost).getRegion();
+		Composition comp = reg.getOrigin();
+		// Get its concentration
+		double conc = gridPointSolution[l];
+		// Get its size and diffusion coefficient
+		int size = 0;
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			auto type = id.cast<Species>();
+			size += comp[type];
+		}
+		double coef = cluster.getDiffusionCoefficient(gridIndex);
+		// Compute the flux if the temperature is valid
+		double newFlux = 0.0;
+		if (cluster.getTemperature(gridIndex) > 0.0)
+			newFlux = (double)size * factor * coef * conc *
+				sinkStrengths[advClusterIdx] /
+				cluster.getTemperature(gridIndex);
+
+		// Check the cluster type
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			auto type = id.cast<Species>();
+			if (comp.isOnAxis(type)) {
+				fluxes[id()] += newFlux;
+				break;
+			}
+		}
+
+		advClusterIdx++;
+	}
+
+	return;
+}
+
+template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
@@ -482,12 +564,12 @@ template <typename TImpl>
 std::map<std::string, SpeciesId>
 ReactionNetwork<TImpl>::createSpeciesLabelMap() noexcept
 {
-    std::map<std::string, SpeciesId> labelMap;
-    for (auto s : getSpeciesRange()) {
-        labelMap.emplace(
-            toLabelString(s.value), SpeciesId(s.value, getNumberOfSpecies()));
-    }
-    return labelMap;
+	std::map<std::string, SpeciesId> labelMap;
+	for (auto s : getSpeciesRange()) {
+		labelMap.emplace(
+			toLabelString(s.value), SpeciesId(s.value, getNumberOfSpecies()));
+	}
+	return labelMap;
 }
 
 template <typename TImpl>
