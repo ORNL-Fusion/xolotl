@@ -81,8 +81,6 @@ Options::Options() :
 	heVRatio(4.0),
 	migrationThreshold(std::numeric_limits<double>::infinity())
 {
-	radiusMinSizes.Init(0);
-
 	return;
 }
 
@@ -204,9 +202,9 @@ Options::readParams(int argc, char* argv[])
 		"To do so, simply write the values in order "
 		"nX xStepSize nY yStepSize nZ zStepSize .")("radiusSize",
 		bpo::value<std::string>(),
-		"This option allows the user a minimum size for the computation "
-		"for the average radius (default is 0).")("boundary",
-		bpo::value<std::string>(),
+		"This option allows the user to set a minimum size for the computation "
+		"for the average radii, in the same order as the netParam option "
+		"(default is 0).")("boundary", bpo::value<std::string>(),
 		"This option allows the user to choose the boundary conditions. "
 		"The first one correspond to the left side (surface) "
 		"and second one to the right (bulk), "
@@ -421,15 +419,10 @@ Options::readParams(int argc, char* argv[])
 			// Break the argument into tokens.
 			auto tokens = reader.loadLine();
 
-			// Create the array of sizes
-			util::Array<int, 4> sizes;
-			sizes.Init(0);
-
 			// Set the values
-			for (int i = 0; i < std::min((int)tokens.size(), 4); i++) {
-				sizes[i] = tokens[i];
+			for (int i = 0; i < tokens.size(); i++) {
+				radiusMinSizes.push_back(tokens[i]);
 			}
-			radiusMinSizes = sizes;
 		}
 
 		// Take care of the processes

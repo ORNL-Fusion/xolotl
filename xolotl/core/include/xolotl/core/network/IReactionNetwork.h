@@ -228,6 +228,14 @@ public:
 	getDiagonalFill(SparseFillMap& fillMap) = 0;
 
 	virtual double
+	getTotalConcentration(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) = 0;
+
+	virtual double
+	getTotalRadiusConcentration(ConcentrationsView concentrations,
+		SpeciesId species, AmountType minSize = 0) = 0;
+
+	virtual double
 	getTotalAtomConcentration(ConcentrationsView concentrations,
 		SpeciesId species, AmountType minSize = 0) = 0;
 

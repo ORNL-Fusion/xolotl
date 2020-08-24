@@ -407,7 +407,7 @@ public:
 	 *
 	 * @return The minimum size
 	 */
-	virtual util::Array<int, 4>
+	virtual std::vector<size_t>
 	getMinSizes() const = 0;
 
 	/**

@@ -134,7 +134,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 				  << "burstingFactor=2.5" << std::endl
 				  << "zeta=0.6" << std::endl
 				  << "resoSize=10" << std::endl
-				  << "radiusSize=5" << std::endl
+				  << "radiusSize=5 0 3" << std::endl
 				  << "density=9.0" << std::endl
 				  << "lattice=0.1" << std::endl
 				  << "impurityRadius=0.5" << std::endl
@@ -235,8 +235,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	auto sizes = opts.getRadiusMinSizes();
 	BOOST_REQUIRE_EQUAL(sizes[0], 5);
 	BOOST_REQUIRE_EQUAL(sizes[1], 0);
-	BOOST_REQUIRE_EQUAL(sizes[2], 0);
-	BOOST_REQUIRE_EQUAL(sizes[3], 0);
+	BOOST_REQUIRE_EQUAL(sizes[2], 3);
 
 	// Check the xenon density option
 	BOOST_REQUIRE_EQUAL(opts.getDensity(), 9.0);

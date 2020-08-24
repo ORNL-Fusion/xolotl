@@ -1230,6 +1230,8 @@ computeAlloy1D(
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int dof = network.getDOF();
+	auto numSpecies = network.getSpeciesListSize();
+	auto myData = std::vector<double>(numSpecies * 4, 0.0);
 
 	// Initial declarations for the density and diameter
 	double iDensity = 0.0, vDensity = 0.0, voidDensity = 0.0,
@@ -1264,130 +1266,31 @@ computeAlloy1D(
 		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 		deep_copy(dConcs, hConcs);
 
-		// I
-		iDensity += network.getTotalConcentration(dConcs, Spec::I, 1);
-		iDiameter +=
-			2.0 * network.getTotalRadiusConcentration(dConcs, Spec::I, 1);
-
-		// V
-		vDensity += network.getTotalConcentration(dConcs, Spec::V, 1);
-		vDiameter +=
-			2.0 * network.getTotalRadiusConcentration(dConcs, Spec::V, 1);
-
-		// Void
-		voidDensity += network.getTotalConcentration(dConcs, Spec::Void, 1);
-		voidDiameter +=
-			2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Void, 1);
-		voidPartialDensity +=
-			network.getTotalConcentration(dConcs, Spec::Void, minSizes[0]);
-		voidPartialDiameter += 2.0 *
-			network.getTotalRadiusConcentration(
-				dConcs, Spec::Void, minSizes[0]);
-
-		// Faulted
-		faultedDensity +=
-			network.getTotalConcentration(dConcs, Spec::Faulted, 1);
-		faultedDiameter +=
-			2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Faulted, 1);
-		faultedPartialDensity +=
-			network.getTotalConcentration(dConcs, Spec::Faulted, minSizes[1]);
-		faultedPartialDiameter += 2.0 *
-			network.getTotalRadiusConcentration(
-				dConcs, Spec::Faulted, minSizes[1]);
-
-		// Perfect
-		perfectDensity +=
-			network.getTotalConcentration(dConcs, Spec::Perfect, 1);
-		perfectDiameter +=
-			2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Perfect, 1);
-		perfectPartialDensity +=
-			network.getTotalConcentration(dConcs, Spec::Perfect, minSizes[2]);
-		perfectPartialDiameter += 2.0 *
-			network.getTotalRadiusConcentration(
-				dConcs, Spec::Perfect, minSizes[2]);
-
-		// Frank
-		frankDensity += network.getTotalConcentration(dConcs, Spec::Frank, 1);
-		frankDiameter +=
-			2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Frank, 1);
-		frankPartialDensity +=
-			network.getTotalConcentration(dConcs, Spec::Frank, minSizes[3]);
-		frankPartialDiameter += 2.0 *
-			network.getTotalRadiusConcentration(
-				dConcs, Spec::Frank, minSizes[3]);
+		// Loop on the species
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			myData[4 * id()] += network.getTotalConcentration(dConcs, id, 1);
+			myData[(4 * id()) + 1] +=
+				2.0 * network.getTotalRadiusConcentration(dConcs, id, 1);
+			myData[(4 * id()) + 2] +=
+				network.getTotalConcentration(dConcs, id, minSizes[id()]);
+			myData[(4 * id()) + 3] += 2.0 *
+				network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]);
+		}
 	}
 
 	// Sum all the concentrations through MPI reduce
-	std::array<double, 20> myConcData{iDensity, vDensity, voidDensity,
-		frankDensity, faultedDensity, perfectDensity, voidPartialDensity,
-		frankPartialDensity, faultedPartialDensity, perfectPartialDensity,
-		iDiameter, vDiameter, voidDiameter, frankDiameter, faultedDiameter,
-		perfectDiameter, voidPartialDiameter, frankPartialDiameter,
-		faultedPartialDiameter, perfectPartialDiameter};
-	std::array<double, 20> totalConcData{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
-		MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+	auto globalData = std::vector<double>(myData.size(), 0.0);
+	MPI_Reduce(myData.data(), globalData.data(), myData.size(), MPI_DOUBLE,
+		MPI_SUM, 0, xolotlComm);
 
 	// Average the data
 	if (procId == 0) {
-		double iTotalDensity = totalConcData[0],
-			   vTotalDensity = totalConcData[1],
-			   voidTotalDensity = totalConcData[2],
-			   frankTotalDensity = totalConcData[3],
-			   faultedTotalDensity = totalConcData[4],
-			   perfectTotalDensity = totalConcData[5],
-			   voidPartialTotalDensity = totalConcData[6],
-			   frankPartialTotalDensity = totalConcData[7],
-			   faultedPartialTotalDensity = totalConcData[8],
-			   perfectPartialTotalDensity = totalConcData[9],
-			   iTotalDiameter = totalConcData[10],
-			   vTotalDiameter = totalConcData[11],
-			   voidTotalDiameter = totalConcData[12],
-			   frankTotalDiameter = totalConcData[13],
-			   faultedTotalDiameter = totalConcData[14],
-			   perfectTotalDiameter = totalConcData[13],
-			   voidPartialTotalDiameter = totalConcData[16],
-			   frankPartialTotalDiameter = totalConcData[17],
-			   faultedPartialTotalDiameter = totalConcData[18],
-			   perfectPartialTotalDiameter = totalConcData[19];
-		iTotalDensity = iTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		vTotalDensity = vTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		voidTotalDensity = voidTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		perfectTotalDensity =
-			perfectTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		faultedTotalDensity =
-			faultedTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		frankTotalDensity =
-			frankTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		voidPartialTotalDensity =
-			voidPartialTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		perfectPartialTotalDensity =
-			perfectPartialTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		faultedPartialTotalDensity =
-			faultedPartialTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		frankPartialTotalDensity =
-			frankPartialTotalDensity / (grid[Mx] - grid[surfacePos + 1]);
-		iTotalDiameter = iTotalDiameter /
-			(iTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		vTotalDiameter = vTotalDiameter /
-			(vTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		voidTotalDiameter = voidTotalDiameter /
-			(voidTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		perfectTotalDiameter = perfectTotalDiameter /
-			(perfectTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		faultedTotalDiameter = faultedTotalDiameter /
-			(faultedTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		frankTotalDiameter = frankTotalDiameter /
-			(frankTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		voidPartialTotalDiameter = voidPartialTotalDiameter /
-			(voidPartialTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		perfectPartialTotalDiameter = perfectPartialTotalDiameter /
-			(perfectPartialTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		faultedPartialTotalDiameter = faultedPartialTotalDiameter /
-			(faultedPartialTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
-		frankPartialTotalDiameter = frankPartialTotalDiameter /
-			(frankPartialTotalDensity * (grid[Mx] - grid[surfacePos + 1]));
+		for (std::size_t i = 0; i < numSpecies; ++i) {
+			globalData[(4 * i) + 1] /= globalData[4 * i];
+			globalData[(4 * i) + 3] /= globalData[(4 * i) + 2];
+			globalData[4 * i] /= (grid[Mx] - grid[surfacePos + 1]);
+			globalData[(4 * i) + 2] /= (grid[Mx] - grid[surfacePos + 1]);
+		}
 
 		// Set the output precision
 		const int outputPrecision = 5;
@@ -1398,20 +1301,13 @@ computeAlloy1D(
 		outputFile << std::setprecision(outputPrecision);
 
 		// Output the data
-		outputFile << timestep << " " << time << " " << iTotalDensity << " "
-				   << iTotalDiameter << " " << vTotalDensity << " "
-				   << vTotalDiameter << " " << voidTotalDensity << " "
-				   << voidTotalDiameter << " " << faultedTotalDensity << " "
-				   << faultedTotalDiameter << " " << perfectTotalDensity << " "
-				   << perfectTotalDiameter << " " << frankTotalDensity << " "
-				   << frankTotalDiameter << " " << voidPartialTotalDensity
-				   << " " << voidPartialTotalDiameter << " "
-				   << faultedPartialTotalDensity << " "
-				   << faultedPartialTotalDiameter << " "
-				   << perfectPartialTotalDensity << " "
-				   << perfectPartialTotalDiameter << " "
-				   << frankPartialTotalDensity << " "
-				   << frankPartialTotalDiameter << std::endl;
+		outputFile << timestep << " " << time << " ";
+		for (std::size_t i = 0; i < numSpecies; ++i) {
+			outputFile << globalData[i * 4] << " " << globalData[(i * 4) + 1]
+					   << " " << globalData[(i * 4) + 2] << " "
+					   << globalData[(i * 4) + 3] << " ";
+		}
+		outputFile << std::endl;
 
 		// Close the output file
 		outputFile.close();

@@ -330,16 +330,8 @@ computeAlloy0D(
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int dof = network.getDOF();
-
-	// Initial declarations for the density and diameter
-	double iDensity = 0.0, vDensity = 0.0, voidDensity = 0.0,
-		   frankDensity = 0.0, faultedDensity = 0.0, perfectDensity = 0.0,
-		   voidPartialDensity = 0.0, frankPartialDensity = 0.0,
-		   faultedPartialDensity = 0.0, perfectPartialDensity = 0.0,
-		   iDiameter = 0.0, vDiameter = 0.0, voidDiameter = 0.0,
-		   frankDiameter = 0.0, faultedDiameter = 0.0, perfectDiameter = 0.0,
-		   voidPartialDiameter = 0.0, frankPartialDiameter = 0.0,
-		   faultedPartialDiameter = 0.0, perfectPartialDiameter = 0.0;
+	auto numSpecies = network.getSpeciesListSize();
+	auto myData = std::vector<double>(numSpecies * 4, 0.0);
 
 	// Get the minimum size for the loop densities and diameters
 	auto minSizes = solverHandler.getMinSizes();
@@ -356,64 +348,21 @@ computeAlloy0D(
 	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 	deep_copy(dConcs, hConcs);
 
-	// I
-	iDensity = network.getTotalConcentration(dConcs, Spec::I, 1);
-	iDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::I, 1);
-
-	// V
-	vDensity = network.getTotalConcentration(dConcs, Spec::V, 1);
-	vDiameter = 2.0 * network.getTotalRadiusConcentration(dConcs, Spec::V, 1);
-
-	// Void
-	voidDensity = network.getTotalConcentration(dConcs, Spec::Void, 1);
-	voidDiameter =
-		2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Void, 1);
-	voidPartialDensity =
-		network.getTotalConcentration(dConcs, Spec::Void, minSizes[0]);
-	voidPartialDiameter = 2.0 *
-		network.getTotalRadiusConcentration(dConcs, Spec::Void, minSizes[0]);
-
-	// Faulted
-	faultedDensity = network.getTotalConcentration(dConcs, Spec::Faulted, 1);
-	faultedDiameter =
-		2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Faulted, 1);
-	faultedPartialDensity =
-		network.getTotalConcentration(dConcs, Spec::Faulted, minSizes[1]);
-	faultedPartialDiameter = 2.0 *
-		network.getTotalRadiusConcentration(dConcs, Spec::Faulted, minSizes[1]);
-
-	// Perfect
-	perfectDensity = network.getTotalConcentration(dConcs, Spec::Perfect, 1);
-	perfectDiameter =
-		2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Perfect, 1);
-	perfectPartialDensity =
-		network.getTotalConcentration(dConcs, Spec::Perfect, minSizes[2]);
-	perfectPartialDiameter = 2.0 *
-		network.getTotalRadiusConcentration(dConcs, Spec::Perfect, minSizes[2]);
-
-	// Frank
-	frankDensity = network.getTotalConcentration(dConcs, Spec::Frank, 1);
-	frankDiameter =
-		2.0 * network.getTotalRadiusConcentration(dConcs, Spec::Frank, 1);
-	frankPartialDensity =
-		network.getTotalConcentration(dConcs, Spec::Frank, minSizes[3]);
-	frankPartialDiameter = 2.0 *
-		network.getTotalRadiusConcentration(dConcs, Spec::Frank, minSizes[3]);
+	// Loop on the species
+	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+		myData[4 * id()] = network.getTotalConcentration(dConcs, id, 1);
+		myData[(4 * id()) + 1] = 2.0 *
+			network.getTotalRadiusConcentration(dConcs, id, 1) /
+			myData[4 * id()];
+		myData[(4 * id()) + 2] =
+			network.getTotalConcentration(dConcs, id, minSizes[id()]);
+		myData[(4 * id()) + 3] = 2.0 *
+			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
+			myData[(4 * id()) + 2];
+	}
 
 	// Set the output precision
 	const int outputPrecision = 5;
-
-	// Average the diameters
-	iDiameter = iDiameter / iDensity;
-	vDiameter = vDiameter / vDensity;
-	voidDiameter = voidDiameter / voidDensity;
-	perfectDiameter = perfectDiameter / perfectDensity;
-	faultedDiameter = faultedDiameter / faultedDensity;
-	frankDiameter = frankDiameter / frankDensity;
-	voidPartialDiameter = voidPartialDiameter / voidPartialDensity;
-	perfectPartialDiameter = perfectPartialDiameter / perfectPartialDensity;
-	faultedPartialDiameter = faultedPartialDiameter / faultedPartialDensity;
-	frankPartialDiameter = frankPartialDiameter / frankPartialDensity;
 
 	// Open the output file
 	std::fstream outputFile;
@@ -421,16 +370,12 @@ computeAlloy0D(
 	outputFile << std::setprecision(outputPrecision);
 
 	// Output the data
-	outputFile << timestep << " " << time << " " << iDensity << " " << iDiameter
-			   << " " << vDensity << " " << vDiameter << " " << voidDensity
-			   << " " << voidDiameter << " " << faultedDensity << " "
-			   << faultedDiameter << " " << perfectDensity << " "
-			   << perfectDiameter << " " << frankDensity << " " << frankDiameter
-			   << " " << voidPartialDensity << " " << voidPartialDiameter << " "
-			   << faultedPartialDensity << " " << faultedPartialDiameter << " "
-			   << perfectPartialDensity << " " << perfectPartialDiameter << " "
-			   << frankPartialDensity << " " << frankPartialDiameter
-			   << std::endl;
+	outputFile << timestep << " " << time << " ";
+	for (std::size_t i = 0; i < numSpecies; ++i) {
+		outputFile << myData[i * 4] << " " << myData[(i * 4) + 1] << " "
+				   << myData[(i * 4) + 2] << " " << myData[(i * 4) + 3] << " ";
+	}
+	outputFile << std::endl;
 
 	// Close the output file
 	outputFile.close();

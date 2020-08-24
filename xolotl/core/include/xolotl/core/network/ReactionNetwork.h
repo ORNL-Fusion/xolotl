@@ -301,6 +301,14 @@ public:
 	getTotalConcentration(ConcentrationsView concentrations, Species type,
 		AmountType minSize = 0);
 
+	double
+	getTotalConcentration(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) override
+	{
+		auto type = species.cast<Species>();
+		return getTotalConcentration(concentrations, type, minSize);
+	}
+
 	/**
 	 * Get the total concentration of a given type of clusters times their
 	 * radius.
@@ -314,6 +322,14 @@ public:
 	double
 	getTotalRadiusConcentration(ConcentrationsView concentrations, Species type,
 		AmountType minSize = 0);
+
+	double
+	getTotalRadiusConcentration(ConcentrationsView concentrations,
+		SpeciesId species, AmountType minSize = 0) override
+	{
+		auto type = species.cast<Species>();
+		return getTotalRadiusConcentration(concentrations, type, minSize);
+	}
 
 	/**
 	 * Get the total concentration of a given type of clusters times the number

@@ -85,8 +85,8 @@ MaterialHandler::initializeFluxHandler(const options::Options& options)
 	auto customHandler =
 		dynamic_cast<flux::CustomFitFluxHandler*>(_fluxHandler.get());
 	if (customHandler) {
-        customHandler->setProfileFilePath(options.getFluxProfileFilePath());
-    }
+		customHandler->setProfileFilePath(options.getFluxProfileFilePath());
+	}
 }
 
 void

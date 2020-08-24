@@ -280,7 +280,7 @@ protected:
 	/**
 	 * Average radius computation minimum size
 	 */
-	util::Array<int, 4> radiusMinSizes;
+	std::vector<size_t> radiusMinSizes;
 
 	/**
 	 * Density of atom in a bubble in nm-3.
@@ -341,7 +341,7 @@ protected:
 	/**
 	 * The path to the custom flux profile file
 	 */
-    fs::path fluxProfileFilePath;
+	fs::path fluxProfileFilePath;
 
 public:
 	/**
@@ -935,7 +935,7 @@ public:
 	 * Obtain the minimum size for the average radius computation.
 	 * \see IOptions.h
 	 */
-	virtual util::Array<int, 4>
+	virtual std::vector<size_t>
 	getRadiusMinSizes() const override
 	{
 		return radiusMinSizes;

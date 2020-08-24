@@ -42,10 +42,10 @@ private:
 	 */
 	std::vector<double> normFactors;
 
-    /**
-     * File path for custom profile
-     */
-    fs::path profileFilePath {"tridyn.dat"};
+	/**
+	 * File path for custom profile
+	 */
+	fs::path profileFilePath{"tridyn.dat"};
 
 	/**
 	 * Function that calculate the flux of He at a given position x (in nm).
@@ -90,14 +90,14 @@ public:
 	{
 	}
 
-    /**
-     * Provide file path for custom flux profile
-     */
-    void
-    setProfileFilePath(const fs::path& filePath)
-    {
-        profileFilePath = filePath;
-    }
+	/**
+	 * Provide file path for custom flux profile
+	 */
+	void
+	setProfileFilePath(const fs::path& filePath)
+	{
+		profileFilePath = filePath;
+	}
 
 	/**
 	 * Compute and store the incident flux values at each grid point.

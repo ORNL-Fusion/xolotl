@@ -501,7 +501,7 @@ public:
 	 *
 	 * @return The size
 	 */
-	virtual util::Array<int, 4>
+	virtual std::vector<size_t>
 	getRadiusMinSizes() const = 0;
 
 	/**

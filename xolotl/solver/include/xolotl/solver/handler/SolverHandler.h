@@ -160,7 +160,7 @@ protected:
 	unsigned int rngSeed;
 
 	//! The minimum sizes for average radius computation.
-	util::Array<int, 4> minRadiusSizes;
+	std::vector<size_t> minRadiusSizes;
 
 	//! The previous time.
 	double previousTime;
@@ -564,8 +564,14 @@ public:
 		// Set the modified trap-mutation handler
 		mutationHandler = material->getTrapMutationHandler().get();
 
-		// Set the minimum size for the average radius compuation
-		minRadiusSizes = opts.getRadiusMinSizes();
+		// Set the minimum size for the average radius computation
+		auto numSpecies = network.getSpeciesListSize();
+		minRadiusSizes = std::vector<size_t>(numSpecies, 1);
+		auto minSizes = opts.getRadiusMinSizes();
+		for (auto i = 0; i < std::min(minSizes.size(), minRadiusSizes.size());
+			 i++) {
+			minRadiusSizes[i] = minSizes[i];
+		}
 
 		// Set the initial vacancy concentration
 		initialVConc = opts.getInitialVConcentration();
@@ -997,7 +1003,7 @@ public:
 	 * Get the minimum size for computing average radius.
 	 * \see ISolverHandler.h
 	 */
-	util::Array<int, 4>
+	std::vector<size_t>
 	getMinSizes() const override
 	{
 		return minRadiusSizes;
