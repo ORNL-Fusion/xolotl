@@ -160,8 +160,9 @@ runSystemTestCase(const std::string& caseName,
 	auto argc = boost::unit_test::framework::master_test_suite().argc;
 	auto argv = boost::unit_test::framework::master_test_suite().argv;
 	if (argc == 2 && std::strcmp(argv[1], "--approve") == 0) {
-		fs::copy_file("./" + fileName, dataDir + "/output/" + caseName + ".txt",
-			fs::copy_option::overwrite_if_exists);
+		xolotl::fs::copy_file("./" + fileName,
+			dataDir + "/output/" + caseName + ".txt",
+			xolotl::fs::copy_option::overwrite_if_exists);
 	}
 	else {
 		checkOutput("./" + fileName, dataDir + "/output/" + caseName + ".txt");

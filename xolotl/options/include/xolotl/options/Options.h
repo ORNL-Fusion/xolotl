@@ -341,7 +341,7 @@ protected:
 	/**
 	 * The path to the custom flux profile file
 	 */
-	std::string fluxProfileFilePath;
+    fs::path fluxProfileFilePath;
 
 public:
 	/**
@@ -1068,7 +1068,7 @@ public:
 	virtual std::string
 	getFluxProfileFilePath() const override
 	{
-		return fluxProfileFilePath;
+		return fluxProfileFilePath.string();
 	}
 };
 // end class Options

@@ -8,6 +8,7 @@
 
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/util/Array.h>
+#include <xolotl/util/Filesystem.h>
 
 namespace xolotl
 {
