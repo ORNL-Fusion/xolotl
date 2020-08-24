@@ -1,12 +1,11 @@
 #pragma once
 
-#include <string.h>
-
 #include <cmath>
 #include <fstream>
 #include <iostream>
 
 #include <xolotl/core/flux/FluxHandler.h>
+#include <xolotl/util/Filesystem.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/TokenizedLineReader.h>
 
@@ -42,6 +41,11 @@ private:
 	 * Value of the fit function integrated on the grid.
 	 */
 	std::vector<double> normFactors;
+
+    /**
+     * File path for custom profile
+     */
+    fs::path profileFilePath {"tridyn.dat"};
 
 	/**
 	 * Function that calculate the flux of He at a given position x (in nm).
@@ -86,6 +90,15 @@ public:
 	{
 	}
 
+    /**
+     * Provide file path for custom flux profile
+     */
+    void
+    setProfileFilePath(const fs::path& filePath)
+    {
+        profileFilePath = filePath;
+    }
+
 	/**
 	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
@@ -107,8 +120,7 @@ public:
 		xGrid = grid;
 
 		// Read the parameter file
-		std::ifstream paramFile;
-		paramFile.open("tridyn.dat");
+		fs::ifstream paramFile(profileFilePath);
 
 		// Gets the process ID
 		int procId;

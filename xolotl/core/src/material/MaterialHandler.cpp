@@ -81,6 +81,12 @@ MaterialHandler::initializeFluxHandler(const options::Options& options)
 		// Initialize the time profile
 		_fluxHandler->initializeTimeProfile(options.getFluxProfileName());
 	}
+
+	auto customHandler =
+		dynamic_cast<flux::CustomFitFluxHandler*>(_fluxHandler.get());
+	if (customHandler) {
+        customHandler->setProfileFilePath(options.getFluxProfileFilePath());
+    }
 }
 
 void
