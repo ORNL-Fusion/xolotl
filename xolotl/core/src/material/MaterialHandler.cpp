@@ -6,6 +6,7 @@
 #include <xolotl/core/diffusion/Diffusion2DHandler.h>
 #include <xolotl/core/diffusion/Diffusion3DHandler.h>
 #include <xolotl/core/diffusion/DummyDiffusionHandler.h>
+#include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/material/MaterialHandler.h>
 #include <xolotl/util/TokenizedLineReader.h>
 
@@ -19,7 +20,9 @@ MaterialHandler::MaterialHandler(const options::Options& options,
 	const IMaterialSubHandlerGenerator& subHandlerGenerator) :
 	_diffusionHandler(createDiffusionHandler(options)),
 	_advectionHandlers({subHandlerGenerator.generateAdvectionHandler()}),
-	_fluxHandler(subHandlerGenerator.generateFluxHandler()),
+	_fluxHandler(options.getFluxProfileFilePath().empty() ?
+			subHandlerGenerator.generateFluxHandler() :
+			std::make_shared<flux::CustomFitFluxHandler>()),
 	_trapMutationHandler(subHandlerGenerator.generateTrapMutationHandler())
 {
 	initializeFluxHandler(options);

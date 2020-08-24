@@ -9,7 +9,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/config.h>
-#include <xolotl/core/flux/TRIDYNFitFluxHandler.h>
+#include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
 
@@ -21,9 +21,9 @@ using Kokkos::ScopeGuard;
 BOOST_GLOBAL_FIXTURE(ScopeGuard);
 
 /**
- * The test suite is responsible for testing the TRIDYNFitFluxHandler.
+ * The test suite is responsible for testing the CustomFitFluxHandler.
  */
-BOOST_AUTO_TEST_SUITE(TRIDYNFitFluxHandlerTester_testSuite)
+BOOST_AUTO_TEST_SUITE(CustomFitFluxHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 {
@@ -70,8 +70,8 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	// Get its size
 	const int dof = network.getDOF();
 
-	// Create the TRIDYN flux handler
-	auto testFitFlux = make_shared<TRIDYNFitFluxHandler>();
+	// Create the Custom flux handler
+	auto testFitFlux = make_shared<CustomFitFluxHandler>();
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler

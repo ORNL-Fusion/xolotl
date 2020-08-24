@@ -1,5 +1,4 @@
-#ifndef TRIDYNFITFLUXHANDLER_H
-#define TRIDYNFITFLUXHANDLER_H
+#pragma once
 
 #include <string.h>
 
@@ -19,9 +18,9 @@ namespace flux
 {
 /**
  * This class realizes the IFluxHandler interface to calculate the incident
- * helium flux for a (100) oriented tungsten material using TRIDYN input data.
+ * helium flux for a (100) oriented tungsten material using custom input data.
  */
-class TRIDYNFitFluxHandler : public FluxHandler
+class CustomFitFluxHandler : public FluxHandler
 {
 private:
 	/**
@@ -76,14 +75,14 @@ public:
 	/**
 	 * The constructor
 	 */
-	TRIDYNFitFluxHandler()
+	CustomFitFluxHandler()
 	{
 	}
 
 	/**
 	 * The Destructor
 	 */
-	~TRIDYNFitFluxHandler()
+	~CustomFitFluxHandler()
 	{
 	}
 
@@ -120,7 +119,7 @@ public:
 			// Print a message
 			if (procId == 0)
 				std::cout
-					<< "No parameter files for TRIDYN flux, the flux will be 0"
+					<< "No parameter files for custom flux, the flux will be 0"
 					<< std::endl;
 		}
 		else {
@@ -166,7 +165,7 @@ public:
 					// Print a message
 					if (procId == 0)
 						std::cout
-							<< "One of the reduction factors for the TRIDYN "
+							<< "One of the reduction factors for the custom "
 							   "flux is negative, "
 							   "check if this is really what you want to do."
 							<< std::endl;
@@ -343,10 +342,8 @@ public:
 		return;
 	}
 };
-// end class TRIDYNFitFluxHandler
+// end class CustomFitFluxHandler
 
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif
