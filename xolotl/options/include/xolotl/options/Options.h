@@ -338,6 +338,11 @@ protected:
 	 */
 	double migrationThreshold;
 
+	/**
+	 * The path to the custom flux profile file
+	 */
+	std::string fluxProfileFilePath;
+
 public:
 	/**
 	 * The constructor.
@@ -1054,6 +1059,16 @@ public:
 	getMigrationThreshold() const override
 	{
 		return migrationThreshold;
+	}
+
+	/**
+	 * Get the path to the custom flux profile.
+	 * \see IOptions.h
+	 */
+	virtual std::string
+	getFluxProfileFilePath() const override
+	{
+		return fluxProfileFilePath;
 	}
 };
 // end class Options

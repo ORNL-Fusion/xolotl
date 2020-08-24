@@ -591,6 +591,14 @@ public:
 	 */
 	virtual double
 	getMigrationThreshold() const = 0;
+
+	/**
+	 * Get the path to the custom flux profile.
+	 *
+	 * @return The path to the file
+	 */
+	virtual std::string
+	getFluxProfileFilePath() const = 0;
 };
 // end class IOptions
 

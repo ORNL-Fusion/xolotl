@@ -79,7 +79,8 @@ Options::Options() :
 	xenonDiffusivity(-1.0),
 	fissionYield(0.25),
 	heVRatio(4.0),
-	migrationThreshold(std::numeric_limits<double>::infinity())
+	migrationThreshold(std::numeric_limits<double>::infinity()),
+	fluxProfileFilePath("")
 {
 	radiusMinSizes.Init(0);
 
@@ -250,7 +251,10 @@ Options::readParams(int argc, char* argv[])
 		"V in a bubble.")("migrationThreshold",
 		bpo::value<double>(&migrationThreshold),
 		"This option allows the user to set a limit on the migration energy "
-		"above which the diffusion will be ignored.");
+		"above which the diffusion will be ignored.")("fluxProfileFilePath",
+		bpo::value<std::string>(&fluxProfileFilePath),
+		"The path to the custom flux profile file; the default is an empty "
+		"string that will use the default material associated flux handler.");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);

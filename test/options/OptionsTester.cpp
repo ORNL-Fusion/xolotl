@@ -143,7 +143,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 				  << "xenonDiffusivity=3.0" << std::endl
 				  << "fissionYield=0.3" << std::endl
 				  << "heVRatio=5.0" << std::endl
-				  << "migrationThreshold=1.0" << std::endl;
+				  << "migrationThreshold=1.0" << std::endl
+				  << "fluxProfileFilePath=path/to/the/flux/profile/file.txt"
+				  << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -262,6 +264,10 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 
 	// Check the migration threshold option
 	BOOST_REQUIRE_EQUAL(opts.getMigrationThreshold(), 1.0);
+
+	// Check the network filename
+	BOOST_REQUIRE_EQUAL(
+		opts.getFluxProfileFilePath(), "path/to/the/flux/profile/file.txt");
 
 	// Check the physical processes option
 	auto map = opts.getProcesses();
