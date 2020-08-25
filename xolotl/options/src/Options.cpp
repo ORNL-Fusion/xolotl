@@ -248,7 +248,8 @@ Options::readParams(int argc, char* argv[])
 		"V in a bubble.")("migrationThreshold",
 		bpo::value<double>(&migrationThreshold),
 		"This option allows the user to set a limit on the migration energy "
-		"above which the diffusion will be ignored.")("fluxDepthProfileFilePath",
+		"above which the diffusion will be ignored.")(
+		"fluxDepthProfileFilePath",
 		bpo::value<fs::path>(&fluxDepthProfileFilePath),
 		"The path to the custom flux profile file; the default is an empty "
 		"string that will use the default material associated flux handler.");

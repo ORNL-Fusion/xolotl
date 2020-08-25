@@ -70,6 +70,10 @@ public:
 			concs, Species::He, minSize);
 	}
 
+	void
+	updateBurstingConcs(double* gridPointSolution, double factor,
+		std::vector<double>& nBurst) override;
+
 	IndexType
 	checkLargestClusterId();
 

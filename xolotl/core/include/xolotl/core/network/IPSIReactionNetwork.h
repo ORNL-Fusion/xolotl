@@ -25,6 +25,10 @@ public:
 	virtual double
 	getTotalTrappedHeliumConcentration(
 		ConcentrationsView concentrations, AmountType minSize) = 0;
+
+	virtual void
+	updateBurstingConcs(double* gridPointSolution, double factor,
+		std::vector<double>& nBurst) = 0;
 };
 } // namespace network
 } // namespace core

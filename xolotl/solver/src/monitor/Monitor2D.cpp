@@ -10,8 +10,8 @@
 #include <vector>
 
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
-#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/solver/PetscSolver.h>
@@ -348,10 +348,7 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	double hy = solverHandler.getStepSizeY();
 
 	// Get the network
-	using NetworkType =
-		core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
+	using NetworkType = core::network::IPSIReactionNetwork;
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int dof = network.getDOF();
 
@@ -361,7 +358,8 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	CHKERRQ(ierr);
 
 	// Store the concentration over the grid
-	double heConcentration = 0.0, dConcentration = 0.0, tConcentration = 0.0;
+	auto numSpecies = network.getSpeciesListSize();
+	auto myConcData = std::vector<double>(numSpecies, 0.0);
 
 	// Loop on the grid
 	for (PetscInt yj = ys; yj < ys + ym; yj++) {
@@ -387,13 +385,10 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 			deep_copy(dConcs, hConcs);
 
 			// Get the total concentrations at this grid point
-			heConcentration +=
-				network.getTotalAtomConcentration(dConcs, Spec::He, 1) * hx *
-				hy;
-			dConcentration +=
-				network.getTotalAtomConcentration(dConcs, Spec::D, 1) * hx * hy;
-			tConcentration +=
-				network.getTotalAtomConcentration(dConcs, Spec::T, 1) * hx * hy;
+			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+				myConcData[id()] +=
+					network.getTotalAtomConcentration(dConcs, id, 1) * hx * hy;
+			}
 		}
 	}
 
@@ -403,17 +398,10 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Sum all the concentrations through MPI reduce
-	std::array<double, 3> myConcData{
-		heConcentration, dConcentration, tConcentration};
-	std::array<double, 3> totalConcData{0.0, 0.0, 0.0};
+	auto totalConcData = std::vector<double>(numSpecies, 0.0);
 
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 		MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
-
-	// Extract total He, D, T concentrations.  Values are valid only on rank 0.
-	double totalHeConcentration = totalConcData[0];
-	double totalDConcentration = totalConcData[1];
-	double totalTConcentration = totalConcData[2];
 
 	// Get the total size of the grid
 	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, PETSC_IGNORE, PETSC_IGNORE,
@@ -443,9 +431,7 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 				nHelium2D[j] += previousHeFlux2D[j] * dt;
 				nDeuterium2D[j] += previousDFlux2D[j] * dt;
 				nTritium2D[j] += previousTFlux2D[j] * dt;
-				previousHeFlux2D[j] = 0.0;
-				previousDFlux2D[j] = 0.0;
-				previousTFlux2D[j] = 0.0;
+				auto myFluxData = std::vector<double>(numSpecies, 0.0);
 
 				// Get the pointer to the beginning of the solution data for
 				// this grid point
@@ -467,27 +453,11 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 				}
 				double factor = 2.0 * hy / (hxLeft + hxRight);
 
-				// Loop on the diffusing clusters
-				for (auto l : diffusingIds) {
-					// Get the cluster and composition
-					auto cluster = network.getClusterCommon(l);
-					auto reg = network.getCluster(l, plsm::onHost).getRegion();
-					Composition comp = reg.getOrigin();
-					// Get its concentration
-					double conc = gridPointSolution[l];
-					// Get its size and diffusion coefficient
-					int size = comp[Spec::He] + comp[Spec::D] + comp[Spec::T];
-					double coef = cluster.getDiffusionCoefficient(xi - xs);
-					// Compute the flux going to the right
-					double newFlux =
-						(double)size * factor * coef * conc * hxRight;
-					if (comp.isOnAxis(Spec::He))
-						previousHeFlux2D[j] += newFlux;
-					if (comp.isOnAxis(Spec::D))
-						previousDFlux2D[j] += newFlux;
-					if (comp.isOnAxis(Spec::T))
-						previousTFlux2D[j] += newFlux;
-				}
+				network.updateOutgoingDiffFluxes(gridPointSolution, factor,
+					diffusingIds, myFluxData, xi - xs);
+				previousHeFlux2D[j] += myFluxData[0];
+				previousDFlux2D[j] += myFluxData[1];
+				previousTFlux2D[j] += myFluxData[2];
 
 				// Set the bottom processor
 				bottomProc = procId;
@@ -522,9 +492,9 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		double surface = (double)My * hy;
 
 		// Rescale the concentration
-		totalHeConcentration = totalHeConcentration / surface;
-		totalDConcentration = totalDConcentration / surface;
-		totalTConcentration = totalTConcentration / surface;
+		for (std::size_t i = 0; i < numSpecies; ++i) {
+			totalConcData[i] /= surface;
+		}
 		double totalHeBulk = 0.0, totalDBulk = 0.0, totalTBulk = 0.0;
 		// Look if the bottom is a free surface
 		if (solverHandler.getRightOffset() == 1) {
@@ -543,17 +513,20 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Helium content = " << totalHeConcentration << std::endl;
-		std::cout << "Deuterium content = " << totalDConcentration << std::endl;
-		std::cout << "Tritium content = " << totalTConcentration << std::endl;
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			std::cout << network.getSpeciesName(id)
+					  << " content = " << totalConcData[id()] << '\n';
+		}
 		std::cout << "Fluence = " << fluence << "\n" << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << fluence << " " << totalHeConcentration << " "
-				   << totalDConcentration << " " << totalTConcentration << " "
-				   << totalHeBulk << " " << totalDBulk << " " << totalTBulk
+		outputFile << fluence << " ";
+		for (std::size_t i = 0; i < numSpecies; ++i) {
+			outputFile << totalConcData[i] << " ";
+		}
+		outputFile << totalHeBulk << " " << totalDBulk << " " << totalTBulk
 				   << std::endl;
 		outputFile.close();
 	}
@@ -1205,11 +1178,10 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 	// Now work on the bubble bursting
 	if (solverHandler.burstBubbles()) {
-		using NetworkType = core::network::PSIReactionNetwork<
-			core::network::PSIFullSpeciesList>;
-		using Spec = typename NetworkType::Species;
+		using NetworkType = core::network::IPSIReactionNetwork;
 		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 		auto dof = network.getDOF();
+		auto specIdHe = psiNetwork->getHeliumSpeciesId();
 
 		// Compute the prefactor for the probability (arbitrary)
 		double prefactor =
@@ -1247,7 +1219,7 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 					// Compute the helium density at this grid point
 					double heDensity = psiNetwork->getTotalAtomConcentration(
-						dConcs, Spec::He, 1);
+						dConcs, specIdHe, 1);
 
 					// Compute the radius of the bubble from the number of
 					// helium
@@ -1354,10 +1326,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 	double hy = solverHandler.getStepSizeY();
 
 	// Take care of bursting
-	using NetworkType =
-		core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
+	using NetworkType = core::network::IPSIReactionNetwork;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Loop on each bursting depth
@@ -1377,56 +1346,8 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		std::cout << "bursting at: " << yj * hy << " " << distance << std::endl;
 
 		// Pinhole case
-		// Loop on every cluster
-		for (unsigned int i = 0; i < network.getNumClusters(); i++) {
-			const auto& clReg =
-				psiNetwork->getCluster(i, plsm::onHost).getRegion();
-			// Non-grouped clusters
-			if (clReg.isSimplex()) {
-				// Get the composition
-				Composition comp = clReg.getOrigin();
-				// Pure He, D, or T case
-				if (comp.isOnAxis(Spec::He) || comp.isOnAxis(Spec::D) ||
-					comp.isOnAxis(Spec::T)) {
-					// Reset concentration
-					gridPointSolution[i] = 0.0;
-				}
-				// Mixed cluster case
-				else if (!comp.isOnAxis(Spec::V) && !comp.isOnAxis(Spec::I)) {
-					// Transfer concentration to V of the same size
-					Composition vComp = Composition::zero();
-					vComp[Spec::V] = comp[Spec::V];
-					auto vCluster =
-						psiNetwork->findCluster(vComp, plsm::onHost);
-					gridPointSolution[vCluster.getId()] += gridPointSolution[i];
-					gridPointSolution[i] = 0.0;
-				}
-			}
-			// Grouped clusters
-			else {
-				// Get the factor
-				double concFactor = clReg.volume() / clReg[Spec::V].length();
-				// Loop on the Vs
-				for (auto j : makeIntervalRange(clReg[Spec::V])) {
-					// Transfer concentration to V of the same size
-					Composition vComp = Composition::zero();
-					vComp[Spec::V] = j;
-					auto vCluster =
-						psiNetwork->findCluster(vComp, plsm::onHost);
-					// TODO: refine formula with V moment
-					gridPointSolution[vCluster.getId()] +=
-						gridPointSolution[i] * concFactor;
-				}
-
-				// Reset the concentration and moments
-				gridPointSolution[i] = 0.0;
-				auto momentIds =
-					psiNetwork->getCluster(i, plsm::onHost).getMomentIds();
-				for (std::size_t j = 0; j < momentIds.extent(0); j++) {
-					gridPointSolution[momentIds(j)] = 0.0;
-				}
-			}
-		}
+		auto nBurst = std::vector<double>(3, 0.0); // Not actually used here
+		psiNetwork->updateBurstingConcs(gridPointSolution, 0.0, nBurst);
 	}
 
 	// Now takes care of moving surface

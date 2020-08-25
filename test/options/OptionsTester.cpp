@@ -144,7 +144,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 				  << "fissionYield=0.3" << std::endl
 				  << "heVRatio=5.0" << std::endl
 				  << "migrationThreshold=1.0" << std::endl
-				  << "fluxProfileFilePath=path/to/the/flux/profile/file.txt"
+				  << "fluxDepthProfileFilePath=path/to/the/flux/profile/file.txt"
 				  << std::endl;
 	goodParamFile.close();
 

@@ -11,8 +11,8 @@
 
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/AlloyReactionNetwork.h>
+#include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
-#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/solver/PetscSolver.h>
@@ -551,7 +551,6 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 	// Store the concentration over the grid
 	auto numSpecies = network.getSpeciesListSize();
-	auto specIdHe = network.getHeliumSpeciesId();
 	auto myConcData = std::vector<double>(numSpecies, 0.0);
 
 	// Declare the pointer for the concentrations at a specific grid point
@@ -1769,11 +1768,10 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 	// Now work on the bubble bursting
 	if (solverHandler.burstBubbles()) {
-		using NetworkType = core::network::PSIReactionNetwork<
-			core::network::PSIFullSpeciesList>;
-		using Spec = typename NetworkType::Species;
+		using NetworkType = core::network::IPSIReactionNetwork;
 		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 		auto dof = network.getDOF();
+		auto specIdHe = psiNetwork->getHeliumSpeciesId();
 
 		// Compute the prefactor for the probability (arbitrary)
 		double prefactor =
@@ -1808,7 +1806,7 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 				// Compute the helium density at this grid point
 				double heDensity =
-					psiNetwork->getTotalAtomConcentration(dConcs, Spec::He, 1);
+					psiNetwork->getTotalAtomConcentration(dConcs, specIdHe, 1);
 
 				// Compute the radius of the bubble from the number of helium
 				double nV = heDensity * (grid[xi + 1] - grid[xi]) / heVRatio;
@@ -1921,12 +1919,9 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	double dt = time - previousTime;
 
 	// Take care of bursting
-	using NetworkType =
-		core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
+	using NetworkType = core::network::IPSIReactionNetwork;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
-	double localNHe = 0.0, localND = 0.0, localNT = 0.0;
+	auto nBurst = std::vector<double>(3, 0.0);
 
 	// Loop on each bursting depth
 	for (int i = 0; i < depthPositions1D.size(); i++) {
@@ -1953,106 +1948,16 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 		outputFile.close();
 
 		// Pinhole case
-		// Loop on every cluster
-		for (unsigned int i = 0; i < network.getNumClusters(); i++) {
-			const auto& clReg =
-				psiNetwork->getCluster(i, plsm::onHost).getRegion();
-			// Non-grouped clusters
-			if (clReg.isSimplex()) {
-				// Get the composition
-				Composition comp = clReg.getOrigin();
-				// Pure He, D, or T case
-				if (comp.isOnAxis(Spec::He)) {
-					// Compute the number of atoms released
-					localNHe +=
-						gridPointSolution[i] * (double)comp[Spec::He] * hxLeft;
-					// Reset concentration
-					gridPointSolution[i] = 0.0;
-				}
-				else if (comp.isOnAxis(Spec::D)) {
-					// Compute the number of atoms released
-					localND +=
-						gridPointSolution[i] * (double)comp[Spec::D] * hxLeft;
-					// Reset concentration
-					gridPointSolution[i] = 0.0;
-				}
-				else if (comp.isOnAxis(Spec::T)) {
-					// Compute the number of atoms released
-					localNT +=
-						gridPointSolution[i] * (double)comp[Spec::T] * hxLeft;
-					// Reset concentration
-					gridPointSolution[i] = 0.0;
-				}
-				// Mixed cluster case
-				else if (!comp.isOnAxis(Spec::V) && !comp.isOnAxis(Spec::I)) {
-					// Compute the number of atoms released
-					localNHe +=
-						gridPointSolution[i] * (double)comp[Spec::He] * hxLeft;
-					localND +=
-						gridPointSolution[i] * (double)comp[Spec::D] * hxLeft;
-					localNT +=
-						gridPointSolution[i] * (double)comp[Spec::T] * hxLeft;
-					// Transfer concentration to V of the same size
-					Composition vComp = Composition::zero();
-					vComp[Spec::V] = comp[Spec::V];
-					auto vCluster =
-						psiNetwork->findCluster(vComp, plsm::onHost);
-					gridPointSolution[vCluster.getId()] += gridPointSolution[i];
-					gridPointSolution[i] = 0.0;
-				}
-			}
-			// Grouped clusters
-			else {
-				// Compute the number of atoms released
-				double concFactor = clReg.volume() / clReg[Spec::He].length();
-				for (auto j : makeIntervalRange(clReg[Spec::He])) {
-					localNHe +=
-						gridPointSolution[i] * (double)j * concFactor * hxLeft;
-				}
-				concFactor = clReg.volume() / clReg[Spec::D].length();
-				for (auto j : makeIntervalRange(clReg[Spec::D])) {
-					localND +=
-						gridPointSolution[i] * (double)j * concFactor * hxLeft;
-				}
-				concFactor = clReg.volume() / clReg[Spec::T].length();
-				for (auto j : makeIntervalRange(clReg[Spec::T])) {
-					localND +=
-						gridPointSolution[i] * (double)j * concFactor * hxLeft;
-				}
-
-				// Get the factor
-				concFactor = clReg.volume() / clReg[Spec::V].length();
-				// Loop on the Vs
-				for (auto j : makeIntervalRange(clReg[Spec::V])) {
-					// Transfer concentration to V of the same size
-					Composition vComp = Composition::zero();
-					vComp[Spec::V] = j;
-					auto vCluster =
-						psiNetwork->findCluster(vComp, plsm::onHost);
-					// TODO: refine formula with V moment
-					gridPointSolution[vCluster.getId()] +=
-						gridPointSolution[i] * concFactor;
-				}
-
-				// Reset the concentration and moments
-				gridPointSolution[i] = 0.0;
-				auto momentIds =
-					psiNetwork->getCluster(i, plsm::onHost).getMomentIds();
-				for (std::size_t j = 0; j < momentIds.extent(0); j++) {
-					gridPointSolution[momentIds(j)] = 0.0;
-				}
-			}
-		}
+		psiNetwork->updateBurstingConcs(gridPointSolution, hxLeft, nBurst);
 	}
 
 	// Add up the local quantities
-	double nHe = 0.0, nD = 0.0, nT = 0.0;
-	MPI_Allreduce(&localNHe, &nHe, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
-	nHeliumBurst1D += nHe;
-	MPI_Allreduce(&localND, &nD, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
-	nDeuteriumBurst1D += nD;
-	MPI_Allreduce(&localNT, &nT, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
-	nTritiumBurst1D += nT;
+	auto globalBurst = std::vector<double>(3, 0.0);
+	MPI_Allreduce(
+		nBurst.data(), globalBurst.data(), 3, MPI_DOUBLE, MPI_SUM, xolotlComm);
+	nHeliumBurst1D += globalBurst[0];
+	nDeuteriumBurst1D += globalBurst[1];
+	nTritiumBurst1D += globalBurst[2];
 
 	// Now takes care of moving surface
 	bool moving = false;

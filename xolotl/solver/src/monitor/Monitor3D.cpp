@@ -10,8 +10,8 @@
 #include <vector>
 
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
-#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/solver/PetscSolver.h>
@@ -335,10 +335,7 @@ computeHeliumRetention3D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	auto grid = solverHandler.getXGrid();
 
 	// Get the network
-	using NetworkType =
-		core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
+	using NetworkType = core::network::IPSIReactionNetwork;
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
 	const int dof = network.getDOF();
 
@@ -352,7 +349,8 @@ computeHeliumRetention3D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	CHKERRQ(ierr);
 
 	// Store the concentration over the grid
-	double heConcentration = 0.0, dConcentration = 0.0, tConcentration = 0.0;
+	auto numSpecies = network.getSpeciesListSize();
+	auto myConcData = std::vector<double>(numSpecies, 0.0);
 
 	// Loop on the grid
 	for (PetscInt zk = zs; zk < zs + zm; zk++) {
@@ -379,15 +377,11 @@ computeHeliumRetention3D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 				deep_copy(dConcs, hConcs);
 
 				// Get the total concentrations at this grid point
-				heConcentration +=
-					network.getTotalAtomConcentration(dConcs, Spec::He, 1) *
-					hx * hy * hz;
-				dConcentration +=
-					network.getTotalAtomConcentration(dConcs, Spec::D, 1) * hx *
-					hy * hz;
-				tConcentration +=
-					network.getTotalAtomConcentration(dConcs, Spec::T, 1) * hx *
-					hy * hz;
+				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+					myConcData[id()] +=
+						network.getTotalAtomConcentration(dConcs, id, 1) * hx *
+						hy * hz;
+				}
 			}
 		}
 	}
@@ -397,18 +391,11 @@ computeHeliumRetention3D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Determine total concentrations for He, D, T.
-	std::array<double, 3> myConcData{
-		heConcentration, dConcentration, tConcentration};
-	std::array<double, 3> totalConcData;
+	// Sum all the concentrations through MPI reduce
+	auto totalConcData = std::vector<double>(numSpecies, 0.0);
 
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 		MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
-
-	// Extract total He, D, T concentrations.  Values are valid only on rank 0.
-	double totalHeConcentration = totalConcData[0];
-	double totalDConcentration = totalConcData[1];
-	double totalTConcentration = totalConcData[2];
 
 	// Master process
 	if (procId == 0) {
@@ -423,26 +410,29 @@ computeHeliumRetention3D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		double surface = (double)(My * Mz) * hy * hz;
 
 		// Rescale the concentration
-		totalHeConcentration = totalHeConcentration / surface;
-		totalDConcentration = totalDConcentration / surface;
-		totalTConcentration = totalTConcentration / surface;
+		for (std::size_t i = 0; i < numSpecies; ++i) {
+			totalConcData[i] /= surface;
+		}
 
 		// Get the fluence
 		double fluence = fluxHandler->getFluence();
 
 		// Print the result
 		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Helium content = " << totalHeConcentration << std::endl;
-		std::cout << "Deuterium content = " << totalDConcentration << std::endl;
-		std::cout << "Tritium content = " << totalTConcentration << std::endl;
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			std::cout << network.getSpeciesName(id)
+					  << " content = " << totalConcData[id()] << '\n';
+		}
 		std::cout << "Fluence = " << fluence << "\n" << std::endl;
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << fluence << " " << totalHeConcentration << " "
-				   << totalDConcentration << " " << totalTConcentration
-				   << std::endl;
+		outputFile << fluence << " ";
+		for (std::size_t i = 0; i < numSpecies; ++i) {
+			outputFile << totalConcData[i] << " ";
+		}
+		outputFile << std::endl;
 		outputFile.close();
 	}
 
@@ -1221,11 +1211,10 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 	// Now work on the bubble bursting
 	if (solverHandler.burstBubbles()) {
-		using NetworkType = core::network::PSIReactionNetwork<
-			core::network::PSIFullSpeciesList>;
-		using Spec = typename NetworkType::Species;
+		using NetworkType = core::network::IPSIReactionNetwork;
 		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 		auto dof = network.getDOF();
+		auto specIdHe = psiNetwork->getHeliumSpeciesId();
 
 		// Compute the prefactor for the probability (arbitrary)
 		double prefactor =
@@ -1267,7 +1256,7 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 						// Compute the helium density at this grid point
 						double heDensity =
 							psiNetwork->getTotalAtomConcentration(
-								dConcs, Spec::He, 1);
+								dConcs, specIdHe, 1);
 
 						// Compute the radius of the bubble from the number of
 						// helium
@@ -1379,10 +1368,7 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 	double hz = solverHandler.getStepSizeZ();
 
 	// Take care of bursting
-	using NetworkType =
-		core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
+	using NetworkType = core::network::IPSIReactionNetwork;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Loop on each bursting depth
@@ -1405,56 +1391,8 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 				  << distance << std::endl;
 
 		// Pinhole case
-		// Loop on every cluster
-		for (unsigned int i = 0; i < network.getNumClusters(); i++) {
-			const auto& clReg =
-				psiNetwork->getCluster(i, plsm::onHost).getRegion();
-			// Non-grouped clusters
-			if (clReg.isSimplex()) {
-				// Get the composition
-				Composition comp = clReg.getOrigin();
-				// Pure He, D, or T case
-				if (comp.isOnAxis(Spec::He) || comp.isOnAxis(Spec::D) ||
-					comp.isOnAxis(Spec::T)) {
-					// Reset concentration
-					gridPointSolution[i] = 0.0;
-				}
-				// Mixed cluster case
-				else if (!comp.isOnAxis(Spec::V) && !comp.isOnAxis(Spec::I)) {
-					// Transfer concentration to V of the same size
-					Composition vComp = Composition::zero();
-					vComp[Spec::V] = comp[Spec::V];
-					auto vCluster =
-						psiNetwork->findCluster(vComp, plsm::onHost);
-					gridPointSolution[vCluster.getId()] += gridPointSolution[i];
-					gridPointSolution[i] = 0.0;
-				}
-			}
-			// Grouped clusters
-			else {
-				// Get the factor
-				double concFactor = clReg.volume() / clReg[Spec::V].length();
-				// Loop on the Vs
-				for (auto j : makeIntervalRange(clReg[Spec::V])) {
-					// Transfer concentration to V of the same size
-					Composition vComp = Composition::zero();
-					vComp[Spec::V] = j;
-					auto vCluster =
-						psiNetwork->findCluster(vComp, plsm::onHost);
-					// TODO: refine formula with V moment
-					gridPointSolution[vCluster.getId()] +=
-						gridPointSolution[i] * concFactor;
-				}
-
-				// Reset the concentration and moments
-				gridPointSolution[i] = 0.0;
-				auto momentIds =
-					psiNetwork->getCluster(i, plsm::onHost).getMomentIds();
-				for (std::size_t j = 0; j < momentIds.extent(0); j++) {
-					gridPointSolution[momentIds(j)] = 0.0;
-				}
-			}
-		}
+		auto nBurst = std::vector<double>(3, 0.0); // Not actually used here
+		psiNetwork->updateBurstingConcs(gridPointSolution, 0.0, nBurst);
 	}
 
 	// Now takes care of moving surface
