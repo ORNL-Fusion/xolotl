@@ -20,6 +20,15 @@ public:
 		std::function<std::shared_ptr<THandlerBase>(const options::Options&)>;
 
 	template <typename THandler>
+	static auto
+	makeDefaultGenerator() noexcept
+	{
+		return [](const options::Options& options) {
+			return std::make_shared<THandler>(options);
+		};
+	}
+
+	template <typename THandler>
 	struct Registration
 	{
 		Registration(const std::string& name);
@@ -62,9 +71,7 @@ Factory<TFactory, THandlerBase>::Registration<THandler>::Registration(
 	const std::string& name)
 {
 	TFactory::get().registerGenerator(
-		name, [](const options::Options& options) {
-			return std::make_shared<THandler>(options);
-		});
+		name, TFactory::template makeDefaultGenerator<THandler>());
 }
 
 template <typename TFactory, typename THandlerBase>
