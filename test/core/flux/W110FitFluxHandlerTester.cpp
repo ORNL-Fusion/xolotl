@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	const int dof = network.getDOF();
 
 	// Create the W110 flux handler
-	auto testFitFlux = make_shared<W110FitFluxHandler>();
+	auto testFitFlux = make_shared<W110FitFluxHandler>(opts);
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler

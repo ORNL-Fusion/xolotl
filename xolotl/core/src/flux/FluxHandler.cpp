@@ -14,13 +14,25 @@ namespace core
 {
 namespace flux
 {
-FluxHandler::FluxHandler() :
+FluxHandler::FluxHandler(const options::IOptions& options) :
 	fluence(0.0),
 	fluxAmplitude(0.0),
 	useTimeProfile(false),
 	normFactor(0.0)
 {
-	return;
+	// Wrong if both the flux and time profile options are used
+	if (options.useFluxAmplitude() && options.useFluxTimeProfile()) {
+		throw std::runtime_error("\nA constant flux value AND a time profile "
+								 "cannot both be given.");
+	}
+	else if (options.useFluxAmplitude()) {
+		// Set the constant value of the flux
+		setFluxAmplitude(options.getFluxAmplitude());
+	}
+	else if (options.useFluxTimeProfile()) {
+		// Initialize the time profile
+		initializeTimeProfile(options.getFluxProfileName());
+	}
 }
 
 void

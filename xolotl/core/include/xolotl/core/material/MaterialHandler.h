@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
+#include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
 #include <xolotl/core/modified/DummyTrapMutationHandler.h>
 #include <xolotl/options/Options.h>
@@ -15,7 +16,7 @@ class IMaterialSubHandlerGenerator
 {
 public:
 	virtual std::shared_ptr<core::flux::IFluxHandler>
-	generateFluxHandler() const = 0;
+	generateFluxHandler(const options::IOptions& options) const = 0;
 
 	virtual std::shared_ptr<core::advection::IAdvectionHandler>
 	generateAdvectionHandler() const = 0;
@@ -30,12 +31,17 @@ template <typename TFluxHandler,
 class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 {
 	std::shared_ptr<core::flux::IFluxHandler>
-	generateFluxHandler() const final
+	generateFluxHandler(const options::IOptions& options) const final
 	{
 		static_assert(
 			std::is_base_of<core::flux::IFluxHandler, TFluxHandler>::value, "");
 
-		return std::make_shared<TFluxHandler>();
+		if (options.getFluxProfileFilePath().empty()) {
+			return std::make_shared<TFluxHandler>(options);
+		}
+		else {
+			return std::make_shared<flux::CustomFitFluxHandler>(options);
+		}
 	}
 
 	std::shared_ptr<core::advection::IAdvectionHandler>
@@ -93,9 +99,6 @@ protected:
 private:
 	static std::shared_ptr<core::diffusion::IDiffusionHandler>
 	createDiffusionHandler(const options::Options& options);
-
-	void
-	initializeFluxHandler(const options::Options& options);
 
 	void
 	initializeTrapMutationHandler(const options::Options& options);

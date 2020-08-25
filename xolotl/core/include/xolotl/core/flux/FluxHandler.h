@@ -6,6 +6,7 @@
 
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/flux/IFluxHandler.h>
+#include <xolotl/options/IOptions.h>
 
 namespace xolotl
 {
@@ -103,7 +104,7 @@ protected:
 	recomputeFluxHandler(int surfacePos);
 
 public:
-	FluxHandler();
+	FluxHandler(const options::IOptions&);
 
 	~FluxHandler()
 	{

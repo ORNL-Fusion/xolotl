@@ -47,7 +47,8 @@ public:
 	/**
 	 * The constructor
 	 */
-	W211FitFluxHandler()
+	W211FitFluxHandler(const options::IOptions& options) :
+		PSIFluxHandler(options)
 	{
 	}
 

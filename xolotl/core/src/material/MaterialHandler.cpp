@@ -6,7 +6,6 @@
 #include <xolotl/core/diffusion/Diffusion2DHandler.h>
 #include <xolotl/core/diffusion/Diffusion3DHandler.h>
 #include <xolotl/core/diffusion/DummyDiffusionHandler.h>
-#include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/material/MaterialHandler.h>
 #include <xolotl/util/TokenizedLineReader.h>
 
@@ -20,12 +19,9 @@ MaterialHandler::MaterialHandler(const options::Options& options,
 	const IMaterialSubHandlerGenerator& subHandlerGenerator) :
 	_diffusionHandler(createDiffusionHandler(options)),
 	_advectionHandlers({subHandlerGenerator.generateAdvectionHandler()}),
-	_fluxHandler(options.getFluxProfileFilePath().empty() ?
-			subHandlerGenerator.generateFluxHandler() :
-			std::make_shared<flux::CustomFitFluxHandler>()),
+	_fluxHandler(subHandlerGenerator.generateFluxHandler(options)),
 	_trapMutationHandler(subHandlerGenerator.generateTrapMutationHandler())
 {
-	initializeFluxHandler(options);
 	initializeTrapMutationHandler(options);
 	initializeAdvectionHandlers(options);
 }
@@ -61,31 +57,6 @@ MaterialHandler::createDiffusionHandler(const options::Options& options)
 		// The asked dimension is not good (e.g. -1, 4)
 		throw InvalidGridDimension(
 			"\nxolotlFactory: Bad dimension for the material factory.");
-	}
-}
-
-void
-MaterialHandler::initializeFluxHandler(const options::Options& options)
-{
-	// Wrong if both the flux and time profile options are used
-	if (options.useFluxAmplitude() && options.useFluxTimeProfile()) {
-		// A constant flux value AND a time profile cannot both be given.
-		throw std::string("\nA constant flux value AND a time profile "
-						  "cannot both be given.");
-	}
-	else if (options.useFluxAmplitude()) {
-		// Set the constant value of the flux
-		_fluxHandler->setFluxAmplitude(options.getFluxAmplitude());
-	}
-	else if (options.useFluxTimeProfile()) {
-		// Initialize the time profile
-		_fluxHandler->initializeTimeProfile(options.getFluxProfileName());
-	}
-
-	auto customHandler =
-		dynamic_cast<flux::CustomFitFluxHandler*>(_fluxHandler.get());
-	if (customHandler) {
-		customHandler->setProfileFilePath(options.getFluxProfileFilePath());
 	}
 }
 

@@ -135,7 +135,9 @@ public:
 	/**
 	 * The constructor
 	 */
-	AlloyFitFluxHandler() : tauFlux(0.0)
+	AlloyFitFluxHandler(const options::IOptions& options) :
+		FluxHandler(options),
+		tauFlux(0.0)
 	{
 	}
 

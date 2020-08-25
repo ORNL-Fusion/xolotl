@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	const int dof = network.getDOF();
 
 	// Create the ulsed flux handler
-	auto testFitFlux = make_shared<PulsedFitFluxHandler>();
+	auto testFitFlux = make_shared<PulsedFitFluxHandler>(opts);
 	// Set the flux amplitude and pulse parameters
 	testFitFlux->setFluxAmplitude(1.0);
 	testFitFlux->setPulseTime(1.0e-3);

@@ -37,7 +37,7 @@ public:
 	/**
 	 * The constructor
 	 */
-	FuelFitFluxHandler()
+	FuelFitFluxHandler(const options::IOptions& options) : FluxHandler(options)
 	{
 	}
 

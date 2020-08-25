@@ -45,7 +45,7 @@ private:
 	/**
 	 * File path for custom profile
 	 */
-	fs::path profileFilePath{"tridyn.dat"};
+	fs::path profileFilePath;
 
 	/**
 	 * Function that calculate the flux of He at a given position x (in nm).
@@ -79,7 +79,9 @@ public:
 	/**
 	 * The constructor
 	 */
-	CustomFitFluxHandler()
+	CustomFitFluxHandler(const options::IOptions& options) :
+		FluxHandler(options),
+		profileFilePath(options.getFluxProfileFilePath())
 	{
 	}
 
@@ -88,15 +90,6 @@ public:
 	 */
 	~CustomFitFluxHandler()
 	{
-	}
-
-	/**
-	 * Provide file path for custom flux profile
-	 */
-	void
-	setProfileFilePath(const fs::path& filePath)
-	{
-		profileFilePath = filePath;
 	}
 
 	/**

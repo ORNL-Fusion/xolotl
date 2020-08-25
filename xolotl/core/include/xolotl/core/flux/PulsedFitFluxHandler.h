@@ -56,7 +56,10 @@ public:
 	/**
 	 * The constructor
 	 */
-	PulsedFitFluxHandler() : deltaTime(0.0), alpha(0.0)
+	PulsedFitFluxHandler(const options::IOptions& options) :
+		FluxHandler(options),
+		deltaTime(0.0),
+		alpha(0.0)
 	{
 	}
 

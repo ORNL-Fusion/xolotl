@@ -70,7 +70,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	const int dof = network.getDOF();
 
 	// Create the W100 flux handler
-	auto testFitFlux = make_shared<W100FitFluxHandler>();
+	auto testFitFlux = make_shared<W100FitFluxHandler>(opts);
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid)
 	const int dof = network.getDOF();
 
 	// Create the W100 flux handler
-	auto testFitFlux = make_shared<W100FitFluxHandler>();
+	auto testFitFlux = make_shared<W100FitFluxHandler>(opts);
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	const int dof = network.getDOF();
 
 	// Create the W100 flux handler
-	auto testFitFlux = make_shared<W100FitFluxHandler>();
+	auto testFitFlux = make_shared<W100FitFluxHandler>(opts);
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
@@ -287,7 +287,7 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
 	const int dof = network.getDOF();
 
 	// Create the W100 flux handler
-	auto testFitFlux = make_shared<W100FitFluxHandler>();
+	auto testFitFlux = make_shared<W100FitFluxHandler>(opts);
 
 	// Set the factor to change the flux amplitude
 	testFitFlux->setFluxAmplitude(2.5);
@@ -384,7 +384,7 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 					 "4.0 0.0";
 	writeFluxFile.close();
 
-	auto testFitFlux = make_shared<W100FitFluxHandler>();
+	auto testFitFlux = make_shared<W100FitFluxHandler>(opts);
 	// Initialize the time profile for the flux handler
 	testFitFlux->initializeTimeProfile("fluxFile.dat");
 	// Initialize the flux handler

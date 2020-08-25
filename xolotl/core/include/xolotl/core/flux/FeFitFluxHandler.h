@@ -36,7 +36,7 @@ public:
 	/**
 	 * The constructor
 	 */
-	FeFitFluxHandler()
+	FeFitFluxHandler(const options::IOptions& options) : FluxHandler(options)
 	{
 	}
 

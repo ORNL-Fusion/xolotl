@@ -22,7 +22,7 @@ namespace flux
 class PSIFluxHandler : public FluxHandler
 {
 public:
-	PSIFluxHandler() : FluxHandler()
+	PSIFluxHandler(const options::IOptions& options) : FluxHandler(options)
 	{
 	}
 

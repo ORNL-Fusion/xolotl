@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	const int dof = network.getDOF();
 
 	// Create the fuel flux handler
-	auto testFitFlux = make_shared<FuelFitFluxHandler>();
+	auto testFitFlux = make_shared<FuelFitFluxHandler>(opts);
 	// Set the flux amplitude
 	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
