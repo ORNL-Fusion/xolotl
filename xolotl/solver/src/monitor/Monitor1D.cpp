@@ -259,11 +259,9 @@ computeTRIDYN1D(
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
-	using NetworkType =
-		core::network::PSIReactionNetwork<core::network::PSIFullSpeciesList>;
-	using Spec = typename NetworkType::Species;
-	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	int dof = network.getDOF();
+	auto& network = solverHandler.getNetwork();
+	const int dof = network.getDOF();
+	const auto numSpecies = network.getSpeciesListSize();
 
 	// Get the position of the surface
 	int surfacePos = solverHandler.getSurfacePosition();
@@ -302,8 +300,7 @@ computeTRIDYN1D(
 
 	// Define a dataset for concentrations.
 	// Everyone must create the dataset with the same shape.
-	constexpr auto numConcSpecies = 5;
-	constexpr auto numValsPerGridpoint = numConcSpecies + 2;
+	const auto numValsPerGridpoint = 5 + 2;
 	const auto firstIdxToWrite = (surfacePos + solverHandler.getLeftOffset());
 	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
 	io::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {
@@ -339,16 +336,11 @@ computeTRIDYN1D(
 			// Get the total concentrations at this grid point
 			auto currIdx = xi - myFirstIdxToWrite;
 			myConcs[currIdx][0] = (x - (grid[surfacePos + 1] - grid[1]));
-			myConcs[currIdx][1] =
-				network.getTotalAtomConcentration(dConcs, Spec::He, 1);
-			myConcs[currIdx][2] =
-				network.getTotalAtomConcentration(dConcs, Spec::D, 1);
-			myConcs[currIdx][3] =
-				network.getTotalAtomConcentration(dConcs, Spec::T, 1);
-			myConcs[currIdx][4] =
-				network.getTotalAtomConcentration(dConcs, Spec::V, 1);
-			myConcs[currIdx][5] =
-				network.getTotalAtomConcentration(dConcs, Spec::I, 1);
+			// Get the total concentrations at this grid point
+			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+				myConcs[currIdx][id() + 1] +=
+					network.getTotalAtomConcentration(dConcs, id, 1);
+			}
 			myConcs[currIdx][6] = gridPointSolution[dof];
 		}
 	}
