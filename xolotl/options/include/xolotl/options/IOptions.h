@@ -174,7 +174,7 @@ public:
 	 * @return The name of the file
 	 */
 	virtual std::string
-	getFluxProfileName() const = 0;
+	getFluxTimeProfileFilePath() const = 0;
 
 	/**
 	 * Which type of performance handlers should we use?
@@ -599,7 +599,7 @@ public:
 	 * @return The path to the file
 	 */
 	virtual std::string
-	getFluxProfileFilePath() const = 0;
+	getFluxDepthProfileFilePath() const = 0;
 };
 // end class IOptions
 

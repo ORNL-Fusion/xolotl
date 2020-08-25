@@ -26,7 +26,7 @@ Options::Options() :
 	bulkTemperature(0.0),
 	fluxFlag(false),
 	fluxAmplitude(0.0),
-	fluxProfileFlag(false),
+	fluxTimeProfileFlag(false),
 	perfRegistryType(perf::IHandlerRegistry::std),
 	vizStandardHandlersFlag(false),
 	materialName(""),
@@ -153,7 +153,7 @@ Options::readParams(int argc, char* argv[])
 		"The value of the incoming flux in #/nm2/s. If the Fuel case is used "
 		"it actually "
 		"corresponds to the fission rate in #/nm3/s.")("fluxFile",
-		bpo::value<std::string>(&fluxProfileFilename),
+		bpo::value<std::string>(&fluxTimeProfileFilePath),
 		"A time profile for the flux is given by the specified file, "
 		"then linear interpolation is used to fit the data."
 		"(NOTE: If a flux profile file is given, "
@@ -248,8 +248,8 @@ Options::readParams(int argc, char* argv[])
 		"V in a bubble.")("migrationThreshold",
 		bpo::value<double>(&migrationThreshold),
 		"This option allows the user to set a limit on the migration energy "
-		"above which the diffusion will be ignored.")("fluxProfileFilePath",
-		bpo::value<fs::path>(&fluxProfileFilePath),
+		"above which the diffusion will be ignored.")("fluxDepthProfileFilePath",
+		bpo::value<fs::path>(&fluxDepthProfileFilePath),
 		"The path to the custom flux profile file; the default is an empty "
 		"string that will use the default material associated flux handler.");
 
@@ -335,7 +335,7 @@ Options::readParams(int argc, char* argv[])
 		}
 		if (opts.count("fluxFile")) {
 			// Check that the profile file exists
-			std::ifstream inFile(fluxProfileFilename.c_str());
+			std::ifstream inFile(fluxTimeProfileFilePath.c_str());
 			if (!inFile) {
 				std::cerr << "\nOptions: could not open file containing flux "
 							 "profile data. "
@@ -346,7 +346,7 @@ Options::readParams(int argc, char* argv[])
 			}
 			else {
 				// Set the flag to use a flux profile to true
-				fluxProfileFlag = true;
+				fluxTimeProfileFlag = true;
 			}
 		}
 

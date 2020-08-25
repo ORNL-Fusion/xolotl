@@ -77,12 +77,12 @@ protected:
 	/**
 	 * Use a time profile for the flux?
 	 */
-	bool fluxProfileFlag;
+	bool fluxTimeProfileFlag;
 
 	/**
 	 * Name of the input time profile file for the flux.
 	 */
-	std::string fluxProfileFilename;
+	std::string fluxTimeProfileFilePath;
 
 	/**
 	 * Which type of performance infrastructure should we use?
@@ -341,7 +341,7 @@ protected:
 	/**
 	 * The path to the custom flux profile file
 	 */
-	fs::path fluxProfileFilePath;
+	fs::path fluxDepthProfileFilePath;
 
 public:
 	/**
@@ -515,7 +515,7 @@ public:
 	bool
 	useFluxTimeProfile() const override
 	{
-		return fluxProfileFlag;
+		return fluxTimeProfileFlag;
 	}
 
 	/**
@@ -524,9 +524,9 @@ public:
 	 * \see IOptions.h
 	 */
 	std::string
-	getFluxProfileName() const override
+	getFluxTimeProfileFilePath() const override
 	{
-		return fluxProfileFilename;
+		return fluxTimeProfileFilePath;
 	}
 
 	/**
@@ -1066,9 +1066,9 @@ public:
 	 * \see IOptions.h
 	 */
 	virtual std::string
-	getFluxProfileFilePath() const override
+	getFluxDepthProfileFilePath() const override
 	{
-		return fluxProfileFilePath.string();
+		return fluxDepthProfileFilePath.string();
 	}
 };
 // end class Options

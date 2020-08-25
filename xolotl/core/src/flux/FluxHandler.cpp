@@ -31,7 +31,7 @@ FluxHandler::FluxHandler(const options::IOptions& options) :
 	}
 	else if (options.useFluxTimeProfile()) {
 		// Initialize the time profile
-		initializeTimeProfile(options.getFluxProfileName());
+		initializeTimeProfile(options.getFluxTimeProfileFilePath());
 	}
 }
 

@@ -81,7 +81,7 @@ public:
 	 */
 	CustomFitFluxHandler(const options::IOptions& options) :
 		FluxHandler(options),
-		profileFilePath(options.getFluxProfileFilePath())
+		profileFilePath(options.getFluxDepthProfileFilePath())
 	{
 	}
 

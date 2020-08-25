@@ -265,8 +265,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getMigrationThreshold(), 1.0);
 
 	// Check the network filename
-	BOOST_REQUIRE_EQUAL(
-		opts.getFluxProfileFilePath(), "path/to/the/flux/profile/file.txt");
+	BOOST_REQUIRE_EQUAL(opts.getFluxDepthProfileFilePath(),
+		"path/to/the/flux/profile/file.txt");
 
 	// Check the physical processes option
 	auto map = opts.getProcesses();
@@ -478,7 +478,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
 
 	// Check if the time profile option is used for the flux
 	BOOST_REQUIRE_EQUAL(opts.useFluxTimeProfile(), true);
-	BOOST_REQUIRE_EQUAL(opts.getFluxProfileName(), "fluxFile.dat");
+	BOOST_REQUIRE_EQUAL(opts.getFluxTimeProfileFilePath(), "fluxFile.dat");
 
 	// Remove the created files
 	std::string tempFile = "temperatureFile.dat";

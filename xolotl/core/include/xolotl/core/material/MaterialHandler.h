@@ -36,7 +36,7 @@ class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 		static_assert(
 			std::is_base_of<core::flux::IFluxHandler, TFluxHandler>::value, "");
 
-		if (options.getFluxProfileFilePath().empty()) {
+		if (options.getFluxDepthProfileFilePath().empty()) {
 			return std::make_shared<TFluxHandler>(options);
 		}
 		else {
