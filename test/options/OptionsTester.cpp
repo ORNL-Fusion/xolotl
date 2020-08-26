@@ -107,45 +107,46 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 
 	// Create a good parameter file
 	std::ofstream goodParamFile("param_good.txt");
-	goodParamFile << "vizHandler=std" << std::endl
-				  << "petscArgs=-fieldsplit_0_pc_type redundant "
-					 "-ts_max_snes_failures 200 "
-					 "-pc_fieldsplit_detect_coupling "
-					 "-ts_adapt_dt_max 10 -pc_type fieldsplit "
-					 "-fieldsplit_1_pc_type sor -ts_final_time 1000 "
-					 "-ts_max_steps 3"
-				  << std::endl
-				  << "networkFile=tungsten.txt" << std::endl
-				  << "startTemp=900" << std::endl
-				  << "perfHandler=std" << std::endl
-				  << "flux=1.5" << std::endl
-				  << "material=W100" << std::endl
-				  << "initialV=0.05" << std::endl
-				  << "dimensions=1" << std::endl
-				  << "voidPortion=60.0" << std::endl
-				  << "regularGrid=no" << std::endl
-				  << "process=diff" << std::endl
-				  << "grouping=11 2 4" << std::endl
-				  << "sputtering=0.5" << std::endl
-				  << "boundary=1 1" << std::endl
-				  << std::endl
-				  << "burstingDepth=5.0" << std::endl
-				  << "burstingMin=3" << std::endl
-				  << "burstingFactor=2.5" << std::endl
-				  << "zeta=0.6" << std::endl
-				  << "resoSize=10" << std::endl
-				  << "radiusSize=5 0 3" << std::endl
-				  << "density=9.0" << std::endl
-				  << "lattice=0.1" << std::endl
-				  << "impurityRadius=0.5" << std::endl
-				  << "biasFactor=2.0" << std::endl
-				  << "hydrogenFactor=0.5" << std::endl
-				  << "xenonDiffusivity=3.0" << std::endl
-				  << "fissionYield=0.3" << std::endl
-				  << "heVRatio=5.0" << std::endl
-				  << "migrationThreshold=1.0" << std::endl
-				  << "fluxDepthProfileFilePath=path/to/the/flux/profile/file.txt"
-				  << std::endl;
+	goodParamFile
+		<< "vizHandler=std" << std::endl
+		<< "petscArgs=-fieldsplit_0_pc_type redundant "
+		   "-ts_max_snes_failures 200 "
+		   "-pc_fieldsplit_detect_coupling "
+		   "-ts_adapt_dt_max 10 -pc_type fieldsplit "
+		   "-fieldsplit_1_pc_type sor -ts_final_time 1000 "
+		   "-ts_max_steps 3"
+		<< std::endl
+		<< "networkFile=tungsten.txt" << std::endl
+		<< "startTemp=900" << std::endl
+		<< "perfHandler=std" << std::endl
+		<< "flux=1.5" << std::endl
+		<< "material=W100" << std::endl
+		<< "initialV=0.05" << std::endl
+		<< "dimensions=1" << std::endl
+		<< "voidPortion=60.0" << std::endl
+		<< "regularGrid=no" << std::endl
+		<< "process=diff" << std::endl
+		<< "grouping=11 2 4" << std::endl
+		<< "sputtering=0.5" << std::endl
+		<< "boundary=1 1" << std::endl
+		<< std::endl
+		<< "burstingDepth=5.0" << std::endl
+		<< "burstingMin=3" << std::endl
+		<< "burstingFactor=2.5" << std::endl
+		<< "zeta=0.6" << std::endl
+		<< "resoSize=10" << std::endl
+		<< "radiusSize=5 0 3" << std::endl
+		<< "density=9.0" << std::endl
+		<< "lattice=0.1" << std::endl
+		<< "impurityRadius=0.5" << std::endl
+		<< "biasFactor=2.0" << std::endl
+		<< "hydrogenFactor=0.5" << std::endl
+		<< "xenonDiffusivity=3.0" << std::endl
+		<< "fissionYield=0.3" << std::endl
+		<< "heVRatio=5.0" << std::endl
+		<< "migrationThreshold=1.0" << std::endl
+		<< "fluxDepthProfileFilePath=path/to/the/flux/profile/file.txt"
+		<< std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");

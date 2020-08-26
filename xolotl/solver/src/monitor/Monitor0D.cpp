@@ -527,6 +527,7 @@ monitorBubble0D(
 	std::stringstream name;
 	name << "bubble_" << timestep << ".dat";
 	outputFile.open(name.str());
+	outputFile << "#lo_He hi_He lo_V hi_V conc" << std::endl;
 
 	// Get the pointer to the beginning of the solution data for this grid point
 	gridPointSolution = solutionArray[0];
@@ -803,9 +804,19 @@ setupPetsc0DMonitor(TS ts)
 
 	// Set the monitor to output data for Alloy
 	if (flagAlloy) {
+		auto& network = solverHandler.getNetwork();
+		auto numSpecies = network.getSpeciesListSize();
 		// Create/open the output files
 		std::fstream outputFile;
 		outputFile.open("Alloy.dat", std::fstream::out);
+		outputFile << "#time_step time ";
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			auto speciesName = network.getSpeciesName(id);
+			outputFile << speciesName << "_density " << speciesName
+					   << "_diameter " << speciesName << "_partial_density "
+					   << speciesName << "_partial_diameter ";
+		}
+		outputFile << std::endl;
 		outputFile.close();
 
 		// computeAlloy0D will be called at each timestep
@@ -839,6 +850,9 @@ setupPetsc0DMonitor(TS ts)
 		// Uncomment to clear the file where the retention will be written
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt");
+		outputFile << "#time Xenon_conc radius partial_radius "
+					  "partial_bubble_conc partial_size"
+				   << std::endl;
 		outputFile.close();
 	}
 

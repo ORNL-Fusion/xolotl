@@ -2432,6 +2432,7 @@ setupPetsc1DMonitor(TS ts)
 				// Clear the file where the surface will be written
 				std::ofstream outputFile;
 				outputFile.open("surface.txt");
+				outputFile << "#time height" << std::endl;
 				outputFile.close();
 			}
 		}
@@ -2453,6 +2454,7 @@ setupPetsc1DMonitor(TS ts)
 			// written
 			std::ofstream outputFile;
 			outputFile.open("bursting.txt");
+			outputFile << "#time depth" << std::endl;
 			outputFile.close();
 		}
 	}
@@ -2652,6 +2654,25 @@ setupPetsc1DMonitor(TS ts)
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
+			outputFile << "#fluence ";
+			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+				auto speciesName = network.getSpeciesName(id);
+				outputFile << speciesName << "_content ";
+			}
+			if (solverHandler.getRightOffset() == 1) {
+				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+					auto speciesName = network.getSpeciesName(id);
+					outputFile << speciesName << "_bulk ";
+				}
+			}
+			if (solverHandler.getLeftOffset() == 1) {
+				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+					auto speciesName = network.getSpeciesName(id);
+					outputFile << speciesName << "_surface ";
+				}
+			}
+			outputFile << "Helium_burst Deuterium_burst Tritium_burst"
+					   << std::endl;
 			outputFile.close();
 		}
 	}
@@ -2700,6 +2721,9 @@ setupPetsc1DMonitor(TS ts)
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
+			outputFile << "#time Xenon_content radius partial_radius "
+						  "partial_bubble_conc partial_size"
+					   << std::endl;
 			outputFile.close();
 		}
 	}
@@ -2718,6 +2742,14 @@ setupPetsc1DMonitor(TS ts)
 			// Create/open the output files
 			std::fstream outputFile;
 			outputFile.open("Alloy.dat", std::fstream::out);
+			outputFile << "#time_step time ";
+			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+				auto speciesName = network.getSpeciesName(id);
+				outputFile << speciesName << "_density " << speciesName
+						   << "_diameter " << speciesName << "_partial_density "
+						   << speciesName << "_partial_diameter ";
+			}
+			outputFile << std::endl;
 			outputFile.close();
 		}
 

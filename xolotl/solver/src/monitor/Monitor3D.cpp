@@ -1842,6 +1842,7 @@ setupPetsc3DMonitor(TS ts)
 				// Clear the file where the surface will be written
 				std::ofstream outputFile;
 				outputFile.open("surface.txt");
+				outputFile << "#time heights" << std::endl;
 				outputFile.close();
 			}
 		}
@@ -1924,9 +1925,16 @@ setupPetsc3DMonitor(TS ts)
 
 		// Master process
 		if (procId == 0) {
+			auto numSpecies = network.getSpeciesListSize();
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
+			outputFile << "#fluence ";
+			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+				auto speciesName = network.getSpeciesName(id);
+				outputFile << speciesName << "_content ";
+			}
+			outputFile << std::endl;
 			outputFile.close();
 		}
 	}
@@ -1975,6 +1983,9 @@ setupPetsc3DMonitor(TS ts)
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
+			outputFile << "#time Xenon_content radius partial_radius "
+						  "Xenon_gb"
+					   << std::endl;
 			outputFile.close();
 		}
 	}
