@@ -13,7 +13,7 @@ namespace network
 namespace detail
 {
 template <typename TSpeciesEnum>
-auto
+std::shared_ptr<PSIReactionNetwork<TSpeciesEnum>>
 generatePSIReactionNetwork(const options::Options& options)
 {
 	using NetworkType = PSIReactionNetwork<TSpeciesEnum>;

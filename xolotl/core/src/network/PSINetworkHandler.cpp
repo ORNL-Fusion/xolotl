@@ -8,7 +8,7 @@ namespace network
 {
 namespace detail
 {
-template auto
+template std::shared_ptr<PSIReactionNetwork<PSIFullSpeciesList>>
 generatePSIReactionNetwork<PSIFullSpeciesList>(const options::Options& options);
 }
 
