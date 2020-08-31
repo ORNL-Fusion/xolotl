@@ -44,28 +44,32 @@ public:
 		advectingClusters.clear();
 		sinkStrengthVector.clear();
 
-		using NetworkType =
-			network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+		using NetworkType = network::IPSIReactionNetwork;
+		using AmountType = NetworkType::AmountType;
+
 		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+		auto numSpecies = psiNetwork->getSpeciesListSize();
+		auto specIdHe = psiNetwork->getHeliumSpeciesId();
 
 		// Initialize the composition
-		NetworkType::Composition comp = NetworkType::Composition::zero();
+		auto comp = std::vector<AmountType>(numSpecies, 0);
 
 		// Loop on helium clusters from size 1 to 7
 		for (std::size_t i = 1; i <= 7; i++) {
-			comp[NetworkType::Species::He] = i;
-			auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
+			comp[specIdHe()] = i;
+			auto clusterId = psiNetwork->findClusterId(comp);
 
 			// Check that the helium cluster is present in the network
-			if (cluster.getId() == NetworkType::invalidIndex()) {
-				throw std::string("\nThe helium cluster of size " +
+			if (clusterId == NetworkType::invalidIndex()) {
+				throw std::runtime_error("\nThe helium cluster of size " +
 					std::to_string(i) +
 					"is not present in the network, "
 					"cannot use the advection option!");
 			}
 
 			// Get its diffusion coefficient
-			double diffFactor = cluster.getDiffusionFactor();
+			double diffFactor =
+				psiNetwork->getClusterCommon(clusterId).getDiffusionFactor();
 
 			// Don't do anything if the diffusion factor is 0.0
 			if (util::equal(diffFactor, 0.0))
@@ -101,20 +105,16 @@ public:
 			if (util::equal(sinkStrength, 0.0))
 				continue;
 
-			// Get its id
-			auto index = cluster.getId();
 			// Add it to our collection of advecting clusters.
-			advectingClusters.emplace_back(index);
+			advectingClusters.emplace_back(clusterId);
 
 			// Add the sink strength to the vector
 			sinkStrengthVector.push_back(sinkStrength);
 
 			// Set the off-diagonal part for the Jacobian to 1
 			// Set the ofill value to 1 for this cluster
-			ofillMap[index].emplace_back(index);
+			ofillMap[clusterId].emplace_back(clusterId);
 		}
-
-		return;
 	}
 };
 // end class W211AdvectionHandler

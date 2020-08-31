@@ -4,7 +4,7 @@
 #include <cmath>
 
 #include <xolotl/core/flux/FluxHandler.h>
-#include <xolotl/core/network/PSIReactionNetwork.h>
+#include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -82,46 +82,43 @@ public:
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
 
 		// Skip if the flux amplitude is 0.0 and we are not using a time profile
-		if (util::equal(fluxAmplitude, 0.0) && !useTimeProfile)
+		if (util::equal(fluxAmplitude, 0.0) && !useTimeProfile) {
 			return;
+		}
 
 		// Set the flux index corresponding the the single vacancy cluster here
-		using NetworkType =
-			network::PSIReactionNetwork<network::PSIFullSpeciesList>;
+		using NetworkType = network::IPSIReactionNetwork;
+		using AmountType = NetworkType::AmountType;
+
 		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+		auto numSpecies = psiNetwork->getSpeciesListSize();
+		auto specIdV = psiNetwork->getVacancySpeciesId();
+		auto specIdI = psiNetwork->getInterstitialSpeciesId();
 
 		// Set the flux index corresponding the the single helium cluster here
-		NetworkType::Composition comp;
-		// Initialize the composition
-		for (auto i : psiNetwork->getSpeciesRange()) {
-			comp[i] = 0;
-		}
-		comp[NetworkType::Species::V] = 1;
-		auto cluster = psiNetwork->findCluster(comp, plsm::onHost);
+		auto comp = std::vector<AmountType>(numSpecies, 0);
+		comp[specIdV()] = 1;
+		auto clusterId = psiNetwork->findClusterId(comp);
 		// Check that the vacancy cluster is present in the network
-		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string(
+		if (clusterId == NetworkType::invalidIndex()) {
+			throw std::runtime_error(
 				"\nThe single vacancy cluster is not present in the network, "
 				"cannot use the flux option!");
 		}
-		fluxIndices.push_back(cluster.getId());
+		fluxIndices.push_back(clusterId);
 
 		// Set the flux index corresponding the the single interstitial cluster
 		// here Initialize the composition
-		for (auto i : psiNetwork->getSpeciesRange()) {
-			comp[i] = 0;
-		}
-		comp[NetworkType::Species::I] = 1;
-		cluster = psiNetwork->findCluster(comp, plsm::onHost);
+		comp.assign(numSpecies, 0);
+		comp[specIdI()] = 1;
+		clusterId = psiNetwork->findClusterId(comp);
 		// Check that the interstitial cluster is present in the network
-		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string("\nThe single interstitial cluster is not "
-							  "present in the network, "
-							  "cannot use the flux option!");
+		if (clusterId == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe single interstitial cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
 		}
-		fluxIndices.push_back(cluster.getId());
-
-		return;
+		fluxIndices.push_back(clusterId);
 	}
 
 	/**

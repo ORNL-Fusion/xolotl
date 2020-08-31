@@ -10,6 +10,7 @@
 
 #include <xolotl/config.h>
 #include <xolotl/core/flux/PulsedFitFluxHandler.h>
+#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
 
 using namespace std;
