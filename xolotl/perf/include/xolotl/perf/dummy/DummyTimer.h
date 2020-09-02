@@ -4,8 +4,6 @@
 #include <xolotl/perf/ITimer.h>
 #include <xolotl/util/Identifiable.h>
 
-using namespace std;
-
 namespace xolotl
 {
 namespace perf
