@@ -77,8 +77,8 @@ protected:
 	 *
 	 * TODO: change name?
 	 */
-	using ReactantRefVector1D = std::vector<
-		std::vector<std::tuple<std::size_t, std::size_t, std::size_t>>>;
+	using ReactantRefVector1D =
+		std::vector<std::vector<std::array<std::size_t, 3>>>;
 	using ReactantRefVector2D = std::vector<ReactantRefVector1D>;
 	using ReactantRefVector3D = std::vector<ReactantRefVector2D>;
 	ReactantRefVector3D tmBubbles;

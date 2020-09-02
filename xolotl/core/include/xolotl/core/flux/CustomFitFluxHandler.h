@@ -47,6 +47,8 @@ private:
 	 */
 	fs::path profileFilePath;
 
+	using FluxHandler::FitFunction;
+
 	/**
 	 * Function that calculate the flux of He at a given position x (in nm).
 	 * This function is not normalized. The surface is supposed to be (100).

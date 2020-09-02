@@ -128,16 +128,16 @@ TrapMutationHandler::initializeIndex1D(int surfacePos,
 	// No GB trap mutation handler in 1D for now
 
 	// Create the temporary 2D vector
-	ReactantRefVector2D temp2DVector;
+	auto& temp2DVector = tmBubbles.emplace_back();
 	// Create the temporary 1D vector
-	ReactantRefVector1D temp1DVector;
+	auto& temp1DVector = temp2DVector.emplace_back();
 
 	// Loop on the grid points in the depth direction
 	for (int i = 0; i < nx; i++) {
+		auto& indices = temp1DVector.emplace_back();
 		// If we are on the left side of the surface there is no
 		// modified trap-mutation
 		if (i + xs <= surfacePos) {
-			temp1DVector.emplace_back();
 			continue;
 		}
 
@@ -148,7 +148,6 @@ TrapMutationHandler::initializeIndex1D(int surfacePos,
 			(grid[i + xs - 1] + grid[i + xs]) / 2.0 - grid[surfacePos + 1];
 
 		// Loop on the depth vector
-		std::vector<std::tuple<std::size_t, std::size_t, std::size_t>> indices;
 		for (int l = 0; l < depthVec.size(); l++) {
 			// Check if a helium cluster undergo TM at this depth
 			if (std::fabs(depth - depthVec[l]) < 0.01 ||
@@ -158,28 +157,16 @@ TrapMutationHandler::initializeIndex1D(int surfacePos,
 				auto comp = std::vector<AmountType>(numSpecies, 0);
 				comp[specIdHe()] = l + 1;
 				comp[specIdV()] = sizeVec[l];
-				auto heVClusterId = psiNetwork->findClusterId(comp);
+				std::size_t heVClusterId = psiNetwork->findClusterId(comp);
 				comp[specIdV()] = 0;
-				auto heClusterId = psiNetwork->findClusterId(comp);
+				std::size_t heClusterId = psiNetwork->findClusterId(comp);
 				comp[specIdI()] = sizeVec[l];
 				comp[specIdHe()] = 0;
-				auto iClusterId = psiNetwork->findClusterId(comp);
-				indices.emplace_back(
-					std::make_tuple(heVClusterId, heClusterId, iClusterId));
+				std::size_t iClusterId = psiNetwork->findClusterId(comp);
+				indices.push_back({heVClusterId, heClusterId, iClusterId});
 			}
 		}
-
-		// Add indices to the index vector
-		temp1DVector.emplace_back(indices);
 	}
-
-	// Give the 1D vector to the 2D vector
-	temp2DVector.emplace_back(temp1DVector);
-
-	// Give the 2D vector to the final vector
-	tmBubbles.emplace_back(temp2DVector);
-
-	return;
 }
 
 void
@@ -207,24 +194,22 @@ TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 	auto sigma3SizeVec = sigma3Handler->getSizeVector();
 
 	// Create the temporary 2D vector
-	ReactantRefVector2D temp2DVector;
+	auto& temp2DVector = tmBubbles.emplace_back();
 
 	// Loop on the grid points in the Y direction
 	temp2DVector.reserve(ny);
 	for (int j = 0; j < ny; j++) {
 		// Create the temporary 1D vector
-		ReactantRefVector1D temp1DVector;
+		auto& temp1DVector = temp2DVector.emplace_back();
 
 		// Loop on the grid points in the depth direction
 		for (int i = 0; i < nx; i++) {
 			// Create the list (vector) of indices at this grid point
-			std::vector<std::tuple<std::size_t, std::size_t, std::size_t>>
-				indices;
+			auto& indices = temp1DVector.emplace_back();
 
 			// If we are on the left side of the surface there is no
 			// modified trap-mutation
 			if (i + xs <= surfacePos[j + ys]) {
-				temp1DVector.push_back(indices);
 				continue;
 			}
 
@@ -250,8 +235,7 @@ TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 					comp[specIdI()] = sizeVec[l];
 					comp[specIdHe()] = 0;
 					auto iClusterId = psiNetwork->findClusterId(comp);
-					indices.emplace_back(
-						std::make_tuple(heVClusterId, heClusterId, iClusterId));
+					indices.push_back({heVClusterId, heClusterId, iClusterId});
 				}
 			}
 
@@ -277,32 +261,21 @@ TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 						comp[specIdI()] = sizeVec[l];
 						comp[specIdHe()] = 0;
 						auto iClusterId = psiNetwork->findClusterId(comp);
-						auto tempTuple = std::make_tuple(
-							heVClusterId, heClusterId, iClusterId);
+						std::array<std::size_t, 3> tempArray = {
+							heVClusterId, heClusterId, iClusterId};
 						// Check if this bubble is already
 						// associated with this grid point.
 						auto iter = std::find(
-							indices.begin(), indices.end(), tempTuple);
+							indices.begin(), indices.end(), tempArray);
 						if (iter == indices.end()) {
 							// Add this bubble to the indices
-							indices.emplace_back(tempTuple);
+							indices.push_back(tempArray);
 						}
 					}
 				}
 			}
-
-			// Add indices to the index vector
-			temp1DVector.push_back(indices);
 		}
-
-		// Give the 1D vector to the 2D vector
-		temp2DVector.push_back(temp1DVector);
 	}
-
-	// Give the 2D vector to the final vector
-	tmBubbles.push_back(temp2DVector);
-
-	return;
 }
 
 void
@@ -334,24 +307,22 @@ TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
 	tmBubbles.reserve(nz);
 	for (int k = 0; k < nz; k++) {
 		// Create the temporary 2D vector
-		ReactantRefVector2D temp2DVector;
+		auto& temp2DVector = tmBubbles.emplace_back();
 
 		// Loop on the grid points in the Y direction
 		temp2DVector.reserve(ny);
 		for (int j = 0; j < ny; j++) {
 			// Create the temporary 1D vector
-			ReactantRefVector1D temp1DVector;
+			auto& temp1DVector = temp2DVector.emplace_back();
 
 			// Loop on the grid points in the depth direction
 			for (int i = 0; i < nx; i++) {
 				// Create the list (vector) of indices at this grid point
-				std::vector<std::tuple<std::size_t, std::size_t, std::size_t>>
-					indices;
+				auto& indices = temp1DVector.emplace_back();
 
 				// If we are on the left side of the surface there is no
 				// modified trap-mutation
 				if (i + xs <= surfacePos[j + ys][k + zs]) {
-					temp1DVector.emplace_back(indices);
 					continue;
 				}
 
@@ -377,8 +348,8 @@ TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
 						comp[specIdI()] = sizeVec[l];
 						comp[specIdHe()] = 0;
 						auto iClusterId = psiNetwork->findClusterId(comp);
-						indices.emplace_back(std::make_tuple(
-							heVClusterId, heClusterId, iClusterId));
+						indices.push_back(
+							{heVClusterId, heClusterId, iClusterId});
 					}
 				}
 
@@ -405,33 +376,22 @@ TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
 							comp[specIdI()] = sizeVec[l];
 							comp[specIdHe()] = 0;
 							auto iClusterId = psiNetwork->findClusterId(comp);
-							auto tempTuple = std::make_tuple(
-								heVClusterId, heClusterId, iClusterId);
+							std::array<std::size_t, 3> tempArray = {
+								heVClusterId, heClusterId, iClusterId};
 							// Check if this bubble is already
 							// associated with this grid point.
 							auto iter = std::find(
-								indices.begin(), indices.end(), tempTuple);
+								indices.begin(), indices.end(), tempArray);
 							if (iter == indices.end()) {
 								// Add this bubble to the indices
-								indices.emplace_back(tempTuple);
+								indices.push_back(tempArray);
 							}
 						}
 					}
 				}
-
-				// Add indices to the index vector
-				temp1DVector.push_back(indices);
 			}
-
-			// Give the 1D vector to the 2D vector
-			temp2DVector.push_back(temp1DVector);
 		}
-
-		// Give the 2D vector to the final vector
-		tmBubbles.push_back(temp2DVector);
 	}
-
-	return;
 }
 
 void
@@ -440,26 +400,21 @@ TrapMutationHandler::updateTrapMutationRate(const double rate)
 	// Multiply the biggest rate in the network by 1000.0
 	// so that trap-mutation overcomes any other reaction
 	kMutation = 1000.0 * rate;
-
-	return;
 }
 
 void
 TrapMutationHandler::setAttenuation(bool isAttenuation)
 {
 	attenuation = isAttenuation;
-
-	return;
 }
 
 void
 TrapMutationHandler::updateDisappearingRate(double conc)
 {
 	// Set the rate to have an exponential decrease
-	if (attenuation)
+	if (attenuation) {
 		kDis = exp(-4.0 * conc);
-
-	return;
+	}
 }
 
 void
@@ -501,8 +456,6 @@ TrapMutationHandler::computeTrapMutation(network::IReactionNetwork& network,
 		updatedConcOffset[bubbleIndex] += rate * oldConc;
 		updatedConcOffset[iIndex] += rate * oldConc;
 	}
-
-	return;
 }
 
 int

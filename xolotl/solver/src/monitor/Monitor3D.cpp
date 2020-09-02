@@ -65,7 +65,7 @@ std::vector<std::vector<double>> nInterstitial3D;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield3D = 0.0;
 // The vector of depths at which bursting happens
-std::vector<std::tuple<int, int, int>> depthPositions3D;
+std::vector<std::array<int, 3>> depthPositions3D;
 // The vector of ids for diffusing interstitial clusters
 std::vector<size_t> iClusterIds3D;
 // The id of the largest cluster
@@ -1273,8 +1273,7 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 						// surface, burst
 						if (radius > distance) {
 							burst = true;
-							depthPositions3D.push_back(
-								std::make_tuple(zk, yj, xi));
+							depthPositions3D.push_back({zk, yj, xi});
 							// Exit the loop
 							continue;
 						}
@@ -1288,8 +1287,7 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 						if (prob > test) {
 							burst = true;
-							depthPositions3D.push_back(
-								std::make_tuple(zk, yj, xi));
+							depthPositions3D.push_back({zk, yj, xi});
 						}
 					}
 				}

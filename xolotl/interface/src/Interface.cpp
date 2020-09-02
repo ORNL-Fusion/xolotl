@@ -186,14 +186,10 @@ XolotlInterface::solveXolotl()
 	return;
 }
 
-std::vector<
-	std::vector<std::vector<std::tuple<double, double, double, double>>>>
+std::vector<std::vector<std::vector<std::array<double, 4>>>>
 XolotlInterface::getLocalNE()
 {
-	std::vector<
-		std::vector<std::vector<std::tuple<double, double, double, double>>>>
-		toReturn = std::vector<std::vector<
-			std::vector<std::tuple<double, double, double, double>>>>();
+	std::vector<std::vector<std::vector<std::array<double, 4>>>> toReturn;
 	try {
 		// Get the solver handler
 		auto& solverHandler = solver::Solver::getSolverHandler();
@@ -217,8 +213,8 @@ XolotlInterface::getLocalNE()
 }
 
 void
-XolotlInterface::setLocalNE(std::vector<
-	std::vector<std::vector<std::tuple<double, double, double, double>>>>
+XolotlInterface::setLocalNE(
+	const std::vector<std::vector<std::vector<std::array<double, 4>>>>&
 		rateVector)
 {
 	try {

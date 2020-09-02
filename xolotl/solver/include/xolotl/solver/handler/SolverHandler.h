@@ -34,7 +34,7 @@ protected:
 	 *
 	 * The first pair is the location of a grid point (X,Y),
 	 */
-	std::vector<std::tuple<int, int, int>> gbVector;
+	std::vector<std::array<int, 3>> gbVector;
 
 	//! The name of the network file
 	std::string networkName;
@@ -95,9 +95,7 @@ protected:
 	//! The vector of quantities to pass to MOOSE.
 	// 0: Xe rate, 1: previous flux, 2: monomer concentration, 3: volume
 	// fraction
-	std::vector<
-		std::vector<std::vector<std::tuple<double, double, double, double>>>>
-		localNE;
+	std::vector<std::vector<std::vector<std::array<double, 4>>>> localNE;
 
 	//! The electronic stopping power for re-solution
 	double electronicStoppingPower;
@@ -506,7 +504,6 @@ public:
 
 		// Initialize our random number generator.
 		bool useRNGSeedFromOptions = false;
-		bool printRNGSeed = false;
 		std::tie(useRNGSeedFromOptions, rngSeed) = opts.getRNGSeed();
 		if (not useRNGSeedFromOptions) {
 			// User didn't give a seed value to use, so
@@ -776,17 +773,13 @@ public:
 		localNE.clear();
 		// Create the vector of vectors and fill it with 0.0
 		for (int i = 0; i < a; i++) {
-			std::vector<std::vector<std::tuple<double, double, double, double>>>
-				tempTempVector;
+			auto& tempTempVector = localNE.emplace_back();
 			for (int j = 0; j < b; j++) {
-				std::vector<std::tuple<double, double, double, double>>
-					tempVector;
+				auto& tempVector = tempTempVector.emplace_back();
 				for (int k = 0; k < c; k++) {
-					tempVector.push_back(std::make_tuple(0.0, 0.0, 0.0, 0.0));
+					tempVector.push_back({0.0, 0.0, 0.0, 0.0});
 				}
-				tempTempVector.push_back(tempVector);
 			}
-			localNE.push_back(tempTempVector);
 		}
 	}
 
@@ -805,8 +798,8 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setLocalNE(std::vector<
-		std::vector<std::vector<std::tuple<double, double, double, double>>>>
+	setLocalNE(
+		const std::vector<std::vector<std::vector<std::array<double, 4>>>>&
 			rateVector) override
 	{
 		localNE = rateVector;
@@ -816,8 +809,7 @@ public:
 	 * Get the local Xe rate vector that needs to be passed.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<
-		std::vector<std::vector<std::tuple<double, double, double, double>>>>&
+	std::vector<std::vector<std::vector<std::array<double, 4>>>>&
 	getLocalNE() override
 	{
 		return localNE;
@@ -1117,7 +1109,7 @@ public:
 	 *
 	 * @return The GB vector
 	 */
-	std::vector<std::tuple<int, int, int>>
+	std::vector<std::array<int, 3>>
 	getGBVector() const override
 	{
 		return gbVector;
@@ -1135,7 +1127,7 @@ public:
 		if (i >= localXS && i < localXS + std::max(localXM, 1) &&
 			j >= localYS && j < localYS + std::max(localYM, 1) &&
 			k >= localZS && k < localZS + std::max(localZM, 1)) {
-			gbVector.push_back(std::make_tuple(i, j, k));
+			gbVector.push_back({i, j, k});
 		}
 	}
 

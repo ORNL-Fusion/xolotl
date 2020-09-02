@@ -309,8 +309,8 @@ public:
 	 * @param rateVector The vector to replace the local Xe rate.
 	 */
 	virtual void
-	setLocalNE(std::vector<
-		std::vector<std::vector<std::tuple<double, double, double, double>>>>
+	setLocalNE(
+		const std::vector<std::vector<std::vector<std::array<double, 4>>>>&
 			rateVector) = 0;
 
 	/**
@@ -318,8 +318,7 @@ public:
 	 *
 	 * @return The vector of rates
 	 */
-	virtual std::vector<
-		std::vector<std::vector<std::tuple<double, double, double, double>>>>&
+	virtual std::vector<std::vector<std::vector<std::array<double, 4>>>>&
 	getLocalNE() = 0;
 
 	/**
@@ -496,7 +495,7 @@ public:
 	 *
 	 * @return The GB vector
 	 */
-	virtual std::vector<std::tuple<int, int, int>>
+	virtual std::vector<std::array<int, 3>>
 	getGBVector() const = 0;
 
 	/**

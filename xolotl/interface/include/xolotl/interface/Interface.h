@@ -99,8 +99,7 @@ public:
 	 *
 	 * @return The vector
 	 */
-	std::vector<
-		std::vector<std::vector<std::tuple<double, double, double, double>>>>
+	std::vector<std::vector<std::vector<std::array<double, 4>>>>
 	getLocalNE();
 
 	/**
@@ -109,8 +108,8 @@ public:
 	 * @param The vector
 	 */
 	void
-	setLocalNE(std::vector<
-		std::vector<std::vector<std::tuple<double, double, double, double>>>>
+	setLocalNE(
+		const std::vector<std::vector<std::vector<std::array<double, 4>>>>&
 			rateVector);
 
 	/**
