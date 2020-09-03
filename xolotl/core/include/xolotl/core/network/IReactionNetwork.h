@@ -30,12 +30,14 @@ public:
 	using Bounds = std::vector<std::vector<AmountType>>;
 	using PhaseSpace = std::vector<std::string>;
 
+    KOKKOS_INLINE_FUNCTION
 	static constexpr IndexType
 	invalidIndex() noexcept
 	{
 		return detail::InvalidIndex::value;
 	}
 
+    KOKKOS_INLINE_FUNCTION
 	static constexpr AmountType
 	invalidAmount() noexcept
 	{

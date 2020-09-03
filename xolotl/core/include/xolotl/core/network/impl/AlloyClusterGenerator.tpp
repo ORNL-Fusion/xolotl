@@ -237,7 +237,7 @@ AlloyClusterGenerator::getMigrationEnergy(
 {
 	const auto& reg = cluster.getRegion();
 	Composition comp(reg.getOrigin());
-	double migrationEnergy = std::numeric_limits<double>::infinity();
+	double migrationEnergy = util::infinity<double>;
 	if (comp.isOnAxis(Species::Perfect)) {
 		return 0.7;
 	}

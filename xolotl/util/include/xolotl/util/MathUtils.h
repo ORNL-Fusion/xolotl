@@ -21,6 +21,12 @@ namespace xolotl
 {
 namespace util
 {
+template <typename T>
+inline constexpr T epsilon = std::numeric_limits<T>::epsilon();
+
+template <typename T>
+inline constexpr T infinity = std::numeric_limits<T>::infinity();
+
 //@{
 /**
  * Duplicate of the generic std::min and std::max to be used in device kernels
@@ -63,8 +69,7 @@ KOKKOS_INLINE_FUNCTION
 bool
 equal(double a, double b)
 {
-	constexpr double eps = std::numeric_limits<double>::epsilon();
-	return std::fabs(b - a) < eps;
+	return std::fabs(b - a) < epsilon<double>;
 }
 
 /**

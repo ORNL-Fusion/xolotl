@@ -174,8 +174,10 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 	// Initialize the reflected regions
 	auto rRegions = detail::updateReflectedRegionsForCoefs<nMomentIds>(
 		cl1Reg, cl2Reg, pr1Reg, pr2Reg);
-	auto cl1RR = std::get<0>(rRegions), cl2RR = std::get<1>(rRegions),
-		 pr1RR = std::get<2>(rRegions), pr2RR = std::get<3>(rRegions);
+	auto cl1RR = rRegions[0];
+    auto cl2RR = rRegions[1];
+	auto pr1RR = rRegions[2];
+    auto pr2RR = rRegions[3];
 
 	// If there is no product the overlap is 1
 	double nOverlap = 1.0;
@@ -1244,8 +1246,10 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 	// Initialize the reflected regions
 	auto rRegions = detail::updateReflectedRegionsForCoefs<nMomentIds>(
 		prod1Reg, prod2Reg, clReg, cl2Reg);
-	auto clRR = std::get<2>(rRegions), cl2RR = std::get<3>(rRegions),
-		 pr1RR = std::get<0>(rRegions), pr2RR = std::get<1>(rRegions);
+	auto clRR = rRegions[2];
+    auto cl2RR = rRegions[3];
+	auto pr1RR = rRegions[0];
+    auto pr2RR = rRegions[1];
 
 	auto nOverlap =
 		static_cast<double>(this->computeOverlap(pr1RR, pr2RR, clRR, cl2RR));

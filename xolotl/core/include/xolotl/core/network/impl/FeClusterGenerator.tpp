@@ -168,7 +168,7 @@ FeClusterGenerator::getMigrationEnergy(
 		0.0, 0.67, 0.62, 0.37, 0.48};
 
 	const auto& reg = cluster.getRegion();
-	double migrationEnergy = std::numeric_limits<double>::infinity();
+	double migrationEnergy = util::infinity<double>;
 	if (reg.isSimplex()) {
 		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {

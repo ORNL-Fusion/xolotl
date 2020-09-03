@@ -12,11 +12,8 @@ namespace detail
 {
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
-std::tuple<
-	plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-	plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-	plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-	plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>>
+Kokkos::Array<
+	plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>, 4>
 initReflectedRegions(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	const TRegion& pr1Reg, const TRegion& pr2Reg)
 {
@@ -36,17 +33,15 @@ initReflectedRegions(const TRegion& cl1Reg, const TRegion& cl2Reg,
 		pr1RR[i()] = Ival(pr1Reg[i].begin(), pr1Reg[i].end());
 		pr2RR[i()] = Ival(pr2Reg[i].begin(), pr2Reg[i].end());
 	}
-	return std::tie(cl1RR, cl2RR, pr1RR, pr2RR);
+	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
 
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
 std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() > 1),
-	std::tuple<
+	Kokkos::Array<
 		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>>>
+		4>>
 updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	const TRegion& pr1Reg, const TRegion& pr2Reg)
 {
@@ -56,8 +51,10 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 
 	// Initialize the reflected regions
 	auto rRegions = initReflectedRegions<Dim>(cl1Reg, cl2Reg, pr1Reg, pr2Reg);
-	auto cl1RR = std::get<0>(rRegions), cl2RR = std::get<1>(rRegions),
-		 pr1RR = std::get<2>(rRegions), pr2RR = std::get<3>(rRegions);
+	auto cl1RR = rRegions[0];
+    auto cl2RR = rRegions[1];
+	auto pr1RR = rRegions[2];
+    auto pr2RR = rRegions[3];
 	auto vIndex = static_cast<std::underlying_type_t<Species>>(Species::V);
 	// The first product tells us how to project
 	if (pr1Reg[Species::I].end() > 1 || pr1Reg[Species::Perfect].end() > 1 ||
@@ -139,17 +136,15 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 				pr2Reg[Species::Perfect].begin() -
 				pr2Reg[Species::Frank].begin() - 2);
 	}
-	return std::tie(cl1RR, cl2RR, pr1RR, pr2RR);
+	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
 
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
 std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1),
-	std::tuple<
+	Kokkos::Array<
 		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>>>
+		4>>
 updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	const TRegion& pr1Reg, const TRegion& pr2Reg)
 {
@@ -159,8 +154,10 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 
 	// Initialize the reflected regions
 	auto rRegions = initReflectedRegions<Dim>(cl1Reg, cl2Reg, pr1Reg, pr2Reg);
-	auto cl1RR = std::get<0>(rRegions), cl2RR = std::get<1>(rRegions),
-		 pr1RR = std::get<2>(rRegions), pr2RR = std::get<3>(rRegions);
+	auto cl1RR = rRegions[0];
+    auto cl2RR = rRegions[1];
+	auto pr1RR = rRegions[2];
+    auto pr2RR = rRegions[3];
 	auto vIndex = static_cast<std::underlying_type_t<Species>>(Species::V);
 	// The first product tells us how to project
 	if (pr1Reg[Species::I].end() > 1) {
@@ -193,17 +190,15 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 			Ival(pr2Reg[Species::V].begin() - pr2Reg[Species::I].end() + 1,
 				pr2Reg[Species::V].end() - pr2Reg[Species::I].begin());
 	}
-	return std::tie(cl1RR, cl2RR, pr1RR, pr2RR);
+	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
 
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
 std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 0),
-	std::tuple<
+	Kokkos::Array<
 		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
-		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>>>
+		4>>
 updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	const TRegion& pr1Reg, const TRegion& pr2Reg)
 {

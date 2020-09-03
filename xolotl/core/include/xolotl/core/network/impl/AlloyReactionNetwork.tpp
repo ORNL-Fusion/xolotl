@@ -542,24 +542,23 @@ AlloyReactionGenerator::addSinks(IndexType i, TTag tag) const
 {
 	using Species = typename Network::Species;
 	using Composition = typename Network::Composition;
-	constexpr auto invalidIndex = Network::invalidIndex();
 
 	const auto& clReg = this->getCluster(i).getRegion();
 	Composition lo = clReg.getOrigin();
 
 	// I
 	if (clReg.isSimplex() && lo.isOnAxis(Species::I)) {
-		this->addSinkReaction(tag, {i, invalidIndex});
+		this->addSinkReaction(tag, {i, Network::invalidIndex()});
 	}
 
 	// V
 	if (clReg.isSimplex() && lo.isOnAxis(Species::V)) {
-		this->addSinkReaction(tag, {i, invalidIndex});
+		this->addSinkReaction(tag, {i, Network::invalidIndex()});
 	}
 
 	// Perfect
 	if (clReg.isSimplex() && lo.isOnAxis(Species::Perfect)) {
-		this->addSinkReaction(tag, {i, invalidIndex});
+		this->addSinkReaction(tag, {i, Network::invalidIndex()});
 	}
 }
 

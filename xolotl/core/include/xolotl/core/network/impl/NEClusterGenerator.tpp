@@ -107,7 +107,7 @@ NEClusterGenerator::getMigrationEnergy(
 	constexpr double xeOneMigration = 1.0;
 
 	const auto& reg = cluster.getRegion();
-	double migrationEnergy = std::numeric_limits<double>::infinity();
+	double migrationEnergy = util::infinity<double>;
 	if (reg.isSimplex()) {
 		auto amtXe = reg.getOrigin()[0];
 		if (amtXe <= 1) {

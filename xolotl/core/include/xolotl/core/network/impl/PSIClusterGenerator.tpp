@@ -92,13 +92,13 @@ PSIClusterGenerator<PSIFullSpeciesList>::refine(
 	//	}
 
 	// Else refine around the edge
-	auto maxDPerV = KOKKOS_LAMBDA(AmountType amtV)
+	auto maxDPerV = [hevRatio = _hevRatio, maxD = _maxD](AmountType amtV)
 	{
-		return (2.0 / 3.0) * getMaxHePerV(amtV, _hevRatio) * (_maxD > 0);
+		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio) * (maxD > 0);
 	};
-	auto maxTPerV = KOKKOS_LAMBDA(AmountType amtV)
+	auto maxTPerV = [hevRatio = _hevRatio, maxT = _maxT](AmountType amtV)
 	{
-		return (2.0 / 3.0) * getMaxHePerV(amtV, _hevRatio) * (_maxT > 0);
+		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio) * (maxT > 0);
 	};
 	if (region[Species::V].end() > 1) {
 		Composition lo = region.getOrigin();
@@ -214,9 +214,9 @@ PSIClusterGenerator<PSIFullSpeciesList>::select(const Region& region) const
 	}
 
 	// The edge
-	auto maxDPerV = KOKKOS_LAMBDA(AmountType amtV)
+	auto maxDPerV = [hevRatio = _hevRatio](AmountType amtV)
 	{
-		return (2.0 / 3.0) * getMaxHePerV(amtV, _hevRatio);
+		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio);
 	};
 	if (region[Species::V].end() > 1) {
 		Composition lo = region.getOrigin();
@@ -272,7 +272,7 @@ PSIClusterGenerator<PSIFullSpeciesList>::getMaxHePerV(
 	if (amtV < maxHePerV.size()) {
 		return maxHePerV[amtV];
 	}
-	return std::max((AmountType)(ratio * amtV),
+	return util::max((AmountType)(ratio * amtV),
 		maxHePerV[maxHePerV.size() - 1] + amtV - (AmountType)maxHePerV.size() +
 			1);
 }
@@ -283,7 +283,7 @@ double
 PSIClusterGenerator<PSIFullSpeciesList>::getFormationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
-	constexpr auto infinity = std::numeric_limits<double>::infinity();
+	constexpr auto infinity = util::infinity<double>;
 
 	// I formation energies in eV
 	constexpr Kokkos::Array<double, 7> iFormationEnergies = {
@@ -352,7 +352,7 @@ PSIClusterGenerator<PSIFullSpeciesList>::getMigrationEnergy(
 	static constexpr double vOneMigration = 1.30;
 
 	const auto& reg = cluster.getRegion();
-	double migrationEnergy = std::numeric_limits<double>::infinity();
+	double migrationEnergy = util::infinity<double>;
 	if (reg.isSimplex()) {
 		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {
@@ -584,7 +584,7 @@ PSIClusterGenerator<PSIFullSpeciesList>::getHeVFormationEnergy(
 		57.7939};
 
 	// Initial declarations
-	double energy = -std::numeric_limits<double>::infinity();
+	double energy = -util::infinity<double>;
 	// The following coefficients are computed using the above and are used
 	// to evaluate the full function f(x,y).
 	Kokkos::Array<double, 4> coefficients{0.0, 0.0, 0.0, 0.0};

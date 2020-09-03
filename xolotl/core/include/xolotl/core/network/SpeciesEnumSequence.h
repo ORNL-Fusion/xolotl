@@ -116,7 +116,9 @@ struct SpeciesForGrouping
 	static constexpr auto first = Sequence::first();
 	static constexpr auto last = Sequence::lastNoI();
 
-	static constexpr std::underlying_type_t<TSpeciesEnum>
+    KOKKOS_INLINE_FUNCTION
+	static constexpr
+    std::underlying_type_t<TSpeciesEnum>
 	mapToMomentId(EnumSequence<TSpeciesEnum, N> value)
 	{
 		return value();

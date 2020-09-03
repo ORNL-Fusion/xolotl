@@ -62,8 +62,9 @@ struct SpeciesForGrouping<AlloySpecies, 6>
 	static constexpr auto first = Sequence(AlloySpecies::V);
 	static constexpr auto last = Sequence(AlloySpecies::Frank);
 
-	static constexpr std::underlying_type_t<AlloySpecies> mapToMomentId(
-		EnumSequence<AlloySpecies, 6>)
+    KOKKOS_INLINE_FUNCTION
+	static constexpr std::underlying_type_t<AlloySpecies>
+    mapToMomentId(EnumSequence<AlloySpecies, 6>)
 	{
 		return 0;
 	}

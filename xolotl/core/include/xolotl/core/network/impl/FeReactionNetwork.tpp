@@ -210,20 +210,19 @@ FeReactionGenerator::addSinks(IndexType i, TTag tag) const
 {
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
-	constexpr auto invalidIndex = NetworkType::invalidIndex();
 
 	const auto& clReg = this->getCluster(i).getRegion();
 	Composition lo = clReg.getOrigin();
 
 	// I
 	if (clReg.isSimplex() && lo.isOnAxis(Species::I)) {
-		this->addSinkReaction(tag, {i, invalidIndex});
+		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
 	}
 
 	// V
 	if (clReg.isSimplex() && lo.isOnAxis(Species::V)) {
 		if (lo[Species::V] < 5)
-			this->addSinkReaction(tag, {i, invalidIndex});
+			this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
 	}
 }
 
