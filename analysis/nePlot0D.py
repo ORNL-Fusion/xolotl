@@ -20,10 +20,10 @@ fig.suptitle(title,fontsize=22)
 xePlot = plt.subplot(111)
 
 ## Create lists of file names to read from, time step number in the file, associated line colors, labels
-name = ['/home/sophie/Workspace/xolotl-reso-build/baker/network_2073K.h5', '/home/sophie/Workspace/xolotl-reso-build/baker/network_2073K_full.h5', '/home/sophie/Workspace/xolotl-reso-build/baker/network_2073K_one.h5', '/home/sophie/Workspace/xolotl-reso-build/baker/network_2073K_partial.h5']
-timestep = [436,511,436,436]
-col = ['black', 'blue', 'magenta', 'green', 'red']
-lab = ['2073 K, standard', '2073 K, Turnbull re-solution', '2073 K, Setyawan re-solution (one)', '2073 K, Setyawan re-solution (partial)', 'test']
+name = ['/home/sophie/Workspace/xolotl-plsm-build/script/xolotlStop.h5', '/home/sophie/Workspace/xolotl-plsm-build/script/xolotlStop.h5', '/home/sophie/Workspace/xolotl-plsm-build/script/xolotlStop.h5', '/home/sophie/Workspace/xolotl-plsm-build/script/xolotlStop.h5']
+timestep = [25,35,45,55]
+col = ['black', 'blue', 'magenta', 'green']
+lab = ['TS 25', 'TS 35', 'TS 45', 'TS 55']
 
 for i in range(len(name)):
     ## Open the file
@@ -40,13 +40,9 @@ for i in range(len(name)):
     ## Read the time at the chosen time step
     time = concGroup.attrs['absoluteTime']
 
-    ## Read the composition index to know which cluster is what
-    compDset = f['headerGroup/composition']
-
     ## Read how many normal and super clusters there are
     networkGroup = f['networkGroup']
-    normalSize = networkGroup.attrs['normalSize']
-    superSize = networkGroup.attrs['superSize']
+    totalSize = networkGroup.attrs['totalSize']
 
     ## Create the mesh and data array
     x = np.empty([maxSize])
@@ -58,23 +54,15 @@ for i in range(len(name)):
     pos = 0 ## if 0D
     for j in range(indexDset[pos], indexDset[pos+1]):
         ## Skip the moments for now
-        if (int(concDset[j][0]) > len(compDset) - 1): continue
-        ## Normal clusters
-        if (int(concDset[j][0]) < normalSize):
-            ## Get the helium and hydrogen sizes of this cluster
-            xeSize = compDset[int(concDset[j][0])][0]
-            ## Fill the arrays
-            if (concDset[j][1] > 0.0): xeArray[xeSize] = xeArray[xeSize] + concDset[j][1]
-        ## Super clusters
-        else:
-            ## Loop on the number of clusters it contains
-            clusterGroup = networkGroup[str(concDset[j][0])]
-            nTot = clusterGroup.attrs['nTot']
-            numXe = clusterGroup.attrs['numAtom']
-            if (concDset[j][1] > 0.0):
-                for l in range(int(numXe - nTot)+1, int(numXe)+1):
-                    ## Fill the array
-                    xeArray[l] = xeArray[l] + concDset[j][1]
+        if (int(concDset[j][0]) > totalSize - 1): continue
+        ## Get the cluster bounds
+        groupName = str(concDset[i][0])
+        clusterGroup = networkGroup[groupName]
+        bounds = clusterGroup.attrs['bounds']
+        ## Loop on Xe size
+        for l in range(bounds[0], bounds[1]+1):
+            ## Fill the array
+            xeArray[l] = xeArray[l] + concDset[j][1]
 
     ## Plot the data
     x = np.delete(x,(0), axis=0)

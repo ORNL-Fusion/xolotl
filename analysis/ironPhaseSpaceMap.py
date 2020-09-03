@@ -9,7 +9,7 @@ from   pylab import *
 import matplotlib.transforms as mtrans
 
 ## Open the Xolotl output file (by default "bubble_#.dat")
-amin, amax, bmin, bmax, conc = loadtxt('/home/sophie/Workspace/xolotl-master-build/bubble_211.dat', usecols = (0,1,2,3,4) , unpack=True)
+amin, amax, bmin, bmax, conc = loadtxt('/home/sophie/Workspace/xolotl-plsm-build/script/bubble_211.dat', usecols = (0,1,2,3,4) , unpack=True)
 
 ## Init objects
 x = np.array([])

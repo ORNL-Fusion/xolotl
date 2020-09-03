@@ -12,13 +12,13 @@ from matplotlib.colors import LogNorm
 zero = 1.0e-20
 
 ## Select the timestep we want to read from
-timestep = 0
+timestep = 9
 
 ## Set the maximum size of helium/hydrogen
 maxSize = 201
 
 ## Open the file
-f = h5py.File('/home/sophie/Data/Xolotl/network/He2DT/network_ITER_BPO_37_2020.h5', 'r')
+f = h5py.File('/home/sophie/Workspace/xolotl-plsm-build/script/xolotlStop.h5', 'r')
 
 ## Get the last time step saved in the file
 concGroup0 = f['concentrationsGroup']
@@ -39,15 +39,10 @@ time = concGroup.attrs['absoluteTime']
 ## Read the grid to know which grid point is which depth
 gridDset = f['headerGroup/grid']
 gridSize = len(gridDset)
-#print(gridSize)
-
-## Read the composition index to know which cluster is what
-compDset = f['headerGroup/composition']
 
 ## Read how many normal and super clusters there are
 networkGroup = f['networkGroup']
-normalSize = networkGroup.attrs['normalSize']
-superSize = networkGroup.attrs['superSize']
+totalSize = networkGroup.attrs['totalSize']
 
 ## Create the mesh and data array
 x = np.empty([maxSize+1, gridSize])
@@ -63,50 +58,54 @@ for i in range(0, maxSize+1):
         tArray[i][j] = zero
         vArray[i][j] = zero
         
-## Save the composition information for super clusters
+## Save the composition information for all clusters
 superMap = []
-for i in range(normalSize, normalSize+superSize):
-    ## Loop on the number of clusters it contains
-    groupName = str(i) + '/heVList'
-    heVList = networkGroup[groupName]
+for i in range(0, totalSize):
+    ## Get the cluster bounds
+    groupName = str(i)
+    clusterGroup = networkGroup[groupName]
+    bounds = clusterGroup.attrs['bounds']
+    if (bounds[8] > 0): continue # I case
     temp = [[],[],[]]
-    for k in range(0, len(heVList)):
-    	heSize = heVList[k][0]
-    	tSize = heVList[k][2]
-    	vSize = heVList[k][3]
-    	## Look for he size
-    	foundSize = False
-    	for j in range(0, len(temp[0])):
-    	    if (heSize == temp[0][j][0]):
-    	    	## Add to the weight
-    	    	temp[0][j][1] = temp[0][j][1] + 1
-    	    	foundSize = True
-    	    	break
-    	## Create a new field
-    	if (not foundSize):
-    	    temp[0].append([heSize, 1])
-    	## Look for t size
-    	foundSize = False
-    	for j in range(0, len(temp[1])):
-    	    if (tSize == temp[1][j][0]):
-    	    	## Add to the weight
-    	    	temp[1][j][1] = temp[1][j][1] + 1
-    	    	foundSize = True
-    	    	break
-    	## Create a new field
-    	if (not foundSize):
-    	    temp[1].append([tSize, 1])
-    	## Look for v size
-    	foundSize = False
-    	for j in range(0, len(temp[2])):
-    	    if (vSize == temp[2][j][0]):
-    	    	## Add to the weight
-    	    	temp[2][j][1] = temp[2][j][1] + 1
-    	    	foundSize = True
-    	    	break
-    	## Create a new field
-    	if (not foundSize):
-    	    temp[2].append([vSize, 1])
+    ## Loop on them
+    for he in range(bounds[0], bounds[1]+1):
+        for d in range(bounds[2], bounds[3]+1):
+            for t in range(bounds[4], bounds[5]+1):
+                for v in range(bounds[6], bounds[7]+1):
+                    ## Look for he size
+                    foundSize = False
+                    for j in range(0, len(temp[0])):
+                        if (he == temp[0][j][0]):
+                            ## Add to the weight
+                            temp[0][j][1] = temp[0][j][1] + 1
+                            foundSize = True
+                            break
+                    ## Create a new field
+                    if (not foundSize):
+                        temp[0].append([he, 1])
+                    ## Look for t size
+                    foundSize = False
+                    for j in range(0, len(temp[1])):
+                        if (t == temp[1][j][0]):
+                            ## Add to the weight
+                            temp[1][j][1] = temp[1][j][1] + 1
+                            foundSize = True
+                            break
+                    ## Create a new field
+                    if (not foundSize):
+                        temp[1].append([t, 1])
+                    ## Look for v size
+                    foundSize = False
+                    for j in range(0, len(temp[2])):
+                        if (v == temp[2][j][0]):
+                            ## Add to the weight
+                            temp[2][j][1] = temp[2][j][1] + 1
+                            foundSize = True
+                            break
+                    ## Create a new field
+                    if (not foundSize):
+                        temp[2].append([v, 1])
+    
     superMap.append(temp)
     
 #print('superMap =', superMap)
@@ -116,35 +115,23 @@ for j in range(len(indexDset)-1):
     ## Loop on the concentrations
     for i in range(indexDset[j], indexDset[j+1]):
         ## Skip the moments for now
-        if (int(concDset[i][0]) > len(compDset) - 1): continue
+        if (int(concDset[i][0]) > totalSize - 1): continue
         ## Get the concentration
         conc = concDset[i][1]
-        ## Normal clusters
-        if (int(concDset[i][0]) < normalSize):
-            ## Get the helium and hydrogen sizes of this cluster
-            heSize = compDset[int(concDset[i][0])][0]
-            tSize = compDset[int(concDset[i][0])][2]
-            vSize = compDset[int(concDset[i][0])][3]
-            ## Fill the arrays
-            heArray[heSize][j] = heArray[heSize][j] + conc
-            tArray[tSize][j] = tArray[tSize][j] + conc
-            vArray[vSize][j] = vArray[vSize][j] + conc
-        ## Super clusters
-        else:
-            ## Loop on each component
-            lists = superMap[concDset[i][0]-normalSize]
-            ## He
-            for k in range(0, len(lists[0])):
-                heSize = lists[0][k][0]
-                heArray[heSize][j] = heArray[heSize][j] + (conc * lists[0][k][1])
-            ## T
-            for k in range(0, len(lists[1])):
-                tSize = lists[1][k][0]
-                tArray[tSize][j] = tArray[tSize][j] + (conc * lists[1][k][1])
-            ## V
-            for k in range(0, len(lists[2])):
-                vSize = lists[2][k][0]
-                vArray[vSize][j] = vArray[vSize][j] + (conc * lists[2][k][1])
+        ## Loop on each component
+        lists = superMap[concDset[i][0]]
+        ## He
+        for k in range(0, len(lists[0])):
+            heSize = lists[0][k][0]
+            heArray[heSize][j] = heArray[heSize][j] + (conc * lists[0][k][1])
+        ## T
+        for k in range(0, len(lists[1])):
+            tSize = lists[1][k][0]
+            tArray[tSize][j] = tArray[tSize][j] + (conc * lists[1][k][1])
+        ## V
+        for k in range(0, len(lists[2])):
+            vSize = lists[2][k][0]
+            vArray[vSize][j] = vArray[vSize][j] + (conc * lists[2][k][1])
 
 
 ## Create plots

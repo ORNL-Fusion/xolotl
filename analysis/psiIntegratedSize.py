@@ -11,13 +11,13 @@ from matplotlib.colors import LogNorm
 zero = 1.0e-20
 
 ## Select the timestep we want to read from
-timestep = 0
+timestep = 9
 
 ## Set the maximum size of helium/hydrogen
 maxSize = 401
 
 ## Open the file (the network/restart HDF5 file)
-f = h5py.File('/home/sophie/Data/Xolotl/network/He2DT/network_ITER_BPO_37_2020.h5', 'r')
+f = h5py.File('/home/sophie/Workspace/xolotl-plsm-build/script/xolotlStop.h5', 'r')
 
 ## Open the concentration group
 groupName ='concentrationsGroup/concentration_' + str(timestep)
@@ -34,13 +34,9 @@ time = concGroup.attrs['absoluteTime']
 ## Read the grid to know which grid point is which depth
 gridDset = f['headerGroup/grid']
 
-## Read the composition index to know which cluster is what
-compDset = f['headerGroup/composition']
-
 ## Read how many normal and super clusters there are
 networkGroup = f['networkGroup']
-normalSize = networkGroup.attrs['normalSize']
-superSize = networkGroup.attrs['superSize']
+totalSize = networkGroup.attrs['totalSize']
 
 ## Create the mesh and data array
 heArray = np.empty([maxSize+1])
@@ -62,33 +58,22 @@ for j in range(len(indexDset)-1):
     ## Loop on the concentrations
     for i in range(indexDset[j], indexDset[j+1]):
         ## Skip the moments for now
-        if (int(concDset[i][0]) > len(compDset) - 1): continue
-        ## Normal clusters
-        if (int(concDset[i][0]) < normalSize):
-            ## Get the helium and hydrogen sizes of this cluster
-            heSize = compDset[int(concDset[i][0])][0]
-            dSize = compDset[int(concDset[i][0])][1]
-            tSize = compDset[int(concDset[i][0])][2]
-            ## Fill the arrays
-            heArray[heSize] = heArray[heSize] + concDset[i][1] * dgrid
-            dArray[dSize] = dArray[dSize] + concDset[i][1] * dgrid
-            tArray[tSize] = tArray[tSize] + concDset[i][1] * dgrid
-            hArray[dSize+tSize] = hArray[dSize+tSize] + concDset[i][1] * dgrid
-        ## Super clusters
-        else:
-            ## Loop on the number of clusters it contains
-            groupName = str(concDset[i][0]) + '/heVList'
-            heVList = networkGroup[groupName]
-            for k in range(0, len(heVList)):
-                ## Get the helium and hydrogen sizes of this cluster
-                heSize = heVList[k][0]
-                dSize = heVList[k][1]
-                tSize = heVList[k][2]
-                ## Fill the arrays
-                heArray[heSize] = heArray[heSize] + concDset[i][1] * dgrid
-                dArray[dSize] = dArray[dSize] + concDset[i][1] * dgrid
-                tArray[tSize] = tArray[tSize] + concDset[i][1] * dgrid
-                hArray[dSize+tSize] = hArray[dSize+tSize] + concDset[i][1] * dgrid
+        if (int(concDset[i][0]) > totalSize - 1): continue
+        ## Get the cluster bounds
+        groupName = str(concDset[i][0])
+        clusterGroup = networkGroup[groupName]
+        bounds = clusterGroup.attrs['bounds']
+        if (bounds[8] > 0): continue # I case
+        ## Loop on them
+        for he in range(bounds[0], bounds[1]+1):
+            for d in range(bounds[2], bounds[3]+1):
+                for t in range(bounds[4], bounds[5]+1):
+                    for v in range(bounds[6], bounds[7]+1):
+                        ## Fill the arrays
+                        heArray[he] = heArray[he] + concDset[i][1] * dgrid
+                        dArray[d] = dArray[d] + concDset[i][1] * dgrid
+                        tArray[t] = tArray[t] + concDset[i][1] * dgrid
+                        hArray[d+t] = hArray[d+t] + concDset[i][1] * dgrid
 
 ## Create plots
 fig = plt.figure()

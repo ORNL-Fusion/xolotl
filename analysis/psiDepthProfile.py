@@ -11,7 +11,7 @@ fig = plt.figure()
 plotDist = plt.subplot(111)
 
 ## Open the file
-f = h5py.File('/home/sophie/Data/Xolotl/PISCES/TRIDYN_0.h5', 'r')
+f = h5py.File('/home/sophie/Workspace/xolotl-plsm-build/script/TRIDYN_9.h5', 'r')
 concDset = f['concs']
 depth = []
 He = []
@@ -22,7 +22,7 @@ I = []
 ## Read the data and put it in lists
 for j in range(0, len(concDset)):
     depth.append(concDset[j][0])
-    He.append(concDset[j][1]) ## 1 for He, 2 for D, 3 for T, 4 for V, 5 for I
+    He.append(concDset[j][1]) ## 1 for He, 2 for D, 3 for T, 4 for V, 5 for I, depending on the network
     D.append(concDset[j][2])
     T.append(concDset[j][3])
     V.append(concDset[j][4])
