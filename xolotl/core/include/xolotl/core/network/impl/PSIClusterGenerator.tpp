@@ -92,12 +92,10 @@ PSIClusterGenerator<PSIFullSpeciesList>::refine(
 	//	}
 
 	// Else refine around the edge
-	auto maxDPerV = [hevRatio = _hevRatio, maxD = _maxD](AmountType amtV)
-	{
+	auto maxDPerV = [hevRatio = _hevRatio, maxD = _maxD](AmountType amtV) {
 		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio) * (maxD > 0);
 	};
-	auto maxTPerV = [hevRatio = _hevRatio, maxT = _maxT](AmountType amtV)
-	{
+	auto maxTPerV = [hevRatio = _hevRatio, maxT = _maxT](AmountType amtV) {
 		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio) * (maxT > 0);
 	};
 	if (region[Species::V].end() > 1) {
@@ -214,8 +212,7 @@ PSIClusterGenerator<PSIFullSpeciesList>::select(const Region& region) const
 	}
 
 	// The edge
-	auto maxDPerV = [hevRatio = _hevRatio](AmountType amtV)
-	{
+	auto maxDPerV = [hevRatio = _hevRatio](AmountType amtV) {
 		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio);
 	};
 	if (region[Species::V].end() > 1) {

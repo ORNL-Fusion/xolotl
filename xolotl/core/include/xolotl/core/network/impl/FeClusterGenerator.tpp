@@ -113,7 +113,11 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 		result[1] = true;
 	}
 
-	return (result[0] && result[1]);
+	if (!result[0] && !result[1]) {
+		return false;
+	}
+
+	return true;
 }
 
 KOKKOS_INLINE_FUNCTION

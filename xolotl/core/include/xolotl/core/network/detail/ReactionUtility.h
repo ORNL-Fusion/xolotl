@@ -52,9 +52,9 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	// Initialize the reflected regions
 	auto rRegions = initReflectedRegions<Dim>(cl1Reg, cl2Reg, pr1Reg, pr2Reg);
 	auto cl1RR = rRegions[0];
-    auto cl2RR = rRegions[1];
+	auto cl2RR = rRegions[1];
 	auto pr1RR = rRegions[2];
-    auto pr2RR = rRegions[3];
+	auto pr2RR = rRegions[3];
 	auto vIndex = static_cast<std::underlying_type_t<Species>>(Species::V);
 	// The first product tells us how to project
 	if (pr1Reg[Species::I].end() > 1 || pr1Reg[Species::Perfect].end() > 1 ||
@@ -155,9 +155,9 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	// Initialize the reflected regions
 	auto rRegions = initReflectedRegions<Dim>(cl1Reg, cl2Reg, pr1Reg, pr2Reg);
 	auto cl1RR = rRegions[0];
-    auto cl2RR = rRegions[1];
+	auto cl2RR = rRegions[1];
 	auto pr1RR = rRegions[2];
-    auto pr2RR = rRegions[3];
+	auto pr2RR = rRegions[3];
 	auto vIndex = static_cast<std::underlying_type_t<Species>>(Species::V);
 	// The first product tells us how to project
 	if (pr1Reg[Species::I].end() > 1) {

@@ -64,9 +64,9 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 	auto rRegions = detail::updateReflectedRegionsForCoefs<nMomentIds>(
 		prod1Reg, prod2Reg, clReg, cl2Reg);
 	auto clRR = rRegions[2];
-    auto cl2RR = rRegions[3];
+	auto cl2RR = rRegions[3];
 	auto pr1RR = rRegions[0];
-    auto pr2RR = rRegions[1];
+	auto pr2RR = rRegions[1];
 
 	auto nOverlap =
 		static_cast<double>(this->computeOverlap(pr1RR, pr2RR, clRR, cl2RR));
