@@ -15,6 +15,8 @@ void
 PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 	double* gridPointSolution, double factor, std::vector<double>& nBurst)
 {
+	using detail::toIndex;
+
 	// Loop on every cluster
 	for (unsigned int i = 0; i < this->getNumClusters(); i++) {
 		const auto& clReg = this->getCluster(i, plsm::onHost).getRegion();
@@ -25,40 +27,53 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 			// Pure He, D, or T case
 			if (comp.isOnAxis(Species::He)) {
 				// Compute the number of atoms released
-				nBurst[0] +=
+				nBurst[toIndex(Species::He)] +=
 					gridPointSolution[i] * (double)comp[Species::He] * factor;
 				// Reset concentration
 				gridPointSolution[i] = 0.0;
+				continue;
 			}
-			else if (comp.isOnAxis(Species::D)) {
-				// Compute the number of atoms released
-				nBurst[1] +=
-					gridPointSolution[i] * (double)comp[Species::D] * factor;
-				// Reset concentration
-				gridPointSolution[i] = 0.0;
+			if constexpr (hasDeuterium<Species>) {
+				if (comp.isOnAxis(Species::D)) {
+					// Compute the number of atoms released
+					nBurst[toIndex(Species::D)] += gridPointSolution[i] *
+						(double)comp[Species::D] * factor;
+					// Reset concentration
+					gridPointSolution[i] = 0.0;
+					continue;
+				}
 			}
-			else if (comp.isOnAxis(Species::T)) {
-				// Compute the number of atoms released
-				nBurst[2] +=
-					gridPointSolution[i] * (double)comp[Species::T] * factor;
-				// Reset concentration
-				gridPointSolution[i] = 0.0;
+			if constexpr (hasTritium<Species>) {
+				if (comp.isOnAxis(Species::T)) {
+					// Compute the number of atoms released
+					nBurst[toIndex(Species::T)] += gridPointSolution[i] *
+						(double)comp[Species::T] * factor;
+					// Reset concentration
+					gridPointSolution[i] = 0.0;
+					continue;
+				}
 			}
 			// Mixed cluster case
-			else if (!comp.isOnAxis(Species::V) && !comp.isOnAxis(Species::I)) {
+			if (!comp.isOnAxis(Species::V) && !comp.isOnAxis(Species::I)) {
 				// Compute the number of atoms released
-				nBurst[0] +=
+				nBurst[toIndex(Species::He)] +=
 					gridPointSolution[i] * (double)comp[Species::He] * factor;
-				nBurst[1] +=
-					gridPointSolution[i] * (double)comp[Species::D] * factor;
-				nBurst[2] +=
-					gridPointSolution[i] * (double)comp[Species::T] * factor;
+				if constexpr (hasDeuterium<Species>) {
+					nBurst[toIndex(Species::D)] += gridPointSolution[i] *
+						(double)comp[Species::D] * factor;
+				}
+				if constexpr (hasTritium<Species>) {
+					nBurst[toIndex(Species::T)] += gridPointSolution[i] *
+						(double)comp[Species::T] * factor;
+				}
 				// Transfer concentration to V of the same size
 				Composition vComp = Composition::zero();
 				vComp[Species::V] = comp[Species::V];
 				auto vCluster = this->findCluster(vComp, plsm::onHost);
 				gridPointSolution[vCluster.getId()] += gridPointSolution[i];
 				gridPointSolution[i] = 0.0;
+
+				continue;
 			}
 		}
 		// Grouped clusters
@@ -66,18 +81,22 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 			// Compute the number of atoms released
 			double concFactor = clReg.volume() / clReg[Species::He].length();
 			for (auto j : makeIntervalRange(clReg[Species::He])) {
-				nBurst[0] +=
+				nBurst[toIndex(Species::He)] +=
 					gridPointSolution[i] * (double)j * concFactor * factor;
 			}
-			concFactor = clReg.volume() / clReg[Species::D].length();
-			for (auto j : makeIntervalRange(clReg[Species::D])) {
-				nBurst[1] +=
-					gridPointSolution[i] * (double)j * concFactor * factor;
+			if constexpr (hasDeuterium<Species>) {
+				concFactor = clReg.volume() / clReg[Species::D].length();
+				for (auto j : makeIntervalRange(clReg[Species::D])) {
+					nBurst[toIndex(Species::D)] +=
+						gridPointSolution[i] * (double)j * concFactor * factor;
+				}
 			}
-			concFactor = clReg.volume() / clReg[Species::T].length();
-			for (auto j : makeIntervalRange(clReg[Species::T])) {
-				nBurst[2] +=
-					gridPointSolution[i] * (double)j * concFactor * factor;
+			if constexpr (hasTritium<Species>) {
+				concFactor = clReg.volume() / clReg[Species::T].length();
+				for (auto j : makeIntervalRange(clReg[Species::T])) {
+					nBurst[toIndex(Species::T)] +=
+						gridPointSolution[i] * (double)j * concFactor * factor;
+				}
 			}
 
 			// Get the factor
@@ -138,8 +157,13 @@ PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 		KOKKOS_LAMBDA(IndexType i, typename Reducer::value_type & update) {
 			const auto& clReg = clData.getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
-			auto size = hi[Species::He] + hi[Species::D] + hi[Species::T] +
-				hi[Species::V];
+			auto size = hi[Species::He] + hi[Species::V];
+			if constexpr (hasDeuterium<Species>) {
+				size += hi[Species::D];
+			}
+			if constexpr (hasTritium<Species>) {
+				size += hi[Species::T];
+			}
 			if (size > update.val) {
 				update.val = size;
 				update.loc = i;

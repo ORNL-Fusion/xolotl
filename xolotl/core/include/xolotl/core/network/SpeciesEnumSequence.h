@@ -16,6 +16,11 @@ std::string
 getSpeciesLabel(TSpeciesEnum species);
 
 template <typename TSpeciesEnum>
+struct NumberOfSpecies : std::integral_constant<std::size_t, 0>
+{
+};
+
+template <typename TSpeciesEnum>
 struct NumberOfInterstitialSpecies : std::integral_constant<std::size_t, 0>
 {
 };
@@ -24,6 +29,14 @@ template <typename TSpeciesEnum>
 struct NumberOfVacancySpecies : std::integral_constant<std::size_t, 0>
 {
 };
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+constexpr std::size_t
+numberOfSpecies() noexcept
+{
+	return NumberOfSpecies<TSpeciesEnum>::value;
+}
 
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION

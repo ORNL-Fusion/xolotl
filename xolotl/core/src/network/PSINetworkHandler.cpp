@@ -19,7 +19,23 @@ namespace detail
 auto psiFullSpeciesListNetworkHandlerRegistrations =
 	xolotl::factory::network::NetworkHandlerFactory::RegistrationCollection<
 		PSINetworkHandler<PSIFullSpeciesList>>(
-		{"W100", "W110", "W111", "W211", "TRIDYN", "Pulsed"});
+		{"W100", "W110", "W111", "W211", "Pulsed"});
+}
+
+namespace detail
+{
+template std::shared_ptr<PSIReactionNetwork<PSIHeliumSpeciesList>>
+generatePSIReactionNetwork<PSIHeliumSpeciesList>(const options::Options& options);
+}
+
+template class PSINetworkHandler<PSIHeliumSpeciesList>;
+
+namespace detail
+{
+// auto psiFullSpeciesListNetworkHandlerRegistrations =
+// 	xolotl::factory::network::NetworkHandlerFactory::RegistrationCollection<
+// 		PSINetworkHandler<PSIHeliumSpeciesList>>(
+// 		{"W100", "W110", "W111", "W211", "TRIDYN", "Pulsed"});
 }
 } // namespace network
 } // namespace core

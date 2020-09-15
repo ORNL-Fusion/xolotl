@@ -114,6 +114,15 @@ struct ReactionTypeListHelper<TNetwork,
 
 template <typename TNetwork>
 using ReactionTypeList = typename ReactionTypeListHelper<TNetwork>::Type;
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+constexpr ReactionNetworkIndexType
+toIndex(TSpeciesEnum species)
+{
+    static_assert(std::is_enum_v<TSpeciesEnum>);
+    return static_cast<ReactionNetworkIndexType>(species);
+}
 } // namespace detail
 } // namespace network
 } // namespace core

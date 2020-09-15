@@ -7,6 +7,7 @@ namespace core
 {
 namespace network
 {
+// PSIFullSpeciesList
 template class PSIReactionNetwork<PSIFullSpeciesList>;
 
 template ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
@@ -45,6 +46,48 @@ ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
 template double
 ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
+
+// PSIHeliumSpeciesList
+template class PSIReactionNetwork<PSIHeliumSpeciesList>;
+
+template ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
+	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+		const std::vector<SubdivisionRatio>& subdivisionRatios,
+		IndexType gridSize, const options::IOptions& opts);
+
+template ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
+	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+		IndexType gridSize, const options::IOptions& opts);
+
+template ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::Cluster<
+	plsm::OnHost>
+ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::findCluster(
+	const Composition& comp, plsm::OnHost context);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
+	getTotalConcentration(
+		ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
+	getTotalRadiusConcentration(
+		ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
+	getTotalAtomConcentration(
+		ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
+	getTotalTrappedAtomConcentration(
+		ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
+	getTotalVolumeFraction(
+		ConcentrationsView concentrations, Species type, AmountType minSize);
 } // namespace network
 } // namespace core
 } // namespace xolotl
