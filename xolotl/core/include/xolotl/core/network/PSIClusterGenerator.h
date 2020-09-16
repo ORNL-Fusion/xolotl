@@ -1,11 +1,39 @@
 #pragma once
 
+#include <xolotl/util/MathUtils.h>
+
 namespace xolotl
 {
 namespace core
 {
 namespace network
 {
+namespace psi
+{
+KOKKOS_INLINE_FUNCTION
+IReactionNetwork::AmountType
+getMaxHePerV(IReactionNetwork::AmountType amtV, double ratio) noexcept
+{
+    using AmountType = IReactionNetwork::AmountType;
+
+	/**
+	 * The maximum number of helium atoms that can be combined with a
+	 * vacancy cluster with size equal to the index i.
+	 * It could support a mixture of up to nine
+	 * helium atoms with one vacancy.
+	 */
+	constexpr Kokkos::Array<AmountType, 30> maxHePerV = {0, 9, 14, 18, 20, 27,
+		30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101,
+		103, 105, 107, 109, 110, 112, 116};
+
+	if (amtV < maxHePerV.size()) {
+		return maxHePerV[amtV];
+	}
+	return util::max((AmountType)(ratio * amtV),
+		maxHePerV[maxHePerV.size() - 1] + amtV - (AmountType)maxHePerV.size() +
+			1);
+}
+} // namespace psi
 
 template <typename TSpeciesEnum>
 class PSIClusterGenerator :
@@ -36,9 +64,9 @@ public:
 	bool
 	select(const Region& region) const;
 
-	KOKKOS_FUNCTION
-	static AmountType
-	getMaxHePerV(AmountType amtV, double ratio) noexcept;
+	// KOKKOS_FUNCTION
+	// static AmountType
+	// getMaxHePerV(AmountType amtV, double ratio) noexcept;
 
 	template <typename PlsmContext>
 	KOKKOS_INLINE_FUNCTION
@@ -82,9 +110,6 @@ private:
 	AmountType _groupingWidthB;
 	double _hevRatio{4.0};
 };
-
-
-
 
 // template <typename TSpeciesEnum>
 // class PSIClusterGenerator

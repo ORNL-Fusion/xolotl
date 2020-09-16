@@ -96,6 +96,88 @@ struct NumberOfVacancySpecies<PSIFullSpeciesList> :
 {
 };
 
+enum class PSIDeuteriumSpeciesList
+{
+	He,
+    D,
+	V,
+	I
+};
+
+inline const std::string&
+toLabelString(PSIDeuteriumSpeciesList species)
+{
+	static const std::string labelArray[] = {"He", "D", "V", "I"};
+	return labelArray[static_cast<int>(species)];
+}
+
+inline const std::string&
+toNameString(PSIDeuteriumSpeciesList species)
+{
+	static const std::string nameArray[] = {
+		"Helium", "Deuterium", "Vacancy", "Interstitial"};
+	return nameArray[static_cast<int>(species)];
+}
+
+template <>
+struct NumberOfSpecies<PSIDeuteriumSpeciesList> :
+	std::integral_constant<std::size_t, 4>
+{
+};
+
+template <>
+struct NumberOfInterstitialSpecies<PSIDeuteriumSpeciesList> :
+	std::integral_constant<std::size_t, 1>
+{
+};
+
+template <>
+struct NumberOfVacancySpecies<PSIDeuteriumSpeciesList> :
+	std::integral_constant<std::size_t, 1>
+{
+};
+
+enum class PSITritiumSpeciesList
+{
+	He,
+    T,
+	V,
+	I
+};
+
+inline const std::string&
+toLabelString(PSITritiumSpeciesList species)
+{
+	static const std::string labelArray[] = {"He", "T", "V", "I"};
+	return labelArray[static_cast<int>(species)];
+}
+
+inline const std::string&
+toNameString(PSITritiumSpeciesList species)
+{
+	static const std::string nameArray[] = {
+		"Helium", "Tritium", "Vacancy", "Interstitial"};
+	return nameArray[static_cast<int>(species)];
+}
+
+template <>
+struct NumberOfSpecies<PSITritiumSpeciesList> :
+	std::integral_constant<std::size_t, 4>
+{
+};
+
+template <>
+struct NumberOfInterstitialSpecies<PSITritiumSpeciesList> :
+	std::integral_constant<std::size_t, 1>
+{
+};
+
+template <>
+struct NumberOfVacancySpecies<PSITritiumSpeciesList> :
+	std::integral_constant<std::size_t, 1>
+{
+};
+
 enum class PSIHeliumSpeciesList
 {
 	He,

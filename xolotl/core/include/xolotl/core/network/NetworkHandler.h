@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+
 #include <xolotl/core/network/INetworkHandler.h>
 #include <xolotl/options/Options.h>
 
