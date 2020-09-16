@@ -13,6 +13,9 @@ KOKKOS_INLINE_FUNCTION
 double
 PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 {
+    using psi::hasDeuterium;
+    using psi::hasTritium;
+
 	using NetworkType = typename Superclass::NetworkType;
 
 	constexpr double beTableV1[10][7] = {

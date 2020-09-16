@@ -48,6 +48,8 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 {
 	using detail::toIndex;
     using psi::getMaxHePerV;
+    using psi::hasDeuterium;
+    using psi::hasTritium;
 
 	for (auto& r : result) {
 		r = true;
@@ -188,6 +190,8 @@ bool
 PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 {
     using psi::getMaxHePerV;
+    using psi::hasDeuterium;
+    using psi::hasTritium;
 
 	// Remove 0
 	auto isZeroPoint = [](const Region& reg) {
@@ -312,29 +316,6 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 	return true;
 }
 
-// template <typename TSpeciesEnum>
-// KOKKOS_FUNCTION typename PSIClusterGenerator<TSpeciesEnum>::AmountType
-// PSIClusterGenerator<TSpeciesEnum>::getMaxHePerV(
-// 	AmountType amtV, double ratio) noexcept
-// {
-// 	/**
-// 	 * The maximum number of helium atoms that can be combined with a
-// 	 * vacancy cluster with size equal to the index i.
-// 	 * It could support a mixture of up to nine
-// 	 * helium atoms with one vacancy.
-// 	 */
-// 	constexpr Kokkos::Array<AmountType, 30> maxHePerV = {0, 9, 14, 18, 20, 27,
-// 		30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101,
-// 		103, 105, 107, 109, 110, 112, 116};
-
-// 	if (amtV < maxHePerV.size()) {
-// 		return maxHePerV[amtV];
-// 	}
-// 	return util::max((AmountType)(ratio * amtV),
-// 		maxHePerV[maxHePerV.size() - 1] + amtV - (AmountType)maxHePerV.size() +
-// 			1);
-// }
-
 template <typename TSpeciesEnum>
 template <typename PlsmContext>
 KOKKOS_INLINE_FUNCTION
@@ -378,12 +359,12 @@ PSIClusterGenerator<TSpeciesEnum>::getFormationEnergy(
 				return infinity;
 			}
 		}
-		if constexpr (hasDeuterium<Species>) {
+		if constexpr (psi::hasDeuterium<Species>) {
 			if (comp.isOnAxis(Species::D)) {
 				return infinity;
 			}
 		}
-		if constexpr (hasTritium<Species>) {
+		if constexpr (psi::hasTritium<Species>) {
 			if (comp.isOnAxis(Species::T)) {
 				return infinity;
 			}
@@ -433,14 +414,14 @@ PSIClusterGenerator<TSpeciesEnum>::getMigrationEnergy(
 				return heMigration[amtHe];
 			}
 		}
-		if constexpr (hasDeuterium<Species>) {
+		if constexpr (psi::hasDeuterium<Species>) {
 			if (comp.isOnAxis(Species::D)) {
 				if (comp[Species::D] == 1) {
 					return dOneMigrationEnergy;
 				}
 			}
 		}
-		if constexpr (hasTritium<Species>) {
+		if constexpr (psi::hasTritium<Species>) {
 			if (comp.isOnAxis(Species::T)) {
 				if (comp[Species::T] == 1) {
 					return tOneMigrationEnergy;
@@ -495,14 +476,14 @@ PSIClusterGenerator<TSpeciesEnum>::getDiffusionFactor(
 				return heDiffusion[amtHe];
 			}
 		}
-		if constexpr (hasDeuterium<Species>) {
+		if constexpr (psi::hasDeuterium<Species>) {
 			if (comp.isOnAxis(Species::D)) {
 				if (comp[Species::D] == 1) {
 					return dOneDiffusionFactor;
 				}
 			}
 		}
-		if constexpr (hasTritium<Species>) {
+		if constexpr (psi::hasTritium<Species>) {
 			if (comp.isOnAxis(Species::T)) {
 				if (comp[Species::T] == 1) {
 					return tOneDiffusionFactor;
@@ -551,7 +532,7 @@ PSIClusterGenerator<TSpeciesEnum>::getReactionRadius(
 				pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed, (1.0 / 3.0));
 			return impurityRadius + termOne - termTwo;
 		}
-		if constexpr (hasDeuterium<Species>) {
+		if constexpr (psi::hasDeuterium<Species>) {
 			if (comp.isOnAxis(Species::D)) {
 				double FourPi = 4.0 * ::xolotl::core::pi;
 				double aCubed = pow(latticeParameter, 3);
@@ -564,7 +545,7 @@ PSIClusterGenerator<TSpeciesEnum>::getReactionRadius(
 					_hydrogenRadiusFactor;
 			}
 		}
-		if constexpr (hasTritium<Species>) {
+		if constexpr (psi::hasTritium<Species>) {
 			if (comp.isOnAxis(Species::T)) {
 				double FourPi = 4.0 * ::xolotl::core::pi;
 				double aCubed = pow(latticeParameter, 3);

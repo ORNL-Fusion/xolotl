@@ -55,6 +55,9 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 
+    BOOST_REQUIRE(network.hasDeuterium());
+    BOOST_REQUIRE(network.hasTritium());
+
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 156);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 156);
 	// TODO: check it is within a given range?

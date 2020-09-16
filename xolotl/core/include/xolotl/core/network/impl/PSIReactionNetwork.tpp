@@ -33,7 +33,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 				gridPointSolution[i] = 0.0;
 				continue;
 			}
-			if constexpr (hasDeuterium<Species>) {
+			if constexpr (psi::hasDeuterium<Species>) {
 				if (comp.isOnAxis(Species::D)) {
 					// Compute the number of atoms released
 					nBurst[toIndex(Species::D)] += gridPointSolution[i] *
@@ -43,7 +43,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 					continue;
 				}
 			}
-			if constexpr (hasTritium<Species>) {
+			if constexpr (psi::hasTritium<Species>) {
 				if (comp.isOnAxis(Species::T)) {
 					// Compute the number of atoms released
 					nBurst[toIndex(Species::T)] += gridPointSolution[i] *
@@ -58,11 +58,11 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 				// Compute the number of atoms released
 				nBurst[toIndex(Species::He)] +=
 					gridPointSolution[i] * (double)comp[Species::He] * factor;
-				if constexpr (hasDeuterium<Species>) {
+				if constexpr (psi::hasDeuterium<Species>) {
 					nBurst[toIndex(Species::D)] += gridPointSolution[i] *
 						(double)comp[Species::D] * factor;
 				}
-				if constexpr (hasTritium<Species>) {
+				if constexpr (psi::hasTritium<Species>) {
 					nBurst[toIndex(Species::T)] += gridPointSolution[i] *
 						(double)comp[Species::T] * factor;
 				}
@@ -84,14 +84,14 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 				nBurst[toIndex(Species::He)] +=
 					gridPointSolution[i] * (double)j * concFactor * factor;
 			}
-			if constexpr (hasDeuterium<Species>) {
+			if constexpr (psi::hasDeuterium<Species>) {
 				concFactor = clReg.volume() / clReg[Species::D].length();
 				for (auto j : makeIntervalRange(clReg[Species::D])) {
 					nBurst[toIndex(Species::D)] +=
 						gridPointSolution[i] * (double)j * concFactor * factor;
 				}
 			}
-			if constexpr (hasTritium<Species>) {
+			if constexpr (psi::hasTritium<Species>) {
 				concFactor = clReg.volume() / clReg[Species::T].length();
 				for (auto j : makeIntervalRange(clReg[Species::T])) {
 					nBurst[toIndex(Species::T)] +=
@@ -158,10 +158,10 @@ PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 			const auto& clReg = clData.getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
 			auto size = hi[Species::He] + hi[Species::V];
-			if constexpr (hasDeuterium<Species>) {
+			if constexpr (psi::hasDeuterium<Species>) {
 				size += hi[Species::D];
 			}
-			if constexpr (hasTritium<Species>) {
+			if constexpr (psi::hasTritium<Species>) {
 				size += hi[Species::T];
 			}
 			if (size > update.val) {

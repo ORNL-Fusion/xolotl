@@ -10,6 +10,8 @@ namespace core
 {
 namespace network
 {
+namespace psi
+{
 namespace detail
 {
 template <typename TSpeciesEnum>
@@ -21,13 +23,14 @@ template <typename TSpeciesEnum>
 struct HasTritium : std::false_type
 {
 };
-}
+} // namespace detail
 
 template <typename TSpeciesEnum>
 inline constexpr bool hasDeuterium = detail::HasDeuterium<TSpeciesEnum>::value;
 
 template <typename TSpeciesEnum>
 inline constexpr bool hasTritium = detail::HasTritium<TSpeciesEnum>::value;
+} // namespace psi
 
 template <typename TSpeciesEnum>
 class PSIReactionNetwork;
@@ -50,6 +53,8 @@ enum class PSIFullSpeciesList
 	I
 };
 
+namespace psi
+{
 namespace detail
 {
 template <>
@@ -61,7 +66,8 @@ template <>
 struct HasTritium<PSIFullSpeciesList> : std::true_type
 {
 };
-}
+} // namespace detail
+} // namespace psi
 
 inline const std::string&
 toLabelString(PSIFullSpeciesList species)
@@ -99,10 +105,21 @@ struct NumberOfVacancySpecies<PSIFullSpeciesList> :
 enum class PSIDeuteriumSpeciesList
 {
 	He,
-    D,
+	D,
 	V,
 	I
 };
+
+namespace psi
+{
+namespace detail
+{
+template <>
+struct HasDeuterium<PSIDeuteriumSpeciesList> : std::true_type
+{
+};
+} // namespace detail
+} // namespace psi
 
 inline const std::string&
 toLabelString(PSIDeuteriumSpeciesList species)
@@ -140,10 +157,21 @@ struct NumberOfVacancySpecies<PSIDeuteriumSpeciesList> :
 enum class PSITritiumSpeciesList
 {
 	He,
-    T,
+	T,
 	V,
 	I
 };
+
+namespace psi
+{
+namespace detail
+{
+template <>
+struct HasTritium<PSITritiumSpeciesList> : std::true_type
+{
+};
+} // namespace detail
+} // namespace psi
 
 inline const std::string&
 toLabelString(PSITritiumSpeciesList species)
