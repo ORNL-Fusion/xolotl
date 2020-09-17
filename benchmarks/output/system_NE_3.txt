@@ -1,3 +1,4 @@
+#time Xenon_content radius partial_radius partial_bubble_conc partial_size
 0 0 -nan 0 0 0
 0.1 9.8e-06 0.3 0 0 0
 1.1 0.0001078 0.3 0 0 0

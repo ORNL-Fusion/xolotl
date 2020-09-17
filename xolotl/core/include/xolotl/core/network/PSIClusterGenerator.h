@@ -14,7 +14,7 @@ KOKKOS_INLINE_FUNCTION
 IReactionNetwork::AmountType
 getMaxHePerV(IReactionNetwork::AmountType amtV, double ratio) noexcept
 {
-    using AmountType = IReactionNetwork::AmountType;
+	using AmountType = IReactionNetwork::AmountType;
 
 	/**
 	 * The maximum number of helium atoms that can be combined with a

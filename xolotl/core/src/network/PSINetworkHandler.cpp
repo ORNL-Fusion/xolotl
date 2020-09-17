@@ -99,18 +99,18 @@ generatePSIReactionNetwork(const options::Options& options)
 			options);
 	}
 	else if (maxD > 0 && maxT <= 0) {
-        return makePSIReactionNetwork<PSIDeuteriumSpeciesList>(
-            {maxHe, maxD, maxV, maxI},
-            {{refineHe, refineD, refineV, refineI},
-                {groupingWidthHe, groupingWidthD, groupingWidthV, 1}},
-            options);
+		return makePSIReactionNetwork<PSIDeuteriumSpeciesList>(
+			{maxHe, maxD, maxV, maxI},
+			{{refineHe, refineD, refineV, refineI},
+				{groupingWidthHe, groupingWidthD, groupingWidthV, 1}},
+			options);
 	}
 	else if (maxD <= 0 && maxT > 0) {
-        return makePSIReactionNetwork<PSITritiumSpeciesList>(
-            {maxHe, maxT, maxV, maxI},
-            {{refineHe, refineT, refineV, refineI},
-                {groupingWidthHe, groupingWidthT, groupingWidthV, 1}},
-            options);
+		return makePSIReactionNetwork<PSITritiumSpeciesList>(
+			{maxHe, maxT, maxV, maxI},
+			{{refineHe, refineT, refineV, refineI},
+				{groupingWidthHe, groupingWidthT, groupingWidthV, 1}},
+			options);
 	}
 	else {
 		return makePSIReactionNetwork<PSIHeliumSpeciesList>({maxHe, maxV, maxI},

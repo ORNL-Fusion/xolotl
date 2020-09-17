@@ -55,8 +55,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 
-    BOOST_REQUIRE(network.hasDeuterium());
-    BOOST_REQUIRE(network.hasTritium());
+	BOOST_REQUIRE(network.hasDeuterium());
+	BOOST_REQUIRE(network.hasTritium());
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 156);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 156);
@@ -1064,6 +1064,1836 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 2);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
+}
+
+BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 0 2 2" << std::endl
+			  << "process=reaction" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	int argc = 2;
+	char** argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
+	std::string parameterFile = "param.txt";
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
+	opts.readParams(argc, argv);
+
+	using NetworkType = PSIReactionNetwork<PSIHeliumSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	// Get the boundaries from the options
+	// Get the boundaries from the options
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
+	NetworkType network({maxHe, maxV, maxI}, 1, opts);
+
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+
+	BOOST_REQUIRE(!network.hasDeuterium());
+	BOOST_REQUIRE(!network.hasTritium());
+
+	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 35);
+	BOOST_REQUIRE_EQUAL(network.getDOF(), 35);
+	// TODO: check it is within a given range?
+	auto deviceMemorySize = network.getDeviceMemorySize();
+	BOOST_REQUIRE(deviceMemorySize > 350000);
+	BOOST_REQUIRE(deviceMemorySize < 400000);
+
+	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getImpurityRadius(), 0.3, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getInterstitialBias(), 1.15, 0.01);
+
+	BOOST_REQUIRE(network.getEnableStdReaction() == true);
+	BOOST_REQUIRE(network.getEnableReSolution() == false);
+
+	BOOST_REQUIRE_EQUAL(network.getGridSize(), 1);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 35);
+	typename NetworkType::PhaseSpace phaseSpace = network.getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
+
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 3);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 2);
+
+	// Check the single vacancy
+	auto vacancy = network.getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 2);
+
+	// Get the diagonal fill
+	const auto dof = network.getDOF();
+	NetworkType::SparseFillMap knownDFill;
+	knownDFill[0] = {0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18, 20, 21, 23,
+		24, 26, 27, 29, 1, 4, 25, 28, 7, 22, 10, 19, 13, 16};
+	knownDFill[1] = {
+		1, 0, 2, 3, 6, 9, 12, 15, 18, 21, 24, 27, 7, 25, 10, 22, 13, 19, 16};
+	knownDFill[2] = {2, 0, 3, 1, 4, 5, 7, 8, 10, 11, 13, 14, 16, 17, 19, 20, 22,
+		23, 25, 26, 28, 6, 9, 12, 15, 18, 21, 24, 27, 29};
+	knownDFill[3] = {3, 0, 1, 2, 4, 7, 10, 13, 16, 19, 22, 6};
+	knownDFill[4] = {4, 0, 5, 1, 6, 2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
+		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34};
+	knownDFill[5] = {5, 0, 6, 2, 4, 7, 10, 13, 16, 19, 22, 8};
+	knownDFill[6] = {6, 0, 1, 2, 5, 3, 4, 7, 10, 13, 16, 19, 22, 9};
+	knownDFill[7] = {7, 0, 8, 1, 9, 2, 3, 4, 5, 6, 10, 11, 12, 13, 14, 15, 16,
+		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32};
+	knownDFill[8] = {8, 0, 9, 2, 7, 4, 5, 10, 13, 16, 19, 22, 11};
+	knownDFill[9] = {9, 0, 1, 2, 8, 3, 7, 4, 6, 10, 13, 16, 19, 22, 12};
+	knownDFill[10] = {10, 0, 11, 1, 12, 2, 3, 4, 7, 5, 6, 8, 9, 13, 14, 15, 16,
+		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+	knownDFill[11] = {11, 0, 12, 2, 10, 4, 8, 5, 7, 13, 16, 19, 22, 14};
+	knownDFill[12] = {12, 0, 1, 2, 11, 3, 10, 4, 9, 6, 7, 13, 16, 19, 22, 15};
+	knownDFill[13] = {13, 0, 14, 1, 15, 2, 3, 4, 10, 5, 6, 7, 8, 9, 11, 12, 16,
+		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
+	knownDFill[14] = {14, 0, 15, 2, 13, 4, 11, 5, 10, 7, 8, 16, 19, 22, 17};
+	knownDFill[15] = {
+		15, 0, 1, 2, 14, 3, 13, 4, 12, 6, 10, 7, 9, 16, 19, 22, 18};
+	knownDFill[16] = {16, 0, 17, 1, 18, 2, 3, 4, 13, 5, 6, 7, 10, 8, 9, 11, 12,
+		14, 15, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
+	knownDFill[17] = {17, 0, 18, 2, 16, 4, 14, 5, 13, 7, 11, 8, 10, 19, 22, 20};
+	knownDFill[18] = {
+		18, 0, 1, 2, 17, 3, 16, 4, 15, 6, 13, 7, 12, 9, 10, 19, 22, 21};
+	knownDFill[19] = {19, 0, 20, 1, 21, 2, 3, 4, 16, 5, 6, 7, 13, 8, 9, 10, 11,
+		12, 14, 15, 17, 18, 22, 23, 24, 25, 26, 27};
+	knownDFill[20] = {
+		20, 0, 21, 2, 19, 4, 17, 5, 16, 7, 14, 8, 13, 10, 11, 22, 23};
+	knownDFill[21] = {
+		21, 0, 1, 2, 20, 3, 19, 4, 18, 6, 16, 7, 15, 9, 13, 10, 12, 22, 24};
+	knownDFill[22] = {22, 0, 23, 1, 24, 2, 3, 4, 19, 5, 6, 7, 16, 8, 9, 10, 13,
+		11, 12, 14, 15, 17, 18, 20, 21, 25};
+	knownDFill[23] = {
+		23, 0, 24, 2, 22, 4, 20, 5, 19, 7, 17, 8, 16, 10, 14, 11, 13, 26};
+	knownDFill[24] = {
+		24, 0, 1, 2, 23, 3, 22, 4, 21, 6, 19, 7, 18, 9, 16, 10, 15, 12, 13, 27};
+	knownDFill[25] = {25, 0, 26, 1, 27, 2, 4, 22, 7, 19, 10, 16, 13};
+	knownDFill[26] = {26, 0, 27, 2, 25, 4, 23, 5, 22, 7, 20, 8, 19, 10, 17, 11,
+		16, 13, 14, 28};
+	knownDFill[27] = {27, 0, 1, 2, 26, 4, 24, 6, 22, 7, 21, 9, 19, 10, 18, 12,
+		16, 13, 15, 29};
+	knownDFill[28] = {
+		28, 0, 29, 2, 4, 25, 26, 7, 22, 23, 8, 10, 19, 20, 11, 13, 16, 17, 14};
+	knownDFill[29] = {
+		29, 0, 2, 28, 4, 27, 7, 24, 9, 22, 10, 21, 12, 19, 13, 18, 15, 16, 30};
+	knownDFill[30] = {30, 4, 28, 29, 7, 25, 26, 27, 10, 22, 23, 24, 11, 12, 13,
+		19, 20, 21, 14, 15, 16, 17, 18, 31};
+	knownDFill[31] = {31, 4, 30, 7, 28, 29, 10, 25, 26, 27, 13, 22, 23, 24, 14,
+		15, 16, 19, 20, 21, 17, 18, 32};
+	knownDFill[32] = {32, 4, 31, 7, 30, 10, 28, 29, 13, 25, 26, 27, 16, 22, 23,
+		24, 17, 18, 19, 20, 21, 33};
+	knownDFill[33] = {33, 4, 32, 7, 31, 10, 30, 13, 28, 29, 16, 25, 26, 27, 19,
+		22, 23, 24, 20, 21, 34};
+	knownDFill[34] = {34, 4, 33, 7, 32, 10, 31, 13, 30, 16, 28, 29, 19, 25, 26,
+		27, 22, 23, 24};
+
+	NetworkType::SparseFillMap dfill;
+	auto nPartials = network.getDiagonalFill(dfill);
+	BOOST_REQUIRE_EQUAL(nPartials, 730);
+	for (NetworkType::IndexType i = 0; i < dof; i++) {
+		auto rowIter = dfill.find(i);
+		if (rowIter != dfill.end()) {
+			const auto& row = rowIter->second;
+			BOOST_REQUIRE_EQUAL(row.size(), knownDFill[i].size());
+		}
+	}
+
+	// Set temperatures
+	std::vector<double> temperatures = {1000.0};
+	network.setTemperatures(temperatures);
+	network.syncClusterDataOnHost();
+	NetworkType::IndexType gridId = 0;
+
+	// Check the largest rate
+	BOOST_REQUIRE_CLOSE(network.getLargestRate(), 621745254537, 0.01);
+
+	// Create a concentration vector where every field is at 1.0
+	std::vector<double> concentrations(dof + 1, 1.0);
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(concentrations.data(), dof + 1);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof + 1);
+	deep_copy(dConcs, hConcs);
+
+	// Check the total concentrations
+	BOOST_REQUIRE_CLOSE(
+		network.getTotalConcentration(dConcs, Spec::He, 2), 28.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		network.getTotalAtomConcentration(dConcs, Spec::V, 1), 40.0, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getTotalRadiusConcentration(dConcs, Spec::I, 1),
+		0.356278, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		network.getTotalTrappedAtomConcentration(dConcs, Spec::He, 1), 150.0,
+		0.01);
+
+	// Check the left side rate of 0th cluster
+	BOOST_REQUIRE_CLOSE(
+		network.getLeftSideRate(dConcs, 0, gridId), 6542589997348, 0.01);
+
+	// Create a flux vector where every field is at 0.0
+	std::vector<double> fluxes(dof + 1, 0.0);
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hFluxes = HostUnmanaged(fluxes.data(), dof + 1);
+	auto dFluxes = Kokkos::View<double*>("Fluxes", dof + 1);
+	deep_copy(dFluxes, hFluxes);
+
+	// Check the fluxes computation
+	std::vector<double> knownFluxes = {-6.59922e+12, -2.1875e+12, -3.06298e+11,
+		-7.17265e+11, -9.26817e+11, -4.20286e+09, -6.78353e+11, -1.29322e+11,
+		1.39983e+10, -6.5855e+11, 2.66351e+11, 2.15857e+10, -6.50319e+11,
+		2.12631e+11, 3.1882e+10, -6.39172e+11, 2.99265e+11, 3.97195e+10,
+		-6.30701e+11, 5.90056e+11, 3.99174e+10, -6.30487e+11, 5.85758e+11,
+		3.9949e+10, -6.30453e+11, 6.02049e+11, 3.99806e+10, -6.30419e+11,
+		4.5238e+11, -3.30296e+11, 1.66226e+11, 1.02969e+11, 8.19748e+10,
+		7.84045e+10, 9.48781e+10, 0};
+	network.computeAllFluxes(dConcs, dFluxes, gridId);
+	deep_copy(hFluxes, dFluxes);
+	for (NetworkType::IndexType i = 0; i < dof + 1; i++) {
+		BOOST_REQUIRE_CLOSE(fluxes[i], knownFluxes[i], 0.01);
+	}
+
+	// Check the partials computation
+	std::vector<double> knownPartials = {-8.40783e+12, -2.30258e+10,
+		-3.30546e+11, -2.90598e+11, -3.30546e+11, -2.90598e+11, -3.30546e+11,
+		-2.90567e+11, -3.30546e+11, -2.90369e+11, -3.30546e+11, -2.82532e+11,
+		-3.30546e+11, -2.72235e+11, -3.30546e+11, -2.64648e+11, -3.30546e+11,
+		-2.46478e+11, -3.30546e+11, -3.30546e+11, 2.67577e+11, 9.09818e+10,
+		5.573e+10, 7.91737e+10, 6.43611e+10, 2.81168e+10, 3.43955e+10,
+		1.2623e+10, 6.74686e+10, 6.54704e+10, -2.96676e+12, 1.24349e+12,
+		-2.67574e+11, -2.99909e+11, -2.99909e+11, -2.99909e+11, -2.99909e+11,
+		-2.99909e+11, -2.99909e+11, -2.99909e+11, -2.99909e+11, -2.99909e+11,
+		2.823e+10, 6.75752e+10, 2.31623e+10, 3.92905e+10, 4.66819e+10,
+		2.9177e+10, 8.09113e+10, -6.37632e+11, 3.99456e+10, 3.31328e+11,
+		-2.67574e+11, -3.52546e+10, -1.74325e+06, -1.82039e+10, -1.74325e+06,
+		-7.59033e+09, -1.74325e+06, -1.02994e+10, -1.74325e+06, -7.84056e+09,
+		-1.74325e+06, -2.01138e+08, -1.74325e+06, -3.4839e+07, -1.74325e+06,
+		-3.35622e+06, -1.74325e+06, -1.74325e+06, 0.589587, 7.13287e-10,
+		1.64575e-21, 5.44315e-26, 2.53901e-30, 8.3304e-34, 5.3915e-39,
+		1.30973e-42, 3.63678e-47, -7.17268e+11, -3.30546e+11, -2.99909e+11,
+		6.973e+06, -3.85224e+10, -1.98028e+10, -8.23174e+09, -1.11472e+10,
+		-8.47066e+09, -2.13572e+08, -3.39905e+07, 4.34409e-20, -1.7114e+12,
+		2.90598e+11, 2.55347e+11, 2.99909e+11, 2.61387e+11, -3.52546e+10,
+		-3.85224e+10, -7.43475e+10, -3.52518e+10, -3.85224e+10, -6.17954e+10,
+		-3.52518e+10, -3.85224e+10, -6.64033e+10, -3.52518e+10, -3.85224e+10,
+		-6.39522e+10, -3.52518e+10, -3.85224e+10, -5.4645e+10, -3.52518e+10,
+		-3.85224e+10, -5.51305e+10, -3.52518e+10, -3.85224e+10, -5.573e+10,
+		-3.52518e+10, -3.85224e+10, -3.52518e+10, -3.85224e+10, -3.85224e+10,
+		-3.85224e+10, -3.85224e+10, -3.85224e+10, 0.168546, -3.70003e+11,
+		3.99475e+10, 3.30546e+11, 3.52528e+10, 2.77661e+06, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07,
+		0.000645754, -7.16877e+11, -3.30546e+11, -2.99909e+11, 1.74325e+06,
+		1.74325e+06, 3.85224e+10, 0, -1.98028e+10, -8.23174e+09, -1.11472e+10,
+		-8.47066e+09, -2.13572e+08, -3.39905e+07, 8.5372e-13, -9.18826e+11,
+		2.90598e+11, 2.72397e+11, 2.99909e+11, 2.80106e+11, -1.82039e+10,
+		-1.98028e+10, 1.18575e+11, -1.8201e+10, -1.98028e+10, -3.67666e+10,
+		-1.8201e+10, -1.98028e+10, -4.09504e+10, -1.8201e+10, -1.98028e+10,
+		-3.79329e+10, -1.8201e+10, -1.98028e+10, -2.78409e+10, -1.8201e+10,
+		-1.98028e+10, -2.79591e+10, -1.8201e+10, -1.98028e+10, -2.823e+10,
+		-1.8201e+10, -1.98028e+10, -1.8201e+10, -1.98028e+10, -1.98028e+10,
+		-1.98028e+10, -1.98028e+10, -3.70003e+11, 3.99475e+10, 3.30546e+11,
+		1.82022e+10, 2.92726e+06, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10,
+		-7.83737e+09, -1.97888e+08, -3.15332e+07, 0.0122619, -7.16877e+11,
+		-3.30546e+11, -2.99909e+11, 1.74325e+06, 1.74325e+06, 1.98028e+10, 0, 0,
+		3.85224e+10, -8.23174e+09, -1.11472e+10, -8.47066e+09, -2.13572e+08,
+		-3.39905e+07, 3.09165e-14, -4.42322e+11, 2.90598e+11, 2.83011e+11,
+		2.99909e+11, 2.91677e+11, -7.59033e+09, -8.23174e+09, 1.31121e+10,
+		3.81409e+10, -7.58729e+09, -8.23174e+09, -7.58729e+09, -8.23174e+09,
+		-2.55803e+10, -7.58729e+09, -8.23174e+09, -2.22096e+10, -7.58729e+09,
+		-8.23174e+09, -1.16336e+10, -7.58729e+09, -8.23174e+09, -1.15399e+10,
+		-7.58729e+09, -8.23174e+09, -1.16223e+10, -7.58729e+09, -8.23174e+09,
+		-7.58729e+09, -8.23174e+09, -8.23174e+09, -8.23174e+09, -3.70003e+11,
+		3.99475e+10, 3.30546e+11, 7.58858e+09, 3.03294e+06, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07,
+		0.01763, -7.16877e+11, -3.30546e+11, -2.99909e+11, 1.74325e+06,
+		1.74325e+06, 8.23174e+09, 0, 0, 3.85224e+10, 1.98028e+10, 0,
+		-1.11472e+10, -8.47066e+09, -2.13572e+08, -3.39905e+07, 6.37192e-07,
+		-5.50159e+11, 2.90598e+11, 2.80302e+11, 2.99909e+11, 2.88762e+11,
+		-1.02994e+10, -1.11472e+10, -4.60539e+09, 3.62176e+10, -1.02963e+10,
+		-1.11472e+10, 6.13013e+10, -1.02963e+10, -1.11472e+10, -1.02963e+10,
+		-1.11472e+10, -2.62623e+10, -1.02963e+10, -1.11472e+10, -1.55556e+10,
+		-1.02963e+10, -1.11472e+10, -1.55021e+10, -1.02963e+10, -1.11472e+10,
+		-1.56242e+10, -1.02963e+10, -1.11472e+10, -1.02963e+10, -1.11472e+10,
+		-1.11472e+10, -3.70003e+11, 3.99475e+10, 3.30546e+11, 1.02976e+10,
+		3.11707e+06, 0, 3.52518e+10, 7.58729e+09, 0, 0, 1.8201e+10,
+		-7.83737e+09, -1.97888e+08, -3.15332e+07, 3.74213, -7.16877e+11,
+		-3.30546e+11, -2.99909e+11, 1.74325e+06, 1.74325e+06, 1.11472e+10, 0, 0,
+		3.85224e+10, 8.23174e+09, 0, 0, 1.98028e+10, -8.47066e+09, -2.13572e+08,
+		-3.39905e+07, 0.00019075, -4.39973e+11, 2.90598e+11, 2.82761e+11,
+		2.99909e+11, 2.91439e+11, -7.84056e+09, -8.47066e+09, 2.42996e+09,
+		4.01199e+10, -7.83737e+09, -8.47066e+09, -1.16363e+09, 1.45596e+10,
+		-7.83737e+09, -8.47066e+09, -7.83737e+09, -8.47066e+09, -7.83737e+09,
+		-8.47066e+09, -1.18278e+10, -7.83737e+09, -8.47066e+09, -1.17238e+10,
+		-7.83737e+09, -8.47066e+09, -1.18025e+10, -7.83737e+09, -8.47066e+09,
+		-7.83737e+09, -8.47066e+09, -3.70003e+11, 3.99475e+10, 3.30546e+11,
+		7.83882e+09, 3.18812e+06, 0, 3.52518e+10, 1.02963e+10, 0, 0, 1.8201e+10,
+		7.58729e+09, 0, -1.97888e+08, -3.15332e+07, 0.269839, -7.16877e+11,
+		-3.30546e+11, -2.99909e+11, 1.74325e+06, 1.74325e+06, 8.47066e+09, 0, 0,
+		3.85224e+10, 1.11472e+10, 0, 0, 1.98028e+10, 8.23174e+09, 0,
+		-2.13572e+08, -3.39905e+07, 9.67471e-05, -1.28161e+11, 2.90598e+11,
+		2.904e+11, 2.99909e+11, 2.99696e+11, -2.01138e+08, -2.13572e+08,
+		9.32844e+09, 5.21457e+10, -1.97888e+08, -2.13572e+08, 1.31094e+10,
+		2.53948e+10, -1.97888e+08, -2.13572e+08, 3.16209e+10, -1.97888e+08,
+		-2.13572e+08, -1.97888e+08, -2.13572e+08, -1.97888e+08, -2.13572e+08,
+		-3.38777e+08, -1.97888e+08, -2.13572e+08, -2.96092e+08, -1.97888e+08,
+		-2.13572e+08, -3.70003e+11, 3.99475e+10, 3.30546e+11, 1.99395e+08,
+		3.25022e+06, 0, 3.52518e+10, 7.83737e+09, 0, 0, 1.8201e+10, 1.02963e+10,
+		0, 0, 7.58729e+09, -3.15332e+07, 80.2838, -7.16877e+11, -3.30546e+11,
+		-2.99909e+11, 1.74325e+06, 1.74325e+06, 2.13572e+08, 0, 0, 3.85224e+10,
+		8.47066e+09, 0, 0, 1.98028e+10, 1.11472e+10, 0, 0, 8.23174e+09,
+		-3.39905e+07, 0.000567812, -1.23094e+11, 2.90598e+11, 2.90567e+11,
+		2.99909e+11, 2.99875e+11, -3.4839e+07, -3.39905e+07, -4.85626e+08,
+		5.43061e+10, -3.15332e+07, -3.39905e+07, 9.97379e+09, 2.62091e+10,
+		-3.15332e+07, -3.39905e+07, 1.40405e+10, 1.00783e+10, -3.15332e+07,
+		-3.39905e+07, -3.15332e+07, -3.39905e+07, -3.15332e+07, -3.39905e+07,
+		-3.15332e+07, -3.39905e+07, 11.1828, -3.70003e+11, 3.99475e+10,
+		3.30546e+11, 3.30957e+07, 3.30575e+06, 0, 3.52518e+10, 1.97888e+08, 0,
+		0, 1.8201e+10, 7.83737e+09, 0, 0, 7.58729e+09, 1.02963e+10, 0, 1.61525,
+		-7.16877e+11, -3.30546e+11, -2.99909e+11, 1.74325e+06, 1.74325e+06,
+		3.39905e+07, 0, 0, 3.85224e+10, 2.13572e+08, 0, 0, 1.98028e+10,
+		8.47066e+09, 0, 0, 8.23174e+09, 1.11472e+10, 0, 0.000428787,
+		-1.23309e+11, 2.90598e+11, 2.90598e+11, 2.99909e+11, 2.99909e+11,
+		-3.35622e+06, -5.99321e+08, 5.51307e+10, -3.89095e+08, 2.75449e+10,
+		1.05873e+10, 1.04071e+10, 4.37128e+10, -3.69972e+11, 3.99475e+10,
+		3.30546e+11, 1.61296e+06, 3.35622e+06, 0, 3.52518e+10, 3.15332e+07,
+		3.15332e+07, 0, 1.8201e+10, 1.97888e+08, 0, 0, 7.58729e+09, 7.83737e+09,
+		0, 0, 1.02963e+10, 10.5114, -7.16843e+11, -3.30546e+11, -2.99909e+11,
+		1.74325e+06, 1.74325e+06, 0, 3.85224e+10, 3.39905e+07, 3.39905e+07, 0,
+		1.98028e+10, 2.13572e+08, 0, 0, 8.23174e+09, 8.47066e+09, 0, 0,
+		1.11472e+10, 0.000318953, -7.91755e+10, 3.30546e+11, 3.30546e+11,
+		-1.74325e+06, 5.573e+10, 5.573e+10, 3.52518e+10, 2.79591e+10,
+		2.79906e+10, 1.8201e+10, 3.15332e+07, 1.16336e+10, 1.18315e+10,
+		7.58729e+09, 1.97888e+08, 2.62836e+10, 2.62836e+10, 1.02963e+10,
+		7.83737e+09, -4.16721e+11, -3.30546e+11, 1.74325e+06, 1.74325e+06, 0,
+		3.85224e+10, 0, 1.98028e+10, 3.39905e+07, 3.39905e+07, 0, 8.23174e+09,
+		2.13572e+08, 2.13572e+08, 0, 1.11472e+10, 8.47066e+09, 0, 0.00691469,
+		-7.77042e+10, 3.52518e+10, 3.52518e+10, 3.85224e+10, 4.64311e+10,
+		2.823e+10, 1.8201e+10, 1.98028e+10, 1.91272e+10, 1.16054e+10,
+		7.58729e+09, 8.23174e+09, 3.15332e+07, 3.39905e+07, 2.58519e+10,
+		1.5967e+10, 1.02963e+10, 1.11472e+10, 1.97888e+08, 2.13572e+08,
+		6.18652e+10, 7.83737e+09, 8.47066e+09, 0.000243671, -6.6557e+10, 0,
+		3.85224e+10, 1.8201e+10, 1.8201e+10, 1.98028e+10, 1.92096e+10,
+		1.16223e+10, 7.58729e+09, 8.23174e+09, 3.69456e+10, 1.55677e+10,
+		1.02963e+10, 1.11472e+10, 3.15332e+07, 3.39905e+07, 2.81359e+10,
+		1.22393e+10, 7.83737e+09, 8.47066e+09, 1.97888e+08, 2.13572e+08,
+		0.0834275, -5.83252e+10, 0, 3.85224e+10, 0, 1.98028e+10, 1.5819e+10,
+		7.58729e+09, 8.23174e+09, 3.70677e+10, 1.56242e+10, 1.02963e+10,
+		1.11472e+10, 2.80318e+10, 1.17893e+10, 7.83737e+09, 8.47066e+09,
+		3.15332e+07, 3.39905e+07, 1.57001e+09, 1.97888e+08, 2.13572e+08,
+		0.0438128, -3.85224e+10, 0, 3.85224e+10, 1.98028e+10, 1.98028e+10,
+		8.23174e+09, 8.23174e+09, 2.14435e+10, 1.02963e+10, 1.11472e+10,
+		2.81106e+10, 1.18025e+10, 7.83737e+09, 8.47066e+09, 7.50387e+08,
+		4.04451e+08, 1.97888e+08, 2.13572e+08, 3.15332e+07, 3.39905e+07,
+		0.168546, -0.168546, 3.85224e+10, 3.85224e+10, 1.98028e+10, 1.98028e+10,
+		8.23174e+09, 8.23174e+09, 1.11472e+10, 1.11472e+10, 1.6308e+10,
+		7.83737e+09, 8.47066e+09, 7.07552e+08, 2.96092e+08, 1.97888e+08,
+		2.13572e+08, 2.51275e+08, 3.15332e+07, 3.39905e+07};
+
+	auto vals = Kokkos::View<double*>("solverPartials", nPartials);
+	network.computeAllPartials(dConcs, vals, gridId);
+	auto hPartials = create_mirror_view(vals);
+	deep_copy(hPartials, vals);
+	int startingIdx = 0;
+	for (NetworkType::IndexType i = 0; i < dof; i++) {
+		auto rowIter = dfill.find(i);
+		if (rowIter != dfill.end()) {
+			const auto& row = rowIter->second;
+			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
+				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
+				auto index = std::distance(row.begin(), iter);
+				BOOST_REQUIRE_CLOSE(hPartials[startingIdx + index],
+					knownPartials[startingIdx + j], 0.01);
+			}
+			startingIdx += row.size();
+		}
+	}
+
+	// Check clusters
+	NetworkType::Composition comp = NetworkType::Composition::zero();
+	comp[Spec::V] = 1;
+	auto cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 505312.69, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 1800000000000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 1.3, 0.01);
+	const auto& reg0 = cluster.getRegion();
+	Composition lo = reg0.getOrigin();
+	Composition hi = reg0.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
+	auto momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 2);
+
+	comp[Spec::V] = 0;
+	comp[Spec::I] = 1;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 78358278338, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 88000000000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 0.01, 0.01);
+	const auto& reg1 = cluster.getRegion();
+	lo = reg1.getOrigin();
+	hi = reg1.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 2);
+
+	comp[Spec::I] = 0;
+	comp[Spec::He] = 5;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 16);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 1242214406, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 5000000000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 0.12, 0.01);
+	const auto& reg2 = cluster.getRegion();
+	lo = reg2.getOrigin();
+	hi = reg2.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 5);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 6);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 2);
+
+	comp[Spec::He] = 4;
+	comp[Spec::V] = 1;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 14);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 14.8829, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(gridId), 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 0.0, 0.01);
+	BOOST_REQUIRE_EQUAL(
+		cluster.getMigrationEnergy(), std::numeric_limits<double>::infinity());
+	const auto& reg3 = cluster.getRegion();
+	lo = reg3.getOrigin();
+	hi = reg3.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 4);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 5);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 2);
+}
+
+BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 1 0 1 1" << std::endl
+			  << "process=reaction" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	int argc = 2;
+	char** argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
+	std::string parameterFile = "param.txt";
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
+	opts.readParams(argc, argv);
+
+	using NetworkType = PSIReactionNetwork<PSIDeuteriumSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	// Get the boundaries from the options
+	// Get the boundaries from the options
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
+	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
+	NetworkType network({maxHe, maxD, maxV, maxI}, 1, opts);
+
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+
+	BOOST_REQUIRE(network.hasDeuterium());
+	BOOST_REQUIRE(!network.hasTritium());
+
+	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 80);
+	BOOST_REQUIRE_EQUAL(network.getDOF(), 80);
+	// TODO: check it is within a given range?
+	auto deviceMemorySize = network.getDeviceMemorySize();
+	BOOST_REQUIRE(deviceMemorySize > 1000000);
+	BOOST_REQUIRE(deviceMemorySize < 1500000);
+
+	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getImpurityRadius(), 0.3, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getInterstitialBias(), 1.15, 0.01);
+
+	BOOST_REQUIRE(network.getEnableStdReaction() == true);
+	BOOST_REQUIRE(network.getEnableReSolution() == false);
+
+	BOOST_REQUIRE_EQUAL(network.getGridSize(), 1);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 80);
+	typename NetworkType::PhaseSpace phaseSpace = network.getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
+
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 4);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 3);
+
+	// Check the single vacancy
+	auto vacancy = network.getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 1);
+
+	// Get the diagonal fill
+	const auto dof = network.getDOF();
+	NetworkType::SparseFillMap knownDFill;
+	knownDFill[0] = {
+		0, 1, 3, 10, 18, 26, 34, 42, 50, 58, 66, 9, 65, 17, 57, 25, 49, 33, 41};
+	knownDFill[1] = {1, 0, 2, 9, 17, 25, 33, 41, 49, 57, 65, 3, 10, 18, 26, 34,
+		42, 50, 58, 66};
+	knownDFill[2] = {2, 0, 3, 1, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 18, 19, 20,
+		21, 22, 23, 26, 27, 28, 29, 30, 31, 34, 35, 36, 37, 38, 39, 42, 43, 44,
+		45, 46, 47, 50, 51, 52, 53, 54, 55, 58, 59, 60, 61, 62, 63, 66, 67, 68,
+		69, 70, 71, 73, 74, 75, 76, 77, 78, 8, 16, 24, 32, 40, 48, 56, 64, 72,
+		79};
+	knownDFill[3] = {3, 0, 1, 2, 9, 17, 25, 33, 41, 49, 57, 4, 11};
+	knownDFill[4] = {4, 2, 3, 9, 17, 25, 33, 41, 49, 57, 5, 12};
+	knownDFill[5] = {5, 2, 4, 9, 17, 25, 33, 41, 49, 57, 6, 13};
+	knownDFill[6] = {6, 2, 5, 9, 17, 25, 33, 41, 49, 57, 7, 14};
+	knownDFill[7] = {7, 2, 6, 9, 17, 25, 33, 41, 49, 57, 8, 15};
+	knownDFill[8] = {8, 2, 7, 9, 17, 25, 33, 41, 49, 57, 16};
+	knownDFill[9] = {9, 0, 10, 1, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17,
+		18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+		36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+		54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71,
+		72, 73, 74, 75, 76, 77, 78, 79};
+	knownDFill[10] = {10, 0, 1, 9, 2, 17, 25, 33, 41, 49, 57, 11, 18};
+	knownDFill[11] = {11, 2, 10, 3, 9, 17, 25, 33, 41, 49, 57, 12, 19};
+	knownDFill[12] = {12, 2, 11, 4, 9, 17, 25, 33, 41, 49, 57, 13, 20};
+	knownDFill[13] = {13, 2, 12, 5, 9, 17, 25, 33, 41, 49, 57, 14, 21};
+	knownDFill[14] = {14, 2, 13, 6, 9, 17, 25, 33, 41, 49, 57, 15, 22};
+	knownDFill[15] = {15, 2, 14, 7, 9, 17, 25, 33, 41, 49, 57, 16, 23};
+	knownDFill[16] = {16, 2, 15, 8, 9, 17, 25, 33, 41, 49, 57, 24};
+	knownDFill[17] = {17, 0, 18, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+		16, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+		36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+		54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64};
+	knownDFill[18] = {18, 0, 1, 17, 2, 9, 10, 25, 33, 41, 49, 57, 19, 26};
+	knownDFill[19] = {19, 2, 18, 3, 17, 9, 11, 25, 33, 41, 49, 57, 20, 27};
+	knownDFill[20] = {20, 2, 19, 4, 17, 9, 12, 25, 33, 41, 49, 57, 21, 28};
+	knownDFill[21] = {21, 2, 20, 5, 17, 9, 13, 25, 33, 41, 49, 57, 22, 29};
+	knownDFill[22] = {22, 2, 21, 6, 17, 9, 14, 25, 33, 41, 49, 57, 23, 30};
+	knownDFill[23] = {23, 2, 22, 7, 17, 9, 15, 25, 33, 41, 49, 57, 24, 31};
+	knownDFill[24] = {24, 2, 23, 8, 17, 9, 16, 25, 33, 41, 49, 57, 32};
+	knownDFill[25] = {25, 0, 26, 1, 3, 4, 5, 6, 7, 8, 9, 17, 10, 11, 12, 13, 14,
+		15, 16, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+		36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+		54, 55, 56};
+	knownDFill[26] = {26, 0, 1, 25, 2, 9, 18, 10, 17, 33, 41, 49, 27, 34};
+	knownDFill[27] = {27, 2, 26, 3, 25, 9, 19, 11, 17, 33, 41, 49, 28, 35};
+	knownDFill[28] = {28, 2, 27, 4, 25, 9, 20, 12, 17, 33, 41, 49, 29, 36};
+	knownDFill[29] = {29, 2, 28, 5, 25, 9, 21, 13, 17, 33, 41, 49, 30, 37};
+	knownDFill[30] = {30, 2, 29, 6, 25, 9, 22, 14, 17, 33, 41, 49, 31, 38};
+	knownDFill[31] = {31, 2, 30, 7, 25, 9, 23, 15, 17, 33, 41, 49, 32, 39};
+	knownDFill[32] = {32, 2, 31, 8, 25, 9, 24, 16, 17, 33, 41, 49, 40};
+	knownDFill[33] = {33, 0, 34, 1, 3, 4, 5, 6, 7, 8, 9, 25, 10, 11, 12, 13, 14,
+		15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 35,
+		36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48};
+	knownDFill[34] = {34, 0, 1, 33, 2, 9, 26, 10, 25, 17, 18, 41, 35, 42};
+	knownDFill[35] = {35, 2, 34, 3, 33, 9, 27, 11, 25, 17, 19, 41, 36, 43};
+	knownDFill[36] = {36, 2, 35, 4, 33, 9, 28, 12, 25, 17, 20, 41, 37, 44};
+	knownDFill[37] = {37, 2, 36, 5, 33, 9, 29, 13, 25, 17, 21, 41, 38, 45};
+	knownDFill[38] = {38, 2, 37, 6, 33, 9, 30, 14, 25, 17, 22, 41, 39, 46};
+	knownDFill[39] = {39, 2, 38, 7, 33, 9, 31, 15, 25, 17, 23, 41, 40, 47};
+	knownDFill[40] = {40, 2, 39, 8, 33, 9, 32, 16, 25, 17, 24, 41, 48};
+	knownDFill[41] = {41, 0, 42, 1, 3, 4, 5, 6, 7, 8, 9, 33, 10, 11, 12, 13, 14,
+		15, 16, 17, 25, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32,
+		34, 35, 36, 37, 38, 39, 40, 49};
+	knownDFill[42] = {42, 0, 1, 41, 2, 9, 34, 10, 33, 17, 26, 18, 25, 43, 50};
+	knownDFill[43] = {43, 2, 42, 3, 41, 9, 35, 11, 33, 17, 27, 19, 25, 44, 51};
+	knownDFill[44] = {44, 2, 43, 4, 41, 9, 36, 12, 33, 17, 28, 20, 25, 45, 52};
+	knownDFill[45] = {45, 2, 44, 5, 41, 9, 37, 13, 33, 17, 29, 21, 25, 46, 53};
+	knownDFill[46] = {46, 2, 45, 6, 41, 9, 38, 14, 33, 17, 30, 22, 25, 47, 54};
+	knownDFill[47] = {47, 2, 46, 7, 41, 9, 39, 15, 33, 17, 31, 23, 25, 48, 55};
+	knownDFill[48] = {48, 2, 47, 8, 41, 9, 40, 16, 33, 17, 32, 24, 25, 56};
+	knownDFill[49] = {49, 0, 50, 1, 3, 4, 5, 6, 7, 8, 9, 41, 10, 11, 12, 13, 14,
+		15, 16, 17, 33, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+		32, 57};
+	knownDFill[50] = {
+		50, 0, 1, 49, 2, 9, 42, 10, 41, 17, 34, 18, 33, 25, 26, 51, 58};
+	knownDFill[51] = {
+		51, 2, 50, 3, 49, 9, 43, 11, 41, 17, 35, 19, 33, 25, 27, 52, 59};
+	knownDFill[52] = {
+		52, 2, 51, 4, 49, 9, 44, 12, 41, 17, 36, 20, 33, 25, 28, 53, 60};
+	knownDFill[53] = {
+		53, 2, 52, 5, 49, 9, 45, 13, 41, 17, 37, 21, 33, 25, 29, 54, 61};
+	knownDFill[54] = {
+		54, 2, 53, 6, 49, 9, 46, 14, 41, 17, 38, 22, 33, 25, 30, 55, 62};
+	knownDFill[55] = {
+		55, 2, 54, 7, 49, 9, 47, 15, 41, 17, 39, 23, 33, 25, 31, 56, 63};
+	knownDFill[56] = {
+		56, 2, 55, 8, 49, 9, 48, 16, 41, 17, 40, 24, 33, 25, 32, 64};
+	knownDFill[57] = {57, 0, 58, 1, 3, 4, 5, 6, 7, 8, 9, 49, 10, 11, 12, 13, 14,
+		15, 16, 17, 41, 18, 19, 20, 21, 22, 23, 24, 25, 33, 65};
+	knownDFill[58] = {
+		58, 0, 1, 57, 2, 9, 50, 10, 49, 17, 42, 18, 41, 25, 34, 26, 33, 59, 66};
+	knownDFill[59] = {59, 2, 58, 3, 57, 9, 51, 11, 49, 17, 43, 19, 41, 25, 35,
+		27, 33, 60, 67};
+	knownDFill[60] = {60, 2, 59, 4, 57, 9, 52, 12, 49, 17, 44, 20, 41, 25, 36,
+		28, 33, 61, 68};
+	knownDFill[61] = {61, 2, 60, 5, 57, 9, 53, 13, 49, 17, 45, 21, 41, 25, 37,
+		29, 33, 62, 69};
+	knownDFill[62] = {62, 2, 61, 6, 57, 9, 54, 14, 49, 17, 46, 22, 41, 25, 38,
+		30, 33, 63, 70};
+	knownDFill[63] = {63, 2, 62, 7, 57, 9, 55, 15, 49, 17, 47, 23, 41, 25, 39,
+		31, 33, 64, 71};
+	knownDFill[64] = {
+		64, 2, 63, 8, 57, 9, 56, 16, 49, 17, 48, 24, 41, 25, 40, 32, 33, 72};
+	knownDFill[65] = {65, 0, 66, 1, 9, 57, 17, 49, 25, 41, 33};
+	knownDFill[66] = {66, 0, 1, 65, 2, 9, 58, 10, 57, 17, 50, 18, 49, 25, 42,
+		26, 41, 33, 34, 67, 73};
+	knownDFill[67] = {67, 2, 66, 9, 59, 11, 57, 17, 51, 19, 49, 25, 43, 27, 41,
+		33, 35, 68, 74};
+	knownDFill[68] = {68, 2, 67, 9, 60, 12, 57, 17, 52, 20, 49, 25, 44, 28, 41,
+		33, 36, 69, 75};
+	knownDFill[69] = {69, 2, 68, 9, 61, 13, 57, 17, 53, 21, 49, 25, 45, 29, 41,
+		33, 37, 70, 76};
+	knownDFill[70] = {70, 2, 69, 9, 62, 14, 57, 17, 54, 22, 49, 25, 46, 30, 41,
+		33, 38, 71, 77};
+	knownDFill[71] = {71, 2, 70, 9, 63, 15, 57, 17, 55, 23, 49, 25, 47, 31, 41,
+		33, 39, 72, 78};
+	knownDFill[72] = {
+		72, 2, 71, 9, 64, 16, 57, 17, 56, 24, 49, 25, 48, 32, 41, 33, 40, 79};
+	knownDFill[73] = {
+		73, 2, 9, 65, 66, 17, 57, 58, 18, 25, 49, 50, 26, 33, 41, 42, 34, 74};
+	knownDFill[74] = {
+		74, 2, 73, 9, 67, 17, 59, 19, 57, 25, 51, 27, 49, 33, 43, 35, 41, 75};
+	knownDFill[75] = {
+		75, 2, 74, 9, 68, 17, 60, 20, 57, 25, 52, 28, 49, 33, 44, 36, 41, 76};
+	knownDFill[76] = {
+		76, 2, 75, 9, 69, 17, 61, 21, 57, 25, 53, 29, 49, 33, 45, 37, 41, 77};
+	knownDFill[77] = {
+		77, 2, 76, 9, 70, 17, 62, 22, 57, 25, 54, 30, 49, 33, 46, 38, 41, 78};
+	knownDFill[78] = {
+		78, 2, 77, 9, 71, 17, 63, 23, 57, 25, 55, 31, 49, 33, 47, 39, 41, 79};
+	knownDFill[79] = {
+		79, 2, 78, 9, 72, 17, 64, 24, 57, 25, 56, 32, 49, 33, 48, 40, 41};
+
+	NetworkType::SparseFillMap dfill;
+	auto nPartials = network.getDiagonalFill(dfill);
+	BOOST_REQUIRE_EQUAL(nPartials, 1546);
+	for (NetworkType::IndexType i = 0; i < dof; i++) {
+		auto rowIter = dfill.find(i);
+		if (rowIter != dfill.end()) {
+			const auto& row = rowIter->second;
+			BOOST_REQUIRE_EQUAL(row.size(), knownDFill[i].size());
+		}
+	}
+
+	// Set temperatures
+	std::vector<double> temperatures = {1000.0};
+	network.setTemperatures(temperatures);
+	network.syncClusterDataOnHost();
+	NetworkType::IndexType gridId = 0;
+
+	// Check the largest rate
+	BOOST_REQUIRE_CLOSE(network.getLargestRate(), 290600199485, 0.01);
+
+	// Create a concentration vector where every field is at 1.0
+	std::vector<double> concentrations(dof + 1, 1.0);
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(concentrations.data(), dof + 1);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof + 1);
+	deep_copy(dConcs, hConcs);
+
+	// Check the total concentrations
+	BOOST_REQUIRE_CLOSE(
+		network.getTotalConcentration(dConcs, Spec::He, 2), 63.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		network.getTotalAtomConcentration(dConcs, Spec::V, 1), 70.0, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getTotalRadiusConcentration(dConcs, Spec::I, 1),
+		0.15785478, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		network.getTotalTrappedAtomConcentration(dConcs, Spec::D, 1), 210.0,
+		0.01);
+
+	// Check the left side rate of 0th cluster
+	BOOST_REQUIRE_CLOSE(
+		network.getLeftSideRate(dConcs, 0, gridId), 2905985128900, 0.01);
+
+	// Create a flux vector where every field is at 0.0
+	std::vector<double> fluxes(dof + 1, 0.0);
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hFluxes = HostUnmanaged(fluxes.data(), dof + 1);
+	auto dFluxes = Kokkos::View<double*>("Fluxes", dof + 1);
+	deep_copy(dFluxes, hFluxes);
+
+	// Check the fluxes computation
+	std::vector<double> knownFluxes = {-2.78438e+12, -3.79208e+11, -2.60097e+11,
+		-3.7e+11, -7.94032e+10, -7.94032e+10, -7.94032e+10, -7.94032e+10,
+		-7.02249e+10, -2.55576e+12, -3.43925e+11, -4.41514e+10, -4.41514e+10,
+		-4.41514e+10, -4.41514e+10, -4.41514e+10, -3.49731e+10, -9.80812e+11,
+		-3.25724e+11, -2.59503e+10, -2.59503e+10, -2.59503e+10, -2.59503e+10,
+		-2.59503e+10, -1.67721e+10, -2.0752e+11, -3.18105e+11, -1.83315e+10,
+		-1.83315e+10, -1.83315e+10, -1.83315e+10, -1.83315e+10, -9.1533e+09,
+		-2.47458e+11, -3.07611e+11, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, 1.34086e+09, -3.09611e+10, -2.91936e+11,
+		7.83737e+09, 7.83737e+09, 7.83737e+09, 7.83737e+09, 7.83737e+09,
+		1.70156e+10, 3.17486e+11, -2.81442e+11, 1.83315e+10, 1.83315e+10,
+		1.83315e+10, 1.83315e+10, 1.83315e+10, 2.75098e+10, 3.25001e+11,
+		-2.73823e+11, 2.59503e+10, 2.59503e+10, 2.59503e+10, 2.59503e+10,
+		2.59503e+10, 3.51286e+10, 3.69715e+11, -2.55622e+11, 4.41514e+10,
+		4.41514e+10, 4.41514e+10, 4.41514e+10, 4.41514e+10, 5.33296e+10,
+		1.91831e+11, 7.94032e+10, 7.94032e+10, 7.94032e+10, 7.94032e+10,
+		7.94032e+10, 8.85814e+10, 0};
+	network.computeAllFluxes(dConcs, dFluxes, gridId);
+	deep_copy(hFluxes, dFluxes);
+	for (NetworkType::IndexType i = 0; i < dof + 1; i++) {
+		BOOST_REQUIRE_CLOSE(fluxes[i], knownFluxes[i], 0.01);
+	}
+
+	// Check the partials computation
+	std::vector<double> knownPartials = {-2.90599e+12, -2.906e+11, -2.90598e+11,
+		-2.90598e+11, -2.90598e+11, -2.90598e+11, -2.90598e+11, -2.90598e+11,
+		-2.90598e+11, -2.90598e+11, -2.90598e+11, 5.573e+10, 5.573e+10,
+		2.79591e+10, 2.79591e+10, 1.16336e+10, 1.16336e+10, 2.62836e+10,
+		2.62836e+10, -3.79208e+11, -2.906e+11, -9.17958e+09, -3.52546e+10,
+		-1.82039e+10, -7.59033e+09, -1.02994e+10, -7.84056e+09, -2.01138e+08,
+		-3.4839e+07, -3.35622e+06, 0, 1.31842e-11, 4.28792e-23, 1.7587e-31,
+		6.89652e-38, 1.73787e-44, 7.33147e-49, 1.05059e-52, 2.28623e-54,
+		-5.50695e+11, 2.90598e+11, 2.8142e+11, -9.17958e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09, -9.17823e+09,
+		-9.17823e+09, -9.17823e+09, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -3.7918e+11,
+		-2.90598e+11, 9.17958e+09, 1.34787e+06, -3.52518e+10, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		1.31832e-11, -8.85814e+10, 0, 9.17823e+09, -3.52518e+10, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		1.31832e-11, -8.85814e+10, 0, 9.17823e+09, -3.52518e+10, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		1.31832e-11, -8.85814e+10, 0, 9.17823e+09, -3.52518e+10, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		1.31832e-11, -8.85814e+10, 0, 9.17823e+09, -3.52518e+10, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		1.31832e-11, -7.94032e+10, 9.17823e+09, 9.17823e+09, -3.52518e+10,
+		-1.8201e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08,
+		-3.15332e+07, 1.31832e-11, -3.04043e+12, 2.90598e+11, 2.55347e+11,
+		-3.52546e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -7.43475e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -6.17954e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -6.64033e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -6.39522e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-5.4645e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -5.51305e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -5.573e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, 10.5114,
+		10.5114, 10.5114, 10.5114, 10.5114, 10.5114, 10.5114, -3.7918e+11,
+		-2.90598e+11, 3.52546e+10, 2.77661e+06, -9.17823e+09, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -8.85814e+10, 0, 9.17823e+09, 3.52518e+10, 0, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -8.85814e+10, 0, 9.17823e+09, 3.52518e+10, 0, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -8.85814e+10, 0, 9.17823e+09, 3.52518e+10, 0, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -8.85814e+10, 0, 9.17823e+09, 3.52518e+10, 0, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -8.85814e+10, 0, 9.17823e+09, 3.52518e+10, 0, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -7.94032e+10, 9.17823e+09, 9.17823e+09, 3.52518e+10, 0,
+		-1.8201e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08,
+		-3.15332e+07, 0.000645754, -1.47041e+12, 2.90598e+11, 2.72397e+11,
+		-1.82039e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, 1.18575e+11, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -3.67666e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -4.09504e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -3.79329e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-2.78409e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -2.79591e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -3.7918e+11, -2.90598e+11, 1.82039e+10, 2.92726e+06,
+		-9.17823e+09, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -8.85814e+10, 0, 9.17823e+09,
+		1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -8.85814e+10, 0, 9.17823e+09,
+		1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -8.85814e+10, 0, 9.17823e+09,
+		1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -8.85814e+10, 0, 9.17823e+09,
+		1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -8.85814e+10, 0, 9.17823e+09,
+		1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -7.94032e+10, 9.17823e+09,
+		9.17823e+09, 1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10,
+		-7.83737e+09, -1.97888e+08, -3.15332e+07, 0.0122619, -6.16283e+11,
+		2.90598e+11, 2.83011e+11, -7.59033e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, 1.31121e+10,
+		3.81409e+10, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -2.55803e+10, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -2.22096e+10,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -1.16336e+10, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-3.79148e+11, -2.90598e+11, 7.59033e+09, 3.03294e+06, -9.17823e+09, 0,
+		3.52518e+10, 1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0,
+		0.01763, -8.85499e+10, 0, 9.17823e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0, 0.01763,
+		-8.85499e+10, 0, 9.17823e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0, 0.01763,
+		-8.85499e+10, 0, 9.17823e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0, 0.01763,
+		-8.85499e+10, 0, 9.17823e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0, 0.01763,
+		-8.85499e+10, 0, 9.17823e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0, 0.01763,
+		-7.93716e+10, 9.17823e+09, 9.17823e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0.01763,
+		-7.10338e+11, 2.90598e+11, 2.80302e+11, -1.02994e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-4.60539e+09, 3.62176e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, 6.13013e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-2.62623e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -3.7895e+11, -2.90598e+11,
+		1.02994e+10, 3.11707e+06, -9.17823e+09, 0, 3.52518e+10, 7.58729e+09, 0,
+		0, 1.8201e+10, -7.83737e+09, 0, 3.74213, -8.8352e+10, 0, 9.17823e+09,
+		1.02963e+10, 0, 0, 3.52518e+10, 7.58729e+09, 0, 0, 1.8201e+10,
+		-7.83737e+09, 0, 3.74213, -8.8352e+10, 0, 9.17823e+09, 1.02963e+10, 0,
+		0, 3.52518e+10, 7.58729e+09, 0, 0, 1.8201e+10, -7.83737e+09, 0, 3.74213,
+		-8.8352e+10, 0, 9.17823e+09, 1.02963e+10, 0, 0, 3.52518e+10,
+		7.58729e+09, 0, 0, 1.8201e+10, -7.83737e+09, 0, 3.74213, -8.8352e+10, 0,
+		9.17823e+09, 1.02963e+10, 0, 0, 3.52518e+10, 7.58729e+09, 0, 0,
+		1.8201e+10, -7.83737e+09, 0, 3.74213, -8.8352e+10, 0, 9.17823e+09,
+		1.02963e+10, 0, 0, 3.52518e+10, 7.58729e+09, 0, 0, 1.8201e+10,
+		-7.83737e+09, 0, 3.74213, -7.91737e+10, 9.17823e+09, 9.17823e+09,
+		1.02963e+10, 0, 0, 3.52518e+10, 7.58729e+09, 0, 0, 1.8201e+10,
+		-7.83737e+09, 3.74213, -4.24732e+11, 2.90598e+11, 2.90598e+11,
+		-7.84056e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, 2.42996e+09, 4.01199e+10, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -1.16363e+09, 1.45596e+10, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, 297.781,
+		-3.71113e+11, -2.90598e+11, 7.84056e+09, 7.84056e+09, -9.17823e+09, 0,
+		3.52518e+10, 1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-8.05146e+10, 0, 9.17823e+09, 7.83737e+09, 7.83737e+09, 0, 3.52518e+10,
+		1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-8.05146e+10, 0, 9.17823e+09, 7.83737e+09, 7.83737e+09, 0, 3.52518e+10,
+		1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-8.05146e+10, 0, 9.17823e+09, 7.83737e+09, 7.83737e+09, 0, 3.52518e+10,
+		1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-8.05146e+10, 0, 9.17823e+09, 7.83737e+09, 7.83737e+09, 0, 3.52518e+10,
+		1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-8.05146e+10, 0, 9.17823e+09, 7.83737e+09, 7.83737e+09, 0, 3.52518e+10,
+		1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-7.13364e+10, 9.17823e+09, 9.17823e+09, 7.83737e+09, 7.83737e+09, 0,
+		3.52518e+10, 1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0.269839,
+		-9.96637e+10, 2.90598e+11, 2.90598e+11, -2.01138e+08, -1.97888e+08,
+		-1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08,
+		9.32844e+09, 6.39735e+10, -1.97888e+08, -1.97888e+08, -1.97888e+08,
+		-1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08, 1.31094e+10,
+		4.09504e+10, -1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08,
+		-1.97888e+08, -1.97888e+08, -1.97888e+08, 3.16209e+10, -1.97888e+08,
+		-1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08,
+		-1.97888e+08, 150427, -3.60817e+11, -2.90598e+11, 2.01138e+08,
+		2.01138e+08, -9.17823e+09, 0, 3.52518e+10, 7.83737e+09, 7.83737e+09, 0,
+		1.8201e+10, 1.02963e+10, 1.02963e+10, 0, 7.58729e+09, 0, 80.2838,
+		-7.02183e+10, 0, 9.17823e+09, 1.97888e+08, 1.97888e+08, 0, 3.52518e+10,
+		7.83737e+09, 7.83737e+09, 0, 1.8201e+10, 1.02963e+10, 1.02963e+10, 0,
+		7.58729e+09, 0, 80.2838, -7.02183e+10, 0, 9.17823e+09, 1.97888e+08,
+		1.97888e+08, 0, 3.52518e+10, 7.83737e+09, 7.83737e+09, 0, 1.8201e+10,
+		1.02963e+10, 1.02963e+10, 0, 7.58729e+09, 0, 80.2838, -7.02183e+10, 0,
+		9.17823e+09, 1.97888e+08, 1.97888e+08, 0, 3.52518e+10, 7.83737e+09,
+		7.83737e+09, 0, 1.8201e+10, 1.02963e+10, 1.02963e+10, 0, 7.58729e+09, 0,
+		80.2838, -7.02183e+10, 0, 9.17823e+09, 1.97888e+08, 1.97888e+08, 0,
+		3.52518e+10, 7.83737e+09, 7.83737e+09, 0, 1.8201e+10, 1.02963e+10,
+		1.02963e+10, 0, 7.58729e+09, 0, 80.2838, -7.02183e+10, 0, 9.17823e+09,
+		1.97888e+08, 1.97888e+08, 0, 3.52518e+10, 7.83737e+09, 7.83737e+09, 0,
+		1.8201e+10, 1.02963e+10, 1.02963e+10, 0, 7.58729e+09, 0, 80.2838,
+		-6.10401e+10, 9.17823e+09, 9.17823e+09, 1.97888e+08, 1.97888e+08, 0,
+		3.52518e+10, 7.83737e+09, 7.83737e+09, 0, 1.8201e+10, 1.02963e+10,
+		1.02963e+10, 0, 7.58729e+09, 80.2838, -8.37554e+10, 2.90598e+11,
+		2.90598e+11, -3.4839e+07, -3.15332e+07, -3.15332e+07, -3.15332e+07,
+		-3.15332e+07, -3.15332e+07, -3.15332e+07, -4.85626e+08, 5.4645e+10,
+		-3.15332e+07, -3.15332e+07, -3.15332e+07, -3.15332e+07, -3.15332e+07,
+		-3.15332e+07, -3.15332e+07, 9.97379e+09, 3.79329e+10, -3.15332e+07,
+		-3.15332e+07, -3.15332e+07, -3.15332e+07, -3.15332e+07, -3.15332e+07,
+		-3.15332e+07, 2.55804e+10, 2.55804e+10, 11.1828, -3.53229e+11,
+		-2.90598e+11, 3.4839e+07, 3.4839e+07, -9.17823e+09, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-6.2631e+10, 0, 9.17823e+09, 3.15332e+07, 3.15332e+07, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-6.2631e+10, 0, 9.17823e+09, 3.15332e+07, 3.15332e+07, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-6.2631e+10, 0, 9.17823e+09, 3.15332e+07, 3.15332e+07, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-6.2631e+10, 0, 9.17823e+09, 3.15332e+07, 3.15332e+07, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-6.2631e+10, 0, 9.17823e+09, 3.15332e+07, 3.15332e+07, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-5.34528e+10, 9.17823e+09, 9.17823e+09, 3.15332e+07, 3.15332e+07, 0,
+		3.52518e+10, 1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09,
+		7.83737e+09, 7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10,
+		1.61525, -5.57333e+10, 2.90598e+11, 2.90598e+11, -3.35622e+06,
+		-5.99321e+08, 5.51307e+10, 2.78409e+10, 2.78409e+10, 2.22096e+10,
+		2.22096e+10, 5.9337e+10, -3.35028e+11, -2.90598e+11, 3.35622e+06,
+		3.35622e+06, -9.17823e+09, 0, 3.52518e+10, 3.15332e+07, 3.15332e+07,
+		1.8201e+10, 1.8201e+10, 1.97888e+08, 1.97888e+08, 7.58729e+09,
+		7.58729e+09, 7.83737e+09, 7.83737e+09, 1.02963e+10, 1.02963e+10, 0,
+		10.5114, -4.443e+10, 0, 9.17823e+09, 0, 3.52518e+10, 3.15332e+07,
+		3.15332e+07, 1.8201e+10, 1.8201e+10, 1.97888e+08, 1.97888e+08,
+		7.58729e+09, 7.58729e+09, 7.83737e+09, 7.83737e+09, 1.02963e+10,
+		1.02963e+10, 0, 10.5114, -4.443e+10, 0, 9.17823e+09, 0, 3.52518e+10,
+		3.15332e+07, 3.15332e+07, 1.8201e+10, 1.8201e+10, 1.97888e+08,
+		1.97888e+08, 7.58729e+09, 7.58729e+09, 7.83737e+09, 7.83737e+09,
+		1.02963e+10, 1.02963e+10, 0, 10.5114, -4.443e+10, 0, 9.17823e+09, 0,
+		3.52518e+10, 3.15332e+07, 3.15332e+07, 1.8201e+10, 1.8201e+10,
+		1.97888e+08, 1.97888e+08, 7.58729e+09, 7.58729e+09, 7.83737e+09,
+		7.83737e+09, 1.02963e+10, 1.02963e+10, 0, 10.5114, -4.443e+10, 0,
+		9.17823e+09, 0, 3.52518e+10, 3.15332e+07, 3.15332e+07, 1.8201e+10,
+		1.8201e+10, 1.97888e+08, 1.97888e+08, 7.58729e+09, 7.58729e+09,
+		7.83737e+09, 7.83737e+09, 1.02963e+10, 1.02963e+10, 0, 10.5114,
+		-4.443e+10, 0, 9.17823e+09, 0, 3.52518e+10, 3.15332e+07, 3.15332e+07,
+		1.8201e+10, 1.8201e+10, 1.97888e+08, 1.97888e+08, 7.58729e+09,
+		7.58729e+09, 7.83737e+09, 7.83737e+09, 1.02963e+10, 1.02963e+10, 0,
+		10.5114, -3.52518e+10, 9.17823e+09, 9.17823e+09, 0, 3.52518e+10,
+		3.15332e+07, 3.15332e+07, 1.8201e+10, 1.8201e+10, 1.97888e+08,
+		1.97888e+08, 7.58729e+09, 7.58729e+09, 7.83737e+09, 7.83737e+09,
+		1.02963e+10, 1.02963e+10, 10.5114, -9.17823e+09, -9.17823e+09,
+		9.09818e+10, 5.573e+10, 3.52518e+10, 4.61601e+10, 2.79906e+10,
+		1.8201e+10, 3.15332e+07, 1.92209e+10, 1.18315e+10, 7.58729e+09,
+		1.97888e+08, 3.65798e+10, 3.41209e+10, 1.02963e+10, 7.83737e+09, 0,
+		-9.17823e+09, 0, 9.17823e+09, 3.52518e+10, 3.52518e+10, 1.8201e+10,
+		1.8201e+10, 3.15332e+07, 3.15332e+07, 7.58729e+09, 7.58729e+09,
+		1.97888e+08, 1.97888e+08, 1.02963e+10, 1.02963e+10, 7.83737e+09,
+		7.83737e+09, 0, -9.17823e+09, 0, 9.17823e+09, 3.52518e+10, 3.52518e+10,
+		1.8201e+10, 1.8201e+10, 3.15332e+07, 3.15332e+07, 7.58729e+09,
+		7.58729e+09, 1.97888e+08, 1.97888e+08, 1.02963e+10, 1.02963e+10,
+		7.83737e+09, 7.83737e+09, 0, -9.17823e+09, 0, 9.17823e+09, 3.52518e+10,
+		3.52518e+10, 1.8201e+10, 1.8201e+10, 3.15332e+07, 3.15332e+07,
+		7.58729e+09, 7.58729e+09, 1.97888e+08, 1.97888e+08, 1.02963e+10,
+		1.02963e+10, 7.83737e+09, 7.83737e+09, 0, -9.17823e+09, 0, 9.17823e+09,
+		3.52518e+10, 3.52518e+10, 1.8201e+10, 1.8201e+10, 3.15332e+07,
+		3.15332e+07, 7.58729e+09, 7.58729e+09, 1.97888e+08, 1.97888e+08,
+		1.02963e+10, 1.02963e+10, 7.83737e+09, 7.83737e+09, 0, -9.17823e+09, 0,
+		9.17823e+09, 3.52518e+10, 3.52518e+10, 1.8201e+10, 1.8201e+10,
+		3.15332e+07, 3.15332e+07, 7.58729e+09, 7.58729e+09, 1.97888e+08,
+		1.97888e+08, 1.02963e+10, 1.02963e+10, 7.83737e+09, 7.83737e+09, 0,
+		-10.5114, 9.17823e+09, 9.17823e+09, 3.52518e+10, 3.52518e+10,
+		1.8201e+10, 1.8201e+10, 3.15332e+07, 3.15332e+07, 7.58729e+09,
+		7.58729e+09, 1.97888e+08, 1.97888e+08, 1.02963e+10, 1.02963e+10,
+		7.83737e+09, 7.83737e+09};
+
+	auto vals = Kokkos::View<double*>("solverPartials", nPartials);
+	network.computeAllPartials(dConcs, vals, gridId);
+	auto hPartials = create_mirror_view(vals);
+	deep_copy(hPartials, vals);
+	int startingIdx = 0;
+	for (NetworkType::IndexType i = 0; i < dof; i++) {
+		auto rowIter = dfill.find(i);
+		if (rowIter != dfill.end()) {
+			const auto& row = rowIter->second;
+			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
+				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
+				auto index = std::distance(row.begin(), iter);
+				BOOST_REQUIRE_CLOSE(hPartials[startingIdx + index],
+					knownPartials[startingIdx + j], 0.01);
+			}
+			startingIdx += row.size();
+		}
+	}
+
+	// Check clusters
+	NetworkType::Composition comp = NetworkType::Composition::zero();
+	comp[Spec::V] = 1;
+	auto cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 1);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 505312.69, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 1800000000000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 1.3, 0.01);
+	const auto& reg0 = cluster.getRegion();
+	Composition lo = reg0.getOrigin();
+	Composition hi = reg0.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::D], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::D], 1);
+	auto momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+
+	comp[Spec::V] = 0;
+	comp[Spec::I] = 1;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 78358278338, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 88000000000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 0.01, 0.01);
+	const auto& reg1 = cluster.getRegion();
+	lo = reg1.getOrigin();
+	hi = reg1.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::D], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::D], 1);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+
+	comp[Spec::I] = 0;
+	comp[Spec::He] = 5;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 41);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 1242214406, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 5000000000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 0.12, 0.01);
+	const auto& reg2 = cluster.getRegion();
+	lo = reg2.getOrigin();
+	hi = reg2.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 5);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 6);
+	BOOST_REQUIRE_EQUAL(lo[Spec::D], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::D], 1);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+
+	comp[Spec::He] = 0;
+	comp[Spec::D] = 1;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.075, 0.01);
+	BOOST_REQUIRE_EQUAL(
+		cluster.getFormationEnergy(), std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 3440887974, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 283000000000, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 0.38, 0.01);
+	const auto& reg3 = cluster.getRegion();
+	lo = reg3.getOrigin();
+	hi = reg3.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::D], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::D], 2);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+
+	comp[Spec::He] = 3;
+	comp[Spec::V] = 1;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 27);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
+	BOOST_REQUIRE_EQUAL(cluster.getFormationEnergy(), 11.5304);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(gridId), 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 0.0, 0.01);
+	BOOST_REQUIRE_EQUAL(
+		cluster.getMigrationEnergy(), std::numeric_limits<double>::infinity());
+	const auto& reg4 = cluster.getRegion();
+	lo = reg4.getOrigin();
+	hi = reg4.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 3);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 4);
+	BOOST_REQUIRE_EQUAL(lo[Spec::D], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::D], 2);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+}
+
+BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::ofstream paramFile("param.txt");
+	paramFile << "netParam=8 0 1 1 1" << std::endl
+			  << "process=reaction" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	int argc = 2;
+	char** argv = new char*[3];
+	std::string appName = "fakeXolotlAppNameForTests";
+	argv[0] = new char[appName.length() + 1];
+	strcpy(argv[0], appName.c_str());
+	std::string parameterFile = "param.txt";
+	argv[1] = new char[parameterFile.length() + 1];
+	strcpy(argv[1], parameterFile.c_str());
+	argv[2] = 0; // null-terminate the array
+	opts.readParams(argc, argv);
+
+	using NetworkType = PSIReactionNetwork<PSITritiumSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	// Get the boundaries from the options
+	// Get the boundaries from the options
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
+	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
+	NetworkType network({maxHe, maxT, maxV, maxI}, 1, opts);
+
+	network.syncClusterDataOnHost();
+	network.getSubpaving().syncZones(plsm::onHost);
+
+	BOOST_REQUIRE(!network.hasDeuterium());
+	BOOST_REQUIRE(network.hasTritium());
+
+	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 80);
+	BOOST_REQUIRE_EQUAL(network.getDOF(), 80);
+	// TODO: check it is within a given range?
+	auto deviceMemorySize = network.getDeviceMemorySize();
+	BOOST_REQUIRE(deviceMemorySize > 1000000);
+	BOOST_REQUIRE(deviceMemorySize < 1500000);
+
+	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getImpurityRadius(), 0.3, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getInterstitialBias(), 1.15, 0.01);
+
+	BOOST_REQUIRE(network.getEnableStdReaction() == true);
+	BOOST_REQUIRE(network.getEnableReSolution() == false);
+
+	BOOST_REQUIRE_EQUAL(network.getGridSize(), 1);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 80);
+	typename NetworkType::PhaseSpace phaseSpace = network.getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
+
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 4);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 3);
+
+	// Check the single vacancy
+	auto vacancy = network.getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 1);
+
+	// Get the diagonal fill
+	const auto dof = network.getDOF();
+	NetworkType::SparseFillMap knownDFill;
+	knownDFill[0] = {
+		0, 1, 3, 10, 18, 26, 34, 42, 50, 58, 66, 9, 65, 17, 57, 25, 49, 33, 41};
+	knownDFill[1] = {1, 0, 2, 9, 17, 25, 33, 41, 49, 57, 65, 3, 10, 18, 26, 34,
+		42, 50, 58, 66};
+	knownDFill[2] = {2, 0, 3, 1, 4, 5, 6, 7, 10, 11, 12, 13, 14, 15, 18, 19, 20,
+		21, 22, 23, 26, 27, 28, 29, 30, 31, 34, 35, 36, 37, 38, 39, 42, 43, 44,
+		45, 46, 47, 50, 51, 52, 53, 54, 55, 58, 59, 60, 61, 62, 63, 66, 67, 68,
+		69, 70, 71, 73, 74, 75, 76, 77, 78, 8, 16, 24, 32, 40, 48, 56, 64, 72,
+		79};
+	knownDFill[3] = {3, 0, 1, 2, 9, 17, 25, 33, 41, 49, 57, 4, 11};
+	knownDFill[4] = {4, 2, 3, 9, 17, 25, 33, 41, 49, 57, 5, 12};
+	knownDFill[5] = {5, 2, 4, 9, 17, 25, 33, 41, 49, 57, 6, 13};
+	knownDFill[6] = {6, 2, 5, 9, 17, 25, 33, 41, 49, 57, 7, 14};
+	knownDFill[7] = {7, 2, 6, 9, 17, 25, 33, 41, 49, 57, 8, 15};
+	knownDFill[8] = {8, 2, 7, 9, 17, 25, 33, 41, 49, 57, 16};
+	knownDFill[9] = {9, 0, 10, 1, 3, 4, 5, 6, 7, 8, 11, 12, 13, 14, 15, 16, 17,
+		18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+		36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+		54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71,
+		72, 73, 74, 75, 76, 77, 78, 79};
+	knownDFill[10] = {10, 0, 1, 9, 2, 17, 25, 33, 41, 49, 57, 11, 18};
+	knownDFill[11] = {11, 2, 10, 3, 9, 17, 25, 33, 41, 49, 57, 12, 19};
+	knownDFill[12] = {12, 2, 11, 4, 9, 17, 25, 33, 41, 49, 57, 13, 20};
+	knownDFill[13] = {13, 2, 12, 5, 9, 17, 25, 33, 41, 49, 57, 14, 21};
+	knownDFill[14] = {14, 2, 13, 6, 9, 17, 25, 33, 41, 49, 57, 15, 22};
+	knownDFill[15] = {15, 2, 14, 7, 9, 17, 25, 33, 41, 49, 57, 16, 23};
+	knownDFill[16] = {16, 2, 15, 8, 9, 17, 25, 33, 41, 49, 57, 24};
+	knownDFill[17] = {17, 0, 18, 1, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+		16, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+		36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+		54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64};
+	knownDFill[18] = {18, 0, 1, 17, 2, 9, 10, 25, 33, 41, 49, 57, 19, 26};
+	knownDFill[19] = {19, 2, 18, 3, 17, 9, 11, 25, 33, 41, 49, 57, 20, 27};
+	knownDFill[20] = {20, 2, 19, 4, 17, 9, 12, 25, 33, 41, 49, 57, 21, 28};
+	knownDFill[21] = {21, 2, 20, 5, 17, 9, 13, 25, 33, 41, 49, 57, 22, 29};
+	knownDFill[22] = {22, 2, 21, 6, 17, 9, 14, 25, 33, 41, 49, 57, 23, 30};
+	knownDFill[23] = {23, 2, 22, 7, 17, 9, 15, 25, 33, 41, 49, 57, 24, 31};
+	knownDFill[24] = {24, 2, 23, 8, 17, 9, 16, 25, 33, 41, 49, 57, 32};
+	knownDFill[25] = {25, 0, 26, 1, 3, 4, 5, 6, 7, 8, 9, 17, 10, 11, 12, 13, 14,
+		15, 16, 18, 19, 20, 21, 22, 23, 24, 27, 28, 29, 30, 31, 32, 33, 34, 35,
+		36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+		54, 55, 56};
+	knownDFill[26] = {26, 0, 1, 25, 2, 9, 18, 10, 17, 33, 41, 49, 27, 34};
+	knownDFill[27] = {27, 2, 26, 3, 25, 9, 19, 11, 17, 33, 41, 49, 28, 35};
+	knownDFill[28] = {28, 2, 27, 4, 25, 9, 20, 12, 17, 33, 41, 49, 29, 36};
+	knownDFill[29] = {29, 2, 28, 5, 25, 9, 21, 13, 17, 33, 41, 49, 30, 37};
+	knownDFill[30] = {30, 2, 29, 6, 25, 9, 22, 14, 17, 33, 41, 49, 31, 38};
+	knownDFill[31] = {31, 2, 30, 7, 25, 9, 23, 15, 17, 33, 41, 49, 32, 39};
+	knownDFill[32] = {32, 2, 31, 8, 25, 9, 24, 16, 17, 33, 41, 49, 40};
+	knownDFill[33] = {33, 0, 34, 1, 3, 4, 5, 6, 7, 8, 9, 25, 10, 11, 12, 13, 14,
+		15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32, 35,
+		36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48};
+	knownDFill[34] = {34, 0, 1, 33, 2, 9, 26, 10, 25, 17, 18, 41, 35, 42};
+	knownDFill[35] = {35, 2, 34, 3, 33, 9, 27, 11, 25, 17, 19, 41, 36, 43};
+	knownDFill[36] = {36, 2, 35, 4, 33, 9, 28, 12, 25, 17, 20, 41, 37, 44};
+	knownDFill[37] = {37, 2, 36, 5, 33, 9, 29, 13, 25, 17, 21, 41, 38, 45};
+	knownDFill[38] = {38, 2, 37, 6, 33, 9, 30, 14, 25, 17, 22, 41, 39, 46};
+	knownDFill[39] = {39, 2, 38, 7, 33, 9, 31, 15, 25, 17, 23, 41, 40, 47};
+	knownDFill[40] = {40, 2, 39, 8, 33, 9, 32, 16, 25, 17, 24, 41, 48};
+	knownDFill[41] = {41, 0, 42, 1, 3, 4, 5, 6, 7, 8, 9, 33, 10, 11, 12, 13, 14,
+		15, 16, 17, 25, 18, 19, 20, 21, 22, 23, 24, 26, 27, 28, 29, 30, 31, 32,
+		34, 35, 36, 37, 38, 39, 40, 49};
+	knownDFill[42] = {42, 0, 1, 41, 2, 9, 34, 10, 33, 17, 26, 18, 25, 43, 50};
+	knownDFill[43] = {43, 2, 42, 3, 41, 9, 35, 11, 33, 17, 27, 19, 25, 44, 51};
+	knownDFill[44] = {44, 2, 43, 4, 41, 9, 36, 12, 33, 17, 28, 20, 25, 45, 52};
+	knownDFill[45] = {45, 2, 44, 5, 41, 9, 37, 13, 33, 17, 29, 21, 25, 46, 53};
+	knownDFill[46] = {46, 2, 45, 6, 41, 9, 38, 14, 33, 17, 30, 22, 25, 47, 54};
+	knownDFill[47] = {47, 2, 46, 7, 41, 9, 39, 15, 33, 17, 31, 23, 25, 48, 55};
+	knownDFill[48] = {48, 2, 47, 8, 41, 9, 40, 16, 33, 17, 32, 24, 25, 56};
+	knownDFill[49] = {49, 0, 50, 1, 3, 4, 5, 6, 7, 8, 9, 41, 10, 11, 12, 13, 14,
+		15, 16, 17, 33, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
+		32, 57};
+	knownDFill[50] = {
+		50, 0, 1, 49, 2, 9, 42, 10, 41, 17, 34, 18, 33, 25, 26, 51, 58};
+	knownDFill[51] = {
+		51, 2, 50, 3, 49, 9, 43, 11, 41, 17, 35, 19, 33, 25, 27, 52, 59};
+	knownDFill[52] = {
+		52, 2, 51, 4, 49, 9, 44, 12, 41, 17, 36, 20, 33, 25, 28, 53, 60};
+	knownDFill[53] = {
+		53, 2, 52, 5, 49, 9, 45, 13, 41, 17, 37, 21, 33, 25, 29, 54, 61};
+	knownDFill[54] = {
+		54, 2, 53, 6, 49, 9, 46, 14, 41, 17, 38, 22, 33, 25, 30, 55, 62};
+	knownDFill[55] = {
+		55, 2, 54, 7, 49, 9, 47, 15, 41, 17, 39, 23, 33, 25, 31, 56, 63};
+	knownDFill[56] = {
+		56, 2, 55, 8, 49, 9, 48, 16, 41, 17, 40, 24, 33, 25, 32, 64};
+	knownDFill[57] = {57, 0, 58, 1, 3, 4, 5, 6, 7, 8, 9, 49, 10, 11, 12, 13, 14,
+		15, 16, 17, 41, 18, 19, 20, 21, 22, 23, 24, 25, 33, 65};
+	knownDFill[58] = {
+		58, 0, 1, 57, 2, 9, 50, 10, 49, 17, 42, 18, 41, 25, 34, 26, 33, 59, 66};
+	knownDFill[59] = {59, 2, 58, 3, 57, 9, 51, 11, 49, 17, 43, 19, 41, 25, 35,
+		27, 33, 60, 67};
+	knownDFill[60] = {60, 2, 59, 4, 57, 9, 52, 12, 49, 17, 44, 20, 41, 25, 36,
+		28, 33, 61, 68};
+	knownDFill[61] = {61, 2, 60, 5, 57, 9, 53, 13, 49, 17, 45, 21, 41, 25, 37,
+		29, 33, 62, 69};
+	knownDFill[62] = {62, 2, 61, 6, 57, 9, 54, 14, 49, 17, 46, 22, 41, 25, 38,
+		30, 33, 63, 70};
+	knownDFill[63] = {63, 2, 62, 7, 57, 9, 55, 15, 49, 17, 47, 23, 41, 25, 39,
+		31, 33, 64, 71};
+	knownDFill[64] = {
+		64, 2, 63, 8, 57, 9, 56, 16, 49, 17, 48, 24, 41, 25, 40, 32, 33, 72};
+	knownDFill[65] = {65, 0, 66, 1, 9, 57, 17, 49, 25, 41, 33};
+	knownDFill[66] = {66, 0, 1, 65, 2, 9, 58, 10, 57, 17, 50, 18, 49, 25, 42,
+		26, 41, 33, 34, 67, 73};
+	knownDFill[67] = {67, 2, 66, 9, 59, 11, 57, 17, 51, 19, 49, 25, 43, 27, 41,
+		33, 35, 68, 74};
+	knownDFill[68] = {68, 2, 67, 9, 60, 12, 57, 17, 52, 20, 49, 25, 44, 28, 41,
+		33, 36, 69, 75};
+	knownDFill[69] = {69, 2, 68, 9, 61, 13, 57, 17, 53, 21, 49, 25, 45, 29, 41,
+		33, 37, 70, 76};
+	knownDFill[70] = {70, 2, 69, 9, 62, 14, 57, 17, 54, 22, 49, 25, 46, 30, 41,
+		33, 38, 71, 77};
+	knownDFill[71] = {71, 2, 70, 9, 63, 15, 57, 17, 55, 23, 49, 25, 47, 31, 41,
+		33, 39, 72, 78};
+	knownDFill[72] = {
+		72, 2, 71, 9, 64, 16, 57, 17, 56, 24, 49, 25, 48, 32, 41, 33, 40, 79};
+	knownDFill[73] = {
+		73, 2, 9, 65, 66, 17, 57, 58, 18, 25, 49, 50, 26, 33, 41, 42, 34, 74};
+	knownDFill[74] = {
+		74, 2, 73, 9, 67, 17, 59, 19, 57, 25, 51, 27, 49, 33, 43, 35, 41, 75};
+	knownDFill[75] = {
+		75, 2, 74, 9, 68, 17, 60, 20, 57, 25, 52, 28, 49, 33, 44, 36, 41, 76};
+	knownDFill[76] = {
+		76, 2, 75, 9, 69, 17, 61, 21, 57, 25, 53, 29, 49, 33, 45, 37, 41, 77};
+	knownDFill[77] = {
+		77, 2, 76, 9, 70, 17, 62, 22, 57, 25, 54, 30, 49, 33, 46, 38, 41, 78};
+	knownDFill[78] = {
+		78, 2, 77, 9, 71, 17, 63, 23, 57, 25, 55, 31, 49, 33, 47, 39, 41, 79};
+	knownDFill[79] = {
+		79, 2, 78, 9, 72, 17, 64, 24, 57, 25, 56, 32, 49, 33, 48, 40, 41};
+
+	NetworkType::SparseFillMap dfill;
+	auto nPartials = network.getDiagonalFill(dfill);
+	BOOST_REQUIRE_EQUAL(nPartials, 1546);
+	for (NetworkType::IndexType i = 0; i < dof; i++) {
+		auto rowIter = dfill.find(i);
+		if (rowIter != dfill.end()) {
+			const auto& row = rowIter->second;
+			BOOST_REQUIRE_EQUAL(row.size(), knownDFill[i].size());
+		}
+	}
+
+	// Set temperatures
+	std::vector<double> temperatures = {1000.0};
+	network.setTemperatures(temperatures);
+	network.syncClusterDataOnHost();
+	NetworkType::IndexType gridId = 0;
+
+	// Check the largest rate
+	BOOST_REQUIRE_CLOSE(network.getLargestRate(), 290600199485, 0.01);
+
+	// Create a concentration vector where every field is at 1.0
+	std::vector<double> concentrations(dof + 1, 1.0);
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(concentrations.data(), dof + 1);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof + 1);
+	deep_copy(dConcs, hConcs);
+
+	// Check the total concentrations
+	BOOST_REQUIRE_CLOSE(
+		network.getTotalConcentration(dConcs, Spec::He, 2), 63.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		network.getTotalAtomConcentration(dConcs, Spec::V, 1), 70.0, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getTotalRadiusConcentration(dConcs, Spec::I, 1),
+		0.15785478, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		network.getTotalTrappedAtomConcentration(dConcs, Spec::T, 1), 210.0,
+		0.01);
+
+	// Check the left side rate of 0th cluster
+	BOOST_REQUIRE_CLOSE(
+		network.getLeftSideRate(dConcs, 0, gridId), 2905985128900, 0.01);
+
+	// Create a flux vector where every field is at 0.0
+	std::vector<double> fluxes(dof + 1, 0.0);
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hFluxes = HostUnmanaged(fluxes.data(), dof + 1);
+	auto dFluxes = Kokkos::View<double*>("Fluxes", dof + 1);
+	deep_copy(dFluxes, hFluxes);
+
+	// Check the fluxes computation
+	std::vector<double> knownFluxes = {-2.78438e+12, -3.77521e+11, -1.58909e+11,
+		-3.7e+11, -7.94032e+10, -7.94032e+10, -7.94032e+10, -7.94032e+10,
+		-7.19114e+10, -2.55576e+12, -3.42239e+11, -4.41514e+10, -4.41514e+10,
+		-4.41514e+10, -4.41514e+10, -4.41514e+10, -3.66596e+10, -9.80812e+11,
+		-3.24038e+11, -2.59503e+10, -2.59503e+10, -2.59503e+10, -2.59503e+10,
+		-2.59503e+10, -1.84586e+10, -2.0752e+11, -3.16419e+11, -1.83315e+10,
+		-1.83315e+10, -1.83315e+10, -1.83315e+10, -1.83315e+10, -1.08398e+10,
+		-2.47458e+11, -3.05924e+11, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -3.45603e+08, -3.09611e+10, -2.9025e+11,
+		7.83737e+09, 7.83737e+09, 7.83737e+09, 7.83737e+09, 7.83737e+09,
+		1.53291e+10, 3.17486e+11, -2.79755e+11, 1.83315e+10, 1.83315e+10,
+		1.83315e+10, 1.83315e+10, 1.83315e+10, 2.58233e+10, 3.25001e+11,
+		-2.72136e+11, 2.59503e+10, 2.59503e+10, 2.59503e+10, 2.59503e+10,
+		2.59503e+10, 3.34421e+10, 3.69715e+11, -2.53935e+11, 4.41514e+10,
+		4.41514e+10, 4.41514e+10, 4.41514e+10, 4.41514e+10, 5.16431e+10,
+		1.93518e+11, 7.94032e+10, 7.94032e+10, 7.94032e+10, 7.94032e+10,
+		7.94032e+10, 8.68949e+10, 0};
+	network.computeAllFluxes(dConcs, dFluxes, gridId);
+	deep_copy(hFluxes, dFluxes);
+	for (NetworkType::IndexType i = 0; i < dof + 1; i++) {
+		BOOST_REQUIRE_CLOSE(fluxes[i], knownFluxes[i], 0.01);
+	}
+
+	// Check the partials computation
+	std::vector<double> knownPartials = {-2.90599e+12, -2.906e+11, -2.90598e+11,
+		-2.90598e+11, -2.90598e+11, -2.90598e+11, -2.90598e+11, -2.90598e+11,
+		-2.90598e+11, -2.90598e+11, -2.90598e+11, 5.573e+10, 5.573e+10,
+		2.79591e+10, 2.79591e+10, 1.16336e+10, 1.16336e+10, 2.62836e+10,
+		2.62836e+10, -3.77521e+11, -2.906e+11, -7.49312e+09, -3.52546e+10,
+		-1.82039e+10, -7.59033e+09, -1.02994e+10, -7.84056e+09, -2.01138e+08,
+		-3.4839e+07, -3.35622e+06, 0, 1.31842e-11, 4.28792e-23, 1.7587e-31,
+		6.89652e-38, 1.73787e-44, 7.33147e-49, 1.05059e-52, 2.28623e-54,
+		-4.49507e+11, 2.90598e+11, 2.83107e+11, -7.49312e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09, -7.49177e+09,
+		-7.49177e+09, -7.49177e+09, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -3.77493e+11,
+		-2.90598e+11, 7.49312e+09, 1.34787e+06, -3.52518e+10, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		1.31832e-11, -8.68949e+10, 0, 7.49177e+09, -3.52518e+10, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		1.31832e-11, -8.68949e+10, 0, 7.49177e+09, -3.52518e+10, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		1.31832e-11, -8.68949e+10, 0, 7.49177e+09, -3.52518e+10, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		1.31832e-11, -8.68949e+10, 0, 7.49177e+09, -3.52518e+10, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		1.31832e-11, -7.94032e+10, 7.49177e+09, 7.49177e+09, -3.52518e+10,
+		-1.8201e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08,
+		-3.15332e+07, 1.31832e-11, -3.04043e+12, 2.90598e+11, 2.55347e+11,
+		-3.52546e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -7.43475e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -6.17954e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -6.64033e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -6.39522e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-5.4645e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -5.51305e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -5.573e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10,
+		-3.52518e+10, -3.52518e+10, -3.52518e+10, -3.52518e+10, 10.5114,
+		10.5114, 10.5114, 10.5114, 10.5114, 10.5114, 10.5114, -3.77493e+11,
+		-2.90598e+11, 3.52546e+10, 2.77661e+06, -7.49177e+09, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -8.68949e+10, 0, 7.49177e+09, 3.52518e+10, 0, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -8.68949e+10, 0, 7.49177e+09, 3.52518e+10, 0, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -8.68949e+10, 0, 7.49177e+09, 3.52518e+10, 0, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -8.68949e+10, 0, 7.49177e+09, 3.52518e+10, 0, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -8.68949e+10, 0, 7.49177e+09, 3.52518e+10, 0, -1.8201e+10,
+		-7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08, -3.15332e+07, 0,
+		0.000645754, -7.94032e+10, 7.49177e+09, 7.49177e+09, 3.52518e+10, 0,
+		-1.8201e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09, -1.97888e+08,
+		-3.15332e+07, 0.000645754, -1.47041e+12, 2.90598e+11, 2.72397e+11,
+		-1.82039e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, 1.18575e+11, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -3.67666e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -4.09504e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -3.79329e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-2.78409e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -2.79591e+10, -1.8201e+10,
+		-1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10, -1.8201e+10,
+		-1.8201e+10, -3.77493e+11, -2.90598e+11, 1.82039e+10, 2.92726e+06,
+		-7.49177e+09, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -8.68949e+10, 0, 7.49177e+09,
+		1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -8.68949e+10, 0, 7.49177e+09,
+		1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -8.68949e+10, 0, 7.49177e+09,
+		1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -8.68949e+10, 0, 7.49177e+09,
+		1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -8.68949e+10, 0, 7.49177e+09,
+		1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10, -7.83737e+09,
+		-1.97888e+08, -3.15332e+07, 0, 0.0122619, -7.94032e+10, 7.49177e+09,
+		7.49177e+09, 1.8201e+10, 0, 0, 3.52518e+10, -7.58729e+09, -1.02963e+10,
+		-7.83737e+09, -1.97888e+08, -3.15332e+07, 0.0122619, -6.16283e+11,
+		2.90598e+11, 2.83011e+11, -7.59033e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, 1.31121e+10,
+		3.81409e+10, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -2.55803e+10, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -2.22096e+10,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -1.16336e+10, -7.58729e+09, -7.58729e+09,
+		-7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09, -7.58729e+09,
+		-3.77462e+11, -2.90598e+11, 7.59033e+09, 3.03294e+06, -7.49177e+09, 0,
+		3.52518e+10, 1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0,
+		0.01763, -8.68634e+10, 0, 7.49177e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0, 0.01763,
+		-8.68634e+10, 0, 7.49177e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0, 0.01763,
+		-8.68634e+10, 0, 7.49177e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0, 0.01763,
+		-8.68634e+10, 0, 7.49177e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0, 0.01763,
+		-8.68634e+10, 0, 7.49177e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0, 0.01763,
+		-7.93716e+10, 7.49177e+09, 7.49177e+09, 7.58729e+09, 0, 0, 3.52518e+10,
+		1.8201e+10, 0, -1.02963e+10, -7.83737e+09, -1.97888e+08, 0.01763,
+		-7.10338e+11, 2.90598e+11, 2.80302e+11, -1.02994e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-4.60539e+09, 3.62176e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, 6.13013e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-2.62623e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10, -1.02963e+10,
+		-1.02963e+10, -1.02963e+10, -1.02963e+10, -3.77264e+11, -2.90598e+11,
+		1.02994e+10, 3.11707e+06, -7.49177e+09, 0, 3.52518e+10, 7.58729e+09, 0,
+		0, 1.8201e+10, -7.83737e+09, 0, 3.74213, -8.66655e+10, 0, 7.49177e+09,
+		1.02963e+10, 0, 0, 3.52518e+10, 7.58729e+09, 0, 0, 1.8201e+10,
+		-7.83737e+09, 0, 3.74213, -8.66655e+10, 0, 7.49177e+09, 1.02963e+10, 0,
+		0, 3.52518e+10, 7.58729e+09, 0, 0, 1.8201e+10, -7.83737e+09, 0, 3.74213,
+		-8.66655e+10, 0, 7.49177e+09, 1.02963e+10, 0, 0, 3.52518e+10,
+		7.58729e+09, 0, 0, 1.8201e+10, -7.83737e+09, 0, 3.74213, -8.66655e+10,
+		0, 7.49177e+09, 1.02963e+10, 0, 0, 3.52518e+10, 7.58729e+09, 0, 0,
+		1.8201e+10, -7.83737e+09, 0, 3.74213, -8.66655e+10, 0, 7.49177e+09,
+		1.02963e+10, 0, 0, 3.52518e+10, 7.58729e+09, 0, 0, 1.8201e+10,
+		-7.83737e+09, 0, 3.74213, -7.91737e+10, 7.49177e+09, 7.49177e+09,
+		1.02963e+10, 0, 0, 3.52518e+10, 7.58729e+09, 0, 0, 1.8201e+10,
+		-7.83737e+09, 3.74213, -4.24732e+11, 2.90598e+11, 2.90598e+11,
+		-7.84056e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, 2.42996e+09, 4.01199e+10, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -1.16363e+09, 1.45596e+10, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09,
+		-7.83737e+09, -7.83737e+09, -7.83737e+09, -7.83737e+09, 297.781,
+		-3.69426e+11, -2.90598e+11, 7.84056e+09, 7.84056e+09, -7.49177e+09, 0,
+		3.52518e+10, 1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-7.88281e+10, 0, 7.49177e+09, 7.83737e+09, 7.83737e+09, 0, 3.52518e+10,
+		1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-7.88281e+10, 0, 7.49177e+09, 7.83737e+09, 7.83737e+09, 0, 3.52518e+10,
+		1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-7.88281e+10, 0, 7.49177e+09, 7.83737e+09, 7.83737e+09, 0, 3.52518e+10,
+		1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-7.88281e+10, 0, 7.49177e+09, 7.83737e+09, 7.83737e+09, 0, 3.52518e+10,
+		1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-7.88281e+10, 0, 7.49177e+09, 7.83737e+09, 7.83737e+09, 0, 3.52518e+10,
+		1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0, 0.269839,
+		-7.13364e+10, 7.49177e+09, 7.49177e+09, 7.83737e+09, 7.83737e+09, 0,
+		3.52518e+10, 1.02963e+10, 0, 0, 1.8201e+10, 7.58729e+09, 0, 0.269839,
+		-9.96637e+10, 2.90598e+11, 2.90598e+11, -2.01138e+08, -1.97888e+08,
+		-1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08,
+		9.32844e+09, 6.39735e+10, -1.97888e+08, -1.97888e+08, -1.97888e+08,
+		-1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08, 1.31094e+10,
+		4.09504e+10, -1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08,
+		-1.97888e+08, -1.97888e+08, -1.97888e+08, 3.16209e+10, -1.97888e+08,
+		-1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08, -1.97888e+08,
+		-1.97888e+08, 150427, -3.5913e+11, -2.90598e+11, 2.01138e+08,
+		2.01138e+08, -7.49177e+09, 0, 3.52518e+10, 7.83737e+09, 7.83737e+09, 0,
+		1.8201e+10, 1.02963e+10, 1.02963e+10, 0, 7.58729e+09, 0, 80.2838,
+		-6.85319e+10, 0, 7.49177e+09, 1.97888e+08, 1.97888e+08, 0, 3.52518e+10,
+		7.83737e+09, 7.83737e+09, 0, 1.8201e+10, 1.02963e+10, 1.02963e+10, 0,
+		7.58729e+09, 0, 80.2838, -6.85319e+10, 0, 7.49177e+09, 1.97888e+08,
+		1.97888e+08, 0, 3.52518e+10, 7.83737e+09, 7.83737e+09, 0, 1.8201e+10,
+		1.02963e+10, 1.02963e+10, 0, 7.58729e+09, 0, 80.2838, -6.85319e+10, 0,
+		7.49177e+09, 1.97888e+08, 1.97888e+08, 0, 3.52518e+10, 7.83737e+09,
+		7.83737e+09, 0, 1.8201e+10, 1.02963e+10, 1.02963e+10, 0, 7.58729e+09, 0,
+		80.2838, -6.85319e+10, 0, 7.49177e+09, 1.97888e+08, 1.97888e+08, 0,
+		3.52518e+10, 7.83737e+09, 7.83737e+09, 0, 1.8201e+10, 1.02963e+10,
+		1.02963e+10, 0, 7.58729e+09, 0, 80.2838, -6.85319e+10, 0, 7.49177e+09,
+		1.97888e+08, 1.97888e+08, 0, 3.52518e+10, 7.83737e+09, 7.83737e+09, 0,
+		1.8201e+10, 1.02963e+10, 1.02963e+10, 0, 7.58729e+09, 0, 80.2838,
+		-6.10401e+10, 7.49177e+09, 7.49177e+09, 1.97888e+08, 1.97888e+08, 0,
+		3.52518e+10, 7.83737e+09, 7.83737e+09, 0, 1.8201e+10, 1.02963e+10,
+		1.02963e+10, 0, 7.58729e+09, 80.2838, -8.37554e+10, 2.90598e+11,
+		2.90598e+11, -3.4839e+07, -3.15332e+07, -3.15332e+07, -3.15332e+07,
+		-3.15332e+07, -3.15332e+07, -3.15332e+07, -4.85626e+08, 5.4645e+10,
+		-3.15332e+07, -3.15332e+07, -3.15332e+07, -3.15332e+07, -3.15332e+07,
+		-3.15332e+07, -3.15332e+07, 9.97379e+09, 3.79329e+10, -3.15332e+07,
+		-3.15332e+07, -3.15332e+07, -3.15332e+07, -3.15332e+07, -3.15332e+07,
+		-3.15332e+07, 2.55804e+10, 2.55804e+10, 11.1828, -3.51543e+11,
+		-2.90598e+11, 3.4839e+07, 3.4839e+07, -7.49177e+09, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-6.09446e+10, 0, 7.49177e+09, 3.15332e+07, 3.15332e+07, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-6.09446e+10, 0, 7.49177e+09, 3.15332e+07, 3.15332e+07, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-6.09446e+10, 0, 7.49177e+09, 3.15332e+07, 3.15332e+07, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-6.09446e+10, 0, 7.49177e+09, 3.15332e+07, 3.15332e+07, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-6.09446e+10, 0, 7.49177e+09, 3.15332e+07, 3.15332e+07, 0, 3.52518e+10,
+		1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09, 7.83737e+09,
+		7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10, 0, 1.61525,
+		-5.34528e+10, 7.49177e+09, 7.49177e+09, 3.15332e+07, 3.15332e+07, 0,
+		3.52518e+10, 1.97888e+08, 1.97888e+08, 0, 1.8201e+10, 7.83737e+09,
+		7.83737e+09, 7.58729e+09, 7.58729e+09, 1.02963e+10, 1.02963e+10,
+		1.61525, -5.57333e+10, 2.90598e+11, 2.90598e+11, -3.35622e+06,
+		-5.99321e+08, 5.51307e+10, 2.78409e+10, 2.78409e+10, 2.22096e+10,
+		2.22096e+10, 5.9337e+10, -3.33342e+11, -2.90598e+11, 3.35622e+06,
+		3.35622e+06, -7.49177e+09, 0, 3.52518e+10, 3.15332e+07, 3.15332e+07,
+		1.8201e+10, 1.8201e+10, 1.97888e+08, 1.97888e+08, 7.58729e+09,
+		7.58729e+09, 7.83737e+09, 7.83737e+09, 1.02963e+10, 1.02963e+10, 0,
+		10.5114, -4.27436e+10, 0, 7.49177e+09, 0, 3.52518e+10, 3.15332e+07,
+		3.15332e+07, 1.8201e+10, 1.8201e+10, 1.97888e+08, 1.97888e+08,
+		7.58729e+09, 7.58729e+09, 7.83737e+09, 7.83737e+09, 1.02963e+10,
+		1.02963e+10, 0, 10.5114, -4.27436e+10, 0, 7.49177e+09, 0, 3.52518e+10,
+		3.15332e+07, 3.15332e+07, 1.8201e+10, 1.8201e+10, 1.97888e+08,
+		1.97888e+08, 7.58729e+09, 7.58729e+09, 7.83737e+09, 7.83737e+09,
+		1.02963e+10, 1.02963e+10, 0, 10.5114, -4.27436e+10, 0, 7.49177e+09, 0,
+		3.52518e+10, 3.15332e+07, 3.15332e+07, 1.8201e+10, 1.8201e+10,
+		1.97888e+08, 1.97888e+08, 7.58729e+09, 7.58729e+09, 7.83737e+09,
+		7.83737e+09, 1.02963e+10, 1.02963e+10, 0, 10.5114, -4.27436e+10, 0,
+		7.49177e+09, 0, 3.52518e+10, 3.15332e+07, 3.15332e+07, 1.8201e+10,
+		1.8201e+10, 1.97888e+08, 1.97888e+08, 7.58729e+09, 7.58729e+09,
+		7.83737e+09, 7.83737e+09, 1.02963e+10, 1.02963e+10, 0, 10.5114,
+		-4.27436e+10, 0, 7.49177e+09, 0, 3.52518e+10, 3.15332e+07, 3.15332e+07,
+		1.8201e+10, 1.8201e+10, 1.97888e+08, 1.97888e+08, 7.58729e+09,
+		7.58729e+09, 7.83737e+09, 7.83737e+09, 1.02963e+10, 1.02963e+10, 0,
+		10.5114, -3.52518e+10, 7.49177e+09, 7.49177e+09, 0, 3.52518e+10,
+		3.15332e+07, 3.15332e+07, 1.8201e+10, 1.8201e+10, 1.97888e+08,
+		1.97888e+08, 7.58729e+09, 7.58729e+09, 7.83737e+09, 7.83737e+09,
+		1.02963e+10, 1.02963e+10, 10.5114, -7.49177e+09, -7.49177e+09,
+		9.09818e+10, 5.573e+10, 3.52518e+10, 4.61601e+10, 2.79906e+10,
+		1.8201e+10, 3.15332e+07, 1.92209e+10, 1.18315e+10, 7.58729e+09,
+		1.97888e+08, 3.65798e+10, 3.41209e+10, 1.02963e+10, 7.83737e+09, 0,
+		-7.49177e+09, 0, 7.49177e+09, 3.52518e+10, 3.52518e+10, 1.8201e+10,
+		1.8201e+10, 3.15332e+07, 3.15332e+07, 7.58729e+09, 7.58729e+09,
+		1.97888e+08, 1.97888e+08, 1.02963e+10, 1.02963e+10, 7.83737e+09,
+		7.83737e+09, 0, -7.49177e+09, 0, 7.49177e+09, 3.52518e+10, 3.52518e+10,
+		1.8201e+10, 1.8201e+10, 3.15332e+07, 3.15332e+07, 7.58729e+09,
+		7.58729e+09, 1.97888e+08, 1.97888e+08, 1.02963e+10, 1.02963e+10,
+		7.83737e+09, 7.83737e+09, 0, -7.49177e+09, 0, 7.49177e+09, 3.52518e+10,
+		3.52518e+10, 1.8201e+10, 1.8201e+10, 3.15332e+07, 3.15332e+07,
+		7.58729e+09, 7.58729e+09, 1.97888e+08, 1.97888e+08, 1.02963e+10,
+		1.02963e+10, 7.83737e+09, 7.83737e+09, 0, -7.49177e+09, 0, 7.49177e+09,
+		3.52518e+10, 3.52518e+10, 1.8201e+10, 1.8201e+10, 3.15332e+07,
+		3.15332e+07, 7.58729e+09, 7.58729e+09, 1.97888e+08, 1.97888e+08,
+		1.02963e+10, 1.02963e+10, 7.83737e+09, 7.83737e+09, 0, -7.49177e+09, 0,
+		7.49177e+09, 3.52518e+10, 3.52518e+10, 1.8201e+10, 1.8201e+10,
+		3.15332e+07, 3.15332e+07, 7.58729e+09, 7.58729e+09, 1.97888e+08,
+		1.97888e+08, 1.02963e+10, 1.02963e+10, 7.83737e+09, 7.83737e+09, 0,
+		-10.5114, 7.49177e+09, 7.49177e+09, 3.52518e+10, 3.52518e+10,
+		1.8201e+10, 1.8201e+10, 3.15332e+07, 3.15332e+07, 7.58729e+09,
+		7.58729e+09, 1.97888e+08, 1.97888e+08, 1.02963e+10, 1.02963e+10,
+		7.83737e+09, 7.83737e+09};
+
+	auto vals = Kokkos::View<double*>("solverPartials", nPartials);
+	network.computeAllPartials(dConcs, vals, gridId);
+	auto hPartials = create_mirror_view(vals);
+	deep_copy(hPartials, vals);
+	int startingIdx = 0;
+	for (NetworkType::IndexType i = 0; i < dof; i++) {
+		auto rowIter = dfill.find(i);
+		if (rowIter != dfill.end()) {
+			const auto& row = rowIter->second;
+			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
+				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
+				auto index = std::distance(row.begin(), iter);
+				BOOST_REQUIRE_CLOSE(hPartials[startingIdx + index],
+					knownPartials[startingIdx + j], 0.01);
+			}
+			startingIdx += row.size();
+		}
+	}
+
+	// Check clusters
+	NetworkType::Composition comp = NetworkType::Composition::zero();
+	comp[Spec::V] = 1;
+	auto cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 1);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 505312.69, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 1800000000000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 1.3, 0.01);
+	const auto& reg0 = cluster.getRegion();
+	Composition lo = reg0.getOrigin();
+	Composition hi = reg0.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::T], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::T], 1);
+	auto momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+
+	comp[Spec::V] = 0;
+	comp[Spec::I] = 1;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 78358278338, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 88000000000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 0.01, 0.01);
+	const auto& reg1 = cluster.getRegion();
+	lo = reg1.getOrigin();
+	hi = reg1.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::T], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::T], 1);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+
+	comp[Spec::I] = 0;
+	comp[Spec::He] = 5;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 41);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 1242214406, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 5000000000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 0.12, 0.01);
+	const auto& reg2 = cluster.getRegion();
+	lo = reg2.getOrigin();
+	hi = reg2.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 5);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 6);
+	BOOST_REQUIRE_EQUAL(lo[Spec::T], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::T], 1);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+
+	comp[Spec::He] = 0;
+	comp[Spec::T] = 1;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.075, 0.01);
+	BOOST_REQUIRE_EQUAL(
+		cluster.getFormationEnergy(), std::numeric_limits<double>::infinity());
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		cluster.getDiffusionCoefficient(gridId), 2808640007, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 231000000000, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getMigrationEnergy(), 0.38, 0.01);
+	const auto& reg3 = cluster.getRegion();
+	lo = reg3.getOrigin();
+	hi = reg3.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::T], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::T], 2);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+
+	comp[Spec::He] = 3;
+	comp[Spec::V] = 1;
+	cluster = network.findCluster(comp, plsm::onHost);
+	BOOST_REQUIRE_EQUAL(cluster.getId(), 27);
+	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
+	BOOST_REQUIRE_EQUAL(cluster.getFormationEnergy(), 11.5304);
+	BOOST_REQUIRE_CLOSE(cluster.getTemperature(gridId), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionCoefficient(gridId), 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(cluster.getDiffusionFactor(), 0.0, 0.01);
+	BOOST_REQUIRE_EQUAL(
+		cluster.getMigrationEnergy(), std::numeric_limits<double>::infinity());
+	const auto& reg4 = cluster.getRegion();
+	lo = reg4.getOrigin();
+	hi = reg4.getUpperLimitPoint();
+	BOOST_REQUIRE_EQUAL(lo[Spec::V], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::V], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::He], 3);
+	BOOST_REQUIRE_EQUAL(hi[Spec::He], 4);
+	BOOST_REQUIRE_EQUAL(lo[Spec::T], 1);
+	BOOST_REQUIRE_EQUAL(hi[Spec::T], 2);
+	momId = cluster.getMomentIds();
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

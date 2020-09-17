@@ -1,3 +1,4 @@
+#fluence Helium_content Deuterium_content Tritium_content Vacancy_content Interstitial_content Helium_bulk Deuterium_bulk Tritium_bulk Vacancy_bulk Interstitial_bulk Helium_surface Deuterium_surface Tritium_surface Vacancy_surface Interstitial_surface Helium_burst Deuterium_burst Tritium_burst
 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 4e-07 3.99845e-08 1.79975e-07 1.7998e-07 1.14204e-89 1.08528e-09 0 0 0 0 0 0 0 0 0 0 0 0 0
 1.14995e-06 1.14867e-07 5.17272e-07 5.17309e-07 8.26851e-84 2.79442e-09 4.11963e-11 6.5762e-11 5.37048e-11 1.11438e-104 -3.84893e-21 1.67652e-11 2.63299e-11 2.14665e-11 6.03659e-108 2.93019e-10 0 0 0

@@ -47,9 +47,9 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	const Region& region, BoolArray& result) const
 {
 	using detail::toIndex;
-    using psi::getMaxHePerV;
-    using psi::hasDeuterium;
-    using psi::hasTritium;
+	using psi::getMaxHePerV;
+	using psi::hasDeuterium;
+	using psi::hasTritium;
 
 	for (auto& r : result) {
 		r = true;
@@ -189,9 +189,9 @@ KOKKOS_INLINE_FUNCTION
 bool
 PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 {
-    using psi::getMaxHePerV;
-    using psi::hasDeuterium;
-    using psi::hasTritium;
+	using psi::getMaxHePerV;
+	using psi::hasDeuterium;
+	using psi::hasTritium;
 
 	// Remove 0
 	auto isZeroPoint = [](const Region& reg) {

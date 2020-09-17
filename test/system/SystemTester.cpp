@@ -51,9 +51,23 @@ BOOST_AUTO_TEST_CASE(system_PSI_1)
 
 BOOST_AUTO_TEST_CASE(system_PSI_2)
 {
-	BOOST_REQUIRE(testUtils::copyFile("tridyn.dat"));
+	BOOST_REQUIRE(testUtils::copyFile("tridyn_system_PSI_2.dat"));
 	// 1D + HeDTVI + grouping + heat
 	testUtils::runSystemTestCase("system_PSI_2");
+}
+
+BOOST_AUTO_TEST_CASE(system_PSI_3)
+{
+	BOOST_REQUIRE(testUtils::copyFile("tridyn_system_PSI_3.dat"));
+	// 1D + HeDVI + advection + modifiedTM + attenuation + surface + reflective
+	testUtils::runSystemTestCase("system_PSI_3");
+}
+
+BOOST_AUTO_TEST_CASE(system_PSI_4)
+{
+	BOOST_REQUIRE(testUtils::copyFile("tridyn_system_PSI_4.dat"));
+	// 1D + HeTVI + advection + modifiedTM + attenuation + surface + reflective
+	testUtils::runSystemTestCase("system_PSI_4");
 }
 
 BOOST_AUTO_TEST_CASE(system_Fe_1)

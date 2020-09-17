@@ -1,3 +1,4 @@
+#time Xenon_content radius partial_radius Xenon_gb
 0 0 -nan 0 0
 0.1 5.34815e-06 0.3 0.3 0
 1.1 5.88296e-05 0.3 0.3 0

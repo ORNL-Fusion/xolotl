@@ -22,11 +22,11 @@ public:
 	virtual SpeciesId
 	getInterstitialSpeciesId() const = 0;
 
-    virtual bool
-    hasDeuterium() const noexcept = 0;
+	virtual bool
+	hasDeuterium() const noexcept = 0;
 
-    virtual bool
-    hasTritium() const noexcept = 0;
+	virtual bool
+	hasTritium() const noexcept = 0;
 
 	virtual double
 	getTotalTrappedHeliumConcentration(
