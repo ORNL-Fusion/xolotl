@@ -119,12 +119,6 @@ public:
 	setTimes(double finalTime, double dt) override;
 
 	/**
-	 * This operation resets the concentrations where the GB are located.
-	 */
-	void
-	initGBLocation() override;
-
-	/**
 	 * This operation get the concentration vector with the ids.
 	 *
 	 * @return The concentration vector

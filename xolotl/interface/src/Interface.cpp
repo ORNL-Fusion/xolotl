@@ -66,7 +66,6 @@ XolotlInterface::XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm)
 {
 	initializeXolotl(argc, argv, mpiComm);
 	initializedHere = true;
-	initGBLocation();
 }
 
 XolotlInterface::~XolotlInterface()
@@ -298,28 +297,6 @@ XolotlInterface::resetGBVector()
 		auto& solverHandler = solver::Solver::getSolverHandler();
 		// Reset the location
 		solverHandler.resetGBVector();
-	}
-	catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	}
-	catch (const std::string& error) {
-		std::cerr << error << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	}
-	catch (...) {
-		std::cerr << "Unrecognized exception seen." << std::endl;
-		std::cerr << "Aborting." << std::endl;
-	}
-
-	return;
-}
-
-void
-XolotlInterface::initGBLocation()
-{
-	try {
-		solver->initGBLocation();
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;

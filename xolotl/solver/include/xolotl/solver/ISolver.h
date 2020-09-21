@@ -79,12 +79,6 @@ public:
 	setTimes(double finalTime, double dt) = 0;
 
 	/**
-	 * This operation resets the concentrations where the GB are located.
-	 */
-	virtual void
-	initGBLocation() = 0;
-
-	/**
 	 * This operation get the concentration vector with the ids.
 	 *
 	 * @return The concentration vector

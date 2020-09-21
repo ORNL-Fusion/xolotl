@@ -414,16 +414,6 @@ PetscSolver::setTimes(double finalTime, double dt)
 	return;
 }
 
-void
-PetscSolver::initGBLocation()
-{
-	// Initialize the concentrations in the solution vector
-	auto& solverHandler = Solver::getSolverHandler();
-	solverHandler.initGBLocation(da, C);
-
-	return;
-}
-
 std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
 PetscSolver::getConcVector()
 {
@@ -484,9 +474,16 @@ PetscSolver::solve()
 		// Push the options for the solve
 		ierr = PetscOptionsPush(petscOptions);
 		checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPush failed.");
-		// Reset the time step number
-		ierr = TSSetStepNumber(ts, 0);
-		checkPetscError(ierr, "PetscSolver::solve: Reset Step Number failed.");
+		if (!petscInitializedHere) {
+			// Reset the time step number
+			ierr = TSSetStepNumber(ts, 0);
+			checkPetscError(
+				ierr, "PetscSolver::solve: Reset Step Number failed.");
+			// Reset the GB location
+			auto& solverHandler = Solver::getSolverHandler();
+			solverHandler.initGBLocation(da, C);
+		}
+		// Start the PETSc Solve
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr, "PetscSolver::solve: TSSolve failed.");
 

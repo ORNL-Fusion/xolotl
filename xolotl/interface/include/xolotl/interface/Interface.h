@@ -144,12 +144,6 @@ public:
 	resetGBVector();
 
 	/**
-	 * Set the concentrations to 0.0 where the GBs are.
-	 */
-	void
-	initGBLocation();
-
-	/**
 	 * Get the concentrations and their ids.
 	 *
 	 * @return The concentration vector from the current state of the simulation
