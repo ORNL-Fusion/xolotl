@@ -2418,7 +2418,7 @@ setupPetsc1DMonitor(TS ts)
 				// Get the interstitial quantity from the HDF5 file
 				nInterEvent1D = lastTsGroup->readData1D("nInterstitial");
 				// Get the previous I flux from the HDF5 file
-				previousIEventFlux1D = lastTsGroup->readData1D("previousIFlux");
+				previousIEventFlux1D = lastTsGroup->readData1D("previousFluxI");
 				// Get the previous time from the HDF5 file
 				double previousTime = lastTsGroup->readPreviousTime();
 				solverHandler.setPreviousTime(previousTime);
