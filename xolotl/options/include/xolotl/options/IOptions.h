@@ -444,14 +444,6 @@ public:
 	getBurstingDepth() const = 0;
 
 	/**
-	 * Obtain the value of the minimum size at which the bursting is happening.
-	 *
-	 * @return The size
-	 */
-	virtual int
-	getBurstingSize() const = 0;
-
-	/**
 	 * Obtain the value of the factor in the bursting probability.
 	 *
 	 * @return The factor
@@ -487,14 +479,6 @@ public:
 	 */
 	virtual bool
 	printRNGSeed(void) const = 0;
-
-	/**
-	 * Obtain the minimum size for the re-solution.
-	 *
-	 * @return The size
-	 */
-	virtual int
-	getResoMinSize() const = 0;
 
 	/**
 	 * Obtain the minimum size for the average radius computation.

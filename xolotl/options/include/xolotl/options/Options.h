@@ -247,11 +247,6 @@ protected:
 	double burstingDepth;
 
 	/**
-	 * Minimum size for the bursting.
-	 */
-	int burstingMinSize;
-
-	/**
 	 * Factor used in bursting probability.
 	 */
 	double burstingFactor;
@@ -271,11 +266,6 @@ protected:
 	 * Whether to print the value used to seed the random number generator.
 	 */
 	bool rngPrintSeed;
-
-	/**
-	 * Re-solution minimum size
-	 */
-	int resoMinSize;
 
 	/**
 	 * Average radius computation minimum size
@@ -922,16 +912,6 @@ public:
 	}
 
 	/**
-	 * Obtain the minimum size for the re-solution.
-	 * \see IOptions.h
-	 */
-	int
-	getResoMinSize() const override
-	{
-		return resoMinSize;
-	}
-
-	/**
 	 * Obtain the minimum size for the average radius computation.
 	 * \see IOptions.h
 	 */
@@ -959,16 +939,6 @@ public:
 	getPulseTime() const override
 	{
 		return pulseTime;
-	}
-
-	/**
-	 * Obtain the value of the minimum size at which the bursting is happening.
-	 * \see IOptions.h
-	 */
-	int
-	getBurstingSize() const override
-	{
-		return burstingMinSize;
 	}
 
 	/**

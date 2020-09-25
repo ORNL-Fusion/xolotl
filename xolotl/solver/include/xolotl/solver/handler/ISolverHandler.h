@@ -259,14 +259,6 @@ public:
 	getHeVRatio() const = 0;
 
 	/**
-	 * Get the bursting minimum size parameter.
-	 *
-	 * @return The minimum size
-	 */
-	virtual int
-	getMinSizeBursting() const = 0;
-
-	/**
 	 * Get the grid left offset.
 	 *
 	 * @return The offset

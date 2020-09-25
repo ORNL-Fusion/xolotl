@@ -62,13 +62,11 @@ Options::Options() :
 	frontBoundary(1),
 	backBoundary(1),
 	burstingDepth(10.0),
-	burstingMinSize(0),
 	burstingFactor(0.1),
 	rngUseSeed(false),
 	rngSeed(0),
 	rngPrintSeed(false),
 	zeta(0.73),
-	resoMinSize(0),
 	density(10.162795276841),
 	pulseTime(0.0),
 	pulseProportion(0.0),
@@ -212,19 +210,15 @@ Options::readParams(int argc, char* argv[])
 		"0 means mirror or periodic, 1 means free surface.")("burstingDepth",
 		bpo::value<double>(&burstingDepth),
 		"This option allows the user to set a depth in nm "
-		"for the bubble bursting.")("burstingMin",
-		bpo::value<int>(&burstingMinSize),
-		"This option allows the user to set a minimum size for the bubble "
-		"bursting.")("burstingFactor", bpo::value<double>(&burstingFactor),
+		"for the bubble bursting.")("burstingFactor",
+		bpo::value<double>(&burstingFactor),
 		"This option allows the user to set the factor used in computing the "
 		"likelihood of a bursting event.")("rng", bpo::value<std::string>(),
 		"Allows user to specify seed used to initialize random number "
 		"generator (default = determined from current time) and "
 		"whether each process should print the seed value "
-		"it uses (default = don't print)")("resoSize",
-		bpo::value<int>(&resoMinSize)->default_value(0),
-		"This option allows the user a minimum size for the re-solution "
-		"(default is 0).")("density", bpo::value<double>(&density),
+		"it uses (default = don't print)")("density",
+		bpo::value<double>(&density),
 		"This option allows the user to set a density in nm-3 "
 		"for the number of xenon per volume in a bubble.")("pulse",
 		bpo::value<std::string>(),

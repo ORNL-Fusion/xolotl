@@ -129,12 +129,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "grouping=11 2 4" << std::endl
 		<< "sputtering=0.5" << std::endl
 		<< "boundary=1 1" << std::endl
-		<< std::endl
 		<< "burstingDepth=5.0" << std::endl
-		<< "burstingMin=3" << std::endl
 		<< "burstingFactor=2.5" << std::endl
 		<< "zeta=0.6" << std::endl
-		<< "resoSize=10" << std::endl
 		<< "radiusSize=5 0 3" << std::endl
 		<< "density=9.0" << std::endl
 		<< "lattice=0.1" << std::endl
@@ -212,9 +209,6 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Check the bursting depth option
 	BOOST_REQUIRE_EQUAL(opts.getBurstingDepth(), 5.0);
 
-	// Check the bursting size option
-	BOOST_REQUIRE_EQUAL(opts.getBurstingSize(), 3);
-
 	// Check the bursting factor option
 	BOOST_REQUIRE_EQUAL(opts.getBurstingFactor(), 2.5);
 
@@ -228,9 +222,6 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 
 	// Check the electronic stopping power option
 	BOOST_REQUIRE_EQUAL(opts.getZeta(), 0.6);
-
-	// Check the minimum re-solution size option
-	BOOST_REQUIRE_EQUAL(opts.getResoMinSize(), 10);
 
 	// Check the minimum size option for the average radius computation
 	auto sizes = opts.getRadiusMinSizes();
