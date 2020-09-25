@@ -94,12 +94,12 @@ public:
 	getPetscArg() const = 0;
 
 	/**
-	 * Should we use const temperature handlers?
+	 * Should we use gradient temperature handlers?
 	 *
-	 * @return true if Xolotl must use a constant temperature
+	 * @return true if Xolotl must use a temperature gradient
 	 */
 	virtual bool
-	useConstTemperatureHandlers() const = 0;
+	useGradientTemperatureHandlers() const = 0;
 
 	/**
 	 * Obtain the value of the constant temperature to be used.

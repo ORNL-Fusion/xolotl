@@ -117,7 +117,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		   "-ts_max_steps 3"
 		<< std::endl
 		<< "networkFile=tungsten.txt" << std::endl
-		<< "startTemp=900" << std::endl
+		<< "constantTemp=900" << std::endl
 		<< "perfHandler=std" << std::endl
 		<< "flux=1.5" << std::endl
 		<< "material=W100" << std::endl
@@ -168,7 +168,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getNetworkFilename(), "tungsten.txt");
 
 	// Check the temperature
-	BOOST_REQUIRE_EQUAL(opts.useConstTemperatureHandlers(), true);
+	BOOST_REQUIRE_EQUAL(opts.useGradientTemperatureHandlers(), false);
+	BOOST_REQUIRE_EQUAL(opts.useHeatEquationHandlers(), false);
+	BOOST_REQUIRE_EQUAL(opts.useTemperatureProfileHandlers(), false);
 	BOOST_REQUIRE_EQUAL(opts.getConstTemperature(), 900.0);
 	BOOST_REQUIRE_EQUAL(opts.getBulkTemperature(), 0.0);
 

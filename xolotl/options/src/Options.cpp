@@ -18,8 +18,8 @@ Options::Options() :
 	exitCode(EXIT_SUCCESS),
 	petscArg(""),
 	networkFilename(""),
-	constTempFlag(false),
-	constTemperature(1000.0),
+	gradientTempFlag(false),
+	constantTemp(1000.0),
 	tempProfileFlag(false),
 	tempProfileFilename(""),
 	heatFlag(false),
@@ -132,22 +132,21 @@ Options::readParams(int argc, char* argv[])
 	bpo::options_description config("Parameters");
 	config.add_options()("networkFile",
 		bpo::value<std::string>(&networkFilename),
-		"The network will be loaded from this HDF5 file.")("startTemp",
-		bpo::value<std::string>(),
-		"The temperature (in Kelvin) will be the constant floating point value "
-		"specified. "
-		"(default = 1000). If two values are given, the second one is "
-		"interpreted "
-		"as the bulk temperature and a gradient will be used. (NOTE: Use only "
-		"ONE temperature option)")("tempFile",
+		"The network will be loaded from this HDF5 file.")("constantTemp",
+		bpo::value<double>(&constantTemp),
+		"The temperature (in Kelvin, default = 1000). NOTE: Use only "
+		"ONE temperature option")("tempFile",
 		bpo::value<std::string>(&tempProfileFilename),
 		"A temperature profile is given by the specified file, "
 		"then linear interpolation is used to fit the data."
-		"(NOTE: If a temperature file is given, "
-		"a constant temperature should NOT be given)")("heat",
-		bpo::value<std::string>(),
+		" NOTE: Use only "
+		"ONE temperature option")("heat", bpo::value<std::string>(),
 		"The heat flux (in W nm-2) at the surface and the temperature in the "
-		"bulk (Kelvin).")("flux", bpo::value<double>(&fluxAmplitude),
+		"bulk (Kelvin). NOTE: Use only "
+		"ONE temperature option")("gradientTemp", bpo::value<std::string>(),
+		"A temperature gradient will be used between the surface value (first "
+		"one) and the bulk one (second), both in Kelvin. NOTE: Use only "
+		"ONE temperature option")("flux", bpo::value<double>(&fluxAmplitude),
 		"The value of the incoming flux in #/nm2/s. If the Fuel case is used "
 		"it actually "
 		"corresponds to the fission rate in #/nm3/s.")("fluxFile",
@@ -269,21 +268,21 @@ Options::readParams(int argc, char* argv[])
 		notify(opts);
 
 		// Take care of the temperature
-		if (opts.count("startTemp")) {
+		if (opts.count("gradientTemp")) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-				opts["startTemp"].as<std::string>());
+				opts["gradientTemp"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
 			auto tokens = reader.loadLine();
 
-			// Set the flag to use constant temperature to true
-			constTempFlag = true;
+			// Set the flag to use gradient temperature to true
+			gradientTempFlag = true;
 
 			// Set the temperature
-			constTemperature = tokens[0];
+			constantTemp = tokens[0];
 
 			// Check if we have another value
 			if (tokens.size() > 1) {
@@ -320,7 +319,7 @@ Options::readParams(int argc, char* argv[])
 			auto tokens = reader.loadLine();
 
 			heatFlag = true;
-			constTemperature = tokens[0];
+			constantTemp = tokens[0];
 			bulkTemperature = tokens[1];
 		}
 

@@ -35,14 +35,9 @@ protected:
 	std::string petscArg;
 
 	/**
-	 * Use the constant temperature set of handlers?
-	 */
-	bool constTempFlag;
-
-	/**
 	 * Value for the constant temperature.
 	 */
-	double constTemperature;
+	double constantTemp;
 
 	/**
 	 * Use the temperature profile set of handlers?
@@ -58,6 +53,11 @@ protected:
 	 * Use the heat equation set of handlers?
 	 */
 	bool heatFlag;
+
+	/**
+	 * Use the gradient temperature set of handlers?
+	 */
+	bool gradientTempFlag;
 
 	/**
 	 * Value for the bulk temperature.
@@ -423,9 +423,9 @@ public:
 	 * \see IOptions.h
 	 */
 	bool
-	useConstTemperatureHandlers() const override
+	useGradientTemperatureHandlers() const override
 	{
-		return constTempFlag;
+		return gradientTempFlag;
 	}
 
 	/**
@@ -435,7 +435,7 @@ public:
 	double
 	getConstTemperature() const override
 	{
-		return constTemperature;
+		return constantTemp;
 	}
 
 	/**

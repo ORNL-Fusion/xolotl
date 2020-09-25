@@ -32,33 +32,13 @@ TemperatureHandler::TemperatureHandler(const options::Options& options)
 	auto xolotlComm = util::getMPIComm();
 	MPI_Comm_rank(xolotlComm, &procId);
 
-	if (options.useConstTemperatureHandlers() &&
-		options.useTemperatureProfileHandlers()) {
-		// Only print the error message once when running in parallel
-		if (procId == 0) {
-			// A constant temperature value AND a temperature profile cannot
-			// both be given.
-			throw std::runtime_error("\nA constant temperature value AND a "
-									 "temperature file cannot both be given.");
-		}
-	}
-	else if (options.useConstTemperatureHandlers()) {
-		auto temp = options.getConstTemperature();
-		// Check if we want a temperature gradient
-		double bulkTemp = options.getBulkTemperature();
-		if (util::equal(bulkTemp, 0.0)) {
-			// we are to use a constant temperature handler
-			_strategy = std::make_shared<TemperatureConstantHandler>(temp);
-		}
-		else {
-			// Use a temperature gradient
-			_strategy =
-				std::make_shared<TemperatureGradientHandler>(temp, bulkTemp);
-		}
-	}
-	else if (options.useTemperatureProfileHandlers()) {
+	if (options.useTemperatureProfileHandlers()) {
 		auto tempFileName = options.getTempProfileFilename();
 		_strategy = std::make_shared<TemperatureProfileHandler>(tempFileName);
+		if (procId == 0)
+			std::cout
+				<< "TemperatureHandler: Using the time profile defined in: "
+				<< tempFileName << std::endl;
 	}
 	else if (options.useHeatEquationHandlers()) {
 		if (util::equal(options.getConstTemperature(), 0.0)) {
@@ -66,6 +46,10 @@ TemperatureHandler::TemperatureHandler(const options::Options& options)
 			// 0.0
 			_strategy = std::make_shared<TemperatureConstantHandler>(
 				options.getBulkTemperature());
+			if (procId == 0)
+				std::cout
+					<< "TemperatureHandler: Using a constant temperature of: "
+					<< options.getBulkTemperature() << " K" << std::endl;
 		}
 		else {
 			// Actually using the heat equation
@@ -112,19 +96,35 @@ TemperatureHandler::TemperatureHandler(const options::Options& options)
 				_strategy->setHeatCoefficient(core::feHeatCoefficient);
 				_strategy->setHeatConductivity(core::feHeatConductivity);
 			}
+			if (procId == 0)
+				std::cout << "TemperatureHandler: Using the heat equation with "
+							 "a flux of: "
+						  << options.getConstTemperature()
+						  << " W nm-2, and a bulk temperature of: "
+						  << options.getBulkTemperature() << " K" << std::endl;
 		}
 	}
+	else if (options.useGradientTemperatureHandlers()) {
+		auto temp = options.getConstTemperature();
+		// Check if we want a temperature gradient
+		double bulkTemp = options.getBulkTemperature();
+		// Use a temperature gradient
+		_strategy =
+			std::make_shared<TemperatureGradientHandler>(temp, bulkTemp);
+		if (procId == 0)
+			std::cout << "TemperatureHandler: Using a temperature gradient "
+						 "with a surface temperature of: "
+					  << options.getConstTemperature()
+					  << " K, and a bulk temperature of: "
+					  << options.getBulkTemperature() << " K" << std::endl;
+	}
 	else {
-		// Only print the error message once when running in parallel
-		if (procId == 0) {
-			std::cerr << "\nWarning: Temperature information has not been "
-						 "given.  Defaulting to constant"
-						 " temperature = 1000K "
-					  << std::endl;
-		}
 		auto temp = options.getConstTemperature();
 		// we are to use a constant temperature handler
 		_strategy = std::make_shared<TemperatureConstantHandler>(temp);
+		if (procId == 0)
+			std::cout << "TemperatureHandler: Using a constant temperature of: "
+					  << options.getConstTemperature() << " K" << std::endl;
 	}
 }
 } // namespace temperature
