@@ -70,6 +70,13 @@ BOOST_AUTO_TEST_CASE(system_PSI_4)
 	testUtils::runSystemTestCase("system_PSI_4");
 }
 
+BOOST_AUTO_TEST_CASE(system_PSI_5)
+{
+	// 1D + HeVI + advection + modifiedTM + attenuation + surface + reflective +
+	// reduced matrix method bulk
+	testUtils::runSystemTestCase("system_PSI_5");
+}
+
 BOOST_AUTO_TEST_CASE(system_Fe_1)
 {
 	// 0D

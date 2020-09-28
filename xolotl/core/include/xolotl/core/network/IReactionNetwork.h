@@ -171,6 +171,16 @@ public:
 	setEnableNucleation(bool reso) = 0;
 
 	KOKKOS_INLINE_FUNCTION
+	bool
+	getEnableReducedJacobian() const noexcept
+	{
+		return _enableReducedJacobian;
+	}
+
+	virtual void
+	setEnableReducedJacobian(bool reduced) = 0;
+
+	KOKKOS_INLINE_FUNCTION
 	IndexType
 	getGridSize() const noexcept
 	{
@@ -260,6 +270,7 @@ protected:
 	bool _enableStdReaction{};
 	bool _enableReSolution{};
 	bool _enableNucleation{};
+	bool _enableReducedJacobian{};
 
 	IndexType _gridSize{};
 	IndexType _numDOFs{};

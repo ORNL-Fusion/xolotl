@@ -283,6 +283,12 @@ PetscSolver::initialize()
 	ierr = PetscOptionsPush(petscOptions);
 	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPush failed.");
 
+	// Check the option -snes_mf_operator
+	PetscBool flagReduced;
+	ierr = PetscOptionsHasName(NULL, NULL, "-snes_mf_operator", &flagReduced);
+	auto& network = getSolverHandler().getNetwork();
+	network.setEnableReducedJacobian(flagReduced);
+
 	// Create the solver context
 	getSolverHandler().createSolverContext(da);
 

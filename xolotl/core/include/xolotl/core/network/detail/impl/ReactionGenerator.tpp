@@ -14,6 +14,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::ReactionGeneratorBase(
 	_subpaving(network._subpaving),
 	_clusterData(network._clusterData),
 	_numDOFs(network.getDOF()),
+	_enableReducedJacobian(network.getEnableReducedJacobian()),
 	_clusterProdReactionCounts(
 		"Production Reaction Counts", _clusterData.numClusters),
 	_clusterDissReactionCounts(
@@ -186,8 +187,15 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 	Kokkos::parallel_for(
 		this->_numDOFs,
 		KOKKOS_LAMBDA(const IndexType i) { tmpConn.row_map(i) = 1; });
-	reactionCollection.apply(DEVICE_LAMBDA(
-		auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
+	if (this->_enableReducedJacobian) {
+		reactionCollection.apply(DEVICE_LAMBDA(auto&& reaction) {
+			reaction.contributeReducedConnectivity(tmpConn);
+		});
+	}
+	else {
+		reactionCollection.apply(DEVICE_LAMBDA(
+			auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
+	}
 
 	Kokkos::fence();
 	// Get row map
@@ -218,9 +226,15 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 			}
 		});
 	// Fill entries (column ids)
-	reactionCollection.apply(DEVICE_LAMBDA(
-		auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
-
+	if (this->_enableReducedJacobian) {
+		reactionCollection.apply(DEVICE_LAMBDA(auto&& reaction) {
+			reaction.contributeReducedConnectivity(tmpConn);
+		});
+	}
+	else {
+		reactionCollection.apply(DEVICE_LAMBDA(
+			auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
+	}
 	Kokkos::fence();
 
 	// Shrink to fit

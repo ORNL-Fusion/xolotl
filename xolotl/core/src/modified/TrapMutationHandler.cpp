@@ -81,7 +81,8 @@ TrapMutationHandler::initialize(network::IReactionNetwork& network,
 		}
 
 		// The interstitial cluster is connected to He
-		dfill[iClusterId].emplace_back(heClusterId);
+		if (!enableReducedJacobian)
+			dfill[iClusterId].emplace_back(heClusterId);
 
 		// Get the corresponding HeV cluster
 		comp[specIdHe()] = i;
@@ -97,7 +98,8 @@ TrapMutationHandler::initialize(network::IReactionNetwork& network,
 		}
 
 		// The HeV cluster is connected to He
-		dfill[heVClusterId].emplace_back(heClusterId);
+		if (!enableReducedJacobian)
+			dfill[heVClusterId].emplace_back(heClusterId);
 	}
 
 	// Update the bubble bursting rate
@@ -497,13 +499,22 @@ TrapMutationHandler::computePartialsForTrapMutation(
 		indices[baseIndex] = heIndex;
 		val[baseIndex] = -rate;
 
-		// Set the bubble cluster partial derivative
-		indices[(baseIndex) + 1] = bubbleIndex;
-		val[(baseIndex) + 1] = rate;
+		if (!enableReducedJacobian) {
+			// Set the bubble cluster partial derivative
+			indices[(baseIndex) + 1] = bubbleIndex;
+			val[(baseIndex) + 1] = rate;
 
-		// Set the interstitial cluster partial derivative
-		indices[(baseIndex) + 2] = iIndex;
-		val[(baseIndex) + 2] = rate;
+			// Set the interstitial cluster partial derivative
+			indices[(baseIndex) + 2] = iIndex;
+			val[(baseIndex) + 2] = rate;
+		}
+		else {
+			// Dummy numbers because it is off-diagonal
+			indices[(baseIndex) + 1] = heIndex;
+			val[(baseIndex) + 1] = 0.0;
+			indices[(baseIndex) + 2] = heIndex;
+			val[(baseIndex) + 2] = 0.0;
+		}
 
 		// Advance to next indices/vals index.
 		++i;

@@ -146,6 +146,7 @@ protected:
 	Subpaving _subpaving;
 	ClusterData _clusterData;
 	IndexType _numDOFs;
+	bool _enableReducedJacobian;
 	IndexView _clusterProdReactionCounts;
 	IndexView _clusterDissReactionCounts;
 

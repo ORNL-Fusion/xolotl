@@ -175,6 +175,13 @@ ReactionNetwork<TImpl>::setEnableNucleation(bool reaction)
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::setEnableReducedJacobian(bool reduced)
+{
+	this->_enableReducedJacobian = reduced;
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 {
 	this->_gridSize = gridSize;
@@ -372,10 +379,18 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 		nValues, KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
 
 	auto connectivity = _reactions.getConnectivity();
-	_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
-		reaction.contributePartialDerivatives(
-			concentrations, values, connectivity, gridIndex);
-	});
+	if (this->_enableReducedJacobian) {
+		_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
+			reaction.contributeReducedPartialDerivatives(
+				concentrations, values, connectivity, gridIndex);
+		});
+	}
+	else {
+		_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
+			reaction.contributePartialDerivatives(
+				concentrations, values, connectivity, gridIndex);
+		});
+	}
 
 	Kokkos::fence();
 }

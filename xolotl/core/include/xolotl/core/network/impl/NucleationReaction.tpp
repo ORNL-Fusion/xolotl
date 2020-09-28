@@ -55,6 +55,19 @@ NucleationReaction<TNetwork, TDerived>::computeConnectivity(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
+NucleationReaction<TNetwork, TDerived>::computeReducedConnectivity(
+	const Connectivity& connectivity)
+{
+	// The reactant connects with the reactant
+	this->addConnectivity(_reactant, _reactant, connectivity);
+	// The product connects with the reactant
+	if (_product == _reactant)
+		this->addConnectivity(_product, _reactant, connectivity);
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
 NucleationReaction<TNetwork, TDerived>::computeFlux(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
 {
@@ -89,6 +102,27 @@ NucleationReaction<TNetwork, TDerived>::computePartialDerivatives(
 	else {
 		Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)), 1.0);
 		Kokkos::atomic_add(&values(connectivity(_product, _reactant)), 0.5);
+	}
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+NucleationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
+	ConcentrationsView concentrations, Kokkos::View<double*> values,
+	Connectivity connectivity, IndexType gridIndex)
+{
+	// Get the single concentration to know in which regime we are
+	double singleConc = concentrations(_reactant);
+
+	// Update the partials
+	if (singleConc > 2.0 * this->_rate(gridIndex)) {
+		// Nothing
+	}
+	else {
+		Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)), 1.0);
+		if (_product == _reactant)
+			Kokkos::atomic_add(&values(connectivity(_product, _reactant)), 0.5);
 	}
 }
 } // namespace network

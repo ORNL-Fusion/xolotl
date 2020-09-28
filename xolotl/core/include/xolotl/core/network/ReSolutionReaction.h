@@ -61,12 +61,22 @@ private:
 
 	KOKKOS_INLINE_FUNCTION
 	void
+	computeReducedConnectivity(const Connectivity& connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
 	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
 		IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, Connectivity connectivity,
+		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, Connectivity connectivity,
 		IndexType gridIndex);
 

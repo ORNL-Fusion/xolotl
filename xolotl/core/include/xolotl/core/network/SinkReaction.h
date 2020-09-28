@@ -70,6 +70,14 @@ private:
 
 	KOKKOS_INLINE_FUNCTION
 	void
+	computeReducedConnectivity(const Connectivity& connectivity)
+	{
+		// The reactant connects with the reactant
+		this->addConnectivity(_reactant, _reactant, connectivity);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
 	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
 		IndexType gridIndex)
 	{
@@ -80,6 +88,16 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, Connectivity connectivity,
+		IndexType gridIndex)
+	{
+		Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)),
+			this->_rate(gridIndex));
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, Connectivity connectivity,
 		IndexType gridIndex)
 	{

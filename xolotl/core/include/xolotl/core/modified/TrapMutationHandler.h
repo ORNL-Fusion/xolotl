@@ -68,6 +68,9 @@ protected:
 	//! To know if we want attenuation or not
 	bool attenuation;
 
+	//! To know if we are using the reduced Jacobian method.
+	bool enableReducedJacobian;
+
 	/**
 	 * The vector containing the indices of the bubbles created through modified
 	 * trap-mutation for each grid point. The difference between this vector and
@@ -113,7 +116,8 @@ public:
 		kMutation(0.0),
 		kDis(1.0),
 		attenuation(true),
-		desorp(0, 0.0)
+		desorp(0, 0.0),
+		enableReducedJacobian(false)
 	{
 	}
 
@@ -249,6 +253,18 @@ public:
 	getNumberOfMutating() const
 	{
 		return sizeVec.size();
+	}
+
+	/**
+	 * Set the enable reduced Jacobian method.
+	 *
+	 * @param The boolean
+	 */
+	void
+	setEnableReduceJacobian(bool reduced)
+	{
+		enableReducedJacobian = reduced;
+		return;
 	}
 };
 // end class TrapMutationHandler

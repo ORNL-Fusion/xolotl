@@ -182,6 +182,14 @@ public:
 	 */
 	virtual int
 	getNumberOfMutating() const = 0;
+
+	/**
+	 * Set the enable reduced Jacobian method.
+	 *
+	 * @param The boolean
+	 */
+	virtual void
+	setEnableReduceJacobian(bool reduced) = 0;
 };
 // end class ITrapMutationHandler
 
