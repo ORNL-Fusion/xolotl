@@ -90,9 +90,9 @@ protected:
 	perf::IHandlerRegistry::RegistryType perfRegistryType;
 
 	/**
-	 * Use the "standard" set of handlers for the visualization infrastructure?
+     * Name of the viz handler
 	 */
-	bool vizStandardHandlersFlag;
+    std::string vizHandlerName;
 
 	/**
 	 * Name of the material.
@@ -529,16 +529,16 @@ public:
 		return perfRegistryType;
 	}
 
-	/**
-	 * Should we use the "standard" set of handlers for the visualization?
-	 * If false, use dummy (stub) handlers.
-	 * \see IOptions.h
-	 */
-	bool
-	useVizStandardHandlers() const override
-	{
-		return vizStandardHandlersFlag;
-	}
+    /**
+     * Obtain the name of the visualization handler to be used
+     *
+     * @return The name of the viz handler
+     */
+    std::string
+    getVizHandlerName() const override
+    {
+        return vizHandlerName;
+    }
 
 	/**
 	 * Obtain the name of the material to be used for simulation.

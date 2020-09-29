@@ -1,7 +1,6 @@
-#ifndef DUMMYHANDLERREGISTRY_H
-#define DUMMYHANDLERREGISTRY_H
+#pragma once
 
-#include <xolotl/viz/IVizHandlerRegistry.h>
+#include <xolotl/viz/IVizHandler.h>
 #include <xolotl/viz/dummy/DummyPlot.h>
 
 namespace xolotl
@@ -11,23 +10,22 @@ namespace viz
 namespace dummy
 {
 /**
- * Factory for creating plots that are dummies, meaning that they have the
+ * Handler for creating plots that are dummies, meaning that they have the
  * same structure as IPlot but don't actually do anything. This is so that
  * the code can be written to use the visualization infrastructure without
  * regard to whether visualization is active or disabled.
  */
-class DummyHandlerRegistry : public IVizHandlerRegistry
+class DummyHandler : public IVizHandler
 {
 public:
-	/**
-	 * Construct a DummyHandlerRegistry.
-	 */
-	DummyHandlerRegistry();
+	DummyHandler() = delete;
+
+    DummyHandler(const options::IOptions& options);
 
 	/**
-	 * Clean up a DummyHandlerRegistry.
+	 * Clean up a DummyHandler.
 	 */
-	virtual ~DummyHandlerRegistry();
+	virtual ~DummyHandler();
 
 	/**
 	 * Obtain a Plot by name.
@@ -38,10 +36,8 @@ public:
 	virtual std::shared_ptr<IPlot>
 	getPlot(const std::string& name, PlotType type);
 };
-// end class DummyHandlerRegistry
+// end class DummyHandler
 
 } // end namespace dummy
 } // end namespace viz
 } // end namespace xolotl
-
-#endif

@@ -11,7 +11,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
-#include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
+#include <xolotl/factory/viz/VizHandlerFactory.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/perf/dummy/DummyHandlerRegistry.h>
 #include <xolotl/perf/xolotlPerf.h>

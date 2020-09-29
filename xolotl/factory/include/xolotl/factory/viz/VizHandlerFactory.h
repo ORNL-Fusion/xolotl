@@ -6,27 +6,27 @@ namespace xolotl
 {
 namespace viz
 {
-class IVizHandlerRegistry;
+class IVizHandler;
 }
 
 namespace factory
 {
 namespace viz
 {
-class VizHandlerRegistryFactory :
-	public Factory<VizHandlerRegistryFactory, xolotl::viz::IVizHandlerRegistry>
+class VizHandlerFactory :
+	public Factory<VizHandlerFactory, xolotl::viz::IVizHandler>
 {
 public:
 	static std::string
 	getFactoryName() noexcept
 	{
-		return "VizHandlerRegistryFactory";
+		return "VizHandlerFactory";
 	}
 
 	static std::string
 	getName(const options::Options& options)
 	{
-		return "";
+		return options.getVizHandlerName();
 	}
 };
 } // end namespace viz

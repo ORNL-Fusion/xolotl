@@ -1,11 +1,10 @@
-#ifndef STANDARDHANDLERREGISTRY_H
-#define STANDARDHANDLERREGISTRY_H
+#pragma once
 
 #include <iostream>
 #include <map>
 #include <string>
 
-#include <xolotl/viz/IVizHandlerRegistry.h>
+#include <xolotl/viz/IVizHandler.h>
 
 namespace xolotl
 {
@@ -14,22 +13,21 @@ namespace viz
 namespace standard
 {
 /**
- * Factory for creating standard plots using EAVL and MESA libraries.
+ * Handler for creating standard plots using EAVL and MESA libraries.
  * This is used only if the libraries are present and if the user uses
  * the standard registry.
  */
-class StandardHandlerRegistry : public IVizHandlerRegistry
+class StandardHandler : public IVizHandler
 {
 public:
-	/**
-	 * Construct a StandardHandlerRegistry.
-	 */
-	StandardHandlerRegistry();
+	StandardHandler() = delete;
+
+    StandardHandler(const options::IOptions& options);
 
 	/**
-	 * Clean up a StandardHandlerRegistry.
+	 * Clean up a StandardHandler.
 	 */
-	virtual ~StandardHandlerRegistry();
+	virtual ~StandardHandler();
 
 	/**
 	 * Obtain a Plot by name.
@@ -41,10 +39,8 @@ public:
 	virtual std::shared_ptr<IPlot>
 	getPlot(const std::string& name, PlotType type);
 };
-// end class StandardHandlerRegistry
+// end class StandardHandler
 
 } /* namespace standard */
 } /* namespace viz */
 } /* namespace xolotl */
-
-#endif

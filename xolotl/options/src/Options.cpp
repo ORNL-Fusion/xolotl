@@ -28,7 +28,7 @@ Options::Options() :
 	fluxAmplitude(0.0),
 	fluxTimeProfileFlag(false),
 	perfRegistryType(perf::IHandlerRegistry::std),
-	vizStandardHandlersFlag(false),
+    vizHandlerName(""),
 	materialName(""),
 	initialVConcentration(0.0),
 	voidPortion(50.0),
@@ -158,7 +158,7 @@ Options::readParams(int argc, char* argv[])
 		bpo::value<std::string>()->default_value("std"),
 		"Which set of performance handlers to use. (default = std, available "
 		"std,dummy,os,papi).")("vizHandler",
-		bpo::value<std::string>()->default_value("dummy"),
+		bpo::value<std::string>(&vizHandlerName)->default_value("dummy"),
 		"Which set of handlers to use for the visualization. (default = dummy, "
 		"available std,dummy).")("dimensions",
 		bpo::value<int>(&dimensionNumber),
@@ -366,13 +366,7 @@ Options::readParams(int argc, char* argv[])
 		// Take care of the visualization handler
 		if (opts.count("vizHandler")) {
 			// Determine the type of handlers we are being asked to use
-			if (opts["vizHandler"].as<std::string>() == "std") {
-				vizStandardHandlersFlag = true;
-			}
-			else if (opts["vizHandler"].as<std::string>() == "dummy") {
-				vizStandardHandlersFlag = false;
-			}
-			else {
+			if (!(vizHandlerName == "std" || vizHandlerName == "dummy")) {
 				std::cerr << "\nOptions: unrecognized argument in the "
 							 "visualization option handler."
 							 "Aborting!\n"

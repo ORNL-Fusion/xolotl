@@ -1,5 +1,4 @@
-#ifndef IVIZHANDLERREGISTRY_H
-#define IVIZHANDLERREGISTRY_H
+#pragma once
 
 // Includes
 #include <memory>
@@ -14,15 +13,15 @@ namespace xolotl
 namespace viz
 {
 /**
- * Factory for building plots, dataprovider, and labelprovider.
+ * Interface for visualization handlers
  */
-class IVizHandlerRegistry
+class IVizHandler
 {
 public:
 	/**
 	 * The destructor
 	 */
-	virtual ~IVizHandlerRegistry()
+	virtual ~IVizHandler()
 	{
 	}
 
@@ -32,9 +31,7 @@ public:
 	virtual std::shared_ptr<IPlot>
 	getPlot(const std::string& name, PlotType type) = 0;
 
-}; // end class IVizHandlerRegistry
+}; // end class IVizHandler
 
 } /* namespace viz */
 } /* namespace xolotl */
-
-#endif

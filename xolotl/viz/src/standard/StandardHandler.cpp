@@ -1,6 +1,9 @@
+#include <stdexcept>
+
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/viz/dataprovider/DataProvider.h>
-#include <xolotl/viz/standard/StandardHandlerRegistry.h>
+#include <xolotl/viz/standard/StandardHandler.h>
 #include <xolotl/viz/standard/plot/Plot.h>
 #include <xolotl/viz/standard/plot/ScatterPlot.h>
 #include <xolotl/viz/standard/plot/SeriesPlot.h>
@@ -13,16 +16,23 @@ namespace viz
 {
 namespace standard
 {
-StandardHandlerRegistry::StandardHandlerRegistry()
+#ifndef HAVE_VIZLIB_STD
+namespace detail
+{
+auto stdHandlerRegistrations =
+	xolotl::factory::viz::VizHandlerFactory::RegistrationCollection<
+		StandardHandler>({"std"});
+}
+#endif
+
+StandardHandler::StandardHandler(const options::IOptions& options)
 {
 }
 
-StandardHandlerRegistry::~StandardHandlerRegistry()
-{
-}
+StandardHandler::~StandardHandler() = default;
 
 std::shared_ptr<IPlot>
-StandardHandlerRegistry::getPlot(const std::string& name, PlotType type)
+StandardHandler::getPlot(const std::string& name, PlotType type)
 {
 	switch (type) {
 	case PlotType::SCATTER:

@@ -184,15 +184,13 @@ public:
 	virtual perf::IHandlerRegistry::RegistryType
 	getPerfHandlerType(void) const = 0;
 
-	/**
-	 * Should we use the "standard" set of handlers for the visualization?
-	 * If false, use dummy (stub) handlers.
-	 *
-	 * @return true if program should use standard handlers, false if
-	 * should use dummy handlers
-	 */
-	virtual bool
-	useVizStandardHandlers() const = 0;
+    /**
+     * Obtain the name of the visualization handler to be used
+     *
+     * @return The name of the viz handler
+     */
+    virtual std::string
+    getVizHandlerName() const = 0;
 
 	/**
 	 * Obtain the name of the material to be used for the simulation.

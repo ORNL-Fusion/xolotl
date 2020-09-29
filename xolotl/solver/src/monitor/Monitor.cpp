@@ -9,7 +9,6 @@
 #include <sstream>
 #include <vector>
 
-#include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/solver/PetscSolver.h>

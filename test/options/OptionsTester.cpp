@@ -183,7 +183,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		opts.getPerfHandlerType(), xolotl::perf::IHandlerRegistry::std);
 
 	// Check the performance handler
-	BOOST_REQUIRE_EQUAL(opts.useVizStandardHandlers(), true);
+	BOOST_REQUIRE_EQUAL(opts.getVizHandlerName(), "std");
 
 	// Check the material option
 	BOOST_REQUIRE_EQUAL(opts.getMaterial(), "W100");

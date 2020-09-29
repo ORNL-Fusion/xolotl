@@ -7,13 +7,14 @@
 #include <xolotl/factory/network/NetworkHandlerFactory.h>
 #include <xolotl/factory/solver/SolverFactory.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
-#include <xolotl/factory/viz/VizHandlerRegistryFactory.h>
+#include <xolotl/factory/viz/VizHandlerFactory.h>
 #include <xolotl/interface/Interface.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/solver/Solver.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/viz/VizHandlerRegistry.h>
 
 namespace xolotl
 {
@@ -116,8 +117,8 @@ XolotlInterface::initializeXolotl(int argc, char* argv[], MPI_Comm comm)
 		perf::initialize(opts.getPerfHandlerType());
 
 		// Initialize the visualization
-		auto vizHandler =
-			factory::viz::VizHandlerRegistryFactory::get().generate(opts);
+		viz::VizHandlerRegistry::set(
+			factory::viz::VizHandlerFactory::get().generate(opts));
 
 		// Setup the solver
 		solver = factory::solver::SolverFactory::get().generate(opts);
