@@ -56,7 +56,7 @@ for i in range(len(name)):
         ## Skip the moments for now
         if (int(concDset[j][0]) > totalSize - 1): continue
         ## Get the cluster bounds
-        groupName = str(concDset[i][0])
+        groupName = str(concDset[j][0])
         clusterGroup = networkGroup[groupName]
         bounds = clusterGroup.attrs['bounds']
         ## Loop on Xe size
