@@ -10,9 +10,6 @@ namespace viz
 class VizHandlerRegistry
 {
 public:
-	// static std::shared_ptr<IPlot>
-	// getPlot(const std::string& name, PlotType type);
-
     static void
     set(const std::shared_ptr<IVizHandler>& handler);
 

@@ -3,7 +3,6 @@
 // Includes
 #include <memory>
 #include <string>
-#include <vector>
 
 #include <xolotl/viz/IPlot.h>
 #include <xolotl/viz/PlotType.h>

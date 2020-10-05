@@ -1,5 +1,6 @@
 #include <stdexcept>
 
+#include <xolotl/factory/viz/VizHandlerFactory.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/viz/dataprovider/DataProvider.h>

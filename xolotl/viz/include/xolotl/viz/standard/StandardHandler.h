@@ -1,9 +1,8 @@
 #pragma once
 
-#include <iostream>
-#include <map>
 #include <string>
 
+#include <xolotl/options/IOptions.h>
 #include <xolotl/viz/IVizHandler.h>
 
 namespace xolotl
