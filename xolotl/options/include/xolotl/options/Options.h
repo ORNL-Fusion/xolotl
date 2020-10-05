@@ -35,34 +35,19 @@ protected:
 	std::string petscArg;
 
 	/**
-	 * Value for the constant temperature.
+	 * Name of the temperature handler to use
 	 */
-	double constantTemp;
+	std::string tempHandlerName;
 
 	/**
-	 * Use the temperature profile set of handlers?
+	 * Temperature parameter values
 	 */
-	bool tempProfileFlag;
+	std::array<double, 2> tempParam;
 
 	/**
 	 * Name of the input temperature profile file.
 	 */
 	std::string tempProfileFilename;
-
-	/**
-	 * Use the heat equation set of handlers?
-	 */
-	bool heatFlag;
-
-	/**
-	 * Use the gradient temperature set of handlers?
-	 */
-	bool gradientTempFlag;
-
-	/**
-	 * Value for the bulk temperature.
-	 */
-	double bulkTemperature;
 
 	/**
 	 * Use the flux amplitude option?
@@ -90,9 +75,9 @@ protected:
 	perf::IHandlerRegistry::RegistryType perfRegistryType;
 
 	/**
-     * Name of the viz handler
+	 * Name of the viz handler
 	 */
-    std::string vizHandlerName;
+	std::string vizHandlerName;
 
 	/**
 	 * Name of the material.
@@ -418,34 +403,16 @@ public:
 		return petscArg;
 	}
 
-	/**
-	 * Should we use const temperature handlers?
-	 * \see IOptions.h
-	 */
-	bool
-	useGradientTemperatureHandlers() const override
+	std::string
+	getTempHandlerName() const override
 	{
-		return gradientTempFlag;
+		return tempHandlerName;
 	}
 
-	/**
-	 * Obtain the value of the constant temperature to be used.
-	 * \see IOptions.h
-	 */
-	double
-	getConstTemperature() const override
+    double
+	getTempParam(std::size_t i = 0) const override
 	{
-		return constantTemp;
-	}
-
-	/**
-	 * Should we use temperature profile handlers?
-	 * \see IOptions.h
-	 */
-	bool
-	useTemperatureProfileHandlers() const override
-	{
-		return tempProfileFlag;
+		return tempParam[i];
 	}
 
 	/**
@@ -456,26 +423,6 @@ public:
 	getTempProfileFilename() const override
 	{
 		return tempProfileFilename;
-	}
-
-	/**
-	 * Should we use heat equation handlers?
-	 * \see IOptions.h
-	 */
-	bool
-	useHeatEquationHandlers() const override
-	{
-		return heatFlag;
-	}
-
-	/**
-	 * Obtain the value of the temperature to be used in the bulk.
-	 * \see IOptions.h
-	 */
-	double
-	getBulkTemperature() const override
-	{
-		return bulkTemperature;
 	}
 
 	/**
@@ -529,16 +476,16 @@ public:
 		return perfRegistryType;
 	}
 
-    /**
-     * Obtain the name of the visualization handler to be used
-     *
-     * @return The name of the viz handler
-     */
-    std::string
-    getVizHandlerName() const override
-    {
-        return vizHandlerName;
-    }
+	/**
+	 * Obtain the name of the visualization handler to be used
+	 *
+	 * @return The name of the viz handler
+	 */
+	std::string
+	getVizHandlerName() const override
+	{
+		return vizHandlerName;
+	}
 
 	/**
 	 * Obtain the name of the material to be used for simulation.

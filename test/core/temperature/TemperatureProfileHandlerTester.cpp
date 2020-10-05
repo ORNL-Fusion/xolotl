@@ -7,17 +7,16 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/core/temperature/TemperatureProfileHandler.h>
+#include <xolotl/core/temperature/ProfileHandler.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/config.h>
 
 using namespace std;
 using namespace xolotl;
 using namespace core;
-using namespace temperature;
 
 /**
- * The test suite is responsible for testing the TemperatureHandler.
+ * The test suite is responsible for testing the ProfileHandler.
  */
 BOOST_AUTO_TEST_SUITE(TemperatureProfileHandlerTester_testSuite)
 
@@ -48,7 +47,7 @@ BOOST_AUTO_TEST_CASE(check_getTemperature)
 	network::IReactionNetwork::SparseFillMap dfill;
 
 	// Create and initialize the temperature profile handler
-	auto testTemp = make_shared<TemperatureProfileHandler>("tempFile.dat");
+	auto testTemp = make_shared<temperature::ProfileHandler>("tempFile.dat");
 	testTemp->initializeTemperature(dof, ofill, dfill);
 	plsm::SpaceVector<double, 3> pos{1.142857142857143, 0.0, 0.0};
 

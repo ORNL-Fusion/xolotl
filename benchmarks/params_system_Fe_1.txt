@@ -4,7 +4,7 @@ netParam=200 0 0 200 1
 vizHandler=dummy
 perfHandler=dummy
 material=Fe
-constantTemp=703
+tempParam=703
 flux=8.46e-6
 grouping=30 2 2
 #-snes_test_display -snes_test_jacobian_view -snes_test_jacobian 1.0e-10

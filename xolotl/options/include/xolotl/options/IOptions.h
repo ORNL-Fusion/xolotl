@@ -2,9 +2,11 @@
 #define IOPTIONS_H
 
 // Includes
-#include <iostream>
+#include <array>
 #include <map>
 #include <string>
+#include <tuple>
+#include <vector>
 
 #include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/util/Array.h>
@@ -94,28 +96,18 @@ public:
 	getPetscArg() const = 0;
 
 	/**
-	 * Should we use gradient temperature handlers?
+	 * Obtain the name of the temperature handler to be used
 	 *
-	 * @return true if Xolotl must use a temperature gradient
+	 * @return The name of the temperature handler
 	 */
-	virtual bool
-	useGradientTemperatureHandlers() const = 0;
+	virtual std::string
+	getTempHandlerName() const = 0;
 
 	/**
-	 * Obtain the value of the constant temperature to be used.
-	 *
-	 * @return The value for the temperature
+	 * Obtain the temperature parameters for the temperature handler
 	 */
 	virtual double
-	getConstTemperature() const = 0;
-
-	/**
-	 * Should we use temperature profile handlers?
-	 *
-	 * @return true if Xolotl must use a temperature profile
-	 */
-	virtual bool
-	useTemperatureProfileHandlers() const = 0;
+	getTempParam(std::size_t i = 0) const = 0;
 
 	/**
 	 * Obtain the name of the file containing the temperature profile data.
@@ -124,22 +116,6 @@ public:
 	 */
 	virtual std::string
 	getTempProfileFilename() const = 0;
-
-	/**
-	 * Should we use heat equation handlers?
-	 *
-	 * @return true if Xolotl must use the heat equation
-	 */
-	virtual bool
-	useHeatEquationHandlers() const = 0;
-
-	/**
-	 * Obtain the value of the temperature to be used in the bulk.
-	 *
-	 * @return The value for the temperature
-	 */
-	virtual double
-	getBulkTemperature() const = 0;
 
 	/**
 	 * Should we use the flux amplitude option?
@@ -184,13 +160,13 @@ public:
 	virtual perf::IHandlerRegistry::RegistryType
 	getPerfHandlerType(void) const = 0;
 
-    /**
-     * Obtain the name of the visualization handler to be used
-     *
-     * @return The name of the viz handler
-     */
-    virtual std::string
-    getVizHandlerName() const = 0;
+	/**
+	 * Obtain the name of the visualization handler to be used
+	 *
+	 * @return The name of the viz handler
+	 */
+	virtual std::string
+	getVizHandlerName() const = 0;
 
 	/**
 	 * Obtain the name of the material to be used for the simulation.

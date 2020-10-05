@@ -1,6 +1,7 @@
 #pragma once
 
-#include <xolotl/core/temperature/ITemperatureHandler.h>
+#include <xolotl/core/temperature/TemperatureHandler.h>
+#include <xolotl/options/IOptions.h>
 
 namespace xolotl
 {
@@ -12,7 +13,7 @@ namespace temperature
  * This class realizes the ITemperatureHandler, it is responsible for the
  * handling of a temperature constant with time.
  */
-class TemperatureConstantHandler : public ITemperatureHandler
+class ConstantHandler : public TemperatureHandler
 {
 private:
 	/**
@@ -20,62 +21,23 @@ private:
 	 */
 	double temperature;
 
-	/**
-	 * The number of degrees of freedom in the network
-	 */
-	int dof;
-
-	/**
-	 * The default constructor is private because the TemperatureConstantHandler
-	 * must be initialized with a temperature
-	 */
-	TemperatureConstantHandler() : temperature(0.0), dof(0)
-	{
-	}
-
 public:
 	/**
-	 * The constructor
+	 * Construct with provided constant temperature
 	 *
 	 * @param constTemperature the temperature
 	 */
-	TemperatureConstantHandler(double constTemperature) :
-		temperature(constTemperature),
-		dof(0)
-	{
-	}
+	ConstantHandler(double constTemperature);
+
+	/**
+	 * Construct with options
+	 */
+	ConstantHandler(const options::IOptions& options);
 
 	/**
 	 * The destructor.
 	 */
-	virtual ~TemperatureConstantHandler()
-	{
-	}
-
-	/**
-	 * This operation initializes the ofill and dfill arrays so that the
-	 * temperature is connected correctly in the solver.
-	 *
-	 * \see ITemperatureHandler.h
-	 */
-	virtual void
-	initializeTemperature(const int _dof,
-		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap)
-	{
-		// TODO: do we need the DOF if the heat equation is not ON?
-
-		// Set dof
-		dof = _dof;
-
-		// Add the temperature to ofill
-		ofillMap[dof].emplace_back(dof);
-
-		// Add the temperature to dfill
-		dfillMap[dof].emplace_back(dof);
-
-		return;
-	}
+	virtual ~ConstantHandler();
 
 	/**
 	 * This operation returns the temperature at the given position
@@ -84,8 +46,8 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual double
-	getTemperature(const plsm::SpaceVector<double, 3>&, double) const
+	double
+	getTemperature(const plsm::SpaceVector<double, 3>&, double) const override
 	{
 		return temperature;
 	}
@@ -96,8 +58,8 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void
-	setTemperature(double* solution)
+	void
+	setTemperature(double* solution) override
 	{
 		return;
 	}
@@ -107,8 +69,8 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void
-	setHeatCoefficient(double coef)
+	void
+	setHeatCoefficient(double coef) override
 	{
 		return;
 	}
@@ -118,8 +80,8 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void
-	setHeatConductivity(double cond)
+	void
+	setHeatConductivity(double cond) override
 	{
 		return;
 	}
@@ -130,8 +92,8 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void
-	updateSurfacePosition(int surfacePos)
+	void
+	updateSurfacePosition(int surfacePos) override
 	{
 		return;
 	}
@@ -143,10 +105,10 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void
+	void
 	computeTemperature(double** concVector, double* updatedConcOffset,
 		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
-		double sz = 0.0, int iz = 0)
+		double sz = 0.0, int iz = 0) override
 	{
 		return;
 	}
@@ -158,10 +120,10 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual bool
+	bool
 	computePartialsForTemperature(double* val, int* indices, double hxLeft,
 		double hxRight, int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
-		int iz = 0)
+		int iz = 0) override
 	{
 		return false;
 	}

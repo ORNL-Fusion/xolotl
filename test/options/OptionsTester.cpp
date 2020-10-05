@@ -117,7 +117,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		   "-ts_max_steps 3"
 		<< std::endl
 		<< "networkFile=tungsten.txt" << std::endl
-		<< "constantTemp=900" << std::endl
+		<< "tempHandler=constant" << std::endl
+		<< "tempParam=900" << std::endl
 		<< "perfHandler=std" << std::endl
 		<< "flux=1.5" << std::endl
 		<< "material=W100" << std::endl
@@ -168,11 +169,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getNetworkFilename(), "tungsten.txt");
 
 	// Check the temperature
-	BOOST_REQUIRE_EQUAL(opts.useGradientTemperatureHandlers(), false);
-	BOOST_REQUIRE_EQUAL(opts.useHeatEquationHandlers(), false);
-	BOOST_REQUIRE_EQUAL(opts.useTemperatureProfileHandlers(), false);
-	BOOST_REQUIRE_EQUAL(opts.getConstTemperature(), 900.0);
-	BOOST_REQUIRE_EQUAL(opts.getBulkTemperature(), 0.0);
+	BOOST_REQUIRE_EQUAL(opts.getTempHandlerName(), "constant");
+	BOOST_REQUIRE_EQUAL(opts.getTempParam(), 900.0);
+	BOOST_REQUIRE_EQUAL(opts.getTempParam(1), 0.0);
 
 	// Check if the flux option is used
 	BOOST_REQUIRE_EQUAL(opts.useFluxAmplitude(), true);
@@ -441,6 +440,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
 	// Create a parameter file using these two profile files
 	std::ofstream paramFile("param_good_profiles.txt");
 	paramFile << "fluxFile=fluxFile.dat" << std::endl
+			  << "tempHandler=profile" << std::endl
 			  << "tempFile=temperatureFile.dat" << std::endl;
 	paramFile.close();
 
@@ -464,7 +464,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
 	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
 
 	// Check the temperature
-	BOOST_REQUIRE_EQUAL(opts.useTemperatureProfileHandlers(), true);
+	BOOST_REQUIRE_EQUAL(opts.getTempHandlerName(), "profile");
 	BOOST_REQUIRE_EQUAL(opts.getTempProfileFilename(), "temperatureFile.dat");
 
 	// Check if the heFlux option is used

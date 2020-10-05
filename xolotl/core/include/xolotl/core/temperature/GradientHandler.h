@@ -1,7 +1,7 @@
-#ifndef TEMPERATUREGRADIENTHANDLER_H
-#define TEMPERATUREGRADIENTHANDLER_H
+#pragma once
 
-#include <xolotl/core/temperature/ITemperatureHandler.h>
+#include <xolotl/core/temperature/TemperatureHandler.h>
+#include <xolotl/options/IOptions.h>
 
 namespace xolotl
 {
@@ -13,7 +13,7 @@ namespace temperature
  * This class realizes the ITemperatureHandler, it is responsible for the
  * handling of a temperature constant with time but changing with location.
  */
-class TemperatureGradientHandler : public ITemperatureHandler
+class GradientHandler : public TemperatureHandler
 {
 private:
 	/**
@@ -26,65 +26,26 @@ private:
 	 */
 	double bulkTemperature;
 
-	/**
-	 * The number of degrees of freedom in the network
-	 */
-	int dof;
-
-	/**
-	 * The default constructor is private because the TemperatureHandler
-	 * must be initialized with a temperature
-	 */
-	TemperatureGradientHandler() :
-		surfaceTemperature(0.0),
-		bulkTemperature(0.0),
-		dof(0)
-	{
-	}
-
 public:
+	GradientHandler() = delete;
+
 	/**
 	 * The constructor
 	 *
 	 * @param temp The surface temperature
 	 * @param grad The bulk temperature
 	 */
-	TemperatureGradientHandler(double surfTemp, double bulkTemp) :
-		surfaceTemperature(surfTemp),
-		bulkTemperature(bulkTemp),
-		dof(0)
-	{
-	}
+	GradientHandler(double surfTemp, double bulkTemp);
+
+	/**
+	 * Construct from options
+	 */
+	GradientHandler(const options::IOptions& options);
 
 	/**
 	 * The destructor.
 	 */
-	virtual ~TemperatureGradientHandler()
-	{
-	}
-
-	/**
-	 * This operation initializes the ofill and dfill arrays so that the
-	 * temperature is connected correctly in the solver.
-	 *
-	 * \see ITemperatureHandler.h
-	 */
-	virtual void
-	initializeTemperature(const int _dof,
-		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap)
-	{
-		// Set dof
-		dof = _dof;
-
-		// Add the temperature to ofill
-		ofillMap[dof].emplace_back(dof);
-
-		// Add the temperature to dfill
-		dfillMap[dof].emplace_back(dof);
-
-		return;
-	}
+	virtual ~GradientHandler();
 
 	/**
 	 * This operation returns the temperature at the given position
@@ -92,12 +53,9 @@ public:
 	 *
 	 * @return The temperature
 	 */
-	virtual double
-	getTemperature(const plsm::SpaceVector<double, 3>& fraction, double) const
-	{
-		return surfaceTemperature +
-			(bulkTemperature - surfaceTemperature) * fraction[0];
-	}
+	double
+	getTemperature(
+		const plsm::SpaceVector<double, 3>& fraction, double) const override;
 
 	/**
 	 * This operation sets the temperature given by the solver.
@@ -105,8 +63,8 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void
-	setTemperature(double* solution)
+	void
+	setTemperature(double* solution) override
 	{
 		return;
 	}
@@ -116,8 +74,8 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void
-	setHeatCoefficient(double coef)
+	void
+	setHeatCoefficient(double coef) override
 	{
 		return;
 	}
@@ -127,8 +85,8 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void
-	setHeatConductivity(double cond)
+	void
+	setHeatConductivity(double cond) override
 	{
 		return;
 	}
@@ -139,8 +97,8 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void
-	updateSurfacePosition(int surfacePos)
+	void
+	updateSurfacePosition(int surfacePos) override
 	{
 		return;
 	}
@@ -152,10 +110,10 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual void
+	void
 	computeTemperature(double** concVector, double* updatedConcOffset,
 		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
-		double sz = 0.0, int iz = 0)
+		double sz = 0.0, int iz = 0) override
 	{
 		return;
 	}
@@ -167,18 +125,16 @@ public:
 	 *
 	 * \see ITemperatureHandler.h
 	 */
-	virtual bool
+	bool
 	computePartialsForTemperature(double* val, int* indices, double hxLeft,
 		double hxRight, int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
-		int iz = 0)
+		int iz = 0) override
 	{
 		return false;
 	}
 };
-// end class TemperatureGradientHandler
+// end class GradientHandler
 
 } // namespace temperature
 } // namespace core
 } // namespace xolotl
-
-#endif

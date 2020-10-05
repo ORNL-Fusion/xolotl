@@ -3,22 +3,21 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/core/temperature/TemperatureConstantHandler.h>
+#include <xolotl/core/temperature/ConstantHandler.h>
 
 using namespace std;
 using namespace xolotl;
 using namespace core;
-using namespace temperature;
 
 /**
- * The test suite is responsible for testing the TemperatureConstantHandler.
+ * The test suite is responsible for testing the ConstantHandler.
  */
 BOOST_AUTO_TEST_SUITE(TemperatureConstantHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(check_getTemperature)
 {
 	// Create the temperature handler
-	auto testTemp = make_shared<TemperatureConstantHandler>(1000.0);
+	auto testTemp = make_shared<temperature::ConstantHandler>(1000.0);
 
 	// Create a time
 	double currTime = 1.0;

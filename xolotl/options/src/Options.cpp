@@ -18,17 +18,14 @@ Options::Options() :
 	exitCode(EXIT_SUCCESS),
 	petscArg(""),
 	networkFilename(""),
-	gradientTempFlag(false),
-	constantTemp(1000.0),
-	tempProfileFlag(false),
+	tempHandlerName(""),
+	tempParam{},
 	tempProfileFilename(""),
-	heatFlag(false),
-	bulkTemperature(0.0),
 	fluxFlag(false),
 	fluxAmplitude(0.0),
 	fluxTimeProfileFlag(false),
 	perfRegistryType(perf::IHandlerRegistry::std),
-    vizHandlerName(""),
+	vizHandlerName(""),
 	materialName(""),
 	initialVConcentration(0.0),
 	voidPortion(50.0),
@@ -132,20 +129,19 @@ Options::readParams(int argc, char* argv[])
 	bpo::options_description config("Parameters");
 	config.add_options()("networkFile",
 		bpo::value<std::string>(&networkFilename),
-		"The network will be loaded from this HDF5 file.")("constantTemp",
-		bpo::value<double>(&constantTemp),
-		"The temperature (in Kelvin, default = 1000). NOTE: Use only "
-		"ONE temperature option")("tempFile",
+		"The network will be loaded from this HDF5 file.")("tempHandler",
+		bpo::value<std::string>(&tempHandlerName)->default_value("constant"),
+		"Temperature handler to use. (default = constant; available "
+		"constant,gradient,heat,profile")("tempParam",
+		bpo::value<std::string>(),
+		"At most two parameters for temperature handler. Alternatives:"
+		"constant -> temp; "
+		"gradient -> surfaceTemp bulkTemp; "
+		"heat -> heatFlux bulkTemp")("tempFile",
 		bpo::value<std::string>(&tempProfileFilename),
 		"A temperature profile is given by the specified file, "
 		"then linear interpolation is used to fit the data."
 		" NOTE: Use only "
-		"ONE temperature option")("heat", bpo::value<std::string>(),
-		"The heat flux (in W nm-2) at the surface and the temperature in the "
-		"bulk (Kelvin). NOTE: Use only "
-		"ONE temperature option")("gradientTemp", bpo::value<std::string>(),
-		"A temperature gradient will be used between the surface value (first "
-		"one) and the bulk one (second), both in Kelvin. NOTE: Use only "
 		"ONE temperature option")("flux", bpo::value<double>(&fluxAmplitude),
 		"The value of the incoming flux in #/nm2/s. If the Fuel case is used "
 		"it actually "
@@ -257,7 +253,7 @@ Options::readParams(int argc, char* argv[])
 	}
 
 	if (shouldRunFlag) {
-		std::ifstream ifs(param_file.c_str());
+		std::ifstream ifs(param_file);
 		if (!ifs) {
 			std::cerr << "Options: unable to open parameter file: "
 					  << param_file << std::endl;
@@ -268,31 +264,30 @@ Options::readParams(int argc, char* argv[])
 		notify(opts);
 
 		// Take care of the temperature
-		if (opts.count("gradientTemp")) {
+		if (opts.count("tempParam")) {
 			// Build an input stream from the argument string.
 			util::TokenizedLineReader<double> reader;
 			auto argSS = std::make_shared<std::istringstream>(
-				opts["gradientTemp"].as<std::string>());
+				opts["tempParam"].as<std::string>());
 			reader.setInputStream(argSS);
 
 			// Break the argument into tokens.
 			auto tokens = reader.loadLine();
-
-			// Set the flag to use gradient temperature to true
-			gradientTempFlag = true;
-
-			// Set the temperature
-			constantTemp = tokens[0];
-
-			// Check if we have another value
-			if (tokens.size() > 1) {
-				// Set the temperature gradient
-				bulkTemperature = tokens[1];
+			if (tokens.size() > 2) {
+				std::cerr
+					<< "Options: too many temperature parameters (expect 2)"
+					<< std::endl;
+				exitCode = EXIT_FAILURE;
+				return;
+			}
+			for (std::size_t i = 0; i < tokens.size(); ++i) {
+				tempParam[i] = tokens[i];
 			}
 		}
+
 		if (opts.count("tempFile")) {
 			// Check that the profile file exists
-			std::ifstream inFile(tempProfileFilename.c_str());
+			std::ifstream inFile(tempProfileFilename);
 			if (!inFile) {
 				std::cerr << "\nOptions: could not open file containing "
 							 "temperature profile data. "
@@ -301,26 +296,6 @@ Options::readParams(int argc, char* argv[])
 				shouldRunFlag = false;
 				exitCode = EXIT_FAILURE;
 			}
-			else {
-				// Set the flag to use a temperature profile to true
-				tempProfileFlag = true;
-			}
-		}
-
-		// Take care of the heat
-		if (opts.count("heat")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<double> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["heat"].as<std::string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-
-			heatFlag = true;
-			constantTemp = tokens[0];
-			bulkTemperature = tokens[1];
 		}
 
 		// Take care of the flux

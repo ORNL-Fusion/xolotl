@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xolotl/core/temperature/ITemperatureHandler.h>
+#include <xolotl/core/temperature/TemperatureHandler.h>
 #include <xolotl/options/IOptions.h>
 
 namespace xolotl
@@ -9,7 +9,7 @@ namespace core
 {
 namespace temperature
 {
-class HeatEquationHandler : public ITemperatureHandler
+class HeatEquationHandler : public TemperatureHandler
 {
 public:
 	HeatEquationHandler() = delete;
@@ -20,23 +20,6 @@ public:
 
 	virtual ~HeatEquationHandler();
 
-	void
-	initializeTemperature(const int _dof,
-		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap) override
-	{
-		// Set dof
-		dof = _dof;
-
-		// Add the temperature to ofill
-		ofillMap[dof].emplace_back(dof);
-
-		// Add the temperature to dfill
-		dfillMap[dof].emplace_back(dof);
-
-		return;
-	}
-
 	double
 	getTemperature(
 		const plsm::SpaceVector<double, 3>&, double time) const override;
@@ -44,7 +27,7 @@ public:
 	void
 	setTemperature(double* solution) override
 	{
-		localTemperature = solution[dof];
+		localTemperature = solution[this->_dof];
 	}
 
 	void
@@ -92,11 +75,6 @@ private:
 	double localTemperature;
 
 	/**
-	 * The number of degrees of freedom in the network
-	 */
-	int dof;
-
-	/**
 	 * The surface position
 	 */
 	int surfacePosition;
@@ -111,8 +89,19 @@ private:
 	 */
 	double heatConductivity;
 
+	/**
+	 * Zero flux enables constant temperature behavior
+	 */
 	bool zeroFlux{false};
+
+	/**
+	 * Number of dimensions for the current simulation
+	 */
 	int dimension;
+
+	/**
+	 * Hang on to single allocation for use in computeTemperature()
+	 */
 	std::vector<std::array<double, 2>> oldConcBox;
 };
 } // namespace temperature

@@ -1,5 +1,6 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/temperature/HeatEquationHandler.h>
+#include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -8,12 +9,18 @@ namespace core
 {
 namespace temperature
 {
+namespace detail
+{
+auto heatEqTemperatureHandlerRegistration =
+	xolotl::factory::temperature::TemperatureHandlerFactory::Registration<
+		HeatEquationHandler>("heat");
+}
+
 HeatEquationHandler::HeatEquationHandler(
 	double flux, double bulkTemp, int dim) :
 	heatFlux(flux),
 	bulkTemperature(bulkTemp),
 	localTemperature(0.0),
-	dof(0),
 	surfacePosition(0.0),
 	heatCoef(0.0),
 	heatConductivity(0.0),
@@ -24,8 +31,8 @@ HeatEquationHandler::HeatEquationHandler(
 }
 
 HeatEquationHandler::HeatEquationHandler(const options::IOptions& options) :
-	HeatEquationHandler(options.getConstTemperature(),
-		options.getBulkTemperature(), options.getDimensionNumber())
+	HeatEquationHandler(options.getTempParam(0), options.getTempParam(1),
+		options.getDimensionNumber())
 {
 	// Set the heat coefficient which depends on the material
 	auto problemType = options.getMaterial();
@@ -76,7 +83,7 @@ HeatEquationHandler::computeTemperature(double** concVector,
 	}
 
 	// Initial declaration
-	int index = dof;
+	int index = this->_dof;
 
 	// Get the initial concentrations
 	double oldConc = concVector[0][index];
@@ -115,7 +122,7 @@ HeatEquationHandler::computePartialsForTemperature(double* val, int* indices,
 		return false;
 	}
 
-	indices[0] = dof;
+	indices[0] = this->_dof;
 
 	double s[3] = {0, sy, sz};
 

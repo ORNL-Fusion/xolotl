@@ -6,7 +6,7 @@ grouping=506 2
 vizHandler=dummy
 perfHandler=dummy
 material=800H
-constantTemp=623
+tempParam=623
 flux=1e-7
 radiusSize=0 50 50 0 10 10
 #-snes_test_display -snes_test_jacobian 1.0e-1 -snes_test_jacobian_view -ts_dt 1.0e-8
