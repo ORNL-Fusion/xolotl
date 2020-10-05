@@ -2,6 +2,7 @@
 #include <iostream>
 #include <stdexcept>
 
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/temperature/HeatEquation1DHandler.h>
 #include <xolotl/core/temperature/HeatEquation2DHandler.h>
 #include <xolotl/core/temperature/HeatEquation3DHandler.h>
