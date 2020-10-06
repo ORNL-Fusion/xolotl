@@ -20,7 +20,7 @@ class DummyHandler : public IVizHandler
 public:
 	DummyHandler() = delete;
 
-    DummyHandler(const options::IOptions& options);
+	DummyHandler(const options::IOptions& options);
 
 	/**
 	 * Clean up a DummyHandler.

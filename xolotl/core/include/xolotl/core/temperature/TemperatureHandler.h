@@ -11,7 +11,7 @@ namespace temperature
 class TemperatureHandler : public ITemperatureHandler
 {
 public:
-    TemperatureHandler() = default;
+	TemperatureHandler() = default;
 
 	virtual ~TemperatureHandler();
 

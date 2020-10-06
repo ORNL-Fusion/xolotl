@@ -21,7 +21,7 @@ class StandardHandler : public IVizHandler
 public:
 	StandardHandler() = delete;
 
-    StandardHandler(const options::IOptions& options);
+	StandardHandler(const options::IOptions& options);
 
 	/**
 	 * Clean up a StandardHandler.

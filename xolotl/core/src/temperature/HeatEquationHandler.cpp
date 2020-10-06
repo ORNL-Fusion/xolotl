@@ -94,7 +94,7 @@ HeatEquationHandler::computeTemperature(double** concVector,
 
 	double s[3] = {0, sy, sz};
 
-	if (xi = surfacePosition) {
+	if (xi == surfacePosition) {
 		// Boundary condition with heat flux
 		updatedConcOffset[index] += heatCoef * (2.0 / hxLeft) *
 			((heatFlux / heatConductivity) +

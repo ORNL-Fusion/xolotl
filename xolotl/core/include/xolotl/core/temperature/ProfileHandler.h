@@ -45,10 +45,10 @@ public:
 	 */
 	ProfileHandler(const std::string& profileFileName);
 
-    /**
-     * Construct from options
-     */
-    ProfileHandler(const options::IOptions& options);
+	/**
+	 * Construct from options
+	 */
+	ProfileHandler(const options::IOptions& options);
 
 	/**
 	 * The destructor.

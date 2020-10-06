@@ -10,8 +10,8 @@ namespace viz
 class VizHandlerRegistry
 {
 public:
-    static void
-    set(const std::shared_ptr<IVizHandler>& handler);
+	static void
+	set(const std::shared_ptr<IVizHandler>& handler);
 
 	static IVizHandler*
 	get()
