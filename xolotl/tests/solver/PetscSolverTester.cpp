@@ -481,7 +481,7 @@ BOOST_AUTO_TEST_CASE(checkPetscSolver3DHandler) {
 			<< "flux=4.0e5" << std::endl << "material=W100" << std::endl
 			<< "dimensions=3" << std::endl << "process=diff advec reaction"
 			<< std::endl << "voidPortion=0.0" << std::endl
-			<< "netParam=8 0 0 2 6" << std::endl << "grid=10 0.5 6 1.0 3 2.0"
+			<< "netParam=8 0 0 2 6" << std::endl << "grid=9 0.5 6 1.0 3 2.0"
 			<< std::endl;
 	paramFile.close();
 
