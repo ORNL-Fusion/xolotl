@@ -1,3 +1,5 @@
+#include <papi.h>
+
 #include <iostream>
 #include <stdexcept>
 
@@ -9,15 +11,25 @@ namespace perf
 {
 namespace papi
 {
-PAPITimer::Timestamp PAPITimer::invalidValue = -1;
-
-PAPITimer::~PAPITimer(void)
+PAPITimer::PAPITimer(const std::string& name) :
+	util::Identifiable(name),
+	val(0),
+	startTime(invalidValue)
 {
-	// nothing to do
+}
+
+PAPITimer::~PAPITimer()
+{
+}
+
+PAPITimer::Timestamp
+PAPITimer::getCurrentTime() const
+{
+	return PAPI_get_real_nsec();
 }
 
 void
-PAPITimer::start(void)
+PAPITimer::start()
 {
 	if (isRunning()) {
 		throw std::runtime_error(
@@ -25,11 +37,11 @@ PAPITimer::start(void)
 	}
 
 	// Start the timer by sampling the current time.
-	startTime = GetCurrentTime();
+	startTime = getCurrentTime();
 }
 
 void
-PAPITimer::stop(void)
+PAPITimer::stop()
 {
 	if (!isRunning()) {
 		throw std::runtime_error(
@@ -38,14 +50,14 @@ PAPITimer::stop(void)
 
 	// Form the difference between the end timestamp and
 	// our saved start timestamp.
-	val += ToSeconds(GetCurrentTime() - startTime);
+	val += toSeconds(getCurrentTime() - startTime);
 
 	// Indicate the timer is no longer running.
 	startTime = invalidValue;
 }
 
 void
-PAPITimer::reset(void)
+PAPITimer::reset()
 {
 	if (isRunning()) {
 		throw std::runtime_error("Attempting to reset a timer that is running");
@@ -55,7 +67,7 @@ PAPITimer::reset(void)
 }
 
 std::string
-PAPITimer::getUnits(void) const
+PAPITimer::getUnits() const
 {
 	return std::string("s");
 }

@@ -4,7 +4,6 @@
 
 #include <boost/test/included/unit_test.hpp>
 
-#include <xolotl/perf/config.h>
 #include <xolotl/perf/os/OSTimer.h>
 
 using namespace std;

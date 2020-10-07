@@ -3,14 +3,12 @@
 #include <iostream>
 
 #include <xolotl/core/network/INetworkHandler.h>
-#include <xolotl/factory/material/MaterialHandlerFactory.h>
-#include <xolotl/factory/network/NetworkHandlerFactory.h>
+#include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/factory/solver/SolverFactory.h>
-#include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
 #include <xolotl/factory/viz/VizHandlerFactory.h>
 #include <xolotl/interface/Interface.h>
 #include <xolotl/options/Options.h>
-#include <xolotl/perf/xolotlPerf.h>
+#include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/solver/Solver.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/MPIUtils.h>
@@ -114,7 +112,8 @@ XolotlInterface::initializeXolotl(int argc, char* argv[], MPI_Comm comm)
 		}
 
 		// Set up our performance data infrastructure.
-		perf::initialize(opts.getPerfHandlerType());
+		perf::PerfHandlerRegistry::set(
+			factory::perf::PerfHandlerFactory::get().generate(opts));
 
 		// Initialize the visualization
 		viz::VizHandlerRegistry::set(
@@ -577,7 +576,7 @@ XolotlInterface::finalizeXolotl()
 
 		// Report statistics about the performance data collected during
 		// the run we just completed.
-		auto handlerRegistry = perf::getHandlerRegistry();
+		auto handlerRegistry = perf::PerfHandlerRegistry::get();
 		perf::PerfObjStatsMap<perf::ITimer::ValType> timerStats;
 		perf::PerfObjStatsMap<perf::IEventCounter::ValType> counterStats;
 		perf::PerfObjStatsMap<perf::IHardwareCounter::CounterType> hwCtrStats;

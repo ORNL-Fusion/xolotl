@@ -12,7 +12,6 @@
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/options/Options.h>
-#include <xolotl/perf/dummy/DummyHandlerRegistry.h>
 #include <xolotl/test/MPIFixture.h>
 
 using namespace std;

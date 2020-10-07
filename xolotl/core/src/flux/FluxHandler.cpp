@@ -6,7 +6,6 @@
 #include <mpi.h>
 
 #include <xolotl/core/flux/FluxHandler.h>
-#include <xolotl/perf/xolotlPerf.h>
 
 namespace xolotl
 {

@@ -13,7 +13,8 @@
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/io/XFile.h>
-#include <xolotl/perf/xolotlPerf.h>
+#include <xolotl/perf/PerfHandlerRegistry.h>
+#include <xolotl/perf/ScopedTimer.h>
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/Monitor.h>
 #include <xolotl/util/MPIUtils.h>
@@ -1543,7 +1544,7 @@ setupPetsc2DMonitor(TS ts)
 {
 	PetscErrorCode ierr;
 
-	auto handlerRegistry = perf::getHandlerRegistry();
+	auto handlerRegistry = perf::PerfHandlerRegistry::get();
 	gbTimer = handlerRegistry->getTimer("monitor2D:GB");
 
 	// Get the process ID

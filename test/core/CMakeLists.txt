@@ -16,7 +16,6 @@ foreach(test ${tests})
         xolotlPerf
         Boost::unit_test_framework
     )
-    target_include_directories(${testName} PUBLIC ${XOLOTL_TEST_INCLUDE_DIR})
     add_test(${testName} ${testName}) 
     #add a label so the tests can be run separately
     set_property(TEST ${testName} PROPERTY LABELS "xolotl.tests.core")

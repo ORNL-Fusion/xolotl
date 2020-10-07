@@ -13,8 +13,6 @@
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
 #include <xolotl/factory/viz/VizHandlerFactory.h>
 #include <xolotl/options/Options.h>
-#include <xolotl/perf/dummy/DummyHandlerRegistry.h>
-#include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/handler/PetscSolver0DHandler.h>
 #include <xolotl/solver/handler/PetscSolver1DHandler.h>

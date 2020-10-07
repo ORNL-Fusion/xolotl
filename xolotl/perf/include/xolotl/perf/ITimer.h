@@ -43,7 +43,7 @@ public:
 	/**
 	 * Destroy the timer.
 	 */
-	virtual ~ITimer(void)
+	virtual ~ITimer()
 	{
 	}
 
@@ -51,31 +51,31 @@ public:
 	 * Start the timer.
 	 */
 	virtual void
-	start(void) = 0;
+	start() = 0;
 
 	/**
 	 * Stop the timer.
 	 */
 	virtual void
-	stop(void) = 0;
+	stop() = 0;
 
 	/**
 	 * Access the timer's value.  (Only valid if timer is not running.)
 	 */
 	virtual ValType
-	getValue(void) const = 0;
+	getValue() const = 0;
 
 	/**
 	 * Reset the timer's value.  Only valid if timer is not running.
 	 */
 	virtual void
-	reset(void) = 0;
+	reset() = 0;
 
 	/**
 	 * Obtain a string describing the units of the timer's value.
 	 */
 	virtual std::string
-	getUnits(void) const = 0;
+	getUnits() const = 0;
 };
 // end class ITimer
 

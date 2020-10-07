@@ -1,6 +1,8 @@
 #ifndef TESTS_UTILS_MPIFIXTURE_H
 #define TESTS_UTILS_MPIFIXTURE_H
 
+#include <mpi.h>
+
 // Do not put this in a namespace - it causes macros like
 // BOOST_GLOBAL_FIXTURE to break.
 

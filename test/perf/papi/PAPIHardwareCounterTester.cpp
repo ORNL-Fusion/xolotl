@@ -23,7 +23,7 @@ const IHardwareCounter::SpecType test_ctrSpec = {IHardwareCounter::Instructions,
 // Since our purpose is to test the Timer class and not the registry,
 // we recreate the initialization explicitly.
 bool
-InitializePAPI(void)
+initializePAPI()
 {
 	bool ret = true;
 
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_SUITE(HardwareCounter_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkName)
 {
-	bool papiInitialized = InitializePAPI();
+	bool papiInitialized = initializePAPI();
 	BOOST_REQUIRE_EQUAL(papiInitialized, true);
 
 	PAPIHardwareCounter tester("test", test_ctrSpec);
@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE(checkName)
 
 BOOST_AUTO_TEST_CASE(check_getSpecification)
 {
-	bool papiInitialized = InitializePAPI();
+	bool papiInitialized = initializePAPI();
 	BOOST_REQUIRE_EQUAL(papiInitialized, true);
 
 	PAPIHardwareCounter tester("test", test_ctrSpec);
@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(check_getSpecification)
 
 BOOST_AUTO_TEST_CASE(check_getValues)
 {
-	bool papiInitialized = InitializePAPI();
+	bool papiInitialized = initializePAPI();
 	BOOST_REQUIRE_EQUAL(papiInitialized, true);
 
 	PAPIHardwareCounter tester("test", test_ctrSpec);

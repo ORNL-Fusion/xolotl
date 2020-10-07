@@ -178,8 +178,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getFluxAmplitude(), 1.5);
 
 	// Check the performance handler
-	BOOST_REQUIRE_EQUAL(
-		opts.getPerfHandlerType(), xolotl::perf::IHandlerRegistry::std);
+	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "std");
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.getVizHandlerName(), "std");
@@ -615,8 +614,7 @@ BOOST_AUTO_TEST_CASE(papiPerfHandler)
 	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
 
 	// Check the performance handler
-	BOOST_REQUIRE_EQUAL(
-		opts.getPerfHandlerType(), xolotl::perf::IHandlerRegistry::papi);
+	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "papi");
 
 	// Remove the created file
 	std::string tempFile = "param_good_perf_papi.txt";
@@ -651,8 +649,7 @@ BOOST_AUTO_TEST_CASE(osPerfHandler)
 	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
 
 	// Check the performance handler
-	BOOST_REQUIRE_EQUAL(
-		opts.getPerfHandlerType(), xolotl::perf::IHandlerRegistry::os);
+	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "os");
 
 	// Remove the created file
 	std::string tempFile = "param_good_perf_os.txt";
@@ -687,8 +684,7 @@ BOOST_AUTO_TEST_CASE(dummyPerfHandler)
 	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
 
 	// Check the performance handler
-	BOOST_REQUIRE_EQUAL(
-		opts.getPerfHandlerType(), xolotl::perf::IHandlerRegistry::dummy);
+	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "dummy");
 
 	// Remove the created file
 	std::string tempFile = "param_good_perf_dummy.txt";

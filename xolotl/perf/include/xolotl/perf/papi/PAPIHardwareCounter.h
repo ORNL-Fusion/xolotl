@@ -1,11 +1,4 @@
-#ifndef PAPIHARDWARECOUNTER_H
-#define PAPIHARDWARECOUNTER_H
-
-#include <xolotl/perf/config.h>
-#if !defined(HAVE_PAPI)
-#error \
-	"Using PAPI-based handler registry classes but PAPI was not found when configured."
-#endif // !defined(HAVE_PAPI)
+#pragma once
 
 #include <map>
 #include <string>
@@ -62,14 +55,14 @@ private:
 	/// Construct a PAPIHardwareCounter.
 	/// The default constructor is private to force callers to
 	/// provide a name and a collection of hardware counters to monitor.
-	PAPIHardwareCounter(void) : util::Identifiable("unused")
+	PAPIHardwareCounter() : util::Identifiable("unused")
 	{
 	}
 
 	/// Initialize our collection of specifications for the
 	/// hardware counters we know how to monitor.
 	static void
-	InitCounterSpecMap(void);
+	initCounterSpecMap();
 
 public:
 	/// Construct a PAPIHardwareCounter.
@@ -81,15 +74,15 @@ public:
 		const std::string& name, const IHardwareCounter::SpecType& cset);
 
 	/// Destroy the counter set.
-	virtual ~PAPIHardwareCounter(void);
+	virtual ~PAPIHardwareCounter();
 
 	/// Start counting hardware counter events.
-	virtual void
-	start(void);
+	void
+	start() override;
 
 	/// Stop counting hardware counter events.
-	virtual void
-	stop(void);
+	void
+	stop() override;
 
 	///
 	/// Retrieve the values of the hardware counters that have been collected.
@@ -97,8 +90,8 @@ public:
 	///
 	/// @return The current counts for our configured values.
 	///
-	virtual const ValType&
-	getValues(void) const
+	const ValType&
+	getValues() const override
 	{
 		return vals;
 	}
@@ -108,16 +101,16 @@ public:
 	///
 	/// @return The hardware counters the counter set was configured to collect.
 	///
-	virtual const SpecType&
-	getSpecification(void) const
+	const SpecType&
+	getSpecification() const override
 	{
 		return spec;
 	}
 
 	/// Retrieve the name of the given hardware counter.
 	/// @return The name of the given hardware counter.
-	virtual std::string
-	getCounterName(IHardwareCounter::CounterSpec cs) const;
+	std::string
+	getCounterName(IHardwareCounter::CounterSpec cs) const override;
 
 	/// Add the given HardwareCounter's value to my value.
 	/// @param cset The counter set whose values should be added to my values.
@@ -128,9 +121,6 @@ public:
 	virtual IHardwareCounter&
 	operator+=(const IHardwareCounter& c);
 };
-
 } // namespace papi
 } // namespace perf
 } // namespace xolotl
-
-#endif

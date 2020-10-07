@@ -48,7 +48,8 @@ public:
 	get();
 
 	std::shared_ptr<THandlerBase>
-	generate(const std::string& name, const options::Options& options);
+	generate(const std::string& name,
+		const options::Options& options = options::Options{});
 
 	std::shared_ptr<THandlerBase>
 	generate(const options::Options& options);

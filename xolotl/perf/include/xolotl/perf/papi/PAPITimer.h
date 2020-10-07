@@ -1,13 +1,4 @@
-#ifndef PAPITIMER_H
-#define PAPITIMER_H
-
-#include <xolotl/perf/config.h>
-#if !defined(HAVE_PAPI)
-#error \
-	"Using PAPI-based handler registry classes but PAPI was not found when configured."
-#endif // !defined(HAVE_PAPI)
-
-#include <papi.h>
+#pragma once
 
 #include <xolotl/perf/ITimer.h>
 #include <xolotl/util/Identifiable.h>
@@ -27,7 +18,7 @@ private:
 	typedef long long Timestamp;
 
 	/// An invalid Timestamp value.
-	static Timestamp invalidValue;
+	static constexpr Timestamp invalidValue = -1;
 
 	/// The timer's value.
 	ITimer::ValType val;
@@ -39,7 +30,7 @@ private:
 	/// Construct a timer.
 	/// The default constructor is private to force callers to provide a name
 	/// for the timer object.
-	PAPITimer(void) : util::Identifiable("unused"), val(0)
+	PAPITimer() : util::Identifiable("unused"), val(0)
 	{
 	}
 
@@ -47,17 +38,14 @@ private:
 	///
 	/// @return The current time.
 	Timestamp
-	GetCurrentTime(void) const
-	{
-		return PAPI_get_real_nsec();
-	}
+	getCurrentTime() const;
 
 	/// Convert a Timestamp to seconds.
 	///
 	/// @param t A timestamp to be converted to seconds.
 	/// @return t in terms of seconds.
 	static ITimer::ValType
-	ToSeconds(Timestamp t)
+	toSeconds(Timestamp t)
 	{
 		// The timer we use - PAPI_get_real_nsec - gives time in nanoseconds.
 		return t / 1.0e9;
@@ -68,46 +56,41 @@ public:
 	/// Construct a timer.
 	///
 	/// @param name The name to associate with the timer.
-	PAPITimer(const std::string& name) :
-		util::Identifiable(name),
-		val(0),
-		startTime(invalidValue)
-	{
-	}
+	PAPITimer(const std::string& name);
 
 	///
 	/// Destroy the timer.
 	///
-	virtual ~PAPITimer(void);
+	virtual ~PAPITimer();
 
 	///
 	/// Start the timer.
 	/// Throws std::runtime_error if starting a timer that was already started.
 	///
-	virtual void
-	start(void);
+	void
+	start() override;
 
 	///
 	/// Stop the timer.
 	/// Throws std::runtime_error if stopping a timer that was not running.
 	///
-	virtual void
-	stop(void);
+	void
+	stop() override;
 
 	///
 	/// Reset the timer.
 	/// Throws std::runtime_error if timer is running.
 	///
-	virtual void
-	reset(void);
+	void
+	reset() override;
 
 	///
 	/// Determine if the Timer is currently running.
 	///
 	/// @return true if the Timer is running, false otherwise.
 	///
-	virtual bool
-	isRunning(void) const
+	bool
+	isRunning() const
 	{
 		return (startTime != invalidValue);
 	}
@@ -118,8 +101,8 @@ public:
 	///
 	/// @return The elapsed time measured by this timer.
 	///
-	virtual ValType
-	getValue(void) const
+	ValType
+	getValue() const override
 	{
 		return val;
 	}
@@ -128,8 +111,8 @@ public:
 	/// Retrieve the Timer value's units.
 	/// @return The units in which the timer's value is given.
 	///
-	virtual std::string
-	getUnits(void) const;
+	std::string
+	getUnits() const override;
 
 	/// Add the given Timer's value to my value.
 	/// @param t The timer whose value should be added to my value.
@@ -141,9 +124,6 @@ public:
 		return *this;
 	}
 };
-
 } // namespace papi
 } // namespace perf
 } // namespace xolotl
-
-#endif // PAPITIMER_H

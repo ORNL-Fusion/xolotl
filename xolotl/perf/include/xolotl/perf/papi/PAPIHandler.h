@@ -1,7 +1,6 @@
-#ifndef PAPIHANDLERREGISTRY_H
-#define PAPIHANDLERREGISTRY_H
+#pragma once
 
-#include <xolotl/perf/standard/StdHandlerRegistry.h>
+#include <xolotl/perf/standard/StdHandler.h>
 
 namespace xolotl
 {
@@ -14,14 +13,14 @@ namespace papi
  * use the Performance API (PAPI) library for access to timers and
  * hardware counters.
  */
-class PAPIHandlerRegistry : public standard::StdHandlerRegistry
+class PAPIHandler : public standard::StdHandler
 {
 public:
 	/// Construct a handler registry.
-	PAPIHandlerRegistry(void);
+	PAPIHandler(const options::IOptions&);
 
 	/// Destroy the handler registry.
-	virtual ~PAPIHandlerRegistry(void)
+	virtual ~PAPIHandler()
 	{
 	}
 
@@ -46,9 +45,6 @@ public:
 	getHardwareCounter(
 		const std::string& name, const IHardwareCounter::SpecType& ctrSpec);
 };
-
 } // namespace papi
 } // namespace perf
 } // namespace xolotl
-
-#endif // PAPIHandlerRegistry

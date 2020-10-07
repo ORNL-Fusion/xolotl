@@ -10,7 +10,7 @@
 #include <vector>
 
 #include <xolotl/io/XFile.h>
-#include <xolotl/perf/xolotlPerf.h>
+#include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/Monitor.h>
 #include <xolotl/util/MPIUtils.h>
@@ -147,7 +147,7 @@ monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec, void*)
 	// timer here since the main function is using it to get an
 	// overall elapsed time measurement of the solve.
 	//
-	auto solverTimer = perf::getHandlerRegistry()->getTimer("solve");
+	auto solverTimer = perf::PerfHandlerRegistry::get()->getTimer("solve");
 	solverTimer->stop();
 	double solverTimerValue = solverTimer->getValue();
 	solverTimer->start();

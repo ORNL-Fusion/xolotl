@@ -1,3 +1,4 @@
+#include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/solver/handler/PetscSolverHandler.h>
 
 namespace xolotl
@@ -6,6 +7,18 @@ namespace solver
 {
 namespace handler
 {
+PetscSolverHandler::PetscSolverHandler(NetworkType& _network) :
+    SolverHandler(_network),
+    fluxTimer(perf::PerfHandlerRegistry::get()->getTimer("Flux")),
+    partialDerivativeTimer(
+        perf::PerfHandlerRegistry::get()->getTimer("Partial Derivatives")),
+    fluxCounter(perf::PerfHandlerRegistry::get()->getEventCounter("Flux")),
+    partialDerivativeCounter(
+        perf::PerfHandlerRegistry::get()->getEventCounter(
+            "Partial Derivatives"))
+{
+}
+
 std::vector<PetscInt>
 PetscSolverHandler::ConvertToPetscSparseFillMap(
 	size_t dof, const core::network::IReactionNetwork::SparseFillMap& fillMap)

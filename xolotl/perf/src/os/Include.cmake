@@ -1,9 +1,9 @@
 list(APPEND XOLOTL_PERF_HEADERS
-    ${XOLOTL_PERF_HEADER_DIR}/os/OSHandlerRegistry.h
+    ${XOLOTL_PERF_HEADER_DIR}/os/OSHandler.h
     ${XOLOTL_PERF_HEADER_DIR}/os/OSTimer.h
 )
 
 list(APPEND XOLOTL_PERF_SOURCES
-    ${XOLOTL_PERF_SOURCE_DIR}/os/OSHandlerRegistry.cpp
+    ${XOLOTL_PERF_SOURCE_DIR}/os/OSHandler.cpp
     ${XOLOTL_PERF_SOURCE_DIR}/os/OSTimer.cpp
 )

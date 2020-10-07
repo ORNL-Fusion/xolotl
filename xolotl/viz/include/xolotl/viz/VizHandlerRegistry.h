@@ -1,6 +1,7 @@
 #pragma once
 
-#include <xolotl/factory/viz/VizHandlerFactory.h>
+#include <memory>
+
 #include <xolotl/viz/IVizHandler.h>
 
 namespace xolotl

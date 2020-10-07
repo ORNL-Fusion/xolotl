@@ -220,18 +220,18 @@ PetscSolver::PetscSolver(const options::Options& options) :
 {
 	this->setCommandLineOptions(options.getPetscArg());
 
-	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
-	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
-	SolveTimer = handlerRegistry->getTimer("SolveTimer");
+	RHSFunctionTimer = perfHandler->getTimer("RHSFunctionTimer");
+	RHSJacobianTimer = perfHandler->getTimer("RHSJacobianTimer");
+	SolveTimer = perfHandler->getTimer("SolveTimer");
 }
 
 PetscSolver::PetscSolver(handler::ISolverHandler& _solverHandler,
-	std::shared_ptr<perf::IHandlerRegistry> registry) :
-	Solver(_solverHandler, registry)
+	std::shared_ptr<perf::IPerfHandler> _perfHandler) :
+	Solver(_solverHandler, _perfHandler)
 {
-	RHSFunctionTimer = handlerRegistry->getTimer("RHSFunctionTimer");
-	RHSJacobianTimer = handlerRegistry->getTimer("RHSJacobianTimer");
-	SolveTimer = handlerRegistry->getTimer("SolveTimer");
+	RHSFunctionTimer = perfHandler->getTimer("RHSFunctionTimer");
+	RHSJacobianTimer = perfHandler->getTimer("RHSJacobianTimer");
+	SolveTimer = perfHandler->getTimer("SolveTimer");
 }
 
 PetscSolver::~PetscSolver()

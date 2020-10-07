@@ -1,5 +1,4 @@
-#ifndef OPTIONS_H
-#define OPTIONS_H
+#pragma once
 
 #include <xolotl/options/IOptions.h>
 
@@ -70,9 +69,9 @@ protected:
 	std::string fluxTimeProfileFilePath;
 
 	/**
-	 * Which type of performance infrastructure should we use?
+	 * Name of the perf handler
 	 */
-	perf::IHandlerRegistry::RegistryType perfRegistryType;
+	std::string perfHandlerName;
 
 	/**
 	 * Name of the viz handler
@@ -467,13 +466,13 @@ public:
 	}
 
 	/**
-	 * Which type of performance handlers should we use?
+	 * Name of perfomance handler to use
 	 * \see IOptions.h
 	 */
-	perf::IHandlerRegistry::RegistryType
-	getPerfHandlerType(void) const override
+	std::string
+	getPerfHandlerName() const override
 	{
-		return perfRegistryType;
+		return perfHandlerName;
 	}
 
 	/**
@@ -989,8 +988,5 @@ public:
 	}
 };
 // end class Options
-
 } /* namespace options */
 } /* namespace xolotl */
-
-#endif // OPTIONS_H

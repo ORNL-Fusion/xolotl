@@ -5,7 +5,6 @@
 #include <limits>
 
 #include <xolotl/perf/ITimer.h>
-#include <xolotl/perf/config.h>
 #include <xolotl/util/Identifiable.h>
 
 namespace xolotl

@@ -9,36 +9,18 @@
 
 #include <boost/test/included/unit_test.hpp>
 
+#include <xolotl/factory/perf/PerfHandlerFactory.h>
+#include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/perf/PerfObjStatistics.h>
-#include <xolotl/perf/xolotlPerf.h>
+
+#include <xolotl/test/MPIFixture.h>
 
 using namespace xolotl;
 
-// our coordinates in the MPI world
-int cwRank = -1;
-int cwSize = -1;
-
 /**
- * Test suite for HandlerRegistry classes (mainly StdHandlerRegistry).
+ * Test suite for HandlerRegistry classes (mainly StdHandler).
  */
-BOOST_AUTO_TEST_SUITE(StdHandlerRegistry_testSuite)
-
-struct MPIFixture
-{
-	MPIFixture(void)
-	{
-		MPI_Init(&boost::unit_test::framework::master_test_suite().argc,
-			&boost::unit_test::framework::master_test_suite().argv);
-
-		MPI_Comm_rank(MPI_COMM_WORLD, &cwRank);
-		MPI_Comm_size(MPI_COMM_WORLD, &cwSize);
-	}
-
-	~MPIFixture(void)
-	{
-		MPI_Finalize();
-	}
-};
+BOOST_AUTO_TEST_SUITE(StdHandler_testSuite)
 
 #if BOOST_VERSION >= 105900
 // In Boost 1.59, the semicolon at the end of the definition of
@@ -55,11 +37,11 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 	unsigned int nGoodInits = 0;
 
 	try {
-		perf::initialize(perf::IHandlerRegistry::dummy);
+		perf::PerfHandlerRegistry::set(
+            factory::perf::PerfHandlerFactory::get().generate("dummy"));
 		nGoodInits++;
 
-		std::shared_ptr<perf::IHandlerRegistry> reg =
-			perf::getHandlerRegistry();
+		auto reg = perf::PerfHandlerRegistry::get();
 		if (reg) {
 			nGoodInits++;
 		}
@@ -79,11 +61,11 @@ BOOST_AUTO_TEST_CASE(createStdHandlerReg)
 	unsigned int nGoodInits = 0;
 
 	try {
-		perf::initialize(perf::IHandlerRegistry::std);
+		perf::PerfHandlerRegistry::set(
+            factory::perf::PerfHandlerFactory::get().generate("std"));
 		nGoodInits++;
 
-		std::shared_ptr<perf::IHandlerRegistry> reg =
-			perf::getHandlerRegistry();
+		auto reg = perf::PerfHandlerRegistry::get();
 		if (reg) {
 			nGoodInits++;
 		}
@@ -102,11 +84,11 @@ BOOST_AUTO_TEST_CASE(createOSHandlerReg)
 	unsigned int nGoodInits = 0;
 
 	try {
-		perf::initialize(perf::IHandlerRegistry::os);
+		perf::PerfHandlerRegistry::set(
+            factory::perf::PerfHandlerFactory::get().generate("os"));
 		nGoodInits++;
 
-		std::shared_ptr<perf::IHandlerRegistry> reg =
-			perf::getHandlerRegistry();
+		auto reg = perf::PerfHandlerRegistry::get();
 		if (reg) {
 			nGoodInits++;
 		}
@@ -123,9 +105,9 @@ BOOST_AUTO_TEST_CASE(createOSHandlerReg)
 BOOST_AUTO_TEST_CASE(aggregateStats)
 {
 	try {
-		perf::initialize(perf::IHandlerRegistry::std);
-		std::shared_ptr<perf::IHandlerRegistry> reg =
-			perf::getHandlerRegistry();
+		perf::PerfHandlerRegistry::set(
+            factory::perf::PerfHandlerFactory::get().generate("std"));
+		auto reg = perf::PerfHandlerRegistry::get();
 
 		std::shared_ptr<perf::IEventCounter> ctr =
 			reg->getEventCounter("testCounter");
@@ -137,6 +119,11 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
 		if (!timer) {
 			throw std::runtime_error("Failed to create Timer");
 		}
+
+        int cwSize = -1;
+        int cwRank = -1;
+		MPI_Comm_size(MPI_COMM_WORLD, &cwSize);
+		MPI_Comm_rank(MPI_COMM_WORLD, &cwRank);
 
 		// simulate the timing of some event.
 		BOOST_TEST_MESSAGE("Simulating timed event...");

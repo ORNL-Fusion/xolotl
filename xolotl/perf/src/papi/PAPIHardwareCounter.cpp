@@ -25,7 +25,7 @@ PAPIHardwareCounter::PAPIHardwareCounter(
 
 	// Ensure our counter spec map has been initialized.
 	if (csMap.empty()) {
-		InitCounterSpecMap();
+		initCounterSpecMap();
 	}
 
 	// Build the PAPI event set for our events.
@@ -34,9 +34,8 @@ PAPIHardwareCounter::PAPIHardwareCounter(
 		throw xolotl::perf::runtime_error(
 			"Failed to create PAPI eventset", err);
 	}
-	for (SpecType::const_iterator iter = spec.begin(); iter != spec.end();
-		 ++iter) {
-		CounterSpecMap::const_iterator miter = csMap.find(*iter);
+	for (const auto& cspec : spec) {
+		auto miter = csMap.find(cspec);
 
 		// we had better know about the counter spec
 		assert(miter != csMap.end());
@@ -99,7 +98,7 @@ PAPIHardwareCounter::getCounterName(IHardwareCounter::CounterSpec cs) const
 }
 
 void
-PAPIHardwareCounter::InitCounterSpecMap(void)
+PAPIHardwareCounter::initCounterSpecMap()
 {
 	csMap[Instructions] =
 		new CounterSpecInfo("Instructions", "PAPI_TOT_INS", PAPI_TOT_INS);

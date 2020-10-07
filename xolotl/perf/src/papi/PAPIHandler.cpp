@@ -1,6 +1,9 @@
+#include <papi.h>
+
+#include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/perf/EventCounter.h>
 #include <xolotl/perf/RuntimeError.h>
-#include <xolotl/perf/papi/PAPIHandlerRegistry.h>
+#include <xolotl/perf/papi/PAPIHandler.h>
 #include <xolotl/perf/papi/PAPIHardwareCounter.h>
 #include <xolotl/perf/papi/PAPITimer.h>
 
@@ -10,7 +13,15 @@ namespace perf
 {
 namespace papi
 {
-PAPIHandlerRegistry::PAPIHandlerRegistry(void)
+namespace detail
+{
+auto papiHandlerRegistrations =
+	::xolotl::factory::perf::PerfHandlerFactory::RegistrationCollection<
+		PAPIHandler>({"papi"});
+}
+
+PAPIHandler::PAPIHandler(const options::IOptions& options) :
+	standard::StdHandler(options)
 {
 	int ret;
 	ret = PAPI_library_init(PAPI_VER_CURRENT);
@@ -22,7 +33,7 @@ PAPIHandlerRegistry::PAPIHandlerRegistry(void)
 }
 
 std::shared_ptr<ITimer>
-PAPIHandlerRegistry::getTimer(const std::string& name)
+PAPIHandler::getTimer(const std::string& name)
 {
 	// TODO - associate the object we create with the current region.
 	std::shared_ptr<ITimer> ret;
@@ -44,7 +55,7 @@ PAPIHandlerRegistry::getTimer(const std::string& name)
 }
 
 std::shared_ptr<IHardwareCounter>
-PAPIHandlerRegistry::getHardwareCounter(
+PAPIHandler::getHardwareCounter(
 	const std::string& name, const IHardwareCounter::SpecType& ctrSpec)
 {
 	// TODO - associate the object we create with the current region

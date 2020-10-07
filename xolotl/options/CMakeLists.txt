@@ -16,7 +16,7 @@ add_library(xolotlOptions SHARED
     ${XOLOTL_OPTIONS_HEADERS}
 )
 target_link_libraries(xolotlOptions PUBLIC
-    xolotlPerf
+    xolotlUtil
     Boost::program_options
     MPI::MPI_CXX
 )

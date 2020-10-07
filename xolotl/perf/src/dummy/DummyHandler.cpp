@@ -1,4 +1,8 @@
-#include <xolotl/perf/dummy/DummyHandlerRegistry.h>
+#include <xolotl/factory/perf/PerfHandlerFactory.h>
+#include <xolotl/perf/dummy/DummyEventCounter.h>
+#include <xolotl/perf/dummy/DummyHandler.h>
+#include <xolotl/perf/dummy/DummyHardwareCounter.h>
+#include <xolotl/perf/dummy/DummyTimer.h>
 
 namespace xolotl
 {
@@ -6,9 +10,20 @@ namespace perf
 {
 namespace dummy
 {
+namespace detail
+{
+auto dummyHandlerRegistrations =
+	::xolotl::factory::perf::PerfHandlerFactory::RegistrationCollection<
+		DummyHandler>({"dummy"});
+}
+
+DummyHandler::DummyHandler(const options::IOptions&)
+{
+}
+
 // Obtain a Timer by name.
 std::shared_ptr<ITimer>
-DummyHandlerRegistry::getTimer(const std::string& name)
+DummyHandler::getTimer(const std::string& name)
 {
 	// TODO is there a need for us to retain access to this Timer?
 	// TODO do we need to check whether client has already created
@@ -18,7 +33,7 @@ DummyHandlerRegistry::getTimer(const std::string& name)
 
 // Obtain an EventCounter by name.
 std::shared_ptr<IEventCounter>
-DummyHandlerRegistry::getEventCounter(const std::string& name)
+DummyHandler::getEventCounter(const std::string& name)
 {
 	// TODO is there a need for us to retain access to this Timer?
 	// TODO do we need to check whether client has already created
@@ -29,7 +44,7 @@ DummyHandlerRegistry::getEventCounter(const std::string& name)
 // Obtain a HardwareCounter object by name and by the
 // counter data it collects.
 std::shared_ptr<IHardwareCounter>
-DummyHandlerRegistry::getHardwareCounter(
+DummyHandler::getHardwareCounter(
 	const std::string& name, const IHardwareCounter::SpecType& ctrSpec)
 {
 	// TODO is there a need for us to retain access to this Timer?
@@ -39,7 +54,7 @@ DummyHandlerRegistry::getHardwareCounter(
 }
 
 void
-DummyHandlerRegistry::collectStatistics(PerfObjStatsMap<ITimer::ValType>&,
+DummyHandler::collectStatistics(PerfObjStatsMap<ITimer::ValType>&,
 	PerfObjStatsMap<IEventCounter::ValType>&,
 	PerfObjStatsMap<IHardwareCounter::CounterType>&)
 {
@@ -48,7 +63,7 @@ DummyHandlerRegistry::collectStatistics(PerfObjStatsMap<ITimer::ValType>&,
 }
 
 void
-DummyHandlerRegistry::reportStatistics(std::ostream&,
+DummyHandler::reportStatistics(std::ostream&,
 	const PerfObjStatsMap<ITimer::ValType>&,
 	const PerfObjStatsMap<IEventCounter::ValType>&,
 	const PerfObjStatsMap<IHardwareCounter::CounterType>&) const
@@ -56,7 +71,6 @@ DummyHandlerRegistry::reportStatistics(std::ostream&,
 	// do nothing
 	return;
 }
-
 } // namespace dummy
 } // namespace perf
 } // namespace xolotl

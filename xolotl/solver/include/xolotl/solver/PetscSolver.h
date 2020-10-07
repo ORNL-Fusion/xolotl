@@ -75,7 +75,7 @@ public:
 
 	//! The Constructor
 	PetscSolver(handler::ISolverHandler& _solverHandler,
-		std::shared_ptr<perf::IHandlerRegistry> registry);
+		std::shared_ptr<perf::IPerfHandler> _perfHandler);
 
 	//! The Destructor
 	~PetscSolver();

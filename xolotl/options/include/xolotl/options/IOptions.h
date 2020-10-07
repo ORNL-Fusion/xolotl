@@ -1,5 +1,4 @@
-#ifndef IOPTIONS_H
-#define IOPTIONS_H
+#pragma once
 
 // Includes
 #include <array>
@@ -8,7 +7,6 @@
 #include <tuple>
 #include <vector>
 
-#include <xolotl/perf/xolotlPerf.h>
 #include <xolotl/util/Array.h>
 #include <xolotl/util/Filesystem.h>
 
@@ -153,12 +151,12 @@ public:
 	getFluxTimeProfileFilePath() const = 0;
 
 	/**
-	 * Which type of performance handlers should we use?
+	 * Obtain the name of the perfomance handler to be used
 	 *
-	 * @return The type of performance handler registry to use
+	 * @return The name of the perf handler
 	 */
-	virtual perf::IHandlerRegistry::RegistryType
-	getPerfHandlerType(void) const = 0;
+	virtual std::string
+	getPerfHandlerName() const = 0;
 
 	/**
 	 * Obtain the name of the visualization handler to be used
@@ -560,8 +558,5 @@ public:
 	getFluxDepthProfileFilePath() const = 0;
 };
 // end class IOptions
-
 } /* namespace options */
 } /* namespace xolotl */
-
-#endif

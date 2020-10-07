@@ -2,7 +2,6 @@
 #define PETSCSOLVER0DHANDLER_H
 
 // Includes
-#include <xolotl/perf/dummy/DummyHandlerRegistry.h>
 #include <xolotl/solver/handler/PetscSolverHandler.h>
 
 namespace xolotl

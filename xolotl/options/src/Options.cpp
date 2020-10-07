@@ -24,7 +24,7 @@ Options::Options() :
 	fluxFlag(false),
 	fluxAmplitude(0.0),
 	fluxTimeProfileFlag(false),
-	perfRegistryType(perf::IHandlerRegistry::std),
+	perfHandlerName(""),
 	vizHandlerName(""),
 	materialName(""),
 	initialVConcentration(0.0),
@@ -151,7 +151,7 @@ Options::readParams(int argc, char* argv[])
 		"then linear interpolation is used to fit the data."
 		"(NOTE: If a flux profile file is given, "
 		"a constant flux should NOT be given)")("perfHandler",
-		bpo::value<std::string>()->default_value("std"),
+		bpo::value<std::string>(&perfHandlerName)->default_value("std"),
 		"Which set of performance handlers to use. (default = std, available "
 		"std,dummy,os,papi).")("vizHandler",
 		bpo::value<std::string>(&vizHandlerName)->default_value("dummy"),
@@ -321,14 +321,9 @@ Options::readParams(int argc, char* argv[])
 
 		// Take care of the performance handler
 		if (opts.count("perfHandler")) {
-			try {
-				// Determine the type of handlers we are being asked to use
-				perf::IHandlerRegistry::RegistryType rtype =
-					perf::toPerfRegistryType(
-						opts["perfHandler"].as<std::string>());
-				perfRegistryType = rtype;
-			}
-			catch (const std::invalid_argument& e) {
+			std::string perfHandlers[] = {"dummy", "std", "os", "papi"};
+			if (std::find(begin(perfHandlers), end(perfHandlers),
+					perfHandlerName) == end(perfHandlers)) {
 				std::cerr << "\nOptions: could not understand the performance "
 							 "handler type. "
 							 "Aborting!\n"

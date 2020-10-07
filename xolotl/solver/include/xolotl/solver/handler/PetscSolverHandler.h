@@ -2,6 +2,8 @@
 #define PETSCSOLVERHANDLER_H
 
 // Includes
+#include <xolotl/perf/IEventCounter.h>
+#include <xolotl/perf/ITimer.h>
 #include <xolotl/solver/handler/SolverHandler.h>
 
 namespace xolotl
@@ -116,16 +118,7 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolverHandler(NetworkType& _network) :
-		SolverHandler(_network),
-		fluxTimer(perf::getHandlerRegistry()->getTimer("Flux")),
-		partialDerivativeTimer(
-			perf::getHandlerRegistry()->getTimer("Partial Derivatives")),
-		fluxCounter(perf::getHandlerRegistry()->getEventCounter("Flux")),
-		partialDerivativeCounter(
-			perf::getHandlerRegistry()->getEventCounter("Partial Derivatives"))
-	{
-	}
+	PetscSolverHandler(NetworkType& _network);
 };
 // end class PetscSolverHandler
 

@@ -9,6 +9,7 @@ list(APPEND XOLOTL_FACTORY_HEADERS
 
 include(src/material/Include.cmake)
 include(src/network/Include.cmake)
+include(src/perf/Include.cmake)
 include(src/solver/Include.cmake)
 include(src/temperature/Include.cmake)
 include(src/viz/Include.cmake)

@@ -1,10 +1,9 @@
-#ifndef STDHANDLERREGISTRY_H
-#define STDHANDLERREGISTRY_H
+#pragma once
 
 #include <map>
 #include <memory>
 
-#include <xolotl/perf/IHandlerRegistry.h>
+#include <xolotl/perf/IPerfHandler.h>
 #include <xolotl/perf/PerfObjStatistics.h>
 
 namespace xolotl
@@ -17,7 +16,7 @@ namespace standard
  * Base class for for building performance data collection objects that
  * collect data (as opposed to low-overhead stubs).
  */
-class StdHandlerRegistry : public IHandlerRegistry
+class StdHandler : public IPerfHandler
 {
 private:
 	/**
@@ -35,7 +34,7 @@ private:
 	 */
 	template <typename T, typename V>
 	void
-	AggregateStatistics(int myRank,
+	aggregateStatistics(int myRank,
 		const std::map<std::string, std::shared_ptr<T>>& myObjs,
 		std::map<std::string, PerfObjStatistics<V>>& stats) const;
 
@@ -55,7 +54,7 @@ private:
 	 */
 	template <typename T, typename V>
 	std::pair<bool, V>
-	GetObjValue(const std::map<std::string, std::shared_ptr<T>>& myObjs,
+	getObjValue(const std::map<std::string, std::shared_ptr<T>>& myObjs,
 		const std::string& objName) const;
 
 	/**
@@ -68,7 +67,7 @@ private:
 	 */
 	template <typename T>
 	void
-	CollectMyObjectNames(
+	collectMyObjectNames(
 		const std::map<std::string, std::shared_ptr<T>>& myObjs,
 		std::vector<std::string>& objNames) const;
 
@@ -87,7 +86,7 @@ private:
 	 */
 	template <typename T, typename V>
 	void
-	CollectAllObjectNames(int myRank,
+	collectAllObjectNames(int myRank,
 		const std::map<std::string, std::shared_ptr<T>>& myObjs,
 		std::map<std::string, PerfObjStatistics<V>>& stats) const;
 
@@ -108,15 +107,12 @@ protected:
 	std::map<std::string, std::shared_ptr<IHardwareCounter>> allHWCounterSets;
 
 public:
-	/**
-	 * Construct a StdHandlerRegistry.
-	 */
-	StdHandlerRegistry(void);
+    StdHandler(const options::IOptions&);
 
 	/**
-	 * Destroy a StdHandlerRegistry.
+	 * Destroy a StdHandler.
 	 */
-	virtual ~StdHandlerRegistry(void);
+	virtual ~StdHandler();
 
 	/**
 	 * Look up and return a named counter in the current scope.
@@ -127,6 +123,17 @@ public:
 	 */
 	std::shared_ptr<IEventCounter>
 	getEventCounter(const std::string& name) override;
+
+	/**
+	 * Look up and return a named counter in the current scope.
+	 * Create the counter if it does not already exist.
+	 *
+	 * @param name The object's name.
+	 * @return The object with the given name.
+	 */
+	std::shared_ptr<IHardwareCounter>
+	getHardwareCounter(const std::string& name,
+		const IHardwareCounter::SpecType& ctrSpec) override;
 
 	/**
 	 * Collect statistics about any performance data collected by
@@ -159,9 +166,6 @@ public:
 		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwStats)
 		const override;
 };
-
 } // namespace standard
 } // namespace perf
 } // namespace xolotl
-
-#endif // STDHANDLERREGISTRY_H
