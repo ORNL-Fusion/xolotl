@@ -107,7 +107,7 @@ protected:
 	std::map<std::string, std::shared_ptr<IHardwareCounter>> allHWCounterSets;
 
 public:
-    StdHandler(const options::IOptions&);
+	StdHandler(const options::IOptions&);
 
 	/**
 	 * Destroy a StdHandler.

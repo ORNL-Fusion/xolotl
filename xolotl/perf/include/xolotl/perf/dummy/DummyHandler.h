@@ -11,7 +11,7 @@ namespace dummy
 class DummyHandler : public IPerfHandler
 {
 public:
-    DummyHandler(const options::IOptions&);
+	DummyHandler(const options::IOptions&);
 
 	virtual ~DummyHandler()
 	{

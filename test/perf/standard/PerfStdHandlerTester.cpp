@@ -12,7 +12,6 @@
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/perf/PerfObjStatistics.h>
-
 #include <xolotl/test/MPIFixture.h>
 
 using namespace xolotl;
@@ -38,7 +37,7 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 
 	try {
 		perf::PerfHandlerRegistry::set(
-            factory::perf::PerfHandlerFactory::get().generate("dummy"));
+			factory::perf::PerfHandlerFactory::get().generate("dummy"));
 		nGoodInits++;
 
 		auto reg = perf::PerfHandlerRegistry::get();
@@ -62,7 +61,7 @@ BOOST_AUTO_TEST_CASE(createStdHandlerReg)
 
 	try {
 		perf::PerfHandlerRegistry::set(
-            factory::perf::PerfHandlerFactory::get().generate("std"));
+			factory::perf::PerfHandlerFactory::get().generate("std"));
 		nGoodInits++;
 
 		auto reg = perf::PerfHandlerRegistry::get();
@@ -85,7 +84,7 @@ BOOST_AUTO_TEST_CASE(createOSHandlerReg)
 
 	try {
 		perf::PerfHandlerRegistry::set(
-            factory::perf::PerfHandlerFactory::get().generate("os"));
+			factory::perf::PerfHandlerFactory::get().generate("os"));
 		nGoodInits++;
 
 		auto reg = perf::PerfHandlerRegistry::get();
@@ -106,7 +105,7 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
 {
 	try {
 		perf::PerfHandlerRegistry::set(
-            factory::perf::PerfHandlerFactory::get().generate("std"));
+			factory::perf::PerfHandlerFactory::get().generate("std"));
 		auto reg = perf::PerfHandlerRegistry::get();
 
 		std::shared_ptr<perf::IEventCounter> ctr =
@@ -120,8 +119,8 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
 			throw std::runtime_error("Failed to create Timer");
 		}
 
-        int cwSize = -1;
-        int cwRank = -1;
+		int cwSize = -1;
+		int cwRank = -1;
 		MPI_Comm_size(MPI_COMM_WORLD, &cwSize);
 		MPI_Comm_rank(MPI_COMM_WORLD, &cwRank);
 
