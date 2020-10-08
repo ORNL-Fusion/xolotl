@@ -55,8 +55,11 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		r = true;
 	}
 
+	Composition lo = region.getOrigin();
+	Composition hi = region.getUpperLimitPoint();
+
 	// I is never grouped
-	if (region[Species::I].begin() > 0) {
+	if (lo[Species::I] > 0) {
 		return true;
 	}
 
@@ -70,41 +73,33 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	};
 
 	// V is never grouped
-	if (region[Species::V].end() > 1 && othersBeginAtZero(region, Species::V)) {
+	if (hi[Species::V] > 1 && othersBeginAtZero(region, Species::V)) {
 		return true;
 	}
 
 	// He is never grouped
-	if (region[Species::He].end() > 1 &&
-		othersBeginAtZero(region, Species::He)) {
+	if (hi[Species::He] > 1 && othersBeginAtZero(region, Species::He)) {
 		return true;
 	}
 
 	// D is never grouped
 	if constexpr (hasDeuterium<Species>) {
-		if (region[Species::D].end() > 1 &&
-			othersBeginAtZero(region, Species::D)) {
+		if (hi[Species::D] > 1 && othersBeginAtZero(region, Species::D)) {
 			return true;
 		}
 	}
 
 	// T is never grouped
 	if constexpr (hasTritium<Species>) {
-		if (region[Species::T].end() > 1 &&
-			othersBeginAtZero(region, Species::T)) {
+		if (hi[Species::T] > 1 && othersBeginAtZero(region, Species::T)) {
 			return true;
 		}
 	}
 
 	// Don't group under the given min for V
-	if (region[Species::V].begin() < _groupingMin) {
+	if (lo[Species::V] < _groupingMin) {
 		return true;
 	}
-
-	//	// Don't group above maxV so that the cluster are rejected by select
-	//	if (region[Species::V].begin() >= _maxV) {
-	//		return true;
-	//	}
 
 	// Else refine around the edge
 	auto maxDPerV = [hevRatio = _hevRatio, maxD = _maxD](AmountType amtV) {
@@ -113,62 +108,87 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	auto maxTPerV = [hevRatio = _hevRatio, maxT = _maxT](AmountType amtV) {
 		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio) * (maxT > 0);
 	};
-	if (region[Species::V].end() > 1) {
-		Composition lo = region.getOrigin();
-		Composition hi = region.getUpperLimitPoint();
+	if (hi[Species::V] > 1) {
+		double factor = 1.0e-1;
 
 		if (lo[Species::He] <= getMaxHePerV(hi[Species::V] - 1, _hevRatio) &&
 			hi[Species::He] - 1 >=
 				getMaxHePerV(lo[Species::V] - 1, _hevRatio)) {
+			//			if (region[Species::He].length() <
+			//				util::max((double)(_groupingWidthA + 1),
+			//						region[Species::He].begin() *
+			// region[Species::He].begin() * factor)) {
+			//				result[toIndex(Species::He)] = false;
+			//			}
+
+			if constexpr (hasDeuterium<Species>) {
+				if (region[Species::D].length() <
+					util::max((double)(_groupingWidthA + 1),
+						lo[Species::D] * lo[Species::D] * factor)) {
+					result[toIndex(Species::D)] = false;
+				}
+				if (lo[Species::D] <= maxDPerV(hi[Species::V] - 1) &&
+					hi[Species::D] - 1 >= maxDPerV(lo[Species::V] - 1) &&
+					_maxD > 0) {
+					result[toIndex(Species::D)] = true;
+				}
+			}
+
+			if constexpr (hasTritium<Species>) {
+				if (region[Species::T].length() <
+					util::max((double)(_groupingWidthA + 1),
+						lo[Species::T] * lo[Species::T] * factor)) {
+					result[toIndex(Species::T)] = false;
+				}
+				if (lo[Species::T] <= maxTPerV(hi[Species::T] - 1) &&
+					hi[Species::T] - 1 >= maxTPerV(lo[Species::T] - 1) &&
+					_maxD > 0) {
+					result[toIndex(Species::T)] = true;
+				}
+			}
+
+			if constexpr (hasDeuterium<Species> && hasTritium<Species>) {
+				auto hiH = hi[Species::D] + hi[Species::T] - 2;
+				if (hiH > (2.0 / 3.0) * lo[Species::He] + 0.5) {
+					result[toIndex(Species::D)] = true;
+					result[toIndex(Species::T)] = true;
+				}
+			}
+
+			// Border case
+			if constexpr (hasDeuterium<Species>) {
+				if (lo[Species::D] == 0) {
+					result[toIndex(Species::D)] = true;
+				}
+			}
+			if constexpr (hasTritium<Species>) {
+				if (lo[Species::T] == 0) {
+					result[toIndex(Species::T)] = true;
+				}
+			}
+
 			return true;
 		}
-		if constexpr (hasDeuterium<Species>) {
-			if (lo[Species::D] <= maxDPerV(hi[Species::V] - 1) &&
-				hi[Species::D] - 1 >= maxDPerV(lo[Species::V] - 1) &&
-				_maxD > 0) {
-				return true;
-			}
-		}
-		if constexpr (hasTritium<Species>) {
-			if (lo[Species::T] <= maxTPerV(hi[Species::V] - 1) &&
-				hi[Species::T] - 1 >= maxTPerV(lo[Species::V] - 1) &&
-				_maxT > 0) {
-				return true;
-			}
-		}
-		if constexpr (hasDeuterium<Species> && hasTritium<Species>) {
-			auto hiH = hi[Species::D] + hi[Species::T];
-			if (lo[Species::He] == 0) {
-				return true;
-			}
-			if (hiH >= (2.0 / 3.0) * lo[Species::He] + 0.5) {
-				return true;
-			}
-		}
 	}
+
+	double factor = 5.0e-1;
 
 	if (region[Species::V].length() <
 		util::max((double)(_groupingWidthB + 1),
-			region[Species::V].begin() * 1.0e-2)) {
+			lo[Species::V] * lo[Species::V] * factor)) {
 		result[toIndex(Species::V)] = false;
-	}
-
-	// Edge case
-	if (region[Species::V].begin() <= _maxV &&
-		region[Species::V].end() > _maxV) {
-		result[toIndex(Species::V)] = true;
 	}
 
 	if (region[Species::He].length() <
 		util::max((double)(_groupingWidthA + 1),
-			region[Species::He].begin() * 1.0e-2)) {
+			lo[Species::He] * lo[Species::He] * factor)) {
 		result[toIndex(Species::He)] = false;
 	}
 
 	if constexpr (hasDeuterium<Species>) {
 		if (region[Species::D].length() <
 			util::max((double)(_groupingWidthA + 1),
-				region[Species::D].begin() * 1.0e-2)) {
+				lo[Species::D] * lo[Species::D] * factor)) {
 			result[toIndex(Species::D)] = false;
 		}
 	}
@@ -176,10 +196,60 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	if constexpr (hasTritium<Species>) {
 		if (region[Species::T].length() <
 			util::max((double)(_groupingWidthA + 1),
-				region[Species::T].begin() * 1.0e-2)) {
+				lo[Species::T] * lo[Species::T] * factor)) {
 			result[toIndex(Species::T)] = false;
 		}
 	}
+
+	// No He
+	if (lo[Species::He] == 0) {
+		if constexpr (hasDeuterium<Species> && hasTritium<Species>) {
+			auto hiH = hi[Species::D] + hi[Species::T] - 2;
+			if (hiH > 6 * (hi[Species::V] - 1)) {
+				result[toIndex(Species::D)] = true;
+				result[toIndex(Species::T)] = true;
+			}
+		}
+		else if constexpr (hasDeuterium<Species>) {
+			if (hi[Species::D] - 1 > 6 * (hi[Species::V] - 1)) {
+				result[toIndex(Species::D)] = true;
+			}
+		}
+		else if constexpr (hasTritium<Species>) {
+			if (hi[Species::T] - 1 > 6 * (hi[Species::V] - 1)) {
+				result[toIndex(Species::T)] = true;
+			}
+		}
+	}
+
+	// Border case
+	if (hi[Species::V] > _maxV + 1) {
+		result[toIndex(Species::V)] = true;
+	}
+	if (lo[Species::V] == 0) {
+		result[toIndex(Species::V)] = true;
+	}
+	if (lo[Species::He] == 0) {
+		result[toIndex(Species::He)] = true;
+	}
+	if constexpr (hasDeuterium<Species>) {
+		if (lo[Species::D] == 0) {
+			result[toIndex(Species::D)] = true;
+		}
+	}
+	if constexpr (hasTritium<Species>) {
+		if (lo[Species::T] == 0) {
+			result[toIndex(Species::T)] = true;
+		}
+	}
+
+	int axis = 0;
+	for (auto& r : result) {
+		axis += r;
+	}
+
+	if (axis == 1)
+		return false;
 
 	return true;
 }
@@ -270,29 +340,33 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		}
 	}
 
-	// The edge
 	auto maxDPerV = [hevRatio = _hevRatio](AmountType amtV) {
 		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio);
 	};
+
+	// The edge
 	if (region[Species::V].end() > 1) {
 		Composition lo = region.getOrigin();
 		Composition hi = region.getUpperLimitPoint();
+		auto hiV = util::min(hi[Species::V] - 1, _maxV);
+		auto hiHe =
+			util::min(hi[Species::He] - 1, getMaxHePerV(_maxV, _hevRatio));
 
 		// Too many helium
-		if (lo[Species::He] > getMaxHePerV(hi[Species::V] - 1, _hevRatio)) {
+		if (lo[Species::He] > getMaxHePerV(hiV, _hevRatio)) {
 			return false;
 		}
 
 		// Too many deuterium
 		if constexpr (hasDeuterium<Species>) {
-			if (lo[Species::D] > maxDPerV(hi[Species::V] - 1)) {
+			if (lo[Species::D] > maxDPerV(hiV)) {
 				return false;
 			}
 		}
 
 		// Too many tritium
 		if constexpr (hasTritium<Species>) {
-			if (lo[Species::T] > maxDPerV(hi[Species::V] - 1)) {
+			if (lo[Species::T] > maxDPerV(hiV)) {
 				return false;
 			}
 		}
@@ -301,12 +375,36 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		if constexpr (hasDeuterium<Species> && hasTritium<Species>) {
 			auto loH = lo[Species::D] + lo[Species::T];
 			if (lo[Species::He] == 0) {
-				if (loH > 6 * (hi[Species::V] - 1)) {
+				if (loH > 6 * hiV) {
 					return false;
 				}
 			}
 			else {
-				if (loH > (2.0 / 3.0) * (hi[Species::He] - 1) + 0.5) {
+				if (loH > (2.0 / 3.0) * hiHe + 0.5) {
+					return false;
+				}
+			}
+		}
+		else if constexpr (hasDeuterium<Species>) {
+			if (lo[Species::He] == 0) {
+				if (lo[Species::D] > 6 * hiV) {
+					return false;
+				}
+			}
+			else {
+				if (lo[Species::D] > (2.0 / 3.0) * hiHe + 0.5) {
+					return false;
+				}
+			}
+		}
+		else if constexpr (hasTritium<Species>) {
+			if (lo[Species::He] == 0) {
+				if (lo[Species::T] > 6 * hiV) {
+					return false;
+				}
+			}
+			else {
+				if (lo[Species::T] > (2.0 / 3.0) * hiHe + 0.5) {
 					return false;
 				}
 			}

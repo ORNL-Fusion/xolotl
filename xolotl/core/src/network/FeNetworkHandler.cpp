@@ -34,7 +34,7 @@ auto feNetworkGenerator = [](const options::Options& options) {
 		while (maxHe + 1 > pow(groupingWidthHe, i)) {
 			++i;
 		}
-		maxHe = pow(groupingWidthV, i) - 1;
+		maxHe = pow(groupingWidthHe, i) - 1;
 		i = 0;
 		while (maxV + 1 > pow(groupingWidthV, i)) {
 			++i;
