@@ -14,7 +14,7 @@ auto neNetworkHandlerRegistrations =
 		NENetworkHandler>({"Fuel"});
 }
 
-auto neNetworkGenerator = [](const options::Options& options) {
+auto neNetworkGenerator = [](const options::IOptions& options) {
 	using NetworkType = core::network::NEReactionNetwork;
 
 	// Get the boundaries from the options
@@ -44,7 +44,7 @@ auto neNetworkGenerator = [](const options::Options& options) {
 	return network;
 };
 
-NENetworkHandler::NENetworkHandler(const options::Options& options) :
+NENetworkHandler::NENetworkHandler(const options::IOptions& options) :
 	NetworkHandler(options, neNetworkGenerator)
 {
 }

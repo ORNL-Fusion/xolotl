@@ -13,7 +13,7 @@ namespace material
 class AlloyMaterialHandler : public MaterialHandler
 {
 public:
-	AlloyMaterialHandler(const options::Options& options) :
+	AlloyMaterialHandler(const options::IOptions& options) :
 		MaterialHandler(options,
 			MaterialSubHandlerGenerator<core::flux::AlloyFitFluxHandler>{})
 	{

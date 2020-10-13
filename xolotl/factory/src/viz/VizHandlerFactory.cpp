@@ -12,7 +12,7 @@ template VizHandlerFactory&
 Factory<VizHandlerFactory, IVizHandler>::get();
 
 template std::shared_ptr<IVizHandler>
-Factory<VizHandlerFactory, IVizHandler>::generate(const options::Options&);
+Factory<VizHandlerFactory, IVizHandler>::generate(const options::IOptions&);
 
 template bool
 Factory<VizHandlerFactory, IVizHandler>::registerGenerator(

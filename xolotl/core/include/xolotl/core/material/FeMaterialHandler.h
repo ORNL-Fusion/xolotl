@@ -13,7 +13,7 @@ namespace material
 class FeMaterialHandler : public MaterialHandler
 {
 public:
-	FeMaterialHandler(const options::Options& options) :
+	FeMaterialHandler(const options::IOptions& options) :
 		MaterialHandler(options,
 			MaterialSubHandlerGenerator<core::flux::FeFitFluxHandler>{})
 	{

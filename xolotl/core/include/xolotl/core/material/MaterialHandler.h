@@ -4,7 +4,7 @@
 #include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
 #include <xolotl/core/modified/DummyTrapMutationHandler.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/IOptions.h>
 
 namespace xolotl
 {
@@ -93,18 +93,18 @@ public:
 	}
 
 protected:
-	MaterialHandler(const options::Options& options,
+	MaterialHandler(const options::IOptions& options,
 		const IMaterialSubHandlerGenerator& subHandlerGenerator);
 
 private:
 	static std::shared_ptr<core::diffusion::IDiffusionHandler>
-	createDiffusionHandler(const options::Options& options);
+	createDiffusionHandler(const options::IOptions& options);
 
 	void
-	initializeTrapMutationHandler(const options::Options& options);
+	initializeTrapMutationHandler(const options::IOptions& options);
 
 	void
-	initializeAdvectionHandlers(const options::Options& options);
+	initializeAdvectionHandlers(const options::IOptions& options);
 
 protected:
 	std::shared_ptr<core::diffusion::IDiffusionHandler> _diffusionHandler;

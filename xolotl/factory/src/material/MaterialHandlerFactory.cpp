@@ -13,7 +13,7 @@ Factory<MaterialHandlerFactory, IMaterialHandler>::get();
 
 template std::shared_ptr<IMaterialHandler>
 Factory<MaterialHandlerFactory, IMaterialHandler>::generate(
-	const options::Options&);
+	const options::IOptions&);
 
 template bool
 Factory<MaterialHandlerFactory, IMaterialHandler>::registerGenerator(

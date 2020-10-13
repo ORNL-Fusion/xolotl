@@ -12,7 +12,7 @@ namespace network
 class AlloyNetworkHandler : public NetworkHandler
 {
 public:
-	AlloyNetworkHandler(const options::Options& options);
+	AlloyNetworkHandler(const options::IOptions& options);
 };
 } // namespace network
 } // namespace core

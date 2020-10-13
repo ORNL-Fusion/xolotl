@@ -12,7 +12,7 @@ namespace network
 class NENetworkHandler : public NetworkHandler
 {
 public:
-	NENetworkHandler(const options::Options& options);
+	NENetworkHandler(const options::IOptions& options);
 };
 } // namespace network
 } // namespace core

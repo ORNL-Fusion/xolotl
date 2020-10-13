@@ -14,7 +14,7 @@ auto alloyNetworkHandlerRegistrations =
 		AlloyNetworkHandler>({"800H"});
 }
 
-auto alloyNetworkGenerator = [](const options::Options& options) {
+auto alloyNetworkGenerator = [](const options::IOptions& options) {
 	using NetworkType = AlloyReactionNetwork;
 
 	// Get the boundaries from the options
@@ -42,7 +42,7 @@ auto alloyNetworkGenerator = [](const options::Options& options) {
 	return network;
 };
 
-AlloyNetworkHandler::AlloyNetworkHandler(const options::Options& options) :
+AlloyNetworkHandler::AlloyNetworkHandler(const options::IOptions& options) :
 	NetworkHandler(options, alloyNetworkGenerator)
 {
 }

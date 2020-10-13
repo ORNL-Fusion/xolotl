@@ -4,6 +4,7 @@
 #include <xolotl/core/network/detail/ReactionGenerator.h>
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
+#include <xolotl/options/Options.h>
 
 namespace xolotl
 {

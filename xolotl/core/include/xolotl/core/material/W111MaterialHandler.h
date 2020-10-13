@@ -15,7 +15,7 @@ namespace material
 class W111MaterialHandler : public MaterialHandler
 {
 public:
-	W111MaterialHandler(const options::Options& options) :
+	W111MaterialHandler(const options::IOptions& options) :
 		MaterialHandler(options,
 			MaterialSubHandlerGenerator<core::flux::W111FitFluxHandler,
 				core::advection::W111AdvectionHandler,

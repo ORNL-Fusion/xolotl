@@ -6,7 +6,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include <xolotl/options/Options.h>
+#include <xolotl/options/IOptions.h>
 
 namespace xolotl
 {
@@ -17,13 +17,13 @@ class Factory
 {
 public:
 	using Generator =
-		std::function<std::shared_ptr<THandlerBase>(const options::Options&)>;
+		std::function<std::shared_ptr<THandlerBase>(const options::IOptions&)>;
 
 	template <typename THandler>
 	static auto
 	makeDefaultGenerator() noexcept
 	{
-		return [](const options::Options& options) {
+		return [](const options::IOptions& options) {
 			return std::make_shared<THandler>(options);
 		};
 	}
@@ -48,11 +48,13 @@ public:
 	get();
 
 	std::shared_ptr<THandlerBase>
-	generate(const std::string& name,
-		const options::Options& options = options::Options{});
+	generate(const std::string& name, const options::IOptions& options);
 
 	std::shared_ptr<THandlerBase>
-	generate(const options::Options& options);
+	generate(const std::string& name);
+
+	std::shared_ptr<THandlerBase>
+	generate(const options::IOptions& options);
 
 	bool
 	registerGenerator(const std::string& name, const Generator& generator);

@@ -25,7 +25,7 @@ makePSIReactionNetwork(
 }
 
 std::shared_ptr<IPSIReactionNetwork>
-generatePSIReactionNetwork(const options::Options& options)
+generatePSIReactionNetwork(const options::IOptions& options)
 {
 	using AmountType = IReactionNetwork::AmountType;
 
@@ -117,7 +117,7 @@ auto psiNetworkHandlerRegistrations =
 		PSINetworkHandler>({"W100", "W110", "W111", "W211", "Pulsed"});
 } // namespace detail
 
-PSINetworkHandler::PSINetworkHandler(const options::Options& options) :
+PSINetworkHandler::PSINetworkHandler(const options::IOptions& options) :
 	NetworkHandler(options, detail::generatePSIReactionNetwork)
 {
 }

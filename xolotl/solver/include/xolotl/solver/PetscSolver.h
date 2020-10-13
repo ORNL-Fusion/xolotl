@@ -71,7 +71,7 @@ public:
 	 */
 	PetscSolver() = delete;
 
-	PetscSolver(const options::Options& options);
+	PetscSolver(const options::IOptions& options);
 
 	//! The Constructor
 	PetscSolver(handler::ISolverHandler& _solverHandler,

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/factory/Factory.h>
+#include <xolotl/options/Options.h>
 
 namespace xolotl
 {
@@ -23,7 +24,7 @@ Factory<TFactory, THandlerBase>::get()
 template <typename TFactory, typename THandlerBase>
 std::shared_ptr<THandlerBase>
 Factory<TFactory, THandlerBase>::generate(
-	const std::string& name, const options::Options& options)
+	const std::string& name, const options::IOptions& options)
 {
 	auto it = _generators.find(name);
 	if (it == _generators.end()) {
@@ -35,7 +36,14 @@ Factory<TFactory, THandlerBase>::generate(
 
 template <typename TFactory, typename THandlerBase>
 std::shared_ptr<THandlerBase>
-Factory<TFactory, THandlerBase>::generate(const options::Options& options)
+Factory<TFactory, THandlerBase>::generate(const std::string& name)
+{
+	return generate(name, options::Options{});
+}
+
+template <typename TFactory, typename THandlerBase>
+std::shared_ptr<THandlerBase>
+Factory<TFactory, THandlerBase>::generate(const options::IOptions& options)
 {
 	return generate(TFactory::getName(options), options);
 }

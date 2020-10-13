@@ -12,7 +12,7 @@ namespace core
 namespace network
 {
 NetworkHandler::NetworkHandler(
-	const options::Options& options, NetworkGeneratorFunction generatorFunc) :
+	const options::IOptions& options, NetworkGeneratorFunction generatorFunc) :
 	_network(generatorFunc(options))
 {
 	if (!_network) {

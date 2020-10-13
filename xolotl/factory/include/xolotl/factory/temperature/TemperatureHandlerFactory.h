@@ -28,7 +28,7 @@ public:
 	}
 
 	static std::string
-	getName(const options::Options& options)
+	getName(const options::IOptions& options)
 	{
 		return options.getTempHandlerName();
 	}

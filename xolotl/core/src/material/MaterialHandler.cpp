@@ -15,7 +15,7 @@ namespace core
 {
 namespace material
 {
-MaterialHandler::MaterialHandler(const options::Options& options,
+MaterialHandler::MaterialHandler(const options::IOptions& options,
 	const IMaterialSubHandlerGenerator& subHandlerGenerator) :
 	_diffusionHandler(createDiffusionHandler(options)),
 	_advectionHandlers({subHandlerGenerator.generateAdvectionHandler()}),
@@ -27,7 +27,7 @@ MaterialHandler::MaterialHandler(const options::Options& options,
 }
 
 std::shared_ptr<core::diffusion::IDiffusionHandler>
-MaterialHandler::createDiffusionHandler(const options::Options& options)
+MaterialHandler::createDiffusionHandler(const options::IOptions& options)
 {
 	double migrationThreshold = options.getMigrationThreshold();
 
@@ -61,7 +61,7 @@ MaterialHandler::createDiffusionHandler(const options::Options& options)
 }
 
 void
-MaterialHandler::initializeTrapMutationHandler(const options::Options& options)
+MaterialHandler::initializeTrapMutationHandler(const options::IOptions& options)
 {
 	if (!options.getProcesses().at("modifiedTM")) {
 		_trapMutationHandler =
@@ -73,7 +73,7 @@ MaterialHandler::initializeTrapMutationHandler(const options::Options& options)
 }
 
 void
-MaterialHandler::initializeAdvectionHandlers(const options::Options& options)
+MaterialHandler::initializeAdvectionHandlers(const options::IOptions& options)
 {
 	if (!options.getProcesses().at("advec")) {
 		_advectionHandlers.clear();

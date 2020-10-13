@@ -2,6 +2,7 @@
 #define SOLVER_H
 
 // Includes
+#include <xolotl/options/IOptions.h>
 #include <xolotl/perf/IPerfHandler.h>
 #include <xolotl/solver/ISolver.h>
 
@@ -44,7 +45,7 @@ public:
 	 */
 	Solver() = delete;
 
-	Solver(const options::Options& options,
+	Solver(const options::IOptions& options,
 		SolverHandlerGenerator handlerGenerator);
 
 	//! Constuct a solver.

@@ -14,7 +14,7 @@
 #include <xolotl/core/modified/ITrapMutationHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/temperature/ITemperatureHandler.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/IOptions.h>
 #include <xolotl/util/Array.h>
 #include <xolotl/util/RandomNumberGenerator.h>
 
@@ -57,7 +57,7 @@ public:
 	initializeHandlers(
 		std::shared_ptr<core::material::IMaterialHandler> material,
 		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
-		const options::Options& opts) = 0;
+		const options::IOptions& opts) = 0;
 
 	/**
 	 * Create everything needed before starting to solve.

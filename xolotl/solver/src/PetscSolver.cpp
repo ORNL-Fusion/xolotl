@@ -198,7 +198,7 @@ RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void*)
 	PetscFunctionReturn(0);
 }
 
-PetscSolver::PetscSolver(const options::Options& options) :
+PetscSolver::PetscSolver(const options::IOptions& options) :
 	Solver(options,
 		[&options](core::network::IReactionNetwork& network)
 			-> std::shared_ptr<handler::ISolverHandler> {

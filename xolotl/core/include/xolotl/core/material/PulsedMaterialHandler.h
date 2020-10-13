@@ -13,7 +13,7 @@ namespace material
 class PulsedMaterialHandler : public MaterialHandler
 {
 public:
-	PulsedMaterialHandler(const options::Options& options) :
+	PulsedMaterialHandler(const options::IOptions& options) :
 		MaterialHandler(options,
 			MaterialSubHandlerGenerator<core::flux::PulsedFitFluxHandler>{})
 	{

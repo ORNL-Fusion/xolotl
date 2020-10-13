@@ -13,7 +13,7 @@ Factory<NetworkHandlerFactory, INetworkHandler>::get();
 
 template std::shared_ptr<INetworkHandler>
 Factory<NetworkHandlerFactory, INetworkHandler>::generate(
-	const options::Options&);
+	const options::IOptions&);
 
 template bool
 Factory<NetworkHandlerFactory, INetworkHandler>::registerGenerator(

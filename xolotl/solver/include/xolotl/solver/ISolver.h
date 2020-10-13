@@ -4,7 +4,6 @@
 // Includes
 #include <map>
 
-#include <xolotl/options/Options.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
 
 namespace xolotl

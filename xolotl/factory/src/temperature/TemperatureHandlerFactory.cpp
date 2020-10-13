@@ -13,7 +13,7 @@ Factory<TemperatureHandlerFactory, ITemperatureHandler>::get();
 
 template std::shared_ptr<ITemperatureHandler>
 Factory<TemperatureHandlerFactory, ITemperatureHandler>::generate(
-	const options::Options&);
+	const options::IOptions&);
 
 template bool
 Factory<TemperatureHandlerFactory, ITemperatureHandler>::registerGenerator(

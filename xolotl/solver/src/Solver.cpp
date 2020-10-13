@@ -13,7 +13,7 @@ namespace solver
 handler::ISolverHandler* Solver::staticSolverHandler = nullptr;
 
 Solver::Solver(
-	const options::Options& options, SolverHandlerGenerator handlerGenerator) :
+	const options::IOptions& options, SolverHandlerGenerator handlerGenerator) :
 	network(factory::network::NetworkHandlerFactory::get()
 				.generate(options)
 				->getNetwork()),

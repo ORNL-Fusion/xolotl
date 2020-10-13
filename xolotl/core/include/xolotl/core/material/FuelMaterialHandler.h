@@ -13,7 +13,7 @@ namespace material
 class FuelMaterialHandler : public MaterialHandler
 {
 public:
-	FuelMaterialHandler(const options::Options& options) :
+	FuelMaterialHandler(const options::IOptions& options) :
 		MaterialHandler(options,
 			MaterialSubHandlerGenerator<core::flux::FuelFitFluxHandler>{})
 	{

@@ -491,7 +491,7 @@ public:
 	initializeHandlers(
 		std::shared_ptr<core::material::IMaterialHandler> material,
 		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
-		const options::Options& opts) override
+		const options::IOptions& opts) override
 	{
 		// Determine who I am.
 		int myProcId = -1;

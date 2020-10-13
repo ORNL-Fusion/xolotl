@@ -3,7 +3,7 @@
 #include <functional>
 
 #include <xolotl/core/network/INetworkHandler.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/IOptions.h>
 
 namespace xolotl
 {
@@ -12,7 +12,7 @@ namespace core
 namespace network
 {
 using NetworkGeneratorFunction =
-	std::function<std::shared_ptr<IReactionNetwork>(const options::Options&)>;
+	std::function<std::shared_ptr<IReactionNetwork>(const options::IOptions&)>;
 
 class NetworkHandler : public INetworkHandler
 {
@@ -25,7 +25,7 @@ public:
 
 protected:
 	NetworkHandler(
-		const options::Options& options, NetworkGeneratorFunction func);
+		const options::IOptions& options, NetworkGeneratorFunction func);
 
 protected:
 	std::shared_ptr<IReactionNetwork> _network;

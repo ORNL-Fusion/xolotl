@@ -12,7 +12,7 @@ template SolverFactory&
 Factory<SolverFactory, ISolver>::get();
 
 template std::shared_ptr<ISolver>
-Factory<SolverFactory, ISolver>::generate(const options::Options&);
+Factory<SolverFactory, ISolver>::generate(const options::IOptions&);
 
 template bool
 Factory<SolverFactory, ISolver>::registerGenerator(

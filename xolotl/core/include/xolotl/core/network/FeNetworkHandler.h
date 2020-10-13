@@ -12,7 +12,7 @@ namespace network
 class FeNetworkHandler : public NetworkHandler
 {
 public:
-	FeNetworkHandler(const options::Options& options);
+	FeNetworkHandler(const options::IOptions& options);
 };
 } // namespace network
 } // namespace core

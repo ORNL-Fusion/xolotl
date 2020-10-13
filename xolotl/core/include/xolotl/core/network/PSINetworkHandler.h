@@ -13,7 +13,7 @@ namespace network
 class PSINetworkHandler : public NetworkHandler
 {
 public:
-	PSINetworkHandler(const options::Options& options);
+	PSINetworkHandler(const options::IOptions& options);
 };
 } // namespace network
 } // namespace core
