@@ -14,7 +14,7 @@ public:
 	static void
 	set(const std::shared_ptr<IPerfHandler>& handler);
 
-	static std::shared_ptr<IPerfHandler>
+	static const std::shared_ptr<IPerfHandler>&
 	get();
 
 private:

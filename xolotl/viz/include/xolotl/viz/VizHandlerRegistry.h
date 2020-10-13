@@ -14,11 +14,8 @@ public:
 	static void
 	set(const std::shared_ptr<IVizHandler>& handler);
 
-	static IVizHandler*
-	get()
-	{
-		return vizHandler.get();
-	}
+	static const std::shared_ptr<IVizHandler>&
+	get();
 
 private:
 	static std::shared_ptr<IVizHandler> vizHandler;

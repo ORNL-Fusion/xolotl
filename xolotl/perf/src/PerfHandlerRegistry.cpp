@@ -1,3 +1,5 @@
+#include <stdexcept>
+
 #include <xolotl/perf/PerfHandlerRegistry.h>
 
 namespace xolotl
@@ -12,7 +14,7 @@ PerfHandlerRegistry::set(const std::shared_ptr<IPerfHandler>& handler)
 	perfHandler = handler;
 }
 
-std::shared_ptr<IPerfHandler>
+const std::shared_ptr<IPerfHandler>&
 PerfHandlerRegistry::get()
 {
 	if (!perfHandler) {
