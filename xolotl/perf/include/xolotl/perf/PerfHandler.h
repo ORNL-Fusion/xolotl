@@ -10,13 +10,11 @@ namespace xolotl
 {
 namespace perf
 {
-namespace standard
-{
 /**
  * Base class for for building performance data collection objects that
  * collect data (as opposed to low-overhead stubs).
  */
-class StdHandler : public IPerfHandler
+class PerfHandler : public IPerfHandler
 {
 private:
 	/**
@@ -107,12 +105,12 @@ protected:
 	std::map<std::string, std::shared_ptr<IHardwareCounter>> allHWCounterSets;
 
 public:
-	StdHandler(const options::IOptions&);
+	PerfHandler(const options::IOptions&);
 
 	/**
-	 * Destroy a StdHandler.
+	 * Destroy a PerfHandler.
 	 */
-	virtual ~StdHandler();
+	virtual ~PerfHandler();
 
 	/**
 	 * Look up and return a named counter in the current scope.
@@ -166,6 +164,5 @@ public:
 		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwStats)
 		const override;
 };
-} // namespace standard
 } // namespace perf
 } // namespace xolotl

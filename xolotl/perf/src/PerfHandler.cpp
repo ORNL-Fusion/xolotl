@@ -9,28 +9,19 @@
 
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/perf/EventCounter.h>
+#include <xolotl/perf/PerfHandler.h>
 #include <xolotl/perf/dummy/DummyHardwareCounter.h>
-#include <xolotl/perf/standard/StdHandler.h>
 #include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
 {
 namespace perf
 {
-namespace standard
-{
-// namespace detail
-// {
-// auto stdHandlerRegistrations =
-// 	::xolotl::factory::perf::PerfHandlerFactory::RegistrationCollection<
-// 		StdHandler>({"std"});
-// }
-
-StdHandler::StdHandler(const options::IOptions&)
+PerfHandler::PerfHandler(const options::IOptions&)
 {
 }
 
-StdHandler::~StdHandler()
+PerfHandler::~PerfHandler()
 {
 	// Release the objects we have been tracking.
 	// Because we use shared_ptrs for these objects,
@@ -43,7 +34,7 @@ StdHandler::~StdHandler()
 // We can create the EventCounters, since they don't depend on
 // more specialized functionality from any of our subclasses.
 std::shared_ptr<IEventCounter>
-StdHandler::getEventCounter(const std::string& name)
+PerfHandler::getEventCounter(const std::string& name)
 {
 	// TODO - associate the object we create with the current region
 	std::shared_ptr<IEventCounter> ret;
@@ -65,7 +56,7 @@ StdHandler::getEventCounter(const std::string& name)
 }
 
 std::shared_ptr<IHardwareCounter>
-StdHandler::getHardwareCounter(
+PerfHandler::getHardwareCounter(
 	const std::string& name, const IHardwareCounter::SpecType& ctrSpec)
 {
 	// TODO - associate the object we create with the current region
@@ -91,7 +82,7 @@ StdHandler::getHardwareCounter(
 
 template <typename T, typename V>
 void
-StdHandler::collectAllObjectNames(int myRank,
+PerfHandler::collectAllObjectNames(int myRank,
 	const std::map<std::string, std::shared_ptr<T>>& myObjs,
 	std::map<std::string, PerfObjStatistics<V>>& stats) const
 {
@@ -174,7 +165,7 @@ StdHandler::collectAllObjectNames(int myRank,
 
 template <typename T>
 void
-StdHandler::collectMyObjectNames(
+PerfHandler::collectMyObjectNames(
 	const std::map<std::string, std::shared_ptr<T>>& myObjs,
 	std::vector<std::string>& objNames) const
 {
@@ -187,7 +178,7 @@ StdHandler::collectMyObjectNames(
 // represents multiple hardware counters.
 template <>
 void
-StdHandler::collectMyObjectNames<IHardwareCounter>(
+PerfHandler::collectMyObjectNames<IHardwareCounter>(
 	const std::map<std::string, std::shared_ptr<IHardwareCounter>>& myObjs,
 	std::vector<std::string>& objNames) const
 {
@@ -206,7 +197,8 @@ StdHandler::collectMyObjectNames<IHardwareCounter>(
 
 template <typename T, typename V>
 std::pair<bool, V>
-StdHandler::getObjValue(const std::map<std::string, std::shared_ptr<T>>& myObjs,
+PerfHandler::getObjValue(
+	const std::map<std::string, std::shared_ptr<T>>& myObjs,
 	const std::string& objName) const
 {
 	auto currObjIter = myObjs.find(objName);
@@ -225,7 +217,7 @@ StdHandler::getObjValue(const std::map<std::string, std::shared_ptr<T>>& myObjs,
 
 template <>
 std::pair<bool, IHardwareCounter::CounterType>
-StdHandler::getObjValue(
+PerfHandler::getObjValue(
 	const std::map<std::string, std::shared_ptr<IHardwareCounter>>& myObjs,
 	const std::string& objName) const
 {
@@ -264,7 +256,7 @@ StdHandler::getObjValue(
 
 template <typename T, typename V>
 void
-StdHandler::aggregateStatistics(int myRank,
+PerfHandler::aggregateStatistics(int myRank,
 	const std::map<std::string, std::shared_ptr<T>>& myObjs,
 	std::map<std::string, PerfObjStatistics<V>>& stats) const
 {
@@ -357,7 +349,7 @@ StdHandler::aggregateStatistics(int myRank,
 }
 
 void
-StdHandler::collectStatistics(PerfObjStatsMap<ITimer::ValType>& timerStats,
+PerfHandler::collectStatistics(PerfObjStatsMap<ITimer::ValType>& timerStats,
 	PerfObjStatsMap<IEventCounter::ValType>& counterStats,
 	PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats)
 {
@@ -380,7 +372,7 @@ StdHandler::collectStatistics(PerfObjStatsMap<ITimer::ValType>& timerStats,
 }
 
 void
-StdHandler::reportStatistics(std::ostream& os,
+PerfHandler::reportStatistics(std::ostream& os,
 	const PerfObjStatsMap<ITimer::ValType>& timerStats,
 	const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
 	const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) const
@@ -401,6 +393,5 @@ StdHandler::reportStatistics(std::ostream& os,
 		iter->second.outputTo(os);
 	}
 }
-} // namespace standard
 } // namespace perf
 } // namespace xolotl

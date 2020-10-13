@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xolotl/perf/standard/StdHandler.h>
+#include <xolotl/perf/PerfHandler.h>
 
 namespace xolotl
 {
@@ -13,16 +13,14 @@ namespace papi
  * use the Performance API (PAPI) library for access to timers and
  * hardware counters.
  */
-class PAPIHandler : public standard::StdHandler
+class PAPIHandler : public PerfHandler
 {
 public:
 	/// Construct a handler registry.
 	PAPIHandler(const options::IOptions&);
 
 	/// Destroy the handler registry.
-	virtual ~PAPIHandler()
-	{
-	}
+	virtual ~PAPIHandler();
 
 	/**
 	 * Look up and return a named timer.

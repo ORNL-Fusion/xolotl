@@ -21,7 +21,7 @@ auto papiHandlerRegistrations =
 }
 
 PAPIHandler::PAPIHandler(const options::IOptions& options) :
-	standard::StdHandler(options)
+	PerfHandler(options)
 {
 	int ret;
 	ret = PAPI_library_init(PAPI_VER_CURRENT);
@@ -30,6 +30,10 @@ PAPIHandler::PAPIHandler(const options::IOptions& options) :
 			"Unable to initialize PAPI library for performance data collection",
 			ret);
 	}
+}
+
+PAPIHandler::~PAPIHandler()
+{
 }
 
 std::shared_ptr<ITimer>

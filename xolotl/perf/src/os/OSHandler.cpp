@@ -14,11 +14,10 @@ namespace detail
 {
 auto osHandlerRegistrations =
 	::xolotl::factory::perf::PerfHandlerFactory::RegistrationCollection<
-		OSHandler>({"os", "std"});
+		OSHandler>({"os"});
 }
 
-OSHandler::OSHandler(const options::IOptions& options) :
-	standard::StdHandler(options)
+OSHandler::~OSHandler()
 {
 }
 

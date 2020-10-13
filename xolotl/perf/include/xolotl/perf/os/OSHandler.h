@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xolotl/perf/standard/StdHandler.h>
+#include <xolotl/perf/PerfHandler.h>
 
 namespace xolotl
 {
@@ -8,14 +8,12 @@ namespace perf
 {
 namespace os
 {
-class OSHandler : public standard::StdHandler
+class OSHandler : public PerfHandler
 {
 public:
-	OSHandler(const options::IOptions&);
+    using PerfHandler::PerfHandler;
 
-	virtual ~OSHandler()
-	{
-	}
+	virtual ~OSHandler();
 
 	std::shared_ptr<ITimer>
 	getTimer(const std::string& name) override;

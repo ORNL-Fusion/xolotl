@@ -1,5 +1,4 @@
-#ifndef XPERF_RUNTIME_ERROR_H
-#define XPERF_RUNTIME_ERROR_H
+#pragma once
 
 #include <stdexcept>
 
@@ -37,8 +36,5 @@ public:
 		return code;
 	}
 };
-
 } // end namespace perf
 } // end namespace xolotl
-
-#endif // XPERF_RUNTIME_ERROR_H
