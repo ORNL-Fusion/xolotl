@@ -55,29 +55,6 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 	BOOST_REQUIRE_EQUAL(nGoodInits, 2U);
 }
 
-BOOST_AUTO_TEST_CASE(createStdHandlerReg)
-{
-	unsigned int nGoodInits = 0;
-
-	try {
-		perf::PerfHandlerRegistry::set(
-			factory::perf::PerfHandlerFactory::get().generate("std"));
-		nGoodInits++;
-
-		auto reg = perf::PerfHandlerRegistry::get();
-		if (reg) {
-			nGoodInits++;
-		}
-
-		BOOST_TEST_MESSAGE("Standard handler registry created successfully.");
-	}
-	catch (const std::exception& e) {
-		BOOST_TEST_MESSAGE("StdHandlerRegistry creation failed: " << e.what());
-	}
-
-	BOOST_REQUIRE_EQUAL(nGoodInits, 2U);
-}
-
 BOOST_AUTO_TEST_CASE(createOSHandlerReg)
 {
 	unsigned int nGoodInits = 0;
@@ -105,7 +82,7 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
 {
 	try {
 		perf::PerfHandlerRegistry::set(
-			factory::perf::PerfHandlerFactory::get().generate("std"));
+			factory::perf::PerfHandlerFactory::get().generate("os"));
 		auto reg = perf::PerfHandlerRegistry::get();
 
 		std::shared_ptr<perf::IEventCounter> ctr =
