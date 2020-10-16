@@ -28,6 +28,12 @@ auto stdHandlerRegistrations =
 
 StandardHandler::StandardHandler(const options::IOptions& options)
 {
+	auto xolotlComm = util::getMPIComm();
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+	if (procId == 0) {
+		std::cout << "VizHandler: Using the standard handler" << std::endl;
+	}
 }
 
 StandardHandler::~StandardHandler() = default;

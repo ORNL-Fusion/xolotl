@@ -26,6 +26,7 @@ BOOST_AUTO_TEST_SUITE(HeatEquationHandler_testSuite)
  */
 BOOST_AUTO_TEST_CASE(checkHeat1D)
 {
+	MPI_Init(NULL, NULL);
 	// Set the DOF
 	const int dof = 9;
 
@@ -317,6 +318,9 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	BOOST_REQUIRE_CLOSE(val[4], 6.835e+13, 0.01);
 	BOOST_REQUIRE_CLOSE(val[5], 6.835e+13, 0.01);
 	BOOST_REQUIRE_CLOSE(val[6], 6.835e+13, 0.01);
+
+	// Finalize MPI
+	MPI_Finalize();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

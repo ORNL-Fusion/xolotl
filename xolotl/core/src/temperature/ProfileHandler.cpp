@@ -2,6 +2,7 @@
 
 #include <xolotl/core/temperature/ProfileHandler.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
+#include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
 {
@@ -19,6 +20,13 @@ auto profileTemperatureHandlerRegistration =
 ProfileHandler::ProfileHandler(const std::string& profileFileName) :
 	tempFile(profileFileName)
 {
+	auto xolotlComm = util::getMPIComm();
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+	if (procId == 0) {
+		std::cout << "TemperatureHandler: Using the time profile defined in: "
+				  << tempFile << std::endl;
+	}
 }
 
 ProfileHandler::ProfileHandler(const options::IOptions& options) :

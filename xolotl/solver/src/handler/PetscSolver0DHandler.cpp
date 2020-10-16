@@ -21,6 +21,8 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
+	std::cout << "SolverHandler: 0D simulation" << std::endl;
+
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = util::getMPIComm();
 	ierr = DMDACreate1d(xolotlComm, DM_BOUNDARY_NONE, 1, dof + 1, 0, NULL, &da);

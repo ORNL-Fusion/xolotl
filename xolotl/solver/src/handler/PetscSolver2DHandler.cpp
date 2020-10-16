@@ -51,6 +51,30 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
+		std::cout << "SolverHandler: 2D simulation with surface BC: ";
+		std::string bcString = "periodic";
+		if (isMirror)
+			bcString = "mirror";
+		if (leftOffset == 1)
+			std::cout << "free surface";
+		else
+			std::cout << bcString;
+		std::cout << ", bulk BC: ";
+		if (rightOffset == 1)
+			std::cout << "free surface";
+		else
+			std::cout << bcString;
+		std::cout << ", left BC: ";
+		if (topOffset == 1)
+			std::cout << "free surface";
+		else
+			std::cout << bcString;
+		std::cout << ", right BC: ";
+		if (bottomOffset == 1)
+			std::cout << "free surface";
+		else
+			std::cout << bcString;
+		std::cout << ", grid (nm): ";
 		for (int i = 1; i < grid.size() - 1; i++) {
 			std::cout << grid[i] - grid[surfacePosition[0] + 1] << " ";
 		}

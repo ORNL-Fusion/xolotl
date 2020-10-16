@@ -1,6 +1,7 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/temperature/HeatEquationHandler.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -28,6 +29,16 @@ HeatEquationHandler::HeatEquationHandler(
 	dimension(dim),
 	oldConcBox(dimension, {0.0, 0.0})
 {
+	auto xolotlComm = util::getMPIComm();
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+	if (procId == 0) {
+		std::cout << "TemperatureHandler: Using the heat equation with "
+					 "a flux of: "
+				  << heatFlux
+				  << " W nm-2, and a bulk temperature of: " << bulkTemperature
+				  << " K" << std::endl;
+	}
 }
 
 HeatEquationHandler::HeatEquationHandler(const options::IOptions& options) :

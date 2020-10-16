@@ -11,7 +11,7 @@ namespace os
 class OSHandler : public PerfHandler
 {
 public:
-    using PerfHandler::PerfHandler;
+	using PerfHandler::PerfHandler;
 
 	virtual ~OSHandler();
 

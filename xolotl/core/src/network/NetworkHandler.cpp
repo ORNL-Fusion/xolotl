@@ -22,8 +22,14 @@ NetworkHandler::NetworkHandler(
 	int procId;
 	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 	if (procId == 0) {
-		std::cout << "\nLoaded network of size " << _network->getDOF() << "."
-				  << std::endl;
+		std::cout << "NetworkHandler: Loaded network of " << _network->getDOF()
+				  << " DOF with: ";
+		auto numSpecies = _network->getSpeciesListSize();
+		for (auto id = SpeciesId(numSpecies); id; ++id) {
+			auto speciesName = _network->getSpeciesName(id);
+			std::cout << speciesName << " ";
+		}
+		std::cout << std::endl;
 	}
 }
 } // namespace network

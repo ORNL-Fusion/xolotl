@@ -22,6 +22,7 @@ BOOST_AUTO_TEST_SUITE(TemperatureProfileHandlerTester_testSuite)
 
 BOOST_AUTO_TEST_CASE(check_getTemperature)
 {
+	MPI_Init(NULL, NULL);
 	// Set the DOF
 	const int dof = 9;
 
@@ -82,6 +83,9 @@ BOOST_AUTO_TEST_CASE(check_getTemperature)
 	// Remove the created file
 	std::string tempFile = "tempFile.dat";
 	std::remove(tempFile.c_str());
+
+	// Finalize MPI
+	MPI_Finalize();
 
 	return;
 }
