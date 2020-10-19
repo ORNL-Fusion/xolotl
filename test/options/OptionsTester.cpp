@@ -323,7 +323,6 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5)
 	BOOST_REQUIRE_EQUAL(opts.getMaxT(), 0);
 	BOOST_REQUIRE_EQUAL(opts.getMaxV(), 5);
 	BOOST_REQUIRE_EQUAL(opts.getMaxI(), 3);
-	BOOST_REQUIRE_EQUAL(opts.usePhaseCut(), false);
 
 	// Check the grid parameters
 	BOOST_REQUIRE_EQUAL(opts.getNX(), 100);

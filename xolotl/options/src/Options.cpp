@@ -40,7 +40,6 @@ Options::Options() :
 	groupingWidthB(0),
 	sputteringYield(0.0),
 	useHDF5Flag(true),
-	usePhaseCutFlag(false),
 	maxImpurity(8),
 	maxD(0),
 	maxT(0),
@@ -141,19 +140,18 @@ Options::readParams(int argc, char* argv[])
 		bpo::value<std::string>(&tempProfileFilename),
 		"A temperature profile is given by the specified file, "
 		"then linear interpolation is used to fit the data."
-		" NOTE: Use only "
-		"ONE temperature option")("flux", bpo::value<double>(&fluxAmplitude),
+		" NOTE: no need for tempParam here.")("flux",
+		bpo::value<double>(&fluxAmplitude),
 		"The value of the incoming flux in #/nm2/s. If the Fuel case is used "
-		"it actually "
-		"corresponds to the fission rate in #/nm3/s.")("fluxFile",
+		"it actually corresponds to the fission rate in #/nm3/s.")("fluxFile",
 		bpo::value<std::string>(&fluxTimeProfileFilePath),
 		"A time profile for the flux is given by the specified file, "
 		"then linear interpolation is used to fit the data."
 		"(NOTE: If a flux profile file is given, "
 		"a constant flux should NOT be given)")("perfHandler",
-		bpo::value<std::string>(&perfHandlerName)->default_value("std"),
-		"Which set of performance handlers to use. (default = std, available "
-		"std,dummy,os,papi).")("vizHandler",
+		bpo::value<std::string>(&perfHandlerName)->default_value("os"),
+		"Which set of performance handlers to use. (default = os, available "
+		"dummy,os,papi).")("vizHandler",
 		bpo::value<std::string>(&vizHandlerName)->default_value("dummy"),
 		"Which set of handlers to use for the visualization. (default = dummy, "
 		"available std,dummy).")("dimensions",
@@ -161,8 +159,7 @@ Options::readParams(int argc, char* argv[])
 		"Number of dimensions for the simulation.")("material",
 		bpo::value<std::string>(&materialName),
 		"The material options are as follows: {W100, W110, W111, "
-		"W211, Fuel, TRIDYN, Fe, 800H}, where W is for tungsten and "
-		"the numbers correspond to the surface orientation.")("initialV",
+		"W211, Pulsed, Fuel, Fe, 800H}.")("initialV",
 		bpo::value<double>(&initialVConcentration),
 		"The value of the initial concentration of vacancies in the material.")(
 		"zeta", bpo::value<double>(&zeta)->default_value(0.73),
@@ -189,8 +186,7 @@ Options::readParams(int argc, char* argv[])
 		"netParam", bpo::value<std::string>(),
 		"This option allows the user to define the boundaries of the network. "
 		"To do so, simply write the values in order "
-		"maxHe/Xe maxD maxT maxV maxI bool .")("grid",
-		bpo::value<std::string>(),
+		"maxHe/Xe maxD maxT maxV maxI.")("grid", bpo::value<std::string>(),
 		"This option allows the user to define the boundaries of the grid. "
 		"To do so, simply write the values in order "
 		"nX xStepSize nY yStepSize nZ zStepSize .")("radiusSize",
@@ -217,7 +213,8 @@ Options::readParams(int argc, char* argv[])
 		"This option allows the user to set a density in nm-3 "
 		"for the number of xenon per volume in a bubble.")("pulse",
 		bpo::value<std::string>(),
-		"The total length of the pulse (in s) and the proportion of it that is "
+		"The total length of the pulse (in s) if the Pulsed material is used, "
+		"and the proportion of it that is "
 		"ON.")("lattice", bpo::value<double>(&latticeParameter),
 		"This option allows the user to set the length of the lattice side in "
 		"nm.")("impurityRadius", bpo::value<double>(&impurityRadius),
@@ -471,12 +468,6 @@ Options::readParams(int argc, char* argv[])
 				maxV = strtol(tokens[3].c_str(), NULL, 10);
 				// Set the interstitial size
 				maxI = strtol(tokens[4].c_str(), NULL, 10);
-
-				// Check if there are other values
-				if (tokens.size() > 5) {
-					// Set the phase cut
-					usePhaseCutFlag = (tokens[5] == "true");
-				}
 			}
 		}
 

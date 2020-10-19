@@ -294,14 +294,6 @@ public:
 	useHDF5() const = 0;
 
 	/**
-	 * To know if we should use the phase cut.
-	 *
-	 * @return usePhaseCutFlag
-	 */
-	virtual bool
-	usePhaseCut() const = 0;
-
-	/**
 	 * Obtain the maximum value of impurities (He or Xe) to be used.
 	 *
 	 * @return The maximum value

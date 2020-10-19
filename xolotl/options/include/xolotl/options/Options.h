@@ -160,11 +160,6 @@ protected:
 	bool useHDF5Flag;
 
 	/**
-	 * Use the phase cut for the network?
-	 */
-	bool usePhaseCutFlag;
-
-	/**
 	 * Maximum number of He or Xe
 	 */
 	int maxImpurity;
@@ -645,16 +640,6 @@ public:
 	useHDF5() const override
 	{
 		return useHDF5Flag;
-	}
-
-	/**
-	 * To know if we should use the phase cut.
-	 * \see IOptions.h
-	 */
-	bool
-	usePhaseCut() const override
-	{
-		return usePhaseCutFlag;
 	}
 
 	/**
