@@ -47,19 +47,19 @@ public:
 	SpeciesId
 	getHeliumSpeciesId() const override
 	{
-		return SpeciesId{Species::He, this->getNumberOfSpecies()};
+		return SpeciesId{Species::He, Superclass::getNumberOfSpecies()};
 	}
 
 	SpeciesId
 	getVacancySpeciesId() const override
 	{
-		return SpeciesId{Species::V, this->getNumberOfSpecies()};
+		return SpeciesId{Species::V, Superclass::getNumberOfSpecies()};
 	}
 
 	SpeciesId
 	getInterstitialSpeciesId() const override
 	{
-		return SpeciesId{Species::I, this->getNumberOfSpecies()};
+		return SpeciesId{Species::I, Superclass::getNumberOfSpecies()};
 	}
 
 	bool
