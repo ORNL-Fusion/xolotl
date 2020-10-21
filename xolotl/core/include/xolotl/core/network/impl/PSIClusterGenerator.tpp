@@ -173,9 +173,7 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 
 	double factor = 5.0e-1;
 
-	if (region[Species::V].length() <
-		util::max((double)(_groupingWidthB + 1),
-			lo[Species::V] * lo[Species::V] * factor)) {
+	if (region[Species::V].length() < _groupingWidthB + 1) {
 		result[toIndex(Species::V)] = false;
 	}
 

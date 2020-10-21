@@ -107,8 +107,12 @@ generatePSIReactionNetwork(const options::IOptions& options)
 			options);
 	}
 	else {
+		AmountType refineHe = (maxHe + 1) / groupingWidthHe;
+		AmountType refineV = (maxV + 1) / groupingWidthV;
 		return makePSIReactionNetwork<PSIHeliumSpeciesList>({maxHe, maxV, maxI},
-			{{groupingWidthHe, groupingWidthV, maxI + 1}}, options);
+			{{refineHe, refineV, maxI + 1},
+				{groupingWidthHe, groupingWidthV, 1}},
+			options);
 	}
 }
 
