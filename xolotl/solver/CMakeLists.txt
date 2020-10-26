@@ -42,10 +42,9 @@ target_link_libraries(xolotlSolver PUBLIC
     xolotlFactory
     xolotlPerf
     xolotlViz
-    ${PETSC_LIBRARIES}
+    PETSc
 )
 target_include_directories(xolotlSolver PUBLIC
-    ${PETSC_INCLUDES}
     $<BUILD_INTERFACE:${XOLOTL_SOLVER_INCLUDE_DIR}>
     $<INSTALL_INTERFACE:include>
 )

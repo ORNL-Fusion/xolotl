@@ -25,12 +25,11 @@ target_link_libraries(xolotlInterface
     xolotlViz
     PUBLIC
     MPI::MPI_CXX
-    ${PETSC_LIBRARIES}
+    PETSc
 )
 target_include_directories(xolotlInterface PUBLIC
     $<BUILD_INTERFACE:${XOLOTL_INTERFACE_INCLUDE_DIR}>
     $<INSTALL_INTERFACE:include>
-    ${PETSC_INCLUDES}
 )
 set_target_properties(xolotlInterface PROPERTIES
     INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"

@@ -26,18 +26,15 @@ install(TARGETS xolotl
     EXPORT Xolotl
     RUNTIME DESTINATION bin
 )
-install(EXPORT Xolotl DESTINATION lib/xolotl)
+install(EXPORT Xolotl DESTINATION lib/Xolotl)
 
 include(CMakePackageConfigHelpers)
 configure_package_config_file(${CMAKE_SOURCE_DIR}/CMake/XolotlConfig.cmake.in
     ${CMAKE_CURRENT_BINARY_DIR}/CMake/XolotlConfig.cmake
-    INSTALL_DESTINATION lib/xolotl
+    INSTALL_DESTINATION lib/Xolotl
 )
 install(FILES
     ${CMAKE_CURRENT_BINARY_DIR}/CMake/XolotlConfig.cmake
     ${CMAKE_SOURCE_DIR}/CMake/FindPETSc.cmake
-    ${CMAKE_SOURCE_DIR}/CMake/FindPackageMultipass.cmake
-    ${CMAKE_SOURCE_DIR}/CMake/ResolveCompilerPaths.cmake
-    ${CMAKE_SOURCE_DIR}/CMake/CorrectWindowsPaths.cmake
-    DESTINATION lib/xolotl
+    DESTINATION lib/Xolotl
 )
