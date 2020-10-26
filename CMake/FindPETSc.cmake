@@ -13,7 +13,6 @@
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 #
 
-find_library(PETSC_LIBRARY NAMES petsc)
 find_library(PETSC_LIBRARY
     NAMES petsc
     PATHS
@@ -23,6 +22,7 @@ find_library(PETSC_LIBRARY
     ${PETSC_DIR}/${PETSC_ARCH}/lib
     NO_DEFAULT_PATH
 )
+find_library(PETSC_LIBRARY NAMES petsc)
 
 find_path(PETSC_INCLUDE_DIR
     NAMES petsc.h
