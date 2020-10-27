@@ -1,4 +1,4 @@
-#pragma once
+#include <SystemTestCase.h>
 
 #include <algorithm>
 #include <cmath>
@@ -8,69 +8,17 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
-#include <string>
 #include <vector>
 
 #include <boost/test/unit_test.hpp>
 
+#include <xolotl/test/config.h>
 #include <xolotl/util/Filesystem.h>
 
-#include <xolotl/test/config.h>
-
-namespace testUtils
+namespace xolotl
 {
-const std::string dataDir = TO_STRING(XOLOTL_TEST_DATA_DIR);
-const std::string binDir = TO_STRING(XOLOTL_BUILD_DIR);
-
-constexpr double defaultTolerance = 1.0e-10;
-const std::string defaultFileName = "retentionOut.txt";
-
-double tolerance = defaultTolerance;
-
-bool
-runXolotl(const std::string& caseName)
+namespace test
 {
-	auto exec = binDir + "/xolotl/xolotl";
-	auto paramsFileName = dataDir + "/params_" + caseName + ".txt";
-	auto consoleFileName = binDir + "/test/system/cout_" + caseName + ".txt";
-	auto command = exec + " " + paramsFileName + " > " + consoleFileName;
-	int retCode = std::system(command.c_str());
-	return (retCode == 0);
-}
-
-bool
-copyFile(const std::string& paramsFileName)
-{
-	int retCode =
-		std::system(("cp " + dataDir + "/" + paramsFileName + " .").c_str());
-	return (retCode == 0);
-}
-
-std::vector<double>
-readOutputFile(const std::string& fileName)
-{
-	std::ifstream ifs(fileName);
-	if (!ifs) {
-		throw std::runtime_error("Unable to open file: " + fileName);
-	}
-	std::string line, tmpStr;
-	std::vector<double> ret;
-	while (getline(ifs, line)) {
-		std::stringstream(line) >> tmpStr;
-		if (tmpStr[0] == '#') {
-			continue;
-		}
-
-		std::stringstream ss(line);
-		while (ss >> tmpStr) {
-			auto tmp = atof(tmpStr.c_str());
-			ret.push_back(tmp);
-		}
-	}
-
-	return ret;
-}
-
 double
 diff2Norm(
 	const std::vector<double>& data, const std::vector<double>& expectedData)
@@ -138,37 +86,102 @@ computeDiffNorm(
 	return diff2Norm(data, expectedData);
 }
 
+std::vector<double>
+readOutputFile(const std::string& fileName)
+{
+	std::ifstream ifs(fileName);
+	if (!ifs) {
+		throw std::runtime_error("Unable to open file: " + fileName);
+	}
+
+	std::string line, tmpStr;
+	std::vector<double> ret;
+	while (getline(ifs, line)) {
+		std::stringstream(line) >> tmpStr;
+		if (tmpStr[0] == '#') {
+			continue;
+		}
+
+		std::stringstream ss(line);
+		while (ss >> tmpStr) {
+			auto tmp = atof(tmpStr.c_str());
+			ret.push_back(tmp);
+		}
+	}
+
+	return ret;
+}
+
+const std::string SystemTestCase::_dataDir = TO_STRING(XOLOTL_TEST_DATA_DIR);
+const std::string SystemTestCase::_binDir = TO_STRING(XOLOTL_BUILD_DIR);
+const std::string SystemTestCase::_defaultOutputFileName = "retentionOut.txt";
+
+SystemTestCase::SystemTestCase(const std::string& caseName,
+	const std::string& outputFileName, double tolerance) :
+	_caseName(caseName),
+	_outputFileName(outputFileName),
+	_tolerance(tolerance)
+{
+}
+
+SystemTestCase::SystemTestCase(const std::string& caseName, double tolerance) :
+	SystemTestCase(caseName, _defaultOutputFileName, tolerance)
+{
+}
+
+SystemTestCase::SystemTestCase(const std::string& caseName) :
+	SystemTestCase(caseName, _defaultOutputFileName)
+{
+}
+
+bool
+SystemTestCase::runXolotl() const
+{
+	auto exec = _binDir + "/xolotl/xolotl";
+	auto paramsFileName = _dataDir + "/params_" + _caseName + ".txt";
+	auto consoleFileName = _binDir + "/test/system/cout_" + _caseName + ".txt";
+	auto command = exec + " " + paramsFileName + " > " + consoleFileName;
+	int retCode = std::system(command.c_str());
+	return (retCode == 0);
+}
+
 void
-checkOutput(const std::string& outputFileName,
-	const std::string& expectedOutputFileName)
+SystemTestCase::checkOutput(const std::string& outputFileName,
+	const std::string& expectedOutputFileName) const
 {
 	auto expectedData = readOutputFile(expectedOutputFileName);
 	auto data = readOutputFile(outputFileName);
 	BOOST_REQUIRE(expectedData.size() == data.size());
 	auto diffNorm = computeDiffNorm(data, expectedData);
-    //FIXME
+	// FIXME
 	std::cout << std::scientific << std::setprecision(12) << diffNorm << " < "
-			  << tolerance << std::endl;
-	BOOST_REQUIRE(diffNorm < tolerance);
+			  << _tolerance << std::endl;
+	BOOST_REQUIRE(diffNorm < _tolerance);
 }
 
 void
-runSystemTestCase(const std::string& caseName,
-	const std::string& fileName = defaultFileName,
-	double tol = defaultTolerance)
+SystemTestCase::operator()() const
 {
-	tolerance = tol;
-	BOOST_REQUIRE(runXolotl(caseName));
+	BOOST_REQUIRE(runXolotl());
 
 	auto argc = boost::unit_test::framework::master_test_suite().argc;
 	auto argv = boost::unit_test::framework::master_test_suite().argv;
 	if (argc == 2 && std::strcmp(argv[1], "--approve") == 0) {
-		xolotl::fs::copy_file("./" + fileName,
-			dataDir + "/output/" + caseName + ".txt",
+		xolotl::fs::copy_file("./" + _outputFileName,
+			_dataDir + "/output/" + _caseName + ".txt",
 			xolotl::fs::copy_option::overwrite_if_exists);
 	}
 	else {
-		checkOutput("./" + fileName, dataDir + "/output/" + caseName + ".txt");
+		checkOutput(
+			"./" + _outputFileName, _dataDir + "/output/" + _caseName + ".txt");
 	}
 }
-} // namespace testUtils
+
+void
+SystemTestCase::copyFile(const std::string& fileName)
+{
+	xolotl::fs::copy_file(_dataDir + "/" + fileName, {},
+		xolotl::fs::copy_option::overwrite_if_exists);
+}
+} // namespace test
+} // namespace xolotl
