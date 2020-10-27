@@ -8,7 +8,6 @@
 #include <boost/test/framework.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/config.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/options/Options.h>

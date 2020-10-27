@@ -8,7 +8,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/config.h>
 #include <xolotl/core/flux/FuelFitFluxHandler.h>
 #include <xolotl/options/Options.h>
 

@@ -6,6 +6,12 @@ find_package(Boost REQUIRED COMPONENTS unit_test_framework)
 
 set(XOLOTL_TEST_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
+get_filename_component(XOLOTL_TEST_DATA_DIR
+    "${CMAKE_SOURCE_DIR}/benchmarks"
+    ABSOLUTE
+)
+set(XOLOTL_BUILD_DIR ${CMAKE_BINARY_DIR})
+
 execute_process(COMMAND
     ${CMAKE_COMMAND} -E make_directory ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/test
 )

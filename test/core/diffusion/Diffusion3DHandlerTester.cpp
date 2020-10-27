@@ -11,7 +11,6 @@
 #include <xolotl/core/diffusion/Diffusion3DHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
-#include <xolotl/test/config.h>
 
 using namespace std;
 using namespace xolotl::core;

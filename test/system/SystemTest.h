@@ -15,10 +15,12 @@
 
 #include <xolotl/util/Filesystem.h>
 
+#include <xolotl/test/config.h>
+
 namespace testUtils
 {
-const std::string dataDir = TEST_DATA_DIR;
-const std::string binDir = BUILD_DIR;
+const std::string dataDir = TO_STRING(XOLOTL_TEST_DATA_DIR);
+const std::string binDir = TO_STRING(XOLOTL_BUILD_DIR);
 
 constexpr double defaultTolerance = 1.0e-10;
 const std::string defaultFileName = "retentionOut.txt";
@@ -144,6 +146,7 @@ checkOutput(const std::string& outputFileName,
 	auto data = readOutputFile(outputFileName);
 	BOOST_REQUIRE(expectedData.size() == data.size());
 	auto diffNorm = computeDiffNorm(data, expectedData);
+    //FIXME
 	std::cout << std::scientific << std::setprecision(12) << diffNorm << " < "
 			  << tolerance << std::endl;
 	BOOST_REQUIRE(diffNorm < tolerance);

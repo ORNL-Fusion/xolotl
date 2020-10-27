@@ -8,7 +8,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/config.h>
 #include <xolotl/core/flux/W110FitFluxHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>

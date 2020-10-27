@@ -8,14 +8,6 @@ target_include_directories(SystemTest INTERFACE
     ${CMAKE_BINARY_DIR}
     ${CMAKE_SOURCE_DIR}/xolotlCore/io
 )
-get_filename_component(__test_data_dir
-    "${CMAKE_SOURCE_DIR}/benchmarks"
-    ABSOLUTE
-)
-target_compile_definitions(SystemTest INTERFACE
-    -DTEST_DATA_DIR="${__test_data_dir}"
-    -DBUILD_DIR="${CMAKE_BINARY_DIR}"
-)
 add_dependencies(SystemTest xolotl)
 
 add_executable(SystemTester SystemTester.cpp)

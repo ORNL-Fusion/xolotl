@@ -8,7 +8,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/config.h>
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
 #include <xolotl/core/modified/W211TrapMutationHandler.h>
 #include <xolotl/options/Options.h>

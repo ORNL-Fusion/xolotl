@@ -8,7 +8,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/config.h>
 #include <xolotl/core/flux/FeFitFluxHandler.h>
 #include <xolotl/options/Options.h>
 

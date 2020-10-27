@@ -8,7 +8,6 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/config.h>
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
 #include <xolotl/core/advection/YGBAdvectionHandler.h>
 #include <xolotl/core/modified/DummyTrapMutationHandler.h>
