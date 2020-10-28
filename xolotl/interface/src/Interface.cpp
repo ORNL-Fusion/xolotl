@@ -78,7 +78,6 @@ void
 XolotlInterface::printSomething()
 {
 	std::cout << "I'm in Xolotl !!!" << std::endl;
-	return;
 }
 
 void
@@ -137,8 +136,6 @@ XolotlInterface::initializeXolotl(int argc, char* argv[], MPI_Comm comm)
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 void
@@ -181,8 +178,6 @@ XolotlInterface::solveXolotl()
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 std::vector<std::vector<std::vector<std::array<double, 4>>>>
@@ -234,8 +229,6 @@ XolotlInterface::setLocalNE(
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 void
@@ -260,8 +253,6 @@ XolotlInterface::getLocalCoordinates(int& xs, int& xm, int& Mx, int& ys,
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 void
@@ -285,8 +276,6 @@ XolotlInterface::setGBLocation(int i, int j, int k)
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 void
@@ -310,8 +299,6 @@ XolotlInterface::resetGBVector()
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
@@ -360,8 +347,6 @@ XolotlInterface::setConcVector(
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 double
@@ -410,8 +395,6 @@ XolotlInterface::setPreviousTime(double time)
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 double
@@ -455,8 +438,6 @@ XolotlInterface::setCurrentTimes(double time, double dt)
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 double
@@ -504,8 +485,6 @@ XolotlInterface::setNXeGB(double nXe)
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 TS&
@@ -607,8 +586,6 @@ XolotlInterface::finalizeXolotl()
 		std::cerr << "Unrecognized exception seen." << std::endl;
 		std::cerr << "Aborting." << std::endl;
 	}
-
-	return;
 }
 
 } /* namespace interface */
