@@ -1,4 +1,5 @@
-#include <SystemTestCase.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include <algorithm>
 #include <cmath>
@@ -12,6 +13,8 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <xolotl/interface/Interface.h>
+#include <xolotl/test/SystemTestCase.h>
 #include <xolotl/test/config.h>
 #include <xolotl/util/Filesystem.h>
 
@@ -19,6 +22,41 @@ namespace xolotl
 {
 namespace test
 {
+class StdOutRedirect
+{
+public:
+	StdOutRedirect(const std::string& outputFileName)
+	{
+		fflush(stdout);
+		int fd1 =
+			open(outputFileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+		if (fd1 < 0) {
+			throw std::runtime_error(
+				"Failed to open " + outputFileName + " for writing");
+		}
+		_fileDesc = dup(STDOUT_FILENO);
+		if (_fileDesc < 0) {
+			throw std::runtime_error("Failed to duplicate standard output");
+		}
+		if (dup2(fd1, STDOUT_FILENO) < 0) {
+			throw std::runtime_error("Failed to duplicate " + outputFileName +
+				" to standard output");
+		}
+		close(fd1);
+	}
+
+	~StdOutRedirect() noexcept(false)
+	{
+		fflush(stdout);
+		if (dup2(_fileDesc, STDOUT_FILENO) < 0) {
+			throw std::runtime_error("Failed to reinstate standard output");
+		}
+	}
+
+private:
+	int _fileDesc;
+};
+
 double
 diff2Norm(
 	const std::vector<double>& data, const std::vector<double>& expectedData)
@@ -116,16 +154,10 @@ const std::string SystemTestCase::_dataDir = TO_STRING(XOLOTL_TEST_DATA_DIR);
 const std::string SystemTestCase::_binDir = TO_STRING(XOLOTL_BUILD_DIR);
 const std::string SystemTestCase::_defaultOutputFileName = "retentionOut.txt";
 
-SystemTestCase::SystemTestCase(const std::string& caseName,
-	const std::string& outputFileName, double tolerance) :
+SystemTestCase::SystemTestCase(
+	const std::string& caseName, const std::string& outputFileName) :
 	_caseName(caseName),
-	_outputFileName(outputFileName),
-	_tolerance(tolerance)
-{
-}
-
-SystemTestCase::SystemTestCase(const std::string& caseName, double tolerance) :
-	SystemTestCase(caseName, _defaultOutputFileName, tolerance)
+	_outputFileName(outputFileName)
 {
 }
 
@@ -140,9 +172,23 @@ SystemTestCase::runXolotl() const
 	auto exec = _binDir + "/xolotl/xolotl";
 	auto paramsFileName = _dataDir + "/params_" + _caseName + ".txt";
 	auto consoleFileName = _binDir + "/test/system/cout_" + _caseName + ".txt";
-	auto command = exec + " " + paramsFileName + " > " + consoleFileName;
-	int retCode = std::system(command.c_str());
-	return (retCode == 0);
+
+	// Redirect console output
+	StdOutRedirect redir{consoleFileName};
+
+	char* argv[] = {exec.data(), paramsFileName.data()};
+	try {
+		xolotl::interface::XolotlInterface{2, argv}.solveXolotl();
+	}
+	catch (const std::exception& e) {
+		std::cout << e.what() << std::endl;
+		return false;
+	}
+	catch (...) {
+		return false;
+	}
+
+	return true;
 }
 
 void
@@ -153,14 +199,11 @@ SystemTestCase::checkOutput(const std::string& outputFileName,
 	auto data = readOutputFile(outputFileName);
 	BOOST_REQUIRE(expectedData.size() == data.size());
 	auto diffNorm = computeDiffNorm(data, expectedData);
-	// FIXME
-	std::cout << std::scientific << std::setprecision(12) << diffNorm << " < "
-			  << _tolerance << std::endl;
-	BOOST_REQUIRE(diffNorm < _tolerance);
+	BOOST_TEST(diffNorm < _tolerance);
 }
 
 void
-SystemTestCase::operator()() const
+SystemTestCase::run() const
 {
 	BOOST_REQUIRE(runXolotl());
 

@@ -14,14 +14,19 @@ public:
 	SystemTestCase() = delete;
 
 	SystemTestCase(const std::string& caseName,
-		const std::string& outputFileName, double tolerance = defaultTolerance);
-
-	SystemTestCase(const std::string& caseName, double tolerance);
+		const std::string& outputFileName);
 
 	explicit SystemTestCase(const std::string& caseName);
 
+    SystemTestCase&
+    tolerance(double tol)
+    {
+        _tolerance = tol;
+        return *this;
+    }
+
 	void
-	operator()() const;
+	run() const;
 
 	static void
 	copyFile(const std::string& fileName);
