@@ -24,34 +24,46 @@ namespace xolotl
 {
 namespace test
 {
+int
+getMPIRank()
+{
+	int rank;
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	return rank;
+}
+
 class StdOutRedirect
 {
 public:
 	StdOutRedirect(const std::string& outputFileName)
 	{
-		fflush(stdout);
-		int fd1 =
-			open(outputFileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
-		if (fd1 < 0) {
-			throw std::runtime_error(
-				"Failed to open " + outputFileName + " for writing");
+		if (getMPIRank() == 0) {
+			fflush(stdout);
+			int fd1 = open(
+				outputFileName.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+			if (fd1 < 0) {
+				throw std::runtime_error(
+					"Failed to open " + outputFileName + " for writing");
+			}
+			_fileDesc = dup(STDOUT_FILENO);
+			if (_fileDesc < 0) {
+				throw std::runtime_error("Failed to duplicate standard output");
+			}
+			if (dup2(fd1, STDOUT_FILENO) < 0) {
+				throw std::runtime_error("Failed to duplicate " +
+					outputFileName + " to standard output");
+			}
+			close(fd1);
 		}
-		_fileDesc = dup(STDOUT_FILENO);
-		if (_fileDesc < 0) {
-			throw std::runtime_error("Failed to duplicate standard output");
-		}
-		if (dup2(fd1, STDOUT_FILENO) < 0) {
-			throw std::runtime_error("Failed to duplicate " + outputFileName +
-				" to standard output");
-		}
-		close(fd1);
 	}
 
 	~StdOutRedirect() noexcept(false)
 	{
-		fflush(stdout);
-		if (dup2(_fileDesc, STDOUT_FILENO) < 0) {
-			throw std::runtime_error("Failed to reinstate standard output");
+		if (getMPIRank() == 0) {
+			fflush(stdout);
+			if (dup2(_fileDesc, STDOUT_FILENO) < 0) {
+				throw std::runtime_error("Failed to reinstate standard output");
+			}
 		}
 	}
 
@@ -62,24 +74,31 @@ private:
 class ScopedTimer
 {
 public:
-	ScopedTimer(const std::string& name, bool enable)
+	ScopedTimer(const std::string& name, bool enable) : _enable(enable)
 	{
-		if (enable) {
-			_timer = std::make_unique<perf::os::OSTimer>(name);
-			_timer->start();
+		if (_enable) {
+			MPI_Barrier(MPI_COMM_WORLD);
+			if (getMPIRank() == 0) {
+				_timer = std::make_unique<perf::os::OSTimer>(name);
+				_timer->start();
+			}
 		}
 	}
 
 	~ScopedTimer()
 	{
-		if (_timer) {
-			_timer->stop();
-			std::cout << _timer->getName() << ": " << _timer->getValue()
-					  << "s\n";
+		if (_enable) {
+			MPI_Barrier(MPI_COMM_WORLD);
+			if (_timer) {
+				_timer->stop();
+				std::cout << _timer->getName() << ": ";
+				std::cout << _timer->getValue() << 's' << std::endl;
+			}
 		}
 	}
 
 private:
+	bool _enable;
 	std::unique_ptr<perf::ITimer> _timer;
 };
 
@@ -235,16 +254,18 @@ SystemTestCase::run() const
 		BOOST_REQUIRE(runXolotl());
 	}
 
-	auto argc = boost::unit_test::framework::master_test_suite().argc;
-	auto argv = boost::unit_test::framework::master_test_suite().argv;
-	if (argc == 2 && std::strcmp(argv[1], "--approve") == 0) {
-		xolotl::fs::copy_file("./" + _outputFileName,
-			_dataDir + "/output/" + _caseName + ".txt",
-			xolotl::fs::copy_option::overwrite_if_exists);
-	}
-	else {
-		checkOutput(
-			"./" + _outputFileName, _dataDir + "/output/" + _caseName + ".txt");
+	if (getMPIRank() == 0) {
+		auto argc = boost::unit_test::framework::master_test_suite().argc;
+		auto argv = boost::unit_test::framework::master_test_suite().argv;
+		if (argc == 2 && std::strcmp(argv[1], "--approve") == 0) {
+			xolotl::fs::copy_file("./" + _outputFileName,
+				_dataDir + "/output/" + _caseName + ".txt",
+				xolotl::fs::copy_option::overwrite_if_exists);
+		}
+		else {
+			checkOutput("./" + _outputFileName,
+				_dataDir + "/output/" + _caseName + ".txt");
+		}
 	}
 }
 
