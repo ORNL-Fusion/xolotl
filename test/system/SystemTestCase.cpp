@@ -14,6 +14,8 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/interface/Interface.h>
+#include <xolotl/perf/dummy/DummyTimer.h>
+#include <xolotl/perf/os/OSTimer.h>
 #include <xolotl/test/SystemTestCase.h>
 #include <xolotl/test/config.h>
 #include <xolotl/util/Filesystem.h>
@@ -55,6 +57,30 @@ public:
 
 private:
 	int _fileDesc;
+};
+
+class ScopedTimer
+{
+public:
+	ScopedTimer(const std::string& name, bool enable)
+	{
+		if (enable) {
+			_timer = std::make_unique<perf::os::OSTimer>(name);
+			_timer->start();
+		}
+	}
+
+	~ScopedTimer()
+	{
+		if (_timer) {
+			_timer->stop();
+			std::cout << _timer->getName() << ": " << _timer->getValue()
+					  << "s\n";
+		}
+	}
+
+private:
+	std::unique_ptr<perf::ITimer> _timer;
 };
 
 double
@@ -169,13 +195,12 @@ SystemTestCase::SystemTestCase(const std::string& caseName) :
 bool
 SystemTestCase::runXolotl() const
 {
+	// Redirect console output
+	StdOutRedirect redir{_binDir + "/test/system/stdout_" + _caseName + ".txt"};
+
+	// Construct command-line
 	auto exec = _binDir + "/xolotl/xolotl";
 	auto paramsFileName = _dataDir + "/params_" + _caseName + ".txt";
-	auto consoleFileName = _binDir + "/test/system/cout_" + _caseName + ".txt";
-
-	// Redirect console output
-	StdOutRedirect redir{consoleFileName};
-
 	char* argv[] = {exec.data(), paramsFileName.data()};
 	try {
 		xolotl::interface::XolotlInterface{2, argv}.solveXolotl();
@@ -205,7 +230,10 @@ SystemTestCase::checkOutput(const std::string& outputFileName,
 void
 SystemTestCase::run() const
 {
-	BOOST_REQUIRE(runXolotl());
+	{
+		ScopedTimer timer{_caseName, _enableTimer};
+		BOOST_REQUIRE(runXolotl());
+	}
 
 	auto argc = boost::unit_test::framework::master_test_suite().argc;
 	auto argv = boost::unit_test::framework::master_test_suite().argv;

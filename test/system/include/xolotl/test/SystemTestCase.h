@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <string>
 
 namespace xolotl
@@ -22,6 +23,13 @@ public:
     tolerance(double tol)
     {
         _tolerance = tol;
+        return *this;
+    }
+
+    SystemTestCase&
+    withTimer()
+    {
+        _enableTimer = true;
         return *this;
     }
 
@@ -48,6 +56,8 @@ private:
 	const std::string _outputFileName;
 
 	double _tolerance{defaultTolerance};
+
+    bool _enableTimer {false};
 };
 } // namespace test
 } // namespace xolotl
