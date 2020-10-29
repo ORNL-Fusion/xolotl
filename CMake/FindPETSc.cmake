@@ -16,10 +16,11 @@
 find_library(PETSC_LIBRARY
     NAMES petsc
     PATHS
-    ${PETSC_DIR}/lib
     ${PETSc_DIR}/lib
+    ${PETSC_DIR}/lib
     $ENV{PETSC_DIR}/lib
     ${PETSC_DIR}/${PETSC_ARCH}/lib
+    $ENV{PETSC_DIR}/$ENV{PETSC_ARCH}/lib
     NO_DEFAULT_PATH
 )
 find_library(PETSC_LIBRARY NAMES petsc)
@@ -27,19 +28,19 @@ find_library(PETSC_LIBRARY NAMES petsc)
 find_path(PETSC_INCLUDE_DIR
     NAMES petsc.h
     PATHS
-    ${PETSC_DIR}/include
     ${PETSc_DIR}/include
+    ${PETSC_DIR}/include
     $ENV{PETSC_DIR}/include
-    ${PETSC_DIR}/${PETSC_ARCH}/include
 )
 
 find_path(PETSCCONF_INCLUDE_DIR
     NAMES petscconf.h
     PATHS
-    ${PETSC_DIR}/include
     ${PETSc_DIR}/include
+    ${PETSC_DIR}/include
     $ENV{PETSC_DIR}/include
     ${PETSC_DIR}/${PETSC_ARCH}/include
+    $ENV{PETSC_DIR}/$ENV{PETSC_ARCH}/include
 )
 
 get_filename_component(PETSC_LIB_DIR ${PETSC_LIBRARY} DIRECTORY)
