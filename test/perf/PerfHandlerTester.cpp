@@ -12,7 +12,7 @@
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/perf/PerfObjStatistics.h>
-#include <xolotl/test/MPIFixture.h>
+#include <xolotl/test/MPITestUtils.h>
 
 using namespace xolotl;
 

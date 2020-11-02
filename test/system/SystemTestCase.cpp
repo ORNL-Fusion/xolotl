@@ -16,6 +16,7 @@
 #include <xolotl/interface/Interface.h>
 #include <xolotl/perf/dummy/DummyTimer.h>
 #include <xolotl/perf/os/OSTimer.h>
+#include <xolotl/test/MPITestUtils.h>
 #include <xolotl/test/SystemTestCase.h>
 #include <xolotl/test/config.h>
 #include <xolotl/util/Filesystem.h>
@@ -24,14 +25,6 @@ namespace xolotl
 {
 namespace test
 {
-int
-getMPIRank()
-{
-	int rank;
-	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-	return rank;
-}
-
 class StdOutRedirect
 {
 public:

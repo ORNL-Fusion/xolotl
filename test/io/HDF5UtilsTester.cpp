@@ -3,15 +3,13 @@
 
 #include <memory>
 
-#include <mpi.h>
-
 #include <boost/test/framework.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/options/Options.h>
-#include <xolotl/test/MPIFixture.h>
+#include <xolotl/test/MPITestUtils.h>
 
 using namespace std;
 using namespace xolotl::io;
