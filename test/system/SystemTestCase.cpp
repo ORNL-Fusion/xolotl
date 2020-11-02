@@ -265,7 +265,8 @@ SystemTestCase::run() const
 void
 SystemTestCase::copyFile(const std::string& fileName)
 {
-	xolotl::fs::copy_file(_dataDir + "/" + fileName, {},
+	xolotl::fs::copy_file(_dataDir + "/" + fileName,
+		xolotl::fs::absolute(fileName),
 		xolotl::fs::copy_option::overwrite_if_exists);
 }
 } // namespace test
