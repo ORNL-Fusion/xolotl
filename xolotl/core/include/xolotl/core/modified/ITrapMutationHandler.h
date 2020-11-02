@@ -189,7 +189,7 @@ public:
 	 * @param The boolean
 	 */
 	virtual void
-	setEnableReduceJacobian(bool reduced) = 0;
+	setEnableReducedJacobian(bool reduced) = 0;
 };
 // end class ITrapMutationHandler
 

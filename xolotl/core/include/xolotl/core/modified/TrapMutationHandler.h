@@ -261,7 +261,7 @@ public:
 	 * @param The boolean
 	 */
 	void
-	setEnableReduceJacobian(bool reduced)
+	setEnableReducedJacobian(bool reduced)
 	{
 		enableReducedJacobian = reduced;
 		return;

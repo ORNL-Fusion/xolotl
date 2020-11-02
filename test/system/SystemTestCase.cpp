@@ -243,7 +243,7 @@ SystemTestCase::checkOutput(const std::string& outputFileName,
 	auto data = readOutputFile(outputFileName);
 	BOOST_REQUIRE(expectedData.size() == data.size());
 	auto diffNorm = computeDiffNorm(data, expectedData);
-	BOOST_TEST(diffNorm < _tolerance);
+	BOOST_REQUIRE(diffNorm < _tolerance);
 }
 
 void

@@ -23,12 +23,12 @@ BOOST_AUTO_TEST_SUITE(Network_testSuite)
 
 using network_types =
 #if defined(__clang__)
-    boost::mpl::list<
+	boost::mpl::list<
 #elif defined(__GNUC__) || defined(__GNUG__)
-    std::tuple<
+	std::tuple<
 #endif
-        NEReactionNetwork, AlloyReactionNetwork, FeReactionNetwork,
-        PSIReactionNetwork<PSIFullSpeciesList>>;
+		NEReactionNetwork, AlloyReactionNetwork, FeReactionNetwork,
+		PSIReactionNetwork<PSIFullSpeciesList>>;
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(defaut_constructor, T, network_types)
 {

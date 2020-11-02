@@ -14,24 +14,24 @@ class SystemTestCase
 public:
 	SystemTestCase() = delete;
 
-	SystemTestCase(const std::string& caseName,
-		const std::string& outputFileName);
+	SystemTestCase(
+		const std::string& caseName, const std::string& outputFileName);
 
 	explicit SystemTestCase(const std::string& caseName);
 
-    SystemTestCase&
-    tolerance(double tol)
-    {
-        _tolerance = tol;
-        return *this;
-    }
+	SystemTestCase&
+	tolerance(double tol)
+	{
+		_tolerance = tol;
+		return *this;
+	}
 
-    SystemTestCase&
-    withTimer()
-    {
-        _enableTimer = true;
-        return *this;
-    }
+	SystemTestCase&
+	withTimer()
+	{
+		_enableTimer = true;
+		return *this;
+	}
 
 	void
 	run() const;
@@ -57,7 +57,7 @@ private:
 
 	double _tolerance{defaultTolerance};
 
-    bool _enableTimer {false};
+	bool _enableTimer{false};
 };
 } // namespace test
 } // namespace xolotl

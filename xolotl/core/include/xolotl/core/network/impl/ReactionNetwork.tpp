@@ -5,6 +5,7 @@
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/options/Options.h>
+#include <xolotl/util/TokenizedLineReader.h>
 
 namespace xolotl
 {
@@ -31,6 +32,18 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	setEnableStdReaction(map["reaction"]);
 	setEnableReSolution(map["resolution"]);
 	setEnableNucleation(map["heterogeneous"]);
+	std::string petscString = opts.getPetscArg();
+	util::TokenizedLineReader<std::string> reader;
+	reader.setInputStream(std::make_shared<std::istringstream>(petscString));
+	auto tokens = reader.loadLine();
+	bool useReduced = false;
+	for (int i = 0; i < tokens.size(); ++i) {
+		if (tokens[i] == "-snes_mf_operator") {
+			useReduced = true;
+			break;
+		}
+	}
+	setEnableReducedJacobian(useReduced);
 
 	auto tiles = subpaving.getTiles(plsm::onDevice);
 	this->_numClusters = tiles.extent(0);
