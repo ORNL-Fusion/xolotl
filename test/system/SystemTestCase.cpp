@@ -4,13 +4,13 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
-#include <cstring>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
 #include <vector>
 
+#include <boost/program_options.hpp>
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/interface/Interface.h>
@@ -23,8 +23,38 @@
 
 namespace xolotl
 {
+namespace bpo = ::boost::program_options;
+
 namespace test
 {
+SystemTestOptions::SystemTestOptions()
+{
+	auto argc = boost::unit_test::framework::master_test_suite().argc;
+	auto argv = boost::unit_test::framework::master_test_suite().argv;
+
+	bpo::options_description desc("System Test Options");
+	desc.add_options()("help", "produce help message")(
+		"approve", "approve running test cases")(
+		"time-all", "report xolotl run time for each test case");
+
+	bpo::variables_map opts;
+	bpo::store(bpo::parse_command_line(argc, argv, desc), opts);
+	bpo::notify(opts);
+
+	if (opts.count("help")) {
+		std::cout << desc << std::endl;
+		std::exit(0);
+	}
+
+	if (opts.count("approve")) {
+		SystemTestCase::_approve = true;
+	}
+
+	if (opts.count("time-all")) {
+		SystemTestCase::_timeAll = true;
+	}
+}
+
 class StdOutRedirect
 {
 public:
@@ -192,11 +222,17 @@ const std::string SystemTestCase::_dataDir = TO_STRING(XOLOTL_TEST_DATA_DIR);
 const std::string SystemTestCase::_binDir = TO_STRING(XOLOTL_BUILD_DIR);
 const std::string SystemTestCase::_defaultOutputFileName = "retentionOut.txt";
 
+bool SystemTestCase::_approve = false;
+bool SystemTestCase::_timeAll = false;
+
 SystemTestCase::SystemTestCase(
 	const std::string& caseName, const std::string& outputFileName) :
 	_caseName(caseName),
 	_outputFileName(outputFileName)
 {
+	if (_timeAll) {
+		_enableTimer = true;
+	}
 }
 
 SystemTestCase::SystemTestCase(const std::string& caseName) :
@@ -248,9 +284,7 @@ SystemTestCase::run() const
 	}
 
 	if (getMPIRank() == 0) {
-		auto argc = boost::unit_test::framework::master_test_suite().argc;
-		auto argv = boost::unit_test::framework::master_test_suite().argv;
-		if (argc == 2 && std::strcmp(argv[1], "--approve") == 0) {
+		if (_approve) {
 			xolotl::fs::copy_file("./" + _outputFileName,
 				_dataDir + "/output/" + _caseName + ".txt",
 				xolotl::fs::copy_option::overwrite_if_exists);

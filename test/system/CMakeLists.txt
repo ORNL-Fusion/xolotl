@@ -3,6 +3,7 @@ target_link_libraries(SystemTestCase PUBLIC
     xolotlIO
     xolotlInterface
     Boost::unit_test_framework
+    Boost::program_options
 )
 target_include_directories(SystemTestCase PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}/include

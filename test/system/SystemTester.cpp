@@ -14,6 +14,9 @@ using xolotl::test::SystemTestCase;
 
 BOOST_GLOBAL_FIXTURE(MPIFixture);
 
+using xolotl::test::SystemTestOptions;
+BOOST_GLOBAL_FIXTURE(SystemTestOptions);
+
 BOOST_AUTO_TEST_SUITE(System_testSuite)
 
 BOOST_AUTO_TEST_CASE(system_NE_0)
