@@ -14,12 +14,9 @@ using xolotl::test::SystemTestCase;
 
 BOOST_GLOBAL_FIXTURE(MPIFixture);
 
-using xolotl::test::SystemTestOptions;
-BOOST_GLOBAL_FIXTURE(SystemTestOptions);
+BOOST_AUTO_TEST_SUITE(System)
 
-BOOST_AUTO_TEST_SUITE(System_testSuite)
-
-BOOST_AUTO_TEST_CASE(system_NE_0)
+BOOST_AUTO_TEST_CASE(NE_0)
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -27,7 +24,7 @@ BOOST_AUTO_TEST_CASE(system_NE_0)
 	SystemTestCase{"system_NE_0"}.tolerance(1.0e-9).run();
 }
 
-BOOST_AUTO_TEST_CASE(system_NE_1)
+BOOST_AUTO_TEST_CASE(NE_1)
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -36,7 +33,7 @@ BOOST_AUTO_TEST_CASE(system_NE_1)
 	SystemTestCase{"system_NE_1"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(system_NE_2)
+BOOST_AUTO_TEST_CASE(NE_2)
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -45,7 +42,7 @@ BOOST_AUTO_TEST_CASE(system_NE_2)
 	SystemTestCase{"system_NE_2"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(system_NE_3)
+BOOST_AUTO_TEST_CASE(NE_3)
 {
 	if (getMPICommSize() > 25) {
 		return;
@@ -54,25 +51,16 @@ BOOST_AUTO_TEST_CASE(system_NE_3)
 	SystemTestCase{"system_NE_3"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(system_NE_4)
-{
-	if (getMPICommSize() > 400) {
-		return;
-    // 3D
-	}
-	SystemTestCase{"system_NE_4"}.run();
-}
-
-BOOST_AUTO_TEST_CASE(system_NE_5)
+BOOST_AUTO_TEST_CASE(NE_4)
 {
 	if (getMPICommSize() > 100) {
 		return;
 	}
 	// 2D
-	SystemTestCase{"system_NE_5"}.run();
+	SystemTestCase{"system_NE_4"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(system_PSI_1)
+BOOST_AUTO_TEST_CASE(PSI_1)
 {
 	if (getMPICommSize() > 20) {
 		return;
@@ -82,47 +70,17 @@ BOOST_AUTO_TEST_CASE(system_PSI_1)
 	SystemTestCase{"system_PSI_1"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(system_PSI_2)
+BOOST_AUTO_TEST_CASE(PSI_2)
 {
-	if (getMPICommSize() > 10) {
+	if (getMPICommSize() > 20) {
 		return;
 	}
 	SystemTestCase::copyFile("tridyn_system_PSI_2.dat");
-	// 1D + HeDTVI + grouping + heat
+	// 1D + HeTVI + advection + modifiedTM + attenuation + surface + reflective
 	SystemTestCase{"system_PSI_2"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(system_PSI_3)
-{
-	if (getMPICommSize() > 20) {
-		return;
-	}
-	SystemTestCase::copyFile("tridyn_system_PSI_3.dat");
-	// 1D + HeDVI + advection + modifiedTM + attenuation + surface + reflective
-	SystemTestCase{"system_PSI_3"}.run();
-}
-
-BOOST_AUTO_TEST_CASE(system_PSI_4)
-{
-	if (getMPICommSize() > 20) {
-		return;
-	}
-	SystemTestCase::copyFile("tridyn_system_PSI_4.dat");
-	// 1D + HeTVI + advection + modifiedTM + attenuation + surface + reflective
-	SystemTestCase{"system_PSI_4"}.run();
-}
-
-BOOST_AUTO_TEST_CASE(system_PSI_5)
-{
-	if (getMPICommSize() > 20) {
-		return;
-	}
-	// 1D + HeVI + advection + modifiedTM + attenuation + surface + reflective +
-	// reduced matrix method bulk
-	SystemTestCase{"system_PSI_5"}.run();
-}
-
-BOOST_AUTO_TEST_CASE(system_Fe_1)
+BOOST_AUTO_TEST_CASE(Fe_1)
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -131,7 +89,7 @@ BOOST_AUTO_TEST_CASE(system_Fe_1)
 	SystemTestCase{"system_Fe_1", "bubble_36.dat"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(system_Alloy_1)
+BOOST_AUTO_TEST_CASE(Alloy_1)
 {
 	if (getMPICommSize() > 1) {
 		return;

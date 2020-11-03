@@ -21,6 +21,9 @@
 #include <xolotl/test/config.h>
 #include <xolotl/util/Filesystem.h>
 
+using xolotl::test::SystemTestOptions;
+BOOST_GLOBAL_FIXTURE(SystemTestOptions);
+
 namespace xolotl
 {
 namespace bpo = ::boost::program_options;
