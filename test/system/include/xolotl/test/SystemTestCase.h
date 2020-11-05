@@ -10,12 +10,12 @@ namespace test
 class SystemTestOptions
 {
 public:
-    SystemTestOptions();
+	SystemTestOptions();
 };
 
 class SystemTestCase
 {
-    friend class SystemTestOptions;
+	friend class SystemTestOptions;
 
 	static constexpr double defaultTolerance = 1.0e-10;
 
@@ -61,7 +61,7 @@ private:
 	static const std::string _defaultOutputFileName;
 
 	static bool _approve;
-    static bool _timeAll;
+	static bool _timeAll;
 
 	const std::string _caseName;
 	const std::string _outputFileName;

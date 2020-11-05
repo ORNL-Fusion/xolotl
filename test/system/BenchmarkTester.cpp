@@ -9,8 +9,8 @@ BOOST_GLOBAL_FIXTURE(ScopeGuard);
 
 #include <xolotl/test/MPITestUtils.h>
 #include <xolotl/test/SystemTestCase.h>
-using xolotl::test::SystemTestCase;
 using xolotl::test::getMPICommSize;
+using xolotl::test::SystemTestCase;
 
 BOOST_GLOBAL_FIXTURE(MPIFixture);
 
@@ -18,19 +18,19 @@ BOOST_AUTO_TEST_SUITE(Benchmark)
 
 BOOST_AUTO_TEST_CASE(NE_1)
 {
-    if (getMPICommSize() > 1) {
-        return;
-    }
-    // 0D, 9999 DOF ungrouped
+	if (getMPICommSize() > 1) {
+		return;
+	}
+	// 0D, 9999 DOF ungrouped
 	SystemTestCase{"benchmark_NE_1"}.withTimer().run();
 }
 
 BOOST_AUTO_TEST_CASE(NE_2)
 {
-    if (getMPICommSize() > 1) {
-        return;
-    }
-    // 0D, 20079 DOF grouped
+	if (getMPICommSize() > 1) {
+		return;
+	}
+	// 0D, 20079 DOF grouped
 	SystemTestCase{"benchmark_NE_2"}.withTimer().run();
 }
 
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(NE_3)
 {
 	if (getMPICommSize() > 400) {
 		return;
-    // 3D
+		// 3D
 	}
 	SystemTestCase{"benchmark_NE_3"}.withTimer().run();
 }

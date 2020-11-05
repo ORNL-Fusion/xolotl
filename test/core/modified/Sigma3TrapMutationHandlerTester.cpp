@@ -10,8 +10,8 @@
 
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
 #include <xolotl/core/advection/YGBAdvectionHandler.h>
-#include <xolotl/core/modified/DummyTrapMutationHandler.h>
 #include <xolotl/core/modified/Sigma3TrapMutationHandler.h>
+#include <xolotl/core/modified/W100TrapMutationHandler.h>
 #include <xolotl/options/Options.h>
 
 using namespace std;
@@ -81,7 +81,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 	const int dof = network.getDOF();
 
 	// Create the modified trap-mutation handler
-	DummyTrapMutationHandler trapMutationHandler;
+	W100TrapMutationHandler trapMutationHandler;
 
 	// Create the advection handlers needed to initialize the trap mutation
 	// handler
@@ -99,13 +99,9 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 		surfacePos, network, advectionHandlers, grid, 11, 0, 5, 0.5, 0);
 
 	// Check some values in dfill
-	BOOST_REQUIRE_EQUAL(dfill[1][0], 1);
-	BOOST_REQUIRE_EQUAL(dfill[3][0], 3);
-	BOOST_REQUIRE_EQUAL(dfill[5][0], 5);
-	BOOST_REQUIRE_EQUAL(dfill[7][0], 7);
-	BOOST_REQUIRE_EQUAL(dfill[9][0], 9);
-	BOOST_REQUIRE_EQUAL(dfill[11][0], 11);
-	BOOST_REQUIRE_EQUAL(dfill[13][0], 13);
+	BOOST_REQUIRE_EQUAL(dfill[1][0], 71);
+	BOOST_REQUIRE_EQUAL(dfill[27][0], 27);
+	BOOST_REQUIRE_EQUAL(dfill[39][0], 38);
 
 	// The arrays of concentration
 	double concentration[nGrid * 5 * dof];
@@ -128,15 +124,16 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 	// Set the temperature to compute the rates
 	network.setTemperatures(temperatures);
 	network.syncClusterDataOnHost();
+	trapMutationHandler.updateTrapMutationRate(network.getLargestRate());
 
 	// Compute the modified trap mutation at the sixth grid point
 	trapMutationHandler.computeTrapMutation(
 		network, concOffset, updatedConcOffset, 5, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 8.0900e+22, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], -2.0214e+22, 0.01); // He4
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[18], 2.0214e+22, 0.01); // Create He4V
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 9.5324e+21, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[49], -2.3426e+21, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[50], 2.3426e+21, 0.01);
 
 	// Get the offset for the ninth grid point on the fourth row
 	concOffset = conc + (nGrid * 3 + 8) * dof;
@@ -147,13 +144,11 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 		network, concOffset, updatedConcOffset, 8, 3);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 5.5031e+23, 0.01); // Create I
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[8], 0.0, 0.01); // He3
-	BOOST_REQUIRE_CLOSE(
-		updatedConcOffset[17], 0.0, 0.01); // Doesn't create He3V
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[12], -1.3760e+23, 0.01); // He7
-	BOOST_REQUIRE_CLOSE(
-		updatedConcOffset[21], 1.3760e+23, 0.01); // Create He7V2
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 6.23056e+22, 0.01); // Create I
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[49], -1.54727e+22, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[50], 1.54727e+22, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[60], -1.5542e+22, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[61], 1.5542e+22, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int indices[3 * maxHe];
@@ -169,11 +164,11 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(nMutating, 4);
-	BOOST_REQUIRE_EQUAL(indices[0], 9); // He4
-	BOOST_REQUIRE_EQUAL(indices[1], 18); // He4V
+	BOOST_REQUIRE_EQUAL(indices[0], 49); // He4
+	BOOST_REQUIRE_EQUAL(indices[1], 50); // He4V
 	BOOST_REQUIRE_EQUAL(indices[2], 0); // I
-	BOOST_REQUIRE_EQUAL(indices[3], 10); // He5
-	BOOST_REQUIRE_EQUAL(indices[4], 19); // He5V
+	BOOST_REQUIRE_EQUAL(indices[3], 60); // He5
+	BOOST_REQUIRE_EQUAL(indices[4], 61); // He5V
 	BOOST_REQUIRE_EQUAL(indices[5], 0); // I
 
 	// Check values

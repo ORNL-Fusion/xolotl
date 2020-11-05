@@ -260,7 +260,7 @@ TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 						auto heVClusterId = psiNetwork->findClusterId(comp);
 						comp[specIdV()] = 0;
 						auto heClusterId = psiNetwork->findClusterId(comp);
-						comp[specIdI()] = sizeVec[l];
+						comp[specIdI()] = sigma3SizeVec[l];
 						comp[specIdHe()] = 0;
 						auto iClusterId = psiNetwork->findClusterId(comp);
 						std::array<std::size_t, 3> tempArray = {
@@ -375,7 +375,7 @@ TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
 							auto heVClusterId = psiNetwork->findClusterId(comp);
 							comp[specIdV()] = 0;
 							auto heClusterId = psiNetwork->findClusterId(comp);
-							comp[specIdI()] = sizeVec[l];
+							comp[specIdI()] = sigma3SizeVec[l];
 							comp[specIdHe()] = 0;
 							auto iClusterId = psiNetwork->findClusterId(comp);
 							std::array<std::size_t, 3> tempArray = {
