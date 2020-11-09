@@ -82,22 +82,22 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 		if (topOffset == 1)
 			std::cout << "free surface";
 		else
-			std::cout << bcString;
+			std::cout << "periodic";
 		std::cout << ", right BC: ";
 		if (bottomOffset == 1)
 			std::cout << "free surface";
 		else
-			std::cout << bcString;
+			std::cout << "periodic";
 		std::cout << ", front BC: ";
 		if (frontOffset == 1)
 			std::cout << "free surface";
 		else
-			std::cout << bcString;
+			std::cout << "periodic";
 		std::cout << ", back BC: ";
 		if (backOffset == 1)
 			std::cout << "free surface";
 		else
-			std::cout << bcString;
+			std::cout << "periodic";
 		std::cout << ", grid (nm): ";
 		for (int i = 1; i < grid.size() - 1; i++) {
 			std::cout << grid[i] - grid[surfacePosition[0][0] + 1] << " ";

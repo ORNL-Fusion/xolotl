@@ -1342,7 +1342,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		int surfacePos = solverHandler.getSurfacePosition(yj);
 		// Get the distance from the surface
 		double distance =
-			(grid[xi] - grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
+			(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
 
 		std::cout << "bursting at: " << yj * hy << " " << distance << std::endl;
 
@@ -1725,7 +1725,7 @@ setupPetsc2DMonitor(TS ts)
 			bool iClusterExists = true;
 			AmountType iSize = 1;
 			while (iClusterExists) {
-				comp[specIdI] = iSize;
+				comp[specIdI()] = iSize;
 				auto clusterId = psiNetwork->findClusterId(comp);
 				// Check that the helium cluster is present in the network
 				if (clusterId != NetworkType::invalidIndex()) {

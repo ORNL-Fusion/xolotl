@@ -1794,7 +1794,7 @@ setupPetsc3DMonitor(TS ts)
 			bool iClusterExists = true;
 			AmountType iSize = 1;
 			while (iClusterExists) {
-				comp[specIdI] = iSize;
+				comp[specIdI()] = iSize;
 				auto clusterId = psiNetwork->findClusterId(comp);
 				// Check that the helium cluster is present in the network
 				if (clusterId != NetworkType::invalidIndex()) {

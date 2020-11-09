@@ -68,12 +68,12 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 		if (topOffset == 1)
 			std::cout << "free surface";
 		else
-			std::cout << bcString;
+			std::cout << "periodic";
 		std::cout << ", right BC: ";
 		if (bottomOffset == 1)
 			std::cout << "free surface";
 		else
-			std::cout << bcString;
+			std::cout << "periodic";
 		std::cout << ", grid (nm): ";
 		for (int i = 1; i < grid.size() - 1; i++) {
 			std::cout << grid[i] - grid[surfacePosition[0] + 1] << " ";
@@ -230,7 +230,7 @@ PetscSolver2DHandler::initializeConcentration(DM& da, Vec& C)
 
 	// Loop on all the grid points
 	for (int j = localYS; j < localYS + localYM; j++)
-		for (int i = localXS; i < localXS + localXM; i++) {
+		for (int i = localXS - 1; i <= localXS + localXM; i++) {
 			// Temperature
 			plsm::SpaceVector<double, 3> gridPosition{0.0, j * hY, 0.0};
 			if (i < 0)
