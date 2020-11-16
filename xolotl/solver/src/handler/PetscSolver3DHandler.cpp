@@ -638,17 +638,13 @@ PetscSolver3DHandler::updateConcentration(
 						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 					}
-					else if (xi == -1) {
-						hxLeft = 0.0;
-						hxRight = (grid[xi + 2] + grid[xi + 1]) / 2.0;
-					}
 					else if (xi - 1 < 0) {
-						hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
+						hxLeft = grid[xi + 1] - grid[xi];
 						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 					}
 					else {
 						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-						hxRight = (grid[xi + 1] - grid[xi]) / 2;
+						hxRight = grid[xi + 1] - grid[xi];
 					}
 
 					temperatureHandler->computeTemperature(concVector,
@@ -694,12 +690,12 @@ PetscSolver3DHandler::updateConcentration(
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
 				else if (xi - 1 < 0) {
-					hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
+					hxLeft = grid[xi + 1] - grid[xi];
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
 				else {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-					hxRight = (grid[xi + 1] - grid[xi]) / 2;
+					hxRight = grid[xi + 1] - grid[xi];
 				}
 
 				// Set the grid fraction
@@ -832,12 +828,12 @@ PetscSolver3DHandler::updateConcentration(
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
 				else if (xi - 1 < 0) {
-					hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
+					hxLeft = grid[xi + 1] - grid[xi];
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
 				else {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-					hxRight = (grid[xi + 1] - grid[xi]) / 2;
+					hxRight = grid[xi + 1] - grid[xi];
 				}
 
 				// Boundary conditions
@@ -1000,12 +996,12 @@ PetscSolver3DHandler::computeJacobian(
 					hxRight = (grid[xi + 2] + grid[xi + 1]) / 2.0;
 				}
 				else if (xi - 1 < 0) {
-					hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
+					hxLeft = grid[xi + 1] - grid[xi];
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
 				else {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-					hxRight = (grid[xi + 1] - grid[xi]) / 2;
+					hxRight = grid[xi + 1] - grid[xi];
 				}
 
 				// Heat condition
@@ -1245,12 +1241,12 @@ PetscSolver3DHandler::computeJacobian(
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
 				else if (xi - 1 < 0) {
-					hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
+					hxLeft = grid[xi + 1] - grid[xi];
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
 				else {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-					hxRight = (grid[xi + 1] - grid[xi]) / 2;
+					hxRight = grid[xi + 1] - grid[xi];
 				}
 
 				// Boundary conditions

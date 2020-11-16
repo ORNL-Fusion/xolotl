@@ -1166,14 +1166,14 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 					}
 					else if (xi - 1 < 0) {
-						hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
+						hxLeft = grid[xi + 1] - grid[xi];
 						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 					}
 					else {
 						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-						hxRight = (grid[xi + 1] - grid[xi]) / 2;
+						hxRight = grid[xi + 1] - grid[xi];
 					}
-					double factor = 2.0 / (hxLeft + hxRight);
+					double factor = hy * hz * 2.0 / (hxLeft + hxRight);
 
 					network.updateOutgoingDiffFluxes(gridPointSolution, factor,
 						iClusterIds3D, myFlux, xi - xs);
@@ -1193,7 +1193,7 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 				// The density of tungsten is 62.8 atoms/nm3, thus the threshold
 				// is
 				double threshold =
-					(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
+					(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy * hz;
 				if (nInterstitial3D[yj][zk] > threshold) {
 					// The surface is moving
 					fvalue[0] = 0.0;
@@ -1420,7 +1420,7 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 			double threshold =
-				(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
+				(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy * hz;
 
 			// Move the surface up
 			if (nInterstitial3D[yj][zk] > threshold) {
@@ -1435,8 +1435,8 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 					// Update the number of interstitials
 					nInterstitial3D[yj][zk] -= threshold;
 					// Update the thresold
-					double threshold =
-						(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
+					threshold = (62.8 - initialVConc) *
+						(grid[xi] - grid[xi - 1]) * hy * hz;
 				}
 
 				// Throw an exception if the position is negative
@@ -1515,8 +1515,8 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 				// negative
 				while (nInterstitial3D[yj][zk] < 0.0) {
 					// Compute the threshold to a deeper grid point
-					threshold =
-						(62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
+					threshold = (62.8 - initialVConc) *
+						(grid[xi + 1] - grid[xi]) * hy * hz;
 					// Set all the concentrations to 0.0 at xi = surfacePos + 1
 					// if xi is on this process
 					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym &&

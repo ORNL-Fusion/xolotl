@@ -1094,12 +1094,12 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			}
 			else if (xi - 1 < 0) {
-				hxLeft = (grid[xi + 1] + grid[xi]) / 2.0;
+				hxLeft = grid[xi + 1] - grid[xi];
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			}
 			else {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = (grid[xi + 1] - grid[xi]) / 2;
+				hxRight = grid[xi + 1] - grid[xi];
 			}
 
 			// Initialize the value for the flux
@@ -1111,7 +1111,7 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 				gridPointSolution = solutionArray[yj][xi];
 
 				// Factor for finite difference
-				double factor = 2.0 / (hxLeft + hxRight);
+				double factor = hy * 2.0 / (hxLeft + hxRight);
 
 				network.updateOutgoingDiffFluxes(
 					gridPointSolution, factor, iClusterIds2D, myFlux, xi - xs);
@@ -1202,6 +1202,7 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			int surfacePos = solverHandler.getSurfacePosition(yj);
 			for (xi = surfacePos + solverHandler.getLeftOffset();
 				 xi < Mx - solverHandler.getRightOffset(); xi++) {
+				bool localBurst = false;
 				// If this is the locally owned part of the grid
 				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
 					// Get the pointer to the beginning of the solution data for
@@ -1233,14 +1234,6 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 						cbrt((3.0 * tlcCubed * nV) / (8.0 * core::pi)) -
 						cbrt((3.0 * tlcCubed) / (8.0 * core::pi));
 
-					// If the radius is larger than the distance to the surface,
-					// burst
-					if (radius > distance) {
-						burst = true;
-						depthPositions2D.push_back(std::make_pair(yj, xi));
-						// Exit the loop
-						continue;
-					}
 					// Add randomness
 					double prob = prefactor *
 						(1.0 - (distance - radius) / distance) *
@@ -1248,10 +1241,17 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 							exp(-(distance - depthParam) / (depthParam * 2.0)));
 					double test = solverHandler.getRNG().GetRandomDouble();
 
-					if (prob > test) {
-						burst = true;
-						depthPositions2D.push_back(std::make_pair(yj, xi));
+					if (radius > distance || prob > test) {
+						localBurst = true;
 					}
+				}
+				// Check if this location burst
+				bool locationBurst = false;
+				MPI_Allreduce(&localBurst, &locationBurst, 1, MPI_C_BOOL,
+					MPI_LOR, xolotlComm);
+				if (locationBurst) {
+					depthPositions2D.push_back(std::make_pair(yj, xi));
+					burst = true;
 				}
 			}
 		}
@@ -1329,6 +1329,10 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Take care of bursting
 	using NetworkType = core::network::IPSIReactionNetwork;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+	auto specIdV = psiNetwork->getVacancySpeciesId();
+	auto specIdI = psiNetwork->getInterstitialSpeciesId();
+
+	bool surfaceMoved = false;
 
 	// Loop on each bursting depth
 	for (int i = 0; i < depthPositions2D.size(); i++) {
@@ -1347,8 +1351,82 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		std::cout << "bursting at: " << yj * hy << " " << distance << std::endl;
 
 		// Pinhole case
-		auto nBurst = std::vector<double>(3, 0.0); // Not actually used here
-		psiNetwork->updateBurstingConcs(gridPointSolution, 0.0, nBurst);
+		auto nBurst = std::vector<double>(3, 0.0); // Not actually used  here
+		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
+			psiNetwork->updateBurstingConcs(gridPointSolution, 0.0, nBurst);
+		}
+
+//		// Crater case
+//		int yLeft = yj - 1, yRight = yj + 1;
+//		if (yLeft < 0)
+//			yLeft = My - 1; // Periodicity
+//		if (yRight == My)
+//			yRight = 0; // Periodicity
+//
+//		// Loop on every grid point above
+//		for (int currentX = xi; currentX > surfacePos; --currentX) {
+//			// If this is the locally owned part of the grid
+//			if (currentX >= xs && currentX < xs + xm && yj >= ys &&
+//				yj < ys + ym) {
+//				gridPointSolution = solutionArray[yj][currentX];
+//				// Get the total I and V concentrations
+//				using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
+//					Kokkos::MemoryUnmanaged>;
+//				auto hConcs = HostUnmanaged(gridPointSolution, dof);
+//				auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+//				deep_copy(dConcs, hConcs);
+//				double iConc =
+//					psiNetwork->getTotalAtomConcentration(dConcs, specIdI, 1);
+//				double vConc =
+//					psiNetwork->getTotalAtomConcentration(dConcs, specIdV, 1);
+//				// The density of tungsten is 62.8 atoms/nm3
+//				double wConc = (62.8 - vConc + iConc) / 2.0;
+//
+//				std::cout << currentX << " " << wConc << std::endl;
+//
+//				// Reset the concentrations
+//				for (auto l = 0; l < dof; ++l) {
+//					gridPointSolution[l] = 0.0;
+//				}
+//
+//				// Pass the tungsten concentration to the sides
+//				// Do the left side first
+//				std::cout << currentX << " L "
+//						  << solverHandler.getSurfacePosition(yLeft) << " R "
+//						  << solverHandler.getSurfacePosition(yRight)
+//						  << std::endl;
+//				if (solverHandler.getSurfacePosition(yLeft) < currentX) {
+//					// if we are on the right process
+//					if (currentX >= xs && currentX < xs + xm && yLeft >= ys &&
+//						yLeft < ys + ym) {
+//						// Get the concentrations at currentX
+//						gridPointSolution = solutionArray[yLeft][currentX];
+//						gridPointSolution[iClusterIds2D[0]] += wConc;
+//					}
+//				}
+//				// Now do the right side
+//				if (solverHandler.getSurfacePosition(yRight) < currentX) {
+//					// if we are on the right process
+//					if (currentX >= xs && currentX < xs + xm && yRight >= ys &&
+//						yRight < ys + ym) {
+//						// Get the concentrations at currentX
+//						gridPointSolution = solutionArray[yRight][currentX];
+//						gridPointSolution[iClusterIds2D[0]] += wConc;
+//					}
+//				}
+//			}
+//		}
+//
+//		// Update the surface position
+//		solverHandler.setSurfacePosition(xi, yj);
+//
+//		// Reset the I flux and count
+//		nInterstitial2D[yLeft] += nInterstitial2D[yj] / 2.0;
+//		nInterstitial2D[yRight] += nInterstitial2D[yj] / 2.0;
+//		nInterstitial2D[yj] = 0.0;
+//		previousIFlux2D[yj] = 0.0;
+//
+//		surfaceMoved = true;
 	}
 
 	// Now takes care of moving surface
@@ -1359,7 +1437,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 	}
 
 	// Skip if nothing is moving
-	if (!moving) {
+	if (!moving && !surfaceMoved) {
 		// Restore the solutionArray
 		ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
 		CHKERRQ(ierr);
