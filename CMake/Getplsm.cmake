@@ -1,4 +1,4 @@
-set(PLSM_URL git@code.ornl.gov:4pf/plsm.git)
+set(PLSM_URL https://github.com/ORNL-Fusion/plsm.git)
 
 find_package(Git REQUIRED)
 
