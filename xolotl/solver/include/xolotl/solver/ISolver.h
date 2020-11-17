@@ -51,7 +51,7 @@ public:
 	/**
 	 * This operation sets up the mesh that will be used by the solver and
 	 * initializes the data on that mesh. This operation will throw an exception
-	 * of type std::string if the mesh can not be setup.
+	 * of type std::runtime_error if the mesh can not be setup.
 	 */
 	virtual void
 	setupMesh() = 0;
@@ -60,7 +60,7 @@ public:
 	 * This operation performs all necessary initialization for the solver
 	 * possibly including but not limited to setting up MPI and loading initial
 	 * conditions. If the solver can not be initialized, this operation will
-	 * throw an exception of type std::string.
+	 * throw an exception of type std::runtime_error.
 	 *
 	 * @param isStandalone To know is Xolotl is used as a subcomponent of
 	 * another code
@@ -115,7 +115,7 @@ public:
 
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve
-	 * fails, it will throw an exception of type std::string.
+	 * fails, it will throw an exception of type std::runtime_error.
 	 */
 	virtual void
 	solve() = 0;
@@ -133,7 +133,7 @@ public:
 	 * This operation performs all necessary finalization for the solver
 	 * including but not limited to cleaning up memory, finalizing MPI and
 	 * printing diagnostic information. If the solver can not be finalized,
-	 * this operation will throw an exception of type std::string.
+	 * this operation will throw an exception of type std::runtime_error.
 	 */
 	virtual void
 	finalize() = 0;

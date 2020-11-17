@@ -124,8 +124,9 @@ monitorLargest3D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 					ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
 					CHKERRQ(ierr);
 					// Send an error
-					throw std::string("\nxolotlSolver::Monitor3D: The largest "
-									  "cluster concentration is too high!!");
+					throw std::runtime_error(
+						"\nxolotlSolver::Monitor3D: The largest "
+						"cluster concentration is too high!!");
 				}
 			}
 
@@ -1452,8 +1453,9 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 						outputFile << "overgrid" << std::endl;
 						outputFile.close();
 					}
-					throw std::string("\nxolotlSolver::Monitor3D: The surface "
-									  "is trying to go outside of the grid!!");
+					throw std::runtime_error(
+						"\nxolotlSolver::Monitor3D: The surface "
+						"is trying to go outside of the grid!!");
 				}
 
 				// Printing information about the extension of the material

@@ -213,7 +213,7 @@ PetscSolver::PetscSolver(const options::IOptions& options) :
 				return std::make_shared<handler::PetscSolver3DHandler>(network);
 			default:
 				// The asked dimension is not good (e.g. -1, 4)
-				throw std::string(
+				throw std::runtime_error(
 					"\nxolotlFactory: Bad dimension for the solver handler.");
 			}
 		})
@@ -376,8 +376,9 @@ PetscSolver::initialize()
 			ierr, "PetscSolver::initialize: setupPetsc3DMonitor failed.");
 		break;
 	default:
-		throw std::string("PetscSolver Exception: Wrong number of dimensions "
-						  "to set the monitors.");
+		throw std::runtime_error(
+			"PetscSolver Exception: Wrong number of dimensions "
+			"to set the monitors.");
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -531,8 +532,9 @@ PetscSolver::solve()
 		checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPop failed.");
 	}
 	else {
-		throw std::string("PetscSolver Exception: Unable to solve! Data not "
-						  "configured properly.");
+		throw std::runtime_error(
+			"PetscSolver Exception: Unable to solve! Data not "
+			"configured properly.");
 	}
 	// Stop the timer
 	SolveTimer->stop();

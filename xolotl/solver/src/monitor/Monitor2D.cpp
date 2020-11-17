@@ -138,8 +138,9 @@ monitorLargest2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 				ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
 				CHKERRQ(ierr);
 				// Send an error
-				throw std::string("\nxolotlSolver::Monitor2D: The largest "
-								  "cluster concentration is too high!!");
+				throw std::runtime_error(
+					"\nxolotlSolver::Monitor2D: The largest "
+					"cluster concentration is too high!!");
 			}
 		}
 
@@ -1356,77 +1357,81 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 			psiNetwork->updateBurstingConcs(gridPointSolution, 0.0, nBurst);
 		}
 
-//		// Crater case
-//		int yLeft = yj - 1, yRight = yj + 1;
-//		if (yLeft < 0)
-//			yLeft = My - 1; // Periodicity
-//		if (yRight == My)
-//			yRight = 0; // Periodicity
-//
-//		// Loop on every grid point above
-//		for (int currentX = xi; currentX > surfacePos; --currentX) {
-//			// If this is the locally owned part of the grid
-//			if (currentX >= xs && currentX < xs + xm && yj >= ys &&
-//				yj < ys + ym) {
-//				gridPointSolution = solutionArray[yj][currentX];
-//				// Get the total I and V concentrations
-//				using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
-//					Kokkos::MemoryUnmanaged>;
-//				auto hConcs = HostUnmanaged(gridPointSolution, dof);
-//				auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-//				deep_copy(dConcs, hConcs);
-//				double iConc =
-//					psiNetwork->getTotalAtomConcentration(dConcs, specIdI, 1);
-//				double vConc =
-//					psiNetwork->getTotalAtomConcentration(dConcs, specIdV, 1);
-//				// The density of tungsten is 62.8 atoms/nm3
-//				double wConc = (62.8 - vConc + iConc) / 2.0;
-//
-//				std::cout << currentX << " " << wConc << std::endl;
-//
-//				// Reset the concentrations
-//				for (auto l = 0; l < dof; ++l) {
-//					gridPointSolution[l] = 0.0;
-//				}
-//
-//				// Pass the tungsten concentration to the sides
-//				// Do the left side first
-//				std::cout << currentX << " L "
-//						  << solverHandler.getSurfacePosition(yLeft) << " R "
-//						  << solverHandler.getSurfacePosition(yRight)
-//						  << std::endl;
-//				if (solverHandler.getSurfacePosition(yLeft) < currentX) {
-//					// if we are on the right process
-//					if (currentX >= xs && currentX < xs + xm && yLeft >= ys &&
-//						yLeft < ys + ym) {
-//						// Get the concentrations at currentX
-//						gridPointSolution = solutionArray[yLeft][currentX];
-//						gridPointSolution[iClusterIds2D[0]] += wConc;
-//					}
-//				}
-//				// Now do the right side
-//				if (solverHandler.getSurfacePosition(yRight) < currentX) {
-//					// if we are on the right process
-//					if (currentX >= xs && currentX < xs + xm && yRight >= ys &&
-//						yRight < ys + ym) {
-//						// Get the concentrations at currentX
-//						gridPointSolution = solutionArray[yRight][currentX];
-//						gridPointSolution[iClusterIds2D[0]] += wConc;
-//					}
-//				}
-//			}
-//		}
-//
-//		// Update the surface position
-//		solverHandler.setSurfacePosition(xi, yj);
-//
-//		// Reset the I flux and count
-//		nInterstitial2D[yLeft] += nInterstitial2D[yj] / 2.0;
-//		nInterstitial2D[yRight] += nInterstitial2D[yj] / 2.0;
-//		nInterstitial2D[yj] = 0.0;
-//		previousIFlux2D[yj] = 0.0;
-//
-//		surfaceMoved = true;
+		//		// Crater case
+		//		int yLeft = yj - 1, yRight = yj + 1;
+		//		if (yLeft < 0)
+		//			yLeft = My - 1; // Periodicity
+		//		if (yRight == My)
+		//			yRight = 0; // Periodicity
+		//
+		//		// Loop on every grid point above
+		//		for (int currentX = xi; currentX > surfacePos; --currentX) {
+		//			// If this is the locally owned part of the grid
+		//			if (currentX >= xs && currentX < xs + xm && yj >= ys &&
+		//				yj < ys + ym) {
+		//				gridPointSolution = solutionArray[yj][currentX];
+		//				// Get the total I and V concentrations
+		//				using HostUnmanaged = Kokkos::View<double*,
+		//Kokkos::HostSpace, 					Kokkos::MemoryUnmanaged>; 				auto hConcs =
+		//HostUnmanaged(gridPointSolution, dof); 				auto dConcs =
+		//Kokkos::View<double*>("Concentrations", dof); 				deep_copy(dConcs,
+		//hConcs); 				double iConc = 					psiNetwork->getTotalAtomConcentration(dConcs,
+		//specIdI, 1); 				double vConc =
+		//					psiNetwork->getTotalAtomConcentration(dConcs, specIdV,
+		//1);
+		//				// The density of tungsten is 62.8 atoms/nm3
+		//				double wConc = (62.8 - vConc + iConc) / 2.0;
+		//
+		//				std::cout << currentX << " " << wConc << std::endl;
+		//
+		//				// Reset the concentrations
+		//				for (auto l = 0; l < dof; ++l) {
+		//					gridPointSolution[l] = 0.0;
+		//				}
+		//
+		//				// Pass the tungsten concentration to the sides
+		//				// Do the left side first
+		//				std::cout << currentX << " L "
+		//						  << solverHandler.getSurfacePosition(yLeft) << " R
+		//"
+		//						  << solverHandler.getSurfacePosition(yRight)
+		//						  << std::endl;
+		//				if (solverHandler.getSurfacePosition(yLeft) < currentX)
+		//{
+		//					// if we are on the right process
+		//					if (currentX >= xs && currentX < xs + xm && yLeft >= ys
+		//&& 						yLeft < ys + ym) {
+		//						// Get the concentrations at currentX
+		//						gridPointSolution =
+		//solutionArray[yLeft][currentX]; 						gridPointSolution[iClusterIds2D[0]] +=
+		//wConc;
+		//					}
+		//				}
+		//				// Now do the right side
+		//				if (solverHandler.getSurfacePosition(yRight) < currentX)
+		//{
+		//					// if we are on the right process
+		//					if (currentX >= xs && currentX < xs + xm && yRight >= ys
+		//&& 						yRight < ys + ym) {
+		//						// Get the concentrations at currentX
+		//						gridPointSolution =
+		//solutionArray[yRight][currentX]; 						gridPointSolution[iClusterIds2D[0]]
+		//+= wConc;
+		//					}
+		//				}
+		//			}
+		//		}
+		//
+		//		// Update the surface position
+		//		solverHandler.setSurfacePosition(xi, yj);
+		//
+		//		// Reset the I flux and count
+		//		nInterstitial2D[yLeft] += nInterstitial2D[yj] / 2.0;
+		//		nInterstitial2D[yRight] += nInterstitial2D[yj] / 2.0;
+		//		nInterstitial2D[yj] = 0.0;
+		//		previousIFlux2D[yj] = 0.0;
+		//
+		//		surfaceMoved = true;
 	}
 
 	// Now takes care of moving surface
@@ -1487,8 +1492,9 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 					outputFile << "overgrid" << std::endl;
 					outputFile.close();
 				}
-				throw std::string("\nxolotlSolver::Monitor2D: The surface is "
-								  "trying to go outside of the grid!!");
+				throw std::runtime_error(
+					"\nxolotlSolver::Monitor2D: The surface is "
+					"trying to go outside of the grid!!");
 			}
 
 			// Printing information about the extension of the material

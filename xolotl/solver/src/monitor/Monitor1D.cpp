@@ -216,8 +216,9 @@ monitorLargest1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 			ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
 			CHKERRQ(ierr);
 			// Send an error
-			throw std::string("\nxolotlSolver::Monitor1D: The largest cluster "
-							  "concentration is too high!!");
+			throw std::runtime_error(
+				"\nxolotlSolver::Monitor1D: The largest cluster "
+				"concentration is too high!!");
 		}
 	}
 
@@ -1876,9 +1877,10 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 
 	// Check if both events happened
 	if (nevents == 3)
-		throw std::string("\nxolotlSolver::Monitor1D: This is not supposed to "
-						  "happen, the surface cannot "
-						  "move in both directions at the same time!!");
+		throw std::runtime_error(
+			"\nxolotlSolver::Monitor1D: This is not supposed to "
+			"happen, the surface cannot "
+			"move in both directions at the same time!!");
 
 	// Gets the process ID
 	auto xolotlComm = util::getMPIComm();
@@ -2015,8 +2017,9 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 				outputFile << "overgrid" << std::endl;
 				outputFile.close();
 			}
-			throw std::string("\nxolotlSolver::Monitor1D: The surface is "
-							  "trying to go outside of the grid!!");
+			throw std::runtime_error(
+				"\nxolotlSolver::Monitor1D: The surface is "
+				"trying to go outside of the grid!!");
 		}
 
 		// Printing information about the extension of the material

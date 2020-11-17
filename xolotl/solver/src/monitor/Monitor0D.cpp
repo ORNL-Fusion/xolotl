@@ -99,8 +99,9 @@ monitorLargest0D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 		ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
 		CHKERRQ(ierr);
 		// Send an error
-		throw std::string("\nxolotlSolver::Monitor0D: The largest cluster "
-						  "concentration is too high!!");
+		throw std::runtime_error(
+			"\nxolotlSolver::Monitor0D: The largest cluster "
+			"concentration is too high!!");
 	}
 
 	// Restore the solutionArray

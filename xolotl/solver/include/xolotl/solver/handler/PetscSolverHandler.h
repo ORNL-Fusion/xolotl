@@ -24,8 +24,9 @@ namespace handler
 inline void
 checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
 {
-	if (PetscUnlikely(errorCode))
-		throw std::string(errorMsg);
+	if (PetscUnlikely(errorCode)) {
+		throw std::runtime_error(errorMsg);
+	}
 }
 #endif
 

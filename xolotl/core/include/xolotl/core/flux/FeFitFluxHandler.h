@@ -66,7 +66,7 @@ public:
 		comp[NetworkType::Species::He] = 1;
 		auto cluster = feNetwork->findCluster(comp, plsm::onHost);
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string(
+			throw std::runtime_error(
 				"\nThe single helium cluster is not present in the network, "
 				"cannot use the flux option!");
 		}
@@ -77,9 +77,9 @@ public:
 		comp[NetworkType::Species::I] = 1;
 		cluster = feNetwork->findCluster(comp, plsm::onHost);
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string("\nThe single interstitial cluster is not "
-							  "present in the network, "
-							  "cannot use the flux option!");
+			throw std::runtime_error("\nThe single interstitial cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
 
@@ -88,7 +88,7 @@ public:
 		comp[NetworkType::Species::V] = 1;
 		cluster = feNetwork->findCluster(comp, plsm::onHost);
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string(
+			throw std::runtime_error(
 				"\nThe single vacancy cluster is not present in the network, "
 				"cannot use the flux option!");
 		}
@@ -96,7 +96,7 @@ public:
 		comp[NetworkType::Species::V] = 2;
 		cluster = feNetwork->findCluster(comp, plsm::onHost);
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string(
+			throw std::runtime_error(
 				"\nThe double vacancy cluster is not present in the network, "
 				"cannot use the flux option!");
 		}
@@ -104,7 +104,7 @@ public:
 		comp[NetworkType::Species::V] = 3;
 		cluster = feNetwork->findCluster(comp, plsm::onHost);
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string(
+			throw std::runtime_error(
 				"\nThe triple vacancy cluster is not present in the network, "
 				"cannot use the flux option!");
 		}
@@ -112,15 +112,16 @@ public:
 		comp[NetworkType::Species::V] = 4;
 		cluster = feNetwork->findCluster(comp, plsm::onHost);
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string("\nThe quadruple vacancy cluster is not present "
-							  "in the network, "
-							  "cannot use the flux option!");
+			throw std::runtime_error(
+				"\nThe quadruple vacancy cluster is not present "
+				"in the network, "
+				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 5;
 		cluster = feNetwork->findCluster(comp, plsm::onHost);
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string(
+			throw std::runtime_error(
 				"\nVacancy 5 cluster is not present in the network, "
 				"cannot use the flux option!");
 		}
@@ -128,7 +129,7 @@ public:
 		comp[NetworkType::Species::V] = 9;
 		cluster = feNetwork->findCluster(comp, plsm::onHost);
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string(
+			throw std::runtime_error(
 				"\nVacancy 9 cluster is not present in the network, "
 				"cannot use the flux option!");
 		}
@@ -158,7 +159,7 @@ public:
 		}
 
 		else {
-			throw std::string(
+			throw std::runtime_error(
 				"\nThe iron problem is not defined for more than 0D!");
 		}
 

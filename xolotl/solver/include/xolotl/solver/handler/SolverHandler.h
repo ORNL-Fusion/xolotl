@@ -632,25 +632,24 @@ public:
 		if (leftOffset == 0 &&
 			(map["advec"] || map["modifiedTM"] || map["movingSurface"] ||
 				map["bursting"])) {
-			throw std::string("\nThe left side of the grid is set to use a "
-							  "reflective boundary condition "
-							  "but you want to use processes that are "
-							  "intrinsically related to "
-							  "a free surface (advection, modified trap "
-							  "mutation, moving surface, bubble bursting).");
+			throw std::runtime_error(
+				"\nThe left side of the grid is set to use a reflective "
+				"boundary condition but you want to use processes that are "
+				"intrinsically related to a free surface (advection, modified "
+				"trap mutation, moving surface, bubble bursting).");
 		}
 
 		// Complains if processes that should not be used together are used
 		if (map["attenuation"] && !map["modifiedTM"]) {
-			throw std::string("\nYou want to use the attenuation on the "
-							  "modified trap mutation "
-							  "but you are not using the modifiedTM process, "
-							  "it doesn't make any sense.");
+			throw std::runtime_error(
+				"\nYou want to use the attenuation on the modified trap "
+				"mutation but you are not using the modifiedTM process, it "
+				"doesn't make any sense.");
 		}
 		if (map["modifiedTM"] && !map["reaction"]) {
-			throw std::string("\nYou want to use the modified trap mutation "
-							  "but the reaction process is not set,"
-							  " it doesn't make any sense.");
+			throw std::runtime_error(
+				"\nYou want to use the modified trap mutation but the reaction "
+				"process is not set, it doesn't make any sense.");
 		}
 
 		return;
