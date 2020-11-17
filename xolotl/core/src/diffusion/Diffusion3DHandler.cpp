@@ -57,20 +57,19 @@ Diffusion3DHandler::initializeDiffusionGrid(
 						// We have to find the corresponding reactant in the
 						// diffusion cluster collection.
 						for (auto const& currAdvCluster : advecClusters) {
-							// Initialize n the index in the diffusion index
-							// vector
-							// TODO use std::find or std::find_if?
-							int n = 0;
-							while (n < nDiff) {
-								auto const currDiffCluster =
-									diffusingClusters[n];
-								if (currDiffCluster == currAdvCluster) {
-									break;
-								}
-								n++;
+							auto it = find(diffusingClusters.begin(),
+								diffusingClusters.end(), currAdvCluster);
+							if (it != diffusingClusters.end()) {
+								// Set this diffusion grid value to false
+								diffusionGrid[k + 1][j + 1][i][(*it)] = false;
 							}
-							// Set this diffusion grid value to false
-							diffusionGrid[k + 1][j + 1][i][n] = false;
+							else {
+								throw std::runtime_error(
+									"\nThe advecting cluster of id: " +
+									std::to_string(currAdvCluster) +
+									" was not found in the diffusing clusters, "
+									"cannot use the diffusion!");
+							}
 						}
 					}
 				}

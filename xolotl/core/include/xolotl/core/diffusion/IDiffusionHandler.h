@@ -15,8 +15,8 @@ namespace diffusion
 {
 /**
  * Realizations of this interface are responsible for all the physical parts
- * for the diffusion of mobile cluster. The solver call these methods to handle
- * the diffusion.
+ * for the isotropic diffusion of mobile cluster. The solver call these methods
+ * to handle the diffusion.
  */
 class IDiffusionHandler
 {
@@ -41,7 +41,9 @@ public:
 
 	/**
 	 * Initialize an array of the dimension of the physical domain times the
-	 * number of diffusion clusters
+	 * number of diffusing clusters. For each location, True means the cluster
+	 * is actually diffusing, False means it is not. Clusters do not diffuse
+	 * on advection sinks.
 	 *
 	 * @param advectionHandlers The vector of advection handlers
 	 * @param grid The spatial grid in the depth direction
@@ -61,16 +63,15 @@ public:
 		int ys = 0, int nz = 0, double hz = 0.0, int zs = 0) = 0;
 
 	/**
-	 * Compute the flux due to the diffusion for all the cluster that are
+	 * Compute the flux due to the diffusion for all the clusters that are
 	 * diffusing, given the space parameters. This method is called by the
-	 * RHSFunction from the PetscSolver.
+	 * RHSFunction from the solver.
 	 *
 	 * @param network The network
 	 * @param concVector The pointer to the pointer of arrays of concentration
 	 * at middle/ left/right/bottom/top/front/back grid points
 	 * @param updatedConcOffset The pointer to the array of the concentration at
-	 * the grid point where the diffusion is computed used to find the next
-	 * solution
+	 * the grid point where the diffusion is computed
 	 * @param hxLeft The step size on the left side of the point in the x
 	 * direction
 	 * @param hxRight The step size on the right side of the point in the x
@@ -91,7 +92,7 @@ public:
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters
 	 * given the space parameters. This method is called by the RHSJacobian from
-	 * the PetscSolver.
+	 * the solver.
 	 *
 	 * @param network The network
 	 * @param val The pointer to the array that will contain the values of

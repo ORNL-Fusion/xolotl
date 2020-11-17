@@ -41,10 +41,9 @@ public:
 	 * it won't be possible to set the partial derivatives for the diffusion.
 	 *
 	 * The value 1 is set in ofillMap if a cluster has a non zero diffusion
-	 * coefficient.
+	 * coefficient and a migration energy lower than the threshold.
 	 *
-	 * @param network The network
-	 * @param ofillMap Map of connectivity for diffusing clusters.
+	 * \see IDiffusionHandler.h
 	 */
 	virtual void
 	initializeOFill(const network::IReactionNetwork& network,
@@ -78,7 +77,7 @@ public:
 	/**
 	 * Get the total number of diffusing clusters in the network.
 	 *
-	 * @return The number of diffusing clusters
+	 * \see IDiffusionHandler.h
 	 */
 	int
 	getNumberOfDiffusing() const override
@@ -89,7 +88,7 @@ public:
 	/**
 	 * Get the vector of IDs of diffusing clusters in the network.
 	 *
-	 * @return The vector
+	 * \see IDiffusionHandler.h
 	 */
 	virtual std::vector<std::size_t>
 	getDiffusingIds() const override
