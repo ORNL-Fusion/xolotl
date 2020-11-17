@@ -41,7 +41,7 @@ ZGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 
 		auto cluster = psiNetwork->getClusterCommon(clusterId);
 
-		// Get its diffusion coefficient
+		// Get its diffusion factor
 		double diffFactor = cluster.getDiffusionFactor();
 
 		// Don't do anything if the diffusion factor is 0.0

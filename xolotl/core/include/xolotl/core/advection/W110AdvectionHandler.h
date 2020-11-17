@@ -10,7 +10,7 @@ namespace advection
 {
 /**
  * This class realizes the IAdvectionHandler interface responsible for all
- * the physical parts for the advection of mobile helium cluster.
+ * the physical parts for the advection of mobile helium clusters in W110.
  */
 class W110AdvectionHandler : public TungstenAdvectionHandler
 {

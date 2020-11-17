@@ -15,7 +15,7 @@ SurfaceAdvectionHandler::initializeAdvectionGrid(
 	// Get the number of advecting clusters
 	int nAdvec = advectingClusters.size();
 
-	// Initialize the diffusion grid with true everywhere
+	// Initialize the advection grid with true everywhere
 	advectionGrid.clear();
 	// Initialize it to True
 	for (int k = 0; k < nz + 2; k++) {
@@ -59,21 +59,22 @@ SurfaceAdvectionHandler::initializeAdvectionGrid(
 					if (currAdvecHandler->isPointOnSink(gridPosition)) {
 						// We have to find the corresponding index in the
 						// diffusion index vector
-						for (int m = 0; m < otherAdvecClusters.size(); m++) {
-							// Initialize n the index in the diffusion index
-							// vector
-							// TODO can we do this with std::find or
-							// std::find_if?
-							int n = 0;
-							while (n < nAdvec) {
-								if (&(advectingClusters[n]) ==
-									&(otherAdvecClusters[m])) {
-									break;
-								}
-								n++;
+						for (auto const currAdvCluster : otherAdvecClusters) {
+							auto it = find(advectingClusters.begin(),
+								advectingClusters.end(), currAdvCluster);
+							if (it != advectingClusters.end()) {
+								// Set this diffusion grid value to false
+								advectionGrid[k + 1][j + 1][i + 1][(*it)] =
+									false;
 							}
-							// Set this diffusion grid value to false
-							advectionGrid[k + 1][j + 1][i + 1][n] = false;
+							else {
+								throw std::runtime_error(
+									"\nThe advecting cluster of id: " +
+									std::to_string(currAdvCluster) +
+									" was not found in the advecting clusters, "
+									"cannot "
+									"use the advection!");
+							}
 						}
 					}
 				}

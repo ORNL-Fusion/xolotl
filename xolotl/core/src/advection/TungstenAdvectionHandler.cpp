@@ -44,7 +44,7 @@ TungstenAdvectionHandler::initialize(network::IReactionNetwork& network,
 				"cannot use the advection option!");
 		}
 
-		// Get its diffusion coefficient
+		// Get its diffusion factor
 		double diffFactor =
 			psiNetwork->getClusterCommon(clusterId).getDiffusionFactor();
 

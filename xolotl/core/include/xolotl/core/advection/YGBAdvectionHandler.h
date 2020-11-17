@@ -15,9 +15,7 @@ namespace advection
  * This class realizes the IAdvectionHandler interface responsible for all
  * the physical parts for the advection of mobile helium cluster.
  * It represents the advection (drift) toward grain boundaries (GB) in the
- * Y direction, perpendicular to the surface. It has been observed that clusters
- * don't diffuse anymore once on the GB, the diffusion is thus cancelled out
- * here on the GB.
+ * Y direction, perpendicular to the surface.
  */
 class YGBAdvectionHandler : public AdvectionHandler
 {
@@ -43,9 +41,8 @@ public:
 		network::IReactionNetwork::SparseFillMap& ofillMap) override;
 
 	/**
-	 * Initialize an array of the dimension of the physical domain times the
-	 * number of advecting clusters. For each location, True means the cluster
-	 * is moving, False means it is not. Don't do anything here.
+	 * The surface advection handler is in charge of initializing the grid for
+	 * all the handlers, doesn't do anything here.
 	 *
 	 * \see IAdvectionHandler.h
 	 */
@@ -58,12 +55,6 @@ public:
 	}
 
 	/**
-	 * Compute the flux due to the advection for all the helium clusters,
-	 * given the space parameters and the position.
-	 * This method is called by the RHSFunction from the PetscSolver.
-	 * This method also removes the flux from diffusion of the advecting
-	 * clusters on the GB.
-	 *
 	 * \see IAdvectionHandler.h
 	 */
 	void
@@ -74,11 +65,6 @@ public:
 		int iz = 0) const override;
 
 	/**
-	 * Compute the partials due to the advection of all the helium clusters
-	 * given the space parameters and the position. This method is called by the
-	 * RHSJacobian from the PetscSolver. This method also removes the partials
-	 * from diffusion of the advecting clusters on the GB.
-	 *
 	 * \see IAdvectionHandler.h
 	 */
 	void
@@ -90,7 +76,7 @@ public:
 	/**
 	 * Compute the indices that will determine where the partial derivatives
 	 * will be put in the Jacobian. This method is called by the RHSJacobian
-	 * from the PetscSolver.
+	 * from the solver.
 	 *
 	 * Here we consider GB in the Y direction.
 	 *
@@ -101,8 +87,6 @@ public:
 		const plsm::SpaceVector<double, 3>& pos) const override;
 
 	/**
-	 * Check whether the grid point is located on the sink surface or not.
-	 *
 	 * \see IAdvectionHandler.h
 	 */
 	bool

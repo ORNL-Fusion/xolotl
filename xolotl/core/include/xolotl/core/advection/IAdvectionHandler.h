@@ -31,7 +31,7 @@ public:
 	}
 
 	/**
-	 * This function initialize the list of clusters that will move through
+	 * This function initializes the list of clusters that will move through
 	 * advection and their corresponding sink strength (or driving forces).
 	 *
 	 * @param network The network
@@ -60,7 +60,7 @@ public:
 	/**
 	 * Initialize an array of the dimension of the physical domain times the
 	 * number of advecting clusters. For each location, True means the cluster
-	 * is moving, False means it is not.
+	 * is actually moving, False means it is not.
 	 *
 	 * @param advectionHandlers The vector of advection handlers
 	 * @param grid The spatial grid in the depth direction
@@ -81,15 +81,14 @@ public:
 	/**
 	 * Compute the flux due to the advection for all the helium clusters,
 	 * given the space parameters and the position.
-	 * This method is called by the RHSFunction from the PetscSolver.
+	 * This method is called by the RHSFunction from the solver.
 	 *
 	 * @param network The network
 	 * @param pos The position on the grid
 	 * @param concVector The pointer to the pointer of arrays of concentration
 	 * at middle, left, and right grid points
 	 * @param updatedConcOffset The pointer to the array of the concentration at
-	 * the grid point where the advection is computed used to find the next
-	 * solution
+	 * the grid point where the advection is computed
 	 * @param hxLeft The step size on the left side of the point in the x
 	 * direction
 	 * @param hxRight The step size on the right side of the point in the x
@@ -109,10 +108,9 @@ public:
 	/**
 	 * Compute the partial derivatives due to the advection of all the helium
 	 * clusters given the space parameters and the position. This method is
-	 * called by the RHSJacobian from the PetscSolver.
+	 * called by the RHSJacobian from the solver.
 	 *
 	 * @param network The network
-	 * @param h The space parameters in the three directions
 	 * @param val The pointer to the array that will contain the values of
 	 * partials for the advection
 	 * @param indices The pointer to the array that will contain the indices of
@@ -137,7 +135,7 @@ public:
 	/**
 	 * Compute the indices that will determine where the partial derivatives
 	 * will be put in the Jacobian. This method is called by the RHSJacobian
-	 * from the PetscSolver.
+	 * from the solver.
 	 *
 	 * @param pos The position on the grid
 	 * @return The indices for the position in the Jacobian

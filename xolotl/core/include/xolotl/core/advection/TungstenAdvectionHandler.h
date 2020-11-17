@@ -13,7 +13,7 @@ namespace advection
 {
 /**
  * This class realizes the IAdvectionHandler interface responsible for all
- * the physical parts for the advection of mobile helium cluster.
+ * the physical parts for the advection of mobile helium cluster in tungsten.
  */
 class TungstenAdvectionHandler : public SurfaceAdvectionHandler
 {
@@ -24,11 +24,9 @@ public:
 
 	/**
 	 * This function initializes the list of clusters that will move through
-	 * advection for a (100) tungsten material.
+	 * advection for a tungsten material.
 	 *
-	 * @param network The network
-	 * @param ofillMap Map of connectivity for advecting clusters.
-	 * of the advecting clusters
+	 * \see IAdvectionHandler.h
 	 */
 	void
 	initialize(network::IReactionNetwork& network,

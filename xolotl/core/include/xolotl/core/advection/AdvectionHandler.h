@@ -46,7 +46,7 @@ public:
 	/**
 	 * Set the number of dimension.
 	 *
-	 * @param dim The number of dimensions of the problem
+	 * \see IAdvectionHandler.h
 	 */
 	void
 	setDimension(int dim) override
@@ -57,7 +57,7 @@ public:
 	/**
 	 * Set the location of the sink.
 	 *
-	 * @param pos The location of the sink
+	 * \see IAdvectionHandler.h
 	 */
 	void
 	setLocation(double pos) override
@@ -68,7 +68,7 @@ public:
 	/**
 	 * Get the total number of advecting clusters in the network.
 	 *
-	 * @return The number of advecting clusters
+	 * \see IAdvectionHandler.h
 	 */
 	int
 	getNumberOfAdvecting() const override
@@ -79,7 +79,7 @@ public:
 	/**
 	 * Get the vector of index of advecting clusters in the network.
 	 *
-	 * @return The vector of advecting clusters
+	 * \see IAdvectionHandler.h
 	 */
 	const std::vector<std::size_t>&
 	getAdvectingClusters() override
@@ -90,7 +90,7 @@ public:
 	/**
 	 * Get the vector of sink strength.
 	 *
-	 * @return The vector of sink strength
+	 * \see IAdvectionHandler.h
 	 */
 	const std::vector<double>
 	getSinkStrengths() override
@@ -101,7 +101,7 @@ public:
 	/**
 	 * Get the location of the sink.
 	 *
-	 * @return The location
+	 * \see IAdvectionHandler.h
 	 */
 	double
 	getLocation() const override

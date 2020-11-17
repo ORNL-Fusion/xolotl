@@ -35,10 +35,6 @@ public:
 	}
 
 	/**
-	 * Initialize an array of the dimension of the physical domain times the
-	 * number of advecting clusters. For each location, True means the cluster
-	 * is moving, False means it is not.
-	 *
 	 * \see IAdvectionHandler.h
 	 */
 	void
@@ -49,7 +45,7 @@ public:
 	/**
 	 * Compute the flux due to the advection for all the helium clusters,
 	 * given the space parameter hx and the position.
-	 * This method is called by the RHSFunction from the PetscSolver.
+	 * This method is called by the RHSFunction from the solver.
 	 *
 	 * If D is the diffusion coefficient, and C_r, C_m the right and middle
 	 * concentration of this cluster, A the sink strength, K the Boltzmann
@@ -71,7 +67,7 @@ public:
 	/**
 	 * Compute the partials due to the advection of all the helium clusters
 	 * given the space parameter hx and the position. This method is called by
-	 * the RHSJacobian from the PetscSolver.
+	 * the RHSJacobian from the solver.
 	 *
 	 * The partial derivative on the right grid point is given by (same notation
 	 * as for the computeAdvection method)
@@ -93,7 +89,7 @@ public:
 	/**
 	 * Compute the indices that will determine where the partial derivatives
 	 * will be put in the Jacobian. This method is called by the RHSJacobian
-	 * from the PetscSolver.
+	 * from the solver.
 	 *
 	 * For the surface advection the stencil is always the same:
 	 *

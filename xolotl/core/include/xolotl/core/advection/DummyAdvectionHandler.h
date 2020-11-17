@@ -33,8 +33,7 @@ public:
 	 * advection. For the dummy class we don't want any cluster to advect, so
 	 * this class only clears the vector and doesn't fill them.
 	 *
-	 * @param network The network
-	 * @param ofillMap Map of connectivity for advecting clusters.
+	 * \see IAdvectionHandler.h
 	 */
 	void
 	initialize(network::IReactionNetwork& network,
@@ -49,10 +48,6 @@ public:
 	}
 
 	/**
-	 * Initialize an array of the dimension of the physical domain times the
-	 * number of advecting clusters. For each location, True means the cluster
-	 * is moving, False means it is not.
-	 *
 	 * \see IAdvectionHandler.h
 	 */
 	void
@@ -65,10 +60,6 @@ public:
 	}
 
 	/**
-	 * Compute the flux due to the advection for all the helium clusters,
-	 * given the space parameter hx and the position.
-	 * This method is called by the RHSFunction from the PetscSolver.
-	 *
 	 * \see IAdvectionHandler.h
 	 */
 	void
@@ -82,10 +73,6 @@ public:
 	}
 
 	/**
-	 * Compute the partials due to the advection of all the helium clusters
-	 * given the space parameter hx and the position. This method is called by
-	 * the RHSJacobian from the PetscSolver.
-	 *
 	 * \see IAdvectionHandler.h
 	 */
 	void
