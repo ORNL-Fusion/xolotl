@@ -66,7 +66,7 @@ protected:
 	double kDis;
 
 	//! To know if we want attenuation or not
-	bool attenuation;
+	bool enableAttenuation;
 
 	//! To know if we are using the reduced Jacobian method.
 	bool enableReducedJacobian;
@@ -115,7 +115,7 @@ public:
 	TrapMutationHandler() :
 		kMutation(0.0),
 		kDis(1.0),
-		attenuation(true),
+		enableAttenuation(true),
 		desorp(0, 0.0),
 		enableReducedJacobian(false)
 	{
@@ -129,11 +129,6 @@ public:
 	}
 
 	/**
-	 * The initialize method has to add connectivity between the He clusters and
-	 * HeV_i clusters of same number of He, and I_i, with i = 1, 2. It must also
-	 * initialize the rates of the reactions and define which trap-mutation is
-	 * allowed at each grid point.
-	 *
 	 * \see ITrapMutationHandler.h
 	 */
 	virtual void
@@ -142,11 +137,6 @@ public:
 		int nz = 0);
 
 	/**
-	 * This method defines which trap-mutation is allowed at each grid point.
-	 * The stored indices correspond to the HeV bubbles, and more precisely to
-	 * their rank in the bubbles vector obtained with bubbles =
-	 * network->getAll(heVType).
-	 *
 	 * \see ITrapMutationHandler.h
 	 */
 	virtual void
@@ -155,11 +145,6 @@ public:
 		std::vector<double> grid, int nx, int xs);
 
 	/**
-	 * This method defines which trap-mutation is allowed at each grid point.
-	 * The stored indices correspond to the HeV bubbles, and more precisely to
-	 * their rank in the bubbles vector obtained with bubbles =
-	 * network->getAll(heVType).
-	 *
 	 * \see ITrapMutationHandler.h
 	 */
 	virtual void
@@ -169,11 +154,6 @@ public:
 		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys);
 
 	/**
-	 * This method defines which trap-mutation is allowed at each grid point.
-	 * The stored indices correspond to the HeV bubbles, and more precisely to
-	 * their rank in the bubbles vector obtained with bubbles =
-	 * network->getAll(heVType).
-	 *
 	 * \see ITrapMutationHandler.h
 	 */
 	virtual void
@@ -184,28 +164,23 @@ public:
 		int nz, double hz, int zs);
 
 	/**
-	 * This method update the rate for the modified trap-mutation if the rates
-	 * changed in the network, it should be called when temperature changes
-	 * for instance.
-	 *
-	 * @param rate The largest rate in the network
+	 * \see ITrapMutationHandler.h
 	 */
 	void
 	updateTrapMutationRate(const double rate);
 
 	/**
-	 * This method set the boolean to remember if we want attenuation or not.
-	 *
-	 * @param isAttenuation True if we want attenuation
+	 * \see ITrapMutationHandler.h
 	 */
 	void
-	setAttenuation(bool isAttenuation);
+	setAttenuation(bool isAttenuation)
+	{
+		enableAttenuation = isAttenuation;
+		return;
+	}
 
 	/**
-	 * This method update the rate that makes the modified trap-mutation
-	 * inefficient with time, depending on the total helium concentration.
-	 *
-	 * @param conc The concentration of helium
+	 * \see ITrapMutationHandler.h
 	 */
 	void
 	updateDisappearingRate(double conc);
@@ -213,7 +188,7 @@ public:
 	/**
 	 * Compute the flux due to the modified trap-mutation for all the cluster,
 	 * given the position index xi.
-	 * This method is called by the RHSFunction from the PetscSolver.
+	 * This method is called by the RHSFunction from the solver.
 	 *
 	 * He_i --> (He_i)(V) + I
 	 *
@@ -229,7 +204,7 @@ public:
 	 * Compute the partials due to the modified trap-mutation for all the
 	 * clusters given the position index xi. Returns the number of helium
 	 * clusters that are undergoing trap-mutation at this grid point.
-	 * This method is called by the RHSJacobian from the PetscSolver.
+	 * This method is called by the RHSJacobian from the solver.
 	 *
 	 * He_i --> (He_i)(V) + I
 	 *
@@ -244,10 +219,7 @@ public:
 		int zk = 0);
 
 	/**
-	 * Get the total number of clusters in the network that can undergo trap
-	 * mutation.
-	 *
-	 * @return The number of clusters
+	 * \see ITrapMutationHandler.h
 	 */
 	virtual int
 	getNumberOfMutating() const
@@ -256,9 +228,7 @@ public:
 	}
 
 	/**
-	 * Set the enable reduced Jacobian method.
-	 *
-	 * @param The boolean
+	 * \see ITrapMutationHandler.h
 	 */
 	void
 	setEnableReducedJacobian(bool reduced)

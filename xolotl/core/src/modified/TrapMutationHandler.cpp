@@ -405,16 +405,10 @@ TrapMutationHandler::updateTrapMutationRate(const double rate)
 }
 
 void
-TrapMutationHandler::setAttenuation(bool isAttenuation)
-{
-	attenuation = isAttenuation;
-}
-
-void
 TrapMutationHandler::updateDisappearingRate(double conc)
 {
 	// Set the rate to have an exponential decrease
-	if (attenuation) {
+	if (enableAttenuation) {
 		kDis = exp(-4.0 * conc);
 	}
 }

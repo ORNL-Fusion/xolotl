@@ -104,7 +104,7 @@ public:
 		int nz, double hz, int zs) = 0;
 
 	/**
-	 * This method update the rate for the modified trap-mutation if the rates
+	 * This method updates the rate for the modified trap-mutation if the rates
 	 * changed in the network, it should be called when temperature changes
 	 * for instance.
 	 *
@@ -114,7 +114,7 @@ public:
 	updateTrapMutationRate(const double rate) = 0;
 
 	/**
-	 * This method set the boolean to remember if we want attenuation or not.
+	 * This method sets the boolean to remember if we want attenuation or not.
 	 *
 	 * @param isAttenuation True if we want attenuation
 	 */
@@ -122,7 +122,7 @@ public:
 	setAttenuation(bool isAttenuation) = 0;
 
 	/**
-	 * This method update the rate that makes the modified trap-mutation
+	 * This method updates the rate that makes the modified trap-mutation
 	 * inefficient with time, depending on the total helium concentration.
 	 *
 	 * @param conc The concentration of helium
@@ -133,14 +133,13 @@ public:
 	/**
 	 * Compute the flux due to the modified trap-mutation for all the cluster,
 	 * given the position index xi.
-	 * This method is called by the RHSFunction from the PetscSolver.
+	 * This method is called by the RHSFunction from the solver.
 	 *
 	 * @param network The network
 	 * @param concOffset The pointer to the array of concentration at the grid
 	 * point where the trap-mutation is computed
 	 * @param updatedConcOffset The pointer to the array of the concentration
-	 * at the grid point where the trap-mutation is computed used to find the
-	 * next solution
+	 * at the grid point where the trap-mutation is computed
 	 * @param xi The index of the position on the grid in the depth direction
 	 * @param yj The index of the position on the grid in the Y direction
 	 * @param zk The index of the position on the grid in the Z direction
@@ -153,7 +152,7 @@ public:
 	 * Compute the partials due to the modified trap-mutation for all the
 	 * clusters given the position index xi. Returns the number of helium
 	 * clusters that are undergoing trap-mutation at this grid point.
-	 * This method is called by the RHSJacobian from the PetscSolver.
+	 * This method is called by the RHSJacobian from the solver.
 	 *
 	 * @param network The network
 	 * @param concOffset The pointer to the array of concentration at the grid
@@ -184,7 +183,7 @@ public:
 	getNumberOfMutating() const = 0;
 
 	/**
-	 * Set the enable reduced Jacobian method.
+	 * Enable reduced Jacobian method.
 	 *
 	 * @param The boolean
 	 */

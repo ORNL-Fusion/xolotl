@@ -18,10 +18,7 @@ class DummyTrapMutationHandler : public TrapMutationHandler
 {
 private:
 	/**
-	 * Method initializing the depth vector, the size vector,
-	 * and desorption information.
-	 *
-	 * @param temp The temperature of the system
+	 * \see TrapMutationHandler.h
 	 */
 	void
 	initializeDepthSize(double temp)
@@ -50,11 +47,6 @@ public:
 	}
 
 	/**
-	 * The initialize method has to add connectivity between the He clusters and
-	 * HeV_i clusters of same number of He, and I_i, with i = 1, 2. It must also
-	 * initialize the rates of the reactions and define which trap-mutation is
-	 * allowed at each grid point.
-	 *
 	 * \see ITrapMutationHandler.h
 	 */
 	void
@@ -67,11 +59,6 @@ public:
 	}
 
 	/**
-	 * This method defines which trap-mutation is allowed at each grid point.
-	 * The stored indices correspond to the HeV bubbles, and more precisely to
-	 * their rank in the bubbles vector obtained with bubbles =
-	 * network->getAll(heVType).
-	 *
 	 * \see ITrapMutationHandler.h
 	 */
 	void
@@ -84,11 +71,6 @@ public:
 	}
 
 	/**
-	 * This method defines which trap-mutation is allowed at each grid point.
-	 * The stored indices correspond to the HeV bubbles, and more precisely to
-	 * their rank in the bubbles vector obtained with bubbles =
-	 * network->getAll(heVType).
-	 *
 	 * \see ITrapMutationHandler.h
 	 */
 	void
@@ -102,11 +84,6 @@ public:
 	}
 
 	/**
-	 * This method defines which trap-mutation is allowed at each grid point.
-	 * The stored indices correspond to the HeV bubbles, and more precisely to
-	 * their rank in the bubbles vector obtained with bubbles =
-	 * network->getAll(heVType).
-	 *
 	 * \see ITrapMutationHandler.h
 	 */
 	void
@@ -121,10 +98,6 @@ public:
 	}
 
 	/**
-	 * Compute the flux due to the modified trap-mutation for all the cluster,
-	 * given the position index xi.
-	 * This method is called by the RHSFunction from the PetscSolver.
-	 *
 	 * \see ITrapMutationHandler.h
 	 */
 	void
@@ -136,11 +109,6 @@ public:
 	}
 
 	/**
-	 * Compute the partials due to the modified trap-mutation for all the
-	 * clusters given the position index xi. Returns the number of helium
-	 * clusters that are undergoing trap-mutation at this grid point.
-	 * This method is called by the RHSJacobian from the PetscSolver.
-	 *
 	 * \see ITrapMutationHandler.h
 	 */
 	int
@@ -153,10 +121,7 @@ public:
 	}
 
 	/**
-	 * Get the total number of clusters in the network that can undergo trap
-	 * mutation.
-	 *
-	 * @return The number of clusters
+	 * \see ITrapMutationHandler.h
 	 */
 	int
 	getNumberOfMutating() const

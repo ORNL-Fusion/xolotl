@@ -18,10 +18,7 @@ class W111TrapMutationHandler : public TrapMutationHandler
 {
 private:
 	/**
-	 * Method initializing the depth vector, the size vector,
-	 * and desorption information.
-	 *
-	 * @param temp The temperature of the system
+	 * \see ITrapMutationHandler.h
 	 */
 	void
 	initializeDepthSize(double temp)
