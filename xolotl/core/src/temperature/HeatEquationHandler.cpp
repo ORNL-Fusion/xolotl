@@ -65,7 +65,9 @@ HeatEquationHandler::HeatEquationHandler(const options::IOptions& options) :
 		this->setHeatConductivity(core::feHeatConductivity);
 	}
 	else {
-		// TODO: Should we throw?
+		throw std::runtime_error("\nThe requested material: " + problemType +
+			" does not have heat parameters defined for it, cannot use the "
+			"temperature option!");
 	}
 }
 
@@ -89,6 +91,7 @@ HeatEquationHandler::computeTemperature(double** concVector,
 	double* updatedConcOffset, double hxLeft, double hxRight, int xi, double sy,
 	int iy, double sz, int iz)
 {
+	// Skip if the flux is 0
 	if (zeroFlux) {
 		return;
 	}
@@ -119,6 +122,7 @@ HeatEquationHandler::computeTemperature(double** concVector,
 			(hxLeft + hxRight);
 	}
 
+	// Deal with the potential additional dimensions
 	for (int d = 1; d < dimension; ++d) {
 		updatedConcOffset[index] += heatCoef * s[d] *
 			(oldConcBox[d][0] + oldConcBox[d][1] - 2.0 * oldConc);
@@ -129,18 +133,22 @@ bool
 HeatEquationHandler::computePartialsForTemperature(double* val, int* indices,
 	double hxLeft, double hxRight, int xi, double sy, int iy, double sz, int iz)
 {
+	// Skip if the flux is 0
 	if (zeroFlux) {
 		return false;
 	}
 
+	// Get the DOF
 	indices[0] = this->_dof;
 
 	double s[3] = {0, sy, sz};
 
+	// Compute the partials along the depth
 	val[0] = 1.0 / (hxLeft * hxRight);
 	val[1] = 2.0 * heatCoef / (hxLeft * (hxLeft + hxRight));
 	val[2] = 2.0 * heatCoef / (hxRight * (hxLeft + hxRight));
 
+	// Deal with the potential additional dimensions
 	for (int d = 1; d < dimension; ++d) {
 		val[0] += s[d];
 		val[2 * d + 1] = heatCoef * s[d];
@@ -149,6 +157,7 @@ HeatEquationHandler::computePartialsForTemperature(double* val, int* indices,
 
 	val[0] *= -2.0 * heatCoef;
 
+	// Boundary condition with the heat flux
 	if (xi == surfacePosition) {
 		val[1] = 0.0;
 		val[2] = 2.0 * heatCoef / (hxLeft * hxRight);

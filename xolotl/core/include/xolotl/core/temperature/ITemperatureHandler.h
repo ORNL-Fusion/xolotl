@@ -88,13 +88,12 @@ public:
 
 	/**
 	 * Compute the flux due to the heat equation.
-	 * This method is called by the RHSFunction from the PetscSolver.
+	 * This method is called by the RHSFunction from the solver.
 	 *
 	 * @param concVector The pointer to the pointer of arrays of concentration
 	 * at middle/ left/right grid points
 	 * @param updatedConcOffset The pointer to the array of the concentration at
-	 * the grid point where the heat equation is computed used to find the next
-	 * solution
+	 * the grid point where the heat equation is computed
 	 * @param hxLeft The step size on the left side of the point in the x
 	 * direction
 	 * @param hxRight The step size on the right side of the point in the x
@@ -114,7 +113,7 @@ public:
 
 	/**
 	 * Compute the partials due to the heat equation.
-	 * This method is called by the RHSJacobian from the PetscSolver.
+	 * This method is called by the RHSJacobian from the solver.
 	 *
 	 * @param val The pointer to the array that will contain the values of
 	 * partials for the heat equation
