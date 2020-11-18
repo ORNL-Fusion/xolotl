@@ -20,15 +20,12 @@ class FeFitFluxHandler : public FluxHandler
 {
 private:
 	/**
-	 * Function that calculate the flux at a given position x (in nm).
-	 * This function is not normalized. This is for iron.
-	 *
-	 * @param x The position where to evaluate he fit
-	 * @return The evaluated value
+	 * \see FluxHandler.h
 	 */
 	double
 	FitFunction(double x)
 	{
+		// Not actually used
 		return 0.0;
 	}
 
@@ -48,15 +45,18 @@ public:
 	}
 
 	/**
-	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
 		std::vector<double> grid)
 	{
-		// Call the general method
-		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
+		// Only defined in 0D
+		if (xGrid.size() == 0) {
+			// Add an empty vector
+			std::vector<double> tempVector;
+			incidentFluxVec.push_back(tempVector);
+		}
 
 		using NetworkType = network::FeReactionNetwork;
 		auto feNetwork = dynamic_cast<NetworkType*>(&network);
@@ -139,8 +139,7 @@ public:
 	}
 
 	/**
-	 * This operation computes the flux due to incoming particles at a given
-	 * grid point. \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	void
 	computeIncidentFlux(

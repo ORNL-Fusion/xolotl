@@ -9,6 +9,7 @@
 #include <xolotl/core/flux/AlloySRIMData.h>
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/core/network/AlloyReactionNetwork.h>
+#include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
 {
@@ -17,7 +18,7 @@ namespace core
 namespace flux
 {
 /**
- * This class realizes the IFluxHandler interface to calculate the incident
+ * This class realizes the FluxHandler interface to calculate the incident
  * fluxes for the alloy case.
  */
 class AlloyFitFluxHandler : public FluxHandler
@@ -27,17 +28,21 @@ private:
 	double tauFlux;
 
 	/**
-	 * Function that calculate the flux at a given position x (in nm).
-	 *
-	 * @param x The position where to evaluate he fit
-	 * @return The evaluated value
+	 * \see FluxHandler.h
 	 */
 	double
 	FitFunction(double x)
 	{
+		// Not actually used
 		return 1.0;
 	}
 
+	/**
+	 * Computes the damage as a function of the data from SRIM
+	 *
+	 * @param x The position
+	 * @return The vector of damages
+	 */
 	std::vector<double>
 	AlloyDamageFunction(const double x)
 	{
@@ -52,6 +57,12 @@ private:
 		return damage;
 	}
 
+	/**
+	 * Computes the implantation as a function of the data from SRIM
+	 *
+	 * @param x The position
+	 * @return The value of implantation
+	 */
 	double
 	AlloyImplantationFunction(const double x)
 	{
@@ -64,6 +75,14 @@ private:
 		return 0.0;
 	}
 
+	/**
+	 * Computes the generation rate as a function of the data from SRIM
+	 *
+	 * @param size The size of the cluster
+	 * @param it The index of the cluster in the cascade
+	 * @param fraction The reduction fraction
+	 * @return The vector of damage rates
+	 */
 	std::vector<double>
 	AlloySetGeneration(const int size, const int it, const double fraction)
 	{
@@ -106,6 +125,11 @@ private:
 		return damageRate;
 	}
 
+	/**
+	 * Adds contribution to the given input
+	 *
+	 * @param input The input to add to
+	 */
 	void
 	AlloyAddImplantation(std::vector<double>& input)
 	{
@@ -149,7 +173,6 @@ public:
 	}
 
 	/**
-	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
 	void
@@ -176,6 +199,9 @@ public:
 			srim.setOverlap();
 			cascade.setOverlap();
 		}
+		auto xolotlComm = util::getMPIComm();
+		int procId;
+		MPI_Comm_rank(xolotlComm, &procId);
 
 		using NetworkType = network::AlloyReactionNetwork;
 		auto alloyNetwork = dynamic_cast<NetworkType*>(&network);
@@ -214,8 +240,9 @@ public:
 					if (fluxCluster1.getId() == NetworkType::invalidIndex() ||
 						fluxCluster2.getId() == NetworkType::invalidIndex()) {
 						// Throw error -> missing type
-						std::cout << "Error: no flux cluster of size " << size
-								  << std::endl;
+						throw std::runtime_error(
+							"\nNo clusted of size: " + std::to_string(size) +
+							", cannot use the flux option!");
 					}
 					else {
 						// Frank loop
@@ -252,8 +279,9 @@ public:
 					fluxCluster = alloyNetwork->findCluster(comp, plsm::onHost);
 					if (fluxCluster.getId() == NetworkType::invalidIndex()) {
 						// Throw error -> no available type
-						std::cout << "Error: no flux cluster of size " << -size
-								  << std::endl;
+						throw std::runtime_error(
+							"\nNo clusted of size: " + std::to_string(-size) +
+							", cannot use the flux option!");
 					}
 					else {
 						// Faulted loop
@@ -266,29 +294,25 @@ public:
 			// Neither interstitial nor vacancy type cluster
 			else {
 				// Throw error for size 0 cluster
+				throw std::runtime_error(
+					"\nThe cluster is of size 0 which is not possible, cannot "
+					"use the flux option!");
 			}
 		}
 
-		// TODO: record the results in a files
-		//		std::ofstream outfile;
-		//		outfile.open("alloyFlux.dat");
-		//		auto clusters = network.getAll();
-		//		for (int i = 0; i < ionDamage.fluxIndex.size(); ++i) {
-		//			outfile << ionDamage.fluxIndex[i];
-		//			for (int j = 0; j < ionDamage.damageRate[i].size(); ++j) {
-		//				outfile << " " << ionDamage.damageRate[i][j];
-		//			}
-		//			// find the corresponding flux clusters
-		//			std::for_each(clusters.begin(), clusters.end(),
-		//					[&outfile, &i, this](IReactant &currReactant) {
-		//						if (currReactant.getId()
-		//								== ionDamage.fluxIndex[i]) {
-		//							outfile << " " << currReactant.getName();
-		//						}
-		//					});
-		//			outfile << std::endl;
-		//		}
-		//		outfile.close();
+		if (procId == 0) {
+			std::ofstream outfile;
+			outfile.open("alloyFlux.dat");
+			for (int it = 0; it < ionDamage.fluxIndex.size(); ++it) {
+				outfile << ionDamage.fluxIndex[it] << ": ";
+				for (int xi = surfacePos; xi < std::max((int)grid.size(), 1);
+					 xi++) {
+					outfile << ionDamage.damageRate[it][xi - surfacePos] << " ";
+				}
+				outfile << std::endl;
+			}
+			outfile.close();
+		}
 
 		return;
 	}

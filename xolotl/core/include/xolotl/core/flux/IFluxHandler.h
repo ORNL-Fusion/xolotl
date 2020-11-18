@@ -49,8 +49,7 @@ public:
 	 *
 	 * @param currentTime The time
 	 * @param updatedConcOffset The pointer to the array of the concentration at
-	 * the grid point where the diffusion is computed used to find the next
-	 * solution
+	 * the grid point where the diffusion is computed
 	 * @param ix The position on the x grid
 	 * @param surfacePos The current position of the surface
 	 */

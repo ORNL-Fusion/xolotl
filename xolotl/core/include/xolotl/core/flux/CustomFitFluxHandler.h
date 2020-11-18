@@ -16,8 +16,7 @@ namespace core
 namespace flux
 {
 /**
- * This class realizes the IFluxHandler interface to calculate the incident
- * helium flux for a (100) oriented tungsten material using custom input data.
+ * This class realizes the FluxHandler interface for custom input data.
  */
 class CustomFitFluxHandler : public FluxHandler
 {
@@ -33,7 +32,7 @@ private:
 	std::vector<double> totalDepths;
 
 	/**
-	 * The reduction factor between He and other depositions.
+	 * The reduction factors for each deposition.
 	 */
 	std::vector<double> reductionFactors;
 
@@ -43,19 +42,14 @@ private:
 	std::vector<double> normFactors;
 
 	/**
-	 * File path for custom profile
+	 * File path for custom profiles
 	 */
 	fs::path profileFilePath;
 
 	using FluxHandler::FitFunction;
 
 	/**
-	 * Function that calculate the flux of He at a given position x (in nm).
-	 * This function is not normalized. The surface is supposed to be (100).
-	 *
-	 * @param x The position where to evaluate the fit
-	 * @param i The indice of the fit
-	 * @return The evaluated value
+	 * \see FluxHandler.h
 	 */
 	double
 	FitFunction(double x, int i)
@@ -95,7 +89,6 @@ public:
 	}
 
 	/**
-	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
 	void
@@ -289,8 +282,7 @@ public:
 	}
 
 	/**
-	 * This operation computes the flux due to incoming particles at a given
-	 * grid point. \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	void
 	computeIncidentFlux(
@@ -321,10 +313,13 @@ public:
 		return;
 	}
 
+	/**
+	 * \see IFluxHandler.h
+	 */
 	void
 	recomputeFluxHandler(int surfacePos)
 	{
-		// Loop on the different types of clusters, He, W, D, t
+		// Loop on the different types of clusters
 		for (int index = 0; index < fluxIndices.size(); index++) {
 			// Factor the incident flux will be multiplied by
 			double fluxNormalized = 0.0;

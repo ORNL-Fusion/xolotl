@@ -49,7 +49,7 @@ protected:
 	std::vector<int> fluxIndices;
 
 	/**
-	 * Are we using a time profile for the amplitude of the helium incoming
+	 * Are we using a time profile for the amplitude of the incoming
 	 * flux?
 	 */
 	bool useTimeProfile;
@@ -79,24 +79,24 @@ protected:
 	 * @return The evaluated value
 	 */
 	virtual double
-	FitFunction(double)
+	FitFunction(double x)
 	{
 		return 0.0;
 	}
 
 	/**
-	 * This method returns the value of the helium incident flux amplitude at
+	 * This method returns the value of the incident flux amplitude at
 	 * the given time when a time profile is used.
 	 *
 	 * @param currentTime The time
-	 * @return The value of the helium flux at this time
+	 * @return The value of the flux at this time
 	 */
 	double
 	getProfileAmplitude(double currentTime) const;
 
 	/**
 	 * This method recomputes the values of the incident flux vector when
-	 * a time profile is given.
+	 * conditions changed in the simulation.
 	 *
 	 * @param surfacePos The current position of the surface
 	 */
@@ -111,7 +111,6 @@ public:
 	}
 
 	/**
-	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
 	virtual void
@@ -119,64 +118,55 @@ public:
 		std::vector<double> grid);
 
 	/**
-	 * This method reads the values on the time profile file and store them in
-	 * the time and amplitude vectors. \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	virtual void
 	initializeTimeProfile(const std::string& fileName);
 
 	/**
-	 * This operation computes the flux due to incoming particles at a given
-	 * grid point. \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	virtual void
 	computeIncidentFlux(
 		double currentTime, double* updatedConcOffset, int xi, int surfacePos);
 
 	/**
-	 * This operation increments the fluence at the current time step.
 	 * \see IFluxHandler.h
 	 */
 	virtual void
 	incrementFluence(double dt);
 
 	/**
-	 * This operation computes the fluence at the given time.
 	 * \see IFluxHandler.h
 	 */
 	virtual void
 	computeFluence(double time);
 
 	/**
-	 * This operation returns the fluence.
 	 * \see IFluxHandler.h
 	 */
 	virtual double
 	getFluence() const;
 
 	/**
-	 * This operation sets the factor to change the intensity of the flux.
 	 * \see IFluxHandler.h
 	 */
 	virtual void
 	setFluxAmplitude(double flux);
 
 	/**
-	 * This operation gets the factor that changes the flux intensity/amplitude.
 	 * \see IFluxHandler.h
 	 */
 	virtual double
 	getFluxAmplitude() const;
 
 	/**
-	 * This operation gets the flux rate used for re-solution.
 	 * \see IFluxHandler.h
 	 */
 	virtual double
 	getFluxRate() const;
 
 	/**
-	 * This operation sets the time of the pulse.
 	 * \see IFluxHandler.h
 	 */
 	virtual void
@@ -186,7 +176,6 @@ public:
 	}
 
 	/**
-	 * This operation sets proportion of the pulse that is on.
 	 * \see IFluxHandler.h
 	 */
 	virtual void

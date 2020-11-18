@@ -14,22 +14,19 @@ namespace core
 namespace flux
 {
 /**
- * This class realizes the IFluxHandler interface to calculate the incident
+ * This class realizes the FluxHandler interface to calculate the incident
  * xenon flux for nuclear fuel.
  */
 class FuelFitFluxHandler : public FluxHandler
 {
 private:
 	/**
-	 * Function that calculate the flux at a given position x (in nm).
-	 * This function is not normalized. The surface is supposed to be (100).
-	 *
-	 * @param x The position where to evaluate he fit
-	 * @return The evaluated value
+	 * \see FluxHandler.h
 	 */
 	double
 	FitFunction(double x)
 	{
+		// Constant flux
 		return 1.0;
 	}
 
@@ -49,7 +46,6 @@ public:
 	}
 
 	/**
-	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
 	void
@@ -66,11 +62,7 @@ public:
 		// Set the flux index corresponding the the single xenon cluster here
 		using NetworkType = network::NEReactionNetwork;
 		auto& neNetwork = dynamic_cast<NetworkType&>(network);
-		NetworkType::Composition comp;
-		// Initialize the composition
-		for (auto i : neNetwork.getSpeciesRange()) {
-			comp[i] = 0;
-		}
+		NetworkType::Composition comp = NetworkType::Composition::zero();
 		comp[NetworkType::Species::Xe] = 1;
 		auto cluster = neNetwork.findCluster(comp, plsm::onHost);
 		// Check that the helium cluster is present in the network
@@ -85,8 +77,7 @@ public:
 	}
 
 	/**
-	 * This operation computes the flux due to incoming particles at a given
-	 * grid point. \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	void
 	computeIncidentFlux(
@@ -95,12 +86,6 @@ public:
 		// Skip if no index was set
 		if (fluxIndices.size() == 0)
 			return;
-
-		// 0D Case
-		if (xGrid.size() == 0) {
-			updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
-			return;
-		}
 
 		// Update the concentration array
 		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;

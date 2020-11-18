@@ -12,18 +12,14 @@ namespace core
 namespace flux
 {
 /**
- * This class realizes the IFluxHandler interface to calculate the incident
+ * This class realizes the PSIFluxHandler interface to calculate the incident
  * helium flux for a (211) oriented tungsten material.
  */
 class W211FitFluxHandler : public PSIFluxHandler
 {
 private:
 	/**
-	 * Function that calculate the flux at a given position x (in nm).
-	 * This function is not normalized. The surface is supposed to be (211).
-	 *
-	 * @param x The position where to evaluate the fit
-	 * @return The evaluated value
+	 * \see FluxHandler.h
 	 */
 	double
 	FitFunction(double x)

@@ -31,7 +31,6 @@ public:
 	}
 
 	/**
-	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
 	void
@@ -45,7 +44,7 @@ public:
 		if (util::equal(fluxAmplitude, 0.0) && !useTimeProfile)
 			return;
 
-		// Set the flux index corresponding the the single helium cluster here
+		// Set the flux index corresponding the single helium cluster here
 		using NetworkType = network::IPSIReactionNetwork;
 		using AmountType = NetworkType::AmountType;
 
@@ -53,7 +52,6 @@ public:
 		auto numSpecies = psiNetwork->getSpeciesListSize();
 		auto specIdHe = psiNetwork->getHeliumSpeciesId();
 
-		// Set the flux index corresponding the the single helium cluster here
 		auto comp = std::vector<AmountType>(numSpecies, 0);
 		comp[specIdHe()] = 1;
 		auto clusterId = psiNetwork->findClusterId(comp);

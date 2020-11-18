@@ -14,7 +14,7 @@ namespace core
 namespace flux
 {
 /**
- * This class realizes the IFluxHandler interface to calculate the incident V
+ * This class realizes the FluxHandler interface to calculate the incident V
  * and I flux for tungsten material with a flux amplitude being intermittent.
  */
 class PulsedFitFluxHandler : public FluxHandler
@@ -37,11 +37,7 @@ private:
 	double sigma = 100.0;
 
 	/**
-	 * Function that calculate the flux at a given position x (in nm).
-	 * This function is not normalized.
-	 *
-	 * @param x The position where to evaluate the fit
-	 * @return The evaluated value
+	 * \see FluxHandler.h
 	 */
 	double
 	FitFunction(double x)
@@ -71,7 +67,6 @@ public:
 	}
 
 	/**
-	 * Compute and store the incident flux values at each grid point.
 	 * \see IFluxHandler.h
 	 */
 	void
@@ -95,7 +90,6 @@ public:
 		auto specIdV = psiNetwork->getVacancySpeciesId();
 		auto specIdI = psiNetwork->getInterstitialSpeciesId();
 
-		// Set the flux index corresponding the the single helium cluster here
 		auto comp = std::vector<AmountType>(numSpecies, 0);
 		comp[specIdV()] = 1;
 		auto clusterId = psiNetwork->findClusterId(comp);
@@ -108,7 +102,8 @@ public:
 		fluxIndices.push_back(clusterId);
 
 		// Set the flux index corresponding the the single interstitial cluster
-		// here Initialize the composition
+		// here
+		// Initialize the composition
 		comp.assign(numSpecies, 0);
 		comp[specIdI()] = 1;
 		clusterId = psiNetwork->findClusterId(comp);
@@ -122,8 +117,7 @@ public:
 	}
 
 	/**
-	 * This operation computes the flux due to incoming particles at a given
-	 * grid point. \see IFluxHandler.h
+	 * \see IFluxHandler.h
 	 */
 	void
 	computeIncidentFlux(
@@ -146,7 +140,6 @@ public:
 	}
 
 	/**
-	 * This operation sets the time of the pulse.
 	 * \see IFluxHandler.h
 	 */
 	void
@@ -157,7 +150,6 @@ public:
 	}
 
 	/**
-	 * This operation sets proportion of the pulse that is on.
 	 * \see IFluxHandler.h
 	 */
 	void
