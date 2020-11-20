@@ -82,7 +82,7 @@ XFile::HeaderGroup::HeaderGroup(const XFile& file,
 	Attribute<decltype(nx)> nxAttr(*this, nxAttrName, scalarDSpace);
 	nxAttr.setTo(nx);
 
-	// Add an hy attribute.
+	// Add an hx attribute.
 	double hx = 0.0;
 	if (grid.size() > 0)
 		hx = grid[1] - grid[0];

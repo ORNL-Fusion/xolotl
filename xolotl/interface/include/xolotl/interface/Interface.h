@@ -55,6 +55,9 @@ public:
 
 	/**
 	 * The initializing constructor
+	 *
+	 * @param argc, argv The command line arguments
+	 * @param MPI_Comm The communicator to use
 	 */
 	XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm = MPI_COMM_WORLD);
 
@@ -95,7 +98,7 @@ public:
 	solveXolotl();
 
 	/**
-	 * Get the local Xe rate that needs to be passed
+	 * Get the vector of data that can be passed to an app
 	 *
 	 * @return The vector
 	 */
@@ -103,7 +106,7 @@ public:
 	getLocalNE();
 
 	/**
-	 * Set the local Xe rate
+	 * Set the vector of data from an app
 	 *
 	 * @param The vector
 	 */
@@ -113,7 +116,7 @@ public:
 			rateVector);
 
 	/**
-	 * Get the local Xe rate that needs to be passed
+	 * Get the local coordinates of the grid, sizes and indices
 	 *
 	 * @param xs, xm The start and width in the X direction on the local MPI
 	 * process

@@ -31,8 +31,8 @@ checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
 #endif
 
 /**
- * This class and its subclasses realize the ISolverHandler interface to solve
- * the advection-diffusion-reaction problem with the PETSc solvers from Argonne
+ * This class and its subclasses realize the SolverHandler interface to solve
+ * the diffusion-reaction problem with the PETSc solvers from Argonne
  * National Laboratory.
  *
  * This class does NOT implement most of the methods that are needed by the

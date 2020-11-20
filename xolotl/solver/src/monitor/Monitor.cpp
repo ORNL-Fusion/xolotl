@@ -78,9 +78,9 @@ monitorTime(TS, PetscInt, PetscReal time, Vec, void*)
 }
 
 #undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeHeliumFluence")
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeFluence")
 /**
- * This is a monitoring method that will compute the total helium fluence
+ * This is a monitoring method that will compute the total fluence
  */
 PetscErrorCode
 computeFluence(TS, PetscInt, PetscReal time, Vec, void*)

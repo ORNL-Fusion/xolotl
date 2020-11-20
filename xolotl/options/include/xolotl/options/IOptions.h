@@ -32,7 +32,7 @@ public:
 	 * Read the parameters from the given file to set the different
 	 * Xolotl options.
 	 *
-	 * @param argv Vector of argument strings
+	 * @param argc, argv Argument strings
 	 */
 	virtual void
 	readParams(int argc, char* argv[]) = 0;
@@ -134,16 +134,16 @@ public:
 	getFluxAmplitude() const = 0;
 
 	/**
-	 * Should we use a time profile for the helium flux?
+	 * Should we use a time profile for the flux?
 	 *
-	 * @return True is a time profile file is given for the helium flux
+	 * @return True is a time profile file is given for the flux
 	 */
 	virtual bool
 	useFluxTimeProfile() const = 0;
 
 	/**
 	 * Obtain the name of the file containing the time profile data for the
-	 * helium flux.
+	 * flux.
 	 *
 	 * @return The name of the file
 	 */

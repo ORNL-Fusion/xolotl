@@ -362,7 +362,7 @@ computeTRIDYN1D(
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop1D")
 /**
- * This is a monitoring method that update an hdf5 file at each time step.
+ * This is a monitoring method that update an hdf5 file every given time.
  */
 PetscErrorCode
 startStop1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
@@ -1165,6 +1165,7 @@ profileTemperature1D(
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeAlloy1D")
 /**
  * This is a monitoring method that will compute average density and diameter
+ * of defects
  */
 PetscErrorCode
 computeAlloy1D(
@@ -1225,16 +1226,6 @@ computeAlloy1D(
 	const int dof = network.getDOF();
 	auto numSpecies = network.getSpeciesListSize();
 	auto myData = std::vector<double>(numSpecies * 4, 0.0);
-
-	// Initial declarations for the density and diameter
-	double iDensity = 0.0, vDensity = 0.0, voidDensity = 0.0,
-		   frankDensity = 0.0, faultedDensity = 0.0, perfectDensity = 0.0,
-		   voidPartialDensity = 0.0, frankPartialDensity = 0.0,
-		   faultedPartialDensity = 0.0, perfectPartialDensity = 0.0,
-		   iDiameter = 0.0, vDiameter = 0.0, voidDiameter = 0.0,
-		   frankDiameter = 0.0, faultedDiameter = 0.0, perfectDiameter = 0.0,
-		   voidPartialDiameter = 0.0, frankPartialDiameter = 0.0,
-		   faultedPartialDiameter = 0.0, perfectPartialDiameter = 0.0;
 
 	// Get the minimum size for the loop densities and diameters
 	auto minSizes = solverHandler.getMinSizes();
@@ -2143,7 +2134,8 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 
 /**
  * This operation sets up different monitors
- *  depending on the options.
+ * depending on the options.
+ *
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
@@ -2573,8 +2565,7 @@ setupPetsc1DMonitor(TS ts)
 			ierr, "setupPetsc1DMonitor: TSMonitorSet (monitorPerf) failed.");
 	}
 
-	// Set the monitor to compute the helium fluence and the retention
-	// for the retention calculation
+	// Set the monitor to compute the helium retention
 	if (flagHeRetention) {
 		// Get the previous time if concentrations were stored and initialize
 		// the fluence
@@ -2681,8 +2672,7 @@ setupPetsc1DMonitor(TS ts)
 		}
 	}
 
-	// Set the monitor to compute the xenon fluence and the retention
-	// for the retention calculation
+	// Set the monitor to compute the xenon retention
 	if (flagXeRetention) {
 		// Get the da from ts
 		DM da;

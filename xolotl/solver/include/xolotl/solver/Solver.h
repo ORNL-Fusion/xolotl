@@ -12,7 +12,7 @@ namespace solver
 {
 /**
  * This class and its subclasses realize the ISolver interface to solve the
- * advection-diffusion-reaction problem with currently supported solvers.
+ * diffusion-reaction problem with currently supported solvers.
  */
 class Solver : public ISolver
 {
@@ -56,11 +56,7 @@ public:
 	virtual ~Solver(){};
 
 	/**
-	 * This operation transfers the input arguments passed to the program on
-	 * startup to the solver. These options are static options specified at
-	 * the start of the program whereas the options passed to setOptions() may
-	 * change.
-	 * @param arg The string of arguments
+	 * \see ISolver.h
 	 */
 	void
 	setCommandLineOptions(std::string arg);
@@ -69,7 +65,8 @@ public:
 	 * This operation returns the solver handler for this solver. This
 	 * operation is only for use by solver code and is not part of the
 	 * ISolver interface.
-	 * @return The advection handler for this solver
+	 *
+	 * @return The solver handler for this solver
 	 */
 	static handler::ISolverHandler&
 	getSolverHandler()

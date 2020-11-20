@@ -318,7 +318,7 @@ Options::readParams(int argc, char* argv[])
 
 		// Take care of the performance handler
 		if (opts.count("perfHandler")) {
-			std::string perfHandlers[] = {"dummy", "std", "os", "papi"};
+			std::string perfHandlers[] = {"dummy", "os", "papi"};
 			if (std::find(begin(perfHandlers), end(perfHandlers),
 					perfHandlerName) == end(perfHandlers)) {
 				std::cerr << "\nOptions: could not understand the performance "

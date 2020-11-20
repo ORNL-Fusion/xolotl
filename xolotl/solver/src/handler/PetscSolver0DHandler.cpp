@@ -15,6 +15,7 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	PetscErrorCode ierr;
 
 	// Degrees of freedom is the total number of clusters in the network
+	// + moments
 	const int dof = network.getDOF();
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -36,14 +37,9 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	checkPetscError(
 		ierr, "PetscSolver0DHandler::createSolverContext: DMSetUp failed.");
 
-	/*  The only spatial coupling in the Jacobian is due to diffusion.
-	 *  The ofill (thought of as a dof by dof 2d (row-oriented) array represents
-	 *  the nonzero coupling between degrees of freedom at one point with
-	 * degrees of freedom on the adjacent point to the left or right. A 1 at i,j
-	 * in the ofill array indicates that the degree of freedom i at a point is
-	 * coupled to degree of freedom j at the adjacent point. In this case ofill
-	 * has only a few diagonal entries since the only spatial coupling is
-	 * regular diffusion.
+	/* The ofill (thought of as a dof by dof 2d (row-oriented) array represents
+	 * the nonzero coupling between degrees of freedom at one point with
+	 * degrees of freedom on the adjacent point to the left or right.
 	 */
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
@@ -92,7 +88,7 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	PetscScalar* concOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	// + the super clusters
+	// + moments
 	const int dof = network.getDOF();
 
 	// Get the single vacancy ID
@@ -268,7 +264,7 @@ PetscSolver0DHandler::updateConcentration(
 		"TSGetDM failed.");
 
 	// Pointers to the PETSc arrays that start at the beginning of the
-	// local array!
+	// local array
 	PetscScalar **concs = nullptr, **updatedConcs = nullptr;
 	// Get pointers to vector data
 	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
@@ -292,7 +288,8 @@ PetscSolver0DHandler::updateConcentration(
 	concOffset = concs[0];
 	updatedConcOffset = updatedConcs[0];
 
-	// Degrees of freedom is the total number of clusters in the network
+	// Degrees of freedom is the total number of clusters in the network +
+	// moments
 	const int dof = network.getDOF();
 
 	// Get the temperature from the temperature handler
@@ -363,7 +360,8 @@ PetscSolver0DHandler::computeJacobian(
 	// Pointer to the concentrations at a given grid point
 	PetscScalar* concOffset = nullptr;
 
-	// Degrees of freedom is the total number of clusters in the network
+	// Degrees of freedom is the total number of clusters in the network +
+	// moments
 	const int dof = network.getDOF();
 
 	// Arguments for MatSetValuesStencil called below

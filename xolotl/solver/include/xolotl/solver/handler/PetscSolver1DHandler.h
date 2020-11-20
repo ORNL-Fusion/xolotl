@@ -12,7 +12,7 @@ namespace handler
 {
 /**
  * This class is a subclass of PetscSolverHandler and implement all the methods
- * needed to solve the ADR equations in 1D using PETSc from Argonne National
+ * needed to solve the DR equations in 1D using PETSc from Argonne National
  * Laboratory.
  */
 class PetscSolver1DHandler : public PetscSolverHandler
@@ -22,9 +22,6 @@ private:
 	int surfacePosition;
 
 public:
-	/**
-	 * Construct a PetscSolver1DHandler.
-	 */
 	PetscSolver1DHandler() = delete;
 
 	/**
@@ -44,36 +41,31 @@ public:
 	}
 
 	/**
-	 * Create everything needed before starting to solve.
 	 * \see ISolverHandler.h
 	 */
 	void
 	createSolverContext(DM& da);
 
 	/**
-	 * Initialize the concentration solution vector.
 	 * \see ISolverHandler.h
 	 */
 	void
 	initializeConcentration(DM& da, Vec& C);
 
 	/**
-	 * Set the concentrations to 0.0 where the GBs are.
 	 * \see ISolverHandler.h
 	 */
 	void
 	initGBLocation(DM& da, Vec& C);
 
 	/**
-	 * This operation get the concentration vector with the ids.
 	 * \see ISolverHandler.h
 	 */
 	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
 	getConcVector(DM& da, Vec& C);
 
 	/**
-	 * This operation sets the concentration vector in the current state of the
-	 * simulation. \see ISolverHandler.h
+	 * \see ISolverHandler.h
 	 */
 	void
 	setConcVector(DM& da, Vec& C,
@@ -82,22 +74,18 @@ public:
 			concVector);
 
 	/**
-	 * Compute the new concentrations for the RHS function given an initial
-	 * vector of concentrations. Apply the diffusion, advection and all the
-	 * reactions. \see ISolverHandler.h
+	 * \see ISolverHandler.h
 	 */
 	void
 	updateConcentration(TS& ts, Vec& localC, Vec& F, PetscReal ftime);
 
 	/**
-	 * Compute the full Jacobian.
 	 * \see ISolverHandler.h
 	 */
 	void
 	computeJacobian(TS& ts, Vec& localC, Mat& J, PetscReal ftime);
 
 	/**
-	 * Get the position of the surface.
 	 * \see ISolverHandler.h
 	 */
 	int
@@ -107,7 +95,6 @@ public:
 	}
 
 	/**
-	 * Set the position of the surface.
 	 * \see ISolverHandler.h
 	 */
 	void

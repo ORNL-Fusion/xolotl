@@ -172,7 +172,6 @@ protected:
 	 * @param nx The number of grid points
 	 * @param hx The step size
 	 * @param surfacePos The position of the surface on the grid
-	 * @param isPSI To know if we want a PSI grid or a NE grid
 	 */
 	void
 	generateGrid(int nx, double hx, int surfacePos)
@@ -484,8 +483,7 @@ public:
 	}
 
 	/**
-	 * Initialize all the physics handlers that are needed to solve the ADR
-	 * equations. \see ISolverHandler.h
+	 * \see ISolverHandler.h
 	 */
 	void
 	initializeHandlers(
@@ -656,7 +654,6 @@ public:
 	}
 
 	/**
-	 * Get the grid in the x direction.
 	 * \see ISolverHandler.h
 	 */
 	std::vector<double>
@@ -666,7 +663,6 @@ public:
 	}
 
 	/**
-	 * Get the step size in the y direction.
 	 * \see ISolverHandler.h
 	 */
 	double
@@ -676,7 +672,6 @@ public:
 	}
 
 	/**
-	 * Get the step size in the z direction.
 	 * \see ISolverHandler.h
 	 */
 	double
@@ -686,7 +681,6 @@ public:
 	}
 
 	/**
-	 * Get the number of dimensions of the problem.
 	 * \see ISolverHandler.h
 	 */
 	int
@@ -696,7 +690,6 @@ public:
 	}
 
 	/**
-	 * Get the initial vacancy concentration.
 	 * \see ISolverHandler.h
 	 */
 	double
@@ -706,7 +699,6 @@ public:
 	}
 
 	/**
-	 * Get the sputtering yield.
 	 * \see ISolverHandler.h
 	 */
 	double
@@ -716,7 +708,6 @@ public:
 	}
 
 	/**
-	 * Get the depth parameter for bursting.
 	 * \see ISolverHandler.h
 	 */
 	double
@@ -726,7 +717,6 @@ public:
 	}
 
 	/**
-	 * Get the bursting factor.
 	 * \see ISolverHandler.h
 	 */
 	double
@@ -736,7 +726,6 @@ public:
 	}
 
 	/**
-	 * Get the HeV ratio.
 	 * \see ISolverHandler.h
 	 */
 	double
@@ -746,7 +735,6 @@ public:
 	}
 
 	/**
-	 * Create the local Xe rate vector.
 	 * \see ISolverHandler.h
 	 */
 	void
@@ -766,7 +754,6 @@ public:
 	}
 
 	/**
-	 * Set the latest value of the local Xe rate.
 	 * \see ISolverHandler.h
 	 */
 	void
@@ -776,7 +763,6 @@ public:
 	}
 
 	/**
-	 * Set the whole vector of local Xe rate.
 	 * \see ISolverHandler.h
 	 */
 	void
@@ -788,7 +774,6 @@ public:
 	}
 
 	/**
-	 * Get the local Xe rate vector that needs to be passed.
 	 * \see ISolverHandler.h
 	 */
 	std::vector<std::vector<std::vector<std::array<double, 4>>>>&
@@ -798,7 +783,6 @@ public:
 	}
 
 	/**
-	 * Set the latest value of the Xe flux.
 	 * \see ISolverHandler.h
 	 */
 	void
@@ -808,7 +792,6 @@ public:
 	}
 
 	/**
-	 * Set the latest value of the Xe monomer concentration.
 	 * \see ISolverHandler.h
 	 */
 	void
@@ -818,7 +801,6 @@ public:
 	}
 
 	/**
-	 * Set the latest value of the volume fraction.
 	 * \see ISolverHandler.h
 	 */
 	void
@@ -828,7 +810,6 @@ public:
 	}
 
 	/**
-	 * Set the coordinates covered by the local grid.
 	 * \see ISolverHandler.h
 	 */
 	void
@@ -841,39 +822,9 @@ public:
 		localYM = ym;
 		localZS = zs;
 		localZM = zm;
-
-		// Check for free surface boundaries
-
-		// Read the parameter file
-		std::ifstream paramFile;
-		paramFile.open(gbFileName);
-		if (paramFile.good()) {
-			// Build an input stream from the string
-			util::TokenizedLineReader<int> reader;
-			// Get the line
-			std::string line;
-			getline(paramFile, line);
-			auto lineSS = std::make_shared<std::istringstream>(line);
-			reader.setInputStream(lineSS);
-
-			// Read the first line
-			auto tokens = reader.loadLine();
-			// And start looping on the lines
-			while (tokens.size() > 0) {
-				// Add the coordinates to the GB vector
-				setGBLocation(tokens[0], tokens[1], tokens[2]);
-
-				// Read the next line
-				getline(paramFile, line);
-				lineSS = std::make_shared<std::istringstream>(line);
-				reader.setInputStream(lineSS);
-				tokens = reader.loadLine();
-			}
-		}
 	}
 
 	/**
-	 * Get the coordinates covered by the local grid.
 	 * \see ISolverHandler.h
 	 */
 	void
@@ -892,7 +843,6 @@ public:
 	}
 
 	/**
-	 * Get the grid left offset.
 	 * \see ISolverHandler.h
 	 */
 	int
@@ -902,7 +852,6 @@ public:
 	}
 
 	/**
-	 * Get the grid right offset.
 	 * \see ISolverHandler.h
 	 */
 	int
@@ -912,7 +861,6 @@ public:
 	}
 
 	/**
-	 * To know if the surface should be able to move.
 	 * \see ISolverHandler.h
 	 */
 	bool
@@ -922,7 +870,6 @@ public:
 	}
 
 	/**
-	 * To know if the bubble bursting should be used.
 	 * \see ISolverHandler.h
 	 */
 	bool
@@ -932,7 +879,6 @@ public:
 	}
 
 	/**
-	 * Get the previous time.
 	 * \see ISolverHandler.h
 	 */
 	double
@@ -942,7 +888,6 @@ public:
 	}
 
 	/**
-	 * Set the previous time.
 	 * \see ISolverHandler.h
 	 */
 	void
@@ -954,7 +899,6 @@ public:
 	}
 
 	/**
-	 * Get the number of Xe that went to the GB.
 	 * \see ISolverHandler.h
 	 */
 	double
@@ -964,7 +908,6 @@ public:
 	}
 
 	/**
-	 * Set the number of Xe that went to the GB.
 	 * \see ISolverHandler.h
 	 */
 	void
@@ -974,7 +917,6 @@ public:
 	}
 
 	/**
-	 * Get the minimum size for computing average radius.
 	 * \see ISolverHandler.h
 	 */
 	std::vector<size_t>
@@ -984,7 +926,6 @@ public:
 	}
 
 	/**
-	 * Get the flux handler.
 	 * \see ISolverHandler.h
 	 */
 	core::flux::IFluxHandler*
@@ -994,7 +935,6 @@ public:
 	}
 
 	/**
-	 * Get the temperature handler.
 	 * \see ISolverHandler.h
 	 */
 	core::temperature::ITemperatureHandler*
@@ -1004,7 +944,6 @@ public:
 	}
 
 	/**
-	 * Get the diffusion handler.
 	 * \see ISolverHandler.h
 	 */
 	core::diffusion::IDiffusionHandler*
@@ -1014,7 +953,6 @@ public:
 	}
 
 	/**
-	 * Get the advection handler.
 	 * \see ISolverHandler.h
 	 */
 	core::advection::IAdvectionHandler*
@@ -1024,7 +962,6 @@ public:
 	}
 
 	/**
-	 * Get the advection handlers.
 	 * \see ISolverHandler.h
 	 */
 	std::vector<core::advection::IAdvectionHandler*>
@@ -1034,7 +971,6 @@ public:
 	}
 
 	/**
-	 * Get the modified trap-mutation handler.
 	 * \see ISolverHandler.h
 	 */
 	core::modified::ITrapMutationHandler*
@@ -1044,7 +980,6 @@ public:
 	}
 
 	/**
-	 * Get the network.
 	 * \see ISolverHandler.h
 	 */
 	virtual core::network::IReactionNetwork&
@@ -1054,7 +989,6 @@ public:
 	}
 
 	/**
-	 * Get the network name.
 	 * \see ISolverHandler.h
 	 */
 	std::string
@@ -1064,10 +998,7 @@ public:
 	}
 
 	/**
-	 * Access the random number generator
-	 * The generator will have already been seeded.
-	 *
-	 * @return The RandomNumberGenerator object to use.
+	 * \see ISolverHandler.h
 	 */
 	util::RandomNumberGenerator<int, unsigned int>&
 	getRNG(void) const override
@@ -1076,20 +1007,7 @@ public:
 	}
 
 	/**
-	 * Set the file name containing the location of GB.
-	 *
-	 * @param name The filename
-	 */
-	void
-	setGBFileName(std::string name) override
-	{
-		gbFileName = name;
-	}
-
-	/**
-	 * Get the vector containing the location of GB.
-	 *
-	 * @return The GB vector
+	 * \see ISolverHandler.h
 	 */
 	std::vector<std::array<int, 3>>
 	getGBVector() const override
@@ -1098,9 +1016,7 @@ public:
 	}
 
 	/**
-	 * Set the location of one GB grid point.
-	 *
-	 * @param i, j, k The coordinate of the GB
+	 * \see ISolverHandler.h
 	 */
 	void
 	setGBLocation(int i, int j = 0, int k = 0) override
@@ -1114,71 +1030,12 @@ public:
 	}
 
 	/**
-	 * Reset the GB vector.
+	 * \see ISolverHandler.h
 	 */
 	void
 	resetGBVector() override
 	{
 		gbVector.clear();
-	}
-
-	/**
-	 * Get the coordinates covered by the local grid using copying method.
-	 * \see ISolverHandler.h
-	 */
-	void
-	getLocalCoordinatesCpy(int* xs, int* xm, int* Mx, int* ys, int* ym, int* My,
-		int* zs, int* zm, int* Mz) override
-	{
-		*xs = localXS;
-		*xm = localXM;
-		*Mx = nX;
-		*ys = localYS;
-		*ym = localYM;
-		*My = nY;
-		*zs = localZS;
-		*zm = localZM;
-		*Mz = nZ;
-	}
-
-	/**
-	 * Passing the XeRate at i,j,k point.
-	 * \see ISolverHandler.h
-	 */
-	double
-	getXeRatePoint(int i, int j, int k) override
-	{
-		return std::get<0>(localNE[i][j][k]);
-	}
-
-	/**
-	 * Passing the XeFlux at i,j,k point.
-	 * \see ISolverHandler.h
-	 */
-	double
-	getXeFluxPoint(int i, int j, int k) override
-	{
-		return std::get<1>(localNE[i][j][k]);
-	}
-
-	/**
-	 * Passing the XeConc at i,j,k point.
-	 * \see ISolverHandler.h
-	 */
-	double
-	getXeConcPoint(int i, int j, int k) override
-	{
-		return std::get<2>(localNE[i][j][k]);
-	}
-
-	/**
-	 * Passing the XeVolFrac at i,j,k point.
-	 * \see ISolverHandler.h
-	 */
-	double
-	getXeVolFracPoint(int i, int j, int k) override
-	{
-		return std::get<3>(localNE[i][j][k]);
 	}
 };
 // end class SolverHandler

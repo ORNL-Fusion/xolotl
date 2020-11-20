@@ -17,6 +17,7 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 	PetscErrorCode ierr;
 
 	// Degrees of freedom is the total number of clusters in the network
+	// + moments
 	const int dof = network.getDOF();
 
 	// Set the position of the surface
@@ -46,7 +47,7 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 		}
 	}
 
-	// Prints the grid on one process
+	// Prints info on one process
 	auto xolotlComm = util::getMPIComm();
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
@@ -108,17 +109,12 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 		ierr, "PetscSolver2DHandler::createSolverContext: DMSetUp failed.");
 
 	// Initialize the surface of the first advection handler corresponding to
-	// the advection toward the surface (or a dummy one if it is deactivated)
+	// the advection toward the surface
 	advectionHandlers[0]->setLocation(grid[surfacePosition[0] + 1] - grid[1]);
 
-	/*  The only spatial coupling in the Jacobian is due to diffusion.
-	 *  The ofill (thought of as a dof by dof 2d (row-oriented) array represents
-	 *  the nonzero coupling between degrees of freedom at one point with
-	 * degrees of freedom on the adjacent point to the left or right. A 1 at i,j
-	 * in the ofill array indicates that the degree of freedom i at a point is
-	 * coupled to degree of freedom j at the adjacent point. In this case ofill
-	 * has only a few diagonal entries since the only spatial coupling is
-	 * regular diffusion.
+	/* The ofill (thought of as a dof by dof 2d (row-oriented) array represents
+	 * the nonzero coupling between degrees of freedom at one point with
+	 * degrees of freedom on the adjacent point.
 	 */
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
@@ -218,7 +214,7 @@ PetscSolver2DHandler::initializeConcentration(DM& da, Vec& C)
 	PetscScalar* concOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	// + the super clusters
+	// + moments
 	const int dof = network.getDOF();
 
 	// Get the single vacancy ID
@@ -327,7 +323,7 @@ PetscSolver2DHandler::initGBLocation(DM& da, Vec& C)
 	PetscScalar* concOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	// + the super clusters
+	// + moments
 	const int dof = network.getDOF();
 
 	// Need to use the NE network here
@@ -530,7 +526,7 @@ PetscSolver2DHandler::updateConcentration(
 		ierr, "PetscSolver2DHandler::updateConcentration: TSGetDM failed.");
 
 	// Pointers to the PETSc arrays that start at the beginning (localXS,
-	// localYS) of the local array!
+	// localYS) of the local array
 	PetscScalar ***concs = nullptr, ***updatedConcs = nullptr;
 	// Get pointers to vector data
 	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);

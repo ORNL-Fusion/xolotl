@@ -140,7 +140,7 @@ monitorLargest3D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop3D")
 /**
- * This is a monitoring method that will update an hdf5 file at each time step.
+ * This is a monitoring method that will update an hdf5 file every given time.
  */
 PetscErrorCode
 startStop3D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)

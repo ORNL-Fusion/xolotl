@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "networkFile=tungsten.txt" << std::endl
 		<< "tempHandler=constant" << std::endl
 		<< "tempParam=900" << std::endl
-		<< "perfHandler=std" << std::endl
+		<< "perfHandler=os" << std::endl
 		<< "flux=1.5" << std::endl
 		<< "material=W100" << std::endl
 		<< "initialV=0.05" << std::endl
@@ -178,7 +178,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getFluxAmplitude(), 1.5);
 
 	// Check the performance handler
-	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "std");
+	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "os");
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.getVizHandlerName(), "std");

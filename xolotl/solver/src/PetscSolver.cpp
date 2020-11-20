@@ -12,21 +12,11 @@
 #include <xolotl/util/MPIUtils.h>
 
 /*
- C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from Brian Wirth's SciDAC project.
+ C_t =  -D*C_xx + F(C) + R(C)  from Brian Wirth's SciDAC project.
 
- D*C_xx  - diffusion of He and V and I
- A*C_x   - advection of He
- F(C)    - forcing function; He being created.
- R(C)    - reaction terms   (clusters combining)
- D(C)    - dissociation terms (cluster breaking up)
-
- Sample Options:
- -da_grid_x <nx>						 -- number of grid points in the x
- direction -ts_max_steps <maxsteps>                -- maximum number of
- time-steps to take -ts_final_time <time>                   -- maximum time to
- compute to -ts_dt <size>							 -- initial size of the time
- step
-
+ D*C_xx  - diffusion
+ F(C)    - forcing function; impurities being created.
+ R(C)    - reaction terms   (production and dissociation)
  */
 
 namespace xolotl
@@ -53,7 +43,7 @@ std::shared_ptr<perf::ITimer> SolveTimer;
 PetscOptions* petscOptions = nullptr;
 
 // Help message
-static char help[] = "Solves C_t =  -D*C_xx + A*C_x + F(C) + R(C) + D(C) from "
+static char help[] = "Solves C_t =  -D*C_xx + F(C) + R(C) + from "
 					 "Brian Wirth's SciDAC project.\n";
 
 // ----- GLOBAL VARIABLES ----- //
@@ -171,7 +161,6 @@ RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void*)
 	// Get the solver handler
 	auto& solverHandler = Solver::getSolverHandler();
 
-	/* ----- Compute the partial derivatives for the reaction term ----- */
 	solverHandler.computeJacobian(ts, localC, J, ftime);
 
 	// Return the local vector
@@ -235,16 +224,6 @@ PetscSolver::PetscSolver(handler::ISolverHandler& _solverHandler,
 }
 
 PetscSolver::~PetscSolver()
-{
-}
-
-void
-PetscSolver::setOptions(const std::map<std::string, std::string>&)
-{
-}
-
-void
-PetscSolver::setupMesh()
 {
 }
 

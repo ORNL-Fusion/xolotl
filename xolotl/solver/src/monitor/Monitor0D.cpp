@@ -39,8 +39,6 @@ monitorTime(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx);
 extern PetscErrorCode
 computeFluence(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx);
-extern PetscErrorCode
-monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx);
 
 // Declaration of the variables defined in Monitor.cpp
 extern std::shared_ptr<viz::IPlot> perfPlot;
@@ -114,7 +112,7 @@ monitorLargest0D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop0D")
 /**
- * This is a monitoring method that update an hdf5 file at each time step.
+ * This is a monitoring method that update an hdf5 file every given time.
  */
 PetscErrorCode
 startStop0D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
@@ -174,9 +172,6 @@ startStop0D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 		timestep, time, previousTime, currentTimeStep);
 
 	// Determine the concentration values we will write.
-	// We only examine and collect the grid points we own.
-	// TODO measure impact of us building the flattened representation
-	// rather than a ragged 2D representation.
 	io::XFile::TimestepGroup::Concs1DType concs(1);
 
 	// Access the solution data for the current grid point.
@@ -297,6 +292,7 @@ computeXenonRetention0D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeAlloy0D")
 /**
  * This is a monitoring method that will compute average density and diameter
+ * of defects.
  */
 PetscErrorCode
 computeAlloy0D(
@@ -380,7 +376,7 @@ computeAlloy0D(
 	// Close the output file
 	outputFile.close();
 
-	// Restore the PETSC solution array
+	// Restore the PETSc solution array
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
@@ -566,6 +562,7 @@ monitorBubble0D(
 /**
  * This operation sets up different monitors
  *  depending on the options.
+ *
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
@@ -578,18 +575,13 @@ setupPetsc0DMonitor(TS ts)
 	auto vizHandlerRegistry = viz::VizHandlerRegistry::get();
 
 	// Flags to launch the monitors or not
-	PetscBool flagCheck, flag1DPlot, flagBubble, flagPerf, flagStatus,
-		flagAlloy, flagXeRetention, flagLargest;
+	PetscBool flagCheck, flag1DPlot, flagBubble, flagStatus, flagAlloy,
+		flagXeRetention, flagLargest;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
 	checkPetscError(ierr,
 		"setupPetsc0DMonitor: PetscOptionsHasName (-check_collapse) failed.");
-
-	// Check the option -plot_perf
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
-	checkPetscError(
-		ierr, "setupPetsc0DMonitor: PetscOptionsHasName (-plot_perf) failed.");
 
 	// Check the option -plot_1d
 	ierr = PetscOptionsHasName(NULL, NULL, "-plot_1d", &flag1DPlot);
@@ -763,35 +755,6 @@ setupPetsc0DMonitor(TS ts)
 		ierr = TSMonitorSet(ts, monitorScatter0D, NULL, NULL);
 		checkPetscError(ierr,
 			"setupPetsc0DMonitor: TSMonitorSet (monitorScatter0D) failed.");
-	}
-
-	// Set the monitor to save performance plots (has to be in parallel)
-	if (flagPerf) {
-		// Create a ScatterPlot
-		perfPlot =
-			vizHandlerRegistry->getPlot("perfPlot", viz::PlotType::SCATTER);
-
-		// Create and set the label provider
-		auto labelProvider =
-			std::make_shared<viz::LabelProvider>("labelProvider");
-		labelProvider->axis1Label = "Process ID";
-		labelProvider->axis2Label = "Solver Time";
-
-		// Give it to the plot
-		perfPlot->setLabelProvider(labelProvider);
-
-		// Create the data provider
-		auto dataProvider =
-			std::make_shared<viz::dataprovider::CvsXDataProvider>(
-				"dataProvider");
-
-		// Give it to the plot
-		perfPlot->setDataProvider(dataProvider);
-
-		// monitorPerf will be called at each timestep
-		ierr = TSMonitorSet(ts, monitorPerf, NULL, NULL);
-		checkPetscError(
-			ierr, "setupPetsc0DMonitor: TSMonitorSet (monitorPerf) failed.");
 	}
 
 	// Set the monitor to save text file of the mean concentration of bubbles

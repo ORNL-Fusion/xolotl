@@ -374,7 +374,7 @@ public:
 		/**
 		 * Determine if we have any TimestepGroups.
 		 *
-		 * @return True iff any TimestepGroups have been written.
+		 * @return True if any TimestepGroups have been written.
 		 */
 		bool
 		hasTimesteps(void) const

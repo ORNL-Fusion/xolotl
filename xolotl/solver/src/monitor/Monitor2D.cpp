@@ -154,7 +154,7 @@ monitorLargest2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop2D")
 /**
- * This is a monitoring method that will update an hdf5 file at each time step.
+ * This is a monitoring method that will update an hdf5 file every given time.
  */
 PetscErrorCode
 startStop2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
@@ -1128,27 +1128,51 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			// We want the position just at the surface now
 			xi = surfacePos;
 			// Do the left side first
-			if (solverHandler.getSurfacePosition(yLeft) > surfacePos) {
-				// if we are on the right process
-				if (xi >= xs && xi < xs + xm && yLeft >= ys &&
-					yLeft < ys + ym) {
-					// Get the concentrations at xi = surfacePos
-					gridPointSolution = solutionArray[yLeft][xi];
+			auto leftSurf = solverHandler.getSurfacePosition(yLeft);
+			if (leftSurf < surfacePos) {
+				// Loop on every grid point above
+				for (int currentX = xi; currentX >= xi; --currentX) {
+					// If this is the locally owned part of the grid
+					if (currentX >= xs && currentX < xs + xm && yLeft >= ys &&
+						yLeft < ys + ym) {
+						// Get the concentrations at xi = surfacePos
+						gridPointSolution = solutionArray[yLeft][currentX];
+						double hX = 0.0;
+						if (currentX - 1 < 0) {
+							hX = grid[currentX + 1] - grid[currentX];
+						}
+						else {
+							hX =
+								(grid[currentX + 1] - grid[currentX - 1]) / 2.0;
+						}
 
-					network.updateOutgoingDiffFluxes(gridPointSolution,
-						hxLeft / hy, iClusterIds2D, myFlux, xi - xs);
+						network.updateOutgoingDiffFluxes(gridPointSolution,
+							hX / hy, iClusterIds2D, myFlux, currentX - xs);
+					}
 				}
 			}
 			// Now do the right side
-			if (solverHandler.getSurfacePosition(yRight) > surfacePos) {
-				// if we are on the right process
-				if (xi >= xs && xi < xs + xm && yRight >= ys &&
-					yRight < ys + ym) {
-					// Get the concentrations at xi = surfacePos + 1
-					gridPointSolution = solutionArray[yRight][xi];
+			auto rightSurf = solverHandler.getSurfacePosition(yRight);
+			if (rightSurf < surfacePos) {
+				// Loop on every grid point above
+				for (int currentX = xi; currentX >= xi; --currentX) {
+					// If this is the locally owned part of the grid
+					if (currentX >= xs && currentX < xs + xm && yRight >= ys &&
+						yRight < ys + ym) {
+						// Get the concentrations at xi = surfacePos
+						gridPointSolution = solutionArray[yRight][currentX];
+						double hX = 0.0;
+						if (currentX - 1 < 0) {
+							hX = grid[currentX + 1] - grid[currentX];
+						}
+						else {
+							hX =
+								(grid[currentX + 1] - grid[currentX - 1]) / 2.0;
+						}
 
-					network.updateOutgoingDiffFluxes(gridPointSolution,
-						hxLeft / hy, iClusterIds2D, myFlux, xi - xs);
+						network.updateOutgoingDiffFluxes(gridPointSolution,
+							hX / hy, iClusterIds2D, myFlux, currentX - xs);
+					}
 				}
 			}
 
@@ -1352,86 +1376,76 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		std::cout << "bursting at: " << yj * hy << " " << distance << std::endl;
 
 		// Pinhole case
-		auto nBurst = std::vector<double>(3, 0.0); // Not actually used  here
+		auto nBurst = std::vector<double>(3, 0.0); // Not actually used here
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
 			psiNetwork->updateBurstingConcs(gridPointSolution, 0.0, nBurst);
 		}
 
-		//		// Crater case
-		//		int yLeft = yj - 1, yRight = yj + 1;
-		//		if (yLeft < 0)
-		//			yLeft = My - 1; // Periodicity
-		//		if (yRight == My)
-		//			yRight = 0; // Periodicity
-		//
-		//		// Loop on every grid point above
-		//		for (int currentX = xi; currentX > surfacePos; --currentX) {
-		//			// If this is the locally owned part of the grid
-		//			if (currentX >= xs && currentX < xs + xm && yj >= ys &&
-		//				yj < ys + ym) {
-		//				gridPointSolution = solutionArray[yj][currentX];
-		//				// Get the total I and V concentrations
-		//				using HostUnmanaged = Kokkos::View<double*,
-		//Kokkos::HostSpace, 					Kokkos::MemoryUnmanaged>; 				auto hConcs =
-		//HostUnmanaged(gridPointSolution, dof); 				auto dConcs =
-		//Kokkos::View<double*>("Concentrations", dof); 				deep_copy(dConcs,
-		//hConcs); 				double iConc = 					psiNetwork->getTotalAtomConcentration(dConcs,
-		//specIdI, 1); 				double vConc =
-		//					psiNetwork->getTotalAtomConcentration(dConcs, specIdV,
-		//1);
-		//				// The density of tungsten is 62.8 atoms/nm3
-		//				double wConc = (62.8 - vConc + iConc) / 2.0;
-		//
-		//				std::cout << currentX << " " << wConc << std::endl;
-		//
-		//				// Reset the concentrations
-		//				for (auto l = 0; l < dof; ++l) {
-		//					gridPointSolution[l] = 0.0;
-		//				}
-		//
-		//				// Pass the tungsten concentration to the sides
-		//				// Do the left side first
-		//				std::cout << currentX << " L "
-		//						  << solverHandler.getSurfacePosition(yLeft) << " R
-		//"
-		//						  << solverHandler.getSurfacePosition(yRight)
-		//						  << std::endl;
-		//				if (solverHandler.getSurfacePosition(yLeft) < currentX)
-		//{
-		//					// if we are on the right process
-		//					if (currentX >= xs && currentX < xs + xm && yLeft >= ys
-		//&& 						yLeft < ys + ym) {
-		//						// Get the concentrations at currentX
-		//						gridPointSolution =
-		//solutionArray[yLeft][currentX]; 						gridPointSolution[iClusterIds2D[0]] +=
-		//wConc;
-		//					}
-		//				}
-		//				// Now do the right side
-		//				if (solverHandler.getSurfacePosition(yRight) < currentX)
-		//{
-		//					// if we are on the right process
-		//					if (currentX >= xs && currentX < xs + xm && yRight >= ys
-		//&& 						yRight < ys + ym) {
-		//						// Get the concentrations at currentX
-		//						gridPointSolution =
-		//solutionArray[yRight][currentX]; 						gridPointSolution[iClusterIds2D[0]]
-		//+= wConc;
-		//					}
-		//				}
-		//			}
-		//		}
-		//
-		//		// Update the surface position
-		//		solverHandler.setSurfacePosition(xi, yj);
-		//
-		//		// Reset the I flux and count
-		//		nInterstitial2D[yLeft] += nInterstitial2D[yj] / 2.0;
-		//		nInterstitial2D[yRight] += nInterstitial2D[yj] / 2.0;
-		//		nInterstitial2D[yj] = 0.0;
-		//		previousIFlux2D[yj] = 0.0;
-		//
-		//		surfaceMoved = true;
+//		// Crater case
+//		int yLeft = yj - 1, yRight = yj + 1;
+//		if (yLeft < 0)
+//			yLeft = My - 1; // Periodicity
+//		if (yRight == My)
+//			yRight = 0; // Periodicity
+//
+//		// Loop on every grid point above
+//		for (int currentX = xi; currentX > surfacePos; --currentX) {
+//			// If this is the locally owned part of the grid
+//			if (currentX >= xs && currentX < xs + xm && yj >= ys &&
+//				yj < ys + ym) {
+//				gridPointSolution = solutionArray[yj][currentX];
+//				// Get the total I and V concentrations
+//				using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
+//					Kokkos::MemoryUnmanaged>;
+//				auto hConcs = HostUnmanaged(gridPointSolution, dof);
+//				auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+//				deep_copy(dConcs, hConcs);
+//				double iConc =
+//					psiNetwork->getTotalAtomConcentration(dConcs, specIdI, 1);
+//				double vConc =
+//					psiNetwork->getTotalAtomConcentration(dConcs, specIdV, 1);
+//				// The density of tungsten is 62.8 atoms/nm3
+//				double wConc = (62.8 - vConc + iConc) / 2.0;
+//
+//				// Reset the concentrations
+//				for (auto l = 0; l < dof; ++l) {
+//					gridPointSolution[l] = 0.0;
+//				}
+//
+//				// Pass the tungsten concentration to the sides
+//				// Do the left side first
+//				if (solverHandler.getSurfacePosition(yLeft) < currentX) {
+//					// if we are on the right process
+//					if (currentX >= xs && currentX < xs + xm && yLeft >= ys &&
+//						yLeft < ys + ym) {
+//						// Get the concentrations at currentX
+//						gridPointSolution = solutionArray[yLeft][currentX];
+//						gridPointSolution[iClusterIds2D[0]] += wConc;
+//					}
+//				}
+//				// Now do the right side
+//				if (solverHandler.getSurfacePosition(yRight) < currentX) {
+//					// if we are on the right process
+//					if (currentX >= xs && currentX < xs + xm && yRight >= ys &&
+//						yRight < ys + ym) {
+//						// Get the concentrations at currentX
+//						gridPointSolution = solutionArray[yRight][currentX];
+//						gridPointSolution[iClusterIds2D[0]] += wConc;
+//					}
+//				}
+//			}
+//		}
+//
+//		// Update the surface position
+//		solverHandler.setSurfacePosition(xi, yj);
+//
+//		// Reset the I flux and count
+//		nInterstitial2D[yLeft] += nInterstitial2D[yj] / 2.0;
+//		nInterstitial2D[yRight] += nInterstitial2D[yj] / 2.0;
+//		nInterstitial2D[yj] = 0.0;
+//		previousIFlux2D[yj] = 0.0;
+//
+//		surfaceMoved = true;
 	}
 
 	// Now takes care of moving surface
@@ -1620,6 +1634,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 /**
  * This operation sets up different monitors
  *  depending on the options.
+ *
  * @param ts The time stepper
  * @return A standard PETSc error code
  */
@@ -1904,8 +1919,7 @@ setupPetsc2DMonitor(TS ts)
 			ierr, "setupPetsc2DMonitor: TSMonitorSet (monitorPerf) failed.");
 	}
 
-	// Set the monitor to compute the helium fluence for the retention
-	// calculation
+	// Set the monitor to compute the helium retention
 	if (flagHeRetention) {
 		// Check if we have a free surface at the bottom
 		if (solverHandler.getRightOffset() == 1) {
@@ -1973,8 +1987,7 @@ setupPetsc2DMonitor(TS ts)
 		}
 	}
 
-	// Set the monitor to compute the xenon fluence and the retention
-	// for the retention calculation
+	// Set the monitor to compute the xenon retention
 	if (flagXeRetention) {
 		// Get the da from ts
 		DM da;

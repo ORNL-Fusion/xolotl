@@ -324,15 +324,12 @@ public:
 	~Options();
 
 	/**
-	 * Read the parameters from the given file to set the different
-	 * xolotl options.
 	 * \see IOptions.h
 	 */
 	void
 	readParams(int argc, char* argv[]) override;
 
 	/**
-	 * Should the program run after parsing the parameter file?
 	 * \see IOptions.h
 	 */
 	bool
@@ -342,7 +339,6 @@ public:
 	}
 
 	/**
-	 * Set the shouldRunFlag.
 	 * \see IOptions.h
 	 */
 	void
@@ -352,7 +348,6 @@ public:
 	}
 
 	/**
-	 * If program shouldn't run, what should its exit code be?
 	 * \see IOptions.h
 	 */
 	int
@@ -362,7 +357,6 @@ public:
 	}
 
 	/**
-	 * Set the value for the exit code.
 	 * \see IOptions.h
 	 */
 	void
@@ -372,7 +366,6 @@ public:
 	}
 
 	/**
-	 * Get the name of the network file.
 	 * \see IOptions.h
 	 */
 	std::string
@@ -381,6 +374,9 @@ public:
 		return networkFilename;
 	}
 
+	/**
+	 * \see IOptions.h
+	 */
 	std::string
 	getSolverName() const override
 	{
@@ -388,7 +384,6 @@ public:
 	}
 
 	/**
-	 * Get the Arguments for PETSc.
 	 * \see IOptions.h
 	 */
 	std::string
@@ -397,12 +392,18 @@ public:
 		return petscArg;
 	}
 
+	/**
+	 * \see IOptions.h
+	 */
 	std::string
 	getTempHandlerName() const override
 	{
 		return tempHandlerName;
 	}
 
+	/**
+	 * \see IOptions.h
+	 */
 	double
 	getTempParam(std::size_t i = 0) const override
 	{
@@ -410,7 +411,6 @@ public:
 	}
 
 	/**
-	 * Obtain the name of the file containing the temperature profile data.
 	 * \see IOptions.h
 	 */
 	std::string
@@ -420,7 +420,6 @@ public:
 	}
 
 	/**
-	 * Should we use the flux option?
 	 * \see IOptions.h
 	 */
 	bool
@@ -430,7 +429,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the flux intensity to be used.
 	 * \see IOptions.h
 	 */
 	double
@@ -440,7 +438,6 @@ public:
 	}
 
 	/**
-	 * Should we use a time profile for the flux?
 	 * \see IOptions.h
 	 */
 	bool
@@ -450,8 +447,6 @@ public:
 	}
 
 	/**
-	 * Obtain the name of the file containing the time profile data for the
-	 * flux.
 	 * \see IOptions.h
 	 */
 	std::string
@@ -461,7 +456,6 @@ public:
 	}
 
 	/**
-	 * Name of perfomance handler to use
 	 * \see IOptions.h
 	 */
 	std::string
@@ -471,9 +465,7 @@ public:
 	}
 
 	/**
-	 * Obtain the name of the visualization handler to be used
-	 *
-	 * @return The name of the viz handler
+	 * \see IOptions.h
 	 */
 	std::string
 	getVizHandlerName() const override
@@ -482,7 +474,6 @@ public:
 	}
 
 	/**
-	 * Obtain the name of the material to be used for simulation.
 	 * \see IOptions.h
 	 */
 	std::string
@@ -492,7 +483,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the concentration for the vacancies.
 	 * \see IOptions.h
 	 */
 	double
@@ -502,7 +492,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the electronic stopping power.
 	 * \see IOptions.h
 	 */
 	double
@@ -512,7 +501,6 @@ public:
 	}
 
 	/**
-	 * Obtain the number of dimensions for the simulation.
 	 * \see IOptions.h
 	 */
 	int
@@ -522,7 +510,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the void portion for the simulation.
 	 * \see IOptions.h
 	 */
 	double
@@ -532,7 +519,6 @@ public:
 	}
 
 	/**
-	 * Should we use a regular grid on the x direction?
 	 * \see IOptions.h
 	 */
 	bool
@@ -542,7 +528,6 @@ public:
 	}
 
 	/**
-	 * Should we use a Chebyshev grid on the x direction?
 	 * \see IOptions.h
 	 */
 	bool
@@ -552,7 +537,6 @@ public:
 	}
 
 	/**
-	 * Should we read in the grid on the x direction?
 	 * \see IOptions.h
 	 */
 	bool
@@ -562,7 +546,6 @@ public:
 	}
 
 	/**
-	 * Get the name of the grid file.
 	 * \see IOptions.h
 	 */
 	std::string
@@ -572,9 +555,7 @@ public:
 	}
 
 	/**
-	 * Obtain the physical process map.
-	 *
-	 * @return The map
+	 * \see IOptions.h
 	 */
 	const std::map<std::string, bool>&
 	getProcesses() const override
@@ -583,7 +564,6 @@ public:
 	}
 
 	/**
-	 * Obtain the string listing the wanted GB.
 	 * \see IOptions.h
 	 */
 	std::string
@@ -593,7 +573,6 @@ public:
 	}
 
 	/**
-	 * Obtain the minimum size for the grouping.
 	 * \see IOptions.h
 	 */
 	int
@@ -603,7 +582,6 @@ public:
 	}
 
 	/**
-	 * Obtain the first width for the grouping.
 	 * \see IOptions.h
 	 */
 	int
@@ -613,7 +591,6 @@ public:
 	}
 
 	/**
-	 * Obtain the second width for the grouping.
 	 * \see IOptions.h
 	 */
 	int
@@ -623,7 +600,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the intensity of the sputtering yield to be used.
 	 * \see IOptions.h
 	 */
 	double
@@ -633,7 +609,6 @@ public:
 	}
 
 	/**
-	 * To know if we should use the HDF5 file.
 	 * \see IOptions.h
 	 */
 	bool
@@ -643,7 +618,6 @@ public:
 	}
 
 	/**
-	 * Obtain the maximum value of impurities (He or Xe) to be used.
 	 * \see IOptions.h
 	 */
 	int
@@ -653,7 +627,6 @@ public:
 	}
 
 	/**
-	 * Obtain the maximum value of deuterium to be used.
 	 * \see IOptions.h
 	 */
 	int
@@ -663,7 +636,6 @@ public:
 	}
 
 	/**
-	 * Obtain the maximum value of tritium to be used.
 	 * \see IOptions.h
 	 */
 	int
@@ -673,7 +645,6 @@ public:
 	}
 
 	/**
-	 * Obtain the maximum value of vacancies to be used.
 	 * \see IOptions.h
 	 */
 	int
@@ -683,7 +654,6 @@ public:
 	}
 
 	/**
-	 * Obtain the maximum value of interstitials to be used.
 	 * \see IOptions.h
 	 */
 	int
@@ -693,7 +663,6 @@ public:
 	}
 
 	/**
-	 * Obtain the number of grid points in the depth direction to be used.
 	 * \see IOptions.h
 	 */
 	int
@@ -703,7 +672,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the step size in the depth direction to be used.
 	 * \see IOptions.h
 	 */
 	double
@@ -713,7 +681,6 @@ public:
 	}
 
 	/**
-	 * Obtain the number of grid points in the Y direction to be used.
 	 * \see IOptions.h
 	 */
 	int
@@ -723,7 +690,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the step size in the Y direction to be used.
 	 * \see IOptions.h
 	 */
 	double
@@ -733,7 +699,6 @@ public:
 	}
 
 	/**
-	 * Obtain the number of grid points in the Z direction to be used.
 	 * \see IOptions.h
 	 */
 	int
@@ -743,7 +708,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the step size in the Z direction to be used.
 	 * \see IOptions.h
 	 */
 	double
@@ -753,7 +717,6 @@ public:
 	}
 
 	/**
-	 * Obtain the boundary condition on a given side of the grid.
 	 * \see IOptions.h
 	 */
 	int
@@ -788,7 +751,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the depth above which the bursting is happening.
 	 * \see IOptions.h
 	 */
 	double
@@ -798,7 +760,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the factor in the bursting probability.
 	 * \see IOptions.h
 	 */
 	double
@@ -808,8 +769,6 @@ public:
 	}
 
 	/**
-	 * Set the seed that should be used for initializing the random
-	 * number generator.
 	 * \see IOptions.h
 	 */
 	void
@@ -820,8 +779,6 @@ public:
 	}
 
 	/**
-	 * Obtain the seed that should be used for initializing the random
-	 * number generator.
 	 * \see IOptions.h
 	 */
 	std::tuple<bool, unsigned int>
@@ -831,9 +788,6 @@ public:
 	}
 
 	/**
-	 * Determine if we should print the value used to seed the random
-	 * number generator (regardless if it was given on the command line
-	 * or generated dynamically).
 	 * \see IOptions.h
 	 */
 	bool
@@ -843,7 +797,6 @@ public:
 	}
 
 	/**
-	 * Obtain the minimum size for the average radius computation.
 	 * \see IOptions.h
 	 */
 	virtual std::vector<size_t>
@@ -853,7 +806,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the density of a bubble.
 	 * \see IOptions.h
 	 */
 	double
@@ -863,7 +815,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the length of the flux pulse.
 	 * \see IOptions.h
 	 */
 	virtual double
@@ -873,7 +824,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the proportion the flux pulse (on).
 	 * \see IOptions.h
 	 */
 	virtual double
@@ -883,7 +833,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the lattice parameter.
 	 * \see IOptions.h
 	 */
 	virtual double
@@ -893,7 +842,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the impurity radius.
 	 * \see IOptions.h
 	 */
 	virtual double
@@ -903,7 +851,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the bias factor for interstitial.
 	 * \see IOptions.h
 	 */
 	virtual double
@@ -913,7 +860,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the factor between H and He radii.
 	 * \see IOptions.h
 	 */
 	virtual double
@@ -923,7 +869,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the xenon diffusion coefficient.
 	 * \see IOptions.h
 	 */
 	virtual double
@@ -933,7 +878,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the fission yield.
 	 * \see IOptions.h
 	 */
 	virtual double
@@ -943,7 +887,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the HeV ratio.
 	 * \see IOptions.h
 	 */
 	virtual double
@@ -953,7 +896,6 @@ public:
 	}
 
 	/**
-	 * Obtain the value of the migration threshold
 	 * \see IOptions.h
 	 */
 	virtual double
@@ -963,7 +905,6 @@ public:
 	}
 
 	/**
-	 * Get the path to the custom flux profile.
 	 * \see IOptions.h
 	 */
 	virtual std::string
