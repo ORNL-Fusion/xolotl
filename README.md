@@ -9,37 +9,101 @@ Building Xolotl
 
 First things first, checkout the repository with
 
-> git clone git@github.com:ORNL-Fusion/xolotl.git
+> git clone https://github.com/ORNL-Fusion/xolotl /home/user/xolotl-source
 
-Now, assuming you have all of the dependencies for Xolotl built and a good C++11 compiler (GCC 4.7.2 or greater), Xolotl itself is quite easy to build. If you do not have all of the dependencies, check out the next section.
+Now, assuming you have all of the dependencies for Xolotl built and a good C++17 compiler (GCC 5 or greater), Xolotl itself is quite easy to build. If you do not have all of the dependencies, check out the next section.
 
 Create a directory in which you want to build Xolotl (for instance /home/user/xolotl-build) and change into it. It can be any directory except for the source directory (which is /home/user/xolotl-source/). From inside the build directory run the following commands:
 
->CXX=/opt/mpich/bin/mpicxx PETSC_DIR=/opt/petsc-install PETSC_ARCH=arch-archvalue cmake -DHDF5_ROOT=/opt/hdf5 -DBOOST_ROOT=/usr/local/include/ -DCMAKE_BUILD_TYPE=Release ../xolotl-source/
-make
-make test
+>PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=mpicxx ../xolotl-source \
+make \
+make test 
 
-with the path to your MPI compiler (here mpicxx) in CXX and the path to an installed PETSc version in PETSC_DIR (multiple PETSc versions can coexist on the same file-system).
+with the path to your MPI compiler (here mpicxx) in -DCMAKE_CXX_COMPILER and the path to an installed PETSc version in PETSC_DIR (multiple PETSc versions can coexist on the same file-system).
 
 You can also run make in parallel (make -jN, where N is the number of processes) to build Xolotl faster. This is recommended if you have a big machine.
 
-Never use the -DCMAKE_CXX_COMPILER=<C++ compiler> option instead of CXX=<C++ compiler> environment variable. It causes CMake to ignore all of your other options (such as -DBoost_ROOT if you have a special build of Boost).
+**NOTE:** If CMake fails to find HDF5, add the path to your HDF5 installation directory in the CMake command:
+
+>HDF5_ROOT=/opt/hdf5 PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=mpicxx ../xolotl-source 
+
+**NOTE (bis):**If you have Boost  but CMake fails to find BOOST, add the path to your Boost installation folder in the CMake command:
+
+>BOOST_ROOT=/opt/boost PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=mpicxx ../xolotl-source 
 
 
 Building Xolotl's Dependencies
 =====
 
-The following codes must be built and configured as described below in order for Xolotl to compile.
+The following codes must be built and configured as described below in order for Xolotl to compile. If working on a system where modules are available we recommend loading the existing modules.
 
-Boost (for tests)
+MPICH 3
 -----
 
-Xolotl uses [Boost](http://www.boost.org) for unit tests. If you don't want to run the tests, then you don't need Boost. However, if you do want to run the tests you should have the latest version of Boost installed for your system. You can get Boost from your package manager or build it from scratch by downloading the latest. Use the following commands in the Boost directory:
+[MPICH 3.0](http://www.mpich.org) or higher is required for Xolotl and its dependencies (alternatively, [Open MPI](https://www.open-mpi.org/) can be used). Use the following commands once downloaded:
 
->./bootstrap.sh --show-libraries
-./b2 install --prefix=/opt/boost --with-test
+>./configure --prefix=/opt/mpich --enable-shared=yes \
+make \
+make install 
 
-This will only install the parts of Boost required for testing.
+Your path needs to be updated to point to the new MPICH3 install, which can be done by adding the following lines in either ~/.bashrc or ~/.bash_profile:
+
+>PATH=/opt/mpich/bin:$PATH \
+export PATH
+
+Your library path also needs to be updated in the same file:
+
+>LD_LIBRARY_PATH=/opt/mpich/lib:$LD_LIBRARY_PATH \
+export LD_LIBRARY_PATH
+
+Kokkos
+-----
+
+[Kokkos](https://github.com/kokkos/kokkos/wiki) is used to enable different back-ends for Xolotl (the develop branch):
+
+###SERIAL###
+
+>git clone https://github.com/kokkos/kokkos /opt/kokkos \
+cd /opt/kokkos \
+git checkout develop \
+mkdir build \
+cd build \
+cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_SERIAL=ON -DBUILD_SHARED_LIBS=ON .. \
+make install 
+
+###OpenMP###
+
+>git clone https://github.com/kokkos/kokkos /opt/kokkos \
+cd /opt/kokkos \
+git checkout develop \
+mkdir build \
+cd build \
+cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_OPENMP=ON -DBUILD_SHARED_LIBS=ON .. \
+make install 
+
+###CUDA###
+
+>git clone https://github.com/kokkos/kokkos /opt/kokkos \
+cd /opt/kokkos \
+git checkout develop \
+mkdir build \
+cd build \
+cmake -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_CUDA=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_CONSTEXPR=ON -DBUILD_SHARED_LIBS=ON .. \
+make install 
+
+The Xolotl cmake line has to be updated here:
+
+>PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=/opt/kokkos-install/bin/nvcc_wrapper ../xolotl-source \
+
+Boost 
+-----
+
+Xolotl uses [Boost](http://www.boost.org). You can get Boost from your package manager or build it from scratch by downloading the latest. Use the following commands in the Boost directory:
+
+>./bootstrap.sh --show-libraries \
+./b2 install --prefix=/opt/boost --with-test --with-filesystem --with-program_options --with-timer
+
+This will only install the parts of Boost required for Xolotl.
 
 If Boost is installed to a non-standard prefix such as the above, you can point CMake to it by using the -DBOOST_ROOT option.
 
@@ -49,13 +113,13 @@ You can run Xolotl tests with
 
 If you want to only run a specific one, run the corresponding executable that is created in your build folder. For instance (from your build directory)
 
->./tests/reactants/PSIClusterTester
+>./test/core/NetworkTester
 
 
 PETSc
 -----
 
-[PETSc](http://www.mcs.anl.gov/petsc/) is used to solve the ADR equation in Xolotl. We build PETSc without debugging enabled. Xolotl now uses the "master" version of PETSc. You can download it (for instance in /opt/) using git with the following command:
+[PETSc](http://www.mcs.anl.gov/petsc/) is used to solve the DR equation in Xolotl. We build PETSc without debugging enabled. Xolotl now uses the "master" version of PETSc. You can download it (for instance in /opt/) using git with the following command:
 
 git clone https://bitbucket.org/petsc/petsc petsc
 
@@ -75,7 +139,7 @@ If PETSc complains because it is not finding Blas/Lapack, you have different opt
 
 When PETSc versions are changing often, it is faster to build PETSc in place instead of installing it. To do so, simply remove the --prefix option from the ./configure command line, and follow PETSc instructions as before:
 
->make PETSC_DIR=/optr/petsc PETSC_ARCH=arch-linux2-c-opt all
+>make PETSC_DIR=/opt/petsc PETSC_ARCH=arch-linux2-c-opt all
 
 To update PETSc, go to your PETSc directory, do
 
@@ -87,19 +151,15 @@ to get the latest version, and rebuild it with
 
 To build Xolotl you now need to specify the PETSC_ARCH variable when running cmake additionally to PETSC_DIR.
 
-**Note: ** The trunk of Xolotl requires a recent version of PETSc, if you get errors related to PetscOptions* while compiling Xolotl you'll have to update your PETSc.
 
-
-HDF5
+HDF5 parallel
 -----
 
 [HDF5](http://www.hdfgroup.org/HDF5/) is required for I/O in Xolotl and its dependencies. Use the following commands:
 
 >./configure --prefix=/opt/hdf5 --enable-parallel 
 make
-make check
 make install
-make check-install
 
 Your path needs to be updated to point to the new HDF5 install, which can be done by adding the following lines in either ~/.bashrc or ~/.bash_profile:
 
@@ -114,7 +174,6 @@ export LD_LIBRARY_PATH
 Performance Libraries
 ---------------------
 The following are the libraries required IF AND ONLY IF you wish to monitor Xolotl's performance. For more information about the performance infrastructure of Xolotl please refer to the [Performance] section of the wiki. 
-
 
 ###PAPI###
 [PAPI](http://icl.cs.utk.edu/papi/index.html), Performance Application Programming Interface, provides access to hardware counter information. In Xolotl, this library is used via GPTL to access hardware performance counters.
@@ -160,91 +219,26 @@ export GPTL_PREFIX
 
 Visualization Libraries
 ---------------------
-The following libraries are needed in order to plot Xolotl's outputs. A wiki page on the visualization will be added soon.
+VTK-m is needed in order to plot Xolotl's output.
+ 
+VTK-m
+-----
 
-
-###Mesa###
-
-Mesa is an open-source implementation of the OpenGL specification - a system for rendering interactive 3D graphics. A light version of Mesa-7.5.2 is available [here](https://sourceforge.net/p/xolotl-psi/code/HEAD/tree/trunk/deps/mesa/MesaLib-7.5.2-OSMesa.tar.bz2). Once downloaded, you just have to untar and make it in the repository where you want it (for instance /opt)
-
-> tar -xf MesaLib-7.5.2-OSMesa.tar.bz2
-cd Mesa-7.5.2
-make
-
-After that you simply have to add MESA_PREFIX to your ~/.bashrc or ~/.bash_profile
-
-> MESA_PREFIX=/opt/Mesa-7.5.2
-export MESA_PREFIX
-
-
-###EAVL###
-
-[EAVL](http://ft.ornl.gov/eavl/) is the Extreme-scale Analysis and Visualization Library. If you have [Git](http://git-scm.com/) you simply have to
-
-> cd /opt
-git clone https://github.com/jsmeredith/EAVL EAVL
-cd EAVL
-
-(note: an update this week to EAVL has yet to be reflected in Xolotl's code; this will happen shortly, but in the meantime, after cloning the repository, please revert to an older version with: `git checkout 263414fc4aa416e2376c1af9150c6934146644eb`)
-
->./configure
-make
-make check
-
-to install it and then add EAVL_PREFIX to your ~/.bashrc or ~/.bash_profile (if the repository was cloned to your /opt directory)
-
-> EAVL_PREFIX=/opt/EAVL
-export EAVL_PREFIX
+VTK-m is a toolkit of scientific visualization algorithms for emerging processor architectures. VTK-m supports the fine-grained concurrency for data analysis and visualization algorithms required to drive extreme scale computing by providing abstract models for data and execution that can be applied to a variety of algorithms across many different processor architectures. Here is how to get and install it.
+ 
+> mkdir vtkm \
+cd vtkm \
+git clone https://gitlab.kitware.com/vtk/vtk-m.git \
+mkdir build \
+cd build \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/VTKM -DBUILD_SHARED_LIBS=OFF ../vtk-m \
+make -j 4 install 
+ 
+Once installed, all that is needed to enable the compilation of the visualization routines in Xolotl is to add the following flag to your cmake (using the absolute path):
+-DVTKM_DIR=/opt/VTKM
 
 
 Running Xolotl
 =====
 
-You should now be able to run Xolotl and its preprocessor. 
-
-
-Tricks on Red Hat Enterprise Linux 6
-=====
-
-Getting GCC 4.7.2
------
-
-The default compiler on Red Hat Enterprise Linux (RHEL) 6 is GCC 4.4.7, but Xolotl requires GCC 4.7.2 or greater. RHEL supports GCC 4.7.2 if you have the "Linux Developer" version and you can install it following the instructions on the [Developer Toolset page](https://access.redhat.com/site/documentation/en-US/Red_Hat_Developer_Toolset/1/html/User_Guide/sect-Red_Hat_Developer_Toolset-Install.html).
-
-Most RHEL 6 customers do not have access to the "Linux Developer" version of RHEL 6. The Developer Toolset is open source and can be installed through the CentOS repositories. First, as root, create a file in /etc/yum.repos.d/ called testing-devtools.repo and add the following contents
-
-> [testing-devtools]
-name=testing devtools for CentOS $releasever
-baseurl=http://people.centos.org/tru/devtools-1.1/6/$basearch/RPMS
-gpgcheck=0
-
-Next, also as root, install the Developer Toolset version 1.1 with yum by issuing the following command:
-
->yum --enablerepo=testing-devtools install devtoolset-1.1
-
-Answer yes at the prompts to install the toolset.
-
-The Developer Toolset and GCC 4.7.2 will be installed to /opt/centos/devtoolset-1.1 and the executables will be available in /opt/centos/devtoolset-1.1/root/usr/bin. This installation will not automatically override the default install of GCC 4.4.7. It will still be on your path and take precedence over 4.7.2, so configure your path or direct CMake to build Xolotl accordingly.
-
-The simplest way to use the new compiler is to rebuild MPI with GCC 4.7.2 (which you kind of have to do anyway) and then rebuild Xolotl with MPI.
-
-
-Updating Boost
------
-
-The default version of Boost on RHEL6 will not work with GCC 4.7.2 because of changes in both packages for the C++11 standard implementation. Download the latest version of Boost from the website and build it with the instructions above. Only the testing libraries are required.
-
-If you build Boost this way, then you will need to add the -DBoost_ROOT=<path to boost> and -DBoost_NO_BOOST_CMAKE=ON to your CMake build configuration as such:
-
-CXX=mpicxx cmake ../xolotl -DCMAKE_BUILD_TYPE=Release -DBoost_ROOT=/opt/boost -DBoost_NO_BOOST_CMAKE=ON
-
-
-Tricks on Ubuntu
-=====
-
-Getting GCC 4.7+
------
-
-If your machine is Ubuntu 12.10 you're already using GNU C++ 4.7 and above.
-
-[Here](http://www.swiftsoftwaregroup.com/upgrade-gcc-4-7-ubuntu-12-04/) is a link that will tell you how to upgrade GCC if you're on Ubuntu 12.04.
+You should now be able to run Xolotl. Check out our page on [Running Xolotl](https://github.com/ORNL-Fusion/xolotl/wiki/Running-Xolotl).
