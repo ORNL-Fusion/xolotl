@@ -1,6 +1,6 @@
 README.txt for Xolotl Plasma Surface Interactions Simulator
 
-This page provides instructions on how to build Xolotl and its dependencies. All the commands were written for a bash shell, if you are using another type of shell you will have to modify the commands accordingly. CMake is required to build Xolotl, although instructions for it are not included below. We recommend that you download CMake using the package manager on your system. On Red Hat-based systems, this is as simple as running "yum install cmake" or "dnf install cmake" as root.
+This page provides instructions on how to build Xolotl and its dependencies. All the commands were written for a bash shell, if you are using another type of shell you will have to modify the commands accordingly. CMake and MPI are required to build Xolotl, although instructions for them are not included below. We recommend that you download them using the package manager on your system. 
 
  You should replace any reference to /home/user to the appropriate prefix for your system. All of the packages are also installed to /opt by preference, but you may adjust that prefix as you see fit too.
 
@@ -37,31 +37,12 @@ Building Xolotl's Dependencies
 
 The following codes must be built and configured as described below in order for Xolotl to compile. If working on a system where modules are available we recommend loading the existing modules.
 
-MPICH 3
------
-
-[MPICH 3.0](http://www.mpich.org) or higher is required for Xolotl and its dependencies (alternatively, [Open MPI](https://www.open-mpi.org/) can be used). Use the following commands once downloaded:
-
->./configure --prefix=/opt/mpich --enable-shared=yes \
-make \
-make install 
-
-Your path needs to be updated to point to the new MPICH3 install, which can be done by adding the following lines in either ~/.bashrc or ~/.bash_profile:
-
->PATH=/opt/mpich/bin:$PATH \
-export PATH
-
-Your library path also needs to be updated in the same file:
-
->LD_LIBRARY_PATH=/opt/mpich/lib:$LD_LIBRARY_PATH \
-export LD_LIBRARY_PATH
-
 Kokkos
 -----
 
 [Kokkos](https://github.com/kokkos/kokkos/wiki) is used to enable different back-ends for Xolotl (the develop branch):
 
-###SERIAL###
+#SERIAL#
 
 >git clone https://github.com/kokkos/kokkos /opt/kokkos \
 cd /opt/kokkos \
@@ -71,7 +52,7 @@ cd build \
 cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_SERIAL=ON -DBUILD_SHARED_LIBS=ON .. \
 make install 
 
-###OpenMP###
+#OpenMP#
 
 >git clone https://github.com/kokkos/kokkos /opt/kokkos \
 cd /opt/kokkos \
@@ -81,7 +62,9 @@ cd build \
 cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_OPENMP=ON -DBUILD_SHARED_LIBS=ON .. \
 make install 
 
-###CUDA###
+#CUDA#
+
+CUDA version 11 is needed for C++17 support.
 
 >git clone https://github.com/kokkos/kokkos /opt/kokkos \
 cd /opt/kokkos \
@@ -175,7 +158,8 @@ Performance Libraries
 ---------------------
 The following are the libraries required IF AND ONLY IF you wish to monitor Xolotl's performance. For more information about the performance infrastructure of Xolotl please refer to the [Performance] section of the wiki. 
 
-###PAPI###
+PAPI
+----
 [PAPI](http://icl.cs.utk.edu/papi/index.html), Performance Application Programming Interface, provides access to hardware counter information. In Xolotl, this library is used via GPTL to access hardware performance counters.
 
 **FIRST:**  Please refer to the INSTALL.txt file in the root directory to find the installation instructions for your specific operating system. 
@@ -194,27 +178,6 @@ Your path may need to be updated to set the variable PAPI_PREFIX to point to the
 export PAPI_PREFIX
 
 Note that versions other than PAPI 5.3.0 have been known to cause problems, so it is advised to use this version.
-
-
-###GPTL 5.3###
-The General Purpose Timing Library, or [GPTL](http://jmrosinski.github.io/GPTL/), is a lightweight timing library with support for timing arbitrary regions of code, MPI operations, and collecting hardware performance counter information.
-
-See the GPTL web page and INSTALL file in the root of the GPTL source distribution for instructions on building, testing, and installing GPTL.
-
-To be used for building Xolotl, GPTL's code must be compiled so that the resulting static library can be linked into other shared libraries (such as Xolotl's performance library).  For many systems, this means compiling the library using a flag like '-fPIC'.  To configure GPTL to be built this way, add the -fPIC flag to the first definitions of CFLAGS and FFLAGS within the GPTL macros.make configuration file before building.
-
-If you are NOT using version 5.3 of GPTL two other modifications to GPTL might be required, depending on the distribution and version of MPI you are using. GPTL supports MPICH and its variants out of the box, but requires a slight code modification for use with OpenMPI.  If you are using OpenMPI, add -DMPI_STATUS_SIZE=6 to the definition of CFLAGS in the macros.make file.  Also, if you are using a newer release of OpenMPI, you may need to modify the function signatures in pmpi.c so that read-only arguments are declared with 'const'. For instance, with OpenMPI 1.7.4, the signature for MPI_Send is
-
-  int MPI_Send( const void* buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm );
-
-and GPTL's MPI wrappers will not compile without the const qualifier. Workarounds are to either add the missing const keywords in the GPTL pmpi.c file, or use an older version of OpenMPI such as version 1.6.4 that does not declare MPI functions using const qualifiers.
-
-**NOTE:**  Refer to the Configure Requirements section of [Performance] for further instructions on building Xolotl with GPTL (if GPTL is being built with OPENMP=yes in macros.make).
-
-After installing GPTL, your path needs to be updated to set the variable GPTL_PREFIX to point to the new root installation of the GPTL library and include files, which can be done by adding the following lines in either ~/.bashrc or ~/.bash_profile:
-
-> GPTL_PREFIX=/usr/local/gptl-$(REVNO)
-export GPTL_PREFIX
 
 
 Visualization Libraries
