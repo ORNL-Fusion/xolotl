@@ -81,10 +81,9 @@ SurfacePlot::render(const std::string& fileName)
 	}
 
 	// Create the vtk-m data set
-	vtkm::cont::DataSetFieldAdd dsf;
 	vtkm::cont::DataSetBuilderRectilinear dsb;
 	vtkm::cont::DataSet dataSet = dsb.Create(xVector, yVector);
-	dsf.AddCellField(dataSet, plotDataProvider->getDataName(), zVector);
+	dataSet.AddCellField(plotDataProvider->getDataName(), zVector);
 
 	// Create the view
 	vtkm::rendering::View2D* view = nullptr;

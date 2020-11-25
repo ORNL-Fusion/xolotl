@@ -97,7 +97,6 @@ SeriesPlot::render(const std::string& fileName)
 	vtkm::Bounds fieldBounds;
 
 	// Create initial data set
-	vtkm::cont::DataSetFieldAdd dsf;
 	vtkm::cont::DataSetBuilderRectilinear dsb;
 	auto xVector = plotDataProviders->at(0)->getAxis1Vector();
 	vtkm::cont::DataSet dataSet = dsb.Create(xVector);
@@ -108,8 +107,7 @@ SeriesPlot::render(const std::string& fileName)
 		auto yVector = plotDataProviders->at(i)->getAxis2Vector();
 
 		// Add the 1D value to plot
-		dsf.AddPointField(
-			dataSet, plotDataProviders->at(i)->getDataName(), yVector);
+		dataSet.AddPointField(plotDataProviders->at(i)->getDataName(), yVector);
 
 		// Accumulate the bounds of our data to focus camera
 		fieldBounds.X = dataSet.GetCoordinateSystem().GetBounds().X;

@@ -69,12 +69,11 @@ ScatterPlot::render(const std::string& fileName)
 	std::vector<double> yVector = plotDataProvider->getAxis2Vector();
 
 	// Create the vtk-m data set
-	vtkm::cont::DataSetFieldAdd dsf;
 	vtkm::cont::DataSetBuilderUniform dsb;
 	vtkm::cont::DataSet dataSet = dsb.Create(xVector.size());
 
 	// Add the 1D value to plot
-	dsf.AddPointField(dataSet, plotDataProvider->getDataName(), yVector);
+	dataSet.AddPointField(plotDataProvider->getDataName(), yVector);
 
 	// Create the view
 	vtkm::rendering::View1D* view = nullptr;
