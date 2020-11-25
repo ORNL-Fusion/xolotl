@@ -3,7 +3,7 @@
 
 using namespace xolotlViz;
 
-Plot::Plot(const std::string& name) :
+Plot::Plot(const std::string &name) :
 		xolotlCore::Identifiable(name), plotStyle(PlottingStyle::LINE) {
 }
 
@@ -14,7 +14,7 @@ void Plot::render(const std::string&) {
 	return;
 }
 
-void Plot::write(const std::string& fileName) {
+void Plot::write(const std::string &fileName) {
 	render(fileName);
 	return;
 }

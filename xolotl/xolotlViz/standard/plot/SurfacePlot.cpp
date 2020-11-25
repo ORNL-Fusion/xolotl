@@ -34,14 +34,14 @@ using namespace xolotlViz;
 #define W_WIDTH 1024
 #define W_HEIGHT 1024
 
-SurfacePlot::SurfacePlot(const std::string& name) :
+SurfacePlot::SurfacePlot(const std::string &name) :
 		Plot(name) {
 }
 
 SurfacePlot::~SurfacePlot() {
 }
 
-void SurfacePlot::render(const std::string& fileName) {
+void SurfacePlot::render(const std::string &fileName) {
 
 	// Check if the label provider is set
 	if (!plotLabelProvider) {
@@ -71,10 +71,9 @@ void SurfacePlot::render(const std::string& fileName) {
 	}
 
 	// Create the vtk-m data set
-	vtkm::cont::DataSetFieldAdd dsf;
 	vtkm::cont::DataSetBuilderRectilinear dsb;
 	vtkm::cont::DataSet dataSet = dsb.Create(xVector, yVector);
-	dsf.AddCellField(dataSet, plotDataProvider->getDataName(), zVector);
+	dataSet.AddCellField(plotDataProvider->getDataName(), zVector);
 
 	// Create the view
 	vtkm::rendering::View2D *view = nullptr;
@@ -105,21 +104,18 @@ void SurfacePlot::render(const std::string& fileName) {
 	// Print the title
 	std::string titleLabel;
 	float labelLeftPos;
-	if (enableLogScale)
-	{
-	  titleLabel = "Log of " + plotLabelProvider->titleLabel;
-	  labelLeftPos = -.45;
+	if (enableLogScale) {
+		titleLabel = "Log of " + plotLabelProvider->titleLabel;
+		labelLeftPos = -.45;
 
+	} else {
+		titleLabel = plotLabelProvider->titleLabel;
+		labelLeftPos = -.25;
 	}
-	else
-	{
-	  titleLabel = plotLabelProvider->titleLabel;
-	  labelLeftPos = -.25;
-	}
-  std::unique_ptr<vtkm::rendering::TextAnnotationScreen> titleAnnotation(
-      new vtkm::rendering::TextAnnotationScreen(
-				titleLabel, vtkm::rendering::Color::white,
-				.07, vtkm::Vec<vtkm::Float32, 2>(labelLeftPos, .93), 0));
+	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> titleAnnotation(
+			new vtkm::rendering::TextAnnotationScreen(titleLabel,
+					vtkm::rendering::Color::white, .07,
+					vtkm::Vec<vtkm::Float32, 2>(labelLeftPos, .93), 0));
 	view->AddAnnotation(std::move(titleAnnotation));
 
 	// Print the axis labels

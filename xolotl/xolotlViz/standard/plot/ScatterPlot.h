@@ -28,7 +28,7 @@ public:
 	/**
 	 * The default constructor
 	 */
-	ScatterPlot(const std::string& name);
+	ScatterPlot(const std::string &name);
 
 	/**
 	 * The destructor
@@ -38,7 +38,7 @@ public:
 	/**
 	 * Method managing everything that is related to the rendering of a plot.
 	 */
-	void render(const std::string& fileName = "fileName");
+	void render(const std::string &fileName = "fileName");
 
 };
 
