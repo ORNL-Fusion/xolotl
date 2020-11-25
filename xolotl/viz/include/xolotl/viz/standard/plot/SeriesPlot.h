@@ -60,6 +60,13 @@ public:
 	addDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider);
 
 	/**
+	 * Gets the data provider used.
+	 * \see IPlot.h
+	 */
+	std::shared_ptr<dataprovider::IDataProvider>
+	getDataProvider() const;
+
+	/**
 	 * Method getting the i-th data provider
 	 * @ param i The number of the data provider to be returned.
 	 * @ return The ith data provider.

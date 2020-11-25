@@ -18,18 +18,6 @@ using namespace xolotl::perf;
  */
 BOOST_AUTO_TEST_SUITE(EventCounter_testSuite)
 
-BOOST_AUTO_TEST_CASE(checkName)
-{
-	EventCounter tester("test");
-
-	BOOST_TEST_MESSAGE("\n"
-		<< "EventCounter Message: \n"
-		<< "tester.getName() " << tester.getName() << "\n");
-
-	// Require that the name of this EventCounter is "test"
-	BOOST_REQUIRE_EQUAL("test", tester.getName());
-}
-
 BOOST_AUTO_TEST_CASE(checkInitialValue)
 {
 	EventCounter tester("test");

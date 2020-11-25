@@ -6,7 +6,6 @@
 #include <vector>
 
 #include <xolotl/perf/IHardwareCounter.h>
-#include <xolotl/util/Identifiable.h>
 
 namespace xolotl
 {
@@ -18,7 +17,7 @@ namespace dummy
  * The DummyHardwareCounter class is instantiated by the DummyHandlerRegistry
  * class and realizes the DummyHardwareCounter interface.
  */
-class DummyHardwareCounter : public IHardwareCounter, public util::Identifiable
+class DummyHardwareCounter : public IHardwareCounter
 {
 private:
 	/**
@@ -38,7 +37,7 @@ private:
 	 * must always be given a name and a vector of quantities to
 	 * be monitored.
 	 */
-	DummyHardwareCounter() : util::Identifiable("unused")
+	DummyHardwareCounter()
 	{
 	}
 
@@ -52,8 +51,7 @@ public:
 	 * DummyHardwareCounter will monitor
 	 */
 	DummyHardwareCounter(const std::string& counterName,
-		const IHardwareCounter::SpecType& ctrSpec) :
-		util::Identifiable("unused")
+		const IHardwareCounter::SpecType& ctrSpec)
 	{
 	}
 

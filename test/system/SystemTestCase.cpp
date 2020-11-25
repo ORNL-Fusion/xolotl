@@ -100,7 +100,9 @@ private:
 class ScopedTimer
 {
 public:
-	ScopedTimer(const std::string& name, bool enable) : _enable(enable)
+	ScopedTimer(const std::string& name, bool enable) :
+		_name(name),
+		_enable(enable)
 	{
 		if (_enable) {
 			MPI_Barrier(MPI_COMM_WORLD);
@@ -117,7 +119,7 @@ public:
 			MPI_Barrier(MPI_COMM_WORLD);
 			if (_timer) {
 				_timer->stop();
-				std::cout << _timer->getName() << ": ";
+				std::cout << _name << ": ";
 				std::cout << _timer->getValue() << 's' << std::endl;
 			}
 		}
@@ -126,6 +128,7 @@ public:
 private:
 	bool _enable;
 	std::unique_ptr<perf::ITimer> _timer;
+	std::string _name;
 };
 
 double

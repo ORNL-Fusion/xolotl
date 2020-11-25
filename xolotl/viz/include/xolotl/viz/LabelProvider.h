@@ -4,8 +4,6 @@
 // Includes
 #include <string>
 
-#include <xolotl/util/Identifiable.h>
-
 namespace xolotl
 {
 namespace viz
@@ -14,13 +12,13 @@ namespace viz
  * LabelProvider provides a series of labels to print on the plots.
  * One Plot must have only one LabelProvider.
  */
-class LabelProvider : public util::Identifiable
+class LabelProvider
 {
 private:
 	/**
 	 * Declare the constructor as private to force the use of a name
 	 */
-	LabelProvider() : util::Identifiable("unused")
+	LabelProvider()
 	{
 	}
 
@@ -69,7 +67,6 @@ public:
 	 * The default constructor
 	 */
 	LabelProvider(const std::string& name) :
-		util::Identifiable(name),
 		axis1Label(" "),
 		axis2Label(" "),
 		axis3Label(" "),

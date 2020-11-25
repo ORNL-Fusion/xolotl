@@ -2,7 +2,6 @@
 #define DATAPROVIDER_H
 
 // Includes
-#include <xolotl/util/Identifiable.h>
 #include <xolotl/viz/dataprovider/IDataProvider.h>
 
 namespace xolotl
@@ -16,13 +15,13 @@ namespace dataprovider
  * general methods, to actually get data from the data provider, one needs to
  * use the subclasses.
  */
-class DataProvider : public virtual IDataProvider, public util::Identifiable
+class DataProvider : public virtual IDataProvider
 {
 protected:
 	/**
 	 * Declare the constructor as private to force the use of a name
 	 */
-	DataProvider() : util::Identifiable("unused")
+	DataProvider()
 	{
 	}
 

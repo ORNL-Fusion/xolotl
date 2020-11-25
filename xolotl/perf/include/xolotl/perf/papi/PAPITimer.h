@@ -1,7 +1,6 @@
 #pragma once
 
 #include <xolotl/perf/ITimer.h>
-#include <xolotl/util/Identifiable.h>
 
 namespace xolotl
 {
@@ -11,7 +10,7 @@ namespace papi
 {
 /// A timer that measures how long something takes to execute.
 /// Uses PAPI for sampling the system's timer.
-class PAPITimer : public ITimer, public util::Identifiable
+class PAPITimer : public ITimer
 {
 private:
 	/// The type PAPI uses for timestamps.
@@ -30,7 +29,7 @@ private:
 	/// Construct a timer.
 	/// The default constructor is private to force callers to provide a name
 	/// for the timer object.
-	PAPITimer() : util::Identifiable("unused"), val(0)
+	PAPITimer() : val(0)
 	{
 	}
 

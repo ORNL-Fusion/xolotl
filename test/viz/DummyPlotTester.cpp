@@ -18,17 +18,6 @@ using namespace dummy;
 BOOST_AUTO_TEST_SUITE(DummyPlot_testSuite)
 
 /**
- * Method checking the non-ability to use a name.
- */
-BOOST_AUTO_TEST_CASE(checkName)
-{
-	// Create myDummyPlot
-	auto myDummyPlot = make_shared<DummyPlot>("myDummyPlot");
-
-	BOOST_REQUIRE_EQUAL("unused", myDummyPlot->getName());
-}
-
-/**
  * Method checking the non-ability to choose a PlottingStyle.
  */
 BOOST_AUTO_TEST_CASE(checkPlottingStyle)

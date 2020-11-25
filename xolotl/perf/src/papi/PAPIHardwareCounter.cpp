@@ -17,7 +17,6 @@ PAPIHardwareCounter::CounterSpecMap PAPIHardwareCounter::csMap;
 
 PAPIHardwareCounter::PAPIHardwareCounter(
 	const std::string& name, const IHardwareCounter::SpecType& cset) :
-	util::Identifiable(name),
 	spec(cset),
 	eventSet(PAPI_NULL)
 {

@@ -2,7 +2,6 @@
 #define EVENTCOUNTER_H
 
 #include <xolotl/perf/IEventCounter.h>
-#include <xolotl/util/Identifiable.h>
 
 namespace xolotl
 {
@@ -13,7 +12,7 @@ namespace perf
  * increment the counter whenever an event of interest occurs, and
  * retrieve the count whenever it is desired.
  */
-class EventCounter : public IEventCounter, public util::Identifiable
+class EventCounter : public IEventCounter
 {
 private:
 	/**
@@ -25,7 +24,7 @@ private:
 	 * We declare a private default constructor to force
 	 * client code to provide a name when creating EventCounters.
 	 */
-	EventCounter(void) : util::Identifiable("unused"), value(0)
+	EventCounter(void) : value(0)
 	{
 	}
 
@@ -35,7 +34,7 @@ public:
 	 *
 	 * @param name The EventCounter's name
 	 */
-	EventCounter(const std::string& name) : util::Identifiable(name), value(0)
+	EventCounter(const std::string& name) : value(0)
 	{
 	}
 

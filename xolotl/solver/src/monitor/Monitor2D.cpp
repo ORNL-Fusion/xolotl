@@ -1548,6 +1548,11 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 					// Set the new surface temperature
 					gridPointSolution[dof] = surfTemp;
 
+					// Reset the concentrations
+					for (auto l = 0; l < dof; ++l) {
+						gridPointSolution[l] = 0.0;
+					}
+
 					if (vacancyIndex > 0 && nGridPoints > 0) {
 						// Initialize the vacancy concentration
 						gridPointSolution[vacancyIndex] = initialVConc;

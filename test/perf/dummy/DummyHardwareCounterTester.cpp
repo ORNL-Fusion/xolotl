@@ -21,13 +21,6 @@ const IHardwareCounter::SpecType test_hwCtrSpec = {
  */
 BOOST_AUTO_TEST_SUITE(DummyHardwareCounter_testSuite)
 
-BOOST_AUTO_TEST_CASE(checkName)
-{
-	DummyHardwareCounter tester("test", test_hwCtrSpec);
-
-	BOOST_REQUIRE_EQUAL("unused", tester.getName());
-}
-
 BOOST_AUTO_TEST_CASE(check_getValues)
 {
 	DummyHardwareCounter tester("test", test_hwCtrSpec);

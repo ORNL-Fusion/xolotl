@@ -7,8 +7,6 @@
 
 #include <mpi.h>
 
-#include <xolotl/util/IIdentifiable.h>
-
 namespace xolotl
 {
 namespace perf
@@ -16,7 +14,7 @@ namespace perf
 /**
  * A counter that can sample hardware counter values.
  */
-class IHardwareCounter : public virtual util::IIdentifiable
+class IHardwareCounter
 {
 public:
 	/// The types of hardware counters we can collect

@@ -2514,7 +2514,7 @@ setupPetsc1DMonitor(TS ts)
 
 			// Create a data provider for each cluster in the network
 			for (int i = 0; i < loopSize; i++) {
-				// Set the name for Identifiable
+				// Set the name
 				std::stringstream dataProviderName;
 				dataProviderName << "dataprovider" << i;
 				// Create the data provider

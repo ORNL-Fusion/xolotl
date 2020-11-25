@@ -5,7 +5,6 @@
 #include <memory>
 #include <string>
 
-#include <xolotl/util/IIdentifiable.h>
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/viz/PlottingStyle.h>
 #include <xolotl/viz/dataprovider/IDataProvider.h>
@@ -19,7 +18,7 @@ namespace viz
  * DataProvider. The user interacts with it through different method where
  * he/she could set the data to plot, title, legend, plotting style, etc.
  */
-class IPlot : public virtual util::IIdentifiable
+class IPlot
 {
 public:
 	/**

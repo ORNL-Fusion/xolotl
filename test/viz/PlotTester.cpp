@@ -20,17 +20,6 @@ using namespace standard::plot;
 BOOST_AUTO_TEST_SUITE(Plot_testSuite)
 
 /**
- * Method checking the ability to use a name.
- */
-BOOST_AUTO_TEST_CASE(checkName)
-{
-	// Create myScatterPlot
-	auto myScatterPlot = make_shared<ScatterPlot>("myScatterPlot");
-
-	BOOST_REQUIRE_EQUAL("myScatterPlot", myScatterPlot->getName());
-}
-
-/**
  * Method checking the ability to choose a PlottingStyle.
  */
 BOOST_AUTO_TEST_CASE(checkPlottingStyle)

@@ -15,17 +15,6 @@ using namespace dataprovider;
 BOOST_AUTO_TEST_SUITE(DataProvider_testSuite)
 
 /**
- * Method checking the ability to use a name.
- */
-BOOST_AUTO_TEST_CASE(checkName)
-{
-	// Create myDataProvider
-	auto myDataProvider = make_shared<DataProvider>("myDataProvider");
-
-	BOOST_REQUIRE_EQUAL("myDataProvider", myDataProvider->getName());
-}
-
-/**
  * Method checking you can add points to the data, get the data, and
  * getDataMean().
  */

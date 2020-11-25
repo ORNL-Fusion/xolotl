@@ -3,7 +3,6 @@
 
 #include <string>
 
-#include <xolotl/util/Identifiable.h>
 #include <xolotl/viz/IPlot.h>
 
 namespace xolotl
@@ -16,13 +15,13 @@ namespace dummy
  * The DummyPlot class is instantiated by the DummyHandlerRegistry
  * class and realizes the IPlot interface.
  */
-class DummyPlot : public IPlot, public util::Identifiable
+class DummyPlot : public IPlot
 {
 private:
 	/**
 	 * Declare the constructor as private to force the use of a name.
 	 */
-	DummyPlot() : util::Identifiable("unused")
+	DummyPlot()
 	{
 	}
 

@@ -4,7 +4,6 @@
 #include <string>
 
 #include <xolotl/perf/IEventCounter.h>
-#include <xolotl/util/Identifiable.h>
 
 namespace xolotl
 {
@@ -16,14 +15,14 @@ namespace dummy
  * The DummyEventCounter class is instantiated by the DummyHandlerRegistry
  * class and realizes the DummyEventCounter interface.
  */
-class DummyEventCounter : public IEventCounter, public util::Identifiable
+class DummyEventCounter : public IEventCounter
 {
 private:
 	/**
 	 * The default constructor is declared private since all EventCounters
 	 *  must be initialized with a name.
 	 */
-	DummyEventCounter(void) : util::Identifiable("unused")
+	DummyEventCounter(void)
 	{
 	}
 
@@ -32,7 +31,7 @@ public:
 	 * DummyEventCounter constructor that takes the argument name but
 	 * doesn't do anything with it
 	 */
-	DummyEventCounter(const std::string& name) : util::Identifiable("unused")
+	DummyEventCounter(const std::string& name)
 	{
 	}
 

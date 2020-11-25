@@ -7,8 +7,6 @@
 
 #include <mpi.h>
 
-#include <xolotl/util/IIdentifiable.h>
-
 namespace xolotl
 {
 namespace perf
@@ -17,7 +15,7 @@ namespace perf
  * Realizations of this interface are responsible for the collection
  * of performance timing statistics.
  */
-class ITimer : public virtual util::IIdentifiable
+class ITimer
 {
 public:
 	/**

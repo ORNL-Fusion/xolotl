@@ -187,6 +187,12 @@ SeriesPlot::addDataProvider(
 }
 
 std::shared_ptr<dataprovider::IDataProvider>
+SeriesPlot::getDataProvider() const
+{
+	return plotDataProviders->at(0);
+}
+
+std::shared_ptr<dataprovider::IDataProvider>
 SeriesPlot::getDataProvider(int i) const
 {
 	return plotDataProviders->at(i);

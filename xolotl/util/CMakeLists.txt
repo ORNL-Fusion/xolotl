@@ -6,8 +6,6 @@ set(XOLOTL_UTIL_HEADERS
     ${XOLOTL_UTIL_HEADER_DIR}/Array.h
     ${XOLOTL_UTIL_HEADER_DIR}/DoInOrder.h
     ${XOLOTL_UTIL_HEADER_DIR}/Filesystem.h
-    ${XOLOTL_UTIL_HEADER_DIR}/Identifiable.h
-    ${XOLOTL_UTIL_HEADER_DIR}/IIdentifiable.h
     ${XOLOTL_UTIL_HEADER_DIR}/MathUtils.h
     ${XOLOTL_UTIL_HEADER_DIR}/MPIUtils.h
     ${XOLOTL_UTIL_HEADER_DIR}/TokenizedLineReader.h

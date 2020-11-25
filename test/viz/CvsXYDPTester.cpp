@@ -15,18 +15,6 @@ using namespace dataprovider;
 BOOST_AUTO_TEST_SUITE(CvsXYDataProvider_testSuite)
 
 /**
- * Method checking the ability to use a name.
- */
-BOOST_AUTO_TEST_CASE(checkName)
-{
-	// Create myCvsXYDataProvider
-	auto myCvsXYDataProvider =
-		make_shared<CvsXYDataProvider>("myCvsXYDataProvider");
-
-	BOOST_REQUIRE_EQUAL("myCvsXYDataProvider", myCvsXYDataProvider->getName());
-}
-
-/**
  * Method checking you can get the axis vectors.
  */
 BOOST_AUTO_TEST_CASE(checkGetVector)

@@ -11,10 +11,7 @@ namespace perf
 {
 namespace papi
 {
-PAPITimer::PAPITimer(const std::string& name) :
-	util::Identifiable(name),
-	val(0),
-	startTime(invalidValue)
+PAPITimer::PAPITimer(const std::string& name) : val(0), startTime(invalidValue)
 {
 }
 

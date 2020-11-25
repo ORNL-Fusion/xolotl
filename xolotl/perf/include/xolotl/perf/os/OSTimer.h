@@ -5,7 +5,6 @@
 #include <limits>
 
 #include <xolotl/perf/ITimer.h>
-#include <xolotl/util/Identifiable.h>
 
 namespace xolotl
 {
@@ -15,7 +14,7 @@ namespace os
 {
 /// A timer that measures how long something takes to execute.
 /// Uses an operating system/runtime timer interface.
-class OSTimer : public ITimer, public util::Identifiable
+class OSTimer : public ITimer
 {
 private:
 	/// Concise name for type of our time source.
@@ -40,7 +39,7 @@ private:
 	/// Construct a timer.
 	/// The default constructor is private to force callers to provide a name
 	/// for the timer object.
-	OSTimer(void) : util::Identifiable("unused"), val(0)
+	OSTimer(void) : val(0)
 	{
 	}
 
@@ -49,10 +48,7 @@ public:
 	/// Construct a timer.
 	///
 	/// @param name The name to associate with the timer.
-	OSTimer(const std::string& name) :
-		util::Identifiable(name),
-		val(0),
-		startTime(invalidTimestamp)
+	OSTimer(const std::string& name) : val(0), startTime(invalidTimestamp)
 	{
 	}
 

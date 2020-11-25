@@ -2,7 +2,6 @@
 #define PLOT_H
 
 // Includes
-#include <xolotl/util/Identifiable.h>
 #include <xolotl/viz/IPlot.h>
 
 namespace xolotl
@@ -18,13 +17,13 @@ namespace plot
  * It is a general class that provides general methods, but to actual plot
  * anything, the user needs to use one of its subclasses.
  */
-class Plot : public IPlot, public util::Identifiable
+class Plot : public IPlot
 {
 protected:
 	/**
 	 * Declare the constructor as private to force the use of a name
 	 */
-	Plot() : util::Identifiable("unused")
+	Plot()
 	{
 	}
 

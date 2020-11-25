@@ -15,13 +15,6 @@ using namespace xolotl::perf::dummy;
  */
 BOOST_AUTO_TEST_SUITE(DummyEventCounter_testSuite)
 
-BOOST_AUTO_TEST_CASE(checkName)
-{
-	DummyEventCounter tester("test");
-
-	BOOST_REQUIRE_EQUAL("unused", tester.getName());
-}
-
 BOOST_AUTO_TEST_CASE(checkInitialValue)
 {
 	DummyEventCounter tester("test");

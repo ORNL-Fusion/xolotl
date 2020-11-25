@@ -43,22 +43,6 @@ initializePAPI()
  */
 BOOST_AUTO_TEST_SUITE(HardwareCounter_testSuite)
 
-BOOST_AUTO_TEST_CASE(checkName)
-{
-	bool papiInitialized = initializePAPI();
-	BOOST_REQUIRE_EQUAL(papiInitialized, true);
-
-	PAPIHardwareCounter tester("test", test_ctrSpec);
-
-	// Output the version of PAPI that is being used
-	BOOST_TEST_MESSAGE("\n"
-		<< "PAPI_VERSION = " << PAPI_VERSION_MAJOR(PAPI_VERSION) << "."
-		<< PAPI_VERSION_MINOR(PAPI_VERSION) << "."
-		<< PAPI_VERSION_REVISION(PAPI_VERSION) << "\n");
-
-	BOOST_REQUIRE_EQUAL("test", tester.getName());
-}
-
 BOOST_AUTO_TEST_CASE(check_getSpecification)
 {
 	bool papiInitialized = initializePAPI();
