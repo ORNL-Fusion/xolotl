@@ -9,27 +9,35 @@ Building Xolotl
 
 First things first, checkout the repository with
 
-> git clone https://github.com/ORNL-Fusion/xolotl /home/user/xolotl-source
+```
+git clone https://github.com/ORNL-Fusion/xolotl /home/user/xolotl-source
+```
 
 Now, assuming you have all of the dependencies for Xolotl built and a good C++17 compiler (GCC 5 or greater), Xolotl itself is quite easy to build. If you do not have all of the dependencies, check out the next section.
 
 Create a directory in which you want to build Xolotl (for instance /home/user/xolotl-build) and change into it. It can be any directory except for the source directory (which is /home/user/xolotl-source/). From inside the build directory run the following commands:
 
->PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=mpicxx ../xolotl-source \
-make \
+```
+PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=mpicxx ../xolotl-source
+make
 make test 
+```
 
-with the path to your MPI compiler (here mpicxx) in -DCMAKE_CXX_COMPILER and the path to an installed PETSc version in PETSC_DIR (multiple PETSc versions can coexist on the same file-system).
+with the path to your MPI compiler (here mpicxx) in `-DCMAKE_CXX_COMPILER` and the path to an installed PETSc version in `PETSC_DIR` (multiple PETSc versions can coexist on the same file-system).
 
 You can also run make in parallel (make -jN, where N is the number of processes) to build Xolotl faster. This is recommended if you have a big machine.
 
 **NOTE:** If CMake fails to find HDF5, add the path to your HDF5 installation directory in the CMake command:
 
->HDF5_ROOT=/opt/hdf5 PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=mpicxx ../xolotl-source 
+```
+HDF5_ROOT=/opt/hdf5 PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=mpicxx ../xolotl-source 
+```
 
 **NOTE (bis):**If you have Boost  but CMake fails to find BOOST, add the path to your Boost installation folder in the CMake command:
 
->BOOST_ROOT=/opt/boost PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=mpicxx ../xolotl-source 
+```
+BOOST_ROOT=/opt/boost PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=mpicxx ../xolotl-source 
+```
 
 
 Building Xolotl's Dependencies
@@ -42,49 +50,59 @@ Kokkos
 
 [Kokkos](https://github.com/kokkos/kokkos/wiki) is used to enable different back-ends for Xolotl (the develop branch):
 
-#SERIAL#
+#### SERIAL
 
->git clone https://github.com/kokkos/kokkos /opt/kokkos \
-cd /opt/kokkos \
-git checkout develop \
-mkdir build \
-cd build \
-cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_SERIAL=ON -DBUILD_SHARED_LIBS=ON .. \
+```
+git clone https://github.com/kokkos/kokkos /opt/kokkos
+cd /opt/kokkos
+git checkout develop
+mkdir build
+cd build
+cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_SERIAL=ON -DBUILD_SHARED_LIBS=ON ..
 make install 
+```
 
-#OpenMP#
+#### OpenMP
 
->git clone https://github.com/kokkos/kokkos /opt/kokkos \
-cd /opt/kokkos \
-git checkout develop \
-mkdir build \
-cd build \
-cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_OPENMP=ON -DBUILD_SHARED_LIBS=ON .. \
+```
+git clone https://github.com/kokkos/kokkos /opt/kokkos
+cd /opt/kokkos
+git checkout develop
+mkdir build
+cd build
+cmake -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_OPENMP=ON -DBUILD_SHARED_LIBS=ON ..
 make install 
+```
 
-#CUDA#
+#### CUDA
 
 CUDA version 11 is needed for C++17 support.
 
->git clone https://github.com/kokkos/kokkos /opt/kokkos \
-cd /opt/kokkos \
-git checkout develop \
-mkdir build \
-cd build \
-cmake -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_CUDA=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_CONSTEXPR=ON -DBUILD_SHARED_LIBS=ON .. \
+```
+git clone https://github.com/kokkos/kokkos /opt/kokkos
+cd /opt/kokkos
+git checkout develop
+mkdir build
+cd build
+cmake -DCMAKE_CXX_COMPILER=/opt/kokkos/bin/nvcc_wrapper -DCMAKE_INSTALL_PREFIX=/opt/kokkos-install -DKokkos_ENABLE_CUDA=ON -DKokkos_ENABLE_CUDA_LAMBDA=ON -DKokkos_ENABLE_CUDA_CONSTEXPR=ON -DBUILD_SHARED_LIBS=ON ..
 make install 
+```
 
 The Xolotl cmake line has to be updated here:
 
->PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=/opt/kokkos-install/bin/nvcc_wrapper ../xolotl-source \
+```
+PETSC_DIR=/opt/petsc-install cmake -DCMAKE_BUILD_TYPE=Release -DKokkos_DIR=/opt/kokkos-install -DCMAKE_CXX_COMPILER=/opt/kokkos-install/bin/nvcc_wrapper ../xolotl-source
+```
 
 Boost 
 -----
 
 Xolotl uses [Boost](http://www.boost.org). You can get Boost from your package manager or build it from scratch by downloading the latest. Use the following commands in the Boost directory:
 
->./bootstrap.sh --show-libraries \
+```
+./bootstrap.sh --show-libraries
 ./b2 install --prefix=/opt/boost --with-test --with-filesystem --with-program_options --with-timer
+```
 
 This will only install the parts of Boost required for Xolotl.
 
@@ -92,11 +110,15 @@ If Boost is installed to a non-standard prefix such as the above, you can point 
 
 You can run Xolotl tests with
 
->make test
+```
+make test
+```
 
 If you want to only run a specific one, run the corresponding executable that is created in your build folder. For instance (from your build directory)
 
->./test/core/NetworkTester
+```
+./test/core/NetworkTester
+```
 
 
 PETSc
@@ -104,35 +126,45 @@ PETSc
 
 [PETSc](http://www.mcs.anl.gov/petsc/) is used to solve the DR equation in Xolotl. We build PETSc without debugging enabled. Xolotl now uses the "master" version of PETSc. You can download it (for instance in /opt/) using git with the following command:
 
+```
 git clone https://bitbucket.org/petsc/petsc petsc
+```
 
 Enter the petsc directory and build it using the following commands (hint: after the configure step, PETSc will print you what to execute):
 
->./configure PETSC_DIR=$PWD --prefix=/opt/petsc-install --with-cc=mpicc --with-cxx=mpicxx --with-fc=mpif77 --with-debugging=no  --with-shared-libraries
+```
+./configure PETSC_DIR=$PWD --prefix=/opt/petsc-install --with-cc=mpicc --with-cxx=mpicxx --with-fc=mpif77 --with-debugging=no  --with-shared-libraries
 make PETSC_DIR=/opt/petsc PETSC_ARCH=arch-linux2-c-opt all
 make PETSC_DIR=/opt/petsc PETSC_ARCH=arch-linux2-c-opt install
 make PETSC_DIR=/opt/petsc-install test
 make PETSC_DIR=/opt/petsc-install PETSC_ARCH=arch-linux2-c-opt streams NPMAX=<number of MPI processes you intend to use\>
+```
 
 If you don't have Fortran compilers, you can use --with-fc=0 during the configure.
 
-If PETSc complains because it is not finding Blas/Lapack, you have different options: you can install Blas/Lapack yourself (with yum, dnf, or apt-get for instance; you can also download them from [netlib/blas](http://www.netlib.org/blas/) and [netlib/lapack](http://www.netlib.org/lapack/)) and configure PETSc again, or you can tell PETSc to download it with --download-fblaslapack (if Fortran compilers are availalble) or --download-f2cblaslapack (without Fortran compilers).
+If PETSc complains because it is not finding Blas/Lapack, you have different options: you can install Blas/Lapack yourself (with yum, dnf, or apt-get for instance; you can also download them from [netlib/blas](http://www.netlib.org/blas/) and [netlib/lapack](http://www.netlib.org/lapack/)) and configure PETSc again, or you can tell PETSc to download it with `--download-fblaslapack` (if Fortran compilers are availalble) or --download-f2cblaslapack (without Fortran compilers).
 
 **Built in place for developers**
 
-When PETSc versions are changing often, it is faster to build PETSc in place instead of installing it. To do so, simply remove the --prefix option from the ./configure command line, and follow PETSc instructions as before:
+When PETSc versions are changing often, it is faster to build PETSc in place instead of installing it. To do so, simply remove the `--prefix` option from the `./configure` command line, and follow PETSc instructions as before:
 
->make PETSC_DIR=/opt/petsc PETSC_ARCH=arch-linux2-c-opt all
+```
+make PETSC_DIR=/opt/petsc PETSC_ARCH=arch-linux2-c-opt all
+```
 
 To update PETSc, go to your PETSc directory, do
 
->git pull
+```
+git pull
+```
 
 to get the latest version, and rebuild it with
 
->make PETSC_DIR=/opt/petsc PETSC_ARCH=arch-linux2-c-opt all
+```
+make PETSC_DIR=/opt/petsc PETSC_ARCH=arch-linux2-c-opt all
+```
 
-To build Xolotl you now need to specify the PETSC_ARCH variable when running cmake additionally to PETSC_DIR.
+To build Xolotl you now need to specify the `PETSC_ARCH` variable when running cmake additionally to `PETSC_DIR`.
 
 
 HDF5 parallel
@@ -140,19 +172,25 @@ HDF5 parallel
 
 [HDF5](http://www.hdfgroup.org/HDF5/) is required for I/O in Xolotl and its dependencies. Use the following commands:
 
->./configure --prefix=/opt/hdf5 --enable-parallel 
+```
+./configure --prefix=/opt/hdf5 --enable-parallel 
 make
 make install
+```
 
-Your path needs to be updated to point to the new HDF5 install, which can be done by adding the following lines in either ~/.bashrc or ~/.bash_profile:
+Your path needs to be updated to point to the new HDF5 install, which can be done by adding the following lines in either `~/.bashrc` or `~/.bash_profile`:
 
->PATH=/opt/hdf5/bin:$PATH
+```
+PATH=/opt/hdf5/bin:$PATH
 export PATH
+```
 
 Your library path also needs to be updated in the same file:
 
->LD_LIBRARY_PATH=/opt/hdf5/lib:$LD_LIBRARY_PATH
+```
+LD_LIBRARY_PATH=/opt/hdf5/lib:$LD_LIBRARY_PATH
 export LD_LIBRARY_PATH
+```
 
 Performance Libraries
 ---------------------
@@ -166,16 +204,20 @@ PAPI
 
 The general installation instructions are as follows (configure and make files are in the src directory):
 
-> ./configure
-  make
-  make test 
-  make fulltest (optional step to run all tests)
-  make install-all
+```
+./configure
+make
+make test 
+make fulltest (optional step to run all tests)
+make install-all
+```
 
-Your path may need to be updated to set the variable PAPI_PREFIX to point to the root installation of the PAPI library and include files, which can be done by adding the following lines in either ~/.bashrc or ~/.bash_profile:
+Your path may need to be updated to set the variable `PAPI_PREFIX` to point to the root installation of the PAPI library and include files, which can be done by adding the following lines in either `~/.bashrc` or `~/.bash_profile`:
 
-> PAPI_PREFIX=/usr/local
+```
+PAPI_PREFIX=/usr/local
 export PAPI_PREFIX
+```
 
 Note that versions other than PAPI 5.3.0 have been known to cause problems, so it is advised to use this version.
 
@@ -189,16 +231,18 @@ VTK-m
 
 VTK-m is a toolkit of scientific visualization algorithms for emerging processor architectures. VTK-m supports the fine-grained concurrency for data analysis and visualization algorithms required to drive extreme scale computing by providing abstract models for data and execution that can be applied to a variety of algorithms across many different processor architectures. Here is how to get and install it.
  
-> mkdir vtkm \
-cd vtkm \
-git clone https://gitlab.kitware.com/vtk/vtk-m.git \
-mkdir build \
-cd build \
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/VTKM -DBUILD_SHARED_LIBS=OFF ../vtk-m \
-make -j 4 install 
+```
+mkdir vtkm
+cd vtkm
+git clone https://gitlab.kitware.com/vtk/vtk-m.git
+mkdir build
+cd build
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/opt/VTKM -DBUILD_SHARED_LIBS=OFF ../vtk-m
+make -j 4 install
+```
  
 Once installed, all that is needed to enable the compilation of the visualization routines in Xolotl is to add the following flag to your cmake (using the absolute path):
--DVTKM_DIR=/opt/VTKM
+`-DVTKM_DIR=/opt/VTKM`
 
 
 Running Xolotl
