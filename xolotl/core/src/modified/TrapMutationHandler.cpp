@@ -151,6 +151,8 @@ TrapMutationHandler::initializeIndex1D(int surfacePos,
 
 		// Loop on the depth vector
 		for (int l = 0; l < depthVec.size(); l++) {
+			// Skip if the depth is negative
+			if (depthVec[l] < 0.0) continue;
 			// Check if a helium cluster undergo TM at this depth
 			if (std::fabs(depth - depthVec[l]) < 0.01 ||
 				(depthVec[l] - 0.01 < depth &&
@@ -223,6 +225,8 @@ TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 
 			// Loop on the depth vector
 			for (int l = 0; l < depthVec.size(); l++) {
+				// Skip if the depth is negative
+				if (depthVec[l] < 0.0) continue;
 				// Check if a helium cluster undergo TM at this depth
 				if (std::fabs(depth - depthVec[l]) < 0.01 ||
 					(depthVec[l] - 0.01 < depth &&
@@ -251,6 +255,8 @@ TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 				double distance = fabs(yPos - location);
 				// Loop on the sigma 3 distance vector
 				for (int l = 0; l < sigma3DistanceVec.size(); l++) {
+					// Skip if the distance is negative
+					if (sigma3DistanceVec[l] < 0.0) continue;
 					// Check if a helium cluster undergo TM at this depth
 					if (std::fabs(distance - sigma3DistanceVec[l]) < 0.01) {
 						// Add the bubble of size l+1 to the indices
@@ -336,6 +342,8 @@ TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
 
 				// Loop on the depth vector
 				for (int l = 0; l < depthVec.size(); l++) {
+					// Skip if the depth is negative
+					if (depthVec[l] < 0.0) continue;
 					// Check if a helium cluster undergo TM at this depth
 					if (std::fabs(depth - depthVec[l]) < 0.01 ||
 						(depthVec[l] - 0.01 < depth &&
@@ -366,6 +374,8 @@ TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
 
 					// Loop on the sigma 3 distance vector
 					for (int l = 0; l < sigma3DistanceVec.size(); l++) {
+						// Skip if the distance is negative
+						if (sigma3DistanceVec[l] < 0.0) continue;
 						// Check if a helium cluster undergo TM at this depth
 						if (std::fabs(distance - sigma3DistanceVec[l]) < 0.01) {
 							// Add the bubble of size l+1 to the indices
