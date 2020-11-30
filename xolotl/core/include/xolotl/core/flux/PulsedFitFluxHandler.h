@@ -1,5 +1,4 @@
-#ifndef PULSEDFITFLUXHANDLER_H
-#define PULSEDFITFLUXHANDLER_H
+#pragma once
 
 #include <cmath>
 
@@ -54,8 +53,8 @@ public:
 	 */
 	PulsedFitFluxHandler(const options::IOptions& options) :
 		FluxHandler(options),
-		deltaTime(0.0),
-		alpha(0.0)
+		deltaTime(options.getPulseTime()),
+		alpha(options.getPulseProportion())
 	{
 	}
 
@@ -164,5 +163,3 @@ public:
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif

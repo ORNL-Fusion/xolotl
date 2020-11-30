@@ -17,10 +17,6 @@ public:
 		MaterialHandler(options,
 			MaterialSubHandlerGenerator<core::flux::FuelFitFluxHandler>{})
 	{
-		// Change the flux amplitude because we have to take into account
-		// that there are one xenon created every 4 fissions.
-		_fluxHandler->setFluxAmplitude(
-			options.getFluxAmplitude() * options.getFissionYield());
 	}
 };
 } // namespace material

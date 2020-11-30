@@ -17,8 +17,6 @@ public:
 		MaterialHandler(options,
 			MaterialSubHandlerGenerator<core::flux::PulsedFitFluxHandler>{})
 	{
-		_fluxHandler->setPulseTime(options.getPulseTime());
-		_fluxHandler->setProportion(options.getPulseProportion());
 	}
 };
 } // namespace material

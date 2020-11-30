@@ -1,5 +1,4 @@
-#ifndef FUELFITFLUXHANDLER_H
-#define FUELFITFLUXHANDLER_H
+#pragma once
 
 #include <cmath>
 
@@ -36,6 +35,10 @@ public:
 	 */
 	FuelFitFluxHandler(const options::IOptions& options) : FluxHandler(options)
 	{
+		// Change the flux amplitude because we have to take into account
+		// that there are one xenon created every 4 fissions.
+		this->setFluxAmplitude(
+			options.getFluxAmplitude() * options.getFissionYield());
 	}
 
 	/**
@@ -98,5 +101,3 @@ public:
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif
