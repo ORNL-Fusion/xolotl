@@ -19,13 +19,6 @@ class DataProvider : public virtual IDataProvider
 {
 protected:
 	/**
-	 * Declare the constructor as private to force the use of a name
-	 */
-	DataProvider()
-	{
-	}
-
-	/**
 	 * Collection of data points.
 	 */
 	std::shared_ptr<std::vector<DataPoint>> dataPoints;
@@ -39,38 +32,42 @@ public:
 	/**
 	 * The default constructor.
 	 */
-	DataProvider(const std::string& name);
+	DataProvider()
+	{
+	}
 
 	/**
 	 * The destructor.
 	 */
-	~DataProvider();
+	~DataProvider()
+	{
+	}
 
 	/**
-	 * Returns a collection of the data points.
 	 * \see IDataProvider.h
 	 */
 	std::shared_ptr<std::vector<DataPoint>>
-	getDataPoints() const;
+	getDataPoints() const
+	{
+		return dataPoints;
+	}
 
 	/**
-	 * Method filling the data collection.
 	 * \see IDataProvider.h
 	 */
 	void
-	setDataPoints(std::shared_ptr<std::vector<DataPoint>> points);
+	setDataPoints(std::shared_ptr<std::vector<DataPoint>> points)
+	{
+		dataPoints = points;
+	}
 
 	/**
-	 * Returns the value of the mean of all the data points.
 	 * \see IDataProvider.h
 	 */
 	double
 	getDataMean() const;
 
 	/**
-	 * Method that has to be overwritten by subclasses.
-	 * Should return the vector of quantity that will be plotted on the X axis.
-	 * Quantity being x, y, z, t, or value.
 	 * \see IDataProvider.h
 	 */
 	virtual std::vector<double>
@@ -80,9 +77,6 @@ public:
 	}
 
 	/**
-	 * Method that has to be overwritten by subclasses.
-	 * Should return the vector of quantity that will be plotted on the Y axis.
-	 * Quantity being x, y, z, t, or value.
 	 * \see IDataProvider.h
 	 */
 	virtual std::vector<double>
@@ -92,9 +86,6 @@ public:
 	}
 
 	/**
-	 * Method that has to be overwritten by subclasses.
-	 * Should return the vector of quantity that will be plotted on the Z axis.
-	 * Quantity being x, y, z, t, or value.
 	 * \see IDataProvider.h
 	 */
 	virtual std::vector<double>
@@ -104,9 +95,7 @@ public:
 	}
 
 	/**
-	 * Method that has to be overwritten by subclasses.
-	 * Should return the vector of time steps that will be used for the
-	 * VideoPlots. \see IDataProvider.h
+	 * \see IDataProvider.h
 	 */
 	virtual std::vector<double>
 	getAxis4Vector() const
@@ -115,8 +104,7 @@ public:
 	}
 
 	/**
-	 * This operation returns the name of the data.
-	 * @return the name
+	 * \see IDataProvider.h
 	 */
 	virtual std::string
 	getDataName() const
@@ -125,8 +113,7 @@ public:
 	}
 
 	/**
-	 * This operation sets the name of the data.
-	 * @param name the name of the data
+	 * \see IDataProvider.h
 	 */
 	virtual void
 	setDataName(const std::string& name)

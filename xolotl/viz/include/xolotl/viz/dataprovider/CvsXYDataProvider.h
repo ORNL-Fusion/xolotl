@@ -18,51 +18,49 @@ namespace dataprovider
  */
 class CvsXYDataProvider : public DataProvider
 {
-private:
+public:
 	/**
-	 * Declare the constructor as private to force the use of a name
+	 * The default constructor
 	 */
 	CvsXYDataProvider() : DataProvider()
 	{
 	}
 
-public:
-	/**
-	 * The default constructor
-	 */
-	CvsXYDataProvider(const std::string& name);
-
 	/**
 	 * The destructor
 	 */
-	~CvsXYDataProvider();
+	~CvsXYDataProvider()
+	{
+	}
 
 	/**
-	 * Method returning a vector containing the 'x' field of the collection of
-	 * DataPoint of the DataProvider.
 	 * @return The vector of DataPoint x value.
+	 *
+	 * \see IDataProvider.h
 	 */
 	virtual std::vector<double>
 	getAxis1Vector() const;
 
 	/**
-	 * Method returning a vector containing the 'y' field of the collection of
-	 * DataPoint of the DataProvider.
 	 * @return The vector of DataPoint y value.
+	 *
+	 * \see IDataProvider.h
 	 */
 	virtual std::vector<double>
 	getAxis2Vector() const;
 
 	/**
-	 * Method returning a vector containing the 'Value' field of the collection
-	 * of DataPoint of the DataProvider.
 	 * @return The vector of DataPoint value.
+	 *
+	 * \see IDataProvider.h
 	 */
 	virtual std::vector<double>
 	getAxis3Vector() const;
 
+private:
 	/**
 	 * Method adding value to a vector if it is not already in the vector.
+	 *
 	 * @param vector The vector to which to add the value.
 	 * @param value The value to add.
 	 */

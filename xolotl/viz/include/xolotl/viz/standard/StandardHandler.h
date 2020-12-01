@@ -12,8 +12,8 @@ namespace viz
 namespace standard
 {
 /**
- * Handler for creating standard plots using EAVL and MESA libraries.
- * This is used only if the libraries are present and if the user uses
+ * Handler for creating standard plots using VTK-m library.
+ * This is used only if the library is present and if the user uses
  * the standard registry.
  */
 class StandardHandler : public IVizHandler
@@ -23,20 +23,13 @@ public:
 
 	StandardHandler(const options::IOptions& options);
 
-	/**
-	 * Clean up a StandardHandler.
-	 */
 	virtual ~StandardHandler();
 
 	/**
-	 * Obtain a Plot by name.
-	 *
-	 * @param name The name of the Plot.
-	 * @param type The type of plot to return.
-	 * @return A shared pointer to the newly-created Plot.
+	 * \see IVizHandler.h
 	 */
 	virtual std::shared_ptr<IPlot>
-	getPlot(const std::string& name, PlotType type);
+	getPlot(PlotType type);
 };
 // end class StandardHandler
 

@@ -25,10 +25,13 @@ public:
 	}
 
 	/**
-	 * This operation returns the IPlot specified by the parameter.
+	 * Obtain a Plot by type.
+	 *
+	 * @param type The type of plot to return.
+	 * @return A shared pointer to the newly-created Plot.
 	 */
 	virtual std::shared_ptr<IPlot>
-	getPlot(const std::string& name, PlotType type) = 0;
+	getPlot(PlotType type) = 0;
 
 }; // end class IVizHandler
 

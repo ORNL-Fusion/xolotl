@@ -18,37 +18,33 @@ namespace dataprovider
  */
 class CvsXDataProvider : public DataProvider
 {
-private:
+public:
 	/**
-	 * Declare the constructor as private to force the use of a name
+	 * The default constructor
 	 */
 	CvsXDataProvider() : DataProvider()
 	{
 	}
 
-public:
-	/**
-	 * The default constructor
-	 */
-	CvsXDataProvider(const std::string& name);
-
 	/**
 	 * The destructor
 	 */
-	~CvsXDataProvider();
+	~CvsXDataProvider()
+	{
+	}
 
 	/**
-	 * Method returning a vector containing the 'x' field of the collection of
-	 * DataPoint of the DataProvider.
 	 * @return The vector of DataPoint x value.
+	 *
+	 * \see IDataProvider.h
 	 */
 	virtual std::vector<double>
 	getAxis1Vector() const;
 
 	/**
-	 * Method returning a vector containing the 'value' field of the collection
-	 * of DataPoint of the DataProvider.
 	 * @return The vector of DataPoint value.
+	 *
+	 * \see IDataProvider.h
 	 */
 	virtual std::vector<double>
 	getAxis2Vector() const;

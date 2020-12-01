@@ -24,13 +24,7 @@ enum PlotType
 	/**
 	 * SurfacePlot
 	 */
-	SURFACE,
-
-	/**
-	 * VideoPlot
-	 */
-	VIDEO
-
+	SURFACE
 };
 
 // end enum PlotType

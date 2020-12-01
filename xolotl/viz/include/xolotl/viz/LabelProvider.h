@@ -14,14 +14,6 @@ namespace viz
  */
 class LabelProvider
 {
-private:
-	/**
-	 * Declare the constructor as private to force the use of a name
-	 */
-	LabelProvider()
-	{
-	}
-
 public:
 	/**
 	 * The label of the X axis of the plot.
@@ -66,7 +58,7 @@ public:
 	/**
 	 * The default constructor
 	 */
-	LabelProvider(const std::string& name) :
+	LabelProvider() :
 		axis1Label(" "),
 		axis2Label(" "),
 		axis3Label(" "),

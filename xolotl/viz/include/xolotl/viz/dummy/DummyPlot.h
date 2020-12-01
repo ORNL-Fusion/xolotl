@@ -17,127 +17,137 @@ namespace dummy
  */
 class DummyPlot : public IPlot
 {
-private:
+public:
 	/**
-	 * Declare the constructor as private to force the use of a name.
+	 * The default constructor
 	 */
 	DummyPlot()
 	{
 	}
 
 	/**
-	 * Data provider used for the plot.
-	 */
-	std::shared_ptr<dataprovider::IDataProvider> plotDataProvider;
-
-public:
-	/**
-	 * The default constructor
-	 */
-	DummyPlot(const std::string& name);
-
-	/**
 	 * The destructor.
 	 */
-	~DummyPlot();
+	~DummyPlot()
+	{
+	}
 
 	/**
-	 * Method managing everything that is related to the rendering of a plot.
 	 * \see IPlot.h
 	 */
 	void
-	render(const std::string& fileName = "fileName");
+	render(const std::string& fileName = "fileName")
+	{
+		return;
+	}
 
 	/**
-	 * Method that will save the plotted plot in a file.
 	 * \see IPlot.h
 	 */
 	void
-	write(const std::string& fileName);
+	write(const std::string& fileName)
+	{
+		return;
+	}
 
 	/**
-	 * Method allowing the user to set the PlottingStyle.
 	 * \see IPlot.h
 	 */
 	void
-	setPlottingStyle(PlottingStyle style);
+	setPlottingStyle(PlottingStyle style)
+	{
+		return;
+	}
 
 	/**
-	 * Method getting the PlottingStyle.
 	 * \see IPlot.h
 	 */
 	PlottingStyle
-	getPlottingStyle();
+	getPlottingStyle()
+	{
+		return PlottingStyle();
+	}
 
 	/**
-	 * Sets the data provider used for the plots.
 	 * \see IPlot.h
 	 */
 	void
-	setDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider);
+	setDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider)
+	{
+		return;
+	}
 
 	/**
-	 * Method adding one data provider to the vector plotDataProviders
 	 * \see IPlot.h
 	 */
 	void
-	addDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider);
+	addDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider)
+	{
+		return;
+	}
 
 	/**
-	 * Gets the data provider used.
 	 * \see IPlot.h
 	 */
 	std::shared_ptr<dataprovider::IDataProvider>
-	getDataProvider() const;
+	getDataProvider() const
+	{
+		return std::shared_ptr<dataprovider::IDataProvider>();
+	}
 
 	/**
-	 * Method getting the i-th data provider for SeriesPlot
 	 * \see IPlot.h
 	 */
 	std::shared_ptr<dataprovider::IDataProvider>
-	getDataProvider(int i) const;
+	getDataProvider(int i) const
+	{
+		return std::shared_ptr<dataprovider::IDataProvider>();
+	}
 
 	/**
-	 * Method getting the total number of data providers
 	 * \see IPlot.h
 	 */
 	int
-	getDataProviderNumber() const;
+	getDataProviderNumber() const
+	{
+		return 0;
+	}
 
 	/**
-	 * Sets the label provider used for the plots.
 	 * \see IPlot.h
 	 */
 	void
-	setLabelProvider(std::shared_ptr<LabelProvider> labelProvider);
+	setLabelProvider(std::shared_ptr<LabelProvider> labelProvider)
+	{
+		return;
+	}
 
 	/**
-	 * Gets the label provider used.
 	 * \see IPlot.h
 	 */
 	std::shared_ptr<LabelProvider>
-	getLabelProvider() const;
+	getLabelProvider() const
+	{
+		return std::shared_ptr<LabelProvider>();
+	}
 
 	/**
-	 * Method that enables the rendering of the legend.
 	 * \see IPlot.h
 	 */
 	void
-	showLegend(bool legendShow = true);
+	showLegend(bool legendShow = true)
+	{
+		return;
+	}
 
 	/**
-	 * Method getting the legend.
-	 * \see IPlot.h
-	 */
-	std::string
-	getLegend() const;
-
-	/**
-	 * Method that enables the log scale.
 	 * \see IPlot.h
 	 */
 	void
-	setLogScale(bool logScale = true);
+	setLogScale(bool logScale = true)
+	{
+		return;
+	}
 };
 // end class DummyPlot
 

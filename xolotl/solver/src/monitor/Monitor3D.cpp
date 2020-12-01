@@ -1869,12 +1869,10 @@ setupPetsc3DMonitor(TS ts)
 		// Only the master process will create the plot
 		if (procId == 0) {
 			// Create a ScatterPlot
-			perfPlot =
-				vizHandlerRegistry->getPlot("perfPlot", viz::PlotType::SCATTER);
+			perfPlot = vizHandlerRegistry->getPlot(viz::PlotType::SCATTER);
 
 			// Create and set the label provider
-			auto labelProvider =
-				std::make_shared<viz::LabelProvider>("labelProvider");
+			auto labelProvider = std::make_shared<viz::LabelProvider>();
 			labelProvider->axis1Label = "Process ID";
 			labelProvider->axis2Label = "Solver Time";
 
@@ -1883,8 +1881,7 @@ setupPetsc3DMonitor(TS ts)
 
 			// Create the data provider
 			auto dataProvider =
-				std::make_shared<viz::dataprovider::CvsXDataProvider>(
-					"dataProvider");
+				std::make_shared<viz::dataprovider::CvsXDataProvider>();
 
 			// Give it to the plot
 			perfPlot->setDataProvider(dataProvider);
@@ -1994,12 +1991,11 @@ setupPetsc3DMonitor(TS ts)
 		// Only the master process will create the plot
 		if (procId == 0) {
 			// Create a SurfacePlot
-			surfacePlotXY3D = vizHandlerRegistry->getPlot(
-				"surfacePlotXY3D", viz::PlotType::SURFACE);
+			surfacePlotXY3D =
+				vizHandlerRegistry->getPlot(viz::PlotType::SURFACE);
 
 			// Create and set the label provider
-			auto labelProvider =
-				std::make_shared<viz::LabelProvider>("labelProvider");
+			auto labelProvider = std::make_shared<viz::LabelProvider>();
 			labelProvider->axis1Label = "Depth (nm)";
 			labelProvider->axis2Label = "Y (nm)";
 			labelProvider->axis3Label = "Concentration";
@@ -2009,8 +2005,7 @@ setupPetsc3DMonitor(TS ts)
 
 			// Create the data provider
 			auto dataProvider =
-				std::make_shared<viz::dataprovider::CvsXYDataProvider>(
-					"dataProvider");
+				std::make_shared<viz::dataprovider::CvsXYDataProvider>();
 
 			// Give it to the plot
 			surfacePlotXY3D->setDataProvider(dataProvider);
@@ -2027,12 +2022,11 @@ setupPetsc3DMonitor(TS ts)
 		// Only the master process will create the plot
 		if (procId == 0) {
 			// Create a SurfacePlot
-			surfacePlotXZ3D = vizHandlerRegistry->getPlot(
-				"surfacePlotXZ3D", viz::PlotType::SURFACE);
+			surfacePlotXZ3D =
+				vizHandlerRegistry->getPlot(viz::PlotType::SURFACE);
 
 			// Create and set the label provider
-			auto labelProvider =
-				std::make_shared<viz::LabelProvider>("labelProvider");
+			auto labelProvider = std::make_shared<viz::LabelProvider>();
 			labelProvider->axis1Label = "Depth (nm)";
 			labelProvider->axis2Label = "Z (nm)";
 			labelProvider->axis3Label = "Concentration";
@@ -2042,8 +2036,7 @@ setupPetsc3DMonitor(TS ts)
 
 			// Create the data provider
 			auto dataProvider =
-				std::make_shared<viz::dataprovider::CvsXYDataProvider>(
-					"dataProvider");
+				std::make_shared<viz::dataprovider::CvsXYDataProvider>();
 
 			// Give it to the plot
 			surfacePlotXZ3D->setDataProvider(dataProvider);

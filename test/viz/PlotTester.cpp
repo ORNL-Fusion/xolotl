@@ -25,7 +25,7 @@ BOOST_AUTO_TEST_SUITE(Plot_testSuite)
 BOOST_AUTO_TEST_CASE(checkPlottingStyle)
 {
 	// Create myScatterPlot
-	auto myScatterPlot = make_shared<ScatterPlot>("myScatterPlot");
+	auto myScatterPlot = make_shared<ScatterPlot>();
 
 	PlottingStyle thePlottingStyle = LINE;
 
@@ -42,10 +42,10 @@ BOOST_AUTO_TEST_CASE(checkPlottingStyle)
 BOOST_AUTO_TEST_CASE(checkDataProvider)
 {
 	// Create myScatterPlot
-	auto myScatterPlot = make_shared<ScatterPlot>("myScatterPlot");
+	auto myScatterPlot = make_shared<ScatterPlot>();
 
 	// Create myDataProvider
-	auto myDataProvider = make_shared<DataProvider>("myDataProvider");
+	auto myDataProvider = make_shared<DataProvider>();
 
 	// Create a DataPoint vector
 	auto myPoints = make_shared<vector<DataPoint>>();
@@ -92,12 +92,5 @@ BOOST_AUTO_TEST_CASE(checkDataProvider)
 		BOOST_REQUIRE_EQUAL(dataPoints->at(i).z, myPoints->at(i).z);
 	}
 }
-
-///**
-// * Method checking the writing of the file.
-// */
-// BOOST_AUTO_TEST_CASE(checkWrite) {
-//    BOOST_FAIL("checkWrite not implement yet");
-//}
 
 BOOST_AUTO_TEST_SUITE_END()

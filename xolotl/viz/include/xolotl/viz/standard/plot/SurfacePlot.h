@@ -17,32 +17,27 @@ namespace plot
 /**
  * Plot the data value as a function of two different dimensions.
  * The available PlottingStyle are POINTS, LINE, COLORMAP, and SURFACE.
- * It can be associated to QvsXYDataProvider, QvsXZDataProvider, or
- * QvsYZDataProvider.
+ * It can be associated to CvsXYDataProvider.
  */
 class SurfacePlot : public Plot
 {
-private:
+public:
 	/**
-	 * Declare the constructor as private to force the use of a name
+	 * The default constructor
 	 */
 	SurfacePlot() : Plot()
 	{
 	}
 
-public:
-	/**
-	 * The default constructor
-	 */
-	SurfacePlot(const std::string& name);
-
 	/**
 	 * The destructor
 	 */
-	~SurfacePlot();
+	~SurfacePlot()
+	{
+	}
 
 	/**
-	 * Method managing everything that is related to the rendering of a plot.
+	 * \see IPlot.h
 	 */
 	void
 	render(const std::string& fileName = "fileName");

@@ -7,14 +7,6 @@ namespace viz
 {
 namespace dataprovider
 {
-CvsXDataProvider::CvsXDataProvider(const std::string& name) : DataProvider(name)
-{
-}
-
-CvsXDataProvider::~CvsXDataProvider()
-{
-}
-
 std::vector<double>
 CvsXDataProvider::getAxis1Vector() const
 {

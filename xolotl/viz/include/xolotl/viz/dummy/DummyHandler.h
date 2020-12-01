@@ -22,19 +22,13 @@ public:
 
 	DummyHandler(const options::IOptions& options);
 
-	/**
-	 * Clean up a DummyHandler.
-	 */
 	virtual ~DummyHandler();
 
 	/**
-	 * Obtain a Plot by name.
-	 *
-	 * @param name The name of the Plot.
-	 * @return A shared pointer to the newly-created Plot.
+	 * \see IVizHandler.h
 	 */
 	virtual std::shared_ptr<IPlot>
-	getPlot(const std::string& name, PlotType type);
+	getPlot(PlotType type);
 };
 // end class DummyHandler
 

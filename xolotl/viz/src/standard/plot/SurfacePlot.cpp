@@ -41,14 +41,6 @@ namespace plot
 #define W_WIDTH 1024
 #define W_HEIGHT 1024
 
-SurfacePlot::SurfacePlot(const std::string& name) : Plot(name)
-{
-}
-
-SurfacePlot::~SurfacePlot()
-{
-}
-
 void
 SurfacePlot::render(const std::string& fileName)
 {

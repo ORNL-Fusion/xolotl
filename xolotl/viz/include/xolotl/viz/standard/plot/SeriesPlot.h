@@ -22,14 +22,6 @@ class SeriesPlot : public Plot
 {
 private:
 	/**
-	 * Declare the constructor as private to force the use of a name
-	 */
-	SeriesPlot() : Plot()
-	{
-	}
-
-private:
-	/**
 	 * Container of data providers used for the plot.
 	 */
 	std::shared_ptr<std::vector<std::shared_ptr<dataprovider::IDataProvider>>>
@@ -39,44 +31,46 @@ public:
 	/**
 	 * The default constructor
 	 */
-	SeriesPlot(const std::string& name);
+	SeriesPlot() :
+		Plot(),
+		plotDataProviders(std::make_shared<
+			std::vector<std::shared_ptr<dataprovider::IDataProvider>>>())
+	{
+	}
 
 	/**
 	 * The destructor
 	 */
-	~SeriesPlot();
+	~SeriesPlot()
+	{
+	}
 
 	/**
-	 * Method managing everything that is related to the rendering of a plot.
+	 * \see IPlot.h
 	 */
 	void
 	render(const std::string& fileName = "fileName");
 
 	/**
-	 * Method adding one data provider to the vector plotDataProviders
-	 * @ param dataProvider The data provider to add.
+	 * \see IPlot.h
 	 */
 	void
 	addDataProvider(std::shared_ptr<dataprovider::IDataProvider> dataProvider);
 
 	/**
-	 * Gets the data provider used.
 	 * \see IPlot.h
 	 */
 	std::shared_ptr<dataprovider::IDataProvider>
 	getDataProvider() const;
 
 	/**
-	 * Method getting the i-th data provider
-	 * @ param i The number of the data provider to be returned.
-	 * @ return The ith data provider.
+	 * \see IPlot.h
 	 */
 	std::shared_ptr<dataprovider::IDataProvider>
 	getDataProvider(int i) const;
 
 	/**
-	 * Method getting the total number of data providers
-	 * @ return The total number of data providers.
+	 * \see IPlot.h
 	 */
 	int
 	getDataProviderNumber() const;

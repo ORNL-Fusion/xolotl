@@ -7,27 +7,6 @@ namespace viz
 {
 namespace dataprovider
 {
-DataProvider::DataProvider(const std::string& name)
-{
-}
-
-DataProvider::~DataProvider()
-{
-}
-
-std::shared_ptr<std::vector<DataPoint>>
-DataProvider::getDataPoints() const
-{
-	return dataPoints;
-}
-
-void
-DataProvider::setDataPoints(std::shared_ptr<std::vector<DataPoint>> points)
-{
-	dataPoints = points;
-	return;
-}
-
 double
 DataProvider::getDataMean() const
 {

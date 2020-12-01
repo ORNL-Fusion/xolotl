@@ -20,8 +20,7 @@ BOOST_AUTO_TEST_SUITE(CvsXYDataProvider_testSuite)
 BOOST_AUTO_TEST_CASE(checkGetVector)
 {
 	// Create myCvsXYDataProvider
-	auto myCvsXYDataProvider =
-		make_shared<CvsXYDataProvider>("myCvsXYDataProvider");
+	auto myCvsXYDataProvider = make_shared<CvsXYDataProvider>();
 
 	// Create a DataPoint vector
 	auto myPoints = make_shared<vector<DataPoint>>();

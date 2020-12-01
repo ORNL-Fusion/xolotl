@@ -35,12 +35,16 @@ public:
 
 	/**
 	 * Method managing everything that is related to the rendering of a plot.
+	 *
+	 * @param fileName The name of the file where the plot
+	 * will be saved.
 	 */
 	virtual void
 	render(const std::string& fileName = "fileName") = 0;
 
 	/**
 	 * Method that will save the plotted plot in a file.
+	 *
 	 * @param fileName The name of the file where the plot
 	 * will be saved.
 	 */
@@ -49,6 +53,7 @@ public:
 
 	/**
 	 * Method allowing the user to set the PlottingStyle.
+	 *
 	 * @param style The PlottingStyle that will be used.
 	 */
 	virtual void
@@ -56,6 +61,7 @@ public:
 
 	/**
 	 * Method getting the PlottingStyle.
+	 *
 	 * @return The PlottingStyle attribute.
 	 */
 	virtual PlottingStyle
@@ -63,6 +69,7 @@ public:
 
 	/**
 	 * Sets the data provider used for the plots.
+	 *
 	 * @param dataProvider The DataProvider to set.
 	 */
 	virtual void
@@ -71,6 +78,7 @@ public:
 
 	/**
 	 * Method adding one data provider to the vector plotDataProviders
+	 *
 	 * @ param dataProvider The data provider to add.
 	 */
 	virtual void
@@ -79,6 +87,7 @@ public:
 
 	/**
 	 * Gets the data provider used.
+	 *
 	 * @return the DataProvider attribute.
 	 */
 	virtual std::shared_ptr<dataprovider::IDataProvider>
@@ -86,6 +95,7 @@ public:
 
 	/**
 	 * Method getting the i-th data provider for SeriesPlot
+	 *
 	 * @ param i The number of the data provider to be returned.
 	 * @ return The ith data provider.
 	 */
@@ -94,6 +104,7 @@ public:
 
 	/**
 	 * Method getting the total number of data providers
+	 *
 	 * @ return The total number of data providers.
 	 */
 	virtual int
@@ -101,6 +112,7 @@ public:
 
 	/**
 	 * Sets the label provider used for the plots.
+	 *
 	 * @param dataProvider The LabelProvider to set.
 	 */
 	virtual void
@@ -108,6 +120,7 @@ public:
 
 	/**
 	 * Gets the label provider used.
+	 *
 	 * @return the LabelProvider attribute.
 	 */
 	virtual std::shared_ptr<LabelProvider>
@@ -115,21 +128,15 @@ public:
 
 	/**
 	 * Method that enables the rendering of the legend.
+	 *
 	 * @param legendShow A boolean set to true by default
 	 */
 	virtual void
 	showLegend(bool legendShow = true) = 0;
 
 	/**
-	 * Method defining the legend with the help of the data provider and the
-	 * label provider.
-	 * @return The legend.
-	 */
-	virtual std::string
-	getLegend() const = 0;
-
-	/**
 	 * Method that enables the log scale.
+	 *
 	 * @param logScale A boolean set to true by default
 	 */
 	virtual void

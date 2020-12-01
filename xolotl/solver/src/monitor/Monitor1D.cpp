@@ -26,7 +26,6 @@
 #include <xolotl/viz/PlotType.h>
 #include <xolotl/viz/VizHandlerRegistry.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
-#include <xolotl/viz/dataprovider/CvsXYDataProvider.h>
 
 namespace xolotl
 {
@@ -2460,14 +2459,12 @@ setupPetsc1DMonitor(TS ts)
 		// Only the master process will create the plot
 		if (procId == 0) {
 			// Create a ScatterPlot
-			scatterPlot1D = vizHandlerRegistry->getPlot(
-				"scatterPlot1D", viz::PlotType::SCATTER);
+			scatterPlot1D = vizHandlerRegistry->getPlot(viz::PlotType::SCATTER);
 
 			scatterPlot1D->setLogScale();
 
 			// Create and set the label provider
-			auto labelProvider =
-				std::make_shared<viz::LabelProvider>("labelProvider");
+			auto labelProvider = std::make_shared<viz::LabelProvider>();
 			labelProvider->axis1Label = "Xenon Size";
 			labelProvider->axis2Label = "Concentration";
 
@@ -2476,8 +2473,7 @@ setupPetsc1DMonitor(TS ts)
 
 			// Create the data provider
 			auto dataProvider =
-				std::make_shared<viz::dataprovider::CvsXDataProvider>(
-					"dataProvider");
+				std::make_shared<viz::dataprovider::CvsXDataProvider>();
 
 			// Give it to the plot
 			scatterPlot1D->setDataProvider(dataProvider);
@@ -2494,15 +2490,13 @@ setupPetsc1DMonitor(TS ts)
 		// Only the master process will create the plot
 		if (procId == 0) {
 			// Create a ScatterPlot
-			seriesPlot1D = vizHandlerRegistry->getPlot(
-				"seriesPlot1D", viz::PlotType::SERIES);
+			seriesPlot1D = vizHandlerRegistry->getPlot(viz::PlotType::SERIES);
 
 			// set the log scale
 			//			seriesPlot1D->setLogScale();
 
 			// Create and set the label provider
-			auto labelProvider =
-				std::make_shared<viz::LabelProvider>("labelProvider");
+			auto labelProvider = std::make_shared<viz::LabelProvider>();
 			labelProvider->axis1Label = "x Position on the Grid";
 			labelProvider->axis2Label = "Concentration";
 
@@ -2514,13 +2508,9 @@ setupPetsc1DMonitor(TS ts)
 
 			// Create a data provider for each cluster in the network
 			for (int i = 0; i < loopSize; i++) {
-				// Set the name
-				std::stringstream dataProviderName;
-				dataProviderName << "dataprovider" << i;
 				// Create the data provider
 				auto dataProvider =
-					std::make_shared<viz::dataprovider::CvsXDataProvider>(
-						dataProviderName.str());
+					std::make_shared<viz::dataprovider::CvsXDataProvider>();
 
 				// Give it to the plot
 				seriesPlot1D->addDataProvider(dataProvider);
@@ -2538,12 +2528,10 @@ setupPetsc1DMonitor(TS ts)
 		// Only the master process will create the plot
 		if (procId == 0) {
 			// Create a ScatterPlot
-			perfPlot =
-				vizHandlerRegistry->getPlot("perfPlot", viz::PlotType::SCATTER);
+			perfPlot = vizHandlerRegistry->getPlot(viz::PlotType::SCATTER);
 
 			// Create and set the label provider
-			auto labelProvider =
-				std::make_shared<viz::LabelProvider>("labelProvider");
+			auto labelProvider = std::make_shared<viz::LabelProvider>();
 			labelProvider->axis1Label = "Process ID";
 			labelProvider->axis2Label = "Solver Time";
 
@@ -2552,8 +2540,7 @@ setupPetsc1DMonitor(TS ts)
 
 			// Create the data provider
 			auto dataProvider =
-				std::make_shared<viz::dataprovider::CvsXDataProvider>(
-					"dataProvider");
+				std::make_shared<viz::dataprovider::CvsXDataProvider>();
 
 			// Give it to the plot
 			perfPlot->setDataProvider(dataProvider);

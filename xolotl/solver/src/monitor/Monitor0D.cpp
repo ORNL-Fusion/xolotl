@@ -23,7 +23,6 @@
 #include <xolotl/viz/PlotType.h>
 #include <xolotl/viz/VizHandlerRegistry.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
-#include <xolotl/viz/dataprovider/CvsXYDataProvider.h>
 
 namespace xolotl
 {
@@ -729,14 +728,12 @@ setupPetsc0DMonitor(TS ts)
 	// Set the monitor to save 1D plot of xenon distribution
 	if (flag1DPlot) {
 		// Create a ScatterPlot
-		scatterPlot0D = vizHandlerRegistry->getPlot(
-			"scatterPlot0D", viz::PlotType::SCATTER);
+		scatterPlot0D = vizHandlerRegistry->getPlot(viz::PlotType::SCATTER);
 
 		//		scatterPlot0D->setLogScale();
 
 		// Create and set the label provider
-		auto labelProvider =
-			std::make_shared<viz::LabelProvider>("labelProvider");
+		auto labelProvider = std::make_shared<viz::LabelProvider>();
 		labelProvider->axis1Label = "Xenon Size";
 		labelProvider->axis2Label = "Concentration";
 
@@ -745,8 +742,7 @@ setupPetsc0DMonitor(TS ts)
 
 		// Create the data provider
 		auto dataProvider =
-			std::make_shared<viz::dataprovider::CvsXDataProvider>(
-				"dataProvider");
+			std::make_shared<viz::dataprovider::CvsXDataProvider>();
 
 		// Give it to the plot
 		scatterPlot0D->setDataProvider(dataProvider);

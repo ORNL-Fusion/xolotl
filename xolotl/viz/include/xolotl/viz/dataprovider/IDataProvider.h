@@ -30,6 +30,7 @@ public:
 
 	/**
 	 * Returns a collection of the data points.
+	 *
 	 * @return The collection of DataPoint.
 	 */
 	virtual std::shared_ptr<std::vector<DataPoint>>
@@ -37,6 +38,7 @@ public:
 
 	/**
 	 * Returns the value of the mean of all the data points.
+	 *
 	 * @return The mean of all the values of the data.
 	 */
 	virtual double
@@ -44,6 +46,7 @@ public:
 
 	/**
 	 * Method filling the data collection.
+	 *
 	 * @param points A collection of DataPoint.
 	 */
 	virtual void
@@ -52,6 +55,7 @@ public:
 	/**
 	 * Method returning the vector of quantity that will be plotted on the X
 	 * axis. Quantity being x, y, z, t, or value.
+	 *
 	 * @return The vector of quantity.
 	 */
 	virtual std::vector<double>
@@ -60,6 +64,7 @@ public:
 	/**
 	 * Method returning the vector of quantity that will be plotted on the Y
 	 * axis. Quantity being x, y, z, t, or value.
+	 *
 	 * @return The vector of quantity.
 	 */
 	virtual std::vector<double>
@@ -68,6 +73,7 @@ public:
 	/**
 	 * Method returning the vector of quantity that will be plotted on the Z
 	 * axis. Quantity being x, y, z, t, or value.
+	 *
 	 * @return The vector of quantity.
 	 */
 	virtual std::vector<double>
@@ -76,6 +82,7 @@ public:
 	/**
 	 * Method returning the vector of time steps that will be used for the
 	 * VideoPlots.
+	 *
 	 * @return The vector of time steps.
 	 */
 	virtual std::vector<double>
@@ -83,6 +90,7 @@ public:
 
 	/**
 	 * This operation returns the name of the data.
+	 *
 	 * @return the name
 	 */
 	virtual std::string
@@ -90,6 +98,7 @@ public:
 
 	/**
 	 * This operation sets the name of the data.
+	 *
 	 * @param name the name of the data
 	 */
 	virtual void

@@ -9,7 +9,6 @@
 #include <xolotl/viz/standard/plot/ScatterPlot.h>
 #include <xolotl/viz/standard/plot/SeriesPlot.h>
 #include <xolotl/viz/standard/plot/SurfacePlot.h>
-#include <xolotl/viz/standard/plot/VideoPlot.h>
 
 namespace xolotl
 {
@@ -39,19 +38,17 @@ StandardHandler::StandardHandler(const options::IOptions& options)
 StandardHandler::~StandardHandler() = default;
 
 std::shared_ptr<IPlot>
-StandardHandler::getPlot(const std::string& name, PlotType type)
+StandardHandler::getPlot(PlotType type)
 {
 	switch (type) {
 	case PlotType::SCATTER:
-		return std::make_shared<plot::ScatterPlot>(name);
+		return std::make_shared<plot::ScatterPlot>();
 	case PlotType::SERIES:
-		return std::make_shared<plot::SeriesPlot>(name);
+		return std::make_shared<plot::SeriesPlot>();
 	case PlotType::SURFACE:
-		return std::make_shared<plot::SurfacePlot>(name);
-	case PlotType::VIDEO:
-		return std::make_shared<plot::VideoPlot>(name);
+		return std::make_shared<plot::SurfacePlot>();
 	default:
-		return std::make_shared<plot::Plot>(name);
+		return std::make_shared<plot::Plot>();
 	}
 }
 

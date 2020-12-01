@@ -41,17 +41,6 @@ namespace plot
 #define BG_COLOR vtkm::rendering::Color::white
 #define FG_COLOR vtkm::rendering::Color::black
 
-SeriesPlot::SeriesPlot(const std::string& name) :
-	Plot(name),
-	plotDataProviders(std::make_shared<
-		std::vector<std::shared_ptr<dataprovider::IDataProvider>>>())
-{
-}
-
-SeriesPlot::~SeriesPlot()
-{
-}
-
 void
 SeriesPlot::render(const std::string& fileName)
 {

@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_SUITE(DataProvider_testSuite)
 BOOST_AUTO_TEST_CASE(checkData)
 {
 	// Create myDataProvider
-	auto myDataProvider = make_shared<DataProvider>("myDataProvider");
+	auto myDataProvider = make_shared<DataProvider>();
 
 	// Create a DataPoint vector
 	auto myPoints = make_shared<vector<DataPoint>>();

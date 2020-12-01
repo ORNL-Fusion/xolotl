@@ -41,14 +41,6 @@ namespace plot
 #define BG_COLOR vtkm::rendering::Color::white
 #define FG_COLOR vtkm::rendering::Color::black
 
-ScatterPlot::ScatterPlot(const std::string& name) : Plot(name)
-{
-}
-
-ScatterPlot::~ScatterPlot()
-{
-}
-
 void
 ScatterPlot::render(const std::string& fileName)
 {

@@ -20,10 +20,9 @@ DummyHandler::DummyHandler(const options::IOptions&)
 
 DummyHandler::~DummyHandler() = default;
 
-std::shared_ptr<IPlot>
-DummyHandler::getPlot(const std::string& name, PlotType)
+std::shared_ptr<IPlot> DummyHandler::getPlot(PlotType)
 {
-	return std::make_shared<DummyPlot>(name);
+	return std::make_shared<DummyPlot>();
 }
 
 } // namespace dummy

@@ -5,5 +5,4 @@ list(APPEND XOLOTL_VIZ_HEADERS
 
 list(APPEND XOLOTL_VIZ_SOURCES
     ${XOLOTL_VIZ_SOURCE_DIR}/dummy/DummyHandler.cpp
-    ${XOLOTL_VIZ_SOURCE_DIR}/dummy/DummyPlot.cpp
 )
