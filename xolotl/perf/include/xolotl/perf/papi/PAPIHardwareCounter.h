@@ -33,7 +33,7 @@ private:
 
 	/// A nicer name for a collection of CounterSpecInfo structs,
 	/// keyed by the counter spec ID.
-	typedef std::map<IHardwareCounter::CounterSpec, CounterSpecInfo*>
+	typedef std::map<IHardwareCounter::CounterSpec, CounterSpecInfo>
 		CounterSpecMap;
 
 	/// A collection of CounterSpecInfo structs indicating the

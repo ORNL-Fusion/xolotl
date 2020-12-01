@@ -39,13 +39,13 @@ PAPIHardwareCounter::PAPIHardwareCounter(
 		// we had better know about the counter spec
 		assert(miter != csMap.end());
 
-		CounterSpecInfo* currCounterSpecInfo = miter->second;
-		err = PAPI_add_event(eventSet, currCounterSpecInfo->papiEventID);
+		const CounterSpecInfo& currCounterSpecInfo = miter->second;
+		err = PAPI_add_event(eventSet, currCounterSpecInfo.papiEventID);
 		if (err != PAPI_OK) {
 			std::string errorMsg = "Failed to add event to PAPI eventset";
-			if (PAPI_query_event(currCounterSpecInfo->papiEventID) != PAPI_OK) {
-				errorMsg += "\n" + currCounterSpecInfo->name + " (" +
-					currCounterSpecInfo->papiName + ") counter unavailable";
+			if (PAPI_query_event(currCounterSpecInfo.papiEventID) != PAPI_OK) {
+				errorMsg += "\n" + currCounterSpecInfo.name + " (" +
+					currCounterSpecInfo.papiName + ") counter unavailable";
 			}
 			throw xolotl::perf::runtime_error(errorMsg, err);
 		}
@@ -94,7 +94,7 @@ PAPIHardwareCounter::getCounterName(IHardwareCounter::CounterSpec cs) const
 	CounterSpecMap::const_iterator iter = csMap.find(cs);
 	if (iter != csMap.end()) {
 		std::ostringstream ostr;
-		ostr << iter->second->name << '(' << iter->second->papiName << ')';
+		ostr << iter->second.name << '(' << iter->second.papiName << ')';
 		ret = ostr.str();
 	}
 	return ret;
@@ -103,29 +103,28 @@ PAPIHardwareCounter::getCounterName(IHardwareCounter::CounterSpec cs) const
 void
 PAPIHardwareCounter::initCounterSpecMap()
 {
-	csMap[Instructions] =
-		new CounterSpecInfo("Instructions", "PAPI_TOT_INS", PAPI_TOT_INS);
+	csMap.try_emplace(
+		Instructions, "Instructions", "PAPI_TOT_INS", PAPI_TOT_INS);
 
-	csMap[Cycles] =
-		new CounterSpecInfo("Total cycles", "PAPI_TOT_CYC", PAPI_TOT_CYC);
+	csMap.try_emplace(Cycles, "Total cycles", "PAPI_TOT_CYC", PAPI_TOT_CYC);
 
-	csMap[FPOps] = new CounterSpecInfo(
-		"Floating point operations", "PAPI_FP_OPS", PAPI_FP_OPS);
+	csMap.try_emplace(
+		FPOps, "Floating point operations", "PAPI_FP_OPS", PAPI_FP_OPS);
 
-	csMap[FPInstructions] = new CounterSpecInfo(
-		"Floating point instructions", "PAPI_FP_INS", PAPI_FP_INS);
+	csMap.try_emplace(FPInstructions, "Floating point instructions",
+		"PAPI_FP_INS", PAPI_FP_INS);
 
-	csMap[L1CacheMisses] =
-		new CounterSpecInfo("L1 cache misses", "PAPI_L1_TCM", PAPI_L1_TCM);
+	csMap.try_emplace(
+		L1CacheMisses, "L1 cache misses", "PAPI_L1_TCM", PAPI_L1_TCM);
 
-	csMap[L2CacheMisses] =
-		new CounterSpecInfo("L2 cache misses", "PAPI_L2_TCM", PAPI_L2_TCM);
+	csMap.try_emplace(
+		L2CacheMisses, "L2 cache misses", "PAPI_L2_TCM", PAPI_L2_TCM);
 
-	csMap[L3CacheMisses] =
-		new CounterSpecInfo("L3 cache misses", "PAPI_L3_TCM", PAPI_L3_TCM);
+	csMap.try_emplace(
+		L3CacheMisses, "L3 cache misses", "PAPI_L3_TCM", PAPI_L3_TCM);
 
-	csMap[BranchMispredictions] = new CounterSpecInfo(
-		"Branch mispredictions", "PAPI_BR_MSP", PAPI_BR_MSP);
+	csMap.try_emplace(BranchMispredictions, "Branch mispredictions",
+		"PAPI_BR_MSP", PAPI_BR_MSP);
 }
 
 IHardwareCounter&
