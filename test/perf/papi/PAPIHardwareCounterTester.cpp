@@ -1,11 +1,12 @@
 #define BOOST_TEST_MODULE Regression
 
-#include <math.h>
 #include <papi.h>
 
+#include <cmath>
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <tuple>
 
 #include <boost/test/included/unit_test.hpp>
 
@@ -15,26 +16,41 @@
 using namespace xolotl::perf;
 using namespace papi;
 
-const IHardwareCounter::SpecType test_ctrSpec = {IHardwareCounter::Instructions,
-	IHardwareCounter::Cycles, IHardwareCounter::FPOps,
-	IHardwareCounter::L3CacheMisses};
-
-// Normally, PAPI would be initialized by the HandlerRegistry.
-// Since our purpose is to test the Timer class and not the registry,
-// we recreate the initialization explicitly.
-bool
-initializePAPI()
+struct PAPIFixture
 {
-	bool ret = true;
-
-	if (!PAPI_is_initialized()) {
-		int papiVersion = PAPI_library_init(PAPI_VER_CURRENT);
-		if (papiVersion != PAPI_VER_CURRENT) {
-			BOOST_TEST_MESSAGE("PAPI library version mismatch: asked for"
-				<< PAPI_VER_CURRENT << ", got " << papiVersion);
-			ret = false;
+	PAPIFixture()
+	{
+		if (!PAPI_is_initialized()) {
+			int papiVersion = PAPI_library_init(PAPI_VER_CURRENT);
+			if (papiVersion != PAPI_VER_CURRENT) {
+				BOOST_TEST_MESSAGE("PAPI library version mismatch: asked for"
+					<< PAPI_VER_CURRENT << ", got " << papiVersion);
+				throw std::runtime_error("Unable to construct PAPI fixture");
+			}
 		}
 	}
+};
+
+BOOST_GLOBAL_FIXTURE(PAPIFixture);
+
+IHardwareCounter::SpecType
+getCtrSpec()
+{
+	using SpecInfo = std::pair<IHardwareCounter::CounterSpec, int>;
+	std::vector<SpecInfo> specs = {
+		{IHardwareCounter::Instructions, PAPI_TOT_INS},
+		{IHardwareCounter::Cycles, PAPI_TOT_CYC},
+		{IHardwareCounter::FPOps, PAPI_FP_OPS},
+		{IHardwareCounter::L3CacheMisses, PAPI_L3_TCM}};
+
+	IHardwareCounter::SpecType ret;
+
+	for (const auto& spec : specs) {
+		if (PAPI_query_event(spec.second) == PAPI_OK) {
+			ret.push_back(spec.first);
+		}
+	}
+
 	return ret;
 }
 
@@ -45,10 +61,7 @@ BOOST_AUTO_TEST_SUITE(HardwareCounter_testSuite)
 
 BOOST_AUTO_TEST_CASE(check_getSpecification)
 {
-	bool papiInitialized = initializePAPI();
-	BOOST_REQUIRE_EQUAL(papiInitialized, true);
-
-	PAPIHardwareCounter tester("test", test_ctrSpec);
+	PAPIHardwareCounter tester("test", getCtrSpec());
 
 	BOOST_TEST_MESSAGE("\n"
 		<< "PAPIHardwareCounter Message: \n"
@@ -58,20 +71,19 @@ BOOST_AUTO_TEST_CASE(check_getSpecification)
 		BOOST_TEST_MESSAGE(" " << tester.getCounterName(*iter) << " ");
 	}
 
-	BOOST_REQUIRE_EQUAL(test_ctrSpec.size(), ctrSpec.size());
-	if (test_ctrSpec.size() == ctrSpec.size()) {
-		for (unsigned i = 0; i < test_ctrSpec.size(); i++) {
-			BOOST_REQUIRE_EQUAL(test_ctrSpec[i], ctrSpec[i]);
+	auto testCtrSpec = getCtrSpec();
+	BOOST_REQUIRE_EQUAL(testCtrSpec.size(), ctrSpec.size());
+	if (testCtrSpec.size() == ctrSpec.size()) {
+		for (unsigned i = 0; i < testCtrSpec.size(); i++) {
+			BOOST_REQUIRE_EQUAL(testCtrSpec[i], ctrSpec[i]);
 		}
 	}
 }
 
 BOOST_AUTO_TEST_CASE(check_getValues)
 {
-	bool papiInitialized = initializePAPI();
-	BOOST_REQUIRE_EQUAL(papiInitialized, true);
-
-	PAPIHardwareCounter tester("test", test_ctrSpec);
+	auto testCtrSpec = getCtrSpec();
+	PAPIHardwareCounter tester("test", testCtrSpec);
 
 	const unsigned int nMultiplies = 1000;
 	tester.start();
@@ -88,14 +100,20 @@ BOOST_AUTO_TEST_CASE(check_getValues)
 	// Output the counts we measured.
 	auto testVals = tester.getValues();
 	BOOST_TEST_MESSAGE("produced " << testVals.size() << " values");
-	BOOST_REQUIRE_EQUAL(testVals.size(), test_ctrSpec.size());
+	BOOST_REQUIRE_EQUAL(testVals.size(), testCtrSpec.size());
 
 	std::ostringstream mstr;
 	for (unsigned int i = 0; i < testVals.size(); ++i) {
-		mstr << " " << tester.getCounterName(test_ctrSpec[i]) << ": "
+		mstr << " " << tester.getCounterName(testCtrSpec[i]) << ": "
 			 << testVals[i] << '\n';
 	}
 	BOOST_TEST_MESSAGE("PAPIHardwareCounter measured:\n" << mstr.str());
+
+	// if FP ops are not supported, quit here
+	if (std::find(testCtrSpec.begin(), testCtrSpec.end(),
+			IHardwareCounter::FPOps) == testCtrSpec.end()) {
+		return;
+	}
 
 	// Verify we got what we expected.
 	// It isn't easy to verify instructions or cycles - these
@@ -103,7 +121,7 @@ BOOST_AUTO_TEST_CASE(check_getValues)
 	// However, we know how many floating point operations we
 	// did in our test loop.
 	// NOTE: the indices into testVals must change if you change
-	// the test_ctrSpec specification.
+	// the testCtrSpec specification.
 	std::ostringstream vstr;
 	vstr << "We believe:\n"
 		 << "* this test program was compiled "
