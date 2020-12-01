@@ -42,8 +42,12 @@ PAPIHardwareCounter::PAPIHardwareCounter(
 		CounterSpecInfo* currCounterSpecInfo = miter->second;
 		err = PAPI_add_event(eventSet, currCounterSpecInfo->papiEventID);
 		if (err != PAPI_OK) {
-			throw xolotl::perf::runtime_error(
-				"Failed to add event to PAPI eventset", err);
+			std::string errorMsg = "Failed to add event to PAPI eventset";
+			if (PAPI_query_event(currCounterSpecInfo->papiEventID) != PAPI_OK) {
+				errorMsg += "\n" + currCounterSpecInfo->name + " (" +
+					currCounterSpecInfo->papiName + ") counter unavailable";
+			}
+			throw xolotl::perf::runtime_error(errorMsg, err);
 		}
 	}
 
