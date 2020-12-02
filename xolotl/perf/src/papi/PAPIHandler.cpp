@@ -52,7 +52,7 @@ PAPIHandler::getTimer(const std::string& name)
 	else {
 		// We have not yet created a timer with this name.
 		// Build one, and keep track of it.
-		ret = std::make_shared<PAPITimer>(name);
+		ret = std::make_shared<PAPITimer>();
 		allTimers[name] = ret;
 	}
 	return ret;
@@ -75,7 +75,7 @@ PAPIHandler::getHardwareCounter(
 	else {
 		// We have not yet created a hw counter set with this name.
 		// Build one and keep track of it.
-		ret = std::make_shared<PAPIHardwareCounter>(name, ctrSpec);
+		ret = std::make_shared<PAPIHardwareCounter>(ctrSpec);
 		allHWCounterSets[name] = ret;
 	}
 	return ret;

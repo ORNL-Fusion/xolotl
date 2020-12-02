@@ -8,41 +8,35 @@ namespace perf
 {
 namespace papi
 {
-/// A timer that measures how long something takes to execute.
-/// Uses PAPI for sampling the system's timer.
+/**
+ * A timer that measures how long something takes to execute.
+ * Uses PAPI for sampling the system's timer.
+ */
 class PAPITimer : public ITimer
 {
 private:
-	/// The type PAPI uses for timestamps.
+	//! The type PAPI uses for timestamps.
 	typedef long long Timestamp;
 
-	/// An invalid Timestamp value.
+	//! An invalid Timestamp value.
 	static constexpr Timestamp invalidValue = -1;
 
-	/// The timer's value.
+	//! The timer's value.
 	ITimer::ValType val;
 
-	/// When the timer was started.
-	/// Will be invalidValue if timer is not running.
+	//! When the timer was started.
+	//! Will be invalidValue if timer is not running.
 	Timestamp startTime;
 
-	/// Construct a timer.
-	/// The default constructor is private to force callers to provide a name
-	/// for the timer object.
-	PAPITimer() : val(0)
-	{
-	}
-
-	/// Sample the current time.
-	///
-	/// @return The current time.
+	/**
+	 * Sample the current time.
+	 */
 	Timestamp
 	getCurrentTime() const;
 
-	/// Convert a Timestamp to seconds.
-	///
-	/// @param t A timestamp to be converted to seconds.
-	/// @return t in terms of seconds.
+	/**
+	 * Convert a Timestamp to seconds.
+	 */
 	static ITimer::ValType
 	toSeconds(Timestamp t)
 	{
@@ -51,71 +45,64 @@ private:
 	}
 
 public:
-	///
-	/// Construct a timer.
-	///
-	/// @param name The name to associate with the timer.
-	PAPITimer(const std::string& name);
+	PAPITimer() : val(0), startTime(invalidValue)
+	{
+	}
 
-	///
-	/// Destroy the timer.
-	///
-	virtual ~PAPITimer();
+	virtual ~PAPITimer()
+	{
+	}
 
-	///
-	/// Start the timer.
-	/// Throws std::runtime_error if starting a timer that was already started.
-	///
+	/**
+	 * \see ITimer.h
+	 */
 	void
 	start() override;
 
-	///
-	/// Stop the timer.
-	/// Throws std::runtime_error if stopping a timer that was not running.
-	///
+	/**
+	 * \see ITimer.h
+	 */
 	void
 	stop() override;
 
-	///
-	/// Reset the timer.
-	/// Throws std::runtime_error if timer is running.
-	///
+	/**
+	 * \see ITimer.h
+	 */
 	void
 	reset() override;
 
-	///
-	/// Determine if the Timer is currently running.
-	///
-	/// @return true if the Timer is running, false otherwise.
-	///
+	/**
+	 * Determine if the Timer is currently running.
+	 *
+	 * @return true if the Timer is running, false otherwise.
+	 */
 	bool
 	isRunning() const
 	{
 		return (startTime != invalidValue);
 	}
 
-	///
-	/// Retrieve the value of the timer.
-	/// The value is only valid if the timer is not running.
-	///
-	/// @return The elapsed time measured by this timer.
-	///
+	/**
+	 * \see ITimer.h
+	 */
 	ValType
 	getValue() const override
 	{
 		return val;
 	}
 
-	///
-	/// Retrieve the Timer value's units.
-	/// @return The units in which the timer's value is given.
-	///
+	/**
+	 * \see ITimer.h
+	 */
 	std::string
 	getUnits() const override;
 
-	/// Add the given Timer's value to my value.
-	/// @param t The timer whose value should be added to my value.
-	/// @return Myself after adding the given timer's value.
+	/**
+	 * Add the given Timer's value to my value.
+	 *
+	 * @param t The timer whose value should be added to my value.
+	 * @return Myself after adding the given timer's value.
+	 */
 	virtual ITimer&
 	operator+=(const ITimer& t)
 	{

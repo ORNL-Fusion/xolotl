@@ -16,7 +16,7 @@ BOOST_AUTO_TEST_SUITE(OSTimer_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkTiming)
 {
-	perf::os::OSTimer tester("test");
+	auto tester = perf::os::OSTimer();
 	double sleepSeconds = 2.0;
 
 	// Simulate some computation/communication with a sleep of known duration.
@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_CASE(checkTiming)
 
 BOOST_AUTO_TEST_CASE(accumulate)
 {
-	perf::os::OSTimer tester("test");
+	auto tester = perf::os::OSTimer();
 
 	const unsigned int sleepSeconds = 2;
 
@@ -51,7 +51,7 @@ BOOST_AUTO_TEST_CASE(accumulate)
 
 BOOST_AUTO_TEST_CASE(reset)
 {
-	perf::os::OSTimer tester("test");
+	auto tester = perf::os::OSTimer();
 
 	const unsigned int sleepSeconds = 2;
 

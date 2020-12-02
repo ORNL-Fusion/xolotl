@@ -25,20 +25,14 @@ DummyHandler::DummyHandler(const options::IOptions&)
 std::shared_ptr<ITimer>
 DummyHandler::getTimer(const std::string& name)
 {
-	// TODO is there a need for us to retain access to this Timer?
-	// TODO do we need to check whether client has already created
-	// an object with this name and return that object?
-	return std::make_shared<DummyTimer>(name);
+	return std::make_shared<DummyTimer>();
 }
 
 // Obtain an EventCounter by name.
 std::shared_ptr<IEventCounter>
 DummyHandler::getEventCounter(const std::string& name)
 {
-	// TODO is there a need for us to retain access to this Timer?
-	// TODO do we need to check whether client has already created
-	// an object with this name and return that object?
-	return std::make_shared<DummyEventCounter>(name);
+	return std::make_shared<DummyEventCounter>();
 }
 
 // Obtain a HardwareCounter object by name and by the
@@ -47,10 +41,7 @@ std::shared_ptr<IHardwareCounter>
 DummyHandler::getHardwareCounter(
 	const std::string& name, const IHardwareCounter::SpecType& ctrSpec)
 {
-	// TODO is there a need for us to retain access to this Timer?
-	// TODO do we need to check whether client has already created
-	// an object with this name and return that object?
-	return std::make_shared<DummyHardwareCounter>(name, ctrSpec);
+	return std::make_shared<DummyHardwareCounter>(ctrSpec);
 }
 
 void

@@ -49,7 +49,7 @@ PerfHandler::getEventCounter(const std::string& name)
 	else {
 		// We have not yet created an event counter with this name.
 		// Build one and keep track of it.
-		ret = std::make_shared<EventCounter>(name);
+		ret = std::make_shared<EventCounter>();
 		allEventCounters[name] = ret;
 	}
 	return ret;
@@ -74,7 +74,7 @@ PerfHandler::getHardwareCounter(
 		// We have not yet created a hw counter set with this name.
 		// Build one and keep track of it.
 		// Note with the OSHandler it is always a dummy.
-		ret = std::make_shared<dummy::DummyHardwareCounter>(name, ctrSpec);
+		ret = std::make_shared<dummy::DummyHardwareCounter>(ctrSpec);
 		allHWCounterSets[name] = ret;
 	}
 	return ret;

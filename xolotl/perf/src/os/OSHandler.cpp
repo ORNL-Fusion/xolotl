@@ -37,7 +37,7 @@ OSHandler::getTimer(const std::string& name)
 	else {
 		// We have not yet created a timer with this name.
 		// Build one, and keep track of it.
-		ret = std::make_shared<OSTimer>(name);
+		ret = std::make_shared<OSTimer>();
 		allTimers[name] = ret;
 	}
 	return ret;

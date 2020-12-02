@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_SUITE(EventCounter_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkInitialValue)
 {
-	EventCounter tester("test");
+	auto tester = EventCounter();
 
 	BOOST_TEST_MESSAGE("\n"
 		<< "EventCounter Message: \n"
@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(checkInitialValue)
 
 BOOST_AUTO_TEST_CASE(checkCounting)
 {
-	EventCounter tester("test");
+	auto tester = EventCounter();
 
 	for (int i = 0; i < 3; i++) {
 		// increment the EventCounter

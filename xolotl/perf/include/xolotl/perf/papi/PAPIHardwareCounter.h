@@ -11,11 +11,11 @@ namespace perf
 {
 namespace papi
 {
-/// A collection of hardware performance counters.
+//! A collection of hardware performance counters.
 class PAPIHardwareCounter : public IHardwareCounter
 {
 private:
-	/// Information about a single hardware counter.
+	//! Information about a single hardware counter.
 	struct CounterSpecInfo
 	{
 		std::string name; ///< Common name for the counter.
@@ -31,92 +31,94 @@ private:
 		}
 	};
 
-	/// A nicer name for a collection of CounterSpecInfo structs,
-	/// keyed by the counter spec ID.
+	//! A nicer name for a collection of CounterSpecInfo structs,
+	//! keyed by the counter spec ID.
 	typedef std::map<IHardwareCounter::CounterSpec, CounterSpecInfo>
 		CounterSpecMap;
 
-	/// A collection of CounterSpecInfo structs indicating the
-	/// set of hardware counters that we know how to monitor.
+	//! A collection of CounterSpecInfo structs indicating the
+	//! set of hardware counters that we know how to monitor.
 	static CounterSpecMap csMap;
 
-	/// The hardware performance counter values we have collected.
-	/// These are only valid after the collection has stopped counting.
+	//! The hardware performance counter values we have collected.
+	//! These are only valid after the collection has stopped counting.
 	IHardwareCounter::ValType vals;
 
-	/// Our configuration (which hardware performance counters
-	/// we are monitoring).
+	//! Our configuration (which hardware performance counters
+	//! we are monitoring).
 	IHardwareCounter::SpecType spec;
 
-	/// Our PAPI event set handle.
+	//! Our PAPI event set handle.
 	int eventSet;
 
-	/// Construct a PAPIHardwareCounter.
-	/// The default constructor is private to force callers to
-	/// provide a name and a collection of hardware counters to monitor.
+	//! Construct a PAPIHardwareCounter.
+	//! The default constructor is private to force callers to
+	//! provide a collection of hardware counters to monitor.
 	PAPIHardwareCounter()
 	{
 	}
 
-	/// Initialize our collection of specifications for the
-	/// hardware counters we know how to monitor.
+	//! Initialize our collection of specifications for the
+	//! hardware counters we know how to monitor.
 	static void
 	initCounterSpecMap();
 
 public:
-	/// Construct a PAPIHardwareCounter.
-	///
-	/// @param name The name to associate with the collected counts.
-	/// @param cset The collection of hardware counter spec values indicating
-	///             The set of hardware counters we should monitor.
-	PAPIHardwareCounter(
-		const std::string& name, const IHardwareCounter::SpecType& cset);
+	/**
+	 * Construct a PAPIHardwareCounter.
+	 *
+	 * @param cset The collection of hardware counter spec values indicating
+	 * the set of hardware counters we should monitor
+	 */
+	PAPIHardwareCounter(const IHardwareCounter::SpecType& cset);
 
 	/// Destroy the counter set.
 	virtual ~PAPIHardwareCounter();
 
-	/// Start counting hardware counter events.
+	/**
+	 * \see IHardwareCounter.h
+	 */
 	void
 	start() override;
 
-	/// Stop counting hardware counter events.
+	/**
+	 * \see IHardwareCounter.h
+	 */
 	void
 	stop() override;
 
-	///
-	/// Retrieve the values of the hardware counters that have been collected.
-	/// The values are only valid if the counter set is not currently counting.
-	///
-	/// @return The current counts for our configured values.
-	///
+	/**
+	 * \see IHardwareCounter.h
+	 */
 	const ValType&
 	getValues() const override
 	{
 		return vals;
 	}
 
-	///
-	/// Retrieve the configuration of the IHardwareCounter.
-	///
-	/// @return The hardware counters the counter set was configured to collect.
-	///
+	/**
+	 * \see IHardwareCounter.h
+	 */
 	const SpecType&
 	getSpecification() const override
 	{
 		return spec;
 	}
 
-	/// Retrieve the name of the given hardware counter.
-	/// @return The name of the given hardware counter.
+	/**
+	 * \see IHardwareCounter.h
+	 */
 	std::string
 	getCounterName(IHardwareCounter::CounterSpec cs) const override;
 
-	/// Add the given HardwareCounter's value to my value.
-	/// @param cset The counter set whose values should be added to my values.
-	///             This counter set must be configured exactly the same as me,
-	///             or the operation will throw a std::invalid_argument
-	///             exception.
-	/// @return Myself after adding the given counter set's values.
+	/**
+	 * Add the given HardwareCounter's value to my value.
+	 *
+	 * @param cset The counter set whose values should be added to my values.
+	 * This counter set must be configured exactly the same as me,
+	 * or the operation will throw a std::invalid_argument exception.
+	 * @return Myself after adding the given counter set's values.
+	 */
 	virtual IHardwareCounter&
 	operator+=(const IHardwareCounter& c);
 };

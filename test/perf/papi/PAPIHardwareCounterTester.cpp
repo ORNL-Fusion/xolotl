@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_SUITE(HardwareCounter_testSuite)
 
 BOOST_AUTO_TEST_CASE(check_getSpecification)
 {
-	PAPIHardwareCounter tester("test", getCtrSpec());
+	PAPIHardwareCounter tester(getCtrSpec());
 
 	BOOST_TEST_MESSAGE("\n"
 		<< "PAPIHardwareCounter Message: \n"
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(check_getSpecification)
 BOOST_AUTO_TEST_CASE(check_getValues)
 {
 	auto testCtrSpec = getCtrSpec();
-	PAPIHardwareCounter tester("test", testCtrSpec);
+	PAPIHardwareCounter tester(testCtrSpec);
 
 	const unsigned int nMultiplies = 1000;
 	tester.start();

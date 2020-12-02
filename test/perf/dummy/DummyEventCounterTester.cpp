@@ -17,14 +17,14 @@ BOOST_AUTO_TEST_SUITE(DummyEventCounter_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkInitialValue)
 {
-	DummyEventCounter tester("test");
+	auto tester = DummyEventCounter();
 
 	BOOST_REQUIRE_EQUAL(0U, tester.getValue());
 }
 
 BOOST_AUTO_TEST_CASE(checkCounting)
 {
-	DummyEventCounter tester("test");
+	auto tester = DummyEventCounter();
 
 	for (int i = 0; i < 3; i++) {
 		tester.increment();

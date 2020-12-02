@@ -50,7 +50,7 @@ BOOST_AUTO_TEST_CASE(checkTiming)
 {
 	BOOST_REQUIRE_EQUAL(papiInitialized, true);
 
-	PAPITimer tester("test");
+	auto tester = PAPITimer();
 	double sleepSeconds = 2.0;
 
 	// Output the version of PAPI that is being used
@@ -74,14 +74,14 @@ BOOST_AUTO_TEST_CASE(checkUnits)
 {
 	BOOST_REQUIRE_EQUAL(papiInitialized, true);
 
-	PAPITimer tester("test");
+	auto tester = PAPITimer();
 	BOOST_REQUIRE_EQUAL("s", tester.getUnits());
 }
 
 BOOST_AUTO_TEST_CASE(accumulate)
 {
 	BOOST_REQUIRE_EQUAL(papiInitialized, true);
-	PAPITimer tester("test");
+	auto tester = PAPITimer();
 
 	const unsigned int sleepSeconds = 2;
 
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(accumulate)
 BOOST_AUTO_TEST_CASE(reset)
 {
 	BOOST_REQUIRE_EQUAL(papiInitialized, true);
-	PAPITimer tester("test");
+	auto tester = PAPITimer();
 
 	const unsigned int sleepSeconds = 2;
 

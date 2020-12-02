@@ -20,21 +20,11 @@ private:
 	 */
 	IEventCounter::ValType value;
 
-	/**
-	 * We declare a private default constructor to force
-	 * client code to provide a name when creating EventCounters.
-	 */
-	EventCounter(void) : value(0)
-	{
-	}
-
 public:
 	/**
-	 * EventCounter constructor that takes the argument name
-	 *
-	 * @param name The EventCounter's name
+	 * Default constructor
 	 */
-	EventCounter(const std::string& name) : value(0)
+	EventCounter() : value(0)
 	{
 	}
 

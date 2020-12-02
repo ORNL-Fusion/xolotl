@@ -23,7 +23,7 @@ BOOST_AUTO_TEST_SUITE(DummyHardwareCounter_testSuite)
 
 BOOST_AUTO_TEST_CASE(check_getValues)
 {
-	DummyHardwareCounter tester("test", test_hwCtrSpec);
+	DummyHardwareCounter tester(test_hwCtrSpec);
 
 	BOOST_TEST_MESSAGE("\n"
 		<< "DummyHardwareCounter Message: \n"
@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(check_getValues)
 
 BOOST_AUTO_TEST_CASE(check_getSpecification)
 {
-	DummyHardwareCounter tester("test", test_hwCtrSpec);
+	DummyHardwareCounter tester(test_hwCtrSpec);
 
 	BOOST_TEST_MESSAGE("\n"
 		<< "DummyHardwareCounter Message: \n"

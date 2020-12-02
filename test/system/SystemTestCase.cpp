@@ -107,7 +107,7 @@ public:
 		if (_enable) {
 			MPI_Barrier(MPI_COMM_WORLD);
 			if (getMPIRank() == 0) {
-				_timer = std::make_unique<perf::os::OSTimer>(name);
+				_timer = std::make_unique<perf::os::OSTimer>();
 				_timer->start();
 			}
 		}

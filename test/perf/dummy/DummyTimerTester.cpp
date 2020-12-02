@@ -17,14 +17,14 @@ BOOST_AUTO_TEST_SUITE(DummyTimer_testSuite)
 
 BOOST_AUTO_TEST_CASE(checkInitialValue)
 {
-	DummyTimer tester("test");
+	auto tester = DummyTimer();
 
 	BOOST_REQUIRE_EQUAL(0, tester.getValue());
 }
 
 BOOST_AUTO_TEST_CASE(checkTiming)
 {
-	DummyTimer tester("test");
+	auto tester = DummyTimer();
 
 	tester.start();
 	sleep(3);

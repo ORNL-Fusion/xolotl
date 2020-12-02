@@ -16,7 +16,7 @@ namespace papi
 PAPIHardwareCounter::CounterSpecMap PAPIHardwareCounter::csMap;
 
 PAPIHardwareCounter::PAPIHardwareCounter(
-	const std::string& name, const IHardwareCounter::SpecType& cset) :
+	const IHardwareCounter::SpecType& cset) :
 	spec(cset),
 	eventSet(PAPI_NULL)
 {

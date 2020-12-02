@@ -46,12 +46,10 @@ public:
 	 * DummyHardwareCounter constructor that takes the name and a
 	 * list of the different quantities it should monitor.
 	 *
-	 * @param counterName The DummyHardwareCounter's name
 	 * @param counterQuantities The vector of quantities the
 	 * DummyHardwareCounter will monitor
 	 */
-	DummyHardwareCounter(const std::string& counterName,
-		const IHardwareCounter::SpecType& ctrSpec)
+	DummyHardwareCounter(const IHardwareCounter::SpecType& ctrSpec)
 	{
 	}
 
@@ -63,8 +61,7 @@ public:
 	}
 
 	/**
-	 * Start collecting performance counter data.
-	 * This class' implementation is a stub.
+	 * \see IHardwareCounter.h
 	 */
 	virtual void
 	start(void)
@@ -73,8 +70,7 @@ public:
 	}
 
 	/**
-	 * Stop collecting performance counter data.
-	 * This class' implementation is a stub.
+	 * \see IHardwareCounter.h
 	 */
 	virtual void
 	stop(void)
@@ -83,10 +79,7 @@ public:
 	}
 
 	/**
-	 * Retrieve the values of the hardware counters that have been collected.
-	 * This class' implementation is a stub.
-	 *
-	 * @return An empty collection of values.
+	 * \see IHardwareCounter.h
 	 */
 	virtual const ValType&
 	getValues(void) const
@@ -96,10 +89,7 @@ public:
 	}
 
 	/**
-	 * Retrieve the hardware counters we monitor.
-	 * This class' implementation is a stub.
-	 *
-	 * @return Any empty collection of specifications.
+	 * \see IHardwareCounter.h
 	 */
 	virtual const SpecType&
 	getSpecification(void) const
@@ -108,10 +98,7 @@ public:
 	}
 
 	/**
-	 * Retrieve the name of the given hardware counter.
-	 * This class' implementation is a stub.
-	 *
-	 * @return An empty string.
+	 * \see IHardwareCounter.h
 	 */
 	virtual std::string
 	getCounterName(IHardwareCounter::CounterSpec cs) const

@@ -17,21 +17,11 @@ namespace dummy
  */
 class DummyEventCounter : public IEventCounter
 {
-private:
-	/**
-	 * The default constructor is declared private since all EventCounters
-	 *  must be initialized with a name.
-	 */
-	DummyEventCounter(void)
-	{
-	}
-
 public:
 	/**
-	 * DummyEventCounter constructor that takes the argument name but
-	 * doesn't do anything with it
+	 * Default constructor
 	 */
-	DummyEventCounter(const std::string& name)
+	DummyEventCounter()
 	{
 	}
 

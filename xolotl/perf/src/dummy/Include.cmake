@@ -8,5 +8,4 @@ list(APPEND XOLOTL_PERF_HEADERS
 list(APPEND XOLOTL_PERF_SOURCES
     ${XOLOTL_PERF_SOURCE_DIR}/dummy/DummyHandler.cpp
     ${XOLOTL_PERF_SOURCE_DIR}/dummy/DummyHardwareCounter.cpp
-    ${XOLOTL_PERF_SOURCE_DIR}/dummy/DummyTimer.cpp
 )
