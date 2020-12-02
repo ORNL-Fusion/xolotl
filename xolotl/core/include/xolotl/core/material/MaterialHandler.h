@@ -69,7 +69,7 @@ class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 	generateFluxHandler(const options::IOptions& options) const final
 	{
 		static_assert(
-			std::is_base_of<core::flux::IFluxHandler, TFluxHandler>::value, "");
+			std::is_base_of<core::flux::IFluxHandler, TFluxHandler>::value);
 
 		if (options.getFluxDepthProfileFilePath().empty()) {
 			return std::make_shared<TFluxHandler>(options);
@@ -83,8 +83,7 @@ class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 	generateAdvectionHandler() const final
 	{
 		static_assert(std::is_base_of<core::advection::IAdvectionHandler,
-						  TAdvectionHandler>::value,
-			"");
+			TAdvectionHandler>::value);
 
 		return std::make_shared<TAdvectionHandler>();
 	}
@@ -93,8 +92,7 @@ class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 	generateTrapMutationHandler() const final
 	{
 		static_assert(std::is_base_of<core::modified::ITrapMutationHandler,
-						  TTrapMutationHandler>::value,
-			"");
+			TTrapMutationHandler>::value);
 
 		return std::make_shared<TTrapMutationHandler>();
 	}

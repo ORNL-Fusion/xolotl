@@ -1,4 +1,3 @@
-#include <xolotl/core/InvalidGridDimension.h>
 #include <xolotl/core/advection/XGBAdvectionHandler.h>
 #include <xolotl/core/advection/YGBAdvectionHandler.h>
 #include <xolotl/core/advection/ZGBAdvectionHandler.h>
@@ -75,7 +74,7 @@ MaterialHandler::createDiffusionHandler(const options::IOptions& options)
 		break;
 	default:
 		// The asked dimension is not good (e.g. -1, 4)
-		throw InvalidGridDimension(
+		throw std::runtime_error(
 			"\nxolotlFactory: Bad dimension for the material factory.");
 	}
 }

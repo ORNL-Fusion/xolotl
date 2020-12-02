@@ -4,7 +4,6 @@ set(XOLOTL_CORE_HEADER_DIR ${XOLOTL_CORE_INCLUDE_DIR}/xolotl/core)
 
 set(XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/Constants.h
-    ${XOLOTL_CORE_HEADER_DIR}/InvalidGridDimension.h
 )
 
 include(src/advection/Include.cmake)
