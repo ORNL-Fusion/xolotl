@@ -8,6 +8,10 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief Virtual class interface for all the networks in the PSI
+ * application.
+ */
 class IPSIReactionNetwork : public IReactionNetwork
 {
 public:

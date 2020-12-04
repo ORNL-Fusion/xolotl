@@ -10,6 +10,10 @@ namespace network
 {
 namespace detail
 {
+/**
+ * @brief Structure used by the reactions to store
+ * reactant and product ids.
+ */
 struct ClusterSet
 {
 	using IndexType = IReactionNetwork::IndexType;

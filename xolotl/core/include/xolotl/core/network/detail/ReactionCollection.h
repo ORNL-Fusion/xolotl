@@ -23,6 +23,12 @@ namespace network
 {
 namespace detail
 {
+/**
+ * @brief Class for a set of reactions to help with applying
+ * specific functions on them in a generic way.
+ *
+ * @tparam TReaction The type of reaction
+ */
 template <typename TReaction>
 class ReactionSet
 {

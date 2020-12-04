@@ -18,6 +18,13 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief General reaction class where
+ * reactants become products with a given rate
+ *
+ * @tparam TNetwork The network type
+ * @tparam TDerived The derived class type.
+ */
 template <typename TNetwork, typename TDerived>
 class Reaction
 {
@@ -64,6 +71,10 @@ public:
 		}
 	}
 
+	/**
+	 * @brief Computes the contribution to the connectivity
+	 * (which cluster interacts with which one).
+	 */
 	KOKKOS_INLINE_FUNCTION
 	void
 	contributeConnectivity(const Connectivity& connectivity)
@@ -71,6 +82,11 @@ public:
 		asDerived()->computeConnectivity(connectivity);
 	}
 
+	/**
+	 * @brief Computes the contribution to the connectivity
+	 * when the reduced matrix method is used (only the
+	 * diagonal)
+	 */
 	KOKKOS_INLINE_FUNCTION
 	void
 	contributeReducedConnectivity(const Connectivity& connectivity)
@@ -86,6 +102,9 @@ public:
 		asDerived()->computeFlux(concentrations, fluxes, gridIndex);
 	}
 
+	/**
+	 * @brief Computes the contribution to the Jacobian.
+	 */
 	KOKKOS_INLINE_FUNCTION
 	void
 	contributePartialDerivatives(ConcentrationsView concentrations,
@@ -96,6 +115,11 @@ public:
 			concentrations, values, connectivity, gridIndex);
 	}
 
+	/**
+	 * @brief Computes the contribution to the Jacobian
+	 * when the reduced matrix method is used (only the
+	 * diagonal)
+	 */
 	KOKKOS_INLINE_FUNCTION
 	void
 	contributeReducedPartialDerivatives(ConcentrationsView concentrations,
@@ -106,6 +130,9 @@ public:
 			concentrations, values, connectivity, gridIndex);
 	}
 
+	/**
+	 * \see IReactionNetwork.h
+	 */
 	KOKKOS_INLINE_FUNCTION
 	double
 	contributeLeftSideRate(ConcentrationsView concentrations,
@@ -131,6 +158,10 @@ protected:
 		updateRates();
 	}
 
+	/**
+	 * @brief Computes the volume by which the reactants and products
+	 * overlap, making the reaction viable.
+	 */
 	KOKKOS_INLINE_FUNCTION
 	AmountType
 	computeOverlap(const ReflectedRegion& cl1RR, const ReflectedRegion& cl2RR,
@@ -181,6 +212,13 @@ protected:
 	CoefsSubView _coefs;
 };
 
+/**
+ * @brief Class implementing production reaction where
+ * R_1 + R_2 -> sum_n P_n with a given rate, and n = 0, 1, 2.
+ *
+ * @tparam TNetwork The network type
+ * @tparam TDerived The derived class type.
+ */
 template <typename TNetwork, typename TDerived>
 class ProductionReaction : public Reaction<TNetwork, TDerived>
 {
@@ -268,6 +306,13 @@ protected:
 	Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _productMomentIds;
 };
 
+/**
+ * @brief Class implementing dissociation reaction where
+ * R -> P_1 + P_2 with a given rate.
+ *
+ * @tparam TNetwork The network type
+ * @tparam TDerived The derived class type.
+ */
 template <typename TNetwork, typename TDerived>
 class DissociationReaction : public Reaction<TNetwork, TDerived>
 {

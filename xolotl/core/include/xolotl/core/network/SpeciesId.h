@@ -19,6 +19,10 @@ public:
 	using std::runtime_error::runtime_error;
 };
 
+/**
+ * @brief Class representing species id, where a species is a type of
+ * atom and is a dimension in the phase space.
+ */
 class SpeciesId
 {
 public:

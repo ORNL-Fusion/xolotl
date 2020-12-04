@@ -10,6 +10,12 @@ namespace network
 {
 namespace detail
 {
+/**
+ * @brief Inherits from ReactionGeneratorBase and additionally fills collections
+ * re-solution reactions depending on the subpaving.
+ *
+ * @tparam TBase The templated base class.
+ */
 template <typename TBase>
 class ReSolutionReactionGenerator : public TBase
 {

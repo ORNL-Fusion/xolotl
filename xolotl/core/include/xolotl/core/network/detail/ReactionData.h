@@ -19,6 +19,13 @@ using CoefficientsView = Kokkos::View<double*****>;
 using CoefficientsViewUnmanaged =
 	Kokkos::View<double*****, Kokkos::MemoryUnmanaged>;
 
+/**
+ * @brief Connectivity object that stores which
+ * cluster interacts with which, needed to define the sparse
+ * Jacobian. Relies on Kokkos Compressed Row Storage array.
+ *
+ * @tparam TMemSpace The memory layout type
+ */
 template <typename TMemSpace = DefaultMemorySpace>
 class ClusterConnectivity :
 	public Kokkos::Crs<ReactionNetworkIndexType, TMemSpace>
@@ -148,6 +155,13 @@ private:
 	IndexType _avgRowSize{};
 };
 
+/**
+ * @brief Stores all the information needed for a reaction
+ * (overlap widths, rates, position in the collection, grouping
+ * coefficients, connectivity, etc.)
+ *
+ * @tparam TNetwork The network type
+ */
 template <typename TNetwork>
 struct ReactionData
 {

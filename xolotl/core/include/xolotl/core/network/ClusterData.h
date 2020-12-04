@@ -76,6 +76,12 @@ struct UnmanagedHelper
 template <typename TView>
 using Unmanaged = typename UnmanagedHelper<TView>::Type;
 
+/**
+ * @brief Structure for physical properties and clusters,
+ * independent of the network type.
+ *
+ * @tparam PlsmContext Host or Device
+ */
 template <typename PlsmContext = plsm::OnDevice>
 struct ClusterDataCommon
 {
@@ -193,6 +199,13 @@ public:
 	View<double**> diffusionCoefficient;
 };
 
+/**
+ * @brief Structure for additional clusters properties that are
+ * dependent on the network type (tiles and moments).
+ *
+ * @tparam TNetwork The network type
+ * @tparam PlsmContext Host or Device
+ */
 template <typename TNetwork, typename PlsmContext = plsm::OnDevice>
 struct ClusterData : ClusterDataCommon<PlsmContext>
 {

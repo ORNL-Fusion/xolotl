@@ -9,6 +9,13 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief Class implementing sink reaction where
+ * reactant -> 0 with a given rate
+ *
+ * @tparam TNetwork The network type
+ * @tparam TDerived The derived class type.
+ */
 template <typename TNetwork, typename TDerived>
 class SinkReaction : public Reaction<TNetwork, TDerived>
 {

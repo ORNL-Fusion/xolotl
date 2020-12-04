@@ -15,6 +15,13 @@ namespace network
 {
 namespace detail
 {
+/**
+ * @brief General class filling collections for production
+ * and dissociation reactions depending on the subpaving.
+ *
+ * @tparam TNetwork The network type
+ * @tparam TDerived The derived class
+ */
 template <typename TNetwork, typename TDerived>
 class ReactionGeneratorBase
 {

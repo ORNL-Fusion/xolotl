@@ -8,6 +8,11 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief Base class for cluster properties.
+ *
+ * @tparam TDerived The derived template class
+ */
 template <typename TDerived>
 class ClusterBase
 {
@@ -80,6 +85,11 @@ private:
 	IndexType _id{detail::InvalidIndex::value};
 };
 
+/**
+ * @brief Class for cluster properties common to every type of clusters.
+ *
+ * @tparam PlsmContext Host or Device
+ */
 template <typename PlsmContext>
 class ClusterCommon : public ClusterBase<ClusterCommon<PlsmContext>>
 {
@@ -111,6 +121,12 @@ private:
 	ClusterDataRef _data;
 };
 
+/**
+ * @brief Network specific cluster class.
+ *
+ * @tparam TNetwork Network type
+ * @tparam PlsmContext Host or Device
+ */
 template <typename TNetwork, typename PlsmContext>
 class Cluster : public ClusterBase<Cluster<TNetwork, PlsmContext>>
 {

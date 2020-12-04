@@ -16,6 +16,10 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief Virtual class interface for accessing anything needed by outside
+ * classes like the solver.
+ */
 class IReactionNetwork
 {
 public:
@@ -70,6 +74,10 @@ public:
 	virtual const std::string&
 	getSpeciesName(SpeciesId id) const = 0;
 
+	/**
+	 * @brief Degrees of freedom includes _numClusters
+	 * plus the moments.
+	 */
 	KOKKOS_INLINE_FUNCTION
 	IndexType
 	getDOF() const noexcept
@@ -190,9 +198,16 @@ public:
 	virtual void
 	setGridSize(IndexType gridSize) = 0;
 
+	/**
+	 * @brief Takes a vector of temperatures along X and updates the diffusion
+	 * coefficients and rates accordingly.
+	 */
 	virtual void
 	setTemperatures(const std::vector<double>& gridTemperatures) = 0;
 
+	/**
+	 * @brief Copies tile and cluster data from device to host.
+	 */
 	virtual void
 	syncClusterDataOnHost() = 0;
 
@@ -208,23 +223,43 @@ public:
 	virtual IndexType
 	getLargestClusterId() = 0;
 
+	/**
+	 * @brief Returns an object representing the the bounds of each
+	 * cluster in each dimension of the phase space.
+	 */
 	virtual Bounds
 	getAllClusterBounds() = 0;
 
 	virtual PhaseSpace
 	getPhaseSpace() = 0;
 
+	/**
+	 * @brief Updates the fluxes view with the rates from all the
+	 * reactions at this grid point, the fluxes are used by the RHS function.
+	 */
 	virtual void
 	computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
 		IndexType gridIndex) = 0;
 
+	/**
+	 * @brief Updates the values view with the rates from all the
+	 * reactions at this grid point, they are used by the RHS Jacobian.
+	 */
 	virtual void
 	computeAllPartials(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex) = 0;
 
+	/**
+	 * @brief Returns the largest computed rate.
+	 */
 	virtual double
 	getLargestRate() = 0;
 
+	/**
+	 * @brief Returns the sum of rates at this grid point from reactions
+	 * where the given cluster Id is on the left side of the reaction (either
+	 * a reactant or dissociating).
+	 */
 	virtual double
 	getLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex) = 0;
@@ -251,11 +286,35 @@ public:
 	getTotalAtomConcentration(ConcentrationsView concentrations,
 		SpeciesId species, AmountType minSize = 0) = 0;
 
+	/**
+	 * @brief Computes the diffusion flux exiting from this grid point.
+	 *
+	 * @param gridPointSolution The array of local solution, indexed with
+	 * cluster Ids
+	 * @param factor The geometric factor
+	 * @param diffusingIds The vector of cluster Ids that we want to compute the
+	 * diffusion flux for
+	 * @param fluxes The vector of fluxes to update
+	 * @param gridIndex The grid point location
+	 */
 	virtual void
 	updateOutgoingDiffFluxes(double* gridPointSolution, double factor,
 		std::vector<IndexType> diffusingIds, std::vector<double>& fluxes,
 		IndexType gridIndex) = 0;
 
+	/**
+	 * @brief Computes the advection flux exiting from this grid point.
+	 *
+	 * @param gridPointSolution The array of local solution, indexed with
+	 * cluster Ids
+	 * @param factor The geometric factor
+	 * @param advectingIds The vector of cluster Ids that we want to compute the
+	 * advection flux for
+	 * @param sinkStrengths The vector of sink strengths corresponding to each
+	 * cluster advection
+	 * @param fluxes The vector of fluxes to update
+	 * @param gridIndex The grid point location
+	 */
 	virtual void
 	updateOutgoingAdvecFluxes(double* gridPointSolution, double factor,
 		std::vector<IndexType> advectingIds, std::vector<double> sinkStrengths,

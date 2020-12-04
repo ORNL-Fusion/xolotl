@@ -10,6 +10,13 @@ namespace network
 {
 namespace detail
 {
+/**
+ * @brief Reflected region are used to combine vacancy and interstitial spaces
+ * as they are opposite.
+ *
+ * @tparam Dim The number of dimension for the reflected region
+ * @tparam TRegion The region where the I needs to be reflected
+ */
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
 Kokkos::Array<
@@ -36,6 +43,13 @@ initReflectedRegions(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
 
+/**
+ * @brief Specific case with more than one type of V. Here it can be reflected
+ * of V or I depending on the product type.
+ *
+ * @tparam Dim The number of dimension for the reflected region
+ * @tparam TRegion The region where the I needs to be reflected
+ */
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
 std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() > 1),
@@ -139,6 +153,13 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
 
+/**
+ * @brief Specific case with one type of V. Here it can be reflected
+ * of V or I depending on the product type.
+ *
+ * @tparam Dim The number of dimension for the reflected region
+ * @tparam TRegion The region where the I needs to be reflected
+ */
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
 std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1),
@@ -193,6 +214,13 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
 
+/**
+ * @brief Specific case where there is no V. Simply initialize
+ * the reflected regions.
+ *
+ * @tparam Dim The number of dimension for the reflected region
+ * @tparam TRegion The region where the I needs to be reflected
+ */
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
 std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 0),
@@ -205,6 +233,13 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	return initReflectedRegions<Dim>(cl1Reg, cl2Reg, pr1Reg, pr2Reg);
 }
 
+/**
+ * @brief Specific case with more than one type of V. The I dispersion has to be
+ * taken into account.
+ *
+ * @tparam Dim The number of dimension for the reflected region
+ * @tparam TRegion The region where the I needs to be reflected
+ */
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
 std::enable_if_t<((numberOfVacancySpecies<typename TRegion::EnumIndex>() > 1)),
@@ -223,6 +258,13 @@ getReflectedDispersionForCoefs(const TRegion& clReg)
 	return disp;
 }
 
+/**
+ * @brief Specific case with one or fewer V. The I dispersion can be neglected
+ * because I are not grouped in that case.
+ *
+ * @tparam Dim The number of dimension for the reflected region
+ * @tparam TRegion The region where the I needs to be reflected
+ */
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
 std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() <= 1),
@@ -232,6 +274,12 @@ getReflectedDispersionForCoefs(const TRegion& clReg)
 	return clReg.dispersion();
 }
 
+/**
+ * @brief Computes the sum of cl1RR[i] distance to the mean
+ * over the reaction overlap volume.
+ *
+ * @tparam TRRegion The reflected region
+ */
 template <typename TRRegion>
 KOKKOS_INLINE_FUNCTION
 double
@@ -251,6 +299,12 @@ computeFirstOrderSum(const typename TRRegion::ScalarType i,
 	return toReturn;
 }
 
+/**
+ * @brief Computes the sum of cl1RR[i] distance to the mean,
+ * squared, over the reaction overlap volume.
+ *
+ * @tparam TRRegion The reflected region
+ */
 template <typename TRRegion>
 KOKKOS_INLINE_FUNCTION
 double
@@ -270,6 +324,12 @@ computeSecondOrderSum(const typename TRRegion::ScalarType i,
 	return toReturn;
 }
 
+/**
+ * @brief Computes the sum of cl1RR[i] distance to the mean times
+ * cl3RR[i] distance to the mean over the reaction overlap volume.
+ *
+ * @tparam TRRegion The reflected region
+ */
 template <typename TRRegion>
 KOKKOS_INLINE_FUNCTION
 double
@@ -292,6 +352,12 @@ computeSecondOrderOffsetSum(const typename TRRegion::ScalarType i,
 	return toReturn;
 }
 
+/**
+ * @brief Computes the sum of cl1RR[i] distance to the mean,
+ * cubed, over the reaction overlap volume.
+ *
+ * @tparam TRRegion The reflected region
+ */
 template <typename TRRegion>
 KOKKOS_INLINE_FUNCTION
 double

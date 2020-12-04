@@ -9,6 +9,13 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief Class implementing nucleation reaction where
+ * X_1 + X_1 -> X_2 with a given rate
+ *
+ * @tparam TNetwork The network type
+ * @tparam TDerived The derived class type.
+ */
 template <typename TNetwork, typename TDerived>
 class NucleationReaction : public Reaction<TNetwork, TDerived>
 {

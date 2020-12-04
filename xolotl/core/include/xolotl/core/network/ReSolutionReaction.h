@@ -8,6 +8,13 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief Class implementing re-solution reaction where
+ * X_n -> X_(n-1) + X_1 with a given rate
+ *
+ * @tparam TNetwork The network type
+ * @tparam TDerived The derived class type.
+ */
 template <typename TNetwork, typename TDerived>
 class ReSolutionReaction : public Reaction<TNetwork, TDerived>
 {
