@@ -206,28 +206,18 @@ public:
 	getDimensionNumber() const = 0;
 
 	/**
-	 * Should we use a regular grid on the x direction?
-	 * @return true if program should use a regular grid,
-	 * false if not
+	 * Obtain the name of the grid type to be used
+	 *
+	 * @return The name of the grid type
 	 */
-	virtual bool
-	useRegularXGrid() const = 0;
+	virtual std::string
+	getGridTypeName() const = 0;
 
 	/**
-	 * Should we use a Chebyshev grid on the x direction?
-	 * @return true if program should use a Chebyshev grid,
-	 * false if not
+	 * Obtain the grid parameters
 	 */
-	virtual bool
-	useChebyshevGrid() const = 0;
-
-	/**
-	 * Should we read in the grid on the x direction?
-	 * @return true if program should read in the grid,
-	 * false if not
-	 */
-	virtual bool
-	useReadInGrid() const = 0;
+	virtual double
+	getGridParam(std::size_t i = 0) const = 0;
 
 	/**
 	 * Get the name of the grid file.
@@ -332,54 +322,6 @@ public:
 	 */
 	virtual int
 	getMaxI() const = 0;
-
-	/**
-	 * Obtain the number of grid points in the depth direction to be used.
-	 *
-	 * @return The number of grid points
-	 */
-	virtual int
-	getNX() const = 0;
-
-	/**
-	 * Obtain the value of the step size in the depth direction to be used.
-	 *
-	 * @return The value of the step size
-	 */
-	virtual double
-	getXStepSize() const = 0;
-
-	/**
-	 * Obtain the number of grid points in the Y direction to be used.
-	 *
-	 * @return The number of grid points
-	 */
-	virtual int
-	getNY() const = 0;
-
-	/**
-	 * Obtain the value of the step size in the Y direction to be used.
-	 *
-	 * @return The value of the step size
-	 */
-	virtual double
-	getYStepSize() const = 0;
-
-	/**
-	 * Obtain the number of grid points in the Z direction to be used.
-	 *
-	 * @return The number of grid points
-	 */
-	virtual int
-	getNZ() const = 0;
-
-	/**
-	 * Obtain the value of the step size in the Z direction to be used.
-	 *
-	 * @return The value of the step size
-	 */
-	virtual double
-	getZStepSize() const = 0;
 
 	/**
 	 * Obtain the boundary condition on a given side of the grid.

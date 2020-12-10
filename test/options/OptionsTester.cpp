@@ -125,7 +125,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "initialV=0.05" << std::endl
 		<< "dimensions=1" << std::endl
 		<< "voidPortion=60.0" << std::endl
-		<< "regularGrid=no" << std::endl
+		<< "gridType=nonuniform" << std::endl
+		<< "gridParam=10" << std::endl
 		<< "process=diff" << std::endl
 		<< "grouping=11 2 4" << std::endl
 		<< "sputtering=0.5" << std::endl
@@ -195,8 +196,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Check the void portion option
 	BOOST_REQUIRE_EQUAL(opts.getVoidPortion(), 60.0);
 
-	// Check the regular grid option
-	BOOST_REQUIRE_EQUAL(opts.useRegularXGrid(), false);
+	// Check the grid options
+	BOOST_REQUIRE_EQUAL(opts.getGridTypeName(), "nonuniform");
+	BOOST_REQUIRE_EQUAL(opts.getGridParam(0), 10);
 
 	// Check the grouping option
 	BOOST_REQUIRE_EQUAL(opts.getGroupingMin(), 11);
@@ -292,8 +294,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5)
 
 	// Create a good parameter file
 	std::ofstream goodParamFile("param_good.txt");
-	goodParamFile << "netParam=8 1 0 5 3" << std::endl
-				  << "grid=100 0.5" << std::endl;
+	goodParamFile << "netParam=8 1 0 5 3" << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -323,12 +324,6 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5)
 	BOOST_REQUIRE_EQUAL(opts.getMaxT(), 0);
 	BOOST_REQUIRE_EQUAL(opts.getMaxV(), 5);
 	BOOST_REQUIRE_EQUAL(opts.getMaxI(), 3);
-
-	// Check the grid parameters
-	BOOST_REQUIRE_EQUAL(opts.getNX(), 100);
-	BOOST_REQUIRE_EQUAL(opts.getXStepSize(), 0.5);
-	BOOST_REQUIRE_EQUAL(opts.getNY(), 0);
-	BOOST_REQUIRE_EQUAL(opts.getYStepSize(), 0.0);
 
 	// Remove the created file
 	std::string tempFile = "param_good.txt";
@@ -483,11 +478,17 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
 
 BOOST_AUTO_TEST_CASE(readGridIn)
 {
+	// Create a grid file
+	std::ofstream gridFile("grid.dat");
+	gridFile << "0.0 1.0 3.0 7.0";
+	gridFile.close();
+
 	Options opts;
 
 	// Create a parameter file with a file name for the grid
 	std::ofstream paramFile("param_read_in_grid.txt");
-	paramFile << "regularGrid=grid.dat" << std::endl;
+	paramFile << "gridType=read" << std::endl
+			  << "gridFile=grid.dat" << std::endl;
 	paramFile.close();
 
 	string pathToFile("param_read_in_grid.txt");
@@ -510,11 +511,13 @@ BOOST_AUTO_TEST_CASE(readGridIn)
 	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
 
 	// Check the grid options
-	BOOST_REQUIRE_EQUAL(opts.useReadInGrid(), true);
+	BOOST_REQUIRE_EQUAL(opts.getGridTypeName(), "read");
 	BOOST_REQUIRE_EQUAL(opts.getGridFilename(), "grid.dat");
 
 	// Remove the created file
 	std::string tempFile = "param_read_in_grid.txt";
+	std::remove(tempFile.c_str());
+	tempFile = "grid.dat";
 	std::remove(tempFile.c_str());
 }
 

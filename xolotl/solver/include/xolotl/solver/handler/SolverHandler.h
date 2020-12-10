@@ -57,9 +57,6 @@ protected:
 	//! The number of grid points in the Z direction.
 	int nZ;
 
-	//! The grid step size in the depth direction.
-	double hX;
-
 	//! The grid step size in the y direction.
 	double hY;
 
@@ -121,12 +118,6 @@ protected:
 	//! The portion of void at the beginning of the problem.
 	double portion;
 
-	//! Which type of grid does the used want to use.
-	std::string useRegularGrid;
-
-	//! If the user wants to use a Chebyshev grid.
-	bool readInGrid;
-
 	//! If the user wants to move the surface.
 	bool movingSurface;
 
@@ -169,20 +160,25 @@ protected:
 	/**
 	 * Method generating the grid in the x direction
 	 *
-	 * @param nx The number of grid points
-	 * @param hx The step size
-	 * @param surfacePos The position of the surface on the grid
+	 * @param opts The options
 	 */
 	void
-	generateGrid(int nx, double hx, int surfacePos)
+	generateGrid(const options::IOptions& opts)
 	{
 		// Clear the grid
 		grid.clear();
 
+		// Doesn't mean anything in 0D
+		if (opts.getDimensionNumber() == 0)
+			return;
+
+		// Get the grid type
+		auto gridType = opts.getGridTypeName();
+
 		// Check if we want to read in the grid from a file
-		if (readInGrid) {
+		if (gridType == "read") {
 			// Open the corresponding file
-			std::ifstream inputFile(useRegularGrid.c_str());
+			std::ifstream inputFile(opts.getGridFilename().c_str());
 			if (!inputFile)
 				std::cerr << "\nCould not open the file containing the grid "
 							 "spacing information. "
@@ -225,42 +221,86 @@ protected:
 			// Set the number of grid points
 			nX = grid.size() - 2;
 
+			// Get the number of dimensions
+			auto dim = opts.getDimensionNumber();
+			if (dim > 1) {
+				nY = opts.getGridParam(0);
+				hY = opts.getGridParam(1);
+			}
+			if (dim > 2) {
+				nZ = opts.getGridParam(2);
+				hZ = opts.getGridParam(3);
+			}
+
 			return;
 		}
 
 		// Maybe the user wants a Chebyshev grid
-		if (useRegularGrid == "cheby") {
+		if (gridType == "cheby") {
 			// The first grid point will be at x = 0.0
 			grid.push_back(0.0);
 			grid.push_back(0.0);
 
+			// Set the number of grid points
+			nX = opts.getGridParam(0);
+			auto hx = opts.getGridParam(1);
 			// In that case hx correspond to the full length of the grid
-			for (int l = 1; l <= nx - 1; l++) {
+			for (int l = 1; l <= nX - 1; l++) {
 				grid.push_back((hx / 2.0) *
-					(1.0 - cos(core::pi * double(l) / double(nx - 1))));
+					(1.0 - cos(core::pi * double(l) / double(nX - 1))));
 			}
 			// The last grid point will be at x = hx
 			grid.push_back(hx);
 
-			return;
-		}
-		// Check if the user wants a regular grid
-		if (useRegularGrid == "regular") {
-			// The grid will me made of nx + 1 points separated by hx nm
-			for (int l = 0; l <= nx + 1; l++) {
-				grid.push_back((double)l * hx);
+			// Get the number of dimensions
+			auto dim = opts.getDimensionNumber();
+			if (dim > 1) {
+				nY = opts.getGridParam(2);
+				hY = opts.getGridParam(3);
+			}
+			if (dim > 2) {
+				nZ = opts.getGridParam(4);
+				hZ = opts.getGridParam(5);
 			}
 
 			return;
 		}
+		// Check if the user wants a regular grid
+		if (gridType == "uniform") {
+			// Set the number of grid points
+			nX = opts.getGridParam(0);
+			auto hx = opts.getGridParam(1);
+			// The grid will me made of nx + 2 points separated by hx nm
+			for (int l = 0; l <= nX + 1; l++) {
+				grid.push_back((double)l * hx);
+			}
+
+			// Get the number of dimensions
+			auto dim = opts.getDimensionNumber();
+			if (dim > 1) {
+				nY = opts.getGridParam(2);
+				hY = opts.getGridParam(3);
+			}
+			if (dim > 2) {
+				nZ = opts.getGridParam(4);
+				hZ = opts.getGridParam(5);
+			}
+
+			return;
+		}
+
 		// If it is not regular do a fine mesh close to the surface and
 		// increase the step size when away from the surface
-		else if (useRegularGrid == "PSI") {
+		if (gridType == "nonuniform") {
 			// Initialize the value of the previous point
 			double previousPoint = 0.0;
+			// Set the number of grid points
+			nX = opts.getGridParam(0);
+			// Set the position of the surface
+			double surfacePos = (int)(nX * opts.getVoidPortion() / 100.0);
 
 			// Loop on all the grid points
-			for (int l = 0; l <= nx + 1; l++) {
+			for (int l = 0; l <= nX + 1; l++) {
 				// Add the previous point
 				grid.push_back(previousPoint);
 				// 0.1nm step near the surface (x < 2.5nm)
@@ -353,73 +393,58 @@ protected:
 				}
 			}
 
-			return;
-		}
-		// If it is not regular do a fine mesh near points of interests
-		else if (useRegularGrid == "NE") {
-			// Initialize the value of the previous point
-			double previousPoint = 0.0;
-
-			// Loop on all the grid points
-			for (int l = 0; l <= nx + 1; l++) {
-				// Add the previous point
-				grid.push_back(previousPoint);
-				// 10nm step near the surface (x < 200nm)
-				if (l < surfacePos + 21) {
-					previousPoint += 10;
-				}
-				// 100nm step size (200nm < x < 1um)
-				else if (l < surfacePos + 29) {
-					previousPoint += 100;
-				}
-				// 1um step size (1um < x < 5um)
-				else if (l < surfacePos + 33) {
-					previousPoint += 1000;
-				}
-				// 5um step size (5um < x < 45um)
-				else if (l < surfacePos + 41) {
-					previousPoint += 5000;
-				}
-				// 1um step size (45um < x < 49um)
-				else if (l < surfacePos + 45) {
-					previousPoint += 1000;
-				}
-				// 100nm step size
-				else if (l < surfacePos + 53) {
-					previousPoint += 100;
-				}
-				// 10nm step size
-				else if (l < surfacePos + 93) {
-					previousPoint += 10;
-				}
-				// 100nm step size
-				else if (l < surfacePos + 101) {
-					previousPoint += 100;
-				}
-				// 1um step size
-				else if (l < surfacePos + 105) {
-					previousPoint += 1000;
-				}
-				// 5um step size
-				else if (l < surfacePos + 113) {
-					previousPoint += 5000;
-				}
-				// 1um step size
-				else if (l < surfacePos + 117) {
-					previousPoint += 1000;
-				}
-				// 100nm step size
-				else if (l < surfacePos + 125) {
-					previousPoint += 100;
-				}
-				// 10nm step size
-				else {
-					previousPoint += 10;
-				}
+			// Get the number of dimensions
+			auto dim = opts.getDimensionNumber();
+			if (dim > 1) {
+				nY = opts.getGridParam(1);
+				hY = opts.getGridParam(2);
+			}
+			if (dim > 2) {
+				nZ = opts.getGridParam(3);
+				hZ = opts.getGridParam(4);
 			}
 
 			return;
 		}
+		// If it is a geometric gradation grid
+		if (gridType == "geometric") {
+			// Initialize the value of the previous point
+			double previousPoint = 0.0;
+			// Set the number of grid points
+			nX = opts.getGridParam(0);
+			// Set the position of the surface
+			double surfacePos = (int)(nX * opts.getVoidPortion() / 100.0);
+			// Set the gradation parameters
+			double width = 0.1, r = opts.getGridParam(1);
+
+			// Loop on all the grid points
+			for (int l = 0; l <= nX + 1; l++) {
+				// Add the previous point
+				grid.push_back(previousPoint);
+				// 0.1nm step near the surface
+				if (l < surfacePos + 1) {
+					previousPoint += width;
+				}
+				else {
+					previousPoint += width * pow(r, l - surfacePos - 1);
+				}
+			}
+
+			// Get the number of dimensions
+			auto dim = opts.getDimensionNumber();
+			if (dim > 1) {
+				nY = opts.getGridParam(2);
+				hY = opts.getGridParam(3);
+			}
+			if (dim > 2) {
+				nZ = opts.getGridParam(4);
+				hZ = opts.getGridParam(5);
+			}
+
+			return;
+		}
+
+		throw std::runtime_error("\nThe grid type option was not recognized!");
 
 		return;
 	}
@@ -435,7 +460,6 @@ protected:
 		nX(0),
 		nY(0),
 		nZ(0),
-		hX(0.0),
 		hY(0.0),
 		hZ(0.0),
 		localXS(0),
@@ -454,8 +478,6 @@ protected:
 		electronicStoppingPower(0.0),
 		dimension(-1),
 		portion(0.0),
-		useRegularGrid(""),
-		readInGrid(false),
 		movingSurface(false),
 		bubbleBursting(false),
 		isMirror(true),
@@ -518,24 +540,7 @@ public:
 		networkName = opts.getNetworkFilename();
 
 		// Set the grid options
-		// Take the parameter file option by default
-		nX = opts.getNX(), nY = opts.getNY(), nZ = opts.getNZ();
-		hX = opts.getXStepSize(), hY = opts.getYStepSize(),
-		hZ = opts.getZStepSize();
-		// Update them if we use an HDF5 file with header group
-		if (opts.useHDF5()) {
-			int nx = 0, ny = 0, nz = 0;
-			double hx = 0.0, hy = 0.0, hz = 0.0;
-
-			io::XFile xfile(networkName);
-			auto headerGroup = xfile.getGroup<io::XFile::HeaderGroup>();
-			if (headerGroup) {
-				headerGroup->read(nx, hx, ny, hy, nz, hz);
-
-				nX = nx, nY = ny, nZ = nz;
-				hX = hx, hY = hy, hZ = hz;
-			}
-		}
+		generateGrid(opts);
 
 		// Set the flux handler
 		fluxHandler = material->getFluxHandler().get();
@@ -588,27 +593,9 @@ public:
 		// Set the HeV ratio
 		heVRatio = opts.getHeVRatio();
 
-		// Look at if the user wants to use a regular grid in the x direction
-		if (opts.useRegularXGrid())
-			useRegularGrid = "regular";
-		else if (opts.getMaterial() == "Fuel")
-			useRegularGrid = "NE";
-		else
-			useRegularGrid = "PSI";
-
 		// Boundary conditions in the X direction
 		if (opts.getMaterial() == "Fuel")
 			isMirror = false;
-
-		// Look at if the user wants to use a Chebyshev grid in the x direction
-		if (opts.useChebyshevGrid())
-			useRegularGrid = "cheby";
-
-		// Look at if the user wants to read in the grid in the x direction
-		if (opts.useReadInGrid()) {
-			readInGrid = true;
-			useRegularGrid = opts.getGridFilename();
-		}
 
 		// Set the boundary conditions (= 1: free surface; = 0: mirror)
 		leftOffset = opts.getLeftBoundary();

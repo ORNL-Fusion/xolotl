@@ -27,10 +27,7 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 			surfacePosition[j] = (int)(nX * portion / 100.0);
 	}
 
-	// Generate the grid in the x direction
-	generateGrid(nX, hX, surfacePosition[0]);
-
-	// Now that the grid was generated, we can update the surface position
+	// We can update the surface position
 	// if we are using a restart file
 	if (not networkName.empty() and movingSurface) {
 		io::XFile xfile(networkName);

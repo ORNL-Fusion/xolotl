@@ -30,9 +30,8 @@ Options::Options() :
 	initialVConcentration(0.0),
 	voidPortion(50.0),
 	dimensionNumber(1),
-	useRegularGridFlag(true),
-	useChebyshevGridFlag(false),
-	readInGridFlag(false),
+	gridTypeName(""),
+	gridParam{},
 	gridFilename(""),
 	gbList(""),
 	groupingMin(std::numeric_limits<int>::max()),
@@ -45,12 +44,6 @@ Options::Options() :
 	maxT(0),
 	maxV(20),
 	maxI(6),
-	nX(10),
-	nY(0),
-	nZ(0),
-	xStepSize(0.5),
-	yStepSize(0.0),
-	zStepSize(0.0),
 	leftBoundary(1),
 	rightBoundary(1),
 	bottomBoundary(1),
@@ -166,9 +159,20 @@ Options::readParams(int argc, char* argv[])
 		"The value of the electronic stopping power in the material (0.73 by "
 		"default).")("voidPortion", bpo::value<double>(&voidPortion),
 		"The value (in %) of the void portion at the start of the simulation.")(
-		"regularGrid", bpo::value<std::string>(),
-		"Will the grid be regularly spaced in the x direction? (available "
-		"yes,no,cheby,<filename>)")("petscArgs",
+		"gridType",
+		bpo::value<std::string>(&gridTypeName)->default_value("uniform"),
+		"Grid type to use along X. (default = uniform; available "
+		"uniform,nonuniform,geometric,cheby,read")("gridParam",
+		bpo::value<std::string>(),
+		"At most six parameters for the grid. Alternatives:"
+		"uniform -> nX hX; "
+		"nonuniform -> nX; "
+		"geometric -> nX ratio"
+		"cheby -> nX width"
+		"The four additional parameters are for a uniform grid in Y and Z -> "
+		"nY hY nZ hZ.")("gridFile", bpo::value<std::string>(&gridFilename),
+		"A grid spacing is given by the specified file."
+		" NOTE: you need gridParam here only if in 2D/3D.")("petscArgs",
 		bpo::value<std::string>(&petscArg),
 		"All the arguments that will be given to PETSc.")("process",
 		bpo::value<std::string>(),
@@ -186,10 +190,7 @@ Options::readParams(int argc, char* argv[])
 		"netParam", bpo::value<std::string>(),
 		"This option allows the user to define the boundaries of the network. "
 		"To do so, simply write the values in order "
-		"maxHe/Xe maxD maxT maxV maxI.")("grid", bpo::value<std::string>(),
-		"This option allows the user to define the boundaries of the grid. "
-		"To do so, simply write the values in order "
-		"nX xStepSize nY yStepSize nZ zStepSize .")("radiusSize",
+		"maxHe/Xe maxD maxT maxV maxI.")("radiusSize",
 		bpo::value<std::string>(),
 		"This option allows the user to set a minimum size for the computation "
 		"for the average radii, in the same order as the netParam option "
@@ -271,9 +272,9 @@ Options::readParams(int argc, char* argv[])
 			// Break the argument into tokens.
 			auto tokens = reader.loadLine();
 			if (tokens.size() > 2) {
-				std::cerr
-					<< "Options: too many temperature parameters (expect 2)"
-					<< std::endl;
+				std::cerr << "Options: too many temperature parameters (expect "
+							 "2 or less)"
+						  << std::endl;
 				exitCode = EXIT_FAILURE;
 				return;
 			}
@@ -344,22 +345,37 @@ Options::readParams(int argc, char* argv[])
 		}
 
 		// Take care of the grid
-		if (opts.count("regularGrid")) {
-			auto arg = opts["regularGrid"].as<std::string>();
-			// Determine the type of handlers we are being asked to use
-			if (arg == "yes") {
-				useRegularGridFlag = true;
+		if (opts.count("gridParam")) {
+			// Build an input stream from the argument string.
+			util::TokenizedLineReader<double> reader;
+			auto argSS = std::make_shared<std::istringstream>(
+				opts["gridParam"].as<std::string>());
+			reader.setInputStream(argSS);
+
+			// Break the argument into tokens.
+			auto tokens = reader.loadLine();
+			if (tokens.size() > 6) {
+				std::cerr
+					<< "Options: too many grid parameters (expect 6 or less)"
+					<< std::endl;
+				exitCode = EXIT_FAILURE;
+				return;
 			}
-			else if (arg == "no") {
-				useRegularGridFlag = false;
+			for (std::size_t i = 0; i < tokens.size(); ++i) {
+				gridParam[i] = tokens[i];
 			}
-			else if (arg == "cheby") {
-				useChebyshevGridFlag = true;
-			}
-			else {
-				// Read it as a file name
-				gridFilename = arg;
-				readInGridFlag = true;
+		}
+
+		if (opts.count("gridFile")) {
+			// Check that the file exists
+			std::ifstream inFile(gridFilename);
+			if (!inFile) {
+				std::cerr << "\nOptions: could not open file containing "
+							 "grid data. "
+							 "Aborting!\n"
+						  << std::endl;
+				shouldRunFlag = false;
+				exitCode = EXIT_FAILURE;
 			}
 		}
 
@@ -468,36 +484,6 @@ Options::readParams(int argc, char* argv[])
 				maxV = strtol(tokens[3].c_str(), NULL, 10);
 				// Set the interstitial size
 				maxI = strtol(tokens[4].c_str(), NULL, 10);
-			}
-		}
-
-		// Take care of the grid
-		if (opts.count("grid")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<std::string> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["grid"].as<std::string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-
-			// Set the values for the for the depth
-			nX = strtol(tokens[0].c_str(), NULL, 10);
-			xStepSize = strtod(tokens[1].c_str(), NULL);
-
-			// Check if we have other values
-			if (tokens.size() > 2) {
-				// Set the values for the for Y
-				nY = strtol(tokens[2].c_str(), NULL, 10);
-				yStepSize = strtod(tokens[3].c_str(), NULL);
-
-				// Check if we have other values
-				if (tokens.size() > 4) {
-					// Set the values for the for Z
-					nZ = strtol(tokens[4].c_str(), NULL, 10);
-					zStepSize = strtod(tokens[5].c_str(), NULL);
-				}
 			}
 		}
 

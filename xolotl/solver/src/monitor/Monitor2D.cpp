@@ -1396,13 +1396,13 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		//				gridPointSolution = solutionArray[yj][currentX];
 		//				// Get the total I and V concentrations
 		//				using HostUnmanaged = Kokkos::View<double*,
-		//Kokkos::HostSpace, 					Kokkos::MemoryUnmanaged>; 				auto hConcs =
-		//HostUnmanaged(gridPointSolution, dof); 				auto dConcs =
-		//Kokkos::View<double*>("Concentrations", dof); 				deep_copy(dConcs,
-		//hConcs); 				double iConc = 					psiNetwork->getTotalAtomConcentration(dConcs,
-		//specIdI, 1); 				double vConc =
-		//					psiNetwork->getTotalAtomConcentration(dConcs, specIdV,
-		//1);
+		// Kokkos::HostSpace, 					Kokkos::MemoryUnmanaged>; 				auto hConcs
+		// = HostUnmanaged(gridPointSolution, dof); 				auto dConcs =
+		// Kokkos::View<double*>("Concentrations", dof);
+		// deep_copy(dConcs, hConcs); 				double iConc =
+		// psiNetwork->getTotalAtomConcentration(dConcs, specIdI, 1);
+		// double vConc = 					psiNetwork->getTotalAtomConcentration(dConcs, specIdV,
+		// 1);
 		//				// The density of tungsten is 62.8 atoms/nm3
 		//				double wConc = (62.8 - vConc + iConc) / 2.0;
 		//
@@ -1416,23 +1416,26 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		//				if (solverHandler.getSurfacePosition(yLeft) < currentX)
 		//{
 		//					// if we are on the right process
-		//					if (currentX >= xs && currentX < xs + xm && yLeft >= ys
+		//					if (currentX >= xs && currentX < xs + xm && yLeft >=
+		//ys
 		//&& 						yLeft < ys + ym) {
 		//						// Get the concentrations at currentX
 		//						gridPointSolution =
-		//solutionArray[yLeft][currentX]; 						gridPointSolution[iClusterIds2D[0]] +=
-		//wConc;
+		// solutionArray[yLeft][currentX];
+		// gridPointSolution[iClusterIds2D[0]] += wConc;
 		//					}
 		//				}
 		//				// Now do the right side
 		//				if (solverHandler.getSurfacePosition(yRight) < currentX)
 		//{
 		//					// if we are on the right process
-		//					if (currentX >= xs && currentX < xs + xm && yRight >= ys
+		//					if (currentX >= xs && currentX < xs + xm && yRight >=
+		//ys
 		//&& 						yRight < ys + ym) {
 		//						// Get the concentrations at currentX
 		//						gridPointSolution =
-		//solutionArray[yRight][currentX]; 						gridPointSolution[iClusterIds2D[0]]
+		// solutionArray[yRight][currentX];
+		// gridPointSolution[iClusterIds2D[0]]
 		//+= wConc;
 		//					}
 		//				}

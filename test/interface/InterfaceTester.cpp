@@ -38,7 +38,6 @@ BOOST_AUTO_TEST_CASE(simple0D)
 			  << "material=Fuel" << std::endl
 			  << "dimensions=0" << std::endl
 			  << "process=reaction" << std::endl
-			  << "regularGrid=yes" << std::endl
 			  << "netParam=10 0 0 0 0" << std::endl;
 	paramFile.close();
 

@@ -105,19 +105,14 @@ protected:
 	int dimensionNumber;
 
 	/**
-	 * Use a regular grid on the x direction?
+	 * Name of the grid type to use
 	 */
-	bool useRegularGridFlag;
+	std::string gridTypeName;
 
 	/**
-	 * Use a Chebyshev grid on the x direction?
+	 * Grid parameter values
 	 */
-	bool useChebyshevGridFlag;
-
-	/**
-	 * Read in the grid on the x direction?
-	 */
-	bool readInGridFlag;
+	std::array<double, 6> gridParam;
 
 	/**
 	 * The name of the file where the grid is stored.
@@ -183,36 +178,6 @@ protected:
 	 * Maximum number of I
 	 */
 	int maxI;
-
-	/**
-	 * Number of grid point in the depth direction
-	 */
-	int nX;
-
-	/**
-	 * Step size in the depth direction
-	 */
-	double xStepSize;
-
-	/**
-	 * Number of grid point in the Y direction
-	 */
-	int nY;
-
-	/**
-	 * Step size in the Y direction
-	 */
-	double yStepSize;
-
-	/**
-	 * Number of grid point in the Z direction
-	 */
-	int nZ;
-
-	/**
-	 * Step size in the Z direction
-	 */
-	double zStepSize;
 
 	/**
 	 * The boundary condition on the given side of the grid.
@@ -521,28 +486,19 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
-	bool
-	useRegularXGrid() const override
+	std::string
+	getGridTypeName() const override
 	{
-		return useRegularGridFlag;
+		return gridTypeName;
 	}
 
 	/**
 	 * \see IOptions.h
 	 */
-	bool
-	useChebyshevGrid() const override
+	double
+	getGridParam(std::size_t i = 0) const override
 	{
-		return useChebyshevGridFlag;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	bool
-	useReadInGrid() const override
-	{
-		return readInGridFlag;
+		return gridParam[i];
 	}
 
 	/**
@@ -660,60 +616,6 @@ public:
 	getMaxI() const override
 	{
 		return maxI;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	int
-	getNX() const override
-	{
-		return nX;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	double
-	getXStepSize() const override
-	{
-		return xStepSize;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	int
-	getNY() const override
-	{
-		return nY;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	double
-	getYStepSize() const override
-	{
-		return yStepSize;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	int
-	getNZ() const override
-	{
-		return nZ;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	double
-	getZStepSize() const override
-	{
-		return zStepSize;
 	}
 
 	/**
