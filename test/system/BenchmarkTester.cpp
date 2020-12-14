@@ -92,16 +92,15 @@ BOOST_AUTO_TEST_CASE(PSI_4)
 	SystemTestCase{"benchmark_PSI_4"}.withTimer().run();
 }
 
-// BOOST_AUTO_TEST_CASE(PSI_5)
-//{
-//	if (getMPICommSize() > 150 || getMPICommSize() < 16) {
-//		return;
-//	}
-//	SystemTestCase::copyFile("tridyn_benchmark_PSI_5.dat");
-//	// 1D + HeDVI + advection + modifiedTM + attenuation + surface + reflective
-//+ heat
-//	// longer
-//	SystemTestCase{"benchmark_PSI_5"}.withTimer().run();
-//}
+BOOST_AUTO_TEST_CASE(PSI_5)
+{
+	if (getMPICommSize() > 150 || getMPICommSize() < 16) {
+		return;
+	}
+	SystemTestCase::copyFile("tridyn_benchmark_PSI_5.dat");
+	// 1D + HeDVI + advection + modifiedTM + attenuation + surface + reflective + heat
+	// longer
+	SystemTestCase{"benchmark_PSI_5"}.withTimer().run();
+}
 
 BOOST_AUTO_TEST_SUITE_END()
