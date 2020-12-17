@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/detail/impl/TrapMutationReactionGenerator.tpp>
 #include <xolotl/core/network/impl/PSIClusterGenerator.tpp>
 #include <xolotl/core/network/impl/PSIReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
@@ -393,7 +394,8 @@ inline ReactionCollection<
 PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
-		this->getProductionReactions(), this->getDissociationReactions());
+		this->getProductionReactions(), this->getDissociationReactions(),
+        this->getTrapMutationReactions());
 	return ret;
 }
 } // namespace detail

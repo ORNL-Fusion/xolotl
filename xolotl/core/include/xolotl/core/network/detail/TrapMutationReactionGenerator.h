@@ -11,21 +11,21 @@ namespace network
 namespace detail
 {
 template <typename TBase>
-class NucleationReactionGenerator : public TBase
+class TrapMutationReactionGenerator : public TBase
 {
 public:
 	using Superclass = TBase;
 	using NetworkType = typename TBase::NetworkType;
 	using NetworkTraits = ReactionNetworkTraits<NetworkType>;
-	using NucleationReactionType =
-		typename NetworkTraits::NucleationReactionType;
+	using TrapMutationReactionType =
+		typename NetworkTraits::TrapMutationReactionType;
 	using IndexType = typename NetworkType::IndexType;
 	using IndexView = typename Superclass::IndexView;
 	using ClusterSetSubView = typename Superclass::ClusterSetSubView;
 	using Count = typename Superclass::Count;
 	using Construct = typename Superclass::Construct;
 
-	NucleationReactionGenerator(const NetworkType& network);
+	TrapMutationReactionGenerator(const NetworkType& network);
 
 	IndexType
 	getRowMapAndTotalReactionCount();
@@ -35,42 +35,42 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	void
-	addNucleationReaction(Count, const ClusterSet& clusterSet) const;
+	addTrapMutationReaction(Count, const ClusterSet& clusterSet) const;
 
 	KOKKOS_INLINE_FUNCTION
 	void
-	addNucleationReaction(Construct, const ClusterSet& clusterSet) const;
+	addTrapMutationReaction(Construct, const ClusterSet& clusterSet) const;
 
-	Kokkos::View<NucleationReactionType*>
-	getNucleationReactions() const
+	Kokkos::View<TrapMutationReactionType*>
+	getTrapMutationReactions() const
 	{
-		return _nucleationReactions;
+		return _tmReactions;
 	}
 
 	IndexType
-	getNumberOfNucleationReactions() const
+	getNumberOfTrapMutationReactions() const
 	{
-		return _nucleationReactions.size();
+		return _tmReactions.size();
 	}
 
 private:
-	IndexView _clusterNucleationReactionCounts;
+	IndexView _clusterTMReactionCounts;
 
 	IndexType _numPrecedingReactions{};
-	IndexType _numNucleationReactions{};
+	IndexType _numTMReactions{};
 
-	IndexView _nucleationCrsRowMap;
-	ClusterSetSubView _nucleationCrsClusterSets;
+	IndexView _tmCrsRowMap;
+	ClusterSetSubView _tmCrsClusterSets;
 
-	Kokkos::View<NucleationReactionType*> _nucleationReactions;
+	Kokkos::View<TrapMutationReactionType*> _tmReactions;
 };
 
 template <typename TNetwork, typename TReaction, typename TBase>
 struct WrapTypeSpecificReactionGenerator<TNetwork, TReaction, TBase,
-	std::enable_if_t<
-		std::is_base_of_v<NucleationReaction<TNetwork, TReaction>, TReaction>>>
+	std::enable_if_t<std::is_base_of_v<
+		TrapMutationReaction<TNetwork, TReaction>, TReaction>>>
 {
-	using Type = NucleationReactionGenerator<TBase>;
+	using Type = TrapMutationReactionGenerator<TBase>;
 };
 } // namespace detail
 } // namespace network

@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/PSITraits.h>
 #include <xolotl/core/network/Reaction.h>
+#include <xolotl/core/network/TrapMutationReaction.h>
 
 namespace xolotl
 {
@@ -38,6 +39,18 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeBindingEnergy();
+};
+
+template <typename TSpeciesEnum>
+class PSITrapMutationReaction :
+	public TrapMutationReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSITrapMutationReaction<TSpeciesEnum>>
+{
+public:
+    using Superclass = TrapMutationReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSITrapMutationReaction<TSpeciesEnum>>;
+
+    using Superclass::Superclass;
 };
 } // namespace network
 } // namespace core

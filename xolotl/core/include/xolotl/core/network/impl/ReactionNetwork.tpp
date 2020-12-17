@@ -737,9 +737,6 @@ ReactionNetworkWorker<TImpl>::defineReactions()
 {
 	auto generator = _nw.asDerived()->getReactionGenerator();
 	_nw._reactions = generator.generateReactions();
-
-	// _nw._reactionData = generator.getReactionData();
-	// _nw._reactions = generator.getReactionCollection();
 }
 
 template <typename TImpl>
