@@ -692,6 +692,22 @@ PetscSolver1DHandler::updateConcentration(
 		}
 
 		// Boundary conditions
+		if (xi == surfacePosition) {
+			auto currId = dof - 1;
+			auto cluster = network.getClusterCommon(currId);
+			double oldConc = concVector[0][currId];
+			double oldRightConc = concVector[2][currId];
+			double J = 1.0e3; // nm-2 s-1
+			//			double J = 0.0; // nm-2 s-1
+			updatedConcOffset[currId] += (2.0 * J) / hxLeft +
+				(2.0 * cluster.getDiffusionCoefficient(xi + 1) *
+					(oldRightConc - oldConc) / (hxLeft * hxRight)) -
+				(J *
+					(cluster.getDiffusionCoefficient(xi + 2) -
+						cluster.getDiffusionCoefficient(xi)) /
+					(cluster.getDiffusionCoefficient(xi + 1) *
+						(hxLeft + hxRight)));
+		}
 		// Everything to the left of the surface is empty
 		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
 			continue;
@@ -983,6 +999,46 @@ PetscSolver1DHandler::computeJacobian(
 
 	// Loop over the grid points
 	for (PetscInt xi = localXS; xi < localXS + localXM; xi++) {
+		// Compute the left and right hx
+		double hxLeft = 0.0, hxRight = 0.0;
+		if (xi - 1 >= 0 && xi < nX) {
+			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+		}
+		else if (xi - 1 < 0) {
+			hxLeft = grid[xi + 1] - grid[xi];
+			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+		}
+		else {
+			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+			hxRight = grid[xi + 1] - grid[xi];
+		}
+
+		if (xi == surfacePosition) {
+			auto currId = dof - 1;
+			auto cluster = network.getClusterCommon(currId);
+			MatStencil fluxRow, fluxCols[2];
+			PetscScalar fluxVals[2];
+			fluxVals[0] = -2.0 * cluster.getDiffusionCoefficient(xi + 1) /
+				(hxLeft * hxRight);
+			fluxVals[1] = 2.0 * cluster.getDiffusionCoefficient(xi + 1) /
+				(hxLeft * hxRight);
+			// Set grid coordinate and component number for the row
+			fluxRow.i = xi;
+			fluxRow.c = currId;
+			// Set grid coordinates and component numbers for the columns
+			// corresponding to the middle, left, and right grid points
+			fluxCols[0].i = xi; // middle
+			fluxCols[0].c = currId;
+			fluxCols[1].i = xi + 1; // right
+			fluxCols[1].c = currId;
+
+			ierr = MatSetValuesStencil(
+				J, 1, &fluxRow, 2, fluxCols, fluxVals, ADD_VALUES);
+			checkPetscError(ierr,
+				"PetscSolver1DHandler::computeJacobian: "
+				"MatSetValuesStencil (flux) failed.");
+		}
 		// Boundary conditions
 		// Everything to the left of the surface is empty
 		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
@@ -998,20 +1054,6 @@ PetscSolver1DHandler::computeJacobian(
 		}
 		if (skip)
 			continue;
-		// Compute the left and right hx
-		double hxLeft = 0.0, hxRight = 0.0;
-		if (xi - 1 >= 0 && xi < nX) {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-		}
-		else if (xi - 1 < 0) {
-			hxLeft = grid[xi + 1] - grid[xi];
-			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
-		}
-		else {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-			hxRight = grid[xi + 1] - grid[xi];
-		}
 
 		// Get the partial derivatives for the diffusion
 		diffusionHandler->computePartialsForDiffusion(

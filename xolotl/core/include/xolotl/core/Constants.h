@@ -47,7 +47,7 @@ constexpr double heliumRadius = 0.30000000000000000;
 constexpr double xenonRadius = 0.30000000000000000;
 
 // Tungsten heat coefficient = lambda / (rho * C) in nm2 s-1
-constexpr double tungstenHeatCoefficient = 6.835e13;
+constexpr double tungstenHeatCoefficient = 9.88e12;
 
 // UO2 heat coefficient = lambda / (rho * C) in nm2 s-1
 constexpr double uo2HeatCoefficient = 0.0;
@@ -59,7 +59,7 @@ constexpr double feHeatCoefficient = 0.0;
 constexpr double alloyHeatCoefficient = 0.0;
 
 // Tungsten heat conductivity = lambda in W K-1 nm-1
-constexpr double tungstenHeatConductivity = 173 * 1.0e-9;
+constexpr double tungstenHeatConductivity = 159 * 1.0e-9;
 
 // UO2 heat conductivity = lambda in W K-1 m-1
 constexpr double uo2HeatConductivity = 0.0;

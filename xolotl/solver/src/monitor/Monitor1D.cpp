@@ -779,7 +779,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << fluence << ' ';
+		outputFile << time << ' ';
 		for (std::size_t i = 0; i < numSpecies; ++i) {
 			outputFile << totalConcData[i] << ' ';
 		}
