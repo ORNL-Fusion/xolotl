@@ -6,7 +6,7 @@
 namespace xolotlCore {
 
 void Diffusion1DHandler::initializeDiffusionGrid(
-		std::vector<IAdvectionHandler *> advectionHandlers,
+		std::vector<IAdvectionHandler*> advectionHandlers,
 		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
 		int nz, double hz, int zs) {
 	// Get the number of diffusing clusters
@@ -22,10 +22,10 @@ void Diffusion1DHandler::initializeDiffusionGrid(
 	NDPoint<3> gridPosition { 0.0, 0.0, 0.0 };
 
 	// Consider each advection handler
-	for (auto const& currAdvectionHandler : advectionHandlers) {
+	for (auto const &currAdvectionHandler : advectionHandlers) {
 
 		// Access collection of advecting clusters.
-		auto const& advecClusters =
+		auto const &advecClusters =
 				currAdvectionHandler->getAdvectingClusters();
 
 		// Loop on the spatial grid
@@ -37,13 +37,13 @@ void Diffusion1DHandler::initializeDiffusionGrid(
 			if (currAdvectionHandler->isPointOnSink(gridPosition)) {
 				// We have to find the corresponding reactant in the diffusion
 				// cluster collection.
-				for (IReactant const& currAdvCluster : advecClusters) {
+				for (IReactant const &currAdvCluster : advecClusters) {
 
 					// Initialize n the index in the diffusion index vector
 					// TODO use std::find or std::find_if?
 					int n = 0;
 					while (n < nDiff) {
-						IReactant const& currDiffCluster = diffusingClusters[n];
+						IReactant const &currDiffCluster = diffusingClusters[n];
 						if (&currDiffCluster == &currAdvCluster) {
 							break;
 						}
@@ -59,7 +59,7 @@ void Diffusion1DHandler::initializeDiffusionGrid(
 	return;
 }
 
-void Diffusion1DHandler::computeDiffusion(const IReactionNetwork& network,
+void Diffusion1DHandler::computeDiffusion(const IReactionNetwork &network,
 		double **concVector, double *updatedConcOffset, double hxLeft,
 		double hxRight, int ix, double, int, double, int) const {
 
@@ -70,9 +70,9 @@ void Diffusion1DHandler::computeDiffusion(const IReactionNetwork& network,
 	// diffusing clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int diffClusterIdx = 0;
-	for (IReactant const& currReactant : diffusingClusters) {
+	for (IReactant const &currReactant : diffusingClusters) {
 
-		auto const& cluster = static_cast<IReactant const&>(currReactant);
+		auto const &cluster = static_cast<IReactant const&>(currReactant);
 		int index = cluster.getId() - 1;
 
 		// Get the initial concentrations
@@ -104,7 +104,7 @@ void Diffusion1DHandler::computeDiffusion(const IReactionNetwork& network,
 }
 
 void Diffusion1DHandler::computePartialsForDiffusion(
-		const IReactionNetwork& network, double *val, int *indices,
+		const IReactionNetwork &network, double *val, int *indices,
 		double hxLeft, double hxRight, int ix, double, int, double, int) const {
 
 	// Loop on them
@@ -114,9 +114,9 @@ void Diffusion1DHandler::computePartialsForDiffusion(
 	// diffusing clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int diffClusterIdx = 0;
-	for (IReactant const& currReactant : diffusingClusters) {
+	for (IReactant const &currReactant : diffusingClusters) {
 
-		auto const& cluster = static_cast<IReactant const&>(currReactant);
+		auto const &cluster = static_cast<IReactant const&>(currReactant);
 
 		int index = cluster.getId() - 1;
 
@@ -128,13 +128,13 @@ void Diffusion1DHandler::computePartialsForDiffusion(
 		// for the middle, left, and right grid point
 		val[diffClusterIdx * 3] = -2.0 * cluster.getDiffusionCoefficient(ix + 1)
 				/ (hxLeft * hxRight) * diffusionGrid[ix + 1][diffClusterIdx]; // middle
-		val[(diffClusterIdx * 3) + 1] = (cluster.getDiffusionCoefficient(ix)
+		val[(diffClusterIdx * 3) + 1] = (cluster.getDiffusionCoefficient(ix + 1)
 				* 2.0 / (hxLeft * (hxLeft + hxRight))
 				+ (cluster.getDiffusionCoefficient(ix)
 						- cluster.getDiffusionCoefficient(ix + 2))
 						/ ((hxLeft + hxRight) * (hxLeft + hxRight)))
 				* diffusionGrid[ix][diffClusterIdx]; // left
-		val[(diffClusterIdx * 3) + 2] = (cluster.getDiffusionCoefficient(ix)
+		val[(diffClusterIdx * 3) + 2] = (cluster.getDiffusionCoefficient(ix + 1)
 				* 2.0 / (hxRight * (hxLeft + hxRight))
 				+ (cluster.getDiffusionCoefficient(ix + 2)
 						- cluster.getDiffusionCoefficient(ix))
