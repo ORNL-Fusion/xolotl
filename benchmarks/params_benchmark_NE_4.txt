@@ -11,5 +11,4 @@ tempParam=1200
 grouping=101 2
 process=diff reaction
 voidPortion=0.0
-regularGrid=yes
 initialV=0.0
