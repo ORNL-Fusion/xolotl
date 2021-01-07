@@ -98,8 +98,8 @@ BOOST_AUTO_TEST_CASE(PSI_5)
 		return;
 	}
 	SystemTestCase::copyFile("tridyn_benchmark_PSI_5.dat");
-	// 1D + HeDVI + advection + modifiedTM + attenuation + surface + reflective + heat
-	// longer
+	// 1D + HeDVI + advection + modifiedTM + attenuation + surface + reflective
+	// + heat longer
 	SystemTestCase{"benchmark_PSI_5"}.withTimer().run();
 }
 

@@ -133,14 +133,14 @@ Diffusion1DHandler::computePartialsForDiffusion(
 			cluster.getDiffusionCoefficient(ix + 1) / (hxLeft * hxRight) *
 			diffusionGrid[ix + 1][diffClusterIdx]; // middle
 		val[(diffClusterIdx * 3) + 1] =
-			(cluster.getDiffusionCoefficient(ix) * 2.0 /
+			(cluster.getDiffusionCoefficient(ix + 1) * 2.0 /
 					(hxLeft * (hxLeft + hxRight)) +
 				(cluster.getDiffusionCoefficient(ix) -
 					cluster.getDiffusionCoefficient(ix + 2)) /
 					((hxLeft + hxRight) * (hxLeft + hxRight))) *
 			diffusionGrid[ix][diffClusterIdx]; // left
 		val[(diffClusterIdx * 3) + 2] =
-			(cluster.getDiffusionCoefficient(ix) * 2.0 /
+			(cluster.getDiffusionCoefficient(ix + 1) * 2.0 /
 					(hxRight * (hxLeft + hxRight)) +
 				(cluster.getDiffusionCoefficient(ix + 2) -
 					cluster.getDiffusionCoefficient(ix)) /
