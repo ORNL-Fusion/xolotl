@@ -34,7 +34,7 @@ protected:
 	std::string gbFileName;
 
 	//! The original network created from the network loader.
-	xolotlCore::IReactionNetwork& network;
+	xolotlCore::IReactionNetwork &network;
 
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
@@ -100,7 +100,7 @@ protected:
 	xolotlCore::IDiffusionHandler *diffusionHandler;
 
 	//! The vector of advection handlers.
-	std::vector<xolotlCore::IAdvectionHandler *> advectionHandlers;
+	std::vector<xolotlCore::IAdvectionHandler*> advectionHandlers;
 
 	//! The original modified trap-mutation handler created.
 	xolotlCore::ITrapMutationHandler *mutationHandler;
@@ -430,19 +430,20 @@ protected:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	SolverHandler(xolotlCore::IReactionNetwork& _network) :
-			network(_network), networkName(""), gbFileName(""), nX(0), nY(0), nZ(0), hX(0.0), hY(
-					0.0), hZ(0.0), localXS(0), localXM(0), localYS(
-							0), localYM(0), localZS(0), localZM(0), leftOffset(1), rightOffset(1), bottomOffset(
-					1), topOffset(1), frontOffset(1), backOffset(1), initialVConc(
-					0.0), electronicStoppingPower(0.0), dimension(-1), portion(
-					0.0), useRegularGrid(""), readInGrid(false), movingSurface(
+	SolverHandler(xolotlCore::IReactionNetwork &_network) :
+			network(_network), networkName(""), gbFileName(""), nX(0), nY(0), nZ(
+					0), hX(0.0), hY(0.0), hZ(0.0), localXS(0), localXM(0), localYS(
+					0), localYM(0), localZS(0), localZM(0), leftOffset(1), rightOffset(
+					1), bottomOffset(1), topOffset(1), frontOffset(1), backOffset(
+					1), initialVConc(0.0), electronicStoppingPower(0.0), dimension(
+					-1), portion(0.0), useRegularGrid(""), readInGrid(false), movingSurface(
 					false), bubbleBursting(false), useAttenuation(false), sputteringYield(
 					0.0), fluxHandler(nullptr), temperatureHandler(nullptr), diffusionHandler(
 					nullptr), mutationHandler(nullptr), resolutionHandler(
 					nullptr), nucleationHandler(nullptr), tauBursting(10.0), minSizeBursting(
-					0), burstingFactor(0.1), rngSeed(0), heVRatio(4.0), previousTime(0.0), nXeGB(
-							0.0) {}
+					0), burstingFactor(0.1), rngSeed(0), heVRatio(4.0), previousTime(
+					0.0), nXeGB(0.0), isMirror(true) {
+	}
 
 public:
 
@@ -509,15 +510,15 @@ public:
 
 		// Set the flux handler
 		fluxHandler =
-				(xolotlCore::IFluxHandler *) material->getFluxHandler().get();
+				(xolotlCore::IFluxHandler*) material->getFluxHandler().get();
 
 		// Set the temperature handler
 		temperatureHandler =
-				(xolotlCore::ITemperatureHandler *) tempHandler.get();
+				(xolotlCore::ITemperatureHandler*) tempHandler.get();
 
 		// Set the diffusion handler
 		diffusionHandler =
-				(xolotlCore::IDiffusionHandler *) material->getDiffusionHandler().get();
+				(xolotlCore::IDiffusionHandler*) material->getDiffusionHandler().get();
 
 		// Set the advection handlers
 		auto handlers = material->getAdvectionHandler();
@@ -527,17 +528,17 @@ public:
 
 		// Set the modified trap-mutation handler
 		mutationHandler =
-				(xolotlCore::ITrapMutationHandler *) material->getTrapMutationHandler().get();
+				(xolotlCore::ITrapMutationHandler*) material->getTrapMutationHandler().get();
 
 		// Set the re-solution handler
 		resolutionHandler =
-				(xolotlCore::IReSolutionHandler *) material->getReSolutionHandler().get();
+				(xolotlCore::IReSolutionHandler*) material->getReSolutionHandler().get();
 		// Set its minimum size
 		resolutionHandler->setMinSize(options.getResoMinSize());
 
 		// Set the heterogeneous nucleation handler
 		nucleationHandler =
-				(xolotlCore::IHeterogeneousNucleationHandler *) material->getNucleationHandler().get();
+				(xolotlCore::IHeterogeneousNucleationHandler*) material->getNucleationHandler().get();
 
 		// Set the minimum size for the average radius compuation
 		minRadiusSizes = options.getRadiusMinSizes();
@@ -758,7 +759,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	std::vector<
-			std::vector<std::vector<std::tuple<double, double, double, double> > > > & getLocalNE()
+			std::vector<std::vector<std::tuple<double, double, double, double> > > >& getLocalNE()
 			override {
 		return localNE;
 	}
@@ -925,7 +926,7 @@ public:
 	 * Get the flux handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IFluxHandler *getFluxHandler() const override {
+	xolotlCore::IFluxHandler* getFluxHandler() const override {
 		return fluxHandler;
 	}
 
@@ -933,7 +934,7 @@ public:
 	 * Get the temperature handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::ITemperatureHandler *getTemperatureHandler() const override {
+	xolotlCore::ITemperatureHandler* getTemperatureHandler() const override {
 		return temperatureHandler;
 	}
 
@@ -941,7 +942,7 @@ public:
 	 * Get the diffusion handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IDiffusionHandler *getDiffusionHandler() const override {
+	xolotlCore::IDiffusionHandler* getDiffusionHandler() const override {
 		return diffusionHandler;
 	}
 
@@ -949,7 +950,7 @@ public:
 	 * Get the advection handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IAdvectionHandler *getAdvectionHandler() const override {
+	xolotlCore::IAdvectionHandler* getAdvectionHandler() const override {
 		return advectionHandlers[0];
 	}
 
@@ -957,7 +958,7 @@ public:
 	 * Get the advection handlers.
 	 * \see ISolverHandler.h
 	 */
-	std::vector<xolotlCore::IAdvectionHandler *> getAdvectionHandlers() const
+	std::vector<xolotlCore::IAdvectionHandler*> getAdvectionHandlers() const
 			override {
 		return advectionHandlers;
 	}
@@ -966,7 +967,7 @@ public:
 	 * Get the modified trap-mutation handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::ITrapMutationHandler *getMutationHandler() const override {
+	xolotlCore::ITrapMutationHandler* getMutationHandler() const override {
 		return mutationHandler;
 	}
 
@@ -974,7 +975,7 @@ public:
 	 * Get the re-solution handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IReSolutionHandler *getReSolutionHandler() const override {
+	xolotlCore::IReSolutionHandler* getReSolutionHandler() const override {
 		return resolutionHandler;
 	}
 
@@ -982,7 +983,7 @@ public:
 	 * Get the heterogeneous nucleation handler.
 	 * \see ISolverHandler.h
 	 */
-	xolotlCore::IHeterogeneousNucleationHandler *getHeterogeneousNucleationHandler() const
+	xolotlCore::IHeterogeneousNucleationHandler* getHeterogeneousNucleationHandler() const
 			override {
 		return nucleationHandler;
 	}
@@ -1052,28 +1053,28 @@ public:
 		gbVector.clear();
 	}
 
-        /** 
-         * Get the coordinates covered by the local grid using copying method.
-         * \see ISolverHandler.h
-         */
-        void getLocalCoordinatesCpy(int *xs, int *xm, int *Mx, int *ys, int *ym,
-                        int *My, int *zs, int *zm, int *Mz) override {
-                *xs = localXS;
-                *xm = localXM;
-                *Mx = nX; 
-                *ys = localYS;
-                *ym = localYM;
-                *My = nY; 
-                *zs = localZS;
-                *zm = localZM;
-                *Mz = nZ; 
-        }
+	/**
+	 * Get the coordinates covered by the local grid using copying method.
+	 * \see ISolverHandler.h
+	 */
+	void getLocalCoordinatesCpy(int *xs, int *xm, int *Mx, int *ys, int *ym,
+			int *My, int *zs, int *zm, int *Mz) override {
+		*xs = localXS;
+		*xm = localXM;
+		*Mx = nX;
+		*ys = localYS;
+		*ym = localYM;
+		*My = nY;
+		*zs = localZS;
+		*zm = localZM;
+		*Mz = nZ;
+	}
 
 	/**
 	 * Passing the XeRate at i,j,k point.
 	 * \see ISolverHandler.h
 	 */
-        double getXeRatePoint(int i, int j, int k) override {
+	double getXeRatePoint(int i, int j, int k) override {
 		return get<0>(localNE[i][j][k]);
 	}
 
@@ -1081,7 +1082,7 @@ public:
 	 * Passing the XeFlux at i,j,k point.
 	 * \see ISolverHandler.h
 	 */
-        double getXeFluxPoint(int i, int j, int k) override {
+	double getXeFluxPoint(int i, int j, int k) override {
 		return get<1>(localNE[i][j][k]);
 	}
 
@@ -1089,7 +1090,7 @@ public:
 	 * Passing the XeConc at i,j,k point.
 	 * \see ISolverHandler.h
 	 */
-        double getXeConcPoint(int i, int j, int k) override {
+	double getXeConcPoint(int i, int j, int k) override {
 		return get<2>(localNE[i][j][k]);
 	}
 
@@ -1097,7 +1098,7 @@ public:
 	 * Passing the XeVolFrac at i,j,k point.
 	 * \see ISolverHandler.h
 	 */
-        double getXeVolFracPoint(int i, int j, int k) override {
+	double getXeVolFracPoint(int i, int j, int k) override {
 		return get<3>(localNE[i][j][k]);
 	}
 }
