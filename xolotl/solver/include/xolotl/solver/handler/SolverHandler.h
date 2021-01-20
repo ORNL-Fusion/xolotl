@@ -106,6 +106,9 @@ protected:
 	//! The original diffusion handler created.
 	core::diffusion::IDiffusionHandler* diffusionHandler;
 
+	//! The original Soret diffusion handler created.
+	core::modified::ISoretDiffusionHandler* soretDiffusionHandler;
+
 	//! The vector of advection handlers.
 	std::vector<core::advection::IAdvectionHandler*> advectionHandlers;
 
@@ -486,6 +489,7 @@ protected:
 		fluxHandler(nullptr),
 		temperatureHandler(nullptr),
 		diffusionHandler(nullptr),
+		soretDiffusionHandler(nullptr),
 		mutationHandler(nullptr),
 		tauBursting(10.0),
 		burstingFactor(0.1),
@@ -550,6 +554,7 @@ public:
 
 		// Set the diffusion handler
 		diffusionHandler = material->getDiffusionHandler().get();
+		soretDiffusionHandler = material->getSoretDiffusionHandler().get();
 
 		// Set the advection handlers
 		auto handlers = material->getAdvectionHandler();
@@ -937,6 +942,15 @@ public:
 	getDiffusionHandler() const override
 	{
 		return diffusionHandler;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	core::modified::ISoretDiffusionHandler*
+	getSoretDiffusionHandler() const override
+	{
+		return soretDiffusionHandler;
 	}
 
 	/**

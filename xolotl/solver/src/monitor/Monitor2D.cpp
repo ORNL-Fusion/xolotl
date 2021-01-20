@@ -1396,14 +1396,14 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		//				gridPointSolution = solutionArray[yj][currentX];
 		//				// Get the total I and V concentrations
 		//				using HostUnmanaged = Kokkos::View<double*,
-		// Kokkos::HostSpace, 					Kokkos::MemoryUnmanaged>; 				auto
-		// hConcs
+		// Kokkos::HostSpace, 					Kokkos::MemoryUnmanaged>;
+		// auto hConcs
 		// = HostUnmanaged(gridPointSolution, dof); 				auto dConcs
 		// = Kokkos::View<double*>("Concentrations", dof); deep_copy(dConcs,
 		// hConcs); 				double iConc =
 		// psiNetwork->getTotalAtomConcentration(dConcs, specIdI, 1);
-		// double vConc = 					psiNetwork->getTotalAtomConcentration(dConcs,
-		// specIdV, 1);
+		// double vConc =
+		// psiNetwork->getTotalAtomConcentration(dConcs, specIdV, 1);
 		//				// The density of tungsten is 62.8 atoms/nm3
 		//				double wConc = (62.8 - vConc + iConc) / 2.0;
 		//

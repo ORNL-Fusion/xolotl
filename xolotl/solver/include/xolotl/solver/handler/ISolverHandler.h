@@ -11,6 +11,7 @@
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
+#include <xolotl/core/modified/ISoretDiffusionHandler.h>
 #include <xolotl/core/modified/ITrapMutationHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/temperature/ITemperatureHandler.h>
@@ -424,6 +425,14 @@ public:
 	 */
 	virtual core::diffusion::IDiffusionHandler*
 	getDiffusionHandler() const = 0;
+
+	/**
+	 * Get the Soret diffusion handler.
+	 *
+	 * @return The Soret diffusion handler
+	 */
+	virtual core::modified::ISoretDiffusionHandler*
+	getSoretDiffusionHandler() const = 0;
 
 	/**
 	 * Get the surface advection handler.

@@ -6,6 +6,7 @@
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/core/flux/IFluxHandler.h>
+#include <xolotl/core/modified/ISoretDiffusionHandler.h>
 #include <xolotl/core/modified/ITrapMutationHandler.h>
 
 namespace xolotl
@@ -47,6 +48,14 @@ public:
 	 */
 	virtual std::shared_ptr<core::diffusion::IDiffusionHandler>
 	getDiffusionHandler() const = 0;
+
+	/**
+	 * Return the Soret diffusion handler.
+	 *
+	 * @return The Soret diffusion handler.
+	 */
+	virtual std::shared_ptr<core::modified::ISoretDiffusionHandler>
+	getSoretDiffusionHandler() const = 0;
 
 	/**
 	 * Return the modified trap-mutation handler.

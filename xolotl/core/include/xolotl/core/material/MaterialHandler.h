@@ -4,6 +4,7 @@
 #include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
 #include <xolotl/core/modified/DummyTrapMutationHandler.h>
+#include <xolotl/core/modified/SoretDiffusionHandler.h>
 #include <xolotl/options/IOptions.h>
 
 namespace xolotl
@@ -41,6 +42,12 @@ public:
 	 */
 	virtual std::shared_ptr<core::modified::ITrapMutationHandler>
 	generateTrapMutationHandler() const = 0;
+
+	/**
+	 * Generate the Soret diffusion handler
+	 */
+	virtual std::shared_ptr<core::modified::ISoretDiffusionHandler>
+	generateSoretDiffusionHandler() const = 0;
 };
 
 /**
@@ -62,7 +69,8 @@ public:
  */
 template <typename TFluxHandler,
 	typename TAdvectionHandler = core::advection::DummyAdvectionHandler,
-	typename TTrapMutationHandler = core::modified::DummyTrapMutationHandler>
+	typename TTrapMutationHandler = core::modified::DummyTrapMutationHandler,
+	typename TSoretDiffusionHandler = core::modified::SoretDiffusionHandler>
 class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 {
 	std::shared_ptr<core::flux::IFluxHandler>
@@ -96,6 +104,15 @@ class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 
 		return std::make_shared<TTrapMutationHandler>();
 	}
+
+	std::shared_ptr<core::modified::ISoretDiffusionHandler>
+	generateSoretDiffusionHandler() const final
+	{
+		static_assert(std::is_base_of<core::modified::ISoretDiffusionHandler,
+			TSoretDiffusionHandler>::value);
+
+		return std::make_shared<TSoretDiffusionHandler>();
+	}
 };
 
 /**
@@ -124,6 +141,12 @@ public:
 		return _diffusionHandler;
 	}
 
+	std::shared_ptr<core::modified::ISoretDiffusionHandler>
+	getSoretDiffusionHandler() const final
+	{
+		return _soretDiffusionHandler;
+	}
+
 	std::shared_ptr<core::modified::ITrapMutationHandler>
 	getTrapMutationHandler() const final
 	{
@@ -150,6 +173,12 @@ private:
 	createDiffusionHandler(const options::IOptions& options);
 
 	/**
+	 * Finish setting up Soret diffusion handler based on relevant options
+	 */
+	void
+	initializeSoretDiffusionHandler(const options::IOptions& options);
+
+	/**
 	 * Finish setting up trap mutation handler based on relevant options
 	 */
 	void
@@ -167,6 +196,8 @@ protected:
 		_advectionHandlers;
 	std::shared_ptr<core::flux::IFluxHandler> _fluxHandler;
 	std::shared_ptr<core::modified::ITrapMutationHandler> _trapMutationHandler;
+	std::shared_ptr<core::modified::ISoretDiffusionHandler>
+		_soretDiffusionHandler;
 };
 } // namespace material
 } // namespace core

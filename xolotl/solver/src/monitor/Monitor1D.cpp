@@ -2105,6 +2105,10 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	auto tempHandler = solverHandler.getTemperatureHandler();
 	tempHandler->updateSurfacePosition(surfacePos);
 
+	// Set the new surface in the Soret diffusion handler
+	auto soretDiffHandler = solverHandler.getSoretDiffusionHandler();
+	soretDiffHandler->updateSurfacePosition(surfacePos);
+
 	// Get the flux handler to reinitialize it
 	fluxHandler->initializeFluxHandler(
 		solverHandler.getNetwork(), surfacePos, grid);

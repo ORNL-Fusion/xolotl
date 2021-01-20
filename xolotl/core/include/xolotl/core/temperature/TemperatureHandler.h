@@ -21,13 +21,14 @@ public:
 	void
 	initializeTemperature(int dof,
 		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap)
-		override; /**
-				   * This operation sets the temperature given by the solver.
-				   * Don't do anything.
-				   *
-				   * \see ITemperatureHandler.h
-				   */
+		network::IReactionNetwork::SparseFillMap& dfillMap) override;
+
+	/**
+	 * This operation sets the temperature given by the solver.
+	 * Don't do anything.
+	 *
+	 * \see ITemperatureHandler.h
+	 */
 	void
 	setTemperature(double* solution) override
 	{
