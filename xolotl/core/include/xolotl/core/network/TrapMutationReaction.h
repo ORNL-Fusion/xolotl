@@ -24,6 +24,10 @@ public:
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
 
+protected:
+	static constexpr auto invalidIndex = Superclass::invalidIndex;
+
+public:
 	TrapMutationReaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
@@ -40,6 +44,10 @@ public:
 	{
 		return detail::CoefficientsView();
 	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(double largestRate);
 
 private:
 	KOKKOS_INLINE_FUNCTION
@@ -60,6 +68,10 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedConnectivity(const Connectivity& connectivity);
+
+    KOKKOS_INLINE_FUNCTION
+    double
+    getAppliedRate(IndexType gridIndex) const;
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -84,6 +96,9 @@ private:
 		IndexType gridIndex);
 
 private:
+	IndexType _heClId;
+    IndexType _heVClId;
+    IndexType _iClId;
 };
 } // namespace network
 } // namespace core

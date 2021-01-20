@@ -89,6 +89,12 @@ public:
 	IndexType
 	checkLargestClusterId();
 
+	void
+	updateReactionRates();
+
+	void
+	updateTrapMutationDisappearingRate(double totalTrappedHeliumConc) override;
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);

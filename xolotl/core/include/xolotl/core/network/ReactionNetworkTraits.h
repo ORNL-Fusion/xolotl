@@ -25,6 +25,12 @@ using ReactionNetworkIndexType = std::size_t;
 
 using CompositionAmountType = std::uint32_t;
 
+inline constexpr auto invalidNetworkIndex =
+	plsm::invalid<ReactionNetworkIndexType>;
+
+inline constexpr auto invalidSpeciesAmount =
+	plsm::invalid<CompositionAmountType>;
+
 template <typename TNetwork, typename PlsmContext>
 class ClusterData;
 
@@ -85,16 +91,6 @@ struct ReactionNetworkProperties
 	static constexpr std::size_t numSpecies = Traits::numSpecies;
 	using SpeciesSequence = SpeciesEnumSequence<Species, numSpecies>;
 	static constexpr std::size_t numSpeciesNoI = SpeciesSequence::sizeNoI();
-};
-
-struct InvalidIndex
-{
-	static constexpr auto value = plsm::invalid<ReactionNetworkIndexType>;
-};
-
-struct InvalidSpeciesAmount
-{
-	static constexpr auto value = plsm::invalid<CompositionAmountType>;
 };
 
 template <typename TNetwork, typename = VoidType<>>

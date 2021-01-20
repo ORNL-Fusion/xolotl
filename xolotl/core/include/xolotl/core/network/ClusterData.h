@@ -19,6 +19,16 @@ class ClusterCommon;
 template <typename TNetwork, typename PlsmContext>
 class Cluster;
 
+struct Desorption
+{
+	using AmountType = detail::CompositionAmountType;
+	using IndexType = detail::ReactionNetworkIndexType;
+
+	AmountType size{};
+	IndexType id{detail::invalidNetworkIndex};
+	double portion{};
+};
+
 namespace detail
 {
 template <typename PlsmContext>
@@ -108,6 +118,7 @@ public:
 		enableStdReaction("Enable Std Reaction" + labelStr(label)),
 		enableReSolution("Enable Re-Solution Process" + labelStr(label)),
 		enableNucleation("Enable Nucleation Process" + labelStr(label)),
+		enableTrapMutation("Enable Trap Mutation Process" + labelStr(label)),
 		temperature("Temperature" + labelStr(label), gridSize),
 		reactionRadius("Reaction Radius" + labelStr(label), numClusters),
 		formationEnergy("Formation Energy" + labelStr(label), numClusters),
@@ -173,6 +184,13 @@ public:
 		return enableNucleation(0);
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	bool
+	getEnableTrapMutation() const
+	{
+		return enableTrapMutation();
+	}
+
 	void
 	setGridSize(IndexType gridSize_)
 	{
@@ -180,6 +198,18 @@ public:
 		temperature = View<double*>("Temperature" + labelStr(label), gridSize);
 		diffusionCoefficient = View<double**>(
 			"Diffusion Coefficient" + labelStr(label), numClusters, gridSize);
+	}
+
+	void
+	initializeTrapMutationData()
+	{
+		currentDesorpLeftSideRate =
+			View<double>("Current Desorption Left Side Rate");
+		currentDisappearingRate =
+			View<double>("Current Trap Mutation Disappearing Rate");
+		auto mirror = create_mirror_view(currentDisappearingRate);
+		mirror() = 1.0;
+		deep_copy(currentDisappearingRate, mirror);
 	}
 
 	IndexType numClusters{};
@@ -191,6 +221,12 @@ public:
 	View<bool[1]> enableStdReaction;
 	View<bool[1]> enableReSolution;
 	View<bool[1]> enableNucleation;
+	View<bool> enableTrapMutation;
+
+	View<Desorption> desorption;
+	View<double> currentDesorpLeftSideRate;
+	View<double> currentDisappearingRate;
+
 	View<double*> temperature;
 	View<double*> reactionRadius;
 	View<double*> formationEnergy;
@@ -274,6 +310,10 @@ struct ClusterDataCommonRef
 		enableStdReaction(data.enableStdReaction),
 		enableReSolution(data.enableReSolution),
 		enableNucleation(data.enableNucleation),
+		enableTrapMutation(data.enableTrapMutation),
+		desorption(data.desorption),
+		currentDesorpLeftSideRate(data.currentDesorpLeftSideRate),
+		currentDisappearingRate(data.currentDisappearingRate),
 		temperature(data.temperature),
 		reactionRadius(data.reactionRadius),
 		formationEnergy(data.formationEnergy),
@@ -339,6 +379,13 @@ struct ClusterDataCommonRef
 		return enableNucleation(0);
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	bool
+	getEnableTrapMutation() const
+	{
+		return enableTrapMutation();
+	}
+
 	IndexType numClusters{};
 	IndexType gridSize{};
 	View<double[1]> atomicVolume;
@@ -348,6 +395,12 @@ struct ClusterDataCommonRef
 	View<bool[1]> enableStdReaction;
 	View<bool[1]> enableReSolution;
 	View<bool[1]> enableNucleation;
+	View<bool> enableTrapMutation;
+
+	View<Desorption> desorption;
+	View<double> currentDesorpLeftSideRate;
+	View<double> currentDisappearingRate;
+
 	View<double*> temperature;
 	View<double*> reactionRadius;
 	View<double**> diffusionCoefficient;

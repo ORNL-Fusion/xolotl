@@ -82,7 +82,7 @@ private:
 	}
 
 private:
-	IndexType _id{detail::InvalidIndex::value};
+	IndexType _id{detail::invalidNetworkIndex};
 };
 
 /**

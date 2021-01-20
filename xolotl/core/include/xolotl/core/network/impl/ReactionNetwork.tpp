@@ -24,14 +24,16 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 {
 	// Set constants
 	this->setInterstitialBias(opts.getBiasFactor());
-	setImpurityRadius(opts.getImpurityRadius());
-	setLatticeParameter(opts.getLatticeParameter());
-	setFissionRate(opts.getFluxAmplitude());
-	setZeta(opts.getZeta());
+	this->setImpurityRadius(opts.getImpurityRadius());
+	this->setLatticeParameter(opts.getLatticeParameter());
+	this->setFissionRate(opts.getFluxAmplitude());
+	this->setZeta(opts.getZeta());
 	auto map = opts.getProcesses();
-	setEnableStdReaction(map["reaction"]);
-	setEnableReSolution(map["resolution"]);
-	setEnableNucleation(map["heterogeneous"]);
+	this->setEnableStdReaction(map["reaction"]);
+	this->setEnableReSolution(map["resolution"]);
+	this->setEnableNucleation(map["heterogeneous"]);
+	this->setEnableTrapMutation(map["modifiedTM"]);
+	this->setEnableAttenuation(map["attenuation"]);
 	std::string petscString = opts.getPetscArg();
 	util::TokenizedLineReader<std::string> reader;
 	reader.setInputStream(std::make_shared<std::istringstream>(petscString));
@@ -43,11 +45,13 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 			break;
 		}
 	}
-	setEnableReducedJacobian(useReduced);
+	this->setEnableReducedJacobian(useReduced);
 
-	auto tiles = subpaving.getTiles(plsm::onDevice);
-	this->_numClusters = tiles.extent(0);
+	if (this->_enableTrapMutation) {
+		_clusterData.initializeTrapMutationData();
+	}
 
+	this->_numClusters = _clusterData.numClusters;
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
 
@@ -142,7 +146,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setFissionRate(double rate)
 {
-	this->_fissionRate = rate;
+	Superclass::setFissionRate(rate);
 	auto mirror = Kokkos::create_mirror_view(_clusterData.fissionRate);
 	mirror(0) = this->_fissionRate;
 	Kokkos::deep_copy(_clusterData.fissionRate, mirror);
@@ -161,7 +165,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setEnableStdReaction(bool reaction)
 {
-	this->_enableStdReaction = reaction;
+	Superclass::setEnableStdReaction(reaction);
 	auto mirror = Kokkos::create_mirror_view(_clusterData.enableStdReaction);
 	mirror(0) = this->_enableStdReaction;
 	Kokkos::deep_copy(_clusterData.enableStdReaction, mirror);
@@ -171,7 +175,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setEnableReSolution(bool reaction)
 {
-	this->_enableReSolution = reaction;
+	Superclass::setEnableReSolution(reaction);
 	auto mirror = Kokkos::create_mirror_view(_clusterData.enableReSolution);
 	mirror(0) = this->_enableReSolution;
 	Kokkos::deep_copy(_clusterData.enableReSolution, mirror);
@@ -181,7 +185,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setEnableNucleation(bool reaction)
 {
-	this->_enableNucleation = reaction;
+	Superclass::setEnableNucleation(reaction);
 	auto mirror = Kokkos::create_mirror_view(_clusterData.enableNucleation);
 	mirror(0) = this->_enableNucleation;
 	Kokkos::deep_copy(_clusterData.enableNucleation, mirror);
@@ -189,9 +193,12 @@ ReactionNetwork<TImpl>::setEnableNucleation(bool reaction)
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setEnableReducedJacobian(bool reduced)
+ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 {
-	this->_enableReducedJacobian = reduced;
+	Superclass::setEnableTrapMutation(reaction);
+	auto mirror = Kokkos::create_mirror_view(_clusterData.enableTrapMutation);
+	mirror() = this->_enableTrapMutation;
+	deep_copy(_clusterData.enableTrapMutation, mirror);
 }
 
 template <typename TImpl>
@@ -216,6 +223,13 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 
 	updateDiffusionCoefficients();
 
+	asDerived()->updateReactionRates();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::updateReactionRates()
+{
 	_reactions.apply(
 		DEVICE_LAMBDA(auto&& reaction) { reaction.updateRates(); });
 	Kokkos::fence();
@@ -375,6 +389,9 @@ void
 ReactionNetwork<TImpl>::computeAllFluxes(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
 {
+	if (this->_enableTrapMutation) {
+		updateDesorptionLeftSideRate(concentrations, gridIndex);
+	}
 	_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeFlux(concentrations, fluxes, gridIndex);
 	});
@@ -386,6 +403,10 @@ void
 ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 	Kokkos::View<double*> values, IndexType gridIndex)
 {
+	if (this->_enableTrapMutation) {
+		updateDesorptionLeftSideRate(concentrations, gridIndex);
+	}
+
 	// Reset the values
 	const auto& nValues = values.extent(0);
 	// Loop on the reactions
@@ -407,6 +428,20 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 	}
 
 	Kokkos::fence();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::updateDesorptionLeftSideRate(
+	ConcentrationsView concentrations, IndexType gridIndex)
+{
+	// TODO: Desorption is constant. So make it available on both host and
+	// device. Either DualView or just direct value type that gets copied
+	auto desorp = create_mirror_view(_clusterData.desorption);
+	deep_copy(desorp, _clusterData.desorption);
+	auto lsRate = create_mirror_view(_clusterData.currentDesorpLeftSideRate);
+	lsRate() = getLeftSideRate(concentrations, desorp().id, gridIndex);
+	deep_copy(_clusterData.currentDesorpLeftSideRate, lsRate);
 }
 
 template <typename TImpl>

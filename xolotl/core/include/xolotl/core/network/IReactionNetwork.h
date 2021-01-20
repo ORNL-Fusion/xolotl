@@ -38,14 +38,14 @@ public:
 	static constexpr IndexType
 	invalidIndex() noexcept
 	{
-		return detail::InvalidIndex::value;
+		return detail::invalidNetworkIndex;
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr AmountType
 	invalidAmount() noexcept
 	{
-		return detail::InvalidSpeciesAmount::value;
+		return detail::invalidSpeciesAmount;
 	}
 
 	IReactionNetwork(IndexType gridSize) : _gridSize(gridSize)
@@ -143,12 +143,14 @@ public:
 	}
 
 	virtual void
-	setFissionRate(double rate) = 0;
+	setFissionRate(double rate)
+	{
+		_fissionRate = rate;
+	}
 
 	virtual void
 	setZeta(double z) = 0;
 
-	KOKKOS_INLINE_FUNCTION
 	bool
 	getEnableStdReaction() const noexcept
 	{
@@ -156,9 +158,11 @@ public:
 	}
 
 	virtual void
-	setEnableStdReaction(bool reaction) = 0;
+	setEnableStdReaction(bool reaction)
+	{
+		_enableStdReaction = reaction;
+	}
 
-	KOKKOS_INLINE_FUNCTION
 	bool
 	getEnableReSolution() const noexcept
 	{
@@ -166,9 +170,11 @@ public:
 	}
 
 	virtual void
-	setEnableReSolution(bool reso) = 0;
+	setEnableReSolution(bool reso)
+	{
+		_enableReSolution = reso;
+	}
 
-	KOKKOS_INLINE_FUNCTION
 	bool
 	getEnableNucleation() const noexcept
 	{
@@ -176,9 +182,35 @@ public:
 	}
 
 	virtual void
-	setEnableNucleation(bool reso) = 0;
+	setEnableNucleation(bool nuc)
+	{
+		_enableNucleation = nuc;
+	}
 
-	KOKKOS_INLINE_FUNCTION
+	bool
+	getEnableTrapMutation() const noexcept
+	{
+		return _enableTrapMutation;
+	}
+
+	virtual void
+	setEnableTrapMutation(bool enable)
+	{
+		_enableTrapMutation = enable;
+	}
+
+	bool
+	getEnableAttenuation() const noexcept
+	{
+		return _enableAttenuation;
+	}
+
+	virtual void
+	setEnableAttenuation(bool enable)
+	{
+		_enableAttenuation = enable;
+	}
+
 	bool
 	getEnableReducedJacobian() const noexcept
 	{
@@ -186,9 +218,11 @@ public:
 	}
 
 	virtual void
-	setEnableReducedJacobian(bool reduced) = 0;
+	setEnableReducedJacobian(bool reduced)
+	{
+		_enableReducedJacobian = reduced;
+	}
 
-	KOKKOS_INLINE_FUNCTION
 	IndexType
 	getGridSize() const noexcept
 	{
@@ -329,6 +363,8 @@ protected:
 	bool _enableStdReaction{};
 	bool _enableReSolution{};
 	bool _enableNucleation{};
+	bool _enableTrapMutation{};
+	bool _enableAttenuation{};
 	bool _enableReducedJacobian{};
 
 	IndexType _gridSize{};

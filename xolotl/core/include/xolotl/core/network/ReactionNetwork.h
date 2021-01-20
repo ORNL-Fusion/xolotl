@@ -187,7 +187,7 @@ public:
 	setEnableNucleation(bool reaction) override;
 
 	void
-	setEnableReducedJacobian(bool reduced) override;
+	setEnableTrapMutation(bool reaction) override;
 
 	void
 	setGridSize(IndexType gridSize) override;
@@ -281,6 +281,10 @@ public:
 	void
 	computeAllPartials(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex) override;
+
+	void
+	updateDesorptionLeftSideRate(
+		ConcentrationsView concentrations, IndexType gridIndex);
 
 	double
 	getLargestRate() override;
@@ -382,6 +386,9 @@ public:
 		AmountType minSize = 0);
 
 	void
+	updateReactionRates();
+
+	void
 	updateOutgoingDiffFluxes(double* gridPointSolution, double factor,
 		std::vector<IndexType> diffusingIds, std::vector<double>& fluxes,
 		IndexType gridIndex) override;
@@ -425,12 +432,12 @@ private:
 	Subpaving _subpaving;
 	ClusterDataMirror _clusterDataMirror;
 
-	ReactionCollection _reactions;
-
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
 protected:
 	ClusterData _clusterData;
+
+	ReactionCollection _reactions;
 
 	std::map<std::string, SpeciesId> _speciesLabelMap;
 };

@@ -124,6 +124,37 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 }
 
 template <typename TSpeciesEnum>
+void
+PSIReactionNetwork<TSpeciesEnum>::updateReactionRates()
+{
+	Superclass::updateReactionRates();
+
+	using TrapMutationReactionType =
+		typename Superclass::Traits::TrapMutationReactionType;
+	auto largestRate = this->getLargestRate();
+	auto tmReactions =
+		this->_reactions.template getView<TrapMutationReactionType>();
+	Kokkos::parallel_for(
+		tmReactions.size(), KOKKOS_LAMBDA(IndexType i) {
+			tmReactions[i].computeRate(largestRate);
+		});
+}
+
+template <typename TSpeciesEnum>
+void
+PSIReactionNetwork<TSpeciesEnum>::updateTrapMutationDisappearingRate(
+	double totalTrappedHeliumConc)
+{
+	// Set the rate to have an exponential decrease
+	if (this->_enableAttenuation) {
+		auto mirror =
+			create_mirror_view(this->_clusterData.currentDisappearingRate);
+		mirror() = exp(-4.0 * totalTrappedHeliumConc);
+		deep_copy(this->_clusterData.currentDisappearingRate, mirror);
+	}
+}
+
+template <typename TSpeciesEnum>
 double
 PSIReactionNetwork<TSpeciesEnum>::checkLatticeParameter(double latticeParameter)
 {
@@ -395,7 +426,7 @@ PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-        this->getTrapMutationReactions());
+		this->getTrapMutationReactions());
 	return ret;
 }
 } // namespace detail
