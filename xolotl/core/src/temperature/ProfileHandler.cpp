@@ -41,9 +41,10 @@ ProfileHandler::~ProfileHandler()
 void
 ProfileHandler::initializeTemperature(const int dof,
 	network::IReactionNetwork::SparseFillMap& ofillMap,
-	network::IReactionNetwork::SparseFillMap& dfillMap)
+	network::IReactionNetwork::SparseFillMap& dfillMap,
+	std::vector<double> grid)
 {
-	TemperatureHandler::initializeTemperature(dof, ofillMap, dfillMap);
+	TemperatureHandler::initializeTemperature(dof, ofillMap, dfillMap, grid);
 
 	// Open file dataFile.dat containing the time and temperature
 	std::ifstream inputFile(tempFile.c_str());

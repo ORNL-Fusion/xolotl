@@ -144,7 +144,7 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(dof, ofill, dfill);
+	temperatureHandler->initializeTemperature(dof, ofill, dfill, grid);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents
 	// diffusion

@@ -27,7 +27,8 @@ HeatEquationHandler::HeatEquationHandler(
 	heatConductivity(0.0),
 	zeroFlux(util::equal(heatFlux, 0.0)),
 	dimension(dim),
-	oldConcBox(dimension, {0.0, 0.0})
+	oldConcBox(dimension, {0.0, 0.0}),
+	interfaceLoc(125.0)
 {
 	auto xolotlComm = util::getMPIComm();
 	int procId;
@@ -99,6 +100,12 @@ HeatEquationHandler::computeTemperature(double** concVector,
 	// Initial declaration
 	int index = this->_dof;
 
+	// Adjust the parameters
+	double midHeatCoef = getLocalHeatFactor(xi) * heatCoef,
+		   leftHeatCoef = getLocalHeatFactor(xi - 1) * heatCoef,
+		   rightHeatCoef = getLocalHeatFactor(xi + 1) * heatCoef,
+		   midHeatCond = getLocalHeatFactor(xi) * heatConductivity;
+
 	// Get the initial concentrations
 	double oldConc = concVector[0][index];
 	for (int d = 0; d < dimension; ++d) {
@@ -108,15 +115,23 @@ HeatEquationHandler::computeTemperature(double** concVector,
 
 	double s[3] = {0, sy, sz};
 
+	// Surface
 	if (xi == surfacePosition) {
 		// Boundary condition with heat flux
-		updatedConcOffset[index] += heatCoef * (2.0 / hxLeft) *
-			((heatFlux / heatConductivity) +
+		updatedConcOffset[index] += midHeatCoef * (2.0 / hxLeft) *
+			((heatFlux / midHeatCond) + (oldConcBox[0][1] - oldConc) / hxRight);
+	}
+	// Interface
+	else if (fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc) <
+		2.0) {
+		double rightHeatCond = getLocalHeatFactor(xi + 1) * heatConductivity;
+		updatedConcOffset[index] += rightHeatCoef * (2.0 / hxLeft) *
+			((heatFlux / rightHeatCond) +
 				(oldConcBox[0][1] - oldConc) / hxRight);
 	}
 	else {
 		// Use a simple midpoint stencil to compute the concentration
-		updatedConcOffset[index] += heatCoef * (2.0 / hxLeft) *
+		updatedConcOffset[index] += midHeatCoef * (2.0 / hxLeft) *
 			(oldConcBox[0][0] + (hxLeft / hxRight) * oldConcBox[0][1] -
 				(1.0 + (hxLeft / hxRight)) * oldConc) /
 			(hxLeft + hxRight);
@@ -124,7 +139,7 @@ HeatEquationHandler::computeTemperature(double** concVector,
 
 	// Deal with the potential additional dimensions
 	for (int d = 1; d < dimension; ++d) {
-		updatedConcOffset[index] += heatCoef * s[d] *
+		updatedConcOffset[index] += midHeatCoef * s[d] *
 			(oldConcBox[d][0] + oldConcBox[d][1] - 2.0 * oldConc);
 	}
 }
@@ -143,27 +158,47 @@ HeatEquationHandler::computePartialsForTemperature(double* val, int* indices,
 
 	double s[3] = {0, sy, sz};
 
+	// Adjust the parameters
+	double midHeatCoef = getLocalHeatFactor(xi) * heatCoef,
+		   leftHeatCoef = getLocalHeatFactor(xi - 1) * heatCoef,
+		   rightHeatCoef = getLocalHeatFactor(xi + 1) * heatCoef;
+
 	// Compute the partials along the depth
 	val[0] = 1.0 / (hxLeft * hxRight);
-	val[1] = 2.0 * heatCoef / (hxLeft * (hxLeft + hxRight));
-	val[2] = 2.0 * heatCoef / (hxRight * (hxLeft + hxRight));
+	val[1] = 2.0 * midHeatCoef / (hxLeft * (hxLeft + hxRight));
+	val[2] = 2.0 * midHeatCoef / (hxRight * (hxLeft + hxRight));
 
 	// Deal with the potential additional dimensions
 	for (int d = 1; d < dimension; ++d) {
 		val[0] += s[d];
-		val[2 * d + 1] = heatCoef * s[d];
-		val[2 * d + 2] = heatCoef * s[d];
+		val[2 * d + 1] = midHeatCoef * s[d];
+		val[2 * d + 2] = midHeatCoef * s[d];
 	}
 
-	val[0] *= -2.0 * heatCoef;
+	val[0] *= -2.0 * midHeatCoef;
 
 	// Boundary condition with the heat flux
 	if (xi == surfacePosition) {
 		val[1] = 0.0;
-		val[2] = 2.0 * heatCoef / (hxLeft * hxRight);
+		val[2] = 2.0 * midHeatCoef / (hxLeft * hxRight);
+	}
+	else if (fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc) <
+		2.0) {
+		val[0] = -2.0 * rightHeatCoef / (hxLeft * hxRight);
+		val[1] = 0.0;
+		val[2] = 2.0 * rightHeatCoef / (hxLeft * hxRight);
 	}
 
 	return true;
+}
+
+double
+HeatEquationHandler::getLocalHeatFactor(int xi) const
+{
+	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
+	if (x < interfaceLoc)
+		return 0.2;
+	return 1.0;
 }
 } // namespace temperature
 } // namespace core

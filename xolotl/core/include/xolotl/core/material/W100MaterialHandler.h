@@ -3,6 +3,7 @@
 #include <xolotl/core/advection/W100AdvectionHandler.h>
 #include <xolotl/core/flux/W100FitFluxHandler.h>
 #include <xolotl/core/material/MaterialHandler.h>
+#include <xolotl/core/modified/SoretDiffusionHandler.h>
 #include <xolotl/core/modified/W100TrapMutationHandler.h>
 #include <xolotl/factory/material/MaterialHandlerFactory.h>
 
@@ -19,7 +20,8 @@ public:
 		MaterialHandler(options,
 			MaterialSubHandlerGenerator<core::flux::W100FitFluxHandler,
 				core::advection::W100AdvectionHandler,
-				core::modified::W100TrapMutationHandler>{})
+				core::modified::W100TrapMutationHandler,
+				core::modified::SoretDiffusionHandler>{})
 	{
 	}
 };

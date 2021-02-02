@@ -128,6 +128,11 @@ private:
 	double heatConductivity;
 
 	/**
+	 * The interface location
+	 */
+	double interfaceLoc;
+
+	/**
 	 * Zero flux enables constant temperature behavior
 	 */
 	bool zeroFlux{false};
@@ -141,6 +146,15 @@ private:
 	 * Hang on to single allocation for use in computeTemperature()
 	 */
 	std::vector<std::array<double, 2>> oldConcBox;
+
+	/**
+	 * Get the heat factor at this grid point.
+	 *
+	 * @param xi The grid index
+	 * @return The factor
+	 */
+	double
+	getLocalHeatFactor(int xi) const;
 };
 } // namespace temperature
 } // namespace core

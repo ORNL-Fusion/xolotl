@@ -20,7 +20,8 @@ TemperatureHandler::~TemperatureHandler()
 void
 TemperatureHandler::initializeTemperature(const int dof,
 	network::IReactionNetwork::SparseFillMap& ofillMap,
-	network::IReactionNetwork::SparseFillMap& dfillMap)
+	network::IReactionNetwork::SparseFillMap& dfillMap,
+	std::vector<double> grid)
 {
 	// Set dof
 	_dof = dof;
@@ -30,6 +31,9 @@ TemperatureHandler::initializeTemperature(const int dof,
 
 	// Add the temperature to dfill
 	dfillMap[_dof].emplace_back(_dof);
+
+	// keep the grd
+	xGrid = grid;
 }
 } // namespace temperature
 } // namespace core

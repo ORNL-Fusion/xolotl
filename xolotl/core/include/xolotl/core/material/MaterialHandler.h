@@ -3,8 +3,8 @@
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
 #include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
+#include <xolotl/core/modified/DummySoretDiffusionHandler.h>
 #include <xolotl/core/modified/DummyTrapMutationHandler.h>
-#include <xolotl/core/modified/SoretDiffusionHandler.h>
 #include <xolotl/options/IOptions.h>
 
 namespace xolotl
@@ -70,7 +70,8 @@ public:
 template <typename TFluxHandler,
 	typename TAdvectionHandler = core::advection::DummyAdvectionHandler,
 	typename TTrapMutationHandler = core::modified::DummyTrapMutationHandler,
-	typename TSoretDiffusionHandler = core::modified::SoretDiffusionHandler>
+	typename TSoretDiffusionHandler =
+		core::modified::DummySoretDiffusionHandler>
 class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 {
 	std::shared_ptr<core::flux::IFluxHandler>

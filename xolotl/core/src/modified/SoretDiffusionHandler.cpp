@@ -11,11 +11,24 @@ namespace core
 {
 namespace modified
 {
+double
+SoretDiffusionHandler::getLocalHeatFactor(int xi) const
+{
+	//	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
+	//	if (x < 100.0)
+	//		return 0.2;
+	//	//	if (x < 125.0) return 0.016 * x - 1.0;
+	return 1.0;
+}
+
 void
 SoretDiffusionHandler::computeDiffusion(network::IReactionNetwork& network,
 	double** concVector, double* updatedConcOffset, double hxLeft,
 	double hxRight, int ix, double, int, double, int) const
 {
+	// Adjust the constants to the material
+	double localHeatCond = getLocalHeatFactor(ix) * heatConductivity;
+
 	if (ix == surfacePosition) {
 		for (auto const& currId : diffusingClusters) {
 			auto cluster = network.getClusterCommon(currId);
@@ -30,29 +43,27 @@ SoretDiffusionHandler::computeDiffusion(network::IReactionNetwork& network,
 				exp(-cluster.getMigrationEnergy() /
 					(kBoltzmann *
 						(rightTemp +
-							(hxLeft + hxRight) * heatFlux / heatConductivity)));
+							(hxLeft + hxRight) * heatFlux / localHeatCond)));
 
 			updatedConcOffset[currId] += 2.0 *
 					(J +
-						(beta * midDiff * oldConc * heatFlux) /
-							heatConductivity) /
+						(beta * midDiff * oldConc * heatFlux) / localHeatCond) /
 					hxLeft +
 				2.0 * midDiff * (oldRightConc - oldConc) / (hxLeft * hxRight) -
-				(J + (beta * midDiff * oldConc * heatFlux) / heatConductivity) *
+				(J + (beta * midDiff * oldConc * heatFlux) / localHeatCond) *
 					(rightDiff - leftDiff) / (midDiff * (hxLeft + hxRight));
 
 			// Second part
 			updatedConcOffset[currId] -= 2.0 * beta * midDiff * oldConc *
-					heatFlux / (hxLeft * heatConductivity) +
+					heatFlux / (hxLeft * localHeatCond) +
 				2.0 * beta * midDiff * oldConc * (rightTemp - midTemp) /
 					(hxLeft * hxRight) +
 				beta * heatFlux *
 					(J +
-						(beta * midDiff * oldConc * heatFlux) /
-							heatConductivity) /
-					heatConductivity -
+						(beta * midDiff * oldConc * heatFlux) / localHeatCond) /
+					localHeatCond -
 				beta * oldConc * heatFlux * (rightDiff - leftDiff) /
-					(heatConductivity * (hxLeft + hxRight));
+					(localHeatCond * (hxLeft + hxRight));
 		}
 	}
 	else {
@@ -87,12 +98,15 @@ SoretDiffusionHandler::computeDiffusion(network::IReactionNetwork& network,
 	return;
 }
 
-void
+bool
 SoretDiffusionHandler::computePartialsForDiffusion(
 	network::IReactionNetwork& network, double** concVector, double* val,
 	int* indices, double hxLeft, double hxRight, int ix, double, int, double,
 	int) const
 {
+	// Adjust the constants to the material
+	double localHeatCond = getLocalHeatFactor(ix) * heatConductivity;
+
 	if (ix == surfacePosition) {
 		int diffClusterIdx = 0;
 
@@ -113,21 +127,21 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 				exp(-cluster.getMigrationEnergy() /
 					(kBoltzmann *
 						(rightTemp +
-							(hxLeft + hxRight) * heatFlux / heatConductivity)));
+							(hxLeft + hxRight) * heatFlux / localHeatCond)));
 			// Compute the partial derivatives for diffusion of this cluster
 			// for the middle, left, and right grid point
 			val[diffClusterIdx * 6] =
-				2.0 * beta * midDiff * heatFlux / (hxLeft * heatConductivity) -
+				2.0 * beta * midDiff * heatFlux / (hxLeft * localHeatCond) -
 				2.0 * midDiff / (hxLeft * hxRight) -
 				beta * heatFlux * (rightDiff - leftDiff) /
-					(heatConductivity * (hxLeft + hxRight)) -
-				2.0 * beta * midDiff * heatFlux / (hxLeft * heatConductivity) -
+					(localHeatCond * (hxLeft + hxRight)) -
+				2.0 * beta * midDiff * heatFlux / (hxLeft * localHeatCond) -
 				2.0 * beta * midDiff * (rightTemp - midTemp) /
 					(hxLeft * hxRight) -
 				beta * beta * midDiff * heatFlux * heatFlux /
-					(heatConductivity * heatConductivity) +
+					(localHeatCond * localHeatCond) +
 				beta * heatFlux * (rightDiff - leftDiff) /
-					(heatConductivity * (hxLeft + hxRight)); // middle conc
+					(localHeatCond * (hxLeft + hxRight)); // middle conc
 			val[(diffClusterIdx * 6) + 1] = 0.0; // left conc
 			val[(diffClusterIdx * 6) + 2] =
 				2.0 * midDiff / (hxLeft * hxRight); // right conc
@@ -194,7 +208,7 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 		}
 	}
 
-	return;
+	return true;
 }
 
 } /* end namespace modified */

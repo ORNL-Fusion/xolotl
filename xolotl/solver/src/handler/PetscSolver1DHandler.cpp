@@ -98,7 +98,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(dof, ofill, dfill);
+	temperatureHandler->initializeTemperature(dof, ofill, dfill, grid);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents
 	// diffusion
@@ -133,7 +133,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 
 	// The soret initialization needs to be done after the network
 	// because it adds connectivities the network would remove
-	soretDiffusionHandler->initialize(network, ofill, dfill);
+	soretDiffusionHandler->initialize(network, ofill, dfill, grid);
 
 	// Load up the block fills
 	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
@@ -979,42 +979,45 @@ PetscSolver1DHandler::computeJacobian(
 		concVector[2] = concs[xi + 1]; // right
 
 		// Get the partial derivatives for the Soret diffusion
-		soretDiffusionHandler->computePartialsForDiffusion(network, concVector,
-			soretDiffVals, soretDiffIndices, hxLeft, hxRight, xi - localXS);
+		auto setValues = soretDiffusionHandler->computePartialsForDiffusion(
+			network, concVector, soretDiffVals, soretDiffIndices, hxLeft,
+			hxRight, xi - localXS);
 
 		// Loop on the number of diffusion cluster to set the values in the
 		// Jacobian
-		for (int i = 0; i < nDiff; i++) {
-			// Set grid coordinate and component number for the row
-			row.i = xi;
-			row.c = soretDiffIndices[i];
+		if (setValues) {
+			for (int i = 0; i < nDiff; i++) {
+				// Set grid coordinate and component number for the row
+				row.i = xi;
+				row.c = soretDiffIndices[i];
 
-			// Set grid coordinates and component numbers for the columns
-			// corresponding to the middle, left, and right grid points
-			cols[0].i = xi; // middle
-			cols[0].c = soretDiffIndices[i];
-			cols[1].i = xi - 1; // left
-			cols[1].c = soretDiffIndices[i];
-			cols[2].i = xi + 1; // right
-			cols[2].c = soretDiffIndices[i];
+				// Set grid coordinates and component numbers for the columns
+				// corresponding to the middle, left, and right grid points
+				cols[0].i = xi; // middle
+				cols[0].c = soretDiffIndices[i];
+				cols[1].i = xi - 1; // left
+				cols[1].c = soretDiffIndices[i];
+				cols[2].i = xi + 1; // right
+				cols[2].c = soretDiffIndices[i];
 
-			ierr = MatSetValuesStencil(
-				J, 1, &row, 3, cols, soretDiffVals + (6 * i), ADD_VALUES);
-			checkPetscError(ierr,
-				"PetscSolver1DHandler::computeJacobian: "
-				"MatSetValuesStencil (Soret diffusion, conc) failed.");
+				ierr = MatSetValuesStencil(
+					J, 1, &row, 3, cols, soretDiffVals + (6 * i), ADD_VALUES);
+				checkPetscError(ierr,
+					"PetscSolver1DHandler::computeJacobian: "
+					"MatSetValuesStencil (Soret diffusion, conc) failed.");
 
-			// Set grid coordinates and component numbers for the columns
-			// corresponding to the middle, left, and right grid points
-			cols[0].c = dof;
-			cols[1].c = dof;
-			cols[2].c = dof;
+				// Set grid coordinates and component numbers for the columns
+				// corresponding to the middle, left, and right grid points
+				cols[0].c = dof;
+				cols[1].c = dof;
+				cols[2].c = dof;
 
-			ierr = MatSetValuesStencil(
-				J, 1, &row, 3, cols, soretDiffVals + (6 * i) + 3, ADD_VALUES);
-			checkPetscError(ierr,
-				"PetscSolver1DHandler::computeJacobian: "
-				"MatSetValuesStencil (Soret diffusion, temp) failed.");
+				ierr = MatSetValuesStencil(J, 1, &row, 3, cols,
+					soretDiffVals + (6 * i) + 3, ADD_VALUES);
+				checkPetscError(ierr,
+					"PetscSolver1DHandler::computeJacobian: "
+					"MatSetValuesStencil (Soret diffusion, temp) failed.");
+			}
 		}
 
 		if (xi == surfacePosition)

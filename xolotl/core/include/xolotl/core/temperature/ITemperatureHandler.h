@@ -36,11 +36,13 @@ public:
 	 * off-diagonal fill map.
 	 * @param dfillMap Map indicating row/column of diffusing variables in
 	 * diagonal fill map.
+	 * @param grid The X grid
 	 */
 	virtual void
 	initializeTemperature(const int dof,
 		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap) = 0;
+		network::IReactionNetwork::SparseFillMap& dfillMap,
+		std::vector<double> grid) = 0;
 
 	/**
 	 * This operation returns the temperature at the given position

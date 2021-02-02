@@ -21,7 +21,8 @@ public:
 	void
 	initializeTemperature(int dof,
 		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap) override;
+		network::IReactionNetwork::SparseFillMap& dfillMap,
+		std::vector<double> grid) override;
 
 	/**
 	 * This operation sets the temperature given by the solver.
@@ -106,6 +107,11 @@ protected:
 	 * The number of degrees of freedom in the network
 	 */
 	int _dof;
+
+	/**
+	 * The x grid
+	 */
+	std::vector<double> xGrid;
 };
 } // namespace temperature
 } // namespace core

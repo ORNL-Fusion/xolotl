@@ -46,8 +46,14 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 	// Create dfill
 	network::IReactionNetwork::SparseFillMap dfill;
 
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
 	// Initialize it
-	heatHandler.initializeTemperature(dof, ofill, dfill);
+	heatHandler.initializeTemperature(dof, ofill, dfill, grid);
 
 	// Check that the temperature "diffusion" is well set
 	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
@@ -131,13 +137,19 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 	BOOST_REQUIRE_CLOSE(
 		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
 
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
 	// Create ofill
 	network::IReactionNetwork::SparseFillMap ofill;
 	// Create dfill
 	network::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize it
-	heatHandler.initializeTemperature(dof, ofill, dfill);
+	heatHandler.initializeTemperature(dof, ofill, dfill, grid);
 
 	// Check that the temperature "diffusion" is well set
 	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
@@ -230,13 +242,19 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	BOOST_REQUIRE_CLOSE(
 		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
 
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
 	// Create ofill
 	network::IReactionNetwork::SparseFillMap ofill;
 	// Create dfill
 	network::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize it
-	heatHandler.initializeTemperature(dof, ofill, dfill);
+	heatHandler.initializeTemperature(dof, ofill, dfill, grid);
 
 	// Check that the temperature "diffusion" is well set
 	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);

@@ -36,11 +36,13 @@ public:
 	 * @param network The network
 	 * @param ofill Connectivity map for the off-diagonal part of the Jacobian
 	 * @param dfill Connectivity map for the diagonal part of the Jacobian
+	 * @param grid The X grid
 	 */
 	virtual void
 	initialize(const network::IReactionNetwork& network,
 		network::IReactionNetwork::SparseFillMap& ofill,
-		network::IReactionNetwork::SparseFillMap& dfill) = 0;
+		network::IReactionNetwork::SparseFillMap& dfill,
+		std::vector<double> grid) = 0;
 
 	/**
 	 * This operation sets the heat flux at the surface.
@@ -116,8 +118,10 @@ public:
 	 * @param sz The space parameter, depending on the grid step size in the z
 	 * direction
 	 * @param iz The position on the z grid
+	 *
+	 * @return True if clusters diffused
 	 */
-	virtual void
+	virtual bool
 	computePartialsForDiffusion(network::IReactionNetwork& network,
 		double** concVector, double* val, int* indices, double hxLeft,
 		double hxRight, int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
