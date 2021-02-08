@@ -273,7 +273,8 @@ public:
 	 */
 	virtual void
 	computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-		IndexType gridIndex) = 0;
+		IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0) = 0;
 
 	/**
 	 * @brief Updates the values view with the rates from all the
@@ -281,7 +282,8 @@ public:
 	 */
 	virtual void
 	computeAllPartials(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex) = 0;
+		Kokkos::View<double*> values, IndexType gridIndex = 0,
+		double surfaceDepth = 0.0, double spacing = 0.0) = 0;
 
 	/**
 	 * @brief Returns the largest computed rate.

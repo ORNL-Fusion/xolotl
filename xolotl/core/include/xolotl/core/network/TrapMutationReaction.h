@@ -69,9 +69,13 @@ private:
 	void
 	computeReducedConnectivity(const Connectivity& connectivity);
 
-    KOKKOS_INLINE_FUNCTION
-    double
-    getAppliedRate(IndexType gridIndex) const;
+	KOKKOS_INLINE_FUNCTION
+	double
+	getAppliedRate(IndexType gridIndex) const;
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	getEnabled() const;
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -96,9 +100,10 @@ private:
 		IndexType gridIndex);
 
 private:
+	AmountType _heAmount;
 	IndexType _heClId;
-    IndexType _heVClId;
-    IndexType _iClId;
+	IndexType _heVClId;
+	IndexType _iClId;
 };
 } // namespace network
 } // namespace core

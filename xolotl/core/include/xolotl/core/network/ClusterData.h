@@ -104,6 +104,7 @@ public:
 
 	using ClusterType = ClusterCommon<PlsmContext>;
 	using IndexType = detail::ReactionNetworkIndexType;
+	using AmountType = detail::CompositionAmountType;
 
 	ClusterDataCommon() = default;
 
@@ -223,9 +224,15 @@ public:
 	View<bool[1]> enableNucleation;
 	View<bool> enableTrapMutation;
 
+	// TODO:
+	// Move these things into PSI-specific cluster data structure.
+	// Use additional cluster data type specified in ClusterData::Types
 	View<Desorption> desorption;
 	View<double> currentDesorpLeftSideRate;
 	View<double> currentDisappearingRate;
+	View<double[7]> tmDepths; // should be DualView
+	View<AmountType[7]> tmVSizes; // may only be needed at initialization
+	View<bool[7]> tmEnabled;
 
 	View<double*> temperature;
 	View<double*> reactionRadius;
@@ -293,6 +300,7 @@ struct ClusterDataCommonRef
 {
 	using ClusterType = ClusterCommon<PlsmContext>;
 	using IndexType = detail::ReactionNetworkIndexType;
+	using AmountType = detail::CompositionAmountType;
 
 	template <typename TData>
 	using View = Unmanaged<ViewType<TData, PlsmContext>>;
@@ -314,6 +322,9 @@ struct ClusterDataCommonRef
 		desorption(data.desorption),
 		currentDesorpLeftSideRate(data.currentDesorpLeftSideRate),
 		currentDisappearingRate(data.currentDisappearingRate),
+		tmDepths(data.tmDepths),
+		tmVSizes(data.tmVSizes),
+		tmEnabled(data.tmEnabled),
 		temperature(data.temperature),
 		reactionRadius(data.reactionRadius),
 		formationEnergy(data.formationEnergy),
@@ -400,6 +411,9 @@ struct ClusterDataCommonRef
 	View<Desorption> desorption;
 	View<double> currentDesorpLeftSideRate;
 	View<double> currentDisappearingRate;
+	View<double[7]> tmDepths; // should be DualView
+	View<AmountType[7]> tmVSizes; // may only be needed at initialization
+	View<bool[7]> tmEnabled;
 
 	View<double*> temperature;
 	View<double*> reactionRadius;

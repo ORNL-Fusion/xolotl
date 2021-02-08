@@ -386,11 +386,12 @@ ReactionNetwork<TImpl>::generateClusterData(const ClusterGenerator& generator)
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::computeAllFluxes(
-	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
+ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
+	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
 {
 	if (this->_enableTrapMutation) {
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
+		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
 	_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeFlux(concentrations, fluxes, gridIndex);
@@ -401,10 +402,12 @@ ReactionNetwork<TImpl>::computeAllFluxes(
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
-	Kokkos::View<double*> values, IndexType gridIndex)
+	Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+	double spacing)
 {
 	if (this->_enableTrapMutation) {
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
+		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
 
 	// Reset the values
@@ -442,6 +445,26 @@ ReactionNetwork<TImpl>::updateDesorptionLeftSideRate(
 	auto lsRate = create_mirror_view(_clusterData.currentDesorpLeftSideRate);
 	lsRate() = getLeftSideRate(concentrations, desorp().id, gridIndex);
 	deep_copy(_clusterData.currentDesorpLeftSideRate, lsRate);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::selectTrapMutationReactions(
+	double depth, double spacing)
+{
+	auto depths = create_mirror_view(_clusterData.tmDepths);
+	deep_copy(depths, _clusterData.tmDepths);
+	auto enable = create_mirror_view(_clusterData.tmEnabled);
+	for (std::size_t l = 0; l < depths.size(); ++l) {
+		enable[l] = false;
+		if (depths[l] == 0.0) {
+			continue;
+		}
+		if (depths[l] < depth + 0.01 && depths[l] > depth - spacing - 0.01) {
+			enable[l] = true;
+		}
+	}
+	deep_copy(_clusterData.tmEnabled, enable);
 }
 
 template <typename TImpl>

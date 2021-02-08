@@ -804,6 +804,12 @@ PetscSolver2DHandler::updateConcentration(
 			mutationHandler->computeTrapMutation(network, concOffset,
 				updatedConcOffset, xi - localXS, yj - localYS);
 
+			auto surfacePos = grid[surfacePosition[yj] + 1];
+			auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
+			auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
+			auto curDepth = curXPos - surfacePos;
+			auto curSpacing = curXPos - prevXPos;
+
 			// ----- Compute the reaction fluxes over the locally owned part of
 			// the grid -----
 			using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
@@ -816,7 +822,8 @@ PetscSolver2DHandler::updateConcentration(
 			deep_copy(dFlux, hFlux);
 			fluxCounter->increment();
 			fluxTimer->start();
-			network.computeAllFluxes(dConcs, dFlux, xi + 1 - localXS);
+			network.computeAllFluxes(
+				dConcs, dFlux, xi + 1 - localXS, curDepth, curSpacing);
 			fluxTimer->stop();
 			deep_copy(hFlux, dFlux);
 		}
@@ -1244,6 +1251,12 @@ PetscSolver2DHandler::computeJacobian(
 
 			// ----- Take care of the reactions for all the reactants -----
 
+			auto surfacePos = grid[surfacePosition[yj] + 1];
+			auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
+			auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
+			auto curDepth = curXPos - surfacePos;
+			auto curSpacing = curXPos - prevXPos;
+
 			// Compute all the partial derivatives for the reactions
 			using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
 				Kokkos::MemoryUnmanaged>;
@@ -1252,7 +1265,8 @@ PetscSolver2DHandler::computeJacobian(
 			deep_copy(dConcs, hConcs);
 			partialDerivativeCounter->increment();
 			partialDerivativeTimer->start();
-			network.computeAllPartials(dConcs, vals, xi + 1 - localXS);
+			network.computeAllPartials(
+				dConcs, vals, xi + 1 - localXS, curDepth, curSpacing);
 			partialDerivativeTimer->stop();
 			auto hPartials = create_mirror_view(vals);
 			deep_copy(hPartials, vals);

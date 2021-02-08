@@ -88,10 +88,22 @@ TrapMutationReaction<TNetwork, TDerived>::getAppliedRate(
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
+bool
+TrapMutationReaction<TNetwork, TDerived>::getEnabled() const
+{
+	return this->_clusterData.tmEnabled[_heAmount];
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
 void
 TrapMutationReaction<TNetwork, TDerived>::computeFlux(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
 {
+	if (!getEnabled()) {
+		return;
+	}
+
 	auto rate = getAppliedRate(gridIndex);
 	auto f = rate * concentrations[_heClId] *
 		this->_clusterData.currentDisappearingRate();
@@ -108,6 +120,10 @@ TrapMutationReaction<TNetwork, TDerived>::computePartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
 	Connectivity connectivity, IndexType gridIndex)
 {
+	if (!getEnabled()) {
+		return;
+	}
+
 	auto rate = getAppliedRate(gridIndex);
 
 	Kokkos::atomic_sub(&values(connectivity(_heClId, _heClId)), rate);
@@ -122,6 +138,10 @@ TrapMutationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
 	Connectivity connectivity, IndexType gridIndex)
 {
+	if (!getEnabled()) {
+		return;
+	}
+
 	auto rate = getAppliedRate(gridIndex);
 	Kokkos::atomic_sub(&values(connectivity(_heClId, _heClId)), rate);
 }

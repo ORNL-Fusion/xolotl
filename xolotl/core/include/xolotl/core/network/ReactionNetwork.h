@@ -276,15 +276,19 @@ public:
 
 	void
 	computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-		IndexType gridIndex) override;
+		IndexType gridIndex, double surfaceDepth, double spacing) override;
 
 	void
 	computeAllPartials(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex) override;
+		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+		double spacing) override;
 
 	void
 	updateDesorptionLeftSideRate(
 		ConcentrationsView concentrations, IndexType gridIndex);
+
+    void
+    selectTrapMutationReactions(double surfaceDepth, double spacing);
 
 	double
 	getLargestRate() override;

@@ -358,6 +358,23 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		}
 	}
 
+	// Trap-Mutation
+    auto heAmt = lo1[Species::He];
+	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && 1 <= heAmt && heAmt <= 7) {
+        auto vSize = this->_clusterData.tmVSizes[heAmt];
+		Composition comp1 = Composition::zero();
+		comp1[Species::He] = heAmt;
+        comp1[Species::V] = vSize;
+        Composition comp2 = Composition::zero();
+        comp2[Species::I] = vSize;
+        if (lo1 == comp1 && lo2 == comp2) {
+            Composition comp0 = Composition::zero();
+            comp0[Species::He] = heAmt;
+            auto heClusterId = subpaving.findTileId(comp0, plsm::onDevice);
+            this->addTrapMutationReaction(tag, {heClusterId, i, j});
+        }
+	}
+
 	// Special case for trap-mutation
 	if (nProd == 0) {
 		// Look for larger clusters only if one of the reactant is pure He
