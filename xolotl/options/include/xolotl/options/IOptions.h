@@ -182,6 +182,13 @@ public:
 	getVoidPortion() const = 0;
 
 	/**
+	 * Obtain the interface location in nm.
+	 * @return The location.
+	 */
+	virtual double
+	getInterfaceLocation() const = 0;
+
+	/**
 	 * Obtain the value of the concentration for the vacancies.
 	 *
 	 * @return The concentration value

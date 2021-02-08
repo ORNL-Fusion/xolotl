@@ -53,6 +53,11 @@ protected:
 	double beta;
 
 	/**
+	 * The interface location
+	 */
+	double interfaceLoc;
+
+	/**
 	 * The He flux (nm-2 s-1)
 	 */
 	double J;
@@ -70,8 +75,9 @@ public:
 		surfacePosition(0),
 		heatConductivity(0.0),
 		heatFlux(0.0),
-		beta(0.0),
-		J(1.0e3)
+		beta(0.0065),
+		J(1.0e3),
+		interfaceLoc(0.0)
 	{
 	}
 
@@ -145,6 +151,15 @@ public:
 	updateSurfacePosition(int surfacePos) override
 	{
 		surfacePosition = surfacePos;
+	}
+
+	/**
+	 * \see ISoretDiffusionHandler.h
+	 */
+	void
+	setInterfaceLocation(double loc) override
+	{
+		interfaceLoc = loc;
 	}
 
 	/**

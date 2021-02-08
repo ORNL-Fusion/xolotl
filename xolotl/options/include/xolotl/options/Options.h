@@ -100,6 +100,11 @@ protected:
 	double voidPortion;
 
 	/**
+	 * The location of the interface between two materials.
+	 */
+	double interfaceLocation;
+
+	/**
 	 * Number of dimensions for the simulation.
 	 */
 	int dimensionNumber;
@@ -481,6 +486,15 @@ public:
 	getVoidPortion() const override
 	{
 		return voidPortion;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	double
+	getInterfaceLocation() const override
+	{
+		return interfaceLocation;
 	}
 
 	/**

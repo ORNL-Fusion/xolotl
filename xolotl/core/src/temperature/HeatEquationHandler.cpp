@@ -28,7 +28,7 @@ HeatEquationHandler::HeatEquationHandler(
 	zeroFlux(util::equal(heatFlux, 0.0)),
 	dimension(dim),
 	oldConcBox(dimension, {0.0, 0.0}),
-	interfaceLoc(125.0)
+	interfaceLoc(0.0)
 {
 	auto xolotlComm = util::getMPIComm();
 	int procId;
@@ -70,6 +70,8 @@ HeatEquationHandler::HeatEquationHandler(const options::IOptions& options) :
 			" does not have heat parameters defined for it, cannot use the "
 			"temperature option!");
 	}
+
+	interfaceLoc = options.getInterfaceLocation();
 }
 
 HeatEquationHandler::~HeatEquationHandler()

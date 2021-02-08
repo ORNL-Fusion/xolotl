@@ -69,6 +69,14 @@ public:
 	updateSurfacePosition(int surfacePos) = 0;
 
 	/**
+	 * This operation sets the interface location.
+	 *
+	 * @param loc The interface location
+	 */
+	virtual void
+	setInterfaceLocation(double loc) = 0;
+
+	/**
 	 * Compute the flux due to the diffusion for all the clusters that are
 	 * diffusing, given the space parameters. This method is called by the
 	 * RHSFunction from the solver.

@@ -17,54 +17,9 @@ namespace modified
  */
 class DummySoretDiffusionHandler : public ISoretDiffusionHandler
 {
-protected:
-	//! Collection of diffusing clusters.
-	std::vector<std::size_t> diffusingClusters;
-
-	/**
-	 * The number of degrees of freedom in the network
-	 */
-	int dof;
-
-	/**
-	 * The x grid
-	 */
-	std::vector<double> xGrid;
-
-	/**
-	 * The heat flux in W.m-2
-	 */
-	double heatFlux;
-
-	/**
-	 * The heat conductivity
-	 */
-	double heatConductivity;
-
-	/**
-	 * The surface position
-	 */
-	int surfacePosition;
-
-	/**
-	 * The beta factor
-	 */
-	double beta;
-
-	/**
-	 * The He flux (nm-2 s-1)
-	 */
-	double J;
-
 public:
 	//! The Constructor
-	DummySoretDiffusionHandler() :
-		dof(0),
-		surfacePosition(0),
-		heatConductivity(0.0),
-		heatFlux(0.0),
-		beta(0.0065),
-		J(1.0e3)
+	DummySoretDiffusionHandler()
 	{
 	}
 
@@ -108,6 +63,15 @@ public:
 	 */
 	void
 	updateSurfacePosition(int surfacePos) override
+	{
+		return;
+	}
+
+	/**
+	 * \see ISoretDiffusionHandler.h
+	 */
+	void
+	setInterfaceLocation(double loc) override
 	{
 		return;
 	}

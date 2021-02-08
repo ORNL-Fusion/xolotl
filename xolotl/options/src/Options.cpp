@@ -29,6 +29,7 @@ Options::Options() :
 	materialName(""),
 	initialVConcentration(0.0),
 	voidPortion(50.0),
+	interfaceLocation(0.0),
 	dimensionNumber(1),
 	gridTypeName(""),
 	gridParam{},
@@ -159,6 +160,8 @@ Options::readParams(int argc, char* argv[])
 		"The value of the electronic stopping power in the material (0.73 by "
 		"default).")("voidPortion", bpo::value<double>(&voidPortion),
 		"The value (in %) of the void portion at the start of the simulation.")(
+		"interfaceLoc", bpo::value<double>(&interfaceLocation),
+		"The value (in nm) of the interface location between two materials.")(
 		"gridType",
 		bpo::value<std::string>(&gridTypeName)->default_value("uniform"),
 		"Grid type to use along X. (default = uniform; available "
