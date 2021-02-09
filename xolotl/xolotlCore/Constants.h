@@ -30,7 +30,7 @@ constexpr double tungstenLatticeConstant = 0.31700000000000000;
 static const double alloyLatticeConstant = 0.36000000000000000;
 
 //! Lattice Parameter for UO2
-constexpr double uraniumDioxydeLatticeConstant = 0.57400000000000000;
+constexpr double uraniumDioxydeLatticeConstant = 0.54700000000000000;
 
 //! Lattice Parameter for Iron
 constexpr double ironLatticeConstant = 0.28700000000000000;
