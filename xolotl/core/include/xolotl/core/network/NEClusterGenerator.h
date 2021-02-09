@@ -60,10 +60,12 @@ public:
 
 private:
 	AmountType _maxXe;
+	AmountType _maxV{0};
+	AmountType _groupingMin;
+	AmountType _groupingWidthXe;
+	AmountType _groupingWidthV;
 	double _xeDiffusivity;
 	bool _xeDiffusive;
-	AmountType _groupingMin;
-	AmountType _groupingWidth;
 	double _density;
 };
 } // namespace network
