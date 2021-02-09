@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/detail/impl/NucleationReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/ReSolutionReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/impl/NEClusterGenerator.tpp>
 #include <xolotl/core/network/impl/NEReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
@@ -64,6 +65,10 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
 
+	if (i == j) {
+		addSinks(i, tag);
+	}
+
 	auto numClusters = this->getNumberOfClusters();
 
 	// Get the composition of each cluster
@@ -115,12 +120,35 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	}
 }
 
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+NEReactionGenerator::addSinks(IndexType i, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	const auto& clReg = this->getCluster(i).getRegion();
+	Composition lo = clReg.getOrigin();
+
+	// I
+	if (clReg.isSimplex() && lo.isOnAxis(Species::I)) {
+		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
+	}
+
+	// V
+	if (clReg.isSimplex() && lo.isOnAxis(Species::V) && lo[Species::V] < 5) {
+		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
+	}
+}
+
 inline ReactionCollection<NEReactionGenerator::NetworkType>
 NEReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getReSolutionReactions(), this->getNucleationReactions());
+		this->getReSolutionReactions(), this->getNucleationReactions(),
+        this->getSinkReactions());
 	return ret;
 }
 } // namespace detail

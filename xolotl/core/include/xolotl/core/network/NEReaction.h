@@ -3,6 +3,7 @@
 #include <xolotl/core/network/NETraits.h>
 #include <xolotl/core/network/NucleationReaction.h>
 #include <xolotl/core/network/ReSolutionReaction.h>
+#include <xolotl/core/network/SinkReaction.h>
 
 namespace xolotl
 {
@@ -56,6 +57,17 @@ public:
 	using Superclass::Superclass;
 };
 
+class NESinkReaction : public SinkReaction<NEReactionNetwork, NESinkReaction>
+{
+public:
+	using Superclass = SinkReaction<NEReactionNetwork, NESinkReaction>;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getSinkBias();
+};
 } // namespace network
 } // namespace core
 } // namespace xolotl

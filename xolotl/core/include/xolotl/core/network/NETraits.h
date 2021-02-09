@@ -14,6 +14,7 @@ class NEProductionReaction;
 class NEDissociationReaction;
 class NEReSolutionReaction;
 class NENucleationReaction;
+class NESinkReaction;
 class NEReactionNetwork;
 class NEClusterGenerator;
 namespace detail
@@ -23,32 +24,34 @@ class NEClusterUpdater;
 
 enum class NESpecies
 {
-	Xe
+	Xe,
+	V,
+	I
 };
 
 inline const std::string&
 toLabelString(NESpecies species)
 {
-	static const std::string labelArray[] = {"Xe"};
+	static const std::string labelArray[] = {"Xe", "V", "I"};
 	return labelArray[static_cast<int>(species)];
 }
 
 inline const std::string&
 toNameString(NESpecies species)
 {
-	static const std::string nameArray[] = {"Xenon"};
+	static const std::string nameArray[] = {"Xenon", "Vacancy", "Interstitial"};
 	return nameArray[static_cast<int>(species)];
 }
 
 template <>
 struct NumberOfInterstitialSpecies<NESpecies> :
-	std::integral_constant<std::size_t, 0>
+	std::integral_constant<std::size_t, 1>
 {
 };
 
 template <>
 struct NumberOfVacancySpecies<NESpecies> :
-	std::integral_constant<std::size_t, 0>
+	std::integral_constant<std::size_t, 1>
 {
 };
 
@@ -57,17 +60,18 @@ struct ReactionNetworkTraits<NEReactionNetwork>
 {
 	using Species = NESpecies;
 
-	static constexpr std::size_t numSpecies = 1;
+	static constexpr std::size_t numSpecies = 3;
 
 	// using ReactionType = NEReaction;
 	using ProductionReactionType = NEProductionReaction;
 	using DissociationReactionType = NEDissociationReaction;
 	using ReSolutionReactionType = NEReSolutionReaction;
 	using NucleationReactionType = NENucleationReaction;
+	using SinkReactionType = NESinkReaction;
 
 	using ReactionTypeList =
 		std::tuple<ProductionReactionType, DissociationReactionType,
-			ReSolutionReactionType, NucleationReactionType>;
+			ReSolutionReactionType, NucleationReactionType, SinkReactionType>;
 
 	using ClusterGenerator = NEClusterGenerator;
 	using ClusterUpdater = detail::NEClusterUpdater;

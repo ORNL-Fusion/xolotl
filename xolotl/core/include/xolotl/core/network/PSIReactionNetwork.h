@@ -135,11 +135,6 @@ public:
 	void
 	operator()(IndexType i, IndexType j, TTag tag) const;
 
-	template <typename TTag>
-	KOKKOS_INLINE_FUNCTION
-	void
-	addSinks(IndexType i, TTag tag) const;
-
 private:
 	ReactionCollection<NetworkType>
 	getReactionCollection() const;
