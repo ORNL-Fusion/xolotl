@@ -183,6 +183,15 @@ public:
 	{
 		return;
 	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual void
+	setFissionYield(double yield)
+	{
+		return;
+	}
 };
 // end class FluxHandler
 

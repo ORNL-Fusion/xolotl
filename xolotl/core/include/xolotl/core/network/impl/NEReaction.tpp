@@ -2,8 +2,8 @@
 
 #include <xolotl/core/network/impl/NucleationReaction.tpp>
 #include <xolotl/core/network/impl/ReSolutionReaction.tpp>
-#include <xolotl/core/network/impl/SinkReaction.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
+#include <xolotl/core/network/impl/SinkReaction.tpp>
 
 namespace xolotl
 {

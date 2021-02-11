@@ -534,7 +534,6 @@ ProductionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
-
 	return getRateForProduction(
 		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 }
@@ -1678,6 +1677,26 @@ DissociationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 	double E_b = this->asDerived()->computeBindingEnergy();
 
 	constexpr double k_B = ::xolotl::core::kBoltzmann;
+
+	//	if (E_b < 1.0) {
+	//	auto cl0Reg = cl0.getRegion().getOrigin(), cl1Reg =
+	//cl1.getRegion().getOrigin(), prod0Reg =
+	//this->_clusterData.getCluster(_reactant).getRegion().getOrigin();
+	//
+	//	constexpr auto speciesRange = NetworkType::getSpeciesRange();
+	//	for (auto j : speciesRange) {
+	//				std::cout << cl0Reg[j()] << " ";
+	//			}
+	//	std::cout << r0 << std::endl << " + " << std::endl;
+	//	for (auto j : speciesRange) {
+	//				std::cout << cl1Reg[j()] << " ";
+	//			}
+	//	std::cout << r1 << std::endl << " -> " << std::endl;
+	//	for (auto j : speciesRange) {
+	//				std::cout << prod0Reg[j()] << " ";
+	//			}
+	//	std::cout << E_b << std::endl << "." << std::endl;
+	//	}
 
 	double kMinus = (1.0 / omega) * kPlus * std::exp(-E_b / (k_B * T));
 

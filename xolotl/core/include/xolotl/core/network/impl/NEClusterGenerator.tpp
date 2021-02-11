@@ -48,13 +48,13 @@ NEClusterGenerator::refine(const Region& region, BoolArray& result) const
 	}
 
 	// V is never grouped
-	if (region[Species::V].end() > 1 && region[Species::V].begin() < 11 &&
+	if (region[Species::V].end() > 1 && region[Species::V].begin() < 7 &&
 		region[Species::Xe].begin() == 0 && region[Species::I].begin() == 0) {
 		return true;
 	}
 
 	// Xe is never grouped
-	if (region[Species::Xe].end() > 1 && region[Species::Xe].begin() < 9 &&
+	if (region[Species::Xe].end() > 1 && region[Species::Xe].begin() < 2 &&
 		region[Species::V].begin() == 0 && region[Species::I].begin() == 0) {
 		return true;
 	}
@@ -72,37 +72,15 @@ NEClusterGenerator::refine(const Region& region, BoolArray& result) const
 	}
 
 	// Middle
-	Composition lo = region.getOrigin();
-	Composition hi = region.getUpperLimitPoint();
-	auto amtXe = 0.5 * (lo[Species::Xe] + hi[Species::Xe] - 1);
-	auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
-	double amt = sqrt(amtXe * amtXe + amtV * amtV);
-	double ibe = 4.88 +
-		2.59 * (cbrt(amtV * amtV) - cbrt((amtV - 1.0) * (amtV - 1.0))) -
-		2.5 * log(1.0 + (amtXe / amtV));
-	auto distance = fabs(ibe - 1.5);
-	//	if (distance < 1.2) {
-	if (distance < 1.5) {
-		auto comp = amt * amt * amt * 1.0e-6;
-		if (region[Species::Xe].length() <
-			util::max(_groupingWidthXe + 1.0, comp)) {
-			result[0] = false;
-		}
-		if (region[Species::V].length() <
-			util::max(_groupingWidthV + 1.0, comp)) {
-			result[1] = false;
-		}
+	if (region[Species::Xe].length() <
+		util::max((double)(_groupingWidthXe + 1),
+			region[Species::Xe].begin() * 1.0e-1)) {
+		result[0] = false;
 	}
-	else {
-		auto comp = amt * amt * amt * 1.0e-4;
-		if (region[Species::Xe].length() <
-			util::max(_groupingWidthXe + 1.0, comp)) {
-			result[0] = false;
-		}
-		if (region[Species::V].length() <
-			util::max(_groupingWidthV + 1.0, comp)) {
-			result[1] = false;
-		}
+	if (region[Species::V].length() <
+		util::max((double)(_groupingWidthV + 1),
+			region[Species::V].begin() * 1.0e-1)) {
+		result[1] = false;
 	}
 
 	// Edges
@@ -143,7 +121,7 @@ NEClusterGenerator::select(const Region& region) const
 	}
 
 	// Xenon
-	if (region[Species::Xe].begin() > 8 && region[Species::V].end() == 1 &&
+	if (region[Species::Xe].begin() > 1 && region[Species::V].end() == 1 &&
 		region[Species::I].end() == 1) {
 		return false;
 	}
@@ -152,7 +130,7 @@ NEClusterGenerator::select(const Region& region) const
 	}
 
 	// Vacancy
-	if (region[Species::V].begin() > 10 && region[Species::Xe].end() == 1 &&
+	if (region[Species::V].begin() > 6 && region[Species::Xe].end() == 1 &&
 		region[Species::I].end() == 1) {
 		return false;
 	}
@@ -169,27 +147,8 @@ double
 NEClusterGenerator::getFormationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
-	/**
-	 * The set of xenon formation energies up to Xe_29 indexed by size. That is
-	 * E_(f,Xe_1) = xeFormationEnergies[1]. The value at index zero is just
-	 * padding to make the indexing easy.
-	 */
-	constexpr Kokkos::Array<double, 30> xeFormationEnergies = {0.0, 7.0, 12.15,
-		17.15, 21.90, 26.50, 31.05, 35.30, 39.45, 43.00, 46.90, 50.65, 53.90,
-		56.90, 59.80, 62.55, 65.05, 67.45, 69.45, 71.20, 72.75, 74.15, 75.35,
-		76.40, 77.25, 77.95, 78.45, 78.80, 78.95, 79.0};
-
-	const auto& reg = cluster.getRegion();
-	if (reg.isSimplex()) {
-		auto amtXe = reg.getOrigin()[0];
-		if (amtXe < xeFormationEnergies.size()) {
-			return xeFormationEnergies[amtXe];
-		}
-		else {
-			return 79.0;
-		}
-	}
-	return 79.0;
+	// Not used?
+	return 0.0;
 }
 
 template <typename PlsmContext>
@@ -199,12 +158,13 @@ NEClusterGenerator::getMigrationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
 	// I migration energy in eV
-	constexpr double iOneMigrationEnergy = 0.34;
+	constexpr double iOneMigrationEnergy = 1.97;
 	// Xe migration energies in eV
-	constexpr Kokkos::Array<double, 4> xeMigration = {0.0, 0.06, 0.06, 0.06};
+	constexpr double xeOneMigrationEnergy = 1.0;
 	// V migration energies in eV
-	constexpr Kokkos::Array<double, 5> vMigration = {
-		0.0, 0.67, 0.62, 0.37, 0.48};
+	constexpr double vOneMigrationEnergy = 2.49;
+	// XeV migration energies in eV
+	constexpr double xevOneMigrationEnergy = 1.0;
 
 	const auto& reg = cluster.getRegion();
 	double migrationEnergy = util::infinity<double>;
@@ -216,18 +176,20 @@ NEClusterGenerator::getMigrationEnergy(
 			}
 		}
 		else if (comp.isOnAxis(Species::Xe)) {
-			auto amtXe = comp[Species::Xe];
-			if (amtXe < xeMigration.size()) {
-				migrationEnergy = xeMigration[amtXe];
+			if (comp[Species::Xe] == 1) {
+				migrationEnergy = xeOneMigrationEnergy;
 			}
 		}
 		else if (comp.isOnAxis(Species::V)) {
-			auto amtV = comp[Species::V];
-			if (amtV < vMigration.size()) {
-				migrationEnergy = vMigration[amtV];
+			if (comp[Species::V] == 1) {
+				migrationEnergy = vOneMigrationEnergy;
 			}
 		}
+		else if (comp[Species::V] == 1 && comp[Species::Xe] == 1) {
+			migrationEnergy = _xeDiffusive ? 0.0 : xevOneMigrationEnergy;
+		}
 	}
+
 	return migrationEnergy;
 }
 
@@ -238,13 +200,13 @@ NEClusterGenerator::getDiffusionFactor(
 	const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
 	// I diffusion factors in nm^2/s
-	constexpr double iOneDiffusionFactor = 1.0e+11;
-	// Xe diffusion factors in nm^2/s
-	constexpr Kokkos::Array<double, 4> xeDiffusion = {
-		0.0, 1.0e+11, 5.0e+10, 3.3e+10};
-	// V diffusion factors in nm^2/s
-	constexpr Kokkos::Array<double, 5> vDiffusion = {
-		0.0, 1.0e+11, 5.0e+10, 3.3e+10, 2.5e+10};
+	constexpr double iOneDiffusionFactor = 4.077e+11;
+	// Xe migration energies in eV
+	constexpr double xeOneDiffusionFactor = 1.247e+10;
+	// V migration energies in eV
+	constexpr double vOneDiffusionFactor = 9.934e+11;
+	// XeV migration energies in eV
+	constexpr double xevOneDiffusionFactor = 1.0;
 
 	const auto& reg = cluster.getRegion();
 	double diffusionFactor = 0.0;
@@ -256,16 +218,17 @@ NEClusterGenerator::getDiffusionFactor(
 			}
 		}
 		else if (comp.isOnAxis(Species::Xe)) {
-			auto amtXe = comp[Species::Xe];
-			if (amtXe < xeDiffusion.size()) {
-				diffusionFactor = xeDiffusion[amtXe];
+			if (comp[Species::Xe] == 1) {
+				diffusionFactor = xeOneDiffusionFactor;
 			}
 		}
 		else if (comp.isOnAxis(Species::V)) {
-			auto amtV = comp[Species::V];
-			if (amtV < vDiffusion.size()) {
-				diffusionFactor = vDiffusion[amtV];
+			if (comp[Species::V] == 1) {
+				diffusionFactor = vOneDiffusionFactor;
 			}
+		}
+		else if (comp[Species::V] == 1 && comp[Species::Xe] == 1) {
+			diffusionFactor = _xeDiffusive ? 0.0 : xevOneDiffusionFactor;
 		}
 	}
 
@@ -281,36 +244,34 @@ NEClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 {
 	const auto& reg = cluster.getRegion();
 	double radius = 0.0;
+	double FourPi = 4.0 * ::xolotl::core::pi;
 	if (reg.isSimplex()) {
 		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {
 			radius = latticeParameter * cbrt(3.0 / ::xolotl::core::pi) * 0.5;
 		}
 		else if (comp.isOnAxis(Species::Xe)) {
-			double FourPi = 4.0 * ::xolotl::core::pi;
-			double aCubed = pow(latticeParameter, 3);
-			double termOne =
-				pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed * comp[Species::Xe],
-					(1.0 / 3.0));
-			double termTwo =
-				pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed, (1.0 / 3.0));
-			radius = impurityRadius + termOne - termTwo;
+			radius = impurityRadius;
 		}
-		else {
+		else if (comp.isOnAxis(Species::V)) {
 			radius = latticeParameter *
 				pow((3.0 * comp[Species::V]) / ::xolotl::core::pi,
 					(1.0 / 3.0)) *
 				0.5;
 		}
+		else {
+			radius =
+				pow((3.0 * (double)comp[Species::Xe]) / (FourPi * _density),
+					(1.0 / 3.0));
+		}
 	}
 	else {
-		// Loop on the V range
-		for (auto j : makeIntervalRange(reg[Species::V])) {
-			radius += latticeParameter *
-				pow((3.0 * (double)j) / ::xolotl::core::pi, (1.0 / 3.0)) * 0.5;
+		// Loop on the Xe range
+		for (auto j : makeIntervalRange(reg[Species::Xe])) {
+			radius += pow((3.0 * (double)j) / (FourPi * _density), (1.0 / 3.0));
 		}
 		// Average the radius
-		radius /= reg[Species::V].length();
+		radius /= reg[Species::Xe].length();
 	}
 
 	return radius;

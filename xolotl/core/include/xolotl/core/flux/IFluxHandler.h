@@ -117,10 +117,18 @@ public:
 	/**
 	 * This operation sets proportion of the pulse that is on.
 	 *
-	 * @param a The proprotion
+	 * @param a The proportion
 	 */
 	virtual void
 	setProportion(double a) = 0;
+
+	/**
+	 * This operation sets the fission yield.
+	 *
+	 * @param yield The yield
+	 */
+	virtual void
+	setFissionYield(double yield) = 0;
 };
 // end class IFluxHandler
 

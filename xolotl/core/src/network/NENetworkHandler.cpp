@@ -18,23 +18,34 @@ auto neNetworkGenerator = [](const options::IOptions& options) {
 	using NetworkType = core::network::NEReactionNetwork;
 
 	// Get the boundaries from the options
+	NetworkType::AmountType maxV = options.getMaxV();
+	NetworkType::AmountType maxI = options.getMaxI();
 	NetworkType::AmountType maxXe = options.getMaxImpurity();
-	NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
+	NetworkType::AmountType groupingWidthXe = options.getGroupingWidthA();
+	NetworkType::AmountType groupingWidthV = options.getGroupingWidthB();
 	// Take care of the case with no grouping
-	if (options.getGroupingMin() > maxXe)
-		groupingWidth = maxXe + 1;
+	if (options.getGroupingMin() > maxV) {
+		groupingWidthXe = maxXe + 1;
+		groupingWidthV = maxV + 1;
+	}
 	else {
-		// Adapt maxXe
+		// Adapt maxXe and maxV
 		int i = 0;
-		while (maxXe + 1 > pow(groupingWidth, i)) {
+		while (maxXe + 1 > pow(groupingWidthXe, i)) {
 			++i;
 		}
-		maxXe = pow(groupingWidth, i) - 1;
+		maxXe = pow(groupingWidthXe, i) - 1;
+		i = 0;
+		while (maxV + 1 > pow(groupingWidthV, i)) {
+			++i;
+		}
+		maxV = pow(groupingWidthV, i) - 1;
 	}
 
-	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxXe};
-	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {{groupingWidth}};
-	// The number of grid points is set to 1 here but can be changed later
+	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
+		maxXe, maxV, maxI};
+	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
+		{groupingWidthXe, groupingWidthV, maxI + 1}};
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 

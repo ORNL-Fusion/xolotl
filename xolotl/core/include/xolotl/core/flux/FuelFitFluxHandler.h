@@ -29,16 +29,25 @@ private:
 		return 1.0;
 	}
 
+	/**
+	 * The fission yield for Xe.
+	 */
+	double xeYield;
+
+	/**
+	 * The fission yield for defects.
+	 */
+	double defectYield;
+
 public:
 	/**
 	 * The constructor
 	 */
-	FuelFitFluxHandler(const options::IOptions& options) : FluxHandler(options)
+	FuelFitFluxHandler(const options::IOptions& options) :
+		FluxHandler(options),
+		xeYield(options.getFissionYield()),
+		defectYield(1.0e4)
 	{
-		// Change the flux amplitude because we have to take into account
-		// that there are one xenon created every 4 fissions.
-		this->setFluxAmplitude(
-			options.getFluxAmplitude() * options.getFissionYield());
 	}
 
 	/**
@@ -76,6 +85,28 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 
+		comp[NetworkType::Species::Xe] = 0;
+		comp[NetworkType::Species::V] = 1;
+		cluster = neNetwork.findCluster(comp, plsm::onHost);
+		// Check that the helium cluster is present in the network
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::string(
+				"\nThe single vacancy cluster is not present in the network, "
+				"cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::V] = 0;
+		comp[NetworkType::Species::I] = 1;
+		cluster = neNetwork.findCluster(comp, plsm::onHost);
+		// Check that the helium cluster is present in the network
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::string("\nThe single interstitial cluster is not "
+							  "present in the network, "
+							  "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
 		return;
 	}
 
@@ -91,9 +122,20 @@ public:
 			return;
 
 		// Update the concentration array
-		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
+		updatedConcOffset[fluxIndices[0]] += fluxAmplitude * xeYield; // Xe
+		updatedConcOffset[fluxIndices[1]] += fluxAmplitude * defectYield; // V
+		updatedConcOffset[fluxIndices[2]] += fluxAmplitude * defectYield; // I
 
 		return;
+	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual void
+	setFissionYield(double yield)
+	{
+		xeYield = yield;
 	}
 };
 // end class FuelFitFluxHandler
