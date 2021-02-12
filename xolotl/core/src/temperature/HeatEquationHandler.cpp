@@ -102,12 +102,6 @@ HeatEquationHandler::computeTemperature(double** concVector,
 	// Initial declaration
 	int index = this->_dof;
 
-	// Adjust the parameters
-	double midHeatCoef = getLocalHeatFactor(xi) * heatCoef,
-		   leftHeatCoef = getLocalHeatFactor(xi - 1) * heatCoef,
-		   rightHeatCoef = getLocalHeatFactor(xi + 1) * heatCoef,
-		   midHeatCond = getLocalHeatFactor(xi) * heatConductivity;
-
 	// Get the initial concentrations
 	double oldConc = concVector[0][index];
 	for (int d = 0; d < dimension; ++d) {
@@ -115,21 +109,30 @@ HeatEquationHandler::computeTemperature(double** concVector,
 		oldConcBox[d][1] = concVector[2 * d + 2][index];
 	}
 
+	// Adjust the parameters
+	double midHeatCoef = getLocalHeatCoefficient(xi, oldConc),
+		   leftHeatCoef = getLocalHeatCoefficient(xi - 1, oldConcBox[0][0]),
+		   rightHeatCoef = getLocalHeatCoefficient(xi + 1, oldConcBox[0][1]),
+		   midHeatCond = getLocalHeatConductivity(xi, oldConc);
+
 	double s[3] = {0, sy, sz};
 
-	// Surface
-	if (xi == surfacePosition) {
+	// Surface and interface
+	if (xi == surfacePosition ||
+		fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc) < 2.0) {
 		// Boundary condition with heat flux
 		updatedConcOffset[index] += midHeatCoef * (2.0 / hxLeft) *
 			((heatFlux / midHeatCond) + (oldConcBox[0][1] - oldConc) / hxRight);
-	}
-	// Interface
-	else if (fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc) <
-		2.0) {
-		double rightHeatCond = getLocalHeatFactor(xi + 1) * heatConductivity;
-		updatedConcOffset[index] += rightHeatCoef * (2.0 / hxLeft) *
-			((heatFlux / rightHeatCond) +
-				(oldConcBox[0][1] - oldConc) / hxRight);
+		// Second term for temperature dependent conductivity
+		// left is taken at xi so that the 20 % factor is not there
+		double leftTemp =
+			oldConcBox[0][1] + heatFlux * (hxLeft + hxRight) / midHeatCond;
+		double leftHeatCond = getLocalHeatConductivity(xi, leftTemp),
+			   rightHeatCond =
+				   getLocalHeatConductivity(xi + 1, oldConcBox[0][1]);
+		updatedConcOffset[index] -= midHeatCoef * heatFlux *
+			(rightHeatCond - leftHeatCond) /
+			(midHeatCond * midHeatCond * (hxLeft + hxRight));
 	}
 	else {
 		// Use a simple midpoint stencil to compute the concentration
@@ -137,6 +140,15 @@ HeatEquationHandler::computeTemperature(double** concVector,
 			(oldConcBox[0][0] + (hxLeft / hxRight) * oldConcBox[0][1] -
 				(1.0 + (hxLeft / hxRight)) * oldConc) /
 			(hxLeft + hxRight);
+		// Second term for temperature dependent conductivity
+		double leftHeatCond =
+				   getLocalHeatConductivity(xi - 1, oldConcBox[0][0]),
+			   rightHeatCond =
+				   getLocalHeatConductivity(xi + 1, oldConcBox[0][1]);
+		updatedConcOffset[index] += midHeatCoef *
+			(oldConcBox[0][1] - oldConcBox[0][0]) *
+			(rightHeatCond - leftHeatCond) /
+			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
 	}
 
 	// Deal with the potential additional dimensions
@@ -147,8 +159,9 @@ HeatEquationHandler::computeTemperature(double** concVector,
 }
 
 bool
-HeatEquationHandler::computePartialsForTemperature(double* val, int* indices,
-	double hxLeft, double hxRight, int xi, double sy, int iy, double sz, int iz)
+HeatEquationHandler::computePartialsForTemperature(double** concVector,
+	double* val, int* indices, double hxLeft, double hxRight, int xi, double sy,
+	int iy, double sz, int iz)
 {
 	// Skip if the flux is 0
 	if (zeroFlux) {
@@ -160,15 +173,26 @@ HeatEquationHandler::computePartialsForTemperature(double* val, int* indices,
 
 	double s[3] = {0, sy, sz};
 
-	// Adjust the parameters
-	double midHeatCoef = getLocalHeatFactor(xi) * heatCoef,
-		   leftHeatCoef = getLocalHeatFactor(xi - 1) * heatCoef,
-		   rightHeatCoef = getLocalHeatFactor(xi + 1) * heatCoef;
+	double midHeatCoef = getLocalHeatCoefficient(xi, concVector[0][this->_dof]),
+		   leftHeatCoef =
+			   getLocalHeatCoefficient(xi - 1, concVector[1][this->_dof]),
+		   rightHeatCoef =
+			   getLocalHeatCoefficient(xi + 1, concVector[2][this->_dof]),
+		   midHeatCond =
+			   getLocalHeatConductivity(xi, concVector[0][this->_dof]),
+		   leftHeatCond =
+			   getLocalHeatConductivity(xi - 1, concVector[1][this->_dof]),
+		   rightHeatCond =
+			   getLocalHeatConductivity(xi - 1, concVector[2][this->_dof]);
 
 	// Compute the partials along the depth
 	val[0] = 1.0 / (hxLeft * hxRight);
-	val[1] = 2.0 * midHeatCoef / (hxLeft * (hxLeft + hxRight));
-	val[2] = 2.0 * midHeatCoef / (hxRight * (hxLeft + hxRight));
+	val[1] = 2.0 * midHeatCoef / (hxLeft * (hxLeft + hxRight)) -
+		midHeatCoef * (rightHeatCond - leftHeatCond) /
+			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
+	val[2] = 2.0 * midHeatCoef / (hxRight * (hxLeft + hxRight)) +
+		midHeatCoef * (rightHeatCond - leftHeatCond) /
+			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
 
 	// Deal with the potential additional dimensions
 	for (int d = 1; d < dimension; ++d) {
@@ -180,27 +204,31 @@ HeatEquationHandler::computePartialsForTemperature(double* val, int* indices,
 	val[0] *= -2.0 * midHeatCoef;
 
 	// Boundary condition with the heat flux
-	if (xi == surfacePosition) {
+	if (xi == surfacePosition ||
+		fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc) < 2.0) {
 		val[1] = 0.0;
 		val[2] = 2.0 * midHeatCoef / (hxLeft * hxRight);
-	}
-	else if (fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc) <
-		2.0) {
-		val[0] = -2.0 * rightHeatCoef / (hxLeft * hxRight);
-		val[1] = 0.0;
-		val[2] = 2.0 * rightHeatCoef / (hxLeft * hxRight);
 	}
 
 	return true;
 }
 
 double
-HeatEquationHandler::getLocalHeatFactor(int xi) const
+HeatEquationHandler::getLocalHeatConductivity(int xi, double temp) const
 {
 	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
+	double heatCond = 159.0e-9;
+	//	double lnT = log(temp);
+	//	double heatCond = (10.846 * lnT * lnT - 182.22 * lnT + 872.47) * 1.0e-9;
 	if (x < interfaceLoc)
-		return 0.2;
-	return 1.0;
+		return 0.2 * heatCond;
+	return heatCond;
+}
+
+double
+HeatEquationHandler::getLocalHeatCoefficient(int xi, double temp) const
+{
+	return heatCoef * getLocalHeatConductivity(xi, temp);
 }
 } // namespace temperature
 } // namespace core

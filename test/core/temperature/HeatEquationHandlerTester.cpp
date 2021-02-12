@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		valPointer, indicesPointer, hx, hx, hx);
+		concVector, valPointer, indicesPointer, hx, hx, hx);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
@@ -213,7 +213,7 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		valPointer, indicesPointer, hx, hx, hx, sy, 1);
+		concVector, valPointer, indicesPointer, hx, hx, hx, sy, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
@@ -323,7 +323,7 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		valPointer, indicesPointer, hx, hx, hx, sy, 1, sz, 1);
+		concVector, valPointer, indicesPointer, hx, hx, hx, sy, 1, sz, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);

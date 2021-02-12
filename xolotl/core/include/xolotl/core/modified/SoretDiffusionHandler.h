@@ -48,6 +48,11 @@ protected:
 	int surfacePosition;
 
 	/**
+	 * The local xs
+	 */
+	int localXs;
+
+	/**
 	 * The beta factor
 	 */
 	double beta;
@@ -75,9 +80,10 @@ public:
 		surfacePosition(0),
 		heatConductivity(0.0),
 		heatFlux(0.0),
-		beta(0.0065),
+		beta(0.0),
 		J(1.0e3),
-		interfaceLoc(0.0)
+		interfaceLoc(0.0),
+		localXs(0)
 	{
 	}
 
@@ -93,7 +99,7 @@ public:
 	initialize(const network::IReactionNetwork& network,
 		network::IReactionNetwork::SparseFillMap& ofill,
 		network::IReactionNetwork::SparseFillMap& dfill,
-		std::vector<double> grid) override
+		std::vector<double> grid, int xs) override
 	{
 		// Clear the index vector
 		diffusingClusters.clear();
@@ -103,6 +109,7 @@ public:
 
 		// Copy the grid
 		xGrid = grid;
+		localXs = xs;
 
 		// Consider each cluster
 		for (std::size_t i = 0; i < network.getNumClusters(); i++) {

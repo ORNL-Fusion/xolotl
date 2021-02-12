@@ -37,12 +37,13 @@ public:
 	 * @param ofill Connectivity map for the off-diagonal part of the Jacobian
 	 * @param dfill Connectivity map for the diagonal part of the Jacobian
 	 * @param grid The X grid
+	 * @param xs The start index of the local grid
 	 */
 	virtual void
 	initialize(const network::IReactionNetwork& network,
 		network::IReactionNetwork::SparseFillMap& ofill,
 		network::IReactionNetwork::SparseFillMap& dfill,
-		std::vector<double> grid) = 0;
+		std::vector<double> grid, int xs) = 0;
 
 	/**
 	 * This operation sets the heat flux at the surface.

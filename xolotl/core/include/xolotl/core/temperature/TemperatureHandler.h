@@ -95,9 +95,9 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	bool
-	computePartialsForTemperature(double* val, int* indices, double hxLeft,
-		double hxRight, int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
-		int iz = 0) override
+	computePartialsForTemperature(double** concVector, double* val,
+		int* indices, double hxLeft, double hxRight, int xi, double sy = 0.0,
+		int iy = 0, double sz = 0.0, int iz = 0) override
 	{
 		return false;
 	}

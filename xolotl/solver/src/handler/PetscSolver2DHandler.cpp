@@ -877,6 +877,7 @@ PetscSolver2DHandler::computeJacobian(
 	// Declarations for variables used in the loop
 	double atomConc = 0.0, totalAtomConc = 0.0;
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
+	double** concVector = new double*[5];
 
 	// Get the total number of diffusing clusters
 	const int nDiff = std::max(diffusionHandler->getNumberOfDiffusing(), 0);
@@ -924,13 +925,22 @@ PetscSolver2DHandler::computeJacobian(
 				hxRight = grid[xi + 1] - grid[xi];
 			}
 
+			// Fill the concVector with the pointer to the middle, left, and
+			// right grid points
+			concVector[0] = concOffset; // middle
+			concVector[1] = concs[yj][xi - 1]; // left
+			concVector[2] = concs[yj][xi + 1]; // right
+			concVector[3] = concs[yj - 1][xi]; // bottom
+			concVector[4] = concs[yj + 1][xi]; // top
+
 			// Heat condition
 			if (xi == surfacePosition[yj] && xi >= localXS &&
 				xi < localXS + localXM) {
 				// Get the partial derivatives for the temperature
 				auto setValues =
 					temperatureHandler->computePartialsForTemperature(
-						tempVals, tempIndices, hxLeft, hxRight, xi, sy, yj);
+						concVector, tempVals, tempIndices, hxLeft, hxRight, xi,
+						sy, yj);
 
 				if (setValues) {
 					// Set grid coordinate and component number for the row
@@ -1005,7 +1015,8 @@ PetscSolver2DHandler::computeJacobian(
 			if (xi >= localXS && xi < localXS + localXM) {
 				auto setValues =
 					temperatureHandler->computePartialsForTemperature(
-						tempVals, tempIndices, hxLeft, hxRight, xi, sy, yj);
+						concVector, tempVals, tempIndices, hxLeft, hxRight, xi,
+						sy, yj);
 
 				if (setValues) {
 					// Set grid coordinate and component number for the row

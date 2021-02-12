@@ -92,9 +92,9 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	bool
-	computePartialsForTemperature(double* val, int* indices, double hxLeft,
-		double hxRight, int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
-		int iz = 0) override;
+	computePartialsForTemperature(double** concVector, double* val,
+		int* indices, double hxLeft, double hxRight, int xi, double sy = 0.0,
+		int iy = 0, double sz = 0.0, int iz = 0) override;
 
 private:
 	/**
@@ -148,13 +148,24 @@ private:
 	std::vector<std::array<double, 2>> oldConcBox;
 
 	/**
-	 * Get the heat factor at this grid point.
+	 * Get the heat conductivity at this grid point.
 	 *
 	 * @param xi The grid index
-	 * @return The factor
+	 * @param temp The temperature
+	 * @return The conductivity
 	 */
 	double
-	getLocalHeatFactor(int xi) const;
+	getLocalHeatConductivity(int xi, double temp) const;
+
+	/**
+	 * Get the heat coefficient at this grid point.
+	 *
+	 * @param xi The grid index
+	 * @param temp The temperature
+	 * @return The coefficient
+	 */
+	double
+	getLocalHeatCoefficient(int xi, double temp) const;
 };
 } // namespace temperature
 } // namespace core

@@ -133,7 +133,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 
 	// The soret initialization needs to be done after the network
 	// because it adds connectivities the network would remove
-	soretDiffusionHandler->initialize(network, ofill, dfill, grid);
+	soretDiffusionHandler->initialize(network, ofill, dfill, grid, localXS);
 
 	// Load up the block fills
 	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
@@ -682,12 +682,16 @@ PetscSolver1DHandler::updateConcentration(
 		if (skip)
 			continue;
 
+		if (grid[xi + 1] - grid[surfacePosition + 1] > 1000002)
+			continue;
+
 		// ---- Compute Soret diffusion over the locally owned part of the grid
 		// -----
 		soretDiffusionHandler->computeDiffusion(network, concVector,
 			updatedConcOffset, hxLeft, hxRight, xi - localXS);
 
-		if (xi == surfacePosition)
+		if (xi == surfacePosition ||
+			(fabs(grid[xi + 1] - grid[surfacePosition + 1] - 1000000) < 2.0))
 			continue;
 
 		// ----- Account for flux of incoming particles -----
@@ -837,6 +841,12 @@ PetscSolver1DHandler::computeJacobian(
 		// Get the concentrations at this grid point
 		concOffset = concs[xi];
 
+		// Fill the concVector with the pointer to the middle, left, and right
+		// grid points
+		concVector[0] = concOffset; // middle
+		concVector[1] = concs[xi - 1]; // left
+		concVector[2] = concs[xi + 1]; // right
+
 		// Set the grid fraction
 		gridPosition[0] =
 			((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1]) /
@@ -855,7 +865,7 @@ PetscSolver1DHandler::computeJacobian(
 		// Get the partial derivatives for the temperature
 		if (xi >= localXS && xi < localXS + localXM) {
 			auto setValues = temperatureHandler->computePartialsForTemperature(
-				tempVals, tempIndices, hxLeft, hxRight, xi);
+				concVector, tempVals, tempIndices, hxLeft, hxRight, xi);
 
 			if (setValues) {
 				// Set grid coordinate and component number for the row
@@ -972,6 +982,9 @@ PetscSolver1DHandler::computeJacobian(
 		if (skip)
 			continue;
 
+		if (grid[xi + 1] - grid[surfacePosition + 1] > 1000002)
+			continue;
+
 		// Fill the concVector with the pointer to the middle, left, and right
 		// grid points
 		concVector[0] = concOffset; // middle
@@ -1020,7 +1033,8 @@ PetscSolver1DHandler::computeJacobian(
 			}
 		}
 
-		if (xi == surfacePosition)
+		if (xi == surfacePosition ||
+			(fabs(grid[xi + 1] - grid[surfacePosition + 1] - 1000000) < 2.0))
 			continue;
 
 		// Get the partial derivatives for the diffusion

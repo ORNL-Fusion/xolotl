@@ -46,9 +46,9 @@ constexpr double heliumRadius = 0.30000000000000000;
 //! Single xenon radius. Given in units here of nm.
 constexpr double xenonRadius = 0.30000000000000000;
 
-// Tungsten heat coefficient = lambda / (rho * C) in nm2 s-1
+// Tungsten heat coefficient = 1 / (rho * C)
 // constexpr double tungstenHeatCoefficient = 1.236e13;
-constexpr double tungstenHeatCoefficient = 6.18e13;
+constexpr double tungstenHeatCoefficient = 3.8868e20;
 
 // UO2 heat coefficient = lambda / (rho * C) in nm2 s-1
 constexpr double uo2HeatCoefficient = 0.0;

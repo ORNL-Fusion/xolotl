@@ -35,7 +35,7 @@ public:
 	initialize(const network::IReactionNetwork& network,
 		network::IReactionNetwork::SparseFillMap& ofill,
 		network::IReactionNetwork::SparseFillMap& dfill,
-		std::vector<double> grid) override
+		std::vector<double> grid, int xs) override
 	{
 		return;
 	}
