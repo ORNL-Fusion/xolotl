@@ -28,7 +28,8 @@ std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() < 2),
 	double>
 getRateForSink(const double r, const double dc, const double latticeParameter)
 {
-	double r0 = latticeParameter * 0.75 * sqrt(3.0);
+	// TODO: r0 depends on the network type
+	double r0 = latticeParameter * 0.5 * sqrt(2.0);
 	double rho = 0.0003;
 	constexpr double pi = ::xolotl::core::pi;
 

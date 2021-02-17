@@ -1680,8 +1680,8 @@ DissociationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 
 	//	if (E_b < 1.0) {
 	//	auto cl0Reg = cl0.getRegion().getOrigin(), cl1Reg =
-	//cl1.getRegion().getOrigin(), prod0Reg =
-	//this->_clusterData.getCluster(_reactant).getRegion().getOrigin();
+	// cl1.getRegion().getOrigin(), prod0Reg =
+	// this->_clusterData.getCluster(_reactant).getRegion().getOrigin();
 	//
 	//	constexpr auto speciesRange = NetworkType::getSpeciesRange();
 	//	for (auto j : speciesRange) {

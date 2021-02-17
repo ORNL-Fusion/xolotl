@@ -248,16 +248,14 @@ NEClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	if (reg.isSimplex()) {
 		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {
-			radius = latticeParameter * cbrt(3.0 / ::xolotl::core::pi) * 0.5;
+			radius = latticeParameter * cbrt(1.0 / ::xolotl::core::pi) * 0.5;
 		}
 		else if (comp.isOnAxis(Species::Xe)) {
 			radius = impurityRadius;
 		}
 		else if (comp.isOnAxis(Species::V)) {
 			radius = latticeParameter *
-				pow((3.0 * comp[Species::V]) / ::xolotl::core::pi,
-					(1.0 / 3.0)) *
-				0.5;
+				cbrt((comp[Species::V]) / ::xolotl::core::pi) * 0.5;
 		}
 		else {
 			radius =
