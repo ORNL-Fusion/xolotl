@@ -110,7 +110,7 @@ public:
 							coefs[10] = coefs[10] / ((double) sectionWidth);
 							// Compute the fraction rate
 							auto radius = cluster.getReactionRadius();
-							double fractionRate = 4.0 * xolotlCore::pi * mu
+							double fractionRate = 2.0 * xolotlCore::pi * mu
 									* pow(radius + lambda, 2.0);
 							// Add the size to the vector
 							sizeVec.emplace_back(&cluster, nullptr,
@@ -125,7 +125,7 @@ public:
 							coefs[0] = 1.0, coefs[2] = 1.0, coefs[10] = size;
 							// Compute the fraction rate
 							auto radius = cluster.getReactionRadius();
-							double fractionRate = 4.0 * xolotlCore::pi * mu
+							double fractionRate = 2.0 * xolotlCore::pi * mu
 									* pow(radius + lambda, 2.0);
 							// Add the size to the vector
 							sizeVec.emplace_back(&cluster, nullptr,
