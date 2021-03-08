@@ -47,13 +47,11 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	}
 	this->setEnableReducedJacobian(useReduced);
 
-	if (this->_enableTrapMutation) {
-		_clusterData.initializeTrapMutationData();
-	}
-
 	this->_numClusters = _clusterData.numClusters;
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
+
+	asDerived()->initializeExtraClusterData();
 
 	defineReactions();
 }
@@ -389,10 +387,6 @@ void
 ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
 	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
 {
-	if (this->_enableTrapMutation) {
-		updateDesorptionLeftSideRate(concentrations, gridIndex);
-		selectTrapMutationReactions(surfaceDepth, spacing);
-	}
 	_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeFlux(concentrations, fluxes, gridIndex);
 	});
@@ -405,11 +399,6 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 	Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
 	double spacing)
 {
-	if (this->_enableTrapMutation) {
-		updateDesorptionLeftSideRate(concentrations, gridIndex);
-		selectTrapMutationReactions(surfaceDepth, spacing);
-	}
-
 	// Reset the values
 	const auto& nValues = values.extent(0);
 	// Loop on the reactions
@@ -431,40 +420,6 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 	}
 
 	Kokkos::fence();
-}
-
-template <typename TImpl>
-void
-ReactionNetwork<TImpl>::updateDesorptionLeftSideRate(
-	ConcentrationsView concentrations, IndexType gridIndex)
-{
-	// TODO: Desorption is constant. So make it available on both host and
-	// device. Either DualView or just direct value type that gets copied
-	auto desorp = create_mirror_view(_clusterData.desorption);
-	deep_copy(desorp, _clusterData.desorption);
-	auto lsRate = create_mirror_view(_clusterData.currentDesorpLeftSideRate);
-	lsRate() = getLeftSideRate(concentrations, desorp().id, gridIndex);
-	deep_copy(_clusterData.currentDesorpLeftSideRate, lsRate);
-}
-
-template <typename TImpl>
-void
-ReactionNetwork<TImpl>::selectTrapMutationReactions(
-	double depth, double spacing)
-{
-	auto depths = create_mirror_view(_clusterData.tmDepths);
-	deep_copy(depths, _clusterData.tmDepths);
-	auto enable = create_mirror_view(_clusterData.tmEnabled);
-	for (std::size_t l = 0; l < depths.size(); ++l) {
-		enable[l] = false;
-		if (depths[l] == 0.0) {
-			continue;
-		}
-		if (depths[l] < depth + 0.01 && depths[l] > depth - spacing - 0.01) {
-			enable[l] = true;
-		}
-	}
-	deep_copy(_clusterData.tmEnabled, enable);
 }
 
 template <typename TImpl>

@@ -74,6 +74,21 @@ public:
 		return psi::hasTritium<Species>;
 	}
 
+	void
+	initializeExtraClusterData();
+
+	void
+	selectTrapMutationReactions(double surfaceDepth, double spacing);
+
+	void
+	computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
+		IndexType gridIndex, double surfaceDepth, double spacing) override;
+
+	void
+	computeAllPartials(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+		double spacing) override;
+
 	double
 	getTotalTrappedHeliumConcentration(
 		ConcentrationsView concs, AmountType minSize = 0) override
@@ -94,6 +109,10 @@ public:
 
 	void
 	updateTrapMutationDisappearingRate(double totalTrappedHeliumConc) override;
+
+	void
+	updateDesorptionLeftSideRate(
+		ConcentrationsView concentrations, IndexType gridIndex);
 
 private:
 	double

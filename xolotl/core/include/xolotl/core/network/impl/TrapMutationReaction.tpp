@@ -43,7 +43,8 @@ KOKKOS_INLINE_FUNCTION
 double
 TrapMutationReaction<TNetwork, TDerived>::computeRate(double largestRate)
 {
-	const auto& desorp = this->_clusterData.desorption();
+	const auto& desorp =
+		this->_clusterData.extraData.trapMutationData.desorption();
 	if (_heClId == desorp.id) {
 		return (1.0 - desorp.portion) / desorp.portion;
 	}
@@ -80,8 +81,9 @@ TrapMutationReaction<TNetwork, TDerived>::getAppliedRate(
 	IndexType gridIndex) const
 {
 	double rate = this->_rate[gridIndex];
-	if (_heClId == this->_clusterData.desorption().id) {
-		rate *= this->_clusterData.currentDesorpLeftSideRate();
+    auto& tmData = this->_clusterData.extraData.trapMutationData;
+	if (_heClId == tmData.desorption().id) {
+		rate *= tmData.currentDesorpLeftSideRate();
 	}
 	return rate;
 }
@@ -91,7 +93,7 @@ KOKKOS_INLINE_FUNCTION
 bool
 TrapMutationReaction<TNetwork, TDerived>::getEnabled() const
 {
-	return this->_clusterData.tmEnabled[_heAmount];
+	return this->_clusterData.extraData.trapMutationData.tmEnabled[_heAmount];
 }
 
 template <typename TNetwork, typename TDerived>
@@ -106,7 +108,7 @@ TrapMutationReaction<TNetwork, TDerived>::computeFlux(
 
 	auto rate = getAppliedRate(gridIndex);
 	auto f = rate * concentrations[_heClId] *
-		this->_clusterData.currentDisappearingRate();
+		this->_clusterData.extraData.trapMutationData.currentDisappearingRate();
 
 	Kokkos::atomic_sub(&fluxes[_heClId], f);
 	Kokkos::atomic_add(&fluxes[_heVClId], f);

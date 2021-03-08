@@ -146,6 +146,11 @@ public:
 		return GroupingRange::mapToMomentId(value);
 	}
 
+	void
+	initializeExtraClusterData()
+	{
+	}
+
 	std::size_t
 	getSpeciesListSize() const noexcept override
 	{
@@ -282,13 +287,6 @@ public:
 	computeAllPartials(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
 		double spacing) override;
-
-	void
-	updateDesorptionLeftSideRate(
-		ConcentrationsView concentrations, IndexType gridIndex);
-
-    void
-    selectTrapMutationReactions(double surfaceDepth, double spacing);
 
 	double
 	getLargestRate() override;

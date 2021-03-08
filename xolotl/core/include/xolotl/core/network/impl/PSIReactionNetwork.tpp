@@ -13,6 +13,66 @@ namespace network
 {
 template <typename TSpeciesEnum>
 void
+PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData()
+{
+	if (this->_enableTrapMutation) {
+		this->_clusterData.extraData.trapMutationData.initialize();
+	}
+}
+
+template <typename TSpeciesEnum>
+void
+PSIReactionNetwork<TSpeciesEnum>::selectTrapMutationReactions(
+	double depth, double spacing)
+{
+	auto& tmData = this->_clusterData.extraData.trapMutationData;
+	auto depths = create_mirror_view(tmData.tmDepths);
+	deep_copy(depths, tmData.tmDepths);
+	auto enable = create_mirror_view(tmData.tmEnabled);
+	for (std::size_t l = 0; l < depths.size(); ++l) {
+		enable[l] = false;
+		if (depths[l] == 0.0) {
+			continue;
+		}
+		if (depths[l] < depth + 0.01 && depths[l] > depth - spacing - 0.01) {
+			enable[l] = true;
+		}
+	}
+	deep_copy(tmData.tmEnabled, enable);
+}
+
+template <typename TSpeciesEnum>
+void
+PSIReactionNetwork<TSpeciesEnum>::computeAllFluxes(
+	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex,
+	double surfaceDepth, double spacing)
+{
+	if (this->_enableTrapMutation) {
+		updateDesorptionLeftSideRate(concentrations, gridIndex);
+		selectTrapMutationReactions(surfaceDepth, spacing);
+	}
+
+	Superclass::computeAllFluxes(
+		concentrations, fluxes, gridIndex, surfaceDepth, spacing);
+}
+
+template <typename TSpeciesEnum>
+void
+PSIReactionNetwork<TSpeciesEnum>::computeAllPartials(
+	ConcentrationsView concentrations, Kokkos::View<double*> values,
+	IndexType gridIndex, double surfaceDepth, double spacing)
+{
+	if (this->_enableTrapMutation) {
+		updateDesorptionLeftSideRate(concentrations, gridIndex);
+		selectTrapMutationReactions(surfaceDepth, spacing);
+	}
+
+	Superclass::computeAllPartials(
+		concentrations, values, gridIndex, surfaceDepth, spacing);
+}
+
+template <typename TSpeciesEnum>
+void
 PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 	double* gridPointSolution, double factor, std::vector<double>& nBurst)
 {
@@ -147,11 +207,26 @@ PSIReactionNetwork<TSpeciesEnum>::updateTrapMutationDisappearingRate(
 {
 	// Set the rate to have an exponential decrease
 	if (this->_enableAttenuation) {
-		auto mirror =
-			create_mirror_view(this->_clusterData.currentDisappearingRate);
+		auto& tmData = this->_clusterData.extraData.trapMutationData;
+		auto mirror = create_mirror_view(tmData.currentDisappearingRate);
 		mirror() = exp(-4.0 * totalTrappedHeliumConc);
-		deep_copy(this->_clusterData.currentDisappearingRate, mirror);
+		deep_copy(tmData.currentDisappearingRate, mirror);
 	}
+}
+
+template <typename TSpeciesEnum>
+void
+PSIReactionNetwork<TSpeciesEnum>::updateDesorptionLeftSideRate(
+	ConcentrationsView concentrations, IndexType gridIndex)
+{
+	// TODO: Desorption is constant. So make it available on both host and
+	// device. Either DualView or just direct value type that gets copied
+	auto& tmData = this->_clusterData.extraData.trapMutationData;
+	auto desorp = create_mirror_view(tmData.desorption);
+	deep_copy(desorp, tmData.desorption);
+	auto lsRate = create_mirror_view(tmData.currentDesorpLeftSideRate);
+	lsRate() = this->getLeftSideRate(concentrations, desorp().id, gridIndex);
+	deep_copy(tmData.currentDesorpLeftSideRate, lsRate);
 }
 
 template <typename TSpeciesEnum>
@@ -359,20 +434,21 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	}
 
 	// Trap-Mutation
-    auto heAmt = lo1[Species::He];
+	auto heAmt = lo1[Species::He];
 	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && 1 <= heAmt && heAmt <= 7) {
-        auto vSize = this->_clusterData.tmVSizes[heAmt];
+		auto vSize =
+			this->_clusterData.extraData.trapMutationData.tmVSizes[heAmt];
 		Composition comp1 = Composition::zero();
 		comp1[Species::He] = heAmt;
-        comp1[Species::V] = vSize;
-        Composition comp2 = Composition::zero();
-        comp2[Species::I] = vSize;
-        if (lo1 == comp1 && lo2 == comp2) {
-            Composition comp0 = Composition::zero();
-            comp0[Species::He] = heAmt;
-            auto heClusterId = subpaving.findTileId(comp0, plsm::onDevice);
-            this->addTrapMutationReaction(tag, {heClusterId, i, j});
-        }
+		comp1[Species::V] = vSize;
+		Composition comp2 = Composition::zero();
+		comp2[Species::I] = vSize;
+		if (lo1 == comp1 && lo2 == comp2) {
+			Composition comp0 = Composition::zero();
+			comp0[Species::He] = heAmt;
+			auto heClusterId = subpaving.findTileId(comp0, plsm::onDevice);
+			this->addTrapMutationReaction(tag, {heClusterId, i, j});
+		}
 	}
 
 	// Special case for trap-mutation

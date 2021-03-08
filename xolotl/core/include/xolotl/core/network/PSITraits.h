@@ -3,6 +3,7 @@
 #include <tuple>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/core/network/TrapMutationClusterData.h>
 
 namespace xolotl
 {
@@ -46,6 +47,9 @@ class PSITrapMutationReaction;
 
 template <typename TSpeciesEnum>
 class PSIClusterGenerator;
+
+template <typename>
+struct TrapMutationClusterData;
 
 enum class PSIFullSpeciesList
 {
@@ -265,6 +269,19 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 
 	using ClusterGenerator = PSIClusterGenerator<Species>;
 };
+
+namespace detail
+{
+template <typename TSpeciesEnum, typename PlsmContext,
+	template <typename> typename ViewConvert>
+struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, PlsmContext,
+	ViewConvert>
+{
+	using TrapMutationData =
+		TrapMutationClusterData<ClusterDataCommon<PlsmContext, ViewConvert>>;
+	TrapMutationData trapMutationData;
+};
+} // namespace detail
 } // namespace network
 } // namespace core
 } // namespace xolotl
