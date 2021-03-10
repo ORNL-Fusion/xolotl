@@ -51,7 +51,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
 
-	asDerived()->initializeExtraClusterData();
+	asDerived()->initializeExtraClusterData(opts);
 
 	defineReactions();
 }
@@ -222,6 +222,8 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 	updateDiffusionCoefficients();
 
 	asDerived()->updateReactionRates();
+
+	asDerived()->updateExtraClusterData(gridTemps);
 }
 
 template <typename TImpl>

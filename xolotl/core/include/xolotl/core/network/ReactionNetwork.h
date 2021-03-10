@@ -147,7 +147,12 @@ public:
 	}
 
 	void
-	initializeExtraClusterData()
+	initializeExtraClusterData(const options::IOptions&)
+	{
+	}
+
+	void
+	updateExtraClusterData(const std::vector<double>&)
 	{
 	}
 
@@ -281,12 +286,13 @@ public:
 
 	void
 	computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-		IndexType gridIndex, double surfaceDepth, double spacing) override;
+		IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0) override;
 
 	void
 	computeAllPartials(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
-		double spacing) override;
+		Kokkos::View<double*> values, IndexType gridIndex = 0,
+		double surfaceDepth = 0.0, double spacing = 0.0) override;
 
 	double
 	getLargestRate() override;

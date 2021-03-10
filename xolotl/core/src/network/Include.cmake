@@ -2,12 +2,14 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterSet.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/MemorySpace.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/NucleationReactionGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/PSITrapMutation.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionCollection.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionUtility.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReSolutionReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/SinkReactionGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TupleUtility.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyClusterGenerator.h
@@ -45,6 +47,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/SinkReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesEnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesId.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/TrapMutationClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/TrapMutationReaction.h
 )
 

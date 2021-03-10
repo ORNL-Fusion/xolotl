@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/detail/PSITrapMutation.h>
 #include <xolotl/core/network/detail/impl/TrapMutationReactionGenerator.tpp>
 #include <xolotl/core/network/impl/PSIClusterGenerator.tpp>
 #include <xolotl/core/network/impl/PSIReaction.tpp>
@@ -13,11 +14,45 @@ namespace network
 {
 template <typename TSpeciesEnum>
 void
-PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData()
+PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
+	const options::IOptions& options)
 {
-	if (this->_enableTrapMutation) {
-		this->_clusterData.extraData.trapMutationData.initialize();
+	if (!this->_enableTrapMutation) {
+		return;
 	}
+
+	this->_clusterData.extraData.trapMutationData.initialize();
+
+	_tmHandler = detail::psi::getTrapMutationHandler(options.getMaterial());
+}
+
+template <typename TSpeciesEnum>
+void
+PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
+	const std::vector<double>& gridTemps)
+{
+	if (!this->_enableTrapMutation) {
+		return;
+	}
+
+	_tmHandler->updateData(gridTemps[0]);
+	auto& tmData = this->_clusterData.extraData.trapMutationData;
+
+	using Kokkos::HostSpace;
+	using Kokkos::MemoryUnmanaged;
+
+	auto desorp =
+		Kokkos::View<const detail::Desorption, HostSpace, MemoryUnmanaged>(
+			&_tmHandler->getDesorption());
+	deep_copy(tmData.desorption, desorp);
+
+	auto depths = Kokkos::View<const double[7], HostSpace, MemoryUnmanaged>(
+		_tmHandler->getDepths().data());
+	deep_copy(tmData.tmDepths, depths);
+
+	auto vSizes = Kokkos::View<const AmountType[7], HostSpace, MemoryUnmanaged>(
+		_tmHandler->getVacancySizes().data());
+	deep_copy(tmData.tmVSizes, vSizes);
 }
 
 template <typename TSpeciesEnum>

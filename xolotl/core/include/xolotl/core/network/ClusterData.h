@@ -19,16 +19,6 @@ class ClusterCommon;
 template <typename TNetwork, typename PlsmContext>
 class Cluster;
 
-struct Desorption
-{
-	using AmountType = detail::CompositionAmountType;
-	using IndexType = detail::ReactionNetworkIndexType;
-
-	AmountType size{};
-	IndexType id{detail::invalidNetworkIndex};
-	double portion{};
-};
-
 namespace detail
 {
 template <typename PlsmContext>

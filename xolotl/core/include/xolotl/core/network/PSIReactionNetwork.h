@@ -5,6 +5,7 @@
 #include <xolotl/core/network/PSITraits.h>
 #include <xolotl/core/network/ReactionNetwork.h>
 #include <xolotl/core/network/detail/ReactionGenerator.h>
+#include <xolotl/core/network/detail/TrapMutationHandler.h>
 
 namespace xolotl
 {
@@ -75,7 +76,10 @@ public:
 	}
 
 	void
-	initializeExtraClusterData();
+	initializeExtraClusterData(const options::IOptions& options);
+
+	void
+	updateExtraClusterData(const std::vector<double>& gridTemps);
 
 	void
 	selectTrapMutationReactions(double surfaceDepth, double spacing);
@@ -133,6 +137,9 @@ private:
 	{
 		return detail::PSIReactionGenerator<Species>{*this};
 	}
+
+private:
+	std::unique_ptr<detail::TrapMutationHandler> _tmHandler;
 };
 
 namespace detail

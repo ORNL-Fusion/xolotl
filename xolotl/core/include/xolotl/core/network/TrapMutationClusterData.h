@@ -8,6 +8,16 @@ namespace network
 {
 namespace detail
 {
+struct Desorption
+{
+	using AmountType = detail::CompositionAmountType;
+	using IndexType = detail::ReactionNetworkIndexType;
+
+	AmountType size{};
+	double portion{};
+	IndexType id{detail::invalidNetworkIndex};
+};
+
 template <typename TClusterDataParent>
 struct TrapMutationClusterData
 {
@@ -35,11 +45,18 @@ struct TrapMutationClusterData
 	{
 		currentDesorpLeftSideRate =
 			View<double>("Current Desorption Left Side Rate");
+
 		currentDisappearingRate =
 			View<double>("Current Trap Mutation Disappearing Rate");
 		auto mirror = create_mirror_view(currentDisappearingRate);
 		mirror() = 1.0;
 		deep_copy(currentDisappearingRate, mirror);
+
+		desorption = View<Desorption>("Desorption");
+		tmDepths = View<double[7]>("Trap-mutation depths");
+		tmVSizes = View<AmountType[7]>("Trap-mutation vacancy sizes");
+
+		tmEnabled = View<bool[7]>("Trap-mutation enabled helium sizes");
 	}
 
 	View<Desorption> desorption;
