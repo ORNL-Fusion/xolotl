@@ -740,6 +740,9 @@ PetscSolver3DHandler::updateConcentration(
 				// Compute the total concentration of atoms contained in bubbles
 				atomConc = 0.0;
 
+				auto& psiNetwork =
+					dynamic_cast<core::network::IPSIReactionNetwork&>(network);
+
 				// Loop over grid points
 				for (int xi = surfacePosition[yj][zk] + leftOffset;
 					 xi < nX - rightOffset; xi++) {
@@ -763,9 +766,6 @@ PetscSolver3DHandler::updateConcentration(
 						auto dConcs =
 							Kokkos::View<double*>("Concentrations", dof);
 						deep_copy(dConcs, hConcs);
-						auto& psiNetwork =
-							dynamic_cast<core::network::IPSIReactionNetwork&>(
-								network);
 						atomConc +=
 							psiNetwork.getTotalTrappedHeliumConcentration(
 								dConcs, 0) *
@@ -780,7 +780,7 @@ PetscSolver3DHandler::updateConcentration(
 					xolotlComm);
 
 				// Set the disappearing rate in the modified TM handler
-				mutationHandler->updateDisappearingRate(totalAtomConc);
+				psiNetwork.updateTrapMutationDisappearingRate(totalAtomConc);
 			}
 
 			// Skip if we are not on the right process
@@ -1176,6 +1176,9 @@ PetscSolver3DHandler::computeJacobian(
 				// Compute the total concentration of atoms contained in bubbles
 				atomConc = 0.0;
 
+				auto& psiNetwork =
+					dynamic_cast<core::network::IPSIReactionNetwork&>(network);
+
 				// Loop over grid points
 				for (int xi = surfacePosition[yj][zk] + leftOffset;
 					 xi < nX - rightOffset; xi++) {
@@ -1199,9 +1202,6 @@ PetscSolver3DHandler::computeJacobian(
 						auto dConcs =
 							Kokkos::View<double*>("Concentrations", dof);
 						deep_copy(dConcs, hConcs);
-						auto& psiNetwork =
-							dynamic_cast<core::network::IPSIReactionNetwork&>(
-								network);
 						atomConc +=
 							psiNetwork.getTotalTrappedHeliumConcentration(
 								dConcs, 0) *
@@ -1216,7 +1216,7 @@ PetscSolver3DHandler::computeJacobian(
 					xolotlComm);
 
 				// Set the disappearing rate in the modified TM handler
-				mutationHandler->updateDisappearingRate(totalAtomConc);
+				psiNetwork.updateTrapMutationDisappearingRate(totalAtomConc);
 			}
 
 			// Skip if we are not on the right process

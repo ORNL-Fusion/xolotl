@@ -110,8 +110,7 @@ public:
 	}
 };
 
-inline
-std::unique_ptr<TrapMutationHandler>
+inline std::unique_ptr<TrapMutationHandler>
 getTrapMutationHandler(const std::string& material)
 {
 	if (material == "W100") {

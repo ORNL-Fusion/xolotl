@@ -36,6 +36,7 @@ class PSIReactionNetwork :
 public:
 	using Superclass = ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
 	using Subpaving = typename Superclass::Subpaving;
+	using SubdivisionRatio = typename Superclass::SubdivisionRatio;
 	using Composition = typename Superclass::Composition;
 	using Species = typename Superclass::Species;
 	using AmountType = typename Superclass::AmountType;
@@ -44,6 +45,16 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 
 	using Superclass::Superclass;
+
+	PSIReactionNetwork(const Subpaving& subpaving, IndexType gridSize,
+		const options::IOptions& options);
+
+	PSIReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+		const std::vector<SubdivisionRatio>& subdivisionRatios,
+		IndexType gridSize, const options::IOptions& options);
+
+	PSIReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+		IndexType gridSize, const options::IOptions& options);
 
 	SpeciesId
 	getHeliumSpeciesId() const override

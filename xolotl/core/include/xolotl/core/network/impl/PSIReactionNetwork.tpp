@@ -13,6 +13,39 @@ namespace core
 namespace network
 {
 template <typename TSpeciesEnum>
+PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(const Subpaving& subpaving,
+	IndexType gridSize, const options::IOptions& options) :
+	Superclass(subpaving, gridSize, options),
+	_tmHandler(this->_enableTrapMutation ?
+			detail::psi::getTrapMutationHandler(options.getMaterial()) :
+			nullptr)
+{
+}
+
+template <typename TSpeciesEnum>
+PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
+	const std::vector<AmountType>& maxSpeciesAmounts,
+	const std::vector<SubdivisionRatio>& subdivisionRatios, IndexType gridSize,
+	const options::IOptions& options) :
+	Superclass(maxSpeciesAmounts, subdivisionRatios, gridSize, options),
+	_tmHandler(this->_enableTrapMutation ?
+			detail::psi::getTrapMutationHandler(options.getMaterial()) :
+			nullptr)
+{
+}
+
+template <typename TSpeciesEnum>
+PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
+	const std::vector<AmountType>& maxSpeciesAmounts, IndexType gridSize,
+	const options::IOptions& options) :
+	Superclass(maxSpeciesAmounts, gridSize, options),
+	_tmHandler(this->_enableTrapMutation ?
+			detail::psi::getTrapMutationHandler(options.getMaterial()) :
+			nullptr)
+{
+}
+
+template <typename TSpeciesEnum>
 void
 PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
 	const options::IOptions& options)
@@ -22,8 +55,6 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
 	}
 
 	this->_clusterData.extraData.trapMutationData.initialize();
-
-	_tmHandler = detail::psi::getTrapMutationHandler(options.getMaterial());
 }
 
 template <typename TSpeciesEnum>
@@ -32,6 +63,11 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	const std::vector<double>& gridTemps)
 {
 	if (!this->_enableTrapMutation) {
+		return;
+	}
+
+	static bool done = false;
+	if (done) {
 		return;
 	}
 
@@ -53,6 +89,8 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	auto vSizes = Kokkos::View<const AmountType[7], HostSpace, MemoryUnmanaged>(
 		_tmHandler->getVacancySizes().data());
 	deep_copy(tmData.tmVSizes, vSizes);
+
+	done = true;
 }
 
 template <typename TSpeciesEnum>
@@ -519,8 +557,8 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 				const auto& prodReg = this->getCluster(k).getRegion();
 				bool isGood = true;
 				// Loop on the species
-				// TODO: check l correspond to the same species in bounds and
-				// prod
+				// TODO: check l correspond to the same species in bounds
+				// and prod
 				for (auto l : speciesNoI) {
 					if (prodReg[l()].begin() > bounds[l()].second) {
 						isGood = false;

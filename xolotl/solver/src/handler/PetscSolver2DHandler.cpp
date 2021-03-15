@@ -681,6 +681,9 @@ PetscSolver2DHandler::updateConcentration(
 			// Compute the total concentration of atoms contained in bubbles
 			atomConc = 0.0;
 
+			auto& psiNetwork =
+				dynamic_cast<core::network::IPSIReactionNetwork&>(network);
+
 			// Loop over grid points
 			for (int xi = surfacePosition[yj] + leftOffset;
 				 xi < nX - rightOffset; xi++) {
@@ -702,9 +705,6 @@ PetscSolver2DHandler::updateConcentration(
 					auto hConcs = HostUnmanaged(concOffset, dof);
 					auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 					deep_copy(dConcs, hConcs);
-					auto& psiNetwork =
-						dynamic_cast<core::network::IPSIReactionNetwork&>(
-							network);
 					atomConc += psiNetwork.getTotalTrappedHeliumConcentration(
 									dConcs, 0) *
 						(grid[xi + 1] - grid[xi]);
@@ -718,7 +718,7 @@ PetscSolver2DHandler::updateConcentration(
 				&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
 
 			// Set the disappearing rate in the modified TM handler
-			mutationHandler->updateDisappearingRate(totalAtomConc);
+			psiNetwork.updateTrapMutationDisappearingRate(totalAtomConc);
 		}
 
 		// Skip if we are not on the right process
@@ -1067,6 +1067,9 @@ PetscSolver2DHandler::computeJacobian(
 			// Compute the total concentration of atoms contained in bubbles
 			atomConc = 0.0;
 
+			auto& psiNetwork =
+				dynamic_cast<core::network::IPSIReactionNetwork&>(network);
+
 			// Loop over grid points
 			for (int xi = surfacePosition[yj] + leftOffset;
 				 xi < nX - rightOffset; xi++) {
@@ -1088,9 +1091,6 @@ PetscSolver2DHandler::computeJacobian(
 					auto hConcs = HostUnmanaged(concOffset, dof);
 					auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 					deep_copy(dConcs, hConcs);
-					auto& psiNetwork =
-						dynamic_cast<core::network::IPSIReactionNetwork&>(
-							network);
 					atomConc += psiNetwork.getTotalTrappedHeliumConcentration(
 									dConcs, 0) *
 						(grid[xi + 1] - grid[xi]);
@@ -1104,7 +1104,7 @@ PetscSolver2DHandler::computeJacobian(
 				&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
 
 			// Set the disappearing rate in the modified TM handler
-			mutationHandler->updateDisappearingRate(totalAtomConc);
+			psiNetwork.updateTrapMutationDisappearingRate(totalAtomConc);
 		}
 
 		// Skip if we are not on the right process
