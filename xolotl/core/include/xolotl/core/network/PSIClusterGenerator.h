@@ -105,6 +105,7 @@ private:
 	AmountType _maxD{1};
 	AmountType _maxT{1};
 	AmountType _maxV{0};
+	AmountType _maxI{0};
 	AmountType _groupingMin;
 	AmountType _groupingWidthA;
 	AmountType _groupingWidthB;

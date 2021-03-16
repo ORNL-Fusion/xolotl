@@ -246,6 +246,22 @@ struct NumberOfVacancySpecies<PSIHeliumSpeciesList> :
 {
 };
 
+template <>
+struct SpeciesForGrouping<PSIHeliumSpeciesList, 3>
+{
+	using Sequence = EnumSequence<PSIHeliumSpeciesList, 3>;
+	static constexpr auto first = Sequence(PSIHeliumSpeciesList::He);
+	static constexpr auto last = Sequence(PSIHeliumSpeciesList::I);
+
+	KOKKOS_INLINE_FUNCTION
+	static constexpr std::underlying_type_t<PSIHeliumSpeciesList> mapToMomentId(
+		EnumSequence<PSIHeliumSpeciesList, 3> value)
+	{
+		if (value == PSIHeliumSpeciesList::I) return 1;
+		return value();
+	}
+};
+
 template <typename TSpeciesEnum>
 struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 {
