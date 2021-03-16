@@ -23,13 +23,14 @@ Options::Options() :
 				false), maxImpurity(8), maxD(0), maxT(0), maxV(20), maxI(6), nX(
 				10), nY(0), nZ(0), xStepSize(0.5), yStepSize(0.0), zStepSize(
 				0.0), leftBoundary(1), rightBoundary(1), bottomBoundary(1), topBoundary(
-				1), frontBoundary(1), backBoundary(1), burstingDepth(10.0), burstingMinSize(
-				0), burstingFactor(0.1), rngUseSeed(false), rngSeed(0), rngPrintSeed(
-				false), zeta(0.73), resoMinSize(0), density(10.162795276841), pulseTime(
-				0.0), pulseProportion(0.0), latticeParameter(-1.0), impurityRadius(
-				-1.0), biasFactor(1.15), hydrogenFactor(0.25), xenonDiffusivity(
-				-1.0), fissionYield(0.25), heVRatio(4.0), migrationThreshold(
-						std::numeric_limits<double>::infinity()) {
+				1), frontBoundary(1), backBoundary(1), xBC("mirror"), burstingDepth(
+				10.0), burstingMinSize(0), burstingFactor(0.1), rngUseSeed(
+				false), rngSeed(0), rngPrintSeed(false), zeta(0.73), resoMinSize(
+				0), density(10.162795276841), pulseTime(0.0), pulseProportion(
+				0.0), latticeParameter(-1.0), impurityRadius(-1.0), biasFactor(
+				1.15), hydrogenFactor(0.25), xenonDiffusivity(-1.0), fissionYield(
+				0.25), heVRatio(4.0), migrationThreshold(
+				std::numeric_limits<double>::infinity()) {
 	radiusMinSizes.Init(0);
 
 	return;
@@ -124,8 +125,8 @@ void Options::readParams(int argc, char *argv[]) {
 			bpo::value<string>(),
 			"List of all the processes to use in the simulation (reaction, diff, "
 					"advec, modifiedTM, movingSurface, bursting, attenuation, oneResolution, "
-					"partialResolution, fullResolution, heterogeneous).")("grain",
-			bpo::value<string>(&gbList),
+					"partialResolution, fullResolution, heterogeneous).")(
+			"grain", bpo::value<string>(&gbList),
 			"This option allows the user to add GB in the X, Y, or Z directions. "
 					"To do so, simply write the direction followed "
 					"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")(
@@ -151,6 +152,8 @@ void Options::readParams(int argc, char *argv[]) {
 					"and second one to the right (bulk), "
 					"then two for Y and two for Z. "
 					"0 means mirror or periodic, 1 means free surface.")(
+			"xBCType", bpo::value<string>(&xBC),
+			"This option allows the user to switch between mirror and periodic BC in the X direction.")(
 			"burstingDepth", bpo::value<double>(&burstingDepth),
 			"This option allows the user to set a depth in nm "
 					"for the bubble bursting.")("burstingMin",

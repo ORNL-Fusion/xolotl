@@ -240,6 +240,11 @@ protected:
 			backBoundary;
 
 	/**
+	 * String of the list of wanted BC in X.
+	 */
+	std::string xBC;
+
+	/**
 	 * Depth for the bubble bursting in nm.
 	 */
 	double burstingDepth;
@@ -747,6 +752,14 @@ public:
 	}
 	int getBackBoundary() const override {
 		return backBoundary;
+	}
+
+	/**
+	 * Obtain the string listing the wanted BC in the X direction.
+	 * \see IOptions.h
+	 */
+	std::string getBCString() const override {
+		return xBC;
 	}
 
 	/**

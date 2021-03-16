@@ -579,7 +579,7 @@ public:
 			useRegularGrid = "PSI";
 
 		// Boundary conditions in the X direction
-		if (options.getMaterial() == "Fuel")
+		if (options.getBCString() == "periodic")
 			isMirror = false;
 
 		// Look at if the user wants to use a Chebyshev grid in the x direction
