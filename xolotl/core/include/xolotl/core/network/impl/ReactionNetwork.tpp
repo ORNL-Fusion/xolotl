@@ -221,9 +221,9 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 
 	updateDiffusionCoefficients();
 
-	asDerived()->updateReactionRates();
-
 	asDerived()->updateExtraClusterData(gridTemps);
+
+	asDerived()->updateReactionRates();
 }
 
 template <typename TImpl>

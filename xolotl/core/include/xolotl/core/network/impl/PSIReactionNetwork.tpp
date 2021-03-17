@@ -72,14 +72,19 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	}
 
 	_tmHandler->updateData(gridTemps[0]);
+
 	auto& tmData = this->_clusterData.extraData.trapMutationData;
 
 	using Kokkos::HostSpace;
 	using Kokkos::MemoryUnmanaged;
 
+	auto desorption = _tmHandler->getDesorption();
+	Composition comp{};
+	comp[Species::He] = desorption.size;
+	desorption.id = this->findCluster(comp, plsm::onHost).getId();
 	auto desorp =
 		Kokkos::View<const detail::Desorption, HostSpace, MemoryUnmanaged>(
-			&_tmHandler->getDesorption());
+			&desorption);
 	deep_copy(tmData.desorption, desorp);
 
 	auto depths = Kokkos::View<const double[7], HostSpace, MemoryUnmanaged>(

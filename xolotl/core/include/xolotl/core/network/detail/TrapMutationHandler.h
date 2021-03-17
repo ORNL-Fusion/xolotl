@@ -21,23 +21,23 @@ public:
 	virtual void
 	updateData(double temp) = 0;
 
-    const Desorption&
-    getDesorption() const noexcept
-    {
-        return _desorp;
-    }
+	const Desorption&
+	getDesorption() const noexcept
+	{
+		return _desorp;
+	}
 
-    const std::array<double, 7>&
-    getDepths() const noexcept
-    {
-        return _depths;
-    }
+	const std::array<double, 7>&
+	getDepths() const noexcept
+	{
+		return _depths;
+	}
 
-    const std::array<AmountType, 7>&
-    getVacancySizes() const noexcept
-    {
-        return _vSizes;
-    }
+	const std::array<AmountType, 7>&
+	getVacancySizes() const noexcept
+	{
+		return _vSizes;
+	}
 
 protected:
 	Desorption _desorp{};
