@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=3 0 0 3 1" << std::endl
-			  << "process=reaction" << std::endl;
+			  << "process=reaction sink" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options

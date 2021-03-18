@@ -166,7 +166,7 @@ public:
 	}
 
 	virtual void
-	setEnableReSolution(bool reso) = 0;
+	setEnableReSolution(bool reaction) = 0;
 
 	KOKKOS_INLINE_FUNCTION
 	bool
@@ -176,7 +176,17 @@ public:
 	}
 
 	virtual void
-	setEnableNucleation(bool reso) = 0;
+	setEnableNucleation(bool reaction) = 0;
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	getEnableSink() const noexcept
+	{
+		return _enableSink;
+	}
+
+	virtual void
+	setEnableSink(bool reaction) = 0;
 
 	KOKKOS_INLINE_FUNCTION
 	bool
@@ -329,6 +339,7 @@ protected:
 	bool _enableStdReaction{};
 	bool _enableReSolution{};
 	bool _enableNucleation{};
+	bool _enableSink{};
 	bool _enableReducedJacobian{};
 
 	IndexType _gridSize{};

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/impl/PSIClusterGenerator.tpp>
 #include <xolotl/core/network/impl/PSIReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
@@ -192,6 +193,10 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	constexpr auto invalidIndex = NetworkType::invalidIndex();
 	auto previousIndex = invalidIndex;
 
+	if (i == j) {
+		addSinks(i, tag);
+	}
+
 	auto numClusters = this->getNumberOfClusters();
 
 	// Get the composition of each cluster
@@ -205,12 +210,10 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	auto& subpaving = this->getSubpaving();
 
 	// Special case for I + I
-	if (lo1.isOnAxis(Species::I) &&
-		lo2.isOnAxis(Species::I)) {
+	if (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::I)) {
 		// Compute the composition of the new cluster
 		auto minSize = lo1[Species::I] + lo2[Species::I];
-		auto maxSize = hi1[Species::I] + hi2[Species::I] -
-			2;
+		auto maxSize = hi1[Species::I] + hi2[Species::I] - 2;
 		// Find the corresponding clusters
 		for (auto k = minSize; k <= maxSize; k++) {
 			Composition comp = Composition::zero();
@@ -229,42 +232,42 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 
 	// Special case for I + V
 	if ((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
-			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I))) {
+		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I))) {
 		// Find out which one is which
 		auto vSize =
 			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
 		// Int can be grouped
 		auto iReg = lo1.isOnAxis(Species::I) ? cl1Reg : cl2Reg;
 		for (auto k : makeIntervalRange(iReg[Species::I])) {
-		// Compute the product size
-		int prodSize = vSize - k;
-		// 3 cases
-		if (prodSize > 0) {
-			// Looking for V cluster
-			Composition comp = Composition::zero();
-			comp[Species::V] = prodSize;
-			auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
-			if (vProdId != invalidIndex && vProdId != previousIndex) {
-				this->addProductionReaction(tag, {i, j, vProdId});
-				previousIndex = vProdId;
-				// No dissociation
+			// Compute the product size
+			int prodSize = vSize - k;
+			// 3 cases
+			if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+				if (vProdId != invalidIndex && vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					previousIndex = vProdId;
+					// No dissociation
+				}
 			}
-		}
-		else if (prodSize < 0) {
-			// Looking for I cluster
-			Composition comp = Composition::zero();
-			comp[Species::I] = -prodSize;
-			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-			if (iProdId != invalidIndex && iProdId != previousIndex) {
-				this->addProductionReaction(tag, {i, j, iProdId});
-				previousIndex = iProdId;
-				// No dissociation
+			else if (prodSize < 0) {
+				// Looking for I cluster
+				Composition comp = Composition::zero();
+				comp[Species::I] = -prodSize;
+				auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+				if (iProdId != invalidIndex && iProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					previousIndex = iProdId;
+					// No dissociation
+				}
 			}
-		}
-		else {
-			// No product
-			this->addProductionReaction(tag, {i, j});
-		}
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
+			}
 		}
 		return;
 	}
@@ -397,12 +400,37 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 }
 
 template <typename TSpeciesEnum>
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+PSIReactionGenerator<TSpeciesEnum>::addSinks(IndexType i, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	const auto& clReg = this->getCluster(i).getRegion();
+	Composition lo = clReg.getOrigin();
+
+	// I
+	if (lo.isOnAxis(Species::I)) {
+		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
+	}
+
+	// V
+	if (clReg.isSimplex() && lo.isOnAxis(Species::V)) {
+		if (lo[Species::V] == 1)
+			this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
+	}
+}
+
+template <typename TSpeciesEnum>
 inline ReactionCollection<
 	typename PSIReactionGenerator<TSpeciesEnum>::NetworkType>
 PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
-		this->getProductionReactions(), this->getDissociationReactions());
+		this->getProductionReactions(), this->getDissociationReactions(),
+		this->getSinkReactions());
 	return ret;
 }
 } // namespace detail

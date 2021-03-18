@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/PSITraits.h>
 #include <xolotl/core/network/Reaction.h>
+#include <xolotl/core/network/SinkReaction.h>
 
 namespace xolotl
 {
@@ -38,6 +39,26 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeBindingEnergy();
+};
+
+template <typename TSpeciesEnum>
+class PSISinkReaction :
+	public SinkReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSISinkReaction<TSpeciesEnum>>
+{
+public:
+	using Superclass = SinkReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSISinkReaction<TSpeciesEnum>>;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getSinkBias();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getSinkStrength();
 };
 } // namespace network
 } // namespace core

@@ -32,6 +32,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	setEnableStdReaction(map["reaction"]);
 	setEnableReSolution(map["resolution"]);
 	setEnableNucleation(map["heterogeneous"]);
+	setEnableSink(map["sink"]);
 	std::string petscString = opts.getPetscArg();
 	util::TokenizedLineReader<std::string> reader;
 	reader.setInputStream(std::make_shared<std::istringstream>(petscString));
@@ -189,6 +190,16 @@ ReactionNetwork<TImpl>::setEnableNucleation(bool reaction)
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::setEnableSink(bool reaction)
+{
+	this->_enableSink = reaction;
+	auto mirror = Kokkos::create_mirror_view(_clusterData.enableSink);
+	mirror(0) = this->_enableSink;
+	Kokkos::deep_copy(_clusterData.enableSink, mirror);
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::setEnableReducedJacobian(bool reduced)
 {
 	this->_enableReducedJacobian = reduced;
@@ -261,6 +272,7 @@ ReactionNetwork<TImpl>::syncClusterDataOnHost()
 	Kokkos::deep_copy(mirror.enableStdReaction, _clusterData.enableStdReaction);
 	Kokkos::deep_copy(mirror.enableReSolution, _clusterData.enableReSolution);
 	Kokkos::deep_copy(mirror.enableNucleation, _clusterData.enableNucleation);
+	Kokkos::deep_copy(mirror.enableSink, _clusterData.enableSink);
 	Kokkos::deep_copy(mirror.temperature, _clusterData.temperature);
 	Kokkos::deep_copy(mirror.momentIds, _clusterData.momentIds);
 	Kokkos::deep_copy(mirror.reactionRadius, _clusterData.reactionRadius);

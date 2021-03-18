@@ -42,6 +42,9 @@ template <typename TSpeciesEnum>
 class PSIDissociationReaction;
 
 template <typename TSpeciesEnum>
+class PSISinkReaction;
+
+template <typename TSpeciesEnum>
 class PSIClusterGenerator;
 
 enum class PSIFullSpeciesList
@@ -254,10 +257,11 @@ struct SpeciesForGrouping<PSIHeliumSpeciesList, 3>
 	static constexpr auto last = Sequence(PSIHeliumSpeciesList::I);
 
 	KOKKOS_INLINE_FUNCTION
-	static constexpr std::underlying_type_t<PSIHeliumSpeciesList> mapToMomentId(
-		EnumSequence<PSIHeliumSpeciesList, 3> value)
+	static constexpr std::underlying_type_t<PSIHeliumSpeciesList>
+	mapToMomentId(EnumSequence<PSIHeliumSpeciesList, 3> value)
 	{
-		if (value == PSIHeliumSpeciesList::I) return 1;
+		if (value == PSIHeliumSpeciesList::I)
+			return 1;
 		return value();
 	}
 };
@@ -271,9 +275,10 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 
 	using ProductionReactionType = PSIProductionReaction<Species>;
 	using DissociationReactionType = PSIDissociationReaction<Species>;
+	using SinkReactionType = PSISinkReaction<Species>;
 
-	using ReactionTypeList =
-		std::tuple<ProductionReactionType, DissociationReactionType>;
+	using ReactionTypeList = std::tuple<ProductionReactionType,
+		DissociationReactionType, SinkReactionType>;
 
 	using ClusterGenerator = PSIClusterGenerator<Species>;
 };
