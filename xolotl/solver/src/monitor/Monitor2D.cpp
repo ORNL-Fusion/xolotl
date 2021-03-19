@@ -79,7 +79,7 @@ double sputteringYield2D = 0.0;
 // The vector of depths at which bursting happens
 std::vector<std::pair<int, int>> depthPositions2D;
 // The vector of ids for diffusing interstitial clusters
-std::vector<size_t> iClusterIds2D;
+std::vector<IdType> iClusterIds2D;
 // The id of the largest cluster
 int largestClusterId2D = -1;
 // The concentration threshold for the largest cluster
@@ -1362,13 +1362,13 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Loop on each bursting depth
 	for (int i = 0; i < depthPositions2D.size(); i++) {
 		// Get the coordinates of the point
-		int xi = depthPositions2D[i].second, yj = depthPositions2D[i].first;
+		xi = depthPositions2D[i].second, yj = depthPositions2D[i].first;
 		// Get the pointer to the beginning of the solution data for this grid
 		// point
 		gridPointSolution = solutionArray[yj][xi];
 
 		// Get the surface position
-		int surfacePos = solverHandler.getSurfacePosition(yj);
+		PetscInt surfacePos = solverHandler.getSurfacePosition(yj);
 		// Get the distance from the surface
 		double distance =
 			(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];

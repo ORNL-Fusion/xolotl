@@ -290,8 +290,9 @@ typename ReactionNetwork<TImpl>::template Cluster<plsm::OnDevice>
 ReactionNetwork<TImpl>::findCluster(
 	const Composition& comp, plsm::OnDevice context)
 {
-	return Cluster<plsm::OnDevice>(
-		_clusterData, _subpaving.findTileId(comp, context));
+	auto id = _subpaving.findTileId(comp, context);
+	return Cluster<plsm::OnDevice>(_clusterData,
+		id == _subpaving.invalidIndex() ? this->invalidIndex() : IndexType(id));
 }
 
 template <typename TImpl>
@@ -299,8 +300,9 @@ typename ReactionNetwork<TImpl>::template Cluster<plsm::OnHost>
 ReactionNetwork<TImpl>::findCluster(
 	const Composition& comp, plsm::OnHost context)
 {
-	return Cluster<plsm::OnHost>(
-		_clusterDataMirror, _subpaving.findTileId(comp, context));
+	auto id = _subpaving.findTileId(comp, context);
+	return Cluster<plsm::OnHost>(_clusterDataMirror,
+		id == _subpaving.invalidIndex() ? this->invalidIndex() : IndexType(id));
 }
 
 template <typename TImpl>

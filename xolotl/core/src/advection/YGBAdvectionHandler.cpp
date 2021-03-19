@@ -153,7 +153,7 @@ YGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 
 void
 YGBAdvectionHandler::computePartialsForAdvection(
-	network::IReactionNetwork& network, double* val, int* indices,
+	network::IReactionNetwork& network, double* val, IdType* indices,
 	const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight,
 	int ix, double hy, int iy, double hz, int iz) const
 {

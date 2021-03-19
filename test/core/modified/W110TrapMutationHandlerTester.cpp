@@ -13,7 +13,8 @@
 #include <xolotl/options/Options.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace modified;
 
 using Kokkos::ScopeGuard;
@@ -149,10 +150,10 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[61], 8.1022e+20, 0.01); // Create He5V
 
 	// Initialize the indices and values to set in the Jacobian
-	int indices[3 * maxHe];
+	IdType indices[3 * maxHe];
 	double val[3 * maxHe];
 	// Get the pointer on them for the compute modified trap-mutation method
-	int* indicesPointer = &indices[0];
+	IdType* indicesPointer = &indices[0];
 	double* valPointer = &val[0];
 
 	// Compute the partial derivatives for the modified trap-mutation at the

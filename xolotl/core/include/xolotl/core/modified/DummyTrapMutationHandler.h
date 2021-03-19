@@ -113,7 +113,7 @@ public:
 	 */
 	int
 	computePartialsForTrapMutation(network::IReactionNetwork& network,
-		double* concOffset, double* val, int* indices, int xi, int yj = 0,
+		double* concOffset, double* val, IdType* indices, int xi, int yj = 0,
 		int zk = 0)
 	{
 		// Doesn't do anything

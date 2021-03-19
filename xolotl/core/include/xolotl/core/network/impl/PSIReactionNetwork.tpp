@@ -190,8 +190,6 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 
 	constexpr auto species = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
-	constexpr auto invalidIndex = NetworkType::invalidIndex();
-	auto previousIndex = invalidIndex;
 
 	if (i == j) {
 		addSinks(i, tag);
@@ -208,6 +206,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
 	auto& subpaving = this->getSubpaving();
+	auto previousIndex = subpaving.invalidIndex();
 
 	// Special case for I + I
 	if (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::I)) {
@@ -219,7 +218,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 			Composition comp = Composition::zero();
 			comp[Species::I] = k;
 			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-			if (iProdId != invalidIndex && iProdId != previousIndex) {
+			if (iProdId != subpaving.invalidIndex() && iProdId != previousIndex) {
 				this->addProductionReaction(tag, {i, j, iProdId});
 				if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
 					this->addDissociationReaction(tag, {iProdId, i, j});
@@ -247,7 +246,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 				Composition comp = Composition::zero();
 				comp[Species::V] = prodSize;
 				auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
-				if (vProdId != invalidIndex && vProdId != previousIndex) {
+			if (vProdId != subpaving.invalidIndex() && vProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, vProdId});
 					previousIndex = vProdId;
 					// No dissociation
@@ -258,7 +257,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 				Composition comp = Composition::zero();
 				comp[Species::I] = -prodSize;
 				auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-				if (iProdId != invalidIndex && iProdId != previousIndex) {
+			if (iProdId != subpaving.invalidIndex() && iProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, iProdId});
 					previousIndex = iProdId;
 					// No dissociation

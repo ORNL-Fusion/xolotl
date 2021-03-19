@@ -4,6 +4,7 @@
 // Includes
 #include <memory>
 
+#include <xolotl/config.h>
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
@@ -170,7 +171,7 @@ public:
 	 */
 	virtual int
 	computePartialsForTrapMutation(network::IReactionNetwork& network,
-		double* concOffset, double* val, int* indices, int xi, int yj = 0,
+		double* concOffset, double* val, IdType* indices, int xi, int yj = 0,
 		int zk = 0) = 0;
 
 	/**

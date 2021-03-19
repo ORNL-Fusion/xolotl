@@ -13,7 +13,8 @@
 #include <xolotl/options/Options.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace diffusion;
 
 using Kokkos::ScopeGuard;
@@ -151,10 +152,10 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();
-	int indices[nDiff];
+	IdType indices[nDiff];
 	double val[3 * nDiff];
 	// Get the pointer on them for the compute diffusion method
-	int* indicesPointer = &indices[0];
+	IdType* indicesPointer = &indices[0];
 	double* valPointer = &val[0];
 
 	// Compute the partial derivatives for the diffusion a the grid point 1

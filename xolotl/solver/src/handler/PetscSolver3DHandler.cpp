@@ -964,11 +964,11 @@ PetscSolver3DHandler::computeJacobian(
 	// Arguments for MatSetValuesStencil called below
 	MatStencil row, cols[7];
 	PetscScalar tempVals[7];
-	PetscInt tempIndices[1];
+	IdType tempIndices[1];
 	PetscScalar diffVals[7 * nDiff];
-	PetscInt diffIndices[nDiff];
+	IdType diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
-	PetscInt advecIndices[nAdvec];
+	IdType advecIndices[nAdvec];
 
 	/*
 	 Loop over grid points for the temperature, including ghosts
@@ -1446,7 +1446,7 @@ PetscSolver3DHandler::computeJacobian(
 				// Arguments for MatSetValuesStencil called below
 				MatStencil row, col;
 				PetscScalar mutationVals[3 * nHelium];
-				PetscInt mutationIndices[3 * nHelium];
+				IdType mutationIndices[3 * nHelium];
 
 				// Compute the partial derivative from modified trap-mutation at
 				// this grid point

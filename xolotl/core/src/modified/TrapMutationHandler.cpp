@@ -472,7 +472,7 @@ TrapMutationHandler::computeTrapMutation(network::IReactionNetwork& network,
 int
 TrapMutationHandler::computePartialsForTrapMutation(
 	network::IReactionNetwork& network, double* concOffset, double* val,
-	int* indices, int xi, int yj, int zk)
+	IdType* indices, int xi, int yj, int zk)
 {
 	// Initialize the rate of the reaction
 	double rate = 0.0;

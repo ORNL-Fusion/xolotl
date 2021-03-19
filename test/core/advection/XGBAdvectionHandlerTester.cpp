@@ -151,10 +151,10 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 
 	// Initialize the rows, columns, and values to set in the Jacobian
 	int nAdvec = advectionHandler.getNumberOfAdvecting();
-	int indices[nAdvec];
+	IdType indices[nAdvec];
 	double val[3 * nAdvec];
 	// Get the pointer on them for the compute advection method
-	int* indicesPointer = &indices[0];
+	IdType* indicesPointer = &indices[0];
 	double* valPointer = &val[0];
 
 	// Compute the partial derivatives for the advection a the grid point 1

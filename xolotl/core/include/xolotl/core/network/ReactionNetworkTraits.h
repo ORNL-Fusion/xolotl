@@ -6,6 +6,7 @@
 
 #include <plsm/Subpaving.h>
 
+#include <xolotl/config.h>
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 
 namespace xolotl
@@ -21,7 +22,7 @@ struct ReactionNetworkTraits
 
 namespace detail
 {
-using ReactionNetworkIndexType = std::size_t;
+using ReactionNetworkIndexType = ::xolotl::IdType;
 
 using CompositionAmountType = std::uint32_t;
 
