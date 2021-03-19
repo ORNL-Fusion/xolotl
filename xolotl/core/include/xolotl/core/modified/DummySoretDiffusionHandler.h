@@ -53,15 +53,6 @@ public:
 	 * \see ISoretDiffusionHandler.h
 	 */
 	void
-	setHeatConductivity(double cond) override
-	{
-		return;
-	}
-
-	/**
-	 * \see ISoretDiffusionHandler.h
-	 */
-	void
 	updateSurfacePosition(int surfacePos) override
 	{
 		return;

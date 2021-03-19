@@ -12,12 +12,13 @@ namespace core
 namespace modified
 {
 double
-SoretDiffusionHandler::getLocalHeatFactor(int xi) const
+SoretDiffusionHandler::getLocalHeatConductivity(int xi, double temp) const
 {
 	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
-	if (x < interfaceLoc)
-		return 0.2;
-	return 1.0;
+	double lnT = log(temp);
+	double heatCond = (A * lnT * lnT + B * lnT + C) * 1.0e-9 *
+		(0.2 + 0.8 / (1.0 + exp(interfaceLoc - x)));
+	return heatCond;
 }
 
 void
@@ -26,7 +27,8 @@ SoretDiffusionHandler::computeDiffusion(network::IReactionNetwork& network,
 	double hxRight, int ix, double, int, double, int) const
 {
 	// Adjust the constants to the material
-	double localHeatCond = getLocalHeatFactor(ix + localXs) * heatConductivity;
+	double localHeatCond =
+		getLocalHeatConductivity(ix + localXs, concVector[0][dof]);
 
 	// Surface
 	if (ix + localXs == surfacePosition) {
@@ -66,47 +68,45 @@ SoretDiffusionHandler::computeDiffusion(network::IReactionNetwork& network,
 					(localHeatCond * (hxLeft + hxRight));
 		}
 	}
-	// Interface
-	else if (fabs(xGrid[ix + localXs + 1] - xGrid[surfacePosition + 1] -
-				 interfaceLoc) < 2.0) {
-		double rightHeatCond =
-			getLocalHeatFactor(ix + localXs + 1) * heatConductivity;
-		for (auto const& currId : diffusingClusters) {
-			auto cluster = network.getClusterCommon(currId);
-			// Get the initial concentrations
-			double oldConc = concVector[0][currId];
-			double oldLeftConc = concVector[1][currId];
-			double oldRightConc = concVector[2][currId];
-			double midTemp = concVector[0][dof], rightTemp = concVector[2][dof];
-			double midDiff = cluster.getDiffusionCoefficient(ix + 1),
-				   rightDiff = cluster.getDiffusionCoefficient(ix + 2),
-				   leftDiff = cluster.getDiffusionFactor() *
-				exp(-cluster.getMigrationEnergy() /
-					(kBoltzmann *
-						(rightTemp +
-							(hxLeft + hxRight) * heatFlux / rightHeatCond)));
-
-			updatedConcOffset[currId] += 2.0 *
-					(J +
-						(beta * midDiff * oldConc * heatFlux) / rightHeatCond) /
-					hxLeft +
-				2.0 * midDiff * (oldRightConc - oldConc) / (hxLeft * hxRight) -
-				(J + (beta * midDiff * oldConc * heatFlux) / rightHeatCond) *
-					(rightDiff - leftDiff) / (midDiff * (hxLeft + hxRight));
-
-			// Second part
-			updatedConcOffset[currId] -= 2.0 * beta * midDiff * oldConc *
-					heatFlux / (hxLeft * rightHeatCond) +
-				2.0 * beta * midDiff * oldConc * (rightTemp - midTemp) /
-					(hxLeft * hxRight) +
-				beta * heatFlux *
-					(J +
-						(beta * midDiff * oldConc * heatFlux) / rightHeatCond) /
-					rightHeatCond -
-				beta * oldConc * heatFlux * (rightDiff - leftDiff) /
-					(rightHeatCond * (hxLeft + hxRight));
-		}
-	}
+	//	// Interface
+	//	else if (fabs(xGrid[ix + localXs + 1] - xGrid[surfacePosition + 1] -
+	//				 interfaceLoc) < 2.0) {
+	//		double rightHeatCond =
+	//			getLocalHeatFactor(ix + localXs + 1) * heatConductivity;
+	//		for (auto const& currId : diffusingClusters) {
+	//			auto cluster = network.getClusterCommon(currId);
+	//			// Get the initial concentrations
+	//			double oldConc = concVector[0][currId];
+	//			double oldLeftConc = concVector[1][currId];
+	//			double oldRightConc = concVector[2][currId];
+	//			double midTemp = concVector[0][dof], rightTemp =
+	//concVector[2][dof]; 			double midDiff = cluster.getDiffusionCoefficient(ix +
+	//1), 				   rightDiff = cluster.getDiffusionCoefficient(ix + 2), 				   leftDiff =
+	//cluster.getDiffusionFactor() * 				exp(-cluster.getMigrationEnergy() /
+	//					(kBoltzmann *
+	//						(rightTemp +
+	//							(hxLeft + hxRight) * heatFlux /
+	//rightHeatCond)));
+	//
+	//			updatedConcOffset[currId] += 2.0 *
+	//					(J +
+	//						(beta * midDiff * oldConc * heatFlux) / rightHeatCond)
+	/// 					hxLeft + 				2.0 * midDiff * (oldRightConc - oldConc) / (hxLeft * hxRight) -
+	//				(J + (beta * midDiff * oldConc * heatFlux) / rightHeatCond)
+	//* 					(rightDiff - leftDiff) / (midDiff * (hxLeft + hxRight));
+	//
+	//			// Second part
+	//			updatedConcOffset[currId] -= 2.0 * beta * midDiff * oldConc *
+	//					heatFlux / (hxLeft * rightHeatCond) +
+	//				2.0 * beta * midDiff * oldConc * (rightTemp - midTemp) /
+	//					(hxLeft * hxRight) +
+	//				beta * heatFlux *
+	//					(J +
+	//						(beta * midDiff * oldConc * heatFlux) / rightHeatCond)
+	/// 					rightHeatCond - 				beta * oldConc * heatFlux * (rightDiff - leftDiff) /
+	//					(rightHeatCond * (hxLeft + hxRight));
+	//		}
+	//	}
 	// Bulk BC
 	else if (fabs(xGrid[ix + localXs + 1] - xGrid[surfacePosition + 1] -
 				 1000000) < 2.0) {
@@ -175,7 +175,8 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 	int) const
 {
 	// Adjust the constants to the material
-	double localHeatCond = getLocalHeatFactor(ix + localXs) * heatConductivity;
+	double localHeatCond =
+		getLocalHeatConductivity(ix + localXs, concVector[0][dof]);
 
 	// Surface
 	if (ix + localXs == surfacePosition) {
@@ -226,58 +227,58 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 			diffClusterIdx++;
 		}
 	}
-	// Interface
-	else if (fabs(xGrid[ix + localXs + 1] - xGrid[surfacePosition + 1] -
-				 interfaceLoc) < 2.0) {
-		double rightHeatCond =
-			getLocalHeatFactor(ix + localXs + 1) * heatConductivity;
-		int diffClusterIdx = 0;
-
-		for (auto const& currId : diffusingClusters) {
-			auto cluster = network.getClusterCommon(currId);
-			// Get the initial concentrations
-			double oldConc = concVector[0][currId];
-			double oldLeftConc = concVector[1][currId];
-			double oldRightConc = concVector[2][currId];
-
-			// Set the cluster index, the PetscSolver will use it to compute
-			// the row and column indices for the Jacobian
-			indices[diffClusterIdx] = currId;
-			double midTemp = concVector[0][dof], rightTemp = concVector[2][dof];
-			double midDiff = cluster.getDiffusionCoefficient(ix + 1),
-				   rightDiff = cluster.getDiffusionCoefficient(ix + 2),
-				   leftDiff = cluster.getDiffusionFactor() *
-				exp(-cluster.getMigrationEnergy() /
-					(kBoltzmann *
-						(rightTemp +
-							(hxLeft + hxRight) * heatFlux / rightHeatCond)));
-			// Compute the partial derivatives for diffusion of this cluster
-			// for the middle, left, and right grid point
-			val[diffClusterIdx * 6] =
-				2.0 * beta * midDiff * heatFlux / (hxLeft * rightHeatCond) -
-				2.0 * midDiff / (hxLeft * hxRight) -
-				beta * heatFlux * (rightDiff - leftDiff) /
-					(rightHeatCond * (hxLeft + hxRight)) -
-				2.0 * beta * midDiff * heatFlux / (hxLeft * rightHeatCond) -
-				2.0 * beta * midDiff * (rightTemp - midTemp) /
-					(hxLeft * hxRight) -
-				beta * beta * midDiff * heatFlux * heatFlux /
-					(rightHeatCond * rightHeatCond) +
-				beta * heatFlux * (rightDiff - leftDiff) /
-					(rightHeatCond * (hxLeft + hxRight)); // middle conc
-			val[(diffClusterIdx * 6) + 1] = 0.0; // left conc
-			val[(diffClusterIdx * 6) + 2] =
-				2.0 * midDiff / (hxLeft * hxRight); // right conc
-			val[(diffClusterIdx * 6) + 3] = 2.0 * beta * midDiff * oldConc /
-				(hxLeft * hxRight); // middle temp
-			val[(diffClusterIdx * 6) + 4] = 0.0; // left temp
-			val[(diffClusterIdx * 6) + 5] = -2.0 * beta * midDiff * oldConc /
-				(hxLeft * hxRight); // right temp
-
-			// Increase the index
-			diffClusterIdx++;
-		}
-	}
+	//	// Interface
+	//	else if (fabs(xGrid[ix + localXs + 1] - xGrid[surfacePosition + 1] -
+	//				 interfaceLoc) < 2.0) {
+	//		double rightHeatCond =
+	//			getLocalHeatFactor(ix + localXs + 1) * heatConductivity;
+	//		int diffClusterIdx = 0;
+	//
+	//		for (auto const& currId : diffusingClusters) {
+	//			auto cluster = network.getClusterCommon(currId);
+	//			// Get the initial concentrations
+	//			double oldConc = concVector[0][currId];
+	//			double oldLeftConc = concVector[1][currId];
+	//			double oldRightConc = concVector[2][currId];
+	//
+	//			// Set the cluster index, the PetscSolver will use it to compute
+	//			// the row and column indices for the Jacobian
+	//			indices[diffClusterIdx] = currId;
+	//			double midTemp = concVector[0][dof], rightTemp =
+	//concVector[2][dof]; 			double midDiff = cluster.getDiffusionCoefficient(ix +
+	//1), 				   rightDiff = cluster.getDiffusionCoefficient(ix + 2), 				   leftDiff =
+	//cluster.getDiffusionFactor() * 				exp(-cluster.getMigrationEnergy() /
+	//					(kBoltzmann *
+	//						(rightTemp +
+	//							(hxLeft + hxRight) * heatFlux /
+	//rightHeatCond)));
+	//			// Compute the partial derivatives for diffusion of this cluster
+	//			// for the middle, left, and right grid point
+	//			val[diffClusterIdx * 6] =
+	//				2.0 * beta * midDiff * heatFlux / (hxLeft * rightHeatCond) -
+	//				2.0 * midDiff / (hxLeft * hxRight) -
+	//				beta * heatFlux * (rightDiff - leftDiff) /
+	//					(rightHeatCond * (hxLeft + hxRight)) -
+	//				2.0 * beta * midDiff * heatFlux / (hxLeft * rightHeatCond) -
+	//				2.0 * beta * midDiff * (rightTemp - midTemp) /
+	//					(hxLeft * hxRight) -
+	//				beta * beta * midDiff * heatFlux * heatFlux /
+	//					(rightHeatCond * rightHeatCond) +
+	//				beta * heatFlux * (rightDiff - leftDiff) /
+	//					(rightHeatCond * (hxLeft + hxRight)); // middle conc
+	//			val[(diffClusterIdx * 6) + 1] = 0.0; // left conc
+	//			val[(diffClusterIdx * 6) + 2] =
+	//				2.0 * midDiff / (hxLeft * hxRight); // right conc
+	//			val[(diffClusterIdx * 6) + 3] = 2.0 * beta * midDiff * oldConc /
+	//				(hxLeft * hxRight); // middle temp
+	//			val[(diffClusterIdx * 6) + 4] = 0.0; // left temp
+	//			val[(diffClusterIdx * 6) + 5] = -2.0 * beta * midDiff * oldConc
+	/// 				(hxLeft * hxRight); // right temp
+	//
+	//			// Increase the index
+	//			diffClusterIdx++;
+	//		}
+	//	}
 	// Bulk BC
 	else if (fabs(xGrid[ix + localXs + 1] - xGrid[surfacePosition + 1] -
 				 1000000) < 2.0) {

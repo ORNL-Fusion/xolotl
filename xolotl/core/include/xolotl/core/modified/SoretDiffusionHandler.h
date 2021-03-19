@@ -38,9 +38,9 @@ protected:
 	double heatFlux;
 
 	/**
-	 * The heat conductivity
+	 * Heat conductivity fit
 	 */
-	double heatConductivity;
+	double A = 10.846, B = -182.22, C = 872.47;
 
 	/**
 	 * The surface position
@@ -68,19 +68,22 @@ protected:
 	double J;
 
 	/**
-	 * Get the local heat factor
+	 * Get the heat conductivity at this grid point.
+	 *
+	 * @param xi The grid index
+	 * @param temp The temperature
+	 * @return The conductivity
 	 */
 	double
-	getLocalHeatFactor(int xi) const;
+	getLocalHeatConductivity(int xi, double temp) const;
 
 public:
 	//! The Constructor
 	SoretDiffusionHandler() :
 		dof(0),
 		surfacePosition(0),
-		heatConductivity(0.0),
 		heatFlux(0.0),
-		beta(0.0),
+		beta(0.0065),
 		J(1.0e3),
 		interfaceLoc(0.0),
 		localXs(0)
@@ -140,15 +143,6 @@ public:
 	setHeatFlux(double flux) override
 	{
 		heatFlux = flux;
-	}
-
-	/**
-	 * \see ISoretDiffusionHandler.h
-	 */
-	void
-	setHeatConductivity(double cond) override
-	{
-		heatConductivity = cond;
 	}
 
 	/**

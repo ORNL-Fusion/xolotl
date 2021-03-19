@@ -143,6 +143,11 @@ private:
 	int dimension;
 
 	/**
+	 * Heat conductivity fit
+	 */
+	double A = 10.846, B = -182.22, C = 872.47;
+
+	/**
 	 * Hang on to single allocation for use in computeTemperature()
 	 */
 	std::vector<std::array<double, 2>> oldConcBox;
@@ -156,6 +161,51 @@ private:
 	 */
 	double
 	getLocalHeatConductivity(int xi, double temp) const;
+
+	/**
+	 * Get the heat conductivity at this grid point.
+	 *
+	 * @param xi The grid index
+	 * @return The conductivity
+	 */
+	double
+	getLocalHeatAlpha(int xi) const;
+
+	/**
+	 * Get the heat conductivity at this grid point.
+	 *
+	 * @param temp The temperature
+	 * @return The conductivity
+	 */
+	double
+	getLocalHeatBeta(double temp) const;
+
+	/**
+	 * Get the heat conductivity derivative at this grid point.
+	 *
+	 * @param temp The temperature
+	 * @return The conductivity derivative
+	 */
+	double
+	getLocalHeatCondTempDerivative(double temp) const;
+
+	/**
+	 * Get the heat conductivity second derivative at this grid point.
+	 *
+	 * @param temp The temperature
+	 * @return The conductivity second derivative
+	 */
+	double
+	getLocalHeatCondTempSecondDerivative(double temp) const;
+
+	/**
+	 * Get the heat conductivity derivative at this grid point.
+	 *
+	 * @param xi The grid index
+	 * @return The conductivity derivative
+	 */
+	double
+	getLocalHeatCondSpatialDerivative(int xi) const;
 
 	/**
 	 * Get the heat coefficient at this grid point.

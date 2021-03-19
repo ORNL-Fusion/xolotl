@@ -85,29 +85,6 @@ void
 MaterialHandler::initializeSoretDiffusionHandler(
 	const options::IOptions& options)
 {
-	// Set the heat coefficient which depends on the material
-	auto problemType = options.getMaterial();
-	// PSI case
-	if (problemType == "W100" || problemType == "W110" ||
-		problemType == "W111" || problemType == "W211" ||
-		problemType == "TRIDYN") {
-		_soretDiffusionHandler->setHeatConductivity(
-			core::tungstenHeatConductivity);
-	}
-	// NE case
-	else if (problemType == "Fuel") {
-		_soretDiffusionHandler->setHeatConductivity(core::uo2HeatConductivity);
-	}
-	// Fe case
-	else if (problemType == "Fe") {
-		_soretDiffusionHandler->setHeatConductivity(core::feHeatConductivity);
-	}
-	else {
-		throw std::runtime_error("\nThe requested material: " + problemType +
-			" does not have heat parameters defined for it, cannot use the "
-			"Soret diffusion!");
-	}
-
 	_soretDiffusionHandler->setHeatFlux(options.getTempParam(0));
 	_soretDiffusionHandler->setInterfaceLocation(
 		options.getInterfaceLocation());

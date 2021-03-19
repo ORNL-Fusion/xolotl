@@ -54,14 +54,6 @@ public:
 	setHeatFlux(double flux) = 0;
 
 	/**
-	 * This operation sets the heat conductivity to use in the equation.
-	 *
-	 * @param coef The heat conductivity
-	 */
-	virtual void
-	setHeatConductivity(double cond) = 0;
-
-	/**
 	 * This operation sets the surface position.
 	 *
 	 * @param surfacePos The surface location

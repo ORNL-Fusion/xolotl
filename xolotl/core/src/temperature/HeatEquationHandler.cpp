@@ -111,28 +111,49 @@ HeatEquationHandler::computeTemperature(double** concVector,
 
 	// Adjust the parameters
 	double midHeatCoef = getLocalHeatCoefficient(xi, oldConc),
-		   leftHeatCoef = getLocalHeatCoefficient(xi - 1, oldConcBox[0][0]),
-		   rightHeatCoef = getLocalHeatCoefficient(xi + 1, oldConcBox[0][1]),
 		   midHeatCond = getLocalHeatConductivity(xi, oldConc);
+	double alpha = getLocalHeatAlpha(xi), beta = getLocalHeatBeta(oldConc),
+		   dAlpha = getLocalHeatCondSpatialDerivative(xi),
+		   dBeta = getLocalHeatCondTempDerivative(oldConc);
 
 	double s[3] = {0, sy, sz};
 
 	// Surface and interface
-	if (xi == surfacePosition ||
-		fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc) < 2.0) {
+	//	if (xi == surfacePosition ||
+	//		fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc)
+	//< 2.0)
+	//{
+	//		// Boundary condition with heat flux
+	//		updatedConcOffset[index] += midHeatCoef * (2.0 / hxLeft) *
+	//			((heatFlux / midHeatCond) + (oldConcBox[0][1] - oldConc) /
+	// hxRight);
+	//		// Second term for temperature dependent conductivity
+	//		updatedConcOffset[index] += midHeatCoef * heatFlux * heatFlux *
+	//			getLocalHeatCondTempDerivative(xi, oldConc) /
+	//			(midHeatCond * midHeatCond * midHeatCond);
+	//	}
+	//	else {
+	//		// Use a simple midpoint stencil to compute the concentration
+	//		updatedConcOffset[index] += midHeatCoef * (2.0 / hxLeft) *
+	//			(oldConcBox[0][0] + (hxLeft / hxRight) * oldConcBox[0][1] -
+	//				(1.0 + (hxLeft / hxRight)) * oldConc) /
+	//			(hxLeft + hxRight);
+	//		// Second term for temperature dependent conductivity
+	//		updatedConcOffset[index] += midHeatCoef *
+	//			(oldConcBox[0][1] - oldConcBox[0][0]) *
+	//			(oldConcBox[0][1] - oldConcBox[0][0]) *
+	//			getLocalHeatCondTempDerivative(xi, oldConc) /
+	//			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
+	//	}
+	if (xi == surfacePosition) {
 		// Boundary condition with heat flux
 		updatedConcOffset[index] += midHeatCoef * (2.0 / hxLeft) *
 			((heatFlux / midHeatCond) + (oldConcBox[0][1] - oldConc) / hxRight);
 		// Second term for temperature dependent conductivity
-		// left is taken at xi so that the 20 % factor is not there
-		double leftTemp =
-			oldConcBox[0][1] + heatFlux * (hxLeft + hxRight) / midHeatCond;
-		double leftHeatCond = getLocalHeatConductivity(xi, leftTemp),
-			   rightHeatCond =
-				   getLocalHeatConductivity(xi + 1, oldConcBox[0][1]);
-		updatedConcOffset[index] -= midHeatCoef * heatFlux *
-			(rightHeatCond - leftHeatCond) /
-			(midHeatCond * midHeatCond * (hxLeft + hxRight));
+		updatedConcOffset[index] += -midHeatCoef * heatFlux * beta * dAlpha /
+				(midHeatCond * midHeatCond) +
+			midHeatCoef * heatFlux * heatFlux * alpha * dBeta /
+				(midHeatCond * midHeatCond * midHeatCond);
 	}
 	else {
 		// Use a simple midpoint stencil to compute the concentration
@@ -141,14 +162,13 @@ HeatEquationHandler::computeTemperature(double** concVector,
 				(1.0 + (hxLeft / hxRight)) * oldConc) /
 			(hxLeft + hxRight);
 		// Second term for temperature dependent conductivity
-		double leftHeatCond =
-				   getLocalHeatConductivity(xi - 1, oldConcBox[0][0]),
-			   rightHeatCond =
-				   getLocalHeatConductivity(xi + 1, oldConcBox[0][1]);
 		updatedConcOffset[index] += midHeatCoef *
-			(oldConcBox[0][1] - oldConcBox[0][0]) *
-			(rightHeatCond - leftHeatCond) /
-			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
+				(oldConcBox[0][1] - oldConcBox[0][0]) * beta * dAlpha /
+				(midHeatCond * (hxLeft + hxRight)) +
+			midHeatCoef * alpha * dBeta *
+				(oldConcBox[0][1] - oldConcBox[0][0]) *
+				(oldConcBox[0][1] - oldConcBox[0][0]) /
+				(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
 	}
 
 	// Deal with the potential additional dimensions
@@ -168,44 +188,103 @@ HeatEquationHandler::computePartialsForTemperature(double** concVector,
 		return false;
 	}
 
+	// Initial declaration
+	int index = this->_dof;
+
+	// Get the initial concentrations
+	double oldConc = concVector[0][index];
+	for (int d = 0; d < dimension; ++d) {
+		oldConcBox[d][0] = concVector[2 * d + 1][index];
+		oldConcBox[d][1] = concVector[2 * d + 2][index];
+	}
+
 	// Get the DOF
-	indices[0] = this->_dof;
+	indices[0] = index;
 
 	double s[3] = {0, sy, sz};
 
-	double midHeatCoef = getLocalHeatCoefficient(xi, concVector[0][this->_dof]),
-		   leftHeatCoef =
-			   getLocalHeatCoefficient(xi - 1, concVector[1][this->_dof]),
-		   rightHeatCoef =
-			   getLocalHeatCoefficient(xi + 1, concVector[2][this->_dof]),
-		   midHeatCond =
-			   getLocalHeatConductivity(xi, concVector[0][this->_dof]),
-		   leftHeatCond =
-			   getLocalHeatConductivity(xi - 1, concVector[1][this->_dof]),
-		   rightHeatCond =
-			   getLocalHeatConductivity(xi - 1, concVector[2][this->_dof]);
+	double midHeatCoef = getLocalHeatCoefficient(xi, oldConc),
+		   midHeatCond = getLocalHeatConductivity(xi, oldConc);
+	double alpha = getLocalHeatAlpha(xi), beta = getLocalHeatBeta(oldConc),
+		   dAlpha = getLocalHeatCondSpatialDerivative(xi),
+		   dBeta = getLocalHeatCondTempDerivative(oldConc),
+		   ddBeta = getLocalHeatCondTempSecondDerivative(oldConc);
 
 	// Compute the partials along the depth
-	val[0] = 1.0 / (hxLeft * hxRight);
+	//	val[0] = -2.0 * midHeatCoef / (hxLeft * hxRight) +
+	//		midHeatCoef * getLocalHeatCondTempSecondDerivative(xi, oldConc) *
+	//			(oldConcBox[0][1] - oldConcBox[0][0]) *
+	//			(oldConcBox[0][1] - oldConcBox[0][0]) /
+	//			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight)) +
+	//		midHeatCoef * (2.0 / hxLeft) *
+	//			getLocalHeatCondTempDerivative(xi, oldConc) *
+	//			(oldConcBox[0][0] + (hxLeft / hxRight) * oldConcBox[0][1] -
+	//				(1.0 + (hxLeft / hxRight)) * oldConc) /
+	//			((hxLeft + hxRight) * midHeatCond);
+	//	val[1] = 2.0 * midHeatCoef / (hxLeft * (hxLeft + hxRight)) +
+	//		2.0 * midHeatCoef * (oldConcBox[0][0] - oldConcBox[0][1]) *
+	//			getLocalHeatCondTempDerivative(xi, oldConc) /
+	//			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
+	//	val[2] = 2.0 * midHeatCoef / (hxRight * (hxLeft + hxRight)) +
+	//		2.0 * midHeatCoef * (oldConcBox[0][1] - oldConcBox[0][0]) *
+	//			getLocalHeatCondTempDerivative(xi, oldConc) /
+	//			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
+	val[0] = -2.0 * midHeatCoef / (hxLeft * hxRight) +
+		midHeatCoef * alpha * ddBeta * (oldConcBox[0][1] - oldConcBox[0][0]) *
+			(oldConcBox[0][1] - oldConcBox[0][0]) /
+			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight)) +
+		midHeatCoef * (2.0 / hxLeft) * alpha * dBeta *
+			(oldConcBox[0][0] + (hxLeft / hxRight) * oldConcBox[0][1] -
+				(1.0 + (hxLeft / hxRight)) * oldConc) /
+			((hxLeft + hxRight) * midHeatCond) +
+		midHeatCoef * dBeta * dAlpha * (oldConcBox[0][1] - oldConcBox[0][0]) /
+			((hxLeft + hxRight) * midHeatCond);
 	val[1] = 2.0 * midHeatCoef / (hxLeft * (hxLeft + hxRight)) -
-		midHeatCoef * (rightHeatCond - leftHeatCond) /
-			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
+		midHeatCoef * beta * dAlpha / (midHeatCond * (hxLeft + hxRight)) +
+		2.0 * midHeatCoef * (oldConcBox[0][0] - oldConcBox[0][1]) * alpha *
+			dBeta / (midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
 	val[2] = 2.0 * midHeatCoef / (hxRight * (hxLeft + hxRight)) +
-		midHeatCoef * (rightHeatCond - leftHeatCond) /
-			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
+		midHeatCoef * beta * dAlpha / (midHeatCond * (hxLeft + hxRight)) +
+		2.0 * midHeatCoef * (oldConcBox[0][1] - oldConcBox[0][0]) * alpha *
+			dBeta / (midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
 
 	// Deal with the potential additional dimensions
 	for (int d = 1; d < dimension; ++d) {
-		val[0] += s[d];
+		val[0] -= 2.0 * midHeatCoef * s[d];
 		val[2 * d + 1] = midHeatCoef * s[d];
 		val[2 * d + 2] = midHeatCoef * s[d];
 	}
 
-	val[0] *= -2.0 * midHeatCoef;
-
 	// Boundary condition with the heat flux
-	if (xi == surfacePosition ||
-		fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc) < 2.0) {
+	//	if (xi == surfacePosition ||
+	//		fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc)
+	//< 2.0) { 		val[0] = -2.0 * midHeatCoef / (hxLeft * hxRight)
+	//+ 			2.0 * midHeatCoef * getLocalHeatCondTempDerivative(xi,
+	// oldConc) * 				(oldConcBox[0][1] - oldConc)
+	/// 				(midHeatCond * hxLeft * hxRight) + 			heatFlux
+	/// * heatFlux * midHeatCoef *
+	//				getLocalHeatCondTempSecondDerivative(xi, oldConc) /
+	//				(midHeatCond * midHeatCond * midHeatCond) -
+	//			2.0 * heatFlux * heatFlux * midHeatCoef *
+	//				getLocalHeatCondTempDerivative(xi, oldConc) *
+	//				getLocalHeatCondTempDerivative(xi, oldConc) *
+	//				(midHeatCond * midHeatCond * midHeatCond * midHeatCond);
+	//		val[1] = 0.0;
+	//		val[2] = 2.0 * midHeatCoef / (hxLeft * hxRight);
+	//	}
+	if (xi == surfacePosition) {
+		val[0] = -2.0 * midHeatCoef / (hxLeft * hxRight) +
+			2.0 * midHeatCoef * alpha * dBeta * (oldConcBox[0][1] - oldConc) /
+				(midHeatCond * hxLeft * hxRight) +
+			heatFlux * heatFlux * midHeatCoef * alpha * ddBeta /
+				(midHeatCond * midHeatCond * midHeatCond) -
+			2.0 * heatFlux * heatFlux * midHeatCoef * alpha * alpha * dBeta *
+				dBeta *
+				(midHeatCond * midHeatCond * midHeatCond * midHeatCond) +
+			midHeatCoef * heatFlux * beta * alpha * dAlpha * dBeta /
+				(midHeatCond * midHeatCond * midHeatCond) -
+			midHeatCoef * heatFlux * dBeta * dAlpha /
+				(midHeatCond * midHeatCond);
 		val[1] = 0.0;
 		val[2] = 2.0 * midHeatCoef / (hxLeft * hxRight);
 	}
@@ -217,11 +296,52 @@ double
 HeatEquationHandler::getLocalHeatConductivity(int xi, double temp) const
 {
 	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
-	double heatCond = 159.0e-9;
-	//	double lnT = log(temp);
-	//	double heatCond = (10.846 * lnT * lnT - 182.22 * lnT + 872.47) * 1.0e-9;
-	if (x < interfaceLoc)
-		return 0.2 * heatCond;
+	double lnT = log(temp);
+	double heatCond = (A * lnT * lnT + B * lnT + C) * 1.0e-9 *
+		(0.2 + 0.8 / (1.0 + exp(interfaceLoc - x)));
+	return heatCond;
+}
+
+double
+HeatEquationHandler::getLocalHeatAlpha(int xi) const
+{
+	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
+	double heatCond = (0.2 + 0.8 / (1.0 + exp(interfaceLoc - x)));
+	return heatCond;
+}
+
+double
+HeatEquationHandler::getLocalHeatBeta(double temp) const
+{
+	double lnT = log(temp);
+	double heatCond = (A * lnT * lnT + B * lnT + C) * 1.0e-9;
+	return heatCond;
+}
+
+double
+HeatEquationHandler::getLocalHeatCondTempDerivative(double temp) const
+{
+	double lnT = log(temp);
+	double heatCond = (B + 2.0 * A * lnT) * 1.0e-9 / temp;
+	return heatCond;
+}
+
+double
+HeatEquationHandler::getLocalHeatCondTempSecondDerivative(double temp) const
+{
+	double lnT = log(temp);
+	double heatCond = (-B + 2.0 * A * (1.0 - lnT)) * 1.0e-9 / (temp * temp);
+	return heatCond;
+}
+
+double
+HeatEquationHandler::getLocalHeatCondSpatialDerivative(int xi) const
+{
+	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
+	double heatCond = 0.8 * exp(interfaceLoc - x) /
+		((1.0 + exp(interfaceLoc - x)) * (1.0 + exp(interfaceLoc - x)));
+	if (interfaceLoc - x > 500.0)
+		return 0.0;
 	return heatCond;
 }
 
