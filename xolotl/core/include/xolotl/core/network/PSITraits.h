@@ -277,6 +277,17 @@ template <typename TSpeciesEnum, typename PlsmContext,
 struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, PlsmContext,
 	ViewConvert>
 {
+	ClusterDataExtra() = default;
+
+	template <typename TOtherPlsmContext,
+		template <typename> typename TOtherViewConvert>
+	KOKKOS_INLINE_FUNCTION
+	ClusterDataExtra(const ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>,
+		TOtherPlsmContext, TOtherViewConvert>& data) :
+		trapMutationData(data.trapMutationData)
+	{
+	}
+
 	using TrapMutationData =
 		TrapMutationClusterData<ClusterDataCommon<PlsmContext, ViewConvert>>;
 	TrapMutationData trapMutationData;

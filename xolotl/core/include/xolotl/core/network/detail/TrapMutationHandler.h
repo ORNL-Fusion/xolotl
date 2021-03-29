@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/core/network/TrapMutationClusterData.h>
 
 namespace xolotl
 {
@@ -18,11 +19,14 @@ public:
 	TrapMutationHandler() = default;
 	virtual ~TrapMutationHandler() = default;
 
+    virtual std::array<std::vector<AmountType>, 7>
+    getAllVSizes() const = 0;
+
 	virtual void
 	updateData(double temp) = 0;
 
-	const Desorption&
-	getDesorption() const noexcept
+	const DesorptionInitializer&
+	getDesorptionInitializer() const noexcept
 	{
 		return _desorp;
 	}
@@ -40,7 +44,7 @@ public:
 	}
 
 protected:
-	Desorption _desorp{};
+	DesorptionInitializer _desorp{};
 	std::array<double, 7> _depths{};
 	std::array<AmountType, 7> _vSizes{};
 };

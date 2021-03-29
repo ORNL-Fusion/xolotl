@@ -8,10 +8,34 @@ namespace network
 {
 namespace detail
 {
+struct DesorptionInitializer
+{
+	using AmountType = detail::CompositionAmountType;
+
+	void
+	set(AmountType dSize, double dPortion) noexcept
+	{
+		size = dSize;
+		portion = dPortion;
+	}
+
+	AmountType size{};
+	double portion{};
+};
+
 struct Desorption
 {
 	using AmountType = detail::CompositionAmountType;
 	using IndexType = detail::ReactionNetworkIndexType;
+
+    Desorption() = default;
+
+	Desorption(DesorptionInitializer dInit, IndexType dId) :
+		size{dInit.size},
+		portion{dInit.portion},
+		id{dId}
+	{
+	}
 
 	AmountType size{};
 	double portion{};

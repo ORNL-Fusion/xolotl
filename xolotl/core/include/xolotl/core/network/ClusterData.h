@@ -284,7 +284,8 @@ public:
 	ClusterDataImpl(const TClusterData& data) :
 		Superclass(data),
 		tiles(data.tiles),
-		momentIds(data.momentIds)
+		momentIds(data.momentIds),
+        extraData(data.extraData)
 	{
 	}
 

@@ -22,6 +22,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	_worker(*this),
 	_speciesLabelMap(createSpeciesLabelMap())
 {
+	this->setMaterial(opts.getMaterial());
+
 	// Set constants
 	this->setInterstitialBias(opts.getBiasFactor());
 	this->setImpurityRadius(opts.getImpurityRadius());
@@ -48,10 +50,9 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableReducedJacobian(useReduced);
 
 	this->_numClusters = _clusterData.numClusters;
+	asDerived()->initializeExtraClusterData(opts);
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
-
-	asDerived()->initializeExtraClusterData(opts);
 
 	defineReactions();
 }

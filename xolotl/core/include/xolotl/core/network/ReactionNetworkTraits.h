@@ -41,6 +41,15 @@ template <typename TNetwork, typename PlsmContext,
 	template <typename> typename ViewConvert>
 struct ClusterDataExtra
 {
+	ClusterDataExtra() = default;
+
+	template <typename TOtherPlsmContext,
+		template <typename> typename TOtherViewConvert>
+	KOKKOS_INLINE_FUNCTION
+	ClusterDataExtra(
+		const ClusterDataExtra<TNetwork, TOtherPlsmContext, TOtherViewConvert>&)
+	{
+	}
 };
 
 template <typename TNetwork>

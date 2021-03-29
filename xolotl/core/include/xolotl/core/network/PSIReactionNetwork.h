@@ -167,11 +167,12 @@ public:
 	using NetworkType = PSIReactionNetwork<TSpeciesEnum>;
 	using Subpaving = typename NetworkType::Subpaving;
 	using IndexType = typename NetworkType::IndexType;
+	using AmountType = typename NetworkType::AmountType;
 
 	using Superclass = ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,
 		PSIReactionGenerator<TSpeciesEnum>>;
 
-	using Superclass::Superclass;
+	PSIReactionGenerator(const PSIReactionNetwork<TSpeciesEnum>& network);
 
 	template <typename TTag>
 	KOKKOS_INLINE_FUNCTION
@@ -186,6 +187,9 @@ public:
 private:
 	ReactionCollection<NetworkType>
 	getReactionCollection() const;
+
+private:
+	Kokkos::Array<Kokkos::View<AmountType*>, 7> _tmVSizes;
 };
 } // namespace detail
 } // namespace network

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <unordered_map>
 
 #include <Kokkos_Core.hpp>
@@ -90,6 +91,18 @@ public:
 	getNumClusters() const noexcept
 	{
 		return _numClusters;
+	}
+
+	const std::string&
+	getMaterial() const noexcept
+	{
+		return _material;
+	}
+
+	void
+	setMaterial(const std::string& mat)
+	{
+		_material = mat;
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -357,6 +370,7 @@ public:
 		std::vector<double>& fluxes, IndexType gridIndex) = 0;
 
 protected:
+	std::string _material;
 	double _latticeParameter{};
 	double _atomicVolume{};
 	double _interstitialBias{};

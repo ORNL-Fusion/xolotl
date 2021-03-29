@@ -16,6 +16,7 @@ class TrapMutationReaction : public Reaction<TNetwork, TDerived>
 public:
 	using NetworkType = TNetwork;
 	using Superclass = Reaction<TNetwork, TDerived>;
+	using Species = typename Superclass::Species;
 	using ClusterDataRef = typename Superclass::ClusterDataRef;
 	using IndexType = typename Superclass::IndexType;
 	using Connectivity = typename Superclass::Connectivity;
@@ -48,6 +49,12 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeRate(double largestRate);
+
+	using Superclass::updateRates;
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	updateRates(double largestRate);
 
 private:
 	KOKKOS_INLINE_FUNCTION
@@ -100,10 +107,11 @@ private:
 		IndexType gridIndex);
 
 private:
-	AmountType _heAmount;
 	IndexType _heClId;
 	IndexType _heVClId;
 	IndexType _iClId;
+	AmountType _heAmount{};
+	AmountType _vSize{};
 };
 } // namespace network
 } // namespace core

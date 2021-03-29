@@ -16,9 +16,8 @@ template <typename TSpeciesEnum>
 PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(const Subpaving& subpaving,
 	IndexType gridSize, const options::IOptions& options) :
 	Superclass(subpaving, gridSize, options),
-	_tmHandler(this->_enableTrapMutation ?
-			detail::psi::getTrapMutationHandler(options.getMaterial()) :
-			nullptr)
+	_tmHandler(psi::getTrapMutationHandler(
+		this->_enableTrapMutation, options.getMaterial()))
 {
 }
 
@@ -28,9 +27,8 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
 	const std::vector<SubdivisionRatio>& subdivisionRatios, IndexType gridSize,
 	const options::IOptions& options) :
 	Superclass(maxSpeciesAmounts, subdivisionRatios, gridSize, options),
-	_tmHandler(this->_enableTrapMutation ?
-			detail::psi::getTrapMutationHandler(options.getMaterial()) :
-			nullptr)
+	_tmHandler(psi::getTrapMutationHandler(
+		this->_enableTrapMutation, options.getMaterial()))
 {
 }
 
@@ -39,9 +37,8 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
 	const std::vector<AmountType>& maxSpeciesAmounts, IndexType gridSize,
 	const options::IOptions& options) :
 	Superclass(maxSpeciesAmounts, gridSize, options),
-	_tmHandler(this->_enableTrapMutation ?
-			detail::psi::getTrapMutationHandler(options.getMaterial()) :
-			nullptr)
+	_tmHandler(psi::getTrapMutationHandler(
+		this->_enableTrapMutation, options.getMaterial()))
 {
 }
 
@@ -66,10 +63,12 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 		return;
 	}
 
+	////////////////////////////////////////////////////////////////////////////
 	static bool done = false;
 	if (done) {
 		return;
 	}
+	////////////////////////////////////////////////////////////////////////////
 
 	_tmHandler->updateData(gridTemps[0]);
 
@@ -78,13 +77,12 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	using Kokkos::HostSpace;
 	using Kokkos::MemoryUnmanaged;
 
-	auto desorption = _tmHandler->getDesorption();
+	auto desorpInit = _tmHandler->getDesorptionInitializer();
 	Composition comp{};
-	comp[Species::He] = desorption.size;
-	desorption.id = this->findCluster(comp, plsm::onHost).getId();
-	auto desorp =
-		Kokkos::View<const detail::Desorption, HostSpace, MemoryUnmanaged>(
-			&desorption);
+	comp[Species::He] = desorpInit.size;
+	auto desorp = create_mirror_view(tmData.desorption);
+	desorp() = detail::Desorption{
+		desorpInit, this->findCluster(comp, plsm::onHost).getId()};
 	deep_copy(tmData.desorption, desorp);
 
 	auto depths = Kokkos::View<const double[7], HostSpace, MemoryUnmanaged>(
@@ -95,7 +93,9 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 		_tmHandler->getVacancySizes().data());
 	deep_copy(tmData.tmVSizes, vSizes);
 
+	////////////////////////////////////////////////////////////////////////////
 	done = true;
+	////////////////////////////////////////////////////////////////////////////
 }
 
 template <typename TSpeciesEnum>
@@ -274,7 +274,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateReactionRates()
 		this->_reactions.template getView<TrapMutationReactionType>();
 	Kokkos::parallel_for(
 		tmReactions.size(), KOKKOS_LAMBDA(IndexType i) {
-			tmReactions[i].computeRate(largestRate);
+			tmReactions[i].updateRates(largestRate);
 		});
 }
 
@@ -361,6 +361,27 @@ PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 
 namespace detail
 {
+template <typename TSpeciesEnum>
+PSIReactionGenerator<TSpeciesEnum>::PSIReactionGenerator(
+	const PSIReactionNetwork<TSpeciesEnum>& network) :
+	Superclass(network)
+{
+	auto tmHandler = psi::getTrapMutationHandler(
+		network.getEnableTrapMutation(), network.getMaterial());
+	auto vSizes = tmHandler->getAllVSizes();
+	for (std::size_t n = 0; n < vSizes.size(); ++n) {
+		if (vSizes[n].empty()) {
+			continue;
+		}
+		auto nv = vSizes[n].size();
+		_tmVSizes[n] = Kokkos::View<AmountType*>(
+			"TM Vacancy Sizes - " + std::to_string(n), nv);
+		auto vSizesMirror = Kokkos::View<AmountType*, Kokkos::HostSpace,
+			Kokkos::MemoryUnmanaged>(vSizes[n].data(), nv);
+		deep_copy(_tmVSizes[n], vSizesMirror);
+	}
+}
+
 template <typename TSpeciesEnum>
 template <typename TTag>
 KOKKOS_INLINE_FUNCTION
@@ -514,80 +535,81 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	// Trap-Mutation
 	auto heAmt = lo1[Species::He];
 	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && 1 <= heAmt && heAmt <= 7) {
-		auto vSize =
-			this->_clusterData.extraData.trapMutationData.tmVSizes[heAmt];
 		Composition comp1 = Composition::zero();
 		comp1[Species::He] = heAmt;
-		comp1[Species::V] = vSize;
-		Composition comp2 = Composition::zero();
-		comp2[Species::I] = vSize;
-		if (lo1 == comp1 && lo2 == comp2) {
-			Composition comp0 = Composition::zero();
-			comp0[Species::He] = heAmt;
-			auto heClusterId = subpaving.findTileId(comp0, plsm::onDevice);
-			this->addTrapMutationReaction(tag, {heClusterId, i, j});
+		auto comp2 = comp1;
+		auto& vSizes = _tmVSizes[heAmt];
+		for (std::size_t n = 0; n < vSizes.extent(0); ++n) {
+			auto& vSize = vSizes[n];
+			comp2[Species::V] = vSize;
+			if (lo1 == comp1 && lo2 == comp2) {
+				Composition compI = Composition::zero();
+				compI[Species::I] = vSize;
+				auto iClusterId = subpaving.findTileId(compI, plsm::onDevice);
+				this->addTrapMutationReaction(tag, {i, j, iClusterId});
+			}
 		}
 	}
 
 	// Special case for trap-mutation
-	if (nProd == 0) {
-		// Look for larger clusters only if one of the reactant is pure He
-		if (!(cl1Reg.isSimplex() && lo1.isOnAxis(Species::He)) &&
-			!(cl2Reg.isSimplex() && lo2.isOnAxis(Species::He))) {
-			return;
-		}
+	// if (nProd == 0) {
+	// 	// Look for larger clusters only if one of the reactant is pure He
+	// 	if (!(cl1Reg.isSimplex() && lo1.isOnAxis(Species::He)) &&
+	// 		!(cl2Reg.isSimplex() && lo2.isOnAxis(Species::He))) {
+	// 		return;
+	// 	}
 
-		// Check that both reactants contain He
-		if (cl1Reg[Species::He].begin() < 1 ||
-			cl2Reg[Species::He].begin() < 1) {
-			return;
-		}
+	// 	// Check that both reactants contain He
+	// 	if (cl1Reg[Species::He].begin() < 1 ||
+	// 		cl2Reg[Species::He].begin() < 1) {
+	// 		return;
+	// 	}
 
-		// Loop on possible I sizes
-		// TODO: get the correct value for maxISize
-		AmountType maxISize = 6;
-		for (AmountType n = 1; n <= maxISize; ++n) {
-			// Find the corresponding cluster
-			Composition comp = Composition::zero();
-			comp[Species::I] = n;
-			auto iClusterId = subpaving.findTileId(comp, plsm::onDevice);
+	// 	// Loop on possible I sizes
+	// 	// TODO: get the correct value for maxISize
+	// 	AmountType maxISize = 6;
+	// 	for (AmountType n = 1; n <= maxISize; ++n) {
+	// 		// Find the corresponding cluster
+	// 		Composition comp = Composition::zero();
+	// 		comp[Species::I] = n;
+	// 		auto iClusterId = subpaving.findTileId(comp, plsm::onDevice);
 
-			bounds[Species::V].first += 1;
-			bounds[Species::V].second += 1;
+	// 		bounds[Species::V].first += 1;
+	// 		bounds[Species::V].second += 1;
 
-			// Look for potential product
-			IndexType nProd = 0;
-			for (IndexType k = 0; k < numClusters; ++k) {
-				// Get the composition
-				const auto& prodReg = this->getCluster(k).getRegion();
-				bool isGood = true;
-				// Loop on the species
-				// TODO: check l correspond to the same species in bounds
-				// and prod
-				for (auto l : speciesNoI) {
-					if (prodReg[l()].begin() > bounds[l()].second) {
-						isGood = false;
-						break;
-					}
-					if (prodReg[l()].end() - 1 < bounds[l()].first) {
-						isGood = false;
-						break;
-					}
-				}
+	// 		// Look for potential product
+	// 		IndexType nProd = 0;
+	// 		for (IndexType k = 0; k < numClusters; ++k) {
+	// 			// Get the composition
+	// 			const auto& prodReg = this->getCluster(k).getRegion();
+	// 			bool isGood = true;
+	// 			// Loop on the species
+	// 			// TODO: check l correspond to the same species in bounds
+	// 			// and prod
+	// 			for (auto l : speciesNoI) {
+	// 				if (prodReg[l()].begin() > bounds[l()].second) {
+	// 					isGood = false;
+	// 					break;
+	// 				}
+	// 				if (prodReg[l()].end() - 1 < bounds[l()].first) {
+	// 					isGood = false;
+	// 					break;
+	// 				}
+	// 			}
 
-				if (isGood) {
-					// Increase nProd
-					nProd++;
-					this->addProductionReaction(tag, {i, j, k, iClusterId});
-					// No dissociation
-				}
-			}
-			// Stop if we found a product
-			if (nProd > 0) {
-				break;
-			}
-		}
-	}
+	// 			if (isGood) {
+	// 				// Increase nProd
+	// 				nProd++;
+	// 				this->addProductionReaction(tag, {i, j, k, iClusterId});
+	// 				// No dissociation
+	// 			}
+	// 		}
+	// 		// Stop if we found a product
+	// 		if (nProd > 0) {
+	// 			break;
+	// 		}
+	// 	}
+	// }
 }
 
 template <typename TSpeciesEnum>
