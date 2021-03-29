@@ -109,9 +109,6 @@ protected:
 	//! The vector of advection handlers.
 	std::vector<core::advection::IAdvectionHandler*> advectionHandlers;
 
-	//! The original modified trap-mutation handler created.
-	core::modified::ITrapMutationHandler* mutationHandler;
-
 	//! The number of dimensions for the problem.
 	int dimension;
 
@@ -486,7 +483,6 @@ protected:
 		fluxHandler(nullptr),
 		temperatureHandler(nullptr),
 		diffusionHandler(nullptr),
-		mutationHandler(nullptr),
 		tauBursting(10.0),
 		burstingFactor(0.1),
 		rngSeed(0),
@@ -556,9 +552,6 @@ public:
 		for (auto handler : handlers) {
 			advectionHandlers.push_back(handler.get());
 		}
-
-		// Set the modified trap-mutation handler
-		mutationHandler = material->getTrapMutationHandler().get();
 
 		// Set the minimum size for the average radius computation
 		auto numSpecies = network.getSpeciesListSize();
@@ -955,15 +948,6 @@ public:
 	getAdvectionHandlers() const override
 	{
 		return advectionHandlers;
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	core::modified::ITrapMutationHandler*
-	getMutationHandler() const override
-	{
-		return mutationHandler;
 	}
 
 	/**

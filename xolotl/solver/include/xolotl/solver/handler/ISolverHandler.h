@@ -11,7 +11,6 @@
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
-#include <xolotl/core/modified/ITrapMutationHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 #include <xolotl/options/IOptions.h>
@@ -440,14 +439,6 @@ public:
 	 */
 	virtual std::vector<core::advection::IAdvectionHandler*>
 	getAdvectionHandlers() const = 0;
-
-	/**
-	 * Get the modified trap-mutation handler.
-	 *
-	 * @return The modified trap-mutation handler
-	 */
-	virtual core::modified::ITrapMutationHandler*
-	getMutationHandler() const = 0;
 
 	/**
 	 * Get the network.

@@ -1550,25 +1550,6 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 			}
 		}
 	}
-	// Get the modified trap-mutation handler to reinitialize it
-	auto mutationHandler = solverHandler.getMutationHandler();
-	auto advecHandlers = solverHandler.getAdvectionHandlers();
-
-	// Get the vector of positions of the surface
-	std::vector<std::vector<int>> surfaceIndices;
-	for (PetscInt i = 0; i < My; i++) {
-		// Create a temporary vector
-		std::vector<int> temp;
-		for (PetscInt j = 0; j < Mz; j++) {
-			temp.push_back(solverHandler.getSurfacePosition(i, j));
-		}
-		// Add the temporary vector to the vector of surface indices
-		surfaceIndices.push_back(temp);
-	}
-
-	mutationHandler->initializeIndex3D(surfaceIndices,
-		solverHandler.getNetwork(), advecHandlers, grid, xm, xs, ym, hy, ys, zm,
-		hz, zs);
 
 	// Write the surface positions
 	if (procId == 0) {

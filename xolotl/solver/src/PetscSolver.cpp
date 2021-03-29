@@ -265,8 +265,6 @@ PetscSolver::initialize()
 	// Check the option -snes_mf_operator
 	PetscBool flagReduced;
 	ierr = PetscOptionsHasName(NULL, NULL, "-snes_mf_operator", &flagReduced);
-	auto mutationHandler = getSolverHandler().getMutationHandler();
-	mutationHandler->setEnableReducedJacobian(flagReduced);
 
 	// Create the solver context
 	getSolverHandler().createSolverContext(da);

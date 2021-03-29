@@ -269,6 +269,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateReactionRates()
 
 	using TrapMutationReactionType =
 		typename Superclass::Traits::TrapMutationReactionType;
+	// TODO: is this just the local largest rate? Is it correct?
 	auto largestRate = this->getLargestRate();
 	auto tmReactions =
 		this->_reactions.template getView<TrapMutationReactionType>();
