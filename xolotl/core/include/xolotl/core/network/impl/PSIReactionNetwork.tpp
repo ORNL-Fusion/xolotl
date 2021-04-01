@@ -218,7 +218,8 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 			Composition comp = Composition::zero();
 			comp[Species::I] = k;
 			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-			if (iProdId != subpaving.invalidIndex() && iProdId != previousIndex) {
+			if (iProdId != subpaving.invalidIndex() &&
+				iProdId != previousIndex) {
 				this->addProductionReaction(tag, {i, j, iProdId});
 				if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
 					this->addDissociationReaction(tag, {iProdId, i, j});
@@ -246,7 +247,8 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 				Composition comp = Composition::zero();
 				comp[Species::V] = prodSize;
 				auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
-			if (vProdId != subpaving.invalidIndex() && vProdId != previousIndex) {
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, vProdId});
 					previousIndex = vProdId;
 					// No dissociation
@@ -257,7 +259,8 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 				Composition comp = Composition::zero();
 				comp[Species::I] = -prodSize;
 				auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-			if (iProdId != subpaving.invalidIndex() && iProdId != previousIndex) {
+				if (iProdId != subpaving.invalidIndex() &&
+					iProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, iProdId});
 					previousIndex = iProdId;
 					// No dissociation
