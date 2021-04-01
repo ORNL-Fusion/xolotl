@@ -553,64 +553,64 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	}
 
 	// Special case for trap-mutation
-	// if (nProd == 0) {
-	// 	// Look for larger clusters only if one of the reactant is pure He
-	// 	if (!(cl1Reg.isSimplex() && lo1.isOnAxis(Species::He)) &&
-	// 		!(cl2Reg.isSimplex() && lo2.isOnAxis(Species::He))) {
-	// 		return;
-	// 	}
+	if (nProd == 0) {
+		// Look for larger clusters only if one of the reactant is pure He
+		if (!(cl1Reg.isSimplex() && lo1.isOnAxis(Species::He)) &&
+			!(cl2Reg.isSimplex() && lo2.isOnAxis(Species::He))) {
+			return;
+		}
 
-	// 	// Check that both reactants contain He
-	// 	if (cl1Reg[Species::He].begin() < 1 ||
-	// 		cl2Reg[Species::He].begin() < 1) {
-	// 		return;
-	// 	}
+		// Check that both reactants contain He
+		if (cl1Reg[Species::He].begin() < 1 ||
+			cl2Reg[Species::He].begin() < 1) {
+			return;
+		}
 
-	// 	// Loop on possible I sizes
-	// 	// TODO: get the correct value for maxISize
-	// 	AmountType maxISize = 6;
-	// 	for (AmountType n = 1; n <= maxISize; ++n) {
-	// 		// Find the corresponding cluster
-	// 		Composition comp = Composition::zero();
-	// 		comp[Species::I] = n;
-	// 		auto iClusterId = subpaving.findTileId(comp, plsm::onDevice);
+		// Loop on possible I sizes
+		// TODO: get the correct value for maxISize
+		AmountType maxISize = 6;
+		for (AmountType n = 1; n <= maxISize; ++n) {
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::I] = n;
+			auto iClusterId = subpaving.findTileId(comp, plsm::onDevice);
 
-	// 		bounds[Species::V].first += 1;
-	// 		bounds[Species::V].second += 1;
+			bounds[Species::V].first += 1;
+			bounds[Species::V].second += 1;
 
-	// 		// Look for potential product
-	// 		IndexType nProd = 0;
-	// 		for (IndexType k = 0; k < numClusters; ++k) {
-	// 			// Get the composition
-	// 			const auto& prodReg = this->getCluster(k).getRegion();
-	// 			bool isGood = true;
-	// 			// Loop on the species
-	// 			// TODO: check l correspond to the same species in bounds
-	// 			// and prod
-	// 			for (auto l : speciesNoI) {
-	// 				if (prodReg[l()].begin() > bounds[l()].second) {
-	// 					isGood = false;
-	// 					break;
-	// 				}
-	// 				if (prodReg[l()].end() - 1 < bounds[l()].first) {
-	// 					isGood = false;
-	// 					break;
-	// 				}
-	// 			}
+			// Look for potential product
+			IndexType nProd = 0;
+			for (IndexType k = 0; k < numClusters; ++k) {
+				// Get the composition
+				const auto& prodReg = this->getCluster(k).getRegion();
+				bool isGood = true;
+				// Loop on the species
+				// TODO: check l correspond to the same species in bounds
+				// and prod
+				for (auto l : speciesNoI) {
+					if (prodReg[l()].begin() > bounds[l()].second) {
+						isGood = false;
+						break;
+					}
+					if (prodReg[l()].end() - 1 < bounds[l()].first) {
+						isGood = false;
+						break;
+					}
+				}
 
-	// 			if (isGood) {
-	// 				// Increase nProd
-	// 				nProd++;
-	// 				this->addProductionReaction(tag, {i, j, k, iClusterId});
-	// 				// No dissociation
-	// 			}
-	// 		}
-	// 		// Stop if we found a product
-	// 		if (nProd > 0) {
-	// 			break;
-	// 		}
-	// 	}
-	// }
+				if (isGood) {
+					// Increase nProd
+					nProd++;
+					this->addProductionReaction(tag, {i, j, k, iClusterId});
+					// No dissociation
+				}
+			}
+			// Stop if we found a product
+			if (nProd > 0) {
+				break;
+			}
+		}
+	}
 }
 
 template <typename TSpeciesEnum>
