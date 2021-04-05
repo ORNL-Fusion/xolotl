@@ -213,70 +213,73 @@ ReSolutionReaction<TNetwork, TDerived>::computeConnectivity(
 	// Get the total number of elements in each cluster
 	auto cl = this->_clusterData.getCluster(_reactant);
 	const auto& clReg = cl.getRegion();
-	const bool clIsSimplex = clReg.isSimplex();
 	auto prod1 = this->_clusterData.getCluster(_products[0]);
 	const auto& prod1Reg = prod1.getRegion();
-	const bool prod1IsSimplex = prod1Reg.isSimplex();
 	auto prod2 = this->_clusterData.getCluster(_products[1]);
 	const auto& prod2Reg = prod2.getRegion();
-	const bool prod2IsSimplex = prod2Reg.isSimplex();
 
 	// The reactant connects with the reactant
 	this->addConnectivity(_reactant, _reactant, connectivity);
-	if (!clIsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] != invalidIndex) {
 			this->addConnectivity(
 				_reactant, _reactantMomentIds[i()], connectivity);
 			this->addConnectivity(
 				_reactantMomentIds[i()], _reactant, connectivity);
 			for (auto j : speciesRangeNoI) {
-				this->addConnectivity(_reactantMomentIds[i()],
-					_reactantMomentIds[j()], connectivity);
+				if (_reactantMomentIds[j()] != invalidIndex) {
+					this->addConnectivity(_reactantMomentIds[i()],
+						_reactantMomentIds[j()], connectivity);
+				}
 			}
 		}
 	}
 	// Each product connects with  the reactant
 	// Product 1 with reactant
 	this->addConnectivity(_products[0], _reactant, connectivity);
-	if (!clIsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] != invalidIndex) {
 			this->addConnectivity(
 				_products[0], _reactantMomentIds[i()], connectivity);
 		}
 	}
-	if (!prod1IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[0][i()] != invalidIndex) {
 			this->addConnectivity(
 				_productMomentIds[0][i()], _reactant, connectivity);
 		}
 	}
-	if (!clIsSimplex && !prod1IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[0][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
-				this->addConnectivity(_productMomentIds[0][i()],
-					_reactantMomentIds[j()], connectivity);
+				if (_reactantMomentIds[j()] != invalidIndex) {
+					this->addConnectivity(_productMomentIds[0][i()],
+						_reactantMomentIds[j()], connectivity);
+				}
 			}
 		}
 	}
 	// Product 2 with reactant
 	this->addConnectivity(_products[1], _reactant, connectivity);
-	if (!clIsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] != invalidIndex) {
 			this->addConnectivity(
 				_products[1], _reactantMomentIds[i()], connectivity);
 		}
 	}
-	if (!prod2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[1][i()] != invalidIndex) {
 			this->addConnectivity(
 				_productMomentIds[1][i()], _reactant, connectivity);
 		}
 	}
-	if (!clIsSimplex && !prod2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[1][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
-				this->addConnectivity(_productMomentIds[1][i()],
-					_reactantMomentIds[j()], connectivity);
+				if (_reactantMomentIds[j()] != invalidIndex) {
+					this->addConnectivity(_productMomentIds[1][i()],
+						_reactantMomentIds[j()], connectivity);
+				}
 			}
 		}
 	}
@@ -293,18 +296,15 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	// Get the total number of elements in each cluster
 	auto cl = this->_clusterData.getCluster(_reactant);
 	const auto& clReg = cl.getRegion();
-	const bool clIsSimplex = clReg.isSimplex();
 	auto prod1 = this->_clusterData.getCluster(_products[0]);
 	const auto& prod1Reg = prod1.getRegion();
-	const bool prod1IsSimplex = prod1Reg.isSimplex();
 	auto prod2 = this->_clusterData.getCluster(_products[1]);
 	const auto& prod2Reg = prod2.getRegion();
-	const bool prod2IsSimplex = prod2Reg.isSimplex();
 
 	// The reactant connects with the reactant
 	this->addConnectivity(_reactant, _reactant, connectivity);
-	if (!clIsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (i() == j())
 					this->addConnectivity(_reactantMomentIds[i()],
@@ -316,8 +316,8 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	// Product 1 with reactant
 	if (_products[0] == _reactant)
 		this->addConnectivity(_products[0], _reactant, connectivity);
-	if (!clIsSimplex && !prod1IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[0][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_productMomentIds[0][i()] == _reactantMomentIds[j()])
 					this->addConnectivity(_productMomentIds[0][i()],
@@ -328,8 +328,8 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	// Product 2 with reactant
 	if (_products[1] == _reactant)
 		this->addConnectivity(_products[1], _reactant, connectivity);
-	if (!clIsSimplex && !prod2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[1][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_productMomentIds[1][i()] == _reactantMomentIds[j()])
 					this->addConnectivity(_productMomentIds[1][i()],
@@ -572,7 +572,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			df = this->_rate(gridIndex) / (double)volCl;
 			// Compute the values
 			for (auto i : speciesRangeNoI) {
-				if (k() == i() && _reactantMomentIds[i()] != invalidIndex)
+				if (k() == i())
 					Kokkos::atomic_sub(
 						&values(connectivity(
 							_reactantMomentIds[k()], _reactantMomentIds[i()])),
@@ -583,8 +583,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 		if (_productMomentIds[0][k()] != invalidIndex) {
 			df = this->_rate(gridIndex) / (double)volProd1;
 			for (auto i : speciesRangeNoI) {
-				if (_productMomentIds[0][k()] == _reactantMomentIds[i()] &&
-					_reactantMomentIds[i()] != invalidIndex)
+				if (_productMomentIds[0][k()] == _reactantMomentIds[i()])
 					Kokkos::atomic_add(
 						&values(connectivity(_productMomentIds[0][k()],
 							_reactantMomentIds[i()])),
@@ -592,11 +591,10 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			}
 		}
 		// For the second product
-		if (_productMomentIds[1][k()] != invalidIndex) {
+		if (_productMomentIds[0][k()] != invalidIndex) {
 			df = this->_rate(gridIndex) / (double)volProd2;
 			for (auto i : speciesRangeNoI) {
-				if (_productMomentIds[1][k()] == _reactantMomentIds[i()] &&
-					_reactantMomentIds[i()] != invalidIndex)
+				if (_productMomentIds[1][k()] == _reactantMomentIds[i()])
 					Kokkos::atomic_add(
 						&values(connectivity(_productMomentIds[1][k()],
 							_reactantMomentIds[i()])),

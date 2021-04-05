@@ -549,80 +549,87 @@ ProductionReaction<TNetwork, TDerived>::computeConnectivity(
 	// Get the total number of elements in each cluster
 	auto cl1 = this->_clusterData.getCluster(_reactants[0]);
 	const auto& cl1Reg = cl1.getRegion();
-	const bool cl1IsSimplex = cl1Reg.isSimplex();
 	auto cl2 = this->_clusterData.getCluster(_reactants[1]);
 	const auto& cl2Reg = cl2.getRegion();
-	const bool cl2IsSimplex = cl2Reg.isSimplex();
 	// Each reactant connects with all the reactants
 	// Reactant 1 with reactant 1
 	this->addConnectivity(_reactants[0], _reactants[0], connectivity);
-	if (!cl1IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[0][i()] != invalidIndex) {
 			this->addConnectivity(
 				_reactants[0], _reactantMomentIds[0][i()], connectivity);
 			this->addConnectivity(
 				_reactantMomentIds[0][i()], _reactants[0], connectivity);
 			for (auto j : speciesRangeNoI) {
-				this->addConnectivity(_reactantMomentIds[0][i()],
-					_reactantMomentIds[0][j()], connectivity);
+				if (_reactantMomentIds[0][j()] != invalidIndex) {
+					this->addConnectivity(_reactantMomentIds[0][i()],
+						_reactantMomentIds[0][j()], connectivity);
+				}
 			}
 		}
 	}
+
 	// Reactant 2 with reactant 1
 	this->addConnectivity(_reactants[1], _reactants[0], connectivity);
-	if (!cl1IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[0][i()] != invalidIndex) {
 			this->addConnectivity(
 				_reactants[1], _reactantMomentIds[0][i()], connectivity);
 		}
 	}
-	if (!cl2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[1][i()] != invalidIndex) {
 			this->addConnectivity(
 				_reactantMomentIds[1][i()], _reactants[0], connectivity);
 		}
 	}
-	if (!cl1IsSimplex && !cl2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[1][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
-				this->addConnectivity(_reactantMomentIds[1][i()],
-					_reactantMomentIds[0][j()], connectivity);
+				if (_reactantMomentIds[0][j()] != invalidIndex) {
+					this->addConnectivity(_reactantMomentIds[1][i()],
+						_reactantMomentIds[0][j()], connectivity);
+				}
 			}
 		}
 	}
 	// Reactant 1 with reactant 2
 	this->addConnectivity(_reactants[0], _reactants[1], connectivity);
-	if (!cl2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[1][i()] != invalidIndex) {
 			this->addConnectivity(
 				_reactants[0], _reactantMomentIds[1][i()], connectivity);
 		}
 	}
-	if (!cl1IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[0][i()] != invalidIndex) {
 			this->addConnectivity(
 				_reactantMomentIds[0][i()], _reactants[1], connectivity);
 		}
 	}
-	if (!cl1IsSimplex && !cl2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[0][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
-				this->addConnectivity(_reactantMomentIds[0][i()],
-					_reactantMomentIds[1][j()], connectivity);
+				if (_reactantMomentIds[1][j()] != invalidIndex) {
+					this->addConnectivity(_reactantMomentIds[0][i()],
+						_reactantMomentIds[1][j()], connectivity);
+				}
 			}
 		}
 	}
 	// Reactant 2 with reactant 2
 	this->addConnectivity(_reactants[1], _reactants[1], connectivity);
-	if (!cl2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[1][i()] != invalidIndex) {
 			this->addConnectivity(
 				_reactants[1], _reactantMomentIds[1][i()], connectivity);
 			this->addConnectivity(
 				_reactantMomentIds[1][i()], _reactants[1], connectivity);
 			for (auto j : speciesRangeNoI) {
-				this->addConnectivity(_reactantMomentIds[1][i()],
-					_reactantMomentIds[1][j()], connectivity);
+				if (_reactantMomentIds[1][j()] != invalidIndex) {
+					this->addConnectivity(_reactantMomentIds[1][i()],
+						_reactantMomentIds[1][j()], connectivity);
+				}
 			}
 		}
 	}
@@ -634,49 +641,52 @@ ProductionReaction<TNetwork, TDerived>::computeConnectivity(
 		}
 		auto prod = this->_clusterData.getCluster(prodId);
 		const auto& prodReg = prod.getRegion();
-		const bool prodIsSimplex = prodReg.isSimplex();
 
 		// With reactant 1
 		this->addConnectivity(prodId, _reactants[0], connectivity);
-		if (!cl1IsSimplex) {
-			for (auto i : speciesRangeNoI) {
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[0][i()] != invalidIndex) {
 				this->addConnectivity(
 					prodId, _reactantMomentIds[0][i()], connectivity);
 			}
 		}
-		if (!prodIsSimplex) {
-			for (auto i : speciesRangeNoI) {
+		for (auto i : speciesRangeNoI) {
+			if (_productMomentIds[p][i()] != invalidIndex) {
 				this->addConnectivity(
 					_productMomentIds[p][i()], _reactants[0], connectivity);
 			}
 		}
-		if (!cl1IsSimplex && !prodIsSimplex) {
-			for (auto i : speciesRangeNoI) {
+		for (auto i : speciesRangeNoI) {
+			if (_productMomentIds[p][i()] != invalidIndex) {
 				for (auto j : speciesRangeNoI) {
-					this->addConnectivity(_productMomentIds[p][i()],
-						_reactantMomentIds[0][j()], connectivity);
+					if (_reactantMomentIds[0][j()] != invalidIndex) {
+						this->addConnectivity(_productMomentIds[p][i()],
+							_reactantMomentIds[0][j()], connectivity);
+					}
 				}
 			}
 		}
 		// With reactant 2
 		this->addConnectivity(prodId, _reactants[1], connectivity);
-		if (!cl2IsSimplex) {
-			for (auto i : speciesRangeNoI) {
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[1][i()] != invalidIndex) {
 				this->addConnectivity(
 					prodId, _reactantMomentIds[1][i()], connectivity);
 			}
 		}
-		if (!prodIsSimplex) {
-			for (auto i : speciesRangeNoI) {
+		for (auto i : speciesRangeNoI) {
+			if (_productMomentIds[p][i()] != invalidIndex) {
 				this->addConnectivity(
 					_productMomentIds[p][i()], _reactants[1], connectivity);
 			}
 		}
-		if (!cl2IsSimplex && !prodIsSimplex) {
-			for (auto i : speciesRangeNoI) {
+		for (auto i : speciesRangeNoI) {
+			if (_productMomentIds[p][i()] != invalidIndex) {
 				for (auto j : speciesRangeNoI) {
-					this->addConnectivity(_productMomentIds[p][i()],
-						_reactantMomentIds[1][j()], connectivity);
+					if (_reactantMomentIds[1][j()] != invalidIndex) {
+						this->addConnectivity(_productMomentIds[p][i()],
+							_reactantMomentIds[1][j()], connectivity);
+					}
 				}
 			}
 		}
@@ -693,15 +703,13 @@ ProductionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	// Get the total number of elements in each cluster
 	auto cl1 = this->_clusterData.getCluster(_reactants[0]);
 	const auto& cl1Reg = cl1.getRegion();
-	const bool cl1IsSimplex = cl1Reg.isSimplex();
 	auto cl2 = this->_clusterData.getCluster(_reactants[1]);
 	const auto& cl2Reg = cl2.getRegion();
-	const bool cl2IsSimplex = cl2Reg.isSimplex();
 	// Each reactant connects with all the reactants
 	// Reactant 1 with reactant 1
 	this->addConnectivity(_reactants[0], _reactants[0], connectivity);
-	if (!cl1IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[0][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (i() == j())
 					this->addConnectivity(_reactantMomentIds[0][i()],
@@ -712,8 +720,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	// Reactant 2 with reactant 1
 	if (_reactants[1] == _reactants[0])
 		this->addConnectivity(_reactants[1], _reactants[0], connectivity);
-	if (!cl1IsSimplex && !cl2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[1][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_reactantMomentIds[1][i()] == _reactantMomentIds[0][j()])
 					this->addConnectivity(_reactantMomentIds[1][i()],
@@ -724,8 +732,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	// Reactant 1 with reactant 2
 	if (_reactants[1] == _reactants[0])
 		this->addConnectivity(_reactants[0], _reactants[1], connectivity);
-	if (!cl1IsSimplex && !cl2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[0][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_reactantMomentIds[0][i()] == _reactantMomentIds[1][j()])
 					this->addConnectivity(_reactantMomentIds[0][i()],
@@ -735,8 +743,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	}
 	// Reactant 2 with reactant 2
 	this->addConnectivity(_reactants[1], _reactants[1], connectivity);
-	if (!cl2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[1][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (i() == j())
 					this->addConnectivity(_reactantMomentIds[1][i()],
@@ -752,13 +760,12 @@ ProductionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 		}
 		auto prod = this->_clusterData.getCluster(prodId);
 		const auto& prodReg = prod.getRegion();
-		const bool prodIsSimplex = prodReg.isSimplex();
 
 		// With reactant 1
 		if (prodId == _reactants[0])
 			this->addConnectivity(prodId, _reactants[0], connectivity);
-		if (!cl1IsSimplex && !prodIsSimplex) {
-			for (auto i : speciesRangeNoI) {
+		for (auto i : speciesRangeNoI) {
+			if (_productMomentIds[p][i()] != invalidIndex) {
 				for (auto j : speciesRangeNoI) {
 					if (_productMomentIds[p][i()] == _reactantMomentIds[0][j()])
 						this->addConnectivity(_productMomentIds[p][i()],
@@ -769,8 +776,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 		// With reactant 2
 		if (prodId == _reactants[1])
 			this->addConnectivity(prodId, _reactants[1], connectivity);
-		if (!cl2IsSimplex && !prodIsSimplex) {
-			for (auto i : speciesRangeNoI) {
+		for (auto i : speciesRangeNoI) {
+			if (_productMomentIds[p][i()] != invalidIndex) {
 				for (auto j : speciesRangeNoI) {
 					if (_productMomentIds[p][i()] == _reactantMomentIds[1][j()])
 						this->addConnectivity(_productMomentIds[p][i()],
@@ -823,10 +830,8 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 		f += this->_coefs(i() + 1, 0, 0, 0) * cmR1[i()] * cR2;
 	}
 	for (auto j : speciesRangeNoI) {
-		f += this->_coefs(0, j() + 1, 0, 0) * cR1;
-		cmR2[j()];
+		f += this->_coefs(0, j() + 1, 0, 0) * cR1 * cmR2[j()];
 	}
-
 	for (auto i : speciesRangeNoI) {
 		for (auto j : speciesRangeNoI) {
 			f += this->_coefs(i() + 1, j() + 1, 0, 0) * cmR1[i()] * cmR2[j()];
@@ -872,11 +877,11 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 		// For the second reactant
 		if (_reactantMomentIds[1][k()] != invalidIndex) {
 			f = this->_coefs(0, 0, 1, k() + 1) * cR1 * cR2;
-			for (auto j : speciesRangeNoI) {
-				f += this->_coefs(0, j() + 1, 1, k() + 1) * cR1 * cmR2[j()];
-			}
 			for (auto i : speciesRangeNoI) {
 				f += this->_coefs(i() + 1, 0, 1, k() + 1) * cmR1[i()] * cR2;
+			}
+			for (auto j : speciesRangeNoI) {
+				f += this->_coefs(0, j() + 1, 1, k() + 1) * cR1 * cmR2[j()];
 			}
 			for (auto i : speciesRangeNoI) {
 				for (auto j : speciesRangeNoI) {
@@ -1230,12 +1235,10 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 				for (auto i : speciesRangeNoI) {
 					if (_reactantMomentIds[1][i()] != invalidIndex) {
 						temp = this->_coefs(0, i() + 1, p + 2, k() + 1) * cR1;
-						if (volCl1 > 1) {
-							for (auto j : speciesRangeNoI) {
-								temp += this->_coefs(
-											j() + 1, i() + 1, p + 2, k() + 1) *
-									cmR1[j()];
-							}
+						for (auto j : speciesRangeNoI) {
+							temp +=
+								this->_coefs(j() + 1, i() + 1, p + 2, k() + 1) *
+								cmR1[j()];
 						}
 						Kokkos::atomic_add(
 							&values(connectivity(_productMomentIds[p][k()],
@@ -1246,7 +1249,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 			}
 		}
 	}
-} // namespace network
+}
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
@@ -1348,34 +1351,29 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			// First for the first reactant
 			// (d / dL_1^A)
 			for (auto i : speciesRangeNoI) {
-				if (_reactantMomentIds[0][i()] != invalidIndex) {
-					temp = this->_coefs(i() + 1, 0, 0, k() + 1) * cR2;
-					for (auto j : speciesRangeNoI) {
-						temp += this->_coefs(i() + 1, j() + 1, 0, k() + 1) *
-							cmR1[j()];
-					}
-					if (k() == i())
-						Kokkos::atomic_sub(
-							&values(connectivity(_reactantMomentIds[0][k()],
-								_reactantMomentIds[0][i()])),
-							this->_rate(gridIndex) * temp / (double)volCl1);
+				temp = this->_coefs(i() + 1, 0, 0, k() + 1) * cR2;
+				for (auto j : speciesRangeNoI) {
+					temp +=
+						this->_coefs(i() + 1, j() + 1, 0, k() + 1) * cmR2[j()];
 				}
+				if (k() == i())
+					Kokkos::atomic_sub(
+						&values(connectivity(_reactantMomentIds[0][k()],
+							_reactantMomentIds[0][i()])),
+						this->_rate(gridIndex) * temp / (double)volCl1);
 			}
 			// (d / dL_1^B)
 			for (auto i : speciesRangeNoI) {
-				if (_reactantMomentIds[1][i()] != invalidIndex) {
-					temp = this->_coefs(0, i() + 1, 0, k() + 1) * cR1;
-					for (auto j : speciesRangeNoI) {
-						temp += this->_coefs(j() + 1, i() + 1, 0, k() + 1) *
-							cmR1[j()];
-					}
-					if (_reactantMomentIds[0][k()] ==
-						_reactantMomentIds[1][i()])
-						Kokkos::atomic_sub(
-							&values(connectivity(_reactantMomentIds[0][k()],
-								_reactantMomentIds[1][i()])),
-							this->_rate(gridIndex) * temp / (double)volCl1);
+				temp = this->_coefs(0, i() + 1, 0, k() + 1) * cR1;
+				for (auto j : speciesRangeNoI) {
+					temp +=
+						this->_coefs(j() + 1, i() + 1, 0, k() + 1) * cmR1[j()];
 				}
+				if (_reactantMomentIds[0][k()] == _reactantMomentIds[1][i()])
+					Kokkos::atomic_sub(
+						&values(connectivity(_reactantMomentIds[0][k()],
+							_reactantMomentIds[1][i()])),
+						this->_rate(gridIndex) * temp / (double)volCl1);
 			}
 		}
 	}
@@ -1386,34 +1384,29 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			// First for the second reactant
 			// (d / dL_1^A)
 			for (auto i : speciesRangeNoI) {
-				if (_reactantMomentIds[0][i()] != invalidIndex) {
-					temp = this->_coefs(i() + 1, 0, 1, k() + 1) * cR2;
-					for (auto j : speciesRangeNoI) {
-						temp += this->_coefs(i() + 1, j() + 1, 1, k() + 1) *
-							cmR2[j()];
-					}
-					if (_reactantMomentIds[1][k()] ==
-						_reactantMomentIds[0][i()])
-						Kokkos::atomic_sub(
-							&values(connectivity(_reactantMomentIds[1][k()],
-								_reactantMomentIds[0][i()])),
-							this->_rate(gridIndex) * temp / (double)volCl2);
+				temp = this->_coefs(i() + 1, 0, 1, k() + 1) * cR2;
+				for (auto j : speciesRangeNoI) {
+					temp +=
+						this->_coefs(i() + 1, j() + 1, 1, k() + 1) * cmR2[j()];
 				}
+				if (_reactantMomentIds[1][k()] == _reactantMomentIds[0][i()])
+					Kokkos::atomic_sub(
+						&values(connectivity(_reactantMomentIds[1][k()],
+							_reactantMomentIds[0][i()])),
+						this->_rate(gridIndex) * temp / (double)volCl2);
 			}
 			// (d / dL_1^B)
 			for (auto i : speciesRangeNoI) {
-				if (_reactantMomentIds[1][i()] != invalidIndex) {
-					temp = this->_coefs(0, i() + 1, 1, k() + 1) * cR1;
-					for (auto j : speciesRangeNoI) {
-						temp += this->_coefs(j() + 1, i() + 1, 1, k() + 1) *
-							cmR1[j()];
-					}
-					if (k() == i())
-						Kokkos::atomic_sub(
-							&values(connectivity(_reactantMomentIds[1][k()],
-								_reactantMomentIds[1][i()])),
-							this->_rate(gridIndex) * temp / (double)volCl2);
+				temp = this->_coefs(0, i() + 1, 1, k() + 1) * cR1;
+				for (auto j : speciesRangeNoI) {
+					temp +=
+						this->_coefs(j() + 1, i() + 1, 1, k() + 1) * cmR1[j()];
 				}
+				if (k() == i())
+					Kokkos::atomic_sub(
+						&values(connectivity(_reactantMomentIds[1][k()],
+							_reactantMomentIds[1][i()])),
+						this->_rate(gridIndex) * temp / (double)volCl2);
 			}
 		}
 	}
@@ -1434,39 +1427,29 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			if (_productMomentIds[p][k()] != invalidIndex) {
 				// (d / dL_1^A)
 				for (auto i : speciesRangeNoI) {
-					if (_reactantMomentIds[0][i()] != invalidIndex) {
-						temp = this->_coefs(i() + 1, 0, p + 2, k() + 1) * cR2;
-						for (auto j : speciesRangeNoI) {
-							temp +=
-								this->_coefs(i() + 1, j() + 1, p + 2, k() + 1) *
-								cmR2[j()];
-						}
-						if (_productMomentIds[p][k()] ==
-							_reactantMomentIds[0][i()])
-							Kokkos::atomic_add(
-								&values(connectivity(_productMomentIds[p][k()],
-									_reactantMomentIds[0][i()])),
-								this->_rate(gridIndex) * temp /
-									(double)volProd);
+					temp = this->_coefs(i() + 1, 0, p + 2, k() + 1) * cR2;
+					for (auto j : speciesRangeNoI) {
+						temp += this->_coefs(i() + 1, j() + 1, p + 2, k() + 1) *
+							cmR2[j()];
 					}
+					if (_productMomentIds[p][k()] == _reactantMomentIds[0][i()])
+						Kokkos::atomic_add(
+							&values(connectivity(_productMomentIds[p][k()],
+								_reactantMomentIds[0][i()])),
+							this->_rate(gridIndex) * temp / (double)volProd);
 				}
 				// (d / dL_1^B)
 				for (auto i : speciesRangeNoI) {
-					if (_reactantMomentIds[1][i()] != invalidIndex) {
-						temp = this->_coefs(0, i() + 1, p + 2, k() + 1) * cR1;
-						for (auto j : speciesRangeNoI) {
-							temp +=
-								this->_coefs(j() + 1, i() + 1, p + 2, k() + 1) *
-								cmR1[j()];
-						}
-						if (_productMomentIds[p][k()] ==
-							_reactantMomentIds[1][i()])
-							Kokkos::atomic_add(
-								&values(connectivity(_productMomentIds[p][k()],
-									_reactantMomentIds[1][i()])),
-								this->_rate(gridIndex) * temp /
-									(double)volProd);
+					temp = this->_coefs(0, i() + 1, p + 2, k() + 1) * cR1;
+					for (auto j : speciesRangeNoI) {
+						temp += this->_coefs(j() + 1, i() + 1, p + 2, k() + 1) *
+							cmR1[j()];
 					}
+					if (_productMomentIds[p][k()] == _reactantMomentIds[1][i()])
+						Kokkos::atomic_add(
+							&values(connectivity(_productMomentIds[p][k()],
+								_reactantMomentIds[1][i()])),
+							this->_rate(gridIndex) * temp / (double)volProd);
 				}
 			}
 		}
@@ -1556,8 +1539,7 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 	auto nOverlap =
 		static_cast<double>(this->computeOverlap(pr1RR, pr2RR, clRR, cl2RR));
 
-	// The first coefficient is simply the overlap because it is the sum
-	// over 1
+	// The first coefficient is simply the overlap because it is the sum over 1
 	this->_coefs(0, 0, 0, 0) = nOverlap;
 	for (auto i : speciesRangeNoI) {
 		auto factor = nOverlap / this->_widths[i()];
@@ -1588,8 +1570,8 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 	// possible sums over distances for the flux
 	for (auto i : speciesRangeNoI) {
 		auto factor = nOverlap / this->_widths[i()];
-		// Now we deal with the coefficients needed for the partial
-		// derivatives Starting with the reactant
+		// Now we deal with the coefficients needed for the partial derivatives
+		// Starting with the reactant
 		for (auto k : speciesRangeNoI) {
 			// Second order sum
 			if (k == i) {
@@ -1679,70 +1661,73 @@ DissociationReaction<TNetwork, TDerived>::computeConnectivity(
 	// Get the total number of elements in each cluster
 	auto cl = this->_clusterData.getCluster(_reactant);
 	const auto& clReg = cl.getRegion();
-	const bool clIsSimplex = clReg.isSimplex();
 	auto prod1 = this->_clusterData.getCluster(_products[0]);
 	const auto& prod1Reg = prod1.getRegion();
-	const bool prod1IsSimplex = prod1Reg.isSimplex();
 	auto prod2 = this->_clusterData.getCluster(_products[1]);
 	const auto& prod2Reg = prod2.getRegion();
-	const bool prod2IsSimplex = prod2Reg.isSimplex();
 
 	// The reactant connects with the reactant
 	this->addConnectivity(_reactant, _reactant, connectivity);
-	if (!clIsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] != invalidIndex) {
 			this->addConnectivity(
 				_reactant, _reactantMomentIds[i()], connectivity);
 			this->addConnectivity(
 				_reactantMomentIds[i()], _reactant, connectivity);
 			for (auto j : speciesRangeNoI) {
-				this->addConnectivity(_reactantMomentIds[i()],
-					_reactantMomentIds[j()], connectivity);
+				if (_reactantMomentIds[j()] != invalidIndex) {
+					this->addConnectivity(_reactantMomentIds[i()],
+						_reactantMomentIds[j()], connectivity);
+				}
 			}
 		}
 	}
 	// Each product connects with  the reactant
 	// Product 1 with reactant
 	this->addConnectivity(_products[0], _reactant, connectivity);
-	if (!clIsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] != invalidIndex) {
 			this->addConnectivity(
 				_products[0], _reactantMomentIds[i()], connectivity);
 		}
 	}
-	if (!prod1IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[0][i()] != invalidIndex) {
 			this->addConnectivity(
 				_productMomentIds[0][i()], _reactant, connectivity);
 		}
 	}
-	if (!clIsSimplex && !prod1IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[0][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
-				this->addConnectivity(_productMomentIds[0][i()],
-					_reactantMomentIds[j()], connectivity);
+				if (_reactantMomentIds[j()] != invalidIndex) {
+					this->addConnectivity(_productMomentIds[0][i()],
+						_reactantMomentIds[j()], connectivity);
+				}
 			}
 		}
 	}
 	// Product 2 with reactant
 	this->addConnectivity(_products[1], _reactant, connectivity);
-	if (!clIsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] != invalidIndex) {
 			this->addConnectivity(
 				_products[1], _reactantMomentIds[i()], connectivity);
 		}
 	}
-	if (!prod2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[1][i()] != invalidIndex) {
 			this->addConnectivity(
 				_productMomentIds[1][i()], _reactant, connectivity);
 		}
 	}
-	if (!clIsSimplex && !prod2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[1][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
-				this->addConnectivity(_productMomentIds[1][i()],
-					_reactantMomentIds[j()], connectivity);
+				if (_reactantMomentIds[j()] != invalidIndex) {
+					this->addConnectivity(_productMomentIds[1][i()],
+						_reactantMomentIds[j()], connectivity);
+				}
 			}
 		}
 	}
@@ -1759,18 +1744,15 @@ DissociationReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	// Get the total number of elements in each cluster
 	auto cl = this->_clusterData.getCluster(_reactant);
 	const auto& clReg = cl.getRegion();
-	const bool clIsSimplex = clReg.isSimplex();
 	auto prod1 = this->_clusterData.getCluster(_products[0]);
 	const auto& prod1Reg = prod1.getRegion();
-	const bool prod1IsSimplex = prod1Reg.isSimplex();
 	auto prod2 = this->_clusterData.getCluster(_products[1]);
 	const auto& prod2Reg = prod2.getRegion();
-	const bool prod2IsSimplex = prod2Reg.isSimplex();
 
 	// The reactant connects with the reactant
 	this->addConnectivity(_reactant, _reactant, connectivity);
-	if (!clIsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (i() == j())
 					this->addConnectivity(_reactantMomentIds[i()],
@@ -1782,8 +1764,8 @@ DissociationReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	// Product 1 with reactant
 	if (_products[0] == _reactant)
 		this->addConnectivity(_products[0], _reactant, connectivity);
-	if (!clIsSimplex && !prod1IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[0][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_productMomentIds[0][i()] == _reactantMomentIds[j()])
 					this->addConnectivity(_productMomentIds[0][i()],
@@ -1794,8 +1776,8 @@ DissociationReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	// Product 2 with reactant
 	if (_products[1] == _reactant)
 		this->addConnectivity(_products[1], _reactant, connectivity);
-	if (!clIsSimplex && !prod2IsSimplex) {
-		for (auto i : speciesRangeNoI) {
+	for (auto i : speciesRangeNoI) {
+		if (_productMomentIds[1][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_productMomentIds[1][i()] == _reactantMomentIds[j()])
 					this->addConnectivity(_productMomentIds[1][i()],
@@ -2038,7 +2020,7 @@ DissociationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			df = this->_rate(gridIndex) / (double)volCl;
 			// Compute the values
 			for (auto i : speciesRangeNoI) {
-				if (k() == i() && _reactantMomentIds[i()] != invalidIndex)
+				if (k() == i())
 					Kokkos::atomic_sub(
 						&values(connectivity(
 							_reactantMomentIds[k()], _reactantMomentIds[i()])),
@@ -2049,8 +2031,7 @@ DissociationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 		if (_productMomentIds[0][k()] != invalidIndex) {
 			df = this->_rate(gridIndex) / (double)volProd1;
 			for (auto i : speciesRangeNoI) {
-				if (_productMomentIds[0][k()] == _reactantMomentIds[i()] &&
-					_reactantMomentIds[i()] != invalidIndex)
+				if (_productMomentIds[0][k()] == _reactantMomentIds[i()])
 					Kokkos::atomic_add(
 						&values(connectivity(_productMomentIds[0][k()],
 							_reactantMomentIds[i()])),
@@ -2058,11 +2039,10 @@ DissociationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			}
 		}
 		// For the second product
-		if (_productMomentIds[1][k()] != invalidIndex) {
+		if (_productMomentIds[0][k()] != invalidIndex) {
 			df = this->_rate(gridIndex) / (double)volProd2;
 			for (auto i : speciesRangeNoI) {
-				if (_productMomentIds[1][k()] == _reactantMomentIds[i()] &&
-					_reactantMomentIds[i()] != invalidIndex)
+				if (_productMomentIds[1][k()] == _reactantMomentIds[i()])
 					Kokkos::atomic_add(
 						&values(connectivity(_productMomentIds[1][k()],
 							_reactantMomentIds[i()])),
