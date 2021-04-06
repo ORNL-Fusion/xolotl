@@ -806,22 +806,22 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR1 = concentrations[_reactants[0]];
-	std::vector<double> cmR1;
+	Kokkos::Array<double, nMomentIds> cmR1;
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[0][i()] == invalidIndex) {
-			cmR1.push_back(0.0);
+			cmR1[i()] = 0.0;
 		}
 		else
-			cmR1.push_back(concentrations[_reactantMomentIds[0][i()]]);
+			cmR1[i()] = concentrations[_reactantMomentIds[0][i()]];
 	}
 	auto cR2 = concentrations[_reactants[1]];
-	std::vector<double> cmR2;
+	Kokkos::Array<double, nMomentIds> cmR2;
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[1][i()] == invalidIndex) {
-			cmR2.push_back(0.0);
+			cmR2[i()] = 0.0;
 		}
 		else
-			cmR2.push_back(concentrations[_reactantMomentIds[1][i()]]);
+			cmR2[i()] = concentrations[_reactantMomentIds[1][i()]];
 	}
 
 	// Compute the flux for the 0th order moments
@@ -954,22 +954,22 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR1 = concentrations[_reactants[0]];
-	std::vector<double> cmR1;
+	Kokkos::Array<double, nMomentIds> cmR1;
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[0][i()] == invalidIndex) {
-			cmR1.push_back(0.0);
+			cmR1[i()] = 0.0;
 		}
 		else
-			cmR1.push_back(concentrations[_reactantMomentIds[0][i()]]);
+			cmR1[i()] = concentrations[_reactantMomentIds[0][i()]];
 	}
 	auto cR2 = concentrations[_reactants[1]];
-	std::vector<double> cmR2;
+	Kokkos::Array<double, nMomentIds> cmR2;
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[1][i()] == invalidIndex) {
-			cmR2.push_back(0.0);
+			cmR2[i()] = 0.0;
 		}
 		else
-			cmR2.push_back(concentrations[_reactantMomentIds[1][i()]]);
+			cmR2[i()] = concentrations[_reactantMomentIds[1][i()]];
 	}
 
 	// Compute the partials for the 0th order moments
@@ -1276,22 +1276,22 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR1 = concentrations[_reactants[0]];
-	std::vector<double> cmR1;
+	Kokkos::Array<double, nMomentIds> cmR1;
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[0][i()] == invalidIndex) {
-			cmR1.push_back(0.0);
+			cmR1[i()] = 0.0;
 		}
 		else
-			cmR1.push_back(concentrations[_reactantMomentIds[0][i()]]);
+			cmR1[i()] = concentrations[_reactantMomentIds[0][i()]];
 	}
 	auto cR2 = concentrations[_reactants[1]];
-	std::vector<double> cmR2;
+	Kokkos::Array<double, nMomentIds> cmR2;
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[1][i()] == invalidIndex) {
-			cmR2.push_back(0.0);
+			cmR2[i()] = 0.0;
 		}
 		else
-			cmR2.push_back(concentrations[_reactantMomentIds[1][i()]]);
+			cmR2[i()] = concentrations[_reactantMomentIds[1][i()]];
 	}
 
 	// Compute the partials for the 0th order moments
@@ -1808,13 +1808,13 @@ DissociationReaction<TNetwork, TDerived>::computeFlux(
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR = concentrations[_reactant];
-	std::vector<double> cmR;
+	Kokkos::Array<double, nMomentIds> cmR;
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[i()] == invalidIndex) {
-			cmR.push_back(0.0);
+			cmR[i()] = 0.0;
 		}
 		else
-			cmR.push_back(concentrations[_reactantMomentIds[i()]]);
+			cmR[i()] = concentrations[_reactantMomentIds[i()]];
 	}
 
 	// Compute the flux for the 0th order moments

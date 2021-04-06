@@ -360,13 +360,13 @@ ReSolutionReaction<TNetwork, TDerived>::computeFlux(
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR = concentrations[_reactant];
-	std::vector<double> cmR;
+	Kokkos::Array<double, nMomentIds> cmR;
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[i()] == invalidIndex) {
-			cmR.push_back(0.0);
+			cmR[i()] = 0.0;
 		}
 		else
-			cmR.push_back(concentrations[_reactantMomentIds[i()]]);
+			cmR[i()] = concentrations[_reactantMomentIds[i()]];
 	}
 
 	// Compute the flux for the 0th order moments

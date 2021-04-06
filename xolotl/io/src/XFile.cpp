@@ -178,7 +178,7 @@ XFile::NetworkGroup::NetworkGroup(
 	// Convert it to char
 	std::vector<char*> phaseSpaceChar;
 	for (auto name : phaseSpace) {
-		char *pc = new char[name.size()+1];
+		char* pc = new char[name.size() + 1];
 		std::strcpy(pc, name.c_str());
 		phaseSpaceChar.push_back(pc);
 	}
