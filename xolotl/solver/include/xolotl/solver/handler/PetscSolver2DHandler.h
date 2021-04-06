@@ -19,7 +19,7 @@ class PetscSolver2DHandler : public PetscSolverHandler
 {
 private:
 	//! The position of the surface
-	std::vector<int> surfacePosition;
+	std::vector<IdType> surfacePosition;
 
 public:
 	PetscSolver2DHandler() = delete;
@@ -59,7 +59,8 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+	std::vector<
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 	getConcVector(DM& da, Vec& C);
 
 	/**
@@ -68,7 +69,7 @@ public:
 	void
 	setConcVector(DM& da, Vec& C,
 		std::vector<
-			std::vector<std::vector<std::vector<std::pair<int, double>>>>>&
+			std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
 			concVector);
 
 	/**
@@ -86,8 +87,8 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	int
-	getSurfacePosition(int j = -1, int k = -1) const
+	IdType
+	getSurfacePosition(IdType j = -1, IdType k = -1) const
 	{
 		return surfacePosition[j];
 	}
@@ -96,7 +97,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfacePosition(int pos, int j = -1, int k = -1)
+	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1)
 	{
 		surfacePosition[j] = pos;
 

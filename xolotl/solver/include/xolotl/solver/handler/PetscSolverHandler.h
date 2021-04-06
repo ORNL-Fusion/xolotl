@@ -66,7 +66,7 @@ protected:
 	/**
 	 * Number of valid partial derivatives for each reactant.
 	 */
-	std::vector<PetscInt> reactionSize;
+	std::vector<IdType> reactionSize;
 
 	/**
 	 * Starting index of items for each reactant within the reactionIndices
@@ -82,7 +82,7 @@ protected:
 	/**
 	 * Indices for partial derivatives for all the reactions at one grid point.
 	 */
-	std::vector<PetscInt> reactionIndices;
+	std::vector<IdType> reactionIndices;
 
 	/**
 	 * Partial derivatives for all reactions at one grid point.

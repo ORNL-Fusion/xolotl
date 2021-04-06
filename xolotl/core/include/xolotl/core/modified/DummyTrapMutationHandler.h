@@ -51,8 +51,8 @@ public:
 	 */
 	void
 	initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& dfill, int nx, int ny = 0,
-		int nz = 0)
+		network::IReactionNetwork::SparseFillMap& dfill, IdType nx,
+		IdType ny = 0, IdType nz = 0)
 	{
 		// Doesn't do anything
 		return;
@@ -62,9 +62,9 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	void
-	initializeIndex1D(int surfacePos, network::IReactionNetwork& network,
+	initializeIndex1D(IdType surfacePos, network::IReactionNetwork& network,
 		std::vector<advection::IAdvectionHandler*> advectionHandlers,
-		std::vector<double> grid, int nx, int xs)
+		std::vector<double> grid, IdType nx, IdType xs)
 	{
 		// Doesn't do anything
 		return;
@@ -74,10 +74,11 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	void
-	initializeIndex2D(std::vector<int> surfacePos,
+	initializeIndex2D(std::vector<IdType> surfacePos,
 		network::IReactionNetwork& network,
 		std::vector<advection::IAdvectionHandler*> advectionHandlers,
-		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys)
+		std::vector<double> grid, IdType nx, IdType xs, IdType ny, double hy,
+		IdType ys)
 	{
 		// Doesn't do anything
 		return;
@@ -87,11 +88,11 @@ public:
 	 * \see ITrapMutationHandler.h
 	 */
 	void
-	initializeIndex3D(std::vector<std::vector<int>> surfacePos,
+	initializeIndex3D(std::vector<std::vector<IdType>> surfacePos,
 		network::IReactionNetwork& network,
 		std::vector<advection::IAdvectionHandler*> advectionHandlers,
-		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
-		int nz, double hz, int zs)
+		std::vector<double> grid, IdType nx, IdType xs, IdType ny, double hy,
+		IdType ys, IdType nz, double hz, IdType zs)
 	{
 		// Doesn't do anything
 		return;
@@ -102,7 +103,7 @@ public:
 	 */
 	void
 	computeTrapMutation(network::IReactionNetwork& network, double* concOffset,
-		double* updatedConcOffset, int xi, int yj = 0, int zk = 0)
+		double* updatedConcOffset, IdType xi, IdType yj = 0, IdType zk = 0)
 	{
 		// Doesn't do anything
 		return;
@@ -111,10 +112,10 @@ public:
 	/**
 	 * \see ITrapMutationHandler.h
 	 */
-	int
+	size_t
 	computePartialsForTrapMutation(network::IReactionNetwork& network,
-		double* concOffset, double* val, IdType* indices, int xi, int yj = 0,
-		int zk = 0)
+		double* concOffset, double* val, IdType* indices, IdType xi,
+		IdType yj = 0, IdType zk = 0)
 	{
 		// Doesn't do anything
 		return 0;
@@ -123,7 +124,7 @@ public:
 	/**
 	 * \see ITrapMutationHandler.h
 	 */
-	int
+	size_t
 	getNumberOfMutating() const
 	{
 		return 0;

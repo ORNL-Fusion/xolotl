@@ -67,18 +67,8 @@ monitorLargest0D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	// Initial declaration
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm;
 
 	PetscFunctionBeginUser;
-
-	// Get the MPI communicator
-	auto xolotlComm = util::getMPIComm();
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(xolotlComm, &worldSize);
-	// Gets the process ID (important when it is running in parallel)
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -130,12 +120,12 @@ startStop0D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if (((int)((time + dt / 10.0) / hdf5Stride0D) <= hdf5Previous0D) &&
+	if (((PetscInt)((time + dt / 10.0) / hdf5Stride0D) <= hdf5Previous0D) &&
 		timestep > 0)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
-	if ((int)((time + dt / 10.0) / hdf5Stride0D) > hdf5Previous0D)
+	if ((PetscInt)((time + dt / 10.0) / hdf5Stride0D) > hdf5Previous0D)
 		hdf5Previous0D++;
 
 	// Get the da from ts
@@ -149,7 +139,7 @@ startStop0D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Create an array for the concentration
 	double concArray[dof + 1][2];
@@ -221,7 +211,7 @@ computeXenonRetention0D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the array of concentration
 	PetscReal** solutionArray;
@@ -306,7 +296,7 @@ computeAlloy0D(
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
+	auto surfacePos = solverHandler.getSurfacePosition();
 
 	// Get the da from ts
 	DM da;
@@ -324,7 +314,7 @@ computeAlloy0D(
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 	auto numSpecies = network.getSpeciesListSize();
 	auto myData = std::vector<double>(numSpecies * 4, 0.0);
 
@@ -366,7 +356,7 @@ computeAlloy0D(
 
 	// Output the data
 	outputFile << timestep << " " << time << " ";
-	for (std::size_t i = 0; i < numSpecies; ++i) {
+	for (auto i = 0; i < numSpecies; ++i) {
 		outputFile << myData[i * 4] << " " << myData[(i * 4) + 1] << " "
 				   << myData[(i * 4) + 2] << " " << myData[(i * 4) + 3] << " ";
 	}
@@ -418,7 +408,7 @@ monitorScatter0D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	using Spec = typename NetworkType::Species;
 	using Region = typename NetworkType::Region;
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	int networkSize = network.getNumClusters();
+	auto networkSize = network.getNumClusters();
 
 	// Create a DataPoint vector to store the data to give to the data provider
 	// for the visualization
@@ -428,12 +418,12 @@ monitorScatter0D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	// Get the pointer to the beginning of the solution data for this grid point
 	gridPointSolution = solutionArray[0];
 
-	for (int i = 0; i < networkSize; i++) {
+	for (auto i = 0; i < networkSize; i++) {
 		// Create a DataPoint with the concentration[i] as the value
 		// and add it to myPoints
 		auto cluster = network.getCluster(i);
 		const Region& clReg = cluster.getRegion();
-		for (std::size_t j : makeIntervalRange(clReg[Spec::Xe])) {
+		for (auto j : makeIntervalRange(clReg[Spec::Xe])) {
 			viz::dataprovider::DataPoint aPoint;
 			aPoint.value = gridPointSolution[i];
 			aPoint.t = time;
@@ -515,7 +505,7 @@ monitorBubble0D(
 
 	// Get the network and its size
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	const int networkSize = network.getNumClusters();
+	const auto networkSize = network.getNumClusters();
 
 	// Create the output file
 	std::ofstream outputFile;
@@ -531,7 +521,7 @@ monitorBubble0D(
 	double concTot = 0.0, heliumTot = 0.0;
 
 	// Consider each cluster.
-	for (int i = 0; i < networkSize; i++) {
+	for (auto i = 0; i < networkSize; i++) {
 		auto cluster = network.getCluster(i, plsm::onHost);
 		const Region& clReg = cluster.getRegion();
 		Composition lo = clReg.getOrigin();
@@ -669,25 +659,12 @@ setupPetsc0DMonitor(TS ts)
 			// Get the previous time from the HDF5 file
 			double previousTime = lastTsGroup->readPreviousTime();
 			solverHandler.setPreviousTime(previousTime);
-			hdf5Previous0D = (int)(previousTime / hdf5Stride0D);
+			hdf5Previous0D = (PetscInt)(previousTime / hdf5Stride0D);
 		}
 
 		// Don't do anything if both files have the same name
 		if (hdf5OutputName0D != solverHandler.getNetworkName()) {
-			PetscInt Mx;
 			PetscErrorCode ierr;
-
-			// Get the da from ts
-			DM da;
-			ierr = TSGetDM(ts, &da);
-			checkPetscError(ierr, "setupPetsc0DMonitor: TSGetDM failed.");
-
-			// Get the size of the total grid
-			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE);
-			checkPetscError(ierr, "setupPetsc0DMonitor: DMDAGetInfo failed.");
 
 			// Get the solver handler and network
 			auto& solverHandler = PetscSolver::getSolverHandler();

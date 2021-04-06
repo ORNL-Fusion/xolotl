@@ -77,7 +77,7 @@ std::vector<double> nTritium2D;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield2D = 0.0;
 // The vector of depths at which bursting happens
-std::vector<std::pair<int, int>> depthPositions2D;
+std::vector<std::pair<PetscInt, PetscInt>> depthPositions2D;
 // The vector of ids for diffusing interstitial clusters
 std::vector<IdType> iClusterIds2D;
 // The id of the largest cluster
@@ -85,7 +85,7 @@ int largestClusterId2D = -1;
 // The concentration threshold for the largest cluster
 double largestThreshold2D = 1.0e-12;
 // Tracks the previous TS number
-int previousTSNumber2D = -1;
+PetscInt previousTSNumber2D = -1;
 
 // Timers
 std::shared_ptr<perf::ITimer> gbTimer;
@@ -105,15 +105,6 @@ monitorLargest2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 
 	PetscFunctionBeginUser;
 
-	// Get the MPI communicator
-	auto xolotlComm = util::getMPIComm();
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(xolotlComm, &worldSize);
-	// Gets the process ID (important when it is running in parallel)
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -128,8 +119,8 @@ monitorLargest2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	CHKERRQ(ierr);
 
 	// Loop on the local grid
-	for (PetscInt j = ys; j < ys + ym; j++)
-		for (PetscInt i = xs; i < xs + xm; i++) {
+	for (auto j = ys; j < ys + ym; j++)
+		for (auto i = xs; i < xs + xm; i++) {
 			// Get the pointer to the beginning of the solution data for this
 			// grid point
 			gridPointSolution = solutionArray[j][i];
@@ -174,12 +165,12 @@ startStop2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if (((int)((time + dt / 10.0) / hdf5Stride2D) <= hdf5Previous2D) &&
+	if (((PetscInt)((time + dt / 10.0) / hdf5Stride2D) <= hdf5Previous2D) &&
 		timestep > 0)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
-	if ((int)((time + dt / 10.0) / hdf5Stride2D) > hdf5Previous2D)
+	if ((PetscInt)((time + dt / 10.0) / hdf5Stride2D) > hdf5Previous2D)
 		hdf5Previous2D++;
 
 	// Gets the process ID (important when it is running in parallel)
@@ -207,14 +198,14 @@ startStop2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Create an array for the concentration
 	double concArray[dof + 1][2];
 
 	// Get the vector of positions of the surface
 	std::vector<int> surfaceIndices;
-	for (PetscInt i = 0; i < My; i++) {
+	for (auto i = 0; i < My; i++) {
 		surfaceIndices.push_back(solverHandler.getSurfacePosition(i));
 	}
 
@@ -246,8 +237,8 @@ startStop2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 			previousDFlux2D, nTritium2D, previousTFlux2D);
 
 	// Loop on the full grid
-	for (PetscInt j = 0; j < My; j++) {
-		for (PetscInt i = 0; i < Mx; i++) {
+	for (auto j = 0; j < My; j++) {
+		for (auto i = 0; i < Mx; i++) {
 			// Wait for all the processes
 			MPI_Barrier(xolotlComm);
 
@@ -266,7 +257,7 @@ startStop2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 				gridPointSolution = solutionArray[j][i];
 
 				// Loop on the concentrations
-				for (int l = 0; l < dof + 1; l++) {
+				for (auto l = 0; l < dof + 1; l++) {
 					if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 						// Increase concSize
 						concSize++;
@@ -352,7 +343,7 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	// Get the network
 	using NetworkType = core::network::IPSIReactionNetwork;
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the array of concentration
 	double ***solutionArray, *gridPointSolution;
@@ -364,11 +355,11 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	auto myConcData = std::vector<double>(numSpecies, 0.0);
 
 	// Loop on the grid
-	for (PetscInt yj = ys; yj < ys + ym; yj++) {
+	for (auto yj = ys; yj < ys + ym; yj++) {
 		// Get the surface position
-		int surfacePos = solverHandler.getSurfacePosition(yj);
+		auto surfacePos = solverHandler.getSurfacePosition(yj);
 
-		for (PetscInt xi = xs; xi < xs + xm; xi++) {
+		for (auto xi = xs; xi < xs + xm; xi++) {
 			// Boundary conditions
 			if (xi < surfacePos + solverHandler.getLeftOffset() ||
 				xi >= Mx - solverHandler.getRightOffset())
@@ -414,13 +405,13 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	// Look at the fluxes going in the bulk if the bottom is a free surface
 	if (solverHandler.getRightOffset() == 1) {
 		// Set the bottom surface position
-		int xi = Mx - 2;
+		auto xi = Mx - 2;
 
 		// Get the vector of diffusing clusters
 		auto diffusingIds = diffusionHandler->getDiffusingIds();
 
 		// Loop on every Y position
-		for (PetscInt j = 0; j < My; j++) {
+		for (auto j = 0; j < My; j++) {
 			// Value to know on which processor is the bottom
 			int bottomProc = 0;
 
@@ -441,11 +432,11 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 				// Factor for finite difference
 				double hxLeft = 0.0, hxRight = 0.0;
-				if (xi - 1 >= 0 && xi < Mx) {
+				if (xi >= 1 && xi < Mx) {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
-				else if (xi - 1 < 0) {
+				else if (xi < 1) {
 					hxLeft = grid[xi + 1] - grid[xi];
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
@@ -494,13 +485,13 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		double surface = (double)My * hy;
 
 		// Rescale the concentration
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			totalConcData[i] /= surface;
 		}
 		double totalHeBulk = 0.0, totalDBulk = 0.0, totalTBulk = 0.0;
 		// Look if the bottom is a free surface
 		if (solverHandler.getRightOffset() == 1) {
-			for (int i = 0; i < My; i++) {
+			for (auto i = 0; i < My; i++) {
 				totalHeBulk += nHelium2D[i];
 				totalDBulk += nDeuterium2D[i];
 				totalTBulk += nTritium2D[i];
@@ -525,7 +516,7 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
 		outputFile << fluence << " ";
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			outputFile << totalConcData[i] << " ";
 		}
 		outputFile << totalHeBulk << " " << totalDBulk << " " << totalTBulk
@@ -588,7 +579,7 @@ computeXenonRetention2D(
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the complete data array, including ghost cells
 	Vec localSolution;
@@ -617,8 +608,8 @@ computeXenonRetention2D(
 	auto xeId = xeCluster.getId();
 
 	// Loop on the grid
-	for (PetscInt yj = ys; yj < ys + ym; yj++)
-		for (PetscInt xi = xs; xi < xs + xm; xi++) {
+	for (auto yj = ys; yj < ys + ym; yj++)
+		for (auto xi = xs; xi < xs + xm; xi++) {
 			// Get the pointer to the beginning of the solution data for this
 			// grid point
 			gridPointSolution = solutionArray[yj][xi];
@@ -679,8 +670,8 @@ computeXenonRetention2D(
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Middle
-		int xi = std::get<0>(pair);
-		int yj = std::get<1>(pair);
+		auto xi = std::get<0>(pair);
+		auto yj = std::get<1>(pair);
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
 			double previousXeFlux = std::get<1>(localNE[xi - xs][yj - ys][0]);
@@ -714,16 +705,16 @@ computeXenonRetention2D(
 		auto myRate = std::vector<double>(numSpecies, 0.0);
 		// Define left and right with reference to the middle point
 		// Middle
-		int xi = std::get<0>(pair);
-		int yj = std::get<1>(pair);
+		auto xi = std::get<0>(pair);
+		auto yj = std::get<1>(pair);
 
 		// Factor for finite difference
 		double hxLeft = 0.0, hxRight = 0.0;
-		if (xi - 1 >= 0 && xi < Mx) {
+		if (xi >= 1 && xi < Mx) {
 			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 		}
-		else if (xi - 1 < 0) {
+		else if (xi < 1) {
 			hxLeft = grid[xi + 1] - grid[xi];
 			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 		}
@@ -869,7 +860,7 @@ monitorSurface2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	double hy = solverHandler.getStepSizeY();
 
 	// Choice of the cluster to be plotted
-	int iCluster = 0;
+	IdType iCluster = 0;
 
 	// Create a DataPoint vector to store the data to give to the data provider
 	// for the visualization
@@ -879,8 +870,8 @@ monitorSurface2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	viz::dataprovider::DataPoint thePoint;
 
 	// Loop on the full grid
-	for (PetscInt j = 0; j < My; j++) {
-		for (PetscInt i = 0; i < Mx; i++) {
+	for (auto j = 0; j < My; j++) {
+		for (auto i = 0; i < Mx; i++) {
 			// If it is the locally owned part of the grid
 			if (i >= xs && i < xs + xm && j >= ys && j < ys + ym) {
 				// Get the pointer to the beginning of the solution data for
@@ -1066,7 +1057,7 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			// Loop on the possible yj
 			for (yj = 0; yj < My; yj++) {
 				// Get the position of the surface at yj
-				int surfacePos = solverHandler.getSurfacePosition(yj);
+				auto surfacePos = solverHandler.getSurfacePosition(yj);
 				outputFile << grid[surfacePos + 1] - grid[1] << " ";
 			}
 			outputFile << std::endl;
@@ -1087,14 +1078,14 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 				sputteringYield2D * heliumFluxAmplitude * dt * hy;
 
 			// Get the position of the surface at yj
-			const int surfacePos = solverHandler.getSurfacePosition(yj);
+			const auto surfacePos = solverHandler.getSurfacePosition(yj);
 			xi = surfacePos + solverHandler.getLeftOffset();
 			double hxLeft = 0.0, hxRight = 0.0;
-			if (xi - 1 >= 0 && xi < Mx) {
+			if (xi >= 1 && xi < Mx) {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			}
-			else if (xi - 1 < 0) {
+			else if (xi < 1) {
 				hxLeft = grid[xi + 1] - grid[xi];
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			}
@@ -1120,7 +1111,7 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 			// Check if the surface on the left and/or right sides are higher
 			// than at this grid point
-			int yLeft = yj - 1, yRight = yj + 1;
+			PetscInt yLeft = yj - 1, yRight = yj + 1;
 			if (yLeft < 0)
 				yLeft = My - 1; // Periodicity
 			if (yRight == My)
@@ -1131,7 +1122,7 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			auto leftSurf = solverHandler.getSurfacePosition(yLeft);
 			if (leftSurf < surfacePos) {
 				// Loop on every grid point above
-				for (int currentX = xi; currentX >= xi; --currentX) {
+				for (auto currentX = xi; currentX >= xi; --currentX) {
 					// If this is the locally owned part of the grid
 					if (currentX >= xs && currentX < xs + xm && yLeft >= ys &&
 						yLeft < ys + ym) {
@@ -1155,7 +1146,7 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			auto rightSurf = solverHandler.getSurfacePosition(yRight);
 			if (rightSurf < surfacePos) {
 				// Loop on every grid point above
-				for (int currentX = xi; currentX >= xi; --currentX) {
+				for (auto currentX = xi; currentX >= xi; --currentX) {
 					// If this is the locally owned part of the grid
 					if (currentX >= xs && currentX < xs + xm && yRight >= ys &&
 						yRight < ys + ym) {
@@ -1224,7 +1215,7 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 		// Loop on the full grid
 		for (yj = 0; yj < My; yj++) {
 			// Get the surface position
-			int surfacePos = solverHandler.getSurfacePosition(yj);
+			auto surfacePos = solverHandler.getSurfacePosition(yj);
 			for (xi = surfacePos + solverHandler.getLeftOffset();
 				 xi < Mx - solverHandler.getRightOffset(); xi++) {
 				bool localBurst = false;
@@ -1344,7 +1335,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
-	int dof = network.getDOF();
+	auto dof = network.getDOF();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
@@ -1360,7 +1351,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 	bool surfaceMoved = false;
 
 	// Loop on each bursting depth
-	for (int i = 0; i < depthPositions2D.size(); i++) {
+	for (auto i = 0; i < depthPositions2D.size(); i++) {
 		// Get the coordinates of the point
 		xi = depthPositions2D[i].second, yj = depthPositions2D[i].first;
 		// Get the pointer to the beginning of the solution data for this grid
@@ -1368,7 +1359,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		gridPointSolution = solutionArray[yj][xi];
 
 		// Get the surface position
-		PetscInt surfacePos = solverHandler.getSurfacePosition(yj);
+		auto surfacePos = solverHandler.getSurfacePosition(yj);
 		// Get the distance from the surface
 		double distance =
 			(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
@@ -1382,14 +1373,14 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		}
 
 		//		// Crater case
-		//		int yLeft = yj - 1, yRight = yj + 1;
+		//		PetscInt yLeft = yj - 1, yRight = yj + 1;
 		//		if (yLeft < 0)
 		//			yLeft = My - 1; // Periodicity
 		//		if (yRight == My)
 		//			yRight = 0; // Periodicity
 		//
 		//		// Loop on every grid point above
-		//		for (int currentX = xi; currentX > surfacePos; --currentX) {
+		//		for (auto currentX = xi; currentX > surfacePos; --currentX) {
 		//			// If this is the locally owned part of the grid
 		//			if (currentX >= xs && currentX < xs + xm && yj >= ys &&
 		//				yj < ys + ym) {
@@ -1457,7 +1448,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 
 	// Now takes care of moving surface
 	bool moving = false;
-	for (int i = 0; i < nevents; i++) {
+	for (auto i = 0; i < nevents; i++) {
 		if (eventList[i] == 0)
 			moving = true;
 	}
@@ -1477,7 +1468,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Loop on the possible yj
 	for (yj = 0; yj < My; yj++) {
 		// Get the position of the surface at yj
-		int surfacePos = solverHandler.getSurfacePosition(yj);
+		auto surfacePos = solverHandler.getSurfacePosition(yj);
 		xi = surfacePos + solverHandler.getLeftOffset();
 
 		// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
@@ -1584,7 +1575,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 					// Get the concentrations at xi = surfacePos + 1
 					gridPointSolution = solutionArray[yj][xi];
 					// Loop on DOF
-					for (int i = 0; i < dof; i++) {
+					for (auto i = 0; i < dof; i++) {
 						gridPointSolution[i] = 0.0;
 					}
 				}
@@ -1612,8 +1603,8 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 	auto advecHandlers = solverHandler.getAdvectionHandlers();
 
 	// Get the vector of positions of the surface
-	std::vector<int> surfaceIndices;
-	for (PetscInt i = 0; i < My; i++) {
+	std::vector<IdType> surfaceIndices;
+	for (auto i = 0; i < My; i++) {
 		surfaceIndices.push_back(solverHandler.getSurfacePosition(i));
 	}
 
@@ -1629,7 +1620,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		// Loop on the possible yj
 		for (yj = 0; yj < My; yj++) {
 			// Get the position of the surface at yj
-			int surfacePos = solverHandler.getSurfacePosition(yj);
+			auto surfacePos = solverHandler.getSurfacePosition(yj);
 			outputFile << grid[surfacePos + 1] - grid[1] << " ";
 		}
 		outputFile << std::endl;
@@ -1777,7 +1768,7 @@ setupPetsc2DMonitor(TS ts)
 			// Get the previous time from the HDF5 file
 			double previousTime = lastTsGroup->readPreviousTime();
 			solverHandler.setPreviousTime(previousTime);
-			hdf5Previous2D = (int)(previousTime / hdf5Stride2D);
+			hdf5Previous2D = (PetscInt)(previousTime / hdf5Stride2D);
 		}
 
 		// Don't do anything if both files have the same name
@@ -1849,7 +1840,7 @@ setupPetsc2DMonitor(TS ts)
 
 			// Initialize nInterstitial2D and previousIFlux2D before monitoring
 			// the interstitial flux
-			for (PetscInt j = 0; j < My; j++) {
+			for (auto j = 0; j < My; j++) {
 				nInterstitial2D.push_back(0.0);
 				previousIFlux2D.push_back(0.0);
 			}
@@ -1933,7 +1924,7 @@ setupPetsc2DMonitor(TS ts)
 		// Check if we have a free surface at the bottom
 		if (solverHandler.getRightOffset() == 1) {
 			// Initialize n2D and previousFlux2D before monitoring the fluxes
-			for (PetscInt j = 0; j < My; j++) {
+			for (auto j = 0; j < My; j++) {
 				nHelium2D.push_back(0.0);
 				previousHeFlux2D.push_back(0.0);
 				nDeuterium2D.push_back(0.0);

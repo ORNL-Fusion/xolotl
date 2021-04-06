@@ -79,7 +79,7 @@ std::vector<PetscInt> depthPositions1D;
 // The vector of ids for diffusing interstitial clusters
 std::vector<IdType> iClusterIds1D;
 // Tracks the previous TS number
-int previousTSNumber1D = -1;
+PetscInt previousTSNumber1D = -1;
 // The id of the largest cluster
 int largestClusterId1D = -1;
 // The concentration threshold for the largest cluster
@@ -115,15 +115,6 @@ checkNegative1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 
 	PetscFunctionBeginUser;
 
-	// Get the MPI communicator
-	auto xolotlComm = util::getMPIComm();
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(xolotlComm, &worldSize);
-	// Gets the process ID (important when it is running in parallel)
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -142,14 +133,14 @@ checkNegative1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
-	const int nClusters = network.getNumClusters();
+	const auto nClusters = network.getNumClusters();
 
 	// Loop on the local grid
-	for (PetscInt i = xs; i < xs + xm; i++) {
+	for (auto i = xs; i < xs + xm; i++) {
 		// Get the pointer to the beginning of the solution data for this grid
 		// point
 		gridPointSolution = solutionArray[i]; // Loop on the concentrations
-		for (int l = 0; l < nClusters; l++) {
+		for (auto l = 0; l < nClusters; l++) {
 			if (gridPointSolution[l] < negThreshold1D &&
 				gridPointSolution[l] > 0.0) {
 				gridPointSolution[l] = negThreshold1D;
@@ -183,15 +174,6 @@ monitorLargest1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 
 	PetscFunctionBeginUser;
 
-	// Get the MPI communicator
-	auto xolotlComm = util::getMPIComm();
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(xolotlComm, &worldSize);
-	// Gets the process ID (important when it is running in parallel)
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -206,7 +188,7 @@ monitorLargest1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	CHKERRQ(ierr);
 
 	// Loop on the local grid
-	for (PetscInt i = xs; i < xs + xm; i++) {
+	for (auto i = xs; i < xs + xm; i++) {
 		// Get the pointer to the beginning of the solution data for this grid
 		// point
 		gridPointSolution = solutionArray[i];
@@ -248,20 +230,12 @@ computeTRIDYN1D(
 	// Get the MPI communicator
 	auto xolotlComm = util::getMPIComm();
 
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(xolotlComm, &worldSize);
-
-	// Gets the process ID
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
-
 	// Get the solver handler
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 	const auto numSpecies = network.getSpeciesListSize();
 
 	// Get the position of the surface
@@ -314,7 +288,7 @@ computeTRIDYN1D(
 
 	// Specify the concentrations we will write.
 	// We only consider our own grid points.
-	const auto myFirstIdxToWrite = std::max(xs, firstIdxToWrite);
+	const auto myFirstIdxToWrite = std::max((IdType)xs, firstIdxToWrite);
 	auto myEndIdx = (xs + xm); // "end" in the C++ sense; i.e., one-past-last
 	auto myNumPointsToWrite =
 		(myEndIdx > myFirstIdxToWrite) ? (myEndIdx - myFirstIdxToWrite) : 0;
@@ -335,7 +309,7 @@ computeTRIDYN1D(
 			deep_copy(dConcs, hConcs);
 
 			// Get the total concentrations at this grid point
-			auto currIdx = xi - myFirstIdxToWrite;
+			auto currIdx = (PetscInt)xi - myFirstIdxToWrite;
 			myConcs[currIdx][0] = (x - (grid[surfacePos + 1] - grid[1]));
 			// Get the total concentrations at this grid point
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
@@ -383,19 +357,17 @@ startStop1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if (((int)((time + dt / 10.0) / hdf5Stride1D) <= hdf5Previous1D) &&
+	if (((PetscInt)((time + dt / 10.0) / hdf5Stride1D) <= hdf5Previous1D) &&
 		timestep > 0) {
 		PetscFunctionReturn(0);
 	}
 
 	// Update the previous time
-	if ((int)((time + dt / 10.0) / hdf5Stride1D) > hdf5Previous1D)
+	if ((PetscInt)((time + dt / 10.0) / hdf5Stride1D) > hdf5Previous1D)
 		hdf5Previous1D++;
 
-	// Gets the process ID (important when it is running in parallel)
+	// Gets MPI comm
 	auto xolotlComm = util::getMPIComm();
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -417,13 +389,13 @@ startStop1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Create an array for the concentration
 	double concArray[dof + 1][2];
 
 	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
+	auto surfacePos = solverHandler.getSurfacePosition();
 
 	// Open the existing HDF5 file
 	io::XFile checkpointFile(
@@ -537,13 +509,13 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
 	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
+	auto surfacePos = solverHandler.getSurfacePosition();
 
 	// Get the network
 	using NetworkType = core::network::IPSIReactionNetwork;
 	using AmountType = NetworkType::AmountType;
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the array of concentration
 	PetscReal** solutionArray;
@@ -558,7 +530,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	PetscReal* gridPointSolution;
 
 	// Loop on the grid
-	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+	for (auto xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
 		if (xi < surfacePos + solverHandler.getLeftOffset() ||
 			xi >= Mx - solverHandler.getRightOffset())
@@ -601,7 +573,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	// Look at the fluxes leaving the free surface
 	if (solverHandler.getLeftOffset() == 1) {
 		// Set the surface position
-		int xi = surfacePos + 1;
+		auto xi = surfacePos + 1;
 
 		// Value to know on which processor is the surface
 		int surfaceProc = 0;
@@ -609,7 +581,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
 			// Compute the total number of impurities that left at the surface
-			for (std::size_t i = 0; i < numSpecies; ++i) {
+			for (auto i = 0; i < numSpecies; ++i) {
 				nSurf1D[i] += previousSurfFlux1D[i] * dt;
 			}
 			auto myFluxData = std::vector<double>(numSpecies, 0.0);
@@ -620,11 +592,11 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 			// Factor for finite difference
 			double hxLeft = 0.0, hxRight = 0.0;
-			if (xi - 1 >= 0 && xi < Mx) {
+			if (xi >= 1 && xi < Mx) {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			}
-			else if (xi - 1 < 0) {
+			else if (xi < 1) {
 				hxLeft = grid[xi + 1] - grid[xi];
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			}
@@ -656,7 +628,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 						distance),
 				advecClusters, sinkStrengths, myFluxData, xi - xs);
 
-			for (std::size_t i = 0; i < numSpecies; ++i) {
+			for (auto i = 0; i < numSpecies; ++i) {
 				previousSurfFlux1D[i] = myFluxData[i];
 			}
 
@@ -675,7 +647,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		// Send the information about impurities
 		// to the other processes
 		std::vector<double> countFluxData;
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			countFluxData.push_back(nSurf1D[i]);
 			countFluxData.push_back(previousSurfFlux1D[i]);
 		}
@@ -683,7 +655,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 			surfaceId, xolotlComm);
 
 		// Extract impurity data from broadcast buffer.
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			nSurf1D[i] = countFluxData[2 * i];
 			previousSurfFlux1D[i] = countFluxData[(2 * i) + 1];
 		}
@@ -692,7 +664,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	// Look at the fluxes going in the bulk if the bottom is a free surface
 	if (solverHandler.getRightOffset() == 1) {
 		// Set the bottom surface position
-		int xi = Mx - 2;
+		auto xi = Mx - 2;
 
 		// Value to know on which processor is the bottom
 		int bottomProc = 0;
@@ -700,7 +672,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
 			// Compute the total number of impurities that went in the bulk
-			for (std::size_t i = 0; i < numSpecies; ++i) {
+			for (auto i = 0; i < numSpecies; ++i) {
 				nBulk1D[i] += previousBulkFlux1D[i] * dt;
 			}
 			auto myFluxData = std::vector<double>(numSpecies, 0.0);
@@ -711,11 +683,11 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 			// Factor for finite difference
 			double hxLeft = 0.0, hxRight = 0.0;
-			if (xi - 1 >= 0 && xi < Mx) {
+			if (xi >= 1 && xi < Mx) {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			}
-			else if (xi - 1 < 0) {
+			else if (xi < 1) {
 				hxLeft = grid[xi + 1] - grid[xi];
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			}
@@ -731,7 +703,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 			network.updateOutgoingDiffFluxes(
 				gridPointSolution, factor, diffusingIds, myFluxData, xi - xs);
 
-			for (std::size_t i = 0; i < numSpecies; ++i) {
+			for (auto i = 0; i < numSpecies; ++i) {
 				previousBulkFlux1D[i] = myFluxData[i];
 			}
 
@@ -749,7 +721,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		// Send the information about impurities
 		// to the other processes
 		std::vector<double> countFluxData;
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			countFluxData.push_back(nBulk1D[i]);
 			countFluxData.push_back(previousBulkFlux1D[i]);
 		}
@@ -757,7 +729,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 			bottomId, xolotlComm);
 
 		// Extract impurity data from broadcast buffer.
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			nBulk1D[i] = countFluxData[2 * i];
 			previousBulkFlux1D[i] = countFluxData[(2 * i) + 1];
 		}
@@ -780,16 +752,16 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
 		outputFile << fluence << ' ';
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			outputFile << totalConcData[i] << ' ';
 		}
 		if (solverHandler.getRightOffset() == 1) {
-			for (std::size_t i = 0; i < numSpecies; ++i) {
+			for (auto i = 0; i < numSpecies; ++i) {
 				outputFile << nBulk1D[i] << ' ';
 			}
 		}
 		if (solverHandler.getLeftOffset() == 1) {
-			for (std::size_t i = 0; i < numSpecies; ++i) {
+			for (auto i = 0; i < numSpecies; ++i) {
 				outputFile << nSurf1D[i] << ' ';
 			}
 		}
@@ -849,7 +821,7 @@ computeXenonRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the complete data array, including ghost cells
 	Vec localSolution;
@@ -882,7 +854,7 @@ computeXenonRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	auto xeId = xeCluster.getId();
 
 	// Loop on the grid
-	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+	for (auto xi = xs; xi < xs + xm; xi++) {
 		// Get the pointer to the beginning of the solution data for this grid
 		// point
 		gridPointSolution = solutionArray[xi];
@@ -944,7 +916,7 @@ computeXenonRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Middle
-		int xi = std::get<0>(pair);
+		auto xi = std::get<0>(pair);
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
 			double previousXeFlux = std::get<1>(localNE[xi - xs][0][0]);
@@ -978,15 +950,15 @@ computeXenonRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		auto myRate = std::vector<double>(numSpecies, 0.0);
 		// Define left and right with reference to the middle point
 		// Middle
-		int xi = std::get<0>(pair);
+		auto xi = std::get<0>(pair);
 
 		// Factor for finite difference
 		double hxLeft = 0.0, hxRight = 0.0;
-		if (xi - 1 >= 0 && xi < Mx) {
+		if (xi >= 1 && xi < Mx) {
 			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 		}
-		else if (xi - 1 < 0) {
+		else if (xi < 1) {
 			hxLeft = grid[xi + 1] - grid[xi];
 			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 		}
@@ -1080,10 +1052,10 @@ profileTemperature1D(
 
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
+	auto surfacePos = solverHandler.getSurfacePosition();
 
 	// Get the da from ts
 	DM da;
@@ -1120,7 +1092,7 @@ profileTemperature1D(
 	}
 
 	// Loop on the entire grid
-	for (int xi = surfacePos + solverHandler.getLeftOffset();
+	for (auto xi = surfacePos + solverHandler.getLeftOffset();
 		 xi < Mx - solverHandler.getRightOffset(); xi++) {
 		// Set x
 		double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
@@ -1176,12 +1148,10 @@ computeAlloy1D(
 
 	PetscFunctionBeginUser;
 
-	// Get the number of processes
+	// Get the MPI comm
 	auto xolotlComm = util::getMPIComm();
-	int worldSize;
-	MPI_Comm_size(xolotlComm, &worldSize);
 
-	// Gets the process ID
+	// Get the process ID
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 
@@ -1190,10 +1160,10 @@ computeAlloy1D(
 
 	// Get the physical grid and its length
 	auto grid = solverHandler.getXGrid();
-	int xSize = grid.size();
+	auto xSize = grid.size();
 
 	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
+	auto surfacePos = solverHandler.getSurfacePosition();
 
 	// Get the da from ts
 	DM da;
@@ -1222,7 +1192,7 @@ computeAlloy1D(
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 	auto numSpecies = network.getSpeciesListSize();
 	auto myData = std::vector<double>(numSpecies * 4, 0.0);
 
@@ -1233,7 +1203,7 @@ computeAlloy1D(
 	PetscReal* gridPointSolution;
 
 	// Loop on the grid
-	for (PetscInt xi = xs; xi < xs + xm; xi++) {
+	for (auto xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
 		if (xi < surfacePos + solverHandler.getLeftOffset() ||
 			xi == Mx - solverHandler.getRightOffset())
@@ -1268,7 +1238,7 @@ computeAlloy1D(
 
 	// Average the data
 	if (procId == 0) {
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			globalData[(4 * i) + 1] /= globalData[4 * i];
 			globalData[(4 * i) + 3] /= globalData[(4 * i) + 2];
 			globalData[4 * i] /= (grid[Mx] - grid[surfacePos + 1]);
@@ -1285,7 +1255,7 @@ computeAlloy1D(
 
 		// Output the data
 		outputFile << timestep << " " << time << " ";
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			outputFile << globalData[i * 4] << " " << globalData[(i * 4) + 1]
 					   << " " << globalData[(i * 4) + 2] << " "
 					   << globalData[(i * 4) + 3] << " ";
@@ -1357,10 +1327,10 @@ monitorScatter1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	using Spec = typename NetworkType::Species;
 	using Region = typename NetworkType::Region;
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	int networkSize = network.getNumClusters();
+	auto networkSize = network.getNumClusters();
 
 	// Get the index of the middle of the grid
-	PetscInt ix = Mx / 2;
+	auto ix = Mx / 2;
 
 	// If the middle is on this process
 	if (ix >= xs && ix < xs + xm) {
@@ -1373,12 +1343,12 @@ monitorScatter1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 		// point
 		gridPointSolution = solutionArray[ix];
 
-		for (int i = 0; i < networkSize; i++) {
+		for (auto i = 0; i < networkSize; i++) {
 			// Create a Point with the concentration[i] as the value
 			// and add it to myPoints
 			auto cluster = network.getCluster(i);
 			const Region& clReg = cluster.getRegion();
-			for (std::size_t j : makeIntervalRange(clReg[Spec::Xe])) {
+			for (auto j : makeIntervalRange(clReg[Spec::Xe])) {
 				viz::dataprovider::DataPoint aPoint;
 				aPoint.value = gridPointSolution[i];
 				aPoint.t = time;
@@ -1470,13 +1440,13 @@ monitorSeries1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 
 	// Get the network and its size
 	auto& network = solverHandler.getNetwork();
-	const int networkSize = network.getNumClusters();
+	const auto networkSize = network.getNumClusters();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
 
 	// To plot a maximum of 18 clusters of the whole benchmark
-	const int loopSize = std::min(18, networkSize);
+	const auto loopSize = std::min(18, (int)networkSize);
 
 	if (procId == 0) {
 		// Create a DataPoint vector to store the data to give to the data
@@ -1490,7 +1460,7 @@ monitorSeries1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 			// grid point
 			gridPointSolution = solutionArray[xi];
 
-			for (int i = 0; i < loopSize; i++) {
+			for (auto i = 0; i < loopSize; i++) {
 				// Create a DataPoint with the concentration[i] as the value
 				// and add it to myPoints
 				viz::dataprovider::DataPoint aPoint;
@@ -1502,19 +1472,19 @@ monitorSeries1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 		}
 
 		// Loop on the other processes
-		for (int i = 1; i < worldSize; i++) {
+		for (auto i = 1; i < worldSize; i++) {
 			// Get the size of the local grid of that process
 			int localSize = 0;
 			MPI_Recv(
 				&localSize, 1, MPI_INT, i, 20, xolotlComm, MPI_STATUS_IGNORE);
 
 			// Loop on their grid
-			for (int k = 0; k < localSize; k++) {
+			for (auto k = 0; k < localSize; k++) {
 				// Get the position
 				MPI_Recv(
 					&x, 1, MPI_DOUBLE, i, 21, xolotlComm, MPI_STATUS_IGNORE);
 
-				for (int j = 0; j < loopSize; j++) {
+				for (auto j = 0; j < loopSize; j++) {
 					// and the concentrations
 					double conc = 0.0;
 					MPI_Recv(&conc, 1, MPI_DOUBLE, i, 22, xolotlComm,
@@ -1531,7 +1501,7 @@ monitorSeries1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 			}
 		}
 
-		for (int i = 0; i < loopSize; i++) {
+		for (auto i = 0; i < loopSize; i++) {
 			// Get the data provider and give it the points
 			auto thePoints =
 				std::make_shared<std::vector<viz::dataprovider::DataPoint>>(
@@ -1581,7 +1551,7 @@ monitorSeries1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 			// Send the value of the local position to the master process
 			MPI_Send(&x, 1, MPI_DOUBLE, 0, 21, xolotlComm);
 
-			for (int i = 0; i < loopSize; i++) {
+			for (auto i = 0; i < loopSize; i++) {
 				// Send the value of the concentrations to the master process
 				MPI_Send(
 					&gridPointSolution[i], 1, MPI_DOUBLE, 0, 22, xolotlComm);
@@ -1653,7 +1623,7 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
+	auto surfacePos = solverHandler.getSurfacePosition();
 	xi = surfacePos + solverHandler.getLeftOffset();
 
 	// Get the network
@@ -1705,11 +1675,11 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 			// Factor for finite difference
 			double hxLeft = 0.0, hxRight = 0.0;
-			if (xi - 1 >= 0 && xi < Mx) {
+			if (xi >= 1 && xi < Mx) {
 				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			}
-			else if (xi - 1 < 0) {
+			else if (xi < 1) {
 				hxLeft = grid[xi + 1] - grid[xi];
 				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 			}
@@ -1894,11 +1864,11 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
+	auto surfacePos = solverHandler.getSurfacePosition();
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
-	int dof = network.getDOF();
+	auto dof = network.getDOF();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
@@ -1917,7 +1887,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	auto nBurst = std::vector<double>(3, 0.0);
 
 	// Loop on each bursting depth
-	for (int i = 0; i < depthPositions1D.size(); i++) {
+	for (auto i = 0; i < depthPositions1D.size(); i++) {
 		// Get the pointer to the beginning of the solution data for this grid
 		// point
 		gridPointSolution = solutionArray[depthPositions1D[i]];
@@ -1927,7 +1897,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 		double distance =
 			(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
 		double hxLeft = 0.0;
-		if (xi - 1 < 0) {
+		if (xi < 1) {
 			hxLeft = grid[xi + 1] - grid[xi];
 		}
 		else {
@@ -1955,7 +1925,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Now takes care of moving surface
 	bool moving = false;
 	bool movingUp = false;
-	for (int i = 0; i < nevents; i++) {
+	for (auto i = 0; i < nevents; i++) {
 		if (eventList[i] < 2)
 			moving = true;
 		if (eventList[i] == 0)
@@ -1981,7 +1951,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
 
 	if (movingUp) {
-		int nGridPoints = 0;
+		IdType nGridPoints = 0;
 		// Move the surface up until it is smaller than the next threshold
 		while (nInterEvent1D > threshold) {
 			// Move the surface higher
@@ -2075,7 +2045,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 				// Get the concentrations at xi = surfacePos + 1
 				gridPointSolution = solutionArray[xi];
 				// Loop on DOF
-				for (int i = 0; i < dof; i++) {
+				for (auto i = 0; i < dof; i++) {
 					gridPointSolution[i] = 0.0;
 				}
 			}
@@ -2238,7 +2208,7 @@ setupPetsc1DMonitor(TS ts)
 
 	// Get the network and its size
 	auto& network = solverHandler.getNetwork();
-	const int networkSize = network.getNumClusters();
+	const auto networkSize = network.getNumClusters();
 	// Get the number of species
 	auto numSpecies = network.getSpeciesListSize();
 
@@ -2324,7 +2294,7 @@ setupPetsc1DMonitor(TS ts)
 			// Get the previous time from the HDF5 file
 			double previousTime = lastTsGroup->readPreviousTime();
 			solverHandler.setPreviousTime(previousTime);
-			hdf5Previous1D = (int)(previousTime / hdf5Stride1D);
+			hdf5Previous1D = (PetscInt)(previousTime / hdf5Stride1D);
 		}
 
 		// Don't do anything if both files have the same name
@@ -2504,10 +2474,10 @@ setupPetsc1DMonitor(TS ts)
 			seriesPlot1D->setLabelProvider(labelProvider);
 
 			// To plot a maximum of 18 clusters of the whole benchmark
-			const int loopSize = std::min(18, networkSize);
+			const auto loopSize = std::min(18, (int)networkSize);
 
 			// Create a data provider for each cluster in the network
-			for (int i = 0; i < loopSize; i++) {
+			for (auto i = 0; i < loopSize; i++) {
 				// Create the data provider
 				auto dataProvider =
 					std::make_shared<viz::dataprovider::CvsXDataProvider>();
@@ -2763,10 +2733,10 @@ setupPetsc1DMonitor(TS ts)
 			// Get the physical grid
 			auto grid = solverHandler.getXGrid();
 			// Get the position of the surface
-			int surfacePos = solverHandler.getSurfacePosition();
+			auto surfacePos = solverHandler.getSurfacePosition();
 
 			// Loop on the entire grid
-			for (int xi = surfacePos + solverHandler.getLeftOffset();
+			for (auto xi = surfacePos + solverHandler.getLeftOffset();
 				 xi < Mx - solverHandler.getRightOffset(); xi++) {
 				// Set x
 				double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];

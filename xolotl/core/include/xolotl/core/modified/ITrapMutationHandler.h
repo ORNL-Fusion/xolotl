@@ -43,8 +43,8 @@ public:
 	 */
 	virtual void
 	initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& dfill, int nx, int ny = 0,
-		int nz = 0) = 0;
+		network::IReactionNetwork::SparseFillMap& dfill, IdType nx,
+		IdType ny = 0, IdType nz = 0) = 0;
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.
@@ -57,9 +57,9 @@ public:
 	 * @param xs The beginning of the grid on this process
 	 */
 	virtual void
-	initializeIndex1D(int surfacePos, network::IReactionNetwork& network,
+	initializeIndex1D(IdType surfacePos, network::IReactionNetwork& network,
 		std::vector<advection::IAdvectionHandler*> advectionHandlers,
-		std::vector<double> grid, int nx, int xs) = 0;
+		std::vector<double> grid, IdType nx, IdType xs) = 0;
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.
@@ -75,11 +75,11 @@ public:
 	 * @param ys The beginning of the grid on this process
 	 */
 	virtual void
-	initializeIndex2D(std::vector<int> surfacePos,
+	initializeIndex2D(std::vector<IdType> surfacePos,
 		network::IReactionNetwork& network,
 		std::vector<advection::IAdvectionHandler*> advectionHandlers,
-		std::vector<double> grid, int nx, int xs, int ny, double hy,
-		int ys) = 0;
+		std::vector<double> grid, IdType nx, IdType xs, IdType ny, double hy,
+		IdType ys) = 0;
 
 	/**
 	 * This method defines which trap-mutation is allowed at each grid point.
@@ -98,11 +98,11 @@ public:
 	 * @param zs The beginning of the grid on this process
 	 */
 	virtual void
-	initializeIndex3D(std::vector<std::vector<int>> surfacePos,
+	initializeIndex3D(std::vector<std::vector<IdType>> surfacePos,
 		network::IReactionNetwork& network,
 		std::vector<advection::IAdvectionHandler*> advectionHandlers,
-		std::vector<double> grid, int nx, int xs, int ny, double hy, int ys,
-		int nz, double hz, int zs) = 0;
+		std::vector<double> grid, IdType nx, IdType xs, IdType ny, double hy,
+		IdType ys, IdType nz, double hz, IdType zs) = 0;
 
 	/**
 	 * This method updates the rate for the modified trap-mutation if the rates
@@ -147,7 +147,7 @@ public:
 	 */
 	virtual void
 	computeTrapMutation(network::IReactionNetwork& network, double* concOffset,
-		double* updatedConcOffset, int xi, int yj = 0, int zk = 0) = 0;
+		double* updatedConcOffset, IdType xi, IdType yj = 0, IdType zk = 0) = 0;
 
 	/**
 	 * Compute the partials due to the modified trap-mutation for all the
@@ -169,10 +169,10 @@ public:
 	 * @return The number of helium clusters that go through modified
 	 * trap-mutation at this grid point
 	 */
-	virtual int
+	virtual size_t
 	computePartialsForTrapMutation(network::IReactionNetwork& network,
-		double* concOffset, double* val, IdType* indices, int xi, int yj = 0,
-		int zk = 0) = 0;
+		double* concOffset, double* val, IdType* indices, IdType xi,
+		IdType yj = 0, IdType zk = 0) = 0;
 
 	/**
 	 * Get the total number of clusters in the network that can undergo trap
@@ -180,7 +180,7 @@ public:
 	 *
 	 * @return The number of clusters
 	 */
-	virtual int
+	virtual size_t
 	getNumberOfMutating() const = 0;
 
 	/**

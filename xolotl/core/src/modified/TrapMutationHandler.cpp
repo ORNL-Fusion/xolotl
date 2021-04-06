@@ -16,7 +16,8 @@ namespace modified
 {
 void
 TrapMutationHandler::initialize(network::IReactionNetwork& network,
-	network::IReactionNetwork::SparseFillMap& dfill, int nx, int ny, int nz)
+	network::IReactionNetwork::SparseFillMap& dfill, IdType nx, IdType ny,
+	IdType nz)
 {
 	// This method fills two vectors to define the modified trap-mutation: for
 	// the first one, the first value corresponds to the depth at which the He1
@@ -109,10 +110,10 @@ TrapMutationHandler::initialize(network::IReactionNetwork& network,
 }
 
 void
-TrapMutationHandler::initializeIndex1D(int surfacePos,
+TrapMutationHandler::initializeIndex1D(IdType surfacePos,
 	network::IReactionNetwork& network,
 	std::vector<advection::IAdvectionHandler*> advectionHandlers,
-	std::vector<double> grid, int nx, int xs)
+	std::vector<double> grid, IdType nx, IdType xs)
 {
 	// Clear the vector of HeV indices created by He undergoing trap-mutation
 	// at each grid point
@@ -135,7 +136,7 @@ TrapMutationHandler::initializeIndex1D(int surfacePos,
 	auto& temp1DVector = temp2DVector.emplace_back();
 
 	// Loop on the grid points in the depth direction
-	for (int i = 0; i < nx; i++) {
+	for (auto i = 0; i < nx; i++) {
 		auto& indices = temp1DVector.emplace_back();
 		// If we are on the left side of the surface there is no
 		// modified trap-mutation
@@ -150,7 +151,7 @@ TrapMutationHandler::initializeIndex1D(int surfacePos,
 			(grid[i + xs - 1] + grid[i + xs]) / 2.0 - grid[surfacePos + 1];
 
 		// Loop on the depth vector
-		for (int l = 0; l < depthVec.size(); l++) {
+		for (auto l = 0; l < depthVec.size(); l++) {
 			// Skip if the depth is negative
 			if (depthVec[l] < 0.0)
 				continue;
@@ -175,10 +176,11 @@ TrapMutationHandler::initializeIndex1D(int surfacePos,
 }
 
 void
-TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
+TrapMutationHandler::initializeIndex2D(std::vector<IdType> surfacePos,
 	network::IReactionNetwork& network,
 	std::vector<advection::IAdvectionHandler*> advectionHandlers,
-	std::vector<double> grid, int nx, int xs, int ny, double hy, int ys)
+	std::vector<double> grid, IdType nx, IdType xs, IdType ny, double hy,
+	IdType ys)
 {
 	// Clear the vector of HeV indices created by He undergoing trap-mutation
 	// at each grid point
@@ -203,12 +205,12 @@ TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 
 	// Loop on the grid points in the Y direction
 	temp2DVector.reserve(ny);
-	for (int j = 0; j < ny; j++) {
+	for (auto j = 0; j < ny; j++) {
 		// Create the temporary 1D vector
 		auto& temp1DVector = temp2DVector.emplace_back();
 
 		// Loop on the grid points in the depth direction
-		for (int i = 0; i < nx; i++) {
+		for (auto i = 0; i < nx; i++) {
 			// Create the list (vector) of indices at this grid point
 			auto& indices = temp1DVector.emplace_back();
 
@@ -225,7 +227,7 @@ TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 				grid[surfacePos[j + ys] + 1];
 
 			// Loop on the depth vector
-			for (int l = 0; l < depthVec.size(); l++) {
+			for (auto l = 0; l < depthVec.size(); l++) {
 				// Skip if the depth is negative
 				if (depthVec[l] < 0.0)
 					continue;
@@ -250,13 +252,13 @@ TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 			// Get the Y position
 			double yPos = (double)(j + ys) * hy;
 			// Loop on the GB advection handlers
-			for (int n = 1; n < advectionHandlers.size(); n++) {
+			for (auto n = 1; n < advectionHandlers.size(); n++) {
 				// Get the location of the GB
 				double location = advectionHandlers[n]->getLocation();
 				// Get the current distance from the GB
 				double distance = fabs(yPos - location);
 				// Loop on the sigma 3 distance vector
-				for (int l = 0; l < sigma3DistanceVec.size(); l++) {
+				for (auto l = 0; l < sigma3DistanceVec.size(); l++) {
 					// Skip if the distance is negative
 					if (sigma3DistanceVec[l] < 0.0)
 						continue;
@@ -290,11 +292,12 @@ TrapMutationHandler::initializeIndex2D(std::vector<int> surfacePos,
 }
 
 void
-TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
+TrapMutationHandler::initializeIndex3D(
+	std::vector<std::vector<IdType>> surfacePos,
 	network::IReactionNetwork& network,
 	std::vector<advection::IAdvectionHandler*> advectionHandlers,
-	std::vector<double> grid, int nx, int xs, int ny, double hy, int ys, int nz,
-	double hz, int zs)
+	std::vector<double> grid, IdType nx, IdType xs, IdType ny, double hy,
+	IdType ys, IdType nz, double hz, IdType zs)
 {
 	// Clear the vector of HeV indices created by He undergoing trap-mutation
 	// at each grid point
@@ -316,18 +319,18 @@ TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
 
 	// Loop on the grid points in the Z direction
 	tmBubbles.reserve(nz);
-	for (int k = 0; k < nz; k++) {
+	for (auto k = 0; k < nz; k++) {
 		// Create the temporary 2D vector
 		auto& temp2DVector = tmBubbles.emplace_back();
 
 		// Loop on the grid points in the Y direction
 		temp2DVector.reserve(ny);
-		for (int j = 0; j < ny; j++) {
+		for (auto j = 0; j < ny; j++) {
 			// Create the temporary 1D vector
 			auto& temp1DVector = temp2DVector.emplace_back();
 
 			// Loop on the grid points in the depth direction
-			for (int i = 0; i < nx; i++) {
+			for (auto i = 0; i < nx; i++) {
 				// Create the list (vector) of indices at this grid point
 				auto& indices = temp1DVector.emplace_back();
 
@@ -344,7 +347,7 @@ TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
 					grid[surfacePos[j + ys][k + zs] + 1];
 
 				// Loop on the depth vector
-				for (int l = 0; l < depthVec.size(); l++) {
+				for (auto l = 0; l < depthVec.size(); l++) {
 					// Skip if the depth is negative
 					if (depthVec[l] < 0.0)
 						continue;
@@ -370,14 +373,14 @@ TrapMutationHandler::initializeIndex3D(std::vector<std::vector<int>> surfacePos,
 				// Get the Y position
 				double yPos = (double)(j + ys) * hy;
 				// Loop on the GB advection handlers
-				for (int n = 1; n < advectionHandlers.size(); n++) {
+				for (auto n = 1; n < advectionHandlers.size(); n++) {
 					// Get the location of the GB
 					double location = advectionHandlers[n]->getLocation();
 					// Get the current distance from the GB
 					double distance = fabs(yPos - location);
 
 					// Loop on the sigma 3 distance vector
-					for (int l = 0; l < sigma3DistanceVec.size(); l++) {
+					for (auto l = 0; l < sigma3DistanceVec.size(); l++) {
 						// Skip if the distance is negative
 						if (sigma3DistanceVec[l] < 0.0)
 							continue;
@@ -430,7 +433,8 @@ TrapMutationHandler::updateDisappearingRate(double conc)
 
 void
 TrapMutationHandler::computeTrapMutation(network::IReactionNetwork& network,
-	double* concOffset, double* updatedConcOffset, int xi, int yj, int zk)
+	double* concOffset, double* updatedConcOffset, IdType xi, IdType yj,
+	IdType zk)
 {
 	// Initialize the rate of the reaction
 	double rate = 0.0;
@@ -469,10 +473,10 @@ TrapMutationHandler::computeTrapMutation(network::IReactionNetwork& network,
 	}
 }
 
-int
+size_t
 TrapMutationHandler::computePartialsForTrapMutation(
 	network::IReactionNetwork& network, double* concOffset, double* val,
-	IdType* indices, int xi, int yj, int zk)
+	IdType* indices, IdType xi, IdType yj, IdType zk)
 {
 	// Initialize the rate of the reaction
 	double rate = 0.0;

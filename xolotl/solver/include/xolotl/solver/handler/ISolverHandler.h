@@ -93,7 +93,7 @@ public:
 	 * @return The concentration vector
 	 */
 	virtual std::vector<
-		std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 	getConcVector(DM& da, Vec& C) = 0;
 
 	/**
@@ -107,7 +107,7 @@ public:
 	virtual void
 	setConcVector(DM& da, Vec& C,
 		std::vector<
-			std::vector<std::vector<std::vector<std::pair<int, double>>>>>&
+			std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
 			concVector) = 0;
 
 	/**
@@ -205,8 +205,8 @@ public:
 	 * @param k The index on the grid in the z direction
 	 * @return The position of the surface at this y,z coordinates
 	 */
-	virtual int
-	getSurfacePosition(int j = -1, int k = -1) const = 0;
+	virtual IdType
+	getSurfacePosition(IdType j = -1, IdType k = -1) const = 0;
 
 	/**
 	 * Set the position of the surface.
@@ -216,7 +216,7 @@ public:
 	 * @param k The index on the grid in the z direction
 	 */
 	virtual void
-	setSurfacePosition(int pos, int j = -1, int k = -1) = 0;
+	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1) = 0;
 
 	/**
 	 * Get the initial vacancy concentration.
@@ -263,7 +263,7 @@ public:
 	 *
 	 * @return The offset
 	 */
-	virtual int
+	virtual IdType
 	getLeftOffset() const = 0;
 
 	/**
@@ -271,7 +271,7 @@ public:
 	 *
 	 * @return The offset
 	 */
-	virtual int
+	virtual IdType
 	getRightOffset() const = 0;
 
 	/**
@@ -282,7 +282,7 @@ public:
 	 * @param c The size in the y direction
 	 */
 	virtual void
-	createLocalNE(int a, int b = 1, int c = 1) = 0;
+	createLocalNE(IdType a, IdType b = 1, IdType c = 1) = 0;
 
 	/**
 	 * Set the latest value of the local Xe rate.
@@ -293,7 +293,7 @@ public:
 	 * @param z The z coordinate of the location
 	 */
 	virtual void
-	setLocalXeRate(double rate, int i, int j = 0, int k = 0) = 0;
+	setLocalXeRate(double rate, IdType i, IdType j = 0, IdType k = 0) = 0;
 
 	/**
 	 * Set the whole vector of local NE data.
@@ -322,7 +322,7 @@ public:
 	 * @param z The z coordinate of the location
 	 */
 	virtual void
-	setPreviousXeFlux(double flux, int i, int j = 0, int k = 0) = 0;
+	setPreviousXeFlux(double flux, IdType i, IdType j = 0, IdType k = 0) = 0;
 
 	/**
 	 * Set the latest value of the Xe monomer concentration.
@@ -333,7 +333,7 @@ public:
 	 * @param z The z coordinate of the location
 	 */
 	virtual void
-	setMonomerConc(double conc, int i, int j = 0, int k = 0) = 0;
+	setMonomerConc(double conc, IdType i, IdType j = 0, IdType k = 0) = 0;
 
 	/**
 	 * Set the latest value of the volume fraction.
@@ -344,7 +344,7 @@ public:
 	 * @param z The z coordinate of the location
 	 */
 	virtual void
-	setVolumeFraction(double frac, int i, int j = 0, int k = 0) = 0;
+	setVolumeFraction(double frac, IdType i, IdType j = 0, IdType k = 0) = 0;
 
 	/**
 	 * Set the coordinates covered by the local grid.
@@ -357,8 +357,8 @@ public:
 	 * process
 	 */
 	virtual void
-	setLocalCoordinates(
-		int xs, int xm, int ys = 0, int ym = 0, int zs = 0, int zm = 0) = 0;
+	setLocalCoordinates(IdType xs, IdType xm, IdType ys = 0, IdType ym = 0,
+		IdType zs = 0, IdType zm = 0) = 0;
 
 	/**
 	 * Get the coordinates covered by the local grid.
@@ -374,8 +374,8 @@ public:
 	 * @param Mz The total width in the Z direction
 	 */
 	virtual void
-	getLocalCoordinates(int& xs, int& xm, int& Mx, int& ys, int& ym, int& My,
-		int& zs, int& zm, int& Mz) = 0;
+	getLocalCoordinates(IdType& xs, IdType& xm, IdType& Mx, IdType& ys,
+		IdType& ym, IdType& My, IdType& zs, IdType& zm, IdType& Mz) = 0;
 
 	/**
 	 * To know if the surface should be able to move.
@@ -479,7 +479,7 @@ public:
 	 *
 	 * @return The GB vector
 	 */
-	virtual std::vector<std::array<int, 3>>
+	virtual std::vector<std::array<IdType, 3>>
 	getGBVector() const = 0;
 
 	/**
@@ -488,7 +488,7 @@ public:
 	 * @param i, j, k The coordinate of the GB
 	 */
 	virtual void
-	setGBLocation(int i, int j = 0, int k = 0) = 0;
+	setGBLocation(IdType i, IdType j = 0, IdType k = 0) = 0;
 
 	/**
 	 * Reset the GB vector.
