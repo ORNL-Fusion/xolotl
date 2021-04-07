@@ -183,8 +183,8 @@ catch (const std::exception& e) {
 }
 
 void
-XolotlInterface::getLocalCoordinates(int& xs, int& xm, int& Mx, int& ys,
-	int& ym, int& My, int& zs, int& zm, int& Mz)
+XolotlInterface::getLocalCoordinates(IdType& xs, IdType& xm, IdType& Mx,
+	IdType& ys, IdType& ym, IdType& My, IdType& zs, IdType& zm, IdType& Mz)
 try {
 	// Get the solver handler
 	auto& solverHandler = solver::Solver::getSolverHandler();
@@ -197,7 +197,7 @@ catch (const std::exception& e) {
 }
 
 void
-XolotlInterface::setGBLocation(int i, int j, int k)
+XolotlInterface::setGBLocation(IdType i, IdType j, IdType k)
 try {
 	// Get the solver handler
 	auto& solverHandler = solver::Solver::getSolverHandler();
@@ -222,7 +222,7 @@ catch (const std::exception& e) {
 	throw;
 }
 
-std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+std::vector<std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 XolotlInterface::getConcVector()
 try {
 	// Get the vector
@@ -234,8 +234,8 @@ catch (const std::exception& e) {
 }
 
 void
-XolotlInterface::setConcVector(
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+XolotlInterface::setConcVector(std::vector<
+	std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 		concVector)
 try {
 	// Set the vector

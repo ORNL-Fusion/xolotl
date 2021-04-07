@@ -326,7 +326,7 @@ PetscSolver::initialize()
 	checkPetscError(ierr, "PetscSolver::initialize: TSSetFromOptions failed.");
 
 	// Switch on the number of dimensions to set the monitors
-	int dim = getSolverHandler().getDimension();
+	auto dim = getSolverHandler().getDimension();
 	switch (dim) {
 	case 0:
 		// One dimension
@@ -398,7 +398,7 @@ PetscSolver::setTimes(double finalTime, double dt)
 	return;
 }
 
-std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+std::vector<std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 PetscSolver::getConcVector()
 {
 	auto& solverHandler = Solver::getSolverHandler();
@@ -407,9 +407,8 @@ PetscSolver::getConcVector()
 }
 
 void
-PetscSolver::setConcVector(
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>&
-		concVector)
+PetscSolver::setConcVector(std::vector<std::vector<
+		std::vector<std::vector<std::pair<IdType, double>>>>>& concVector)
 {
 	auto& solverHandler = Solver::getSolverHandler();
 

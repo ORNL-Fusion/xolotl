@@ -176,9 +176,11 @@ XFile::NetworkGroup::NetworkGroup(
 	// Get the phase space information
 	auto phaseSpace = network.getPhaseSpace();
 	// Convert it to char
-	std::vector<const char*> phaseSpaceChar;
+	std::vector<char*> phaseSpaceChar;
 	for (auto name : phaseSpace) {
-		phaseSpaceChar.push_back(name.c_str());
+		char* pc = new char[name.size() + 1];
+		std::strcpy(pc, name.c_str());
+		phaseSpaceChar.push_back(pc);
 	}
 	// Write it as an attribute
 	hid_t datatype = H5Tcopy(H5T_C_S1);

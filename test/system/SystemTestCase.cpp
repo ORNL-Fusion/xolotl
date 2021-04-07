@@ -104,7 +104,7 @@ public:
 		_redirected = from._redirected;
 		_fileDesc = from._fileDesc;
 		from._redirected = false;
-        return *this;
+		return *this;
 	}
 
 	~StdOutRedirect() noexcept(false)

@@ -34,7 +34,7 @@ protected:
 	 *
 	 * The first pair is the location of a grid point (X,Y),
 	 */
-	std::vector<std::array<int, 3>> gbVector;
+	std::vector<std::array<IdType, 3>> gbVector;
 
 	//! The name of the network file
 	std::string networkName;
@@ -49,13 +49,13 @@ protected:
 	std::vector<double> grid;
 
 	//! The number of grid points in the depth direction.
-	int nX;
+	IdType nX;
 
 	//! The number of grid points in the Y direction.
-	int nY;
+	IdType nY;
 
 	//! The number of grid points in the Z direction.
-	int nZ;
+	IdType nZ;
 
 	//! The grid step size in the y direction.
 	double hY;
@@ -64,26 +64,26 @@ protected:
 	double hZ;
 
 	//! The local start of grid points in the X direction.
-	int localXS;
+	IdType localXS;
 
 	//! The local width of grid points in the X direction.
-	int localXM;
+	IdType localXM;
 
 	//! The local start of grid points in the Y direction.
-	int localYS;
+	IdType localYS;
 
 	//! The local width of grid points in the Y direction.
-	int localYM;
+	IdType localYM;
 
 	//! The local start of grid points in the Z direction.
-	int localZS;
+	IdType localZS;
 
 	//! The local width of grid points in the Z direction.
-	int localZM;
+	IdType localZM;
 
 	//! The number of grid points by which the boundary condition should be
 	//! shifted at this side.
-	int leftOffset, rightOffset, bottomOffset, topOffset, frontOffset,
+	IdType leftOffset, rightOffset, bottomOffset, topOffset, frontOffset,
 		backOffset;
 
 	//! The initial vacancy concentration.
@@ -207,7 +207,7 @@ protected:
 			}
 
 			// Loop on the tokens
-			for (int i = 0; i < tokens.size(); i++) {
+			for (auto i = 0; i < tokens.size(); i++) {
 				grid.push_back(tokens[i] + offset);
 			}
 
@@ -242,7 +242,7 @@ protected:
 			nX = opts.getGridParam(0);
 			auto hx = opts.getGridParam(1);
 			// In that case hx correspond to the full length of the grid
-			for (int l = 1; l <= nX - 1; l++) {
+			for (auto l = 1; l <= nX - 1; l++) {
 				grid.push_back((hx / 2.0) *
 					(1.0 - cos(core::pi * double(l) / double(nX - 1))));
 			}
@@ -268,7 +268,7 @@ protected:
 			nX = opts.getGridParam(0);
 			auto hx = opts.getGridParam(1);
 			// The grid will me made of nx + 2 points separated by hx nm
-			for (int l = 0; l <= nX + 1; l++) {
+			for (auto l = 0; l <= nX + 1; l++) {
 				grid.push_back((double)l * hx);
 			}
 
@@ -294,10 +294,10 @@ protected:
 			// Set the number of grid points
 			nX = opts.getGridParam(0);
 			// Set the position of the surface
-			double surfacePos = (int)(nX * opts.getVoidPortion() / 100.0);
+			auto surfacePos = (IdType)(nX * opts.getVoidPortion() / 100.0);
 
 			// Loop on all the grid points
-			for (int l = 0; l <= nX + 1; l++) {
+			for (auto l = 0; l <= nX + 1; l++) {
 				// Add the previous point
 				grid.push_back(previousPoint);
 				// 0.1nm step near the surface (x < 2.5nm)
@@ -410,12 +410,12 @@ protected:
 			// Set the number of grid points
 			nX = opts.getGridParam(0);
 			// Set the position of the surface
-			double surfacePos = (int)(nX * opts.getVoidPortion() / 100.0);
+			auto surfacePos = (IdType)(nX * opts.getVoidPortion() / 100.0);
 			// Set the gradation parameters
 			double width = 0.1, r = opts.getGridParam(1);
 
 			// Loop on all the grid points
-			for (int l = 0; l <= nX + 1; l++) {
+			for (auto l = 0; l <= nX + 1; l++) {
 				// Add the previous point
 				grid.push_back(previousPoint);
 				// 0.1nm step near the surface
@@ -718,15 +718,15 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	createLocalNE(int a, int b = 1, int c = 1) override
+	createLocalNE(IdType a, IdType b = 1, IdType c = 1) override
 	{
 		localNE.clear();
 		// Create the vector of vectors and fill it with 0.0
-		for (int i = 0; i < a; i++) {
+		for (auto i = 0; i < a; i++) {
 			auto& tempTempVector = localNE.emplace_back();
-			for (int j = 0; j < b; j++) {
+			for (auto j = 0; j < b; j++) {
 				auto& tempVector = tempTempVector.emplace_back();
-				for (int k = 0; k < c; k++) {
+				for (auto k = 0; k < c; k++) {
 					tempVector.push_back({0.0, 0.0, 0.0, 0.0});
 				}
 			}
@@ -737,7 +737,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setLocalXeRate(double rate, int i, int j = 0, int k = 0) override
+	setLocalXeRate(double rate, IdType i, IdType j = 0, IdType k = 0) override
 	{
 		std::get<0>(localNE[i][j][k]) += rate;
 	}
@@ -766,7 +766,8 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setPreviousXeFlux(double flux, int i, int j = 0, int k = 0) override
+	setPreviousXeFlux(
+		double flux, IdType i, IdType j = 0, IdType k = 0) override
 	{
 		std::get<1>(localNE[i][j][k]) = flux;
 	}
@@ -775,7 +776,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setMonomerConc(double conc, int i, int j = 0, int k = 0) override
+	setMonomerConc(double conc, IdType i, IdType j = 0, IdType k = 0) override
 	{
 		std::get<2>(localNE[i][j][k]) = conc;
 	}
@@ -784,7 +785,8 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setVolumeFraction(double frac, int i, int j = 0, int k = 0) override
+	setVolumeFraction(
+		double frac, IdType i, IdType j = 0, IdType k = 0) override
 	{
 		std::get<3>(localNE[i][j][k]) = frac;
 	}
@@ -793,8 +795,8 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setLocalCoordinates(
-		int xs, int xm, int ys = 0, int ym = 0, int zs = 0, int zm = 0) override
+	setLocalCoordinates(IdType xs, IdType xm, IdType ys = 0, IdType ym = 0,
+		IdType zs = 0, IdType zm = 0) override
 	{
 		localXS = xs;
 		localXM = xm;
@@ -808,8 +810,8 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	getLocalCoordinates(int& xs, int& xm, int& Mx, int& ys, int& ym, int& My,
-		int& zs, int& zm, int& Mz) override
+	getLocalCoordinates(IdType& xs, IdType& xm, IdType& Mx, IdType& ys,
+		IdType& ym, IdType& My, IdType& zs, IdType& zm, IdType& Mz) override
 	{
 		xs = localXS;
 		xm = localXM;
@@ -825,7 +827,7 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	int
+	IdType
 	getLeftOffset() const override
 	{
 		return leftOffset;
@@ -834,7 +836,7 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	int
+	IdType
 	getRightOffset() const override
 	{
 		return rightOffset;
@@ -980,7 +982,7 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	std::vector<std::array<int, 3>>
+	std::vector<std::array<IdType, 3>>
 	getGBVector() const override
 	{
 		return gbVector;
@@ -990,12 +992,12 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setGBLocation(int i, int j = 0, int k = 0) override
+	setGBLocation(IdType i, IdType j = 0, IdType k = 0) override
 	{
 		// Add the coordinates to the GB vector
-		if (i >= localXS && i < localXS + std::max(localXM, 1) &&
-			j >= localYS && j < localYS + std::max(localYM, 1) &&
-			k >= localZS && k < localZS + std::max(localZM, 1)) {
+		if (i >= localXS && i < localXS + std::max(localXM, (IdType)1) &&
+			j >= localYS && j < localYS + std::max(localYM, (IdType)1) &&
+			k >= localZS && k < localZS + std::max(localZM, (IdType)1)) {
 			gbVector.push_back({i, j, k});
 		}
 	}

@@ -55,7 +55,7 @@ public:
 	 * @return The concentration vector
 	 */
 	virtual std::vector<
-		std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 	getConcVector() = 0;
 
 	/**
@@ -65,8 +65,9 @@ public:
 	 * @param The concentration vector
 	 */
 	virtual void
-	setConcVector(std::vector<std::vector<
-			std::vector<std::vector<std::pair<int, double>>>>>& concVector) = 0;
+	setConcVector(std::vector<
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
+			concVector) = 0;
 
 	/**
 	 * Get the current dt.

@@ -98,7 +98,7 @@ public:
 	 * \see ISolver.h
 	 */
 	virtual std::vector<
-		std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 	getConcVector() override;
 
 	/**
@@ -106,7 +106,7 @@ public:
 	 */
 	virtual void
 	setConcVector(std::vector<
-		std::vector<std::vector<std::vector<std::pair<int, double>>>>>&
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
 			concVector) override;
 
 	/**

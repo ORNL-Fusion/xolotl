@@ -109,7 +109,7 @@ PetscErrorCode
 monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec, void*)
 {
 	// To check PETSc errors
-	PetscInt ierr;
+	PetscErrorCode ierr;
 
 	PetscFunctionBeginUser;
 
@@ -168,7 +168,7 @@ monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec, void*)
 		auto allPoints =
 			std::make_shared<std::vector<viz::dataprovider::DataPoint>>();
 
-		for (int i = 0; i < cwSize; ++i) {
+		for (auto i = 0; i < cwSize; ++i) {
 			viz::dataprovider::DataPoint aPoint;
 			aPoint.value = allTimerValues[i];
 			aPoint.x = i;
