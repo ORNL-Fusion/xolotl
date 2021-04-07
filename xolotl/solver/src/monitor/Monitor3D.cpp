@@ -64,9 +64,9 @@ std::vector<std::vector<double>> nInterstitial3D;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield3D = 0.0;
 // The vector of depths at which bursting happens
-std::vector<std::array<int, 3>> depthPositions3D;
+std::vector<std::array<PetscInt, 3>> depthPositions3D;
 // The vector of ids for diffusing interstitial clusters
-std::vector<size_t> iClusterIds3D;
+std::vector<IdType> iClusterIds3D;
 // The id of the largest cluster
 int largestClusterId3D = -1;
 // The concentration threshold for the largest cluster

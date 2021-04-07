@@ -130,7 +130,7 @@ HeatEquationHandler::computeTemperature(double** concVector,
 }
 
 bool
-HeatEquationHandler::computePartialsForTemperature(double* val, int* indices,
+HeatEquationHandler::computePartialsForTemperature(double* val, IdType* indices,
 	double hxLeft, double hxRight, int xi, double sy, int iy, double sz, int iz)
 {
 	// Skip if the flux is 0

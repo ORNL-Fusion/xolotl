@@ -6,6 +6,7 @@
 
 #include <plsm/SpaceVector.h>
 
+#include <xolotl/config.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
 namespace xolotl
@@ -133,7 +134,7 @@ public:
 	 * @return True if the partials were updated
 	 */
 	virtual bool
-	computePartialsForTemperature(double* val, int* indices, double hxLeft,
+	computePartialsForTemperature(double* val, IdType* indices, double hxLeft,
 		double hxRight, int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
 		int iz = 0) = 0;
 };

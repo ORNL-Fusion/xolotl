@@ -1,5 +1,5 @@
 dimensions=0
-process=reaction
+process=reaction sink
 netParam=50 0 0 6 4
 grouping=506 2
 vizHandler=dummy

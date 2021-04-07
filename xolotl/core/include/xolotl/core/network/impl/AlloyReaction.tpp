@@ -83,6 +83,13 @@ AlloySinkReaction::getSinkBias()
 
 	return bias;
 }
+
+KOKKOS_INLINE_FUNCTION
+double
+AlloySinkReaction::getSinkStrength()
+{
+	return ::xolotl::core::alloysinkStrength;
+}
 } // namespace network
 } // namespace core
 } // namespace xolotl

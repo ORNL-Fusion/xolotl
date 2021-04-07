@@ -75,9 +75,9 @@ PetscInt hdf5Previous1D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName1D = "xolotlStop.h5";
 // The vector of depths at which bursting happens
-std::vector<int> depthPositions1D;
+std::vector<PetscInt> depthPositions1D;
 // The vector of ids for diffusing interstitial clusters
-std::vector<size_t> iClusterIds1D;
+std::vector<IdType> iClusterIds1D;
 // Tracks the previous TS number
 int previousTSNumber1D = -1;
 // The id of the largest cluster
@@ -265,7 +265,7 @@ computeTRIDYN1D(
 	const auto numSpecies = network.getSpeciesListSize();
 
 	// Get the position of the surface
-	int surfacePos = solverHandler.getSurfacePosition();
+	auto surfacePos = static_cast<PetscInt>(solverHandler.getSurfacePosition());
 
 	// Get the da from ts
 	DM da;

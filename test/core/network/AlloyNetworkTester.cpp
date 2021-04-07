@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Create a good parameter file
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=8 0 0 6 4" << std::endl
-			  << "process=reaction" << std::endl;
+			  << "process=reaction sink" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -469,7 +469,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	std::ofstream paramFile("param.txt");
 	paramFile << "netParam=20 0 0 6 4" << std::endl
 			  << "grouping=10 5" << std::endl
-			  << "process=reaction" << std::endl;
+			  << "process=reaction sink" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options

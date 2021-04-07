@@ -29,6 +29,7 @@ target_link_libraries(xolotlInterface
 )
 target_include_directories(xolotlInterface PUBLIC
     $<BUILD_INTERFACE:${XOLOTL_INTERFACE_INCLUDE_DIR}>
+    $<BUILD_INTERFACE:${XOLOTL_BINARY_INCLUDE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
 set_target_properties(xolotlInterface PROPERTIES

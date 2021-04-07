@@ -122,7 +122,7 @@ Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
 
 void
 Diffusion2DHandler::computePartialsForDiffusion(
-	network::IReactionNetwork& network, double* val, int* indices,
+	network::IReactionNetwork& network, double* val, IdType* indices,
 	double hxLeft, double hxRight, int ix, double sy, int iy, double, int) const
 {
 	// Consider each diffusing cluster.

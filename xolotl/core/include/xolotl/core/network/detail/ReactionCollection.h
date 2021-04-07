@@ -199,7 +199,7 @@ public:
 	ReactionSetMixinChain(
 		IndexType indexBegin, THeadView view, TTailViews... views) :
 		Head(view),
-		Tail(indexBegin + view.size(), views...),
+		Tail(indexBegin + static_cast<IndexType>(view.size()), views...),
 		_indexBegin(indexBegin)
 	{
 	}

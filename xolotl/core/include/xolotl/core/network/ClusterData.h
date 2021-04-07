@@ -113,6 +113,7 @@ public:
 		enableStdReaction("Enable Std Reaction" + labelStr(label)),
 		enableReSolution("Enable Re-Solution Process" + labelStr(label)),
 		enableNucleation("Enable Nucleation Process" + labelStr(label)),
+		enableSink("Enable Sink Process" + labelStr(label)),
 		enableTrapMutation("Enable Trap Mutation Process" + labelStr(label)),
 		temperature("Temperature" + labelStr(label), gridSize),
 		reactionRadius("Reaction Radius" + labelStr(label), numClusters),
@@ -136,6 +137,7 @@ public:
 		enableStdReaction(data.enableStdReaction),
 		enableReSolution(data.enableReSolution),
 		enableNucleation(data.enableNucleation),
+		enableSink(data.enableSink),
 		enableTrapMutation(data.enableTrapMutation),
 		temperature(data.temperature),
 		reactionRadius(data.reactionRadius),
@@ -203,11 +205,17 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	bool
+	getEnableSink() const
+	{
+		return enableSink(0);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
 	getEnableTrapMutation() const
 	{
 		return enableTrapMutation();
 	}
-
 	void
 	setGridSize(IndexType gridSize_)
 	{
@@ -226,6 +234,7 @@ public:
 	View<bool[1]> enableStdReaction;
 	View<bool[1]> enableReSolution;
 	View<bool[1]> enableNucleation;
+	View<bool[1]> enableSink;
 	View<bool> enableTrapMutation;
 
 	View<double*> temperature;

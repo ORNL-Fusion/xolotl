@@ -197,7 +197,13 @@ public:
 	setEnableNucleation(bool reaction) override;
 
 	void
+	setEnableSink(bool reaction) override;
+	
+	void
 	setEnableTrapMutation(bool reaction) override;
+
+	void
+	setEnableReducedJacobian(bool reduced) override;
 
 	void
 	setGridSize(IndexType gridSize) override;

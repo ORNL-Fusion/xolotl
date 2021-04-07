@@ -121,6 +121,22 @@ FeSinkReaction::getSinkBias()
 
 	return bias;
 }
+
+KOKKOS_INLINE_FUNCTION
+double
+FeSinkReaction::getSinkStrength()
+{
+	auto cl = this->_clusterData.getCluster(this->_reactant);
+	double r = cl.getReactionRadius();
+	double latticeParameter = this->_clusterData.getLatticeParameter();
+	double r0 = latticeParameter * 0.75 * sqrt(3.0);
+	double rho = 0.0003;
+	constexpr double pi = ::xolotl::core::pi;
+
+	double strength = -4.0 * pi * rho / log(pi * rho * (r + r0) * (r + r0));
+
+	return strength;
+}
 } // namespace network
 } // namespace core
 } // namespace xolotl

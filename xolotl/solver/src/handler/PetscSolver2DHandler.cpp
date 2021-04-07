@@ -878,11 +878,11 @@ PetscSolver2DHandler::computeJacobian(
 	// Arguments for MatSetValuesStencil called below
 	MatStencil row, cols[5];
 	PetscScalar tempVals[5];
-	PetscInt tempIndices[1];
+	IdType tempIndices[1];
 	PetscScalar diffVals[5 * nDiff];
-	PetscInt diffIndices[nDiff];
+	IdType diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
-	PetscInt advecIndices[nAdvec];
+	IdType advecIndices[nAdvec];
 
 	/*
 	 Loop over grid points for the temperature, including ghosts

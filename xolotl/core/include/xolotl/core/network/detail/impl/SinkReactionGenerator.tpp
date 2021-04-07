@@ -46,7 +46,7 @@ void
 SinkReactionGenerator<TBase>::addSinkReaction(
 	Count, const ClusterSet& clusterSet) const
 {
-	if (!this->_clusterData.enableStdReaction(0))
+	if (!this->_clusterData.enableSink(0))
 		return;
 
 	Kokkos::atomic_increment(&_clusterSinkReactionCounts(clusterSet.cluster0));
@@ -58,7 +58,7 @@ void
 SinkReactionGenerator<TBase>::addSinkReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
-	if (!this->_clusterData.enableStdReaction(0))
+	if (!this->_clusterData.enableSink(0))
 		return;
 
 	auto id = _sinkCrsRowMap(clusterSet.cluster0);

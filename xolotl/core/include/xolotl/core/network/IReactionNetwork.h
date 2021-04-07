@@ -200,6 +200,18 @@ public:
 		_enableNucleation = nuc;
 	}
 
+    bool
+    getEnableSink() const noexcept
+    {
+        return _enableSink;
+    }
+
+    virtual void
+    setEnableSink(bool sink)
+    {
+        _enableSink = sink;
+    }
+
 	bool
 	getEnableTrapMutation() const noexcept
 	{
@@ -207,9 +219,9 @@ public:
 	}
 
 	virtual void
-	setEnableTrapMutation(bool enable)
+	setEnableTrapMutation(bool tm)
 	{
-		_enableTrapMutation = enable;
+		_enableTrapMutation = tm;
 	}
 
 	bool
@@ -379,6 +391,7 @@ protected:
 	bool _enableStdReaction{};
 	bool _enableReSolution{};
 	bool _enableNucleation{};
+	bool _enableSink{};
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
 	bool _enableReducedJacobian{};

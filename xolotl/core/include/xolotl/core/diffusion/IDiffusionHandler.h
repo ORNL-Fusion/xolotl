@@ -4,6 +4,7 @@
 // Includes
 #include <memory>
 
+#include <xolotl/config.h>
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
@@ -113,7 +114,7 @@ public:
 	 */
 	virtual void
 	computePartialsForDiffusion(network::IReactionNetwork& network, double* val,
-		int* indices, double hxLeft, double hxRight, int ix, double sy = 0.0,
+		IdType* indices, double hxLeft, double hxRight, int ix, double sy = 0.0,
 		int iy = 0, double sz = 0.0, int iz = 0) const = 0;
 
 	/**
@@ -129,7 +130,7 @@ public:
 	 *
 	 * @return The vector
 	 */
-	virtual std::vector<std::size_t>
+	virtual std::vector<IdType>
 	getDiffusingIds() const = 0;
 };
 // end class IDiffusionHandler

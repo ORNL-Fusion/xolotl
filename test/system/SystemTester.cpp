@@ -80,6 +80,16 @@ BOOST_AUTO_TEST_CASE(PSI_2)
 	SystemTestCase{"system_PSI_2"}.run();
 }
 
+BOOST_AUTO_TEST_CASE(PSI_3)
+{
+	if (getMPICommSize() > 10) {
+		return;
+	}
+	// 1D + HeVI + pulsed flux + sink + I grouping + surface + reflective
+	// bulk
+	SystemTestCase{"system_PSI_3"}.run();
+}
+
 BOOST_AUTO_TEST_CASE(Fe_1)
 {
 	if (getMPICommSize() > 1) {

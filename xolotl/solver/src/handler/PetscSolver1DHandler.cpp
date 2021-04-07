@@ -789,11 +789,11 @@ PetscSolver1DHandler::computeJacobian(
 	// Arguments for MatSetValuesStencil called below
 	MatStencil row, cols[3];
 	PetscScalar tempVals[3];
-	PetscInt tempIndices[1];
+	IdType tempIndices[1];
 	PetscScalar diffVals[3 * nDiff];
-	PetscInt diffIndices[nDiff];
+	IdType diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
-	PetscInt advecIndices[nAdvec];
+	IdType advecIndices[nAdvec];
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
 	/*

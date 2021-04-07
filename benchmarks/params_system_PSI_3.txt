@@ -1,0 +1,16 @@
+petscArgs=-ts_dt 1.0e-12 -helium_retention -snes_force_iteration -ts_max_time 1.0e-4 -ts_adapt_dt_max 1.0e-5 -ts_adapt_wnormtype INFINITY -ts_exact_final_time stepover -fieldsplit_0_pc_type sor -ts_max_snes_failures -1 -pc_fieldsplit_detect_coupling -ts_monitor -pc_type fieldsplit -fieldsplit_1_pc_type gamg -fieldsplit_1_ksp_type gmres -ksp_type fgmres -fieldsplit_1_pc_gamg_threshold -1 -ts_max_steps 20
+vizHandler=dummy
+flux=0.5e-2
+netParam=0 0 0 10 50 false
+gridParam=21 200
+boundary=1 1
+material=Pulsed
+dimensions=1
+perfHandler=dummy
+tempParam=400
+grouping=11 4 2
+process=reaction diff movingSurface sink
+voidPortion=0.0
+initialV=0.0
+pulse=100.0 1.0
+migrationThreshold=1.1

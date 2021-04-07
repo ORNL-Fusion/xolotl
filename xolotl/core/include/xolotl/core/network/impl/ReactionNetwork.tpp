@@ -34,6 +34,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);
 	this->setEnableNucleation(map["heterogeneous"]);
+	setEnableSink(map["sink"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
 	std::string petscString = opts.getPetscArg();
@@ -192,12 +193,28 @@ ReactionNetwork<TImpl>::setEnableNucleation(bool reaction)
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::setEnableSink(bool reaction)
+{
+	this->_enableSink = reaction;
+	auto mirror = Kokkos::create_mirror_view(_clusterData.enableSink);
+	mirror(0) = this->_enableSink;
+	Kokkos::deep_copy(_clusterData.enableSink, mirror);
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 {
 	Superclass::setEnableTrapMutation(reaction);
 	auto mirror = Kokkos::create_mirror_view(_clusterData.enableTrapMutation);
 	mirror() = this->_enableTrapMutation;
 	deep_copy(_clusterData.enableTrapMutation, mirror);
+}
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableReducedJacobian(bool reduced)
+{
+	this->_enableReducedJacobian = reduced;
 }
 
 template <typename TImpl>
@@ -276,6 +293,7 @@ ReactionNetwork<TImpl>::syncClusterDataOnHost()
 	Kokkos::deep_copy(mirror.enableStdReaction, _clusterData.enableStdReaction);
 	Kokkos::deep_copy(mirror.enableReSolution, _clusterData.enableReSolution);
 	Kokkos::deep_copy(mirror.enableNucleation, _clusterData.enableNucleation);
+	Kokkos::deep_copy(mirror.enableSink, _clusterData.enableSink);
 	Kokkos::deep_copy(mirror.temperature, _clusterData.temperature);
 	Kokkos::deep_copy(mirror.momentIds, _clusterData.momentIds);
 	Kokkos::deep_copy(mirror.reactionRadius, _clusterData.reactionRadius);
@@ -293,8 +311,9 @@ typename ReactionNetwork<TImpl>::template Cluster<plsm::OnDevice>
 ReactionNetwork<TImpl>::findCluster(
 	const Composition& comp, plsm::OnDevice context)
 {
-	return Cluster<plsm::OnDevice>(
-		_clusterData, _subpaving.findTileId(comp, context));
+	auto id = _subpaving.findTileId(comp, context);
+	return Cluster<plsm::OnDevice>(_clusterData,
+		id == _subpaving.invalidIndex() ? this->invalidIndex() : IndexType(id));
 }
 
 template <typename TImpl>
@@ -302,8 +321,9 @@ typename ReactionNetwork<TImpl>::template Cluster<plsm::OnHost>
 ReactionNetwork<TImpl>::findCluster(
 	const Composition& comp, plsm::OnHost context)
 {
-	return Cluster<plsm::OnHost>(
-		_clusterDataMirror, _subpaving.findTileId(comp, context));
+	auto id = _subpaving.findTileId(comp, context);
+	return Cluster<plsm::OnHost>(_clusterDataMirror,
+		id == _subpaving.invalidIndex() ? this->invalidIndex() : IndexType(id));
 }
 
 template <typename TImpl>
