@@ -367,8 +367,13 @@ PSIReactionGenerator<TSpeciesEnum>::PSIReactionGenerator(
 	const PSIReactionNetwork<TSpeciesEnum>& network) :
 	Superclass(network)
 {
-	auto tmHandler = psi::getTrapMutationHandler(
-		network.getEnableTrapMutation(), network.getMaterial());
+	bool enableTrapMutation = network.getEnableTrapMutation();
+	if (!enableTrapMutation) {
+		return;
+	}
+
+	auto tmHandler =
+		psi::getTrapMutationHandler(enableTrapMutation, network.getMaterial());
 	auto vSizes = tmHandler->getAllVSizes();
 	for (std::size_t n = 0; n < vSizes.size(); ++n) {
 		if (vSizes[n].empty()) {
@@ -533,7 +538,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		}
 	}
 
-	// Trap-Mutation
+	// Modified Trap-Mutation
 	auto heAmt = lo1[Species::He];
 	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && 1 <= heAmt && heAmt <= 7) {
 		Composition comp1 = Composition::zero();
