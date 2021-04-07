@@ -63,13 +63,6 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 		return;
 	}
 
-	////////////////////////////////////////////////////////////////////////////
-	static bool done = false;
-	if (done) {
-		return;
-	}
-	////////////////////////////////////////////////////////////////////////////
-
 	_tmHandler->updateData(gridTemps[0]);
 
 	auto& tmData = this->_clusterData.extraData.trapMutationData;
@@ -92,10 +85,6 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	auto vSizes = Kokkos::View<const AmountType[7], HostSpace, MemoryUnmanaged>(
 		_tmHandler->getVacancySizes().data());
 	deep_copy(tmData.tmVSizes, vSizes);
-
-	////////////////////////////////////////////////////////////////////////////
-	done = true;
-	////////////////////////////////////////////////////////////////////////////
 }
 
 template <typename TSpeciesEnum>
