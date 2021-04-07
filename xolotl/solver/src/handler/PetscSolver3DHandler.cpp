@@ -1425,7 +1425,6 @@ PetscSolver3DHandler::computeJacobian(
 						startingIdx += pdColIdsVectorSize;
 					}
 				}
-						yj - localYS, zk - localZS);
 			}
 		}
 
