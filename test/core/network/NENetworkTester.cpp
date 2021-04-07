@@ -661,7 +661,7 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
 	BOOST_REQUIRE(deviceMemorySize > 40000);
-	BOOST_REQUIRE(deviceMemorySize < 47000);
+	BOOST_REQUIRE(deviceMemorySize < 48000);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();

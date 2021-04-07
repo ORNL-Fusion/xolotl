@@ -285,7 +285,7 @@ public:
 		Superclass(data),
 		tiles(data.tiles),
 		momentIds(data.momentIds),
-        extraData(data.extraData)
+		extraData(data.extraData)
 	{
 	}
 
@@ -302,22 +302,18 @@ public:
 };
 
 template <typename TNetwork, typename PlsmContext = plsm::OnDevice>
-struct ClusterData : ClusterDataImpl<TNetwork, PlsmContext, PassThru>
+struct ClusterDataHelper
 {
-	using Superclass = ClusterDataImpl<TNetwork, PlsmContext, PassThru>;
-
-	using Superclass::Superclass;
+	using Type = ClusterDataImpl<TNetwork, PlsmContext, PassThru>;
 };
 
 template <typename PlsmContext>
 using ClusterDataCommonRef = ClusterDataCommon<PlsmContext, Unmanaged>;
 
 template <typename TNetwork, typename PlsmContext = plsm::OnDevice>
-struct ClusterDataRef : ClusterDataImpl<TNetwork, PlsmContext, Unmanaged>
+struct ClusterDataRefHelper
 {
-	using Superclass = ClusterDataImpl<TNetwork, PlsmContext, Unmanaged>;
-
-	using Superclass::Superclass;
+	using Type = ClusterDataImpl<TNetwork, PlsmContext, Unmanaged>;
 };
 } // namespace detail
 } // namespace network

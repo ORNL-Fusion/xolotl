@@ -32,10 +32,17 @@ inline constexpr auto invalidSpeciesAmount =
 	plsm::invalid<CompositionAmountType>;
 
 template <typename TNetwork, typename PlsmContext>
-struct ClusterData;
+struct ClusterDataHelper;
 
 template <typename TNetwork, typename PlsmContext>
-struct ClusterDataRef;
+using ClusterData = typename ClusterDataHelper<TNetwork, PlsmContext>::Type;
+
+template <typename TNetwork, typename PlsmContext>
+struct ClusterDataRefHelper;
+
+template <typename TNetwork, typename PlsmContext>
+using ClusterDataRef =
+	typename ClusterDataRefHelper<TNetwork, PlsmContext>::Type;
 
 template <typename TNetwork, typename PlsmContext,
 	template <typename> typename ViewConvert>

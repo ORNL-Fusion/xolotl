@@ -366,7 +366,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
 	BOOST_REQUIRE(deviceMemorySize > 300000);
-	BOOST_REQUIRE(deviceMemorySize < 330000);
+	BOOST_REQUIRE(deviceMemorySize < 350000);
 
 	BOOST_REQUIRE_EQUAL(network.getGridSize(), 1);
 

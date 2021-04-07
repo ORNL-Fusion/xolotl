@@ -1095,8 +1095,13 @@ BOOST_AUTO_TEST_CASE(grouped)
 			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
-				BOOST_REQUIRE_CLOSE(hPartials[startingIdx + index],
-					knownPartials[startingIdx + j], 0.01);
+				auto pKnown = knownPartials[startingIdx + j];
+				auto p = hPartials[startingIdx + index];
+				if (p == 0.0 || pKnown == 0.0) {
+					BOOST_REQUIRE_SMALL(fabs(p-pKnown), 1.0e-8);
+                    continue;
+				}
+				BOOST_REQUIRE_CLOSE(p, pKnown, 0.01);
 			}
 			startingIdx += row.size();
 		}
