@@ -216,6 +216,7 @@ public:
 	{
 		return enableTrapMutation();
 	}
+
 	void
 	setGridSize(IndexType gridSize_)
 	{

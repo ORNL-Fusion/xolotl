@@ -542,20 +542,24 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	}
 
 	// Modified Trap-Mutation
-	auto heAmt = lo1[Species::He];
-	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && 1 <= heAmt && heAmt <= 7) {
-		Composition comp1 = Composition::zero();
-		comp1[Species::He] = heAmt;
-		auto comp2 = comp1;
-		auto& vSizes = _tmVSizes[heAmt];
-		for (std::size_t n = 0; n < vSizes.extent(0); ++n) {
-			auto& vSize = vSizes[n];
-			comp2[Species::V] = vSize;
-			if (lo1 == comp1 && lo2 == comp2) {
-				Composition compI = Composition::zero();
-				compI[Species::I] = vSize;
-				auto iClusterId = subpaving.findTileId(compI, plsm::onDevice);
-				this->addTrapMutationReaction(tag, {i, j, iClusterId});
+	if (this->_clusterData.getEnableTrapMutation()) {
+		auto heAmt = lo1[Species::He];
+		if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && 1 <= heAmt &&
+			heAmt <= 7) {
+			Composition comp1 = Composition::zero();
+			comp1[Species::He] = heAmt;
+			auto comp2 = comp1;
+			auto& vSizes = _tmVSizes[heAmt];
+			for (std::size_t n = 0; n < vSizes.extent(0); ++n) {
+				auto& vSize = vSizes[n];
+				comp2[Species::V] = vSize;
+				if (lo1 == comp1 && lo2 == comp2) {
+					Composition compI = Composition::zero();
+					compI[Species::I] = vSize;
+					auto iClusterId =
+						subpaving.findTileId(compI, plsm::onDevice);
+					this->addTrapMutationReaction(tag, {i, j, iClusterId});
+				}
 			}
 		}
 	}
