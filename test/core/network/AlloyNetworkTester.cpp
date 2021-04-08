@@ -4,6 +4,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/network/AlloyReactionNetwork.h>
+#include <xolotl/test/Util.h>
 
 using namespace std;
 using namespace xolotl::core;
@@ -1151,13 +1152,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
-				auto pKnown = knownPartials[startingIdx + j];
-				auto p = hPartials[startingIdx + index];
-				if (p == 0.0 || pKnown == 0.0) {
-					BOOST_REQUIRE_SMALL(fabs(p-pKnown), 1.0e-8);
-                    continue;
-				}
-				BOOST_REQUIRE_CLOSE(p, pKnown, 0.01);
+				XOLOTL_REQUIRE_CLOSE_ZT(knownPartials[startingIdx + j],
+					hPartials[startingIdx + index], 0.01, 1.0e-6);
 			}
 			startingIdx += row.size();
 		}
