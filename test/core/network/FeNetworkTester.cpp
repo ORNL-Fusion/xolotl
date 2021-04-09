@@ -4,6 +4,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/network/FeReactionNetwork.h>
+#include <xolotl/test/Util.h>
 
 using namespace std;
 using namespace xolotl::core;
@@ -366,7 +367,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
 	BOOST_REQUIRE(deviceMemorySize > 290000);
-	BOOST_REQUIRE(deviceMemorySize < 330000);
+	BOOST_REQUIRE(deviceMemorySize < 350000);
 
 	BOOST_REQUIRE_EQUAL(network.getGridSize(), 1);
 
@@ -643,7 +644,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
-				BOOST_REQUIRE_CLOSE(hPartials[startingIdx + index],
+				XOLOTL_REQUIRE_CLOSE(hPartials[startingIdx + index],
 					knownPartials[startingIdx + j], 0.01);
 			}
 			startingIdx += row.size();

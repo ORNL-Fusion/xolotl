@@ -3,6 +3,7 @@
 #include <tuple>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/core/network/TrapMutationClusterData.h>
 
 namespace xolotl
 {
@@ -43,9 +44,12 @@ class PSIDissociationReaction;
 
 template <typename TSpeciesEnum>
 class PSISinkReaction;
-
+template <typename TSpeciesEnum> class PSITrapMutationReaction;
 template <typename TSpeciesEnum>
 class PSIClusterGenerator;
+
+template <typename>
+struct TrapMutationClusterData;
 
 enum class PSIFullSpeciesList
 {
@@ -276,12 +280,38 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 	using ProductionReactionType = PSIProductionReaction<Species>;
 	using DissociationReactionType = PSIDissociationReaction<Species>;
 	using SinkReactionType = PSISinkReaction<Species>;
+	using TrapMutationReactionType = PSITrapMutationReaction<Species>;
 
 	using ReactionTypeList = std::tuple<ProductionReactionType,
-		DissociationReactionType, SinkReactionType>;
+		DissociationReactionType, SinkReactionType,
+		TrapMutationReactionType>;
 
 	using ClusterGenerator = PSIClusterGenerator<Species>;
 };
+
+namespace detail
+{
+template <typename TSpeciesEnum, typename PlsmContext,
+	template <typename> typename ViewConvert>
+struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, PlsmContext,
+	ViewConvert>
+{
+	ClusterDataExtra() = default;
+
+	template <typename TOtherPlsmContext,
+		template <typename> typename TOtherViewConvert>
+	KOKKOS_INLINE_FUNCTION
+	ClusterDataExtra(const ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>,
+		TOtherPlsmContext, TOtherViewConvert>& data) :
+		trapMutationData(data.trapMutationData)
+	{
+	}
+
+	using TrapMutationData =
+		TrapMutationClusterData<ClusterDataCommon<PlsmContext, ViewConvert>>;
+	TrapMutationData trapMutationData;
+};
+} // namespace detail
 } // namespace network
 } // namespace core
 } // namespace xolotl

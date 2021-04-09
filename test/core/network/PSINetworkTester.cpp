@@ -1455,8 +1455,8 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 35);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 350000);
-	BOOST_REQUIRE(deviceMemorySize < 400000);
+	BOOST_REQUIRE(deviceMemorySize > 400000);
+	BOOST_REQUIRE(deviceMemorySize < 450000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);

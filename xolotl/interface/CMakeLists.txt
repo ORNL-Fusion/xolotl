@@ -25,6 +25,7 @@ target_link_libraries(xolotlInterface
     xolotlViz
     PUBLIC
     MPI::MPI_CXX
+    Kokkos::kokkos
     PETSc
 )
 target_include_directories(xolotlInterface PUBLIC

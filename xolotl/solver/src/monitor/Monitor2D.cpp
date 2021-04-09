@@ -1598,19 +1598,6 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		}
 	}
 
-	// Get the modified trap-mutation handler to reinitialize it
-	auto mutationHandler = solverHandler.getMutationHandler();
-	auto advecHandlers = solverHandler.getAdvectionHandlers();
-
-	// Get the vector of positions of the surface
-	std::vector<IdType> surfaceIndices;
-	for (auto i = 0; i < My; i++) {
-		surfaceIndices.push_back(solverHandler.getSurfacePosition(i));
-	}
-
-	mutationHandler->initializeIndex2D(surfaceIndices,
-		solverHandler.getNetwork(), advecHandlers, grid, xm, xs, ym, hy, ys);
-
 	// Write the surface positions
 	if (procId == 0) {
 		std::ofstream outputFile;

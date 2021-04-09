@@ -82,7 +82,7 @@ private:
 	}
 
 private:
-	IndexType _id{detail::InvalidIndex::value};
+	IndexType _id{detail::invalidNetworkIndex};
 };
 
 /**
@@ -141,6 +141,7 @@ public:
 	using ClusterData = detail::ClusterData<TNetwork, PlsmContext>;
 	using ClusterDataRef = detail::ClusterDataRef<TNetwork, PlsmContext>;
 	using IndexType = typename Superclass::IndexType;
+	using Composition = typename Types::Composition;
 
 	Cluster() = delete;
 
@@ -161,6 +162,13 @@ public:
 	getRegion() const
 	{
 		return _data.tiles(this->getId()).getRegion();
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	Composition
+	getOriginComposition() const
+	{
+		return getRegion().getOrigin();
 	}
 
 	KOKKOS_INLINE_FUNCTION

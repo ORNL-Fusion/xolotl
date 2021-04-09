@@ -2,12 +2,15 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterSet.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/MemorySpace.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/NucleationReactionGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/PSITrapMutation.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionCollection.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionUtility.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReSolutionReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/SinkReactionGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TupleUtility.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyNetworkHandler.h
@@ -44,9 +47,16 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/SinkReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesEnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesId.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/TrapMutationClusterData.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/TrapMutationReaction.h
 )
 
 list(APPEND XOLOTL_CORE_TPP_FILES
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/NucleationReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReSolutionReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/SinkReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/TrapMutationReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyClusterGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyReactionNetwork.tpp
@@ -64,10 +74,7 @@ list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ReactionNetwork.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ReSolutionReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/SinkReaction.tpp
-    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/NucleationReactionGenerator.tpp
-    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReactionGenerator.tpp
-    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReSolutionReactionGenerator.tpp
-    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/SinkReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/TrapMutationReaction.tpp
 )
 
 list(APPEND XOLOTL_CORE_SOURCES

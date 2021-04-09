@@ -2,6 +2,8 @@
 
 #include <xolotl/core/network/impl/SinkReaction.tpp>
 #include <xolotl/util/MathUtils.h>
+#include <xolotl/core/network/impl/Reaction.tpp>
+#include <xolotl/core/network/impl/TrapMutationReaction.tpp>
 
 namespace xolotl
 {
@@ -33,7 +35,7 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 		{0.0, 0.80, 0.80, 0.75, 0.70, 0.65, 0.60}, // 9
 	};
 
-	static constexpr double beTableV2[15][12] = {
+	constexpr double beTableV2[15][12] = {
 		// H:  1     2     3     4     5     6     7     8     9     10    11 //
 		// He:
 		{0.0, 1.63, 1.31, 1.25, 1.16, 1.00, 1.00, 0.95, 0.95, 0.75, 0.70,

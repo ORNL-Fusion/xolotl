@@ -33,9 +33,6 @@ class ClusterConnectivity :
 public:
 	using IndexType = ReactionNetworkIndexType;
 
-private:
-	static constexpr IndexType invalidIndex = InvalidIndex::value;
-
 public:
 	using Crs = Kokkos::Crs<IndexType, TMemSpace>;
 
@@ -79,7 +76,7 @@ public:
 	void
 	add(IndexType rowId, IndexType columnId) const
 	{
-		if (rowId == invalidIndex || columnId == invalidIndex) {
+		if (rowId == invalidNetworkIndex || columnId == invalidNetworkIndex) {
 			return;
 		}
 		if (this->entries.size() == 0) {
@@ -88,7 +85,7 @@ public:
 		else {
 			for (auto id = this->row_map(rowId);
 				 !Kokkos::atomic_compare_exchange_strong(
-					 &this->entries(id), invalidIndex, columnId);
+					 &this->entries(id), invalidNetworkIndex, columnId);
 				 ++id) {
 				if (this->entries(id) == columnId) {
 					break;
@@ -103,8 +100,8 @@ public:
 	{
 		if (getRowSize(rowId) > _avgRowSize) {
 			auto trPos = getPosition(columnId, rowId, _tr);
-			if (trPos == invalidIndex) {
-				return invalidIndex;
+			if (trPos == invalidNetworkIndex) {
+				return invalidNetworkIndex;
 			}
 			return _trEntries(trPos);
 		}
@@ -139,7 +136,7 @@ private:
 				return pos;
 			}
 		}
-		return invalidIndex;
+		return invalidNetworkIndex;
 	}
 
 	KOKKOS_INLINE_FUNCTION

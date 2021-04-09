@@ -136,12 +136,6 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 	// Set it in the handler
 	setLocalCoordinates(xs, xm, ys, ym);
 
-	// Initialize the modified trap-mutation handler because it adds
-	// connectivity
-	mutationHandler->initialize(network, dfill, localXM, localYM);
-	mutationHandler->initializeIndex2D(surfacePosition, network,
-		advectionHandlers, grid, localXM, localXS, localYM, hY, localYS);
-
 	// Tell the network the number of grid points on this process with ghosts
 	// TODO: do we need the ghost points?
 	network.setGridSize(localXM + 2);
@@ -290,9 +284,6 @@ PetscSolver2DHandler::initializeConcentration(DM& da, Vec& C)
 	// Update the network with the temperature
 	network.setTemperatures(temperature);
 	network.syncClusterDataOnHost();
-	// Update the modified trap-mutation rate
-	// that depends on the network reaction rates
-	mutationHandler->updateTrapMutationRate(network.getLargestRate());
 
 	/*
 	 Restore vectors
@@ -495,9 +486,6 @@ PetscSolver2DHandler::setConcVector(DM& da, Vec& C,
 		// Update the network with the temperature
 		network.setTemperatures(temperature);
 		network.syncClusterDataOnHost();
-		// Update the modified trap-mutation rate
-		// that depends on the network reaction rates
-		mutationHandler->updateTrapMutationRate(network.getLargestRate());
 	}
 
 	// Restore the solutionArray
@@ -670,10 +658,6 @@ PetscSolver2DHandler::updateConcentration(
 			// Update the network with the temperature
 			network.setTemperatures(temperature);
 			network.syncClusterDataOnHost();
-			// Update the modified trap-mutation rate
-			// that depends on the network reaction rates
-			// TODO: is this just the local largest rate? Is it correct?
-			mutationHandler->updateTrapMutationRate(network.getLargestRate());
 		}
 	}
 
@@ -684,6 +668,9 @@ PetscSolver2DHandler::updateConcentration(
 		if (useAttenuation) {
 			// Compute the total concentration of atoms contained in bubbles
 			atomConc = 0.0;
+
+			auto& psiNetwork =
+				dynamic_cast<core::network::IPSIReactionNetwork&>(network);
 
 			// Loop over grid points
 			for (auto xi = surfacePosition[yj] + leftOffset;
@@ -706,9 +693,6 @@ PetscSolver2DHandler::updateConcentration(
 					auto hConcs = HostUnmanaged(concOffset, dof);
 					auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 					deep_copy(dConcs, hConcs);
-					auto& psiNetwork =
-						dynamic_cast<core::network::IPSIReactionNetwork&>(
-							network);
 					atomConc += psiNetwork.getTotalTrappedHeliumConcentration(
 									dConcs, 0) *
 						(grid[xi + 1] - grid[xi]);
@@ -722,7 +706,7 @@ PetscSolver2DHandler::updateConcentration(
 				&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
 
 			// Set the disappearing rate in the modified TM handler
-			mutationHandler->updateDisappearingRate(totalAtomConc);
+			psiNetwork.updateTrapMutationDisappearingRate(totalAtomConc);
 		}
 
 		// Skip if we are not on the right process
@@ -803,10 +787,11 @@ PetscSolver2DHandler::updateConcentration(
 					xi - localXS, hY, yj - localYS);
 			}
 
-			// ----- Compute the modified trap-mutation over the locally owned
-			// part of the grid -----
-			mutationHandler->computeTrapMutation(network, concOffset,
-				updatedConcOffset, xi - localXS, yj - localYS);
+			auto surfacePos = grid[surfacePosition[yj] + 1];
+			auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
+			auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
+			auto curDepth = curXPos - surfacePos;
+			auto curSpacing = curXPos - prevXPos;
 
 			// ----- Compute the reaction fluxes over the locally owned part of
 			// the grid -----
@@ -820,7 +805,8 @@ PetscSolver2DHandler::updateConcentration(
 			deep_copy(dFlux, hFlux);
 			fluxCounter->increment();
 			fluxTimer->start();
-			network.computeAllFluxes(dConcs, dFlux, xi + 1 - localXS);
+			network.computeAllFluxes(
+				dConcs, dFlux, xi + 1 - localXS, curDepth, curSpacing);
 			fluxTimer->stop();
 			deep_copy(hFlux, dFlux);
 		}
@@ -1050,10 +1036,6 @@ PetscSolver2DHandler::computeJacobian(
 			// Update the network with the temperature
 			network.setTemperatures(temperature);
 			network.syncClusterDataOnHost();
-			// Update the modified trap-mutation rate
-			// that depends on the network reaction rates
-			// TODO: is this just the local largest rate? Is it correct?
-			mutationHandler->updateTrapMutationRate(network.getLargestRate());
 		}
 	}
 
@@ -1064,6 +1046,9 @@ PetscSolver2DHandler::computeJacobian(
 		if (useAttenuation) {
 			// Compute the total concentration of atoms contained in bubbles
 			atomConc = 0.0;
+
+			auto& psiNetwork =
+				dynamic_cast<core::network::IPSIReactionNetwork&>(network);
 
 			// Loop over grid points
 			for (auto xi = surfacePosition[yj] + leftOffset;
@@ -1086,9 +1071,6 @@ PetscSolver2DHandler::computeJacobian(
 					auto hConcs = HostUnmanaged(concOffset, dof);
 					auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 					deep_copy(dConcs, hConcs);
-					auto& psiNetwork =
-						dynamic_cast<core::network::IPSIReactionNetwork&>(
-							network);
 					atomConc += psiNetwork.getTotalTrappedHeliumConcentration(
 									dConcs, 0) *
 						(grid[xi + 1] - grid[xi]);
@@ -1102,7 +1084,7 @@ PetscSolver2DHandler::computeJacobian(
 				&atomConc, &totalAtomConc, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
 
 			// Set the disappearing rate in the modified TM handler
-			mutationHandler->updateDisappearingRate(totalAtomConc);
+			psiNetwork.updateTrapMutationDisappearingRate(totalAtomConc);
 		}
 
 		// Skip if we are not on the right process
@@ -1249,6 +1231,12 @@ PetscSolver2DHandler::computeJacobian(
 
 			// ----- Take care of the reactions for all the reactants -----
 
+			auto surfacePos = grid[surfacePosition[yj] + 1];
+			auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
+			auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
+			auto curDepth = curXPos - surfacePos;
+			auto curSpacing = curXPos - prevXPos;
+
 			// Compute all the partial derivatives for the reactions
 			using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
 				Kokkos::MemoryUnmanaged>;
@@ -1257,7 +1245,8 @@ PetscSolver2DHandler::computeJacobian(
 			deep_copy(dConcs, hConcs);
 			partialDerivativeCounter->increment();
 			partialDerivativeTimer->start();
-			network.computeAllPartials(dConcs, vals, xi + 1 - localXS);
+			network.computeAllPartials(
+				dConcs, vals, xi + 1 - localXS, curDepth, curSpacing);
 			partialDerivativeTimer->stop();
 			auto hPartials = create_mirror_view(vals);
 			deep_copy(hPartials, vals);
@@ -1301,64 +1290,6 @@ PetscSolver2DHandler::computeJacobian(
 				}
 			}
 
-			// ----- Take care of the modified trap-mutation for all the
-			// reactants -----
-
-			// Store the total number of He clusters in the network for the
-			// modified trap-mutation
-			auto nHelium = mutationHandler->getNumberOfMutating();
-
-			// Arguments for MatSetValuesStencil called below
-			MatStencil row, col;
-			PetscScalar mutationVals[3 * nHelium];
-			IdType mutationIndices[3 * nHelium];
-
-			// Compute the partial derivative from modified trap-mutation at
-			// this grid point
-			auto nMutating = mutationHandler->computePartialsForTrapMutation(
-				network, concOffset, mutationVals, mutationIndices,
-				xi - localXS, yj - localYS);
-
-			// Loop on the number of helium undergoing trap-mutation to set the
-			// values in the Jacobian
-			for (auto i = 0; i < nMutating; i++) {
-				// Set grid coordinate and component number for the row and
-				// column corresponding to the helium cluster
-				row.i = xi;
-				row.j = yj;
-				row.c = mutationIndices[3 * i];
-				col.i = xi;
-				col.j = yj;
-				col.c = mutationIndices[3 * i];
-
-				ierr = MatSetValuesStencil(
-					J, 1, &row, 1, &col, mutationVals + (3 * i), ADD_VALUES);
-				checkPetscError(ierr,
-					"PetscSolver2DHandler::computeJacobian: "
-					"MatSetValuesStencil (He trap-mutation) failed.");
-
-				// Set component number for the row
-				// corresponding to the HeV cluster created through
-				// trap-mutation
-				row.c = mutationIndices[(3 * i) + 1];
-
-				ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					mutationVals + (3 * i) + 1, ADD_VALUES);
-				checkPetscError(ierr,
-					"PetscSolver2DHandler::computeJacobian: "
-					"MatSetValuesStencil (HeV trap-mutation) failed.");
-
-				// Set component number for the row
-				// corresponding to the interstitial created through
-				// trap-mutation
-				row.c = mutationIndices[(3 * i) + 2];
-
-				ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-					mutationVals + (3 * i) + 2, ADD_VALUES);
-				checkPetscError(ierr,
-					"PetscSolver2DHandler::computeJacobian: "
-					"MatSetValuesStencil (I trap-mutation) failed.");
-			}
 		}
 	}
 

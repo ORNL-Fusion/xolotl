@@ -2079,12 +2079,6 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	fluxHandler->initializeFluxHandler(
 		solverHandler.getNetwork(), surfacePos, grid);
 
-	// Get the modified trap-mutation handler to reinitialize it
-	auto mutationHandler = solverHandler.getMutationHandler();
-	auto advecHandlers = solverHandler.getAdvectionHandlers();
-	mutationHandler->initializeIndex1D(
-		surfacePos, solverHandler.getNetwork(), advecHandlers, grid, xm, xs);
-
 	// Write the updated surface position
 	if (procId == 0) {
 		std::ofstream outputFile;

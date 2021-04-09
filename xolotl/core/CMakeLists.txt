@@ -12,7 +12,6 @@ include(src/flux/Include.cmake)
 include(src/material/Include.cmake)
 include(src/network/Include.cmake)
 include(src/temperature/Include.cmake)
-include(src/modified/Include.cmake)
 
 add_library(xolotlCore SHARED
     ${XOLOTL_CORE_SOURCES}

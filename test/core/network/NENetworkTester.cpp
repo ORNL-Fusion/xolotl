@@ -4,6 +4,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/test/Util.h>
 
 using namespace std;
 using namespace xolotl::core;
@@ -418,7 +419,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
-				BOOST_REQUIRE_CLOSE(hPartials[startingIdx + index],
+				XOLOTL_REQUIRE_CLOSE(hPartials[startingIdx + index],
 					knownPartials[startingIdx + j], 0.01);
 			}
 			startingIdx += row.size();
@@ -662,7 +663,7 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
 	BOOST_REQUIRE(deviceMemorySize > 40000);
-	BOOST_REQUIRE(deviceMemorySize < 47000);
+	BOOST_REQUIRE(deviceMemorySize < 48000);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -771,7 +772,7 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
-				BOOST_REQUIRE_CLOSE(hPartials[startingIdx + index],
+				XOLOTL_REQUIRE_CLOSE(hPartials[startingIdx + index],
 					knownPartials[startingIdx + j], 0.01);
 			}
 			startingIdx += row.size();

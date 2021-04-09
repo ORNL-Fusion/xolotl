@@ -320,7 +320,7 @@ PetscSolver0DHandler::updateConcentration(
 	deep_copy(dFlux, hFlux);
 	fluxCounter->increment();
 	fluxTimer->start();
-	network.computeAllFluxes(dConcs, dFlux, 0);
+	network.computeAllFluxes(dConcs, dFlux);
 	fluxTimer->stop();
 	deep_copy(hFlux, dFlux);
 
@@ -397,7 +397,7 @@ PetscSolver0DHandler::computeJacobian(
 	deep_copy(dConcs, hConcs);
 	partialDerivativeCounter->increment();
 	partialDerivativeTimer->start();
-	network.computeAllPartials(dConcs, vals, 0);
+	network.computeAllPartials(dConcs, vals);
 	partialDerivativeTimer->stop();
 	auto hPartials = create_mirror_view(vals);
 	deep_copy(hPartials, vals);

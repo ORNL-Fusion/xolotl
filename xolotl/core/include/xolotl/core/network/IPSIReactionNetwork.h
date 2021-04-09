@@ -39,6 +39,9 @@ public:
 	virtual void
 	updateBurstingConcs(double* gridPointSolution, double factor,
 		std::vector<double>& nBurst) = 0;
+
+	virtual void
+	updateTrapMutationDisappearingRate(double totalTrappedHeliumConc) = 0;
 };
 } // namespace network
 } // namespace core

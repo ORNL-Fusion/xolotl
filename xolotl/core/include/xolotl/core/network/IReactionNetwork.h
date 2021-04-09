@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <unordered_map>
 
 #include <Kokkos_Core.hpp>
@@ -38,14 +39,14 @@ public:
 	static constexpr IndexType
 	invalidIndex() noexcept
 	{
-		return detail::InvalidIndex::value;
+		return detail::invalidNetworkIndex;
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr AmountType
 	invalidAmount() noexcept
 	{
-		return detail::InvalidSpeciesAmount::value;
+		return detail::invalidSpeciesAmount;
 	}
 
 	IReactionNetwork(IndexType gridSize) : _gridSize(gridSize)
@@ -90,6 +91,18 @@ public:
 	getNumClusters() const noexcept
 	{
 		return _numClusters;
+	}
+
+	const std::string&
+	getMaterial() const noexcept
+	{
+		return _material;
+	}
+
+	void
+	setMaterial(const std::string& mat)
+	{
+		_material = mat;
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -143,12 +156,14 @@ public:
 	}
 
 	virtual void
-	setFissionRate(double rate) = 0;
+	setFissionRate(double rate)
+	{
+		_fissionRate = rate;
+	}
 
 	virtual void
 	setZeta(double z) = 0;
 
-	KOKKOS_INLINE_FUNCTION
 	bool
 	getEnableStdReaction() const noexcept
 	{
@@ -156,9 +171,11 @@ public:
 	}
 
 	virtual void
-	setEnableStdReaction(bool reaction) = 0;
+	setEnableStdReaction(bool reaction)
+	{
+		_enableStdReaction = reaction;
+	}
 
-	KOKKOS_INLINE_FUNCTION
 	bool
 	getEnableReSolution() const noexcept
 	{
@@ -166,9 +183,11 @@ public:
 	}
 
 	virtual void
-	setEnableReSolution(bool reaction) = 0;
+	setEnableReSolution(bool reso)
+	{
+		_enableReSolution = reso;
+	}
 
-	KOKKOS_INLINE_FUNCTION
 	bool
 	getEnableNucleation() const noexcept
 	{
@@ -176,19 +195,47 @@ public:
 	}
 
 	virtual void
-	setEnableNucleation(bool reaction) = 0;
-
-	KOKKOS_INLINE_FUNCTION
-	bool
-	getEnableSink() const noexcept
+	setEnableNucleation(bool nuc)
 	{
-		return _enableSink;
+		_enableNucleation = nuc;
+	}
+
+    bool
+    getEnableSink() const noexcept
+    {
+        return _enableSink;
+    }
+
+    virtual void
+    setEnableSink(bool sink)
+    {
+        _enableSink = sink;
+    }
+
+	bool
+	getEnableTrapMutation() const noexcept
+	{
+		return _enableTrapMutation;
 	}
 
 	virtual void
-	setEnableSink(bool reaction) = 0;
+	setEnableTrapMutation(bool tm)
+	{
+		_enableTrapMutation = tm;
+	}
 
-	KOKKOS_INLINE_FUNCTION
+	bool
+	getEnableAttenuation() const noexcept
+	{
+		return _enableAttenuation;
+	}
+
+	virtual void
+	setEnableAttenuation(bool enable)
+	{
+		_enableAttenuation = enable;
+	}
+
 	bool
 	getEnableReducedJacobian() const noexcept
 	{
@@ -196,9 +243,11 @@ public:
 	}
 
 	virtual void
-	setEnableReducedJacobian(bool reduced) = 0;
+	setEnableReducedJacobian(bool reduced)
+	{
+		_enableReducedJacobian = reduced;
+	}
 
-	KOKKOS_INLINE_FUNCTION
 	IndexType
 	getGridSize() const noexcept
 	{
@@ -249,7 +298,8 @@ public:
 	 */
 	virtual void
 	computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-		IndexType gridIndex) = 0;
+		IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0) = 0;
 
 	/**
 	 * @brief Updates the values view with the rates from all the
@@ -257,7 +307,8 @@ public:
 	 */
 	virtual void
 	computeAllPartials(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex) = 0;
+		Kokkos::View<double*> values, IndexType gridIndex = 0,
+		double surfaceDepth = 0.0, double spacing = 0.0) = 0;
 
 	/**
 	 * @brief Returns the largest computed rate.
@@ -331,6 +382,7 @@ public:
 		std::vector<double>& fluxes, IndexType gridIndex) = 0;
 
 protected:
+	std::string _material;
 	double _latticeParameter{};
 	double _atomicVolume{};
 	double _interstitialBias{};
@@ -340,6 +392,8 @@ protected:
 	bool _enableReSolution{};
 	bool _enableNucleation{};
 	bool _enableSink{};
+	bool _enableTrapMutation{};
+	bool _enableAttenuation{};
 	bool _enableReducedJacobian{};
 
 	IndexType _gridSize{};
