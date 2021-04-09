@@ -28,7 +28,7 @@ struct Desorption
 	using AmountType = detail::CompositionAmountType;
 	using IndexType = detail::ReactionNetworkIndexType;
 
-    Desorption() = default;
+	Desorption() = default;
 
 	Desorption(DesorptionInitializer dInit, IndexType dId) :
 		size{dInit.size},

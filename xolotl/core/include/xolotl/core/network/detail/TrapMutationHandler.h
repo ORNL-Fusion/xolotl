@@ -19,8 +19,8 @@ public:
 	TrapMutationHandler() = default;
 	virtual ~TrapMutationHandler() = default;
 
-    virtual std::array<std::vector<AmountType>, 7>
-    getAllVSizes() const = 0;
+	virtual std::array<std::vector<AmountType>, 7>
+	getAllVSizes() const = 0;
 
 	virtual void
 	updateData(double temp) = 0;

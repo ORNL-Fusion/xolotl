@@ -200,17 +200,17 @@ public:
 		_enableNucleation = nuc;
 	}
 
-    bool
-    getEnableSink() const noexcept
-    {
-        return _enableSink;
-    }
+	bool
+	getEnableSink() const noexcept
+	{
+		return _enableSink;
+	}
 
-    virtual void
-    setEnableSink(bool sink)
-    {
-        _enableSink = sink;
-    }
+	virtual void
+	setEnableSink(bool sink)
+	{
+		_enableSink = sink;
+	}
 
 	bool
 	getEnableTrapMutation() const noexcept

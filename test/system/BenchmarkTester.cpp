@@ -68,7 +68,8 @@ BOOST_AUTO_TEST_CASE(PSI_2)
 		return;
 	}
 	SystemTestCase::copyFile("tridyn_benchmark_PSI_2.dat");
-	// 1D + HeDVI + advection + modifiedTM + attenuation + surface + reflective
+	// 1D + HeDVI + grouping + advection + modifiedTM + attenuation + surface +
+	// reflective
 	SystemTestCase{"benchmark_PSI_2"}.withTimer().run();
 }
 
@@ -77,8 +78,8 @@ BOOST_AUTO_TEST_CASE(PSI_3)
 	if (getMPICommSize() > 20) {
 		return;
 	}
-	// 1D + HeVI + advection + modifiedTM + attenuation + surface + reflective +
-	// reduced matrix method
+	// 1D + HeVI + grouping + advection + modifiedTM + attenuation + surface +
+	// reflective + reduced matrix method
 	SystemTestCase{"benchmark_PSI_3"}.withTimer().run();
 }
 

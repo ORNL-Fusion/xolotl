@@ -198,7 +198,7 @@ public:
 
 	void
 	setEnableSink(bool reaction) override;
-	
+
 	void
 	setEnableTrapMutation(bool reaction) override;
 

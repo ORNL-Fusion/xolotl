@@ -61,17 +61,19 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	Composition hi = region.getUpperLimitPoint();
 
 	// Group I on its own
-	if (lo[Species::I] < _groupingMin) {
-		return true;
-	}
-	if (region[Species::I].end() > _maxI) {
-		return true;
-	}
-	if (region[Species::I].length() <
-		util::max((double)(_groupingWidthB + 1),
-			region[Species::I].begin() * 1.0e-2)) {
-		result[toIndex(Species::I)] = false;
-		return false;
+	if (lo[Species::I] > 0) {
+		if (lo[Species::I] < _groupingMin) {
+			return true;
+		}
+		if (region[Species::I].end() > _maxI) {
+			return true;
+		}
+		if (region[Species::I].length() <
+			util::max((double)(_groupingWidthB + 1),
+				region[Species::I].begin() * 1.0e-2)) {
+			result[toIndex(Species::I)] = false;
+			return false;
+		}
 	}
 
 	auto othersBeginAtZero = [](const Region& reg, Species species) {
@@ -333,13 +335,19 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 
 	// Can't cluster without V
 	if (region[Species::V].end() == 1) {
+		if (region[Species::He].begin() > _maxHe)
+			return false;
 		if constexpr (hasDeuterium<Species>) {
+			if (region[Species::D].begin() > _maxD)
+				return false;
 			if (region[Species::He].begin() > 0 &&
 				region[Species::D].begin() > 0) {
 				return false;
 			}
 		}
 		if constexpr (hasTritium<Species>) {
+			if (region[Species::T].begin() > _maxT)
+				return false;
 			if (region[Species::He].begin() > 0 &&
 				region[Species::T].begin() > 0) {
 				return false;

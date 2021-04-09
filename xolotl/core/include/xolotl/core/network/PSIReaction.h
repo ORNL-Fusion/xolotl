@@ -67,9 +67,9 @@ class PSITrapMutationReaction :
 		PSITrapMutationReaction<TSpeciesEnum>>
 {
 public:
-    using Superclass = TrapMutationReaction<PSIReactionNetwork<TSpeciesEnum>,
+	using Superclass = TrapMutationReaction<PSIReactionNetwork<TSpeciesEnum>,
 		PSITrapMutationReaction<TSpeciesEnum>>;
-    using Superclass::Superclass;
+	using Superclass::Superclass;
 };
 } // namespace network
 } // namespace core

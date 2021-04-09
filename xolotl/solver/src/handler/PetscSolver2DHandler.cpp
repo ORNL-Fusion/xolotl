@@ -1289,7 +1289,6 @@ PetscSolver2DHandler::computeJacobian(
 					startingIdx += pdColIdsVectorSize;
 				}
 			}
-
 		}
 	}
 
