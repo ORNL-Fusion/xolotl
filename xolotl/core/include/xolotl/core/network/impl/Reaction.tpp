@@ -534,8 +534,27 @@ ProductionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
-	return getRateForProduction(
+
+	auto rate = getRateForProduction(
 		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+
+//	constexpr auto speciesRange = NetworkType::getSpeciesRange();
+//	auto cl0Reg = cl0.getRegion(), cl1Reg = cl1.getRegion(),
+//		 prodReg = this->_clusterData.getCluster(_products[0]).getRegion();
+//	for (auto i : speciesRange) {
+//		std::cout << cl0Reg[i()].begin() << " ";
+//	}
+//	std::cout << "+ ";
+//	for (auto i : speciesRange) {
+//		std::cout << cl1Reg[i()].begin() << " ";
+//	}
+//	std::cout << "-> ";
+//	for (auto i : speciesRange) {
+//		std::cout << prodReg[i()].begin() << " ";
+//	}
+//	std::cout << std::endl;
+
+	return rate;
 }
 
 template <typename TNetwork, typename TDerived>

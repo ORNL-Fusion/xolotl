@@ -158,13 +158,15 @@ NEClusterGenerator::getMigrationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
 	// I migration energy in eV
-	constexpr double iOneMigrationEnergy = 1.97;
+	constexpr double iOneMigrationEnergy = 3.5;
 	// Xe migration energies in eV
 	constexpr double xeOneMigrationEnergy = 1.0;
 	// V migration energies in eV
-	constexpr double vOneMigrationEnergy = 2.49;
+	constexpr double vOneMigrationEnergy = 3.5;
 	// XeV migration energies in eV
-	constexpr double xevOneMigrationEnergy = 1.0;
+	constexpr Kokkos::Array<double, 9> xevMigrationEnergies = {
+		util::infinity<double>, util::infinity<double>, 3.70, 4.99, 2.77, 7.37,
+		10.13, 5.43, 3.13};
 
 	const auto& reg = cluster.getRegion();
 	double migrationEnergy = util::infinity<double>;
@@ -185,8 +187,9 @@ NEClusterGenerator::getMigrationEnergy(
 				migrationEnergy = vOneMigrationEnergy;
 			}
 		}
-		else if (comp[Species::V] == 1 && comp[Species::Xe] == 1) {
-			migrationEnergy = _xeDiffusive ? 0.0 : xevOneMigrationEnergy;
+		else if (comp[Species::V] < xevMigrationEnergies.size() &&
+			comp[Species::Xe] == 1) {
+			migrationEnergy = xevMigrationEnergies[comp[Species::V]];
 		}
 	}
 
@@ -204,9 +207,11 @@ NEClusterGenerator::getDiffusionFactor(
 	// Xe migration energies in eV
 	constexpr double xeOneDiffusionFactor = 1.247e+10;
 	// V migration energies in eV
-	constexpr double vOneDiffusionFactor = 9.934e+11;
+	constexpr double vOneDiffusionFactor = 4.249e+11;
 	// XeV migration energies in eV
-	constexpr double xevOneDiffusionFactor = 1.0;
+	constexpr Kokkos::Array<double, 9> xevDiffusionFactors = {0.0, 0.0,
+		6.483e+11, 7.48e+10, 9.974e+10, 2.493e+10, 1.995e+11, 2.493e+10,
+		2.493e+10};
 
 	const auto& reg = cluster.getRegion();
 	double diffusionFactor = 0.0;
@@ -227,8 +232,9 @@ NEClusterGenerator::getDiffusionFactor(
 				diffusionFactor = vOneDiffusionFactor;
 			}
 		}
-		else if (comp[Species::V] == 1 && comp[Species::Xe] == 1) {
-			diffusionFactor = _xeDiffusive ? 0.0 : xevOneDiffusionFactor;
+		else if (comp[Species::V] < xevDiffusionFactors.size() &&
+			comp[Species::Xe] == 1) {
+			diffusionFactor = xevDiffusionFactors[comp[Species::V]];
 		}
 	}
 
