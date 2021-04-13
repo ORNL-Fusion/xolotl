@@ -111,7 +111,7 @@ checkNegative1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	// Initial declaration
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
@@ -124,12 +124,9 @@ checkNegative1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
@@ -170,7 +167,7 @@ monitorLargest1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	// Initial declaration
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
@@ -183,9 +180,9 @@ monitorLargest1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
+	// Get the solver handler and local coordinates
+	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Loop on the local grid
 	for (auto i = xs; i < xs + xm; i++) {
@@ -223,15 +220,16 @@ computeTRIDYN1D(
 
 	// Initial declarations
 	PetscErrorCode ierr;
-	PetscInt xs, xm;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
 	// Get the MPI communicator
 	auto xolotlComm = util::getMPIComm();
 
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
@@ -244,17 +242,6 @@ computeTRIDYN1D(
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the total size of the grid
-	PetscInt Mx;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -345,12 +332,13 @@ startStop1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	// Initial declaration
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm, Mx;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Compute the dt
 	double previousTime = solverHandler.getPreviousTime();
@@ -376,15 +364,6 @@ startStop1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 
 	// Get the solutionArray
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the network and dof
@@ -478,12 +457,13 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 	// Initial declarations
 	PetscErrorCode ierr;
-	PetscInt xs, xm;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the flux handler that will be used to know the fluence
 	auto fluxHandler = solverHandler.getFluxHandler();
@@ -493,17 +473,6 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the total size of the grid
-	PetscInt Mx;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -789,28 +758,18 @@ computeXenonRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 	// Initial declarations
 	PetscErrorCode ierr;
-	PetscInt xs, xm;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
-
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
 
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the total size of the grid
-	PetscInt Mx;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	CHKERRQ(ierr);
+	// Get the solver handler and local coordinates
+	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
@@ -1038,7 +997,7 @@ profileTemperature1D(
 {
 	// Initial declarations
 	PetscErrorCode ierr;
-	PetscInt xs, xm;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
@@ -1047,8 +1006,9 @@ profileTemperature1D(
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
@@ -1060,17 +1020,6 @@ profileTemperature1D(
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the total size of the grid
-	PetscInt Mx;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -1144,7 +1093,7 @@ computeAlloy1D(
 {
 	// Initial declarations
 	PetscErrorCode ierr;
-	PetscInt xs, xm;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
@@ -1155,30 +1104,17 @@ computeAlloy1D(
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the physical grid and its length
 	auto grid = solverHandler.getXGrid();
 	auto xSize = grid.size();
 
-	// Get the position of the surface
-	auto surfacePos = solverHandler.getSurfacePosition();
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the total size of the grid
-	PetscInt Mx;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the array of concentration
@@ -1201,6 +1137,9 @@ computeAlloy1D(
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal* gridPointSolution;
+
+	// Get the position of the surface
+	auto surfacePos = solverHandler.getSurfacePosition();
 
 	// Loop on the grid
 	for (auto xi = xs; xi < xs + xm; xi++) {
@@ -1287,7 +1226,7 @@ monitorScatter1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	// Initial declarations
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm, xi, Mx;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
@@ -1309,18 +1248,9 @@ monitorScatter1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the network and its size
 	using NetworkType = core::network::NEReactionNetwork;
@@ -1405,7 +1335,7 @@ monitorSeries1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm, xi;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 	double x = 0.0;
 
 	PetscFunctionBeginUser;
@@ -1431,12 +1361,9 @@ monitorSeries1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the network and its size
 	auto& network = solverHandler.getNetwork();
@@ -1455,7 +1382,7 @@ monitorSeries1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 			loopSize);
 
 		// Loop on the grid
-		for (xi = xs; xi < xs + xm; xi++) {
+		for (auto xi = xs; xi < xs + xm; xi++) {
 			// Get the pointer to the beginning of the solution data for this
 			// grid point
 			gridPointSolution = solutionArray[xi];
@@ -1540,7 +1467,7 @@ monitorSeries1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 		MPI_Send(&xm, 1, MPI_DOUBLE, 0, 20, xolotlComm);
 
 		// Loop on the grid
-		for (xi = xs; xi < xs + xm; xi++) {
+		for (auto xi = xs; xi < xs + xm; xi++) {
 			// Dump x
 			x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 
@@ -1579,7 +1506,7 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 	// Initial declaration
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm, xi, Mx;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 	depthPositions1D.clear();
 	fvalue[0] = 1.0, fvalue[1] = 1.0, fvalue[2] = 1.0;
 
@@ -1609,22 +1536,13 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the position of the surface
 	auto surfacePos = solverHandler.getSurfacePosition();
-	xi = surfacePos + solverHandler.getLeftOffset();
+	auto xi = surfacePos + solverHandler.getLeftOffset();
 
 	// Get the network
 	using NetworkType = core::network::IPSIReactionNetwork;
@@ -1826,7 +1744,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Initial declaration
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
-	PetscInt xs, xm, xi;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
@@ -1852,16 +1770,9 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
-	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, NULL, NULL, &xm, NULL, NULL);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the position of the surface
 	auto surfacePos = solverHandler.getSurfacePosition();
@@ -1893,7 +1804,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 		gridPointSolution = solutionArray[depthPositions1D[i]];
 
 		// Get the distance from the surface
-		xi = depthPositions1D[i];
+		auto xi = depthPositions1D[i];
 		double distance =
 			(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
 		double hxLeft = 0.0;
@@ -1942,7 +1853,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	}
 
 	// Set the surface position
-	xi = surfacePos + solverHandler.getLeftOffset();
+	auto xi = surfacePos + solverHandler.getLeftOffset();
 
 	// Get the initial vacancy concentration
 	double initialVConc = solverHandler.getInitialVConc();
