@@ -67,6 +67,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getSinkBias();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getSinkStrength();
 };
 } // namespace network
 } // namespace core

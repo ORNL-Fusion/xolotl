@@ -20,7 +20,7 @@ class DiffusionHandler : public IDiffusionHandler
 {
 protected:
 	//! Collection of diffusing clusters.
-	std::vector<std::size_t> diffusingClusters;
+	std::vector<IdType> diffusingClusters;
 
 	//! Migration energy threshold
 	double migrationThreshold;
@@ -90,7 +90,7 @@ public:
 	 *
 	 * \see IDiffusionHandler.h
 	 */
-	virtual std::vector<std::size_t>
+	virtual std::vector<IdType>
 	getDiffusingIds() const override
 	{
 		return diffusingClusters;

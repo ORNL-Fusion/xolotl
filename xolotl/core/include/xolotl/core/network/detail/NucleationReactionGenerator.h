@@ -67,8 +67,8 @@ private:
 
 template <typename TNetwork, typename TReaction, typename TBase>
 struct WrapTypeSpecificReactionGenerator<TNetwork, TReaction, TBase,
-	std::enable_if_t<std::is_base_of<NucleationReaction<TNetwork, TReaction>,
-		TReaction>::value>>
+	std::enable_if_t<
+		std::is_base_of_v<NucleationReaction<TNetwork, TReaction>, TReaction>>>
 {
 	using Type = NucleationReactionGenerator<TBase>;
 };

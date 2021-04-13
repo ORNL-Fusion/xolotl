@@ -16,7 +16,7 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create distributed array (DMDA) to manage parallel grid and vectors
@@ -89,7 +89,7 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the single vacancy ID
 	auto singleVacancyCluster = network.getSingleVacancy();
@@ -101,7 +101,7 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	concOffset = concentrations[0];
 
 	// Loop on all the clusters to initialize at 0.0
-	for (int n = 0; n < dof; n++) {
+	for (auto n = 0; n < dof; n++) {
 		concOffset[n] = 0.0;
 	}
 
@@ -160,7 +160,7 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	return;
 }
 
-std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+std::vector<std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 PetscSolver0DHandler::getConcVector(DM& da, Vec& C)
 {
 	// Initial declaration
@@ -176,25 +176,26 @@ PetscSolver0DHandler::getConcVector(DM& da, Vec& C)
 
 	// Get the network and dof
 	auto& network = getNetwork();
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Create the vector for the concentrations
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+	std::vector<
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 		toReturn;
 
 	// Access the solution data for the current grid point.
 	gridPointSolution = concentrations[0];
 
 	// Create the temporary vector for this grid point
-	std::vector<std::pair<int, double>> tempVector;
+	std::vector<std::pair<IdType, double>> tempVector;
 	for (auto l = 0; l < dof + 1; ++l) {
 		if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 			tempVector.push_back(std::make_pair(l, gridPointSolution[l]));
 		}
 	}
-	std::vector<std::vector<std::pair<int, double>>> tempTempVector;
+	std::vector<std::vector<std::pair<IdType, double>>> tempTempVector;
 	tempTempVector.push_back(tempVector);
-	std::vector<std::vector<std::vector<std::pair<int, double>>>>
+	std::vector<std::vector<std::vector<std::pair<IdType, double>>>>
 		tempTempTempVector;
 	tempTempTempVector.push_back(tempTempVector);
 	toReturn.push_back(tempTempTempVector);
@@ -210,7 +211,8 @@ PetscSolver0DHandler::getConcVector(DM& da, Vec& C)
 
 void
 PetscSolver0DHandler::setConcVector(DM& da, Vec& C,
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>&
+	std::vector<
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
 		concVector)
 {
 	PetscErrorCode ierr;
@@ -224,13 +226,13 @@ PetscSolver0DHandler::setConcVector(DM& da, Vec& C,
 		"DMDAVecGetArrayDOF failed.");
 
 	// Get the DOF of the network
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the local concentration
 	gridPointSolution = concentrations[0];
 
 	// Loop on the given vector
-	for (int l = 0; l < concVector[0][0][0].size(); l++) {
+	for (auto l = 0; l < concVector[0][0][0].size(); l++) {
 		gridPointSolution[concVector[0][0][0][l].first] =
 			concVector[0][0][0][l].second;
 	}
@@ -290,7 +292,7 @@ PetscSolver0DHandler::updateConcentration(
 
 	// Degrees of freedom is the total number of clusters in the network +
 	// moments
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);
@@ -318,7 +320,7 @@ PetscSolver0DHandler::updateConcentration(
 	deep_copy(dFlux, hFlux);
 	fluxCounter->increment();
 	fluxTimer->start();
-	network.computeAllFluxes(dConcs, dFlux, 0);
+	network.computeAllFluxes(dConcs, dFlux);
 	fluxTimer->stop();
 	deep_copy(hFlux, dFlux);
 
@@ -362,13 +364,13 @@ PetscSolver0DHandler::computeJacobian(
 
 	// Degrees of freedom is the total number of clusters in the network +
 	// moments
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Arguments for MatSetValuesStencil called below
 	MatStencil rowId;
 	MatStencil colIds[dof];
 	MatStencil colId;
-	int pdColIdsVectorSize = 0;
+	IdType pdColIdsVectorSize = 0;
 
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
@@ -395,16 +397,16 @@ PetscSolver0DHandler::computeJacobian(
 	deep_copy(dConcs, hConcs);
 	partialDerivativeCounter->increment();
 	partialDerivativeTimer->start();
-	network.computeAllPartials(dConcs, vals, 0);
+	network.computeAllPartials(dConcs, vals);
 	partialDerivativeTimer->stop();
 	auto hPartials = create_mirror_view(vals);
 	deep_copy(hPartials, vals);
 
 	// Variable for the loop on reactants
-	int startingIdx = 0;
+	IdType startingIdx = 0;
 
 	// Update the column in the Jacobian that represents each DOF
-	for (int i = 0; i < dof; i++) {
+	for (auto i = 0; i < dof; i++) {
 		// Set grid coordinate and component number for the row
 		rowId.i = 0;
 		rowId.c = i;
@@ -416,7 +418,7 @@ PetscSolver0DHandler::computeJacobian(
 			pdColIdsVectorSize = row.size();
 
 			// Loop over the list of column ids
-			for (int j = 0; j < pdColIdsVectorSize; j++) {
+			for (auto j = 0; j < pdColIdsVectorSize; j++) {
 				// Set grid coordinate and component number for a column in the
 				// list
 				colIds[j].i = 0;

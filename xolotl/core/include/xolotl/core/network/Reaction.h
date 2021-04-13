@@ -32,7 +32,7 @@ class Reaction
 	using Props = detail::ReactionNetworkProperties<TNetwork>;
 
 protected:
-	static constexpr auto invalidIndex = detail::InvalidIndex::value;
+	static constexpr auto invalidIndex = detail::invalidNetworkIndex;
 	static constexpr auto nMomentIds = Props::numSpeciesNoI;
 	static constexpr auto coeffsSingleExtent = Props::numSpeciesNoI + 1;
 

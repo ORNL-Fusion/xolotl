@@ -19,10 +19,8 @@ MaterialHandler::MaterialHandler(const options::IOptions& options,
 	const IMaterialSubHandlerGenerator& subHandlerGenerator) :
 	_diffusionHandler(createDiffusionHandler(options)),
 	_advectionHandlers({subHandlerGenerator.generateAdvectionHandler()}),
-	_fluxHandler(subHandlerGenerator.generateFluxHandler(options)),
-	_trapMutationHandler(subHandlerGenerator.generateTrapMutationHandler())
+	_fluxHandler(subHandlerGenerator.generateFluxHandler(options))
 {
-	initializeTrapMutationHandler(options);
 	initializeAdvectionHandlers(options);
 
 	auto xolotlComm = util::getMPIComm();
@@ -76,18 +74,6 @@ MaterialHandler::createDiffusionHandler(const options::IOptions& options)
 		// The asked dimension is not good (e.g. -1, 4)
 		throw std::runtime_error(
 			"\nxolotlFactory: Bad dimension for the material factory.");
-	}
-}
-
-void
-MaterialHandler::initializeTrapMutationHandler(const options::IOptions& options)
-{
-	if (!options.getProcesses().at("modifiedTM")) {
-		_trapMutationHandler =
-			std::make_shared<core::modified::DummyTrapMutationHandler>();
-	}
-	if (!options.getProcesses().at("attenuation")) {
-		_trapMutationHandler->setAttenuation(false);
 	}
 }
 

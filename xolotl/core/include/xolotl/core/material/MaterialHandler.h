@@ -3,7 +3,6 @@
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
 #include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
-#include <xolotl/core/modified/DummyTrapMutationHandler.h>
 #include <xolotl/options/IOptions.h>
 
 namespace xolotl
@@ -35,12 +34,6 @@ public:
 	 */
 	virtual std::shared_ptr<core::advection::IAdvectionHandler>
 	generateAdvectionHandler() const = 0;
-
-	/**
-	 * Generate the trap mutation handler
-	 */
-	virtual std::shared_ptr<core::modified::ITrapMutationHandler>
-	generateTrapMutationHandler() const = 0;
 };
 
 /**
@@ -53,16 +46,13 @@ public:
  * @tparam TFluxHandler Must be a child of core::flux::IFluxHandler
  * @tparam TAdvectionHandler Must be a child of
  * core::advection::IAdvectionHandler
- * @tparam TTrapMutationHandler Must be a child of
- * core::modified::ITrapMutationHandler
  *
  * @note The flux handler type must be provided. However, if the options specify
  * a flux depth profile file, the CustomFitFluxHandler is used instead of the
  * specified flux handler type.
  */
 template <typename TFluxHandler,
-	typename TAdvectionHandler = core::advection::DummyAdvectionHandler,
-	typename TTrapMutationHandler = core::modified::DummyTrapMutationHandler>
+	typename TAdvectionHandler = core::advection::DummyAdvectionHandler>
 class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 {
 	std::shared_ptr<core::flux::IFluxHandler>
@@ -86,15 +76,6 @@ class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 			TAdvectionHandler>::value);
 
 		return std::make_shared<TAdvectionHandler>();
-	}
-
-	std::shared_ptr<core::modified::ITrapMutationHandler>
-	generateTrapMutationHandler() const final
-	{
-		static_assert(std::is_base_of<core::modified::ITrapMutationHandler,
-			TTrapMutationHandler>::value);
-
-		return std::make_shared<TTrapMutationHandler>();
 	}
 };
 
@@ -124,12 +105,6 @@ public:
 		return _diffusionHandler;
 	}
 
-	std::shared_ptr<core::modified::ITrapMutationHandler>
-	getTrapMutationHandler() const final
-	{
-		return _trapMutationHandler;
-	}
-
 protected:
 	/**
 	 * @brief Construct with options and sub-handler generator
@@ -150,12 +125,6 @@ private:
 	createDiffusionHandler(const options::IOptions& options);
 
 	/**
-	 * Finish setting up trap mutation handler based on relevant options
-	 */
-	void
-	initializeTrapMutationHandler(const options::IOptions& options);
-
-	/**
 	 * Finish setting up advection handler(s) based on relevant options
 	 */
 	void
@@ -166,7 +135,6 @@ protected:
 	std::vector<std::shared_ptr<core::advection::IAdvectionHandler>>
 		_advectionHandlers;
 	std::shared_ptr<core::flux::IFluxHandler> _fluxHandler;
-	std::shared_ptr<core::modified::ITrapMutationHandler> _trapMutationHandler;
 };
 } // namespace material
 } // namespace core

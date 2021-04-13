@@ -6,6 +6,7 @@
 
 #include <plsm/Subpaving.h>
 
+#include <xolotl/config.h>
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 
 namespace xolotl
@@ -21,15 +22,43 @@ struct ReactionNetworkTraits
 
 namespace detail
 {
-using ReactionNetworkIndexType = std::size_t;
+using ReactionNetworkIndexType = ::xolotl::IdType;
 
 using CompositionAmountType = std::uint32_t;
 
-template <typename TNetwork, typename PlsmContext>
-class ClusterData;
+inline constexpr auto invalidNetworkIndex =
+	plsm::invalid<ReactionNetworkIndexType>;
+
+inline constexpr auto invalidSpeciesAmount =
+	plsm::invalid<CompositionAmountType>;
 
 template <typename TNetwork, typename PlsmContext>
-class ClusterDataRef;
+struct ClusterDataHelper;
+
+template <typename TNetwork, typename PlsmContext>
+using ClusterData = typename ClusterDataHelper<TNetwork, PlsmContext>::Type;
+
+template <typename TNetwork, typename PlsmContext>
+struct ClusterDataRefHelper;
+
+template <typename TNetwork, typename PlsmContext>
+using ClusterDataRef =
+	typename ClusterDataRefHelper<TNetwork, PlsmContext>::Type;
+
+template <typename TNetwork, typename PlsmContext,
+	template <typename> typename ViewConvert>
+struct ClusterDataExtra
+{
+	ClusterDataExtra() = default;
+
+	template <typename TOtherPlsmContext,
+		template <typename> typename TOtherViewConvert>
+	KOKKOS_INLINE_FUNCTION
+	ClusterDataExtra(
+		const ClusterDataExtra<TNetwork, TOtherPlsmContext, TOtherViewConvert>&)
+	{
+	}
+};
 
 template <typename TNetwork>
 struct ReactionDataRef;
@@ -85,16 +114,6 @@ struct ReactionNetworkProperties
 	static constexpr std::size_t numSpecies = Traits::numSpecies;
 	using SpeciesSequence = SpeciesEnumSequence<Species, numSpecies>;
 	static constexpr std::size_t numSpeciesNoI = SpeciesSequence::sizeNoI();
-};
-
-struct InvalidIndex
-{
-	static constexpr auto value = plsm::invalid<ReactionNetworkIndexType>;
-};
-
-struct InvalidSpeciesAmount
-{
-	static constexpr auto value = plsm::invalid<CompositionAmountType>;
 };
 
 template <typename TNetwork, typename = VoidType<>>

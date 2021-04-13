@@ -259,15 +259,34 @@ getReflectedDispersionForCoefs(const TRegion& clReg)
 }
 
 /**
- * @brief Specific case with one or fewer V. The I dispersion can be neglected
- * because I are not grouped in that case.
+ * @brief Specific case with one V. I dispersion is added to V.
  *
  * @tparam Dim The number of dimension for the reflected region
  * @tparam TRegion The region where the I needs to be reflected
  */
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
-std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() <= 1),
+std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1),
+	plsm::SpaceVector<double, Dim>>
+getReflectedDispersionForCoefs(const TRegion& clReg)
+{
+	using Species = typename TRegion::EnumIndex;
+	auto disp = clReg.dispersion();
+	auto vIndex = static_cast<std::underlying_type_t<Species>>(Species::V);
+	auto iIndex = static_cast<std::underlying_type_t<Species>>(Species::I);
+	disp[vIndex] += disp[iIndex] - 1.0;
+	return disp;
+}
+
+/**
+ * @brief Specific case no V.
+ *
+ * @tparam Dim The number of dimension for the reflected region
+ * @tparam TRegion The region where the I needs to be reflected
+ */
+template <std::size_t Dim, typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() < 1),
 	plsm::SpaceVector<double, Dim>>
 getReflectedDispersionForCoefs(const TRegion& clReg)
 {

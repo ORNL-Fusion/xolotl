@@ -15,7 +15,8 @@
 #include <xolotl/options/Options.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace modified;
 
 using Kokkos::ScopeGuard;
@@ -56,15 +57,15 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 
 	// Suppose we have a grid with 13 grid points and distance of
 	// 0.1 nm between grid points
-	int nGrid = 13;
+	IdType nGrid = 13;
 	std::vector<double> grid;
 	std::vector<double> temperatures;
-	for (int l = 0; l < nGrid; l++) {
+	for (auto l = 0; l < nGrid; l++) {
 		grid.push_back((double)l * 0.1);
 		temperatures.push_back(1000.0);
 	}
 	// Set the surface position
-	std::vector<int> surfacePos = {0, 0, 0, 0, 0};
+	std::vector<IdType> surfacePos = {0, 0, 0, 0, 0};
 
 	// Create the network
 	using NetworkType =
@@ -78,7 +79,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Create the modified trap-mutation handler
 	W100TrapMutationHandler trapMutationHandler;
@@ -108,7 +109,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 	double newConcentration[nGrid * 5 * dof];
 
 	// Initialize their values
-	for (int i = 0; i < nGrid * 5 * dof; i++) {
+	for (auto i = 0; i < nGrid * 5 * dof; i++) {
 		concentration[i] = (double)i * i;
 		newConcentration[i] = 0.0;
 	}
@@ -151,15 +152,15 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[61], 1.5542e+22, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
-	int indices[3 * maxHe];
+	IdType indices[3 * maxHe];
 	double val[3 * maxHe];
 	// Get the pointer on them for the compute modified trap-mutation method
-	int* indicesPointer = &indices[0];
+	IdType* indicesPointer = &indices[0];
 	double* valPointer = &val[0];
 
 	// Compute the partial derivatives for the modified trap-mutation at the
 	// grid point 8
-	int nMutating = trapMutationHandler.computePartialsForTrapMutation(
+	auto nMutating = trapMutationHandler.computePartialsForTrapMutation(
 		network, concOffset, valPointer, indicesPointer, 8, 3);
 
 	// Check the values for the indices
@@ -180,7 +181,7 @@ BOOST_AUTO_TEST_CASE(checkModifiedTrapMutation)
 	BOOST_REQUIRE_CLOSE(val[5], 6.34804e+14, 0.01);
 
 	// Change the temperature of the network
-	for (int l = 0; l < nGrid; l++) {
+	for (auto l = 0; l < nGrid; l++) {
 		temperatures[l] = 500.0;
 	}
 	network.setTemperatures(temperatures);

@@ -77,7 +77,7 @@ public:
 	 */
 	void
 	computePartialsForAdvection(network::IReactionNetwork& network, double* val,
-		int* indices, const plsm::SpaceVector<double, 3>& pos, double hxLeft,
+		IdType* indices, const plsm::SpaceVector<double, 3>& pos, double hxLeft,
 		double hxRight, int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
 		int iz = 0) const override
 	{

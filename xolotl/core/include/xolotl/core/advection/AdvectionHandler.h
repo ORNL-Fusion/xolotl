@@ -23,7 +23,7 @@ protected:
 	double location;
 
 	//! The collection of advecting clusters.
-	std::vector<std::size_t> advectingClusters;
+	std::vector<IdType> advectingClusters;
 
 	//! The vector containing the value of the sink strength (called A) of the
 	//! advecting clusters
@@ -81,7 +81,7 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
-	const std::vector<std::size_t>&
+	const std::vector<IdType>&
 	getAdvectingClusters() override
 	{
 		return advectingClusters;

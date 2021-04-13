@@ -64,15 +64,15 @@ std::vector<std::vector<double>> nInterstitial3D;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield3D = 0.0;
 // The vector of depths at which bursting happens
-std::vector<std::array<int, 3>> depthPositions3D;
+std::vector<std::array<PetscInt, 3>> depthPositions3D;
 // The vector of ids for diffusing interstitial clusters
-std::vector<size_t> iClusterIds3D;
+std::vector<IdType> iClusterIds3D;
 // The id of the largest cluster
 int largestClusterId3D = -1;
 // The concentration threshold for the largest cluster
 double largestThreshold3D = 1.0e-12;
 // Tracks the previous TS number
-int previousTSNumber3D = -1;
+PetscInt previousTSNumber3D = -1;
 
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorLargest3D")
@@ -85,18 +85,9 @@ monitorLargest3D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	// Initial declaration
 	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
-	PetscInt xs, xm, ys, ym, zs, zm;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
-
-	// Get the MPI communicator
-	auto xolotlComm = util::getMPIComm();
-	// Get the number of processes
-	int worldSize;
-	MPI_Comm_size(xolotlComm, &worldSize);
-	// Gets the process ID (important when it is running in parallel)
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the da from ts
 	DM da;
@@ -107,14 +98,14 @@ monitorLargest3D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	CHKERRQ(ierr);
+	// Get the solver handler and local coordinates
+	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Loop on the local grid
-	for (PetscInt k = zs; k < zs + zm; k++)
-		for (PetscInt j = ys; j < ys + ym; j++)
-			for (PetscInt i = xs; i < xs + xm; i++) {
+	for (auto k = zs; k < zs + zm; k++)
+		for (auto j = ys; j < ys + ym; j++)
+			for (auto i = xs; i < xs + xm; i++) {
 				// Get the pointer to the beginning of the solution data for
 				// this grid point
 				gridPointSolution = solutionArray[k][j][i];
@@ -148,24 +139,25 @@ startStop3D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double ****solutionArray, *gridPointSolution;
-	PetscInt xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Compute the dt
 	double previousTime = solverHandler.getPreviousTime();
 	double dt = time - previousTime;
 
 	// Don't do anything if it is not on the stride
-	if (((int)((time + dt / 10.0) / hdf5Stride3D) <= hdf5Previous3D) &&
+	if (((PetscInt)((time + dt / 10.0) / hdf5Stride3D) <= hdf5Previous3D) &&
 		timestep > 0)
 		PetscFunctionReturn(0);
 
 	// Update the previous time
-	if ((int)((time + dt / 10.0) / hdf5Stride3D) > hdf5Previous3D)
+	if ((PetscInt)((time + dt / 10.0) / hdf5Stride3D) > hdf5Previous3D)
 		hdf5Previous3D++;
 
 	// Gets the process ID (important when it is running in parallel)
@@ -182,28 +174,19 @@ startStop3D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	CHKERRQ(ierr);
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	CHKERRQ(ierr);
-
 	// Get the network and dof
 	auto& network = solverHandler.getNetwork();
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Create an array for the concentration
 	double concArray[dof + 1][2];
 
 	// Get the vector of positions of the surface
 	std::vector<std::vector<int>> surfaceIndices;
-	for (PetscInt i = 0; i < My; i++) {
+	for (auto i = 0; i < My; i++) {
 		// Create a temporary vector
 		std::vector<int> temp;
-		for (PetscInt j = 0; j < Mz; j++) {
+		for (auto j = 0; j < Mz; j++) {
 			temp.push_back(solverHandler.getSurfacePosition(i, j));
 		}
 		// Add the temporary vector to the vector of surface indices
@@ -232,9 +215,9 @@ startStop3D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	}
 
 	// Loop on the full grid
-	for (PetscInt k = 0; k < Mz; k++) {
-		for (PetscInt j = 0; j < My; j++) {
-			for (PetscInt i = 0; i < Mx; i++) {
+	for (auto k = 0; k < Mz; k++) {
+		for (auto j = 0; j < My; j++) {
+			for (auto i = 0; i < Mx; i++) {
 				// Wait for all the processes
 				MPI_Barrier(xolotlComm);
 
@@ -254,7 +237,7 @@ startStop3D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 					gridPointSolution = solutionArray[k][j][i];
 
 					// Loop on the concentrations
-					for (int l = 0; l < dof + 1; l++) {
+					for (auto l = 0; l < dof + 1; l++) {
 						if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 							// Increase concSize
 							concSize++;
@@ -307,12 +290,13 @@ computeHeliumRetention3D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 {
 	// Initial declarations
 	PetscErrorCode ierr;
-	PetscInt xs, xm, ys, ym, zs, zm, Mx, My, Mz;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the flux handler that will be used to compute fluxes.
 	auto fluxHandler = solverHandler.getFluxHandler();
@@ -322,22 +306,13 @@ computeHeliumRetention3D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	CHKERRQ(ierr);
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	CHKERRQ(ierr);
-
 	// Get the physical grid in the x direction
 	auto grid = solverHandler.getXGrid();
 
 	// Get the network
 	using NetworkType = core::network::IPSIReactionNetwork;
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Setup step size variables
 	double hy = solverHandler.getStepSizeY();
@@ -353,12 +328,12 @@ computeHeliumRetention3D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	auto myConcData = std::vector<double>(numSpecies, 0.0);
 
 	// Loop on the grid
-	for (PetscInt zk = zs; zk < zs + zm; zk++) {
-		for (PetscInt yj = ys; yj < ys + ym; yj++) {
+	for (auto zk = zs; zk < zs + zm; zk++) {
+		for (auto yj = ys; yj < ys + ym; yj++) {
 			// Get the surface position
-			int surfacePos = solverHandler.getSurfacePosition(yj, zk);
+			auto surfacePos = solverHandler.getSurfacePosition(yj, zk);
 
-			for (PetscInt xi = xs; xi < xs + xm; xi++) {
+			for (auto xi = xs; xi < xs + xm; xi++) {
 				// Boundary conditions
 				if (xi < surfacePos + solverHandler.getLeftOffset() ||
 					xi >= Mx - solverHandler.getRightOffset())
@@ -410,7 +385,7 @@ computeHeliumRetention3D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		double surface = (double)(My * Mz) * hy * hz;
 
 		// Rescale the concentration
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			totalConcData[i] /= surface;
 		}
 
@@ -429,7 +404,7 @@ computeHeliumRetention3D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
 		outputFile << fluence << " ";
-		for (std::size_t i = 0; i < numSpecies; ++i) {
+		for (auto i = 0; i < numSpecies; ++i) {
 			outputFile << totalConcData[i] << " ";
 		}
 		outputFile << std::endl;
@@ -454,27 +429,17 @@ computeXenonRetention3D(
 {
 	// Initial declarations
 	PetscErrorCode ierr;
-	PetscInt xs, xm, ys, ym, zs, zm;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
-
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	CHKERRQ(ierr);
-
-	// Get the total size of the grid
-	PetscInt Mx, My, Mz;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 
 	// Get the physical grid
@@ -490,7 +455,7 @@ computeXenonRetention3D(
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the complete data array, including ghost cells
 	Vec localSolution;
@@ -519,9 +484,9 @@ computeXenonRetention3D(
 	auto xeId = xeCluster.getId();
 
 	// Loop on the grid
-	for (PetscInt zk = zs; zk < zs + zm; zk++) {
-		for (PetscInt yj = ys; yj < ys + ym; yj++) {
-			for (PetscInt xi = xs; xi < xs + xm; xi++) {
+	for (auto zk = zs; zk < zs + zm; zk++) {
+		for (auto yj = ys; yj < ys + ym; yj++) {
+			for (auto xi = xs; xi < xs + xm; xi++) {
 				// Get the pointer to the beginning of the solution data for
 				// this grid point
 				gridPointSolution = solutionArray[zk][yj][xi];
@@ -588,9 +553,9 @@ computeXenonRetention3D(
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Middle
-		int xi = std::get<0>(pair);
-		int yj = std::get<1>(pair);
-		int zk = std::get<2>(pair);
+		auto xi = std::get<0>(pair);
+		auto yj = std::get<1>(pair);
+		auto zk = std::get<2>(pair);
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym && zk >= zs &&
 			zk < zs + zm) {
@@ -628,17 +593,17 @@ computeXenonRetention3D(
 		auto myRate = std::vector<double>(numSpecies, 0.0);
 		// Define left and right with reference to the middle point
 		// Middle
-		int xi = std::get<0>(pair);
-		int yj = std::get<1>(pair);
-		int zk = std::get<2>(pair);
+		auto xi = std::get<0>(pair);
+		auto yj = std::get<1>(pair);
+		auto zk = std::get<2>(pair);
 
 		// Factor for finite difference
 		double hxLeft = 0.0, hxRight = 0.0;
-		if (xi - 1 >= 0 && xi < Mx) {
+		if (xi >= 1 && xi < Mx) {
 			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 		}
-		else if (xi - 1 < 0) {
+		else if (xi < 1) {
 			hxLeft = grid[xi + 1] - grid[xi];
 			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 		}
@@ -762,7 +727,7 @@ monitorSurfaceXY3D(
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double ****solutionArray, *gridPointSolution;
-	PetscInt xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 	double x, y;
 
 	PetscFunctionBeginUser;
@@ -785,17 +750,9 @@ monitorSurfaceXY3D(
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	CHKERRQ(ierr);
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the physical grid in the x direction
 	auto grid = solverHandler.getXGrid();
@@ -804,7 +761,7 @@ monitorSurfaceXY3D(
 	double hy = solverHandler.getStepSizeY();
 
 	// Choice of the cluster to be plotted
-	int iCluster = 0;
+	IdType iCluster = 0;
 
 	// Create a DataPoint vector to store the data to give to the data provider
 	// for the visualization
@@ -815,18 +772,18 @@ monitorSurfaceXY3D(
 
 	// Loop on the full grid, Y and X first because they are the axis of the
 	// plot
-	for (PetscInt j = 0; j < My; j++) {
+	for (auto j = 0; j < My; j++) {
 		// Compute y
 		y = (double)j * hy;
 
-		for (PetscInt i = 0; i < Mx; i++) {
+		for (auto i = 0; i < Mx; i++) {
 			// Compute x
 			x = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
 
 			// Initialize the value of the concentration to integrate over Z
 			double conc = 0.0;
 
-			for (PetscInt k = 0; k < Mz; k++) {
+			for (auto k = 0; k < Mz; k++) {
 				// If it is the locally owned part of the grid
 				if (i >= xs && i < xs + xm && j >= ys && j < ys + ym &&
 					k >= zs && k < zs + zm) {
@@ -907,7 +864,7 @@ monitorSurfaceXZ3D(
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double ****solutionArray, *gridPointSolution;
-	PetscInt xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 	double x, z;
 
 	PetscFunctionBeginUser;
@@ -930,17 +887,9 @@ monitorSurfaceXZ3D(
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	CHKERRQ(ierr);
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the physical grid in the x direction
 	auto grid = solverHandler.getXGrid();
@@ -949,7 +898,7 @@ monitorSurfaceXZ3D(
 	double hz = solverHandler.getStepSizeZ();
 
 	// Choice of the cluster to be plotted
-	int iCluster = 0;
+	IdType iCluster = 0;
 
 	// Create a DataPoint vector to store the data to give to the data provider
 	// for the visualization
@@ -960,18 +909,18 @@ monitorSurfaceXZ3D(
 
 	// Loop on the full grid, Z and X first because they are the axis of the
 	// plot
-	for (PetscInt k = 0; k < Mz; k++) {
+	for (auto k = 0; k < Mz; k++) {
 		// Compute z
 		z = (double)k * hz;
 
-		for (PetscInt i = 0; i < Mx; i++) {
+		for (auto i = 0; i < Mx; i++) {
 			// Compute x
 			x = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
 
 			// Initialize the value of the concentration to integrate over Y
 			double conc = 0.0;
 
-			for (PetscInt j = 0; j < My; j++) {
+			for (auto j = 0; j < My; j++) {
 				// If it is the locally owned part of the grid
 				if (i >= xs && i < xs + xm && j >= ys && j < ys + ym &&
 					k >= zs && k < zs + zm) {
@@ -1050,7 +999,7 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 	// Initial declaration
 	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
-	PetscInt xs, xm, xi, Mx, ys, ym, yj, My, zs, zm, zk, Mz;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 	fvalue[0] = 1.0, fvalue[1] = 1.0;
 	depthPositions3D.clear();
 
@@ -1080,18 +1029,9 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	CHKERRQ(ierr);
-
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the network
 	using NetworkType = core::network::IPSIReactionNetwork;
@@ -1121,10 +1061,10 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			outputFile << time << " ";
 
 			// Loop on the possible yj
-			for (yj = 0; yj < My; yj++) {
-				for (zk = 0; zk < Mz; zk++) {
+			for (auto yj = 0; yj < My; yj++) {
+				for (auto zk = 0; zk < Mz; zk++) {
 					// Get the position of the surface at yj, zk
-					int surfacePos = solverHandler.getSurfacePosition(yj, zk);
+					auto surfacePos = solverHandler.getSurfacePosition(yj, zk);
 					outputFile << (double)yj * hy << " " << (double)zk * hz
 							   << " " << grid[surfacePos + 1] - grid[1] << " ";
 				}
@@ -1137,8 +1077,8 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 		double initialVConc = solverHandler.getInitialVConc();
 
 		// Loop on the possible zk and yj
-		for (zk = 0; zk < Mz; zk++) {
-			for (yj = 0; yj < My; yj++) {
+		for (auto zk = 0; zk < Mz; zk++) {
+			for (auto yj = 0; yj < My; yj++) {
 				// Compute the total density of intersitials that escaped from
 				// the surface since last timestep using the stored flux
 				nInterstitial3D[yj][zk] += previousIFlux3D[yj][zk] * dt;
@@ -1148,8 +1088,8 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 					sputteringYield3D * heliumFluxAmplitude * dt;
 
 				// Get the position of the surface at yj
-				int surfacePos = solverHandler.getSurfacePosition(yj, zk);
-				xi = surfacePos + solverHandler.getLeftOffset();
+				auto surfacePos = solverHandler.getSurfacePosition(yj, zk);
+				auto xi = surfacePos + solverHandler.getLeftOffset();
 
 				// Initialize the value for the flux
 				auto myFlux = std::vector<double>(numSpecies, 0.0);
@@ -1162,11 +1102,11 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 					// Factor for finite difference
 					double hxLeft = 0.0, hxRight = 0.0;
-					if (xi - 1 >= 0 && xi < Mx) {
+					if (xi >= 1 && xi < Mx) {
 						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 					}
-					else if (xi - 1 < 0) {
+					else if (xi < 1) {
 						hxLeft = grid[xi + 1] - grid[xi];
 						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 					}
@@ -1229,11 +1169,11 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 		bool burst = false;
 
 		// Loop on the full grid
-		for (zk = 0; zk < Mz; zk++) {
-			for (yj = 0; yj < My; yj++) {
+		for (auto zk = 0; zk < Mz; zk++) {
+			for (auto yj = 0; yj < My; yj++) {
 				// Get the surface position
-				int surfacePos = solverHandler.getSurfacePosition(yj, zk);
-				for (xi = surfacePos + solverHandler.getLeftOffset();
+				auto surfacePos = solverHandler.getSurfacePosition(yj, zk);
+				for (auto xi = surfacePos + solverHandler.getLeftOffset();
 					 xi < Mx - solverHandler.getRightOffset(); xi++) {
 					// If this is the locally owned part of the grid
 					if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym &&
@@ -1320,7 +1260,7 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Initial declaration
 	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
-	PetscInt xs, xm, xi, Mx, ys, ym, yj, My, zs, zm, zk, Mz;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
 
@@ -1342,22 +1282,13 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
-	// Get the corners of the grid
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	CHKERRQ(ierr);
-
-	// Get the size of the total grid
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
+	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
+	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the network
 	auto& network = solverHandler.getNetwork();
-	int dof = network.getDOF();
+	auto dof = network.getDOF();
 
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
@@ -1370,17 +1301,17 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 
 	// Loop on each bursting depth
-	for (int i = 0; i < depthPositions3D.size(); i++) {
+	for (auto i = 0; i < depthPositions3D.size(); i++) {
 		// Get the coordinates of the point
-		int xi = std::get<2>(depthPositions3D[i]),
-			yj = std::get<1>(depthPositions3D[i]),
-			zk = std::get<0>(depthPositions3D[i]);
+		auto xi = std::get<2>(depthPositions3D[i]),
+			 yj = std::get<1>(depthPositions3D[i]),
+			 zk = std::get<0>(depthPositions3D[i]);
 		// Get the pointer to the beginning of the solution data for this grid
 		// point
 		gridPointSolution = solutionArray[zk][yj][xi];
 
 		// Get the surface position
-		int surfacePos = solverHandler.getSurfacePosition(yj, zk);
+		auto surfacePos = solverHandler.getSurfacePosition(yj, zk);
 		// Get the distance from the surface
 		double distance =
 			(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
@@ -1395,7 +1326,7 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 
 	// Now takes care of moving surface
 	bool moving = false;
-	for (int i = 0; i < nevents; i++) {
+	for (auto i = 0; i < nevents; i++) {
 		if (eventList[i] == 0)
 			moving = true;
 	}
@@ -1413,11 +1344,11 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 	double initialVConc = solverHandler.getInitialVConc();
 
 	// Loop on the possible zk and yj
-	for (zk = 0; zk < Mz; zk++) {
-		for (yj = 0; yj < My; yj++) {
+	for (auto zk = 0; zk < Mz; zk++) {
+		for (auto yj = 0; yj < My; yj++) {
 			// Get the position of the surface at yj
-			int surfacePos = solverHandler.getSurfacePosition(yj, zk);
-			xi = surfacePos + solverHandler.getLeftOffset();
+			auto surfacePos = solverHandler.getSurfacePosition(yj, zk);
+			auto xi = surfacePos + solverHandler.getLeftOffset();
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 			double threshold =
@@ -1526,7 +1457,7 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 						// Get the concentrations at xi = surfacePos + 1
 						gridPointSolution = solutionArray[zk][yj][xi];
 						// Loop on DOF
-						for (int i = 0; i < dof; i++) {
+						for (auto i = 0; i < dof; i++) {
 							gridPointSolution[i] = 0.0;
 						}
 					}
@@ -1550,25 +1481,6 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 			}
 		}
 	}
-	// Get the modified trap-mutation handler to reinitialize it
-	auto mutationHandler = solverHandler.getMutationHandler();
-	auto advecHandlers = solverHandler.getAdvectionHandlers();
-
-	// Get the vector of positions of the surface
-	std::vector<std::vector<int>> surfaceIndices;
-	for (PetscInt i = 0; i < My; i++) {
-		// Create a temporary vector
-		std::vector<int> temp;
-		for (PetscInt j = 0; j < Mz; j++) {
-			temp.push_back(solverHandler.getSurfacePosition(i, j));
-		}
-		// Add the temporary vector to the vector of surface indices
-		surfaceIndices.push_back(temp);
-	}
-
-	mutationHandler->initializeIndex3D(surfaceIndices,
-		solverHandler.getNetwork(), advecHandlers, grid, xm, xs, ym, hy, ys, zm,
-		hz, zs);
 
 	// Write the surface positions
 	if (procId == 0) {
@@ -1577,10 +1489,10 @@ postEventFunction3D(TS ts, PetscInt nevents, PetscInt eventList[],
 		outputFile << time << " ";
 
 		// Loop on the possible yj
-		for (yj = 0; yj < My; yj++) {
-			for (zk = 0; zk < Mz; zk++) {
+		for (auto yj = 0; yj < My; yj++) {
+			for (auto zk = 0; zk < Mz; zk++) {
 				// Get the position of the surface at yj, zk
-				int surfacePos = solverHandler.getSurfacePosition(yj, zk);
+				auto surfacePos = solverHandler.getSurfacePosition(yj, zk);
 				outputFile << (double)yj * hy << " " << (double)zk * hz << " "
 						   << grid[surfacePos + 1] - grid[1] << " ";
 			}
@@ -1735,7 +1647,7 @@ setupPetsc3DMonitor(TS ts)
 			// Get the previous time from the HDF5 file
 			double previousTime = lastTsGroup->readPreviousTime();
 			solverHandler.setPreviousTime(previousTime);
-			hdf5Previous3D = (int)(previousTime / hdf5Stride3D);
+			hdf5Previous3D = (PetscInt)(previousTime / hdf5Stride3D);
 		}
 
 		// Don't do anything if both files have the same name
@@ -1809,10 +1721,10 @@ setupPetsc3DMonitor(TS ts)
 
 			// Initialize nInterstitial3D and previousIFlux3D before monitoring
 			// the interstitial flux
-			for (PetscInt j = 0; j < My; j++) {
+			for (auto j = 0; j < My; j++) {
 				// Create a one dimensional vector of double
 				std::vector<double> tempVector;
-				for (PetscInt k = 0; k < Mz; k++) {
+				for (auto k = 0; k < Mz; k++) {
 					tempVector.push_back(0.0);
 				}
 				// Add the tempVector to nInterstitial3D and previousIFlux3D

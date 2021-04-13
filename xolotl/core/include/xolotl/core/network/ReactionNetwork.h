@@ -146,6 +146,16 @@ public:
 		return GroupingRange::mapToMomentId(value);
 	}
 
+	void
+	initializeExtraClusterData(const options::IOptions&)
+	{
+	}
+
+	void
+	updateExtraClusterData(const std::vector<double>&)
+	{
+	}
+
 	std::size_t
 	getSpeciesListSize() const noexcept override
 	{
@@ -185,6 +195,12 @@ public:
 
 	void
 	setEnableNucleation(bool reaction) override;
+
+	void
+	setEnableSink(bool reaction) override;
+
+	void
+	setEnableTrapMutation(bool reaction) override;
 
 	void
 	setEnableReducedJacobian(bool reduced) override;
@@ -276,11 +292,13 @@ public:
 
 	void
 	computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-		IndexType gridIndex) override;
+		IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0) override;
 
 	void
 	computeAllPartials(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex) override;
+		Kokkos::View<double*> values, IndexType gridIndex = 0,
+		double surfaceDepth = 0.0, double spacing = 0.0) override;
 
 	double
 	getLargestRate() override;
@@ -382,6 +400,9 @@ public:
 		AmountType minSize = 0);
 
 	void
+	updateReactionRates();
+
+	void
 	updateOutgoingDiffFluxes(double* gridPointSolution, double factor,
 		std::vector<IndexType> diffusingIds, std::vector<double>& fluxes,
 		IndexType gridIndex) override;
@@ -425,12 +446,12 @@ private:
 	Subpaving _subpaving;
 	ClusterDataMirror _clusterDataMirror;
 
-	ReactionCollection _reactions;
-
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
 protected:
 	ClusterData _clusterData;
+
+	ReactionCollection _reactions;
 
 	std::map<std::string, SpeciesId> _speciesLabelMap;
 };

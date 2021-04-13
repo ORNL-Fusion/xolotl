@@ -1,5 +1,8 @@
 #pragma once
 
+#include <xolotl/core/network/impl/Reaction.tpp>
+#include <xolotl/core/network/impl/SinkReaction.tpp>
+#include <xolotl/core/network/impl/TrapMutationReaction.tpp>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -32,7 +35,7 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 		{0.0, 0.80, 0.80, 0.75, 0.70, 0.65, 0.60}, // 9
 	};
 
-	static constexpr double beTableV2[15][12] = {
+	constexpr double beTableV2[15][12] = {
 		// H:  1     2     3     4     5     6     7     8     9     10    11 //
 		// He:
 		{0.0, 1.63, 1.31, 1.25, 1.16, 1.00, 1.00, 0.95, 0.95, 0.75, 0.70,
@@ -118,6 +121,25 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 	}
 
 	return util::max(be, -5.0);
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSISinkReaction<TSpeciesEnum>::getSinkBias()
+{
+	return 1.0;
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSISinkReaction<TSpeciesEnum>::getSinkStrength()
+{
+	constexpr double pi = ::xolotl::core::pi;
+	double grainSize = 50000.0; // 50 um
+
+	return 1.0 / (pi * grainSize * grainSize);
 }
 } // namespace network
 } // namespace core

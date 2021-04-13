@@ -17,6 +17,7 @@ PSIClusterGenerator<TSpeciesEnum>::PSIClusterGenerator(
 	_maxD(opts.getMaxD()),
 	_maxT(opts.getMaxT()),
 	_maxV(opts.getMaxV()),
+	_maxI(opts.getMaxI()),
 	_groupingMin(opts.getGroupingMin()),
 	_groupingWidthA(opts.getGroupingWidthA()),
 	_groupingWidthB(opts.getGroupingWidthB()),
@@ -33,6 +34,7 @@ PSIClusterGenerator<TSpeciesEnum>::PSIClusterGenerator(
 	_maxD(opts.getMaxD()),
 	_maxT(opts.getMaxT()),
 	_maxV(opts.getMaxV()),
+	_maxI(opts.getMaxI()),
 	_groupingMin(opts.getGroupingMin()),
 	_groupingWidthA(opts.getGroupingWidthA()),
 	_groupingWidthB(opts.getGroupingWidthB()),
@@ -58,9 +60,20 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	Composition lo = region.getOrigin();
 	Composition hi = region.getUpperLimitPoint();
 
-	// I is never grouped
+	// Group I on its own
 	if (lo[Species::I] > 0) {
-		return true;
+		if (lo[Species::I] < _groupingMin) {
+			return true;
+		}
+		if (region[Species::I].end() > _maxI) {
+			return true;
+		}
+		if (region[Species::I].length() <
+			util::max((double)(_groupingWidthB + 1),
+				region[Species::I].begin() * 1.0e-2)) {
+			result[toIndex(Species::I)] = false;
+			return false;
+		}
 	}
 
 	auto othersBeginAtZero = [](const Region& reg, Species species) {
@@ -274,12 +287,6 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		return false;
 	}
 
-	// Interstitials
-	if (region[Species::I].begin() > 0 &&
-		!region.getOrigin().isOnAxis(Species::I)) {
-		return false;
-	}
-
 	auto othersEndAtOne = [](const Region& reg, Species species) {
 		for (auto s : NetworkType::getSpeciesRange()) {
 			if (s.value != species && reg[s].end() != 1) {
@@ -288,6 +295,16 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		}
 		return true;
 	};
+
+	// Interstitials
+	if (region[Species::I].begin() > 0 &&
+		!region.getOrigin().isOnAxis(Species::I)) {
+		return false;
+	}
+	if (region[Species::I].begin() > _maxI &&
+		othersEndAtOne(region, Species::I)) {
+		return false;
+	}
 
 	// Helium
 	if (region[Species::He].begin() > _maxHe &&
@@ -318,13 +335,19 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 
 	// Can't cluster without V
 	if (region[Species::V].end() == 1) {
+		if (region[Species::He].begin() > _maxHe)
+			return false;
 		if constexpr (hasDeuterium<Species>) {
+			if (region[Species::D].begin() > _maxD)
+				return false;
 			if (region[Species::He].begin() > 0 &&
 				region[Species::D].begin() > 0) {
 				return false;
 			}
 		}
 		if constexpr (hasTritium<Species>) {
+			if (region[Species::T].begin() > _maxT)
+				return false;
 			if (region[Species::He].begin() > 0 &&
 				region[Species::T].begin() > 0) {
 				return false;
@@ -442,8 +465,8 @@ PSIClusterGenerator<TSpeciesEnum>::getFormationEnergy(
 				return iFormationEnergies[amtI];
 			}
 			else {
-				return /* 48 + 6*(amtI - 6) */
-					6.0 * (2.0 + amtI);
+				return iFormationEnergies[iFormationEnergies.size() - 1] +
+					(double)(amtI + 1 - iFormationEnergies.size());
 			}
 		}
 		if (comp.isOnAxis(Species::He)) {
@@ -468,6 +491,7 @@ PSIClusterGenerator<TSpeciesEnum>::getFormationEnergy(
 
 		return getHeVFormationEnergy(comp);
 	}
+
 	return formationEnergy;
 }
 
@@ -530,6 +554,18 @@ PSIClusterGenerator<TSpeciesEnum>::getMigrationEnergy(
 			}
 		}
 	}
+	else {
+		Composition comp(reg.getOrigin());
+		if (comp.isOnAxis(Species::I)) {
+			migrationEnergy = 0.0;
+			for (auto j : makeIntervalRange(reg[Species::I])) {
+				migrationEnergy += util::min((double)j, 15.0) * 0.1;
+			}
+			// Average the energy
+			migrationEnergy /= reg[Species::I].length();
+		}
+	}
+
 	return migrationEnergy;
 }
 
@@ -590,6 +626,16 @@ PSIClusterGenerator<TSpeciesEnum>::getDiffusionFactor(
 			if (comp[Species::V] == 1) {
 				return vOneDiffusion;
 			}
+		}
+	}
+	else {
+		Composition comp(reg.getOrigin());
+		if (comp.isOnAxis(Species::I)) {
+			for (auto j : makeIntervalRange(reg[Species::I])) {
+				diffusionFactor += iDiffusion[1] / (double)j;
+			}
+			// Average the energy
+			diffusionFactor /= reg[Species::I].length();
 		}
 	}
 
@@ -663,18 +709,36 @@ PSIClusterGenerator<TSpeciesEnum>::getReactionRadius(
 				(1.0 / 3.0));
 	}
 	else {
-		// Loop on the V range
-		for (auto j : makeIntervalRange(reg[Species::V])) {
-			radius += (sqrt(3.0) / 4.0) * latticeParameter +
-				pow((3.0 * pow(latticeParameter, 3.0) * (double)j) /
-						(8.0 * ::xolotl::core::pi),
-					(1.0 / 3.0)) -
-				pow((3.0 * pow(latticeParameter, 3.0)) /
-						(8.0 * ::xolotl::core::pi),
-					(1.0 / 3.0));
+		Composition comp(reg.getOrigin());
+		if (comp.isOnAxis(Species::I)) {
+			double EightPi = 8.0 * ::xolotl::core::pi;
+			double aCubed = pow(latticeParameter, 3.0);
+			double termOne =
+				interstitialBias * (sqrt(3.0) / 4.0) * latticeParameter;
+			double termThree = pow((3.0 / EightPi) * aCubed, (1.0 / 3.0));
+			for (auto j : makeIntervalRange(reg[Species::I])) {
+				double termTwo =
+					pow((3.0 / EightPi) * aCubed * (double)j, (1.0 / 3.0));
+				radius += termOne + termTwo - termThree;
+			}
+			// Average the energy
+			radius /= reg[Species::I].length();
 		}
-		// Average the radius
-		radius /= reg[Species::V].length();
+		// Loop on the V range
+		else {
+			// Loop on the V range
+			for (auto j : makeIntervalRange(reg[Species::V])) {
+				radius += (sqrt(3.0) / 4.0) * latticeParameter +
+					pow((3.0 * pow(latticeParameter, 3.0) * (double)j) /
+							(8.0 * ::xolotl::core::pi),
+						(1.0 / 3.0)) -
+					pow((3.0 * pow(latticeParameter, 3.0)) /
+							(8.0 * ::xolotl::core::pi),
+						(1.0 / 3.0));
+			}
+			// Average the radius
+			radius /= reg[Species::V].length();
+		}
 	}
 
 	return radius;

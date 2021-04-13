@@ -8,6 +8,8 @@
 
 #include <mpi.h>
 
+#include <xolotl/config.h>
+
 namespace xolotl
 {
 namespace core
@@ -129,8 +131,8 @@ public:
 	 * @param Mz The total width in the Z direction
 	 */
 	void
-	getLocalCoordinates(int& xs, int& xm, int& Mx, int& ys, int& ym, int& My,
-		int& zs, int& zm, int& Mz);
+	getLocalCoordinates(IdType& xs, IdType& xm, IdType& Mx, IdType& ys,
+		IdType& ym, IdType& My, IdType& zs, IdType& zm, IdType& Mz);
 
 	/**
 	 * Set the location of one GB grid point.
@@ -138,7 +140,7 @@ public:
 	 * @param i, j, k The coordinate of the GB
 	 */
 	void
-	setGBLocation(int i, int j = 0, int k = 0);
+	setGBLocation(IdType i, IdType j = 0, IdType k = 0);
 
 	/**
 	 * Reset the GB vector.
@@ -151,7 +153,8 @@ public:
 	 *
 	 * @return The concentration vector from the current state of the simulation
 	 */
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+	std::vector<
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 	getConcVector();
 
 	/**
@@ -161,7 +164,7 @@ public:
 	 */
 	void
 	setConcVector(std::vector<
-		std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 			concVector);
 
 	/**

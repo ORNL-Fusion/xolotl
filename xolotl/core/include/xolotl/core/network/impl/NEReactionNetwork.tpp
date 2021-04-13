@@ -126,14 +126,14 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-//	// Special case for Xe_1 + Xe_1V_1
-//	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() &&
-//		((lo1.isOnAxis(Species::Xe) && lo1[Species::Xe] == 1 &&
-//			 lo2[Species::Xe] == 1 && lo2[Species::V] == 1) ||
-//			(lo2.isOnAxis(Species::Xe) && lo2[Species::Xe] == 1 &&
-//				lo1[Species::Xe] == 1 && lo1[Species::V] == 1))) {
-//		return;
-//	}
+	//	// Special case for Xe_1 + Xe_1V_1
+	//	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() &&
+	//		((lo1.isOnAxis(Species::Xe) && lo1[Species::Xe] == 1 &&
+	//			 lo2[Species::Xe] == 1 && lo2[Species::V] == 1) ||
+	//			(lo2.isOnAxis(Species::Xe) && lo2[Species::Xe] == 1 &&
+	//				lo1[Species::Xe] == 1 && lo1[Species::V] == 1))) {
+	//		return;
+	//	}
 
 	// General case
 	constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
@@ -248,12 +248,13 @@ NEClusterUpdater::updateDiffusionCoefficient(
 
 		//		const auto& clReg = data.tiles(clusterId).getRegion();
 		//		Composition lo = clReg.getOrigin();
-		//		if (clReg.isSimplex() && lo[Species::V] == 1 && lo[Species::Xe] ==
-		//1) {
+		//		if (clReg.isSimplex() && lo[Species::V] == 1 && lo[Species::Xe]
+		//== 1) {
 		//			// Intrinsic diffusion
 		//			double kernel = -3.04 / (kBoltzmann *
-		//data.temperature(gridIndex)); 			double D3 = 7.6e8 * exp(kernel); //
-		//nm2/s
+		// data.temperature(gridIndex)); 			double D3 = 7.6e8 *
+		// exp(kernel);
+		// // nm2/s
 		//
 		//			// We need the fission rate now
 		//			double fissionRate = data.fissionRate(0) * 1.0e27; // #/m3/s
@@ -265,10 +266,10 @@ NEClusterUpdater::updateDiffusionCoefficient(
 		//			kernel = -1.2 / (kBoltzmann * data.temperature(gridIndex));
 		//			double D2 =
 		//				(5.6e-25 * sqrt(fissionRate) * exp(kernel)) * 1.0e18; //
-		//nm2/s
+		// nm2/s
 		//
 		//			data.diffusionCoefficient(clusterId, gridIndex) = D1 + D2 +
-		//D3;
+		// D3;
 		//
 		//			return;
 		//		}
