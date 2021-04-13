@@ -111,40 +111,22 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 					detail::computeSecondOrderSum(
 						i(), clRR, cl2RR, pr2RR, pr1RR) /
 					clDisp[k()];
-			}
-			else {
-				this->_coefs(i() + 1, 0, 0, k() + 1) =
-					this->_coefs(i() + 1, 0, 0, 0) *
-					this->_coefs(k() + 1, 0, 0, 0) / (nOverlap * clDisp[k()]);
-			}
-		}
-
-		// First moments for the first product
-		for (auto k : speciesRangeNoI) {
-			// Second order sum
-			if (k == i) {
 				this->_coefs(i() + 1, 0, 1, k() + 1) = factor *
 					detail::computeSecondOrderOffsetSum(
 						i(), clRR, cl2RR, pr1RR, pr2RR) /
 					prod1Disp[k()];
-			}
-			else {
-				this->_coefs(i() + 1, 0, 1, k() + 1) =
-					this->_coefs(i() + 1, 0, 0, 0) *
-					this->_coefs(0, 0, 1, k() + 1) / nOverlap;
-			}
-		}
-
-		// First moments for the second product
-		for (auto k : speciesRangeNoI) {
-			// Second order sum
-			if (k == i) {
 				this->_coefs(i() + 1, 0, 2, k() + 1) = factor *
 					detail::computeSecondOrderOffsetSum(
 						i(), clRR, cl2RR, pr2RR, pr1RR) /
 					prod2Disp[k()];
 			}
 			else {
+				this->_coefs(i() + 1, 0, 0, k() + 1) =
+					this->_coefs(i() + 1, 0, 0, 0) *
+					this->_coefs(k() + 1, 0, 0, 0) / (nOverlap * clDisp[k()]);
+				this->_coefs(i() + 1, 0, 1, k() + 1) =
+					this->_coefs(i() + 1, 0, 0, 0) *
+					this->_coefs(0, 0, 1, k() + 1) / nOverlap;
 				this->_coefs(i() + 1, 0, 2, k() + 1) =
 					this->_coefs(i() + 1, 0, 0, 0) *
 					this->_coefs(0, 0, 2, k() + 1) / nOverlap;
@@ -242,14 +224,10 @@ ReSolutionReaction<TNetwork, TDerived>::computeConnectivity(
 			this->addConnectivity(
 				_products[0], _reactantMomentIds[i()], connectivity);
 		}
-	}
-	for (auto i : speciesRangeNoI) {
 		if (_productMomentIds[0][i()] != invalidIndex) {
 			this->addConnectivity(
 				_productMomentIds[0][i()], _reactant, connectivity);
 		}
-	}
-	for (auto i : speciesRangeNoI) {
 		if (_productMomentIds[0][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_reactantMomentIds[j()] != invalidIndex) {
@@ -266,14 +244,10 @@ ReSolutionReaction<TNetwork, TDerived>::computeConnectivity(
 			this->addConnectivity(
 				_products[1], _reactantMomentIds[i()], connectivity);
 		}
-	}
-	for (auto i : speciesRangeNoI) {
 		if (_productMomentIds[1][i()] != invalidIndex) {
 			this->addConnectivity(
 				_productMomentIds[1][i()], _reactant, connectivity);
 		}
-	}
-	for (auto i : speciesRangeNoI) {
 		if (_productMomentIds[1][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_reactantMomentIds[j()] != invalidIndex) {

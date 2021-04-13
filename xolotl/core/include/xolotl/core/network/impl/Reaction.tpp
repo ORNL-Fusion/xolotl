@@ -289,10 +289,8 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 					this->_coefs(0, j() + 1, 0, 0) / nOverlap;
 			}
 		}
-	}
 
-	for (auto i : speciesRangeNoI) {
-		auto factor = nOverlap / this->_widths[i()];
+		factor = nOverlap / this->_widths[i()];
 
 		// First reactant first moments
 		for (auto k : speciesRangeNoI) {
@@ -301,40 +299,31 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 					detail::computeSecondOrderSum(
 						i(), cl1RR, cl2RR, pr1RR, pr2RR) /
 					cl1Disp[i()];
-			}
-			else {
-				this->_coefs(i() + 1, 0, 0, k() + 1) =
-					this->_coefs(i() + 1, 0, 0, 0) *
-					this->_coefs(k() + 1, 0, 0, 0) / (nOverlap * cl1Disp[k()]);
-			}
-
-			this->_coefs(0, i() + 1, 0, k() + 1) =
-				this->_coefs(k() + 1, i() + 1, 0, 0) / cl1Disp[k()];
-		}
-
-		// Second reactant partial derivatives
-		for (auto k : speciesRangeNoI) {
-			if (k == i) {
 				this->_coefs(0, i() + 1, 1, k() + 1) = factor *
 					detail::computeSecondOrderSum(
 						i(), cl2RR, cl1RR, pr1RR, pr2RR) /
 					cl2Disp[i()];
 			}
 			else {
+				this->_coefs(i() + 1, 0, 0, k() + 1) =
+					this->_coefs(i() + 1, 0, 0, 0) *
+					this->_coefs(k() + 1, 0, 0, 0) / (nOverlap * cl1Disp[k()]);
 				this->_coefs(0, i() + 1, 1, k() + 1) =
 					this->_coefs(0, i() + 1, 0, 0) *
 					this->_coefs(0, k() + 1, 0, 0) / (nOverlap * cl2Disp[k()]);
 			}
 
+			this->_coefs(0, i() + 1, 0, k() + 1) =
+				this->_coefs(k() + 1, i() + 1, 0, 0) / cl1Disp[k()];
+
+			// Second reactant partial derivatives
 			this->_coefs(i() + 1, 0, 1, k() + 1) =
 				this->_coefs(i() + 1, k() + 1, 0, 0) / cl2Disp[k()];
 		}
-	}
 
-	// Now we loop over the 2 dimensions of the coefs to compute all
-	// the possible sums over distances for the flux
-	for (auto i : speciesRangeNoI) {
-		auto factor = nOverlap / this->_widths[i()];
+		// Now we loop over the 2 dimensions of the coefs to compute all
+		// the possible sums over distances for the flux
+		factor = nOverlap / this->_widths[i()];
 		for (auto j : speciesRangeNoI) {
 			// Now we deal with the coefficients needed for the
 			// first moments
@@ -576,15 +565,9 @@ ProductionReaction<TNetwork, TDerived>::computeConnectivity(
 			this->addConnectivity(
 				_reactants[1], _reactantMomentIds[0][i()], connectivity);
 		}
-	}
-	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[1][i()] != invalidIndex) {
 			this->addConnectivity(
 				_reactantMomentIds[1][i()], _reactants[0], connectivity);
-		}
-	}
-	for (auto i : speciesRangeNoI) {
-		if (_reactantMomentIds[1][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_reactantMomentIds[0][j()] != invalidIndex) {
 					this->addConnectivity(_reactantMomentIds[1][i()],
@@ -600,15 +583,9 @@ ProductionReaction<TNetwork, TDerived>::computeConnectivity(
 			this->addConnectivity(
 				_reactants[0], _reactantMomentIds[1][i()], connectivity);
 		}
-	}
-	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[0][i()] != invalidIndex) {
 			this->addConnectivity(
 				_reactantMomentIds[0][i()], _reactants[1], connectivity);
-		}
-	}
-	for (auto i : speciesRangeNoI) {
-		if (_reactantMomentIds[0][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_reactantMomentIds[1][j()] != invalidIndex) {
 					this->addConnectivity(_reactantMomentIds[0][i()],
@@ -649,15 +626,9 @@ ProductionReaction<TNetwork, TDerived>::computeConnectivity(
 				this->addConnectivity(
 					prodId, _reactantMomentIds[0][i()], connectivity);
 			}
-		}
-		for (auto i : speciesRangeNoI) {
 			if (_productMomentIds[p][i()] != invalidIndex) {
 				this->addConnectivity(
 					_productMomentIds[p][i()], _reactants[0], connectivity);
-			}
-		}
-		for (auto i : speciesRangeNoI) {
-			if (_productMomentIds[p][i()] != invalidIndex) {
 				for (auto j : speciesRangeNoI) {
 					if (_reactantMomentIds[0][j()] != invalidIndex) {
 						this->addConnectivity(_productMomentIds[p][i()],
@@ -673,15 +644,9 @@ ProductionReaction<TNetwork, TDerived>::computeConnectivity(
 				this->addConnectivity(
 					prodId, _reactantMomentIds[1][i()], connectivity);
 			}
-		}
-		for (auto i : speciesRangeNoI) {
 			if (_productMomentIds[p][i()] != invalidIndex) {
 				this->addConnectivity(
 					_productMomentIds[p][i()], _reactants[1], connectivity);
-			}
-		}
-		for (auto i : speciesRangeNoI) {
-			if (_productMomentIds[p][i()] != invalidIndex) {
 				for (auto j : speciesRangeNoI) {
 					if (_reactantMomentIds[1][j()] != invalidIndex) {
 						this->addConnectivity(_productMomentIds[p][i()],
@@ -828,11 +793,7 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 	double f = this->_coefs(0, 0, 0, 0) * cR1 * cR2;
 	for (auto i : speciesRangeNoI) {
 		f += this->_coefs(i() + 1, 0, 0, 0) * cmR1[i()] * cR2;
-	}
-	for (auto j : speciesRangeNoI) {
-		f += this->_coefs(0, j() + 1, 0, 0) * cR1 * cmR2[j()];
-	}
-	for (auto i : speciesRangeNoI) {
+		f += this->_coefs(0, i() + 1, 0, 0) * cR1 * cmR2[i()];
 		for (auto j : speciesRangeNoI) {
 			f += this->_coefs(i() + 1, j() + 1, 0, 0) * cmR1[i()] * cmR2[j()];
 		}
@@ -859,11 +820,7 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 			f = this->_coefs(0, 0, 0, k() + 1) * cR1 * cR2;
 			for (auto i : speciesRangeNoI) {
 				f += this->_coefs(i() + 1, 0, 0, k() + 1) * cmR1[i()] * cR2;
-			}
-			for (auto j : speciesRangeNoI) {
-				f += this->_coefs(0, j() + 1, 0, k() + 1) * cR1 * cmR2[j()];
-			}
-			for (auto i : speciesRangeNoI) {
+				f += this->_coefs(0, i() + 1, 0, k() + 1) * cR1 * cmR2[i()];
 				for (auto j : speciesRangeNoI) {
 					f += this->_coefs(i() + 1, j() + 1, 0, k() + 1) *
 						cmR1[i()] * cmR2[j()];
@@ -879,11 +836,7 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 			f = this->_coefs(0, 0, 1, k() + 1) * cR1 * cR2;
 			for (auto i : speciesRangeNoI) {
 				f += this->_coefs(i() + 1, 0, 1, k() + 1) * cmR1[i()] * cR2;
-			}
-			for (auto j : speciesRangeNoI) {
-				f += this->_coefs(0, j() + 1, 1, k() + 1) * cR1 * cmR2[j()];
-			}
-			for (auto i : speciesRangeNoI) {
+				f += this->_coefs(0, i() + 1, 1, k() + 1) * cR1 * cmR2[i()];
 				for (auto j : speciesRangeNoI) {
 					f += this->_coefs(i() + 1, j() + 1, 1, k() + 1) *
 						cmR1[i()] * cmR2[j()];
@@ -910,12 +863,8 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 				for (auto i : speciesRangeNoI) {
 					f += this->_coefs(i() + 1, 0, p + 2, k() + 1) * cmR1[i()] *
 						cR2;
-				}
-				for (auto j : speciesRangeNoI) {
-					f += this->_coefs(0, j() + 1, p + 2, k() + 1) * cR1 *
-						cmR2[j()];
-				}
-				for (auto i : speciesRangeNoI) {
+					f += this->_coefs(0, i() + 1, p + 2, k() + 1) * cR1 *
+						cmR2[i()];
 					for (auto j : speciesRangeNoI) {
 						f += this->_coefs(i() + 1, j() + 1, p + 2, k() + 1) *
 							cmR1[i()] * cmR2[j()];
@@ -1021,8 +970,8 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 			this->_rate(gridIndex) * temp / (double)volProd);
 	}
 
-	// (d / dL_1^A)
 	for (auto i : speciesRangeNoI) {
+		// (d / dL_1^A)
 		if (_reactantMomentIds[0][i()] != invalidIndex) {
 			temp = this->_coefs(i() + 1, 0, 0, 0) * cR2;
 			for (auto j : speciesRangeNoI) {
@@ -1050,10 +999,8 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 					this->_rate(gridIndex) * temp / (double)volProd);
 			}
 		}
-	}
 
-	// (d / dL_1^B)
-	for (auto i : speciesRangeNoI) {
+		// (d / dL_1^B)
 		if (_reactantMomentIds[1][i()] != invalidIndex) {
 			temp = this->_coefs(0, i() + 1, 0, 0) * cR1;
 			for (auto j : speciesRangeNoI) {
@@ -1092,8 +1039,18 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 			Kokkos::atomic_sub(&values(connectivity(
 								   _reactantMomentIds[0][k()], _reactants[0])),
 				this->_rate(gridIndex) * temp / (double)volCl1);
-			// (d / dL_1^A)
+
+			// (d / dL_0^B)
+			temp = this->_coefs(0, 0, 0, k() + 1) * cR1;
+			for (auto j : speciesRangeNoI) {
+				temp += this->_coefs(j() + 1, 0, 0, k() + 1) * cmR1[j()];
+			}
+			Kokkos::atomic_sub(&values(connectivity(
+								   _reactantMomentIds[0][k()], _reactants[1])),
+				this->_rate(gridIndex) * temp / (double)volCl1);
+
 			for (auto i : speciesRangeNoI) {
+				// (d / dL_1^A)
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
 					temp = this->_coefs(i() + 1, 0, 0, k() + 1) * cR2;
 					for (auto j : speciesRangeNoI) {
@@ -1105,17 +1062,8 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 							_reactantMomentIds[0][i()])),
 						this->_rate(gridIndex) * temp / (double)volCl1);
 				}
-			}
-			// (d / dL_0^B)
-			temp = this->_coefs(0, 0, 0, k() + 1) * cR1;
-			for (auto j : speciesRangeNoI) {
-				temp += this->_coefs(j() + 1, 0, 0, k() + 1) * cmR1[j()];
-			}
-			Kokkos::atomic_sub(&values(connectivity(
-								   _reactantMomentIds[0][k()], _reactants[1])),
-				this->_rate(gridIndex) * temp / (double)volCl1);
-			// (d / dL_1^B)
-			for (auto i : speciesRangeNoI) {
+
+				// (d / dL_1^B)
 				if (_reactantMomentIds[1][i()] != invalidIndex) {
 					temp = this->_coefs(0, i() + 1, 0, k() + 1) * cR1;
 					for (auto j : speciesRangeNoI) {
@@ -1129,10 +1077,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 				}
 			}
 		}
-	}
 
-	// Take care of the first moments
-	for (auto k : speciesRangeNoI) {
 		if (_reactantMomentIds[1][k()] != invalidIndex) {
 			// First for the second reactant
 			// (d / dL_0^A)
@@ -1143,8 +1088,18 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 			Kokkos::atomic_sub(&values(connectivity(
 								   _reactantMomentIds[1][k()], _reactants[0])),
 				this->_rate(gridIndex) * temp / (double)volCl2);
-			// (d / dL_1^A)
+
+			// (d / dL_0^B)
+			temp = this->_coefs(0, 0, 1, k() + 1) * cR1;
+			for (auto j : speciesRangeNoI) {
+				temp += this->_coefs(j() + 1, 0, 1, k() + 1) * cmR1[j()];
+			}
+			Kokkos::atomic_sub(&values(connectivity(
+								   _reactantMomentIds[1][k()], _reactants[1])),
+				this->_rate(gridIndex) * temp / (double)volCl2);
+
 			for (auto i : speciesRangeNoI) {
+				// (d / dL_1^A)
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
 					temp = this->_coefs(i() + 1, 0, 1, k() + 1) * cR2;
 					for (auto j : speciesRangeNoI) {
@@ -1156,17 +1111,8 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 							_reactantMomentIds[0][i()])),
 						this->_rate(gridIndex) * temp / (double)volCl2);
 				}
-			}
-			// (d / dL_0^B)
-			temp = this->_coefs(0, 0, 1, k() + 1) * cR1;
-			for (auto j : speciesRangeNoI) {
-				temp += this->_coefs(j() + 1, 0, 1, k() + 1) * cmR1[j()];
-			}
-			Kokkos::atomic_sub(&values(connectivity(
-								   _reactantMomentIds[1][k()], _reactants[1])),
-				this->_rate(gridIndex) * temp / (double)volCl2);
-			// (d / dL_1^B)
-			for (auto i : speciesRangeNoI) {
+
+				// (d / dL_1^B)
 				if (_reactantMomentIds[1][i()] != invalidIndex) {
 					temp = this->_coefs(0, i() + 1, 1, k() + 1) * cR1;
 					for (auto j : speciesRangeNoI) {
@@ -1206,8 +1152,20 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 					&values(
 						connectivity(_productMomentIds[p][k()], _reactants[0])),
 					this->_rate(gridIndex) * temp / (double)volProd);
-				// (d / dL_1^A)
+
+				// (d / dL_0^B)
+				temp = this->_coefs(0, 0, p + 2, k() + 1) * cR1;
+				for (auto j : speciesRangeNoI) {
+					temp +=
+						this->_coefs(j() + 1, 0, p + 2, k() + 1) * cmR1[j()];
+				}
+				Kokkos::atomic_add(
+					&values(
+						connectivity(_productMomentIds[p][k()], _reactants[1])),
+					this->_rate(gridIndex) * temp / (double)volProd);
+
 				for (auto i : speciesRangeNoI) {
+					// (d / dL_1^A)
 					if (_reactantMomentIds[0][i()] != invalidIndex) {
 						temp = this->_coefs(i() + 1, 0, p + 2, k() + 1) * cR2;
 						for (auto j : speciesRangeNoI) {
@@ -1220,19 +1178,8 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 								_reactantMomentIds[0][i()])),
 							this->_rate(gridIndex) * temp / (double)volProd);
 					}
-				}
-				// (d / dL_0^B)
-				temp = this->_coefs(0, 0, p + 2, k() + 1) * cR1;
-				for (auto j : speciesRangeNoI) {
-					temp +=
-						this->_coefs(j() + 1, 0, p + 2, k() + 1) * cmR1[j()];
-				}
-				Kokkos::atomic_add(
-					&values(
-						connectivity(_productMomentIds[p][k()], _reactants[1])),
-					this->_rate(gridIndex) * temp / (double)volProd);
-				// (d / dL_1^B)
-				for (auto i : speciesRangeNoI) {
+
+					// (d / dL_1^B)
 					if (_reactantMomentIds[1][i()] != invalidIndex) {
 						temp = this->_coefs(0, i() + 1, p + 2, k() + 1) * cR1;
 						for (auto j : speciesRangeNoI) {
@@ -1349,8 +1296,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	for (auto k : speciesRangeNoI) {
 		if (_reactantMomentIds[0][k()] != invalidIndex) {
 			// First for the first reactant
-			// (d / dL_1^A)
 			for (auto i : speciesRangeNoI) {
+				// (d / dL_1^A)
 				temp = this->_coefs(i() + 1, 0, 0, k() + 1) * cR2;
 				for (auto j : speciesRangeNoI) {
 					temp +=
@@ -1361,9 +1308,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 						&values(connectivity(_reactantMomentIds[0][k()],
 							_reactantMomentIds[0][i()])),
 						this->_rate(gridIndex) * temp / (double)volCl1);
-			}
-			// (d / dL_1^B)
-			for (auto i : speciesRangeNoI) {
+
+				// (d / dL_1^B)
 				temp = this->_coefs(0, i() + 1, 0, k() + 1) * cR1;
 				for (auto j : speciesRangeNoI) {
 					temp +=
@@ -1376,14 +1322,11 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 						this->_rate(gridIndex) * temp / (double)volCl1);
 			}
 		}
-	}
 
-	// Take care of the first moments
-	for (auto k : speciesRangeNoI) {
 		if (_reactantMomentIds[1][k()] != invalidIndex) {
 			// First for the second reactant
-			// (d / dL_1^A)
 			for (auto i : speciesRangeNoI) {
+				// (d / dL_1^A)
 				temp = this->_coefs(i() + 1, 0, 1, k() + 1) * cR2;
 				for (auto j : speciesRangeNoI) {
 					temp +=
@@ -1394,9 +1337,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 						&values(connectivity(_reactantMomentIds[1][k()],
 							_reactantMomentIds[0][i()])),
 						this->_rate(gridIndex) * temp / (double)volCl2);
-			}
-			// (d / dL_1^B)
-			for (auto i : speciesRangeNoI) {
+
+				// (d / dL_1^B)
 				temp = this->_coefs(0, i() + 1, 1, k() + 1) * cR1;
 				for (auto j : speciesRangeNoI) {
 					temp +=
@@ -1425,8 +1367,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 		// Take care of the first moments
 		for (auto k : speciesRangeNoI) {
 			if (_productMomentIds[p][k()] != invalidIndex) {
-				// (d / dL_1^A)
 				for (auto i : speciesRangeNoI) {
+					// (d / dL_1^A)
 					temp = this->_coefs(i() + 1, 0, p + 2, k() + 1) * cR2;
 					for (auto j : speciesRangeNoI) {
 						temp += this->_coefs(i() + 1, j() + 1, p + 2, k() + 1) *
@@ -1437,9 +1379,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 							&values(connectivity(_productMomentIds[p][k()],
 								_reactantMomentIds[0][i()])),
 							this->_rate(gridIndex) * temp / (double)volProd);
-				}
-				// (d / dL_1^B)
-				for (auto i : speciesRangeNoI) {
+
+					// (d / dL_1^B)
 					temp = this->_coefs(0, i() + 1, p + 2, k() + 1) * cR1;
 					for (auto j : speciesRangeNoI) {
 						temp += this->_coefs(j() + 1, i() + 1, p + 2, k() + 1) *
@@ -1579,40 +1520,22 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 					detail::computeSecondOrderSum(
 						i(), clRR, cl2RR, pr2RR, pr1RR) /
 					clDisp[k()];
-			}
-			else {
-				this->_coefs(i() + 1, 0, 0, k() + 1) =
-					this->_coefs(i() + 1, 0, 0, 0) *
-					this->_coefs(k() + 1, 0, 0, 0) / (nOverlap * clDisp[k()]);
-			}
-		}
-
-		// First moments for the first product
-		for (auto k : speciesRangeNoI) {
-			// Second order sum
-			if (k == i) {
 				this->_coefs(i() + 1, 0, 1, k() + 1) = factor *
 					detail::computeSecondOrderOffsetSum(
 						i(), clRR, cl2RR, pr1RR, pr2RR) /
 					prod1Disp[k()];
-			}
-			else {
-				this->_coefs(i() + 1, 0, 1, k() + 1) =
-					this->_coefs(i() + 1, 0, 0, 0) *
-					this->_coefs(0, 0, 1, k() + 1) / nOverlap;
-			}
-		}
-
-		// First moments for the second product
-		for (auto k : speciesRangeNoI) {
-			// Second order sum
-			if (k == i) {
 				this->_coefs(i() + 1, 0, 2, k() + 1) = factor *
 					detail::computeSecondOrderOffsetSum(
 						i(), clRR, cl2RR, pr2RR, pr1RR) /
 					prod2Disp[k()];
 			}
 			else {
+				this->_coefs(i() + 1, 0, 0, k() + 1) =
+					this->_coefs(i() + 1, 0, 0, 0) *
+					this->_coefs(k() + 1, 0, 0, 0) / (nOverlap * clDisp[k()]);
+				this->_coefs(i() + 1, 0, 1, k() + 1) =
+					this->_coefs(i() + 1, 0, 0, 0) *
+					this->_coefs(0, 0, 1, k() + 1) / nOverlap;
 				this->_coefs(i() + 1, 0, 2, k() + 1) =
 					this->_coefs(i() + 1, 0, 0, 0) *
 					this->_coefs(0, 0, 2, k() + 1) / nOverlap;
@@ -1690,15 +1613,9 @@ DissociationReaction<TNetwork, TDerived>::computeConnectivity(
 			this->addConnectivity(
 				_products[0], _reactantMomentIds[i()], connectivity);
 		}
-	}
-	for (auto i : speciesRangeNoI) {
 		if (_productMomentIds[0][i()] != invalidIndex) {
 			this->addConnectivity(
 				_productMomentIds[0][i()], _reactant, connectivity);
-		}
-	}
-	for (auto i : speciesRangeNoI) {
-		if (_productMomentIds[0][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_reactantMomentIds[j()] != invalidIndex) {
 					this->addConnectivity(_productMomentIds[0][i()],
@@ -1714,15 +1631,9 @@ DissociationReaction<TNetwork, TDerived>::computeConnectivity(
 			this->addConnectivity(
 				_products[1], _reactantMomentIds[i()], connectivity);
 		}
-	}
-	for (auto i : speciesRangeNoI) {
 		if (_productMomentIds[1][i()] != invalidIndex) {
 			this->addConnectivity(
 				_productMomentIds[1][i()], _reactant, connectivity);
-		}
-	}
-	for (auto i : speciesRangeNoI) {
-		if (_productMomentIds[1][i()] != invalidIndex) {
 			for (auto j : speciesRangeNoI) {
 				if (_reactantMomentIds[j()] != invalidIndex) {
 					this->addConnectivity(_productMomentIds[1][i()],
