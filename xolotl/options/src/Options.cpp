@@ -76,7 +76,7 @@ Options::~Options(void)
 }
 
 void
-Options::readParams(int argc, char* argv[])
+Options::readParams(int argc, const char* argv[])
 {
 	// Check that a file name is given
 	if (argc < 2) {

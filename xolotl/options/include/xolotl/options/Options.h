@@ -292,7 +292,7 @@ public:
 	 * \see IOptions.h
 	 */
 	void
-	readParams(int argc, char* argv[]) override;
+	readParams(int argc, const char* argv[]) override;
 
 	/**
 	 * \see IOptions.h

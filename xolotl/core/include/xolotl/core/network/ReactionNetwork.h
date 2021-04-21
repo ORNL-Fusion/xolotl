@@ -291,14 +291,74 @@ public:
 	}
 
 	void
+	computeFluxesPreProcess(
+		ConcentrationsView, FluxesView, IndexType, double, double)
+	{
+	}
+
+	void
 	computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
 		IndexType gridIndex = 0, double surfaceDepth = 0.0,
-		double spacing = 0.0) override;
+		double spacing = 0.0) final;
+
+	template <typename TReaction>
+	void
+	computeFluxes(ConcentrationsView concentrations, FluxesView fluxes,
+		IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0)
+	{
+		asDerived()->computeFluxesPreProcess(
+			concentrations, fluxes, gridIndex, surfaceDepth, spacing);
+
+		_reactions.template applyOn<TReaction>(DEVICE_LAMBDA(auto&& reaction) {
+			reaction.contributeFlux(concentrations, fluxes, gridIndex);
+		});
+		Kokkos::fence();
+	}
+
+	void
+	computePartialsPreProcess(
+		ConcentrationsView, FluxesView, IndexType, double, double)
+	{
+	}
 
 	void
 	computeAllPartials(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex = 0,
 		double surfaceDepth = 0.0, double spacing = 0.0) override;
+
+	template <typename TReaction>
+	void
+	computePartials(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex = 0,
+		double surfaceDepth = 0.0, double spacing = 0.0)
+	{
+		// Reset the values
+		const auto& nValues = values.extent(0);
+		Kokkos::parallel_for(
+			nValues, KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
+
+		asDerived()->computePartialsPreProcess(
+			concentrations, values, gridIndex, surfaceDepth, spacing);
+
+		auto connectivity = _reactions.getConnectivity();
+		if (this->_enableReducedJacobian) {
+			_reactions.template applyOn<TReaction>(
+				DEVICE_LAMBDA(auto&& reaction) {
+					reaction.contributeReducedPartialDerivatives(
+						concentrations, values, connectivity, gridIndex);
+				});
+		}
+		else {
+			_reactions.template applyOn<TReaction>(
+				DEVICE_LAMBDA(auto&& reaction) {
+					reaction.contributePartialDerivatives(
+						concentrations, values, connectivity, gridIndex);
+				});
+		}
+
+		Kokkos::fence();
+	}
 
 	double
 	getLargestRate() override;

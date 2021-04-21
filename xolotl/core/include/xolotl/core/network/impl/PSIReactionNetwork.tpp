@@ -111,7 +111,7 @@ PSIReactionNetwork<TSpeciesEnum>::selectTrapMutationReactions(
 
 template <typename TSpeciesEnum>
 void
-PSIReactionNetwork<TSpeciesEnum>::computeAllFluxes(
+PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex,
 	double surfaceDepth, double spacing)
 {
@@ -119,14 +119,11 @@ PSIReactionNetwork<TSpeciesEnum>::computeAllFluxes(
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
-
-	Superclass::computeAllFluxes(
-		concentrations, fluxes, gridIndex, surfaceDepth, spacing);
 }
 
 template <typename TSpeciesEnum>
 void
-PSIReactionNetwork<TSpeciesEnum>::computeAllPartials(
+PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
 	IndexType gridIndex, double surfaceDepth, double spacing)
 {
@@ -134,9 +131,6 @@ PSIReactionNetwork<TSpeciesEnum>::computeAllPartials(
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
-
-	Superclass::computeAllPartials(
-		concentrations, values, gridIndex, surfaceDepth, spacing);
 }
 
 template <typename TSpeciesEnum>

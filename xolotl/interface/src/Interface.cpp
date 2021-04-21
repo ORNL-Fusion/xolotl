@@ -110,7 +110,7 @@ try {
 	}
 
 	options::Options opts;
-	opts.readParams(argc, argv);
+	opts.readParams(argc, (const char**)argv);
 	if (!opts.shouldRun()) {
 		throw std::runtime_error("Unable to read the options.");
 	}

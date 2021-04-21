@@ -49,6 +49,8 @@ public:
 		return detail::invalidSpeciesAmount;
 	}
 
+    IReactionNetwork() = default;
+
 	IReactionNetwork(IndexType gridSize) : _gridSize(gridSize)
 	{
 	}

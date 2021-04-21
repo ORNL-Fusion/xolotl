@@ -410,6 +410,9 @@ void
 ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
 	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
 {
+	asDerived()->computeFluxesPreProcess(
+		concentrations, fluxes, gridIndex, surfaceDepth, spacing);
+
 	_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeFlux(concentrations, fluxes, gridIndex);
 	});
@@ -424,9 +427,11 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 {
 	// Reset the values
 	const auto& nValues = values.extent(0);
-	// Loop on the reactions
 	Kokkos::parallel_for(
 		nValues, KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
+
+	asDerived()->computePartialsPreProcess(
+		concentrations, values, gridIndex, surfaceDepth, spacing);
 
 	auto connectivity = _reactions.getConnectivity();
 	if (this->_enableReducedJacobian) {

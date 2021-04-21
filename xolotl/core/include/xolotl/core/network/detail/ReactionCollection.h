@@ -475,6 +475,15 @@ public:
 			DEVICE_LAMBDA(const IndexType i) { chain.apply(func, i); });
 	}
 
+	template <typename TReaction, typename F>
+	void
+	applyOn(const F& func)
+	{
+		auto view = getView<TReaction>();
+		Kokkos::parallel_for(
+			view.size(), DEVICE_LAMBDA(const IndexType i) { func(view[i]); });
+	}
+
 	template <typename F, typename T>
 	void
 	reduce(const F& func, T& out)
