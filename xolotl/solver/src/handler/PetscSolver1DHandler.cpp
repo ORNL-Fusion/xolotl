@@ -544,7 +544,7 @@ PetscSolver1DHandler::updateConcentration(
 	}
 
 	// Declarations for variables used in the loop
-	double** concVector = new double*[3];
+	double* concVector[3]{nullptr};
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
 	// Loop over grid points first for the temperature, including the ghost
@@ -748,9 +748,6 @@ PetscSolver1DHandler::updateConcentration(
 	checkPetscError(ierr,
 		"PetscSolver1DHandler::updateConcentration: "
 		"DMDAVecRestoreArrayDOF (F) failed.");
-
-	// Clear memory
-	delete[] concVector;
 
 	return;
 }
