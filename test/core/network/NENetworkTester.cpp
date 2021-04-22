@@ -4,10 +4,12 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace network;
 
 using Kokkos::ScopeGuard;
@@ -23,22 +25,17 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=20 0 0 0 0" << std::endl
 			  << "process=reaction" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = NEReactionNetwork;
 	using Spec = NetworkType::Species;
@@ -251,23 +248,18 @@ BOOST_AUTO_TEST_CASE(grouped)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=25 0 0 0 0" << std::endl
 			  << "grouping=11 4" << std::endl
 			  << "process=reaction" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = NEReactionNetwork;
 	using Spec = NetworkType::Species;
@@ -470,22 +462,17 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=20 0 0 0 0" << std::endl
 			  << "process=reaction resolution" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = NEReactionNetwork;
 	using Spec = NetworkType::Species;
@@ -623,23 +610,18 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=25 0 0 0 0" << std::endl
 			  << "grouping=11 4" << std::endl
 			  << "process=reaction resolution" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = NEReactionNetwork;
 	using Spec = NetworkType::Species;

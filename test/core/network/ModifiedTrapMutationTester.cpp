@@ -7,10 +7,9 @@
 
 #include <boost/test/unit_test.hpp>
 
-// #include <xolotl/core/advection/DummyAdvectionHandler.h>
-// #include <xolotl/core/modified/W100TrapMutationHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/core/network/impl/TrapMutationReaction.tpp>
+#include <xolotl/test/CommandLine.h>
 #include <xolotl/options/Options.h>
 
 using namespace std;
@@ -150,22 +149,19 @@ private:
 		// Create the option to create a network
 		xolotl::options::Options opts;
 		// Create a good parameter file
-		std::string tempFile = "param.txt";
-		std::ofstream paramFile(tempFile);
+		std::string parameterFile = "param.txt";
+		std::ofstream paramFile(parameterFile);
 		paramFile << "netParam=8 0 0 10 6" << '\n'
 				  << "process=reaction modifiedTM" << '\n'
 				  << "material=" << materialName << '\n';
 		paramFile.close();
 
 		// Create a fake command line to read the options
-		std::string appName = "fakeXolotlAppNameForTests";
-		std::string parameterFile = "param.txt";
-		int argc = 2;
-		const char* argv[2]{appName.c_str(), parameterFile.c_str()};
-		opts.readParams(argc, argv);
+        test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+        opts.readParams(cl.argc, cl.argv);
 
 		// Remove the created file
-		std::remove(tempFile.c_str());
+		std::remove(parameterFile.c_str());
 
 		AmountType maxV = opts.getMaxV();
 		AmountType maxI = opts.getMaxI();

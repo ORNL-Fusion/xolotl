@@ -9,10 +9,12 @@
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/test/CommandLine.h>
 #include <xolotl/test/MPITestUtils.h>
 
 using namespace std;
-using namespace xolotl::io;
+using namespace xolotl;
+using namespace io;
 
 using Kokkos::ScopeGuard;
 BOOST_GLOBAL_FIXTURE(ScopeGuard);
@@ -52,20 +54,16 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 0 1 0" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(2, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	// Set the number of grid points and step size
 	int nGrid = 5;
@@ -335,10 +333,6 @@ BOOST_AUTO_TEST_CASE(checkIO)
 			}
 		}
 	}
-
-	// Remove the created file
-	std::string tempFile = "param.txt";
-	std::remove(tempFile.c_str());
 }
 
 /**

@@ -4,13 +4,13 @@
 #include <fstream>
 #include <iostream>
 
-#include <mpi.h>
-
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/diffusion/Diffusion3DHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/test/CommandLine.h>
+#include <xolotl/util/MPIUtils.h>
 
 using namespace std;
 using namespace xolotl;
@@ -34,23 +34,17 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 0 1 0" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	// Initialize MPI
-	MPI_Init(&argc, &argv);
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	util::mpiInit(cl.argc, cl.argv);
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	// Create a grid
 	std::vector<double> grid;
@@ -180,10 +174,6 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	BOOST_REQUIRE_CLOSE(val[12], 6415444736, 0.01);
 	BOOST_REQUIRE_CLOSE(val[20], 3141913616, 0.01);
 	BOOST_REQUIRE_CLOSE(val[26], 1264105042, 0.01);
-
-	// Remove the created file
-	std::string tempFile = "param.txt";
-	std::remove(tempFile.c_str());
 
 	// Finalize MPI
 	MPI_Finalize();

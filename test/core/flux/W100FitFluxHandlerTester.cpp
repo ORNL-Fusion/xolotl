@@ -4,16 +4,17 @@
 #include <fstream>
 #include <iostream>
 
-#include <mpi.h>
-
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/flux/W100FitFluxHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/test/CommandLine.h>
+#include <xolotl/util/MPIUtils.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace flux;
 
 using Kokkos::ScopeGuard;
@@ -29,23 +30,17 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	// Initialize MPI for HDF5
-	MPI_Init(&argc, &argv);
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	util::mpiInit(cl.argc, cl.argv);
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	// Create a grid
 	std::vector<double> grid;
@@ -114,21 +109,16 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	// Create a grid
 	std::vector<double> grid;
@@ -186,21 +176,16 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	// Create a grid
 	std::vector<double> grid;
@@ -248,21 +233,16 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	// Create a grid
 	std::vector<double> grid;
@@ -335,21 +315,16 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=9 0 0 0 0" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	// Create a grid
 	std::vector<double> grid;
@@ -376,7 +351,8 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 	// Create a file with a time profile for the flux
 	// First column with the time and the second with
 	// the amplitude (in He/nm2/s) at that time.
-	std::ofstream writeFluxFile("fluxFile.dat");
+	std::string fluxFile = "fluxFile.dat";
+	std::ofstream writeFluxFile(fluxFile);
 	writeFluxFile << "0.0 1000.0 \n"
 					 "1.0 4000.0 \n"
 					 "2.0 2000.0 \n"
@@ -386,7 +362,7 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 
 	auto testFitFlux = make_shared<W100FitFluxHandler>(opts);
 	// Initialize the time profile for the flux handler
-	testFitFlux->initializeTimeProfile("fluxFile.dat");
+	testFitFlux->initializeTimeProfile(fluxFile);
 	// Initialize the flux handler
 	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
@@ -449,10 +425,7 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 	BOOST_REQUIRE_EQUAL(testFitFlux->getFluxAmplitude(), 1500.0);
 
 	// Remove the created file
-	std::string tempFile = "fluxFile.dat";
-	std::remove(tempFile.c_str());
-	tempFile = "param.txt";
-	std::remove(tempFile.c_str());
+	std::remove(fluxFile.c_str());
 
 	// Finalize MPI
 	MPI_Finalize();
