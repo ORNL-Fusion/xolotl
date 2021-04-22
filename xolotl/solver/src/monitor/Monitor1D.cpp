@@ -2134,7 +2134,7 @@ setupPetsc1DMonitor(TS ts)
 	std::string networkName = solverHandler.getNetworkName();
 	bool hasConcentrations = false;
 	if (not networkName.empty()) {
-		networkFile.reset(new io::XFile(networkName));
+		networkFile = std::make_unique<io::XFile>(networkName);
 		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		if (hasConcentrations) {

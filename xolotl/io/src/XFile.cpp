@@ -348,8 +348,8 @@ XFile::ConcentrationGroup::addTimestepGroup(
 	int timeStep, double time, double previousTime, double deltaTime) const
 {
 	// Create a group for the new timestep.
-	std::unique_ptr<XFile::TimestepGroup> tsGroup(
-		new TimestepGroup(*this, timeStep, time, previousTime, deltaTime));
+	auto tsGroup = std::make_unique<XFile::TimestepGroup>(
+		*this, timeStep, time, previousTime, deltaTime);
 
 	// Update our last known timestep.
 	Attribute<decltype(timeStep)> lastTimestepAttr(*this, lastTimestepAttrName);
@@ -372,7 +372,7 @@ XFile::ConcentrationGroup::getTimestepGroup(int timeStep) const
 
 	try {
 		// Open the sub-group associated with the desired time step.
-		tsGroup.reset(new TimestepGroup(*this, timeStep));
+		tsGroup = std::make_unique<XFile::TimestepGroup>(*this, timeStep);
 	}
 	catch (HDF5Exception& e) {
 		// We were unable to open the group associated with the given time step.
@@ -392,7 +392,7 @@ XFile::ConcentrationGroup::getLastTimestepGroup(void) const
 		// if any time steps have been written.
 		auto lastTimeStep = getLastTimeStep();
 		if (lastTimeStep >= 0) {
-			tsGroup.reset(new TimestepGroup(*this, lastTimeStep));
+			tsGroup = std::make_unique<TimestepGroup>(*this, lastTimeStep);
 		}
 	}
 	catch (HDF5Exception& e) {

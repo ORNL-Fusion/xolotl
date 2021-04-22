@@ -78,7 +78,6 @@ SurfacePlot::render(const std::string& fileName)
 	dataSet.AddCellField(plotDataProvider->getDataName(), zVector);
 
 	// Create the view
-	vtkm::rendering::View2D* view = nullptr;
 	vtkm::rendering::Color bg(0.5, 0.5, 0.5, 1.f);
 	vtkm::rendering::CanvasRayTracer canvas(W_WIDTH, W_HEIGHT);
 	vtkm::rendering::MapperRayTracer mapper;
@@ -89,7 +88,7 @@ SurfacePlot::render(const std::string& fileName)
 	vtkm::rendering::Actor actor(dataSet.GetCellSet(),
 		dataSet.GetCoordinateSystem(),
 		dataSet.GetField(plotDataProvider->getDataName()),
-		vtkm::cont::ColorTable::Preset::JET);
+		vtkm::cont::ColorTable::Preset::Jet);
 	scene.AddActor(actor);
 
 	// Set camera position
@@ -101,7 +100,7 @@ SurfacePlot::render(const std::string& fileName)
 	camera.SetXScale(1.01f);
 
 	// Create vtkm rendering infrastructure
-	view = new vtkm::rendering::View2D(scene, mapper, canvas, camera, bg);
+	vtkm::rendering::View2D view(scene, mapper, canvas, camera, bg);
 
 	// Print the title
 	std::string titleLabel;
@@ -114,52 +113,37 @@ SurfacePlot::render(const std::string& fileName)
 		titleLabel = plotLabelProvider->titleLabel;
 		labelLeftPos = -.25;
 	}
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> titleAnnotation(
-		new vtkm::rendering::TextAnnotationScreen(titleLabel,
-			vtkm::rendering::Color::white, .07,
-			vtkm::Vec<vtkm::Float32, 2>(labelLeftPos, .93), 0));
-	view->AddAnnotation(std::move(titleAnnotation));
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		titleLabel, vtkm::rendering::Color::white, .07,
+		vtkm::Vec<vtkm::Float32, 2>(labelLeftPos, .93), 0));
 
 	// Print the axis labels
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> axis1Annotation(
-		new vtkm::rendering::TextAnnotationScreen(plotLabelProvider->axis1Label,
-			vtkm::rendering::Color::white, .065,
-			vtkm::Vec<vtkm::Float32, 2>(-.12, -.9), 0));
-	view->AddAnnotation(std::move(axis1Annotation));
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		plotLabelProvider->axis1Label, vtkm::rendering::Color::white, .065,
+		vtkm::Vec<vtkm::Float32, 2>(-.12, -.9), 0));
 
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> axis2Annotation(
-		new vtkm::rendering::TextAnnotationScreen(plotLabelProvider->axis2Label,
-			vtkm::rendering::Color::white, .065,
-			vtkm::Vec<vtkm::Float32, 2>(-.85, -.15), 90));
-	view->AddAnnotation(std::move(axis2Annotation));
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		plotLabelProvider->axis2Label, vtkm::rendering::Color::white, .065,
+		vtkm::Vec<vtkm::Float32, 2>(-.85, -.15), 90));
 
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> axis3Annotation(
-		new vtkm::rendering::TextAnnotationScreen(plotLabelProvider->axis3Label,
-			vtkm::rendering::Color::white, .065,
-			vtkm::Vec<vtkm::Float32, 2>(-.15, .73), 0));
-	view->AddAnnotation(std::move(axis3Annotation));
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		plotLabelProvider->axis3Label, vtkm::rendering::Color::white, .065,
+		vtkm::Vec<vtkm::Float32, 2>(-.15, .73), 0));
 
 	// Add the time information
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> timeAnnotation(
-		new vtkm::rendering::TextAnnotationScreen(plotLabelProvider->timeLabel,
-			vtkm::rendering::Color::white, .055,
-			vtkm::Vec<vtkm::Float32, 2>(.6, -.91), 0));
-	view->AddAnnotation(std::move(timeAnnotation));
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		plotLabelProvider->timeLabel, vtkm::rendering::Color::white, .055,
+		vtkm::Vec<vtkm::Float32, 2>(.6, -.91), 0));
 
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> timeStepAnnotation(
-		new vtkm::rendering::TextAnnotationScreen(
-			plotLabelProvider->timeStepLabel, vtkm::rendering::Color::white,
-			.055, vtkm::Vec<vtkm::Float32, 2>(.6, -.96), 0));
-	view->AddAnnotation(std::move(timeStepAnnotation));
-
-	// Set the view
-	view->Initialize();
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		plotLabelProvider->timeStepLabel, vtkm::rendering::Color::white, .055,
+		vtkm::Vec<vtkm::Float32, 2>(.6, -.96), 0));
 
 	// Paint
-	view->Paint();
+	view.Paint();
 
 	// Save the final buffer as an image
-	view->SaveAs(fileName);
+	view.SaveAs(fileName);
 
 	return;
 }

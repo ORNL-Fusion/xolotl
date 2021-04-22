@@ -106,24 +106,25 @@ PerfHandler::collectAllObjectNames(int myRank,
 		&nBytes, &totalNumBytes, 1, MPI_UNSIGNED, MPI_SUM, 0, xolotlComm);
 
 	// Marshal all our object names.
-	char* myNamesBuf = new char[nBytes];
-	char* pName = myNamesBuf;
+	auto myNamesBuf = std::make_unique<char[]>(nBytes);
+	char* pName = myNamesBuf.get();
 	for (auto nameIter = myNames.begin(); nameIter != myNames.end();
 		 ++nameIter) {
 		strcpy(pName, nameIter->c_str());
 		pName += (nameIter->length() + 1); // skip the NUL terminator
 	}
-	assert(pName == (myNamesBuf + nBytes));
+	assert(pName == (myNamesBuf.get() + nBytes));
 
 	// Provide all names to root.
 	// First, provide the amount of data from each process.
 	int cwSize;
 	MPI_Comm_size(xolotlComm, &cwSize);
-	char* allNames = (myRank == 0) ? new char[totalNumBytes] : NULL;
-	int* allNameCounts = (myRank == 0) ? new int[cwSize] : NULL;
-	int* allNameDispls = (myRank == 0) ? new int[cwSize] : NULL;
+	std::vector<char> allNames((myRank == 0) ? totalNumBytes : 0);
+	std::vector<int> allNameCounts((myRank == 0) ? cwSize : 0);
+	std::vector<int> allNameDispls((myRank == 0) ? cwSize : 0);
 
-	MPI_Gather(&nBytes, 1, MPI_INT, allNameCounts, 1, MPI_INT, 0, xolotlComm);
+	MPI_Gather(
+		&nBytes, 1, MPI_INT, allNameCounts.data(), 1, MPI_INT, 0, xolotlComm);
 
 	// Next, root computes the displacements for data from each process.
 	if (myRank == 0) {
@@ -134,14 +135,14 @@ PerfHandler::collectAllObjectNames(int myRank,
 	}
 
 	// Finally, gather all names to the root process.
-	MPI_Gatherv(myNamesBuf, nBytes, MPI_CHAR, allNames, allNameCounts,
-		allNameDispls, MPI_CHAR, 0, xolotlComm);
+	MPI_Gatherv(myNamesBuf.get(), nBytes, MPI_CHAR, allNames.data(),
+		allNameCounts.data(), allNameDispls.data(), MPI_CHAR, 0, xolotlComm);
 
 	if (myRank == 0) {
 		// Process the gathered names to determine the
 		// set of all known object names.
-		pName = allNames;
-		while (pName < (allNames + totalNumBytes)) {
+		pName = allNames.data();
+		while (pName < (allNames.data() + totalNumBytes)) {
 			auto iter = stats.find(pName);
 			if (iter == stats.end()) {
 				// This is an object  name we have not seen before.
@@ -157,10 +158,6 @@ PerfHandler::collectAllObjectNames(int myRank,
 	}
 
 	// clean up
-	delete[] myNamesBuf;
-	delete[] allNames;
-	delete[] allNameCounts;
-	delete[] allNameDispls;
 }
 
 template <typename T>
@@ -286,9 +283,15 @@ PerfHandler::aggregateStatistics(int myRank,
 		// we can safely cast away const on the tsiter data string because
 		// the only process that accesses that string is rank 0,
 		// and it only reads the data.
-		char* objName = (myRank == 0) ?
-			const_cast<char*>(tsiter->second.name.c_str()) :
-			new char[nameLen + 1];
+		std::unique_ptr<char[]> objNamePtr;
+		char* objName = nullptr;
+		if (myRank == 0) {
+			objName = const_cast<char*>(tsiter->second.name.c_str());
+		}
+		else {
+			objNamePtr = std::make_unique<char[]>(nameLen + 1);
+			objName = objNamePtr.get();
+		}
 		MPI_Bcast(objName, nameLen + 1, MPI_CHAR, 0, xolotlComm);
 
 		// do we know about the current object?
@@ -334,11 +337,6 @@ PerfHandler::aggregateStatistics(int myRank,
 			tsiter->second.stdev =
 				sqrt((valSquaredSum / tsiter->second.processCount) -
 					(tsiter->second.average * tsiter->second.average));
-		}
-
-		// clean up
-		if (myRank != 0) {
-			delete[] objName;
 		}
 
 		// advance to next object

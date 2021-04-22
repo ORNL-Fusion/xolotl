@@ -115,7 +115,7 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	std::unique_ptr<io::XFile> xfile;
 	std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
 	if (not networkName.empty()) {
-		xfile.reset(new io::XFile(networkName));
+		xfile = std::make_unique<io::XFile>(networkName);
 		concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}

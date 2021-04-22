@@ -153,11 +153,11 @@ monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec, void*)
 	solverTimer->start();
 
 	// Collect all sampled timer values to rank 0.
-	double* allTimerValues = (cwRank == 0) ? new double[cwSize] : NULL;
+	std::vector<double> allTimerValues((cwRank == 0) ? cwSize : 0);
 	MPI_Gather(&solverTimerValue, // send buffer
 		1, // number of values to send
 		MPI_DOUBLE, // type of items in send buffer
-		allTimerValues, // receive buffer (only valid at root)
+		allTimerValues.data(), // receive buffer (only valid at root)
 		1, // number of values to receive from each process
 		MPI_DOUBLE, // type of items in receive buffer
 		0, // root of MPI collective operation
@@ -175,9 +175,6 @@ monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec, void*)
 			aPoint.t = time;
 			allPoints->push_back(aPoint);
 		}
-
-		// Clean up the receive buffer (only valid at root)
-		delete[] allTimerValues;
 
 		// Provide the data provider the points.
 		perfPlot->getDataProvider()->setDataPoints(allPoints);
