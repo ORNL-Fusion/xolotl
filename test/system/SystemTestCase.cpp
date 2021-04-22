@@ -288,7 +288,7 @@ SystemTestCase::runXolotl() const
 	// Construct command-line
 	auto exec = _binDir + "/xolotl/xolotl";
 	auto paramsFileName = _dataDir + "/params_" + _caseName + ".txt";
-	char* argv[] = {exec.data(), paramsFileName.data()};
+	const char* argv[] = {exec.data(), paramsFileName.data()};
 	try {
 		xolotl::interface::XolotlInterface{2, argv}.solveXolotl();
 	}

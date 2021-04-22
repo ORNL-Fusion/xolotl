@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 
 	// Fill the concVector with the pointer to the middle, left, and right grid
 	// points
-	double** concVector = new double*[3];
+	double* concVector[3]{};
 	concVector[0] = concOffset; // middle
 	concVector[1] = conc; // left
 	concVector[2] = conc + 2 * (dof + 1); // right
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 
 	// Fill the concVector with the pointer to the middle, left, right, bottom,
 	// and top grid points
-	double** concVector = new double*[5];
+	double* concVector[5]{};
 	concVector[0] = concOffset; // middle
 	concVector[1] = conc + 3 * (dof + 1); // left
 	concVector[2] = conc + 5 * (dof + 1); // right
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 
 	// Fill the concVector with the pointer to the middle, left, right, bottom,
 	// top, front, and back grid points
-	double** concVector = new double*[7];
+	double* concVector[7]{};
 	concVector[0] = concOffset; // middle
 	concVector[1] = conc + 12 * (dof + 1); // left
 	concVector[2] = conc + 14 * (dof + 1); // right

@@ -1,7 +1,7 @@
 #include <xolotl/interface/Interface.h>
 
 int
-main(int argc, char* argv[])
+main(int argc, const char* argv[])
 {
 	xolotl::interface::XolotlInterface{argc, argv}.solveXolotl();
 	return EXIT_SUCCESS;

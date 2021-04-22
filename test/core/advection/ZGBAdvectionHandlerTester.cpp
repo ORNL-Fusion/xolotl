@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 
 	// Fill the concVector with the pointer to the middle, left, right, bottom,
 	// top, front, and back grid points
-	double** concVector = new double*[7];
+	double* concVector[7]{};
 	concVector[0] = concOffset; // middle
 	concVector[1] = conc + 12 * dof; // left
 	concVector[2] = conc + 14 * dof; // right

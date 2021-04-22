@@ -662,7 +662,7 @@ public:
 
 		if (hasGroup<T>()) {
 			// Open the group within our file.
-			group.reset(new T(*this));
+			group = std::make_unique<T>(*this);
 		}
 		return std::move(group);
 	}

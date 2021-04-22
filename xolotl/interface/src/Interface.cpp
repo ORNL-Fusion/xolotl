@@ -21,10 +21,11 @@ namespace interface
 class Context
 {
 public:
-	Context(int argc, char* argv[]) : _kokkosContext(argc, argv)
+	Context(int argc, const char* argv[]) :
+		_kokkosContext(argc, const_cast<char**>(argv))
 	{
 		if (!initialized()) {
-			MPI_Init(&argc, &argv);
+			util::mpiInit(argc, argv);
 			_mpiInitializedHere = true;
 		}
 	}
@@ -67,7 +68,7 @@ reportException(const std::exception& e)
 
 XolotlInterface::XolotlInterface() = default;
 
-XolotlInterface::XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm)
+XolotlInterface::XolotlInterface(int argc, const char* argv[], MPI_Comm mpiComm)
 {
 	initializeXolotl(argc, argv, mpiComm);
 	initializedHere = true;
@@ -87,7 +88,7 @@ XolotlInterface::printSomething()
 }
 
 void
-XolotlInterface::initializeXolotl(int argc, char* argv[], MPI_Comm comm)
+XolotlInterface::initializeXolotl(int argc, const char* argv[], MPI_Comm comm)
 try {
 	context = std::make_unique<Context>(argc, argv);
 
@@ -110,7 +111,7 @@ try {
 	}
 
 	options::Options opts;
-	opts.readParams(argc, (const char**)argv);
+	opts.readParams(argc, argv);
 	if (!opts.shouldRun()) {
 		throw std::runtime_error("Unable to read the options.");
 	}
