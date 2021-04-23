@@ -1,4 +1,5 @@
 list(APPEND XOLOTL_CORE_HEADERS
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterSet.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/MemorySpace.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/NucleationReactionGenerator.h
@@ -9,6 +10,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionUtility.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReSolutionReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/SinkReactionGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TupleUtility.h
@@ -18,7 +20,6 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyTraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/Cluster.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/ClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/EnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeNetworkHandler.h
@@ -47,15 +48,16 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/SinkReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesEnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesId.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/TrapMutationClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/TrapMutationReaction.h
 )
 
 list(APPEND XOLOTL_CORE_TPP_FILES
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ClusterData.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/NucleationReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReSolutionReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/SinkReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/TrapMutationClusterData.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/TrapMutationReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyClusterGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyReaction.tpp

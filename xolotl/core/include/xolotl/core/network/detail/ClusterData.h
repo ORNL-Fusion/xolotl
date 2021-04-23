@@ -21,30 +21,6 @@ class Cluster;
 
 namespace detail
 {
-template <typename PlsmContext>
-struct ContextLabelHelper;
-
-template <>
-struct ContextLabelHelper<plsm::OnHost>
-{
-	static constexpr char label = 'H';
-};
-
-template <>
-struct ContextLabelHelper<plsm::OnDevice>
-{
-	static constexpr char label = 'D';
-};
-
-template <typename PlsmContext>
-constexpr char contextLabel = ContextLabelHelper<PlsmContext>::label;
-
-inline std::string
-labelStr(const char labelChar)
-{
-	return std::string("_") + labelChar;
-}
-
 template <typename TData, typename PlsmContext>
 struct ViewTypeHelper;
 
@@ -89,10 +65,6 @@ template <typename PlsmContext,
 	template <typename> typename ViewConvert = PassThru>
 struct ClusterDataCommon
 {
-protected:
-	static constexpr char label = contextLabel<PlsmContext>;
-
-public:
 	template <typename TData>
 	using View = ViewConvert<ViewType<TData, PlsmContext>>;
 
@@ -102,28 +74,7 @@ public:
 
 	ClusterDataCommon() = default;
 
-	explicit ClusterDataCommon(
-		IndexType numClusters_, IndexType gridSize_ = 0) :
-		numClusters(numClusters_),
-		gridSize(gridSize_),
-		atomicVolume("Atomic Volume" + labelStr(label)),
-		latticeParameter("Lattice Parameter" + labelStr(label)),
-		fissionRate("Fission Rate" + labelStr(label)),
-		zeta("Zeta" + labelStr(label)),
-		enableStdReaction("Enable Std Reaction" + labelStr(label)),
-		enableReSolution("Enable Re-Solution Process" + labelStr(label)),
-		enableNucleation("Enable Nucleation Process" + labelStr(label)),
-		enableSink("Enable Sink Process" + labelStr(label)),
-		enableTrapMutation("Enable Trap Mutation Process" + labelStr(label)),
-		temperature("Temperature" + labelStr(label), gridSize),
-		reactionRadius("Reaction Radius" + labelStr(label), numClusters),
-		formationEnergy("Formation Energy" + labelStr(label), numClusters),
-		migrationEnergy("Migration Energy" + labelStr(label), numClusters),
-		diffusionFactor("Diffusion Factor" + labelStr(label), numClusters),
-		diffusionCoefficient(
-			"Diffusion Coefficient" + labelStr(label), numClusters, gridSize)
-	{
-	}
+	explicit ClusterDataCommon(IndexType numClusters_, IndexType gridSize_ = 0);
 
 	template <typename TClusterDataCommon>
 	KOKKOS_INLINE_FUNCTION
@@ -149,37 +100,7 @@ public:
 	}
 
 	std::uint64_t
-	getDeviceMemorySize() const noexcept
-	{
-		std::uint64_t ret = 0;
-
-		ret += sizeof(numClusters);
-		ret += sizeof(gridSize);
-		ret += atomicVolume.required_allocation_size();
-		ret += latticeParameter.required_allocation_size();
-		ret += fissionRate.required_allocation_size();
-		ret += zeta.required_allocation_size();
-		ret += enableStdReaction.required_allocation_size();
-		ret += enableReSolution.required_allocation_size();
-		ret += enableNucleation.required_allocation_size();
-		ret += enableSink.required_allocation_size();
-		ret += enableTrapMutation.required_allocation_size();
-
-		ret += temperature.required_allocation_size(temperature.size());
-		ret += reactionRadius.required_allocation_size(reactionRadius.size());
-		ret += formationEnergy.required_allocation_size(formationEnergy.size());
-		ret += migrationEnergy.required_allocation_size(migrationEnergy.size());
-		ret += diffusionFactor.required_allocation_size(diffusionFactor.size());
-		ret += diffusionCoefficient.required_allocation_size(
-			diffusionCoefficient.extent(0), diffusionCoefficient.extent(1));
-
-		return ret;
-	}
-
-	void
-	syncClusterDataOnHost()
-	{
-	}
+	getDeviceMemorySize() const noexcept;
 
 	ClusterType
 	getCluster(IndexType clusterId) const noexcept
@@ -251,13 +172,7 @@ public:
 	}
 
 	void
-	setGridSize(IndexType gridSize_)
-	{
-		gridSize = gridSize_;
-		temperature = View<double*>("Temperature" + labelStr(label), gridSize);
-		diffusionCoefficient = View<double**>(
-			"Diffusion Coefficient" + labelStr(label), numClusters, gridSize);
-	}
+	setGridSize(IndexType gridSize_);
 
 	IndexType numClusters{};
 	IndexType gridSize{};
@@ -309,18 +224,9 @@ public:
 	ClusterDataImpl() = default;
 
 	ClusterDataImpl(const TilesView& tiles_, IndexType numClusters_,
-		IndexType gridSize_ = 0) :
-		Superclass(numClusters_, gridSize_),
-		tiles(tiles_),
-		momentIds("Moment Ids" + labelStr(this->label), numClusters_)
-	{
-	}
+		IndexType gridSize_ = 0);
 
-	explicit ClusterDataImpl(Subpaving& subpaving, IndexType gridSize_ = 0) :
-		ClusterDataImpl(subpaving.getTiles(PlsmContext{}),
-			subpaving.getNumberOfTiles(PlsmContext{}), gridSize_)
-	{
-	}
+	explicit ClusterDataImpl(Subpaving& subpaving, IndexType gridSize_ = 0);
 
 	template <typename TClusterData>
 	KOKKOS_INLINE_FUNCTION
@@ -333,16 +239,7 @@ public:
 	}
 
 	std::uint64_t
-	getDeviceMemorySize() const noexcept
-	{
-		std::uint64_t ret = Superclass::getDeviceMemorySize();
-
-		ret += tiles.required_allocation_size(tiles.size());
-		ret += momentIds.required_allocation_size(momentIds.size());
-		ret += extraData.getDeviceMemorySize();
-
-		return ret;
-	}
+	getDeviceMemorySize() const noexcept;
 
 	KOKKOS_INLINE_FUNCTION
 	ClusterType
@@ -374,29 +271,8 @@ struct ClusterDataRefHelper
 template <typename TN1, typename PC1, template <typename> typename VC1,
 	typename TN2, typename PC2, template <typename> typename VC2>
 inline void
-deepCopy(ClusterDataImpl<TN1, PC1, VC1> to, ClusterDataImpl<TN2, PC2, VC2> from)
-{
-	deep_copy(to.atomicVolume, from.atomicVolume);
-	deep_copy(to.latticeParameter, from.latticeParameter);
-	deep_copy(to.fissionRate, from.fissionRate);
-	deep_copy(to.zeta, from.zeta);
-	deep_copy(to.enableStdReaction, from.enableStdReaction);
-	deep_copy(to.enableReSolution, from.enableReSolution);
-	deep_copy(to.enableNucleation, from.enableNucleation);
-	deep_copy(to.enableSink, from.enableSink);
-	deep_copy(to.enableTrapMutation, from.enableTrapMutation);
-	deep_copy(to.temperature, from.temperature);
-	deep_copy(to.reactionRadius, from.reactionRadius);
-	deep_copy(to.formationEnergy, from.formationEnergy);
-	deep_copy(to.migrationEnergy, from.migrationEnergy);
-	deep_copy(to.diffusionFactor, from.diffusionFactor);
-	deep_copy(to.diffusionCoefficient, from.diffusionCoefficient);
-
-	// NOTE: Intentionally omitting tiles assuming that was part of construction
-	deep_copy(to.momentIds, from.momentIds);
-
-	deepCopy(to.extraData, from.extraData);
-}
+deepCopy(
+	ClusterDataImpl<TN1, PC1, VC1> to, ClusterDataImpl<TN2, PC2, VC2> from);
 } // namespace detail
 } // namespace network
 } // namespace core

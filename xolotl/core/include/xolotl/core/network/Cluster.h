@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xolotl/core/network/ClusterData.h>
+#include <xolotl/core/network/detail/ClusterData.h>
 
 namespace xolotl
 {

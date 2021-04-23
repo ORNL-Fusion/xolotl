@@ -1,7 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
-#include <xolotl/core/network/TrapMutationClusterData.h>
+#include <xolotl/core/network/detail/TrapMutationClusterData.h>
 
 namespace xolotl
 {

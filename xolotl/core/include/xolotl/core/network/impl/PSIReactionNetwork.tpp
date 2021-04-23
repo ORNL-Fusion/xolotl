@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/detail/PSITrapMutation.h>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/TrapMutationClusterData.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationReactionGenerator.tpp>
 #include <xolotl/core/network/impl/PSIClusterGenerator.tpp>
 #include <xolotl/core/network/impl/PSIReaction.tpp>
@@ -365,7 +366,7 @@ PSIReactionGenerator<TSpeciesEnum>::PSIReactionGenerator(
 		}
 		auto nv = vSizes[n].size();
 		_tmVSizes[n] = Kokkos::View<AmountType*>(
-			"TM Vacancy Sizes - He" + std::to_string(n+1), nv);
+			"TM Vacancy Sizes - He" + std::to_string(n + 1), nv);
 		auto vSizesMirror = Kokkos::View<AmountType*, Kokkos::HostSpace,
 			Kokkos::MemoryUnmanaged>(vSizes[n].data(), nv);
 		deep_copy(_tmVSizes[n], vSizesMirror);
@@ -543,7 +544,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 			Composition comp1 = Composition::zero();
 			comp1[Species::He] = heAmt;
 			auto comp2 = comp1;
-			auto& vSizes = _tmVSizes[heAmt-1];
+			auto& vSizes = _tmVSizes[heAmt - 1];
 			for (std::size_t n = 0; n < vSizes.extent(0); ++n) {
 				auto& vSize = vSizes[n];
 				comp2[Species::V] = vSize;

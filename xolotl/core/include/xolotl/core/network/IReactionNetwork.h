@@ -7,8 +7,8 @@
 #include <Kokkos_Crs.hpp>
 
 #include <xolotl/core/network/Cluster.h>
-#include <xolotl/core/network/ClusterData.h>
 #include <xolotl/core/network/SpeciesId.h>
+#include <xolotl/core/network/detail/ClusterData.h>
 #include <xolotl/core/network/detail/ReactionData.h>
 
 namespace xolotl
@@ -49,7 +49,7 @@ public:
 		return detail::invalidSpeciesAmount;
 	}
 
-    IReactionNetwork() = default;
+	IReactionNetwork() = default;
 
 	IReactionNetwork(IndexType gridSize) : _gridSize(gridSize)
 	{
