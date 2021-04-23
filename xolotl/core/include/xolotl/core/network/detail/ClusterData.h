@@ -206,12 +206,14 @@ template <typename TNetwork, typename PlsmContext,
 struct ClusterDataImpl : ClusterDataCommon<PlsmContext, ViewConvert>
 {
 private:
+	using Traits = ReactionNetworkTraits<TNetwork>;
 	using Types = detail::ReactionNetworkTypes<TNetwork>;
 	using Props = detail::ReactionNetworkProperties<TNetwork>;
 	static constexpr auto nMomentIds = Props::numSpeciesNoI;
 
 public:
 	using Superclass = ClusterDataCommon<PlsmContext, ViewConvert>;
+	using ClusterGenerator = typename Traits::ClusterGenerator;
 	using Subpaving = typename Types::Subpaving;
 	using TilesView =
 		ViewConvert<typename Subpaving::template TilesView<PlsmContext>>;
@@ -247,6 +249,10 @@ public:
 	{
 		return ClusterType(*this, clusterId);
 	}
+
+	void
+	generate(const ClusterGenerator& generator, double latticeParameter,
+		double interstitialBias, double impurityRadius);
 
 	TilesView tiles;
 	View<IndexType* [nMomentIds]> momentIds;

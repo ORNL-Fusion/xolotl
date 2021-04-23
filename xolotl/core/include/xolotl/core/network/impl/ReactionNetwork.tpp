@@ -373,7 +373,8 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::generateClusterData(const ClusterGenerator& generator)
 {
-	_worker.generateClusterData(generator);
+	_clusterData.generate(generator, this->getLatticeParameter(),
+		this->getInterstitialBias(), this->getImpurityRadius());
 }
 
 template <typename TImpl>
@@ -649,38 +650,6 @@ ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
 			if (!util::equal(clusterData.diffusionFactor(i), 0.0)) {
 				updater.updateDiffusionCoefficient(clusterData, i, j);
 			}
-		});
-	Kokkos::fence();
-}
-
-template <typename TImpl>
-void
-ReactionNetworkWorker<TImpl>::generateClusterData(
-	const typename Network::ClusterGenerator& generator)
-{
-	auto nClusters = _nw._clusterData.numClusters;
-	_nw._clusterData.formationEnergy =
-		Kokkos::View<double*>("Formation Energy", nClusters);
-	_nw._clusterData.migrationEnergy =
-		Kokkos::View<double*>("Migration Energy", nClusters);
-	_nw._clusterData.diffusionFactor =
-		Kokkos::View<double*>("Diffusion Factor", nClusters);
-	_nw._clusterData.reactionRadius =
-		Kokkos::View<double*>("Reaction Radius", nClusters);
-
-	ClusterData data(_nw._clusterData);
-	auto latticeParameter = _nw.getLatticeParameter();
-	auto interstitialBias = _nw.getInterstitialBias();
-	auto impurityRadius = _nw.getImpurityRadius();
-	Kokkos::parallel_for(
-		nClusters, KOKKOS_LAMBDA(const IndexType i) {
-			auto cluster = data.getCluster(i);
-			data.formationEnergy(i) = generator.getFormationEnergy(cluster);
-			data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);
-			data.diffusionFactor(i) =
-				generator.getDiffusionFactor(cluster, latticeParameter);
-			data.reactionRadius(i) = generator.getReactionRadius(
-				cluster, latticeParameter, interstitialBias, impurityRadius);
 		});
 	Kokkos::fence();
 }

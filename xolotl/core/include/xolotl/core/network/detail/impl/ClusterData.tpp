@@ -39,8 +39,7 @@ labelStr()
 	return labelString(contextLabel<PlsmContext>);
 }
 
-template <typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename PlsmContext, template <typename> typename ViewConvert>
 ClusterDataCommon<PlsmContext, ViewConvert>::ClusterDataCommon(
 	IndexType numClusters_, IndexType gridSize_) :
 	numClusters(numClusters_),
@@ -65,8 +64,7 @@ ClusterDataCommon<PlsmContext, ViewConvert>::ClusterDataCommon(
 {
 }
 
-template <typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename PlsmContext, template <typename> typename ViewConvert>
 inline std::uint64_t
 ClusterDataCommon<PlsmContext, ViewConvert>::getDeviceMemorySize()
 	const noexcept
@@ -96,8 +94,7 @@ ClusterDataCommon<PlsmContext, ViewConvert>::getDeviceMemorySize()
 	return ret;
 }
 
-template <typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename PlsmContext, template <typename> typename ViewConvert>
 inline void
 ClusterDataCommon<PlsmContext, ViewConvert>::setGridSize(IndexType gridSize_)
 {
@@ -141,6 +138,27 @@ ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::getDeviceMemorySize()
 	ret += extraData.getDeviceMemorySize();
 
 	return ret;
+}
+
+template <typename TNetwork, typename PlsmContext,
+	template <typename> typename ViewConvert>
+inline void
+ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::generate(
+	const ClusterGenerator& generator, double latticeParameter,
+	double interstitialBias, double impurityRadius)
+{
+	auto data = *this;
+	Kokkos::parallel_for(
+		this->numClusters, KOKKOS_LAMBDA(const IndexType i) {
+			auto cluster = data.getCluster(i);
+			data.formationEnergy(i) = generator.getFormationEnergy(cluster);
+			data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);
+			data.diffusionFactor(i) =
+				generator.getDiffusionFactor(cluster, latticeParameter);
+			data.reactionRadius(i) = generator.getReactionRadius(
+				cluster, latticeParameter, interstitialBias, impurityRadius);
+		});
+	Kokkos::fence();
 }
 
 template <typename TN1, typename PC1, template <typename> typename VC1,

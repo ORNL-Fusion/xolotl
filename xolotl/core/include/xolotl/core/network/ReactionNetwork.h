@@ -541,9 +541,6 @@ struct ReactionNetworkWorker
 	updateDiffusionCoefficients();
 
 	void
-	generateClusterData(const typename Network::ClusterGenerator& generator);
-
-	void
 	defineMomentIds();
 
 	void
