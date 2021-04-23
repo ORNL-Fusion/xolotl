@@ -154,7 +154,7 @@ PerfHandler::collectAllObjectNames(int myRank,
 			// Advance to next object name
 			pName += (strlen(pName) + 1);
 		}
-		assert(pName == allNames + totalNumBytes);
+		assert(pName == allNames.data() + totalNumBytes);
 	}
 
 	// clean up
