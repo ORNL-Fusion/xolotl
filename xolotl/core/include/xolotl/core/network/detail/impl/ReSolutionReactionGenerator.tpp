@@ -46,7 +46,7 @@ void
 ReSolutionReactionGenerator<TBase>::addReSolutionReaction(
 	Count, const ClusterSet& clusterSet) const
 {
-	if (!this->_clusterData.enableReSolution(0))
+	if (!this->_clusterData.enableReSolution())
 		return;
 
 	Kokkos::atomic_increment(&_clusterReSoReactionCounts(clusterSet.cluster0));
@@ -58,7 +58,7 @@ void
 ReSolutionReactionGenerator<TBase>::addReSolutionReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
-	if (!this->_clusterData.enableReSolution(0))
+	if (!this->_clusterData.enableReSolution())
 		return;
 
 	auto id = _reSoCrsRowMap(clusterSet.cluster0);

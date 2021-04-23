@@ -128,7 +128,7 @@ FeSinkReaction::getSinkStrength()
 {
 	auto cl = this->_clusterData.getCluster(this->_reactant);
 	double r = cl.getReactionRadius();
-	double latticeParameter = this->_clusterData.getLatticeParameter();
+	double latticeParameter = this->_clusterData.latticeParameter();
 	double r0 = latticeParameter * 0.75 * sqrt(3.0);
 	double rho = 0.0003;
 	constexpr double pi = ::xolotl::core::pi;

@@ -95,7 +95,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 		if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1[Species::Xe] == 1 &&
 			lo2[Species::Xe] == 1) {
-			if (this->_clusterData.enableNucleation(0))
+			if (this->_clusterData.enableNucleation())
 				this->addNucleationReaction(tag, {i, k});
 			else
 				this->addProductionReaction(tag, {i, j, k});
@@ -145,7 +145,7 @@ NEClusterUpdater::updateDiffusionCoefficient(
 		double D3 = 7.6e8 * exp(kernel); // nm2/s
 
 		// We need the fission rate now
-		double fissionRate = data.fissionRate(0) * 1.0e27; // #/m3/s
+		double fissionRate = data.fissionRate() * 1.0e27; // #/m3/s
 
 		// Athermal diffusion
 		double D1 = (8e-40 * fissionRate) * 1.0e18; // nm2/s

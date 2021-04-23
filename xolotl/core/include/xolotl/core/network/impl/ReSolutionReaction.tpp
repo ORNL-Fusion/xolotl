@@ -141,7 +141,7 @@ double
 ReSolutionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 {
 	// Get Zeta
-	auto zeta = this->_clusterData.zeta(0);
+	auto zeta = this->_clusterData.zeta();
 	// Set the fit variables depending on the electronic stopping power (zeta)
 	double y0 = 0.0, a1 = 0.0, b1 = 0.0, b2 = 0.0, c = 0.0;
 	if (zeta > 0.87) {
@@ -179,7 +179,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 								  exp(-b2 * pow(radius, 2.0))) *
 		1.0e-4;
 	// Resolution rate depends on fission rate
-	double resolutionRate = 1.0e8 * this->_clusterData.fissionRate(0);
+	double resolutionRate = 1.0e8 * this->_clusterData.fissionRate();
 
 	return fractionRate * resolutionRate;
 }

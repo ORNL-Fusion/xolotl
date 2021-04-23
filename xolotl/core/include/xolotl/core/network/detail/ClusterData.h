@@ -81,10 +81,12 @@ struct ClusterDataCommon
 	ClusterDataCommon(const TClusterDataCommon& data) :
 		numClusters(data.numClusters),
 		gridSize(data.gridSize),
+		_floatVals(data._floatVals),
 		atomicVolume(data.atomicVolume),
 		latticeParameter(data.latticeParameter),
 		fissionRate(data.fissionRate),
 		zeta(data.zeta),
+		_boolVals(data._boolVals),
 		enableStdReaction(data.enableStdReaction),
 		enableReSolution(data.enableReSolution),
 		enableNucleation(data.enableNucleation),
@@ -108,83 +110,22 @@ struct ClusterDataCommon
 		return ClusterType(*this, clusterId);
 	}
 
-	KOKKOS_INLINE_FUNCTION
-	double
-	getAtomicVolume() const
-	{
-		return atomicVolume(0);
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	getLatticeParameter() const
-	{
-		return latticeParameter(0);
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	getFissionRate() const
-	{
-		return fissionRate(0);
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	getZeta() const
-	{
-		return zeta(0);
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	bool
-	getEnableStdReaction() const
-	{
-		return enableStdReaction(0);
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	bool
-	getEnableReSolution() const
-	{
-		return enableReSolution(0);
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	bool
-	getEnableNucleation() const
-	{
-		return enableNucleation(0);
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	bool
-	getEnableSink() const
-	{
-		return enableSink(0);
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	bool
-	getEnableTrapMutation() const
-	{
-		return enableTrapMutation();
-	}
-
 	void
 	setGridSize(IndexType gridSize_);
 
 	IndexType numClusters{};
 	IndexType gridSize{};
-	View<double[1]> atomicVolume;
-	View<double[1]> latticeParameter;
-	View<double[1]> fissionRate;
-	View<double[1]> zeta;
-	View<bool[1]> enableStdReaction;
-	View<bool[1]> enableReSolution;
-	View<bool[1]> enableNucleation;
-	View<bool[1]> enableSink;
-	View<bool> enableTrapMutation;
+	View<double[4]> _floatVals;
+	Unmanaged<View<double>> atomicVolume;
+	Unmanaged<View<double>> latticeParameter;
+	Unmanaged<View<double>> fissionRate;
+	Unmanaged<View<double>> zeta;
+	View<bool[5]> _boolVals;
+	Unmanaged<View<bool>> enableStdReaction;
+	Unmanaged<View<bool>> enableReSolution;
+	Unmanaged<View<bool>> enableNucleation;
+	Unmanaged<View<bool>> enableSink;
+	Unmanaged<View<bool>> enableTrapMutation;
 
 	View<double*> temperature;
 	View<double*> reactionRadius;

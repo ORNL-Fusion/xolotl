@@ -29,7 +29,7 @@ constexpr char contextLabel = ContextLabelHelper<PlsmContext>::label;
 inline std::string
 labelString(const char labelChar)
 {
-	return std::string("_") + labelChar;
+	return std::string(" (") + labelChar + std::string(")");
 }
 
 template <typename PlsmContext>
@@ -44,16 +44,17 @@ ClusterDataCommon<PlsmContext, ViewConvert>::ClusterDataCommon(
 	IndexType numClusters_, IndexType gridSize_) :
 	numClusters(numClusters_),
 	gridSize(gridSize_),
-	atomicVolume("Atomic Volume" + labelStr<PlsmContext>()),
-	latticeParameter("Lattice Parameter" + labelStr<PlsmContext>()),
-	fissionRate("Fission Rate" + labelStr<PlsmContext>()),
-	zeta("Zeta" + labelStr<PlsmContext>()),
-	enableStdReaction("Enable Std Reaction" + labelStr<PlsmContext>()),
-	enableReSolution("Enable Re-Solution Process" + labelStr<PlsmContext>()),
-	enableNucleation("Enable Nucleation Process" + labelStr<PlsmContext>()),
-	enableSink("Enable Sink Process" + labelStr<PlsmContext>()),
-	enableTrapMutation(
-		"Enable Trap Mutation Process" + labelStr<PlsmContext>()),
+	_floatVals("Floating Point Values" + labelStr<PlsmContext>()),
+	atomicVolume(subview(_floatVals, 0)),
+	latticeParameter(subview(_floatVals, 1)),
+	fissionRate(subview(_floatVals, 2)),
+	zeta(subview(_floatVals, 3)),
+	_boolVals("Boolean Values" + labelStr<PlsmContext>()),
+	enableStdReaction(subview(_boolVals, 0)),
+	enableReSolution(subview(_boolVals, 1)),
+	enableNucleation(subview(_boolVals, 2)),
+	enableSink(subview(_boolVals, 3)),
+	enableTrapMutation(subview(_boolVals, 4)),
 	temperature("Temperature" + labelStr<PlsmContext>(), gridSize),
 	reactionRadius("Reaction Radius" + labelStr<PlsmContext>(), numClusters),
 	formationEnergy("Formation Energy" + labelStr<PlsmContext>(), numClusters),
@@ -73,15 +74,8 @@ ClusterDataCommon<PlsmContext, ViewConvert>::getDeviceMemorySize()
 
 	ret += sizeof(numClusters);
 	ret += sizeof(gridSize);
-	ret += atomicVolume.required_allocation_size();
-	ret += latticeParameter.required_allocation_size();
-	ret += fissionRate.required_allocation_size();
-	ret += zeta.required_allocation_size();
-	ret += enableStdReaction.required_allocation_size();
-	ret += enableReSolution.required_allocation_size();
-	ret += enableNucleation.required_allocation_size();
-	ret += enableSink.required_allocation_size();
-	ret += enableTrapMutation.required_allocation_size();
+	ret += _floatVals.required_allocation_size();
+	ret += _boolVals.required_allocation_size();
 
 	ret += temperature.required_allocation_size(temperature.size());
 	ret += reactionRadius.required_allocation_size(reactionRadius.size());

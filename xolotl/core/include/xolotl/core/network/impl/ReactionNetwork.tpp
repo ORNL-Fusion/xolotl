@@ -134,12 +134,12 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
 	auto lParam = asDerived()->checkLatticeParameter(latticeParameter);
 	this->_latticeParameter = lParam;
 	auto mirror = Kokkos::create_mirror_view(_clusterData.latticeParameter);
-	mirror(0) = this->_latticeParameter;
+	mirror() = this->_latticeParameter;
 	Kokkos::deep_copy(_clusterData.latticeParameter, mirror);
 
 	this->_atomicVolume = asDerived()->computeAtomicVolume(lParam);
 	mirror = Kokkos::create_mirror_view(_clusterData.atomicVolume);
-	mirror(0) = this->_atomicVolume;
+	mirror() = this->_atomicVolume;
 	Kokkos::deep_copy(_clusterData.atomicVolume, mirror);
 }
 
@@ -149,7 +149,7 @@ ReactionNetwork<TImpl>::setFissionRate(double rate)
 {
 	Superclass::setFissionRate(rate);
 	auto mirror = Kokkos::create_mirror_view(_clusterData.fissionRate);
-	mirror(0) = this->_fissionRate;
+	mirror() = this->_fissionRate;
 	Kokkos::deep_copy(_clusterData.fissionRate, mirror);
 }
 
@@ -158,7 +158,7 @@ void
 ReactionNetwork<TImpl>::setZeta(double z)
 {
 	auto mirror = Kokkos::create_mirror_view(_clusterData.zeta);
-	mirror(0) = z;
+	mirror() = z;
 	Kokkos::deep_copy(_clusterData.zeta, mirror);
 }
 
@@ -168,7 +168,7 @@ ReactionNetwork<TImpl>::setEnableStdReaction(bool reaction)
 {
 	Superclass::setEnableStdReaction(reaction);
 	auto mirror = Kokkos::create_mirror_view(_clusterData.enableStdReaction);
-	mirror(0) = this->_enableStdReaction;
+	mirror() = this->_enableStdReaction;
 	Kokkos::deep_copy(_clusterData.enableStdReaction, mirror);
 }
 
@@ -178,7 +178,7 @@ ReactionNetwork<TImpl>::setEnableReSolution(bool reaction)
 {
 	Superclass::setEnableReSolution(reaction);
 	auto mirror = Kokkos::create_mirror_view(_clusterData.enableReSolution);
-	mirror(0) = this->_enableReSolution;
+	mirror() = this->_enableReSolution;
 	Kokkos::deep_copy(_clusterData.enableReSolution, mirror);
 }
 
@@ -188,7 +188,7 @@ ReactionNetwork<TImpl>::setEnableNucleation(bool reaction)
 {
 	Superclass::setEnableNucleation(reaction);
 	auto mirror = Kokkos::create_mirror_view(_clusterData.enableNucleation);
-	mirror(0) = this->_enableNucleation;
+	mirror() = this->_enableNucleation;
 	Kokkos::deep_copy(_clusterData.enableNucleation, mirror);
 }
 
@@ -198,7 +198,7 @@ ReactionNetwork<TImpl>::setEnableSink(bool reaction)
 {
 	this->_enableSink = reaction;
 	auto mirror = Kokkos::create_mirror_view(_clusterData.enableSink);
-	mirror(0) = this->_enableSink;
+	mirror() = this->_enableSink;
 	Kokkos::deep_copy(_clusterData.enableSink, mirror);
 }
 

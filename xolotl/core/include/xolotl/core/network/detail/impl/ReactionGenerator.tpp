@@ -116,7 +116,7 @@ void
 ReactionGeneratorBase<TNetwork, TDerived>::addProductionReaction(
 	Count, const ClusterSet& clusterSet) const
 {
-	if (!_clusterData.enableStdReaction(0))
+	if (!_clusterData.enableStdReaction())
 		return;
 
 	Kokkos::atomic_increment(&_clusterProdReactionCounts(clusterSet.cluster0));
@@ -128,7 +128,7 @@ void
 ReactionGeneratorBase<TNetwork, TDerived>::addProductionReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
-	if (!_clusterData.enableStdReaction(0))
+	if (!_clusterData.enableStdReaction())
 		return;
 
 	auto id = _prodCrsRowMap(clusterSet.cluster0);
@@ -145,7 +145,7 @@ void
 ReactionGeneratorBase<TNetwork, TDerived>::addDissociationReaction(
 	Count, const ClusterSet& clusterSet) const
 {
-	if (!_clusterData.enableStdReaction(0))
+	if (!_clusterData.enableStdReaction())
 		return;
 
 	Kokkos::atomic_increment(&_clusterDissReactionCounts(clusterSet.cluster1));
@@ -157,7 +157,7 @@ void
 ReactionGeneratorBase<TNetwork, TDerived>::addDissociationReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
-	if (!_clusterData.enableStdReaction(0))
+	if (!_clusterData.enableStdReaction())
 		return;
 
 	auto id = _dissCrsRowMap(clusterSet.cluster1);

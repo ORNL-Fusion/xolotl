@@ -35,7 +35,7 @@ NucleationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 {
 	// We say there are 25 bubbles created per fission fragments and there
 	// are 2 fission fragments per fission
-	double rate = 50.0 * this->_clusterData.fissionRate(0);
+	double rate = 50.0 * this->_clusterData.fissionRate();
 
 	return rate;
 }

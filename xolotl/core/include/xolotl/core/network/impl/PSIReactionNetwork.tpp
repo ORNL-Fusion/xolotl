@@ -537,7 +537,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	}
 
 	// Modified Trap-Mutation
-	if (this->_clusterData.getEnableTrapMutation()) {
+	if (this->_clusterData.enableTrapMutation()) {
 		auto heAmt = lo1[Species::He];
 		if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && 1 <= heAmt &&
 			heAmt <= 7) {

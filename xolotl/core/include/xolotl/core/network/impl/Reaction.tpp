@@ -1549,7 +1549,7 @@ KOKKOS_INLINE_FUNCTION
 double
 DissociationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 {
-	double omega = this->_clusterData.getAtomicVolume();
+	double omega = this->_clusterData.atomicVolume();
 	double T = this->_clusterData.temperature(gridIndex);
 
 	// TODO: computeProductionRate should use products and not reactants
