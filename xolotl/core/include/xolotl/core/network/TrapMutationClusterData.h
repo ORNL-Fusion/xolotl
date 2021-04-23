@@ -64,6 +64,21 @@ struct TrapMutationClusterData
 	{
 	}
 
+	std::uint64_t
+	getDeviceMemorySize() const noexcept
+	{
+		std::uint64_t ret = 0;
+
+		ret += desorption.required_allocation_size();
+		ret += currentDesorpLeftSideRate.required_allocation_size();
+		ret += currentDisappearingRate.required_allocation_size();
+		ret += tmDepths.required_allocation_size();
+		ret += tmVSizes.required_allocation_size();
+		ret += tmEnabled.required_allocation_size();
+
+		return ret;
+	}
+
 	void
 	initialize()
 	{
@@ -86,10 +101,37 @@ struct TrapMutationClusterData
 	View<Desorption> desorption;
 	View<double> currentDesorpLeftSideRate;
 	View<double> currentDisappearingRate;
-	View<double[7]> tmDepths; // should be DualView
-	View<AmountType[7]> tmVSizes; // may only be needed at initialization
+	View<double[7]> tmDepths;
+	View<AmountType[7]> tmVSizes;
 	View<bool[7]> tmEnabled;
 };
+
+template <typename TP1, typename TP2>
+inline void
+deepCopy(TrapMutationClusterData<TP1> to, TrapMutationClusterData<TP2> from)
+{
+	if (!from.desorption.is_allocated()) {
+		return;
+	}
+
+	if (!to.desorption.is_allocated()) {
+		to.desorption = create_mirror_view(from.desorption);
+		to.currentDesorpLeftSideRate =
+			create_mirror_view(from.currentDesorpLeftSideRate);
+		to.currentDisappearingRate =
+			create_mirror_view(from.currentDisappearingRate);
+		to.tmDepths = create_mirror_view(from.tmDepths);
+		to.tmVSizes = create_mirror_view(from.tmVSizes);
+		to.tmEnabled = create_mirror_view(from.tmEnabled);
+	}
+
+	deep_copy(to.desorption, from.desorption);
+	deep_copy(to.currentDesorpLeftSideRate, from.currentDesorpLeftSideRate);
+	deep_copy(to.currentDisappearingRate, from.currentDisappearingRate);
+	deep_copy(to.tmDepths, from.tmDepths);
+	deep_copy(to.tmVSizes, from.tmVSizes);
+	deep_copy(to.tmEnabled, from.tmEnabled);
+}
 } // namespace detail
 } // namespace network
 } // namespace core

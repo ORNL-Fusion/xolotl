@@ -148,6 +148,39 @@ public:
 	{
 	}
 
+	std::uint64_t
+	getDeviceMemorySize() const noexcept
+	{
+		std::uint64_t ret = 0;
+
+		ret += sizeof(numClusters);
+		ret += sizeof(gridSize);
+		ret += atomicVolume.required_allocation_size();
+		ret += latticeParameter.required_allocation_size();
+		ret += fissionRate.required_allocation_size();
+		ret += zeta.required_allocation_size();
+		ret += enableStdReaction.required_allocation_size();
+		ret += enableReSolution.required_allocation_size();
+		ret += enableNucleation.required_allocation_size();
+		ret += enableSink.required_allocation_size();
+		ret += enableTrapMutation.required_allocation_size();
+
+		ret += temperature.required_allocation_size(temperature.size());
+		ret += reactionRadius.required_allocation_size(reactionRadius.size());
+		ret += formationEnergy.required_allocation_size(formationEnergy.size());
+		ret += migrationEnergy.required_allocation_size(migrationEnergy.size());
+		ret += diffusionFactor.required_allocation_size(diffusionFactor.size());
+		ret += diffusionCoefficient.required_allocation_size(
+			diffusionCoefficient.extent(0), diffusionCoefficient.extent(1));
+
+		return ret;
+	}
+
+	void
+	syncClusterDataOnHost()
+	{
+	}
+
 	ClusterType
 	getCluster(IndexType clusterId) const noexcept
 	{
@@ -299,6 +332,18 @@ public:
 	{
 	}
 
+	std::uint64_t
+	getDeviceMemorySize() const noexcept
+	{
+		std::uint64_t ret = Superclass::getDeviceMemorySize();
+
+		ret += tiles.required_allocation_size(tiles.size());
+		ret += momentIds.required_allocation_size(momentIds.size());
+		ret += extraData.getDeviceMemorySize();
+
+		return ret;
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	ClusterType
 	getCluster(IndexType clusterId) const noexcept
@@ -325,6 +370,33 @@ struct ClusterDataRefHelper
 {
 	using Type = ClusterDataImpl<TNetwork, PlsmContext, Unmanaged>;
 };
+
+template <typename TN1, typename PC1, template <typename> typename VC1,
+	typename TN2, typename PC2, template <typename> typename VC2>
+inline void
+deepCopy(ClusterDataImpl<TN1, PC1, VC1> to, ClusterDataImpl<TN2, PC2, VC2> from)
+{
+	deep_copy(to.atomicVolume, from.atomicVolume);
+	deep_copy(to.latticeParameter, from.latticeParameter);
+	deep_copy(to.fissionRate, from.fissionRate);
+	deep_copy(to.zeta, from.zeta);
+	deep_copy(to.enableStdReaction, from.enableStdReaction);
+	deep_copy(to.enableReSolution, from.enableReSolution);
+	deep_copy(to.enableNucleation, from.enableNucleation);
+	deep_copy(to.enableSink, from.enableSink);
+	deep_copy(to.enableTrapMutation, from.enableTrapMutation);
+	deep_copy(to.temperature, from.temperature);
+	deep_copy(to.reactionRadius, from.reactionRadius);
+	deep_copy(to.formationEnergy, from.formationEnergy);
+	deep_copy(to.migrationEnergy, from.migrationEnergy);
+	deep_copy(to.diffusionFactor, from.diffusionFactor);
+	deep_copy(to.diffusionCoefficient, from.diffusionCoefficient);
+
+	// NOTE: Intentionally omitting tiles assuming that was part of construction
+	deep_copy(to.momentIds, from.momentIds);
+
+	deepCopy(to.extraData, from.extraData);
+}
 } // namespace detail
 } // namespace network
 } // namespace core
