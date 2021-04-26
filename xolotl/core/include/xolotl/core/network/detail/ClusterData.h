@@ -65,6 +65,9 @@ template <typename PlsmContext,
 	template <typename> typename ViewConvert = PassThru>
 struct ClusterDataCommon
 {
+	template <typename, template <typename> typename>
+	friend class ClusterDataCommon;
+
 	template <typename TData>
 	using View = ViewConvert<ViewType<TData, PlsmContext>>;
 
@@ -82,16 +85,7 @@ struct ClusterDataCommon
 		numClusters(data.numClusters),
 		gridSize(data.gridSize),
 		_floatVals(data._floatVals),
-		atomicVolume(data.atomicVolume),
-		latticeParameter(data.latticeParameter),
-		fissionRate(data.fissionRate),
-		zeta(data.zeta),
 		_boolVals(data._boolVals),
-		enableStdReaction(data.enableStdReaction),
-		enableReSolution(data.enableReSolution),
-		enableNucleation(data.enableNucleation),
-		enableSink(data.enableSink),
-		enableTrapMutation(data.enableTrapMutation),
 		temperature(data.temperature),
 		reactionRadius(data.reactionRadius),
 		formationEnergy(data.formationEnergy),
@@ -100,6 +94,10 @@ struct ClusterDataCommon
 		diffusionCoefficient(data.diffusionCoefficient)
 	{
 	}
+
+	template <typename TClusterDataCommon>
+	void
+	deepCopy(const TClusterDataCommon& data);
 
 	std::uint64_t
 	getDeviceMemorySize() const noexcept;
@@ -113,19 +111,161 @@ struct ClusterDataCommon
 	void
 	setGridSize(IndexType gridSize_);
 
+private:
+	enum FloatValsIndex : int
+	{
+		ATOMIC_VOLUME = 0,
+		LATTICE_PARAM,
+		FISSION_RATE,
+		ZETA,
+		NUM_FLOAT_VALS
+	};
+
+	enum BoolValsIndex : int
+	{
+		STD_REACTION = 0,
+		RESOLUTION,
+		NUCLEATION,
+		SINK,
+		TRAP_MUTATION,
+		NUM_BOOL_VALS
+	};
+
+	template <typename TView, typename TVal>
+	void
+	setVal(TView view, int index, TVal value)
+	{
+		auto sub = subview(view, index);
+		auto mir = create_mirror_view(sub);
+		mir() = value;
+		deep_copy(sub, mir);
+	}
+
+public:
+	KOKKOS_INLINE_FUNCTION
+	double
+	atomicVolume() const
+	{
+		return _floatVals[ATOMIC_VOLUME];
+	}
+
+	void
+	setAtomicVolume(double val)
+	{
+		setVal(_floatVals, ATOMIC_VOLUME, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	latticeParameter() const
+	{
+		return _floatVals[LATTICE_PARAM];
+	}
+
+	void
+	setLatticeParameter(double val)
+	{
+		setVal(_floatVals, LATTICE_PARAM, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	fissionRate() const
+	{
+		return _floatVals[FISSION_RATE];
+	}
+
+	void
+	setFissionRate(double val)
+	{
+		setVal(_floatVals, FISSION_RATE, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	zeta() const
+	{
+		return _floatVals[ZETA];
+	}
+
+	void
+	setZeta(double val)
+	{
+		setVal(_floatVals, ZETA, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableStdReaction() const
+	{
+		return _boolVals[STD_REACTION];
+	}
+
+	void
+	setEnableStdReaction(bool val)
+	{
+		setVal(_boolVals, STD_REACTION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableReSolution() const
+	{
+		return _boolVals[RESOLUTION];
+	}
+
+	void
+	setEnableReSolution(bool val)
+	{
+		setVal(_boolVals, RESOLUTION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableNucleation() const
+	{
+		return _boolVals[NUCLEATION];
+	}
+
+	void
+	setEnableNucleation(bool val)
+	{
+		setVal(_boolVals, NUCLEATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableSink() const
+	{
+		return _boolVals[SINK];
+	}
+
+	void
+	setEnableSink(bool val)
+	{
+		setVal(_boolVals, SINK, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableTrapMutation() const
+	{
+		return _boolVals[TRAP_MUTATION];
+	}
+
+	void
+	setEnableTrapMutation(bool val)
+	{
+		setVal(_boolVals, TRAP_MUTATION, val);
+	}
+
+private:
+	View<double[NUM_FLOAT_VALS]> _floatVals;
+	View<bool[NUM_BOOL_VALS]> _boolVals;
+
+public:
 	IndexType numClusters{};
 	IndexType gridSize{};
-	View<double[4]> _floatVals;
-	Unmanaged<View<double>> atomicVolume;
-	Unmanaged<View<double>> latticeParameter;
-	Unmanaged<View<double>> fissionRate;
-	Unmanaged<View<double>> zeta;
-	View<bool[5]> _boolVals;
-	Unmanaged<View<bool>> enableStdReaction;
-	Unmanaged<View<bool>> enableReSolution;
-	Unmanaged<View<bool>> enableNucleation;
-	Unmanaged<View<bool>> enableSink;
-	Unmanaged<View<bool>> enableTrapMutation;
 
 	View<double*> temperature;
 	View<double*> reactionRadius;
@@ -181,6 +321,10 @@ public:
 	{
 	}
 
+	template <typename TClusterData>
+	void
+	deepCopy(const TClusterData& data);
+
 	std::uint64_t
 	getDeviceMemorySize() const noexcept;
 
@@ -214,12 +358,6 @@ struct ClusterDataRefHelper
 {
 	using Type = ClusterDataImpl<TNetwork, PlsmContext, Unmanaged>;
 };
-
-template <typename TN1, typename PC1, template <typename> typename VC1,
-	typename TN2, typename PC2, template <typename> typename VC2>
-inline void
-deepCopy(
-	ClusterDataImpl<TN1, PC1, VC1> to, ClusterDataImpl<TN2, PC2, VC2> from);
 } // namespace detail
 } // namespace network
 } // namespace core

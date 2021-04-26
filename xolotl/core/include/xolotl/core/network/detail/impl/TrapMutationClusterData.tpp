@@ -9,6 +9,35 @@ namespace network
 namespace detail
 {
 template <typename TClusterDataParent>
+template <typename TClusterDataOther>
+inline void
+TrapMutationClusterData<TClusterDataParent>::deepCopy(
+	const TrapMutationClusterData<TClusterDataOther>& from)
+{
+	if (!from.desorption.is_allocated()) {
+		return;
+	}
+
+	if (!desorption.is_allocated()) {
+		desorption = create_mirror_view(from.desorption);
+		currentDesorpLeftSideRate =
+			create_mirror_view(from.currentDesorpLeftSideRate);
+		currentDisappearingRate =
+			create_mirror_view(from.currentDisappearingRate);
+		tmDepths = create_mirror_view(from.tmDepths);
+		tmVSizes = create_mirror_view(from.tmVSizes);
+		tmEnabled = create_mirror_view(from.tmEnabled);
+	}
+
+	deep_copy(desorption, from.desorption);
+	deep_copy(currentDesorpLeftSideRate, from.currentDesorpLeftSideRate);
+	deep_copy(currentDisappearingRate, from.currentDisappearingRate);
+	deep_copy(tmDepths, from.tmDepths);
+	deep_copy(tmVSizes, from.tmVSizes);
+	deep_copy(tmEnabled, from.tmEnabled);
+}
+
+template <typename TClusterDataParent>
 inline std::uint64_t
 TrapMutationClusterData<TClusterDataParent>::getDeviceMemorySize()
 	const noexcept
@@ -43,33 +72,6 @@ TrapMutationClusterData<TClusterDataParent>::initialize()
 	tmVSizes = View<AmountType[7]>("Trap-mutation vacancy sizes");
 
 	tmEnabled = View<bool[7]>("Trap-mutation enabled helium sizes");
-}
-
-template <typename TP1, typename TP2>
-inline void
-deepCopy(TrapMutationClusterData<TP1> to, TrapMutationClusterData<TP2> from)
-{
-	if (!from.desorption.is_allocated()) {
-		return;
-	}
-
-	if (!to.desorption.is_allocated()) {
-		to.desorption = create_mirror_view(from.desorption);
-		to.currentDesorpLeftSideRate =
-			create_mirror_view(from.currentDesorpLeftSideRate);
-		to.currentDisappearingRate =
-			create_mirror_view(from.currentDisappearingRate);
-		to.tmDepths = create_mirror_view(from.tmDepths);
-		to.tmVSizes = create_mirror_view(from.tmVSizes);
-		to.tmEnabled = create_mirror_view(from.tmEnabled);
-	}
-
-	deep_copy(to.desorption, from.desorption);
-	deep_copy(to.currentDesorpLeftSideRate, from.currentDesorpLeftSideRate);
-	deep_copy(to.currentDisappearingRate, from.currentDisappearingRate);
-	deep_copy(to.tmDepths, from.tmDepths);
-	deep_copy(to.tmVSizes, from.tmVSizes);
-	deep_copy(to.tmEnabled, from.tmEnabled);
 }
 } // namespace detail
 } // namespace network

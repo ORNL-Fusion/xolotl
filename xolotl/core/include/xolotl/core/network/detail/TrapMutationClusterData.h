@@ -64,6 +64,10 @@ struct TrapMutationClusterData
 	{
 	}
 
+	template <typename TClusterDataOther>
+	void
+	deepCopy(const TrapMutationClusterData<TClusterDataOther>& data);
+
 	std::uint64_t
 	getDeviceMemorySize() const noexcept;
 
@@ -77,10 +81,6 @@ struct TrapMutationClusterData
 	View<AmountType[7]> tmVSizes;
 	View<bool[7]> tmEnabled;
 };
-
-template <typename TP1, typename TP2>
-inline void
-deepCopy(TrapMutationClusterData<TP1> to, TrapMutationClusterData<TP2> from);
 } // namespace detail
 } // namespace network
 } // namespace core

@@ -59,20 +59,20 @@ struct ClusterDataExtra
 	{
 	}
 
+	template <typename TOtherPlsmContext,
+		template <typename> typename TOtherViewConvert>
+	void
+	deepCopy([[maybe_unused]] const ClusterDataExtra<TNetwork,
+		TOtherPlsmContext, TOtherViewConvert>& data)
+	{
+	}
+
 	std::uint64_t
 	getDeviceMemorySize() const noexcept
 	{
 		return 0;
 	}
 };
-
-template <typename TN1, typename PC1, template <typename> typename VC1,
-	typename TN2, typename PC2, template <typename> typename VC2>
-inline void
-deepCopy([[maybe_unused]] ClusterDataExtra<TN1, PC1, VC1> to,
-	[[maybe_unused]] ClusterDataExtra<TN2, PC2, VC2> from)
-{
-}
 
 template <typename TNetwork>
 struct ReactionDataRef;

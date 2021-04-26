@@ -133,14 +133,10 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
 {
 	auto lParam = asDerived()->checkLatticeParameter(latticeParameter);
 	this->_latticeParameter = lParam;
-	auto mirror = Kokkos::create_mirror_view(_clusterData.latticeParameter);
-	mirror() = this->_latticeParameter;
-	Kokkos::deep_copy(_clusterData.latticeParameter, mirror);
+	_clusterData.setLatticeParameter(this->_latticeParameter);
 
 	this->_atomicVolume = asDerived()->computeAtomicVolume(lParam);
-	mirror = Kokkos::create_mirror_view(_clusterData.atomicVolume);
-	mirror() = this->_atomicVolume;
-	Kokkos::deep_copy(_clusterData.atomicVolume, mirror);
+	_clusterData.setAtomicVolume(this->_atomicVolume);
 }
 
 template <typename TImpl>
@@ -148,18 +144,14 @@ void
 ReactionNetwork<TImpl>::setFissionRate(double rate)
 {
 	Superclass::setFissionRate(rate);
-	auto mirror = Kokkos::create_mirror_view(_clusterData.fissionRate);
-	mirror() = this->_fissionRate;
-	Kokkos::deep_copy(_clusterData.fissionRate, mirror);
+	_clusterData.setFissionRate(this->_fissionRate);
 }
 
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setZeta(double z)
 {
-	auto mirror = Kokkos::create_mirror_view(_clusterData.zeta);
-	mirror() = z;
-	Kokkos::deep_copy(_clusterData.zeta, mirror);
+	_clusterData.setZeta(z);
 }
 
 template <typename TImpl>
@@ -167,9 +159,7 @@ void
 ReactionNetwork<TImpl>::setEnableStdReaction(bool reaction)
 {
 	Superclass::setEnableStdReaction(reaction);
-	auto mirror = Kokkos::create_mirror_view(_clusterData.enableStdReaction);
-	mirror() = this->_enableStdReaction;
-	Kokkos::deep_copy(_clusterData.enableStdReaction, mirror);
+	_clusterData.setEnableStdReaction(this->_enableStdReaction);
 }
 
 template <typename TImpl>
@@ -177,9 +167,7 @@ void
 ReactionNetwork<TImpl>::setEnableReSolution(bool reaction)
 {
 	Superclass::setEnableReSolution(reaction);
-	auto mirror = Kokkos::create_mirror_view(_clusterData.enableReSolution);
-	mirror() = this->_enableReSolution;
-	Kokkos::deep_copy(_clusterData.enableReSolution, mirror);
+	_clusterData.setEnableReSolution(this->_enableReSolution);
 }
 
 template <typename TImpl>
@@ -187,9 +175,7 @@ void
 ReactionNetwork<TImpl>::setEnableNucleation(bool reaction)
 {
 	Superclass::setEnableNucleation(reaction);
-	auto mirror = Kokkos::create_mirror_view(_clusterData.enableNucleation);
-	mirror() = this->_enableNucleation;
-	Kokkos::deep_copy(_clusterData.enableNucleation, mirror);
+	_clusterData.setEnableNucleation(this->_enableNucleation);
 }
 
 template <typename TImpl>
@@ -197,9 +183,7 @@ void
 ReactionNetwork<TImpl>::setEnableSink(bool reaction)
 {
 	this->_enableSink = reaction;
-	auto mirror = Kokkos::create_mirror_view(_clusterData.enableSink);
-	mirror() = this->_enableSink;
-	Kokkos::deep_copy(_clusterData.enableSink, mirror);
+	_clusterData.setEnableSink(this->_enableSink);
 }
 
 template <typename TImpl>
@@ -207,10 +191,9 @@ void
 ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 {
 	Superclass::setEnableTrapMutation(reaction);
-	auto mirror = Kokkos::create_mirror_view(_clusterData.enableTrapMutation);
-	mirror() = this->_enableTrapMutation;
-	deep_copy(_clusterData.enableTrapMutation, mirror);
+	_clusterData.setEnableTrapMutation(this->_enableTrapMutation);
 }
+
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setEnableReducedJacobian(bool reduced)
@@ -272,7 +255,7 @@ ReactionNetwork<TImpl>::syncClusterDataOnHost()
 {
 	_subpaving.syncTiles(plsm::onHost);
 	auto mirror = ClusterDataMirror(_subpaving, this->_gridSize);
-	deepCopy(mirror, _clusterData);
+	mirror.deepCopy(_clusterData);
 	_clusterDataMirror = mirror;
 }
 

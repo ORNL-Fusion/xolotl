@@ -895,8 +895,8 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 35);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 400000);
-	BOOST_REQUIRE(deviceMemorySize < 450000);
+	BOOST_REQUIRE(deviceMemorySize > 350000);
+	BOOST_REQUIRE(deviceMemorySize < 400000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
@@ -1199,8 +1199,8 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 56);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 500000);
-	BOOST_REQUIRE(deviceMemorySize < 900000);
+	BOOST_REQUIRE(deviceMemorySize > 650000);
+	BOOST_REQUIRE(deviceMemorySize < 700000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
@@ -1555,8 +1555,8 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 56);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 500000);
-	BOOST_REQUIRE(deviceMemorySize < 900000);
+	BOOST_REQUIRE(deviceMemorySize > 650000);
+	BOOST_REQUIRE(deviceMemorySize < 700000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);

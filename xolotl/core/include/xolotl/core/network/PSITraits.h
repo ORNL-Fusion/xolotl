@@ -307,6 +307,15 @@ struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, PlsmContext,
 	{
 	}
 
+	template <typename TOtherPlsmContext,
+		template <typename> typename TOtherViewConvert>
+	void
+	deepCopy(const ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>,
+		TOtherPlsmContext, TOtherViewConvert>& data)
+	{
+		trapMutationData.deepCopy(data.trapMutationData);
+	}
+
 	std::uint64_t
 	getDeviceMemorySize() const noexcept
 	{
@@ -317,15 +326,6 @@ struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, PlsmContext,
 		TrapMutationClusterData<ClusterDataCommon<PlsmContext, ViewConvert>>;
 	TrapMutationData trapMutationData;
 };
-
-template <typename TSp, typename PC1, template <typename> typename VC1,
-	typename PC2, template <typename> typename VC2>
-inline void
-deepCopy(ClusterDataExtra<PSIReactionNetwork<TSp>, PC1, VC1> to,
-	ClusterDataExtra<PSIReactionNetwork<TSp>, PC2, VC2> from)
-{
-	deepCopy(to.trapMutationData, from.trapMutationData);
-}
 } // namespace detail
 } // namespace network
 } // namespace core

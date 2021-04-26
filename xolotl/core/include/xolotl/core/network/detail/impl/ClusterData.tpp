@@ -45,16 +45,7 @@ ClusterDataCommon<PlsmContext, ViewConvert>::ClusterDataCommon(
 	numClusters(numClusters_),
 	gridSize(gridSize_),
 	_floatVals("Floating Point Values" + labelStr<PlsmContext>()),
-	atomicVolume(subview(_floatVals, 0)),
-	latticeParameter(subview(_floatVals, 1)),
-	fissionRate(subview(_floatVals, 2)),
-	zeta(subview(_floatVals, 3)),
 	_boolVals("Boolean Values" + labelStr<PlsmContext>()),
-	enableStdReaction(subview(_boolVals, 0)),
-	enableReSolution(subview(_boolVals, 1)),
-	enableNucleation(subview(_boolVals, 2)),
-	enableSink(subview(_boolVals, 3)),
-	enableTrapMutation(subview(_boolVals, 4)),
 	temperature("Temperature" + labelStr<PlsmContext>(), gridSize),
 	reactionRadius("Reaction Radius" + labelStr<PlsmContext>(), numClusters),
 	formationEnergy("Formation Energy" + labelStr<PlsmContext>(), numClusters),
@@ -63,6 +54,21 @@ ClusterDataCommon<PlsmContext, ViewConvert>::ClusterDataCommon(
 	diffusionCoefficient("Diffusion Coefficient" + labelStr<PlsmContext>(),
 		numClusters, gridSize)
 {
+}
+
+template <typename PlsmContext, template <typename> typename ViewConvert>
+template <typename TClusterDataCommon>
+inline void
+ClusterDataCommon<PlsmContext, ViewConvert>::deepCopy(const TClusterDataCommon& data)
+{
+	deep_copy(_floatVals, data._floatVals);
+	deep_copy(_boolVals, data._boolVals);
+	deep_copy(temperature, data.temperature);
+	deep_copy(reactionRadius, data.reactionRadius);
+	deep_copy(formationEnergy, data.formationEnergy);
+	deep_copy(migrationEnergy, data.migrationEnergy);
+	deep_copy(diffusionFactor, data.diffusionFactor);
+	deep_copy(diffusionCoefficient, data.diffusionCoefficient);
 }
 
 template <typename PlsmContext, template <typename> typename ViewConvert>
@@ -121,6 +127,21 @@ ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::ClusterDataImpl(
 
 template <typename TNetwork, typename PlsmContext,
 	template <typename> typename ViewConvert>
+template <typename TClusterData>
+inline void
+ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::deepCopy(
+	const TClusterData& data)
+{
+	Superclass::deepCopy(data);
+
+	// NOTE: Intentionally omitting tiles assuming that was part of construction
+	deep_copy(momentIds, data.momentIds);
+
+	extraData.deepCopy(data.extraData);
+}
+
+template <typename TNetwork, typename PlsmContext,
+	template <typename> typename ViewConvert>
 inline std::uint64_t
 ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::getDeviceMemorySize()
 	const noexcept
@@ -153,33 +174,6 @@ ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::generate(
 				cluster, latticeParameter, interstitialBias, impurityRadius);
 		});
 	Kokkos::fence();
-}
-
-template <typename TN1, typename PC1, template <typename> typename VC1,
-	typename TN2, typename PC2, template <typename> typename VC2>
-inline void
-deepCopy(ClusterDataImpl<TN1, PC1, VC1> to, ClusterDataImpl<TN2, PC2, VC2> from)
-{
-	deep_copy(to.atomicVolume, from.atomicVolume);
-	deep_copy(to.latticeParameter, from.latticeParameter);
-	deep_copy(to.fissionRate, from.fissionRate);
-	deep_copy(to.zeta, from.zeta);
-	deep_copy(to.enableStdReaction, from.enableStdReaction);
-	deep_copy(to.enableReSolution, from.enableReSolution);
-	deep_copy(to.enableNucleation, from.enableNucleation);
-	deep_copy(to.enableSink, from.enableSink);
-	deep_copy(to.enableTrapMutation, from.enableTrapMutation);
-	deep_copy(to.temperature, from.temperature);
-	deep_copy(to.reactionRadius, from.reactionRadius);
-	deep_copy(to.formationEnergy, from.formationEnergy);
-	deep_copy(to.migrationEnergy, from.migrationEnergy);
-	deep_copy(to.diffusionFactor, from.diffusionFactor);
-	deep_copy(to.diffusionCoefficient, from.diffusionCoefficient);
-
-	// NOTE: Intentionally omitting tiles assuming that was part of construction
-	deep_copy(to.momentIds, from.momentIds);
-
-	deepCopy(to.extraData, from.extraData);
 }
 } // namespace detail
 } // namespace network
