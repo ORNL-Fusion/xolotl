@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 23);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 130000);
+	BOOST_REQUIRE(deviceMemorySize > 120000);
 	BOOST_REQUIRE(deviceMemorySize < 140000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.36, 0.01);

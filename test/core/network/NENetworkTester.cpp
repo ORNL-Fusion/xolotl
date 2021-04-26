@@ -485,7 +485,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 	network.getSubpaving().syncZones(plsm::onHost);
 
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 37000);
+	BOOST_REQUIRE(deviceMemorySize > 36000);
 	BOOST_REQUIRE(deviceMemorySize < 42000);
 
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
@@ -644,7 +644,7 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 35000);
+	BOOST_REQUIRE(deviceMemorySize > 34000);
 	BOOST_REQUIRE(deviceMemorySize < 40000);
 
 	// Get the diagonal fill
