@@ -9,8 +9,8 @@
 
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/core/network/impl/TrapMutationReaction.tpp>
-#include <xolotl/test/CommandLine.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/test/CommandLine.h>
 
 using namespace std;
 using namespace xolotl;
@@ -157,8 +157,8 @@ private:
 		paramFile.close();
 
 		// Create a fake command line to read the options
-        test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
-        opts.readParams(cl.argc, cl.argv);
+		test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+		opts.readParams(cl.argc, cl.argv);
 
 		// Remove the created file
 		std::remove(parameterFile.c_str());

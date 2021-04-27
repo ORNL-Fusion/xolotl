@@ -1145,7 +1145,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
 				XOLOTL_REQUIRE_CLOSE_ZT(knownPartials[startingIdx + j],
-					hPartials[startingIdx + index], 0.01, 1.0e-6);
+					hPartials[startingIdx + index], 0.05, 1.0e-6);
 			}
 			startingIdx += row.size();
 		}

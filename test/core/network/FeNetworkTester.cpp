@@ -636,8 +636,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
-				XOLOTL_REQUIRE_CLOSE(hPartials[startingIdx + index],
-					knownPartials[startingIdx + j], 0.01);
+				XOLOTL_REQUIRE_CLOSE_ZT(hPartials[startingIdx + index],
+					knownPartials[startingIdx + j], 0.01, 1.0e-4);
 			}
 			startingIdx += row.size();
 		}

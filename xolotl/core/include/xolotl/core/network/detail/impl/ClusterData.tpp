@@ -59,7 +59,8 @@ ClusterDataCommon<PlsmContext, ViewConvert>::ClusterDataCommon(
 template <typename PlsmContext, template <typename> typename ViewConvert>
 template <typename TClusterDataCommon>
 inline void
-ClusterDataCommon<PlsmContext, ViewConvert>::deepCopy(const TClusterDataCommon& data)
+ClusterDataCommon<PlsmContext, ViewConvert>::deepCopy(
+	const TClusterDataCommon& data)
 {
 	deep_copy(_floatVals, data._floatVals);
 	deep_copy(_boolVals, data._boolVals);

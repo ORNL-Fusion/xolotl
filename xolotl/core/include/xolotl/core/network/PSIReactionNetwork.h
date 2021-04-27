@@ -102,8 +102,8 @@ public:
 
 	void
 	computePartialsPreProcess(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex,
-		double surfaceDepth, double spacing);
+		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+		double spacing);
 
 	double
 	getTotalTrappedHeliumConcentration(

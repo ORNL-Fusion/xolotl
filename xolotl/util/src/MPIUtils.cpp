@@ -27,8 +27,8 @@ getMPIComm(void)
 void
 mpiInit(int& argc, const char* argv[])
 {
-    auto ncargv = const_cast<char**>(argv);
-    MPI_Init(&argc, &ncargv);
+	auto ncargv = const_cast<char**>(argv);
+	MPI_Init(&argc, &ncargv);
 }
 
 } // namespace util
