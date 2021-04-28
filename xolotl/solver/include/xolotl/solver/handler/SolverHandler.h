@@ -586,7 +586,7 @@ public:
 		heVRatio = opts.getHeVRatio();
 
 		// Boundary conditions in the X direction
-		if (opts.getMaterial() == "Fuel")
+		if (opts.getBCString() == "periodic")
 			isMirror = false;
 
 		// Set the boundary conditions (= 1: free surface; = 0: mirror)
