@@ -60,9 +60,18 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	Composition lo = region.getOrigin();
 	Composition hi = region.getUpperLimitPoint();
 
-	// Group I on its own
+	auto othersBeginAtZero = [](const Region& reg, Species species) {
+		for (auto s : NetworkType::getSpeciesRange()) {
+			if (s.value != species && reg[s].begin() != 0) {
+				return false;
+			}
+		}
+		return true;
+	};
+
 	if (lo[Species::I] > 0) {
-		if (lo[Species::I] < _groupingMin) {
+		if (lo[Species::I] < _groupingMin &&
+			othersBeginAtZero(region, Species::I)) {
 			return true;
 		}
 		if (region[Species::I].end() > _maxI) {
@@ -75,15 +84,6 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 			return false;
 		}
 	}
-
-	auto othersBeginAtZero = [](const Region& reg, Species species) {
-		for (auto s : NetworkType::getSpeciesRange()) {
-			if (s.value != species && reg[s].begin() != 0) {
-				return false;
-			}
-		}
-		return true;
-	};
 
 	// V is never grouped
 	if (hi[Species::V] > 1 && othersBeginAtZero(region, Species::V)) {
@@ -259,7 +259,7 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		axis += r;
 	}
 
-	if (axis == 1)
+	if (axis == 0)
 		return false;
 
 	return true;
@@ -301,8 +301,7 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		!region.getOrigin().isOnAxis(Species::I)) {
 		return false;
 	}
-	if (region[Species::I].begin() > _maxI &&
-		othersEndAtOne(region, Species::I)) {
+	if (region[Species::I].begin() > _maxI) {
 		return false;
 	}
 
