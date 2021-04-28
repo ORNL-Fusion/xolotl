@@ -8,4 +8,4 @@ Xolotl uses CMake, MPI, PETSc, Kokkos, Boost, HDF5 as described in [Build Config
 
 If you want to contribute please check [Guidelines](https://github.com/ORNL-Fusion/xolotl/wiki/Guidelines).
 
-For any question you can send an email to our [mailing list](xolotl-psi-development@lists.sourceforge.net).
+For any question you can send an email to our mailing list: xolotl-psi-development@lists.sourceforge.net.
