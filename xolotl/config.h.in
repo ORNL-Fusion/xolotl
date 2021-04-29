@@ -2,9 +2,6 @@
 
 #cmakedefine XOLOTL_USE_64BIT_INDEX_TYPE
 
-#define XOLOTL_VERSION @Xolotl_VERSION@
-#define XOLOTL_VERSION_EXACT @Xolotl_VERSION_EXACT@
-
 #define STRINGIFY(x) #x
 #define TO_STRING(x) STRINGIFY(x)
 
@@ -17,16 +14,4 @@ using IdType = std::uint64_t;
 // using IdType = std::int32_t;
 using IdType = std::uint32_t;
 #endif
-
-inline std::string
-getVersionString()
-{
-    return TO_STRING(XOLOTL_VERSION);
-}
-
-inline std::string
-getExactVersionString()
-{
-    return TO_STRING(XOLOTL_VERSION_EXACT);
-}
 } // namespace xolotl

@@ -2,6 +2,7 @@
 #include <ctime>
 #include <iostream>
 
+#include <xolotl/version.h>
 #include <xolotl/core/network/INetworkHandler.h>
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/factory/solver/SolverFactory.h>

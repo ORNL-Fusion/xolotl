@@ -4,7 +4,11 @@ set(XOLOTL_BINARY_INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
 set(XOLOTL_BINARY_INCLUDE_DIR ${XOLOTL_BINARY_INCLUDE_DIR} PARENT_SCOPE)
 
 configure_file(${CMAKE_CURRENT_LIST_DIR}/config.h.in
-    ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/config.h)
+    ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/config.h
+)
+configure_file(${CMAKE_CURRENT_LIST_DIR}/version.h.in
+    ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/version.h
+)
 
 add_subdirectory(util)
 add_subdirectory(perf)
