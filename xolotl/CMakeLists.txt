@@ -9,6 +9,10 @@ configure_file(${CMAKE_CURRENT_LIST_DIR}/config.h.in
 configure_file(${CMAKE_CURRENT_LIST_DIR}/version.h.in
     ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/version.h
 )
+add_custom_target(xolotlVersion ALL
+    DEPENDS "${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/version.h"
+    SOURCES "${CMAKE_CURRENT_LIST_DIR}/version.h.in"
+)
 
 add_subdirectory(util)
 add_subdirectory(perf)

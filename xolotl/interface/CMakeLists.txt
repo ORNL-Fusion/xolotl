@@ -14,6 +14,7 @@ add_library(xolotlInterface SHARED
     ${XOLOTL_INTERFACE_SOURCES}
     ${XOLOTL_INTERFACE_HEADERS}
 )
+add_dependencies(xolotlInterface xolotlVersion)
 target_link_libraries(xolotlInterface
     PRIVATE
     xolotlCore
@@ -29,9 +30,9 @@ target_link_libraries(xolotlInterface
     PETSc
 )
 target_include_directories(xolotlInterface PUBLIC
+    $<INSTALL_INTERFACE:include>
     $<BUILD_INTERFACE:${XOLOTL_INTERFACE_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${XOLOTL_BINARY_INCLUDE_DIR}>
-    $<INSTALL_INTERFACE:include>
 )
 set_target_properties(xolotlInterface PROPERTIES
     INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
