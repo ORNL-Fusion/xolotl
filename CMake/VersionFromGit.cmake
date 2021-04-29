@@ -84,6 +84,12 @@ function(version_from_git)
         set(semver "${semver}+${version_label}")
     endif()
 
+    if(git_at_a_tag)
+        set(version_exact ${semver})
+    else()
+        set(version_exact "${semver}-${revision}-${git_hash}")
+    endif()
+
     # Log the results
     if(ARG_LOG)
         message(STATUS "Git Version Info:
@@ -104,7 +110,10 @@ function(version_from_git)
     set(VERSION_MAJOR ${version_major} PARENT_SCOPE)
     set(VERSION_MINOR ${version_minor} PARENT_SCOPE)
     set(VERSION_PATCH ${version_patch} PARENT_SCOPE)
+    set(VERSION_EXACT ${version_exact} PARENT_SCOPE)
 
 endfunction(version_from_git)
 
-version_from_git(LOG ON)
+option(Xolotl_VERSION_LOG "Print details of version from git" OFF)
+version_from_git(LOG ${Xolotl_VERSION_LOG})
+set(Xolotl_VERSION_EXACT ${VERSION_EXACT})

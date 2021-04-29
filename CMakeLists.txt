@@ -7,22 +7,17 @@ if(POLICY CMP0025)
     cmake_policy(SET CMP0025 NEW)
 endif()
 
-# Set policy so we can use some of the recent Jed Brown Find*.cmake files.
-if(POLICY CMP0057)
-    cmake_policy(SET CMP0057 NEW)
-endif()
-
-if(POLICY CMP0074)
-    cmake_policy(SET CMP0074 NEW)
-endif()
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+include(VersionFromGit)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(xolotl CXX)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+project(Xolotl
+    VERSION ${VERSION}
+    LANGUAGES CXX
+)
 
 ## MPI
 find_package(MPI REQUIRED)

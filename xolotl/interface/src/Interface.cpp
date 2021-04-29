@@ -102,12 +102,11 @@ try {
 
 	if (rank == 0) {
 		// Print the start message
-		std::cout << "Starting Xolotl Plasma-Surface Interactions Simulator"
-				  << std::endl;
+		std::cout << "Starting Xolotl (" << getExactVersionString() << ")\n";
 		// TODO! Print copyright message
 		// Print date and time
 		std::time_t currentTime = std::time(NULL);
-		std::cout << std::asctime(std::localtime(&currentTime));
+		std::cout << std::asctime(std::localtime(&currentTime)) << std::flush;
 	}
 
 	options::Options opts;
