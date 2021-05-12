@@ -2,7 +2,6 @@
 #include <ctime>
 #include <iostream>
 
-#include <xolotl/version.h>
 #include <xolotl/core/network/INetworkHandler.h>
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/factory/solver/SolverFactory.h>
@@ -13,6 +12,7 @@
 #include <xolotl/solver/Solver.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/version.h>
 #include <xolotl/viz/VizHandlerRegistry.h>
 
 namespace xolotl
