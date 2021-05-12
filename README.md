@@ -2,7 +2,7 @@ README.txt for Xolotl
 
 Xolotl is a continuum simulator under development within two DOE SciDAC programs, available at https://github.com/ORNL-Fusion/xolotl . It is a high-performance computing code using advection-reaction-diffusion (ADR) kinetic rate theory to model the time evolution of the divertor material in next generation tokamaks like ITER, as well as nuclear fuel in fission reactors.
 
-Here is a quick start guide to install Xolotl if you have all the required dependencies (CMake higher than 3.13, MPI compiler with C++17 support, Boost, Kokkos, HDF5, PETSc):
+Here is a quick start guide to install Xolotl if you have all the required dependencies (CMake higher than 3.13, MPI compiler with C++17 support, Boost, Kokkos 3.3 or earlier, HDF5, PETSc):
 ```
 git clone https://github.com/ORNL-Fusion/xolotl $HOME/xolotl-source
 mkdir $HOME/xolotl-build
