@@ -12,8 +12,8 @@
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
 #include <xolotl/core/network/detail/ClusterSet.h>
+#include <xolotl/core/network/detail/MultiElementCollection.h>
 #include <xolotl/core/network/detail/ReactionData.h>
-#include <xolotl/core/network/detail/TupleUtility.h>
 
 namespace xolotl
 {
@@ -272,12 +272,6 @@ public:
 		return Head::getNumberOfReactions() + Tail::getNumberOfReactions();
 	}
 
-	IndexType
-	getNumberOfRates() const noexcept
-	{
-		return Head::getNumberOfRates() + Tail::getNumberOfRates();
-	}
-
 	void
 	getReactionBeginIndices(
 		Kokkos::Array<IndexType, NumReactionTypes + 1>& ids) const
@@ -359,15 +353,21 @@ public:
 
 	template <typename... TViews>
 	ReactionCollection(IndexType gridSize, TViews... views) :
-		_chain(views...),
-		_data(
-			_chain.getNumberOfReactions(), gridSize, getReactionBeginIndices())
+		_reactions(views...),
+		_data(_reactions.getNumberOfElements(), gridSize,
+			_reactions.getElementBeginIndices())
 	{
 		static_assert(sizeof...(TViews) == numReactionTypes,
 			"Construction from views requires the number of views to match the "
 			"number of reaction types in the ReactionCollection");
 
-		_chain.allocateCoefficients(_data.coeffs);
+		_reactions.forEachType(
+			[this](IndexType reactionTypeIndex, IndexType numReactions,
+				auto reactionTypeTag) {
+				using ReactionType = typename decltype(reactionTypeTag)::Type;
+				_data.coeffs[reactionTypeIndex] =
+					ReactionType::allocateCoefficientsView(numReactions);
+			});
 	}
 
 	void
@@ -391,7 +391,7 @@ public:
 	std::uint64_t
 	getDeviceMemorySize() const noexcept
 	{
-		std::uint64_t ret = _chain.getDeviceMemorySize();
+		std::uint64_t ret = _reactions.getDeviceMemorySize();
 		ret += _data.getDeviceMemorySize();
 		return ret;
 	}
@@ -406,23 +406,24 @@ public:
 	Kokkos::View<TReaction*>
 	getView() const
 	{
-		return _chain.template getView<TReaction>();
+		return _reactions.template getView<TReaction>();
 	}
 
 	template <typename TReaction>
 	void
 	setView(Kokkos::View<TReaction*> view)
 	{
-		_chain.setView(view);
-		_data.numReactions = _chain.getNumberOfReactions();
+		_reactions.setView(view);
+		_data.numReactions = _reactions.getNumberOfElements();
 	}
 
 	void
 	constructAll(
 		ClusterDataRef clusterData, Kokkos::View<ClusterSet*> clusterSets)
 	{
-		auto chain = _chain;
+		auto chain = _reactions.getChain();
 		auto reactionData = ReactionDataRef<NetworkType>(_data);
+		// TODO: Enable this without getting the chain
 		Kokkos::parallel_for(
 			_data.numReactions, DEVICE_LAMBDA(const IndexType i) {
 				chain.apply(
@@ -440,7 +441,7 @@ public:
 	updateAll(ClusterDataRef clusterData)
 	{
 		auto reactionData = ReactionDataRef<NetworkType>(_data);
-		apply(DEVICE_LAMBDA(auto&& reaction) {
+		forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.updateData(reactionData, clusterData);
 		});
 	}
@@ -467,46 +468,34 @@ public:
 
 	template <typename F>
 	void
-	apply(const F& func)
+	forEach(const F& func)
 	{
-		auto chain = _chain;
-		Kokkos::parallel_for(
-			_data.numReactions,
-			DEVICE_LAMBDA(const IndexType i) { chain.apply(func, i); });
+		_reactions.forEach(func);
 	}
 
 	template <typename TReaction, typename F>
 	void
-	applyOn(const F& func)
+	forEachOn(const F& func)
 	{
-		auto view = getView<TReaction>();
-		Kokkos::parallel_for(
-			view.size(), DEVICE_LAMBDA(const IndexType i) { func(view[i]); });
+		_reactions.template forEachOn<TReaction>(func);
 	}
 
 	template <typename F, typename T>
 	void
 	reduce(const F& func, T& out)
 	{
-		auto chain = _chain;
-		Kokkos::parallel_reduce(
-			_data.numReactions,
-			DEVICE_LAMBDA(
-				const IndexType i, T& local) { chain.reduce(func, i, local); },
-			out);
+		_reactions.reduce(func, out);
 	}
 
-private:
-	Kokkos::Array<IndexType, numReactionTypes + 1>
-	getReactionBeginIndices() const
+	template <typename TReaction, typename F, typename T>
+	void
+	reduceOn(const F& func, T& out)
 	{
-		Kokkos::Array<IndexType, numReactionTypes + 1> ret;
-		_chain.getReactionBeginIndices(ret);
-		return ret;
+		_reactions.template reduceOn<TReaction>(func, out);
 	}
 
 private:
-	ReactionSetChain<ReactionTypes> _chain;
+	MultiElementCollection<ReactionTypes> _reactions;
 	ReactionData<NetworkType> _data;
 };
 } // namespace detail

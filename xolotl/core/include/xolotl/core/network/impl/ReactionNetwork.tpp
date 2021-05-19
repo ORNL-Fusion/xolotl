@@ -232,7 +232,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::updateReactionRates()
 {
-	_reactions.apply(
+	_reactions.forEach(
 		DEVICE_LAMBDA(auto&& reaction) { reaction.updateRates(); });
 	Kokkos::fence();
 }
@@ -368,7 +368,7 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
 	asDerived()->computeFluxesPreProcess(
 		concentrations, fluxes, gridIndex, surfaceDepth, spacing);
 
-	_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
+	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeFlux(concentrations, fluxes, gridIndex);
 	});
 	Kokkos::fence();
@@ -390,13 +390,13 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 
 	auto connectivity = _reactions.getConnectivity();
 	if (this->_enableReducedJacobian) {
-		_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
+		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributeReducedPartialDerivatives(
 				concentrations, values, connectivity, gridIndex);
 		});
 	}
 	else {
-		_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
+		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributePartialDerivatives(
 				concentrations, values, connectivity, gridIndex);
 		});
