@@ -275,7 +275,7 @@ computeTRIDYN1D(
 
 	// Specify the concentrations we will write.
 	// We only consider our own grid points.
-	const auto myFirstIdxToWrite = std::max((IdType)xs, firstIdxToWrite);
+	const auto myFirstIdxToWrite = std::max((IdType)xs, (IdType)firstIdxToWrite);
 	auto myEndIdx = (xs + xm); // "end" in the C++ sense; i.e., one-past-last
 	auto myNumPointsToWrite =
 		(myEndIdx > myFirstIdxToWrite) ? (myEndIdx - myFirstIdxToWrite) : 0;
