@@ -659,19 +659,19 @@ public:
 			out);
 	}
 
-    /**
-     * @brief Get the ElementSetMixinChain that implements this collection
-     */
+	/**
+	 * @brief Get the ElementSetMixinChain that implements this collection
+	 */
 	decltype(auto)
 	getChain() const
 	{
 		return _chain;
 	}
 
-    /**
-     * @brief Get the set of begin indices for each element view as if the views
-     * were appended one to another
-     */
+	/**
+	 * @brief Get the set of begin indices for each element view as if the views
+	 * were appended one to another
+	 */
 	Kokkos::Array<IndexType, numElementTypes + 1>
 	getElementBeginIndices() const
 	{

@@ -163,6 +163,9 @@ public:
 		_fissionRate = rate;
 	}
 
+	/**
+	 * @brief Zeta is used to compute the rates of re-solution reactions.
+	 */
 	virtual void
 	setZeta(double z) = 0;
 
