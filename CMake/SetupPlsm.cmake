@@ -2,12 +2,24 @@ option(Xolotl_USE_PLSM_DEVELOP "" FALSE)
 if(EXISTS ${plsm_DIR})
     if(DEFINED CACHE{XOLOTL_USE_PLSM_DEVELOP})
         if(Xolotl_USE_PLSM_DEVELOP AND XOLOTL_USE_PLSM_DEVELOP)
-            return()
+            set(__return TRUE)
         elseif(NOT Xolotl_USE_PLSM_DEVELOP AND NOT XOLOTL_USE_PLSM_DEVELOP)
-            return()
+            set(__return TRUE)
         else()
+            set(__return FALSE)
             set(__do_src_update TRUE)
         endif()
+    endif()
+    if(DEFINED CACHE{XOLOTL_USE_64BIT_INDEX_TYPE})
+        if(Xolotl_USE_64BIT_INDEX_TYPE AND XOLOTL_USE_64BIT_INDEX_TYPE)
+        elseif(NOT Xolotl_USE_64BIT_INDEX_TYPE AND NOT
+                XOLOTL_USE_64BIT_INDEX_TYPE)
+        else()
+            set(__return FALSE)
+        endif()
+    endif()
+    if(__return)
+        return()
     endif()
 endif()
 
@@ -62,6 +74,7 @@ set(__plsm_opts
     -DKokkos_DIR=${Kokkos_DIR}
     -DCMAKE_INSTALL_PREFIX=${__plsm_bin_dir}/install
     -DBUILD_TESTING=OFF
+    -DPLSM_USE_64BIT_INDEX_TYPE=${Xolotl_USE_64BIT_INDEX_TYPE}
 )
 message(STATUS "    configure")
 set(__output_file "${__external_bin_dir}/plsm_configure.out")
