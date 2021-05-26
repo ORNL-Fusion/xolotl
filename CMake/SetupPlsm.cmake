@@ -35,7 +35,7 @@ set(__plsm_bin_dir ${__external_bin_dir}/plsm_build)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove_directory ${__plsm_bin_dir})
 execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${__plsm_bin_dir})
 
-if(NOT EXISTS ${__plsm_src_dir})
+if(NOT EXISTS ${__plsm_src_dir}/CMakeLists.txt)
     message(STATUS "    checkout")
     execute_process(
         COMMAND ${GIT_EXECUTABLE} submodule update --init
