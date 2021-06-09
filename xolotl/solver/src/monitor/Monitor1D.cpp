@@ -1771,6 +1771,10 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
+	// Get the solutionArray
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
 	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
 	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
