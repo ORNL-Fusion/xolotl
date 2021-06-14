@@ -1867,7 +1867,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
 
 	if (movingUp) {
-		IdType nGridPoints = 0;
+		int nGridPoints = 0;
 		// Move the surface up until it is smaller than the next threshold
 		while (nInterEvent1D > threshold) {
 			// Move the surface higher
