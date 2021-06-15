@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/detail/PSITrapMutation.h>
+#include <xolotl/core/network/detail/impl/BurstingReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationClusterData.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationReactionGenerator.tpp>
@@ -387,11 +388,11 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	constexpr auto species = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
 
+	auto numClusters = this->getNumberOfClusters();
+
 	if (i == j) {
 		addSinks(i, tag);
 	}
-
-	auto numClusters = this->getNumberOfClusters();
 
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
@@ -645,13 +646,46 @@ PSIReactionGenerator<TSpeciesEnum>::addSinks(IndexType i, TTag tag) const
 }
 
 template <typename TSpeciesEnum>
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	const auto& clReg = this->getCluster(i).getRegion();
+	Composition lo = clReg.getOrigin();
+
+	// Need helium
+	if (lo[Species::He] == 0)
+		return;
+
+	// Pure helium case
+	if (lo[Species::V] == 0) {
+		this->addBurstingReaction(tag, {i, NetworkType::invalidIndex()});
+	}
+	// Bubble case
+	else {
+		auto& subpaving = this->getSubpaving();
+		// Look for the V cluster of the same size
+		Composition comp = Composition::zero();
+		comp[Species::V] = lo[Species::V];
+		auto vClusterId = subpaving.findTileId(comp, plsm::onDevice);
+		if (vClusterId != NetworkType::invalidIndex())
+			this->addBurstingReaction(tag, {i, vClusterId});
+	}
+}
+
+template <typename TSpeciesEnum>
 inline ReactionCollection<
 	typename PSIReactionGenerator<TSpeciesEnum>::NetworkType>
 PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions(), this->getTrapMutationReactions());
+		this->getSinkReactions(), this->getTrapMutationReactions(),
+		this->getBurstingReactions());
 	return ret;
 }
 } // namespace detail

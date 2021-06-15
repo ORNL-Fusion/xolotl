@@ -242,6 +242,18 @@ public:
 	}
 
 	bool
+	getEnableBursting() const noexcept
+	{
+		return _enableBursting;
+	}
+
+	virtual void
+	setEnableBursting(bool enable)
+	{
+		_enableBursting = enable;
+	}
+
+	bool
 	getEnableReducedJacobian() const noexcept
 	{
 		return _enableReducedJacobian;
@@ -399,6 +411,7 @@ protected:
 	bool _enableSink{};
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
+	bool _enableBursting{};
 	bool _enableReducedJacobian{};
 
 	IndexType _gridSize{};

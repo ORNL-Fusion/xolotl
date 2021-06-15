@@ -36,6 +36,8 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 			if (j < i) {
 				return;
 			}
+			if (i == j)
+				generator.addBurstings(i, Count{});
 			if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
 				return;
 			}
@@ -52,6 +54,8 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 			if (j < i) {
 				return;
 			}
+			if (i == j)
+				generator.addBurstings(i, Construct{});
 			if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
 				return;
 			}

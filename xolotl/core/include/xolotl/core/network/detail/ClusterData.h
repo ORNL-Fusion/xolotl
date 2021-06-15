@@ -153,6 +153,7 @@ private:
 		NUCLEATION,
 		SINK,
 		TRAP_MUTATION,
+		BURST,
 		NUM_BOOL_VALS
 	};
 
@@ -282,6 +283,19 @@ public:
 	setEnableTrapMutation(bool val)
 	{
 		setVal(_boolVals, TRAP_MUTATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableBurst() const
+	{
+		return _boolVals[BURST];
+	}
+
+	void
+	setEnableBurst(bool val)
+	{
+		setVal(_boolVals, BURST, val);
 	}
 
 private:

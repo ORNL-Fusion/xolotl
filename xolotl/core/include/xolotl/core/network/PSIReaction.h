@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/BurstingReaction.h>
 #include <xolotl/core/network/PSITraits.h>
 #include <xolotl/core/network/Reaction.h>
 #include <xolotl/core/network/SinkReaction.h>
@@ -69,6 +70,16 @@ class PSITrapMutationReaction :
 public:
 	using Superclass = TrapMutationReaction<PSIReactionNetwork<TSpeciesEnum>,
 		PSITrapMutationReaction<TSpeciesEnum>>;
+	using Superclass::Superclass;
+};
+template <typename TSpeciesEnum>
+class PSIBurstingReaction :
+	public BurstingReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSIBurstingReaction<TSpeciesEnum>>
+{
+public:
+	using Superclass = BurstingReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSIBurstingReaction<TSpeciesEnum>>;
 	using Superclass::Superclass;
 };
 } // namespace network

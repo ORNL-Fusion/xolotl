@@ -35,9 +35,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);
 	this->setEnableNucleation(map["heterogeneous"]);
-	setEnableSink(map["sink"]);
+	this->setEnableSink(map["sink"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
+	this->setEnableBursting(map["bursting"]);
 	std::string petscString = opts.getPetscArg();
 	util::TokenizedLineReader<std::string> reader;
 	reader.setInputStream(std::make_shared<std::istringstream>(petscString));
@@ -192,6 +193,14 @@ ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 {
 	Superclass::setEnableTrapMutation(reaction);
 	_clusterData.setEnableTrapMutation(this->_enableTrapMutation);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableBursting(bool reaction)
+{
+	this->_enableBursting = reaction;
+	_clusterData.setEnableBurst(this->_enableBursting);
 }
 
 template <typename TImpl>

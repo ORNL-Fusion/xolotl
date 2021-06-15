@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/impl/BurstingReaction.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/core/network/impl/SinkReaction.tpp>
 #include <xolotl/core/network/impl/TrapMutationReaction.tpp>

@@ -601,7 +601,7 @@ public:
 		auto map = opts.getProcesses();
 		movingSurface = map["movingSurface"];
 		// Should we be able to burst bubbles?
-		bubbleBursting = map["bursting"];
+		bubbleBursting = false;
 		// Should we be able to attenuate the modified trap mutation?
 		useAttenuation = map["attenuation"];
 

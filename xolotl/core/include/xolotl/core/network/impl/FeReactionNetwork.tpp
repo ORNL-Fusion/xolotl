@@ -225,6 +225,14 @@ FeReactionGenerator::addSinks(IndexType i, TTag tag) const
 	}
 }
 
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+FeReactionGenerator::addBurstings(IndexType i, TTag tag) const
+{
+	return;
+}
+
 inline ReactionCollection<FeReactionGenerator::NetworkType>
 FeReactionGenerator::getReactionCollection() const
 {

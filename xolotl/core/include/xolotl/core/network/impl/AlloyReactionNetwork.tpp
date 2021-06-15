@@ -577,6 +577,14 @@ AlloyReactionGenerator::addSinks(IndexType i, TTag tag) const
 	}
 }
 
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+AlloyReactionGenerator::addBurstings(IndexType i, TTag tag) const
+{
+	return;
+}
+
 inline ReactionCollection<AlloyReactionGenerator::Network>
 AlloyReactionGenerator::getReactionCollection() const
 {

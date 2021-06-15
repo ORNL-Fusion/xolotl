@@ -115,6 +115,14 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	}
 }
 
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+NEReactionGenerator::addBurstings(IndexType i, TTag tag) const
+{
+	return;
+}
+
 inline ReactionCollection<NEReactionGenerator::NetworkType>
 NEReactionGenerator::getReactionCollection() const
 {

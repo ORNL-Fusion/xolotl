@@ -203,6 +203,9 @@ public:
 	setEnableTrapMutation(bool reaction) override;
 
 	void
+	setEnableBursting(bool reaction) override;
+
+	void
 	setEnableReducedJacobian(bool reduced) override;
 
 	void

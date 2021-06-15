@@ -77,6 +77,11 @@ public:
 	void
 	addSinks(IndexType i, TTag tag) const;
 
+	template <typename TTag>
+	KOKKOS_INLINE_FUNCTION
+	void
+	addBurstings(IndexType i, TTag tag) const;
+
 	ReactionCollection<Network>
 	getReactionCollection() const;
 };
