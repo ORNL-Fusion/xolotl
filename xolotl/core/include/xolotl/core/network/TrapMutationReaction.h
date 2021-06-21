@@ -8,6 +8,23 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief Class implementing near surface trap mutation reactions where
+ * He_n -> He_nV_m + I_m
+ * with a given rate at specific depths.
+ *
+ * The depths depend on the material orientation and temperature.
+ *
+ * A cluster can also desorb, meaning that the rate of the trap mutation
+ * reaction will depend on the "left side" rate.
+ *
+ * If the attenuation is ON, the rates will decrease as a function of the
+ * concentration value given to
+ * IPSIReactionNetwork::updateTrapMutationDisappearingRate(conc).
+ *
+ * @tparam TNetwork The network type
+ * @tparam TDerived The derived class type.
+ */
 template <typename TNetwork, typename TDerived>
 class TrapMutationReaction : public Reaction<TNetwork, TDerived>
 {

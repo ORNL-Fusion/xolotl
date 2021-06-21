@@ -25,7 +25,6 @@ find_package(MPI REQUIRED)
 ## PETSc
 find_package(PETSc REQUIRED)
 option(Xolotl_USE_64BIT_INDEX_TYPE "" ${PETSc_USE_64BIT_INDICES})
-set(XOLOTL_USE_64BIT_INDEX_TYPE ${Xolotl_USE_64BIT_INDEX_TYPE})
 
 ## Boost
 # Note that we only need to list Boost component libraries that have a
@@ -45,9 +44,7 @@ if(NOT HDF5_IS_PARALLEL)
 endif()
 
 ## plsm
-if(NOT plsm_DIR)
-    include(Getplsm)
-endif()
+include(SetupPlsm)
 list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
 find_package(plsm REQUIRED)
 
@@ -66,6 +63,7 @@ include(CTest)
 include(XolotlExtraTesting)
 
 ## xolotl
+set(XOLOTL_USE_64BIT_INDEX_TYPE ${Xolotl_USE_64BIT_INDEX_TYPE} CACHE INTERNAL "")
 add_subdirectory(xolotl)
 
 ## xconv

@@ -310,9 +310,10 @@ public:
 		asDerived()->computeFluxesPreProcess(
 			concentrations, fluxes, gridIndex, surfaceDepth, spacing);
 
-		_reactions.template applyOn<TReaction>(DEVICE_LAMBDA(auto&& reaction) {
-			reaction.contributeFlux(concentrations, fluxes, gridIndex);
-		});
+		_reactions.template forEachOn<TReaction>(
+			DEVICE_LAMBDA(auto&& reaction) {
+				reaction.contributeFlux(concentrations, fluxes, gridIndex);
+			});
 		Kokkos::fence();
 	}
 
@@ -343,14 +344,14 @@ public:
 
 		auto connectivity = _reactions.getConnectivity();
 		if (this->_enableReducedJacobian) {
-			_reactions.template applyOn<TReaction>(
+			_reactions.template forEachOn<TReaction>(
 				DEVICE_LAMBDA(auto&& reaction) {
 					reaction.contributeReducedPartialDerivatives(
 						concentrations, values, connectivity, gridIndex);
 				});
 		}
 		else {
-			_reactions.template applyOn<TReaction>(
+			_reactions.template forEachOn<TReaction>(
 				DEVICE_LAMBDA(auto&& reaction) {
 					reaction.contributePartialDerivatives(
 						concentrations, values, connectivity, gridIndex);

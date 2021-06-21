@@ -100,6 +100,7 @@ TrapMutationReaction<TNetwork, TDerived>::getAppliedRate(
 	if (_heClId == tmData.desorption().id) {
 		rate *= tmData.currentDesorpLeftSideRate();
 	}
+	rate *= tmData.currentDisappearingRate();
 	return rate;
 }
 
@@ -124,8 +125,7 @@ TrapMutationReaction<TNetwork, TDerived>::computeFlux(
 	}
 
 	auto rate = getAppliedRate(gridIndex);
-	auto f = rate * concentrations[_heClId] *
-		this->_clusterData.extraData.trapMutationData.currentDisappearingRate();
+	auto f = rate * concentrations[_heClId];
 
 	Kokkos::atomic_sub(&fluxes[_heClId], f);
 	Kokkos::atomic_add(&fluxes[_heVClId], f);

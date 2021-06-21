@@ -1,0 +1,3 @@
+[submodule "external/plsm"]
+	path = external/plsm
+	url = https://github.com/ORNL-Fusion/plsm.git

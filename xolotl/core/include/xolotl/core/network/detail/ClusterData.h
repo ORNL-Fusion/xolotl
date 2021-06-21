@@ -55,6 +55,31 @@ using Unmanaged = typename UnmanagedHelper<TView>::Type;
 template <typename TView>
 using PassThru = TView;
 
+template <typename TNetwork, typename PlsmContext,
+	template <typename> typename ViewConvert>
+struct ClusterDataExtra
+{
+	ClusterDataExtra() = default;
+
+	template <typename PC, template <typename> typename VC>
+	KOKKOS_INLINE_FUNCTION
+	ClusterDataExtra(const ClusterDataExtra<TNetwork, PC, VC>&)
+	{
+	}
+
+	template <typename PC, template <typename> typename VC>
+	void
+	deepCopy([[maybe_unused]] const ClusterDataExtra<TNetwork, PC, VC>& data)
+	{
+	}
+
+	std::uint64_t
+	getDeviceMemorySize() const noexcept
+	{
+		return 0;
+	}
+};
+
 /**
  * @brief Structure for physical properties and clusters,
  * independent of the network type.

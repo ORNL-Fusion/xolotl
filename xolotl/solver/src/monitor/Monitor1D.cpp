@@ -275,7 +275,8 @@ computeTRIDYN1D(
 
 	// Specify the concentrations we will write.
 	// We only consider our own grid points.
-	const auto myFirstIdxToWrite = std::max((IdType)xs, firstIdxToWrite);
+	const auto myFirstIdxToWrite =
+		std::max((IdType)xs, (IdType)firstIdxToWrite);
 	auto myEndIdx = (xs + xm); // "end" in the C++ sense; i.e., one-past-last
 	auto myNumPointsToWrite =
 		(myEndIdx > myFirstIdxToWrite) ? (myEndIdx - myFirstIdxToWrite) : 0;
@@ -1770,6 +1771,10 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
 
+	// Get the solutionArray
+	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
 	// Get the solver handler and local coordinates
 	auto& solverHandler = PetscSolver::getSolverHandler();
 	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
@@ -1862,7 +1867,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
 
 	if (movingUp) {
-		IdType nGridPoints = 0;
+		int nGridPoints = 0;
 		// Move the surface up until it is smaller than the next threshold
 		while (nInterEvent1D > threshold) {
 			// Move the surface higher

@@ -1213,7 +1213,10 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 						// surface, burst
 						if (radius > distance) {
 							burst = true;
-							depthPositions3D.push_back({zk, yj, xi});
+							depthPositions3D.push_back(
+								{static_cast<PetscInt>(zk),
+									static_cast<PetscInt>(yj),
+									static_cast<PetscInt>(xi)});
 							// Exit the loop
 							continue;
 						}
@@ -1227,7 +1230,10 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 						if (prob > test) {
 							burst = true;
-							depthPositions3D.push_back({zk, yj, xi});
+							depthPositions3D.push_back(
+								{static_cast<PetscInt>(zk),
+									static_cast<PetscInt>(yj),
+									static_cast<PetscInt>(xi)});
 						}
 					}
 				}

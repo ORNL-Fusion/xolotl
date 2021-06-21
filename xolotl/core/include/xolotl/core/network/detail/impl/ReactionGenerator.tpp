@@ -188,12 +188,12 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		this->_numDOFs,
 		KOKKOS_LAMBDA(const IndexType i) { tmpConn.row_map(i) = 1; });
 	if (this->_enableReducedJacobian) {
-		reactionCollection.apply(DEVICE_LAMBDA(auto&& reaction) {
+		reactionCollection.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributeReducedConnectivity(tmpConn);
 		});
 	}
 	else {
-		reactionCollection.apply(DEVICE_LAMBDA(
+		reactionCollection.forEach(DEVICE_LAMBDA(
 			auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
 	}
 
@@ -227,12 +227,12 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		});
 	// Fill entries (column ids)
 	if (this->_enableReducedJacobian) {
-		reactionCollection.apply(DEVICE_LAMBDA(auto&& reaction) {
+		reactionCollection.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributeReducedConnectivity(tmpConn);
 		});
 	}
 	else {
-		reactionCollection.apply(DEVICE_LAMBDA(
+		reactionCollection.forEach(DEVICE_LAMBDA(
 			auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
 	}
 	Kokkos::fence();

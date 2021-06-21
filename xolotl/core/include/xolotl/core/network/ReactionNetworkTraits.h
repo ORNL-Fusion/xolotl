@@ -15,6 +15,27 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief Provide information about species and reaction types specific to a
+ * network
+ *
+ * This is the place for things that must be specified explicitly for a given
+ * network. Other template instantiations are specified in
+ * detail::ReactionNetworkTypes and detail::ReactionNetworkProperties
+ * based on the items specified here.
+ * The default instantiation is empty. Therefore, it must be specialized for
+ * every network type.
+ *
+ * The following items must be provided:
+ * - **Species** (type)
+ * - **numSpecies** (static constexpr std::size_t)
+ * - **ProductionReactionType** (type)
+ * - **DissociationReactionType** (type)
+ * - (Optionally) **ReactionTypeList** (type; std::tuple of reaction types) if
+ *   there are more than production and dissociation
+ * - **ClusterGenerator** (type)
+ * - (Optionally) **ClusterUpdater** (type)
+ */
 template <typename TImpl>
 struct ReactionNetworkTraits
 {
@@ -32,6 +53,19 @@ inline constexpr auto invalidNetworkIndex =
 inline constexpr auto invalidSpeciesAmount =
 	plsm::invalid<CompositionAmountType>;
 
+/**
+ * @brief Customization mechanism for adding arbitrary network-specific data
+ * items to ClusterData (ClusterDataImpl).
+ *
+ * The default is empty.
+ *
+ * The data here should be accessed only from code that "knows" what it
+ * contains, that is, other network-specific code
+ */
+template <typename TNetwork, typename PlsmContext,
+	template <typename> typename ViewConvert>
+struct ClusterDataExtra;
+
 template <typename TNetwork, typename PlsmContext>
 struct ClusterDataHelper;
 
@@ -45,35 +79,6 @@ template <typename TNetwork, typename PlsmContext>
 using ClusterDataRef =
 	typename ClusterDataRefHelper<TNetwork, PlsmContext>::Type;
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
-struct ClusterDataExtra
-{
-	ClusterDataExtra() = default;
-
-	template <typename TOtherPlsmContext,
-		template <typename> typename TOtherViewConvert>
-	KOKKOS_INLINE_FUNCTION
-	ClusterDataExtra(
-		const ClusterDataExtra<TNetwork, TOtherPlsmContext, TOtherViewConvert>&)
-	{
-	}
-
-	template <typename TOtherPlsmContext,
-		template <typename> typename TOtherViewConvert>
-	void
-	deepCopy([[maybe_unused]] const ClusterDataExtra<TNetwork,
-		TOtherPlsmContext, TOtherViewConvert>& data)
-	{
-	}
-
-	std::uint64_t
-	getDeviceMemorySize() const noexcept
-	{
-		return 0;
-	}
-};
-
 template <typename TNetwork>
 struct ReactionDataRef;
 
@@ -83,25 +88,26 @@ class DefaultClusterUpdater;
 template <typename TNetwork>
 class ReactionCollection;
 
-/*!
- * Stand-in for C++17 std::void_t
- */
-template <typename...>
-using VoidType = void;
-
-template <typename TImpl, typename = VoidType<>>
+template <typename TImpl, typename = std::void_t<>>
 struct ClusterUpdaterHelper
 {
 	using Type = DefaultClusterUpdater<TImpl>;
 };
 
+/**
+ * If ReactionNetworkTraits provides a ClusterUpdater member, then use that
+ */
 template <typename TImpl>
 struct ClusterUpdaterHelper<TImpl,
-	VoidType<typename ReactionNetworkTraits<TImpl>::ClusterUpdater>>
+	std::void_t<typename ReactionNetworkTraits<TImpl>::ClusterUpdater>>
 {
 	using Type = typename ReactionNetworkTraits<TImpl>::ClusterUpdater;
 };
 
+/**
+ * @brief Instantiate types for things needed by the network based on the
+ * ReactionNetworkTraits
+ */
 template <typename TImpl>
 struct ReactionNetworkTypes
 {
@@ -120,6 +126,10 @@ struct ReactionNetworkTypes
 	using ReactionDataRef = typename detail::ReactionDataRef<TImpl>;
 };
 
+/**
+ * @brief Label some properties of the network phase space based on the
+ * ReactionNetworkTraits
+ */
 template <typename TImpl>
 struct ReactionNetworkProperties
 {
@@ -130,7 +140,10 @@ struct ReactionNetworkProperties
 	static constexpr std::size_t numSpeciesNoI = SpeciesSequence::sizeNoI();
 };
 
-template <typename TNetwork, typename = VoidType<>>
+/**
+ * By default, list production and dissociation types from ReactionNetworkTraits
+ */
+template <typename TNetwork, typename = std::void_t<>>
 struct ReactionTypeListHelper
 {
 	using Traits = ReactionNetworkTraits<TNetwork>;
@@ -138,9 +151,13 @@ struct ReactionTypeListHelper
 		typename Traits::DissociationReactionType>;
 };
 
+/**
+ * If ReactionNetworkTraits provides a ReactionTypeList member, then use that
+ * See ReactionTypeListHelper
+ */
 template <typename TNetwork>
 struct ReactionTypeListHelper<TNetwork,
-	VoidType<typename ReactionNetworkTraits<TNetwork>::ReactionTypeList>>
+	std::void_t<typename ReactionNetworkTraits<TNetwork>::ReactionTypeList>>
 {
 	using Type = typename ReactionNetworkTraits<TNetwork>::ReactionTypeList;
 };
