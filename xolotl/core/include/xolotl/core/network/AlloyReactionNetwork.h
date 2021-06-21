@@ -59,6 +59,9 @@ namespace detail
 class AlloyReactionGenerator :
 	public ReactionGenerator<AlloyReactionNetwork, AlloyReactionGenerator>
 {
+	friend class ReactionGeneratorBase<AlloyReactionNetwork,
+		AlloyReactionGenerator>;
+
 public:
 	using Network = AlloyReactionNetwork;
 	using Subpaving = typename Network::Subpaving;
@@ -77,11 +80,7 @@ public:
 	void
 	addSinks(IndexType i, TTag tag) const;
 
-	template <typename TTag>
-	KOKKOS_INLINE_FUNCTION
-	void
-	addBurstings(IndexType i, TTag tag) const;
-
+private:
 	ReactionCollection<Network>
 	getReactionCollection() const;
 };
