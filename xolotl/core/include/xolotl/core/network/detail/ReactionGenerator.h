@@ -109,11 +109,6 @@ public:
 	void
 	addDissociationReaction(Construct, const ClusterSet& clusterSet) const;
 
-	template <typename TTag>
-	KOKKOS_INLINE_FUNCTION
-	void
-	addBurstings(IndexType i, TTag tag) const;
-
 	Kokkos::View<ProductionReactionType*>
 	getProductionReactions() const
 	{

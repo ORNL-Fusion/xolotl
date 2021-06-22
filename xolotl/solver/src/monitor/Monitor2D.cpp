@@ -76,8 +76,6 @@ std::vector<double> previousTFlux2D;
 std::vector<double> nTritium2D;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield2D = 0.0;
-// The vector of depths at which bursting happens
-std::vector<std::pair<PetscInt, PetscInt>> depthPositions2D;
 // The vector of ids for diffusing interstitial clusters
 std::vector<IdType> iClusterIds2D;
 // The id of the largest cluster
@@ -937,7 +935,7 @@ monitorSurface2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "eventFunction2D")
 /**
- * This is a method that checks if the surface should move or bursting happen
+ * This is a method that checks if the surface should move
  */
 PetscErrorCode
 eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
@@ -946,8 +944,7 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 	PetscErrorCode ierr;
 	double ***solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
-	fvalue[0] = 1.0, fvalue[1] = 1.0;
-	depthPositions2D.clear();
+	fvalue[0] = 1.0;
 
 	PetscFunctionBeginUser;
 
@@ -1145,92 +1142,6 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 		}
 	}
 
-	// Now work on the bubble bursting
-	if (solverHandler.burstBubbles()) {
-		using NetworkType = core::network::IPSIReactionNetwork;
-		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
-		auto dof = network.getDOF();
-		auto specIdHe = psiNetwork->getHeliumSpeciesId();
-
-		// Compute the prefactor for the probability (arbitrary)
-		double prefactor =
-			heliumFluxAmplitude * dt * solverHandler.getBurstingFactor();
-
-		// The depth parameter to know where the bursting should happen
-		double depthParam = solverHandler.getTauBursting(); // nm
-		// The number of He per V in a bubble
-		double heVRatio = solverHandler.getHeVRatio();
-
-		// For now we are not bursting
-		bool burst = false;
-
-		// Loop on the full grid
-		for (auto yj = 0; yj < My; yj++) {
-			// Get the surface position
-			auto surfacePos = solverHandler.getSurfacePosition(yj);
-			for (auto xi = surfacePos + solverHandler.getLeftOffset();
-				 xi < Mx - solverHandler.getRightOffset(); xi++) {
-				bool localBurst = false;
-				// If this is the locally owned part of the grid
-				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
-					// Get the pointer to the beginning of the solution data for
-					// this grid point
-					gridPointSolution = solutionArray[yj][xi];
-
-					using HostUnmanaged = Kokkos::View<double*,
-						Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-					auto hConcs = HostUnmanaged(gridPointSolution, dof);
-					auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-					deep_copy(dConcs, hConcs);
-
-					// Get the distance from the surface
-					double distance =
-						(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
-
-					// Compute the helium density at this grid point
-					double heDensity = psiNetwork->getTotalAtomConcentration(
-						dConcs, specIdHe, 1);
-
-					// Compute the radius of the bubble from the number of
-					// helium
-					double nV =
-						heDensity * (grid[xi + 1] - grid[xi]) * hy / heVRatio;
-					double latticeParam = network.getLatticeParameter();
-					double tlcCubed =
-						latticeParam * latticeParam * latticeParam;
-					double radius = (sqrt(3.0) / 4) * latticeParam +
-						cbrt((3.0 * tlcCubed * nV) / (8.0 * core::pi)) -
-						cbrt((3.0 * tlcCubed) / (8.0 * core::pi));
-
-					// Add randomness
-					double prob = prefactor *
-						(1.0 - (distance - radius) / distance) *
-						std::min(1.0,
-							exp(-(distance - depthParam) / (depthParam * 2.0)));
-					double test = solverHandler.getRNG().GetRandomDouble();
-
-					if (radius > distance || prob > test) {
-						localBurst = true;
-					}
-				}
-				// Check if this location burst
-				bool locationBurst = false;
-				MPI_Allreduce(&localBurst, &locationBurst, 1, MPI_C_BOOL,
-					MPI_LOR, xolotlComm);
-				if (locationBurst) {
-					depthPositions2D.push_back(std::make_pair(yj, xi));
-					burst = true;
-				}
-			}
-		}
-
-		// If at least one grid point is bursting
-		if (burst) {
-			// The event is happening
-			fvalue[1] = 0.0;
-		}
-	}
-
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
@@ -1241,7 +1152,7 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "postEventFunction2D")
 /**
- * This is a method that moves the surface or burst bubbles
+ * This is a method that moves the surface
  */
 PetscErrorCode
 postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
@@ -1285,110 +1196,6 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Get the step size in Y
 	double hy = solverHandler.getStepSizeY();
 
-	// Take care of bursting
-	using NetworkType = core::network::IPSIReactionNetwork;
-	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
-	auto specIdV = psiNetwork->getVacancySpeciesId();
-	auto specIdI = psiNetwork->getInterstitialSpeciesId();
-
-	bool surfaceMoved = false;
-
-	// Loop on each bursting depth
-	for (auto i = 0; i < depthPositions2D.size(); i++) {
-		// Get the coordinates of the point
-		auto xi = depthPositions2D[i].second, yj = depthPositions2D[i].first;
-		// Get the pointer to the beginning of the solution data for this grid
-		// point
-		gridPointSolution = solutionArray[yj][xi];
-
-		// Get the surface position
-		auto surfacePos = solverHandler.getSurfacePosition(yj);
-		// Get the distance from the surface
-		double distance =
-			(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
-
-		std::cout << "bursting at: " << yj * hy << " " << distance << std::endl;
-
-		// Pinhole case
-		auto nBurst = std::vector<double>(3, 0.0); // Not actually used here
-		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
-			psiNetwork->updateBurstingConcs(gridPointSolution, 0.0, nBurst);
-		}
-
-		//		// Crater case
-		//		PetscInt yLeft = yj - 1, yRight = yj + 1;
-		//		if (yLeft < 0)
-		//			yLeft = My - 1; // Periodicity
-		//		if (yRight == My)
-		//			yRight = 0; // Periodicity
-		//
-		//		// Loop on every grid point above
-		//		for (auto currentX = xi; currentX > surfacePos; --currentX) {
-		//			// If this is the locally owned part of the grid
-		//			if (currentX >= xs && currentX < xs + xm && yj >= ys &&
-		//				yj < ys + ym) {
-		//				gridPointSolution = solutionArray[yj][currentX];
-		//				// Get the total I and V concentrations
-		//				using HostUnmanaged = Kokkos::View<double*,
-		// Kokkos::HostSpace, 					Kokkos::MemoryUnmanaged>;
-		// auto hConcs
-		// = HostUnmanaged(gridPointSolution, dof); 				auto dConcs
-		// = Kokkos::View<double*>("Concentrations", dof); deep_copy(dConcs,
-		// hConcs); 				double iConc =
-		// psiNetwork->getTotalAtomConcentration(dConcs, specIdI, 1);
-		// double vConc =
-		// psiNetwork->getTotalAtomConcentration(dConcs, specIdV, 1);
-		//				// The density of tungsten is 62.8 atoms/nm3
-		//				double wConc = (62.8 - vConc + iConc) / 2.0;
-		//
-		//				// Reset the concentrations
-		//				for (auto l = 0; l < dof; ++l) {
-		//					gridPointSolution[l] = 0.0;
-		//				}
-		//
-		//				// Pass the tungsten concentration to the sides
-		//				// Do the left side first
-		//				if (solverHandler.getSurfacePosition(yLeft) < currentX)
-		//{
-		//					// if we are on the right process
-		//					if (currentX >= xs && currentX < xs + xm && yLeft >=
-		// ys
-		//&& 						yLeft < ys + ym) {
-		//						// Get the concentrations at currentX
-		//						gridPointSolution =
-		// solutionArray[yLeft][currentX];
-		// gridPointSolution[iClusterIds2D[0]] += wConc;
-		//					}
-		//				}
-		//				// Now do the right side
-		//				if (solverHandler.getSurfacePosition(yRight) < currentX)
-		//{
-		//					// if we are on the right process
-		//					if (currentX >= xs && currentX < xs + xm && yRight
-		//>= ys
-		//&& 						yRight < ys + ym) {
-		//						// Get the concentrations at currentX
-		//						gridPointSolution =
-		// solutionArray[yRight][currentX];
-		// gridPointSolution[iClusterIds2D[0]]
-		//+= wConc;
-		//					}
-		//				}
-		//			}
-		//		}
-		//
-		//		// Update the surface position
-		//		solverHandler.setSurfacePosition(xi, yj);
-		//
-		//		// Reset the I flux and count
-		//		nInterstitial2D[yLeft] += nInterstitial2D[yj] / 2.0;
-		//		nInterstitial2D[yRight] += nInterstitial2D[yj] / 2.0;
-		//		nInterstitial2D[yj] = 0.0;
-		//		previousIFlux2D[yj] = 0.0;
-		//
-		//		surfaceMoved = true;
-	}
-
 	// Now takes care of moving surface
 	bool moving = false;
 	for (auto i = 0; i < nevents; i++) {
@@ -1397,7 +1204,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 	}
 
 	// Skip if nothing is moving
-	if (!moving && !surfaceMoved) {
+	if (!moving) {
 		// Restore the solutionArray
 		ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
 		CHKERRQ(ierr);
@@ -1739,82 +1546,73 @@ setupPetsc2DMonitor(TS ts)
 			ierr, "setupPetsc2DMonitor: TSMonitorSet (startStop2D) failed.");
 	}
 
-	// If the user wants the surface to be able to move or bursting
-	if (solverHandler.moveSurface() || solverHandler.burstBubbles()) {
-		// Surface
-		if (solverHandler.moveSurface()) {
-			using NetworkType = core::network::IPSIReactionNetwork;
-			using AmountType = NetworkType::AmountType;
-			auto psiNetwork = dynamic_cast<NetworkType*>(&network);
-			// Get the number of species
-			auto numSpecies = psiNetwork->getSpeciesListSize();
-			auto specIdI = psiNetwork->getInterstitialSpeciesId();
+	// If the user wants the surface to be able to move
+	if (solverHandler.moveSurface()) {
+		using NetworkType = core::network::IPSIReactionNetwork;
+		using AmountType = NetworkType::AmountType;
+		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+		// Get the number of species
+		auto numSpecies = psiNetwork->getSpeciesListSize();
+		auto specIdI = psiNetwork->getInterstitialSpeciesId();
 
-			// Initialize the composition
-			auto comp = std::vector<AmountType>(numSpecies, 0);
+		// Initialize the composition
+		auto comp = std::vector<AmountType>(numSpecies, 0);
 
-			// Loop on interstital clusters
-			bool iClusterExists = true;
-			AmountType iSize = 1;
-			while (iClusterExists) {
-				comp[specIdI()] = iSize;
-				auto clusterId = psiNetwork->findClusterId(comp);
-				// Check that the helium cluster is present in the network
-				if (clusterId != NetworkType::invalidIndex()) {
-					iClusterIds2D.push_back(clusterId);
-					iSize++;
-				}
-				else
-					iClusterExists = false;
+		// Loop on interstital clusters
+		bool iClusterExists = true;
+		AmountType iSize = 1;
+		while (iClusterExists) {
+			comp[specIdI()] = iSize;
+			auto clusterId = psiNetwork->findClusterId(comp);
+			// Check that the helium cluster is present in the network
+			if (clusterId != NetworkType::invalidIndex()) {
+				iClusterIds2D.push_back(clusterId);
+				iSize++;
 			}
-
-			// Initialize nInterstitial2D and previousIFlux2D before monitoring
-			// the interstitial flux
-			for (auto j = 0; j < My; j++) {
-				nInterstitial2D.push_back(0.0);
-				previousIFlux2D.push_back(0.0);
-			}
-
-			// Get the interstitial information at the surface if concentrations
-			// were stored
-			if (hasConcentrations) {
-				assert(lastTsGroup);
-
-				// Get the interstitial quantity from the HDF5 file
-				nInterstitial2D = lastTsGroup->readData2D("nInterstitial");
-				// Get the previous I flux from the HDF5 file
-				previousIFlux2D = lastTsGroup->readData2D("previousFluxI");
-				// Get the previous time from the HDF5 file
-				double previousTime = lastTsGroup->readPreviousTime();
-				solverHandler.setPreviousTime(previousTime);
-			}
-
-			// Get the sputtering yield
-			sputteringYield2D = solverHandler.getSputteringYield();
-
-			// Master process
-			if (procId == 0) {
-				// Clear the file where the surface will be written
-				std::ofstream outputFile;
-				outputFile.open("surface.txt");
-				outputFile << "#time heights" << std::endl;
-				outputFile.close();
-			}
+			else
+				iClusterExists = false;
 		}
 
-		// Bursting
-		if (solverHandler.burstBubbles()) {
-			// No need to seed the random number generator here.
-			// The solver handler has already done it.
+		// Initialize nInterstitial2D and previousIFlux2D before monitoring
+		// the interstitial flux
+		for (auto j = 0; j < My; j++) {
+			nInterstitial2D.push_back(0.0);
+			previousIFlux2D.push_back(0.0);
+		}
+
+		// Get the interstitial information at the surface if concentrations
+		// were stored
+		if (hasConcentrations) {
+			assert(lastTsGroup);
+
+			// Get the interstitial quantity from the HDF5 file
+			nInterstitial2D = lastTsGroup->readData2D("nInterstitial");
+			// Get the previous I flux from the HDF5 file
+			previousIFlux2D = lastTsGroup->readData2D("previousFluxI");
+			// Get the previous time from the HDF5 file
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
+		}
+
+		// Get the sputtering yield
+		sputteringYield2D = solverHandler.getSputteringYield();
+
+		// Master process
+		if (procId == 0) {
+			// Clear the file where the surface will be written
+			std::ofstream outputFile;
+			outputFile.open("surface.txt");
+			outputFile << "#time heights" << std::endl;
+			outputFile.close();
 		}
 
 		// Set directions and terminate flags for the surface event
-		PetscInt direction[2];
-		PetscBool terminate[2];
-		direction[0] = 0, direction[1] = 0;
-		terminate[0] = PETSC_FALSE, terminate[1] = PETSC_FALSE;
+		PetscInt direction[1];
+		PetscBool terminate[1];
+		direction[0] = 0;
+		terminate[0] = PETSC_FALSE;
 		// Set the TSEvent
-		ierr = TSSetEventHandler(ts, 2, direction, terminate, eventFunction2D,
+		ierr = TSSetEventHandler(ts, 1, direction, terminate, eventFunction2D,
 			postEventFunction2D, NULL);
 		checkPetscError(ierr,
 			"setupPetsc2DMonitor: TSSetEventHandler (eventFunction2D) failed.");
@@ -2023,8 +1821,8 @@ setupPetsc2DMonitor(TS ts)
 		ierr, "setupPetsc2DMonitor: TSMonitorSet (monitorTime) failed.");
 
 	PetscFunctionReturn(0);
-}
+} // namespace monitor
 
-} /* end namespace monitor */
-} /* end namespace solver */
+} // namespace monitor
+} // namespace solver
 } /* end namespace xolotl */

@@ -60,8 +60,7 @@ double previousIEventFlux1D = 0.0;
 //! The variable to store the total number of atoms going through the surface or
 //! bottom.
 std::vector<double> nSurf1D, nBulk1D;
-double nInterEvent1D = 0.0, nHeliumBurst1D = 0.0, nDeuteriumBurst1D = 0.0,
-	   nTritiumBurst1D = 0.0;
+double nInterEvent1D = 0.0;
 //! The variable to store the xenon flux at the previous time step.
 double previousXeFlux1D = 0.0;
 //! The variable to store the sputtering yield at the surface.
@@ -74,8 +73,6 @@ PetscReal hdf5Stride1D = 0.0;
 PetscInt hdf5Previous1D = 0;
 //! HDF5 output file name
 std::string hdf5OutputName1D = "xolotlStop.h5";
-// The vector of depths at which bursting happens
-std::vector<PetscInt> depthPositions1D;
 // The vector of ids for diffusing interstitial clusters
 std::vector<IdType> iClusterIds1D;
 // Tracks the previous TS number
@@ -410,11 +407,6 @@ startStop1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	if (solverHandler.getRightOffset() == 1)
 		tsGroup->writeBottom1D(nBulk1D, previousBulkFlux1D, names);
 
-	// Write the bursting information if the bubble bursting is used
-	if (solverHandler.burstBubbles())
-		tsGroup->writeBursting1D(
-			nHeliumBurst1D, nDeuteriumBurst1D, nTritiumBurst1D);
-
 	// Determine the concentration values we will write.
 	// We only examine and collect the grid points we own.
 	// TODO measure impact of us building the flattened representation
@@ -735,8 +727,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 				outputFile << nSurf1D[i] << ' ';
 			}
 		}
-		outputFile << nHeliumBurst1D << " " << nDeuteriumBurst1D << " "
-				   << nTritiumBurst1D << std::endl;
+		outputFile << std::endl;
 		outputFile.close();
 	}
 
@@ -1497,7 +1488,7 @@ monitorSeries1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "eventFunction1D")
 /**
- * This is a method that checks if the surface should move or bursting happen
+ * This is a method that checks if the surface should move
  */
 PetscErrorCode
 eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
@@ -1508,8 +1499,7 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
-	depthPositions1D.clear();
-	fvalue[0] = 1.0, fvalue[1] = 1.0, fvalue[2] = 1.0;
+	fvalue[0] = 1.0, fvalue[1] = 1.0;
 
 	PetscFunctionBeginUser;
 
@@ -1647,83 +1637,6 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 		}
 	}
 
-	// Now work on the bubble bursting
-	if (solverHandler.burstBubbles()) {
-		using NetworkType = core::network::IPSIReactionNetwork;
-		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
-		auto dof = network.getDOF();
-		auto specIdHe = psiNetwork->getHeliumSpeciesId();
-
-		// Compute the prefactor for the probability (arbitrary)
-		double prefactor =
-			heliumFluxAmplitude * dt * solverHandler.getBurstingFactor();
-
-		// The depth parameter to know where the bursting should happen
-		double depthParam = solverHandler.getTauBursting(); // nm
-		// The number of He per V in a bubble
-		double heVRatio = solverHandler.getHeVRatio();
-
-		// For now we are not bursting
-		bool burst = false;
-
-		// Loop on the full grid of interest
-		for (xi = surfacePos + solverHandler.getLeftOffset();
-			 xi < Mx - solverHandler.getRightOffset(); xi++) {
-			// If this is the locally owned part of the grid
-			if (xi >= xs && xi < xs + xm) {
-				// Get the distance from the surface
-				double distance =
-					(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
-
-				// Get the pointer to the beginning of the solution data for
-				// this grid point
-				gridPointSolution = solutionArray[xi];
-
-				using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
-					Kokkos::MemoryUnmanaged>;
-				auto hConcs = HostUnmanaged(gridPointSolution, dof);
-				auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-				deep_copy(dConcs, hConcs);
-
-				// Compute the helium density at this grid point
-				double heDensity =
-					psiNetwork->getTotalAtomConcentration(dConcs, specIdHe, 1);
-
-				// Compute the radius of the bubble from the number of helium
-				double nV = heDensity * (grid[xi + 1] - grid[xi]) / heVRatio;
-				double latticeParam = network.getLatticeParameter();
-				double tlcCubed = latticeParam * latticeParam * latticeParam;
-				double radius = (sqrt(3.0) / 4) * latticeParam +
-					cbrt((3.0 * tlcCubed * nV) / (8.0 * core::pi)) -
-					cbrt((3.0 * tlcCubed) / (8.0 * core::pi));
-
-				// Add randomness
-				double prob = prefactor *
-					(1.0 - (distance - radius) / distance) *
-					std::min(1.0,
-						exp(-(distance - depthParam) / (depthParam * 2.0)));
-				double test = solverHandler.getRNG().GetRandomDouble();
-
-				// If the bubble is too big or the probability is high enough
-				if (prob > test || radius > distance) {
-					burst = true;
-					depthPositions1D.push_back(xi);
-				}
-			}
-		}
-
-		// If at least one grid point is bursting
-		int localFlag = 1;
-		if (burst) {
-			// The event is happening
-			localFlag = 0;
-		}
-		// All the processes should call post event
-		int flag = -1;
-		MPI_Allreduce(&localFlag, &flag, 1, MPI_INT, MPI_MIN, xolotlComm);
-		fvalue[2] = flag;
-	}
-
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
@@ -1734,7 +1647,7 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 #undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "postEventFunction1D")
 /**
- * This is a method that moves the surface or burst bubbles
+ * This is a method that moves the surface
  */
 PetscErrorCode
 postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
@@ -1749,13 +1662,13 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 
 	PetscFunctionBeginUser;
 
-	// Check if the surface has moved or a bubble burst
+	// Check if the surface has moved
 	if (nevents == 0) {
 		PetscFunctionReturn(0);
 	}
 
 	// Check if both events happened
-	if (nevents == 3)
+	if (nevents == 2)
 		throw std::runtime_error(
 			"\nxolotlSolver::Monitor1D: This is not supposed to "
 			"happen, the surface cannot "
@@ -1796,47 +1709,6 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Get the delta time from the previous timestep to this timestep
 	double previousTime = solverHandler.getPreviousTime();
 	double dt = time - previousTime;
-
-	// Take care of bursting
-	using NetworkType = core::network::IPSIReactionNetwork;
-	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
-	auto nBurst = std::vector<double>(3, 0.0);
-
-	// Loop on each bursting depth
-	for (auto i = 0; i < depthPositions1D.size(); i++) {
-		// Get the pointer to the beginning of the solution data for this grid
-		// point
-		gridPointSolution = solutionArray[depthPositions1D[i]];
-
-		// Get the distance from the surface
-		auto xi = depthPositions1D[i];
-		double distance =
-			(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
-		double hxLeft = 0.0;
-		if (xi < 1) {
-			hxLeft = grid[xi + 1] - grid[xi];
-		}
-		else {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-		}
-
-		// Write the bursting information
-		std::ofstream outputFile;
-		outputFile.open("bursting.txt", std::ios::app);
-		outputFile << time << " " << distance << std::endl;
-		outputFile.close();
-
-		// Pinhole case
-		psiNetwork->updateBurstingConcs(gridPointSolution, hxLeft, nBurst);
-	}
-
-	// Add up the local quantities
-	auto globalBurst = std::vector<double>(3, 0.0);
-	MPI_Allreduce(
-		nBurst.data(), globalBurst.data(), 3, MPI_DOUBLE, MPI_SUM, xolotlComm);
-	nHeliumBurst1D += globalBurst[0];
-	nDeuteriumBurst1D += globalBurst[1];
-	nTritiumBurst1D += globalBurst[2];
 
 	// Now takes care of moving surface
 	bool moving = false;
@@ -2256,82 +2128,70 @@ setupPetsc1DMonitor(TS ts)
 			ierr, "setupPetsc1DMonitor: TSMonitorSet (startStop1D) failed.");
 	}
 
-	// If the user wants the surface to be able to move or bursting
-	if (solverHandler.moveSurface() || solverHandler.burstBubbles()) {
+	// If the user wants the surface to be able to move
+	if (solverHandler.moveSurface()) {
 		// Surface
-		if (solverHandler.moveSurface()) {
-			using NetworkType = core::network::IPSIReactionNetwork;
-			using AmountType = NetworkType::AmountType;
-			auto psiNetwork = dynamic_cast<NetworkType*>(&network);
-			// Get the number of species
-			auto numSpecies = psiNetwork->getSpeciesListSize();
-			auto specIdI = psiNetwork->getInterstitialSpeciesId();
+		using NetworkType = core::network::IPSIReactionNetwork;
+		using AmountType = NetworkType::AmountType;
+		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+		// Get the number of species
+		auto numSpecies = psiNetwork->getSpeciesListSize();
+		auto specIdI = psiNetwork->getInterstitialSpeciesId();
 
-			// Initialize the composition
-			auto comp = std::vector<AmountType>(numSpecies, 0);
+		// Initialize the composition
+		auto comp = std::vector<AmountType>(numSpecies, 0);
 
-			// Loop on interstital clusters
-			bool iClusterExists = true;
-			AmountType iSize = 1;
-			while (iClusterExists) {
-				comp[specIdI()] = iSize;
-				auto clusterId = psiNetwork->findClusterId(comp);
-				// Check that the helium cluster is present in the network
-				if (clusterId != NetworkType::invalidIndex()) {
-					iClusterIds1D.push_back(clusterId);
-					iSize++;
-				}
-				else
-					iClusterExists = false;
+		// Loop on interstital clusters
+		bool iClusterExists = true;
+		AmountType iSize = 1;
+		while (iClusterExists) {
+			comp[specIdI()] = iSize;
+			auto clusterId = psiNetwork->findClusterId(comp);
+			// Check that the helium cluster is present in the network
+			if (clusterId != NetworkType::invalidIndex()) {
+				iClusterIds1D.push_back(clusterId);
+				iSize++;
 			}
+			else
+				iClusterExists = false;
+		}
 
-			// Get the interstitial information at the surface if concentrations
-			// were stored
-			if (hasConcentrations) {
-				assert(lastTsGroup);
+		// Get the interstitial information at the surface if concentrations
+		// were stored
+		if (hasConcentrations) {
+			assert(lastTsGroup);
 
-				// Get the interstitial quantity from the HDF5 file
-				nInterEvent1D = lastTsGroup->readData1D("nInterstitial");
-				// Get the previous I flux from the HDF5 file
-				previousIEventFlux1D = lastTsGroup->readData1D("previousFluxI");
-				// Get the previous time from the HDF5 file
-				double previousTime = lastTsGroup->readPreviousTime();
-				solverHandler.setPreviousTime(previousTime);
-			}
+			// Get the interstitial quantity from the HDF5 file
+			nInterEvent1D = lastTsGroup->readData1D("nInterstitial");
+			// Get the previous I flux from the HDF5 file
+			previousIEventFlux1D = lastTsGroup->readData1D("previousFluxI");
+			// Get the previous time from the HDF5 file
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
+		}
 
-			// Get the sputtering yield
-			sputteringYield1D = solverHandler.getSputteringYield();
+		// Get the sputtering yield
+		sputteringYield1D = solverHandler.getSputteringYield();
 
-			// Master process
-			if (procId == 0) {
-				// Clear the file where the surface will be written
-				std::ofstream outputFile;
-				outputFile.open("surface.txt");
-				outputFile << "#time height" << std::endl;
-				outputFile.close();
-			}
+		// Master process
+		if (procId == 0) {
+			// Clear the file where the surface will be written
+			std::ofstream outputFile;
+			outputFile.open("surface.txt");
+			outputFile << "#time height" << std::endl;
+			outputFile.close();
 		}
 
 		// Set directions and terminate flags for the surface event
-		PetscInt direction[3];
-		PetscBool terminate[3];
-		direction[0] = 0, direction[1] = 0, direction[2] = 0;
-		terminate[0] = PETSC_FALSE, terminate[1] = PETSC_FALSE,
-		terminate[2] = PETSC_FALSE;
+		PetscInt direction[2];
+		PetscBool terminate[2];
+		direction[0] = 0, direction[1] = 0;
+		terminate[0] = PETSC_FALSE, terminate[1] = PETSC_FALSE;
 		// Set the TSEvent
-		ierr = TSSetEventHandler(ts, 3, direction, terminate, eventFunction1D,
+		ierr = TSSetEventHandler(ts, 2, direction, terminate, eventFunction1D,
 			postEventFunction1D, NULL);
 		checkPetscError(ierr,
 			"setupPetsc1DMonitor: TSSetEventHandler (eventFunction1D) failed.");
-
-		if (solverHandler.burstBubbles() && procId == 0) {
-			// Uncomment to clear the file where the bursting info will be
-			// written
-			std::ofstream outputFile;
-			outputFile.open("bursting.txt");
-			outputFile << "#time depth" << std::endl;
-			outputFile.close();
-		}
 	}
 
 	// Set the monitor to save 1D plot of xenon distribution
@@ -2490,14 +2350,6 @@ setupPetsc1DMonitor(TS ts)
 						lastTsGroup->readData1D(prevFluxName.str());
 				}
 			}
-
-			// Bursting
-			if (solverHandler.burstBubbles()) {
-				// Read about the impurity fluxes in from bursting
-				nHeliumBurst1D = lastTsGroup->readData1D("nHeliumBurst");
-				nDeuteriumBurst1D = lastTsGroup->readData1D("nDeuteriumBurst");
-				nTritiumBurst1D = lastTsGroup->readData1D("nTritiumBurst");
-			}
 		}
 
 		// computeFluence will be called at each timestep
@@ -2533,8 +2385,6 @@ setupPetsc1DMonitor(TS ts)
 					outputFile << speciesName << "_surface ";
 				}
 			}
-			outputFile << "Helium_burst Deuterium_burst Tritium_burst"
-					   << std::endl;
 			outputFile.close();
 		}
 	}

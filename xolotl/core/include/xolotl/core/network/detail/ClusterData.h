@@ -143,6 +143,9 @@ private:
 		LATTICE_PARAM,
 		FISSION_RATE,
 		ZETA,
+		DEPTH,
+		TAU_BURSTING,
+		F_BURSTING,
 		NUM_FLOAT_VALS
 	};
 
@@ -218,6 +221,45 @@ public:
 	setZeta(double val)
 	{
 		setVal(_floatVals, ZETA, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getDepth() const
+	{
+		return _floatVals[DEPTH];
+	}
+
+	void
+	setDepth(double val)
+	{
+		setVal(_floatVals, DEPTH, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getTauBursting() const
+	{
+		return _floatVals[TAU_BURSTING];
+	}
+
+	void
+	setTauBursting(double val)
+	{
+		setVal(_floatVals, TAU_BURSTING, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getFBursting() const
+	{
+		return _floatVals[F_BURSTING];
+	}
+
+	void
+	setFBursting(double val)
+	{
+		setVal(_floatVals, F_BURSTING, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

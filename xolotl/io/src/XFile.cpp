@@ -413,9 +413,6 @@ const std::string XFile::TimestepGroup::deltaTimeAttrName = "deltaTime";
 const std::string XFile::TimestepGroup::surfacePosDataName = "iSurface";
 const std::string XFile::TimestepGroup::nIntersAttrName = "nInterstitial";
 const std::string XFile::TimestepGroup::prevIFluxAttrName = "previousFluxI";
-const std::string XFile::TimestepGroup::nHeBurstAttrName = "nHeliumBurst";
-const std::string XFile::TimestepGroup::nDBurstAttrName = "nDeuteriumBurst";
-const std::string XFile::TimestepGroup::nTBurstAttrName = "nTritiumBurst";
 const std::string XFile::TimestepGroup::nAttrName = "n";
 const std::string XFile::TimestepGroup::previousFluxAttrName = "previousFlux";
 const std::string XFile::TimestepGroup::surfAttrName = "Surf";
@@ -722,26 +719,6 @@ XFile::TimestepGroup::writeBottom2D(const Data2DType& nHe,
 
 	// Close everything
 	status = H5Dclose(datasetId);
-}
-
-void
-XFile::TimestepGroup::writeBursting1D(
-	Data1DType nHe, Data1DType nD, Data1DType nT)
-{
-	// Build a data space for scalar attributes.
-	XFile::ScalarDataSpace scalarDSpace;
-
-	// Add quantity of helium attribute
-	Attribute<Data1DType> nHeAttr(*this, nHeBurstAttrName, scalarDSpace);
-	nHeAttr.setTo(nHe);
-
-	// Add quantity of deuterium attribute
-	Attribute<Data1DType> nDAttr(*this, nDBurstAttrName, scalarDSpace);
-	nDAttr.setTo(nD);
-
-	// Add quantity of tritium attribute
-	Attribute<Data1DType> nTAttr(*this, nTBurstAttrName, scalarDSpace);
-	nTAttr.setTo(nT);
 }
 
 void

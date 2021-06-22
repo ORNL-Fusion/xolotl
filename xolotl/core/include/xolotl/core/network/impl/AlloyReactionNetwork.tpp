@@ -61,6 +61,12 @@ KOKKOS_INLINE_FUNCTION
 void
 AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+
 	using Species = typename Network::Species;
 	using Composition = typename Network::Composition;
 	using AmountType = typename Network::AmountType;
@@ -575,14 +581,6 @@ AlloyReactionGenerator::addSinks(IndexType i, TTag tag) const
 	if (clReg.isSimplex() && lo.isOnAxis(Species::Perfect)) {
 		this->addSinkReaction(tag, {i, Network::invalidIndex()});
 	}
-}
-
-template <typename TTag>
-KOKKOS_INLINE_FUNCTION
-void
-AlloyReactionGenerator::addBurstings(IndexType i, TTag tag) const
-{
-	return;
 }
 
 inline ReactionCollection<AlloyReactionGenerator::Network>

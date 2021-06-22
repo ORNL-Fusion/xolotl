@@ -169,6 +169,15 @@ public:
 	virtual void
 	setZeta(double z) = 0;
 
+	/**
+	 * @brief TauBursting and FBursting are used for the bursting rates.
+	 */
+	virtual void
+	setTauBursting(double tau) = 0;
+
+	virtual void
+	setFBursting(double f) = 0;
+
 	bool
 	getEnableStdReaction() const noexcept
 	{

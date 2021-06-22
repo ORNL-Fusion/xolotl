@@ -121,6 +121,9 @@ PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
+	if (this->_enableBursting) {
+		this->_clusterData.setDepth(surfaceDepth);
+	}
 }
 
 template <typename TSpeciesEnum>
@@ -132,6 +135,9 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 	if (this->_enableTrapMutation) {
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
+	}
+	if (this->_enableBursting) {
+		this->_clusterData.setDepth(surfaceDepth);
 	}
 }
 
@@ -390,8 +396,16 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 
 	auto numClusters = this->getNumberOfClusters();
 
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
 	if (i == j) {
-		addSinks(i, tag);
+		addBurstings(i, tag);
+		if (diffusionFactor(i) > 0.0)
+			addSinks(i, tag);
+	}
+
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
 	}
 
 	// Get the composition of each cluster

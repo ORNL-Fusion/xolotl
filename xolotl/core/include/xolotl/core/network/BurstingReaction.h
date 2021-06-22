@@ -104,8 +104,6 @@ protected:
 	IndexType _reactant;
 	IndexType _product;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
-
-	double _f = 0.1;
 };
 } // namespace network
 } // namespace core

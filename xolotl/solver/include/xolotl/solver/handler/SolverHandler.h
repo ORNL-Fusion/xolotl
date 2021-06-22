@@ -118,9 +118,6 @@ protected:
 	//! If the user wants to move the surface.
 	bool movingSurface;
 
-	//! If the user wants to burst bubbles.
-	bool bubbleBursting;
-
 	//! If the user wants to use x mirror boundary conditions or periodic ones.
 	bool isMirror;
 
@@ -129,12 +126,6 @@ protected:
 
 	//! The sputtering yield for the problem.
 	double sputteringYield;
-
-	//! The depth parameter for the bubble bursting.
-	double tauBursting;
-
-	//! The factor involved in computing bursting likelihood.
-	double burstingFactor;
 
 	//! The ratio of He per V in a bubble.
 	double heVRatio;
@@ -476,15 +467,12 @@ protected:
 		dimension(-1),
 		portion(0.0),
 		movingSurface(false),
-		bubbleBursting(false),
 		isMirror(true),
 		useAttenuation(false),
 		sputteringYield(0.0),
 		fluxHandler(nullptr),
 		temperatureHandler(nullptr),
 		diffusionHandler(nullptr),
-		tauBursting(10.0),
-		burstingFactor(0.1),
 		rngSeed(0),
 		heVRatio(4.0),
 		previousTime(0.0),
@@ -576,12 +564,6 @@ public:
 		// Set the sputtering yield
 		sputteringYield = opts.getSputteringYield();
 
-		// Set the sputtering yield
-		tauBursting = opts.getBurstingDepth();
-
-		// Set the bursting factor
-		burstingFactor = opts.getBurstingFactor();
-
 		// Set the HeV ratio
 		heVRatio = opts.getHeVRatio();
 
@@ -600,8 +582,6 @@ public:
 		// Should we be able to move the surface?
 		auto map = opts.getProcesses();
 		movingSurface = map["movingSurface"];
-		// Should we be able to burst bubbles?
-		bubbleBursting = false;
 		// Should we be able to attenuate the modified trap mutation?
 		useAttenuation = map["attenuation"];
 
@@ -684,24 +664,6 @@ public:
 	getSputteringYield() const override
 	{
 		return sputteringYield;
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	double
-	getTauBursting() const override
-	{
-		return tauBursting;
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	double
-	getBurstingFactor() const override
-	{
-		return burstingFactor;
 	}
 
 	/**
@@ -848,15 +810,6 @@ public:
 	moveSurface() const override
 	{
 		return movingSurface;
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	bool
-	burstBubbles() const override
-	{
-		return bubbleBursting;
 	}
 
 	/**

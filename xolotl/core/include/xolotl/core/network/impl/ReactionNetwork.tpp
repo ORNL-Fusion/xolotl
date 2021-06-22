@@ -31,6 +31,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setLatticeParameter(opts.getLatticeParameter());
 	this->setFissionRate(opts.getFluxAmplitude());
 	this->setZeta(opts.getZeta());
+	this->setTauBursting(opts.getBurstingDepth());
+	this->setFBursting(opts.getBurstingFactor());
 	auto map = opts.getProcesses();
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);
@@ -153,6 +155,20 @@ void
 ReactionNetwork<TImpl>::setZeta(double z)
 {
 	_clusterData.setZeta(z);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setTauBursting(double tau)
+{
+	_clusterData.setTauBursting(tau);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setFBursting(double f)
+{
+	_clusterData.setFBursting(f);
 }
 
 template <typename TImpl>

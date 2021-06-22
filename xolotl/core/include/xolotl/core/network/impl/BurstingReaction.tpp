@@ -71,7 +71,16 @@ KOKKOS_INLINE_FUNCTION
 double
 BurstingReaction<TNetwork, TDerived>::getAppliedRate(IndexType gridIndex) const
 {
-	return 1.0e9;
+	// Get the radius of the cluster
+	auto cl = this->_clusterData.getCluster(_reactant);
+	auto radius = cl.getReactionRadius();
+
+	// Get the current depth
+	auto depth = this->_clusterData.getDepth();
+	auto tau = this->_clusterData.getTauBursting();
+	auto f = this->_clusterData.getFBursting();
+	return f * (radius / depth) *
+		util::min(1.0, exp(-(depth - tau) / (2.0 * tau)));
 }
 
 template <typename TNetwork, typename TDerived>
