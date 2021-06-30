@@ -3,9 +3,9 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <Kokkos_Core.hpp>
-using Kokkos::ScopeGuard;
-BOOST_GLOBAL_FIXTURE(ScopeGuard);
+#include <xolotl/test/KokkosFixture.h>
+
+BOOST_GLOBAL_FIXTURE(KokkosFixture);
 
 #include <xolotl/test/MPITestUtils.h>
 #include <xolotl/test/SystemTestCase.h>
