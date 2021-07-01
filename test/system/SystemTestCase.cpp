@@ -36,9 +36,9 @@ SystemTestOptions::SystemTestOptions()
 	auto argv = boost::unit_test::framework::master_test_suite().argv;
 
 	bpo::options_description desc("System Test Options");
-	desc.add_options()("help", "produce help message")("verbose,v",
+	desc.add_options()("help,h", "produce help message")("verbose,v",
 		"show all standard output")("approve,a", "approve running test cases")(
-		"time-all", "report xolotl run time for each test case");
+		"time-all,t", "report xolotl run time for each test case");
 
 	bpo::variables_map opts;
 	bpo::store(bpo::parse_command_line(argc, argv, desc), opts);
@@ -288,9 +288,10 @@ SystemTestCase::runXolotl() const
 	// Construct command-line
 	auto exec = _binDir + "/xolotl/xolotl";
 	auto paramsFileName = _dataDir + "/params_" + _caseName + ".txt";
+	int argc = 2;
 	const char* argv[] = {exec.data(), paramsFileName.data()};
 	try {
-		xolotl::interface::XolotlInterface{2, argv}.solveXolotl();
+		xolotl::interface::XolotlInterface{argc, argv}.solveXolotl();
 	}
 	catch (const std::exception& e) {
 		std::cout << e.what() << std::endl;
