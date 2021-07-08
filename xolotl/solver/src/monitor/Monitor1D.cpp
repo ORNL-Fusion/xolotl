@@ -1741,7 +1741,8 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	if (movingUp) {
 		int nGridPoints = 0;
 		// Move the surface up until it is smaller than the next threshold
-		while (nInterEvent1D > threshold) {
+		while (nInterEvent1D > threshold &&
+			surfacePos + solverHandler.getLeftOffset() - 2 >= 0) {
 			// Move the surface higher
 			surfacePos--;
 			xi = surfacePos + solverHandler.getLeftOffset();
@@ -1753,7 +1754,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 		}
 
 		// Throw an exception if the position is negative
-		if (surfacePos < 0) {
+		if (surfacePos + solverHandler.getLeftOffset() < 2) {
 			PetscBool flagCheck;
 			ierr =
 				PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
