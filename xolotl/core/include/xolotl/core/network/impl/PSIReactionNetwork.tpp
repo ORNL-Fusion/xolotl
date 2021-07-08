@@ -670,24 +670,28 @@ PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
 
 	const auto& clReg = this->getCluster(i).getRegion();
 	Composition lo = clReg.getOrigin();
+	Composition hi = clReg.getUpperLimitPoint();
 
 	// Need helium
-	if (lo[Species::He] == 0)
+	if (hi[Species::He] == 1)
 		return;
 
-	// Pure helium case
-	if (lo[Species::V] == 0) {
-		this->addBurstingReaction(tag, {i, NetworkType::invalidIndex()});
-	}
-	// Bubble case
-	else {
-		auto& subpaving = this->getSubpaving();
-		// Look for the V cluster of the same size
-		Composition comp = Composition::zero();
-		comp[Species::V] = lo[Species::V];
-		auto vClusterId = subpaving.findTileId(comp, plsm::onDevice);
-		if (vClusterId != NetworkType::invalidIndex())
-			this->addBurstingReaction(tag, {i, vClusterId});
+	// Loop on V
+	for (auto nV = lo[Species::V]; nV < hi[Species::V]; nV++) {
+		// Pure helium case
+		if (nV == 0) {
+			this->addBurstingReaction(tag, {i, NetworkType::invalidIndex()});
+		}
+		// Bubble case
+		else {
+			auto& subpaving = this->getSubpaving();
+			// Look for the V cluster of the same size
+			Composition comp = Composition::zero();
+			comp[Species::V] = nV;
+			auto vClusterId = subpaving.findTileId(comp, plsm::onDevice);
+			if (vClusterId != NetworkType::invalidIndex())
+				this->addBurstingReaction(tag, {i, vClusterId});
+		}
 	}
 }
 

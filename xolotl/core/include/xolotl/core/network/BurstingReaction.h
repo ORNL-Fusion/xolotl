@@ -30,6 +30,8 @@ public:
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using Composition = typename Superclass::Composition;
+	using Region = typename Superclass::Region;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
 
@@ -43,9 +45,12 @@ public:
 	BurstingReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
 		IndexType reactionId, const detail::ClusterSet& clusterSet);
 
-	static detail::CoefficientsView allocateCoefficientsView(IndexType)
+	static detail::CoefficientsView
+	allocateCoefficientsView(IndexType size)
 	{
-		return detail::CoefficientsView();
+		return detail::CoefficientsView("Bursting Coefficients", size,
+			Superclass::coeffsSingleExtent, 1, 1,
+			Superclass::coeffsSingleExtent);
 	}
 
 	using Superclass::updateRates;
@@ -57,10 +62,7 @@ public:
 private:
 	KOKKOS_INLINE_FUNCTION
 	void
-	computeCoefficients()
-	{
-		// No coefs
-	}
+	computeCoefficients();
 
 	KOKKOS_INLINE_FUNCTION
 	double
@@ -104,6 +106,9 @@ protected:
 	IndexType _reactant;
 	IndexType _product;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
+
+	static constexpr auto nMomentIds = Superclass::nMomentIds;
+	Kokkos::Array<IndexType, nMomentIds> _reactantMomentIds;
 };
 } // namespace network
 } // namespace core
