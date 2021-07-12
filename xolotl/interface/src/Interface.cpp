@@ -22,7 +22,7 @@ namespace interface
 class Context
 {
 public:
-	Context(int argc, const char* argv[]) :
+	Context(int& argc, const char* argv[]) :
 		_kokkosContext(argc, const_cast<char**>(argv))
 	{
 		if (!initialized()) {
@@ -69,7 +69,8 @@ reportException(const std::exception& e)
 
 XolotlInterface::XolotlInterface() = default;
 
-XolotlInterface::XolotlInterface(int argc, const char* argv[], MPI_Comm mpiComm)
+XolotlInterface::XolotlInterface(
+	int& argc, const char* argv[], MPI_Comm mpiComm)
 {
 	initializeXolotl(argc, argv, mpiComm);
 	initializedHere = true;
@@ -89,7 +90,7 @@ XolotlInterface::printSomething()
 }
 
 void
-XolotlInterface::initializeXolotl(int argc, const char* argv[], MPI_Comm comm)
+XolotlInterface::initializeXolotl(int& argc, const char* argv[], MPI_Comm comm)
 try {
 	context = std::make_unique<Context>(argc, argv);
 
