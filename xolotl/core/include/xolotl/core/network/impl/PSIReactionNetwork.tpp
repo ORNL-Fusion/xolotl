@@ -247,7 +247,8 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 			gridPointSolution[i] = 0.0;
 			auto momentIds = this->getCluster(i, plsm::onHost).getMomentIds();
 			for (std::size_t j = 0; j < momentIds.extent(0); j++) {
-				gridPointSolution[momentIds(j)] = 0.0;
+				if (momentIds(j) != this->invalidIndex())
+					gridPointSolution[momentIds(j)] = 0.0;
 			}
 		}
 	}

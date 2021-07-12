@@ -62,7 +62,7 @@ public:
 	 * @param MPI_Comm The communicator to use
 	 */
 	XolotlInterface(
-		int argc, const char* argv[], MPI_Comm mpiComm = MPI_COMM_WORLD);
+		int& argc, const char* argv[], MPI_Comm mpiComm = MPI_COMM_WORLD);
 
 	/**
 	 * The destructor
@@ -84,7 +84,7 @@ public:
 	 */
 	void
 	initializeXolotl(
-		int argc, const char* argv[], MPI_Comm comm = MPI_COMM_WORLD);
+		int& argc, const char* argv[], MPI_Comm comm = MPI_COMM_WORLD);
 
 	/**
 	 * Set the final time and the dt.
