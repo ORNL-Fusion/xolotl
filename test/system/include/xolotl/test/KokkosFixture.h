@@ -8,8 +8,7 @@ class KokkosFixture
 {
 public:
 	KokkosFixture() :
-		_guard(
-			boost::unit_test::framework::master_test_suite().argc,
+		_guard(boost::unit_test::framework::master_test_suite().argc,
 			boost::unit_test::framework::master_test_suite().argv)
 	{
 	}

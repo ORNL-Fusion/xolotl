@@ -69,7 +69,8 @@ reportException(const std::exception& e)
 
 XolotlInterface::XolotlInterface() = default;
 
-XolotlInterface::XolotlInterface(int& argc, const char* argv[], MPI_Comm mpiComm)
+XolotlInterface::XolotlInterface(
+	int& argc, const char* argv[], MPI_Comm mpiComm)
 {
 	initializeXolotl(argc, argv, mpiComm);
 	initializedHere = true;
