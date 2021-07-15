@@ -79,7 +79,7 @@ KOKKOS_INLINE_FUNCTION
 double
 BurstingReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 {
-	return 1.0e9;
+	return 0.0;
 }
 
 template <typename TNetwork, typename TDerived>
@@ -87,9 +87,6 @@ KOKKOS_INLINE_FUNCTION
 void
 BurstingReaction<TNetwork, TDerived>::updateRates(double largestRate)
 {
-	for (IndexType i = 0; i < this->_rate.extent(0); ++i) {
-		this->_rate(i) = 1.0e9;
-	}
 }
 
 template <typename TNetwork, typename TDerived>
