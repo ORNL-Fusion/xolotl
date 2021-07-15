@@ -278,8 +278,27 @@ BurstingReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
 	Connectivity connectivity, IndexType gridIndex)
 {
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
 	auto rate = getAppliedRate(gridIndex);
-	Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)), rate);
+	Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)),
+		rate * this->_coefs(0, 0, 0, 0) / (double)_reactantVolume);
+
+	// Take care of the first moments
+	for (auto k : speciesRangeNoI) {
+		if (_reactantMomentIds[k()] != invalidIndex) {
+			// First for the reactant
+			auto df = rate / (double)_reactantVolume;
+			for (auto i : speciesRangeNoI) {
+				if (_reactantMomentIds[i()] == _reactantMomentIds[k()]) {
+					Kokkos::atomic_sub(
+						&values(connectivity(
+							_reactantMomentIds[k()], _reactantMomentIds[i()])),
+						df * this->_coefs(i() + 1, 0, 0, k() + 1));
+				}
+			}
+		}
+	}
 }
 
 template <typename TNetwork, typename TDerived>
