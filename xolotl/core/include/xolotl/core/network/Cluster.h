@@ -98,7 +98,6 @@ class ClusterCommon : public ClusterBase<ClusterCommon<PlsmContext>>
 public:
 	using Superclass = ClusterBase<ClusterCommon<PlsmContext>>;
 	using ClusterData = detail::ClusterDataCommon<PlsmContext>;
-	// using ClusterDataRef = detail::ClusterDataCommonRef<PlsmContext>;
 	using IndexType = typename Superclass::IndexType;
 
 	ClusterCommon() = delete;
@@ -109,13 +108,6 @@ public:
 		_data{&data}
 	{
 	}
-
-	// KOKKOS_INLINE_FUNCTION
-	// ClusterCommon(const ClusterDataRef& data, IndexType id) :
-	// 	Superclass(id),
-	// 	_data{data}
-	// {
-	// }
 
 private:
 	const ClusterData* _data;
@@ -139,7 +131,6 @@ public:
 	using Subpaving = typename Types::Subpaving;
 	using Region = typename Subpaving::RegionType;
 	using ClusterData = detail::ClusterData<TNetwork, PlsmContext>;
-	// using ClusterDataRef = detail::ClusterDataRef<TNetwork, PlsmContext>;
 	using IndexType = typename Superclass::IndexType;
 	using Composition = typename Types::Composition;
 
@@ -151,13 +142,6 @@ public:
 		_data{&data}
 	{
 	}
-
-	// KOKKOS_INLINE_FUNCTION
-	// Cluster(const ClusterDataRef& data, IndexType id) :
-	// 	Superclass(id),
-	// 	_data{data}
-	// {
-	// }
 
 	KOKKOS_INLINE_FUNCTION
 	Region
