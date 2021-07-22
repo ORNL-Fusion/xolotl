@@ -56,12 +56,10 @@ std::shared_ptr<viz::IPlot> seriesPlot1D;
 std::shared_ptr<viz::IPlot> surfacePlot1D;
 //! The variable to store the particle flux at the previous time step.
 std::vector<double> previousSurfFlux1D, previousBulkFlux1D;
-double previousIEventFlux1D = 0.0;
 //! The variable to store the total number of atoms going through the surface or
 //! bottom.
 std::vector<double> nSurf1D, nBulk1D;
-double nInterEvent1D = 0.0, nHeliumBurst1D = 0.0, nDeuteriumBurst1D = 0.0,
-	   nTritiumBurst1D = 0.0;
+double nHeliumBurst1D = 0.0, nDeuteriumBurst1D = 0.0, nTritiumBurst1D = 0.0;
 //! The variable to store the xenon flux at the previous time step.
 double previousXeFlux1D = 0.0;
 //! The variable to store the sputtering yield at the surface.
@@ -402,8 +400,7 @@ startStop1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	if (solverHandler.moveSurface() || solverHandler.getLeftOffset() == 1) {
 		// Write the surface positions and the associated interstitial
 		// quantities in the concentration sub group
-		tsGroup->writeSurface1D(surfacePos, nInterEvent1D, previousIEventFlux1D,
-			nSurf1D, previousSurfFlux1D, names);
+		tsGroup->writeSurface1D(surfacePos, nSurf1D, previousSurfFlux1D, names);
 	}
 
 	// Write the bottom impurity information if the bottom is a free surface
@@ -412,7 +409,7 @@ startStop1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 
 	// Write the bursting information if the bubble bursting is used
 	if (solverHandler.burstBubbles())
-		tsGroup->writeBursting1D(
+		tsGroup->writeBursting(
 			nHeliumBurst1D, nDeuteriumBurst1D, nTritiumBurst1D);
 
 	// Determine the concentration values we will write.
@@ -452,7 +449,8 @@ startStop1D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
  * This is a monitoring method that will compute the helium retention
  */
 PetscErrorCode
-computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
+computeHeliumRetention1D(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 {
 	perf::ScopedTimer myTimer(heRetentionTimer);
 
@@ -494,6 +492,7 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 	// Store the concentration over the grid
 	auto numSpecies = network.getSpeciesListSize();
+	auto specIdI = network.getInterstitialSpeciesId();
 	auto myConcData = std::vector<double>(numSpecies, 0.0);
 
 	// Declare the pointer for the concentrations at a specific grid point
@@ -551,8 +550,12 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
 			// Compute the total number of impurities that left at the surface
-			for (auto i = 0; i < numSpecies; ++i) {
-				nSurf1D[i] += previousSurfFlux1D[i] * dt;
+			if (timestep > 0) {
+				for (auto i = 0; i < numSpecies; ++i) {
+					if (i == specIdI() && solverHandler.moveSurface())
+						continue;
+					nSurf1D[i] += previousSurfFlux1D[i] * dt;
+				}
 			}
 			auto myFluxData = std::vector<double>(numSpecies, 0.0);
 
@@ -599,6 +602,8 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 				advecClusters, sinkStrengths, myFluxData, xi - xs);
 
 			for (auto i = 0; i < numSpecies; ++i) {
+				if (i == specIdI() && solverHandler.moveSurface())
+					continue;
 				previousSurfFlux1D[i] = myFluxData[i];
 			}
 
@@ -642,8 +647,10 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
 			// Compute the total number of impurities that went in the bulk
-			for (auto i = 0; i < numSpecies; ++i) {
-				nBulk1D[i] += previousBulkFlux1D[i] * dt;
+			if (timestep > 0) {
+				for (auto i = 0; i < numSpecies; ++i) {
+					nBulk1D[i] += previousBulkFlux1D[i] * dt;
+				}
 			}
 			auto myFluxData = std::vector<double>(numSpecies, 0.0);
 
@@ -1582,12 +1589,15 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			// Get the concentrations at xi = surfacePos + 1
 			gridPointSolution = solutionArray[xi];
 
-			// Compute the total density of intersitials that escaped from the
-			// surface since last timestep using the stored flux
-			nInterEvent1D += previousIEventFlux1D * dt;
+			if (TSNumber > 0) {
+				// Compute the total density of intersitials that escaped from
+				// the surface since last timestep using the stored flux
+				nSurf1D[specIdI()] += previousSurfFlux1D[specIdI()] * dt;
 
-			// Remove the sputtering yield since last timestep
-			nInterEvent1D -= sputteringYield1D * heliumFluxAmplitude * dt;
+				// Remove the sputtering yield since last timestep
+				nSurf1D[specIdI()] -=
+					sputteringYield1D * heliumFluxAmplitude * dt;
+			}
 
 			// Initialize the value for the flux
 			auto myFlux = std::vector<double>(numSpecies, 0.0);
@@ -1610,8 +1620,9 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 			network.updateOutgoingDiffFluxes(
 				gridPointSolution, factor, iClusterIds1D, myFlux, xi - xs);
+
 			// Update the previous flux
-			previousIEventFlux1D = myFlux[specIdI()];
+			previousSurfFlux1D[specIdI()] = myFlux[specIdI()];
 
 			// Set the surface processor
 			surfaceProc = procId;
@@ -1622,10 +1633,10 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 		MPI_Allreduce(
 			&surfaceProc, &surfaceId, 1, MPI_INT, MPI_SUM, xolotlComm);
 
-		// Send the information about nInterEvent1D and previousFlux1D
-		// to the other processes
-		MPI_Bcast(&nInterEvent1D, 1, MPI_DOUBLE, surfaceId, xolotlComm);
-		MPI_Bcast(&previousIEventFlux1D, 1, MPI_DOUBLE, surfaceId, xolotlComm);
+		// Send the information to the other processes
+		MPI_Bcast(&nSurf1D[specIdI()], 1, MPI_DOUBLE, surfaceId, xolotlComm);
+		MPI_Bcast(&previousSurfFlux1D[specIdI()], 1, MPI_DOUBLE, surfaceId,
+			xolotlComm);
 
 		// Now that all the processes have the same value of nInterstitials,
 		// compare it to the threshold to now if we should move the surface
@@ -1635,13 +1646,13 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 		// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 		double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
-		if (nInterEvent1D > threshold) {
+		if (nSurf1D[specIdI()] > threshold) {
 			// The surface is moving
 			fvalue[0] = 0;
 		}
 
 		// Moving the surface back
-		else if (nInterEvent1D < -threshold / 10.0) {
+		else if (nSurf1D[specIdI()] < -threshold / 10.0) {
 			// The surface is moving
 			fvalue[1] = 0;
 		}
@@ -1863,20 +1874,22 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Get the initial vacancy concentration
 	double initialVConc = solverHandler.getInitialVConc();
 
+	auto specIdI = psiNetwork->getInterstitialSpeciesId();
+
 	// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 	double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
 
 	if (movingUp) {
 		int nGridPoints = 0;
 		// Move the surface up until it is smaller than the next threshold
-		while (nInterEvent1D > threshold &&
+		while (nSurf1D[specIdI()] > threshold &&
 			surfacePos + solverHandler.getLeftOffset() - 2 >= 0) {
 			// Move the surface higher
 			surfacePos--;
 			xi = surfacePos + solverHandler.getLeftOffset();
 			nGridPoints++;
 			// Update the number of interstitials
-			nInterEvent1D -= threshold;
+			nSurf1D[specIdI()] -= threshold;
 			// Update the thresold
 			threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
 		}
@@ -1953,7 +1966,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Moving the surface back
 	else {
 		// Move it back as long as the number of interstitials in negative
-		while (nInterEvent1D < 0.0) {
+		while (nSurf1D[specIdI()] < 0.0) {
 			// Compute the threshold to a deeper grid point
 			threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
 			// Set all the concentrations to 0.0 at xi = surfacePos + 1
@@ -1971,7 +1984,7 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 			surfacePos++;
 			xi = surfacePos + solverHandler.getLeftOffset();
 			// Update the number of interstitials
-			nInterEvent1D += threshold;
+			nSurf1D[specIdI()] += threshold;
 		}
 
 		// Printing information about the extension of the material
@@ -2186,81 +2199,13 @@ setupPetsc1DMonitor(TS ts)
 			"setupPetsc1DMonitor: TSMonitorSet (checkNegative1D) failed.");
 	}
 
-	// Set the monitor to save the status of the simulation in hdf5 file
-	if (flagStatus) {
-		// Find the stride to know how often the HDF5 file has to be written
-		PetscBool flag;
-		ierr = PetscOptionsGetReal(
-			NULL, NULL, "-start_stop", &hdf5Stride1D, &flag);
-		checkPetscError(ierr,
-			"setupPetsc1DMonitor: PetscOptionsGetReal (-start_stop) failed.");
-		if (!flag)
-			hdf5Stride1D = 1.0;
-
-		// Compute the correct hdf5Previous1D for a restart
-		// Get the last time step written in the HDF5 file
-		if (hasConcentrations) {
-			assert(lastTsGroup);
-
-			// Get the previous time from the HDF5 file
-			double previousTime = lastTsGroup->readPreviousTime();
-			solverHandler.setPreviousTime(previousTime);
-			hdf5Previous1D = (PetscInt)(previousTime / hdf5Stride1D);
-		}
-
-		// Don't do anything if both files have the same name
-		if (hdf5OutputName1D != solverHandler.getNetworkName()) {
-			PetscInt Mx;
-			PetscErrorCode ierr;
-
-			// Get the da from ts
-			DM da;
-			ierr = TSGetDM(ts, &da);
-			checkPetscError(ierr, "setupPetsc1DMonitor: TSGetDM failed.");
-
-			// Get the size of the total grid
-			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE);
-			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
-
-			// Get the solver handler
-			auto& solverHandler = PetscSolver::getSolverHandler();
-
-			// Get the physical grid
-			auto grid = solverHandler.getXGrid();
-
-			// Create and initialize a checkpoint file.
-			// We do this in its own scope so that the file
-			// is closed when the file object goes out of scope.
-			// We want it to close before we (potentially) copy
-			// the network from another file using a single-process
-			// MPI communicator.
-			{
-				io::XFile checkpointFile(hdf5OutputName1D, grid, xolotlComm);
-			}
-
-			// Copy the network group from the given file (if it has one).
-			// We open the files using a single-process MPI communicator
-			// because it is faster for a single process to do the
-			// copy with HDF5's H5Ocopy implementation than it is
-			// when all processes call the copy function.
-			// The checkpoint file must be closed before doing this.
-			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
-				hdf5OutputName1D, network);
-		}
-
-		// startStop1D will be called at each timestep
-		ierr = TSMonitorSet(ts, startStop1D, NULL, NULL);
-		checkPetscError(
-			ierr, "setupPetsc1DMonitor: TSMonitorSet (startStop1D) failed.");
-	}
-
 	// If the user wants the surface to be able to move or bursting
 	if (solverHandler.moveSurface() || solverHandler.burstBubbles()) {
 		// Surface
 		if (solverHandler.moveSurface()) {
+			// Clear the vector just in case
+			iClusterIds1D.clear();
+
 			using NetworkType = core::network::IPSIReactionNetwork;
 			using AmountType = NetworkType::AmountType;
 			auto psiNetwork = dynamic_cast<NetworkType*>(&network);
@@ -2291,10 +2236,28 @@ setupPetsc1DMonitor(TS ts)
 			if (hasConcentrations) {
 				assert(lastTsGroup);
 
-				// Get the interstitial quantity from the HDF5 file
-				nInterEvent1D = lastTsGroup->readData1D("nInterstitial");
-				// Get the previous I flux from the HDF5 file
-				previousIEventFlux1D = lastTsGroup->readData1D("previousFluxI");
+				// Get the names of the species in the network
+				std::vector<std::string> names;
+				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+					names.push_back(network.getSpeciesName(id));
+				}
+
+				// Loop on the names
+				for (auto i = 0; i < names.size(); i++) {
+					// Create the n attribute name
+					std::ostringstream nName;
+					nName << "n" << names[i] << "Surf";
+					// Read quantity attribute
+					nSurf1D[i] = lastTsGroup->readData1D(nName.str());
+
+					// Create the previous flux attribute name
+					std::ostringstream prevFluxName;
+					prevFluxName << "previousFlux" << names[i] << "Surf";
+					// Read the attribute
+					previousSurfFlux1D[i] =
+						lastTsGroup->readData1D(prevFluxName.str());
+				}
+
 				// Get the previous time from the HDF5 file
 				double previousTime = lastTsGroup->readPreviousTime();
 				solverHandler.setPreviousTime(previousTime);
@@ -2680,6 +2643,77 @@ setupPetsc1DMonitor(TS ts)
 		ierr = TSMonitorSet(ts, monitorLargest1D, NULL, NULL);
 		checkPetscError(ierr,
 			"setupPetsc1DMonitor: TSMonitorSet (monitorLargest1D) failed.");
+	}
+
+	// Set the monitor to save the status of the simulation in hdf5 file
+	if (flagStatus) {
+		// Find the stride to know how often the HDF5 file has to be written
+		PetscBool flag;
+		ierr = PetscOptionsGetReal(
+			NULL, NULL, "-start_stop", &hdf5Stride1D, &flag);
+		checkPetscError(ierr,
+			"setupPetsc1DMonitor: PetscOptionsGetReal (-start_stop) failed.");
+		if (!flag)
+			hdf5Stride1D = 1.0;
+
+		// Compute the correct hdf5Previous1D for a restart
+		// Get the last time step written in the HDF5 file
+		if (hasConcentrations) {
+			assert(lastTsGroup);
+
+			// Get the previous time from the HDF5 file
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
+			hdf5Previous1D = (PetscInt)(previousTime / hdf5Stride1D);
+		}
+
+		// Don't do anything if both files have the same name
+		if (hdf5OutputName1D != solverHandler.getNetworkName()) {
+			PetscInt Mx;
+			PetscErrorCode ierr;
+
+			// Get the da from ts
+			DM da;
+			ierr = TSGetDM(ts, &da);
+			checkPetscError(ierr, "setupPetsc1DMonitor: TSGetDM failed.");
+
+			// Get the size of the total grid
+			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
+				PETSC_IGNORE, PETSC_IGNORE);
+			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
+
+			// Get the solver handler
+			auto& solverHandler = PetscSolver::getSolverHandler();
+
+			// Get the physical grid
+			auto grid = solverHandler.getXGrid();
+
+			// Create and initialize a checkpoint file.
+			// We do this in its own scope so that the file
+			// is closed when the file object goes out of scope.
+			// We want it to close before we (potentially) copy
+			// the network from another file using a single-process
+			// MPI communicator.
+			{
+				io::XFile checkpointFile(hdf5OutputName1D, grid, xolotlComm);
+			}
+
+			// Copy the network group from the given file (if it has one).
+			// We open the files using a single-process MPI communicator
+			// because it is faster for a single process to do the
+			// copy with HDF5's H5Ocopy implementation than it is
+			// when all processes call the copy function.
+			// The checkpoint file must be closed before doing this.
+			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
+				hdf5OutputName1D, network);
+		}
+
+		// startStop1D will be called at each timestep
+		ierr = TSMonitorSet(ts, startStop1D, NULL, NULL);
+		checkPetscError(
+			ierr, "setupPetsc1DMonitor: TSMonitorSet (startStop1D) failed.");
 	}
 
 	// Set the monitor to simply change the previous time to the new time
