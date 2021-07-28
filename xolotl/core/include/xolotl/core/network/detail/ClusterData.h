@@ -130,7 +130,13 @@ struct ClusterDataCommon
 	ClusterType
 	getCluster(IndexType clusterId) const noexcept
 	{
-		return ClusterType(*this, clusterId);
+		return ClusterType(this, clusterId);
+	}
+
+	ClusterType
+	getClusterCommon(IndexType clusterId) const noexcept
+	{
+		return getCluster(clusterId);
 	}
 
 	void
@@ -357,7 +363,7 @@ public:
 	ClusterType
 	getCluster(IndexType clusterId) const noexcept
 	{
-		return ClusterType(*this, clusterId);
+		return ClusterType(this, clusterId);
 	}
 
 	void

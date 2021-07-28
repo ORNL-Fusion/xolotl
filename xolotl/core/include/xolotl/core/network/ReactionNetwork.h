@@ -77,13 +77,20 @@ public:
 	using SparseFillMap = typename IReactionNetwork::SparseFillMap;
 	using ClusterData = typename Types::ClusterData;
 	using ClusterDataMirror = typename Types::ClusterDataMirror;
-	using ClusterDataRef = typename Types::ClusterDataRef;
+	using ClusterDataMirrorRef = detail::ClusterDataRef<TImpl, plsm::OnHost>;
+	using ClusterDataRef = detail::ClusterDataRef<TImpl, plsm::OnDevice>;
+	using ClusterDataView = Kokkos::View<ClusterDataRef>;
+	using ClusterDataHostView = Kokkos::View<ClusterDataRef, Kokkos::HostSpace,
+		Kokkos::MemoryUnmanaged>;
 	using ReactionCollection = typename Types::ReactionCollection;
 	using Bounds = IReactionNetwork::Bounds;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
 
 	template <typename PlsmContext>
 	using Cluster = Cluster<TImpl, PlsmContext>;
+
+	void
+	copyClusterDataView();
 
 	ReactionNetwork() = default;
 
@@ -245,7 +252,7 @@ public:
 	ClusterCommon<plsm::OnHost>
 	getClusterCommon(IndexType clusterId) const override
 	{
-		return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
+		return _clusterDataMirrorRef.getClusterCommon(clusterId);
 	}
 
 	ClusterCommon<plsm::OnHost>
@@ -267,13 +274,14 @@ public:
 	Cluster<plsm::OnDevice>
 	getCluster(IndexType clusterId, plsm::OnDevice)
 	{
-		return Cluster<plsm::OnDevice>(_clusterData, clusterId);
+		return _clusterDataView().getCluster(clusterId);
 	}
 
 	Cluster<plsm::OnHost>
 	getCluster(IndexType clusterId, plsm::OnHost)
 	{
-		return Cluster<plsm::OnHost>(_clusterDataMirror, clusterId);
+		// return Cluster<plsm::OnHost>(_clusterDataMirrorRef, clusterId);
+		return _clusterDataMirrorRef.getCluster(clusterId);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -506,11 +514,13 @@ private:
 private:
 	Subpaving _subpaving;
 	ClusterDataMirror _clusterDataMirror;
+	ClusterDataMirrorRef _clusterDataMirrorRef;
 
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
 protected:
 	ClusterData _clusterData;
+	ClusterDataView _clusterDataView;
 
 	ReactionCollection _reactions;
 
@@ -526,7 +536,6 @@ struct ReactionNetworkWorker
 	using Types = ReactionNetworkTypes<TImpl>;
 	using Species = typename Types::Species;
 	using ClusterData = typename Types::ClusterData;
-	using ClusterDataRef = typename Types::ClusterDataRef;
 	using IndexType = typename Types::IndexType;
 	using AmountType = typename Types::AmountType;
 	using ReactionCollection = typename Types::ReactionCollection;

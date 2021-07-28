@@ -33,14 +33,14 @@ AlloyReactionNetwork::IndexType
 AlloyReactionNetwork::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
-	auto clData = ClusterDataRef(_clusterData);
+	auto clData = _clusterDataView;
 	using Reducer = Kokkos::MaxLoc<AlloyReactionNetwork::AmountType,
 		AlloyReactionNetwork::IndexType>;
 	Reducer::value_type maxLoc;
 	Kokkos::parallel_reduce(
 		_numClusters,
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
-			const Region& clReg = clData.getCluster(i).getRegion();
+			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
 			auto size =
 				hi[Species::Void] + hi[Species::Frank] + hi[Species::Faulted];

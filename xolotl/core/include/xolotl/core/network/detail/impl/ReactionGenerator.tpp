@@ -13,6 +13,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::ReactionGeneratorBase(
 	const TNetwork& network) :
 	_subpaving(network._subpaving),
 	_clusterData(network._clusterData),
+    _clusterDataView(network._clusterDataView),
 	_numDOFs(network.getDOF()),
 	_enableReducedJacobian(network.getEnableReducedJacobian()),
 	_clusterProdReactionCounts(
@@ -63,7 +64,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 	//      - Constructing all reactions
 	//      - Generating connectivity
 	auto reactionCollection = this->asDerived()->getReactionCollection();
-	reactionCollection.constructAll(_clusterData, _allClusterSets);
+	reactionCollection.constructAll(_clusterDataView, _allClusterSets);
 
 	Kokkos::fence();
 

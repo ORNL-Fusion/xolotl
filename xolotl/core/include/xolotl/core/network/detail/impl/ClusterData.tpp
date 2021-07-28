@@ -163,7 +163,7 @@ ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::generate(
 	const ClusterGenerator& generator, double latticeParameter,
 	double interstitialBias, double impurityRadius)
 {
-	auto data = *this;
+	auto data = ClusterDataRef<TNetwork, PlsmContext>(*this);
 	Kokkos::parallel_for(
 		this->numClusters, KOKKOS_LAMBDA(const IndexType i) {
 			auto cluster = data.getCluster(i);

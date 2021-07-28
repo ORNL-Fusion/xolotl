@@ -54,6 +54,7 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
 	}
 
 	this->_clusterData.extraData.trapMutationData.initialize();
+    this->copyClusterDataView();
 }
 
 template <typename TSpeciesEnum>
@@ -319,15 +320,14 @@ typename PSIReactionNetwork<TSpeciesEnum>::IndexType
 PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
-	auto clData = typename PSIReactionNetwork<TSpeciesEnum>::ClusterDataRef(
-		this->_clusterData);
+	auto clData = this->_clusterDataView;
 	using Reducer = Kokkos::MaxLoc<PSIReactionNetwork<TSpeciesEnum>::AmountType,
 		PSIReactionNetwork<TSpeciesEnum>::IndexType>;
 	typename Reducer::value_type maxLoc;
 	Kokkos::parallel_reduce(
 		this->_numClusters,
 		KOKKOS_LAMBDA(IndexType i, typename Reducer::value_type & update) {
-			const auto& clReg = clData.getCluster(i).getRegion();
+			const auto& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
 			auto size = hi[Species::He] + hi[Species::V];
 			if constexpr (psi::hasDeuterium<Species>) {

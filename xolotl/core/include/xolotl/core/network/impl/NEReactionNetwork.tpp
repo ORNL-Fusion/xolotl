@@ -34,14 +34,14 @@ NEReactionNetwork::IndexType
 NEReactionNetwork::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
-	auto clData = ClusterDataRef(_clusterData);
+	auto clData = _clusterDataView;
 	using Reducer = Kokkos::MaxLoc<NEReactionNetwork::AmountType,
 		NEReactionNetwork::IndexType>;
 	Reducer::value_type maxLoc;
 	Kokkos::parallel_reduce(
 		_numClusters,
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
-			const Region& clReg = clData.getCluster(i).getRegion();
+			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
 			if (hi[Species::Xe] > update.val) {
 				update.val = hi[Species::Xe];

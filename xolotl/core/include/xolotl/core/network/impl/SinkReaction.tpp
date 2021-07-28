@@ -16,7 +16,7 @@ KOKKOS_INLINE_FUNCTION
 double
 SinkReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 {
-	auto cl = this->_clusterData.getCluster(_reactant);
+	auto cl = this->_clusterData->getCluster(_reactant);
 	double dc = cl.getDiffusionCoefficient(gridIndex);
 
 	double strength = this->asDerived()->getSinkBias() *

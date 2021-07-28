@@ -9,7 +9,7 @@ namespace network
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 TrapMutationReaction<TNetwork, TDerived>::TrapMutationReaction(
-	ReactionDataRef reactionData, ClusterDataRef clusterData,
+	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, IndexType cluster0, IndexType cluster1,
 	IndexType cluster2) :
 	Superclass(reactionData, clusterData, reactionId),
@@ -27,7 +27,7 @@ TrapMutationReaction<TNetwork, TDerived>::TrapMutationReaction(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 TrapMutationReaction<TNetwork, TDerived>::TrapMutationReaction(
-	ReactionDataRef reactionData, ClusterDataRef clusterData,
+	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, const detail::ClusterSet& clusterSet) :
 	TrapMutationReaction(reactionData, clusterData, reactionId,
 		clusterSet.cluster0, clusterSet.cluster1, clusterSet.cluster2)
@@ -48,7 +48,7 @@ double
 TrapMutationReaction<TNetwork, TDerived>::computeRate(double largestRate)
 {
 	const auto& desorp =
-		this->_clusterData.extraData.trapMutationData.desorption();
+		this->_clusterData->extraData.trapMutationData.desorption();
 	if (_heClId == desorp.id) {
 		return (1.0 - desorp.portion) / desorp.portion;
 	}
@@ -96,7 +96,7 @@ TrapMutationReaction<TNetwork, TDerived>::getAppliedRate(
 	IndexType gridIndex) const
 {
 	double rate = this->_rate[gridIndex];
-	auto& tmData = this->_clusterData.extraData.trapMutationData;
+	auto& tmData = this->_clusterData->extraData.trapMutationData;
 	if (_heClId == tmData.desorption().id) {
 		rate *= tmData.currentDesorpLeftSideRate();
 	}
@@ -109,7 +109,7 @@ KOKKOS_INLINE_FUNCTION
 bool
 TrapMutationReaction<TNetwork, TDerived>::getEnabled() const
 {
-	const auto& tmData = this->_clusterData.extraData.trapMutationData;
+	const auto& tmData = this->_clusterData->extraData.trapMutationData;
 	return tmData.tmEnabled[_heAmount - 1] &&
 		(tmData.tmVSizes[_heAmount - 1] == _vSize);
 }

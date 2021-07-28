@@ -9,7 +9,7 @@ namespace network
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 NucleationReaction<TNetwork, TDerived>::NucleationReaction(
-	ReactionDataRef reactionData, ClusterDataRef clusterData,
+	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, IndexType cluster0, IndexType cluster1) :
 	Superclass(reactionData, clusterData, reactionId),
 	_reactant(cluster0),
@@ -21,7 +21,7 @@ NucleationReaction<TNetwork, TDerived>::NucleationReaction(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 NucleationReaction<TNetwork, TDerived>::NucleationReaction(
-	ReactionDataRef reactionData, ClusterDataRef clusterData,
+	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, const detail::ClusterSet& clusterSet) :
 	NucleationReaction(reactionData, clusterData, reactionId,
 		clusterSet.cluster0, clusterSet.cluster1)
@@ -35,7 +35,7 @@ NucleationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 {
 	// We say there are 25 bubbles created per fission fragments and there
 	// are 2 fission fragments per fission
-	double rate = 50.0 * this->_clusterData.fissionRate();
+	double rate = 50.0 * this->_clusterData->fissionRate();
 
 	return rate;
 }

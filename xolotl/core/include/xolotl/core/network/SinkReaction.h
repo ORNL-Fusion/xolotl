@@ -24,18 +24,18 @@ class SinkReaction : public Reaction<TNetwork, TDerived>
 public:
 	using NetworkType = TNetwork;
 	using Superclass = Reaction<TNetwork, TDerived>;
-	using ClusterDataRef = typename Superclass::ClusterDataRef;
 	using IndexType = typename Superclass::IndexType;
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ClusterData = typename Superclass::ClusterData;
 
 	SinkReaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
-	SinkReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
+	SinkReaction(ReactionDataRef reactionData, const ClusterData& clusterData,
 		IndexType reactionId, IndexType cluster0) :
 		Superclass(reactionData, clusterData, reactionId),
 		_reactant(cluster0)
@@ -44,7 +44,7 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
-	SinkReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
+	SinkReaction(ReactionDataRef reactionData, const ClusterData& clusterData,
 		IndexType reactionId, const detail::ClusterSet& clusterSet) :
 		SinkReaction(reactionData, clusterData, reactionId, clusterSet.cluster0)
 	{

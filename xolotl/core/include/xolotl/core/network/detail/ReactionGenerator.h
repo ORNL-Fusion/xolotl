@@ -28,9 +28,9 @@ class ReactionGeneratorBase
 public:
 	using NetworkType = TNetwork;
 	using NetworkTraits = ReactionNetworkTraits<NetworkType>;
-	using ClusterData = typename NetworkType::ClusterData;
 	using ClusterDataRef = typename NetworkType::ClusterDataRef;
-	using Cluster = typename ClusterData::ClusterType;
+	using ClusterDataView = typename NetworkType::ClusterDataView;
+	using Cluster = typename ClusterDataRef::ClusterType;
 	using ProductionReactionType =
 		typename NetworkTraits::ProductionReactionType;
 	using DissociationReactionType =
@@ -133,7 +133,8 @@ protected:
 
 protected:
 	Subpaving _subpaving;
-	ClusterData _clusterData;
+	ClusterDataRef _clusterData;
+	ClusterDataView _clusterDataView;
 	IndexType _numDOFs;
 	bool _enableReducedJacobian;
 	IndexView _clusterProdReactionCounts;
