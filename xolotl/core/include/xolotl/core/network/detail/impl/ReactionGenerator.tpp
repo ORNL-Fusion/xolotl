@@ -12,8 +12,8 @@ template <typename TNetwork, typename TDerived>
 ReactionGeneratorBase<TNetwork, TDerived>::ReactionGeneratorBase(
 	const TNetwork& network) :
 	_subpaving(network._subpaving),
-	_clusterData(network._clusterData),
-    _clusterDataView(network._clusterDataView),
+	_clusterData(network._clusterData.h_view()),
+	_clusterDataView(network._clusterData.d_view),
 	_numDOFs(network.getDOF()),
 	_enableReducedJacobian(network.getEnableReducedJacobian()),
 	_clusterProdReactionCounts(

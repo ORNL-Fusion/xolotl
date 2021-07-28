@@ -34,7 +34,7 @@ NEReactionNetwork::IndexType
 NEReactionNetwork::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
-	auto clData = _clusterDataView;
+	auto clData = _clusterData.d_view;
 	using Reducer = Kokkos::MaxLoc<NEReactionNetwork::AmountType,
 		NEReactionNetwork::IndexType>;
 	Reducer::value_type maxLoc;

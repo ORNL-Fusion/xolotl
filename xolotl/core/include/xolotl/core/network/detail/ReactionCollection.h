@@ -32,7 +32,6 @@ public:
 	using ReactionTypes = ReactionTypeList<NetworkType>;
 	using Types = ReactionNetworkTypes<NetworkType>;
 	using ClusterData = typename Types::ClusterData;
-	using ClusterDataRef = typename Types::ClusterDataRef;
 
 private:
 	static constexpr std::size_t numReactionTypes =
@@ -111,7 +110,7 @@ public:
 	}
 
 	void
-	constructAll(Kokkos::View<ClusterDataRef> clusterData,
+	constructAll(Kokkos::View<ClusterData> clusterData,
 		Kokkos::View<ClusterSet*> clusterSets)
 	{
 		auto chain = _reactions.getChain();
@@ -131,7 +130,7 @@ public:
 	}
 
 	void
-	updateAll(Kokkos::View<ClusterDataRef> clusterData)
+	updateAll(Kokkos::View<ClusterData> clusterData)
 	{
 		auto reactionData = ReactionDataRef<NetworkType>(_data);
 		forEach(DEVICE_LAMBDA(auto&& reaction) {

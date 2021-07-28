@@ -77,10 +77,10 @@ public:
 	using SparseFillMap = typename IReactionNetwork::SparseFillMap;
 	using ClusterData = typename Types::ClusterData;
 	using ClusterDataMirror = typename Types::ClusterDataMirror;
-	using ClusterDataMirrorRef = detail::ClusterDataRef<TImpl, plsm::OnHost>;
-	using ClusterDataRef = detail::ClusterDataRef<TImpl, plsm::OnDevice>;
-	using ClusterDataView = Kokkos::View<ClusterDataRef>;
-	using ClusterDataHostView = Kokkos::View<ClusterDataRef, Kokkos::HostSpace,
+	// using ClusterDataMirrorRef = detail::ClusterDataRef<TImpl, plsm::OnHost>;
+	// using ClusterDataRef = detail::ClusterDataRef<TImpl, plsm::OnDevice>;
+	using ClusterDataView = Kokkos::View<ClusterData>;
+	using ClusterDataHostView = Kokkos::View<ClusterData, Kokkos::HostSpace,
 		Kokkos::MemoryUnmanaged>;
 	using ReactionCollection = typename Types::ReactionCollection;
 	using Bounds = IReactionNetwork::Bounds;
@@ -252,7 +252,7 @@ public:
 	ClusterCommon<plsm::OnHost>
 	getClusterCommon(IndexType clusterId) const override
 	{
-		return _clusterDataMirrorRef.getClusterCommon(clusterId);
+		return _clusterDataMirror.getClusterCommon(clusterId);
 	}
 
 	ClusterCommon<plsm::OnHost>
@@ -274,14 +274,13 @@ public:
 	Cluster<plsm::OnDevice>
 	getCluster(IndexType clusterId, plsm::OnDevice)
 	{
-		return _clusterDataView().getCluster(clusterId);
+		return _clusterData.d_view().getCluster(clusterId);
 	}
 
 	Cluster<plsm::OnHost>
 	getCluster(IndexType clusterId, plsm::OnHost)
 	{
-		// return Cluster<plsm::OnHost>(_clusterDataMirrorRef, clusterId);
-		return _clusterDataMirrorRef.getCluster(clusterId);
+		return _clusterDataMirror.getCluster(clusterId);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -508,19 +507,20 @@ private:
 	double
 	getTemperature(IndexType gridIndex) const noexcept
 	{
-		return _clusterData.temperature(gridIndex);
+		return _clusterData.d_view().temperature(gridIndex);
 	}
 
 private:
 	Subpaving _subpaving;
 	ClusterDataMirror _clusterDataMirror;
-	ClusterDataMirrorRef _clusterDataMirrorRef;
+	// ClusterDataMirrorRef _clusterDataMirrorRef;
 
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
 protected:
-	ClusterData _clusterData;
-	ClusterDataView _clusterDataView;
+	// ClusterData _clusterData;
+	// ClusterDataView _clusterDataView;
+    Kokkos::DualView<ClusterData> _clusterData;
 
 	ReactionCollection _reactions;
 

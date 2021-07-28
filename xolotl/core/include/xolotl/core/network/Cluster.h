@@ -97,20 +97,21 @@ class ClusterCommon : public ClusterBase<ClusterCommon<PlsmContext>>
 
 public:
 	using Superclass = ClusterBase<ClusterCommon<PlsmContext>>;
+    using ClusterData = detail::ClusterDataCommon<PlsmContext>;
 	using ClusterDataRef = detail::ClusterDataCommonRef<PlsmContext>;
 	using IndexType = typename Superclass::IndexType;
 
 	ClusterCommon() = delete;
 
 	KOKKOS_INLINE_FUNCTION
-	ClusterCommon(const ClusterDataRef* data, IndexType id) :
+	ClusterCommon(const ClusterData* data, IndexType id) :
 		Superclass(id),
 		_data{data}
 	{
 	}
 
 private:
-	const ClusterDataRef* _data;
+	const ClusterData* _data;
 };
 
 /**
@@ -130,6 +131,7 @@ public:
 	using Superclass = ClusterBase<Cluster<TNetwork, PlsmContext>>;
 	using Subpaving = typename Types::Subpaving;
 	using Region = typename Subpaving::RegionType;
+	using ClusterData = detail::ClusterData<TNetwork, PlsmContext>;
 	using ClusterDataRef = detail::ClusterDataRef<TNetwork, PlsmContext>;
 	using IndexType = typename Superclass::IndexType;
 	using Composition = typename Types::Composition;
@@ -137,7 +139,7 @@ public:
 	Cluster() = delete;
 
 	KOKKOS_INLINE_FUNCTION
-	Cluster(const ClusterDataRef* data, IndexType id) :
+	Cluster(const ClusterData* data, IndexType id) :
 		Superclass(id),
 		_data{data}
 	{
@@ -147,10 +149,7 @@ public:
 	const Region&
 	getRegion() const
 	{
-		const auto& tile = this->_data->tiles(this->getId());
-		const auto& region = tile.getRegion();
-		return region;
-		// return _data->tiles(this->getId()).getRegion();
+		return this->_data->tiles(this->getId()).getRegion();
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -168,7 +167,7 @@ public:
 	}
 
 private:
-	const ClusterDataRef* _data;
+	const ClusterData* _data;
 };
 } // namespace network
 } // namespace core

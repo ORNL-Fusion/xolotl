@@ -34,7 +34,7 @@ FeReactionNetwork::IndexType
 FeReactionNetwork::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
-	auto clData = _clusterDataView;
+	auto clData = _clusterData.d_view;
 	using Reducer = Kokkos::MaxLoc<FeReactionNetwork::AmountType,
 		FeReactionNetwork::IndexType>;
 	Reducer::value_type maxLoc;

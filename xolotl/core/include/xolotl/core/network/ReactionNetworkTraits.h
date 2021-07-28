@@ -120,7 +120,7 @@ struct ReactionNetworkTypes
 	using Composition = typename Subpaving::PointType;
 	using ClusterData = detail::ClusterData<TImpl, plsm::OnDevice>;
 	using ClusterDataMirror = detail::ClusterData<TImpl, plsm::OnHost>;
-	using ClusterDataRef = detail::ClusterDataRef<TImpl, plsm::OnDevice>;
+	// using ClusterDataRef = detail::ClusterDataRef<TImpl, plsm::OnDevice>;
 	using ClusterUpdater = typename ClusterUpdaterHelper<TImpl>::Type;
 	using ReactionCollection = detail::ReactionCollection<TImpl>;
 	using ReactionDataRef = typename detail::ReactionDataRef<TImpl>;

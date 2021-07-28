@@ -33,7 +33,7 @@ AlloyReactionNetwork::IndexType
 AlloyReactionNetwork::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
-	auto clData = _clusterDataView;
+	auto clData = _clusterData.d_view;
 	using Reducer = Kokkos::MaxLoc<AlloyReactionNetwork::AmountType,
 		AlloyReactionNetwork::IndexType>;
 	Reducer::value_type maxLoc;

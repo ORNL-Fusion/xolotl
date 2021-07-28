@@ -47,7 +47,7 @@ public:
 	using FluxesView = IReactionNetwork::FluxesView;
 	using Connectivity = typename IReactionNetwork::Connectivity;
 	using ReactionDataRef = typename Types::ReactionDataRef;
-	using ClusterData = typename Types::ClusterDataRef;
+	using ClusterData = typename Types::ClusterData;
 	using ReflectedRegion =
 		plsm::Region<plsm::DifferenceType<typename Region::ScalarType>,
 			Props::numSpeciesNoI>;

@@ -53,8 +53,8 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
 		return;
 	}
 
-	this->_clusterData.extraData.trapMutationData.initialize();
-    this->copyClusterDataView();
+	this->_clusterData.h_view().extraData.trapMutationData.initialize();
+	this->copyClusterDataView();
 }
 
 template <typename TSpeciesEnum>
@@ -68,7 +68,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 
 	_tmHandler->updateData(gridTemps[0]);
 
-	auto& tmData = this->_clusterData.extraData.trapMutationData;
+	auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
 
 	using Kokkos::HostSpace;
 	using Kokkos::MemoryUnmanaged;
@@ -95,7 +95,7 @@ void
 PSIReactionNetwork<TSpeciesEnum>::selectTrapMutationReactions(
 	double depth, double spacing)
 {
-	auto& tmData = this->_clusterData.extraData.trapMutationData;
+	auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
 	auto depths = create_mirror_view(tmData.tmDepths);
 	deep_copy(depths, tmData.tmDepths);
 	auto enable = create_mirror_view(tmData.tmEnabled);
@@ -273,7 +273,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateTrapMutationDisappearingRate(
 {
 	// Set the rate to have an exponential decrease
 	if (this->_enableAttenuation) {
-		auto& tmData = this->_clusterData.extraData.trapMutationData;
+		auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
 		auto mirror = create_mirror_view(tmData.currentDisappearingRate);
 		mirror() = exp(-4.0 * totalTrappedHeliumConc);
 		deep_copy(tmData.currentDisappearingRate, mirror);
@@ -287,7 +287,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateDesorptionLeftSideRate(
 {
 	// TODO: Desorption is constant. So make it available on both host and
 	// device. Either DualView or just direct value type that gets copied
-	auto& tmData = this->_clusterData.extraData.trapMutationData;
+	auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
 	auto desorp = create_mirror_view(tmData.desorption);
 	deep_copy(desorp, tmData.desorption);
 	auto lsRate = create_mirror_view(tmData.currentDesorpLeftSideRate);
@@ -320,7 +320,7 @@ typename PSIReactionNetwork<TSpeciesEnum>::IndexType
 PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
-	auto clData = this->_clusterDataView;
+	auto clData = this->_clusterData.d_view;
 	using Reducer = Kokkos::MaxLoc<PSIReactionNetwork<TSpeciesEnum>::AmountType,
 		PSIReactionNetwork<TSpeciesEnum>::IndexType>;
 	typename Reducer::value_type maxLoc;
