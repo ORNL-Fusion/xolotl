@@ -55,8 +55,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 23);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 120000);
-	BOOST_REQUIRE(deviceMemorySize < 140000);
+	BOOST_CHECK_GT(deviceMemorySize, 90000);
+	BOOST_CHECK_LT(deviceMemorySize, 100000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.36, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.011664, 0.01);
@@ -506,8 +506,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 53);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 700000);
-	BOOST_REQUIRE(deviceMemorySize < 1100000);
+	BOOST_CHECK_GT(deviceMemorySize, 500000);
+	BOOST_CHECK_LT(deviceMemorySize, 600000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.36, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.011664, 0.01);
