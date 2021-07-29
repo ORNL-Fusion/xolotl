@@ -39,8 +39,8 @@ labelStr()
 	return labelString(contextLabel<PlsmContext>);
 }
 
-template <typename PlsmContext, template <typename> typename ViewConvert>
-ClusterDataCommon<PlsmContext, ViewConvert>::ClusterDataCommon(
+template <typename PlsmContext>
+ClusterDataCommon<PlsmContext>::ClusterDataCommon(
 	IndexType numClusters_, IndexType gridSize_) :
 	numClusters(numClusters_),
 	gridSize(gridSize_),
@@ -56,10 +56,10 @@ ClusterDataCommon<PlsmContext, ViewConvert>::ClusterDataCommon(
 {
 }
 
-template <typename PlsmContext, template <typename> typename ViewConvert>
+template <typename PlsmContext>
 template <typename TClusterDataCommon>
 inline void
-ClusterDataCommon<PlsmContext, ViewConvert>::deepCopy(
+ClusterDataCommon<PlsmContext>::deepCopy(
 	const TClusterDataCommon& data)
 {
 	deep_copy(_floatVals, data._floatVals);
@@ -72,9 +72,9 @@ ClusterDataCommon<PlsmContext, ViewConvert>::deepCopy(
 	deep_copy(diffusionCoefficient, data.diffusionCoefficient);
 }
 
-template <typename PlsmContext, template <typename> typename ViewConvert>
+template <typename PlsmContext>
 inline std::uint64_t
-ClusterDataCommon<PlsmContext, ViewConvert>::getDeviceMemorySize()
+ClusterDataCommon<PlsmContext>::getDeviceMemorySize()
 	const noexcept
 {
 	std::uint64_t ret = 0;
@@ -95,9 +95,9 @@ ClusterDataCommon<PlsmContext, ViewConvert>::getDeviceMemorySize()
 	return ret;
 }
 
-template <typename PlsmContext, template <typename> typename ViewConvert>
+template <typename PlsmContext>
 inline void
-ClusterDataCommon<PlsmContext, ViewConvert>::setGridSize(IndexType gridSize_)
+ClusterDataCommon<PlsmContext>::setGridSize(IndexType gridSize_)
 {
 	gridSize = gridSize_;
 	temperature =
@@ -107,9 +107,8 @@ ClusterDataCommon<PlsmContext, ViewConvert>::setGridSize(IndexType gridSize_)
 			numClusters, gridSize);
 }
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
-ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::ClusterDataImpl(
+template <typename TNetwork, typename PlsmContext>
+ClusterData<TNetwork, PlsmContext>::ClusterData(
 	const TilesView& tiles_, IndexType numClusters_, IndexType gridSize_) :
 	Superclass(numClusters_, gridSize_),
 	tiles(tiles_),
@@ -117,20 +116,18 @@ ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::ClusterDataImpl(
 {
 }
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
-ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::ClusterDataImpl(
+template <typename TNetwork, typename PlsmContext>
+ClusterData<TNetwork, PlsmContext>::ClusterData(
 	Subpaving& subpaving, IndexType gridSize_) :
-	ClusterDataImpl(subpaving.getTiles(PlsmContext{}),
+	ClusterData(subpaving.getTiles(PlsmContext{}),
 		subpaving.getNumberOfTiles(PlsmContext{}), gridSize_)
 {
 }
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename TNetwork, typename PlsmContext>
 template <typename TClusterData>
 inline void
-ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::deepCopy(
+ClusterData<TNetwork, PlsmContext>::deepCopy(
 	const TClusterData& data)
 {
 	Superclass::deepCopy(data);
@@ -141,10 +138,9 @@ ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::deepCopy(
 	extraData.deepCopy(data.extraData);
 }
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename TNetwork, typename PlsmContext>
 inline std::uint64_t
-ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::getDeviceMemorySize()
+ClusterData<TNetwork, PlsmContext>::getDeviceMemorySize()
 	const noexcept
 {
 	std::uint64_t ret = Superclass::getDeviceMemorySize();
@@ -156,10 +152,9 @@ ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::getDeviceMemorySize()
 	return ret;
 }
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename TNetwork, typename PlsmContext>
 inline void
-ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::generate(
+ClusterData<TNetwork, PlsmContext>::generate(
 	const ClusterGenerator& generator, double latticeParameter,
 	double interstitialBias, double impurityRadius)
 {

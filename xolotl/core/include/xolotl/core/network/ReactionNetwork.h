@@ -77,13 +77,17 @@ public:
 	using SparseFillMap = typename IReactionNetwork::SparseFillMap;
 	using ClusterData = typename Types::ClusterData;
 	using ClusterDataMirror = typename Types::ClusterDataMirror;
-	using ClusterDataRef = typename Types::ClusterDataRef;
+	using ClusterDataView = Kokkos::View<ClusterData>;
+	using ClusterDataHostView = typename ClusterDataView::host_mirror_type;
 	using ReactionCollection = typename Types::ReactionCollection;
 	using Bounds = IReactionNetwork::Bounds;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
 
 	template <typename PlsmContext>
 	using Cluster = Cluster<TImpl, PlsmContext>;
+
+	void
+	copyClusterDataView();
 
 	ReactionNetwork() = default;
 
@@ -245,7 +249,7 @@ public:
 	ClusterCommon<plsm::OnHost>
 	getClusterCommon(IndexType clusterId) const override
 	{
-		return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
+		return _clusterDataMirror.getClusterCommon(clusterId);
 	}
 
 	ClusterCommon<plsm::OnHost>
@@ -267,13 +271,13 @@ public:
 	Cluster<plsm::OnDevice>
 	getCluster(IndexType clusterId, plsm::OnDevice)
 	{
-		return Cluster<plsm::OnDevice>(_clusterData, clusterId);
+		return _clusterData.d_view().getCluster(clusterId);
 	}
 
 	Cluster<plsm::OnHost>
 	getCluster(IndexType clusterId, plsm::OnHost)
 	{
-		return Cluster<plsm::OnHost>(_clusterDataMirror, clusterId);
+		return _clusterDataMirror.getCluster(clusterId);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -500,7 +504,7 @@ private:
 	double
 	getTemperature(IndexType gridIndex) const noexcept
 	{
-		return _clusterData.temperature(gridIndex);
+		return _clusterData.d_view().temperature(gridIndex);
 	}
 
 private:
@@ -510,7 +514,7 @@ private:
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
 protected:
-	ClusterData _clusterData;
+	Kokkos::DualView<ClusterData> _clusterData;
 
 	ReactionCollection _reactions;
 
@@ -526,7 +530,6 @@ struct ReactionNetworkWorker
 	using Types = ReactionNetworkTypes<TImpl>;
 	using Species = typename Types::Species;
 	using ClusterData = typename Types::ClusterData;
-	using ClusterDataRef = typename Types::ClusterDataRef;
 	using IndexType = typename Types::IndexType;
 	using AmountType = typename Types::AmountType;
 	using ReactionCollection = typename Types::ReactionCollection;

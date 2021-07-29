@@ -43,11 +43,11 @@ public:
 	using AmountType = typename Types::AmountType;
 	using Region = typename Types::Region;
 	using Composition = typename Types::Composition;
-	using ClusterDataRef = typename Types::ClusterDataRef;
 	using ConcentrationsView = IReactionNetwork::ConcentrationsView;
 	using FluxesView = IReactionNetwork::FluxesView;
 	using Connectivity = typename IReactionNetwork::Connectivity;
 	using ReactionDataRef = typename Types::ReactionDataRef;
+	using ClusterData = typename Types::ClusterData;
 	using ReflectedRegion =
 		plsm::Region<plsm::DifferenceType<typename Region::ScalarType>,
 			Props::numSpeciesNoI>;
@@ -55,12 +55,12 @@ public:
 	Reaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
-	Reaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
+	Reaction(ReactionDataRef reactionData, const ClusterData& clusterData,
 		IndexType reactionId);
 
 	KOKKOS_INLINE_FUNCTION
 	void
-	updateData(ReactionDataRef reactionData, ClusterDataRef clusterData);
+	updateData(ReactionDataRef reactionData, const ClusterData& clusterData);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -179,7 +179,7 @@ protected:
 			return;
 		}
 
-		const auto& mIds = _clusterData.getCluster(clusterId).getMomentIds();
+		const auto& mIds = _clusterData->getCluster(clusterId).getMomentIds();
 		for (IndexType i = 0; i < nMomentIds; ++i) {
 			momentIds[i] = mIds[i];
 		}
@@ -194,7 +194,7 @@ protected:
 	}
 
 protected:
-	ClusterDataRef _clusterData;
+	const ClusterData* _clusterData;
 
 	IndexType _reactionId{invalidIndex};
 
@@ -227,7 +227,6 @@ class ProductionReaction : public Reaction<TNetwork, TDerived>
 public:
 	using NetworkType = TNetwork;
 	using Superclass = Reaction<TNetwork, TDerived>;
-	using ClusterDataRef = typename Superclass::ClusterDataRef;
 	using IndexType = typename Superclass::IndexType;
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
@@ -236,18 +235,21 @@ public:
 	using Region = typename Superclass::Region;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ClusterData = typename Superclass::ClusterData;
 	using ReflectedRegion = typename Superclass::ReflectedRegion;
 
 	ProductionReaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
-	ProductionReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
-		IndexType reactionId, IndexType cluster0, IndexType cluster1,
+	ProductionReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		IndexType cluster0, IndexType cluster1,
 		IndexType cluster2 = invalidIndex, IndexType cluster3 = invalidIndex);
 
 	KOKKOS_INLINE_FUNCTION
-	ProductionReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
-		IndexType reactionId, const detail::ClusterSet& clusterSet);
+	ProductionReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		const detail::ClusterSet& clusterSet);
 
 	static detail::CoefficientsView
 	allocateCoefficientsView(IndexType size)
@@ -323,7 +325,6 @@ class DissociationReaction : public Reaction<TNetwork, TDerived>
 public:
 	using NetworkType = TNetwork;
 	using Superclass = Reaction<TNetwork, TDerived>;
-	using ClusterDataRef = typename Superclass::ClusterDataRef;
 	using IndexType = typename Superclass::IndexType;
 	using Region = typename Superclass::Region;
 	using Composition = typename Superclass::Composition;
@@ -332,18 +333,19 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ClusterData = typename Superclass::ClusterData;
 	using ReflectedRegion = typename Superclass::ReflectedRegion;
 
 	DissociationReaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
 	DissociationReaction(ReactionDataRef reactionData,
-		ClusterDataRef clusterData, IndexType reactionId, IndexType cluster0,
-		IndexType cluster1, IndexType cluster2);
+		const ClusterData& clusterData, IndexType reactionId,
+		IndexType cluster0, IndexType cluster1, IndexType cluster2);
 
 	KOKKOS_INLINE_FUNCTION
 	DissociationReaction(ReactionDataRef reactionData,
-		ClusterDataRef clusterData, IndexType reactionId,
+		const ClusterData& clusterData, IndexType reactionId,
 		const detail::ClusterSet& clusterSet);
 
 	static detail::CoefficientsView

@@ -103,9 +103,9 @@ public:
 	ClusterCommon() = delete;
 
 	KOKKOS_INLINE_FUNCTION
-	ClusterCommon(const ClusterData& data, IndexType id) :
+	ClusterCommon(const ClusterData* data, IndexType id) :
 		Superclass(id),
-		_data{&data}
+		_data{data}
 	{
 	}
 
@@ -137,17 +137,15 @@ public:
 	Cluster() = delete;
 
 	KOKKOS_INLINE_FUNCTION
-	Cluster(const ClusterData& data, IndexType id) :
-		Superclass(id),
-		_data{&data}
+	Cluster(const ClusterData* data, IndexType id) : Superclass(id), _data{data}
 	{
 	}
 
 	KOKKOS_INLINE_FUNCTION
-	Region
+	const Region&
 	getRegion() const
 	{
-		return _data->tiles(this->getId()).getRegion();
+		return this->_data->tiles(this->getId()).getRegion();
 	}
 
 	KOKKOS_INLINE_FUNCTION

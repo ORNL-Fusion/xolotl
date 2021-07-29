@@ -11,7 +11,7 @@ namespace network
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
-	ReactionDataRef reactionData, ClusterDataRef clusterData,
+	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, IndexType cluster0, IndexType cluster1,
 	IndexType cluster2) :
 	Superclass(reactionData, clusterData, reactionId),
@@ -26,9 +26,9 @@ ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
 	// static
 	const auto dummyRegion = Region(Composition{});
 
-	auto clReg = this->_clusterData.getCluster(_reactant).getRegion();
-	auto prod1Reg = this->_clusterData.getCluster(_products[0]).getRegion();
-	auto prod2Reg = this->_clusterData.getCluster(_products[1]).getRegion();
+	auto clReg = this->_clusterData->getCluster(_reactant).getRegion();
+	auto prod1Reg = this->_clusterData->getCluster(_products[0]).getRegion();
+	auto prod2Reg = this->_clusterData->getCluster(_products[1]).getRegion();
 
 	_reactantVolume = clReg.volume();
 	_productVolumes = {prod1Reg.volume(), prod2Reg.volume()};
@@ -39,7 +39,7 @@ ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
-	ReactionDataRef reactionData, ClusterDataRef clusterData,
+	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, const detail::ClusterSet& clusterSet) :
 	ReSolutionReaction(reactionData, clusterData, reactionId,
 		clusterSet.cluster0, clusterSet.cluster1, clusterSet.cluster2)
@@ -56,9 +56,9 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-	auto clReg = this->_clusterData.getCluster(_reactant).getRegion();
-	auto prod1Reg = this->_clusterData.getCluster(_products[0]).getRegion();
-	auto prod2Reg = this->_clusterData.getCluster(_products[1]).getRegion();
+	auto clReg = this->_clusterData->getCluster(_reactant).getRegion();
+	auto prod1Reg = this->_clusterData->getCluster(_products[0]).getRegion();
+	auto prod2Reg = this->_clusterData->getCluster(_products[1]).getRegion();
 	const auto& clDisp =
 		detail::getReflectedDispersionForCoefs<NetworkType::Traits::numSpecies>(
 			clReg);
@@ -151,7 +151,7 @@ double
 ReSolutionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 {
 	// Get Zeta
-	auto zeta = this->_clusterData.zeta();
+	auto zeta = this->_clusterData->zeta();
 	// Set the fit variables depending on the electronic stopping power (zeta)
 	double y0 = 0.0, a1 = 0.0, b1 = 0.0, b2 = 0.0, c = 0.0;
 	if (zeta > 0.87) {
@@ -182,14 +182,14 @@ ReSolutionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 		y0 = 2.3061, a1 = 0.2786, b1 = 1.1008, b2 = 1.605, c = 150.6689;
 	}
 	// Compute the fraction rate
-	auto cl = this->_clusterData.getCluster(_reactant);
+	auto cl = this->_clusterData->getCluster(_reactant);
 	auto radius = cl.getReactionRadius();
 	double fractionRate = (a1 * exp(-b1 * radius) +
 							  (y0 - a1) / (1.0 + c * pow(radius, 2.0)) *
 								  exp(-b2 * pow(radius, 2.0))) *
 		1.0e-4;
 	// Resolution rate depends on fission rate
-	double resolutionRate = 1.0e8 * this->_clusterData.fissionRate();
+	double resolutionRate = 1.0e8 * this->_clusterData->fissionRate();
 
 	return fractionRate * resolutionRate;
 }
@@ -203,11 +203,11 @@ ReSolutionReaction<TNetwork, TDerived>::computeConnectivity(
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 	// Get the total number of elements in each cluster
-	auto cl = this->_clusterData.getCluster(_reactant);
+	auto cl = this->_clusterData->getCluster(_reactant);
 	const auto& clReg = cl.getRegion();
-	auto prod1 = this->_clusterData.getCluster(_products[0]);
+	auto prod1 = this->_clusterData->getCluster(_products[0]);
 	const auto& prod1Reg = prod1.getRegion();
-	auto prod2 = this->_clusterData.getCluster(_products[1]);
+	auto prod2 = this->_clusterData->getCluster(_products[1]);
 	const auto& prod2Reg = prod2.getRegion();
 
 	// The reactant connects with the reactant
@@ -278,11 +278,11 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 	// Get the total number of elements in each cluster
-	auto cl = this->_clusterData.getCluster(_reactant);
+	auto cl = this->_clusterData->getCluster(_reactant);
 	const auto& clReg = cl.getRegion();
-	auto prod1 = this->_clusterData.getCluster(_products[0]);
+	auto prod1 = this->_clusterData->getCluster(_products[0]);
 	const auto& prod1Reg = prod1.getRegion();
-	auto prod2 = this->_clusterData.getCluster(_products[1]);
+	auto prod2 = this->_clusterData->getCluster(_products[1]);
 	const auto& prod2Reg = prod2.getRegion();
 
 	// The reactant connects with the reactant

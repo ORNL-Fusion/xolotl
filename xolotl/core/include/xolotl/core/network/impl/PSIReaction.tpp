@@ -75,9 +75,9 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 
 	double be = 0.0;
 
-	auto cl = this->_clusterData.getCluster(this->_reactant);
-	auto prod1 = this->_clusterData.getCluster(this->_products[0]);
-	auto prod2 = this->_clusterData.getCluster(this->_products[1]);
+	auto cl = this->_clusterData->getCluster(this->_reactant);
+	auto prod1 = this->_clusterData->getCluster(this->_products[0]);
+	auto prod2 = this->_clusterData->getCluster(this->_products[1]);
 
 	auto clReg = cl.getRegion();
 	auto prod1Reg = prod1.getRegion();

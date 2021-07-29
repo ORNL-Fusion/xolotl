@@ -29,7 +29,7 @@ public:
 	using NetworkType = TNetwork;
 	using NetworkTraits = ReactionNetworkTraits<NetworkType>;
 	using ClusterData = typename NetworkType::ClusterData;
-	using ClusterDataRef = typename NetworkType::ClusterDataRef;
+	using ClusterDataView = typename NetworkType::ClusterDataView;
 	using Cluster = typename ClusterData::ClusterType;
 	using ProductionReactionType =
 		typename NetworkTraits::ProductionReactionType;
@@ -134,6 +134,7 @@ protected:
 protected:
 	Subpaving _subpaving;
 	ClusterData _clusterData;
+	ClusterDataView _clusterDataView;
 	IndexType _numDOFs;
 	bool _enableReducedJacobian;
 	IndexView _clusterProdReactionCounts;

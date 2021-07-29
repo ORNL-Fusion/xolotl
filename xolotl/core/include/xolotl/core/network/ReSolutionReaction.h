@@ -23,7 +23,6 @@ class ReSolutionReaction : public Reaction<TNetwork, TDerived>
 public:
 	using NetworkType = TNetwork;
 	using Superclass = Reaction<TNetwork, TDerived>;
-	using ClusterDataRef = typename Superclass::ClusterDataRef;
 	using IndexType = typename Superclass::IndexType;
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
@@ -32,18 +31,20 @@ public:
 	using Region = typename Superclass::Region;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ClusterData = typename Superclass::ClusterData;
 	using ReflectedRegion = typename Superclass::ReflectedRegion;
 
 	ReSolutionReaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
-	ReSolutionReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
-		IndexType reactionId, IndexType cluster0, IndexType cluster1,
-		IndexType cluster2);
+	ReSolutionReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		IndexType cluster0, IndexType cluster1, IndexType cluster2);
 
 	KOKKOS_INLINE_FUNCTION
-	ReSolutionReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
-		IndexType reactionId, const detail::ClusterSet& clusterSet);
+	ReSolutionReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		const detail::ClusterSet& clusterSet);
 
 	static detail::CoefficientsView
 	allocateCoefficientsView(IndexType size)

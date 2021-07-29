@@ -50,8 +50,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 20);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 25000);
-	BOOST_REQUIRE(deviceMemorySize < 30000);
+	BOOST_CHECK_GT(deviceMemorySize, 19000);
+	BOOST_CHECK_LT(deviceMemorySize, 22000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.547, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0409168, 0.01);
@@ -283,8 +283,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 19);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 25000);
-	BOOST_REQUIRE(deviceMemorySize < 30000);
+	BOOST_CHECK_GT(deviceMemorySize, 18000);
+	BOOST_CHECK_LT(deviceMemorySize, 21000);
 
 	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 16);
@@ -485,8 +485,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 	network.getSubpaving().syncZones(plsm::onHost);
 
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 36000);
-	BOOST_REQUIRE(deviceMemorySize < 42000);
+	BOOST_CHECK_GT(deviceMemorySize, 24000);
+	BOOST_CHECK_LT(deviceMemorySize, 28000);
 
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
 	BOOST_REQUIRE(network.getEnableReSolution() == true);
@@ -644,8 +644,8 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 34000);
-	BOOST_REQUIRE(deviceMemorySize < 40000);
+	BOOST_CHECK_GT(deviceMemorySize, 23000);
+	BOOST_CHECK_LT(deviceMemorySize, 26000);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
