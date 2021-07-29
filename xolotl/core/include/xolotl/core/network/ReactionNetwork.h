@@ -77,11 +77,8 @@ public:
 	using SparseFillMap = typename IReactionNetwork::SparseFillMap;
 	using ClusterData = typename Types::ClusterData;
 	using ClusterDataMirror = typename Types::ClusterDataMirror;
-	// using ClusterDataMirrorRef = detail::ClusterDataRef<TImpl, plsm::OnHost>;
-	// using ClusterDataRef = detail::ClusterDataRef<TImpl, plsm::OnDevice>;
 	using ClusterDataView = Kokkos::View<ClusterData>;
-	using ClusterDataHostView = Kokkos::View<ClusterData, Kokkos::HostSpace,
-		Kokkos::MemoryUnmanaged>;
+	using ClusterDataHostView = typename ClusterDataView::host_mirror_type;
 	using ReactionCollection = typename Types::ReactionCollection;
 	using Bounds = IReactionNetwork::Bounds;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
@@ -513,14 +510,11 @@ private:
 private:
 	Subpaving _subpaving;
 	ClusterDataMirror _clusterDataMirror;
-	// ClusterDataMirrorRef _clusterDataMirrorRef;
 
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
 protected:
-	// ClusterData _clusterData;
-	// ClusterDataView _clusterDataView;
-    Kokkos::DualView<ClusterData> _clusterData;
+	Kokkos::DualView<ClusterData> _clusterData;
 
 	ReactionCollection _reactions;
 

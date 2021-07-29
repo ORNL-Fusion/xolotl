@@ -380,15 +380,6 @@ struct ClusterDataHelper
 {
 	using Type = ClusterDataImpl<TNetwork, PlsmContext, PassThru>;
 };
-
-template <typename PlsmContext>
-using ClusterDataCommonRef = ClusterDataCommon<PlsmContext, Unmanaged>;
-
-template <typename TNetwork, typename PlsmContext = plsm::OnDevice>
-struct ClusterDataRefHelper
-{
-	using Type = ClusterDataImpl<TNetwork, PlsmContext, Unmanaged>;
-};
 } // namespace detail
 } // namespace network
 } // namespace core

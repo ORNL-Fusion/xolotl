@@ -18,8 +18,6 @@ template <typename TImpl>
 inline void
 ReactionNetwork<TImpl>::copyClusterDataView()
 {
-	// auto clDataRef = ClusterDataRef(_clusterData);
-	// deep_copy(_clusterDataView, ClusterDataHostView(&_clusterData));
 	_clusterData.modify_host();
 	_clusterData.sync_device();
 }
@@ -29,7 +27,6 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	IndexType gridSize, const options::IOptions& opts) :
 	Superclass(gridSize),
 	_subpaving(subpaving),
-	// _clusterData(_subpaving, gridSize),
 	_clusterData("Cluster Data"),
 	_worker(*this),
 	_speciesLabelMap(createSpeciesLabelMap())
@@ -222,7 +219,6 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 	this->_gridSize = gridSize;
 	_clusterData.h_view().setGridSize(gridSize);
 	_clusterDataMirror.setGridSize(gridSize);
-	// _clusterDataMirrorRef = ClusterDataMirrorRef(_clusterDataMirror);
 	copyClusterDataView();
 	_reactions.setGridSize(gridSize);
 	_reactions.updateAll(_clusterData.d_view);
@@ -273,7 +269,6 @@ ReactionNetwork<TImpl>::syncClusterDataOnHost()
 	auto mirror = ClusterDataMirror(_subpaving, this->_gridSize);
 	mirror.deepCopy(_clusterData.h_view());
 	_clusterDataMirror = mirror;
-	// _clusterDataMirrorRef = ClusterDataMirrorRef(_clusterDataMirror);
 }
 
 template <typename TImpl>
