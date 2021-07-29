@@ -62,15 +62,11 @@ inline constexpr auto invalidSpeciesAmount =
  * The data here should be accessed only from code that "knows" what it
  * contains, that is, other network-specific code
  */
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename TNetwork, typename PlsmContext>
 struct ClusterDataExtra;
 
 template <typename TNetwork, typename PlsmContext>
-struct ClusterDataHelper;
-
-template <typename TNetwork, typename PlsmContext>
-using ClusterData = typename ClusterDataHelper<TNetwork, PlsmContext>::Type;
+struct ClusterData;
 
 template <typename TNetwork>
 struct ReactionDataRef;

@@ -52,24 +52,20 @@ struct UnmanagedHelper
 template <typename TView>
 using Unmanaged = typename UnmanagedHelper<TView>::Type;
 
-template <typename TView>
-using PassThru = TView;
-
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename TNetwork, typename PlsmContext>
 struct ClusterDataExtra
 {
 	ClusterDataExtra() = default;
 
-	template <typename PC, template <typename> typename VC>
+	template <typename PC>
 	KOKKOS_INLINE_FUNCTION
-	ClusterDataExtra(const ClusterDataExtra<TNetwork, PC, VC>&)
+	ClusterDataExtra(const ClusterDataExtra<TNetwork, PC>&)
 	{
 	}
 
-	template <typename PC, template <typename> typename VC>
+	template <typename PC>
 	void
-	deepCopy([[maybe_unused]] const ClusterDataExtra<TNetwork, PC, VC>& data)
+	deepCopy([[maybe_unused]] const ClusterDataExtra<TNetwork, PC>& data)
 	{
 	}
 
@@ -86,15 +82,14 @@ struct ClusterDataExtra
  *
  * @tparam PlsmContext Host or Device
  */
-template <typename PlsmContext,
-	template <typename> typename ViewConvert = PassThru>
+template <typename PlsmContext>
 struct ClusterDataCommon
 {
-	template <typename, template <typename> typename>
+	template <typename>
 	friend class ClusterDataCommon;
 
 	template <typename TData>
-	using View = ViewConvert<ViewType<TData, PlsmContext>>;
+	using View = ViewType<TData, PlsmContext>;
 
 	using ClusterType = ClusterCommon<PlsmContext>;
 	using IndexType = detail::ReactionNetworkIndexType;
@@ -313,9 +308,8 @@ public:
  * @tparam TNetwork The network type
  * @tparam PlsmContext Host or Device
  */
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
-struct ClusterDataImpl : ClusterDataCommon<PlsmContext, ViewConvert>
+template <typename TNetwork, typename PlsmContext>
+struct ClusterData : ClusterDataCommon<PlsmContext>
 {
 private:
 	using Traits = ReactionNetworkTraits<TNetwork>;
@@ -324,27 +318,26 @@ private:
 	static constexpr auto nMomentIds = Props::numSpeciesNoI;
 
 public:
-	using Superclass = ClusterDataCommon<PlsmContext, ViewConvert>;
+	using Superclass = ClusterDataCommon<PlsmContext>;
 	using ClusterGenerator = typename Traits::ClusterGenerator;
 	using Subpaving = typename Types::Subpaving;
-	using TilesView =
-		ViewConvert<typename Subpaving::template TilesView<PlsmContext>>;
+	using TilesView = typename Subpaving::template TilesView<PlsmContext>;
 	using ClusterType = Cluster<TNetwork, PlsmContext>;
 	using IndexType = typename Types::IndexType;
 
 	template <typename TData>
 	using View = typename Superclass::template View<TData>;
 
-	ClusterDataImpl() = default;
+	ClusterData() = default;
 
-	ClusterDataImpl(const TilesView& tiles_, IndexType numClusters_,
+	ClusterData(const TilesView& tiles_, IndexType numClusters_,
 		IndexType gridSize_ = 0);
 
-	explicit ClusterDataImpl(Subpaving& subpaving, IndexType gridSize_ = 0);
+	explicit ClusterData(Subpaving& subpaving, IndexType gridSize_ = 0);
 
 	template <typename TClusterData>
 	KOKKOS_INLINE_FUNCTION
-	ClusterDataImpl(const TClusterData& data) :
+	ClusterData(const TClusterData& data) :
 		Superclass(data),
 		tiles(data.tiles),
 		momentIds(data.momentIds),
@@ -372,13 +365,7 @@ public:
 
 	TilesView tiles;
 	View<IndexType* [nMomentIds]> momentIds;
-	ClusterDataExtra<TNetwork, PlsmContext, ViewConvert> extraData;
-};
-
-template <typename TNetwork, typename PlsmContext = plsm::OnDevice>
-struct ClusterDataHelper
-{
-	using Type = ClusterDataImpl<TNetwork, PlsmContext, PassThru>;
+	ClusterDataExtra<TNetwork, PlsmContext> extraData;
 };
 } // namespace detail
 } // namespace network
