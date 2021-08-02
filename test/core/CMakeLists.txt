@@ -1,9 +1,34 @@
-file(GLOB tests
-    advection/*Tester.cpp
-    diffusion/*Tester.cpp
-    flux/*Tester.cpp
-    network/*Tester.cpp
-    temperature/*Tester.cpp
+set(tests
+    advection/DummyAdvectionHandlerTester.cpp
+    advection/W100AdvectionHandlerTester.cpp
+    advection/W110AdvectionHandlerTester.cpp
+    advection/W111AdvectionHandlerTester.cpp
+    advection/W211AdvectionHandlerTester.cpp
+    advection/XGBAdvectionHandlerTester.cpp
+    advection/YGBAdvectionHandlerTester.cpp
+    advection/ZGBAdvectionHandlerTester.cpp
+    diffusion/Diffusion1DHandlerTester.cpp
+    diffusion/Diffusion2DHandlerTester.cpp
+    diffusion/Diffusion3DHandlerTester.cpp
+    diffusion/DummyDiffusionHandlerTester.cpp
+    flux/CustomFitFluxHandlerTester.cpp
+    flux/FeFitFluxHandlerTester.cpp
+    flux/FuelFitFluxHandlerTester.cpp
+    flux/PulsedFitFluxHandlerTester.cpp
+    flux/W100FitFluxHandlerTester.cpp
+    flux/W110FitFluxHandlerTester.cpp
+    flux/W111FitFluxHandlerTester.cpp
+    flux/W211FitFluxHandlerTester.cpp
+    network/AlloyNetworkTester.cpp
+    network/FeNetworkTester.cpp
+    network/ModifiedTrapMutationTester.cpp
+    network/NENetworkTester.cpp
+    network/NetworkTester.cpp
+    network/PSINetworkTester.cpp
+    temperature/HeatEquationHandlerTester.cpp
+    temperature/TemperatureConstantHandlerTester.cpp
+    temperature/TemperatureGradientHandlerTester.cpp
+    temperature/TemperatureProfileHandlerTester.cpp
 )
 
 add_tests(tests LIBS xolotlCore xolotlOptions xolotlPerf LABEL "xolotl.tests.core")

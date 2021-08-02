@@ -1,13 +1,17 @@
-file(GLOB tests
-    *Tester.cpp
-    dummy/*Tester.cpp
-    os/*Tester.cpp
-    standard/*Tester.cpp
+list(APPEND tests
+    EventCounterTester.cpp
+    PerfHandlerTester.cpp
+    dummy/DummyEventCounterTester.cpp
+    dummy/DummyHardwareCounterTester.cpp
+    dummy/DummyTimerTester.cpp
+    os/OSTimerTester.cpp
 )
 
 if(PAPI_FOUND)
-    file(GLOB PAPI_TEST_SRCS papi/*Tester.cpp)
-    list(APPEND tests ${PAPI_TEST_SRCS})
+    list(APPEND tests
+        papi/PAPIHardwareCounterTester.cpp
+        papi/PAPITimerTester.cpp
+    )
 endif(PAPI_FOUND)
 
 if(CMAKE_BUILD_TYPE MATCHES "^Debug$")
