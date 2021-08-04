@@ -145,9 +145,18 @@ TrapMutationReaction<TNetwork, TDerived>::computePartialDerivatives(
 
 	auto rate = getAppliedRate(gridIndex);
 
-	Kokkos::atomic_sub(&values(connectivity(_heClId, _heClId)), rate);
-	Kokkos::atomic_add(&values(connectivity(_heVClId, _heClId)), rate);
-	Kokkos::atomic_add(&values(connectivity(_iClId, _heClId)), rate);
+	Kokkos::atomic_sub(&values(
+                _connEntries[0][0][0][0]
+                // connectivity(_heClId, _heClId)
+                ), rate);
+	Kokkos::atomic_add(&values(
+                _connEntries[1][0][0][0]
+                // connectivity(_heVClId, _heClId)
+                ), rate);
+	Kokkos::atomic_add(&values(
+                _connEntries[2][0][0][0]
+                // connectivity(_iClId, _heClId)
+                ), rate);
 }
 
 template <typename TNetwork, typename TDerived>
@@ -162,7 +171,10 @@ TrapMutationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	}
 
 	auto rate = getAppliedRate(gridIndex);
-	Kokkos::atomic_sub(&values(connectivity(_heClId, _heClId)), rate);
+	Kokkos::atomic_sub(&values(
+                _connEntries[0][0][0][0]
+                // connectivity(_heClId, _heClId)
+                ), rate);
 }
 
 template <typename TNetwork, typename TDerived>

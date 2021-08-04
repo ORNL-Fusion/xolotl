@@ -78,6 +78,9 @@ public:
 	setConnectivity(const ClusterConnectivity<>& connectivity)
 	{
 		_data.connectivity = connectivity;
+		auto conn = _data.connectivity;
+		forEach(DEVICE_LAMBDA(
+			auto&& reaction) { reaction.defineJacobianEntries(conn); });
 	}
 
 	std::uint64_t

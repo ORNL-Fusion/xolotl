@@ -143,6 +143,13 @@ public:
 			concentrations, clusterId, gridIndex);
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	defineJacobianEntries(Connectivity connectivity)
+	{
+		asDerived()->mapJacobianEntries(connectivity);
+	}
+
 protected:
 	KOKKOS_INLINE_FUNCTION
 	TDerived*
@@ -299,6 +306,10 @@ private:
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity);
+
 protected:
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
 	util::Array<IndexType, 2> _reactants{invalidIndex, invalidIndex};
@@ -309,6 +320,8 @@ protected:
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
 	util::Array<IndexType, 2, nMomentIds> _reactantMomentIds;
 	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
+
+	util::Array<IndexType, 4, 1 + nMomentIds, 2, 1 + nMomentIds> _connEntries;
 };
 
 /**
@@ -396,6 +409,10 @@ private:
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity);
+
 protected:
 	IndexType _reactant;
 	AmountType _reactantVolume;
@@ -406,6 +423,8 @@ protected:
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
 	util::Array<IndexType, nMomentIds> _reactantMomentIds;
 	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
+
+	util::Array<IndexType, 3, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
 };
 } // namespace network
 } // namespace core

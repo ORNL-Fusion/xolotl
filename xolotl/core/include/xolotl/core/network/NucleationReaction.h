@@ -94,10 +94,15 @@ private:
 		return 0.0;
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity);
+
 protected:
 	IndexType _reactant;
 	IndexType _product;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
+	util::Array<IndexType, 2, 1, 1, 1> _connEntries;
 };
 } // namespace network
 } // namespace core

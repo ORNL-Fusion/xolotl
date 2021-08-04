@@ -93,6 +93,10 @@ private:
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity);
+
 protected:
 	IndexType _reactant;
 	AmountType _reactantVolume;
@@ -103,6 +107,8 @@ protected:
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
 	util::Array<IndexType, nMomentIds> _reactantMomentIds;
 	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
+
+    util::Array<IndexType, 3, 1+nMomentIds, 1, 1+nMomentIds> _connEntries;
 };
 } // namespace network
 } // namespace core
