@@ -3,7 +3,7 @@
 #include <Kokkos_Core.hpp>
 
 #include <plsm/Utility.h>
-#include <plsm/detail/KokkosExtension.h>
+// #include <plsm/detail/KokkosExtension.h>
 
 #include <xolotl/core/network/Cluster.h>
 #include <xolotl/core/network/IReactionNetwork.h>
@@ -11,6 +11,7 @@
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 #include <xolotl/core/network/detail/ClusterSet.h>
 #include <xolotl/core/network/detail/ReactionData.h>
+#include <xolotl/util/Array.h>
 
 namespace xolotl
 {
@@ -170,7 +171,7 @@ protected:
 	KOKKOS_INLINE_FUNCTION
 	void
 	copyMomentIds(
-		IndexType clusterId, Kokkos::Array<IndexType, nMomentIds>& momentIds)
+		IndexType clusterId, util::Array<IndexType, nMomentIds>& momentIds)
 	{
 		if (clusterId == invalidIndex) {
 			for (IndexType i = 0; i < nMomentIds; ++i) {
@@ -300,14 +301,14 @@ private:
 
 protected:
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
-	Kokkos::Array<IndexType, 2> _reactants{invalidIndex, invalidIndex};
-	Kokkos::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
-	Kokkos::Array<AmountType, 2> _reactantVolumes{0, 0};
-	Kokkos::Array<AmountType, 2> _productVolumes{0, 0};
+	util::Array<IndexType, 2> _reactants{invalidIndex, invalidIndex};
+	util::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
+	util::Array<AmountType, 2> _reactantVolumes{0, 0};
+	util::Array<AmountType, 2> _productVolumes{0, 0};
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
-	Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _reactantMomentIds;
-	Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _productMomentIds;
+	util::Array<IndexType, 2, nMomentIds> _reactantMomentIds;
+	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
 };
 
 /**
@@ -399,12 +400,12 @@ protected:
 	IndexType _reactant;
 	AmountType _reactantVolume;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
-	Kokkos::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
-	Kokkos::Array<AmountType, 2> _productVolumes{0, 0};
+	util::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
+	util::Array<AmountType, 2> _productVolumes{0, 0};
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
-	Kokkos::Array<IndexType, nMomentIds> _reactantMomentIds;
-	Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _productMomentIds;
+	util::Array<IndexType, nMomentIds> _reactantMomentIds;
+	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
 };
 } // namespace network
 } // namespace core

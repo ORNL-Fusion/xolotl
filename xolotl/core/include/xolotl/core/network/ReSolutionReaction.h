@@ -97,12 +97,12 @@ protected:
 	IndexType _reactant;
 	AmountType _reactantVolume;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
-	Kokkos::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
-	Kokkos::Array<AmountType, 2> _productVolumes{0, 0};
+	util::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
+	util::Array<AmountType, 2> _productVolumes{0, 0};
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
-	Kokkos::Array<IndexType, nMomentIds> _reactantMomentIds;
-	Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _productMomentIds;
+	util::Array<IndexType, nMomentIds> _reactantMomentIds;
+	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
 };
 } // namespace network
 } // namespace core
