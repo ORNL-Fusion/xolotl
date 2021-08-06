@@ -49,6 +49,11 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesEnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesId.h
     ${XOLOTL_CORE_HEADER_DIR}/network/TrapMutationReaction.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ZrClusterGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ZrNetworkHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ZrReaction.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ZrReactionNetwork.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ZrTraits.h
 )
 
 list(APPEND XOLOTL_CORE_TPP_FILES
@@ -77,6 +82,9 @@ list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ReSolutionReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/SinkReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/TrapMutationReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrClusterGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrReactionNetwork.tpp
 )
 
 list(APPEND XOLOTL_CORE_SOURCES
@@ -89,4 +97,6 @@ list(APPEND XOLOTL_CORE_SOURCES
     ${XOLOTL_CORE_SOURCE_DIR}/network/NetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/PSINetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetwork.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/ZrNetworkHandler.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/ZrReactionNetwork.cpp
 )

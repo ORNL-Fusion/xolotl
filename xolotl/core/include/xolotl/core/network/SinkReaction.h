@@ -55,6 +55,10 @@ public:
 		return detail::CoefficientsView();
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex);
+
 private:
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -62,10 +66,6 @@ private:
 	{
 		// No coefs
 	}
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	computeRate(IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void

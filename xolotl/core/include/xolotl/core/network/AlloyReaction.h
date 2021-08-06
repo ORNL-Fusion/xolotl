@@ -19,6 +19,10 @@ public:
 		ProductionReaction<AlloyReactionNetwork, AlloyProductionReaction>;
 
 	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getRateForProduction(IndexType gridIndex);
 };
 
 class AlloyDissociationReaction :
@@ -29,6 +33,10 @@ public:
 		DissociationReaction<AlloyReactionNetwork, AlloyDissociationReaction>;
 
 	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getRateForProduction(IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double

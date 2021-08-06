@@ -14,6 +14,7 @@
 #include <xolotl/core/network/FeReactionNetwork.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/core/network/ZrReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/Monitor.h>
@@ -373,6 +374,72 @@ computeAlloy0D(
 }
 
 #undef __FUNCT__
+#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeAlphaZr0D")
+/**
+ * This is a monitoring method that will compute average density and diameter
+ * of defects.
+ */
+PetscErrorCode
+computeAlphaZr0D(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
+{
+	// Initial declarations
+	PetscErrorCode ierr;
+
+	PetscFunctionBeginUser;
+
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the position of the surface
+	auto surfacePos = solverHandler.getSurfacePosition();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the array of concentration
+	PetscReal** solutionArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Degrees of freedom is the total number of clusters in the network
+	auto& network = solverHandler.getNetwork();
+	auto networkSize = network.getNumClusters();
+
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal* gridPointSolution;
+
+	// Get the pointer to the beginning of the solution data for this grid point
+	gridPointSolution = solutionArray[0];
+
+	// Set the output precision
+	const int outputPrecision = 5;
+
+	// Open the output file
+	std::fstream outputFile;
+	outputFile.open("AlphaZr.dat", std::fstream::out | std::fstream::app);
+	outputFile << std::setprecision(outputPrecision);
+
+	// Output the data
+	outputFile << timestep << " " << time << " ";
+	for (auto i = 0; i < networkSize; ++i) {
+		outputFile << gridPointSolution[i] << " ";
+	}
+	outputFile << std::endl;
+
+	// Close the output file
+	outputFile.close();
+
+	// Restore the PETSc solution array
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+#undef __FUNCT__
 #define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorScatter0D")
 /**
  * This is a monitoring method that will save 1D plots of the xenon
@@ -421,7 +488,7 @@ monitorScatter0D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	for (auto i = 0; i < networkSize; i++) {
 		// Create a DataPoint with the concentration[i] as the value
 		// and add it to myPoints
-		auto cluster = network.getCluster(i);
+		auto cluster = network.getCluster(i, plsm::onHost);
 		const Region& clReg = cluster.getRegion();
 		for (auto j : makeIntervalRange(clReg[Spec::Xe])) {
 			viz::dataprovider::DataPoint aPoint;
@@ -565,7 +632,7 @@ setupPetsc0DMonitor(TS ts)
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flag1DPlot, flagBubble, flagStatus, flagAlloy,
-		flagXeRetention, flagLargest;
+		flagXeRetention, flagLargest, flagZr;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
@@ -591,6 +658,12 @@ setupPetsc0DMonitor(TS ts)
 	ierr = PetscOptionsHasName(NULL, NULL, "-alloy", &flagAlloy);
 	checkPetscError(
 		ierr, "setupPetsc0DMonitor: PetscOptionsHasName (-alloy) failed.");
+
+	// Check the option -alpha_zr
+	ierr = PetscOptionsHasName(NULL, NULL, "-alpha_zr", &flagZr);
+	checkPetscError(
+		ierr, "setupPetsc0DMonitor: PetscOptionsHasName (-alpha_zr) failed.");
+
 	// Check the option -xenon_retention
 	ierr =
 		PetscOptionsHasName(NULL, NULL, "-xenon_retention", &flagXeRetention);
@@ -697,6 +770,37 @@ setupPetsc0DMonitor(TS ts)
 		ierr = TSMonitorSet(ts, computeAlloy0D, NULL, NULL);
 		checkPetscError(
 			ierr, "setupPetsc0DMonitor: TSMonitorSet (computeAlloy0D) failed.");
+	}
+
+	// Set the monitor to output data for AlphaZr
+	if (flagZr) {
+		using NetworkType = core::network::ZrReactionNetwork;
+		using Spec = typename NetworkType::Species;
+		using Region = typename NetworkType::Region;
+		using Composition = typename NetworkType::Composition;
+		auto& network = dynamic_cast<NetworkType&>(solverHandler.getNetwork());
+		auto networkSize = network.getNumClusters();
+
+		// Create/open the output files
+		std::fstream outputFile;
+		outputFile.open("AlphaZr.dat", std::fstream::out);
+		outputFile << "#time_step time ";
+		for (auto i = 0; i < networkSize; i++) {
+			auto cluster = network.getCluster(i, plsm::onHost);
+			const Region& clReg = cluster.getRegion();
+			Composition lo(clReg.getOrigin());
+			if (lo.isOnAxis(Spec::V))
+				outputFile << "V_" << lo[Spec::V] << " ";
+			else if (lo.isOnAxis(Spec::I))
+				outputFile << "I_" << lo[Spec::I] << " ";
+		}
+		outputFile << std::endl;
+		outputFile.close();
+
+		// computeAlphaZr0D will be called at each timestep
+		ierr = TSMonitorSet(ts, computeAlphaZr0D, NULL, NULL);
+		checkPetscError(ierr,
+			"setupPetsc0DMonitor: TSMonitorSet (computeAlphaZr0D) failed.");
 	}
 
 	// Set the monitor to compute the xenon content

@@ -20,6 +20,10 @@ public:
 		ProductionReaction<NEReactionNetwork, NEProductionReaction>;
 
 	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getRateForProduction(IndexType gridIndex);
 };
 
 class NEDissociationReaction :
@@ -30,6 +34,10 @@ public:
 		DissociationReaction<NEReactionNetwork, NEDissociationReaction>;
 
 	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getRateForProduction(IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double

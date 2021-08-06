@@ -15,45 +15,36 @@ double
 getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	const double r1, const double dc0, const double dc1)
 {
+	// TODO: fix the reaction rate
 	constexpr double pi = ::xolotl::core::pi;
-	constexpr double rCore = ::xolotl::core::alloyCoreRadius;
+	constexpr double rCore = ::xolotl::core::alphaZrCoreRadius;
 	const double zs = 4.0 * pi * (r0 + r1 + rCore);
+
 	using Species = typename TRegion::EnumIndex;
-	bool cl0IsSphere = (pairCl0Reg.getOrigin().isOnAxis(Species::V) ||
-			 pairCl0Reg.getOrigin().isOnAxis(Species::Void) ||
-			 pairCl0Reg.getOrigin().isOnAxis(Species::I)),
-		 cl1IsSphere = (pairCl1Reg.getOrigin().isOnAxis(Species::V) ||
-			 pairCl1Reg.getOrigin().isOnAxis(Species::Void) ||
-			 pairCl1Reg.getOrigin().isOnAxis(Species::I));
+	xolotl::core::network::detail::Composition<typename TRegion::VectorType,
+		Species>
+		lo0 = pairCl0Reg.getOrigin();
+	xolotl::core::network::detail::Composition<typename TRegion::VectorType,
+		Species>
+		lo1 = pairCl1Reg.getOrigin();
+	bool cl0Is1D = (lo0[Species::I] == 9), cl1Is1D = (lo1[Species::I] == 9);
 
-	// Simple case
-	if (cl0IsSphere && cl1IsSphere) {
-		return zs * (dc0 + dc1);
+	// Cluster 0 is 1D diffuser
+	if (cl0Is1D) {
+		return 0.0;
+	}
+	// Cluster 1 is 1D diffuser
+	else if (cl1Is1D) {
+		return 0.0;
 	}
 
-	double p = 0.0, zl = 0.0;
-	if (r0 < r1) {
-		p = 1.0 / (1.0 + pow(r1 / (3.0 * (r0 + rCore)), 2.0));
-		zl = 4.0 * pow(pi, 2.0) * r1 / log(1.0 + 8.0 * r1 / (r0 + rCore));
-	}
-	else {
-		p = 1.0 / (1.0 + pow(r0 / (3.0 * (r1 + rCore)), 2.0));
-		zl = 4.0 * pow(pi, 2.0) * r0 / log(1.0 + 8.0 * r0 / (r1 + rCore));
-	}
-
-	double k_plus = (dc0 + dc1) * (p * zs + (1.0 - p) * zl);
-	double bias = 1.0;
-	if (pairCl0Reg.getOrigin().isOnAxis(Species::I) ||
-		pairCl1Reg.getOrigin().isOnAxis(Species::I)) {
-		bias = 1.2;
-	}
-
-	return k_plus * bias;
+	// None of them is a 1D diffuser
+	return zs * (dc0 + dc1);
 }
 
 KOKKOS_INLINE_FUNCTION
 double
-AlloyProductionReaction::getRateForProduction(IndexType gridIndex)
+ZrProductionReaction::getRateForProduction(IndexType gridIndex)
 {
 	auto cl0 = this->_clusterData->getCluster(_reactants[0]);
 	auto cl1 = this->_clusterData->getCluster(_reactants[1]);
@@ -69,7 +60,7 @@ AlloyProductionReaction::getRateForProduction(IndexType gridIndex)
 
 KOKKOS_INLINE_FUNCTION
 double
-AlloyDissociationReaction::getRateForProduction(IndexType gridIndex)
+ZrDissociationReaction::getRateForProduction(IndexType gridIndex)
 {
 	auto cl0 = this->_clusterData->getCluster(_products[0]);
 	auto cl1 = this->_clusterData->getCluster(_products[1]);
@@ -85,7 +76,7 @@ AlloyDissociationReaction::getRateForProduction(IndexType gridIndex)
 
 KOKKOS_INLINE_FUNCTION
 double
-AlloyDissociationReaction::computeBindingEnergy()
+ZrDissociationReaction::computeBindingEnergy()
 {
 	using Species = typename Superclass::Species;
 	using Composition = typename Superclass::Composition;
@@ -103,33 +94,19 @@ AlloyDissociationReaction::computeBindingEnergy()
 	Composition hi = clReg.getUpperLimitPoint();
 	Composition prod1Comp = prod1Reg.getOrigin();
 	Composition prod2Comp = prod2Reg.getOrigin();
-	if (lo.isOnAxis(Species::Void)) {
-		double n = (double)(lo[Species::Void] + hi[Species::Void] - 1) / 2.0;
-		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
-			be = 3.5 - 3.45 * (pow(n + 1.0, 2.0 / 3.0) - pow(n, 2.0 / 3.0));
-		}
-		else if (prod1Comp.isOnAxis(Species::V) ||
-			prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
-		}
-	}
-	else if (lo.isOnAxis(Species::Faulted)) {
-		double n =
-			(double)(lo[Species::Faulted] + hi[Species::Faulted] - 1) / 2.0;
-		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.2 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
-		}
-	}
-	else if (lo.isOnAxis(Species::V)) {
+
+	// TODO: Fix the formulas for V and I
+
+	if (lo.isOnAxis(Species::V)) {
 		double n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 0.0 - 0.0 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
 		}
 	}
 	else if (lo.isOnAxis(Species::I)) {
 		double n = (double)(lo[Species::I] + hi[Species::I] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
-			be = 3.5 - 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 0.0 - 0.0 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
 		}
 	}
 
@@ -138,31 +115,48 @@ AlloyDissociationReaction::computeBindingEnergy()
 
 KOKKOS_INLINE_FUNCTION
 double
-AlloySinkReaction::getSinkBias()
+ZrSinkReaction::computeRate(IndexType gridIndex)
 {
 	using Species = typename Superclass::Species;
 	using Composition = typename Superclass::Composition;
 
-	double bias = 1.0;
+	// TODO: set the right values in the arrays, verify the formulas
 
-	auto cl = this->_clusterData->getCluster(this->_reactant);
+	// Anisotropy ratio
+	constexpr Kokkos::Array<double, 6> iAnisotropy = {
+		0.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+	constexpr Kokkos::Array<double, 10> vAnisotropy = {
+		0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+
+	auto cl = this->_clusterData->getCluster(_reactant);
+	double dc = cl.getDiffusionCoefficient(gridIndex);
 
 	auto clReg = cl.getRegion();
-	if (clReg.isSimplex()) {
-		Composition comp = clReg.getOrigin();
-		if (comp.isOnAxis(Species::I)) {
-			bias = 1.2;
-		}
+	Composition lo = clReg.getOrigin();
+
+	if (lo.isOnAxis(Species::V)) {
+		return dc * 1.0 *
+			(::xolotl::core::alphaZrASinkStrength *
+					vAnisotropy[lo[Species::V]] +
+				::xolotl::core::alphaZrCSinkStrength /
+					(vAnisotropy[lo[Species::V]] *
+						vAnisotropy[lo[Species::V]]));
+	}
+	else if (lo.isOnAxis(Species::I)) {
+		if (lo[Species::I] < iAnisotropy.size())
+			return dc * 1.1 *
+				(::xolotl::core::alphaZrASinkStrength *
+						iAnisotropy[lo[Species::I]] +
+					::xolotl::core::alphaZrCSinkStrength /
+						(iAnisotropy[lo[Species::I]] *
+							iAnisotropy[lo[Species::I]]));
+		else
+			return dc * 1.1 *
+				(::xolotl::core::alphaZrASinkStrength +
+					::xolotl::core::alphaZrCSinkStrength);
 	}
 
-	return bias;
-}
-
-KOKKOS_INLINE_FUNCTION
-double
-AlloySinkReaction::getSinkStrength()
-{
-	return ::xolotl::core::alloySinkStrength;
+	return 1.0;
 }
 } // namespace network
 } // namespace core
