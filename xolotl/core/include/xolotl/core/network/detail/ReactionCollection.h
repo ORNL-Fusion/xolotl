@@ -83,6 +83,12 @@ public:
 			auto&& reaction) { reaction.defineJacobianEntries(conn); });
 	}
 
+	void
+	resetConnectivity()
+	{
+		_data.connectivity = ClusterConnectivity<>{};
+	}
+
 	std::uint64_t
 	getDeviceMemorySize() const noexcept
 	{

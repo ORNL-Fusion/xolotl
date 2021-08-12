@@ -507,10 +507,16 @@ private:
 	}
 
 private:
+    void
+    generateDiagonalFill();
+
+private:
 	Subpaving _subpaving;
 	ClusterDataMirror _clusterDataMirror;
 
 	detail::ReactionNetworkWorker<TImpl> _worker;
+
+	SparseFillMap _connectivityMap;
 
 protected:
 	Kokkos::DualView<ClusterData> _clusterData;
