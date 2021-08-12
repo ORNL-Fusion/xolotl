@@ -109,11 +109,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void
 	contributePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex)
+		Kokkos::View<double*> values, IndexType gridIndex)
 	{
 		asDerived()->computePartialDerivatives(
-			concentrations, values, connectivity, gridIndex);
+			concentrations, values, gridIndex);
 	}
 
 	/**
@@ -124,11 +123,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void
 	contributeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex)
+		Kokkos::View<double*> values, IndexType gridIndex)
 	{
 		asDerived()->computeReducedPartialDerivatives(
-			concentrations, values, connectivity, gridIndex);
+			concentrations, values, gridIndex);
 	}
 
 	/**
@@ -292,14 +290,12 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double
@@ -395,14 +391,12 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double

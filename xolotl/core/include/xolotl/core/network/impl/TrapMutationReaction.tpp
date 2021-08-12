@@ -137,7 +137,7 @@ KOKKOS_INLINE_FUNCTION
 void
 TrapMutationReaction<TNetwork, TDerived>::computePartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	Connectivity connectivity, IndexType gridIndex)
+	IndexType gridIndex)
 {
 	if (!getEnabled()) {
 		return;
@@ -145,18 +145,9 @@ TrapMutationReaction<TNetwork, TDerived>::computePartialDerivatives(
 
 	auto rate = getAppliedRate(gridIndex);
 
-	Kokkos::atomic_sub(&values(
-                _connEntries[0][0][0][0]
-                // connectivity(_heClId, _heClId)
-                ), rate);
-	Kokkos::atomic_add(&values(
-                _connEntries[1][0][0][0]
-                // connectivity(_heVClId, _heClId)
-                ), rate);
-	Kokkos::atomic_add(&values(
-                _connEntries[2][0][0][0]
-                // connectivity(_iClId, _heClId)
-                ), rate);
+	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), rate);
+	Kokkos::atomic_add(&values(_connEntries[1][0][0][0]), rate);
+	Kokkos::atomic_add(&values(_connEntries[2][0][0][0]), rate);
 }
 
 template <typename TNetwork, typename TDerived>
@@ -164,17 +155,14 @@ KOKKOS_INLINE_FUNCTION
 void
 TrapMutationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	Connectivity connectivity, IndexType gridIndex)
+	IndexType gridIndex)
 {
 	if (!getEnabled()) {
 		return;
 	}
 
 	auto rate = getAppliedRate(gridIndex);
-	Kokkos::atomic_sub(&values(
-                _connEntries[0][0][0][0]
-                // connectivity(_heClId, _heClId)
-                ), rate);
+	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), rate);
 }
 
 template <typename TNetwork, typename TDerived>

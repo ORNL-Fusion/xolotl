@@ -346,19 +346,18 @@ public:
 		asDerived()->computePartialsPreProcess(
 			concentrations, values, gridIndex, surfaceDepth, spacing);
 
-		auto connectivity = _reactions.getConnectivity();
 		if (this->_enableReducedJacobian) {
 			_reactions.template forEachOn<TReaction>(
 				DEVICE_LAMBDA(auto&& reaction) {
 					reaction.contributeReducedPartialDerivatives(
-						concentrations, values, connectivity, gridIndex);
+						concentrations, values, gridIndex);
 				});
 		}
 		else {
 			_reactions.template forEachOn<TReaction>(
 				DEVICE_LAMBDA(auto&& reaction) {
 					reaction.contributePartialDerivatives(
-						concentrations, values, connectivity, gridIndex);
+						concentrations, values, gridIndex);
 				});
 		}
 

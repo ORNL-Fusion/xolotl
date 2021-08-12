@@ -400,17 +400,16 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 	asDerived()->computePartialsPreProcess(
 		concentrations, values, gridIndex, surfaceDepth, spacing);
 
-	auto connectivity = _reactions.getConnectivity();
 	if (this->_enableReducedJacobian) {
 		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributeReducedPartialDerivatives(
-				concentrations, values, connectivity, gridIndex);
+				concentrations, values, gridIndex);
 		});
 	}
 	else {
 		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributePartialDerivatives(
-				concentrations, values, connectivity, gridIndex);
+				concentrations, values, gridIndex);
 		});
 	}
 
