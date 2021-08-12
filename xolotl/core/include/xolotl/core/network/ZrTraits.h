@@ -85,6 +85,59 @@ struct ReactionNetworkTraits<ZrReactionNetwork>
 	using ClusterGenerator = ZrClusterGenerator;
 	using ClusterUpdater = detail::ZrClusterUpdater;
 };
+
+namespace detail
+{
+template <typename PlsmContext>
+struct ClusterDataExtra<ZrReactionNetwork, PlsmContext>
+{
+	using NetworkType = ZrReactionNetwork;
+
+	template <typename TData>
+	using View = ViewType<TData, PlsmContext>;
+
+	using IndexType = detail::ReactionNetworkIndexType;
+
+	ClusterDataExtra() = default;
+
+	template <typename PC>
+	KOKKOS_INLINE_FUNCTION
+	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
+		anisotropyRatio(data.anisotropyRatio)
+	{
+	}
+
+	template <typename PC>
+	void
+	deepCopy(const ClusterDataExtra<NetworkType, PC>& data)
+	{
+		if (!data.anisotropyRatio.is_allocated()) {
+			return;
+		}
+
+		if (!anisotropyRatio.is_allocated()) {
+			anisotropyRatio = create_mirror_view(data.anisotropyRatio);
+		}
+
+		deep_copy(anisotropyRatio, data.anisotropyRatio);
+	}
+
+	std::uint64_t
+	getDeviceMemorySize() const noexcept
+	{
+		return anisotropyRatio.required_allocation_size();
+	}
+
+	void
+	initialize(IndexType numClusters, IndexType gridSize = 0)
+	{
+		anisotropyRatio =
+			View<double**>("Anisotropy Ratio", numClusters, gridSize);
+	}
+
+	View<double**> anisotropyRatio;
+};
+} // namespace detail
 } // namespace network
 } // namespace core
 } // namespace xolotl

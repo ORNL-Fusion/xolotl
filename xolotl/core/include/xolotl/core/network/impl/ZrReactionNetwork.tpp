@@ -53,6 +53,19 @@ ZrReactionNetwork::checkLargestClusterId()
 	return maxLoc.loc;
 }
 
+void
+ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
+{
+	if (!this->_enableSink) {
+		return;
+	}
+
+	this->_clusterData.h_view().extraData.initialize(
+		this->_clusterData.h_view().numClusters,
+		this->_clusterData.h_view().gridSize);
+	this->copyClusterDataView();
+}
+
 namespace detail
 {
 template <typename TTag>
@@ -197,7 +210,8 @@ void
 ZrClusterUpdater::updateDiffusionCoefficient(
 	const ClusterData& data, IndexType clusterId, IndexType gridIndex) const
 {
-	// TODO: Set correct values in arrays
+	// TODO: Set correct values in arrays, check formulas for diffusion
+	// coefficients and anisotropy ratios
 
 	// I migration energies in eV
 	constexpr Kokkos::Array<double, 6> iMigrationA = {
@@ -238,6 +252,10 @@ ZrClusterUpdater::updateDiffusionCoefficient(
 			// Compute the mean
 			data.diffusionCoefficient(clusterId, gridIndex) =
 				Da * Da * pow(Dc, 1.0 / 3.0);
+
+			// Compute the anisotropy factor
+			data.extraData.anisotropyRatio(clusterId, gridIndex) =
+				pow(Dc, 1.0 / 6.0) / Da;
 			return;
 		}
 
@@ -251,6 +269,11 @@ ZrClusterUpdater::updateDiffusionCoefficient(
 			// Compute the mean
 			data.diffusionCoefficient(clusterId, gridIndex) =
 				Da * Da * pow(Dc, 1.0 / 3.0);
+
+			// Compute the anisotropy factor
+			data.extraData.anisotropyRatio(clusterId, gridIndex) =
+				pow(Dc, 1.0 / 6.0) / Da;
+
 			return;
 		}
 	}

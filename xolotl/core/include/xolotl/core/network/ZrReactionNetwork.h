@@ -36,6 +36,9 @@ public:
 	IndexType
 	checkLargestClusterId();
 
+	void
+	initializeExtraClusterData(const options::IOptions& options);
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);

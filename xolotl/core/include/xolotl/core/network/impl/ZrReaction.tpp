@@ -120,40 +120,27 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 	using Species = typename Superclass::Species;
 	using Composition = typename Superclass::Composition;
 
-	// TODO: set the right values in the arrays, verify the formulas
-
-	// Anisotropy ratio
-	constexpr Kokkos::Array<double, 6> iAnisotropy = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-	constexpr Kokkos::Array<double, 10> vAnisotropy = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+	// TODO: verify the formulas
 
 	auto cl = this->_clusterData->getCluster(_reactant);
-	double dc = cl.getDiffusionCoefficient(gridIndex);
+	auto dc = cl.getDiffusionCoefficient(gridIndex);
+	auto anisotropy =
+		this->_clusterData->extraData.anisotropyRatio(_reactant, gridIndex);
 
 	auto clReg = cl.getRegion();
 	Composition lo = clReg.getOrigin();
 
 	if (lo.isOnAxis(Species::V)) {
 		return dc * 1.0 *
-			(::xolotl::core::alphaZrASinkStrength *
-					vAnisotropy[lo[Species::V]] +
+			(::xolotl::core::alphaZrASinkStrength * anisotropy +
 				::xolotl::core::alphaZrCSinkStrength /
-					(vAnisotropy[lo[Species::V]] *
-						vAnisotropy[lo[Species::V]]));
+					(anisotropy * anisotropy));
 	}
 	else if (lo.isOnAxis(Species::I)) {
-		if (lo[Species::I] < iAnisotropy.size())
-			return dc * 1.1 *
-				(::xolotl::core::alphaZrASinkStrength *
-						iAnisotropy[lo[Species::I]] +
-					::xolotl::core::alphaZrCSinkStrength /
-						(iAnisotropy[lo[Species::I]] *
-							iAnisotropy[lo[Species::I]]));
-		else
-			return dc * 1.1 *
-				(::xolotl::core::alphaZrASinkStrength +
-					::xolotl::core::alphaZrCSinkStrength);
+		return dc * 1.1 *
+			(::xolotl::core::alphaZrASinkStrength * anisotropy +
+				::xolotl::core::alphaZrCSinkStrength /
+					(anisotropy * anisotropy));
 	}
 
 	return 1.0;

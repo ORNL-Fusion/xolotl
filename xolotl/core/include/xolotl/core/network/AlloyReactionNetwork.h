@@ -13,8 +13,6 @@ namespace network
 namespace detail
 {
 class AlloyReactionGenerator;
-
-class AlloyClusterUpdater;
 } // namespace detail
 
 class AlloyReactionNetwork : public ReactionNetwork<AlloyReactionNetwork>
@@ -83,14 +81,6 @@ public:
 private:
 	ReactionCollection<Network>
 	getReactionCollection() const;
-};
-
-class AlloyClusterUpdater
-{
-public:
-	using Network = AlloyReactionNetwork;
-	using ClusterData = typename Network::ClusterData;
-	using IndexType = typename Network::IndexType;
 };
 } // namespace detail
 } // namespace network
