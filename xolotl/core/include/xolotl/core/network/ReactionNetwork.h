@@ -65,6 +65,7 @@ public:
 	using SpeciesRange = EnumSequenceRange<Species, numSpecies>;
 	using ClusterGenerator = typename Traits::ClusterGenerator;
 	using ClusterUpdater = typename Types::ClusterUpdater;
+	using Connectivity = typename Superclass::Connectivity;
 	using AmountType = typename IReactionNetwork::AmountType;
 	using IndexType = typename IReactionNetwork::IndexType;
 	using Subpaving = typename Types::Subpaving;
@@ -494,7 +495,7 @@ private:
 	generateClusterData(const ClusterGenerator& generator);
 
 	void
-	defineReactions();
+	defineReactions(Connectivity& connectivity);
 
 	void
 	updateDiffusionCoefficients();
@@ -507,8 +508,8 @@ private:
 	}
 
 private:
-    void
-    generateDiagonalFill();
+	void
+	generateDiagonalFill(const Connectivity& connectivity);
 
 private:
 	Subpaving _subpaving;
@@ -539,6 +540,7 @@ struct ReactionNetworkWorker
 	using AmountType = typename Types::AmountType;
 	using ReactionCollection = typename Types::ReactionCollection;
 	using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
+	using Connectivity = typename IReactionNetwork::Connectivity;
 
 	Network& _nw;
 
@@ -553,7 +555,7 @@ struct ReactionNetworkWorker
 	defineMomentIds();
 
 	void
-	defineReactions();
+	defineReactions(Connectivity& connectivity);
 
 	IndexType
 	getDiagonalFill(typename Network::SparseFillMap& fillMap);

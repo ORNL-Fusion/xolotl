@@ -67,8 +67,9 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
 
-	defineReactions();
-	generateDiagonalFill();
+	Connectivity connectivity;
+	defineReactions(connectivity);
+	generateDiagonalFill(connectivity);
 }
 
 template <typename TImpl>
@@ -618,16 +619,15 @@ ReactionNetwork<TImpl>::defineMomentIds()
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::defineReactions()
+ReactionNetwork<TImpl>::defineReactions(Connectivity& connectivity)
 {
-	_worker.defineReactions();
+	_worker.defineReactions(connectivity);
 }
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::generateDiagonalFill()
+ReactionNetwork<TImpl>::generateDiagonalFill(const Connectivity& connectivity)
 {
-	auto connectivity = _reactions.getConnectivity();
 	auto hConnRowMap = create_mirror_view(connectivity.row_map);
 	deep_copy(hConnRowMap, connectivity.row_map);
 	auto hConnEntries = create_mirror_view(connectivity.entries);
@@ -644,8 +644,6 @@ ReactionNetwork<TImpl>::generateDiagonalFill()
 		}
 		_connectivityMap[i] = std::move(current);
 	}
-
-	_reactions.resetConnectivity();
 }
 
 template <typename TImpl>
@@ -745,10 +743,11 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 
 template <typename TImpl>
 void
-ReactionNetworkWorker<TImpl>::defineReactions()
+ReactionNetworkWorker<TImpl>::defineReactions(Connectivity& connectivity)
 {
 	auto generator = _nw.asDerived()->getReactionGenerator();
 	_nw._reactions = generator.generateReactions();
+	connectivity = generator.getConnectivity();
 }
 
 template <typename TImpl>
