@@ -486,7 +486,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 
 	auto deviceMemorySize = network.getDeviceMemorySize();
 	BOOST_CHECK_GT(deviceMemorySize, 30000);
-	BOOST_CHECK_LT(deviceMemorySize, 33000);
+	BOOST_CHECK_LT(deviceMemorySize, 35000);
 
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
 	BOOST_REQUIRE(network.getEnableReSolution() == true);
