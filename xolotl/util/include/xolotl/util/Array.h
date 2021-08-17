@@ -1,10 +1,10 @@
-#ifndef XCORE_NDARRAY_H
-#define XCORE_NDARRAY_H
+#pragma once
 
-#include <array>
 #include <iostream>
 #include <iterator>
 #include <sstream>
+
+#include <Kokkos_Array.hpp>
 
 namespace xolotl
 {
@@ -18,10 +18,13 @@ class Array;
 // An N-dimensional array of Ts.
 // Specialization for 2+ dimensions.
 template <typename T, uint32_t N0, uint32_t N1, uint32_t... Ns>
-class Array<T, N0, N1, Ns...> : public std::array<Array<T, N1, Ns...>, N0>
+class Array<T, N0, N1, Ns...> : public Kokkos::Array<Array<T, N1, Ns...>, N0>
 {
 public:
-	Array(void) = default;
+	KOKKOS_DEFAULTED_FUNCTION
+	Array() = default;
+
+	KOKKOS_DEFAULTED_FUNCTION
 	Array(const Array<T, N0, N1, Ns...>& other) = default;
 
 	void
@@ -32,6 +35,7 @@ public:
 		}
 	}
 
+	KOKKOS_INLINE_FUNCTION
 	Array<T, N0, N1, Ns...>&
 	operator+=(const Array<T, N0, N1, Ns...>& other)
 	{
@@ -69,10 +73,13 @@ operator+(const Array<T, N0, N1, Ns...>& a, const Array<T, N0, N1, Ns...>& b)
 // An N-dimensional array of type T.
 // Specialization for one dimension.
 template <typename T, uint32_t N0>
-class Array<T, N0> : public std::array<T, N0>
+class Array<T, N0> : public Kokkos::Array<T, N0>
 {
 public:
-	Array(void) = default;
+	KOKKOS_DEFAULTED_FUNCTION
+	Array() = default;
+
+	KOKKOS_DEFAULTED_FUNCTION
 	Array(const Array<T, N0>& other) = default;
 
 	void
@@ -81,6 +88,7 @@ public:
 		std::fill(this->begin(), this->end(), val);
 	}
 
+	KOKKOS_INLINE_FUNCTION
 	Array<T, N0>&
 	operator+=(const Array<T, N0>& other)
 	{
@@ -103,6 +111,7 @@ public:
 };
 
 template <typename T, uint32_t N0>
+KOKKOS_INLINE_FUNCTION
 Array<T, N0>
 operator+(const Array<T, N0>& a, const Array<T, N0>& b)
 {
@@ -113,5 +122,3 @@ operator+(const Array<T, N0>& a, const Array<T, N0>& b)
 
 } /* end namespace util */
 } /* end namespace xolotl */
-
-#endif // XCORE_NDARRAY_H

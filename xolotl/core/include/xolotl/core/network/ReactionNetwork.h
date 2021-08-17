@@ -65,6 +65,7 @@ public:
 	using SpeciesRange = EnumSequenceRange<Species, numSpecies>;
 	using ClusterGenerator = typename Traits::ClusterGenerator;
 	using ClusterUpdater = typename Types::ClusterUpdater;
+	using Connectivity = typename Superclass::Connectivity;
 	using AmountType = typename IReactionNetwork::AmountType;
 	using IndexType = typename IReactionNetwork::IndexType;
 	using Subpaving = typename Types::Subpaving;
@@ -346,19 +347,18 @@ public:
 		asDerived()->computePartialsPreProcess(
 			concentrations, values, gridIndex, surfaceDepth, spacing);
 
-		auto connectivity = _reactions.getConnectivity();
 		if (this->_enableReducedJacobian) {
 			_reactions.template forEachOn<TReaction>(
 				DEVICE_LAMBDA(auto&& reaction) {
 					reaction.contributeReducedPartialDerivatives(
-						concentrations, values, connectivity, gridIndex);
+						concentrations, values, gridIndex);
 				});
 		}
 		else {
 			_reactions.template forEachOn<TReaction>(
 				DEVICE_LAMBDA(auto&& reaction) {
 					reaction.contributePartialDerivatives(
-						concentrations, values, connectivity, gridIndex);
+						concentrations, values, gridIndex);
 				});
 		}
 
@@ -495,7 +495,7 @@ private:
 	generateClusterData(const ClusterGenerator& generator);
 
 	void
-	defineReactions();
+	defineReactions(Connectivity& connectivity);
 
 	void
 	updateDiffusionCoefficients();
@@ -508,10 +508,16 @@ private:
 	}
 
 private:
+	void
+	generateDiagonalFill(const Connectivity& connectivity);
+
+private:
 	Subpaving _subpaving;
 	ClusterDataMirror _clusterDataMirror;
 
 	detail::ReactionNetworkWorker<TImpl> _worker;
+
+	SparseFillMap _connectivityMap;
 
 protected:
 	Kokkos::DualView<ClusterData> _clusterData;
@@ -534,6 +540,7 @@ struct ReactionNetworkWorker
 	using AmountType = typename Types::AmountType;
 	using ReactionCollection = typename Types::ReactionCollection;
 	using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
+	using Connectivity = typename IReactionNetwork::Connectivity;
 
 	Network& _nw;
 
@@ -548,7 +555,7 @@ struct ReactionNetworkWorker
 	defineMomentIds();
 
 	void
-	defineReactions();
+	defineReactions(Connectivity& connectivity);
 
 	IndexType
 	getDiagonalFill(typename Network::SparseFillMap& fillMap);

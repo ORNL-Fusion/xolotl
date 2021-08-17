@@ -67,7 +67,9 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
 
-	defineReactions();
+	Connectivity connectivity;
+	defineReactions(connectivity);
+	generateDiagonalFill(connectivity);
 }
 
 template <typename TImpl>
@@ -400,17 +402,16 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 	asDerived()->computePartialsPreProcess(
 		concentrations, values, gridIndex, surfaceDepth, spacing);
 
-	auto connectivity = _reactions.getConnectivity();
 	if (this->_enableReducedJacobian) {
 		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributeReducedPartialDerivatives(
-				concentrations, values, connectivity, gridIndex);
+				concentrations, values, gridIndex);
 		});
 	}
 	else {
 		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributePartialDerivatives(
-				concentrations, values, connectivity, gridIndex);
+				concentrations, values, gridIndex);
 		});
 	}
 
@@ -618,16 +619,44 @@ ReactionNetwork<TImpl>::defineMomentIds()
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::defineReactions()
+ReactionNetwork<TImpl>::defineReactions(Connectivity& connectivity)
 {
-	_worker.defineReactions();
+	_worker.defineReactions(connectivity);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::generateDiagonalFill(const Connectivity& connectivity)
+{
+	auto hConnRowMap = create_mirror_view(connectivity.row_map);
+	deep_copy(hConnRowMap, connectivity.row_map);
+	auto hConnEntries = create_mirror_view(connectivity.entries);
+	deep_copy(hConnEntries, connectivity.entries);
+
+	_connectivityMap.clear();
+	for (int i = 0; i < this->getDOF(); ++i) {
+		auto jBegin = hConnRowMap(i);
+		auto jEnd = hConnRowMap(i + 1);
+		std::vector<int> current;
+		current.reserve(jEnd - jBegin);
+		for (IndexType j = jBegin; j < jEnd; ++j) {
+			current.push_back((int)hConnEntries(j));
+		}
+		_connectivityMap[i] = std::move(current);
+	}
 }
 
 template <typename TImpl>
 typename ReactionNetwork<TImpl>::IndexType
 ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
 {
-	return _worker.getDiagonalFill(fillMap);
+	IndexType nnz = 0;
+	for (int i = 0; i < this->getDOF(); ++i) {
+		const auto& current = _connectivityMap[i];
+		nnz += current.size();
+		fillMap.insert_or_assign(i, current);
+	}
+	return nnz;
 }
 
 namespace detail
@@ -714,35 +743,11 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 
 template <typename TImpl>
 void
-ReactionNetworkWorker<TImpl>::defineReactions()
+ReactionNetworkWorker<TImpl>::defineReactions(Connectivity& connectivity)
 {
 	auto generator = _nw.asDerived()->getReactionGenerator();
 	_nw._reactions = generator.generateReactions();
-}
-
-template <typename TImpl>
-typename ReactionNetworkWorker<TImpl>::IndexType
-ReactionNetworkWorker<TImpl>::getDiagonalFill(
-	typename Network::SparseFillMap& fillMap)
-{
-	auto connectivity = _nw._reactions.getConnectivity();
-	auto hConnRowMap = create_mirror_view(connectivity.row_map);
-	deep_copy(hConnRowMap, connectivity.row_map);
-	auto hConnEntries = create_mirror_view(connectivity.entries);
-	deep_copy(hConnEntries, connectivity.entries);
-
-	for (int i = 0; i < _nw.getDOF(); ++i) {
-		auto jBegin = hConnRowMap(i);
-		auto jEnd = hConnRowMap(i + 1);
-		std::vector<int> current;
-		current.reserve(jEnd - jBegin);
-		for (IndexType j = jBegin; j < jEnd; ++j) {
-			current.push_back((int)hConnEntries(j));
-		}
-		fillMap[i] = std::move(current);
-	}
-
-	return hConnEntries.extent(0);
+	connectivity = generator.getConnectivity();
 }
 
 template <typename TImpl>

@@ -3,7 +3,7 @@
 #include <Kokkos_Core.hpp>
 
 #include <plsm/Utility.h>
-#include <plsm/detail/KokkosExtension.h>
+// #include <plsm/detail/KokkosExtension.h>
 
 #include <xolotl/core/network/Cluster.h>
 #include <xolotl/core/network/IReactionNetwork.h>
@@ -11,6 +11,7 @@
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 #include <xolotl/core/network/detail/ClusterSet.h>
 #include <xolotl/core/network/detail/ReactionData.h>
+#include <xolotl/util/Array.h>
 
 namespace xolotl
 {
@@ -108,11 +109,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void
 	contributePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex)
+		Kokkos::View<double*> values, IndexType gridIndex)
 	{
 		asDerived()->computePartialDerivatives(
-			concentrations, values, connectivity, gridIndex);
+			concentrations, values, gridIndex);
 	}
 
 	/**
@@ -123,11 +123,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void
 	contributeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex)
+		Kokkos::View<double*> values, IndexType gridIndex)
 	{
 		asDerived()->computeReducedPartialDerivatives(
-			concentrations, values, connectivity, gridIndex);
+			concentrations, values, gridIndex);
 	}
 
 	/**
@@ -140,6 +139,13 @@ public:
 	{
 		return asDerived()->computeLeftSideRate(
 			concentrations, clusterId, gridIndex);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	defineJacobianEntries(Connectivity connectivity)
+	{
+		asDerived()->mapJacobianEntries(connectivity);
 	}
 
 protected:
@@ -170,7 +176,7 @@ protected:
 	KOKKOS_INLINE_FUNCTION
 	void
 	copyMomentIds(
-		IndexType clusterId, Kokkos::Array<IndexType, nMomentIds>& momentIds)
+		IndexType clusterId, util::Array<IndexType, nMomentIds>& momentIds)
 	{
 		if (clusterId == invalidIndex) {
 			for (IndexType i = 0; i < nMomentIds; ++i) {
@@ -284,30 +290,34 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity);
+
 protected:
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
-	Kokkos::Array<IndexType, 2> _reactants{invalidIndex, invalidIndex};
-	Kokkos::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
-	Kokkos::Array<AmountType, 2> _reactantVolumes{0, 0};
-	Kokkos::Array<AmountType, 2> _productVolumes{0, 0};
+	util::Array<IndexType, 2> _reactants{invalidIndex, invalidIndex};
+	util::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
+	util::Array<AmountType, 2> _reactantVolumes{0, 0};
+	util::Array<AmountType, 2> _productVolumes{0, 0};
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
-	Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _reactantMomentIds;
-	Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _productMomentIds;
+	util::Array<IndexType, 2, nMomentIds> _reactantMomentIds;
+	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
+
+	util::Array<IndexType, 4, 1 + nMomentIds, 2, 1 + nMomentIds> _connEntries;
 };
 
 /**
@@ -381,30 +391,34 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity);
+
 protected:
 	IndexType _reactant;
 	AmountType _reactantVolume;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
-	Kokkos::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
-	Kokkos::Array<AmountType, 2> _productVolumes{0, 0};
+	util::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
+	util::Array<AmountType, 2> _productVolumes{0, 0};
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
-	Kokkos::Array<IndexType, nMomentIds> _reactantMomentIds;
-	Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _productMomentIds;
+	util::Array<IndexType, nMomentIds> _reactantMomentIds;
+	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
+
+	util::Array<IndexType, 3, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
 };
 } // namespace network
 } // namespace core
