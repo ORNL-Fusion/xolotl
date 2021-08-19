@@ -95,21 +95,19 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex)
+		Kokkos::View<double*> values, IndexType gridIndex)
 	{
-		Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)),
-			this->_rate(gridIndex));
+		Kokkos::atomic_sub(
+			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex)
+		Kokkos::View<double*> values, IndexType gridIndex)
 	{
-		Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)),
-			this->_rate(gridIndex));
+		Kokkos::atomic_sub(
+			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -120,9 +118,18 @@ private:
 		return 0.0;
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity)
+	{
+		_connEntries[0][0][0][0] = connectivity(_reactant, _reactant);
+	}
+
 protected:
 	IndexType _reactant;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
+
+	util::Array<IndexType, 1, 1, 1, 1> _connEntries;
 };
 } // namespace network
 } // namespace core
