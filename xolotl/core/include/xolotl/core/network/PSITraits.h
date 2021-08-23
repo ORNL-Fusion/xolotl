@@ -3,7 +3,7 @@
 #include <tuple>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
-#include <xolotl/core/network/TrapMutationClusterData.h>
+#include <xolotl/core/network/detail/TrapMutationClusterData.h>
 
 namespace xolotl
 {
@@ -291,24 +291,35 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 
 namespace detail
 {
-template <typename TSpeciesEnum, typename PlsmContext,
-	template <typename> typename ViewConvert>
-struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, PlsmContext,
-	ViewConvert>
+template <typename TSpeciesEnum, typename PlsmContext>
+struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, PlsmContext>
 {
+	using NetworkType = PSIReactionNetwork<TSpeciesEnum>;
+
 	ClusterDataExtra() = default;
 
-	template <typename TOtherPlsmContext,
-		template <typename> typename TOtherViewConvert>
+	template <typename PC>
 	KOKKOS_INLINE_FUNCTION
-	ClusterDataExtra(const ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>,
-		TOtherPlsmContext, TOtherViewConvert>& data) :
+	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
 		trapMutationData(data.trapMutationData)
 	{
 	}
 
+	template <typename PC>
+	void
+	deepCopy(const ClusterDataExtra<NetworkType, PC>& data)
+	{
+		trapMutationData.deepCopy(data.trapMutationData);
+	}
+
+	std::uint64_t
+	getDeviceMemorySize() const noexcept
+	{
+		return trapMutationData.getDeviceMemorySize();
+	}
+
 	using TrapMutationData =
-		TrapMutationClusterData<ClusterDataCommon<PlsmContext, ViewConvert>>;
+		TrapMutationClusterData<ClusterDataCommon<PlsmContext>>;
 	TrapMutationData trapMutationData;
 };
 } // namespace detail

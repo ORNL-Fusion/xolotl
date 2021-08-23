@@ -12,7 +12,8 @@ template <typename TNetwork, typename TDerived>
 ReactionGeneratorBase<TNetwork, TDerived>::ReactionGeneratorBase(
 	const TNetwork& network) :
 	_subpaving(network._subpaving),
-	_clusterData(network._clusterData),
+	_clusterData(network._clusterData.h_view()),
+	_clusterDataView(network._clusterData.d_view),
 	_numDOFs(network.getDOF()),
 	_enableReducedJacobian(network.getEnableReducedJacobian()),
 	_clusterProdReactionCounts(
@@ -63,7 +64,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 	//      - Constructing all reactions
 	//      - Generating connectivity
 	auto reactionCollection = this->asDerived()->getReactionCollection();
-	reactionCollection.constructAll(_clusterData, _allClusterSets);
+	reactionCollection.constructAll(_clusterDataView, _allClusterSets);
 
 	Kokkos::fence();
 
@@ -116,7 +117,7 @@ void
 ReactionGeneratorBase<TNetwork, TDerived>::addProductionReaction(
 	Count, const ClusterSet& clusterSet) const
 {
-	if (!_clusterData.enableStdReaction(0))
+	if (!_clusterData.enableStdReaction())
 		return;
 
 	Kokkos::atomic_increment(&_clusterProdReactionCounts(clusterSet.cluster0));
@@ -128,7 +129,7 @@ void
 ReactionGeneratorBase<TNetwork, TDerived>::addProductionReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
-	if (!_clusterData.enableStdReaction(0))
+	if (!_clusterData.enableStdReaction())
 		return;
 
 	auto id = _prodCrsRowMap(clusterSet.cluster0);
@@ -145,7 +146,7 @@ void
 ReactionGeneratorBase<TNetwork, TDerived>::addDissociationReaction(
 	Count, const ClusterSet& clusterSet) const
 {
-	if (!_clusterData.enableStdReaction(0))
+	if (!_clusterData.enableStdReaction())
 		return;
 
 	Kokkos::atomic_increment(&_clusterDissReactionCounts(clusterSet.cluster1));
@@ -157,7 +158,7 @@ void
 ReactionGeneratorBase<TNetwork, TDerived>::addDissociationReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
-	if (!_clusterData.enableStdReaction(0))
+	if (!_clusterData.enableStdReaction())
 		return;
 
 	auto id = _dissCrsRowMap(clusterSet.cluster1);
@@ -188,12 +189,12 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		this->_numDOFs,
 		KOKKOS_LAMBDA(const IndexType i) { tmpConn.row_map(i) = 1; });
 	if (this->_enableReducedJacobian) {
-		reactionCollection.apply(DEVICE_LAMBDA(auto&& reaction) {
+		reactionCollection.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributeReducedConnectivity(tmpConn);
 		});
 	}
 	else {
-		reactionCollection.apply(DEVICE_LAMBDA(
+		reactionCollection.forEach(DEVICE_LAMBDA(
 			auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
 	}
 
@@ -227,12 +228,12 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		});
 	// Fill entries (column ids)
 	if (this->_enableReducedJacobian) {
-		reactionCollection.apply(DEVICE_LAMBDA(auto&& reaction) {
+		reactionCollection.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributeReducedConnectivity(tmpConn);
 		});
 	}
 	else {
-		reactionCollection.apply(DEVICE_LAMBDA(
+		reactionCollection.forEach(DEVICE_LAMBDA(
 			auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
 	}
 	Kokkos::fence();
@@ -268,7 +269,8 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		});
 	nEntries = connectivity.entries.extent(0);
 
-	reactionCollection.setConnectivity(connectivity);
+	_connectivity = connectivity;
+	reactionCollection.setConnectivity(_connectivity);
 }
 } // namespace detail
 } // namespace network

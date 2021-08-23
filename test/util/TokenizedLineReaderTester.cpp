@@ -32,8 +32,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing)
 	//----- Check doubles -----//
 
 	// Create the input stream
-	shared_ptr<stringstream> doubleTestStream(
-		new stringstream(stringstream::in | stringstream::out));
+	auto doubleTestStream = std::make_shared<stringstream>(ios::in | ios::out);
 	*doubleTestStream << doubleString;
 	// Load the double reader
 	doubleReader.setInputStream(doubleTestStream);
@@ -67,8 +66,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing)
 	//----- Check integers -----//
 
 	// Create the input stream
-	shared_ptr<stringstream> intTestStream(
-		new stringstream(stringstream::in | stringstream::out));
+	auto intTestStream = std::make_shared<stringstream>(ios::in | ios::out);
 	*intTestStream << intString;
 	// Load the int reader
 	intReader.setInputStream(intTestStream);
@@ -107,8 +105,7 @@ BOOST_AUTO_TEST_CASE(checkCSVParsing)
 	//----- Check integers -----//
 
 	// Create the input stream
-	shared_ptr<stringstream> intTestStream(
-		new stringstream(stringstream::in | stringstream::out));
+	auto intTestStream = std::make_shared<stringstream>(ios::in | ios::out);
 	*intTestStream << intCSVString;
 	// Configure the delimiter
 	intReader.setDelimiter(",");
@@ -149,8 +146,7 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter)
 	//----- Check doubles -----//
 
 	// Create the input stream
-	shared_ptr<stringstream> doubleTestStream(
-		new stringstream(stringstream::in | stringstream::out));
+	auto doubleTestStream = std::make_shared<stringstream>(ios::in | ios::out);
 	*doubleTestStream << doubleCSVDoubleSlashCommentString;
 	// Set the delimiter
 	doubleReader.setDelimiter(",");
@@ -197,8 +193,7 @@ BOOST_AUTO_TEST_CASE(checkDelimiterParsing)
 	vector<std::string> iLine;
 
 	// Create the input stream
-	shared_ptr<stringstream> stringTestStream(
-		new stringstream(stringstream::in | stringstream::out));
+	auto stringTestStream = std::make_shared<stringstream>(ios::in | ios::out);
 	*stringTestStream << equalDelimiterString;
 	// Configure the delimiter
 	stringReader.setDelimiter("=");

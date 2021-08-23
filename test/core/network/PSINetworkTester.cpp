@@ -4,10 +4,12 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/network/PSIReactionNetwork.h>
+#include <xolotl/test/CommandLine.h>
 #include <xolotl/test/PSINetworkTesterData.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace network;
 
 using Kokkos::ScopeGuard;
@@ -23,22 +25,17 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 1 1 1 1" << std::endl
 			  << "process=reaction" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = PSIReactionNetwork<PSIFullSpeciesList>;
 	using Spec = NetworkType::Species;
@@ -63,8 +60,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 156);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 3000000);
-	BOOST_REQUIRE(deviceMemorySize < 3500000);
+	BOOST_CHECK_GT(deviceMemorySize, 3900000);
+	BOOST_CHECK_LT(deviceMemorySize, 3940000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
@@ -585,23 +582,18 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 1 1 1 1" << std::endl
 			  << "process=reaction" << std::endl
 			  << "petscArgs=-snes_mf_operator" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = PSIReactionNetwork<PSIFullSpeciesList>;
 	using Spec = NetworkType::Species;
@@ -620,8 +612,8 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	network.getSubpaving().syncZones(plsm::onHost);
 
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 3000000);
-	BOOST_REQUIRE(deviceMemorySize < 3500000);
+	BOOST_CHECK_GT(deviceMemorySize, 3900000);
+	BOOST_CHECK_LT(deviceMemorySize, 3940000);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -870,22 +862,17 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 0 2 2" << std::endl
 			  << "process=reaction" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = PSIReactionNetwork<PSIHeliumSpeciesList>;
 	using Spec = NetworkType::Species;
@@ -908,8 +895,8 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 35);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 400000);
-	BOOST_REQUIRE(deviceMemorySize < 450000);
+	BOOST_CHECK_GT(deviceMemorySize, 405000);
+	BOOST_CHECK_LT(deviceMemorySize, 420000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
@@ -1178,22 +1165,17 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 1 0 1 1" << std::endl
 			  << "process=reaction" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = PSIReactionNetwork<PSIDeuteriumSpeciesList>;
 	using Spec = NetworkType::Species;
@@ -1217,8 +1199,8 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 56);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 500000);
-	BOOST_REQUIRE(deviceMemorySize < 900000);
+	BOOST_CHECK_GT(deviceMemorySize, 798000);
+	BOOST_CHECK_LT(deviceMemorySize, 812000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
@@ -1539,22 +1521,17 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 1 1 1" << std::endl
 			  << "process=reaction" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = PSIReactionNetwork<PSITritiumSpeciesList>;
 	using Spec = NetworkType::Species;
@@ -1578,8 +1555,8 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 56);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 500000);
-	BOOST_REQUIRE(deviceMemorySize < 900000);
+	BOOST_CHECK_GT(deviceMemorySize, 798000);
+	BOOST_CHECK_LT(deviceMemorySize, 812000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);

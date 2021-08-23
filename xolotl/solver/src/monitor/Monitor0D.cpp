@@ -612,7 +612,7 @@ setupPetsc0DMonitor(TS ts)
 	std::string networkName = solverHandler.getNetworkName();
 	bool hasConcentrations = false;
 	if (not networkName.empty()) {
-		networkFile.reset(new io::XFile(networkName));
+		networkFile = std::make_unique<io::XFile>(networkName);
 		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		if (hasConcentrations) {
@@ -638,68 +638,6 @@ setupPetsc0DMonitor(TS ts)
 		ierr = TSSetPostStep(ts, checkTimeStep);
 		checkPetscError(
 			ierr, "setupPetsc0DMonitor: TSSetPostStep (checkTimeStep) failed.");
-	}
-
-	// Set the monitor to save the status of the simulation in hdf5 file
-	if (flagStatus) {
-		// Find the stride to know how often the HDF5 file has to be written
-		PetscBool flag;
-		ierr = PetscOptionsGetReal(
-			NULL, NULL, "-start_stop", &hdf5Stride0D, &flag);
-		checkPetscError(ierr,
-			"setupPetsc0DMonitor: PetscOptionsGetInt (-start_stop) failed.");
-		if (!flag)
-			hdf5Stride0D = 1.0;
-
-		// Compute the correct hdf5Previous0D for a restart
-		// Get the last time step written in the HDF5 file
-		if (hasConcentrations) {
-			assert(lastTsGroup);
-
-			// Get the previous time from the HDF5 file
-			double previousTime = lastTsGroup->readPreviousTime();
-			solverHandler.setPreviousTime(previousTime);
-			hdf5Previous0D = (PetscInt)(previousTime / hdf5Stride0D);
-		}
-
-		// Don't do anything if both files have the same name
-		if (hdf5OutputName0D != solverHandler.getNetworkName()) {
-			PetscErrorCode ierr;
-
-			// Get the solver handler and network
-			auto& solverHandler = PetscSolver::getSolverHandler();
-			auto& network = solverHandler.getNetwork();
-
-			// Get the physical grid (which is empty)
-			auto grid = solverHandler.getXGrid();
-
-			// Get the MPI communicator
-			auto xolotlComm = util::getMPIComm();
-
-			// Create and initialize a checkpoint file.
-			// We do this in its own scope so that the file
-			// is closed when the file object goes out of scope.
-			// We want it to close before we (potentially) copy
-			// the network from another file using a single-process
-			// MPI communicator.
-			{
-				io::XFile checkpointFile(hdf5OutputName0D, grid, xolotlComm);
-			}
-
-			// Copy the network group from the given file (if it has one).
-			// We open the files using a single-process MPI communicator
-			// because it is faster for a single process to do the
-			// copy with HDF5's H5Ocopy implementation than it is
-			// when all processes call the copy function.
-			// The checkpoint file must be closed before doing this.
-			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
-				hdf5OutputName0D, network);
-		}
-
-		// startStop0D will be called at each timestep
-		ierr = TSMonitorSet(ts, startStop0D, NULL, NULL);
-		checkPetscError(
-			ierr, "setupPetsc0DMonitor: TSMonitorSet (startStop0D) failed.");
 	}
 
 	// Set the monitor to save 1D plot of xenon distribution
@@ -809,6 +747,68 @@ setupPetsc0DMonitor(TS ts)
 		ierr = TSMonitorSet(ts, monitorLargest0D, NULL, NULL);
 		checkPetscError(ierr,
 			"setupPetsc0DMonitor: TSMonitorSet (monitorLargest0D) failed.");
+	}
+
+	// Set the monitor to save the status of the simulation in hdf5 file
+	if (flagStatus) {
+		// Find the stride to know how often the HDF5 file has to be written
+		PetscBool flag;
+		ierr = PetscOptionsGetReal(
+			NULL, NULL, "-start_stop", &hdf5Stride0D, &flag);
+		checkPetscError(ierr,
+			"setupPetsc0DMonitor: PetscOptionsGetInt (-start_stop) failed.");
+		if (!flag)
+			hdf5Stride0D = 1.0;
+
+		// Compute the correct hdf5Previous0D for a restart
+		// Get the last time step written in the HDF5 file
+		if (hasConcentrations) {
+			assert(lastTsGroup);
+
+			// Get the previous time from the HDF5 file
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
+			hdf5Previous0D = (PetscInt)(previousTime / hdf5Stride0D);
+		}
+
+		// Don't do anything if both files have the same name
+		if (hdf5OutputName0D != solverHandler.getNetworkName()) {
+			PetscErrorCode ierr;
+
+			// Get the solver handler and network
+			auto& solverHandler = PetscSolver::getSolverHandler();
+			auto& network = solverHandler.getNetwork();
+
+			// Get the physical grid (which is empty)
+			auto grid = solverHandler.getXGrid();
+
+			// Get the MPI communicator
+			auto xolotlComm = util::getMPIComm();
+
+			// Create and initialize a checkpoint file.
+			// We do this in its own scope so that the file
+			// is closed when the file object goes out of scope.
+			// We want it to close before we (potentially) copy
+			// the network from another file using a single-process
+			// MPI communicator.
+			{
+				io::XFile checkpointFile(hdf5OutputName0D, grid, xolotlComm);
+			}
+
+			// Copy the network group from the given file (if it has one).
+			// We open the files using a single-process MPI communicator
+			// because it is faster for a single process to do the
+			// copy with HDF5's H5Ocopy implementation than it is
+			// when all processes call the copy function.
+			// The checkpoint file must be closed before doing this.
+			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
+				hdf5OutputName0D, network);
+		}
+
+		// startStop0D will be called at each timestep
+		ierr = TSMonitorSet(ts, startStop0D, NULL, NULL);
+		checkPetscError(
+			ierr, "setupPetsc0DMonitor: TSMonitorSet (startStop0D) failed.");
 	}
 
 	// Set the monitor to simply change the previous time to the new time

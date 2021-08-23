@@ -26,6 +26,12 @@ setMPIComm(MPI_Comm comm);
 MPI_Comm
 getMPIComm(void);
 
+/**
+ * Initialize MPI with const char array
+ */
+void
+mpiInit(int& argc, const char* argv[]);
+
 } // namespace util
 } // namespace xolotl
 #endif

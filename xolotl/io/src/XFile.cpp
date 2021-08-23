@@ -176,11 +176,9 @@ XFile::NetworkGroup::NetworkGroup(
 	// Get the phase space information
 	auto phaseSpace = network.getPhaseSpace();
 	// Convert it to char
-	std::vector<char*> phaseSpaceChar;
+	std::vector<const char*> phaseSpaceChar;
 	for (auto name : phaseSpace) {
-		char* pc = new char[name.size() + 1];
-		std::strcpy(pc, name.c_str());
-		phaseSpaceChar.push_back(pc);
+		phaseSpaceChar.push_back(name.c_str());
 	}
 	// Write it as an attribute
 	hid_t datatype = H5Tcopy(H5T_C_S1);
@@ -350,8 +348,8 @@ XFile::ConcentrationGroup::addTimestepGroup(
 	int timeStep, double time, double previousTime, double deltaTime) const
 {
 	// Create a group for the new timestep.
-	std::unique_ptr<XFile::TimestepGroup> tsGroup(
-		new TimestepGroup(*this, timeStep, time, previousTime, deltaTime));
+	auto tsGroup = std::make_unique<XFile::TimestepGroup>(
+		*this, timeStep, time, previousTime, deltaTime);
 
 	// Update our last known timestep.
 	Attribute<decltype(timeStep)> lastTimestepAttr(*this, lastTimestepAttrName);
@@ -374,7 +372,7 @@ XFile::ConcentrationGroup::getTimestepGroup(int timeStep) const
 
 	try {
 		// Open the sub-group associated with the desired time step.
-		tsGroup.reset(new TimestepGroup(*this, timeStep));
+		tsGroup = std::make_unique<XFile::TimestepGroup>(*this, timeStep);
 	}
 	catch (HDF5Exception& e) {
 		// We were unable to open the group associated with the given time step.
@@ -394,7 +392,7 @@ XFile::ConcentrationGroup::getLastTimestepGroup(void) const
 		// if any time steps have been written.
 		auto lastTimeStep = getLastTimeStep();
 		if (lastTimeStep >= 0) {
-			tsGroup.reset(new TimestepGroup(*this, lastTimeStep));
+			tsGroup = std::make_unique<TimestepGroup>(*this, lastTimeStep);
 		}
 	}
 	catch (HDF5Exception& e) {
@@ -464,9 +462,8 @@ XFile::TimestepGroup::TimestepGroup(
 }
 
 void
-XFile::TimestepGroup::writeSurface1D(Surface1DType iSurface, Data1DType nInter,
-	Data1DType previousIFlux, std::vector<Data1DType> nAtoms,
-	std::vector<Data1DType> previousFluxes,
+XFile::TimestepGroup::writeSurface1D(Surface1DType iSurface,
+	std::vector<Data1DType> nAtoms, std::vector<Data1DType> previousFluxes,
 	std::vector<std::string> atomNames) const
 {
 	// Make a scalar dataspace for 1D attributes.
@@ -475,14 +472,6 @@ XFile::TimestepGroup::writeSurface1D(Surface1DType iSurface, Data1DType nInter,
 	// Create, write, and close the surface position attribute
 	Attribute<int> surfacePosAttr(*this, surfacePosDataName, scalarDSpace);
 	surfacePosAttr.setTo(iSurface);
-
-	// Create, write, and close the quantity of interstitial attribute
-	Attribute<Data1DType> nIntersAttr(*this, nIntersAttrName, scalarDSpace);
-	nIntersAttr.setTo(nInter);
-
-	// Create, write, and close the flux of interstitial attribute
-	Attribute<Data1DType> prevIFluxAttr(*this, prevIFluxAttrName, scalarDSpace);
-	prevIFluxAttr.setTo(previousIFlux);
 
 	// Loop on the names
 	for (auto i = 0; i < atomNames.size(); i++) {
@@ -507,7 +496,8 @@ XFile::TimestepGroup::writeSurface1D(Surface1DType iSurface, Data1DType nInter,
 
 void
 XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
-	const Data2DType& nInter, const Data2DType& previousFlux) const
+	std::vector<Data2DType> nAtoms, std::vector<Data2DType> previousFluxes,
+	std::vector<std::string> atomNames) const
 {
 	// Create the array that will store the indices and fill it
 	int size = iSurface.size();
@@ -528,43 +518,55 @@ XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
 	// Close the dataset
 	status = H5Dclose(datasetId);
 
-	// Create the array that will store the quantities and fill it
-	double quantityArray[size];
-	for (int i = 0; i < size; i++) {
-		quantityArray[i] = nInter[i];
+	// Loop on the names
+	for (auto i = 0; i < atomNames.size(); i++) {
+		// Create the n attribute name
+		std::ostringstream nName;
+		nName << nAttrName << atomNames[i] << surfAttrName;
+
+		// Create the array that will store the quantities and fill it
+		double quantityArray[size];
+		for (int j = 0; j < size; j++) {
+			quantityArray[j] = nAtoms[i][j];
+		}
+
+		// Create the dataset for the surface indices
+		datasetId = H5Dcreate2(getId(), nName.str().c_str(), H5T_IEEE_F64LE,
+			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+		// Write quantityArray in the dataset
+		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+			H5P_DEFAULT, &quantityArray);
+
+		// Close the dataset
+		status = H5Dclose(datasetId);
+		// Create the previous flux attribute name
+		std::ostringstream prevFluxName;
+		prevFluxName << previousFluxAttrName << atomNames[i] << surfAttrName;
+
+		// Fill the array with the previous flux
+		for (int j = 0; j < size; j++) {
+			quantityArray[j] = previousFluxes[i][j];
+		}
+
+		// Create the dataset for the surface indices
+		datasetId =
+			H5Dcreate2(getId(), prevFluxName.str().c_str(), H5T_IEEE_F64LE,
+				indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+		// Write quantityArray in the dataset
+		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+			H5P_DEFAULT, &quantityArray);
+
+		// Close everything
+		status = H5Dclose(datasetId);
 	}
-
-	// Create the dataset for the surface indices
-	datasetId = H5Dcreate2(getId(), nIntersAttrName.c_str(), H5T_IEEE_F64LE,
-		indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-	// Write quantityArray in the dataset
-	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-		&quantityArray);
-
-	// Close the dataset
-	status = H5Dclose(datasetId);
-
-	// Fill the array with the previous flux
-	for (int i = 0; i < size; i++) {
-		quantityArray[i] = previousFlux[i];
-	}
-
-	// Create the dataset for the surface indices
-	datasetId = H5Dcreate2(getId(), prevIFluxAttrName.c_str(), H5T_IEEE_F64LE,
-		indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-
-	// Write quantityArray in the dataset
-	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-		&quantityArray);
-
-	// Close everything
-	status = H5Dclose(datasetId);
 }
 
 void
 XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
-	const Data3DType& nInter, const Data3DType& previousFlux) const
+	std::vector<Data3DType> nAtoms, std::vector<Data3DType> previousFluxes,
+	std::vector<std::string> atomNames) const
 {
 	// Create the array that will store the indices and fill it
 	int xSize = iSurface.size();
@@ -590,38 +592,51 @@ XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
 	// Close the dataset
 	status = H5Dclose(datasetId);
 
-	// Create the array that will store the interstitial quantities and fill it
-	double quantityArray[xSize][ySize];
-	for (int i = 0; i < xSize; i++) {
-		for (int j = 0; j < ySize; j++) {
-			quantityArray[i][j] = nInter[i][j];
+	// Loop on the names
+	for (auto k = 0; k < atomNames.size(); k++) {
+		// Create the n attribute name
+		std::ostringstream nName;
+		nName << nAttrName << atomNames[k] << surfAttrName;
+
+		// Create the array that will store the interstitial quantities and fill
+		// it
+		double quantityArray[xSize][ySize];
+		for (int i = 0; i < xSize; i++) {
+			for (int j = 0; j < ySize; j++) {
+				quantityArray[i][j] = nAtoms[k][i][j];
+			}
 		}
-	}
 
-	// Create the dataset for the interstitial quantities
-	datasetId = H5Dcreate2(getId(), nIntersAttrName.c_str(), H5T_IEEE_F64LE,
-		indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	// Write in the dataset
-	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-		&quantityArray);
-	// Close the dataset
-	status = H5Dclose(datasetId);
+		// Create the dataset for the interstitial quantities
+		datasetId = H5Dcreate2(getId(), nName.str().c_str(), H5T_IEEE_F64LE,
+			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		// Write in the dataset
+		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+			H5P_DEFAULT, &quantityArray);
 
-	// Fill the array that will store the interstitial flux
-	for (int i = 0; i < xSize; i++) {
-		for (int j = 0; j < ySize; j++) {
-			quantityArray[i][j] = previousFlux[i][j];
+		// Close the dataset
+		status = H5Dclose(datasetId);
+		// Create the previous flux attribute name
+		std::ostringstream prevFluxName;
+		prevFluxName << previousFluxAttrName << atomNames[k] << surfAttrName;
+
+		// Fill the array that will store the interstitial flux
+		for (int i = 0; i < xSize; i++) {
+			for (int j = 0; j < ySize; j++) {
+				quantityArray[i][j] = previousFluxes[k][i][j];
+			}
 		}
-	}
 
-	// Create the dataset for the interstitial quantities
-	datasetId = H5Dcreate2(getId(), prevIFluxAttrName.c_str(), H5T_IEEE_F64LE,
-		indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	// Write in the dataset
-	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-		&quantityArray);
-	// Close the dataset
-	status = H5Dclose(datasetId);
+		// Create the dataset for the interstitial quantities
+		datasetId =
+			H5Dcreate2(getId(), prevFluxName.str().c_str(), H5T_IEEE_F64LE,
+				indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		// Write in the dataset
+		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+			H5P_DEFAULT, &quantityArray);
+		// Close the dataset
+		status = H5Dclose(datasetId);
+	}
 }
 
 void
@@ -653,81 +668,127 @@ XFile::TimestepGroup::writeBottom1D(std::vector<Data1DType> nAtoms,
 }
 
 void
-XFile::TimestepGroup::writeBottom2D(const Data2DType& nHe,
-	const Data2DType& previousHeFlux, const Data2DType& nD,
-	const Data2DType& previousDFlux, const Data2DType& nT,
-	const Data2DType& previousTFlux)
+XFile::TimestepGroup::writeBottom2D(std::vector<Data2DType> nAtoms,
+	std::vector<Data2DType> previousFluxes, std::vector<std::string> atomNames)
 {
 	// Find out the size of the arrays
-	const int size = nHe.size();
+	const int size = nAtoms[0].size();
 
 	// Create the dataspace for the dataset with dimension dims
 	std::array<hsize_t, 1> dims{(hsize_t)size};
 	XFile::SimpleDataSpace<1> dspace(dims);
+	double quantityArray[size];
 
-	// Create the dataset for helium
-	hid_t datasetId = H5Dcreate2(getId(), "nHelium", H5T_IEEE_F64LE,
-		dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	//	// Create the array that will store the quantities and fill it
-	//	double quantityArray[size];
-	//	for (int i = 0; i < size; i++) {
-	//		quantityArray[i] = nInter[i];
-	//	}
-	// Write the dataset
-	auto status = H5Dwrite(
-		datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, nHe.data());
-	// Close the dataset
-	status = H5Dclose(datasetId);
+	// Loop on the names
+	for (auto i = 0; i < atomNames.size(); i++) {
+		// Create the n attribute name
+		std::ostringstream nName;
+		nName << nAttrName << atomNames[i] << bulkAttrName;
 
-	// Create the dataset for the helium flux
-	datasetId = H5Dcreate2(getId(), "previousHeFlux", H5T_IEEE_F64LE,
-		dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	// Write  the dataset
-	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-		previousHeFlux.data());
-	// Close the dataset
-	status = H5Dclose(datasetId);
+		// Fill the array
+		double quantityArray[size];
+		for (int j = 0; j < size; j++) {
+			quantityArray[j] = nAtoms[i][j];
+		}
 
-	// Create the dataset for the deuterium
-	datasetId = H5Dcreate2(getId(), "nDeuterium", H5T_IEEE_F64LE,
-		dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	// Write the dataset
-	status = H5Dwrite(
-		datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, nD.data());
-	// Close the dataset
-	status = H5Dclose(datasetId);
+		// Create the dataset for the surface indices
+		auto datasetId =
+			H5Dcreate2(getId(), nName.str().c_str(), H5T_IEEE_F64LE,
+				dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
-	// Create the dataset for the deuterium flux
-	datasetId = H5Dcreate2(getId(), "previousDFlux", H5T_IEEE_F64LE,
-		dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	// Write  the dataset
-	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-		previousDFlux.data());
-	// Close the dataset
-	status = H5Dclose(datasetId);
+		// Write quantityArray in the dataset
+		auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+			H5P_DEFAULT, &quantityArray);
 
-	// Create the dataset for the tritium
-	datasetId = H5Dcreate2(getId(), "nTritium", H5T_IEEE_F64LE, dspace.getId(),
-		H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	// Write the dataset
-	status = H5Dwrite(
-		datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, nT.data());
-	// Close the dataset
-	status = H5Dclose(datasetId);
+		// Close the dataset
+		status = H5Dclose(datasetId);
+		// Create the previous flux attribute name
+		std::ostringstream prevFluxName;
+		prevFluxName << previousFluxAttrName << atomNames[i] << bulkAttrName;
 
-	// Create the dataset for the tritium flux
-	datasetId = H5Dcreate2(getId(), "previousTFlux", H5T_IEEE_F64LE,
-		dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	// Write  the dataset
-	status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-		previousTFlux.data());
+		// Fill the array with the previous flux
+		for (int j = 0; j < size; j++) {
+			quantityArray[j] = previousFluxes[i][j];
+		}
 
-	// Close everything
-	status = H5Dclose(datasetId);
+		// Create the dataset for the surface indices
+		datasetId =
+			H5Dcreate2(getId(), prevFluxName.str().c_str(), H5T_IEEE_F64LE,
+				dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+
+		// Write quantityArray in the dataset
+		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+			H5P_DEFAULT, &quantityArray);
+
+		// Close everything
+		status = H5Dclose(datasetId);
+	}
 }
 
 void
-XFile::TimestepGroup::writeBursting1D(
+XFile::TimestepGroup::writeBottom3D(std::vector<Data3DType> nAtoms,
+	std::vector<Data3DType> previousFluxes, std::vector<std::string> atomNames)
+{
+	// Find out the size of the arrays
+	// Create the array that will store the indices and fill it
+	int xSize = nAtoms[0].size();
+	int ySize = nAtoms[0][0].size();
+	int indexArray[xSize][ySize];
+
+	// Create the dataspace for the dataset with dimension dims
+	std::array<hsize_t, 2> dims{(hsize_t)xSize, (hsize_t)ySize};
+	XFile::SimpleDataSpace<2> indexDSpace(dims);
+
+	// Loop on the names
+	for (auto k = 0; k < atomNames.size(); k++) {
+		// Create the n attribute name
+		std::ostringstream nName;
+		nName << nAttrName << atomNames[k] << bulkAttrName;
+
+		// Create the array that will store the interstitial quantities and fill
+		// it
+		double quantityArray[xSize][ySize];
+		for (int i = 0; i < xSize; i++) {
+			for (int j = 0; j < ySize; j++) {
+				quantityArray[i][j] = nAtoms[k][i][j];
+			}
+		}
+
+		// Create the dataset for the interstitial quantities
+		auto datasetId =
+			H5Dcreate2(getId(), nName.str().c_str(), H5T_IEEE_F64LE,
+				indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		// Write in the dataset
+		auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+			H5P_DEFAULT, &quantityArray);
+
+		// Close the dataset
+		status = H5Dclose(datasetId);
+		// Create the previous flux attribute name
+		std::ostringstream prevFluxName;
+		prevFluxName << previousFluxAttrName << atomNames[k] << bulkAttrName;
+
+		// Fill the array that will store the interstitial flux
+		for (int i = 0; i < xSize; i++) {
+			for (int j = 0; j < ySize; j++) {
+				quantityArray[i][j] = previousFluxes[k][i][j];
+			}
+		}
+
+		// Create the dataset for the interstitial quantities
+		datasetId =
+			H5Dcreate2(getId(), prevFluxName.str().c_str(), H5T_IEEE_F64LE,
+				indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+		// Write in the dataset
+		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+			H5P_DEFAULT, &quantityArray);
+		// Close the dataset
+		status = H5Dclose(datasetId);
+	}
+}
+
+void
+XFile::TimestepGroup::writeBursting(
 	Data1DType nHe, Data1DType nD, Data1DType nT)
 {
 	// Build a data space for scalar attributes.

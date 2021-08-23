@@ -1,13 +1,17 @@
-file(GLOB tests
-    *Tester.cpp
-    dummy/*Tester.cpp
-    os/*Tester.cpp
-    standard/*Tester.cpp
+list(APPEND tests
+    EventCounterTester.cpp
+    PerfHandlerTester.cpp
+    dummy/DummyEventCounterTester.cpp
+    dummy/DummyHardwareCounterTester.cpp
+    dummy/DummyTimerTester.cpp
+    os/OSTimerTester.cpp
 )
 
 if(PAPI_FOUND)
-    file(GLOB PAPI_TEST_SRCS papi/*Tester.cpp)
-    list(APPEND tests ${PAPI_TEST_SRCS})
+    list(APPEND tests
+        papi/PAPIHardwareCounterTester.cpp
+        papi/PAPITimerTester.cpp
+    )
 endif(PAPI_FOUND)
 
 if(CMAKE_BUILD_TYPE MATCHES "^Debug$")
@@ -28,11 +32,4 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
     "${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/test/perf/config.h"
 )
 
-foreach(test ${tests})
-    get_filename_component(testName ${test} NAME_WE)
-    add_executable(${testName} ${test})
-    target_link_libraries(${testName} xolotlPerf Boost::unit_test_framework)
-    add_test(${testName} ${testName})
-    #add a label so the tests can be run separately
-    set_property(TEST ${testName} PROPERTY LABELS "xolotl.tests.perf")
-endforeach(test ${tests})
+add_tests(tests LIBS xolotlPerf LABEL "xolotl.tests.perf")

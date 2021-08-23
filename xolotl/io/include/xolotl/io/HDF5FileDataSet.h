@@ -225,7 +225,7 @@ HDF5File::RaggedDataSet2D<T>::buildDataSpace(
 
 	// Define the dataspace for the flattened data.
 	SimpleDataSpace<1>::Dimensions dims{totalNumItems};
-	std::unique_ptr<SimpleDataSpace<1>> dataspace(new SimpleDataSpace<1>(dims));
+	auto dataspace = std::make_unique<SimpleDataSpace<1>>(dims);
 	return std::move(dataspace);
 }
 

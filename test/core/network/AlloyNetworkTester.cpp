@@ -4,10 +4,12 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/network/AlloyReactionNetwork.h>
+#include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace network;
 
 using Kokkos::ScopeGuard;
@@ -23,22 +25,17 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 0 6 4" << std::endl
 			  << "process=reaction sink" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = AlloyReactionNetwork;
 	using Spec = NetworkType::Species;
@@ -58,8 +55,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 23);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 140000);
-	BOOST_REQUIRE(deviceMemorySize < 170000);
+	BOOST_CHECK_GT(deviceMemorySize, 120000);
+	BOOST_CHECK_LT(deviceMemorySize, 130000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.36, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.011664, 0.01);
@@ -467,23 +464,18 @@ BOOST_AUTO_TEST_CASE(grouped)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=20 0 0 6 4" << std::endl
 			  << "grouping=10 5" << std::endl
 			  << "process=reaction sink" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = AlloyReactionNetwork;
 	using Spec = NetworkType::Species;
@@ -514,8 +506,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 53);
 	// TODO: check it is within a given range?
 	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 700000);
-	BOOST_REQUIRE(deviceMemorySize < 1100000);
+	BOOST_CHECK_GT(deviceMemorySize, 730000);
+	BOOST_CHECK_LT(deviceMemorySize, 780000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.36, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.011664, 0.01);
@@ -1153,7 +1145,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
 				XOLOTL_REQUIRE_CLOSE_ZT(knownPartials[startingIdx + j],
-					hPartials[startingIdx + index], 0.01, 1.0e-6);
+					hPartials[startingIdx + index], 0.05, 1.0e-6);
 			}
 			startingIdx += row.size();
 		}

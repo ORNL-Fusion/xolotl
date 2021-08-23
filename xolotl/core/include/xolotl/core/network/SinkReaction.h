@@ -24,18 +24,18 @@ class SinkReaction : public Reaction<TNetwork, TDerived>
 public:
 	using NetworkType = TNetwork;
 	using Superclass = Reaction<TNetwork, TDerived>;
-	using ClusterDataRef = typename Superclass::ClusterDataRef;
 	using IndexType = typename Superclass::IndexType;
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ClusterData = typename Superclass::ClusterData;
 
 	SinkReaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
-	SinkReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
+	SinkReaction(ReactionDataRef reactionData, const ClusterData& clusterData,
 		IndexType reactionId, IndexType cluster0) :
 		Superclass(reactionData, clusterData, reactionId),
 		_reactant(cluster0)
@@ -44,7 +44,7 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
-	SinkReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
+	SinkReaction(ReactionDataRef reactionData, const ClusterData& clusterData,
 		IndexType reactionId, const detail::ClusterSet& clusterSet) :
 		SinkReaction(reactionData, clusterData, reactionId, clusterSet.cluster0)
 	{
@@ -95,21 +95,19 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex)
+		Kokkos::View<double*> values, IndexType gridIndex)
 	{
-		Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)),
-			this->_rate(gridIndex));
+		Kokkos::atomic_sub(
+			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex)
+		Kokkos::View<double*> values, IndexType gridIndex)
 	{
-		Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)),
-			this->_rate(gridIndex));
+		Kokkos::atomic_sub(
+			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -120,9 +118,18 @@ private:
 		return 0.0;
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity)
+	{
+		_connEntries[0][0][0][0] = connectivity(_reactant, _reactant);
+	}
+
 protected:
 	IndexType _reactant;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
+
+	util::Array<IndexType, 1, 1, 1, 1> _connEntries;
 };
 } // namespace network
 } // namespace core

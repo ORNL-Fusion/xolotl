@@ -8,6 +8,23 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief Class implementing near surface trap mutation reactions where
+ * He_n -> He_nV_m + I_m
+ * with a given rate at specific depths.
+ *
+ * The depths depend on the material orientation and temperature.
+ *
+ * A cluster can also desorb, meaning that the rate of the trap mutation
+ * reaction will depend on the "left side" rate.
+ *
+ * If the attenuation is ON, the rates will decrease as a function of the
+ * concentration value given to
+ * IPSIReactionNetwork::updateTrapMutationDisappearingRate(conc).
+ *
+ * @tparam TNetwork The network type
+ * @tparam TDerived The derived class type.
+ */
 template <typename TNetwork, typename TDerived>
 class TrapMutationReaction : public Reaction<TNetwork, TDerived>
 {
@@ -17,13 +34,13 @@ public:
 	using NetworkType = TNetwork;
 	using Superclass = Reaction<TNetwork, TDerived>;
 	using Species = typename Superclass::Species;
-	using ClusterDataRef = typename Superclass::ClusterDataRef;
 	using IndexType = typename Superclass::IndexType;
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ClusterData = typename Superclass::ClusterData;
 
 protected:
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
@@ -33,12 +50,12 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	TrapMutationReaction(ReactionDataRef reactionData,
-		ClusterDataRef clusterData, IndexType reactionId, IndexType cluster0,
-		IndexType cluster1, IndexType cluster2);
+		const ClusterData& clusterData, IndexType reactionId,
+		IndexType cluster0, IndexType cluster1, IndexType cluster2);
 
 	KOKKOS_INLINE_FUNCTION
 	TrapMutationReaction(ReactionDataRef reactionData,
-		ClusterDataRef clusterData, IndexType reactionId,
+		const ClusterData& clusterData, IndexType reactionId,
 		const detail::ClusterSet& clusterSet);
 
 	static detail::CoefficientsView allocateCoefficientsView(IndexType)
@@ -92,19 +109,26 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity)
+	{
+		_connEntries[0][0][0][0] = connectivity(_heClId, _heClId);
+		_connEntries[1][0][0][0] = connectivity(_heVClId, _heClId);
+		_connEntries[2][0][0][0] = connectivity(_iClId, _heClId);
+	}
 
 private:
 	IndexType _heClId;
@@ -112,6 +136,8 @@ private:
 	IndexType _iClId;
 	AmountType _heAmount{};
 	AmountType _vSize{};
+
+	util::Array<IndexType, 3, 1, 1, 1> _connEntries;
 };
 } // namespace network
 } // namespace core

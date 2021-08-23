@@ -528,9 +528,8 @@ public:
 			std::cout << "Proc " << myProcId << " using RNG seed value "
 					  << rngSeed << std::endl;
 		}
-		rng = std::unique_ptr<util::RandomNumberGenerator<int, unsigned int>>(
-			new util::RandomNumberGenerator<int, unsigned int>(
-				rngSeed + myProcId));
+		rng = std::make_unique<util::RandomNumberGenerator<int, unsigned int>>(
+			rngSeed + myProcId);
 
 		// Set the network loader
 		networkName = opts.getNetworkFilename();
@@ -587,7 +586,7 @@ public:
 		heVRatio = opts.getHeVRatio();
 
 		// Boundary conditions in the X direction
-		if (opts.getMaterial() == "Fuel")
+		if (opts.getBCString() == "periodic")
 			isMirror = false;
 
 		// Set the boundary conditions (= 1: free surface; = 0: mirror)

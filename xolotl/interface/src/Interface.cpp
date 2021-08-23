@@ -12,6 +12,7 @@
 #include <xolotl/solver/Solver.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/version.h>
 #include <xolotl/viz/VizHandlerRegistry.h>
 
 namespace xolotl
@@ -21,10 +22,11 @@ namespace interface
 class Context
 {
 public:
-	Context(int argc, char* argv[]) : _kokkosContext(argc, argv)
+	Context(int& argc, const char* argv[]) :
+		_kokkosContext(argc, const_cast<char**>(argv))
 	{
 		if (!initialized()) {
-			MPI_Init(&argc, &argv);
+			util::mpiInit(argc, argv);
 			_mpiInitializedHere = true;
 		}
 	}
@@ -67,7 +69,8 @@ reportException(const std::exception& e)
 
 XolotlInterface::XolotlInterface() = default;
 
-XolotlInterface::XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm)
+XolotlInterface::XolotlInterface(
+	int& argc, const char* argv[], MPI_Comm mpiComm)
 {
 	initializeXolotl(argc, argv, mpiComm);
 	initializedHere = true;
@@ -87,7 +90,7 @@ XolotlInterface::printSomething()
 }
 
 void
-XolotlInterface::initializeXolotl(int argc, char* argv[], MPI_Comm comm)
+XolotlInterface::initializeXolotl(int& argc, const char* argv[], MPI_Comm comm)
 try {
 	context = std::make_unique<Context>(argc, argv);
 
@@ -101,12 +104,11 @@ try {
 
 	if (rank == 0) {
 		// Print the start message
-		std::cout << "Starting Xolotl Plasma-Surface Interactions Simulator"
-				  << std::endl;
+		std::cout << "Starting Xolotl (" << getExactVersionString() << ")\n";
 		// TODO! Print copyright message
 		// Print date and time
 		std::time_t currentTime = std::time(NULL);
-		std::cout << std::asctime(std::localtime(&currentTime));
+		std::cout << std::asctime(std::localtime(&currentTime)) << std::flush;
 	}
 
 	options::Options opts;

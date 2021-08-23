@@ -50,6 +50,7 @@ Options::Options() :
 	topBoundary(1),
 	frontBoundary(1),
 	backBoundary(1),
+	xBC("mirror"),
 	burstingDepth(10.0),
 	burstingFactor(0.1),
 	rngUseSeed(false),
@@ -76,21 +77,11 @@ Options::~Options(void)
 }
 
 void
-Options::readParams(int argc, char* argv[])
+Options::readParams(int argc, const char* argv[])
 {
 	// Check that a file name is given
 	if (argc < 2) {
 		std::cerr << "Options: parameter file name must not be empty"
-				  << std::endl;
-		shouldRunFlag = false;
-		exitCode = EXIT_FAILURE;
-		return;
-	}
-
-	// Check that the file exist
-	std::ifstream ifs(argv[1]);
-	if (!ifs) {
-		std::cerr << "Options: unable to open parameter file: " << argv[1]
 				  << std::endl;
 		shouldRunFlag = false;
 		exitCode = EXIT_FAILURE;
@@ -103,7 +94,9 @@ Options::readParams(int argc, char* argv[])
 	// Parse the command line options.
 	bpo::options_description desc("Command line options");
 	desc.add_options()("help", "show this help message")("parameterFile",
-		bpo::value<std::string>(&param_file), "input file name");
+		bpo::value<std::string>(&param_file),
+		"When running Xolotl the name of the parameter file should immediately "
+		"follow the executable: xolotl/xolotl param.txt");
 
 	bpo::positional_options_description p;
 	p.add("parameterFile", -1);
@@ -121,7 +114,7 @@ Options::readParams(int argc, char* argv[])
 	bpo::options_description config("Parameters");
 	config.add_options()("networkFile",
 		bpo::value<std::string>(&networkFilename),
-		"The network will be loaded from this HDF5 file.")("tempHandler",
+		"The HDF5 file to use for restart.")("tempHandler",
 		bpo::value<std::string>(&tempHandlerName)->default_value("constant"),
 		"Temperature handler to use. (default = constant; available "
 		"constant,gradient,heat,profile")("tempParam",
@@ -183,11 +176,13 @@ Options::readParams(int argc, char* argv[])
 		"To do so, simply write the direction followed "
 		"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")("grouping",
 		bpo::value<std::string>(),
-		"This option allows the use a grouping scheme starting at the cluster "
-		"with 'min' size and with the given width.")("sputtering",
-		bpo::value<double>(&sputteringYield),
-		"This option allows the user to add a sputtering yield (atoms/ion).")(
-		"netParam", bpo::value<std::string>(),
+		"The grouping parameters: the first integer is the size at which the "
+		"grouping starts (HeV clusters in the PSI case, Xe in the NE case), "
+		"the second is the first width of the groups (He for PSI, Xe for NE), "
+		"and the third one in the second width of the groups (V for PSI).")(
+		"sputtering", bpo::value<double>(&sputteringYield),
+		"The sputtering yield (in atoms/ion) that will be used.")("netParam",
+		bpo::value<std::string>(),
 		"This option allows the user to define the boundaries of the network. "
 		"To do so, simply write the values in order "
 		"maxHe/Xe maxD maxT maxV maxI.")("radiusSize",
@@ -199,44 +194,44 @@ Options::readParams(int argc, char* argv[])
 		"The first one correspond to the left side (surface) "
 		"and second one to the right (bulk), "
 		"then two for Y and two for Z. "
-		"0 means mirror or periodic, 1 means free surface.")("burstingDepth",
-		bpo::value<double>(&burstingDepth),
-		"This option allows the user to set a depth in nm "
-		"for the bubble bursting.")("burstingFactor",
-		bpo::value<double>(&burstingFactor),
+		"0 means mirror or periodic, 1 means free surface.")("xBCType",
+		bpo::value<std::string>(&xBC),
+		"The boundary conditions to use in the X direction, mirror (default) "
+		"or periodic.")("burstingDepth", bpo::value<double>(&burstingDepth),
+		"The depth (in nm) after which there is an exponential decrease in the "
+		"probability of bursting (10.0 nm if nothing is specified).")(
+		"burstingFactor", bpo::value<double>(&burstingFactor),
 		"This option allows the user to set the factor used in computing the "
 		"likelihood of a bursting event.")("rng", bpo::value<std::string>(),
 		"Allows user to specify seed used to initialize random number "
 		"generator (default = determined from current time) and "
 		"whether each process should print the seed value "
-		"it uses (default = don't print)")("density",
+		"it uses (default = don't print).")("density",
 		bpo::value<double>(&density),
-		"This option allows the user to set a density in nm-3 "
-		"for the number of xenon per volume in a bubble.")("pulse",
+		"Sets a density in nm-3 for the number of xenon per volume in a bubble "
+		"for the NE case (default is 10.162795276841 nm-3 as before).")("pulse",
 		bpo::value<std::string>(),
 		"The total length of the pulse (in s) if the Pulsed material is used, "
 		"and the proportion of it that is "
 		"ON.")("lattice", bpo::value<double>(&latticeParameter),
-		"This option allows the user to set the length of the lattice side in "
-		"nm.")("impurityRadius", bpo::value<double>(&impurityRadius),
-		"This option allows the user to set the radius of the main impurity "
-		"(He or Xe) in nm.")("biasFactor", bpo::value<double>(&biasFactor),
+		"The length of the lattice side in nm.")("impurityRadius",
+		bpo::value<double>(&impurityRadius),
+		"The radius of the main impurity (He or Xe) in nm.")("biasFactor",
+		bpo::value<double>(&biasFactor),
 		"This option allows the user to set the bias factor reflecting the "
 		"fact that interstitial "
 		"clusters have a larger surrounding strain field.")("hydrogenFactor",
 		bpo::value<double>(&hydrogenFactor),
-		"This option allows the user to set the factor between the size of He "
-		"and H.")("xenonDiffusivity", bpo::value<double>(&xenonDiffusivity),
-		"This option allows the user to set the diffusion coefficient for "
-		"xenon in nm2 s-1.")("fissionYield", bpo::value<double>(&fissionYield),
-		"This option allows the user to set the number of xenon created for "
-		"each fission.")("heVRatio", bpo::value<double>(&heVRatio),
-		"This option allows the user to set the number of He atoms allowed per "
-		"V in a bubble.")("migrationThreshold",
-		bpo::value<double>(&migrationThreshold),
-		"This option allows the user to set a limit on the migration energy "
-		"above which the diffusion will be ignored.")(
-		"fluxDepthProfileFilePath",
+		"The factor between the size of He and H.")("xenonDiffusivity",
+		bpo::value<double>(&xenonDiffusivity),
+		"The diffusion coefficient for xenon in nm2 s-1.")("fissionYield",
+		bpo::value<double>(&fissionYield),
+		"The number of xenon created for each fission (default is 0.25).")(
+		"heVRatio", bpo::value<double>(&heVRatio),
+		"The number of He atoms allowed per V in a bubble.")(
+		"migrationThreshold", bpo::value<double>(&migrationThreshold),
+		"Set a limit on the migration energy above which the diffusion will be "
+		"ignored.")("fluxDepthProfileFilePath",
 		bpo::value<fs::path>(&fluxDepthProfileFilePath),
 		"The path to the custom flux profile file; the default is an empty "
 		"string that will use the default material associated flux handler.");
@@ -248,6 +243,18 @@ Options::readParams(int argc, char* argv[])
 		std::cout << visible << '\n';
 		shouldRunFlag = false;
 		exitCode = EXIT_FAILURE;
+		return;
+	}
+
+	// Check that the file exist
+	std::ifstream ifs(argv[1]);
+	if (!ifs) {
+		std::cerr << "Options: unable to open parameter file: " << argv[1]
+				  << std::endl;
+		std::cout << visible << '\n';
+		shouldRunFlag = false;
+		exitCode = EXIT_FAILURE;
+		return;
 	}
 
 	if (shouldRunFlag) {

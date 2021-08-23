@@ -2,6 +2,7 @@
 
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/detail/ReactionGenerator.h>
+#include <xolotl/core/network/detail/impl/ClusterData.tpp>
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/options/Options.h>
@@ -14,14 +15,25 @@ namespace core
 namespace network
 {
 template <typename TImpl>
+inline void
+ReactionNetwork<TImpl>::copyClusterDataView()
+{
+	_clusterData.modify_host();
+	_clusterData.sync_device();
+}
+
+template <typename TImpl>
 ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	IndexType gridSize, const options::IOptions& opts) :
 	Superclass(gridSize),
 	_subpaving(subpaving),
-	_clusterData(_subpaving, gridSize),
+	_clusterData("Cluster Data"),
 	_worker(*this),
 	_speciesLabelMap(createSpeciesLabelMap())
 {
+	_clusterData.h_view() = ClusterData(_subpaving, gridSize);
+	copyClusterDataView();
+
 	this->setMaterial(opts.getMaterial());
 
 	// Set constants
@@ -50,12 +62,14 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	}
 	this->setEnableReducedJacobian(useReduced);
 
-	this->_numClusters = _clusterData.numClusters;
+	this->_numClusters = _clusterData.h_view().numClusters;
 	asDerived()->initializeExtraClusterData(opts);
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
 
-	defineReactions();
+	Connectivity connectivity;
+	defineReactions(connectivity);
+	generateDiagonalFill(connectivity);
 }
 
 template <typename TImpl>
@@ -132,14 +146,10 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
 {
 	auto lParam = asDerived()->checkLatticeParameter(latticeParameter);
 	this->_latticeParameter = lParam;
-	auto mirror = Kokkos::create_mirror_view(_clusterData.latticeParameter);
-	mirror(0) = this->_latticeParameter;
-	Kokkos::deep_copy(_clusterData.latticeParameter, mirror);
+	_clusterData.h_view().setLatticeParameter(this->_latticeParameter);
 
 	this->_atomicVolume = asDerived()->computeAtomicVolume(lParam);
-	mirror = Kokkos::create_mirror_view(_clusterData.atomicVolume);
-	mirror(0) = this->_atomicVolume;
-	Kokkos::deep_copy(_clusterData.atomicVolume, mirror);
+	_clusterData.h_view().setAtomicVolume(this->_atomicVolume);
 }
 
 template <typename TImpl>
@@ -147,18 +157,14 @@ void
 ReactionNetwork<TImpl>::setFissionRate(double rate)
 {
 	Superclass::setFissionRate(rate);
-	auto mirror = Kokkos::create_mirror_view(_clusterData.fissionRate);
-	mirror(0) = this->_fissionRate;
-	Kokkos::deep_copy(_clusterData.fissionRate, mirror);
+	_clusterData.h_view().setFissionRate(this->_fissionRate);
 }
 
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setZeta(double z)
 {
-	auto mirror = Kokkos::create_mirror_view(_clusterData.zeta);
-	mirror(0) = z;
-	Kokkos::deep_copy(_clusterData.zeta, mirror);
+	_clusterData.h_view().setZeta(z);
 }
 
 template <typename TImpl>
@@ -166,9 +172,7 @@ void
 ReactionNetwork<TImpl>::setEnableStdReaction(bool reaction)
 {
 	Superclass::setEnableStdReaction(reaction);
-	auto mirror = Kokkos::create_mirror_view(_clusterData.enableStdReaction);
-	mirror(0) = this->_enableStdReaction;
-	Kokkos::deep_copy(_clusterData.enableStdReaction, mirror);
+	_clusterData.h_view().setEnableStdReaction(this->_enableStdReaction);
 }
 
 template <typename TImpl>
@@ -176,9 +180,7 @@ void
 ReactionNetwork<TImpl>::setEnableReSolution(bool reaction)
 {
 	Superclass::setEnableReSolution(reaction);
-	auto mirror = Kokkos::create_mirror_view(_clusterData.enableReSolution);
-	mirror(0) = this->_enableReSolution;
-	Kokkos::deep_copy(_clusterData.enableReSolution, mirror);
+	_clusterData.h_view().setEnableReSolution(this->_enableReSolution);
 }
 
 template <typename TImpl>
@@ -186,9 +188,7 @@ void
 ReactionNetwork<TImpl>::setEnableNucleation(bool reaction)
 {
 	Superclass::setEnableNucleation(reaction);
-	auto mirror = Kokkos::create_mirror_view(_clusterData.enableNucleation);
-	mirror(0) = this->_enableNucleation;
-	Kokkos::deep_copy(_clusterData.enableNucleation, mirror);
+	_clusterData.h_view().setEnableNucleation(this->_enableNucleation);
 }
 
 template <typename TImpl>
@@ -196,9 +196,7 @@ void
 ReactionNetwork<TImpl>::setEnableSink(bool reaction)
 {
 	this->_enableSink = reaction;
-	auto mirror = Kokkos::create_mirror_view(_clusterData.enableSink);
-	mirror(0) = this->_enableSink;
-	Kokkos::deep_copy(_clusterData.enableSink, mirror);
+	_clusterData.h_view().setEnableSink(this->_enableSink);
 }
 
 template <typename TImpl>
@@ -206,10 +204,9 @@ void
 ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 {
 	Superclass::setEnableTrapMutation(reaction);
-	auto mirror = Kokkos::create_mirror_view(_clusterData.enableTrapMutation);
-	mirror() = this->_enableTrapMutation;
-	deep_copy(_clusterData.enableTrapMutation, mirror);
+	_clusterData.h_view().setEnableTrapMutation(this->_enableTrapMutation);
 }
+
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setEnableReducedJacobian(bool reduced)
@@ -222,10 +219,11 @@ void
 ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 {
 	this->_gridSize = gridSize;
-	_clusterData.setGridSize(gridSize);
+	_clusterData.h_view().setGridSize(gridSize);
 	_clusterDataMirror.setGridSize(gridSize);
+	copyClusterDataView();
 	_reactions.setGridSize(gridSize);
-	_reactions.updateAll(_clusterData);
+	_reactions.updateAll(_clusterData.d_view);
 	Kokkos::fence();
 }
 
@@ -235,7 +233,7 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 {
 	Kokkos::View<const double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
 		tempsHost(gridTemps.data(), this->_gridSize);
-	Kokkos::deep_copy(_clusterData.temperature, tempsHost);
+	Kokkos::deep_copy(_clusterData.h_view().temperature, tempsHost);
 
 	updateDiffusionCoefficients();
 
@@ -248,7 +246,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::updateReactionRates()
 {
-	_reactions.apply(
+	_reactions.forEach(
 		DEVICE_LAMBDA(auto&& reaction) { reaction.updateRates(); });
 	Kokkos::fence();
 }
@@ -259,23 +257,7 @@ ReactionNetwork<TImpl>::getDeviceMemorySize() const noexcept
 {
 	std::uint64_t ret = _subpaving.getDeviceMemorySize();
 
-	ret += sizeof(_clusterData.numClusters);
-	ret += sizeof(_clusterData.gridSize);
-	ret += _clusterData.atomicVolume.required_allocation_size();
-	ret += _clusterData.temperature.required_allocation_size(
-		_clusterData.temperature.extent(0));
-	ret += _clusterData.reactionRadius.required_allocation_size(
-		_clusterData.reactionRadius.extent(0));
-	ret += _clusterData.formationEnergy.required_allocation_size(
-		_clusterData.formationEnergy.extent(0));
-	ret += _clusterData.migrationEnergy.required_allocation_size(
-		_clusterData.migrationEnergy.extent(0));
-	ret += _clusterData.diffusionFactor.required_allocation_size(
-		_clusterData.diffusionFactor.extent(0));
-	ret += _clusterData.diffusionCoefficient.required_allocation_size(
-		_clusterData.diffusionCoefficient.extent(0),
-		_clusterData.diffusionCoefficient.extent(1));
-
+	ret += _clusterData.h_view().getDeviceMemorySize();
 	ret += _reactions.getDeviceMemorySize();
 
 	return ret;
@@ -287,21 +269,7 @@ ReactionNetwork<TImpl>::syncClusterDataOnHost()
 {
 	_subpaving.syncTiles(plsm::onHost);
 	auto mirror = ClusterDataMirror(_subpaving, this->_gridSize);
-	Kokkos::deep_copy(mirror.atomicVolume, _clusterData.atomicVolume);
-	Kokkos::deep_copy(mirror.latticeParameter, _clusterData.latticeParameter);
-	Kokkos::deep_copy(mirror.fissionRate, _clusterData.fissionRate);
-	Kokkos::deep_copy(mirror.enableStdReaction, _clusterData.enableStdReaction);
-	Kokkos::deep_copy(mirror.enableReSolution, _clusterData.enableReSolution);
-	Kokkos::deep_copy(mirror.enableNucleation, _clusterData.enableNucleation);
-	Kokkos::deep_copy(mirror.enableSink, _clusterData.enableSink);
-	Kokkos::deep_copy(mirror.temperature, _clusterData.temperature);
-	Kokkos::deep_copy(mirror.momentIds, _clusterData.momentIds);
-	Kokkos::deep_copy(mirror.reactionRadius, _clusterData.reactionRadius);
-	Kokkos::deep_copy(mirror.formationEnergy, _clusterData.formationEnergy);
-	Kokkos::deep_copy(mirror.migrationEnergy, _clusterData.migrationEnergy);
-	Kokkos::deep_copy(mirror.diffusionFactor, _clusterData.diffusionFactor);
-	Kokkos::deep_copy(
-		mirror.diffusionCoefficient, _clusterData.diffusionCoefficient);
+	mirror.deepCopy(_clusterData.h_view());
 	_clusterDataMirror = mirror;
 }
 
@@ -312,7 +280,7 @@ ReactionNetwork<TImpl>::findCluster(
 	const Composition& comp, plsm::OnDevice context)
 {
 	auto id = _subpaving.findTileId(comp, context);
-	return Cluster<plsm::OnDevice>(_clusterData,
+	return _clusterData.d_view().getCluster(
 		id == _subpaving.invalidIndex() ? this->invalidIndex() : IndexType(id));
 }
 
@@ -322,7 +290,7 @@ ReactionNetwork<TImpl>::findCluster(
 	const Composition& comp, plsm::OnHost context)
 {
 	auto id = _subpaving.findTileId(comp, context);
-	return Cluster<plsm::OnHost>(_clusterDataMirror,
+	return _clusterDataMirror.getCluster(
 		id == _subpaving.invalidIndex() ? this->invalidIndex() : IndexType(id));
 }
 
@@ -349,7 +317,7 @@ ReactionNetwork<TImpl>::getSingleVacancy()
 
 	auto clusterId = findCluster(comp, plsm::onHost).getId();
 
-	return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
+	return _clusterDataMirror.getClusterCommon(clusterId);
 }
 
 template <typename TImpl>
@@ -402,7 +370,8 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::generateClusterData(const ClusterGenerator& generator)
 {
-	_worker.generateClusterData(generator);
+	_clusterData.h_view().generate(generator, this->getLatticeParameter(),
+		this->getInterstitialBias(), this->getImpurityRadius());
 }
 
 template <typename TImpl>
@@ -410,7 +379,10 @@ void
 ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
 	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
 {
-	_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
+	asDerived()->computeFluxesPreProcess(
+		concentrations, fluxes, gridIndex, surfaceDepth, spacing);
+
+	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeFlux(concentrations, fluxes, gridIndex);
 	});
 	Kokkos::fence();
@@ -424,21 +396,22 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 {
 	// Reset the values
 	const auto& nValues = values.extent(0);
-	// Loop on the reactions
 	Kokkos::parallel_for(
 		nValues, KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
 
-	auto connectivity = _reactions.getConnectivity();
+	asDerived()->computePartialsPreProcess(
+		concentrations, values, gridIndex, surfaceDepth, spacing);
+
 	if (this->_enableReducedJacobian) {
-		_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
+		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributeReducedPartialDerivatives(
-				concentrations, values, connectivity, gridIndex);
+				concentrations, values, gridIndex);
 		});
 	}
 	else {
-		_reactions.apply(DEVICE_LAMBDA(auto&& reaction) {
+		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributePartialDerivatives(
-				concentrations, values, connectivity, gridIndex);
+				concentrations, values, gridIndex);
 		});
 	}
 
@@ -646,16 +619,44 @@ ReactionNetwork<TImpl>::defineMomentIds()
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::defineReactions()
+ReactionNetwork<TImpl>::defineReactions(Connectivity& connectivity)
 {
-	_worker.defineReactions();
+	_worker.defineReactions(connectivity);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::generateDiagonalFill(const Connectivity& connectivity)
+{
+	auto hConnRowMap = create_mirror_view(connectivity.row_map);
+	deep_copy(hConnRowMap, connectivity.row_map);
+	auto hConnEntries = create_mirror_view(connectivity.entries);
+	deep_copy(hConnEntries, connectivity.entries);
+
+	_connectivityMap.clear();
+	for (int i = 0; i < this->getDOF(); ++i) {
+		auto jBegin = hConnRowMap(i);
+		auto jEnd = hConnRowMap(i + 1);
+		std::vector<int> current;
+		current.reserve(jEnd - jBegin);
+		for (IndexType j = jBegin; j < jEnd; ++j) {
+			current.push_back((int)hConnEntries(j));
+		}
+		_connectivityMap[i] = std::move(current);
+	}
 }
 
 template <typename TImpl>
 typename ReactionNetwork<TImpl>::IndexType
 ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
 {
-	return _worker.getDiagonalFill(fillMap);
+	IndexType nnz = 0;
+	for (int i = 0; i < this->getDOF(); ++i) {
+		const auto& current = _connectivityMap[i];
+		nnz += current.size();
+		fillMap.insert_or_assign(i, current);
+	}
+	return nnz;
 }
 
 namespace detail
@@ -665,46 +666,16 @@ void
 ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
 {
 	using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
-	auto clusterData = _nw._clusterData;
+	auto clusterData = _nw._clusterData.d_view;
 	auto updater = typename Network::ClusterUpdater{};
 	Kokkos::parallel_for(
-		Range2D({0, 0}, {clusterData.numClusters, clusterData.gridSize}),
+		Range2D({0, 0},
+			{_nw._clusterData.h_view().numClusters,
+				_nw._clusterData.h_view().gridSize}),
 		KOKKOS_LAMBDA(IndexType i, IndexType j) {
-			if (!util::equal(clusterData.diffusionFactor(i), 0.0)) {
-				updater.updateDiffusionCoefficient(clusterData, i, j);
+			if (!util::equal(clusterData().diffusionFactor(i), 0.0)) {
+				updater.updateDiffusionCoefficient(clusterData(), i, j);
 			}
-		});
-	Kokkos::fence();
-}
-
-template <typename TImpl>
-void
-ReactionNetworkWorker<TImpl>::generateClusterData(
-	const typename Network::ClusterGenerator& generator)
-{
-	auto nClusters = _nw._clusterData.numClusters;
-	_nw._clusterData.formationEnergy =
-		Kokkos::View<double*>("Formation Energy", nClusters);
-	_nw._clusterData.migrationEnergy =
-		Kokkos::View<double*>("Migration Energy", nClusters);
-	_nw._clusterData.diffusionFactor =
-		Kokkos::View<double*>("Diffusion Factor", nClusters);
-	_nw._clusterData.reactionRadius =
-		Kokkos::View<double*>("Reaction Radius", nClusters);
-
-	ClusterData data(_nw._clusterData);
-	auto latticeParameter = _nw.getLatticeParameter();
-	auto interstitialBias = _nw.getInterstitialBias();
-	auto impurityRadius = _nw.getImpurityRadius();
-	Kokkos::parallel_for(
-		nClusters, KOKKOS_LAMBDA(const IndexType i) {
-			auto cluster = data.getCluster(i);
-			data.formationEnergy(i) = generator.getFormationEnergy(cluster);
-			data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);
-			data.diffusionFactor(i) =
-				generator.getDiffusionFactor(cluster, latticeParameter);
-			data.reactionRadius(i) = generator.getReactionRadius(
-				cluster, latticeParameter, interstitialBias, impurityRadius);
 		});
 	Kokkos::fence();
 }
@@ -715,16 +686,16 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 {
 	constexpr auto speciesRange = Network::getSpeciesRangeForGrouping();
 
-	ClusterDataRef data(_nw._clusterData);
-
-	auto nClusters = data.numClusters;
+	auto nClusters = _nw._clusterData.h_view().numClusters;
 	auto counts = Kokkos::View<IndexType*>("Moment Id Counts", nClusters);
+
+	auto data = _nw._clusterData.d_view.data();
 
 	IndexType nMomentIds = 0;
 	Kokkos::parallel_reduce(
 		nClusters,
 		KOKKOS_LAMBDA(const IndexType i, IndexType& running) {
-			const auto& reg = data.getCluster(i).getRegion();
+			const auto& reg = data->getCluster(i).getRegion();
 			IndexType count = 0;
 			for (auto k : speciesRange) {
 				if (reg[k].length() != 1) {
@@ -748,18 +719,18 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 
 	Kokkos::parallel_for(
 		nClusters, KOKKOS_LAMBDA(const IndexType i) {
-			const auto& reg = data.getCluster(i).getRegion();
+			const auto& reg = data->getCluster(i).getRegion();
 			IndexType current = counts(i);
 			for (auto k : speciesRange) {
 				if (reg[k].length() == 1) {
-					if (data.momentIds(i, Network::mapToMomentId(k)) ==
+					if (data->momentIds(i, Network::mapToMomentId(k)) ==
 						nClusters + current - 1)
 						continue;
-					data.momentIds(i, Network::mapToMomentId(k)) =
+					data->momentIds(i, Network::mapToMomentId(k)) =
 						Network::invalidIndex();
 				}
 				else {
-					data.momentIds(i, Network::mapToMomentId(k)) =
+					data->momentIds(i, Network::mapToMomentId(k)) =
 						nClusters + current;
 					++current;
 				}
@@ -772,35 +743,11 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 
 template <typename TImpl>
 void
-ReactionNetworkWorker<TImpl>::defineReactions()
+ReactionNetworkWorker<TImpl>::defineReactions(Connectivity& connectivity)
 {
 	auto generator = _nw.asDerived()->getReactionGenerator();
 	_nw._reactions = generator.generateReactions();
-}
-
-template <typename TImpl>
-typename ReactionNetworkWorker<TImpl>::IndexType
-ReactionNetworkWorker<TImpl>::getDiagonalFill(
-	typename Network::SparseFillMap& fillMap)
-{
-	auto connectivity = _nw._reactions.getConnectivity();
-	auto hConnRowMap = create_mirror_view(connectivity.row_map);
-	deep_copy(hConnRowMap, connectivity.row_map);
-	auto hConnEntries = create_mirror_view(connectivity.entries);
-	deep_copy(hConnEntries, connectivity.entries);
-
-	for (int i = 0; i < _nw.getDOF(); ++i) {
-		auto jBegin = hConnRowMap(i);
-		auto jEnd = hConnRowMap(i + 1);
-		std::vector<int> current;
-		current.reserve(jEnd - jBegin);
-		for (IndexType j = jBegin; j < jEnd; ++j) {
-			current.push_back((int)hConnEntries(j));
-		}
-		fillMap[i] = std::move(current);
-	}
-
-	return hConnEntries.extent(0);
+	connectivity = generator.getConnectivity();
 }
 
 template <typename TImpl>
@@ -834,7 +781,7 @@ ReactionNetworkWorker<TImpl>::getTotalRadiusConcentration(
 {
 	auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
 	double conc = 0.0;
-	auto clusterData = _nw._clusterData;
+	auto clusterData = _nw._clusterData.d_view;
 	Kokkos::parallel_reduce(
 		_nw._numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
@@ -842,8 +789,8 @@ ReactionNetworkWorker<TImpl>::getTotalRadiusConcentration(
 			const auto factor = clReg.volume() / clReg[type].length();
 			for (AmountType j : makeIntervalRange(clReg[type])) {
 				if (j >= minSize)
-					lsum += concentrations(i) * clusterData.reactionRadius(i) *
-						factor;
+					lsum += concentrations(i) *
+						clusterData().reactionRadius(i) * factor;
 			}
 		},
 		conc);
@@ -884,7 +831,7 @@ ReactionNetworkWorker<TImpl>::getTotalVolumeFraction(
 {
 	auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
 	double conc = 0.0;
-	auto clusterData = _nw._clusterData;
+	auto clusterData = _nw._clusterData.d_view;
 	Kokkos::parallel_reduce(
 		_nw._numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
@@ -893,7 +840,7 @@ ReactionNetworkWorker<TImpl>::getTotalVolumeFraction(
 			for (AmountType j : makeIntervalRange(clReg[type])) {
 				if (j >= minSize)
 					lsum += concentrations(i) *
-						pow(clusterData.reactionRadius(i), 3.0) * factor;
+						pow(clusterData().reactionRadius(i), 3.0) * factor;
 			}
 		},
 		conc);

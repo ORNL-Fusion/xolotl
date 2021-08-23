@@ -35,7 +35,7 @@ public:
 	 * @param argc, argv Argument strings
 	 */
 	virtual void
-	readParams(int argc, char* argv[]) = 0;
+	readParams(int argc, const char* argv[]) = 0;
 
 	/**
 	 * Should the program run after parsing the parameter file?
@@ -340,6 +340,14 @@ public:
 	getFrontBoundary() const = 0;
 	virtual int
 	getBackBoundary() const = 0;
+
+	/**
+	 * Obtain the string listing the wanted BC in the X direction.
+	 *
+	 * @return The BC type
+	 */
+	virtual std::string
+	getBCString() const = 0;
 
 	/**
 	 * Obtain the value of the depth above which the bursting is happening.

@@ -61,7 +61,8 @@ public:
 	 * @param argc, argv The command line arguments
 	 * @param MPI_Comm The communicator to use
 	 */
-	XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm = MPI_COMM_WORLD);
+	XolotlInterface(
+		int& argc, const char* argv[], MPI_Comm mpiComm = MPI_COMM_WORLD);
 
 	/**
 	 * The destructor
@@ -82,7 +83,8 @@ public:
 	 * @return The pointer to the solver
 	 */
 	void
-	initializeXolotl(int argc, char* argv[], MPI_Comm comm = MPI_COMM_WORLD);
+	initializeXolotl(
+		int& argc, const char* argv[], MPI_Comm comm = MPI_COMM_WORLD);
 
 	/**
 	 * Set the final time and the dt.

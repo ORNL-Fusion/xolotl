@@ -35,14 +35,14 @@ NEReactionNetwork::IndexType
 NEReactionNetwork::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
-	auto clData = ClusterDataRef(_clusterData);
+	auto clData = _clusterData.d_view;
 	using Reducer = Kokkos::MaxLoc<NEReactionNetwork::AmountType,
 		NEReactionNetwork::IndexType>;
 	Reducer::value_type maxLoc;
 	Kokkos::parallel_reduce(
 		_numClusters,
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
-			const Region& clReg = clData.getCluster(i).getRegion();
+			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
 			auto size = hi[Species::Xe] + hi[Species::V];
 			if (size > update.val) {
@@ -173,8 +173,6 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		}
 
 		if (isGood) {
-			// Increase nProd
-			nProd++;
 			this->addProductionReaction(tag, {i, j, k});
 			// Loop on the species
 			bool isOnAxis1 = false, isOnAxis2 = false;
@@ -245,7 +243,6 @@ NEClusterUpdater::updateDiffusionCoefficient(
 	if (data.migrationEnergy(clusterId) > 0.0) {
 		//		using Species = typename NetworkType::Species;
 		//		using Composition = typename NetworkType::Composition;
-
 		//		const auto& clReg = data.tiles(clusterId).getRegion();
 		//		Composition lo = clReg.getOrigin();
 		//		if (clReg.isSimplex() && lo[Species::V] == 1 && lo[Species::Xe]

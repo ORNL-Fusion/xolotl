@@ -182,7 +182,7 @@ PetscSolver2DHandler::initializeConcentration(DM& da, Vec& C)
 	std::unique_ptr<io::XFile> xfile;
 	std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
 	if (not networkName.empty()) {
-		xfile.reset(new io::XFile(networkName));
+		xfile = std::make_unique<io::XFile>(networkName);
 		concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
@@ -538,7 +538,7 @@ PetscSolver2DHandler::updateConcentration(
 	double sy = 1.0 / (hY * hY);
 
 	// Declarations for variables used in the loop
-	double** concVector = new double*[5];
+	double* concVector[5]{nullptr};
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 	std::vector<double> incidentFluxVector;
 	double atomConc = 0.0, totalAtomConc = 0.0;
@@ -823,9 +823,6 @@ PetscSolver2DHandler::updateConcentration(
 	checkPetscError(ierr,
 		"PetscSolver2DHandler::updateConcentration: "
 		"DMDAVecRestoreArrayDOF (F) failed.");
-
-	// Clear memory
-	delete[] concVector;
 
 	return;
 }

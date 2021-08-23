@@ -96,14 +96,14 @@ public:
 	selectTrapMutationReactions(double surfaceDepth, double spacing);
 
 	void
-	computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
-		IndexType gridIndex = 0, double surfaceDepth = 0.0,
-		double spacing = 0.0) override;
+	computeFluxesPreProcess(ConcentrationsView concentrations,
+		FluxesView fluxes, IndexType gridIndex, double surfaceDepth,
+		double spacing);
 
 	void
-	computeAllPartials(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex = 0,
-		double surfaceDepth = 0.0, double spacing = 0.0) override;
+	computePartialsPreProcess(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+		double spacing);
 
 	double
 	getTotalTrappedHeliumConcentration(

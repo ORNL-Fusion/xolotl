@@ -7,8 +7,9 @@
 #include <Kokkos_Crs.hpp>
 
 #include <xolotl/core/network/Cluster.h>
-#include <xolotl/core/network/ClusterData.h>
 #include <xolotl/core/network/SpeciesId.h>
+#include <xolotl/core/network/detail/ClusterConnectivity.h>
+#include <xolotl/core/network/detail/ClusterData.h>
 #include <xolotl/core/network/detail/ReactionData.h>
 
 namespace xolotl
@@ -48,6 +49,8 @@ public:
 	{
 		return detail::invalidSpeciesAmount;
 	}
+
+	IReactionNetwork() = default;
 
 	IReactionNetwork(IndexType gridSize) : _gridSize(gridSize)
 	{
@@ -161,6 +164,9 @@ public:
 		_fissionRate = rate;
 	}
 
+	/**
+	 * @brief Zeta is used to compute the rates of re-solution reactions.
+	 */
 	virtual void
 	setZeta(double z) = 0;
 

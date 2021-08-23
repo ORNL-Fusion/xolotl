@@ -56,24 +56,11 @@ PetscInt hdf5Previous2D = 0;
 std::string hdf5OutputName2D = "xolotlStop.h5";
 //! The pointer to the 2D plot used in MonitorSurface.
 std::shared_ptr<viz::IPlot> surfacePlot2D;
-//! The variable to store the interstitial flux at the previous time step.
-std::vector<double> previousIFlux2D;
-//! The variable to store the total number of interstitials going through the
-//! surface.
-std::vector<double> nInterstitial2D;
-//! The variable to store the helium flux at the previous time step.
-std::vector<double> previousHeFlux2D;
-//! The variable to store the total number of helium going through the bottom.
-std::vector<double> nHelium2D;
-//! The variable to store the deuterium flux at the previous time step.
-std::vector<double> previousDFlux2D;
-//! The variable to store the total number of deuterium going through the
+std::vector<std::vector<double>> previousSurfFlux2D, previousBulkFlux2D;
+//! The variable to store the total number of atoms going through the surface or
 //! bottom.
-std::vector<double> nDeuterium2D;
-//! The variable to store the tritium flux at the previous time step.
-std::vector<double> previousTFlux2D;
-//! The variable to store the total number of tritium going through the bottom.
-std::vector<double> nTritium2D;
+std::vector<std::vector<double>> nSurf2D, nBulk2D;
+double nHeliumBurst2D = 0.0, nDeuteriumBurst2D = 0.0, nTritiumBurst2D = 0.0;
 //! The variable to store the sputtering yield at the surface.
 double sputteringYield2D = 0.0;
 // The vector of depths at which bursting happens
@@ -216,17 +203,28 @@ startStop2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 	auto tsGroup = concGroup->addTimestepGroup(
 		timestep, time, previousTime, currentTimeStep);
 
-	if (solverHandler.moveSurface()) {
+	// Get the names of the species in the network
+	auto numSpecies = network.getSpeciesListSize();
+	std::vector<std::string> names;
+	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+		names.push_back(network.getSpeciesName(id));
+	}
+
+	if (solverHandler.moveSurface() || solverHandler.getLeftOffset() == 1) {
 		// Write the surface positions and the associated interstitial
 		// quantities in the concentration sub group
 		tsGroup->writeSurface2D(
-			surfaceIndices, nInterstitial2D, previousIFlux2D);
+			surfaceIndices, nSurf2D, previousSurfFlux2D, names);
 	}
 
 	// Write the bottom impurity information if the bottom is a free surface
 	if (solverHandler.getRightOffset() == 1)
-		tsGroup->writeBottom2D(nHelium2D, previousHeFlux2D, nDeuterium2D,
-			previousDFlux2D, nTritium2D, previousTFlux2D);
+		tsGroup->writeBottom2D(nBulk2D, previousBulkFlux2D, names);
+
+	// Write the bursting information if the bubble bursting is used
+	if (solverHandler.burstBubbles())
+		tsGroup->writeBursting(
+			nHeliumBurst2D, nDeuteriumBurst2D, nTritiumBurst2D);
 
 	// Loop on the full grid
 	for (auto j = 0; j < My; j++) {
@@ -296,7 +294,8 @@ startStop2D(TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
  * This is a monitoring method that will compute the helium retention
  */
 PetscErrorCode
-computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
+computeHeliumRetention2D(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void*)
 {
 	// Initial declarations
 	PetscErrorCode ierr;
@@ -336,6 +335,7 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 	// Store the concentration over the grid
 	auto numSpecies = network.getSpeciesListSize();
+	auto specIdI = network.getInterstitialSpeciesId();
 	auto myConcData = std::vector<double>(numSpecies, 0.0);
 
 	// Loop on the grid
@@ -380,28 +380,33 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 		MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
-	// Look at the fluxes going in the bulk if the bottom is a free surface
-	if (solverHandler.getRightOffset() == 1) {
-		// Set the bottom surface position
-		auto xi = Mx - 2;
+	// Get the delta time from the previous timestep to this timestep
+	double previousTime = solverHandler.getPreviousTime();
+	double dt = time - previousTime;
 
+	// Look at the fluxes going in the bulk if the bottom is a free surface
+	if (solverHandler.getLeftOffset() == 1) {
 		// Get the vector of diffusing clusters
 		auto diffusingIds = diffusionHandler->getDiffusingIds();
 
 		// Loop on every Y position
 		for (auto j = 0; j < My; j++) {
+			// Set the surface position
+			auto xi = solverHandler.getSurfacePosition(j) + 1;
 			// Value to know on which processor is the bottom
-			int bottomProc = 0;
+			int surfProc = 0;
 
 			// Check we are on the right proc
 			if (xi >= xs && xi < xs + xm && j >= ys && j < ys + ym) {
-				// Get the delta time from the previous timestep to this
-				// timestep
-				double dt = time - solverHandler.getPreviousTime();
-				// Compute the total number of impurities that went in the bulk
-				nHelium2D[j] += previousHeFlux2D[j] * dt;
-				nDeuterium2D[j] += previousDFlux2D[j] * dt;
-				nTritium2D[j] += previousTFlux2D[j] * dt;
+				// Compute the total number of impurities that left at the
+				// surface
+				if (timestep > 0) {
+					for (auto i = 0; i < numSpecies; ++i) {
+						if (i == specIdI() && solverHandler.moveSurface())
+							continue;
+						nSurf2D[i][j] += previousSurfFlux2D[i][j] * dt;
+					}
+				}
 				auto myFluxData = std::vector<double>(numSpecies, 0.0);
 
 				// Get the pointer to the beginning of the solution data for
@@ -426,9 +431,105 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 				network.updateOutgoingDiffFluxes(gridPointSolution, factor,
 					diffusingIds, myFluxData, xi - xs);
-				previousHeFlux2D[j] += myFluxData[0];
-				previousDFlux2D[j] += myFluxData[1];
-				previousTFlux2D[j] += myFluxData[2];
+
+				// Take into account the surface advection
+				// Get the surface advection handler
+				auto advecHandler = solverHandler.getAdvectionHandler();
+				// Get the sink strengths and advecting clusters
+				auto sinkStrengths = advecHandler->getSinkStrengths();
+				auto advecClusters = advecHandler->getAdvectingClusters();
+				// Set the distance from the surface
+				double distance = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1] -
+					advecHandler->getLocation();
+
+				network.updateOutgoingAdvecFluxes(gridPointSolution,
+					3.0 * hy /
+						(core::kBoltzmann * distance * distance * distance *
+							distance),
+					advecClusters, sinkStrengths, myFluxData, xi - xs);
+
+				for (auto i = 0; i < numSpecies; ++i) {
+					if (i == specIdI() && solverHandler.moveSurface())
+						continue;
+					previousSurfFlux2D[i][j] = myFluxData[i];
+				}
+
+				// Set the bottom processor
+				surfProc = procId;
+			}
+
+			// Get which processor will send the information
+			int surfId = 0;
+			MPI_Allreduce(&surfProc, &surfId, 1, MPI_INT, MPI_SUM, xolotlComm);
+
+			// Send the information about impurities
+			// to the other processes
+			std::vector<double> countFluxData;
+			for (auto i = 0; i < numSpecies; ++i) {
+				countFluxData.push_back(nSurf2D[i][j]);
+				countFluxData.push_back(previousSurfFlux2D[i][j]);
+			}
+			MPI_Bcast(countFluxData.data(), countFluxData.size(), MPI_DOUBLE,
+				surfId, xolotlComm);
+
+			// Extract impurity data from broadcast buffer.
+			for (auto i = 0; i < numSpecies; ++i) {
+				nSurf2D[i][j] = countFluxData[2 * i];
+				previousSurfFlux2D[i][j] = countFluxData[(2 * i) + 1];
+			}
+		}
+	}
+
+	// Look at the fluxes going in the bulk if the bottom is a free surface
+	if (solverHandler.getRightOffset() == 1) {
+		// Set the bottom surface position
+		auto xi = Mx - 2;
+
+		// Get the vector of diffusing clusters
+		auto diffusingIds = diffusionHandler->getDiffusingIds();
+
+		// Loop on every Y position
+		for (auto j = 0; j < My; j++) {
+			// Value to know on which processor is the bottom
+			int bottomProc = 0;
+
+			// Check we are on the right proc
+			if (xi >= xs && xi < xs + xm && j >= ys && j < ys + ym) {
+				// Compute the total number of impurities that left at the
+				// surface
+				if (timestep > 0) {
+					for (auto i = 0; i < numSpecies; ++i) {
+						nBulk2D[i][j] += previousBulkFlux2D[i][j] * dt;
+					}
+				}
+				auto myFluxData = std::vector<double>(numSpecies, 0.0);
+
+				// Get the pointer to the beginning of the solution data for
+				// this grid point
+				gridPointSolution = solutionArray[j][xi];
+
+				// Factor for finite difference
+				double hxLeft = 0.0, hxRight = 0.0;
+				if (xi >= 1 && xi < Mx) {
+					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				}
+				else if (xi < 1) {
+					hxLeft = grid[xi + 1] - grid[xi];
+					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				}
+				else {
+					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+					hxRight = grid[xi + 1] - grid[xi];
+				}
+				double factor = 2.0 * hy / (hxLeft + hxRight);
+
+				network.updateOutgoingDiffFluxes(gridPointSolution, factor,
+					diffusingIds, myFluxData, xi - xs);
+
+				for (auto i = 0; i < numSpecies; ++i) {
+					previousBulkFlux2D[i][j] = myFluxData[i];
+				}
 
 				// Set the bottom processor
 				bottomProc = procId;
@@ -441,19 +542,19 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 			// Send the information about impurities
 			// to the other processes
-			std::array<double, 6> countFluxData{nHelium2D[j],
-				previousHeFlux2D[j], nDeuterium2D[j], previousDFlux2D[j],
-				nTritium2D[j], previousTFlux2D[j]};
+			std::vector<double> countFluxData;
+			for (auto i = 0; i < numSpecies; ++i) {
+				countFluxData.push_back(nBulk2D[i][j]);
+				countFluxData.push_back(previousBulkFlux2D[i][j]);
+			}
 			MPI_Bcast(countFluxData.data(), countFluxData.size(), MPI_DOUBLE,
 				bottomId, xolotlComm);
 
-			// Extract inpurity data from broadcast buffer.
-			nHelium2D[j] = countFluxData[0];
-			previousHeFlux2D[j] = countFluxData[1];
-			nDeuterium2D[j] = countFluxData[2];
-			previousDFlux2D[j] = countFluxData[3];
-			nTritium2D[j] = countFluxData[4];
-			previousTFlux2D[j] = countFluxData[5];
+			// Extract impurity data from broadcast buffer.
+			for (auto i = 0; i < numSpecies; ++i) {
+				nBulk2D[i][j] = countFluxData[2 * i];
+				previousBulkFlux2D[i][j] = countFluxData[(2 * i) + 1];
+			}
 		}
 	}
 
@@ -466,17 +567,25 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		for (auto i = 0; i < numSpecies; ++i) {
 			totalConcData[i] /= surface;
 		}
-		double totalHeBulk = 0.0, totalDBulk = 0.0, totalTBulk = 0.0;
+		auto totalBulk = std::vector<double>(numSpecies, 0.0);
 		// Look if the bottom is a free surface
 		if (solverHandler.getRightOffset() == 1) {
-			for (auto i = 0; i < My; i++) {
-				totalHeBulk += nHelium2D[i];
-				totalDBulk += nDeuterium2D[i];
-				totalTBulk += nTritium2D[i];
+			for (auto i = 0; i < numSpecies; ++i) {
+				for (auto j = 0; j < My; j++) {
+					totalBulk[i] += nBulk2D[i][j];
+				}
+				totalBulk[i] = totalBulk[i] / surface;
 			}
-			totalHeBulk = totalHeBulk / surface;
-			totalDBulk = totalDBulk / surface;
-			totalTBulk = totalTBulk / surface;
+		}
+		auto totalSurf = std::vector<double>(numSpecies, 0.0);
+		// Look if the bottom is a free surface
+		if (solverHandler.getLeftOffset() == 1) {
+			for (auto i = 0; i < numSpecies; ++i) {
+				for (auto j = 0; j < My; j++) {
+					totalSurf[i] += nSurf2D[i][j];
+				}
+				totalSurf[i] = totalSurf[i] / surface;
+			}
 		}
 
 		// Get the fluence
@@ -497,8 +606,18 @@ computeHeliumRetention2D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		for (auto i = 0; i < numSpecies; ++i) {
 			outputFile << totalConcData[i] << " ";
 		}
-		outputFile << totalHeBulk << " " << totalDBulk << " " << totalTBulk
-				   << std::endl;
+		if (solverHandler.getRightOffset() == 1) {
+			for (auto i = 0; i < numSpecies; ++i) {
+				outputFile << totalBulk[i] << ' ';
+			}
+		}
+		if (solverHandler.getLeftOffset() == 1) {
+			for (auto i = 0; i < numSpecies; ++i) {
+				outputFile << totalSurf[i] << ' ';
+			}
+		}
+		outputFile << nHeliumBurst2D << " " << nDeuteriumBurst2D << " "
+				   << nTritiumBurst2D << std::endl;
 		outputFile.close();
 	}
 
@@ -1021,13 +1140,16 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 		// Loop on the possible yj
 		for (auto yj = 0; yj < My; yj++) {
-			// Compute the total density of intersitials that escaped from the
-			// surface since last timestep using the stored flux
-			nInterstitial2D[yj] += previousIFlux2D[yj] * dt;
+			if (TSNumber > 0) {
+				// Compute the total density of intersitials that escaped from
+				// the surface since last timestep using the stored flux
+				nSurf2D[specIdI()][yj] +=
+					previousSurfFlux2D[specIdI()][yj] * dt;
 
-			// Remove the sputtering yield since last timestep
-			nInterstitial2D[yj] -=
-				sputteringYield2D * heliumFluxAmplitude * dt * hy;
+				// Remove the sputtering yield since last timestep
+				nSurf2D[specIdI()][yj] -=
+					sputteringYield2D * heliumFluxAmplitude * dt * hy;
+			}
 
 			// Get the position of the surface at yj
 			const auto surfacePos = solverHandler.getSurfacePosition(yj);
@@ -1125,20 +1247,20 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 				MPI_SUM, xolotlComm);
 
 			// Update the previous flux
-			previousIFlux2D[yj] = newTotalFlux;
+			previousSurfFlux2D[specIdI()][yj] = newTotalFlux;
 
 			// Compare nInterstitials to the threshold to know if we should move
 			// the surface
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 			double threshold = (62.8 - initialVConc) * hxLeft * hy;
-			if (nInterstitial2D[yj] > threshold) {
+			if (nSurf2D[specIdI()][yj] > threshold) {
 				// The surface is moving
 				fvalue[0] = 0.0;
 			}
 
 			// Moving the surface back
-			else if (nInterstitial2D[yj] < -threshold / 10.0) {
+			else if (nSurf2D[specIdI()][yj] < -threshold / 10.0) {
 				// The surface is moving
 				fvalue[0] = 0.0;
 			}
@@ -1147,10 +1269,8 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 
 	// Now work on the bubble bursting
 	if (solverHandler.burstBubbles()) {
-		using NetworkType = core::network::IPSIReactionNetwork;
-		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 		auto dof = network.getDOF();
-		auto specIdHe = psiNetwork->getHeliumSpeciesId();
+		auto specIdHe = network.getHeliumSpeciesId();
 
 		// Compute the prefactor for the probability (arbitrary)
 		double prefactor =
@@ -1188,8 +1308,8 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 						(grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePos + 1];
 
 					// Compute the helium density at this grid point
-					double heDensity = psiNetwork->getTotalAtomConcentration(
-						dConcs, specIdHe, 1);
+					double heDensity =
+						network.getTotalAtomConcentration(dConcs, specIdHe, 1);
 
 					// Compute the radius of the bubble from the number of
 					// helium
@@ -1290,6 +1410,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
 	auto specIdV = psiNetwork->getVacancySpeciesId();
 	auto specIdI = psiNetwork->getInterstitialSpeciesId();
+	auto nBurst = std::vector<double>(3, 0.0);
 
 	bool surfaceMoved = false;
 
@@ -1310,7 +1431,6 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		std::cout << "bursting at: " << yj * hy << " " << distance << std::endl;
 
 		// Pinhole case
-		auto nBurst = std::vector<double>(3, 0.0); // Not actually used here
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
 			psiNetwork->updateBurstingConcs(gridPointSolution, 0.0, nBurst);
 		}
@@ -1389,6 +1509,14 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		//		surfaceMoved = true;
 	}
 
+	// Add up the local quantities
+	auto globalBurst = std::vector<double>(3, 0.0);
+	MPI_Allreduce(
+		nBurst.data(), globalBurst.data(), 3, MPI_DOUBLE, MPI_SUM, xolotlComm);
+	nHeliumBurst2D += globalBurst[0];
+	nDeuteriumBurst2D += globalBurst[1];
+	nTritiumBurst2D += globalBurst[2];
+
 	// Now takes care of moving surface
 	bool moving = false;
 	for (auto i = 0; i < nevents; i++) {
@@ -1419,23 +1547,24 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 			(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy;
 
 		// Move the surface up
-		if (nInterstitial2D[yj] > threshold) {
+		if (nSurf2D[specIdI()][yj] > threshold) {
 			int nGridPoints = 0;
 			// Move the surface up until it is smaller than the next threshold
-			while (nInterstitial2D[yj] > threshold) {
+			while (nSurf2D[specIdI()][yj] > threshold &&
+				surfacePos + solverHandler.getLeftOffset() - 2 >= 0) {
 				// Move the surface higher
 				surfacePos--;
 				xi = surfacePos + solverHandler.getLeftOffset();
 				nGridPoints++;
 				// Update the number of interstitials
-				nInterstitial2D[yj] -= threshold;
+				nSurf2D[specIdI()][yj] -= threshold;
 				// Update the thresold
 				threshold =
 					(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy;
 			}
 
 			// Throw an exception if the position is negative
-			if (surfacePos < 0) {
+			if (surfacePos + solverHandler.getLeftOffset() < 2) {
 				PetscBool flagCheck;
 				ierr = PetscOptionsHasName(
 					NULL, NULL, "-check_collapse", &flagCheck);
@@ -1506,9 +1635,9 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 		}
 
 		// Moving the surface back
-		else if (nInterstitial2D[yj] < -threshold / 10.0) {
+		else if (nSurf2D[specIdI()][yj] < -threshold / 10.0) {
 			// Move it back as long as the number of interstitials in negative
-			while (nInterstitial2D[yj] < 0.0) {
+			while (nSurf2D[specIdI()][yj] < 0.0) {
 				// Compute the threshold to a deeper grid point
 				threshold =
 					(62.8 - initialVConc) * (grid[xi + 1] - grid[xi]) * hy;
@@ -1527,7 +1656,7 @@ postEventFunction2D(TS ts, PetscInt nevents, PetscInt eventList[],
 				surfacePos++;
 				xi = surfacePos + solverHandler.getLeftOffset();
 				// Update the number of interstitials
-				nInterstitial2D[yj] += threshold;
+				nSurf2D[specIdI()][yj] += threshold;
 			}
 
 			// Printing information about the extension of the material
@@ -1628,27 +1757,6 @@ setupPetsc2DMonitor(TS ts)
 	checkPetscError(ierr,
 		"setupPetsc2DMonitor: PetscOptionsHasName (-largest_conc) failed.");
 
-	// Get the solver handler
-	auto& solverHandler = PetscSolver::getSolverHandler();
-
-	// Get the network and its size
-	auto& network = solverHandler.getNetwork();
-
-	// Determine if we have an existing restart file,
-	// and if so, it it has had timesteps written to it.
-	std::unique_ptr<io::XFile> networkFile;
-	std::unique_ptr<io::XFile::TimestepGroup> lastTsGroup;
-	std::string networkName = solverHandler.getNetworkName();
-	bool hasConcentrations = false;
-	if (not networkName.empty()) {
-		networkFile.reset(new io::XFile(networkName));
-		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
-		hasConcentrations = (concGroup and concGroup->hasTimesteps());
-		if (hasConcentrations) {
-			lastTsGroup = concGroup->getLastTimestepGroup();
-		}
-	}
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -1662,6 +1770,43 @@ setupPetsc2DMonitor(TS ts)
 		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
 	CHKERRQ(ierr);
 	checkPetscError(ierr, "setupPetsc2DMonitor: DMDAGetInfo failed.");
+
+	// Get the solver handler
+	auto& solverHandler = PetscSolver::getSolverHandler();
+
+	// Get the network and its size
+	auto& network = solverHandler.getNetwork();
+	// Get the number of species
+	auto numSpecies = network.getSpeciesListSize();
+
+	// Create data depending on the boundary conditions
+	if (solverHandler.getLeftOffset() == 1) {
+		nSurf2D = std::vector<std::vector<double>>(
+			numSpecies, std::vector<double>(My, 0.0));
+		previousSurfFlux2D = std::vector<std::vector<double>>(
+			numSpecies, std::vector<double>(My, 0.0));
+	}
+	if (solverHandler.getRightOffset() == 1) {
+		nBulk2D = std::vector<std::vector<double>>(
+			numSpecies, std::vector<double>(My, 0.0));
+		previousBulkFlux2D = std::vector<std::vector<double>>(
+			numSpecies, std::vector<double>(My, 0.0));
+	}
+
+	// Determine if we have an existing restart file,
+	// and if so, it it has had timesteps written to it.
+	std::unique_ptr<io::XFile> networkFile;
+	std::unique_ptr<io::XFile::TimestepGroup> lastTsGroup;
+	std::string networkName = solverHandler.getNetworkName();
+	bool hasConcentrations = false;
+	if (not networkName.empty()) {
+		networkFile = std::make_unique<io::XFile>(networkName);
+		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
+		hasConcentrations = (concGroup and concGroup->hasTimesteps());
+		if (hasConcentrations) {
+			lastTsGroup = concGroup->getLastTimestepGroup();
+		}
+	}
 
 	// Set the post step processing to stop the solver if the time step
 	// collapses
@@ -1683,66 +1828,13 @@ setupPetsc2DMonitor(TS ts)
 			ierr, "setupPetsc2DMonitor: TSSetPostStep (checkTimeStep) failed.");
 	}
 
-	// Set the monitor to save the status of the simulation in hdf5 file
-	if (flagStatus) {
-		// Find the stride to know how often the HDF5 file has to be written
-		PetscBool flag;
-		ierr = PetscOptionsGetReal(
-			NULL, NULL, "-start_stop", &hdf5Stride2D, &flag);
-		checkPetscError(ierr,
-			"setupPetsc2DMonitor: PetscOptionsGetReal (-start_stop) failed.");
-		if (!flag)
-			hdf5Stride2D = 1.0;
-
-		if (hasConcentrations) {
-			// Get the previous time from the HDF5 file
-			double previousTime = lastTsGroup->readPreviousTime();
-			solverHandler.setPreviousTime(previousTime);
-			hdf5Previous2D = (PetscInt)(previousTime / hdf5Stride2D);
-		}
-
-		// Don't do anything if both files have the same name
-		if (hdf5OutputName2D != solverHandler.getNetworkName()) {
-			// Get the solver handler
-			auto& solverHandler = PetscSolver::getSolverHandler();
-
-			// Get the physical grid in the x direction
-			auto grid = solverHandler.getXGrid();
-
-			// Setup step size variables
-			double hy = solverHandler.getStepSizeY();
-
-			// Create and initialize a checkpoint file.
-			// We do this in its own scope so that the file
-			// is closed when the file object goes out of scope.
-			// We want it to close before we (potentially) copy
-			// the network from another file using a single-process
-			// MPI communicator.
-			{
-				io::XFile checkpointFile(
-					hdf5OutputName2D, grid, xolotlComm, My, hy);
-			}
-
-			// Copy the network group from the given file (if it has one).
-			// We open the files using a single-process MPI communicator
-			// because it is faster for a single process to do the
-			// copy with HDF5's H5Ocopy implementation than it is
-			// when all processes call the copy function.
-			// The checkpoint file must be closed before doing this.
-			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
-				hdf5OutputName2D, network);
-		}
-
-		// startStop2D will be called at each timestep
-		ierr = TSMonitorSet(ts, startStop2D, NULL, NULL);
-		checkPetscError(
-			ierr, "setupPetsc2DMonitor: TSMonitorSet (startStop2D) failed.");
-	}
-
 	// If the user wants the surface to be able to move or bursting
 	if (solverHandler.moveSurface() || solverHandler.burstBubbles()) {
 		// Surface
 		if (solverHandler.moveSurface()) {
+			// Clear the vector just in case
+			iClusterIds2D.clear();
+
 			using NetworkType = core::network::IPSIReactionNetwork;
 			using AmountType = NetworkType::AmountType;
 			auto psiNetwork = dynamic_cast<NetworkType*>(&network);
@@ -1768,22 +1860,33 @@ setupPetsc2DMonitor(TS ts)
 					iClusterExists = false;
 			}
 
-			// Initialize nInterstitial2D and previousIFlux2D before monitoring
-			// the interstitial flux
-			for (auto j = 0; j < My; j++) {
-				nInterstitial2D.push_back(0.0);
-				previousIFlux2D.push_back(0.0);
-			}
-
 			// Get the interstitial information at the surface if concentrations
 			// were stored
 			if (hasConcentrations) {
 				assert(lastTsGroup);
 
-				// Get the interstitial quantity from the HDF5 file
-				nInterstitial2D = lastTsGroup->readData2D("nInterstitial");
-				// Get the previous I flux from the HDF5 file
-				previousIFlux2D = lastTsGroup->readData2D("previousFluxI");
+				// Get the names of the species in the network
+				std::vector<std::string> names;
+				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+					names.push_back(network.getSpeciesName(id));
+				}
+
+				// Loop on the names
+				for (auto i = 0; i < names.size(); i++) {
+					// Create the n attribute name
+					std::ostringstream nName;
+					nName << "n" << names[i] << "Surf";
+					// Read quantity attribute
+					nSurf2D[i] = lastTsGroup->readData2D(nName.str());
+
+					// Create the previous flux attribute name
+					std::ostringstream prevFluxName;
+					prevFluxName << "previousFlux" << names[i] << "Surf";
+					// Read the attribute
+					previousSurfFlux2D[i] =
+						lastTsGroup->readData2D(prevFluxName.str());
+				}
+
 				// Get the previous time from the HDF5 file
 				double previousTime = lastTsGroup->readPreviousTime();
 				solverHandler.setPreviousTime(previousTime);
@@ -1851,19 +1954,6 @@ setupPetsc2DMonitor(TS ts)
 
 	// Set the monitor to compute the helium retention
 	if (flagHeRetention) {
-		// Check if we have a free surface at the bottom
-		if (solverHandler.getRightOffset() == 1) {
-			// Initialize n2D and previousFlux2D before monitoring the fluxes
-			for (auto j = 0; j < My; j++) {
-				nHelium2D.push_back(0.0);
-				previousHeFlux2D.push_back(0.0);
-				nDeuterium2D.push_back(0.0);
-				previousDFlux2D.push_back(0.0);
-				nTritium2D.push_back(0.0);
-				previousTFlux2D.push_back(0.0);
-			}
-		}
-
 		// Get the previous time if concentrations were stored and initialize
 		// the fluence
 		if (hasConcentrations) {
@@ -1877,15 +1967,56 @@ setupPetsc2DMonitor(TS ts)
 			// Increment the fluence with the value at this current timestep
 			fluxHandler->computeFluence(previousTime);
 
+			// Get the names of the species in the network
+			std::vector<std::string> names;
+			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+				names.push_back(network.getSpeciesName(id));
+			}
+
+			// If the surface is a free surface
+			if (solverHandler.getLeftOffset() == 1) {
+				// Loop on the names
+				for (auto i = 0; i < names.size(); i++) {
+					// Create the n attribute name
+					std::ostringstream nName;
+					nName << "n" << names[i] << "Surf";
+					// Read quantity attribute
+					nSurf2D[i] = lastTsGroup->readData2D(nName.str());
+
+					// Create the previous flux attribute name
+					std::ostringstream prevFluxName;
+					prevFluxName << "previousFlux" << names[i] << "Surf";
+					// Read the attribute
+					previousSurfFlux2D[i] =
+						lastTsGroup->readData2D(prevFluxName.str());
+				}
+			}
+
 			// If the bottom is a free surface
 			if (solverHandler.getRightOffset() == 1) {
-				// Read about the impurity fluxes in the bulk
-				nHelium2D = lastTsGroup->readData2D("nHelium");
-				previousHeFlux2D = lastTsGroup->readData2D("previousHeFlux");
-				nDeuterium2D = lastTsGroup->readData2D("nDeuterium");
-				previousDFlux2D = lastTsGroup->readData2D("previousDFlux");
-				nTritium2D = lastTsGroup->readData2D("nTritium");
-				previousTFlux2D = lastTsGroup->readData2D("previousTFlux");
+				// Loop on the names
+				for (auto i = 0; i < names.size(); i++) {
+					// Create the n attribute name
+					std::ostringstream nName;
+					nName << "n" << names[i] << "Bulk";
+					// Read quantity attribute
+					nBulk2D[i] = lastTsGroup->readData2D(nName.str());
+
+					// Create the previous flux attribute name
+					std::ostringstream prevFluxName;
+					prevFluxName << "previousFlux" << names[i] << "Bulk";
+					// Read the attribute
+					previousBulkFlux2D[i] =
+						lastTsGroup->readData2D(prevFluxName.str());
+				}
+			}
+
+			// Bursting
+			if (solverHandler.burstBubbles()) {
+				// Read about the impurity fluxes in from bursting
+				nHeliumBurst2D = lastTsGroup->readData1D("nHeliumBurst");
+				nDeuteriumBurst2D = lastTsGroup->readData1D("nDeuteriumBurst");
+				nTritiumBurst2D = lastTsGroup->readData1D("nTritiumBurst");
 			}
 		}
 
@@ -1911,7 +2042,19 @@ setupPetsc2DMonitor(TS ts)
 				auto speciesName = network.getSpeciesName(id);
 				outputFile << speciesName << "_content ";
 			}
-			outputFile << "Helium_bulk Deuterium_bulk Tritium_bulk"
+			if (solverHandler.getRightOffset() == 1) {
+				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+					auto speciesName = network.getSpeciesName(id);
+					outputFile << speciesName << "_bulk ";
+				}
+			}
+			if (solverHandler.getLeftOffset() == 1) {
+				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+					auto speciesName = network.getSpeciesName(id);
+					outputFile << speciesName << "_surface ";
+				}
+			}
+			outputFile << "Helium_burst Deuterium_burst Tritium_burst"
 					   << std::endl;
 			outputFile.close();
 		}
@@ -2014,6 +2157,62 @@ setupPetsc2DMonitor(TS ts)
 		ierr = TSMonitorSet(ts, monitorLargest2D, NULL, NULL);
 		checkPetscError(ierr,
 			"setupPetsc2DMonitor: TSMonitorSet (monitorLargest2D) failed.");
+	}
+
+	// Set the monitor to save the status of the simulation in hdf5 file
+	if (flagStatus) {
+		// Find the stride to know how often the HDF5 file has to be written
+		PetscBool flag;
+		ierr = PetscOptionsGetReal(
+			NULL, NULL, "-start_stop", &hdf5Stride2D, &flag);
+		checkPetscError(ierr,
+			"setupPetsc2DMonitor: PetscOptionsGetReal (-start_stop) failed.");
+		if (!flag)
+			hdf5Stride2D = 1.0;
+
+		if (hasConcentrations) {
+			// Get the previous time from the HDF5 file
+			double previousTime = lastTsGroup->readPreviousTime();
+			solverHandler.setPreviousTime(previousTime);
+			hdf5Previous2D = (PetscInt)(previousTime / hdf5Stride2D);
+		}
+
+		// Don't do anything if both files have the same name
+		if (hdf5OutputName2D != solverHandler.getNetworkName()) {
+			// Get the solver handler
+			auto& solverHandler = PetscSolver::getSolverHandler();
+
+			// Get the physical grid in the x direction
+			auto grid = solverHandler.getXGrid();
+
+			// Setup step size variables
+			double hy = solverHandler.getStepSizeY();
+
+			// Create and initialize a checkpoint file.
+			// We do this in its own scope so that the file
+			// is closed when the file object goes out of scope.
+			// We want it to close before we (potentially) copy
+			// the network from another file using a single-process
+			// MPI communicator.
+			{
+				io::XFile checkpointFile(
+					hdf5OutputName2D, grid, xolotlComm, My, hy);
+			}
+
+			// Copy the network group from the given file (if it has one).
+			// We open the files using a single-process MPI communicator
+			// because it is faster for a single process to do the
+			// copy with HDF5's H5Ocopy implementation than it is
+			// when all processes call the copy function.
+			// The checkpoint file must be closed before doing this.
+			writeNetwork(xolotlComm, solverHandler.getNetworkName(),
+				hdf5OutputName2D, network);
+		}
+
+		// startStop2D will be called at each timestep
+		ierr = TSMonitorSet(ts, startStop2D, NULL, NULL);
+		checkPetscError(
+			ierr, "setupPetsc2DMonitor: TSMonitorSet (startStop2D) failed.");
 	}
 
 	// Set the monitor to simply change the previous time to the new time

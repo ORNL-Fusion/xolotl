@@ -65,6 +65,7 @@ public:
 	using SpeciesRange = EnumSequenceRange<Species, numSpecies>;
 	using ClusterGenerator = typename Traits::ClusterGenerator;
 	using ClusterUpdater = typename Types::ClusterUpdater;
+	using Connectivity = typename Superclass::Connectivity;
 	using AmountType = typename IReactionNetwork::AmountType;
 	using IndexType = typename IReactionNetwork::IndexType;
 	using Subpaving = typename Types::Subpaving;
@@ -77,13 +78,17 @@ public:
 	using SparseFillMap = typename IReactionNetwork::SparseFillMap;
 	using ClusterData = typename Types::ClusterData;
 	using ClusterDataMirror = typename Types::ClusterDataMirror;
-	using ClusterDataRef = typename Types::ClusterDataRef;
+	using ClusterDataView = Kokkos::View<ClusterData>;
+	using ClusterDataHostView = typename ClusterDataView::host_mirror_type;
 	using ReactionCollection = typename Types::ReactionCollection;
 	using Bounds = IReactionNetwork::Bounds;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
 
 	template <typename PlsmContext>
 	using Cluster = Cluster<TImpl, PlsmContext>;
+
+	void
+	copyClusterDataView();
 
 	ReactionNetwork() = default;
 
@@ -245,7 +250,7 @@ public:
 	ClusterCommon<plsm::OnHost>
 	getClusterCommon(IndexType clusterId) const override
 	{
-		return ClusterCommon<plsm::OnHost>(_clusterDataMirror, clusterId);
+		return _clusterDataMirror.getClusterCommon(clusterId);
 	}
 
 	ClusterCommon<plsm::OnHost>
@@ -267,13 +272,13 @@ public:
 	Cluster<plsm::OnDevice>
 	getCluster(IndexType clusterId, plsm::OnDevice)
 	{
-		return Cluster<plsm::OnDevice>(_clusterData, clusterId);
+		return _clusterData.d_view().getCluster(clusterId);
 	}
 
 	Cluster<plsm::OnHost>
 	getCluster(IndexType clusterId, plsm::OnHost)
 	{
-		return Cluster<plsm::OnHost>(_clusterDataMirror, clusterId);
+		return _clusterDataMirror.getCluster(clusterId);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -291,14 +296,74 @@ public:
 	}
 
 	void
+	computeFluxesPreProcess(
+		ConcentrationsView, FluxesView, IndexType, double, double)
+	{
+	}
+
+	void
 	computeAllFluxes(ConcentrationsView concentrations, FluxesView fluxes,
 		IndexType gridIndex = 0, double surfaceDepth = 0.0,
-		double spacing = 0.0) override;
+		double spacing = 0.0) final;
+
+	template <typename TReaction>
+	void
+	computeFluxes(ConcentrationsView concentrations, FluxesView fluxes,
+		IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0)
+	{
+		asDerived()->computeFluxesPreProcess(
+			concentrations, fluxes, gridIndex, surfaceDepth, spacing);
+
+		_reactions.template forEachOn<TReaction>(
+			DEVICE_LAMBDA(auto&& reaction) {
+				reaction.contributeFlux(concentrations, fluxes, gridIndex);
+			});
+		Kokkos::fence();
+	}
+
+	void
+	computePartialsPreProcess(
+		ConcentrationsView, FluxesView, IndexType, double, double)
+	{
+	}
 
 	void
 	computeAllPartials(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex = 0,
 		double surfaceDepth = 0.0, double spacing = 0.0) override;
+
+	template <typename TReaction>
+	void
+	computePartials(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex = 0,
+		double surfaceDepth = 0.0, double spacing = 0.0)
+	{
+		// Reset the values
+		const auto& nValues = values.extent(0);
+		Kokkos::parallel_for(
+			nValues, KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
+
+		asDerived()->computePartialsPreProcess(
+			concentrations, values, gridIndex, surfaceDepth, spacing);
+
+		if (this->_enableReducedJacobian) {
+			_reactions.template forEachOn<TReaction>(
+				DEVICE_LAMBDA(auto&& reaction) {
+					reaction.contributeReducedPartialDerivatives(
+						concentrations, values, gridIndex);
+				});
+		}
+		else {
+			_reactions.template forEachOn<TReaction>(
+				DEVICE_LAMBDA(auto&& reaction) {
+					reaction.contributePartialDerivatives(
+						concentrations, values, gridIndex);
+				});
+		}
+
+		Kokkos::fence();
+	}
 
 	double
 	getLargestRate() override;
@@ -430,7 +495,7 @@ private:
 	generateClusterData(const ClusterGenerator& generator);
 
 	void
-	defineReactions();
+	defineReactions(Connectivity& connectivity);
 
 	void
 	updateDiffusionCoefficients();
@@ -439,8 +504,12 @@ private:
 	double
 	getTemperature(IndexType gridIndex) const noexcept
 	{
-		return _clusterData.temperature(gridIndex);
+		return _clusterData.d_view().temperature(gridIndex);
 	}
+
+private:
+	void
+	generateDiagonalFill(const Connectivity& connectivity);
 
 private:
 	Subpaving _subpaving;
@@ -448,8 +517,10 @@ private:
 
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
+	SparseFillMap _connectivityMap;
+
 protected:
-	ClusterData _clusterData;
+	Kokkos::DualView<ClusterData> _clusterData;
 
 	ReactionCollection _reactions;
 
@@ -465,11 +536,11 @@ struct ReactionNetworkWorker
 	using Types = ReactionNetworkTypes<TImpl>;
 	using Species = typename Types::Species;
 	using ClusterData = typename Types::ClusterData;
-	using ClusterDataRef = typename Types::ClusterDataRef;
 	using IndexType = typename Types::IndexType;
 	using AmountType = typename Types::AmountType;
 	using ReactionCollection = typename Types::ReactionCollection;
 	using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
+	using Connectivity = typename IReactionNetwork::Connectivity;
 
 	Network& _nw;
 
@@ -481,13 +552,10 @@ struct ReactionNetworkWorker
 	updateDiffusionCoefficients();
 
 	void
-	generateClusterData(const typename Network::ClusterGenerator& generator);
-
-	void
 	defineMomentIds();
 
 	void
-	defineReactions();
+	defineReactions(Connectivity& connectivity);
 
 	IndexType
 	getDiagonalFill(typename Network::SparseFillMap& fillMap);

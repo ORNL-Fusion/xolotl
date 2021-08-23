@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/detail/PSITrapMutation.h>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/TrapMutationClusterData.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationReactionGenerator.tpp>
 #include <xolotl/core/network/impl/PSIClusterGenerator.tpp>
 #include <xolotl/core/network/impl/PSIReaction.tpp>
@@ -52,7 +53,8 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
 		return;
 	}
 
-	this->_clusterData.extraData.trapMutationData.initialize();
+	this->_clusterData.h_view().extraData.trapMutationData.initialize();
+	this->copyClusterDataView();
 }
 
 template <typename TSpeciesEnum>
@@ -66,7 +68,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 
 	_tmHandler->updateData(gridTemps[0]);
 
-	auto& tmData = this->_clusterData.extraData.trapMutationData;
+	auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
 
 	using Kokkos::HostSpace;
 	using Kokkos::MemoryUnmanaged;
@@ -93,7 +95,7 @@ void
 PSIReactionNetwork<TSpeciesEnum>::selectTrapMutationReactions(
 	double depth, double spacing)
 {
-	auto& tmData = this->_clusterData.extraData.trapMutationData;
+	auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
 	auto depths = create_mirror_view(tmData.tmDepths);
 	deep_copy(depths, tmData.tmDepths);
 	auto enable = create_mirror_view(tmData.tmEnabled);
@@ -111,7 +113,7 @@ PSIReactionNetwork<TSpeciesEnum>::selectTrapMutationReactions(
 
 template <typename TSpeciesEnum>
 void
-PSIReactionNetwork<TSpeciesEnum>::computeAllFluxes(
+PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex,
 	double surfaceDepth, double spacing)
 {
@@ -119,14 +121,11 @@ PSIReactionNetwork<TSpeciesEnum>::computeAllFluxes(
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
-
-	Superclass::computeAllFluxes(
-		concentrations, fluxes, gridIndex, surfaceDepth, spacing);
 }
 
 template <typename TSpeciesEnum>
 void
-PSIReactionNetwork<TSpeciesEnum>::computeAllPartials(
+PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
 	IndexType gridIndex, double surfaceDepth, double spacing)
 {
@@ -134,9 +133,6 @@ PSIReactionNetwork<TSpeciesEnum>::computeAllPartials(
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
-
-	Superclass::computeAllPartials(
-		concentrations, values, gridIndex, surfaceDepth, spacing);
 }
 
 template <typename TSpeciesEnum>
@@ -245,7 +241,8 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 			gridPointSolution[i] = 0.0;
 			auto momentIds = this->getCluster(i, plsm::onHost).getMomentIds();
 			for (std::size_t j = 0; j < momentIds.extent(0); j++) {
-				gridPointSolution[momentIds(j)] = 0.0;
+				if (momentIds(j) != this->invalidIndex())
+					gridPointSolution[momentIds(j)] = 0.0;
 			}
 		}
 	}
@@ -276,7 +273,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateTrapMutationDisappearingRate(
 {
 	// Set the rate to have an exponential decrease
 	if (this->_enableAttenuation) {
-		auto& tmData = this->_clusterData.extraData.trapMutationData;
+		auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
 		auto mirror = create_mirror_view(tmData.currentDisappearingRate);
 		mirror() = exp(-4.0 * totalTrappedHeliumConc);
 		deep_copy(tmData.currentDisappearingRate, mirror);
@@ -290,7 +287,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateDesorptionLeftSideRate(
 {
 	// TODO: Desorption is constant. So make it available on both host and
 	// device. Either DualView or just direct value type that gets copied
-	auto& tmData = this->_clusterData.extraData.trapMutationData;
+	auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
 	auto desorp = create_mirror_view(tmData.desorption);
 	deep_copy(desorp, tmData.desorption);
 	auto lsRate = create_mirror_view(tmData.currentDesorpLeftSideRate);
@@ -323,15 +320,14 @@ typename PSIReactionNetwork<TSpeciesEnum>::IndexType
 PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
-	auto clData = typename PSIReactionNetwork<TSpeciesEnum>::ClusterDataRef(
-		this->_clusterData);
+	auto clData = this->_clusterData.d_view;
 	using Reducer = Kokkos::MaxLoc<PSIReactionNetwork<TSpeciesEnum>::AmountType,
 		PSIReactionNetwork<TSpeciesEnum>::IndexType>;
 	typename Reducer::value_type maxLoc;
 	Kokkos::parallel_reduce(
 		this->_numClusters,
 		KOKKOS_LAMBDA(IndexType i, typename Reducer::value_type & update) {
-			const auto& clReg = clData.getCluster(i).getRegion();
+			const auto& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
 			auto size = hi[Species::He] + hi[Species::V];
 			if constexpr (psi::hasDeuterium<Species>) {
@@ -371,7 +367,7 @@ PSIReactionGenerator<TSpeciesEnum>::PSIReactionGenerator(
 		}
 		auto nv = vSizes[n].size();
 		_tmVSizes[n] = Kokkos::View<AmountType*>(
-			"TM Vacancy Sizes - " + std::to_string(n), nv);
+			"TM Vacancy Sizes - He" + std::to_string(n + 1), nv);
 		auto vSizesMirror = Kokkos::View<AmountType*, Kokkos::HostSpace,
 			Kokkos::MemoryUnmanaged>(vSizes[n].data(), nv);
 		deep_copy(_tmVSizes[n], vSizesMirror);
@@ -542,14 +538,14 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	}
 
 	// Modified Trap-Mutation
-	if (this->_clusterData.getEnableTrapMutation()) {
+	if (this->_clusterData.enableTrapMutation()) {
 		auto heAmt = lo1[Species::He];
 		if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && 1 <= heAmt &&
 			heAmt <= 7) {
 			Composition comp1 = Composition::zero();
 			comp1[Species::He] = heAmt;
 			auto comp2 = comp1;
-			auto& vSizes = _tmVSizes[heAmt];
+			auto& vSizes = _tmVSizes[heAmt - 1];
 			for (std::size_t n = 0; n < vSizes.extent(0); ++n) {
 				auto& vSize = vSizes[n];
 				comp2[Species::V] = vSize;

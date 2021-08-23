@@ -64,30 +64,21 @@ struct TrapMutationClusterData
 	{
 	}
 
+	template <typename TClusterDataOther>
 	void
-	initialize()
-	{
-		currentDesorpLeftSideRate =
-			View<double>("Current Desorption Left Side Rate");
+	deepCopy(const TrapMutationClusterData<TClusterDataOther>& data);
 
-		currentDisappearingRate =
-			View<double>("Current Trap Mutation Disappearing Rate");
-		auto mirror = create_mirror_view(currentDisappearingRate);
-		mirror() = 1.0;
-		deep_copy(currentDisappearingRate, mirror);
+	std::uint64_t
+	getDeviceMemorySize() const noexcept;
 
-		desorption = View<Desorption>("Desorption");
-		tmDepths = View<double[7]>("Trap-mutation depths");
-		tmVSizes = View<AmountType[7]>("Trap-mutation vacancy sizes");
-
-		tmEnabled = View<bool[7]>("Trap-mutation enabled helium sizes");
-	}
+	void
+	initialize();
 
 	View<Desorption> desorption;
 	View<double> currentDesorpLeftSideRate;
 	View<double> currentDisappearingRate;
-	View<double[7]> tmDepths; // should be DualView
-	View<AmountType[7]> tmVSizes; // may only be needed at initialization
+	View<double[7]> tmDepths;
+	View<AmountType[7]> tmVSizes;
 	View<bool[7]> tmEnabled;
 };
 } // namespace detail

@@ -34,14 +34,14 @@ FeReactionNetwork::IndexType
 FeReactionNetwork::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
-	auto clData = ClusterDataRef(_clusterData);
+	auto clData = _clusterData.d_view;
 	using Reducer = Kokkos::MaxLoc<FeReactionNetwork::AmountType,
 		FeReactionNetwork::IndexType>;
 	Reducer::value_type maxLoc;
 	Kokkos::parallel_reduce(
 		_numClusters,
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
-			const Region& clReg = clData.getCluster(i).getRegion();
+			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
 			auto size = hi[Species::He] + hi[Species::V];
 			if (size > update.val) {
