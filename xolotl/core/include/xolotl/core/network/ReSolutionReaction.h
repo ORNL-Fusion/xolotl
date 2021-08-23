@@ -106,7 +106,7 @@ protected:
 	util::Array<IndexType, nMomentIds> _reactantMomentIds;
 	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
 
-    util::Array<IndexType, 3, 1+nMomentIds, 1, 1+nMomentIds> _connEntries;
+	util::Array<IndexType, 3, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
 };
 } // namespace network
 } // namespace core

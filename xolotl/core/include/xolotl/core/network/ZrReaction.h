@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/ConstantReaction.h>
 #include <xolotl/core/network/SinkReaction.h>
 #include <xolotl/core/network/ZrTraits.h>
 
@@ -47,6 +48,19 @@ class ZrSinkReaction : public SinkReaction<ZrReactionNetwork, ZrSinkReaction>
 {
 public:
 	using Superclass = SinkReaction<ZrReactionNetwork, ZrSinkReaction>;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex);
+};
+
+class ZrConstantReaction :
+	public ConstantReaction<ZrReactionNetwork, ZrConstantReaction>
+{
+public:
+	using Superclass = ConstantReaction<ZrReactionNetwork, ZrConstantReaction>;
 
 	using Superclass::Superclass;
 

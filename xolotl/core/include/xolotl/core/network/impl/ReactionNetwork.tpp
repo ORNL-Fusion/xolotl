@@ -46,9 +46,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);
 	this->setEnableNucleation(map["heterogeneous"]);
-	setEnableSink(map["sink"]);
+	this->setEnableSink(map["sink"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
+	this->setEnableConstantReaction(map["constant"]);
 	std::string petscString = opts.getPetscArg();
 	util::TokenizedLineReader<std::string> reader;
 	reader.setInputStream(std::make_shared<std::istringstream>(petscString));
@@ -209,6 +210,15 @@ ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::setEnableConstantReaction(bool reaction)
+{
+	this->_enableConstantReaction = reaction;
+	_clusterData.h_view().setEnableConstantReaction(
+		this->_enableConstantReaction);
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::setEnableReducedJacobian(bool reduced)
 {
 	this->_enableReducedJacobian = reduced;
@@ -342,6 +352,59 @@ ReactionNetwork<TImpl>::getAllClusterBounds()
 		bounds.push_back(boundVector);
 	}
 	return bounds;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::initializeClusterMap(
+	typename ReactionNetwork<TImpl>::BoundVector bounds)
+{
+	// Get the current bounds
+	auto currentBounds = getAllClusterBounds();
+
+	// Check that the sizes add up
+	IndexType nSubClusters = 0;
+	for (auto subBounds : bounds) {
+		nSubClusters += subBounds.size();
+	}
+	assert(this->_numClusters == nSubClusters);
+
+	auto clusterData = _clusterData.h_view;
+
+	auto mirApp = create_mirror_view(clusterData().toSubNetworkApp);
+	auto mirIndex = create_mirror_view(clusterData().toSubNetworkIndex);
+	// Loop on the current clusters
+	for (auto k = 0; k < this->_numClusters; ++k) {
+		// Loop on each sub bounds vector
+		for (auto i = 0; i < bounds.size(); i++)
+			for (auto j = 0; j < bounds[i].size(); j++) {
+				if (currentBounds[k] == bounds[i][j]) {
+					mirApp(k) = i;
+					mirIndex(k) = j;
+					break;
+				}
+			}
+	}
+	deep_copy(clusterData().toSubNetworkApp, mirApp);
+	deep_copy(clusterData().toSubNetworkIndex, mirIndex);
+
+	return;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setConstantRates(
+	typename ReactionNetwork<TImpl>::RateVector rates)
+{
+	auto clusterData = _clusterData.h_view;
+
+	// Loop on the current clusters
+	for (auto i = 0; i < this->_numClusters; ++i)
+		for (auto j = 0; j < this->_numClusters; ++j) {
+			clusterData().constantRates(i, j) = rates[i][j];
+		}
+
+	return;
 }
 
 template <typename TImpl>

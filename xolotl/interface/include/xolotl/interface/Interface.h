@@ -49,6 +49,12 @@ private:
 	 */
 	std::shared_ptr<solver::ISolver> solver;
 
+	/**
+	 * A vector of maps to know which cluster in subnetworks correspond
+	 * to which in the main network
+	 */
+	std::vector<std::vector<IdType>> fromSubNetwork;
+
 public:
 	/**
 	 * The default constructor
@@ -235,6 +241,30 @@ public:
 	 */
 	std::vector<double>
 	getGridInfo(double& hy, double& hz);
+
+	/**
+	 * Get the cluster information
+	 *
+	 * @return The vector representing the bounds for each cluster
+	 */
+	std::vector<std::vector<IdType>>
+	getAllClusterBounds();
+
+	/**
+	 * Computes the map between the different set of cluster bounds.
+	 *
+	 * @param bounds A vector of cluster bounds
+	 */
+	void
+	initializeClusterMaps(std::vector<std::vector<std::vector<IdType>>> bounds);
+
+	/**
+	 * Values for the rates to be set in constant reactions
+	 *
+	 * @param rates All the rates
+	 */
+	void
+	setConstantRates(std::vector<std::vector<double>> rates);
 
 	/**
 	 * Get whether the solve converged or not.

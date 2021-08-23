@@ -34,6 +34,8 @@ public:
 	using Connectivity = detail::ClusterConnectivity<>;
 	using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 	using Bounds = std::vector<std::vector<AmountType>>;
+	using BoundVector = std::vector<std::vector<std::vector<AmountType>>>;
+	using RateVector = std::vector<std::vector<double>>;
 	using PhaseSpace = std::vector<std::string>;
 
 	KOKKOS_INLINE_FUNCTION
@@ -243,6 +245,18 @@ public:
 	}
 
 	bool
+	getEnableConstantReaction() const noexcept
+	{
+		return _enableConstantReaction;
+	}
+
+	virtual void
+	setEnableConstantReaction(bool enable)
+	{
+		_enableConstantReaction = enable;
+	}
+
+	bool
 	getEnableReducedJacobian() const noexcept
 	{
 		return _enableReducedJacobian;
@@ -294,6 +308,16 @@ public:
 	 */
 	virtual Bounds
 	getAllClusterBounds() = 0;
+
+	/**
+	 * @brief Computes the map between the different cluster bounds
+	 */
+	virtual void initializeClusterMap(BoundVector) = 0;
+
+	/**
+	 * @brief Set the rates for constant reactions
+	 */
+	virtual void setConstantRates(RateVector) = 0;
 
 	virtual PhaseSpace
 	getPhaseSpace() = 0;
@@ -400,6 +424,7 @@ protected:
 	bool _enableSink{};
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
+	bool _enableConstantReaction{};
 	bool _enableReducedJacobian{};
 
 	IndexType _gridSize{};

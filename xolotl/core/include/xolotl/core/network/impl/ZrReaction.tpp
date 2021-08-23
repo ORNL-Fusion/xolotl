@@ -145,6 +145,13 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 
 	return 1.0;
 }
+
+KOKKOS_INLINE_FUNCTION
+double
+ZrConstantReaction::computeRate(IndexType gridIndex)
+{
+	return this->_clusterData->constantRates(_reactants[0], _reactants[1]);
+}
 } // namespace network
 } // namespace core
 } // namespace xolotl

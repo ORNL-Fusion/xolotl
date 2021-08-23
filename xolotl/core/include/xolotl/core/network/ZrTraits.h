@@ -15,6 +15,7 @@ class ZrReactionNetwork;
 class ZrProductionReaction;
 class ZrDissociationReaction;
 class ZrSinkReaction;
+class ZrConstantReaction;
 class ZrClusterGenerator;
 namespace detail
 {
@@ -78,9 +79,10 @@ struct ReactionNetworkTraits<ZrReactionNetwork>
 	using ProductionReactionType = ZrProductionReaction;
 	using DissociationReactionType = ZrDissociationReaction;
 	using SinkReactionType = ZrSinkReaction;
+	using ConstantReactionType = ZrConstantReaction;
 
 	using ReactionTypeList = std::tuple<ProductionReactionType,
-		DissociationReactionType, SinkReactionType>;
+		DissociationReactionType, SinkReactionType, ConstantReactionType>;
 
 	using ClusterGenerator = ZrClusterGenerator;
 	using ClusterUpdater = detail::ZrClusterUpdater;

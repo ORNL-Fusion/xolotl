@@ -82,6 +82,8 @@ public:
 	using ClusterDataHostView = typename ClusterDataView::host_mirror_type;
 	using ReactionCollection = typename Types::ReactionCollection;
 	using Bounds = IReactionNetwork::Bounds;
+	using BoundVector = IReactionNetwork::BoundVector;
+	using RateVector = IReactionNetwork::RateVector;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
 
 	template <typename PlsmContext>
@@ -208,6 +210,9 @@ public:
 	setEnableTrapMutation(bool reaction) override;
 
 	void
+	setEnableConstantReaction(bool reaction) override;
+
+	void
 	setEnableReducedJacobian(bool reduced) override;
 
 	void
@@ -264,6 +269,10 @@ public:
 
 	Bounds
 	getAllClusterBounds() override;
+
+	void initializeClusterMap(BoundVector) override;
+
+	void setConstantRates(RateVector) override;
 
 	PhaseSpace
 	getPhaseSpace() override;

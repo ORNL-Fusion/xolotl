@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/detail/impl/ConstantReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
 #include <xolotl/core/network/impl/ZrClusterGenerator.tpp>
@@ -80,6 +81,9 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if (i == j) {
 		addSinks(i, tag);
 	}
+
+	// Add every possibility
+	this->addConstantReaction(tag, {i, j});
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
@@ -192,7 +196,7 @@ ZrReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<Network> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions());
+		this->getSinkReactions(), this->getConstantReactions());
 	return ret;
 }
 } // namespace detail

@@ -128,6 +128,15 @@ try {
 	// Setup the solver
 	solver = factory::solver::SolverFactory::get().generate(opts);
 	assert(solver);
+
+	auto bounds = getAllClusterBounds();
+	std::vector<std::vector<std::vector<IdType>>> allBounds;
+	allBounds.push_back(bounds);
+	initializeClusterMaps(allBounds);
+
+	auto processMap = opts.getProcesses();
+	if (processMap["noSolve"])
+		return;
 	// Initialize the solver
 	solver->initialize();
 }
@@ -333,6 +342,70 @@ try {
 	hz = solverHandler.getStepSizeZ();
 
 	return solverHandler.getXGrid();
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+std::vector<std::vector<IdType>>
+XolotlInterface::getAllClusterBounds()
+try {
+	// Get the solver handler and network
+	auto& solverHandler = solver::Solver::getSolverHandler();
+	auto& network = solverHandler.getNetwork();
+
+	return network.getAllClusterBounds();
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::initializeClusterMaps(
+	std::vector<std::vector<std::vector<IdType>>> bounds)
+try {
+	// Get the solver handler and network
+	auto& solverHandler = solver::Solver::getSolverHandler();
+	auto& network = solverHandler.getNetwork();
+	network.initializeClusterMap(bounds);
+
+	// Create the local map
+	auto currentBounds = getAllClusterBounds();
+	// Loop on the sub network bounds
+	for (auto subBounds : bounds) {
+		// Create a new vector
+		std::vector<IdType> temp;
+		// Loop on the entries
+		for (auto bound : subBounds) {
+			// Look for the same cluster in currentBounds
+			for (auto j = 0; j < currentBounds.size(); j++) {
+				if (bound == currentBounds[j]) {
+					temp.push_back(j);
+					break;
+				}
+			}
+		}
+		fromSubNetwork.push_back(temp);
+	}
+
+	return;
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::setConstantRates(std::vector<std::vector<double>> rates)
+try {
+	// Get the solver handler and network
+	auto& solverHandler = solver::Solver::getSolverHandler();
+	auto& network = solverHandler.getNetwork();
+	network.setConstantRates(rates);
+
+	return;
 }
 catch (const std::exception& e) {
 	reportException(e);

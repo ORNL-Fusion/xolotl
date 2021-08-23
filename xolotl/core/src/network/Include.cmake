@@ -1,6 +1,7 @@
 list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterSet.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/ConstantReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/MemorySpace.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/NucleationReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/PSITrapMutation.h
@@ -20,6 +21,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyTraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/Cluster.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ConstantReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/EnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeNetworkHandler.h
@@ -58,6 +60,7 @@ list(APPEND XOLOTL_CORE_HEADERS
 
 list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ClusterData.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ConstantReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/NucleationReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReSolutionReactionGenerator.tpp
