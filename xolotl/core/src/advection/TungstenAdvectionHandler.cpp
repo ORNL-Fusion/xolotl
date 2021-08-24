@@ -33,14 +33,14 @@ TungstenAdvectionHandler::initialize(network::IReactionNetwork& network,
 	auto comp = std::vector<AmountType>(numSpecies, 0);
 
 	// Loop on helium clusters from size 1 to 7
-	for (std::size_t i = 1; i <= 7; i++) {
+	for (std::size_t i = 1; i <= 1; i++) {
 		comp[specIdHe()] = i;
 		auto clusterId = psiNetwork->findClusterId(comp);
 		// Check that the helium cluster is present in the network
 		if (clusterId == NetworkType::invalidIndex()) {
 			throw std::runtime_error("\nThe helium cluster of size " +
 				std::to_string(i) +
-				"is not present in the network, "
+				" is not present in the network, "
 				"cannot use the advection option!");
 		}
 

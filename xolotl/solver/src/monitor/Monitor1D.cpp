@@ -728,22 +728,8 @@ computeHeliumRetention1D(
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << fluence << ' ';
-		for (auto i = 0; i < numSpecies; ++i) {
-			outputFile << totalConcData[i] << ' ';
-		}
-		if (solverHandler.getRightOffset() == 1) {
-			for (auto i = 0; i < numSpecies; ++i) {
-				outputFile << nBulk1D[i] << ' ';
-			}
-		}
-		if (solverHandler.getLeftOffset() == 1) {
-			for (auto i = 0; i < numSpecies; ++i) {
-				outputFile << nSurf1D[i] << ' ';
-			}
-		}
-		outputFile << nHeliumBurst1D << " " << nDeuteriumBurst1D << " "
-				   << nTritiumBurst1D << std::endl;
+		outputFile << time << " " << solutionArray[surfacePos][dof] << " "
+				   << totalConcData[0] << std::endl;
 		outputFile.close();
 	}
 
@@ -1033,9 +1019,17 @@ profileTemperature1D(
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
 
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	ierr = DMGetLocalVector(da, &localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
 	// Get the array of concentration
 	PetscReal** solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Declare the pointer for the concentrations at a specific grid point
@@ -1048,6 +1042,22 @@ profileTemperature1D(
 		outputFile << time;
 	}
 
+	// Create the local vector of temperature wrt temperatureGrid
+	std::vector<double> localTemperature;
+	// Loop on the local grid including ghosts
+	for (auto i = xs; i < xs + xm + 2; i++) {
+		// Get the pointer to the beginning of the solution data for this
+		// grid point
+		gridPointSolution = solutionArray[(PetscInt)i - 1];
+
+		// Get the local temperature
+		localTemperature.push_back(gridPointSolution[dof]);
+	}
+
+	// Interpolate
+	auto updatedTemperature =
+		solverHandler.interpolateTemperature(surfacePos, localTemperature);
+
 	// Loop on the entire grid
 	for (auto xi = surfacePos + solverHandler.getLeftOffset();
 		 xi < Mx - solverHandler.getRightOffset(); xi++) {
@@ -1057,12 +1067,8 @@ profileTemperature1D(
 		double localTemp = 0.0;
 		// Check if this process is in charge of xi
 		if (xi >= xs && xi < xs + xm) {
-			// Get the pointer to the beginning of the solution data for this
-			// grid point
-			gridPointSolution = solutionArray[xi];
-
 			// Get the local temperature
-			localTemp = gridPointSolution[dof];
+			localTemp = updatedTemperature[xi - xs + 1];
 		}
 
 		// Get the value on procId = 0
@@ -1083,7 +1089,7 @@ profileTemperature1D(
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);

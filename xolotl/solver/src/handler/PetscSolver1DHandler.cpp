@@ -37,6 +37,9 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		}
 	}
 
+	// Generate the separate grid for the temperature
+	generateTemperatureGrid(surfacePosition);
+
 	// Prints info on one process
 	auto xolotlComm = util::getMPIComm();
 	int procId;
@@ -58,6 +61,12 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		std::cout << ", grid (nm): ";
 		for (auto i = 1; i < grid.size() - 1; i++) {
 			std::cout << grid[i] - grid[surfacePosition + 1] << " ";
+		}
+		std::cout << std::endl;
+
+		std::cout << "Temperature grid (nm): ";
+		for (auto i = 0; i < temperatureGrid.size(); i++) {
+			std::cout << temperatureGrid[i] << " ";
 		}
 		std::cout << std::endl;
 	}
@@ -202,12 +211,16 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 		// Temperature
 		plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 		if (i < 0)
-			gridPosition[0] = (grid[0] - grid[surfacePosition + 1]) /
-				(grid[grid.size() - 1] - grid[surfacePosition + 1]);
+			gridPosition[0] =
+				(temperatureGrid[0] - temperatureGrid[surfacePosition + 1]) /
+				(temperatureGrid[temperatureGrid.size() - 1] -
+					temperatureGrid[surfacePosition + 1]);
 		else
 			gridPosition[0] =
-				((grid[i] + grid[i + 1]) / 2.0 - grid[surfacePosition + 1]) /
-				(grid[grid.size() - 1] - grid[surfacePosition + 1]);
+				((temperatureGrid[i] + temperatureGrid[i + 1]) / 2.0 -
+					temperatureGrid[surfacePosition + 1]) /
+				(temperatureGrid[temperatureGrid.size() - 1] -
+					temperatureGrid[surfacePosition + 1]);
 		auto temp = temperatureHandler->getTemperature(gridPosition, 0.0);
 		temperature[i - localXS + 1] = temp;
 
@@ -254,7 +267,8 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Update the network with the temperature
-	network.setTemperatures(temperature);
+	auto networkTemp = interpolateTemperature(surfacePosition);
+	network.setTemperatures(networkTemp);
 	network.syncClusterDataOnHost();
 
 	/*
@@ -448,7 +462,8 @@ PetscSolver1DHandler::setConcVector(DM& da, Vec& C,
 		temperature[i + 1] = gridPointSolution[dof];
 	}
 	// Update the network with the temperature
-	network.setTemperatures(temperature);
+	auto networkTemp = interpolateTemperature(surfacePosition);
+	network.setTemperatures(networkTemp);
 	network.syncClusterDataOnHost();
 
 	// Restore the solutionArray
@@ -567,16 +582,18 @@ PetscSolver1DHandler::updateConcentration(
 			// Compute the left and right hx
 			double hxLeft = 0.0, hxRight = 0.0;
 			if (xi >= 1 && xi < nX) {
-				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				hxLeft =
+					(temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+				hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 			}
 			else if (xi < 1) {
-				hxLeft = grid[xi + 1] - grid[xi];
-				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				hxLeft = temperatureGrid[xi + 1] - temperatureGrid[xi];
+				hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 			}
 			else {
-				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = grid[xi + 1] - grid[xi];
+				hxLeft =
+					(temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+				hxRight = temperatureGrid[xi + 1] - temperatureGrid[xi];
 			}
 
 			temperatureHandler->computeTemperature(
@@ -612,22 +629,24 @@ PetscSolver1DHandler::updateConcentration(
 		// Compute the left and right hx
 		double hxLeft = 0.0, hxRight = 0.0;
 		if (xi >= 1 && xi < nX) {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			hxLeft = (temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+			hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 		}
 		else if (xi < 1) {
-			hxLeft = grid[xi + 1] - grid[xi];
-			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			hxLeft = temperatureGrid[xi + 1] - temperatureGrid[xi];
+			hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 		}
 		else {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-			hxRight = grid[xi + 1] - grid[xi];
+			hxLeft = (temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+			hxRight = temperatureGrid[xi + 1] - temperatureGrid[xi];
 		}
 
 		// Set the grid fraction
 		gridPosition[0] =
-			((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1]) /
-			(grid[grid.size() - 1] - grid[surfacePosition + 1]);
+			((temperatureGrid[xi] + temperatureGrid[xi + 1]) / 2.0 -
+				temperatureGrid[surfacePosition + 1]) /
+			(temperatureGrid[temperatureGrid.size() - 1] -
+				temperatureGrid[surfacePosition + 1]);
 
 		// Get the temperature from the temperature handler
 		temperatureHandler->setTemperature(concOffset);
@@ -647,10 +666,16 @@ PetscSolver1DHandler::updateConcentration(
 		}
 	}
 
-	if (tempHasChanged) {
+	// Share the information with all the processes
+	bool totalTempHasChanged = false;
+	auto xolotlComm = util::getMPIComm();
+	MPI_Allreduce(&tempHasChanged, &totalTempHasChanged, 1, MPI_C_BOOL, MPI_LOR,
+		xolotlComm);
+
+	if (totalTempHasChanged) {
 		// Update the network with the temperature
-		network.setTemperatures(temperature);
-		for (auto i = 0; i < temperature.size(); i++) { }
+		auto networkTemp = interpolateTemperature(surfacePosition);
+		network.setTemperatures(networkTemp);
 		network.syncClusterDataOnHost();
 	}
 
@@ -807,20 +832,20 @@ PetscSolver1DHandler::computeJacobian(
 		// Compute the left and right hx
 		double hxLeft = 0.0, hxRight = 0.0;
 		if (xi >= 1 && xi < nX) {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			hxLeft = (temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+			hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 		}
 		else if (xi == -1) {
 			hxLeft = 0.0;
-			hxRight = (grid[xi + 2] + grid[xi + 1]) / 2.0;
+			hxRight = (temperatureGrid[xi + 2] + temperatureGrid[xi + 1]) / 2.0;
 		}
 		else if (xi < 1) {
-			hxLeft = grid[xi + 1] - grid[xi];
-			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			hxLeft = temperatureGrid[xi + 1] - temperatureGrid[xi];
+			hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 		}
 		else {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-			hxRight = grid[xi + 1] - grid[xi];
+			hxLeft = (temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+			hxRight = temperatureGrid[xi + 1] - temperatureGrid[xi];
 		}
 
 		// Heat condition
@@ -871,8 +896,10 @@ PetscSolver1DHandler::computeJacobian(
 
 		// Set the grid fraction
 		gridPosition[0] =
-			((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1]) /
-			(grid[grid.size() - 1] - grid[surfacePosition + 1]);
+			((temperatureGrid[xi] + temperatureGrid[xi + 1]) / 2.0 -
+				temperatureGrid[surfacePosition + 1]) /
+			(temperatureGrid[temperatureGrid.size() - 1] -
+				temperatureGrid[surfacePosition + 1]);
 
 		// Get the temperature from the temperature handler
 		temperatureHandler->setTemperature(concOffset);
@@ -912,9 +939,16 @@ PetscSolver1DHandler::computeJacobian(
 		}
 	}
 
-	if (tempHasChanged) {
+	// Share the information with all the processes
+	bool totalTempHasChanged = false;
+	auto xolotlComm = util::getMPIComm();
+	MPI_Allreduce(&tempHasChanged, &totalTempHasChanged, 1, MPI_C_BOOL, MPI_LOR,
+		xolotlComm);
+
+	if (totalTempHasChanged) {
 		// Update the network with the temperature
-		network.setTemperatures(temperature);
+		auto networkTemp = interpolateTemperature(surfacePosition);
+		network.setTemperatures(networkTemp);
 		network.syncClusterDataOnHost();
 	}
 

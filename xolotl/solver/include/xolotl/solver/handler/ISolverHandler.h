@@ -486,6 +486,17 @@ public:
 	 */
 	virtual void
 	resetGBVector() = 0;
+
+	/**
+	 * Interpolate the temperature between the two grids.
+	 *
+	 * @param pos The surface position
+	 * @param localTemp The local temperature vector wrt temperature grid
+	 * @return The local temperature vector wrt cluster grid
+	 */
+	virtual std::vector<double>
+	interpolateTemperature(
+		IdType pos, std::vector<double> localTemp = std::vector<double>()) = 0;
 };
 // end class ISolverHandler
 
