@@ -4,8 +4,10 @@
 #include <fstream>
 #include <iostream>
 
+#include <boost/program_options/errors.hpp>
 #include <boost/test/framework.hpp>
 #include <boost/test/unit_test.hpp>
+namespace bpo = boost::program_options;
 
 #include <xolotl/options/Options.h>
 
@@ -29,12 +31,7 @@ BOOST_AUTO_TEST_CASE(noOptions)
 	const char* argv[] = {"./xolotl"};
 
 	// Attempt to read the parameters
-	opts.readParams(1, argv);
-
-	// The Option class does not like empty command line
-	// a parameter file is always needed
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+	BOOST_CHECK_THROW(opts.readParams(1, argv), bpo::error);
 }
 
 BOOST_AUTO_TEST_CASE(badParamFileName)
@@ -49,11 +46,7 @@ BOOST_AUTO_TEST_CASE(badParamFileName)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameters
-	opts.readParams(2, argv);
-
-	// If the parameter file does not exist, xolotl should not run
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+	BOOST_CHECK_THROW(opts.readParams(2, argv), bpo::error);
 }
 
 BOOST_AUTO_TEST_CASE(badParamFile)
@@ -145,11 +138,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should run with good parameters
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
+	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
 	// Check the network filename
 	BOOST_REQUIRE_EQUAL(opts.getNetworkFilename(), "tungsten.txt");
@@ -291,11 +280,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should run with good parameters
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
+	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
 	// Check if we use the HDF5 file
 	BOOST_REQUIRE_EQUAL(opts.useHDF5(), false);
@@ -330,12 +315,7 @@ BOOST_AUTO_TEST_CASE(wrongPerfHandler)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should not be able to run with a wrong performance handler
-	// parameter
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+	BOOST_CHECK_THROW(opts.readParams(2, argv), bpo::invalid_option_value);
 
 	// Remove the created file
 	std::string tempFile = "param_perf_wrong.txt";
@@ -360,12 +340,7 @@ BOOST_AUTO_TEST_CASE(wrongVizHandler)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should not be able to run with a wrong visualization handler
-	// parameter
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+	BOOST_CHECK_THROW(opts.readParams(2, argv), bpo::invalid_option_value);
 
 	// Remove the created file
 	std::string tempFile = "param_viz_wrong.txt";
@@ -420,11 +395,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should run with good parameters
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
+	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
 	// Check the temperature
 	BOOST_REQUIRE_EQUAL(opts.getTempHandlerName(), "profile");
@@ -470,11 +441,7 @@ BOOST_AUTO_TEST_CASE(readGridIn)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should run
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
+	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
 	// Check the grid options
 	BOOST_REQUIRE_EQUAL(opts.getGridTypeName(), "read");
@@ -505,11 +472,7 @@ BOOST_AUTO_TEST_CASE(wrongFluxProfile)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should not be able to run with a wrong flux profile file name
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+	BOOST_CHECK_THROW(opts.readParams(2, argv), bpo::error);
 
 	// Remove the created file
 	std::string tempFile = "param_flux_wrong.txt";
@@ -534,12 +497,7 @@ BOOST_AUTO_TEST_CASE(wrongTempProfile)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should not be able to run with a wrong temperature profile file
-	// name
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), false);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_FAILURE);
+	BOOST_CHECK_THROW(opts.readParams(2, argv), bpo::error);
 
 	// Remove the created file
 	std::string tempFile = "param_temp_wrong.txt";
@@ -563,11 +521,7 @@ BOOST_AUTO_TEST_CASE(papiPerfHandler)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should run with good parameters
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
+	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "papi");
@@ -594,11 +548,7 @@ BOOST_AUTO_TEST_CASE(osPerfHandler)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should run with good parameters
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
+	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "os");
@@ -625,11 +575,7 @@ BOOST_AUTO_TEST_CASE(dummyPerfHandler)
 	const char* argv[] = {"./xolotl", fname};
 
 	// Attempt to read the parameter file
-	opts.readParams(2, argv);
-
-	// Xolotl should run with good parameters
-	BOOST_REQUIRE_EQUAL(opts.shouldRun(), true);
-	BOOST_REQUIRE_EQUAL(opts.getExitCode(), EXIT_SUCCESS);
+	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "dummy");

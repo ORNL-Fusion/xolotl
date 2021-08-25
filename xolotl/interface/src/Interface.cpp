@@ -117,9 +117,6 @@ try {
 
 	options::Options opts;
 	opts.readParams(argc, argv);
-	if (!opts.shouldRun()) {
-		throw std::runtime_error("Unable to read the options.");
-	}
 
 	// Set up our performance data infrastructure.
 	perf::PerfHandlerRegistry::set(

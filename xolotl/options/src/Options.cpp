@@ -2,6 +2,8 @@
 #include <fstream>
 #include <limits>
 
+using namespace std::string_literals;
+
 #include <boost/program_options.hpp>
 
 #include <xolotl/options/Options.h>
@@ -15,8 +17,6 @@ namespace xolotl
 namespace options
 {
 Options::Options() :
-	shouldRunFlag(true),
-	exitCode(EXIT_SUCCESS),
 	petscArg(""),
 	networkFilename(""),
 	tempHandlerName(""),
@@ -82,11 +82,7 @@ Options::readParams(int argc, const char* argv[])
 {
 	// Check that a file name is given
 	if (argc < 2) {
-		std::cerr << "Options: parameter file name must not be empty"
-				  << std::endl;
-		shouldRunFlag = false;
-		exitCode = EXIT_FAILURE;
-		return;
+		throw bpo::error("Options: parameter file name must not be empty");
 	}
 
 	// The name of the parameter file
@@ -242,352 +238,298 @@ Options::readParams(int argc, const char* argv[])
 
 	if (opts.count("help")) {
 		std::cout << visible << std::endl;
-		shouldRunFlag = false;
-		exitCode = EXIT_FAILURE;
-		return;
+		std::exit(EXIT_SUCCESS);
 	}
 
 	// Check that the file exist
-	std::ifstream ifs(argv[1]);
-	if (!ifs) {
-		std::cerr << "Options: unable to open parameter file: " << argv[1]
-				  << std::endl;
+	if (!std::ifstream{argv[1]}) {
 		std::cout << visible << std::endl;
-		shouldRunFlag = false;
-		exitCode = EXIT_FAILURE;
-		return;
+		throw bpo::error("Options: unable to open parameter file: "s + argv[1]);
 	}
 
-	if (shouldRunFlag) {
-		std::ifstream ifs(param_file);
-		if (!ifs) {
-			std::cerr << "Options: unable to open parameter file: "
-					  << param_file << std::endl;
-			exitCode = EXIT_FAILURE;
-			return;
-		}
-		store(parse_config_file(ifs, config), opts);
-		notify(opts);
+	std::ifstream ifs(param_file);
+	if (!ifs) {
+		throw bpo::error(
+			"Options: unable to open parameter file: " + param_file);
+	}
+	store(parse_config_file(ifs, config), opts);
+	notify(opts);
 
-		// Take care of the temperature
-		if (opts.count("tempParam")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<double> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["tempParam"].as<std::string>());
-			reader.setInputStream(argSS);
+	// Take care of the temperature
+	if (opts.count("tempParam")) {
+		// Build an input stream from the argument string.
+		util::TokenizedLineReader<double> reader;
+		auto argSS = std::make_shared<std::istringstream>(
+			opts["tempParam"].as<std::string>());
+		reader.setInputStream(argSS);
 
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-			if (tokens.size() > 2) {
-				std::cerr << "Options: too many temperature parameters (expect "
-							 "2 or less)"
-						  << std::endl;
-				exitCode = EXIT_FAILURE;
-				return;
-			}
-			for (std::size_t i = 0; i < tokens.size(); ++i) {
-				tempParam[i] = tokens[i];
-			}
+		// Break the argument into tokens.
+		auto tokens = reader.loadLine();
+		if (tokens.size() > 2) {
+			throw bpo::error(
+				"Options: too many temperature parameters (expect 2 or less)");
 		}
+		for (std::size_t i = 0; i < tokens.size(); ++i) {
+			tempParam[i] = tokens[i];
+		}
+	}
 
-		if (opts.count("tempFile")) {
-			// Check that the profile file exists
-			std::ifstream inFile(tempProfileFilename);
-			if (!inFile) {
-				std::cerr << "\nOptions: could not open file containing "
-							 "temperature profile data. "
-							 "Aborting!\n"
-						  << std::endl;
-				shouldRunFlag = false;
-				exitCode = EXIT_FAILURE;
-			}
+	if (opts.count("tempFile")) {
+		// Check that the profile file exists
+		std::ifstream inFile(tempProfileFilename);
+		if (!inFile) {
+			throw bpo::error("Options: could not open file containing "
+							 "temperature profile data. Aborting!");
 		}
+	}
 
-		// Take care of the flux
-		if (opts.count("flux")) {
-			fluxFlag = true;
+	// Take care of the flux
+	if (opts.count("flux")) {
+		fluxFlag = true;
+	}
+	if (opts.count("fluxFile")) {
+		// Check that the profile file exists
+		std::ifstream inFile(fluxTimeProfileFilePath.c_str());
+		if (!inFile) {
+			throw bpo::error("Options: could not open file containing flux "
+							 "profile data. Aborting!");
 		}
-		if (opts.count("fluxFile")) {
-			// Check that the profile file exists
-			std::ifstream inFile(fluxTimeProfileFilePath.c_str());
-			if (!inFile) {
-				std::cerr << "\nOptions: could not open file containing flux "
-							 "profile data. "
-							 "Aborting!\n"
-						  << std::endl;
-				shouldRunFlag = false;
-				exitCode = EXIT_FAILURE;
+		else {
+			// Set the flag to use a flux profile to true
+			fluxTimeProfileFlag = true;
+		}
+	}
+
+	// Take care of the performance handler
+	if (opts.count("perfHandler")) {
+		std::string perfHandlers[] = {"dummy", "os", "papi"};
+		if (std::find(begin(perfHandlers), end(perfHandlers),
+				perfHandlerName) == end(perfHandlers)) {
+			throw bpo::invalid_option_value(
+				"Options: could not understand the performance handler type. "
+				"Aborting!");
+		}
+	}
+
+	// Take care of the visualization handler
+	if (opts.count("vizHandler")) {
+		// Determine the type of handlers we are being asked to use
+		if (!(vizHandlerName == "std" || vizHandlerName == "dummy")) {
+			throw bpo::invalid_option_value(
+				"Options: unrecognized argument in the visualization option "
+				"handler. Aborting!");
+		}
+	}
+
+	// Take care of the grid
+	if (opts.count("gridParam")) {
+		// Build an input stream from the argument string.
+		util::TokenizedLineReader<double> reader;
+		auto argSS = std::make_shared<std::istringstream>(
+			opts["gridParam"].as<std::string>());
+		reader.setInputStream(argSS);
+
+		// Break the argument into tokens.
+		auto tokens = reader.loadLine();
+		if (tokens.size() > 6) {
+			throw bpo::invalid_option_value(
+				"Options: too many grid parameters (expect 6 or less)");
+		}
+		for (std::size_t i = 0; i < tokens.size(); ++i) {
+			gridParam[i] = tokens[i];
+		}
+	}
+
+	if (opts.count("gridFile")) {
+		// Check that the file exists
+		std::ifstream inFile(gridFilename);
+		if (!inFile) {
+			throw bpo::invalid_option_value(
+				"Options: could not open file containing grid data. Aborting!");
+		}
+	}
+
+	// Take care of the radius minimum size
+	if (opts.count("radiusSize")) {
+		// Build an input stream from the argument string.
+		util::TokenizedLineReader<int> reader;
+		auto argSS = std::make_shared<std::istringstream>(
+			opts["radiusSize"].as<std::string>());
+		reader.setInputStream(argSS);
+
+		// Break the argument into tokens.
+		auto tokens = reader.loadLine();
+
+		// Set the values
+		for (int i = 0; i < tokens.size(); i++) {
+			radiusMinSizes.push_back(tokens[i]);
+		}
+	}
+
+	// Take care of the processes
+	if (opts.count("process")) {
+		// Build an input stream from the argument string.
+		util::TokenizedLineReader<std::string> reader;
+		auto argSS = std::make_shared<std::istringstream>(
+			opts["process"].as<std::string>());
+		reader.setInputStream(argSS);
+
+		// Break the argument into tokens.
+		auto tokens = reader.loadLine();
+
+		// Initialize the map of processes
+		processMap["reaction"] = false;
+		processMap["diff"] = false;
+		processMap["advec"] = false;
+		processMap["modifiedTM"] = false;
+		processMap["movingSurface"] = false;
+		processMap["bursting"] = false;
+		processMap["attenuation"] = false;
+		processMap["resolution"] = false;
+		processMap["heterogeneous"] = false;
+		processMap["sink"] = false;
+
+		// Loop on the tokens
+		for (int i = 0; i < tokens.size(); ++i) {
+			// Look for the key
+			if (processMap.find(tokens[i]) == processMap.end()) {
+				throw bpo::invalid_option_value(
+					"Options: The process name is not known: "s + tokens[i] +
+					". Aborting!");
 			}
 			else {
-				// Set the flag to use a flux profile to true
-				fluxTimeProfileFlag = true;
+				// Switch the value to true in the map
+				processMap[tokens[i]] = true;
 			}
-		}
-
-		// Take care of the performance handler
-		if (opts.count("perfHandler")) {
-			std::string perfHandlers[] = {"dummy", "os", "papi"};
-			if (std::find(begin(perfHandlers), end(perfHandlers),
-					perfHandlerName) == end(perfHandlers)) {
-				std::cerr << "\nOptions: could not understand the performance "
-							 "handler type. "
-							 "Aborting!\n"
-						  << std::endl;
-				shouldRunFlag = false;
-				exitCode = EXIT_FAILURE;
-			}
-		}
-
-		// Take care of the visualization handler
-		if (opts.count("vizHandler")) {
-			// Determine the type of handlers we are being asked to use
-			if (!(vizHandlerName == "std" || vizHandlerName == "dummy")) {
-				std::cerr << "\nOptions: unrecognized argument in the "
-							 "visualization option handler."
-							 "Aborting!\n"
-						  << std::endl;
-				shouldRunFlag = false;
-				exitCode = EXIT_FAILURE;
-			}
-		}
-
-		// Take care of the grid
-		if (opts.count("gridParam")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<double> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["gridParam"].as<std::string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-			if (tokens.size() > 6) {
-				std::cerr
-					<< "Options: too many grid parameters (expect 6 or less)"
-					<< std::endl;
-				exitCode = EXIT_FAILURE;
-				return;
-			}
-			for (std::size_t i = 0; i < tokens.size(); ++i) {
-				gridParam[i] = tokens[i];
-			}
-		}
-
-		if (opts.count("gridFile")) {
-			// Check that the file exists
-			std::ifstream inFile(gridFilename);
-			if (!inFile) {
-				std::cerr << "\nOptions: could not open file containing "
-							 "grid data. "
-							 "Aborting!\n"
-						  << std::endl;
-				shouldRunFlag = false;
-				exitCode = EXIT_FAILURE;
-			}
-		}
-
-		// Take care of the radius minimum size
-		if (opts.count("radiusSize")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<int> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["radiusSize"].as<std::string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-
-			// Set the values
-			for (int i = 0; i < tokens.size(); i++) {
-				radiusMinSizes.push_back(tokens[i]);
-			}
-		}
-
-		// Take care of the processes
-		if (opts.count("process")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<std::string> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["process"].as<std::string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-
-			// Initialize the map of processes
-			processMap["reaction"] = false;
-			processMap["diff"] = false;
-			processMap["advec"] = false;
-			processMap["modifiedTM"] = false;
-			processMap["movingSurface"] = false;
-			processMap["bursting"] = false;
-			processMap["attenuation"] = false;
-			processMap["resolution"] = false;
-			processMap["heterogeneous"] = false;
-			processMap["sink"] = false;
-
-			// Loop on the tokens
-			for (int i = 0; i < tokens.size(); ++i) {
-				// Look for the key
-				if (processMap.find(tokens[i]) == processMap.end()) {
-					// Send an error
-					std::cerr << "\nOptions: The process name is not known: "
-							  << tokens[i] << std::endl
-							  << "Aborting!\n"
-							  << std::endl;
-					shouldRunFlag = false;
-					exitCode = EXIT_FAILURE;
-				}
-				else {
-					// Switch the value to true in the map
-					processMap[tokens[i]] = true;
-				}
-			}
-		}
-
-		// Take care of the gouping
-		if (opts.count("grouping")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<int> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["grouping"].as<std::string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-
-			// Set grouping minimum size
-			groupingMin = tokens[0];
-			// Set the grouping width in the first direction
-			groupingWidthA = tokens[1];
-			// Set the grouping width in the second direction
-			if (tokens.size() > 2)
-				groupingWidthB = tokens[2];
-		}
-
-		// Take care of the network parameters
-		if (opts.count("netParam")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<std::string> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["netParam"].as<std::string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-
-			// Set the flag to not use the HDF5 file
-			useHDF5Flag = false;
-
-			// Set the value for the impurities
-			maxImpurity = strtol(tokens[0].c_str(), NULL, 10);
-
-			// Check if we have other values
-			if (tokens.size() > 1) {
-				// Set the deuterium size
-				maxD = strtol(tokens[1].c_str(), NULL, 10);
-				// Set the tritium size
-				maxT = strtol(tokens[2].c_str(), NULL, 10);
-				// Set the vacancy size
-				maxV = strtol(tokens[3].c_str(), NULL, 10);
-				// Set the interstitial size
-				maxI = strtol(tokens[4].c_str(), NULL, 10);
-			}
-		}
-
-		// Take care of the boundary conditions
-		if (opts.count("boundary")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<int> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["boundary"].as<std::string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-
-			// Set the left boundary
-			leftBoundary = tokens[0];
-			// Set the right boundary
-			rightBoundary = tokens[1];
-			if (tokens.size() > 2)
-				// Set the bottom boundary
-				bottomBoundary = tokens[2];
-			if (tokens.size() > 3)
-				// Set the top boundary
-				topBoundary = tokens[3];
-			if (tokens.size() > 4)
-				// Set the front boundary
-				frontBoundary = tokens[4];
-			if (tokens.size() > 5)
-				// Set the back boundary
-				backBoundary = tokens[5];
-		}
-
-		// Take care of the rng
-		if (opts.count("rng")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<std::string> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["rng"].as<std::string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-			try {
-				size_t currIdx = 0;
-
-				// Determine whether we should print the seed value.
-				bool shouldPrintSeed = false;
-				if (tokens[currIdx] == "print") {
-					shouldPrintSeed = true;
-					++currIdx;
-				}
-				rngPrintSeed = shouldPrintSeed;
-
-				if (currIdx < tokens.size()) {
-					// Convert arg to an integer.
-					char* ep = NULL;
-					auto useed = strtoul(tokens[currIdx].c_str(), &ep, 10);
-					if (ep !=
-						(tokens[currIdx].c_str() + tokens[currIdx].length())) {
-						std::cerr
-							<< "\nOptions: Invalid random number generator "
-							   "seed, must be a non-negative integer."
-							   "Aborting!\n"
-							<< std::endl;
-					}
-					setRNGSeed(useed);
-				}
-			}
-			catch (const std::invalid_argument& e) {
-				std::cerr
-					<< "\nOptions: unrecognized argument in setting the rng."
-					   "Aborting!\n"
-					<< std::endl;
-				shouldRunFlag = false;
-				exitCode = EXIT_FAILURE;
-			}
-		}
-
-		// Take care of the flux pulse
-		if (opts.count("pulse")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<double> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["pulse"].as<std::string>());
-			reader.setInputStream(argSS);
-
-			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
-
-			pulseTime = tokens[0];
-			pulseProportion = tokens[1];
 		}
 	}
 
-	return;
+	// Take care of the gouping
+	if (opts.count("grouping")) {
+		// Build an input stream from the argument string.
+		util::TokenizedLineReader<int> reader;
+		auto argSS = std::make_shared<std::istringstream>(
+			opts["grouping"].as<std::string>());
+		reader.setInputStream(argSS);
+
+		// Break the argument into tokens.
+		auto tokens = reader.loadLine();
+
+		// Set grouping minimum size
+		groupingMin = tokens[0];
+		// Set the grouping width in the first direction
+		groupingWidthA = tokens[1];
+		// Set the grouping width in the second direction
+		if (tokens.size() > 2)
+			groupingWidthB = tokens[2];
+	}
+
+	// Take care of the network parameters
+	if (opts.count("netParam")) {
+		// Build an input stream from the argument string.
+		util::TokenizedLineReader<std::string> reader;
+		auto argSS = std::make_shared<std::istringstream>(
+			opts["netParam"].as<std::string>());
+		reader.setInputStream(argSS);
+
+		// Break the argument into tokens.
+		auto tokens = reader.loadLine();
+
+		// Set the flag to not use the HDF5 file
+		useHDF5Flag = false;
+
+		// Set the value for the impurities
+		maxImpurity = strtol(tokens[0].c_str(), NULL, 10);
+
+		// Check if we have other values
+		if (tokens.size() > 1) {
+			// Set the deuterium size
+			maxD = strtol(tokens[1].c_str(), NULL, 10);
+			// Set the tritium size
+			maxT = strtol(tokens[2].c_str(), NULL, 10);
+			// Set the vacancy size
+			maxV = strtol(tokens[3].c_str(), NULL, 10);
+			// Set the interstitial size
+			maxI = strtol(tokens[4].c_str(), NULL, 10);
+		}
+	}
+
+	// Take care of the boundary conditions
+	if (opts.count("boundary")) {
+		// Build an input stream from the argument string.
+		util::TokenizedLineReader<int> reader;
+		auto argSS = std::make_shared<std::istringstream>(
+			opts["boundary"].as<std::string>());
+		reader.setInputStream(argSS);
+
+		// Break the argument into tokens.
+		auto tokens = reader.loadLine();
+
+		// Set the left boundary
+		leftBoundary = tokens[0];
+		// Set the right boundary
+		rightBoundary = tokens[1];
+		if (tokens.size() > 2)
+			// Set the bottom boundary
+			bottomBoundary = tokens[2];
+		if (tokens.size() > 3)
+			// Set the top boundary
+			topBoundary = tokens[3];
+		if (tokens.size() > 4)
+			// Set the front boundary
+			frontBoundary = tokens[4];
+		if (tokens.size() > 5)
+			// Set the back boundary
+			backBoundary = tokens[5];
+	}
+
+	// Take care of the rng
+	if (opts.count("rng")) {
+		// Build an input stream from the argument string.
+		util::TokenizedLineReader<std::string> reader;
+		auto argSS =
+			std::make_shared<std::istringstream>(opts["rng"].as<std::string>());
+		reader.setInputStream(argSS);
+
+		// Break the argument into tokens.
+		auto tokens = reader.loadLine();
+		size_t currIdx = 0;
+
+		// Determine whether we should print the seed value.
+		bool shouldPrintSeed = false;
+		if (tokens[currIdx] == "print") {
+			shouldPrintSeed = true;
+			++currIdx;
+		}
+		rngPrintSeed = shouldPrintSeed;
+
+		if (currIdx < tokens.size()) {
+			// Convert arg to an integer.
+			char* ep = NULL;
+			auto useed = strtoul(tokens[currIdx].c_str(), &ep, 10);
+			if (ep != (tokens[currIdx].c_str() + tokens[currIdx].length())) {
+				throw bpo::invalid_option_value(
+					"Options: Invalid random number generator seed, must "
+					"be a non-negative integer. Aborting!");
+			}
+			setRNGSeed(useed);
+		}
+	}
+
+	// Take care of the flux pulse
+	if (opts.count("pulse")) {
+		// Build an input stream from the argument string.
+		util::TokenizedLineReader<double> reader;
+		auto argSS = std::make_shared<std::istringstream>(
+			opts["pulse"].as<std::string>());
+		reader.setInputStream(argSS);
+
+		// Break the argument into tokens.
+		auto tokens = reader.loadLine();
+
+		pulseTime = tokens[0];
+		pulseProportion = tokens[1];
+	}
 }
 
 } // end namespace options
