@@ -373,8 +373,10 @@ try {
 	int rank;
 	MPI_Comm_rank(xolotlComm, &rank);
 	if (rank == 0) {
+		std::stringstream ss;
 		handlerRegistry->reportStatistics(
-			std::cout, timerStats, counterStats, hwCtrStats);
+			ss, timerStats, counterStats, hwCtrStats);
+		XOLOTL_LOG << ss.str();
 	}
 
 	solver.reset();

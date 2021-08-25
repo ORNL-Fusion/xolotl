@@ -2,10 +2,10 @@
 
 #include <cmath>
 #include <fstream>
-#include <iostream>
 
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/util/Filesystem.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/TokenizedLineReader.h>
 
@@ -118,9 +118,8 @@ public:
 		if (!paramFile.good()) {
 			// Print a message
 			if (procId == 0)
-				std::cout
-					<< "No parameter files for custom flux, the flux will be 0"
-					<< std::endl;
+				XOLOTL_LOG
+					<< "No parameter files for custom flux, the flux will be 0";
 		}
 		else {
 			// Build an input stream from the string
@@ -164,11 +163,10 @@ public:
 				if (reductionFactors[index] < 0.0) {
 					// Print a message
 					if (procId == 0)
-						std::cout
+						XOLOTL_LOG
 							<< "One of the reduction factors for the custom "
 							   "flux is negative, "
-							   "check if this is really what you want to do."
-							<< std::endl;
+							   "check if this is really what you want to do.";
 				}
 
 				// Set the parameters for the fit

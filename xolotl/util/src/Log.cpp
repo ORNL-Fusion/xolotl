@@ -28,19 +28,16 @@ initLogging()
 	boost::log::add_common_attributes();
 
 	namespace keywords = boost::log::keywords;
-    namespace expr = boost::log::expressions;
+	namespace expr = boost::log::expressions;
 
-	boost::log::add_console_log(std::cout, keywords::format = "%Message%");
-	boost::log::add_file_log(
-		// keywords::file_name = "sample_%N.log", /*< file name pattern >*/
-		// keywords::rotation_size =
-		// 	10 * 1024 * 1024, /*< rotate files every 10 MiB... >*/
-		// keywords::time_based_rotation = sinks::file::rotation_at_time_point(
-		// 	0, 0, 0), /*< ...or at midnight >*/
-		keywords::file_name = "xolotlOutput.log",
-		keywords::format = "(%TimeStamp%)[%Severity%]: %Message%"
-        // keywords::format = expr::stream << '[' << expr::timestamp << 
-	);
+	boost::log::add_console_log(std::cout, keywords::format = "%Message%")
+		->set_filter(boost::log::trivial::severity < LogLevel::error);
+	boost::log::add_console_log(
+		std::cerr, keywords::format = "[%Severity%] %Message%")
+		->set_filter(boost::log::trivial::severity >= LogLevel::error);
+
+	boost::log::add_file_log(keywords::file_name = "xolotlOutput.log",
+		keywords::format = "(%TimeStamp%)[%Severity%]: %Message%");
 }
 
 void

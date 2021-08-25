@@ -5,6 +5,7 @@
 #include <boost/program_options.hpp>
 
 #include <xolotl/options/Options.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/TokenizedLineReader.h>
 
 namespace bpo = boost::program_options;
@@ -240,7 +241,7 @@ Options::readParams(int argc, const char* argv[])
 	visible.add(desc).add(config);
 
 	if (opts.count("help")) {
-		std::cout << visible << '\n';
+		std::cout << visible << std::endl;
 		shouldRunFlag = false;
 		exitCode = EXIT_FAILURE;
 		return;
@@ -251,7 +252,7 @@ Options::readParams(int argc, const char* argv[])
 	if (!ifs) {
 		std::cerr << "Options: unable to open parameter file: " << argv[1]
 				  << std::endl;
-		std::cout << visible << '\n';
+		std::cout << visible << std::endl;
 		shouldRunFlag = false;
 		exitCode = EXIT_FAILURE;
 		return;
