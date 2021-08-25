@@ -1,6 +1,5 @@
 // Includes
-#include <iostream>
-
+#include <xolotl/util/Log.h>
 #include <xolotl/viz/standard/plot/SeriesPlot.h>
 
 // General VTKM includes
@@ -46,13 +45,13 @@ SeriesPlot::render(const std::string& fileName)
 {
 	// Check if the label provider is set
 	if (!plotLabelProvider) {
-		std::cout << "The LabelProvider is not set!!" << std::endl;
+		XOLOTL_LOG_WRN << "The LabelProvider is not set!!";
 		return;
 	}
 
 	// Check if the data provider is set
 	if (plotDataProviders->empty()) {
-		std::cout << "No DataProvider!!" << std::endl;
+		XOLOTL_LOG_WRN << "No DataProvider!!";
 		return;
 	}
 

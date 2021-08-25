@@ -1,11 +1,12 @@
-#ifndef TOKENIZEDLINEREADER_H
-#define TOKENIZEDLINEREADER_H
+#pragma once
 
 // Includes
 #include <iostream>
 #include <memory>
 #include <sstream>
 #include <vector>
+
+#include <xolotl/util/Log.h>
 
 namespace xolotl
 {
@@ -264,17 +265,11 @@ public:
 			}
 		}
 		else {
-			std::cout << "TokenizedLineReader Message: "
-					  << " Stream is empty or closed." << std::endl;
-			return dataVector;
+			XOLOTL_LOG << "TokenizedLineReader: Stream is empty or closed.";
 		}
 
 		return dataVector;
 	}
 };
-// end class TokenizedLineReader
-
 } // namespace util
 } // namespace xolotl
-
-#endif
