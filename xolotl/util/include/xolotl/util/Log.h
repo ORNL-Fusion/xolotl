@@ -1,5 +1,8 @@
 #pragma once
 
+#include <iomanip>
+#include <sstream>
+
 #include <boost/log/sources/global_logger_storage.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/trivial.hpp>
@@ -33,10 +36,20 @@ initLogging();
 
 void
 flushLogFile();
+
+class StringStream : public std::stringstream
+{
+public:
+	explicit StringStream(std::streamsize prec = 16)
+	{
+		this->precision(prec);
+	}
+};
 } // namespace util
 } // namespace xolotl
 
-#define XOLOTL_LOG_SEV(level) BOOST_LOG_SEV(::xolotl::util::getLogger(), level)
+#define XOLOTL_LOG_SEV(level) \
+	BOOST_LOG_SEV(::xolotl::util::getLogger(), level) << std::setprecision(16)
 
 #define XOLOTL_LOG XOLOTL_LOG_SEV(::xolotl::util::LogLevel::info)
 

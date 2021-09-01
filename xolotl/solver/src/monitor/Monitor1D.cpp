@@ -719,7 +719,7 @@ computeHeliumRetention1D(
 		double fluence = fluxHandler->getFluence();
 
 		// Print the result
-		std::stringstream ss;
+		util::StringStream ss;
 		ss << "\nTime: " << time << '\n';
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 			ss << network.getSpeciesName(id)

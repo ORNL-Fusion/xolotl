@@ -1,4 +1,3 @@
-#include <sstream>
 #include <stdexcept>
 
 #include <mpi.h>
@@ -23,7 +22,7 @@ NetworkHandler::NetworkHandler(
 	int procId;
 	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 	if (procId == 0) {
-		std::stringstream ss;
+		util::StringStream ss;
 		ss << "NetworkHandler: Loaded network of " << _network->getDOF()
 		   << " DOF with: ";
 		auto numSpecies = _network->getSpeciesListSize();

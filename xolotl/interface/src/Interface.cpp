@@ -370,7 +370,7 @@ try {
 	int rank;
 	MPI_Comm_rank(xolotlComm, &rank);
 	if (rank == 0) {
-		std::stringstream ss;
+		util::StringStream ss;
 		handlerRegistry->reportStatistics(
 			ss, timerStats, counterStats, hwCtrStats);
 		XOLOTL_LOG << ss.str();

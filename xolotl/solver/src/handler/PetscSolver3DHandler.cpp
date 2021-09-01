@@ -1,5 +1,3 @@
-#include <sstream>
-
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
@@ -64,7 +62,7 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 	auto xolotlComm = util::getMPIComm();
 	int procId = util::getMPIRank();
 	if (procId == 0) {
-        std::stringstream ss;
+        util::StringStream ss;
 		ss << "SolverHandler: 3D simulation with surface BC: ";
 		std::string bcString = "periodic";
 		if (isMirror)

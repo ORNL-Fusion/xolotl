@@ -28,7 +28,7 @@ MaterialHandler::MaterialHandler(const options::IOptions& options,
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
-		std::stringstream ss;
+		util::StringStream ss;
 		ss << "MaterialHandler: The selected material is: "
 		   << options.getMaterial() << " with the following processes: ";
 		auto processes = options.getProcesses();
