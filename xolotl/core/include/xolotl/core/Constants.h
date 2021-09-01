@@ -38,13 +38,13 @@ constexpr double uraniumDioxydeLatticeConstant = 0.54700000000000000;
 constexpr double ironLatticeConstant = 0.28700000000000000;
 
 //! Lattice Parameter. Given in units here of nm.
-constexpr double alphaZrLatticeConstant = 0.30000000000000000;
+constexpr double alphaZrLatticeConstant = 0.32294500000000000; //the a-constant
 
 //! Core radius. Given in units here of nm.
 constexpr double alloyCoreRadius = 0.36000000000000000;
 
 //! Core radius. Given in units here of nm.
-constexpr double alphaZrCoreRadius = 0.00000000000000000;
+constexpr double alphaZrCoreRadius = 0.36000000000000000;
 
 //! Single helium radius. Given in units here of nm.
 constexpr double heliumRadius = 0.30000000000000000;
@@ -92,8 +92,10 @@ constexpr double frankBurgers = 0.333;
 constexpr double alloySinkStrength = 1.0e-5;
 
 // Sink strength for alphaZr case in nm^-2
-constexpr double alphaZrASinkStrength = 0.0;
-constexpr double alphaZrCSinkStrength = 0.0;
+constexpr double alphaZrASinkStrength = 7.25e-8;
+constexpr double alphaZrCSinkStrength = 2.25e-8;
+//constexpr double alphaZrASinkStrength = 2e-5;
+//constexpr double alphaZrCSinkStrength = 5e-6;
 
 } /* end namespace core */
 } /* end namespace xolotl */

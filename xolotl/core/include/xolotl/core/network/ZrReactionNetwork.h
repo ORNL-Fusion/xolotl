@@ -47,7 +47,7 @@ private:
 	computeAtomicVolume(double latticeParameter)
 	{
 		// TODO: Define atomic volume used in dissociation rate
-		return 0.0 * latticeParameter * latticeParameter * latticeParameter;
+		return 0.0234; //nm^3
 	}
 
 	double

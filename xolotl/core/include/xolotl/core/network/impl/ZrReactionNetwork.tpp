@@ -210,30 +210,28 @@ void
 ZrClusterUpdater::updateDiffusionCoefficient(
 	const ClusterData& data, IndexType clusterId, IndexType gridIndex) const
 {
-	// TODO: Set correct values in arrays, check formulas for diffusion
-	// coefficients and anisotropy ratios
-
 	// I migration energies in eV
 	constexpr Kokkos::Array<double, 6> iMigrationA = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+		0.0, 0.17, 0.23, 0.49, 0.75, 0.87};
 	constexpr Kokkos::Array<double, 6> iMigrationC = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-	// I diffusion factors in nm^2/s
+		0.0, 0.30, 0.54, 0.93, 1.2, 1.6};
+    //I diffusion factors in nm^2/s
 	constexpr Kokkos::Array<double, 6> iDiffusionA = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+		0.0, 2.4e+11, 3.2e+11, 4.9e+12, 5.1e+13, 4.3e+13};
 	constexpr Kokkos::Array<double, 6> iDiffusionC = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+		0.0, 6.8e+11, 2.6e+12, 6.8e+13, 4.2e+14, 5.5e+15};
 
 	// V migration energies in eV
 	constexpr Kokkos::Array<double, 10> vMigrationA = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-	constexpr Kokkos::Array<double, 10> vMigrationC = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-	// V diffusions factors in nm^2/s
+		0.0, 0.59, 0.58, 0.94, 0.16, 0.81, 0.25, 0.46, 0.68, 0.90};
+    constexpr Kokkos::Array<double, 10> vMigrationC = {
+		0.0, 0.67, 0.41, 1.12, 0.58, 0.29, 0.18, 0.40, 0.61, 1.0};
+    // V diffusions factors in nm^2/s
 	constexpr Kokkos::Array<double, 10> vDiffusionA = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+		0.0,1.6e+12, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10, 5e+12, 1e+13, 1.5e+13};
 	constexpr Kokkos::Array<double, 10> vDiffusionC = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+		0.0, 2.2e+12, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9, 1.4e+13, 2.8e+13, 4.2e+13};
+
 
 	// 3D diffuser case
 	if (data.migrationEnergy(clusterId) < 0.0) {
@@ -251,11 +249,11 @@ ZrClusterUpdater::updateDiffusionCoefficient(
 
 			// Compute the mean
 			data.diffusionCoefficient(clusterId, gridIndex) =
-				Da * Da * pow(Dc, 1.0 / 3.0);
+				pow(Da * Da * Dc, 1.0 / 3.0);
 
 			// Compute the anisotropy factor
 			data.extraData.anisotropyRatio(clusterId, gridIndex) =
-				pow(Dc, 1.0 / 6.0) / Da;
+				pow(Dc / Da, 1.0 / 6.0);
 			return;
 		}
 
@@ -268,11 +266,11 @@ ZrClusterUpdater::updateDiffusionCoefficient(
 
 			// Compute the mean
 			data.diffusionCoefficient(clusterId, gridIndex) =
-				Da * Da * pow(Dc, 1.0 / 3.0);
+				pow(Da * Da * Dc, 1.0 / 3.0);
 
 			// Compute the anisotropy factor
 			data.extraData.anisotropyRatio(clusterId, gridIndex) =
-				pow(Dc, 1.0 / 6.0) / Da;
+				pow(Dc / Da, 1.0 / 6.0);
 
 			return;
 		}

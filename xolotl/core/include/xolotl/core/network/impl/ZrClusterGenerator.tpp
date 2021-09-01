@@ -97,9 +97,8 @@ double
 ZrClusterGenerator::getMigrationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
-	// TODO: set the right value for I_9 migration energy
 	constexpr double defaultMigration = -1.0;
-	constexpr double iNineMigration = 1.0;
+	constexpr double iNineMigration = 0.10;
 
 	const auto& reg = cluster.getRegion();
 	Composition comp(reg.getOrigin());
@@ -124,9 +123,9 @@ double
 ZrClusterGenerator::getDiffusionFactor(
 	const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
-	// TODO: set the right value for I_9 diffusion factor
 	constexpr double defaultDiffusion = 1.0;
-	constexpr double iNineDiffusion = 1.0;
+	constexpr double iNineDiffusion = 2.2e+11;
+
 
 	const auto& reg = cluster.getRegion();
 	Composition comp(reg.getOrigin());
@@ -158,17 +157,18 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	Composition lo(reg.getOrigin());
 	double radius = 0.0;
 
-	// TODO: fix the formula for V and I
+    // jmr: rn = (3nOmega/4pi)^1/3 [nm]
+    // jmr: Note that (3Omega/4pi) = 5.586e-3 nm^3, where Omega = 0.0234 nm^3
 
 	if (lo.isOnAxis(Species::V)) {
 		for (auto j : makeIntervalRange(reg[Species::V])) {
-			radius += pow(0.0 * prefactor * (double)j, 1.0 / 3.0);
+			radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
 		}
 		return radius / reg[Species::V].length();
 	}
 	if (lo.isOnAxis(Species::I)) {
 		for (auto j : makeIntervalRange(reg[Species::I])) {
-			radius += pow(0.0 * prefactor * (double)j, 1.0 / 3.0);
+			radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
 		}
 		return radius / reg[Species::I].length();
 	}

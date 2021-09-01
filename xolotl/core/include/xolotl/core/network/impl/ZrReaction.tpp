@@ -15,7 +15,6 @@ double
 getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	const double r1, const double dc0, const double dc1)
 {
-	// TODO: fix the reaction rate
 	constexpr double pi = ::xolotl::core::pi;
 	constexpr double rCore = ::xolotl::core::alphaZrCoreRadius;
 	const double zs = 4.0 * pi * (r0 + r1 + rCore);
@@ -29,13 +28,15 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		lo1 = pairCl1Reg.getOrigin();
 	bool cl0Is1D = (lo0[Species::I] == 9), cl1Is1D = (lo1[Species::I] == 9);
 
+    // Until the macroscopic cross-section method is established, just assume 3-D rates of reactions:
 	// Cluster 0 is 1D diffuser
 	if (cl0Is1D) {
-		return 0.0;
+		return zs * (dc0 + dc1);
 	}
+
 	// Cluster 1 is 1D diffuser
 	else if (cl1Is1D) {
-		return 0.0;
+		return zs * (dc0 + dc1);
 	}
 
 	// None of them is a 1D diffuser
@@ -95,18 +96,18 @@ ZrDissociationReaction::computeBindingEnergy()
 	Composition prod1Comp = prod1Reg.getOrigin();
 	Composition prod2Comp = prod2Reg.getOrigin();
 
-	// TODO: Fix the formulas for V and I
-
 	if (lo.isOnAxis(Species::V)) {
 		double n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 0.0 - 0.0 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 2.03 - 1.9 * (pow(n, 0.84) - pow(n - 1.0, 0.84));
+
 		}
 	}
 	else if (lo.isOnAxis(Species::I)) {
 		double n = (double)(lo[Species::I] + hi[Species::I] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
-			be = 0.0 - 0.0 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 2.94 - 2.8 * (pow(n, 0.81) - pow(n - 1.0, 0.81));
+
 		}
 	}
 
@@ -119,8 +120,6 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 {
 	using Species = typename Superclass::Species;
 	using Composition = typename Superclass::Composition;
-
-	// TODO: verify the formulas
 
 	auto cl = this->_clusterData->getCluster(_reactant);
 	auto dc = cl.getDiffusionCoefficient(gridIndex);
@@ -136,12 +135,21 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 				::xolotl::core::alphaZrCSinkStrength /
 					(anisotropy * anisotropy));
 	}
+
+    //1-D diffusers are assumed to only interact with <a>-type edge dislocation lines
+    //The anisotropy factor is assumed equal to 1.0 in this case
 	else if (lo.isOnAxis(Species::I)) {
-		return dc * 1.1 *
-			(::xolotl::core::alphaZrASinkStrength * anisotropy +
-				::xolotl::core::alphaZrCSinkStrength /
-					(anisotropy * anisotropy));
-	}
+        if (lo[Species::I] < 9) {
+            return dc * 1.1 *
+                (::xolotl::core::alphaZrASinkStrength * anisotropy +
+                    ::xolotl::core::alphaZrCSinkStrength /
+                        (anisotropy * anisotropy));
+        }
+        else if (lo[Species::I] == 9) {
+            return dc * 1.1 *
+                (::xolotl::core::alphaZrASinkStrength);
+        }
+    }
 
 	return 1.0;
 }
