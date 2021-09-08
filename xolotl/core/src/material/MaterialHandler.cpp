@@ -7,7 +7,7 @@
 #include <xolotl/core/diffusion/DummyDiffusionHandler.h>
 #include <xolotl/core/material/MaterialHandler.h>
 #include <xolotl/util/MPIUtils.h>
-#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -90,10 +90,7 @@ MaterialHandler::initializeAdvectionHandlers(const options::IOptions& options)
 	auto dim = options.getDimensionNumber();
 
 	// Setup the grain boundaries
-	std::string gbString = options.getGbString();
-	util::TokenizedLineReader<std::string> reader;
-	reader.setInputStream(std::make_shared<std::istringstream>(gbString));
-	auto tokens = reader.loadLine();
+	auto tokens = util::Tokenizer<>{options.getGbString()}();
 	for (int i = 0; i < tokens.size(); ++i) {
 		if (tokens[i] == "X") {
 			_advectionHandlers.push_back(

@@ -5,7 +5,7 @@
 #include <boost/program_options.hpp>
 
 #include <xolotl/options/Options.h>
-#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace bpo = boost::program_options;
 
@@ -270,14 +270,9 @@ Options::readParams(int argc, const char* argv[])
 
 		// Take care of the temperature
 		if (opts.count("tempParam")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<double> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["tempParam"].as<std::string>());
-			reader.setInputStream(argSS);
-
 			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
+			auto tokens =
+				util::Tokenizer<double>{opts["tempParam"].as<std::string>()}();
 			if (tokens.size() > 2) {
 				std::cerr << "Options: too many temperature parameters (expect "
 							 "2 or less)"
@@ -353,14 +348,9 @@ Options::readParams(int argc, const char* argv[])
 
 		// Take care of the grid
 		if (opts.count("gridParam")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<double> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["gridParam"].as<std::string>());
-			reader.setInputStream(argSS);
-
 			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
+			auto tokens =
+				util::Tokenizer<double>{opts["gridParam"].as<std::string>()}();
 			if (tokens.size() > 6) {
 				std::cerr
 					<< "Options: too many grid parameters (expect 6 or less)"
@@ -388,14 +378,9 @@ Options::readParams(int argc, const char* argv[])
 
 		// Take care of the radius minimum size
 		if (opts.count("radiusSize")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<int> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["radiusSize"].as<std::string>());
-			reader.setInputStream(argSS);
-
 			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
+			auto tokens =
+				util::Tokenizer<int>{opts["radiusSize"].as<std::string>()}();
 
 			// Set the values
 			for (int i = 0; i < tokens.size(); i++) {
@@ -405,14 +390,9 @@ Options::readParams(int argc, const char* argv[])
 
 		// Take care of the processes
 		if (opts.count("process")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<std::string> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["process"].as<std::string>());
-			reader.setInputStream(argSS);
-
 			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
+			auto tokens =
+				util::Tokenizer<>{opts["process"].as<std::string>()}();
 
 			// Initialize the map of processes
 			processMap["reaction"] = false;
@@ -447,14 +427,9 @@ Options::readParams(int argc, const char* argv[])
 
 		// Take care of the gouping
 		if (opts.count("grouping")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<int> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["grouping"].as<std::string>());
-			reader.setInputStream(argSS);
-
 			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
+			auto tokens =
+				util::Tokenizer<int>{opts["grouping"].as<std::string>()}();
 
 			// Set grouping minimum size
 			groupingMin = tokens[0];
@@ -467,14 +442,9 @@ Options::readParams(int argc, const char* argv[])
 
 		// Take care of the network parameters
 		if (opts.count("netParam")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<std::string> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["netParam"].as<std::string>());
-			reader.setInputStream(argSS);
-
 			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
+			auto tokens =
+				util::Tokenizer<>{opts["netParam"].as<std::string>()}();
 
 			// Set the flag to not use the HDF5 file
 			useHDF5Flag = false;
@@ -497,14 +467,9 @@ Options::readParams(int argc, const char* argv[])
 
 		// Take care of the boundary conditions
 		if (opts.count("boundary")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<int> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["boundary"].as<std::string>());
-			reader.setInputStream(argSS);
-
 			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
+			auto tokens =
+				util::Tokenizer<int>{opts["boundary"].as<std::string>()}();
 
 			// Set the left boundary
 			leftBoundary = tokens[0];
@@ -526,14 +491,8 @@ Options::readParams(int argc, const char* argv[])
 
 		// Take care of the rng
 		if (opts.count("rng")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<std::string> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["rng"].as<std::string>());
-			reader.setInputStream(argSS);
-
 			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
+			auto tokens = util::Tokenizer<>{opts["rng"].as<std::string>()}();
 			try {
 				size_t currIdx = 0;
 
@@ -572,21 +531,14 @@ Options::readParams(int argc, const char* argv[])
 
 		// Take care of the flux pulse
 		if (opts.count("pulse")) {
-			// Build an input stream from the argument string.
-			util::TokenizedLineReader<double> reader;
-			auto argSS = std::make_shared<std::istringstream>(
-				opts["pulse"].as<std::string>());
-			reader.setInputStream(argSS);
-
 			// Break the argument into tokens.
-			auto tokens = reader.loadLine();
+			auto tokens =
+				util::Tokenizer<double>{opts["pulse"].as<std::string>()}();
 
 			pulseTime = tokens[0];
 			pulseProportion = tokens[1];
 		}
 	}
-
-	return;
 }
 
 } // end namespace options
