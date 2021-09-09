@@ -1,5 +1,5 @@
 set(tests
-    TokenizedLineReaderTester.cpp
+    TokenizerTester.cpp
 )
 
 add_tests(tests LIBS xolotlUtil LABEL "xolotl.tests.util")
