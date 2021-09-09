@@ -1279,6 +1279,124 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
+void
+ProductionReaction<TNetwork, TDerived>::computeConstantRates(
+	ConcentrationsView concentrations, RatesView rates, BelongingView isInSub,
+	OwnedSubMapView backMap, IndexType gridIndex)
+{
+	// Only consider specific cases
+	if (isInSub[_reactants[0]] and isInSub[_reactants[1]])
+		return;
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	// Initialize the concentrations that will be used in the loops
+	auto cR1 = concentrations[_reactants[0]];
+	Kokkos::Array<double, nMomentIds> cmR1;
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[0][i()] == invalidIndex) {
+			cmR1[i()] = 0.0;
+		}
+		else
+			cmR1[i()] = concentrations[_reactantMomentIds[0][i()]];
+	}
+	auto cR2 = concentrations[_reactants[1]];
+	Kokkos::Array<double, nMomentIds> cmR2;
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[1][i()] == invalidIndex) {
+			cmR2[i()] = 0.0;
+		}
+		else
+			cmR2[i()] = concentrations[_reactantMomentIds[1][i()]];
+	}
+
+	// Case r1 and r2 are not in but one of the product is
+	if (not isInSub[_reactants[0]] and not isInSub[_reactants[1]]) {
+		// Compute the flux for the 0th order moments
+		double f = this->_coefs(0, 0, 0, 0) * cR1 * cR2;
+		for (auto i : speciesRangeNoI) {
+			f += this->_coefs(i() + 1, 0, 0, 0) * cmR1[i()] * cR2;
+			f += this->_coefs(0, i() + 1, 0, 0) * cR1 * cmR2[i()];
+			for (auto j : speciesRangeNoI) {
+				f += this->_coefs(i() + 1, j() + 1, 0, 0) * cmR1[i()] *
+					cmR2[j()];
+			}
+		}
+		f *= this->_rate(gridIndex);
+
+		IndexType p = 0;
+		for (auto prodId : _products) {
+			if (prodId == invalidIndex) {
+				continue;
+			}
+			if (isInSub[prodId])
+				Kokkos::atomic_add(&rates(prodId, isInSub.extent(0)),
+					f / (double)_productVolumes[p]);
+			p++;
+		}
+
+		return;
+	}
+
+	// r1 is in but not r2
+	if (isInSub[_reactants[0]] and not isInSub[_reactants[1]]) {
+		// Remove the C1 contribution from the standard formulation because it
+		// will be available in the sub network
+		double f = this->_coefs(0, 0, 0, 0) * cR2;
+		for (auto i : speciesRangeNoI) {
+			f += this->_coefs(i() + 1, 0, 0, 0) * cR2;
+			f += this->_coefs(0, i() + 1, 0, 0) * cmR2[i()];
+			for (auto j : speciesRangeNoI) {
+				f += this->_coefs(i() + 1, j() + 1, 0, 0) * cmR2[j()];
+			}
+		}
+		f *= this->_rate(gridIndex);
+		Kokkos::atomic_sub(&rates(_reactants[0], _reactants[0]),
+			f / (double)_reactantVolumes[0]);
+
+		IndexType p = 0;
+		for (auto prodId : _products) {
+			if (prodId == invalidIndex) {
+				continue;
+			}
+			if (isInSub[prodId])
+				Kokkos::atomic_add(&rates(prodId, _reactants[0]),
+					f / (double)_productVolumes[p]);
+			p++;
+		}
+	}
+	// r2 is in but not r1
+	if (not isInSub[_reactants[0]] and isInSub[_reactants[1]]) {
+		// Remove the C2 contribution
+		double f = this->_coefs(0, 0, 0, 0) * cR1;
+		for (auto i : speciesRangeNoI) {
+			f += this->_coefs(i() + 1, 0, 0, 0) * cmR1[i()];
+			f += this->_coefs(0, i() + 1, 0, 0) * cR1;
+			for (auto j : speciesRangeNoI) {
+				f += this->_coefs(i() + 1, j() + 1, 0, 0) * cmR1[i()];
+			}
+		}
+		f *= this->_rate(gridIndex);
+		Kokkos::atomic_sub(&rates(_reactants[1], _reactants[1]),
+			f / (double)_reactantVolumes[1]);
+
+		IndexType p = 0;
+		for (auto prodId : _products) {
+			if (prodId == invalidIndex) {
+				continue;
+			}
+			if (isInSub[prodId])
+				Kokkos::atomic_add(&rates(prodId, _reactants[1]),
+					f / (double)_productVolumes[p]);
+			p++;
+		}
+	}
+
+	// TODO: add grouping
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
 double
 ProductionReaction<TNetwork, TDerived>::computeLeftSideRate(
 	ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)
@@ -1917,6 +2035,49 @@ DissociationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			}
 		}
 	}
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+DissociationReaction<TNetwork, TDerived>::computeConstantRates(
+	ConcentrationsView concentrations, RatesView rates, BelongingView isInSub,
+	OwnedSubMapView backMap, IndexType gridIndex)
+{
+	// Only consider cases where one of the products is in the sub network
+	// but not the dissociating cluster
+	if (isInSub[_reactant])
+		return;
+	if (not isInSub[_products[0]] and not isInSub[_products[0]])
+		return;
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	// Initialize the concentrations that will be used in the loops
+	auto cR = concentrations[_reactant];
+	Kokkos::Array<double, nMomentIds> cmR;
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] == invalidIndex) {
+			cmR[i()] = 0.0;
+		}
+		else
+			cmR[i()] = concentrations[_reactantMomentIds[i()]];
+	}
+
+	// Compute the flux for the 0th order moments
+	double f = this->_coefs(0, 0, 0, 0) * cR;
+	for (auto i : speciesRangeNoI) {
+		f += this->_coefs(i() + 1, 0, 0, 0) * cmR[i()];
+	}
+	f *= this->_rate(gridIndex);
+	if (isInSub[_products[0]])
+		Kokkos::atomic_add(&rates(_products[0], isInSub.extent(0)),
+			f / (double)_productVolumes[0]);
+	if (isInSub[_products[1]])
+		Kokkos::atomic_add(&rates(_products[1], isInSub.extent(0)),
+			f / (double)_productVolumes[1]);
+
+	// TODO: add grouping
 }
 
 template <typename TNetwork, typename TDerived>

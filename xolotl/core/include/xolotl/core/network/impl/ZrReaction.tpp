@@ -150,6 +150,9 @@ KOKKOS_INLINE_FUNCTION
 double
 ZrConstantReaction::computeRate(IndexType gridIndex)
 {
+	if (_reactants[1] == invalidIndex)
+		return this->_clusterData->constantRates(
+			_reactants[0], this->_clusterData->numClusters);
 	return this->_clusterData->constantRates(_reactants[0], _reactants[1]);
 }
 } // namespace network

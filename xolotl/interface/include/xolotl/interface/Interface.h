@@ -242,12 +242,14 @@ public:
 	std::vector<double>
 	getGridInfo(double& hy, double& hz);
 
+	using CompositionAmountType = std::uint32_t;
+
 	/**
 	 * Get the cluster information
 	 *
 	 * @return The vector representing the bounds for each cluster
 	 */
-	std::vector<std::vector<IdType>>
+	std::vector<std::vector<CompositionAmountType>>
 	getAllClusterBounds();
 
 	/**
@@ -256,7 +258,8 @@ public:
 	 * @param bounds A vector of cluster bounds
 	 */
 	void
-	initializeClusterMaps(std::vector<std::vector<std::vector<IdType>>> bounds);
+	initializeClusterMaps(
+		std::vector<std::vector<std::vector<CompositionAmountType>>> bounds);
 
 	/**
 	 * Values for the rates to be set in constant reactions
@@ -265,6 +268,15 @@ public:
 	 */
 	void
 	setConstantRates(std::vector<std::vector<double>> rates);
+
+	/**
+	 * Compute the constant rates
+	 *
+	 * @param conc The concentration vector
+	 * @return A vector containing the rates for each sub instance
+	 */
+	std::vector<std::vector<std::vector<double>>>
+	computeConstantRates(std::vector<double> conc);
 
 	/**
 	 * Get whether the solve converged or not.

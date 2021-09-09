@@ -167,6 +167,35 @@ TrapMutationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
+void
+TrapMutationReaction<TNetwork, TDerived>::computeConstantRates(
+	ConcentrationsView concentrations, RatesView rates, BelongingView isInSub,
+	OwnedSubMapView backMap, IndexType gridIndex)
+{
+	if (!getEnabled()) {
+		return;
+	}
+
+	// Only consider cases where one of the products is in the sub network
+	// but not the dissociating cluster
+	if (isInSub[_heClId])
+		return;
+	if (not isInSub[_heVClId] and not isInSub[_iClId])
+		return;
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	auto rate = getAppliedRate(gridIndex);
+	auto f = rate * concentrations[_heClId];
+
+	if (isInSub[_heClId])
+		Kokkos::atomic_add(&rates(_heClId, isInSub.extent(0)), f);
+	if (isInSub[_iClId])
+		Kokkos::atomic_add(&rates(_iClId, isInSub.extent(0)), f);
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
 double
 TrapMutationReaction<TNetwork, TDerived>::computeLeftSideRate(
 	ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)

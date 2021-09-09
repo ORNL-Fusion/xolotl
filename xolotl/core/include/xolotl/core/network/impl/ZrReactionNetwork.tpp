@@ -80,6 +80,7 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 	if (i == j) {
 		addSinks(i, tag);
+		this->addConstantReaction(tag, {i, Network::invalidIndex()});
 	}
 
 	// Add every possibility

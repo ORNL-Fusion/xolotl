@@ -29,6 +29,9 @@ public:
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using RatesView = typename Superclass::RatesView;
+	using BelongingView = typename Superclass::BelongingView;
+	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
 	using ClusterData = typename Superclass::ClusterData;
@@ -79,6 +82,8 @@ private:
 	void
 	computeConnectivity(const Connectivity& connectivity)
 	{
+		if (_reactants[1] == invalidIndex)
+			return;
 		// The second reactant connects with the first reactant
 		this->addConnectivity(_reactants[0], _reactants[1], connectivity);
 	}
@@ -97,7 +102,9 @@ private:
 	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
 		IndexType gridIndex)
 	{
-		Kokkos::atomic_sub(&fluxes(_reactants[0]),
+		if (_reactants[1] == invalidIndex)
+			Kokkos::atomic_add(&fluxes(_reactants[0]), this->_rate(gridIndex));
+		Kokkos::atomic_add(&fluxes(_reactants[0]),
 			concentrations(_reactants[1]) * this->_rate(gridIndex));
 	}
 
@@ -106,7 +113,9 @@ private:
 	computePartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex)
 	{
-		Kokkos::atomic_sub(
+		if (_reactants[1] == invalidIndex)
+			return;
+		Kokkos::atomic_add(
 			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
 	}
 
@@ -116,8 +125,16 @@ private:
 		Kokkos::View<double*> values, IndexType gridIndex)
 	{
 		if (_reactants[0] == _reactants[1])
-			Kokkos::atomic_sub(
+			Kokkos::atomic_add(
 				&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex)
+	{
+		return;
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -132,6 +149,8 @@ private:
 	void
 	mapJacobianEntries(Connectivity connectivity)
 	{
+		if (_reactants[1] == invalidIndex)
+			return;
 		_connEntries[0][0][0][0] = connectivity(_reactants[0], _reactants[1]);
 	}
 

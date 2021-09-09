@@ -31,6 +31,10 @@ public:
 	using OwnedConcentrationsView = Kokkos::View<double*>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
+	using RatesView = Kokkos::View<double**, Kokkos::MemoryUnmanaged>;
+	using SubMapView = Kokkos::View<IndexType*, Kokkos::MemoryUnmanaged>;
+	using OwnedSubMapView = Kokkos::View<IndexType*>;
+	using BelongingView = Kokkos::View<bool*>;
 	using Connectivity = detail::ClusterConnectivity<>;
 	using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 	using Bounds = std::vector<std::vector<AmountType>>;
@@ -339,6 +343,15 @@ public:
 	computeAllPartials(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex = 0,
 		double surfaceDepth = 0.0, double spacing = 0.0) = 0;
+
+	/**
+	 * @brief Updates the rates view with the rates from all the
+	 * reactions at this grid point, this is for multiple instances use.
+	 */
+	virtual void
+	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		SubMapView subMap, IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0) = 0;
 
 	/**
 	 * @brief Returns the largest computed rate.

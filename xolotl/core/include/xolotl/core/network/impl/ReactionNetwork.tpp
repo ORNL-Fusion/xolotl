@@ -400,7 +400,7 @@ ReactionNetwork<TImpl>::setConstantRates(
 
 	// Loop on the current clusters
 	for (auto i = 0; i < this->_numClusters; ++i)
-		for (auto j = 0; j < this->_numClusters; ++j) {
+		for (auto j = 0; j < this->_numClusters + 1; ++j) {
 			clusterData().constantRates(i, j) = rates[i][j];
 		}
 
@@ -478,6 +478,41 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 		});
 	}
 
+	Kokkos::fence();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::computeConstantRates(ConcentrationsView concentrations,
+	RatesView rates, SubMapView subMap, IndexType gridIndex,
+	double surfaceDepth, double spacing)
+{
+	asDerived()->computeConstantRatesPreProcess(
+		concentrations, gridIndex, surfaceDepth, spacing);
+
+	// Create additional views to know how to treat each cluster
+	auto dof = concentrations.extent(0);
+	auto isInSub = BelongingView("In Sub", dof);
+	auto clusterData = _clusterData.d_view;
+	auto backMap = OwnedSubMapView("Back Map", dof);
+
+	// Initialize them
+	Kokkos::parallel_for(
+		dof, KOKKOS_LAMBDA(const IndexType i) {
+			isInSub(i) = false;
+			backMap(i) = 0;
+		});
+	Kokkos::parallel_for(
+		subMap.extent(0), KOKKOS_LAMBDA(const IndexType i) {
+			auto id = subMap(i);
+			isInSub(id) = true;
+			backMap(id) = i;
+		});
+
+	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
+		reaction.contributeConstantRates(
+			concentrations, rates, isInSub, backMap, gridIndex);
+	});
 	Kokkos::fence();
 }
 

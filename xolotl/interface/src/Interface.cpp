@@ -130,7 +130,9 @@ try {
 	assert(solver);
 
 	auto bounds = getAllClusterBounds();
-	std::vector<std::vector<std::vector<IdType>>> allBounds;
+	std::vector<std::vector<
+		std::vector<xolotl::core::network::detail::CompositionAmountType>>>
+		allBounds;
 	allBounds.push_back(bounds);
 	initializeClusterMaps(allBounds);
 
@@ -348,7 +350,7 @@ catch (const std::exception& e) {
 	throw;
 }
 
-std::vector<std::vector<IdType>>
+std::vector<std::vector<xolotl::core::network::detail::CompositionAmountType>>
 XolotlInterface::getAllClusterBounds()
 try {
 	// Get the solver handler and network
@@ -363,8 +365,9 @@ catch (const std::exception& e) {
 }
 
 void
-XolotlInterface::initializeClusterMaps(
-	std::vector<std::vector<std::vector<IdType>>> bounds)
+XolotlInterface::initializeClusterMaps(std::vector<std::vector<
+		std::vector<xolotl::core::network::detail::CompositionAmountType>>>
+		bounds)
 try {
 	// Get the solver handler and network
 	auto& solverHandler = solver::Solver::getSolverHandler();
@@ -406,6 +409,51 @@ try {
 	network.setConstantRates(rates);
 
 	return;
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+std::vector<std::vector<std::vector<double>>>
+XolotlInterface::computeConstantRates(std::vector<double> conc)
+try {
+	// Get the solver handler and network
+	auto& solverHandler = solver::Solver::getSolverHandler();
+	auto& network = solverHandler.getNetwork();
+	const auto dof = network.getDOF();
+
+	auto hConcs =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+			conc.data(), dof);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+	deep_copy(dConcs, hConcs);
+
+	// Loop on the sub network maps
+	std::vector<std::vector<std::vector<double>>> toReturn;
+	for (auto subMap : fromSubNetwork) {
+		// Get the sub DOF and initialize the rate map
+		auto subDOF = subMap.size();
+		auto hMap =
+			Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+				subMap.data(), subDOF);
+		auto dMap = Kokkos::View<IdType*>("Sub Map", subDOF);
+		deep_copy(dMap, hMap);
+		std::vector<std::vector<double>> rateMap =
+			std::vector(subDOF, std::vector(subDOF + 1, 0.0));
+		auto hRates = Kokkos::View<double**, Kokkos::HostSpace>(
+			"hRates", subDOF, subDOF + 1);
+		auto dRates = Kokkos::View<double**>("Sub Rates", subDOF, subDOF);
+		deep_copy(dRates, hRates);
+
+		network.computeConstantRates(dConcs, dRates, dMap);
+
+		deep_copy(hRates, dRates);
+		// TODO: does it need to be copied element by element?
+		toReturn.push_back(rateMap);
+	}
+
+	return toReturn;
 }
 catch (const std::exception& e) {
 	reportException(e);

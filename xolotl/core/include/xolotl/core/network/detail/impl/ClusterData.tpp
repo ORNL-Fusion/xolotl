@@ -56,8 +56,8 @@ ClusterDataCommon<PlsmContext>::ClusterDataCommon(
 		"Sub Network Index" + labelStr<PlsmContext>(), numClusters),
 	diffusionCoefficient("Diffusion Coefficient" + labelStr<PlsmContext>(),
 		numClusters, gridSize),
-	constantRates(
-		"Constant Rates" + labelStr<PlsmContext>(), numClusters, numClusters)
+	constantRates("Constant Rates" + labelStr<PlsmContext>(), numClusters,
+		numClusters + 1)
 {
 }
 

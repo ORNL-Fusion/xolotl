@@ -75,6 +75,10 @@ public:
 	using Ival = typename Region::IntervalType;
 	using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
 	using FluxesView = typename IReactionNetwork::FluxesView;
+	using RatesView = typename IReactionNetwork::RatesView;
+	using SubMapView = typename IReactionNetwork::SubMapView;
+	using OwnedSubMapView = typename IReactionNetwork::OwnedSubMapView;
+	using BelongingView = typename IReactionNetwork::BelongingView;
 	using SparseFillMap = typename IReactionNetwork::SparseFillMap;
 	using ClusterData = typename Types::ClusterData;
 	using ClusterDataMirror = typename Types::ClusterDataMirror;
@@ -341,6 +345,17 @@ public:
 	computeAllPartials(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex = 0,
 		double surfaceDepth = 0.0, double spacing = 0.0) override;
+
+	void
+	computeConstantRatesPreProcess(
+		ConcentrationsView, IndexType, double, double)
+	{
+	}
+
+	void
+	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		SubMapView subMap, IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0) final;
 
 	template <typename TReaction>
 	void
