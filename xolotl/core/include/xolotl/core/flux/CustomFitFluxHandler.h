@@ -7,7 +7,7 @@
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/util/Filesystem.h>
 #include <xolotl/util/MPIUtils.h>
-#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -123,18 +123,14 @@ public:
 					<< std::endl;
 		}
 		else {
-			// Build an input stream from the string
-			util::TokenizedLineReader<std::string> reader;
 			// Get the line
 			std::string line;
 			getline(paramFile, line);
-			auto lineSS = std::make_shared<std::istringstream>(line);
-			reader.setInputStream(lineSS);
 
 			using AmountType = network::IReactionNetwork::AmountType;
 
 			// Read the first line
-			auto tokens = reader.loadLine();
+			auto tokens = util::Tokenizer<>{line}();
 			// And start looping on the lines
 			int index = 0;
 			while (tokens.size() > 0) {
@@ -173,9 +169,7 @@ public:
 
 				// Set the parameters for the fit
 				getline(paramFile, line);
-				lineSS = std::make_shared<std::istringstream>(line);
-				reader.setInputStream(lineSS);
-				tokens = reader.loadLine();
+				tokens = util::Tokenizer<>{line}();
 				std::vector<double> params;
 				params.push_back(std::stod(tokens[0]));
 				params.push_back(std::stod(tokens[1]));
@@ -250,9 +244,7 @@ public:
 
 				// Read the next line
 				getline(paramFile, line);
-				lineSS = std::make_shared<std::istringstream>(line);
-				reader.setInputStream(lineSS);
-				tokens = reader.loadLine();
+				tokens = util::Tokenizer<>{line}();
 				// Increase the index
 				index++;
 			}
