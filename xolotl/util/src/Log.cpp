@@ -74,7 +74,7 @@ initLogging()
 										<< expr::message)
 		->set_filter(severity >= LogLevel::error);
 
-	boost::log::add_file_log(keywords::file_name = "xolotlOutput.log",
+	boost::log::add_file_log(keywords::file_name = getLogFileName(),
 		keywords::format = expr::stream
 			<< "("
 			<< expr::format_date_time<boost::posix_time::ptime>(
@@ -87,6 +87,12 @@ void
 flushLogFile()
 {
 	boost::log::core::get()->flush();
+}
+
+std::string
+getLogFileName()
+{
+	return "xolotlOutput.log";
 }
 } // namespace util
 } // namespace xolotl

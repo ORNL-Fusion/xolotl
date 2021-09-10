@@ -43,6 +43,9 @@ initLogging();
 void
 flushLogFile();
 
+std::string
+getLogFileName();
+
 class StringStream : public std::stringstream
 {
 public:
