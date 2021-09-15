@@ -60,9 +60,10 @@ Log::Log()
 	boost::log::add_common_attributes();
 	core->add_global_attribute("Scope", attr::named_scope());
 
-	boost::log::add_console_log(std::cout, keywords::format = "%Message%")
+	boost::log::add_console_log(
+		std::cout, keywords::auto_flush = true, keywords::format = "%Message%")
 		->set_filter(Log::info <= severity && severity < Log::error);
-	boost::log::add_console_log(std::cerr,
+	boost::log::add_console_log(std::cerr, keywords::auto_flush = true,
 		keywords::format = expr::stream << "[" << severity << "] "
 										<< expr::message)
 		->set_filter(severity >= Log::error);
