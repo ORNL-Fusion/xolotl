@@ -12,9 +12,16 @@ namespace xolotl
 {
 namespace util
 {
+/**
+ * @brief Serves as namespace for log-related functions as well as lazy
+ * singleton for initializing logging
+ */
 class Log
 {
 public:
+    /**
+     * Severity levels for log messages
+     */
 	enum Level
 	{
 		debug = 0,
@@ -24,22 +31,38 @@ public:
 		error
 	};
 
+    /**
+     * Alias for severity logger type
+     */
 	using LoggerType = boost::log::sources::severity_logger<Level>;
 
 	Log();
 
+    /**
+     * @brief Get a severity logger
+     */
 	static LoggerType&
 	getLogger();
 
+    /**
+     * @brief Flush the logging core
+     */
 	static void
 	flush();
 };
 
+/**
+ * @relates Log
+ * @brief Insert a Log::Level into a stream
+ */
 std::ostream&
 operator<<(std::ostream& os, Log::Level level);
 
 BOOST_LOG_INLINE_GLOBAL_LOGGER_DEFAULT(Logger, Log::LoggerType);
 
+/**
+ * @brief Customize a std::stringstream with a precision for floats
+ */
 class StringStream : public std::stringstream
 {
 public:
