@@ -17,6 +17,7 @@
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/Monitor.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/viz/IPlot.h>
 #include <xolotl/viz/LabelProvider.h>
@@ -250,9 +251,8 @@ computeXenonRetention0D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		network.getTotalAtomConcentration(dConcs, Spec::Xe, minSizes[0]);
 
 	// Print the result
-	std::cout << "\nTime: " << time << std::endl;
-	std::cout << "Xenon concentration = " << xeConcentration << std::endl
-			  << std::endl;
+	XOLOTL_LOG << "\nTime: " << time << '\n'
+			   << "Xenon concentration = " << xeConcentration << "\n\n";
 
 	// Make sure the average partial radius makes sense
 	double averagePartialRadius = 0.0, averagePartialSize = 0.0;
