@@ -66,7 +66,7 @@ void
 reportException(const std::exception& e)
 {
 	XOLOTL_LOG_ERR << e.what();
-	util::flushLogFile();
+	util::Log::flush();
 	std::cerr << "Aborting." << std::endl;
 }
 
@@ -106,7 +106,6 @@ try {
 	MPI_Comm_rank(xolotlComm, &rank);
 
 	if (rank == 0) {
-		util::initLogging();
 		// Print the start message
 		XOLOTL_LOG << "Starting Xolotl (" << getExactVersionString() << ")\n";
 		// TODO! Print copyright message

@@ -15,10 +15,10 @@ namespace xolotl
 {
 namespace util
 {
-BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", LogLevel)
+BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", Log::Level)
 
 const char*
-toString(LogLevel level)
+toString(Log::Level level)
 {
 	static const char* strings[] = {
 		"DEBUG", "EXTRA", "INFO", "WARNING", "ERROR"};
@@ -33,7 +33,7 @@ toString(LogLevel level)
 }
 
 std::ostream&
-operator<<(std::ostream& os, LogLevel level)
+operator<<(std::ostream& os, Log::Level level)
 {
 	auto str = toString(level);
 	if (str) {
@@ -46,14 +46,7 @@ operator<<(std::ostream& os, LogLevel level)
 	return os;
 }
 
-BOOST_LOG_GLOBAL_LOGGER_INIT(Logger, LoggerType)
-{
-	LoggerType lg;
-	return lg;
-}
-
-void
-initLogging()
+Log::Log()
 {
 	namespace keywords = boost::log::keywords;
 	namespace expr = boost::log::expressions;
@@ -61,20 +54,20 @@ initLogging()
 
 	auto core = boost::log::core::get();
 #ifdef NDEBUG
-	core->set_filter(severity > LogLevel::debug);
+	core->set_filter(severity > Log::debug);
 #endif
 
 	boost::log::add_common_attributes();
 	core->add_global_attribute("Scope", attr::named_scope());
 
 	boost::log::add_console_log(std::cout, keywords::format = "%Message%")
-		->set_filter(LogLevel::info <= severity && severity < LogLevel::error);
+		->set_filter(Log::info <= severity && severity < Log::error);
 	boost::log::add_console_log(std::cerr,
 		keywords::format = expr::stream << "[" << severity << "] "
 										<< expr::message)
-		->set_filter(severity >= LogLevel::error);
+		->set_filter(severity >= Log::error);
 
-	boost::log::add_file_log(keywords::file_name = getLogFileName(),
+	boost::log::add_file_log(keywords::file_name = "xolotlOutput.log",
 		keywords::format = expr::stream
 			<< "("
 			<< expr::format_date_time<boost::posix_time::ptime>(
@@ -83,16 +76,17 @@ initLogging()
 			<< expr::format_named_scope("Scope", keywords::format = "{%n}"));
 }
 
-void
-flushLogFile()
+Log::LoggerType&
+Log::getLogger()
 {
-	boost::log::core::get()->flush();
+	static Log log;
+	return Logger::get();
 }
 
-std::string
-getLogFileName()
+void
+Log::flush()
 {
-	return "xolotlOutput.log";
+	boost::log::core::get()->flush();
 }
 } // namespace util
 } // namespace xolotl
