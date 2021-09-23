@@ -48,7 +48,7 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 	auto xolotlComm = util::getMPIComm();
 	int procId = util::getMPIRank();
 	if (procId == 0) {
-        util::StringStream ss;
+		util::StringStream ss;
 		ss << "SolverHandler: 2D simulation with surface BC: ";
 		std::string bcString = "periodic";
 		if (isMirror)
@@ -76,7 +76,7 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 		for (auto i = 1; i < grid.size() - 1; i++) {
 			ss << grid[i] - grid[surfacePosition[0] + 1] << " ";
 		}
-        XOLOTL_LOG << ss.str();
+		XOLOTL_LOG << ss.str();
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

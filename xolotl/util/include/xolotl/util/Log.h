@@ -19,9 +19,9 @@ namespace util
 class Log
 {
 public:
-    /**
-     * Severity levels for log messages
-     */
+	/**
+	 * Severity levels for log messages
+	 */
 	enum Level
 	{
 		debug = 0,
@@ -31,22 +31,22 @@ public:
 		error
 	};
 
-    /**
-     * Alias for severity logger type
-     */
+	/**
+	 * Alias for severity logger type
+	 */
 	using LoggerType = boost::log::sources::severity_logger<Level>;
 
 	Log();
 
-    /**
-     * @brief Get a severity logger
-     */
+	/**
+	 * @brief Get a severity logger
+	 */
 	static LoggerType&
 	getLogger();
 
-    /**
-     * @brief Flush the logging core
-     */
+	/**
+	 * @brief Flush the logging core
+	 */
 	static void
 	flush();
 };

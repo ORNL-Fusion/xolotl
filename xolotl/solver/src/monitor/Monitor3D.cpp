@@ -623,7 +623,7 @@ computeHeliumRetention3D(
 		double fluence = fluxHandler->getFluence();
 
 		// Print the result
-        util::StringStream ss;
+		util::StringStream ss;
 		ss << "\nTime: " << time << '\n';
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 			ss << network.getSpeciesName(id)
@@ -635,7 +635,7 @@ computeHeliumRetention3D(
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << fluence << " ";
+		outputFile << time << ' ' << fluence << " ";
 		for (auto i = 0; i < numSpecies; ++i) {
 			outputFile << totalConcData[i] << " ";
 		}
@@ -2110,7 +2110,7 @@ setupPetsc3DMonitor(TS ts)
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
-			outputFile << "#fluence ";
+			outputFile << "#time fluence ";
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 				auto speciesName = network.getSpeciesName(id);
 				outputFile << speciesName << "_content ";

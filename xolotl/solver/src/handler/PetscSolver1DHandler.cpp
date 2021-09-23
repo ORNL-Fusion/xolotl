@@ -41,7 +41,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 	auto xolotlComm = util::getMPIComm();
 	int procId = util::getMPIRank();
 	if (procId == 0) {
-        util::StringStream ss;
+		util::StringStream ss;
 		ss << "SolverHandler: 1D simulation with surface BC: ";
 		std::string bcString = "periodic";
 		if (isMirror)
