@@ -93,10 +93,12 @@ Options::readParams(int argc, const char* argv[])
 	desc.add_options()("help", "show this help message")("parameterFile",
 		bpo::value<std::string>(&param_file),
 		"When running Xolotl the name of the parameter file should immediately "
-		"follow the executable: xolotl/xolotl param.txt");
+		"follow the executable: xolotl/xolotl param.txt")("networkFile",
+		bpo::value<std::string>(&networkFilename),
+		"The HDF5 file to use for restart.");
 
 	bpo::positional_options_description p;
-	p.add("parameterFile", -1);
+	p.add("parameterFile", 1);
 
 	bpo::variables_map opts;
 
@@ -106,8 +108,7 @@ Options::readParams(int argc, const char* argv[])
 	bpo::notify(opts);
 
 	// Declare a group of options that will be
-	// allowed both on command line and in
-	// config file
+	// allowed in config file
 	bpo::options_description config("Parameters");
 	config.add_options()("networkFile",
 		bpo::value<std::string>(&networkFilename),
