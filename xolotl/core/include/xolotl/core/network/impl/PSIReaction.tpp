@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/PSIClusterGenerator.h>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/core/network/impl/SinkReaction.tpp>
 #include <xolotl/core/network/impl/TrapMutationReaction.tpp>
@@ -72,6 +73,7 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
+	using AmountType = typename NetworkType::AmountType;
 
 	double be = 0.0;
 
@@ -116,8 +118,55 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 	}
 
 	if (be == 0.0) {
-		be = prod1.getFormationEnergy() + prod2.getFormationEnergy() -
-			cl.getFormationEnergy();
+		// Special case for V
+		auto orig1 = prod1Reg.getOrigin();
+		auto orig2 = prod2Reg.getOrigin();
+		Composition comp(clReg.getOrigin());
+		AmountType lowerV = 16, higherV = 31;
+		AmountType minV = 1;
+		for (auto i = 1; i < higherV; i++) {
+			auto maxHe = psi::getMaxHePerV(i, 4.0);
+			if (comp[Species::He] > maxHe)
+				minV = i;
+		}
+		lowerV = std::max(lowerV, minV + 2);
+		if ((orig1.isOnAxis(Species::V) || orig2.isOnAxis(Species::V)) &&
+			(comp[Species::V] >= lowerV && comp[Species::V] <= higherV)) {
+			// Get the be at 16 and 30
+			Composition HeVComp(clReg.getOrigin());
+			HeVComp[Species::V] = lowerV;
+			auto fe1 = PSIClusterGenerator<TSpeciesEnum>::getHeVFormationEnergy(
+				HeVComp);
+			HeVComp[Species::V] = lowerV - 1;
+			auto fe2 = PSIClusterGenerator<TSpeciesEnum>::getHeVFormationEnergy(
+				HeVComp);
+			Composition vComp{};
+			vComp[Species::V] = 1;
+			auto fe3 =
+				PSIClusterGenerator<TSpeciesEnum>::getHeVFormationEnergy(vComp);
+			auto be1 = fe2 + fe3 - fe1;
+			HeVComp[Species::V] = higherV;
+			fe1 = PSIClusterGenerator<TSpeciesEnum>::getHeVFormationEnergy(
+				HeVComp);
+			HeVComp[Species::V] = higherV - 1;
+			fe2 = PSIClusterGenerator<TSpeciesEnum>::getHeVFormationEnergy(
+				HeVComp);
+			auto be2 = fe2 + fe3 - fe1;
+			if (higherV - lowerV < 4)
+				be = be2;
+			else
+				be = be1 +
+					(comp[Species::V] - lowerV) * (be2 - be1) /
+						(higherV - lowerV);
+		}
+		else {
+			be = prod1.getFormationEnergy() + prod2.getFormationEnergy() -
+				cl.getFormationEnergy();
+		}
+
+		//		std::cout << comp[Species::He] << " " << comp[Species::V] << " "
+		//<< be << " " << this->_products[0] << " " << lowerV << " " << higherV
+		//<< std::endl;
 	}
 
 	return util::max(be, -5.0);
