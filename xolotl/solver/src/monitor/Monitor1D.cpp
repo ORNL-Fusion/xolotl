@@ -18,6 +18,7 @@
 #include <xolotl/perf/ScopedTimer.h>
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/Monitor.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
 #include <xolotl/util/RandomNumberGenerator.h>
@@ -718,18 +719,35 @@ computeHeliumRetention1D(
 		double fluence = fluxHandler->getFluence();
 
 		// Print the result
-		std::cout << "\nTime: " << time << std::endl;
+		util::StringStream ss;
+		ss << "\nTime: " << time << '\n';
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			std::cout << network.getSpeciesName(id)
-					  << " content = " << totalConcData[id()] << '\n';
+			ss << network.getSpeciesName(id)
+			   << " content = " << totalConcData[id()] << '\n';
 		}
-		std::cout << "Fluence = " << fluence << '\n' << std::endl;
+		ss << "Fluence = " << fluence << "\n\n";
+		XOLOTL_LOG << ss.str();
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << time << " " << solutionArray[surfacePos][dof] << " "
-				   << totalConcData[0] << std::endl;
+
+		outputFile << time << ' ' << fluence << ' ';
+		for (auto i = 0; i < numSpecies; ++i) {
+			outputFile << totalConcData[i] << ' ';
+		}
+		if (solverHandler.getRightOffset() == 1) {
+			for (auto i = 0; i < numSpecies; ++i) {
+				outputFile << nBulk1D[i] << ' ';
+			}
+		}
+		if (solverHandler.getLeftOffset() == 1) {
+			for (auto i = 0; i < numSpecies; ++i) {
+				outputFile << nSurf1D[i] << ' ';
+			}
+		}
+		outputFile << nHeliumBurst1D << " " << nDeuteriumBurst1D << " "
+				   << nTritiumBurst1D << std::endl;
 		outputFile.close();
 	}
 
@@ -950,9 +968,9 @@ computeXenonRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 		double nXenon = solverHandler.getNXeGB();
 
 		// Print the result
-		std::cout << "\nTime: " << time << std::endl;
-		std::cout << "Xenon concentration = " << totalConcData[0] << std::endl;
-		std::cout << "Xenon GB = " << nXenon << std::endl << std::endl;
+		XOLOTL_LOG << "\nTime: " << time << '\n'
+				   << "Xenon concentration = " << totalConcData[0] << '\n'
+				   << "Xenon GB = " << nXenon << "\n\n";
 
 		// Make sure the average partial radius makes sense
 		double averagePartialRadius = 0.0, averagePartialSize = 0.0;
@@ -1920,9 +1938,8 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 
 		// Printing information about the extension of the material
 		if (procId == 0) {
-			std::cout << "Adding " << nGridPoints
-					  << " points to the grid at time: " << time << " s."
-					  << std::endl;
+			XOLOTL_LOG << "Adding " << nGridPoints
+					   << " points to the grid at time: " << time << " s.";
 		}
 
 		// Set it in the solver
@@ -1995,8 +2012,8 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 
 		// Printing information about the extension of the material
 		if (procId == 0) {
-			std::cout << "Removing grid points to the grid at time: " << time
-					  << " s." << std::endl;
+			XOLOTL_LOG << "Removing grid points to the grid at time: " << time
+					   << " s.";
 		}
 
 		// Set it in the solver
@@ -2486,7 +2503,7 @@ setupPetsc1DMonitor(TS ts)
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
-			outputFile << "#fluence ";
+			outputFile << "#time fluence ";
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 				auto speciesName = network.getSpeciesName(id);
 				outputFile << speciesName << "_content ";

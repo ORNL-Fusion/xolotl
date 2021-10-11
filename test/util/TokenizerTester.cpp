@@ -3,14 +3,14 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/StreamTokenizer.h>
 
 using namespace std;
 using namespace xolotl::util;
 
 // Test data
-const string doubleString =
-	"0.0 1.0 5.0\n0.11 0.55 22.86 99.283\n# Comment\n 0.000382 883.33 74.832\n";
+const string doubleString = "0.0  1.0 5.0\n0.11 0.55 22.86 99.283\n# Comment\n "
+							"0.000382 883.33 74.832\n";
 const string doubleCSVDoubleSlashCommentString =
 	"0.0,1.0,5.0\n0.11,0.55,22.86,99.283\n// Comment\n0.000382,883.33,74.832\n";
 const string intString = "1 3 5 7 9\n# Comment\n 0 2 4 6 \n";
@@ -20,25 +20,27 @@ const string equalDelimiterString =
 
 BOOST_AUTO_TEST_SUITE(TokenizedLineReader_testSuite)
 
-/**This operation checks default parsing setup of the TokenizedLineReader.*/
+/**This operation checks default parsing setup of the StreamTokenizer.*/
 BOOST_AUTO_TEST_CASE(checkDefaultParsing)
 {
-	// Local Declarations
-	TokenizedLineReader<double> doubleReader;
-	TokenizedLineReader<int> intReader;
-	vector<double> dLine;
-	vector<int> iLine;
-
 	//----- Check doubles -----//
 
+	auto dLine = Tokenizer<double>{"0.1  1.2 3.1  7234.09"}();
+	BOOST_REQUIRE(!dLine.empty());
+	BOOST_REQUIRE_EQUAL(4U, dLine.size());
+	BOOST_REQUIRE_CLOSE_FRACTION(0.1, dLine.at(0), 0.001);
+	BOOST_REQUIRE_CLOSE_FRACTION(1.2, dLine.at(1), 0.001);
+	BOOST_REQUIRE_CLOSE_FRACTION(3.1, dLine.at(2), 0.001);
+	BOOST_REQUIRE_CLOSE_FRACTION(7234.09, dLine.at(3), 0.001);
+
 	// Create the input stream
-	auto doubleTestStream = std::make_shared<stringstream>(ios::in | ios::out);
-	*doubleTestStream << doubleString;
+	auto doubleTestStream = std::istringstream(doubleString);
 	// Load the double reader
-	doubleReader.setInputStream(doubleTestStream);
+	StreamTokenizer doubleReader(doubleTestStream);
 
 	// Get the first line and check it
-	dLine = doubleReader.loadLine();
+	dLine.clear();
+	doubleReader.loadLine(dLine);
 	BOOST_REQUIRE(!dLine.empty());
 	BOOST_REQUIRE_EQUAL(3U, dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.0, dLine.at(0), 0.001);
@@ -46,7 +48,7 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing)
 	BOOST_REQUIRE_CLOSE_FRACTION(5.0, dLine.at(2), 0.001);
 
 	// Get the second line and check it
-	dLine = doubleReader.loadLine();
+	dLine = doubleReader.loadLine<double>();
 	BOOST_REQUIRE(!dLine.empty());
 	BOOST_REQUIRE_EQUAL(4U, dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.11, dLine.at(0), 0.001);
@@ -56,7 +58,8 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing)
 
 	// The third line should skipped because it is a comment so, get the fourth
 	// line and check it
-	dLine = doubleReader.loadLine();
+	dLine.clear();
+	doubleReader.loadLine(dLine);
 	BOOST_REQUIRE(!dLine.empty());
 	BOOST_REQUIRE_EQUAL(3U, dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.000382, dLine.at(0), 0.001);
@@ -64,15 +67,23 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing)
 	BOOST_REQUIRE_CLOSE_FRACTION(74.832, dLine.at(2), 0.0001);
 
 	//----- Check integers -----//
+	auto iLine = Tokenizer<int>{"1  3 5 7  9"}();
+	BOOST_REQUIRE(!iLine.empty());
+	BOOST_REQUIRE_EQUAL(5U, iLine.size());
+	BOOST_REQUIRE_EQUAL(1, iLine.at(0));
+	BOOST_REQUIRE_EQUAL(3, iLine.at(1));
+	BOOST_REQUIRE_EQUAL(5, iLine.at(2));
+	BOOST_REQUIRE_EQUAL(7, iLine.at(3));
+	BOOST_REQUIRE_EQUAL(9, iLine.at(4));
 
 	// Create the input stream
-	auto intTestStream = std::make_shared<stringstream>(ios::in | ios::out);
-	*intTestStream << intString;
+	auto intTestStream = std::istringstream(intString);
 	// Load the int reader
-	intReader.setInputStream(intTestStream);
+	StreamTokenizer intReader(intTestStream);
 
 	// Get the first line and check it
-	iLine = intReader.loadLine();
+	iLine.clear();
+	intReader.loadLine(iLine);
 	BOOST_REQUIRE(!iLine.empty());
 	BOOST_REQUIRE_EQUAL(5U, iLine.size());
 	BOOST_REQUIRE_EQUAL(1, iLine.at(0));
@@ -83,37 +94,35 @@ BOOST_AUTO_TEST_CASE(checkDefaultParsing)
 
 	// The second line should skipped because it is a comment so, get the fourth
 	// line and check it
-	iLine = intReader.loadLine();
+	iLine = intReader.loadLine<int>();
 	BOOST_REQUIRE(!iLine.empty());
 	BOOST_REQUIRE_EQUAL(4U, iLine.size());
 	BOOST_REQUIRE_EQUAL(0, iLine.at(0));
 	BOOST_REQUIRE_EQUAL(2, iLine.at(1));
 	BOOST_REQUIRE_EQUAL(4, iLine.at(2));
 	BOOST_REQUIRE_EQUAL(6, iLine.at(3));
-
-	return;
 }
 
-/**This operation checks the TokenizedLineReader when the token is changed to a
+/**This operation checks the StreamTokenizer when the token is changed to a
  * comma.*/
 BOOST_AUTO_TEST_CASE(checkCSVParsing)
 {
-	// Local Declarations
-	TokenizedLineReader<int> intReader;
-	vector<int> iLine;
-
-	//----- Check integers -----//
+	auto iLine = Tokenizer<int>{"1,3,5,7,9", ","}();
+	BOOST_REQUIRE(!iLine.empty());
+	BOOST_REQUIRE_EQUAL(5U, iLine.size());
+	BOOST_REQUIRE_EQUAL(1, iLine.at(0));
+	BOOST_REQUIRE_EQUAL(3, iLine.at(1));
+	BOOST_REQUIRE_EQUAL(5, iLine.at(2));
+	BOOST_REQUIRE_EQUAL(7, iLine.at(3));
+	BOOST_REQUIRE_EQUAL(9, iLine.at(4));
 
 	// Create the input stream
-	auto intTestStream = std::make_shared<stringstream>(ios::in | ios::out);
-	*intTestStream << intCSVString;
-	// Configure the delimiter
-	intReader.setDelimiter(",");
+	auto intTestStream = std::istringstream(intCSVString);
 	// Load the int reader
-	intReader.setInputStream(intTestStream);
+	StreamTokenizer intReader(intTestStream, ",");
 
 	// Get the first line and check it
-	iLine = intReader.loadLine();
+	iLine = intReader.loadLine<int>();
 	BOOST_REQUIRE(!iLine.empty());
 	BOOST_REQUIRE_EQUAL(5U, iLine.size());
 	BOOST_REQUIRE_EQUAL(1, iLine.at(0));
@@ -124,39 +133,28 @@ BOOST_AUTO_TEST_CASE(checkCSVParsing)
 
 	// The second line should skipped because it is a comment so, get the fourth
 	// line and check it
-	iLine = intReader.loadLine();
+	iLine = intReader.loadLine<int>();
 	BOOST_REQUIRE(!iLine.empty());
 	BOOST_REQUIRE_EQUAL(4U, iLine.size());
 	BOOST_REQUIRE_EQUAL(0, iLine.at(0));
 	BOOST_REQUIRE_EQUAL(2, iLine.at(1));
 	BOOST_REQUIRE_EQUAL(4, iLine.at(2));
 	BOOST_REQUIRE_EQUAL(6, iLine.at(3));
-
-	return;
 }
 
-/**This operation checks the TokenizedLineReader when the comment token is
+/**This operation checks the StreamTokenizer when the comment token is
  * changed.*/
 BOOST_AUTO_TEST_CASE(checkCommentDelimiter)
 {
-	// Local Declarations
-	TokenizedLineReader<double> doubleReader;
+	// Create the input stream
+	auto doubleTestStream =
+		std::istringstream(doubleCSVDoubleSlashCommentString);
+	// Load the double reader
+	StreamTokenizer doubleReader(doubleTestStream, ",", "//");
 	vector<double> dLine;
 
-	//----- Check doubles -----//
-
-	// Create the input stream
-	auto doubleTestStream = std::make_shared<stringstream>(ios::in | ios::out);
-	*doubleTestStream << doubleCSVDoubleSlashCommentString;
-	// Set the delimiter
-	doubleReader.setDelimiter(",");
-	// Set the comment delimiter
-	doubleReader.setCommentDelimiter("//");
-	// Load the double reader
-	doubleReader.setInputStream(doubleTestStream);
-
 	// Get the first line and check it
-	dLine = doubleReader.loadLine();
+	doubleReader.loadLine(dLine);
 	BOOST_REQUIRE(!dLine.empty());
 	BOOST_REQUIRE_EQUAL(3U, dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.0, dLine.at(0), 0.001);
@@ -164,7 +162,7 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter)
 	BOOST_REQUIRE_CLOSE_FRACTION(5.0, dLine.at(2), 0.001);
 
 	// Get the second line and check it
-	dLine = doubleReader.loadLine();
+	dLine = doubleReader.loadLine<double>();
 	BOOST_REQUIRE(!dLine.empty());
 	BOOST_REQUIRE_EQUAL(4U, dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.11, dLine.at(0), 0.001);
@@ -174,45 +172,41 @@ BOOST_AUTO_TEST_CASE(checkCommentDelimiter)
 
 	// The third line should skipped because it is a comment so, get the fourth
 	// line and check it
-	dLine = doubleReader.loadLine();
+	dLine = doubleReader.loadLine<double>();
 	BOOST_REQUIRE(!dLine.empty());
 	BOOST_REQUIRE_EQUAL(3U, dLine.size());
 	BOOST_REQUIRE_CLOSE_FRACTION(0.000382, dLine.at(0), 0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(883.33, dLine.at(1), 0.001);
 	BOOST_REQUIRE_CLOSE_FRACTION(74.832, dLine.at(2), 0.0001);
-
-	return;
 }
 
-/**This operation checks the TokenizedLineReader when the delimiter is changed
+/**This operation checks the StreamTokenizer when the delimiter is changed
  * to a the equal sign.*/
 BOOST_AUTO_TEST_CASE(checkDelimiterParsing)
 {
-	// Local Declarations
-	TokenizedLineReader<std::string> stringReader;
-	vector<std::string> iLine;
+	auto iLine = Tokenizer<>{"arg=many different strings", "="}();
+	BOOST_REQUIRE(!iLine.empty());
+	BOOST_REQUIRE_EQUAL(2U, iLine.size());
+	BOOST_REQUIRE_EQUAL("arg", iLine.at(0));
+	BOOST_REQUIRE_EQUAL("many different strings", iLine.at(1));
 
 	// Create the input stream
-	auto stringTestStream = std::make_shared<stringstream>(ios::in | ios::out);
-	*stringTestStream << equalDelimiterString;
-	// Configure the delimiter
-	stringReader.setDelimiter("=");
+	auto stringTestStream = std::istringstream(equalDelimiterString);
 	// Load the int reader
-	stringReader.setInputStream(stringTestStream);
+	StreamTokenizer stringReader(stringTestStream, "=");
 
 	// Get the first line and check it
-	iLine = stringReader.loadLine();
+	iLine.clear();
+	stringReader.loadLine(iLine);
 	BOOST_REQUIRE(!iLine.empty());
 	BOOST_REQUIRE_EQUAL(2U, iLine.size());
 	BOOST_REQUIRE_EQUAL("arg", iLine.at(0));
 	BOOST_REQUIRE_EQUAL("many different strings", iLine.at(1));
 
 	// Get the second line and check it
-	iLine = stringReader.loadLine();
+	iLine = stringReader.loadLine<std::string>();
 	BOOST_REQUIRE_EQUAL(1U, iLine.size());
 	BOOST_REQUIRE_EQUAL("no equal sign here", iLine.at(0));
-
-	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

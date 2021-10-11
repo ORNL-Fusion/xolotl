@@ -1,6 +1,7 @@
 // Includes
 #include <xolotl/core/Constants.h>
 #include <xolotl/solver/handler/PetscSolver0DHandler.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -22,7 +23,7 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	std::cout << "SolverHandler: 0D simulation" << std::endl;
+	XOLOTL_LOG << "SolverHandler: 0D simulation";
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = util::getMPIComm();

@@ -269,7 +269,8 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		});
 	nEntries = connectivity.entries.extent(0);
 
-	reactionCollection.setConnectivity(connectivity);
+	_connectivity = connectivity;
+	reactionCollection.setConnectivity(_connectivity);
 }
 } // namespace detail
 } // namespace network

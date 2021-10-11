@@ -7,7 +7,7 @@
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/RandomNumberGenerator.h>
-#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -192,10 +192,7 @@ protected:
 			getline(inputFile, line);
 
 			// Break the line into a vector
-			util::TokenizedLineReader<double> reader;
-			auto argSS = std::make_shared<std::istringstream>(line);
-			reader.setInputStream(argSS);
-			auto tokens = reader.loadLine();
+			auto tokens = util::Tokenizer<double>{line}();
 
 			if (tokens.size() == 0)
 				std::cerr << "\nDid not read correctly the file containing the "

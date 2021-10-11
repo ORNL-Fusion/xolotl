@@ -9,7 +9,11 @@
 #include <xolotl/solver/handler/PetscSolver1DHandler.h>
 #include <xolotl/solver/handler/PetscSolver2DHandler.h>
 #include <xolotl/solver/handler/PetscSolver3DHandler.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
+
+PETSC_EXTERN PetscErrorCode
+PetscVFPrintfDefault(FILE*, const char[], va_list);
 
 /*
  C_t =  -D*C_xx + F(C) + R(C)  from Brian Wirth's SciDAC project.
@@ -28,6 +32,33 @@ namespace detail
 auto petscSolverRegistrations =
 	xolotl::factory::solver::SolverFactory::RegistrationCollection<PetscSolver>(
 		{"PETSc"});
+}
+
+PetscErrorCode
+overridePetscVFPrintf(FILE* fd, const char format[], va_list Argp)
+{
+	PetscFunctionBegin;
+
+	PetscErrorCode ierr;
+	if (fd == stdout || fd == stderr) {
+		constexpr std::size_t BIG = 1024;
+		char buff[BIG];
+		std::size_t length;
+		ierr = PetscVSNPrintf(buff, BIG, format, &length, Argp);
+		CHKERRQ(ierr);
+		if (fd == stderr) {
+			XOLOTL_LOG_ERR << buff;
+		}
+		else {
+			XOLOTL_LOG << buff;
+		}
+	}
+	else {
+		ierr = PetscVFPrintfDefault(fd, format, Argp);
+		CHKERRQ(ierr);
+	}
+
+	PetscFunctionReturn(0);
 }
 
 // Timer for RHSFunction()
@@ -244,6 +275,7 @@ PetscSolver::initialize()
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	if (!isPetscInitialized()) {
+		PetscVFPrintf = overridePetscVFPrintf;
 		ierr = PetscInitialize(NULL, NULL, NULL, help);
 		checkPetscError(
 			ierr, "PetscSolver::initialize: PetscInitialize failed.");

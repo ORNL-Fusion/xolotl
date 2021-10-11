@@ -11,6 +11,7 @@
 #include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/solver/Solver.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/version.h>
 #include <xolotl/viz/VizHandlerRegistry.h>
@@ -64,7 +65,9 @@ private:
 void
 reportException(const std::exception& e)
 {
-	std::cerr << e.what() << "\nAborting." << std::endl;
+	XOLOTL_LOG_ERR << e.what();
+	util::Log::flush();
+	std::cerr << "Aborting." << std::endl;
 }
 
 XolotlInterface::XolotlInterface() = default;
@@ -104,18 +107,15 @@ try {
 
 	if (rank == 0) {
 		// Print the start message
-		std::cout << "Starting Xolotl (" << getExactVersionString() << ")\n";
+		XOLOTL_LOG << "Starting Xolotl (" << getExactVersionString() << ")\n";
 		// TODO! Print copyright message
 		// Print date and time
 		std::time_t currentTime = std::time(NULL);
-		std::cout << std::asctime(std::localtime(&currentTime)) << std::flush;
+		XOLOTL_LOG << std::asctime(std::localtime(&currentTime)) << std::flush;
 	}
 
 	options::Options opts;
 	opts.readParams(argc, argv);
-	if (!opts.shouldRun()) {
-		throw std::runtime_error("Unable to read the options.");
-	}
 
 	// Set up our performance data infrastructure.
 	perf::PerfHandlerRegistry::set(
@@ -369,8 +369,10 @@ try {
 	int rank;
 	MPI_Comm_rank(xolotlComm, &rank);
 	if (rank == 0) {
+		util::StringStream ss;
 		handlerRegistry->reportStatistics(
-			std::cout, timerStats, counterStats, hwCtrStats);
+			ss, timerStats, counterStats, hwCtrStats);
+		XOLOTL_LOG << ss.str();
 	}
 
 	solver.reset();

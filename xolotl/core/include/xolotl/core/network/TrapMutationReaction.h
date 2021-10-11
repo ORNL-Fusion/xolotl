@@ -109,19 +109,26 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity)
+	{
+		_connEntries[0][0][0][0] = connectivity(_heClId, _heClId);
+		_connEntries[1][0][0][0] = connectivity(_heVClId, _heClId);
+		_connEntries[2][0][0][0] = connectivity(_iClId, _heClId);
+	}
 
 private:
 	IndexType _heClId;
@@ -129,6 +136,8 @@ private:
 	IndexType _iClId;
 	AmountType _heAmount{};
 	AmountType _vSize{};
+
+	util::Array<IndexType, 3, 1, 1, 1> _connEntries;
 };
 } // namespace network
 } // namespace core

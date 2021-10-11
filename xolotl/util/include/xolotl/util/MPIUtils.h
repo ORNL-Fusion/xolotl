@@ -24,7 +24,7 @@ setMPIComm(MPI_Comm comm);
  *  @return The communicator
  */
 MPI_Comm
-getMPIComm(void);
+getMPIComm();
 
 /**
  * Initialize MPI with const char array
@@ -32,6 +32,11 @@ getMPIComm(void);
 void
 mpiInit(int& argc, const char* argv[]);
 
+/**
+ * Get rank of current process within Xolotl's communicator
+ */
+int
+getMPIRank();
 } // namespace util
 } // namespace xolotl
 #endif
