@@ -129,7 +129,7 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 			if (comp[Species::He] > maxHe)
 				minV = i;
 		}
-		lowerV = std::max(lowerV, minV + 2);
+		lowerV = util::max(lowerV, minV + 2);
 		if ((orig1.isOnAxis(Species::V) || orig2.isOnAxis(Species::V)) &&
 			(comp[Species::V] >= lowerV && comp[Species::V] <= higherV)) {
 			// Get the be at 16 and 30
