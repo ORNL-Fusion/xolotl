@@ -246,9 +246,17 @@ computeTRIDYN1D(
 	// Get the physical grid
 	auto grid = solverHandler.getXGrid();
 
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	ierr = DMGetLocalVector(da, &localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
 	// Get the array of concentration
 	PetscReal** solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Save current concentrations as an HDF5 file.
@@ -282,6 +290,17 @@ computeTRIDYN1D(
 	io::HDF5File::DataSet<double>::DataType2D<numValsPerGridpoint> myConcs(
 		myNumPointsToWrite);
 
+	// Get the interpolated temperature
+	std::vector<double> localTemp;
+	for (PetscInt i = -1; i <= (PetscInt)xm; ++i) {
+		auto gridPointSolution = solutionArray[(PetscInt)xs + i];
+
+		// Get the temperature
+		localTemp.push_back(gridPointSolution[dof]);
+	}
+	auto networkTemp =
+		solverHandler.interpolateTemperature(surfacePos, localTemp);
+
 	for (auto xi = myFirstIdxToWrite; xi < myEndIdx; ++xi) {
 		if (xi >= firstIdxToWrite) {
 			// Determine current gridpoint value.
@@ -303,7 +322,7 @@ computeTRIDYN1D(
 				myConcs[currIdx][id() + 1] +=
 					network.getTotalAtomConcentration(dConcs, id, 1);
 			}
-			myConcs[currIdx][6] = gridPointSolution[dof];
+			myConcs[currIdx][numSpecies + 1] = networkTemp[currIdx];
 		}
 	}
 
@@ -313,7 +332,9 @@ computeTRIDYN1D(
 		xolotlComm, myFirstIdxToWrite - firstIdxToWrite, myConcs);
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray);
+	CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(da, &localSolution);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
@@ -1892,6 +1913,9 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 		PetscFunctionReturn(0);
 	}
 
+	// Save the current position
+	auto oldSurfacePos = surfacePos;
+
 	// Set the surface position
 	auto xi = surfacePos + solverHandler.getLeftOffset();
 
@@ -1952,10 +1976,41 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 		if (singleVacancyCluster.getId() !=
 			core::network::IReactionNetwork::invalidIndex())
 			vacancyIndex = singleVacancyCluster.getId();
+
+		// Get the complete data array, including ghost cells
+		Vec localSolution;
+		ierr = DMGetLocalVector(da, &localSolution);
+		CHKERRQ(ierr);
+		ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+		CHKERRQ(ierr);
+		ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+		CHKERRQ(ierr);
+		// Get the array of concentration
+		PetscReal** localSolutionArray;
+		ierr = DMDAVecGetArrayDOFRead(da, localSolution, &localSolutionArray);
+		CHKERRQ(ierr);
+		// Get the interpolated temperature
+		std::vector<double> localTemp;
+		for (PetscInt i = -1; i <= (PetscInt)xm; ++i) {
+			auto gridPointSolution = localSolutionArray[(PetscInt)xs + i];
+
+			// Get the temperature
+			localTemp.push_back(gridPointSolution[dof]);
+		}
+		// Restore the solutionArray
+		ierr =
+			DMDAVecRestoreArrayDOFRead(da, localSolution, &localSolutionArray);
+		CHKERRQ(ierr);
+		ierr = DMRestoreLocalVector(da, &localSolution);
+		CHKERRQ(ierr);
+
+		auto networkTemp =
+			solverHandler.interpolateTemperature(oldSurfacePos, localTemp);
 		// Get the surface temperature
 		double temp = 0.0;
+		xi = oldSurfacePos + solverHandler.getLeftOffset();
 		if (xi >= xs && xi < xs + xm) {
-			temp = solutionArray[xi][dof];
+			temp = networkTemp[xi - xs + 1];
 		}
 		double surfTemp = 0.0;
 		MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
@@ -2019,6 +2074,9 @@ postEventFunction1D(TS ts, PetscInt nevents, PetscInt eventList[],
 		// Set it in the solver
 		solverHandler.setSurfacePosition(surfacePos);
 	}
+
+	// Set the new surface lacation in the solver handler
+	solverHandler.generateTemperatureGrid(surfacePos, oldSurfacePos);
 
 	// Set the new surface location in the surface advection handler
 	auto advecHandler = solverHandler.getAdvectionHandler();

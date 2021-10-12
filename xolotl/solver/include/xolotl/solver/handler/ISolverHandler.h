@@ -218,6 +218,15 @@ public:
 	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1) = 0;
 
 	/**
+	 * Generate the grid for the temperature.
+	 *
+	 * @param surfacePos The surface position
+	 * @param oldPos The old surface position
+	 */
+	virtual void
+	generateTemperatureGrid(IdType surfacePos, IdType oldPos = 0) = 0;
+
+	/**
 	 * Get the initial vacancy concentration.
 	 *
 	 * @return The initial vacancy concentration

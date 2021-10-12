@@ -133,6 +133,9 @@ protected:
 	//! If the user wants to attenuate the modified trap mutation.
 	bool useAttenuation;
 
+	//! What type of temperature grid to use.
+	bool sameTemperatureGrid;
+
 	//! The sputtering yield for the problem.
 	double sputteringYield;
 
@@ -450,13 +453,207 @@ protected:
 	}
 
 	/**
-	 * Method generating the grid for the temperature
+	 * Constructor.
 	 *
-	 * @param surfacePos The surface position
+	 * @param _network The reaction network to use.
+	 */
+	SolverHandler(NetworkType& _network) :
+		network(_network),
+		networkName(""),
+		nX(0),
+		nY(0),
+		nZ(0),
+		hY(0.0),
+		hZ(0.0),
+		localXS(0),
+		localXM(0),
+		localYS(0),
+		localYM(0),
+		localZS(0),
+		localZM(0),
+		leftOffset(1),
+		rightOffset(1),
+		bottomOffset(1),
+		topOffset(1),
+		frontOffset(1),
+		backOffset(1),
+		initialVConc(0.0),
+		electronicStoppingPower(0.0),
+		dimension(-1),
+		portion(0.0),
+		movingSurface(false),
+		bubbleBursting(false),
+		isMirror(true),
+		useAttenuation(false),
+		sameTemperatureGrid(true),
+		sputteringYield(0.0),
+		fluxHandler(nullptr),
+		temperatureHandler(nullptr),
+		diffusionHandler(nullptr),
+		tauBursting(10.0),
+		burstingFactor(0.1),
+		rngSeed(0),
+		heVRatio(4.0),
+		previousTime(0.0),
+		nXeGB(0.0)
+	{
+	}
+
+public:
+	//! The Constructor
+	SolverHandler() = delete;
+
+	~SolverHandler()
+	{
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	void
+	initializeHandlers(
+		std::shared_ptr<core::material::IMaterialHandler> material,
+		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
+		const options::IOptions& opts) override
+	{
+		// Determine who I am.
+		int myProcId = -1;
+		auto xolotlComm = util::getMPIComm();
+		MPI_Comm_rank(xolotlComm, &myProcId);
+
+		// Initialize our random number generator.
+		bool useRNGSeedFromOptions = false;
+		std::tie(useRNGSeedFromOptions, rngSeed) = opts.getRNGSeed();
+		if (not useRNGSeedFromOptions) {
+			// User didn't give a seed value to use, so
+			// use something based on current time and our proc id
+			// so that it is different from run to run, and should
+			// be different across all processes within a given run.
+			rngSeed = time(NULL);
+		}
+		if (opts.printRNGSeed()) {
+			std::cout << "Proc " << myProcId << " using RNG seed value "
+					  << rngSeed << std::endl;
+		}
+		rng = std::make_unique<util::RandomNumberGenerator<int, unsigned int>>(
+			rngSeed + myProcId);
+
+		// Set the network loader
+		networkName = opts.getNetworkFilename();
+
+		// Set the grid options
+		generateGrid(opts);
+
+		// Set the flux handler
+		fluxHandler = material->getFluxHandler().get();
+
+		// Set the temperature handler
+		temperatureHandler = tempHandler.get();
+
+		// Set the diffusion handler
+		diffusionHandler = material->getDiffusionHandler().get();
+
+		// Set the advection handlers
+		auto handlers = material->getAdvectionHandler();
+		for (auto handler : handlers) {
+			advectionHandlers.push_back(handler.get());
+		}
+
+		// Set the minimum size for the average radius computation
+		auto numSpecies = network.getSpeciesListSize();
+		minRadiusSizes = std::vector<size_t>(numSpecies, 1);
+		auto minSizes = opts.getRadiusMinSizes();
+		for (auto i = 0; i < std::min(minSizes.size(), minRadiusSizes.size());
+			 i++) {
+			minRadiusSizes[i] = minSizes[i];
+		}
+
+		// Set the initial vacancy concentration
+		initialVConc = opts.getInitialVConcentration();
+
+		// Set the electronic stopping power
+		electronicStoppingPower = opts.getZeta();
+
+		// Set the number of dimension
+		dimension = opts.getDimensionNumber();
+
+		// Set the void portion
+		portion = opts.getVoidPortion();
+
+		// Set the sputtering yield
+		sputteringYield = opts.getSputteringYield();
+
+		// Set the sputtering yield
+		tauBursting = opts.getBurstingDepth();
+
+		// Set the bursting factor
+		burstingFactor = opts.getBurstingFactor();
+
+		// Set the HeV ratio
+		heVRatio = opts.getHeVRatio();
+
+		// Which type of temperature grid to use
+		if (opts.getTempHandlerName() == "heat")
+			sameTemperatureGrid = false;
+
+		// Boundary conditions in the X direction
+		if (opts.getBCString() == "periodic")
+			isMirror = false;
+
+		// Set the boundary conditions (= 1: free surface; = 0: mirror)
+		leftOffset = opts.getLeftBoundary();
+		rightOffset = opts.getRightBoundary();
+		bottomOffset = opts.getBottomBoundary();
+		topOffset = opts.getTopBoundary();
+		frontOffset = opts.getFrontBoundary();
+		backOffset = opts.getBackBoundary();
+
+		// Should we be able to move the surface?
+		auto map = opts.getProcesses();
+		movingSurface = map["movingSurface"];
+		// Should we be able to burst bubbles?
+		bubbleBursting = map["bursting"];
+		// Should we be able to attenuate the modified trap mutation?
+		useAttenuation = map["attenuation"];
+
+		// Some safeguards about what to use with what
+		if (leftOffset == 0 &&
+			(map["advec"] || map["modifiedTM"] || map["movingSurface"] ||
+				map["bursting"])) {
+			throw std::runtime_error(
+				"\nThe left side of the grid is set to use a reflective "
+				"boundary condition but you want to use processes that are "
+				"intrinsically related to a free surface (advection, modified "
+				"trap mutation, moving surface, bubble bursting).");
+		}
+
+		// Complains if processes that should not be used together are used
+		if (map["attenuation"] && !map["modifiedTM"]) {
+			throw std::runtime_error(
+				"\nYou want to use the attenuation on the modified trap "
+				"mutation but you are not using the modifiedTM process, it "
+				"doesn't make any sense.");
+		}
+		if (map["modifiedTM"] && !map["reaction"]) {
+			throw std::runtime_error(
+				"\nYou want to use the modified trap mutation but the reaction "
+				"process is not set, it doesn't make any sense.");
+		}
+
+		return;
+	}
+
+	/**
+	 * \see ISolverHandler.h
 	 */
 	void
 	generateTemperatureGrid(IdType surfacePos, IdType oldPos = 0)
 	{
+		// Don't do anything if we want the same grid as the cluster one
+		if (sameTemperatureGrid) {
+			temperatureGrid = grid;
+			return;
+		}
 		// If the temperature grid already existed we need to save its values
 		std::vector<double> oldGrid;
 		if (temperatureGrid.size() > 0)
@@ -571,192 +768,6 @@ protected:
 		}
 
 		temperature = toReturn;
-	}
-
-	/**
-	 * Constructor.
-	 *
-	 * @param _network The reaction network to use.
-	 */
-	SolverHandler(NetworkType& _network) :
-		network(_network),
-		networkName(""),
-		nX(0),
-		nY(0),
-		nZ(0),
-		hY(0.0),
-		hZ(0.0),
-		localXS(0),
-		localXM(0),
-		localYS(0),
-		localYM(0),
-		localZS(0),
-		localZM(0),
-		leftOffset(1),
-		rightOffset(1),
-		bottomOffset(1),
-		topOffset(1),
-		frontOffset(1),
-		backOffset(1),
-		initialVConc(0.0),
-		electronicStoppingPower(0.0),
-		dimension(-1),
-		portion(0.0),
-		movingSurface(false),
-		bubbleBursting(false),
-		isMirror(true),
-		useAttenuation(false),
-		sputteringYield(0.0),
-		fluxHandler(nullptr),
-		temperatureHandler(nullptr),
-		diffusionHandler(nullptr),
-		tauBursting(10.0),
-		burstingFactor(0.1),
-		rngSeed(0),
-		heVRatio(4.0),
-		previousTime(0.0),
-		nXeGB(0.0)
-	{
-	}
-
-public:
-	//! The Constructor
-	SolverHandler() = delete;
-
-	~SolverHandler()
-	{
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	void
-	initializeHandlers(
-		std::shared_ptr<core::material::IMaterialHandler> material,
-		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
-		const options::IOptions& opts) override
-	{
-		// Determine who I am.
-		int myProcId = -1;
-		auto xolotlComm = util::getMPIComm();
-		MPI_Comm_rank(xolotlComm, &myProcId);
-
-		// Initialize our random number generator.
-		bool useRNGSeedFromOptions = false;
-		std::tie(useRNGSeedFromOptions, rngSeed) = opts.getRNGSeed();
-		if (not useRNGSeedFromOptions) {
-			// User didn't give a seed value to use, so
-			// use something based on current time and our proc id
-			// so that it is different from run to run, and should
-			// be different across all processes within a given run.
-			rngSeed = time(NULL);
-		}
-		if (opts.printRNGSeed()) {
-			std::cout << "Proc " << myProcId << " using RNG seed value "
-					  << rngSeed << std::endl;
-		}
-		rng = std::make_unique<util::RandomNumberGenerator<int, unsigned int>>(
-			rngSeed + myProcId);
-
-		// Set the network loader
-		networkName = opts.getNetworkFilename();
-
-		// Set the grid options
-		generateGrid(opts);
-
-		// Set the flux handler
-		fluxHandler = material->getFluxHandler().get();
-
-		// Set the temperature handler
-		temperatureHandler = tempHandler.get();
-
-		// Set the diffusion handler
-		diffusionHandler = material->getDiffusionHandler().get();
-
-		// Set the advection handlers
-		auto handlers = material->getAdvectionHandler();
-		for (auto handler : handlers) {
-			advectionHandlers.push_back(handler.get());
-		}
-
-		// Set the minimum size for the average radius computation
-		auto numSpecies = network.getSpeciesListSize();
-		minRadiusSizes = std::vector<size_t>(numSpecies, 1);
-		auto minSizes = opts.getRadiusMinSizes();
-		for (auto i = 0; i < std::min(minSizes.size(), minRadiusSizes.size());
-			 i++) {
-			minRadiusSizes[i] = minSizes[i];
-		}
-
-		// Set the initial vacancy concentration
-		initialVConc = opts.getInitialVConcentration();
-
-		// Set the electronic stopping power
-		electronicStoppingPower = opts.getZeta();
-
-		// Set the number of dimension
-		dimension = opts.getDimensionNumber();
-
-		// Set the void portion
-		portion = opts.getVoidPortion();
-
-		// Set the sputtering yield
-		sputteringYield = opts.getSputteringYield();
-
-		// Set the sputtering yield
-		tauBursting = opts.getBurstingDepth();
-
-		// Set the bursting factor
-		burstingFactor = opts.getBurstingFactor();
-
-		// Set the HeV ratio
-		heVRatio = opts.getHeVRatio();
-
-		// Boundary conditions in the X direction
-		if (opts.getBCString() == "periodic")
-			isMirror = false;
-
-		// Set the boundary conditions (= 1: free surface; = 0: mirror)
-		leftOffset = opts.getLeftBoundary();
-		rightOffset = opts.getRightBoundary();
-		bottomOffset = opts.getBottomBoundary();
-		topOffset = opts.getTopBoundary();
-		frontOffset = opts.getFrontBoundary();
-		backOffset = opts.getBackBoundary();
-
-		// Should we be able to move the surface?
-		auto map = opts.getProcesses();
-		movingSurface = map["movingSurface"];
-		// Should we be able to burst bubbles?
-		bubbleBursting = map["bursting"];
-		// Should we be able to attenuate the modified trap mutation?
-		useAttenuation = map["attenuation"];
-
-		// Some safeguards about what to use with what
-		if (leftOffset == 0 &&
-			(map["advec"] || map["modifiedTM"] || map["movingSurface"] ||
-				map["bursting"])) {
-			throw std::runtime_error(
-				"\nThe left side of the grid is set to use a reflective "
-				"boundary condition but you want to use processes that are "
-				"intrinsically related to a free surface (advection, modified "
-				"trap mutation, moving surface, bubble bursting).");
-		}
-
-		// Complains if processes that should not be used together are used
-		if (map["attenuation"] && !map["modifiedTM"]) {
-			throw std::runtime_error(
-				"\nYou want to use the attenuation on the modified trap "
-				"mutation but you are not using the modifiedTM process, it "
-				"doesn't make any sense.");
-		}
-		if (map["modifiedTM"] && !map["reaction"]) {
-			throw std::runtime_error(
-				"\nYou want to use the modified trap mutation but the reaction "
-				"process is not set, it doesn't make any sense.");
-		}
-
-		return;
 	}
 
 	/**
@@ -1144,6 +1155,10 @@ public:
 	interpolateTemperature(IdType pos,
 		std::vector<double> localTemp = std::vector<double>()) override
 	{
+		// No need to interpolate if the grid are the same
+		if (sameTemperatureGrid)
+			return temperature;
+
 		// Get the default temperature vector if needed
 		if (localTemp.size() == 0)
 			localTemp = temperature;
