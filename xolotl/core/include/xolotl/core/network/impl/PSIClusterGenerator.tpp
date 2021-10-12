@@ -746,8 +746,7 @@ PSIClusterGenerator<TSpeciesEnum>::getReactionRadius(
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 double
-PSIClusterGenerator<TSpeciesEnum>::getHeVFormationEnergy(
-	Composition comp) const noexcept
+PSIClusterGenerator<TSpeciesEnum>::getHeVFormationEnergy(Composition comp)
 {
 	// V formation energies in eV
 	constexpr Kokkos::Array<double, 2> vFormationEnergies = {3.6, 7.25};
