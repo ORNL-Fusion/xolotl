@@ -1,8 +1,8 @@
-// Includes
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/solver/handler/PetscSolver1DHandler.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -39,27 +39,27 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 
 	// Prints info on one process
 	auto xolotlComm = util::getMPIComm();
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
+	int procId = util::getMPIRank();
 	if (procId == 0) {
-		std::cout << "SolverHandler: 1D simulation with surface BC: ";
+		util::StringStream ss;
+		ss << "SolverHandler: 1D simulation with surface BC: ";
 		std::string bcString = "periodic";
 		if (isMirror)
 			bcString = "mirror";
 		if (leftOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << bcString;
-		std::cout << " and bulk BC: ";
+			ss << bcString;
+		ss << " and bulk BC: ";
 		if (rightOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << bcString;
-		std::cout << ", grid (nm): ";
+			ss << bcString;
+		ss << ", grid (nm): ";
 		for (auto i = 1; i < grid.size() - 1; i++) {
-			std::cout << grid[i] - grid[surfacePosition + 1] << " ";
+			ss << grid[i] - grid[surfacePosition + 1] << " ";
 		}
-		std::cout << std::endl;
+		XOLOTL_LOG << ss.str();
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

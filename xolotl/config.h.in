@@ -14,4 +14,5 @@ using IdType = std::uint64_t;
 // using IdType = std::int32_t;
 using IdType = std::uint32_t;
 #endif
+using AmountType = std::uint32_t;
 } // namespace xolotl

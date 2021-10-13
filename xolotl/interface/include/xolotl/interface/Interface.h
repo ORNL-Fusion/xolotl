@@ -242,14 +242,12 @@ public:
 	std::vector<double>
 	getGridInfo(double& hy, double& hz);
 
-	using CompositionAmountType = std::uint32_t;
-
 	/**
 	 * Get the cluster information
 	 *
 	 * @return The vector representing the bounds for each cluster
 	 */
-	std::vector<std::vector<CompositionAmountType>>
+	std::vector<std::vector<AmountType>>
 	getAllClusterBounds();
 
 	/**
@@ -259,7 +257,7 @@ public:
 	 */
 	void
 	initializeClusterMaps(
-		std::vector<std::vector<std::vector<CompositionAmountType>>> bounds);
+		std::vector<std::vector<std::vector<AmountType>>> bounds);
 
 	/**
 	 * Values for the rates to be set in constant reactions

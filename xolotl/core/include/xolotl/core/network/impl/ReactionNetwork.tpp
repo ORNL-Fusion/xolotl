@@ -6,7 +6,7 @@
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/options/Options.h>
-#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -51,12 +51,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableAttenuation(map["attenuation"]);
 	this->setEnableConstantReaction(map["constant"]);
 	std::string petscString = opts.getPetscArg();
-	util::TokenizedLineReader<std::string> reader;
-	reader.setInputStream(std::make_shared<std::istringstream>(petscString));
-	auto tokens = reader.loadLine();
+	auto tokens = util::Tokenizer<>{petscString}();
 	bool useReduced = false;
-	for (int i = 0; i < tokens.size(); ++i) {
-		if (tokens[i] == "-snes_mf_operator") {
+	for (const auto& token : tokens) {
+		if (token == "-snes_mf_operator") {
 			useReduced = true;
 			break;
 		}
