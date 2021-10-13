@@ -276,7 +276,7 @@ public:
 	 * @return A vector containing the rates for each sub instance
 	 */
 	std::vector<std::vector<std::vector<double>>>
-	computeConstantRates(std::vector<double> conc);
+	computeConstantRates(std::vector<std::vector<double>> conc);
 
 	/**
 	 * Get whether the solve converged or not.

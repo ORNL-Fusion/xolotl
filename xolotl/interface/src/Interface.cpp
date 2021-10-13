@@ -416,16 +416,23 @@ catch (const std::exception& e) {
 }
 
 std::vector<std::vector<std::vector<double>>>
-XolotlInterface::computeConstantRates(std::vector<double> conc)
+XolotlInterface::computeConstantRates(std::vector<std::vector<double>> conc)
 try {
 	// Get the solver handler and network
 	auto& solverHandler = solver::Solver::getSolverHandler();
 	auto& network = solverHandler.getNetwork();
 	const auto dof = network.getDOF();
 
+	// Construct the full concentration vector first
+	std::vector<double> fullConc(dof, 0.0);
+	for (auto i = 0; i < conc.size(); i++)
+		for (auto j = 0; j < conc[i].size(); j++) {
+			fullConc[fromSubNetwork[i][j]] = conc[i][j];
+		}
+
 	auto hConcs =
 		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
-			conc.data(), dof);
+			fullConc.data(), dof);
 	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 	deep_copy(dConcs, hConcs);
 
@@ -443,7 +450,7 @@ try {
 			std::vector(subDOF, std::vector(subDOF + 1, 0.0));
 		auto hRates = Kokkos::View<double**, Kokkos::HostSpace>(
 			"hRates", subDOF, subDOF + 1);
-		auto dRates = Kokkos::View<double**>("Sub Rates", subDOF, subDOF);
+		auto dRates = Kokkos::View<double**>("Sub Rates", subDOF, subDOF + 1);
 		deep_copy(dRates, hRates);
 
 		network.computeConstantRates(dConcs, dRates, dMap);
