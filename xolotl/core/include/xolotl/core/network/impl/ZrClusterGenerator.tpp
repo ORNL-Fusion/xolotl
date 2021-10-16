@@ -124,7 +124,8 @@ ZrClusterGenerator::getDiffusionFactor(
 	const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
 	constexpr double defaultDiffusion = 1.0;
-	constexpr double iNineDiffusion = 2.2e+11;
+	//constexpr double iNineDiffusion = 2.2e+11;
+    constexpr double iNineDiffusion = 0.0;
 
 
 	const auto& reg = cluster.getRegion();

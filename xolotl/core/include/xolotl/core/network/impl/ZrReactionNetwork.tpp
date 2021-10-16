@@ -64,6 +64,7 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 		this->_clusterData.h_view().numClusters,
 		this->_clusterData.h_view().gridSize);
 	this->copyClusterDataView();
+
 }
 
 namespace detail
