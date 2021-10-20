@@ -13,7 +13,13 @@ set(XOLOTL_SOLVER_HEADERS
     ${XOLOTL_SOLVER_HEADER_DIR}/handler/PetscSolver3DHandler.h
     ${XOLOTL_SOLVER_HEADER_DIR}/handler/PetscSolverHandler.h
     ${XOLOTL_SOLVER_HEADER_DIR}/handler/SolverHandler.h
-    ${XOLOTL_SOLVER_HEADER_DIR}/monitor/Monitor.h
+    ${XOLOTL_SOLVER_HEADER_DIR}/monitor/IMonitor.h
+    ${XOLOTL_SOLVER_HEADER_DIR}/monitor/IPetscMonitor.h
+    ${XOLOTL_SOLVER_HEADER_DIR}/monitor/PetscMonitor.h
+    ${XOLOTL_SOLVER_HEADER_DIR}/monitor/PetscMonitor0D.h
+    ${XOLOTL_SOLVER_HEADER_DIR}/monitor/PetscMonitor1D.h
+    ${XOLOTL_SOLVER_HEADER_DIR}/monitor/PetscMonitor2D.h
+    ${XOLOTL_SOLVER_HEADER_DIR}/monitor/PetscMonitor3D.h
 )
 
 set(XOLOTL_SOLVER_SOURCES
@@ -24,11 +30,11 @@ set(XOLOTL_SOLVER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/handler/PetscSolver2DHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/handler/PetscSolver3DHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/handler/PetscSolverHandler.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/Monitor.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/Monitor0D.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/Monitor1D.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/Monitor2D.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/Monitor3D.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/PetscMonitor.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/PetscMonitor0D.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/PetscMonitor1D.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/PetscMonitor2D.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/PetscMonitor3D.cpp
 )
 
 add_library(xolotlSolver SHARED

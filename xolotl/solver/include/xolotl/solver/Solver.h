@@ -5,6 +5,7 @@
 #include <xolotl/options/IOptions.h>
 #include <xolotl/perf/IPerfHandler.h>
 #include <xolotl/solver/ISolver.h>
+#include <xolotl/solver/monitor/IMonitor.h>
 
 namespace xolotl
 {
@@ -31,6 +32,9 @@ protected:
 
 	//! The original solver handler.
 	std::shared_ptr<handler::ISolverHandler> solverHandler;
+
+	//! The monitor
+	std::shared_ptr<monitor::IMonitor> monitor;
 
 	//! Static global reference to current solver handler
 	static handler::ISolverHandler* staticSolverHandler;

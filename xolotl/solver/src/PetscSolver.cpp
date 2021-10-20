@@ -9,6 +9,10 @@
 #include <xolotl/solver/handler/PetscSolver1DHandler.h>
 #include <xolotl/solver/handler/PetscSolver2DHandler.h>
 #include <xolotl/solver/handler/PetscSolver3DHandler.h>
+#include <xolotl/solver/monitor/PetscMonitor0D.h>
+#include <xolotl/solver/monitor/PetscMonitor1D.h>
+#include <xolotl/solver/monitor/PetscMonitor2D.h>
+#include <xolotl/solver/monitor/PetscMonitor3D.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 
@@ -76,15 +80,6 @@ PetscOptions* petscOptions = nullptr;
 // Help message
 static char help[] = "Solves C_t =  -D*C_xx + F(C) + R(C) + from "
 					 "Brian Wirth's SciDAC project.\n";
-
-// ----- GLOBAL VARIABLES ----- //
-namespace monitor
-{
-extern PetscErrorCode setupPetsc0DMonitor(TS);
-extern PetscErrorCode setupPetsc1DMonitor(TS);
-extern PetscErrorCode setupPetsc2DMonitor(TS);
-extern PetscErrorCode setupPetsc3DMonitor(TS);
-} // namespace monitor
 
 void
 PetscSolver::setupInitialConditions(DM da, Vec C)
@@ -362,33 +357,30 @@ PetscSolver::initialize()
 	switch (dim) {
 	case 0:
 		// One dimension
-		ierr = monitor::setupPetsc0DMonitor(ts);
-		checkPetscError(
-			ierr, "PetscSolver::initialize: setupPetsc0DMonitor failed.");
+		this->monitor =
+			std::make_shared<monitor::PetscMonitor0D>(ts, this->solverHandler);
 		break;
 	case 1:
 		// One dimension
-		ierr = monitor::setupPetsc1DMonitor(ts);
-		checkPetscError(
-			ierr, "PetscSolver::initialize: setupPetsc1DMonitor failed.");
+		this->monitor =
+			std::make_shared<monitor::PetscMonitor1D>(ts, this->solverHandler);
 		break;
 	case 2:
 		// Two dimensions
-		ierr = monitor::setupPetsc2DMonitor(ts);
-		checkPetscError(
-			ierr, "PetscSolver::initialize: setupPetsc2DMonitor failed.");
+		this->monitor =
+			std::make_shared<monitor::PetscMonitor2D>(ts, this->solverHandler);
 		break;
 	case 3:
 		// Three dimensions
-		ierr = monitor::setupPetsc3DMonitor(ts);
-		checkPetscError(
-			ierr, "PetscSolver::initialize: setupPetsc3DMonitor failed.");
+		this->monitor =
+			std::make_shared<monitor::PetscMonitor2D>(ts, this->solverHandler);
 		break;
 	default:
 		throw std::runtime_error(
 			"PetscSolver Exception: Wrong number of dimensions "
 			"to set the monitors.");
 	}
+	this->monitor->setup();
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set initial conditions
