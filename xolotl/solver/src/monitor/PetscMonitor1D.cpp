@@ -19,8 +19,6 @@ namespace solver
 {
 namespace monitor
 {
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "checkNegative")
 PetscErrorCode
 checkNegative(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -32,8 +30,6 @@ checkNegative(
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeTRIDYN")
 PetscErrorCode
 computeTRIDYN(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -45,8 +41,6 @@ computeTRIDYN(
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "profileTemperature")
 PetscErrorCode
 profileTemperature(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -59,8 +53,6 @@ profileTemperature(
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorSeries")
 PetscErrorCode
 monitorSeries(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)

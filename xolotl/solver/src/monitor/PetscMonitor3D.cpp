@@ -19,8 +19,6 @@ namespace solver
 {
 namespace monitor
 {
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorSurfaceXY")
 PetscErrorCode
 monitorSurfaceXY(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -32,8 +30,6 @@ monitorSurfaceXY(
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorSurfaceXZ")
 PetscErrorCode
 monitorSurfaceXZ(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)

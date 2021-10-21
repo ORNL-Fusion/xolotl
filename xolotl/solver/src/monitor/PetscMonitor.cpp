@@ -12,8 +12,6 @@ namespace monitor
 //! The variable to store the threshold on time step defined by the user.
 double timeStepThreshold = 0.0;
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "checkTimeStep")
 /**
  * This is a method that decides when to extend the network
  */
@@ -39,8 +37,6 @@ checkTimeStep(TS ts)
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorTime")
 PetscErrorCode
 monitorTime(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
@@ -51,8 +47,6 @@ monitorTime(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeFluence")
 PetscErrorCode
 computeFluence(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -64,8 +58,6 @@ computeFluence(
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorPerf")
 PetscErrorCode
 monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
@@ -76,8 +68,6 @@ monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorLargest")
 PetscErrorCode
 monitorLargest(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -89,8 +79,6 @@ monitorLargest(
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "startStop")
 PetscErrorCode
 startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
@@ -101,8 +89,6 @@ startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeHeliumRetention")
 PetscErrorCode
 computeHeliumRetention(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -115,8 +101,6 @@ computeHeliumRetention(
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeXenonRetention")
 PetscErrorCode
 computeXenonRetention(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -129,8 +113,6 @@ computeXenonRetention(
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "computeAlloy")
 PetscErrorCode
 computeAlloy(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
@@ -141,8 +123,6 @@ computeAlloy(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "monitorScatter")
 PetscErrorCode
 monitorScatter(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -154,8 +134,6 @@ monitorScatter(
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "eventFunction")
 PetscErrorCode
 eventFunction(
 	TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void* ctx)
@@ -167,8 +145,6 @@ eventFunction(
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "postEventFunction")
 PetscErrorCode
 postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[], PetscReal time,
 	Vec solution, PetscBool fwd, void* ctx)

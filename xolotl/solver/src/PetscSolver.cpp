@@ -81,8 +81,6 @@ PetscSolver::setupInitialConditions(DM da, Vec C)
 
 /* ------------------------------------------------------------------- */
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "RHSFunction")
 /*
  RHSFunction - Evaluates the right-hand-side of the nonlinear function defining
  the ODE
@@ -107,8 +105,6 @@ RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void* ctx)
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "RHSJacobian")
 /*
  Compute the Jacobian entries based on IFunction() and insert them into the
  matrix
@@ -506,13 +502,13 @@ PetscSolver::getXolotlTime()
 PetscErrorCode
 PetscSolver::rhsFunction(TS ts, PetscReal ftime, Vec C, Vec F)
 {
+	PetscErrorCode ierr;
+	PetscFunctionBeginUser;
+
 	// Start the RHSFunction Timer
 	rhsFunctionTimer->start();
 
-	PetscErrorCode ierr;
-
 	// Get the local data vector from PETSc
-	PetscFunctionBeginUser;
 	DM da;
 	ierr = TSGetDM(ts, &da);
 	CHKERRQ(ierr);
@@ -549,13 +545,13 @@ PetscSolver::rhsFunction(TS ts, PetscReal ftime, Vec C, Vec F)
 PetscErrorCode
 PetscSolver::rhsJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J)
 {
+	PetscErrorCode ierr;
+	PetscFunctionBeginUser;
+
 	// Start the RHSJacobian timer
 	rhsJacobianTimer->start();
 
-	PetscErrorCode ierr;
-
 	// Get the matrix from PETSc
-	PetscFunctionBeginUser;
 	ierr = MatZeroEntries(J);
 	CHKERRQ(ierr);
 	DM da;
