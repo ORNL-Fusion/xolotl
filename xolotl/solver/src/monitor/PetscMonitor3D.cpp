@@ -1461,10 +1461,11 @@ PetscMonitor3D::eventFunction(
 	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
-	fvalue[0] = 1.0, fvalue[1] = 1.0;
-	_depthPositions.clear();
 
 	PetscFunctionBeginUser;
+
+	fvalue[0] = 1.0, fvalue[1] = 1.0;
+	_depthPositions.clear();
 
 	PetscInt TSNumber = -1;
 	ierr = TSGetStepNumber(ts, &TSNumber);

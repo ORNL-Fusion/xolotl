@@ -800,14 +800,14 @@ PetscErrorCode
 PetscMonitor1D::startStop(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
-	perf::ScopedTimer myTimer(_startStopTimer);
-
 	// Initial declaration
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_startStopTimer);
 
 	// Get local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
@@ -919,13 +919,13 @@ PetscErrorCode
 PetscMonitor1D::computeHeliumRetention(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
-	perf::ScopedTimer myTimer(_heRetentionTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_heRetentionTimer);
 
 	// Get local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
@@ -1226,13 +1226,13 @@ PetscErrorCode
 PetscMonitor1D::computeXenonRetention(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
-	perf::ScopedTimer myTimer(_xeRetentionTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_xeRetentionTimer);
 
 	// Get the da from ts
 	DM da;
@@ -1585,14 +1585,14 @@ PetscErrorCode
 PetscMonitor1D::monitorScatter(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
-	perf::ScopedTimer myTimer(_scatterTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_scatterTimer);
 
 	// Don't do anything if it is not on the stride
 	if (timestep % 200 != 0)
@@ -1689,16 +1689,17 @@ PetscErrorCode
 PetscMonitor1D::eventFunction(
 	TS ts, PetscReal time, Vec solution, PetscScalar* fvalue)
 {
-	perf::ScopedTimer myTimer(_eventFuncTimer);
-
 	// Initial declaration
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
-	_depthPositions.clear();
-	fvalue[0] = 1.0, fvalue[1] = 1.0, fvalue[2] = 1.0;
 
 	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_eventFuncTimer);
+
+	_depthPositions.clear();
+	fvalue[0] = 1.0, fvalue[1] = 1.0, fvalue[2] = 1.0;
 
 	PetscInt TSNumber = -1;
 	ierr = TSGetStepNumber(ts, &TSNumber);
@@ -1925,14 +1926,14 @@ PetscErrorCode
 PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	PetscReal time, Vec solution, PetscBool)
 {
-	perf::ScopedTimer myTimer(_postEventFuncTimer);
-
 	// Initial declaration
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_postEventFuncTimer);
 
 	// Check if the surface has moved or a bubble burst
 	if (nevents == 0) {
@@ -2201,14 +2202,14 @@ PetscErrorCode
 PetscMonitor1D::checkNegative(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
-	perf::ScopedTimer myTimer(_checkNegativeTimer);
-
 	// Initial declaration
 	PetscErrorCode ierr;
 	double **solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_checkNegativeTimer);
 
 	// Get the da from ts
 	DM da;
@@ -2254,13 +2255,13 @@ PetscErrorCode
 PetscMonitor1D::computeTRIDYN(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
-	perf::ScopedTimer myTimer(_tridynTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_tridynTimer);
 
 	// Get the MPI communicator
 	auto xolotlComm = util::getMPIComm();
@@ -2451,15 +2452,16 @@ PetscErrorCode
 PetscMonitor1D::monitorSeries(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
-	perf::ScopedTimer myTimer(_seriesTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	const double **solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
-	double x = 0.0;
 
 	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_seriesTimer);
+
+	double x = 0.0;
 
 	// Don't do anything if it is not on the stride
 	if (timestep % 10 != 0)

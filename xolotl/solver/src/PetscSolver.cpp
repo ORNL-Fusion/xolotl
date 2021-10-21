@@ -41,7 +41,7 @@ auto petscSolverRegistrations =
 PetscErrorCode
 overridePetscVFPrintf(FILE* fd, const char format[], va_list Argp)
 {
-	PetscFunctionBegin;
+	PetscFunctionBeginUser;
 
 	PetscErrorCode ierr;
 	if (fd == stdout || fd == stderr) {

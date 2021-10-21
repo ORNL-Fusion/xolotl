@@ -1085,13 +1085,13 @@ PetscErrorCode
 PetscMonitor2D::computeXenonRetention(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
-	perf::ScopedTimer myTimer(_gbTimer);
-
 	// Initial declarations
 	PetscErrorCode ierr;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_gbTimer);
 
 	// Get local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
@@ -1348,10 +1348,11 @@ PetscMonitor2D::eventFunction(
 	PetscErrorCode ierr;
 	double ***solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
-	fvalue[0] = 1.0, fvalue[1] = 1.0;
-	_depthPositions.clear();
 
 	PetscFunctionBeginUser;
+
+	fvalue[0] = 1.0, fvalue[1] = 1.0;
+	_depthPositions.clear();
 
 	PetscInt TSNumber = -1;
 	ierr = TSGetStepNumber(ts, &TSNumber);
@@ -1978,9 +1979,10 @@ PetscMonitor2D::monitorSurface(
 	PetscErrorCode ierr;
 	const double ***solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
-	double x = 0.0, y = 0.0;
 
 	PetscFunctionBeginUser;
+
+	double x = 0.0, y = 0.0;
 
 	// Don't do anything if it is not on the stride
 	if (timestep % 10 != 0)
