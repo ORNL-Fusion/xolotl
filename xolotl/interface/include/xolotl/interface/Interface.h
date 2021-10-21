@@ -1,5 +1,4 @@
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#pragma once
 
 #include <petscts.h>
 
@@ -250,9 +249,5 @@ public:
 	void
 	finalizeXolotl();
 };
-// End class interface
-
 } /* namespace interface */
 } /* namespace xolotl */
-
-#endif

@@ -36,9 +36,6 @@ protected:
 	//! The monitor
 	std::shared_ptr<monitor::IMonitor> monitor;
 
-	//! Static global reference to current solver handler
-	static handler::ISolverHandler* staticSolverHandler;
-
 public:
 	using SolverHandlerGenerator =
 		std::function<std::shared_ptr<handler::ISolverHandler>(
@@ -53,8 +50,8 @@ public:
 		SolverHandlerGenerator handlerGenerator);
 
 	//! Constuct a solver.
-	Solver(handler::ISolverHandler& _solverHandler,
-		std::shared_ptr<perf::IPerfHandler> _perfHandler);
+	Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler,
+		const std::shared_ptr<perf::IPerfHandler>& _perfHandler);
 
 	//! The Destructor
 	virtual ~Solver(){};
@@ -66,16 +63,12 @@ public:
 	setCommandLineOptions(std::string arg);
 
 	/**
-	 * This operation returns the solver handler for this solver. This
-	 * operation is only for use by solver code and is not part of the
-	 * ISolver interface.
-	 *
 	 * @return The solver handler for this solver
 	 */
-	static handler::ISolverHandler&
+	std::shared_ptr<handler::ISolverHandler>
 	getSolverHandler()
 	{
-		return *staticSolverHandler;
+		return solverHandler;
 	}
 
 protected:

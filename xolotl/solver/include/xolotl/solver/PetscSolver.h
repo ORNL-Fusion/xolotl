@@ -1,5 +1,4 @@
-#ifndef PETSCSOLVER_H
-#define PETSCSOLVER_H
+#pragma once
 
 // Includes
 #include <xolotl/factory/solver/SolverFactory.h>
@@ -58,6 +57,21 @@ private:
 	PetscOptions petscOptions;
 
 	/**
+	 * Timer for rhsFunction
+	 */
+	std::shared_ptr<perf::ITimer> rhsFunctionTimer;
+
+	/**
+	 * Timer for rhsJacobian()
+	 */
+	std::shared_ptr<perf::ITimer> rhsJacobianTimer;
+
+	/**
+	 * Timer for solve()
+	 */
+	std::shared_ptr<perf::ITimer> solveTimer;
+
+	/**
 	 * This operation configures the initial conditions of the grid in Xolotl.
 	 *
 	 * @param data The DM (data manager) created by PETSc
@@ -76,8 +90,8 @@ public:
 	PetscSolver(const options::IOptions& options);
 
 	//! The Constructor
-	PetscSolver(handler::ISolverHandler& _solverHandler,
-		std::shared_ptr<perf::IPerfHandler> _perfHandler);
+	PetscSolver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler,
+		const std::shared_ptr<perf::IPerfHandler>& _perfHandler);
 
 	//! The Destructor
 	~PetscSolver();
@@ -97,14 +111,14 @@ public:
 	/**
 	 * \see ISolver.h
 	 */
-	virtual std::vector<
+	std::vector<
 		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 	getConcVector() override;
 
 	/**
 	 * \see ISolver.h
 	 */
-	virtual void
+	void
 	setConcVector(std::vector<
 		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
 			concVector) override;
@@ -112,13 +126,13 @@ public:
 	/**
 	 * \see ISolver.h
 	 */
-	virtual double
+	double
 	getCurrentDt() override;
 
 	/**
 	 * \see ISolver.h
 	 */
-	virtual void
+	void
 	setCurrentTimes(double currentTime, double currentDt) override;
 
 	/**
@@ -153,6 +167,12 @@ public:
 	 */
 	double
 	getXolotlTime() override;
+
+	PetscErrorCode
+	rhsFunction(TS ts, PetscReal ftime, Vec C, Vec F);
+
+	PetscErrorCode
+	rhsJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J);
 };
 // end class PetscSolver
 } /* namespace solver */
@@ -169,5 +189,3 @@ public:
 #else
 #define Actual__FUNCT__(sname, fname) fname
 #endif /* if it is the Intel compiler */
-
-#endif
