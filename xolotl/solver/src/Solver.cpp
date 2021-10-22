@@ -10,8 +10,6 @@ namespace xolotl
 {
 namespace solver
 {
-handler::ISolverHandler* Solver::staticSolverHandler = nullptr;
-
 Solver::Solver(
 	const options::IOptions& options, SolverHandlerGenerator handlerGenerator) :
 	network(factory::network::NetworkHandlerFactory::get()
@@ -29,15 +27,14 @@ Solver::Solver(
 	assert(solverHandler);
 	solverHandler->initializeHandlers(
 		materialHandler, temperatureHandler, options);
-	staticSolverHandler = solverHandler.get();
 }
 
-Solver::Solver(handler::ISolverHandler& _solverHandler,
-	std::shared_ptr<perf::IPerfHandler> _perfHandler) :
+Solver::Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler,
+	const std::shared_ptr<perf::IPerfHandler>& _perfHandler) :
 	optionsString(""),
+	solverHandler(_solverHandler),
 	perfHandler(_perfHandler)
 {
-	staticSolverHandler = &_solverHandler;
 }
 
 void

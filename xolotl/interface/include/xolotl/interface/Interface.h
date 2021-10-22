@@ -1,5 +1,4 @@
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#pragma once
 
 #include <petscts.h>
 
@@ -53,7 +52,7 @@ private:
 	 * A vector of maps to know which cluster in subnetworks correspond
 	 * to which in the main network
 	 */
-	std::vector<std::vector<IdType>> fromSubNetwork;
+	std::vector<std::vector<AmountType>> fromSubNetwork;
 
 public:
 	/**
@@ -290,9 +289,5 @@ public:
 	void
 	finalizeXolotl();
 };
-// End class interface
-
 } /* namespace interface */
 } /* namespace xolotl */
-
-#endif

@@ -32,8 +32,8 @@ public:
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
 	using RatesView = Kokkos::View<double**, Kokkos::MemoryUnmanaged>;
-	using SubMapView = Kokkos::View<IndexType*, Kokkos::MemoryUnmanaged>;
-	using OwnedSubMapView = Kokkos::View<IndexType*>;
+	using SubMapView = Kokkos::View<AmountType*, Kokkos::MemoryUnmanaged>;
+	using OwnedSubMapView = Kokkos::View<AmountType*>;
 	using BelongingView = Kokkos::View<bool*>;
 	using Connectivity = detail::ClusterConnectivity<>;
 	using SparseFillMap = std::unordered_map<int, std::vector<int>>;
