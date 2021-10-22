@@ -1639,7 +1639,7 @@ PetscMonitor1D::monitorScatter(
 		for (auto i = 0; i < networkSize; i++) {
 			// Create a Point with the concentration[i] as the value
 			// and add it to myPoints
-			auto cluster = network.getCluster(i);
+			auto cluster = network.getCluster(i, plsm::onHost);
 			const Region& clReg = cluster.getRegion();
 			for (auto j : makeIntervalRange(clReg[Spec::Xe])) {
 				viz::dataprovider::DataPoint aPoint;
