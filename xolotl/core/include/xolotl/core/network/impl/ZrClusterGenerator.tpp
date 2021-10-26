@@ -158,19 +158,25 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	Composition lo(reg.getOrigin());
 	double radius = 0.0;
 
-    // jmr: rn = (3nOmega/4pi)^1/3 [nm]
+    // jmr: rn = (3nOmega/4pi)^1/3 [nm] for n < 10
     // jmr: Note that (3Omega/4pi) = 5.586e-3 nm^3, where Omega = 0.0234 nm^3
+    // jmr: For prismatic loops (n > 9): rn = 0.163076*sqrt(n) [nm]
+    // jmr: For basal loops (n > 9): rn = 0.169587*sqrt(n) [nm]
 
 	if (lo.isOnAxis(Species::V)) {
 		for (auto j : makeIntervalRange(reg[Species::V])) {
-			radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
+            if (lo[Species::V] < 10) radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
+            else radius += 0.163076 * pow((double)j,0.5);
 		}
+
 		return radius / reg[Species::V].length();
 	}
+
 	if (lo.isOnAxis(Species::I)) {
 		for (auto j : makeIntervalRange(reg[Species::I])) {
-			radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
-		}
+            if (lo[Species::I] < 10) radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
+            else radius += 0.163076 * pow((double)j,0.5);
+        }
 		return radius / reg[Species::I].length();
 	}
 

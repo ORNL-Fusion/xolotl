@@ -65,6 +65,29 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 		this->_clusterData.h_view().gridSize);
 	this->copyClusterDataView();
 
+    auto data = this->_clusterData.h_view();
+    Kokkos::parallel_for(
+    this->_numClusters, KOKKOS_LAMBDA(const IndexType i) {
+    auto cluster = data.getCluster(i);
+    const auto& reg = cluster.getRegion();
+    Composition lo(reg.getOrigin());
+
+    // Set the dislocation capture radii for vacancy a-loops (convert to nm):
+    // First index in dislocation capture radius is for I capture; second is for V capture
+    if (lo.isOnAxis(Species::V)){
+        data.extraData.dislocationCaptureRadius(i, 0) = 2.9 * pow(lo[Species::V], 0.12) / 10;
+        data.extraData.dislocationCaptureRadius(i, 1) = 0.6 * pow(lo[Species::V], 0.3) / 10;
+    }
+
+    // Set the dislocation capture radii for interstitial a-loops (convert to nm)
+    else if (lo.isOnAxis(Species::I)){
+        data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::I], 0.05) / 10;
+        data.extraData.dislocationCaptureRadius(i, 1) = 5.1 * pow(lo[Species::I], -0.01) / 10;
+    }
+
+    // ADD BASAL DISLOCATION CAPTURE RADII HERE
+
+    });
 }
 
 namespace detail

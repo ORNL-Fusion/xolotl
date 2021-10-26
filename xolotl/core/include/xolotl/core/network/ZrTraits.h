@@ -104,6 +104,7 @@ struct ClusterDataExtra<ZrReactionNetwork, PlsmContext>
 	KOKKOS_INLINE_FUNCTION
 	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
 		anisotropyRatio(data.anisotropyRatio)
+        ,dislocationCaptureRadius(data.dislocationCaptureRadius)
 	{
 	}
 
@@ -133,9 +134,43 @@ struct ClusterDataExtra<ZrReactionNetwork, PlsmContext>
 	{
 		anisotropyRatio =
 			View<double**>("Anisotropy Ratio", numClusters, gridSize);
+        dislocationCaptureRadius =
+            View<double**>("Dislocation Capture Radius", numClusters, 2);
 	}
+    
+    /*
+    template <typename PC>
+    void
+    deepCopyCapture(const ClusterDataExtra<NetworkType, PC>& data)
+    {
+        if (!data.dislocationCaptureRadius.is_allocated()) {
+            return;
+        }
+        
+        if (!dislocationCaptureRadius.is_allocated()) {
+            dislocationCaptureRadius = create_mirror_view(data.dislocationCaptureRadius);
+        }
+        
+        deep_copy(dislocationCaptureRadius, data.dislocationCaptureRadius);
+    }
+    
+    std::uint64_t
+    getDeviceMemorySize() const noexcept
+    {
+        return anisotropyRatio.required_allocation_size();
+    }
+    
+    void
+    initialize(IndexType numClusters, IndexType gridSize = 0)
+    {
+        anisotropyRatio =
+        View<double**>("Anisotropy Ratio", numClusters, gridSize);
+    }
+     */
 
 	View<double**> anisotropyRatio;
+    View<double**> dislocationCaptureRadius;
+
 };
 } // namespace detail
 } // namespace network
