@@ -17,6 +17,14 @@ namespace xolotl
 {
 namespace perf
 {
+// OpenMPI 2.x and 3.0 define its MPI_Datatype constants using a
+// C-style cast to void*.  Clang++ objects to using these with
+// in-class initializers and constexpr in our classes like ITimer.
+// So we have to define them elsewhere (i.e., here).
+const MPI_Datatype ITimer::MPIValType = MPI_DOUBLE;
+const MPI_Datatype IEventCounter::MPIValType = MPI_UNSIGNED_LONG;
+const MPI_Datatype IHardwareCounter::MPIValType = MPI_LONG_LONG_INT;
+
 PerfHandler::PerfHandler(const options::IOptions&)
 {
 }
