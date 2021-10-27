@@ -3,6 +3,7 @@
 
 // Includes
 #include <xolotl/core/Constants.h>
+#include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/MPIUtils.h>
@@ -102,6 +103,9 @@ protected:
 
 	//! The original temperature handler created.
 	core::temperature::ITemperatureHandler* temperatureHandler;
+
+	//! the original perf handler created.
+	std::shared_ptr<perf::IPerfHandler> perfHandler;
 
 	//! The original diffusion handler created.
 	core::diffusion::IDiffusionHandler* diffusionHandler;
@@ -447,8 +451,9 @@ protected:
 	 * Constructor.
 	 *
 	 * @param _network The reaction network to use.
+	 * @param _perfHandler The perf handler to use.
 	 */
-	SolverHandler(NetworkType& _network) :
+	SolverHandler(NetworkType& _network, const options::IOptions& options) :
 		network(_network),
 		networkName(""),
 		nX(0),
@@ -479,6 +484,7 @@ protected:
 		sputteringYield(0.0),
 		fluxHandler(nullptr),
 		temperatureHandler(nullptr),
+		perfHandler(factory::perf::PerfHandlerFactory::get().generate(options)),
 		diffusionHandler(nullptr),
 		tauBursting(10.0),
 		burstingFactor(0.1),
@@ -501,9 +507,8 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeHandlers(
-		std::shared_ptr<core::material::IMaterialHandler> material,
-		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
+	initializeHandlers(core::material::IMaterialHandler* material,
+		core::temperature::ITemperatureHandler* tempHandler,
 		const options::IOptions& opts) override
 	{
 		// Determine who I am.
@@ -538,7 +543,7 @@ public:
 		fluxHandler = material->getFluxHandler().get();
 
 		// Set the temperature handler
-		temperatureHandler = tempHandler.get();
+		temperatureHandler = tempHandler;
 
 		// Set the diffusion handler
 		diffusionHandler = material->getDiffusionHandler().get();
@@ -919,6 +924,15 @@ public:
 	getTemperatureHandler() const override
 	{
 		return temperatureHandler;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	std::shared_ptr<perf::IPerfHandler>
+	getPerfHandler() const override
+	{
+		return perfHandler;
 	}
 
 	/**

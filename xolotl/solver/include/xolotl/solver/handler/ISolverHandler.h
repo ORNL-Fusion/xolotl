@@ -14,6 +14,7 @@
 #include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 #include <xolotl/options/IOptions.h>
+#include <xolotl/perf/IPerfHandler.h>
 #include <xolotl/util/Array.h>
 #include <xolotl/util/RandomNumberGenerator.h>
 
@@ -53,9 +54,8 @@ public:
 	 * @param options The Xolotl options
 	 */
 	virtual void
-	initializeHandlers(
-		std::shared_ptr<core::material::IMaterialHandler> material,
-		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
+	initializeHandlers(core::material::IMaterialHandler* material,
+		core::temperature::ITemperatureHandler* tempHandler,
 		const options::IOptions& opts) = 0;
 
 	/**
@@ -415,6 +415,14 @@ public:
 	 */
 	virtual core::temperature::ITemperatureHandler*
 	getTemperatureHandler() const = 0;
+
+	/**
+	 * Get the perf handler.
+	 *
+	 * @return The perf handler
+	 */
+	virtual std::shared_ptr<perf::IPerfHandler>
+	getPerfHandler() const = 0;
 
 	/**
 	 * Get the diffusion handler.

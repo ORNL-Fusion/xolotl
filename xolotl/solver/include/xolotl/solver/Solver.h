@@ -36,6 +36,9 @@ protected:
 	//! The monitor
 	std::shared_ptr<monitor::IMonitor> monitor;
 
+	//! The perf handler
+	std::shared_ptr<perf::IPerfHandler> perfHandler;
+
 public:
 	using SolverHandlerGenerator =
 		std::function<std::shared_ptr<handler::ISolverHandler>(
@@ -50,8 +53,7 @@ public:
 		SolverHandlerGenerator handlerGenerator);
 
 	//! Constuct a solver.
-	Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler,
-		const std::shared_ptr<perf::IPerfHandler>& _perfHandler);
+	Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler);
 
 	//! The Destructor
 	virtual ~Solver(){};
@@ -70,13 +72,6 @@ public:
 	{
 		return solverHandler;
 	}
-
-protected:
-	/**
-	 * The performance handler registry that will be used
-	 * for this class.
-	 */
-	std::shared_ptr<perf::IPerfHandler> perfHandler;
 };
 // end class Solver
 

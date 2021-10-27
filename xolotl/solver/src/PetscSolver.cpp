@@ -125,13 +125,17 @@ PetscSolver::PetscSolver(const options::IOptions& options) :
 			-> std::shared_ptr<handler::ISolverHandler> {
 			switch (options.getDimensionNumber()) {
 			case 0:
-				return std::make_shared<handler::PetscSolver0DHandler>(network);
+				return std::make_shared<handler::PetscSolver0DHandler>(
+					network, options);
 			case 1:
-				return std::make_shared<handler::PetscSolver1DHandler>(network);
+				return std::make_shared<handler::PetscSolver1DHandler>(
+					network, options);
 			case 2:
-				return std::make_shared<handler::PetscSolver2DHandler>(network);
+				return std::make_shared<handler::PetscSolver2DHandler>(
+					network, options);
 			case 3:
-				return std::make_shared<handler::PetscSolver3DHandler>(network);
+				return std::make_shared<handler::PetscSolver3DHandler>(
+					network, options);
 			default:
 				// The asked dimension is not good (e.g. -1, 4)
 				throw std::runtime_error(
@@ -147,9 +151,8 @@ PetscSolver::PetscSolver(const options::IOptions& options) :
 }
 
 PetscSolver::PetscSolver(
-	const std::shared_ptr<handler::ISolverHandler>& _solverHandler,
-	const std::shared_ptr<perf::IPerfHandler>& _perfHandler) :
-	Solver(_solverHandler, _perfHandler)
+	const std::shared_ptr<handler::ISolverHandler>& _solverHandler) :
+	Solver(_solverHandler)
 {
 	rhsFunctionTimer = perfHandler->getTimer("rhsFunctionTimer");
 	rhsJacobianTimer = perfHandler->getTimer("rhsJacobianTimer");

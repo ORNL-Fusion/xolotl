@@ -9,7 +9,6 @@ set(XOLOTL_PERF_HEADERS
     ${XOLOTL_PERF_HEADER_DIR}/IPerfHandler.h
     ${XOLOTL_PERF_HEADER_DIR}/ITimer.h
     ${XOLOTL_PERF_HEADER_DIR}/PerfHandler.h
-    ${XOLOTL_PERF_HEADER_DIR}/PerfHandlerRegistry.h
     ${XOLOTL_PERF_HEADER_DIR}/PerfObjStatistics.h
     ${XOLOTL_PERF_HEADER_DIR}/RuntimeError.h
     ${XOLOTL_PERF_HEADER_DIR}/ScopedTimer.h
@@ -17,7 +16,6 @@ set(XOLOTL_PERF_HEADERS
 
 set(XOLOTL_PERF_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/PerfHandler.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/PerfHandlerRegistry.cpp
 )
 
 include(src/dummy/Include.cmake)

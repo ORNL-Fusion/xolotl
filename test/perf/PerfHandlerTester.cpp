@@ -10,14 +10,15 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
-#include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/perf/PerfObjStatistics.h>
+#include <xolotl/perf/IEventCounter.h>
+#include <xolotl/perf/IPerfHandler.h>
 #include <xolotl/test/MPITestUtils.h>
 
 using namespace xolotl;
 
 /**
- * Test suite for HandlerRegistry classes (mainly StdHandler).
+ * Test suite for IPerfHandler classes (mainly StdHandler).
  */
 BOOST_AUTO_TEST_SUITE(StdHandler_testSuite)
 
@@ -36,14 +37,8 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 	unsigned int nGoodInits = 0;
 
 	try {
-		perf::PerfHandlerRegistry::set(
-			factory::perf::PerfHandlerFactory::get().generate("dummy"));
-		nGoodInits++;
-
-		auto reg = perf::PerfHandlerRegistry::get();
-		if (reg) {
-			nGoodInits++;
-		}
+		auto reg = factory::perf::PerfHandlerFactory::get().generate("dummy");
+		BOOST_REQUIRE((bool)reg);
 
 		BOOST_TEST_MESSAGE("Dummy handler registry created successfully.");
 	}
@@ -51,8 +46,6 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 		BOOST_TEST_MESSAGE(
 			"DummyHandlerRegistry creation failed: " << e.what());
 	}
-
-	BOOST_REQUIRE_EQUAL(nGoodInits, 2U);
 }
 
 BOOST_AUTO_TEST_CASE(createOSHandlerReg)
@@ -60,30 +53,20 @@ BOOST_AUTO_TEST_CASE(createOSHandlerReg)
 	unsigned int nGoodInits = 0;
 
 	try {
-		perf::PerfHandlerRegistry::set(
-			factory::perf::PerfHandlerFactory::get().generate("os"));
-		nGoodInits++;
-
-		auto reg = perf::PerfHandlerRegistry::get();
-		if (reg) {
-			nGoodInits++;
-		}
+		auto reg = factory::perf::PerfHandlerFactory::get().generate("os");
+		BOOST_REQUIRE((bool)reg);
 
 		BOOST_TEST_MESSAGE("OS handler registry created successfully.");
 	}
 	catch (const std::exception& e) {
 		BOOST_TEST_MESSAGE("OSHandlerRegistry creation failed: " << e.what());
 	}
-
-	BOOST_REQUIRE_EQUAL(nGoodInits, 2U);
 }
 
 BOOST_AUTO_TEST_CASE(aggregateStats)
 {
 	try {
-		perf::PerfHandlerRegistry::set(
-			factory::perf::PerfHandlerFactory::get().generate("os"));
-		auto reg = perf::PerfHandlerRegistry::get();
+		auto reg = factory::perf::PerfHandlerFactory::get().generate("os");
 
 		std::shared_ptr<perf::IEventCounter> ctr =
 			reg->getEventCounter("testCounter");

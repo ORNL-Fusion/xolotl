@@ -22,6 +22,10 @@ namespace solver
 {
 class ISolver;
 }
+namespace perf
+{
+class IPerfHandler;
+}
 
 namespace interface
 {
@@ -47,6 +51,11 @@ private:
 	 * The solver
 	 */
 	std::shared_ptr<solver::ISolver> solver;
+
+	/**
+	 * The perf handler
+	 */
+	std::shared_ptr<perf::IPerfHandler> perfHandler;
 
 public:
 	/**
