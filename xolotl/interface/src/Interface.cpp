@@ -14,7 +14,6 @@
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/version.h>
-#include <xolotl/viz/VizHandlerRegistry.h>
 
 namespace xolotl
 {
@@ -124,10 +123,6 @@ try {
 
 	options::Options opts;
 	opts.readParams(argc, argv);
-
-	// Initialize the visualization
-	viz::VizHandlerRegistry::set(
-		factory::viz::VizHandlerFactory::get().generate(opts));
 
 	// Setup the solver
 	solver = factory::solver::SolverFactory::get().generate(opts);

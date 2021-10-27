@@ -9,7 +9,6 @@
 #include <xolotl/solver/monitor/PetscMonitorFunctions.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
-#include <xolotl/viz/VizHandlerRegistry.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 
 namespace xolotl
@@ -89,7 +88,7 @@ PetscMonitor1D::setup()
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get xolotlViz handler registry
-	auto vizHandlerRegistry = viz::VizHandlerRegistry::get();
+	auto vizHandlerRegistry = _solverHandler->getVizHandler();
 
 	// Flags to launch the monitors or not
 	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,

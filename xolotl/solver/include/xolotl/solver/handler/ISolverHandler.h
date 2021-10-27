@@ -17,6 +17,7 @@
 #include <xolotl/perf/IPerfHandler.h>
 #include <xolotl/util/Array.h>
 #include <xolotl/util/RandomNumberGenerator.h>
+#include <xolotl/viz/IVizHandler.h>
 
 namespace xolotl
 {
@@ -423,6 +424,14 @@ public:
 	 */
 	virtual std::shared_ptr<perf::IPerfHandler>
 	getPerfHandler() const = 0;
+
+	/**
+	 * Get the viz handler.
+	 *
+	 * @return The viz handler
+	 */
+	virtual std::shared_ptr<viz::IVizHandler>
+	getVizHandler() const = 0;
 
 	/**
 	 * Get the diffusion handler.
