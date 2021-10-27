@@ -125,9 +125,6 @@ try {
 	options::Options opts;
 	opts.readParams(argc, argv);
 
-	// Set up our performance data infrastructure.
-	perfHandler = factory::perf::PerfHandlerFactory::get().generate(opts);
-
 	// Initialize the visualization
 	viz::VizHandlerRegistry::set(
 		factory::viz::VizHandlerFactory::get().generate(opts));
@@ -347,6 +344,8 @@ XolotlInterface::finalizeXolotl()
 try {
 	// Call solver finalize
 	solver->finalize();
+
+	auto perfHandler = solverCast(solver)->getSolverHandler()->getPerfHandler();
 
 	// Report statistics about the performance data collected during
 	// the run we just completed.

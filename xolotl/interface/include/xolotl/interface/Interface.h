@@ -52,11 +52,6 @@ private:
 	 */
 	std::shared_ptr<solver::ISolver> solver;
 
-	/**
-	 * The perf handler
-	 */
-	std::shared_ptr<perf::IPerfHandler> perfHandler;
-
 public:
 	/**
 	 * The default constructor

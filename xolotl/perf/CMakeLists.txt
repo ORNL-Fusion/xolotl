@@ -16,6 +16,7 @@ set(XOLOTL_PERF_HEADERS
 
 set(XOLOTL_PERF_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/PerfHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/ScopedTimer.cpp
 )
 
 include(src/dummy/Include.cmake)
