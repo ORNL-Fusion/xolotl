@@ -11,6 +11,7 @@
 #include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/solver/Solver.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/version.h>
 #include <xolotl/viz/VizHandlerRegistry.h>
@@ -61,10 +62,20 @@ private:
 	Kokkos::ScopeGuard _kokkosContext;
 };
 
+std::shared_ptr<solver::Solver>
+solverCast(const std::shared_ptr<solver::ISolver>& solver) noexcept
+{
+	auto ret = std::dynamic_pointer_cast<solver::Solver>(solver);
+	assert(ret.get() != nullptr);
+	return ret;
+}
+
 void
 reportException(const std::exception& e)
 {
-	std::cerr << e.what() << "\nAborting." << std::endl;
+	XOLOTL_LOG_ERR << e.what();
+	util::Log::flush();
+	std::cerr << "Aborting." << std::endl;
 }
 
 XolotlInterface::XolotlInterface() = default;
@@ -104,18 +115,15 @@ try {
 
 	if (rank == 0) {
 		// Print the start message
-		std::cout << "Starting Xolotl (" << getExactVersionString() << ")\n";
+		XOLOTL_LOG << "Starting Xolotl (" << getExactVersionString() << ")\n";
 		// TODO! Print copyright message
 		// Print date and time
 		std::time_t currentTime = std::time(NULL);
-		std::cout << std::asctime(std::localtime(&currentTime)) << std::flush;
+		XOLOTL_LOG << std::asctime(std::localtime(&currentTime)) << std::flush;
 	}
 
 	options::Options opts;
 	opts.readParams(argc, argv);
-	if (!opts.shouldRun()) {
-		throw std::runtime_error("Unable to read the options.");
-	}
 
 	// Set up our performance data infrastructure.
 	perf::PerfHandlerRegistry::set(
@@ -128,6 +136,15 @@ try {
 	// Setup the solver
 	solver = factory::solver::SolverFactory::get().generate(opts);
 	assert(solver);
+
+	auto bounds = getAllClusterBounds();
+	std::vector<std::vector<std::vector<AmountType>>> allBounds;
+	allBounds.push_back(bounds);
+	initializeClusterMaps(allBounds);
+
+	auto processMap = opts.getProcesses();
+	if (processMap["noSolve"])
+		return;
 	// Initialize the solver
 	solver->initialize();
 }
@@ -162,7 +179,7 @@ std::vector<std::vector<std::vector<std::array<double, 4>>>>
 XolotlInterface::getLocalNE()
 try {
 	// Get the solver handler and return the rate vector
-	return solver::Solver::getSolverHandler().getLocalNE();
+	return solverCast(solver)->getSolverHandler()->getLocalNE();
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -174,10 +191,8 @@ XolotlInterface::setLocalNE(
 	const std::vector<std::vector<std::vector<std::array<double, 4>>>>&
 		rateVector)
 try {
-	// Get the solver handler
-	auto& solverHandler = solver::Solver::getSolverHandler();
 	// Set the rate vector
-	solverHandler.setLocalNE(rateVector);
+	solverCast(solver)->getSolverHandler()->setLocalNE(rateVector);
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -188,10 +203,9 @@ void
 XolotlInterface::getLocalCoordinates(IdType& xs, IdType& xm, IdType& Mx,
 	IdType& ys, IdType& ym, IdType& My, IdType& zs, IdType& zm, IdType& Mz)
 try {
-	// Get the solver handler
-	auto& solverHandler = solver::Solver::getSolverHandler();
 	// Get the local coordinates
-	solverHandler.getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
+	solverCast(solver)->getSolverHandler()->getLocalCoordinates(
+		xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -201,10 +215,8 @@ catch (const std::exception& e) {
 void
 XolotlInterface::setGBLocation(IdType i, IdType j, IdType k)
 try {
-	// Get the solver handler
-	auto& solverHandler = solver::Solver::getSolverHandler();
 	// Set the coordinate of the GB
-	solverHandler.setGBLocation(i, j, k);
+	solverCast(solver)->getSolverHandler()->setGBLocation(i, j, k);
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -214,10 +226,8 @@ catch (const std::exception& e) {
 void
 XolotlInterface::resetGBVector()
 try {
-	// Get the solver handler
-	auto& solverHandler = solver::Solver::getSolverHandler();
 	// Reset the location
-	solverHandler.resetGBVector();
+	solverCast(solver)->getSolverHandler()->resetGBVector();
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -251,9 +261,7 @@ catch (const std::exception& e) {
 double
 XolotlInterface::getPreviousTime()
 try {
-	// Get the solver handler
-	auto& solverHandler = solver::Solver::getSolverHandler();
-	return solverHandler.getPreviousTime();
+	return solverCast(solver)->getSolverHandler()->getPreviousTime();
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -263,9 +271,8 @@ catch (const std::exception& e) {
 void
 XolotlInterface::setPreviousTime(double time)
 try {
-	// Get the solver handler
-	auto& solverHandler = solver::Solver::getSolverHandler();
-	solverHandler.setPreviousTime(time, true); // Update the fluence from here
+	// Update the fluence from here
+	solverCast(solver)->getSolverHandler()->setPreviousTime(time, true);
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -295,9 +302,7 @@ catch (const std::exception& e) {
 double
 XolotlInterface::getNXeGB()
 try {
-	// Get the solver handler
-	auto& solverHandler = solver::Solver::getSolverHandler();
-	return solverHandler.getNXeGB();
+	return solverCast(solver)->getSolverHandler()->getNXeGB();
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -307,9 +312,7 @@ catch (const std::exception& e) {
 void
 XolotlInterface::setNXeGB(double nXe)
 try {
-	// Get the solver handler
-	auto& solverHandler = solver::Solver::getSolverHandler();
-	solverHandler.setNXeGB(nXe);
+	solverCast(solver)->getSolverHandler()->setNXeGB(nXe);
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -326,13 +329,120 @@ std::vector<double>
 XolotlInterface::getGridInfo(double& hy, double& hz)
 try {
 	// Get the solver handler
-	auto& solverHandler = solver::Solver::getSolverHandler();
+	auto solverHandler = solverCast(solver)->getSolverHandler();
 
 	// Get the step size
-	hy = solverHandler.getStepSizeY();
-	hz = solverHandler.getStepSizeZ();
+	hy = solverHandler->getStepSizeY();
+	hz = solverHandler->getStepSizeZ();
 
-	return solverHandler.getXGrid();
+	return solverHandler->getXGrid();
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+std::vector<std::vector<AmountType>>
+XolotlInterface::getAllClusterBounds()
+try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+
+	return network.getAllClusterBounds();
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::initializeClusterMaps(
+	std::vector<std::vector<std::vector<AmountType>>> bounds)
+try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	network.initializeClusterMap(bounds);
+
+	// Create the local map
+	auto currentBounds = getAllClusterBounds();
+	// Loop on the sub network bounds
+	for (auto subBounds : bounds) {
+		// Create a new vector
+		std::vector<AmountType> temp;
+		// Loop on the entries
+		for (auto bound : subBounds) {
+			// Look for the same cluster in currentBounds
+			for (auto j = 0; j < currentBounds.size(); j++) {
+				if (bound == currentBounds[j]) {
+					temp.push_back(j);
+					break;
+				}
+			}
+		}
+		fromSubNetwork.push_back(temp);
+	}
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::setConstantRates(std::vector<std::vector<double>> rates)
+try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	network.setConstantRates(rates);
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+std::vector<std::vector<std::vector<double>>>
+XolotlInterface::computeConstantRates(std::vector<std::vector<double>> conc)
+try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	const auto dof = network.getDOF();
+
+	// Construct the full concentration vector first
+	std::vector<double> fullConc(dof, 0.0);
+	for (auto i = 0; i < conc.size(); i++)
+		for (auto j = 0; j < conc[i].size(); j++) {
+			fullConc[fromSubNetwork[i][j]] = conc[i][j];
+		}
+
+	auto hConcs =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+			fullConc.data(), dof);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+	deep_copy(dConcs, hConcs);
+
+	// Loop on the sub network maps
+	std::vector<std::vector<std::vector<double>>> toReturn;
+	for (auto subMap : fromSubNetwork) {
+		// Get the sub DOF and initialize the rate map
+		auto subDOF = subMap.size();
+		auto hMap = Kokkos::View<AmountType*, Kokkos::HostSpace,
+			Kokkos::MemoryUnmanaged>(subMap.data(), subDOF);
+		auto dMap = Kokkos::View<AmountType*>("Sub Map", subDOF);
+		deep_copy(dMap, hMap);
+		std::vector<std::vector<double>> rateMap =
+			std::vector(subDOF, std::vector(subDOF + 1, 0.0));
+		auto hRates = Kokkos::View<double**, Kokkos::HostSpace>(
+			"hRates", subDOF, subDOF + 1);
+		auto dRates = Kokkos::View<double**>("Sub Rates", subDOF, subDOF + 1);
+		deep_copy(dRates, hRates);
+
+		network.computeConstantRates(dConcs, dRates, dMap);
+
+		deep_copy(hRates, dRates);
+		// TODO: does it need to be copied element by element?
+		toReturn.push_back(rateMap);
+	}
+
+	return toReturn;
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -369,8 +479,10 @@ try {
 	int rank;
 	MPI_Comm_rank(xolotlComm, &rank);
 	if (rank == 0) {
+		util::StringStream ss;
 		handlerRegistry->reportStatistics(
-			std::cout, timerStats, counterStats, hwCtrStats);
+			ss, timerStats, counterStats, hwCtrStats);
+		XOLOTL_LOG << ss.str();
 	}
 
 	solver.reset();

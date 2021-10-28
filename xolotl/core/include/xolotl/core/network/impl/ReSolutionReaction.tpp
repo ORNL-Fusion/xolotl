@@ -394,7 +394,7 @@ KOKKOS_INLINE_FUNCTION
 void
 ReSolutionReaction<TNetwork, TDerived>::computePartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	Connectivity connectivity, IndexType gridIndex)
+	IndexType gridIndex)
 {
 	using AmountType = typename NetworkType::AmountType;
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
@@ -403,36 +403,33 @@ ReSolutionReaction<TNetwork, TDerived>::computePartialDerivatives(
 	// First for the reactant
 	double df = this->_rate(gridIndex) / (double)_reactantVolume;
 	// Compute the values
-	Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)),
-		df * this->_coefs(0, 0, 0, 0));
+	Kokkos::atomic_sub(
+		&values(_connEntries[0][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[i()] != invalidIndex) {
-			Kokkos::atomic_sub(
-				&values(connectivity(_reactant, _reactantMomentIds[i()])),
+			Kokkos::atomic_sub(&values(_connEntries[0][0][0][1 + i()]),
 				df * this->_coefs(i() + 1, 0, 0, 0));
 		}
 	}
 	// For the first product
 	df = this->_rate(gridIndex) / (double)_productVolumes[0];
-	Kokkos::atomic_add(&values(connectivity(_products[0], _reactant)),
-		df * this->_coefs(0, 0, 0, 0));
+	Kokkos::atomic_add(
+		&values(_connEntries[1][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[i()] != invalidIndex) {
-			Kokkos::atomic_add(
-				&values(connectivity(_products[0], _reactantMomentIds[i()])),
+			Kokkos::atomic_add(&values(_connEntries[1][0][0][1 + i()]),
 				df * this->_coefs(i() + 1, 0, 0, 0));
 		}
 	}
 	// For the second product
 	df = this->_rate(gridIndex) / (double)_productVolumes[1];
-	Kokkos::atomic_add(&values(connectivity(_products[1], _reactant)),
-		df * this->_coefs(0, 0, 0, 0));
+	Kokkos::atomic_add(
+		&values(_connEntries[2][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[i()] != invalidIndex) {
-			Kokkos::atomic_add(
-				&values(connectivity(_products[1], _reactantMomentIds[i()])),
+			Kokkos::atomic_add(&values(_connEntries[2][0][0][1 + i()]),
 				df * this->_coefs(i() + 1, 0, 0, 0));
 		}
 	}
@@ -443,14 +440,12 @@ ReSolutionReaction<TNetwork, TDerived>::computePartialDerivatives(
 			// First for the reactant
 			df = this->_rate(gridIndex) / (double)_reactantVolume;
 			// Compute the values
-			Kokkos::atomic_sub(
-				&values(connectivity(_reactantMomentIds[k()], _reactant)),
+			Kokkos::atomic_sub(&values(_connEntries[0][1 + k()][0][0]),
 				df * this->_coefs(0, 0, 0, k() + 1));
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[i()] != invalidIndex) {
 					Kokkos::atomic_sub(
-						&values(connectivity(
-							_reactantMomentIds[k()], _reactantMomentIds[i()])),
+						&values(_connEntries[0][1 + k()][0][1 + i()]),
 						df * this->_coefs(i() + 1, 0, 0, k() + 1));
 				}
 			}
@@ -458,14 +453,12 @@ ReSolutionReaction<TNetwork, TDerived>::computePartialDerivatives(
 		// For the first product
 		if (_productMomentIds[0][k()] != invalidIndex) {
 			df = this->_rate(gridIndex) / (double)_productVolumes[0];
-			Kokkos::atomic_add(
-				&values(connectivity(_productMomentIds[0][k()], _reactant)),
+			Kokkos::atomic_add(&values(_connEntries[1][1 + k()][0][0]),
 				df * this->_coefs(0, 0, 1, k() + 1));
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[i()] != invalidIndex) {
 					Kokkos::atomic_add(
-						&values(connectivity(_productMomentIds[0][k()],
-							_reactantMomentIds[i()])),
+						&values(_connEntries[1][1 + k()][0][1 + i()]),
 						df * this->_coefs(i() + 1, 0, 1, k() + 1));
 				}
 			}
@@ -473,14 +466,12 @@ ReSolutionReaction<TNetwork, TDerived>::computePartialDerivatives(
 		// For the second product
 		if (_productMomentIds[1][k()] != invalidIndex) {
 			df = this->_rate(gridIndex) / (double)_productVolumes[1];
-			Kokkos::atomic_add(
-				&values(connectivity(_productMomentIds[1][k()], _reactant)),
+			Kokkos::atomic_add(&values(_connEntries[2][1 + k()][0][0]),
 				df * this->_coefs(0, 0, 2, k() + 1));
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[i()] != invalidIndex) {
 					Kokkos::atomic_add(
-						&values(connectivity(_productMomentIds[1][k()],
-							_reactantMomentIds[i()])),
+						&values(_connEntries[2][1 + k()][0][1 + i()]),
 						df * this->_coefs(i() + 1, 0, 2, k() + 1));
 				}
 			}
@@ -493,7 +484,7 @@ KOKKOS_INLINE_FUNCTION
 void
 ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	Connectivity connectivity, IndexType gridIndex)
+	IndexType gridIndex)
 {
 	using AmountType = typename NetworkType::AmountType;
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
@@ -502,19 +493,19 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	// First for the reactant
 	double df = this->_rate(gridIndex) / (double)_reactantVolume;
 	// Compute the values
-	Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)),
-		df * this->_coefs(0, 0, 0, 0));
+	Kokkos::atomic_sub(
+		&values(_connEntries[0][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 	// For the first product
 	df = this->_rate(gridIndex) / (double)_productVolumes[0];
 	if (_products[0] == _reactant)
-		Kokkos::atomic_add(&values(connectivity(_products[0], _reactant)),
-			df * this->_coefs(0, 0, 0, 0));
+		Kokkos::atomic_add(
+			&values(_connEntries[1][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 
 	// For the second product
 	df = this->_rate(gridIndex) / (double)_productVolumes[1];
 	if (_products[1] == _reactant)
-		Kokkos::atomic_add(&values(connectivity(_products[1], _reactant)),
-			df * this->_coefs(0, 0, 0, 0));
+		Kokkos::atomic_add(
+			&values(_connEntries[2][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 
 	// Take care of the first moments
 	for (auto k : speciesRangeNoI) {
@@ -525,8 +516,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			for (auto i : speciesRangeNoI) {
 				if (k() == i())
 					Kokkos::atomic_sub(
-						&values(connectivity(
-							_reactantMomentIds[k()], _reactantMomentIds[i()])),
+						&values(_connEntries[0][1 + k()][0][1 + i()]),
 						df * this->_coefs(i() + 1, 0, 0, k() + 1));
 			}
 		}
@@ -536,8 +526,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			for (auto i : speciesRangeNoI) {
 				if (_productMomentIds[0][k()] == _reactantMomentIds[i()])
 					Kokkos::atomic_add(
-						&values(connectivity(_productMomentIds[0][k()],
-							_reactantMomentIds[i()])),
+						&values(_connEntries[1][1 + k()][0][1 + i()]),
 						df * this->_coefs(i() + 1, 0, 1, k() + 1));
 			}
 		}
@@ -547,12 +536,54 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			for (auto i : speciesRangeNoI) {
 				if (_productMomentIds[1][k()] == _reactantMomentIds[i()])
 					Kokkos::atomic_add(
-						&values(connectivity(_productMomentIds[1][k()],
-							_reactantMomentIds[i()])),
+						&values(_connEntries[2][1 + k()][0][1 + i()]),
 						df * this->_coefs(i() + 1, 0, 2, k() + 1));
 			}
 		}
 	}
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+ReSolutionReaction<TNetwork, TDerived>::computeConstantRates(
+	ConcentrationsView concentrations, RatesView rates, BelongingView isInSub,
+	OwnedSubMapView backMap, IndexType gridIndex)
+{
+	// Only consider cases where one of the products is in the sub network
+	// but not the dissociating cluster
+	if (isInSub[_reactant])
+		return;
+	if (not isInSub[_products[0]] and not isInSub[_products[0]])
+		return;
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	// Initialize the concentrations that will be used in the loops
+	auto cR = concentrations[_reactant];
+	Kokkos::Array<double, nMomentIds> cmR;
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] == invalidIndex) {
+			cmR[i()] = 0.0;
+		}
+		else
+			cmR[i()] = concentrations[_reactantMomentIds[i()]];
+	}
+
+	// Compute the flux for the 0th order moments
+	double f = this->_coefs(0, 0, 0, 0) * cR;
+	for (auto i : speciesRangeNoI) {
+		f += this->_coefs(i() + 1, 0, 0, 0) * cmR[i()];
+	}
+	f *= this->_rate(gridIndex);
+	if (isInSub[_products[0]])
+		Kokkos::atomic_add(&rates(_products[0], isInSub.extent(0)),
+			f / (double)_productVolumes[0]);
+	if (isInSub[_products[1]])
+		Kokkos::atomic_add(&rates(_products[1], isInSub.extent(0)),
+			f / (double)_productVolumes[1]);
+
+	// TODO: add grouping
 }
 
 template <typename TNetwork, typename TDerived>
@@ -563,6 +594,53 @@ ReSolutionReaction<TNetwork, TDerived>::computeLeftSideRate(
 {
 	// This type of reaction doesn't count
 	return 0.0;
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+ReSolutionReaction<TNetwork, TDerived>::mapJacobianEntries(
+	Connectivity connectivity)
+{
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	_connEntries[0][0][0][0] = connectivity(_reactant, _reactant);
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] != invalidIndex) {
+			_connEntries[0][0][0][1 + i()] =
+				connectivity(_reactant, _reactantMomentIds[i()]);
+			_connEntries[0][1 + i()][0][0] =
+				connectivity(_reactantMomentIds[i()], _reactant);
+			for (auto j : speciesRangeNoI) {
+				if (_reactantMomentIds[j()] != invalidIndex) {
+					_connEntries[0][1 + i()][0][1 + j()] = connectivity(
+						_reactantMomentIds[i()], _reactantMomentIds[j()]);
+				}
+			}
+		}
+	}
+
+	for (auto p : {0, 1}) {
+		_connEntries[1 + p][0][0][0] = connectivity(_products[p], _reactant);
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[i()] != invalidIndex) {
+				_connEntries[1 + p][0][0][1 + i()] =
+					connectivity(_products[p], _reactantMomentIds[i()]);
+			}
+			if (_productMomentIds[p][i()] != invalidIndex) {
+				_connEntries[1 + p][1 + i()][0][0] =
+					connectivity(_productMomentIds[p][i()], _reactant);
+			}
+			if (_productMomentIds[p][i()] != invalidIndex) {
+				for (auto j : speciesRangeNoI) {
+					if (_reactantMomentIds[j()] != invalidIndex) {
+						_connEntries[1 + p][1 + i()][0][1 + j()] = connectivity(
+							_productMomentIds[p][i()], _reactantMomentIds[j()]);
+					}
+				}
+			}
+		}
+	}
 }
 } // namespace network
 } // namespace core

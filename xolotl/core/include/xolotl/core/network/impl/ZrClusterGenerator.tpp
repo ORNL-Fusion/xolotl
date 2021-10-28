@@ -124,9 +124,8 @@ ZrClusterGenerator::getDiffusionFactor(
 	const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
 	constexpr double defaultDiffusion = 1.0;
-	//constexpr double iNineDiffusion = 2.2e+11;
-    constexpr double iNineDiffusion = 0.0;
-
+	// constexpr double iNineDiffusion = 2.2e+11;
+	constexpr double iNineDiffusion = 0.0;
 
 	const auto& reg = cluster.getRegion();
 	Composition comp(reg.getOrigin());
@@ -158,15 +157,17 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	Composition lo(reg.getOrigin());
 	double radius = 0.0;
 
-    // jmr: rn = (3nOmega/4pi)^1/3 [nm] for n < 10
-    // jmr: Note that (3Omega/4pi) = 5.586e-3 nm^3, where Omega = 0.0234 nm^3
-    // jmr: For prismatic loops (n > 9): rn = 0.163076*sqrt(n) [nm]
-    // jmr: For basal loops (n > 9): rn = 0.169587*sqrt(n) [nm]
+	// jmr: rn = (3nOmega/4pi)^1/3 [nm] for n < 10
+	// jmr: Note that (3Omega/4pi) = 5.586e-3 nm^3, where Omega = 0.0234 nm^3
+	// jmr: For prismatic loops (n > 9): rn = 0.163076*sqrt(n) [nm]
+	// jmr: For basal loops (n > 9): rn = 0.169587*sqrt(n) [nm]
 
 	if (lo.isOnAxis(Species::V)) {
 		for (auto j : makeIntervalRange(reg[Species::V])) {
-            if (lo[Species::V] < 10) radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
-            else radius += 0.163076 * pow((double)j,0.5);
+			if (lo[Species::V] < 10)
+				radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
+			else
+				radius += 0.163076 * pow((double)j, 0.5);
 		}
 
 		return radius / reg[Species::V].length();
@@ -174,9 +175,11 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 
 	if (lo.isOnAxis(Species::I)) {
 		for (auto j : makeIntervalRange(reg[Species::I])) {
-            if (lo[Species::I] < 10) radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
-            else radius += 0.163076 * pow((double)j,0.5);
-        }
+			if (lo[Species::I] < 10)
+				radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
+			else
+				radius += 0.163076 * pow((double)j, 0.5);
+		}
 		return radius / reg[Species::I].length();
 	}
 

@@ -28,6 +28,9 @@ public:
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using RatesView = typename Superclass::RatesView;
+	using BelongingView = typename Superclass::BelongingView;
+	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
 	using ClusterData = typename Superclass::ClusterData;
@@ -77,14 +80,20 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex)
+	{
+		return;
+	}
 
 	KOKKOS_INLINE_FUNCTION
 	double
@@ -94,10 +103,15 @@ private:
 		return 0.0;
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity);
+
 protected:
 	IndexType _reactant;
 	IndexType _product;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
+	util::Array<IndexType, 2, 1, 1, 1> _connEntries;
 };
 } // namespace network
 } // namespace core

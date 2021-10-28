@@ -91,10 +91,9 @@ public:
 		double latticeParameter, double interstitialBias,
 		double impurityRadius) const noexcept;
 
-private:
 	KOKKOS_INLINE_FUNCTION
-	double
-	getHeVFormationEnergy(Composition comp) const noexcept;
+	static double
+	getHeVFormationEnergy(Composition comp);
 
 private:
 	// The factor between He and H radius sizes

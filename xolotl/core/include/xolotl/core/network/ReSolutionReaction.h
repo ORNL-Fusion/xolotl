@@ -27,6 +27,9 @@ public:
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using RatesView = typename Superclass::RatesView;
+	using BelongingView = typename Superclass::BelongingView;
+	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using Composition = typename Superclass::Composition;
 	using Region = typename Superclass::Region;
 	using AmountType = typename Superclass::AmountType;
@@ -79,30 +82,39 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity);
+
 protected:
 	IndexType _reactant;
 	AmountType _reactantVolume;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
-	Kokkos::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
-	Kokkos::Array<AmountType, 2> _productVolumes{0, 0};
+	util::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
+	util::Array<AmountType, 2> _productVolumes{0, 0};
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
-	Kokkos::Array<IndexType, nMomentIds> _reactantMomentIds;
-	Kokkos::Array<Kokkos::Array<IndexType, nMomentIds>, 2> _productMomentIds;
+	util::Array<IndexType, nMomentIds> _reactantMomentIds;
+	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
+
+	util::Array<IndexType, 3, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
 };
 } // namespace network
 } // namespace core

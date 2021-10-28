@@ -6,7 +6,7 @@
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/options/Options.h>
-#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -46,16 +46,15 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);
 	this->setEnableNucleation(map["heterogeneous"]);
-	setEnableSink(map["sink"]);
+	this->setEnableSink(map["sink"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
+	this->setEnableConstantReaction(map["constant"]);
 	std::string petscString = opts.getPetscArg();
-	util::TokenizedLineReader<std::string> reader;
-	reader.setInputStream(std::make_shared<std::istringstream>(petscString));
-	auto tokens = reader.loadLine();
+	auto tokens = util::Tokenizer<>{petscString}();
 	bool useReduced = false;
-	for (int i = 0; i < tokens.size(); ++i) {
-		if (tokens[i] == "-snes_mf_operator") {
+	for (const auto& token : tokens) {
+		if (token == "-snes_mf_operator") {
 			useReduced = true;
 			break;
 		}
@@ -67,7 +66,9 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
 
-	defineReactions();
+	Connectivity connectivity;
+	defineReactions(connectivity);
+	generateDiagonalFill(connectivity);
 }
 
 template <typename TImpl>
@@ -203,6 +204,15 @@ ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 {
 	Superclass::setEnableTrapMutation(reaction);
 	_clusterData.h_view().setEnableTrapMutation(this->_enableTrapMutation);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableConstantReaction(bool reaction)
+{
+	this->_enableConstantReaction = reaction;
+	_clusterData.h_view().setEnableConstantReaction(
+		this->_enableConstantReaction);
 }
 
 template <typename TImpl>
@@ -343,6 +353,59 @@ ReactionNetwork<TImpl>::getAllClusterBounds()
 }
 
 template <typename TImpl>
+void
+ReactionNetwork<TImpl>::initializeClusterMap(
+	typename ReactionNetwork<TImpl>::BoundVector bounds)
+{
+	// Get the current bounds
+	auto currentBounds = getAllClusterBounds();
+
+	// Check that the sizes add up
+	IndexType nSubClusters = 0;
+	for (auto subBounds : bounds) {
+		nSubClusters += subBounds.size();
+	}
+	assert(this->_numClusters == nSubClusters);
+
+	auto clusterData = _clusterData.h_view;
+
+	auto mirApp = create_mirror_view(clusterData().toSubNetworkApp);
+	auto mirIndex = create_mirror_view(clusterData().toSubNetworkIndex);
+	// Loop on the current clusters
+	for (auto k = 0; k < this->_numClusters; ++k) {
+		// Loop on each sub bounds vector
+		for (auto i = 0; i < bounds.size(); i++)
+			for (auto j = 0; j < bounds[i].size(); j++) {
+				if (currentBounds[k] == bounds[i][j]) {
+					mirApp(k) = i;
+					mirIndex(k) = j;
+					break;
+				}
+			}
+	}
+	deep_copy(clusterData().toSubNetworkApp, mirApp);
+	deep_copy(clusterData().toSubNetworkIndex, mirIndex);
+
+	return;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setConstantRates(
+	typename ReactionNetwork<TImpl>::RateVector rates)
+{
+	auto clusterData = _clusterData.h_view;
+
+	// Loop on the current clusters
+	for (auto i = 0; i < this->_numClusters; ++i)
+		for (auto j = 0; j < this->_numClusters + 1; ++j) {
+			clusterData().constantRates(i, j) = rates[i][j];
+		}
+
+	return;
+}
+
+template <typename TImpl>
 typename ReactionNetwork<TImpl>::PhaseSpace
 ReactionNetwork<TImpl>::getPhaseSpace()
 {
@@ -400,20 +463,54 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 	asDerived()->computePartialsPreProcess(
 		concentrations, values, gridIndex, surfaceDepth, spacing);
 
-	auto connectivity = _reactions.getConnectivity();
 	if (this->_enableReducedJacobian) {
 		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributeReducedPartialDerivatives(
-				concentrations, values, connectivity, gridIndex);
+				concentrations, values, gridIndex);
 		});
 	}
 	else {
 		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 			reaction.contributePartialDerivatives(
-				concentrations, values, connectivity, gridIndex);
+				concentrations, values, gridIndex);
 		});
 	}
 
+	Kokkos::fence();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::computeConstantRates(ConcentrationsView concentrations,
+	RatesView rates, SubMapView subMap, IndexType gridIndex,
+	double surfaceDepth, double spacing)
+{
+	asDerived()->computeConstantRatesPreProcess(
+		concentrations, gridIndex, surfaceDepth, spacing);
+
+	// Create additional views to know how to treat each cluster
+	auto dof = concentrations.extent(0);
+	auto isInSub = BelongingView("In Sub", dof);
+	auto clusterData = _clusterData.d_view;
+	auto backMap = OwnedSubMapView("Back Map", dof);
+
+	// Initialize them
+	Kokkos::parallel_for(
+		dof, KOKKOS_LAMBDA(const IndexType i) {
+			isInSub(i) = false;
+			backMap(i) = 0;
+		});
+	Kokkos::parallel_for(
+		subMap.extent(0), KOKKOS_LAMBDA(const IndexType i) {
+			auto id = subMap(i);
+			isInSub(id) = true;
+			backMap(id) = i;
+		});
+
+	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
+		reaction.contributeConstantRates(
+			concentrations, rates, isInSub, backMap, gridIndex);
+	});
 	Kokkos::fence();
 }
 
@@ -618,16 +715,44 @@ ReactionNetwork<TImpl>::defineMomentIds()
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::defineReactions()
+ReactionNetwork<TImpl>::defineReactions(Connectivity& connectivity)
 {
-	_worker.defineReactions();
+	_worker.defineReactions(connectivity);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::generateDiagonalFill(const Connectivity& connectivity)
+{
+	auto hConnRowMap = create_mirror_view(connectivity.row_map);
+	deep_copy(hConnRowMap, connectivity.row_map);
+	auto hConnEntries = create_mirror_view(connectivity.entries);
+	deep_copy(hConnEntries, connectivity.entries);
+
+	_connectivityMap.clear();
+	for (int i = 0; i < this->getDOF(); ++i) {
+		auto jBegin = hConnRowMap(i);
+		auto jEnd = hConnRowMap(i + 1);
+		std::vector<int> current;
+		current.reserve(jEnd - jBegin);
+		for (IndexType j = jBegin; j < jEnd; ++j) {
+			current.push_back((int)hConnEntries(j));
+		}
+		_connectivityMap[i] = std::move(current);
+	}
 }
 
 template <typename TImpl>
 typename ReactionNetwork<TImpl>::IndexType
 ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
 {
-	return _worker.getDiagonalFill(fillMap);
+	IndexType nnz = 0;
+	for (int i = 0; i < this->getDOF(); ++i) {
+		const auto& current = _connectivityMap[i];
+		nnz += current.size();
+		fillMap.insert_or_assign(i, current);
+	}
+	return nnz;
 }
 
 namespace detail
@@ -714,35 +839,11 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 
 template <typename TImpl>
 void
-ReactionNetworkWorker<TImpl>::defineReactions()
+ReactionNetworkWorker<TImpl>::defineReactions(Connectivity& connectivity)
 {
 	auto generator = _nw.asDerived()->getReactionGenerator();
 	_nw._reactions = generator.generateReactions();
-}
-
-template <typename TImpl>
-typename ReactionNetworkWorker<TImpl>::IndexType
-ReactionNetworkWorker<TImpl>::getDiagonalFill(
-	typename Network::SparseFillMap& fillMap)
-{
-	auto connectivity = _nw._reactions.getConnectivity();
-	auto hConnRowMap = create_mirror_view(connectivity.row_map);
-	deep_copy(hConnRowMap, connectivity.row_map);
-	auto hConnEntries = create_mirror_view(connectivity.entries);
-	deep_copy(hConnEntries, connectivity.entries);
-
-	for (int i = 0; i < _nw.getDOF(); ++i) {
-		auto jBegin = hConnRowMap(i);
-		auto jEnd = hConnRowMap(i + 1);
-		std::vector<int> current;
-		current.reserve(jEnd - jBegin);
-		for (IndexType j = jBegin; j < jEnd; ++j) {
-			current.push_back((int)hConnEntries(j));
-		}
-		fillMap[i] = std::move(current);
-	}
-
-	return hConnEntries.extent(0);
+	connectivity = generator.getConnectivity();
 }
 
 template <typename TImpl>

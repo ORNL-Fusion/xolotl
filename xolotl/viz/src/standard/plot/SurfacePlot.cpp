@@ -1,7 +1,7 @@
 // Includes
-#include <iostream>
 #include <string>
 
+#include <xolotl/util/Log.h>
 #include <xolotl/viz/standard/plot/SurfacePlot.h>
 
 // General VTKM includes
@@ -46,13 +46,13 @@ SurfacePlot::render(const std::string& fileName)
 {
 	// Check if the label provider is set
 	if (!plotLabelProvider) {
-		std::cout << "The LabelProvider is not set!!" << std::endl;
+		XOLOTL_LOG_WRN << "The LabelProvider is not set!!";
 		return;
 	}
 
 	// Check if the data provider is set
 	if (!plotDataProvider) {
-		std::cout << "The DataProvider is not set!!" << std::endl;
+		XOLOTL_LOG_WRN << "The DataProvider is not set!!";
 		return;
 	}
 

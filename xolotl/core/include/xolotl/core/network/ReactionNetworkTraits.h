@@ -45,7 +45,7 @@ namespace detail
 {
 using ReactionNetworkIndexType = ::xolotl::IdType;
 
-using CompositionAmountType = std::uint32_t;
+using CompositionAmountType = ::xolotl::AmountType;
 
 inline constexpr auto invalidNetworkIndex =
 	plsm::invalid<ReactionNetworkIndexType>;

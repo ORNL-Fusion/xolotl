@@ -111,7 +111,10 @@ struct ClusterDataCommon
 		formationEnergy(data.formationEnergy),
 		migrationEnergy(data.migrationEnergy),
 		diffusionFactor(data.diffusionFactor),
-		diffusionCoefficient(data.diffusionCoefficient)
+		toSubNetworkApp(data.toSubNetworkApp),
+		toSubNetworkIndex(data.toSubNetworkIndex),
+		diffusionCoefficient(data.diffusionCoefficient),
+		constantRates(data.constantRates)
 	{
 	}
 
@@ -154,6 +157,7 @@ private:
 		NUCLEATION,
 		SINK,
 		TRAP_MUTATION,
+		CONSTANT_REACTION,
 		NUM_BOOL_VALS
 	};
 
@@ -285,6 +289,19 @@ public:
 		setVal(_boolVals, TRAP_MUTATION, val);
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableConstantReaction() const
+	{
+		return _boolVals[CONSTANT_REACTION];
+	}
+
+	void
+	setEnableConstantReaction(bool val)
+	{
+		setVal(_boolVals, CONSTANT_REACTION, val);
+	}
+
 private:
 	View<double[NUM_FLOAT_VALS]> _floatVals;
 	View<bool[NUM_BOOL_VALS]> _boolVals;
@@ -298,7 +315,10 @@ public:
 	View<double*> formationEnergy;
 	View<double*> migrationEnergy;
 	View<double*> diffusionFactor;
+	View<IndexType*> toSubNetworkApp;
+	View<IndexType*> toSubNetworkIndex;
 	View<double**> diffusionCoefficient;
+	View<double**> constantRates;
 };
 
 /**

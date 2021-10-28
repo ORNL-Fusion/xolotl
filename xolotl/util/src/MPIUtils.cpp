@@ -19,7 +19,7 @@ setMPIComm(MPI_Comm comm)
 }
 
 MPI_Comm
-getMPIComm(void)
+getMPIComm()
 {
 	return xolotlMPIComm;
 }
@@ -29,6 +29,14 @@ mpiInit(int& argc, const char* argv[])
 {
 	auto ncargv = const_cast<char**>(argv);
 	MPI_Init(&argc, &ncargv);
+}
+
+int
+getMPIRank()
+{
+	int rank;
+	MPI_Comm_rank(getMPIComm(), &rank);
+	return rank;
 }
 
 } // namespace util
