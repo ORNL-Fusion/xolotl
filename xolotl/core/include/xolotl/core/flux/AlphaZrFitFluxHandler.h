@@ -66,16 +66,19 @@ public:
 
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
-        int numMobile = 0;
-        if (maxSizeI < 10) numMobile = maxSizeI+1;
-        else numMobile = 10;
+        int numMobileI = 0;
+        int numMobileV = 0;
+        if (maxSizeI < 10) numMobileI = maxSizeI+1;
+        else numMobileI = 10;
+        if (maxSizeV < 10) numMobileV = maxSizeV+1;
+        else numMobileV = 10;
 
 		// Set the flux index corresponding the mobile interstitial clusters (n < 10)
         NetworkType::Composition comp = NetworkType::Composition::zero();
         comp[NetworkType::Species::I] = 1;
         std::ostringstream oss;
         auto cluster = zrNetwork->findCluster(comp, plsm::onHost);
-        for (int i = 1; i < numMobile; i++){
+        for (int i = 1; i < numMobileI; i++){
             comp[NetworkType::Species::I] = i;
             cluster = zrNetwork->findCluster(comp, plsm::onHost);
             if (cluster.getId() == NetworkType::invalidIndex()) {
@@ -104,7 +107,7 @@ public:
 
         // Set the flux index corresponding the mobile vacancy clusters (n < 10)
 		comp[NetworkType::Species::I] = 0;
-        for (int i = 1; i < numMobile; i++){
+        for (int i = 1; i < numMobileV; i++){
             comp[NetworkType::Species::V] = i;
             cluster = zrNetwork->findCluster(comp, plsm::onHost);
             if (cluster.getId() == NetworkType::invalidIndex()) {
@@ -162,28 +165,9 @@ public:
             // Set the vacancy fluxes
             for (int i = 0; i < maxSizeV; i++){
                 updatedConcOffset[fluxIndices[i+maxSizeI]] += fluxV[i];
+
             }
             
-            /*
-			updatedConcOffset[fluxIndices[0]] += 7.15306e-07; // I1 (7.153e+14 cm^-3 s^-1)
-			updatedConcOffset[fluxIndices[1]] += 4.37883e-08; // I2
-            updatedConcOffset[fluxIndices[2]] += 2.43045e-08; // I3
-            updatedConcOffset[fluxIndices[3]] += 1.61015e-08; // I4
-            updatedConcOffset[fluxIndices[4]] += 4.66543e-09; // I5
-            updatedConcOffset[fluxIndices[5]] += 5.13252e-09; // I6
-            updatedConcOffset[fluxIndices[6]] += 5.13252e-09; // I7
-            updatedConcOffset[fluxIndices[7]] += 5.13252e-09; // I8
-            updatedConcOffset[fluxIndices[8]] += 5.13252e-09; // I9
-            updatedConcOffset[fluxIndices[9]] += 5.18329e-07; // V1
-            updatedConcOffset[fluxIndices[10]] += 5.32574e-08; // V2
-            updatedConcOffset[fluxIndices[11]] += 1.28488e-08; // V3
-            updatedConcOffset[fluxIndices[12]] += 2.01684e-08; // V4
-            updatedConcOffset[fluxIndices[13]] += 1.51447e-08; // V5
-            updatedConcOffset[fluxIndices[14]] += 2.91043e-09; // V6
-            updatedConcOffset[fluxIndices[15]] += 2.91043e-09; // V7
-            updatedConcOffset[fluxIndices[16]] += 2.91043e-09; // V8
-            updatedConcOffset[fluxIndices[17]] += 2.91043e-09; // V9
-            */
 		}
 
 		else {
