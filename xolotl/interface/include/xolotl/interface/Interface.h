@@ -259,7 +259,24 @@ public:
 		std::vector<std::vector<std::vector<AmountType>>> bounds);
 
 	/**
-	 * Values for the rates to be set in constant reactions
+	 * Get the implanted flux for each sub network.
+	 *
+	 * @return The vector of vectors of flux, first is the ID and second is the
+	 * value.
+	 */
+	std::vector<std::vector<std::pair<IdType, double>>>
+	getImplantedFlux();
+
+	/**
+	 * Set the implanted flux for each sub network.
+	 *
+	 * @param fluxVector With first is the ID and second is the value
+	 */
+	void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector);
+
+	/**
+	 * Values for the rates to be set in constant reactions.
 	 *
 	 * @param rates All the rates
 	 */

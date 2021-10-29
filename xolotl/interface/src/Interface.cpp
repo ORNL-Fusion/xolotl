@@ -137,14 +137,16 @@ try {
 	solver = factory::solver::SolverFactory::get().generate(opts);
 	assert(solver);
 
-	auto bounds = getAllClusterBounds();
-	std::vector<std::vector<std::vector<AmountType>>> allBounds;
-	allBounds.push_back(bounds);
-	initializeClusterMaps(allBounds);
-
 	auto processMap = opts.getProcesses();
-	if (processMap["noSolve"])
+	if (processMap["noSolve"]) {
+		// The flux handler still need to be initialized
+		auto fluxHandler =
+			solverCast(solver)->getSolverHandler()->getFluxHandler();
+		auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+		fluxHandler->initializeFluxHandler(network, 0, std::vector<double>());
 		return;
+	}
+
 	// Initialize the solver
 	solver->initialize();
 }
@@ -381,6 +383,38 @@ try {
 		}
 		fromSubNetwork.push_back(temp);
 	}
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+std::vector<std::vector<std::pair<IdType, double>>>
+XolotlInterface::getImplantedFlux()
+try {
+	// Get the flux handler
+	auto fluxHandler = solverCast(solver)->getSolverHandler()->getFluxHandler();
+
+	// Loop on the sub network maps
+	std::vector<std::vector<std::pair<IdType, double>>> toReturn;
+	for (auto subMap : fromSubNetwork) {
+		toReturn.push_back(fluxHandler->getImplantedFlux(subMap));
+	}
+
+	return toReturn;
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::setImplantedFlux(
+	std::vector<std::pair<IdType, double>> fluxVector)
+try {
+	// Get the flux handler
+	auto fluxHandler = solverCast(solver)->getSolverHandler()->getFluxHandler();
+	fluxHandler->setImplantedFlux(fluxVector);
 }
 catch (const std::exception& e) {
 	reportException(e);

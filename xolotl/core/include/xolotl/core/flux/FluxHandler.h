@@ -183,6 +183,24 @@ public:
 	{
 		return;
 	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<std::pair<IdType, double>>
+	getImplantedFlux(std::vector<AmountType> map)
+	{
+		return std::vector<std::pair<IdType, double>>();
+	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector)
+	{
+		return;
+	}
 };
 // end class FluxHandler
 
