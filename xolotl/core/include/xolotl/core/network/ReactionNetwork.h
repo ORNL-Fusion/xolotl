@@ -274,6 +274,9 @@ public:
 	Bounds
 	getAllClusterBounds() override;
 
+	std::string
+	getHeaderString() override;
+
 	void initializeClusterMap(BoundVector) override;
 
 	void setConstantRates(RateVector) override;

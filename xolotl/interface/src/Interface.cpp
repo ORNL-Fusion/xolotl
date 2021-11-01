@@ -483,6 +483,54 @@ catch (const std::exception& e) {
 	throw;
 }
 
+void
+XolotlInterface::outputData(double time, std::vector<std::vector<double>> conc)
+try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	const auto dof = network.getDOF();
+	auto networkSize = network.getNumClusters();
+
+	if (time == 0.0) {
+		// Create/open the output files
+		std::fstream outputFile;
+		outputFile.open("FullAlphaZr.dat", std::fstream::out);
+		outputFile << "#time ";
+		outputFile << network.getHeaderString();
+		outputFile << std::endl;
+		outputFile.close();
+	}
+
+	// Construct the full concentration vector first
+	std::vector<double> fullConc(dof, 0.0);
+	for (auto i = 0; i < conc.size(); i++)
+		for (auto j = 0; j < conc[i].size(); j++) {
+			fullConc[fromSubNetwork[i][j]] = conc[i][j];
+		}
+
+	// Set the output precision
+	const int outputPrecision = 5;
+
+	// Open the output file
+	std::fstream outputFile;
+	outputFile.open("FullAlphaZr.dat", std::fstream::out | std::fstream::app);
+	outputFile << std::setprecision(outputPrecision);
+
+	// Output the data
+	outputFile << time << " ";
+	for (auto i = 0; i < networkSize; ++i) {
+		outputFile << fullConc[i] << " ";
+	}
+	outputFile << std::endl;
+
+	// Close the output file
+	outputFile.close();
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
 bool
 XolotlInterface::getConvergenceStatus()
 try {

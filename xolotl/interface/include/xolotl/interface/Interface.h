@@ -293,6 +293,15 @@ public:
 	computeConstantRates(std::vector<std::vector<double>> conc);
 
 	/**
+	 * Write the data in a file.
+	 *
+	 * @param time The current time
+	 * @param conc The concentration vector
+	 */
+	void
+	outputData(double time, std::vector<std::vector<double>> conc);
+
+	/**
 	 * Get whether the solve converged or not.
 	 *
 	 * @return true if it converged

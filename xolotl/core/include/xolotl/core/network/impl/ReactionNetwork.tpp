@@ -353,6 +353,33 @@ ReactionNetwork<TImpl>::getAllClusterBounds()
 }
 
 template <typename TImpl>
+std::string
+ReactionNetwork<TImpl>::getHeaderString()
+{
+	// Create the object to return
+	std::stringstream header;
+
+	// Loop on all the clusters
+	constexpr auto speciesRange = getSpeciesRange();
+	auto numSpecies = getSpeciesListSize();
+	auto tiles = _subpaving.getTiles(plsm::onHost);
+	for (IndexType i = 0; i < this->_numClusters; ++i) {
+		const auto& clReg = tiles(i).getRegion();
+		Composition lo = clReg.getOrigin();
+		Composition hi = clReg.getUpperLimitPoint();
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			auto avg = (hi[id()] - 1 + lo[id()]) / 2;
+			if (avg > 0) {
+				auto speciesName = getSpeciesName(id);
+				header << speciesName << "_" << avg;
+			}
+		}
+		header << " ";
+	}
+	return header.str();
+}
+
+template <typename TImpl>
 void
 ReactionNetwork<TImpl>::initializeClusterMap(
 	typename ReactionNetwork<TImpl>::BoundVector bounds)

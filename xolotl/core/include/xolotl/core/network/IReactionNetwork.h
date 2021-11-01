@@ -314,6 +314,12 @@ public:
 	getAllClusterBounds() = 0;
 
 	/**
+	 * @brief Return a string of cluster name in ID order.
+	 */
+	virtual std::string
+	getHeaderString() = 0;
+
+	/**
 	 * @brief Computes the map between the different cluster bounds
 	 */
 	virtual void initializeClusterMap(BoundVector) = 0;
