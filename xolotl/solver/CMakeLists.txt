@@ -30,6 +30,7 @@ set(XOLOTL_SOLVER_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/src/handler/PetscSolver2DHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/handler/PetscSolver3DHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/handler/PetscSolverHandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/handler/SolverHandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/PetscMonitor.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/PetscMonitor0D.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/src/monitor/PetscMonitor1D.cpp

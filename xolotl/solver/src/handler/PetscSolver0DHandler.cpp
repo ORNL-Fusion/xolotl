@@ -1,7 +1,8 @@
-// Includes
 #include <xolotl/core/Constants.h>
+#include <xolotl/io/XFile.h>
 #include <xolotl/solver/handler/PetscSolver0DHandler.h>
 #include <xolotl/util/Log.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl

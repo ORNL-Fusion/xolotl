@@ -8,13 +8,12 @@
 #include <xolotl/factory/viz/VizHandlerFactory.h>
 #include <xolotl/interface/Interface.h>
 #include <xolotl/options/Options.h>
-#include <xolotl/perf/PerfHandlerRegistry.h>
+#include <xolotl/perf/IPerfHandler.h>
 #include <xolotl/solver/Solver.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/version.h>
-#include <xolotl/viz/VizHandlerRegistry.h>
 
 namespace xolotl
 {
@@ -124,14 +123,6 @@ try {
 
 	options::Options opts;
 	opts.readParams(argc, argv);
-
-	// Set up our performance data infrastructure.
-	perf::PerfHandlerRegistry::set(
-		factory::perf::PerfHandlerFactory::get().generate(opts));
-
-	// Initialize the visualization
-	viz::VizHandlerRegistry::set(
-		factory::viz::VizHandlerFactory::get().generate(opts));
 
 	// Setup the solver
 	solver = factory::solver::SolverFactory::get().generate(opts);
@@ -465,13 +456,14 @@ try {
 	// Call solver finalize
 	solver->finalize();
 
+	auto perfHandler = solverCast(solver)->getSolverHandler()->getPerfHandler();
+
 	// Report statistics about the performance data collected during
 	// the run we just completed.
-	auto handlerRegistry = perf::PerfHandlerRegistry::get();
 	perf::PerfObjStatsMap<perf::ITimer::ValType> timerStats;
 	perf::PerfObjStatsMap<perf::IEventCounter::ValType> counterStats;
 	perf::PerfObjStatsMap<perf::IHardwareCounter::CounterType> hwCtrStats;
-	handlerRegistry->collectStatistics(timerStats, counterStats, hwCtrStats);
+	perfHandler->collectStatistics(timerStats, counterStats, hwCtrStats);
 
 	auto xolotlComm = util::getMPIComm();
 
@@ -480,8 +472,7 @@ try {
 	MPI_Comm_rank(xolotlComm, &rank);
 	if (rank == 0) {
 		util::StringStream ss;
-		handlerRegistry->reportStatistics(
-			ss, timerStats, counterStats, hwCtrStats);
+		perfHandler->reportStatistics(ss, timerStats, counterStats, hwCtrStats);
 		XOLOTL_LOG << ss.str();
 	}
 

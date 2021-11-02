@@ -3,7 +3,6 @@
 #include <xolotl/factory/material/MaterialHandlerFactory.h>
 #include <xolotl/factory/network/NetworkHandlerFactory.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
-#include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/solver/Solver.h>
 
 namespace xolotl
@@ -21,19 +20,17 @@ Solver::Solver(
 		factory::temperature::TemperatureHandlerFactory::get().generate(
 			options)),
 	solverHandler(handlerGenerator(*network)),
-	perfHandler(perf::PerfHandlerRegistry::get())
-
+	perfHandler(solverHandler->getPerfHandler())
 {
 	assert(solverHandler);
 	solverHandler->initializeHandlers(
-		materialHandler, temperatureHandler, options);
+		materialHandler.get(), temperatureHandler.get(), options);
 }
 
-Solver::Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler,
-	const std::shared_ptr<perf::IPerfHandler>& _perfHandler) :
+Solver::Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler) :
 	optionsString(""),
 	solverHandler(_solverHandler),
-	perfHandler(_perfHandler)
+	perfHandler(solverHandler->getPerfHandler())
 {
 }
 

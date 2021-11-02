@@ -1,8 +1,10 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/io/XFile.h>
 #include <xolotl/solver/handler/PetscSolver3DHandler.h>
 #include <xolotl/util/Log.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl

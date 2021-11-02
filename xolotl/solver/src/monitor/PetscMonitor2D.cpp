@@ -2,14 +2,12 @@
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/io/XFile.h>
-#include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/perf/ScopedTimer.h>
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/PetscMonitor2D.h>
 #include <xolotl/solver/monitor/PetscMonitorFunctions.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
-#include <xolotl/viz/VizHandlerRegistry.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 #include <xolotl/viz/dataprovider/CvsXYDataProvider.h>
 
@@ -35,8 +33,7 @@ PetscMonitor2D::setup()
 {
 	PetscErrorCode ierr;
 
-	auto handlerRegistry = perf::PerfHandlerRegistry::get();
-	_gbTimer = handlerRegistry->getTimer("monitor2D:GB");
+	_gbTimer = _solverHandler->getPerfHandler()->getTimer("monitor2D:GB");
 
 	// Get the process ID
 	auto xolotlComm = util::getMPIComm();
@@ -44,7 +41,7 @@ PetscMonitor2D::setup()
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get the xolotlViz handler registry
-	auto vizHandlerRegistry = viz::VizHandlerRegistry::get();
+	auto vizHandlerRegistry = _solverHandler->getVizHandler();
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flagPerf, flagHeRetention, flagXeRetention, flagStatus,
