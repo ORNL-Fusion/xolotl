@@ -18,15 +18,12 @@ set(XOLOTL_VIZ_HEADERS
     ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/viz/config.h
     ${XOLOTL_VIZ_HEADER_DIR}/IPlot.h
     ${XOLOTL_VIZ_HEADER_DIR}/IVizHandler.h
-    ${XOLOTL_VIZ_HEADER_DIR}/VizHandlerRegistry.h
     ${XOLOTL_VIZ_HEADER_DIR}/LabelProvider.h
     ${XOLOTL_VIZ_HEADER_DIR}/PlottingStyle.h
     ${XOLOTL_VIZ_HEADER_DIR}/PlotType.h
 )
 
-set(XOLOTL_VIZ_SOURCES
-    ${XOLOTL_VIZ_SOURCE_DIR}/VizHandlerRegistry.cpp
-)
+set(XOLOTL_VIZ_SOURCES "")
 
 include(src/dataprovider/Include.cmake)
 include(src/dummy/Include.cmake)

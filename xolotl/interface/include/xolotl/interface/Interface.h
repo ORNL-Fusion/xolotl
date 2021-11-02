@@ -22,6 +22,10 @@ namespace solver
 {
 class ISolver;
 }
+namespace perf
+{
+class IPerfHandler;
+}
 
 namespace interface
 {

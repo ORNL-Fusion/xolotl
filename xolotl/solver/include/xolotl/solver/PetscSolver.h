@@ -90,8 +90,7 @@ public:
 	PetscSolver(const options::IOptions& options);
 
 	//! The Constructor
-	PetscSolver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler,
-		const std::shared_ptr<perf::IPerfHandler>& _perfHandler);
+	PetscSolver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler);
 
 	//! The Destructor
 	~PetscSolver();

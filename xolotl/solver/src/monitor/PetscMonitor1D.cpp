@@ -3,14 +3,12 @@
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/io/XFile.h>
-#include <xolotl/perf/PerfHandlerRegistry.h>
 #include <xolotl/perf/ScopedTimer.h>
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/PetscMonitor1D.h>
 #include <xolotl/solver/monitor/PetscMonitorFunctions.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
-#include <xolotl/viz/VizHandlerRegistry.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 
 namespace xolotl
@@ -69,20 +67,20 @@ PetscMonitor1D::setup()
 {
 	PetscErrorCode ierr;
 
-	auto handlerRegistry = perf::PerfHandlerRegistry::get();
+	auto perfHandler = _solverHandler->getPerfHandler();
 
 	// Initialize the timers, including the one for this function.
-	_initTimer = handlerRegistry->getTimer("monitor1D:init");
+	_initTimer = perfHandler->getTimer("monitor1D:init");
 	perf::ScopedTimer myTimer(_initTimer);
-	_checkNegativeTimer = handlerRegistry->getTimer("monitor1D:checkNeg");
-	_tridynTimer = handlerRegistry->getTimer("monitor1D:tridyn");
-	_startStopTimer = handlerRegistry->getTimer("monitor1D:startStop");
-	_heRetentionTimer = handlerRegistry->getTimer("monitor1D:heRet");
-	_xeRetentionTimer = handlerRegistry->getTimer("monitor1D:xeRet");
-	_scatterTimer = handlerRegistry->getTimer("monitor1D:scatter");
-	_seriesTimer = handlerRegistry->getTimer("monitor1D:series");
-	_eventFuncTimer = handlerRegistry->getTimer("monitor1D:event");
-	_postEventFuncTimer = handlerRegistry->getTimer("monitor1D:postEvent");
+	_checkNegativeTimer = perfHandler->getTimer("monitor1D:checkNeg");
+	_tridynTimer = perfHandler->getTimer("monitor1D:tridyn");
+	_startStopTimer = perfHandler->getTimer("monitor1D:startStop");
+	_heRetentionTimer = perfHandler->getTimer("monitor1D:heRet");
+	_xeRetentionTimer = perfHandler->getTimer("monitor1D:xeRet");
+	_scatterTimer = perfHandler->getTimer("monitor1D:scatter");
+	_seriesTimer = perfHandler->getTimer("monitor1D:series");
+	_eventFuncTimer = perfHandler->getTimer("monitor1D:event");
+	_postEventFuncTimer = perfHandler->getTimer("monitor1D:postEvent");
 
 	// Get the process ID
 	auto xolotlComm = util::getMPIComm();
@@ -90,7 +88,7 @@ PetscMonitor1D::setup()
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Get xolotlViz handler registry
-	auto vizHandlerRegistry = viz::VizHandlerRegistry::get();
+	auto vizHandlerRegistry = _solverHandler->getVizHandler();
 
 	// Flags to launch the monitors or not
 	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,
