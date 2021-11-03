@@ -85,9 +85,11 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		}
 	}
 
-	// V is never grouped
-	if (hi[Species::V] > 1 && othersBeginAtZero(region, Species::V)) {
-		return true;
+	if (_maxV < 10000) {
+		// V is never grouped
+		if (hi[Species::V] > 1 && othersBeginAtZero(region, Species::V)) {
+			return true;
+		}
 	}
 
 	// He is never grouped
@@ -127,17 +129,11 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		if (lo[Species::He] <= getMaxHePerV(hi[Species::V] - 1, _hevRatio) &&
 			hi[Species::He] - 1 >=
 				getMaxHePerV(lo[Species::V] - 1, _hevRatio)) {
-			//			if (region[Species::He].length() <
-			//				util::max((double)(_groupingWidthA + 1),
-			//						region[Species::He].begin() *
-			// region[Species::He].begin() * factor)) {
-			//				result[toIndex(Species::He)] = false;
-			//			}
-
 			if constexpr (hasDeuterium<Species>) {
 				if (region[Species::D].length() <
 					util::max((double)(_groupingWidthA + 1),
-						lo[Species::D] * lo[Species::D] * factor)) {
+						(double)lo[Species::D] * (double)lo[Species::D] *
+							factor)) {
 					result[toIndex(Species::D)] = false;
 				}
 				if (lo[Species::D] <= maxDPerV(hi[Species::V] - 1) &&
@@ -150,7 +146,8 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 			if constexpr (hasTritium<Species>) {
 				if (region[Species::T].length() <
 					util::max((double)(_groupingWidthA + 1),
-						lo[Species::T] * lo[Species::T] * factor)) {
+						(double)lo[Species::T] * (double)lo[Species::T] *
+							factor)) {
 					result[toIndex(Species::T)] = false;
 				}
 				if (lo[Species::T] <= maxTPerV(hi[Species::T] - 1) &&
@@ -180,26 +177,43 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 				}
 			}
 
+			if (region[Species::He].length() <=
+				(lo[Species::He] - 4.0 * _groupingMin) * factor)
+				result[toIndex(Species::He)] = false;
+			if (hi[Species::He] > getMaxHePerV(_maxV, _hevRatio) + 1) {
+				result[toIndex(Species::He)] = true;
+			}
+
+			if (region[Species::V].length() <=
+				(lo[Species::V] - _groupingMin) * factor)
+				result[toIndex(Species::V)] = false;
+
+			if (hi[Species::V] > _maxV + 1) {
+				result[toIndex(Species::V)] = true;
+			}
+
 			return true;
 		}
 	}
 
-	double factor = 5.0e-1;
+	double factor = 1.0;
 
-	if (region[Species::V].length() < _groupingWidthB + 1) {
+	if (region[Species::V].length() <
+		util::max((double)(_groupingWidthB + 1),
+			(double)lo[Species::V] * (double)lo[Species::V] * factor)) {
 		result[toIndex(Species::V)] = false;
 	}
 
 	if (region[Species::He].length() <
 		util::max((double)(_groupingWidthA + 1),
-			lo[Species::He] * lo[Species::He] * factor)) {
+			(double)lo[Species::He] * (double)lo[Species::He] * factor)) {
 		result[toIndex(Species::He)] = false;
 	}
 
 	if constexpr (hasDeuterium<Species>) {
 		if (region[Species::D].length() <
 			util::max((double)(_groupingWidthA + 1),
-				lo[Species::D] * lo[Species::D] * factor)) {
+				(double)lo[Species::D] * (double)lo[Species::D] * factor)) {
 			result[toIndex(Species::D)] = false;
 		}
 	}
@@ -207,7 +221,7 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	if constexpr (hasTritium<Species>) {
 		if (region[Species::T].length() <
 			util::max((double)(_groupingWidthA + 1),
-				lo[Species::T] * lo[Species::T] * factor)) {
+				(double)lo[Species::T] * (double)lo[Species::T] * factor)) {
 			result[toIndex(Species::T)] = false;
 		}
 	}

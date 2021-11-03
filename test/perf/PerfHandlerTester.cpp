@@ -10,9 +10,9 @@
 #include <boost/test/included/unit_test.hpp>
 
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
-#include <xolotl/perf/PerfObjStatistics.h>
 #include <xolotl/perf/IEventCounter.h>
 #include <xolotl/perf/IPerfHandler.h>
+#include <xolotl/perf/PerfObjStatistics.h>
 #include <xolotl/test/MPITestUtils.h>
 
 using namespace xolotl;
