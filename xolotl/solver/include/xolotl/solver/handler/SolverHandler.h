@@ -755,8 +755,7 @@ public:
 				if (loc >= tempLoc1 && loc < tempLoc2) {
 					double xLoc = (loc - tempLoc1) / (tempLoc2 - tempLoc1);
 					double y1 = broadcastedTemp[j], y2 = broadcastedTemp[j + 1];
-					toReturn.push_back(
-						y1 + xLoc * (y2 - y1) / (tempLoc2 - tempLoc1));
+					toReturn.push_back(y1 + xLoc * (y2 - y1));
 					matched = true;
 					jKeep = j;
 					break;
@@ -1235,8 +1234,7 @@ public:
 				if (loc >= tempLoc1 && loc < tempLoc2) {
 					double xLoc = (loc - tempLoc1) / (tempLoc2 - tempLoc1);
 					double y1 = broadcastedTemp[j], y2 = broadcastedTemp[j + 1];
-					toReturn.push_back(
-						y1 + xLoc * (y2 - y1) / (tempLoc2 - tempLoc1));
+					toReturn.push_back(y1 + xLoc * (y2 - y1));
 					matched = true;
 					jKeep = j;
 					break;
