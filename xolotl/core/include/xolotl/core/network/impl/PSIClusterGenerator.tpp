@@ -77,12 +77,23 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		if (region[Species::I].end() > _maxI) {
 			return true;
 		}
+		//		if (_maxI < 10000) {
 		if (region[Species::I].length() <
 			util::max((double)(_groupingWidthB + 1),
 				region[Species::I].begin() * 1.0e-2)) {
 			result[toIndex(Species::I)] = false;
 			return false;
 		}
+		//		}
+		//		else {
+		//			if (region[Species::I].length() <
+		//				util::max((double)(_groupingWidthB + 1),
+		//					(double)(region[Species::I].begin() - _groupingMin)
+		//* 						(double)(region[Species::I].begin() - _groupingMin) * 1.0e-4)) {
+		//				result[toIndex(Species::I)] = false;
+		//				return false;
+		//			}
+		//		}
 	}
 
 	if (_maxV < 10000) {
@@ -177,6 +188,10 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 				}
 			}
 
+			// Doesn't fully refine only for large networks
+			if (_maxV < 10000)
+				return true;
+
 			if (region[Species::He].length() <=
 				(lo[Species::He] - 4.0 * _groupingMin) * factor)
 				result[toIndex(Species::He)] = false;
@@ -196,12 +211,19 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		}
 	}
 
-	double factor = 1.0;
+	double factor = 5.0e-1;
 
-	if (region[Species::V].length() <
-		util::max((double)(_groupingWidthB + 1),
-			(double)lo[Species::V] * (double)lo[Species::V] * factor)) {
-		result[toIndex(Species::V)] = false;
+	if (_maxV < 10000) {
+		if (region[Species::V].length() < _groupingWidthB + 1) {
+			result[toIndex(Species::V)] = false;
+		}
+	}
+	else {
+		if (region[Species::V].length() <
+			util::max((double)(_groupingWidthB + 1),
+				(double)lo[Species::V] * (double)lo[Species::V] * factor)) {
+			result[toIndex(Species::V)] = false;
+		}
 	}
 
 	if (region[Species::He].length() <
