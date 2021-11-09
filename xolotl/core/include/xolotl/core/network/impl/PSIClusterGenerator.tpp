@@ -77,23 +77,12 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		if (region[Species::I].end() > _maxI) {
 			return true;
 		}
-		//		if (_maxI < 10000) {
 		if (region[Species::I].length() <
 			util::max((double)(_groupingWidthB + 1),
 				region[Species::I].begin() * 1.0e-2)) {
 			result[toIndex(Species::I)] = false;
 			return false;
 		}
-		//		}
-		//		else {
-		//			if (region[Species::I].length() <
-		//				util::max((double)(_groupingWidthB + 1),
-		//					(double)(region[Species::I].begin() - _groupingMin)
-		//* 						(double)(region[Species::I].begin() - _groupingMin) * 1.0e-4)) {
-		//				result[toIndex(Species::I)] = false;
-		//				return false;
-		//			}
-		//		}
 	}
 
 	if (_maxV < 10000) {

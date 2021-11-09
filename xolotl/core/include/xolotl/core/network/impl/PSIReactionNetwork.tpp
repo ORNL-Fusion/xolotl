@@ -430,7 +430,6 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	}
 
 	// Special case for I + V
-	std::set<IndexType> previousIndices;
 	if ((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
 		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I))) {
 		// Find out which one is which
@@ -440,7 +439,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		for (auto k : makeIntervalRange(iReg[Species::I]))
 			for (auto l : makeIntervalRange(vReg[Species::V])) {
 				// Compute the product size
-				int prodSize = l - k;
+				int prodSize = (int)l - (int)k;
 				// 3 cases
 				if (prodSize > 0) {
 					// Looking for V cluster
@@ -448,10 +447,9 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 					comp[Species::V] = prodSize;
 					auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
 					if (vProdId != subpaving.invalidIndex() &&
-						previousIndices.find(vProdId) ==
-							previousIndices.end()) {
+						vProdId != previousIndex) {
 						this->addProductionReaction(tag, {i, j, vProdId});
-						previousIndices.insert(vProdId);
+						previousIndex = vProdId;
 						// No dissociation
 					}
 				}
@@ -461,10 +459,9 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 					comp[Species::I] = -prodSize;
 					auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
 					if (iProdId != subpaving.invalidIndex() &&
-						previousIndices.find(iProdId) ==
-							previousIndices.end()) {
+						iProdId != previousIndex) {
 						this->addProductionReaction(tag, {i, j, iProdId});
-						previousIndices.insert(iProdId);
+						previousIndex = iProdId;
 						// No dissociation
 					}
 				}
