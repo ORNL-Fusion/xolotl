@@ -25,7 +25,6 @@ class BurstingReaction : public Reaction<TNetwork, TDerived>
 public:
 	using NetworkType = TNetwork;
 	using Superclass = Reaction<TNetwork, TDerived>;
-	using ClusterDataRef = typename Superclass::ClusterDataRef;
 	using IndexType = typename Superclass::IndexType;
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
@@ -34,15 +33,16 @@ public:
 	using Region = typename Superclass::Region;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ClusterData = typename Superclass::ClusterData;
 
 	BurstingReaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
-	BurstingReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
+	BurstingReaction(ReactionDataRef reactionData, const ClusterData& clusterData,
 		IndexType reactionId, IndexType cluster0, IndexType cluster1);
 
 	KOKKOS_INLINE_FUNCTION
-	BurstingReaction(ReactionDataRef reactionData, ClusterDataRef clusterData,
+	BurstingReaction(ReactionDataRef reactionData, const ClusterData& clusterData,
 		IndexType reactionId, const detail::ClusterSet& clusterSet);
 
 	static detail::CoefficientsView
@@ -88,19 +88,23 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
+		Kokkos::View<double*> values,
 		IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, Connectivity connectivity,
+		Kokkos::View<double*> values,
 		IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity);
 
 protected:
 	IndexType _reactant;
@@ -109,7 +113,9 @@ protected:
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
-	Kokkos::Array<IndexType, nMomentIds> _reactantMomentIds;
+	util::Array<IndexType, nMomentIds> _reactantMomentIds;
+
+	util::Array<IndexType, 2, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
 };
 } // namespace network
 } // namespace core

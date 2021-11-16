@@ -45,7 +45,7 @@ namespace detail
 {
 using ReactionNetworkIndexType = ::xolotl::IdType;
 
-using CompositionAmountType = std::uint32_t;
+using CompositionAmountType = ::xolotl::AmountType;
 
 inline constexpr auto invalidNetworkIndex =
 	plsm::invalid<ReactionNetworkIndexType>;
@@ -62,22 +62,11 @@ inline constexpr auto invalidSpeciesAmount =
  * The data here should be accessed only from code that "knows" what it
  * contains, that is, other network-specific code
  */
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename TNetwork, typename PlsmContext>
 struct ClusterDataExtra;
 
 template <typename TNetwork, typename PlsmContext>
-struct ClusterDataHelper;
-
-template <typename TNetwork, typename PlsmContext>
-using ClusterData = typename ClusterDataHelper<TNetwork, PlsmContext>::Type;
-
-template <typename TNetwork, typename PlsmContext>
-struct ClusterDataRefHelper;
-
-template <typename TNetwork, typename PlsmContext>
-using ClusterDataRef =
-	typename ClusterDataRefHelper<TNetwork, PlsmContext>::Type;
+struct ClusterData;
 
 template <typename TNetwork>
 struct ReactionDataRef;
@@ -120,7 +109,6 @@ struct ReactionNetworkTypes
 	using Composition = typename Subpaving::PointType;
 	using ClusterData = detail::ClusterData<TImpl, plsm::OnDevice>;
 	using ClusterDataMirror = detail::ClusterData<TImpl, plsm::OnHost>;
-	using ClusterDataRef = detail::ClusterDataRef<TImpl, plsm::OnDevice>;
 	using ClusterUpdater = typename ClusterUpdaterHelper<TImpl>::Type;
 	using ReactionCollection = detail::ReactionCollection<TImpl>;
 	using ReactionDataRef = typename detail::ReactionDataRef<TImpl>;

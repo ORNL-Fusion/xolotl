@@ -9,7 +9,7 @@ namespace network
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 BurstingReaction<TNetwork, TDerived>::BurstingReaction(
-	ReactionDataRef reactionData, ClusterDataRef clusterData,
+	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, IndexType cluster0, IndexType cluster1) :
 	Superclass(reactionData, clusterData, reactionId),
 	_reactant(cluster0),
@@ -17,7 +17,7 @@ BurstingReaction<TNetwork, TDerived>::BurstingReaction(
 {
 	this->copyMomentIds(_reactant, _reactantMomentIds);
 
-	auto clReg = this->_clusterData.getCluster(_reactant).getRegion();
+	auto clReg = this->_clusterData->getCluster(_reactant).getRegion();
 	_reactantVolume = clReg.volume();
 
 	this->initialize();
@@ -26,7 +26,7 @@ BurstingReaction<TNetwork, TDerived>::BurstingReaction(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 BurstingReaction<TNetwork, TDerived>::BurstingReaction(
-	ReactionDataRef reactionData, ClusterDataRef clusterData,
+	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, const detail::ClusterSet& clusterSet) :
 	BurstingReaction(reactionData, clusterData, reactionId, clusterSet.cluster0,
 		clusterSet.cluster1)
@@ -44,10 +44,10 @@ BurstingReaction<TNetwork, TDerived>::computeCoefficients()
 
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-	auto clReg = this->_clusterData.getCluster(_reactant).getRegion();
+	auto clReg = this->_clusterData->getCluster(_reactant).getRegion();
 	const auto& prReg = (_product == invalidIndex) ?
 		dummyRegion :
-		this->_clusterData.getCluster(_product).getRegion();
+		this->_clusterData->getCluster(_product).getRegion();
 	Composition lo = clReg.getOrigin();
 	Composition hi = clReg.getUpperLimitPoint();
 	Composition prod = prReg.getOrigin();
@@ -153,13 +153,13 @@ double
 BurstingReaction<TNetwork, TDerived>::getAppliedRate(IndexType gridIndex) const
 {
 	// Get the radius of the cluster
-	auto cl = this->_clusterData.getCluster(_reactant);
+	auto cl = this->_clusterData->getCluster(_reactant);
 	auto radius = cl.getReactionRadius();
 
 	// Get the current depth
-	auto depth = this->_clusterData.getDepth();
-	auto tau = this->_clusterData.getTauBursting();
-	auto f = this->_clusterData.getFBursting();
+	auto depth = this->_clusterData->getDepth();
+	auto tau = this->_clusterData->getTauBursting();
+	auto f = this->_clusterData->getFBursting();
 	return f * (radius / depth) *
 		util::min(1.0, exp(-(depth - tau) / (2.0 * tau)));
 }
@@ -216,7 +216,7 @@ KOKKOS_INLINE_FUNCTION
 void
 BurstingReaction<TNetwork, TDerived>::computePartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	Connectivity connectivity, IndexType gridIndex)
+	IndexType gridIndex)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -226,25 +226,25 @@ BurstingReaction<TNetwork, TDerived>::computePartialDerivatives(
 	// First for the reactant
 	double df = rate / (double)_reactantVolume;
 	// Compute the values
-	Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)),
+	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]),
 		df * this->_coefs(0, 0, 0, 0));
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[i()] != invalidIndex) {
 			Kokkos::atomic_sub(
-				&values(connectivity(_reactant, _reactantMomentIds[i()])),
+				&values(_connEntries[0][0][0][1 + i()]),
 				df * this->_coefs(i() + 1, 0, 0, 0));
 		}
 	}
 	// For the product
 	if (_product != invalidIndex) {
 		df = rate;
-		Kokkos::atomic_add(&values(connectivity(_product, _reactant)),
+		Kokkos::atomic_add(&values(_connEntries[1][0][0][0]),
 			df * this->_coefs(0, 0, 0, 0));
 
 		for (auto i : speciesRangeNoI) {
 			if (_reactantMomentIds[i()] != invalidIndex) {
 				Kokkos::atomic_add(
-					&values(connectivity(_product, _reactantMomentIds[i()])),
+					&values(_connEntries[1][0][0][1+i()]),
 					df * this->_coefs(i() + 1, 0, 0, 0));
 			}
 		}
@@ -257,14 +257,13 @@ BurstingReaction<TNetwork, TDerived>::computePartialDerivatives(
 			df = rate / (double)_reactantVolume;
 			// Compute the values
 			Kokkos::atomic_sub(
-				&values(connectivity(_reactantMomentIds[k()], _reactant)),
+				&values(_connEntries[0][1+k()][0][0]),
 				df * this->_coefs(0, 0, 0, k() + 1));
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[i()] != invalidIndex) {
 					Kokkos::atomic_sub(
-						&values(connectivity(
-							_reactantMomentIds[k()], _reactantMomentIds[i()])),
-						df * this->_coefs(i() + 1, 0, 0, k() + 1));
+						&values(_connEntries[0][1+k()][0][1+i()]),
+						df * this->_coefs(k() + 1, 0, 0, i() + 1));
 				}
 			}
 		}
@@ -276,12 +275,12 @@ KOKKOS_INLINE_FUNCTION
 void
 BurstingReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	Connectivity connectivity, IndexType gridIndex)
+	IndexType gridIndex)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 	auto rate = getAppliedRate(gridIndex);
-	Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)),
+	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]),
 		rate * this->_coefs(0, 0, 0, 0) / (double)_reactantVolume);
 
 	// Take care of the first moments
@@ -292,9 +291,8 @@ BurstingReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[i()] == _reactantMomentIds[k()]) {
 					Kokkos::atomic_sub(
-						&values(connectivity(
-							_reactantMomentIds[k()], _reactantMomentIds[i()])),
-						df * this->_coefs(i() + 1, 0, 0, k() + 1));
+						&values(_connEntries[0][1+k()][0][1+i()]),
+						df * this->_coefs(k() + 1, 0, 0, i() + 1));
 				}
 			}
 		}
@@ -309,6 +307,42 @@ BurstingReaction<TNetwork, TDerived>::computeLeftSideRate(
 {
 	return 0.0;
 }
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+BurstingReaction<TNetwork, TDerived>::mapJacobianEntries(
+	Connectivity connectivity)
+{
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	_connEntries[0][0][0][0] = connectivity(_reactant, _reactant);
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] != invalidIndex) {
+			_connEntries[0][0][0][1 + i()] =
+				connectivity(_reactant, _reactantMomentIds[i()]);
+			_connEntries[0][1 + i()][0][0] =
+				connectivity(_reactantMomentIds[i()], _reactant);
+			for (auto j : speciesRangeNoI) {
+				if (_reactantMomentIds[j()] != invalidIndex) {
+					_connEntries[0][1 + i()][0][1 + j()] = connectivity(
+						_reactantMomentIds[i()], _reactantMomentIds[j()]);
+				}
+			}
+		}
+	}
+
+	if (_product != invalidIndex) {
+		_connEntries[1][0][0][0] = connectivity(_product, _reactant);
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[i()] != invalidIndex) {
+				_connEntries[1][0][0][1 + i()] =
+					connectivity(_product, _reactantMomentIds[i()]);
+			}
+		}
+	}
+}
+
 } // namespace network
 } // namespace core
 } // namespace xolotl

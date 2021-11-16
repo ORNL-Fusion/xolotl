@@ -31,7 +31,7 @@ public:
 	using IndexType = detail::ReactionNetworkIndexType;
 	using ReactionTypes = ReactionTypeList<NetworkType>;
 	using Types = ReactionNetworkTypes<NetworkType>;
-	using ClusterDataRef = typename Types::ClusterDataRef;
+	using ClusterData = typename Types::ClusterData;
 
 private:
 	static constexpr std::size_t numReactionTypes =
@@ -68,16 +68,12 @@ public:
 		_data.setGridSize(gridSize);
 	}
 
-	const ClusterConnectivity<>&
-	getConnectivity() const
-	{
-		return _data.connectivity;
-	}
-
 	void
 	setConnectivity(const ClusterConnectivity<>& connectivity)
 	{
-		_data.connectivity = connectivity;
+		auto conn = connectivity;
+		forEach(DEVICE_LAMBDA(
+			auto&& reaction) { reaction.defineJacobianEntries(conn); });
 	}
 
 	std::uint64_t
@@ -110,8 +106,8 @@ public:
 	}
 
 	void
-	constructAll(
-		ClusterDataRef clusterData, Kokkos::View<ClusterSet*> clusterSets)
+	constructAll(Kokkos::View<ClusterData> clusterData,
+		Kokkos::View<ClusterSet*> clusterSets)
 	{
 		auto chain = _reactions.getChain();
 		auto reactionData = ReactionDataRef<NetworkType>(_data);
@@ -123,18 +119,18 @@ public:
 						using ReactionType =
 							std::remove_reference_t<decltype(reaction)>;
 						reaction = ReactionType(
-							reactionData, clusterData, i, clusterSets(i));
+							reactionData, clusterData(), i, clusterSets(i));
 					},
 					i);
 			});
 	}
 
 	void
-	updateAll(ClusterDataRef clusterData)
+	updateAll(Kokkos::View<ClusterData> clusterData)
 	{
 		auto reactionData = ReactionDataRef<NetworkType>(_data);
 		forEach(DEVICE_LAMBDA(auto&& reaction) {
-			reaction.updateData(reactionData, clusterData);
+			reaction.updateData(reactionData, clusterData());
 		});
 	}
 

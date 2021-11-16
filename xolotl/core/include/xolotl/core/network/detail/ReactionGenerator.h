@@ -29,7 +29,7 @@ public:
 	using NetworkType = TNetwork;
 	using NetworkTraits = ReactionNetworkTraits<NetworkType>;
 	using ClusterData = typename NetworkType::ClusterData;
-	using ClusterDataRef = typename NetworkType::ClusterDataRef;
+	using ClusterDataView = typename NetworkType::ClusterDataView;
 	using Cluster = typename ClusterData::ClusterType;
 	using ProductionReactionType =
 		typename NetworkTraits::ProductionReactionType;
@@ -124,6 +124,12 @@ public:
 	void
 	generateConnectivity(ReactionCollection<NetworkType>& reactionCollection);
 
+	const ClusterConnectivity<>&
+	getConnectivity() const
+	{
+		return _connectivity;
+	}
+
 protected:
 	TDerived*
 	asDerived()
@@ -134,6 +140,7 @@ protected:
 protected:
 	Subpaving _subpaving;
 	ClusterData _clusterData;
+	ClusterDataView _clusterDataView;
 	IndexType _numDOFs;
 	bool _enableReducedJacobian;
 	IndexView _clusterProdReactionCounts;
@@ -151,6 +158,8 @@ protected:
 
 	Kokkos::View<ProductionReactionType*> _prodReactions;
 	Kokkos::View<DissociationReactionType*> _dissReactions;
+
+	ClusterConnectivity<> _connectivity;
 };
 
 template <typename TNetwork, typename TReaction,

@@ -29,7 +29,6 @@ public:
 	using IndexType = typename Superclass::IndexType;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
-	using ClusterDataRef = typename Superclass::ClusterDataRef;
 
 	using Superclass::Superclass;
 

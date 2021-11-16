@@ -8,6 +8,7 @@
 
 #include <xolotl/core/network/Cluster.h>
 #include <xolotl/core/network/SpeciesId.h>
+#include <xolotl/core/network/detail/ClusterConnectivity.h>
 #include <xolotl/core/network/detail/ClusterData.h>
 #include <xolotl/core/network/detail/ReactionData.h>
 

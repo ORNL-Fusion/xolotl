@@ -12,7 +12,8 @@ template <typename TNetwork, typename TDerived>
 ReactionGeneratorBase<TNetwork, TDerived>::ReactionGeneratorBase(
 	const TNetwork& network) :
 	_subpaving(network._subpaving),
-	_clusterData(network._clusterData),
+	_clusterData(network._clusterData.h_view()),
+	_clusterDataView(network._clusterData.d_view),
 	_numDOFs(network.getDOF()),
 	_enableReducedJacobian(network.getEnableReducedJacobian()),
 	_clusterProdReactionCounts(
@@ -57,7 +58,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 	//      - Constructing all reactions
 	//      - Generating connectivity
 	auto reactionCollection = this->asDerived()->getReactionCollection();
-	reactionCollection.constructAll(_clusterData, _allClusterSets);
+	reactionCollection.constructAll(_clusterDataView, _allClusterSets);
 
 	Kokkos::fence();
 
@@ -262,7 +263,8 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		});
 	nEntries = connectivity.entries.extent(0);
 
-	reactionCollection.setConnectivity(connectivity);
+	_connectivity = connectivity;
+	reactionCollection.setConnectivity(_connectivity);
 }
 } // namespace detail
 } // namespace network

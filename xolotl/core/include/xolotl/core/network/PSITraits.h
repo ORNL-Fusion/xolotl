@@ -295,25 +295,23 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 
 namespace detail
 {
-template <typename TSpeciesEnum, typename PlsmContext,
-	template <typename> typename ViewConvert>
-struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, PlsmContext,
-	ViewConvert>
+template <typename TSpeciesEnum, typename PlsmContext>
+struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, PlsmContext>
 {
 	using NetworkType = PSIReactionNetwork<TSpeciesEnum>;
 
 	ClusterDataExtra() = default;
 
-	template <typename PC, template <typename> typename VC>
+	template <typename PC>
 	KOKKOS_INLINE_FUNCTION
-	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC, VC>& data) :
+	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
 		trapMutationData(data.trapMutationData)
 	{
 	}
 
-	template <typename PC, template <typename> typename VC>
+	template <typename PC>
 	void
-	deepCopy(const ClusterDataExtra<NetworkType, PC, VC>& data)
+	deepCopy(const ClusterDataExtra<NetworkType, PC>& data)
 	{
 		trapMutationData.deepCopy(data.trapMutationData);
 	}
@@ -325,7 +323,7 @@ struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, PlsmContext,
 	}
 
 	using TrapMutationData =
-		TrapMutationClusterData<ClusterDataCommon<PlsmContext, ViewConvert>>;
+		TrapMutationClusterData<ClusterDataCommon<PlsmContext>>;
 	TrapMutationData trapMutationData;
 };
 } // namespace detail
