@@ -150,9 +150,9 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 							factor)) {
 					result[toIndex(Species::T)] = false;
 				}
-				if (lo[Species::T] <= maxTPerV(hi[Species::T] - 1) &&
-					hi[Species::T] - 1 >= maxTPerV(lo[Species::T] - 1) &&
-					_maxD > 0) {
+				if (lo[Species::T] <= maxTPerV(hi[Species::V] - 1) &&
+					hi[Species::T] - 1 >= maxTPerV(lo[Species::V] - 1) &&
+					_maxT > 0) {
 					result[toIndex(Species::T)] = true;
 				}
 			}
@@ -385,7 +385,7 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		}
 	}
 
-	auto maxDPerV = [hevRatio = _hevRatio](AmountType amtV) {
+	auto maxHPerV = [hevRatio = _hevRatio](AmountType amtV) {
 		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio);
 	};
 
@@ -404,14 +404,14 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 
 		// Too many deuterium
 		if constexpr (hasDeuterium<Species>) {
-			if (lo[Species::D] > maxDPerV(hiV)) {
+			if (lo[Species::D] > maxHPerV(hiV)) {
 				return false;
 			}
 		}
 
 		// Too many tritium
 		if constexpr (hasTritium<Species>) {
-			if (lo[Species::T] > maxDPerV(hiV)) {
+			if (lo[Species::T] > maxHPerV(hiV)) {
 				return false;
 			}
 		}

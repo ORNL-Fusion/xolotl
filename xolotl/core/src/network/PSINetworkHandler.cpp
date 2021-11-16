@@ -41,6 +41,11 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	AmountType groupingWidthV = options.getGroupingWidthB();
 	AmountType groupingWidthI = options.getGroupingWidthB();
 
+	if (maxI > options.getGroupingMin() and maxV >= options.getGroupingMin()) {
+		throw std::runtime_error(
+			"Both V and I are grouped, this is not currently possible!");
+	}
+
 	if (options.getMaxImpurity() <= 0) {
 		maxHe = 0;
 		groupingWidthHe = 1;
@@ -89,7 +94,7 @@ generatePSIReactionNetwork(const options::IOptions& options)
 		maxV = pow(groupingWidthV, i) - 1;
 	}
 
-	if (options.getGroupingMin() > maxI) {
+	if (options.getGroupingMin() >= maxI) {
 		groupingWidthI = maxI + 1;
 	}
 	else {

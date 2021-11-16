@@ -501,11 +501,11 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		// Loop on the species
 		// TODO: check l correspond to the same species in bounds and prod
 		for (auto l : speciesNoI) {
-			if (prodReg[l()].begin() > bounds[l()].second) {
+			if (prodReg[l()].begin() > bounds[l].second) {
 				isGood = false;
 				break;
 			}
-			if (prodReg[l()].end() - 1 < bounds[l()].first) {
+			if (prodReg[l()].end() - 1 < bounds[l].first) {
 				isGood = false;
 				break;
 			}
@@ -584,6 +584,10 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 			Composition comp = Composition::zero();
 			comp[Species::I] = n;
 			auto iClusterId = subpaving.findTileId(comp, plsm::onDevice);
+
+			// Check the I cluster exists
+			if (iClusterId == NetworkType::invalidIndex())
+				continue;
 
 			bounds[Species::V].first += 1;
 			bounds[Species::V].second += 1;
