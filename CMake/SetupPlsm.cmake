@@ -53,13 +53,14 @@ if(NOT EXISTS ${__plsm_src_dir}/CMakeLists.txt)
         OUTPUT_FILE "${__external_bin_dir}/plsm_clone.out"
         ERROR_FILE "${__external_bin_dir}/plsm_clone.out"
     )
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} fetch --all
-        WORKING_DIRECTORY "${__plsm_src_dir}"
-        OUTPUT_FILE "${__external_bin_dir}/plsm_clone.out"
-        ERROR_FILE "${__external_bin_dir}/plsm_clone.out"
-    )
 endif()
+
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} fetch --all
+    WORKING_DIRECTORY "${__plsm_src_dir}"
+    OUTPUT_FILE "${__external_bin_dir}/plsm_clone.out"
+    ERROR_FILE "${__external_bin_dir}/plsm_clone.out"
+)
 
 # Should we update the source to a different version
 set(XOLOTL_USE_PLSM_DEVELOP ${Xolotl_USE_PLSM_DEVELOP} CACHE INTERNAL "")
