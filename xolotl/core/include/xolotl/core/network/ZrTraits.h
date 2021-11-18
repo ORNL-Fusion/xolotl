@@ -72,7 +72,7 @@ template <>
 struct ReactionNetworkTraits<ZrReactionNetwork>
 {
 	using Species = ZrSpecies;
-
+    
 	static constexpr std::size_t numSpecies = 2;
 
 	using ProductionReactionType = ZrProductionReaction;

@@ -162,8 +162,17 @@ ZrDissociationReaction::computeBindingEnergy()
 	if (lo.isOnAxis(Species::V)) {
 		double n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			if (n < 18) be = 2.03 - 1.9 * (pow(n, 0.84) - pow(n - 1.0, 0.84));
+			//if (n < 18) be = 2.03 - 1.9 * (pow(n, 0.84) - pow(n - 1.0, 0.84));
+            if (n == 2) be = 0.22;
+            else if (n == 2) be = 0.22;
+            else if (n == 3) be = 0.35;
+            else if (n == 4) be = 0.32;
+            else if (n == 5) be = 1.2;
+            else if (n == 6) be = 1.2;
+            else if (n == 7) be = 0.27;
+            else if (n < 18) be = 2.03 - 4.29 * (pow(n, 0.6666) - pow(n - 1.0, 0.66666));
             else be = 2.03 - 3.4 * (pow(n, 0.70) - pow(n - 1.0, 0.70));
+            //std::cout << "n = " << n << " be = " << be << "\n";
 		}
 	}
 
@@ -194,6 +203,7 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 	Composition lo = clReg.getOrigin();
 
 	if (lo.isOnAxis(Species::V)) {
+
 		return dc * 1.0 *
 			(::xolotl::core::alphaZrCSinkStrength * anisotropy +
 				::xolotl::core::alphaZrASinkStrength /
@@ -203,7 +213,9 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
     //1-D diffusers are assumed to only interact with <a>-type edge dislocation lines
     //The anisotropy factor is assumed equal to 1.0 in this case
 	else if (lo.isOnAxis(Species::I)) {
+
         if (lo[Species::I] < 9) {
+
             return dc * 1.1 *
                 (::xolotl::core::alphaZrCSinkStrength * anisotropy +
                     ::xolotl::core::alphaZrASinkStrength /

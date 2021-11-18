@@ -96,8 +96,8 @@ constexpr double alphaZrASinkStrength = 7.25e-8; //Single crystal
 constexpr double alphaZrCSinkStrength = 2.25e-8; //Single crystal
 //constexpr double alphaZrASinkStrength = 2e-5; //cold-worked Zr
 //constexpr double alphaZrCSinkStrength = 5e-6; //cold-worked Zr
-//constexpr double alphaZrASinkStrength = 1e-11;
-//constexpr double alphaZrCSinkStrength = 1e-11;
+//constexpr double alphaZrASinkStrength = 1e-20;
+//constexpr double alphaZrCSinkStrength = 1e-20;
 
 } /* end namespace core */
 } /* end namespace xolotl */

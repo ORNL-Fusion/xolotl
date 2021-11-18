@@ -42,7 +42,12 @@ ZrReactionNetwork::checkLargestClusterId()
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
 			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
-			auto size = hi[Species::V] + hi[Species::I];
+
+            /* adding basal
+            auto size = hi[Species::V] + hi[Species::I] + hi[Species::Basal];
+            */
+
+            auto size = hi[Species::V] + hi[Species::I];
 			if (size > update.val) {
 				update.val = size;
 				update.loc = i;
@@ -79,13 +84,20 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
         data.extraData.dislocationCaptureRadius(i, 1) = 0.6 * pow(lo[Species::V], 0.3) / 10;
     }
 
+    /* adding basal
+    // Set the dislocation capture radii for vacancy c-loops (convert to nm):
+    // First index in dislocation capture radius is for I capture; second is for V capture
+    if (lo.isOnAxis(Species::Basal)){
+        data.extraData.dislocationCaptureRadius(i, 0) = 3.9 * pow(lo[Species::Basal], 0.07) / 10;
+        data.extraData.dislocationCaptureRadius(i, 1) = 0.4 * pow(lo[Species::Basal], 0.33) / 10;
+    }
+    */
+
     // Set the dislocation capture radii for interstitial a-loops (convert to nm)
     else if (lo.isOnAxis(Species::I)){
         data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::I], 0.05) / 10;
         data.extraData.dislocationCaptureRadius(i, 1) = 5.1 * pow(lo[Species::I], -0.01) / 10;
     }
-
-    // ADD BASAL DISLOCATION CAPTURE RADII HERE
 
     });
 }
@@ -97,6 +109,7 @@ KOKKOS_INLINE_FUNCTION
 void
 ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
+
 	using Species = typename Network::Species;
 	using Composition = typename Network::Composition;
 	using AmountType = typename Network::AmountType;
@@ -132,6 +145,70 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		}
 		return;
 	}
+
+    /* adding basal
+    // vac + Basal = Basal
+    if ((lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::V)) ||
+        (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Basal))) {
+        // Find out which one is which
+        auto vSize =
+            lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
+        auto basalSize =
+            lo1.isOnAxis(Species::Basal) ? lo1[Species::Basal] : lo2[Species::Basal];
+        // Compute the composition of the new cluster
+        int prodsize = vSize + basalSize;
+        // Find the corresponding cluster
+        Composition comp = Composition::zero();
+        comp[Species::Basal] = prodsize;
+        auto basalProdId = subpaving.findTileId(comp, plsm::onDevice);
+        if (basalProdId != subpaving.invalidIndex()) {
+            this->addProductionReaction(tag, {i, j, basalProdId});
+            if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+                this->addDissociationReaction(tag, {basalProdId, i, j});
+        }
+        }
+        return;
+    }
+
+    // int + Basal = Basal | int | recombine
+    if ((lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::I)) ||
+        (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::Basal))) {
+        // Find out which one is which
+        auto iSize =
+            lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
+        auto basalSize =
+            lo1.isOnAxis(Species::Basal) ? lo1[Species::Basal] : lo2[Species::Basal];
+        // Compute the composition of the new cluster
+        int prodSize = basalSize - iSize;
+        // 3 cases
+        if (prodSize > 0){
+            // Looking for Basal cluster
+            Composition comp = Composition::zero();
+            comp[Species::Basal] = prodSize;
+            auto basalProdId = subpaving.findTileId(comp, plsm::onDevice);
+            if (basalProdId != subpaving.invalidIndex()) {
+                this->addProductionReaction(tag, {i, j, basalProdId});
+                // No dissociation
+            }
+        }
+        else if (prodSize < 0) {
+            // Looking for I cluster
+            Composition comp = Composition::zero();
+            comp[Species::I] = -prodSize;
+            auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+            if (iProdId != subpaving.invalidIndex()) {
+                this->addProductionReaction(tag, {i, j, iProdId});
+                // No dissociation
+            }
+        }
+        else {
+        // No product
+        this->addProductionReaction(tag, {i, j});
+        }
+
+        return;
+    }
+    */
 
 	// vac + int = vac | int | recombine
 	if (((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
@@ -234,6 +311,7 @@ void
 ZrClusterUpdater::updateDiffusionCoefficient(
 	const ClusterData& data, IndexType clusterId, IndexType gridIndex) const
 {
+
 	// I migration energies in eV
 	constexpr Kokkos::Array<double, 6> iMigrationA = {
 		0.0, 0.17, 0.23, 0.49, 0.75, 0.87};
@@ -245,17 +323,17 @@ ZrClusterUpdater::updateDiffusionCoefficient(
 	constexpr Kokkos::Array<double, 6> iDiffusionC = {
 		0.0, 6.8e+11, 2.6e+12, 6.8e+13, 4.2e+14, 5.5e+15};
 
-
-	// V migration energies in eV
-	constexpr Kokkos::Array<double, 10> vMigrationA = {
-		0.0, 0.59, 0.58, 0.94, 0.16, 0.81, 0.25, 0.90, 0.90, 0.90};
-    constexpr Kokkos::Array<double, 10> vMigrationC = {
-		0.0, 0.67, 0.41, 1.12, 0.58, 0.29, 0.18, 1.0, 1.0, 1.0};
+    // V migration energies in eV (up to n = 6)
+    constexpr Kokkos::Array<double, 7> vMigrationA = {
+    0.0, 0.59, 0.58, 0.94, 0.16, 0.81, 0.25};
+    constexpr Kokkos::Array<double, 7> vMigrationC = {
+    0.0, 0.67, 0.41, 1.12, 0.58, 0.29, 0.18};
     // V diffusions factors in nm^2/s
-	constexpr Kokkos::Array<double, 10> vDiffusionA = {
-		0.0,1.6e+12, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10, 1.5e+13, 1.5e+13, 1.5e+13};
-	constexpr Kokkos::Array<double, 10> vDiffusionC = {
-		0.0, 2.2e+12, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9, 4.2e+13, 4.2e+13, 4.2e+13};
+    constexpr Kokkos::Array<double, 7> vDiffusionA = {
+    0.0,1.6e+12, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10};
+    constexpr Kokkos::Array<double, 7> vDiffusionC = {
+    0.0, 2.2e+12, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
+
 
 	// 3D diffuser case
 	if (data.migrationEnergy(clusterId) < 0.0) {

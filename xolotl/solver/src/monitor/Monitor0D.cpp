@@ -386,8 +386,9 @@ computeAlphaZr0D(
 
     // Initial declarations
 	// Reduce output based on current timestep:
-    if (timestep < 500) if (timestep%1 !=0 ) PetscFunctionReturn(0);
-    if (timestep < 5000) {if (timestep%5 !=0 ) PetscFunctionReturn(0);}
+    if (timestep < 200) {if(timestep%1 !=0 ) PetscFunctionReturn(0);}
+    else if (timestep < 500) {if (timestep%5 !=0 ) PetscFunctionReturn(0);}
+    else if (timestep < 5000) {if (timestep%50 !=0 ) PetscFunctionReturn(0);}
     else if (timestep < 10000) {if (timestep%500 !=0 ) PetscFunctionReturn(0);}
     else if (timestep < 100000) {if (timestep%5000 !=0 ) PetscFunctionReturn(0);}
     else if (timestep < 1000000) {if (timestep%50000 !=0 ) PetscFunctionReturn(0);}

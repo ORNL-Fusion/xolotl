@@ -39,8 +39,16 @@ KOKKOS_INLINE_FUNCTION
 bool
 ZrClusterGenerator::select(const Region& region) const
 {
+    /* adding basal
 	int nAxis =
-		(region[Species::V].begin() > 0) + (region[Species::I].begin() > 0);
+		(region[Species::V].begin() > 0) +
+        (region[Species::I].begin() > 0) +
+        (region[Species::Basal].begin() > 0);
+    */
+
+    int nAxis =
+        (region[Species::V].begin() > 0) +
+        (region[Species::I].begin() > 0);
 
 	if (nAxis > 1) {
 		return false;
@@ -59,7 +67,25 @@ ZrClusterGenerator::select(const Region& region) const
 		// V
 		if (region[Species::V].begin() > _maxV)
 			return false;
+
+        /* adding basal
+        // Basal
+        if (region[Species::Basal].begin() > _maxV)
+            return false;
+        */
+
+        // Void
+        //if (region[Species::Basal].begin() > 0 &&
+            //region[Species::Basal].begin() <= _maxV)
+            //return false;
 	}
+
+    //if (region[Species::V].begin() == 0 && region[Species::I].begin() == 0 &&
+        //region[Species::Basal].end() - 1 <= _maxV)
+        //return false;
+
+    //if (region[Species::Basal].begin() > _maxSize)
+        //return false;
 
 	return true;
 }
@@ -104,7 +130,7 @@ ZrClusterGenerator::getMigrationEnergy(
 	Composition comp(reg.getOrigin());
 	double migrationEnergy = util::infinity<double>;
 
-	if (comp.isOnAxis(Species::V) && comp[Species::V] <= 9) {
+	if (comp.isOnAxis(Species::V) && comp[Species::V] <= 6) {
 		return defaultMigration;
 	}
 	if (comp.isOnAxis(Species::I)) {
@@ -132,9 +158,10 @@ ZrClusterGenerator::getDiffusionFactor(
 	Composition comp(reg.getOrigin());
 	double diffusionFactor = 0.0;
 
-	if (comp.isOnAxis(Species::V) && comp[Species::V] <= 9) {
+	if (comp.isOnAxis(Species::V) && comp[Species::V] <= 6) {
 		return defaultDiffusion;
 	}
+
 	if (comp.isOnAxis(Species::I)) {
 		if (comp[Species::I] <= 5)
 			return defaultDiffusion;
@@ -157,6 +184,7 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	const auto& reg = cluster.getRegion();
 	Composition lo(reg.getOrigin());
 	double radius = 0.0;
+    int basalTransitionSize = 91;
 
     // jmr: rn = (3nOmega/4pi)^1/3 [nm] for n < 10
     // jmr: Note that (3Omega/4pi) = 5.586e-3 nm^3, where Omega = 0.0234 nm^3
@@ -171,6 +199,17 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 
 		return radius / reg[Species::V].length();
 	}
+
+    /* adding basal
+    if (lo.isOnAxis(Species::Basal)) {
+        for (auto j : makeIntervalRange(reg[Species::Basal])) {
+            if (lo[Species::Basal] < basalTransitionSize) radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
+            else radius += 0.169587 * pow((double)j,0.5);
+        }
+
+    return radius / reg[Species::Basal].length();
+    }
+    */
 
 	if (lo.isOnAxis(Species::I)) {
 		for (auto j : makeIntervalRange(reg[Species::I])) {
