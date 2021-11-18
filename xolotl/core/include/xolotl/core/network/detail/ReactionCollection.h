@@ -68,16 +68,12 @@ public:
 		_data.setGridSize(gridSize);
 	}
 
-	const ClusterConnectivity<>&
-	getConnectivity() const
-	{
-		return _data.connectivity;
-	}
-
 	void
 	setConnectivity(const ClusterConnectivity<>& connectivity)
 	{
-		_data.connectivity = connectivity;
+		auto conn = connectivity;
+		forEach(DEVICE_LAMBDA(
+			auto&& reaction) { reaction.defineJacobianEntries(conn); });
 	}
 
 	std::uint64_t

@@ -124,6 +124,12 @@ public:
 	void
 	generateConnectivity(ReactionCollection<NetworkType>& reactionCollection);
 
+	const ClusterConnectivity<>&
+	getConnectivity() const
+	{
+		return _connectivity;
+	}
+
 protected:
 	TDerived*
 	asDerived()
@@ -152,6 +158,8 @@ protected:
 
 	Kokkos::View<ProductionReactionType*> _prodReactions;
 	Kokkos::View<DissociationReactionType*> _dissReactions;
+
+	ClusterConnectivity<> _connectivity;
 };
 
 template <typename TNetwork, typename TReaction,

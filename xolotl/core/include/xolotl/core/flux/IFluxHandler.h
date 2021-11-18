@@ -121,6 +121,23 @@ public:
 	 */
 	virtual void
 	setProportion(double a) = 0;
+
+	/**
+	 * Get the implanted flux for a specific sub network.
+	 *
+	 * @param The map of indices for this sub network
+	 * @return The vector flux, first is the ID and second is the value.
+	 */
+	virtual std::vector<std::pair<IdType, double>>
+	getImplantedFlux(std::vector<AmountType> map) = 0;
+
+	/**
+	 * Set the implanted flux for each sub network.
+	 *
+	 * @param fluxVector With first is the ID and second is the value
+	 */
+	virtual void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector) = 0;
 };
 // end class IFluxHandler
 

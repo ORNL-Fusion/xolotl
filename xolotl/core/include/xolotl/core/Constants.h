@@ -38,7 +38,7 @@ constexpr double uraniumDioxydeLatticeConstant = 0.54700000000000000;
 constexpr double ironLatticeConstant = 0.28700000000000000;
 
 //! Lattice Parameter. Given in units here of nm.
-constexpr double alphaZrLatticeConstant = 0.32294500000000000; //the a-constant
+constexpr double alphaZrLatticeConstant = 0.32294500000000000; // the a-constant
 
 //! Core radius. Given in units here of nm.
 constexpr double alloyCoreRadius = 0.36000000000000000;

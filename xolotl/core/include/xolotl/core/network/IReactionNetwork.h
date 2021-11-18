@@ -8,6 +8,7 @@
 
 #include <xolotl/core/network/Cluster.h>
 #include <xolotl/core/network/SpeciesId.h>
+#include <xolotl/core/network/detail/ClusterConnectivity.h>
 #include <xolotl/core/network/detail/ClusterData.h>
 #include <xolotl/core/network/detail/ReactionData.h>
 
@@ -30,9 +31,15 @@ public:
 	using OwnedConcentrationsView = Kokkos::View<double*>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
+	using RatesView = Kokkos::View<double**, Kokkos::MemoryUnmanaged>;
+	using SubMapView = Kokkos::View<AmountType*, Kokkos::MemoryUnmanaged>;
+	using OwnedSubMapView = Kokkos::View<AmountType*>;
+	using BelongingView = Kokkos::View<bool*>;
 	using Connectivity = detail::ClusterConnectivity<>;
 	using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 	using Bounds = std::vector<std::vector<AmountType>>;
+	using BoundVector = std::vector<std::vector<std::vector<AmountType>>>;
+	using RateVector = std::vector<std::vector<double>>;
 	using PhaseSpace = std::vector<std::string>;
 
 	KOKKOS_INLINE_FUNCTION
@@ -242,6 +249,18 @@ public:
 	}
 
 	bool
+	getEnableConstantReaction() const noexcept
+	{
+		return _enableConstantReaction;
+	}
+
+	virtual void
+	setEnableConstantReaction(bool enable)
+	{
+		_enableConstantReaction = enable;
+	}
+
+	bool
 	getEnableReducedJacobian() const noexcept
 	{
 		return _enableReducedJacobian;
@@ -294,6 +313,22 @@ public:
 	virtual Bounds
 	getAllClusterBounds() = 0;
 
+	/**
+	 * @brief Return a string of cluster name in ID order.
+	 */
+	virtual std::string
+	getHeaderString() = 0;
+
+	/**
+	 * @brief Computes the map between the different cluster bounds
+	 */
+	virtual void initializeClusterMap(BoundVector) = 0;
+
+	/**
+	 * @brief Set the rates for constant reactions
+	 */
+	virtual void setConstantRates(RateVector) = 0;
+
 	virtual PhaseSpace
 	getPhaseSpace() = 0;
 
@@ -314,6 +349,15 @@ public:
 	computeAllPartials(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex = 0,
 		double surfaceDepth = 0.0, double spacing = 0.0) = 0;
+
+	/**
+	 * @brief Updates the rates view with the rates from all the
+	 * reactions at this grid point, this is for multiple instances use.
+	 */
+	virtual void
+	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		SubMapView subMap, IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0) = 0;
 
 	/**
 	 * @brief Returns the largest computed rate.
@@ -399,6 +443,7 @@ protected:
 	bool _enableSink{};
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
+	bool _enableConstantReaction{};
 	bool _enableReducedJacobian{};
 
 	IndexType _gridSize{};

@@ -51,8 +51,13 @@ ClusterDataCommon<PlsmContext>::ClusterDataCommon(
 	formationEnergy("Formation Energy" + labelStr<PlsmContext>(), numClusters),
 	migrationEnergy("Migration Energy" + labelStr<PlsmContext>(), numClusters),
 	diffusionFactor("Diffusion Factor" + labelStr<PlsmContext>(), numClusters),
+	toSubNetworkApp("Sub Network App" + labelStr<PlsmContext>(), numClusters),
+	toSubNetworkIndex(
+		"Sub Network Index" + labelStr<PlsmContext>(), numClusters),
 	diffusionCoefficient("Diffusion Coefficient" + labelStr<PlsmContext>(),
-		numClusters, gridSize)
+		numClusters, gridSize),
+	constantRates("Constant Rates" + labelStr<PlsmContext>(), numClusters,
+		numClusters + 1)
 {
 }
 
@@ -68,7 +73,10 @@ ClusterDataCommon<PlsmContext>::deepCopy(const TClusterDataCommon& data)
 	deep_copy(formationEnergy, data.formationEnergy);
 	deep_copy(migrationEnergy, data.migrationEnergy);
 	deep_copy(diffusionFactor, data.diffusionFactor);
+	deep_copy(toSubNetworkApp, data.toSubNetworkApp);
+	deep_copy(toSubNetworkIndex, data.toSubNetworkIndex);
 	deep_copy(diffusionCoefficient, data.diffusionCoefficient);
+	deep_copy(constantRates, data.constantRates);
 }
 
 template <typename PlsmContext>
@@ -87,8 +95,12 @@ ClusterDataCommon<PlsmContext>::getDeviceMemorySize() const noexcept
 	ret += formationEnergy.required_allocation_size(formationEnergy.size());
 	ret += migrationEnergy.required_allocation_size(migrationEnergy.size());
 	ret += diffusionFactor.required_allocation_size(diffusionFactor.size());
+	ret += toSubNetworkApp.required_allocation_size(toSubNetworkApp.size());
+	ret += toSubNetworkIndex.required_allocation_size(toSubNetworkIndex.size());
 	ret += diffusionCoefficient.required_allocation_size(
 		diffusionCoefficient.extent(0), diffusionCoefficient.extent(1));
+	ret += constantRates.required_allocation_size(
+		constantRates.extent(0), constantRates.extent(1));
 
 	return ret;
 }
@@ -164,6 +176,7 @@ ClusterData<TNetwork, PlsmContext>::generate(const ClusterGenerator& generator,
 			data.reactionRadius(i) = generator.getReactionRadius(
 				cluster, latticeParameter, interstitialBias, impurityRadius);
 		});
+
 	Kokkos::fence();
 }
 } // namespace detail

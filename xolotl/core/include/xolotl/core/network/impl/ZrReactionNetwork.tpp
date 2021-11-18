@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/detail/impl/ConstantReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
 #include <xolotl/core/network/impl/ZrClusterGenerator.tpp>
@@ -116,7 +117,11 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 	if (i == j) {
 		addSinks(i, tag);
+		this->addConstantReaction(tag, {i, Network::invalidIndex()});
 	}
+
+	// Add every possibility
+	this->addConstantReaction(tag, {i, j});
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
@@ -293,7 +298,7 @@ ZrReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<Network> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions());
+		this->getSinkReactions(), this->getConstantReactions());
 	return ret;
 }
 } // namespace detail
@@ -317,7 +322,7 @@ ZrClusterUpdater::updateDiffusionCoefficient(
 		0.0, 0.17, 0.23, 0.49, 0.75, 0.87};
 	constexpr Kokkos::Array<double, 6> iMigrationC = {
 		0.0, 0.30, 0.54, 0.93, 1.2, 1.6};
-    //I diffusion factors in nm^2/s
+	// I diffusion factors in nm^2/s
 	constexpr Kokkos::Array<double, 6> iDiffusionA = {
 		0.0, 2.4e+11, 3.2e+11, 4.9e+12, 5.1e+13, 4.3e+13};
 	constexpr Kokkos::Array<double, 6> iDiffusionC = {
@@ -333,7 +338,6 @@ ZrClusterUpdater::updateDiffusionCoefficient(
     0.0,1.6e+12, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10};
     constexpr Kokkos::Array<double, 7> vDiffusionC = {
     0.0, 2.2e+12, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
-
 
 	// 3D diffuser case
 	if (data.migrationEnergy(clusterId) < 0.0) {

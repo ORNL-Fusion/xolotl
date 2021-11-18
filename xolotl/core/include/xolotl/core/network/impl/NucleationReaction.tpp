@@ -90,7 +90,7 @@ KOKKOS_INLINE_FUNCTION
 void
 NucleationReaction<TNetwork, TDerived>::computePartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	Connectivity connectivity, IndexType gridIndex)
+	IndexType gridIndex)
 {
 	// Get the single concentration to know in which regime we are
 	double singleConc = concentrations(_reactant);
@@ -100,8 +100,8 @@ NucleationReaction<TNetwork, TDerived>::computePartialDerivatives(
 		// Nothing
 	}
 	else {
-		Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)), 1.0);
-		Kokkos::atomic_add(&values(connectivity(_product, _reactant)), 0.5);
+		Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), 1.0);
+		Kokkos::atomic_add(&values(_connEntries[1][0][0][0]), 0.5);
 	}
 }
 
@@ -110,7 +110,7 @@ KOKKOS_INLINE_FUNCTION
 void
 NucleationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	Connectivity connectivity, IndexType gridIndex)
+	IndexType gridIndex)
 {
 	// Get the single concentration to know in which regime we are
 	double singleConc = concentrations(_reactant);
@@ -120,10 +120,20 @@ NucleationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 		// Nothing
 	}
 	else {
-		Kokkos::atomic_sub(&values(connectivity(_reactant, _reactant)), 1.0);
+		Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), 1.0);
 		if (_product == _reactant)
-			Kokkos::atomic_add(&values(connectivity(_product, _reactant)), 0.5);
+			Kokkos::atomic_add(&values(_connEntries[1][0][0][0]), 0.5);
 	}
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+NucleationReaction<TNetwork, TDerived>::mapJacobianEntries(
+	Connectivity connectivity)
+{
+	_connEntries[0][0][0][0] = connectivity(_reactant, _reactant);
+	_connEntries[1][0][0][0] = connectivity(_product, _reactant);
 }
 } // namespace network
 } // namespace core

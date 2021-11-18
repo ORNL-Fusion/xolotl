@@ -1,5 +1,4 @@
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#pragma once
 
 #include <petscts.h>
 
@@ -22,6 +21,10 @@ class IReactionNetwork;
 namespace solver
 {
 class ISolver;
+}
+namespace perf
+{
+class IPerfHandler;
 }
 
 namespace interface
@@ -48,6 +51,12 @@ private:
 	 * The solver
 	 */
 	std::shared_ptr<solver::ISolver> solver;
+
+	/**
+	 * A vector of maps to know which cluster in subnetworks correspond
+	 * to which in the main network
+	 */
+	std::vector<std::vector<AmountType>> fromSubNetwork;
 
 public:
 	/**
@@ -237,6 +246,66 @@ public:
 	getGridInfo(double& hy, double& hz);
 
 	/**
+	 * Get the cluster information
+	 *
+	 * @return The vector representing the bounds for each cluster
+	 */
+	std::vector<std::vector<AmountType>>
+	getAllClusterBounds();
+
+	/**
+	 * Computes the map between the different set of cluster bounds.
+	 *
+	 * @param bounds A vector of cluster bounds
+	 */
+	void
+	initializeClusterMaps(
+		std::vector<std::vector<std::vector<AmountType>>> bounds);
+
+	/**
+	 * Get the implanted flux for each sub network.
+	 *
+	 * @return The vector of vectors of flux, first is the ID and second is the
+	 * value.
+	 */
+	std::vector<std::vector<std::pair<IdType, double>>>
+	getImplantedFlux();
+
+	/**
+	 * Set the implanted flux for each sub network.
+	 *
+	 * @param fluxVector With first is the ID and second is the value
+	 */
+	void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector);
+
+	/**
+	 * Values for the rates to be set in constant reactions.
+	 *
+	 * @param rates All the rates
+	 */
+	void
+	setConstantRates(std::vector<std::vector<double>> rates);
+
+	/**
+	 * Compute the constant rates
+	 *
+	 * @param conc The concentration vector
+	 * @return A vector containing the rates for each sub instance
+	 */
+	std::vector<std::vector<std::vector<double>>>
+	computeConstantRates(std::vector<std::vector<double>> conc);
+
+	/**
+	 * Write the data in a file.
+	 *
+	 * @param time The current time
+	 * @param conc The concentration vector
+	 */
+	void
+	outputData(double time, std::vector<std::vector<double>> conc);
+
+	/**
 	 * Get whether the solve converged or not.
 	 *
 	 * @return true if it converged
@@ -250,9 +319,5 @@ public:
 	void
 	finalizeXolotl();
 };
-// End class interface
-
 } /* namespace interface */
 } /* namespace xolotl */
-
-#endif

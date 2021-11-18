@@ -137,7 +137,7 @@ KOKKOS_INLINE_FUNCTION
 void
 TrapMutationReaction<TNetwork, TDerived>::computePartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	Connectivity connectivity, IndexType gridIndex)
+	IndexType gridIndex)
 {
 	if (!getEnabled()) {
 		return;
@@ -145,9 +145,9 @@ TrapMutationReaction<TNetwork, TDerived>::computePartialDerivatives(
 
 	auto rate = getAppliedRate(gridIndex);
 
-	Kokkos::atomic_sub(&values(connectivity(_heClId, _heClId)), rate);
-	Kokkos::atomic_add(&values(connectivity(_heVClId, _heClId)), rate);
-	Kokkos::atomic_add(&values(connectivity(_iClId, _heClId)), rate);
+	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), rate);
+	Kokkos::atomic_add(&values(_connEntries[1][0][0][0]), rate);
+	Kokkos::atomic_add(&values(_connEntries[2][0][0][0]), rate);
 }
 
 template <typename TNetwork, typename TDerived>
@@ -155,14 +155,43 @@ KOKKOS_INLINE_FUNCTION
 void
 TrapMutationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	Connectivity connectivity, IndexType gridIndex)
+	IndexType gridIndex)
 {
 	if (!getEnabled()) {
 		return;
 	}
 
 	auto rate = getAppliedRate(gridIndex);
-	Kokkos::atomic_sub(&values(connectivity(_heClId, _heClId)), rate);
+	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), rate);
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+TrapMutationReaction<TNetwork, TDerived>::computeConstantRates(
+	ConcentrationsView concentrations, RatesView rates, BelongingView isInSub,
+	OwnedSubMapView backMap, IndexType gridIndex)
+{
+	if (!getEnabled()) {
+		return;
+	}
+
+	// Only consider cases where one of the products is in the sub network
+	// but not the dissociating cluster
+	if (isInSub[_heClId])
+		return;
+	if (not isInSub[_heVClId] and not isInSub[_iClId])
+		return;
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	auto rate = getAppliedRate(gridIndex);
+	auto f = rate * concentrations[_heClId];
+
+	if (isInSub[_heClId])
+		Kokkos::atomic_add(&rates(_heClId, isInSub.extent(0)), f);
+	if (isInSub[_iClId])
+		Kokkos::atomic_add(&rates(_iClId, isInSub.extent(0)), f);
 }
 
 template <typename TNetwork, typename TDerived>
