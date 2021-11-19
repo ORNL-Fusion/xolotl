@@ -80,7 +80,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	comp[Species::He] = desorpInit.size;
 	auto desorp = create_mirror_view(tmData.desorption);
 	desorp() = detail::Desorption{
-		desorpInit, this->findCluster(comp, plsm::onHost).getId()};
+		desorpInit, this->findCluster(comp, plsm::HostMemSpace{}).getId()};
 	deep_copy(tmData.desorption, desorp);
 
 	auto depths = Kokkos::View<const double[7], HostSpace, MemoryUnmanaged>(
@@ -146,7 +146,8 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 
 	// Loop on every cluster
 	for (unsigned int i = 0; i < this->getNumClusters(); i++) {
-		const auto& clReg = this->getCluster(i, plsm::onHost).getRegion();
+		const auto& clReg =
+			this->getCluster(i, plsm::HostMemSpace{}).getRegion();
 		// Non-grouped clusters
 		if (clReg.isSimplex()) {
 			// Get the composition
@@ -196,7 +197,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 				// Transfer concentration to V of the same size
 				Composition vComp = Composition::zero();
 				vComp[Species::V] = comp[Species::V];
-				auto vCluster = this->findCluster(vComp, plsm::onHost);
+				auto vCluster = this->findCluster(vComp, plsm::HostMemSpace{});
 				gridPointSolution[vCluster.getId()] += gridPointSolution[i];
 				gridPointSolution[i] = 0.0;
 
@@ -233,7 +234,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 				// Transfer concentration to V of the same size
 				Composition vComp = Composition::zero();
 				vComp[Species::V] = j;
-				auto vCluster = this->findCluster(vComp, plsm::onHost);
+				auto vCluster = this->findCluster(vComp, plsm::HostMemSpace{});
 				// TODO: refine formula with V moment
 				gridPointSolution[vCluster.getId()] +=
 					gridPointSolution[i] * concFactor;
@@ -241,7 +242,8 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 
 			// Reset the concentration and moments
 			gridPointSolution[i] = 0.0;
-			auto momentIds = this->getCluster(i, plsm::onHost).getMomentIds();
+			auto momentIds =
+				this->getCluster(i, plsm::HostMemSpace{}).getMomentIds();
 			for (std::size_t j = 0; j < momentIds.extent(0); j++) {
 				if (momentIds(j) != this->invalidIndex())
 					gridPointSolution[momentIds(j)] = 0.0;
@@ -416,7 +418,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		for (auto k = minSize; k <= maxSize; k++) {
 			Composition comp = Composition::zero();
 			comp[Species::I] = k;
-			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto iProdId = subpaving.findTileId(comp);
 			if (iProdId != subpaving.invalidIndex() &&
 				iProdId != previousIndex) {
 				this->addProductionReaction(tag, {i, j, iProdId});
@@ -445,7 +447,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 					// Looking for V cluster
 					Composition comp = Composition::zero();
 					comp[Species::V] = prodSize;
-					auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+					auto vProdId = subpaving.findTileId(comp);
 					if (vProdId != subpaving.invalidIndex() &&
 						vProdId != previousIndex) {
 						this->addProductionReaction(tag, {i, j, vProdId});
@@ -457,7 +459,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 					// Looking for I cluster
 					Composition comp = Composition::zero();
 					comp[Species::I] = -prodSize;
-					auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+					auto iProdId = subpaving.findTileId(comp);
 					if (iProdId != subpaving.invalidIndex() &&
 						iProdId != previousIndex) {
 						this->addProductionReaction(tag, {i, j, iProdId});
@@ -555,7 +557,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 					Composition compI = Composition::zero();
 					compI[Species::I] = vSize;
 					auto iClusterId =
-						subpaving.findTileId(compI, plsm::onDevice);
+						subpaving.findTileId(compI);
 					this->addTrapMutationReaction(tag, {i, j, iClusterId});
 				}
 			}
@@ -583,7 +585,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 			// Find the corresponding cluster
 			Composition comp = Composition::zero();
 			comp[Species::I] = n;
-			auto iClusterId = subpaving.findTileId(comp, plsm::onDevice);
+			auto iClusterId = subpaving.findTileId(comp);
 
 			// Check the I cluster exists
 			if (iClusterId == NetworkType::invalidIndex())

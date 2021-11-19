@@ -170,7 +170,6 @@ private:
 		AmountType maxT = opts.getMaxT();
 		NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 		network.syncClusterDataOnHost();
-		network.getSubpaving().syncZones(plsm::onHost);
 
 		return network;
 	}

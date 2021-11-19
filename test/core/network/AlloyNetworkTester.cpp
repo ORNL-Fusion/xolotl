@@ -49,7 +49,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 		{maxV, maxSize, maxSize, maxI, maxSize, maxSize}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 23);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 23);
@@ -282,7 +281,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::V] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 17);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.14068, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 1.9, 0.01);
@@ -311,7 +310,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 2;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 10);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.17725, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 5.4559, 0.01);
@@ -340,7 +339,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::I] = 0;
 	comp[Spec::Void] = 7;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 15);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.26912, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.9416, 0.01);
@@ -369,7 +368,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::Void] = 0;
 	comp[Spec::Frank] = 8;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 3);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.49776, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 9.4, 0.01);
@@ -398,7 +397,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::Frank] = 0;
 	comp[Spec::Perfect] = 5;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 5);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.321142, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 7.2480, 0.01);
@@ -427,7 +426,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::Perfect] = 0;
 	comp[Spec::Faulted] = 7;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 13);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.4656, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 7.2186, 0.01);
@@ -496,7 +495,6 @@ BOOST_AUTO_TEST_CASE(grouped)
 	NetworkType network = NetworkType(maxSpeciesAmounts, subdivRatios, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 47);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 53);
@@ -1146,7 +1144,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::V] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 21);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.14068, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 1.9, 0.01);
@@ -1175,7 +1173,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 2;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 10);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.17725, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 5.4559, 0.01);
@@ -1204,7 +1202,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	comp[Spec::I] = 0;
 	comp[Spec::Void] = 15;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 19);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.361465, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 20.96172, 0.01);
@@ -1233,7 +1231,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	comp[Spec::Void] = 0;
 	comp[Spec::Frank] = 12;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.60856, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 11.86668, 0.01);
@@ -1262,7 +1260,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	comp[Spec::Frank] = 0;
 	comp[Spec::Perfect] = 5;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 5);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.321142, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 7.2480, 0.01);
@@ -1291,7 +1289,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	comp[Spec::Perfect] = 0;
 	comp[Spec::Faulted] = 20;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 16);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.78702848, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 14.63612, 0.01);

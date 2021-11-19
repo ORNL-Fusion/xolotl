@@ -265,35 +265,15 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::syncClusterDataOnHost()
 {
-	_subpaving.syncTiles(plsm::onHost);
-	auto mirror = ClusterDataMirror(_subpaving, this->_gridSize);
-	mirror.deepCopy(_clusterData.h_view());
-	_clusterDataMirror = mirror;
+	_subpavingMirror = _subpaving.makeMirrorCopy();
+
+	auto dataMirror = ClusterDataMirror(_subpaving, this->_gridSize);
+	dataMirror.deepCopy(_clusterData.h_view());
+	_clusterDataMirror = dataMirror;
 }
 
 template <typename TImpl>
-KOKKOS_INLINE_FUNCTION
-typename ReactionNetwork<TImpl>::template Cluster<plsm::OnDevice>
-ReactionNetwork<TImpl>::findCluster(
-	const Composition& comp, plsm::OnDevice context)
-{
-	auto id = _subpaving.findTileId(comp, context);
-	return _clusterData.d_view().getCluster(
-		id == _subpaving.invalidIndex() ? this->invalidIndex() : IndexType(id));
-}
-
-template <typename TImpl>
-typename ReactionNetwork<TImpl>::template Cluster<plsm::OnHost>
-ReactionNetwork<TImpl>::findCluster(
-	const Composition& comp, plsm::OnHost context)
-{
-	auto id = _subpaving.findTileId(comp, context);
-	return _clusterDataMirror.getCluster(
-		id == _subpaving.invalidIndex() ? this->invalidIndex() : IndexType(id));
-}
-
-template <typename TImpl>
-ClusterCommon<plsm::OnHost>
+ClusterCommon<plsm::HostMemSpace>
 ReactionNetwork<TImpl>::getSingleVacancy()
 {
 	Composition comp = Composition::zero();
@@ -313,7 +293,7 @@ ReactionNetwork<TImpl>::getSingleVacancy()
 	if (hasVacancy)
 		comp[vIndex] = 1;
 
-	auto clusterId = findCluster(comp, plsm::onHost).getId();
+	auto clusterId = findCluster(comp, plsm::HostMemSpace{}).getId();
 
 	return _clusterDataMirror.getClusterCommon(clusterId);
 }
@@ -327,7 +307,7 @@ ReactionNetwork<TImpl>::getAllClusterBounds()
 
 	// Loop on all the clusters
 	constexpr auto speciesRange = getSpeciesRange();
-	auto tiles = _subpaving.getTiles(plsm::onHost);
+	auto tiles = _subpavingMirror.getTiles();
 	for (IndexType i = 0; i < this->_numClusters; ++i) {
 		const auto& clReg = tiles(i).getRegion();
 		Composition lo = clReg.getOrigin();
@@ -485,7 +465,7 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(
 	if (!hasVacancy)
 		return 0.0;
 
-	auto tiles = _subpaving.getTiles(plsm::onDevice);
+	auto tiles = _subpaving.getTiles();
 	double conc = 0.0;
 	Kokkos::parallel_reduce(
 		this->_numClusters,
@@ -516,7 +496,7 @@ ReactionNetwork<TImpl>::updateOutgoingDiffFluxes(double* gridPointSolution,
 	for (auto l : diffusingIds) {
 		// Get the cluster and composition
 		auto cluster = this->getClusterCommon(l);
-		auto reg = this->getCluster(l, plsm::onHost).getRegion();
+		auto reg = this->getCluster(l, plsm::HostMemSpace{}).getRegion();
 		Composition comp = reg.getOrigin();
 		// Get its concentration
 		double conc = gridPointSolution[l];
@@ -555,7 +535,7 @@ ReactionNetwork<TImpl>::updateOutgoingAdvecFluxes(double* gridPointSolution,
 	for (auto l : advectingIds) {
 		// Get the cluster and composition
 		auto cluster = this->getClusterCommon(l);
-		auto reg = this->getCluster(l, plsm::onHost).getRegion();
+		auto reg = this->getCluster(l, plsm::HostMemSpace{}).getRegion();
 		Composition comp = reg.getOrigin();
 		// Get its concentration
 		double conc = gridPointSolution[l];
@@ -753,7 +733,7 @@ double
 ReactionNetworkWorker<TImpl>::getTotalConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
 {
-	auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+	auto tiles = _nw._subpaving.getTiles();
 	double conc = 0.0;
 	Kokkos::parallel_reduce(
 		_nw._numClusters,
@@ -777,7 +757,7 @@ double
 ReactionNetworkWorker<TImpl>::getTotalRadiusConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
 {
-	auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+	auto tiles = _nw._subpaving.getTiles();
 	double conc = 0.0;
 	auto clusterData = _nw._clusterData.d_view;
 	Kokkos::parallel_reduce(
@@ -803,7 +783,7 @@ double
 ReactionNetworkWorker<TImpl>::getTotalAtomConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
 {
-	auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+	auto tiles = _nw._subpaving.getTiles();
 	double conc = 0.0;
 	Kokkos::parallel_reduce(
 		_nw._numClusters,
@@ -827,7 +807,7 @@ double
 ReactionNetworkWorker<TImpl>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
 {
-	auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+	auto tiles = _nw._subpaving.getTiles();
 	double conc = 0.0;
 	auto clusterData = _nw._clusterData.d_view;
 	Kokkos::parallel_reduce(

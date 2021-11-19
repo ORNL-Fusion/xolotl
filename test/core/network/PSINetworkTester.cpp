@@ -56,7 +56,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE(network.hasDeuterium());
 	BOOST_REQUIRE(network.hasTritium());
@@ -414,7 +413,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::V] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 1);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
@@ -441,7 +440,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
@@ -468,7 +467,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 57);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
@@ -495,7 +494,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::He] = 0;
 	comp[Spec::D] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 9);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.075, 0.01);
 	BOOST_REQUIRE_EQUAL(
@@ -523,7 +522,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::D] = 0;
 	comp[Spec::T] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.075, 0.01);
 	BOOST_REQUIRE_EQUAL(
@@ -552,7 +551,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	comp[Spec::V] = 1;
 	comp[Spec::He] = 8;
 	comp[Spec::D] = 3;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 123);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 30.1049, 0.01);
@@ -610,7 +609,6 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -883,7 +881,6 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	NetworkType network({maxHe, maxV, maxI}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE(!network.hasDeuterium());
 	BOOST_REQUIRE(!network.hasTritium());
@@ -1062,7 +1059,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::V] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
@@ -1085,7 +1082,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
@@ -1108,7 +1105,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 16);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
@@ -1131,7 +1128,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 
 	comp[Spec::He] = 4;
 	comp[Spec::V] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 14);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 14.8829, 0.01);
@@ -1183,7 +1180,6 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	NetworkType network({maxHe, maxD, maxV, maxI}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE(network.hasDeuterium());
 	BOOST_REQUIRE(!network.hasTritium());
@@ -1380,7 +1376,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::V] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 1);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
@@ -1405,7 +1401,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
@@ -1430,7 +1426,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 24);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
@@ -1455,7 +1451,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	comp[Spec::He] = 0;
 	comp[Spec::D] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.075, 0.01);
 	BOOST_REQUIRE_EQUAL(
@@ -1481,7 +1477,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	comp[Spec::He] = 3;
 	comp[Spec::V] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 17);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_EQUAL(cluster.getFormationEnergy(), 11.5304);
@@ -1535,7 +1531,6 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	NetworkType network({maxHe, maxT, maxV, maxI}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE(!network.hasDeuterium());
 	BOOST_REQUIRE(network.hasTritium());
@@ -1732,7 +1727,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::V] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 1);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
@@ -1757,7 +1752,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
@@ -1782,7 +1777,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 24);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
@@ -1807,7 +1802,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	comp[Spec::He] = 0;
 	comp[Spec::T] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.075, 0.01);
 	BOOST_REQUIRE_EQUAL(
@@ -1833,7 +1828,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	comp[Spec::He] = 3;
 	comp[Spec::V] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 17);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_EQUAL(cluster.getFormationEnergy(), 11.5304);
@@ -1886,7 +1881,6 @@ BOOST_AUTO_TEST_CASE(smallHeVGrouped)
 			->getNetwork());
 
 	network->syncClusterDataOnHost();
-	network->getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 2874);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 3300);
@@ -1934,7 +1928,6 @@ BOOST_AUTO_TEST_CASE(largeHeVGrouped)
 			->getNetwork());
 
 	network->syncClusterDataOnHost();
-	network->getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 3127);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 4775);
@@ -1982,7 +1975,6 @@ BOOST_AUTO_TEST_CASE(HeDVGrouped)
 			->getNetwork());
 
 	network->syncClusterDataOnHost();
-	network->getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 4967);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 6656);
@@ -2030,7 +2022,6 @@ BOOST_AUTO_TEST_CASE(HeTVGrouped)
 			->getNetwork());
 
 	network->syncClusterDataOnHost();
-	network->getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 4967);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 6656);
@@ -2078,7 +2069,6 @@ BOOST_AUTO_TEST_CASE(HeDTVGrouped)
 			->getNetwork());
 
 	network->syncClusterDataOnHost();
-	network->getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 2383);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 4259);
@@ -2126,7 +2116,6 @@ BOOST_AUTO_TEST_CASE(IGrouped)
 			->getNetwork());
 
 	network->syncClusterDataOnHost();
-	network->getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 813);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 1424);

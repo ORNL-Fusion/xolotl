@@ -16,10 +16,6 @@ template ReactionNetwork<AlloyReactionNetwork>::ReactionNetwork(
 	const std::vector<AmountType>& maxSpeciesAmounts, IndexType gridSize,
 	const options::IOptions& opts);
 
-template ReactionNetwork<AlloyReactionNetwork>::Cluster<plsm::OnHost>
-ReactionNetwork<AlloyReactionNetwork>::findCluster(
-	const Composition& comp, plsm::OnHost context);
-
 template double
 ReactionNetwork<AlloyReactionNetwork>::getTotalConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);

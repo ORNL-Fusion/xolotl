@@ -1,7 +1,6 @@
 list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterSet.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/detail/MemorySpace.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/NucleationReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/PSITrapMutation.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionCollection.h
