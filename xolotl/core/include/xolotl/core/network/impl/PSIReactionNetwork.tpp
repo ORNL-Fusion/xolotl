@@ -197,7 +197,11 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 				Composition vComp = Composition::zero();
 				vComp[Species::V] = comp[Species::V];
 				auto vCluster = this->findCluster(vComp, plsm::onHost);
-				gridPointSolution[vCluster.getId()] += gridPointSolution[i];
+				// Get the region
+				auto vReg = vCluster.getRegion();
+				double width = vReg[Species::V].length();
+				gridPointSolution[vCluster.getId()] +=
+					gridPointSolution[i] / width;
 				gridPointSolution[i] = 0.0;
 
 				continue;
@@ -234,9 +238,12 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 				Composition vComp = Composition::zero();
 				vComp[Species::V] = j;
 				auto vCluster = this->findCluster(vComp, plsm::onHost);
+				// Get the region
+				auto vReg = vCluster.getRegion();
+				double width = vReg[Species::V].length();
 				// TODO: refine formula with V moment
 				gridPointSolution[vCluster.getId()] +=
-					gridPointSolution[i] * concFactor;
+					gridPointSolution[i] * concFactor / width;
 			}
 
 			// Reset the concentration and moments
