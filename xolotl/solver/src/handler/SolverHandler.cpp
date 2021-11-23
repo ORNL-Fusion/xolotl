@@ -38,6 +38,7 @@ SolverHandler::SolverHandler(
 	movingSurface(false),
 	isMirror(true),
 	useAttenuation(false),
+	fluxTempProfile(false),
 	sputteringYield(0.0),
 	fluxHandler(nullptr),
 	temperatureHandler(nullptr),
@@ -409,6 +410,9 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 
 	// Set the sputtering yield
 	sputteringYield = opts.getSputteringYield();
+
+	// Do we want a flux temporal profile?
+	fluxTempProfile = opts.useFluxTimeProfile();
 
 	// Boundary conditions in the X direction
 	if (opts.getBCString() == "periodic")

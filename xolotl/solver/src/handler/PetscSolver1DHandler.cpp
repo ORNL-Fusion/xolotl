@@ -141,6 +141,9 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
 
+	// Initialize the flux handler
+	fluxHandler->initializeFluxHandler(network, surfacePosition, grid);
+
 	return;
 }
 
@@ -173,9 +176,6 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 
 	// Give the surface position to the temperature handler
 	temperatureHandler->updateSurfacePosition(surfacePosition);
-
-	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, surfacePosition, grid);
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(

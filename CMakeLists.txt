@@ -48,7 +48,7 @@ endif()
 ## plsm
 include(SetupPlsm)
 list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
-find_package(plsm REQUIRED)
+find_package(plsm 1.1 REQUIRED)
 
 ## PAPI
 find_package(PAPI)

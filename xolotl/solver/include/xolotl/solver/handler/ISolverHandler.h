@@ -362,6 +362,14 @@ public:
 	moveSurface() const = 0;
 
 	/**
+	 * To know if a temporal profile is used for the flux.
+	 *
+	 * @return True if temporal flux option is used.
+	 */
+	virtual bool
+	temporalFlux() const = 0;
+
+	/**
 	 * Get the minimum size for computing average radius.
 	 *
 	 * @return The minimum size

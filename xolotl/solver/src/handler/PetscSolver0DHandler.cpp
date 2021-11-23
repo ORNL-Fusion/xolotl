@@ -65,6 +65,9 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
 
+	// Initialize the flux handler
+	fluxHandler->initializeFluxHandler(network, 0, grid);
+
 	return;
 }
 
@@ -82,9 +85,6 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::initializeConcentration: "
 		"DMDAVecGetArrayDOF failed.");
-
-	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, 0, grid);
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar* concOffset = nullptr;

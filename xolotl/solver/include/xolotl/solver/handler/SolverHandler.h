@@ -126,6 +126,9 @@ protected:
 	//! If the user wants to attenuate the modified trap mutation.
 	bool useAttenuation;
 
+	//! If the user wants to use a temporal profile for the flux.
+	bool fluxTempProfile;
+
 	//! The sputtering yield for the problem.
 	double sputteringYield;
 
@@ -350,6 +353,15 @@ public:
 	moveSurface() const override
 	{
 		return movingSurface;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	bool
+	temporalFlux() const override
+	{
+		return fluxTempProfile;
 	}
 
 	/**
