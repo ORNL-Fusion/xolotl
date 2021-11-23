@@ -235,14 +235,6 @@ public:
 	getSputteringYield() const = 0;
 
 	/**
-	 * Get the HeV ratio.
-	 *
-	 * @return The ratio
-	 */
-	virtual double
-	getHeVRatio() const = 0;
-
-	/**
 	 * Get the grid left offset.
 	 *
 	 * @return The offset

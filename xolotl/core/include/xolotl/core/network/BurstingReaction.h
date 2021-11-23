@@ -38,12 +38,14 @@ public:
 	BurstingReaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
-	BurstingReaction(ReactionDataRef reactionData, const ClusterData& clusterData,
-		IndexType reactionId, IndexType cluster0, IndexType cluster1);
+	BurstingReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		IndexType cluster0, IndexType cluster1);
 
 	KOKKOS_INLINE_FUNCTION
-	BurstingReaction(ReactionDataRef reactionData, const ClusterData& clusterData,
-		IndexType reactionId, const detail::ClusterSet& clusterSet);
+	BurstingReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		const detail::ClusterSet& clusterSet);
 
 	static detail::CoefficientsView
 	allocateCoefficientsView(IndexType size)
@@ -88,14 +90,12 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values,
-		IndexType gridIndex);
+		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double

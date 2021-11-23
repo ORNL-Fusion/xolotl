@@ -1,7 +1,7 @@
 #pragma once
 
-#include <xolotl/core/network/impl/BurstingReaction.tpp>
 #include <xolotl/core/network/PSIClusterGenerator.h>
+#include <xolotl/core/network/impl/BurstingReaction.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/core/network/impl/SinkReaction.tpp>
 #include <xolotl/core/network/impl/TrapMutationReaction.tpp>
@@ -126,7 +126,7 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 		AmountType lowerV = 16, higherV = 31;
 		AmountType minV = 1;
 		for (auto i = 1; i < higherV; i++) {
-			auto maxHe = psi::getMaxHePerV(i, 4.0);
+			auto maxHe = psi::getMaxHePerV(i);
 			if (comp[Species::He] > maxHe)
 				minV = i;
 		}

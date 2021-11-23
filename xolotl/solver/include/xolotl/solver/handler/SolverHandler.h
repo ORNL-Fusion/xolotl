@@ -129,9 +129,6 @@ protected:
 	//! The sputtering yield for the problem.
 	double sputteringYield;
 
-	//! The ratio of He per V in a bubble.
-	double heVRatio;
-
 	//! The value to use to seed the random number generator.
 	unsigned int rngSeed;
 
@@ -229,15 +226,6 @@ public:
 	getSputteringYield() const override
 	{
 		return sputteringYield;
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	double
-	getHeVRatio() const override
-	{
-		return heVRatio;
 	}
 
 	/**

@@ -17,7 +17,6 @@ namespace solver
 {
 namespace monitor
 {
-
 PetscErrorCode
 monitorSurfaceXY(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -171,77 +170,77 @@ PetscMonitor3D::setup()
 
 	// If the user wants the surface to be able to move
 	if (_solverHandler->moveSurface()) {
-			// Clear the vector just in case
-			_iClusterIds.clear();
+		// Clear the vector just in case
+		_iClusterIds.clear();
 
-			using NetworkType = core::network::IPSIReactionNetwork;
-			using AmountType = NetworkType::AmountType;
-			auto psiNetwork = dynamic_cast<NetworkType*>(&network);
-			// Get the number of species
-			auto numSpecies = psiNetwork->getSpeciesListSize();
-			auto specIdI = psiNetwork->getInterstitialSpeciesId();
+		using NetworkType = core::network::IPSIReactionNetwork;
+		using AmountType = NetworkType::AmountType;
+		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+		// Get the number of species
+		auto numSpecies = psiNetwork->getSpeciesListSize();
+		auto specIdI = psiNetwork->getInterstitialSpeciesId();
 
-			// Initialize the composition
-			auto comp = std::vector<AmountType>(numSpecies, 0);
+		// Initialize the composition
+		auto comp = std::vector<AmountType>(numSpecies, 0);
 
-			// Loop on interstital clusters
-			bool iClusterExists = true;
-			AmountType iSize = 1;
-			while (iClusterExists) {
-				comp[specIdI()] = iSize;
-				auto clusterId = psiNetwork->findClusterId(comp);
-				// Check that the helium cluster is present in the network
-				if (clusterId != NetworkType::invalidIndex()) {
-					_iClusterIds.push_back(clusterId);
-					iSize++;
-				}
-				else
-					iClusterExists = false;
+		// Loop on interstital clusters
+		bool iClusterExists = true;
+		AmountType iSize = 1;
+		while (iClusterExists) {
+			comp[specIdI()] = iSize;
+			auto clusterId = psiNetwork->findClusterId(comp);
+			// Check that the helium cluster is present in the network
+			if (clusterId != NetworkType::invalidIndex()) {
+				_iClusterIds.push_back(clusterId);
+				iSize++;
+			}
+			else
+				iClusterExists = false;
+		}
+
+		// Get the interstitial information at the surface if concentrations
+		// were stored
+		if (hasConcentrations) {
+			assert(lastTsGroup);
+
+			// Get the names of the species in the network
+			std::vector<std::string> names;
+			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+				names.push_back(network.getSpeciesName(id));
 			}
 
-			// Get the interstitial information at the surface if concentrations
-			// were stored
-			if (hasConcentrations) {
-				assert(lastTsGroup);
+			// Loop on the names
+			for (auto i = 0; i < names.size(); i++) {
+				// Create the n attribute name
+				std::ostringstream nName;
+				nName << "n" << names[i] << "Surf";
+				// Read quantity attribute
+				_nSurf[i] = lastTsGroup->readData3D(nName.str());
 
-				// Get the names of the species in the network
-				std::vector<std::string> names;
-				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-					names.push_back(network.getSpeciesName(id));
-				}
-
-				// Loop on the names
-				for (auto i = 0; i < names.size(); i++) {
-					// Create the n attribute name
-					std::ostringstream nName;
-					nName << "n" << names[i] << "Surf";
-					// Read quantity attribute
-					_nSurf[i] = lastTsGroup->readData3D(nName.str());
-
-					// Create the previous flux attribute name
-					std::ostringstream prevFluxName;
-					prevFluxName << "previousFlux" << names[i] << "Surf";
-					// Read the attribute
-					_previousSurfFlux[i] =
-						lastTsGroup->readData3D(prevFluxName.str());
-				}
-
-				// Get the previous time from the HDF5 file
-				double previousTime = lastTsGroup->readPreviousTime();
-				_solverHandler->setPreviousTime(previousTime);
+				// Create the previous flux attribute name
+				std::ostringstream prevFluxName;
+				prevFluxName << "previousFlux" << names[i] << "Surf";
+				// Read the attribute
+				_previousSurfFlux[i] =
+					lastTsGroup->readData3D(prevFluxName.str());
 			}
 
-			// Get the sputtering yield
-			_sputteringYield = _solverHandler->getSputteringYield();
+			// Get the previous time from the HDF5 file
+			double previousTime = lastTsGroup->readPreviousTime();
+			_solverHandler->setPreviousTime(previousTime);
+		}
 
-			// Master process
-			if (procId == 0) {
-				// Clear the file where the surface will be written
-				std::ofstream outputFile;
-				outputFile.open("surface.txt");
-				outputFile << "#time heights" << std::endl;
-				outputFile.close();
-			}
+		// Get the sputtering yield
+		_sputteringYield = _solverHandler->getSputteringYield();
+
+		// Master process
+		if (procId == 0) {
+			// Clear the file where the surface will be written
+			std::ofstream outputFile;
+			outputFile.open("surface.txt");
+			outputFile << "#time heights" << std::endl;
+			outputFile.close();
+		}
 
 		// Set directions and terminate flags for the surface event
 		PetscInt direction[1];

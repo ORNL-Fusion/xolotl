@@ -45,7 +45,6 @@ SolverHandler::SolverHandler(
 	perfHandler(factory::perf::PerfHandlerFactory::get().generate(options)),
 	diffusionHandler(nullptr),
 	rngSeed(0),
-	heVRatio(4.0),
 	previousTime(0.0),
 	nXeGB(0.0)
 {
@@ -410,9 +409,6 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 
 	// Set the sputtering yield
 	sputteringYield = opts.getSputteringYield();
-
-	// Set the HeV ratio
-	heVRatio = opts.getHeVRatio();
 
 	// Boundary conditions in the X direction
 	if (opts.getBCString() == "periodic")

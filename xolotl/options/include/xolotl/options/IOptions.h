@@ -443,14 +443,6 @@ public:
 	getFissionYield() const = 0;
 
 	/**
-	 * Obtain the value of the HeV ratio.
-	 *
-	 * @return The ratio
-	 */
-	virtual double
-	getHeVRatio() const = 0;
-
-	/**
 	 * Obtain the value of the migration energy threshold for effective
 	 * diffusivity.
 	 *

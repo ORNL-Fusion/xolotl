@@ -226,25 +226,23 @@ BurstingReaction<TNetwork, TDerived>::computePartialDerivatives(
 	// First for the reactant
 	double df = rate / (double)_reactantVolume;
 	// Compute the values
-	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]),
-		df * this->_coefs(0, 0, 0, 0));
+	Kokkos::atomic_sub(
+		&values(_connEntries[0][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 	for (auto i : speciesRangeNoI) {
 		if (_reactantMomentIds[i()] != invalidIndex) {
-			Kokkos::atomic_sub(
-				&values(_connEntries[0][0][0][1 + i()]),
+			Kokkos::atomic_sub(&values(_connEntries[0][0][0][1 + i()]),
 				df * this->_coefs(i() + 1, 0, 0, 0));
 		}
 	}
 	// For the product
 	if (_product != invalidIndex) {
 		df = rate;
-		Kokkos::atomic_add(&values(_connEntries[1][0][0][0]),
-			df * this->_coefs(0, 0, 0, 0));
+		Kokkos::atomic_add(
+			&values(_connEntries[1][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 
 		for (auto i : speciesRangeNoI) {
 			if (_reactantMomentIds[i()] != invalidIndex) {
-				Kokkos::atomic_add(
-					&values(_connEntries[1][0][0][1+i()]),
+				Kokkos::atomic_add(&values(_connEntries[1][0][0][1 + i()]),
 					df * this->_coefs(i() + 1, 0, 0, 0));
 			}
 		}
@@ -256,13 +254,12 @@ BurstingReaction<TNetwork, TDerived>::computePartialDerivatives(
 			// First for the reactant
 			df = rate / (double)_reactantVolume;
 			// Compute the values
-			Kokkos::atomic_sub(
-				&values(_connEntries[0][1+k()][0][0]),
+			Kokkos::atomic_sub(&values(_connEntries[0][1 + k()][0][0]),
 				df * this->_coefs(0, 0, 0, k() + 1));
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[i()] != invalidIndex) {
 					Kokkos::atomic_sub(
-						&values(_connEntries[0][1+k()][0][1+i()]),
+						&values(_connEntries[0][1 + k()][0][1 + i()]),
 						df * this->_coefs(k() + 1, 0, 0, i() + 1));
 				}
 			}
@@ -291,7 +288,7 @@ BurstingReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[i()] == _reactantMomentIds[k()]) {
 					Kokkos::atomic_sub(
-						&values(_connEntries[0][1+k()][0][1+i()]),
+						&values(_connEntries[0][1 + k()][0][1 + i()]),
 						df * this->_coefs(k() + 1, 0, 0, i() + 1));
 				}
 			}
