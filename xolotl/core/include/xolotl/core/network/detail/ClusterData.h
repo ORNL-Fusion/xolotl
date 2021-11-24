@@ -39,15 +39,15 @@ struct ClusterDataExtra
 
 	ClusterDataExtra() = default;
 
-	template <typename PC>
+	template <typename MS>
 	KOKKOS_INLINE_FUNCTION
-	ClusterDataExtra(const ClusterDataExtra<TNetwork, PC>&)
+	ClusterDataExtra(const ClusterDataExtra<TNetwork, MS>&)
 	{
 	}
 
-	template <typename PC>
+	template <typename MS>
 	void
-	deepCopy([[maybe_unused]] const ClusterDataExtra<TNetwork, PC>& data)
+	deepCopy([[maybe_unused]] const ClusterDataExtra<TNetwork, MS>& data)
 	{
 	}
 

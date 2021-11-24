@@ -267,7 +267,7 @@ ReactionNetwork<TImpl>::syncClusterDataOnHost()
 {
 	_subpavingMirror = _subpaving.makeMirrorCopy();
 
-	auto dataMirror = ClusterDataMirror(_subpaving, this->_gridSize);
+	auto dataMirror = ClusterDataMirror(_subpavingMirror, this->_gridSize);
 	dataMirror.deepCopy(_clusterData.h_view());
 	_clusterDataMirror = dataMirror;
 }
