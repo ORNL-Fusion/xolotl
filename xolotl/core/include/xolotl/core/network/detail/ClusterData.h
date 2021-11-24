@@ -20,6 +20,25 @@ class Cluster;
 
 namespace detail
 {
+template <typename TData, typename MemSpace>
+struct ViewTypeHelper;
+
+template <typename TData>
+struct ViewTypeHelper<TData, plsm::HostMemSpace>
+{
+	using DeviceView = Kokkos::View<TData, plsm::DeviceMemSpace>;
+	using ViewType = typename DeviceView::HostMirror;
+};
+
+template <typename TData>
+struct ViewTypeHelper<TData, plsm::DeviceMemSpace>
+{
+	using ViewType = Kokkos::View<TData, plsm::DeviceMemSpace>;
+};
+
+template <typename TData, typename MemSpace>
+using ViewType = typename ViewTypeHelper<TData, MemSpace>::ViewType;
+
 template <typename TView>
 struct UnmanagedHelper
 {
@@ -73,7 +92,7 @@ struct ClusterDataCommon
 	friend class ClusterDataCommon;
 
 	template <typename TData>
-	using View = Kokkos::View<TData, MemSpace>;
+	using View = ViewType<TData, MemSpace>;
 
 	using ClusterType = ClusterCommon<MemSpace>;
 	using IndexType = detail::ReactionNetworkIndexType;
