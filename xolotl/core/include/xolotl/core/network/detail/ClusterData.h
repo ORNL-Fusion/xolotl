@@ -21,19 +21,15 @@ class Cluster;
 namespace detail
 {
 template <typename TData, typename MemSpace>
-struct ViewTypeHelper;
-
-template <typename TData>
-struct ViewTypeHelper<TData, plsm::HostMemSpace>
+struct ViewTypeHelper
 {
 	using DeviceView = Kokkos::View<TData, plsm::DeviceMemSpace>;
-	using ViewType = typename DeviceView::HostMirror;
-};
-
-template <typename TData>
-struct ViewTypeHelper<TData, plsm::DeviceMemSpace>
-{
-	using ViewType = Kokkos::View<TData, plsm::DeviceMemSpace>;
+	using HostView = Kokkos::View<TData, plsm::HostMemSpace>;
+	using ViewType = std::conditional_t<
+		std::is_same_v<plsm::HostMemSpace, plsm::DeviceMemSpace>,
+		  HostView,
+		  std::conditional_t<std::is_same_v<MemSpace, plsm::DeviceMemSpace>,
+			  DeviceView, typename DeviceView::HostMirror>>;
 };
 
 template <typename TData, typename MemSpace>

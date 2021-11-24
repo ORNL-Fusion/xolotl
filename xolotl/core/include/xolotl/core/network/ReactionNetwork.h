@@ -7,6 +7,7 @@
 #include <Kokkos_Atomic.hpp>
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Crs.hpp>
+#include <Kokkos_DualView.hpp>
 
 #include <plsm/Subpaving.h>
 #include <plsm/refine/RegionDetector.h>
