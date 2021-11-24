@@ -191,6 +191,34 @@ PSISinkReaction<TSpeciesEnum>::getSinkStrength()
 
 	return 1.0 / (pi * grainSize * grainSize);
 }
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSIBurstingReaction<TSpeciesEnum>::getAppliedRate(IndexType gridIndex) const
+{
+	using NetworkType = typename Superclass::NetworkType;
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	using AmountType = typename NetworkType::AmountType;
+
+	// Get the radius of the cluster
+	auto cl = this->_clusterData->getCluster(this->_reactant);
+	auto clReg = cl.getRegion();
+	Composition loComp(clReg.getOrigin());
+	Composition hiComp(clReg.getUpperLimitPoint());
+	double avHe = (hiComp[Species::He] + loComp[Species::He]) / 2.0;
+	AmountType avV = (hiComp[Species::V] + loComp[Species::V]) / 2.0;
+	auto radius = avHe * cl.getReactionRadius() /
+		(double)xolotl::core::network::psi::getMaxHePerV(avV);
+
+	// Get the current depth
+	auto depth = this->_clusterData->getDepth();
+	auto tau = this->_clusterData->getTauBursting();
+	auto f = this->_clusterData->getFBursting();
+	return f * (radius / depth) *
+		util::min(1.0, exp(-(depth - tau) / (2.0 * tau)));
+}
 } // namespace network
 } // namespace core
 } // namespace xolotl

@@ -149,23 +149,6 @@ BurstingReaction<TNetwork, TDerived>::computeReducedConnectivity(
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
-double
-BurstingReaction<TNetwork, TDerived>::getAppliedRate(IndexType gridIndex) const
-{
-	// Get the radius of the cluster
-	auto cl = this->_clusterData->getCluster(_reactant);
-	auto radius = cl.getReactionRadius();
-
-	// Get the current depth
-	auto depth = this->_clusterData->getDepth();
-	auto tau = this->_clusterData->getTauBursting();
-	auto f = this->_clusterData->getFBursting();
-	return f * (radius / depth) *
-		util::min(1.0, exp(-(depth - tau) / (2.0 * tau)));
-}
-
-template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
 void
 BurstingReaction<TNetwork, TDerived>::computeFlux(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
@@ -183,7 +166,7 @@ BurstingReaction<TNetwork, TDerived>::computeFlux(
 			cmR[i()] = concentrations[_reactantMomentIds[i()]];
 	}
 
-	auto rate = getAppliedRate(gridIndex);
+	auto rate = this->asDerived()->getAppliedRate(gridIndex);
 
 	// Compute the flux for the 0th order moments
 	double f = this->_coefs(0, 0, 0, 0) * cR;
@@ -220,7 +203,7 @@ BurstingReaction<TNetwork, TDerived>::computePartialDerivatives(
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-	auto rate = getAppliedRate(gridIndex);
+	auto rate = this->asDerived()->getAppliedRate(gridIndex);
 
 	// Compute the partials for the 0th order moments
 	// First for the reactant
@@ -276,7 +259,7 @@ BurstingReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-	auto rate = getAppliedRate(gridIndex);
+	auto rate = this->asDerived()->getAppliedRate(gridIndex);
 	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]),
 		rate * this->_coefs(0, 0, 0, 0) / (double)_reactantVolume);
 

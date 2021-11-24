@@ -79,10 +79,6 @@ private:
 	computeReducedConnectivity(const Connectivity& connectivity);
 
 	KOKKOS_INLINE_FUNCTION
-	double
-	getAppliedRate(IndexType gridIndex) const;
-
-	KOKKOS_INLINE_FUNCTION
 	void
 	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
 		IndexType gridIndex);

@@ -62,6 +62,7 @@ public:
 	double
 	getSinkStrength();
 };
+
 template <typename TSpeciesEnum>
 class PSITrapMutationReaction :
 	public TrapMutationReaction<PSIReactionNetwork<TSpeciesEnum>,
@@ -80,7 +81,12 @@ class PSIBurstingReaction :
 public:
 	using Superclass = BurstingReaction<PSIReactionNetwork<TSpeciesEnum>,
 		PSIBurstingReaction<TSpeciesEnum>>;
+	using IndexType = typename Superclass::IndexType;
 	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getAppliedRate(IndexType gridIndex) const;
 };
 } // namespace network
 } // namespace core
