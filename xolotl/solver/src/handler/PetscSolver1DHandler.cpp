@@ -652,7 +652,6 @@ PetscSolver1DHandler::updateConcentration(
 	if (tempHasChanged) {
 		// Update the network with the temperature
 		network.setTemperatures(temperature);
-		for (auto i = 0; i < temperature.size(); i++) { }
 		network.syncClusterDataOnHost();
 	}
 
