@@ -62,13 +62,20 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
 template <typename TSpeciesEnum>
 void
 PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
-	const std::vector<double>& gridTemps)
+	const std::vector<double>& gridTemps, const std::vector<double>& gridDepths)
 {
 	if (!this->_enableTrapMutation) {
 		return;
 	}
 
-	_tmHandler->updateData(gridTemps[0]);
+	// Check which temperature index to use
+	IdType tempId = 0;
+	for (tempId = 0; tempId < gridDepths.size(); tempId++) {
+		if (gridDepths[tempId] > 0.01)
+			break;
+	}
+
+	_tmHandler->updateData(gridTemps[tempId]);
 
 	auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
 

@@ -264,11 +264,12 @@ public:
 	setGridSize(IndexType gridSize) = 0;
 
 	/**
-	 * @brief Takes a vector of temperatures along X and updates the diffusion
-	 * coefficients and rates accordingly.
+	 * @brief Takes a vector of temperatures and associated depths along X and
+	 * updates the diffusion coefficients and rates accordingly.
 	 */
 	virtual void
-	setTemperatures(const std::vector<double>& gridTemperatures) = 0;
+	setTemperatures(const std::vector<double>& gridTemperatures,
+		const std::vector<double>& gridDepths) = 0;
 
 	/**
 	 * @brief Copies tile and cluster data from device to host.

@@ -256,7 +256,15 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Update the network with the temperature
-	network.setTemperatures(temperature);
+	std::vector<double> depths;
+	for (auto i = 0; i < temperature.size(); i++) {
+		if (localXS + i == nX + 1)
+			depths.push_back(grid[localXS + i] - grid[surfacePosition + 1]);
+		else
+			depths.push_back((grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+				grid[surfacePosition + 1]);
+	}
+	network.setTemperatures(temperature, depths);
 	network.syncClusterDataOnHost();
 
 	/*
@@ -450,7 +458,15 @@ PetscSolver1DHandler::setConcVector(DM& da, Vec& C,
 		temperature[i + 1] = gridPointSolution[dof];
 	}
 	// Update the network with the temperature
-	network.setTemperatures(temperature);
+	std::vector<double> depths;
+	for (auto i = 0; i < temperature.size(); i++) {
+		if (localXS + i == nX + 1)
+			depths.push_back(grid[localXS + i] - grid[surfacePosition + 1]);
+		else
+			depths.push_back((grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+				grid[surfacePosition + 1]);
+	}
+	network.setTemperatures(temperature, depths);
 	network.syncClusterDataOnHost();
 
 	// Restore the solutionArray
@@ -585,6 +601,25 @@ PetscSolver1DHandler::updateConcentration(
 				concVector, updatedConcOffset, hxLeft, hxRight, xi);
 		}
 
+		// Compute the old and new array offsets
+		concOffset = concs[xi];
+		updatedConcOffset = updatedConcs[xi];
+
+		// Set the grid fraction
+		gridPosition[0] =
+			((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1]) /
+			(grid[grid.size() - 1] - grid[surfacePosition + 1]);
+
+		// Get the temperature from the temperature handler
+		temperatureHandler->setTemperature(concOffset);
+		double temp = temperatureHandler->getTemperature(gridPosition, ftime);
+
+		// Update the network if the temperature changed
+		if (std::fabs(temperature[xi + 1 - localXS] - temp) > 0.1) {
+			temperature[xi + 1 - localXS] = temp;
+			tempHasChanged = true;
+		}
+
 		// Boundary conditions
 		// Everything to the left of the surface is empty
 		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
@@ -600,10 +635,6 @@ PetscSolver1DHandler::updateConcentration(
 		}
 		if (skip)
 			continue;
-
-		// Compute the old and new array offsets
-		concOffset = concs[xi];
-		updatedConcOffset = updatedConcs[xi];
 
 		// Fill the concVector with the pointer to the middle, left, and right
 		// grid points
@@ -626,21 +657,6 @@ PetscSolver1DHandler::updateConcentration(
 			hxRight = grid[xi + 1] - grid[xi];
 		}
 
-		// Set the grid fraction
-		gridPosition[0] =
-			((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1]) /
-			(grid[grid.size() - 1] - grid[surfacePosition + 1]);
-
-		// Get the temperature from the temperature handler
-		temperatureHandler->setTemperature(concOffset);
-		double temp = temperatureHandler->getTemperature(gridPosition, ftime);
-
-		// Update the network if the temperature changed
-		if (std::fabs(temperature[xi + 1 - localXS] - temp) > 0.1) {
-			temperature[xi + 1 - localXS] = temp;
-			tempHasChanged = true;
-		}
-
 		// ---- Compute the temperature over the locally owned part of the grid
 		// -----
 		if (xi >= localXS && xi < localXS + localXM) {
@@ -651,7 +667,16 @@ PetscSolver1DHandler::updateConcentration(
 
 	if (tempHasChanged) {
 		// Update the network with the temperature
-		network.setTemperatures(temperature);
+		std::vector<double> depths;
+		for (auto i = 0; i < temperature.size(); i++) {
+			if (localXS + i == nX + 1)
+				depths.push_back(grid[localXS + i] - grid[surfacePosition + 1]);
+			else
+				depths.push_back(
+					(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+					grid[surfacePosition + 1]);
+		}
+		network.setTemperatures(temperature, depths);
 		network.syncClusterDataOnHost();
 	}
 
@@ -852,21 +877,6 @@ PetscSolver1DHandler::computeJacobian(
 			}
 		}
 
-		// Boundary conditions
-		// Everything to the left of the surface is empty
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
-			continue;
-		// Free surface GB
-		bool skip = false;
-		for (auto& pair : gbVector) {
-			if (xi == std::get<0>(pair)) {
-				skip = true;
-				break;
-			}
-		}
-		if (skip)
-			continue;
-
 		// Get the concentrations at this grid point
 		concOffset = concs[xi];
 
@@ -884,6 +894,21 @@ PetscSolver1DHandler::computeJacobian(
 			temperature[xi + 1 - localXS] = temp;
 			tempHasChanged = true;
 		}
+
+		// Boundary conditions
+		// Everything to the left of the surface is empty
+		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+			continue;
+		// Free surface GB
+		bool skip = false;
+		for (auto& pair : gbVector) {
+			if (xi == std::get<0>(pair)) {
+				skip = true;
+				break;
+			}
+		}
+		if (skip)
+			continue;
 
 		// Get the partial derivatives for the temperature
 		if (xi >= localXS && xi < localXS + localXM) {
@@ -915,7 +940,16 @@ PetscSolver1DHandler::computeJacobian(
 
 	if (tempHasChanged) {
 		// Update the network with the temperature
-		network.setTemperatures(temperature);
+		std::vector<double> depths;
+		for (auto i = 0; i < temperature.size(); i++) {
+			if (localXS + i == nX + 1)
+				depths.push_back(grid[localXS + i] - grid[surfacePosition + 1]);
+			else
+				depths.push_back(
+					(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+					grid[surfacePosition + 1]);
+		}
+		network.setTemperatures(temperature, depths);
 		network.syncClusterDataOnHost();
 	}
 

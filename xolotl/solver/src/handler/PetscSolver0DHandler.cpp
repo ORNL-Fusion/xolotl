@@ -148,7 +148,8 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Update the network with the temperature
-	network.setTemperatures(temperature);
+	auto depths = std::vector<double>(1, 1.0);
+	network.setTemperatures(temperature, depths);
 	network.syncClusterDataOnHost();
 
 	/*
@@ -241,7 +242,8 @@ PetscSolver0DHandler::setConcVector(DM& da, Vec& C,
 
 	// Set the temperature in the network
 	temperature[0] = gridPointSolution[dof];
-	network.setTemperatures(temperature);
+	auto depths = std::vector<double>(1, 1.0);
+	network.setTemperatures(temperature, depths);
 
 	/*
 	 Restore vectors
@@ -303,7 +305,8 @@ PetscSolver0DHandler::updateConcentration(
 	// Update the network if the temperature changed
 	if (std::fabs(temperature[0] - temp) > 0.1) {
 		temperature[0] = temp;
-		network.setTemperatures(temperature);
+		auto depths = std::vector<double>(1, 1.0);
+		network.setTemperatures(temperature, depths);
 		network.syncClusterDataOnHost();
 	}
 
@@ -385,7 +388,8 @@ PetscSolver0DHandler::computeJacobian(
 	// Update the network if the temperature changed
 	if (std::fabs(temperature[0] - temp) > 0.1) {
 		temperature[0] = temp;
-		network.setTemperatures(temperature);
+		auto depths = std::vector<double>(1, 1.0);
+		network.setTemperatures(temperature, depths);
 		network.syncClusterDataOnHost();
 	}
 

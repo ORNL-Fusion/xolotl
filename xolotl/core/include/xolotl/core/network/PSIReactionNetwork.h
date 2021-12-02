@@ -90,7 +90,8 @@ public:
 	initializeExtraClusterData(const options::IOptions& options);
 
 	void
-	updateExtraClusterData(const std::vector<double>& gridTemps);
+	updateExtraClusterData(const std::vector<double>& gridTemps,
+		const std::vector<double>& gridDepths);
 
 	void
 	selectTrapMutationReactions(double surfaceDepth, double spacing);
