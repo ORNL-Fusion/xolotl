@@ -80,7 +80,8 @@ public:
 	setTemperatures(double temp)
 	{
 		std::vector<double> temperatures(_nGrid, temp);
-		_network.setTemperatures(temperatures);
+		std::vector<double> depths(_nGrid, 1.0);
+		_network.setTemperatures(temperatures, depths);
 		_network.syncClusterDataOnHost();
 	}
 

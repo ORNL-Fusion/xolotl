@@ -92,7 +92,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 	}
 
 	// Set the temperature to 1000 K to initialize the diffusion coefficients
-	network.setTemperatures(temperatures);
+	network.setTemperatures(temperatures, grid);
 	network.syncClusterDataOnHost();
 
 	// Get pointers

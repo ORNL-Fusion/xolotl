@@ -7,6 +7,6 @@ dimensions=0
 perfHandler=os
 tempParam=1400
 grouping=101 2
-process=reaction
+process=reaction resolution
 radiusSize=50
 xenonDiffusivity=0.075

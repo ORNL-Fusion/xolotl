@@ -343,7 +343,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -783,7 +784,8 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -988,7 +990,8 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -1305,7 +1308,8 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -1656,7 +1660,8 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 

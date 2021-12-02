@@ -158,7 +158,8 @@ public:
 	}
 
 	void
-	updateExtraClusterData(const std::vector<double>&)
+	updateExtraClusterData(
+		const std::vector<double>&, const std::vector<double>&)
 	{
 	}
 
@@ -215,7 +216,8 @@ public:
 	setGridSize(IndexType gridSize) override;
 
 	void
-	setTemperatures(const std::vector<double>& gridTemperatures) override;
+	setTemperatures(const std::vector<double>& gridTemperatures,
+		const std::vector<double>& gridDepths) override;
 
 	std::uint64_t
 	getDeviceMemorySize() const noexcept override;

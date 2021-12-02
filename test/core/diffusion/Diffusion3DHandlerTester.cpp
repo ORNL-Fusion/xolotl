@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
-	network.setTemperatures(temperatures);
+	network.setTemperatures(temperatures, grid);
 	network.syncClusterDataOnHost();
 
 	// Get pointers

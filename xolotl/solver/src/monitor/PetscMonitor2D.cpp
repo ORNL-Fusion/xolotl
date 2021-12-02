@@ -276,6 +276,7 @@ PetscMonitor2D::setup()
 
 	// Set the monitor to compute the helium retention
 	if (flagHeRetention) {
+		auto fluxHandler = _solverHandler->getFluxHandler();
 		// Get the previous time if concentrations were stored and initialize
 		// the fluence
 		if (hasConcentrations) {
@@ -284,8 +285,6 @@ PetscMonitor2D::setup()
 			// Get the previous time from the HDF5 file
 			double previousTime = lastTsGroup->readPreviousTime();
 			_solverHandler->setPreviousTime(previousTime);
-			// Initialize the fluence
-			auto fluxHandler = _solverHandler->getFluxHandler();
 			// Increment the fluence with the value at this current timestep
 			fluxHandler->computeFluence(previousTime);
 
@@ -380,6 +379,31 @@ PetscMonitor2D::setup()
 			outputFile << "Helium_burst Deuterium_burst Tritium_burst"
 					   << std::endl;
 			outputFile.close();
+
+			if (_solverHandler->temporalFlux()) {
+				// Open an additional file that will keep the flux evolution
+				outputFile.open("instantFlux.txt");
+				outputFile << "#time ";
+
+				// Get the generated clusters
+				auto indices = fluxHandler->getFluxIndices();
+
+				// Get the bounds
+				auto bounds = network.getAllClusterBounds();
+				// Loop on them
+				for (auto i : indices) {
+					for (auto id = core::network::SpeciesId(numSpecies); id;
+						 ++id) {
+						auto speciesName = network.getSpeciesName(id);
+						if (bounds[i][2 * id()] > 0)
+							outputFile << speciesName << "_"
+									   << bounds[i][2 * id()];
+					}
+					outputFile << " ";
+				}
+				outputFile << std::endl;
+				outputFile.close();
+			}
 		}
 	}
 
@@ -1069,6 +1093,21 @@ PetscMonitor2D::computeHeliumRetention(
 		outputFile << _nHeliumBurst << " " << _nDeuteriumBurst << " "
 				   << _nTritiumBurst << std::endl;
 		outputFile.close();
+
+		if (_solverHandler->temporalFlux()) {
+			// Open an additional file that will keep the flux evolution
+			outputFile.open("instantFlux.txt", std::ios::app);
+			outputFile << time << " ";
+			// Get the flux information
+			auto instantFlux = fluxHandler->getInstantFlux(time);
+			// Loop on it
+			for (auto flux : instantFlux) {
+				outputFile << flux << " ";
+			}
+
+			outputFile << std::endl;
+			outputFile.close();
+		}
 	}
 
 	// Restore the solutionArray
