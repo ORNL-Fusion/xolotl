@@ -1,5 +1,5 @@
 dimensions=1
-process=reaction diff movingSurface advec
+process=reaction diff movingSurface advec modifiedTM attenuation
 gridType=nonuniform
 gridParam=40
 vizHandler=dummy
