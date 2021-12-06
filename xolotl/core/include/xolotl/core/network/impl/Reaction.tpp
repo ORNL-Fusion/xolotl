@@ -809,14 +809,15 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 	}
 	f *= this->_rate(gridIndex);
 
-	Kokkos::atomic_sub(&fluxes[_reactants[0]], f / (double)_reactantVolumes[0]);
-	Kokkos::atomic_sub(&fluxes[_reactants[1]], f / (double)_reactantVolumes[1]);
+	Kokkos::atomic_sub(&fluxes[_reactants[0]], f / _reactantVolumes[0]);
+	Kokkos::atomic_sub(&fluxes[_reactants[1]], f / _reactantVolumes[1]);
+
 	IndexType p = 0;
 	for (auto prodId : _products) {
 		if (prodId == invalidIndex) {
 			continue;
 		}
-		Kokkos::atomic_add(&fluxes[prodId], f / (double)_productVolumes[p]);
+		Kokkos::atomic_add(&fluxes[prodId], f / _productVolumes[p]);
 		p++;
 	}
 
@@ -834,8 +835,8 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 				}
 			}
 			f *= this->_rate(gridIndex);
-			Kokkos::atomic_sub(&fluxes[_reactantMomentIds[0][k()]],
-				f / (double)_reactantVolumes[0]);
+			Kokkos::atomic_sub(
+				&fluxes[_reactantMomentIds[0][k()]], f / _reactantVolumes[0]);
 		}
 
 		// For the second reactant
@@ -850,8 +851,8 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 				}
 			}
 			f *= this->_rate(gridIndex);
-			Kokkos::atomic_sub(&fluxes[_reactantMomentIds[1][k()]],
-				f / (double)_reactantVolumes[1]);
+			Kokkos::atomic_sub(
+				&fluxes[_reactantMomentIds[1][k()]], f / _reactantVolumes[1]);
 		}
 
 		// For the products
@@ -874,8 +875,8 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 					}
 				}
 				f *= this->_rate(gridIndex);
-				Kokkos::atomic_add(&fluxes[_productMomentIds[p][k()]],
-					f / (double)_productVolumes[p]);
+				Kokkos::atomic_add(
+					&fluxes[_productMomentIds[p][k()]], f / _productVolumes[p]);
 			}
 		}
 	}
@@ -924,10 +925,10 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 	}
 	// First for the first reactant
 	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]),
-		this->_rate(gridIndex) * temp / (double)_reactantVolumes[0]);
+		this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 	// Second reactant
 	Kokkos::atomic_sub(&values(_connEntries[1][0][0][0]),
-		this->_rate(gridIndex) * temp / (double)_reactantVolumes[1]);
+		this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 	// For the products
 	for (auto p : {0, 1}) {
 		auto prodId = _products[p];
@@ -935,7 +936,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 			continue;
 		}
 		Kokkos::atomic_add(&values(_connEntries[2 + p][0][0][0]),
-			this->_rate(gridIndex) * temp / (double)_productVolumes[p]);
+			this->_rate(gridIndex) * temp / _productVolumes[p]);
 	}
 
 	// Compute the values (d / dL_0^B)
@@ -945,10 +946,10 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 	}
 	// First for the first reactant
 	Kokkos::atomic_sub(&values(_connEntries[0][0][1][0]),
-		this->_rate(gridIndex) * temp / (double)_reactantVolumes[0]);
+		this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 	// Second reactant
 	Kokkos::atomic_sub(&values(_connEntries[1][0][1][0]),
-		this->_rate(gridIndex) * temp / (double)_reactantVolumes[1]);
+		this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 	// For the products
 	for (auto p : {0, 1}) {
 		auto prodId = _products[p];
@@ -956,7 +957,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 			continue;
 		}
 		Kokkos::atomic_add(&values(_connEntries[2 + p][0][1][0]),
-			this->_rate(gridIndex) * temp / (double)_productVolumes[p]);
+			this->_rate(gridIndex) * temp / _productVolumes[p]);
 	}
 
 	for (auto i : speciesRangeNoI) {
@@ -968,10 +969,10 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 			}
 			// First reactant
 			Kokkos::atomic_sub(&values(_connEntries[0][0][0][1 + i()]),
-				this->_rate(gridIndex) * temp / (double)_reactantVolumes[0]);
+				this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 			// second reactant
 			Kokkos::atomic_sub(&values(_connEntries[1][0][0][1 + i()]),
-				this->_rate(gridIndex) * temp / (double)_reactantVolumes[1]);
+				this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 			// For the products
 			for (auto p : {0, 1}) {
 				auto prodId = _products[p];
@@ -979,7 +980,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 					continue;
 				}
 				Kokkos::atomic_add(&values(_connEntries[2 + p][0][0][1 + i()]),
-					this->_rate(gridIndex) * temp / (double)_productVolumes[p]);
+					this->_rate(gridIndex) * temp / _productVolumes[p]);
 			}
 		}
 
@@ -990,16 +991,16 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 				temp += this->_coefs(j() + 1, i() + 1, 0, 0) * cmR1[j()];
 			}
 			Kokkos::atomic_sub(&values(_connEntries[0][0][1][1 + i()]),
-				this->_rate(gridIndex) * temp / (double)_reactantVolumes[0]);
+				this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 			Kokkos::atomic_sub(&values(_connEntries[1][0][1][1 + i()]),
-				this->_rate(gridIndex) * temp / (double)_reactantVolumes[1]);
+				this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 			for (auto p : {0, 1}) {
 				auto prodId = _products[p];
 				if (prodId == invalidIndex) {
 					continue;
 				}
 				Kokkos::atomic_add(&values(_connEntries[2 + p][0][1][1 + i()]),
-					this->_rate(gridIndex) * temp / (double)_productVolumes[p]);
+					this->_rate(gridIndex) * temp / _productVolumes[p]);
 			}
 		}
 	}
@@ -1014,7 +1015,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 				temp += this->_coefs(0, j() + 1, 0, k() + 1) * cmR2[j()];
 			}
 			Kokkos::atomic_sub(&values(_connEntries[0][1 + k()][0][0]),
-				this->_rate(gridIndex) * temp / (double)_reactantVolumes[0]);
+				this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 
 			// (d / dL_0^B)
 			temp = this->_coefs(0, 0, 0, k() + 1) * cR1;
@@ -1022,7 +1023,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 				temp += this->_coefs(j() + 1, 0, 0, k() + 1) * cmR1[j()];
 			}
 			Kokkos::atomic_sub(&values(_connEntries[0][1 + k()][1][0]),
-				this->_rate(gridIndex) * temp / (double)_reactantVolumes[0]);
+				this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 
 			for (auto i : speciesRangeNoI) {
 				// (d / dL_1^A)
@@ -1034,8 +1035,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 					}
 					Kokkos::atomic_sub(
 						&values(_connEntries[0][1 + k()][0][1 + i()]),
-						this->_rate(gridIndex) * temp /
-							(double)_reactantVolumes[0]);
+						this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 				}
 
 				// (d / dL_1^B)
@@ -1047,8 +1047,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 					}
 					Kokkos::atomic_sub(
 						&values(_connEntries[0][1 + k()][1][1 + i()]),
-						this->_rate(gridIndex) * temp /
-							(double)_reactantVolumes[0]);
+						this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 				}
 			}
 		}
@@ -1061,7 +1060,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 				temp += this->_coefs(0, j() + 1, 1, k() + 1) * cmR2[j()];
 			}
 			Kokkos::atomic_sub(&values(_connEntries[1][1 + k()][0][0]),
-				this->_rate(gridIndex) * temp / (double)_reactantVolumes[1]);
+				this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 
 			// (d / dL_0^B)
 			temp = this->_coefs(0, 0, 1, k() + 1) * cR1;
@@ -1069,7 +1068,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 				temp += this->_coefs(j() + 1, 0, 1, k() + 1) * cmR1[j()];
 			}
 			Kokkos::atomic_sub(&values(_connEntries[1][1 + k()][1][0]),
-				this->_rate(gridIndex) * temp / (double)_reactantVolumes[1]);
+				this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 
 			for (auto i : speciesRangeNoI) {
 				// (d / dL_1^A)
@@ -1081,8 +1080,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 					}
 					Kokkos::atomic_sub(
 						&values(_connEntries[1][1 + k()][0][1 + i()]),
-						this->_rate(gridIndex) * temp /
-							(double)_reactantVolumes[1]);
+						this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 				}
 
 				// (d / dL_1^B)
@@ -1094,8 +1092,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 					}
 					Kokkos::atomic_sub(
 						&values(_connEntries[1][1 + k()][1][1 + i()]),
-						this->_rate(gridIndex) * temp /
-							(double)_reactantVolumes[1]);
+						this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 				}
 			}
 		}
@@ -1118,7 +1115,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 						this->_coefs(0, j() + 1, p + 2, k() + 1) * cmR2[j()];
 				}
 				Kokkos::atomic_add(&values(_connEntries[2 + p][1 + k()][0][0]),
-					this->_rate(gridIndex) * temp / (double)_productVolumes[p]);
+					this->_rate(gridIndex) * temp / _productVolumes[p]);
 
 				// (d / dL_0^B)
 				temp = this->_coefs(0, 0, p + 2, k() + 1) * cR1;
@@ -1127,7 +1124,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 						this->_coefs(j() + 1, 0, p + 2, k() + 1) * cmR1[j()];
 				}
 				Kokkos::atomic_add(&values(_connEntries[2 + p][1 + k()][1][0]),
-					this->_rate(gridIndex) * temp / (double)_productVolumes[p]);
+					this->_rate(gridIndex) * temp / _productVolumes[p]);
 
 				for (auto i : speciesRangeNoI) {
 					// (d / dL_1^A)
@@ -1140,8 +1137,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 						}
 						Kokkos::atomic_add(
 							&values(_connEntries[2 + p][1 + k()][0][1 + i()]),
-							this->_rate(gridIndex) * temp /
-								(double)_productVolumes[p]);
+							this->_rate(gridIndex) * temp / _productVolumes[p]);
 					}
 
 					// (d / dL_1^B)
@@ -1154,8 +1150,7 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 						}
 						Kokkos::atomic_add(
 							&values(_connEntries[2 + p][1 + k()][1][1 + i()]),
-							this->_rate(gridIndex) * temp /
-								(double)_productVolumes[p]);
+							this->_rate(gridIndex) * temp / _productVolumes[p]);
 					}
 				}
 			}
@@ -1206,11 +1201,11 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	}
 	// First for the first reactant
 	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]),
-		this->_rate(gridIndex) * temp / (double)_reactantVolumes[0]);
+		this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 	// Second reactant
 	if (_reactants[1] == _reactants[0])
 		Kokkos::atomic_sub(&values(_connEntries[1][0][0][0]),
-			this->_rate(gridIndex) * temp / (double)_reactantVolumes[1]);
+			this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 	// For the products
 	for (auto p : {0, 1}) {
 		auto prodId = _products[p];
@@ -1218,7 +1213,7 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			continue;
 		}
 		Kokkos::atomic_add(&values(_connEntries[2 + p][0][0][0]),
-			this->_rate(gridIndex) * temp / (double)_productVolumes[p]);
+			this->_rate(gridIndex) * temp / _productVolumes[p]);
 	}
 
 	// Compute the values (d / dL_0^B)
@@ -1229,10 +1224,10 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	// First for the first reactant
 	if (_reactants[1] == _reactants[0])
 		Kokkos::atomic_sub(&values(_connEntries[0][0][1][0]),
-			this->_rate(gridIndex) * temp / (double)_reactantVolumes[0]);
+			this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 	// Second reactant
 	Kokkos::atomic_sub(&values(_connEntries[1][0][1][0]),
-		this->_rate(gridIndex) * temp / (double)_reactantVolumes[1]);
+		this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 	// For the products
 	for (auto p : {0, 1}) {
 		auto prodId = _products[p];
@@ -1240,7 +1235,7 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			continue;
 		}
 		Kokkos::atomic_add(&values(_connEntries[2 + p][0][1][0]),
-			this->_rate(gridIndex) * temp / (double)_productVolumes[p]);
+			this->_rate(gridIndex) * temp / _productVolumes[p]);
 	}
 
 	// Take care of the first moments
@@ -1257,8 +1252,7 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 				if (k() == i())
 					Kokkos::atomic_sub(
 						&values(_connEntries[0][1 + k()][0][1 + i()]),
-						this->_rate(gridIndex) * temp /
-							(double)_reactantVolumes[0]);
+						this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 
 				// (d / dL_1^B)
 				temp = this->_coefs(0, i() + 1, 0, k() + 1) * cR1;
@@ -1269,8 +1263,7 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 				if (_reactantMomentIds[0][k()] == _reactantMomentIds[1][i()])
 					Kokkos::atomic_sub(
 						&values(_connEntries[0][1 + k()][1][1 + i()]),
-						this->_rate(gridIndex) * temp /
-							(double)_reactantVolumes[0]);
+						this->_rate(gridIndex) * temp / _reactantVolumes[0]);
 			}
 		}
 
@@ -1286,8 +1279,7 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 				if (_reactantMomentIds[1][k()] == _reactantMomentIds[0][i()])
 					Kokkos::atomic_sub(
 						&values(_connEntries[1][1 + k()][0][1 + i()]),
-						this->_rate(gridIndex) * temp /
-							(double)_reactantVolumes[1]);
+						this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 
 				// (d / dL_1^B)
 				temp = this->_coefs(0, i() + 1, 1, k() + 1) * cR1;
@@ -1298,8 +1290,7 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 				if (k() == i())
 					Kokkos::atomic_sub(
 						&values(_connEntries[1][1 + k()][1][1 + i()]),
-						this->_rate(gridIndex) * temp /
-							(double)_reactantVolumes[1]);
+						this->_rate(gridIndex) * temp / _reactantVolumes[1]);
 			}
 		}
 	}
@@ -1324,8 +1315,7 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 					if (_productMomentIds[p][k()] == _reactantMomentIds[0][i()])
 						Kokkos::atomic_add(
 							&values(_connEntries[2 + p][1 + k()][0][1 + i()]),
-							this->_rate(gridIndex) * temp /
-								(double)_productVolumes[p]);
+							this->_rate(gridIndex) * temp / _productVolumes[p]);
 
 					// (d / dL_1^B)
 					temp = this->_coefs(0, i() + 1, p + 2, k() + 1) * cR1;
@@ -1336,8 +1326,7 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 					if (_productMomentIds[p][k()] == _reactantMomentIds[1][i()])
 						Kokkos::atomic_add(
 							&values(_connEntries[2 + p][1 + k()][1][1 + i()]),
-							this->_rate(gridIndex) * temp /
-								(double)_productVolumes[p]);
+							this->_rate(gridIndex) * temp / _productVolumes[p]);
 				}
 			}
 		}
@@ -1802,9 +1791,9 @@ DissociationReaction<TNetwork, TDerived>::computeFlux(
 		f += this->_coefs(i() + 1, 0, 0, 0) * cmR[i()];
 	}
 	f *= this->_rate(gridIndex);
-	Kokkos::atomic_sub(&fluxes[_reactant], f / (double)_reactantVolume);
-	Kokkos::atomic_add(&fluxes[_products[0]], f / (double)_productVolumes[0]);
-	Kokkos::atomic_add(&fluxes[_products[1]], f / (double)_productVolumes[1]);
+	Kokkos::atomic_sub(&fluxes[_reactant], f / _reactantVolume);
+	Kokkos::atomic_add(&fluxes[_products[0]], f / _productVolumes[0]);
+	Kokkos::atomic_add(&fluxes[_products[1]], f / _productVolumes[1]);
 
 	// Take care of the first moments
 	for (auto k : speciesRangeNoI) {
@@ -1816,7 +1805,7 @@ DissociationReaction<TNetwork, TDerived>::computeFlux(
 			}
 			f *= this->_rate(gridIndex);
 			Kokkos::atomic_sub(
-				&fluxes[_reactantMomentIds[k()]], f / (double)_reactantVolume);
+				&fluxes[_reactantMomentIds[k()]], f / _reactantVolume);
 		}
 
 		// Now the first product
@@ -1826,8 +1815,8 @@ DissociationReaction<TNetwork, TDerived>::computeFlux(
 				f += this->_coefs(i() + 1, 0, 1, k() + 1) * cmR[i()];
 			}
 			f *= this->_rate(gridIndex);
-			Kokkos::atomic_add(&fluxes[_productMomentIds[0][k()]],
-				f / (double)_productVolumes[0]);
+			Kokkos::atomic_add(
+				&fluxes[_productMomentIds[0][k()]], f / _productVolumes[0]);
 		}
 
 		// Finally the second product
@@ -1837,8 +1826,8 @@ DissociationReaction<TNetwork, TDerived>::computeFlux(
 				f += this->_coefs(i() + 1, 0, 2, k() + 1) * cmR[i()];
 			}
 			f *= this->_rate(gridIndex);
-			Kokkos::atomic_add(&fluxes[_productMomentIds[1][k()]],
-				f / (double)_productVolumes[1]);
+			Kokkos::atomic_add(
+				&fluxes[_productMomentIds[1][k()]], f / _productVolumes[1]);
 		}
 	}
 }
@@ -1855,7 +1844,7 @@ DissociationReaction<TNetwork, TDerived>::computePartialDerivatives(
 
 	// Compute the partials for the 0th order moments
 	// First for the reactant
-	double df = this->_rate(gridIndex) / (double)_reactantVolume;
+	double df = this->_rate(gridIndex) / _reactantVolume;
 	// Compute the values
 	Kokkos::atomic_sub(
 		&values(_connEntries[0][0][0][0]), df * this->_coefs(0, 0, 0, 0));
@@ -1866,7 +1855,7 @@ DissociationReaction<TNetwork, TDerived>::computePartialDerivatives(
 		}
 	}
 	// For the first product
-	df = this->_rate(gridIndex) / (double)_productVolumes[0];
+	df = this->_rate(gridIndex) / _productVolumes[0];
 	Kokkos::atomic_add(
 		&values(_connEntries[1][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 
@@ -1877,7 +1866,7 @@ DissociationReaction<TNetwork, TDerived>::computePartialDerivatives(
 		}
 	}
 	// For the second product
-	df = this->_rate(gridIndex) / (double)_productVolumes[1];
+	df = this->_rate(gridIndex) / _productVolumes[1];
 	Kokkos::atomic_add(
 		&values(_connEntries[2][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 
@@ -1892,7 +1881,7 @@ DissociationReaction<TNetwork, TDerived>::computePartialDerivatives(
 	for (auto k : speciesRangeNoI) {
 		if (_reactantMomentIds[k()] != invalidIndex) {
 			// First for the reactant
-			df = this->_rate(gridIndex) / (double)_reactantVolume;
+			df = this->_rate(gridIndex) / _reactantVolume;
 			// Compute the values
 			Kokkos::atomic_sub(&values(_connEntries[0][1 + k()][0][0]),
 				df * this->_coefs(0, 0, 0, k() + 1));
@@ -1906,7 +1895,7 @@ DissociationReaction<TNetwork, TDerived>::computePartialDerivatives(
 		}
 		// For the first product
 		if (_productMomentIds[0][k()] != invalidIndex) {
-			df = this->_rate(gridIndex) / (double)_productVolumes[0];
+			df = this->_rate(gridIndex) / _productVolumes[0];
 			Kokkos::atomic_add(&values(_connEntries[1][1 + k()][0][0]),
 				df * this->_coefs(0, 0, 1, k() + 1));
 			for (auto i : speciesRangeNoI) {
@@ -1919,7 +1908,7 @@ DissociationReaction<TNetwork, TDerived>::computePartialDerivatives(
 		}
 		// For the second product
 		if (_productMomentIds[1][k()] != invalidIndex) {
-			df = this->_rate(gridIndex) / (double)_productVolumes[1];
+			df = this->_rate(gridIndex) / _productVolumes[1];
 			Kokkos::atomic_add(&values(_connEntries[2][1 + k()][0][0]),
 				df * this->_coefs(0, 0, 2, k() + 1));
 			for (auto i : speciesRangeNoI) {
@@ -1945,18 +1934,18 @@ DissociationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 
 	// Compute the partials for the 0th order moments
 	// First for the reactant
-	double df = this->_rate(gridIndex) / (double)_reactantVolume;
+	double df = this->_rate(gridIndex) / _reactantVolume;
 	// Compute the values
 	Kokkos::atomic_sub(
 		&values(_connEntries[0][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 	// For the first product
-	df = this->_rate(gridIndex) / (double)_productVolumes[0];
+	df = this->_rate(gridIndex) / _productVolumes[0];
 	if (_products[0] == _reactant)
 		Kokkos::atomic_add(
 			&values(_connEntries[1][0][0][0]), df * this->_coefs(0, 0, 0, 0));
 
 	// For the second product
-	df = this->_rate(gridIndex) / (double)_productVolumes[1];
+	df = this->_rate(gridIndex) / _productVolumes[1];
 	if (_products[1] == _reactant)
 		Kokkos::atomic_add(
 			&values(_connEntries[2][0][0][0]), df * this->_coefs(0, 0, 0, 0));
@@ -1965,7 +1954,7 @@ DissociationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	for (auto k : speciesRangeNoI) {
 		if (_reactantMomentIds[k()] != invalidIndex) {
 			// First for the reactant
-			df = this->_rate(gridIndex) / (double)_reactantVolume;
+			df = this->_rate(gridIndex) / _reactantVolume;
 			// Compute the values
 			for (auto i : speciesRangeNoI) {
 				if (k() == i())
@@ -1976,7 +1965,7 @@ DissociationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 		}
 		// For the first product
 		if (_productMomentIds[0][k()] != invalidIndex) {
-			df = this->_rate(gridIndex) / (double)_productVolumes[0];
+			df = this->_rate(gridIndex) / _productVolumes[0];
 			for (auto i : speciesRangeNoI) {
 				if (_productMomentIds[0][k()] == _reactantMomentIds[i()])
 					Kokkos::atomic_add(
@@ -1986,7 +1975,7 @@ DissociationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 		}
 		// For the second product
 		if (_productMomentIds[0][k()] != invalidIndex) {
-			df = this->_rate(gridIndex) / (double)_productVolumes[1];
+			df = this->_rate(gridIndex) / _productVolumes[1];
 			for (auto i : speciesRangeNoI) {
 				if (_productMomentIds[1][k()] == _reactantMomentIds[i()])
 					Kokkos::atomic_add(

@@ -9,6 +9,10 @@
 #include <xolotl/solver/handler/PetscSolver1DHandler.h>
 #include <xolotl/solver/handler/PetscSolver2DHandler.h>
 #include <xolotl/solver/handler/PetscSolver3DHandler.h>
+#include <xolotl/solver/monitor/PetscMonitor0D.h>
+#include <xolotl/solver/monitor/PetscMonitor1D.h>
+#include <xolotl/solver/monitor/PetscMonitor2D.h>
+#include <xolotl/solver/monitor/PetscMonitor3D.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 
@@ -37,7 +41,7 @@ auto petscSolverRegistrations =
 PetscErrorCode
 overridePetscVFPrintf(FILE* fd, const char format[], va_list Argp)
 {
-	PetscFunctionBegin;
+	PetscFunctionBeginUser;
 
 	PetscErrorCode ierr;
 	if (fd == stdout || fd == stderr) {
@@ -61,45 +65,22 @@ overridePetscVFPrintf(FILE* fd, const char format[], va_list Argp)
 	PetscFunctionReturn(0);
 }
 
-// Timer for RHSFunction()
-std::shared_ptr<perf::ITimer> RHSFunctionTimer;
-
-// Timer for RHSJacobian()
-std::shared_ptr<perf::ITimer> RHSJacobianTimer;
-
-// Timer for solve()
-std::shared_ptr<perf::ITimer> SolveTimer;
-
 // PETSc options object
-PetscOptions* petscOptions = nullptr;
+// PetscOptions* petscOptions = nullptr;
 
 // Help message
 static char help[] = "Solves C_t =  -D*C_xx + F(C) + R(C) + from "
 					 "Brian Wirth's SciDAC project.\n";
 
-// ----- GLOBAL VARIABLES ----- //
-namespace monitor
-{
-extern PetscErrorCode setupPetsc0DMonitor(TS);
-extern PetscErrorCode setupPetsc1DMonitor(TS);
-extern PetscErrorCode setupPetsc2DMonitor(TS);
-extern PetscErrorCode setupPetsc3DMonitor(TS);
-} // namespace monitor
-
 void
 PetscSolver::setupInitialConditions(DM da, Vec C)
 {
 	// Initialize the concentrations in the solution vector
-	auto& solverHandler = Solver::getSolverHandler();
-	solverHandler.initializeConcentration(da, C);
-
-	return;
+	this->solverHandler->initializeConcentration(da, C);
 }
 
 /* ------------------------------------------------------------------- */
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "RHSFunction")
 /*
  RHSFunction - Evaluates the right-hand-side of the nonlinear function defining
  the ODE
@@ -115,106 +96,26 @@ PetscSolver::setupInitialConditions(DM da, Vec C)
  */
 /* ------------------------------------------------------------------- */
 PetscErrorCode
-RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void*)
+RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void* ctx)
 {
-	// Start the RHSFunction Timer
-	RHSFunctionTimer->start();
-
-	PetscErrorCode ierr;
-
-	// Get the local data vector from PETSc
 	PetscFunctionBeginUser;
-	DM da;
-	ierr = TSGetDM(ts, &da);
+	PetscErrorCode ierr =
+		static_cast<PetscSolver*>(ctx)->rhsFunction(ts, ftime, C, F);
 	CHKERRQ(ierr);
-	Vec localC;
-	ierr = DMGetLocalVector(da, &localC);
-	CHKERRQ(ierr);
-
-	// Scatter ghost points to local vector, using the 2-step process
-	// DMGlobalToLocalBegin(),DMGlobalToLocalEnd().
-	// By placing code between these two statements, computations can be
-	// done while messages are in transition.
-	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
-	CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
-	CHKERRQ(ierr);
-
-	// Set the initial values of F
-	ierr = VecSet(F, 0.0);
-	CHKERRQ(ierr);
-
-	// Compute the new concentrations
-	auto& solverHandler = Solver::getSolverHandler();
-	solverHandler.updateConcentration(ts, localC, F, ftime);
-
-	// Stop the RHSFunction Timer
-	RHSFunctionTimer->stop();
-
-	// Return the local vector
-	ierr = DMRestoreLocalVector(da, &localC);
-	CHKERRQ(ierr);
-
 	PetscFunctionReturn(0);
 }
 
-#undef __FUNCT__
-#define __FUNCT__ Actual__FUNCT__("xolotlSolver", "RHSJacobian")
 /*
  Compute the Jacobian entries based on IFunction() and insert them into the
  matrix
  */
 PetscErrorCode
-RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void*)
+RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void* ctx)
 {
-	// Start the RHSJacobian timer
-	RHSJacobianTimer->start();
-
-	PetscErrorCode ierr;
-
-	// Get the matrix from PETSc
 	PetscFunctionBeginUser;
-	ierr = MatZeroEntries(J);
+	PetscErrorCode ierr =
+		static_cast<PetscSolver*>(ctx)->rhsJacobian(ts, ftime, C, A, J);
 	CHKERRQ(ierr);
-	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
-	Vec localC;
-	ierr = DMGetLocalVector(da, &localC);
-	CHKERRQ(ierr);
-
-	// Get the complete data array
-	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
-	CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
-	CHKERRQ(ierr);
-
-	// Get the solver handler
-	auto& solverHandler = Solver::getSolverHandler();
-
-	solverHandler.computeJacobian(ts, localC, J, ftime);
-
-	// Return the local vector
-	ierr = DMRestoreLocalVector(da, &localC);
-	CHKERRQ(ierr);
-
-	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
-	CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
-	CHKERRQ(ierr);
-
-	if (A != J) {
-		ierr = MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
-		CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
-		CHKERRQ(ierr);
-	}
-
-	//	ierr = MatView(J, PETSC_VIEWER_STDOUT_WORLD);
-
-	// Stop the RHSJacobian timer
-	RHSJacobianTimer->stop();
-
 	PetscFunctionReturn(0);
 }
 
@@ -224,13 +125,17 @@ PetscSolver::PetscSolver(const options::IOptions& options) :
 			-> std::shared_ptr<handler::ISolverHandler> {
 			switch (options.getDimensionNumber()) {
 			case 0:
-				return std::make_shared<handler::PetscSolver0DHandler>(network);
+				return std::make_shared<handler::PetscSolver0DHandler>(
+					network, options);
 			case 1:
-				return std::make_shared<handler::PetscSolver1DHandler>(network);
+				return std::make_shared<handler::PetscSolver1DHandler>(
+					network, options);
 			case 2:
-				return std::make_shared<handler::PetscSolver2DHandler>(network);
+				return std::make_shared<handler::PetscSolver2DHandler>(
+					network, options);
 			case 3:
-				return std::make_shared<handler::PetscSolver3DHandler>(network);
+				return std::make_shared<handler::PetscSolver3DHandler>(
+					network, options);
 			default:
 				// The asked dimension is not good (e.g. -1, 4)
 				throw std::runtime_error(
@@ -240,18 +145,18 @@ PetscSolver::PetscSolver(const options::IOptions& options) :
 {
 	this->setCommandLineOptions(options.getPetscArg());
 
-	RHSFunctionTimer = perfHandler->getTimer("RHSFunctionTimer");
-	RHSJacobianTimer = perfHandler->getTimer("RHSJacobianTimer");
-	SolveTimer = perfHandler->getTimer("SolveTimer");
+	rhsFunctionTimer = perfHandler->getTimer("rhsFunctionTimer");
+	rhsJacobianTimer = perfHandler->getTimer("rhsJacobianTimer");
+	solveTimer = perfHandler->getTimer("solveTimer");
 }
 
-PetscSolver::PetscSolver(handler::ISolverHandler& _solverHandler,
-	std::shared_ptr<perf::IPerfHandler> _perfHandler) :
-	Solver(_solverHandler, _perfHandler)
+PetscSolver::PetscSolver(
+	const std::shared_ptr<handler::ISolverHandler>& _solverHandler) :
+	Solver(_solverHandler)
 {
-	RHSFunctionTimer = perfHandler->getTimer("RHSFunctionTimer");
-	RHSJacobianTimer = perfHandler->getTimer("RHSJacobianTimer");
-	SolveTimer = perfHandler->getTimer("SolveTimer");
+	rhsFunctionTimer = perfHandler->getTimer("rhsFunctionTimer");
+	rhsJacobianTimer = perfHandler->getTimer("rhsJacobianTimer");
+	solveTimer = perfHandler->getTimer("solveTimer");
 }
 
 PetscSolver::~PetscSolver()
@@ -299,7 +204,7 @@ PetscSolver::initialize()
 	ierr = PetscOptionsHasName(NULL, NULL, "-snes_mf_operator", &flagReduced);
 
 	// Create the solver context
-	getSolverHandler().createSolverContext(da);
+	this->solverHandler->createSolverContext(da);
 
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Extract global vector from DMDA to hold solution
@@ -324,15 +229,15 @@ PetscSolver::initialize()
 	checkPetscError(ierr, "PetscSolver::initialize: TSSetDM failed.");
 	ierr = TSSetProblemType(ts, TS_NONLINEAR);
 	checkPetscError(ierr, "PetscSolver::initialize: TSSetProblemType failed.");
-	ierr = TSSetRHSFunction(ts, NULL, RHSFunction, NULL);
+	ierr = TSSetRHSFunction(ts, nullptr, RHSFunction, this);
 	checkPetscError(ierr, "PetscSolver::initialize: TSSetRHSFunction failed.");
-	ierr = TSSetRHSJacobian(ts, NULL, NULL, RHSJacobian, NULL);
+	ierr = TSSetRHSJacobian(ts, nullptr, nullptr, RHSJacobian, this);
 	checkPetscError(ierr, "PetscSolver::initialize: TSSetRHSJacobian failed.");
 	ierr = TSSetSolution(ts, C);
 	checkPetscError(ierr, "PetscSolver::initialize: TSSetSolution failed.");
 
 	// Read the times if the information is in the HDF5 file
-	auto fileName = getSolverHandler().getNetworkName();
+	auto fileName = this->solverHandler->getNetworkName();
 	double time = 0.0, deltaTime = 1.0e-12;
 	if (!fileName.empty()) {
 		io::XFile xfile(fileName);
@@ -358,37 +263,34 @@ PetscSolver::initialize()
 	checkPetscError(ierr, "PetscSolver::initialize: TSSetFromOptions failed.");
 
 	// Switch on the number of dimensions to set the monitors
-	auto dim = getSolverHandler().getDimension();
+	auto dim = this->solverHandler->getDimension();
 	switch (dim) {
 	case 0:
 		// One dimension
-		ierr = monitor::setupPetsc0DMonitor(ts);
-		checkPetscError(
-			ierr, "PetscSolver::initialize: setupPetsc0DMonitor failed.");
+		this->monitor =
+			std::make_shared<monitor::PetscMonitor0D>(ts, this->solverHandler);
 		break;
 	case 1:
 		// One dimension
-		ierr = monitor::setupPetsc1DMonitor(ts);
-		checkPetscError(
-			ierr, "PetscSolver::initialize: setupPetsc1DMonitor failed.");
+		this->monitor =
+			std::make_shared<monitor::PetscMonitor1D>(ts, this->solverHandler);
 		break;
 	case 2:
 		// Two dimensions
-		ierr = monitor::setupPetsc2DMonitor(ts);
-		checkPetscError(
-			ierr, "PetscSolver::initialize: setupPetsc2DMonitor failed.");
+		this->monitor =
+			std::make_shared<monitor::PetscMonitor2D>(ts, this->solverHandler);
 		break;
 	case 3:
 		// Three dimensions
-		ierr = monitor::setupPetsc3DMonitor(ts);
-		checkPetscError(
-			ierr, "PetscSolver::initialize: setupPetsc3DMonitor failed.");
+		this->monitor =
+			std::make_shared<monitor::PetscMonitor3D>(ts, this->solverHandler);
 		break;
 	default:
 		throw std::runtime_error(
 			"PetscSolver Exception: Wrong number of dimensions "
 			"to set the monitors.");
 	}
+	this->monitor->setup();
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set initial conditions
@@ -401,8 +303,6 @@ PetscSolver::initialize()
 	// Pop the options
 	ierr = PetscOptionsPop();
 	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPop failed.");
-
-	return;
 }
 
 void
@@ -426,25 +326,19 @@ PetscSolver::setTimes(double finalTime, double dt)
 	// Give the final time value to the solver
 	ierr = TSSetMaxTime(ts, finalTime);
 	checkPetscError(ierr, "PetscSolver::setTimes: TSSetMaxTime failed.");
-
-	return;
 }
 
 std::vector<std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 PetscSolver::getConcVector()
 {
-	auto& solverHandler = Solver::getSolverHandler();
-
-	return solverHandler.getConcVector(da, C);
+	return this->solverHandler->getConcVector(da, C);
 }
 
 void
 PetscSolver::setConcVector(std::vector<std::vector<
 		std::vector<std::vector<std::pair<IdType, double>>>>>& concVector)
 {
-	auto& solverHandler = Solver::getSolverHandler();
-
-	return solverHandler.setConcVector(da, C, concVector);
+	return this->solverHandler->setConcVector(da, C, concVector);
 }
 
 double
@@ -471,8 +365,6 @@ PetscSolver::setCurrentTimes(double time, double dt)
 	ierr = TSSetTimeStep(ts, dt);
 	checkPetscError(
 		ierr, "PetscSolver::setCurrentTimes: TSSetTimeStep failed.");
-
-	return;
 }
 
 void
@@ -480,7 +372,7 @@ PetscSolver::solve()
 {
 	PetscErrorCode ierr;
 	// Start the solve Timer
-	SolveTimer->start();
+	solveTimer->start();
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Solve the ODE system
@@ -495,8 +387,7 @@ PetscSolver::solve()
 			checkPetscError(
 				ierr, "PetscSolver::solve: Reset Step Number failed.");
 			// Reset the GB location
-			auto& solverHandler = Solver::getSolverHandler();
-			solverHandler.initGBLocation(da, C);
+			this->solverHandler->initGBLocation(da, C);
 		}
 		// Start the PETSc Solve
 		ierr = TSSolve(ts, C);
@@ -545,9 +436,7 @@ PetscSolver::solve()
 			"configured properly.");
 	}
 	// Stop the timer
-	SolveTimer->stop();
-
-	return;
+	solveTimer->stop();
 }
 
 bool
@@ -599,8 +488,6 @@ PetscSolver::finalize()
 		ierr = PetscFinalize();
 		checkPetscError(ierr, "PetscSolver::finalize: PetscFinalize failed.");
 	}
-
-	return;
 }
 
 double
@@ -613,6 +500,101 @@ PetscSolver::getXolotlTime()
 	ierr = TSGetTime(ts, &CurrentXolotlTime);
 	checkPetscError(ierr, "PetscSolver::getXolotlTime: TSGetTime failed.");
 	return CurrentXolotlTime;
+}
+
+PetscErrorCode
+PetscSolver::rhsFunction(TS ts, PetscReal ftime, Vec C, Vec F)
+{
+	PetscErrorCode ierr;
+	PetscFunctionBeginUser;
+
+	// Start the RHSFunction Timer
+	rhsFunctionTimer->start();
+
+	// Get the local data vector from PETSc
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+	Vec localC;
+	ierr = DMGetLocalVector(da, &localC);
+	CHKERRQ(ierr);
+
+	// Scatter ghost points to local vector, using the 2-step process
+	// DMGlobalToLocalBegin(),DMGlobalToLocalEnd().
+	// By placing code between these two statements, computations can be
+	// done while messages are in transition.
+	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
+	CHKERRQ(ierr);
+
+	// Set the initial values of F
+	ierr = VecSet(F, 0.0);
+	CHKERRQ(ierr);
+
+	// Compute the new concentrations
+	this->solverHandler->updateConcentration(ts, localC, F, ftime);
+
+	// Stop the RHSFunction Timer
+	rhsFunctionTimer->stop();
+
+	// Return the local vector
+	ierr = DMRestoreLocalVector(da, &localC);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscSolver::rhsJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J)
+{
+	PetscErrorCode ierr;
+	PetscFunctionBeginUser;
+
+	// Start the RHSJacobian timer
+	rhsJacobianTimer->start();
+
+	// Get the matrix from PETSc
+	ierr = MatZeroEntries(J);
+	CHKERRQ(ierr);
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+	Vec localC;
+	ierr = DMGetLocalVector(da, &localC);
+	CHKERRQ(ierr);
+
+	// Get the complete data array
+	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
+	CHKERRQ(ierr);
+
+	// Get the solver handler
+	this->solverHandler->computeJacobian(ts, localC, J, ftime);
+
+	// Return the local vector
+	ierr = DMRestoreLocalVector(da, &localC);
+	CHKERRQ(ierr);
+
+	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
+	CHKERRQ(ierr);
+	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
+	CHKERRQ(ierr);
+
+	if (A != J) {
+		ierr = MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
+		CHKERRQ(ierr);
+		ierr = MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
+		CHKERRQ(ierr);
+	}
+
+	//	ierr = MatView(J, PETSC_VIEWER_STDOUT_WORLD);
+
+	// Stop the RHSJacobian timer
+	rhsJacobianTimer->stop();
+
+	PetscFunctionReturn(0);
 }
 } /* end namespace solver */
 } /* end namespace xolotl */

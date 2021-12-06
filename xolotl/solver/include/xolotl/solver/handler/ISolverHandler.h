@@ -14,8 +14,10 @@
 #include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 #include <xolotl/options/IOptions.h>
+#include <xolotl/perf/IPerfHandler.h>
 #include <xolotl/util/Array.h>
 #include <xolotl/util/RandomNumberGenerator.h>
+#include <xolotl/viz/IVizHandler.h>
 
 namespace xolotl
 {
@@ -53,9 +55,8 @@ public:
 	 * @param options The Xolotl options
 	 */
 	virtual void
-	initializeHandlers(
-		std::shared_ptr<core::material::IMaterialHandler> material,
-		std::shared_ptr<core::temperature::ITemperatureHandler> tempHandler,
+	initializeHandlers(core::material::IMaterialHandler* material,
+		core::temperature::ITemperatureHandler* tempHandler,
 		const options::IOptions& opts) = 0;
 
 	/**
@@ -402,6 +403,14 @@ public:
 	burstBubbles() const = 0;
 
 	/**
+	 * To know if a temporal profile is used for the flux.
+	 *
+	 * @return True if temporal flux option is used.
+	 */
+	virtual bool
+	temporalFlux() const = 0;
+
+	/**
 	 * Get the minimum size for computing average radius.
 	 *
 	 * @return The minimum size
@@ -424,6 +433,22 @@ public:
 	 */
 	virtual core::temperature::ITemperatureHandler*
 	getTemperatureHandler() const = 0;
+
+	/**
+	 * Get the perf handler.
+	 *
+	 * @return The perf handler
+	 */
+	virtual std::shared_ptr<perf::IPerfHandler>
+	getPerfHandler() const = 0;
+
+	/**
+	 * Get the viz handler.
+	 *
+	 * @return The viz handler
+	 */
+	virtual std::shared_ptr<viz::IVizHandler>
+	getVizHandler() const = 0;
 
 	/**
 	 * Get the diffusion handler.

@@ -48,10 +48,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 20);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 20);
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_CHECK_GT(deviceMemorySize, 23000);
-	BOOST_CHECK_LT(deviceMemorySize, 26000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.547, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0409168, 0.01);
@@ -113,7 +109,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -281,10 +278,6 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 16);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 19);
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_CHECK_GT(deviceMemorySize, 22000);
-	BOOST_CHECK_LT(deviceMemorySize, 24000);
 
 	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 16);
@@ -325,7 +318,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -484,10 +478,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_CHECK_GT(deviceMemorySize, 30000);
-	BOOST_CHECK_LT(deviceMemorySize, 35000);
-
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
 	BOOST_REQUIRE(network.getEnableReSolution() == true);
 
@@ -528,7 +518,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -642,11 +633,6 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 	network.syncClusterDataOnHost();
 	network.getSubpaving().syncZones(plsm::onHost);
 
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_CHECK_GT(deviceMemorySize, 29000);
-	BOOST_CHECK_LT(deviceMemorySize, 32000);
-
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
 	NetworkType::SparseFillMap knownDFill;
@@ -683,7 +669,8 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 

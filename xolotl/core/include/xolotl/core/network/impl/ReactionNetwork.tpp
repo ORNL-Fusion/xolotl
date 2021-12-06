@@ -227,7 +227,8 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
+ReactionNetwork<TImpl>::setTemperatures(
+	const std::vector<double>& gridTemps, const std::vector<double>& gridDepths)
 {
 	Kokkos::View<const double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
 		tempsHost(gridTemps.data(), this->_gridSize);
@@ -235,7 +236,7 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 
 	updateDiffusionCoefficients();
 
-	asDerived()->updateExtraClusterData(gridTemps);
+	asDerived()->updateExtraClusterData(gridTemps, gridDepths);
 
 	asDerived()->updateReactionRates();
 }

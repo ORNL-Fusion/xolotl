@@ -1,5 +1,13 @@
 #!/usr/bin/env python
 
+###################################################################
+# This script works for any applications.
+# It creates a new file (line 21) containing only the last 
+# concentration group and everything else needed to restart Xolotl.
+# This is useful when restarting the simulation often and when 
+# the other concentration groups won't be needed for data analysis.
+###################################################################
+
 import h5py
 
 ## Open the file we want to copy from

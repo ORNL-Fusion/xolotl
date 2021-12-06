@@ -113,8 +113,9 @@ public:
 	 * Construct a PetscSolverHandler.
 	 *
 	 * @param _network The reaction network to use.
+	 * @param _perfHandler The perf handler to use.
 	 */
-	PetscSolverHandler(NetworkType& _network);
+	PetscSolverHandler(NetworkType& _network, const options::IOptions& options);
 };
 // end class PetscSolverHandler
 

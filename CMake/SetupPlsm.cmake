@@ -1,5 +1,18 @@
+function(find_plsm __result)
+    list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
+    find_package(plsm QUIET)
+    set(${__result} ${plsm_FOUND} PARENT_SCOPE)
+endfunction()
+
 option(Xolotl_USE_PLSM_DEVELOP "" FALSE)
 if(EXISTS ${plsm_DIR})
+    if(NOT XOLOTL_USE_PLSM_SUBMODULE)
+        find_plsm(__found)
+        if(__found)
+            mark_as_advanced(FORCE Xolotl_USE_PLSM_DEVELOP)
+            return()
+        endif()
+    endif()
     if(DEFINED CACHE{XOLOTL_USE_PLSM_DEVELOP})
         if(Xolotl_USE_PLSM_DEVELOP AND XOLOTL_USE_PLSM_DEVELOP)
             set(__return TRUE)
@@ -43,13 +56,14 @@ if(NOT EXISTS ${__plsm_src_dir}/CMakeLists.txt)
         OUTPUT_FILE "${__external_bin_dir}/plsm_clone.out"
         ERROR_FILE "${__external_bin_dir}/plsm_clone.out"
     )
-    execute_process(
-        COMMAND ${GIT_EXECUTABLE} fetch --all
-        WORKING_DIRECTORY "${__plsm_src_dir}"
-        OUTPUT_FILE "${__external_bin_dir}/plsm_clone.out"
-        ERROR_FILE "${__external_bin_dir}/plsm_clone.out"
-    )
 endif()
+
+execute_process(
+    COMMAND ${GIT_EXECUTABLE} fetch --all
+    WORKING_DIRECTORY "${__plsm_src_dir}"
+    OUTPUT_FILE "${__external_bin_dir}/plsm_clone.out"
+    ERROR_FILE "${__external_bin_dir}/plsm_clone.out"
+)
 
 # Should we update the source to a different version
 set(XOLOTL_USE_PLSM_DEVELOP ${Xolotl_USE_PLSM_DEVELOP} CACHE INTERNAL "")
@@ -124,3 +138,4 @@ if(NOT ${__build_ret} EQUAL 0)
 endif()
 
 set(plsm_DIR ${__plsm_bin_dir}/install)
+set(XOLOTL_USE_PLSM_SUBMODULE TRUE CACHE INTERNAL "")

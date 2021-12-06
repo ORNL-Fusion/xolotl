@@ -50,10 +50,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 16);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 16);
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_CHECK_GT(deviceMemorySize, 95000);
-	BOOST_CHECK_LT(deviceMemorySize, 99000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.287, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.01181995, 0.01);
@@ -110,7 +106,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -356,10 +353,6 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 30);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 36);
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_CHECK_GT(deviceMemorySize, 315000);
-	BOOST_CHECK_LT(deviceMemorySize, 330000);
 
 	BOOST_REQUIRE_EQUAL(network.getGridSize(), 1);
 
@@ -446,7 +439,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
