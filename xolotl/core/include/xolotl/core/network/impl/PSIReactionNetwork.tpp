@@ -277,9 +277,9 @@ PSIReactionNetwork<TSpeciesEnum>::updateReactionRates()
 	auto tmReactions =
 		this->_reactions.template getView<TrapMutationReactionType>();
 	Kokkos::parallel_for(
-		tmReactions.size(), KOKKOS_LAMBDA(IndexType i) {
-			tmReactions[i].updateRates(largestRate);
-		});
+		"PSIReactionNetwork::updateReactionRates", tmReactions.size(),
+		KOKKOS_LAMBDA(
+			IndexType i) { tmReactions[i].updateRates(largestRate); });
 }
 
 template <typename TSpeciesEnum>
@@ -341,7 +341,7 @@ PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 		PSIReactionNetwork<TSpeciesEnum>::IndexType>;
 	typename Reducer::value_type maxLoc;
 	Kokkos::parallel_reduce(
-		this->_numClusters,
+		"PSIReactionNetwork::checkLargestClusterId", this->_numClusters,
 		KOKKOS_LAMBDA(IndexType i, typename Reducer::value_type & update) {
 			const auto& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();

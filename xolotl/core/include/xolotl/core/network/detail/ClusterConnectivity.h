@@ -45,7 +45,8 @@ public:
 			auto conn = *this;
 			auto nRows = conn.row_map.size() - 1;
 			Kokkos::parallel_for(
-				nRows, KOKKOS_LAMBDA(IndexType i) {
+				"ClusterConnectivity::assignTransposeEntries", nRows,
+				KOKKOS_LAMBDA(IndexType i) {
 					auto pBegin = conn.row_map(i);
 					auto pEnd = conn.row_map(i + 1);
 					for (auto p = pBegin; p < pEnd; ++p) {
