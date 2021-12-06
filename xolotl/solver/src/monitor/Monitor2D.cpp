@@ -1131,14 +1131,17 @@ eventFunction2D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			// the surface
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
-			double threshold = (62.8 - initialVConc) * hxLeft * hy;
+			double threshold =
+				(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy;
 			if (nInterstitial2D[yj] > threshold) {
 				// The surface is moving
 				fvalue[0] = 0.0;
 			}
 
+			// Update the threshold for erosion (the cell size is not the same)
+			threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]) * hy;
 			// Moving the surface back
-			else if (nInterstitial2D[yj] < -threshold / 10.0) {
+			if (nInterstitial2D[yj] < -threshold * 0.9) {
 				// The surface is moving
 				fvalue[0] = 0.0;
 			}

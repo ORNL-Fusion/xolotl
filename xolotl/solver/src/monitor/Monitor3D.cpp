@@ -1140,8 +1140,12 @@ eventFunction3D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 					fvalue[0] = 0.0;
 				}
 
+				// Update the threshold for erosion (the cell size is not the
+				// same)
+				threshold =
+					(62.8 - initialVConc) * (grid[xi + 1] - grid[xi]) * hy * hz;
 				// Moving the surface back
-				else if (nInterstitial3D[yj][zk] < -threshold / 10.0) {
+				if (nInterstitial3D[yj][zk] < -threshold / 10.0) {
 					// The surface is moving
 					fvalue[0] = 0.0;
 				}

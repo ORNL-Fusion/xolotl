@@ -1640,8 +1640,10 @@ eventFunction1D(TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void*)
 			fvalue[0] = 0;
 		}
 
+		// Update the threshold for erosion (the cell size is not the same)
+		threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
 		// Moving the surface back
-		else if (nInterEvent1D < -threshold / 10.0) {
+		if (nInterEvent1D < -threshold * 0.9) {
 			// The surface is moving
 			fvalue[1] = 0;
 		}
