@@ -1643,8 +1643,12 @@ PetscMonitor3D::eventFunction(
 					fvalue[0] = 0.0;
 				}
 
+				// Update the threshold for erosion (the cell size is not the
+				// same)
+				threshold =
+					(62.8 - initialVConc) * (grid[xi + 1] - grid[xi]) * hy * hz;
 				// Moving the surface back
-				else if (_nSurf[specIdI()][yj][zk] < -threshold / 10.0) {
+				if (_nSurf[specIdI()][yj][zk] < -threshold * 0.9) {
 					// The surface is moving
 					fvalue[0] = 0.0;
 				}
