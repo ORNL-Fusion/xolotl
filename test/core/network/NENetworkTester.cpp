@@ -44,7 +44,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 		{(NetworkType::AmountType)opts.getMaxImpurity()}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 20);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 20);
@@ -204,7 +203,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::Xe] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 7.0, 0.01);
@@ -222,7 +221,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
 	comp[Spec::Xe] = 10;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 9);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.61702, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 46.9, 0.01);
@@ -274,7 +273,6 @@ BOOST_AUTO_TEST_CASE(grouped)
 	NetworkType network({maxXe}, {{groupingWidth}}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 16);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 19);
@@ -415,7 +413,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::Xe] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 7.0, 0.01);
@@ -433,7 +431,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
 	comp[Spec::Xe] = 20;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 5);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.7961, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 79.0, 0.01);
@@ -476,7 +474,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 	network.setFissionRate(8.0e-9);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
 	BOOST_REQUIRE(network.getEnableReSolution() == true);
@@ -631,7 +628,6 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 	network.setFissionRate(8.0e-9);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();

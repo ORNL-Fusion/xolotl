@@ -67,7 +67,7 @@ public:
 		auto& neNetwork = dynamic_cast<NetworkType&>(network);
 		NetworkType::Composition comp = NetworkType::Composition::zero();
 		comp[NetworkType::Species::Xe] = 1;
-		auto cluster = neNetwork.findCluster(comp, plsm::onHost);
+		auto cluster = neNetwork.findCluster(comp, plsm::HostMemSpace{});
 		// Check that the helium cluster is present in the network
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::string(

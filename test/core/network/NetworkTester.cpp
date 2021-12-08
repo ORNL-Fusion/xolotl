@@ -43,7 +43,6 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(defaut_constructor, T, network_types)
 		NetworkType(maxSpeciesAmounts, 1, xolotl::options::Options{});
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE(network.getNumClusters() > 0);
 	BOOST_REQUIRE(network.getDOF() > 0);

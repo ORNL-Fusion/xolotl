@@ -54,7 +54,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	NetworkType::AmountType maxXe = opts.getMaxImpurity();
 	NetworkType network({maxXe}, grid.size(), opts);
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
 	const int dof = network.getDOF();
 

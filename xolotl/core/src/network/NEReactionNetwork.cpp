@@ -16,10 +16,6 @@ template ReactionNetwork<NEReactionNetwork>::ReactionNetwork(
 	const std::vector<AmountType>& maxSpeciesAmounts, IndexType gridSize,
 	const options::IOptions& opts);
 
-template ReactionNetwork<NEReactionNetwork>::Cluster<plsm::OnHost>
-ReactionNetwork<NEReactionNetwork>::findCluster(
-	const Composition& comp, plsm::OnHost context);
-
 template double
 ReactionNetwork<NEReactionNetwork>::getTotalConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);

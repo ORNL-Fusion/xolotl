@@ -92,7 +92,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		// Find the corresponding cluster
 		Composition comp = Composition::zero();
 		comp[Species::I] = size;
-		auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+		auto iProdId = subpaving.findTileId(comp);
 		if (iProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, iProdId});
 			if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
@@ -118,7 +118,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Looking for V cluster
 			Composition comp = Composition::zero();
 			comp[Species::V] = prodSize;
-			auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto vProdId = subpaving.findTileId(comp);
 			if (vProdId != subpaving.invalidIndex()) {
 				this->addProductionReaction(tag, {i, j, vProdId});
 				// No dissociation
@@ -128,7 +128,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Looking for I cluster
 			Composition comp = Composition::zero();
 			comp[Species::I] = -prodSize;
-			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto iProdId = subpaving.findTileId(comp);
 			if (iProdId != subpaving.invalidIndex()) {
 				this->addProductionReaction(tag, {i, j, iProdId});
 				// No dissociation

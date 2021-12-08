@@ -3,7 +3,6 @@
 #include <Kokkos_Core.hpp>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
-#include <xolotl/core/network/detail/MemorySpace.h>
 
 namespace xolotl
 {
@@ -20,7 +19,7 @@ namespace detail
  *
  * @tparam TMemSpace The memory layout type
  */
-template <typename TMemSpace = DefaultMemorySpace>
+template <typename TMemSpace = plsm::DefaultMemSpace>
 class ClusterConnectivity :
 	public Kokkos::Crs<ReactionNetworkIndexType, TMemSpace>
 {

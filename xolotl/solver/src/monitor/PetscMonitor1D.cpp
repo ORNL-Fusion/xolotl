@@ -1317,7 +1317,7 @@ PetscMonitor1D::computeXenonRetention(
 	// Get Xe_1
 	Composition xeComp = Composition::zero();
 	xeComp[Spec::Xe] = 1;
-	auto xeCluster = network.findCluster(xeComp, plsm::onHost);
+	auto xeCluster = network.findCluster(xeComp, plsm::HostMemSpace{});
 	auto xeId = xeCluster.getId();
 
 	// Loop on the grid
@@ -1678,7 +1678,7 @@ PetscMonitor1D::monitorScatter(
 		for (auto i = 0; i < networkSize; i++) {
 			// Create a Point with the concentration[i] as the value
 			// and add it to myPoints
-			auto cluster = network.getCluster(i, plsm::onHost);
+			auto cluster = network.getCluster(i, plsm::HostMemSpace{});
 			const Region& clReg = cluster.getRegion();
 			for (auto j : makeIntervalRange(clReg[Spec::Xe])) {
 				viz::dataprovider::DataPoint aPoint;
