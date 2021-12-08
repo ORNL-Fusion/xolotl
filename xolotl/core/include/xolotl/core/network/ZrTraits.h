@@ -123,28 +123,7 @@ struct ClusterDataExtra<ZrReactionNetwork, PlsmContext>
 		}
 
 		deep_copy(anisotropyRatio, data.anisotropyRatio);
-	}
 
-	std::uint64_t
-	getDeviceMemorySize() const noexcept
-	{
-		return anisotropyRatio.required_allocation_size();
-	}
-
-	void
-	initialize(IndexType numClusters, IndexType gridSize = 0)
-	{
-		anisotropyRatio =
-			View<double**>("Anisotropy Ratio", numClusters, gridSize);
-		dislocationCaptureRadius =
-			View<double**>("Dislocation Capture Radius", numClusters, 2);
-	}
-
-	/*
-	template <typename PC>
-	void
-	deepCopyCapture(const ClusterDataExtra<NetworkType, PC>& data)
-	{
 		if (!data.dislocationCaptureRadius.is_allocated()) {
 			return;
 		}
@@ -155,24 +134,45 @@ struct ClusterDataExtra<ZrReactionNetwork, PlsmContext>
 		}
 
 		deep_copy(dislocationCaptureRadius, data.dislocationCaptureRadius);
+
+
+		if (!data.integratedConcentrations.is_allocated()) {
+			return;
+		}
+
+		if (!integratedConcentrations.is_allocated()) {
+			integratedConcentrations = create_mirror_view(data.integratedConcentrations);
+		}
+
+		deep_copy(integratedConcentrations, data.integratedConcentrations);
 	}
 
 	std::uint64_t
 	getDeviceMemorySize() const noexcept
 	{
-		return anisotropyRatio.required_allocation_size();
+		std::uint64_t ret = 0;
+
+		ret += anisotropyRatio.required_allocation_size(anisotropyRatio.extent(0), anisotropyRatio.extent(1));
+		ret += dislocationCaptureRadius.required_allocation_size(dislocationCaptureRadius.extent(0), dislocationCaptureRadius.extent(1));
+		ret += integratedConcentrations.required_allocation_size(integratedConcentrations.size());
+
+		return ret;
 	}
 
 	void
 	initialize(IndexType numClusters, IndexType gridSize = 0)
 	{
 		anisotropyRatio =
-		View<double**>("Anisotropy Ratio", numClusters, gridSize);
+			View<double**>("Anisotropy Ratio", numClusters, gridSize);
+		dislocationCaptureRadius =
+			View<double**>("Dislocation Capture Radius", numClusters, 2);
+		integratedConcentrations =
+			View<double*>("Integrated Concentrations", 2);
 	}
-	 */
 
 	View<double**> anisotropyRatio;
 	View<double**> dislocationCaptureRadius;
+	View<double*> integratedConcentrations;
 };
 } // namespace detail
 } // namespace network

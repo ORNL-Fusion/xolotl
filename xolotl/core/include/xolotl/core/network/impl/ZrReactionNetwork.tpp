@@ -102,8 +102,42 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
         data.extraData.dislocationCaptureRadius(i, 1) = 5.1 * pow(lo[Species::I], -0.01) / 10;
     }
     //std::cout << "CaptureRadius-stop \n";
+    }); // Goes with parallel_for
+}
 
-    });
+void
+ZrReactionNetwork::computeFluxesPreProcess(
+	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex,
+	double surfaceDepth, double spacing)
+{
+	if (this->_enableSink) {
+		updateIntegratedConcentrations(concentrations, gridIndex);
+	}
+}
+
+void
+ZrReactionNetwork::computePartialsPreProcess(
+	ConcentrationsView concentrations, Kokkos::View<double*> values,
+	IndexType gridIndex, double surfaceDepth, double spacing)
+{
+	if (this->_enableSink) {
+		updateIntegratedConcentrations(concentrations, gridIndex);
+	}
+}
+
+
+void
+	ZrReactionNetwork::updateIntegratedConcentrations(
+	ConcentrationsView concentrations, IndexType gridIndex)
+{
+	auto& data = this->_clusterData.h_view().extraData;
+	// Get the V and I integrated concentration
+	auto vInt = this->getTotalConcentration(concentrations, Species::V);
+	auto iInt = this->getTotalConcentration(concentrations, Species::I);
+	auto intConcs = create_mirror_view(data.integratedConcentrations);
+	intConcs(0) = vInt;
+	intConcs(1) = iInt;
+	deep_copy(data.integratedConcentrations, intConcs);
 }
 
 namespace detail

@@ -54,6 +54,21 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeRate(IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
+		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computePartialDerivatives(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeReducedPartialDerivatives(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex);
 };
 
 class ZrConstantReaction :
