@@ -27,10 +27,14 @@ KOKKOS_INLINE_FUNCTION
 bool
 ZrClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
+    //std::cout << "Refine-start \n";
+
 	result[0] = true;
 	result[1] = true;
+    //result[2] = true;
 
 	// No need for refine here because we are not using grouping
+    //std::cout << "Refine-stop \n";
 
 	return true;
 }
@@ -46,9 +50,11 @@ ZrClusterGenerator::select(const Region& region) const
         (region[Species::Basal].begin() > 0);
     */
 
+
     int nAxis =
         (region[Species::V].begin() > 0) +
         (region[Species::I].begin() > 0);
+
 
 	if (nAxis > 1) {
 		return false;
@@ -74,18 +80,7 @@ ZrClusterGenerator::select(const Region& region) const
             return false;
         */
 
-        // Void
-        //if (region[Species::Basal].begin() > 0 &&
-            //region[Species::Basal].begin() <= _maxV)
-            //return false;
 	}
-
-    //if (region[Species::V].begin() == 0 && region[Species::I].begin() == 0 &&
-        //region[Species::Basal].end() - 1 <= _maxV)
-        //return false;
-
-    //if (region[Species::Basal].begin() > _maxSize)
-        //return false;
 
 	return true;
 }
@@ -178,6 +173,8 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	double latticeParameter, double interstitialBias,
 	double impurityRadius) const noexcept
 {
+    //std::cout << "ReactionRadius-start \n";
+
 	const double prefactor = 0.0 * latticeParameter * latticeParameter *
 		latticeParameter / ::xolotl::core::pi;
 	const auto& reg = cluster.getRegion();
@@ -197,7 +194,7 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 			else
 				radius += 0.163076 * pow((double)j, 0.5);
 		}
-
+        //std::cout << "ReactionRadius-stopI \n";
 		return radius / reg[Species::V].length();
 	}
 
@@ -208,6 +205,7 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
             else radius += 0.169587 * pow((double)j,0.5);
         }
 
+    //std::cout << "ReactionRadius-stopB \n";
     return radius / reg[Species::Basal].length();
     }
     */
@@ -219,9 +217,10 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 			else
 				radius += 0.163076 * pow((double)j, 0.5);
 		}
+        //std::cout << "ReactionRadius-stopV \n";
 		return radius / reg[Species::I].length();
 	}
-
+    //std::cout << "ReactionRadius-stop \n";
 	return radius;
 }
 } // namespace network

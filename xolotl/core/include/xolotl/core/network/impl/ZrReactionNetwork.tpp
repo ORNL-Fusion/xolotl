@@ -66,6 +66,8 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 		return;
 	}
 
+    //std::cout << "CaptureRadius-start \n";
+
 	this->_clusterData.h_view().extraData.initialize(
 		this->_clusterData.h_view().numClusters,
 		this->_clusterData.h_view().gridSize);
@@ -99,6 +101,7 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
         data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::I], 0.05) / 10;
         data.extraData.dislocationCaptureRadius(i, 1) = 5.1 * pow(lo[Species::I], -0.01) / 10;
     }
+    //std::cout << "CaptureRadius-stop \n";
 
     });
 }
@@ -110,7 +113,6 @@ KOKKOS_INLINE_FUNCTION
 void
 ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
-
 	using Species = typename Network::Species;
 	using Composition = typename Network::Composition;
 	using AmountType = typename Network::AmountType;
@@ -134,6 +136,8 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
+    //std::cout << i << " " << j << "\n";
+
 	// vac + vac = vac
 	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V)) {
 		// Compute the composition of the new cluster
@@ -148,10 +152,12 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				this->addDissociationReaction(tag, {vProdId, i, j});
 			}
 		}
+        //std::cout << "ReactionGenerator-stopV+V \n";
+
 		return;
 	}
 
-    /* adding basal
+    /*
     // vac + Basal = Basal
     if ((lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::V)) ||
         (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Basal))) {
@@ -172,6 +178,8 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
                 this->addDissociationReaction(tag, {basalProdId, i, j});
         }
         }
+        std::cout << "ReactionGenerator-stopV+B \n";
+
         return;
     }
 
@@ -211,9 +219,12 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
         this->addProductionReaction(tag, {i, j});
         }
 
+        std::cout << "ReactionGenerator-stopI+B \n";
+
         return;
     }
     */
+
 
 	// vac + int = vac | int | recombine
 	if (((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
@@ -250,6 +261,8 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// No product
 			this->addProductionReaction(tag, {i, j});
 		}
+        //std::cout << "ReactionGenerator-stopI+V \n";
+
 		return;
 	}
 
@@ -267,6 +280,8 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				this->addDissociationReaction(tag, {iProdId, i, j});
 			}
 		}
+        //std::cout << "ReactionGenerator-stopI+I \n";
+
 		return;
 	}
 }

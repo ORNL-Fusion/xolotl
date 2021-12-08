@@ -63,6 +63,7 @@ public:
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
 		std::vector<double> grid)
 	{
+        //std::cout << "Flux-start \n";
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
         
@@ -97,6 +98,30 @@ public:
             incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1]));
         }
 
+        /*
+        comp[NetworkType::Species::V] = 0;
+        comp[NetworkType::Species::Basal] = 1;
+        cluster = zrNetwork->findCluster(comp, plsm::onHost);
+        if (cluster.getId() == NetworkType::invalidIndex()) {
+            throw std::runtime_error("\nThe current basal cluster is not "
+                                     "present in the network, "
+                                     "cannot use the flux option!");
+        }
+        fluxIndices.push_back(cluster.getId());
+        incidentFluxVec.push_back(std::vector<double>(1, fluxV[0]));
+        
+        
+        comp[NetworkType::Species::Basal] = 2;
+        cluster = zrNetwork->findCluster(comp, plsm::onHost);
+        if (cluster.getId() == NetworkType::invalidIndex()) {
+            throw std::runtime_error("\nThe current basal cluster is not "
+                                     "present in the network, "
+                                     "cannot use the flux option!");
+        }
+        fluxIndices.push_back(cluster.getId());
+        incidentFluxVec.push_back(std::vector<double>(1, fluxV[1]));
+         */
+        //std::cout << "Flux-stop \n";
 		return;
 	}
 
@@ -109,27 +134,12 @@ public:
 	{
 		// Define only for a 0D case
 		if (xGrid.size() == 0) {
-            
-            // Reduce the defect generation rate based on the current time (defect density)
-            double cascadeEfficiency = 1.0;
-            if (currentTime > 1e2) cascadeEfficiency = 0.25;
-            else if (currentTime > 10) cascadeEfficiency = 0.35;
-            else if (currentTime > 1) cascadeEfficiency = 0.5;
-            else if (currentTime > 0.1) cascadeEfficiency = 0.65;
-            else if (currentTime > 0.001) cascadeEfficiency = 0.8;
-            else if (currentTime > 0.0001) cascadeEfficiency = 0.9;
-            cascadeEfficiency = 1.0;
+            //std::cout << "Flux-start2 \n";
 
-            // Set the fluxes
-            double numTotalI = 0.0;
-            double numTotalV = 0.0;
             for (int i = 0; i < fluxIndices.size(); i++) {
-                updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;
-                if (i < (maxSizeI-1)) numTotalI+= incidentFluxVec[i][0] * cascadeEfficiency * (i+1);
-                else numTotalV+= incidentFluxVec[i][0] * cascadeEfficiency * (i+1-maxSizeI);
+                updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
             }
-        
-            std::cout << numTotalI << " " << numTotalV << "\n";
+            
 		}
 
 		else {
