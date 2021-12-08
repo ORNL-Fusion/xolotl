@@ -335,7 +335,7 @@ public:
 			concentrations, fluxes, gridIndex, surfaceDepth, spacing);
 
 		_reactions.template forEachOn<TReaction>(
-			DEVICE_LAMBDA(auto&& reaction) {
+			"ReactionNetwork::computeFluxes", DEVICE_LAMBDA(auto&& reaction) {
 				reaction.contributeFlux(concentrations, fluxes, gridIndex);
 			});
 		Kokkos::fence();
@@ -361,13 +361,15 @@ public:
 		// Reset the values
 		const auto& nValues = values.extent(0);
 		Kokkos::parallel_for(
-			nValues, KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
+			"ReactionNetwork::computePartials::resetValues", nValues,
+			KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
 
 		asDerived()->computePartialsPreProcess(
 			concentrations, values, gridIndex, surfaceDepth, spacing);
 
 		if (this->_enableReducedJacobian) {
 			_reactions.template forEachOn<TReaction>(
+				"ReactionNetwork::computePartials",
 				DEVICE_LAMBDA(auto&& reaction) {
 					reaction.contributeReducedPartialDerivatives(
 						concentrations, values, gridIndex);
@@ -375,6 +377,7 @@ public:
 		}
 		else {
 			_reactions.template forEachOn<TReaction>(
+				"ReactionNetwork::computePartials",
 				DEVICE_LAMBDA(auto&& reaction) {
 					reaction.contributePartialDerivatives(
 						concentrations, values, gridIndex);

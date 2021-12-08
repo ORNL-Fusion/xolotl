@@ -152,7 +152,8 @@ ClusterData<TNetwork, MemSpace>::generate(const ClusterGenerator& generator,
 {
 	auto data = *this;
 	Kokkos::parallel_for(
-		this->numClusters, KOKKOS_LAMBDA(const IndexType i) {
+		"ClusterData::generate", this->numClusters,
+		KOKKOS_LAMBDA(const IndexType i) {
 			auto cluster = data.getCluster(i);
 			data.formationEnergy(i) = generator.getFormationEnergy(cluster);
 			data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);

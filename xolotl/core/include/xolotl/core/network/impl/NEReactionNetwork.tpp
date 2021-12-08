@@ -39,7 +39,7 @@ NEReactionNetwork::checkLargestClusterId()
 		NEReactionNetwork::IndexType>;
 	Reducer::value_type maxLoc;
 	Kokkos::parallel_reduce(
-		_numClusters,
+		"NEReactionNetwork::checkLargestClusterId", _numClusters,
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
 			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
