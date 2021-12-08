@@ -73,7 +73,7 @@ template <>
 struct ReactionNetworkTraits<ZrReactionNetwork>
 {
 	using Species = ZrSpecies;
-    
+
 	static constexpr std::size_t numSpecies = 2;
 
 	using ProductionReactionType = ZrProductionReaction;
@@ -130,18 +130,18 @@ struct ClusterDataExtra<ZrReactionNetwork, PlsmContext>
 
 		if (!dislocationCaptureRadius.is_allocated()) {
 			dislocationCaptureRadius =
-	create_mirror_view(data.dislocationCaptureRadius);
+				create_mirror_view(data.dislocationCaptureRadius);
 		}
 
 		deep_copy(dislocationCaptureRadius, data.dislocationCaptureRadius);
-
 
 		if (!data.integratedConcentrations.is_allocated()) {
 			return;
 		}
 
 		if (!integratedConcentrations.is_allocated()) {
-			integratedConcentrations = create_mirror_view(data.integratedConcentrations);
+			integratedConcentrations =
+				create_mirror_view(data.integratedConcentrations);
 		}
 
 		deep_copy(integratedConcentrations, data.integratedConcentrations);
@@ -152,9 +152,13 @@ struct ClusterDataExtra<ZrReactionNetwork, PlsmContext>
 	{
 		std::uint64_t ret = 0;
 
-		ret += anisotropyRatio.required_allocation_size(anisotropyRatio.extent(0), anisotropyRatio.extent(1));
-		ret += dislocationCaptureRadius.required_allocation_size(dislocationCaptureRadius.extent(0), dislocationCaptureRadius.extent(1));
-		ret += integratedConcentrations.required_allocation_size(integratedConcentrations.size());
+		ret += anisotropyRatio.required_allocation_size(
+			anisotropyRatio.extent(0), anisotropyRatio.extent(1));
+		ret += dislocationCaptureRadius.required_allocation_size(
+			dislocationCaptureRadius.extent(0),
+			dislocationCaptureRadius.extent(1));
+		ret += integratedConcentrations.required_allocation_size(
+			integratedConcentrations.size());
 
 		return ret;
 	}

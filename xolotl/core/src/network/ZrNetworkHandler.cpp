@@ -15,7 +15,7 @@ auto zrNetworkHandlerRegistrations =
 }
 
 auto zrNetworkGenerator = [](const options::IOptions& options) {
-    //std::cout << "NetworkHandler-start \n";
+	// std::cout << "NetworkHandler-start \n";
 
 	using NetworkType = ZrReactionNetwork;
 
@@ -23,24 +23,22 @@ auto zrNetworkGenerator = [](const options::IOptions& options) {
 	NetworkType::AmountType maxV = options.getMaxV();
 	NetworkType::AmountType maxI = options.getMaxI();
 
-    
-    std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxV, maxI};
-    std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
-        {maxV + 1, maxI + 1}};
-    
-    
-    /* adding basal
+	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxV, maxI};
+	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
+		{maxV + 1, maxI + 1}};
+
+	/* adding basal
 	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxV, maxV, maxI};
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
 		{maxV + 1, maxV + 1, maxI + 1}};
-     */
-    
+	 */
+
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 
 	network->syncClusterDataOnHost();
 	network->getSubpaving().syncZones(plsm::onHost);
-    //std::cout << "NetworkHandler-stop \n";
+	// std::cout << "NetworkHandler-stop \n";
 
 	return network;
 };

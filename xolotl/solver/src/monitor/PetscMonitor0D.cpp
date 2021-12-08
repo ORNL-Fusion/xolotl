@@ -208,10 +208,10 @@ PetscMonitor0D::setup()
 				outputFile << "V_" << lo[Spec::V] << " ";
 			else if (lo.isOnAxis(Spec::I))
 				outputFile << "I_" << lo[Spec::I] << " ";
-            /* adding basal
-            else if (lo.isOnAxis(Spec::Basal))
-                outputFile << "Basal_" << lo[Spec::Basal] << " ";
-             */
+			/* adding basal
+			else if (lo.isOnAxis(Spec::Basal))
+				outputFile << "Basal_" << lo[Spec::Basal] << " ";
+			 */
 		}
 		outputFile << std::endl;
 		outputFile.close();
@@ -631,19 +631,18 @@ PetscErrorCode
 PetscMonitor0D::computeAlphaZr(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
-    
-    //std::cout << "Monitor-start \n";
+	// std::cout << "Monitor-start \n";
 	// Initial declarations
 	PetscErrorCode ierr;
 	// Reduce output based on current timestep:
-    if (timestep < 200){
-        if (timestep % 2 != 0)
-        PetscFunctionReturn(0);
-    }
-    else if (timestep < 500){
+	if (timestep < 200) {
+		if (timestep % 2 != 0)
+			PetscFunctionReturn(0);
+	}
+	else if (timestep < 500) {
 		if (timestep % 10 != 0)
 			PetscFunctionReturn(0);
-    }
+	}
 	else if (timestep < 5000) {
 		if (timestep % 50 != 0)
 			PetscFunctionReturn(0);
@@ -710,8 +709,8 @@ PetscMonitor0D::computeAlphaZr(
 	// Restore the PETSc solution array
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
-    
-    //std::cout << "Monitor-stop \n";
+
+	// std::cout << "Monitor-stop \n";
 	PetscFunctionReturn(0);
 }
 

@@ -27,14 +27,14 @@ KOKKOS_INLINE_FUNCTION
 bool
 ZrClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
-    //std::cout << "Refine-start \n";
+	// std::cout << "Refine-start \n";
 
 	result[0] = true;
 	result[1] = true;
-    //result[2] = true;
+	// result[2] = true;
 
 	// No need for refine here because we are not using grouping
-    //std::cout << "Refine-stop \n";
+	// std::cout << "Refine-stop \n";
 
 	return true;
 }
@@ -43,18 +43,15 @@ KOKKOS_INLINE_FUNCTION
 bool
 ZrClusterGenerator::select(const Region& region) const
 {
-    /* adding basal
+	/* adding basal
 	int nAxis =
 		(region[Species::V].begin() > 0) +
-        (region[Species::I].begin() > 0) +
-        (region[Species::Basal].begin() > 0);
-    */
+		(region[Species::I].begin() > 0) +
+		(region[Species::Basal].begin() > 0);
+	*/
 
-
-    int nAxis =
-        (region[Species::V].begin() > 0) +
-        (region[Species::I].begin() > 0);
-
+	int nAxis =
+		(region[Species::V].begin() > 0) + (region[Species::I].begin() > 0);
 
 	if (nAxis > 1) {
 		return false;
@@ -74,12 +71,11 @@ ZrClusterGenerator::select(const Region& region) const
 		if (region[Species::V].begin() > _maxV)
 			return false;
 
-        /* adding basal
-        // Basal
-        if (region[Species::Basal].begin() > _maxV)
-            return false;
-        */
-
+		/* adding basal
+		// Basal
+		if (region[Species::Basal].begin() > _maxV)
+			return false;
+		*/
 	}
 
 	return true;
@@ -173,14 +169,14 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	double latticeParameter, double interstitialBias,
 	double impurityRadius) const noexcept
 {
-    //std::cout << "ReactionRadius-start \n";
+	// std::cout << "ReactionRadius-start \n";
 
 	const double prefactor = 0.0 * latticeParameter * latticeParameter *
 		latticeParameter / ::xolotl::core::pi;
 	const auto& reg = cluster.getRegion();
 	Composition lo(reg.getOrigin());
 	double radius = 0.0;
-    int basalTransitionSize = 91;
+	int basalTransitionSize = 91;
 
 	// jmr: rn = (3nOmega/4pi)^1/3 [nm] for n < 10
 	// jmr: Note that (3Omega/4pi) = 5.586e-3 nm^3, where Omega = 0.0234 nm^3
@@ -194,21 +190,21 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 			else
 				radius += 0.163076 * pow((double)j, 0.5);
 		}
-        //std::cout << "ReactionRadius-stopI \n";
+		// std::cout << "ReactionRadius-stopI \n";
 		return radius / reg[Species::V].length();
 	}
 
-    /* adding basal
-    if (lo.isOnAxis(Species::Basal)) {
-        for (auto j : makeIntervalRange(reg[Species::Basal])) {
-            if (lo[Species::Basal] < basalTransitionSize) radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
-            else radius += 0.169587 * pow((double)j,0.5);
-        }
+	/* adding basal
+	if (lo.isOnAxis(Species::Basal)) {
+		for (auto j : makeIntervalRange(reg[Species::Basal])) {
+			if (lo[Species::Basal] < basalTransitionSize) radius += pow(5.586e-3
+	* (double)j, 1.0 / 3.0); else radius += 0.169587 * pow((double)j,0.5);
+		}
 
-    //std::cout << "ReactionRadius-stopB \n";
-    return radius / reg[Species::Basal].length();
-    }
-    */
+	//std::cout << "ReactionRadius-stopB \n";
+	return radius / reg[Species::Basal].length();
+	}
+	*/
 
 	if (lo.isOnAxis(Species::I)) {
 		for (auto j : makeIntervalRange(reg[Species::I])) {
@@ -217,10 +213,10 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 			else
 				radius += 0.163076 * pow((double)j, 0.5);
 		}
-        //std::cout << "ReactionRadius-stopV \n";
+		// std::cout << "ReactionRadius-stopV \n";
 		return radius / reg[Species::I].length();
 	}
-    //std::cout << "ReactionRadius-stop \n";
+	// std::cout << "ReactionRadius-stop \n";
 	return radius;
 }
 } // namespace network
