@@ -218,7 +218,7 @@ public:
 					NetworkType::Composition::zero();
 				comp[NetworkType::Species::I] = size;
 				auto fluxCluster =
-					alloyNetwork->findCluster(comp, plsm::onHost);
+					alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 				if (fluxCluster.getId() != NetworkType::invalidIndex()) {
 					(ionDamage.fluxIndex).push_back(fluxCluster.getId());
 					(ionDamage.damageRate)
@@ -232,11 +232,11 @@ public:
 					comp[NetworkType::Species::I] = 0;
 					comp[NetworkType::Species::Frank] = size;
 					auto fluxCluster1 =
-						alloyNetwork->findCluster(comp, plsm::onHost);
+						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 					comp[NetworkType::Species::Frank] = 0;
 					comp[NetworkType::Species::Perfect] = size;
 					auto fluxCluster2 =
-						alloyNetwork->findCluster(comp, plsm::onHost);
+						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 					if (fluxCluster1.getId() == NetworkType::invalidIndex() ||
 						fluxCluster2.getId() == NetworkType::invalidIndex()) {
 						// Throw error -> missing type
@@ -266,7 +266,7 @@ public:
 					NetworkType::Composition::zero();
 				comp[NetworkType::Species::V] = size;
 				auto fluxCluster =
-					alloyNetwork->findCluster(comp, plsm::onHost);
+					alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 				if (fluxCluster.getId() != NetworkType::invalidIndex()) {
 					(ionDamage.fluxIndex).push_back(fluxCluster.getId());
 					(ionDamage.damageRate)
@@ -276,7 +276,8 @@ public:
 				else {
 					comp[NetworkType::Species::V] = 0;
 					comp[NetworkType::Species::Faulted] = size;
-					fluxCluster = alloyNetwork->findCluster(comp, plsm::onHost);
+					fluxCluster =
+						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 					if (fluxCluster.getId() == NetworkType::invalidIndex()) {
 						// Throw error -> no available type
 						throw std::runtime_error(

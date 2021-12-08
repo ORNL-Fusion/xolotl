@@ -23,7 +23,7 @@ public:
 	using Region = typename NetworkType::Region;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
-	using BoolArray = typename Superclass::BoolVec<Region>;
+	using BoolArray = plsm::refine::BoolVec<Region>;
 
 	FeClusterGenerator(const options::IOptions& options);
 

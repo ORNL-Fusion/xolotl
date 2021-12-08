@@ -7,6 +7,7 @@
 #include <Kokkos_Atomic.hpp>
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Crs.hpp>
+#include <Kokkos_DualView.hpp>
 
 #include <plsm/Subpaving.h>
 #include <plsm/refine/RegionDetector.h>
@@ -224,18 +225,32 @@ public:
 	void
 	syncClusterDataOnHost() override;
 
+	template <typename MemSpace>
 	KOKKOS_INLINE_FUNCTION
-	Cluster<plsm::OnDevice>
-	findCluster(const Composition& comp, plsm::OnDevice context);
-
-	Cluster<plsm::OnHost>
-	findCluster(const Composition& comp, plsm::OnHost context);
+	Cluster<MemSpace>
+	findCluster(const Composition& comp, MemSpace)
+	{
+		if constexpr (!std::is_same_v<plsm::HostMemSpace,
+						  plsm::DeviceMemSpace> &&
+			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+			auto id = _subpavingMirror.findTileId(comp);
+			return _clusterDataMirror.getCluster(
+				id == _subpaving.invalidIndex() ? this->invalidIndex() :
+												  IndexType(id));
+		}
+		else {
+			auto id = _subpaving.findTileId(comp);
+			return _clusterData.d_view().getCluster(
+				id == _subpaving.invalidIndex() ? this->invalidIndex() :
+												  IndexType(id));
+		}
+	}
 
 	KOKKOS_INLINE_FUNCTION
 	auto
 	findCluster(const Composition& comp)
 	{
-		return findCluster(comp, plsm::onDevice);
+		return findCluster(comp, plsm::DeviceMemSpace{});
 	}
 
 	IndexType
@@ -246,16 +261,16 @@ public:
 		for (std::size_t i = 0; i < composition.size(); ++i) {
 			comp[i] = composition[i];
 		}
-		return findCluster(comp, plsm::onHost).getId();
+		return findCluster(comp, plsm::HostMemSpace{}).getId();
 	}
 
-	ClusterCommon<plsm::OnHost>
+	ClusterCommon<plsm::HostMemSpace>
 	getClusterCommon(IndexType clusterId) const override
 	{
 		return _clusterDataMirror.getClusterCommon(clusterId);
 	}
 
-	ClusterCommon<plsm::OnHost>
+	ClusterCommon<plsm::HostMemSpace>
 	getSingleVacancy() override;
 
 	IndexType
@@ -270,24 +285,26 @@ public:
 	PhaseSpace
 	getPhaseSpace() override;
 
+	template <typename MemSpace>
 	KOKKOS_INLINE_FUNCTION
-	Cluster<plsm::OnDevice>
-	getCluster(IndexType clusterId, plsm::OnDevice)
+	Cluster<MemSpace>
+	getCluster(IndexType clusterId, MemSpace)
 	{
-		return _clusterData.d_view().getCluster(clusterId);
-	}
-
-	Cluster<plsm::OnHost>
-	getCluster(IndexType clusterId, plsm::OnHost)
-	{
-		return _clusterDataMirror.getCluster(clusterId);
+		if constexpr (!std::is_same_v<plsm::HostMemSpace,
+						  plsm::DeviceMemSpace> &&
+			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+			return _clusterDataMirror.getCluster(clusterId);
+		}
+		else {
+			return _clusterData.d_view().getCluster(clusterId);
+		}
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	auto
 	getCluster(IndexType clusterId)
 	{
-		return getCluster(clusterId, plsm::onDevice);
+		return getCluster(clusterId, plsm::DeviceMemSpace{});
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -515,6 +532,7 @@ private:
 
 private:
 	Subpaving _subpaving;
+	typename Subpaving::HostMirror _subpavingMirror;
 	ClusterDataMirror _clusterDataMirror;
 
 	detail::ReactionNetworkWorker<TImpl> _worker;
