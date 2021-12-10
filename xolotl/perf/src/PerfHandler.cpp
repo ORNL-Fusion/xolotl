@@ -399,5 +399,10 @@ PerfHandler::reportStatistics(std::ostream& os,
 		iter->second.outputTo(os);
 	}
 }
+
+void
+loadPerfHandlers()
+{
+}
 } // namespace perf
 } // namespace xolotl

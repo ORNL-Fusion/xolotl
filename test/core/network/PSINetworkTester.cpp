@@ -27,6 +27,7 @@ BOOST_AUTO_TEST_SUITE(PSINetwork_testSuite)
 
 BOOST_AUTO_TEST_CASE(fullyRefined)
 {
+    loadNetworkHandlers();
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file

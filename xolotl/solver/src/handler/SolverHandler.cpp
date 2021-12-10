@@ -44,7 +44,8 @@ SolverHandler::SolverHandler(
 	fluxHandler(nullptr),
 	temperatureHandler(nullptr),
 	vizHandler(factory::viz::VizHandlerFactory::get().generate(options)),
-	perfHandler(factory::perf::PerfHandlerFactory::get().generate(options)),
+	perfHandler(factory::perf::PerfHandlerFactory::get(perf::loadPerfHandlers)
+					.generate(options)),
 	diffusionHandler(nullptr),
 	tauBursting(10.0),
 	burstingFactor(0.1),
