@@ -8,19 +8,13 @@ namespace network
 {
 namespace detail
 {
-template <typename MemSpace, typename TEnable = void>
+template <typename MemSpace>
 struct MemSpaceLabelHelper
 {
-	static constexpr char label = 'H';
-};
-
-template <typename MemSpace>
-struct MemSpaceLabelHelper<MemSpace,
-	std::enable_if_t<
-		!std::is_same_v<plsm::HostMemSpace, plsm::DeviceMemSpace> &&
-		std::is_same_v<MemSpace, plsm::DeviceMemSpace>>>
-{
-	static constexpr char label = 'D';
+	static constexpr bool onDevice =
+		(std::is_same_v<MemSpace, plsm::DeviceMemSpace> &&
+			!std::is_same_v<plsm::HostMemSpace, plsm::DeviceMemSpace>);
+	static constexpr char label = onDevice ? 'D' : 'H';
 };
 
 template <typename MemSpace>
