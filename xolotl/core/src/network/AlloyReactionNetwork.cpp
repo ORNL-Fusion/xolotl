@@ -62,8 +62,8 @@ AlloyReactionNetwork::checkLargestClusterId()
 	using Reducer = Kokkos::MaxLoc<AlloyReactionNetwork::AmountType,
 		AlloyReactionNetwork::IndexType>;
 	Reducer::value_type maxLoc;
-	Kokkos::parallel_reduce("AlloyReactionNetwork::checkLargestClusterId",
-		_numClusters,
+	Kokkos::parallel_reduce(
+		"AlloyReactionNetwork::checkLargestClusterId", _numClusters,
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
 			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();

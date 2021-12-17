@@ -570,8 +570,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 				if (lo1 == comp1 && lo2 == comp2) {
 					Composition compI = Composition::zero();
 					compI[Species::I] = vSize;
-					auto iClusterId =
-						subpaving.findTileId(compI);
+					auto iClusterId = subpaving.findTileId(compI);
 					this->addTrapMutationReaction(tag, {i, j, iClusterId});
 				}
 			}

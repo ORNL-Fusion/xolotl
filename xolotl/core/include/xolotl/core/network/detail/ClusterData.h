@@ -26,10 +26,9 @@ struct ViewTypeHelper
 	using DeviceView = Kokkos::View<TData, plsm::DeviceMemSpace>;
 	using HostView = Kokkos::View<TData, plsm::HostMemSpace>;
 	using ViewType = std::conditional_t<
-		std::is_same_v<plsm::HostMemSpace, plsm::DeviceMemSpace>,
-		  HostView,
-		  std::conditional_t<std::is_same_v<MemSpace, plsm::DeviceMemSpace>,
-			  DeviceView, typename DeviceView::HostMirror>>;
+		std::is_same_v<plsm::HostMemSpace, plsm::DeviceMemSpace>, HostView,
+		std::conditional_t<std::is_same_v<MemSpace, plsm::DeviceMemSpace>,
+			DeviceView, typename DeviceView::HostMirror>>;
 };
 
 template <typename TData, typename MemSpace>

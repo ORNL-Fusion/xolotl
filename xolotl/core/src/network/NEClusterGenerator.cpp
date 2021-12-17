@@ -27,6 +27,6 @@ NEClusterGenerator::NEClusterGenerator(
 	_density(opts.getDensity())
 {
 }
-}
-}
-}
+} // namespace network
+} // namespace core
+} // namespace xolotl
