@@ -59,6 +59,9 @@ namespace detail
 class AlloyReactionGenerator :
 	public ReactionGenerator<AlloyReactionNetwork, AlloyReactionGenerator>
 {
+	friend class ReactionGeneratorBase<AlloyReactionNetwork,
+		AlloyReactionGenerator>;
+
 public:
 	using Network = AlloyReactionNetwork;
 	using Subpaving = typename Network::Subpaving;
@@ -77,6 +80,7 @@ public:
 	void
 	addSinks(IndexType i, TTag tag) const;
 
+private:
 	ReactionCollection<Network>
 	getReactionCollection() const;
 };
@@ -94,3 +98,7 @@ public:
 } // namespace xolotl
 
 #include <xolotl/core/network/AlloyClusterGenerator.h>
+
+#if defined(XOLOTL_INCLUDE_RN_TPP_FILES)
+#include <xolotl/core/network/impl/AlloyReactionNetwork.tpp>
+#endif

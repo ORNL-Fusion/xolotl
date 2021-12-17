@@ -1,5 +1,6 @@
 #include <xolotl/core/temperature/ConstantHandler.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
@@ -22,8 +23,8 @@ ConstantHandler::ConstantHandler(double constTemperature) :
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
-		std::cout << "TemperatureHandler: Using a constant temperature of: "
-				  << temperature << " K" << std::endl;
+		XOLOTL_LOG << "TemperatureHandler: Using a constant temperature of: "
+				   << temperature << " K";
 	}
 }
 

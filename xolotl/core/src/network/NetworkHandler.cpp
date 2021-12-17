@@ -1,9 +1,9 @@
-#include <iostream>
 #include <stdexcept>
 
 #include <mpi.h>
 
 #include <xolotl/core/network/NetworkHandler.h>
+#include <xolotl/util/Log.h>
 
 namespace xolotl
 {
@@ -22,15 +22,21 @@ NetworkHandler::NetworkHandler(
 	int procId;
 	MPI_Comm_rank(MPI_COMM_WORLD, &procId);
 	if (procId == 0) {
-		std::cout << "NetworkHandler: Loaded network of " << _network->getDOF()
-				  << " DOF with: ";
+		util::StringStream ss;
+		ss << "NetworkHandler: Loaded network of " << _network->getDOF()
+		   << " DOF with: ";
 		auto numSpecies = _network->getSpeciesListSize();
 		for (auto id = SpeciesId(numSpecies); id; ++id) {
 			auto speciesName = _network->getSpeciesName(id);
-			std::cout << speciesName << " ";
+			ss << speciesName << " ";
 		}
-		std::cout << std::endl;
+		XOLOTL_LOG << ss.str();
 	}
+}
+
+void
+loadNetworkHandlers()
+{
 }
 } // namespace network
 } // namespace core

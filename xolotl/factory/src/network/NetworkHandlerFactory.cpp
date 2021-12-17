@@ -9,7 +9,7 @@ using core::network::INetworkHandler;
 using network::NetworkHandlerFactory;
 
 template NetworkHandlerFactory&
-Factory<NetworkHandlerFactory, INetworkHandler>::get();
+Factory<NetworkHandlerFactory, INetworkHandler>::get(const UserInitializer&);
 
 template std::shared_ptr<INetworkHandler>
 Factory<NetworkHandlerFactory, INetworkHandler>::generate(

@@ -29,7 +29,6 @@ public:
 	using IndexType = typename Superclass::IndexType;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
-	using ClusterDataRef = typename Superclass::ClusterDataRef;
 
 	using Superclass::Superclass;
 
@@ -91,3 +90,7 @@ private:
 } // namespace xolotl
 
 #include <xolotl/core/network/FeClusterGenerator.h>
+
+#if defined(XOLOTL_INCLUDE_RN_TPP_FILES)
+#include <xolotl/core/network/impl/FeReactionNetwork.tpp>
+#endif

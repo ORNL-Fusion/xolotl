@@ -20,6 +20,23 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
 )
 include_directories(${XOLOTL_BINARY_INCLUDE_DIR} ${XOLOTL_TEST_INCLUDE_DIR})
 
+function(add_tests _testFiles)
+    set(options NONE)
+    set(oneValueArgs LABEL)
+    set(multiValueArgs LIBS)
+    cmake_parse_arguments(PARSE_ARGV 1 XOLOTL_TEST
+        "${options}" "${oneValueArgs}" "${multiValueArgs}"
+    )
+    foreach(test ${${_testFiles}})
+        get_filename_component(testName ${test} NAME_WE)
+        add_executable(${testName} ${test})
+        target_link_libraries(${testName} Boost::unit_test_framework)
+        target_link_libraries(${testName} ${XOLOTL_TEST_LIBS})
+        add_test(${testName} ${testName})
+        set_property(TEST ${testName} PROPERTY LABELS ${XOLOTL_TEST_LABEL})
+    endforeach()
+endfunction()
+
 add_subdirectory(util)
 add_subdirectory(core)
 add_subdirectory(io)

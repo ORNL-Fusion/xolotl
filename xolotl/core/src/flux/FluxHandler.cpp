@@ -244,6 +244,25 @@ FluxHandler::getFluxRate() const
 	return fluxAmplitude / normFactor;
 }
 
+std::vector<double>
+FluxHandler::getInstantFlux(double time) const
+{
+	// Create the vector to return
+	std::vector<double> toReturn;
+
+	// Get the current amplitude
+	auto ampl = getProfileAmplitude(time);
+	toReturn.push_back(ampl);
+
+	return toReturn;
+}
+
+std::vector<IdType>
+FluxHandler::getFluxIndices() const
+{
+	return fluxIndices;
+}
+
 } // end namespace flux
 } // end namespace core
 } // end namespace xolotl

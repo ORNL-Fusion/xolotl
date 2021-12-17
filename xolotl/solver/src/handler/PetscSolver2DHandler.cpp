@@ -1,8 +1,10 @@
-// Includes
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/io/XFile.h>
 #include <xolotl/solver/handler/PetscSolver2DHandler.h>
+#include <xolotl/util/Log.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -46,37 +48,37 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 
 	// Prints info on one process
 	auto xolotlComm = util::getMPIComm();
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
+	int procId = util::getMPIRank();
 	if (procId == 0) {
-		std::cout << "SolverHandler: 2D simulation with surface BC: ";
+		util::StringStream ss;
+		ss << "SolverHandler: 2D simulation with surface BC: ";
 		std::string bcString = "periodic";
 		if (isMirror)
 			bcString = "mirror";
 		if (leftOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << bcString;
-		std::cout << ", bulk BC: ";
+			ss << bcString;
+		ss << ", bulk BC: ";
 		if (rightOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << bcString;
-		std::cout << ", left BC: ";
+			ss << bcString;
+		ss << ", left BC: ";
 		if (topOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << "periodic";
-		std::cout << ", right BC: ";
+			ss << "periodic";
+		ss << ", right BC: ";
 		if (bottomOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << "periodic";
-		std::cout << ", grid (nm): ";
+			ss << "periodic";
+		ss << ", grid (nm): ";
 		for (auto i = 1; i < grid.size() - 1; i++) {
-			std::cout << grid[i] - grid[surfacePosition[0] + 1] << " ";
+			ss << grid[i] - grid[surfacePosition[0] + 1] << " ";
 		}
-		std::cout << std::endl;
+		XOLOTL_LOG << ss.str();
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -157,6 +159,9 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
 
+	// Initialize the flux handler
+	fluxHandler->initializeFluxHandler(network, surfacePosition[0], grid);
+
 	return;
 }
 
@@ -189,9 +194,6 @@ PetscSolver2DHandler::initializeConcentration(DM& da, Vec& C)
 
 	// Give the surface position to the temperature handler
 	temperatureHandler->updateSurfacePosition(surfacePosition[0]);
-
-	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, surfacePosition[0], grid);
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(
@@ -282,7 +284,16 @@ PetscSolver2DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Update the network with the temperature
-	network.setTemperatures(temperature);
+	std::vector<double> depths;
+	for (auto i = 0; i < temperature.size(); i++) {
+		if (localXS + i == nX + 1)
+			depths.push_back(
+				grid[localXS + i] - grid[surfacePosition[localYS] + 1]);
+		else
+			depths.push_back((grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+				grid[surfacePosition[localYS] + 1]);
+	}
+	network.setTemperatures(temperature, depths);
 	network.syncClusterDataOnHost();
 
 	/*
@@ -484,7 +495,17 @@ PetscSolver2DHandler::setConcVector(DM& da, Vec& C,
 			temperature[i + 1] = gridPointSolution[dof];
 		}
 		// Update the network with the temperature
-		network.setTemperatures(temperature);
+		std::vector<double> depths;
+		for (auto i = 0; i < temperature.size(); i++) {
+			if (localXS + i == nX + 1)
+				depths.push_back(
+					grid[localXS + i] - grid[surfacePosition[localYS] + 1]);
+			else
+				depths.push_back(
+					(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+					grid[surfacePosition[localYS] + 1]);
+		}
+		network.setTemperatures(temperature, depths);
 		network.syncClusterDataOnHost();
 	}
 
@@ -584,6 +605,27 @@ PetscSolver2DHandler::updateConcentration(
 					concVector, updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
 			}
 
+			// Compute the old and new array offsets
+			concOffset = concs[yj][xi];
+			updatedConcOffset = updatedConcs[yj][xi];
+
+			// Set the grid fraction
+			gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
+								  grid[surfacePosition[yj] + 1]) /
+				(grid[grid.size() - 1] - grid[surfacePosition[yj] + 1]);
+			gridPosition[1] = yj / nY;
+
+			// Get the temperature from the temperature handler
+			temperatureHandler->setTemperature(concOffset);
+			double temp =
+				temperatureHandler->getTemperature(gridPosition, ftime);
+
+			// Update the network if the temperature changed
+			if (std::fabs(temperature[xi + 1 - localXS] - temp) > 0.1) {
+				temperature[xi + 1 - localXS] = temp;
+				tempHasChanged = true;
+			}
+
 			// Boundary conditions
 			// Everything to the left of the surface is empty
 			if (xi < surfacePosition[yj] + leftOffset ||
@@ -600,9 +642,6 @@ PetscSolver2DHandler::updateConcentration(
 			}
 			if (skip)
 				continue;
-			// Compute the old and new array offsets
-			concOffset = concs[yj][xi];
-			updatedConcOffset = updatedConcs[yj][xi];
 
 			// Fill the concVector with the pointer to the middle, left, and
 			// right grid points
@@ -627,23 +666,6 @@ PetscSolver2DHandler::updateConcentration(
 				hxRight = grid[xi + 1] - grid[xi];
 			}
 
-			// Set the grid fraction
-			gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
-								  grid[surfacePosition[yj] + 1]) /
-				(grid[grid.size() - 1] - grid[surfacePosition[yj] + 1]);
-			gridPosition[1] = yj / nY;
-
-			// Get the temperature from the temperature handler
-			temperatureHandler->setTemperature(concOffset);
-			double temp =
-				temperatureHandler->getTemperature(gridPosition, ftime);
-
-			// Update the network if the temperature changed
-			if (std::fabs(temperature[xi + 1 - localXS] - temp) > 0.1) {
-				temperature[xi + 1 - localXS] = temp;
-				tempHasChanged = true;
-			}
-
 			// ---- Compute the temperature over the locally owned part of the
 			// grid -----
 			if (xi >= localXS && xi < localXS + localXM) {
@@ -656,7 +678,17 @@ PetscSolver2DHandler::updateConcentration(
 		// of T depending on more than X
 		if (tempHasChanged) {
 			// Update the network with the temperature
-			network.setTemperatures(temperature);
+			std::vector<double> depths;
+			for (auto i = 0; i < temperature.size(); i++) {
+				if (localXS + i == nX + 1)
+					depths.push_back(
+						grid[localXS + i] - grid[surfacePosition[localYS] + 1]);
+				else
+					depths.push_back(
+						(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+						grid[surfacePosition[localYS] + 1]);
+			}
+			network.setTemperatures(temperature, depths);
 			network.syncClusterDataOnHost();
 		}
 	}
@@ -953,22 +985,6 @@ PetscSolver2DHandler::computeJacobian(
 				}
 			}
 
-			// Boundary conditions
-			// Everything to the left of the surface is empty
-			if (xi < surfacePosition[yj] + leftOffset ||
-				xi > nX - 1 - rightOffset)
-				continue;
-			// Free surface GB
-			bool skip = false;
-			for (auto& pair : gbVector) {
-				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
-					skip = true;
-					break;
-				}
-			}
-			if (skip)
-				continue;
-
 			// Get the concentrations at this grid point
 			concOffset = concs[yj][xi];
 
@@ -988,6 +1004,22 @@ PetscSolver2DHandler::computeJacobian(
 				temperature[xi + 1 - localXS] = temp;
 				tempHasChanged = true;
 			}
+
+			// Boundary conditions
+			// Everything to the left of the surface is empty
+			if (xi < surfacePosition[yj] + leftOffset ||
+				xi > nX - 1 - rightOffset)
+				continue;
+			// Free surface GB
+			bool skip = false;
+			for (auto& pair : gbVector) {
+				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
+					skip = true;
+					break;
+				}
+			}
+			if (skip)
+				continue;
 
 			// Get the partial derivatives for the temperature
 			if (xi >= localXS && xi < localXS + localXM) {
@@ -1031,7 +1063,17 @@ PetscSolver2DHandler::computeJacobian(
 
 		if (tempHasChanged) {
 			// Update the network with the temperature
-			network.setTemperatures(temperature);
+			std::vector<double> depths;
+			for (auto i = 0; i < temperature.size(); i++) {
+				if (localXS + i == nX + 1)
+					depths.push_back(
+						grid[localXS + i] - grid[surfacePosition[localYS] + 1]);
+				else
+					depths.push_back(
+						(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+						grid[surfacePosition[localYS] + 1]);
+			}
+			network.setTemperatures(temperature, depths);
 			network.syncClusterDataOnHost();
 		}
 	}

@@ -85,7 +85,6 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 	// Get the size of the network
 	int networkSize = network.getNumClusters();
 
@@ -158,14 +157,13 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		auto tsGroup = concGroup->addTimestepGroup(
 			timeStep, currentTime, previousTime, currentTimeStep);
 
-		std::vector<double> nSurf = {nHe, nD, nT, nV};
-		std::vector<double> previousSurfFlux = {
-			previousHeFlux, previousDFlux, previousTFlux, previousVFlux};
+		std::vector<double> nSurf = {nHe, nD, nT, nV, nInter};
+		std::vector<double> previousSurfFlux = {previousHeFlux, previousDFlux,
+			previousTFlux, previousVFlux, previousFlux};
 		std::vector<std::string> surfNames = {
-			"Helium", "Deuterium", "Tritium", "Vacancy"};
+			"Helium", "Deuterium", "Tritium", "Vacancy", "Interstitial"};
 		// Write the surface information
-		tsGroup->writeSurface1D(
-			iSurface, nInter, previousFlux, nSurf, previousSurfFlux, surfNames);
+		tsGroup->writeSurface1D(iSurface, nSurf, previousSurfFlux, surfNames);
 
 		std::vector<double> nBulk = {nHe, nV};
 		std::vector<double> previousBulkFlux = {previousHeFlux, previousVFlux};
@@ -232,9 +230,9 @@ BOOST_AUTO_TEST_CASE(checkIO)
 			"Checking test file last time step surface position.");
 		BOOST_REQUIRE_EQUAL(tsGroup->readSurface1D(), iSurface);
 		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("nInterstitial"), nInter, 0.0001);
-		BOOST_REQUIRE_CLOSE(
-			tsGroup->readData1D("previousFluxI"), previousFlux, 0.0001);
+			tsGroup->readData1D("nInterstitialSurf"), nInter, 0.0001);
+		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousFluxInterstitialSurf"),
+			previousFlux, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("nHeliumSurf"), nHe, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousFluxHeliumSurf"),
 			previousHeFlux, 0.0001);
@@ -282,7 +280,8 @@ BOOST_AUTO_TEST_CASE(checkIO)
 			BOOST_REQUIRE_EQUAL(cluster.getDiffusionFactor(), diffusionFactor);
 
 			// Check the bounds
-			const auto& clReg = network.getCluster(i, plsm::onHost).getRegion();
+			const auto& clReg =
+				network.getCluster(i, plsm::HostMemSpace{}).getRegion();
 			NetworkType::Composition lo = clReg.getOrigin();
 			NetworkType::Composition hi = clReg.getUpperLimitPoint();
 			for (auto j : speciesRange) {
@@ -367,6 +366,9 @@ BOOST_AUTO_TEST_CASE(checkSurface2D)
 	XFile::TimestepGroup::Surface2DType iSurface = {2, 3, 2, 0, 5};
 	XFile::TimestepGroup::Data2DType nInter = {0.0, 0.0, 0.5, 0.6, 0.5};
 	XFile::TimestepGroup::Data2DType previousIFlux = {0.0, 0.1, 3.0, -1.0, 5.0};
+	XFile::TimestepGroup::Data2DType nHe = {0.0, 0.4, 0.5, 0.7, 0.5};
+	XFile::TimestepGroup::Data2DType previousHeFlux = {
+		0.6, 0.2, 3.0, -1.0, 4.0};
 
 	// Open the file to add concentrations.
 	// Done in its own scope so that it closes when the
@@ -387,8 +389,19 @@ BOOST_AUTO_TEST_CASE(checkSurface2D)
 			timeStep, currentTime, previousTime, currentTimeStep);
 		BOOST_REQUIRE(tsGroup);
 
+		auto nSurf = {nHe, nInter};
+		auto previousSurfFlux = {previousHeFlux, previousIFlux};
+		std::vector<std::string> surfNames = {"Helium", "Interstitial"};
+
+		auto nBulk = {nHe};
+		auto previousBulkFlux = {previousHeFlux};
+		std::vector<std::string> bulkNames = {"Helium"};
+
 		// Write the surface position
-		tsGroup->writeSurface2D(iSurface, nInter, previousIFlux);
+		tsGroup->writeSurface2D(iSurface, nSurf, previousSurfFlux, surfNames);
+
+		// Write the bulk information
+		tsGroup->writeBottom2D(nBulk, previousBulkFlux, bulkNames);
 	}
 
 	// Read the file to check the values we wrote.
@@ -412,17 +425,49 @@ BOOST_AUTO_TEST_CASE(checkSurface2D)
 		}
 
 		// Read the interstitial quantity
-		auto nInterstitial = tsGroup->readData2D("nInterstitial");
+		auto nInterstitial = tsGroup->readData2D("nInterstitialSurf");
 		// Check all the values
 		for (int i = 0; i < nInterstitial.size(); i++) {
 			BOOST_REQUIRE_CLOSE(nInterstitial[i], nInter[i], 0.0001);
 		}
 
 		// Read the interstitial flux
-		auto previousIFlux = tsGroup->readData2D("previousFluxI");
+		auto previousInterFlux =
+			tsGroup->readData2D("previousFluxInterstitialSurf");
 		// Check all the values
-		for (int i = 0; i < previousIFlux.size(); i++) {
-			BOOST_REQUIRE_CLOSE(previousIFlux[i], previousIFlux[i], 0.0001);
+		for (int i = 0; i < previousInterFlux.size(); i++) {
+			BOOST_REQUIRE_CLOSE(previousInterFlux[i], previousIFlux[i], 0.0001);
+		}
+
+		// Read the He quantity
+		auto nHelium = tsGroup->readData2D("nHeliumSurf");
+		// Check all the values
+		for (int i = 0; i < nHelium.size(); i++) {
+			BOOST_REQUIRE_CLOSE(nHelium[i], nHe[i], 0.0001);
+		}
+
+		// Read the He flux
+		auto previousHeliumFlux = tsGroup->readData2D("previousFluxHeliumSurf");
+		// Check all the values
+		for (int i = 0; i < previousHeliumFlux.size(); i++) {
+			BOOST_REQUIRE_CLOSE(
+				previousHeliumFlux[i], previousHeFlux[i], 0.0001);
+		}
+
+		// Read the He quantity
+		auto nHeliumBulk = tsGroup->readData2D("nHeliumBulk");
+		// Check all the values
+		for (int i = 0; i < nHeliumBulk.size(); i++) {
+			BOOST_REQUIRE_CLOSE(nHeliumBulk[i], nHe[i], 0.0001);
+		}
+
+		// Read the He flux
+		auto previousHeliumFluxBulk =
+			tsGroup->readData2D("previousFluxHeliumBulk");
+		// Check all the values
+		for (int i = 0; i < previousHeliumFluxBulk.size(); i++) {
+			BOOST_REQUIRE_CLOSE(
+				previousHeliumFluxBulk[i], previousHeFlux[i], 0.0001);
 		}
 	}
 }
@@ -463,6 +508,10 @@ BOOST_AUTO_TEST_CASE(checkSurface3D)
 		{2.0, 3.0, 2.0, 0.0, 0.5}, {0.0, 0.0, 0.0, 0.0, 0.0}};
 	XFile::TimestepGroup::Data3DType previousIFlux = {{0.0, 0.0, 0.0, 0.0, 0.0},
 		{-2.0, 3.0, 2.0, 0.0, -0.5}, {0.0, 0.0, 0.0, 0.0, 0.0}};
+	XFile::TimestepGroup::Data3DType nV = {{0.0, 0.0, 0.0, 0.0, 0.0},
+		{2.0, 3.0, 1.0, 0.0, 0.4}, {0.0, 0.0, 0.0, 0.0, 0.0}};
+	XFile::TimestepGroup::Data3DType previousVFlux = {{0.0, 0.0, 0.0, 0.0, 0.0},
+		{-2.0, 5.0, 2.0, 0.0, -1.5}, {0.0, 0.0, 0.0, 0.0, 0.0}};
 
 	// Open test file to add timestep group with concentrations.
 	// Done in its own scope so that it closes when the
@@ -484,8 +533,19 @@ BOOST_AUTO_TEST_CASE(checkSurface3D)
 			timeStep, currentTime, previousTime, currentTimeStep);
 		BOOST_REQUIRE(tsGroup);
 
+		auto nSurf = {nV, nInter};
+		auto previousSurfFlux = {previousVFlux, previousIFlux};
+		std::vector<std::string> surfNames = {"Vacancy", "Interstitial"};
+
+		auto nBulk = {nV};
+		auto previousBulkFlux = {previousVFlux};
+		std::vector<std::string> bulkNames = {"Vacancy"};
+
 		// Write the surface position
-		tsGroup->writeSurface3D(iSurface, nInter, previousIFlux);
+		tsGroup->writeSurface3D(iSurface, nSurf, previousSurfFlux, surfNames);
+
+		// Write the bulk information
+		tsGroup->writeBottom3D(nBulk, previousBulkFlux, bulkNames);
 	}
 
 	// Check contents of file we wrote.
@@ -508,19 +568,53 @@ BOOST_AUTO_TEST_CASE(checkSurface3D)
 				BOOST_REQUIRE_EQUAL(surfacePos[i][j], iSurface[i][j]);
 			}
 		}
-		auto nInterstitial = tsGroup->readData3D("nInterstitial");
+		auto nInterstitial = tsGroup->readData3D("nInterstitialSurf");
 		// Check all the values
 		for (int i = 0; i < nInterstitial.size(); i++) {
 			for (int j = 0; j < nInterstitial[0].size(); j++) {
 				BOOST_REQUIRE_CLOSE(nInterstitial[i][j], nInter[i][j], 0.0001);
 			}
 		}
-		auto previousIFlux = tsGroup->readData3D("previousFluxI");
+		auto previousInterFlux =
+			tsGroup->readData3D("previousFluxInterstitialSurf");
 		// Check all the values
-		for (int i = 0; i < previousIFlux.size(); i++) {
-			for (int j = 0; j < previousIFlux[0].size(); j++) {
+		for (int i = 0; i < previousInterFlux.size(); i++) {
+			for (int j = 0; j < previousInterFlux[0].size(); j++) {
 				BOOST_REQUIRE_CLOSE(
-					previousIFlux[i][j], previousIFlux[i][j], 0.0001);
+					previousInterFlux[i][j], previousIFlux[i][j], 0.0001);
+			}
+		}
+
+		auto nVac = tsGroup->readData3D("nVacancySurf");
+		// Check all the values
+		for (int i = 0; i < nVac.size(); i++) {
+			for (int j = 0; j < nVac[0].size(); j++) {
+				BOOST_REQUIRE_CLOSE(nVac[i][j], nV[i][j], 0.0001);
+			}
+		}
+		auto previousVacFlux = tsGroup->readData3D("previousFluxVacancySurf");
+		// Check all the values
+		for (int i = 0; i < previousVacFlux.size(); i++) {
+			for (int j = 0; j < previousVacFlux[0].size(); j++) {
+				BOOST_REQUIRE_CLOSE(
+					previousVacFlux[i][j], previousVFlux[i][j], 0.0001);
+			}
+		}
+
+		auto nVacBulk = tsGroup->readData3D("nVacancyBulk");
+		// Check all the values
+		for (int i = 0; i < nVacBulk.size(); i++) {
+			for (int j = 0; j < nVacBulk[0].size(); j++) {
+				BOOST_REQUIRE_CLOSE(nVacBulk[i][j], nV[i][j], 0.0001);
+			}
+		}
+		auto previousVacFluxBulk =
+			tsGroup->readData3D("previousFluxVacancyBulk");
+		// Check all the values
+		for (int i = 0; i < previousVacFluxBulk.size(); i++) {
+			for (int j = 0; j < previousVacFluxBulk[0].size(); j++) {
+				BOOST_REQUIRE_CLOSE(
+					previousVacFluxBulk[i][j], previousVFlux[i][j], 0.0001);
 			}
 		}
 	}

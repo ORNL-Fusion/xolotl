@@ -8,23 +8,17 @@ namespace network
 {
 namespace detail
 {
-template <typename PlsmContext>
-struct ContextLabelHelper;
-
-template <>
-struct ContextLabelHelper<plsm::OnHost>
+template <typename MemSpace>
+struct MemSpaceLabelHelper
 {
-	static constexpr char label = 'H';
+	static constexpr bool onDevice =
+		(std::is_same_v<MemSpace, plsm::DeviceMemSpace> &&
+			!std::is_same_v<plsm::HostMemSpace, plsm::DeviceMemSpace>);
+	static constexpr char label = onDevice ? 'D' : 'H';
 };
 
-template <>
-struct ContextLabelHelper<plsm::OnDevice>
-{
-	static constexpr char label = 'D';
-};
-
-template <typename PlsmContext>
-constexpr char contextLabel = ContextLabelHelper<PlsmContext>::label;
+template <typename MemSpace>
+constexpr char memSpaceLabel = MemSpaceLabelHelper<MemSpace>::label;
 
 inline std::string
 labelString(const char labelChar)
@@ -32,35 +26,34 @@ labelString(const char labelChar)
 	return std::string(" (") + labelChar + std::string(")");
 }
 
-template <typename PlsmContext>
+template <typename MemSpace>
 inline std::string
 labelStr()
 {
-	return labelString(contextLabel<PlsmContext>);
+	return labelString(memSpaceLabel<MemSpace>);
 }
 
-template <typename PlsmContext, template <typename> typename ViewConvert>
-ClusterDataCommon<PlsmContext, ViewConvert>::ClusterDataCommon(
+template <typename MemSpace>
+ClusterDataCommon<MemSpace>::ClusterDataCommon(
 	IndexType numClusters_, IndexType gridSize_) :
 	numClusters(numClusters_),
 	gridSize(gridSize_),
-	_floatVals("Floating Point Values" + labelStr<PlsmContext>()),
-	_boolVals("Boolean Values" + labelStr<PlsmContext>()),
-	temperature("Temperature" + labelStr<PlsmContext>(), gridSize),
-	reactionRadius("Reaction Radius" + labelStr<PlsmContext>(), numClusters),
-	formationEnergy("Formation Energy" + labelStr<PlsmContext>(), numClusters),
-	migrationEnergy("Migration Energy" + labelStr<PlsmContext>(), numClusters),
-	diffusionFactor("Diffusion Factor" + labelStr<PlsmContext>(), numClusters),
-	diffusionCoefficient("Diffusion Coefficient" + labelStr<PlsmContext>(),
-		numClusters, gridSize)
+	_floatVals("Floating Point Values" + labelStr<MemSpace>()),
+	_boolVals("Boolean Values" + labelStr<MemSpace>()),
+	temperature("Temperature" + labelStr<MemSpace>(), gridSize),
+	reactionRadius("Reaction Radius" + labelStr<MemSpace>(), numClusters),
+	formationEnergy("Formation Energy" + labelStr<MemSpace>(), numClusters),
+	migrationEnergy("Migration Energy" + labelStr<MemSpace>(), numClusters),
+	diffusionFactor("Diffusion Factor" + labelStr<MemSpace>(), numClusters),
+	diffusionCoefficient(
+		"Diffusion Coefficient" + labelStr<MemSpace>(), numClusters, gridSize)
 {
 }
 
-template <typename PlsmContext, template <typename> typename ViewConvert>
+template <typename MemSpace>
 template <typename TClusterDataCommon>
 inline void
-ClusterDataCommon<PlsmContext, ViewConvert>::deepCopy(
-	const TClusterDataCommon& data)
+ClusterDataCommon<MemSpace>::deepCopy(const TClusterDataCommon& data)
 {
 	deep_copy(_floatVals, data._floatVals);
 	deep_copy(_boolVals, data._boolVals);
@@ -72,10 +65,9 @@ ClusterDataCommon<PlsmContext, ViewConvert>::deepCopy(
 	deep_copy(diffusionCoefficient, data.diffusionCoefficient);
 }
 
-template <typename PlsmContext, template <typename> typename ViewConvert>
+template <typename MemSpace>
 inline std::uint64_t
-ClusterDataCommon<PlsmContext, ViewConvert>::getDeviceMemorySize()
-	const noexcept
+ClusterDataCommon<MemSpace>::getDeviceMemorySize() const noexcept
 {
 	std::uint64_t ret = 0;
 
@@ -95,43 +87,36 @@ ClusterDataCommon<PlsmContext, ViewConvert>::getDeviceMemorySize()
 	return ret;
 }
 
-template <typename PlsmContext, template <typename> typename ViewConvert>
+template <typename MemSpace>
 inline void
-ClusterDataCommon<PlsmContext, ViewConvert>::setGridSize(IndexType gridSize_)
+ClusterDataCommon<MemSpace>::setGridSize(IndexType gridSize_)
 {
 	gridSize = gridSize_;
-	temperature =
-		View<double*>("Temperature" + labelStr<PlsmContext>(), gridSize);
-	diffusionCoefficient =
-		View<double**>("Diffusion Coefficient" + labelStr<PlsmContext>(),
-			numClusters, gridSize);
+	temperature = View<double*>("Temperature" + labelStr<MemSpace>(), gridSize);
+	diffusionCoefficient = View<double**>(
+		"Diffusion Coefficient" + labelStr<MemSpace>(), numClusters, gridSize);
 }
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
-ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::ClusterDataImpl(
+template <typename TNetwork, typename MemSpace>
+ClusterData<TNetwork, MemSpace>::ClusterData(
 	const TilesView& tiles_, IndexType numClusters_, IndexType gridSize_) :
 	Superclass(numClusters_, gridSize_),
 	tiles(tiles_),
-	momentIds("Moment Ids" + labelStr<PlsmContext>(), numClusters_)
+	momentIds("Moment Ids" + labelStr<MemSpace>(), numClusters_)
 {
 }
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
-ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::ClusterDataImpl(
+template <typename TNetwork, typename MemSpace>
+ClusterData<TNetwork, MemSpace>::ClusterData(
 	Subpaving& subpaving, IndexType gridSize_) :
-	ClusterDataImpl(subpaving.getTiles(PlsmContext{}),
-		subpaving.getNumberOfTiles(PlsmContext{}), gridSize_)
+	ClusterData(subpaving.getTiles(), subpaving.getNumberOfTiles(), gridSize_)
 {
 }
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename TNetwork, typename MemSpace>
 template <typename TClusterData>
 inline void
-ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::deepCopy(
-	const TClusterData& data)
+ClusterData<TNetwork, MemSpace>::deepCopy(const TClusterData& data)
 {
 	Superclass::deepCopy(data);
 
@@ -141,11 +126,9 @@ ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::deepCopy(
 	extraData.deepCopy(data.extraData);
 }
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename TNetwork, typename MemSpace>
 inline std::uint64_t
-ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::getDeviceMemorySize()
-	const noexcept
+ClusterData<TNetwork, MemSpace>::getDeviceMemorySize() const noexcept
 {
 	std::uint64_t ret = Superclass::getDeviceMemorySize();
 
@@ -156,16 +139,15 @@ ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::getDeviceMemorySize()
 	return ret;
 }
 
-template <typename TNetwork, typename PlsmContext,
-	template <typename> typename ViewConvert>
+template <typename TNetwork, typename MemSpace>
 inline void
-ClusterDataImpl<TNetwork, PlsmContext, ViewConvert>::generate(
-	const ClusterGenerator& generator, double latticeParameter,
-	double interstitialBias, double impurityRadius)
+ClusterData<TNetwork, MemSpace>::generate(const ClusterGenerator& generator,
+	double latticeParameter, double interstitialBias, double impurityRadius)
 {
 	auto data = *this;
 	Kokkos::parallel_for(
-		this->numClusters, KOKKOS_LAMBDA(const IndexType i) {
+		"ClusterData::generate", this->numClusters,
+		KOKKOS_LAMBDA(const IndexType i) {
 			auto cluster = data.getCluster(i);
 			data.formationEnergy(i) = generator.getFormationEnergy(cluster);
 			data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);

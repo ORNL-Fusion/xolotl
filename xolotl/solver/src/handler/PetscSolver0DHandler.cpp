@@ -1,6 +1,8 @@
-// Includes
 #include <xolotl/core/Constants.h>
+#include <xolotl/io/XFile.h>
 #include <xolotl/solver/handler/PetscSolver0DHandler.h>
+#include <xolotl/util/Log.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -22,7 +24,7 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	 Create distributed array (DMDA) to manage parallel grid and vectors
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
-	std::cout << "SolverHandler: 0D simulation" << std::endl;
+	XOLOTL_LOG << "SolverHandler: 0D simulation";
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = util::getMPIComm();
@@ -63,6 +65,9 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
 
+	// Initialize the flux handler
+	fluxHandler->initializeFluxHandler(network, 0, grid);
+
 	return;
 }
 
@@ -80,9 +85,6 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::initializeConcentration: "
 		"DMDAVecGetArrayDOF failed.");
-
-	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, 0, grid);
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar* concOffset = nullptr;
@@ -146,7 +148,8 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Update the network with the temperature
-	network.setTemperatures(temperature);
+	auto depths = std::vector<double>(1, 1.0);
+	network.setTemperatures(temperature, depths);
 	network.syncClusterDataOnHost();
 
 	/*
@@ -239,7 +242,8 @@ PetscSolver0DHandler::setConcVector(DM& da, Vec& C,
 
 	// Set the temperature in the network
 	temperature[0] = gridPointSolution[dof];
-	network.setTemperatures(temperature);
+	auto depths = std::vector<double>(1, 1.0);
+	network.setTemperatures(temperature, depths);
 
 	/*
 	 Restore vectors
@@ -301,7 +305,8 @@ PetscSolver0DHandler::updateConcentration(
 	// Update the network if the temperature changed
 	if (std::fabs(temperature[0] - temp) > 0.1) {
 		temperature[0] = temp;
-		network.setTemperatures(temperature);
+		auto depths = std::vector<double>(1, 1.0);
+		network.setTemperatures(temperature, depths);
 		network.syncClusterDataOnHost();
 	}
 
@@ -383,7 +388,8 @@ PetscSolver0DHandler::computeJacobian(
 	// Update the network if the temperature changed
 	if (std::fabs(temperature[0] - temp) > 0.1) {
 		temperature[0] = temp;
-		network.setTemperatures(temperature);
+		auto depths = std::vector<double>(1, 1.0);
+		network.setTemperatures(temperature, depths);
 		network.syncClusterDataOnHost();
 	}
 

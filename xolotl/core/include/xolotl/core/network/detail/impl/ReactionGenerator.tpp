@@ -12,7 +12,8 @@ template <typename TNetwork, typename TDerived>
 ReactionGeneratorBase<TNetwork, TDerived>::ReactionGeneratorBase(
 	const TNetwork& network) :
 	_subpaving(network._subpaving),
-	_clusterData(network._clusterData),
+	_clusterData(network._clusterData.h_view()),
+	_clusterDataView(network._clusterData.d_view),
 	_numDOFs(network.getDOF()),
 	_enableReducedJacobian(network.getEnableReducedJacobian()),
 	_clusterProdReactionCounts(
@@ -32,7 +33,8 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 	using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
 	auto range2d = Range2D({0, 0}, {numClusters, numClusters});
 	Kokkos::parallel_for(
-		range2d, KOKKOS_LAMBDA(IndexType i, IndexType j) {
+		"ReactionGeneratorBase::generateReactions::count", range2d,
+		KOKKOS_LAMBDA(IndexType i, IndexType j) {
 			if (j < i) {
 				return;
 			}
@@ -48,7 +50,8 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 	generator = *(this->asDerived());
 
 	Kokkos::parallel_for(
-		range2d, KOKKOS_LAMBDA(IndexType i, IndexType j) {
+		"ReactionGeneratorBase::generateReactions::construct", range2d,
+		KOKKOS_LAMBDA(IndexType i, IndexType j) {
 			if (j < i) {
 				return;
 			}
@@ -63,7 +66,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 	//      - Constructing all reactions
 	//      - Generating connectivity
 	auto reactionCollection = this->asDerived()->getReactionCollection();
-	reactionCollection.constructAll(_clusterData, _allClusterSets);
+	reactionCollection.constructAll(_clusterDataView, _allClusterSets);
 
 	Kokkos::fence();
 
@@ -185,16 +188,20 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 	// Even if there is no reaction each dof should connect with itself (for
 	// PETSc)
 	Kokkos::parallel_for(
-		this->_numDOFs,
+		"ReactionGeneratorBase::generateConnectivity::diagonal", this->_numDOFs,
 		KOKKOS_LAMBDA(const IndexType i) { tmpConn.row_map(i) = 1; });
 	if (this->_enableReducedJacobian) {
-		reactionCollection.forEach(DEVICE_LAMBDA(auto&& reaction) {
-			reaction.contributeReducedConnectivity(tmpConn);
-		});
+		reactionCollection.forEach(
+			"ReactionGeneratorBase::generateConnectivity",
+			DEVICE_LAMBDA(auto&& reaction) {
+				reaction.contributeReducedConnectivity(tmpConn);
+			});
 	}
 	else {
-		reactionCollection.forEach(DEVICE_LAMBDA(
-			auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
+		reactionCollection.forEach(
+			"ReactionGeneratorBase::generateConnectivity",
+			DEVICE_LAMBDA(
+				auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
 	}
 
 	Kokkos::fence();
@@ -209,13 +216,14 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		Entries(Kokkos::ViewAllocateWithoutInitializing("connectivity entries"),
 			nEntries);
 	Kokkos::parallel_for(
-		nEntries, KOKKOS_LAMBDA(IndexType i) {
-			tmpConn.entries(i) = NetworkType::invalidIndex();
-		});
+		"ReactionGeneratorBase::generateConnectivity::init", nEntries,
+		KOKKOS_LAMBDA(
+			IndexType i) { tmpConn.entries(i) = NetworkType::invalidIndex(); });
 	// Even if there is no reaction each dof should connect with itself (for
 	// PETSc)
 	Kokkos::parallel_for(
-		this->_numDOFs, KOKKOS_LAMBDA(const IndexType i) {
+		"ReactionGeneratorBase::generateConnectivity::diagonal", this->_numDOFs,
+		KOKKOS_LAMBDA(const IndexType i) {
 			auto id = tmpConn.row_map(i);
 			for (; !Kokkos::atomic_compare_exchange_strong(
 					 &tmpConn.entries(id), NetworkType::invalidIndex(), i);
@@ -227,13 +235,17 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		});
 	// Fill entries (column ids)
 	if (this->_enableReducedJacobian) {
-		reactionCollection.forEach(DEVICE_LAMBDA(auto&& reaction) {
-			reaction.contributeReducedConnectivity(tmpConn);
-		});
+		reactionCollection.forEach(
+			"ReactionGeneratorBase::generateConnectivity",
+			DEVICE_LAMBDA(auto&& reaction) {
+				reaction.contributeReducedConnectivity(tmpConn);
+			});
 	}
 	else {
-		reactionCollection.forEach(DEVICE_LAMBDA(
-			auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
+		reactionCollection.forEach(
+			"ReactionGeneratorBase::generateConnectivity",
+			DEVICE_LAMBDA(
+				auto&& reaction) { reaction.contributeConnectivity(tmpConn); });
 	}
 	Kokkos::fence();
 
@@ -268,7 +280,8 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		});
 	nEntries = connectivity.entries.extent(0);
 
-	reactionCollection.setConnectivity(connectivity);
+	_connectivity = connectivity;
+	reactionCollection.setConnectivity(_connectivity);
 }
 } // namespace detail
 } // namespace network
