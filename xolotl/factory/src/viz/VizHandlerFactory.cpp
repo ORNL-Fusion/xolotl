@@ -9,7 +9,7 @@ using viz::VizHandlerFactory;
 using xolotl::viz::IVizHandler;
 
 template VizHandlerFactory&
-Factory<VizHandlerFactory, IVizHandler>::get();
+Factory<VizHandlerFactory, IVizHandler>::get(const UserInitializer&);
 
 template std::shared_ptr<IVizHandler>
 Factory<VizHandlerFactory, IVizHandler>::generate(const options::IOptions&);

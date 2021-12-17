@@ -11,7 +11,8 @@ namespace solver
 {
 Solver::Solver(
 	const options::IOptions& options, SolverHandlerGenerator handlerGenerator) :
-	network(factory::network::NetworkHandlerFactory::get()
+	network(factory::network::NetworkHandlerFactory::get(
+		core::network::loadNetworkHandlers)
 				.generate(options)
 				->getNetwork()),
 	materialHandler(

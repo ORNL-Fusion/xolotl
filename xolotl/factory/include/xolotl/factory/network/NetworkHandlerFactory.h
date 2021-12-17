@@ -9,7 +9,7 @@ namespace core
 namespace network
 {
 class INetworkHandler;
-}
+} // namespace network
 } // namespace core
 
 namespace factory
