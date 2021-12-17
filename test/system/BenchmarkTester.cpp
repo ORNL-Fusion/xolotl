@@ -95,7 +95,7 @@ BOOST_AUTO_TEST_CASE(PSI_4)
 	}
 	SystemTestCase::copyFile("tridyn_benchmark_PSI_4.dat");
 	// 1D + ITER_He
-	SystemTestCase{"benchmark_PSI_4"}.withTimer().run();
+	SystemTestCase{"benchmark_PSI_4"}.tolerance(5.0e-10).withTimer().run();
 }
 
 BOOST_AUTO_TEST_CASE(PSI_5)
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(PSI_5)
 	}
 	SystemTestCase::copyFile("tridyn_benchmark_PSI_5.dat");
 	// 1D + ITER_BPO
-	SystemTestCase{"benchmark_PSI_5"}.withTimer().run();
+	SystemTestCase{"benchmark_PSI_5"}.tolerance(5.0e-10).withTimer().run();
 }
 
 BOOST_AUTO_TEST_CASE(PSI_6)

@@ -1,4 +1,4 @@
-petscArgs=-snes_stol 1.0e-12 -fieldsplit_1_pc_gamg_threshold -1 -ts_max_steps 1000 -xenon_retention -ts_max_time 2.0e5 -ts_adapt_dt_max 5.0e3 -ts_dt 1.0e-1 -ts_exact_final_time matchstep -fieldsplit_0_pc_type sor -ts_max_snes_failures -1 -pc_fieldsplit_detect_coupling -ts_monitor -pc_type fieldsplit -fieldsplit_1_pc_type gamg -fieldsplit_1_ksp_type gmres -ksp_type fgmres
+petscArgs=-snes_stol 1.0e-12 -fieldsplit_1_pc_gamg_threshold -1 -ts_max_steps 1000 -xenon_retention -ts_max_time 1.0e4 -ts_adapt_dt_max 5.0e3 -ts_dt 1.0e-1 -ts_exact_final_time matchstep -fieldsplit_0_pc_type sor -ts_max_snes_failures -1 -pc_fieldsplit_detect_coupling -ts_monitor -pc_type fieldsplit -fieldsplit_1_pc_type gamg -fieldsplit_1_ksp_type gmres -ksp_type fgmres
 vizHandler=dummy
 flux=8.0e-9
 boundary=1 1 1 1 
