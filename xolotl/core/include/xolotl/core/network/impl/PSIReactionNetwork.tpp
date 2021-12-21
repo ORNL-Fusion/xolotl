@@ -451,41 +451,43 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		// Find out which one is which
 		auto vReg = lo1.isOnAxis(Species::V) ? cl1Reg : cl2Reg;
 		auto iReg = lo1.isOnAxis(Species::I) ? cl1Reg : cl2Reg;
-		// I and V can be grouped
-		for (auto k : makeIntervalRange(iReg[Species::I]))
-			for (auto l : makeIntervalRange(vReg[Species::V])) {
-				// Compute the product size
-				int prodSize = (int)l - (int)k;
-				// 3 cases
-				if (prodSize > 0) {
-					// Looking for V cluster
-					Composition comp = Composition::zero();
-					comp[Species::V] = prodSize;
-					auto vProdId = subpaving.findTileId(comp);
-					if (vProdId != subpaving.invalidIndex() &&
-						vProdId != previousIndex) {
-						this->addProductionReaction(tag, {i, j, vProdId});
-						previousIndex = vProdId;
-						// No dissociation
-					}
-				}
-				else if (prodSize < 0) {
-					// Looking for I cluster
-					Composition comp = Composition::zero();
-					comp[Species::I] = -prodSize;
-					auto iProdId = subpaving.findTileId(comp);
-					if (iProdId != subpaving.invalidIndex() &&
-						iProdId != previousIndex) {
-						this->addProductionReaction(tag, {i, j, iProdId});
-						previousIndex = iProdId;
-						// No dissociation
-					}
-				}
-				else {
-					// No product
-					this->addProductionReaction(tag, {i, j});
+		// Compute the largest possible product and the smallest one
+		int largestProd =
+			(int)vReg[Species::V].end() - 1 - (int)iReg[Species::I].begin();
+		int smallestProd =
+			(int)vReg[Species::V].begin() - (int)iReg[Species::I].end() + 1;
+		// Loop on the products
+		for (int prodSize = smallestProd; prodSize <= largestProd; prodSize++) {
+			// 3 cases
+			if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					previousIndex = vProdId;
+					// No dissociation
 				}
 			}
+			else if (prodSize < 0) {
+				// Looking for I cluster
+				Composition comp = Composition::zero();
+				comp[Species::I] = -prodSize;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex() &&
+					iProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					previousIndex = iProdId;
+					// No dissociation
+				}
+			}
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
+			}
+		}
 		return;
 	}
 

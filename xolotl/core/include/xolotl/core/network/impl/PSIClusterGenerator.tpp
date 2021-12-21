@@ -81,16 +81,41 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 			util::max((double)(_groupingWidthB + 1),
 				region[Species::I].begin() * 1.0e-2)) {
 			result[toIndex(Species::I)] = false;
-			return false;
+			return true;
 		}
 	}
 
-	if (_maxV < 10000) {
+	// No impurity case
+	if (lo[Species::V] > 0 and _maxHe == 0 and _maxD == 0 and _maxT == 0) {
+		if (lo[Species::V] < _groupingMin &&
+			othersBeginAtZero(region, Species::V)) {
+			return true;
+		}
+		if (region[Species::V].end() > _maxV) {
+			return true;
+		}
+		if (region[Species::V].length() <
+			util::max((double)(_groupingWidthB + 1),
+				region[Species::V].begin() * 1.0e-2)) {
+			result[toIndex(Species::V)] = false;
+			return true;
+		}
+	}
+	else if (_maxV < 10000) {
 		// V is never grouped
 		if (hi[Species::V] > 1 && othersBeginAtZero(region, Species::V)) {
 			return true;
 		}
 	}
+
+	// Don't group under the given min for V
+	if (lo[Species::V] < _groupingMin) {
+		return true;
+	}
+
+	// Skip the rest if there is no impurities
+	if (_maxHe == 0 and _maxD == 0 and _maxT == 0)
+		return true;
 
 	// He is never grouped
 	if (hi[Species::He] > 1 && othersBeginAtZero(region, Species::He)) {
@@ -109,11 +134,6 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		if (hi[Species::T] > 1 && othersBeginAtZero(region, Species::T)) {
 			return true;
 		}
-	}
-
-	// Don't group under the given min for V
-	if (lo[Species::V] < _groupingMin) {
-		return true;
 	}
 
 	// Else refine around the edge
@@ -353,6 +373,11 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 	}
 
 	// Vacancy
+	if (region[Species::V].begin() > 0 and
+		!region.getOrigin().isOnAxis(Species::V) and _maxHe == 0 and
+		_maxD == 0 and _maxT == 0) {
+		return false;
+	}
 	if (region[Species::V].begin() > _maxV) {
 		return false;
 	}
