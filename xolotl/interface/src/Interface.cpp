@@ -135,6 +135,12 @@ try {
 			solverCast(solver)->getSolverHandler()->getFluxHandler();
 		auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 		fluxHandler->initializeFluxHandler(network, 0, std::vector<double>());
+
+		// The network needs the temperature for the rates
+		// TODO: this assumes constant temperature and 0D case
+		auto temperature = std::vector<double>(1, opts.getTempParam());
+		network.setTemperatures(temperature);
+
 		return;
 	}
 
@@ -463,7 +469,11 @@ try {
 		network.computeConstantRates(dConcs, dRates, dMap);
 
 		deep_copy(hRates, dRates);
-		// TODO: does it need to be copied element by element?
+		// Copy element by element
+		for (auto i = 0; i < rateMap.size(); i++)
+			for (auto j = 0; j < rateMap[0].size(); j++) {
+				rateMap[i][j] = hRates(i, j);
+			}
 		toReturn.push_back(rateMap);
 	}
 

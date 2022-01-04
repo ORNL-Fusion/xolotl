@@ -577,10 +577,10 @@ ReSolutionReaction<TNetwork, TDerived>::computeConstantRates(
 	}
 	f *= this->_rate(gridIndex);
 	if (isInSub[_products[0]])
-		Kokkos::atomic_add(&rates(_products[0], isInSub.extent(0)),
+		Kokkos::atomic_add(&rates(backMap(_products[0]), isInSub.extent(0)),
 			f / (double)_productVolumes[0]);
 	if (isInSub[_products[1]])
-		Kokkos::atomic_add(&rates(_products[1], isInSub.extent(0)),
+		Kokkos::atomic_add(&rates(backMap(_products[1]), isInSub.extent(0)),
 			f / (double)_productVolumes[1]);
 
 	// TODO: add grouping

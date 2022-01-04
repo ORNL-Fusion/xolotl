@@ -110,10 +110,7 @@ public:
 			comp[NetworkType::Species::I] = i;
 			cluster = zrNetwork->findCluster(comp, plsm::onHost);
 			if (cluster.getId() == NetworkType::invalidIndex()) {
-				throw std::runtime_error(
-					"\nThe current interstitial cluster is not "
-					"present in the network, "
-					"cannot use the flux option!");
+				continue;
 			}
 			fluxIndices.push_back(cluster.getId());
 			incidentFluxVec.push_back(std::vector<double>(1, fluxI[i - 1]));
@@ -125,9 +122,7 @@ public:
 			comp[NetworkType::Species::V] = i;
 			cluster = zrNetwork->findCluster(comp, plsm::onHost);
 			if (cluster.getId() == NetworkType::invalidIndex()) {
-				throw std::runtime_error("\nThe current vacancy cluster is not "
-										 "present in the network, "
-										 "cannot use the flux option!");
+				continue;
 			}
 			fluxIndices.push_back(cluster.getId());
 			incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1]));
