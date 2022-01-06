@@ -32,7 +32,7 @@ private:
 	// Define the range of possible cluster sizes, and their respective
 	// fluxes in nm^-3 s^-1 Multiply by 1.0e+21 to get to cm^-3 s^-1 if
 	// you want to check values
-	float fluxI[70] = {2.365739684679306e-07, 2.1755974706776704e-08,
+	std::vector<double> fluxI = {2.365739684679306e-07, 2.1755974706776704e-08,
 		6.6215695655160775e-09, 3.979857734281858e-09, 2.108954194096771e-09,
 		1.7928725927606022e-09, 1.5213778723816244e-09, 5.500284627584542e-10,
 		4.093585813506016e-10, 6.703070630459465e-10, 4.3671599902652566e-10,
@@ -49,7 +49,7 @@ private:
 		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-	float fluxV[70] = {1.7811390508204618e-07, 1.6930667065081818e-08,
+	std::vector<double> fluxV = {1.7811390508204618e-07, 1.6930667065081818e-08,
 		7.0735654428151215e-09, 3.3754591361812474e-09, 1.840000680680739e-09,
 		1.6146127259999994e-09, 2.1627167789999997e-09, 1.015531922447914e-09,
 		6.790095549999998e-10, 6.365080860000001e-10, 5.00133545e-10,
@@ -69,16 +69,18 @@ private:
 		9.628580000000001e-12, 0, 0, 0, 2.5899328999999996e-11, 0, 0,
 		1.9257160000000002e-11, 0, 0, 0, 0};
 
-	// Set the maximum cluster sizes to set a generation flux to
-	int maxSizeI = 70;
-	int maxSizeV = 70;
+	// Keep the maximum cluster sizes to set a generation flux to
+	size_t maxSizeI = 0;
+	size_t maxSizeV = 0;
 
 public:
 	/**
 	 * The constructor
 	 */
 	AlphaZrFitFluxHandler(const options::IOptions& options) :
-		FluxHandler(options)
+		FluxHandler(options),
+		maxSizeI(options.getMaxI()),
+		maxSizeV(options.getMaxV())
 	{
 	}
 
@@ -106,7 +108,7 @@ public:
 		comp[NetworkType::Species::I] = 1;
 		std::ostringstream oss;
 		auto cluster = zrNetwork->findCluster(comp, plsm::onHost);
-		for (int i = 1; i < (maxSizeI + 1); i++) {
+		for (int i = 1; i <= std::min(maxSizeI, fluxI.size()); i++) {
 			comp[NetworkType::Species::I] = i;
 			cluster = zrNetwork->findCluster(comp, plsm::onHost);
 			if (cluster.getId() == NetworkType::invalidIndex()) {
@@ -118,7 +120,7 @@ public:
 
 		// Set the flux index corresponding the mobile vacancy clusters (n < 10)
 		comp[NetworkType::Species::I] = 0;
-		for (int i = 1; i < (maxSizeV + 1); i++) {
+		for (int i = 1; i <= std::min(maxSizeV, fluxV.size()); i++) {
 			comp[NetworkType::Species::V] = i;
 			cluster = zrNetwork->findCluster(comp, plsm::onHost);
 			if (cluster.getId() == NetworkType::invalidIndex()) {
