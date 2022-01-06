@@ -58,7 +58,7 @@ BOOST_AUTO_TEST_CASE(NE_5)
 		return;
 	}
 	// 0D, grouped, re-solution
-	SystemTestCase{"benchmark_NE_5"}.tolerance(1.0e-9).withTimer().run();
+	SystemTestCase{"benchmark_NE_5"}.tolerance(5.0e-9).withTimer().run();
 }
 
 BOOST_AUTO_TEST_CASE(PSI_1)
