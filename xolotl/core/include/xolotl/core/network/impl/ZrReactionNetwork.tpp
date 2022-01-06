@@ -158,8 +158,12 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	using Composition = typename Network::Composition;
 	using AmountType = typename Network::AmountType;
 
+	// Get the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+
 	if (i == j) {
-		addSinks(i, tag);
+		if (diffusionFactor(i) != 0.0)
+			addSinks(i, tag);
 		this->addConstantReaction(tag, {i, Network::invalidIndex()});
 	}
 
@@ -169,6 +173,11 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
 
+	// Check the diffusion factors
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
 	const auto& cl2Reg = this->getCluster(j).getRegion();
@@ -176,8 +185,6 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition hi1 = cl1Reg.getUpperLimitPoint();
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
-
-	// std::cout << i << " " << j << "\n";
 
 	// vac + vac = vac
 	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V)) {
