@@ -191,7 +191,7 @@ public:
 		// Loop on the map
 		for (auto i = 0; i < map.size(); i++) {
 			// Look for this value in fluxIndices
-			for (auto j = 0; i < fluxIndices.size(); j++) {
+			for (auto j = 0; j < fluxIndices.size(); j++) {
 				if (map[i] == fluxIndices[j]) {
 					toReturn.push_back(
 						std::make_pair(i, incidentFluxVec[j][0]));
