@@ -104,8 +104,9 @@ private:
 	{
 		if (_reactants[1] == invalidIndex)
 			Kokkos::atomic_add(&fluxes(_reactants[0]), this->_rate(gridIndex));
-		Kokkos::atomic_add(&fluxes(_reactants[0]),
-			concentrations(_reactants[1]) * this->_rate(gridIndex));
+		else
+			Kokkos::atomic_add(&fluxes(_reactants[0]),
+				concentrations(_reactants[1]) * this->_rate(gridIndex));
 	}
 
 	KOKKOS_INLINE_FUNCTION

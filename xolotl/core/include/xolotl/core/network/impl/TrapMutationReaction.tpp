@@ -189,9 +189,9 @@ TrapMutationReaction<TNetwork, TDerived>::computeConstantRates(
 	auto f = rate * concentrations[_heClId];
 
 	if (isInSub[_heClId])
-		Kokkos::atomic_add(&rates(_heClId, isInSub.extent(0)), f);
+		Kokkos::atomic_add(&rates(backMap(_heClId), isInSub.extent(0)), f);
 	if (isInSub[_iClId])
-		Kokkos::atomic_add(&rates(_iClId, isInSub.extent(0)), f);
+		Kokkos::atomic_add(&rates(backMap(_iClId), isInSub.extent(0)), f);
 }
 
 template <typename TNetwork, typename TDerived>

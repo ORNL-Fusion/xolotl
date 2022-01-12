@@ -1330,7 +1330,7 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 				continue;
 			}
 			if (isInSub[prodId])
-				Kokkos::atomic_add(&rates(prodId, isInSub.extent(0)),
+				Kokkos::atomic_add(&rates(backMap(prodId), isInSub.extent(0)),
 					f / (double)_productVolumes[p]);
 			p++;
 		}
@@ -1351,7 +1351,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 			}
 		}
 		f *= this->_rate(gridIndex);
-		Kokkos::atomic_sub(&rates(_reactants[0], _reactants[0]),
+		Kokkos::atomic_sub(
+			&rates(backMap(_reactants[0]), backMap(_reactants[0])),
 			f / (double)_reactantVolumes[0]);
 
 		IndexType p = 0;
@@ -1360,7 +1361,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 				continue;
 			}
 			if (isInSub[prodId])
-				Kokkos::atomic_add(&rates(prodId, _reactants[0]),
+				Kokkos::atomic_add(
+					&rates(backMap(prodId), backMap(_reactants[0])),
 					f / (double)_productVolumes[p]);
 			p++;
 		}
@@ -1377,7 +1379,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 			}
 		}
 		f *= this->_rate(gridIndex);
-		Kokkos::atomic_sub(&rates(_reactants[1], _reactants[1]),
+		Kokkos::atomic_sub(
+			&rates(backMap(_reactants[1]), backMap(_reactants[1])),
 			f / (double)_reactantVolumes[1]);
 
 		IndexType p = 0;
@@ -1386,7 +1389,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 				continue;
 			}
 			if (isInSub[prodId])
-				Kokkos::atomic_add(&rates(prodId, _reactants[1]),
+				Kokkos::atomic_add(
+					&rates(backMap(prodId), backMap(_reactants[1])),
 					f / (double)_productVolumes[p]);
 			p++;
 		}
@@ -2071,10 +2075,10 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 	}
 	f *= this->_rate(gridIndex);
 	if (isInSub[_products[0]])
-		Kokkos::atomic_add(&rates(_products[0], isInSub.extent(0)),
+		Kokkos::atomic_add(&rates(backMap(_products[0]), isInSub.extent(0)),
 			f / (double)_productVolumes[0]);
 	if (isInSub[_products[1]])
-		Kokkos::atomic_add(&rates(_products[1], isInSub.extent(0)),
+		Kokkos::atomic_add(&rates(backMap(_products[1]), isInSub.extent(0)),
 			f / (double)_productVolumes[1]);
 
 	// TODO: add grouping

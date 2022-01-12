@@ -429,6 +429,9 @@ ReactionNetwork<TImpl>::setConstantRates(
 			clusterData().constantRates(i, j) = rates[i][j];
 		}
 
+	// Update the rates
+	updateReactionRates();
+
 	return;
 }
 

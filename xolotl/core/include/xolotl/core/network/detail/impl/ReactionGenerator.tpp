@@ -28,16 +28,12 @@ ReactionCollection<TNetwork>
 ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 {
 	auto numClusters = _clusterData.numClusters;
-	auto diffusionFactor = _clusterData.diffusionFactor;
 	auto generator = *(this->asDerived());
 	using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
 	auto range2d = Range2D({0, 0}, {numClusters, numClusters});
 	Kokkos::parallel_for(
 		range2d, KOKKOS_LAMBDA(IndexType i, IndexType j) {
 			if (j < i) {
-				return;
-			}
-			if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
 				return;
 			}
 			generator(i, j, Count{});
@@ -51,9 +47,6 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 	Kokkos::parallel_for(
 		range2d, KOKKOS_LAMBDA(IndexType i, IndexType j) {
 			if (j < i) {
-				return;
-			}
-			if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
 				return;
 			}
 			generator(i, j, Construct{});
