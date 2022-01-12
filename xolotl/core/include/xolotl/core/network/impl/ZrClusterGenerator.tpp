@@ -27,14 +27,12 @@ KOKKOS_INLINE_FUNCTION
 bool
 ZrClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
-	// std::cout << "Refine-start \n";
 
 	result[0] = true;
 	result[1] = true;
-	// result[2] = true;
+	//result[2] = true;
 
 	// No need for refine here because we are not using grouping
-	// std::cout << "Refine-stop \n";
 
 	return true;
 }
@@ -43,12 +41,13 @@ KOKKOS_INLINE_FUNCTION
 bool
 ZrClusterGenerator::select(const Region& region) const
 {
-	/* adding basal
+	//adding basal
+    /*
 	int nAxis =
 		(region[Species::V].begin() > 0) +
 		(region[Species::I].begin() > 0) +
 		(region[Species::Basal].begin() > 0);
-	*/
+    */
 
 	int nAxis =
 		(region[Species::V].begin() > 0) + (region[Species::I].begin() > 0);
@@ -71,11 +70,12 @@ ZrClusterGenerator::select(const Region& region) const
 		if (region[Species::V].begin() > _maxV)
 			return false;
 
-		/* adding basal
+		//adding basal
+        /*
 		// Basal
 		if (region[Species::Basal].begin() > _maxV)
 			return false;
-		*/
+        */
 	}
 
 	return true;
@@ -125,7 +125,7 @@ ZrClusterGenerator::getMigrationEnergy(
 		return defaultMigration;
 	}
 	if (comp.isOnAxis(Species::I)) {
-		if (comp[Species::I] <= 5)
+		if (comp[Species::I] <= 3)
 			return defaultMigration;
 		if (comp[Species::I] == 9)
 			return iNineMigration;
@@ -153,7 +153,7 @@ ZrClusterGenerator::getDiffusionFactor(
 	}
 
 	if (comp.isOnAxis(Species::I)) {
-		if (comp[Species::I] <= 5)
+		if (comp[Species::I] <= 3)
 			return defaultDiffusion;
 		if (comp[Species::I] == 9)
 			return iNineDiffusion;
@@ -169,7 +169,6 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	double latticeParameter, double interstitialBias,
 	double impurityRadius) const noexcept
 {
-	// std::cout << "ReactionRadius-start \n";
 
 	const double prefactor = 0.0 * latticeParameter * latticeParameter *
 		latticeParameter / ::xolotl::core::pi;
@@ -190,21 +189,19 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 			else
 				radius += 0.163076 * pow((double)j, 0.5);
 		}
-		// std::cout << "ReactionRadius-stopI \n";
 		return radius / reg[Species::V].length();
 	}
 
-	/* adding basal
+	// adding basal
+    /*
 	if (lo.isOnAxis(Species::Basal)) {
 		for (auto j : makeIntervalRange(reg[Species::Basal])) {
-			if (lo[Species::Basal] < basalTransitionSize) radius += pow(5.586e-3
-	* (double)j, 1.0 / 3.0); else radius += 0.169587 * pow((double)j,0.5);
+			if (lo[Species::Basal] < basalTransitionSize) radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
+            else radius += 0.169587 * pow((double)j,0.5);
 		}
-
-	//std::cout << "ReactionRadius-stopB \n";
-	return radius / reg[Species::Basal].length();
+        return radius / reg[Species::Basal].length();
 	}
-	*/
+    */
 
 	if (lo.isOnAxis(Species::I)) {
 		for (auto j : makeIntervalRange(reg[Species::I])) {
@@ -213,10 +210,8 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 			else
 				radius += 0.163076 * pow((double)j, 0.5);
 		}
-		// std::cout << "ReactionRadius-stopV \n";
 		return radius / reg[Species::I].length();
 	}
-	// std::cout << "ReactionRadius-stop \n";
 	return radius;
 }
 } // namespace network

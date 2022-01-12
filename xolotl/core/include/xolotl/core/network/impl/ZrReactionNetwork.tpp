@@ -44,9 +44,8 @@ ZrReactionNetwork::checkLargestClusterId()
 			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
 
-			/* adding basal
-			auto size = hi[Species::V] + hi[Species::I] + hi[Species::Basal];
-			*/
+			//adding basal
+			//auto size = hi[Species::V] + hi[Species::I] + hi[Species::Basal];
 
 			auto size = hi[Species::V] + hi[Species::I];
 			if (size > update.val) {
@@ -66,8 +65,6 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 		return;
 	}
 
-	// std::cout << "CaptureRadius-start \n";
-
 	this->_clusterData.h_view().extraData.initialize(
 		this->_clusterData.h_view().numClusters,
 		this->_clusterData.h_view().gridSize);
@@ -84,33 +81,48 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 			// nm): First index in dislocation capture radius is for I capture;
 			// second is for V capture
 			if (lo.isOnAxis(Species::V)) {
-				data.extraData.dislocationCaptureRadius(i, 0) =
-					2.9 * pow(lo[Species::V], 0.12) / 10;
-				data.extraData.dislocationCaptureRadius(i, 1) =
-					0.6 * pow(lo[Species::V], 0.3) / 10;
-			}
 
-			/* adding basal
-			// Set the dislocation capture radii for vacancy c-loops (convert to
-			nm):
-			// First index in dislocation capture radius is for I capture;
-			second is for V capture if (lo.isOnAxis(Species::Basal)){
-				data.extraData.dislocationCaptureRadius(i, 0) = 3.9 *
-			pow(lo[Species::Basal], 0.07) / 10;
-				data.extraData.dislocationCaptureRadius(i, 1) = 0.4 *
-			pow(lo[Species::Basal], 0.33) / 10;
-			}
-			*/
+                // Spontaneous radii:
+                //data.extraData.dislocationCaptureRadius(i, 0) = 2.9 * pow(lo[Species::V], 0.12) / 10;
+                //data.extraData.dislocationCaptureRadius(i, 1) = 0.6 * pow(lo[Species::V], 0.3) / 10;
 
-			// Set the dislocation capture radii for interstitial a-loops
-			// (convert to nm)
-			else if (lo.isOnAxis(Species::I)) {
-				data.extraData.dislocationCaptureRadius(i, 0) =
-					4.2 * pow(lo[Species::I], 0.05) / 10;
-				data.extraData.dislocationCaptureRadius(i, 1) =
-					5.1 * pow(lo[Species::I], -0.01) / 10;
+                // Thermal radii:
+                data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::V], 0.09) / 10; // EXCELLENT
+                data.extraData.dislocationCaptureRadius(i, 1) = 2.0 * pow(lo[Species::V], 0.3) / 10; // EXCELLENT
+
+            }
+
+            // adding basal
+            /*
+            // Set the dislocation capture radii for vacancy c-loops (convert to nm):
+            // First index in dislocation capture radius is for I capture;
+            // second is for V capture
+            if (lo.isOnAxis(Species::Basal)){
+
+                // Spontaneous radii:
+                //data.extraData.dislocationCaptureRadius(i, 0) = 3.9 * pow(lo[Species::Basal], 0.07) / 10;
+                //data.extraData.dislocationCaptureRadius(i, 1) = 0.4 * pow(lo[Species::Basal], 0.33) / 10;
+
+                // Thermal radii:
+                data.extraData.dislocationCaptureRadius(i, 0) = 10.6 * pow(lo[Species::Basal], -0.02) / 10;
+                data.extraData.dislocationCaptureRadius(i, 1) = 1.8 * pow(lo[Species::Basal], 0.27) / 10;
+            }
+            */
+
+            // Set the dislocation capture radii for interstitial a-loops
+            // (convert to nm)
+            else if (lo.isOnAxis(Species::I)) {
+
+                // Spontaneous radii:
+                //data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::I], 0.05) / 10;
+                //data.extraData.dislocationCaptureRadius(i, 1) = 5.1 * pow(lo[Species::I], -0.01) / 10;
+
+                // Thermal radii:
+                //data.extraData.dislocationCaptureRadius(i, 0) = 5 * pow(lo[Species::I], 0.18) / 10; // Original
+                data.extraData.dislocationCaptureRadius(i, 0) = 4 * pow(lo[Species::I], 0.23) / 10; // Experimenting
+                data.extraData.dislocationCaptureRadius(i, 1) = 6.0 * pow(lo[Species::I], 0.08) / 10; //
+
 			}
-			// std::cout << "CaptureRadius-stop \n";
 		}); // Goes with parallel_for
 }
 
@@ -118,9 +130,11 @@ void
 ZrReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
 	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
 {
+    /*
 	if (this->_enableSink) {
 		updateIntegratedConcentrations(concentrations, gridIndex);
 	}
+    */
 }
 
 void
@@ -128,9 +142,11 @@ ZrReactionNetwork::computePartialsPreProcess(ConcentrationsView concentrations,
 	Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
 	double spacing)
 {
+    /*
 	if (this->_enableSink) {
 		updateIntegratedConcentrations(concentrations, gridIndex);
 	}
+    */
 }
 
 void
@@ -177,8 +193,6 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
-	// std::cout << i << " " << j << "\n";
-
 	// vac + vac = vac
 	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V)) {
 		// Compute the composition of the new cluster
@@ -193,12 +207,30 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				this->addDissociationReaction(tag, {vProdId, i, j});
 			}
 		}
-		// std::cout << "ReactionGenerator-stopV+V \n";
 
 		return;
 	}
 
-	/*
+    /*
+    // Basal + Basal = Basal
+    if (lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::Basal)) {
+        // Compute the composition of the new cluster
+        auto size = lo1[Species::Basal] + lo2[Species::Basal];
+        // Find the corresponding cluster
+        Composition comp = Composition::zero();
+        comp[Species::Basal] = size;
+        auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+        if (vProdId != subpaving.invalidIndex()) {
+            this->addProductionReaction(tag, {i, j, vProdId});
+            if (lo1[Species::Basal] == 1 || lo2[Species::Basal] == 1) {
+            this->addDissociationReaction(tag, {vProdId, i, j});
+        }
+    }
+
+    return;
+    }
+
+	//Adding basal
 	// vac + Basal = Basal
 	if ((lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::V)) ||
 		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Basal))) {
@@ -218,9 +250,8 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			this->addProductionReaction(tag, {i, j, basalProdId});
 			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
 				this->addDissociationReaction(tag, {basalProdId, i, j});
+		    }
 		}
-		}
-		std::cout << "ReactionGenerator-stopV+B \n";
 
 		return;
 	}
@@ -232,8 +263,7 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		auto iSize =
 			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
 		auto basalSize =
-			lo1.isOnAxis(Species::Basal) ? lo1[Species::Basal] :
-	lo2[Species::Basal];
+			lo1.isOnAxis(Species::Basal) ? lo1[Species::Basal] : lo2[Species::Basal];
 		// Compute the composition of the new cluster
 		int prodSize = basalSize - iSize;
 		// 3 cases
@@ -262,11 +292,9 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		this->addProductionReaction(tag, {i, j});
 		}
 
-		std::cout << "ReactionGenerator-stopI+B \n";
-
 		return;
 	}
-	*/
+    */
 
 	// vac + int = vac | int | recombine
 	if (((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
@@ -303,7 +331,6 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// No product
 			this->addProductionReaction(tag, {i, j});
 		}
-		// std::cout << "ReactionGenerator-stopI+V \n";
 
 		return;
 	}
@@ -322,7 +349,6 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				this->addDissociationReaction(tag, {iProdId, i, j});
 			}
 		}
-		// std::cout << "ReactionGenerator-stopI+I \n";
 
 		return;
 	}
@@ -373,6 +399,7 @@ void
 ZrClusterUpdater::updateDiffusionCoefficient(
 	const ClusterData& data, IndexType clusterId, IndexType gridIndex) const
 {
+
 	// I migration energies in eV
 	constexpr Kokkos::Array<double, 6> iMigrationA = {
 		0.0, 0.17, 0.23, 0.49, 0.75, 0.87};

@@ -32,43 +32,12 @@ private:
 	// Define the range of possible cluster sizes, and their respective
 	// fluxes in nm^-3 s^-1 Multiply by 1.0e+21 to get to cm^-3 s^-1 if
 	// you want to check values
-	float fluxI[70] = {2.365739684679306e-07, 2.1755974706776704e-08,
-		6.6215695655160775e-09, 3.979857734281858e-09, 2.108954194096771e-09,
-		1.7928725927606022e-09, 1.5213778723816244e-09, 5.500284627584542e-10,
-		4.093585813506016e-10, 6.703070630459465e-10, 4.3671599902652566e-10,
-		1.5136519821278934e-10, 2.0253029017681254e-10, 1.4309830185036925e-10,
-		3.395551051218416e-10, 1.6644273710076962e-10, 9.872932486119687e-11,
-		6.210012288223767e-11, 1.741549602054323e-10, 1.1421807857184855e-10,
-		7.142901860019398e-11, 1.9311062910580072e-11, 1.389313676998744e-10,
-		4.5282886983331086e-11, 2.8966594365870508e-11, 1.115499440160588e-10,
-		0.0, 3.562735552804218e-11, 9.655531455290036e-12,
-		3.562735552804218e-11, 9.655531455290036e-12, 0.0,
-		2.597182407275075e-11, 2.597182407275075e-11, 0.0,
-		2.597182407275075e-11, 0.0, 9.655531455290036e-12, 0.0, 0.0,
-		9.655531455290036e-12, 0.0, 2.597182407275075e-11, 0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
-	float fluxV[70] = {1.7811390508204618e-07, 1.6930667065081818e-08,
-		7.0735654428151215e-09, 3.3754591361812474e-09, 1.840000680680739e-09,
-		1.6146127259999994e-09, 2.1627167789999997e-09, 1.015531922447914e-09,
-		6.790095549999998e-10, 6.365080860000001e-10, 5.00133545e-10,
-		6.908325919999998e-10, 6.111473429999999e-10, 3.894946049999999e-10,
-		2.2615779300000004e-10, 4.01893729e-10, 1.45108826e-10,
-		1.6787280799999993e-10, 2.0438660999999995e-10, 1.6719651500000004e-10,
-		1.4427961800000002e-10, 1.61956032e-10, 9.429843900000001e-11,
-		7.504127899999999e-11, 4.2669623e-11, 1.01114429e-10,
-		1.5158115299999994e-10, 3.5527909e-11, 3.3041043e-11,
-		1.2437397699999997e-10, 0, 7.1229639e-11, 6.856895199999998e-11,
-		4.515648899999999e-11, 6.731392999999998e-11, 3.3041043e-11, 0,
-		8.501352199999999e-11, 2.8885739999999996e-11, 0, 3.5527909e-11, 0,
-		5.1972479000000005e-11, 0, 9.628580000000001e-12, 0,
-		9.628580000000001e-12, 1.9257160000000002e-11, 1.9257160000000002e-11,
-		3.3041043e-11, 9.628580000000001e-12, 1.9257160000000002e-11, 0, 0, 0,
-		2.5899328999999996e-11, 2.5899328999999996e-11, 3.428447599999999e-11,
-		9.628580000000001e-12, 0, 0, 0, 2.5899328999999996e-11, 0, 0,
-		1.9257160000000002e-11, 0, 0, 0, 0};
-
+    
+    float fluxI[70] = {4.141478088722051e-07, 3.961706397610119e-08, 1.2106952158361212e-08, 7.648435047264139e-09, 4.0244599086078205e-09, 3.3920182333877126e-09, 2.973973662425018e-09, 1.2417969019237562e-09, 8.851070516960898e-10, 1.3603816064935588e-09, 7.755269088868743e-10, 2.8874033916240647e-10, 4.672779143981795e-10, 3.2236846376884343e-10, 7.656476570683874e-10, 3.573797643046147e-10, 2.1021120447778106e-10, 1.539555427405712e-10, 3.782044331935486e-10, 2.568277326339155e-10, 1.585689463091986e-10, 5.5696756415877455e-11, 3.3550319027591227e-10, 1.069608242891428e-10, 8.354513462381556e-11, 2.4778164052265936e-10, 0.0, 7.911244608120112e-11, 2.7848378207938727e-11, 7.911244608120112e-11, 2.7848378207938727e-11, 0.0, 5.1264067873265366e-11, 5.1264067873265366e-11, 0.0, 5.1264067873265366e-11, 0.0, 2.7848378207938727e-11, 0.0, 0.0, 2.7848378207938727e-11, 0.0, 5.1264067873265366e-11, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    
+    float fluxV[70] = {3.000166061596907e-07, 3.261617020215222e-08, 1.125375463678962e-08, 6.367679929976148e-09, 3.6816615428727384e-09, 2.9269034006169983e-09, 3.359947468090799e-09, 1.8195145694037134e-09, 1.3135561927353992e-09, 1.0449271185930001e-09, 1.1127620938895e-09, 1.474853409405799e-09, 1.1821355154481997e-09, 8.466205016950002e-10, 4.427436436175002e-10, 8.012900146363999e-10, 3.0815704976440003e-10, 3.241739333764998e-10, 4.196949035263e-10, 3.490487822005e-10, 3.084457042192001e-10, 3.664849375693001e-10, 2.1650475950509992e-10, 1.625140160880999e-10, 9.524908203469999e-11, 2.125413615481001e-10, 3.2572815399419994e-10, 7.668920153209999e-11, 6.825371032619996e-11, 2.292135057965999e-10, 0, 1.5371191870060005e-10, 1.4494291185829992e-10, 1.036845732406e-10, 1.7151468025099992e-10, 6.825371032619996e-11, 0, 1.6797488560979994e-10, 8.098611512549996e-11, 0, 7.668920153209999e-11, 0, 9.972117528360005e-11, 0, 2.699537170850001e-11, 0, 2.699537170850001e-11, 5.399074341700002e-11, 5.399074341700002e-11, 6.825371032619996e-11, 2.699537170850001e-11, 5.399074341700002e-11, 0, 0, 0, 4.9693829823599966e-11, 4.9693829823599966e-11, 1.4494291185829992e-10, 2.699537170850001e-11, 0, 0, 0, 4.9693829823599966e-11, 0, 0, 5.399074341700002e-11, 0, 0, 0, 0};
+    
+    
 	// Set the maximum cluster sizes to set a generation flux to
 	int maxSizeI = 70;
 	int maxSizeV = 70;
@@ -96,7 +65,6 @@ public:
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
 		std::vector<double> grid)
 	{
-		// std::cout << "Flux-start \n";
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
 
@@ -109,14 +77,10 @@ public:
 		for (int i = 1; i < (maxSizeI + 1); i++) {
 			comp[NetworkType::Species::I] = i;
 			cluster = zrNetwork->findCluster(comp, plsm::onHost);
-			if (cluster.getId() == NetworkType::invalidIndex()) {
-				throw std::runtime_error(
-					"\nThe current interstitial cluster is not "
-					"present in the network, "
-					"cannot use the flux option!");
+			if (cluster.getId() != NetworkType::invalidIndex()) {
+                fluxIndices.push_back(cluster.getId());
+                incidentFluxVec.push_back(std::vector<double>(1, fluxI[i - 1]));
 			}
-			fluxIndices.push_back(cluster.getId());
-			incidentFluxVec.push_back(std::vector<double>(1, fluxI[i - 1]));
 		}
 
 		// Set the flux index corresponding the mobile vacancy clusters (n < 10)
@@ -124,39 +88,25 @@ public:
 		for (int i = 1; i < (maxSizeV + 1); i++) {
 			comp[NetworkType::Species::V] = i;
 			cluster = zrNetwork->findCluster(comp, plsm::onHost);
-			if (cluster.getId() == NetworkType::invalidIndex()) {
-				throw std::runtime_error("\nThe current vacancy cluster is not "
-										 "present in the network, "
-										 "cannot use the flux option!");
+			if (cluster.getId() != NetworkType::invalidIndex()) {
+                fluxIndices.push_back(cluster.getId());
+                incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1]));
 			}
-			fluxIndices.push_back(cluster.getId());
-			incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1]));
 		}
-
-		/*
-		comp[NetworkType::Species::V] = 0;
-		comp[NetworkType::Species::Basal] = 1;
-		cluster = zrNetwork->findCluster(comp, plsm::onHost);
-		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::runtime_error("\nThe current basal cluster is not "
-									 "present in the network, "
-									 "cannot use the flux option!");
-		}
-		fluxIndices.push_back(cluster.getId());
-		incidentFluxVec.push_back(std::vector<double>(1, fluxV[0]));
-
-
-		comp[NetworkType::Species::Basal] = 2;
-		cluster = zrNetwork->findCluster(comp, plsm::onHost);
-		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::runtime_error("\nThe current basal cluster is not "
-									 "present in the network, "
-									 "cannot use the flux option!");
-		}
-		fluxIndices.push_back(cluster.getId());
-		incidentFluxVec.push_back(std::vector<double>(1, fluxV[1]));
-		 */
-		// std::cout << "Flux-stop \n";
+        
+        // Set the flux index corresponding the mobile vacancy clusters (n < 10)
+        /*
+        comp[NetworkType::Species::V] = 0;
+        for (int i = 1; i < (maxSizeV + 1); i++) {
+            comp[NetworkType::Species::Basal] = i;
+            cluster = zrNetwork->findCluster(comp, plsm::onHost);
+            if (cluster.getId() != NetworkType::invalidIndex()) {
+                fluxIndices.push_back(cluster.getId());
+                incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1]));
+            }
+        }
+         */
+         
 		return;
 	}
 
@@ -169,12 +119,16 @@ public:
 	{
 		// Define only for a 0D case
 		if (xGrid.size() == 0) {
-			// std::cout << "Flux-start2 \n";
 
-			for (int i = 0; i < fluxIndices.size(); i++) {
-				updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
-			}
-		}
+            // Reduce the defect generation rate based on the current time (defect density)
+            //double cascadeEfficiency = (0.9*(1-tanh(0.000000100527088*(currentTime*100)))+0.1)*0.64*(1-tanh(0.000030527088*(currentTime/100-20000)))+0.001; //Long1 decline modified7 mod12
+            //cascadeEfficiency = 1.0;
+            
+            for (int i = 0; i < fluxIndices.size(); i++) {
+                updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;
+            }
+
+        }
 
 		else {
 			throw std::runtime_error(
@@ -223,7 +177,7 @@ public:
 	}
 };
 // end class AlphaZrFitFluxHandler
-
+    
 } // namespace flux
 } // namespace core
 } // namespace xolotl

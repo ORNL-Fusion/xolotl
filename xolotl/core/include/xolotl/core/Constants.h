@@ -44,7 +44,7 @@ constexpr double alphaZrLatticeConstant = 0.32294500000000000; // the a-constant
 constexpr double alloyCoreRadius = 0.36000000000000000;
 
 //! Core radius. Given in units here of nm.
-constexpr double alphaZrCoreRadius = 0.36000000000000000;
+constexpr double alphaZrCoreRadius = 0.64500000000000000;
 
 //! Single helium radius. Given in units here of nm.
 constexpr double heliumRadius = 0.30000000000000000;
@@ -92,12 +92,10 @@ constexpr double frankBurgers = 0.333;
 constexpr double alloySinkStrength = 1.0e-5;
 
 // Sink strength for alphaZr case in nm^-2
-constexpr double alphaZrASinkStrength = 7.25e-8; // Single crystal
-constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
-// constexpr double alphaZrASinkStrength = 2e-5; //cold-worked Zr
-// constexpr double alphaZrCSinkStrength = 5e-6; //cold-worked Zr
-// constexpr double alphaZrASinkStrength = 1e-20;
-// constexpr double alphaZrCSinkStrength = 1e-20;
+constexpr double alphaZrASinkStrength = 7.25e-8; //Single crystal
+constexpr double alphaZrCSinkStrength = 2.25e-8; //Single crystal
+//constexpr double alphaZrASinkStrength = 2e-5; //cold-worked Zr
+//constexpr double alphaZrCSinkStrength = 5e-6; //cold-worked Zr
 
 } /* end namespace core */
 } /* end namespace xolotl */
