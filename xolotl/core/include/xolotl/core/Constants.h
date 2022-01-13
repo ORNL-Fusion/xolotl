@@ -92,10 +92,10 @@ constexpr double frankBurgers = 0.333;
 constexpr double alloySinkStrength = 1.0e-5;
 
 // Sink strength for alphaZr case in nm^-2
-constexpr double alphaZrASinkStrength = 7.25e-8; //Single crystal
-constexpr double alphaZrCSinkStrength = 2.25e-8; //Single crystal
-//constexpr double alphaZrASinkStrength = 2e-5; //cold-worked Zr
-//constexpr double alphaZrCSinkStrength = 5e-6; //cold-worked Zr
+constexpr double alphaZrASinkStrength = 7.25e-8; // Single crystal
+constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
+// constexpr double alphaZrASinkStrength = 2e-5; //cold-worked Zr
+// constexpr double alphaZrCSinkStrength = 5e-6; //cold-worked Zr
 
 } /* end namespace core */
 } /* end namespace xolotl */

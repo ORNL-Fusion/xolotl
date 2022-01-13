@@ -35,22 +35,22 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	double n0 = 0; // size of cluster 0
 	double n1 = 0; // size of cluster 1
 	double Pl = 1.0; // Capture efficiency for diffusing defect
-    double Pli = 1.0; // Capture efficiency for interstitial a-loop
-    double Plv = 1.0; // Capture efficiency for vacancy a-loops
+	double Pli = 1.0; // Capture efficiency for interstitial a-loop
+	double Plv = 1.0; // Capture efficiency for vacancy a-loops
 
 	// Determine parameters based on cluster type and size
 	if (cl0IsV)
 		n0 = lo0[Species::V];
-	//else if (lo0.isOnAxis(Species::Basal))
-	    //n0 = lo0[Species::Basal];
+	else if (lo0.isOnAxis(Species::Basal))
+		n0 = lo0[Species::Basal];
 	else
 		n0 = lo0[Species::I];
 	bool cl0IsLoop = (n0 > 9);
 
 	if (cl1IsV)
 		n1 = lo1[Species::V];
-	//else if (lo1.isOnAxis(Species::Basal))
-	    //n1 = lo1[Species::Basal];
+	else if (lo1.isOnAxis(Species::Basal))
+		n1 = lo1[Species::Basal];
 	else
 		n1 = lo1[Species::I];
 	bool cl1IsLoop = (n1 > 9);
@@ -92,9 +92,10 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		else
 			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 
-        // Restrict the capture efficiency to 3.0, but keep the ratio of I to V constant:
-        Plv = 0.78 * pow(p, -2) + 0.66 * p - 0.44;
-        Pli = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
+		// Restrict the capture efficiency to 3.0, but keep the ratio of I to V
+		// constant:
+		Plv = 0.78 * pow(p, -2) + 0.66 * p - 0.44;
+		Pli = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 
 		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
 			(dc0 + dc1);
@@ -108,7 +109,6 @@ KOKKOS_INLINE_FUNCTION
 double
 ZrProductionReaction::getRateForProduction(IndexType gridIndex)
 {
-
 	auto cl0 = this->_clusterData->getCluster(_reactants[0]);
 	auto cl1 = this->_clusterData->getCluster(_reactants[1]);
 
@@ -146,7 +146,6 @@ KOKKOS_INLINE_FUNCTION
 double
 ZrDissociationReaction::getRateForProduction(IndexType gridIndex)
 {
-
 	auto cl0 = this->_clusterData->getCluster(_products[0]);
 	auto cl1 = this->_clusterData->getCluster(_products[1]);
 
@@ -204,28 +203,29 @@ ZrDissociationReaction::computeBindingEnergy()
 	if (lo.isOnAxis(Species::V)) {
 		double n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-
-			if (n < 18) be = 2.03 - 1.9 * (pow(n, 0.84) - pow(n - 1.0, 0.84));
-            /*
-            if (n == 2) be = 0.22;
-            else if (n == 3) be = 0.35;
-            else if (n == 4) be = 0.32;
-            else if (n == 5) be = 1.2;
-            else if (n == 6) be = 1.2;
-            else if (n == 7) be = 0.27;
-            else if (n < 18) be = 2.03 - 4.29 * (pow(n, 0.6666) - pow(n - 1.0, 0.66666));
-            */
-            else be = 2.03 - 3.4 * (pow(n, 0.70) - pow(n - 1.0, 0.70));
-            if(n > 70) be = be*1.1;
+			if (n < 18)
+				be = 2.03 - 1.9 * (pow(n, 0.84) - pow(n - 1.0, 0.84));
+			/*
+			if (n == 2) be = 0.22;
+			else if (n == 3) be = 0.35;
+			else if (n == 4) be = 0.32;
+			else if (n == 5) be = 1.2;
+			else if (n == 6) be = 1.2;
+			else if (n == 7) be = 0.27;
+			else if (n < 18) be = 2.03 - 4.29 * (pow(n, 0.6666) - pow(n - 1.0,
+			0.66666));
+			*/
+			else
+				be = 2.03 - 3.4 * (pow(n, 0.70) - pow(n - 1.0, 0.70));
+			if (n > 70)
+				be = be * 1.1;
 		}
 	}
 
-	//adding basal
-    /*
+	// adding basal
 	else if (lo.isOnAxis(Species::Basal)) {
 		be = 0.22;
 	}
-    */
 
 	else if (lo.isOnAxis(Species::I)) {
 		double n = (double)(lo[Species::I] + hi[Species::I] - 1) / 2.0;
@@ -234,7 +234,7 @@ ZrDissociationReaction::computeBindingEnergy()
 				be = 2.94 - 2.8 * (pow(n, 0.81) - pow(n - 1.0, 0.81));
 			else
 				be = 2.94 - 4.6 * (pow(n, 0.66) - pow(n - 1.0, 0.66));
-            be = be*0.9;
+			be = be * 0.9;
 		}
 	}
 
@@ -266,7 +266,6 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 	// 1-D diffusers are assumed to only interact with <a>-type edge dislocation
 	// lines The anisotropy factor is assumed equal to 1.0 in this case
 	else if (lo.isOnAxis(Species::I)) {
-
 		if (lo[Species::I] < 9) {
 			return dc * 1.1 *
 				(::xolotl::core::alphaZrCSinkStrength * anisotropy +

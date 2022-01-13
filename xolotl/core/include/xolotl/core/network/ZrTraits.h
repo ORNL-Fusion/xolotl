@@ -25,20 +25,21 @@ class ZrClusterUpdater;
 enum class ZrSpecies
 {
 	V,
+	Basal,
 	I
 };
 
 inline const std::string&
 toLabelString(ZrSpecies species)
 {
-	static const std::string labelArray[] = {"V", "I"};
+	static const std::string labelArray[] = {"V", "Basal", "I"};
 	return labelArray[static_cast<int>(species)];
 }
 
 inline const std::string&
 toNameString(ZrSpecies species)
 {
-	static const std::string nameArray[] = {"Vacancy", "Interstitial"};
+	static const std::string nameArray[] = {"Vacancy", "Basal", "Interstitial"};
 	return nameArray[static_cast<int>(species)];
 }
 
@@ -50,20 +51,20 @@ struct NumberOfInterstitialSpecies<ZrSpecies> :
 
 template <>
 struct NumberOfVacancySpecies<ZrSpecies> :
-	std::integral_constant<std::size_t, 1>
+	std::integral_constant<std::size_t, 2>
 {
 };
 
 template <>
-struct SpeciesForGrouping<ZrSpecies, 2>
+struct SpeciesForGrouping<ZrSpecies, 3>
 {
-	using Sequence = EnumSequence<ZrSpecies, 2>;
+	using Sequence = EnumSequence<ZrSpecies, 3>;
 	static constexpr auto first = Sequence(ZrSpecies::V);
 	static constexpr auto last = Sequence(ZrSpecies::I);
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::underlying_type_t<ZrSpecies> mapToMomentId(
-		EnumSequence<ZrSpecies, 2>)
+		EnumSequence<ZrSpecies, 3>)
 	{
 		return 0;
 	}
@@ -74,7 +75,7 @@ struct ReactionNetworkTraits<ZrReactionNetwork>
 {
 	using Species = ZrSpecies;
 
-	static constexpr std::size_t numSpecies = 2;
+	static constexpr std::size_t numSpecies = 3;
 
 	using ProductionReactionType = ZrProductionReaction;
 	using DissociationReactionType = ZrDissociationReaction;
