@@ -41,16 +41,16 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	// Determine parameters based on cluster type and size
 	if (cl0IsV)
 		n0 = lo0[Species::V];
-	//else if (lo0.isOnAxis(Species::Basal))
-	    //n0 = lo0[Species::Basal];
+	else if (lo0.isOnAxis(Species::Basal))
+	    n0 = lo0[Species::Basal];
 	else
 		n0 = lo0[Species::I];
 	bool cl0IsLoop = (n0 > 9);
 
 	if (cl1IsV)
 		n1 = lo1[Species::V];
-	//else if (lo1.isOnAxis(Species::Basal))
-	    //n1 = lo1[Species::Basal];
+	else if (lo1.isOnAxis(Species::Basal))
+	    n1 = lo1[Species::Basal];
 	else
 		n1 = lo1[Species::I];
 	bool cl1IsLoop = (n1 > 9);
@@ -221,11 +221,9 @@ ZrDissociationReaction::computeBindingEnergy()
 	}
 
 	//adding basal
-    /*
 	else if (lo.isOnAxis(Species::Basal)) {
 		be = 0.22;
 	}
-    */
 
 	else if (lo.isOnAxis(Species::I)) {
 		double n = (double)(lo[Species::I] + hi[Species::I] - 1) / 2.0;

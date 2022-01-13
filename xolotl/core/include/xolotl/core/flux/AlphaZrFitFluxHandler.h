@@ -98,7 +98,6 @@ public:
 		}
         
         // Set the flux index corresponding the mobile vacancy clusters (n < 10)
-        /*
         comp[NetworkType::Species::V] = 0;
         for (int i = 1; i < (maxSizeV + 1); i++) {
             comp[NetworkType::Species::Basal] = i;
@@ -108,7 +107,6 @@ public:
                 incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1]));
             }
         }
-         */
          
 		return;
 	}

@@ -45,9 +45,9 @@ ZrReactionNetwork::checkLargestClusterId()
 			Composition hi = clReg.getUpperLimitPoint();
 
 			//adding basal
-			//auto size = hi[Species::V] + hi[Species::I] + hi[Species::Basal];
+			auto size = hi[Species::V] + hi[Species::I] + hi[Species::Basal];
 
-			auto size = hi[Species::V] + hi[Species::I];
+			//auto size = hi[Species::V] + hi[Species::I];
 			if (size > update.val) {
 				update.val = size;
 				update.loc = i;
@@ -93,7 +93,6 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
             }
 
             // adding basal
-            /*
             // Set the dislocation capture radii for vacancy c-loops (convert to nm):
             // First index in dislocation capture radius is for I capture;
             // second is for V capture
@@ -107,7 +106,6 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
                 data.extraData.dislocationCaptureRadius(i, 0) = 10.6 * pow(lo[Species::Basal], -0.02) / 10;
                 data.extraData.dislocationCaptureRadius(i, 1) = 1.8 * pow(lo[Species::Basal], 0.27) / 10;
             }
-            */
 
             // Set the dislocation capture radii for interstitial a-loops
             // (convert to nm)
@@ -220,7 +218,6 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-    /*
     // Basal + Basal = Basal
     if (lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::Basal)) {
         // Compute the composition of the new cluster
@@ -232,8 +229,8 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
         if (vProdId != subpaving.invalidIndex()) {
             this->addProductionReaction(tag, {i, j, vProdId});
             if (lo1[Species::Basal] == 1 || lo2[Species::Basal] == 1) {
-            this->addDissociationReaction(tag, {vProdId, i, j});
-        }
+                this->addDissociationReaction(tag, {vProdId, i, j});
+            }
     }
 
     return;
@@ -303,7 +300,6 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 		return;
 	}
-    */
 
 	// vac + int = vac | int | recombine
 	if (((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
@@ -408,7 +404,6 @@ void
 ZrClusterUpdater::updateDiffusionCoefficient(
 	const ClusterData& data, IndexType clusterId, IndexType gridIndex) const
 {
-
 	// I migration energies in eV
 	constexpr Kokkos::Array<double, 6> iMigrationA = {
 		0.0, 0.17, 0.23, 0.49, 0.75, 0.87};

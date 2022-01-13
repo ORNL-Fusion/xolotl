@@ -209,10 +209,8 @@ PetscMonitor0D::setup()
 			else if (lo.isOnAxis(Spec::I))
 				outputFile << "I_" << lo[Spec::I] << " ";
 			//adding basal
-            /*
 			else if (lo.isOnAxis(Spec::Basal))
 				outputFile << "Basal_" << lo[Spec::Basal] << " ";
-             */
 			 
 		}
 		outputFile << std::endl;
