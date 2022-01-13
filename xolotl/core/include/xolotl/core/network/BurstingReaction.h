@@ -104,7 +104,7 @@ private:
 
 protected:
 	IndexType _reactant;
-	AmountType _reactantVolume;
+	double _reactantVolume;
 	IndexType _product;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
 

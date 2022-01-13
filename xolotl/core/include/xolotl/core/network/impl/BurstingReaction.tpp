@@ -175,7 +175,7 @@ BurstingReaction<TNetwork, TDerived>::computeFlux(
 	}
 	f *= rate;
 
-	Kokkos::atomic_sub(&fluxes[_reactant], f / (double)_reactantVolume);
+	Kokkos::atomic_sub(&fluxes[_reactant], f / _reactantVolume);
 	if (_product != invalidIndex)
 		Kokkos::atomic_add(&fluxes[_product], f);
 
@@ -189,7 +189,7 @@ BurstingReaction<TNetwork, TDerived>::computeFlux(
 			}
 			f *= rate;
 			Kokkos::atomic_sub(
-				&fluxes[_reactantMomentIds[k()]], f / (double)_reactantVolume);
+				&fluxes[_reactantMomentIds[k()]], f / _reactantVolume);
 		}
 	}
 }
@@ -207,7 +207,7 @@ BurstingReaction<TNetwork, TDerived>::computePartialDerivatives(
 
 	// Compute the partials for the 0th order moments
 	// First for the reactant
-	double df = rate / (double)_reactantVolume;
+	double df = rate / _reactantVolume;
 	// Compute the values
 	Kokkos::atomic_sub(
 		&values(_connEntries[0][0][0][0]), df * this->_coefs(0, 0, 0, 0));
@@ -235,7 +235,7 @@ BurstingReaction<TNetwork, TDerived>::computePartialDerivatives(
 	for (auto k : speciesRangeNoI) {
 		if (_reactantMomentIds[k()] != invalidIndex) {
 			// First for the reactant
-			df = rate / (double)_reactantVolume;
+			df = rate / _reactantVolume;
 			// Compute the values
 			Kokkos::atomic_sub(&values(_connEntries[0][1 + k()][0][0]),
 				df * this->_coefs(0, 0, 0, k() + 1));
@@ -261,13 +261,13 @@ BurstingReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 
 	auto rate = this->asDerived()->getAppliedRate(gridIndex);
 	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]),
-		rate * this->_coefs(0, 0, 0, 0) / (double)_reactantVolume);
+		rate * this->_coefs(0, 0, 0, 0) / _reactantVolume);
 
 	// Take care of the first moments
 	for (auto k : speciesRangeNoI) {
 		if (_reactantMomentIds[k()] != invalidIndex) {
 			// First for the reactant
-			auto df = rate / (double)_reactantVolume;
+			auto df = rate / _reactantVolume;
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[i()] == _reactantMomentIds[k()]) {
 					Kokkos::atomic_sub(

@@ -571,6 +571,7 @@ PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
 		return;
 
 	// Loop on V
+	auto previousIndex = NetworkType::invalidIndex();
 	for (auto nV = lo[Species::V]; nV < hi[Species::V]; nV++) {
 		// Pure helium case
 		if (nV == 0) {
@@ -583,8 +584,10 @@ PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
 			Composition comp = Composition::zero();
 			comp[Species::V] = nV;
 			auto vClusterId = subpaving.findTileId(comp, plsm::onDevice);
-			if (vClusterId != NetworkType::invalidIndex())
+			if (vClusterId != NetworkType::invalidIndex() and vClusterId != previousIndex) {
 				this->addBurstingReaction(tag, {i, vClusterId});
+				previousIndex = vClusterId;
+			}
 		}
 	}
 }
