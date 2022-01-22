@@ -326,10 +326,12 @@ PetscSolver0DHandler::updateConcentration(
 	fluxTimer->stop();
 	deep_copy(hFlux, dFlux);
 
+    /*
     for (auto i = 0; i < dof; i++) {
         std::cout << updatedConcOffset[i] << " ";
     }
     std::cout << "\n";
+    */
 
 	/*
 	 Restore vectors

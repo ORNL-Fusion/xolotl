@@ -44,11 +44,12 @@ ZrReactionNetwork::checkLargestClusterId()
 			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
 
-			//adding basal
+			// adding basal
 			auto size = hi[Species::V] + hi[Species::I] + hi[Species::Basal];
 
-			//auto size = hi[Species::V] + hi[Species::I];
-			if (size > update.val) {
+			// auto size = hi[Species::V] + hi[Species::I];
+
+            if (size > update.val) {
 				update.val = size;
 				update.loc = i;
 			}
@@ -81,16 +82,18 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 			// nm): First index in dislocation capture radius is for I capture;
 			// second is for V capture
 			if (lo.isOnAxis(Species::V)) {
+				// Spontaneous radii:
+				// data.extraData.dislocationCaptureRadius(i, 0) = 2.9 *
+				// pow(lo[Species::V], 0.12) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 1) = 0.6 *
+				// pow(lo[Species::V], 0.3) / 10;
 
-                // Spontaneous radii:
-                //data.extraData.dislocationCaptureRadius(i, 0) = 2.9 * pow(lo[Species::V], 0.12) / 10;
-                //data.extraData.dislocationCaptureRadius(i, 1) = 0.6 * pow(lo[Species::V], 0.3) / 10;
-
-                // Thermal radii:
-                data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::V], 0.09) / 10; // EXCELLENT
-                data.extraData.dislocationCaptureRadius(i, 1) = 2.0 * pow(lo[Species::V], 0.3) / 10; // EXCELLENT
-
-            }
+				// Thermal radii:
+				data.extraData.dislocationCaptureRadius(i, 0) =
+					4.2 * pow(lo[Species::V], 0.09) / 10; // EXCELLENT
+				data.extraData.dislocationCaptureRadius(i, 1) =
+					2.0 * pow(lo[Species::V], 0.3) / 10; // EXCELLENT
+			}
 
             // adding basal
             // Set the dislocation capture radii for vacancy c-loops (convert to nm):
@@ -103,23 +106,25 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
                 //data.extraData.dislocationCaptureRadius(i, 1) = 0.4 * pow(lo[Species::Basal], 0.33) / 10;
 
                 // Thermal radii:
-                data.extraData.dislocationCaptureRadius(i, 0) = 10.6 * pow(lo[Species::Basal], -0.02) / 10;
+                data.extraData.dislocationCaptureRadius(i, 0) = 10.6 * pow(lo[Species::Basal], -0.05) / 10;
                 data.extraData.dislocationCaptureRadius(i, 1) = 1.8 * pow(lo[Species::Basal], 0.27) / 10;
             }
 
-            // Set the dislocation capture radii for interstitial a-loops
-            // (convert to nm)
-            else if (lo.isOnAxis(Species::I)) {
+			// Set the dislocation capture radii for interstitial a-loops
+			// (convert to nm)
+			else if (lo.isOnAxis(Species::I)) {
+				// Spontaneous radii:
+				// data.extraData.dislocationCaptureRadius(i, 0) = 4.2 *
+				// pow(lo[Species::I], 0.05) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 1) = 5.1 *
+				// pow(lo[Species::I], -0.01) / 10;
 
-                // Spontaneous radii:
-                //data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::I], 0.05) / 10;
-                //data.extraData.dislocationCaptureRadius(i, 1) = 5.1 * pow(lo[Species::I], -0.01) / 10;
-
-                // Thermal radii:
-                //data.extraData.dislocationCaptureRadius(i, 0) = 5 * pow(lo[Species::I], 0.18) / 10; // Original
-                data.extraData.dislocationCaptureRadius(i, 0) = 4 * pow(lo[Species::I], 0.23) / 10; // Experimenting
-                data.extraData.dislocationCaptureRadius(i, 1) = 6.0 * pow(lo[Species::I], 0.08) / 10; //
-
+				// Thermal radii:
+				// data.extraData.dislocationCaptureRadius(i, 0) = 5 *
+				// pow(lo[Species::I], 0.18) / 10; // Original
+                data.extraData.dislocationCaptureRadius(i, 0) = 5.5 * pow(lo[Species::I], 0.18) / 10; // Experimenting
+				data.extraData.dislocationCaptureRadius(i, 1) = 6.0 * pow(lo[Species::I], 0.08) / 10; // Original
+                //data.extraData.dislocationCaptureRadius(i, 1) = 7.0 * pow(lo[Species::I], 0.03) / 10; // Experimenting
 			}
 		}); // Goes with parallel_for
 }
@@ -128,11 +133,11 @@ void
 ZrReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
 	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
 {
-    /*
+	/*
 	if (this->_enableSink) {
 		updateIntegratedConcentrations(concentrations, gridIndex);
 	}
-    */
+	*/
 }
 
 void
@@ -140,11 +145,11 @@ ZrReactionNetwork::computePartialsPreProcess(ConcentrationsView concentrations,
 	Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
 	double spacing)
 {
-    /*
+	/*
 	if (this->_enableSink) {
 		updateIntegratedConcentrations(concentrations, gridIndex);
 	}
-    */
+	*/
 }
 
 void
@@ -218,34 +223,33 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-    // Basal + Basal = Basal
-    if (lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::Basal)) {
-        // Compute the composition of the new cluster
-        auto size = lo1[Species::Basal] + lo2[Species::Basal];
-        // Find the corresponding cluster
-        Composition comp = Composition::zero();
-        comp[Species::Basal] = size;
-        auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
-        if (vProdId != subpaving.invalidIndex()) {
-            this->addProductionReaction(tag, {i, j, vProdId});
-            if (lo1[Species::Basal] == 1 || lo2[Species::Basal] == 1) {
-                this->addDissociationReaction(tag, {vProdId, i, j});
-            }
-    }
-
-    return;
-    }
-
 	//Adding basal
+	// Basal + Basal = Basal
+	if (lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::Basal)) {
+		// Compute the composition of the new cluster
+		auto size = lo1[Species::Basal] + lo2[Species::Basal];
+		// Find the corresponding cluster
+		Composition comp = Composition::zero();
+		comp[Species::Basal] = size;
+		auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+		if (vProdId != subpaving.invalidIndex()) {
+			this->addProductionReaction(tag, {i, j, vProdId});
+			if (lo1[Species::Basal] == 1 || lo2[Species::Basal] == 1) {
+				this->addDissociationReaction(tag, {vProdId, i, j});
+			}
+		}
+
+		return;
+	}
+
 	// vac + Basal = Basal
 	if ((lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::V)) ||
 		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Basal))) {
 		// Find out which one is which
 		auto vSize =
 			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
-		auto basalSize =
-			lo1.isOnAxis(Species::Basal) ? lo1[Species::Basal] :
-	lo2[Species::Basal];
+		auto basalSize = lo1.isOnAxis(Species::Basal) ? lo1[Species::Basal] :
+														lo2[Species::Basal];
 		// Compute the composition of the new cluster
 		int prodsize = vSize + basalSize;
 		// Find the corresponding cluster
@@ -256,7 +260,7 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			this->addProductionReaction(tag, {i, j, basalProdId});
 			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
 				this->addDissociationReaction(tag, {basalProdId, i, j});
-		    }
+			}
 		}
 
 		return;
@@ -268,12 +272,12 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		// Find out which one is which
 		auto iSize =
 			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
-		auto basalSize =
-			lo1.isOnAxis(Species::Basal) ? lo1[Species::Basal] : lo2[Species::Basal];
+		auto basalSize = lo1.isOnAxis(Species::Basal) ? lo1[Species::Basal] :
+														lo2[Species::Basal];
 		// Compute the composition of the new cluster
 		int prodSize = basalSize - iSize;
 		// 3 cases
-		if (prodSize > 0){
+		if (prodSize > 0) {
 			// Looking for Basal cluster
 			Composition comp = Composition::zero();
 			comp[Species::Basal] = prodSize;
@@ -294,8 +298,8 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			}
 		}
 		else {
-		// No product
-		this->addProductionReaction(tag, {i, j});
+			// No product
+			this->addProductionReaction(tag, {i, j});
 		}
 
 		return;

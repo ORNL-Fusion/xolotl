@@ -27,7 +27,6 @@ KOKKOS_INLINE_FUNCTION
 bool
 ZrClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
-
 	result[0] = true;
 	result[1] = true;
 	result[2] = true;
@@ -41,16 +40,14 @@ KOKKOS_INLINE_FUNCTION
 bool
 ZrClusterGenerator::select(const Region& region) const
 {
-	//adding basal
-	int nAxis =
-		(region[Species::V].begin() > 0) +
-		(region[Species::I].begin() > 0) +
-		(region[Species::Basal].begin() > 0);
+	// adding basal
+	int nAxis = (region[Species::V].begin() > 0) +
+		(region[Species::I].begin() > 0) + (region[Species::Basal].begin() > 0);
 
-    /*
+	/*
 	int nAxis =
 		(region[Species::V].begin() > 0) + (region[Species::I].begin() > 0);
-    */
+	*/
 
 	if (nAxis > 1) {
 		return false;
@@ -70,7 +67,7 @@ ZrClusterGenerator::select(const Region& region) const
 		if (region[Species::V].begin() > _maxV)
 			return false;
 
-		//adding basal
+		// adding basal
 		// Basal
 		if (region[Species::Basal].begin() > _maxV)
 			return false;
@@ -167,7 +164,6 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	double latticeParameter, double interstitialBias,
 	double impurityRadius) const noexcept
 {
-
 	const double prefactor = 0.0 * latticeParameter * latticeParameter *
 		latticeParameter / ::xolotl::core::pi;
 	const auto& reg = cluster.getRegion();
@@ -193,10 +189,20 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	// adding basal
 	if (lo.isOnAxis(Species::Basal)) {
 		for (auto j : makeIntervalRange(reg[Species::Basal])) {
-			if (lo[Species::Basal] < basalTransitionSize) radius += pow(5.586e-3 * (double)j, 1.0 / 3.0);
-            else radius += 0.169587 * pow((double)j,0.5);
+
+            // Treat the case for faulted basal pyramids
+            // Estimate a spherical radius based on equivalent surface area
+            if (lo[Species::Basal] < basalTransitionSize){
+                double Sb = pow(3, 0.5) / 2 * pow(3.232, 2) * (double)j; //Basal surface area
+                double Sp = 3.232 / 2 * pow(3 * pow(3.232, 2) + 4 * pow(5.17, 2), 0.5) * (double)j; //Prismatic surface area
+                radius += pow((Sb + Sp) / (4 * pi), 0.5) / 10;
+            }
+
+            //Treat the case of a basal c-loop
+			else
+				radius += 0.169587 * pow((double)j, 0.5);
 		}
-        return radius / reg[Species::Basal].length();
+		return radius / reg[Species::Basal].length();
 	}
 
 	if (lo.isOnAxis(Species::I)) {

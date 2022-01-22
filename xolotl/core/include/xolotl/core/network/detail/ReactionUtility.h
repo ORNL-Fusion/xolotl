@@ -188,36 +188,36 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 		cl1RR[vIndex] = Ival(cl1Reg[Species::I].begin() -
 				cl1Reg[Species::V].end() - cl1Reg[Species::Basal].end() + 2,
 			cl1Reg[Species::I].end() - cl1Reg[Species::V].begin() -
-				cl1Reg[Species::Basal].begin() - 1);
+				cl1Reg[Species::Basal].begin());
 		cl2RR[vIndex] = Ival(cl2Reg[Species::I].begin() -
 				cl2Reg[Species::V].end() - cl2Reg[Species::Basal].end() + 2,
 			cl2Reg[Species::I].end() - cl2Reg[Species::V].begin() -
-				cl2Reg[Species::Basal].begin() - 1);
+				cl2Reg[Species::Basal].begin());
 		pr1RR[vIndex] = Ival(pr1Reg[Species::I].begin() -
 				pr1Reg[Species::V].end() - pr1Reg[Species::Basal].end() + 2,
 			pr1Reg[Species::I].end() - pr1Reg[Species::V].begin() -
-				pr1Reg[Species::Basal].begin() - 1);
+				pr1Reg[Species::Basal].begin());
 		pr2RR[vIndex] = Ival(pr2Reg[Species::I].begin() -
 				pr2Reg[Species::V].end() - pr2Reg[Species::Basal].end() + 2,
 			pr2Reg[Species::I].end() - pr2Reg[Species::V].begin() -
-				pr2Reg[Species::Basal].begin() - 1);
+				pr2Reg[Species::Basal].begin());
 	}
 	else {
 		// Project on V
 		cl1RR[vIndex] = Ival(cl1Reg[Species::V].begin() +
-				cl1Reg[Species::Basal].begin() - cl1Reg[Species::I].end() + 2,
+				cl1Reg[Species::Basal].begin() - cl1Reg[Species::I].end() + 1,
 			cl1Reg[Species::V].end() + cl1Reg[Species::Basal].end() -
 				cl1Reg[Species::I].begin() - 1);
-		cl2RR[vIndex] = Ival(cl1Reg[Species::V].begin() +
-				cl1Reg[Species::Basal].begin() - cl1Reg[Species::I].end() + 2,
-			cl1Reg[Species::V].end() + cl1Reg[Species::Basal].end() -
-				cl1Reg[Species::I].begin() - 1);
+		cl2RR[vIndex] = Ival(cl2Reg[Species::V].begin() +
+				cl2Reg[Species::Basal].begin() - cl2Reg[Species::I].end() + 1,
+			cl2Reg[Species::V].end() + cl2Reg[Species::Basal].end() -
+				cl2Reg[Species::I].begin() - 1);
 		pr1RR[vIndex] = Ival(pr1Reg[Species::V].begin() +
-				pr1Reg[Species::Basal].begin() - pr1Reg[Species::I].end() + 2,
+				pr1Reg[Species::Basal].begin() - pr1Reg[Species::I].end() + 1,
 			pr1Reg[Species::V].end() + pr1Reg[Species::Basal].end() -
 				pr1Reg[Species::I].begin() - 1);
 		pr2RR[vIndex] = Ival(pr2Reg[Species::V].begin() +
-				pr2Reg[Species::Basal].begin() - pr2Reg[Species::I].end() + 2,
+				pr2Reg[Species::Basal].begin() - pr2Reg[Species::I].end() + 1,
 			pr2Reg[Species::V].end() + pr2Reg[Species::Basal].end() -
 				pr2Reg[Species::I].begin() - 1);
 	}

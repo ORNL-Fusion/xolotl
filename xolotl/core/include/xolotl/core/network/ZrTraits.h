@@ -25,7 +25,7 @@ class ZrClusterUpdater;
 enum class ZrSpecies
 {
 	V,
-    Basal,
+	Basal,
 	I
 };
 
