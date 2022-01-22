@@ -30,9 +30,9 @@ auto zrNetworkGenerator = [](const options::IOptions& options) {
 	*/
 
 	// adding basal
-	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxV, 0, maxI};
+	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxV, maxV, maxI};
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
-		{maxV + 1, 0 + 1, maxI + 1}};
+		{maxV + 1, maxV + 1, maxI + 1}};
 
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
