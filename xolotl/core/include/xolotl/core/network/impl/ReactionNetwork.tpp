@@ -749,11 +749,12 @@ ReactionNetworkWorker<TImpl>::getTotalConcentration(
 	Kokkos::parallel_reduce(
 		"ReactionNetworkWorker::getTotalConcentration", _nw._numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			using util::max;
 			const auto& clReg = tiles(i).getRegion();
-			const auto factor = clReg.volume() / clReg[type].length();
-			for (AmountType j : makeIntervalRange(clReg[type])) {
-				if (j >= minSize)
-					lsum += concentrations(i) * factor;
+			const auto& ival = clReg[type];
+			const auto factor = clReg.volume() / ival.length();
+			for (auto j = max(minSize, ival.begin()); j < ival.end(); ++j) {
+				lsum += concentrations(i) * factor;
 			}
 		},
 		conc);
@@ -774,12 +775,13 @@ ReactionNetworkWorker<TImpl>::getTotalRadiusConcentration(
 	Kokkos::parallel_reduce(
 		"ReactionNetworkWorker::getTotalRadiusConcentration", _nw._numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			using util::max;
 			const auto& clReg = tiles(i).getRegion();
-			const auto factor = clReg.volume() / clReg[type].length();
-			for (AmountType j : makeIntervalRange(clReg[type])) {
-				if (j >= minSize)
-					lsum += concentrations(i) *
-						clusterData().reactionRadius(i) * factor;
+			const auto& ival = clReg[type];
+			const auto factor = clReg.volume() / ival.length();
+			for (auto j = max(minSize, ival.begin()); j < ival.end(); ++j) {
+				lsum += concentrations(i) * clusterData().reactionRadius(i) *
+					factor;
 			}
 		},
 		conc);
@@ -799,11 +801,12 @@ ReactionNetworkWorker<TImpl>::getTotalAtomConcentration(
 	Kokkos::parallel_reduce(
 		"ReactionNetworkWorker::getTotalAtomConcentration", _nw._numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			using util::max;
 			const auto& clReg = tiles(i).getRegion();
-			const auto factor = clReg.volume() / clReg[type].length();
-			for (AmountType j : makeIntervalRange(clReg[type])) {
-				if (j >= minSize)
-					lsum += concentrations(i) * j * factor;
+			const auto& ival = clReg[type];
+			const auto factor = clReg.volume() / ival.length();
+			for (auto j = max(minSize, ival.begin()); j < ival.end(); ++j) {
+				lsum += concentrations(i) * j * factor;
 			}
 		},
 		conc);
@@ -824,19 +827,21 @@ ReactionNetworkWorker<TImpl>::getTotalVolumeFraction(
 	Kokkos::parallel_reduce(
 		"ReactionNetworkWorker::getTotalVolumeFraction", _nw._numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			using util::max;
 			const auto& clReg = tiles(i).getRegion();
-			const auto factor = clReg.volume() / clReg[type].length();
-			for (AmountType j : makeIntervalRange(clReg[type])) {
-				if (j >= minSize)
-					lsum += concentrations(i) *
-						pow(clusterData().reactionRadius(i), 3.0) * factor;
+			const auto& ival = clReg[type];
+			const auto factor = clReg.volume() / ival.length();
+			const auto rRad = clusterData().reactionRadius(i);
+			const auto rRad3 = rRad * rRad * rRad;
+			for (auto j = max(minSize, ival.begin()); j < ival.end(); ++j) {
+				lsum += concentrations(i) * rRad3 * factor;
 			}
 		},
 		conc);
 
 	Kokkos::fence();
 
-	double sphereFactor = 4.0 * ::xolotl::core::pi / 3.0;
+	constexpr double sphereFactor = 4.0 * ::xolotl::core::pi / 3.0;
 
 	return conc * sphereFactor;
 }
