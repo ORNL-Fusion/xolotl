@@ -23,7 +23,7 @@ NEClusterGenerator::refine(const Region& region, BoolArray& result) const
 	}
 	if (region[Species::Xe].length() <
 		util::max((double)(_groupingWidth + 1),
-			region[Species::Xe].begin() * 1.0e-2)) {
+			region[Species::Xe].begin() * 2.0e-2)) {
 		result[0] = false;
 		return false;
 	}
