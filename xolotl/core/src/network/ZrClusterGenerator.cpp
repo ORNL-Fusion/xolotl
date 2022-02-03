@@ -1,0 +1,24 @@
+#include <xolotl/core/network/ZrReactionNetwork.h>
+
+namespace xolotl
+{
+namespace core
+{
+namespace network
+{
+ZrClusterGenerator::ZrClusterGenerator(const options::IOptions& options) :
+	_maxV(options.getMaxV()),
+	_maxI(options.getMaxI())
+{
+}
+
+ZrClusterGenerator::ZrClusterGenerator(
+	const options::IOptions& options, std::size_t refineDepth) :
+	Superclass(refineDepth),
+	_maxV(options.getMaxV()),
+	_maxI(options.getMaxI())
+{
+}
+} // namespace network
+} // namespace core
+} // namespace xolotl

@@ -16,10 +16,6 @@ template ReactionNetwork<ZrReactionNetwork>::ReactionNetwork(
 	const std::vector<AmountType>& maxSpeciesAmounts, IndexType gridSize,
 	const options::IOptions& opts);
 
-template ReactionNetwork<ZrReactionNetwork>::Cluster<plsm::OnHost>
-ReactionNetwork<ZrReactionNetwork>::findCluster(
-	const Composition& comp, plsm::OnHost context);
-
 template double
 ReactionNetwork<ZrReactionNetwork>::getTotalConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);

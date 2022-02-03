@@ -201,7 +201,7 @@ PetscMonitor0D::setup()
 		outputFile.open("AlphaZr.dat", std::fstream::out);
 		outputFile << "#time_step time ";
 		for (auto i = 0; i < networkSize; i++) {
-			auto cluster = network.getCluster(i, plsm::onHost);
+			auto cluster = network.getCluster(i, plsm::HostMemSpace{});
 			const Region& clReg = cluster.getRegion();
 			Composition lo(clReg.getOrigin());
 			if (lo.isOnAxis(Spec::V))
@@ -211,9 +211,8 @@ PetscMonitor0D::setup()
 			// adding basal
 			else if (lo.isOnAxis(Spec::Basal))
 				outputFile << "Basal_" << lo[Spec::Basal] << " ";
+		}
 
-        }
-        
 		outputFile << std::endl;
 		outputFile.close();
 		// computeAlphaZr will be called at each timestep
@@ -754,7 +753,7 @@ PetscMonitor0D::monitorScatter(
 	for (auto i = 0; i < networkSize; i++) {
 		// Create a DataPoint with the concentration[i] as the value
 		// and add it to myPoints
-		auto cluster = network.getCluster(i, plsm::onHost);
+		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
 		const Region& clReg = cluster.getRegion();
 		for (auto j : makeIntervalRange(clReg[Spec::Xe])) {
 			viz::dataprovider::DataPoint aPoint;
@@ -846,7 +845,7 @@ PetscMonitor0D::monitorBubble(
 
 	// Consider each cluster.
 	for (auto i = 0; i < networkSize; i++) {
-		auto cluster = network.getCluster(i, plsm::onHost);
+		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
 		const Region& clReg = cluster.getRegion();
 		Composition lo = clReg.getOrigin();
 		Composition hi = clReg.getUpperLimitPoint();

@@ -9,20 +9,6 @@ namespace core
 {
 namespace network
 {
-ZrClusterGenerator::ZrClusterGenerator(const options::IOptions& options) :
-	_maxV(options.getMaxV()),
-	_maxI(options.getMaxI())
-{
-}
-
-ZrClusterGenerator::ZrClusterGenerator(
-	const options::IOptions& options, std::size_t refineDepth) :
-	Superclass(refineDepth),
-	_maxV(options.getMaxV()),
-	_maxI(options.getMaxI())
-{
-}
-
 KOKKOS_INLINE_FUNCTION
 bool
 ZrClusterGenerator::refine(const Region& region, BoolArray& result) const
@@ -189,16 +175,18 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	// adding basal
 	if (lo.isOnAxis(Species::Basal)) {
 		for (auto j : makeIntervalRange(reg[Species::Basal])) {
+			// Treat the case for faulted basal pyramids
+			// Estimate a spherical radius based on equivalent surface area
+			if (lo[Species::Basal] < basalTransitionSize) {
+				double Sb = pow(3, 0.5) / 2 * pow(3.232, 2) *
+					(double)j; // Basal surface area
+				double Sp = 3.232 / 2 *
+					pow(3 * pow(3.232, 2) + 4 * pow(5.17, 2), 0.5) *
+					(double)j; // Prismatic surface area
+				radius += pow((Sb + Sp) / (4 * pi), 0.5) / 10;
+			}
 
-            // Treat the case for faulted basal pyramids
-            // Estimate a spherical radius based on equivalent surface area
-            if (lo[Species::Basal] < basalTransitionSize){
-                double Sb = pow(3, 0.5) / 2 * pow(3.232, 2) * (double)j; //Basal surface area
-                double Sp = 3.232 / 2 * pow(3 * pow(3.232, 2) + 4 * pow(5.17, 2), 0.5) * (double)j; //Prismatic surface area
-                radius += pow((Sb + Sp) / (4 * pi), 0.5) / 10;
-            }
-
-            //Treat the case of a basal c-loop
+			// Treat the case of a basal c-loop
 			else
 				radius += 0.169587 * pow((double)j, 0.5);
 		}

@@ -2,7 +2,6 @@
 #include <ctime>
 #include <iostream>
 
-#include <xolotl/core/network/INetworkHandler.h>
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/factory/solver/SolverFactory.h>
 #include <xolotl/factory/viz/VizHandlerFactory.h>
@@ -139,7 +138,8 @@ try {
 		// The network needs the temperature for the rates
 		// TODO: this assumes constant temperature and 0D case
 		auto temperature = std::vector<double>(1, opts.getTempParam());
-		network.setTemperatures(temperature);
+		auto depths = std::vector<double>(1, 0.0);
+		network.setTemperatures(temperature, depths);
 
 		return;
 	}

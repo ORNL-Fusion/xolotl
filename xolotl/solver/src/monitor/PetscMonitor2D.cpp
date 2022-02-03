@@ -276,6 +276,7 @@ PetscMonitor2D::setup()
 
 	// Set the monitor to compute the helium retention
 	if (flagHeRetention) {
+		auto fluxHandler = _solverHandler->getFluxHandler();
 		// Get the previous time if concentrations were stored and initialize
 		// the fluence
 		if (hasConcentrations) {
@@ -284,8 +285,6 @@ PetscMonitor2D::setup()
 			// Get the previous time from the HDF5 file
 			double previousTime = lastTsGroup->readPreviousTime();
 			_solverHandler->setPreviousTime(previousTime);
-			// Initialize the fluence
-			auto fluxHandler = _solverHandler->getFluxHandler();
 			// Increment the fluence with the value at this current timestep
 			fluxHandler->computeFluence(previousTime);
 
@@ -380,6 +379,31 @@ PetscMonitor2D::setup()
 			outputFile << "Helium_burst Deuterium_burst Tritium_burst"
 					   << std::endl;
 			outputFile.close();
+
+			if (_solverHandler->temporalFlux()) {
+				// Open an additional file that will keep the flux evolution
+				outputFile.open("instantFlux.txt");
+				outputFile << "#time ";
+
+				// Get the generated clusters
+				auto indices = fluxHandler->getFluxIndices();
+
+				// Get the bounds
+				auto bounds = network.getAllClusterBounds();
+				// Loop on them
+				for (auto i : indices) {
+					for (auto id = core::network::SpeciesId(numSpecies); id;
+						 ++id) {
+						auto speciesName = network.getSpeciesName(id);
+						if (bounds[i][2 * id()] > 0)
+							outputFile << speciesName << "_"
+									   << bounds[i][2 * id()];
+					}
+					outputFile << " ";
+				}
+				outputFile << std::endl;
+				outputFile.close();
+			}
 		}
 	}
 
@@ -1069,6 +1093,21 @@ PetscMonitor2D::computeHeliumRetention(
 		outputFile << _nHeliumBurst << " " << _nDeuteriumBurst << " "
 				   << _nTritiumBurst << std::endl;
 		outputFile.close();
+
+		if (_solverHandler->temporalFlux()) {
+			// Open an additional file that will keep the flux evolution
+			outputFile.open("instantFlux.txt", std::ios::app);
+			outputFile << time << " ";
+			// Get the flux information
+			auto instantFlux = fluxHandler->getInstantFlux(time);
+			// Loop on it
+			for (auto flux : instantFlux) {
+				outputFile << flux << " ";
+			}
+
+			outputFile << std::endl;
+			outputFile.close();
+		}
 	}
 
 	// Restore the solutionArray
@@ -1135,7 +1174,7 @@ PetscMonitor2D::computeXenonRetention(
 	// Get Xe_1
 	Composition xeComp = Composition::zero();
 	xeComp[Spec::Xe] = 1;
-	auto xeCluster = network.findCluster(xeComp, plsm::onHost);
+	auto xeCluster = network.findCluster(xeComp, plsm::HostMemSpace{});
 	auto xeId = xeCluster.getId();
 
 	// Loop on the grid
@@ -1532,14 +1571,17 @@ PetscMonitor2D::eventFunction(
 			// the surface
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
-			double threshold = (62.8 - initialVConc) * hxLeft * hy;
+			double threshold =
+				(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy;
 			if (_nSurf[specIdI()][yj] > threshold) {
 				// The surface is moving
 				fvalue[0] = 0.0;
 			}
 
+			// Update the threshold for erosion (the cell size is not the same)
+			threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]) * hy;
 			// Moving the surface back
-			else if (_nSurf[specIdI()][yj] < -threshold / 10.0) {
+			if (_nSurf[specIdI()][yj] < -threshold * 0.9) {
 				// The surface is moving
 				fvalue[0] = 0.0;
 			}

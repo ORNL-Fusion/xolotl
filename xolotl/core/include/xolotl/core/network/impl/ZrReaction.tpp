@@ -37,7 +37,8 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	double Pl = 1.0; // Capture efficiency for diffusing defect
 	double Pli = 1.0; // Capture efficiency for interstitial a-loop
 	double Plv = 1.0; // Capture efficiency for vacancy a-loops
-    int basalTransitionSize = 91; // Transition from basal pyramid to flat c-loop
+	int basalTransitionSize =
+		91; // Transition from basal pyramid to flat c-loop
 
 	// Determine parameters based on cluster type and size
 	if (cl0IsV)
@@ -70,16 +71,28 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		// Calculate the capture efficiency (assuming only prismatic loops)
 		if (cl0IsV)
 			Pl = 0.78 * pow(p, -2) + 0.66 * p - 0.44;
-        else if (lo0.isOnAxis(Species::Basal)){
-            if (n0 < basalTransitionSize) alpha = 1.0; //Completely spherical
-            Pl = p;
-            }
+		else if (lo0.isOnAxis(Species::Basal)) {
+			if (n0 < basalTransitionSize)
+				alpha = 1.0; // Completely spherical
+			Pl = p;
+		}
 		else
 			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 
-        if (lo0.isOnAxis(Species::Basal) && (n0==91 || n0==90)){
-            std::cout << n0 << " " << n1 << " (" << lo0.isOnAxis(Species::V) << lo0.isOnAxis(Species::Basal) << lo0.isOnAxis(Species::I) << " " << lo1.isOnAxis(Species::V) << lo1.isOnAxis(Species::Basal) << lo1.isOnAxis(Species::I) << ") " <<  p << " " << Pl << " " << alpha << " " << rd << " " << r0 << " " << rateSpherical << " " << rateToroidal << " " << ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) * (dc0 + dc1) << "\n";
-        }
+		if (lo0.isOnAxis(Species::Basal) && (n0 == 91 || n0 == 90)) {
+			std::cout << n0 << " " << n1 << " (" << lo0.isOnAxis(Species::V)
+					  << lo0.isOnAxis(Species::Basal)
+					  << lo0.isOnAxis(Species::I) << " "
+					  << lo1.isOnAxis(Species::V)
+					  << lo1.isOnAxis(Species::Basal)
+					  << lo1.isOnAxis(Species::I) << ") " << p << " " << Pl
+					  << " " << alpha << " " << rd << " " << r0 << " "
+					  << rateSpherical << " " << rateToroidal << " "
+					  << ((1 - alpha) * rateToroidal * Pl +
+							 alpha * rateSpherical) *
+					(dc0 + dc1)
+					  << "\n";
+		}
 
 		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
 			(dc0 + dc1);
@@ -98,28 +111,42 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		// Calculate the capture efficiency (assuming only prismatic loops)
 		if (cl1IsV)
 			Pl = 0.78 * pow(p, -2) + 0.66 * p - 0.44;
-        else if (lo1.isOnAxis(Species::Basal)) {
-            if (n1 < basalTransitionSize) alpha = 1.0; //Completely spherical
-            Pl = p;
-            }
+		else if (lo1.isOnAxis(Species::Basal)) {
+			if (n1 < basalTransitionSize)
+				alpha = 1.0; // Completely spherical
+			Pl = p;
+		}
 		else
 			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 
-        if (lo1.isOnAxis(Species::Basal) && (n1==91 || n1==90)){
-
-            std::cout << n0 << " " << n1 << " (" << lo0.isOnAxis(Species::V) << lo0.isOnAxis(Species::Basal) << lo0.isOnAxis(Species::I) << " " << lo1.isOnAxis(Species::V) << lo1.isOnAxis(Species::Basal) << lo1.isOnAxis(Species::I) << ") " <<  p << " " << Pl << " " << alpha << " " << rd << " " << r1 << " " << rateSpherical << " " << rateToroidal << " " <<((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) * (dc0 + dc1) << "\n";
-        }
+		if (lo1.isOnAxis(Species::Basal) && (n1 == 91 || n1 == 90)) {
+			std::cout << n0 << " " << n1 << " (" << lo0.isOnAxis(Species::V)
+					  << lo0.isOnAxis(Species::Basal)
+					  << lo0.isOnAxis(Species::I) << " "
+					  << lo1.isOnAxis(Species::V)
+					  << lo1.isOnAxis(Species::Basal)
+					  << lo1.isOnAxis(Species::I) << ") " << p << " " << Pl
+					  << " " << alpha << " " << rd << " " << r1 << " "
+					  << rateSpherical << " " << rateToroidal << " "
+					  << ((1 - alpha) * rateToroidal * Pl +
+							 alpha * rateSpherical) *
+					(dc0 + dc1)
+					  << "\n";
+		}
 
 		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
 			(dc0 + dc1);
 	}
 
-    /*
-    if (lo1.isOnAxis(Species::Basal)){
+	/*
+	if (lo1.isOnAxis(Species::Basal)){
 
-    std::cout << n0 << " " << n1 << " (" << lo0.isOnAxis(Species::V) << lo0.isOnAxis(Species::Basal) << lo0.isOnAxis(Species::I) << " " << lo1.isOnAxis(Species::V) << lo1.isOnAxis(Species::Basal) << lo1.isOnAxis(Species::I) << ") " <<  zs * (dc0 + dc1) << "\n";
-    }
-    */
+	std::cout << n0 << " " << n1 << " (" << lo0.isOnAxis(Species::V) <<
+	lo0.isOnAxis(Species::Basal) << lo0.isOnAxis(Species::I) << " " <<
+	lo1.isOnAxis(Species::V) << lo1.isOnAxis(Species::Basal) <<
+	lo1.isOnAxis(Species::I) << ") " <<  zs * (dc0 + dc1) << "\n";
+	}
+	*/
 
 	// None of the clusters are loops (interaction is based on spherical volume)
 	return zs * (dc0 + dc1);
@@ -237,18 +264,23 @@ ZrDissociationReaction::computeBindingEnergy()
 			*/
 			else
 				be = 2.03 - 3.4 * (pow(n, 0.70) - pow(n - 1.0, 0.70));
-            if (n > 18) be = be * 1.01;
+			if (n > 18)
+				be = be * 1.01;
 		}
 	}
 
 	// adding basal
 	else if (lo.isOnAxis(Species::Basal)) {
-        double n = (double)(lo[Species::Basal] + hi[Species::Basal] - 1) / 2.0;
-        if (prod1Comp.isOnAxis(Species::Basal) || prod2Comp.isOnAxis(Species::Basal)) {
-            if (n < 6) be = 2.03 - 2.0 * (pow(n, 0.87) - pow(n - 1.0, 0.87));
-            else if (n < 177) be = 2.03 - 2.5 * (pow(n, 0.78) - pow(n - 1.0, 0.78));
-            else be = 2.03 - 3.7 * (pow(n, 0.72) - pow(n - 1.0, 0.72));
-        }
+		double n = (double)(lo[Species::Basal] + hi[Species::Basal] - 1) / 2.0;
+		if (prod1Comp.isOnAxis(Species::Basal) ||
+			prod2Comp.isOnAxis(Species::Basal)) {
+			if (n < 6)
+				be = 2.03 - 2.0 * (pow(n, 0.87) - pow(n - 1.0, 0.87));
+			else if (n < 177)
+				be = 2.03 - 2.5 * (pow(n, 0.78) - pow(n - 1.0, 0.78));
+			else
+				be = 2.03 - 3.7 * (pow(n, 0.72) - pow(n - 1.0, 0.72));
+		}
 	}
 
 	else if (lo.isOnAxis(Species::I)) {
@@ -258,11 +290,11 @@ ZrDissociationReaction::computeBindingEnergy()
 				be = 2.94 - 2.8 * (pow(n, 0.81) - pow(n - 1.0, 0.81));
 			else
 				be = 2.94 - 4.6 * (pow(n, 0.66) - pow(n - 1.0, 0.66));
-            be = be * 0.99;
+			be = be * 0.99;
 		}
 	}
 
-    return util::max(0.1, be);
+	return util::max(0.1, be);
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -281,7 +313,6 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 	Composition lo = clReg.getOrigin();
 
 	if (lo.isOnAxis(Species::V)) {
-
 		return dc * 1.0 *
 			(::xolotl::core::alphaZrCSinkStrength * anisotropy +
 				::xolotl::core::alphaZrASinkStrength /
@@ -292,7 +323,6 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 	// lines The anisotropy factor is assumed equal to 1.0 in this case
 	else if (lo.isOnAxis(Species::I)) {
 		if (lo[Species::I] < 9) {
-
 			return dc * 1.1 *
 				(::xolotl::core::alphaZrCSinkStrength * anisotropy +
 					::xolotl::core::alphaZrASinkStrength /

@@ -38,7 +38,6 @@ auto zrNetworkGenerator = [](const options::IOptions& options) {
 		maxSpeciesAmounts, subdivRatios, 1, options);
 
 	network->syncClusterDataOnHost();
-	network->getSubpaving().syncZones(plsm::onHost);
 
 	return network;
 };

@@ -4,12 +4,10 @@
  *  Created on: May 6, 2013
  *      Author: bkj
  */
+#pragma once
 
 #include <cmath>
 #include <memory>
-
-#ifndef CONSTANTS_H_
-#define CONSTANTS_H_
 
 namespace xolotl
 {
@@ -99,4 +97,3 @@ constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
 
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif /* CONSTANTS_H_ */
