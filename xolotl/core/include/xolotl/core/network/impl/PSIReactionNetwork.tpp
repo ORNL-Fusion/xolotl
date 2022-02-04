@@ -57,6 +57,7 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
 
 	this->_clusterData.h_view().extraData.trapMutationData.initialize();
 	this->copyClusterDataView();
+	this->invalidateDataMirror();
 }
 
 template <typename TSpeciesEnum>
@@ -97,6 +98,8 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	auto vSizes = Kokkos::View<const AmountType[7], HostSpace, MemoryUnmanaged>(
 		_tmHandler->getVacancySizes().data());
 	deep_copy(tmData.tmVSizes, vSizes);
+
+	this->invalidateDataMirror();
 }
 
 template <typename TSpeciesEnum>
@@ -118,6 +121,10 @@ PSIReactionNetwork<TSpeciesEnum>::selectTrapMutationReactions(
 		}
 	}
 	deep_copy(tmData.tmEnabled, enable);
+
+	// NOTE:
+	// Not calling invalidateDataMirror() here because this change should
+	// only matter to reactions on-device
 }
 
 template <typename TSpeciesEnum>
@@ -295,6 +302,10 @@ PSIReactionNetwork<TSpeciesEnum>::updateTrapMutationDisappearingRate(
 		auto mirror = create_mirror_view(tmData.currentDisappearingRate);
 		mirror() = exp(-4.0 * totalTrappedHeliumConc);
 		deep_copy(tmData.currentDisappearingRate, mirror);
+
+		// NOTE:
+		// Not calling invalidateDataMirror() here because this change should
+		// only matter to reactions on-device
 	}
 }
 
@@ -311,6 +322,10 @@ PSIReactionNetwork<TSpeciesEnum>::updateDesorptionLeftSideRate(
 	auto lsRate = create_mirror_view(tmData.currentDesorpLeftSideRate);
 	lsRate() = this->getLeftSideRate(concentrations, desorp().id, gridIndex);
 	deep_copy(tmData.currentDesorpLeftSideRate, lsRate);
+
+	// NOTE:
+	// Not calling invalidateDataMirror() here because this change should
+	// only matter to reactions on-device
 }
 
 template <typename TSpeciesEnum>
