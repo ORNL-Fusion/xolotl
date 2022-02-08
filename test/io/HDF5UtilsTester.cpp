@@ -85,7 +85,6 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 	// Get the size of the network
 	int networkSize = network.getNumClusters();
 
@@ -281,7 +280,8 @@ BOOST_AUTO_TEST_CASE(checkIO)
 			BOOST_REQUIRE_EQUAL(cluster.getDiffusionFactor(), diffusionFactor);
 
 			// Check the bounds
-			const auto& clReg = network.getCluster(i, plsm::onHost).getRegion();
+			const auto& clReg =
+				network.getCluster(i, plsm::HostMemSpace{}).getRegion();
 			NetworkType::Composition lo = clReg.getOrigin();
 			NetworkType::Composition hi = clReg.getUpperLimitPoint();
 			for (auto j : speciesRange) {

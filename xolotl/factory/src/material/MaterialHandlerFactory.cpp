@@ -9,7 +9,7 @@ using core::material::IMaterialHandler;
 using material::MaterialHandlerFactory;
 
 template MaterialHandlerFactory&
-Factory<MaterialHandlerFactory, IMaterialHandler>::get();
+Factory<MaterialHandlerFactory, IMaterialHandler>::get(const UserInitializer&);
 
 template std::shared_ptr<IMaterialHandler>
 Factory<MaterialHandlerFactory, IMaterialHandler>::generate(

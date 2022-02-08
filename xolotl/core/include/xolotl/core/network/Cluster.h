@@ -88,16 +88,16 @@ private:
 /**
  * @brief Class for cluster properties common to every type of clusters.
  *
- * @tparam PlsmContext Host or Device
+ * @tparam MemSpace plsm::HostMemSpace or plsm::DeviceMemSpace
  */
-template <typename PlsmContext>
-class ClusterCommon : public ClusterBase<ClusterCommon<PlsmContext>>
+template <typename MemSpace>
+class ClusterCommon : public ClusterBase<ClusterCommon<MemSpace>>
 {
-	friend class ClusterBase<ClusterCommon<PlsmContext>>;
+	friend class ClusterBase<ClusterCommon<MemSpace>>;
 
 public:
-	using Superclass = ClusterBase<ClusterCommon<PlsmContext>>;
-	using ClusterData = detail::ClusterDataCommon<PlsmContext>;
+	using Superclass = ClusterBase<ClusterCommon<MemSpace>>;
+	using ClusterData = detail::ClusterDataCommon<MemSpace>;
 	using IndexType = typename Superclass::IndexType;
 
 	ClusterCommon() = delete;
@@ -117,20 +117,20 @@ private:
  * @brief Network specific cluster class.
  *
  * @tparam TNetwork Network type
- * @tparam PlsmContext Host or Device
+ * @tparam MemSpace plsm::HostMemSpace or plsm::DeviceMemSpace
  */
-template <typename TNetwork, typename PlsmContext>
-class Cluster : public ClusterBase<Cluster<TNetwork, PlsmContext>>
+template <typename TNetwork, typename MemSpace>
+class Cluster : public ClusterBase<Cluster<TNetwork, MemSpace>>
 {
 	friend class ClusterBase<Cluster>;
 
 	using Types = detail::ReactionNetworkTypes<TNetwork>;
 
 public:
-	using Superclass = ClusterBase<Cluster<TNetwork, PlsmContext>>;
+	using Superclass = ClusterBase<Cluster<TNetwork, MemSpace>>;
 	using Subpaving = typename Types::Subpaving;
 	using Region = typename Subpaving::RegionType;
-	using ClusterData = detail::ClusterData<TNetwork, PlsmContext>;
+	using ClusterData = detail::ClusterData<TNetwork, MemSpace>;
 	using IndexType = typename Superclass::IndexType;
 	using Composition = typename Types::Composition;
 

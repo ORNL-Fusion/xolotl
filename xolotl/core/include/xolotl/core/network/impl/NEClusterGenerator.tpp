@@ -9,28 +9,6 @@ namespace core
 {
 namespace network
 {
-NEClusterGenerator::NEClusterGenerator(const options::IOptions& opts) :
-	_maxXe(opts.getMaxImpurity()),
-	_xeDiffusivity(opts.getXenonDiffusivity()),
-	_xeDiffusive(_xeDiffusivity > 0.0),
-	_groupingMin(opts.getGroupingMin()),
-	_groupingWidth(opts.getGroupingWidthA()),
-	_density(opts.getDensity())
-{
-}
-
-NEClusterGenerator::NEClusterGenerator(
-	const options::IOptions& opts, std::size_t refineDepth) :
-	Superclass(refineDepth),
-	_maxXe(opts.getMaxImpurity()),
-	_xeDiffusivity(opts.getXenonDiffusivity()),
-	_xeDiffusive(_xeDiffusivity > 0.0),
-	_groupingMin(opts.getGroupingMin()),
-	_groupingWidth(opts.getGroupingWidthA()),
-	_density(opts.getDensity())
-{
-}
-
 KOKKOS_INLINE_FUNCTION
 bool
 NEClusterGenerator::refine(const Region& region, BoolArray& result) const
@@ -45,7 +23,7 @@ NEClusterGenerator::refine(const Region& region, BoolArray& result) const
 	}
 	if (region[Species::Xe].length() <
 		util::max((double)(_groupingWidth + 1),
-			region[Species::Xe].begin() * 1.0e-2)) {
+			region[Species::Xe].begin() * 2.0e-2)) {
 		result[0] = false;
 		return false;
 	}

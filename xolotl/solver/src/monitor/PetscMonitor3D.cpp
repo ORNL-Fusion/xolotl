@@ -1257,7 +1257,7 @@ PetscMonitor3D::computeXenonRetention(
 	// Get Xe_1
 	Composition xeComp = Composition::zero();
 	xeComp[Spec::Xe] = 1;
-	auto xeCluster = network.findCluster(xeComp, plsm::onHost);
+	auto xeCluster = network.findCluster(xeComp, plsm::HostMemSpace{});
 	auto xeId = xeCluster.getId();
 
 	// Loop on the grid

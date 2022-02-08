@@ -48,7 +48,7 @@ endif()
 ## plsm
 include(SetupPlsm)
 list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
-find_package(plsm 1.1 REQUIRED)
+find_package(plsm 2.0 REQUIRED)
 
 ## PAPI
 find_package(PAPI)
@@ -66,11 +66,18 @@ include(XolotlExtraTesting)
 
 ## xolotl
 set(XOLOTL_USE_64BIT_INDEX_TYPE ${Xolotl_USE_64BIT_INDEX_TYPE} CACHE INTERNAL "")
+option(Xolotl_INCLUDE_RN_TPP_FILES
+    "If enabled, always include reaction network template instantiation functions with headers"
+    OFF
+)
+set(XOLOTL_INCLUDE_RN_TPP_FILES ${Xolotl_INCLUDE_RN_TPP_FILES})
 add_subdirectory(xolotl)
 
 ## xconv
 add_subdirectory(xconv)
 
+## testing
 add_subdirectory(test)
 
+## documentation
 add_subdirectory(doc)
