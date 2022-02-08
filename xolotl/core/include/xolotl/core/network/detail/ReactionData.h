@@ -39,12 +39,21 @@ struct ReactionData
 	ReactionData() = default;
 
 	ReactionData(IndexType nReactions, IndexType gridSize,
+		IndexType numClusters, bool readRates,
 		const Kokkos::Array<IndexType, numReactionTypes + 1>& rBeginIds) :
 		numReactions(nReactions),
 		widths("Reaction Widths", numReactions, numSpeciesNoI),
 		rates("Reaction Rates", numReactions, gridSize),
 		reactionBeginIndices(rBeginIds)
 	{
+		if (readRates)
+			reactionEnergies = Kokkos::View<double***>("Reaction Energies",
+				numClusters, numClusters + 1,
+				numClusters + 1); // In case the second cluster or product has
+								  // invalid index
+		else
+			reactionEnergies =
+				Kokkos::View<double***>("Reaction Energies", 0, 0, 0);
 	}
 
 	std::uint64_t
@@ -77,6 +86,7 @@ struct ReactionData
 	Kokkos::View<double**> rates;
 	Kokkos::Array<IndexType, numReactionTypes + 1> reactionBeginIndices;
 	Kokkos::Array<CoefficientsView, numReactionTypes> coeffs;
+	Kokkos::View<double***> reactionEnergies;
 };
 
 template <typename TNetwork>
@@ -95,7 +105,8 @@ struct ReactionDataRef
 	ReactionDataRef(const ReactionData<NetworkType>& data) :
 		widths(data.widths),
 		rates(data.rates),
-		reactionBeginIndices(data.reactionBeginIndices)
+		reactionBeginIndices(data.reactionBeginIndices),
+		reactionEnergies(data.reactionEnergies)
 	{
 		for (std::size_t r = 0; r < numReactionTypes; ++r) {
 			coeffs[r] = data.coeffs[r];
@@ -135,6 +146,7 @@ struct ReactionDataRef
 	Kokkos::View<double**, Kokkos::MemoryUnmanaged> rates;
 	Kokkos::Array<IndexType, numReactionTypes + 1> reactionBeginIndices;
 	Kokkos::Array<CoefficientsViewUnmanaged, numReactionTypes> coeffs;
+	Kokkos::View<double***, Kokkos::MemoryUnmanaged> reactionEnergies;
 };
 } // namespace detail
 } // namespace network

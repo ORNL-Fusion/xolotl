@@ -59,8 +59,7 @@ ClusterDataCommon<PlsmContext>::ClusterDataCommon(
 template <typename PlsmContext>
 template <typename TClusterDataCommon>
 inline void
-ClusterDataCommon<PlsmContext>::deepCopy(
-	const TClusterDataCommon& data)
+ClusterDataCommon<PlsmContext>::deepCopy(const TClusterDataCommon& data)
 {
 	deep_copy(_floatVals, data._floatVals);
 	deep_copy(_boolVals, data._boolVals);
@@ -74,8 +73,7 @@ ClusterDataCommon<PlsmContext>::deepCopy(
 
 template <typename PlsmContext>
 inline std::uint64_t
-ClusterDataCommon<PlsmContext>::getDeviceMemorySize()
-	const noexcept
+ClusterDataCommon<PlsmContext>::getDeviceMemorySize() const noexcept
 {
 	std::uint64_t ret = 0;
 
@@ -127,8 +125,7 @@ ClusterData<TNetwork, PlsmContext>::ClusterData(
 template <typename TNetwork, typename PlsmContext>
 template <typename TClusterData>
 inline void
-ClusterData<TNetwork, PlsmContext>::deepCopy(
-	const TClusterData& data)
+ClusterData<TNetwork, PlsmContext>::deepCopy(const TClusterData& data)
 {
 	Superclass::deepCopy(data);
 
@@ -140,8 +137,7 @@ ClusterData<TNetwork, PlsmContext>::deepCopy(
 
 template <typename TNetwork, typename PlsmContext>
 inline std::uint64_t
-ClusterData<TNetwork, PlsmContext>::getDeviceMemorySize()
-	const noexcept
+ClusterData<TNetwork, PlsmContext>::getDeviceMemorySize() const noexcept
 {
 	std::uint64_t ret = Superclass::getDeviceMemorySize();
 
@@ -154,9 +150,8 @@ ClusterData<TNetwork, PlsmContext>::getDeviceMemorySize()
 
 template <typename TNetwork, typename PlsmContext>
 inline void
-ClusterData<TNetwork, PlsmContext>::generate(
-	const ClusterGenerator& generator, double latticeParameter,
-	double interstitialBias, double impurityRadius)
+ClusterData<TNetwork, PlsmContext>::generate(const ClusterGenerator& generator,
+	double latticeParameter, double interstitialBias, double impurityRadius)
 {
 	auto data = *this;
 	Kokkos::parallel_for(

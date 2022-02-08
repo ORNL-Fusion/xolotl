@@ -51,6 +51,12 @@ private:
 
 	detail::FeReactionGenerator
 	getReactionGenerator() const noexcept;
+
+	void
+	readReactions(double temperature, const std::string filename)
+	{
+		return;
+	}
 };
 
 namespace detail

@@ -31,6 +31,170 @@ NEReactionNetwork::checkImpurityRadius(double impurityRadius)
 	return impurityRadius;
 }
 
+void
+NEReactionNetwork::readReactions(double temperature, const std::string filename)
+{
+	// Read the reactions from a file
+	std::ifstream reactionFile;
+	reactionFile.open(filename);
+	if (!reactionFile.good()) {
+		this->_reactionEnergies =
+			Kokkos::View<double***>("reactionEnergies", 0, 0, 0);
+		return;
+	}
+	auto clData = _clusterData.h_view;
+
+	auto nClusters = this->_numClusters;
+	this->_reactionEnergies =
+		Kokkos::View<double***>("reactionEnergies", nClusters, nClusters + 1,
+			nClusters +
+				1); // In case the second cluster or product has invalid index
+	auto reactionEnergies = Kokkos::create_mirror_view(this->_reactionEnergies);
+	auto constantRates =
+		Kokkos::create_mirror_view(clData().extraData.constantRates);
+
+	auto& subpaving = this->getSubpaving();
+
+	subpaving.syncAll();
+
+	// The first loop will be on single clusters to get their properties
+	std::vector<double> mVector(nClusters, 0.0);
+	std::vector<double> g0Vector(nClusters, 0.0);
+	std::vector<std::vector<std::pair<double, double>>> lVector(
+		nClusters, std::vector<std::pair<double, double>>());
+	constexpr double k_B = ::xolotl::core::kBoltzmann;
+
+	// Build an input stream from the string
+	util::TokenizedLineReader<double> reader;
+	// Get the line
+	std::string line;
+	getline(reactionFile, line);
+	auto lineSS = std::make_shared<std::istringstream>(line);
+	reader.setInputStream(lineSS);
+	// Read the first line
+	auto tokens = reader.loadLine();
+	// And start looping on the lines
+	while (tokens.size() > 0) {
+		// Find the Id of the cluster
+		Composition comp = Composition::zero();
+		comp[Species::Xe] = static_cast<IndexType>(tokens[0]);
+		comp[Species::V] = static_cast<IndexType>(tokens[1]);
+		comp[Species::I] = static_cast<IndexType>(tokens[2]);
+		auto rId = findCluster(comp, plsm::onHost).getId();
+
+		// Get its properties and save it
+		auto g0 = tokens[3];
+		auto mobility = tokens[4];
+		g0Vector[rId] = g0;
+		mVector[rId] = mobility;
+		// Compute the thermal equilibrium
+		auto theq = exp(-g0 / (k_B * temperature));
+
+		// Loop on the linked clusters
+		for (auto i = 5; i < tokens.size(); i += 2) {
+			// Get its properties
+			auto g0Linked = tokens[i];
+			auto mobilityLinked = tokens[i + 1];
+			// Compute its thermal equilibrium
+			auto theqLinked = exp(-g0Linked / (k_B * temperature));
+			// Save the linkage information
+			std::pair<double, double> linkage(
+				mobilityLinked, theqLinked / theq);
+			lVector[rId].push_back(linkage);
+		}
+
+		getline(reactionFile, line);
+		if (line == "Reactions")
+			break;
+
+		lineSS = std::make_shared<std::istringstream>(line);
+		reader.setInputStream(lineSS);
+		tokens = reader.loadLine();
+	}
+
+	// Now we need to loop on the reactions to set their rates
+	getline(reactionFile, line);
+	lineSS = std::make_shared<std::istringstream>(line);
+	reader.setInputStream(lineSS);
+	// Read the next line
+	tokens = reader.loadLine();
+	// And start looping on the lines
+	while (tokens.size() > 0) {
+		// Find the Id of the first reactant
+		Composition comp = Composition::zero();
+		comp[Species::Xe] = static_cast<IndexType>(tokens[0]);
+		comp[Species::V] = static_cast<IndexType>(tokens[1]);
+		comp[Species::I] = static_cast<IndexType>(tokens[2]);
+		auto r1Id = findCluster(comp, plsm::onHost).getId();
+
+		// Sink case
+		if (tokens.size() == 4) {
+			// Get the coefficient rate
+			auto coefRate = tokens[3];
+			// Compute the full given rate for this sink
+			auto linkageRate = mVector[r1Id];
+			// Loop on the linked clusters
+			for (auto link : lVector[r1Id]) {
+				linkageRate += link.first * link.second;
+			}
+			// Save the value
+			constantRates(r1Id, nClusters) =
+				coefRate * k_B * temperature * linkageRate;
+			// Save the energy for this reaction
+			reactionEnergies(r1Id, nClusters, nClusters) = -g0Vector[r1Id];
+		}
+		// Production case
+		else {
+			comp[Species::Xe] = static_cast<IndexType>(tokens[3]);
+			comp[Species::V] = static_cast<IndexType>(tokens[4]);
+			comp[Species::I] = static_cast<IndexType>(tokens[5]);
+			auto r2Id = findCluster(comp, plsm::onHost).getId();
+
+			comp[Species::Xe] = static_cast<IndexType>(tokens[6]);
+			comp[Species::V] = static_cast<IndexType>(tokens[7]);
+			comp[Species::I] = static_cast<IndexType>(tokens[8]);
+			auto prodId = findCluster(comp, plsm::onHost).getId();
+
+			// Get the coefficient rate
+			auto coefRate = tokens[9];
+			// Compute the base rate for this reaction
+			auto linkageRate = mVector[r1Id] + mVector[r2Id];
+			// Save the value to the left
+			auto totalRate = coefRate * k_B * temperature * linkageRate;
+			// Loop on the linked clusters
+			for (auto link2 : lVector[r2Id]) {
+				linkageRate += (link2.first + mVector[r1Id]) * link2.second;
+				for (auto link1 : lVector[r1Id]) {
+					linkageRate += (link2.first) * link2.second * link1.second;
+				}
+			}
+			//			for (auto link2 : lVector[r2Id]) {
+			//				linkageRate += (mVector[r1Id] + link2.first) *
+			// link2.second;
+			//			}
+			// Save the value to the right
+			totalRate = coefRate * k_B * temperature * linkageRate;
+			constantRates(r1Id, r2Id) = totalRate;
+			constantRates(r2Id, r1Id) = totalRate;
+
+			// Save the energy for this reaction
+			double energy = -g0Vector[r1Id] - g0Vector[r2Id];
+			if (prodId != this->invalidIndex())
+				energy += g0Vector[prodId];
+			reactionEnergies(r1Id, r2Id, 0) = energy;
+			reactionEnergies(r2Id, r1Id, 0) = energy;
+		}
+
+		getline(reactionFile, line);
+		lineSS = std::make_shared<std::istringstream>(line);
+		reader.setInputStream(lineSS);
+		tokens = reader.loadLine();
+	}
+
+	deep_copy(this->_reactionEnergies, reactionEnergies);
+	deep_copy(clData().extraData.constantRates, constantRates);
+}
+
 NEReactionNetwork::IndexType
 NEReactionNetwork::checkLargestClusterId()
 {
@@ -55,6 +219,18 @@ NEReactionNetwork::checkLargestClusterId()
 	return maxLoc.loc;
 }
 
+void
+NEReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
+{
+	if (!this->_enableReadRates) {
+		return;
+	}
+
+	this->_clusterData.h_view().extraData.initialize(
+		this->_clusterData.h_view().numClusters);
+	this->copyClusterDataView();
+}
+
 namespace detail
 {
 template <typename TTag>
@@ -71,11 +247,11 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
 	constexpr auto invalidIndex = NetworkType::invalidIndex();
 
+	auto numClusters = this->getNumberOfClusters();
+
 	if (i == j) {
 		addSinks(i, tag);
 	}
-
-	auto numClusters = this->getNumberOfClusters();
 
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
@@ -106,7 +282,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
 			if (vProdId != invalidIndex) {
 				this->addProductionReaction(tag, {i, j, vProdId});
-				// No dissociation
+				this->addDissociationReaction(tag, {vProdId, i, j});
 			}
 		}
 		else if (prodSize < 0) {
@@ -116,7 +292,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
 			if (iProdId != invalidIndex) {
 				this->addProductionReaction(tag, {i, j, iProdId});
-				// No dissociation
+				this->addDissociationReaction(tag, {iProdId, i, j});
 			}
 		}
 		else {
@@ -155,7 +331,6 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	}
 
 	// Look for potential product
-	IndexType nProd = 0;
 	for (IndexType k = 0; k < numClusters; ++k) {
 		// Get the composition
 		const auto& prodReg = this->getCluster(k).getRegion();
@@ -211,7 +386,7 @@ NEReactionGenerator::addSinks(IndexType i, TTag tag) const
 	}
 
 	// V
-	if (clReg.isSimplex() && lo.isOnAxis(Species::V) && lo[Species::V] < 2) {
+	if (clReg.isSimplex() && lo.isOnAxis(Species::V)) {
 		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
 	}
 }
@@ -220,9 +395,11 @@ inline ReactionCollection<NEReactionGenerator::NetworkType>
 NEReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
+		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
 		this->getReSolutionReactions(), this->getNucleationReactions(),
 		this->getSinkReactions());
+	ret._data.reactionEnergies = this->_reactionEnergies;
 	return ret;
 }
 } // namespace detail

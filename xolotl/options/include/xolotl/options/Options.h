@@ -282,6 +282,11 @@ protected:
 	 */
 	fs::path fluxDepthProfileFilePath;
 
+	/**
+	 * The path to the reaction rates file
+	 */
+	fs::path reactionFilePath;
+
 public:
 	/**
 	 * The constructor.
@@ -827,6 +832,15 @@ public:
 	getFluxDepthProfileFilePath() const override
 	{
 		return fluxDepthProfileFilePath.string();
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual std::string
+	getReactionFilePath() const override
+	{
+		return reactionFilePath.string();
 	}
 };
 // end class Options

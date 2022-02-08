@@ -211,6 +211,9 @@ public:
 	setEnableReducedJacobian(bool reduced) override;
 
 	void
+	setEnableReadRates(bool read) override;
+
+	void
 	setGridSize(IndexType gridSize) override;
 
 	void
@@ -495,6 +498,10 @@ private:
 	generateClusterData(const ClusterGenerator& generator);
 
 	void
+	readReactions(
+		double temperature, const std::string filename = "reactionRates.txt");
+
+	void
 	defineReactions(Connectivity& connectivity);
 
 	void
@@ -525,6 +532,9 @@ protected:
 	ReactionCollection _reactions;
 
 	std::map<std::string, SpeciesId> _speciesLabelMap;
+
+	// Reaction energies
+	Kokkos::View<double***> _reactionEnergies;
 };
 
 namespace detail

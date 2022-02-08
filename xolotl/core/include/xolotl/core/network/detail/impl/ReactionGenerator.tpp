@@ -16,10 +16,12 @@ ReactionGeneratorBase<TNetwork, TDerived>::ReactionGeneratorBase(
 	_clusterDataView(network._clusterData.d_view),
 	_numDOFs(network.getDOF()),
 	_enableReducedJacobian(network.getEnableReducedJacobian()),
+	_enableReadRates(network.getEnableReadRates()),
 	_clusterProdReactionCounts(
 		"Production Reaction Counts", _clusterData.numClusters),
 	_clusterDissReactionCounts(
-		"Dissociation Reaction Counts", _clusterData.numClusters)
+		"Dissociation Reaction Counts", _clusterData.numClusters),
+	_reactionEnergies(network._reactionEnergies)
 {
 }
 
@@ -37,9 +39,6 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 			if (j < i) {
 				return;
 			}
-			if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-				return;
-			}
 			generator(i, j, Count{});
 		});
 	Kokkos::fence();
@@ -51,9 +50,6 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 	Kokkos::parallel_for(
 		range2d, KOKKOS_LAMBDA(IndexType i, IndexType j) {
 			if (j < i) {
-				return;
-			}
-			if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
 				return;
 			}
 			generator(i, j, Construct{});

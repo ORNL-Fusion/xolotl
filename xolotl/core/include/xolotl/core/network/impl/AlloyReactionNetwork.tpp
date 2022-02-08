@@ -61,6 +61,12 @@ KOKKOS_INLINE_FUNCTION
 void
 AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+
 	using Species = typename Network::Species;
 	using Composition = typename Network::Composition;
 	using AmountType = typename Network::AmountType;
@@ -581,6 +587,7 @@ inline ReactionCollection<AlloyReactionGenerator::Network>
 AlloyReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<Network> ret(this->_clusterData.gridSize,
+		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
 		this->getSinkReactions());
 	return ret;

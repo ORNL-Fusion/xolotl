@@ -18,6 +18,7 @@
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/Monitor.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/util/TokenizedLineReader.h>
 #include <xolotl/viz/IPlot.h>
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/viz/PlotType.h>
@@ -240,34 +241,21 @@ computeXenonRetention0D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 
 	// Get the concentrations
 	xeConcentration = network.getTotalAtomConcentration(dConcs, Spec::Xe, 1);
-	bubbleConcentration = network.getTotalConcentration(dConcs, Spec::Xe, 1);
-	radii = network.getTotalRadiusConcentration(dConcs, Spec::Xe, 1);
-	partialBubbleConcentration =
-		network.getTotalConcentration(dConcs, Spec::Xe, minSizes[0]);
-	partialRadii =
-		network.getTotalRadiusConcentration(dConcs, Spec::Xe, minSizes[0]);
-	partialSize =
-		network.getTotalAtomConcentration(dConcs, Spec::Xe, minSizes[0]);
 
 	// Print the result
 	std::cout << "\nTime: " << time << std::endl;
 	std::cout << "Xenon concentration = " << xeConcentration << std::endl
 			  << std::endl;
 
-	// Make sure the average partial radius makes sense
-	double averagePartialRadius = 0.0, averagePartialSize = 0.0;
-	if (partialBubbleConcentration > 1.e-16) {
-		averagePartialRadius = partialRadii / partialBubbleConcentration;
-		averagePartialSize = partialSize / partialBubbleConcentration;
-	}
-
 	// Uncomment to write the content in a file
+	constexpr double k_B = ::xolotl::core::kBoltzmann;
+	double temperature = gridPointSolution[dof];
 	std::ofstream outputFile;
 	outputFile.open("retentionOut.txt", std::ios::app);
-	outputFile << time << " " << xeConcentration << " "
-			   << radii / bubbleConcentration << " " << averagePartialRadius
-			   << " " << partialBubbleConcentration << " " << averagePartialSize
-			   << std::endl;
+	outputFile << time << " " << gridPointSolution[0] << " ";
+	outputFile << gridPointSolution[1] << " ";
+	outputFile << gridPointSolution[2] << " ";
+	outputFile << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray
@@ -721,12 +709,18 @@ setupPetsc0DMonitor(TS ts)
 			"setupPetsc0DMonitor: TSMonitorSet (computeXenonRetention0D) "
 			"failed.");
 
+		// Read the linkages in
+		using NetworkType = core::network::NEReactionNetwork;
+		using Spec = typename NetworkType::Species;
+		using Composition = typename NetworkType::Composition;
+
 		// Uncomment to clear the file where the retention will be written
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt");
-		outputFile << "#time Xenon_conc radius partial_radius "
-					  "partial_bubble_conc partial_size"
-				   << std::endl;
+		outputFile << "#time Ui_conc ";
+		outputFile << "Uv1_conc ";
+		outputFile << "Uv2_conc ";
+		outputFile << std::endl;
 		outputFile.close();
 	}
 

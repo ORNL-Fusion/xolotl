@@ -234,7 +234,10 @@ Options::readParams(int argc, const char* argv[])
 		"ignored.")("fluxDepthProfileFilePath",
 		bpo::value<fs::path>(&fluxDepthProfileFilePath),
 		"The path to the custom flux profile file; the default is an empty "
-		"string that will use the default material associated flux handler.");
+		"string that will use the default material associated flux handler.")(
+		"reactionFilePath", bpo::value<fs::path>(&reactionFilePath),
+		"The path to the reaction rates file; the default is an empty "
+		"string.");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);

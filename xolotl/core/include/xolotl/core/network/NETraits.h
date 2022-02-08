@@ -3,6 +3,7 @@
 #include <tuple>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/core/network/detail/ClusterData.h>
 
 namespace xolotl
 {
@@ -76,6 +77,64 @@ struct ReactionNetworkTraits<NEReactionNetwork>
 	using ClusterGenerator = NEClusterGenerator;
 	using ClusterUpdater = detail::NEClusterUpdater;
 };
+
+namespace detail
+{
+template <typename PlsmContext>
+struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
+{
+	using NetworkType = NEReactionNetwork;
+
+	template <typename TData>
+	using View = ViewType<TData, PlsmContext>;
+
+	using IndexType = detail::ReactionNetworkIndexType;
+
+	ClusterDataExtra() = default;
+
+	template <typename PC>
+	KOKKOS_INLINE_FUNCTION
+	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
+		constantRates(data.constantRates)
+	{
+	}
+
+	template <typename PC>
+	void
+	deepCopy(const ClusterDataExtra<NetworkType, PC>& data)
+	{
+		if (!data.constantRates.is_allocated()) {
+			return;
+		}
+
+		if (!constantRates.is_allocated()) {
+			constantRates = create_mirror_view(data.constantRates);
+		}
+
+		deep_copy(constantRates, data.constantRates);
+	}
+
+	std::uint64_t
+	getDeviceMemorySize() const noexcept
+	{
+		std::uint64_t ret = 0;
+
+		ret += constantRates.required_allocation_size(
+			constantRates.extent(0), constantRates.extent(1));
+
+		return ret;
+	}
+
+	void
+	initialize(IndexType numClusters)
+	{
+		constantRates =
+			View<double**>("Constant Rates", numClusters, numClusters + 1);
+	}
+
+	View<double**> constantRates;
+};
+} // namespace detail
 } // namespace network
 } // namespace core
 } // namespace xolotl

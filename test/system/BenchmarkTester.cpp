@@ -16,41 +16,41 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 BOOST_AUTO_TEST_SUITE(Benchmark)
 
-BOOST_AUTO_TEST_CASE(NE_1)
-{
-	if (getMPICommSize() > 1) {
-		return;
-	}
-	// 0D, 9999 DOF ungrouped
-	SystemTestCase{"benchmark_NE_1"}.withTimer().run();
-}
-
-BOOST_AUTO_TEST_CASE(NE_2)
-{
-	if (getMPICommSize() > 1) {
-		return;
-	}
-	// 0D, 20079 DOF grouped
-	SystemTestCase{"benchmark_NE_2"}.withTimer().run();
-}
-
-BOOST_AUTO_TEST_CASE(NE_3)
-{
-	if (getMPICommSize() > 400) {
-		return;
-		// 3D
-	}
-	SystemTestCase{"benchmark_NE_3"}.withTimer().run();
-}
-
-BOOST_AUTO_TEST_CASE(NE_4)
-{
-	if (getMPICommSize() > 3969 || getMPICommSize() < 16) {
-		return;
-		// 2D, longer
-	}
-	SystemTestCase{"benchmark_NE_4"}.withTimer().run();
-}
+// BOOST_AUTO_TEST_CASE(NE_1)
+//{
+//	if (getMPICommSize() > 1) {
+//		return;
+//	}
+//	// 0D, 9999 DOF ungrouped
+//	SystemTestCase{"benchmark_NE_1"}.withTimer().run();
+//}
+//
+// BOOST_AUTO_TEST_CASE(NE_2)
+//{
+//	if (getMPICommSize() > 1) {
+//		return;
+//	}
+//	// 0D, 20079 DOF grouped
+//	SystemTestCase{"benchmark_NE_2"}.withTimer().run();
+//}
+//
+// BOOST_AUTO_TEST_CASE(NE_3)
+//{
+//	if (getMPICommSize() > 400) {
+//		return;
+//		// 3D
+//	}
+//	SystemTestCase{"benchmark_NE_3"}.withTimer().run();
+//}
+//
+// BOOST_AUTO_TEST_CASE(NE_4)
+//{
+//	if (getMPICommSize() > 3969 || getMPICommSize() < 16) {
+//		return;
+//		// 2D, longer
+//	}
+//	SystemTestCase{"benchmark_NE_4"}.withTimer().run();
+//}
 
 BOOST_AUTO_TEST_CASE(PSI_1)
 {

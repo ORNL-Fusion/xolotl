@@ -21,43 +21,8 @@ BOOST_AUTO_TEST_CASE(NE_0)
 	if (getMPICommSize() > 1) {
 		return;
 	}
-	SystemTestCase{"system_NE_0"}.tolerance(1.0e-9).run();
-}
-
-BOOST_AUTO_TEST_CASE(NE_1)
-{
-	if (getMPICommSize() > 1) {
-		return;
-	}
-	// 0D + heterogeneous nucleation
-	SystemTestCase{"system_NE_1"}.run();
-}
-
-BOOST_AUTO_TEST_CASE(NE_2)
-{
-	if (getMPICommSize() > 1) {
-		return;
-	}
-	// 0D + grouping + re-solution
-	SystemTestCase{"system_NE_2"}.run();
-}
-
-BOOST_AUTO_TEST_CASE(NE_3)
-{
-	if (getMPICommSize() > 25) {
-		return;
-	}
-	// 1D + temperature gradient
-	SystemTestCase{"system_NE_3"}.run();
-}
-
-BOOST_AUTO_TEST_CASE(NE_4)
-{
-	if (getMPICommSize() > 100) {
-		return;
-	}
-	// 2D
-	SystemTestCase{"system_NE_4"}.run();
+	SystemTestCase::copyFile("reaction_system_NE_0.dat");
+	SystemTestCase{"system_NE_0"}.run();
 }
 
 BOOST_AUTO_TEST_CASE(PSI_1)

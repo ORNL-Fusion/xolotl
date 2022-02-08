@@ -75,19 +75,19 @@ public:
 		using NetworkType = network::NEReactionNetwork;
 		auto& neNetwork = dynamic_cast<NetworkType&>(network);
 		NetworkType::Composition comp = NetworkType::Composition::zero();
-		comp[NetworkType::Species::Xe] = 1;
-		auto cluster = neNetwork.findCluster(comp, plsm::onHost);
-		// Check that the helium cluster is present in the network
-		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string(
-				"\nThe single xenon cluster is not present in the network, "
-				"cannot use the flux option!");
-		}
-		fluxIndices.push_back(cluster.getId());
-
-		comp[NetworkType::Species::Xe] = 0;
+		//		comp[NetworkType::Species::Xe] = 1;
+		//		auto cluster = neNetwork.findCluster(comp, plsm::onHost);
+		//		// Check that the helium cluster is present in the network
+		//		if (cluster.getId() == NetworkType::invalidIndex()) {
+		//			throw std::string(
+		//				"\nThe single xenon cluster is not present in the
+		// network, " 				"cannot use the flux option!");
+		//		}
+		//		fluxIndices.push_back(cluster.getId());
+		//
+		//		comp[NetworkType::Species::Xe] = 0;
 		comp[NetworkType::Species::V] = 1;
-		cluster = neNetwork.findCluster(comp, plsm::onHost);
+		auto cluster = neNetwork.findCluster(comp, plsm::onHost);
 		// Check that the helium cluster is present in the network
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::string(
@@ -122,9 +122,10 @@ public:
 			return;
 
 		// Update the concentration array
-		updatedConcOffset[fluxIndices[0]] += fluxAmplitude * xeYield; // Xe
-		updatedConcOffset[fluxIndices[1]] += fluxAmplitude * defectYield; // V
-		updatedConcOffset[fluxIndices[2]] += fluxAmplitude * defectYield; // I
+		//		updatedConcOffset[fluxIndices[0]] += fluxAmplitude * xeYield; //
+		// Xe
+		updatedConcOffset[fluxIndices[0]] += fluxAmplitude; // V
+		updatedConcOffset[fluxIndices[1]] += fluxAmplitude; // I
 
 		return;
 	}

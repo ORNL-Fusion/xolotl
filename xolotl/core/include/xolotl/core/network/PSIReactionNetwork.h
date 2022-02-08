@@ -150,6 +150,12 @@ private:
 		return detail::PSIReactionGenerator<Species>{*this};
 	}
 
+	void
+	readReactions(double temperature, const std::string filename)
+	{
+		return;
+	}
+
 private:
 	std::unique_ptr<detail::TrapMutationHandler> _tmHandler;
 };

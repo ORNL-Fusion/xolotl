@@ -498,6 +498,14 @@ public:
 	 */
 	virtual std::string
 	getFluxDepthProfileFilePath() const = 0;
+
+	/**
+	 * Get the path to the reaction rate file.
+	 *
+	 * @return The path to the file
+	 */
+	virtual std::string
+	getReactionFilePath() const = 0;
 };
 // end class IOptions
 } /* namespace options */

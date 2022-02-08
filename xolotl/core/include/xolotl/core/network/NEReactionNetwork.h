@@ -36,6 +36,9 @@ public:
 	IndexType
 	checkLargestClusterId();
 
+	void
+	initializeExtraClusterData(const options::IOptions& options);
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);
@@ -52,6 +55,10 @@ private:
 
 	detail::NEReactionGenerator
 	getReactionGenerator() const noexcept;
+
+	void
+	readReactions(
+		double temperature, const std::string filename = "reactionRates.txt");
 };
 
 namespace detail

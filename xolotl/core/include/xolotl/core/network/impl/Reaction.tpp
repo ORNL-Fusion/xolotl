@@ -22,7 +22,8 @@ Reaction<TNetwork, TDerived>::Reaction(ReactionDataRef reactionData,
 	_reactionId(reactionId),
 	_rate(reactionData.getRates(reactionId)),
 	_widths(reactionData.getWidths(reactionId)),
-	_coefs(reactionData.getCoefficients(reactionId))
+	_coefs(reactionData.getCoefficients(reactionId)),
+	_deltaG0(0.0)
 {
 }
 
@@ -544,22 +545,6 @@ ProductionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 	auto rate = getRateForProduction(
 		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 
-	//	constexpr auto speciesRange = NetworkType::getSpeciesRange();
-	//	auto cl0Reg = cl0.getRegion(), cl1Reg = cl1.getRegion(),
-	//		 prodReg = this->_clusterData.getCluster(_products[0]).getRegion();
-	//	for (auto i : speciesRange) {
-	//		std::cout << cl0Reg[i()].begin() << " ";
-	//	}
-	//	std::cout << "+ ";
-	//	for (auto i : speciesRange) {
-	//		std::cout << cl1Reg[i()].begin() << " ";
-	//	}
-	//	std::cout << "-> ";
-	//	for (auto i : speciesRange) {
-	//		std::cout << prodReg[i()].begin() << " ";
-	//	}
-	//	std::cout << std::endl;
-
 	return rate;
 }
 
@@ -794,6 +779,13 @@ void
 ProductionReaction<TNetwork, TDerived>::computeFlux(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
 {
+	int nProd = 0;
+	for (auto prodId : _products) {
+		if (prodId != invalidIndex) {
+			++nProd;
+		}
+	}
+
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 	// Initialize the concentrations that will be used in the loops
@@ -907,12 +899,6 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 	IndexType gridIndex)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
-	int nProd = 0;
-	for (auto prodId : _products) {
-		if (prodId != invalidIndex) {
-			++nProd;
-		}
-	}
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR1 = concentrations[_reactants[0]];
@@ -1189,12 +1175,6 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	IndexType gridIndex)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
-	int nProd = 0;
-	for (auto prodId : _products) {
-		if (prodId != invalidIndex) {
-			++nProd;
-		}
-	}
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR1 = concentrations[_reactants[0]];
@@ -1648,6 +1628,7 @@ DissociationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 {
 	double omega = this->_clusterData->atomicVolume();
 	double T = this->_clusterData->temperature(gridIndex);
+	constexpr double k_B = ::xolotl::core::kBoltzmann;
 
 	// TODO: computeProductionRate should use products and not reactants
 	auto cl0 = this->_clusterData->getCluster(_products[0]);
@@ -1662,28 +1643,6 @@ DissociationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 	double kPlus = getRateForProduction(
 		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 	double E_b = this->asDerived()->computeBindingEnergy();
-
-	constexpr double k_B = ::xolotl::core::kBoltzmann;
-
-	//	if (E_b < 1.0) {
-	//	auto cl0Reg = cl0.getRegion().getOrigin(), cl1Reg =
-	// cl1.getRegion().getOrigin(), prod0Reg =
-	// this->_clusterData.getCluster(_reactant).getRegion().getOrigin();
-	//
-	//	constexpr auto speciesRange = NetworkType::getSpeciesRange();
-	//	for (auto j : speciesRange) {
-	//				std::cout << cl0Reg[j()] << " ";
-	//			}
-	//	std::cout << r0 << std::endl << " + " << std::endl;
-	//	for (auto j : speciesRange) {
-	//				std::cout << cl1Reg[j()] << " ";
-	//			}
-	//	std::cout << r1 << std::endl << " -> " << std::endl;
-	//	for (auto j : speciesRange) {
-	//				std::cout << prod0Reg[j()] << " ";
-	//			}
-	//	std::cout << E_b << std::endl << "." << std::endl;
-	//	}
 
 	double kMinus = (1.0 / omega) * kPlus * std::exp(-E_b / (k_B * T));
 

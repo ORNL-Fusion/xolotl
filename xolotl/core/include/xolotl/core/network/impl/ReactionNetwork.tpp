@@ -61,12 +61,17 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 		}
 	}
 	this->setEnableReducedJacobian(useReduced);
+	if (opts.getReactionFilePath().length() > 0)
+		this->setEnableReadRates(true);
+	else
+		this->setEnableReadRates(false);
 
 	this->_numClusters = _clusterData.h_view().numClusters;
 	asDerived()->initializeExtraClusterData(opts);
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
 
+	readReactions(opts.getTempParam(), opts.getReactionFilePath());
 	Connectivity connectivity;
 	defineReactions(connectivity);
 	generateDiagonalFill(connectivity);
@@ -212,6 +217,14 @@ void
 ReactionNetwork<TImpl>::setEnableReducedJacobian(bool reduced)
 {
 	this->_enableReducedJacobian = reduced;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableReadRates(bool read)
+{
+	this->_enableReadRates = read;
+	_clusterData.h_view().setEnableReadRates(this->_enableReadRates);
 }
 
 template <typename TImpl>
@@ -615,6 +628,14 @@ void
 ReactionNetwork<TImpl>::defineMomentIds()
 {
 	_worker.defineMomentIds();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::readReactions(
+	double temperature, const std::string filename)
+{
+	asDerived()->readReactions(temperature, filename);
 }
 
 template <typename TImpl>

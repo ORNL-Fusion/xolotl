@@ -254,6 +254,18 @@ public:
 		_enableReducedJacobian = reduced;
 	}
 
+	bool
+	getEnableReadRates() const noexcept
+	{
+		return _enableReadRates;
+	}
+
+	virtual void
+	setEnableReadRates(bool read)
+	{
+		_enableReadRates = read;
+	}
+
 	IndexType
 	getGridSize() const noexcept
 	{
@@ -401,6 +413,7 @@ protected:
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
 	bool _enableReducedJacobian{};
+	bool _enableReadRates{};
 
 	IndexType _gridSize{};
 	IndexType _numDOFs{};

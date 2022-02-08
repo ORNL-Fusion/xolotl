@@ -154,6 +154,7 @@ private:
 		NUCLEATION,
 		SINK,
 		TRAP_MUTATION,
+		READ_RATES,
 		NUM_BOOL_VALS
 	};
 
@@ -283,6 +284,19 @@ public:
 	setEnableTrapMutation(bool val)
 	{
 		setVal(_boolVals, TRAP_MUTATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableReadRates() const
+	{
+		return _boolVals[READ_RATES];
+	}
+
+	void
+	setEnableReadRates(bool val)
+	{
+		setVal(_boolVals, READ_RATES, val);
 	}
 
 private:
