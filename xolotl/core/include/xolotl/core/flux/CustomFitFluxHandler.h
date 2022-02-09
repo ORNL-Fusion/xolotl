@@ -2,12 +2,12 @@
 
 #include <cmath>
 #include <fstream>
-#include <iostream>
 
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/util/Filesystem.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
-#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -118,23 +118,18 @@ public:
 		if (!paramFile.good()) {
 			// Print a message
 			if (procId == 0)
-				std::cout
-					<< "No parameter files for custom flux, the flux will be 0"
-					<< std::endl;
+				XOLOTL_LOG
+					<< "No parameter files for custom flux, the flux will be 0";
 		}
 		else {
-			// Build an input stream from the string
-			util::TokenizedLineReader<std::string> reader;
 			// Get the line
 			std::string line;
 			getline(paramFile, line);
-			auto lineSS = std::make_shared<std::istringstream>(line);
-			reader.setInputStream(lineSS);
 
 			using AmountType = network::IReactionNetwork::AmountType;
 
 			// Read the first line
-			auto tokens = reader.loadLine();
+			auto tokens = util::Tokenizer<>{line}();
 			// And start looping on the lines
 			int index = 0;
 			while (tokens.size() > 0) {
@@ -164,18 +159,15 @@ public:
 				if (reductionFactors[index] < 0.0) {
 					// Print a message
 					if (procId == 0)
-						std::cout
+						XOLOTL_LOG
 							<< "One of the reduction factors for the custom "
 							   "flux is negative, "
-							   "check if this is really what you want to do."
-							<< std::endl;
+							   "check if this is really what you want to do.";
 				}
 
 				// Set the parameters for the fit
 				getline(paramFile, line);
-				lineSS = std::make_shared<std::istringstream>(line);
-				reader.setInputStream(lineSS);
-				tokens = reader.loadLine();
+				tokens = util::Tokenizer<>{line}();
 				std::vector<double> params;
 				params.push_back(std::stod(tokens[0]));
 				params.push_back(std::stod(tokens[1]));
@@ -250,9 +242,7 @@ public:
 
 				// Read the next line
 				getline(paramFile, line);
-				lineSS = std::make_shared<std::istringstream>(line);
-				reader.setInputStream(lineSS);
-				tokens = reader.loadLine();
+				tokens = util::Tokenizer<>{line}();
 				// Increase the index
 				index++;
 			}
@@ -342,6 +332,21 @@ public:
 		}
 
 		return;
+	}
+
+	std::vector<double>
+	getInstantFlux(double time) const
+	{
+		// Create the vector to return
+		std::vector<double> toReturn;
+
+		// Get the current amplitude
+		auto ampl = getProfileAmplitude(time);
+		for (int index = 0; index < fluxIndices.size(); index++) {
+			toReturn.push_back(ampl * reductionFactors[index]);
+		}
+
+		return toReturn;
 	}
 };
 // end class CustomFitFluxHandler

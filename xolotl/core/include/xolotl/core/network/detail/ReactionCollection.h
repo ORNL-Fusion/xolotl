@@ -73,8 +73,10 @@ public:
 	setConnectivity(const ClusterConnectivity<>& connectivity)
 	{
 		auto conn = connectivity;
-		forEach(DEVICE_LAMBDA(
-			auto&& reaction) { reaction.defineJacobianEntries(conn); });
+		forEach(
+			"ReactionCollection::setConnectivity",
+			DEVICE_LAMBDA(
+				auto&& reaction) { reaction.defineJacobianEntries(conn); });
 	}
 
 	std::uint64_t
@@ -114,7 +116,8 @@ public:
 		auto reactionData = ReactionDataRef<NetworkType>(_data);
 		// TODO: Enable this without getting the chain
 		Kokkos::parallel_for(
-			_data.numReactions, DEVICE_LAMBDA(const IndexType i) {
+			"ReactionCollection::constructAll", _data.numReactions,
+			DEVICE_LAMBDA(const IndexType i) {
 				chain.apply(
 					DEVICE_LAMBDA(auto& reaction) {
 						using ReactionType =
@@ -130,9 +133,10 @@ public:
 	updateAll(Kokkos::View<ClusterData> clusterData)
 	{
 		auto reactionData = ReactionDataRef<NetworkType>(_data);
-		forEach(DEVICE_LAMBDA(auto&& reaction) {
-			reaction.updateData(reactionData, clusterData());
-		});
+		forEach(
+			"ReactionCollection::clusterData", DEVICE_LAMBDA(auto&& reaction) {
+				reaction.updateData(reactionData, clusterData());
+			});
 	}
 
 	double
@@ -144,6 +148,7 @@ public:
 		auto nRates = rates.extent(0);
 		auto gridSize = rates.extent(1);
 		Kokkos::parallel_reduce(
+			"ReactionCollection::getLargestRate",
 			Range2D({0, 0}, {nRates, gridSize}),
 			KOKKOS_LAMBDA(const IndexType i, const IndexType j, double& max) {
 				if (rates(i, j) > max) {
@@ -162,11 +167,25 @@ public:
 		_reactions.forEach(func);
 	}
 
+	template <typename F>
+	void
+	forEach(const std::string& label, const F& func)
+	{
+		_reactions.forEach(label, func);
+	}
+
 	template <typename TReaction, typename F>
 	void
 	forEachOn(const F& func)
 	{
 		_reactions.template forEachOn<TReaction>(func);
+	}
+
+	template <typename TReaction, typename F>
+	void
+	forEachOn(const std::string& label, const F& func)
+	{
+		_reactions.template forEachOn<TReaction>(label, func);
 	}
 
 	template <typename F, typename T>
@@ -176,11 +195,25 @@ public:
 		_reactions.reduce(func, out);
 	}
 
+	template <typename F, typename T>
+	void
+	reduce(const std::string& label, const F& func, T& out)
+	{
+		_reactions.reduce(label, func, out);
+	}
+
 	template <typename TReaction, typename F, typename T>
 	void
 	reduceOn(const F& func, T& out)
 	{
 		_reactions.template reduceOn<TReaction>(func, out);
+	}
+
+	template <typename TReaction, typename F, typename T>
+	void
+	reduceOn(const std::string& label, const F& func, T& out)
+	{
+		_reactions.template reduceOn<TReaction>(label, func, out);
 	}
 
 private:

@@ -63,7 +63,6 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
 	const int dof = network.getDOF();
 
@@ -102,7 +101,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
-	network.setTemperatures(temperatures);
+	network.setTemperatures(temperatures, grid);
 	network.syncClusterDataOnHost();
 
 	// Get pointers
@@ -119,7 +118,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 
 	// Fill the concVector with the pointer to the middle, left, right, bottom,
 	// and top grid points
-	double* concVector[3]{};
+	double* concVector[5]{};
 	concVector[0] = concOffset; // middle
 	concVector[1] = conc + 3 * dof; // left
 	concVector[2] = conc + 5 * dof; // right

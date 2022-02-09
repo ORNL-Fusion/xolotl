@@ -13,27 +13,11 @@ namespace core
 {
 namespace network
 {
-double
-NEReactionNetwork::checkLatticeParameter(double latticeParameter)
-{
-	if (latticeParameter <= 0.0) {
-		return uraniumDioxydeLatticeConstant;
-	}
-	return latticeParameter;
-}
-
-double
-NEReactionNetwork::checkImpurityRadius(double impurityRadius)
-{
-	if (impurityRadius <= 0.0) {
-		return xenonRadius;
-	}
-	return impurityRadius;
-}
-
 void
 NEReactionNetwork::readReactions(double temperature, const std::string filename)
 {
+    syncClusterDataOnHost();
+
 	// Read the reactions from a file
 	std::ifstream reactionFile;
 	reactionFile.open(filename);
@@ -53,10 +37,6 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 	auto constantRates =
 		Kokkos::create_mirror_view(clData().extraData.constantRates);
 
-	auto& subpaving = this->getSubpaving();
-
-	subpaving.syncAll();
-
 	// The first loop will be on single clusters to get their properties
 	std::vector<double> mVector(nClusters, 0.0);
 	std::vector<double> g0Vector(nClusters, 0.0);
@@ -64,15 +44,12 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 		nClusters, std::vector<std::pair<double, double>>());
 	constexpr double k_B = ::xolotl::core::kBoltzmann;
 
-	// Build an input stream from the string
-	util::TokenizedLineReader<double> reader;
 	// Get the line
 	std::string line;
 	getline(reactionFile, line);
-	auto lineSS = std::make_shared<std::istringstream>(line);
-	reader.setInputStream(lineSS);
 	// Read the first line
-	auto tokens = reader.loadLine();
+	std::vector<double> tokens;
+	util::Tokenizer<double>{line}(tokens);
 	// And start looping on the lines
 	while (tokens.size() > 0) {
 		// Find the Id of the cluster
@@ -80,7 +57,7 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 		comp[Species::Xe] = static_cast<IndexType>(tokens[0]);
 		comp[Species::V] = static_cast<IndexType>(tokens[1]);
 		comp[Species::I] = static_cast<IndexType>(tokens[2]);
-		auto rId = findCluster(comp, plsm::onHost).getId();
+		auto rId = findCluster(comp, plsm::HostMemSpace{}).getId();
 
 		// Get its properties and save it
 		auto g0 = tokens[3];
@@ -107,17 +84,14 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 		if (line == "Reactions")
 			break;
 
-		lineSS = std::make_shared<std::istringstream>(line);
-		reader.setInputStream(lineSS);
-		tokens = reader.loadLine();
+		tokens = util::Tokenizer<double>{line}();
 	}
 
 	// Now we need to loop on the reactions to set their rates
 	getline(reactionFile, line);
-	lineSS = std::make_shared<std::istringstream>(line);
-	reader.setInputStream(lineSS);
 	// Read the next line
-	tokens = reader.loadLine();
+	tokens.clear();
+	util::Tokenizer<double>{line}(tokens);
 	// And start looping on the lines
 	while (tokens.size() > 0) {
 		// Find the Id of the first reactant
@@ -125,7 +99,7 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 		comp[Species::Xe] = static_cast<IndexType>(tokens[0]);
 		comp[Species::V] = static_cast<IndexType>(tokens[1]);
 		comp[Species::I] = static_cast<IndexType>(tokens[2]);
-		auto r1Id = findCluster(comp, plsm::onHost).getId();
+		auto r1Id = findCluster(comp, plsm::HostMemSpace{}).getId();
 
 		// Sink case
 		if (tokens.size() == 4) {
@@ -148,12 +122,12 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			comp[Species::Xe] = static_cast<IndexType>(tokens[3]);
 			comp[Species::V] = static_cast<IndexType>(tokens[4]);
 			comp[Species::I] = static_cast<IndexType>(tokens[5]);
-			auto r2Id = findCluster(comp, plsm::onHost).getId();
+			auto r2Id = findCluster(comp, plsm::HostMemSpace{}).getId();
 
 			comp[Species::Xe] = static_cast<IndexType>(tokens[6]);
 			comp[Species::V] = static_cast<IndexType>(tokens[7]);
 			comp[Species::I] = static_cast<IndexType>(tokens[8]);
-			auto prodId = findCluster(comp, plsm::onHost).getId();
+			auto prodId = findCluster(comp, plsm::HostMemSpace{}).getId();
 
 			// Get the coefficient rate
 			auto coefRate = tokens[9];
@@ -186,37 +160,12 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 		}
 
 		getline(reactionFile, line);
-		lineSS = std::make_shared<std::istringstream>(line);
-		reader.setInputStream(lineSS);
-		tokens = reader.loadLine();
+		tokens.clear();
+		util::Tokenizer<double>{line}(tokens);
 	}
 
 	deep_copy(this->_reactionEnergies, reactionEnergies);
 	deep_copy(clData().extraData.constantRates, constantRates);
-}
-
-NEReactionNetwork::IndexType
-NEReactionNetwork::checkLargestClusterId()
-{
-	// Copy the cluster data for the parallel loop
-	auto clData = _clusterData.d_view;
-	using Reducer = Kokkos::MaxLoc<NEReactionNetwork::AmountType,
-		NEReactionNetwork::IndexType>;
-	Reducer::value_type maxLoc;
-	Kokkos::parallel_reduce(
-		_numClusters,
-		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
-			const Region& clReg = clData().getCluster(i).getRegion();
-			Composition hi = clReg.getUpperLimitPoint();
-			auto size = hi[Species::Xe] + hi[Species::V];
-			if (size > update.val) {
-				update.val = size;
-				update.loc = i;
-			}
-		},
-		Reducer(maxLoc));
-
-	return maxLoc.loc;
 }
 
 void
@@ -279,7 +228,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Looking for V cluster
 			Composition comp = Composition::zero();
 			comp[Species::V] = prodSize;
-			auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto vProdId = subpaving.findTileId(comp);
 			if (vProdId != invalidIndex) {
 				this->addProductionReaction(tag, {i, j, vProdId});
 				this->addDissociationReaction(tag, {vProdId, i, j});
@@ -289,7 +238,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Looking for I cluster
 			Composition comp = Composition::zero();
 			comp[Species::I] = -prodSize;
-			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto iProdId = subpaving.findTileId(comp);
 			if (iProdId != invalidIndex) {
 				this->addProductionReaction(tag, {i, j, iProdId});
 				this->addDissociationReaction(tag, {iProdId, i, j});

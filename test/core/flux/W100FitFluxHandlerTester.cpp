@@ -60,7 +60,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
 	const int dof = network.getDOF();
 
@@ -135,7 +134,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid)
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
 	const int dof = network.getDOF();
 
@@ -205,7 +203,6 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
 	const int dof = network.getDOF();
 
@@ -262,7 +259,6 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
 	const int dof = network.getDOF();
 
@@ -344,7 +340,6 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
 	const int dof = network.getDOF();
 
@@ -366,8 +361,18 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 	// Initialize the flux handler
 	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
+	// Check flux indices
+	auto indices = testFitFlux->getFluxIndices();
+	BOOST_REQUIRE_EQUAL(indices.size(), 1);
+	BOOST_REQUIRE_EQUAL(indices[0], 0);
+
 	// Create a time
 	double currTime = 0.5;
+
+	// Check the instant flux
+	auto instantFlux = testFitFlux->getInstantFlux(currTime);
+	BOOST_REQUIRE_EQUAL(instantFlux.size(), 1);
+	BOOST_REQUIRE_CLOSE(instantFlux[0], 2500.0, 0.01);
 
 	// The array of concentration
 	double newConcentration[5 * dof];
@@ -400,6 +405,11 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 
 	// Change the current time
 	currTime = 3.5;
+
+	// Check the instant flux
+	instantFlux = testFitFlux->getInstantFlux(currTime);
+	BOOST_REQUIRE_EQUAL(instantFlux.size(), 1);
+	BOOST_REQUIRE_CLOSE(instantFlux[0], 1500.0, 0.01);
 
 	// Reinitialize their values
 	for (int i = 0; i < 5 * dof; i++) {

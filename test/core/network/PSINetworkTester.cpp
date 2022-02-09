@@ -3,8 +3,10 @@
 
 #include <boost/test/unit_test.hpp>
 
+#include <xolotl/core/network/PSINetworkHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/MPITestUtils.h>
 #include <xolotl/test/PSINetworkTesterData.h>
 
 using namespace std;
@@ -15,6 +17,9 @@ using namespace network;
 using Kokkos::ScopeGuard;
 BOOST_GLOBAL_FIXTURE(ScopeGuard);
 
+// Initialize MPI before running any tests; finalize it running all tests.
+BOOST_GLOBAL_FIXTURE(MPIFixture);
+
 /**
  * This suite is responsible for testing the PSI network.
  */
@@ -22,6 +27,7 @@ BOOST_AUTO_TEST_SUITE(PSINetwork_testSuite)
 
 BOOST_AUTO_TEST_CASE(fullyRefined)
 {
+	loadNetworkHandlers();
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
@@ -51,17 +57,12 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE(network.hasDeuterium());
 	BOOST_REQUIRE(network.hasTritium());
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 156);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 156);
-	// TODO: check it is within a given range?
-	//	auto deviceMemorySize = network.getDeviceMemorySize();
-	//	BOOST_CHECK_GT(deviceMemorySize, 3900000);
-	//	BOOST_CHECK_LT(deviceMemorySize, 3940000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
@@ -343,7 +344,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -413,7 +415,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::V] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 1);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
@@ -440,7 +442,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
@@ -467,7 +469,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 57);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
@@ -494,7 +496,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::He] = 0;
 	comp[Spec::D] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 9);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.075, 0.01);
 	BOOST_REQUIRE_EQUAL(
@@ -522,7 +524,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	comp[Spec::D] = 0;
 	comp[Spec::T] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.075, 0.01);
 	BOOST_REQUIRE_EQUAL(
@@ -551,7 +553,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	comp[Spec::V] = 1;
 	comp[Spec::He] = 8;
 	comp[Spec::D] = 3;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 123);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 30.1049, 0.01);
@@ -609,11 +611,6 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
-
-	//	auto deviceMemorySize = network.getDeviceMemorySize();
-	//	BOOST_CHECK_GT(deviceMemorySize, 3900000);
-	//	BOOST_CHECK_LT(deviceMemorySize, 3940000);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -788,7 +785,8 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -886,17 +884,12 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	NetworkType network({maxHe, maxV, maxI}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE(!network.hasDeuterium());
 	BOOST_REQUIRE(!network.hasTritium());
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 35);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 35);
-	// TODO: check it is within a given range?
-	//	auto deviceMemorySize = network.getDeviceMemorySize();
-	//	BOOST_CHECK_GT(deviceMemorySize, 405000);
-	//	BOOST_CHECK_LT(deviceMemorySize, 420000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
@@ -998,7 +991,8 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -1069,7 +1063,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::V] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
@@ -1092,7 +1086,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
@@ -1115,7 +1109,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 16);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
@@ -1138,7 +1132,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 
 	comp[Spec::He] = 4;
 	comp[Spec::V] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 14);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 14.8829, 0.01);
@@ -1190,17 +1184,12 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	NetworkType network({maxHe, maxD, maxV, maxI}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE(network.hasDeuterium());
 	BOOST_REQUIRE(!network.hasTritium());
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 56);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 56);
-	// TODO: check it is within a given range?
-	//	auto deviceMemorySize = network.getDeviceMemorySize();
-	//	BOOST_CHECK_GT(deviceMemorySize, 798000);
-	//	BOOST_CHECK_LT(deviceMemorySize, 812000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
@@ -1320,7 +1309,8 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -1391,7 +1381,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::V] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 1);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
@@ -1416,7 +1406,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
@@ -1441,7 +1431,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 24);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
@@ -1466,7 +1456,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	comp[Spec::He] = 0;
 	comp[Spec::D] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.075, 0.01);
 	BOOST_REQUIRE_EQUAL(
@@ -1492,7 +1482,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	comp[Spec::He] = 3;
 	comp[Spec::V] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 17);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_EQUAL(cluster.getFormationEnergy(), 11.5304);
@@ -1546,17 +1536,12 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	NetworkType network({maxHe, maxT, maxV, maxI}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE(!network.hasDeuterium());
 	BOOST_REQUIRE(network.hasTritium());
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 56);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 56);
-	// TODO: check it is within a given range?
-	//	auto deviceMemorySize = network.getDeviceMemorySize();
-	//	BOOST_CHECK_GT(deviceMemorySize, 798000);
-	//	BOOST_CHECK_LT(deviceMemorySize, 812000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.317, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0159275, 0.01);
@@ -1676,7 +1661,8 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -1747,7 +1733,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::V] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 1);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 3.6, 0.01);
@@ -1772,7 +1758,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.15785, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 10.0, 0.01);
@@ -1797,7 +1783,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 24);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3648, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 26.1, 0.01);
@@ -1822,7 +1808,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	comp[Spec::He] = 0;
 	comp[Spec::T] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.075, 0.01);
 	BOOST_REQUIRE_EQUAL(
@@ -1848,7 +1834,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	comp[Spec::He] = 3;
 	comp[Spec::V] = 1;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 17);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.137265, 0.01);
 	BOOST_REQUIRE_EQUAL(cluster.getFormationEnergy(), 11.5304);
@@ -1870,6 +1856,288 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 2);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+}
+
+BOOST_AUTO_TEST_CASE(smallHeVGrouped)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
+	paramFile << "netParam=8 0 0 50 6" << std::endl
+			  << "process=reaction" << std::endl
+			  << "material=W100" << std::endl
+			  << "grouping=31 4 4" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
+
+	using NetworkType = PSIReactionNetwork<PSIHeliumSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	auto network = dynamic_pointer_cast<NetworkType>(
+		factory::network::NetworkHandlerFactory::get()
+			.generate(opts)
+			->getNetwork());
+
+	network->syncClusterDataOnHost();
+
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 2874);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 3300);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 2874);
+	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
+
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
+
+	// Check the single vacancy
+	auto vacancy = network->getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(largeHeVGrouped)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
+	paramFile << "netParam=8 0 0 20000 6" << std::endl
+			  << "process=reaction" << std::endl
+			  << "material=W100" << std::endl
+			  << "grouping=31 2 2" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
+
+	using NetworkType = PSIReactionNetwork<PSIHeliumSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	auto network = dynamic_pointer_cast<NetworkType>(
+		factory::network::NetworkHandlerFactory::get()
+			.generate(opts)
+			->getNetwork());
+
+	network->syncClusterDataOnHost();
+
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 3127);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 4775);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 3127);
+	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
+
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
+
+	// Check the single vacancy
+	auto vacancy = network->getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 922);
+}
+
+BOOST_AUTO_TEST_CASE(HeDVGrouped)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
+	paramFile << "netParam=8 1 0 20 6" << std::endl
+			  << "process=reaction" << std::endl
+			  << "material=W100" << std::endl
+			  << "grouping=10 4 4" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
+
+	using NetworkType = PSIReactionNetwork<PSIDeuteriumSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	auto network = dynamic_pointer_cast<NetworkType>(
+		factory::network::NetworkHandlerFactory::get()
+			.generate(opts)
+			->getNetwork());
+
+	network->syncClusterDataOnHost();
+
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 4967);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 6656);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 4967);
+	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
+
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
+
+	// Check the single vacancy
+	auto vacancy = network->getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 83);
+}
+
+BOOST_AUTO_TEST_CASE(HeTVGrouped)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
+	paramFile << "netParam=8 0 1 20 6" << std::endl
+			  << "process=reaction" << std::endl
+			  << "material=W100" << std::endl
+			  << "grouping=10 4 4" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
+
+	using NetworkType = PSIReactionNetwork<PSITritiumSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	auto network = dynamic_pointer_cast<NetworkType>(
+		factory::network::NetworkHandlerFactory::get()
+			.generate(opts)
+			->getNetwork());
+
+	network->syncClusterDataOnHost();
+
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 4967);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 6656);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 4967);
+	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
+
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
+
+	// Check the single vacancy
+	auto vacancy = network->getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 83);
+}
+
+BOOST_AUTO_TEST_CASE(HeDTVGrouped)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
+	paramFile << "netParam=8 1 1 6 2" << std::endl
+			  << "process=reaction" << std::endl
+			  << "material=W100" << std::endl
+			  << "grouping=3 2 2" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
+
+	using NetworkType = PSIReactionNetwork<PSIFullSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	auto network = dynamic_pointer_cast<NetworkType>(
+		factory::network::NetworkHandlerFactory::get()
+			.generate(opts)
+			->getNetwork());
+
+	network->syncClusterDataOnHost();
+
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 2383);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 4259);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 2383);
+	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 5);
+
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 5);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 4);
+
+	// Check the single vacancy
+	auto vacancy = network->getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 55);
+}
+
+BOOST_AUTO_TEST_CASE(IGrouped)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
+	paramFile << "netParam=0 0 0 100 10000" << std::endl
+			  << "process=reaction" << std::endl
+			  << "material=W100" << std::endl
+			  << "grouping=101 2 2" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
+
+	using NetworkType = PSIReactionNetwork<PSIHeliumSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	auto network = dynamic_pointer_cast<NetworkType>(
+		factory::network::NetworkHandlerFactory::get()
+			.generate(opts)
+			->getNetwork());
+
+	network->syncClusterDataOnHost();
+
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 813);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 1424);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 813);
+	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
+
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
+
+	// Check the single vacancy
+	auto vacancy = network->getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 2);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -7,6 +7,7 @@
 #include <Kokkos_Atomic.hpp>
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Crs.hpp>
+#include <Kokkos_DualView.hpp>
 
 #include <plsm/Subpaving.h>
 #include <plsm/refine/RegionDetector.h>
@@ -157,7 +158,8 @@ public:
 	}
 
 	void
-	updateExtraClusterData(const std::vector<double>&)
+	updateExtraClusterData(
+		const std::vector<double>&, const std::vector<double>&)
 	{
 	}
 
@@ -217,7 +219,8 @@ public:
 	setGridSize(IndexType gridSize) override;
 
 	void
-	setTemperatures(const std::vector<double>& gridTemperatures) override;
+	setTemperatures(const std::vector<double>& gridTemperatures,
+		const std::vector<double>& gridDepths) override;
 
 	std::uint64_t
 	getDeviceMemorySize() const noexcept override;
@@ -225,18 +228,47 @@ public:
 	void
 	syncClusterDataOnHost() override;
 
+	template <typename MemSpace>
 	KOKKOS_INLINE_FUNCTION
-	Cluster<plsm::OnDevice>
-	findCluster(const Composition& comp, plsm::OnDevice context);
+	IndexType
+	findClusterId(const Composition& comp, MemSpace)
+	{
+		if constexpr (!std::is_same_v<plsm::HostMemSpace,
+						  plsm::DeviceMemSpace> &&
+			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+			auto id = _subpavingMirror.findTileId(comp);
+			return (id == _subpavingMirror.invalidIndex()) ?
+				this->invalidIndex() :
+				IndexType(id);
+		}
+		else {
+			auto id = _subpaving.findTileId(comp);
+			return (id == _subpaving.invalidIndex()) ? this->invalidIndex() :
+													   IndexType(id);
+		}
+	}
 
-	Cluster<plsm::OnHost>
-	findCluster(const Composition& comp, plsm::OnHost context);
+	template <typename MemSpace>
+	KOKKOS_INLINE_FUNCTION
+	Cluster<MemSpace>
+	findCluster(const Composition& comp, MemSpace memSpace)
+	{
+		if constexpr (!std::is_same_v<plsm::HostMemSpace,
+						  plsm::DeviceMemSpace> &&
+			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+			return _clusterDataMirror.getCluster(findClusterId(comp, memSpace));
+		}
+		else {
+			return _clusterData.d_view().getCluster(
+				findClusterId(comp, memSpace));
+		}
+	}
 
 	KOKKOS_INLINE_FUNCTION
 	auto
 	findCluster(const Composition& comp)
 	{
-		return findCluster(comp, plsm::onDevice);
+		return findCluster(comp, plsm::DeviceMemSpace{});
 	}
 
 	IndexType
@@ -247,16 +279,16 @@ public:
 		for (std::size_t i = 0; i < composition.size(); ++i) {
 			comp[i] = composition[i];
 		}
-		return findCluster(comp, plsm::onHost).getId();
+		return findClusterId(comp, plsm::HostMemSpace{});
 	}
 
-	ClusterCommon<plsm::OnHost>
+	ClusterCommon<plsm::HostMemSpace>
 	getClusterCommon(IndexType clusterId) const override
 	{
 		return _clusterDataMirror.getClusterCommon(clusterId);
 	}
 
-	ClusterCommon<plsm::OnHost>
+	ClusterCommon<plsm::HostMemSpace>
 	getSingleVacancy() override;
 
 	IndexType
@@ -271,24 +303,26 @@ public:
 	PhaseSpace
 	getPhaseSpace() override;
 
+	template <typename MemSpace>
 	KOKKOS_INLINE_FUNCTION
-	Cluster<plsm::OnDevice>
-	getCluster(IndexType clusterId, plsm::OnDevice)
+	Cluster<MemSpace>
+	getCluster(IndexType clusterId, MemSpace)
 	{
-		return _clusterData.d_view().getCluster(clusterId);
-	}
-
-	Cluster<plsm::OnHost>
-	getCluster(IndexType clusterId, plsm::OnHost)
-	{
-		return _clusterDataMirror.getCluster(clusterId);
+		if constexpr (!std::is_same_v<plsm::HostMemSpace,
+						  plsm::DeviceMemSpace> &&
+			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+			return _clusterDataMirror.getCluster(clusterId);
+		}
+		else {
+			return _clusterData.d_view().getCluster(clusterId);
+		}
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	auto
 	getCluster(IndexType clusterId)
 	{
-		return getCluster(clusterId, plsm::onDevice);
+		return getCluster(clusterId, plsm::DeviceMemSpace{});
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -319,7 +353,7 @@ public:
 			concentrations, fluxes, gridIndex, surfaceDepth, spacing);
 
 		_reactions.template forEachOn<TReaction>(
-			DEVICE_LAMBDA(auto&& reaction) {
+			"ReactionNetwork::computeFluxes", DEVICE_LAMBDA(auto&& reaction) {
 				reaction.contributeFlux(concentrations, fluxes, gridIndex);
 			});
 		Kokkos::fence();
@@ -345,13 +379,15 @@ public:
 		// Reset the values
 		const auto& nValues = values.extent(0);
 		Kokkos::parallel_for(
-			nValues, KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
+			"ReactionNetwork::computePartials::resetValues", nValues,
+			KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
 
 		asDerived()->computePartialsPreProcess(
 			concentrations, values, gridIndex, surfaceDepth, spacing);
 
 		if (this->_enableReducedJacobian) {
 			_reactions.template forEachOn<TReaction>(
+				"ReactionNetwork::computePartials",
 				DEVICE_LAMBDA(auto&& reaction) {
 					reaction.contributeReducedPartialDerivatives(
 						concentrations, values, gridIndex);
@@ -359,6 +395,7 @@ public:
 		}
 		else {
 			_reactions.template forEachOn<TReaction>(
+				"ReactionNetwork::computePartials",
 				DEVICE_LAMBDA(auto&& reaction) {
 					reaction.contributePartialDerivatives(
 						concentrations, values, gridIndex);
@@ -520,6 +557,7 @@ private:
 
 private:
 	Subpaving _subpaving;
+	typename Subpaving::HostMirror _subpavingMirror;
 	ClusterDataMirror _clusterDataMirror;
 
 	detail::ReactionNetworkWorker<TImpl> _worker;

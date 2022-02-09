@@ -87,7 +87,7 @@ public:
 		//
 		//		comp[NetworkType::Species::Xe] = 0;
 		comp[NetworkType::Species::V] = 1;
-		auto cluster = neNetwork.findCluster(comp, plsm::onHost);
+		auto cluster = neNetwork.findCluster(comp, plsm::HostMemSpace{});
 		// Check that the helium cluster is present in the network
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::string(
@@ -98,7 +98,7 @@ public:
 
 		comp[NetworkType::Species::V] = 0;
 		comp[NetworkType::Species::I] = 1;
-		cluster = neNetwork.findCluster(comp, plsm::onHost);
+		cluster = neNetwork.findCluster(comp, plsm::HostMemSpace{});
 		// Check that the helium cluster is present in the network
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::string("\nThe single interstitial cluster is not "

@@ -21,11 +21,11 @@ public:
 	using Region = typename NetworkType::Region;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
-	using BoolArray = typename Superclass::BoolVec<Region>;
+	using BoolArray = plsm::refine::BoolVec<Region>;
 
-	NEClusterGenerator(const options::IOptions& opts);
+	NEClusterGenerator(const options::IOptions& options);
 
-	NEClusterGenerator(const options::IOptions& opts, std::size_t refineDepth);
+	NEClusterGenerator(const options::IOptions& options, std::size_t refineDepth);
 
 	KOKKOS_INLINE_FUNCTION
 	bool

@@ -16,10 +16,6 @@ template ReactionNetwork<NEReactionNetwork>::ReactionNetwork(
 	const std::vector<AmountType>& maxSpeciesAmounts, IndexType gridSize,
 	const options::IOptions& opts);
 
-template ReactionNetwork<NEReactionNetwork>::Cluster<plsm::OnHost>
-ReactionNetwork<NEReactionNetwork>::findCluster(
-	const Composition& comp, plsm::OnHost context);
-
 template double
 ReactionNetwork<NEReactionNetwork>::getTotalConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
@@ -39,6 +35,48 @@ ReactionNetwork<NEReactionNetwork>::getTotalTrappedAtomConcentration(
 template double
 ReactionNetwork<NEReactionNetwork>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
+
+double
+NEReactionNetwork::checkLatticeParameter(double latticeParameter)
+{
+	if (latticeParameter <= 0.0) {
+		return uraniumDioxydeLatticeConstant;
+	}
+	return latticeParameter;
+}
+
+double
+NEReactionNetwork::checkImpurityRadius(double impurityRadius)
+{
+	if (impurityRadius <= 0.0) {
+		return xenonRadius;
+	}
+	return impurityRadius;
+}
+
+NEReactionNetwork::IndexType
+NEReactionNetwork::checkLargestClusterId()
+{
+	// Copy the cluster data for the parallel loop
+	auto clData = _clusterData.d_view;
+	using Reducer = Kokkos::MaxLoc<NEReactionNetwork::AmountType,
+		NEReactionNetwork::IndexType>;
+	Reducer::value_type maxLoc;
+	Kokkos::parallel_reduce(
+		"NEReactionNetwork::checkLargestClusterId", _numClusters,
+		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
+			const Region& clReg = clData().getCluster(i).getRegion();
+			Composition hi = clReg.getUpperLimitPoint();
+			auto size = hi[Species::Xe] + hi[Species::V];
+			if (size > update.val) {
+				update.val = size;
+				update.loc = i;
+			}
+		},
+		Reducer(maxLoc));
+
+	return maxLoc.loc;
+}
 } // namespace network
 } // namespace core
 } // namespace xolotl

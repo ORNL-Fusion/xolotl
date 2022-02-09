@@ -46,7 +46,7 @@ protected:
 	/**
 	 * The indices of the incoming clusters.
 	 */
-	std::vector<int> fluxIndices;
+	std::vector<IdType> fluxIndices;
 
 	/**
 	 * Are we using a time profile for the amplitude of the incoming
@@ -192,6 +192,18 @@ public:
 	{
 		return;
 	}
+	
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<double>
+	getInstantFlux(double time) const;
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<IdType>
+	getFluxIndices() const;
 };
 // end class FluxHandler
 

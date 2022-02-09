@@ -12,48 +12,6 @@ namespace core
 {
 namespace network
 {
-double
-FeReactionNetwork::checkLatticeParameter(double latticeParameter)
-{
-	if (latticeParameter <= 0.0) {
-		return ironLatticeConstant;
-	}
-	return latticeParameter;
-}
-
-double
-FeReactionNetwork::checkImpurityRadius(double impurityRadius)
-{
-	if (impurityRadius <= 0.0) {
-		return heliumRadius;
-	}
-	return impurityRadius;
-}
-
-FeReactionNetwork::IndexType
-FeReactionNetwork::checkLargestClusterId()
-{
-	// Copy the cluster data for the parallel loop
-	auto clData = _clusterData.d_view;
-	using Reducer = Kokkos::MaxLoc<FeReactionNetwork::AmountType,
-		FeReactionNetwork::IndexType>;
-	Reducer::value_type maxLoc;
-	Kokkos::parallel_reduce(
-		_numClusters,
-		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
-			const Region& clReg = clData().getCluster(i).getRegion();
-			Composition hi = clReg.getUpperLimitPoint();
-			auto size = hi[Species::He] + hi[Species::V];
-			if (size > update.val) {
-				update.val = size;
-				update.loc = i;
-			}
-		},
-		Reducer(maxLoc));
-
-	return maxLoc.loc;
-}
-
 namespace detail
 {
 template <typename TTag>
@@ -98,7 +56,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		// Find the corresponding cluster
 		Composition comp = Composition::zero();
 		comp[Species::I] = size;
-		auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+		auto iProdId = subpaving.findTileId(comp);
 		if (iProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, iProdId});
 			if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
@@ -124,7 +82,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Looking for V cluster
 			Composition comp = Composition::zero();
 			comp[Species::V] = prodSize;
-			auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto vProdId = subpaving.findTileId(comp);
 			if (vProdId != subpaving.invalidIndex()) {
 				this->addProductionReaction(tag, {i, j, vProdId});
 				// No dissociation
@@ -134,7 +92,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Looking for I cluster
 			Composition comp = Composition::zero();
 			comp[Species::I] = -prodSize;
-			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto iProdId = subpaving.findTileId(comp);
 			if (iProdId != subpaving.invalidIndex()) {
 				this->addProductionReaction(tag, {i, j, iProdId});
 				// No dissociation

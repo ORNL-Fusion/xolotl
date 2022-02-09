@@ -6,7 +6,7 @@
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/options/Options.h>
-#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -50,12 +50,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
 	std::string petscString = opts.getPetscArg();
-	util::TokenizedLineReader<std::string> reader;
-	reader.setInputStream(std::make_shared<std::istringstream>(petscString));
-	auto tokens = reader.loadLine();
+	auto tokens = util::Tokenizer<>{petscString}();
 	bool useReduced = false;
-	for (int i = 0; i < tokens.size(); ++i) {
-		if (tokens[i] == "-snes_mf_operator") {
+	for (const auto& token : tokens) {
+		if (token == "-snes_mf_operator") {
 			useReduced = true;
 			break;
 		}
@@ -242,7 +240,8 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
+ReactionNetwork<TImpl>::setTemperatures(
+	const std::vector<double>& gridTemps, const std::vector<double>& gridDepths)
 {
 	Kokkos::View<const double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
 		tempsHost(gridTemps.data(), this->_gridSize);
@@ -250,7 +249,7 @@ ReactionNetwork<TImpl>::setTemperatures(const std::vector<double>& gridTemps)
 
 	updateDiffusionCoefficients();
 
-	asDerived()->updateExtraClusterData(gridTemps);
+	asDerived()->updateExtraClusterData(gridTemps, gridDepths);
 
 	asDerived()->updateReactionRates();
 }
@@ -260,6 +259,7 @@ void
 ReactionNetwork<TImpl>::updateReactionRates()
 {
 	_reactions.forEach(
+		"ReactionNetwork::updateReactionRates",
 		DEVICE_LAMBDA(auto&& reaction) { reaction.updateRates(); });
 	Kokkos::fence();
 }
@@ -280,35 +280,15 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::syncClusterDataOnHost()
 {
-	_subpaving.syncTiles(plsm::onHost);
-	auto mirror = ClusterDataMirror(_subpaving, this->_gridSize);
-	mirror.deepCopy(_clusterData.h_view());
-	_clusterDataMirror = mirror;
+	_subpavingMirror = _subpaving.makeMirrorCopy();
+
+	auto dataMirror = ClusterDataMirror(_subpavingMirror, this->_gridSize);
+	dataMirror.deepCopy(_clusterData.h_view());
+	_clusterDataMirror = dataMirror;
 }
 
 template <typename TImpl>
-KOKKOS_INLINE_FUNCTION
-typename ReactionNetwork<TImpl>::template Cluster<plsm::OnDevice>
-ReactionNetwork<TImpl>::findCluster(
-	const Composition& comp, plsm::OnDevice context)
-{
-	auto id = _subpaving.findTileId(comp, context);
-	return _clusterData.d_view().getCluster(
-		id == _subpaving.invalidIndex() ? this->invalidIndex() : IndexType(id));
-}
-
-template <typename TImpl>
-typename ReactionNetwork<TImpl>::template Cluster<plsm::OnHost>
-ReactionNetwork<TImpl>::findCluster(
-	const Composition& comp, plsm::OnHost context)
-{
-	auto id = _subpaving.findTileId(comp, context);
-	return _clusterDataMirror.getCluster(
-		id == _subpaving.invalidIndex() ? this->invalidIndex() : IndexType(id));
-}
-
-template <typename TImpl>
-ClusterCommon<plsm::OnHost>
+ClusterCommon<plsm::HostMemSpace>
 ReactionNetwork<TImpl>::getSingleVacancy()
 {
 	Composition comp = Composition::zero();
@@ -328,7 +308,7 @@ ReactionNetwork<TImpl>::getSingleVacancy()
 	if (hasVacancy)
 		comp[vIndex] = 1;
 
-	auto clusterId = findCluster(comp, plsm::onHost).getId();
+	auto clusterId = findCluster(comp, plsm::HostMemSpace{}).getId();
 
 	return _clusterDataMirror.getClusterCommon(clusterId);
 }
@@ -342,7 +322,7 @@ ReactionNetwork<TImpl>::getAllClusterBounds()
 
 	// Loop on all the clusters
 	constexpr auto speciesRange = getSpeciesRange();
-	auto tiles = _subpaving.getTiles(plsm::onHost);
+	auto tiles = _subpavingMirror.getTiles();
 	for (IndexType i = 0; i < this->_numClusters; ++i) {
 		const auto& clReg = tiles(i).getRegion();
 		Composition lo = clReg.getOrigin();
@@ -395,9 +375,10 @@ ReactionNetwork<TImpl>::computeAllFluxes(ConcentrationsView concentrations,
 	asDerived()->computeFluxesPreProcess(
 		concentrations, fluxes, gridIndex, surfaceDepth, spacing);
 
-	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
-		reaction.contributeFlux(concentrations, fluxes, gridIndex);
-	});
+	_reactions.forEach(
+		"ReactionNetwork::computeAllFluxes", DEVICE_LAMBDA(auto&& reaction) {
+			reaction.contributeFlux(concentrations, fluxes, gridIndex);
+		});
 	Kokkos::fence();
 }
 
@@ -410,22 +391,27 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 	// Reset the values
 	const auto& nValues = values.extent(0);
 	Kokkos::parallel_for(
-		nValues, KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
+		"ReactionNetwork::computeAllPartials::resetValues", nValues,
+		KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
 
 	asDerived()->computePartialsPreProcess(
 		concentrations, values, gridIndex, surfaceDepth, spacing);
 
 	if (this->_enableReducedJacobian) {
-		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
-			reaction.contributeReducedPartialDerivatives(
-				concentrations, values, gridIndex);
-		});
+		_reactions.forEach(
+			"ReactionNetwork::computeAllPartials",
+			DEVICE_LAMBDA(auto&& reaction) {
+				reaction.contributeReducedPartialDerivatives(
+					concentrations, values, gridIndex);
+			});
 	}
 	else {
-		_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
-			reaction.contributePartialDerivatives(
-				concentrations, values, gridIndex);
-		});
+		_reactions.forEach(
+			"ReactionNetwork::computeAllPartials",
+			DEVICE_LAMBDA(auto&& reaction) {
+				reaction.contributePartialDerivatives(
+					concentrations, values, gridIndex);
+			});
 	}
 
 	Kokkos::fence();
@@ -447,6 +433,7 @@ ReactionNetwork<TImpl>::getLeftSideRate(
 	double leftSideRate = 0.0;
 	// Loop on all the rates to get the maximum
 	_reactions.reduce(
+		"ReactionNetwork::getLeftSideRate",
 		DEVICE_LAMBDA(auto&& reaction, double& lsum) {
 			lsum += reaction.contributeLeftSideRate(
 				concentrations, clusterId, gridIndex);
@@ -500,10 +487,10 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(
 	if (!hasVacancy)
 		return 0.0;
 
-	auto tiles = _subpaving.getTiles(plsm::onDevice);
+	auto tiles = _subpaving.getTiles();
 	double conc = 0.0;
 	Kokkos::parallel_reduce(
-		this->_numClusters,
+		"ReactionNetwork::getTotalTrappedAtomConcentration", this->_numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
 			const Region& clReg = tiles(i).getRegion();
 			if (clReg[vIndex].begin() > 0) {
@@ -531,7 +518,7 @@ ReactionNetwork<TImpl>::updateOutgoingDiffFluxes(double* gridPointSolution,
 	for (auto l : diffusingIds) {
 		// Get the cluster and composition
 		auto cluster = this->getClusterCommon(l);
-		auto reg = this->getCluster(l, plsm::onHost).getRegion();
+		auto reg = this->getCluster(l, plsm::HostMemSpace{}).getRegion();
 		Composition comp = reg.getOrigin();
 		// Get its concentration
 		double conc = gridPointSolution[l];
@@ -570,7 +557,7 @@ ReactionNetwork<TImpl>::updateOutgoingAdvecFluxes(double* gridPointSolution,
 	for (auto l : advectingIds) {
 		// Get the cluster and composition
 		auto cluster = this->getClusterCommon(l);
-		auto reg = this->getCluster(l, plsm::onHost).getRegion();
+		auto reg = this->getCluster(l, plsm::HostMemSpace{}).getRegion();
 		Composition comp = reg.getOrigin();
 		// Get its concentration
 		double conc = gridPointSolution[l];
@@ -690,6 +677,7 @@ ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
 	auto clusterData = _nw._clusterData.d_view;
 	auto updater = typename Network::ClusterUpdater{};
 	Kokkos::parallel_for(
+		"ReactionNetworkWorker::updateDiffusionCoefficients",
 		Range2D({0, 0},
 			{_nw._clusterData.h_view().numClusters,
 				_nw._clusterData.h_view().gridSize}),
@@ -714,7 +702,7 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 
 	IndexType nMomentIds = 0;
 	Kokkos::parallel_reduce(
-		nClusters,
+		"ReactionNetworkWorker::defineMomentIds::count", nClusters,
 		KOKKOS_LAMBDA(const IndexType i, IndexType& running) {
 			const auto& reg = data->getCluster(i).getRegion();
 			IndexType count = 0;
@@ -729,7 +717,7 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 		nMomentIds);
 
 	Kokkos::parallel_scan(
-		nClusters,
+		"ReactionNetworkWorker::defineMomentIds::scan", nClusters,
 		KOKKOS_LAMBDA(IndexType i, IndexType & update, const bool finalPass) {
 			const auto temp = counts(i);
 			if (finalPass) {
@@ -739,7 +727,8 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 		});
 
 	Kokkos::parallel_for(
-		nClusters, KOKKOS_LAMBDA(const IndexType i) {
+		"ReactionNetworkWorker::defineMomentIds::assignMomentIds", nClusters,
+		KOKKOS_LAMBDA(const IndexType i) {
 			const auto& reg = data->getCluster(i).getRegion();
 			IndexType current = counts(i);
 			for (auto k : speciesRange) {
@@ -776,16 +765,17 @@ double
 ReactionNetworkWorker<TImpl>::getTotalConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
 {
-	auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+	auto tiles = _nw._subpaving.getTiles();
 	double conc = 0.0;
 	Kokkos::parallel_reduce(
-		_nw._numClusters,
+		"ReactionNetworkWorker::getTotalConcentration", _nw._numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			using util::max;
 			const auto& clReg = tiles(i).getRegion();
-			const auto factor = clReg.volume() / clReg[type].length();
-			for (AmountType j : makeIntervalRange(clReg[type])) {
-				if (j >= minSize)
-					lsum += concentrations(i) * factor;
+			const auto& ival = clReg[type];
+			const auto factor = clReg.volume() / ival.length();
+			for (auto j = max(minSize, ival.begin()); j < ival.end(); ++j) {
+				lsum += concentrations(i) * factor;
 			}
 		},
 		conc);
@@ -800,18 +790,19 @@ double
 ReactionNetworkWorker<TImpl>::getTotalRadiusConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
 {
-	auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+	auto tiles = _nw._subpaving.getTiles();
 	double conc = 0.0;
 	auto clusterData = _nw._clusterData.d_view;
 	Kokkos::parallel_reduce(
-		_nw._numClusters,
+		"ReactionNetworkWorker::getTotalRadiusConcentration", _nw._numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			using util::max;
 			const auto& clReg = tiles(i).getRegion();
-			const auto factor = clReg.volume() / clReg[type].length();
-			for (AmountType j : makeIntervalRange(clReg[type])) {
-				if (j >= minSize)
-					lsum += concentrations(i) *
-						clusterData().reactionRadius(i) * factor;
+			const auto& ival = clReg[type];
+			const auto factor = clReg.volume() / ival.length();
+			for (auto j = max(minSize, ival.begin()); j < ival.end(); ++j) {
+				lsum += concentrations(i) * clusterData().reactionRadius(i) *
+					factor;
 			}
 		},
 		conc);
@@ -826,16 +817,17 @@ double
 ReactionNetworkWorker<TImpl>::getTotalAtomConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
 {
-	auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+	auto tiles = _nw._subpaving.getTiles();
 	double conc = 0.0;
 	Kokkos::parallel_reduce(
-		_nw._numClusters,
+		"ReactionNetworkWorker::getTotalAtomConcentration", _nw._numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			using util::max;
 			const auto& clReg = tiles(i).getRegion();
-			const auto factor = clReg.volume() / clReg[type].length();
-			for (AmountType j : makeIntervalRange(clReg[type])) {
-				if (j >= minSize)
-					lsum += concentrations(i) * j * factor;
+			const auto& ival = clReg[type];
+			const auto factor = clReg.volume() / ival.length();
+			for (auto j = max(minSize, ival.begin()); j < ival.end(); ++j) {
+				lsum += concentrations(i) * j * factor;
 			}
 		},
 		conc);
@@ -850,25 +842,27 @@ double
 ReactionNetworkWorker<TImpl>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
 {
-	auto tiles = _nw._subpaving.getTiles(plsm::onDevice);
+	auto tiles = _nw._subpaving.getTiles();
 	double conc = 0.0;
 	auto clusterData = _nw._clusterData.d_view;
 	Kokkos::parallel_reduce(
-		_nw._numClusters,
+		"ReactionNetworkWorker::getTotalVolumeFraction", _nw._numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			using util::max;
 			const auto& clReg = tiles(i).getRegion();
-			const auto factor = clReg.volume() / clReg[type].length();
-			for (AmountType j : makeIntervalRange(clReg[type])) {
-				if (j >= minSize)
-					lsum += concentrations(i) *
-						pow(clusterData().reactionRadius(i), 3.0) * factor;
+			const auto& ival = clReg[type];
+			const auto factor = clReg.volume() / ival.length();
+			const auto rRad = clusterData().reactionRadius(i);
+			const auto rRad3 = rRad * rRad * rRad;
+			for (auto j = max(minSize, ival.begin()); j < ival.end(); ++j) {
+				lsum += concentrations(i) * rRad3 * factor;
 			}
 		},
 		conc);
 
 	Kokkos::fence();
 
-	double sphereFactor = 4.0 * ::xolotl::core::pi / 3.0;
+	constexpr double sphereFactor = 4.0 * ::xolotl::core::pi / 3.0;
 
 	return conc * sphereFactor;
 }

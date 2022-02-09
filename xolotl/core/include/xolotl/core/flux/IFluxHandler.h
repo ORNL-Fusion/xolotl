@@ -129,6 +129,24 @@ public:
 	 */
 	virtual void
 	setFissionYield(double yield) = 0;
+	
+	/**
+	 * This operation gets the vector of flux amplitudes for each cluster at
+	 * this time.
+	 *
+	 * @param time The current time
+	 * @return The flux amplitudes
+	 */
+	virtual std::vector<double>
+	getInstantFlux(double time) const = 0;
+
+	/**
+	 * This operation gets the vector of cluster IDs for each generated cluster.
+	 *
+	 * @return The flux indices
+	 */
+	virtual std::vector<IdType>
+	getFluxIndices() const = 0;
 };
 // end class IFluxHandler
 

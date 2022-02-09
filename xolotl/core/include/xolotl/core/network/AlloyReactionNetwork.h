@@ -104,3 +104,7 @@ public:
 } // namespace xolotl
 
 #include <xolotl/core/network/AlloyClusterGenerator.h>
+
+#if defined(XOLOTL_INCLUDE_RN_TPP_FILES)
+#include <xolotl/core/network/impl/AlloyReactionNetwork.tpp>
+#endif

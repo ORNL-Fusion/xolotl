@@ -90,7 +90,8 @@ public:
 	initializeExtraClusterData(const options::IOptions& options);
 
 	void
-	updateExtraClusterData(const std::vector<double>& gridTemps);
+	updateExtraClusterData(const std::vector<double>& gridTemps,
+		const std::vector<double>& gridDepths);
 
 	void
 	selectTrapMutationReactions(double surfaceDepth, double spacing);
@@ -204,3 +205,7 @@ private:
 } // namespace xolotl
 
 #include <xolotl/core/network/PSIClusterGenerator.h>
+
+#if defined(XOLOTL_INCLUDE_RN_TPP_FILES)
+#include <xolotl/core/network/impl/PSIReactionNetwork.tpp>
+#endif

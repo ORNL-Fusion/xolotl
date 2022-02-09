@@ -9,7 +9,8 @@ using core::temperature::ITemperatureHandler;
 using temperature::TemperatureHandlerFactory;
 
 template TemperatureHandlerFactory&
-Factory<TemperatureHandlerFactory, ITemperatureHandler>::get();
+Factory<TemperatureHandlerFactory, ITemperatureHandler>::get(
+	const UserInitializer&);
 
 template std::shared_ptr<ITemperatureHandler>
 Factory<TemperatureHandlerFactory, ITemperatureHandler>::generate(

@@ -23,6 +23,7 @@ target_link_libraries(xolotlInterface
     xolotlIO
     xolotlOptions
     xolotlPerf
+    xolotlUtil
     xolotlViz
     PUBLIC
     MPI::MPI_CXX

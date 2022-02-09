@@ -38,38 +38,6 @@ public:
 	readParams(int argc, const char* argv[]) = 0;
 
 	/**
-	 * Should the program run after parsing the parameter file?
-	 *
-	 * @return true is the program should run
-	 */
-	virtual bool
-	shouldRun() const = 0;
-
-	/**
-	 * Set the shouldRunFlag.
-	 *
-	 * @param flag The value for the shouldRunFlag
-	 */
-	virtual void
-	setShouldRunFlag(bool flag) = 0;
-
-	/**
-	 * If program shouldn't run, what should its exit code be?
-	 *
-	 * @return the value of the exit code
-	 */
-	virtual int
-	getExitCode() const = 0;
-
-	/**
-	 * Set the value for the exit code.
-	 *
-	 * @param code The value for exit code
-	 */
-	virtual void
-	setExitCode(int code) = 0;
-
-	/**
 	 * Get the name of the network file.
 	 *
 	 * @return the name of the network file

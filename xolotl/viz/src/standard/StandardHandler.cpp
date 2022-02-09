@@ -1,6 +1,7 @@
 #include <stdexcept>
 
 #include <xolotl/factory/viz/VizHandlerFactory.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/viz/LabelProvider.h>
 #include <xolotl/viz/dataprovider/DataProvider.h>
@@ -31,7 +32,7 @@ StandardHandler::StandardHandler(const options::IOptions& options)
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
-		std::cout << "VizHandler: Using the standard handler" << std::endl;
+		XOLOTL_LOG << "VizHandler: Using the standard handler";
 	}
 }
 

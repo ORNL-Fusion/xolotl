@@ -96,3 +96,7 @@ private:
 } // namespace xolotl
 
 #include <xolotl/core/network/FeClusterGenerator.h>
+
+#if defined(XOLOTL_INCLUDE_RN_TPP_FILES)
+#include <xolotl/core/network/impl/FeReactionNetwork.tpp>
+#endif

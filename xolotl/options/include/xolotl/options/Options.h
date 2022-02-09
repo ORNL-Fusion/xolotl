@@ -14,16 +14,6 @@ class Options : public IOptions
 {
 protected:
 	/**
-	 * The flag that says if Xolotl should run.
-	 */
-	bool shouldRunFlag;
-
-	/**
-	 * The value of the exit code. Should be 0 if everything went well.
-	 */
-	int exitCode;
-
-	/**
 	 * The name of the file where the network is stored.
 	 */
 	std::string networkFilename;
@@ -303,42 +293,6 @@ public:
 	 */
 	void
 	readParams(int argc, const char* argv[]) override;
-
-	/**
-	 * \see IOptions.h
-	 */
-	bool
-	shouldRun() const override
-	{
-		return shouldRunFlag;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	void
-	setShouldRunFlag(bool flag) override
-	{
-		shouldRunFlag = flag;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	int
-	getExitCode() const override
-	{
-		return exitCode;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	void
-	setExitCode(int code) override
-	{
-		exitCode = code;
-	}
 
 	/**
 	 * \see IOptions.h

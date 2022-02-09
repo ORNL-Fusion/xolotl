@@ -6,8 +6,9 @@
 #include <xolotl/core/diffusion/Diffusion3DHandler.h>
 #include <xolotl/core/diffusion/DummyDiffusionHandler.h>
 #include <xolotl/core/material/MaterialHandler.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
-#include <xolotl/util/TokenizedLineReader.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -27,19 +28,20 @@ MaterialHandler::MaterialHandler(const options::IOptions& options,
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
-		std::cout << "MaterialHandler: The selected material is: "
-				  << options.getMaterial() << " with the following processes: ";
+		util::StringStream ss;
+		ss << "MaterialHandler: The selected material is: "
+		   << options.getMaterial() << " with the following processes: ";
 		auto processes = options.getProcesses();
 		for (auto const& process : processes) {
 			if (process.second) {
-				std::cout << process.first << " ";
+				ss << process.first << " ";
 			}
 		}
 		if (!options.getFluxDepthProfileFilePath().empty()) {
-			std::cout << "; a custom fit flux handler is used reading: "
-					  << options.getFluxDepthProfileFilePath();
+			ss << "; a custom fit flux handler is used reading: "
+			   << options.getFluxDepthProfileFilePath();
 		}
-		std::cout << std::endl;
+		XOLOTL_LOG << ss.str();
 	}
 }
 
@@ -90,10 +92,7 @@ MaterialHandler::initializeAdvectionHandlers(const options::IOptions& options)
 	auto dim = options.getDimensionNumber();
 
 	// Setup the grain boundaries
-	std::string gbString = options.getGbString();
-	util::TokenizedLineReader<std::string> reader;
-	reader.setInputStream(std::make_shared<std::istringstream>(gbString));
-	auto tokens = reader.loadLine();
+	auto tokens = util::Tokenizer<>{options.getGbString()}();
 	for (int i = 0; i < tokens.size(); ++i) {
 		if (tokens[i] == "X") {
 			_advectionHandlers.push_back(

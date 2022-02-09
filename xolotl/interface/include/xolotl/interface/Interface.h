@@ -1,5 +1,4 @@
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#pragma once
 
 #include <petscts.h>
 
@@ -22,6 +21,10 @@ class IReactionNetwork;
 namespace solver
 {
 class ISolver;
+}
+namespace perf
+{
+class IPerfHandler;
 }
 
 namespace interface
@@ -250,9 +253,5 @@ public:
 	void
 	finalizeXolotl();
 };
-// End class interface
-
 } /* namespace interface */
 } /* namespace xolotl */
-
-#endif
