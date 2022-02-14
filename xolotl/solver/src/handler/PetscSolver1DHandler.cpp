@@ -682,17 +682,13 @@ PetscSolver1DHandler::updateConcentration(
 		if (skip)
 			continue;
 
-		if (grid[xi + 1] - grid[surfacePosition + 1] > 1000002)
+		if (xi == surfacePosition)
 			continue;
 
 		// ---- Compute Soret diffusion over the locally owned part of the grid
 		// -----
 		soretDiffusionHandler->computeDiffusion(network, concVector,
 			updatedConcOffset, hxLeft, hxRight, xi - localXS);
-
-		if (xi == surfacePosition ||
-			(fabs(grid[xi + 1] - grid[surfacePosition + 1] - 1000000) < 2.0))
-			continue;
 
 		// ----- Account for flux of incoming particles -----
 		fluxHandler->computeIncidentFlux(
@@ -982,7 +978,7 @@ PetscSolver1DHandler::computeJacobian(
 		if (skip)
 			continue;
 
-		if (grid[xi + 1] - grid[surfacePosition + 1] > 1000002)
+		if (xi == surfacePosition)
 			continue;
 
 		// Fill the concVector with the pointer to the middle, left, and right
@@ -1032,10 +1028,6 @@ PetscSolver1DHandler::computeJacobian(
 					"MatSetValuesStencil (Soret diffusion, temp) failed.");
 			}
 		}
-
-		if (xi == surfacePosition ||
-			(fabs(grid[xi + 1] - grid[surfacePosition + 1] - 1000000) < 2.0))
-			continue;
 
 		// Get the partial derivatives for the diffusion
 		diffusionHandler->computePartialsForDiffusion(

@@ -40,7 +40,7 @@ protected:
 	/**
 	 * Heat conductivity fit
 	 */
-	double A = 10.846, B = -182.22, C = 872.47;
+	double A = 10.846, B = -184.22, C = 872.47;
 
 	/**
 	 * The surface position
@@ -63,11 +63,6 @@ protected:
 	double interfaceLoc;
 
 	/**
-	 * The He flux (nm-2 s-1)
-	 */
-	double J;
-
-	/**
 	 * Get the heat conductivity at this grid point.
 	 *
 	 * @param xi The grid index
@@ -84,7 +79,6 @@ public:
 		surfacePosition(0),
 		heatFlux(0.0),
 		beta(0.0065),
-		J(1.0e3),
 		interfaceLoc(0.0),
 		localXs(0)
 	{

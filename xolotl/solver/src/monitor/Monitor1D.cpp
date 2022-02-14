@@ -794,7 +794,8 @@ computeHeliumRetention1D(TS ts, PetscInt, PetscReal time, Vec solution, void*)
 			}
 		}
 		outputFile << nHeliumBurst1D << " " << nDeuteriumBurst1D << " "
-				   << nTritiumBurst1D << std::endl;
+				   << nTritiumBurst1D << " "
+				   << solutionArray[surfacePos + 1][dof] << std::endl;
 		outputFile.close();
 	}
 

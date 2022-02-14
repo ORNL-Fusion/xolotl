@@ -1663,7 +1663,6 @@ DissociationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 	double omega = this->_clusterData.getAtomicVolume();
 	double T = this->_clusterData.temperature(gridIndex);
 
-	// TODO: computeProductionRate should use products and not reactants
 	auto cl0 = this->_clusterData.getCluster(_products[0]);
 	auto cl1 = this->_clusterData.getCluster(_products[1]);
 

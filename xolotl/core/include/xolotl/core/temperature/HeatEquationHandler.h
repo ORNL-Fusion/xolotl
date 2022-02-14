@@ -145,7 +145,7 @@ private:
 	/**
 	 * Heat conductivity fit
 	 */
-	double A = 10.846, B = -182.22, C = 872.47;
+	double A = 10.846, B = -184.22, C = 872.47;
 
 	/**
 	 * Hang on to single allocation for use in computeTemperature()
