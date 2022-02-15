@@ -84,11 +84,18 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	using Kokkos::MemoryUnmanaged;
 
 	auto desorpInit = _tmHandler->getDesorptionInitializer();
-	Composition comp{};
-	comp[Species::He] = desorpInit.size;
+	auto subpaving = this->_subpaving;
+	IndexType desorpId = this->invalidIndex();
+	Kokkos::parallel_reduce(
+		1,
+		KOKKOS_LAMBDA(std::size_t, IndexType & running) {
+			Composition comp{};
+			comp[Species::He] = desorpInit.size;
+			running = static_cast<IndexType>(subpaving.findTileId(comp));
+		},
+		desorpId);
 	auto desorp = create_mirror_view(tmData.desorption);
-	desorp() = detail::Desorption{
-		desorpInit, this->findCluster(comp, plsm::HostMemSpace{}).getId()};
+	desorp() = detail::Desorption{desorpInit, desorpId};
 	deep_copy(tmData.desorption, desorp);
 
 	auto depths = Kokkos::View<const double[7], HostSpace, MemoryUnmanaged>(

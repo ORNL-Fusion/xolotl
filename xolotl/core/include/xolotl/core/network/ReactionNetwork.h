@@ -561,8 +561,6 @@ private:
 	generateDiagonalFill(const Connectivity& connectivity);
 
 private:
-	Subpaving _subpaving;
-
 	std::optional<SubpavingMirror> _subpavingMirror;
 	std::optional<ClusterDataMirror> _clusterDataMirror;
 
@@ -572,6 +570,8 @@ private:
 
 protected:
 	Kokkos::DualView<ClusterData> _clusterData;
+
+	Subpaving _subpaving;
 
 	ReactionCollection _reactions;
 
