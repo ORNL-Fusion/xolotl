@@ -226,12 +226,15 @@ void
 ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 {
 	this->_gridSize = gridSize;
+	// Set value in mirror so we don't need to invalidate
+	if (_clusterDataMirror.has_value()) {
+		_clusterDataMirror.value().setGridSize(gridSize);
+	}
 	_clusterData.h_view().setGridSize(gridSize);
 	copyClusterDataView();
 	_reactions.setGridSize(gridSize);
 	_reactions.updateAll(_clusterData.d_view);
 	Kokkos::fence();
-	invalidateDataMirror();
 }
 
 template <typename TImpl>
