@@ -1,6 +1,5 @@
 // Includes
-#include <iostream>
-
+#include <xolotl/util/Log.h>
 #include <xolotl/viz/standard/plot/ScatterPlot.h>
 
 // General VTKM includes
@@ -46,13 +45,13 @@ ScatterPlot::render(const std::string& fileName)
 {
 	// Check if the label provider is set
 	if (!plotLabelProvider) {
-		std::cout << "The LabelProvider is not set!!" << std::endl;
+		XOLOTL_LOG_WRN << "The LabelProvider is not set!!";
 		return;
 	}
 
 	// Check if the data provider is set
 	if (!plotDataProvider) {
-		std::cout << "The DataProvider is not set!!" << std::endl;
+		XOLOTL_LOG_WRN << "The DataProvider is not set!!";
 		return;
 	}
 
@@ -68,7 +67,6 @@ ScatterPlot::render(const std::string& fileName)
 	dataSet.AddPointField(plotDataProvider->getDataName(), yVector);
 
 	// Create the view
-	vtkm::rendering::View1D* view = nullptr;
 	vtkm::rendering::CanvasRayTracer canvas(W_WIDTH, W_HEIGHT);
 	vtkm::rendering::MapperWireframer mapper;
 
@@ -90,50 +88,41 @@ ScatterPlot::render(const std::string& fileName)
 	camera.SetViewport(-0.7f, +0.7f, -0.7f, +0.7f);
 
 	// Create vtkm rendering infrastructure
-	view = new vtkm::rendering::View1D(
+	vtkm::rendering::View1D view(
 		scene, mapper, canvas, camera, BG_COLOR, FG_COLOR);
 
 	// Set the log scale
 	if (enableLogScale)
-		view->SetLogY(true);
+		view.SetLogY(true);
 
 	// Print the title
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> titleAnnotation(
-		new vtkm::rendering::TextAnnotationScreen(plotLabelProvider->titleLabel,
-			FG_COLOR, .1, vtkm::Vec<vtkm::Float32, 2>(-.27, .87), 0));
-	view->AddAnnotation(std::move(titleAnnotation));
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		plotLabelProvider->titleLabel, FG_COLOR, .1,
+		vtkm::Vec<vtkm::Float32, 2>(-.27, .87), 0));
 
 	// Print the axis labels
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> axis1Annotation(
-		new vtkm::rendering::TextAnnotationScreen(plotLabelProvider->axis1Label,
-			FG_COLOR, .065, vtkm::Vec<vtkm::Float32, 2>(-.1, -.87), 0));
-	view->AddAnnotation(std::move(axis1Annotation));
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		plotLabelProvider->axis1Label, FG_COLOR, .065,
+		vtkm::Vec<vtkm::Float32, 2>(-.1, -.87), 0));
 
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> axis2Annotation(
-		new vtkm::rendering::TextAnnotationScreen(plotLabelProvider->axis2Label,
-			FG_COLOR, .065, vtkm::Vec<vtkm::Float32, 2>(-.92, -.15), 90));
-	view->AddAnnotation(std::move(axis2Annotation));
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		plotLabelProvider->axis2Label, FG_COLOR, .065,
+		vtkm::Vec<vtkm::Float32, 2>(-.92, -.15), 90));
 
 	// Add the time information
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> timeAnnotation(
-		new vtkm::rendering::TextAnnotationScreen(plotLabelProvider->timeLabel,
-			FG_COLOR, .055, vtkm::Vec<vtkm::Float32, 2>(.55, -.94), 0));
-	view->AddAnnotation(std::move(timeAnnotation));
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		plotLabelProvider->timeLabel, FG_COLOR, .055,
+		vtkm::Vec<vtkm::Float32, 2>(.55, -.94), 0));
 
-	std::unique_ptr<vtkm::rendering::TextAnnotationScreen> timeStepAnnotation(
-		new vtkm::rendering::TextAnnotationScreen(
-			plotLabelProvider->timeStepLabel, FG_COLOR, .055,
-			vtkm::Vec<vtkm::Float32, 2>(.55, -.99), 0));
-	view->AddAnnotation(std::move(timeStepAnnotation));
-
-	// Set the view
-	view->Initialize();
+	view.AddAnnotation(std::make_unique<vtkm::rendering::TextAnnotationScreen>(
+		plotLabelProvider->timeStepLabel, FG_COLOR, .055,
+		vtkm::Vec<vtkm::Float32, 2>(.55, -.99), 0));
 
 	// Paint
-	view->Paint();
+	view.Paint();
 
 	// Save the final buffer as an image
-	view->SaveAs(fileName);
+	view.SaveAs(fileName);
 	return;
 }
 

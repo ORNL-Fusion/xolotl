@@ -4,9 +4,12 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace network;
 
 using Kokkos::ScopeGuard;
@@ -22,22 +25,17 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=20 0 0 0 0" << std::endl
 			  << "process=reaction" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = NEReactionNetwork;
 	using Spec = NetworkType::Species;
@@ -46,17 +44,12 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 		{(NetworkType::AmountType)opts.getMaxImpurity()}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 20);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 20);
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 32000);
-	BOOST_REQUIRE(deviceMemorySize < 36000);
 
-	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.574, 0.01);
-	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.047279806, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.547, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0409168, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getImpurityRadius(), 0.3, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getInterstitialBias(), 1.15, 0.01);
 
@@ -115,7 +108,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -171,21 +165,21 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 		-3.25251e-06, -3.44213e-06, -3.60226e-06, -3.74222e-06, -3.86739e-06,
 		-3.98113e-06, -4.08575e-06, -4.18288e-06, -4.27373e-06, -4.35923e-06,
 		-4.4401e-06, -4.51692e-06, -4.59017e-06, -4.66023e-06, -4.72743e-06,
-		-4.79204e-06, -4.8543e-06, 3.50475e-32, -3.01432e-06, 7.93299e-06,
-		5.30831e-15, -3.25251e-06, -2.38186e-07, 3.01432e-06, 3.14804e-16,
-		-3.44213e-06, -1.8962e-07, 3.25251e-06, 5.84363e-17, -3.60226e-06,
-		-1.60127e-07, 3.44213e-06, 3.42327e-17, -3.74222e-06, -1.39969e-07,
-		3.60226e-06, 1.09411e-18, -3.86739e-06, -1.25163e-07, 3.74222e-06,
-		3.54301e-19, -3.98113e-06, -1.13743e-07, 3.86739e-06, 3.45219e-22,
-		-4.08575e-06, -1.04618e-07, 3.98113e-06, 2.05723e-20, -4.18288e-06,
-		-9.71289e-08, 4.08575e-06, 3.69419e-21, -4.27373e-06, -9.08512e-08,
-		4.18288e-06, 1.14015e-23, -4.35923e-06, -8.54991e-08, 4.27373e-06,
-		6.39174e-25, -4.4401e-06, -8.08717e-08, 4.35923e-06, 2.03997e-25,
-		-4.51692e-06, -7.68238e-08, 4.4401e-06, 3.64005e-26, -4.59017e-06,
-		-7.32473e-08, 4.51692e-06, 2.03305e-27, -4.66023e-06, -7.006e-08,
-		4.59017e-06, 6.4677e-28, -4.72743e-06, -6.71984e-08, 4.66023e-06,
-		6.32493e-30, -4.79204e-06, -6.46122e-08, 4.72743e-06, 3.52376e-31,
-		-4.8543e-06, -6.22614e-08, 4.79204e-06, 3.50475e-32, -3.50475e-32,
+		-4.79204e-06, -4.8543e-06, 4.04978e-32, -3.01432e-06, 7.93299e-06,
+		6.13381e-15, -3.25251e-06, -2.38186e-07, 3.01432e-06, 3.6376e-16,
+		-3.44213e-06, -1.8962e-07, 3.25251e-06, 6.75237e-17, -3.60226e-06,
+		-1.60127e-07, 3.44213e-06, 3.95562e-17, -3.74222e-06, -1.39969e-07,
+		3.60226e-06, 1.26426e-18, -3.86739e-06, -1.25163e-07, 3.74222e-06,
+		4.09399e-19, -3.98113e-06, -1.13743e-07, 3.86739e-06, 3.98904e-22,
+		-4.08575e-06, -1.04618e-07, 3.98113e-06, 2.37715e-20, -4.18288e-06,
+		-9.71289e-08, 4.08575e-06, 4.26867e-21, -4.27373e-06, -9.08512e-08,
+		4.18288e-06, 1.31745e-23, -4.35923e-06, -8.54991e-08, 4.27373e-06,
+		7.38572e-25, -4.4401e-06, -8.08717e-08, 4.35923e-06, 2.35721e-25,
+		-4.51692e-06, -7.68238e-08, 4.4401e-06, 4.20612e-26, -4.59017e-06,
+		-7.32473e-08, 4.51692e-06, 2.34921e-27, -4.66023e-06, -7.006e-08,
+		4.59017e-06, 7.47349e-28, -4.72743e-06, -6.71984e-08, 4.66023e-06,
+		7.30852e-30, -4.79204e-06, -6.46122e-08, 4.72743e-06, 4.07174e-31,
+		-4.8543e-06, -6.22614e-08, 4.79204e-06, 4.04978e-32, -4.04978e-32,
 		4.8543e-06, 4.8543e-06};
 	auto vals = Kokkos::View<double*>("solverPartials", nPartials);
 	network.computeAllPartials(dConcs, vals, gridId);
@@ -209,7 +203,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::Xe] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 7.0, 0.01);
@@ -227,7 +221,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
 	comp[Spec::Xe] = 10;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 9);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.61702, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 46.9, 0.01);
@@ -250,23 +244,18 @@ BOOST_AUTO_TEST_CASE(grouped)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=25 0 0 0 0" << std::endl
 			  << "grouping=11 4" << std::endl
 			  << "process=reaction" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = NEReactionNetwork;
 	using Spec = NetworkType::Species;
@@ -284,14 +273,9 @@ BOOST_AUTO_TEST_CASE(grouped)
 	NetworkType network({maxXe}, {{groupingWidth}}, 1, opts);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 16);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 19);
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 30000);
-	BOOST_REQUIRE(deviceMemorySize < 35000);
 
 	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 16);
@@ -332,12 +316,13 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
-	BOOST_REQUIRE_CLOSE(network.getLargestRate(), 3.5926e+103, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getLargestRate(), 4.15126e+103, 0.01);
 
 	// Create a concentration vector where every field is at 1.0
 	std::vector<double> concentrations(dof + 1, 1.0);
@@ -372,10 +357,10 @@ BOOST_AUTO_TEST_CASE(grouped)
 	deep_copy(dFluxes, hFluxes);
 
 	// Check the fluxes computation
-	std::vector<double> knownFluxes = {-1.79629e+103, -1.76185e-07, -1.8962e-07,
-		-1.13743e-07, 4.49072e+102, -1.5084e-07, 7.36301e-06, 2.45933e-06,
+	std::vector<double> knownFluxes = {-2.07563e+103, -1.76185e-07, -1.8962e-07,
+		-1.13743e-07, 5.18908e+102, -1.5084e-07, 7.36301e-06, 2.45933e-06,
 		-2.38186e-07, -1.60127e-07, -1.39969e-07, -1.25163e-07, -1.04618e-07,
-		-9.71289e-08, -1.79629e+103, 5.1366e-06, -5.49878e-06, -5.38887e+102,
+		-9.71289e-08, -2.07563e+103, 5.1366e-06, -5.49878e-06, -6.22689e+102,
 		-5.81881e-06, 0};
 	network.computeAllFluxes(dConcs, dFluxes, gridId);
 	deep_copy(hFluxes, dFluxes);
@@ -384,27 +369,28 @@ BOOST_AUTO_TEST_CASE(grouped)
 	}
 
 	// Check the partials computation
-	std::vector<double> knownPartials = {-0.000121415, -1.9034e-05, 0,
-		-3.44213e-06, -3.98113e-06, 3.59258e+103, 0, -1.99994e-05, 0,
-		-5.1366e-06, -3.01432e-06, -3.25251e-06, -3.60226e-06, -3.74222e-06,
-		-3.86739e-06, -4.08575e-06, -4.18288e-06, -4.27373e-06, 1.92928e-36,
-		-1.18963e-06, -1.76185e-07, -1.78444e-06, 1.11915e-06, 1.67873e-06,
-		1.32521e-40, 0, -3.44213e-06, -1.8962e-07, 3.25251e-06, 5.84363e-17,
-		-3.98113e-06, -1.13743e-07, 3.86739e-06, 3.45219e-22, -8.98145e+102,
-		-1.72945e-06, -1.67873e-06, 1.06843e-06, 1.2467e-40, 0, -1.24996e-06,
-		-1.5084e-07, 1.18963e-06, 1.78444e-06, -1.87494e-06, 2.10939e-49,
-		-5.1366e-06, 7.36301e-06, 4.99984e-06, 7.49977e-06, 1.92928e-36,
-		-3.01432e-06, 7.93299e-06, 5.30831e-15, -3.25251e-06, -2.38186e-07,
-		3.01432e-06, 3.14804e-16, -3.60226e-06, -1.60127e-07, 3.44213e-06,
-		3.42327e-17, -3.74222e-06, -1.39969e-07, 3.60226e-06, 1.09411e-18,
-		-3.86739e-06, -1.25163e-07, 3.74222e-06, 3.54301e-19, -4.08575e-06,
-		-1.04618e-07, 3.98113e-06, 2.05723e-20, -4.18288e-06, -9.71289e-08,
-		4.08575e-06, 3.69419e-21, -4.27373e-06, -9.08512e-08, 4.18288e-06,
-		3.59258e+103, 0, -1.92928e-36, 5.1366e-06, 5.1366e-06, -3.56888e-06,
-		-5.49878e-06, 1.42755e-06, -1.34298e-06, -2.01447e-06, 1.59025e-40,
-		-2.38537e-40, -1.61666e+103, -3.29659e-06, 1.07777e+103, -1.28212e-06,
-		1.49604e-40, -2.24406e-40, -3.74988e-06, -5.81881e-06, -1.42755e-06,
-		-2.14133e-06, 1.49995e-06, 2.53127e-49};
+	std::vector<double> knownPartials = {-0.000121415, -1.9034e-05, 5.44285e-41,
+		-3.44213e-06, -3.98113e-06, 4.15126e+103, -6.22689e+103, -1.99994e-05,
+		4.65987e-41, -5.1366e-06, -3.01432e-06, -3.25251e-06, -3.60226e-06,
+		-3.74222e-06, -3.86739e-06, -4.08575e-06, -4.18288e-06, -4.27373e-06,
+		2.2293e-36, -1.18963e-06, -1.76185e-07, -1.78444e-06, 1.11915e-06,
+		1.67873e-06, 1.53129e-40, -2.29693e-40, -3.44213e-06, -1.8962e-07,
+		3.25251e-06, 6.75237e-17, -3.98113e-06, -1.13743e-07, 3.86739e-06,
+		3.98904e-22, -1.03782e+103, -1.72945e-06, 1.55672e+103, 1.06843e-06,
+		1.44058e-40, -2.16086e-40, -1.24996e-06, -1.5084e-07, 1.18963e-06,
+		1.78444e-06, -1.87494e-06, 2.43742e-49, -5.1366e-06, 7.36301e-06,
+		4.99984e-06, 7.49977e-06, 2.2293e-36, -3.01432e-06, 7.93299e-06,
+		6.13381e-15, -3.25251e-06, -2.38186e-07, 3.01432e-06, 3.6376e-16,
+		-3.60226e-06, -1.60127e-07, 3.44213e-06, 3.95562e-17, -3.74222e-06,
+		-1.39969e-07, 3.60226e-06, 1.26426e-18, -3.86739e-06, -1.25163e-07,
+		3.74222e-06, 4.09399e-19, -4.08575e-06, -1.04618e-07, 3.98113e-06,
+		2.37715e-20, -4.18288e-06, -9.71289e-08, 4.08575e-06, 4.26867e-21,
+		-4.27373e-06, -9.08512e-08, 4.18288e-06, 4.15126e+103, -6.22689e+103,
+		-2.2293e-36, 5.1366e-06, 5.1366e-06, -3.56888e-06, -5.49878e-06,
+		1.42755e-06, -1.34298e-06, -2.01447e-06, 1.83755e-40, -2.75632e-40,
+		-1.86807e+103, -3.29659e-06, 1.24538e+103, -1.28212e-06, 1.72869e-40,
+		-2.59304e-40, -3.74988e-06, -5.81881e-06, -1.42755e-06, -2.14133e-06,
+		1.49995e-06, 2.92491e-49};
 	auto vals = Kokkos::View<double*>("solverPartials", nPartials);
 	network.computeAllPartials(dConcs, vals, gridId);
 	auto hPartials = create_mirror_view(vals);
@@ -417,7 +403,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
-				BOOST_REQUIRE_CLOSE(hPartials[startingIdx + index],
+				XOLOTL_REQUIRE_CLOSE(hPartials[startingIdx + index],
 					knownPartials[startingIdx + j], 0.01);
 			}
 			startingIdx += row.size();
@@ -427,7 +413,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::Xe] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 7.0, 0.01);
@@ -445,7 +431,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
 	comp[Spec::Xe] = 20;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 5);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.7961, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 79.0, 0.01);
@@ -468,22 +454,17 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=20 0 0 0 0" << std::endl
 			  << "process=reaction resolution" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = NEReactionNetwork;
 	using Spec = NetworkType::Species;
@@ -493,11 +474,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 	network.setFissionRate(8.0e-9);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
-
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 40000);
-	BOOST_REQUIRE(deviceMemorySize < 50000);
 
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
 	BOOST_REQUIRE(network.getEnableReSolution() == true);
@@ -539,7 +515,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
@@ -621,23 +598,18 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=25 0 0 0 0" << std::endl
 			  << "grouping=11 4" << std::endl
 			  << "process=reaction resolution" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	using NetworkType = NEReactionNetwork;
 	using Spec = NetworkType::Species;
@@ -656,12 +628,6 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 	network.setFissionRate(8.0e-9);
 
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
-
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_REQUIRE(deviceMemorySize > 40000);
-	BOOST_REQUIRE(deviceMemorySize < 47000);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -699,12 +665,13 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
-	BOOST_REQUIRE_CLOSE(network.getLargestRate(), 7.739167e+107, 0.01);
+	BOOST_REQUIRE_CLOSE(network.getLargestRate(), 8.942685e+107, 0.01);
 
 	// Create a concentration vector where every field is at 1.0
 	std::vector<double> concentrations(dof + 1, 1.0);
@@ -727,10 +694,10 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 	deep_copy(dFluxes, hFluxes);
 
 	// Check the fluxes computation
-	std::vector<double> knownFluxes = {-3.86958e+107, -0.00379371, -0.00410766,
-		-0.00246059, 9.67396e+106, -0.00318435, 0.158612, 0.0529346,
+	std::vector<double> knownFluxes = {-4.47134e+107, -0.00379371, -0.00410766,
+		-0.00246059, 1.11784e+107, -0.00318435, 0.158612, 0.0529346,
 		-0.00516169, -0.00346739, -0.00302979, -0.00270841, -0.00226261,
-		-0.00210017, -3.86958e+107, 0.110484, -0.118683, -1.16088e+107,
+		-0.00210017, -4.47134e+107, 0.110484, -0.118683, -1.3414e+107,
 		-0.125485, 0};
 	network.computeAllFluxes(dConcs, dFluxes, gridId);
 	deep_copy(hFluxes, dFluxes);
@@ -740,24 +707,24 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 
 	// Check the partials computation
 	std::vector<double> knownPartials = {-2.61554, -0.409267, 0, -0.0738305,
-		-0.0855092, 7.73917e+107, 0, -0.430117, 0, -0.110482, -0.064144,
-		-0.069715, -0.0773028, -0.0803359, -0.0830468, -0.0877732, -0.0898745,
-		-0.0918394, 0.000168841, -0.0256749, -0.00379539, -0.0384405, 0.0241089,
-		0.0361633, 4.44896e-05, 0, -0.0744708, -0.00408481, 0.0700659,
-		0.000297336, -0.0860146, -0.00245026, 0.0833116, 0.000242396,
-		-1.93479e+107, -0.0372559, -0.0361633, 0.0230163, 4.78367e-05, 0,
-		-0.0269713, -0.0032494, 0.025627, 0.0384405, -0.0403902, 4.28086e-05,
-		-0.110824, 0.158615, 0.107707, 0.161561, 0.000168841, -0.0653302,
-		0.170893, 0.000350842, -0.0704167, -0.00513103, 0.0649348, 0.000320188,
-		-0.0778975, -0.00344947, 0.0741507, 0.000279413, -0.0808948,
-		-0.00301523, 0.0776001, 0.000264854, -0.0835765, -0.00269627, 0.0806154,
-		0.000252718, -0.088258, -0.00225369, 0.0857619, 0.000233478, -0.0903414,
-		-0.00209236, 0.0880156, 0.000225672, -0.0922907, -0.00195713, 0.0901079,
-		7.73917e+107, 0, -0.000168841, 0.110653, 0.110653, -0.0770246,
-		-0.118455, 0.030695, -0.0289306, -0.043396, 5.33876e-05, -8.00813e-05,
-		-3.48263e+107, -0.0710155, 2.32175e+107, -0.0276195, 5.7404e-05,
-		-8.6106e-05, -0.0809138, -0.125349, -0.0307524, -0.0461286, 0.0322587,
-		5.13703e-05};
+		-0.0855092, 8.94269e+107, -1.3414e+108, -0.430117, 0, -0.110482,
+		-0.064144, -0.069715, -0.0773028, -0.0803359, -0.0830468, -0.0877732,
+		-0.0898745, -0.0918394, 0.000168841, -0.0256749, -0.00379539,
+		-0.0383688, 0.0241089, 0.0361633, 4.44896e-05, -6.67345e-05, -0.0744708,
+		-0.00408481, 0.0700659, 0.000297336, -0.0860146, -0.00245026, 0.0833116,
+		0.000242396, -2.23567e+107, -0.0372559, 3.35351e+107, 0.0230163,
+		4.78367e-05, -7.1755e-05, -0.0269713, -0.0032494, 0.025627, 0.0384405,
+		-0.0403234, 4.28086e-05, -0.110824, 0.158615, 0.107707, 0.161561,
+		0.000168841, -0.0653302, 0.170893, 0.000350842, -0.0704167, -0.00513103,
+		0.0649348, 0.000320188, -0.0778975, -0.00344947, 0.0741507, 0.000279413,
+		-0.0808948, -0.00301523, 0.0776001, 0.000264854, -0.0835765,
+		-0.00269627, 0.0806154, 0.000252718, -0.088258, -0.00225369, 0.0857619,
+		0.000233478, -0.0903414, -0.00209236, 0.0880156, 0.000225672,
+		-0.0922907, -0.00195713, 0.0901079, 8.94269e+107, -1.3414e+108,
+		-0.000168841, 0.110653, 0.110653, -0.0770246, -0.118455, 0.030695,
+		-0.0289306, -0.043396, 5.33876e-05, -8.00813e-05, -4.02421e+107,
+		-0.0710155, 2.68281e+107, -0.0276195, 5.7404e-05, -8.6106e-05,
+		-0.0809138, -0.125349, -0.0307524, -0.0461286, 0.0322587, 5.13703e-05};
 	auto vals = Kokkos::View<double*>("solverPartials", nPartials);
 	network.computeAllPartials(dConcs, vals, gridId);
 	auto hPartials = create_mirror_view(vals);
@@ -770,7 +737,7 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
-				BOOST_REQUIRE_CLOSE(hPartials[startingIdx + index],
+				XOLOTL_REQUIRE_CLOSE(hPartials[startingIdx + index],
 					knownPartials[startingIdx + j], 0.01);
 			}
 			startingIdx += row.size();

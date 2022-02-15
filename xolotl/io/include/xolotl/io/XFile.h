@@ -123,15 +123,12 @@ public:
 		 * Save the surface positions to our timestep group.
 		 *
 		 * @param iSurface The index of the surface position
-		 * @param nInter The quantity of interstitial at the surface position
-		 * @param previousFlux The previous I flux at the surface position
 		 * @param nAtoms The quantity of atoms at the surface
 		 * @param previousFluxes The previous fluxes
 		 * @param atomNames The names for the atom types
 		 */
 		void
-		writeSurface1D(Surface1DType iSurface, Data1DType nInter,
-			Data1DType previousIFlux, std::vector<Data1DType> nAtoms,
+		writeSurface1D(Surface1DType iSurface, std::vector<Data1DType> nAtoms,
 			std::vector<Data1DType> previousFluxes,
 			std::vector<std::string> atomNames) const;
 
@@ -139,23 +136,29 @@ public:
 		 * Save the surface positions to our timestep group.
 		 *
 		 * @param iSurface The indices of the surface position
-		 * @param nInter The quantity of interstitial at each surface position
-		 * @param previousFlux The previous I flux at each surface position
+		 * @param nAtoms The quantity of atoms at the surface
+		 * @param previousFluxes The previous fluxes
+		 * @param atomNames The names for the atom types
 		 */
 		void
-		writeSurface2D(const Surface2DType& iSurface, const Data2DType& nInter,
-			const Data2DType& previousFlux) const;
+		writeSurface2D(const Surface2DType& iSurface,
+			std::vector<Data2DType> nAtoms,
+			std::vector<Data2DType> previousFluxes,
+			std::vector<std::string> atomNames) const;
 
 		/**
 		 * Save the surface positions to our timestep group.
 		 *
 		 * @param iSurface The indices of the surface position
-		 * @param nInter The quantity of interstitial at each surface position
-		 * @param previousFlux The previous I flux at each surface position
+		 * @param nAtoms The quantity of atoms at the surface
+		 * @param previousFluxes The previous fluxes
+		 * @param atomNames The names for the atom types
 		 */
 		void
-		writeSurface3D(const Surface3DType& iSurface, const Data3DType& nInter,
-			const Data3DType& previousFlux) const;
+		writeSurface3D(const Surface3DType& iSurface,
+			std::vector<Data3DType> nAtoms,
+			std::vector<Data3DType> previousFluxes,
+			std::vector<std::string> atomNames) const;
 
 		/**
 		 * Save the bottom informations to our timestep group.
@@ -172,17 +175,26 @@ public:
 		/**
 		 * Save the bottom informations to our timestep group.
 		 *
-		 * @param nHe The quantity of helium at the bottom
-		 * @param previousHeFlux The previous He flux
-		 * @param nD The quantity of deuterium at the bottom
-		 * @param previousDFlux The previous D flux
-		 * @param nT The quantity of tritium at the bottom
-		 * @param previousTFlux The previous T flux
+		 * @param nAtoms The quantity of atoms at the bulk
+		 * @param previousFluxes The previous fluxes
+		 * @param atomNames The names for the atom types
 		 */
 		void
-		writeBottom2D(const Data2DType& nHe, const Data2DType& previousHeFlux,
-			const Data2DType& nD, const Data2DType& previousDFlux,
-			const Data2DType& nT, const Data2DType& previousTFlux);
+		writeBottom2D(std::vector<Data2DType> nAtoms,
+			std::vector<Data2DType> previousFluxes,
+			std::vector<std::string> atomNames);
+
+		/**
+		 * Save the bottom informations to our timestep group.
+		 *
+		 * @param nAtoms The quantity of atoms at the bulk
+		 * @param previousFluxes The previous fluxes
+		 * @param atomNames The names for the atom types
+		 */
+		void
+		writeBottom3D(std::vector<Data3DType> nAtoms,
+			std::vector<Data3DType> previousFluxes,
+			std::vector<std::string> atomNames);
 
 		/**
 		 * Save the bursting informations to our timestep group.
@@ -192,7 +204,7 @@ public:
 		 * @param nT The quantity of tritium lost from bursting
 		 */
 		void
-		writeBursting1D(Data1DType nHe, Data1DType nD, Data1DType nT);
+		writeBursting(Data1DType nHe, Data1DType nD, Data1DType nT);
 
 		/**
 		 * Add a concentration dataset at a specific grid point.
@@ -662,7 +674,7 @@ public:
 
 		if (hasGroup<T>()) {
 			// Open the group within our file.
-			group.reset(new T(*this));
+			group = std::make_unique<T>(*this);
 		}
 		return std::move(group);
 	}

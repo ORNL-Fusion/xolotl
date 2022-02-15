@@ -66,7 +66,7 @@ protected:
 	/**
 	 * Number of valid partial derivatives for each reactant.
 	 */
-	std::vector<PetscInt> reactionSize;
+	std::vector<IdType> reactionSize;
 
 	/**
 	 * Starting index of items for each reactant within the reactionIndices
@@ -82,7 +82,7 @@ protected:
 	/**
 	 * Indices for partial derivatives for all the reactions at one grid point.
 	 */
-	std::vector<PetscInt> reactionIndices;
+	std::vector<IdType> reactionIndices;
 
 	/**
 	 * Partial derivatives for all reactions at one grid point.
@@ -118,8 +118,9 @@ public:
 	 * Construct a PetscSolverHandler.
 	 *
 	 * @param _network The reaction network to use.
+	 * @param _perfHandler The perf handler to use.
 	 */
-	PetscSolverHandler(NetworkType& _network);
+	PetscSolverHandler(NetworkType& _network, const options::IOptions& options);
 };
 // end class PetscSolverHandler
 

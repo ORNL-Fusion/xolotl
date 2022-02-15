@@ -48,12 +48,14 @@ SurfaceAdvectionHandler::initializeAdvectionGrid(
 				gridPosition[1] = hy * (double)(j + ys);
 				for (int i = 0; i < nx + 2; i++) {
 					// Set the grid position
-					if (i + xs == nx - 1)
+					if (i + xs == nx + 1) {
 						gridPosition[0] = grid[i + xs] +
 							(grid[i + xs] - grid[i + xs - 1]) / 2.0;
-					else
+					}
+					else {
 						gridPosition[0] =
 							(grid[i + xs] + grid[i + xs + 1]) / 2.0;
+					}
 
 					// Check if we are on a sink
 					if (currAdvecHandler->isPointOnSink(gridPosition)) {
@@ -134,7 +136,7 @@ SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 
 void
 SurfaceAdvectionHandler::computePartialsForAdvection(
-	network::IReactionNetwork& network, double* val, int* indices,
+	network::IReactionNetwork& network, double* val, IdType* indices,
 	const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight,
 	int ix, double hy, int iy, double hz, int iz) const
 {

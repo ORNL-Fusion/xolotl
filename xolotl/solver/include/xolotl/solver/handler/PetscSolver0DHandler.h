@@ -25,7 +25,9 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver0DHandler(NetworkType& _network) : PetscSolverHandler(_network)
+	PetscSolver0DHandler(
+		NetworkType& _network, const options::IOptions& options) :
+		PetscSolverHandler(_network, options)
 	{
 	}
 
@@ -59,7 +61,8 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+	std::vector<
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 	getConcVector(DM& da, Vec& C);
 
 	/**
@@ -68,7 +71,7 @@ public:
 	void
 	setConcVector(DM& da, Vec& C,
 		std::vector<
-			std::vector<std::vector<std::vector<std::pair<int, double>>>>>&
+			std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
 			concVector);
 
 	/**
@@ -86,8 +89,8 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	int
-	getSurfacePosition(int j = -1, int k = -1) const
+	IdType
+	getSurfacePosition(IdType j = -1, IdType k = -1) const
 	{
 		return 0;
 	}
@@ -96,7 +99,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfacePosition(int pos, int j = -1, int k = -1)
+	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1)
 	{
 		return;
 	}

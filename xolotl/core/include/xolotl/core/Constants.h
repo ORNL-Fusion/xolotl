@@ -4,12 +4,10 @@
  *  Created on: May 6, 2013
  *      Author: bkj
  */
+#pragma once
 
 #include <cmath>
 #include <memory>
-
-#ifndef CONSTANTS_H_
-#define CONSTANTS_H_
 
 namespace xolotl
 {
@@ -32,7 +30,7 @@ constexpr double tungstenLatticeConstant = 0.31700000000000000;
 constexpr double alloyLatticeConstant = 0.36000000000000000;
 
 //! Lattice Parameter for UO2
-constexpr double uraniumDioxydeLatticeConstant = 0.57400000000000000;
+constexpr double uraniumDioxydeLatticeConstant = 0.54700000000000000;
 
 //! Lattice Parameter for Iron
 constexpr double ironLatticeConstant = 0.28700000000000000;
@@ -83,4 +81,3 @@ constexpr double alloysinkStrength = 1.0e-5;
 
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif /* CONSTANTS_H_ */

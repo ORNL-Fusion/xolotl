@@ -36,9 +36,9 @@ SystemTestOptions::SystemTestOptions()
 	auto argv = boost::unit_test::framework::master_test_suite().argv;
 
 	bpo::options_description desc("System Test Options");
-	desc.add_options()("help", "produce help message")(
-		"approve", "approve running test cases")(
-		"time-all", "report xolotl run time for each test case");
+	desc.add_options()("help,h", "produce help message")("verbose,v",
+		"show all standard output")("approve,a", "approve running test cases")(
+		"time-all,t", "report xolotl run time for each test case");
 
 	bpo::variables_map opts;
 	bpo::store(bpo::parse_command_line(argc, argv, desc), opts);
@@ -47,6 +47,10 @@ SystemTestOptions::SystemTestOptions()
 	if (opts.count("help")) {
 		std::cout << desc << std::endl;
 		std::exit(0);
+	}
+
+	if (opts.count("verbose")) {
+		SystemTestCase::_noRedirect = true;
 	}
 
 	if (opts.count("approve")) {
@@ -61,6 +65,8 @@ SystemTestOptions::SystemTestOptions()
 class StdOutRedirect
 {
 public:
+	StdOutRedirect() = default;
+
 	StdOutRedirect(const std::string& outputFileName)
 	{
 		if (getMPIRank() == 0) {
@@ -80,20 +86,42 @@ public:
 					outputFileName + " to standard output");
 			}
 			close(fd1);
+
+			_redirected = true;
 		}
+	}
+
+	StdOutRedirect(StdOutRedirect&& from) :
+		_redirected(from._redirected),
+		_fileDesc(from._fileDesc)
+	{
+		from._redirected = false;
+	}
+
+	StdOutRedirect&
+	operator=(StdOutRedirect&& from)
+	{
+		_redirected = from._redirected;
+		_fileDesc = from._fileDesc;
+		from._redirected = false;
+		return *this;
 	}
 
 	~StdOutRedirect() noexcept(false)
 	{
 		if (getMPIRank() == 0) {
-			fflush(stdout);
-			if (dup2(_fileDesc, STDOUT_FILENO) < 0) {
-				throw std::runtime_error("Failed to reinstate standard output");
+			if (_redirected) {
+				fflush(stdout);
+				if (dup2(_fileDesc, STDOUT_FILENO) < 0) {
+					throw std::runtime_error(
+						"Failed to reinstate standard output");
+				}
 			}
 		}
 	}
 
 private:
+	bool _redirected{false};
 	int _fileDesc;
 };
 
@@ -228,6 +256,7 @@ const std::string SystemTestCase::_dataDir = TO_STRING(XOLOTL_TEST_DATA_DIR);
 const std::string SystemTestCase::_binDir = TO_STRING(XOLOTL_BUILD_DIR);
 const std::string SystemTestCase::_defaultOutputFileName = "retentionOut.txt";
 
+bool SystemTestCase::_noRedirect = false;
 bool SystemTestCase::_approve = false;
 bool SystemTestCase::_timeAll = false;
 
@@ -250,14 +279,19 @@ bool
 SystemTestCase::runXolotl() const
 {
 	// Redirect console output
-	StdOutRedirect redir{_binDir + "/test/system/stdout_" + _caseName + ".txt"};
+	StdOutRedirect redir;
+	if (!_noRedirect) {
+		redir = StdOutRedirect{
+			_binDir + "/test/system/stdout_" + _caseName + ".txt"};
+	}
 
 	// Construct command-line
 	auto exec = _binDir + "/xolotl/xolotl";
 	auto paramsFileName = _dataDir + "/params_" + _caseName + ".txt";
-	char* argv[] = {exec.data(), paramsFileName.data()};
+	int argc = 2;
+	const char* argv[] = {exec.data(), paramsFileName.data()};
 	try {
-		xolotl::interface::XolotlInterface{2, argv}.solveXolotl();
+		xolotl::interface::XolotlInterface{argc, argv}.solveXolotl();
 	}
 	catch (const std::exception& e) {
 		std::cout << e.what() << std::endl;
@@ -278,7 +312,7 @@ SystemTestCase::checkOutput(const std::string& outputFileName,
 	auto data = readOutputFile(outputFileName);
 	BOOST_REQUIRE(expectedData.size() == data.size());
 	auto diffNorm = computeDiffNorm(data, expectedData);
-	BOOST_REQUIRE(diffNorm < _tolerance);
+	BOOST_REQUIRE_SMALL(diffNorm, _tolerance);
 }
 
 void

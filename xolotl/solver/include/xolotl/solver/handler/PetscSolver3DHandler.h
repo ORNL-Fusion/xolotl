@@ -19,7 +19,7 @@ class PetscSolver3DHandler : public PetscSolverHandler
 {
 private:
 	//! The position of the surface
-	std::vector<std::vector<int>> surfacePosition;
+	std::vector<std::vector<IdType>> surfacePosition;
 
 public:
 	PetscSolver3DHandler() = delete;
@@ -29,7 +29,9 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver3DHandler(NetworkType& _network) : PetscSolverHandler(_network)
+	PetscSolver3DHandler(
+		NetworkType& _network, const options::IOptions& options) :
+		PetscSolverHandler(_network, options)
 	{
 	}
 
@@ -60,7 +62,8 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+	std::vector<
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 	getConcVector(DM& da, Vec& C);
 
 	/**
@@ -69,7 +72,7 @@ public:
 	void
 	setConcVector(DM& da, Vec& C,
 		std::vector<
-			std::vector<std::vector<std::vector<std::pair<int, double>>>>>&
+			std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
 			concVector);
 
 	/**
@@ -87,8 +90,8 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	int
-	getSurfacePosition(int j = -1, int k = -1) const
+	IdType
+	getSurfacePosition(IdType j = -1, IdType k = -1) const
 	{
 		return surfacePosition[j][k];
 	}
@@ -97,7 +100,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfacePosition(int pos, int j = -1, int k = -1)
+	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1)
 	{
 		surfacePosition[j][k] = pos;
 

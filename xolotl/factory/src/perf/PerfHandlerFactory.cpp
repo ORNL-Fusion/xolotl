@@ -9,7 +9,7 @@ using perf::PerfHandlerFactory;
 using xolotl::perf::IPerfHandler;
 
 template PerfHandlerFactory&
-Factory<PerfHandlerFactory, IPerfHandler>::get();
+Factory<PerfHandlerFactory, IPerfHandler>::get(const UserInitializer&);
 
 template std::shared_ptr<IPerfHandler>
 Factory<PerfHandlerFactory, IPerfHandler>::generate(const options::IOptions&);

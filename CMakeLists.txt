@@ -7,35 +7,33 @@ if(POLICY CMP0025)
     cmake_policy(SET CMP0025 NEW)
 endif()
 
-# Set policy so we can use some of the recent Jed Brown Find*.cmake files.
-if(POLICY CMP0057)
-    cmake_policy(SET CMP0057 NEW)
-endif()
-
-if(POLICY CMP0074)
-    cmake_policy(SET CMP0074 NEW)
-endif()
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+include(VersionFromGit)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-project(xolotl CXX)
-
-list(APPEND CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/CMake")
+project(Xolotl
+    VERSION ${VERSION}
+    LANGUAGES CXX
+)
 
 ## MPI
 find_package(MPI REQUIRED)
 
 ## PETSc
 find_package(PETSc REQUIRED)
+option(Xolotl_USE_64BIT_INDEX_TYPE "" ${PETSc_USE_64BIT_INDICES})
 
 ## Boost
 # Note that we only need to list Boost component libraries that have a
 # library implementation (i.e., not header only) as required components.
 find_package(Boost REQUIRED COMPONENTS
-    program_options
     filesystem
+    log_setup
+    log
+    program_options
 )
 
 ## HDF5
@@ -48,11 +46,9 @@ if(NOT HDF5_IS_PARALLEL)
 endif()
 
 ## plsm
-if(NOT plsm_DIR)
-    include(Getplsm)
-endif()
+include(SetupPlsm)
 list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
-find_package(plsm REQUIRED)
+find_package(plsm 2.0 REQUIRED)
 
 ## PAPI
 find_package(PAPI)
@@ -69,11 +65,19 @@ include(CTest)
 include(XolotlExtraTesting)
 
 ## xolotl
+set(XOLOTL_USE_64BIT_INDEX_TYPE ${Xolotl_USE_64BIT_INDEX_TYPE} CACHE INTERNAL "")
+option(Xolotl_INCLUDE_RN_TPP_FILES
+    "If enabled, always include reaction network template instantiation functions with headers"
+    OFF
+)
+set(XOLOTL_INCLUDE_RN_TPP_FILES ${Xolotl_INCLUDE_RN_TPP_FILES})
 add_subdirectory(xolotl)
 
 ## xconv
 add_subdirectory(xconv)
 
+## testing
 add_subdirectory(test)
 
+## documentation
 add_subdirectory(doc)

@@ -6,6 +6,7 @@
 
 #include <plsm/Subpaving.h>
 
+#include <xolotl/config.h>
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 
 namespace xolotl
@@ -14,6 +15,27 @@ namespace core
 {
 namespace network
 {
+/**
+ * @brief Provide information about species and reaction types specific to a
+ * network
+ *
+ * This is the place for things that must be specified explicitly for a given
+ * network. Other template instantiations are specified in
+ * detail::ReactionNetworkTypes and detail::ReactionNetworkProperties
+ * based on the items specified here.
+ * The default instantiation is empty. Therefore, it must be specialized for
+ * every network type.
+ *
+ * The following items must be provided:
+ * - **Species** (type)
+ * - **numSpecies** (static constexpr std::size_t)
+ * - **ProductionReactionType** (type)
+ * - **DissociationReactionType** (type)
+ * - (Optionally) **ReactionTypeList** (type; std::tuple of reaction types) if
+ *   there are more than production and dissociation
+ * - **ClusterGenerator** (type)
+ * - (Optionally) **ClusterUpdater** (type)
+ */
 template <typename TImpl>
 struct ReactionNetworkTraits
 {
@@ -21,15 +43,30 @@ struct ReactionNetworkTraits
 
 namespace detail
 {
-using ReactionNetworkIndexType = std::size_t;
+using ReactionNetworkIndexType = ::xolotl::IdType;
 
-using CompositionAmountType = std::uint32_t;
+using CompositionAmountType = ::xolotl::AmountType;
+
+inline constexpr auto invalidNetworkIndex =
+	plsm::invalid<ReactionNetworkIndexType>;
+
+inline constexpr auto invalidSpeciesAmount =
+	plsm::invalid<CompositionAmountType>;
+
+/**
+ * @brief Customization mechanism for adding arbitrary network-specific data
+ * items to ClusterData (ClusterDataImpl).
+ *
+ * The default is empty.
+ *
+ * The data here should be accessed only from code that "knows" what it
+ * contains, that is, other network-specific code
+ */
+template <typename TNetwork, typename PlsmContext>
+struct ClusterDataExtra;
 
 template <typename TNetwork, typename PlsmContext>
-class ClusterData;
-
-template <typename TNetwork, typename PlsmContext>
-class ClusterDataRef;
+struct ClusterData;
 
 template <typename TNetwork>
 struct ReactionDataRef;
@@ -40,25 +77,26 @@ class DefaultClusterUpdater;
 template <typename TNetwork>
 class ReactionCollection;
 
-/*!
- * Stand-in for C++17 std::void_t
- */
-template <typename...>
-using VoidType = void;
-
-template <typename TImpl, typename = VoidType<>>
+template <typename TImpl, typename = std::void_t<>>
 struct ClusterUpdaterHelper
 {
 	using Type = DefaultClusterUpdater<TImpl>;
 };
 
+/**
+ * If ReactionNetworkTraits provides a ClusterUpdater member, then use that
+ */
 template <typename TImpl>
 struct ClusterUpdaterHelper<TImpl,
-	VoidType<typename ReactionNetworkTraits<TImpl>::ClusterUpdater>>
+	std::void_t<typename ReactionNetworkTraits<TImpl>::ClusterUpdater>>
 {
 	using Type = typename ReactionNetworkTraits<TImpl>::ClusterUpdater;
 };
 
+/**
+ * @brief Instantiate types for things needed by the network based on the
+ * ReactionNetworkTraits
+ */
 template <typename TImpl>
 struct ReactionNetworkTypes
 {
@@ -69,14 +107,17 @@ struct ReactionNetworkTypes
 	using Subpaving = plsm::Subpaving<AmountType, Traits::numSpecies, Species>;
 	using Region = typename Subpaving::RegionType;
 	using Composition = typename Subpaving::PointType;
-	using ClusterData = detail::ClusterData<TImpl, plsm::OnDevice>;
-	using ClusterDataMirror = detail::ClusterData<TImpl, plsm::OnHost>;
-	using ClusterDataRef = detail::ClusterDataRef<TImpl, plsm::OnDevice>;
+	using ClusterData = detail::ClusterData<TImpl, plsm::DeviceMemSpace>;
+	using ClusterDataMirror = detail::ClusterData<TImpl, plsm::HostMemSpace>;
 	using ClusterUpdater = typename ClusterUpdaterHelper<TImpl>::Type;
 	using ReactionCollection = detail::ReactionCollection<TImpl>;
 	using ReactionDataRef = typename detail::ReactionDataRef<TImpl>;
 };
 
+/**
+ * @brief Label some properties of the network phase space based on the
+ * ReactionNetworkTraits
+ */
 template <typename TImpl>
 struct ReactionNetworkProperties
 {
@@ -87,17 +128,10 @@ struct ReactionNetworkProperties
 	static constexpr std::size_t numSpeciesNoI = SpeciesSequence::sizeNoI();
 };
 
-struct InvalidIndex
-{
-	static constexpr auto value = plsm::invalid<ReactionNetworkIndexType>;
-};
-
-struct InvalidSpeciesAmount
-{
-	static constexpr auto value = plsm::invalid<CompositionAmountType>;
-};
-
-template <typename TNetwork, typename = VoidType<>>
+/**
+ * By default, list production and dissociation types from ReactionNetworkTraits
+ */
+template <typename TNetwork, typename = std::void_t<>>
 struct ReactionTypeListHelper
 {
 	using Traits = ReactionNetworkTraits<TNetwork>;
@@ -105,9 +139,13 @@ struct ReactionTypeListHelper
 		typename Traits::DissociationReactionType>;
 };
 
+/**
+ * If ReactionNetworkTraits provides a ReactionTypeList member, then use that
+ * See ReactionTypeListHelper
+ */
 template <typename TNetwork>
 struct ReactionTypeListHelper<TNetwork,
-	VoidType<typename ReactionNetworkTraits<TNetwork>::ReactionTypeList>>
+	std::void_t<typename ReactionNetworkTraits<TNetwork>::ReactionTypeList>>
 {
 	using Type = typename ReactionNetworkTraits<TNetwork>::ReactionTypeList;
 };

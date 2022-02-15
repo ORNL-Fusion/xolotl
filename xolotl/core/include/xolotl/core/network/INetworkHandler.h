@@ -20,6 +20,9 @@ public:
 	virtual std::shared_ptr<IReactionNetwork>
 	getNetwork() const = 0;
 };
+
+void
+loadNetworkHandlers();
 } // namespace network
 } // namespace core
 } // namespace xolotl

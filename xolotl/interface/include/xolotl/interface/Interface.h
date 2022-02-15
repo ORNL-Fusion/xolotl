@@ -1,5 +1,4 @@
-#ifndef INTERFACE_H
-#define INTERFACE_H
+#pragma once
 
 #include <petscts.h>
 
@@ -7,6 +6,8 @@
 #include <vector>
 
 #include <mpi.h>
+
+#include <xolotl/config.h>
 
 namespace xolotl
 {
@@ -20,6 +21,10 @@ class IReactionNetwork;
 namespace solver
 {
 class ISolver;
+}
+namespace perf
+{
+class IPerfHandler;
 }
 
 namespace interface
@@ -59,7 +64,8 @@ public:
 	 * @param argc, argv The command line arguments
 	 * @param MPI_Comm The communicator to use
 	 */
-	XolotlInterface(int argc, char* argv[], MPI_Comm mpiComm = MPI_COMM_WORLD);
+	XolotlInterface(
+		int& argc, const char* argv[], MPI_Comm mpiComm = MPI_COMM_WORLD);
 
 	/**
 	 * The destructor
@@ -80,7 +86,8 @@ public:
 	 * @return The pointer to the solver
 	 */
 	void
-	initializeXolotl(int argc, char* argv[], MPI_Comm comm = MPI_COMM_WORLD);
+	initializeXolotl(
+		int& argc, const char* argv[], MPI_Comm comm = MPI_COMM_WORLD);
 
 	/**
 	 * Set the final time and the dt.
@@ -129,8 +136,8 @@ public:
 	 * @param Mz The total width in the Z direction
 	 */
 	void
-	getLocalCoordinates(int& xs, int& xm, int& Mx, int& ys, int& ym, int& My,
-		int& zs, int& zm, int& Mz);
+	getLocalCoordinates(IdType& xs, IdType& xm, IdType& Mx, IdType& ys,
+		IdType& ym, IdType& My, IdType& zs, IdType& zm, IdType& Mz);
 
 	/**
 	 * Set the location of one GB grid point.
@@ -138,7 +145,7 @@ public:
 	 * @param i, j, k The coordinate of the GB
 	 */
 	void
-	setGBLocation(int i, int j = 0, int k = 0);
+	setGBLocation(IdType i, IdType j = 0, IdType k = 0);
 
 	/**
 	 * Reset the GB vector.
@@ -151,7 +158,8 @@ public:
 	 *
 	 * @return The concentration vector from the current state of the simulation
 	 */
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+	std::vector<
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 	getConcVector();
 
 	/**
@@ -161,7 +169,7 @@ public:
 	 */
 	void
 	setConcVector(std::vector<
-		std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 			concVector);
 
 	/**
@@ -245,9 +253,5 @@ public:
 	void
 	finalizeXolotl();
 };
-// End class interface
-
 } /* namespace interface */
 } /* namespace xolotl */
-
-#endif

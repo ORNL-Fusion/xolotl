@@ -2,6 +2,7 @@
 
 #include <xolotl/core/temperature/ProfileHandler.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
@@ -24,8 +25,8 @@ ProfileHandler::ProfileHandler(const std::string& profileFileName) :
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
-		std::cout << "TemperatureHandler: Using the time profile defined in: "
-				  << tempFile << std::endl;
+		XOLOTL_LOG << "TemperatureHandler: Using the time profile defined in: "
+				   << tempFile;
 	}
 }
 

@@ -6,6 +6,7 @@
 
 #include <plsm/SpaceVector.h>
 
+#include <xolotl/config.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
 namespace xolotl
@@ -138,7 +139,7 @@ public:
 	 */
 	virtual bool
 	computePartialsForTemperature(double** concVector, double* val,
-		int* indices, double hxLeft, double hxRight, int xi, double sy = 0.0,
+		IdType* indices, double hxLeft, double hxRight, int xi, double sy = 0.0,
 		int iy = 0, double sz = 0.0, int iz = 0) = 0;
 };
 // end class ITemperatureHandler

@@ -1,8 +1,10 @@
-// Includes
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/io/XFile.h>
 #include <xolotl/solver/handler/PetscSolver3DHandler.h>
+#include <xolotl/util/Log.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -18,20 +20,20 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Set the position of the surface
 	// Loop on Y
-	for (int j = 0; j < nY; j++) {
+	for (auto j = 0; j < nY; j++) {
 		// Create a one dimensional vector to store the surface indices
 		// for a given Y position
-		std::vector<int> tempPosition;
+		std::vector<IdType> tempPosition;
 
 		// Loop on Z
-		for (int k = 0; k < nZ; k++) {
+		for (auto k = 0; k < nZ; k++) {
 			tempPosition.push_back(0);
 			if (movingSurface)
-				tempPosition[k] = (int)(nX * portion / 100.0);
+				tempPosition[k] = (IdType)(nX * portion / 100.0);
 		}
 
 		// Add tempPosition to the surfacePosition
@@ -50,8 +52,8 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 			auto surfaceIndices = tsGroup->readSurface3D();
 
 			// Set the actual surface positions
-			for (int i = 0; i < surfaceIndices.size(); i++) {
-				for (int j = 0; j < surfaceIndices[0].size(); j++) {
+			for (auto i = 0; i < surfaceIndices.size(); i++) {
+				for (auto j = 0; j < surfaceIndices[0].size(); j++) {
 					surfacePosition[i][j] = surfaceIndices[i][j];
 				}
 			}
@@ -60,47 +62,47 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 
 	// Prints info on one process
 	auto xolotlComm = util::getMPIComm();
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
+	int procId = util::getMPIRank();
 	if (procId == 0) {
-		std::cout << "SolverHandler: 3D simulation with surface BC: ";
+		util::StringStream ss;
+		ss << "SolverHandler: 3D simulation with surface BC: ";
 		std::string bcString = "periodic";
 		if (isMirror)
 			bcString = "mirror";
 		if (leftOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << bcString;
-		std::cout << ", bulk BC: ";
+			ss << bcString;
+		ss << ", bulk BC: ";
 		if (rightOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << bcString;
-		std::cout << ", left BC: ";
+			ss << bcString;
+		ss << ", left BC: ";
 		if (topOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << "periodic";
-		std::cout << ", right BC: ";
+			ss << "periodic";
+		ss << ", right BC: ";
 		if (bottomOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << "periodic";
-		std::cout << ", front BC: ";
+			ss << "periodic";
+		ss << ", front BC: ";
 		if (frontOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << "periodic";
-		std::cout << ", back BC: ";
+			ss << "periodic";
+		ss << ", back BC: ";
 		if (backOffset == 1)
-			std::cout << "free surface";
+			ss << "free surface";
 		else
-			std::cout << "periodic";
-		std::cout << ", grid (nm): ";
-		for (int i = 1; i < grid.size() - 1; i++) {
-			std::cout << grid[i] - grid[surfacePosition[0][0] + 1] << " ";
+			ss << "periodic";
+		ss << ", grid (nm): ";
+		for (auto i = 1; i < grid.size() - 1; i++) {
+			ss << grid[i] - grid[surfacePosition[0][0] + 1] << " ";
 		}
-		std::cout << std::endl;
+		XOLOTL_LOG << ss.str();
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -151,7 +153,7 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 	diffusionHandler->initializeOFill(network, ofill);
 	// Loop on the advection handlers to account the other "off-diagonal"
 	// elements
-	for (int i = 0; i < advectionHandlers.size(); i++) {
+	for (auto i = 0; i < advectionHandlers.size(); i++) {
 		advectionHandlers[i]->initialize(network, ofill);
 	}
 
@@ -163,13 +165,6 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 		"DMDAGetCorners failed.");
 	// Set it in the handler
 	setLocalCoordinates(xs, xm, ys, ym, zs, zm);
-
-	// Initialize the modified trap-mutation handler because it adds
-	// connectivity
-	mutationHandler->initialize(network, dfill, localXM, localYM, localZM);
-	mutationHandler->initializeIndex3D(surfacePosition, network,
-		advectionHandlers, grid, localXM, localXS, localYM, hY, localYS,
-		localZM, hZ, localZS);
 
 	// Tell the network the number of grid points on this process with ghosts
 	// TODO: do we need the ghost points?
@@ -191,6 +186,9 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
+
+	// Initialize the flux handler
+	fluxHandler->initializeFluxHandler(network, surfacePosition[0][0], grid);
 
 	return;
 }
@@ -217,16 +215,13 @@ PetscSolver3DHandler::initializeConcentration(DM& da, Vec& C)
 	std::unique_ptr<io::XFile> xfile;
 	std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
 	if (not networkName.empty()) {
-		xfile.reset(new io::XFile(networkName));
+		xfile = std::make_unique<io::XFile>(networkName);
 		concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
 
 	// Give the surface position to the temperature handler
 	temperatureHandler->updateSurfacePosition(surfacePosition[0][0]);
-
-	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, surfacePosition[0][0], grid);
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, localXM,
@@ -241,7 +236,7 @@ PetscSolver3DHandler::initializeConcentration(DM& da, Vec& C)
 
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Get the single vacancy ID
 	auto singleVacancyCluster = network.getSingleVacancy();
@@ -250,9 +245,10 @@ PetscSolver3DHandler::initializeConcentration(DM& da, Vec& C)
 		vacancyIndex = singleVacancyCluster.getId();
 
 	// Loop on all the grid points
-	for (PetscInt k = localZS; k < localZS + localZM; k++)
-		for (PetscInt j = localYS; j < localYS + localYM; j++)
-			for (PetscInt i = localXS - 1; i <= localXS + localXM; i++) {
+	for (auto k = localZS; k < localZS + localZM; k++)
+		for (auto j = localYS; j < localYS + localYM; j++)
+			for (auto i = (PetscInt)localXS - 1;
+				 i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
 				// Temperature
 				plsm::SpaceVector<double, 3> gridPosition{0.0, j * hY, k * hZ};
 				if (i < 0)
@@ -277,7 +273,7 @@ PetscSolver3DHandler::initializeConcentration(DM& da, Vec& C)
 				concOffset[dof] = temp;
 
 				// Loop on all the clusters to initialize at 0.0
-				for (int n = 0; n < dof; n++) {
+				for (auto n = 0; n < dof; n++) {
 					concOffset[n] = 0.0;
 				}
 
@@ -298,9 +294,9 @@ PetscSolver3DHandler::initializeConcentration(DM& da, Vec& C)
 		assert(tsGroup);
 
 		// Loop on the full grid
-		for (PetscInt k = 0; k < nZ; k++)
-			for (PetscInt j = 0; j < nY; j++)
-				for (PetscInt i = 0; i < nX; i++) {
+		for (auto k = 0; k < nZ; k++)
+			for (auto j = 0; j < nY; j++)
+				for (auto i = 0; i < nX; i++) {
 					// Read the concentrations from the HDF5 file
 					auto concVector = tsGroup->readGridPoint(i, j, k);
 
@@ -311,8 +307,8 @@ PetscSolver3DHandler::initializeConcentration(DM& da, Vec& C)
 						k < localZS + localZM) {
 						concOffset = concentrations[k][j][i];
 						// Loop on the concVector size
-						for (unsigned int l = 0; l < concVector.size(); l++) {
-							concOffset[(int)concVector.at(l).at(0)] =
+						for (auto l = 0; l < concVector.size(); l++) {
+							concOffset[(IdType)concVector.at(l).at(0)] =
 								concVector.at(l).at(1);
 						}
 						// Get the temperature
@@ -324,11 +320,17 @@ PetscSolver3DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Update the network with the temperature
-	network.setTemperatures(temperature);
+	std::vector<double> depths;
+	for (auto i = 0; i < temperature.size(); i++) {
+		if (localXS + i == nX + 1)
+			depths.push_back(grid[localXS + i] -
+				grid[surfacePosition[localYS][localZS] + 1]);
+		else
+			depths.push_back((grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+				grid[surfacePosition[localYS][localZS] + 1]);
+	}
+	network.setTemperatures(temperature, depths);
 	network.syncClusterDataOnHost();
-	// Update the modified trap-mutation rate
-	// that depends on the network reaction rates
-	mutationHandler->updateTrapMutationRate(network.getLargestRate());
 
 	/*
 	 Restore vectors
@@ -358,7 +360,7 @@ PetscSolver3DHandler::initGBLocation(DM& da, Vec& C)
 
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Need to use the NE network here
 	using NetworkType = core::network::NEReactionNetwork;
@@ -368,9 +370,9 @@ PetscSolver3DHandler::initGBLocation(DM& da, Vec& C)
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Get the coordinate of the point
-		int xi = std::get<0>(pair);
-		int yj = std::get<1>(pair);
-		int zk = std::get<2>(pair);
+		auto xi = std::get<0>(pair);
+		auto yj = std::get<1>(pair);
+		auto zk = std::get<2>(pair);
 		// Check if we are on the right process
 		if (xi >= localXS && xi < localXS + localXM && yj >= localYS &&
 			yj < localYS + localYM && zk >= localZS && zk < localZS + localZM) {
@@ -389,7 +391,7 @@ PetscSolver3DHandler::initGBLocation(DM& da, Vec& C)
 				xi - localXS, yj - localYS, zk - localZS);
 
 			// Loop on all the clusters to initialize at 0.0
-			for (int n = 0; n < dof; n++) {
+			for (auto n = 0; n < dof; n++) {
 				concOffset[n] = 0.0;
 			}
 		}
@@ -406,7 +408,7 @@ PetscSolver3DHandler::initGBLocation(DM& da, Vec& C)
 	return;
 }
 
-std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+std::vector<std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 PetscSolver3DHandler::getConcVector(DM& da, Vec& C)
 {
 	// Initial declaration
@@ -422,24 +424,25 @@ PetscSolver3DHandler::getConcVector(DM& da, Vec& C)
 
 	// Get the network and dof
 	auto& network = getNetwork();
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Create the vector for the concentrations
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>
+	std::vector<
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 		toReturn;
 
 	// Loop on the grid points
 	for (auto k = 0; k < localZM; ++k) {
-		std::vector<std::vector<std::vector<std::pair<int, double>>>>
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>
 			tempTempTempVector;
 		for (auto j = 0; j < localYM; ++j) {
-			std::vector<std::vector<std::pair<int, double>>> tempTempVector;
+			std::vector<std::vector<std::pair<IdType, double>>> tempTempVector;
 			for (auto i = 0; i < localXM; ++i) {
 				gridPointSolution =
 					concentrations[localZS + k][localYS + j][localXS + i];
 
 				// Create the temporary vector for this grid point
-				std::vector<std::pair<int, double>> tempVector;
+				std::vector<std::pair<IdType, double>> tempVector;
 				for (auto l = 0; l < dof + 1; ++l) {
 					if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 						tempVector.push_back(
@@ -464,7 +467,8 @@ PetscSolver3DHandler::getConcVector(DM& da, Vec& C)
 
 void
 PetscSolver3DHandler::setConcVector(DM& da, Vec& C,
-	std::vector<std::vector<std::vector<std::vector<std::pair<int, double>>>>>&
+	std::vector<
+		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
 		concVector)
 {
 	PetscErrorCode ierr;
@@ -485,7 +489,7 @@ PetscSolver3DHandler::setConcVector(DM& da, Vec& C,
 					concentrations[localZS + k][localYS + j][localXS + i];
 
 				// Loop on the given vector
-				for (int l = 0; l < concVector[k][j][i].size(); l++) {
+				for (auto l = 0; l < concVector[k][j][i].size(); l++) {
 					gridPointSolution[concVector[k][j][i][l].first] =
 						concVector[k][j][i][l].second;
 				}
@@ -523,7 +527,7 @@ PetscSolver3DHandler::setConcVector(DM& da, Vec& C,
 		"DMDAVecGetArrayDOFRead failed.");
 
 	// Getthe DOF of the network
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Loop on the grid points
 	for (auto k = 0; k < localZM; ++k) {
@@ -536,11 +540,18 @@ PetscSolver3DHandler::setConcVector(DM& da, Vec& C,
 				temperature[i + 1] = gridPointSolution[dof];
 			}
 			// Update the network with the temperature
-			network.setTemperatures(temperature);
+			std::vector<double> depths;
+			for (auto i = 0; i < temperature.size(); i++) {
+				if (localXS + i == nX + 1)
+					depths.push_back(grid[localXS + i] -
+						grid[surfacePosition[localYS][localZS] + 1]);
+				else
+					depths.push_back(
+						(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+						grid[surfacePosition[localYS][localZS] + 1]);
+			}
+			network.setTemperatures(temperature, depths);
 			network.syncClusterDataOnHost();
-			// Update the modified trap-mutation rate
-			// that depends on the network reaction rates
-			mutationHandler->updateTrapMutationRate(network.getLargestRate());
 		}
 	}
 
@@ -589,25 +600,26 @@ PetscSolver3DHandler::updateConcentration(
 	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
 
 	// Degrees of freedom is the total number of clusters in the network
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Set some step size variable
 	double sy = 1.0 / (hY * hY);
 	double sz = 1.0 / (hZ * hZ);
 
 	// Declarations for variables used in the loop
-	double** concVector = new double*[7];
+	double* concVector[7]{nullptr};
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 	std::vector<double> incidentFluxVector;
 	double atomConc = 0.0, totalAtomConc = 0.0;
 
 	// Loop over grid points first for the temperature, including the ghost
 	// points in X
-	for (PetscInt zk = localZS; zk < localZS + localZM; zk++)
-		for (PetscInt yj = localYS; yj < localYS + localYM; yj++) {
+	for (auto zk = localZS; zk < localZS + localZM; zk++)
+		for (auto yj = localYS; yj < localYS + localYM; yj++) {
 			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
 			bool tempHasChanged = false;
-			for (PetscInt xi = localXS - 1; xi <= localXS + localXM; xi++) {
+			for (auto xi = (PetscInt)localXS - 1;
+				 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 				// Heat condition
 				if (xi == surfacePosition[yj][zk] && xi >= localXS &&
 					xi < localXS + localXM) {
@@ -618,20 +630,20 @@ PetscSolver3DHandler::updateConcentration(
 					// Fill the concVector with the pointer to the middle, left,
 					// and right grid points
 					concVector[0] = concOffset; // middle
-					concVector[1] = concs[zk][yj][xi - 1]; // left
+					concVector[1] = concs[zk][yj][(PetscInt)xi - 1]; // left
 					concVector[2] = concs[zk][yj][xi + 1]; // right
-					concVector[3] = concs[zk][yj - 1][xi]; // bottom
+					concVector[3] = concs[zk][(PetscInt)yj - 1][xi]; // bottom
 					concVector[4] = concs[zk][yj + 1][xi]; // top
-					concVector[5] = concs[zk - 1][yj][xi]; // front
+					concVector[5] = concs[(PetscInt)zk - 1][yj][xi]; // front
 					concVector[6] = concs[zk + 1][yj][xi]; // back
 
 					// Compute the left and right hx
 					double hxLeft = 0.0, hxRight = 0.0;
-					if (xi - 1 >= 0 && xi < nX) {
+					if (xi >= 1 && xi < nX) {
 						hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 					}
-					else if (xi - 1 < 0) {
+					else if (xi < 1) {
 						hxLeft = grid[xi + 1] - grid[xi];
 						hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 					}
@@ -642,6 +654,28 @@ PetscSolver3DHandler::updateConcentration(
 
 					temperatureHandler->computeTemperature(concVector,
 						updatedConcOffset, hxLeft, hxRight, xi, sy, yj, sz, zk);
+				}
+
+				// Compute the old and new array offsets
+				concOffset = concs[zk][yj][xi];
+				updatedConcOffset = updatedConcs[zk][yj][xi];
+
+				// Set the grid fraction
+				gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
+									  grid[surfacePosition[yj][zk] + 1]) /
+					(grid[grid.size() - 1] - grid[surfacePosition[yj][zk] + 1]);
+				gridPosition[1] = yj / nY;
+				gridPosition[2] = zk / nZ;
+
+				// Get the temperature from the temperature handler
+				temperatureHandler->setTemperature(concOffset);
+				double temp =
+					temperatureHandler->getTemperature(gridPosition, ftime);
+
+				// Update the network if the temperature changed
+				if (std::fabs(temperature[xi + 1 - localXS] - temp) > 0.1) {
+					temperature[xi + 1 - localXS] = temp;
+					tempHasChanged = true;
 				}
 
 				// Boundary conditions
@@ -662,51 +696,29 @@ PetscSolver3DHandler::updateConcentration(
 				if (skip)
 					continue;
 
-				// Compute the old and new array offsets
-				concOffset = concs[zk][yj][xi];
-				updatedConcOffset = updatedConcs[zk][yj][xi];
-
 				// Fill the concVector with the pointer to the middle, left, and
 				// right grid points
 				concVector[0] = concOffset; // middle
-				concVector[1] = concs[zk][yj][xi - 1]; // left
+				concVector[1] = concs[zk][yj][(PetscInt)xi - 1]; // left
 				concVector[2] = concs[zk][yj][xi + 1]; // right
-				concVector[3] = concs[zk][yj - 1][xi]; // bottom
+				concVector[3] = concs[zk][(PetscInt)yj - 1][xi]; // bottom
 				concVector[4] = concs[zk][yj + 1][xi]; // top
-				concVector[5] = concs[zk - 1][yj][xi]; // front
+				concVector[5] = concs[(PetscInt)zk - 1][yj][xi]; // front
 				concVector[6] = concs[zk + 1][yj][xi]; // back
 
 				// Compute the left and right hx
 				double hxLeft = 0.0, hxRight = 0.0;
-				if (xi - 1 >= 0 && xi < nX) {
+				if (xi >= 1 && xi < nX) {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
-				else if (xi - 1 < 0) {
+				else if (xi < 1) {
 					hxLeft = grid[xi + 1] - grid[xi];
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
 				else {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 					hxRight = grid[xi + 1] - grid[xi];
-				}
-
-				// Set the grid fraction
-				gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
-									  grid[surfacePosition[yj][zk] + 1]) /
-					(grid[grid.size() - 1] - grid[surfacePosition[yj][zk] + 1]);
-				gridPosition[1] = yj / nY;
-				gridPosition[2] = zk / nZ;
-
-				// Get the temperature from the temperature handler
-				temperatureHandler->setTemperature(concOffset);
-				double temp =
-					temperatureHandler->getTemperature(gridPosition, ftime);
-
-				// Update the network if the temperature changed
-				if (std::fabs(temperature[xi + 1 - localXS] - temp) > 0.1) {
-					temperature[xi + 1 - localXS] = temp;
-					tempHasChanged = true;
 				}
 
 				// ---- Compute the temperature over the locally owned part of
@@ -721,27 +733,35 @@ PetscSolver3DHandler::updateConcentration(
 			// preparation of T depending on more than X
 			if (tempHasChanged) {
 				// Update the network with the temperature
-				network.setTemperatures(temperature);
+				std::vector<double> depths;
+				for (auto i = 0; i < temperature.size(); i++) {
+					if (localXS + i == nX + 1)
+						depths.push_back(grid[localXS + i] -
+							grid[surfacePosition[localYS][localZS] + 1]);
+					else
+						depths.push_back(
+							(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+							grid[surfacePosition[localYS][localZS] + 1]);
+				}
+				network.setTemperatures(temperature, depths);
 				network.syncClusterDataOnHost();
-				// Update the modified trap-mutation rate
-				// that depends on the network reaction rates
-				// TODO: is this just the local largest rate? Is it correct?
-				mutationHandler->updateTrapMutationRate(
-					network.getLargestRate());
 			}
 		}
 
 	// Loop over grid points
-	for (PetscInt zk = frontOffset; zk < nZ - backOffset; zk++)
-		for (PetscInt yj = bottomOffset; yj < nY - topOffset; yj++) {
+	for (auto zk = frontOffset; zk < nZ - backOffset; zk++)
+		for (auto yj = bottomOffset; yj < nY - topOffset; yj++) {
 			// Computing the trapped atom concentration is only needed for the
 			// attenuation
 			if (useAttenuation) {
 				// Compute the total concentration of atoms contained in bubbles
 				atomConc = 0.0;
 
+				auto& psiNetwork =
+					dynamic_cast<core::network::IPSIReactionNetwork&>(network);
+
 				// Loop over grid points
-				for (int xi = surfacePosition[yj][zk] + leftOffset;
+				for (auto xi = surfacePosition[yj][zk] + leftOffset;
 					 xi < nX - rightOffset; xi++) {
 					// We are only interested in the helium near the surface
 					if ((grid[xi] + grid[xi + 1]) / 2.0 -
@@ -763,9 +783,6 @@ PetscSolver3DHandler::updateConcentration(
 						auto dConcs =
 							Kokkos::View<double*>("Concentrations", dof);
 						deep_copy(dConcs, hConcs);
-						auto& psiNetwork =
-							dynamic_cast<core::network::IPSIReactionNetwork&>(
-								network);
 						atomConc +=
 							psiNetwork.getTotalTrappedHeliumConcentration(
 								dConcs, 0) *
@@ -780,7 +797,7 @@ PetscSolver3DHandler::updateConcentration(
 					xolotlComm);
 
 				// Set the disappearing rate in the modified TM handler
-				mutationHandler->updateDisappearingRate(totalAtomConc);
+				psiNetwork.updateTrapMutationDisappearingRate(totalAtomConc);
 			}
 
 			// Skip if we are not on the right process
@@ -799,7 +816,7 @@ PetscSolver3DHandler::updateConcentration(
 			advectionHandlers[0]->setLocation(
 				grid[surfacePosition[yj][zk] + 1] - grid[1]);
 
-			for (int xi = localXS; xi < localXS + localXM; xi++) {
+			for (auto xi = localXS; xi < localXS + localXM; xi++) {
 				// Compute the old and new array offsets
 				concOffset = concs[zk][yj][xi];
 				updatedConcOffset = updatedConcs[zk][yj][xi];
@@ -807,20 +824,20 @@ PetscSolver3DHandler::updateConcentration(
 				// Fill the concVector with the pointer to the middle, left,
 				// right, bottom, top, front, and back grid points
 				concVector[0] = concOffset; // middle
-				concVector[1] = concs[zk][yj][xi - 1]; // left
+				concVector[1] = concs[zk][yj][(PetscInt)xi - 1]; // left
 				concVector[2] = concs[zk][yj][xi + 1]; // right
-				concVector[3] = concs[zk][yj - 1][xi]; // bottom
+				concVector[3] = concs[zk][(PetscInt)yj - 1][xi]; // bottom
 				concVector[4] = concs[zk][yj + 1][xi]; // top
-				concVector[5] = concs[zk - 1][yj][xi]; // front
+				concVector[5] = concs[(PetscInt)zk - 1][yj][xi]; // front
 				concVector[6] = concs[zk + 1][yj][xi]; // back
 
 				// Compute the left and right hx
 				double hxLeft = 0.0, hxRight = 0.0;
-				if (xi - 1 >= 0 && xi < nX) {
+				if (xi >= 1 && xi < nX) {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
-				else if (xi - 1 < 0) {
+				else if (xi < 1) {
 					hxLeft = grid[xi + 1] - grid[xi];
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
@@ -862,18 +879,18 @@ PetscSolver3DHandler::updateConcentration(
 				// ---- Compute advection over the locally owned part of the
 				// grid ----- Set the grid position
 				gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
-				for (int i = 0; i < advectionHandlers.size(); i++) {
+				for (auto i = 0; i < advectionHandlers.size(); i++) {
 					advectionHandlers[i]->computeAdvection(network,
 						gridPosition, concVector, updatedConcOffset, hxLeft,
 						hxRight, xi - localXS, hY, yj - localYS, hZ,
 						zk - localZS);
 				}
 
-				// ----- Compute the modified trap-mutation over the locally
-				// owned part of the grid -----
-				mutationHandler->computeTrapMutation(network, concOffset,
-					updatedConcOffset, xi - localXS, yj - localYS,
-					zk - localZS);
+				auto surfacePos = grid[surfacePosition[yj][zk] + 1];
+				auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
+				auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
+				auto curDepth = curXPos - surfacePos;
+				auto curSpacing = curXPos - prevXPos;
 
 				// ----- Compute the reaction fluxes over the locally owned part
 				// of the grid -----
@@ -887,7 +904,8 @@ PetscSolver3DHandler::updateConcentration(
 				deep_copy(dFlux, hFlux);
 				fluxCounter->increment();
 				fluxTimer->start();
-				network.computeAllFluxes(dConcs, dFlux, xi + 1 - localXS);
+				network.computeAllFluxes(
+					dConcs, dFlux, xi + 1 - localXS, curDepth, curSpacing);
 				fluxTimer->stop();
 				deep_copy(hFlux, dFlux);
 			}
@@ -904,9 +922,6 @@ PetscSolver3DHandler::updateConcentration(
 	checkPetscError(ierr,
 		"PetscSolver3DHandler::updateConcentration: "
 		"DMDAVecRestoreArrayDOF (F) failed.");
-
-	// Clear memory
-	delete[] concVector;
 
 	return;
 }
@@ -932,7 +947,7 @@ PetscSolver3DHandler::computeJacobian(
 		"DMDAVecGetArrayDOFRead failed.");
 
 	// The degree of freedom is the size of the network
-	const int dof = network.getDOF();
+	const auto dof = network.getDOF();
 
 	// Setup some step size variables
 	double sy = 1.0 / (hY * hY);
@@ -944,7 +959,7 @@ PetscSolver3DHandler::computeJacobian(
 	// Arguments for MatSetValuesStencil called below
 	MatStencil rowId;
 	MatStencil colIds[dof];
-	int pdColIdsVectorSize = 0;
+	IdType pdColIdsVectorSize = 0;
 
 	// Declarations for variables used in the loop
 	double atomConc = 0.0, totalAtomConc = 0.0;
@@ -952,12 +967,12 @@ PetscSolver3DHandler::computeJacobian(
 	double** concVector = new double*[7];
 
 	// Get the total number of diffusing clusters
-	const int nDiff = std::max(diffusionHandler->getNumberOfDiffusing(), 0);
+	const auto nDiff = std::max(diffusionHandler->getNumberOfDiffusing(), 0);
 
 	// Get the total number of advecting clusters
 	int nAdvec = 0;
-	for (int l = 0; l < advectionHandlers.size(); l++) {
-		int n = advectionHandlers[l]->getNumberOfAdvecting();
+	for (auto l = 0; l < advectionHandlers.size(); l++) {
+		auto n = advectionHandlers[l]->getNumberOfAdvecting();
 		if (n > nAdvec)
 			nAdvec = n;
 	}
@@ -965,23 +980,24 @@ PetscSolver3DHandler::computeJacobian(
 	// Arguments for MatSetValuesStencil called below
 	MatStencil row, cols[7];
 	PetscScalar tempVals[7];
-	PetscInt tempIndices[1];
+	IdType tempIndices[1];
 	PetscScalar diffVals[7 * nDiff];
-	PetscInt diffIndices[nDiff];
+	IdType diffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
-	PetscInt advecIndices[nAdvec];
+	IdType advecIndices[nAdvec];
 
 	/*
 	 Loop over grid points for the temperature, including ghosts
 	 */
-	for (PetscInt zk = localZS; zk < localZS + localZM; zk++)
-		for (PetscInt yj = localYS; yj < localYS + localYM; yj++) {
+	for (auto zk = localZS; zk < localZS + localZM; zk++)
+		for (auto yj = localYS; yj < localYS + localYM; yj++) {
 			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
 			bool tempHasChanged = false;
-			for (PetscInt xi = localXS - 1; xi <= localXS + localXM; xi++) {
+			for (auto xi = (PetscInt)localXS - 1;
+				 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 				// Compute the left and right hx
 				double hxLeft = 0.0, hxRight = 0.0;
-				if (xi - 1 >= 0 && xi < nX) {
+				if (xi >= 1 && xi < nX) {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
@@ -989,7 +1005,7 @@ PetscSolver3DHandler::computeJacobian(
 					hxLeft = 0.0;
 					hxRight = (grid[xi + 2] + grid[xi + 1]) / 2.0;
 				}
-				else if (xi - 1 < 0) {
+				else if (xi < 1) {
 					hxLeft = grid[xi + 1] - grid[xi];
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
@@ -998,14 +1014,17 @@ PetscSolver3DHandler::computeJacobian(
 					hxRight = grid[xi + 1] - grid[xi];
 				}
 
+				// Get the concentrations at this grid point
+				concOffset = concs[zk][yj][xi];
+
 				// Fill the concVector with the pointer to the middle, left,
 				// right, bottom, top, front, and back grid points
 				concVector[0] = concOffset; // middle
-				concVector[1] = concs[zk][yj][xi - 1]; // left
+				concVector[1] = concs[zk][yj][(PetscInt)xi - 1]; // left
 				concVector[2] = concs[zk][yj][xi + 1]; // right
-				concVector[3] = concs[zk][yj - 1][xi]; // bottom
+				concVector[3] = concs[zk][(PetscInt)yj - 1][xi]; // bottom
 				concVector[4] = concs[zk][yj + 1][xi]; // top
-				concVector[5] = concs[zk - 1][yj][xi]; // front
+				concVector[5] = concs[(PetscInt)zk - 1][yj][xi]; // front
 				concVector[6] = concs[zk + 1][yj][xi]; // back
 
 				// Heat condition
@@ -1031,7 +1050,7 @@ PetscSolver3DHandler::computeJacobian(
 						cols[0].j = yj;
 						cols[0].k = zk;
 						cols[0].c = tempIndices[0];
-						cols[1].i = xi - 1; // left
+						cols[1].i = (PetscInt)xi - 1; // left
 						cols[1].j = yj;
 						cols[1].k = zk;
 						cols[1].c = tempIndices[0];
@@ -1040,7 +1059,7 @@ PetscSolver3DHandler::computeJacobian(
 						cols[2].k = zk;
 						cols[2].c = tempIndices[0];
 						cols[3].i = xi; // bottom
-						cols[3].j = yj - 1;
+						cols[3].j = (PetscInt)yj - 1;
 						cols[3].k = zk;
 						cols[3].c = tempIndices[0];
 						cols[4].i = xi; // top
@@ -1049,7 +1068,7 @@ PetscSolver3DHandler::computeJacobian(
 						cols[4].c = tempIndices[0];
 						cols[5].i = xi; // front
 						cols[5].j = yj;
-						cols[5].k = zk - 1;
+						cols[5].k = (PetscInt)zk - 1;
 						cols[5].c = tempIndices[0];
 						cols[6].i = xi; // back
 						cols[6].j = yj;
@@ -1063,26 +1082,6 @@ PetscSolver3DHandler::computeJacobian(
 							"MatSetValuesStencil (temperature) failed.");
 					}
 				}
-
-				// Boundary conditions
-				// Everything to the left of the surface is empty
-				if (xi < surfacePosition[yj][zk] + leftOffset ||
-					xi > nX - 1 - rightOffset)
-					continue;
-				// Free surface GB
-				bool skip = false;
-				for (auto& pair : gbVector) {
-					if (xi == std::get<0>(pair) && yj == std::get<1>(pair) &&
-						zk == std::get<2>(pair)) {
-						skip = true;
-						break;
-					}
-				}
-				if (skip)
-					continue;
-
-				// Get the concentrations at this grid point
-				concOffset = concs[zk][yj][xi];
 
 				// Set the grid fraction
 				gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
@@ -1101,6 +1100,23 @@ PetscSolver3DHandler::computeJacobian(
 					temperature[xi + 1 - localXS] = temp;
 					tempHasChanged = true;
 				}
+
+				// Boundary conditions
+				// Everything to the left of the surface is empty
+				if (xi < surfacePosition[yj][zk] + leftOffset ||
+					xi > nX - 1 - rightOffset)
+					continue;
+				// Free surface GB
+				bool skip = false;
+				for (auto& pair : gbVector) {
+					if (xi == std::get<0>(pair) && yj == std::get<1>(pair) &&
+						zk == std::get<2>(pair)) {
+						skip = true;
+						break;
+					}
+				}
+				if (skip)
+					continue;
 
 				// Get the partial derivatives for the temperature
 				if (xi >= localXS && xi < localXS + localXM) {
@@ -1123,7 +1139,7 @@ PetscSolver3DHandler::computeJacobian(
 						cols[0].j = yj;
 						cols[0].k = zk;
 						cols[0].c = tempIndices[0];
-						cols[1].i = xi - 1; // left
+						cols[1].i = (PetscInt)xi - 1; // left
 						cols[1].j = yj;
 						cols[1].k = zk;
 						cols[1].c = tempIndices[0];
@@ -1132,7 +1148,7 @@ PetscSolver3DHandler::computeJacobian(
 						cols[2].k = zk;
 						cols[2].c = tempIndices[0];
 						cols[3].i = xi; // bottom
-						cols[3].j = yj - 1;
+						cols[3].j = (PetscInt)yj - 1;
 						cols[3].k = zk;
 						cols[3].c = tempIndices[0];
 						cols[4].i = xi; // top
@@ -1141,7 +1157,7 @@ PetscSolver3DHandler::computeJacobian(
 						cols[4].c = tempIndices[0];
 						cols[5].i = xi; // front
 						cols[5].j = yj;
-						cols[5].k = zk - 1;
+						cols[5].k = (PetscInt)zk - 1;
 						cols[5].c = tempIndices[0];
 						cols[6].i = xi; // back
 						cols[6].j = yj;
@@ -1161,27 +1177,35 @@ PetscSolver3DHandler::computeJacobian(
 			// preparation of T depending on more than X
 			if (tempHasChanged) {
 				// Update the network with the temperature
-				network.setTemperatures(temperature);
+				std::vector<double> depths;
+				for (auto i = 0; i < temperature.size(); i++) {
+					if (localXS + i == nX + 1)
+						depths.push_back(grid[localXS + i] -
+							grid[surfacePosition[localYS][localZS] + 1]);
+					else
+						depths.push_back(
+							(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+							grid[surfacePosition[localYS][localZS] + 1]);
+				}
+				network.setTemperatures(temperature, depths);
 				network.syncClusterDataOnHost();
-				// Update the modified trap-mutation rate
-				// that depends on the network reaction rates
-				// TODO: is this just the local largest rate? Is it correct?
-				mutationHandler->updateTrapMutationRate(
-					network.getLargestRate());
 			}
 		}
 
 	// Loop over the grid points
-	for (PetscInt zk = frontOffset; zk < nZ - backOffset; zk++)
-		for (PetscInt yj = bottomOffset; yj < nY - topOffset; yj++) {
+	for (auto zk = frontOffset; zk < nZ - backOffset; zk++)
+		for (auto yj = bottomOffset; yj < nY - topOffset; yj++) {
 			// Computing the trapped atom concentration is only needed for the
 			// attenuation
 			if (useAttenuation) {
 				// Compute the total concentration of atoms contained in bubbles
 				atomConc = 0.0;
 
+				auto& psiNetwork =
+					dynamic_cast<core::network::IPSIReactionNetwork&>(network);
+
 				// Loop over grid points
-				for (int xi = surfacePosition[yj][zk] + leftOffset;
+				for (auto xi = surfacePosition[yj][zk] + leftOffset;
 					 xi < nX - rightOffset; xi++) {
 					// We are only interested in the helium near the surface
 					if ((grid[xi] + grid[xi + 1]) / 2.0 -
@@ -1203,9 +1227,6 @@ PetscSolver3DHandler::computeJacobian(
 						auto dConcs =
 							Kokkos::View<double*>("Concentrations", dof);
 						deep_copy(dConcs, hConcs);
-						auto& psiNetwork =
-							dynamic_cast<core::network::IPSIReactionNetwork&>(
-								network);
 						atomConc +=
 							psiNetwork.getTotalTrappedHeliumConcentration(
 								dConcs, 0) *
@@ -1220,7 +1241,7 @@ PetscSolver3DHandler::computeJacobian(
 					xolotlComm);
 
 				// Set the disappearing rate in the modified TM handler
-				mutationHandler->updateDisappearingRate(totalAtomConc);
+				psiNetwork.updateTrapMutationDisappearingRate(totalAtomConc);
 			}
 
 			// Skip if we are not on the right process
@@ -1237,14 +1258,14 @@ PetscSolver3DHandler::computeJacobian(
 			advectionHandlers[0]->setLocation(
 				grid[surfacePosition[yj][zk] + 1] - grid[1]);
 
-			for (PetscInt xi = localXS; xi < localXS + localXM; xi++) {
+			for (auto xi = localXS; xi < localXS + localXM; xi++) {
 				// Compute the left and right hx
 				double hxLeft = 0.0, hxRight = 0.0;
-				if (xi - 1 >= 0 && xi < nX) {
+				if (xi >= 1 && xi < nX) {
 					hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
-				else if (xi - 1 < 0) {
+				else if (xi < 1) {
 					hxLeft = grid[xi + 1] - grid[xi];
 					hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
 				}
@@ -1279,7 +1300,7 @@ PetscSolver3DHandler::computeJacobian(
 
 				// Loop on the number of diffusion cluster to set the values in
 				// the Jacobian
-				for (int i = 0; i < nDiff; i++) {
+				for (auto i = 0; i < nDiff; i++) {
 					// Set grid coordinate and component number for the row
 					row.i = xi;
 					row.j = yj;
@@ -1293,7 +1314,7 @@ PetscSolver3DHandler::computeJacobian(
 					cols[0].j = yj;
 					cols[0].k = zk;
 					cols[0].c = diffIndices[i];
-					cols[1].i = xi - 1; // left
+					cols[1].i = (PetscInt)xi - 1; // left
 					cols[1].j = yj;
 					cols[1].k = zk;
 					cols[1].c = diffIndices[i];
@@ -1302,7 +1323,7 @@ PetscSolver3DHandler::computeJacobian(
 					cols[2].k = zk;
 					cols[2].c = diffIndices[i];
 					cols[3].i = xi; // bottom
-					cols[3].j = yj - 1;
+					cols[3].j = (PetscInt)yj - 1;
 					cols[3].k = zk;
 					cols[3].c = diffIndices[i];
 					cols[4].i = xi; // top
@@ -1311,7 +1332,7 @@ PetscSolver3DHandler::computeJacobian(
 					cols[4].c = diffIndices[i];
 					cols[5].i = xi; // front
 					cols[5].j = yj;
-					cols[5].k = zk - 1;
+					cols[5].k = (PetscInt)zk - 1;
 					cols[5].c = diffIndices[i];
 					cols[6].i = xi; // back
 					cols[6].j = yj;
@@ -1328,7 +1349,7 @@ PetscSolver3DHandler::computeJacobian(
 				// Get the partial derivatives for the advection
 				// Set the grid position
 				gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
-				for (int l = 0; l < advectionHandlers.size(); l++) {
+				for (auto l = 0; l < advectionHandlers.size(); l++) {
 					advectionHandlers[l]->computePartialsForAdvection(network,
 						advecVals, advecIndices, gridPosition, hxLeft, hxRight,
 						xi - localXS, hY, yj - localYS, hZ, zk - localZS);
@@ -1344,7 +1365,7 @@ PetscSolver3DHandler::computeJacobian(
 
 					// Loop on the number of advecting cluster to set the values
 					// in the Jacobian
-					for (int i = 0; i < nAdvec; i++) {
+					for (auto i = 0; i < nAdvec; i++) {
 						// Set grid coordinate and component number for the row
 						row.i = xi;
 						row.j = yj;
@@ -1355,7 +1376,7 @@ PetscSolver3DHandler::computeJacobian(
 						// not the same Both sides are giving their
 						// concentrations to the center
 						if (advectionHandlers[l]->isPointOnSink(gridPosition)) {
-							cols[0].i = xi - advecStencil[0]; // left?
+							cols[0].i = (PetscInt)xi - advecStencil[0]; // left?
 							cols[0].j = yj - advecStencil[1]; // bottom?
 							cols[0].k = zk - advecStencil[2]; // back?
 							cols[0].c = advecIndices[i];
@@ -1392,6 +1413,12 @@ PetscSolver3DHandler::computeJacobian(
 
 				// ----- Take care of the reactions for all the reactants -----
 
+				auto surfacePos = grid[surfacePosition[yj][zk] + 1];
+				auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
+				auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
+				auto curDepth = curXPos - surfacePos;
+				auto curSpacing = curXPos - prevXPos;
+
 				// Compute all the partial derivatives for the reactions
 				using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
 					Kokkos::MemoryUnmanaged>;
@@ -1400,15 +1427,16 @@ PetscSolver3DHandler::computeJacobian(
 				deep_copy(dConcs, hConcs);
 				partialDerivativeCounter->increment();
 				partialDerivativeTimer->start();
-				network.computeAllPartials(dConcs, vals, xi + 1 - localXS);
+				network.computeAllPartials(
+					dConcs, vals, xi + 1 - localXS, curDepth, curSpacing);
 				partialDerivativeTimer->stop();
 				auto hPartials = create_mirror_view(vals);
 				deep_copy(hPartials, vals);
 
 				// Variable for the loop on reactants
-				int startingIdx = 0;
+				IdType startingIdx = 0;
 				// Update the column in the Jacobian that represents each DOF
-				for (int i = 0; i < dof; i++) {
+				for (auto i = 0; i < dof; i++) {
 					// Set grid coordinate and component number for the row
 					rowId.i = xi;
 					rowId.j = yj;
@@ -1422,7 +1450,7 @@ PetscSolver3DHandler::computeJacobian(
 						pdColIdsVectorSize = row.size();
 
 						// Loop over the list of column ids
-						for (int j = 0; j < pdColIdsVectorSize; j++) {
+						for (auto j = 0; j < pdColIdsVectorSize; j++) {
 							// Set grid coordinate and component number for a
 							// column in the list
 							colIds[j].i = xi;
@@ -1445,67 +1473,6 @@ PetscSolver3DHandler::computeJacobian(
 						// Increase the starting index
 						startingIdx += pdColIdsVectorSize;
 					}
-				}
-
-				// ----- Take care of the modified trap-mutation for all the
-				// reactants -----
-
-				// Store the total number of He clusters in the network for the
-				// modified trap-mutation
-				int nHelium = mutationHandler->getNumberOfMutating();
-
-				// Arguments for MatSetValuesStencil called below
-				MatStencil row, col;
-				PetscScalar mutationVals[3 * nHelium];
-				PetscInt mutationIndices[3 * nHelium];
-
-				// Compute the partial derivative from modified trap-mutation at
-				// this grid point
-				int nMutating = mutationHandler->computePartialsForTrapMutation(
-					network, concOffset, mutationVals, mutationIndices,
-					xi - localXS, yj - localYS, zk - localZS);
-
-				// Loop on the number of helium undergoing trap-mutation to set
-				// the values in the Jacobian
-				for (int i = 0; i < nMutating; i++) {
-					// Set grid coordinate and component number for the row and
-					// column corresponding to the helium cluster
-					row.i = xi;
-					row.j = yj;
-					row.k = zk;
-					row.c = mutationIndices[3 * i];
-					col.i = xi;
-					col.j = yj;
-					col.k = zk;
-					col.c = mutationIndices[3 * i];
-
-					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-						mutationVals + (3 * i), ADD_VALUES);
-					checkPetscError(ierr,
-						"PetscSolver3DHandler::computeJacobian: "
-						"MatSetValuesStencil (He trap-mutation) failed.");
-
-					// Set component number for the row
-					// corresponding to the HeV cluster created through
-					// trap-mutation
-					row.c = mutationIndices[(3 * i) + 1];
-
-					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-						mutationVals + (3 * i) + 1, ADD_VALUES);
-					checkPetscError(ierr,
-						"PetscSolver3DHandler::computeJacobian: "
-						"MatSetValuesStencil (HeV trap-mutation) failed.");
-
-					// Set component number for the row
-					// corresponding to the interstitial created through
-					// trap-mutation
-					row.c = mutationIndices[(3 * i) + 2];
-
-					ierr = MatSetValuesStencil(J, 1, &row, 1, &col,
-						mutationVals + (3 * i) + 2, ADD_VALUES);
-					checkPetscError(ierr,
-						"PetscSolver3DHandler::computeJacobian: "
-						"MatSetValuesStencil (I trap-mutation) failed.");
 				}
 			}
 		}

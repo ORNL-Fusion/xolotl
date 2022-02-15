@@ -4,16 +4,17 @@
 #include <fstream>
 #include <iostream>
 
-#include <mpi.h>
-
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/diffusion/Diffusion1DHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/test/CommandLine.h>
+#include <xolotl/util/MPIUtils.h>
 
 using namespace std;
-using namespace xolotl::core;
+using namespace xolotl;
+using namespace core;
 using namespace diffusion;
 
 using Kokkos::ScopeGuard;
@@ -33,23 +34,17 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	// Create the option to create a network
 	xolotl::options::Options opts;
 	// Create a good parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 0 1 0" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
-	// Initialize MPI for HDF5
-	MPI_Init(&argc, &argv);
-	opts.readParams(argc, argv);
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	util::mpiInit(cl.argc, cl.argv);
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
 
 	// Create a grid
 	std::vector<double> grid;
@@ -69,7 +64,6 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
 	// Get its size
 	const int dof = network.getDOF();
 
@@ -113,7 +107,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	}
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
-	network.setTemperatures(temperatures);
+	network.setTemperatures(temperatures, grid);
 	network.syncClusterDataOnHost();
 
 	// Get pointers
@@ -128,7 +122,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 
 	// Fill the concVector with the pointer to the middle, left, and right grid
 	// points
-	double** concVector = new double*[3];
+	double* concVector[3]{};
 	concVector[0] = concOffset; // middle
 	concVector[1] = conc; // left
 	concVector[2] = conc + 2 * dof; // right
@@ -151,10 +145,10 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();
-	int indices[nDiff];
+	IdType indices[nDiff];
 	double val[3 * nDiff];
 	// Get the pointer on them for the compute diffusion method
-	int* indicesPointer = &indices[0];
+	IdType* indicesPointer = &indices[0];
 	double* valPointer = &val[0];
 
 	// Compute the partial derivatives for the diffusion a the grid point 1
@@ -177,10 +171,6 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	BOOST_REQUIRE_CLOSE(val[5], 6415444736, 0.01);
 	BOOST_REQUIRE_CLOSE(val[6], -6283827232, 0.01);
 	BOOST_REQUIRE_CLOSE(val[9], -2528210084, 0.01);
-
-	// Remove the created file
-	std::string tempFile = "param.txt";
-	std::remove(tempFile.c_str());
 
 	// Finalize MPI
 	MPI_Finalize();

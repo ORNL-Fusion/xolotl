@@ -1,6 +1,7 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/temperature/HeatEquationHandler.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
 
@@ -34,11 +35,11 @@ HeatEquationHandler::HeatEquationHandler(
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
-		std::cout << "TemperatureHandler: Using the heat equation with "
-					 "a flux of: "
-				  << heatFlux
-				  << " W nm-2, and a bulk temperature of: " << bulkTemperature
-				  << " K" << std::endl;
+		XOLOTL_LOG << "TemperatureHandler: Using the heat equation with "
+					  "a flux of: "
+				   << heatFlux
+				   << " W nm-2, and a bulk temperature of: " << bulkTemperature
+				   << " K";
 	}
 }
 
@@ -180,8 +181,8 @@ HeatEquationHandler::computeTemperature(double** concVector,
 
 bool
 HeatEquationHandler::computePartialsForTemperature(double** concVector,
-	double* val, int* indices, double hxLeft, double hxRight, int xi, double sy,
-	int iy, double sz, int iz)
+	double* val, IdType* indices, double hxLeft, double hxRight, int xi,
+	double sy, int iy, double sz, int iz)
 {
 	// Skip if the flux is 0
 	if (zeroFlux) {

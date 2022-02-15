@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xolotl/core/network/ClusterData.h>
+#include <xolotl/core/network/detail/ClusterData.h>
 
 namespace xolotl
 {
@@ -28,42 +28,42 @@ public:
 	double
 	getReactionRadius()
 	{
-		return asDerived()->_data.reactionRadius(_id);
+		return asDerived()->_data->reactionRadius(_id);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	getFormationEnergy()
 	{
-		return asDerived()->_data.formationEnergy(_id);
+		return asDerived()->_data->formationEnergy(_id);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	getTemperature(IndexType gridIndex)
 	{
-		return asDerived()->_data.temperature(gridIndex);
+		return asDerived()->_data->temperature(gridIndex);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	getDiffusionCoefficient(IndexType gridIndex)
 	{
-		return asDerived()->_data.diffusionCoefficient(_id, gridIndex);
+		return asDerived()->_data->diffusionCoefficient(_id, gridIndex);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	getDiffusionFactor()
 	{
-		return asDerived()->_data.diffusionFactor(_id);
+		return asDerived()->_data->diffusionFactor(_id);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	getMigrationEnergy()
 	{
-		return asDerived()->_data.migrationEnergy(_id);
+		return asDerived()->_data->migrationEnergy(_id);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -82,96 +82,88 @@ private:
 	}
 
 private:
-	IndexType _id{detail::InvalidIndex::value};
+	IndexType _id{detail::invalidNetworkIndex};
 };
 
 /**
  * @brief Class for cluster properties common to every type of clusters.
  *
- * @tparam PlsmContext Host or Device
+ * @tparam MemSpace plsm::HostMemSpace or plsm::DeviceMemSpace
  */
-template <typename PlsmContext>
-class ClusterCommon : public ClusterBase<ClusterCommon<PlsmContext>>
+template <typename MemSpace>
+class ClusterCommon : public ClusterBase<ClusterCommon<MemSpace>>
 {
-	friend class ClusterBase<ClusterCommon<PlsmContext>>;
+	friend class ClusterBase<ClusterCommon<MemSpace>>;
 
 public:
-	using Superclass = ClusterBase<ClusterCommon<PlsmContext>>;
-	using ClusterData = detail::ClusterDataCommon<PlsmContext>;
-	using ClusterDataRef = detail::ClusterDataCommonRef<PlsmContext>;
+	using Superclass = ClusterBase<ClusterCommon<MemSpace>>;
+	using ClusterData = detail::ClusterDataCommon<MemSpace>;
 	using IndexType = typename Superclass::IndexType;
 
 	ClusterCommon() = delete;
 
 	KOKKOS_INLINE_FUNCTION
-	ClusterCommon(const ClusterData& data, IndexType id) :
-		Superclass(id),
-		_data{data}
-	{
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	ClusterCommon(const ClusterDataRef& data, IndexType id) :
+	ClusterCommon(const ClusterData* data, IndexType id) :
 		Superclass(id),
 		_data{data}
 	{
 	}
 
 private:
-	ClusterDataRef _data;
+	const ClusterData* _data;
 };
 
 /**
  * @brief Network specific cluster class.
  *
  * @tparam TNetwork Network type
- * @tparam PlsmContext Host or Device
+ * @tparam MemSpace plsm::HostMemSpace or plsm::DeviceMemSpace
  */
-template <typename TNetwork, typename PlsmContext>
-class Cluster : public ClusterBase<Cluster<TNetwork, PlsmContext>>
+template <typename TNetwork, typename MemSpace>
+class Cluster : public ClusterBase<Cluster<TNetwork, MemSpace>>
 {
 	friend class ClusterBase<Cluster>;
 
 	using Types = detail::ReactionNetworkTypes<TNetwork>;
 
 public:
-	using Superclass = ClusterBase<Cluster<TNetwork, PlsmContext>>;
+	using Superclass = ClusterBase<Cluster<TNetwork, MemSpace>>;
 	using Subpaving = typename Types::Subpaving;
 	using Region = typename Subpaving::RegionType;
-	using ClusterData = detail::ClusterData<TNetwork, PlsmContext>;
-	using ClusterDataRef = detail::ClusterDataRef<TNetwork, PlsmContext>;
+	using ClusterData = detail::ClusterData<TNetwork, MemSpace>;
 	using IndexType = typename Superclass::IndexType;
+	using Composition = typename Types::Composition;
 
 	Cluster() = delete;
 
 	KOKKOS_INLINE_FUNCTION
-	Cluster(const ClusterData& data, IndexType id) : Superclass(id), _data{data}
+	Cluster(const ClusterData* data, IndexType id) : Superclass(id), _data{data}
 	{
 	}
 
 	KOKKOS_INLINE_FUNCTION
-	Cluster(const ClusterDataRef& data, IndexType id) :
-		Superclass(id),
-		_data{data}
-	{
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	Region
+	const Region&
 	getRegion() const
 	{
-		return _data.tiles(this->getId()).getRegion();
+		return this->_data->tiles(this->getId()).getRegion();
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	Composition
+	getOriginComposition() const
+	{
+		return getRegion().getOrigin();
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	decltype(auto)
 	getMomentIds()
 	{
-		return Kokkos::subview(_data.momentIds, this->getId(), Kokkos::ALL);
+		return Kokkos::subview(_data->momentIds, this->getId(), Kokkos::ALL);
 	}
 
 private:
-	ClusterDataRef _data;
+	const ClusterData* _data;
 };
 } // namespace network
 } // namespace core

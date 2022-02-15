@@ -1,0 +1,21 @@
+#pragma once
+
+#include <xolotl/config.h>
+
+#define XOLOTL_VERSION @Xolotl_VERSION@
+#define XOLOTL_VERSION_EXACT @Xolotl_VERSION_EXACT@
+
+namespace xolotl
+{
+inline std::string
+getVersionString()
+{
+	return TO_STRING(XOLOTL_VERSION);
+}
+
+inline std::string
+getExactVersionString()
+{
+	return TO_STRING(XOLOTL_VERSION_EXACT);
+}
+} // namespace xolotl

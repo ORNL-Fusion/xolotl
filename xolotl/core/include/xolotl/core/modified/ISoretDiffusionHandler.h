@@ -4,6 +4,7 @@
 // Includes
 #include <memory>
 
+#include <xolotl/config.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
 namespace xolotl
@@ -124,7 +125,7 @@ public:
 	 */
 	virtual bool
 	computePartialsForDiffusion(network::IReactionNetwork& network,
-		double** concVector, double* val, int* indices, double hxLeft,
+		double** concVector, double* val, IdType* indices, double hxLeft,
 		double hxRight, int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
 		int iz = 0) const = 0;
 };

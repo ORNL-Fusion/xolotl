@@ -29,7 +29,7 @@ public:
 	using NetworkType = TNetwork;
 	using NetworkTraits = ReactionNetworkTraits<NetworkType>;
 	using ClusterData = typename NetworkType::ClusterData;
-	using ClusterDataRef = typename NetworkType::ClusterDataRef;
+	using ClusterDataView = typename NetworkType::ClusterDataView;
 	using Cluster = typename ClusterData::ClusterType;
 	using ProductionReactionType =
 		typename NetworkTraits::ProductionReactionType;
@@ -86,24 +86,6 @@ public:
 	void
 	setupCrs();
 
-	IndexType
-	getNumberOfSinkReactions() const noexcept
-	{
-		return 0;
-	}
-
-	IndexType
-	getNumberOfNucleationReactions() const noexcept
-	{
-		return 0;
-	}
-
-	IndexType
-	getNumberOfReSolutionReactions() const noexcept
-	{
-		return 0;
-	}
-
 	KOKKOS_INLINE_FUNCTION
 	IndexType
 	getNumberOfClusters() const noexcept
@@ -142,6 +124,12 @@ public:
 	void
 	generateConnectivity(ReactionCollection<NetworkType>& reactionCollection);
 
+	const ClusterConnectivity<>&
+	getConnectivity() const
+	{
+		return _connectivity;
+	}
+
 protected:
 	TDerived*
 	asDerived()
@@ -152,6 +140,7 @@ protected:
 protected:
 	Subpaving _subpaving;
 	ClusterData _clusterData;
+	ClusterDataView _clusterDataView;
 	IndexType _numDOFs;
 	bool _enableReducedJacobian;
 	IndexView _clusterProdReactionCounts;
@@ -170,18 +159,13 @@ protected:
 	Kokkos::View<ProductionReactionType*> _prodReactions;
 	Kokkos::View<DissociationReactionType*> _dissReactions;
 
-	// detail::ReactionData _reactionData;
+	ClusterConnectivity<> _connectivity;
 };
 
 template <typename TNetwork, typename TReaction,
 	typename TReactionGeneratorParent, typename = void>
 struct WrapTypeSpecificReactionGenerator
 {
-	// WrapTypeSpecificReactionGenerator()
-	// {
-	//     static_assert(false,
-	//         "No type-specific reaction generator for this reaction type");
-	// }
 };
 
 template <typename TReactionGeneratorParent, typename TExtraReactionTypes>
@@ -215,13 +199,13 @@ struct ReactionGeneratorTypeBuilder
 	using ReactionFirst = std::tuple_element_t<0, ReactionTypes>;
 	using ReactionSecond = std::tuple_element_t<1, ReactionTypes>;
 
-	static_assert(std::is_base_of<ProductionReaction<TNetwork, ReactionFirst>,
-					  ReactionFirst>::value,
+	static_assert(std::is_base_of_v<ProductionReaction<TNetwork, ReactionFirst>,
+					  ReactionFirst>,
 		"First reaction type must be a ProductionReaction");
 
 	static_assert(
-		std::is_base_of<DissociationReaction<TNetwork, ReactionSecond>,
-			ReactionSecond>::value,
+		std::is_base_of_v<DissociationReaction<TNetwork, ReactionSecond>,
+			ReactionSecond>,
 		"Second reaction type must be a DissociationReaction");
 
 	using ExtraReactionTypes = TuplePopFront<TuplePopFront<ReactionTypes>>;

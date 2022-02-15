@@ -14,16 +14,6 @@ class Options : public IOptions
 {
 protected:
 	/**
-	 * The flag that says if Xolotl should run.
-	 */
-	bool shouldRunFlag;
-
-	/**
-	 * The value of the exit code. Should be 0 if everything went well.
-	 */
-	int exitCode;
-
-	/**
 	 * The name of the file where the network is stored.
 	 */
 	std::string networkFilename;
@@ -191,6 +181,11 @@ protected:
 		backBoundary;
 
 	/**
+	 * String of the list of wanted BC in X.
+	 */
+	std::string xBC;
+
+	/**
 	 * Depth for the bubble bursting in nm.
 	 */
 	double burstingDepth;
@@ -297,43 +292,7 @@ public:
 	 * \see IOptions.h
 	 */
 	void
-	readParams(int argc, char* argv[]) override;
-
-	/**
-	 * \see IOptions.h
-	 */
-	bool
-	shouldRun() const override
-	{
-		return shouldRunFlag;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	void
-	setShouldRunFlag(bool flag) override
-	{
-		shouldRunFlag = flag;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	int
-	getExitCode() const override
-	{
-		return exitCode;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	void
-	setExitCode(int code) override
-	{
-		exitCode = code;
-	}
+	readParams(int argc, const char* argv[]) override;
 
 	/**
 	 * \see IOptions.h
@@ -664,6 +623,15 @@ public:
 	getBackBoundary() const override
 	{
 		return backBoundary;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	std::string
+	getBCString() const override
+	{
+		return xBC;
 	}
 
 	/**

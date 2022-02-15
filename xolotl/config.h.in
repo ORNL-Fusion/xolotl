@@ -1,0 +1,20 @@
+#pragma once
+
+#cmakedefine XOLOTL_USE_64BIT_INDEX_TYPE
+
+#define STRINGIFY(x) #x
+#define TO_STRING(x) STRINGIFY(x)
+
+namespace xolotl
+{
+#if defined(XOLOTL_USE_64BIT_INDEX_TYPE)
+// using IdType = std::int64_t;
+using IdType = std::uint64_t;
+#else
+// using IdType = std::int32_t;
+using IdType = std::uint32_t;
+#endif
+using AmountType = std::uint32_t;
+} // namespace xolotl
+
+#cmakedefine XOLOTL_INCLUDE_RN_TPP_FILES

@@ -12,47 +12,6 @@ namespace core
 {
 namespace network
 {
-double
-NEReactionNetwork::checkLatticeParameter(double latticeParameter)
-{
-	if (latticeParameter <= 0.0) {
-		return uraniumDioxydeLatticeConstant;
-	}
-	return latticeParameter;
-}
-
-double
-NEReactionNetwork::checkImpurityRadius(double impurityRadius)
-{
-	if (impurityRadius <= 0.0) {
-		return xenonRadius;
-	}
-	return impurityRadius;
-}
-
-NEReactionNetwork::IndexType
-NEReactionNetwork::checkLargestClusterId()
-{
-	// Copy the cluster data for the parallel loop
-	auto clData = ClusterDataRef(_clusterData);
-	using Reducer = Kokkos::MaxLoc<NEReactionNetwork::AmountType,
-		NEReactionNetwork::IndexType>;
-	Reducer::value_type maxLoc;
-	Kokkos::parallel_reduce(
-		_numClusters,
-		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
-			const Region& clReg = clData.getCluster(i).getRegion();
-			Composition hi = clReg.getUpperLimitPoint();
-			if (hi[Species::Xe] > update.val) {
-				update.val = hi[Species::Xe];
-				update.loc = i;
-			}
-		},
-		Reducer(maxLoc));
-
-	return maxLoc.loc;
-}
-
 namespace detail
 {
 template <typename TTag>
@@ -95,7 +54,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 		if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1[Species::Xe] == 1 &&
 			lo2[Species::Xe] == 1) {
-			if (this->_clusterData.enableNucleation(0))
+			if (this->_clusterData.enableNucleation())
 				this->addNucleationReaction(tag, {i, k});
 			else
 				this->addProductionReaction(tag, {i, j, k});
@@ -145,7 +104,7 @@ NEClusterUpdater::updateDiffusionCoefficient(
 		double D3 = 7.6e8 * exp(kernel); // nm2/s
 
 		// We need the fission rate now
-		double fissionRate = data.fissionRate(0) * 1.0e27; // #/m3/s
+		double fissionRate = data.fissionRate() * 1.0e27; // #/m3/s
 
 		// Athermal diffusion
 		double D1 = (8e-40 * fissionRate) * 1.0e18; // nm2/s

@@ -21,9 +21,9 @@ FeDissociationReaction::computeBindingEnergy()
 
 	double be = 5.0;
 
-	auto cl = this->_clusterData.getCluster(this->_reactant);
-	auto prod1 = this->_clusterData.getCluster(this->_products[0]);
-	auto prod2 = this->_clusterData.getCluster(this->_products[1]);
+	auto cl = this->_clusterData->getCluster(this->_reactant);
+	auto prod1 = this->_clusterData->getCluster(this->_products[0]);
+	auto prod2 = this->_clusterData->getCluster(this->_products[1]);
 
 	auto clReg = cl.getRegion();
 	auto prod1Reg = prod1.getRegion();
@@ -109,7 +109,7 @@ FeSinkReaction::getSinkBias()
 
 	double bias = 1.0;
 
-	auto cl = this->_clusterData.getCluster(this->_reactant);
+	auto cl = this->_clusterData->getCluster(this->_reactant);
 
 	auto clReg = cl.getRegion();
 	if (clReg.isSimplex()) {
@@ -120,6 +120,22 @@ FeSinkReaction::getSinkBias()
 	}
 
 	return bias;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeSinkReaction::getSinkStrength()
+{
+	auto cl = this->_clusterData->getCluster(this->_reactant);
+	double r = cl.getReactionRadius();
+	double latticeParameter = this->_clusterData->latticeParameter();
+	double r0 = latticeParameter * 0.75 * sqrt(3.0);
+	double rho = 0.0003;
+	constexpr double pi = ::xolotl::core::pi;
+
+	double strength = -4.0 * pi * rho / log(pi * rho * (r + r0) * (r + r0));
+
+	return strength;
 }
 } // namespace network
 } // namespace core

@@ -121,15 +121,16 @@ SoretDiffusionHandler::computeDiffusion(network::IReactionNetwork& network,
 	//			double oldLeftConc = concVector[1][currId];
 	//
 	//			double leftTemp = concVector[1][dof], midTemp =
-	// concVector[0][dof], 				   rightTemp = concVector[2][dof]; 			double
+	// concVector[0][dof], 				   rightTemp = concVector[2][dof];
+	// double
 	// leftDiff = cluster.getDiffusionCoefficient(ix), 				   midDiff =
 	// cluster.getDiffusionCoefficient(ix + 1), 				   rightDiff =
 	// cluster.getDiffusionCoefficient(ix + 2);
 	//
 	//			updatedConcOffset[currId] +=
 	//				2.0 * midDiff * (oldLeftConc - oldConc) / (hxLeft * hxRight)
-	//+ 				2.0 * midDiff * beta * oldConc * (rightTemp - leftTemp) /
-	//(hxRight * (hxLeft + hxRight));
+	//+ 				2.0 * midDiff * beta * oldConc * (rightTemp - leftTemp)
+	/// (hxRight * (hxLeft + hxRight));
 	//
 	//			// second part
 	//			updatedConcOffset[currId] -= 2.0 * beta * midDiff * oldConc *
@@ -174,7 +175,7 @@ SoretDiffusionHandler::computeDiffusion(network::IReactionNetwork& network,
 bool
 SoretDiffusionHandler::computePartialsForDiffusion(
 	network::IReactionNetwork& network, double** concVector, double* val,
-	int* indices, double hxLeft, double hxRight, int ix, double, int, double,
+	IdType* indices, double hxLeft, double hxRight, int ix, double, int, double,
 	int) const
 {
 	// Adjust the constants to the material
@@ -298,7 +299,8 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 	//			double oldLeftConc = concVector[1][currId];
 	//
 	//			double leftTemp = concVector[1][dof], midTemp =
-	// concVector[0][dof], 				   rightTemp = concVector[2][dof]; 			double
+	// concVector[0][dof], 				   rightTemp = concVector[2][dof];
+	// double
 	// leftDiff = cluster.getDiffusionCoefficient(ix), 				   midDiff =
 	// cluster.getDiffusionCoefficient(ix + 1), 				   rightDiff =
 	// cluster.getDiffusionCoefficient(ix + 2);
@@ -315,16 +317,17 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 	//				beta * beta * midDiff * (rightTemp - leftTemp) *
 	//					(rightTemp - leftTemp) /
 	//					((hxLeft + hxRight) * (hxLeft + hxRight)); // middle
-	// conc 			val[(diffClusterIdx * 6) + 1] = 				2.0 * midDiff / (hxLeft *
-	// hxRight);
+	// conc 			val[(diffClusterIdx * 6) + 1] = 				2.0 * midDiff /
+	// (hxLeft
+	// * hxRight);
 	//// left conc 			val[(diffClusterIdx * 6) + 2] = 0.0; // right conc
 	//			val[(diffClusterIdx * 6) + 3] = 2.0 * beta * midDiff * oldConc /
 	//				(hxLeft * hxRight); // middle temp
 	//			val[(diffClusterIdx * 6) + 4] = -2.0 * beta * midDiff * oldConc
 	/// 					(hxRight * (hxLeft + hxRight)) - 				2.0
 	/// * beta * midDiff * oldConc /
-	//(hxLeft * (hxLeft + hxRight)) - 				2.0 * beta * beta * midDiff *
-	//oldConc * (leftTemp - rightTemp) /
+	//(hxLeft * (hxLeft + hxRight)) - 				2.0 * beta * beta * midDiff
+	//* oldConc * (leftTemp - rightTemp) /
 	//					((hxLeft + hxRight) * (hxLeft + hxRight)); // left temp
 	//			val[(diffClusterIdx * 6) + 5] = -2.0 * beta * beta * midDiff *
 	//				oldConc * (rightTemp - leftTemp) /

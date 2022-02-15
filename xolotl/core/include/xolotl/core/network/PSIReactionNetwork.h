@@ -5,6 +5,7 @@
 #include <xolotl/core/network/PSITraits.h>
 #include <xolotl/core/network/ReactionNetwork.h>
 #include <xolotl/core/network/detail/ReactionGenerator.h>
+#include <xolotl/core/network/detail/TrapMutationHandler.h>
 
 namespace xolotl
 {
@@ -35,6 +36,7 @@ class PSIReactionNetwork :
 public:
 	using Superclass = ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
 	using Subpaving = typename Superclass::Subpaving;
+	using SubdivisionRatio = typename Superclass::SubdivisionRatio;
 	using Composition = typename Superclass::Composition;
 	using Species = typename Superclass::Species;
 	using AmountType = typename Superclass::AmountType;
@@ -43,6 +45,16 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 
 	using Superclass::Superclass;
+
+	PSIReactionNetwork(const Subpaving& subpaving, IndexType gridSize,
+		const options::IOptions& options);
+
+	PSIReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+		const std::vector<SubdivisionRatio>& subdivisionRatios,
+		IndexType gridSize, const options::IOptions& options);
+
+	PSIReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
+		IndexType gridSize, const options::IOptions& options);
 
 	SpeciesId
 	getHeliumSpeciesId() const override
@@ -74,6 +86,26 @@ public:
 		return psi::hasTritium<Species>;
 	}
 
+	void
+	initializeExtraClusterData(const options::IOptions& options);
+
+	void
+	updateExtraClusterData(const std::vector<double>& gridTemps,
+		const std::vector<double>& gridDepths);
+
+	void
+	selectTrapMutationReactions(double surfaceDepth, double spacing);
+
+	void
+	computeFluxesPreProcess(ConcentrationsView concentrations,
+		FluxesView fluxes, IndexType gridIndex, double surfaceDepth,
+		double spacing);
+
+	void
+	computePartialsPreProcess(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+		double spacing);
+
 	double
 	getTotalTrappedHeliumConcentration(
 		ConcentrationsView concs, AmountType minSize = 0) override
@@ -88,6 +120,16 @@ public:
 
 	IndexType
 	checkLargestClusterId();
+
+	void
+	updateReactionRates();
+
+	void
+	updateTrapMutationDisappearingRate(double totalTrappedHeliumConc) override;
+
+	void
+	updateDesorptionLeftSideRate(
+		ConcentrationsView concentrations, IndexType gridIndex);
 
 private:
 	double
@@ -108,6 +150,9 @@ private:
 	{
 		return detail::PSIReactionGenerator<Species>{*this};
 	}
+
+private:
+	std::unique_ptr<detail::TrapMutationHandler> _tmHandler;
 };
 
 namespace detail
@@ -124,11 +169,12 @@ public:
 	using NetworkType = PSIReactionNetwork<TSpeciesEnum>;
 	using Subpaving = typename NetworkType::Subpaving;
 	using IndexType = typename NetworkType::IndexType;
+	using AmountType = typename NetworkType::AmountType;
 
 	using Superclass = ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,
 		PSIReactionGenerator<TSpeciesEnum>>;
 
-	using Superclass::Superclass;
+	PSIReactionGenerator(const PSIReactionNetwork<TSpeciesEnum>& network);
 
 	template <typename TTag>
 	KOKKOS_INLINE_FUNCTION
@@ -143,6 +189,9 @@ public:
 private:
 	ReactionCollection<NetworkType>
 	getReactionCollection() const;
+
+private:
+	Kokkos::Array<Kokkos::View<AmountType*>, 7> _tmVSizes;
 };
 } // namespace detail
 } // namespace network
@@ -150,3 +199,7 @@ private:
 } // namespace xolotl
 
 #include <xolotl/core/network/PSIClusterGenerator.h>
+
+#if defined(XOLOTL_INCLUDE_RN_TPP_FILES)
+#include <xolotl/core/network/impl/PSIReactionNetwork.tpp>
+#endif

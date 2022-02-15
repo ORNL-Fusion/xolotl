@@ -3,9 +3,9 @@
 
 #include <boost/test/unit_test.hpp>
 
-#include <Kokkos_Core.hpp>
-using Kokkos::ScopeGuard;
-BOOST_GLOBAL_FIXTURE(ScopeGuard);
+#include <xolotl/test/KokkosFixture.h>
+
+BOOST_GLOBAL_FIXTURE(KokkosFixture);
 
 #include <xolotl/test/MPITestUtils.h>
 #include <xolotl/test/SystemTestCase.h>
@@ -78,6 +78,16 @@ BOOST_AUTO_TEST_CASE(PSI_2)
 	SystemTestCase::copyFile("tridyn_system_PSI_2.dat");
 	// 1D + HeTVI + advection + modifiedTM + attenuation + surface + reflective
 	SystemTestCase{"system_PSI_2"}.run();
+}
+
+BOOST_AUTO_TEST_CASE(PSI_3)
+{
+	if (getMPICommSize() > 10) {
+		return;
+	}
+	// 1D + HeVI + pulsed flux + sink + I grouping + surface + reflective
+	// bulk
+	SystemTestCase{"system_PSI_3"}.run();
 }
 
 BOOST_AUTO_TEST_CASE(Fe_1)

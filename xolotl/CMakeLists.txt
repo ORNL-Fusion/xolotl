@@ -3,6 +3,17 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(XOLOTL_BINARY_INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
 set(XOLOTL_BINARY_INCLUDE_DIR ${XOLOTL_BINARY_INCLUDE_DIR} PARENT_SCOPE)
 
+configure_file(${CMAKE_CURRENT_LIST_DIR}/config.h.in
+    ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/config.h
+)
+configure_file(${CMAKE_CURRENT_LIST_DIR}/version.h.in
+    ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/version.h
+)
+add_custom_target(xolotlVersion ALL
+    DEPENDS "${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/version.h"
+    SOURCES "${CMAKE_CURRENT_LIST_DIR}/version.h.in"
+)
+
 add_subdirectory(util)
 add_subdirectory(perf)
 add_subdirectory(core)
@@ -20,6 +31,11 @@ target_link_libraries(xolotl
 )
 set_target_properties(xolotl PROPERTIES
     INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
+)
+
+install(FILES
+    ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/config.h
+    DESTINATION include/xolotl
 )
 
 install(TARGETS xolotl

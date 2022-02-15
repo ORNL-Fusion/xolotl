@@ -50,7 +50,7 @@ public:
 	using Region = typename NetworkType::Region;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
-	using BoolArray = typename Superclass::template BoolVec<Region>;
+	using BoolArray = plsm::refine::BoolVec<Region>;
 
 	PSIClusterGenerator(const options::IOptions& opts);
 
@@ -91,10 +91,9 @@ public:
 		double latticeParameter, double interstitialBias,
 		double impurityRadius) const noexcept;
 
-private:
 	KOKKOS_INLINE_FUNCTION
-	double
-	getHeVFormationEnergy(Composition comp) const noexcept;
+	static double
+	getHeVFormationEnergy(Composition comp);
 
 private:
 	// The factor between He and H radius sizes
@@ -105,6 +104,7 @@ private:
 	AmountType _maxD{1};
 	AmountType _maxT{1};
 	AmountType _maxV{0};
+	AmountType _maxI{0};
 	AmountType _groupingMin;
 	AmountType _groupingWidthA;
 	AmountType _groupingWidthB;

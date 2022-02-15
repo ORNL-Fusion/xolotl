@@ -8,9 +8,11 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/interface/Interface.h>
+#include <xolotl/test/CommandLine.h>
 
 using namespace std;
-using namespace xolotl::interface;
+using namespace xolotl;
+using namespace interface;
 
 /**
  * Test suite for the interface class.
@@ -20,7 +22,8 @@ BOOST_AUTO_TEST_SUITE(Interface_testSuite)
 BOOST_AUTO_TEST_CASE(simple0D)
 {
 	// Create the parameter file
-	std::ofstream paramFile("param.txt");
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
 	paramFile << "vizHandler=dummy" << std::endl
 			  << "petscArgs=-fieldsplit_0_pc_type redundant "
 				 "-ts_max_snes_failures 200 "
@@ -42,18 +45,10 @@ BOOST_AUTO_TEST_CASE(simple0D)
 	paramFile.close();
 
 	// Create a fake command line to read the options
-	int argc = 2;
-	char** argv = new char*[3];
-	std::string appName = "fakeXolotlAppNameForTests";
-	argv[0] = new char[appName.length() + 1];
-	strcpy(argv[0], appName.c_str());
-	std::string parameterFile = "param.txt";
-	argv[1] = new char[parameterFile.length() + 1];
-	strcpy(argv[1], parameterFile.c_str());
-	argv[2] = 0; // null-terminate the array
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
 
 	// Create and run the solver
-	auto interface = xolotl::interface::XolotlInterface{argc, argv};
+	auto interface = xolotl::interface::XolotlInterface{cl.argc, cl.argv};
 	interface.solveXolotl();
 
 	// Get data to check
@@ -63,9 +58,7 @@ BOOST_AUTO_TEST_CASE(simple0D)
 	BOOST_REQUIRE_EQUAL(concVector[0][0][0][10].first, 10);
 	BOOST_REQUIRE_EQUAL(concVector[0][0][0][10].second, 900);
 
-	// Remove the created file
-	std::string tempFile = "param.txt";
-	std::remove(tempFile.c_str());
+	std::remove(parameterFile.c_str());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

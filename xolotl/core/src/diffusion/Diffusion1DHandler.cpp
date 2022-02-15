@@ -115,7 +115,7 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 
 void
 Diffusion1DHandler::computePartialsForDiffusion(
-	network::IReactionNetwork& network, double* val, int* indices,
+	network::IReactionNetwork& network, double* val, IdType* indices,
 	double hxLeft, double hxRight, int ix, double, int, double, int) const
 {
 	// Loop on them

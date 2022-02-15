@@ -1,22 +1,34 @@
-file(GLOB tests
-    advection/*Tester.cpp
-    diffusion/*Tester.cpp
-    flux/*Tester.cpp
-    modified/*Tester.cpp
-    network/*Tester.cpp
-    temperature/*Tester.cpp
+set(tests
+    advection/DummyAdvectionHandlerTester.cpp
+    advection/W100AdvectionHandlerTester.cpp
+    advection/W110AdvectionHandlerTester.cpp
+    advection/W111AdvectionHandlerTester.cpp
+    advection/W211AdvectionHandlerTester.cpp
+    advection/XGBAdvectionHandlerTester.cpp
+    advection/YGBAdvectionHandlerTester.cpp
+    advection/ZGBAdvectionHandlerTester.cpp
+    diffusion/Diffusion1DHandlerTester.cpp
+    diffusion/Diffusion2DHandlerTester.cpp
+    diffusion/Diffusion3DHandlerTester.cpp
+    diffusion/DummyDiffusionHandlerTester.cpp
+    flux/CustomFitFluxHandlerTester.cpp
+    flux/FeFitFluxHandlerTester.cpp
+    flux/FuelFitFluxHandlerTester.cpp
+    flux/PulsedFitFluxHandlerTester.cpp
+    flux/W100FitFluxHandlerTester.cpp
+    flux/W110FitFluxHandlerTester.cpp
+    flux/W111FitFluxHandlerTester.cpp
+    flux/W211FitFluxHandlerTester.cpp
+    network/AlloyNetworkTester.cpp
+    network/FeNetworkTester.cpp
+    network/ModifiedTrapMutationTester.cpp
+    network/NENetworkTester.cpp
+    network/NetworkTester.cpp
+    network/PSINetworkTester.cpp
+    temperature/HeatEquationHandlerTester.cpp
+    temperature/TemperatureConstantHandlerTester.cpp
+    temperature/TemperatureGradientHandlerTester.cpp
+    temperature/TemperatureProfileHandlerTester.cpp
 )
 
-foreach(test ${tests})
-    get_filename_component(testName ${test} NAME_WE)
-    add_executable(${testName} ${test})
-    target_link_libraries(${testName}
-        xolotlCore
-        xolotlOptions
-        xolotlPerf
-        Boost::unit_test_framework
-    )
-    add_test(${testName} ${testName}) 
-    #add a label so the tests can be run separately
-    set_property(TEST ${testName} PROPERTY LABELS "xolotl.tests.core")
-endforeach()
+add_tests(tests LIBS xolotlCore xolotlOptions xolotlPerf LABEL "xolotl.tests.core")

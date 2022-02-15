@@ -9,7 +9,7 @@ using solver::SolverFactory;
 using xolotl::solver::ISolver;
 
 template SolverFactory&
-Factory<SolverFactory, ISolver>::get();
+Factory<SolverFactory, ISolver>::get(const UserInitializer&);
 
 template std::shared_ptr<ISolver>
 Factory<SolverFactory, ISolver>::generate(const options::IOptions&);

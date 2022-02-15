@@ -60,6 +60,7 @@ private:
 	static const std::string _binDir;
 	static const std::string _defaultOutputFileName;
 
+	static bool _noRedirect;
 	static bool _approve;
 	static bool _timeAll;
 
