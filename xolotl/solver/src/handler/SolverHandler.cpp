@@ -39,6 +39,7 @@ SolverHandler::SolverHandler(
 	bubbleBursting(false),
 	isMirror(true),
 	useAttenuation(false),
+	sameTemperatureGrid(true),
 	fluxTempProfile(false),
 	sputteringYield(0.0),
 	fluxHandler(nullptr),
@@ -426,6 +427,10 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 
 	// Set the HeV ratio
 	heVRatio = opts.getHeVRatio();
+
+	// Which type of temperature grid to use
+	if (opts.getTempHandlerName() == "heat")
+		sameTemperatureGrid = false;
 
 	// Do we want a flux temporal profile?
 	fluxTempProfile = opts.useFluxTimeProfile();
