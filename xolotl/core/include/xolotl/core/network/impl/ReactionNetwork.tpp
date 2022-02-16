@@ -255,10 +255,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::updateReactionRates()
 {
-	_reactions.forEach(
-		"ReactionNetwork::updateReactionRates",
-		DEVICE_LAMBDA(auto&& reaction) { reaction.updateRates(); });
-	Kokkos::fence();
+	_reactions.updateRates();
 }
 
 template <typename TImpl>
