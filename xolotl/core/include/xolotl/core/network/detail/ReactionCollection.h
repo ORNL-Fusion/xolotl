@@ -138,6 +138,15 @@ public:
 			});
 	}
 
+	void
+	updateRates()
+	{
+		forEach(
+			"ReactionNetwork::updateReactionRates",
+			DEVICE_LAMBDA(auto&& reaction) { reaction.updateRates(); });
+		Kokkos::fence();
+	}
+
 	double
 	getLargestRate() const
 	{
