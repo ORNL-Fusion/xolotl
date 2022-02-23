@@ -45,8 +45,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 							(NetworkType::AmountType)opts.getMaxI()},
 		1, opts);
 
-	network.syncClusterDataOnHost();
-
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 16);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 16);
 
@@ -107,7 +105,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -347,8 +344,6 @@ BOOST_AUTO_TEST_CASE(grouped)
 	NetworkType network({maxHe, maxV, maxI},
 		{{groupingWidthHe, groupingWidthV, maxI + 1}}, 1, opts);
 
-	network.syncClusterDataOnHost();
-
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 30);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 36);
 
@@ -439,7 +434,6 @@ BOOST_AUTO_TEST_CASE(grouped)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate

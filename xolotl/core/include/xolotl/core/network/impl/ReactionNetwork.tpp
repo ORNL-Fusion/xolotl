@@ -149,6 +149,8 @@ ReactionNetwork<TImpl>::setLatticeParameter(double latticeParameter)
 
 	this->_atomicVolume = asDerived()->computeAtomicVolume(lParam);
 	_clusterData.h_view().setAtomicVolume(this->_atomicVolume);
+
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -157,6 +159,7 @@ ReactionNetwork<TImpl>::setFissionRate(double rate)
 {
 	Superclass::setFissionRate(rate);
 	_clusterData.h_view().setFissionRate(this->_fissionRate);
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -164,6 +167,7 @@ void
 ReactionNetwork<TImpl>::setZeta(double z)
 {
 	_clusterData.h_view().setZeta(z);
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -172,6 +176,7 @@ ReactionNetwork<TImpl>::setEnableStdReaction(bool reaction)
 {
 	Superclass::setEnableStdReaction(reaction);
 	_clusterData.h_view().setEnableStdReaction(this->_enableStdReaction);
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -180,6 +185,7 @@ ReactionNetwork<TImpl>::setEnableReSolution(bool reaction)
 {
 	Superclass::setEnableReSolution(reaction);
 	_clusterData.h_view().setEnableReSolution(this->_enableReSolution);
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -188,6 +194,7 @@ ReactionNetwork<TImpl>::setEnableNucleation(bool reaction)
 {
 	Superclass::setEnableNucleation(reaction);
 	_clusterData.h_view().setEnableNucleation(this->_enableNucleation);
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -196,6 +203,7 @@ ReactionNetwork<TImpl>::setEnableSink(bool reaction)
 {
 	this->_enableSink = reaction;
 	_clusterData.h_view().setEnableSink(this->_enableSink);
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -204,6 +212,7 @@ ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 {
 	Superclass::setEnableTrapMutation(reaction);
 	_clusterData.h_view().setEnableTrapMutation(this->_enableTrapMutation);
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -218,8 +227,11 @@ void
 ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 {
 	this->_gridSize = gridSize;
+	// Set value in mirror so we don't need to invalidate
+	if (_clusterDataMirror.has_value()) {
+		_clusterDataMirror.value().setGridSize(gridSize);
+	}
 	_clusterData.h_view().setGridSize(gridSize);
-	_clusterDataMirror.setGridSize(gridSize);
 	copyClusterDataView();
 	_reactions.setGridSize(gridSize);
 	_reactions.updateAll(_clusterData.d_view);
@@ -240,6 +252,8 @@ ReactionNetwork<TImpl>::setTemperatures(
 	asDerived()->updateExtraClusterData(gridTemps, gridDepths);
 
 	asDerived()->updateReactionRates();
+
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -271,7 +285,7 @@ ReactionNetwork<TImpl>::syncClusterDataOnHost()
 
 	_subpavingMirror = _subpaving.makeMirrorCopy();
 
-	auto dataMirror = ClusterDataMirror(_subpavingMirror, this->_gridSize);
+	auto dataMirror = ClusterDataMirror(*_subpavingMirror, this->_gridSize);
 	dataMirror.deepCopy(_clusterData.h_view());
 	_clusterDataMirror = dataMirror;
 }
@@ -299,7 +313,7 @@ ReactionNetwork<TImpl>::getSingleVacancy()
 
 	auto clusterId = findCluster(comp, plsm::HostMemSpace{}).getId();
 
-	return _clusterDataMirror.getClusterCommon(clusterId);
+	return getClusterDataMirror().getClusterCommon(clusterId);
 }
 
 template <typename TImpl>
@@ -311,7 +325,7 @@ ReactionNetwork<TImpl>::getAllClusterBounds()
 
 	// Loop on all the clusters
 	constexpr auto speciesRange = getSpeciesRange();
-	auto tiles = _subpavingMirror.getTiles();
+	auto tiles = getSubpavingMirror().getTiles();
 	for (IndexType i = 0; i < this->_numClusters; ++i) {
 		const auto& clReg = tiles(i).getRegion();
 		Composition lo = clReg.getOrigin();
@@ -354,6 +368,7 @@ ReactionNetwork<TImpl>::generateClusterData(const ClusterGenerator& generator)
 {
 	_clusterData.h_view().generate(generator, this->getLatticeParameter(),
 		this->getInterstitialBias(), this->getImpurityRadius());
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -668,6 +683,7 @@ ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
 			}
 		});
 	Kokkos::fence();
+	_nw.invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -730,6 +746,7 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 
 	Kokkos::fence();
 	_nw._numDOFs = nClusters + nMomentIds;
+	_nw.invalidateDataMirror();
 }
 
 template <typename TImpl>

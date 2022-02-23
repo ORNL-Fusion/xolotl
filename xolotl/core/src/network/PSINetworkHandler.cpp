@@ -19,7 +19,6 @@ makePSIReactionNetwork(
 {
 	auto network = std::make_shared<PSIReactionNetwork<TSpeciesEnum>>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
-	network->syncClusterDataOnHost();
 	return network;
 }
 
