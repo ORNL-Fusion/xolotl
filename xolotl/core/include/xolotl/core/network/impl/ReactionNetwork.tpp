@@ -6,6 +6,7 @@
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/options/Options.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
@@ -264,6 +265,10 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::syncClusterDataOnHost()
 {
+	BOOST_LOG_FUNCTION();
+	// XOLOTL_LOG_XTRA << "syncing data";
+    XOLOTL_LOG_XTRA;
+
 	_subpavingMirror = _subpaving.makeMirrorCopy();
 
 	auto dataMirror = ClusterDataMirror(_subpavingMirror, this->_gridSize);

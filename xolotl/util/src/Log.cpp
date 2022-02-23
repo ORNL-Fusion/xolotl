@@ -8,14 +8,28 @@
 #include <boost/log/utility/setup/common_attributes.hpp>
 #include <boost/log/utility/setup/console.hpp>
 #include <boost/log/utility/setup/file.hpp>
+#include <boost/phoenix.hpp>
 
 #include <xolotl/util/Log.h>
+#include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
 {
 namespace util
 {
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", Log::Level)
+BOOST_LOG_ATTRIBUTE_KEYWORD(process_id, "ProcessID",
+	boost::log::attributes::current_process_id::value_type)
+
+boost::log::attributes::current_process_id::value_type::native_type
+get_native_process_id(boost::log::value_ref<
+	boost::log::attributes::current_process_id::value_type,
+	tag::process_id> const& pid)
+{
+	if (pid)
+		return pid->native_id();
+	return 0;
+}
 
 const char*
 toString(Log::Level level)
@@ -76,8 +90,13 @@ Log::Log()
 			<< "("
 			<< expr::format_date_time<boost::posix_time::ptime>(
 				   "TimeStamp", "%Y-%m-%d %H:%M:%S")
-			<< ")[" << severity << "] " << expr::message
-			<< expr::format_named_scope("Scope", keywords::format = "{%n}"));
+			<< ") ="
+			<< boost::phoenix::bind(
+				   &get_native_process_id, process_id.or_none())
+			<< "= (R" << getMPIRank() << ") [" << severity << "] "
+			<< expr::format_named_scope("Scope", keywords::format = "{%n}")
+			<< '\n'
+			<< expr::message);
 }
 
 Log::LoggerType&
