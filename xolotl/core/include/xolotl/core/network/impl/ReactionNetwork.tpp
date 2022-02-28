@@ -280,8 +280,7 @@ void
 ReactionNetwork<TImpl>::syncClusterDataOnHost()
 {
 	BOOST_LOG_FUNCTION();
-	// XOLOTL_LOG_XTRA << "syncing data";
-    XOLOTL_LOG_XTRA;
+	XOLOTL_LOG_XTRA;
 
 	_subpavingMirror = _subpaving.makeMirrorCopy();
 
