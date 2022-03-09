@@ -22,12 +22,13 @@ BOOST_LOG_ATTRIBUTE_KEYWORD(process_id, "ProcessID",
 	boost::log::attributes::current_process_id::value_type)
 
 boost::log::attributes::current_process_id::value_type::native_type
-get_native_process_id(boost::log::value_ref<
+getNativeProcessId(boost::log::value_ref<
 	boost::log::attributes::current_process_id::value_type,
 	tag::process_id> const& pid)
 {
-	if (pid)
+	if (pid) {
 		return pid->native_id();
+	}
 	return 0;
 }
 
@@ -85,18 +86,32 @@ Log::Log()
 		->set_filter(severity >= Log::error);
 
 	// Print all messages to log file with extra metadata
-	boost::log::add_file_log(keywords::file_name = "xolotlOutput.log",
+	bool mpiReady = mpiInitialized();
+	std::string logFileBaseName = "xolotlOutput";
+	std::string logFileExt = ".log";
+	std::string mpiRankString = "";
+	if (mpiReady) {
+		auto rank = std::to_string(getMPIRank());
+		logFileBaseName += "_" + rank;
+		mpiRankString = "(R" + rank + ") ";
+	}
+	boost::log::add_file_log(keywords::file_name = logFileBaseName + logFileExt,
 		keywords::format = expr::stream
 			<< "("
 			<< expr::format_date_time<boost::posix_time::ptime>(
 				   "TimeStamp", "%Y-%m-%d %H:%M:%S")
 			<< ") ="
-			<< boost::phoenix::bind(
-				   &get_native_process_id, process_id.or_none())
-			<< "= (R" << getMPIRank() << ") [" << severity << "] "
+			<< boost::phoenix::bind(&getNativeProcessId, process_id.or_none())
+			<< "= " << mpiRankString << "[" << severity << "] "
 			<< expr::format_named_scope("Scope", keywords::format = "{%n}")
 			<< '\n'
 			<< expr::message);
+
+	if (!mpiReady) {
+		BOOST_LOG_SEV(Logger::get(), Log::warning)
+			<< "MPI rank will not be included in log messages because MPI has "
+			   "not been initialized";
+	}
 }
 
 Log::LoggerType&
