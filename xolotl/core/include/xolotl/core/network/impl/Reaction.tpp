@@ -1274,9 +1274,30 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 	ConcentrationsView concentrations, RatesView rates, BelongingView isInSub,
 	OwnedSubMapView backMap, IndexType gridIndex)
 {
+	// Check products
+	bool productInSub = false;
+	AmountType nProd = 0;
+	for (auto prodId : _products) {
+		if (prodId == invalidIndex) {
+			continue;
+		}
+		nProd++;
+		if (isInSub[prodId])
+			productInSub = true;
+	}
 	// Only consider specific cases
-	if (isInSub[_reactants[0]] and isInSub[_reactants[1]])
-		return;
+	if (not isInSub[_reactants[0]] and not isInSub[_reactants[1]]) {
+		if (nProd == 0)
+			return;
+		if (nProd > 0 && not productInSub)
+			return;
+	}
+	if (isInSub[_reactants[0]] and isInSub[_reactants[1]]) {
+		if (nProd == 0)
+			return;
+		if (nProd > 0 && productInSub)
+			return;
+	}
 
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -2038,11 +2059,11 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 	ConcentrationsView concentrations, RatesView rates, BelongingView isInSub,
 	OwnedSubMapView backMap, IndexType gridIndex)
 {
-	// Only consider cases where one of the products is in the sub network
-	// but not the dissociating cluster
-	if (isInSub[_reactant])
+	// Only consider cases specific cases
+	if (not isInSub[_reactant] and not isInSub[_products[0]] and
+		not isInSub[_products[1]])
 		return;
-	if (not isInSub[_products[0]] and not isInSub[_products[0]])
+	if (isInSub[_reactant] and isInSub[_products[0]] and isInSub[_products[1]])
 		return;
 
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
@@ -2058,18 +2079,38 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 			cmR[i()] = concentrations[_reactantMomentIds[i()]];
 	}
 
-	// Compute the flux for the 0th order moments
-	double f = this->_coefs(0, 0, 0, 0) * cR;
-	for (auto i : speciesRangeNoI) {
-		f += this->_coefs(i() + 1, 0, 0, 0) * cmR[i()];
+	if (isInSub[_reactant]) {
+		// Compute the flux for the 0th order moments
+		double f = this->_coefs(0, 0, 0, 0);
+		for (auto i : speciesRangeNoI) {
+			f += this->_coefs(i() + 1, 0, 0, 0) * cmR[i()];
+		}
+		f *= this->_rate(gridIndex);
+		Kokkos::atomic_sub(&rates(backMap(_reactant), backMap(_reactant)),
+			f / (double)_reactantVolume);
+		if (isInSub[_products[0]])
+			Kokkos::atomic_add(
+				&rates(backMap(_products[0]), backMap(_reactant)),
+				f / (double)_productVolumes[0]);
+		if (isInSub[_products[1]])
+			Kokkos::atomic_add(
+				&rates(backMap(_products[1]), backMap(_reactant)),
+				f / (double)_productVolumes[1]);
 	}
-	f *= this->_rate(gridIndex);
-	if (isInSub[_products[0]])
-		Kokkos::atomic_add(&rates(backMap(_products[0]), isInSub.extent(0)),
-			f / (double)_productVolumes[0]);
-	if (isInSub[_products[1]])
-		Kokkos::atomic_add(&rates(backMap(_products[1]), isInSub.extent(0)),
-			f / (double)_productVolumes[1]);
+	else {
+		// Compute the flux for the 0th order moments
+		double f = this->_coefs(0, 0, 0, 0) * cR;
+		for (auto i : speciesRangeNoI) {
+			f += this->_coefs(i() + 1, 0, 0, 0) * cmR[i()];
+		}
+		f *= this->_rate(gridIndex);
+		if (isInSub[_products[0]])
+			Kokkos::atomic_add(&rates(backMap(_products[0]), isInSub.extent(0)),
+				f / (double)_productVolumes[0]);
+		if (isInSub[_products[1]])
+			Kokkos::atomic_add(&rates(backMap(_products[1]), isInSub.extent(0)),
+				f / (double)_productVolumes[1]);
+	}
 
 	// TODO: add grouping
 }

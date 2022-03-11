@@ -79,20 +79,22 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		else
 			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 
-//		if (lo0.isOnAxis(Species::Basal) && (n0 == 91 || n0 == 90)) {
-//			std::cout << n0 << " " << n1 << " (" << lo0.isOnAxis(Species::V)
-//					  << lo0.isOnAxis(Species::Basal)
-//					  << lo0.isOnAxis(Species::I) << " "
-//					  << lo1.isOnAxis(Species::V)
-//					  << lo1.isOnAxis(Species::Basal)
-//					  << lo1.isOnAxis(Species::I) << ") " << p << " " << Pl
-//					  << " " << alpha << " " << rd << " " << r0 << " "
-//					  << rateSpherical << " " << rateToroidal << " "
-//					  << ((1 - alpha) * rateToroidal * Pl +
-//							 alpha * rateSpherical) *
-//					(dc0 + dc1)
-//					  << std::endl;
-//		}
+		//		if (lo0.isOnAxis(Species::Basal) && (n0 == 91 || n0 == 90)) {
+		//			std::cout << n0 << " " << n1 << " (" <<
+		//lo0.isOnAxis(Species::V)
+		//					  << lo0.isOnAxis(Species::Basal)
+		//					  << lo0.isOnAxis(Species::I) << " "
+		//					  << lo1.isOnAxis(Species::V)
+		//					  << lo1.isOnAxis(Species::Basal)
+		//					  << lo1.isOnAxis(Species::I) << ") " << p << " " <<
+		//Pl
+		//					  << " " << alpha << " " << rd << " " << r0 << " "
+		//					  << rateSpherical << " " << rateToroidal << " "
+		//					  << ((1 - alpha) * rateToroidal * Pl +
+		//							 alpha * rateSpherical) *
+		//					(dc0 + dc1)
+		//					  << std::endl;
+		//		}
 
 		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
 			(dc0 + dc1);
@@ -119,20 +121,22 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		else
 			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 
-//		if (lo1.isOnAxis(Species::Basal) && (n1 == 91 || n1 == 90)) {
-//			std::cout << n0 << " " << n1 << " (" << lo0.isOnAxis(Species::V)
-//					  << lo0.isOnAxis(Species::Basal)
-//					  << lo0.isOnAxis(Species::I) << " "
-//					  << lo1.isOnAxis(Species::V)
-//					  << lo1.isOnAxis(Species::Basal)
-//					  << lo1.isOnAxis(Species::I) << ") " << p << " " << Pl
-//					  << " " << alpha << " " << rd << " " << r1 << " "
-//					  << rateSpherical << " " << rateToroidal << " "
-//					  << ((1 - alpha) * rateToroidal * Pl +
-//							 alpha * rateSpherical) *
-//					(dc0 + dc1)
-//					  << std::endl;
-//		}
+		//		if (lo1.isOnAxis(Species::Basal) && (n1 == 91 || n1 == 90)) {
+		//			std::cout << n0 << " " << n1 << " (" <<
+		//lo0.isOnAxis(Species::V)
+		//					  << lo0.isOnAxis(Species::Basal)
+		//					  << lo0.isOnAxis(Species::I) << " "
+		//					  << lo1.isOnAxis(Species::V)
+		//					  << lo1.isOnAxis(Species::Basal)
+		//					  << lo1.isOnAxis(Species::I) << ") " << p << " " <<
+		//Pl
+		//					  << " " << alpha << " " << rd << " " << r1 << " "
+		//					  << rateSpherical << " " << rateToroidal << " "
+		//					  << ((1 - alpha) * rateToroidal * Pl +
+		//							 alpha * rateSpherical) *
+		//					(dc0 + dc1)
+		//					  << std::endl;
+		//		}
 
 		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
 			(dc0 + dc1);
@@ -383,9 +387,10 @@ KOKKOS_INLINE_FUNCTION
 double
 ZrConstantReaction::computeRate(IndexType gridIndex)
 {
-	if (_reactants[1] == invalidIndex)
+	if (_reactants[1] == invalidIndex) {
 		return this->_clusterData->constantRates(
 			_reactants[0], this->_clusterData->numClusters);
+	}
 	return this->_clusterData->constantRates(_reactants[0], _reactants[1]);
 }
 } // namespace network

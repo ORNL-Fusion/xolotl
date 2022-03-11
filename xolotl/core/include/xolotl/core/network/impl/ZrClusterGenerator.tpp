@@ -36,7 +36,7 @@ ZrClusterGenerator::refine(const Region& region, BoolArray& result) const
 
 	// Too large
 	if (region[Species::V].end() > _maxV ||
-		region[Species::Basal].end() > _maxV ||
+		region[Species::Basal].end() > _maxB ||
 		region[Species::I].end() > _maxI) {
 		return true;
 	}
@@ -86,12 +86,12 @@ ZrClusterGenerator::select(const Region& region) const
 			return false;
 
 		// Basal
-		if (region[Species::Basal].begin() > _maxV)
+		if (region[Species::Basal].begin() > _maxB)
 			return false;
 	}
 
 	if (region[Species::V].begin() > _maxV ||
-		region[Species::Basal].begin() > _maxV ||
+		region[Species::Basal].begin() > _maxB ||
 		region[Species::I].begin() > _maxI)
 		return false;
 

@@ -74,6 +74,7 @@ private:
 	// Keep the maximum cluster sizes to set a generation flux to
 	size_t maxSizeI = 0;
 	size_t maxSizeV = 0;
+	size_t maxSizeB = 0;
 
 	// Set the fraction of large vacancy clusters (n > 19) that become faulted
 	// basal pyramids:
@@ -87,7 +88,8 @@ public:
 	AlphaZrFitFluxHandler(const options::IOptions& options) :
 		FluxHandler(options),
 		maxSizeI(options.getMaxI()),
-		maxSizeV(options.getMaxV())
+		maxSizeV(options.getMaxV()),
+		maxSizeB(options.getMaxImpurity())
 	{
 	}
 
@@ -144,9 +146,9 @@ public:
 				incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1]));
 		}
 
-		// Set the flux index corresponding the mobile vacancy clusters (n < 10)
+		// Set the flux index corresponding to Basal
 		comp[NetworkType::Species::V] = 0;
-		for (int i = 19; i <= std::min(maxSizeV, fluxV.size()); i++) {
+		for (int i = 19; i <= std::min(maxSizeB, fluxV.size()); i++) {
 			comp[NetworkType::Species::Basal] = i;
 			cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
 			if (cluster.getId() != NetworkType::invalidIndex()) {

@@ -517,10 +517,40 @@ try {
 	outputFile.open("FullAlphaZr.dat", std::fstream::out | std::fstream::app);
 	outputFile << std::setprecision(outputPrecision);
 
+	auto numSpecies = network.getSpeciesListSize();
+	auto myData = std::vector<double>(numSpecies * 6, 0.0);
+
+	// Get the minimum size for the loop densities and diameters
+	auto minSizes = solverCast(solver)->getSolverHandler()->getMinSizes();
+
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(fullConc.data(), dof);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+	deep_copy(dConcs, hConcs);
+
+	// Loop on the species
+	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+		myData[6 * id()] = network.getTotalConcentration(dConcs, id, 1);
+		myData[6 * id() + 1] = network.getTotalAtomConcentration(dConcs, id, 1);
+		myData[(6 * id()) + 2] = 2.0 *
+			network.getTotalRadiusConcentration(dConcs, id, 1) /
+			myData[6 * id()];
+		myData[(6 * id()) + 3] =
+			network.getTotalConcentration(dConcs, id, minSizes[id()]);
+		myData[(6 * id()) + 4] =
+			network.getTotalAtomConcentration(dConcs, id, minSizes[id()]);
+		myData[(6 * id()) + 5] = 2.0 *
+			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
+			myData[(6 * id()) + 3];
+	}
+
 	// Output the data
 	outputFile << time << " ";
-	for (auto i = 0; i < networkSize; ++i) {
-		outputFile << fullConc[i] << " ";
+	for (auto i = 0; i < numSpecies; ++i) {
+		outputFile << myData[i * 6] << " " << myData[(i * 6) + 1] << " "
+				   << myData[(i * 6) + 2] << " " << myData[(i * 6) + 3] << " "
+				   << myData[(i * 6) + 4] << " " << myData[(i * 6) + 5] << " ";
 	}
 	outputFile << std::endl;
 

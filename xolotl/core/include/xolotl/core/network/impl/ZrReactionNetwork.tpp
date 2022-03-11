@@ -60,10 +60,6 @@ ZrReactionNetwork::checkLargestClusterId()
 void
 ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 {
-	if (!this->_enableSink) {
-		return;
-	}
-
 	this->_clusterData.h_view().extraData.initialize(
 		this->_clusterData.h_view().numClusters,
 		this->_clusterData.h_view().gridSize);
@@ -192,6 +188,8 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 	// Add every possibility
 	this->addConstantReaction(tag, {i, j});
+	if (j != i)
+		this->addConstantReaction(tag, {j, i});
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
