@@ -35,6 +35,7 @@ public:
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
 	using ClusterData = typename Superclass::ClusterData;
+	using RateVector = IReactionNetwork::RateVector;
 
 	ConstantReaction() = default;
 
@@ -66,8 +67,18 @@ public:
 	double
 	computeRate(IndexType gridIndex)
 	{
-		// Needs to be implemented by each class
-		return 0.0;
+		return _constantRates[0][0][0][0];
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	setRate(RatesView rates)
+	{
+		auto dof = rates.extent(0);
+		if (_reactants[1] == invalidIndex)
+			_constantRates[0][0][0][0] = rates(_reactants[0], dof);
+		else
+			_constantRates[0][0][0][0] = rates(_reactants[0], _reactants[1]);
 	}
 
 private:
@@ -160,6 +171,7 @@ protected:
 	util::Array<IndexType, 2> _reactants{invalidIndex, invalidIndex};
 
 	util::Array<IndexType, 1, 1, 1, 1> _connEntries;
+	util::Array<double, 1, 1, 1, 1> _constantRates;
 };
 } // namespace network
 } // namespace core

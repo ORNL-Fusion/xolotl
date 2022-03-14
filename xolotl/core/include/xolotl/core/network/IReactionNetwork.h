@@ -31,7 +31,7 @@ public:
 	using OwnedConcentrationsView = Kokkos::View<double*>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
-	using RatesView = Kokkos::View<double**, Kokkos::MemoryUnmanaged>;
+	using RatesView = Kokkos::View<double**>;
 	using SubMapView = Kokkos::View<AmountType*, Kokkos::MemoryUnmanaged>;
 	using OwnedSubMapView = Kokkos::View<AmountType*>;
 	using BelongingView = Kokkos::View<bool*>;

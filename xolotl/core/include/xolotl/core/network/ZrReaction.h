@@ -78,10 +78,6 @@ public:
 	using Superclass = ConstantReaction<ZrReactionNetwork, ZrConstantReaction>;
 
 	using Superclass::Superclass;
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	computeRate(IndexType gridIndex);
 };
 } // namespace network
 } // namespace core

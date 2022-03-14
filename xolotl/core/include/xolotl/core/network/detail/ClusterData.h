@@ -111,8 +111,7 @@ struct ClusterDataCommon
 		diffusionFactor(data.diffusionFactor),
 		toSubNetworkApp(data.toSubNetworkApp),
 		toSubNetworkIndex(data.toSubNetworkIndex),
-		diffusionCoefficient(data.diffusionCoefficient),
-		constantRates(data.constantRates)
+		diffusionCoefficient(data.diffusionCoefficient)
 	{
 	}
 
@@ -316,7 +315,6 @@ public:
 	View<IndexType*> toSubNetworkApp;
 	View<IndexType*> toSubNetworkIndex;
 	View<double**> diffusionCoefficient;
-	View<double**> constantRates;
 };
 
 /**

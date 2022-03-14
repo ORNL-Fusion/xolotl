@@ -341,20 +341,14 @@ ReactionNetwork<TImpl>::getHeaderString()
 	// Loop on all the clusters
 	constexpr auto speciesRange = getSpeciesRange();
 	auto numSpecies = getSpeciesListSize();
-	auto tiles = _subpaving.getTiles();
-	for (IndexType i = 0; i < this->_numClusters; ++i) {
-		const auto& clReg = tiles(i).getRegion();
-		Composition lo = clReg.getOrigin();
-		Composition hi = clReg.getUpperLimitPoint();
-		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			auto avg = (hi[id()] - 1 + lo[id()]) / 2;
-			if (avg > 0) {
-				auto speciesName = getSpeciesName(id);
-				header << speciesName << "_" << avg;
-			}
-		}
-		header << " ";
+	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+		auto speciesName = this->getSpeciesName(id);
+		header << speciesName << "_density " << speciesName << "_atom "
+			   << speciesName << "_diameter " << speciesName
+			   << "_partial_density " << speciesName << "_partial_atom "
+			   << speciesName << "_partial_diameter ";
 	}
+
 	return header.str();
 }
 
@@ -400,16 +394,7 @@ void
 ReactionNetwork<TImpl>::setConstantRates(
 	typename ReactionNetwork<TImpl>::RateVector rates)
 {
-	auto clusterData = _clusterData.h_view;
-
-	// Loop on the current clusters
-	for (auto i = 0; i < this->_numClusters; ++i)
-		for (auto j = 0; j < this->_numClusters + 1; ++j) {
-			clusterData().constantRates(i, j) = rates[i][j];
-		}
-
-	// Update the rates
-	updateReactionRates();
+	asDerived()->setConstantRates(rates);
 
 	return;
 }

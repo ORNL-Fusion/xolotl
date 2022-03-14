@@ -48,9 +48,7 @@ ClusterDataCommon<MemSpace>::ClusterDataCommon(
 	toSubNetworkApp("Sub Network App" + labelStr<MemSpace>(), numClusters),
 	toSubNetworkIndex("Sub Network Index" + labelStr<MemSpace>(), numClusters),
 	diffusionCoefficient(
-		"Diffusion Coefficient" + labelStr<MemSpace>(), numClusters, gridSize),
-	constantRates(
-		"Constant Rates" + labelStr<MemSpace>(), numClusters, numClusters + 1)
+		"Diffusion Coefficient" + labelStr<MemSpace>(), numClusters, gridSize)
 {
 }
 
@@ -69,7 +67,6 @@ ClusterDataCommon<MemSpace>::deepCopy(const TClusterDataCommon& data)
 	deep_copy(toSubNetworkApp, data.toSubNetworkApp);
 	deep_copy(toSubNetworkIndex, data.toSubNetworkIndex);
 	deep_copy(diffusionCoefficient, data.diffusionCoefficient);
-	deep_copy(constantRates, data.constantRates);
 }
 
 template <typename MemSpace>
@@ -92,8 +89,6 @@ ClusterDataCommon<MemSpace>::getDeviceMemorySize() const noexcept
 	ret += toSubNetworkIndex.required_allocation_size(toSubNetworkIndex.size());
 	ret += diffusionCoefficient.required_allocation_size(
 		diffusionCoefficient.extent(0), diffusionCoefficient.extent(1));
-	ret += constantRates.required_allocation_size(
-		constantRates.extent(0), constantRates.extent(1));
 
 	return ret;
 }

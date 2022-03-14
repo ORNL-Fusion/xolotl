@@ -30,11 +30,16 @@ public:
 	using IndexType = typename Superclass::IndexType;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using RateVector = typename Superclass::RateVector;
+	using RatesView = typename Superclass::RatesView;
 
 	using Superclass::Superclass;
 
 	IndexType
 	checkLargestClusterId();
+
+	void
+	setConstantRates(RateVector rates) override;
 
 	void
 	initializeExtraClusterData(const options::IOptions& options);

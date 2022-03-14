@@ -81,13 +81,13 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 
 		//		if (lo0.isOnAxis(Species::Basal) && (n0 == 91 || n0 == 90)) {
 		//			std::cout << n0 << " " << n1 << " (" <<
-		//lo0.isOnAxis(Species::V)
+		// lo0.isOnAxis(Species::V)
 		//					  << lo0.isOnAxis(Species::Basal)
 		//					  << lo0.isOnAxis(Species::I) << " "
 		//					  << lo1.isOnAxis(Species::V)
 		//					  << lo1.isOnAxis(Species::Basal)
 		//					  << lo1.isOnAxis(Species::I) << ") " << p << " " <<
-		//Pl
+		// Pl
 		//					  << " " << alpha << " " << rd << " " << r0 << " "
 		//					  << rateSpherical << " " << rateToroidal << " "
 		//					  << ((1 - alpha) * rateToroidal * Pl +
@@ -123,13 +123,13 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 
 		//		if (lo1.isOnAxis(Species::Basal) && (n1 == 91 || n1 == 90)) {
 		//			std::cout << n0 << " " << n1 << " (" <<
-		//lo0.isOnAxis(Species::V)
+		// lo0.isOnAxis(Species::V)
 		//					  << lo0.isOnAxis(Species::Basal)
 		//					  << lo0.isOnAxis(Species::I) << " "
 		//					  << lo1.isOnAxis(Species::V)
 		//					  << lo1.isOnAxis(Species::Basal)
 		//					  << lo1.isOnAxis(Species::I) << ") " << p << " " <<
-		//Pl
+		// Pl
 		//					  << " " << alpha << " " << rd << " " << r1 << " "
 		//					  << rateSpherical << " " << rateToroidal << " "
 		//					  << ((1 - alpha) * rateToroidal * Pl +
@@ -381,17 +381,6 @@ ZrSinkReaction::computeReducedPartialDerivatives(
 	// TODO: add the wanted function of vInt and iInt in value
 	double value = this->_rate(gridIndex);
 	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), value);
-}
-
-KOKKOS_INLINE_FUNCTION
-double
-ZrConstantReaction::computeRate(IndexType gridIndex)
-{
-	if (_reactants[1] == invalidIndex) {
-		return this->_clusterData->constantRates(
-			_reactants[0], this->_clusterData->numClusters);
-	}
-	return this->_clusterData->constantRates(_reactants[0], _reactants[1]);
 }
 } // namespace network
 } // namespace core

@@ -32,6 +32,7 @@ public:
 	using ReactionTypes = ReactionTypeList<NetworkType>;
 	using Types = ReactionNetworkTypes<NetworkType>;
 	using ClusterData = typename Types::ClusterData;
+	using RateVector = IReactionNetwork::RateVector;
 
 private:
 	static constexpr std::size_t numReactionTypes =

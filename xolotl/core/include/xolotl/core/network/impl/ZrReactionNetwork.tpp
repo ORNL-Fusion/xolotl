@@ -58,6 +58,24 @@ ZrReactionNetwork::checkLargestClusterId()
 }
 
 void
+ZrReactionNetwork::setConstantRates(RateVector rates)
+{
+	auto dRateView = RatesView("dRates", rates.size(), rates[0].size());
+	auto hRateView = create_mirror_view(dRateView);
+	for (auto i = 0; i < rates.size(); i++)
+		for (auto j = 0; j < rates[0].size(); j++) {
+			hRateView(i, j) = rates[i][j];
+		}
+	deep_copy(dRateView, hRateView);
+
+	_reactions.forEachOn<ZrConstantReaction>(
+		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
+			reaction.setRate(dRateView);
+			reaction.updateRates();
+		});
+}
+
+void
 ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 {
 	this->_clusterData.h_view().extraData.initialize(

@@ -461,11 +461,8 @@ try {
 		deep_copy(dMap, hMap);
 		std::vector<std::vector<double>> rateMap =
 			std::vector(subDOF, std::vector(subDOF + 1, 0.0));
-		auto hRates = Kokkos::View<double**, Kokkos::HostSpace>(
-			"hRates", subDOF, subDOF + 1);
-		auto dRates = Kokkos::View<double**>("Sub Rates", subDOF, subDOF + 1);
-		deep_copy(dRates, hRates);
-
+		auto dRates = Kokkos::View<double**>("dRates", subDOF, subDOF + 1);
+		auto hRates = Kokkos::create_mirror_view(dRates);
 		network.computeConstantRates(dConcs, dRates, dMap);
 
 		deep_copy(hRates, dRates);
