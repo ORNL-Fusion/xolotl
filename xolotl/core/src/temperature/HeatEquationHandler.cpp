@@ -19,8 +19,7 @@ auto heatEqTemperatureHandlerRegistration =
 }
 
 HeatEquationHandler::HeatEquationHandler(
-	double flux, double bulkTemp, int dim) :
-	heatFlux(flux),
+	double heatFlux, double bulkTemp, int dim, std::string filename) :
 	bulkTemperature(bulkTemp),
 	localTemperature(0.0),
 	surfacePosition(0.0),
@@ -29,23 +28,50 @@ HeatEquationHandler::HeatEquationHandler(
 	zeroFlux(util::equal(heatFlux, 0.0)),
 	dimension(dim),
 	oldConcBox(dimension, {0.0, 0.0}),
-	interfaceLoc(0.0)
+	interfaceLoc(0.0),
+	fluxFile(filename)
 {
 	auto xolotlComm = util::getMPIComm();
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 	if (procId == 0) {
-		XOLOTL_LOG << "TemperatureHandler: Using the heat equation with "
-					  "a flux of: "
-				   << heatFlux
-				   << " W nm-2, and a bulk temperature of: " << bulkTemperature
-				   << " K";
+		if (fluxFile.size() == 0)
+			XOLOTL_LOG << "TemperatureHandler: Using the heat equation with "
+						  "a flux of: "
+					   << heatFlux << " W nm-2, and a bulk temperature of: "
+					   << bulkTemperature << " K";
+		else
+			XOLOTL_LOG << "TemperatureHandler: Using the heat equation with "
+						  "a flux file: "
+					   << fluxFile
+					   << " , and a bulk temperature of: " << bulkTemperature
+					   << " K";
+	}
+
+	if (fluxFile.size() > 0) {
+		// Open file dataFile.dat containing the time and temperature
+		std::ifstream inputFile(fluxFile.c_str());
+		std::string line;
+
+		// Read the file and store the values in the two vectors
+		while (getline(inputFile, line)) {
+			if (!line.length() || line[0] == '#')
+				continue;
+			double xtemp = 0.0, ytemp = 0.0;
+			sscanf(line.c_str(), "%lf %lf", &xtemp, &ytemp);
+			time.push_back(xtemp);
+			flux.push_back(ytemp);
+		}
+	}
+	else {
+		time.push_back(-1.0);
+		flux.push_back(heatFlux);
 	}
 }
 
 HeatEquationHandler::HeatEquationHandler(const options::IOptions& options) :
 	HeatEquationHandler(options.getTempParam(0), options.getTempParam(1),
-		options.getDimensionNumber())
+		options.getDimensionNumber(), options.getTempProfileFilename())
 {
 	// Set the heat coefficient which depends on the material
 	auto problemType = options.getMaterial();
@@ -91,7 +117,7 @@ HeatEquationHandler::getTemperature(
 }
 
 void
-HeatEquationHandler::computeTemperature(double** concVector,
+HeatEquationHandler::computeTemperature(double currentTime, double** concVector,
 	double* updatedConcOffset, double hxLeft, double hxRight, int xi, double sy,
 	int iy, double sz, int iz)
 {
@@ -102,6 +128,8 @@ HeatEquationHandler::computeTemperature(double** concVector,
 
 	// Initial declaration
 	int index = this->_dof;
+
+	auto heatFlux = getHeatFlux(currentTime);
 
 	// Get the initial concentrations
 	double oldConc = concVector[0][index];
@@ -180,9 +208,9 @@ HeatEquationHandler::computeTemperature(double** concVector,
 }
 
 bool
-HeatEquationHandler::computePartialsForTemperature(double** concVector,
-	double* val, IdType* indices, double hxLeft, double hxRight, int xi,
-	double sy, int iy, double sz, int iz)
+HeatEquationHandler::computePartialsForTemperature(double currentTime,
+	double** concVector, double* val, IdType* indices, double hxLeft,
+	double hxRight, int xi, double sy, int iy, double sz, int iz)
 {
 	// Skip if the flux is 0
 	if (zeroFlux) {
@@ -191,6 +219,8 @@ HeatEquationHandler::computePartialsForTemperature(double** concVector,
 
 	// Initial declaration
 	int index = this->_dof;
+
+	auto heatFlux = getHeatFlux(currentTime);
 
 	// Get the initial concentrations
 	double oldConc = concVector[0][index];
@@ -350,6 +380,39 @@ double
 HeatEquationHandler::getLocalHeatCoefficient(int xi, double temp) const
 {
 	return heatCoef * getLocalHeatConductivity(xi, temp);
+}
+
+double
+HeatEquationHandler::getHeatFlux(double currentTime)
+{
+	// Initialize the value to return
+	double f = 0.0;
+
+	// If the time is smaller than or equal than the first stored time
+	if (currentTime <= time[0])
+		return f = flux[0];
+
+	// If the time is larger or equal to the last stored time
+	if (currentTime >= time[time.size() - 1])
+		return f = flux[time.size() - 1];
+
+	// Else loop to determine the interval the time falls in
+	// i.e. time[k] < time < time[k + 1]
+	for (unsigned int k = 0; k < time.size() - 1; k++) {
+		if (currentTime < time[k])
+			continue;
+		if (currentTime > time[k + 1])
+			continue;
+
+		// Compute the amplitude following a linear interpolation between
+		// the two stored values
+		f = flux[k] +
+			(flux[k + 1] - flux[k]) * (currentTime - time[k]) /
+				(time[k + 1] - time[k]);
+		break;
+	}
+
+	return f;
 }
 } // namespace temperature
 } // namespace core

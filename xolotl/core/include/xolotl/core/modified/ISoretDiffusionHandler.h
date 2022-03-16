@@ -47,28 +47,12 @@ public:
 		std::vector<double> grid, int xs) = 0;
 
 	/**
-	 * This operation sets the heat flux at the surface.
-	 *
-	 * @param flux The heat flux at the surface
-	 */
-	virtual void
-	setHeatFlux(double flux) = 0;
-
-	/**
 	 * This operation sets the surface position.
 	 *
 	 * @param surfacePos The surface location
 	 */
 	virtual void
 	updateSurfacePosition(int surfacePos) = 0;
-
-	/**
-	 * This operation sets the interface location.
-	 *
-	 * @param loc The interface location
-	 */
-	virtual void
-	setInterfaceLocation(double loc) = 0;
 
 	/**
 	 * Compute the flux due to the diffusion for all the clusters that are

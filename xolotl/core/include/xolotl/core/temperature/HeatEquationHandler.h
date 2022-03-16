@@ -23,9 +23,12 @@ public:
 	 *
 	 * @param flux The heat flux
 	 * @param bulkTemp The bulk temperature
-	 * @param dim the number of dimensions fo the simulation
+	 * @param dim the number of dimensions for the simulation
+	 * @param filename The name of the file containing the heat flux time
+	 * profile
 	 */
-	HeatEquationHandler(double flux, double bulkTemp, int dim);
+	HeatEquationHandler(
+		double flux, double bulkTemp, int dim, std::string filename = "");
 
 	/**
 	 * Construct from options
@@ -84,24 +87,28 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	computeTemperature(double** concVector, double* updatedConcOffset,
-		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
-		double sz = 0.0, int iz = 0) override;
+	computeTemperature(double currentTime, double** concVector,
+		double* updatedConcOffset, double hxLeft, double hxRight, int xi,
+		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override;
 
 	/**
 	 * \see ITemperatureHandler.h
 	 */
 	bool
-	computePartialsForTemperature(double** concVector, double* val,
-		IdType* indices, double hxLeft, double hxRight, int xi, double sy = 0.0,
-		int iy = 0, double sz = 0.0, int iz = 0) override;
+	computePartialsForTemperature(double currentTime, double** concVector,
+		double* val, IdType* indices, double hxLeft, double hxRight, int xi,
+		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override;
+
+	/**
+	 * Get the heat flux at this time.
+	 *
+	 * @param currentTime The current time
+	 * @return The heat flux
+	 */
+	double
+	getHeatFlux(double currentTime) override;
 
 private:
-	/**
-	 * The heat flux in W.m-2
-	 */
-	double heatFlux;
-
 	/**
 	 * The bulk temperature in Kelvin
 	 */
@@ -141,6 +148,22 @@ private:
 	 * Number of dimensions for the current simulation
 	 */
 	int dimension;
+	/**
+	 * The name of the file were the profile is stored.
+	 */
+	std::string fluxFile;
+
+	/**
+	 * Vector to hold the time read from the input
+	 * temperature file.
+	 */
+	std::vector<double> time;
+
+	/**
+	 * Vector to hold the temperature read from the input
+	 * temperature file.
+	 */
+	std::vector<double> flux;
 
 	/**
 	 * Heat conductivity fit

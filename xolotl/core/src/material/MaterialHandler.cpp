@@ -85,9 +85,6 @@ void
 MaterialHandler::initializeSoretDiffusionHandler(
 	const options::IOptions& options)
 {
-	_soretDiffusionHandler->setHeatFlux(options.getTempParam(0));
-	_soretDiffusionHandler->setInterfaceLocation(
-		options.getInterfaceLocation());
 }
 
 void

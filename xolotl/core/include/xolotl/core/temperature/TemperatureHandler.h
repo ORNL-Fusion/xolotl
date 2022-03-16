@@ -80,9 +80,9 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	computeTemperature(double** concVector, double* updatedConcOffset,
-		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
-		double sz = 0.0, int iz = 0) override
+	computeTemperature(double currentTime, double** concVector,
+		double* updatedConcOffset, double hxLeft, double hxRight, int xi,
+		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override
 	{
 		return;
 	}
@@ -95,11 +95,23 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	bool
-	computePartialsForTemperature(double** concVector, double* val,
-		IdType* indices, double hxLeft, double hxRight, int xi, double sy = 0.0,
-		int iy = 0, double sz = 0.0, int iz = 0) override
+	computePartialsForTemperature(double currentTime, double** concVector,
+		double* val, IdType* indices, double hxLeft, double hxRight, int xi,
+		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override
 	{
 		return false;
+	}
+
+	/**
+	 * Get the heat flux at this time.
+	 *
+	 * @param currentTime The current time
+	 * @return The heat flux
+	 */
+	double
+	getHeatFlux(double currentTime) override
+	{
+		return 0.0;
 	}
 
 protected:

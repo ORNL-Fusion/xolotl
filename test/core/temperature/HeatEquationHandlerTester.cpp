@@ -52,6 +52,9 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 		grid.push_back((double)l);
 	}
 
+	// Set a time
+	double time = 0.5;
+
 	// Initialize it
 	heatHandler.initializeTemperature(dof, ofill, dfill, grid);
 
@@ -90,7 +93,8 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 	concVector[2] = conc + 2 * (dof + 1); // right
 
 	// Compute the heat equation at this grid point
-	heatHandler.computeTemperature(concVector, updatedConcOffset, hx, hx, hx);
+	heatHandler.computeTemperature(
+		time, concVector, updatedConcOffset, hx, hx, hx);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.367e+16, 0.01);
@@ -110,7 +114,7 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		concVector, valPointer, indicesPointer, hx, hx, hx);
+		time, concVector, valPointer, indicesPointer, hx, hx, hx);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
@@ -142,6 +146,9 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 	for (int l = 0; l < 5; l++) {
 		grid.push_back((double)l);
 	}
+
+	// Set a time
+	double time = 0.5;
 
 	// Create ofill
 	network::IReactionNetwork::SparseFillMap ofill;
@@ -193,7 +200,7 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 
 	// Compute the heat equation at this grid point
 	heatHandler.computeTemperature(
-		concVector, updatedConcOffset, hx, hx, hx, sy, 1);
+		time, concVector, updatedConcOffset, hx, hx, hx, sy, 1);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.367e+17, 0.01);
@@ -213,7 +220,7 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		concVector, valPointer, indicesPointer, hx, hx, hx, sy, 1);
+		time, concVector, valPointer, indicesPointer, hx, hx, hx, sy, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
@@ -247,6 +254,9 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	for (int l = 0; l < 5; l++) {
 		grid.push_back((double)l);
 	}
+
+	// Set a time
+	double time = 0.5;
 
 	// Create ofill
 	network::IReactionNetwork::SparseFillMap ofill;
@@ -303,7 +313,7 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 
 	// Compute the heat equation at this grid point
 	heatHandler.computeTemperature(
-		concVector, updatedConcOffset, hx, hx, hx, sy, 1, sz, 1);
+		time, concVector, updatedConcOffset, hx, hx, hx, sy, 1, sz, 1);
 
 	// Check the new values of updatedConcOffset
 	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.24397e+17, 0.01);
@@ -323,7 +333,7 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		concVector, valPointer, indicesPointer, hx, hx, hx, sy, 1, sz, 1);
+		time, concVector, valPointer, indicesPointer, hx, hx, hx, sy, 1, sz, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);

@@ -33,16 +33,6 @@ protected:
 	std::vector<double> xGrid;
 
 	/**
-	 * The heat flux in W.m-2
-	 */
-	double heatFlux;
-
-	/**
-	 * Heat conductivity fit
-	 */
-	double A = 10.846, B = -184.22, C = 872.47;
-
-	/**
 	 * The surface position
 	 */
 	int surfacePosition;
@@ -57,29 +47,14 @@ protected:
 	 */
 	double beta;
 
-	/**
-	 * The interface location
-	 */
-	double interfaceLoc;
-
-	/**
-	 * Get the heat conductivity at this grid point.
-	 *
-	 * @param xi The grid index
-	 * @param temp The temperature
-	 * @return The conductivity
-	 */
-	double
-	getLocalHeatConductivity(int xi, double temp) const;
-
 public:
 	//! The Constructor
 	SoretDiffusionHandler() :
 		dof(0),
 		surfacePosition(0),
-		heatFlux(0.0),
 		beta(0.0065),
-		interfaceLoc(0.0),
+		//		beta(0.000065),
+		//		beta(0.0),
 		localXs(0)
 	{
 	}
@@ -134,27 +109,9 @@ public:
 	 * \see ISoretDiffusionHandler.h
 	 */
 	void
-	setHeatFlux(double flux) override
-	{
-		heatFlux = flux;
-	}
-
-	/**
-	 * \see ISoretDiffusionHandler.h
-	 */
-	void
 	updateSurfacePosition(int surfacePos) override
 	{
 		surfacePosition = surfacePos;
-	}
-
-	/**
-	 * \see ISoretDiffusionHandler.h
-	 */
-	void
-	setInterfaceLocation(double loc) override
-	{
-		interfaceLoc = loc;
 	}
 
 	/**

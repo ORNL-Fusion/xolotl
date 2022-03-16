@@ -1232,9 +1232,11 @@ PetscMonitor1D::computeHeliumRetention(
 				outputFile << _nSurf[i] << " ";
 			}
 		}
+		auto tempHandler = _solverHandler->getTemperatureHandler();
 		outputFile << _nHeliumBurst << " " << _nDeuteriumBurst << " "
 				   << _nTritiumBurst << " "
-				   << solutionArray[surfacePos + 1][dof] << std::endl;
+				   << solutionArray[surfacePos + 1][dof] << " "
+				   << tempHandler->getHeatFlux(time) << std::endl;
 		outputFile.close();
 
 		if (_solverHandler->temporalFlux()) {

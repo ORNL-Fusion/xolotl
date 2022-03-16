@@ -44,25 +44,7 @@ public:
 	 * \see ISoretDiffusionHandler.h
 	 */
 	void
-	setHeatFlux(double flux) override
-	{
-		return;
-	}
-
-	/**
-	 * \see ISoretDiffusionHandler.h
-	 */
-	void
 	updateSurfacePosition(int surfacePos) override
-	{
-		return;
-	}
-
-	/**
-	 * \see ISoretDiffusionHandler.h
-	 */
-	void
-	setInterfaceLocation(double loc) override
 	{
 		return;
 	}

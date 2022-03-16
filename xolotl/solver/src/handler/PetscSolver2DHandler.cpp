@@ -154,7 +154,7 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 		"DMDASetBlockFills failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-	vals = Kokkos::View<double*>("solverPartials", nPartials);
+	vals = Kokkos::View<double*>("solverPartials", nPartials + 1);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
@@ -601,8 +601,8 @@ PetscSolver2DHandler::updateConcentration(
 					hxRight = grid[xi + 1] - grid[xi];
 				}
 
-				temperatureHandler->computeTemperature(
-					concVector, updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
+				temperatureHandler->computeTemperature(ftime, concVector,
+					updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
 			}
 
 			// Compute the old and new array offsets
@@ -669,8 +669,8 @@ PetscSolver2DHandler::updateConcentration(
 			// ---- Compute the temperature over the locally owned part of the
 			// grid -----
 			if (xi >= localXS && xi < localXS + localXM) {
-				temperatureHandler->computeTemperature(
-					concVector, updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
+				temperatureHandler->computeTemperature(ftime, concVector,
+					updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
 			}
 		}
 
@@ -961,7 +961,7 @@ PetscSolver2DHandler::computeJacobian(
 				xi < localXS + localXM) {
 				// Get the partial derivatives for the temperature
 				auto setValues =
-					temperatureHandler->computePartialsForTemperature(
+					temperatureHandler->computePartialsForTemperature(ftime,
 						concVector, tempVals, tempIndices, hxLeft, hxRight, xi,
 						sy, yj);
 
@@ -1034,7 +1034,7 @@ PetscSolver2DHandler::computeJacobian(
 			// Get the partial derivatives for the temperature
 			if (xi >= localXS && xi < localXS + localXM) {
 				auto setValues =
-					temperatureHandler->computePartialsForTemperature(
+					temperatureHandler->computePartialsForTemperature(ftime,
 						concVector, tempVals, tempIndices, hxLeft, hxRight, xi,
 						sy, yj);
 

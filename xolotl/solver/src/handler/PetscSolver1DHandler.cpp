@@ -61,10 +61,12 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		else
 			ss << bcString;
 		ss << ", grid (nm): ";
-		for (auto i = 1; i < grid.size() - 1; i++) {
+		for (auto i = 0; i < grid.size(); i++) {
 			ss << grid[i] - grid[surfacePosition + 1] << " ";
 		}
 		ss << std::endl;
+
+		ss << grid.size() << " " << temperatureGrid.size() << std::endl;
 
 		ss << "Temperature grid (nm): ";
 		for (auto i = 0; i < temperatureGrid.size(); i++) {
@@ -150,7 +152,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		"DMDASetBlockFills failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-	vals = Kokkos::View<double*>("solverPartials", nPartials);
+	vals = Kokkos::View<double*>("solverPartials", nPartials + 1);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
@@ -621,7 +623,7 @@ PetscSolver1DHandler::updateConcentration(
 			}
 
 			temperatureHandler->computeTemperature(
-				concVector, updatedConcOffset, hxLeft, hxRight, xi);
+				ftime, concVector, updatedConcOffset, hxLeft, hxRight, xi);
 		}
 
 		// Compute the old and new array offsets
@@ -684,7 +686,7 @@ PetscSolver1DHandler::updateConcentration(
 		// -----
 		if (xi >= localXS && xi < localXS + localXM) {
 			temperatureHandler->computeTemperature(
-				concVector, updatedConcOffset, hxLeft, hxRight, xi);
+				ftime, concVector, updatedConcOffset, hxLeft, hxRight, xi);
 		}
 	}
 
@@ -902,7 +904,7 @@ PetscSolver1DHandler::computeJacobian(
 		if (xi == surfacePosition && xi >= localXS && xi < localXS + localXM) {
 			// Get the partial derivatives for the temperature
 			auto setValues = temperatureHandler->computePartialsForTemperature(
-				concVector, tempVals, tempIndices, hxLeft, hxRight, xi);
+				ftime, concVector, tempVals, tempIndices, hxLeft, hxRight, xi);
 
 			if (setValues) {
 				// Set grid coordinate and component number for the row
@@ -961,7 +963,7 @@ PetscSolver1DHandler::computeJacobian(
 		// Get the partial derivatives for the temperature
 		if (xi >= localXS && xi < localXS + localXM) {
 			auto setValues = temperatureHandler->computePartialsForTemperature(
-				concVector, tempVals, tempIndices, hxLeft, hxRight, xi);
+				ftime, concVector, tempVals, tempIndices, hxLeft, hxRight, xi);
 
 			if (setValues) {
 				// Set grid coordinate and component number for the row
@@ -1255,7 +1257,6 @@ PetscSolver1DHandler::computeJacobian(
 			if (rowIter != dfill.end()) {
 				const auto& row = rowIter->second;
 				pdColIdsVectorSize = row.size();
-
 				// Loop over the list of column ids
 				for (auto j = 0; j < pdColIdsVectorSize; j++) {
 					// Set grid coordinate and component number for a column in
