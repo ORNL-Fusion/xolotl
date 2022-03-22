@@ -39,6 +39,8 @@ public:
 	using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 	using Bounds = std::vector<std::vector<AmountType>>;
 	using BoundVector = std::vector<std::vector<std::vector<AmountType>>>;
+	using MomentIdMap = std::vector<std::vector<IdType>>;
+	using MomentIdMapVector = std::vector<std::vector<std::vector<IdType>>>;
 	using RateVector = std::vector<std::vector<double>>;
 	using PhaseSpace = std::vector<std::string>;
 
@@ -315,15 +317,24 @@ public:
 	getAllClusterBounds() = 0;
 
 	/**
+	 * @brief Returns an object representing the the bounds of each
+	 * cluster in each dimension of the phase space.
+	 */
+	virtual MomentIdMap
+	getAllMomentIdInfo() = 0;
+
+	/**
 	 * @brief Return a string of cluster name in ID order.
 	 */
 	virtual std::string
 	getHeaderString() = 0;
 
 	/**
-	 * @brief Computes the map between the different cluster bounds
+	 * @brief Computes the map between the different cluster bounds and moment
+	 * IDs.
 	 */
-	virtual void initializeClusterMap(BoundVector) = 0;
+	virtual void initializeClusterMap(
+		BoundVector, MomentIdMapVector, MomentIdMap) = 0;
 
 	/**
 	 * @brief Set the rates for constant reactions
@@ -357,7 +368,7 @@ public:
 	 */
 	virtual void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		SubMapView subMap, IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		IndexType subId, IndexType gridIndex = 0, double surfaceDepth = 0.0,
 		double spacing = 0.0) = 0;
 
 	/**

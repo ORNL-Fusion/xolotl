@@ -16,9 +16,11 @@ ZrClusterGenerator::refine(const Region& region, BoolArray& result) const
 	for (auto& r : result) {
 		r = true;
 	}
+	auto loV = region[Species::V].begin();
+	auto loB = region[Species::Basal].begin();
+	auto loI = region[Species::I].begin();
 
-	int nAxis = (region[Species::V].begin() > 0) +
-		(region[Species::I].begin() > 0) + (region[Species::Basal].begin() > 0);
+	int nAxis = (loV > 0) + (loI > 0) + (loB > 0);
 
 	if (nAxis > 1) {
 		for (auto& r : result) {
@@ -28,30 +30,30 @@ ZrClusterGenerator::refine(const Region& region, BoolArray& result) const
 	}
 
 	// Smaller that the minimum size for grouping
-	if (region[Species::V].begin() < _groupingMin &&
-		region[Species::Basal].begin() < _groupingMin &&
-		region[Species::I].begin() < _groupingMin) {
+	if (loV < _groupingMin && loB < _groupingMin && loI < _groupingMin) {
 		return true;
 	}
 
 	// Too large
-	if (region[Species::V].end() > _maxV ||
-		region[Species::Basal].end() > _maxB ||
+	if (region[Species::V].end() > _maxV &&
+		region[Species::Basal].end() > _maxB &&
 		region[Species::I].end() > _maxI) {
 		return true;
 	}
+	if ((region[Species::V].end() > _maxV && _maxV > 0) ||
+		(region[Species::Basal].end() > _maxB && _maxB > 0) ||
+		(region[Species::I].end() > _maxI && _maxI > 0)) {
+		return true;
+	}
 
-	auto loV = region[Species::V].begin();
 	if (loV > 0 &&
 		region[Species::V].length() <
 			util::max((double)(_groupingWidth + 1), loV * 2.0e-2))
 		result[0] = false;
-	auto loB = region[Species::Basal].begin();
 	if (loB > 0 &&
 		region[Species::Basal].length() <
 			util::max((double)(_groupingWidth + 1), loB * 2.0e-2))
 		result[1] = false;
-	auto loI = region[Species::I].begin();
 	if (loI > 0 &&
 		region[Species::I].length() <
 			util::max((double)(_groupingWidth + 1), loI * 2.0e-2))

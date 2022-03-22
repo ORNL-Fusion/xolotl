@@ -88,6 +88,8 @@ public:
 	using ReactionCollection = typename Types::ReactionCollection;
 	using Bounds = IReactionNetwork::Bounds;
 	using BoundVector = IReactionNetwork::BoundVector;
+	using MomentIdMap = IReactionNetwork::MomentIdMap;
+	using MomentIdMapVector = IReactionNetwork::MomentIdMapVector;
 	using RateVector = IReactionNetwork::RateVector;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
 
@@ -291,10 +293,14 @@ public:
 	Bounds
 	getAllClusterBounds() override;
 
+	MomentIdMap
+	getAllMomentIdInfo() override;
+
 	std::string
 	getHeaderString() override;
 
-	void initializeClusterMap(BoundVector) override;
+	void initializeClusterMap(
+		BoundVector, MomentIdMapVector, MomentIdMap) override;
 
 	void setConstantRates(RateVector) override;
 
@@ -376,7 +382,7 @@ public:
 
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		SubMapView subMap, IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		IndexType subId, IndexType gridIndex = 0, double surfaceDepth = 0.0,
 		double spacing = 0.0) final;
 
 	template <typename TReaction>
@@ -568,6 +574,9 @@ private:
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
 	SparseFillMap _connectivityMap;
+
+	std::vector<BelongingView> isInSub;
+	std::vector<OwnedSubMapView> backMap;
 
 protected:
 	Kokkos::DualView<ClusterData> _clusterData;

@@ -45,8 +45,6 @@ ClusterDataCommon<MemSpace>::ClusterDataCommon(
 	formationEnergy("Formation Energy" + labelStr<MemSpace>(), numClusters),
 	migrationEnergy("Migration Energy" + labelStr<MemSpace>(), numClusters),
 	diffusionFactor("Diffusion Factor" + labelStr<MemSpace>(), numClusters),
-	toSubNetworkApp("Sub Network App" + labelStr<MemSpace>(), numClusters),
-	toSubNetworkIndex("Sub Network Index" + labelStr<MemSpace>(), numClusters),
 	diffusionCoefficient(
 		"Diffusion Coefficient" + labelStr<MemSpace>(), numClusters, gridSize)
 {
@@ -64,8 +62,6 @@ ClusterDataCommon<MemSpace>::deepCopy(const TClusterDataCommon& data)
 	deep_copy(formationEnergy, data.formationEnergy);
 	deep_copy(migrationEnergy, data.migrationEnergy);
 	deep_copy(diffusionFactor, data.diffusionFactor);
-	deep_copy(toSubNetworkApp, data.toSubNetworkApp);
-	deep_copy(toSubNetworkIndex, data.toSubNetworkIndex);
 	deep_copy(diffusionCoefficient, data.diffusionCoefficient);
 }
 
@@ -85,8 +81,6 @@ ClusterDataCommon<MemSpace>::getDeviceMemorySize() const noexcept
 	ret += formationEnergy.required_allocation_size(formationEnergy.size());
 	ret += migrationEnergy.required_allocation_size(migrationEnergy.size());
 	ret += diffusionFactor.required_allocation_size(diffusionFactor.size());
-	ret += toSubNetworkApp.required_allocation_size(toSubNetworkApp.size());
-	ret += toSubNetworkIndex.required_allocation_size(toSubNetworkIndex.size());
 	ret += diffusionCoefficient.required_allocation_size(
 		diffusionCoefficient.extent(0), diffusionCoefficient.extent(1));
 

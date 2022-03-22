@@ -129,7 +129,7 @@ public:
 	 * @return The vector flux, first is the ID and second is the value.
 	 */
 	virtual std::vector<std::pair<IdType, double>>
-	getImplantedFlux(std::vector<AmountType> map) = 0;
+	getImplantedFlux(std::vector<IdType> map) = 0;
 
 	/**
 	 * Set the implanted flux for each sub network.

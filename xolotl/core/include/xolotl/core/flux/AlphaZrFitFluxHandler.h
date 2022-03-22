@@ -204,7 +204,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	std::vector<std::pair<IdType, double>>
-	getImplantedFlux(std::vector<AmountType> map)
+	getImplantedFlux(std::vector<IdType> map)
 	{
 		std::vector<std::pair<IdType, double>> toReturn;
 		// Loop on the map

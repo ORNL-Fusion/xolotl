@@ -188,7 +188,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	virtual std::vector<std::pair<IdType, double>>
-	getImplantedFlux(std::vector<AmountType> map)
+	getImplantedFlux(std::vector<IdType> map)
 	{
 		return std::vector<std::pair<IdType, double>>();
 	}

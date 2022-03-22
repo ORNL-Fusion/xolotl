@@ -332,6 +332,28 @@ ReactionNetwork<TImpl>::getAllClusterBounds()
 }
 
 template <typename TImpl>
+typename ReactionNetwork<TImpl>::MomentIdMap
+ReactionNetwork<TImpl>::getAllMomentIdInfo()
+{
+	// Create the object to return
+	MomentIdMap idMap;
+
+	// Loop on all the clusters
+	for (auto i = 0; i < this->_numClusters; ++i) {
+		auto cluster = _clusterDataMirror.getCluster(i);
+		auto momIds = cluster.getMomentIds();
+		std::vector<IdType> temp;
+		for (auto j = 0; j < momIds.extent(0); j++) {
+			if (momIds(j) == this->invalidIndex())
+				continue;
+			temp.push_back(momIds(j));
+		}
+		idMap.push_back(temp);
+	}
+	return idMap;
+}
+
+template <typename TImpl>
 std::string
 ReactionNetwork<TImpl>::getHeaderString()
 {
@@ -339,7 +361,6 @@ ReactionNetwork<TImpl>::getHeaderString()
 	std::stringstream header;
 
 	// Loop on all the clusters
-	constexpr auto speciesRange = getSpeciesRange();
 	auto numSpecies = getSpeciesListSize();
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 		auto speciesName = this->getSpeciesName(id);
@@ -355,10 +376,13 @@ ReactionNetwork<TImpl>::getHeaderString()
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::initializeClusterMap(
-	typename ReactionNetwork<TImpl>::BoundVector bounds)
+	typename ReactionNetwork<TImpl>::BoundVector bounds,
+	typename ReactionNetwork<TImpl>::MomentIdMapVector momIdInfos,
+	typename ReactionNetwork<TImpl>::MomentIdMap fromSubNetwork)
 {
-	// Get the current bounds
+	// Get the current bounds and moment id info
 	auto currentBounds = getAllClusterBounds();
+	auto currentMomIdInfo = getAllMomentIdInfo();
 
 	// Check that the sizes add up
 	IndexType nSubClusters = 0;
@@ -367,24 +391,45 @@ ReactionNetwork<TImpl>::initializeClusterMap(
 	}
 	assert(this->_numClusters == nSubClusters);
 
-	auto clusterData = _clusterData.h_view;
-
-	auto mirApp = create_mirror_view(clusterData().toSubNetworkApp);
-	auto mirIndex = create_mirror_view(clusterData().toSubNetworkIndex);
-	// Loop on the current clusters
-	for (auto k = 0; k < this->_numClusters; ++k) {
-		// Loop on each sub bounds vector
-		for (auto i = 0; i < bounds.size(); i++)
-			for (auto j = 0; j < bounds[i].size(); j++) {
-				if (currentBounds[k] == bounds[i][j]) {
-					mirApp(k) = i;
-					mirIndex(k) = j;
-					break;
-				}
-			}
+	IndexType nSubMomIds = 0;
+	for (auto subMomIdInfo : momIdInfos) {
+		for (auto momIds : subMomIdInfo) {
+			nSubMomIds += momIds.size();
+		}
 	}
-	deep_copy(clusterData().toSubNetworkApp, mirApp);
-	deep_copy(clusterData().toSubNetworkIndex, mirIndex);
+	assert(this->_numDOFs == nSubClusters + nSubMomIds);
+
+	// Create additional views to know how to treat each cluster
+	auto dof = this->_numDOFs;
+
+	for (auto subMap : fromSubNetwork) {
+		// Get the sub DOF and initialize the rate map
+		auto subDOF = subMap.size();
+		auto hMap =
+			Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+				subMap.data(), subDOF);
+		auto dMap = Kokkos::View<IdType*>("Sub Map", subDOF);
+		deep_copy(dMap, hMap);
+
+		auto localIsInSub = BelongingView("In Sub", dof);
+		auto localBackMap = OwnedSubMapView("Back Map", dof);
+
+		// Initialize them
+		Kokkos::parallel_for(
+			dof, KOKKOS_LAMBDA(const IndexType i) {
+				localIsInSub(i) = false;
+				localBackMap(i) = 0;
+			});
+		Kokkos::parallel_for(
+			dMap.extent(0), KOKKOS_LAMBDA(const IndexType i) {
+				auto id = dMap(i);
+				localIsInSub(id) = true;
+				localBackMap(id) = i;
+			});
+
+		isInSub.push_back(localIsInSub);
+		backMap.push_back(localBackMap);
+	}
 
 	return;
 }
@@ -482,34 +527,17 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::computeConstantRates(ConcentrationsView concentrations,
-	RatesView rates, SubMapView subMap, IndexType gridIndex,
-	double surfaceDepth, double spacing)
+	RatesView rates, IndexType subId, IndexType gridIndex, double surfaceDepth,
+	double spacing)
 {
 	asDerived()->computeConstantRatesPreProcess(
 		concentrations, gridIndex, surfaceDepth, spacing);
 
-	// Create additional views to know how to treat each cluster
-	auto dof = concentrations.extent(0);
-	auto isInSub = BelongingView("In Sub", dof);
-	auto clusterData = _clusterData.d_view;
-	auto backMap = OwnedSubMapView("Back Map", dof);
-
-	// Initialize them
-	Kokkos::parallel_for(
-		dof, KOKKOS_LAMBDA(const IndexType i) {
-			isInSub(i) = false;
-			backMap(i) = 0;
-		});
-	Kokkos::parallel_for(
-		subMap.extent(0), KOKKOS_LAMBDA(const IndexType i) {
-			auto id = subMap(i);
-			isInSub(id) = true;
-			backMap(id) = i;
-		});
-
+	auto localInSub = isInSub[subId];
+	auto localBackMap = backMap[subId];
 	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeConstantRates(
-			concentrations, rates, isInSub, backMap, gridIndex);
+			concentrations, rates, localInSub, localBackMap, gridIndex);
 	});
 	Kokkos::fence();
 }

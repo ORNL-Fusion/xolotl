@@ -146,6 +146,8 @@ try {
 
 	// Initialize the solver
 	solver->initialize();
+
+	auto momInfo = getAllMomentIdInfo();
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -354,21 +356,33 @@ catch (const std::exception& e) {
 	throw;
 }
 
-void
-XolotlInterface::initializeClusterMaps(
-	std::vector<std::vector<std::vector<AmountType>>> bounds)
+std::vector<std::vector<IdType>>
+XolotlInterface::getAllMomentIdInfo()
 try {
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
-	network.initializeClusterMap(bounds);
 
-	// Create the local map
+	return network.getAllMomentIdInfo();
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::initializeClusterMaps(
+	std::vector<std::vector<std::vector<AmountType>>> bounds,
+	std::vector<std::vector<std::vector<IdType>>> momIdInfo)
+try {
+	// Create the local maps
 	auto currentBounds = getAllClusterBounds();
+	auto currentMomIdInfo = getAllMomentIdInfo();
 	// Loop on the sub network bounds
-	for (auto subBounds : bounds) {
+	for (auto i = 0; i < bounds.size(); i++) {
+		auto subBounds = bounds[i];
 		// Create a new vector
-		std::vector<AmountType> temp;
-		// Loop on the entries
+		std::vector<IdType> temp;
+		// Loop on the cluster entries
 		for (auto bound : subBounds) {
 			// Look for the same cluster in currentBounds
 			for (auto j = 0; j < currentBounds.size(); j++) {
@@ -378,8 +392,20 @@ try {
 				}
 			}
 		}
+		// Loop on the momId entries
+		auto subMomIdInfo = momIdInfo[i];
+		for (auto l = 0; l < subMomIdInfo.size(); l++) {
+			auto idMap = subMomIdInfo[l];
+			for (auto j = 0; j < idMap.size(); j++) {
+				temp.push_back(currentMomIdInfo[temp[l]][j]);
+			}
+		}
 		fromSubNetwork.push_back(temp);
 	}
+
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	network.initializeClusterMap(bounds, momIdInfo, fromSubNetwork);
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -452,18 +478,14 @@ try {
 
 	// Loop on the sub network maps
 	std::vector<std::vector<std::vector<double>>> toReturn;
-	for (auto subMap : fromSubNetwork) {
+	for (auto l = 0; l < fromSubNetwork.size(); l++) {
 		// Get the sub DOF and initialize the rate map
-		auto subDOF = subMap.size();
-		auto hMap = Kokkos::View<AmountType*, Kokkos::HostSpace,
-			Kokkos::MemoryUnmanaged>(subMap.data(), subDOF);
-		auto dMap = Kokkos::View<AmountType*>("Sub Map", subDOF);
-		deep_copy(dMap, hMap);
+		auto subDOF = fromSubNetwork[l].size();
 		std::vector<std::vector<double>> rateMap =
 			std::vector(subDOF, std::vector(subDOF + 1, 0.0));
 		auto dRates = Kokkos::View<double**>("dRates", subDOF, subDOF + 1);
 		auto hRates = Kokkos::create_mirror_view(dRates);
-		network.computeConstantRates(dConcs, dRates, dMap);
+		network.computeConstantRates(dConcs, dRates, l);
 
 		deep_copy(hRates, dRates);
 		// Copy element by element

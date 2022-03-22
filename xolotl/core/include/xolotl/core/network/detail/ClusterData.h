@@ -109,8 +109,6 @@ struct ClusterDataCommon
 		formationEnergy(data.formationEnergy),
 		migrationEnergy(data.migrationEnergy),
 		diffusionFactor(data.diffusionFactor),
-		toSubNetworkApp(data.toSubNetworkApp),
-		toSubNetworkIndex(data.toSubNetworkIndex),
 		diffusionCoefficient(data.diffusionCoefficient)
 	{
 	}
@@ -312,8 +310,6 @@ public:
 	View<double*> formationEnergy;
 	View<double*> migrationEnergy;
 	View<double*> diffusionFactor;
-	View<IndexType*> toSubNetworkApp;
-	View<IndexType*> toSubNetworkIndex;
 	View<double**> diffusionCoefficient;
 };
 
