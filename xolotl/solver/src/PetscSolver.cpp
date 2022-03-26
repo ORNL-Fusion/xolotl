@@ -283,7 +283,7 @@ PetscSolver::initialize()
 	case 3:
 		// Three dimensions
 		this->monitor =
-			std::make_shared<monitor::PetscMonitor2D>(ts, this->solverHandler);
+			std::make_shared<monitor::PetscMonitor3D>(ts, this->solverHandler);
 		break;
 	default:
 		throw std::runtime_error(

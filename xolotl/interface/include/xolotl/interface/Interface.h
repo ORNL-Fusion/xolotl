@@ -56,7 +56,7 @@ private:
 	 * A vector of maps to know which cluster in subnetworks correspond
 	 * to which in the main network
 	 */
-	std::vector<std::vector<AmountType>> fromSubNetwork;
+	std::vector<std::vector<IdType>> fromSubNetwork;
 
 public:
 	/**
@@ -254,13 +254,25 @@ public:
 	getAllClusterBounds();
 
 	/**
-	 * Computes the map between the different set of cluster bounds.
+	 * Get the cluster information
+	 *
+	 * @return The vector linking moment Ids to cluster Ids
+	 */
+	std::vector<std::vector<IdType>>
+	getAllMomentIdInfo();
+
+	/**
+	 * Computes the map between the different set of cluster bounds and moment
+	 * IDs.
 	 *
 	 * @param bounds A vector of cluster bounds
+	 * @param momIdInfo Information about which moment ID goes with which
+	 * cluster
 	 */
 	void
 	initializeClusterMaps(
-		std::vector<std::vector<std::vector<AmountType>>> bounds);
+		std::vector<std::vector<std::vector<AmountType>>> bounds,
+		std::vector<std::vector<std::vector<IdType>>> momIdInfo);
 
 	/**
 	 * Get the implanted flux for each sub network.

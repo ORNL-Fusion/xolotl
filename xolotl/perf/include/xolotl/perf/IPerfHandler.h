@@ -74,5 +74,8 @@ public:
 		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats)
 		const = 0;
 };
+
+void
+loadPerfHandlers();
 } // namespace perf
 } // namespace xolotl

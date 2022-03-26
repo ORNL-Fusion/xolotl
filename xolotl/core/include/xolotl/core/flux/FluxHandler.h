@@ -46,7 +46,7 @@ protected:
 	/**
 	 * The indices of the incoming clusters.
 	 */
-	std::vector<int> fluxIndices;
+	std::vector<IdType> fluxIndices;
 
 	/**
 	 * Are we using a time profile for the amplitude of the incoming
@@ -188,10 +188,16 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	virtual std::vector<std::pair<IdType, double>>
-	getImplantedFlux(std::vector<AmountType> map)
+	getImplantedFlux(std::vector<IdType> map)
 	{
 		return std::vector<std::pair<IdType, double>>();
 	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<double>
+	getInstantFlux(double time) const;
 
 	/**
 	 * \see IFluxHandler.h
@@ -201,6 +207,12 @@ public:
 	{
 		return;
 	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<IdType>
+	getFluxIndices() const;
 };
 // end class FluxHandler
 

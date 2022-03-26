@@ -598,6 +598,16 @@ public:
 			DEVICE_LAMBDA(const IndexType i) { chain.apply(func, i); });
 	}
 
+	template <typename F>
+	void
+	forEach(const std::string& label, const F& func)
+	{
+		auto chain = _chain;
+		Kokkos::parallel_for(
+			label, _numElems,
+			DEVICE_LAMBDA(const IndexType i) { chain.apply(func, i); });
+	}
+
 	/**
 	 * @brief Perform a Kokkos parallel_for on all the elements of a single type
 	 */
@@ -608,6 +618,16 @@ public:
 		auto view = getView<TElem>();
 		Kokkos::parallel_for(
 			view.size(), DEVICE_LAMBDA(const IndexType i) { func(view[i]); });
+	}
+
+	template <typename TElem, typename F>
+	void
+	forEachOn(const std::string& label, const F& func)
+	{
+		auto view = getView<TElem>();
+		Kokkos::parallel_for(
+			label, view.size(),
+			DEVICE_LAMBDA(const IndexType i) { func(view[i]); });
 	}
 
 	/**
@@ -643,6 +663,18 @@ public:
 			out);
 	}
 
+	template <typename F, typename T>
+	void
+	reduce(const std::string& label, const F& func, T& out)
+	{
+		auto chain = _chain;
+		Kokkos::parallel_reduce(
+			label, _numElems,
+			DEVICE_LAMBDA(
+				const IndexType i, T& local) { chain.reduce(func, i, local); },
+			out);
+	}
+
 	/**
 	 * @brief Perform a Kokkos parallel_reduce on all the elements of a single
 	 * type
@@ -654,6 +686,18 @@ public:
 		auto view = getView<TElem>();
 		Kokkos::parallel_reduce(
 			view.size(),
+			DEVICE_LAMBDA(
+				const IndexType i, T& local) { func(view[i], local); },
+			out);
+	}
+
+	template <typename TElem, typename F, typename T>
+	void
+	reduceOn(const std::string& label, const F& func, T& out)
+	{
+		auto view = getView<TElem>();
+		Kokkos::parallel_reduce(
+			label, view.size(),
 			DEVICE_LAMBDA(
 				const IndexType i, T& local) { func(view[i], local); },
 			out);

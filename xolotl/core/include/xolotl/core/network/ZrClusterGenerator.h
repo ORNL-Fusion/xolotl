@@ -21,7 +21,7 @@ public:
 	using Region = typename NetworkType::Region;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
-	using BoolArray = typename Superclass::BoolVec<Region>;
+	using BoolArray = plsm::refine::BoolVec<Region>;
 
 	ZrClusterGenerator(const options::IOptions& options);
 
@@ -61,7 +61,10 @@ public:
 
 private:
 	AmountType _maxV;
+	AmountType _maxB;
 	AmountType _maxI;
+	AmountType _groupingMin;
+	AmountType _groupingWidth;
 };
 } // namespace network
 } // namespace core

@@ -4,12 +4,10 @@
  *  Created on: May 6, 2013
  *      Author: bkj
  */
+#pragma once
 
 #include <cmath>
 #include <memory>
-
-#ifndef CONSTANTS_H_
-#define CONSTANTS_H_
 
 namespace xolotl
 {
@@ -102,4 +100,3 @@ constexpr double basalTransitionSize = 325;
 
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif /* CONSTANTS_H_ */

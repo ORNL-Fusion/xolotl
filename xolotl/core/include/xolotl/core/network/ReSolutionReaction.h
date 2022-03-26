@@ -105,10 +105,10 @@ private:
 
 protected:
 	IndexType _reactant;
-	AmountType _reactantVolume;
+	double _reactantVolume;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
 	util::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
-	util::Array<AmountType, 2> _productVolumes{0, 0};
+	util::Array<double, 2> _productVolumes{0.0, 0.0};
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
 	util::Array<IndexType, nMomentIds> _reactantMomentIds;

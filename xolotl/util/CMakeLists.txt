@@ -28,6 +28,7 @@ target_link_libraries(xolotlUtil PUBLIC
     Boost::filesystem
     Boost::log_setup
     Boost::log
+    Boost::dynamic_linking
     Kokkos::kokkos
 )
 target_include_directories(xolotlUtil PUBLIC

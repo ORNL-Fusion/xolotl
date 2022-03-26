@@ -19,11 +19,6 @@ template ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
 	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 		IndexType gridSize, const options::IOptions& opts);
 
-template ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::Cluster<
-	plsm::OnHost>
-ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::findCluster(
-	const Composition& comp, plsm::OnHost context);
-
 template double
 ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::getTotalConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
@@ -58,11 +53,6 @@ template ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
 template ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
 	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 		IndexType gridSize, const options::IOptions& opts);
-
-template ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::Cluster<
-	plsm::OnHost>
-ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::findCluster(
-	const Composition& comp, plsm::OnHost context);
 
 template double
 ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
@@ -101,11 +91,6 @@ template ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::
 	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 		IndexType gridSize, const options::IOptions& opts);
 
-template ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::Cluster<
-	plsm::OnHost>
-ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::findCluster(
-	const Composition& comp, plsm::OnHost context);
-
 template double
 ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::
 	getTotalConcentration(
@@ -142,11 +127,6 @@ template ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::
 template ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::
 	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 		IndexType gridSize, const options::IOptions& opts);
-
-template ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::Cluster<
-	plsm::OnHost>
-ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::findCluster(
-	const Composition& comp, plsm::OnHost context);
 
 template double
 ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::

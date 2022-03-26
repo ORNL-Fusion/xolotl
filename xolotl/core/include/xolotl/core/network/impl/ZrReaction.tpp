@@ -104,7 +104,6 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 			(dc0 + dc1);
 	}
 
-
 	// None of the clusters are loops (interaction is based on spherical volume)
 	return zs * (dc0 + dc1);
 }
@@ -216,12 +215,16 @@ ZrDissociationReaction::computeBindingEnergy()
 
 	// adding basal
 	else if (lo.isOnAxis(Species::Basal)) {
-        double n = (double)(lo[Species::Basal] + hi[Species::Basal] - 1) / 2.0;
-        if (prod1Comp.isOnAxis(Species::Basal) || prod2Comp.isOnAxis(Species::Basal)) {
-            if (n < 6) be = 2.03 - 2.0 * (pow(n, 0.87) - pow(n - 1.0, 0.87));
-            else if (n < 177) be = 2.03 - 2.5 * (pow(n, 0.78) - pow(n - 1.0, 0.78));
-            else be = 2.03 - 3.7 * (pow(n, 0.72) - pow(n - 1.0, 0.72));
-        }
+		double n = (double)(lo[Species::Basal] + hi[Species::Basal] - 1) / 2.0;
+		if (prod1Comp.isOnAxis(Species::Basal) ||
+			prod2Comp.isOnAxis(Species::Basal)) {
+			if (n < 6)
+				be = 2.03 - 2.0 * (pow(n, 0.87) - pow(n - 1.0, 0.87));
+			else if (n < 177)
+				be = 2.03 - 2.5 * (pow(n, 0.78) - pow(n - 1.0, 0.78));
+			else
+				be = 2.03 - 3.7 * (pow(n, 0.72) - pow(n - 1.0, 0.72));
+		}
 	}
 
 	else if (lo.isOnAxis(Species::I)) {
@@ -234,7 +237,7 @@ ZrDissociationReaction::computeBindingEnergy()
 		}
 	}
 
-    return util::max(0.1, be);
+	return util::max(0.1, be);
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -253,7 +256,6 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 	Composition lo = clReg.getOrigin();
 
 	if (lo.isOnAxis(Species::V)) {
-
 		return dc * 1.0 *
 			(::xolotl::core::alphaZrCSinkStrength * anisotropy +
 				::xolotl::core::alphaZrASinkStrength /
@@ -264,7 +266,6 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 	// lines The anisotropy factor is assumed equal to 1.0 in this case
 	else if (lo.isOnAxis(Species::I)) {
 		if (lo[Species::I] < 9) {
-
 			return dc * 1.1 *
 				(::xolotl::core::alphaZrCSinkStrength * anisotropy +
 					::xolotl::core::alphaZrASinkStrength /
@@ -319,16 +320,6 @@ ZrSinkReaction::computeReducedPartialDerivatives(
 	// TODO: add the wanted function of vInt and iInt in value
 	double value = this->_rate(gridIndex);
 	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), value);
-}
-
-KOKKOS_INLINE_FUNCTION
-double
-ZrConstantReaction::computeRate(IndexType gridIndex)
-{
-	if (_reactants[1] == invalidIndex)
-		return this->_clusterData->constantRates(
-			_reactants[0], this->_clusterData->numClusters);
-	return this->_clusterData->constantRates(_reactants[0], _reactants[1]);
 }
 } // namespace network
 } // namespace core

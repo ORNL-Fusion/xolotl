@@ -74,6 +74,7 @@ private:
 	// Keep the maximum cluster sizes to set a generation flux to
 	size_t maxSizeI = 0;
 	size_t maxSizeV = 0;
+    size_t maxSizeB = 0;
     
     // Set the fraction of large vacancy clusters (n > 19) that become faulted basal pyramids:
     //double Qb = 0.1;
@@ -86,7 +87,8 @@ public:
 	AlphaZrFitFluxHandler(const options::IOptions& options) :
 		FluxHandler(options),
 		maxSizeI(options.getMaxI()),
-		maxSizeV(options.getMaxV())
+		maxSizeV(options.getMaxV()),
+		maxSizeB(options.getMaxImpurity())
 	{
 	}
 
@@ -106,20 +108,20 @@ public:
 	{
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
-        
-        //for (int i = 1; i <= fluxI.size(); i++) {
-          //  fluxI[i-1] = fluxI[i-1]*1.015;
-        //}
+
+		// for (int i = 1; i <= fluxI.size(); i++) {
+		//  fluxI[i-1] = fluxI[i-1]*1.015;
+		//}
 
 		// Set the flux index corresponding the mobile interstitial clusters (n
 		// < 10)
 		NetworkType::Composition comp = NetworkType::Composition::zero();
 		comp[NetworkType::Species::I] = 1;
 		std::ostringstream oss;
-		auto cluster = zrNetwork->findCluster(comp, plsm::onHost);
+		auto cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
 		for (int i = 1; i <= std::min(maxSizeI, fluxI.size()); i++) {
 			comp[NetworkType::Species::I] = i;
-			cluster = zrNetwork->findCluster(comp, plsm::onHost);
+			cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
 			if (cluster.getId() == NetworkType::invalidIndex()) {
 				continue;
 			}
@@ -131,26 +133,30 @@ public:
 		comp[NetworkType::Species::I] = 0;
 		for (int i = 1; i <= std::min(maxSizeV, fluxV.size()); i++) {
 			comp[NetworkType::Species::V] = i;
-			cluster = zrNetwork->findCluster(comp, plsm::onHost);
+			cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
 			if (cluster.getId() == NetworkType::invalidIndex()) {
 				continue;
 			}
 			fluxIndices.push_back(cluster.getId());
-            if (i >= 19) incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1] * (1-Qb)));
-            else incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1]));
+			if (i >= 19)
+				incidentFluxVec.push_back(
+					std::vector<double>(1, fluxV[i - 1] * (1 - Qb)));
+			else
+				incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1]));
 		}
 
-		// Set the flux index corresponding the mobile vacancy clusters (n < 10)
+		// Set the flux index corresponding to Basal
 		comp[NetworkType::Species::V] = 0;
-		for (int i = 19; i <= std::min(maxSizeV, fluxV.size()); i++) {
+		for (int i = 19; i <= std::min(maxSizeB, fluxV.size()); i++) {
 			comp[NetworkType::Species::Basal] = i;
-			cluster = zrNetwork->findCluster(comp, plsm::onHost);
+			cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
 			if (cluster.getId() != NetworkType::invalidIndex()) {
 				fluxIndices.push_back(cluster.getId());
-				incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1] * (Qb)));
+				incidentFluxVec.push_back(
+					std::vector<double>(1, fluxV[i - 1] * (Qb)));
 			}
 		}
-        
+
 		return;
 	}
 
@@ -171,7 +177,7 @@ public:
                 updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
 			}
 		}
-    
+
 		else {
 			throw std::runtime_error(
 				"\nThe alpha Zr problem is not defined for more than 0D!");
@@ -184,7 +190,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	std::vector<std::pair<IdType, double>>
-	getImplantedFlux(std::vector<AmountType> map)
+	getImplantedFlux(std::vector<IdType> map)
 	{
 		std::vector<std::pair<IdType, double>> toReturn;
 		// Loop on the map

@@ -15,19 +15,40 @@ auto zrNetworkHandlerRegistrations =
 }
 
 auto zrNetworkGenerator = [](const options::IOptions& options) {
-	// std::cout << "NetworkHandler-start \n";
-
 	using NetworkType = ZrReactionNetwork;
 
 	// Get the boundaries from the options
+	NetworkType::AmountType maxB = options.getMaxImpurity();
 	NetworkType::AmountType maxV = options.getMaxV();
 	NetworkType::AmountType maxI = options.getMaxI();
+	NetworkType::AmountType ratioB = 1;
+	NetworkType::AmountType ratioV = 1;
+	NetworkType::AmountType ratioI = 1;
 
-	/*
-	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxV, maxI};
-	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
-		{maxV + 1, maxI + 1}};
-	*/
+	if (maxV > 0) {
+		int i = 0;
+		while (maxV + 1 > pow(2, i)) {
+			++i;
+		}
+		maxV = pow(2, i) - 1;
+		ratioV = 2;
+	}
+	if (maxI > 0) {
+		int i = 0;
+		while (maxI + 1 > pow(2, i)) {
+			++i;
+		}
+		maxI = pow(2, i) - 1;
+		ratioI = 2;
+	}
+	if (maxB > 0) {
+		int i = 0;
+		while (maxB + 1 > pow(2, i)) {
+			++i;
+		}
+		maxB = pow(2, i) - 1;
+		ratioB = 2;
+	}
 
 	int i = 0;
 	while (maxV + 1 > pow(2, i)) {
@@ -41,14 +62,14 @@ auto zrNetworkGenerator = [](const options::IOptions& options) {
 	maxI = pow(2, i) - 1;
     
 	// adding basal
-	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxV, maxV, maxI};
-	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {{2, 2, 2}};
+	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxV, maxB, maxI};
+	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
+		{ratioV, ratioB, ratioI}};
 
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 
 	network->syncClusterDataOnHost();
-	network->getSubpaving().syncZones(plsm::onHost);
 
 	return network;
 };
