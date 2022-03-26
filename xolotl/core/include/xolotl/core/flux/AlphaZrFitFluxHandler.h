@@ -76,8 +76,8 @@ private:
 	size_t maxSizeV = 0;
     
     // Set the fraction of large vacancy clusters (n > 19) that become faulted basal pyramids:
-    //double Qb = 0.05;
-    double Qb = 0.05; // No basal
+    //double Qb = 0.1;
+    double Qb = 0.5; // No basal
 
 public:
 	/**
@@ -164,16 +164,11 @@ public:
 		// Define only for a 0D case
 		if (xGrid.size() == 0) {
             
-            // Reduce the defect generation rate based on the current time (defect density)
-            // double cascadeEfficiency = (0.9*(1-tanh(0.000000100527088*(currentTime*100)))+0.1)*0.64*(1-tanh(0.000030527088*(currentTime/100-20000)))+0.001 //Long1 decline modified7 mod12
-            //double cascadeEfficiency = (0.9*(1-tanh(0.000000100527088*(currentTime*100)))+0.1)*0.5*(1-tanh(0.000110527088*(currentTime/100-25000)))+0.001; //Long1 decline modified7 mod11
-            double cascadeEfficiency = (0.9*(1-tanh(0.000000100527088*(currentTime*100)))+0.1)*0.505*(1-tanh(0.000110527088*(currentTime/100-20000)))+0.001; //Long1 decline modified7 mod11 mod2
-            //cascadeEfficiency = 1.0;
-            
+            //double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.021);
             
             for (int i = 0; i < fluxIndices.size(); i++) {
-                updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;
-                //updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
+                //updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;
+                updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
 			}
 		}
     

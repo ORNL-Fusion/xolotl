@@ -27,9 +27,19 @@ KOKKOS_INLINE_FUNCTION
 bool
 ZrClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
-	result[0] = true;
-	result[1] = true;
-	result[2] = true;
+	for (auto& r : result) {
+		r = true;
+	}
+
+	int nAxis = (region[Species::V].begin() > 0) +
+		(region[Species::I].begin() > 0) + (region[Species::Basal].begin() > 0);
+
+	if (nAxis > 1) {
+		for (auto& r : result) {
+			r = false;
+		}
+		return false;
+	}
 
 	// No need for refine here because we are not using grouping
 
@@ -72,6 +82,11 @@ ZrClusterGenerator::select(const Region& region) const
 		if (region[Species::Basal].begin() > _maxV)
 			return false;
 	}
+
+	if (region[Species::V].begin() > _maxV ||
+		region[Species::Basal].begin() > _maxV ||
+		region[Species::I].begin() > _maxI)
+		return false;
 
 	return true;
 }
@@ -169,7 +184,6 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	const auto& reg = cluster.getRegion();
 	Composition lo(reg.getOrigin());
 	double radius = 0.0;
-	int basalTransitionSize = 91;
 
 	// jmr: rn = (3nOmega/4pi)^1/3 [nm] for n < 10
 	// jmr: Note that (3Omega/4pi) = 5.586e-3 nm^3, where Omega = 0.0234 nm^3
@@ -192,7 +206,7 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 
             // Treat the case for faulted basal pyramids
             // Estimate a spherical radius based on equivalent surface area
-            if (lo[Species::Basal] < basalTransitionSize){
+            if (lo[Species::Basal] < ::xolotl::core::basalTransitionSize){
                 double Sb = pow(3, 0.5) / 2 * pow(3.232, 2) * (double)j; //Basal surface area
                 double Sp = 3.232 / 2 * pow(3 * pow(3.232, 2) + 4 * pow(5.17, 2), 0.5) * (double)j; //Prismatic surface area
                 radius += pow((Sb + Sp) / (4 * pi), 0.5) / 10;

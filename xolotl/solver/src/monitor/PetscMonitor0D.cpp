@@ -195,28 +195,63 @@ PetscMonitor0D::setup()
 		using Composition = typename NetworkType::Composition;
 		auto& network =
 			dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-		auto networkSize = network.getNumClusters();
-		// Create/open the output files
+
+        // Create/open the output files
 		std::fstream outputFile;
 		outputFile.open("AlphaZr.dat", std::fstream::out);
 		outputFile << "#time_step time ";
-		for (auto i = 0; i < networkSize; i++) {
-			auto cluster = network.getCluster(i, plsm::onHost);
-			const Region& clReg = cluster.getRegion();
-			Composition lo(clReg.getOrigin());
-			if (lo.isOnAxis(Spec::V))
-				outputFile << "V_" << lo[Spec::V] << " ";
-			else if (lo.isOnAxis(Spec::I))
-				outputFile << "I_" << lo[Spec::I] << " ";
-			// adding basal
-			else if (lo.isOnAxis(Spec::Basal))
-				outputFile << "Basal_" << lo[Spec::Basal] << " ";
-
+        
+        // Initialize the composition
+        Composition comp = Composition::zero();
+        
+        // Start with I clusters
+        bool foundCluster = true;
+        while (foundCluster) {
+            comp[Spec::I]++;
+            auto clusterId = network.findCluster(comp, plsm::onHost).getId();
+            // Check that it is present in the network
+            if (clusterId != NetworkType::invalidIndex()) {
+                _clusterOrder.push_back(clusterId);
+                outputFile << "I_" << comp[Spec::I] << " ";
+            }
+           else
+                foundCluster = false;
+            }
+        
+        // Then Basal
+        comp[Spec::I] = 0;
+        foundCluster = true;
+        while (foundCluster) {
+            comp[Spec::Basal]++;
+            auto clusterId = network.findCluster(comp, plsm::onHost).getId();
+            // Check that it is present in the network
+            if (clusterId != NetworkType::invalidIndex()) {
+                _clusterOrder.push_back(clusterId);
+                outputFile << "Basal_" << comp[Spec::Basal] << " ";
+            }
+            else
+                foundCluster = false;
+        }
+        
+         // And V
+        comp[Spec::Basal] = 0;
+        foundCluster = true;
+        while (foundCluster) {
+            comp[Spec::V]++;
+            auto clusterId = network.findCluster(comp, plsm::onHost).getId();
+            // Check that it is present in the network
+            if (clusterId != NetworkType::invalidIndex()) {
+                _clusterOrder.push_back(clusterId);
+                outputFile << "V_" << comp[Spec::V] << " ";
+            }
+            else
+                foundCluster = false;
         }
         
 		outputFile << std::endl;
 		outputFile.close();
 		// computeAlphaZr will be called at each timestep
+        
 		ierr = TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr);
 		checkPetscError(
 			ierr, "setupPetsc0DMonitor: TSMonitorSet (computeAlphaZr) failed.");
@@ -698,7 +733,7 @@ PetscMonitor0D::computeAlphaZr(
 
 	// Output the data
 	outputFile << timestep << " " << time << " ";
-	for (auto i = 0; i < networkSize; ++i) {
+	for (auto i : _clusterOrder) {
 		outputFile << gridPointSolution[i] << " ";
 	}
 	outputFile << std::endl;
