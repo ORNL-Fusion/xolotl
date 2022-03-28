@@ -190,68 +190,6 @@ PetscMonitor0D::setup()
 	// Set the monitor to output data for AlphaZr
 	if (flagZr) {
 
-        /* //without grouping:
-		using NetworkType = core::network::ZrReactionNetwork;
-		using Spec = typename NetworkType::Species;
-		using Region = typename NetworkType::Region;
-		using Composition = typename NetworkType::Composition;
-		auto& network =
-			dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-
-        // Create/open the output files
-		std::fstream outputFile;
-		outputFile.open("AlphaZr.dat", std::fstream::out);
-		outputFile << "#time_step time ";
-        
-        // Initialize the composition
-        Composition comp = Composition::zero();
-        
-        // Start with I clusters
-        bool foundCluster = true;
-        while (foundCluster) {
-            comp[Spec::I]++;
-            auto clusterId = network.findCluster(comp, plsm::onHost).getId();
-            // Check that it is present in the network
-            if (clusterId != NetworkType::invalidIndex()) {
-                _clusterOrder.push_back(clusterId);
-                outputFile << "I_" << comp[Spec::I] << " ";
-            }
-           else
-                foundCluster = false;
-            }
-        
-        // Then Basal
-        comp[Spec::I] = 0;
-        foundCluster = true;
-        while (foundCluster) {
-            comp[Spec::Basal]++;
-            auto clusterId = network.findCluster(comp, plsm::onHost).getId();
-            // Check that it is present in the network
-            if (clusterId != NetworkType::invalidIndex()) {
-                _clusterOrder.push_back(clusterId);
-                outputFile << "Basal_" << comp[Spec::Basal] << " ";
-            }
-            else
-                foundCluster = false;
-        }
-        
-         // And V
-        comp[Spec::Basal] = 0;
-        foundCluster = true;
-        while (foundCluster) {
-            comp[Spec::V]++;
-            auto clusterId = network.findCluster(comp, plsm::onHost).getId();
-            // Check that it is present in the network
-            if (clusterId != NetworkType::invalidIndex()) {
-                _clusterOrder.push_back(clusterId);
-                outputFile << "V_" << comp[Spec::V] << " ";
-            }
-            else
-                foundCluster = false;
-        }
-        */ //without grouping
-
-        ///* //with grouping:
 		auto& network = _solverHandler->getNetwork();
 		auto numSpecies = network.getSpeciesListSize();
 
@@ -267,7 +205,6 @@ PetscMonitor0D::setup()
 					   << speciesName << "_partial_diameter ";
 		}
         
-        //*/ //with grouping
 		outputFile << std::endl;
 		outputFile.close();
 		// computeAlphaZr will be called at each timestep
@@ -750,20 +687,15 @@ PetscMonitor0D::computeAlphaZr(
 
 	// Output the data
 	outputFile << timestep << " " << time << " ";
-    
-    //without grouping:
-	//for (auto i : _clusterOrder) {
-		//outputFile << gridPointSolution[i] << " ";
 
-    //with grouping:
 	for (auto i = 0; i < numSpecies; ++i) {
 		outputFile << myData[i * 6] << " " << myData[(i * 6) + 1] << " "
 				   << myData[(i * 6) + 2] << " " << myData[(i * 6) + 3] << " "
 				   << myData[(i * 6) + 4] << " " << myData[(i * 6) + 5] << " ";
-
 	}
+    
 	outputFile << std::endl;
-
+    
 	// Close the output file
 	outputFile.close();
 

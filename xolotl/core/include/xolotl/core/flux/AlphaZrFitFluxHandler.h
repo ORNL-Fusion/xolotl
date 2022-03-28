@@ -170,11 +170,11 @@ public:
 		// Define only for a 0D case
 		if (xGrid.size() == 0) {
             
-            //double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.021);
+            double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.021);
             
             for (int i = 0; i < fluxIndices.size(); i++) {
-                //updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;
-                updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
+                updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;
+                //updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
 			}
 		}
 
