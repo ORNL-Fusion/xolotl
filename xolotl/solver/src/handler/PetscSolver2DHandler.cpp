@@ -106,6 +106,16 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 	ierr = DMSetUp(da);
 	checkPetscError(
 		ierr, "PetscSolver2DHandler::createSolverContext: DMSetUp failed.");
+}
+
+void
+PetscSolver2DHandler::initializeSolverContext(DM& da, TS& ts)
+{
+	PetscErrorCode ierr;
+
+	// Degrees of freedom is the total number of clusters in the network
+	// + moments
+	const auto dof = network.getDOF();
 
 	// Initialize the surface of the first advection handler corresponding to
 	// the advection toward the surface
@@ -161,8 +171,6 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 
 	// Initialize the flux handler
 	fluxHandler->initializeFluxHandler(network, surfacePosition[0], grid);
-
-	return;
 }
 
 void

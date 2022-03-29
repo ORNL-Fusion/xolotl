@@ -2,6 +2,7 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
+namespace utf = boost::unit_test;
 
 #include <xolotl/test/KokkosFixture.h>
 
@@ -16,7 +17,7 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 BOOST_AUTO_TEST_SUITE(System)
 
-BOOST_AUTO_TEST_CASE(NE_0)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_0, * utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -24,7 +25,7 @@ BOOST_AUTO_TEST_CASE(NE_0)
 	SystemTestCase{"system_NE_0"}.tolerance(1.0e-9).run();
 }
 
-BOOST_AUTO_TEST_CASE(NE_1)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_1, * utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -33,7 +34,7 @@ BOOST_AUTO_TEST_CASE(NE_1)
 	SystemTestCase{"system_NE_1"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(NE_2)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_2, * utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -42,7 +43,7 @@ BOOST_AUTO_TEST_CASE(NE_2)
 	SystemTestCase{"system_NE_2"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(NE_3)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_3, * utf::label("1D"))
 {
 	if (getMPICommSize() > 25) {
 		return;
@@ -51,7 +52,7 @@ BOOST_AUTO_TEST_CASE(NE_3)
 	SystemTestCase{"system_NE_3"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(NE_4)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_4, * utf::label("2D"))
 {
 	if (getMPICommSize() > 100) {
 		return;
@@ -60,7 +61,7 @@ BOOST_AUTO_TEST_CASE(NE_4)
 	SystemTestCase{"system_NE_4"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_1)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_1, * utf::label("1D"))
 {
 	if (getMPICommSize() > 20) {
 		return;
@@ -70,7 +71,7 @@ BOOST_AUTO_TEST_CASE(PSI_1)
 	SystemTestCase{"system_PSI_1"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_2)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_2, * utf::label("1D"))
 {
 	if (getMPICommSize() > 20) {
 		return;
@@ -80,7 +81,7 @@ BOOST_AUTO_TEST_CASE(PSI_2)
 	SystemTestCase{"system_PSI_2"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_3)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_3, * utf::label("1D"))
 {
 	if (getMPICommSize() > 10) {
 		return;
@@ -90,7 +91,7 @@ BOOST_AUTO_TEST_CASE(PSI_3)
 	SystemTestCase{"system_PSI_3"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(Fe_1)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(Fe_1, * utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -99,7 +100,7 @@ BOOST_AUTO_TEST_CASE(Fe_1)
 	SystemTestCase{"system_Fe_1", "bubble_36.dat"}.run();
 }
 
-BOOST_AUTO_TEST_CASE(Alloy_1)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(Alloy_1, * utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {
 		return;

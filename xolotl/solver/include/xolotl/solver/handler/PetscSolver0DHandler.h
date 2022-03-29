@@ -46,6 +46,12 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
+	initializeSolverContext(DM& da, TS& ts);
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	void
 	initializeConcentration(DM& da, Vec& C);
 
 	/**

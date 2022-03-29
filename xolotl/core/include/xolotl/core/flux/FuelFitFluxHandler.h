@@ -95,6 +95,21 @@ public:
 
 		return;
 	}
+
+	void
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos)
+	{
+		if (fluxIndices.empty()) {
+			return;
+		}
+
+		auto id = fluxIndices[0];
+		auto amplitude = fluxAmplitude;
+		Kokkos::parallel_for(
+			1,
+			KOKKOS_LAMBDA(std::size_t) { updatedConcOffset[id] += amplitude; });
+	}
 };
 // end class FuelFitFluxHandler
 

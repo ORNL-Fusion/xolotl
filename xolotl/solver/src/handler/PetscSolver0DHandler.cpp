@@ -1,3 +1,8 @@
+#include <Kokkos_OffsetView.hpp>
+
+#include <petscconf.h>
+#include <petscdmda_kokkos.hpp>
+
 #include <xolotl/core/Constants.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/handler/PetscSolver0DHandler.h>
@@ -11,6 +16,11 @@ namespace solver
 {
 namespace handler
 {
+using DefaultMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
+template <typename T>
+using PetscOffsetView =
+	Kokkos::Experimental::OffsetView<T, Kokkos::LayoutRight, DefaultMemSpace>;
+
 void
 PetscSolver0DHandler::createSolverContext(DM& da)
 {
@@ -38,6 +48,16 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	ierr = DMSetUp(da);
 	checkPetscError(
 		ierr, "PetscSolver0DHandler::createSolverContext: DMSetUp failed.");
+}
+
+void
+PetscSolver0DHandler::initializeSolverContext(DM& da, TS& ts)
+{
+	PetscErrorCode ierr;
+
+	// Degrees of freedom is the total number of clusters in the network
+	// + moments
+	const auto dof = network.getDOF();
 
 	/* The ofill (thought of as a dof by dof 2d (row-oriented) array represents
 	 * the nonzero coupling between degrees of freedom at one point with
@@ -46,29 +66,38 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(dof, ofill, dfill);
+	// temperatureHandler->initializeTemperature(dof, ofill, dfill);
 
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
 
 	// Load up the block fills
+	#if 0
 	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
 	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
 	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
 	checkPetscError(ierr,
-		"PetscSolver0DHandler::createSolverContext: "
+		"PetscSolver0DHandler::initializeSolverContext: "
 		"DMDASetBlockFills failed.");
+	#else
+	Mat J;
+	ierr = TSGetRHSJacobian(ts, &J, nullptr, nullptr, nullptr);
+	checkPetscError(ierr, "PetscSolver::initialize: TSGetRHSJacobian failed.");
+	auto [rows, cols] = convertToCoordinateListPair(dof/*+1*/, dfill);
+    rows.push_back(dof);
+    cols.push_back(dof);
+    std::cout << "nnz: " << rows.size() << "\nnPartials: " << nPartials << std::endl;
+	ierr = MatSetPreallocationCOO(J, rows.size(), rows.data(), cols.data());
+	#endif
 
 	// Initialize the arrays for the reaction partial derivatives
-	vals = Kokkos::View<double*>("solverPartials", nPartials);
+	vals = Kokkos::View<double*>("solverPartials", nPartials+1);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	// Initialize the flux handler
 	fluxHandler->initializeFluxHandler(network, 0, grid);
-
-	return;
 }
 
 void
@@ -270,28 +299,25 @@ PetscSolver0DHandler::updateConcentration(
 
 	// Pointers to the PETSc arrays that start at the beginning of the
 	// local array
-	PetscScalar **concs = nullptr, **updatedConcs = nullptr;
-	// Get pointers to vector data
-	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
+	PetscOffsetView<const PetscScalar**> concs;
+	ierr = DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs);
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::updateConcentration: "
-		"DMDAVecGetArrayDOFRead (localC) failed.");
-	ierr = DMDAVecGetArrayDOF(da, F, &updatedConcs);
+		"DMDAVecGetKokkosOffsetViewDOF (localC) failed.");
+	PetscOffsetView<PetscScalar**> updatedConcs;
+	ierr = DMDAVecGetKokkosOffsetViewDOFWrite(da, F, &updatedConcs);
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::updateConcentration: "
-		"DMDAVecGetArrayDOF (F) failed.");
-
-	// The following pointers are set to the first position in the conc or
-	// updatedConc arrays that correspond to the beginning of the data for the
-	// current grid point. They are accessed just like regular arrays.
-	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
+		"DMDAVecGetKokkosOffsetViewDOFWrite (F) failed.");
 
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
-	// Get the old and new array offsets
-	concOffset = concs[0];
-	updatedConcOffset = updatedConcs[0];
+	// The following pointers are set to the first position in the conc or
+	// updatedConc arrays that correspond to the beginning of the data for the
+	// current grid point.
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
+	auto updatedConcOffset = subview(updatedConcs, 0, Kokkos::ALL).view();
 
 	// Degrees of freedom is the total number of clusters in the network +
 	// moments
@@ -313,33 +339,22 @@ PetscSolver0DHandler::updateConcentration(
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid
 	// -----
-	using HostUnmanaged =
-		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto hConcs = HostUnmanaged(concOffset, dof);
-	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-	deep_copy(dConcs, hConcs);
-	auto hFlux = HostUnmanaged(updatedConcOffset, dof);
-	auto dFlux = Kokkos::View<double*>("Fluxes", dof);
-	deep_copy(dFlux, hFlux);
 	fluxCounter->increment();
 	fluxTimer->start();
-	network.computeAllFluxes(dConcs, dFlux);
+	network.computeAllFluxes(concOffset, updatedConcOffset);
 	fluxTimer->stop();
-	deep_copy(hFlux, dFlux);
 
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
+	ierr = DMDAVecRestoreKokkosOffsetViewDOF(da, localC, &concs);
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::updateConcentration: "
-		"DMDAVecRestoreArrayDOFRead (localC) failed.");
-	ierr = DMDAVecRestoreArrayDOF(da, F, &updatedConcs);
+		"DMDAVecRestoreKokkosOffsetViewDOF (localC) failed.");
+	ierr = DMDAVecRestoreKokkosOffsetViewDOFWrite(da, F, &updatedConcs);
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::updateConcentration: "
-		"DMDAVecRestoreArrayDOF (F) failed.");
-
-	return;
+		"DMDAVecRestoreKokkosOffsetViewDOFWrite (F) failed.");
 }
 
 void
@@ -356,14 +371,11 @@ PetscSolver0DHandler::computeJacobian(
 		"TSGetDM failed.");
 
 	// Get pointers to vector data
-	PetscScalar** concs = nullptr;
-	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
+	PetscOffsetView<const PetscScalar**> concs;
+	ierr = DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs);
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::computeDiagonalJacobian: "
-		"DMDAVecGetArrayDOFRead failed.");
-
-	// Pointer to the concentrations at a given grid point
-	PetscScalar* concOffset = nullptr;
+		"DMDAVecGetKokkosOffsetViewDOF failed.");
 
 	// Degrees of freedom is the total number of clusters in the network +
 	// moments
@@ -379,7 +391,7 @@ PetscSolver0DHandler::computeJacobian(
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
 	// Get the temperature from the temperature handler
-	concOffset = concs[0];
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 	temperatureHandler->setTemperature(concOffset);
 	double temp = temperatureHandler->getTemperature(gridPosition, ftime);
 
@@ -393,18 +405,14 @@ PetscSolver0DHandler::computeJacobian(
 	// ----- Take care of the reactions for all the reactants -----
 
 	// Compute all the partial derivatives for the reactions
-	using HostUnmanaged =
-		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto hConcs = HostUnmanaged(concOffset, dof);
-	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-	deep_copy(dConcs, hConcs);
 	partialDerivativeCounter->increment();
 	partialDerivativeTimer->start();
-	network.computeAllPartials(dConcs, vals);
+	network.computeAllPartials(concOffset, vals);
 	partialDerivativeTimer->stop();
 	auto hPartials = create_mirror_view(vals);
 	deep_copy(hPartials, vals);
 
+#if 0
 	// Variable for the loop on reactants
 	IdType startingIdx = 0;
 
@@ -441,16 +449,19 @@ PetscSolver0DHandler::computeJacobian(
 			startingIdx += pdColIdsVectorSize;
 		}
 	}
+#else
+	ierr = MatSetValuesCOO(J, vals.data(), ADD_VALUES);
+	checkPetscError(ierr,
+		"PetscSolverExpHandler::computeJacobian: MatSetValuesCOO failed.");
+#endif
 
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
+	ierr = DMDAVecRestoreKokkosOffsetViewDOF(da, localC, &concs);
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::computeDiagonalJacobian: "
-		"DMDAVecRestoreArrayDOFRead failed.");
-
-	return;
+		"DMDAVecRestoreKokkosOffsetViewDOF failed.");
 }
 
 } /* end namespace handler */

@@ -57,6 +57,10 @@ public:
 	computeIncidentFlux(double currentTime, double* updatedConcOffset, int xi,
 		int surfacePos) = 0;
 
+	virtual void
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos) = 0;
+
 	/**
 	 * This operation increments the fluence at the current time step.
 	 *

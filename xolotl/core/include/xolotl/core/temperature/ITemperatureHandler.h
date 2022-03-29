@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 
+#include <Kokkos_View.hpp>
+
 #include <plsm/SpaceVector.h>
 
 #include <xolotl/config.h>
@@ -62,6 +64,9 @@ public:
 	 */
 	virtual void
 	setTemperature(double* solution) = 0;
+
+    virtual void
+    setTemperature(Kokkos::View<const double*> solution) = 0;
 
 	/**
 	 * This operation sets the heat coefficient to use in the equation.

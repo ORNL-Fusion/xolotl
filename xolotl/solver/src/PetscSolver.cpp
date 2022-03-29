@@ -236,6 +236,8 @@ PetscSolver::initialize()
 	ierr = TSSetSolution(ts, C);
 	checkPetscError(ierr, "PetscSolver::initialize: TSSetSolution failed.");
 
+	this->solverHandler->initializeSolverContext(da, ts);
+
 	// Read the times if the information is in the HDF5 file
 	auto fileName = this->solverHandler->getNetworkName();
 	double time = 0.0, deltaTime = 1.0e-12;
@@ -577,10 +579,10 @@ PetscSolver::rhsJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J)
 	ierr = DMRestoreLocalVector(da, &localC);
 	CHKERRQ(ierr);
 
-	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
-	CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
-	CHKERRQ(ierr);
+	// ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
+	// CHKERRQ(ierr);
+	// ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
+	// CHKERRQ(ierr);
 
 	if (A != J) {
 		ierr = MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);

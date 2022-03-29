@@ -1,7 +1,8 @@
 #define BOOST_TEST_DYN_LINK
 #define BOOST_TEST_MODULE Regression
 
-#include <boost/test/unit_test.hpp>
+#include <boost/test/unit_test_suite.hpp>
+namespace utf = boost::unit_test;
 
 #include <xolotl/test/KokkosFixture.h>
 
@@ -16,7 +17,7 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 BOOST_AUTO_TEST_SUITE(Benchmark)
 
-BOOST_AUTO_TEST_CASE(NE_1)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_1, *utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -25,7 +26,7 @@ BOOST_AUTO_TEST_CASE(NE_1)
 	SystemTestCase{"benchmark_NE_1"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(NE_2)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_2, *utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -34,7 +35,7 @@ BOOST_AUTO_TEST_CASE(NE_2)
 	SystemTestCase{"benchmark_NE_2"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(NE_3)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_3, *utf::label("3D"))
 {
 	if (getMPICommSize() > 3969) {
 		return;
@@ -43,7 +44,7 @@ BOOST_AUTO_TEST_CASE(NE_3)
 	SystemTestCase{"benchmark_NE_3"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(NE_4)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_4, *utf::label("2D"))
 {
 	if (getMPICommSize() > 15876 || getMPICommSize() < 16) {
 		return;
@@ -52,7 +53,7 @@ BOOST_AUTO_TEST_CASE(NE_4)
 	SystemTestCase{"benchmark_NE_4"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(NE_5)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_5, *utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -61,7 +62,7 @@ BOOST_AUTO_TEST_CASE(NE_5)
 	SystemTestCase{"benchmark_NE_5"}.tolerance(5.0e-9).withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_1)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_1, *utf::label("1D"))
 {
 	if (getMPICommSize() > 100) {
 		return;
@@ -70,7 +71,7 @@ BOOST_AUTO_TEST_CASE(PSI_1)
 	SystemTestCase{"benchmark_PSI_1"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_2)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_2, *utf::label("1D"))
 {
 	if (getMPICommSize() > 1) {
 		return;
@@ -79,7 +80,7 @@ BOOST_AUTO_TEST_CASE(PSI_2)
 	SystemTestCase{"benchmark_PSI_2"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_3)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_3, *utf::label("1D"))
 {
 	if (getMPICommSize() != 32) {
 		return;
@@ -88,7 +89,7 @@ BOOST_AUTO_TEST_CASE(PSI_3)
 	SystemTestCase{"benchmark_PSI_3"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_4)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_4, *utf::label("1D"))
 {
 	if (getMPICommSize() != 32) {
 		return;
@@ -98,7 +99,7 @@ BOOST_AUTO_TEST_CASE(PSI_4)
 	SystemTestCase{"benchmark_PSI_4"}.tolerance(5.0e-10).withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_5)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_5, *utf::label("1D"))
 {
 	if (getMPICommSize() != 32) {
 		return;
@@ -108,7 +109,7 @@ BOOST_AUTO_TEST_CASE(PSI_5)
 	SystemTestCase{"benchmark_PSI_5"}.tolerance(5.0e-10).withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_6)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_6, *utf::label("1D"))
 {
 	if (getMPICommSize() < 20 || getMPICommSize() > 112) {
 		return;
@@ -117,7 +118,7 @@ BOOST_AUTO_TEST_CASE(PSI_6)
 	SystemTestCase{"benchmark_PSI_6"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_7)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_7, *utf::label("1D"))
 {
 	if (getMPICommSize() < 4 || getMPICommSize() > 25) {
 		return;
@@ -126,7 +127,7 @@ BOOST_AUTO_TEST_CASE(PSI_7)
 	SystemTestCase{"benchmark_PSI_7"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_8)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_8, *utf::label("1D"))
 {
 	if (getMPICommSize() > 20) {
 		return;
@@ -137,7 +138,7 @@ BOOST_AUTO_TEST_CASE(PSI_8)
 	SystemTestCase{"benchmark_PSI_8"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_9)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_9, *utf::label("1D"))
 {
 	if (getMPICommSize() > 20) {
 		return;
@@ -148,7 +149,7 @@ BOOST_AUTO_TEST_CASE(PSI_9)
 	SystemTestCase{"benchmark_PSI_9"}.withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_10)
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_10, *utf::label("1D"))
 {
 	if (getMPICommSize() > 20) {
 		return;

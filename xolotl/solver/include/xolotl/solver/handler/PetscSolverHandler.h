@@ -108,6 +108,10 @@ protected:
 	ConvertToPetscSparseFillMap(size_t dof,
 		const core::network::IReactionNetwork::SparseFillMap& fillMap);
 
+    static std::array<std::vector<PetscInt>, 2>
+    convertToCoordinateListPair(std::size_t dof,
+		const core::network::IReactionNetwork::SparseFillMap& fillMap);
+
 public:
 	/**
 	 * Default constructor, deleted because we need to construct with objects.

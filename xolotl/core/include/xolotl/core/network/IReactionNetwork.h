@@ -27,8 +27,8 @@ class IReactionNetwork
 public:
 	using IndexType = detail::ReactionNetworkIndexType;
 	using AmountType = detail::CompositionAmountType;
-	using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
-	using OwnedConcentrationsView = Kokkos::View<double*>;
+	using ConcentrationsView = Kokkos::View<const double*, Kokkos::MemoryUnmanaged>;
+	using OwnedConcentrationsView = Kokkos::View<const double*>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
 	using Connectivity = detail::ClusterConnectivity<>;

@@ -4,6 +4,8 @@
 #include <memory>
 #include <vector>
 
+#include <Kokkos_View.hpp>
+
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/flux/IFluxHandler.h>
 #include <xolotl/options/IOptions.h>
@@ -129,6 +131,10 @@ public:
 	virtual void
 	computeIncidentFlux(
 		double currentTime, double* updatedConcOffset, int xi, int surfacePos);
+
+	void
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos) override;
 
 	/**
 	 * \see IFluxHandler.h

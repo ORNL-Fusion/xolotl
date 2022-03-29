@@ -201,6 +201,13 @@ FluxHandler::computeIncidentFlux(
 }
 
 void
+FluxHandler::computeIncidentFlux(double currentTime,
+	Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos)
+{
+	// TODO
+}
+
+void
 FluxHandler::incrementFluence(double dt)
 {
 	// The fluence is the flux times the time
