@@ -75,10 +75,7 @@ private:
 	size_t maxSizeI = 0;
 	size_t maxSizeV = 0;
     size_t maxSizeB = 0;
-    
-    // Set the fraction of large vacancy clusters (n > 19) that become faulted basal pyramids:
-    //double Qb = 0.1;
-    double Qb = 0.5; // No basal
+    double Qb = 0;
 
 public:
 	/**
@@ -109,9 +106,10 @@ public:
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
 
-		// for (int i = 1; i <= fluxI.size(); i++) {
-		//  fluxI[i-1] = fluxI[i-1]*1.015;
-		//}
+        // Set the fraction of large vacancy clusters (n > 19) that become faulted basal pyramids:
+        
+        if (maxSizeB > 18) Qb = 0.5; // Basal
+        else Qb = 0; //No basal
 
 		// Set the flux index corresponding the mobile interstitial clusters (n
 		// < 10)
@@ -170,11 +168,11 @@ public:
 		// Define only for a 0D case
 		if (xGrid.size() == 0) {
             
-            double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.021);
+            //double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.021);
             
             for (int i = 0; i < fluxIndices.size(); i++) {
-                updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;
-                //updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
+                //updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;
+                updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
 			}
 		}
 
