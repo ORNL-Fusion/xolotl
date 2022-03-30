@@ -146,8 +146,6 @@ try {
 
 	// Initialize the solver
 	solver->initialize();
-
-	auto momInfo = getAllMomentIdInfo();
 }
 catch (const std::exception& e) {
 	reportException(e);

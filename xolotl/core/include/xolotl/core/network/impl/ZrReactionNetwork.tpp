@@ -95,13 +95,16 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 			// second is for V capture
 			if (lo.isOnAxis(Species::V)) {
 				// Spontaneous radii:
-				 //data.extraData.dislocationCaptureRadius(i, 0) = 3.05 * pow(lo[Species::V], 0.12) / 10;
-				 //data.extraData.dislocationCaptureRadius(i, 1) = 0.39 * pow(lo[Species::V], 0.4) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 0) = 3.05 *
+				// pow(lo[Species::V], 0.12) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 1) = 0.39 *
+				// pow(lo[Species::V], 0.4) / 10;
 
 				// Thermal radii:
-				data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::V], 0.09) / 10;
-				data.extraData.dislocationCaptureRadius(i, 1) = 2.0 * pow(lo[Species::V], 0.3) / 10;
-
+				data.extraData.dislocationCaptureRadius(i, 0) =
+					4.2 * pow(lo[Species::V], 0.09) / 10;
+				data.extraData.dislocationCaptureRadius(i, 1) =
+					2.0 * pow(lo[Species::V], 0.3) / 10;
 			}
 
 			// adding basal
@@ -115,27 +118,37 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 				// data.extraData.dislocationCaptureRadius(i, 1) = 0.4 *
 				// pow(lo[Species::Basal], 0.33) / 10;
 
-                // Thermal radii:
-                if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize) data.extraData.dislocationCaptureRadius(i, 0) = 1.1;
-                else data.extraData.dislocationCaptureRadius(i, 0) = 0.7;
-                data.extraData.dislocationCaptureRadius(i, 1) = 1.8 * pow(lo[Species::Basal], 0.24) / 10;
+				// Thermal radii:
+				if (lo[Species::Basal] < ::xolotl::core::basalTransitionSize)
+					data.extraData.dislocationCaptureRadius(i, 0) = 1.1;
+				else
+					data.extraData.dislocationCaptureRadius(i, 0) = 0.7;
+				data.extraData.dislocationCaptureRadius(i, 1) =
+					1.8 * pow(lo[Species::Basal], 0.24) / 10;
 
-                // Turning off capture radii for FBP:
-                //if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize) data.extraData.dislocationCaptureRadius(i, 0) = 0;
-                //if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize) data.extraData.dislocationCaptureRadius(i, 1) = 0;
-            }
+				// Turning off capture radii for FBP:
+				// if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize)
+				// data.extraData.dislocationCaptureRadius(i, 0) = 0;
+				// if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize)
+				// data.extraData.dislocationCaptureRadius(i, 1) = 0;
+			}
 
 			// Set the dislocation capture radii for interstitial a-loops
 			// (convert to nm)
 			else if (lo.isOnAxis(Species::I)) {
 				// Spontaneous radii:
-				 //data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::I], 0.05) / 10;
-				 //data.extraData.dislocationCaptureRadius(i, 1) = 5.1 * pow(lo[Species::I], -0.01) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 0) = 4.2 *
+				// pow(lo[Species::I], 0.05) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 1) = 5.1 *
+				// pow(lo[Species::I], -0.01) / 10;
 
-                // Thermal radii
-                //data.extraData.dislocationCaptureRadius(i, 0) = 4 * pow(lo[Species::I], 0.23) / 10;
-                data.extraData.dislocationCaptureRadius(i, 0) = 5.0 * pow(lo[Species::I], 0.18) / 10;
-				data.extraData.dislocationCaptureRadius(i, 1) = 6.0 * pow(lo[Species::I], 0.08) / 10;
+				// Thermal radii
+				// data.extraData.dislocationCaptureRadius(i, 0) = 4 *
+				// pow(lo[Species::I], 0.23) / 10;
+				data.extraData.dislocationCaptureRadius(i, 0) =
+					5.0 * pow(lo[Species::I], 0.18) / 10;
+				data.extraData.dislocationCaptureRadius(i, 1) =
+					6.0 * pow(lo[Species::I], 0.08) / 10;
 			}
 		}); // Goes with parallel_for
 }
@@ -476,31 +489,30 @@ ZrClusterUpdater::updateDiffusionCoefficient(
 	constexpr Kokkos::Array<double, 7> vDiffusionC = {
 		0.0, 2.2e+12, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
 
+	// Literature values:
+	/*
+	// I migration energies in eV
+	constexpr Kokkos::Array<double, 6> iMigrationA = {
+	0.0, 0.17, 0.23, 0.49, 0.75, 0.87};
+	constexpr Kokkos::Array<double, 6> iMigrationC = {
+	0.0, 0.17, 0.54, 0.93, 1.2, 1.6};
+	// I diffusion factors in nm^2/s
+	constexpr Kokkos::Array<double, 6> iDiffusionA = {
+	0.0, 3.23e+9, 0, 0, 0, 0};
+	constexpr Kokkos::Array<double, 6> iDiffusionC = {
+	0.0, 3.23e+9, 0, 0, 0, 0};
 
-    // Literature values:
-    /*
-    // I migration energies in eV
-    constexpr Kokkos::Array<double, 6> iMigrationA = {
-    0.0, 0.17, 0.23, 0.49, 0.75, 0.87};
-    constexpr Kokkos::Array<double, 6> iMigrationC = {
-    0.0, 0.17, 0.54, 0.93, 1.2, 1.6};
-    // I diffusion factors in nm^2/s
-    constexpr Kokkos::Array<double, 6> iDiffusionA = {
-    0.0, 3.23e+9, 0, 0, 0, 0};
-    constexpr Kokkos::Array<double, 6> iDiffusionC = {
-    0.0, 3.23e+9, 0, 0, 0, 0};
-
-    // V migration energies in eV (up to n = 6)
-    constexpr Kokkos::Array<double, 7> vMigrationA = {
-    0.0, 0.59, 0.58, 0.94, 0.16, 0.81, 0.25};
-    constexpr Kokkos::Array<double, 7> vMigrationC = {
-    0.0, 0.59, 0.41, 1.12, 0.58, 0.29, 0.18};
-    // V diffusions factors in nm^2/s
-    constexpr Kokkos::Array<double, 7> vDiffusionA = {
-    0.0, 443, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10};
-    constexpr Kokkos::Array<double, 7> vDiffusionC = {
-    0.0, 443, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
-    */
+	// V migration energies in eV (up to n = 6)
+	constexpr Kokkos::Array<double, 7> vMigrationA = {
+	0.0, 0.59, 0.58, 0.94, 0.16, 0.81, 0.25};
+	constexpr Kokkos::Array<double, 7> vMigrationC = {
+	0.0, 0.59, 0.41, 1.12, 0.58, 0.29, 0.18};
+	// V diffusions factors in nm^2/s
+	constexpr Kokkos::Array<double, 7> vDiffusionA = {
+	0.0, 443, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10};
+	constexpr Kokkos::Array<double, 7> vDiffusionC = {
+	0.0, 443, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
+	*/
 
 	// 3D diffuser case
 	if (data.migrationEnergy(clusterId) < 0.0) {

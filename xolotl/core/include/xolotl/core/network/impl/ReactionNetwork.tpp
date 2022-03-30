@@ -356,9 +356,11 @@ ReactionNetwork<TImpl>::getAllMomentIdInfo()
 	// Create the object to return
 	MomentIdMap idMap;
 
+	auto clusterDataMirror = this->getClusterDataMirror();
+
 	// Loop on all the clusters
 	for (auto i = 0; i < this->_numClusters; ++i) {
-		auto cluster = _clusterDataMirror.getCluster(i);
+		auto cluster = clusterDataMirror.getCluster(i);
 		auto momIds = cluster.getMomentIds();
 		std::vector<IdType> temp;
 		for (auto j = 0; j < momIds.extent(0); j++) {
