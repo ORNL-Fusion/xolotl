@@ -301,7 +301,7 @@ public:
 	findClusterId(const std::vector<AmountType>& composition) = 0;
 
 	virtual ClusterCommon<plsm::HostMemSpace>
-	getClusterCommon(IndexType clusterId) const = 0;
+	getClusterCommon(IndexType clusterId) = 0;
 
 	virtual ClusterCommon<plsm::HostMemSpace>
 	getSingleVacancy() = 0;

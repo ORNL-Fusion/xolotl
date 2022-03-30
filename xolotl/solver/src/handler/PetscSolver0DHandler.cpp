@@ -150,7 +150,6 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	// Update the network with the temperature
 	auto depths = std::vector<double>(1, 1.0);
 	network.setTemperatures(temperature, depths);
-	network.syncClusterDataOnHost();
 
 	/*
 	 Restore vectors
@@ -307,7 +306,6 @@ PetscSolver0DHandler::updateConcentration(
 		temperature[0] = temp;
 		auto depths = std::vector<double>(1, 1.0);
 		network.setTemperatures(temperature, depths);
-		network.syncClusterDataOnHost();
 	}
 
 	// ----- Account for flux of incoming particles -----
@@ -397,7 +395,6 @@ PetscSolver0DHandler::computeJacobian(
 		temperature[0] = temp;
 		auto depths = std::vector<double>(1, 1.0);
 		network.setTemperatures(temperature, depths);
-		network.syncClusterDataOnHost();
 	}
 
 	// ----- Take care of the reactions for all the reactants -----
