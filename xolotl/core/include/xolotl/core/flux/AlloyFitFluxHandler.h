@@ -148,7 +148,7 @@ private:
 
 	struct IonDamageStruct
 	{
-		std::vector<int> fluxIndex;
+		std::vector<IdType> fluxIndex;
 		std::vector<std::vector<double>> damageRate;
 	} ionDamage;
 
@@ -339,6 +339,45 @@ public:
 		}
 
 		return;
+	}
+
+	void
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
+	{
+		// Attenuation factor to model reduced production of new point defects
+		// with increasing dose (or time).
+		double attenuation = 1.0;
+		if (tauFlux > 0.0 && currentTime > 0.0)
+			attenuation = 1.0 - exp((-1.0 * tauFlux) / currentTime);
+
+		////////////////////////////////////////////////////////////////////////
+		// TODO: This needs to happen at initialization
+		Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
+			ionDamageFluxIds_h(
+				ionDamage.fluxIndex.data(), ionDamage.fluxIndex.size());
+		Kokkos::View<IdType*> ionDamageFluxIds(
+			"Ion Damage Flux Indices", ionDamage.fluxIndex.size());
+		deep_copy(ionDamageFluxIds, ionDamageFluxIds_h);
+		auto innerSize = xGrid.size() == 0 ? 1 : xGrid.size() - surfacePos + 1;
+		Kokkos::View<double**> ionDamageRate{
+			"Ion Damage Rate", ionDamage.damageRate.size(), innerSize};
+		auto ionDamageRate_h = create_mirror_view(ionDamageRate);
+		for (std::size_t i = 0; i < ionDamage.damageRate.size(); ++i) {
+			for (std::size_t j = 0; j < ionDamage.damageRate[i].size(); ++j) {
+				ionDamageRate_h(i, j) = ionDamage.damageRate[i][j];
+			}
+		}
+		deep_copy(ionDamageRate, ionDamageRate_h);
+		////////////////////////////////////////////////////////////////////////
+
+		// Update the concentration array
+		Kokkos::parallel_for(
+			ionDamageFluxIds.size(), KOKKOS_LAMBDA(std::size_t i) {
+				Kokkos::atomic_add(&updatedConcOffset[ionDamageFluxIds[i]],
+					attenuation * ionDamageRate(i, xi - surfacePos));
+			});
 	}
 
 	/**

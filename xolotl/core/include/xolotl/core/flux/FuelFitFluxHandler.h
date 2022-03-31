@@ -98,7 +98,8 @@ public:
 
 	void
 	computeIncidentFlux(double currentTime,
-		Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos)
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
 	{
 		if (fluxIndices.empty()) {
 			return;

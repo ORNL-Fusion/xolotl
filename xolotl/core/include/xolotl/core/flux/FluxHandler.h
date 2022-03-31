@@ -134,7 +134,8 @@ public:
 
 	void
 	computeIncidentFlux(double currentTime,
-		Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos) override;
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override;
 
 	/**
 	 * \see IFluxHandler.h

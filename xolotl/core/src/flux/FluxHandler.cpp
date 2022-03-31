@@ -204,7 +204,28 @@ void
 FluxHandler::computeIncidentFlux(double currentTime,
 	Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos)
 {
-	// TODO
+	// Skip if no index was set
+	if (fluxIndices.size() == 0)
+		return;
+
+	// Recompute the flux vector if a time profile is used
+	if (useTimeProfile) {
+		fluxAmplitude = getProfileAmplitude(currentTime);
+		recomputeFluxHandler(surfacePos);
+	}
+
+	double value{};
+	if (incidentFluxVec[0].size() == 0) {
+		value = fluxAmplitude;
+	}
+	else {
+		value = incidentFluxVec[0][xi - surfacePos];
+	}
+
+	// Update the concentration array
+	auto id = fluxIndices[0];
+	Kokkos::parallel_for(
+		1, KOKKOS_LAMBDA(std::size_t) { updatedConcOffset[id] += value; });
 }
 
 void
