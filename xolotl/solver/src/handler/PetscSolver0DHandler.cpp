@@ -14,13 +14,14 @@ namespace xolotl
 {
 namespace solver
 {
-namespace handler
-{
+// TODO: Move this to a common header file
 using DefaultMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
 template <typename T>
 using PetscOffsetView =
 	Kokkos::Experimental::OffsetView<T, Kokkos::LayoutRight, DefaultMemSpace>;
 
+namespace handler
+{
 void
 PetscSolver0DHandler::createSolverContext(DM& da)
 {

@@ -1,3 +1,8 @@
+#include <petscconf.h>
+#include <petscdmda_kokkos.hpp>
+
+#include <Kokkos_OffsetView.hpp>
+
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
@@ -13,6 +18,12 @@ namespace xolotl
 {
 namespace solver
 {
+// TODO: Move this to a common header file
+using DefaultMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
+template <typename T>
+using PetscOffsetView =
+	Kokkos::Experimental::OffsetView<T, Kokkos::LayoutRight, DefaultMemSpace>;
+
 namespace monitor
 {
 PetscErrorCode
@@ -425,8 +436,8 @@ PetscMonitor0D::computeXenonRetention(
 	const auto dof = network.getDOF();
 
 	// Get the array of concentration
-	PetscReal** solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	PetscOffsetView<const PetscReal**> solutionArray;
+	ierr = DMDAVecGetKokkosOffsetViewDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
@@ -434,31 +445,22 @@ PetscMonitor0D::computeXenonRetention(
 		   partialBubbleConcentration = 0.0, partialRadii = 0.0,
 		   partialSize = 0.0;
 
-	// Declare the pointer for the concentrations at a specific grid point
-	PetscReal* gridPointSolution;
-
 	// Get the pointer to the beginning of the solution data for this grid point
-	gridPointSolution = solutionArray[0];
+	auto concs = subview(solutionArray, 0, Kokkos::ALL).view();
 
 	// Get the minimum size for the radius
 	auto minSizes = _solverHandler->getMinSizes();
 
-	using HostUnmanaged =
-		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto hConcs = HostUnmanaged(gridPointSolution, dof);
-	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-	deep_copy(dConcs, hConcs);
-
 	// Get the concentrations
-	xeConcentration = network.getTotalAtomConcentration(dConcs, Spec::Xe, 1);
-	bubbleConcentration = network.getTotalConcentration(dConcs, Spec::Xe, 1);
-	radii = network.getTotalRadiusConcentration(dConcs, Spec::Xe, 1);
+	xeConcentration = network.getTotalAtomConcentration(concs, Spec::Xe, 1);
+	bubbleConcentration = network.getTotalConcentration(concs, Spec::Xe, 1);
+	radii = network.getTotalRadiusConcentration(concs, Spec::Xe, 1);
 	partialBubbleConcentration =
-		network.getTotalConcentration(dConcs, Spec::Xe, minSizes[0]);
+		network.getTotalConcentration(concs, Spec::Xe, minSizes[0]);
 	partialRadii =
-		network.getTotalRadiusConcentration(dConcs, Spec::Xe, minSizes[0]);
+		network.getTotalRadiusConcentration(concs, Spec::Xe, minSizes[0]);
 	partialSize =
-		network.getTotalAtomConcentration(dConcs, Spec::Xe, minSizes[0]);
+		network.getTotalAtomConcentration(concs, Spec::Xe, minSizes[0]);
 
 	// Print the result
 	XOLOTL_LOG << "\nTime: " << time << '\n'
@@ -481,7 +483,7 @@ PetscMonitor0D::computeXenonRetention(
 	outputFile.close();
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
@@ -505,8 +507,8 @@ PetscMonitor0D::computeAlloy(
 	CHKERRQ(ierr);
 
 	// Get the array of concentration
-	PetscReal** solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	PetscOffsetView<const PetscReal**> solutionArray;
+	ierr = DMDAVecGetKokkosOffsetViewDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	using NetworkType = core::network::AlloyReactionNetwork;
@@ -522,28 +524,19 @@ PetscMonitor0D::computeAlloy(
 	// Get the minimum size for the loop densities and diameters
 	auto minSizes = _solverHandler->getMinSizes();
 
-	// Declare the pointer for the concentrations at a specific grid point
-	PetscReal* gridPointSolution;
-
 	// Get the pointer to the beginning of the solution data for this grid point
-	gridPointSolution = solutionArray[0];
-
-	using HostUnmanaged =
-		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto hConcs = HostUnmanaged(gridPointSolution, dof);
-	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-	deep_copy(dConcs, hConcs);
+	auto concs = subview(solutionArray, 0, Kokkos::ALL).view();
 
 	// Loop on the species
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		myData[4 * id()] = network.getTotalConcentration(dConcs, id, 1);
+		myData[4 * id()] = network.getTotalConcentration(concs, id, 1);
 		myData[(4 * id()) + 1] = 2.0 *
-			network.getTotalRadiusConcentration(dConcs, id, 1) /
+			network.getTotalRadiusConcentration(concs, id, 1) /
 			myData[4 * id()];
 		myData[(4 * id()) + 2] =
-			network.getTotalConcentration(dConcs, id, minSizes[id()]);
+			network.getTotalConcentration(concs, id, minSizes[id()]);
 		myData[(4 * id()) + 3] = 2.0 *
-			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
+			network.getTotalRadiusConcentration(concs, id, minSizes[id()]) /
 			myData[(4 * id()) + 2];
 	}
 
@@ -567,7 +560,7 @@ PetscMonitor0D::computeAlloy(
 	outputFile.close();
 
 	// Restore the PETSc solution array
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
