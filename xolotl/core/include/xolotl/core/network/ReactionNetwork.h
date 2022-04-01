@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <type_traits>
 
 #include <Kokkos_Atomic.hpp>
@@ -70,6 +71,7 @@ public:
 	using AmountType = typename IReactionNetwork::AmountType;
 	using IndexType = typename IReactionNetwork::IndexType;
 	using Subpaving = typename Types::Subpaving;
+	using SubpavingMirror = typename Subpaving::HostMirror;
 	using SubdivisionRatio = plsm::SubdivisionRatio<numSpecies>;
 	using Composition = typename Types::Composition;
 	using Region = typename Types::Region;
@@ -228,39 +230,49 @@ public:
 	void
 	syncClusterDataOnHost() override;
 
-	template <typename MemSpace>
-	KOKKOS_INLINE_FUNCTION
-	IndexType
-	findClusterId(const Composition& comp, MemSpace)
+	void
+	invalidateDataMirror()
 	{
-		if constexpr (!std::is_same_v<plsm::HostMemSpace,
-						  plsm::DeviceMemSpace> &&
-			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
-			auto id = _subpavingMirror.findTileId(comp);
-			return (id == _subpavingMirror.invalidIndex()) ?
-				this->invalidIndex() :
-				IndexType(id);
+		_subpavingMirror.reset();
+		_clusterDataMirror.reset();
+	}
+
+	const SubpavingMirror&
+	getSubpavingMirror()
+	{
+		if (!_subpavingMirror.has_value()) {
+			syncClusterDataOnHost();
 		}
-		else {
-			auto id = _subpaving.findTileId(comp);
-			return (id == _subpaving.invalidIndex()) ? this->invalidIndex() :
-													   IndexType(id);
+		return *_subpavingMirror;
+	}
+
+	const ClusterDataMirror&
+	getClusterDataMirror()
+	{
+		if (!_clusterDataMirror.has_value()) {
+			syncClusterDataOnHost();
 		}
+		return *_clusterDataMirror;
 	}
 
 	template <typename MemSpace>
 	KOKKOS_INLINE_FUNCTION
 	Cluster<MemSpace>
-	findCluster(const Composition& comp, MemSpace memSpace)
+	findCluster(const Composition& comp, MemSpace)
 	{
 		if constexpr (!std::is_same_v<plsm::HostMemSpace,
 						  plsm::DeviceMemSpace> &&
 			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
-			return _clusterDataMirror.getCluster(findClusterId(comp, memSpace));
+			auto id = getSubpavingMirror().findTileId(comp);
+			return getClusterDataMirror().getCluster(
+				id == _subpaving.invalidIndex() ? this->invalidIndex() :
+												  IndexType(id));
 		}
 		else {
+			auto id = _subpaving.findTileId(comp);
 			return _clusterData.d_view().getCluster(
-				findClusterId(comp, memSpace));
+				id == _subpaving.invalidIndex() ? this->invalidIndex() :
+												  IndexType(id));
 		}
 	}
 
@@ -279,13 +291,13 @@ public:
 		for (std::size_t i = 0; i < composition.size(); ++i) {
 			comp[i] = composition[i];
 		}
-		return findClusterId(comp, plsm::HostMemSpace{});
+		return findCluster(comp, plsm::HostMemSpace{}).getId();
 	}
 
 	ClusterCommon<plsm::HostMemSpace>
-	getClusterCommon(IndexType clusterId) const override
+	getClusterCommon(IndexType clusterId) override
 	{
-		return _clusterDataMirror.getClusterCommon(clusterId);
+		return getClusterDataMirror().getClusterCommon(clusterId);
 	}
 
 	ClusterCommon<plsm::HostMemSpace>
@@ -311,7 +323,7 @@ public:
 		if constexpr (!std::is_same_v<plsm::HostMemSpace,
 						  plsm::DeviceMemSpace> &&
 			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
-			return _clusterDataMirror.getCluster(clusterId);
+			return getClusterDataMirror().getCluster(clusterId);
 		}
 		else {
 			return _clusterData.d_view().getCluster(clusterId);
@@ -556,9 +568,8 @@ private:
 	generateDiagonalFill(const Connectivity& connectivity);
 
 private:
-	Subpaving _subpaving;
-	typename Subpaving::HostMirror _subpavingMirror;
-	ClusterDataMirror _clusterDataMirror;
+	std::optional<SubpavingMirror> _subpavingMirror;
+	std::optional<ClusterDataMirror> _clusterDataMirror;
 
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
@@ -566,6 +577,8 @@ private:
 
 protected:
 	Kokkos::DualView<ClusterData> _clusterData;
+
+	Subpaving _subpaving;
 
 	ReactionCollection _reactions;
 

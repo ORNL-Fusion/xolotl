@@ -25,7 +25,8 @@ public:
 
 	NEClusterGenerator(const options::IOptions& options);
 
-	NEClusterGenerator(const options::IOptions& options, std::size_t refineDepth);
+	NEClusterGenerator(
+		const options::IOptions& options, std::size_t refineDepth);
 
 	KOKKOS_INLINE_FUNCTION
 	bool

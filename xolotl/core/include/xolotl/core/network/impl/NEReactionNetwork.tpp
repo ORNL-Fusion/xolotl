@@ -16,7 +16,7 @@ namespace network
 void
 NEReactionNetwork::readReactions(double temperature, const std::string filename)
 {
-    syncClusterDataOnHost();
+	syncClusterDataOnHost();
 
 	// Read the reactions from a file
 	std::ifstream reactionFile;

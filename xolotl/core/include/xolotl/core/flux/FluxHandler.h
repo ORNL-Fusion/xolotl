@@ -192,7 +192,7 @@ public:
 	{
 		return;
 	}
-	
+
 	/**
 	 * \see IFluxHandler.h
 	 */

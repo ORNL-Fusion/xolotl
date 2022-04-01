@@ -31,6 +31,14 @@ mpiInit(int& argc, const char* argv[])
 	MPI_Init(&argc, &ncargv);
 }
 
+bool
+mpiInitialized()
+{
+	int ret;
+	MPI_Initialized(&ret);
+	return ret != 0;
+}
+
 int
 getMPIRank()
 {

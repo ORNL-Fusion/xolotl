@@ -129,7 +129,7 @@ public:
 	 */
 	virtual void
 	setFissionYield(double yield) = 0;
-	
+
 	/**
 	 * This operation gets the vector of flux amplitudes for each cluster at
 	 * this time.

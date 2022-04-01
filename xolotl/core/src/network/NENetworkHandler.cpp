@@ -49,8 +49,6 @@ auto neNetworkGenerator = [](const options::IOptions& options) {
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 
-	network->syncClusterDataOnHost();
-
 	return network;
 };
 
