@@ -60,18 +60,24 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 		auto rId = findCluster(comp, plsm::HostMemSpace{}).getId();
 
 		// Get its properties and save it
-		auto g0 = tokens[3];
-		auto mobility = tokens[4];
+		auto h0 = tokens[3];
+		auto s0 = tokens[4];
+		auto g0 = h0 - k_B * temperature * s0;
+		auto D0 = tokens[5];
+		auto q = tokens[6];
+		auto mobility =
+			D0 * exp(-q / (k_B * temperature)) / (k_B * temperature);
 		g0Vector[rId] = g0;
 		mVector[rId] = mobility;
 		// Compute the thermal equilibrium
 		auto theq = exp(-g0 / (k_B * temperature));
 
 		// Loop on the linked clusters
-		for (auto i = 5; i < tokens.size(); i += 2) {
+		for (auto i = 7; i < tokens.size(); i += 4) {
 			// Get its properties
-			auto g0Linked = tokens[i];
-			auto mobilityLinked = tokens[i + 1];
+			auto g0Linked = tokens[i] - k_B * temperature * tokens[i + 1];
+			auto mobilityLinked = tokens[i + 2] *
+				exp(-tokens[i + 3] / (k_B * temperature)) / (k_B * temperature);
 			// Compute its thermal equilibrium
 			auto theqLinked = exp(-g0Linked / (k_B * temperature));
 			// Save the linkage information
