@@ -303,6 +303,65 @@ public:
 		return;
 	}
 
+	void
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
+	{
+		// Recompute the flux vector if a time profile is used
+		if (useTimeProfile) {
+			fluxAmplitude = getProfileAmplitude(currentTime);
+			recomputeFluxHandler(surfacePos);
+		}
+
+		////////////////////////////////////////////////////////////////////////
+		// TODO: This needs to happen at initialization
+		auto ids_h =
+			Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+				fluxIndices.data(), fluxIndices.size());
+		auto ids = Kokkos::View<IdType*>(
+			Kokkos::ViewAllocateWithoutInitializing("Flux Indices"),
+			fluxIndices.size());
+		deep_copy(ids, ids_h);
+
+		auto reduxFactors_h =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+				reductionFactors.data(), reductionFactors.size());
+		auto reduxFactors = Kokkos::View<double*>(
+			Kokkos::ViewAllocateWithoutInitializing("Reduction Factors"),
+			reductionFactors.size());
+		deep_copy(reduxFactors, reduxFactors_h);
+
+		auto incidentFlux = Kokkos::View<double**>("Incident Flux Vec",
+			incidentFluxVec.size(), incidentFluxVec[0].size());
+		auto incidentFlux_h = create_mirror_view(incidentFlux);
+		for (std::size_t i = 0; i < incidentFluxVec.size(); ++i) {
+			for (std::size_t j = 0; j < incidentFluxVec[i].size(); ++j) {
+				incidentFlux_h(i, j) = incidentFluxVec[i][j];
+			}
+		}
+		deep_copy(incidentFlux, incidentFlux_h);
+		////////////////////////////////////////////////////////////////////////
+
+		if (xGrid.size() == 0) {
+			// Update the concentration array
+			auto amplitude = fluxAmplitude;
+			Kokkos::parallel_for(
+				ids.size(), KOKKOS_LAMBDA(std::size_t i) {
+					Kokkos::atomic_add(&updatedConcOffset[ids[i]],
+						amplitude * reduxFactors[i]);
+				});
+		}
+		else {
+			// Update the concentration array
+			Kokkos::parallel_for(
+				ids.size(), KOKKOS_LAMBDA(std::size_t i) {
+				Kokkos::atomic_add(&updatedConcOffset[ids[i]],
+                    incidentFlux(i, xi - surfacePos));
+				});
+		}
+	}
+
 	/**
 	 * \see IFluxHandler.h
 	 */

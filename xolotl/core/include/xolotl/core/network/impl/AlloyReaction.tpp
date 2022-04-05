@@ -30,32 +30,32 @@ AlloyDissociationReaction::computeBindingEnergy()
 	Composition prod1Comp = prod1Reg.getOrigin();
 	Composition prod2Comp = prod2Reg.getOrigin();
 	if (lo.isOnAxis(Species::Void)) {
-		double n = (double)(lo[Species::Void] + hi[Species::Void] - 1) / 2.0;
+		double n = (double)(lo[Species::Void] + hi[Species::Void] - 1) * 0.5;
 		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
-			be = 3.5 - 3.45 * (pow(n + 1.0, 2.0 / 3.0) - pow(n, 2.0 / 3.0));
+			be = 3.5 - 3.45 * (cbrt((n + 1.0) * (n + 1.0)) - cbrt(n * n));
 		}
 		else if (prod1Comp.isOnAxis(Species::V) ||
 			prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 1.9 - 3.1 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
 		}
 	}
 	else if (lo.isOnAxis(Species::Faulted)) {
 		double n =
-			(double)(lo[Species::Faulted] + hi[Species::Faulted] - 1) / 2.0;
+			(double)(lo[Species::Faulted] + hi[Species::Faulted] - 1) * 0.5;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.2 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 1.9 - 3.2 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
 		}
 	}
 	else if (lo.isOnAxis(Species::V)) {
-		double n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
+		double n = (double)(lo[Species::V] + hi[Species::V] - 1) * 0.5;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 1.9 - 3.1 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
 		}
 	}
 	else if (lo.isOnAxis(Species::I)) {
-		double n = (double)(lo[Species::I] + hi[Species::I] - 1) / 2.0;
+		double n = (double)(lo[Species::I] + hi[Species::I] - 1) * 0.5;
 		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
-			be = 3.5 - 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 3.5 - 2.5 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
 		}
 	}
 

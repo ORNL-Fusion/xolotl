@@ -410,10 +410,10 @@ PetscSolver0DHandler::computeJacobian(
 	partialDerivativeTimer->start();
 	network.computeAllPartials(concOffset, vals);
 	partialDerivativeTimer->stop();
+#if 0
 	auto hPartials = create_mirror_view(vals);
 	deep_copy(hPartials, vals);
 
-#if 0
 	// Variable for the loop on reactants
 	IdType startingIdx = 0;
 
