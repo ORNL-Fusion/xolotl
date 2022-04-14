@@ -531,7 +531,9 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	}
 
 	// Look for potential product
-	IndexType nProd = 0;
+	IndexType tmSize = 0;
+	IndexType tmNumber = 0;
+	util::Array<IndexType, 8> tmClusterIds;
 	for (IndexType k = 0; k < numClusters; ++k) {
 		// Get the composition
 		const auto& prodReg = this->getCluster(k).getRegion();
@@ -550,8 +552,6 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		}
 
 		if (isGood) {
-			// Increase nProd
-			nProd++;
 			this->addProductionReaction(tag, {i, j, k});
 			// TODO: will have to add some rules, i or j should be a simplex
 			// cluster of max size 1
@@ -575,6 +575,90 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 				this->addDissociationReaction(tag, {k, i, j});
 			}
 		}
+		// Special case for trap-mutation
+		// Look for larger clusters only if one of the reactant is pure He
+		if (!(cl1Reg.isSimplex() && lo1.isOnAxis(Species::He)) &&
+			!(cl2Reg.isSimplex() && lo2.isOnAxis(Species::He))) {
+			continue;
+		}
+
+		// Check that both reactants contain He
+		if (cl1Reg[Species::He].begin() < 1 ||
+			cl2Reg[Species::He].begin() < 1) {
+			continue;
+		}
+
+		// Check that some of the products don't exist
+		if (bounds[Species::He].second <=
+			psi::getMaxHePerV(bounds[Species::V].first, 4.0))
+			continue;
+
+		// Copy the bounds
+		auto tmBounds = bounds;
+
+		// Loop on possible I sizes
+		// TODO: get the correct value for maxISize
+		AmountType maxISize = 6;
+		for (AmountType n = 1; n <= maxISize; ++n) {
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::I] = n;
+			auto iClusterId = subpaving.findTileId(comp);
+
+			// Check the I cluster exists
+			if (iClusterId == NetworkType::invalidIndex())
+				continue;
+
+			tmBounds[Species::V].first += 1;
+			tmBounds[Species::V].second += 1;
+
+			isGood = true;
+			// Loop on the species
+			// TODO: check l correspond to the same species in bounds and
+			// prod
+			for (auto l : speciesNoI) {
+				if (prodReg[l()].begin() > tmBounds[l].second) {
+					isGood = false;
+					break;
+				}
+				if (prodReg[l()].end() - 1 < tmBounds[l].first) {
+					isGood = false;
+					break;
+				}
+			}
+			if (isGood) {
+				if (tmSize == 0) {
+					tmSize = n;
+					tmClusterIds[tmNumber] = k;
+					tmNumber++;
+				}
+				else {
+					if (n == tmSize) {
+						tmClusterIds[tmNumber] = k;
+						tmNumber++;
+					}
+					if (n < tmSize) {
+						tmSize = n;
+						tmNumber = 0;
+						tmClusterIds[tmNumber] = k;
+						tmNumber++;
+					}
+				}
+			}
+		}
+	}
+
+	// Trap mutation (because you don't know in which order products will be
+	// tested
+	if (tmSize > 0) {
+		// Find the corresponding cluster
+		Composition comp = Composition::zero();
+		comp[Species::I] = tmSize;
+		auto iClusterId = subpaving.findTileId(comp);
+		// Loop on the possible products
+		for (auto n = 0; n < tmNumber; n++)
+			this->addProductionReaction(
+				tag, {i, j, tmClusterIds[n], iClusterId});
 	}
 
 	// Modified Trap-Mutation
@@ -595,70 +679,6 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 					auto iClusterId = subpaving.findTileId(compI);
 					this->addTrapMutationReaction(tag, {i, j, iClusterId});
 				}
-			}
-		}
-	}
-
-	// Special case for trap-mutation
-	if (nProd == 0) {
-		// Look for larger clusters only if one of the reactant is pure He
-		if (!(cl1Reg.isSimplex() && lo1.isOnAxis(Species::He)) &&
-			!(cl2Reg.isSimplex() && lo2.isOnAxis(Species::He))) {
-			return;
-		}
-
-		// Check that both reactants contain He
-		if (cl1Reg[Species::He].begin() < 1 ||
-			cl2Reg[Species::He].begin() < 1) {
-			return;
-		}
-
-		// Loop on possible I sizes
-		// TODO: get the correct value for maxISize
-		AmountType maxISize = 6;
-		for (AmountType n = 1; n <= maxISize; ++n) {
-			// Find the corresponding cluster
-			Composition comp = Composition::zero();
-			comp[Species::I] = n;
-			auto iClusterId = subpaving.findTileId(comp);
-
-			// Check the I cluster exists
-			if (iClusterId == NetworkType::invalidIndex())
-				continue;
-
-			bounds[Species::V].first += 1;
-			bounds[Species::V].second += 1;
-
-			// Look for potential product
-			IndexType nProd = 0;
-			for (IndexType k = 0; k < numClusters; ++k) {
-				// Get the composition
-				const auto& prodReg = this->getCluster(k).getRegion();
-				bool isGood = true;
-				// Loop on the species
-				// TODO: check l correspond to the same species in bounds
-				// and prod
-				for (auto l : speciesNoI) {
-					if (prodReg[l()].begin() > bounds[l()].second) {
-						isGood = false;
-						break;
-					}
-					if (prodReg[l()].end() - 1 < bounds[l()].first) {
-						isGood = false;
-						break;
-					}
-				}
-
-				if (isGood) {
-					// Increase nProd
-					nProd++;
-					this->addProductionReaction(tag, {i, j, k, iClusterId});
-					// No dissociation
-				}
-			}
-			// Stop if we found a product
-			if (nProd > 0) {
-				break;
 			}
 		}
 	}

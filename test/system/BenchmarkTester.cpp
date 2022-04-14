@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(PSI_6)
 	if (getMPICommSize() < 20 || getMPICommSize() > 112) {
 		return;
 	}
-	// 1D + million
+	// 1D + larger V
 	SystemTestCase{"benchmark_PSI_6"}.withTimer().run();
 }
 

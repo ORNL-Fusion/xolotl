@@ -22,7 +22,7 @@ getMaxHePerV(IReactionNetwork::AmountType amtV, double ratio) noexcept
 	 * It could support a mixture of up to nine
 	 * helium atoms with one vacancy.
 	 */
-	constexpr Kokkos::Array<AmountType, 30> maxHePerV = {0, 9, 14, 18, 20, 27,
+	constexpr Kokkos::Array<AmountType, 30> maxHePerV = {8, 9, 14, 18, 20, 27,
 		30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101,
 		103, 105, 107, 109, 110, 112, 116};
 

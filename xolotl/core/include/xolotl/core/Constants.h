@@ -9,6 +9,8 @@
 #include <cmath>
 #include <memory>
 
+#include <xolotl/config.h>
+
 namespace xolotl
 {
 namespace core
@@ -76,6 +78,9 @@ constexpr double frankBurgers = 0.333;
 
 // Sink strength for Alloy case in nm^-2
 constexpr double alloysinkStrength = 1.0e-5;
+
+// V value for which the grouping behavior changes for PSI
+constexpr IdType psiVThreshold = 150;
 
 } /* end namespace core */
 } /* end namespace xolotl */

@@ -1895,7 +1895,7 @@ BOOST_AUTO_TEST_CASE(largeHeVGrouped)
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
-	paramFile << "netParam=8 0 0 20000 6" << std::endl
+	paramFile << "netParam=8 0 0 200 6" << std::endl
 			  << "process=reaction" << std::endl
 			  << "material=W100" << std::endl
 			  << "grouping=31 2 2" << std::endl;
@@ -1916,12 +1916,12 @@ BOOST_AUTO_TEST_CASE(largeHeVGrouped)
 			.generate(opts)
 			->getNetwork());
 
-	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 3127);
-	BOOST_REQUIRE_EQUAL(network->getDOF(), 4775);
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 3627);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 4488);
 
 	// TODO: Test each value explicitly?
 	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
-	BOOST_REQUIRE_EQUAL(bounds.size(), 3127);
+	BOOST_REQUIRE_EQUAL(bounds.size(), 3627);
 	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
 	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
 
@@ -1930,7 +1930,7 @@ BOOST_AUTO_TEST_CASE(largeHeVGrouped)
 
 	// Check the single vacancy
 	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 922);
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 613);
 }
 
 BOOST_AUTO_TEST_CASE(HeDVGrouped)

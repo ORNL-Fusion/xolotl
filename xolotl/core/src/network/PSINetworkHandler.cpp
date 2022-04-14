@@ -1,3 +1,4 @@
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/network/PSINetworkHandler.h>
 
 namespace xolotl
@@ -126,7 +127,7 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	else {
 		// Either V is grouped
 		if (options.getGroupingMin() > maxI) {
-			if (maxV < 10000) {
+			if (maxV < ::xolotl::core::psiVThreshold) {
 				AmountType refineHe = (maxHe + 1) / groupingWidthHe;
 				AmountType refineV = (maxV + 1) / groupingWidthV;
 				return makePSIReactionNetwork<PSIHeliumSpeciesList>(
