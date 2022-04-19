@@ -64,6 +64,14 @@ public:
 		double hy = 0.0, int iy = 0, double hz = 0.0,
 		int iz = 0) const override;
 
+	void
+	computeAdvection(network::IReactionNetwork& network,
+		const plsm::SpaceVector<double, 3>& pos,
+		Kokkos::View<const double*>* concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
+		int iz = 0) const override;
+
 	/**
 	 * \see IAdvectionHandler.h
 	 */

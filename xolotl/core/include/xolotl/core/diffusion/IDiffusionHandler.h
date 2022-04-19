@@ -4,7 +4,10 @@
 // Includes
 #include <memory>
 
+#include <Kokkos_Array.hpp>
+
 #include <xolotl/config.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
@@ -89,6 +92,13 @@ public:
 	computeDiffusion(network::IReactionNetwork& network, double** concVector,
 		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
 		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const = 0;
+
+	virtual void
+	computeDiffusion(network::IReactionNetwork& network,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0) const = 0;
 
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters

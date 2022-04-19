@@ -5,6 +5,8 @@
 #include <array>
 #include <memory>
 
+#include <Kokkos_View.hpp>
+
 #include <plsm/SpaceVector.h>
 
 #include <xolotl/config.h>
@@ -105,6 +107,14 @@ public:
 		const plsm::SpaceVector<double, 3>& pos, double** concVector,
 		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
 		double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0) const = 0;
+
+	virtual void
+	computeAdvection(network::IReactionNetwork& network,
+		const plsm::SpaceVector<double, 3>& pos,
+		Kokkos::View<const double*>* concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
+		int iz = 0) const = 0;
 
 	/**
 	 * Compute the partial derivatives due to the advection of all the helium

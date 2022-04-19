@@ -280,6 +280,9 @@ public:
 	virtual IndexType
 	findClusterId(const std::vector<AmountType>& composition) = 0;
 
+    virtual ClusterCommon<plsm::DeviceMemSpace>
+    getClusterCommon(IndexType clusterId, plsm::DeviceMemSpace) = 0;
+
 	virtual ClusterCommon<plsm::HostMemSpace>
 	getClusterCommon(IndexType clusterId) = 0;
 

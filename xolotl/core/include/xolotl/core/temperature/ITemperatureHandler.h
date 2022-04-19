@@ -65,8 +65,8 @@ public:
 	virtual void
 	setTemperature(double* solution) = 0;
 
-    virtual void
-    setTemperature(Kokkos::View<const double*> solution) = 0;
+	virtual void
+	setTemperature(Kokkos::View<const double*> solution) = 0;
 
 	/**
 	 * This operation sets the heat coefficient to use in the equation.
@@ -116,6 +116,11 @@ public:
 	computeTemperature(double** concVector, double* updatedConcOffset,
 		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
 		double sz = 0.0, int iz = 0) = 0;
+
+	virtual void
+	computeTemperature(Kokkos::View<const double*>* concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int xi, double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) = 0;
 
 	/**
 	 * Compute the partials due to the heat equation.

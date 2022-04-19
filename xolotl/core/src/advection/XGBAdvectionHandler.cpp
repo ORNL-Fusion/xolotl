@@ -156,6 +156,17 @@ XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 }
 
 void
+XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
+	const plsm::SpaceVector<double, 3>& pos,
+	Kokkos::View<const double*>* concVector,
+	Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+	int ix, double hy, int iy, double hz, int iz) const
+{
+    // TODO
+	throw std::runtime_error("XGBAdvectionHandler: Not implemented");
+}
+
+void
 XGBAdvectionHandler::computePartialsForAdvection(
 	network::IReactionNetwork& network, double* val, IdType* indices,
 	const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight,

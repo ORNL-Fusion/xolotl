@@ -134,6 +134,15 @@ Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,
 }
 
 void
+Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,
+	const StencilConcArray& concVector, Kokkos::View<double*> updatedConcOffset,
+	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,
+	int) const
+{
+	// TODO
+}
+
+void
 Diffusion3DHandler::computePartialsForDiffusion(
 	network::IReactionNetwork& network, double* val, IdType* indices,
 	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,

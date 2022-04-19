@@ -1,4 +1,3 @@
-// Includes
 #include <array>
 #include <iostream>
 
@@ -106,6 +105,83 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 	}
 
 	return;
+}
+
+void
+Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
+	const StencilConcArray& concVector, Kokkos::View<double*> updatedConcOffset,
+	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,
+	int) const
+{
+	// Consider each diffusing cluster.
+	// TODO Maintaining a separate index assumes that diffusingClusters is
+	// visited in same order as diffusionGrid array for given point.
+	// Currently true with C++11, but we'd like to be able to visit the
+	// diffusing clusters in any order (so that we can parallelize).
+	// Maybe with a zip? or a std::transform?
+
+	////////////////////////////////////////////////////////////////////////////
+	// TODO: This needs to happen at initialization (probably)
+	using HostUnmanaged = Kokkos::View<const IdType*, Kokkos::MemoryUnmanaged>;
+	auto clusterIds_h =
+		HostUnmanaged(diffusingClusters.data(), diffusingClusters.size());
+	auto clusterIds =
+		Kokkos::View<IdType*>("Diffusing Clusters", diffusingClusters.size());
+	deep_copy(clusterIds, clusterIds_h);
+
+	auto clusters = Kokkos::View<network::ClusterCommon<plsm::DeviceMemSpace>*>(
+		Kokkos::ViewAllocateWithoutInitializing("Diffusing Clusters"),
+		diffusingClusters.size());
+	auto clusters_h = create_mirror_view(clusters);
+	for (IdType i = 0; i < diffusingClusters.size(); ++i) {
+		clusters_h[i] = network.getClusterCommon(
+			diffusingClusters[i], plsm::DeviceMemSpace{});
+	}
+	deep_copy(clusters, clusters_h);
+
+	auto diffGrid = Kokkos::View<int**>(
+		"Diffusion Grid", diffusionGrid.size(), diffusingClusters.size());
+	auto diffGrid_h = create_mirror_view(diffGrid);
+	for (IdType i = 0; i < diffusionGrid.size(); ++i) {
+		for (IdType j = 0; j < diffusingClusters.size(); ++j) {
+			diffGrid_h(i, j) = diffusionGrid[i][j];
+		}
+	}
+	deep_copy(diffGrid, diffGrid_h);
+	////////////////////////////////////////////////////////////////////////////
+
+	if (concVector.size() != 3) {
+		throw std::runtime_error(
+			"Wrong size for 1D concentration stencil; should be 3, got " +
+			std::to_string(concVector.size()));
+	}
+	Kokkos::Array<Kokkos::View<const double*>, 3> concVec = {
+		concVector[0], concVector[1], concVector[2]};
+
+	Kokkos::parallel_for(
+		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+			auto currId = clusterIds[i];
+			auto cluster = clusters[i];
+
+			// Get the initial concentrations
+			double oldConc = concVec[0][currId] * diffGrid(ix + 1, i);
+			double oldLeftConc = concVec[1][currId] * diffGrid(ix, i);
+			double oldRightConc = concVec[2][currId] * diffGrid(ix + 2, i);
+
+			// Use a simple midpoint stencil to compute the concentration
+			// double conc = 1.0;
+			double conc = (cluster.getDiffusionCoefficient(ix + 1) * 2.0 *
+							  (oldLeftConc + (hxLeft / hxRight) * oldRightConc -
+								  (1.0 + (hxLeft / hxRight)) * oldConc) /
+							  (hxLeft * (hxLeft + hxRight))) +
+				((cluster.getDiffusionCoefficient(ix + 2) -
+					 cluster.getDiffusionCoefficient(ix)) *
+					(oldRightConc - oldLeftConc) /
+					((hxLeft + hxRight) * (hxLeft + hxRight)));
+
+			// Update the concentration of the cluster
+			updatedConcOffset[currId] += conc;
+		});
 }
 
 void
