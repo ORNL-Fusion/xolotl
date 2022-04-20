@@ -552,11 +552,6 @@ ProductionReaction<TNetwork, TDerived>::computeConnectivity(
 	const Connectivity& connectivity)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
-	// Get the total number of elements in each cluster
-	auto cl1 = this->_clusterData->getCluster(_reactants[0]);
-	const auto& cl1Reg = cl1.getRegion();
-	auto cl2 = this->_clusterData->getCluster(_reactants[1]);
-	const auto& cl2Reg = cl2.getRegion();
 	// Each reactant connects with all the reactants
 	// Reactant 1 with reactant 1
 	this->addConnectivity(_reactants[0], _reactants[0], connectivity);
@@ -633,8 +628,6 @@ ProductionReaction<TNetwork, TDerived>::computeConnectivity(
 		if (prodId == invalidIndex) {
 			continue;
 		}
-		auto prod = this->_clusterData->getCluster(prodId);
-		const auto& prodReg = prod.getRegion();
 
 		// With reactant 1
 		this->addConnectivity(prodId, _reactants[0], connectivity);
@@ -682,11 +675,6 @@ ProductionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	const Connectivity& connectivity)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
-	// Get the total number of elements in each cluster
-	auto cl1 = this->_clusterData->getCluster(_reactants[0]);
-	const auto& cl1Reg = cl1.getRegion();
-	auto cl2 = this->_clusterData->getCluster(_reactants[1]);
-	const auto& cl2Reg = cl2.getRegion();
 	// Each reactant connects with all the reactants
 	// Reactant 1 with reactant 1
 	this->addConnectivity(_reactants[0], _reactants[0], connectivity);
@@ -740,8 +728,6 @@ ProductionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 		if (prodId == invalidIndex) {
 			continue;
 		}
-		auto prod = this->_clusterData->getCluster(prodId);
-		const auto& prodReg = prod.getRegion();
 
 		// With reactant 1
 		if (prodId == _reactants[0])
@@ -1649,14 +1635,6 @@ DissociationReaction<TNetwork, TDerived>::computeConnectivity(
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-	// Get the total number of elements in each cluster
-	auto cl = this->_clusterData->getCluster(_reactant);
-	const auto& clReg = cl.getRegion();
-	auto prod1 = this->_clusterData->getCluster(_products[0]);
-	const auto& prod1Reg = prod1.getRegion();
-	auto prod2 = this->_clusterData->getCluster(_products[1]);
-	const auto& prod2Reg = prod2.getRegion();
-
 	// The reactant connects with the reactant
 	this->addConnectivity(_reactant, _reactant, connectivity);
 	for (auto i : speciesRangeNoI) {
@@ -1719,14 +1697,6 @@ DissociationReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	const Connectivity& connectivity)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
-
-	// Get the total number of elements in each cluster
-	auto cl = this->_clusterData->getCluster(_reactant);
-	const auto& clReg = cl.getRegion();
-	auto prod1 = this->_clusterData->getCluster(_products[0]);
-	const auto& prod1Reg = prod1.getRegion();
-	auto prod2 = this->_clusterData->getCluster(_products[1]);
-	const auto& prod2Reg = prod2.getRegion();
 
 	// The reactant connects with the reactant
 	this->addConnectivity(_reactant, _reactant, connectivity);

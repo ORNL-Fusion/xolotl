@@ -265,7 +265,6 @@ public:
 			Superclass::coeffsSingleExtent);
 	}
 
-private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeCoefficients();
@@ -273,14 +272,6 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeRate(IndexType gridIndex);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeConnectivity(const Connectivity& connectivity);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeReducedConnectivity(const Connectivity& connectivity);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -301,6 +292,15 @@ private:
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
+
+private:
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConnectivity(const Connectivity& connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeReducedConnectivity(const Connectivity& connectivity);
 
 	KOKKOS_INLINE_FUNCTION
 	void

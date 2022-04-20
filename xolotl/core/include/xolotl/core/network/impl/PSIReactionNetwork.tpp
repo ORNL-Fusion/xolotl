@@ -21,8 +21,23 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(const Subpaving& subpaving,
 	IndexType gridSize, const options::IOptions& options) :
 	Superclass(subpaving, gridSize, options),
 	_tmHandler(psi::getTrapMutationHandler(
-		this->_enableTrapMutation, options.getMaterial()))
+		this->_enableTrapMutation, options.getMaterial())),
+	hevRatio(options.getHeVRatio())
 {
+	auto map = options.getProcesses();
+	if (not map["largeBubble"])
+		return;
+
+	largestClusterId = checkLargestClusterId();
+
+	bubbleId = this->_numDOFs;
+	bubbleAvHeId = bubbleId + 1;
+	bubbleAvVId = bubbleId + 2;
+	this->_numDOFs += 3;
+
+	Connectivity connectivity;
+	Superclass::defineReactions(connectivity);
+	Superclass::generateDiagonalFill(connectivity);
 }
 
 template <typename TSpeciesEnum>
@@ -32,8 +47,27 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
 	const options::IOptions& options) :
 	Superclass(maxSpeciesAmounts, subdivisionRatios, gridSize, options),
 	_tmHandler(psi::getTrapMutationHandler(
-		this->_enableTrapMutation, options.getMaterial()))
+		this->_enableTrapMutation, options.getMaterial())),
+	hevRatio(options.getHeVRatio())
 {
+	auto map = options.getProcesses();
+	if (not map["largeBubble"])
+		return;
+
+	largestClusterId = checkLargestClusterId();
+	this->_clusterData.h_view().setHeVRatio(options.getHeVRatio());
+
+	bubbleId = this->_numDOFs;
+	bubbleAvHeId = bubbleId + 1;
+	bubbleAvVId = bubbleId + 2;
+	this->_clusterData.h_view().setBubbleId(bubbleId);
+	this->_clusterData.h_view().setBubbleAvHeId(bubbleAvHeId);
+	this->_clusterData.h_view().setBubbleAvVId(bubbleAvVId);
+	this->_numDOFs += 3;
+
+	Connectivity connectivity;
+	Superclass::defineReactions(connectivity);
+	Superclass::generateDiagonalFill(connectivity);
 }
 
 template <typename TSpeciesEnum>
@@ -42,8 +76,23 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
 	const options::IOptions& options) :
 	Superclass(maxSpeciesAmounts, gridSize, options),
 	_tmHandler(psi::getTrapMutationHandler(
-		this->_enableTrapMutation, options.getMaterial()))
+		this->_enableTrapMutation, options.getMaterial())),
+	hevRatio(options.getHeVRatio())
 {
+	auto map = options.getProcesses();
+	if (not map["largeBubble"])
+		return;
+
+	largestClusterId = checkLargestClusterId();
+
+	bubbleId = this->_numDOFs;
+	bubbleAvHeId = bubbleId + 1;
+	bubbleAvVId = bubbleId + 2;
+	this->_numDOFs += 3;
+
+	Connectivity connectivity;
+	Superclass::defineReactions(connectivity);
+	Superclass::generateDiagonalFill(connectivity);
 }
 
 template <typename TSpeciesEnum>
@@ -144,6 +193,12 @@ PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
+
+	this->_clusterData.h_view().setBubbleAvHe(
+		concentrations(this->_clusterData.h_view().bubbleAvHeId()));
+	this->_clusterData.h_view().setBubbleAvRadius(computeBubbleRadius(
+		concentrations(this->_clusterData.h_view().bubbleAvVId()),
+		this->_clusterData.h_view().latticeParameter()));
 }
 
 template <typename TSpeciesEnum>
@@ -156,6 +211,12 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
+
+	this->_clusterData.h_view().setBubbleAvHe(
+		concentrations(this->_clusterData.h_view().bubbleAvHeId()));
+	this->_clusterData.h_view().setBubbleAvRadius(computeBubbleRadius(
+		concentrations(this->_clusterData.h_view().bubbleAvVId()),
+		this->_clusterData.h_view().latticeParameter()));
 }
 
 template <typename TSpeciesEnum>
@@ -391,7 +452,12 @@ namespace detail
 template <typename TSpeciesEnum>
 PSIReactionGenerator<TSpeciesEnum>::PSIReactionGenerator(
 	const PSIReactionNetwork<TSpeciesEnum>& network) :
-	Superclass(network)
+	Superclass(network),
+	bubbleId(network.bubbleId),
+	bubbleAvHeId(network.bubbleAvHeId),
+	bubbleAvVId(network.bubbleAvVId),
+	largestClusterId(network.largestClusterId),
+	hevRatio(network.hevRatio)
 {
 	bool enableTrapMutation = network.getEnableTrapMutation();
 	if (!enableTrapMutation) {
@@ -431,6 +497,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	if (i == j) {
 		addSinks(i, tag);
 	}
+	addLargeBubbleReactions(i, j, tag);
 
 	auto numClusters = this->getNumberOfClusters();
 
@@ -590,7 +657,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 
 		// Check that some of the products don't exist
 		if (bounds[Species::He].second <=
-			psi::getMaxHePerV(bounds[Species::V].first, 4.0))
+			psi::getMaxHePerV(bounds[Species::V].first, hevRatio))
 			continue;
 
 		// Copy the bounds
@@ -705,6 +772,141 @@ PSIReactionGenerator<TSpeciesEnum>::addSinks(IndexType i, TTag tag) const
 	if (clReg.isSimplex() && lo.isOnAxis(Species::V)) {
 		if (lo[Species::V] == 1)
 			this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
+	}
+}
+
+template <typename TSpeciesEnum>
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
+	IndexType i, IndexType j, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	if (i == j) {
+		const auto& clReg = this->getCluster(i).getRegion();
+		Composition lo = clReg.getOrigin();
+
+		// Check reaction with largest bubble
+		if (not clReg.isSimplex())
+			return;
+
+		// He case
+		if (lo.isOnAxis(Species::He)) {
+			// Only add trap mutation so that at run time it adds the I
+			// concentration if needed.
+			auto& subpaving = this->getSubpaving();
+			Composition comp = Composition::zero();
+			comp[Species::I] = 1;
+			auto iClusterId = subpaving.findTileId(comp);
+			this->addProductionReaction(
+				tag, {i, bubbleId, bubbleId, iClusterId});
+		}
+		// V case
+		else if (lo.isOnAxis(Species::V)) {
+			// V_k + B -> B
+			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+		}
+		// I case
+		else if (lo.isOnAxis(Species::I)) {
+			// I_k + B -> B
+			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+		}
+	}
+
+	// Get the composition of each cluster
+	const auto& cl1Reg = this->getCluster(i).getRegion();
+	const auto& cl2Reg = this->getCluster(j).getRegion();
+	Composition lo1 = cl1Reg.getOrigin();
+	Composition hi1 = cl1Reg.getUpperLimitPoint();
+	Composition lo2 = cl2Reg.getOrigin();
+	Composition hi2 = cl2Reg.getUpperLimitPoint();
+
+	// Special case for I + I
+	if (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::I))
+		return;
+
+	// Special case for I + V
+	if ((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
+		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I)))
+		return;
+
+	// Find the edge of the phase space
+	const auto& largestReg =
+		this->getCluster(this->largestClusterId).getRegion();
+	Composition hiLargest = largestReg.getUpperLimitPoint();
+	auto largestV = hiLargest[Species::V] - 1;
+	auto largestHe = psi::getMaxHePerV(largestV, hevRatio);
+
+	// General case
+	constexpr auto species = NetworkType::getSpeciesRange();
+	constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
+	using BoundsArray = Kokkos::Array<Kokkos::pair<int, int>, numSpeciesNoI>;
+	plsm::EnumIndexed<BoundsArray, Species> bounds;
+	// Loop on the species
+	for (auto l : species) {
+		auto low = lo1[l] + lo2[l];
+		auto high = hi1[l] + hi2[l] - 2;
+		// Special case for I
+		if (l == Species::I) {
+			bounds[Species::V].first -= (int)high;
+			bounds[Species::V].second -= (int)low;
+		}
+		else {
+			bounds[l] = {low, high};
+		}
+	}
+
+	// If the products is larger than the current phasespace
+	if (bounds[Species::He].second > (int)largestHe or
+		bounds[Species::V].second > (int)largestV) {
+		// Special case for He
+		if (lo1.isOnAxis(Species::He) or lo2.isOnAxis(Species::He)) {
+			// Is it trap mutation?
+			if (bounds[Species::He].first >
+				psi::getMaxHePerV(bounds[Species::V].first, hevRatio)) {
+				AmountType iSize = 1;
+				while (bounds[Species::He].first >
+					psi::getMaxHePerV(
+						bounds[Species::V].first + iSize, hevRatio)) {
+					iSize++;
+				}
+				// Get the corresponding I cluster
+				auto& subpaving = this->getSubpaving();
+				Composition comp = Composition::zero();
+				comp[Species::I] = iSize;
+				auto iClusterId = subpaving.findTileId(comp);
+				if (iClusterId != NetworkType::invalidIndex()) {
+					this->addProductionReaction(
+						tag, {i, j, bubbleId, iClusterId});
+				}
+			}
+			else {
+				// Standard absorption
+				this->addProductionReaction(tag, {i, j, bubbleId});
+			}
+		}
+		// Add the reaction
+		else {
+			this->addProductionReaction(tag, {i, j, bubbleId});
+		}
+	}
+
+	// Special case for I
+	if (lo1.isOnAxis(Species::I) or lo2.isOnAxis(Species::I)) {
+		// Find out which one is which
+		auto hevLo = lo1.isOnAxis(Species::I) ? lo2 : lo1;
+		auto iLo = lo1.isOnAxis(Species::I) ? lo1 : lo2;
+
+		if (iLo[Species::I] + hevLo[Species::V] > largestV) {
+			auto hevId = lo1.isOnAxis(Species::I) ? j : i;
+			auto iId = lo1.isOnAxis(Species::I) ? i : j;
+
+			// Add the reaction
+			this->addProductionReaction(tag, {iId, bubbleId, hevId});
+		}
 	}
 }
 

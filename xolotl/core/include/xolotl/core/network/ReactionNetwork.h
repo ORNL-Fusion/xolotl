@@ -526,6 +526,18 @@ public:
 		std::vector<IndexType> advectingIds, std::vector<double> sinkStrengths,
 		std::vector<double>& fluxes, IndexType gridIndex) override;
 
+	void
+	generateClusterData(const ClusterGenerator& generator);
+
+	void
+	defineReactions(Connectivity& connectivity);
+
+	void
+	defineMomentIds();
+
+	void
+	generateDiagonalFill(const Connectivity& connectivity);
+
 private:
 	KOKKOS_INLINE_FUNCTION
 	TImpl*
@@ -538,15 +550,6 @@ private:
 	createSpeciesLabelMap() noexcept;
 
 	void
-	defineMomentIds();
-
-	void
-	generateClusterData(const ClusterGenerator& generator);
-
-	void
-	defineReactions(Connectivity& connectivity);
-
-	void
 	updateDiffusionCoefficients();
 
 	KOKKOS_INLINE_FUNCTION
@@ -555,10 +558,6 @@ private:
 	{
 		return _clusterData.d_view().temperature(gridIndex);
 	}
-
-private:
-	void
-	generateDiagonalFill(const Connectivity& connectivity);
 
 private:
 	std::optional<SubpavingMirror> _subpavingMirror;

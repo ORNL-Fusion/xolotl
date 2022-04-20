@@ -524,8 +524,9 @@ PetscMonitor1D::setup()
 					outputFile << speciesName << "_surface ";
 				}
 			}
-			outputFile << "Helium_burst Deuterium_burst Tritium_burst"
-					   << std::endl;
+			outputFile
+				<< "Helium_burst Deuterium_burst Tritium_burst C_b av_He av_V"
+				<< std::endl;
 			outputFile.close();
 
 			if (_solverHandler->temporalFlux()) {
@@ -981,7 +982,7 @@ PetscMonitor1D::computeHeliumRetention(
 	// Store the concentration over the grid
 	auto numSpecies = network.getSpeciesListSize();
 	auto specIdI = network.getInterstitialSpeciesId();
-	auto myConcData = std::vector<double>(numSpecies, 0.0);
+	auto myConcData = std::vector<double>(numSpecies + 3, 0.0);
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal* gridPointSolution;
@@ -1010,6 +1011,9 @@ PetscMonitor1D::computeHeliumRetention(
 			myConcData[id()] +=
 				network.getTotalAtomConcentration(dConcs, id, 1) * hx;
 		}
+		myConcData[numSpecies] += gridPointSolution[dof - 3];
+		myConcData[numSpecies + 1] += gridPointSolution[dof - 2];
+		myConcData[numSpecies + 2] += gridPointSolution[dof - 1];
 	}
 
 	// Get the current process ID
@@ -1018,10 +1022,10 @@ PetscMonitor1D::computeHeliumRetention(
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Determine total concentrations for He, D, T.
-	auto totalConcData = std::vector<double>(numSpecies, 0.0);
+	auto totalConcData = std::vector<double>(numSpecies + 3, 0.0);
 
-	MPI_Reduce(myConcData.data(), totalConcData.data(), numSpecies, MPI_DOUBLE,
-		MPI_SUM, 0, xolotlComm);
+	MPI_Reduce(myConcData.data(), totalConcData.data(), numSpecies + 3,
+		MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
 	// Get the delta time from the previous timestep to this timestep
 	double previousTime = _solverHandler->getPreviousTime();
@@ -1233,7 +1237,11 @@ PetscMonitor1D::computeHeliumRetention(
 			}
 		}
 		outputFile << _nHeliumBurst << " " << _nDeuteriumBurst << " "
-				   << _nTritiumBurst << std::endl;
+				   << _nTritiumBurst << " " << totalConcData[numSpecies] << " "
+				   << totalConcData[numSpecies + 1] / totalConcData[numSpecies]
+				   << " "
+				   << totalConcData[numSpecies + 2] / totalConcData[numSpecies]
+				   << std::endl;
 		outputFile.close();
 
 		if (_solverHandler->temporalFlux()) {

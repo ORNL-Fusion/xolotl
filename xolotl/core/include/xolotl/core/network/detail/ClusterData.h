@@ -103,6 +103,7 @@ struct ClusterDataCommon
 		numClusters(data.numClusters),
 		gridSize(data.gridSize),
 		_floatVals(data._floatVals),
+		_intVals(data._intVals),
 		_boolVals(data._boolVals),
 		temperature(data.temperature),
 		reactionRadius(data.reactionRadius),
@@ -142,7 +143,18 @@ private:
 		LATTICE_PARAM,
 		FISSION_RATE,
 		ZETA,
+		HELIUM_CONTENT,
+		AV_RADIUS,
+		HEV_RATIO,
 		NUM_FLOAT_VALS
+	};
+
+	enum IntValsIndex : int
+	{
+		BUBBLE = 0,
+		AV_HELIUM,
+		AV_VACANCY,
+		NUM_INT_VALS
 	};
 
 	enum BoolValsIndex : int
@@ -219,6 +231,84 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
+	double
+	bubbleAvHe() const
+	{
+		return _floatVals[HELIUM_CONTENT];
+	}
+
+	void
+	setBubbleAvHe(double val)
+	{
+		setVal(_floatVals, HELIUM_CONTENT, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	bubbleAvRadius() const
+	{
+		return _floatVals[AV_RADIUS];
+	}
+
+	void
+	setBubbleAvRadius(double val)
+	{
+		setVal(_floatVals, AV_RADIUS, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	heVRatio() const
+	{
+		return _floatVals[HEV_RATIO];
+	}
+
+	void
+	setHeVRatio(double val)
+	{
+		setVal(_floatVals, HEV_RATIO, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	bubbleId() const
+	{
+		return _intVals[BUBBLE];
+	}
+
+	void
+	setBubbleId(IndexType val)
+	{
+		setVal(_intVals, BUBBLE, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	bubbleAvHeId() const
+	{
+		return _intVals[AV_HELIUM];
+	}
+
+	void
+	setBubbleAvHeId(IndexType val)
+	{
+		setVal(_intVals, AV_HELIUM, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	bubbleAvVId() const
+	{
+		return _intVals[AV_VACANCY];
+	}
+
+	void
+	setBubbleAvVId(IndexType val)
+	{
+		setVal(_intVals, AV_VACANCY, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
 	bool
 	enableStdReaction() const
 	{
@@ -285,6 +375,7 @@ public:
 
 private:
 	View<double[NUM_FLOAT_VALS]> _floatVals;
+	View<IndexType[NUM_INT_VALS]> _intVals;
 	View<bool[NUM_BOOL_VALS]> _boolVals;
 
 public:

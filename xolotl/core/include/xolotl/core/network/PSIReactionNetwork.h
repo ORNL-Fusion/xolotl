@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/PSIReaction.h>
 #include <xolotl/core/network/PSITraits.h>
@@ -43,6 +44,7 @@ public:
 	using IndexType = typename Superclass::IndexType;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using Connectivity = typename Superclass::Connectivity;
 
 	using Superclass::Superclass;
 
@@ -121,6 +123,12 @@ public:
 	IndexType
 	checkLargestClusterId();
 
+	IndexType
+	getLargestClusterId()
+	{
+		return largestClusterId;
+	}
+
 	void
 	updateReactionRates();
 
@@ -153,6 +161,25 @@ private:
 
 private:
 	std::unique_ptr<detail::TrapMutationHandler> _tmHandler;
+
+protected:
+	double
+	computeBubbleRadius(double vAmount, double latticeParameter)
+	{
+		double aCube = latticeParameter * latticeParameter * latticeParameter;
+		return (sqrt(3.0) / 4.0) * latticeParameter +
+			pow((3.0 * aCube * vAmount) / (8.0 * ::xolotl::core::pi),
+				(1.0 / 3.0)) -
+			pow((3.0 * aCube) / (8.0 * ::xolotl::core::pi), (1.0 / 3.0));
+	}
+
+public:
+	IndexType bubbleId;
+	IndexType bubbleAvHeId;
+	IndexType bubbleAvVId;
+
+	IndexType largestClusterId;
+	double hevRatio{4.0};
 };
 
 namespace detail
@@ -186,12 +213,24 @@ public:
 	void
 	addSinks(IndexType i, TTag tag) const;
 
+	template <typename TTag>
+	KOKKOS_INLINE_FUNCTION
+	void
+	addLargeBubbleReactions(IndexType i, IndexType j, TTag tag) const;
+
 private:
 	ReactionCollection<NetworkType>
 	getReactionCollection() const;
 
 private:
 	Kokkos::Array<Kokkos::View<AmountType*>, 7> _tmVSizes;
+
+	IndexType bubbleId;
+	IndexType bubbleAvHeId;
+	IndexType bubbleAvVId;
+
+	IndexType largestClusterId;
+	double hevRatio{4.0};
 };
 } // namespace detail
 } // namespace network
