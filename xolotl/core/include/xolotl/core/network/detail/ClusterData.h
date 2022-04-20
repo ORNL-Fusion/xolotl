@@ -145,7 +145,9 @@ private:
 		ZETA,
 		HELIUM_CONTENT,
 		AV_RADIUS,
-		HEV_RATIO,
+		DEPTH,
+		TAU_BURSTING,
+		F_BURSTING,
 		NUM_FLOAT_VALS
 	};
 
@@ -164,6 +166,7 @@ private:
 		NUCLEATION,
 		SINK,
 		TRAP_MUTATION,
+		BURST,
 		NUM_BOOL_VALS
 	};
 
@@ -257,19 +260,6 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
-	double
-	heVRatio() const
-	{
-		return _floatVals[HEV_RATIO];
-	}
-
-	void
-	setHeVRatio(double val)
-	{
-		setVal(_floatVals, HEV_RATIO, val);
-	}
-
-	KOKKOS_INLINE_FUNCTION
 	IndexType
 	bubbleId() const
 	{
@@ -306,6 +296,45 @@ public:
 	setBubbleAvVId(IndexType val)
 	{
 		setVal(_intVals, AV_VACANCY, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getDepth() const
+	{
+		return _floatVals[DEPTH];
+	}
+
+	void
+	setDepth(double val)
+	{
+		setVal(_floatVals, DEPTH, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getTauBursting() const
+	{
+		return _floatVals[TAU_BURSTING];
+	}
+
+	void
+	setTauBursting(double val)
+	{
+		setVal(_floatVals, TAU_BURSTING, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getFBursting() const
+	{
+		return _floatVals[F_BURSTING];
+	}
+
+	void
+	setFBursting(double val)
+	{
+		setVal(_floatVals, F_BURSTING, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -371,6 +400,19 @@ public:
 	setEnableTrapMutation(bool val)
 	{
 		setVal(_boolVals, TRAP_MUTATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableBurst() const
+	{
+		return _boolVals[BURST];
+	}
+
+	void
+	setEnableBurst(bool val)
+	{
+		setVal(_boolVals, BURST, val);
 	}
 
 private:

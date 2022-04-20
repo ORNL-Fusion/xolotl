@@ -67,7 +67,6 @@ Options::Options() :
 	hydrogenFactor(0.25),
 	xenonDiffusivity(-1.0),
 	fissionYield(0.25),
-	heVRatio(4.0),
 	migrationThreshold(std::numeric_limits<double>::infinity())
 {
 	return;
@@ -226,8 +225,6 @@ Options::readParams(int argc, const char* argv[])
 		"The diffusion coefficient for xenon in nm2 s-1.")("fissionYield",
 		bpo::value<double>(&fissionYield),
 		"The number of xenon created for each fission (default is 0.25).")(
-		"heVRatio", bpo::value<double>(&heVRatio),
-		"The number of He atoms allowed per V in a bubble.")(
 		"migrationThreshold", bpo::value<double>(&migrationThreshold),
 		"Set a limit on the migration energy above which the diffusion will be "
 		"ignored.")("fluxDepthProfileFilePath",

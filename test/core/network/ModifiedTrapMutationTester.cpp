@@ -132,7 +132,7 @@ private:
 	static std::vector<double>
 	makeGrid(int nGrid)
 	{
-		// Suppose we have a grid with 13 grid points and distance of
+		// Suppose we have a grid with a distance of
 		// 0.1 nm between grid points
 		std::vector<double> grid;
 		for (int l = 0; l < nGrid; l++) {

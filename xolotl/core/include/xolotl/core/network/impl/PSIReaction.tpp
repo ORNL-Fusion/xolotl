@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/PSIClusterGenerator.h>
+#include <xolotl/core/network/impl/BurstingReaction.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/core/network/impl/SinkReaction.tpp>
 #include <xolotl/core/network/impl/TrapMutationReaction.tpp>
@@ -119,15 +120,14 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 					concentrations(largeBubbleId);
 				auto avV = concentrations(this->_clusterData->bubbleAvVId()) /
 					concentrations(largeBubbleId);
-				if (comp[Species::He] + avHe >
-					psi::getMaxHePerV(avV, this->_clusterData->heVRatio())) {
+				if (comp[Species::He] + avHe > psi::getMaxHePerV(avV)) {
 					// Count how many I are needed
 					AmountType nI = 1;
-//					while (comp[Species::He] + avHe >
-//						psi::getMaxHePerV(
-//							avV + nI, this->_clusterData->heVRatio())) {
-//						nI++;
-//					}
+					//					while (comp[Species::He] + avHe >
+					//						psi::getMaxHePerV(
+					//							avV + nI)) {
+					//						nI++;
+					//					}
 
 					// The other product increases
 					Kokkos::atomic_add(&fluxes[this->_products[1]], nI * f);
@@ -309,15 +309,14 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 					concentrations(this->_clusterData->bubbleAvHeId()) / bC;
 				auto avV =
 					concentrations(this->_clusterData->bubbleAvVId()) / bC;
-				if (comp[Species::He] + avHe >
-					psi::getMaxHePerV(avV, this->_clusterData->heVRatio())) {
+				if (comp[Species::He] + avHe > psi::getMaxHePerV(avV)) {
 					// Count how many I are needed
 					AmountType nI = 1;
-//					while (comp[Species::He] + avHe >
-//						psi::getMaxHePerV(
-//							avV + nI, this->_clusterData->heVRatio())) {
-//						nI++;
-//					}
+					//					while (comp[Species::He] + avHe >
+					//						psi::getMaxHePerV(
+					//							avV + nI)) {
+					//						nI++;
+					//					}
 
 					// The other product increases
 					f = this->_coefs(0, 0, 0, 0) * rate * nI;
@@ -673,7 +672,7 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 		AmountType lowerV = 16, higherV = 31;
 		AmountType minV = 1;
 		for (auto i = 1; i < higherV; i++) {
-			auto maxHe = psi::getMaxHePerV(i, 4.0);
+			auto maxHe = psi::getMaxHePerV(i);
 			if (comp[Species::He] > maxHe)
 				minV = i;
 		}
@@ -737,6 +736,34 @@ PSISinkReaction<TSpeciesEnum>::getSinkStrength()
 	double grainSize = 50000.0; // 50 um
 
 	return 1.0 / (pi * grainSize * grainSize);
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSIBurstingReaction<TSpeciesEnum>::getAppliedRate(IndexType gridIndex) const
+{
+	using NetworkType = typename Superclass::NetworkType;
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	using AmountType = typename NetworkType::AmountType;
+
+	// Get the radius of the cluster
+	auto cl = this->_clusterData->getCluster(this->_reactant);
+	auto clReg = cl.getRegion();
+	Composition loComp(clReg.getOrigin());
+	Composition hiComp(clReg.getUpperLimitPoint());
+	double avHe = (hiComp[Species::He] + loComp[Species::He]) / 2.0;
+	AmountType avV = (hiComp[Species::V] + loComp[Species::V]) / 2.0;
+	auto radius = avHe * cl.getReactionRadius() /
+		(double)xolotl::core::network::psi::getMaxHePerV(avV);
+
+	// Get the current depth
+	auto depth = this->_clusterData->getDepth();
+	auto tau = this->_clusterData->getTauBursting();
+	auto f = this->_clusterData->getFBursting();
+	return f * (radius / depth) *
+		util::min(1.0, exp(-(depth - tau) / (2.0 * tau)));
 }
 } // namespace network
 } // namespace core

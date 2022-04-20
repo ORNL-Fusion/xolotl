@@ -116,10 +116,6 @@ public:
 			concs, Species::He, minSize);
 	}
 
-	void
-	updateBurstingConcs(double* gridPointSolution, double factor,
-		std::vector<double>& nBurst) override;
-
 	IndexType
 	checkLargestClusterId();
 
@@ -179,7 +175,6 @@ public:
 	IndexType bubbleAvVId;
 
 	IndexType largestClusterId;
-	double hevRatio{4.0};
 };
 
 namespace detail
@@ -218,6 +213,11 @@ public:
 	void
 	addLargeBubbleReactions(IndexType i, IndexType j, TTag tag) const;
 
+	template <typename TTag>
+	KOKKOS_INLINE_FUNCTION
+	void
+	addBurstings(IndexType i, TTag tag) const;
+
 private:
 	ReactionCollection<NetworkType>
 	getReactionCollection() const;
@@ -230,7 +230,6 @@ private:
 	IndexType bubbleAvVId;
 
 	IndexType largestClusterId;
-	double hevRatio{4.0};
 };
 } // namespace detail
 } // namespace network

@@ -46,15 +46,6 @@ public:
 		static const std::string nIntersAttrName;
 		static const std::string prevIFluxAttrName;
 
-		// Names of Helium attributes.
-		static const std::string nHeBurstAttrName;
-
-		// Names of Deuterium attributes.
-		static const std::string nDBurstAttrName;
-
-		// Names of Tritium attributes.
-		static const std::string nTBurstAttrName;
-
 		// Names of surface and bulk attributes.
 		static const std::string nAttrName;
 		static const std::string previousFluxAttrName;
@@ -206,16 +197,6 @@ public:
 		writeBottom3D(std::vector<Data3DType> nAtoms,
 			std::vector<Data3DType> previousFluxes,
 			std::vector<std::string> atomNames);
-
-		/**
-		 * Save the bursting informations to our timestep group.
-		 *
-		 * @param nHe The quantity of helium lost from bursting
-		 * @param nD The quantity of deuterium lost from bursting
-		 * @param nT The quantity of tritium lost from bursting
-		 */
-		void
-		writeBursting(Data1DType nHe, Data1DType nD, Data1DType nT);
 
 		/**
 		 * Add a concentration dataset at a specific grid point.

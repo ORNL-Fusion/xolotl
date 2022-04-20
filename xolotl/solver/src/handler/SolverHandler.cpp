@@ -36,7 +36,6 @@ SolverHandler::SolverHandler(
 	dimension(-1),
 	portion(0.0),
 	movingSurface(false),
-	bubbleBursting(false),
 	isMirror(true),
 	useAttenuation(false),
 	fluxTempProfile(false),
@@ -47,10 +46,7 @@ SolverHandler::SolverHandler(
 	perfHandler(factory::perf::PerfHandlerFactory::get(perf::loadPerfHandlers)
 					.generate(options)),
 	diffusionHandler(nullptr),
-	tauBursting(10.0),
-	burstingFactor(0.1),
 	rngSeed(0),
-	heVRatio(4.0),
 	previousTime(0.0),
 	nXeGB(0.0)
 {
@@ -416,15 +412,6 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	// Set the sputtering yield
 	sputteringYield = opts.getSputteringYield();
 
-	// Set the sputtering yield
-	tauBursting = opts.getBurstingDepth();
-
-	// Set the bursting factor
-	burstingFactor = opts.getBurstingFactor();
-
-	// Set the HeV ratio
-	heVRatio = opts.getHeVRatio();
-
 	// Do we want a flux temporal profile?
 	fluxTempProfile = opts.useFluxTimeProfile();
 
@@ -443,8 +430,6 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	// Should we be able to move the surface?
 	auto map = opts.getProcesses();
 	movingSurface = map["movingSurface"];
-	// Should we be able to burst bubbles?
-	bubbleBursting = map["bursting"];
 	// Should we be able to attenuate the modified trap mutation?
 	useAttenuation = map["attenuation"];
 

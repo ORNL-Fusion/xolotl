@@ -3,6 +3,7 @@
 #include <set>
 
 #include <xolotl/core/network/detail/PSITrapMutation.h>
+#include <xolotl/core/network/detail/impl/BurstingReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationClusterData.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationReactionGenerator.tpp>
@@ -21,8 +22,7 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(const Subpaving& subpaving,
 	IndexType gridSize, const options::IOptions& options) :
 	Superclass(subpaving, gridSize, options),
 	_tmHandler(psi::getTrapMutationHandler(
-		this->_enableTrapMutation, options.getMaterial())),
-	hevRatio(options.getHeVRatio())
+		this->_enableTrapMutation, options.getMaterial()))
 {
 	auto map = options.getProcesses();
 	if (not map["largeBubble"])
@@ -47,15 +47,13 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
 	const options::IOptions& options) :
 	Superclass(maxSpeciesAmounts, subdivisionRatios, gridSize, options),
 	_tmHandler(psi::getTrapMutationHandler(
-		this->_enableTrapMutation, options.getMaterial())),
-	hevRatio(options.getHeVRatio())
+		this->_enableTrapMutation, options.getMaterial()))
 {
 	auto map = options.getProcesses();
 	if (not map["largeBubble"])
 		return;
 
 	largestClusterId = checkLargestClusterId();
-	this->_clusterData.h_view().setHeVRatio(options.getHeVRatio());
 
 	bubbleId = this->_numDOFs;
 	bubbleAvHeId = bubbleId + 1;
@@ -76,8 +74,7 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
 	const options::IOptions& options) :
 	Superclass(maxSpeciesAmounts, gridSize, options),
 	_tmHandler(psi::getTrapMutationHandler(
-		this->_enableTrapMutation, options.getMaterial())),
-	hevRatio(options.getHeVRatio())
+		this->_enableTrapMutation, options.getMaterial()))
 {
 	auto map = options.getProcesses();
 	if (not map["largeBubble"])
@@ -194,6 +191,10 @@ PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
 
+	if (this->_enableBursting) {
+		this->_clusterData.h_view().setDepth(surfaceDepth);
+	}
+
 	this->_clusterData.h_view().setBubbleAvHe(
 		concentrations(this->_clusterData.h_view().bubbleAvHeId()));
 	this->_clusterData.h_view().setBubbleAvRadius(computeBubbleRadius(
@@ -212,133 +213,15 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
 
+	if (this->_enableBursting) {
+		this->_clusterData.h_view().setDepth(surfaceDepth);
+	}
+
 	this->_clusterData.h_view().setBubbleAvHe(
 		concentrations(this->_clusterData.h_view().bubbleAvHeId()));
 	this->_clusterData.h_view().setBubbleAvRadius(computeBubbleRadius(
 		concentrations(this->_clusterData.h_view().bubbleAvVId()),
 		this->_clusterData.h_view().latticeParameter()));
-}
-
-template <typename TSpeciesEnum>
-void
-PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
-	double* gridPointSolution, double factor, std::vector<double>& nBurst)
-{
-	using detail::toIndex;
-
-	// Loop on every cluster
-	for (unsigned int i = 0; i < this->getNumClusters(); i++) {
-		const auto& clReg =
-			this->getCluster(i, plsm::HostMemSpace{}).getRegion();
-		// Non-grouped clusters
-		if (clReg.isSimplex()) {
-			// Get the composition
-			Composition comp = clReg.getOrigin();
-			// Pure He, D, or T case
-			if (comp.isOnAxis(Species::He)) {
-				// Compute the number of atoms released
-				nBurst[toIndex(Species::He)] +=
-					gridPointSolution[i] * (double)comp[Species::He] * factor;
-				// Reset concentration
-				gridPointSolution[i] = 0.0;
-				continue;
-			}
-			if constexpr (psi::hasDeuterium<Species>) {
-				if (comp.isOnAxis(Species::D)) {
-					// Compute the number of atoms released
-					nBurst[toIndex(Species::D)] += gridPointSolution[i] *
-						(double)comp[Species::D] * factor;
-					// Reset concentration
-					gridPointSolution[i] = 0.0;
-					continue;
-				}
-			}
-			if constexpr (psi::hasTritium<Species>) {
-				if (comp.isOnAxis(Species::T)) {
-					// Compute the number of atoms released
-					nBurst[toIndex(Species::T)] += gridPointSolution[i] *
-						(double)comp[Species::T] * factor;
-					// Reset concentration
-					gridPointSolution[i] = 0.0;
-					continue;
-				}
-			}
-			// Mixed cluster case
-			if (!comp.isOnAxis(Species::V) && !comp.isOnAxis(Species::I)) {
-				// Compute the number of atoms released
-				nBurst[toIndex(Species::He)] +=
-					gridPointSolution[i] * (double)comp[Species::He] * factor;
-				if constexpr (psi::hasDeuterium<Species>) {
-					nBurst[toIndex(Species::D)] += gridPointSolution[i] *
-						(double)comp[Species::D] * factor;
-				}
-				if constexpr (psi::hasTritium<Species>) {
-					nBurst[toIndex(Species::T)] += gridPointSolution[i] *
-						(double)comp[Species::T] * factor;
-				}
-				// Transfer concentration to V of the same size
-				Composition vComp = Composition::zero();
-				vComp[Species::V] = comp[Species::V];
-				auto vCluster = this->findCluster(vComp, plsm::HostMemSpace{});
-				// Get the region
-				auto vReg = vCluster.getRegion();
-				double width = vReg[Species::V].length();
-				gridPointSolution[vCluster.getId()] +=
-					gridPointSolution[i] / width;
-				gridPointSolution[i] = 0.0;
-
-				continue;
-			}
-		}
-		// Grouped clusters
-		else {
-			// Compute the number of atoms released
-			double concFactor = clReg.volume() / clReg[Species::He].length();
-			for (auto j : makeIntervalRange(clReg[Species::He])) {
-				nBurst[toIndex(Species::He)] +=
-					gridPointSolution[i] * (double)j * concFactor * factor;
-			}
-			if constexpr (psi::hasDeuterium<Species>) {
-				concFactor = clReg.volume() / clReg[Species::D].length();
-				for (auto j : makeIntervalRange(clReg[Species::D])) {
-					nBurst[toIndex(Species::D)] +=
-						gridPointSolution[i] * (double)j * concFactor * factor;
-				}
-			}
-			if constexpr (psi::hasTritium<Species>) {
-				concFactor = clReg.volume() / clReg[Species::T].length();
-				for (auto j : makeIntervalRange(clReg[Species::T])) {
-					nBurst[toIndex(Species::T)] +=
-						gridPointSolution[i] * (double)j * concFactor * factor;
-				}
-			}
-
-			// Get the factor
-			concFactor = clReg.volume() / clReg[Species::V].length();
-			// Loop on the Vs
-			for (auto j : makeIntervalRange(clReg[Species::V])) {
-				// Transfer concentration to V of the same size
-				Composition vComp = Composition::zero();
-				vComp[Species::V] = j;
-				auto vCluster = this->findCluster(vComp, plsm::HostMemSpace{});
-				// Get the region
-				auto vReg = vCluster.getRegion();
-				double width = vReg[Species::V].length();
-				// TODO: refine formula with V moment
-				gridPointSolution[vCluster.getId()] +=
-					gridPointSolution[i] * concFactor / width;
-			}
-
-			// Reset the concentration and moments
-			gridPointSolution[i] = 0.0;
-			auto momentIds =
-				this->getCluster(i, plsm::HostMemSpace{}).getMomentIds();
-			for (std::size_t j = 0; j < momentIds.extent(0); j++) {
-				if (momentIds(j) != this->invalidIndex())
-					gridPointSolution[momentIds(j)] = 0.0;
-			}
-		}
-	}
 }
 
 template <typename TSpeciesEnum>
@@ -456,8 +339,7 @@ PSIReactionGenerator<TSpeciesEnum>::PSIReactionGenerator(
 	bubbleId(network.bubbleId),
 	bubbleAvHeId(network.bubbleAvHeId),
 	bubbleAvVId(network.bubbleAvVId),
-	largestClusterId(network.largestClusterId),
-	hevRatio(network.hevRatio)
+	largestClusterId(network.largestClusterId)
 {
 	bool enableTrapMutation = network.getEnableTrapMutation();
 	if (!enableTrapMutation) {
@@ -494,12 +376,20 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	constexpr auto species = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
 
+	auto numClusters = this->getNumberOfClusters();
+
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
 	if (i == j) {
-		addSinks(i, tag);
+		addBurstings(i, tag);
+		if (diffusionFactor(i) > 0.0)
+			addSinks(i, tag);
 	}
 	addLargeBubbleReactions(i, j, tag);
 
-	auto numClusters = this->getNumberOfClusters();
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
 
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
@@ -657,7 +547,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 
 		// Check that some of the products don't exist
 		if (bounds[Species::He].second <=
-			psi::getMaxHePerV(bounds[Species::V].first, hevRatio))
+			psi::getMaxHePerV(bounds[Species::V].first))
 			continue;
 
 		// Copy the bounds
@@ -838,7 +728,7 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 		this->getCluster(this->largestClusterId).getRegion();
 	Composition hiLargest = largestReg.getUpperLimitPoint();
 	auto largestV = hiLargest[Species::V] - 1;
-	auto largestHe = psi::getMaxHePerV(largestV, hevRatio);
+	auto largestHe = psi::getMaxHePerV(largestV);
 
 	// General case
 	constexpr auto species = NetworkType::getSpeciesRange();
@@ -866,11 +756,10 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 		if (lo1.isOnAxis(Species::He) or lo2.isOnAxis(Species::He)) {
 			// Is it trap mutation?
 			if (bounds[Species::He].first >
-				psi::getMaxHePerV(bounds[Species::V].first, hevRatio)) {
+				psi::getMaxHePerV(bounds[Species::V].first)) {
 				AmountType iSize = 1;
 				while (bounds[Species::He].first >
-					psi::getMaxHePerV(
-						bounds[Species::V].first + iSize, hevRatio)) {
+					psi::getMaxHePerV(bounds[Species::V].first + iSize)) {
 					iSize++;
 				}
 				// Get the corresponding I cluster
@@ -911,13 +800,54 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 }
 
 template <typename TSpeciesEnum>
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	const auto& clReg = this->getCluster(i).getRegion();
+	Composition lo = clReg.getOrigin();
+	Composition hi = clReg.getUpperLimitPoint();
+
+	// Need helium
+	if (hi[Species::He] == 1)
+		return;
+
+	// Loop on V
+	auto previousIndex = NetworkType::invalidIndex();
+	for (auto nV = lo[Species::V]; nV < hi[Species::V]; nV++) {
+		// Pure helium case
+		if (nV == 0) {
+			return;
+		}
+		// Bubble case
+		else {
+			auto& subpaving = this->getSubpaving();
+			// Look for the V cluster of the same size
+			Composition comp = Composition::zero();
+			comp[Species::V] = nV;
+			auto vClusterId = subpaving.findTileId(comp);
+			if (vClusterId != NetworkType::invalidIndex() and
+				vClusterId != previousIndex) {
+				this->addBurstingReaction(tag, {i, vClusterId});
+				previousIndex = vClusterId;
+			}
+		}
+	}
+}
+
+template <typename TSpeciesEnum>
 inline ReactionCollection<
 	typename PSIReactionGenerator<TSpeciesEnum>::NetworkType>
 PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions(), this->getTrapMutationReactions());
+		this->getSinkReactions(), this->getTrapMutationReactions(),
+		this->getBurstingReactions());
 	return ret;
 }
 } // namespace detail

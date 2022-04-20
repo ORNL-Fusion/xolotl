@@ -120,9 +120,6 @@ protected:
 	//! If the user wants to move the surface.
 	bool movingSurface;
 
-	//! If the user wants to burst bubbles.
-	bool bubbleBursting;
-
 	//! If the user wants to use x mirror boundary conditions or periodic ones.
 	bool isMirror;
 
@@ -134,15 +131,6 @@ protected:
 
 	//! The sputtering yield for the problem.
 	double sputteringYield;
-
-	//! The depth parameter for the bubble bursting.
-	double tauBursting;
-
-	//! The factor involved in computing bursting likelihood.
-	double burstingFactor;
-
-	//! The ratio of He per V in a bubble.
-	double heVRatio;
 
 	//! The value to use to seed the random number generator.
 	unsigned int rngSeed;
@@ -171,7 +159,7 @@ protected:
 	 * Constructor.
 	 *
 	 * @param _network The reaction network to use.
-	 * @param _perfHandler The perf handler to use.
+	 * @param options The options.
 	 */
 	SolverHandler(NetworkType& _network, const options::IOptions& options);
 
@@ -241,33 +229,6 @@ public:
 	getSputteringYield() const override
 	{
 		return sputteringYield;
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	double
-	getTauBursting() const override
-	{
-		return tauBursting;
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	double
-	getBurstingFactor() const override
-	{
-		return burstingFactor;
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	double
-	getHeVRatio() const override
-	{
-		return heVRatio;
 	}
 
 	/**
@@ -392,15 +353,6 @@ public:
 	moveSurface() const override
 	{
 		return movingSurface;
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	bool
-	burstBubbles() const override
-	{
-		return bubbleBursting;
 	}
 
 	/**

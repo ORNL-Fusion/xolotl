@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/BurstingReaction.h>
 #include <xolotl/core/network/PSITraits.h>
 #include <xolotl/core/network/Reaction.h>
 #include <xolotl/core/network/SinkReaction.h>
@@ -186,6 +187,7 @@ public:
 	double
 	getSinkStrength();
 };
+
 template <typename TSpeciesEnum>
 class PSITrapMutationReaction :
 	public TrapMutationReaction<PSIReactionNetwork<TSpeciesEnum>,
@@ -195,6 +197,21 @@ public:
 	using Superclass = TrapMutationReaction<PSIReactionNetwork<TSpeciesEnum>,
 		PSITrapMutationReaction<TSpeciesEnum>>;
 	using Superclass::Superclass;
+};
+template <typename TSpeciesEnum>
+class PSIBurstingReaction :
+	public BurstingReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSIBurstingReaction<TSpeciesEnum>>
+{
+public:
+	using Superclass = BurstingReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSIBurstingReaction<TSpeciesEnum>>;
+	using IndexType = typename Superclass::IndexType;
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getAppliedRate(IndexType gridIndex) const;
 };
 } // namespace network
 } // namespace core

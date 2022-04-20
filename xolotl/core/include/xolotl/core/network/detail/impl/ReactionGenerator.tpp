@@ -38,9 +38,6 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 			if (j < i) {
 				return;
 			}
-			if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-				return;
-			}
 			generator(i, j, Count{});
 		});
 	Kokkos::fence();
@@ -53,9 +50,6 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateReactions()
 		"ReactionGeneratorBase::generateReactions::construct", range2d,
 		KOKKOS_LAMBDA(IndexType i, IndexType j) {
 			if (j < i) {
-				return;
-			}
-			if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
 				return;
 			}
 			generator(i, j, Construct{});

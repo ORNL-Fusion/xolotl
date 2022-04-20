@@ -197,6 +197,12 @@ public:
 	setZeta(double zeta) override;
 
 	void
+	setTauBursting(double tau) override;
+
+	void
+	setFBursting(double f) override;
+
+	void
 	setEnableStdReaction(bool reaction) override;
 
 	void
@@ -210,6 +216,9 @@ public:
 
 	void
 	setEnableTrapMutation(bool reaction) override;
+
+	void
+	setEnableBursting(bool reaction) override;
 
 	void
 	setEnableReducedJacobian(bool reduced) override;

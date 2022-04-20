@@ -20,8 +20,7 @@ PSIClusterGenerator<TSpeciesEnum>::PSIClusterGenerator(
 	_maxI(opts.getMaxI()),
 	_groupingMin(opts.getGroupingMin()),
 	_groupingWidthA(opts.getGroupingWidthA()),
-	_groupingWidthB(opts.getGroupingWidthB()),
-	_hevRatio(opts.getHeVRatio())
+	_groupingWidthB(opts.getGroupingWidthB())
 {
 }
 
@@ -37,8 +36,7 @@ PSIClusterGenerator<TSpeciesEnum>::PSIClusterGenerator(
 	_maxI(opts.getMaxI()),
 	_groupingMin(opts.getGroupingMin()),
 	_groupingWidthA(opts.getGroupingWidthA()),
-	_groupingWidthB(opts.getGroupingWidthB()),
-	_hevRatio(opts.getHeVRatio())
+	_groupingWidthB(opts.getGroupingWidthB())
 {
 }
 
@@ -117,18 +115,17 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	}
 
 	// Else refine around the edge
-	auto maxDPerV = [hevRatio = _hevRatio, maxD = _maxD](AmountType amtV) {
-		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio) * (maxD > 0);
+	auto maxDPerV = [maxD = _maxD](AmountType amtV) {
+		return (2.0 / 3.0) * getMaxHePerV(amtV) * (maxD > 0);
 	};
-	auto maxTPerV = [hevRatio = _hevRatio, maxT = _maxT](AmountType amtV) {
-		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio) * (maxT > 0);
+	auto maxTPerV = [maxT = _maxT](AmountType amtV) {
+		return (2.0 / 3.0) * getMaxHePerV(amtV) * (maxT > 0);
 	};
 	if (hi[Species::V] > 1) {
 		double factor = 1.0e-1;
 
-		if (lo[Species::He] <= getMaxHePerV(hi[Species::V] - 1, _hevRatio) &&
-			hi[Species::He] - 1 >=
-				getMaxHePerV(lo[Species::V] - 1, _hevRatio)) {
+		if (lo[Species::He] <= getMaxHePerV(hi[Species::V] - 1) &&
+			hi[Species::He] - 1 >= getMaxHePerV(lo[Species::V] - 1)) {
 			if constexpr (hasDeuterium<Species>) {
 				if (region[Species::D].length() <
 					util::max((double)(_groupingWidthA + 1),
@@ -176,7 +173,6 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 					result[toIndex(Species::T)] = true;
 				}
 			}
-
 			return true;
 		}
 	}
@@ -366,8 +362,8 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		}
 	}
 
-	auto maxHPerV = [hevRatio = _hevRatio](AmountType amtV) {
-		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio);
+	auto maxHPerV = [](AmountType amtV) {
+		return (2.0 / 3.0) * getMaxHePerV(amtV);
 	};
 
 	// The edge
@@ -375,11 +371,10 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		Composition lo = region.getOrigin();
 		Composition hi = region.getUpperLimitPoint();
 		auto hiV = util::min(hi[Species::V] - 1, _maxV);
-		auto hiHe =
-			util::min(hi[Species::He] - 1, getMaxHePerV(_maxV, _hevRatio));
+		auto hiHe = util::min(hi[Species::He] - 1, getMaxHePerV(_maxV));
 
 		// Too many helium
-		if (lo[Species::He] > getMaxHePerV(hiV, _hevRatio)) {
+		if (lo[Species::He] > getMaxHePerV(hiV)) {
 			return false;
 		}
 
