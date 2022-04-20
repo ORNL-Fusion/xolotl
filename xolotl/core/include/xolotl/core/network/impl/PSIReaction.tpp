@@ -123,11 +123,11 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 					psi::getMaxHePerV(avV, this->_clusterData->heVRatio())) {
 					// Count how many I are needed
 					AmountType nI = 1;
-					while (comp[Species::He] + avHe >
-						psi::getMaxHePerV(
-							avV + nI, this->_clusterData->heVRatio())) {
-						nI++;
-					}
+//					while (comp[Species::He] + avHe >
+//						psi::getMaxHePerV(
+//							avV + nI, this->_clusterData->heVRatio())) {
+//						nI++;
+//					}
 
 					// The other product increases
 					Kokkos::atomic_add(&fluxes[this->_products[1]], nI * f);
@@ -313,11 +313,11 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 					psi::getMaxHePerV(avV, this->_clusterData->heVRatio())) {
 					// Count how many I are needed
 					AmountType nI = 1;
-					while (comp[Species::He] + avHe >
-						psi::getMaxHePerV(
-							avV + nI, this->_clusterData->heVRatio())) {
-						nI++;
-					}
+//					while (comp[Species::He] + avHe >
+//						psi::getMaxHePerV(
+//							avV + nI, this->_clusterData->heVRatio())) {
+//						nI++;
+//					}
 
 					// The other product increases
 					f = this->_coefs(0, 0, 0, 0) * rate * nI;
