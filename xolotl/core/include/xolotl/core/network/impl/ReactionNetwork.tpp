@@ -725,6 +725,10 @@ ReactionNetworkWorker<TImpl>::defineMomentIds()
 	Kokkos::parallel_for(
 		"ReactionNetworkWorker::defineMomentIds::assignMomentIds", nClusters,
 		KOKKOS_LAMBDA(const IndexType i) {
+			for (IndexType j = 0; j < data->momentIds.extent(1); ++j) {
+				data->momentIds(i, j) = Network::invalidIndex();
+			}
+
 			const auto& reg = data->getCluster(i).getRegion();
 			IndexType current = counts(i);
 			for (auto k : speciesRange) {
