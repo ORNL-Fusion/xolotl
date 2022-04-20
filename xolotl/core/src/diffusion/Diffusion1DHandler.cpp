@@ -122,14 +122,16 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 
 	////////////////////////////////////////////////////////////////////////////
 	// TODO: This needs to happen at initialization (probably)
-	using HostUnmanaged = Kokkos::View<const IdType*, Kokkos::MemoryUnmanaged>;
+	using HostUnmanaged =
+		Kokkos::View<const IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
 	auto clusterIds_h =
 		HostUnmanaged(diffusingClusters.data(), diffusingClusters.size());
-	auto clusterIds =
-		Kokkos::View<IdType*>("Diffusing Clusters", diffusingClusters.size());
+	auto clusterIds = Kokkos::View<IdType*>(
+		"Diffusing Cluster Ids", diffusingClusters.size());
 	deep_copy(clusterIds, clusterIds_h);
 
-	auto clusters = Kokkos::View<network::ClusterCommon<plsm::DeviceMemSpace>*>(
+	using DeviceCluster = network::ClusterCommon<plsm::DeviceMemSpace>;
+	auto clusters = Kokkos::View<DeviceCluster*>(
 		Kokkos::ViewAllocateWithoutInitializing("Diffusing Clusters"),
 		diffusingClusters.size());
 	auto clusters_h = create_mirror_view(clusters);

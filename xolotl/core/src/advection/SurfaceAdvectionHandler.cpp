@@ -136,13 +136,100 @@ SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 
 void
 SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
-	const plsm::SpaceVector<double, 3>& pos,
-	Kokkos::View<const double*>* concVector,
+	const plsm::SpaceVector<double, 3>& pos, const StencilConcArray& concVector,
 	Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
 	int ix, double hy, int iy, double hz, int iz) const
 {
-    // TODO
-	throw std::runtime_error("SurfaceAdvectionHandler: Not implemented");
+	// Consider each advecting cluster
+	// TODO Maintaining a separate index assumes that advectingClusters is
+	// visited in same order as advectionGrid array for given point
+	// and the sinkStrengthVector.
+	// Currently true with C++11, but we'd like to be able to visit the
+	// advecting clusters in any order (so that we can parallelize).
+	// Maybe with a zip? or a std::transform?
+
+	////////////////////////////////////////////////////////////////////////////
+	// TODO: This needs to happen at initialization (probably)
+	using HostUnmanaged =
+		Kokkos::View<const IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto clusterIds_h =
+		HostUnmanaged(advectingClusters.data(), advectingClusters.size());
+	auto clusterIds = Kokkos::View<IdType*>(
+		"Advecting Cluster Ids", advectingClusters.size());
+	deep_copy(clusterIds, clusterIds_h);
+
+	auto sinkStrengths_h =
+		Kokkos::View<const double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+			sinkStrengthVector.data(), sinkStrengthVector.size());
+	auto sinkStrengths =
+		Kokkos::View<double*>("Sink Strengths", sinkStrengthVector.size());
+	deep_copy(sinkStrengths, sinkStrengths_h);
+
+	using DeviceCluster = network::ClusterCommon<plsm::DeviceMemSpace>;
+	auto clusters = Kokkos::View<DeviceCluster*>(
+		Kokkos::ViewAllocateWithoutInitializing("Advecting Clusters"),
+		advectingClusters.size());
+	auto clusters_h = create_mirror_view(clusters);
+	for (IdType i = 0; i < advectingClusters.size(); ++i) {
+		clusters_h[i] = network.getClusterCommon(
+			advectingClusters[i], plsm::DeviceMemSpace{});
+	}
+	deep_copy(clusters, clusters_h);
+
+	auto advGrid = Kokkos::View<int****>("Advection Grid", advectionGrid.size(),
+		advectionGrid[0].size(), advectionGrid[0][0].size(),
+		advectingClusters.size());
+	auto advGrid_h = create_mirror_view(advGrid);
+	for (IdType k = 0; k < advectionGrid.size(); ++k) {
+		for (IdType j = 0; j < advectionGrid[0].size(); ++j) {
+			for (IdType i = 0; i < advectionGrid[0][0].size(); ++i) {
+				for (IdType n = 0; n < advectingClusters.size(); ++n) {
+					advGrid_h(k, j, i, n) = advectionGrid[k][j][i][n];
+				}
+			}
+		}
+	}
+	deep_copy(advGrid, advGrid_h);
+	////////////////////////////////////////////////////////////////////////////
+
+	if (concVector.size() < 3) {
+		throw std::runtime_error("Wrong size for 1D concentration stencil; "
+								 "should be at least 3, got " +
+			std::to_string(concVector.size()));
+	}
+	Kokkos::Array<Kokkos::View<const double*>, 3> concVec = {
+		concVector[0], concVector[1], concVector[2]};
+
+    auto location_ = location;
+	Kokkos::parallel_for(
+		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+			auto currId = clusterIds[i];
+			auto cluster = clusters[i];
+
+			// Get the initial concentrations
+			double oldConc = concVec[0][currId] *
+				advGrid(iz + 1, iy + 1, ix + 1, i); // middle
+			double oldRightConc = concVec[2][currId] *
+				advGrid(iz + 1, iy + 1, ix + 2, i); // right
+
+			// Compute the concentration as explained in the description of the
+			// method
+			double conc = (3.0 * sinkStrengths[i] *
+							  cluster.getDiffusionCoefficient(ix + 1)) *
+				((oldRightConc / pow(pos[0] - location_ + hxRight, 4)) -
+					(oldConc / pow(pos[0] - location_, 4))) /
+				(kBoltzmann * cluster.getTemperature(ix + 1) * hxRight);
+
+			conc += (3.0 * sinkStrengths[i] * oldConc) *
+				(cluster.getDiffusionCoefficient(ix + 2) /
+						cluster.getTemperature(ix + 2) -
+					cluster.getDiffusionCoefficient(ix + 1) /
+						cluster.getTemperature(ix + 1)) /
+				(kBoltzmann * hxRight * pow(pos[0] - location_, 4));
+
+			// Update the concentration of the cluster
+			updatedConcOffset[currId] += conc;
+		});
 }
 
 void

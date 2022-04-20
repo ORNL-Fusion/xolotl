@@ -5,11 +5,10 @@
 #include <array>
 #include <memory>
 
-#include <Kokkos_View.hpp>
-
 #include <plsm/SpaceVector.h>
 
 #include <xolotl/config.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
 namespace xolotl
@@ -111,7 +110,7 @@ public:
 	virtual void
 	computeAdvection(network::IReactionNetwork& network,
 		const plsm::SpaceVector<double, 3>& pos,
-		Kokkos::View<const double*>* concVector,
+		const StencilConcArray& concVector,
 		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
 		int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
 		int iz = 0) const = 0;

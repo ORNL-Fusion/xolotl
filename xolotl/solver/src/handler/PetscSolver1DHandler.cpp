@@ -754,8 +754,8 @@ PetscSolver1DHandler::updateConcentration(
 		gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 		for (auto i = 0; i < advectionHandlers.size(); i++) {
 			advectionHandlers[i]->computeAdvection(network, gridPosition,
-				concVector.data(), updatedConcOffset, hxLeft, hxRight,
-				xi - localXS);
+				core::StencilConcArray{concVector.data(), 3}, updatedConcOffset,
+				hxLeft, hxRight, xi - localXS);
 		}
 
 		auto surfacePos = grid[surfacePosition + 1];

@@ -153,12 +153,11 @@ ZGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 
 void
 ZGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
-	const plsm::SpaceVector<double, 3>& pos,
-	Kokkos::View<const double*>* concVector,
+	const plsm::SpaceVector<double, 3>& pos, const StencilConcArray& concVector,
 	Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
 	int ix, double hy, int iy, double hz, int iz) const
 {
-    // TODO
+	// TODO
 	throw std::runtime_error("ZGBAdvectionHandler: Not implemented");
 }
 
