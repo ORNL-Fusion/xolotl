@@ -13,7 +13,7 @@ BurstingReactionGenerator<TBase>::BurstingReactionGenerator(
 	const NetworkType& network) :
 	Superclass(network),
 	_clusterBurstingReactionCounts(
-		"Bursting Reaction Counts", Superclass::getNumberOfClusters())
+		"Bursting Reaction Counts", Superclass::getNumberOfClusters() + 1)
 {
 }
 

@@ -25,7 +25,6 @@ public:
 		PSIProductionReaction<TSpeciesEnum>>;
 
 	using Superclass::Superclass;
-	using Connectivity = typename Superclass::Connectivity;
 	using NetworkType = typename Superclass::NetworkType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
 	using ClusterData = typename Superclass::ClusterData;
@@ -198,6 +197,7 @@ public:
 		PSITrapMutationReaction<TSpeciesEnum>>;
 	using Superclass::Superclass;
 };
+
 template <typename TSpeciesEnum>
 class PSIBurstingReaction :
 	public BurstingReaction<PSIReactionNetwork<TSpeciesEnum>,
@@ -206,12 +206,87 @@ class PSIBurstingReaction :
 public:
 	using Superclass = BurstingReaction<PSIReactionNetwork<TSpeciesEnum>,
 		PSIBurstingReaction<TSpeciesEnum>>;
-	using IndexType = typename Superclass::IndexType;
 	using Superclass::Superclass;
+	using NetworkType = typename Superclass::NetworkType;
+	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ClusterData = typename Superclass::ClusterData;
+	using IndexType = typename Superclass::IndexType;
+	using Composition = typename Superclass::Composition;
+	using Region = typename Superclass::Region;
+	using ConcentrationsView = typename Superclass::ConcentrationsView;
+	using FluxesView = typename Superclass::FluxesView;
+	using Species = typename Superclass::Species;
+
+	KOKKOS_INLINE_FUNCTION
+	PSIBurstingReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		IndexType cluster0, IndexType cluster1)
+	{
+		this->_clusterData = &clusterData;
+		this->_reactionId = reactionId;
+		this->_rate = reactionData.getRates(reactionId);
+		this->_widths = reactionData.getWidths(reactionId);
+		this->_coefs = reactionData.getCoefficients(reactionId);
+
+		this->_reactant = cluster0;
+		this->_product = cluster1;
+
+		auto numClusters = clusterData.numClusters;
+		// Check if the large bubble is involved
+		if (cluster0 >= numClusters)
+			isLargeBubbleReaction = true;
+		if (cluster1 >= numClusters)
+			isLargeBubbleReaction = true;
+
+		// static
+		const auto dummyRegion = Region(Composition{});
+
+		if (this->_reactant < numClusters) {
+			this->copyMomentIds(this->_reactant, this->_reactantMomentIds);
+		}
+		else {
+			this->_reactantMomentIds[0] = this->_clusterData->bubbleAvHeId();
+			this->_reactantMomentIds[1] = this->_clusterData->bubbleAvVId();
+		}
+
+		const auto& cl1Reg = (this->_reactant < numClusters) ?
+			this->_clusterData->getCluster(this->_reactant).getRegion() :
+			dummyRegion;
+
+		this->_reactantVolume = cl1Reg.volume();
+
+		this->initialize();
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	PSIBurstingReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		const detail::ClusterSet& clusterSet) :
+		PSIBurstingReaction(reactionData, clusterData, reactionId,
+			clusterSet.cluster0, clusterSet.cluster1)
+	{
+	}
 
 	KOKKOS_INLINE_FUNCTION
 	double
 	getAppliedRate(IndexType gridIndex) const;
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeCoefficients();
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
+		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computePartialDerivatives(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex);
+
+private:
+	bool isLargeBubbleReaction = false;
 };
 } // namespace network
 } // namespace core

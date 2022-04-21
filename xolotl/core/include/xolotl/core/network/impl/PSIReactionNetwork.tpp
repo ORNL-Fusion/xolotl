@@ -385,11 +385,11 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		if (diffusionFactor(i) > 0.0)
 			addSinks(i, tag);
 	}
-	addLargeBubbleReactions(i, j, tag);
 
 	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
 		return;
 	}
+	addLargeBubbleReactions(i, j, tag);
 
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
@@ -807,6 +807,11 @@ PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
 {
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
+
+	// Large bubble, add it once
+	if (i == 0) {
+		this->addBurstingReaction(tag, {bubbleId, bubbleId});
+	}
 
 	const auto& clReg = this->getCluster(i).getRegion();
 	Composition lo = clReg.getOrigin();
