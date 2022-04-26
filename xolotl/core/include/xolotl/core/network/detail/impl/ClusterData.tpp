@@ -102,7 +102,9 @@ ClusterData<TNetwork, MemSpace>::ClusterData(
 	const TilesView& tiles_, IndexType numClusters_, IndexType gridSize_) :
 	Superclass(numClusters_, gridSize_),
 	tiles(tiles_),
-	momentIds("Moment Ids" + labelStr<MemSpace>(), numClusters_)
+	momentIds(Kokkos::ViewAllocateWithoutInitializing(
+				  "Moment Ids" + labelStr<MemSpace>()),
+		numClusters_)
 {
 }
 

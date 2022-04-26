@@ -38,7 +38,7 @@ public:
 	 * \see IDiffusionHandler.h
 	 */
 	void
-	initializeOFill(const network::IReactionNetwork& network,
+	initializeOFill(network::IReactionNetwork& network,
 		network::IReactionNetwork::SparseFillMap& ofillMap) override
 	{
 		// Clear the index vector
