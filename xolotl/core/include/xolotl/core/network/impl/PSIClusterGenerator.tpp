@@ -371,10 +371,11 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		Composition lo = region.getOrigin();
 		Composition hi = region.getUpperLimitPoint();
 		auto hiV = util::min(hi[Species::V] - 1, _maxV);
-		auto hiHe = util::min(hi[Species::He] - 1, getMaxHePerV(_maxV));
+		auto hiHe =
+			util::min(hi[Species::He] - 1, (AmountType)getMaxHePerV(_maxV));
 
 		// Too many helium
-		if (lo[Species::He] > getMaxHePerV(hiV)) {
+		if (lo[Species::He] > (AmountType)getMaxHePerV(hiV)) {
 			return false;
 		}
 

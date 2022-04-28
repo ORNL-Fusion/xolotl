@@ -1,5 +1,6 @@
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
+#include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/PetscSolver.h>
@@ -36,7 +37,7 @@ PetscMonitor0D::setup()
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flag1DPlot, flagBubble, flagStatus, flagAlloy,
-		flagXeRetention, flagLargest;
+		flagXeRetention, flagHeRetention, flagLargest;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
@@ -62,11 +63,18 @@ PetscMonitor0D::setup()
 	ierr = PetscOptionsHasName(NULL, NULL, "-alloy", &flagAlloy);
 	checkPetscError(
 		ierr, "setupPetsc0DMonitor: PetscOptionsHasName (-alloy) failed.");
+
 	// Check the option -xenon_retention
 	ierr =
 		PetscOptionsHasName(NULL, NULL, "-xenon_retention", &flagXeRetention);
 	checkPetscError(ierr,
 		"setupPetsc0DMonitor: PetscOptionsHasName (-xenon_retention) failed.");
+
+	// Check the option -helium_retention
+	ierr =
+		PetscOptionsHasName(NULL, NULL, "-helium_retention", &flagHeRetention);
+	checkPetscError(ierr,
+		"setupPetsc0DMonitor: PetscOptionsHasName (-helium_retention) failed.");
 
 	// Check the option -largest_conc
 	ierr = PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest);
@@ -195,6 +203,36 @@ PetscMonitor0D::setup()
 		outputFile << "#time Xenon_conc radius partial_radius "
 					  "partial_bubble_conc partial_size"
 				   << std::endl;
+		outputFile.close();
+	}
+
+	// Set the monitor to compute the helium content
+	if (flagHeRetention) {
+		// Get the previous time if concentrations were stored and initialize
+		// the fluence
+		if (hasConcentrations) {
+			assert(lastTsGroup);
+
+			// Get the previous time from the HDF5 file
+			double previousTime = lastTsGroup->readPreviousTime();
+			_solverHandler->setPreviousTime(previousTime);
+			// Initialize the fluence
+			auto fluxHandler = _solverHandler->getFluxHandler();
+			// Increment the fluence with the value at this current timestep
+			fluxHandler->computeFluence(previousTime);
+		}
+
+		// computeHeliumRetention0D will be called at each timestep
+		ierr =
+			TSMonitorSet(_ts, monitor::computeHeliumRetention, this, nullptr);
+		checkPetscError(ierr,
+			"setupPetsc0DMonitor: TSMonitorSet (computeHeliumRetention) "
+			"failed.");
+
+		// Uncomment to clear the file where the retention will be written
+		std::ofstream outputFile;
+		outputFile.open("retentionOut.txt");
+		outputFile << "#time Helium_conc C_b av_He av_V" << std::endl;
 		outputFile.close();
 	}
 
@@ -478,6 +516,75 @@ PetscMonitor0D::computeXenonRetention(
 			   << radii / bubbleConcentration << " " << averagePartialRadius
 			   << " " << partialBubbleConcentration << " " << averagePartialSize
 			   << std::endl;
+	outputFile.close();
+
+	// Restore the solutionArray
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor0D::computeHeliumRetention(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	// Initial declarations
+	PetscErrorCode ierr;
+
+	PetscFunctionBeginUser;
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	using NetworkType = core::network::IPSIReactionNetwork;
+
+	// Degrees of freedom is the total number of clusters in the network
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+	const auto dof = network.getDOF();
+	auto numSpecies = network.getSpeciesListSize();
+
+	// Get the array of concentration
+	PetscReal** solutionArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	// Store the concentration and other values over the grid
+	double heConcentration = 0.0, cb = 0.0, avHe = 0.0, avV = 0.0;
+
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal* gridPointSolution;
+
+	// Get the pointer to the beginning of the solution data for this grid point
+	gridPointSolution = solutionArray[0];
+
+	// Get the minimum size for the radius
+	auto minSizes = _solverHandler->getMinSizes();
+
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(gridPointSolution, dof);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+	deep_copy(dConcs, hConcs);
+
+	// Get the concentrations
+	auto id = core::network::SpeciesId(numSpecies);
+	heConcentration = network.getTotalAtomConcentration(dConcs, id, 1);
+	cb = gridPointSolution[dof - 4];
+	avHe = gridPointSolution[dof - 3];
+	avV = gridPointSolution[dof - 2];
+
+	// Print the result
+	XOLOTL_LOG << "\nTime: " << time << '\n'
+			   << "Helium concentration = " << heConcentration << "\n\n";
+
+	// Uncomment to write the content in a file
+	std::ofstream outputFile;
+	outputFile.open("retentionOut.txt", std::ios::app);
+	outputFile << time << " " << heConcentration << " " << cb << " "
+			   << avHe / cb << " " << avV / cb << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray

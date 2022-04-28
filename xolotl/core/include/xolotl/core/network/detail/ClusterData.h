@@ -143,7 +143,8 @@ private:
 		LATTICE_PARAM,
 		FISSION_RATE,
 		ZETA,
-		HELIUM_CONTENT,
+		AV_HELIUM_CONTENT,
+		AV_VACANCY_CONTENT,
 		AV_RADIUS,
 		DEPTH,
 		TAU_BURSTING,
@@ -237,13 +238,26 @@ public:
 	double
 	bubbleAvHe() const
 	{
-		return _floatVals[HELIUM_CONTENT];
+		return _floatVals[AV_HELIUM_CONTENT];
 	}
 
 	void
 	setBubbleAvHe(double val)
 	{
-		setVal(_floatVals, HELIUM_CONTENT, val);
+		setVal(_floatVals, AV_HELIUM_CONTENT, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	bubbleAvV() const
+	{
+		return _floatVals[AV_VACANCY_CONTENT];
+	}
+
+	void
+	setBubbleAvV(double val)
+	{
+		setVal(_floatVals, AV_VACANCY_CONTENT, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

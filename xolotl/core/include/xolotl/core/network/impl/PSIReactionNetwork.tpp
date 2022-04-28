@@ -33,6 +33,9 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(const Subpaving& subpaving,
 	bubbleId = this->_numDOFs;
 	bubbleAvHeId = bubbleId + 1;
 	bubbleAvVId = bubbleId + 2;
+	this->_clusterData.h_view().setBubbleId(bubbleId);
+	this->_clusterData.h_view().setBubbleAvHeId(bubbleAvHeId);
+	this->_clusterData.h_view().setBubbleAvVId(bubbleAvVId);
 	this->_numDOFs += 3;
 
 	Connectivity connectivity;
@@ -85,6 +88,9 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
 	bubbleId = this->_numDOFs;
 	bubbleAvHeId = bubbleId + 1;
 	bubbleAvVId = bubbleId + 2;
+	this->_clusterData.h_view().setBubbleId(bubbleId);
+	this->_clusterData.h_view().setBubbleAvHeId(bubbleAvHeId);
+	this->_clusterData.h_view().setBubbleAvVId(bubbleAvVId);
 	this->_numDOFs += 3;
 
 	Connectivity connectivity;
@@ -195,11 +201,19 @@ PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 		this->_clusterData.h_view().setDepth(surfaceDepth);
 	}
 
-	this->_clusterData.h_view().setBubbleAvHe(
-		concentrations(this->_clusterData.h_view().bubbleAvHeId()));
-	this->_clusterData.h_view().setBubbleAvRadius(computeBubbleRadius(
-		concentrations(this->_clusterData.h_view().bubbleAvVId()),
-		this->_clusterData.h_view().latticeParameter()));
+	auto Cb = concentrations(this->_clusterData.h_view().bubbleId());
+	auto avHe = concentrations(this->_clusterData.h_view().bubbleAvHeId()) / Cb;
+	auto avV = concentrations(this->_clusterData.h_view().bubbleAvVId()) / Cb;
+	if (Cb == 0.0) {
+		avHe = 0.0;
+		avV = 0.0;
+	}
+
+	this->_clusterData.h_view().setBubbleAvHe(avHe);
+	this->_clusterData.h_view().setBubbleAvV(avV);
+	this->_clusterData.h_view().setBubbleAvRadius(std::max(0.0,
+		computeBubbleRadius(
+			avV, this->_clusterData.h_view().latticeParameter())));
 }
 
 template <typename TSpeciesEnum>
@@ -217,11 +231,19 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 		this->_clusterData.h_view().setDepth(surfaceDepth);
 	}
 
-	this->_clusterData.h_view().setBubbleAvHe(
-		concentrations(this->_clusterData.h_view().bubbleAvHeId()));
-	this->_clusterData.h_view().setBubbleAvRadius(computeBubbleRadius(
-		concentrations(this->_clusterData.h_view().bubbleAvVId()),
-		this->_clusterData.h_view().latticeParameter()));
+	auto Cb = concentrations(this->_clusterData.h_view().bubbleId());
+	auto avHe = concentrations(this->_clusterData.h_view().bubbleAvHeId()) / Cb;
+	auto avV = concentrations(this->_clusterData.h_view().bubbleAvVId()) / Cb;
+	if (Cb == 0.0) {
+		avHe = 0.0;
+		avV = 0.0;
+	}
+
+	this->_clusterData.h_view().setBubbleAvHe(avHe);
+	this->_clusterData.h_view().setBubbleAvV(avV);
+	this->_clusterData.h_view().setBubbleAvRadius(std::max(0.0,
+		computeBubbleRadius(
+			avV, this->_clusterData.h_view().latticeParameter())));
 }
 
 template <typename TSpeciesEnum>
@@ -691,8 +713,12 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 			Composition comp = Composition::zero();
 			comp[Species::I] = 1;
 			auto iClusterId = subpaving.findTileId(comp);
-			this->addProductionReaction(
-				tag, {i, bubbleId, bubbleId, iClusterId});
+			if (iClusterId == NetworkType::invalidIndex()) {
+				this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+			}
+			else
+				this->addProductionReaction(
+					tag, {i, bubbleId, bubbleId, iClusterId});
 		}
 		// V case
 		else if (lo.isOnAxis(Species::V)) {
@@ -770,6 +796,9 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 				if (iClusterId != NetworkType::invalidIndex()) {
 					this->addProductionReaction(
 						tag, {i, j, bubbleId, iClusterId});
+				}
+				else {
+					this->addProductionReaction(tag, {i, j, bubbleId});
 				}
 			}
 			else {

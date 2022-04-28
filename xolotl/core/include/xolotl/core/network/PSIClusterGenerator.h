@@ -11,10 +11,12 @@ namespace network
 namespace psi
 {
 KOKKOS_INLINE_FUNCTION
-IReactionNetwork::AmountType
-getMaxHePerV(IReactionNetwork::AmountType amtV) noexcept
+double
+getMaxHePerV(double amtV) noexcept
 {
 	using AmountType = IReactionNetwork::AmountType;
+
+	amtV = std::max(0.0, amtV);
 
 	/**
 	 * The maximum number of helium atoms that can be combined with a
@@ -22,17 +24,15 @@ getMaxHePerV(IReactionNetwork::AmountType amtV) noexcept
 	 * It could support a mixture of up to nine
 	 * helium atoms with one vacancy.
 	 */
-	constexpr Kokkos::Array<AmountType, 30> maxHePerV = {8, 9, 14, 18, 20, 27,
-		30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101,
-		103, 105, 107, 109, 110, 112, 116};
+	constexpr Kokkos::Array<AmountType, 15> maxHePerV = {
+		8, 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55, 60, 65, 70};
 
 	if (amtV < maxHePerV.size()) {
-		return maxHePerV[amtV];
+		return maxHePerV[(AmountType)amtV];
 	}
 
-	return util::max((AmountType)(pow((double)amtV, 0.86) * 5.0),
-		maxHePerV[maxHePerV.size() - 1] + amtV - (AmountType)maxHePerV.size() +
-			1);
+	return util::max(pow(amtV, 0.86) * 5.0,
+		maxHePerV[maxHePerV.size() - 1] + amtV - maxHePerV.size() + 1);
 }
 } // namespace psi
 
