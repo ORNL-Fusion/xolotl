@@ -69,8 +69,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
 
-	if (map["largeBubble"])
-		return;
+	asDerived()->initializeExtraDOFs(opts);
 
 	Connectivity connectivity;
 	defineReactions(connectivity);

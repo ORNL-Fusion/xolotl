@@ -92,6 +92,9 @@ public:
 	initializeExtraClusterData(const options::IOptions& options);
 
 	void
+	initializeExtraDOFs(const options::IOptions& options);
+
+	void
 	updateExtraClusterData(const std::vector<double>& gridTemps,
 		const std::vector<double>& gridDepths);
 
@@ -170,10 +173,6 @@ protected:
 	}
 
 public:
-	IndexType bubbleId;
-	IndexType bubbleAvHeId;
-	IndexType bubbleAvVId;
-
 	IndexType largestClusterId;
 };
 
@@ -224,10 +223,6 @@ private:
 
 private:
 	Kokkos::Array<Kokkos::View<AmountType*>, 7> _tmVSizes;
-
-	IndexType bubbleId;
-	IndexType bubbleAvHeId;
-	IndexType bubbleAvVId;
 
 	IndexType largestClusterId;
 };

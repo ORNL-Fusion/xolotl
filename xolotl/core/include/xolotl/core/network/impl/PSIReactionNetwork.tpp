@@ -24,23 +24,6 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(const Subpaving& subpaving,
 	_tmHandler(psi::getTrapMutationHandler(
 		this->_enableTrapMutation, options.getMaterial()))
 {
-	auto map = options.getProcesses();
-	if (not map["largeBubble"])
-		return;
-
-	largestClusterId = checkLargestClusterId();
-
-	bubbleId = this->_numDOFs;
-	bubbleAvHeId = bubbleId + 1;
-	bubbleAvVId = bubbleId + 2;
-	this->_clusterData.h_view().setBubbleId(bubbleId);
-	this->_clusterData.h_view().setBubbleAvHeId(bubbleAvHeId);
-	this->_clusterData.h_view().setBubbleAvVId(bubbleAvVId);
-	this->_numDOFs += 3;
-
-	Connectivity connectivity;
-	Superclass::defineReactions(connectivity);
-	Superclass::generateDiagonalFill(connectivity);
 }
 
 template <typename TSpeciesEnum>
@@ -52,23 +35,6 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
 	_tmHandler(psi::getTrapMutationHandler(
 		this->_enableTrapMutation, options.getMaterial()))
 {
-	auto map = options.getProcesses();
-	if (not map["largeBubble"])
-		return;
-
-	largestClusterId = checkLargestClusterId();
-
-	bubbleId = this->_numDOFs;
-	bubbleAvHeId = bubbleId + 1;
-	bubbleAvVId = bubbleId + 2;
-	this->_clusterData.h_view().setBubbleId(bubbleId);
-	this->_clusterData.h_view().setBubbleAvHeId(bubbleAvHeId);
-	this->_clusterData.h_view().setBubbleAvVId(bubbleAvVId);
-	this->_numDOFs += 3;
-
-	Connectivity connectivity;
-	Superclass::defineReactions(connectivity);
-	Superclass::generateDiagonalFill(connectivity);
 }
 
 template <typename TSpeciesEnum>
@@ -79,23 +45,6 @@ PSIReactionNetwork<TSpeciesEnum>::PSIReactionNetwork(
 	_tmHandler(psi::getTrapMutationHandler(
 		this->_enableTrapMutation, options.getMaterial()))
 {
-	auto map = options.getProcesses();
-	if (not map["largeBubble"])
-		return;
-
-	largestClusterId = checkLargestClusterId();
-
-	bubbleId = this->_numDOFs;
-	bubbleAvHeId = bubbleId + 1;
-	bubbleAvVId = bubbleId + 2;
-	this->_clusterData.h_view().setBubbleId(bubbleId);
-	this->_clusterData.h_view().setBubbleAvHeId(bubbleAvHeId);
-	this->_clusterData.h_view().setBubbleAvVId(bubbleAvVId);
-	this->_numDOFs += 3;
-
-	Connectivity connectivity;
-	Superclass::defineReactions(connectivity);
-	Superclass::generateDiagonalFill(connectivity);
 }
 
 template <typename TSpeciesEnum>
@@ -110,6 +59,23 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
 	this->_clusterData.h_view().extraData.trapMutationData.initialize();
 	this->copyClusterDataView();
 	this->invalidateDataMirror();
+}
+
+template <typename TSpeciesEnum>
+void
+PSIReactionNetwork<TSpeciesEnum>::initializeExtraDOFs(
+	const options::IOptions& options)
+{
+	auto map = options.getProcesses();
+	if (not map["largeBubble"])
+		return;
+
+	largestClusterId = checkLargestClusterId();
+
+	this->_clusterData.h_view().setBubbleId(this->_numDOFs);
+	this->_clusterData.h_view().setBubbleAvHeId(this->_numDOFs + 1);
+	this->_clusterData.h_view().setBubbleAvVId(this->_numDOFs + 2);
+	this->_numDOFs += 3;
 }
 
 template <typename TSpeciesEnum>
@@ -358,9 +324,6 @@ template <typename TSpeciesEnum>
 PSIReactionGenerator<TSpeciesEnum>::PSIReactionGenerator(
 	const PSIReactionNetwork<TSpeciesEnum>& network) :
 	Superclass(network),
-	bubbleId(network.bubbleId),
-	bubbleAvHeId(network.bubbleAvHeId),
-	bubbleAvVId(network.bubbleAvVId),
 	largestClusterId(network.largestClusterId)
 {
 	bool enableTrapMutation = network.getEnableTrapMutation();
@@ -697,6 +660,8 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 
+	auto bubbleId = this->_clusterData.bubbleId();
+
 	if (i == j) {
 		const auto& clReg = this->getCluster(i).getRegion();
 		Composition lo = clReg.getOrigin();
@@ -839,6 +804,7 @@ PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
 
 	// Large bubble, add it once
 	if (i == 0) {
+		auto bubbleId = this->_clusterData.bubbleId();
 		this->addBurstingReaction(tag, {bubbleId, bubbleId});
 	}
 

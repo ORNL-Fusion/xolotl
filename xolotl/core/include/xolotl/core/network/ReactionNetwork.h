@@ -160,6 +160,11 @@ public:
 	}
 
 	void
+	initializeExtraDOFs(const options::IOptions&)
+	{
+	}
+
+	void
 	updateExtraClusterData(
 		const std::vector<double>&, const std::vector<double>&)
 	{
