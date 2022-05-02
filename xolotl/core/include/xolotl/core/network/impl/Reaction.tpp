@@ -470,79 +470,12 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 	}
 }
 
-template <typename TRegion>
-KOKKOS_INLINE_FUNCTION
-std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() > 1),
-	double>
-getRateForProduction(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg,
-	const double r0, const double r1, const double dc0, const double dc1)
-{
-	constexpr double pi = ::xolotl::core::pi;
-	constexpr double rCore = ::xolotl::core::alloyCoreRadius;
-	const double zs = 4.0 * pi * (r0 + r1 + rCore);
-	using Species = typename TRegion::EnumIndex;
-	bool cl0IsSphere = (pairCl0Reg.getOrigin().isOnAxis(Species::V) ||
-			 pairCl0Reg.getOrigin().isOnAxis(Species::Void) ||
-			 pairCl0Reg.getOrigin().isOnAxis(Species::I)),
-		 cl1IsSphere = (pairCl1Reg.getOrigin().isOnAxis(Species::V) ||
-			 pairCl1Reg.getOrigin().isOnAxis(Species::Void) ||
-			 pairCl1Reg.getOrigin().isOnAxis(Species::I));
-
-	// Simple case
-	if (cl0IsSphere && cl1IsSphere) {
-		return zs * (dc0 + dc1);
-	}
-
-	double p = 0.0, zl = 0.0;
-	if (r0 < r1) {
-		p = 1.0 / (1.0 + pow(r1 / (3.0 * (r0 + rCore)), 2.0));
-		zl = 4.0 * pow(pi, 2.0) * r1 / log(1.0 + 8.0 * r1 / (r0 + rCore));
-	}
-	else {
-		p = 1.0 / (1.0 + pow(r0 / (3.0 * (r1 + rCore)), 2.0));
-		zl = 4.0 * pow(pi, 2.0) * r0 / log(1.0 + 8.0 * r0 / (r1 + rCore));
-	}
-
-	double k_plus = (dc0 + dc1) * (p * zs + (1.0 - p) * zl);
-	double bias = 1.0;
-	if (pairCl0Reg.getOrigin().isOnAxis(Species::I) ||
-		pairCl1Reg.getOrigin().isOnAxis(Species::I)) {
-		bias = 1.2;
-	}
-
-	return k_plus * bias;
-}
-
-template <typename TRegion>
-KOKKOS_INLINE_FUNCTION
-std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() < 2),
-	double>
-getRateForProduction(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg,
-	const double r0, const double r1, const double dc0, const double dc1)
-{
-	constexpr double pi = ::xolotl::core::pi;
-
-	double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
-
-	return kPlus;
-}
-
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
 ProductionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 {
-	auto cl0 = this->_clusterData->getCluster(_reactants[0]);
-	auto cl1 = this->_clusterData->getCluster(_reactants[1]);
-
-	double r0 = cl0.getReactionRadius();
-	double r1 = cl1.getReactionRadius();
-
-	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
-	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
-
-	return getRateForProduction(
-		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	return this->asDerived()->getRateForProduction(gridIndex);
 }
 
 template <typename TNetwork, typename TDerived>
@@ -1620,18 +1553,7 @@ DissociationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
 	double omega = this->_clusterData->atomicVolume();
 	double T = this->_clusterData->temperature(gridIndex);
 
-	// TODO: computeProductionRate should use products and not reactants
-	auto cl0 = this->_clusterData->getCluster(_products[0]);
-	auto cl1 = this->_clusterData->getCluster(_products[1]);
-
-	double r0 = cl0.getReactionRadius();
-	double r1 = cl1.getReactionRadius();
-
-	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
-	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
-
-	double kPlus = getRateForProduction(
-		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	double kPlus = this->asDerived()->getRateForProduction(gridIndex);
 	double E_b = this->asDerived()->computeBindingEnergy();
 
 	constexpr double k_B = ::xolotl::core::kBoltzmann;

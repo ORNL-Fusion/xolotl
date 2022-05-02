@@ -24,6 +24,11 @@ public:
 		PSIProductionReaction<TSpeciesEnum>>;
 
 	using Superclass::Superclass;
+	using IndexType = typename Superclass::IndexType;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getRateForProduction(IndexType gridIndex);
 };
 
 template <typename TSpeciesEnum>
@@ -36,6 +41,11 @@ public:
 		PSIDissociationReaction<TSpeciesEnum>>;
 
 	using Superclass::Superclass;
+	using IndexType = typename Superclass::IndexType;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getRateForProduction(IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double

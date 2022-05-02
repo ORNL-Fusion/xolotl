@@ -19,6 +19,10 @@ public:
 		ProductionReaction<FeReactionNetwork, FeProductionReaction>;
 
 	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getRateForProduction(IndexType gridIndex);
 };
 
 class FeDissociationReaction :
@@ -29,6 +33,10 @@ public:
 		DissociationReaction<FeReactionNetwork, FeDissociationReaction>;
 
 	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getRateForProduction(IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	double

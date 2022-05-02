@@ -1,4 +1,5 @@
 #include <xolotl/core/network/AlloyReactionNetwork.h>
+#include <xolotl/core/network/FeCrReactionNetwork.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/io/XFile.h>

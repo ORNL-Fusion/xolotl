@@ -38,6 +38,12 @@ constexpr double ironLatticeConstant = 0.28700000000000000;
 //! Core radius. Given in units here of nm.
 constexpr double alloyCoreRadius = 0.36000000000000000;
 
+//! Core radius. Given in units here of nm.
+constexpr double fecrCoreRadius = 0.37000000000000000;
+
+//! Coalescence radius. Given in units here of nm.
+constexpr double fecrCoalesceRadius = 0.74000000000000000;
+
 //! Single helium radius. Given in units here of nm.
 constexpr double heliumRadius = 0.30000000000000000;
 
@@ -73,9 +79,18 @@ constexpr double alloyHeatConductivity = 0.0;
 constexpr double perfectBurgers = 0.5;
 constexpr double faultedBurgers = 0.333;
 constexpr double frankBurgers = 0.333;
+// Burgers vector magnitudes for loops in FeCr case
+// In lattice parameter units
+constexpr double fecrBurgers = 0.8660254038;
+constexpr double fecrLoopBurgers = 1.0;
 
 // Sink strength for Alloy case in nm^-2
 constexpr double alloysinkStrength = 1.0e-5;
+// Sink strength for FeCr case in nm^-2
+constexpr double fecrSinkStrength = 0.00025;
+
+// FeCr detrap frequency
+constexpr double detrapFrequency = 0.1;
 
 } /* end namespace core */
 } /* end namespace xolotl */

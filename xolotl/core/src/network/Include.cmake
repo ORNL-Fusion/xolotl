@@ -25,6 +25,11 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/FeReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeTraits.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/FeCrClusterGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/FeCrNetworkHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/FeCrReaction.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/FeCrReactionNetwork.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/FeCrTraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/INetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/IPSIReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/IReactionNetwork.h
@@ -64,6 +69,9 @@ list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/FeClusterGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/FeReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/FeReactionNetwork.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/FeCrClusterGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/FeCrReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/FeCrReactionNetwork.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/NEClusterGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/NEReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/NEReactionNetwork.tpp
@@ -85,6 +93,9 @@ list(APPEND XOLOTL_CORE_SOURCES
     ${XOLOTL_CORE_SOURCE_DIR}/network/FeClusterGenerator.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/FeNetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/FeReactionNetwork.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/FeCrClusterGenerator.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/FeCrNetworkHandler.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/FeCrReactionNetwork.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/NEClusterGenerator.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/NENetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/NEReactionNetwork.cpp

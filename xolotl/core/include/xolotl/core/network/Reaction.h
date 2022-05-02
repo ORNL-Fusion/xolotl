@@ -265,14 +265,14 @@ public:
 			Superclass::coeffsSingleExtent);
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex);
+
 private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeCoefficients();
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	computeRate(IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -366,14 +366,14 @@ public:
 			Superclass::coeffsSingleExtent);
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex);
+
 private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeCoefficients();
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	computeRate(IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
