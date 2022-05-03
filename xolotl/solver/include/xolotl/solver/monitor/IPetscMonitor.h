@@ -52,6 +52,9 @@ public:
 	computeAlloy(TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
 
 	virtual PetscErrorCode
+	computeFeCrAl(TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
+
+	virtual PetscErrorCode
 	monitorScatter(TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
 
 	virtual PetscErrorCode

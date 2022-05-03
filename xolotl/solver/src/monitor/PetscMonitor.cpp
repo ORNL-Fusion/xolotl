@@ -123,6 +123,17 @@ computeAlloy(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 }
 
 PetscErrorCode
+computeFeCrAl(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
+{
+	PetscFunctionBeginUser;
+	PetscErrorCode ierr = static_cast<IPetscMonitor*>(ictx)->computeFeCrAl(
+		ts, timestep, time, solution);
+	CHKERRQ(ierr);
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
 monitorScatter(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
@@ -352,6 +363,13 @@ PetscMonitor::computeHeliumRetention(
 
 PetscErrorCode
 PetscMonitor::computeAlloy(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor::computeFeCrAl(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	PetscFunctionReturn(0);

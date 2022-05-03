@@ -44,6 +44,10 @@ computeAlloy(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx);
 
 extern PetscErrorCode
+computeFeCrAl(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx);
+
+extern PetscErrorCode
 monitorScatter(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx);
 

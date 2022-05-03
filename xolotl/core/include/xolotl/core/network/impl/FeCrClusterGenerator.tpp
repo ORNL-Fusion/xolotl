@@ -200,18 +200,10 @@ FeCrClusterGenerator::getMigrationEnergy(
 		return 0.1;
 	}
 	if (comp.isOnAxis(Species::V)) {
-		switch (comp[Species::V]) {
-		case 1:
-			return 0.67;
-		case 2:
-			return 0.62;
-		case 3:
-			return 0.35;
-		case 4:
-			return 0.48;
-		default:
+		if (comp[Species::V] < 5)
+			return 1.3;
+		else
 			return migrationEnergy;
-		}
 	}
 	if (comp.isOnAxis(Species::I)) {
 		switch (comp[Species::I]) {
@@ -222,7 +214,7 @@ FeCrClusterGenerator::getMigrationEnergy(
 		case 3:
 			return 0.43;
 		default:
-			return migrationEnergy;
+			return 1.3;
 		}
 	}
 	return migrationEnergy;
@@ -238,26 +230,19 @@ FeCrClusterGenerator::getDiffusionFactor(
 	Composition comp(reg.getOrigin());
 	double diffusionFactor = 0.0;
 	// FeCr phonon frequency
-	constexpr double phononFrequency = 0.96e13;
-	if (comp.isOnAxis(Species::Free)) {
-		const double jumpDistance = latticeParameter * sqrt(3.0) / 2.0;
-		constexpr double prefactorExponent = -0.7;
-		return phononFrequency * jumpDistance * jumpDistance *
-			pow((double)comp[Species::Free], prefactorExponent) / (2.0);
-	}
+	constexpr double d0 = 1.0e11;
 	if (comp.isOnAxis(Species::V)) {
 		if (comp[Species::V] < 5) {
 			const double jumpDistance = latticeParameter * sqrt(3.0) / 2.0;
 			constexpr double prefactorExponent = -1.0;
-			return phononFrequency * jumpDistance * jumpDistance *
-				pow((double)comp[Species::V], prefactorExponent) / (6.0);
+			return d0 / (double)comp[Species::V];
 		}
 	}
 	if (comp.isOnAxis(Species::I)) {
-		const double jumpDistance = latticeParameter * sqrt(3.0) / 2.0;
-		constexpr double prefactorExponent = -1.0;
-		return phononFrequency * jumpDistance * jumpDistance *
-			pow((double)comp[Species::I], prefactorExponent) / (6.0);
+		if (comp[Species::I] < 7)
+			return d0 / (double)comp[Species::I];
+		else
+			return d0 / std::pow((double)comp[Species::I], -0.7);
 	}
 	return diffusionFactor;
 }
@@ -304,15 +289,16 @@ FeCrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	}
 	if (lo.isOnAxis(Species::V)) {
 		for (auto j : makeIntervalRange(reg[Species::V])) {
-			radius +=
-				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+			radius += pow(3.0 * prefactor * latticeParameter * (double)j / 3.0,
+				1.0 / 3.0);
 		}
 		return radius / reg[Species::V].length();
 	}
 	if (lo.isOnAxis(Species::I)) {
 		for (auto j : makeIntervalRange(reg[Species::I])) {
-			radius +=
-				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+			radius += pow(prefactor * latticeParameter * (double)j /
+					::xolotl::core::fecrBurgers,
+				1.0 / 2.0);
 		}
 		return radius / reg[Species::I].length();
 	}

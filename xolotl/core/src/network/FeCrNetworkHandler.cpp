@@ -19,21 +19,24 @@ auto fecrNetworkGenerator = [](const options::IOptions& options) {
 
 	// Get the boundaries from the options
 	NetworkType::AmountType maxI = options.getMaxI();
-	NetworkType::AmountType maxSize = options.getMaxImpurity();
-	//	NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
-	NetworkType::AmountType groupingWidth = 2;
+	NetworkType::AmountType maxV = options.getMaxImpurity();
+	NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
 	// Adapt maxSize
 	int i = 0;
-	while (maxSize + 1 > pow(groupingWidth, i)) {
+	while (maxV + 1 > pow(groupingWidth, i)) {
 		++i;
 	}
-	maxSize = pow(groupingWidth, i) - 1;
+	maxV = pow(groupingWidth, i) - 1;
+	i = 0;
+	while (maxI + 1 > pow(groupingWidth, i)) {
+		++i;
+	}
+	maxI = pow(groupingWidth, i) - 1;
 
 	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
-		1, maxSize, maxI, maxSize, maxSize, maxSize, maxI, maxSize};
+		0, maxV, maxI, 0, 0, 0, 0, 0};
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
-		{2, groupingWidth, maxI + 1, groupingWidth, groupingWidth,
-			groupingWidth, maxI + 1, groupingWidth}};
+		{1, groupingWidth, groupingWidth, 1, 1, 1, 1, 1}};
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 

@@ -37,7 +37,7 @@ PetscMonitor0D::setup()
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flag1DPlot, flagBubble, flagStatus, flagAlloy,
-		flagXeRetention, flagLargest;
+		flagFeCrAl, flagXeRetention, flagLargest;
 
 	// Check the option -check_collapse
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
@@ -63,6 +63,12 @@ PetscMonitor0D::setup()
 	ierr = PetscOptionsHasName(NULL, NULL, "-alloy", &flagAlloy);
 	checkPetscError(
 		ierr, "setupPetsc0DMonitor: PetscOptionsHasName (-alloy) failed.");
+
+	// Check the option -fecral
+	ierr = PetscOptionsHasName(NULL, NULL, "-fecral", &flagFeCrAl);
+	checkPetscError(
+		ierr, "setupPetsc0DMonitor: PetscOptionsHasName (-fecral) failed.");
+
 	// Check the option -xenon_retention
 	ierr =
 		PetscOptionsHasName(NULL, NULL, "-xenon_retention", &flagXeRetention);
@@ -166,6 +172,28 @@ PetscMonitor0D::setup()
 		ierr = TSMonitorSet(_ts, monitor::computeAlloy, this, nullptr);
 		checkPetscError(
 			ierr, "setupPetsc0DMonitor: TSMonitorSet (computeAlloy) failed.");
+	}
+
+	// Set the monitor to output data for FeCrAl
+	if (flagFeCrAl) {
+		auto& network = _solverHandler->getNetwork();
+		auto numSpecies = network.getSpeciesListSize();
+		// Create/open the output files
+		std::fstream outputFile;
+		outputFile.open("FeCrAl.dat", std::fstream::out);
+		outputFile << "#time_step time ";
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			auto speciesName = network.getSpeciesName(id);
+			outputFile << speciesName << "_density " << speciesName
+					   << "_partial_density ";
+		}
+		outputFile << std::endl;
+		outputFile.close();
+
+		// computeFeCrAl0D will be called at each timestep
+		ierr = TSMonitorSet(_ts, monitor::computeFeCrAl, this, nullptr);
+		checkPetscError(
+			ierr, "setupPetsc0DMonitor: TSMonitorSet (computeFeCrAl) failed.");
 	}
 
 	// Set the monitor to compute the xenon content
@@ -561,6 +589,85 @@ PetscMonitor0D::computeAlloy(
 	for (auto i = 0; i < numSpecies; ++i) {
 		outputFile << myData[i * 4] << " " << myData[(i * 4) + 1] << " "
 				   << myData[(i * 4) + 2] << " " << myData[(i * 4) + 3] << " ";
+	}
+	outputFile << std::endl;
+
+	// Close the output file
+	outputFile.close();
+
+	// Restore the PETSc solution array
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor0D::computeFeCrAl(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	// Initial declarations
+	PetscErrorCode ierr;
+
+	PetscFunctionBeginUser;
+
+	// Get the position of the surface
+	auto surfacePos = _solverHandler->getSurfacePosition();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the array of concentration
+	PetscReal** solutionArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	using NetworkType = core::network::FeCrReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	// Degrees of freedom is the total number of clusters in the network
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+	const auto dof = network.getDOF();
+	auto numSpecies = network.getSpeciesListSize();
+	auto myData = std::vector<double>(numSpecies * 2, 0.0);
+
+	// Get the minimum size for the loop densities and diameters
+	auto minSizes = _solverHandler->getMinSizes();
+
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal* gridPointSolution;
+
+	// Get the pointer to the beginning of the solution data for this grid point
+	gridPointSolution = solutionArray[0];
+
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(gridPointSolution, dof);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+	deep_copy(dConcs, hConcs);
+
+	// Loop on the species
+	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+		myData[2 * id()] = network.getTotalConcentration(dConcs, id, 1);
+		myData[(2 * id()) + 1] =
+			network.getTotalConcentration(dConcs, id, minSizes[id()]);
+	}
+
+	// Set the output precision
+	const int outputPrecision = 5;
+
+	// Open the output file
+	std::fstream outputFile;
+	outputFile.open("FeCrAl.dat", std::fstream::out | std::fstream::app);
+	outputFile << std::setprecision(outputPrecision);
+
+	// Output the data
+	outputFile << timestep << " " << time << " ";
+	for (auto i = 0; i < numSpecies; ++i) {
+		outputFile << myData[i * 2] << " " << myData[(i * 2) + 1] << " ";
 	}
 	outputFile << std::endl;
 

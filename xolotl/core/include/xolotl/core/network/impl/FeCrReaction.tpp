@@ -16,10 +16,17 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	const double r1, const double dc0, const double dc1)
 {
 	constexpr double pi = ::xolotl::core::pi;
-	const double zs = 4.0 * pi * (r0 + r1 + ::xolotl::core::fecrCoreRadius);
+	const double zs = 4.0 * pi * (r0 + r1 + 1.5 * ::xolotl::core::fecrBurgers);
+
 	using Species = typename TRegion::EnumIndex;
 	auto lo0 = pairCl0Reg.getOrigin();
 	auto lo1 = pairCl1Reg.getOrigin();
+
+	if (lo0.isOnAxis(Species::I) and lo1.isOnAxis(Species::I))
+		return 1.1 * zs * (dc0 + dc1);
+
+	return zs * (dc0 + dc1);
+
 	bool cl0IsSphere = (lo0.isOnAxis(Species::V) ||
 			 lo0.isOnAxis(Species::Complex) || lo0.isOnAxis(Species::I)),
 		 cl1IsSphere = (lo1.isOnAxis(Species::V) ||
@@ -100,13 +107,15 @@ FeCrDissociationReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	return 0.0;
 }
 
 KOKKOS_INLINE_FUNCTION
 double
 FeCrDissociationReaction::computeRate(IndexType gridIndex)
 {
+	return 0.0;
+
 	double T = this->_clusterData->temperature(gridIndex);
 	constexpr double pi = ::xolotl::core::pi;
 	using Species = typename Superclass::Species;
@@ -251,7 +260,7 @@ FeCrSinkReaction::getSinkBias()
 	if (clReg.isSimplex()) {
 		Composition comp = clReg.getOrigin();
 		if (comp.isOnAxis(Species::I)) {
-			bias = 1.05;
+			bias = 1.1;
 		}
 	}
 
@@ -262,7 +271,12 @@ KOKKOS_INLINE_FUNCTION
 double
 FeCrSinkReaction::getSinkStrength()
 {
-	return ::xolotl::core::fecrSinkStrength;
+	auto cl = this->_clusterData->getCluster(this->_reactant);
+	auto radius = cl.getReactionRadius();
+	return 2.0 * ::xolotl::core::pi * ::xolotl::core::fecrSinkStrength /
+		(std::log(std::pow(::xolotl::core::pi *
+				::xolotl::core::fecrSinkStrength * radius * radius,
+			-0.5)));
 }
 } // namespace network
 } // namespace core

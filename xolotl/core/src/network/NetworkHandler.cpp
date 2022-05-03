@@ -31,13 +31,6 @@ NetworkHandler::NetworkHandler(
 			ss << speciesName << " ";
 		}
 		ss << std::endl;
-		auto bounds = _network->getAllClusterBounds();
-		for (auto b : bounds) {
-			for (int i = 0; i < numSpecies; ++i) {
-				ss << b[2 * i] << "-" << b[2 * i + 1] << " ";
-			}
-			ss << std::endl;
-		}
 		XOLOTL_LOG << ss.str();
 	}
 }

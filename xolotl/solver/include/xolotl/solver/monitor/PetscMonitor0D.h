@@ -32,6 +32,10 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
+	computeFeCrAl(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
+
+	PetscErrorCode
 	monitorScatter(
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
