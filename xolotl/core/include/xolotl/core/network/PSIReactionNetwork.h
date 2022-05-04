@@ -166,6 +166,7 @@ protected:
 	computeBubbleRadius(double vAmount, double latticeParameter)
 	{
 		double aCube = latticeParameter * latticeParameter * latticeParameter;
+
 		return (sqrt(3.0) / 4.0) * latticeParameter +
 			pow((3.0 * aCube * vAmount) / (8.0 * ::xolotl::core::pi),
 				(1.0 / 3.0)) -

@@ -681,9 +681,10 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 			if (iClusterId == NetworkType::invalidIndex()) {
 				this->addProductionReaction(tag, {i, bubbleId, bubbleId});
 			}
-			else
+			else {
 				this->addProductionReaction(
 					tag, {i, bubbleId, bubbleId, iClusterId});
+			}
 		}
 		// V case
 		else if (lo.isOnAxis(Species::V)) {

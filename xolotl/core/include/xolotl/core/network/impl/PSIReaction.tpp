@@ -115,35 +115,31 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 				f * comp[Species::He]);
 
 			// Trap mutation case
-			//			if (concentrations(largeBubbleId) > 1.0e-16) {
 			auto avHe = this->_clusterData->bubbleAvHe();
 			auto avV = this->_clusterData->bubbleAvV();
-			if (comp[Species::He] + avHe > psi::getMaxHePerV(avV)) {
-				// Count how many I are needed
-				AmountType nI = 1;
-				while (comp[Species::He] + avHe > psi::getMaxHePerV(avV + nI)) {
-					nI++;
-				}
 
-				// The other product increases
-				if (this->_products[1] != Superclass::invalidIndex) {
-					Kokkos::atomic_add(&fluxes[this->_products[1]], nI * f);
+			// Sigmoid
+			double x =
+				((comp[Species::He] + avHe) / psi::getMaxHePerV(avV)) - 1.0;
+			double sigmo = 1.0 / (1.0 + std::exp(-50.0 * x));
+			AmountType nI = 1;
 
-					// The average V increases
-					Composition prodComp(
-						this->_clusterData->getCluster(this->_products[1])
-							.getRegion()
-							.getOrigin());
-					Kokkos::atomic_add(
-						&fluxes[this->_clusterData->bubbleAvVId()],
-						nI * f * prodComp[Species::I]);
-				}
-				else {
-					Kokkos::atomic_add(
-						&fluxes[this->_clusterData->bubbleAvVId()], nI * f);
-				}
+			// The other product increases
+			if (this->_products[1] != Superclass::invalidIndex) {
+				Kokkos::atomic_add(&fluxes[this->_products[1]], nI * f * sigmo);
+
+				// The average V increases
+				Composition prodComp(
+					this->_clusterData->getCluster(this->_products[1])
+						.getRegion()
+						.getOrigin());
+				Kokkos::atomic_add(&fluxes[this->_clusterData->bubbleAvVId()],
+					nI * f * prodComp[Species::I] * sigmo);
 			}
-			//			}
+			else {
+				Kokkos::atomic_add(
+					&fluxes[this->_clusterData->bubbleAvVId()], nI * f * sigmo);
+			}
 		}
 		// V case
 		else if (orig.isOnAxis(Species::V)) {
@@ -307,68 +303,64 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 			}
 
 			// Trap mutation case
-			//			if (bC > 1.0e-16) {
 			auto avHe = this->_clusterData->bubbleAvHe();
 			auto avV = this->_clusterData->bubbleAvV();
-			if (comp[Species::He] + avHe > psi::getMaxHePerV(avV)) {
-				// Count how many I are needed
-				AmountType nI = 1;
-				while (comp[Species::He] + avHe > psi::getMaxHePerV(avV + nI)) {
-					nI++;
-				}
 
-				// The other product increases
-				f = this->_coefs(0, 0, 0, 0) * rate * nI;
-				if (this->_products[1] != Superclass::invalidIndex) {
-					if (this->_reactants[0] == largeBubbleId) {
-						Kokkos::atomic_add(
-							&values(this->_connEntries[3][0][0][0]), f * stdC);
-						Kokkos::atomic_add(
-							&values(this->_connEntries[3][0][1][0]), f * bC);
-					}
-					else {
-						Kokkos::atomic_add(
-							&values(this->_connEntries[3][0][1][0]), f * stdC);
-						Kokkos::atomic_add(
-							&values(this->_connEntries[3][0][0][0]), f * bC);
-					}
-					// The average V increases
-					Composition prodComp(
-						this->_clusterData->getCluster(this->_products[1])
-							.getRegion()
-							.getOrigin());
-					f = this->_coefs(0, 0, 0, 0) * rate * nI *
-						prodComp[Species::I];
-					if (this->_reactants[0] == largeBubbleId) {
-						Kokkos::atomic_add(
-							&values(this->_connEntries[0][2][0][0]), f * stdC);
-						Kokkos::atomic_add(
-							&values(this->_connEntries[0][2][1][0]), f * bC);
-					}
-					else {
-						Kokkos::atomic_add(
-							&values(this->_connEntries[1][2][1][0]), f * stdC);
-						Kokkos::atomic_add(
-							&values(this->_connEntries[1][2][0][0]), f * bC);
-					}
+			// Sigmoid
+			double x =
+				((comp[Species::He] + avHe) / psi::getMaxHePerV(avV)) - 1.0;
+			double sigmo = 1.0 / (1.0 + std::exp(-50.0 * x));
+			AmountType nI = 1;
+
+			// The other product increases
+			f = this->_coefs(0, 0, 0, 0) * rate * nI;
+			if (this->_products[1] != Superclass::invalidIndex) {
+				if (this->_reactants[0] == largeBubbleId) {
+					Kokkos::atomic_add(&values(this->_connEntries[3][0][0][0]),
+						f * sigmo * stdC);
+					Kokkos::atomic_add(&values(this->_connEntries[3][0][1][0]),
+						f * sigmo * bC);
 				}
 				else {
-					f = this->_coefs(0, 0, 0, 0) * rate * nI;
-					if (this->_reactants[0] == largeBubbleId) {
-						Kokkos::atomic_add(
-							&values(this->_connEntries[0][2][0][0]), f * stdC);
-						Kokkos::atomic_add(
-							&values(this->_connEntries[0][2][1][0]), f * bC);
-					}
-					else {
-						Kokkos::atomic_add(
-							&values(this->_connEntries[1][2][1][0]), f * stdC);
-						Kokkos::atomic_add(
-							&values(this->_connEntries[1][2][0][0]), f * bC);
-					}
+					Kokkos::atomic_add(&values(this->_connEntries[3][0][1][0]),
+						f * sigmo * stdC);
+					Kokkos::atomic_add(&values(this->_connEntries[3][0][0][0]),
+						f * sigmo * bC);
+				}
+				// The average V increases
+				Composition prodComp(
+					this->_clusterData->getCluster(this->_products[1])
+						.getRegion()
+						.getOrigin());
+				f = this->_coefs(0, 0, 0, 0) * rate * nI * prodComp[Species::I];
+				if (this->_reactants[0] == largeBubbleId) {
+					Kokkos::atomic_add(&values(this->_connEntries[0][2][0][0]),
+						f * sigmo * stdC);
+					Kokkos::atomic_add(&values(this->_connEntries[0][2][1][0]),
+						f * sigmo * bC);
+				}
+				else {
+					Kokkos::atomic_add(&values(this->_connEntries[1][2][1][0]),
+						f * sigmo * stdC);
+					Kokkos::atomic_add(&values(this->_connEntries[1][2][0][0]),
+						f * sigmo * bC);
 				}
 			}
-			//			}
+			else {
+				f = this->_coefs(0, 0, 0, 0) * rate * nI;
+				if (this->_reactants[0] == largeBubbleId) {
+					Kokkos::atomic_add(&values(this->_connEntries[0][2][0][0]),
+						f * sigmo * stdC);
+					Kokkos::atomic_add(&values(this->_connEntries[0][2][1][0]),
+						f * sigmo * bC);
+				}
+				else {
+					Kokkos::atomic_add(&values(this->_connEntries[1][2][1][0]),
+						f * sigmo * stdC);
+					Kokkos::atomic_add(&values(this->_connEntries[1][2][0][0]),
+						f * sigmo * bC);
+				}
+			}
 		}
 		// V case
 		else if (orig.isOnAxis(Species::V)) {
@@ -778,8 +770,7 @@ PSIBurstingReaction<TSpeciesEnum>::getAppliedRate(IndexType gridIndex) const
 	auto depth = this->_clusterData->getDepth();
 	auto tau = this->_clusterData->getTauBursting();
 	auto f = this->_clusterData->getFBursting();
-	return f * (radius / depth) *
-		util::min(1.0, exp(-(depth - tau) / (2.0 * tau)));
+	return f * (radius / depth);
 }
 
 template <typename TSpeciesEnum>

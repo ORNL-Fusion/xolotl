@@ -572,9 +572,11 @@ PetscMonitor0D::computeHeliumRetention(
 	// Get the concentrations
 	auto id = core::network::SpeciesId(numSpecies);
 	heConcentration = network.getTotalAtomConcentration(dConcs, id, 1);
-	cb = gridPointSolution[dof - 4];
-	avHe = gridPointSolution[dof - 3];
-	avV = gridPointSolution[dof - 2];
+	double vConcentration = network.getTotalAtomConcentration(dConcs, ++id, 1);
+	double iConcentration = network.getTotalAtomConcentration(dConcs, ++id, 1);
+	cb = gridPointSolution[dof - 3];
+	avHe = gridPointSolution[dof - 2];
+	avV = gridPointSolution[dof - 1];
 
 	// Print the result
 	XOLOTL_LOG << "\nTime: " << time << '\n'
@@ -583,8 +585,9 @@ PetscMonitor0D::computeHeliumRetention(
 	// Uncomment to write the content in a file
 	std::ofstream outputFile;
 	outputFile.open("retentionOut.txt", std::ios::app);
-	outputFile << time << " " << heConcentration << " " << cb << " "
-			   << avHe / cb << " " << avV / cb << std::endl;
+	outputFile << time << " " << heConcentration << " " << vConcentration << " "
+			   << iConcentration << " " << cb << " " << avHe / cb << " "
+			   << avV / cb << " " << avHe + heConcentration << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray
