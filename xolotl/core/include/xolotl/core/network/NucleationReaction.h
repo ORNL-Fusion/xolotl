@@ -29,6 +29,7 @@ public:
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
+	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
@@ -91,6 +92,14 @@ private:
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
 		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex)
+	{
+		return;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	getConstantConnectivities(ConnectivitiesView conns, BelongingView isInSub,
+		OwnedSubMapView backMap)
 	{
 		return;
 	}

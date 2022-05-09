@@ -76,6 +76,19 @@ ZrReactionNetwork::setConstantRates(RateVector rates)
 }
 
 void
+ZrReactionNetwork::setConstantConnectivities(ConnectivitiesVector conns)
+{
+	_constantConns = ConnectivitiesView(
+		"dConstantConnectivities", conns.size(), conns[0].size());
+	auto hConnsView = create_mirror_view(_constantConns);
+	for (auto i = 0; i < conns.size(); i++)
+		for (auto j = 0; j < conns[0].size(); j++) {
+			hConnsView(i, j) = conns[i][j];
+		}
+	deep_copy(_constantConns, hConnsView);
+}
+
+void
 ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 {
 	this->_clusterData.h_view().extraData.initialize(
@@ -207,13 +220,27 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if (i == j) {
 		if (diffusionFactor(i) != 0.0)
 			addSinks(i, tag);
-		this->addConstantReaction(tag, {i, Network::invalidIndex()});
+
+		if (this->_constantConns.extent(0) > 0) {
+			if (this->_constantConns(i, this->_numDOFs)) {
+				this->addConstantReaction(tag, {i, Network::invalidIndex()});
+			}
+		}
 	}
 
 	// Add every possibility
-	this->addConstantReaction(tag, {i, j});
-	if (j != i)
-		this->addConstantReaction(tag, {j, i});
+	if (this->_constantConns.extent(0) > 0) {
+		if (this->_constantConns(i, j)) {
+			this->addConstantReaction(tag, {i, j});
+		}
+	}
+	if (j != i) {
+		if (this->_constantConns.extent(0) > 0) {
+			if (this->_constantConns(j, i)) {
+				this->addConstantReaction(tag, {j, i});
+			}
+		}
+	}
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();

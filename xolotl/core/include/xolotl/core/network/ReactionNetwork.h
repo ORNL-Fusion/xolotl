@@ -79,6 +79,7 @@ public:
 	using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
 	using FluxesView = typename IReactionNetwork::FluxesView;
 	using RatesView = typename IReactionNetwork::RatesView;
+	using ConnectivitiesView = typename IReactionNetwork::ConnectivitiesView;
 	using SubMapView = typename IReactionNetwork::SubMapView;
 	using OwnedSubMapView = typename IReactionNetwork::OwnedSubMapView;
 	using BelongingView = typename IReactionNetwork::BelongingView;
@@ -93,6 +94,7 @@ public:
 	using MomentIdMap = IReactionNetwork::MomentIdMap;
 	using MomentIdMapVector = IReactionNetwork::MomentIdMapVector;
 	using RateVector = IReactionNetwork::RateVector;
+	using ConnectivitiesVector = IReactionNetwork::ConnectivitiesVector;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
 
 	template <typename PlsmContext>
@@ -329,7 +331,12 @@ public:
 	void initializeClusterMap(
 		BoundVector, MomentIdMapVector, MomentIdMap) override;
 
+	void
+	initializeReactions() override;
+
 	void setConstantRates(RateVector) override;
+
+	void setConstantConnectivities(ConnectivitiesVector) override;
 
 	PhaseSpace
 	getPhaseSpace() override;
@@ -411,6 +418,9 @@ public:
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
 		IndexType subId, IndexType gridIndex = 0, double surfaceDepth = 0.0,
 		double spacing = 0.0) final;
+
+	void
+	getConstantConnectivities(ConnectivitiesView conns, IndexType subId) final;
 
 	template <typename TReaction>
 	void
@@ -612,6 +622,8 @@ protected:
 	ReactionCollection _reactions;
 
 	std::map<std::string, SpeciesId> _speciesLabelMap;
+
+	ConnectivitiesView _constantConns;
 };
 
 namespace detail

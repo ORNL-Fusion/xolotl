@@ -67,6 +67,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
 
+	// Skip the reactions for now if using constant reactions
+	if (map["constant"])
+		return;
+
 	Connectivity connectivity;
 	defineReactions(connectivity);
 	generateDiagonalFill(connectivity);
@@ -456,10 +460,31 @@ ReactionNetwork<TImpl>::initializeClusterMap(
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::initializeReactions()
+{
+	Connectivity connectivity;
+	defineReactions(connectivity);
+	generateDiagonalFill(connectivity);
+
+	return;
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::setConstantRates(
 	typename ReactionNetwork<TImpl>::RateVector rates)
 {
 	asDerived()->setConstantRates(rates);
+
+	return;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setConstantConnectivities(
+	typename ReactionNetwork<TImpl>::ConnectivitiesVector conns)
+{
+	asDerived()->setConstantConnectivities(conns);
 
 	return;
 }
@@ -559,6 +584,20 @@ ReactionNetwork<TImpl>::computeConstantRates(ConcentrationsView concentrations,
 	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeConstantRates(
 			concentrations, rates, localInSub, localBackMap, gridIndex);
+	});
+	Kokkos::fence();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::getConstantConnectivities(
+	ConnectivitiesView conns, IndexType subId)
+{
+	auto localInSub = isInSub[subId];
+	auto localBackMap = backMap[subId];
+	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
+		reaction.contributeConstantConnectivities(
+			conns, localInSub, localBackMap);
 	});
 	Kokkos::fence();
 }
@@ -900,6 +939,7 @@ void
 ReactionNetworkWorker<TImpl>::defineReactions(Connectivity& connectivity)
 {
 	auto generator = _nw.asDerived()->getReactionGenerator();
+	generator.setConstantConnectivities(_nw._constantConns);
 	_nw._reactions = generator.generateReactions();
 	connectivity = generator.getConnectivity();
 }

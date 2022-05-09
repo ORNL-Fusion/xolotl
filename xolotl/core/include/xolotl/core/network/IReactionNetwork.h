@@ -32,6 +32,7 @@ public:
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
 	using RatesView = Kokkos::View<double**>;
+	using ConnectivitiesView = Kokkos::View<bool**>;
 	using SubMapView = Kokkos::View<AmountType*, Kokkos::MemoryUnmanaged>;
 	using OwnedSubMapView = Kokkos::View<AmountType*>;
 	using BelongingView = Kokkos::View<bool*>;
@@ -42,6 +43,7 @@ public:
 	using MomentIdMap = std::vector<std::vector<IdType>>;
 	using MomentIdMapVector = std::vector<std::vector<std::vector<IdType>>>;
 	using RateVector = std::vector<std::vector<double>>;
+	using ConnectivitiesVector = std::vector<std::vector<bool>>;
 	using PhaseSpace = std::vector<std::string>;
 
 	KOKKOS_INLINE_FUNCTION
@@ -337,9 +339,21 @@ public:
 		BoundVector, MomentIdMapVector, MomentIdMap) = 0;
 
 	/**
+	 * @brief Initialize reactions in the case it was not already
+	 * done in the constructor.
+	 */
+	virtual void
+	initializeReactions() = 0;
+
+	/**
 	 * @brief Set the rates for constant reactions
 	 */
 	virtual void setConstantRates(RateVector) = 0;
+
+	/**
+	 * @brief Set the connectivities for constant reactions
+	 */
+	virtual void setConstantConnectivities(ConnectivitiesVector) = 0;
 
 	virtual PhaseSpace
 	getPhaseSpace() = 0;
@@ -370,6 +384,13 @@ public:
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
 		IndexType subId, IndexType gridIndex = 0, double surfaceDepth = 0.0,
 		double spacing = 0.0) = 0;
+
+	/**
+	 * @brief Updates the rates view with the rates from all the
+	 * reactions at this grid point, this is for multiple instances use.
+	 */
+	virtual void
+	getConstantConnectivities(ConnectivitiesView conns, IndexType subId) = 0;
 
 	/**
 	 * @brief Returns the largest computed rate.
