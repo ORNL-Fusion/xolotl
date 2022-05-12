@@ -75,20 +75,25 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 				(hxLeft * (hxLeft + hxRight)) -
 			beta * (rightDiff - leftDiff) * (rightTemp - leftTemp) /
 				((hxLeft + hxRight) * (hxLeft + hxRight)); // middle conc
+
 		val[(diffClusterIdx * 6) + 1] = beta * midDiff *
 			(rightTemp - leftTemp) /
 			((hxLeft + hxRight) * (hxLeft + hxRight)); // left conc
+
 		val[(diffClusterIdx * 6) + 2] = -beta * midDiff *
 			(rightTemp - leftTemp) /
 			((hxLeft + hxRight) * (hxLeft + hxRight)); // right conc
+
 		val[(diffClusterIdx * 6) + 3] =
 			2.0 * beta * midDiff * oldConc / (hxLeft * hxRight); // middle temp
+
 		val[(diffClusterIdx * 6) + 4] =
 			-2.0 * beta * midDiff * oldConc / (hxLeft * (hxLeft + hxRight)) +
 			beta * midDiff * (oldRightConc - oldLeftConc) /
 				((hxLeft + hxRight) * (hxLeft + hxRight)) +
 			beta * oldConc * (rightDiff - leftDiff) /
 				((hxLeft + hxRight) * (hxLeft + hxRight)); // left temp
+
 		val[(diffClusterIdx * 6) + 5] =
 			-2.0 * beta * midDiff * oldConc / (hxRight * (hxLeft + hxRight)) -
 			beta * midDiff * (oldRightConc - oldLeftConc) /

@@ -1083,7 +1083,7 @@ PetscSolver1DHandler::computeJacobian(
 
 		// Fill the concVector with the pointer to the middle, left, and right
 		// grid points
-		concVector[0] = concOffset; // middle
+		concVector[0] = concs[xi]; // middle
 		concVector[1] = concs[(PetscInt)xi - 1]; // left
 		concVector[2] = concs[xi + 1]; // right
 
