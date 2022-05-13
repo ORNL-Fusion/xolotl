@@ -53,8 +53,6 @@ public:
 		dof(0),
 		surfacePosition(0),
 		beta(0.0065),
-		//		beta(0.000065),
-		//		beta(0.0),
 		localXs(0)
 	{
 	}

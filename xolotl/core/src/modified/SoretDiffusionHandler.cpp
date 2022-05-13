@@ -23,8 +23,9 @@ SoretDiffusionHandler::computeDiffusion(network::IReactionNetwork& network,
 		double oldLeftConc = concVector[1][currId];
 		double oldRightConc = concVector[2][currId];
 
-		double leftTemp = concVector[1][dof], midTemp = concVector[0][dof],
-			   rightTemp = concVector[2][dof];
+		double leftTemp = cluster.getTemperature(ix),
+			   midTemp = cluster.getTemperature(ix + 1),
+			   rightTemp = cluster.getTemperature(ix + 2);
 		double leftDiff = cluster.getDiffusionCoefficient(ix),
 			   midDiff = cluster.getDiffusionCoefficient(ix + 1),
 			   rightDiff = cluster.getDiffusionCoefficient(ix + 2);
@@ -61,8 +62,9 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 		double oldLeftConc = concVector[1][currId];
 		double oldRightConc = concVector[2][currId];
 
-		double leftTemp = concVector[1][dof], midTemp = concVector[0][dof],
-			   rightTemp = concVector[2][dof];
+		double leftTemp = cluster.getTemperature(ix),
+			   midTemp = cluster.getTemperature(ix + 1),
+			   rightTemp = cluster.getTemperature(ix + 2);
 		double leftDiff = cluster.getDiffusionCoefficient(ix),
 			   midDiff = cluster.getDiffusionCoefficient(ix + 1),
 			   rightDiff = cluster.getDiffusionCoefficient(ix + 2);
@@ -84,22 +86,11 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 			(rightTemp - leftTemp) /
 			((hxLeft + hxRight) * (hxLeft + hxRight)); // right conc
 
-		val[(diffClusterIdx * 6) + 3] =
-			2.0 * beta * midDiff * oldConc / (hxLeft * hxRight); // middle temp
+		val[(diffClusterIdx * 6) + 3] = 0.0; // middle temp
 
-		val[(diffClusterIdx * 6) + 4] =
-			-2.0 * beta * midDiff * oldConc / (hxLeft * (hxLeft + hxRight)) +
-			beta * midDiff * (oldRightConc - oldLeftConc) /
-				((hxLeft + hxRight) * (hxLeft + hxRight)) +
-			beta * oldConc * (rightDiff - leftDiff) /
-				((hxLeft + hxRight) * (hxLeft + hxRight)); // left temp
+		val[(diffClusterIdx * 6) + 4] = 0.0; // left temp
 
-		val[(diffClusterIdx * 6) + 5] =
-			-2.0 * beta * midDiff * oldConc / (hxRight * (hxLeft + hxRight)) -
-			beta * midDiff * (oldRightConc - oldLeftConc) /
-				((hxLeft + hxRight) * (hxLeft + hxRight)) -
-			beta * oldConc * (rightDiff - leftDiff) /
-				((hxLeft + hxRight) * (hxLeft + hxRight)); // right temp
+		val[(diffClusterIdx * 6) + 5] = 0.0; // right temp
 
 		// Increase the index
 		diffClusterIdx++;
