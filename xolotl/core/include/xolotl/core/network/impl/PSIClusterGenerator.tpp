@@ -531,7 +531,7 @@ PSIClusterGenerator<TSpeciesEnum>::getMigrationEnergy(
 		0.0, 0.01, 0.02, 0.03, 0.04, 0.05};
 	// He migration energies in eV
 	constexpr Kokkos::Array<double, 8> heMigration = {
-		0.0, 0.06, 0.20, 0.25, 0.20, 0.12, 0.3, 0.4};
+		0.0, 0.13, 0.20, 0.25, 0.20, 0.12, 0.3, 0.4};
 	// The migration energy for a single deuterium.
 	constexpr double dOneMigrationEnergy = 0.38;
 	// The migration energy for a single tritium.
@@ -605,7 +605,7 @@ PSIClusterGenerator<TSpeciesEnum>::getDiffusionFactor(
 		0.0, 8.8e+10, 8.0e+10, 3.9e+10, 2.0e+10, 1.0e+10};
 	// He diffusion factors in nm^2/s
 	constexpr Kokkos::Array<double, 8> heDiffusion = {
-		0.0, 8.35e+10, 3.2e+10, 2.3e+10, 1.7e+10, 5.0e+09, 1.0e+09, 5.0e+08};
+		0.0, 2.9e+10, 3.2e+10, 2.3e+10, 1.7e+10, 5.0e+09, 1.0e+09, 5.0e+08};
 	// The diffusion factor for a single deuterium.
 	constexpr double dOneDiffusionFactor = 2.83e+11;
 	// The diffusion factor for a single tritium.
