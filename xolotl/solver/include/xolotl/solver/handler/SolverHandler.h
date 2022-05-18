@@ -253,6 +253,8 @@ public:
 		// Ghost cells
 		if (localXS == 0 || localXS + localXM == nX)
 			toSend++;
+		if (localXS == 0 && localXS + localXM == nX)
+			toSend++;
 
 		// Receiving array for number of elements
 		int counts[worldSize];
