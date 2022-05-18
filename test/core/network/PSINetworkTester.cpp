@@ -56,8 +56,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
 
-	network.syncClusterDataOnHost();
-
 	BOOST_REQUIRE(network.hasDeuterium());
 	BOOST_REQUIRE(network.hasTritium());
 
@@ -346,7 +344,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -610,8 +607,6 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
 
-	network.syncClusterDataOnHost();
-
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
 	NetworkType::SparseFillMap knownDFill;
@@ -787,7 +782,6 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -882,8 +876,6 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType network({maxHe, maxV, maxI}, 1, opts);
-
-	network.syncClusterDataOnHost();
 
 	BOOST_REQUIRE(!network.hasDeuterium());
 	BOOST_REQUIRE(!network.hasTritium());
@@ -993,7 +985,6 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -1183,8 +1174,6 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxV, maxI}, 1, opts);
 
-	network.syncClusterDataOnHost();
-
 	BOOST_REQUIRE(network.hasDeuterium());
 	BOOST_REQUIRE(!network.hasTritium());
 
@@ -1311,7 +1300,6 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -1535,8 +1523,6 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxT, maxV, maxI}, 1, opts);
 
-	network.syncClusterDataOnHost();
-
 	BOOST_REQUIRE(!network.hasDeuterium());
 	BOOST_REQUIRE(network.hasTritium());
 
@@ -1663,7 +1649,6 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -1886,8 +1871,6 @@ BOOST_AUTO_TEST_CASE(smallHeVGrouped)
 			.generate(opts)
 			->getNetwork());
 
-	network->syncClusterDataOnHost();
-
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 2874);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 3300);
 
@@ -1932,8 +1915,6 @@ BOOST_AUTO_TEST_CASE(largeHeVGrouped)
 		factory::network::NetworkHandlerFactory::get()
 			.generate(opts)
 			->getNetwork());
-
-	network->syncClusterDataOnHost();
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 3127);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 4775);
@@ -1980,8 +1961,6 @@ BOOST_AUTO_TEST_CASE(HeDVGrouped)
 			.generate(opts)
 			->getNetwork());
 
-	network->syncClusterDataOnHost();
-
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 4967);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 6656);
 
@@ -2026,8 +2005,6 @@ BOOST_AUTO_TEST_CASE(HeTVGrouped)
 		factory::network::NetworkHandlerFactory::get()
 			.generate(opts)
 			->getNetwork());
-
-	network->syncClusterDataOnHost();
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 4967);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 6656);
@@ -2074,8 +2051,6 @@ BOOST_AUTO_TEST_CASE(HeDTVGrouped)
 			.generate(opts)
 			->getNetwork());
 
-	network->syncClusterDataOnHost();
-
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 2383);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 4259);
 
@@ -2120,8 +2095,6 @@ BOOST_AUTO_TEST_CASE(IGrouped)
 		factory::network::NetworkHandlerFactory::get()
 			.generate(opts)
 			->getNetwork());
-
-	network->syncClusterDataOnHost();
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 813);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 1424);

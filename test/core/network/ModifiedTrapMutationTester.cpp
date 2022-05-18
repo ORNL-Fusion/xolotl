@@ -82,7 +82,6 @@ public:
 		std::vector<double> temperatures(_nGrid, temp);
 		std::vector<double> depths(_nGrid, 1.0);
 		_network.setTemperatures(temperatures, depths);
-		_network.syncClusterDataOnHost();
 	}
 
 	Kokkos::View<double*>
@@ -170,7 +169,6 @@ private:
 		AmountType maxD = opts.getMaxD();
 		AmountType maxT = opts.getMaxT();
 		NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
-		network.syncClusterDataOnHost();
 
 		return network;
 	}

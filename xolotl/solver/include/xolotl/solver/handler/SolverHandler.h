@@ -210,6 +210,7 @@ public:
 			temperatureGrid = grid;
 			return;
 		}
+
 		// If the temperature grid already existed we need to save its values
 		std::vector<double> oldGrid;
 		if (temperatureGrid.size() > 0)
@@ -738,6 +739,8 @@ public:
 		int toSend = localXM;
 		// Ghost cells
 		if (localXS == 0 || localXS + localXM == nX)
+			toSend++;
+		if (localXS == 0 && localXS + localXM == nX)
 			toSend++;
 
 		// Receiving array for number of elements

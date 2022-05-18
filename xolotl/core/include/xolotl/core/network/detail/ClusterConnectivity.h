@@ -67,6 +67,13 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
+	IndexType
+	getNumberOfRows() const
+	{
+		return this->row_map.size() - 1;
+	}
+
+	KOKKOS_INLINE_FUNCTION
 	void
 	add(IndexType rowId, IndexType columnId) const
 	{

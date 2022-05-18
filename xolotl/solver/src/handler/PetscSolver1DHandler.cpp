@@ -280,7 +280,6 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 				grid[surfacePosition + 1]);
 	}
 	network.setTemperatures(networkTemp, depths);
-	network.syncClusterDataOnHost();
 
 	/*
 	 Restore vectors
@@ -483,7 +482,6 @@ PetscSolver1DHandler::setConcVector(DM& da, Vec& C,
 				grid[surfacePosition + 1]);
 	}
 	network.setTemperatures(networkTemp, depths);
-	network.syncClusterDataOnHost();
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations);
@@ -702,7 +700,6 @@ PetscSolver1DHandler::updateConcentration(
 					grid[surfacePosition + 1]);
 		}
 		network.setTemperatures(networkTemp, depths);
-		network.syncClusterDataOnHost();
 	}
 
 	// Loop over grid points computing ODE terms for each grid point
@@ -984,7 +981,6 @@ PetscSolver1DHandler::computeJacobian(
 					grid[surfacePosition + 1]);
 		}
 		network.setTemperatures(networkTemp, depths);
-		network.syncClusterDataOnHost();
 	}
 
 	// Computing the trapped atom concentration is only needed for the
