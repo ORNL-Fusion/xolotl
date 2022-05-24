@@ -130,9 +130,9 @@ generatePSIReactionNetwork(const options::IOptions& options)
 			{{groupingWidthHe, groupingWidthT, groupingWidthV, groupingWidthI}},
 			options);
 	}
-	// Either V is grouped
-	if (options.getGroupingMin() > maxI) {
-		if (maxV < 10000) {
+	else {
+		// Either V is grouped
+		if (options.getGroupingMin() > maxI) {
 			AmountType refineHe = (maxHe + 1) / groupingWidthHe;
 			AmountType refineV = (maxV + 1) / groupingWidthV;
 			return makePSIReactionNetwork<PSIHeliumSpeciesList>(
@@ -146,12 +146,6 @@ generatePSIReactionNetwork(const options::IOptions& options)
 				{maxHe, maxV, maxI},
 				{{groupingWidthHe, groupingWidthV, groupingWidthI}}, options);
 		}
-	}
-
-	// Or I is grouped
-	else {
-		return makePSIReactionNetwork<PSIHeliumSpeciesList>({maxHe, maxV, maxI},
-			{{maxHe + 1, maxV + 1, groupingWidthI}}, options);
 	}
 }
 

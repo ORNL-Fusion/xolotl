@@ -101,7 +101,7 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 			return true;
 		}
 	}
-	else if (_maxV < 10000) {
+	else {
 		// V is never grouped
 		if (hi[Species::V] > 1 && othersBeginAtZero(region, Species::V)) {
 			return true;
@@ -197,42 +197,14 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 				}
 			}
 
-			// Doesn't fully refine only for large networks
-			if (_maxV < 10000)
-				return true;
-
-			if (region[Species::He].length() <=
-				(lo[Species::He] - 4.0 * _groupingMin) * factor)
-				result[toIndex(Species::He)] = false;
-			if (hi[Species::He] > getMaxHePerV(_maxV, _hevRatio) + 1) {
-				result[toIndex(Species::He)] = true;
-			}
-
-			if (region[Species::V].length() <=
-				(lo[Species::V] - _groupingMin) * factor)
-				result[toIndex(Species::V)] = false;
-
-			if (hi[Species::V] > _maxV + 1) {
-				result[toIndex(Species::V)] = true;
-			}
-
 			return true;
 		}
 	}
 
 	double factor = 5.0e-1;
 
-	if (_maxV < 10000) {
-		if (region[Species::V].length() < _groupingWidthB + 1) {
-			result[toIndex(Species::V)] = false;
-		}
-	}
-	else {
-		if (region[Species::V].length() <
-			util::max((double)(_groupingWidthB + 1),
-				(double)lo[Species::V] * (double)lo[Species::V] * factor)) {
-			result[toIndex(Species::V)] = false;
-		}
+	if (region[Species::V].length() < _groupingWidthB + 1) {
+		result[toIndex(Species::V)] = false;
 	}
 
 	if (region[Species::He].length() <
