@@ -108,7 +108,9 @@ public:
 	void
 	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1)
 	{
+		auto oldPos = surfacePosition;
 		surfacePosition = pos;
+		generateTemperatureGrid(surfacePosition, oldPos);
 
 		return;
 	}

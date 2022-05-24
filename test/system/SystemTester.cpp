@@ -91,6 +91,15 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_3, * utf::label("1D"))
 	SystemTestCase{"system_PSI_3"}.run();
 }
 
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_4, * utf::label("1D"))
+{
+	if (getMPICommSize() > 100) {
+		return;
+	}
+	// 1D + He + heat
+	SystemTestCase{"system_PSI_4"}.tolerance(1.0e-4).run();
+}
+
 BOOST_AUTO_TEST_CASE_WITH_DECOR(Fe_1, * utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {
