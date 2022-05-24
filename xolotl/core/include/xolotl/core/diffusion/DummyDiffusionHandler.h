@@ -38,8 +38,7 @@ public:
 	 * \see IDiffusionHandler.h
 	 */
 	void
-	initializeOFill(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) override
+	initialize(network::IReactionNetwork&, std::vector<RowColPair>&) override
 	{
 		// Clear the index vector
 		diffusingClusters.clear();

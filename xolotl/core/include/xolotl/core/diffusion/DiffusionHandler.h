@@ -45,9 +45,9 @@ public:
 	 *
 	 * \see IDiffusionHandler.h
 	 */
-	virtual void
-	initializeOFill(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) override
+	void
+	initialize(network::IReactionNetwork& network,
+		std::vector<core::RowColPair>& idPairs) override
 	{
 		// Clear the index vector
 		diffusingClusters.clear();
@@ -67,11 +67,9 @@ public:
 			// Note that cluster is diffusing.
 			diffusingClusters.emplace_back(i);
 
-			// Set the ofill value to 1 for this cluster
-			ofillMap[i].emplace_back(i);
+			// Add a matrix entry for this cluster
+			idPairs.push_back({i, i});
 		}
-
-		return;
 	}
 
 	/**

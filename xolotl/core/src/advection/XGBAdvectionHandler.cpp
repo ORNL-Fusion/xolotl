@@ -10,7 +10,7 @@ namespace advection
 {
 void
 XGBAdvectionHandler::initialize(network::IReactionNetwork& network,
-	network::IReactionNetwork::SparseFillMap& ofillMap)
+	std::vector<RowColPair>& idPairs)
 {
 	// Clear the index and sink strength vectors
 	advectingClusters.clear();
@@ -84,9 +84,8 @@ XGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 		// Add the sink strength to the vector
 		sinkStrengthVector.push_back(sinkStrength);
 
-		// Set the off-diagonal part for the Jacobian to 1
-		// Set the ofill value to 1 for this cluster
-		ofillMap[clusterId].emplace_back(clusterId);
+		// Add Jacobian entry for this cluster
+        idPairs.push_back({clusterId, clusterId});
 	}
 
 	return;

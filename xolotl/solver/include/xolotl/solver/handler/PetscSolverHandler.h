@@ -41,7 +41,7 @@ checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
 class PetscSolverHandler : public SolverHandler
 {
 protected:
-	//! Partial derivatives for all reactions at one grid point.
+	//! Partial derivatives at one grid point.
 	Kokkos::View<double*> vals;
 
 	//! Map of connectivities

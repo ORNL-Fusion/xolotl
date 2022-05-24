@@ -38,7 +38,7 @@ public:
 	 */
 	void
 	initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) override;
+		std::vector<RowColPair>& idPairs) override;
 
 	/**
 	 * The surface advection handler is in charge of initializing the grid for

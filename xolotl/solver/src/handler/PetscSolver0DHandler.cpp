@@ -1,9 +1,8 @@
-#include <Kokkos_OffsetView.hpp>
-
 #include <petscconf.h>
 #include <petscdmda_kokkos.hpp>
 
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/handler/PetscSolver0DHandler.h>
 #include <xolotl/util/Log.h>
@@ -14,12 +13,6 @@ namespace xolotl
 {
 namespace solver
 {
-// TODO: Move this to a common header file
-using DefaultMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
-template <typename T>
-using PetscOffsetView =
-	Kokkos::Experimental::OffsetView<T, Kokkos::LayoutRight, DefaultMemSpace>;
-
 namespace handler
 {
 void
@@ -72,27 +65,34 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, TS& ts)
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
 
-	// Load up the block fills
-	#if 0
+	// Preallocate matrix
+#if 0
 	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
 	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
 	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::initializeSolverContext: "
 		"DMDASetBlockFills failed.");
-	#else
+#else
 	Mat J;
 	ierr = TSGetRHSJacobian(ts, &J, nullptr, nullptr, nullptr);
-	checkPetscError(ierr, "PetscSolver::initialize: TSGetRHSJacobian failed.");
-	auto [rows, cols] = convertToCoordinateListPair(dof/*+1*/, dfill);
-    rows.push_back(dof);
-    cols.push_back(dof);
-    std::cout << "nnz: " << rows.size() << "\nnPartials: " << nPartials << std::endl;
+	checkPetscError(ierr,
+		"PetscSolver0DHandler::initializeSolverContext: "
+		"TSGetRHSJacobian failed.");
+	auto [rows, cols] = convertToCoordinateListPair(dof, dfill);
+    // handling temperature (FIXME)
+	rows.push_back(dof);
+	cols.push_back(dof);
+    ++nPartials;
+    //
 	ierr = MatSetPreallocationCOO(J, rows.size(), rows.data(), cols.data());
-	#endif
+	checkPetscError(ierr,
+		"PetscSolver0DHandler::initializeSolverContext: "
+		"MatSetPreallocationCOO failed.");
+#endif
 
 	// Initialize the arrays for the reaction partial derivatives
-	vals = Kokkos::View<double*>("solverPartials", nPartials+1);
+	vals = Kokkos::View<double*>("solverPartials", nPartials);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
@@ -410,51 +410,10 @@ PetscSolver0DHandler::computeJacobian(
 	partialDerivativeTimer->start();
 	network.computeAllPartials(concOffset, vals);
 	partialDerivativeTimer->stop();
-#if 0
-	auto hPartials = create_mirror_view(vals);
-	deep_copy(hPartials, vals);
 
-	// Variable for the loop on reactants
-	IdType startingIdx = 0;
-
-	// Update the column in the Jacobian that represents each DOF
-	for (auto i = 0; i < dof; i++) {
-		// Set grid coordinate and component number for the row
-		rowId.i = 0;
-		rowId.c = i;
-
-		// Number of partial derivatives
-		auto rowIter = dfill.find(i);
-		if (rowIter != dfill.end()) {
-			const auto& row = rowIter->second;
-			pdColIdsVectorSize = row.size();
-
-			// Loop over the list of column ids
-			for (auto j = 0; j < pdColIdsVectorSize; j++) {
-				// Set grid coordinate and component number for a column in the
-				// list
-				colIds[j].i = 0;
-				colIds[j].c = row[j];
-				// Get the partial derivative from the array of all of the
-				// partials
-				reactingPartialsForCluster[j] = hPartials(startingIdx + j);
-			}
-			// Update the matrix
-			ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize, colIds,
-				reactingPartialsForCluster.data(), ADD_VALUES);
-			checkPetscError(ierr,
-				"PetscSolverExpHandler::computeDiagonalJacobian: "
-				"MatSetValuesStencil (reactions) failed.");
-
-			// Increase the starting index
-			startingIdx += pdColIdsVectorSize;
-		}
-	}
-#else
 	ierr = MatSetValuesCOO(J, vals.data(), ADD_VALUES);
-	checkPetscError(ierr,
-		"PetscSolverExpHandler::computeJacobian: MatSetValuesCOO failed.");
-#endif
+	checkPetscError(
+		ierr, "PetscSolver0DHandler::computeJacobian: MatSetValuesCOO failed.");
 
 	/*
 	 Restore vectors

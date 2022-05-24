@@ -37,7 +37,7 @@ public:
 	 */
 	void
 	initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) override
+		std::vector<RowColPair>& idPairs) override
 	{
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();

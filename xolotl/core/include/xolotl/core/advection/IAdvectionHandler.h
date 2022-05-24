@@ -41,7 +41,7 @@ public:
 	 */
 	virtual void
 	initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) = 0;
+		std::vector<RowColPair>& idPairs) = 0;
 
 	/**
 	 * Set the number of dimension

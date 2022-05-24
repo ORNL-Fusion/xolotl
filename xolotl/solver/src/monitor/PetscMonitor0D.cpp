@@ -1,8 +1,7 @@
 #include <petscconf.h>
 #include <petscdmda_kokkos.hpp>
 
-#include <Kokkos_OffsetView.hpp>
-
+#include <xolotl/core/Types.h>
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
@@ -18,12 +17,6 @@ namespace xolotl
 {
 namespace solver
 {
-// TODO: Move this to a common header file
-using DefaultMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
-template <typename T>
-using PetscOffsetView =
-	Kokkos::Experimental::OffsetView<T, Kokkos::LayoutRight, DefaultMemSpace>;
-
 namespace monitor
 {
 PetscErrorCode

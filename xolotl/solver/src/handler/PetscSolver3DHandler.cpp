@@ -160,11 +160,11 @@ PetscSolver3DHandler::initializeSolverContext(DM& da, TS& ts)
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents
 	// diffusion
-	diffusionHandler->initializeOFill(network, ofill);
+	// FIXME: diffusionHandler->initializeOFill(network, ofill);
 	// Loop on the advection handlers to account the other "off-diagonal"
 	// elements
 	for (auto i = 0; i < advectionHandlers.size(); i++) {
-		advectionHandlers[i]->initialize(network, ofill);
+		// FIXME: advectionHandlers[i]->initialize(network, ofill);
 	}
 
 	// Get the local boundaries

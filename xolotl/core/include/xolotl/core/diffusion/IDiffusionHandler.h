@@ -38,8 +38,8 @@ public:
 	 * @param ofill Map of connectivity for diffusing clusters.
 	 */
 	virtual void
-	initializeOFill(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) = 0;
+	initialize(network::IReactionNetwork& network,
+		std::vector<RowColPair>& idPairs) = 0;
 
 	/**
 	 * Initialize an array of the dimension of the physical domain times the
