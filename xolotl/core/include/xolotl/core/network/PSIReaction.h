@@ -24,7 +24,12 @@ public:
 	using Superclass = ProductionReaction<PSIReactionNetwork<TSpeciesEnum>,
 		PSIProductionReaction<TSpeciesEnum>>;
 
+	using IndexType = typename Superclass::IndexType;
 	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex);
 };
 
 template <typename TSpeciesEnum>

@@ -29,10 +29,15 @@ generatePSIReactionNetwork(const options::IOptions& options)
 {
 	using AmountType = IReactionNetwork::AmountType;
 
+	// Get the temperature and lattice constant from the options
+	double latticeConst = options.getLatticeParameter() <= 0.0 ?
+		xolotl::core::tungstenLatticeConstant :
+		options.getLatticeParameter();
+	double temperature = options.getTempParam();
 	// Get the boundaries from the options
 	AmountType maxV = options.getMaxV();
 	AmountType maxI = options.getMaxI();
-	AmountType maxHe = psi::getMaxHePerV(maxV);
+	AmountType maxHe = psi::getMaxHePerVLoop(maxV, latticeConst, temperature);
 	AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	AmountType groupingWidthHe = options.getGroupingWidthA();
@@ -40,11 +45,6 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	AmountType groupingWidthT = options.getGroupingWidthA();
 	AmountType groupingWidthV = options.getGroupingWidthB();
 	AmountType groupingWidthI = options.getGroupingWidthB();
-
-	if (maxI > options.getGroupingMin() and maxV >= options.getGroupingMin()) {
-		throw std::runtime_error(
-			"Both V and I are grouped, this is not currently possible!");
-	}
 
 	if (options.getMaxImpurity() <= 0) {
 		maxHe = 0;
@@ -92,6 +92,15 @@ generatePSIReactionNetwork(const options::IOptions& options)
 			++i;
 		}
 		maxV = pow(groupingWidthV, i) - 1;
+	}
+
+	if (maxI > options.getGroupingMin() and maxV >= options.getGroupingMin()) {
+		AmountType refineHe = (maxHe + 1) / groupingWidthHe;
+		AmountType refineV = (maxV + 1) / groupingWidthV;
+		return makePSIReactionNetwork<PSIHeliumSpeciesList>({maxHe, maxV, maxI},
+			{{refineHe, refineV, maxI + 1},
+				{groupingWidthHe, groupingWidthV, 1}},
+			options);
 	}
 
 	if (options.getGroupingMin() >= maxI) {

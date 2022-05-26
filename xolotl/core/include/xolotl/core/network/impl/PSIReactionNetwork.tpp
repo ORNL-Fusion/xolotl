@@ -280,6 +280,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
+	using IndexType = typename NetworkType::IndexType;
 
 	constexpr auto species = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
@@ -478,54 +479,48 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 			return;
 		}
 
-		// Loop on possible I sizes
-		// TODO: get the correct value for maxISize
-		AmountType maxISize = 6;
-		for (AmountType n = 1; n <= maxISize; ++n) {
-			// Find the corresponding cluster
-			Composition comp = Composition::zero();
-			comp[Species::I] = n;
-			auto iClusterId = subpaving.findTileId(comp, plsm::onDevice);
+		std::set<std::pair<IndexType, IndexType>> previousIndices;
+		previousIndices.insert(std::make_pair<IndexType, IndexType>(
+			subpaving.invalidIndex(), subpaving.invalidIndex()));
 
-			// Check the I cluster exists
-			if (iClusterId == NetworkType::invalidIndex())
-				continue;
-
-			bounds[Species::V].first += 1;
-			bounds[Species::V].second += 1;
-
-			// Look for potential product
-			IndexType nProd = 0;
-			for (IndexType k = 0; k < numClusters; ++k) {
-				// Get the composition
-				const auto& prodReg = this->getCluster(k).getRegion();
-				bool isGood = true;
-				// Loop on the species
-				// TODO: check l correspond to the same species in bounds
-				// and prod
-				for (auto l : speciesNoI) {
-					if (prodReg[l()].begin() > bounds[l()].second) {
-						isGood = false;
-						break;
-					}
-					if (prodReg[l()].end() - 1 < bounds[l()].first) {
-						isGood = false;
-						break;
-					}
+		// Loop on the cluster
+		for (auto a = bounds[Species::He].first;
+			 a <= bounds[Species::He].second; a++)
+			for (auto b = bounds[Species::V].first;
+				 b <= bounds[Species::V].second; b++) {
+				auto nV = b;
+				auto nHeEq = xolotl::core::network::psi::getMaxHePerVEq(
+					nV, this->_clusterData.latticeParameter(), 933.0);
+				while (nHeEq < a) {
+					nV++;
+					nHeEq = xolotl::core::network::psi::getMaxHePerVEq(
+						nV, this->_clusterData.latticeParameter(), 933.0);
 				}
 
-				if (isGood) {
-					// Increase nProd
-					nProd++;
-					this->addProductionReaction(tag, {i, j, k, iClusterId});
+				// Look for the product
+				Composition comp = Composition::zero();
+				comp[Species::He] = a;
+				comp[Species::V] = nV;
+				auto prodId = subpaving.findTileId(comp, plsm::onDevice);
+				comp[Species::He] = 0;
+				comp[Species::V] = 0;
+				comp[Species::I] = nV - bounds[Species::V].first;
+				auto iClusterId = subpaving.findTileId(comp, plsm::onDevice);
+				auto key = std::make_pair<IndexType, IndexType>(
+					std::forward<IndexType>(prodId),
+					std::forward<IndexType>(iClusterId));
+				auto iter = previousIndices.find(key);
+				if (prodId != subpaving.invalidIndex() and
+					iClusterId != subpaving.invalidIndex() and
+					iter == previousIndices.end()) {
+					// Add the reaction
+					this->addProductionReaction(
+						tag, {i, j, prodId, iClusterId});
 					// No dissociation
+					// Update the previous indices
+					previousIndices.insert(key);
 				}
 			}
-			// Stop if we found a product
-			if (nProd > 0) {
-				break;
-			}
-		}
 	}
 }
 
@@ -578,16 +573,20 @@ PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
 			return;
 		}
 		// Bubble case
-		else {
-			auto& subpaving = this->getSubpaving();
-			// Look for the V cluster of the same size
-			Composition comp = Composition::zero();
-			comp[Species::V] = nV;
-			auto vClusterId = subpaving.findTileId(comp, plsm::onDevice);
-			if (vClusterId != NetworkType::invalidIndex() and vClusterId != previousIndex) {
-				this->addBurstingReaction(tag, {i, vClusterId});
-				previousIndex = vClusterId;
-			}
+		auto nHeLoop = xolotl::core::network::psi::getMaxHePerVLoop(
+			nV, this->_clusterData.latticeParameter(), 933.0);
+		if (hi[Species::He] - 1 < nHeLoop)
+			continue;
+
+		auto& subpaving = this->getSubpaving();
+		// Look for the V cluster of the same size
+		Composition comp = Composition::zero();
+		comp[Species::V] = nV;
+		auto vClusterId = subpaving.findTileId(comp, plsm::onDevice);
+		if (vClusterId != NetworkType::invalidIndex() and
+			vClusterId != previousIndex) {
+			this->addBurstingReaction(tag, {i, vClusterId});
+			previousIndex = vClusterId;
 		}
 	}
 }

@@ -16,6 +16,54 @@ namespace network
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 double
+PSIProductionReaction<TSpeciesEnum>::computeRate(IndexType gridIndex)
+{
+	auto rate = Superclass::computeRate(gridIndex);
+
+	using NetworkType = typename Superclass::NetworkType;
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	using AmountType = typename NetworkType::AmountType;
+
+	auto cl1 = this->_clusterData->getCluster(this->_reactants[0]);
+	auto cl2 = this->_clusterData->getCluster(this->_reactants[1]);
+
+	auto cl1Reg = cl1.getRegion();
+	auto cl2Reg = cl2.getRegion();
+
+	Composition lo1Comp(cl1Reg.getOrigin());
+	Composition lo2Comp(cl2Reg.getOrigin());
+	if (lo1Comp[Species::He] == 0)
+		return rate;
+	if (lo2Comp[Species::He] == 0)
+		return rate;
+
+	if (lo1Comp[Species::V] == 0 and lo2Comp[Species::V] == 0)
+		return rate;
+
+	double avHe = 0.0;
+	AmountType avV = 0;
+	if (lo1Comp[Species::V] > 0) {
+		Composition hi1Comp(cl1Reg.getUpperLimitPoint());
+		avHe = (hi1Comp[Species::He] + lo1Comp[Species::He]) / 2.0;
+		avV = (hi1Comp[Species::V] + lo1Comp[Species::V]) / 2.0;
+	}
+	else {
+		Composition hi2Comp(cl2Reg.getUpperLimitPoint());
+		avHe = (hi2Comp[Species::He] + lo2Comp[Species::He]) / 2.0;
+		avV = (hi2Comp[Species::V] + lo2Comp[Species::V]) / 2.0;
+	}
+	auto nHeEq = xolotl::core::network::psi::getMaxHePerVEq(
+		avV, this->_clusterData->latticeParameter(), 933.0);
+	double factor =
+		std::max(1.0 + 5.0 * (double)(nHeEq - avHe) / (double)nHeEq, 1.0);
+
+	return factor * rate;
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
 PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 {
 	using psi::hasDeuterium;
@@ -205,12 +253,7 @@ PSIBurstingReaction<TSpeciesEnum>::getAppliedRate(IndexType gridIndex) const
 	// Get the radius of the cluster
 	auto cl = this->_clusterData->getCluster(this->_reactant);
 	auto clReg = cl.getRegion();
-	Composition loComp(clReg.getOrigin());
-	Composition hiComp(clReg.getUpperLimitPoint());
-	double avHe = (hiComp[Species::He] + loComp[Species::He]) / 2.0;
-	AmountType avV = (hiComp[Species::V] + loComp[Species::V]) / 2.0;
-	auto radius = avHe * cl.getReactionRadius() /
-		(double)xolotl::core::network::psi::getMaxHePerV(avV);
+	auto radius = cl.getReactionRadius();
 
 	// Get the current depth
 	auto depth = this->_clusterData->getDepth();
