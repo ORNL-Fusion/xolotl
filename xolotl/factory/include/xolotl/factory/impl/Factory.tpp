@@ -8,16 +8,19 @@ namespace xolotl
 namespace factory
 {
 template <typename TFactory, typename THandlerBase>
-Factory<TFactory, THandlerBase>::Factory() = default;
+Factory<TFactory, THandlerBase>::Factory()
+{
+}
 
 template <typename TFactory, typename THandlerBase>
 Factory<TFactory, THandlerBase>::~Factory() = default;
 
 template <typename TFactory, typename THandlerBase>
 TFactory&
-Factory<TFactory, THandlerBase>::get()
+Factory<TFactory, THandlerBase>::get(const UserInitializer& callback)
 {
 	static TFactory factory;
+	callback();
 	return factory;
 }
 

@@ -219,6 +219,15 @@ public:
 	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1) = 0;
 
 	/**
+	 * Generate the grid for the temperature.
+	 *
+	 * @param surfacePos The surface position
+	 * @param oldPos The old surface position
+	 */
+	virtual void
+	generateTemperatureGrid(IdType surfacePos, IdType oldPos = 0) = 0;
+
+	/**
 	 * Get the initial vacancy concentration.
 	 *
 	 * @return The initial vacancy concentration
@@ -479,6 +488,17 @@ public:
 	 */
 	virtual void
 	resetGBVector() = 0;
+
+	/**
+	 * Interpolate the temperature between the two grids.
+	 *
+	 * @param pos The surface position
+	 * @param localTemp The local temperature vector wrt temperature grid
+	 * @return The local temperature vector wrt cluster grid
+	 */
+	virtual std::vector<double>
+	interpolateTemperature(
+		IdType pos, std::vector<double> localTemp = std::vector<double>()) = 0;
 };
 // end class ISolverHandler
 

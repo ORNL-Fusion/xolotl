@@ -2,7 +2,6 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/BurstingReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterSet.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/detail/MemorySpace.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/NucleationReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/PSITrapMutation.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionCollection.h
@@ -84,13 +83,21 @@ list(APPEND XOLOTL_CORE_TPP_FILES
 )
 
 list(APPEND XOLOTL_CORE_SOURCES
+    ${XOLOTL_CORE_SOURCE_DIR}/network/AlloyClusterGenerator.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/AlloyNetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/AlloyReactionNetwork.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/FeClusterGenerator.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/FeNetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/FeReactionNetwork.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/NEClusterGenerator.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/NENetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/NEReactionNetwork.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/NetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/PSINetworkHandler.cpp
-    ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetwork.cpp
 )
+
+if(NOT ${XOLOTL_INCLUDE_RN_TPP_FILES})
+    list(APPEND XOLOTL_CORE_SOURCES
+        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetwork.cpp
+    )
+endif()

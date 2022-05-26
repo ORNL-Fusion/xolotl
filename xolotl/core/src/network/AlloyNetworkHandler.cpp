@@ -36,9 +36,6 @@ auto alloyNetworkGenerator = [](const options::IOptions& options) {
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 
-	network->syncClusterDataOnHost();
-	network->getSubpaving().syncZones(plsm::onHost);
-
 	return network;
 };
 

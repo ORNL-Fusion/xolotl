@@ -58,18 +58,26 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
 
 	this->_clusterData.h_view().extraData.trapMutationData.initialize();
 	this->copyClusterDataView();
+	this->invalidateDataMirror();
 }
 
 template <typename TSpeciesEnum>
 void
 PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
-	const std::vector<double>& gridTemps)
+	const std::vector<double>& gridTemps, const std::vector<double>& gridDepths)
 {
 	if (!this->_enableTrapMutation) {
 		return;
 	}
 
-	_tmHandler->updateData(gridTemps[0]);
+	// Check which temperature index to use
+	IdType tempId = 0;
+	for (tempId = 0; tempId < gridDepths.size(); tempId++) {
+		if (gridDepths[tempId] > 0.01)
+			break;
+	}
+
+	_tmHandler->updateData(gridTemps[tempId]);
 
 	auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
 
@@ -77,11 +85,18 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	using Kokkos::MemoryUnmanaged;
 
 	auto desorpInit = _tmHandler->getDesorptionInitializer();
-	Composition comp{};
-	comp[Species::He] = desorpInit.size;
+	auto subpaving = this->_subpaving;
+	IndexType desorpId = this->invalidIndex();
+	Kokkos::parallel_reduce(
+		1,
+		KOKKOS_LAMBDA(std::size_t, IndexType & running) {
+			Composition comp{};
+			comp[Species::He] = desorpInit.size;
+			running = static_cast<IndexType>(subpaving.findTileId(comp));
+		},
+		desorpId);
 	auto desorp = create_mirror_view(tmData.desorption);
-	desorp() = detail::Desorption{
-		desorpInit, this->findCluster(comp, plsm::onHost).getId()};
+	desorp() = detail::Desorption{desorpInit, desorpId};
 	deep_copy(tmData.desorption, desorp);
 
 	auto depths = Kokkos::View<const double[7], HostSpace, MemoryUnmanaged>(
@@ -91,6 +106,8 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	auto vSizes = Kokkos::View<const AmountType[7], HostSpace, MemoryUnmanaged>(
 		_tmHandler->getVacancySizes().data());
 	deep_copy(tmData.tmVSizes, vSizes);
+
+	this->invalidateDataMirror();
 }
 
 template <typename TSpeciesEnum>
@@ -112,6 +129,10 @@ PSIReactionNetwork<TSpeciesEnum>::selectTrapMutationReactions(
 		}
 	}
 	deep_copy(tmData.tmEnabled, enable);
+
+	// NOTE:
+	// Not calling invalidateDataMirror() here because this change should
+	// only matter to reactions on-device
 }
 
 template <typename TSpeciesEnum>
@@ -157,9 +178,9 @@ PSIReactionNetwork<TSpeciesEnum>::updateReactionRates()
 	auto tmReactions =
 		this->_reactions.template getView<TrapMutationReactionType>();
 	Kokkos::parallel_for(
-		tmReactions.size(), KOKKOS_LAMBDA(IndexType i) {
-			tmReactions[i].updateRates(largestRate);
-		});
+		"PSIReactionNetwork::updateReactionRates", tmReactions.size(),
+		KOKKOS_LAMBDA(
+			IndexType i) { tmReactions[i].updateRates(largestRate); });
 }
 
 template <typename TSpeciesEnum>
@@ -173,6 +194,10 @@ PSIReactionNetwork<TSpeciesEnum>::updateTrapMutationDisappearingRate(
 		auto mirror = create_mirror_view(tmData.currentDisappearingRate);
 		mirror() = exp(-4.0 * totalTrappedHeliumConc);
 		deep_copy(tmData.currentDisappearingRate, mirror);
+
+		// NOTE:
+		// Not calling invalidateDataMirror() here because this change should
+		// only matter to reactions on-device
 	}
 }
 
@@ -189,6 +214,10 @@ PSIReactionNetwork<TSpeciesEnum>::updateDesorptionLeftSideRate(
 	auto lsRate = create_mirror_view(tmData.currentDesorpLeftSideRate);
 	lsRate() = this->getLeftSideRate(concentrations, desorp().id, gridIndex);
 	deep_copy(tmData.currentDesorpLeftSideRate, lsRate);
+
+	// NOTE:
+	// Not calling invalidateDataMirror() here because this change should
+	// only matter to reactions on-device
 }
 
 template <typename TSpeciesEnum>
@@ -221,7 +250,7 @@ PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 		PSIReactionNetwork<TSpeciesEnum>::IndexType>;
 	typename Reducer::value_type maxLoc;
 	Kokkos::parallel_reduce(
-		this->_numClusters,
+		"PSIReactionNetwork::checkLargestClusterId", this->_numClusters,
 		KOKKOS_LAMBDA(IndexType i, typename Reducer::value_type & update) {
 			const auto& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
@@ -308,25 +337,34 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
 	auto& subpaving = this->getSubpaving();
-	auto previousIndex = subpaving.invalidIndex();
 
 	// Special case for I + I
 	if (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::I)) {
 		// Compute the composition of the new cluster
 		auto minSize = lo1[Species::I] + lo2[Species::I];
 		auto maxSize = hi1[Species::I] + hi2[Species::I] - 2;
+		auto prodBounds = std::make_pair<int, int>(0, 0);
 		// Find the corresponding clusters
 		for (auto k = minSize; k <= maxSize; k++) {
+			// Check the bounds of the previous product
+			if (k >= prodBounds.first && k <= prodBounds.second) {
+				// Do nothing because we already added this reaction
+				continue;
+			}
 			Composition comp = Composition::zero();
 			comp[Species::I] = k;
-			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-			if (iProdId != subpaving.invalidIndex() &&
-				iProdId != previousIndex) {
+			auto iProdId = subpaving.findTileId(comp);
+			if (iProdId != subpaving.invalidIndex()) {
 				this->addProductionReaction(tag, {i, j, iProdId});
 				if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
 					this->addDissociationReaction(tag, {iProdId, i, j});
 				}
-				previousIndex = iProdId;
+				// Update the bounds
+				const auto& prodReg = this->getCluster(iProdId).getRegion();
+				Composition loP = prodReg.getOrigin();
+				Composition hiP = prodReg.getUpperLimitPoint();
+				prodBounds.first = loP[Species::I];
+				prodBounds.second = hiP[Species::I] - 1;
 			}
 		}
 		return;
@@ -338,41 +376,63 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		// Find out which one is which
 		auto vReg = lo1.isOnAxis(Species::V) ? cl1Reg : cl2Reg;
 		auto iReg = lo1.isOnAxis(Species::I) ? cl1Reg : cl2Reg;
-		// I and V can be grouped
-		for (auto k : makeIntervalRange(iReg[Species::I]))
-			for (auto l : makeIntervalRange(vReg[Species::V])) {
-				// Compute the product size
-				int prodSize = (int)l - (int)k;
-				// 3 cases
-				if (prodSize > 0) {
-					// Looking for V cluster
-					Composition comp = Composition::zero();
-					comp[Species::V] = prodSize;
-					auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
-					if (vProdId != subpaving.invalidIndex() &&
-						vProdId != previousIndex) {
-						this->addProductionReaction(tag, {i, j, vProdId});
-						previousIndex = vProdId;
-						// No dissociation
-					}
-				}
-				else if (prodSize < 0) {
-					// Looking for I cluster
-					Composition comp = Composition::zero();
-					comp[Species::I] = -prodSize;
-					auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-					if (iProdId != subpaving.invalidIndex() &&
-						iProdId != previousIndex) {
-						this->addProductionReaction(tag, {i, j, iProdId});
-						previousIndex = iProdId;
-						// No dissociation
-					}
-				}
-				else {
-					// No product
-					this->addProductionReaction(tag, {i, j});
+		// Compute the largest possible product and the smallest one
+		int largestProd =
+			(int)vReg[Species::V].end() - 1 - (int)iReg[Species::I].begin();
+		int smallestProd =
+			(int)vReg[Species::V].begin() - (int)iReg[Species::I].end() + 1;
+		auto prodBounds = std::make_pair<int, int>(0, 0);
+		// Loop on the products
+		for (int prodSize = smallestProd; prodSize <= largestProd; prodSize++) {
+			// Check the bounds of the previous product
+			if (prodSize >= prodBounds.first and
+				prodSize <= prodBounds.second and prodSize != 0) {
+				// Do nothing because we already added this reaction
+				continue;
+			}
+			// 3 cases
+			if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex()) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					// No dissociation
+
+					// Update the bounds
+					const auto& prodReg = this->getCluster(vProdId).getRegion();
+					Composition loP = prodReg.getOrigin();
+					Composition hiP = prodReg.getUpperLimitPoint();
+					prodBounds.first = loP[Species::V];
+					prodBounds.second = hiP[Species::V] - 1;
 				}
 			}
+			else if (prodSize < 0) {
+				// Looking for I cluster
+				Composition comp = Composition::zero();
+				comp[Species::I] = -prodSize;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex()) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					// No dissociation
+
+					// Update the bounds
+					const auto& prodReg = this->getCluster(iProdId).getRegion();
+					Composition loP = prodReg.getOrigin();
+					Composition hiP = prodReg.getUpperLimitPoint();
+					prodBounds.first = 1 - (int)hiP[Species::I];
+					prodBounds.second = -(int)loP[Species::I];
+				}
+			}
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
+				// Update the bounds
+				prodBounds.first = 0;
+				prodBounds.second = 0;
+			}
+		}
 		return;
 	}
 
@@ -457,8 +517,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 				if (lo1 == comp1 && lo2 == comp2) {
 					Composition compI = Composition::zero();
 					compI[Species::I] = vSize;
-					auto iClusterId =
-						subpaving.findTileId(compI, plsm::onDevice);
+					auto iClusterId = subpaving.findTileId(compI);
 					this->addTrapMutationReaction(tag, {i, j, iClusterId});
 				}
 			}
@@ -501,11 +560,11 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 				Composition comp = Composition::zero();
 				comp[Species::He] = a;
 				comp[Species::V] = nV;
-				auto prodId = subpaving.findTileId(comp, plsm::onDevice);
+				auto prodId = subpaving.findTileId(comp);
 				comp[Species::He] = 0;
 				comp[Species::V] = 0;
 				comp[Species::I] = nV - bounds[Species::V].first;
-				auto iClusterId = subpaving.findTileId(comp, plsm::onDevice);
+				auto iClusterId = subpaving.findTileId(comp);
 				auto key = std::make_pair<IndexType, IndexType>(
 					std::forward<IndexType>(prodId),
 					std::forward<IndexType>(iClusterId));
@@ -582,7 +641,7 @@ PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
 		// Look for the V cluster of the same size
 		Composition comp = Composition::zero();
 		comp[Species::V] = nV;
-		auto vClusterId = subpaving.findTileId(comp, plsm::onDevice);
+		auto vClusterId = subpaving.findTileId(comp);
 		if (vClusterId != NetworkType::invalidIndex() and
 			vClusterId != previousIndex) {
 			this->addBurstingReaction(tag, {i, vClusterId});

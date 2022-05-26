@@ -2,7 +2,6 @@
 #include <ctime>
 #include <iostream>
 
-#include <xolotl/core/network/INetworkHandler.h>
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/factory/solver/SolverFactory.h>
 #include <xolotl/factory/viz/VizHandlerFactory.h>

@@ -4,12 +4,10 @@
  *  Created on: May 6, 2013
  *      Author: bkj
  */
+#pragma once
 
 #include <cmath>
 #include <memory>
-
-#ifndef CONSTANTS_H_
-#define CONSTANTS_H_
 
 namespace xolotl
 {
@@ -95,4 +93,3 @@ constexpr double A_23 = 3.1524e-20;
 
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif /* CONSTANTS_H_ */

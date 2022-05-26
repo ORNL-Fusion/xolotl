@@ -102,3 +102,7 @@ public:
 } // namespace xolotl
 
 #include <xolotl/core/network/NEClusterGenerator.h>
+
+#if defined(XOLOTL_INCLUDE_RN_TPP_FILES)
+#include <xolotl/core/network/impl/NEReactionNetwork.tpp>
+#endif

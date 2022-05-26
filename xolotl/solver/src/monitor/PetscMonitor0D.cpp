@@ -614,7 +614,7 @@ PetscMonitor0D::monitorScatter(
 	for (auto i = 0; i < networkSize; i++) {
 		// Create a DataPoint with the concentration[i] as the value
 		// and add it to myPoints
-		auto cluster = network.getCluster(i, plsm::onHost);
+		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
 		const Region& clReg = cluster.getRegion();
 		for (auto j : makeIntervalRange(clReg[Spec::Xe])) {
 			viz::dataprovider::DataPoint aPoint;
@@ -706,7 +706,7 @@ PetscMonitor0D::monitorBubble(
 
 	// Consider each cluster.
 	for (auto i = 0; i < networkSize; i++) {
-		auto cluster = network.getCluster(i, plsm::onHost);
+		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
 		const Region& clReg = cluster.getRegion();
 		Composition lo = clReg.getOrigin();
 		Composition hi = clReg.getUpperLimitPoint();

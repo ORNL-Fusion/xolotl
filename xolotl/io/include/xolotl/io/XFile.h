@@ -55,17 +55,6 @@ public:
 		// Name of the concentrations data set.
 		static const std::string concDatasetName;
 
-		/**
-		 * Construct the group name for the given time step.
-		 *
-		 * @param concGroup The parent concentration group.
-		 * @param timeStep The time step the group will represent.
-		 * @return A string to use for the name of the time step group for
-		 *          the given time step.
-		 */
-		static std::string
-		makeGroupName(const ConcentrationGroup& concGroup, int timeStep);
-
 	public:
 		// Concise name for surface representations.
 		using Surface1DType = int;
@@ -83,6 +72,17 @@ public:
 		// support ragged edges in the last dimension.
 		using ConcType = std::pair<int, double>;
 		using Concs1DType = HDF5File::RaggedDataSet2D<ConcType>::Ragged2DType;
+
+		/**
+		 * Construct the group name for the given time step.
+		 *
+		 * @param concGroup The parent concentration group.
+		 * @param timeStep The time step the group will represent.
+		 * @return A string to use for the name of the time step group for
+		 *          the given time step.
+		 */
+		static std::string
+		makeGroupName(const ConcentrationGroup& concGroup, int timeStep);
 
 		/**
 		 * Construct a TimestepGroup.
@@ -109,6 +109,17 @@ public:
 		 * @param timeStep The time step of the desired group.
 		 */
 		TimestepGroup(const ConcentrationGroup& concGroup, int timeStep);
+
+		/**
+		 * Update a Timestep group within the given
+		 * concentration group.
+		 *
+		 * @param time The physical time at this time step
+		 * @param previousTime The physical time at the previous time step
+		 * @param deltaTime The physical length of the time step
+		 */
+		void
+		updateTimestepGroup(double time, double previousTime, double deltaTime);
 
 		/**
 		 * Save the surface positions to our timestep group.

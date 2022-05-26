@@ -38,12 +38,14 @@ SolverHandler::SolverHandler(
 	movingSurface(false),
 	isMirror(true),
 	useAttenuation(false),
+	sameTemperatureGrid(true),
 	fluxTempProfile(false),
 	sputteringYield(0.0),
 	fluxHandler(nullptr),
 	temperatureHandler(nullptr),
 	vizHandler(factory::viz::VizHandlerFactory::get().generate(options)),
-	perfHandler(factory::perf::PerfHandlerFactory::get().generate(options)),
+	perfHandler(factory::perf::PerfHandlerFactory::get(perf::loadPerfHandlers)
+					.generate(options)),
 	diffusionHandler(nullptr),
 	rngSeed(0),
 	previousTime(0.0),
@@ -410,6 +412,10 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 
 	// Set the sputtering yield
 	sputteringYield = opts.getSputteringYield();
+
+	// Which type of temperature grid to use
+	if (opts.getTempHandlerName() == "heat")
+		sameTemperatureGrid = false;
 
 	// Do we want a flux temporal profile?
 	fluxTempProfile = opts.useFluxTimeProfile();

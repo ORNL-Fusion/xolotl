@@ -347,9 +347,20 @@ std::unique_ptr<XFile::TimestepGroup>
 XFile::ConcentrationGroup::addTimestepGroup(
 	int timeStep, double time, double previousTime, double deltaTime) const
 {
-	// Create a group for the new timestep.
-	auto tsGroup = std::make_unique<XFile::TimestepGroup>(
-		*this, timeStep, time, previousTime, deltaTime);
+	std::unique_ptr<XFile::TimestepGroup> tsGroup;
+	// Check if this group already exist
+	bool groupExist = H5Lexists(getId(),
+		TimestepGroup::makeGroupName(*this, timeStep).c_str(), H5P_DEFAULT);
+	if (groupExist) {
+		// Get the group
+		tsGroup = getTimestepGroup(timeStep);
+		tsGroup->updateTimestepGroup(time, previousTime, deltaTime);
+	}
+	else {
+		// Create a group for the new timestep.
+		tsGroup = std::make_unique<XFile::TimestepGroup>(
+			*this, timeStep, time, previousTime, deltaTime);
+	}
 
 	// Update our last known timestep.
 	Attribute<decltype(timeStep)> lastTimestepAttr(*this, lastTimestepAttrName);
@@ -456,6 +467,23 @@ XFile::TimestepGroup::TimestepGroup(
 	HDF5File::Group(concGroup, makeGroupName(concGroup, timeStep), false)
 {
 	// Base class opened the group, so nothing else to do.
+}
+
+void
+XFile::TimestepGroup::updateTimestepGroup(
+	double time, double previousTime, double deltaTime)
+{
+	// Add absolute time attribute.
+	Attribute<decltype(time)> absTimeAttr(*this, absTimeAttrName);
+	absTimeAttr.setTo(time);
+
+	// Add previous time attribute.
+	Attribute<decltype(previousTime)> prevTimeAttr(*this, prevTimeAttrName);
+	prevTimeAttr.setTo(previousTime);
+
+	// Add delta time attribute.
+	Attribute<decltype(deltaTime)> deltaTimeAttr(*this, deltaTimeAttrName);
+	deltaTimeAttr.setTo(deltaTime);
 }
 
 void
@@ -792,14 +820,22 @@ XFile::TimestepGroup::writeConcentrationDataset(
 	std::stringstream datasetName;
 	datasetName << "position_" << i << "_" << j << "_" << k;
 
+	// Check the dataset
+	bool datasetExist =
+		H5Lexists(getId(), datasetName.str().c_str(), H5P_DEFAULT);
+
+	hid_t datasetId;
+	if (datasetExist) {
+		// Delete the link to it
+		H5Ldelete(getId(), datasetName.str().c_str(), H5P_DEFAULT);
+	}
+
 	// Create the dataspace for the dataset with dimension dims
 	std::array<hsize_t, 2> dims{(hsize_t)size, (hsize_t)2};
 	XFile::SimpleDataSpace<2> concDSpace(dims);
-
 	// Create the dataset of concentrations for this position
-	hid_t datasetId =
-		H5Dcreate2(getId(), datasetName.str().c_str(), H5T_IEEE_F64LE,
-			concDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	datasetId = H5Dcreate2(getId(), datasetName.str().c_str(), H5T_IEEE_F64LE,
+		concDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 	// Create property list for independent dataset write.
 	hid_t propertyListId = H5Pcreate(H5P_DATASET_XFER);
