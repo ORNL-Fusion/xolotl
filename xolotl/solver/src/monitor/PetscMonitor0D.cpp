@@ -189,12 +189,32 @@ PetscMonitor0D::setup()
 			"setupPetsc0DMonitor: TSMonitorSet (computeXenonRetention) "
 			"failed.");
 
+		using NetworkType = core::network::NEReactionNetwork;
+		using Spec = typename NetworkType::Species;
+		using Composition = typename NetworkType::Composition;
+		using Region = typename NetworkType::Region;
+		auto& network =
+			dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+
 		// Uncomment to clear the file where the retention will be written
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt");
-		outputFile << "#time Ui_conc ";
-		outputFile << "Uv1_conc ";
-		outputFile << "Uv2_conc ";
+		outputFile << "#time ";
+		auto networkSize = network.getNumClusters();
+		for (auto i = 0; i < networkSize; i++) {
+			auto cluster = network.getCluster(i);
+			const Region& clReg = cluster.getRegion();
+			Composition lo(clReg.getOrigin());
+			if (lo.isOnAxis(Spec::I))
+				outputFile << "I_" << lo[Spec::I] << " ";
+			else if (lo.isOnAxis(Spec::V))
+				outputFile << "V_" << lo[Spec::V] << " ";
+			else if (lo.isOnAxis(Spec::Xe))
+				outputFile << "Xe_" << lo[Spec::Xe] << " ";
+			else
+				outputFile << "Xe_" << lo[Spec::Xe] << "V_" << lo[Spec::V]
+						   << " ";
+		}
 		outputFile << std::endl;
 		outputFile.close();
 	}
@@ -431,9 +451,7 @@ PetscMonitor0D::computeXenonRetention(
 	CHKERRQ(ierr);
 
 	// Store the concentration and other values over the grid
-	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
-		   partialBubbleConcentration = 0.0, partialRadii = 0.0,
-		   partialSize = 0.0;
+	double xeConcentration = 0.0;
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal* gridPointSolution;
@@ -462,9 +480,11 @@ PetscMonitor0D::computeXenonRetention(
 	double temperature = gridPointSolution[dof];
 	std::ofstream outputFile;
 	outputFile.open("retentionOut.txt", std::ios::app);
-	outputFile << time << " " << gridPointSolution[0] << " ";
-	outputFile << gridPointSolution[1] << " ";
-	outputFile << gridPointSolution[2] << " ";
+	outputFile << time << " ";
+	auto networkSize = network.getNumClusters();
+	for (auto i = 0; i < networkSize; i++) {
+		outputFile << gridPointSolution[i] << " ";
+	}
 	outputFile << std::endl;
 	outputFile.close();
 

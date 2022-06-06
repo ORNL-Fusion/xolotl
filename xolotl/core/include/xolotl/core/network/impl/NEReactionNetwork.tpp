@@ -148,10 +148,6 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 					linkageRate += (link2.first) * link2.second * link1.second;
 				}
 			}
-			//			for (auto link2 : lVector[r2Id]) {
-			//				linkageRate += (mVector[r1Id] + link2.first) *
-			// link2.second;
-			//			}
 			// Save the value to the right
 			totalRate = coefRate * k_B * temperature * linkageRate;
 			constantRates(r1Id, r2Id) = totalRate;
@@ -257,15 +253,6 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-	//	// Special case for Xe_1 + Xe_1V_1
-	//	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() &&
-	//		((lo1.isOnAxis(Species::Xe) && lo1[Species::Xe] == 1 &&
-	//			 lo2[Species::Xe] == 1 && lo2[Species::V] == 1) ||
-	//			(lo2.isOnAxis(Species::Xe) && lo2[Species::Xe] == 1 &&
-	//				lo1[Species::Xe] == 1 && lo1[Species::V] == 1))) {
-	//		return;
-	//	}
-
 	// General case
 	constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
 	using BoundsArray =
@@ -304,22 +291,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 		if (isGood) {
 			this->addProductionReaction(tag, {i, j, k});
-			// Loop on the species
-			bool isOnAxis1 = false, isOnAxis2 = false;
-			for (auto l : species) {
-				if (lo1.isOnAxis(l()) && lo1[l()] == 1)
-					isOnAxis1 = true;
-				if (lo2.isOnAxis(l()) && lo2[l()] == 1)
-					isOnAxis2 = true;
-			}
-			if (isOnAxis1 || isOnAxis2) {
-				if (lo1.isOnAxis(Species::Xe) && lo2.isOnAxis(Species::Xe) &&
-					lo1[Species::Xe] == 1 && lo2[Species::Xe] == 1) {
-					continue;
-				}
-
-				this->addDissociationReaction(tag, {k, i, j});
-			}
+			this->addDissociationReaction(tag, {k, i, j});
 		}
 	}
 }
@@ -332,16 +304,7 @@ NEReactionGenerator::addSinks(IndexType i, TTag tag) const
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 
-	const auto& clReg = this->getCluster(i).getRegion();
-	Composition lo = clReg.getOrigin();
-
-	// I
-	if (clReg.isSimplex() && lo.isOnAxis(Species::I)) {
-		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
-	}
-
-	// V
-	if (clReg.isSimplex() && lo.isOnAxis(Species::V)) {
+	if (this->_clusterData.extraData.constantRates(i, this->_numDOFs) > 0.0) {
 		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
 	}
 }

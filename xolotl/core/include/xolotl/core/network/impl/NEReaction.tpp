@@ -34,22 +34,6 @@ NEProductionReaction::computeRate(IndexType gridIndex)
 	rate = getRateForProduction(
 		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 
-	//	constexpr auto speciesRange = NetworkType::getSpeciesRange();
-	//	auto cl0Reg = cl0.getRegion(), cl1Reg = cl1.getRegion(),
-	//		 prodReg = this->_clusterData.getCluster(_products[0]).getRegion();
-	//	for (auto i : speciesRange) {
-	//		std::cout << cl0Reg[i()].begin() << " ";
-	//	}
-	//	std::cout << "+ ";
-	//	for (auto i : speciesRange) {
-	//		std::cout << cl1Reg[i()].begin() << " ";
-	//	}
-	//	std::cout << "-> ";
-	//	for (auto i : speciesRange) {
-	//		std::cout << prodReg[i()].begin() << " ";
-	//	}
-	//	std::cout << std::endl;
-
 	return rate;
 }
 
@@ -733,13 +717,6 @@ NEDissociationReaction::computeRate(IndexType gridIndex)
 	double T = this->_clusterData->temperature(gridIndex);
 	constexpr double k_B = ::xolotl::core::kBoltzmann;
 
-	// Read the rates if available
-	auto rate =
-		this->_clusterData->extraData.constantRates(_products[0], _products[1]);
-	if (rate > 0) {
-		return rate * std::exp(this->_deltaG0 / (k_B * T));
-	}
-
 	// TODO: computeProductionRate should use products and not reactants
 	auto cl0 = this->_clusterData->getCluster(_products[0]);
 	auto cl1 = this->_clusterData->getCluster(_products[1]);
@@ -749,6 +726,13 @@ NEDissociationReaction::computeRate(IndexType gridIndex)
 
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
+
+	// Read the rates if available// Read the rates if available
+	auto rate =
+		this->_clusterData->extraData.constantRates(_products[0], _products[1]);
+	if (rate > 0) {
+		return rate * std::exp(this->_deltaG0 / (k_B * T));
+	}
 
 	double kPlus = getRateForProduction(
 		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);

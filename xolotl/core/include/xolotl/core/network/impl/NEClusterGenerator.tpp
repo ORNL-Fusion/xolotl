@@ -104,7 +104,7 @@ NEClusterGenerator::select(const Region& region) const
 	}
 
 	// Vacancy
-	if (region[Species::V].begin() > 6 && region[Species::Xe].end() == 1 &&
+	if (region[Species::V].begin() > 2 && region[Species::Xe].end() == 1 &&
 		region[Species::I].end() == 1) {
 		return false;
 	}
