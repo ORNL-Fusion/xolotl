@@ -48,11 +48,6 @@ protected:
 	SparseFillMap dfill;
 
 	/**
-	 * The current temperature on the grid.
-	 */
-	std::vector<double> temperature;
-
-	/**
 	 * A vector for holding the partial derivatives for one cluster in the order
 	 * that PETSc expects. It is sized in the createSolverContext() operation.
 	 *
