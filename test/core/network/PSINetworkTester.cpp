@@ -2068,4 +2068,49 @@ BOOST_AUTO_TEST_CASE(IGrouped)
 	BOOST_REQUIRE_EQUAL(vacancy.getId(), 2);
 }
 
+BOOST_AUTO_TEST_CASE(VIGrouped)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
+	paramFile << "netParam=0 0 0 1000 10000" << std::endl
+			  << "process=reaction" << std::endl
+			  << "material=W100" << std::endl
+			  << "grouping=101 2 2" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
+
+	using NetworkType = PSIReactionNetwork<PSIHeliumSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	auto network = dynamic_pointer_cast<NetworkType>(
+		factory::network::NetworkHandlerFactory::get()
+			.generate(opts)
+			->getNetwork());
+
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 1091);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 1978);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 1091);
+	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
+
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
+
+	// Check the single vacancy
+	auto vacancy = network->getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 586);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
