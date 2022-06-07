@@ -93,12 +93,6 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	// + moments
 	const auto dof = network.getDOF();
 
-	// Get the single vacancy ID
-	auto singleVacancyCluster = network.getSingleVacancy();
-	auto vacancyIndex = NetworkType::invalidIndex();
-	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
-		vacancyIndex = singleVacancyCluster.getId();
-
 	// Get the concentration of the only grid point
 	concOffset = concentrations[0];
 
@@ -122,9 +116,11 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
 
-	// Initialize the vacancy concentration
-	if (vacancyIndex != NetworkType::invalidIndex() and not hasConcentrations) {
-		concOffset[vacancyIndex] = initialVConc;
+	// Initialize the option specified concentration
+	if (hasConcentrations) {
+		for (auto pair : initialConc) {
+			concOffset[pair.first] = pair.second;
+		}
 	}
 
 	// If the concentration must be set from the HDF5 file

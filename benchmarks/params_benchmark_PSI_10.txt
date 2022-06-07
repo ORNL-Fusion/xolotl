@@ -12,4 +12,3 @@ tempParam=874
 grouping=10 4 4
 process=reaction diff advec modifiedTM attenuation movingSurface
 voidPortion=10.0
-initialV=0.0

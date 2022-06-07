@@ -1860,18 +1860,15 @@ PetscMonitor1D::eventFunction(
 		// Now that all the processes have the same value of nInterstitials,
 		// compare it to the threshold to now if we should move the surface
 
-		// Get the initial vacancy concentration
-		double initialVConc = _solverHandler->getInitialVConc();
-
 		// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
-		double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
+		double threshold = core::tungstenDensity * (grid[xi] - grid[xi - 1]);
 		if (_nSurf[specIdI()] > threshold) {
 			// The surface is moving
 			fvalue[0] = 0;
 		}
 
 		// Update the threshold for erosion (the cell size is not the same)
-		threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
+		threshold = core::tungstenDensity * (grid[xi + 1] - grid[xi]);
 		// Moving the surface back
 		if (_nSurf[specIdI()] < -threshold * 0.9) {
 			// The surface is moving
@@ -2089,13 +2086,10 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Set the surface position
 	auto xi = surfacePos + _solverHandler->getLeftOffset();
 
-	// Get the initial vacancy concentration
-	double initialVConc = _solverHandler->getInitialVConc();
-
 	auto specIdI = psiNetwork->getInterstitialSpeciesId();
 
 	// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
-	double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
+	double threshold = core::tungstenDensity * (grid[xi] - grid[xi - 1]);
 
 	if (movingUp) {
 		int nGridPoints = 0;
@@ -2109,7 +2103,7 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 			// Update the number of interstitials
 			_nSurf[specIdI()] -= threshold;
 			// Update the thresold
-			threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
+			threshold = core::tungstenDensity * (grid[xi] - grid[xi - 1]);
 		}
 
 		// Throw an exception if the position is negative
@@ -2200,11 +2194,20 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 				// Set the new surface temperature
 				gridPointSolution[dof] = surfTemp;
 
+				// Reset the concentrations
+				for (auto l = 0; l < dof; ++l) {
+					gridPointSolution[l] = 0.0;
+				}
+
+				auto initialConc = _solverHandler->getInitialConc();
+
 				if (vacancyIndex !=
 						core::network::IReactionNetwork::invalidIndex() &&
 					nGridPoints > 0) {
-					// Initialize the vacancy concentration
-					gridPointSolution[vacancyIndex] = initialVConc;
+					// Initialize the concentration
+					for (auto pair : initialConc) {
+						gridPointSolution[pair.first] = pair.second;
+					}
 				}
 			}
 
@@ -2218,7 +2221,7 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		// Move it back as long as the number of interstitials in negative
 		while (_nSurf[specIdI()] < 0.0) {
 			// Compute the threshold to a deeper grid point
-			threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
+			threshold = core::tungstenDensity * (grid[xi + 1] - grid[xi]);
 			// Set all the concentrations to 0.0 at xi = surfacePos + 1
 			// if xi is on this process
 			if (xi >= xs && xi < xs + xm) {

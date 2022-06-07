@@ -31,7 +31,6 @@ SolverHandler::SolverHandler(
 	topOffset(1),
 	frontOffset(1),
 	backOffset(1),
-	initialVConc(0.0),
 	electronicStoppingPower(0.0),
 	dimension(-1),
 	portion(0.0),
@@ -402,8 +401,31 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 		minRadiusSizes[i] = minSizes[i];
 	}
 
-	// Set the initial vacancy concentration
-	initialVConc = opts.getInitialVConcentration();
+	// Set the initial concentration
+	auto initialConcString = opts.getInitialConcentration();
+	auto tokens = util::Tokenizer<>{initialConcString}();
+	IdType count = 0;
+	while (count < tokens.size()) {
+		auto comp = std::vector<AmountType>(network.getSpeciesListSize(), 0);
+
+		// Read the cluster type
+		auto clusterSpecies = network.parseSpeciesId(tokens[count]);
+		// Get the cluster
+		comp[clusterSpecies()] = std::stoi(tokens[count + 1]);
+		auto clusterId = network.findClusterId(comp);
+		// Check that it is present in the network
+		if (clusterId == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe requested cluster is not present "
+									 "in the network: " +
+				tokens[count] + "_" + tokens[count + 1] +
+				", cannot use the initial concentration option!");
+		}
+		else
+			initialConc.push_back(std::make_pair<IdType, double>(
+				(IdType)clusterId, std::stod(tokens[count + 2])));
+
+		count += 3;
+	}
 
 	// Set the electronic stopping power
 	electronicStoppingPower = opts.getZeta();

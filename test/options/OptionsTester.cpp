@@ -104,7 +104,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "perfHandler=os" << std::endl
 		<< "flux=1.5" << std::endl
 		<< "material=W100" << std::endl
-		<< "initialV=0.05" << std::endl
+		<< "initialConc=V 1 0.05" << std::endl
 		<< "dimensions=1" << std::endl
 		<< "voidPortion=60.0" << std::endl
 		<< "gridType=nonuniform" << std::endl
@@ -162,7 +162,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getMaterial(), "W100");
 
 	// Check the initial vacancy concentration option
-	BOOST_REQUIRE_EQUAL(opts.getInitialVConcentration(), 0.05);
+	BOOST_REQUIRE_EQUAL(opts.getInitialConcentration(), "V 1 0.05");
 
 	// Check the number of dimensions option
 	BOOST_REQUIRE_EQUAL(opts.getDimensionNumber(), 1);

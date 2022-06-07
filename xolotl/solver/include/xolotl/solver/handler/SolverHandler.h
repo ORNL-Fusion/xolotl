@@ -90,7 +90,7 @@ protected:
 		backOffset;
 
 	//! The initial vacancy concentration.
-	double initialVConc;
+	std::vector<std::pair<IdType, double>> initialConc;
 
 	//! The vector of quantities to pass to MOOSE.
 	// 0: Xe rate, 1: previous flux, 2: monomer concentration, 3: volume
@@ -367,10 +367,10 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	double
-	getInitialVConc() const override
+	std::vector<std::pair<IdType, double>>
+	getInitialConc() const override
 	{
-		return initialVConc;
+		return initialConc;
 	}
 
 	/**
