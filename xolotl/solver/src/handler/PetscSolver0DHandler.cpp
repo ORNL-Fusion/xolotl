@@ -25,6 +25,10 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 	XOLOTL_LOG << "SolverHandler: 0D simulation";
+	for (auto pair : initialConc) {
+		XOLOTL_LOG << ", initial concentration for Id: " << pair.first
+				   << " of: " << pair.second << " nm-3";
+	}
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = util::getMPIComm();
