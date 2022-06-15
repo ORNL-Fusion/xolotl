@@ -70,9 +70,11 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		}
 		ss << std::endl;
 
-		ss << "Temperature grid (nm): ";
-		for (auto i = 0; i < temperatureGrid.size(); i++) {
-			ss << temperatureGrid[i] << " ";
+		if (not sameTemperatureGrid) {
+			ss << "Temperature grid (nm): ";
+			for (auto i = 0; i < temperatureGrid.size(); i++) {
+				ss << temperatureGrid[i] << " ";
+			}
 		}
 		ss << std::endl;
 		XOLOTL_LOG << ss.str();
