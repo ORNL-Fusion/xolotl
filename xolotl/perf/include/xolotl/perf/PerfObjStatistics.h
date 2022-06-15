@@ -80,8 +80,8 @@ struct PerfObjStatistics
 	outputTo(std::ostream& os) const
 	{
 		// Output data in YAML format.
-		constexpr char* nameIndent = "  ";
-		constexpr char* propIndent = "    ";
+		const char* nameIndent = "  ";
+		const char* propIndent = "    ";
 		os << nameIndent << name << ":\n"
 		   << propIndent << "process_count: " << processCount << '\n'
 		   << propIndent << "min: " << min << '\n'
