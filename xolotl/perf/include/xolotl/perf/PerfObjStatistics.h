@@ -79,18 +79,15 @@ struct PerfObjStatistics
 	void
 	outputTo(std::ostream& os) const
 	{
-		os << "  "
-		   << "name: " << name << '\n'
-		   << "    "
-		   << "process_count: " << processCount << '\n'
-		   << "    "
-		   << "min: " << min << '\n'
-		   << "    "
-		   << "max: " << max << '\n'
-		   << "    "
-		   << "average: " << average << '\n'
-		   << "    "
-		   << "stdev: " << stdev << '\n'
+		// Output data in YAML format.
+		constexpr char* nameIndent = "  ";
+		constexpr char* propIndent = "    ";
+		os << nameIndent << name << ":\n"
+		   << propIndent << "process_count: " << processCount << '\n'
+		   << propIndent << "min: " << min << '\n'
+		   << propIndent << "max: " << max << '\n'
+		   << propIndent << "average: " << average << '\n'
+		   << propIndent << "stdev: " << stdev << '\n'
 		   << std::endl;
 	}
 };

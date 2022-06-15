@@ -383,7 +383,9 @@ PerfHandler::reportStatistics(std::ostream& os,
 	const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
 	const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) const
 {
-	os << "\nTimers:\n";
+	// Output performance information in YAML format.
+	os << "\n---\n"
+	   << "Timers:\n";
 	for (auto iter = timerStats.begin(); iter != timerStats.end(); ++iter) {
 		iter->second.outputTo(os);
 	}
