@@ -10,6 +10,4 @@ perfHandler=dummy
 tempParam=1500
 grouping=101 10
 process=diff reaction
-voidPortion=0.0
-initialV=0.0
 xenonDiffusivity=0.075

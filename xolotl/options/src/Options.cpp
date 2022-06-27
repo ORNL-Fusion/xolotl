@@ -28,7 +28,7 @@ Options::Options() :
 	perfHandlerName(""),
 	vizHandlerName(""),
 	materialName(""),
-	initialVConcentration(0.0),
+	initialConcentration(""),
 	voidPortion(50.0),
 	interfaceLocation(0.0),
 	dimensionNumber(1),
@@ -144,10 +144,10 @@ Options::readParams(int argc, const char* argv[])
 		"Number of dimensions for the simulation.")("material",
 		bpo::value<std::string>(&materialName),
 		"The material options are as follows: {W100, W110, W111, "
-		"W211, Pulsed, Fuel, Fe, 800H}.")("initialV",
-		bpo::value<double>(&initialVConcentration),
-		"The value of the initial concentration of vacancies in the material.")(
-		"zeta", bpo::value<double>(&zeta)->default_value(0.73),
+		"W211, Pulsed, Fuel, Fe, 800H}.")("initialConc",
+		bpo::value<std::string>(&initialConcentration),
+		"The name, size, and value of the initial concentration in the "
+		"material.")("zeta", bpo::value<double>(&zeta)->default_value(0.73),
 		"The value of the electronic stopping power in the material (0.73 by "
 		"default).")("voidPortion", bpo::value<double>(&voidPortion),
 		"The value (in %) of the void portion at the start of the simulation.")(

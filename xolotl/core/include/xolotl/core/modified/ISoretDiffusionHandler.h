@@ -41,7 +41,7 @@ public:
 	 * @param xs The start index of the local grid
 	 */
 	virtual void
-	initialize(const network::IReactionNetwork& network,
+	initialize(network::IReactionNetwork& network,
 		network::IReactionNetwork::SparseFillMap& ofill,
 		network::IReactionNetwork::SparseFillMap& dfill,
 		std::vector<double> grid, int xs) = 0;

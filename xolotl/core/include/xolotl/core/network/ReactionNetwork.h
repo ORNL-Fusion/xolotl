@@ -2,6 +2,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <type_traits>
 
 #include <Kokkos_Atomic.hpp>
@@ -70,6 +71,7 @@ public:
 	using AmountType = typename IReactionNetwork::AmountType;
 	using IndexType = typename IReactionNetwork::IndexType;
 	using Subpaving = typename Types::Subpaving;
+	using SubpavingMirror = typename Subpaving::HostMirror;
 	using SubdivisionRatio = plsm::SubdivisionRatio<numSpecies>;
 	using Composition = typename Types::Composition;
 	using Region = typename Types::Region;
@@ -225,6 +227,31 @@ public:
 	void
 	syncClusterDataOnHost() override;
 
+	void
+	invalidateDataMirror()
+	{
+		_subpavingMirror.reset();
+		_clusterDataMirror.reset();
+	}
+
+	const SubpavingMirror&
+	getSubpavingMirror()
+	{
+		if (!_subpavingMirror.has_value()) {
+			syncClusterDataOnHost();
+		}
+		return *_subpavingMirror;
+	}
+
+	const ClusterDataMirror&
+	getClusterDataMirror()
+	{
+		if (!_clusterDataMirror.has_value()) {
+			syncClusterDataOnHost();
+		}
+		return *_clusterDataMirror;
+	}
+
 	template <typename MemSpace>
 	KOKKOS_INLINE_FUNCTION
 	Cluster<MemSpace>
@@ -233,8 +260,8 @@ public:
 		if constexpr (!std::is_same_v<plsm::HostMemSpace,
 						  plsm::DeviceMemSpace> &&
 			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
-			auto id = _subpavingMirror.findTileId(comp);
-			return _clusterDataMirror.getCluster(
+			auto id = getSubpavingMirror().findTileId(comp);
+			return getClusterDataMirror().getCluster(
 				id == _subpaving.invalidIndex() ? this->invalidIndex() :
 												  IndexType(id));
 		}
@@ -265,9 +292,9 @@ public:
 	}
 
 	ClusterCommon<plsm::HostMemSpace>
-	getClusterCommon(IndexType clusterId) const override
+	getClusterCommon(IndexType clusterId) override
 	{
-		return _clusterDataMirror.getClusterCommon(clusterId);
+		return getClusterDataMirror().getClusterCommon(clusterId);
 	}
 
 	ClusterCommon<plsm::HostMemSpace>
@@ -293,7 +320,7 @@ public:
 		if constexpr (!std::is_same_v<plsm::HostMemSpace,
 						  plsm::DeviceMemSpace> &&
 			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
-			return _clusterDataMirror.getCluster(clusterId);
+			return getClusterDataMirror().getCluster(clusterId);
 		}
 		else {
 			return _clusterData.d_view().getCluster(clusterId);
@@ -534,9 +561,8 @@ private:
 	generateDiagonalFill(const Connectivity& connectivity);
 
 private:
-	Subpaving _subpaving;
-	typename Subpaving::HostMirror _subpavingMirror;
-	ClusterDataMirror _clusterDataMirror;
+	std::optional<SubpavingMirror> _subpavingMirror;
+	std::optional<ClusterDataMirror> _clusterDataMirror;
 
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
@@ -544,6 +570,8 @@ private:
 
 protected:
 	Kokkos::DualView<ClusterData> _clusterData;
+
+	Subpaving _subpaving;
 
 	ReactionCollection _reactions;
 

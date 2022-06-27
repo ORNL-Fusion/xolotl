@@ -60,17 +60,20 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 			ss << "free surface";
 		else
 			ss << bcString;
+		for (auto pair : initialConc) {
+			ss << ", initial concentration for Id: " << pair.first
+			   << " of: " << pair.second << " nm-3";
+		}
 		ss << ", grid (nm): ";
 		for (auto i = 0; i < grid.size(); i++) {
 			ss << grid[i] - grid[surfacePosition + 1] << " ";
 		}
 		ss << std::endl;
-
-		ss << grid.size() << " " << temperatureGrid.size() << std::endl;
-
-		ss << "Temperature grid (nm): ";
-		for (auto i = 0; i < temperatureGrid.size(); i++) {
-			ss << temperatureGrid[i] << " ";
+		if (not sameTemperatureGrid) {
+			ss << "Temperature grid (nm): ";
+			for (auto i = 0; i < temperatureGrid.size(); i++) {
+				ss << temperatureGrid[i] << " ";
+			}
 		}
 		ss << std::endl;
 		XOLOTL_LOG << ss.str();
@@ -209,12 +212,6 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 	// + moments
 	const auto dof = network.getDOF();
 
-	// Get the single vacancy ID
-	auto singleVacancyCluster = network.getSingleVacancy();
-	auto vacancyIndex = NetworkType::invalidIndex();
-	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
-		vacancyIndex = singleVacancyCluster.getId();
-
 	// Loop on all the grid points
 	for (auto i = (PetscInt)localXS - 1;
 		 i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
@@ -246,11 +243,12 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 			concOffset[n] = 0.0;
 		}
 
-		// Initialize the vacancy concentration
-		if (i >= surfacePosition + leftOffset and
-			vacancyIndex != NetworkType::invalidIndex() and
-			not hasConcentrations and i < nX - rightOffset) {
-			concOffset[vacancyIndex] = initialVConc;
+		// Initialize the option specified concentration
+		if (i >= surfacePosition + leftOffset and not hasConcentrations and
+			i < nX - rightOffset) {
+			for (auto pair : initialConc) {
+				concOffset[pair.first] = pair.second;
+			}
 		}
 	}
 
@@ -287,7 +285,6 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 				grid[surfacePosition + 1]);
 	}
 	network.setTemperatures(networkTemp, depths);
-	network.syncClusterDataOnHost();
 
 	/*
 	 Restore vectors
@@ -490,7 +487,6 @@ PetscSolver1DHandler::setConcVector(DM& da, Vec& C,
 				grid[surfacePosition + 1]);
 	}
 	network.setTemperatures(networkTemp, depths);
-	network.syncClusterDataOnHost();
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations);
@@ -709,7 +705,6 @@ PetscSolver1DHandler::updateConcentration(
 					grid[surfacePosition + 1]);
 		}
 		network.setTemperatures(networkTemp, depths);
-		network.syncClusterDataOnHost();
 	}
 
 	// Loop over grid points computing ODE terms for each grid point
@@ -1007,7 +1002,6 @@ PetscSolver1DHandler::computeJacobian(
 					grid[surfacePosition + 1]);
 		}
 		network.setTemperatures(networkTemp, depths);
-		network.syncClusterDataOnHost();
 	}
 
 	// Computing the trapped atom concentration is only needed for the

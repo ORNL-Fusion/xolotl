@@ -90,7 +90,7 @@ protected:
 		backOffset;
 
 	//! The initial vacancy concentration.
-	double initialVConc;
+	std::vector<std::pair<IdType, double>> initialConc;
 
 	//! The vector of quantities to pass to MOOSE.
 	// 0: Xe rate, 1: previous flux, 2: monomer concentration, 3: volume
@@ -213,6 +213,7 @@ public:
 			temperatureGrid = grid;
 			return;
 		}
+
 		// If the temperature grid already existed we need to save its values
 		std::vector<double> oldGrid;
 		if (temperatureGrid.size() > 0)
@@ -251,6 +252,8 @@ public:
 		int toSend = localXM;
 		// Ghost cells
 		if (localXS == 0 || localXS + localXM == nX)
+			toSend++;
+		if (localXS == 0 && localXS + localXM == nX)
 			toSend++;
 
 		// Receiving array for number of elements
@@ -363,10 +366,10 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	double
-	getInitialVConc() const override
+	std::vector<std::pair<IdType, double>>
+	getInitialConc() const override
 	{
-		return initialVConc;
+		return initialConc;
 	}
 
 	/**

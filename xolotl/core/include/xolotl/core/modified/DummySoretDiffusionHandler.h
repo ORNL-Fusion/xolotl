@@ -32,7 +32,7 @@ public:
 	 * \see ISoretDiffusionHandler.h
 	 */
 	virtual void
-	initialize(const network::IReactionNetwork& network,
+	initialize(network::IReactionNetwork& network,
 		network::IReactionNetwork::SparseFillMap& ofill,
 		network::IReactionNetwork::SparseFillMap& dfill,
 		std::vector<double> grid, int xs) override

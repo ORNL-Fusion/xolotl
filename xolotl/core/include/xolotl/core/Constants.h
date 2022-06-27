@@ -79,5 +79,8 @@ constexpr double frankBurgers = 0.333;
 // Sink strength for Alloy case in nm^-2
 constexpr double alloysinkStrength = 1.0e-5;
 
+// Tungsten density in nm^-3
+constexpr double tungstenDensity = 62.8;
+
 } /* end namespace core */
 } /* end namespace xolotl */

@@ -161,8 +161,8 @@ public:
 	 *
 	 * @return The concentration value
 	 */
-	virtual double
-	getInitialVConcentration() const = 0;
+	virtual std::string
+	getInitialConcentration() const = 0;
 
 	/**
 	 * Obtain the value of the electronic stopping power.
