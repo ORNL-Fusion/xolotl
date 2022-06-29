@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(PSI_3)
 	}
 	// 1D + HeVI + pulsed flux + sink + I grouping + surface + reflective
 	// bulk
-	SystemTestCase{"system_PSI_3"}.run();
+	SystemTestCase{"system_PSI_3"}.tolerance(1.0e-7).run();
 }
 
 BOOST_AUTO_TEST_CASE(PSI_4)
