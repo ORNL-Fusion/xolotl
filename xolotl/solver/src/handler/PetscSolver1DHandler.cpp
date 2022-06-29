@@ -72,10 +72,11 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		if (not sameTemperatureGrid) {
 			ss << "Temperature grid (nm): ";
 			for (auto i = 0; i < temperatureGrid.size(); i++) {
-				ss << temperatureGrid[i] << " ";
+				ss << temperatureGrid[i] - temperatureGrid[surfacePosition + 1]
+				   << " ";
 			}
+			ss << std::endl;
 		}
-		ss << std::endl;
 		XOLOTL_LOG << ss.str();
 	}
 
@@ -115,7 +116,8 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(dof, ofill, dfill, grid);
+	temperatureHandler->initializeTemperature(
+		dof, ofill, dfill, temperatureGrid);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents
 	// diffusion

@@ -973,9 +973,17 @@ PetscMonitor1D::computeHeliumRetention(
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	const auto dof = network.getDOF();
 
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	ierr = DMGetLocalVector(da, &localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
 	// Get the array of concentration
 	PetscReal** solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Store the concentration over the grid
@@ -1200,6 +1208,31 @@ PetscMonitor1D::computeHeliumRetention(
 		}
 	}
 
+	// Create the local vector of temperature wrt temperatureGrid
+	std::vector<double> localTemperature;
+	// Loop on the local grid including ghosts
+	for (auto i = xs; i < xs + xm + 2; i++) {
+		// Get the pointer to the beginning of the solution data for this
+		// grid point
+		gridPointSolution = solutionArray[(PetscInt)i - 1];
+
+		// Get the local temperature
+		localTemperature.push_back(gridPointSolution[dof]);
+	}
+
+	// Interpolate
+	auto updatedTemperature =
+		_solverHandler->interpolateTemperature(surfacePos, localTemperature);
+
+	// Get the surface temperature
+	double temp = 0.0;
+	auto xi = surfacePos + _solverHandler->getLeftOffset();
+	if (xi >= xs && xi < xs + xm) {
+		temp = updatedTemperature[xi - xs + 1];
+	}
+	double surfTemp = 0.0;
+	MPI_Reduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+
 	// Master process
 	if (procId == 0) {
 		// Get the fluence
@@ -1234,8 +1267,7 @@ PetscMonitor1D::computeHeliumRetention(
 		}
 		auto tempHandler = _solverHandler->getTemperatureHandler();
 		outputFile << _nHeliumBurst << " " << _nDeuteriumBurst << " "
-				   << _nTritiumBurst << " "
-				   << solutionArray[surfacePos + 1][dof] << " "
+				   << _nTritiumBurst << " " << surfTemp << " "
 				   << tempHandler->getHeatFlux(time) << std::endl;
 		outputFile.close();
 
@@ -1256,7 +1288,9 @@ PetscMonitor1D::computeHeliumRetention(
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray);
+	CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(da, &localSolution);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);

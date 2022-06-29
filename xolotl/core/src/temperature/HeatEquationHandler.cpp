@@ -22,7 +22,7 @@ HeatEquationHandler::HeatEquationHandler(
 	double heatFlux, double bulkTemp, int dim, std::string filename) :
 	bulkTemperature(bulkTemp),
 	localTemperature(0.0),
-	surfacePosition(0.0),
+	surfacePosition(0),
 	heatCoef(0.0),
 	heatConductivity(0.0),
 	zeroFlux(util::equal(heatFlux, 0.0)),

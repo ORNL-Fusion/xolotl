@@ -226,9 +226,10 @@ public:
 			return;
 
 		// Compute the total width
-		auto n = grid.size() - 2;
-		auto h =
-			((grid[n - 1] + grid[n]) / 2.0 - grid[surfacePos + 1]) / (n - 0.5);
+		auto n = grid.size() - 2 - surfacePos;
+		auto h = ((grid[grid.size() - 3] + grid[grid.size() - 2]) / 2.0 -
+					 grid[surfacePos + 1]) /
+			(n - 1.5);
 		for (auto i = 0; i < grid.size(); i++) {
 			temperatureGrid.push_back(i * h);
 		}
@@ -289,6 +290,11 @@ public:
 		std::vector<double> toReturn;
 		// Loop on the local grid including ghosts
 		for (auto i = localXS; i < localXS + localXM + 2; i++) {
+			// Left of surface
+			if (i <= surfacePos + 1) {
+				toReturn.push_back(broadcastedTemp[nX]);
+				continue;
+			}
 			// Get the grid location
 			double loc = 0.0;
 			if (i == 0)
@@ -321,7 +327,7 @@ public:
 			}
 
 			if (not matched)
-				toReturn.push_back(broadcastedTemp[nX + 1]);
+				toReturn.push_back(broadcastedTemp[nX]);
 		}
 
 		temperature = toReturn;
