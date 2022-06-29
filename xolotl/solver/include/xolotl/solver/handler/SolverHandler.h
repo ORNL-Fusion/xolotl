@@ -222,16 +222,13 @@ public:
 		if (grid.size() == 0)
 			return;
 
-		for (auto i = 0; i <= surfacePos + 1; i++) {
-			temperatureGrid.push_back(grid[i] - grid[surfacePos + 1]);
-		}
-		auto n = grid.size() - 3 - surfacePos;
-		auto h = ((grid[grid.size() - 2] + grid[grid.size() - 3]) / 2.0 -
-					 grid[surfacePos + 2]) /
+		// Compute the total width
+		auto n = grid.size() - 2 - surfacePos;
+		auto h = ((grid[grid.size() - 3] + grid[grid.size() - 2]) / 2.0 -
+					 grid[surfacePos + 1]) /
 			(n - 1.5);
-		for (auto i = 0; i <= n; i++) {
-			temperatureGrid.push_back(
-				grid[surfacePos + 2] - grid[surfacePos + 1] + i * h);
+		for (auto i = 0; i < grid.size(); i++) {
+			temperatureGrid.push_back(i * h);
 		}
 
 		// The temperature values need to be updated to match the new grid
