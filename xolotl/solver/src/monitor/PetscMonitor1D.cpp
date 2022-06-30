@@ -2296,7 +2296,8 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 
 	// Set the new surface in the temperature handler
 	auto tempHandler = _solverHandler->getTemperatureHandler();
-	tempHandler->updateSurfacePosition(surfacePos);
+	tempHandler->updateSurfacePosition(
+		surfacePos, _solverHandler->getTemperatureGrid());
 
 	// Set the new surface in the Soret diffusion handler
 	auto soretDiffHandler = _solverHandler->getSoretDiffusionHandler();

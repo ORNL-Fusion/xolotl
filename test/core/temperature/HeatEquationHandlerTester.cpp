@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 	double time = 0.5;
 
 	// Initialize it
-	heatHandler.initializeTemperature(dof, ofill, dfill, grid);
+	heatHandler.initializeTemperature(dof, ofill, dfill);
 
 	// Check that the temperature "diffusion" is well set
 	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 	network::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize it
-	heatHandler.initializeTemperature(dof, ofill, dfill, grid);
+	heatHandler.initializeTemperature(dof, ofill, dfill);
 
 	// Check that the temperature "diffusion" is well set
 	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
@@ -264,7 +264,7 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	network::IReactionNetwork::SparseFillMap dfill;
 
 	// Initialize it
-	heatHandler.initializeTemperature(dof, ofill, dfill, grid);
+	heatHandler.initializeTemperature(dof, ofill, dfill);
 
 	// Check that the temperature "diffusion" is well set
 	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);

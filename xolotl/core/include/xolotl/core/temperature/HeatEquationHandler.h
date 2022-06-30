@@ -78,9 +78,11 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	updateSurfacePosition(int surfacePos) override
+	updateSurfacePosition(int surfacePos, std::vector<double> grid) override
 	{
 		surfacePosition = surfacePos;
+		// keep the grid
+		xGrid = grid;
 	}
 
 	/**

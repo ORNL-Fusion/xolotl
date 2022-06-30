@@ -55,7 +55,7 @@ BOOST_AUTO_TEST_CASE(check_getTemperature)
 
 	// Create and initialize the temperature profile handler
 	auto testTemp = make_shared<temperature::ProfileHandler>("tempFile.dat");
-	testTemp->initializeTemperature(dof, ofill, dfill, grid);
+	testTemp->initializeTemperature(dof, ofill, dfill);
 	plsm::SpaceVector<double, 3> pos{1.142857142857143, 0.0, 0.0};
 
 	// Vector to hold the user defined time values

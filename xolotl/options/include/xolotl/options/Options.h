@@ -34,6 +34,11 @@ protected:
 	std::array<double, 2> tempParam;
 
 	/**
+	 * Value for the temperature grid power.
+	 */
+	double tempGridPower;
+
+	/**
 	 * Name of the input temperature profile file.
 	 */
 	std::string tempProfileFilename;
@@ -337,6 +342,15 @@ public:
 	getTempParam(std::size_t i = 0) const override
 	{
 		return tempParam[i];
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	double
+	getTempGridPower() const override
+	{
+		return tempGridPower;
 	}
 
 	/**

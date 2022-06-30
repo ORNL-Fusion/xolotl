@@ -21,8 +21,7 @@ public:
 	void
 	initializeTemperature(int dof,
 		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap,
-		std::vector<double> grid) override;
+		network::IReactionNetwork::SparseFillMap& dfillMap) override;
 
 	/**
 	 * This operation sets the temperature given by the solver.
@@ -67,7 +66,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	updateSurfacePosition(int surfacePos) override
+	updateSurfacePosition(int surfacePos, std::vector<double> grid) override
 	{
 		return;
 	}

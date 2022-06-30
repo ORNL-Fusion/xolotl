@@ -84,6 +84,12 @@ public:
 	getTempProfileFilename() const = 0;
 
 	/**
+	 * Obtain the temperature grid power.
+	 */
+	virtual double
+	getTempGridPower() const = 0;
+
+	/**
 	 * Should we use the flux amplitude option?
 	 * If false, it will not be used.
 	 *

@@ -22,6 +22,7 @@ Options::Options() :
 	tempHandlerName(""),
 	tempParam{},
 	tempProfileFilename(""),
+	tempGridPower(2.5),
 	fluxFlag(false),
 	fluxAmplitude(0.0),
 	fluxTimeProfileFlag(false),
@@ -125,8 +126,11 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(&tempProfileFilename),
 		"A temperature profile is given by the specified file, "
 		"then linear interpolation is used to fit the data."
-		" NOTE: no need for tempParam here.")("flux",
-		bpo::value<double>(&fluxAmplitude),
+		" NOTE: no need for tempParam here.")("tempGridPower",
+		bpo::value<double>(&tempGridPower),
+		"The value of the power to use to create the temperature grid spacing, "
+		"only used if heat temperature handler is used. (default = 2.5).")(
+		"flux", bpo::value<double>(&fluxAmplitude),
 		"The value of the incoming flux in #/nm2/s. If the Fuel case is used "
 		"it actually corresponds to the fission rate in #/nm3/s.")("fluxFile",
 		bpo::value<std::string>(&fluxTimeProfileFilePath),
@@ -172,7 +176,8 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"List of all the processes to use in the simulation (reaction, diff, "
 		"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, "
-		"heterogeneous, sink).")("grain", bpo::value<std::string>(&gbList),
+		"heterogeneous, sink, soret).")("grain",
+		bpo::value<std::string>(&gbList),
 		"This option allows the user to add GB in the X, Y, or Z directions. "
 		"To do so, simply write the direction followed "
 		"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")("grouping",
@@ -371,6 +376,7 @@ Options::readParams(int argc, const char* argv[])
 		processMap["resolution"] = false;
 		processMap["heterogeneous"] = false;
 		processMap["sink"] = false;
+		processMap["soret"] = false;
 
 		// Loop on the tokens
 		for (int i = 0; i < tokens.size(); ++i) {

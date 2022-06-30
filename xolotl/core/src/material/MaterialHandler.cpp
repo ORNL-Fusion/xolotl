@@ -85,6 +85,10 @@ void
 MaterialHandler::initializeSoretDiffusionHandler(
 	const options::IOptions& options)
 {
+	if (!options.getProcesses().at("soret")) {
+		_soretDiffusionHandler =
+			std::make_shared<core::modified::DummySoretDiffusionHandler>();
+	}
 }
 
 void

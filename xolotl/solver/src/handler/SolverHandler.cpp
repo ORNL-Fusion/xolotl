@@ -19,6 +19,7 @@ SolverHandler::SolverHandler(
 	nZ(0),
 	hY(0.0),
 	hZ(0.0),
+	tempGridPower(2.5),
 	localXS(0),
 	localXM(0),
 	localYS(0),
@@ -451,8 +452,11 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	heVRatio = opts.getHeVRatio();
 
 	// Which type of temperature grid to use
-	if (opts.getTempHandlerName() == "heat")
+	if (opts.getTempHandlerName() == "heat") {
 		sameTemperatureGrid = false;
+		// The temperature grid power only makes sense in this case
+		tempGridPower = opts.getTempGridPower();
+	}
 
 	// Do we want a flux temporal profile?
 	fluxTempProfile = opts.useFluxTimeProfile();

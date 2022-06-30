@@ -116,8 +116,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(
-		dof, ofill, dfill, temperatureGrid);
+	temperatureHandler->initializeTemperature(dof, ofill, dfill);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents
 	// diffusion
@@ -196,7 +195,7 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Give the surface position to the temperature handler
-	temperatureHandler->updateSurfacePosition(surfacePosition);
+	temperatureHandler->updateSurfacePosition(surfacePosition, temperatureGrid);
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(

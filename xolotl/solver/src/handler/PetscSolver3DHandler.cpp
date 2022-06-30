@@ -150,7 +150,7 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(dof, ofill, dfill, grid);
+	temperatureHandler->initializeTemperature(dof, ofill, dfill);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents
 	// diffusion
@@ -225,7 +225,7 @@ PetscSolver3DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Give the surface position to the temperature handler
-	temperatureHandler->updateSurfacePosition(surfacePosition[0][0]);
+	temperatureHandler->updateSurfacePosition(surfacePosition[0][0], grid);
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(advectionHandlers, grid, localXM,
@@ -613,7 +613,8 @@ PetscSolver3DHandler::updateConcentration(
 	// points in X
 	for (auto zk = localZS; zk < localZS + localZM; zk++)
 		for (auto yj = localYS; yj < localYS + localYM; yj++) {
-			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
+			temperatureHandler->updateSurfacePosition(
+				surfacePosition[yj][zk], grid);
 			bool tempHasChanged = false;
 			for (auto xi = (PetscInt)localXS - 1;
 				 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
@@ -987,7 +988,8 @@ PetscSolver3DHandler::computeJacobian(
 	 */
 	for (auto zk = localZS; zk < localZS + localZM; zk++)
 		for (auto yj = localYS; yj < localYS + localYM; yj++) {
-			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
+			temperatureHandler->updateSurfacePosition(
+				surfacePosition[yj][zk], grid);
 			bool tempHasChanged = false;
 			for (auto xi = (PetscInt)localXS - 1;
 				 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {

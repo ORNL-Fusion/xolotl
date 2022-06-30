@@ -176,6 +176,14 @@ public:
 	getXGrid() const = 0;
 
 	/**
+	 * Get the grid in the x direction for the temperature.
+	 *
+	 * @return The grid in the x direction
+	 */
+	virtual std::vector<double>
+	getTemperatureGrid() const = 0;
+
+	/**
 	 * Get the step size in the y direction.
 	 *
 	 * @return The step size in the y direction

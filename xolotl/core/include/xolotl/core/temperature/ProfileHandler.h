@@ -61,8 +61,7 @@ public:
 	void
 	initializeTemperature(const int dof,
 		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap,
-		std::vector<double> grid) override;
+		network::IReactionNetwork::SparseFillMap& dfillMap) override;
 
 	/**
 	 * This operation returns the temperature at the given position

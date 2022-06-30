@@ -50,7 +50,7 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(dof, ofill, dfill, grid);
+	temperatureHandler->initializeTemperature(dof, ofill, dfill);
 
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);

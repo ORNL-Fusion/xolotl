@@ -66,6 +66,9 @@ protected:
 	//! The grid step size in the z direction.
 	double hZ;
 
+	//! The power used for the temperature grid step size.
+	double tempGridPower;
+
 	//! The local start of grid points in the X direction.
 	IdType localXS;
 
@@ -227,11 +230,18 @@ public:
 
 		// Compute the total width
 		auto n = grid.size() - 2 - surfacePos;
-		auto h = ((grid[grid.size() - 3] + grid[grid.size() - 2]) / 2.0 -
-					 grid[surfacePos + 1]) /
-			(n - 1.5);
-		for (auto i = 0; i < grid.size(); i++) {
-			temperatureGrid.push_back(i * h);
+		auto width = ((grid[grid.size() - 3] + grid[grid.size() - 2]) / 2.0 -
+			grid[surfacePos + 1]);
+		auto newH = pow(width, 1 / tempGridPower) / (n - 1.5);
+		for (auto i = 0; i < surfacePos + 1; i++) {
+			temperatureGrid.push_back(i * pow(newH, tempGridPower));
+		}
+		temperatureGrid.push_back(
+			temperatureGrid[surfacePos] + (pow(newH, tempGridPower)));
+		for (auto i = surfacePos + 2; i < grid.size(); i++) {
+			auto j = i - surfacePos - 1;
+			temperatureGrid.push_back(temperatureGrid[surfacePos + 1] +
+				(pow(j * newH, tempGridPower)));
 		}
 
 		// The temperature values need to be updated to match the new grid
@@ -340,6 +350,15 @@ public:
 	getXGrid() const override
 	{
 		return grid;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	std::vector<double>
+	getTemperatureGrid() const override
+	{
+		return temperatureGrid;
 	}
 
 	/**
