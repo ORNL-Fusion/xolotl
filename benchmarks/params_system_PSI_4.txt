@@ -12,3 +12,4 @@ tempParam=1.0e-11 400
 voidPortion=0
 boundary=1 1
 perfHandler=dummy
+tempGridPower=1.0

@@ -329,7 +329,7 @@ HeatEquationHandler::getLocalHeatConductivity(int xi, double temp) const
 	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
 	double lnT = log(temp);
 	double heatCond = (A * lnT * lnT + B * lnT + C) * 1.0e-9 *
-		(0.2 + 0.8 / (1.0 + exp(interfaceLoc - x)));
+		(0.2 + 0.8 / (1.0 + exp((interfaceLoc - x) * 0.1)));
 	return heatCond;
 }
 
@@ -337,7 +337,7 @@ double
 HeatEquationHandler::getLocalHeatAlpha(int xi) const
 {
 	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
-	double heatCond = (0.2 + 0.8 / (1.0 + exp(interfaceLoc - x)));
+	double heatCond = (0.2 + 0.8 / (1.0 + exp((interfaceLoc - x) * 0.1)));
 	return heatCond;
 }
 
@@ -369,9 +369,10 @@ double
 HeatEquationHandler::getLocalHeatCondSpatialDerivative(int xi) const
 {
 	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
-	double heatCond = 0.8 * exp(interfaceLoc - x) /
-		((1.0 + exp(interfaceLoc - x)) * (1.0 + exp(interfaceLoc - x)));
-	if (interfaceLoc - x > 500.0)
+	double heatCond = 0.1 * 0.8 * exp((interfaceLoc - x) * 0.1) /
+		((1.0 + exp((interfaceLoc - x) * 0.1)) *
+			(1.0 + exp((interfaceLoc - x) * 0.1)));
+	if (interfaceLoc - x > 1000.0)
 		return 0.0;
 	return heatCond;
 }
