@@ -3,6 +3,7 @@
 
 // Includes
 #include <xolotl/core/modified/ISoretDiffusionHandler.h>
+#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -45,15 +46,11 @@ protected:
 	/**
 	 * The beta factor
 	 */
-	double beta;
+	std::vector<double> beta;
 
 public:
 	//! The Constructor
-	SoretDiffusionHandler() :
-		dof(0),
-		surfacePosition(0),
-		beta(0.0065),
-		localXs(0)
+	SoretDiffusionHandler() : dof(0), surfacePosition(0), localXs(0)
 	{
 	}
 
@@ -81,23 +78,112 @@ public:
 		xGrid = grid;
 		localXs = xs;
 
-		// Consider each cluster
-		for (std::size_t i = 0; i < network.getNumClusters(); i++) {
-			auto cluster = network.getClusterCommon(i);
+		using NetworkType = network::IPSIReactionNetwork;
+		using AmountType = NetworkType::AmountType;
+
+		auto psiNetwork = dynamic_cast<NetworkType*>(&network);
+		auto numSpecies = psiNetwork->getSpeciesListSize();
+		auto specIdHe = psiNetwork->getHeliumSpeciesId();
+
+		// Initialize the composition
+		auto comp = std::vector<AmountType>(numSpecies, 0);
+
+		// Helium
+		comp[specIdHe()] = 1;
+		auto clusterId = psiNetwork->findClusterId(comp);
+		// Check that the helium cluster is present in the network
+		if (clusterId != NetworkType::invalidIndex()) {
+			auto cluster = network.getClusterCommon(clusterId);
 
 			// Get its diffusion factor and migration energy
 			double diffFactor = cluster.getDiffusionFactor();
 
 			// Don't do anything if the diffusion factor is 0.0
-			if (util::equal(diffFactor, 0.0))
-				continue;
+			if (not util::equal(diffFactor, 0.0)) {
+				// Note that cluster is diffusing.
+				diffusingClusters.emplace_back(clusterId);
+				beta.emplace_back(0.0065);
 
-			// Note that cluster is diffusing.
-			diffusingClusters.emplace_back(i);
+				// This cluster interacts with temperature now
+				dfill[clusterId].emplace_back(dof);
+				ofill[clusterId].emplace_back(dof);
+			}
+		}
 
-			// This cluster interacts with temperature now
-			dfill[i].emplace_back(dof);
-			ofill[i].emplace_back(dof);
+		// Hydrogen
+		comp[specIdHe()] = 0;
+		if (psiNetwork->hasDeuterium()) {
+			auto clusterSpecies = network.parseSpeciesId("D");
+			// Get the cluster
+			comp[clusterSpecies()] = 1;
+			auto clusterId = psiNetwork->findClusterId(comp);
+			// Check that the deuterium cluster is present in the network
+			if (clusterId != NetworkType::invalidIndex()) {
+				auto cluster = network.getClusterCommon(clusterId);
+
+				// Get its diffusion factor and migration energy
+				double diffFactor = cluster.getDiffusionFactor();
+
+				// Don't do anything if the diffusion factor is 0.0
+				if (not util::equal(diffFactor, 0.0)) {
+					// Note that cluster is diffusing.
+					diffusingClusters.emplace_back(clusterId);
+					beta.emplace_back(0.0045);
+
+					// This cluster interacts with temperature now
+					dfill[clusterId].emplace_back(dof);
+					ofill[clusterId].emplace_back(dof);
+				}
+			}
+			comp[clusterSpecies()] = 0;
+		}
+		if (psiNetwork->hasTritium()) {
+			auto clusterSpecies = network.parseSpeciesId("T");
+			// Get the cluster
+			comp[clusterSpecies()] = 1;
+			auto clusterId = psiNetwork->findClusterId(comp);
+			// Check that the deuterium cluster is present in the network
+			if (clusterId != NetworkType::invalidIndex()) {
+				auto cluster = network.getClusterCommon(clusterId);
+
+				// Get its diffusion factor and migration energy
+				double diffFactor = cluster.getDiffusionFactor();
+
+				// Don't do anything if the diffusion factor is 0.0
+				if (not util::equal(diffFactor, 0.0)) {
+					// Note that cluster is diffusing.
+					diffusingClusters.emplace_back(clusterId);
+					beta.emplace_back(0.0045);
+
+					// This cluster interacts with temperature now
+					dfill[clusterId].emplace_back(dof);
+					ofill[clusterId].emplace_back(dof);
+				}
+			}
+			comp[clusterSpecies()] = 0;
+		}
+
+		// Self-interstitial
+		auto specIdI = psiNetwork->getInterstitialSpeciesId();
+		comp[specIdI()] = 1;
+		clusterId = psiNetwork->findClusterId(comp);
+		// Check that the interstitial cluster is present in the network
+		if (clusterId != NetworkType::invalidIndex()) {
+			auto cluster = network.getClusterCommon(clusterId);
+
+			// Get its diffusion factor and migration energy
+			double diffFactor = cluster.getDiffusionFactor();
+
+			// Don't do anything if the diffusion factor is 0.0
+			if (not util::equal(diffFactor, 0.0)) {
+				// Note that cluster is diffusing.
+				diffusingClusters.emplace_back(clusterId);
+				beta.emplace_back(0.0128);
+
+				// This cluster interacts with temperature now
+				dfill[clusterId].emplace_back(dof);
+				ofill[clusterId].emplace_back(dof);
+			}
 		}
 
 		return;
