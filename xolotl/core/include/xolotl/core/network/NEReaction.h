@@ -33,7 +33,7 @@ public:
 			cluster1, cluster2, cluster3)
 	{
 		this->_deltaG0 =
-			reactionData.reactionEnergies(_reactants[0], _reactants[1], 0);
+			reactionData.reactionEnergies(_reactants[0], _reactants[1]);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -86,7 +86,7 @@ public:
 			reactionData, clusterData, reactionId, cluster0, cluster1, cluster2)
 	{
 		this->_deltaG0 =
-			reactionData.reactionEnergies(_products[0], _products[1], 0);
+			reactionData.reactionEnergies(_products[0], _products[1]);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -157,8 +157,8 @@ public:
 		IndexType reactionId, IndexType cluster0) :
 		SinkReaction(reactionData, clusterData, reactionId, cluster0)
 	{
-		this->_deltaG0 = reactionData.reactionEnergies(_reactant,
-			this->_clusterData->numClusters, this->_clusterData->numClusters);
+		this->_deltaG0 = reactionData.reactionEnergies(
+			_reactant, this->_clusterData->numClusters);
 	}
 
 	KOKKOS_INLINE_FUNCTION

@@ -199,23 +199,7 @@ PetscMonitor0D::setup()
 		// Uncomment to clear the file where the retention will be written
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt");
-		outputFile << "#time ";
-		auto networkSize = network.getNumClusters();
-		for (auto i = 0; i < networkSize; i++) {
-			auto cluster = network.getCluster(i);
-			const Region& clReg = cluster.getRegion();
-			Composition lo(clReg.getOrigin());
-			if (lo.isOnAxis(Spec::I))
-				outputFile << "I_" << lo[Spec::I] << " ";
-			else if (lo.isOnAxis(Spec::V))
-				outputFile << "V_" << lo[Spec::V] << " ";
-			else if (lo.isOnAxis(Spec::Xe))
-				outputFile << "Xe_" << lo[Spec::Xe] << " ";
-			else
-				outputFile << "Xe_" << lo[Spec::Xe] << "V_" << lo[Spec::V]
-						   << " ";
-		}
-		outputFile << std::endl;
+		outputFile << "#time content" << std::endl;
 		outputFile.close();
 	}
 
@@ -477,15 +461,11 @@ PetscMonitor0D::computeXenonRetention(
 
 	// Uncomment to write the content in a file
 	constexpr double k_B = ::xolotl::core::kBoltzmann;
-	double temperature = gridPointSolution[dof];
 	std::ofstream outputFile;
 	outputFile.open("retentionOut.txt", std::ios::app);
-	outputFile << time << " ";
-	auto networkSize = network.getNumClusters();
-	for (auto i = 0; i < networkSize; i++) {
-		outputFile << gridPointSolution[i] << " ";
-	}
-	outputFile << std::endl;
+	outputFile << time << " " << xeConcentration << " " << gridPointSolution[0]
+			   << " " << gridPointSolution[1] << " " << gridPointSolution[2]
+			   << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray

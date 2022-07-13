@@ -163,7 +163,7 @@ protected:
 	ClusterConnectivity<> _connectivity;
 
 	// Reaction energies
-	Kokkos::View<double***> _reactionEnergies;
+	Kokkos::View<double**> _reactionEnergies;
 };
 
 template <typename TNetwork, typename TReaction,

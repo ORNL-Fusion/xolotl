@@ -107,6 +107,17 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 
+		comp[NetworkType::Species::I] = 0;
+		comp[NetworkType::Species::Xe] = 1;
+		cluster = neNetwork.findCluster(comp, plsm::HostMemSpace{});
+		// Check that the helium cluster is present in the network
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::string("\nThe single xenon cluster is not "
+							  "present in the network, "
+							  "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
 		return;
 	}
 
@@ -124,8 +135,9 @@ public:
 		// Update the concentration array
 		//		updatedConcOffset[fluxIndices[0]] += fluxAmplitude * xeYield; //
 		// Xe
-		updatedConcOffset[fluxIndices[0]] += fluxAmplitude; // V
-		updatedConcOffset[fluxIndices[1]] += fluxAmplitude; // I
+		updatedConcOffset[fluxIndices[0]] += 1636.67 * fluxAmplitude; // V
+		updatedConcOffset[fluxIndices[1]] += 1636.67 * fluxAmplitude; // I
+		updatedConcOffset[fluxIndices[2]] += 0.25 * fluxAmplitude; // Xe
 
 		return;
 	}

@@ -585,7 +585,7 @@ protected:
 	std::map<std::string, SpeciesId> _speciesLabelMap;
 
 	// Reaction energies
-	Kokkos::View<double***> _reactionEnergies;
+	Kokkos::View<double**> _reactionEnergies;
 };
 
 namespace detail

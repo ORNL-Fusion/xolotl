@@ -15,18 +15,20 @@ KOKKOS_INLINE_FUNCTION
 double
 NEProductionReaction::computeRate(IndexType gridIndex)
 {
-	// Read the rates if available
-	auto rate = this->_clusterData->extraData.constantRates(
-		_reactants[0], _reactants[1]);
-	if (rate > 0) {
-		return rate;
-	}
+	double omega = this->_clusterData->atomicVolume();
 
 	auto cl0 = this->_clusterData->getCluster(_reactants[0]);
 	auto cl1 = this->_clusterData->getCluster(_reactants[1]);
 
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
+
+	// Read the rates if available
+	auto rate = this->_clusterData->extraData.constantRates(
+		_reactants[0], _reactants[1]);
+	if (rate > 0) {
+		return (1.0 / omega) * 4.0 * ::xolotl::core::pi * (r0 + r1) * rate;
+	}
 
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
@@ -51,10 +53,19 @@ NEProductionReaction::computeFlux(
 
 	if (nProd == 0) {
 		double omega = this->_clusterData->atomicVolume();
+
+		auto cl0 = this->_clusterData->getCluster(_reactants[0]);
+		auto cl1 = this->_clusterData->getCluster(_reactants[1]);
+
+		double r0 = cl0.getReactionRadius();
+		double r1 = cl1.getReactionRadius();
+
 		// Compute the flux for the 0th order moments
 		double f = ::xolotl::core::uConcentration;
-		f *= this->_clusterData->extraData.constantRates(
-				 _reactants[0], _reactants[1]) *
+		f *= (1.0 / omega) *
+			this->_clusterData->extraData.constantRates(
+				_reactants[0], _reactants[1]) *
+			4.0 * ::xolotl::core::pi * (r0 + r1) *
 			std::exp(this->_deltaG0 / ::xolotl::core::kBoltzmann *
 				this->_clusterData->temperature(gridIndex));
 
@@ -724,43 +735,15 @@ NEDissociationReaction::computeRate(IndexType gridIndex)
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
 
-	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
-	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
-
 	// Read the rates if available// Read the rates if available
 	auto rate =
 		this->_clusterData->extraData.constantRates(_products[0], _products[1]);
 	if (rate > 0) {
-		return rate * std::exp(this->_deltaG0 / (k_B * T));
+		return (1.0 / omega) * 4.0 * ::xolotl::core::pi * (r0 + r1) * rate *
+			std::exp(this->_deltaG0 / (k_B * T));
 	}
 
-	double kPlus = getRateForProduction(
-		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
-	double E_b = this->asDerived()->computeBindingEnergy();
-
-	//	if (E_b < 1.0) {
-	//	auto cl0Reg = cl0.getRegion().getOrigin(), cl1Reg =
-	// cl1.getRegion().getOrigin(), prod0Reg =
-	// this->_clusterData.getCluster(_reactant).getRegion().getOrigin();
-	//
-	//	constexpr auto speciesRange = NetworkType::getSpeciesRange();
-	//	for (auto j : speciesRange) {
-	//				std::cout << cl0Reg[j()] << " ";
-	//			}
-	//	std::cout << r0 << std::endl << " + " << std::endl;
-	//	for (auto j : speciesRange) {
-	//				std::cout << cl1Reg[j()] << " ";
-	//			}
-	//	std::cout << r1 << std::endl << " -> " << std::endl;
-	//	for (auto j : speciesRange) {
-	//				std::cout << prod0Reg[j()] << " ";
-	//			}
-	//	std::cout << E_b << std::endl << "." << std::endl;
-	//	}
-
-	double kMinus = (1.0 / omega) * kPlus * std::exp(-E_b / (k_B * T));
-
-	return kMinus;
+	return 0.0;
 }
 
 KOKKOS_INLINE_FUNCTION

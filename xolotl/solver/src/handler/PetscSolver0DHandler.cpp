@@ -127,8 +127,6 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 		concOffset[vacancyIndex] = initialVConc;
 	}
 
-	concOffset[3] = initialVConc;
-
 	// If the concentration must be set from the HDF5 file
 	if (hasConcentrations) {
 		// Read the concentrations from the HDF5 file for

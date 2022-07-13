@@ -23,14 +23,14 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 	reactionFile.open(filename);
 	if (!reactionFile.good()) {
 		this->_reactionEnergies =
-			Kokkos::View<double***>("reactionEnergies", 0, 0, 0);
+			Kokkos::View<double**>("reactionEnergies", 0, 0);
 		return;
 	}
 	auto clData = _clusterData.h_view;
 
 	auto nClusters = this->_numClusters;
 	this->_reactionEnergies =
-		Kokkos::View<double***>("reactionEnergies", nClusters, nClusters + 1,
+		Kokkos::View<double**>("reactionEnergies", nClusters,
 			nClusters +
 				1); // In case the second cluster or product has invalid index
 	auto reactionEnergies = Kokkos::create_mirror_view(this->_reactionEnergies);
@@ -57,6 +57,7 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 		comp[Species::Xe] = static_cast<IndexType>(tokens[0]);
 		comp[Species::V] = static_cast<IndexType>(tokens[1]);
 		comp[Species::I] = static_cast<IndexType>(tokens[2]);
+
 		auto rId = findCluster(comp, plsm::HostMemSpace{}).getId();
 
 		// Get its properties and save it
@@ -69,6 +70,9 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			D0 * exp(-q / (k_B * temperature)) / (k_B * temperature);
 		g0Vector[rId] = g0;
 		mVector[rId] = mobility;
+		// Set values in the cluster
+		clData().diffusionFactor(rId) = D0;
+		clData().migrationEnergy(rId) = q;
 		// Compute the thermal equilibrium
 		auto theq = exp(-g0 / (k_B * temperature));
 
@@ -121,7 +125,7 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			constantRates(r1Id, nClusters) =
 				coefRate * k_B * temperature * linkageRate;
 			// Save the energy for this reaction
-			reactionEnergies(r1Id, nClusters, nClusters) = -g0Vector[r1Id];
+			reactionEnergies(r1Id, nClusters) = -g0Vector[r1Id];
 		}
 		// Production case
 		else {
@@ -135,12 +139,8 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			comp[Species::I] = static_cast<IndexType>(tokens[8]);
 			auto prodId = findCluster(comp, plsm::HostMemSpace{}).getId();
 
-			// Get the coefficient rate
-			auto coefRate = tokens[9];
 			// Compute the base rate for this reaction
 			auto linkageRate = mVector[r1Id] + mVector[r2Id];
-			// Save the value to the left
-			auto totalRate = coefRate * k_B * temperature * linkageRate;
 			// Loop on the linked clusters
 			for (auto link2 : lVector[r2Id]) {
 				linkageRate += (link2.first + mVector[r1Id]) * link2.second;
@@ -148,8 +148,8 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 					linkageRate += (link2.first) * link2.second * link1.second;
 				}
 			}
-			// Save the value to the right
-			totalRate = coefRate * k_B * temperature * linkageRate;
+			// Save the value
+			auto totalRate = k_B * temperature * linkageRate;
 			constantRates(r1Id, r2Id) = totalRate;
 			constantRates(r2Id, r1Id) = totalRate;
 
@@ -157,8 +157,8 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			double energy = -g0Vector[r1Id] - g0Vector[r2Id];
 			if (prodId != this->invalidIndex())
 				energy += g0Vector[prodId];
-			reactionEnergies(r1Id, r2Id, 0) = energy;
-			reactionEnergies(r2Id, r1Id, 0) = energy;
+			reactionEnergies(r1Id, r2Id) = energy;
+			reactionEnergies(r2Id, r1Id) = energy;
 		}
 
 		getline(reactionFile, line);
@@ -189,6 +189,12 @@ KOKKOS_INLINE_FUNCTION
 void
 NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+
 	// TODO: re-solution and nucleation need to be added
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
@@ -273,6 +279,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	}
 
 	// Look for potential product
+	IndexType nProd = 0;
 	for (IndexType k = 0; k < numClusters; ++k) {
 		// Get the composition
 		const auto& prodReg = this->getCluster(k).getRegion();
@@ -290,8 +297,66 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		}
 
 		if (isGood) {
+			nProd++;
 			this->addProductionReaction(tag, {i, j, k});
 			this->addDissociationReaction(tag, {k, i, j});
+		}
+	}
+
+	// Special case for trap-mutation
+	if (nProd == 0) {
+		// Look for larger clusters only if one of the reactant is pure Xe
+		if (!(cl1Reg.isSimplex() && lo1.isOnAxis(Species::Xe)) &&
+			!(cl2Reg.isSimplex() && lo2.isOnAxis(Species::Xe))) {
+			return;
+		}
+
+		// Check that both reactants contain Xe
+		if (cl1Reg[Species::Xe].begin() < 1 ||
+			cl2Reg[Species::Xe].begin() < 1) {
+			return;
+		}
+
+		// Find the corresponding cluster
+		Composition comp = Composition::zero();
+		comp[Species::I] = 1;
+		auto iClusterId = subpaving.findTileId(comp);
+
+		// Check the I cluster exists
+		if (iClusterId == NetworkType::invalidIndex())
+			throw std::runtime_error(
+				"\nThe single interstitial cluster is not present in the "
+				"network, cannot use the trap mutation reactions!");
+
+		bounds[Species::V].first += 1;
+		bounds[Species::V].second += 1;
+
+		// Look for potential product
+		IndexType nProd = 0;
+		for (IndexType k = 0; k < numClusters; ++k) {
+			// Get the composition
+			const auto& prodReg = this->getCluster(k).getRegion();
+			bool isGood = true;
+			// Loop on the species
+			// TODO: check l correspond to the same species in bounds
+			// and prod
+			for (auto l : speciesNoI) {
+				if (prodReg[l()].begin() > bounds[l()].second) {
+					isGood = false;
+					break;
+				}
+				if (prodReg[l()].end() - 1 < bounds[l()].first) {
+					isGood = false;
+					break;
+				}
+			}
+
+			if (isGood) {
+				// Increase nProd
+				nProd++;
+				this->addProductionReaction(tag, {i, j, k, iClusterId});
+				// No dissociation
+			}
 		}
 	}
 }
