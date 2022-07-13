@@ -60,17 +60,23 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 			ss << "free surface";
 		else
 			ss << bcString;
+		for (auto pair : initialConc) {
+			ss << ", initial concentration for Id: " << pair.first
+			   << " of: " << pair.second << " nm-3";
+		}
 		ss << ", grid (nm): ";
 		for (auto i = 1; i < grid.size() - 1; i++) {
 			ss << grid[i] - grid[surfacePosition + 1] << " ";
 		}
 		ss << std::endl;
 
-		ss << "Temperature grid (nm): ";
-		for (auto i = 0; i < temperatureGrid.size(); i++) {
-			ss << temperatureGrid[i] << " ";
+		if (not sameTemperatureGrid) {
+			ss << "Temperature grid (nm): ";
+			for (auto i = 0; i < temperatureGrid.size(); i++) {
+				ss << temperatureGrid[i] - temperatureGrid[surfacePosition + 1] << " ";
+			}
+			ss << std::endl;
 		}
-		ss << std::endl;
 		XOLOTL_LOG << ss.str();
 	}
 
@@ -202,12 +208,6 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 	// + moments
 	const auto dof = network.getDOF();
 
-	// Get the single vacancy ID
-	auto singleVacancyCluster = network.getSingleVacancy();
-	auto vacancyIndex = NetworkType::invalidIndex();
-	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
-		vacancyIndex = singleVacancyCluster.getId();
-
 	// Loop on all the grid points
 	for (auto i = (PetscInt)localXS - 1;
 		 i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
@@ -239,11 +239,12 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 			concOffset[n] = 0.0;
 		}
 
-		// Initialize the vacancy concentration
-		if (i >= surfacePosition + leftOffset and
-			vacancyIndex != NetworkType::invalidIndex() and
-			not hasConcentrations and i < nX - rightOffset) {
-			concOffset[vacancyIndex] = initialVConc;
+		// Initialize the option specified concentration
+		if (i >= surfacePosition + leftOffset and not hasConcentrations and
+			i < nX - rightOffset) {
+			for (auto pair : initialConc) {
+				concOffset[pair.first] = pair.second;
+			}
 		}
 	}
 
