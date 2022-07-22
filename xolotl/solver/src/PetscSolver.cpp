@@ -579,10 +579,10 @@ PetscSolver::rhsJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J)
 	ierr = DMRestoreLocalVector(da, &localC);
 	CHKERRQ(ierr);
 
-	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
-	CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
-	CHKERRQ(ierr);
+	// ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
+	// CHKERRQ(ierr);
+	// ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
+	// CHKERRQ(ierr);
 
 	if (A != J) {
 		ierr = MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);

@@ -79,6 +79,30 @@ PetscSolverHandler::convertToCoordinateListPair(std::size_t dof,
 
 	return ret;
 }
+
+std::vector<core::RowColPair>
+PetscSolverHandler::convertToRowColPairList(std::size_t dof,
+	const core::network::IReactionNetwork::SparseFillMap& fillMap)
+{
+	auto nNonZeros =
+		std::accumulate(fillMap.begin(), fillMap.end(), std::uint64_t{0},
+			[](std::uint64_t r, auto&& kvp) { return r + kvp.second.size(); });
+
+    std::vector<core::RowColPair> ret;
+	ret.reserve(nNonZeros);
+
+	for (auto i = 0; i < dof; ++i) {
+		auto rowIter = fillMap.find(i);
+		if (rowIter == fillMap.end()) {
+			continue;
+		}
+		for (auto j : rowIter->second) {
+			ret.push_back({i,j});
+		}
+	}
+
+	return ret;
+}
 } /* end namespace handler */
 } /* end namespace solver */
 } /* end namespace xolotl */

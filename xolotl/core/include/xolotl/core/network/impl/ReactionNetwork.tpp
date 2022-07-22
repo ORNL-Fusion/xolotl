@@ -391,12 +391,6 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 	Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
 	double spacing)
 {
-	// Reset the values
-	const auto& nValues = values.extent(0);
-	Kokkos::parallel_for(
-		"ReactionNetwork::computeAllPartials::resetValues", nValues,
-		KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
-
 	asDerived()->computePartialsPreProcess(
 		concentrations, values, gridIndex, surfaceDepth, spacing);
 

@@ -2,6 +2,7 @@
 #define PETSCSOLVERHANDLER_H
 
 // Includes
+#include <xolotl/core/Types.h>
 #include <xolotl/perf/IEventCounter.h>
 #include <xolotl/perf/ITimer.h>
 #include <xolotl/solver/handler/SolverHandler.h>
@@ -103,8 +104,12 @@ protected:
 	ConvertToPetscSparseFillMap(size_t dof,
 		const core::network::IReactionNetwork::SparseFillMap& fillMap);
 
-    static std::array<std::vector<PetscInt>, 2>
-    convertToCoordinateListPair(std::size_t dof,
+	static std::array<std::vector<PetscInt>, 2>
+	convertToCoordinateListPair(std::size_t dof,
+		const core::network::IReactionNetwork::SparseFillMap& fillMap);
+
+	static std::vector<core::RowColPair>
+	convertToRowColPairList(std::size_t dof,
 		const core::network::IReactionNetwork::SparseFillMap& fillMap);
 
 public:
