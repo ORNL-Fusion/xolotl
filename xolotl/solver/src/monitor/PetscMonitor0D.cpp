@@ -580,7 +580,8 @@ PetscMonitor0D::computeHeliumRetention(
 
 	// Print the result
 	XOLOTL_LOG << "\nTime: " << time << '\n'
-			   << "Helium concentration = " << heConcentration << "\n\n";
+			   << "Helium concentration = " << heConcentration << "\n"
+			   << avV / cb << "\n\n";
 
 	// Uncomment to write the content in a file
 	std::ofstream outputFile;

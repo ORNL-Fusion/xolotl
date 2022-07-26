@@ -122,7 +122,7 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 			double x =
 				((comp[Species::He] + avHe) / psi::getMaxHePerV(avV)) - 1.0;
 			double sigmo = 1.0 / (1.0 + std::exp(-50.0 * x));
-			AmountType nI = 1;
+			double nI = 1.0;
 
 			// The other product increases
 			if (this->_products[1] != Superclass::invalidIndex) {
@@ -310,7 +310,7 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 			double x =
 				((comp[Species::He] + avHe) / psi::getMaxHePerV(avV)) - 1.0;
 			double sigmo = 1.0 / (1.0 + std::exp(-50.0 * x));
-			AmountType nI = 1;
+			double nI = 1.0;
 
 			// The other product increases
 			f = this->_coefs(0, 0, 0, 0) * rate * nI;

@@ -384,6 +384,15 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
+	auto diff1 = diffusionFactor(i), diff2 = diffusionFactor(j);
+	if (lo1.isOnAxis(Species::He) and lo1[Species::He] > 1)
+		diff1 = 0.0;
+	if (lo2.isOnAxis(Species::He) and lo2[Species::He] > 1)
+		diff2 = 0.0;
+	if (diff1 == 0.0 && diff2 == 0.0) {
+		return;
+	}
+
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
 
@@ -672,18 +681,20 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 
 		// He case
 		if (lo.isOnAxis(Species::He)) {
-			// Only add trap mutation so that at run time it adds the I
-			// concentration if needed.
-			auto& subpaving = this->getSubpaving();
-			Composition comp = Composition::zero();
-			comp[Species::I] = 1;
-			auto iClusterId = subpaving.findTileId(comp);
-			if (iClusterId == NetworkType::invalidIndex()) {
-				this->addProductionReaction(tag, {i, bubbleId, bubbleId});
-			}
-			else {
-				this->addProductionReaction(
-					tag, {i, bubbleId, bubbleId, iClusterId});
+			if (lo[Species::He] == 1) {
+				// Only add trap mutation so that at run time it adds the I
+				// concentration if needed.
+				auto& subpaving = this->getSubpaving();
+				Composition comp = Composition::zero();
+				comp[Species::I] = 1;
+				auto iClusterId = subpaving.findTileId(comp);
+				if (iClusterId == NetworkType::invalidIndex()) {
+					this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+				}
+				else {
+					this->addProductionReaction(
+						tag, {i, bubbleId, bubbleId, iClusterId});
+				}
 			}
 		}
 		// V case
@@ -746,30 +757,32 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 		bounds[Species::V].second > (int)largestV) {
 		// Special case for He
 		if (lo1.isOnAxis(Species::He) or lo2.isOnAxis(Species::He)) {
-			// Is it trap mutation?
-			if (bounds[Species::He].first >
-				psi::getMaxHePerV(bounds[Species::V].first)) {
-				AmountType iSize = 1;
-				while (bounds[Species::He].first >
-					psi::getMaxHePerV(bounds[Species::V].first + iSize)) {
-					iSize++;
-				}
-				// Get the corresponding I cluster
-				auto& subpaving = this->getSubpaving();
-				Composition comp = Composition::zero();
-				comp[Species::I] = iSize;
-				auto iClusterId = subpaving.findTileId(comp);
-				if (iClusterId != NetworkType::invalidIndex()) {
-					this->addProductionReaction(
-						tag, {i, j, bubbleId, iClusterId});
+			if (lo1[Species::He] == 1 or lo2[Species::He] == 1) {
+				// Is it trap mutation?
+				if (bounds[Species::He].first >
+					psi::getMaxHePerV(bounds[Species::V].first)) {
+					AmountType iSize = 1;
+					while (bounds[Species::He].first >
+						psi::getMaxHePerV(bounds[Species::V].first + iSize)) {
+						iSize++;
+					}
+					// Get the corresponding I cluster
+					auto& subpaving = this->getSubpaving();
+					Composition comp = Composition::zero();
+					comp[Species::I] = iSize;
+					auto iClusterId = subpaving.findTileId(comp);
+					if (iClusterId != NetworkType::invalidIndex()) {
+						this->addProductionReaction(
+							tag, {i, j, bubbleId, iClusterId});
+					}
+					else {
+						this->addProductionReaction(tag, {i, j, bubbleId});
+					}
 				}
 				else {
+					// Standard absorption
 					this->addProductionReaction(tag, {i, j, bubbleId});
 				}
-			}
-			else {
-				// Standard absorption
-				this->addProductionReaction(tag, {i, j, bubbleId});
 			}
 		}
 		// Add the reaction

@@ -984,9 +984,9 @@ PetscMonitor1D::computeHeliumRetention(
 			myConcData[id()] +=
 				network.getTotalAtomConcentration(dConcs, id, 1) * hx;
 		}
-		myConcData[numSpecies] += gridPointSolution[dof - 3];
-		myConcData[numSpecies + 1] += gridPointSolution[dof - 2];
-		myConcData[numSpecies + 2] += gridPointSolution[dof - 1];
+		myConcData[numSpecies] += gridPointSolution[dof - 3] * hx;
+		myConcData[numSpecies + 1] += gridPointSolution[dof - 2] * hx;
+		myConcData[numSpecies + 2] += gridPointSolution[dof - 1] * hx;
 	}
 
 	// Get the current process ID
@@ -1212,8 +1212,8 @@ PetscMonitor1D::computeHeliumRetention(
 		outputFile << totalConcData[numSpecies] << " "
 				   << totalConcData[numSpecies + 1] / totalConcData[numSpecies]
 				   << " "
-				   << totalConcData[numSpecies + 2] / totalConcData[numSpecies]
-				   << std::endl;
+				   << totalConcData[numSpecies + 2] / totalConcData[numSpecies];
+		outputFile << std::endl;
 		outputFile.close();
 
 		if (_solverHandler->temporalFlux()) {
