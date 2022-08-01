@@ -69,6 +69,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 			ss << grid[i] - grid[surfacePosition + 1] << " ";
 		}
 		ss << std::endl;
+
 		if (not sameTemperatureGrid) {
 			ss << "Temperature grid (nm): ";
 			for (auto i = 0; i < temperatureGrid.size(); i++) {
