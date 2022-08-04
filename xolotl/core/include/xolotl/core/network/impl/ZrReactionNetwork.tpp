@@ -76,6 +76,19 @@ ZrReactionNetwork::setConstantRates(RateVector rates)
 }
 
 void
+ZrReactionNetwork::setConstantConnectivities(ConnectivitiesVector conns)
+{
+	_constantConns = ConnectivitiesView(
+		"dConstantConnectivities", conns.size(), conns[0].size());
+	auto hConnsView = create_mirror_view(_constantConns);
+	for (auto i = 0; i < conns.size(); i++)
+		for (auto j = 0; j < conns[0].size(); j++) {
+			hConnsView(i, j) = conns[i][j];
+		}
+	deep_copy(_constantConns, hConnsView);
+}
+
+void
 ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 {
 	this->_clusterData.h_view().extraData.initialize(
@@ -95,12 +108,14 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 			// second is for V capture
 			if (lo.isOnAxis(Species::V)) {
 				// Spontaneous radii:
-				 //data.extraData.dislocationCaptureRadius(i, 0) = 3.05 * pow(lo[Species::V], 0.12) / 10;
-				 //data.extraData.dislocationCaptureRadius(i, 1) = 0.39 * pow(lo[Species::V], 0.4) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 0) = 3.05 *
+				// pow(lo[Species::V], 0.12) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 1) = 0.39 *
+				// pow(lo[Species::V], 0.4) / 10;
 
 				// Thermal radii:
                 if (lo[Species::V] < 1000){
-                    //data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::V], 0.09) / 10;
+                    //data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::V], 0.09) / 10; //old one
                     data.extraData.dislocationCaptureRadius(i, 0) = 2.8 * pow(lo[Species::V], 0.15) / 10;
                     data.extraData.dislocationCaptureRadius(i, 1) = 2.0 * pow(lo[Species::V], 0.3) / 10;
                 }
@@ -139,6 +154,12 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
                 //if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize) data.extraData.dislocationCaptureRadius(i, 0) = 0;
                 //if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize) data.extraData.dislocationCaptureRadius(i, 1) = 0;
             }
+
+                // Turning off capture radii for FBP:
+                // if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize)
+                // data.extraData.dislocationCaptureRadius(i, 0) = 0;
+                // if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize)
+                // data.extraData.dislocationCaptureRadius(i, 1) = 0;
 
 			// Set the dislocation capture radii for interstitial a-loops
 			// (convert to nm)
@@ -220,13 +241,27 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if (i == j) {
 		if (diffusionFactor(i) != 0.0)
 			addSinks(i, tag);
-		this->addConstantReaction(tag, {i, Network::invalidIndex()});
+
+		if (this->_constantConns.extent(0) > 0) {
+			if (this->_constantConns(i, this->_numDOFs)) {
+				this->addConstantReaction(tag, {i, Network::invalidIndex()});
+			}
+		}
 	}
 
 	// Add every possibility
-	this->addConstantReaction(tag, {i, j});
-	if (j != i)
-		this->addConstantReaction(tag, {j, i});
+	if (this->_constantConns.extent(0) > 0) {
+		if (this->_constantConns(i, j)) {
+			this->addConstantReaction(tag, {i, j});
+		}
+	}
+	if (j != i) {
+		if (this->_constantConns.extent(0) > 0) {
+			if (this->_constantConns(j, i)) {
+				this->addConstantReaction(tag, {j, i});
+			}
+		}
+	}
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
@@ -543,55 +578,54 @@ ZrClusterUpdater::updateDiffusionCoefficient(
 	constexpr Kokkos::Array<double, 7> vDiffusionC = {
 		0.0, 2.2e+12, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
 
-
     /*
     //Slower vacancies:
     constexpr Kokkos::Array<double, 6> iMigrationA = {
-        0.0, 0.06, 0.23, 0.49, 0.75, 0.87};
+    0.0, 0.06, 0.23, 0.49, 0.75, 0.87};
     constexpr Kokkos::Array<double, 6> iMigrationC = {
-        0.0, 0.15, 0.54, 0.93, 1.2, 1.6};
+    0.0, 0.15, 0.54, 0.93, 1.2, 1.6};
     // I diffusion factors in nm^2/s
     constexpr Kokkos::Array<double, 6> iDiffusionA = {
-        0.0, 3.5e+10, 3.2e+11, 4.9e+12, 5.1e+13, 4.3e+13};
+    0.0, 3.5e+10, 3.2e+11, 4.9e+12, 5.1e+13, 4.3e+13};
     constexpr Kokkos::Array<double, 6> iDiffusionC = {
-        0.0, 4.7e+10, 2.6e+12, 6.8e+13, 4.2e+14, 5.5e+15};
+    0.0, 4.7e+10, 2.6e+12, 6.8e+13, 4.2e+14, 5.5e+15};
 
     // V migration energies in eV (up to n = 6)
     constexpr Kokkos::Array<double, 7> vMigrationA = {
-        0.0, 0.91, 0.58, 0.94, 0.16, 0.81, 0.25};
+    0.0, 0.91, 0.58, 0.94, 0.16, 0.81, 0.25};
     constexpr Kokkos::Array<double, 7> vMigrationC = {
-        0.0, 0.96, 0.41, 1.12, 0.58, 0.29, 0.18};
+    0.0, 0.96, 0.41, 1.12, 0.58, 0.29, 0.18};
     // V diffusions factors in nm^2/s
     constexpr Kokkos::Array<double, 7> vDiffusionA = {
-        0.0, 5.87e+12, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10};
+    0.0, 5.87e+12, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10};
     constexpr Kokkos::Array<double, 7> vDiffusionC = {
-        0.0, 8.2e+12, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
+    0.0, 8.2e+12, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
     */
 
-    // Literature values:
-    /*
-    // I migration energies in eV
-    constexpr Kokkos::Array<double, 6> iMigrationA = {
-    0.0, 0.17, 0.23, 0.49, 0.75, 0.87};
-    constexpr Kokkos::Array<double, 6> iMigrationC = {
-    0.0, 0.17, 0.54, 0.93, 1.2, 1.6};
-    // I diffusion factors in nm^2/s
-    constexpr Kokkos::Array<double, 6> iDiffusionA = {
-    0.0, 3.23e+9, 0, 0, 0, 0};
-    constexpr Kokkos::Array<double, 6> iDiffusionC = {
-    0.0, 3.23e+9, 0, 0, 0, 0};
+	// Literature values:
+	/*
+	// I migration energies in eV
+	constexpr Kokkos::Array<double, 6> iMigrationA = {
+	0.0, 0.17, 0.23, 0.49, 0.75, 0.87};
+	constexpr Kokkos::Array<double, 6> iMigrationC = {
+	0.0, 0.17, 0.54, 0.93, 1.2, 1.6};
+	// I diffusion factors in nm^2/s
+	constexpr Kokkos::Array<double, 6> iDiffusionA = {
+	0.0, 3.23e+9, 0, 0, 0, 0};
+	constexpr Kokkos::Array<double, 6> iDiffusionC = {
+	0.0, 3.23e+9, 0, 0, 0, 0};
 
-    // V migration energies in eV (up to n = 6)
-    constexpr Kokkos::Array<double, 7> vMigrationA = {
-    0.0, 0.59, 0.58, 0.94, 0.16, 0.81, 0.25};
-    constexpr Kokkos::Array<double, 7> vMigrationC = {
-    0.0, 0.59, 0.41, 1.12, 0.58, 0.29, 0.18};
-    // V diffusions factors in nm^2/s
-    constexpr Kokkos::Array<double, 7> vDiffusionA = {
-    0.0, 443, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10};
-    constexpr Kokkos::Array<double, 7> vDiffusionC = {
-    0.0, 443, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
-    */
+	// V migration energies in eV (up to n = 6)
+	constexpr Kokkos::Array<double, 7> vMigrationA = {
+	0.0, 0.59, 0.58, 0.94, 0.16, 0.81, 0.25};
+	constexpr Kokkos::Array<double, 7> vMigrationC = {
+	0.0, 0.59, 0.41, 1.12, 0.58, 0.29, 0.18};
+	// V diffusions factors in nm^2/s
+	constexpr Kokkos::Array<double, 7> vDiffusionA = {
+	0.0, 443, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10};
+	constexpr Kokkos::Array<double, 7> vDiffusionC = {
+	0.0, 443, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
+	*/
 
 	// 3D diffuser case
 	if (data.migrationEnergy(clusterId) < 0.0) {

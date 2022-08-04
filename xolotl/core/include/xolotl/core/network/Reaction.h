@@ -47,6 +47,7 @@ public:
 	using ConcentrationsView = IReactionNetwork::ConcentrationsView;
 	using FluxesView = IReactionNetwork::FluxesView;
 	using RatesView = IReactionNetwork::RatesView;
+	using ConnectivitiesView = IReactionNetwork::ConnectivitiesView;
 	using BelongingView = IReactionNetwork::BelongingView;
 	using OwnedSubMapView = IReactionNetwork::OwnedSubMapView;
 	using Connectivity = typename IReactionNetwork::Connectivity;
@@ -139,6 +140,14 @@ public:
 	{
 		asDerived()->computeConstantRates(
 			concentrations, rates, isInSub, backMap, gridIndex);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	contributeConstantConnectivities(ConnectivitiesView conns,
+		BelongingView isInSub, OwnedSubMapView backMap)
+	{
+		asDerived()->getConstantConnectivities(conns, isInSub, backMap);
 	}
 
 	/**
@@ -250,6 +259,7 @@ public:
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
+	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using Composition = typename Superclass::Composition;
@@ -318,6 +328,11 @@ private:
 		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
+	void
+	getConstantConnectivities(ConnectivitiesView conns, BelongingView isInSub,
+		OwnedSubMapView backMap);
+
+	KOKKOS_INLINE_FUNCTION
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
@@ -362,6 +377,7 @@ public:
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
+	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
@@ -425,6 +441,11 @@ private:
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
 		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	getConstantConnectivities(ConnectivitiesView conns, BelongingView isInSub,
+		OwnedSubMapView backMap);
 
 	KOKKOS_INLINE_FUNCTION
 	double

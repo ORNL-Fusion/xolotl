@@ -74,8 +74,8 @@ private:
 	// Keep the maximum cluster sizes to set a generation flux to
 	size_t maxSizeI = 0;
 	size_t maxSizeV = 0;
-    size_t maxSizeB = 0;
-    double Qb = 0;
+	size_t maxSizeB = 0;
+	double Qb = 0;
 
 public:
 	/**
@@ -107,7 +107,6 @@ public:
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
 
         // Set the fraction of large vacancy clusters (n > 19) that become faulted basal pyramids:
-        
         if (maxSizeB > 18) Qb = 0.1; // Basal
         else Qb = 0; //No basal
 
@@ -174,14 +173,14 @@ public:
             //double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.021); //without basal
             //double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.0125); //with basal
             
-            //double cascadeEfficiency = (0.71*(1-tanh(0.00040527088*(currentTime/100-1000)))+0.0225); //NEW without basal THIS ONE
-            //double cascadeEfficiency = (0.71*(1-tanh(0.00040527088*(currentTime/100-1000)))+0.02); //NEW with basal THIS ONE
-            double cascadeEfficiency = (0.98*(1-tanh(0.00040527088*(currentTime/100)))+0.02); //NEW NEW with basal
+            //double cascadeEfficiency = (0.71*(1-tanh(0.00040527088*(currentTime/100-1000)))+0.0225); //NEW without basal
+            //double cascadeEfficiency = (0.71*(1-tanh(0.00040527088*(currentTime/100-1000)))+0.02); //Old with basal
+            //double cascadeEfficiency = (0.98*(1-tanh(0.00040527088*(currentTime/100)))+0.02); //NEW NEW with basal
 
             //double cascadeEfficiency = (0.485*(1-tanh(0.00040527088*(currentTime/100-7000)))+0.021); //without basal
             //double cascadeEfficiency = 1;
             
-            //double cascadeEfficiency = (0.495*(1-tanh(0.00040527088*(currentTime/100-5000)))+0.025); //THIS ONE without basal now apparently?
+            double cascadeEfficiency = (0.495*(1-tanh(0.00040527088*(currentTime/100-5000)))+0.025); //THIS ONE without basal now apparently?
 
             
             
@@ -202,6 +201,7 @@ public:
                 //std::cout << i << " " <<incidentFluxVec[i][0] << std::endl;
                 //updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
                 //if(i==0 || i==70) updatedConcOffset[fluxIndices[i]] += 4.3e-6;
+
 			}
 		}
 

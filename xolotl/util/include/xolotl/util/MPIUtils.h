@@ -33,6 +33,12 @@ void
 mpiInit(int& argc, const char* argv[]);
 
 /**
+ * Has MPI been initialized
+ */
+bool
+mpiInitialized();
+
+/**
  * Get rank of current process within Xolotl's communicator
  */
 int

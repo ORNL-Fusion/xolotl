@@ -1599,6 +1599,223 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
+void
+ProductionReaction<TNetwork, TDerived>::getConstantConnectivities(
+	ConnectivitiesView conns, BelongingView isInSub, OwnedSubMapView backMap)
+{
+	// Check products
+	bool productInSub = false;
+	AmountType nProd = 0;
+	for (auto prodId : _products) {
+		if (prodId == invalidIndex) {
+			continue;
+		}
+		nProd++;
+		if (isInSub[prodId])
+			productInSub = true;
+	}
+	// Only consider specific cases
+	if (not isInSub[_reactants[0]] and not isInSub[_reactants[1]]) {
+		if (nProd == 0)
+			return;
+		if (nProd > 0 && not productInSub)
+			return;
+	}
+	if (isInSub[_reactants[0]] and isInSub[_reactants[1]]) {
+		if (nProd == 0)
+			return;
+		if (nProd > 0 && productInSub)
+			return;
+	}
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	auto dof = conns.extent(0);
+
+	// Both reactants are in but not the product
+	if (isInSub[_reactants[0]] and isInSub[_reactants[1]]) {
+		// Code not setup to deal with this
+	}
+	// Both reactants are out but product is in
+	else if (not isInSub[_reactants[0]] and not isInSub[_reactants[1]]) {
+		IndexType p = 0;
+		for (auto prodId : _products) {
+			if (prodId == invalidIndex) {
+				continue;
+			}
+
+			if (isInSub[prodId])
+				conns(backMap(prodId), dof) = true;
+			p++;
+		}
+
+		// Take care of the first moments
+		for (auto k : speciesRangeNoI) {
+			// For the products
+			for (auto p : {0, 1}) {
+				auto prodId = _products[p];
+				if (prodId == invalidIndex) {
+					continue;
+				}
+				if (not isInSub[prodId])
+					continue;
+
+				if (_productMomentIds[p][k()] != invalidIndex) {
+					conns(backMap(_productMomentIds[p][k()]), dof) = true;
+				}
+			}
+		}
+	}
+	// Only the first reactant is in not the second one
+	else if (isInSub[_reactants[0]]) {
+		// First for the first reactant
+		conns(backMap(_reactants[0]), backMap(_reactants[0])) = true;
+		// For the products
+		for (auto p : {0, 1}) {
+			auto prodId = _products[p];
+			if (prodId == invalidIndex) {
+				continue;
+			}
+			if (isInSub[prodId])
+				conns(backMap(prodId), backMap(_reactants[0])) = true;
+		}
+
+		// 1st moment contribution
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[0][i()] == invalidIndex)
+				continue;
+
+			// First for the first reactant
+			conns(backMap(_reactants[0]), backMap(_reactantMomentIds[0][i()])) =
+				true;
+			// For the products
+			for (auto p : {0, 1}) {
+				auto prodId = _products[p];
+				if (prodId == invalidIndex) {
+					continue;
+				}
+				if (isInSub[prodId])
+					conns(backMap(prodId),
+						backMap(_reactantMomentIds[0][i()])) = true;
+			}
+		}
+
+		// Take care of the first moments
+		for (auto k : speciesRangeNoI) {
+			// First for the first reactant
+			if (_reactantMomentIds[0][k()] != invalidIndex) {
+				conns(backMap(_reactantMomentIds[0][k()]),
+					backMap(_reactants[0])) = true;
+
+				for (auto i : speciesRangeNoI) {
+					if (_reactantMomentIds[0][i()] == invalidIndex)
+						continue;
+					conns(backMap(_reactantMomentIds[0][k()]),
+						backMap(_reactantMomentIds[0][i()])) = true;
+				}
+			}
+
+			// For the products
+			for (auto p : {0, 1}) {
+				auto prodId = _products[p];
+				if (prodId == invalidIndex) {
+					continue;
+				}
+				if (not isInSub[prodId])
+					continue;
+
+				if (_productMomentIds[p][k()] != invalidIndex) {
+					conns(backMap(_productMomentIds[p][k()]),
+						backMap(_reactants[0])) = true;
+
+					for (auto i : speciesRangeNoI) {
+						if (_reactantMomentIds[0][i()] == invalidIndex)
+							continue;
+						conns(backMap(_productMomentIds[p][k()]),
+							backMap(_reactantMomentIds[0][i()])) = true;
+					}
+				}
+			}
+		}
+	}
+	// Last case, only the second product is in
+	else {
+		// First for the reactant
+		conns(backMap(_reactants[1]), backMap(_reactants[1])) = true;
+		// For the products
+		for (auto p : {0, 1}) {
+			auto prodId = _products[p];
+			if (prodId == invalidIndex) {
+				continue;
+			}
+			if (isInSub[prodId])
+				conns(backMap(prodId), backMap(_reactants[1])) = true;
+		}
+
+		// Compute the flux for the 0th order moments, moment contribution
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[1][i()] == invalidIndex)
+				continue;
+
+			// First for the reactant
+			conns(backMap(_reactants[1]), backMap(_reactantMomentIds[1][i()])) =
+				true;
+			// For the products
+			for (auto p : {0, 1}) {
+				auto prodId = _products[p];
+				if (prodId == invalidIndex) {
+					continue;
+				}
+				if (isInSub[prodId])
+					conns(backMap(prodId),
+						backMap(_reactantMomentIds[1][i()])) = true;
+			}
+		}
+
+		// Take care of the first moments
+		for (auto k : speciesRangeNoI) {
+			// For the second reactant
+			if (_reactantMomentIds[1][k()] != invalidIndex) {
+				conns(backMap(_reactantMomentIds[1][k()]),
+					backMap(_reactants[1])) = true;
+
+				// 1st moment contribution
+				for (auto i : speciesRangeNoI) {
+					if (_reactantMomentIds[1][i()] == invalidIndex)
+						continue;
+					conns(backMap(_reactantMomentIds[1][k()]),
+						backMap(_reactantMomentIds[1][i()])) = true;
+				}
+			}
+
+			// For the products
+			for (auto p : {0, 1}) {
+				auto prodId = _products[p];
+				if (prodId == invalidIndex) {
+					continue;
+				}
+				if (not isInSub[prodId])
+					continue;
+
+				if (_productMomentIds[p][k()] != invalidIndex) {
+					conns(backMap(_productMomentIds[p][k()]),
+						backMap(_reactants[1])) = true;
+
+					// 1st moment contribution
+					for (auto i : speciesRangeNoI) {
+						if (_reactantMomentIds[1][i()] == invalidIndex)
+							continue;
+						conns(backMap(_productMomentIds[p][k()]),
+							backMap(_reactantMomentIds[1][i()])) = true;
+					}
+				}
+			}
+		}
+	}
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
 double
 ProductionReaction<TNetwork, TDerived>::computeLeftSideRate(
 	ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)
@@ -2403,6 +2620,121 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 					Kokkos::atomic_add(
 						&rates(backMap(_productMomentIds[1][k()]), dof),
 						f / _productVolumes[1]);
+				}
+			}
+		}
+	}
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+DissociationReaction<TNetwork, TDerived>::getConstantConnectivities(
+	ConnectivitiesView conns, BelongingView isInSub, OwnedSubMapView backMap)
+{
+	// Only consider cases specific cases
+	if (not isInSub[_reactant] and not isInSub[_products[0]] and
+		not isInSub[_products[1]])
+		return;
+	if (isInSub[_reactant] and isInSub[_products[0]] and isInSub[_products[1]])
+		return;
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	// Terms for the 0th order moments
+	// First case where the reactant is in
+	if (isInSub[_reactant]) {
+		conns(backMap(_reactant), backMap(_reactant)) = true;
+		if (isInSub[_products[0]])
+			conns(backMap(_products[0]), backMap(_reactant)) = true;
+		if (isInSub[_products[1]])
+			conns(backMap(_products[1]), backMap(_reactant)) = true;
+
+		// Now the moment contribtions
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[i()] == invalidIndex)
+				continue;
+
+			conns(backMap(_reactant), backMap(_reactantMomentIds[i()])) = true;
+			if (isInSub[_products[0]])
+				conns(backMap(_products[0]), backMap(_reactantMomentIds[i()])) =
+					true;
+			if (isInSub[_products[1]])
+				conns(backMap(_products[1]), backMap(_reactantMomentIds[i()])) =
+					true;
+		}
+
+		// Take care of the first moments
+		for (auto k : speciesRangeNoI) {
+			// First for the reactant
+			if (_reactantMomentIds[k()] != invalidIndex) {
+				conns(backMap(_reactantMomentIds[k()]), backMap(_reactant)) =
+					true;
+
+				// 1st moment contribution
+				for (auto i : speciesRangeNoI) {
+					if (_reactantMomentIds[i()] == invalidIndex)
+						continue;
+					conns(backMap(_reactantMomentIds[k()]),
+						backMap(_reactantMomentIds[i()])) = true;
+				}
+			}
+
+			// Now the first product
+			if (isInSub[_products[0]] and
+				_productMomentIds[0][k()] != invalidIndex) {
+				conns(backMap(_productMomentIds[0][k()]), backMap(_reactant)) =
+					true;
+
+				// 1st moment contribution
+				for (auto i : speciesRangeNoI) {
+					if (_reactantMomentIds[i()] == invalidIndex)
+						continue;
+					conns(backMap(_productMomentIds[0][k()]),
+						backMap(_reactantMomentIds[i()])) = true;
+				}
+			}
+
+			// Finally the second product
+			if (isInSub[_products[1]] and
+				_productMomentIds[1][k()] != invalidIndex) {
+				conns(backMap(_productMomentIds[1][k()]), backMap(_reactant)) =
+					true;
+
+				// 1st moment contribution
+				for (auto i : speciesRangeNoI) {
+					if (_reactantMomentIds[i()] == invalidIndex)
+						continue;
+					conns(backMap(_productMomentIds[1][k()]),
+						backMap(_reactantMomentIds[i()])) = true;
+				}
+			}
+		}
+	}
+	// Now the reactant is not in
+	else {
+		auto dof = conns.extent(0);
+
+		// For the first product
+		if (isInSub[_products[0]])
+			conns(backMap(_products[0]), dof) = true;
+		// For the second product
+		if (isInSub[_products[1]])
+			conns(backMap(_products[1]), dof) = true;
+
+		// Take care of the first moments
+		for (auto k : speciesRangeNoI) {
+			// For the first product
+			if (isInSub[_products[0]]) {
+				if (_productMomentIds[0][k()] != invalidIndex) {
+					conns(backMap(_productMomentIds[0][k()]), dof) = true;
+				}
+			}
+
+			// For the second product
+			if (isInSub[_products[1]]) {
+				if (_productMomentIds[1][k()] != invalidIndex) {
+					conns(backMap(_productMomentIds[1][k()]), dof) = true;
 				}
 			}
 		}

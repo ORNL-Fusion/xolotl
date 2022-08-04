@@ -77,10 +77,11 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		// Calculate the capture efficiency (assuming only prismatic loops)
 		if (cl0IsV)
 			Pl = 0.78 * pow(p, -2) + 0.66 * p - 0.44;
-        else if (lo0.isOnAxis(Species::Basal)){
-            if (n0 < ::xolotl::core::basalTransitionSize) alpha = 1.0; //Completely spherical
-            Pl = p;
-            }
+		else if (lo0.isOnAxis(Species::Basal)) {
+			if (n0 < ::xolotl::core::basalTransitionSize)
+				alpha = 1.0; // Completely spherical
+			Pl = p;
+		}
 		else
 			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 
@@ -101,10 +102,11 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		// Calculate the capture efficiency (assuming only prismatic loops)
 		if (cl1IsV)
 			Pl = 0.78 * pow(p, -2) + 0.66 * p - 0.44;
-        else if (lo1.isOnAxis(Species::Basal)) {
-            if (n1 < ::xolotl::core::basalTransitionSize) alpha = 1.0; //Completely spherical
-            Pl = p;
-            }
+		else if (lo1.isOnAxis(Species::Basal)) {
+			if (n1 < ::xolotl::core::basalTransitionSize)
+				alpha = 1.0; // Completely spherical
+			Pl = p;
+		}
 		else
 			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 

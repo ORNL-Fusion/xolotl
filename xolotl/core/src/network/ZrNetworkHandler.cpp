@@ -60,7 +60,7 @@ auto zrNetworkGenerator = [](const options::IOptions& options) {
 		++i;
 	}
 	maxI = pow(2, i) - 1;
-    
+
 	// adding basal
 	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxV, maxB, maxI};
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {

@@ -31,6 +31,7 @@ public:
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using RateVector = typename Superclass::RateVector;
+	using ConnectivitiesVector = typename Superclass::ConnectivitiesVector;
 	using RatesView = typename Superclass::RatesView;
 
 	using Superclass::Superclass;
@@ -40,6 +41,9 @@ public:
 
 	void
 	setConstantRates(RateVector rates) override;
+
+	void
+	setConstantConnectivities(ConnectivitiesVector conns) override;
 
 	void
 	initializeExtraClusterData(const options::IOptions& options);
@@ -74,6 +78,9 @@ private:
 
 	detail::ZrReactionGenerator
 	getReactionGenerator() const noexcept;
+
+	void
+	defineReactions(Connectivity& connectivity);
 };
 
 namespace detail

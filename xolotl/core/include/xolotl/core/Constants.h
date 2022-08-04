@@ -94,7 +94,7 @@ constexpr double alphaZrASinkStrength = 7.25e-8; // Single crystal
 constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
 // constexpr double alphaZrASinkStrength = 2e-5; //cold-worked Zr
 // constexpr double alphaZrCSinkStrength = 5e-6; //cold-worked Zr
-    
+
 // Transition size for basal faulted pyramids to basal c-loops
 constexpr double basalTransitionSize = 91;
 

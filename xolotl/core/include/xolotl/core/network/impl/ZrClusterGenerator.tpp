@@ -193,7 +193,6 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	// adding basal
 	if (lo.isOnAxis(Species::Basal)) {
 		for (auto j : makeIntervalRange(reg[Species::Basal])) {
-
 			// Treat the case for faulted basal pyramids
 			// Estimate a spherical radius based on equivalent surface area
 			if (lo[Species::Basal] < basalTransitionSize) {

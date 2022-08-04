@@ -189,7 +189,6 @@ PetscMonitor0D::setup()
 	}
 	// Set the monitor to output data for AlphaZr
 	if (flagZr) {
-
 		auto& network = _solverHandler->getNetwork();
 		auto numSpecies = network.getSpeciesListSize();
 
@@ -204,11 +203,11 @@ PetscMonitor0D::setup()
 					   << "_partial_density " << speciesName << "_partial_atom "
 					   << speciesName << "_partial_diameter ";
 		}
-        
+
 		outputFile << std::endl;
 		outputFile.close();
 		// computeAlphaZr will be called at each timestep
-        
+
 		ierr = TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr);
 		checkPetscError(
 			ierr, "setupPetsc0DMonitor: TSMonitorSet (computeAlphaZr) failed.");
@@ -693,9 +692,9 @@ PetscMonitor0D::computeAlphaZr(
 				   << myData[(i * 6) + 2] << " " << myData[(i * 6) + 3] << " "
 				   << myData[(i * 6) + 4] << " " << myData[(i * 6) + 5] << " ";
 	}
-    
+
 	outputFile << std::endl;
-    
+
 	// Close the output file
 	outputFile.close();
 

@@ -294,7 +294,6 @@ PetscSolver2DHandler::initializeConcentration(DM& da, Vec& C)
 				grid[surfacePosition[localYS] + 1]);
 	}
 	network.setTemperatures(temperature, depths);
-	network.syncClusterDataOnHost();
 
 	/*
 	 Restore vectors
@@ -506,7 +505,6 @@ PetscSolver2DHandler::setConcVector(DM& da, Vec& C,
 					grid[surfacePosition[localYS] + 1]);
 		}
 		network.setTemperatures(temperature, depths);
-		network.syncClusterDataOnHost();
 	}
 
 	// Restore the solutionArray
@@ -689,7 +687,6 @@ PetscSolver2DHandler::updateConcentration(
 						grid[surfacePosition[localYS] + 1]);
 			}
 			network.setTemperatures(temperature, depths);
-			network.syncClusterDataOnHost();
 		}
 	}
 
@@ -1074,7 +1071,6 @@ PetscSolver2DHandler::computeJacobian(
 						grid[surfacePosition[localYS] + 1]);
 			}
 			network.setTemperatures(temperature, depths);
-			network.syncClusterDataOnHost();
 		}
 	}
 
