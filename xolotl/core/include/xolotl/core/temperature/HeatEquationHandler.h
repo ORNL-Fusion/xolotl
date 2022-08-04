@@ -83,6 +83,7 @@ public:
 		surfacePosition = surfacePos;
 		// keep the grid
 		xGrid = grid;
+		bulkPosition = grid.size() - 3;
 	}
 
 	/**
@@ -125,6 +126,11 @@ private:
 	 * The surface position
 	 */
 	int surfacePosition;
+
+	/**
+	 * The bulk position
+	 */
+	int bulkPosition;
 
 	/**
 	 * The heat coefficient
@@ -241,6 +247,15 @@ private:
 	 */
 	double
 	getLocalHeatCoefficient(int xi, double temp) const;
+
+	/**
+	 * Get the bulk heat flux.
+	 *
+	 * @param temp The temperature
+	 * @return The flux
+	 */
+	double
+	getBulkHeatFlux(double temp) const;
 };
 } // namespace temperature
 } // namespace core

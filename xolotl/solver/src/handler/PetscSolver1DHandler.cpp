@@ -592,7 +592,8 @@ PetscSolver1DHandler::updateConcentration(
 	for (auto xi = (PetscInt)localXS - 1;
 		 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 		// Heat condition
-		if (xi == surfacePosition && xi >= localXS && xi < localXS + localXM) {
+		if ((xi == surfacePosition || (xi == nX - 1 && isRobin)) &&
+			xi >= localXS && xi < localXS + localXM) {
 			// Compute the old and new array offsets
 			concOffset = concs[xi];
 			updatedConcOffset = updatedConcs[xi];
@@ -898,7 +899,8 @@ PetscSolver1DHandler::computeJacobian(
 		concVector[2] = concs[xi + 1]; // right
 
 		// Heat condition
-		if (xi == surfacePosition && xi >= localXS && xi < localXS + localXM) {
+		if ((xi == surfacePosition || (xi == nX - 1 && isRobin)) &&
+			xi >= localXS && xi < localXS + localXM) {
 			// Get the partial derivatives for the temperature
 			auto setValues = temperatureHandler->computePartialsForTemperature(
 				ftime, concVector, tempVals, tempIndices, hxLeft, hxRight, xi);

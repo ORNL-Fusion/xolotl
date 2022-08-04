@@ -99,15 +99,6 @@ BOOST_AUTO_TEST_CASE(PSI_4)
 	SystemTestCase{"system_PSI_4"}.tolerance(1.0e-4).run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_4)
-{
-	if (getMPICommSize() > 100) {
-		return;
-	}
-	// 1D + He + heat
-	SystemTestCase{"system_PSI_4"}.tolerance(1.0e-4).run();
-}
-
 BOOST_AUTO_TEST_CASE(Fe_1)
 {
 	if (getMPICommSize() > 1) {

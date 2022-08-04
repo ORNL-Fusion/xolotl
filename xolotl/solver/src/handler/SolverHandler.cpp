@@ -38,6 +38,7 @@ SolverHandler::SolverHandler(
 	movingSurface(false),
 	bubbleBursting(false),
 	isMirror(true),
+	isRobin(false),
 	useAttenuation(false),
 	sameTemperatureGrid(true),
 	fluxTempProfile(false),
@@ -464,6 +465,8 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	// Boundary conditions in the X direction
 	if (opts.getBCString() == "periodic")
 		isMirror = false;
+	if (opts.getBCString() == "robin")
+		isRobin = true;
 
 	// Set the boundary conditions (= 1: free surface; = 0: mirror)
 	leftOffset = opts.getLeftBoundary();

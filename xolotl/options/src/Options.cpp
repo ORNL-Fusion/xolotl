@@ -202,8 +202,9 @@ Options::readParams(int argc, const char* argv[])
 		"then two for Y and two for Z. "
 		"0 means mirror or periodic, 1 means free surface.")("xBCType",
 		bpo::value<std::string>(&xBC),
-		"The boundary conditions to use in the X direction, mirror (default) "
-		"or periodic.")("burstingDepth", bpo::value<double>(&burstingDepth),
+		"The boundary conditions to use in the X direction, mirror (default), "
+		"periodic, or robin (for temperature).")("burstingDepth",
+		bpo::value<double>(&burstingDepth),
 		"The depth (in nm) after which there is an exponential decrease in the "
 		"probability of bursting (10.0 nm if nothing is specified).")(
 		"burstingFactor", bpo::value<double>(&burstingFactor),

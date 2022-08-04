@@ -147,33 +147,7 @@ HeatEquationHandler::computeTemperature(double currentTime, double** concVector,
 
 	double s[3] = {0, sy, sz};
 
-	// Surface and interface
-	//	if (xi == surfacePosition ||
-	//		fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc)
-	//< 2.0)
-	//{
-	//		// Boundary condition with heat flux
-	//		updatedConcOffset[index] += midHeatCoef * (2.0 / hxLeft) *
-	//			((heatFlux / midHeatCond) + (oldConcBox[0][1] - oldConc) /
-	// hxRight);
-	//		// Second term for temperature dependent conductivity
-	//		updatedConcOffset[index] += midHeatCoef * heatFlux * heatFlux *
-	//			getLocalHeatCondTempDerivative(xi, oldConc) /
-	//			(midHeatCond * midHeatCond * midHeatCond);
-	//	}
-	//	else {
-	//		// Use a simple midpoint stencil to compute the concentration
-	//		updatedConcOffset[index] += midHeatCoef * (2.0 / hxLeft) *
-	//			(oldConcBox[0][0] + (hxLeft / hxRight) * oldConcBox[0][1] -
-	//				(1.0 + (hxLeft / hxRight)) * oldConc) /
-	//			(hxLeft + hxRight);
-	//		// Second term for temperature dependent conductivity
-	//		updatedConcOffset[index] += midHeatCoef *
-	//			(oldConcBox[0][1] - oldConcBox[0][0]) *
-	//			(oldConcBox[0][1] - oldConcBox[0][0]) *
-	//			getLocalHeatCondTempDerivative(xi, oldConc) /
-	//			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
-	//	}
+	// Surface
 	if (xi == surfacePosition) {
 		// Boundary condition with heat flux
 		updatedConcOffset[index] += midHeatCoef * (2.0 / hxLeft) *
@@ -182,6 +156,18 @@ HeatEquationHandler::computeTemperature(double currentTime, double** concVector,
 		updatedConcOffset[index] += -midHeatCoef * heatFlux * beta * dAlpha /
 				(midHeatCond * midHeatCond) +
 			midHeatCoef * heatFlux * heatFlux * alpha * dBeta /
+				(midHeatCond * midHeatCond * midHeatCond);
+	}
+	if (xi == bulkPosition) {
+		// Boundary condition with heat flux
+		double bulkHeatFlux = getBulkHeatFlux(oldConc);
+		updatedConcOffset[index] += midHeatCoef * (2.0 / hxRight) *
+			((-bulkHeatFlux / midHeatCond) +
+				(oldConcBox[0][0] - oldConc) / hxLeft);
+		// Second term for temperature dependent conductivity
+		updatedConcOffset[index] += -midHeatCoef * bulkHeatFlux * beta *
+				dAlpha / (midHeatCond * midHeatCond) +
+			midHeatCoef * bulkHeatFlux * bulkHeatFlux * alpha * dBeta /
 				(midHeatCond * midHeatCond * midHeatCond);
 	}
 	else {
@@ -242,24 +228,6 @@ HeatEquationHandler::computePartialsForTemperature(double currentTime,
 		   ddBeta = getLocalHeatCondTempSecondDerivative(oldConc);
 
 	// Compute the partials along the depth
-	//	val[0] = -2.0 * midHeatCoef / (hxLeft * hxRight) +
-	//		midHeatCoef * getLocalHeatCondTempSecondDerivative(xi, oldConc) *
-	//			(oldConcBox[0][1] - oldConcBox[0][0]) *
-	//			(oldConcBox[0][1] - oldConcBox[0][0]) /
-	//			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight)) +
-	//		midHeatCoef * (2.0 / hxLeft) *
-	//			getLocalHeatCondTempDerivative(xi, oldConc) *
-	//			(oldConcBox[0][0] + (hxLeft / hxRight) * oldConcBox[0][1] -
-	//				(1.0 + (hxLeft / hxRight)) * oldConc) /
-	//			((hxLeft + hxRight) * midHeatCond);
-	//	val[1] = 2.0 * midHeatCoef / (hxLeft * (hxLeft + hxRight)) +
-	//		2.0 * midHeatCoef * (oldConcBox[0][0] - oldConcBox[0][1]) *
-	//			getLocalHeatCondTempDerivative(xi, oldConc) /
-	//			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
-	//	val[2] = 2.0 * midHeatCoef / (hxRight * (hxLeft + hxRight)) +
-	//		2.0 * midHeatCoef * (oldConcBox[0][1] - oldConcBox[0][0]) *
-	//			getLocalHeatCondTempDerivative(xi, oldConc) /
-	//			(midHeatCond * (hxLeft + hxRight) * (hxLeft + hxRight));
 	val[0] = -2.0 * midHeatCoef / (hxLeft * hxRight) +
 		midHeatCoef * alpha * ddBeta * (oldConcBox[0][1] - oldConcBox[0][0]) *
 			(oldConcBox[0][1] - oldConcBox[0][0]) /
@@ -287,22 +255,6 @@ HeatEquationHandler::computePartialsForTemperature(double currentTime,
 	}
 
 	// Boundary condition with the heat flux
-	//	if (xi == surfacePosition ||
-	//		fabs(xGrid[xi + 1] - xGrid[surfacePosition + 1] - interfaceLoc)
-	//< 2.0) { 		val[0] = -2.0 * midHeatCoef / (hxLeft * hxRight)
-	//+ 			2.0 * midHeatCoef * getLocalHeatCondTempDerivative(xi,
-	// oldConc) * 				(oldConcBox[0][1] - oldConc)
-	/// 				(midHeatCond * hxLeft * hxRight) + 			heatFlux
-	/// * heatFlux * midHeatCoef *
-	//				getLocalHeatCondTempSecondDerivative(xi, oldConc) /
-	//				(midHeatCond * midHeatCond * midHeatCond) -
-	//			2.0 * heatFlux * heatFlux * midHeatCoef *
-	//				getLocalHeatCondTempDerivative(xi, oldConc) *
-	//				getLocalHeatCondTempDerivative(xi, oldConc) *
-	//				(midHeatCond * midHeatCond * midHeatCond * midHeatCond);
-	//		val[1] = 0.0;
-	//		val[2] = 2.0 * midHeatCoef / (hxLeft * hxRight);
-	//	}
 	if (xi == surfacePosition) {
 		val[0] = -2.0 * midHeatCoef / (hxLeft * hxRight) +
 			2.0 * midHeatCoef * alpha * dBeta * (oldConcBox[0][1] - oldConc) /
@@ -310,14 +262,22 @@ HeatEquationHandler::computePartialsForTemperature(double currentTime,
 			heatFlux * heatFlux * midHeatCoef * alpha * ddBeta /
 				(midHeatCond * midHeatCond * midHeatCond) -
 			2.0 * heatFlux * heatFlux * midHeatCoef * alpha * alpha * dBeta *
-				dBeta *
-				(midHeatCond * midHeatCond * midHeatCond * midHeatCond) +
-			midHeatCoef * heatFlux * beta * alpha * dAlpha * dBeta /
-				(midHeatCond * midHeatCond * midHeatCond) -
-			midHeatCoef * heatFlux * dBeta * dAlpha /
-				(midHeatCond * midHeatCond);
+				dBeta * (midHeatCond * midHeatCond * midHeatCond * midHeatCond);
 		val[1] = 0.0;
 		val[2] = 2.0 * midHeatCoef / (hxLeft * hxRight);
+	}
+	else if (xi == bulkPosition) {
+		double bulkHeatFlux = getBulkHeatFlux(oldConc);
+		val[0] = -2.0 * midHeatCoef / (hxLeft * hxRight) +
+			2.0 * midHeatCoef * alpha * dBeta * (oldConcBox[0][0] - oldConc) /
+				(midHeatCond * hxLeft * hxRight) +
+			bulkHeatFlux * bulkHeatFlux * midHeatCoef * alpha * ddBeta /
+				(midHeatCond * midHeatCond * midHeatCond) -
+			2.0 * bulkHeatFlux * bulkHeatFlux * midHeatCoef * alpha * alpha *
+				dBeta * dBeta *
+				(midHeatCond * midHeatCond * midHeatCond * midHeatCond);
+		val[1] = 2.0 * midHeatCoef / (hxLeft * hxRight);
+		val[2] = 0.0;
 	}
 
 	return true;
@@ -415,6 +375,21 @@ HeatEquationHandler::getHeatFlux(double currentTime)
 
 	return f;
 }
+
+double
+HeatEquationHandler::getBulkHeatFlux(double temp) const
+{
+	// Convert the temperature to Celsius
+	double tempCelsius = temp - 273.0;
+
+	if (tempCelsius > 300)
+		return (32.0 * exp(-pow((tempCelsius - 280.0) / 300.0, 0.65)) + 21.0) *
+			1.0e-12;
+	return (-21.457 + tempCelsius * 0.206 +
+			   18.0 / (1.0 + exp(150.0 - 0.5 * tempCelsius))) *
+		1.0e-12;
+}
+
 } // namespace temperature
 } // namespace core
 } // namespace xolotl

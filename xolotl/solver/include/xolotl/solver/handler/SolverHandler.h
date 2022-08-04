@@ -139,6 +139,9 @@ protected:
 	//! If the user wants to use x mirror boundary conditions or periodic ones.
 	bool isMirror;
 
+	//! If the user wants to use x Robin boundary conditions for temperature.
+	bool isRobin;
+
 	//! If the user wants to attenuate the modified trap mutation.
 	bool useAttenuation;
 
