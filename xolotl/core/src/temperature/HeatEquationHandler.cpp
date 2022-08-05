@@ -292,30 +292,35 @@ HeatEquationHandler::getLocalHeatAlpha(int xi) const
 double
 HeatEquationHandler::getLocalHeatBeta(double temp) const
 {
-	double lnT = log(temp);
-	double heatCond = (A * lnT * lnT + B * lnT + C) * 1.0e-9;
+	double heatCond =
+		(-2.4e-12 * temp * temp * temp * temp - 3.67e-10 * temp * temp * temp +
+			4.65e-5 * temp * temp - 0.131 * temp + 207.0) *
+		1.0e-9;
 	return heatCond;
 }
 
 double
 HeatEquationHandler::getLocalHeatGamma(double temp) const
 {
-	return heatCoef;
+	double tungstenDensity = 19.25e-24; // kg nm-3
+	double capacity = -4.01e-6 * temp * temp + 3.61e-2 * temp + 119.0;
+	return 1.0 / (tungstenDensity * capacity);
 }
 
 double
 HeatEquationHandler::getDBeta(double temp) const
 {
-	double lnT = log(temp);
-	double heatCond = (B + 2.0 * A * lnT) * 1.0e-9 / temp;
+	double heatCond = (-9.6e-12 * temp * temp * temp - 11.01e-10 * temp * temp +
+						  9.3e-5 * temp - 0.131) *
+		1.0e-9;
 	return heatCond;
 }
 
 double
 HeatEquationHandler::getDDBeta(double temp) const
 {
-	double lnT = log(temp);
-	double heatCond = (-B + 2.0 * A * (1.0 - lnT)) * 1.0e-9 / (temp * temp);
+	double heatCond =
+		(-28.8e-12 * temp * temp - 22.02e-10 * temp + 9.3e-5) * 1.0e-9;
 	return heatCond;
 }
 
@@ -334,7 +339,10 @@ HeatEquationHandler::getDAlpha(int xi) const
 double
 HeatEquationHandler::getDGamma(double temp) const
 {
-	return 0.0;
+	double tungstenDensity = 19.25e-24; // kg nm-3
+	double capacity = -4.01e-6 * temp * temp + 3.61e-2 * temp + 119.0;
+	double dCapacity = 3.61e-2 - 8.02e-6 * temp;
+	return -dCapacity / (tungstenDensity * capacity * capacity);
 }
 
 double
