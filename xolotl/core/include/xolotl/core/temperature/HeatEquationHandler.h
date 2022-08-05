@@ -184,69 +184,68 @@ private:
 	std::vector<std::array<double, 2>> oldConcBox;
 
 	/**
-	 * Get the heat conductivity at this grid point.
+	 * Get the spatially dependent part of the heat conductivity.
 	 *
 	 * @param xi The grid index
-	 * @param temp The temperature
-	 * @return The conductivity
-	 */
-	double
-	getLocalHeatConductivity(int xi, double temp) const;
-
-	/**
-	 * Get the heat conductivity at this grid point.
-	 *
-	 * @param xi The grid index
-	 * @return The conductivity
+	 * @return Alpha
 	 */
 	double
 	getLocalHeatAlpha(int xi) const;
 
 	/**
-	 * Get the heat conductivity at this grid point.
+	 * Get the temperature dependent part of the heat conductivity.
 	 *
 	 * @param temp The temperature
-	 * @return The conductivity
+	 * @return Beta
 	 */
 	double
 	getLocalHeatBeta(double temp) const;
 
 	/**
-	 * Get the heat conductivity derivative at this grid point.
+	 * Get the inverse of the temperature dependent heat capacity times density
+	 * (1.0/(\rho C_v)).
 	 *
 	 * @param temp The temperature
-	 * @return The conductivity derivative
+	 * @return Gamma
 	 */
 	double
-	getLocalHeatCondTempDerivative(double temp) const;
+	getLocalHeatGamma(double temp) const;
 
 	/**
-	 * Get the heat conductivity second derivative at this grid point.
+	 * Get the first temperature derivative of Beta.
 	 *
 	 * @param temp The temperature
-	 * @return The conductivity second derivative
+	 * @return The derivative
 	 */
 	double
-	getLocalHeatCondTempSecondDerivative(double temp) const;
+	getDBeta(double temp) const;
 
 	/**
-	 * Get the heat conductivity derivative at this grid point.
+	 * Get the second temperature derivative of Beta.
+	 *
+	 * @param temp The temperature
+	 * @return The second derivative
+	 */
+	double
+	getDDBeta(double temp) const;
+
+	/**
+	 * Get the spatial derivative of Alpha.
 	 *
 	 * @param xi The grid index
-	 * @return The conductivity derivative
+	 * @return The derivative
 	 */
 	double
-	getLocalHeatCondSpatialDerivative(int xi) const;
+	getDAlpha(int xi) const;
 
 	/**
-	 * Get the heat coefficient at this grid point.
+	 * Get the temperature derivative of Gamma.
 	 *
-	 * @param xi The grid index
 	 * @param temp The temperature
-	 * @return The coefficient
+	 * @return The derivative
 	 */
 	double
-	getLocalHeatCoefficient(int xi, double temp) const;
+	getDGamma(double temp) const;
 
 	/**
 	 * Get the bulk heat flux.
@@ -256,6 +255,14 @@ private:
 	 */
 	double
 	getBulkHeatFlux(double temp) const;
+
+	/**
+	 * Get the bulk heat flux derivative.
+	 *
+	 * @param temp The temperature
+	 */
+	double
+	getBulkHeatFluxDerivative(double temp) const;
 };
 } // namespace temperature
 } // namespace core
