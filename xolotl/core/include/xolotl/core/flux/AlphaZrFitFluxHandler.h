@@ -170,7 +170,7 @@ public:
 		// Define only for a 0D case
 		if (xGrid.size() == 0) {
 
-            double cascadeEfficiency = (0.495*(1-tanh(0.00040527088*(currentTime/100-5000)))+0.025); //THIS ONE without basal now apparently?
+            double cascadeEfficiency = (0.495*(1-tanh(0.00040527088*(currentTime/100-5000)))+0.025);
             
             for (int i = 0; i < fluxIndices.size(); i++) {
                 updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;

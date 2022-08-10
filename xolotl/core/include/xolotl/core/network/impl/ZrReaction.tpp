@@ -78,7 +78,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 
 		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
-			(dc0 + dc1) * modRate;
+			(dc0 + dc1);
 	}
 
 	// Cluster 1 is a dislocation loop:
@@ -103,7 +103,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 
 		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
-			(dc0 + dc1) * modRate;
+			(dc0 + dc1);
 	}
 
 	// None of the clusters are loops (interaction is based on spherical volume)
