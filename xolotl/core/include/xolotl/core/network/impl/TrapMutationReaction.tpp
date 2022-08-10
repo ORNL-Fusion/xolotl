@@ -37,7 +37,8 @@ TrapMutationReaction<TNetwork, TDerived>::TrapMutationReaction(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-TrapMutationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+TrapMutationReaction<TNetwork, TDerived>::computeRate(
+	IndexType gridIndex, double time)
 {
 	return 0.0;
 }

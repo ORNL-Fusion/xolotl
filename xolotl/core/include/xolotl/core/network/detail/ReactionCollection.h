@@ -140,11 +140,11 @@ public:
 	}
 
 	void
-	updateRates()
+	updateRates(double time = 0.0)
 	{
 		forEach(
 			"ReactionNetwork::updateReactionRates",
-			DEVICE_LAMBDA(auto&& reaction) { reaction.updateRates(); });
+			DEVICE_LAMBDA(auto&& reaction) { reaction.updateRates(time); });
 		Kokkos::fence();
 	}
 

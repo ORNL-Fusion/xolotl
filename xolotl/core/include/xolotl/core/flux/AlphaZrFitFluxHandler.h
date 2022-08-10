@@ -107,7 +107,7 @@ public:
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
 
         // Set the fraction of large vacancy clusters (n > 19) that become faulted basal pyramids:
-        if (maxSizeB > 18) Qb = 0.1; // Basal
+        if (maxSizeB > 18) Qb = 0.10; // Basal
         else Qb = 0; //No basal
 
 		// Set the flux index corresponding the mobile interstitial clusters (n
@@ -169,39 +169,11 @@ public:
 	{
 		// Define only for a 0D case
 		if (xGrid.size() == 0) {
-            
-            //double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.021); //without basal
-            //double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.0125); //with basal
-            
-            //double cascadeEfficiency = (0.71*(1-tanh(0.00040527088*(currentTime/100-1000)))+0.0225); //NEW without basal
-            //double cascadeEfficiency = (0.71*(1-tanh(0.00040527088*(currentTime/100-1000)))+0.02); //Old with basal
-            //double cascadeEfficiency = (0.98*(1-tanh(0.00040527088*(currentTime/100)))+0.02); //NEW NEW with basal
 
-            //double cascadeEfficiency = (0.485*(1-tanh(0.00040527088*(currentTime/100-7000)))+0.021); //without basal
-            //double cascadeEfficiency = 1;
-            
             double cascadeEfficiency = (0.495*(1-tanh(0.00040527088*(currentTime/100-5000)))+0.025); //THIS ONE without basal now apparently?
-
             
-            
-            
-            
-            //double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.05);
-            //double cascadeEfficiency = (0.99*(1-tanh(0.00040527088*(currentTime/100)))+0.035);
-
-            //Using Varvenne's
-            //double cascadeEfficiency = (0.375*(1-tanh(0.00040527088*(currentTime/100-8500)))+0.25);
-            //double cascadeEfficiency = (0.5*(1-tanh(0.00040527088*(currentTime/100-3500)))+0.05);
-            //double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/100)))+0.05);
-
-            //double cascadeEfficiency = (0.99*(1-tanh(0.00030527088*(currentTime/150)))); //eta
-
             for (int i = 0; i < fluxIndices.size(); i++) {
                 updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;
-                //std::cout << i << " " <<incidentFluxVec[i][0] << std::endl;
-                //updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0];
-                //if(i==0 || i==70) updatedConcOffset[fluxIndices[i]] += 4.3e-6;
-
 			}
 		}
 

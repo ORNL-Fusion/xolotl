@@ -143,7 +143,6 @@ ZrClusterGenerator::getDiffusionFactor(
 	const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
 	constexpr double defaultDiffusion = 1.0;
-	// constexpr double iNineDiffusion = 2.2e+11;
 	constexpr double iNineDiffusion = 0.0;
 
 	const auto& reg = cluster.getRegion();
@@ -174,11 +173,6 @@ ZrClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	const auto& reg = cluster.getRegion();
 	Composition lo(reg.getOrigin());
 	double radius = 0.0;
-
-	// jmr: rn = (3nOmega/4pi)^1/3 [nm] for n < 10
-	// jmr: Note that (3Omega/4pi) = 5.586e-3 nm^3, where Omega = 0.0234 nm^3
-	// jmr: For prismatic loops (n > 9): rn = 0.163076*sqrt(n) [nm]
-	// jmr: For basal loops (n > 9): rn = 0.169587*sqrt(n) [nm]
 
 	if (lo.isOnAxis(Species::V)) {
 		for (auto j : makeIntervalRange(reg[Species::V])) {

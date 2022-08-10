@@ -69,10 +69,10 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	void
-	updateRates()
+	updateRates(double time = 0.0)
 	{
 		for (IndexType i = 0; i < _rate.extent(0); ++i) {
-			_rate(i) = asDerived()->computeRate(i);
+			_rate(i) = asDerived()->computeRate(i, time);
 		}
 	}
 
@@ -297,7 +297,7 @@ private:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex);
+	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -412,7 +412,7 @@ private:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex);
+	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void

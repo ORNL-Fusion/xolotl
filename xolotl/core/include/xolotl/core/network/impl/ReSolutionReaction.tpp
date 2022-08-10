@@ -148,7 +148,8 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-ReSolutionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+ReSolutionReaction<TNetwork, TDerived>::computeRate(
+	IndexType gridIndex, double time)
 {
 	// Get Zeta
 	auto zeta = this->_clusterData->zeta();

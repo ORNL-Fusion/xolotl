@@ -57,7 +57,7 @@ NEDissociationReaction::getRateForProduction(IndexType gridIndex)
 
 KOKKOS_INLINE_FUNCTION
 double
-NEDissociationReaction::computeBindingEnergy()
+NEDissociationReaction::computeBindingEnergy(double time)
 {
 	auto cl = this->_clusterData->getCluster(this->_reactant);
 	auto prod1 = this->_clusterData->getCluster(this->_products[0]);

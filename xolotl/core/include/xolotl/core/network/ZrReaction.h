@@ -41,7 +41,7 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeBindingEnergy();
+	computeBindingEnergy(double time = 0.0);
 };
 
 class ZrSinkReaction : public SinkReaction<ZrReactionNetwork, ZrSinkReaction>
@@ -53,7 +53,7 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex);
+	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void

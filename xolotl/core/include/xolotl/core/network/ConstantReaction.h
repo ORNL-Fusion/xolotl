@@ -69,7 +69,7 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex)
+	computeRate(IndexType gridIndex, double time = 0.0)
 	{
 		return _constantRates[0][0][0][0];
 	}

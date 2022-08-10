@@ -265,16 +265,26 @@ ReactionNetwork<TImpl>::setTemperatures(
 
 	asDerived()->updateExtraClusterData(gridTemps, gridDepths);
 
-	asDerived()->updateReactionRates();
+	asDerived()->updateReactionRates(_currentTime);
 
 	invalidateDataMirror();
 }
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::updateReactionRates()
+ReactionNetwork<TImpl>::setTime(double time)
 {
-	_reactions.updateRates();
+	_currentTime = time;
+	asDerived()->updateReactionRates(time);
+
+	invalidateDataMirror();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::updateReactionRates(double time)
+{
+	_reactions.updateRates(time);
 }
 
 template <typename TImpl>

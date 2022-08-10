@@ -234,6 +234,9 @@ public:
 	setTemperatures(const std::vector<double>& gridTemperatures,
 		const std::vector<double>& gridDepths) override;
 
+	void
+	setTime(double time) override;
+
 	std::uint64_t
 	getDeviceMemorySize() const noexcept override;
 
@@ -557,7 +560,7 @@ public:
 		AmountType minSize = 0);
 
 	void
-	updateReactionRates();
+	updateReactionRates(double time = 0.0);
 
 	void
 	updateOutgoingDiffFluxes(double* gridPointSolution, double factor,
@@ -624,6 +627,8 @@ protected:
 	std::map<std::string, SpeciesId> _speciesLabelMap;
 
 	ConnectivitiesView _constantConns;
+
+	double _currentTime;
 };
 
 namespace detail

@@ -37,9 +37,8 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	double Pl = 1.0; // Capture efficiency for diffusing defect
 	double Pli = 1.0; // Capture efficiency for interstitial a-loop
 	double Plv = 1.0; // Capture efficiency for vacancy a-loops
-    double modRate = 1.0;
 
-	// Determine parameters based on cluster type and size
+	// Determine parameters for cluster 0 based on cluster type and size
 	if (cl0IsV)
 		n0 = lo0[Species::V];
 	else if (lo0.isOnAxis(Species::Basal))
@@ -48,6 +47,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		n0 = lo0[Species::I];
 	bool cl0IsLoop = (n0 > 9);
 
+    // Determine parameters for cluster 1 based on cluster type and size
 	if (cl1IsV)
 		n1 = lo1[Species::V];
 	else if (lo1.isOnAxis(Species::Basal))
@@ -56,15 +56,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		n1 = lo1[Species::I];
 	bool cl1IsLoop = (n1 > 9);
 
-    //Set modifications to reduce SIA interaction rates:
-    if (lo0.isOnAxis(Species::Basal) && lo1.isOnAxis(Species::I)) modRate = 0.90;
-    else if (lo1.isOnAxis(Species::Basal) && lo0.isOnAxis(Species::I)) modRate = 0.90;
-    //if (lo0.isOnAxis(Species::Basal) && lo1.isOnAxis(Species::V)) modRate = 1.3;
-    //else if (lo1.isOnAxis(Species::Basal) && lo0.isOnAxis(Species::V)) modRate = 1.3;
-
-
-	// These rates are only for 3-D mobile diffusers, but for now assume that it
-	// works for 1-D diffusers as well Cluster 0 is a dislocation loop:
+    // Cluster 0 is a dislocation loop
 	if (cl0IsLoop) {
 		// Define the dislocation capture radius, transition coefficient, and
 		// then calculate the reaction rate
@@ -194,7 +186,7 @@ ZrDissociationReaction::getRateForProduction(IndexType gridIndex)
 
 KOKKOS_INLINE_FUNCTION
 double
-ZrDissociationReaction::computeBindingEnergy()
+ZrDissociationReaction::computeBindingEnergy(double time)
 {
 	using Species = typename Superclass::Species;
 	using Composition = typename Superclass::Composition;
@@ -212,31 +204,15 @@ ZrDissociationReaction::computeBindingEnergy()
 	Composition hi = clReg.getUpperLimitPoint();
 	Composition prod1Comp = prod1Reg.getOrigin();
 	Composition prod2Comp = prod2Reg.getOrigin();
-
     double Efn1 = 0.0;
     double Efn2 = 0.0;
+
 	if (lo.isOnAxis(Species::V)) {
 		double n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
 
-            /*
-			if (n < 18)
-				be = 2.03 - 1.9 * (pow(n, 0.84) - pow(n - 1.0, 0.84));
-			else
-				be = 2.03 - 3.4 * (pow(n, 0.70) - pow(n - 1.0, 0.70));
-            */
-
-            /*
-            //Varvenne binding energies:
-            if (n == 2) be = 0.22;
-            else if (n == 3) be = 0.35;
-            else if (n == 4) be = 0.32;
-            else if (n == 5) be = 1.2;
-            else if (n == 6) be = 1.2;
-            else if (n == 7) be = 0.27;
-            */
-
-
+            // For small sizes, use MD power-law fits
+            // For large sizes, use Varvenne-provided formation energies
             if (n < 18)
                 be = 2.03 - 1.9 * (pow(n, 0.84) - pow(n - 1.0, 0.84));
             else if (n < 66)
@@ -251,41 +227,30 @@ ZrDissociationReaction::computeBindingEnergy()
                 Efn2 = 2*3.14*1.1*1.69*0.25*sqrt(n-1)*log(1.69*sqrt(n-1)/0.23);
                 be = 2.03 - (Efn1 - Efn2);
             }
-
-        //if(n<70) be=be*0.97;
-        //be = be*1.03;
 		}
 	}
 
 	// adding basal
 	else if (lo.isOnAxis(Species::Basal)) {
+		// Time dependence
+		double x = time;
+		double cp = x;
+		double gamma = cp;
+
 		double n = (double)(lo[Species::Basal] + hi[Species::Basal] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::Basal) ||
 			prod2Comp.isOnAxis(Species::Basal)) {
 
-			if (n < 6)
-				be = 2.03 - 2.0 * (pow(n, 0.87) - pow(n - 1.0, 0.87));
-			else if (n < 177)
-				be = 2.03 - 2.5 * (pow(n, 0.78) - pow(n - 1.0, 0.78));
-			else
-				be = 2.03 - 3.7 * (pow(n, 0.72) - pow(n - 1.0, 0.72));
-
             if (n < ::xolotl::core::basalTransitionSize){
-                //be = 2.03 - 2.5 * (pow(n, 0.78) - pow(n - 1.0, 0.78));
-                be = 2.03 + ((5.352*sqrt(n-1)+0.122*(n-1)+0.154*(n-1)-5.3) - (5.352*sqrt(n)+0.122*n+0.154*n-5.3));
-                //be = 2.03 + ((5.352*sqrt(n-1)+0.122*(n-1)-5.3) - (5.352*sqrt(n)+0.122*n-5.3)); //Without basal SFE
-                be = be*0.88;
-                //be = be*0.88+0.154;
+                be = 1.762 + ((5.352*sqrt(n-1)+0.122*(n-1)+0.154*(n-1)-5.3) - (5.352*sqrt(n)+0.122*n+0.154*n-5.3)); // With basal SFE
+                //be = 1.762 + ((5.352*sqrt(n-1)+0.122*(n-1)-5.3) - (5.352*sqrt(n)+0.122*n-5.3)); //Without basal SFE
             }
             else if (n < 200)
-                be = 2.03 + 2.87 * (sqrt(n-1)*log(1.50*sqrt(n-1)) - sqrt(n)*log(1.50*sqrt(n))) - 9.08*0.0171;
-                //be = 2.03 + 2.87 * (sqrt(n-1)*log(1.50*sqrt(n-1)) - sqrt(n)*log(1.50*sqrt(n)));
+                be = 2.03 + 2.87 * (sqrt(n-1)*log(1.50*sqrt(n-1)) - sqrt(n)*log(1.50*sqrt(n))) - 9.08*0.0171; //With SFE
+                //be = 2.03 + 2.87 * (sqrt(n-1)*log(1.50*sqrt(n-1)) - sqrt(n)*log(1.50*sqrt(n))); //Without basal SFE
             else
-                be = 2.03 + 3.02 * (sqrt(n-1)*log(1.64*sqrt(n-1)) - sqrt(n)*log(1.64*sqrt(n))) - 9.08*0.00918;
-                //be = 2.03 + 3.02 * (sqrt(n-1)*log(1.64*sqrt(n-1)) - sqrt(n)*log(1.64*sqrt(n))) ;
-
-
-            //be = be * 1.2;
+                be = 2.03 + 3.02 * (sqrt(n-1)*log(1.64*sqrt(n-1)) - sqrt(n)*log(1.64*sqrt(n))) - 9.08*0.00918; //With SFE
+                //be = 2.03 + 3.02 * (sqrt(n-1)*log(1.64*sqrt(n-1)) - sqrt(n)*log(1.64*sqrt(n))) ; //Without basal SFE
 		}
 	}
 
@@ -296,7 +261,6 @@ ZrDissociationReaction::computeBindingEnergy()
 				be = 2.94 - 2.8 * (pow(n, 0.81) - pow(n - 1.0, 0.81));
 			else
 				be = 2.94 - 4.6 * (pow(n, 0.66) - pow(n - 1.0, 0.66));
-            //be=be*0.96;
 		}
 	}
 
@@ -305,7 +269,7 @@ ZrDissociationReaction::computeBindingEnergy()
 
 KOKKOS_INLINE_FUNCTION
 double
-ZrSinkReaction::computeRate(IndexType gridIndex)
+ZrSinkReaction::computeRate(IndexType gridIndex, double time)
 {
 	using Species = typename Superclass::Species;
 	using Composition = typename Superclass::Composition;
@@ -317,11 +281,6 @@ ZrSinkReaction::computeRate(IndexType gridIndex)
 
 	auto clReg = cl.getRegion();
 	Composition lo = clReg.getOrigin();
-
-    if (lo.isOnAxis(Species::V))
-        std::cout << "VACANCY: n = " << _reactant << " " << " dc = " << dc << " " << anisotropy << std::endl;
-    if (lo.isOnAxis(Species::I))
-        std::cout << "INTERSTITIAL: n = " << _reactant << " " << " dc = " << dc << " " << anisotropy << std::endl;
 
 	if (lo.isOnAxis(Species::V)) {
 		return dc * 1.0 *
@@ -356,7 +315,6 @@ ZrSinkReaction::computeFlux(
 	auto vInt = this->_clusterData->extraData.integratedConcentrations(0);
 	auto iInt = this->_clusterData->extraData.integratedConcentrations(1);
 
-	// TODO: add the wanted function of vInt and iInt in value
 	double value = concentrations(_reactant) * this->_rate(gridIndex);
 	Kokkos::atomic_sub(&fluxes(_reactant), value);
 }
@@ -370,7 +328,6 @@ ZrSinkReaction::computePartialDerivatives(ConcentrationsView concentrations,
 	auto vInt = this->_clusterData->extraData.integratedConcentrations(0);
 	auto iInt = this->_clusterData->extraData.integratedConcentrations(1);
 
-	// TODO: add the wanted function of vInt and iInt in value
 	double value = this->_rate(gridIndex);
 	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), value);
 }
@@ -385,7 +342,6 @@ ZrSinkReaction::computeReducedPartialDerivatives(
 	auto vInt = this->_clusterData->extraData.integratedConcentrations(0);
 	auto iInt = this->_clusterData->extraData.integratedConcentrations(1);
 
-	// TODO: add the wanted function of vInt and iInt in value
 	double value = this->_rate(gridIndex);
 	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), value);
 }

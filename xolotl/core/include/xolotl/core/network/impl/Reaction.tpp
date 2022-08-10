@@ -474,7 +474,8 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-ProductionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+ProductionReaction<TNetwork, TDerived>::computeRate(
+	IndexType gridIndex, double time)
 {
 	return this->asDerived()->getRateForProduction(gridIndex);
 }
@@ -2096,13 +2097,14 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-DissociationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+DissociationReaction<TNetwork, TDerived>::computeRate(
+	IndexType gridIndex, double time)
 {
 	double omega = this->_clusterData->atomicVolume();
 	double T = this->_clusterData->temperature(gridIndex);
 
 	double kPlus = this->asDerived()->getRateForProduction(gridIndex);
-	double E_b = this->asDerived()->computeBindingEnergy();
+	double E_b = this->asDerived()->computeBindingEnergy(time);
 
 	constexpr double k_B = ::xolotl::core::kBoltzmann;
 

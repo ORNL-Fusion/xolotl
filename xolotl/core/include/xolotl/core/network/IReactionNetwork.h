@@ -294,6 +294,12 @@ public:
 		const std::vector<double>& gridDepths) = 0;
 
 	/**
+	 * @brief To update time dependent rates.
+	 */
+	virtual void
+	setTime(double time) = 0;
+
+	/**
 	 * @brief Copies tile and cluster data from device to host.
 	 */
 	virtual void
