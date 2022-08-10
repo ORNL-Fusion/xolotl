@@ -184,6 +184,7 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 	auto oSize =
 		localXM * 2 * (difEntries.size() + advEntries.size() * nAdvec + 1);
 	auto nPartials = dSize + oSize;
+    // TODO: should the count used for this reservation be more exact?
 	std::vector<PetscInt> rows, cols;
 	rows.reserve(nPartials);
 	cols.reserve(nPartials);
@@ -211,6 +212,14 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 		partialsCount += 3;
 	}
 	for (auto i = localXS; i < localXS + localXM; ++i) {
+        if (i < surfacePosition + leftOffset || i > nX - 1 - rightOffset) {
+            for (IdType c = 0; c < dof; ++c) {
+                mapMatStencilsToCoords({c, c}, i, i, rows, cols);
+            }
+            partialsCount += dof;
+            continue;
+        }
+
 		// diffusion
 		for (auto&& component : difEntries) {
 			mapMatStencilsToCoords(component, i, i, rows, cols);
@@ -238,6 +247,11 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 						component, i, i + offsets[0], rows, cols);
 				}
 			}
+            // Handle potential discrepancies in entry counts
+            for (auto i = advEntries[l].size(); i < nAdvec; ++i) {
+                rows.push_back(-1);
+                cols.push_back(-1);
+            }
 			partialsCount += nAdvec * 2;
 		}
 		// network
@@ -247,9 +261,10 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 		partialsCount += nwEntries.size();
 	}
 	//
-	std::cout << "count: " << partialsCount << "\nnPartials: " << nPartials
-			  << std::endl;
-	ierr = MatSetPreallocationCOO(J, rows.size(), rows.data(), cols.data());
+	std::cout << "count: " << partialsCount << "\nnPartialsEst: " << nPartials
+			  << "\nnPartials: " << rows.size() << std::endl;
+    nPartials = rows.size();
+	ierr = MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data());
 	checkPetscError(ierr,
 		"PetscSolver1DHandler::initializeSolverContext: "
 		"MatSetPreallocationCOO failed.");
@@ -933,10 +948,10 @@ PetscSolver1DHandler::computeJacobian(
 	MatStencil row, cols[3];
 	PetscScalar tempVals[3];
 	IdType tempIndices[1];
-	PetscScalar diffVals[3 * nDiff];
-	IdType diffIndices[nDiff];
-	PetscScalar advecVals[2 * nAdvec];
-	IdType advecIndices[nAdvec];
+	auto diffVals = std::vector<PetscScalar>(3 * nDiff);
+	auto diffIndices = std::vector<IdType>(nDiff);
+	auto advecVals = std::vector<PetscScalar>(2 * nAdvec);
+	auto advecIndices = std::vector<IdType>(nAdvec);
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
 	/*
@@ -967,6 +982,11 @@ PetscSolver1DHandler::computeJacobian(
 			hxRight = temperatureGrid[xi + 1] - temperatureGrid[xi];
 		}
 
+		auto tempIndex = valIndex;
+		if (xi >= localXS && xi < localXS + localXM) {
+			valIndex += 3;
+		}
+
 		// Heat condition
 		if (xi == surfacePosition && xi >= localXS && xi < localXS + localXM) {
 			// Get the partial derivatives for the temperature
@@ -995,9 +1015,9 @@ PetscSolver1DHandler::computeJacobian(
 					"MatSetValuesStencil (temperature) failed.");
 
 #endif
-				hTempVals(valIndex + 0) = tempVals[0];
-				hTempVals(valIndex + 1) = tempVals[1];
-				hTempVals(valIndex + 2) = tempVals[2];
+				hTempVals(tempIndex + 0) = tempVals[0];
+				hTempVals(tempIndex + 1) = tempVals[1];
+				hTempVals(tempIndex + 2) = tempVals[2];
 			}
 		}
 
@@ -1068,12 +1088,11 @@ PetscSolver1DHandler::computeJacobian(
 					"PetscSolver1DHandler::computeJacobian: "
 					"MatSetValuesStencil (temperature) failed.");
 #endif
-				hTempVals(valIndex + 0) += tempVals[0];
-				hTempVals(valIndex + 1) += tempVals[1];
-				hTempVals(valIndex + 2) += tempVals[2];
+				hTempVals(tempIndex + 0) += tempVals[0];
+				hTempVals(tempIndex + 1) += tempVals[1];
+				hTempVals(tempIndex + 2) += tempVals[2];
 			}
 		}
-		valIndex += 3;
 	}
 	deep_copy(subview(vals, std::make_pair(IdType{0}, localXM * 3)), hTempVals);
 
@@ -1139,27 +1158,30 @@ PetscSolver1DHandler::computeJacobian(
 	}
 
 	// Arguments for MatSetValuesStencil called below
-	MatStencil rowId;
-	MatStencil colIds[dof];
-	IdType pdColIdsVectorSize = 0;
+	// MatStencil rowId;
+	// MatStencil colIds[dof];
+	// IdType pdColIdsVectorSize = 0;
 
 	// Loop over the grid points
 	for (auto xi = localXS; xi < localXS + localXM; xi++) {
 		// Boundary conditions
 		// Everything to the left of the surface is empty
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
+            valIndex += dof;
 			continue;
+        }
 
 		// Free surface GB
-		bool skip = false;
-		for (auto& pair : gbVector) {
-			if (xi == std::get<0>(pair)) {
-				skip = true;
-				break;
-			}
-		}
-		if (skip)
-			continue;
+        if (std::find_if(begin(gbVector), end(gbVector), [=](auto&& pair) {
+                    return xi == pair[0]; }) != end(gbVector)) {
+            // TODO: If the gbVector is initialized before the preallocation, we
+            // could simply avoid the extra entries
+            valIndex += 3 * nDiff;
+			valIndex += 2 * nAdvec;
+            valIndex += nNetworkEntries;
+            continue;
+        }
+
 		// Compute the left and right hx
 		double hxLeft = 0.0, hxRight = 0.0;
 		if (xi >= 1 && xi < nX) {
@@ -1176,8 +1198,8 @@ PetscSolver1DHandler::computeJacobian(
 		}
 
 		// Get the partial derivatives for the diffusion
-		diffusionHandler->computePartialsForDiffusion(
-			network, diffVals, diffIndices, hxLeft, hxRight, xi - localXS);
+		diffusionHandler->computePartialsForDiffusion(network, diffVals.data(),
+			diffIndices.data(), hxLeft, hxRight, xi - localXS);
 
 #if 0
 		// Loop on the number of diffusion cluster to set the values in the
@@ -1197,13 +1219,13 @@ PetscSolver1DHandler::computeJacobian(
 			cols[2].c = diffIndices[i];
 
 			ierr = MatSetValuesStencil(
-				J, 1, &row, 3, cols, diffVals + (3 * i), ADD_VALUES);
+				J, 1, &row, 3, cols, diffVals.data() + (3 * i), ADD_VALUES);
 			checkPetscError(ierr,
 				"PetscSolver1DHandler::computeJacobian: "
 				"MatSetValuesStencil (diffusion) failed.");
 		}
 #endif
-		auto hDiffVals = HostUnmanaged(diffVals, 3 * nDiff);
+		auto hDiffVals = HostUnmanaged(diffVals.data(), 3 * nDiff);
 		deep_copy(subview(vals, std::make_pair(valIndex, valIndex + 3 * nDiff)),
 			hDiffVals);
 		valIndex += 3 * nDiff;
@@ -1213,8 +1235,8 @@ PetscSolver1DHandler::computeJacobian(
 		gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 		for (auto l = 0; l < advectionHandlers.size(); l++) {
 			advectionHandlers[l]->computePartialsForAdvection(network,
-				advecVals, advecIndices, gridPosition, hxLeft, hxRight,
-				xi - localXS);
+				advecVals.data(), advecIndices.data(), gridPosition, hxLeft,
+				hxRight, xi - localXS);
 
 #if 0
 			// Get the stencil indices to know where to put the partial
@@ -1251,13 +1273,13 @@ PetscSolver1DHandler::computeJacobian(
 
 				// Update the matrix
 				ierr = MatSetValuesStencil(
-					J, 1, &row, 2, cols, advecVals + (2 * i), ADD_VALUES);
+					J, 1, &row, 2, cols, advecVals.data() + (2 * i), ADD_VALUES);
 				checkPetscError(ierr,
 					"PetscSolver1DHandler::computeJacobian: "
 					"MatSetValuesStencil (advection) failed.");
 			}
 #endif
-			auto hAdvecVals = HostUnmanaged(advecVals, 2 * nAdvec);
+			auto hAdvecVals = HostUnmanaged(advecVals.data(), 2 * nAdvec);
 			deep_copy(
 				subview(vals, std::make_pair(valIndex, valIndex + 2 * nAdvec)),
 				hAdvecVals);
