@@ -547,6 +547,9 @@ private:
 	generateClusterData(const ClusterGenerator& generator);
 
 	void
+	readClusters(const std::string filename = "reactionRates.txt");
+
+	void
 	readReactions(
 		double temperature, const std::string filename = "reactionRates.txt");
 
@@ -569,13 +572,14 @@ private:
 
 private:
 	std::optional<SubpavingMirror> _subpavingMirror;
-	std::optional<ClusterDataMirror> _clusterDataMirror;
 
 	detail::ReactionNetworkWorker<TImpl> _worker;
 
 	SparseFillMap _connectivityMap;
 
 protected:
+	std::optional<ClusterDataMirror> _clusterDataMirror;
+
 	Kokkos::DualView<ClusterData> _clusterData;
 
 	Subpaving _subpaving;

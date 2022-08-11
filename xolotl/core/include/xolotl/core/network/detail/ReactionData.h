@@ -39,7 +39,7 @@ struct ReactionData
 	ReactionData() = default;
 
 	ReactionData(IndexType nReactions, IndexType gridSize,
-		IndexType numClusters, bool readRates,
+		IndexType clusterSize, bool readRates,
 		const Kokkos::Array<IndexType, numReactionTypes + 1>& rBeginIds) :
 		numReactions(nReactions),
 		widths("Reaction Widths", numReactions, numSpeciesNoI),
@@ -48,7 +48,7 @@ struct ReactionData
 	{
 		if (readRates)
 			reactionEnergies = Kokkos::View<double**>("Reaction Energies",
-				numClusters, numClusters + 1); // In case the second cluster or
+				clusterSize, clusterSize + 1); // In case the second cluster or
 											   // product has invalid index
 		else
 			reactionEnergies =

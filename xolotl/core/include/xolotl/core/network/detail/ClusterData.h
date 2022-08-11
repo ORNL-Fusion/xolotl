@@ -142,6 +142,9 @@ private:
 		LATTICE_PARAM,
 		FISSION_RATE,
 		ZETA,
+		I_FORMATION,
+		XE_FORMATION,
+		V_FORMATION,
 		NUM_FLOAT_VALS
 	};
 
@@ -217,6 +220,45 @@ public:
 	setZeta(double val)
 	{
 		setVal(_floatVals, ZETA, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getIFormationEnergy() const
+	{
+		return _floatVals[I_FORMATION];
+	}
+
+	void
+	setIFormationEnergy(double val)
+	{
+		setVal(_floatVals, I_FORMATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getVFormationEnergy() const
+	{
+		return _floatVals[V_FORMATION];
+	}
+
+	void
+	setVFormationEnergy(double val)
+	{
+		setVal(_floatVals, V_FORMATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getXeFormationEnergy() const
+	{
+		return _floatVals[XE_FORMATION];
+	}
+
+	void
+	setXeFormationEnergy(double val)
+	{
+		setVal(_floatVals, XE_FORMATION, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

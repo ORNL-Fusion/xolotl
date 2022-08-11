@@ -115,12 +115,6 @@ NEClusterGenerator::select(const Region& region) const
 		return false;
 	}
 
-	// XeV
-	if (region[Species::Xe].begin() > region[Species::V].begin() &&
-		region[Species::V].begin() > 0) {
-		return false;
-	}
-
 	return true;
 }
 
@@ -165,15 +159,17 @@ NEClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	if (reg.isSimplex()) {
 		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {
-			radius =
-				latticeParameter * cbrt(1.0 / ::xolotl::core::pi) * 0.5 * 1.0;
+			//			radius = latticeParameter * cbrt(1.0 /
+			//::xolotl::core::pi)
+			//* 0.5; 			std::cout << radius << std::endl;
+			radius = latticeParameter * ::xolotl::core::pi * 2.0;
 		}
 		else if (comp.isOnAxis(Species::Xe)) {
 			radius = impurityRadius;
 		}
 		else if (comp.isOnAxis(Species::V)) {
 			radius = latticeParameter *
-				cbrt((comp[Species::V]) / ::xolotl::core::pi) * 0.5 * 1.0;
+				cbrt((comp[Species::V]) / ::xolotl::core::pi) * 0.5;
 		}
 		else {
 			radius = pow((3.0 * (double)comp[Species::V]) / (FourPi * _density),

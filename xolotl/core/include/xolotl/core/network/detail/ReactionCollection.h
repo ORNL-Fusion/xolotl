@@ -44,10 +44,10 @@ public:
 	ReactionCollection() = default;
 
 	template <typename... TViews>
-	ReactionCollection(IndexType gridSize, IndexType numClusters,
+	ReactionCollection(IndexType gridSize, IndexType clusterSize,
 		bool readRates, TViews... views) :
 		_reactions(views...),
-		_data(_reactions.getNumberOfElements(), gridSize, numClusters,
+		_data(_reactions.getNumberOfElements(), gridSize, clusterSize,
 			readRates, _reactions.getElementBeginIndices())
 	{
 		static_assert(sizeof...(TViews) == numReactionTypes,

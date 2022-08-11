@@ -5,6 +5,7 @@
 
 #include <Kokkos_Core.hpp>
 #include <Kokkos_Crs.hpp>
+#include <Kokkos_UnorderedMap.hpp>
 
 #include <xolotl/core/network/Cluster.h>
 #include <xolotl/core/network/SpeciesId.h>

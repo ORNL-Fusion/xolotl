@@ -135,9 +135,9 @@ public:
 		// Update the concentration array
 		//		updatedConcOffset[fluxIndices[0]] += fluxAmplitude * xeYield; //
 		// Xe
-		updatedConcOffset[fluxIndices[0]] += 1636.67 * fluxAmplitude; // V
-		updatedConcOffset[fluxIndices[1]] += 1636.67 * fluxAmplitude; // I
-		updatedConcOffset[fluxIndices[2]] += 0.25 * fluxAmplitude; // Xe
+		updatedConcOffset[fluxIndices[0]] += defectYield * fluxAmplitude; // V
+		updatedConcOffset[fluxIndices[1]] += defectYield * fluxAmplitude; // I
+		updatedConcOffset[fluxIndices[2]] += xeYield * fluxAmplitude; // Xe
 
 		return;
 	}

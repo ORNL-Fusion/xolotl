@@ -79,6 +79,8 @@ constexpr double alloysinkStrength = 1.0e-5;
 
 constexpr double uConcentration = 1.0;
 
+constexpr double zFactor = 100.0;
+
 // Tungsten density in nm^-3
 constexpr double tungstenDensity = 62.8;
 

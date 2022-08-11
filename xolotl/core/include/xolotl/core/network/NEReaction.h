@@ -32,8 +32,15 @@ public:
 		ProductionReaction(reactionData, clusterData, reactionId, cluster0,
 			cluster1, cluster2, cluster3)
 	{
-		this->_deltaG0 =
-			reactionData.reactionEnergies(_reactants[0], _reactants[1]);
+		if (this->_clusterData->extraData.fileClusterMap.exists(
+				_reactants[0]) and
+			this->_clusterData->extraData.fileClusterMap.exists(
+				_reactants[1])) {
+			auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+			this->_deltaG0 = reactionData.reactionEnergies(
+				clusterMap.value_at(clusterMap.find(_reactants[0])),
+				clusterMap.value_at(clusterMap.find(_reactants[1])));
+		}
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -85,8 +92,14 @@ public:
 		DissociationReaction(
 			reactionData, clusterData, reactionId, cluster0, cluster1, cluster2)
 	{
-		this->_deltaG0 =
-			reactionData.reactionEnergies(_products[0], _products[1]);
+		if (this->_clusterData->extraData.fileClusterMap.exists(
+				_products[0]) and
+			this->_clusterData->extraData.fileClusterMap.exists(_products[1])) {
+			auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+			this->_deltaG0 = reactionData.reactionEnergies(
+				clusterMap.value_at(clusterMap.find(_products[0])),
+				clusterMap.value_at(clusterMap.find(_products[1])));
+		}
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -157,8 +170,12 @@ public:
 		IndexType reactionId, IndexType cluster0) :
 		SinkReaction(reactionData, clusterData, reactionId, cluster0)
 	{
-		this->_deltaG0 = reactionData.reactionEnergies(
-			_reactant, this->_clusterData->numClusters);
+		if (this->_clusterData->extraData.fileClusterMap.exists(_reactant)) {
+			auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+			this->_deltaG0 = reactionData.reactionEnergies(
+				clusterMap.value_at(clusterMap.find(_reactant)),
+				clusterMap.capacity());
+		}
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -176,22 +193,6 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getSinkStrength();
-
-private:
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
-		IndexType gridIndex);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeReducedPartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex);
 };
 } // namespace network
 } // namespace core

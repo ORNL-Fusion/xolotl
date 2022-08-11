@@ -54,6 +54,12 @@ private:
 	getReactionGenerator() const noexcept;
 
 	void
+	readClusters(const std::string filename)
+	{
+		return;
+	}
+
+	void
 	readReactions(double temperature, const std::string filename)
 	{
 		return;

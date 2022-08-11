@@ -65,6 +65,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	else
 		this->setEnableReadRates(false);
 
+	readClusters(opts.getReactionFilePath());
+
 	this->_numClusters = _clusterData.h_view().numClusters;
 	asDerived()->initializeExtraClusterData(opts);
 	generateClusterData(ClusterGenerator{opts});
@@ -631,6 +633,13 @@ void
 ReactionNetwork<TImpl>::defineMomentIds()
 {
 	_worker.defineMomentIds();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::readClusters(const std::string filename)
+{
+	asDerived()->readClusters(filename);
 }
 
 template <typename TImpl>

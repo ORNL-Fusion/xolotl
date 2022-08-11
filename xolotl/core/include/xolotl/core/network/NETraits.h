@@ -2,6 +2,8 @@
 
 #include <tuple>
 
+#include <Kokkos_UnorderedMap.hpp>
+
 #include <xolotl/core/network/ReactionNetworkTraits.h>
 #include <xolotl/core/network/detail/ClusterData.h>
 
@@ -87,6 +89,7 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 
 	template <typename TData>
 	using View = ViewType<TData, PlsmContext>;
+	using MapType = Kokkos::UnorderedMap<int, int, PlsmContext>;
 
 	using IndexType = detail::ReactionNetworkIndexType;
 
@@ -95,7 +98,8 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 	template <typename PC>
 	KOKKOS_INLINE_FUNCTION
 	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
-		constantRates(data.constantRates)
+		constantRates(data.constantRates),
+		fileClusterMap(data.fileClusterMap)
 	{
 	}
 
@@ -111,7 +115,12 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 			constantRates = create_mirror_view(data.constantRates);
 		}
 
+		if (!fileClusterMap.is_allocated()) {
+			fileClusterMap = MapType(data.fileClusterMap.capacity());
+		}
+
 		deep_copy(constantRates, data.constantRates);
+		deep_copy(fileClusterMap, data.fileClusterMap);
 	}
 
 	std::uint64_t
@@ -121,18 +130,20 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 
 		ret += constantRates.required_allocation_size(
 			constantRates.extent(0), constantRates.extent(1));
+		ret += sizeof(fileClusterMap);
 
 		return ret;
 	}
 
 	void
-	initialize(IndexType numClusters)
+	initialize(IndexType size)
 	{
-		constantRates =
-			View<double**>("Constant Rates", numClusters, numClusters + 1);
+		constantRates = View<double**>("Constant Rates", size, size + 1);
+		fileClusterMap = MapType(size);
 	}
 
 	View<double**> constantRates;
+	MapType fileClusterMap;
 };
 } // namespace detail
 } // namespace network
