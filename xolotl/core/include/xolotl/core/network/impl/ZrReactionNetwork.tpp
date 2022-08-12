@@ -114,15 +114,16 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 				// pow(lo[Species::V], 0.4) / 10;
 
 				// Thermal radii:
-                if (lo[Species::V] < 1000){
-                    data.extraData.dislocationCaptureRadius(i, 0) = 2.8 * pow(lo[Species::V], 0.15) / 10;
-                    data.extraData.dislocationCaptureRadius(i, 1) = 2.0 * pow(lo[Species::V], 0.3) / 10;
-                }
-                else {
-                    data.extraData.dislocationCaptureRadius(i, 0) = 0.79;
-                    data.extraData.dislocationCaptureRadius(i, 1) = 1.59;
-                }
-
+				if (lo[Species::V] < 1000) {
+					data.extraData.dislocationCaptureRadius(i, 0) =
+						2.8 * pow(lo[Species::V], 0.15) / 10;
+					data.extraData.dislocationCaptureRadius(i, 1) =
+						2.0 * pow(lo[Species::V], 0.3) / 10;
+				}
+				else {
+					data.extraData.dislocationCaptureRadius(i, 0) = 0.79;
+					data.extraData.dislocationCaptureRadius(i, 1) = 1.59;
+				}
 			}
 
 			// adding basal
@@ -131,38 +132,50 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 			// second is for V capture
 			if (lo.isOnAxis(Species::Basal)) {
 				// Spontaneous radii:
-                //if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize) data.extraData.dislocationCaptureRadius(i, 0) = 3.9 * pow(lo[Species::Basal], 0.07) / 10;
-				//if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize) data.extraData.dislocationCaptureRadius(i, 1) = 0.55 * pow(lo[Species::Basal], 0.33) / 10;
+				// if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize)
+				// data.extraData.dislocationCaptureRadius(i, 0) = 3.9 *
+				// pow(lo[Species::Basal], 0.07) / 10; if(lo[Species::Basal] <
+				// ::xolotl::core::basalTransitionSize)
+				// data.extraData.dislocationCaptureRadius(i, 1) = 0.55 *
+				// pow(lo[Species::Basal], 0.33) / 10;
 
-                // Thermal radii:
-                if (lo[Species::Basal] < 1000){
-                    if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize) data.extraData.dislocationCaptureRadius(i, 0) = 1.1;
-                    else data.extraData.dislocationCaptureRadius(i, 0) = 5.2 * pow(lo[Species::Basal], 0.06) / 10;
-                    data.extraData.dislocationCaptureRadius(i, 1) = 1.55 * pow(lo[Species::Basal], 0.28) / 10;
-                }
-                else{
-                    data.extraData.dislocationCaptureRadius(i, 0) = 0.787;
-                    data.extraData.dislocationCaptureRadius(i, 1) = 1.072;
-                }
-            }
+				// Thermal radii:
+				if (lo[Species::Basal] < 1000) {
+					if (lo[Species::Basal] <
+						::xolotl::core::basalTransitionSize)
+						data.extraData.dislocationCaptureRadius(i, 0) = 1.1;
+					else
+						data.extraData.dislocationCaptureRadius(i, 0) =
+							5.2 * pow(lo[Species::Basal], 0.06) / 10;
+					data.extraData.dislocationCaptureRadius(i, 1) =
+						1.55 * pow(lo[Species::Basal], 0.28) / 10;
+				}
+				else {
+					data.extraData.dislocationCaptureRadius(i, 0) = 0.787;
+					data.extraData.dislocationCaptureRadius(i, 1) = 1.072;
+				}
+			}
 
 			// Set the dislocation capture radii for interstitial a-loops
 			// (convert to nm)
 			else if (lo.isOnAxis(Species::I)) {
 				// Spontaneous radii:
-				 //data.extraData.dislocationCaptureRadius(i, 0) = 4.2 * pow(lo[Species::I], 0.05) / 10;
-				 //data.extraData.dislocationCaptureRadius(i, 1) = 5.1 * pow(lo[Species::I], -0.01) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 0) = 4.2 *
+				// pow(lo[Species::I], 0.05) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 1) = 5.1 *
+				// pow(lo[Species::I], -0.01) / 10;
 
-                // Thermal radii
-                if (lo[Species::I] < 1000){
-                    data.extraData.dislocationCaptureRadius(i, 0) = 4.5 * pow(lo[Species::I], 0.205) / 10;
-                    data.extraData.dislocationCaptureRadius(i, 1) = 6.0 * pow(lo[Species::I], 0.08) / 10;
-                }
-                else{
-                    data.extraData.dislocationCaptureRadius(i, 0) = 1.85;
-                    data.extraData.dislocationCaptureRadius(i, 1) = 1.04;
-                }
-
+				// Thermal radii
+				if (lo[Species::I] < 1000) {
+					data.extraData.dislocationCaptureRadius(i, 0) =
+						4.5 * pow(lo[Species::I], 0.205) / 10;
+					data.extraData.dislocationCaptureRadius(i, 1) =
+						6.0 * pow(lo[Species::I], 0.08) / 10;
+				}
+				else {
+					data.extraData.dislocationCaptureRadius(i, 0) = 1.85;
+					data.extraData.dislocationCaptureRadius(i, 1) = 1.04;
+				}
 			}
 		}); // Goes with parallel_for
 }
@@ -276,19 +289,22 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
 					this->addDissociationReaction(tag, {vProdId, i, j});
 				}
-                previousIndex = vProdId;
+				previousIndex = vProdId;
 
-                //Special case to allow size 9 basal clusters to dissociate into vacancies
-                if (size == 9 && (lo1[Species::V] == 1 || lo2[Species::V] == 1)){
-                    Composition comp = Composition::zero();
-                    comp[Species::Basal] = size;
-                    auto basalProdId = subpaving.findTileId(comp);
-                    if (basalProdId != subpaving.invalidIndex() &&
-                        basalProdId != previousIndex) {
-                        //No production (vacancies do not accumulate into basal clusters)
-                        this->addDissociationReaction(tag, {basalProdId, i, j});
-                    }
-                }
+				// Special case to allow size 9 basal clusters to dissociate
+				// into vacancies
+				if (size == 9 &&
+					(lo1[Species::V] == 1 || lo2[Species::V] == 1)) {
+					Composition comp = Composition::zero();
+					comp[Species::Basal] = size;
+					auto basalProdId = subpaving.findTileId(comp);
+					if (basalProdId != subpaving.invalidIndex() &&
+						basalProdId != previousIndex) {
+						// No production (vacancies do not accumulate into basal
+						// clusters)
+						this->addDissociationReaction(tag, {basalProdId, i, j});
+					}
+				}
 			}
 		}
 
@@ -311,8 +327,8 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				vProdId != previousIndex) {
 				this->addProductionReaction(tag, {i, j, vProdId});
 				if (lo1[Species::Basal] == 1 || lo2[Species::Basal] == 1) {
-					//this->addDissociationReaction(tag, {vProdId, i, j});
-                    //Dissociating basal clusters produce V
+					// this->addDissociationReaction(tag, {vProdId, i, j});
+					// Dissociating basal clusters produce V
 				}
 				previousIndex = vProdId;
 			}
@@ -332,33 +348,31 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			hi2[Species::Basal] - 4;
 		// Loop on the possible sizes
 		for (auto size = loSize; size <= hiSize; size++) {
-
-            if (size > 9){
-                // Find Basal
-                Composition comp = Composition::zero();
-                comp[Species::Basal] = size;
-                auto basalProdId = subpaving.findTileId(comp);
-                if (basalProdId != subpaving.invalidIndex() &&
-                    basalProdId != previousIndex) {
-                    this->addProductionReaction(tag, {i, j, basalProdId});
-                    if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-                        this->addDissociationReaction(tag, {basalProdId, i, j});
-                    }
-                    previousIndex = basalProdId;
-                }
-            }
-            else {
-                // Find V
-                Composition comp = Composition::zero();
-                comp[Species::V] = size;
-                auto vProdId = subpaving.findTileId(comp);
-                if (vProdId != subpaving.invalidIndex() &&
-                    vProdId != previousIndex) {
-                    this->addProductionReaction(tag, {i, j, vProdId});
-                    previousIndex = vProdId;
-                }
-            }
-
+			if (size > 9) {
+				// Find Basal
+				Composition comp = Composition::zero();
+				comp[Species::Basal] = size;
+				auto basalProdId = subpaving.findTileId(comp);
+				if (basalProdId != subpaving.invalidIndex() &&
+					basalProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, basalProdId});
+					if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+						this->addDissociationReaction(tag, {basalProdId, i, j});
+					}
+					previousIndex = basalProdId;
+				}
+			}
+			else {
+				// Find V
+				Composition comp = Composition::zero();
+				comp[Species::V] = size;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					previousIndex = vProdId;
+				}
+			}
 		}
 
 		return;
@@ -384,22 +398,21 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					basalProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, basalProdId});
 					// No dissociation
-                    previousIndex = basalProdId;
+					previousIndex = basalProdId;
 				}
-
 			}
-            else if (prodSize > 0) {
-                // Looking for V cluster
-                Composition comp = Composition::zero();
-                comp[Species::V] = prodSize;
-                auto vProdId = subpaving.findTileId(comp);
-                if (vProdId != subpaving.invalidIndex() &&
-                    vProdId != previousIndex) {
-                    this->addProductionReaction(tag, {i, j, vProdId});
-                    // No dissociation
-                    previousIndex = vProdId;
-                }
-            }
+			else if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					// No dissociation
+					previousIndex = vProdId;
+				}
+			}
 			else if (prodSize < 0) {
 				// Looking for I cluster
 				Composition comp = Composition::zero();

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/network/ReactionNetwork.h>
 #include <xolotl/core/network/ZrReaction.h>
 #include <xolotl/core/network/ZrTraits.h>
@@ -69,7 +70,8 @@ private:
 	double
 	computeAtomicVolume(double latticeParameter)
 	{
-		// TODO: Define atomic volume used in dissociation rate
+		// sqrt(3) / 4 * a^2 * c
+		// with c the other lattice parameter
 		return 0.0234; // nm^3
 	}
 

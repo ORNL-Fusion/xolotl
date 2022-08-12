@@ -47,7 +47,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		n0 = lo0[Species::I];
 	bool cl0IsLoop = (n0 > 9);
 
-    // Determine parameters for cluster 1 based on cluster type and size
+	// Determine parameters for cluster 1 based on cluster type and size
 	if (cl1IsV)
 		n1 = lo1[Species::V];
 	else if (lo1.isOnAxis(Species::Basal))
@@ -56,7 +56,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		n1 = lo1[Species::I];
 	bool cl1IsLoop = (n1 > 9);
 
-    // Cluster 0 is a dislocation loop
+	// Cluster 0 is a dislocation loop
 	if (cl0IsLoop) {
 		// Define the dislocation capture radius, transition coefficient, and
 		// then calculate the reaction rate
@@ -204,29 +204,31 @@ ZrDissociationReaction::computeBindingEnergy(double time)
 	Composition hi = clReg.getUpperLimitPoint();
 	Composition prod1Comp = prod1Reg.getOrigin();
 	Composition prod2Comp = prod2Reg.getOrigin();
-    double Efn1 = 0.0;
-    double Efn2 = 0.0;
+	double Efn1 = 0.0;
+	double Efn2 = 0.0;
 
 	if (lo.isOnAxis(Species::V)) {
 		double n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-
-            // For small sizes, use MD power-law fits
-            // For large sizes, use Varvenne-provided formation energies
-            if (n < 18)
-                be = 2.03 - 1.9 * (pow(n, 0.84) - pow(n - 1.0, 0.84));
-            else if (n < 66)
-                be = 2.03 - 3.4 * (pow(n, 0.70) - pow(n - 1.0, 0.70));
-            else if (n < 925){
-                Efn1 = 0.11*n+1.741*(sqrt(n))*log(4.588*sqrt(n));
-                Efn2 = 0.11*(n-1)+1.741*(sqrt(n-1))*log(4.588*sqrt(n-1));
-                be = 2.03 - (Efn1 - Efn2);
-            }
-            else {
-                Efn1 = 2*3.14*1.1*1.69*0.25*sqrt(n)*log(1.69*sqrt(n)/0.23);
-                Efn2 = 2*3.14*1.1*1.69*0.25*sqrt(n-1)*log(1.69*sqrt(n-1)/0.23);
-                be = 2.03 - (Efn1 - Efn2);
-            }
+			// For small sizes, use MD power-law fits
+			// For large sizes, use Varvenne-provided formation energies
+			if (n < 18)
+				be = 2.03 - 1.9 * (pow(n, 0.84) - pow(n - 1.0, 0.84));
+			else if (n < 66)
+				be = 2.03 - 3.4 * (pow(n, 0.70) - pow(n - 1.0, 0.70));
+			else if (n < 925) {
+				Efn1 = 0.11 * n + 1.741 * (sqrt(n)) * log(4.588 * sqrt(n));
+				Efn2 = 0.11 * (n - 1) +
+					1.741 * (sqrt(n - 1)) * log(4.588 * sqrt(n - 1));
+				be = 2.03 - (Efn1 - Efn2);
+			}
+			else {
+				Efn1 = 2 * 3.14 * 1.1 * 1.69 * 0.25 * sqrt(n) *
+					log(1.69 * sqrt(n) / 0.23);
+				Efn2 = 2 * 3.14 * 1.1 * 1.69 * 0.25 * sqrt(n - 1) *
+					log(1.69 * sqrt(n - 1) / 0.23);
+				be = 2.03 - (Efn1 - Efn2);
+			}
 		}
 	}
 
@@ -240,17 +242,31 @@ ZrDissociationReaction::computeBindingEnergy(double time)
 		double n = (double)(lo[Species::Basal] + hi[Species::Basal] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::Basal) ||
 			prod2Comp.isOnAxis(Species::Basal)) {
-
-            if (n < ::xolotl::core::basalTransitionSize){
-                be = 1.762 + ((5.352*sqrt(n-1)+0.122*(n-1)+0.154*(n-1)-5.3) - (5.352*sqrt(n)+0.122*n+0.154*n-5.3)); // With basal SFE
-                //be = 1.762 + ((5.352*sqrt(n-1)+0.122*(n-1)-5.3) - (5.352*sqrt(n)+0.122*n-5.3)); //Without basal SFE
-            }
-            else if (n < 200)
-                be = 2.03 + 2.87 * (sqrt(n-1)*log(1.50*sqrt(n-1)) - sqrt(n)*log(1.50*sqrt(n))) - 9.08*0.0171; //With SFE
-                //be = 2.03 + 2.87 * (sqrt(n-1)*log(1.50*sqrt(n-1)) - sqrt(n)*log(1.50*sqrt(n))); //Without basal SFE
-            else
-                be = 2.03 + 3.02 * (sqrt(n-1)*log(1.64*sqrt(n-1)) - sqrt(n)*log(1.64*sqrt(n))) - 9.08*0.00918; //With SFE
-                //be = 2.03 + 3.02 * (sqrt(n-1)*log(1.64*sqrt(n-1)) - sqrt(n)*log(1.64*sqrt(n))) ; //Without basal SFE
+			if (n < ::xolotl::core::basalTransitionSize) {
+				be = 1.762 +
+					((5.352 * sqrt(n - 1) + 0.122 * (n - 1) + 0.154 * (n - 1) -
+						 5.3) -
+						(5.352 * sqrt(n) + 0.122 * n + 0.154 * n -
+							5.3)); // With basal SFE
+				// be = 1.762 + ((5.352*sqrt(n-1)+0.122*(n-1)-5.3) -
+				// (5.352*sqrt(n)+0.122*n-5.3)); //Without basal SFE
+			}
+			else if (n < 200)
+				be = 2.03 +
+					2.87 *
+						(sqrt(n - 1) * log(1.50 * sqrt(n - 1)) -
+							sqrt(n) * log(1.50 * sqrt(n))) -
+					9.08 * 0.0171; // With SFE
+			// be = 2.03 + 2.87 * (sqrt(n-1)*log(1.50*sqrt(n-1)) -
+			// sqrt(n)*log(1.50*sqrt(n))); //Without basal SFE
+			else
+				be = 2.03 +
+					3.02 *
+						(sqrt(n - 1) * log(1.64 * sqrt(n - 1)) -
+							sqrt(n) * log(1.64 * sqrt(n))) -
+					9.08 * 0.00918; // With SFE
+			// be = 2.03 + 3.02 * (sqrt(n-1)*log(1.64*sqrt(n-1)) -
+			// sqrt(n)*log(1.64*sqrt(n))) ; //Without basal SFE
 		}
 	}
 

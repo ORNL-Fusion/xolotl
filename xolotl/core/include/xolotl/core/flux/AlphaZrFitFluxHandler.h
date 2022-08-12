@@ -46,9 +46,7 @@ private:
 		7.911244608120112e-11, 2.7848378207938727e-11, 0.0,
 		5.1264067873265366e-11, 5.1264067873265366e-11, 0.0,
 		5.1264067873265366e-11, 0.0, 2.7848378207938727e-11, 0.0, 0.0,
-		2.7848378207938727e-11, 0.0, 5.1264067873265366e-11, 0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+		2.7848378207938727e-11, 0.0, 5.1264067873265366e-11};
 
 	std::vector<double> fluxV = {3.000166061596907e-07, 3.261617020215222e-08,
 		1.125375463678962e-08, 6.367679929976148e-09, 3.6816615428727384e-09,
@@ -60,16 +58,16 @@ private:
 		3.084457042192001e-10, 3.664849375693001e-10, 2.1650475950509992e-10,
 		1.625140160880999e-10, 9.524908203469999e-11, 2.125413615481001e-10,
 		3.2572815399419994e-10, 7.668920153209999e-11, 6.825371032619996e-11,
-		2.292135057965999e-10, 0, 1.5371191870060005e-10,
+		2.292135057965999e-10, 0.0, 1.5371191870060005e-10,
 		1.4494291185829992e-10, 1.036845732406e-10, 1.7151468025099992e-10,
-		6.825371032619996e-11, 0, 1.6797488560979994e-10, 8.098611512549996e-11,
-		0, 7.668920153209999e-11, 0, 9.972117528360005e-11, 0,
-		2.699537170850001e-11, 0, 2.699537170850001e-11, 5.399074341700002e-11,
-		5.399074341700002e-11, 6.825371032619996e-11, 2.699537170850001e-11,
-		5.399074341700002e-11, 0, 0, 0, 4.9693829823599966e-11,
-		4.9693829823599966e-11, 1.4494291185829992e-10, 2.699537170850001e-11,
-		0, 0, 0, 4.9693829823599966e-11, 0, 0, 5.399074341700002e-11, 0, 0, 0,
-		0};
+		6.825371032619996e-11, 0.0, 1.6797488560979994e-10,
+		8.098611512549996e-11, 0.0, 7.668920153209999e-11, 0.0,
+		9.972117528360005e-11, 0.0, 2.699537170850001e-11, 0.0,
+		2.699537170850001e-11, 5.399074341700002e-11, 5.399074341700002e-11,
+		6.825371032619996e-11, 2.699537170850001e-11, 5.399074341700002e-11,
+		0.0, 0.0, 0.0, 4.9693829823599966e-11, 4.9693829823599966e-11,
+		1.4494291185829992e-10, 2.699537170850001e-11, 0.0, 0.0, 0.0,
+		4.9693829823599966e-11, 0.0, 0.0, 5.399074341700002e-11};
 
 	// Keep the maximum cluster sizes to set a generation flux to
 	size_t maxSizeI = 0;
@@ -106,9 +104,12 @@ public:
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
 
-        // Set the fraction of large vacancy clusters (n > 19) that become faulted basal pyramids:
-        if (maxSizeB > 18) Qb = 0.10; // Basal
-        else Qb = 0; //No basal
+		// Set the fraction of large vacancy clusters (n > 19) that become
+		// faulted basal pyramids:
+		if (maxSizeB > 18)
+			Qb = 0.10; // Basal
+		else
+			Qb = 0.0; // No basal
 
 		// Set the flux index corresponding the mobile interstitial clusters (n
 		// < 10)
@@ -147,15 +148,16 @@ public:
 		for (int i = 1; i <= std::min(maxSizeB, fluxV.size()); i++) {
 			comp[NetworkType::Species::Basal] = i;
 			cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
-            if (cluster.getId() == NetworkType::invalidIndex()) {
-                continue;
-            }
-            fluxIndices.push_back(cluster.getId());
-            if (i >= 19)
-                incidentFluxVec.push_back(std::vector<double>(1, fluxV[i - 1] * (Qb)));
-            else
-                incidentFluxVec.push_back(std::vector<double>(1, 0));
-        }
+			if (cluster.getId() == NetworkType::invalidIndex()) {
+				continue;
+			}
+			fluxIndices.push_back(cluster.getId());
+			if (i >= 19)
+				incidentFluxVec.push_back(
+					std::vector<double>(1, fluxV[i - 1] * (Qb)));
+			else
+				incidentFluxVec.push_back(std::vector<double>(1, 0.0));
+		}
 
 		return;
 	}
@@ -169,11 +171,13 @@ public:
 	{
 		// Define only for a 0D case
 		if (xGrid.size() == 0) {
+			double cascadeEfficiency = (0.495 *
+					(1 - tanh(0.00040527088 * (currentTime / 100.0 - 5000.0))) +
+				0.025);
 
-            double cascadeEfficiency = (0.495*(1-tanh(0.00040527088*(currentTime/100-5000)))+0.025);
-            
-            for (int i = 0; i < fluxIndices.size(); i++) {
-                updatedConcOffset[fluxIndices[i]] += incidentFluxVec[i][0] * cascadeEfficiency;
+			for (int i = 0; i < fluxIndices.size(); i++) {
+				updatedConcOffset[fluxIndices[i]] +=
+					incidentFluxVec[i][0] * cascadeEfficiency;
 			}
 		}
 

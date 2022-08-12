@@ -206,8 +206,8 @@ PetscMonitor0D::setup()
 
 		outputFile << std::endl;
 		outputFile.close();
-		// computeAlphaZr will be called at each timestep
 
+		// computeAlphaZr will be called at each timestep
 		ierr = TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr);
 		checkPetscError(
 			ierr, "setupPetsc0DMonitor: TSMonitorSet (computeAlphaZr) failed.");
