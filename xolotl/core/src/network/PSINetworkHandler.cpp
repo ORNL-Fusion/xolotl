@@ -19,8 +19,6 @@ makePSIReactionNetwork(
 {
 	auto network = std::make_shared<PSIReactionNetwork<TSpeciesEnum>>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
-	network->syncClusterDataOnHost();
-	network->getSubpaving().syncZones(plsm::onHost);
 	return network;
 }
 
@@ -40,6 +38,11 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	AmountType groupingWidthT = options.getGroupingWidthA();
 	AmountType groupingWidthV = options.getGroupingWidthB();
 	AmountType groupingWidthI = options.getGroupingWidthB();
+
+	if (maxI > options.getGroupingMin() and maxV >= options.getGroupingMin()) {
+		throw std::runtime_error(
+			"Both V and I are grouped, this is not currently possible!");
+	}
 
 	if (options.getMaxImpurity() <= 0) {
 		maxHe = 0;
@@ -89,7 +92,7 @@ generatePSIReactionNetwork(const options::IOptions& options)
 		maxV = pow(groupingWidthV, i) - 1;
 	}
 
-	if (options.getGroupingMin() > maxI) {
+	if (options.getGroupingMin() >= maxI) {
 		groupingWidthI = maxI + 1;
 	}
 	else {
@@ -123,13 +126,21 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	else {
 		// Either V is grouped
 		if (options.getGroupingMin() > maxI) {
-			AmountType refineHe = (maxHe + 1) / groupingWidthHe;
-			AmountType refineV = (maxV + 1) / groupingWidthV;
-			return makePSIReactionNetwork<PSIHeliumSpeciesList>(
-				{maxHe, maxV, maxI},
-				{{refineHe, refineV, maxI + 1},
-					{groupingWidthHe, groupingWidthV, 1}},
-				options);
+			if (maxV < 10000) {
+				AmountType refineHe = (maxHe + 1) / groupingWidthHe;
+				AmountType refineV = (maxV + 1) / groupingWidthV;
+				return makePSIReactionNetwork<PSIHeliumSpeciesList>(
+					{maxHe, maxV, maxI},
+					{{refineHe, refineV, maxI + 1},
+						{groupingWidthHe, groupingWidthV, 1}},
+					options);
+			}
+			else {
+				return makePSIReactionNetwork<PSIHeliumSpeciesList>(
+					{maxHe, maxV, maxI},
+					{{groupingWidthHe, groupingWidthV, groupingWidthI}},
+					options);
+			}
 		}
 
 		// Or I is grouped

@@ -39,11 +39,13 @@ SolverHandler::SolverHandler(
 	bubbleBursting(false),
 	isMirror(true),
 	useAttenuation(false),
+	fluxTempProfile(false),
 	sputteringYield(0.0),
 	fluxHandler(nullptr),
 	temperatureHandler(nullptr),
 	vizHandler(factory::viz::VizHandlerFactory::get().generate(options)),
-	perfHandler(factory::perf::PerfHandlerFactory::get().generate(options)),
+	perfHandler(factory::perf::PerfHandlerFactory::get(perf::loadPerfHandlers)
+					.generate(options)),
 	diffusionHandler(nullptr),
 	tauBursting(10.0),
 	burstingFactor(0.1),
@@ -422,6 +424,9 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 
 	// Set the HeV ratio
 	heVRatio = opts.getHeVRatio();
+
+	// Do we want a flux temporal profile?
+	fluxTempProfile = opts.useFluxTimeProfile();
 
 	// Boundary conditions in the X direction
 	if (opts.getBCString() == "periodic")

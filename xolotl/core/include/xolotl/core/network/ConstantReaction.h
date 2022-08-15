@@ -30,11 +30,13 @@ public:
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
+	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
 	using ClusterData = typename Superclass::ClusterData;
+	using RateVector = IReactionNetwork::RateVector;
 
 	ConstantReaction() = default;
 
@@ -45,6 +47,9 @@ public:
 		Superclass(reactionData, clusterData, reactionId),
 		_reactants({cluster0, cluster1})
 	{
+		for (auto i : {0, 1}) {
+			this->copyMomentIds(_reactants[i], _reactantMomentIds[i]);
+		}
 		this->initialize();
 	}
 
@@ -64,10 +69,47 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex)
+	computeRate(IndexType gridIndex, double time = 0.0)
 	{
-		// Needs to be implemented by each class
-		return 0.0;
+		return _constantRates[0][0][0][0];
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	setRate(RatesView rates)
+	{
+		auto dof = rates.extent(0);
+		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+		if (_reactants[1] == invalidIndex) {
+			_constantRates[0][0][0][0] = rates(_reactants[0], dof);
+			for (auto i : speciesRangeNoI) {
+				if (_reactantMomentIds[0][i()] != invalidIndex) {
+					_constantRates[0][1 + i()][0][0] =
+						rates(_reactantMomentIds[0][i()], dof);
+				}
+			}
+		}
+		else {
+			_constantRates[0][0][0][0] = rates(_reactants[0], _reactants[1]);
+			for (auto i : speciesRangeNoI) {
+				if (_reactantMomentIds[1][i()] != invalidIndex) {
+					_constantRates[0][0][0][1 + i()] =
+						rates(_reactants[0], _reactantMomentIds[1][i()]);
+				}
+				if (_reactantMomentIds[0][i()] != invalidIndex) {
+					_constantRates[0][1 + i()][0][0] =
+						rates(_reactantMomentIds[0][i()], _reactants[1]);
+					for (auto j : speciesRangeNoI) {
+						if (_reactantMomentIds[1][j()] != invalidIndex) {
+							_constantRates[0][1 + i()][0][1 + j()] =
+								rates(_reactantMomentIds[0][i()],
+									_reactantMomentIds[1][j()]);
+						}
+					}
+				}
+			}
+		}
 	}
 
 private:
@@ -82,19 +124,66 @@ private:
 	void
 	computeConnectivity(const Connectivity& connectivity)
 	{
+		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+		// Reactant 1 with reactant 1
+		this->addConnectivity(_reactants[0], _reactants[0], connectivity);
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[0][i()] != invalidIndex) {
+				this->addConnectivity(
+					_reactants[0], _reactantMomentIds[0][i()], connectivity);
+				this->addConnectivity(
+					_reactantMomentIds[0][i()], _reactants[0], connectivity);
+				for (auto j : speciesRangeNoI) {
+					if (_reactantMomentIds[0][j()] != invalidIndex) {
+						this->addConnectivity(_reactantMomentIds[0][i()],
+							_reactantMomentIds[0][j()], connectivity);
+					}
+				}
+			}
+		}
+
 		if (_reactants[1] == invalidIndex)
 			return;
-		// The second reactant connects with the first reactant
+
+		// Reactant 2 with reactant 1
 		this->addConnectivity(_reactants[0], _reactants[1], connectivity);
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[1][i()] != invalidIndex) {
+				this->addConnectivity(
+					_reactants[0], _reactantMomentIds[1][i()], connectivity);
+			}
+			if (_reactantMomentIds[0][i()] != invalidIndex) {
+				this->addConnectivity(
+					_reactantMomentIds[0][i()], _reactants[1], connectivity);
+				for (auto j : speciesRangeNoI) {
+					if (_reactantMomentIds[1][j()] != invalidIndex) {
+						this->addConnectivity(_reactantMomentIds[0][i()],
+							_reactantMomentIds[1][j()], connectivity);
+					}
+				}
+			}
+		}
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedConnectivity(const Connectivity& connectivity)
 	{
-		// The second reactant connects with the first reactant
-		if (_reactants[0] == _reactants[1])
-			this->addConnectivity(_reactants[0], _reactants[1], connectivity);
+		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+		// Each reactant connects with all the reactants
+		// Reactant 1 with reactant 1
+		this->addConnectivity(_reactants[0], _reactants[0], connectivity);
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[0][i()] != invalidIndex) {
+				for (auto j : speciesRangeNoI) {
+					if (i() == j())
+						this->addConnectivity(_reactantMomentIds[0][i()],
+							_reactantMomentIds[0][j()], connectivity);
+				}
+			}
+		}
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -102,10 +191,42 @@ private:
 	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
 		IndexType gridIndex)
 	{
-		if (_reactants[1] == invalidIndex)
-			Kokkos::atomic_add(&fluxes(_reactants[0]), this->_rate(gridIndex));
-		Kokkos::atomic_add(&fluxes(_reactants[0]),
-			concentrations(_reactants[1]) * this->_rate(gridIndex));
+		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+		if (_reactants[1] == invalidIndex) {
+			Kokkos::atomic_add(
+				&fluxes(_reactants[0]), _constantRates[0][0][0][0]);
+			for (auto i : speciesRangeNoI) {
+				if (_reactantMomentIds[0][i()] != invalidIndex) {
+					Kokkos::atomic_add(&fluxes(_reactantMomentIds[0][i()]),
+						_constantRates[0][1 + i()][0][0]);
+				}
+			}
+		}
+		else {
+			Kokkos::atomic_add(&fluxes(_reactants[0]),
+				concentrations(_reactants[1]) * _constantRates[0][0][0][0]);
+			for (auto i : speciesRangeNoI) {
+				if (_reactantMomentIds[1][i()] != invalidIndex) {
+					Kokkos::atomic_add(&fluxes(_reactants[0]),
+						concentrations(_reactantMomentIds[1][i()]) *
+							_constantRates[0][0][0][1 + i()]);
+				}
+				if (_reactantMomentIds[0][i()] != invalidIndex) {
+					Kokkos::atomic_add(&fluxes(_reactantMomentIds[0][i()]),
+						concentrations(_reactants[1]) *
+							_constantRates[0][1 + i()][0][0]);
+					for (auto j : speciesRangeNoI) {
+						if (_reactantMomentIds[1][j()] != invalidIndex) {
+							Kokkos::atomic_add(
+								&fluxes(_reactantMomentIds[0][i()]),
+								concentrations(_reactantMomentIds[1][j()]) *
+									_constantRates[0][1 + i()][0][1 + j()]);
+						}
+					}
+				}
+			}
+		}
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -115,8 +236,28 @@ private:
 	{
 		if (_reactants[1] == invalidIndex)
 			return;
+
+		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
 		Kokkos::atomic_add(
-			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+			&values(_connEntries[0][0][0][0]), _constantRates[0][0][0][0]);
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[1][i()] != invalidIndex) {
+				Kokkos::atomic_add(&values(_connEntries[0][0][0][1 + i()]),
+					_constantRates[0][0][0][1 + i()]);
+			}
+			if (_reactantMomentIds[0][i()] != invalidIndex) {
+				Kokkos::atomic_add(&values(_connEntries[0][1 + i()][0][0]),
+					_constantRates[0][1 + i()][0][0]);
+				for (auto j : speciesRangeNoI) {
+					if (_reactantMomentIds[1][j()] != invalidIndex) {
+						Kokkos::atomic_add(
+							&values(_connEntries[0][1 + i()][0][1 + j()]),
+							_constantRates[0][1 + i()][0][1 + j()]);
+					}
+				}
+			}
+		}
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -124,15 +265,39 @@ private:
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex)
 	{
-		if (_reactants[0] == _reactants[1])
-			Kokkos::atomic_add(
-				&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+		if (_reactants[1] == invalidIndex)
+			return;
+
+		if (_reactants[1] != _reactants[0])
+			return;
+
+		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+		Kokkos::atomic_add(
+			&values(_connEntries[0][0][0][0]), _constantRates[0][0][0][0]);
+		for (auto i : speciesRangeNoI) {
+			for (auto j : speciesRangeNoI) {
+				if (_reactantMomentIds[1][j()] != invalidIndex) {
+					Kokkos::atomic_add(
+						&values(_connEntries[0][1 + i()][0][1 + j()]),
+						_constantRates[0][1 + i()][0][1 + j()]);
+				}
+			}
+		}
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
 		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex)
+	{
+		return;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	getConstantConnectivities(ConnectivitiesView conns, BelongingView isInSub,
+		OwnedSubMapView backMap)
 	{
 		return;
 	}
@@ -149,17 +314,41 @@ private:
 	void
 	mapJacobianEntries(Connectivity connectivity)
 	{
+		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
 		if (_reactants[1] == invalidIndex)
 			return;
+
 		_connEntries[0][0][0][0] = connectivity(_reactants[0], _reactants[1]);
+		for (auto i : speciesRangeNoI) {
+			if (_reactantMomentIds[1][i()] != invalidIndex) {
+				_connEntries[0][0][0][1 + i()] =
+					connectivity(_reactants[0], _reactantMomentIds[1][i()]);
+			}
+			if (_reactantMomentIds[0][i()] != invalidIndex) {
+				_connEntries[0][1 + i()][0][0] =
+					connectivity(_reactantMomentIds[0][i()], _reactants[1]);
+				for (auto j : speciesRangeNoI) {
+					if (_reactantMomentIds[1][j()] != invalidIndex) {
+						_connEntries[0][1 + i()][0][1 + j()] =
+							connectivity(_reactantMomentIds[0][i()],
+								_reactantMomentIds[1][j()]);
+					}
+				}
+			}
+		}
 	}
 
 protected:
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
 	util::Array<IndexType, 2> _reactants{invalidIndex, invalidIndex};
 
-	util::Array<IndexType, 1, 1, 1, 1> _connEntries;
-};
+	static constexpr auto nMomentIds = Superclass::nMomentIds;
+	util::Array<IndexType, 2, nMomentIds> _reactantMomentIds;
+
+	util::Array<IndexType, 1, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
+	util::Array<double, 1, 1 + nMomentIds, 1, 1 + nMomentIds> _constantRates;
+}; // namespace network
 } // namespace network
 } // namespace core
 } // namespace xolotl

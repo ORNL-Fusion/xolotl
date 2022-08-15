@@ -333,6 +333,21 @@ public:
 
 		return;
 	}
+
+	std::vector<double>
+	getInstantFlux(double time) const
+	{
+		// Create the vector to return
+		std::vector<double> toReturn;
+
+		// Get the current amplitude
+		auto ampl = getProfileAmplitude(time);
+		for (int index = 0; index < fluxIndices.size(); index++) {
+			toReturn.push_back(ampl * reductionFactors[index]);
+		}
+
+		return toReturn;
+	}
 };
 // end class CustomFitFluxHandler
 

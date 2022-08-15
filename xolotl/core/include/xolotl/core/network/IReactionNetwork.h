@@ -31,7 +31,8 @@ public:
 	using OwnedConcentrationsView = Kokkos::View<double*>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
-	using RatesView = Kokkos::View<double**, Kokkos::MemoryUnmanaged>;
+	using RatesView = Kokkos::View<double**>;
+	using ConnectivitiesView = Kokkos::View<bool**>;
 	using SubMapView = Kokkos::View<AmountType*, Kokkos::MemoryUnmanaged>;
 	using OwnedSubMapView = Kokkos::View<AmountType*>;
 	using BelongingView = Kokkos::View<bool*>;
@@ -39,7 +40,10 @@ public:
 	using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 	using Bounds = std::vector<std::vector<AmountType>>;
 	using BoundVector = std::vector<std::vector<std::vector<AmountType>>>;
+	using MomentIdMap = std::vector<std::vector<IdType>>;
+	using MomentIdMapVector = std::vector<std::vector<std::vector<IdType>>>;
 	using RateVector = std::vector<std::vector<double>>;
+	using ConnectivitiesVector = std::vector<std::vector<bool>>;
 	using PhaseSpace = std::vector<std::string>;
 
 	KOKKOS_INLINE_FUNCTION
@@ -282,11 +286,18 @@ public:
 	setGridSize(IndexType gridSize) = 0;
 
 	/**
-	 * @brief Takes a vector of temperatures along X and updates the diffusion
-	 * coefficients and rates accordingly.
+	 * @brief Takes a vector of temperatures and associated depths along X and
+	 * updates the diffusion coefficients and rates accordingly.
 	 */
 	virtual void
-	setTemperatures(const std::vector<double>& gridTemperatures) = 0;
+	setTemperatures(const std::vector<double>& gridTemperatures,
+		const std::vector<double>& gridDepths) = 0;
+
+	/**
+	 * @brief To update time dependent rates.
+	 */
+	virtual void
+	setTime(double time) = 0;
 
 	/**
 	 * @brief Copies tile and cluster data from device to host.
@@ -297,10 +308,10 @@ public:
 	virtual IndexType
 	findClusterId(const std::vector<AmountType>& composition) = 0;
 
-	virtual ClusterCommon<plsm::OnHost>
-	getClusterCommon(IndexType clusterId) const = 0;
+	virtual ClusterCommon<plsm::HostMemSpace>
+	getClusterCommon(IndexType clusterId) = 0;
 
-	virtual ClusterCommon<plsm::OnHost>
+	virtual ClusterCommon<plsm::HostMemSpace>
 	getSingleVacancy() = 0;
 
 	virtual IndexType
@@ -314,14 +325,41 @@ public:
 	getAllClusterBounds() = 0;
 
 	/**
-	 * @brief Computes the map between the different cluster bounds
+	 * @brief Returns an object representing the the bounds of each
+	 * cluster in each dimension of the phase space.
 	 */
-	virtual void initializeClusterMap(BoundVector) = 0;
+	virtual MomentIdMap
+	getAllMomentIdInfo() = 0;
+
+	/**
+	 * @brief Return a string of cluster name in ID order.
+	 */
+	virtual std::string
+	getHeaderString() = 0;
+
+	/**
+	 * @brief Computes the map between the different cluster bounds and moment
+	 * IDs.
+	 */
+	virtual void initializeClusterMap(
+		BoundVector, MomentIdMapVector, MomentIdMap) = 0;
+
+	/**
+	 * @brief Initialize reactions in the case it was not already
+	 * done in the constructor.
+	 */
+	virtual void
+	initializeReactions() = 0;
 
 	/**
 	 * @brief Set the rates for constant reactions
 	 */
 	virtual void setConstantRates(RateVector) = 0;
+
+	/**
+	 * @brief Set the connectivities for constant reactions
+	 */
+	virtual void setConstantConnectivities(ConnectivitiesVector) = 0;
 
 	virtual PhaseSpace
 	getPhaseSpace() = 0;
@@ -350,8 +388,15 @@ public:
 	 */
 	virtual void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		SubMapView subMap, IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		IndexType subId, IndexType gridIndex = 0, double surfaceDepth = 0.0,
 		double spacing = 0.0) = 0;
+
+	/**
+	 * @brief Updates the rates view with the rates from all the
+	 * reactions at this grid point, this is for multiple instances use.
+	 */
+	virtual void
+	getConstantConnectivities(ConnectivitiesView conns, IndexType subId) = 0;
 
 	/**
 	 * @brief Returns the largest computed rate.

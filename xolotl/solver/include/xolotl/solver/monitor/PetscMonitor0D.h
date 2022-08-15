@@ -43,6 +43,8 @@ public:
 
 protected:
 	std::shared_ptr<viz::IPlot> _scatterPlot;
+
+	std::vector<IdType> _clusterOrder;
 };
 } // namespace monitor
 } // namespace solver

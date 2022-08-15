@@ -33,6 +33,11 @@ NetworkHandler::NetworkHandler(
 		XOLOTL_LOG << ss.str();
 	}
 }
+
+void
+loadNetworkHandlers()
+{
+}
 } // namespace network
 } // namespace core
 } // namespace xolotl

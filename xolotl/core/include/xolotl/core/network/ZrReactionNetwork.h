@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/network/ReactionNetwork.h>
 #include <xolotl/core/network/ZrReaction.h>
 #include <xolotl/core/network/ZrTraits.h>
@@ -30,11 +31,20 @@ public:
 	using IndexType = typename Superclass::IndexType;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using RateVector = typename Superclass::RateVector;
+	using ConnectivitiesVector = typename Superclass::ConnectivitiesVector;
+	using RatesView = typename Superclass::RatesView;
 
 	using Superclass::Superclass;
 
 	IndexType
 	checkLargestClusterId();
+
+	void
+	setConstantRates(RateVector rates) override;
+
+	void
+	setConstantConnectivities(ConnectivitiesVector conns) override;
 
 	void
 	initializeExtraClusterData(const options::IOptions& options);
@@ -46,8 +56,9 @@ private:
 	double
 	computeAtomicVolume(double latticeParameter)
 	{
-		// TODO: Define atomic volume used in dissociation rate
-		return 0.0 * latticeParameter * latticeParameter * latticeParameter;
+		// sqrt(3) / 4 * a^2 * c
+		// with c the other lattice parameter
+		return 0.0234; // nm^3
 	}
 
 	double
@@ -55,6 +66,9 @@ private:
 
 	detail::ZrReactionGenerator
 	getReactionGenerator() const noexcept;
+
+	void
+	defineReactions(Connectivity& connectivity);
 };
 
 namespace detail

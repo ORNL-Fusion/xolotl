@@ -47,6 +47,7 @@ public:
 	using ConcentrationsView = IReactionNetwork::ConcentrationsView;
 	using FluxesView = IReactionNetwork::FluxesView;
 	using RatesView = IReactionNetwork::RatesView;
+	using ConnectivitiesView = IReactionNetwork::ConnectivitiesView;
 	using BelongingView = IReactionNetwork::BelongingView;
 	using OwnedSubMapView = IReactionNetwork::OwnedSubMapView;
 	using Connectivity = typename IReactionNetwork::Connectivity;
@@ -68,10 +69,10 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	void
-	updateRates()
+	updateRates(double time = 0.0)
 	{
 		for (IndexType i = 0; i < _rate.extent(0); ++i) {
-			_rate(i) = asDerived()->computeRate(i);
+			_rate(i) = asDerived()->computeRate(i, time);
 		}
 	}
 
@@ -139,6 +140,14 @@ public:
 	{
 		asDerived()->computeConstantRates(
 			concentrations, rates, isInSub, backMap, gridIndex);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	contributeConstantConnectivities(ConnectivitiesView conns,
+		BelongingView isInSub, OwnedSubMapView backMap)
+	{
+		asDerived()->getConstantConnectivities(conns, isInSub, backMap);
 	}
 
 	/**
@@ -250,6 +259,7 @@ public:
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
+	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using Composition = typename Superclass::Composition;
@@ -287,7 +297,7 @@ private:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex);
+	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -318,6 +328,11 @@ private:
 		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
+	void
+	getConstantConnectivities(ConnectivitiesView conns, BelongingView isInSub,
+		OwnedSubMapView backMap);
+
+	KOKKOS_INLINE_FUNCTION
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
@@ -330,8 +345,8 @@ protected:
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
 	util::Array<IndexType, 2> _reactants{invalidIndex, invalidIndex};
 	util::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
-	util::Array<AmountType, 2> _reactantVolumes{0, 0};
-	util::Array<AmountType, 2> _productVolumes{0, 0};
+	util::Array<double, 2> _reactantVolumes{0.0, 0.0};
+	util::Array<double, 2> _productVolumes{0.0, 0.0};
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
 	util::Array<IndexType, 2, nMomentIds> _reactantMomentIds;
@@ -362,6 +377,7 @@ public:
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
+	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
@@ -396,7 +412,7 @@ private:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex);
+	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -427,6 +443,11 @@ private:
 		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
+	void
+	getConstantConnectivities(ConnectivitiesView conns, BelongingView isInSub,
+		OwnedSubMapView backMap);
+
+	KOKKOS_INLINE_FUNCTION
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
@@ -437,10 +458,10 @@ private:
 
 protected:
 	IndexType _reactant;
-	AmountType _reactantVolume;
+	double _reactantVolume;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
 	util::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
-	util::Array<AmountType, 2> _productVolumes{0, 0};
+	util::Array<double, 2> _productVolumes{0.0, 0.0};
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
 	util::Array<IndexType, nMomentIds> _reactantMomentIds;

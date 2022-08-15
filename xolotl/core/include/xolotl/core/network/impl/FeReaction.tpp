@@ -56,7 +56,7 @@ FeDissociationReaction::getRateForProduction(IndexType gridIndex)
 
 KOKKOS_INLINE_FUNCTION
 double
-FeDissociationReaction::computeBindingEnergy()
+FeDissociationReaction::computeBindingEnergy(double time)
 {
 	using Species = typename Superclass::Species;
 	using Composition = typename Superclass::Composition;

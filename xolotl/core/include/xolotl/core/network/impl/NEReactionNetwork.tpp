@@ -12,47 +12,6 @@ namespace core
 {
 namespace network
 {
-double
-NEReactionNetwork::checkLatticeParameter(double latticeParameter)
-{
-	if (latticeParameter <= 0.0) {
-		return uraniumDioxydeLatticeConstant;
-	}
-	return latticeParameter;
-}
-
-double
-NEReactionNetwork::checkImpurityRadius(double impurityRadius)
-{
-	if (impurityRadius <= 0.0) {
-		return xenonRadius;
-	}
-	return impurityRadius;
-}
-
-NEReactionNetwork::IndexType
-NEReactionNetwork::checkLargestClusterId()
-{
-	// Copy the cluster data for the parallel loop
-	auto clData = _clusterData.d_view;
-	using Reducer = Kokkos::MaxLoc<NEReactionNetwork::AmountType,
-		NEReactionNetwork::IndexType>;
-	Reducer::value_type maxLoc;
-	Kokkos::parallel_reduce(
-		_numClusters,
-		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
-			const Region& clReg = clData().getCluster(i).getRegion();
-			Composition hi = clReg.getUpperLimitPoint();
-			if (hi[Species::Xe] > update.val) {
-				update.val = hi[Species::Xe];
-				update.loc = i;
-			}
-		},
-		Reducer(maxLoc));
-
-	return maxLoc.loc;
-}
-
 namespace detail
 {
 template <typename TTag>
@@ -60,6 +19,12 @@ KOKKOS_INLINE_FUNCTION
 void
 NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;

@@ -40,7 +40,7 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeBindingEnergy();
+	computeBindingEnergy(double time = 0.0);
 };
 
 class AlloySinkReaction :

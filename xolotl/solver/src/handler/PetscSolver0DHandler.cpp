@@ -65,6 +65,9 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
 
+	// Initialize the flux handler
+	fluxHandler->initializeFluxHandler(network, 0, grid);
+
 	return;
 }
 
@@ -82,9 +85,6 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::initializeConcentration: "
 		"DMDAVecGetArrayDOF failed.");
-
-	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, 0, grid);
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar* concOffset = nullptr;
@@ -148,8 +148,8 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Update the network with the temperature
-	network.setTemperatures(temperature);
-	network.syncClusterDataOnHost();
+	auto depths = std::vector<double>(1, 1.0);
+	network.setTemperatures(temperature, depths);
 
 	/*
 	 Restore vectors
@@ -241,7 +241,8 @@ PetscSolver0DHandler::setConcVector(DM& da, Vec& C,
 
 	// Set the temperature in the network
 	temperature[0] = gridPointSolution[dof];
-	network.setTemperatures(temperature);
+	auto depths = std::vector<double>(1, 1.0);
+	network.setTemperatures(temperature, depths);
 
 	/*
 	 Restore vectors
@@ -296,6 +297,9 @@ PetscSolver0DHandler::updateConcentration(
 	// moments
 	const auto dof = network.getDOF();
 
+	// Update the time in the network
+	network.setTime(ftime);
+
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);
 	double temp = temperatureHandler->getTemperature(gridPosition, ftime);
@@ -303,8 +307,8 @@ PetscSolver0DHandler::updateConcentration(
 	// Update the network if the temperature changed
 	if (std::fabs(temperature[0] - temp) > 0.1) {
 		temperature[0] = temp;
-		network.setTemperatures(temperature);
-		network.syncClusterDataOnHost();
+		auto depths = std::vector<double>(1, 1.0);
+		network.setTemperatures(temperature, depths);
 	}
 
 	// ----- Account for flux of incoming particles -----
@@ -325,6 +329,13 @@ PetscSolver0DHandler::updateConcentration(
 	network.computeAllFluxes(dConcs, dFlux);
 	fluxTimer->stop();
 	deep_copy(hFlux, dFlux);
+
+	/*
+	for (auto i = 0; i < dof; i++) {
+		std::cout << updatedConcOffset[i] << " ";
+	}
+	std::cout << "\n";
+	*/
 
 	/*
 	 Restore vectors
@@ -377,6 +388,9 @@ PetscSolver0DHandler::computeJacobian(
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
+	// Update the time in the network
+	network.setTime(ftime);
+
 	// Get the temperature from the temperature handler
 	concOffset = concs[0];
 	temperatureHandler->setTemperature(concOffset);
@@ -385,8 +399,8 @@ PetscSolver0DHandler::computeJacobian(
 	// Update the network if the temperature changed
 	if (std::fabs(temperature[0] - temp) > 0.1) {
 		temperature[0] = temp;
-		network.setTemperatures(temperature);
-		network.syncClusterDataOnHost();
+		auto depths = std::vector<double>(1, 1.0);
+		network.setTemperatures(temperature, depths);
 	}
 
 	// ----- Take care of the reactions for all the reactants -----

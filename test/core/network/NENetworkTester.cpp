@@ -43,15 +43,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	NetworkType network(
 		{(NetworkType::AmountType)opts.getMaxImpurity()}, 1, opts);
 
-	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
-
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 20);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 20);
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_CHECK_GT(deviceMemorySize, 23000);
-	BOOST_CHECK_LT(deviceMemorySize, 26000);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.547, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.0409168, 0.01);
@@ -113,8 +106,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
-	network.syncClusterDataOnHost();
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -207,7 +200,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::Xe] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 7.0, 0.01);
@@ -225,7 +218,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
 	comp[Spec::Xe] = 10;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 9);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.61702, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 46.9, 0.01);
@@ -276,15 +269,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 	maxXe = pow(groupingWidth, i) - 1;
 	NetworkType network({maxXe}, {{groupingWidth}}, 1, opts);
 
-	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
-
 	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 16);
 	BOOST_REQUIRE_EQUAL(network.getDOF(), 19);
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_CHECK_GT(deviceMemorySize, 22000);
-	BOOST_CHECK_LT(deviceMemorySize, 24000);
 
 	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 16);
@@ -325,8 +311,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
-	network.syncClusterDataOnHost();
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -421,7 +407,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	// Check clusters
 	NetworkType::Composition comp = NetworkType::Composition::zero();
 	comp[Spec::Xe] = 1;
-	auto cluster = network.findCluster(comp, plsm::onHost);
+	auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 0);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.3, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 7.0, 0.01);
@@ -439,7 +425,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
 	comp[Spec::Xe] = 20;
-	cluster = network.findCluster(comp, plsm::onHost);
+	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 5);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.7961, 0.01);
 	BOOST_REQUIRE_CLOSE(cluster.getFormationEnergy(), 79.0, 0.01);
@@ -481,13 +467,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 		{(NetworkType::AmountType)opts.getMaxImpurity()}, 1, opts);
 	network.setFissionRate(8.0e-9);
 
-	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
-
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_CHECK_GT(deviceMemorySize, 30000);
-	BOOST_CHECK_LT(deviceMemorySize, 35000);
-
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
 	BOOST_REQUIRE(network.getEnableReSolution() == true);
 
@@ -528,8 +507,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
-	network.syncClusterDataOnHost();
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -639,14 +618,6 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 	NetworkType network({maxXe}, {{groupingWidth}}, 1, opts);
 	network.setFissionRate(8.0e-9);
 
-	network.syncClusterDataOnHost();
-	network.getSubpaving().syncZones(plsm::onHost);
-
-	// TODO: check it is within a given range?
-	auto deviceMemorySize = network.getDeviceMemorySize();
-	BOOST_CHECK_GT(deviceMemorySize, 29000);
-	BOOST_CHECK_LT(deviceMemorySize, 32000);
-
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
 	NetworkType::SparseFillMap knownDFill;
@@ -683,8 +654,8 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 
 	// Set temperatures
 	std::vector<double> temperatures = {1000.0};
-	network.setTemperatures(temperatures);
-	network.syncClusterDataOnHost();
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate

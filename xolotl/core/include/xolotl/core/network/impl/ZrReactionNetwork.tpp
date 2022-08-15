@@ -43,7 +43,10 @@ ZrReactionNetwork::checkLargestClusterId()
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
 			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
-			auto size = hi[Species::V] + hi[Species::I];
+
+			// adding basal
+			auto size = hi[Species::V] + hi[Species::I] + hi[Species::Basal];
+
 			if (size > update.val) {
 				update.val = size;
 				update.loc = i;
@@ -55,16 +58,126 @@ ZrReactionNetwork::checkLargestClusterId()
 }
 
 void
+ZrReactionNetwork::setConstantRates(RateVector rates)
+{
+	auto dRateView = RatesView("dRates", rates.size(), rates[0].size());
+	auto hRateView = create_mirror_view(dRateView);
+	for (auto i = 0; i < rates.size(); i++)
+		for (auto j = 0; j < rates[0].size(); j++) {
+			hRateView(i, j) = rates[i][j];
+		}
+	deep_copy(dRateView, hRateView);
+
+	_reactions.forEachOn<ZrConstantReaction>(
+		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
+			reaction.setRate(dRateView);
+			reaction.updateRates();
+		});
+}
+
+void
+ZrReactionNetwork::setConstantConnectivities(ConnectivitiesVector conns)
+{
+	_constantConns = ConnectivitiesView(
+		"dConstantConnectivities", conns.size(), conns[0].size());
+	auto hConnsView = create_mirror_view(_constantConns);
+	for (auto i = 0; i < conns.size(); i++)
+		for (auto j = 0; j < conns[0].size(); j++) {
+			hConnsView(i, j) = conns[i][j];
+		}
+	deep_copy(_constantConns, hConnsView);
+}
+
+void
 ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 {
-	if (!this->_enableSink) {
-		return;
-	}
-
 	this->_clusterData.h_view().extraData.initialize(
 		this->_clusterData.h_view().numClusters,
 		this->_clusterData.h_view().gridSize);
 	this->copyClusterDataView();
+
+	auto data = this->_clusterData.h_view();
+	Kokkos::parallel_for(
+		this->_numClusters, KOKKOS_LAMBDA(const IndexType i) {
+			auto cluster = data.getCluster(i);
+			const auto& reg = cluster.getRegion();
+			Composition lo(reg.getOrigin());
+
+			// Set the dislocation capture radii for vacancy a-loops (convert to
+			// nm): First index in dislocation capture radius is for I capture;
+			// second is for V capture
+			if (lo.isOnAxis(Species::V)) {
+				// Spontaneous radii:
+				// data.extraData.dislocationCaptureRadius(i, 0) = 3.05 *
+				// pow(lo[Species::V], 0.12) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 1) = 0.39 *
+				// pow(lo[Species::V], 0.4) / 10;
+
+				// Thermal radii:
+				if (lo[Species::V] < 1000) {
+					data.extraData.dislocationCaptureRadius(i, 0) =
+						2.8 * pow(lo[Species::V], 0.15) / 10;
+					data.extraData.dislocationCaptureRadius(i, 1) =
+						2.0 * pow(lo[Species::V], 0.3) / 10;
+				}
+				else {
+					data.extraData.dislocationCaptureRadius(i, 0) = 0.79;
+					data.extraData.dislocationCaptureRadius(i, 1) = 1.59;
+				}
+			}
+
+			// adding basal
+			// Set the dislocation capture radii for vacancy c-loops (convert to
+			// nm): First index in dislocation capture radius is for I capture;
+			// second is for V capture
+			if (lo.isOnAxis(Species::Basal)) {
+				// Spontaneous radii:
+				// if(lo[Species::Basal] < ::xolotl::core::basalTransitionSize)
+				// data.extraData.dislocationCaptureRadius(i, 0) = 3.9 *
+				// pow(lo[Species::Basal], 0.07) / 10; if(lo[Species::Basal] <
+				// ::xolotl::core::basalTransitionSize)
+				// data.extraData.dislocationCaptureRadius(i, 1) = 0.55 *
+				// pow(lo[Species::Basal], 0.33) / 10;
+
+				// Thermal radii:
+				if (lo[Species::Basal] < 1000) {
+					if (lo[Species::Basal] <
+						::xolotl::core::basalTransitionSize)
+						data.extraData.dislocationCaptureRadius(i, 0) = 1.1;
+					else
+						data.extraData.dislocationCaptureRadius(i, 0) =
+							5.2 * pow(lo[Species::Basal], 0.06) / 10;
+					data.extraData.dislocationCaptureRadius(i, 1) =
+						1.55 * pow(lo[Species::Basal], 0.28) / 10;
+				}
+				else {
+					data.extraData.dislocationCaptureRadius(i, 0) = 0.787;
+					data.extraData.dislocationCaptureRadius(i, 1) = 1.072;
+				}
+			}
+
+			// Set the dislocation capture radii for interstitial a-loops
+			// (convert to nm)
+			else if (lo.isOnAxis(Species::I)) {
+				// Spontaneous radii:
+				// data.extraData.dislocationCaptureRadius(i, 0) = 4.2 *
+				// pow(lo[Species::I], 0.05) / 10;
+				// data.extraData.dislocationCaptureRadius(i, 1) = 5.1 *
+				// pow(lo[Species::I], -0.01) / 10;
+
+				// Thermal radii
+				if (lo[Species::I] < 1000) {
+					data.extraData.dislocationCaptureRadius(i, 0) =
+						4.5 * pow(lo[Species::I], 0.205) / 10;
+					data.extraData.dislocationCaptureRadius(i, 1) =
+						6.0 * pow(lo[Species::I], 0.08) / 10;
+				}
+				else {
+					data.extraData.dislocationCaptureRadius(i, 0) = 1.85;
+					data.extraData.dislocationCaptureRadius(i, 1) = 1.04;
+				}
+			}
+		}); // Goes with parallel_for
 }
 
 namespace detail
@@ -78,16 +191,41 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	using Composition = typename Network::Composition;
 	using AmountType = typename Network::AmountType;
 
+	// Get the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+
 	if (i == j) {
-		addSinks(i, tag);
-		this->addConstantReaction(tag, {i, Network::invalidIndex()});
+		if (diffusionFactor(i) != 0.0)
+			addSinks(i, tag);
+
+		if (this->_constantConns.extent(0) > 0) {
+			if (this->_constantConns(i, this->_numDOFs)) {
+				this->addConstantReaction(tag, {i, Network::invalidIndex()});
+			}
+		}
 	}
 
 	// Add every possibility
-	this->addConstantReaction(tag, {i, j});
+	if (this->_constantConns.extent(0) > 0) {
+		if (this->_constantConns(i, j)) {
+			this->addConstantReaction(tag, {i, j});
+		}
+	}
+	if (j != i) {
+		if (this->_constantConns.extent(0) > 0) {
+			if (this->_constantConns(j, i)) {
+				this->addConstantReaction(tag, {j, i});
+			}
+		}
+	}
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
+
+	// Check the diffusion factors
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
 
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
@@ -100,72 +238,230 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	// vac + vac = vac
 	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V)) {
 		// Compute the composition of the new cluster
-		auto size = lo1[Species::V] + lo2[Species::V];
-		// Find the corresponding cluster
-		Composition comp = Composition::zero();
-		comp[Species::V] = size;
-		auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
-		if (vProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, vProdId});
-			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-				this->addDissociationReaction(tag, {vProdId, i, j});
+		auto loSize = lo1[Species::V] + lo2[Species::V];
+		auto hiSize = hi1[Species::V] + hi2[Species::V] - 2;
+		// Loop on the possible sizes
+		for (auto size = loSize; size <= hiSize; size++) {
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::V] = size;
+			auto vProdId = subpaving.findTileId(comp);
+			if (vProdId != subpaving.invalidIndex() &&
+				vProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, vProdId});
+				if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+					this->addDissociationReaction(tag, {vProdId, i, j});
+				}
+				previousIndex = vProdId;
+
+				// Special case to allow size 9 basal clusters to dissociate
+				// into vacancies
+				if (size == 9 &&
+					(lo1[Species::V] == 1 || lo2[Species::V] == 1)) {
+					Composition comp = Composition::zero();
+					comp[Species::Basal] = size;
+					auto basalProdId = subpaving.findTileId(comp);
+					if (basalProdId != subpaving.invalidIndex() &&
+						basalProdId != previousIndex) {
+						// No production (vacancies do not accumulate into basal
+						// clusters)
+						this->addDissociationReaction(tag, {basalProdId, i, j});
+					}
+				}
 			}
 		}
+
+		return;
+	}
+
+	// Adding basal
+	// Basal + Basal = Basal
+	if (lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::Basal)) {
+		// Compute the composition of the new cluster
+		auto loSize = lo1[Species::Basal] + lo2[Species::Basal];
+		auto hiSize = hi1[Species::Basal] + hi2[Species::Basal] - 2;
+		// Loop on the possible sizes
+		for (auto size = loSize; size <= hiSize; size++) {
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::Basal] = size;
+			auto vProdId = subpaving.findTileId(comp);
+			if (vProdId != subpaving.invalidIndex() &&
+				vProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, vProdId});
+				if (lo1[Species::Basal] == 1 || lo2[Species::Basal] == 1) {
+					// this->addDissociationReaction(tag, {vProdId, i, j});
+					// Dissociating basal clusters produce V
+				}
+				previousIndex = vProdId;
+			}
+		}
+
+		return;
+	}
+
+	// vac + Basal = Basal
+	if ((lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::V)) ||
+		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Basal))) {
+		// Compute the composition of the new cluster
+		auto loSize = lo1[Species::V] + lo2[Species::V] + lo1[Species::Basal] +
+			lo2[Species::Basal]; // They can all be added because they are
+								 // orthogonal
+		auto hiSize = hi1[Species::V] + hi2[Species::V] + hi1[Species::Basal] +
+			hi2[Species::Basal] - 4;
+		// Loop on the possible sizes
+		for (auto size = loSize; size <= hiSize; size++) {
+			if (size > 9) {
+				// Find Basal
+				Composition comp = Composition::zero();
+				comp[Species::Basal] = size;
+				auto basalProdId = subpaving.findTileId(comp);
+				if (basalProdId != subpaving.invalidIndex() &&
+					basalProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, basalProdId});
+					if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+						this->addDissociationReaction(tag, {basalProdId, i, j});
+					}
+					previousIndex = basalProdId;
+				}
+			}
+			else {
+				// Find V
+				Composition comp = Composition::zero();
+				comp[Species::V] = size;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					previousIndex = vProdId;
+				}
+			}
+		}
+
+		return;
+	}
+
+	// int + Basal = Basal | vac | int | recombine
+	if ((lo1.isOnAxis(Species::Basal) && lo2.isOnAxis(Species::I)) ||
+		(lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::Basal))) {
+		// Compute the largest possible product and the smallest one
+		int largestProd = (int)hi1[Species::Basal] + (int)hi2[Species::Basal] -
+			2 - (int)lo1[Species::I] - (int)lo2[Species::I];
+		int smallestProd = (int)lo1[Species::Basal] + (int)lo2[Species::Basal] -
+			(int)hi1[Species::I] - (int)hi2[Species::I] + 2;
+		// Loop on the products
+		for (int prodSize = smallestProd; prodSize <= largestProd; prodSize++) {
+			// 4 cases
+			if (prodSize > 9) {
+				// Looking for Basal cluster
+				Composition comp = Composition::zero();
+				comp[Species::Basal] = prodSize;
+				auto basalProdId = subpaving.findTileId(comp);
+				if (basalProdId != subpaving.invalidIndex() &&
+					basalProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, basalProdId});
+					// No dissociation
+					previousIndex = basalProdId;
+				}
+			}
+			else if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					// No dissociation
+					previousIndex = vProdId;
+				}
+			}
+			else if (prodSize < 0) {
+				// Looking for I cluster
+				Composition comp = Composition::zero();
+				comp[Species::I] = -prodSize;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex() &&
+					iProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					// No dissociation
+					previousIndex = iProdId;
+				}
+			}
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
+			}
+		}
+
 		return;
 	}
 
 	// vac + int = vac | int | recombine
 	if (((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
 			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I)))) {
-		// Find out which one is which
-		auto vSize =
-			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
-		auto iSize =
-			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
-		// Compute the product size
-		int prodSize = vSize - iSize;
-		// 3 cases
-		if (prodSize > 0) {
-			// Looking for V cluster
-			Composition comp = Composition::zero();
-			comp[Species::V] = prodSize;
-			auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
-			if (vProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, vProdId});
-				// No dissociation
+		// Compute the largest possible product and the smallest one
+		int largestProd = (int)hi1[Species::V] + (int)hi2[Species::V] - 2 -
+			(int)lo1[Species::I] - (int)lo2[Species::I];
+		int smallestProd = (int)lo1[Species::V] + (int)lo2[Species::V] -
+			(int)hi1[Species::I] - (int)hi2[Species::I] + 2;
+		// Loop on the products
+		for (int prodSize = smallestProd; prodSize <= largestProd; prodSize++) {
+			// 3 cases
+			if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					// No dissociation
+					previousIndex = vProdId;
+				}
+			}
+			else if (prodSize < 0) {
+				// Looking for I cluster
+				Composition comp = Composition::zero();
+				comp[Species::I] = -prodSize;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex() &&
+					iProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					// No dissociation
+					previousIndex = iProdId;
+				}
+			}
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
 			}
 		}
-		else if (prodSize < 0) {
-			// Looking for I cluster
-			Composition comp = Composition::zero();
-			comp[Species::I] = -prodSize;
-			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-			if (iProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, iProdId});
-				// No dissociation
-			}
-		}
-		else {
-			// No product
-			this->addProductionReaction(tag, {i, j});
-		}
+
 		return;
 	}
 
 	// int + int = int
 	if (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::I)) {
 		// Compute the composition of the new cluster
-		auto size = lo1[Species::I] + lo2[Species::I];
-		// Find the corresponding cluster
-		Composition comp = Composition::zero();
-		comp[Species::I] = size;
-		auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
-		if (iProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, iProdId});
-			if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
-				this->addDissociationReaction(tag, {iProdId, i, j});
+		auto loSize = lo1[Species::I] + lo2[Species::I];
+		auto hiSize = hi1[Species::I] + hi2[Species::I] - 2;
+		// Loop on the possible sizes
+		for (auto size = loSize; size <= hiSize; size++) {
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::I] = size;
+			auto iProdId = subpaving.findTileId(comp);
+			if (iProdId != subpaving.invalidIndex() &&
+				iProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, iProdId});
+				if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
+					this->addDissociationReaction(tag, {iProdId, i, j});
+				}
+				previousIndex = iProdId;
 			}
 		}
+
 		return;
 	}
 }
@@ -215,30 +511,27 @@ void
 ZrClusterUpdater::updateDiffusionCoefficient(
 	const ClusterData& data, IndexType clusterId, IndexType gridIndex) const
 {
-	// TODO: Set correct values in arrays, check formulas for diffusion
-	// coefficients and anisotropy ratios
-
 	// I migration energies in eV
 	constexpr Kokkos::Array<double, 6> iMigrationA = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+		0.0, 0.17, 0.23, 0.49, 0.75, 0.87};
 	constexpr Kokkos::Array<double, 6> iMigrationC = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+		0.0, 0.30, 0.54, 0.93, 1.2, 1.6};
 	// I diffusion factors in nm^2/s
 	constexpr Kokkos::Array<double, 6> iDiffusionA = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+		0.0, 2.4e+11, 3.2e+11, 4.9e+12, 5.1e+13, 4.3e+13};
 	constexpr Kokkos::Array<double, 6> iDiffusionC = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+		0.0, 6.8e+11, 2.6e+12, 6.8e+13, 4.2e+14, 5.5e+15};
 
-	// V migration energies in eV
-	constexpr Kokkos::Array<double, 10> vMigrationA = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-	constexpr Kokkos::Array<double, 10> vMigrationC = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+	// V migration energies in eV (up to n = 6)
+	constexpr Kokkos::Array<double, 7> vMigrationA = {
+		0.0, 0.59, 0.58, 0.94, 0.16, 0.81, 0.25};
+	constexpr Kokkos::Array<double, 7> vMigrationC = {
+		0.0, 0.67, 0.41, 1.12, 0.58, 0.29, 0.18};
 	// V diffusions factors in nm^2/s
-	constexpr Kokkos::Array<double, 10> vDiffusionA = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
-	constexpr Kokkos::Array<double, 10> vDiffusionC = {
-		0.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0};
+	constexpr Kokkos::Array<double, 7> vDiffusionA = {
+		0.0, 1.6e+12, 2.7e+12, 4.9e+13, 2.5e+10, 2e+13, 3.2e+10};
+	constexpr Kokkos::Array<double, 7> vDiffusionC = {
+		0.0, 2.2e+12, 2.3e+11, 1.27e+15, 4.5e+11, 5.7e+11, 9.1e+9};
 
 	// 3D diffuser case
 	if (data.migrationEnergy(clusterId) < 0.0) {
@@ -256,11 +549,11 @@ ZrClusterUpdater::updateDiffusionCoefficient(
 
 			// Compute the mean
 			data.diffusionCoefficient(clusterId, gridIndex) =
-				Da * Da * pow(Dc, 1.0 / 3.0);
+				pow(Da * Da * Dc, 1.0 / 3.0);
 
 			// Compute the anisotropy factor
 			data.extraData.anisotropyRatio(clusterId, gridIndex) =
-				pow(Dc, 1.0 / 6.0) / Da;
+				pow(Dc / Da, 1.0 / 6.0);
 			return;
 		}
 
@@ -273,11 +566,11 @@ ZrClusterUpdater::updateDiffusionCoefficient(
 
 			// Compute the mean
 			data.diffusionCoefficient(clusterId, gridIndex) =
-				Da * Da * pow(Dc, 1.0 / 3.0);
+				pow(Da * Da * Dc, 1.0 / 3.0);
 
 			// Compute the anisotropy factor
 			data.extraData.anisotropyRatio(clusterId, gridIndex) =
-				pow(Dc, 1.0 / 6.0) / Da;
+				pow(Dc / Da, 1.0 / 6.0);
 
 			return;
 		}

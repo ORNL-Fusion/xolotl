@@ -2,7 +2,6 @@
 #include <ctime>
 #include <iostream>
 
-#include <xolotl/core/network/INetworkHandler.h>
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/factory/solver/SolverFactory.h>
 #include <xolotl/factory/viz/VizHandlerFactory.h>
@@ -128,14 +127,37 @@ try {
 	solver = factory::solver::SolverFactory::get().generate(opts);
 	assert(solver);
 
-	auto bounds = getAllClusterBounds();
-	std::vector<std::vector<std::vector<AmountType>>> allBounds;
-	allBounds.push_back(bounds);
-	initializeClusterMaps(allBounds);
-
 	auto processMap = opts.getProcesses();
-	if (processMap["noSolve"])
+	if (processMap["noSolve"]) {
+		// The flux handler still need to be initialized
+		auto fluxHandler =
+			solverCast(solver)->getSolverHandler()->getFluxHandler();
+		auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+		fluxHandler->initializeFluxHandler(network, 0, std::vector<double>());
+
+		// The network needs the temperature for the rates
+		// TODO: this assumes constant temperature and 0D case
+		auto temperature = std::vector<double>(1, opts.getTempParam());
+		auto depths = std::vector<double>(1, 0.0);
+		network.setTemperatures(temperature, depths);
+
 		return;
+	}
+	// If constant reactions, initialize later
+	if (processMap["constant"])
+		return;
+
+	// Initialize the solver
+	solver->initialize();
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::initializeSolver()
+try {
 	// Initialize the solver
 	solver->initialize();
 }
@@ -346,21 +368,33 @@ catch (const std::exception& e) {
 	throw;
 }
 
-void
-XolotlInterface::initializeClusterMaps(
-	std::vector<std::vector<std::vector<AmountType>>> bounds)
+std::vector<std::vector<IdType>>
+XolotlInterface::getAllMomentIdInfo()
 try {
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
-	network.initializeClusterMap(bounds);
 
-	// Create the local map
+	return network.getAllMomentIdInfo();
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::initializeClusterMaps(
+	std::vector<std::vector<std::vector<AmountType>>> bounds,
+	std::vector<std::vector<std::vector<IdType>>> momIdInfo)
+try {
+	// Create the local maps
 	auto currentBounds = getAllClusterBounds();
+	auto currentMomIdInfo = getAllMomentIdInfo();
 	// Loop on the sub network bounds
-	for (auto subBounds : bounds) {
+	for (auto i = 0; i < bounds.size(); i++) {
+		auto subBounds = bounds[i];
 		// Create a new vector
-		std::vector<AmountType> temp;
-		// Loop on the entries
+		std::vector<IdType> temp;
+		// Loop on the cluster entries
 		for (auto bound : subBounds) {
 			// Look for the same cluster in currentBounds
 			for (auto j = 0; j < currentBounds.size(); j++) {
@@ -370,8 +404,64 @@ try {
 				}
 			}
 		}
+		// Loop on the momId entries
+		auto subMomIdInfo = momIdInfo[i];
+		for (auto l = 0; l < subMomIdInfo.size(); l++) {
+			auto idMap = subMomIdInfo[l];
+			for (auto j = 0; j < idMap.size(); j++) {
+				temp.push_back(currentMomIdInfo[temp[l]][j]);
+			}
+		}
 		fromSubNetwork.push_back(temp);
 	}
+
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	network.initializeClusterMap(bounds, momIdInfo, fromSubNetwork);
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::initializeReactions()
+try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	network.initializeReactions();
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+std::vector<std::vector<std::pair<IdType, double>>>
+XolotlInterface::getImplantedFlux()
+try {
+	// Get the flux handler
+	auto fluxHandler = solverCast(solver)->getSolverHandler()->getFluxHandler();
+
+	// Loop on the sub network maps
+	std::vector<std::vector<std::pair<IdType, double>>> toReturn;
+	for (auto subMap : fromSubNetwork) {
+		toReturn.push_back(fluxHandler->getImplantedFlux(subMap));
+	}
+
+	return toReturn;
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::setImplantedFlux(
+	std::vector<std::pair<IdType, double>> fluxVector)
+try {
+	// Get the flux handler
+	auto fluxHandler = solverCast(solver)->getSolverHandler()->getFluxHandler();
+	fluxHandler->setImplantedFlux(fluxVector);
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -412,28 +502,151 @@ try {
 
 	// Loop on the sub network maps
 	std::vector<std::vector<std::vector<double>>> toReturn;
-	for (auto subMap : fromSubNetwork) {
+	for (auto l = 0; l < fromSubNetwork.size(); l++) {
 		// Get the sub DOF and initialize the rate map
-		auto subDOF = subMap.size();
-		auto hMap = Kokkos::View<AmountType*, Kokkos::HostSpace,
-			Kokkos::MemoryUnmanaged>(subMap.data(), subDOF);
-		auto dMap = Kokkos::View<AmountType*>("Sub Map", subDOF);
-		deep_copy(dMap, hMap);
+		auto subDOF = fromSubNetwork[l].size();
 		std::vector<std::vector<double>> rateMap =
 			std::vector(subDOF, std::vector(subDOF + 1, 0.0));
-		auto hRates = Kokkos::View<double**, Kokkos::HostSpace>(
-			"hRates", subDOF, subDOF + 1);
-		auto dRates = Kokkos::View<double**>("Sub Rates", subDOF, subDOF + 1);
-		deep_copy(dRates, hRates);
-
-		network.computeConstantRates(dConcs, dRates, dMap);
+		auto dRates = Kokkos::View<double**>("dRates", subDOF, subDOF + 1);
+		auto hRates = Kokkos::create_mirror_view(dRates);
+		network.computeConstantRates(dConcs, dRates, l);
 
 		deep_copy(hRates, dRates);
-		// TODO: does it need to be copied element by element?
+		// Copy element by element
+		for (auto i = 0; i < rateMap.size(); i++)
+			for (auto j = 0; j < rateMap[0].size(); j++) {
+				rateMap[i][j] = hRates(i, j);
+			}
 		toReturn.push_back(rateMap);
 	}
 
 	return toReturn;
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+std::vector<std::vector<std::vector<bool>>>
+XolotlInterface::getConstantConnectivities()
+try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	const auto dof = network.getDOF();
+
+	// Loop on the sub network maps
+	std::vector<std::vector<std::vector<bool>>> toReturn;
+	for (auto l = 0; l < fromSubNetwork.size(); l++) {
+		// Get the sub DOF and initialize the connectivity map
+		auto subDOF = fromSubNetwork[l].size();
+		std::vector<std::vector<bool>> connMap =
+			std::vector(subDOF, std::vector(subDOF + 1, false));
+		auto dConns = Kokkos::View<bool**>("dConns", subDOF, subDOF + 1);
+		auto hConns = Kokkos::create_mirror_view(dConns);
+		network.getConstantConnectivities(dConns, l);
+
+		deep_copy(hConns, dConns);
+		// Copy element by element
+		for (auto i = 0; i < connMap.size(); i++)
+			for (auto j = 0; j < connMap[0].size(); j++) {
+				connMap[i][j] = hConns(i, j);
+			}
+		toReturn.push_back(connMap);
+	}
+
+	return toReturn;
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::setConstantConnectivities(std::vector<std::vector<bool>> conns)
+try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	network.setConstantConnectivities(conns);
+
+	return;
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::outputData(double time, std::vector<std::vector<double>> conc)
+try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	const auto dof = network.getDOF();
+	auto networkSize = network.getNumClusters();
+
+	if (time == 0.0) {
+		// Create/open the output files
+		std::fstream outputFile;
+		outputFile.open("FullAlphaZr.dat", std::fstream::out);
+		outputFile << "#time ";
+		outputFile << network.getHeaderString();
+		outputFile << std::endl;
+		outputFile.close();
+	}
+
+	// Construct the full concentration vector first
+	std::vector<double> fullConc(dof, 0.0);
+	for (auto i = 0; i < conc.size(); i++)
+		for (auto j = 0; j < conc[i].size(); j++) {
+			fullConc[fromSubNetwork[i][j]] = conc[i][j];
+		}
+
+	// Set the output precision
+	const int outputPrecision = 5;
+
+	// Open the output file
+	std::fstream outputFile;
+	outputFile.open("FullAlphaZr.dat", std::fstream::out | std::fstream::app);
+	outputFile << std::setprecision(outputPrecision);
+
+	auto numSpecies = network.getSpeciesListSize();
+	auto myData = std::vector<double>(numSpecies * 6, 0.0);
+
+	// Get the minimum size for the loop densities and diameters
+	auto minSizes = solverCast(solver)->getSolverHandler()->getMinSizes();
+
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(fullConc.data(), dof);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+	deep_copy(dConcs, hConcs);
+
+	// Loop on the species
+	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+		myData[6 * id()] = network.getTotalConcentration(dConcs, id, 1);
+		myData[6 * id() + 1] = network.getTotalAtomConcentration(dConcs, id, 1);
+		myData[(6 * id()) + 2] = 2.0 *
+			network.getTotalRadiusConcentration(dConcs, id, 1) /
+			myData[6 * id()];
+		myData[(6 * id()) + 3] =
+			network.getTotalConcentration(dConcs, id, minSizes[id()]);
+		myData[(6 * id()) + 4] =
+			network.getTotalAtomConcentration(dConcs, id, minSizes[id()]);
+		myData[(6 * id()) + 5] = 2.0 *
+			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
+			myData[(6 * id()) + 3];
+	}
+
+	// Output the data
+	outputFile << time << " ";
+	for (auto i = 0; i < numSpecies; ++i) {
+		outputFile << myData[i * 6] << " " << myData[(i * 6) + 1] << " "
+				   << myData[(i * 6) + 2] << " " << myData[(i * 6) + 3] << " "
+				   << myData[(i * 6) + 4] << " " << myData[(i * 6) + 5] << " ";
+	}
+	outputFile << std::endl;
+
+	// Close the output file
+	outputFile.close();
 }
 catch (const std::exception& e) {
 	reportException(e);

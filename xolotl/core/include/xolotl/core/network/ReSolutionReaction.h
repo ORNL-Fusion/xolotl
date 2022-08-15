@@ -28,6 +28,7 @@ public:
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
+	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using Composition = typename Superclass::Composition;
@@ -64,7 +65,7 @@ private:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex);
+	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -95,6 +96,14 @@ private:
 		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
+	void
+	getConstantConnectivities(ConnectivitiesView conns, BelongingView isInSub,
+		OwnedSubMapView backMap)
+	{
+		return;
+	}
+
+	KOKKOS_INLINE_FUNCTION
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
@@ -105,10 +114,10 @@ private:
 
 protected:
 	IndexType _reactant;
-	AmountType _reactantVolume;
+	double _reactantVolume;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
 	util::Array<IndexType, 2> _products{invalidIndex, invalidIndex};
-	util::Array<AmountType, 2> _productVolumes{0, 0};
+	util::Array<double, 2> _productVolumes{0.0, 0.0};
 
 	static constexpr auto nMomentIds = Superclass::nMomentIds;
 	util::Array<IndexType, nMomentIds> _reactantMomentIds;

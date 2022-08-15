@@ -189,28 +189,24 @@ PetscMonitor0D::setup()
 	}
 	// Set the monitor to output data for AlphaZr
 	if (flagZr) {
-		using NetworkType = core::network::ZrReactionNetwork;
-		using Spec = typename NetworkType::Species;
-		using Region = typename NetworkType::Region;
-		using Composition = typename NetworkType::Composition;
-		auto& network =
-			dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-		auto networkSize = network.getNumClusters();
+		auto& network = _solverHandler->getNetwork();
+		auto numSpecies = network.getSpeciesListSize();
+
 		// Create/open the output files
 		std::fstream outputFile;
 		outputFile.open("AlphaZr.dat", std::fstream::out);
 		outputFile << "#time_step time ";
-		for (auto i = 0; i < networkSize; i++) {
-			auto cluster = network.getCluster(i, plsm::onHost);
-			const Region& clReg = cluster.getRegion();
-			Composition lo(clReg.getOrigin());
-			if (lo.isOnAxis(Spec::V))
-				outputFile << "V_" << lo[Spec::V] << " ";
-			else if (lo.isOnAxis(Spec::I))
-				outputFile << "I_" << lo[Spec::I] << " ";
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			auto speciesName = network.getSpeciesName(id);
+			outputFile << speciesName << "_density " << speciesName << "_atom "
+					   << speciesName << "_diameter " << speciesName
+					   << "_partial_density " << speciesName << "_partial_atom "
+					   << speciesName << "_partial_diameter ";
 		}
+
 		outputFile << std::endl;
 		outputFile.close();
+
 		// computeAlphaZr will be called at each timestep
 		ierr = TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr);
 		checkPetscError(
@@ -546,9 +542,6 @@ PetscMonitor0D::computeAlloy(
 
 	PetscFunctionBeginUser;
 
-	// Get the position of the surface
-	auto surfacePos = _solverHandler->getSurfacePosition();
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -632,9 +625,6 @@ PetscMonitor0D::computeAlphaZr(
 
 	PetscFunctionBeginUser;
 
-	// Get the position of the surface
-	auto surfacePos = _solverHandler->getSurfacePosition();
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -645,15 +635,46 @@ PetscMonitor0D::computeAlphaZr(
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
+	using NetworkType = core::network::ZrReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
 	// Degrees of freedom is the total number of clusters in the network
-	auto& network = _solverHandler->getNetwork();
-	auto networkSize = network.getNumClusters();
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+	const auto dof = network.getDOF();
+	auto numSpecies = network.getSpeciesListSize();
+	auto myData = std::vector<double>(numSpecies * 6, 0.0);
+
+	// Get the minimum size for the loop densities and diameters
+	auto minSizes = _solverHandler->getMinSizes();
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal* gridPointSolution;
 
 	// Get the pointer to the beginning of the solution data for this grid point
 	gridPointSolution = solutionArray[0];
+
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(gridPointSolution, dof);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+	deep_copy(dConcs, hConcs);
+
+	// Loop on the species
+	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+		myData[6 * id()] = network.getTotalConcentration(dConcs, id, 1);
+		myData[6 * id() + 1] = network.getTotalAtomConcentration(dConcs, id, 1);
+		myData[(6 * id()) + 2] = 2.0 *
+			network.getTotalRadiusConcentration(dConcs, id, 1) /
+			myData[6 * id()];
+		myData[(6 * id()) + 3] =
+			network.getTotalConcentration(dConcs, id, minSizes[id()]);
+		myData[(6 * id()) + 4] =
+			network.getTotalAtomConcentration(dConcs, id, minSizes[id()]);
+		myData[(6 * id()) + 5] = 2.0 *
+			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
+			myData[(6 * id()) + 3];
+	}
 
 	// Set the output precision
 	const int outputPrecision = 5;
@@ -665,9 +686,13 @@ PetscMonitor0D::computeAlphaZr(
 
 	// Output the data
 	outputFile << timestep << " " << time << " ";
-	for (auto i = 0; i < networkSize; ++i) {
-		outputFile << gridPointSolution[i] << " ";
+
+	for (auto i = 0; i < numSpecies; ++i) {
+		outputFile << myData[i * 6] << " " << myData[(i * 6) + 1] << " "
+				   << myData[(i * 6) + 2] << " " << myData[(i * 6) + 3] << " "
+				   << myData[(i * 6) + 4] << " " << myData[(i * 6) + 5] << " ";
 	}
+
 	outputFile << std::endl;
 
 	// Close the output file
@@ -721,7 +746,7 @@ PetscMonitor0D::monitorScatter(
 	for (auto i = 0; i < networkSize; i++) {
 		// Create a DataPoint with the concentration[i] as the value
 		// and add it to myPoints
-		auto cluster = network.getCluster(i, plsm::onHost);
+		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
 		const Region& clReg = cluster.getRegion();
 		for (auto j : makeIntervalRange(clReg[Spec::Xe])) {
 			viz::dataprovider::DataPoint aPoint;
@@ -813,7 +838,7 @@ PetscMonitor0D::monitorBubble(
 
 	// Consider each cluster.
 	for (auto i = 0; i < networkSize; i++) {
-		auto cluster = network.getCluster(i, plsm::onHost);
+		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
 		const Region& clReg = cluster.getRegion();
 		Composition lo = clReg.getOrigin();
 		Composition hi = clReg.getUpperLimitPoint();

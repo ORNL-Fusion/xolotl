@@ -11,49 +11,6 @@ namespace core
 {
 namespace network
 {
-double
-AlloyReactionNetwork::checkLatticeParameter(double latticeParameter)
-{
-	if (latticeParameter <= 0.0) {
-		return alloyLatticeConstant;
-	}
-	return latticeParameter;
-}
-
-double
-AlloyReactionNetwork::checkImpurityRadius(double impurityRadius)
-{
-	if (impurityRadius <= 0.0) {
-		return alloyCoreRadius;
-	}
-	return impurityRadius;
-}
-
-AlloyReactionNetwork::IndexType
-AlloyReactionNetwork::checkLargestClusterId()
-{
-	// Copy the cluster data for the parallel loop
-	auto clData = _clusterData.d_view;
-	using Reducer = Kokkos::MaxLoc<AlloyReactionNetwork::AmountType,
-		AlloyReactionNetwork::IndexType>;
-	Reducer::value_type maxLoc;
-	Kokkos::parallel_reduce(
-		_numClusters,
-		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
-			const Region& clReg = clData().getCluster(i).getRegion();
-			Composition hi = clReg.getUpperLimitPoint();
-			auto size =
-				hi[Species::Void] + hi[Species::Frank] + hi[Species::Faulted];
-			if (size > update.val) {
-				update.val = size;
-				update.loc = i;
-			}
-		},
-		Reducer(maxLoc));
-
-	return maxLoc.loc;
-}
-
 namespace detail
 {
 template <typename TTag>
@@ -61,6 +18,12 @@ KOKKOS_INLINE_FUNCTION
 void
 AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+
 	using Species = typename Network::Species;
 	using Composition = typename Network::Composition;
 	using AmountType = typename Network::AmountType;
@@ -87,7 +50,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		// Find the corresponding cluster
 		Composition comp = Composition::zero();
 		comp[Species::V] = size;
-		auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+		auto vProdId = subpaving.findTileId(comp);
 		if (vProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, vProdId});
 			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
@@ -96,7 +59,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		}
 		comp[Species::V] = 0;
 		comp[Species::Void] = size;
-		auto voidProdId = subpaving.findTileId(comp, plsm::onDevice);
+		auto voidProdId = subpaving.findTileId(comp);
 		if (voidProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, voidProdId});
 			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
@@ -119,7 +82,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		for (auto k = minSize; k <= maxSize; k++) {
 			Composition comp = Composition::zero();
 			comp[Species::Void] = k;
-			auto voidProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto voidProdId = subpaving.findTileId(comp);
 			if (voidProdId != subpaving.invalidIndex() &&
 				voidProdId != previousIndex) {
 				this->addProductionReaction(tag, {i, j, voidProdId});
@@ -146,7 +109,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		for (auto k = minSize; k <= maxSize; k++) {
 			Composition comp = Composition::zero();
 			comp[Species::Faulted] = k;
-			auto fProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto fProdId = subpaving.findTileId(comp);
 			if (fProdId != subpaving.invalidIndex() &&
 				fProdId != previousIndex) {
 				this->addProductionReaction(tag, {i, j, fProdId});
@@ -174,7 +137,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Looking for V cluster
 			Composition comp = Composition::zero();
 			comp[Species::V] = prodSize;
-			auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto vProdId = subpaving.findTileId(comp);
 			if (vProdId != subpaving.invalidIndex()) {
 				this->addProductionReaction(tag, {i, j, vProdId});
 				// No dissociation
@@ -184,7 +147,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Looking for I cluster
 			Composition comp = Composition::zero();
 			comp[Species::I] = -prodSize;
-			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto iProdId = subpaving.findTileId(comp);
 			if (iProdId != subpaving.invalidIndex()) {
 				this->addProductionReaction(tag, {i, j, iProdId});
 				// No dissociation
@@ -211,14 +174,14 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			//  Find the corresponding cluster
 			Composition comp = Composition::zero();
 			comp[Species::I] = prodSize;
-			auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto iProdId = subpaving.findTileId(comp);
 			if (iProdId != subpaving.invalidIndex()) {
 				this->addProductionReaction(tag, {i, j, iProdId});
 				// No dissociation
 			}
 			comp[Species::I] = 0;
 			comp[Species::Perfect] = prodSize;
-			auto pProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto pProdId = subpaving.findTileId(comp);
 			if (pProdId != subpaving.invalidIndex()) {
 				this->addProductionReaction(tag, {i, j, pProdId});
 				// No dissociation
@@ -242,7 +205,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				//  Find the corresponding cluster
 				Composition comp = Composition::zero();
 				comp[Species::I] = prodSize;
-				auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto iProdId = subpaving.findTileId(comp);
 				if (iProdId != subpaving.invalidIndex() &&
 					iProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, iProdId});
@@ -251,7 +214,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				}
 				comp[Species::I] = 0;
 				comp[Species::Frank] = prodSize;
-				auto fProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto fProdId = subpaving.findTileId(comp);
 				if (fProdId != subpaving.invalidIndex() &&
 					fProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, fProdId});
@@ -270,7 +233,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		// Find the corresponding cluster
 		Composition comp = Composition::zero();
 		comp[Species::I] = size;
-		auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+		auto iProdId = subpaving.findTileId(comp);
 		if (iProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, iProdId});
 			if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
@@ -279,7 +242,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		}
 		comp[Species::I] = 0;
 		comp[Species::Frank] = size;
-		auto fProdId = subpaving.findTileId(comp, plsm::onDevice);
+		auto fProdId = subpaving.findTileId(comp);
 		if (fProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, fProdId});
 			// No dissociation
@@ -300,7 +263,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		for (auto k = minSize; k <= maxSize; k++) {
 			Composition comp = Composition::zero();
 			comp[Species::Frank] = k;
-			auto fProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto fProdId = subpaving.findTileId(comp);
 			if (fProdId != subpaving.invalidIndex() &&
 				fProdId != previousIndex) {
 				this->addProductionReaction(tag, {i, j, fProdId});
@@ -321,7 +284,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		// Find the corresponding cluster
 		Composition comp = Composition::zero();
 		comp[Species::Perfect] = size;
-		auto pProdId = subpaving.findTileId(comp, plsm::onDevice);
+		auto pProdId = subpaving.findTileId(comp);
 		if (pProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, pProdId});
 			// No dissociation
@@ -344,7 +307,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				//  Find the corresponding cluster
 				Composition comp = Composition::zero();
 				comp[Species::V] = prodSize;
-				auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto vProdId = subpaving.findTileId(comp);
 				if (vProdId != subpaving.invalidIndex() &&
 					vProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, vProdId});
@@ -353,7 +316,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				}
 				comp[Species::V] = 0;
 				comp[Species::Faulted] = prodSize;
-				auto fProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto fProdId = subpaving.findTileId(comp);
 				if (fProdId != subpaving.invalidIndex() &&
 					fProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, fProdId});
@@ -380,7 +343,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				//  Find the corresponding cluster
 				Composition comp = Composition::zero();
 				comp[Species::V] = prodSize;
-				auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto vProdId = subpaving.findTileId(comp);
 				if (vProdId != subpaving.invalidIndex() &&
 					vProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, vProdId});
@@ -389,7 +352,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				}
 				comp[Species::V] = 0;
 				comp[Species::Void] = prodSize;
-				auto fProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto fProdId = subpaving.findTileId(comp);
 				if (fProdId != subpaving.invalidIndex() &&
 					fProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, fProdId});
@@ -420,7 +383,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				// Looking for V cluster
 				Composition comp = Composition::zero();
 				comp[Species::V] = prodSize;
-				auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto vProdId = subpaving.findTileId(comp);
 				if (vProdId != subpaving.invalidIndex() &&
 					vProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, vProdId});
@@ -429,7 +392,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				}
 				comp[Species::V] = 0;
 				comp[Species::Faulted] = prodSize;
-				auto fProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto fProdId = subpaving.findTileId(comp);
 				if (fProdId != subpaving.invalidIndex() &&
 					fProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, fProdId});
@@ -441,7 +404,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				// Looking for I cluster
 				Composition comp = Composition::zero();
 				comp[Species::I] = -prodSize;
-				auto iProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto iProdId = subpaving.findTileId(comp);
 				if (iProdId != subpaving.invalidIndex() &&
 					iProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, iProdId});
@@ -450,7 +413,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				}
 				comp[Species::I] = 0;
 				comp[Species::Perfect] = -prodSize;
-				auto pProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto pProdId = subpaving.findTileId(comp);
 				if (pProdId != subpaving.invalidIndex() &&
 					pProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, pProdId});
@@ -480,7 +443,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		for (auto k = minSize; k <= maxSize; k++) {
 			Composition comp = Composition::zero();
 			comp[Species::Frank] = k;
-			auto fProdId = subpaving.findTileId(comp, plsm::onDevice);
+			auto fProdId = subpaving.findTileId(comp);
 			if (fProdId != subpaving.invalidIndex() &&
 				fProdId != previousIndex) {
 				this->addProductionReaction(tag, {i, j, fProdId});
@@ -506,7 +469,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				//  Find the corresponding cluster
 				Composition comp = Composition::zero();
 				comp[Species::V] = prodSize;
-				auto vProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto vProdId = subpaving.findTileId(comp);
 				if (vProdId != subpaving.invalidIndex() &&
 					vProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, vProdId});
@@ -515,7 +478,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				}
 				comp[Species::V] = 0;
 				comp[Species::Void] = prodSize;
-				auto fProdId = subpaving.findTileId(comp, plsm::onDevice);
+				auto fProdId = subpaving.findTileId(comp);
 				if (fProdId != subpaving.invalidIndex() &&
 					fProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, fProdId});
@@ -534,14 +497,14 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		// Find the corresponding cluster
 		Composition comp = Composition::zero();
 		comp[Species::Perfect] = size;
-		auto pProdId = subpaving.findTileId(comp, plsm::onDevice);
+		auto pProdId = subpaving.findTileId(comp);
 		if (pProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, pProdId});
 			// No dissociation
 		}
 		comp[Species::Perfect] = 0;
 		comp[Species::Frank] = size;
-		auto fProdId = subpaving.findTileId(comp, plsm::onDevice);
+		auto fProdId = subpaving.findTileId(comp);
 		if (fProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, fProdId});
 			// No dissociation

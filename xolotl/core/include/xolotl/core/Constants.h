@@ -4,12 +4,10 @@
  *  Created on: May 6, 2013
  *      Author: bkj
  */
+#pragma once
 
 #include <cmath>
 #include <memory>
-
-#ifndef CONSTANTS_H_
-#define CONSTANTS_H_
 
 namespace xolotl
 {
@@ -38,13 +36,13 @@ constexpr double uraniumDioxydeLatticeConstant = 0.54700000000000000;
 constexpr double ironLatticeConstant = 0.28700000000000000;
 
 //! Lattice Parameter. Given in units here of nm.
-constexpr double alphaZrLatticeConstant = 0.30000000000000000;
+constexpr double alphaZrLatticeConstant = 0.32294500000000000; // the a-constant
 
 //! Core radius. Given in units here of nm.
 constexpr double alloyCoreRadius = 0.36000000000000000;
 
 //! Core radius. Given in units here of nm.
-constexpr double alphaZrCoreRadius = 0.00000000000000000;
+constexpr double alphaZrCoreRadius = 0.64500000000000000;
 
 //! Single helium radius. Given in units here of nm.
 constexpr double heliumRadius = 0.30000000000000000;
@@ -92,9 +90,13 @@ constexpr double frankBurgers = 0.333;
 constexpr double alloySinkStrength = 1.0e-5;
 
 // Sink strength for alphaZr case in nm^-2
-constexpr double alphaZrASinkStrength = 0.0;
-constexpr double alphaZrCSinkStrength = 0.0;
+constexpr double alphaZrASinkStrength = 7.25e-8; // Single crystal
+constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
+// constexpr double alphaZrASinkStrength = 2e-5; //cold-worked Zr
+// constexpr double alphaZrCSinkStrength = 5e-6; //cold-worked Zr
+
+// Transition size for basal faulted pyramids to basal c-loops
+constexpr double basalTransitionSize = 325;
 
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif /* CONSTANTS_H_ */
