@@ -37,7 +37,7 @@ public:
 	 * @param ofill Map of connectivity for diffusing clusters.
 	 */
 	virtual void
-	initializeOFill(const network::IReactionNetwork& network,
+	initializeOFill(network::IReactionNetwork& network,
 		network::IReactionNetwork::SparseFillMap& ofillMap) = 0;
 
 	/**

@@ -92,5 +92,8 @@ constexpr double fecrSinkStrength = 0.00025;
 // FeCr detrap frequency
 constexpr double detrapFrequency = 0.1;
 
+// Tungsten density in nm^-3
+constexpr double tungstenDensity = 62.8;
+
 } /* end namespace core */
 } /* end namespace xolotl */

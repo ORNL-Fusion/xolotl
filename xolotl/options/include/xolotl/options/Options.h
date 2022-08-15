@@ -74,9 +74,9 @@ protected:
 	std::string materialName;
 
 	/**
-	 * Value of the initial vacancy concentration.
+	 * Value for initial concentrations.
 	 */
-	double initialVConcentration;
+	std::string initialConcentration;
 
 	/**
 	 * Value of the electronic stopping power.
@@ -409,10 +409,10 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
-	double
-	getInitialVConcentration() const override
+	std::string
+	getInitialConcentration() const override
 	{
-		return initialVConcentration;
+		return initialConcentration;
 	}
 
 	/**

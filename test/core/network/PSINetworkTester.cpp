@@ -56,8 +56,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
 
-	network.syncClusterDataOnHost();
-
 	BOOST_REQUIRE(network.hasDeuterium());
 	BOOST_REQUIRE(network.hasTritium());
 
@@ -346,7 +344,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -610,8 +607,6 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
 
-	network.syncClusterDataOnHost();
-
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
 	NetworkType::SparseFillMap knownDFill;
@@ -787,7 +782,6 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -882,8 +876,6 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType network({maxHe, maxV, maxI}, 1, opts);
-
-	network.syncClusterDataOnHost();
 
 	BOOST_REQUIRE(!network.hasDeuterium());
 	BOOST_REQUIRE(!network.hasTritium());
@@ -993,7 +985,6 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -1183,8 +1174,6 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxV, maxI}, 1, opts);
 
-	network.syncClusterDataOnHost();
-
 	BOOST_REQUIRE(network.hasDeuterium());
 	BOOST_REQUIRE(!network.hasTritium());
 
@@ -1311,7 +1300,6 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -1535,8 +1523,6 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxT, maxV, maxI}, 1, opts);
 
-	network.syncClusterDataOnHost();
-
 	BOOST_REQUIRE(!network.hasDeuterium());
 	BOOST_REQUIRE(network.hasTritium());
 
@@ -1663,7 +1649,6 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	std::vector<double> temperatures = {1000.0};
 	std::vector<double> depths = {1.0};
 	network.setTemperatures(temperatures, depths);
-	network.syncClusterDataOnHost();
 	NetworkType::IndexType gridId = 0;
 
 	// Check the largest rate
@@ -1858,7 +1843,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
 }
 
-BOOST_AUTO_TEST_CASE(smallHeVGrouped)
+BOOST_AUTO_TEST_CASE(HeVGrouped)
 {
 	// Create the option to create a network
 	xolotl::options::Options opts;
@@ -1886,8 +1871,6 @@ BOOST_AUTO_TEST_CASE(smallHeVGrouped)
 			.generate(opts)
 			->getNetwork());
 
-	network->syncClusterDataOnHost();
-
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 2874);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 3300);
 
@@ -1903,53 +1886,6 @@ BOOST_AUTO_TEST_CASE(smallHeVGrouped)
 	// Check the single vacancy
 	auto vacancy = network->getSingleVacancy();
 	BOOST_REQUIRE_EQUAL(vacancy.getId(), 0);
-}
-
-BOOST_AUTO_TEST_CASE(largeHeVGrouped)
-{
-	// Create the option to create a network
-	xolotl::options::Options opts;
-	// Create a good parameter file
-	std::string parameterFile = "param.txt";
-	std::ofstream paramFile(parameterFile);
-	paramFile << "netParam=8 0 0 20000 6" << std::endl
-			  << "process=reaction" << std::endl
-			  << "material=W100" << std::endl
-			  << "grouping=31 2 2" << std::endl;
-	paramFile.close();
-
-	// Create a fake command line to read the options
-	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
-	opts.readParams(cl.argc, cl.argv);
-
-	std::remove(parameterFile.c_str());
-
-	using NetworkType = PSIReactionNetwork<PSIHeliumSpeciesList>;
-	using Spec = NetworkType::Species;
-	using Composition = NetworkType::Composition;
-
-	auto network = dynamic_pointer_cast<NetworkType>(
-		factory::network::NetworkHandlerFactory::get()
-			.generate(opts)
-			->getNetwork());
-
-	network->syncClusterDataOnHost();
-
-	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 3127);
-	BOOST_REQUIRE_EQUAL(network->getDOF(), 4775);
-
-	// TODO: Test each value explicitly?
-	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
-	BOOST_REQUIRE_EQUAL(bounds.size(), 3127);
-	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
-
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 922);
 }
 
 BOOST_AUTO_TEST_CASE(HeDVGrouped)
@@ -1979,8 +1915,6 @@ BOOST_AUTO_TEST_CASE(HeDVGrouped)
 		factory::network::NetworkHandlerFactory::get()
 			.generate(opts)
 			->getNetwork());
-
-	network->syncClusterDataOnHost();
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 4967);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 6656);
@@ -2027,8 +1961,6 @@ BOOST_AUTO_TEST_CASE(HeTVGrouped)
 			.generate(opts)
 			->getNetwork());
 
-	network->syncClusterDataOnHost();
-
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 4967);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 6656);
 
@@ -2073,8 +2005,6 @@ BOOST_AUTO_TEST_CASE(HeDTVGrouped)
 		factory::network::NetworkHandlerFactory::get()
 			.generate(opts)
 			->getNetwork());
-
-	network->syncClusterDataOnHost();
 
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 2383);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 4259);
@@ -2121,8 +2051,6 @@ BOOST_AUTO_TEST_CASE(IGrouped)
 			.generate(opts)
 			->getNetwork());
 
-	network->syncClusterDataOnHost();
-
 	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 813);
 	BOOST_REQUIRE_EQUAL(network->getDOF(), 1424);
 
@@ -2138,6 +2066,51 @@ BOOST_AUTO_TEST_CASE(IGrouped)
 	// Check the single vacancy
 	auto vacancy = network->getSingleVacancy();
 	BOOST_REQUIRE_EQUAL(vacancy.getId(), 2);
+}
+
+BOOST_AUTO_TEST_CASE(VIGrouped)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
+	paramFile << "netParam=0 0 0 1000 10000" << std::endl
+			  << "process=reaction" << std::endl
+			  << "material=W100" << std::endl
+			  << "grouping=101 2 2" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
+
+	using NetworkType = PSIReactionNetwork<PSIHeliumSpeciesList>;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+
+	auto network = dynamic_pointer_cast<NetworkType>(
+		factory::network::NetworkHandlerFactory::get()
+			.generate(opts)
+			->getNetwork());
+
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 1091);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 1978);
+
+	// TODO: Test each value explicitly?
+	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
+	BOOST_REQUIRE_EQUAL(bounds.size(), 1091);
+	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
+
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
+
+	// Check the single vacancy
+	auto vacancy = network->getSingleVacancy();
+	BOOST_REQUIRE_EQUAL(vacancy.getId(), 586);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -25,6 +25,10 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 	XOLOTL_LOG << "SolverHandler: 0D simulation";
+	for (auto pair : initialConc) {
+		XOLOTL_LOG << ", initial concentration for Id: " << pair.first
+				   << " of: " << pair.second << " nm-3";
+	}
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = util::getMPIComm();
@@ -93,12 +97,6 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	// + moments
 	const auto dof = network.getDOF();
 
-	// Get the single vacancy ID
-	auto singleVacancyCluster = network.getSingleVacancy();
-	auto vacancyIndex = NetworkType::invalidIndex();
-	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
-		vacancyIndex = singleVacancyCluster.getId();
-
 	// Get the concentration of the only grid point
 	concOffset = concentrations[0];
 
@@ -122,9 +120,11 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
 
-	// Initialize the vacancy concentration
-	if (vacancyIndex != NetworkType::invalidIndex() and not hasConcentrations) {
-		concOffset[vacancyIndex] = initialVConc;
+	// Initialize the option specified concentration
+	if (hasConcentrations) {
+		for (auto pair : initialConc) {
+			concOffset[pair.first] = pair.second;
+		}
 	}
 
 	// If the concentration must be set from the HDF5 file
@@ -150,7 +150,6 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	// Update the network with the temperature
 	auto depths = std::vector<double>(1, 1.0);
 	network.setTemperatures(temperature, depths);
-	network.syncClusterDataOnHost();
 
 	/*
 	 Restore vectors
@@ -307,7 +306,6 @@ PetscSolver0DHandler::updateConcentration(
 		temperature[0] = temp;
 		auto depths = std::vector<double>(1, 1.0);
 		network.setTemperatures(temperature, depths);
-		network.syncClusterDataOnHost();
 	}
 
 	// ----- Account for flux of incoming particles -----
@@ -390,7 +388,6 @@ PetscSolver0DHandler::computeJacobian(
 		temperature[0] = temp;
 		auto depths = std::vector<double>(1, 1.0);
 		network.setTemperatures(temperature, depths);
-		network.syncClusterDataOnHost();
 	}
 
 	// ----- Take care of the reactions for all the reactants -----

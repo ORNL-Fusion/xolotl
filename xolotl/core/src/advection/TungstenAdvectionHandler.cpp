@@ -40,7 +40,7 @@ TungstenAdvectionHandler::initialize(network::IReactionNetwork& network,
 		if (clusterId == NetworkType::invalidIndex()) {
 			throw std::runtime_error("\nThe helium cluster of size " +
 				std::to_string(i) +
-				"is not present in the network, "
+				" is not present in the network, "
 				"cannot use the advection option!");
 		}
 
