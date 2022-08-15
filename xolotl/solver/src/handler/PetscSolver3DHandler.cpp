@@ -98,6 +98,10 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 			ss << "free surface";
 		else
 			ss << "periodic";
+		for (auto pair : initialConc) {
+			ss << ", initial concentration for Id: " << pair.first
+			   << " of: " << pair.second << " nm-3";
+		}
 		ss << ", grid (nm): ";
 		for (auto i = 1; i < grid.size() - 1; i++) {
 			ss << grid[i] - grid[surfacePosition[0][0] + 1] << " ";
@@ -238,12 +242,6 @@ PetscSolver3DHandler::initializeConcentration(DM& da, Vec& C)
 	// + moments
 	const auto dof = network.getDOF();
 
-	// Get the single vacancy ID
-	auto singleVacancyCluster = network.getSingleVacancy();
-	auto vacancyIndex = NetworkType::invalidIndex();
-	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
-		vacancyIndex = singleVacancyCluster.getId();
-
 	// Loop on all the grid points
 	for (auto k = localZS; k < localZS + localZM; k++)
 		for (auto j = localYS; j < localYS + localYM; j++)
@@ -279,11 +277,12 @@ PetscSolver3DHandler::initializeConcentration(DM& da, Vec& C)
 
 				// Initialize the vacancy concentration
 				if (i >= surfacePosition[j][k] + leftOffset and
-					vacancyIndex != NetworkType::invalidIndex() and
 					not hasConcentrations and i < nX - rightOffset and
 					j >= bottomOffset and j < nY - topOffset and
 					k >= frontOffset and k < nZ - backOffset) {
-					concOffset[vacancyIndex] = initialVConc;
+					for (auto pair : initialConc) {
+						concOffset[pair.first] = pair.second;
+					}
 				}
 			}
 

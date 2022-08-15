@@ -98,5 +98,8 @@ constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
 // Transition size for basal faulted pyramids to basal c-loops
 constexpr double basalTransitionSize = 325;
 
+// Tungsten density in nm^-3
+constexpr double tungstenDensity = 62.8;
+
 } /* end namespace core */
 } /* end namespace xolotl */
