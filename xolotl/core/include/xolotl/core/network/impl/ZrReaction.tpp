@@ -321,46 +321,6 @@ ZrSinkReaction::computeRate(IndexType gridIndex, double time)
 
 	return 1.0;
 }
-
-KOKKOS_INLINE_FUNCTION
-void
-ZrSinkReaction::computeFlux(
-	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
-{
-	// Get integrated concentrations
-	auto vInt = this->_clusterData->extraData.integratedConcentrations(0);
-	auto iInt = this->_clusterData->extraData.integratedConcentrations(1);
-
-	double value = concentrations(_reactant) * this->_rate(gridIndex);
-	Kokkos::atomic_sub(&fluxes(_reactant), value);
-}
-
-KOKKOS_INLINE_FUNCTION
-void
-ZrSinkReaction::computePartialDerivatives(ConcentrationsView concentrations,
-	Kokkos::View<double*> values, IndexType gridIndex)
-{
-	// Get integrated concentrations
-	auto vInt = this->_clusterData->extraData.integratedConcentrations(0);
-	auto iInt = this->_clusterData->extraData.integratedConcentrations(1);
-
-	double value = this->_rate(gridIndex);
-	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), value);
-}
-
-KOKKOS_INLINE_FUNCTION
-void
-ZrSinkReaction::computeReducedPartialDerivatives(
-	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	IndexType gridIndex)
-{
-	// Get integrated concentrations
-	auto vInt = this->_clusterData->extraData.integratedConcentrations(0);
-	auto iInt = this->_clusterData->extraData.integratedConcentrations(1);
-
-	double value = this->_rate(gridIndex);
-	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), value);
-}
 } // namespace network
 } // namespace core
 } // namespace xolotl
