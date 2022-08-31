@@ -31,7 +31,7 @@ Options::Options() :
 	materialName(""),
 	initialConcentration(""),
 	voidPortion(50.0),
-	interfaceLocation(0.0),
+	interfaceLocation(-1000.0),
 	dimensionNumber(1),
 	gridTypeName(""),
 	gridParam{},
@@ -156,8 +156,8 @@ Options::readParams(int argc, const char* argv[])
 		"default).")("voidPortion", bpo::value<double>(&voidPortion),
 		"The value (in %) of the void portion at the start of the simulation.")(
 		"interfaceLoc", bpo::value<double>(&interfaceLocation),
-		"The value (in nm) of the interface location between two materials.")(
-		"gridType",
+		"The value (in nm) of the interface location between two materials "
+		"(-1000.0 nm by default).")("gridType",
 		bpo::value<std::string>(&gridTypeName)->default_value("uniform"),
 		"Grid type to use along X. (default = uniform; available "
 		"uniform,nonuniform,geometric,cheby,read")("gridParam",

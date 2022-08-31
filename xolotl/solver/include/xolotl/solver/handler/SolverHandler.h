@@ -238,10 +238,6 @@ public:
 
 		auto newWidth = width;
 		auto newH = pow(newWidth, 1 / tempGridPower) / (n - 1.5);
-		if (width > 5000.0) {
-			newWidth = 5000.0;
-			newH = pow(newWidth, 1 / tempGridPower) / (n / 2 - 1.5);
-		}
 
 		// Void
 		for (auto i = 0; i < surfacePos + 1; i++) {
@@ -253,27 +249,10 @@ public:
 			temperatureGrid[surfacePos] + (pow(newH, tempGridPower)));
 
 		// Material
-		for (auto i = surfacePos + 2; i < surfacePos + 2 + n / 2; i++) {
+		for (auto i = surfacePos + 2; i < grid.size(); i++) {
 			auto j = i - surfacePos - 1;
 			temperatureGrid.push_back(temperatureGrid[surfacePos + 1] +
 				(pow(j * newH, tempGridPower)));
-		}
-		if (width > 5000.0) {
-			auto remainWidth = width - newWidth;
-			newH = pow(remainWidth, 1 / tempGridPower) / (n / 2 - 1.5);
-			for (auto i = surfacePos + 2 + n / 2; i < grid.size(); i++) {
-				auto j = i - surfacePos - 1 - n / 2;
-				temperatureGrid.push_back(
-					temperatureGrid[surfacePos + 1 + n / 2] +
-					pow(j * newH, tempGridPower));
-			}
-		}
-		else {
-			for (auto i = surfacePos + 2 + n / 2; i < grid.size(); i++) {
-				auto j = i - surfacePos - 1;
-				temperatureGrid.push_back(temperatureGrid[surfacePos + 1] +
-					(pow(j * newH, tempGridPower)));
-			}
 		}
 
 		// The temperature values need to be updated to match the new grid

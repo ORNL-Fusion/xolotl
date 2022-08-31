@@ -145,8 +145,11 @@ HeatEquationHandler::computeTemperature(double currentTime, double** concVector,
 
 	double s[3] = {0, sy, sz};
 
-	// Surface
-	if (xi == surfacePosition) {
+	double x1 = xGrid[xi] - xGrid[surfacePosition + 1];
+	double x2 = xGrid[xi + 1] - xGrid[surfacePosition + 1];
+
+	// Surface and interface
+	if (xi == surfacePosition or (interfaceLoc > x1 and interfaceLoc <= x2)) {
 		// Boundary condition with heat flux
 		updatedConcOffset[index] += (2.0 * heatFlux * gamma / hxLeft) +
 			(2.0 * alpha * beta * gamma) * (oldConcBox[0][1] - oldConc) /
@@ -246,8 +249,11 @@ HeatEquationHandler::computePartialsForTemperature(double currentTime,
 		val[2 * d + 2] = alpha * beta * gamma * s[d];
 	}
 
+	double x1 = xGrid[xi] - xGrid[surfacePosition + 1];
+	double x2 = xGrid[xi + 1] - xGrid[surfacePosition + 1];
+
 	// Boundary condition with the heat flux
-	if (xi == surfacePosition) {
+	if (xi == surfacePosition or (interfaceLoc > x1 and interfaceLoc <= x2)) {
 		val[0] = 2.0 * heatFlux * dGamma / hxLeft -
 			2.0 * alpha * beta * gamma / (hxLeft * hxRight) +
 			2.0 * alpha * (dBeta * gamma + dGamma * beta) *
@@ -285,6 +291,11 @@ double
 HeatEquationHandler::getLocalHeatAlpha(int xi) const
 {
 	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
+	if (x < interfaceLoc)
+		return 0.2;
+	else
+		return 1.0;
+
 	double heatCond = (0.2 + 0.8 / (1.0 + exp((interfaceLoc - x) * 0.1)));
 	return heatCond;
 }
@@ -327,6 +338,7 @@ HeatEquationHandler::getDDBeta(double temp) const
 double
 HeatEquationHandler::getDAlpha(int xi) const
 {
+	return 0.0;
 	double x = xGrid[xi + 1] - xGrid[surfacePosition + 1];
 	double heatCond = 0.1 * 0.8 * exp((interfaceLoc - x) * 0.1) /
 		((1.0 + exp((interfaceLoc - x) * 0.1)) *
@@ -349,8 +361,19 @@ double
 HeatEquationHandler::getHeatFlux(double currentTime)
 {
 	// Initialize the value to return
-	double f = 0.0;
+	double Qinter = 6.0e-12;
+	double Q0 = 7.4e-10;
+	double tau = 0.8 * 2.5e-4;
+	double freq = 50.0;
+	double cycleTime =
+		currentTime - (std::floor(currentTime * freq)) * (1.0 / freq);
+	double x = 0.0;
+	if (cycleTime > 0.0)
+		x = tau / cycleTime;
+	//	return Qinter;
+	return Qinter + Q0 * (1.0 + x * x) * x * x * exp(-x * x);
 
+	double f = 0.0;
 	// If the time is smaller than or equal than the first stored time
 	if (currentTime <= time[0])
 		return f = flux[0];
@@ -384,30 +407,13 @@ HeatEquationHandler::getBulkHeatFlux(double temp) const
 	// Convert the temperature to Celsius
 	double tempCelsius = temp - 273.0;
 
-	if (tempCelsius > 300)
-		return (32.0 * exp(-pow((tempCelsius - 280.0) / 300.0, 0.65)) + 21.0) *
-			1.0e-12;
-	return (-21.457 + tempCelsius * 0.206 +
-			   18.0 / (1.0 + exp(150.0 - 0.5 * tempCelsius))) *
-		1.0e-12;
+	return (-8.7993 + 0.0845 * tempCelsius) * 1.0e-12;
 }
 
 double
 HeatEquationHandler::getBulkHeatFluxDerivative(double temp) const
 {
-	// Convert the temperature to Celsius
-	double tempCelsius = temp - 273.0;
-
-	if (tempCelsius > 300) {
-		std::cout << "outside" << std::endl;
-		return 0.0;
-	}
-	return (0.206 -
-			   18.0 *
-				   (-0.5 * exp(150.0 - 0.5 * tempCelsius) /
-					   ((1.0 + exp(150.0 - 0.5 * tempCelsius)) *
-						   (1.0 + exp(150.0 - 0.5 * tempCelsius))))) *
-		1.0e-12;
+	return 0.0845 * 1.0e-12;
 }
 
 } // namespace temperature
