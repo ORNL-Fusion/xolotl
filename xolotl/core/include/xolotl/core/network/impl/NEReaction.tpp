@@ -31,16 +31,14 @@ NEProductionReaction::computeRate(IndexType gridIndex)
 			clusterMap.value_at(clusterMap.find(_reactants[1])));
 	}
 	if (rate > 0) {
-		return 4.0 * ::xolotl::core::pi * (r0 + r1) * rate *
-			::xolotl::core::zFactor;
+		return 4.0 * ::xolotl::core::pi * (r0 + r1) * rate;
 	}
 
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
 	rate = getRateForProduction(
-			   cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1) *
-		::xolotl::core::zFactor;
+		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 
 	return rate;
 }
@@ -67,7 +65,7 @@ NEProductionReaction::computeFlux(
 		double r1 = cl1.getReactionRadius();
 
 		// Compute the flux for the 0th order moments
-		double f = ::xolotl::core::uConcentration * ::xolotl::core::zFactor;
+		double f = ::xolotl::core::uConcentration;
 		auto clusterMap = this->_clusterData->extraData.fileClusterMap;
 		f *= (1.0 / omega) *
 			this->_clusterData->extraData.constantRates(
@@ -656,46 +654,47 @@ NEDissociationReaction::computeBindingEnergy()
 	auto clReg = cl.getRegion();
 	auto prod1Reg = prod1.getRegion();
 	auto prod2Reg = prod2.getRegion();
-	if (clReg.isSimplex() && prod1Reg.isSimplex() && prod2Reg.isSimplex()) {
-		Composition comp = clReg.getOrigin();
-		Composition prod1Comp = prod1Reg.getOrigin();
-		Composition prod2Comp = prod2Reg.getOrigin();
-		// Compute the delta_G = G(p1) + G(p2) - G(r)
-		// Get the cluster ratio first
-		double xeSD = (double)comp[Species::Xe] / (double)comp[Species::V];
-		// Fit parameters
-		double fitParams[8] = {0.022098470861651, -0.328234592987279,
-			1.9501944029492, -5.85771773178376, 9.18869701523602,
-			-7.09118822290571, 3.37190513184659, -1.03326651166341};
+	Composition lo = clReg.getOrigin();
+	Composition hi = clReg.getUpperLimitPoint();
+	Composition prod1Comp = prod1Reg.getOrigin();
+	Composition prod2Comp = prod2Reg.getOrigin();
+	auto amtXe = (double)(lo[Species::Xe] + hi[Species::Xe] - 1) / 2.0;
+	auto amtV = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
 
-		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			double xeSDPower = xeSD * xeSD;
-			be = 0.0;
-			for (auto i = 0; i < 8; i++) {
-				be += (double)(i + 1) * fitParams[7 - i] * xeSDPower;
-				xeSDPower *= xeSD;
-			}
-			be += vFormation;
+	// Compute the delta_G = G(p1) + G(p2) - G(r)
+	// Get the cluster ratio first
+	double xeSD = amtXe / amtV;
+	// Fit parameters
+	double fitParams[8] = {0.022098470861651, -0.328234592987279,
+		1.9501944029492, -5.85771773178376, 9.18869701523602, -7.09118822290571,
+		3.37190513184659, -1.03326651166341};
+
+	if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
+		double xeSDPower = xeSD * xeSD;
+		be = 0.0;
+		for (auto i = 0; i < 8; i++) {
+			be += (double)(i + 1) * fitParams[7 - i] * xeSDPower;
+			xeSDPower *= xeSD;
 		}
-		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
-			double xeSDPower = xeSD * xeSD;
-			be = 0.0;
-			for (auto i = 0; i < 8; i++) {
-				be -= (double)(i + 1) * fitParams[7 - i] * xeSDPower;
-				xeSDPower *= xeSD;
-			}
-			be += iFormation;
+		be += vFormation;
+	}
+	if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
+		double xeSDPower = xeSD * xeSD;
+		be = 0.0;
+		for (auto i = 0; i < 8; i++) {
+			be -= (double)(i + 1) * fitParams[7 - i] * xeSDPower;
+			xeSDPower *= xeSD;
 		}
-		if (prod1Comp.isOnAxis(Species::Xe) ||
-			prod2Comp.isOnAxis(Species::Xe)) {
-			double xeSDPower = xeSD;
-			be = 0.0;
-			for (auto i = 0; i < 8; i++) {
-				be -= (double)(i + 2) * fitParams[7 - i] * xeSDPower;
-				xeSDPower *= xeSD;
-			}
-			be += xeFormation;
+		be += iFormation;
+	}
+	if (prod1Comp.isOnAxis(Species::Xe) || prod2Comp.isOnAxis(Species::Xe)) {
+		double xeSDPower = xeSD;
+		be = 0.0;
+		for (auto i = 0; i < 8; i++) {
+			be -= (double)(i + 2) * fitParams[7 - i] * xeSDPower;
+			xeSDPower *= xeSD;
 		}
+		be = 5.0;
 	}
 
 	return util::min(5.0, util::max(be, -5.0));
@@ -730,12 +729,11 @@ NEDissociationReaction::computeRate(IndexType gridIndex)
 	}
 	if (rate > 0) {
 		return (1.0 / omega) * 4.0 * ::xolotl::core::pi * (r0 + r1) * rate *
-			std::exp(this->_deltaG0 / (k_B * T)) * ::xolotl::core::zFactor;
+			std::exp(this->_deltaG0 / (k_B * T));
 	}
 
 	double kPlus = getRateForProduction(
-					   cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1) *
-		::xolotl::core::zFactor;
+		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 	double E_b = this->computeBindingEnergy();
 
 	double kMinus = (1.0 / omega) * kPlus * std::exp(-E_b / (k_B * T));

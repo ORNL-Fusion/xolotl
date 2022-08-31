@@ -17,8 +17,6 @@ NEClusterGenerator::refine(const Region& region, BoolArray& result) const
 	result[1] = true;
 	result[2] = true;
 
-	return true;
-
 	// I is never grouped
 	if (region[Species::I].begin() > 0) {
 		return true;
@@ -48,17 +46,17 @@ NEClusterGenerator::refine(const Region& region, BoolArray& result) const
 		return true;
 	}
 
-	//	// Middle
-	//	if (region[Species::Xe].length() <
-	//		util::max((double)(_groupingWidthXe + 1),
-	//			region[Species::Xe].begin() * 1.0e-1)) {
-	//		result[0] = false;
-	//	}
-	//	if (region[Species::V].length() <
-	//		util::max((double)(_groupingWidthV + 1),
-	//			region[Species::V].begin() * 1.0e-1)) {
-	//		result[1] = false;
-	//	}
+	// Middle
+	if (region[Species::Xe].length() <
+		util::max((double)(_groupingWidthXe + 1),
+			region[Species::Xe].begin() * 1.0e-1)) {
+		result[0] = false;
+	}
+	if (region[Species::V].length() <
+		util::max((double)(_groupingWidthV + 1),
+			region[Species::V].begin() * 1.0e-1)) {
+		result[1] = false;
+	}
 
 	// Edges
 	if (region[Species::Xe].begin() == 0) {
@@ -159,30 +157,28 @@ NEClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	if (reg.isSimplex()) {
 		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {
-			//			radius = latticeParameter * cbrt(1.0 /
-			//::xolotl::core::pi)
-			//* 0.5; 			std::cout << radius << std::endl;
-			radius = latticeParameter * ::xolotl::core::pi * 2.0;
+			radius = latticeParameter * ::xolotl::core::pi * 2.0 *
+				::xolotl::core::zFactor;
 		}
 		else if (comp.isOnAxis(Species::Xe)) {
 			radius = impurityRadius;
 		}
 		else if (comp.isOnAxis(Species::V)) {
-			radius = latticeParameter *
-				cbrt((comp[Species::V]) / ::xolotl::core::pi) * 0.5;
+			radius = latticeParameter * comp[Species::V] * ::xolotl::core::pi *
+				2.0 * sqrt(2.0) * ::xolotl::core::zFactor;
 		}
 		else {
-			radius = pow((3.0 * (double)comp[Species::V]) / (FourPi * _density),
-				(1.0 / 3.0));
+			radius =
+				cbrt((3.0 * (double)comp[Species::Xe]) / (FourPi * _density));
 		}
 	}
 	else {
 		// Loop on the Xe range
-		for (auto j : makeIntervalRange(reg[Species::V])) {
-			radius += pow((3.0 * (double)j) / (FourPi * _density), (1.0 / 3.0));
+		for (auto j : makeIntervalRange(reg[Species::Xe])) {
+			radius += cbrt((3.0 * (double)j) / (FourPi * _density));
 		}
 		// Average the radius
-		radius /= reg[Species::V].length();
+		radius /= reg[Species::Xe].length();
 	}
 
 	return radius;

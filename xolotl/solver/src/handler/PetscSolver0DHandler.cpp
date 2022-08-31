@@ -121,7 +121,7 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Initialize the option specified concentration
-	if (hasConcentrations) {
+	if (not hasConcentrations) {
 		for (auto pair : initialConc) {
 			concOffset[pair.first] = pair.second;
 		}

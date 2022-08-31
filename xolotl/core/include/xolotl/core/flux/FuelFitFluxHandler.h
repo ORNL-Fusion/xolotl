@@ -75,17 +75,6 @@ public:
 		using NetworkType = network::NEReactionNetwork;
 		auto& neNetwork = dynamic_cast<NetworkType&>(network);
 		NetworkType::Composition comp = NetworkType::Composition::zero();
-		//		comp[NetworkType::Species::Xe] = 1;
-		//		auto cluster = neNetwork.findCluster(comp, plsm::onHost);
-		//		// Check that the helium cluster is present in the network
-		//		if (cluster.getId() == NetworkType::invalidIndex()) {
-		//			throw std::string(
-		//				"\nThe single xenon cluster is not present in the
-		// network, " 				"cannot use the flux option!");
-		//		}
-		//		fluxIndices.push_back(cluster.getId());
-		//
-		//		comp[NetworkType::Species::Xe] = 0;
 		comp[NetworkType::Species::V] = 1;
 		auto cluster = neNetwork.findCluster(comp, plsm::HostMemSpace{});
 		// Check that the helium cluster is present in the network
@@ -132,8 +121,6 @@ public:
 		if (fluxIndices.size() == 0)
 			return;
 
-		// Update the concentration array
-		//		updatedConcOffset[fluxIndices[0]] += fluxAmplitude * xeYield; //
 		// Xe
 		updatedConcOffset[fluxIndices[0]] += defectYield * fluxAmplitude; // V
 		updatedConcOffset[fluxIndices[1]] += defectYield * fluxAmplitude; // I
