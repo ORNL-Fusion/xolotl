@@ -237,6 +237,11 @@ protected:
 	using CoefsSubView =
 		decltype(std::declval<ReactionDataRef>().getCoefficients(0));
 	CoefsSubView _coefs;
+
+	//! Constant Rates (only actually used for constant reactions
+	using ConstantRateSubView =
+		decltype(std::declval<ReactionDataRef>().getConstantRates(0));
+	ConstantRateSubView _constantRates;
 };
 
 /**
@@ -288,6 +293,12 @@ public:
 		return detail::CoefficientsView("Production Coefficients", size,
 			Superclass::coeffsSingleExtent, Superclass::coeffsSingleExtent, 4,
 			Superclass::coeffsSingleExtent);
+	}
+
+	static detail::ConstantRateView allocateConstantRateView(
+		IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
 	}
 
 private:
@@ -403,6 +414,12 @@ public:
 		return detail::CoefficientsView("Dissociation Coefficients", size,
 			Superclass::coeffsSingleExtent, 1, 3,
 			Superclass::coeffsSingleExtent);
+	}
+
+	static detail::ConstantRateView allocateConstantRateView(
+		IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
 	}
 
 private:

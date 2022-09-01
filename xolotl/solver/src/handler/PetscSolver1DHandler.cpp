@@ -73,7 +73,8 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		if (not sameTemperatureGrid) {
 			ss << "Temperature grid (nm): ";
 			for (auto i = 0; i < temperatureGrid.size(); i++) {
-				ss << temperatureGrid[i] - temperatureGrid[surfacePosition + 1] << " ";
+				ss << temperatureGrid[i] - temperatureGrid[surfacePosition + 1]
+				   << " ";
 			}
 			ss << std::endl;
 		}
@@ -531,6 +532,9 @@ PetscSolver1DHandler::updateConcentration(
 	// Degrees of freedom is the total number of clusters in the network
 	const auto dof = network.getDOF();
 
+	// Update the time in the network
+	network.setTime(ftime);
+
 	// Computing the trapped atom concentration is only needed for the
 	// attenuation
 	if (useAttenuation) {
@@ -847,6 +851,9 @@ PetscSolver1DHandler::computeJacobian(
 	IdType advecIndices[nAdvec];
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
+	// Update the time in the network
+	network.setTime(ftime);
+
 	/*
 	 Loop over grid points for the temperature, including ghosts
 	 */
@@ -1157,6 +1164,7 @@ PetscSolver1DHandler::computeJacobian(
 		auto hConcs = HostUnmanaged(concOffset, dof);
 		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 		deep_copy(dConcs, hConcs);
+
 		partialDerivativeCounter->increment();
 		partialDerivativeTimer->start();
 		network.computeAllPartials(

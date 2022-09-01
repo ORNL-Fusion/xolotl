@@ -387,8 +387,10 @@ PetscSolver::solve()
 			checkPetscError(
 				ierr, "PetscSolver::solve: Reset Step Number failed.");
 			// Reset the GB location
-			this->solverHandler->initGBLocation(da, C);
+			// TODO: put a condition or move it to the interface
+			//			this->solverHandler->initGBLocation(da, C);
 		}
+
 		// Start the PETSc Solve
 		ierr = TSSolve(ts, C);
 		checkPetscError(ierr, "PetscSolver::solve: TSSolve failed.");

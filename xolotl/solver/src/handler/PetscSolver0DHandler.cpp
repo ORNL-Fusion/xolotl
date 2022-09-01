@@ -331,13 +331,6 @@ PetscSolver0DHandler::updateConcentration(
 	deep_copy(hFlux, dFlux);
 
 	/*
-	for (auto i = 0; i < dof; i++) {
-		std::cout << updatedConcOffset[i] << " ";
-	}
-	std::cout << "\n";
-	*/
-
-	/*
 	 Restore vectors
 	 */
 	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);

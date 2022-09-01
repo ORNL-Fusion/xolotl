@@ -59,6 +59,12 @@ public:
 		return detail::CoefficientsView();
 	}
 
+	static detail::ConstantRateView allocateConstantRateView(
+		IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeRate(IndexType gridIndex, double time = 0.0);

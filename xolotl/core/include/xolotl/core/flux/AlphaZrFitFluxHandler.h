@@ -25,8 +25,7 @@ private:
 	double
 	FitFunction(double x)
 	{
-		// Not actually used
-		return 0.0;
+		return 1.0;
 	}
 
 	// Define the range of possible cluster sizes, and their respective
@@ -101,6 +100,9 @@ public:
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
 		std::vector<double> grid)
 	{
+		// Set the grid
+		xGrid = grid;
+
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
 
@@ -182,8 +184,14 @@ public:
 		}
 
 		else {
-			throw std::runtime_error(
-				"\nThe alpha Zr problem is not defined for more than 0D!");
+			double cascadeEfficiency = (0.495 *
+					(1 - tanh(0.00040527088 * (currentTime / 100.0 - 5000.0))) +
+				0.025);
+
+			for (int i = 0; i < fluxIndices.size(); i++) {
+				updatedConcOffset[fluxIndices[i]] +=
+					incidentFluxVec[i][0] * cascadeEfficiency;
+			}
 		}
 
 		return;

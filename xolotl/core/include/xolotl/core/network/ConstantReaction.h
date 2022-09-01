@@ -67,42 +67,50 @@ public:
 		return detail::CoefficientsView();
 	}
 
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType size, IndexType gridSize)
+	{
+		return detail::ConstantRateView("Constant Rates", size, gridSize,
+			Superclass::coeffsSingleExtent, Superclass::coeffsSingleExtent);
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeRate(IndexType gridIndex, double time = 0.0)
 	{
-		return _constantRates[0][0][0][0];
+		return 0.0;
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	void
-	setRate(RatesView rates)
+	setRate(RatesView rates, IndexType gridIndex)
 	{
 		auto dof = rates.extent(0);
 		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 		if (_reactants[1] == invalidIndex) {
-			_constantRates[0][0][0][0] = rates(_reactants[0], dof);
+			this->_constantRates(gridIndex, 0, 0) = rates(_reactants[0], dof);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
-					_constantRates[0][1 + i()][0][0] =
+					this->_constantRates(gridIndex, 1 + i(), 0) =
 						rates(_reactantMomentIds[0][i()], dof);
 				}
 			}
 		}
 		else {
-			_constantRates[0][0][0][0] = rates(_reactants[0], _reactants[1]);
+			this->_constantRates(gridIndex, 0, 0) =
+				rates(_reactants[0], _reactants[1]);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[1][i()] != invalidIndex) {
-					_constantRates[0][0][0][1 + i()] =
+					this->_constantRates(gridIndex, 0, 1 + i()) =
 						rates(_reactants[0], _reactantMomentIds[1][i()]);
 				}
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
-					_constantRates[0][1 + i()][0][0] =
+					this->_constantRates(gridIndex, 1 + i(), 0) =
 						rates(_reactantMomentIds[0][i()], _reactants[1]);
 					for (auto j : speciesRangeNoI) {
 						if (_reactantMomentIds[1][j()] != invalidIndex) {
-							_constantRates[0][1 + i()][0][1 + j()] =
+							this->_constantRates(gridIndex, 1 + i(), 1 + j()) =
 								rates(_reactantMomentIds[0][i()],
 									_reactantMomentIds[1][j()]);
 						}
@@ -195,33 +203,35 @@ private:
 
 		if (_reactants[1] == invalidIndex) {
 			Kokkos::atomic_add(
-				&fluxes(_reactants[0]), _constantRates[0][0][0][0]);
+				&fluxes(_reactants[0]), this->_constantRates(gridIndex, 0, 0));
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
 					Kokkos::atomic_add(&fluxes(_reactantMomentIds[0][i()]),
-						_constantRates[0][1 + i()][0][0]);
+						this->_constantRates(gridIndex, 1 + i(), 0));
 				}
 			}
 		}
 		else {
 			Kokkos::atomic_add(&fluxes(_reactants[0]),
-				concentrations(_reactants[1]) * _constantRates[0][0][0][0]);
+				concentrations(_reactants[1]) *
+					this->_constantRates(gridIndex, 0, 0));
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[1][i()] != invalidIndex) {
 					Kokkos::atomic_add(&fluxes(_reactants[0]),
 						concentrations(_reactantMomentIds[1][i()]) *
-							_constantRates[0][0][0][1 + i()]);
+							this->_constantRates(gridIndex, 0, 1 + i()));
 				}
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
 					Kokkos::atomic_add(&fluxes(_reactantMomentIds[0][i()]),
 						concentrations(_reactants[1]) *
-							_constantRates[0][1 + i()][0][0]);
+							this->_constantRates(gridIndex, 1 + i(), 0));
 					for (auto j : speciesRangeNoI) {
 						if (_reactantMomentIds[1][j()] != invalidIndex) {
 							Kokkos::atomic_add(
 								&fluxes(_reactantMomentIds[0][i()]),
 								concentrations(_reactantMomentIds[1][j()]) *
-									_constantRates[0][1 + i()][0][1 + j()]);
+									this->_constantRates(
+										gridIndex, 1 + i(), 1 + j()));
 						}
 					}
 				}
@@ -239,21 +249,21 @@ private:
 
 		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-		Kokkos::atomic_add(
-			&values(_connEntries[0][0][0][0]), _constantRates[0][0][0][0]);
+		Kokkos::atomic_add(&values(_connEntries[0][0][0][0]),
+			this->_constantRates(gridIndex, 0, 0));
 		for (auto i : speciesRangeNoI) {
 			if (_reactantMomentIds[1][i()] != invalidIndex) {
 				Kokkos::atomic_add(&values(_connEntries[0][0][0][1 + i()]),
-					_constantRates[0][0][0][1 + i()]);
+					this->_constantRates(gridIndex, 0, 1 + i()));
 			}
 			if (_reactantMomentIds[0][i()] != invalidIndex) {
 				Kokkos::atomic_add(&values(_connEntries[0][1 + i()][0][0]),
-					_constantRates[0][1 + i()][0][0]);
+					this->_constantRates(gridIndex, 1 + i(), 0));
 				for (auto j : speciesRangeNoI) {
 					if (_reactantMomentIds[1][j()] != invalidIndex) {
 						Kokkos::atomic_add(
 							&values(_connEntries[0][1 + i()][0][1 + j()]),
-							_constantRates[0][1 + i()][0][1 + j()]);
+							this->_constantRates(gridIndex, 1 + i(), 1 + j()));
 					}
 				}
 			}
@@ -273,14 +283,14 @@ private:
 
 		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-		Kokkos::atomic_add(
-			&values(_connEntries[0][0][0][0]), _constantRates[0][0][0][0]);
+		Kokkos::atomic_add(&values(_connEntries[0][0][0][0]),
+			this->_constantRates(gridIndex, 0, 0));
 		for (auto i : speciesRangeNoI) {
 			for (auto j : speciesRangeNoI) {
 				if (_reactantMomentIds[1][j()] != invalidIndex) {
 					Kokkos::atomic_add(
 						&values(_connEntries[0][1 + i()][0][1 + j()]),
-						_constantRates[0][1 + i()][0][1 + j()]);
+						this->_constantRates(gridIndex, 1 + i(), 1 + j()));
 				}
 			}
 		}
@@ -347,7 +357,6 @@ protected:
 	util::Array<IndexType, 2, nMomentIds> _reactantMomentIds;
 
 	util::Array<IndexType, 1, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
-	util::Array<double, 1, 1 + nMomentIds, 1, 1 + nMomentIds> _constantRates;
 }; // namespace network
 } // namespace network
 } // namespace core

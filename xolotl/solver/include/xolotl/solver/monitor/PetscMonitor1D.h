@@ -51,6 +51,10 @@ public:
 		PetscReal time, Vec solution, PetscBool) override;
 
 	PetscErrorCode
+	computeAlphaZr(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
+
+	PetscErrorCode
 	checkNegative(TS ts, PetscInt timestep, PetscReal time, Vec solution);
 
 	PetscErrorCode

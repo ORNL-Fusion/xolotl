@@ -34,10 +34,6 @@ public:
 	IndexType
 	checkLargestClusterId();
 
-	void setConstantRates(RateVector) override
-	{
-	}
-
 private:
 	double
 	checkLatticeParameter(double latticeParameter);

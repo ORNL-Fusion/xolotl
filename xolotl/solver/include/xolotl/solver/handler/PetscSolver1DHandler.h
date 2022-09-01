@@ -108,6 +108,24 @@ public:
 
 		return;
 	}
+
+	/**
+	.* \see ISolverHandler.h
+	 */
+	void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths)
+	{
+		temperatures = interpolateTemperature(surfacePosition);
+		for (auto i = 0; i < temperatures.size(); i++) {
+			if (localXS + i == nX + 1)
+				depths.push_back(grid[localXS + i] - grid[surfacePosition + 1]);
+			else
+				depths.push_back(
+					(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+					grid[surfacePosition + 1]);
+		}
+	}
 };
 // end class PetscSolver1DHandler
 

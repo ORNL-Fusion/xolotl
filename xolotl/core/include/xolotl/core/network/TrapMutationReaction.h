@@ -67,6 +67,12 @@ public:
 		return detail::CoefficientsView();
 	}
 
+	static detail::ConstantRateView allocateConstantRateView(
+		IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeRate(double largestRate);

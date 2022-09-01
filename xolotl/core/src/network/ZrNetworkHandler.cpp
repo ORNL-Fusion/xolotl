@@ -67,7 +67,7 @@ auto zrNetworkGenerator = [](const options::IOptions& options) {
 		{ratioV, ratioB, ratioI}};
 
 	auto network = std::make_shared<NetworkType>(
-		maxSpeciesAmounts, subdivRatios, 1, options);
+		maxSpeciesAmounts, subdivRatios, options.getGridParam(0), options);
 
 	return network;
 };

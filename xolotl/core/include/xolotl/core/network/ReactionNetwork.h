@@ -337,7 +337,8 @@ public:
 	void
 	initializeReactions() override;
 
-	void setConstantRates(RateVector) override;
+	void
+	setConstantRates(RateVector, IndexType gridIndex) override;
 
 	void setConstantConnectivities(ConnectivitiesVector) override;
 

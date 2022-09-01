@@ -22,7 +22,8 @@ Reaction<TNetwork, TDerived>::Reaction(ReactionDataRef reactionData,
 	_reactionId(reactionId),
 	_rate(reactionData.getRates(reactionId)),
 	_widths(reactionData.getWidths(reactionId)),
-	_coefs(reactionData.getCoefficients(reactionId))
+	_coefs(reactionData.getCoefficients(reactionId)),
+	_constantRates(reactionData.getConstantRates(reactionId))
 {
 }
 
@@ -34,6 +35,7 @@ Reaction<TNetwork, TDerived>::updateData(
 {
 	_clusterData = &clusterData;
 	_rate = reactionData.getRates(_reactionId);
+	_constantRates = reactionData.getConstantRates(_reactionId);
 }
 
 template <typename TNetwork, typename TDerived>
