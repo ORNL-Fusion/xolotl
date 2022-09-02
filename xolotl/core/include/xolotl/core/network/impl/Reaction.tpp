@@ -22,8 +22,7 @@ Reaction<TNetwork, TDerived>::Reaction(ReactionDataRef reactionData,
 	_reactionId(reactionId),
 	_rate(reactionData.getRates(reactionId)),
 	_widths(reactionData.getWidths(reactionId)),
-	_coefs(reactionData.getCoefficients(reactionId)),
-	_constantRates(reactionData.getConstantRates(reactionId))
+	_coefs(reactionData.getCoefficients(reactionId))
 {
 }
 

@@ -54,21 +54,27 @@ public:
 			"Construction from views requires the number of views to match the "
 			"number of reaction types in the ReactionCollection");
 
-		_reactions.forEachType([gridSize, this](IndexType reactionTypeIndex,
-								   IndexType numReactions,
-								   auto reactionTypeTag) {
-			using ReactionType = typename decltype(reactionTypeTag)::Type;
-			_data.coeffs[reactionTypeIndex] =
-				ReactionType::allocateCoefficientsView(numReactions);
-			_data.constantRates[reactionTypeIndex] =
-				ReactionType::allocateConstantRateView(numReactions, gridSize);
-		});
+		_reactions.forEachType(
+			[this](IndexType reactionTypeIndex, IndexType numReactions,
+				auto reactionTypeTag) {
+				using ReactionType = typename decltype(reactionTypeTag)::Type;
+				_data.coeffs[reactionTypeIndex] =
+					ReactionType::allocateCoefficientsView(numReactions);
+			});
 	}
 
 	void
 	setGridSize(IndexType gridSize)
 	{
 		_data.setGridSize(gridSize);
+
+		_reactions.forEachType([gridSize, this](IndexType reactionTypeIndex,
+								   IndexType numReactions,
+								   auto reactionTypeTag) {
+			using ReactionType = typename decltype(reactionTypeTag)::Type;
+			_data.constantRates[reactionTypeIndex] =
+				ReactionType::allocateConstantRateView(numReactions, gridSize);
+		});
 	}
 
 	void
