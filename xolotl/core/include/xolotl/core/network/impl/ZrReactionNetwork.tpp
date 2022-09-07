@@ -89,6 +89,14 @@ ZrReactionNetwork::setConstantConnectivities(ConnectivitiesVector conns)
 }
 
 void
+ZrReactionNetwork::setGridSize(IndexType gridSize)
+{
+	this->_clusterData.h_view().extraData.setGridSize(
+		this->_clusterData.h_view().numClusters, gridSize);
+	Superclass::setGridSize(gridSize);
+}
+
+void
 ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 {
 	this->_clusterData.h_view().extraData.initialize(

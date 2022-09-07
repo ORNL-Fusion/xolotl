@@ -49,6 +49,9 @@ public:
 	void
 	initializeExtraClusterData(const options::IOptions& options);
 
+	void
+	setGridSize(IndexType gridSize) override;
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);
