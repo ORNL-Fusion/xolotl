@@ -52,6 +52,9 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	// Initialize the temperature handler
 	temperatureHandler->initializeTemperature(dof, ofill, dfill);
 
+	// Tell the network the number of grid points on this process
+	network.setGridSize(1);
+
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
 
