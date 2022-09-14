@@ -46,6 +46,15 @@ public:
 		network::IReactionNetwork::SparseFillMap& dfillMap) = 0;
 
 	/**
+	 * This operation initializes the variables that need to be
+	 * depending on the type of handler used.
+	 *
+	 * @param dof The number of degrees of freedom
+     */
+	virtual void
+	initializeTemperature(const int dof) = 0;
+
+	/**
 	 * This operation returns the temperature at the given position
 	 * and time.
 	 *

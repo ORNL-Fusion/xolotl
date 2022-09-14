@@ -23,6 +23,9 @@ public:
 		network::IReactionNetwork::SparseFillMap& ofillMap,
 		network::IReactionNetwork::SparseFillMap& dfillMap) override;
 
+	void
+	initializeTemperature(int dof) override;
+
 	/**
 	 * This operation sets the temperature given by the solver.
 	 * Don't do anything.

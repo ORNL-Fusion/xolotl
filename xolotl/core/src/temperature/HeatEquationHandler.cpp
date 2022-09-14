@@ -88,6 +88,16 @@ HeatEquationHandler::getTemperature(
 }
 
 void
+HeatEquationHandler::setTemperature(Kokkos::View<const double*> solution)
+{
+	auto elemView = subview(solution, this->_dof);
+	auto elem_h = create_mirror_view(elemView);
+	deep_copy(elem_h, elemView);
+
+	localTemperature = elem_h();
+}
+
+void
 HeatEquationHandler::computeTemperature(double** concVector,
 	double* updatedConcOffset, double hxLeft, double hxRight, int xi, double sy,
 	int iy, double sz, int iz)
@@ -128,6 +138,69 @@ HeatEquationHandler::computeTemperature(double** concVector,
 		updatedConcOffset[index] += heatCoef * s[d] *
 			(oldConcBox[d][0] + oldConcBox[d][1] - 2.0 * oldConc);
 	}
+}
+
+void
+HeatEquationHandler::computeTemperature(Kokkos::View<const double*>* concVector,
+	Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+	int xi, double sy, int iy, double sz, int iz)
+{
+	// Skip if the flux is 0
+	if (zeroFlux) {
+		return;
+	}
+
+	// Initial declaration
+	int index = this->_dof;
+	Kokkos::Array<double, 3> s = {0, sy, sz};
+	Kokkos::Array<Kokkos::View<const double*>, 3> concVec = {
+		concVector[0], concVector[1], concVector[2]};
+
+	auto dim = dimension;
+	auto surfPos = surfacePosition;
+	auto htCoef = heatCoef;
+	auto htFlux = heatFlux;
+	auto htConductivity = heatConductivity;
+
+	////////////////////////////////////////////////////////////////////////////
+	// TODO: Move this to the constructor (or change member to be a View
+	// util::Array<double, 3, 2> oldBox;
+	// for (int d = 0; d < dim; ++d) {
+	// 	oldBox[d][0] = oldConcBox[d][0];
+	// 	oldBox[d][1] = oldConcBox[d][1];
+	// }
+	////////////////////////////////////////////////////////////////////////////
+
+	Kokkos::parallel_for(
+		1, KOKKOS_LAMBDA(std::size_t) {
+			// Get the initial concentrations
+			double oldConc = concVec[0][index];
+			util::Array<double, 3, 2> oldBox;
+			for (int d = 0; d < dim; ++d) {
+				oldBox[d][0] = concVec[2 * d + 1][index];
+				oldBox[d][1] = concVec[2 * d + 2][index];
+			}
+
+			if (xi == surfPos) {
+				// Boundary condition with heat flux
+				updatedConcOffset[index] += htCoef * (2.0 / hxLeft) *
+					((htFlux / htConductivity) +
+						(oldBox[0][1] - oldConc) / hxRight);
+			}
+			else {
+				// Use a simple midpoint stencil to compute the concentration
+				updatedConcOffset[index] += htCoef * (2.0 / hxLeft) *
+					(oldBox[0][0] + (hxLeft / hxRight) * oldBox[0][1] -
+						(1.0 + (hxLeft / hxRight)) * oldConc) /
+					(hxLeft + hxRight);
+			}
+
+			// Deal with the potential additional dimensions
+			for (int d = 1; d < dim; ++d) {
+				updatedConcOffset[index] += htCoef * s[d] *
+					(oldBox[d][0] + oldBox[d][1] - 2.0 * oldConc);
+			}
+		});
 }
 
 bool

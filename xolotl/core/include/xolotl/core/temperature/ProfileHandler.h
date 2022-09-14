@@ -63,6 +63,9 @@ public:
 		network::IReactionNetwork::SparseFillMap& ofillMap,
 		network::IReactionNetwork::SparseFillMap& dfillMap) override;
 
+    void
+    initializeTemperature(const int dof) override;
+
 	/**
 	 * This operation returns the temperature at the given position
 	 * and time.

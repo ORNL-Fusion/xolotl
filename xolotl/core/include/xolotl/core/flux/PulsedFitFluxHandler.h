@@ -138,6 +138,27 @@ public:
 		return;
 	}
 
+	void
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
+	{
+		// Check in which phase of the pulse we are
+		int cycle = currentTime / deltaTime;
+		// The flux is 0.0 after alpha * deltaTime
+		if (currentTime - ((double)cycle * deltaTime) > alpha * deltaTime ||
+			util::equal(deltaTime, 0.0) || util::equal(alpha, 0.0))
+			return;
+
+		// Update the concentration array
+		auto value = incidentFluxVec[0][xi - surfacePos];
+		Kokkos::Array<IdType, 2> ids = {fluxIndices[0], fluxIndices[1]};
+		Kokkos::parallel_for(
+			2, KOKKOS_LAMBDA(std::size_t i) {
+				updatedConcOffset[ids[i]] += value;
+			});
+	}
+
 	/**
 	 * \see IFluxHandler.h
 	 */

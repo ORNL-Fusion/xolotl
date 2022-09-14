@@ -324,14 +324,16 @@ SystemTestCase::run() const
 	}
 
 	if (getMPIRank() == 0) {
+		auto cwd = xolotl::fs::current_path();
+		auto newFilePath = cwd / (_caseName + "_" + _outputFileName);
+		xolotl::fs::rename(cwd / _outputFileName, newFilePath);
+		auto approveFileName = _dataDir + "/output/" + _caseName + ".txt";
 		if (_approve) {
-			xolotl::fs::copy_file("./" + _outputFileName,
-				_dataDir + "/output/" + _caseName + ".txt",
+			xolotl::fs::copy_file(newFilePath, approveFileName,
 				xolotl::fs::copy_option::overwrite_if_exists);
 		}
 		else {
-			checkOutput("./" + _outputFileName,
-				_dataDir + "/output/" + _caseName + ".txt");
+			checkOutput(newFilePath.string(), approveFileName);
 		}
 	}
 }

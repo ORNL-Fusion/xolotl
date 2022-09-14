@@ -131,6 +131,7 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 
 	// Initialize the temperature handler
 	// temperatureHandler->initializeTemperature(dof, ofill, dfill);
+	temperatureHandler->initializeTemperature(dof);
 	//
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents
@@ -212,14 +213,6 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 		partialsCount += 3;
 	}
 	for (auto i = localXS; i < localXS + localXM; ++i) {
-        if (i < surfacePosition + leftOffset || i > nX - 1 - rightOffset) {
-            for (IdType c = 0; c < dof; ++c) {
-                mapMatStencilsToCoords({c, c}, i, i, rows, cols);
-            }
-            partialsCount += dof;
-            continue;
-        }
-
 		// diffusion
 		for (auto&& component : difEntries) {
 			mapMatStencilsToCoords(component, i, i, rows, cols);
@@ -1015,9 +1008,9 @@ PetscSolver1DHandler::computeJacobian(
 					"MatSetValuesStencil (temperature) failed.");
 
 #endif
-				hTempVals(tempIndex + 0) = tempVals[0];
-				hTempVals(tempIndex + 1) = tempVals[1];
-				hTempVals(tempIndex + 2) = tempVals[2];
+				hTempVals(tempIndex + 0) += tempVals[0];
+				hTempVals(tempIndex + 1) += tempVals[1];
+				hTempVals(tempIndex + 2) += tempVals[2];
 			}
 		}
 
@@ -1167,7 +1160,9 @@ PetscSolver1DHandler::computeJacobian(
 		// Boundary conditions
 		// Everything to the left of the surface is empty
 		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
-            valIndex += dof;
+            valIndex += 3 * nDiff;
+			valIndex += 2 * nAdvec;
+            valIndex += nNetworkEntries;
 			continue;
         }
 

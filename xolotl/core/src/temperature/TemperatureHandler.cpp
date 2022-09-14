@@ -31,6 +31,12 @@ TemperatureHandler::initializeTemperature(const int dof,
 	// Add the temperature to dfill
 	dfillMap[_dof].emplace_back(_dof);
 }
+
+void
+TemperatureHandler::initializeTemperature(const int dof)
+{
+	_dof = dof;
+}
 } // namespace temperature
 } // namespace core
 } // namespace xolotl

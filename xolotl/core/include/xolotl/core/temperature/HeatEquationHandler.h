@@ -53,6 +53,9 @@ public:
 		localTemperature = solution[this->_dof];
 	}
 
+	void
+	setTemperature(Kokkos::View<const double*> solution) override;
+
 	/**
 	 * \see ITemperatureHandler.h
 	 */
@@ -87,6 +90,12 @@ public:
 	computeTemperature(double** concVector, double* updatedConcOffset,
 		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
 		double sz = 0.0, int iz = 0) override;
+
+	void
+	computeTemperature(Kokkos::View<const double*>* concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0) override;
 
 	/**
 	 * \see ITemperatureHandler.h
