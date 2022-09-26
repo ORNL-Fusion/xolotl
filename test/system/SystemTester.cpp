@@ -17,6 +17,14 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 BOOST_AUTO_TEST_SUITE(System)
 
+BOOST_AUTO_TEST_CASE_WITH_DECOR(AZr_0, * utf::label("0D"))
+{
+	if (getMPICommSize() > 1) {
+		return;
+	}
+	SystemTestCase{"system_AZr_0", "AlphaZr.dat"}.run();
+}
+
 BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_0, * utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {
@@ -88,7 +96,7 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_3, * utf::label("1D"))
 	}
 	// 1D + HeVI + pulsed flux + sink + I grouping + surface + reflective
 	// bulk
-	SystemTestCase{"system_PSI_3"}.run();
+	SystemTestCase{"system_PSI_3"}.tolerance(1.0e-7).run();
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_4, * utf::label("1D"))

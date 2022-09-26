@@ -11,7 +11,5 @@ tempHandler=gradient
 tempParam=1800 1700
 grouping=101 2
 process=diff reaction
-voidPortion=0.0
-initialV=0.0
 radiusSize=50
 xenonDiffusivity=0.075

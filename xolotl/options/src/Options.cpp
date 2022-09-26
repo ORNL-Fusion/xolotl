@@ -28,7 +28,7 @@ Options::Options() :
 	perfHandlerName(""),
 	vizHandlerName(""),
 	materialName(""),
-	initialVConcentration(0.0),
+	initialConcentration(""),
 	voidPortion(50.0),
 	dimensionNumber(1),
 	gridTypeName(""),
@@ -143,10 +143,10 @@ Options::readParams(int argc, const char* argv[])
 		"Number of dimensions for the simulation.")("material",
 		bpo::value<std::string>(&materialName),
 		"The material options are as follows: {W100, W110, W111, "
-		"W211, Pulsed, Fuel, Fe, 800H}.")("initialV",
-		bpo::value<double>(&initialVConcentration),
-		"The value of the initial concentration of vacancies in the material.")(
-		"zeta", bpo::value<double>(&zeta)->default_value(0.73),
+		"W211, Pulsed, Fuel, Fe, 800H}.")("initialConc",
+		bpo::value<std::string>(&initialConcentration),
+		"The name, size, and value of the initial concentration in the "
+		"material.")("zeta", bpo::value<double>(&zeta)->default_value(0.73),
 		"The value of the electronic stopping power in the material (0.73 by "
 		"default).")("voidPortion", bpo::value<double>(&voidPortion),
 		"The value (in %) of the void portion at the start of the simulation.")(
@@ -169,7 +169,8 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"List of all the processes to use in the simulation (reaction, diff, "
 		"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, "
-		"heterogeneous, sink).")("grain", bpo::value<std::string>(&gbList),
+		"heterogeneous, sink, constant, noSolve).")("grain",
+		bpo::value<std::string>(&gbList),
 		"This option allows the user to add GB in the X, Y, or Z directions. "
 		"To do so, simply write the direction followed "
 		"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")("grouping",
@@ -368,6 +369,8 @@ Options::readParams(int argc, const char* argv[])
 		processMap["resolution"] = false;
 		processMap["heterogeneous"] = false;
 		processMap["sink"] = false;
+		processMap["constant"] = false;
+		processMap["noSolve"] = false;
 
 		// Loop on the tokens
 		for (int i = 0; i < tokens.size(); ++i) {
