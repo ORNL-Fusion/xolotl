@@ -64,20 +64,12 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, TS& ts)
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
-	// temperatureHandler->initializeTemperature(dof, ofill, dfill);
+	temperatureHandler->initializeTemperature(dof);
 
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
 
 	// Preallocate matrix
-#if 0
-	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
-	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
-	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::initializeSolverContext: "
-		"DMDASetBlockFills failed.");
-#else
 	Mat J;
 	ierr = TSGetRHSJacobian(ts, &J, nullptr, nullptr, nullptr);
 	checkPetscError(ierr,
@@ -93,7 +85,6 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, TS& ts)
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::initializeSolverContext: "
 		"MatSetPreallocationCOO failed.");
-#endif
 
 	// Initialize the arrays for the reaction partial derivatives
 	vals = Kokkos::View<double*>("solverPartials", nPartials);
@@ -349,13 +340,6 @@ PetscSolver0DHandler::updateConcentration(
 	fluxTimer->stop();
 
 	/*
-	for (auto i = 0; i < dof; i++) {
-		std::cout << updatedConcOffset[i] << " ";
-	}
-	std::cout << "\n";
-	*/
-
-	/*
 	 Restore vectors
 	 */
 	ierr = DMDAVecRestoreKokkosOffsetViewDOF(da, localC, &concs);
@@ -427,6 +411,9 @@ PetscSolver0DHandler::computeJacobian(
 	ierr = MatSetValuesCOO(J, vals.data(), ADD_VALUES);
 	checkPetscError(
 		ierr, "PetscSolver0DHandler::computeJacobian: MatSetValuesCOO failed.");
+
+	// Reset the values
+    resetJacobianValues();
 
 	/*
 	 Restore vectors

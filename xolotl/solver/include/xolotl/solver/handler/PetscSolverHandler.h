@@ -112,6 +112,12 @@ protected:
 	convertToRowColPairList(std::size_t dof,
 		const core::network::IReactionNetwork::SparseFillMap& fillMap);
 
+    /**
+     * Reset all jacobian values to zero
+     */
+    void
+    resetJacobianValues();
+
 public:
 	/**
 	 * Default constructor, deleted because we need to construct with objects.

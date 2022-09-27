@@ -103,6 +103,15 @@ PetscSolverHandler::convertToRowColPairList(std::size_t dof,
 
 	return ret;
 }
+
+void
+PetscSolverHandler::resetJacobianValues()
+{
+	auto values = vals;
+	Kokkos::parallel_for(
+		"PetscSolverHandler::resetJacobianValues", values.size(),
+		KOKKOS_LAMBDA(const IdType i) { values(i) = 0.0; });
+}
 } /* end namespace handler */
 } /* end namespace solver */
 } /* end namespace xolotl */

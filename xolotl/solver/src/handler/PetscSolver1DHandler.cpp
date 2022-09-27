@@ -136,9 +136,7 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 		advectionHandlers.size(), std::vector<core::RowColPair>{});
 
 	// Initialize the temperature handler
-	// temperatureHandler->initializeTemperature(dof, ofill, dfill);
 	temperatureHandler->initializeTemperature(dof);
-	//
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents
 	// diffusion
@@ -166,14 +164,6 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 	nNetworkEntries = network.getDiagonalFill(dfill);
 
 	// Load up the block fills
-#if 0
-	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
-	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
-	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
-	checkPetscError(ierr,
-		"PetscSolver1DHandler::createSolverContext: "
-		"DMDASetBlockFills failed.");
-#else
 	Mat J;
 	ierr = TSGetRHSJacobian(ts, &J, nullptr, nullptr, nullptr);
 	checkPetscError(ierr,
@@ -267,7 +257,6 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 	checkPetscError(ierr,
 		"PetscSolver1DHandler::initializeSolverContext: "
 		"MatSetPreallocationCOO failed.");
-#endif
 
 	// Initialize the arrays for the reaction partial derivatives
 	vals = Kokkos::View<double*>("solverPartials", nPartials);
@@ -988,27 +977,6 @@ PetscSolver1DHandler::computeJacobian(
 				tempVals, tempIndices, hxLeft, hxRight, xi);
 
 			if (setValues) {
-#if 0
-				// Set grid coordinate and component number for the row
-				row.i = xi;
-				row.c = tempIndices[0];
-
-				// Set grid coordinates and component numbers for the columns
-				// corresponding to the middle, left, and right grid points
-				cols[0].i = xi; // middle
-				cols[0].c = tempIndices[0];
-				cols[1].i = (PetscInt)xi - 1; // left
-				cols[1].c = tempIndices[0];
-				cols[2].i = xi + 1; // right
-				cols[2].c = tempIndices[0];
-
-				ierr = MatSetValuesStencil(
-					J, 1, &row, 3, cols, tempVals, ADD_VALUES);
-				checkPetscError(ierr,
-					"PetscSolver1DHandler::computeJacobian: "
-					"MatSetValuesStencil (temperature) failed.");
-
-#endif
 				hTempVals(tempIndex + 0) += tempVals[0];
 				hTempVals(tempIndex + 1) += tempVals[1];
 				hTempVals(tempIndex + 2) += tempVals[2];
@@ -1062,26 +1030,6 @@ PetscSolver1DHandler::computeJacobian(
 				tempVals, tempIndices, hxLeft, hxRight, xi);
 
 			if (setValues) {
-#if 0
-				// Set grid coordinate and component number for the row
-				row.i = xi;
-				row.c = tempIndices[0];
-
-				// Set grid coordinates and component numbers for the columns
-				// corresponding to the middle, left, and right grid points
-				cols[0].i = xi; // middle
-				cols[0].c = tempIndices[0];
-				cols[1].i = (PetscInt)xi - 1; // left
-				cols[1].c = tempIndices[0];
-				cols[2].i = xi + 1; // right
-				cols[2].c = tempIndices[0];
-
-				ierr = MatSetValuesStencil(
-					J, 1, &row, 3, cols, tempVals, ADD_VALUES);
-				checkPetscError(ierr,
-					"PetscSolver1DHandler::computeJacobian: "
-					"MatSetValuesStencil (temperature) failed.");
-#endif
 				hTempVals(tempIndex + 0) += tempVals[0];
 				hTempVals(tempIndex + 1) += tempVals[1];
 				hTempVals(tempIndex + 2) += tempVals[2];
@@ -1151,11 +1099,6 @@ PetscSolver1DHandler::computeJacobian(
 		psiNetwork.updateTrapMutationDisappearingRate(totalAtomConc);
 	}
 
-	// Arguments for MatSetValuesStencil called below
-	// MatStencil rowId;
-	// MatStencil colIds[dof];
-	// IdType pdColIdsVectorSize = 0;
-
 	// Loop over the grid points
 	for (auto xi = localXS; xi < localXS + localXM; xi++) {
 		// Boundary conditions
@@ -1197,30 +1140,6 @@ PetscSolver1DHandler::computeJacobian(
 		diffusionHandler->computePartialsForDiffusion(network, diffVals.data(),
 			diffIndices.data(), hxLeft, hxRight, xi - localXS);
 
-#if 0
-		// Loop on the number of diffusion cluster to set the values in the
-		// Jacobian
-		for (auto i = 0; i < nDiff; i++) {
-			// Set grid coordinate and component number for the row
-			row.i = xi;
-			row.c = diffIndices[i];
-
-			// Set grid coordinates and component numbers for the columns
-			// corresponding to the middle, left, and right grid points
-			cols[0].i = xi; // middle
-			cols[0].c = diffIndices[i];
-			cols[1].i = (PetscInt)xi - 1; // left
-			cols[1].c = diffIndices[i];
-			cols[2].i = xi + 1; // right
-			cols[2].c = diffIndices[i];
-
-			ierr = MatSetValuesStencil(
-				J, 1, &row, 3, cols, diffVals.data() + (3 * i), ADD_VALUES);
-			checkPetscError(ierr,
-				"PetscSolver1DHandler::computeJacobian: "
-				"MatSetValuesStencil (diffusion) failed.");
-		}
-#endif
 		auto hDiffVals = HostUnmanaged(diffVals.data(), 3 * nDiff);
 		deep_copy(subview(vals, std::make_pair(valIndex, valIndex + 3 * nDiff)),
 			hDiffVals);
@@ -1234,47 +1153,6 @@ PetscSolver1DHandler::computeJacobian(
 				advecVals.data(), advecIndices.data(), gridPosition, hxLeft,
 				hxRight, xi - localXS);
 
-#if 0
-			// Get the stencil indices to know where to put the partial
-			// derivatives in the Jacobian
-			auto advecStencil =
-				advectionHandlers[l]->getStencilForAdvection(gridPosition);
-
-			// Get the number of advecting clusters
-			nAdvec = advectionHandlers[l]->getNumberOfAdvecting();
-
-			// Loop on the number of advecting cluster to set the values in the
-			// Jacobian
-			for (auto i = 0; i < nAdvec; i++) {
-				// Set grid coordinate and component number for the row
-				row.i = xi;
-				row.c = advecIndices[i];
-
-				// If we are on the sink, the partial derivatives are not the
-				// same Both sides are giving their concentrations to the center
-				if (advectionHandlers[l]->isPointOnSink(gridPosition)) {
-					cols[0].i = (PetscInt)xi - advecStencil[0]; // left?
-					cols[0].c = advecIndices[i];
-					cols[1].i = xi + advecStencil[0]; // right?
-					cols[1].c = advecIndices[i];
-				}
-				else {
-					// Set grid coordinates and component numbers for the
-					// columns corresponding to the middle and other grid points
-					cols[0].i = xi; // middle
-					cols[0].c = advecIndices[i];
-					cols[1].i = xi + advecStencil[0]; // left or right
-					cols[1].c = advecIndices[i];
-				}
-
-				// Update the matrix
-				ierr = MatSetValuesStencil(
-					J, 1, &row, 2, cols, advecVals.data() + (2 * i), ADD_VALUES);
-				checkPetscError(ierr,
-					"PetscSolver1DHandler::computeJacobian: "
-					"MatSetValuesStencil (advection) failed.");
-			}
-#endif
 			auto hAdvecVals = HostUnmanaged(advecVals.data(), 2 * nAdvec);
 			deep_copy(
 				subview(vals, std::make_pair(valIndex, valIndex + 2 * nAdvec)),
@@ -1299,54 +1177,6 @@ PetscSolver1DHandler::computeJacobian(
 			xi + 1 - localXS, curDepth, curSpacing);
 		partialDerivativeTimer->stop();
 		valIndex += nNetworkEntries;
-
-		// #if 0
-		// 		auto hPartials = create_mirror_view(vals);
-		// 		deep_copy(hPartials, vals);
-
-		// 		// Variable for the loop on reactants
-		// 		IdType startingIdx = 0;
-
-		// 		// Update the column in the Jacobian that represents each DOF
-		// 		for (auto i = 0; i < dof; i++) {
-		// 			// Set grid coordinate and component number for the row
-		// 			rowId.i = xi;
-		// 			rowId.c = i;
-
-		// 			// Number of partial derivatives
-		// 			auto rowIter = dfill.find(i);
-		// 			if (rowIter != dfill.end()) {
-		// 				const auto& row = rowIter->second;
-		// 				pdColIdsVectorSize = row.size();
-
-		// 				// Loop over the list of column ids
-		// 				for (auto j = 0; j < pdColIdsVectorSize; j++) {
-		// 					// Set grid coordinate and component number for a
-		// column in
-		// 					// the list
-		// 					colIds[j].i = xi;
-		// 					colIds[j].c = row[j];
-		// 					// Get the partial derivative from the array of all
-		// of the
-		// 					// partials
-		// 					reactingPartialsForCluster[j] =
-		// hPartials(startingIdx
-		// + j);
-		// 				}
-		// 				// Update the matrix
-		// 				ierr = MatSetValuesStencil(J, 1, &rowId,
-		// pdColIdsVectorSize, 					colIds,
-		// reactingPartialsForCluster.data(), ADD_VALUES);
-		// checkPetscError(ierr,
-		// "PetscSolverExpHandler::computeJacobian: "
-		// "MatSetValuesStencil (reactions) failed.");
-
-		// 				// Increase the starting index
-		// 				startingIdx += pdColIdsVectorSize;
-		// 			}
-		// 		}
-		// 	}
-		// #else
 	}
 	Kokkos::fence();
 	ierr = MatSetValuesCOO(J, vals.data(), ADD_VALUES);
@@ -1354,12 +1184,7 @@ PetscSolver1DHandler::computeJacobian(
 		ierr, "PetscSolver1DHandler::computeJacobian: MatSetValuesCOO failed.");
 
 	// Reset the values
-	auto values = vals;
-	Kokkos::parallel_for(
-		"ReactionNetwork::computeAllPartials::resetValues", values.size(),
-		KOKKOS_LAMBDA(const IdType i) { values(i) = 0.0; });
-
-	// #endif
+    resetJacobianValues();
 
 	/*
 	 Restore vectors
