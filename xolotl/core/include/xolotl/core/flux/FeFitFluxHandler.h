@@ -1,5 +1,4 @@
-#ifndef FEFITFLUXHANDLER_H
-#define FEFITFLUXHANDLER_H
+#pragma once
 
 #include <cmath>
 
@@ -141,6 +140,8 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
+    ////////////////////////////////////////////////////////////////////////////
+    // DELETEME
 	void
 	computeIncidentFlux(
 		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
@@ -164,6 +165,7 @@ public:
 
 		return;
 	}
+    ////////////////////////////////////////////////////////////////////////////
 
 	void
 	computeIncidentFlux(double currentTime,
@@ -198,5 +200,3 @@ public:
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif

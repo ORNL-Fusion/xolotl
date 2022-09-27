@@ -1,5 +1,4 @@
-#ifndef FLUXHANDLER_H
-#define FLUXHANDLER_H
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -30,6 +29,11 @@ protected:
 	std::vector<std::vector<double>> incidentFluxVec;
 
 	/**
+	 * View copy of incidentFluxVec
+	 */
+	Kokkos::View<double**> incidentFlux;
+
+	/**
 	 * Vector to hold the position at each grid
 	 * point (x position).
 	 */
@@ -49,6 +53,11 @@ protected:
 	 * The indices of the incoming clusters.
 	 */
 	std::vector<IdType> fluxIndices;
+
+	/**
+	 * View copy of fluxIndices
+	 */
+	Kokkos::View<IdType*> fluxIds;
 
 	/**
 	 * Are we using a time profile for the amplitude of the incoming
@@ -105,6 +114,18 @@ protected:
 	void
 	recomputeFluxHandler(int surfacePos);
 
+    /**
+     * This method copies flux indices to device view
+     */
+    void
+    syncFluxIndices();
+
+	/**
+	 * This method copies incident flux data to device view
+	 */
+	void
+	syncIncidentFluxVec();
+
 public:
 	FluxHandler(const options::IOptions&);
 
@@ -128,10 +149,13 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
+	////////////////////////////////////////////////////////////////////////////
+	// DELETEME
 	virtual void
 	computeIncidentFlux(
 		double currentTime, double* updatedConcOffset, int xi, int surfacePos);
 
+	////////////////////////////////////////////////////////////////////////////
 	void
 	computeIncidentFlux(double currentTime,
 		Kokkos::View<double*> updatedConcOffset, int xi,
@@ -226,5 +250,3 @@ public:
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif

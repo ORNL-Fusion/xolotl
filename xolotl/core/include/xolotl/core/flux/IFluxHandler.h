@@ -1,8 +1,9 @@
-#ifndef IFLUXHANDLER_H
-#define IFLUXHANDLER_H
+#pragma once
 
 #include <string>
 #include <vector>
+
+#include <Kokkos_View.hpp>
 
 #include <xolotl/core/network/IReactionNetwork.h>
 
@@ -53,10 +54,13 @@ public:
 	 * @param ix The position on the x grid
 	 * @param surfacePos The current position of the surface
 	 */
+    ////////////////////////////////////////////////////////////////////////////
+    // DELETEME
 	virtual void
 	computeIncidentFlux(double currentTime, double* updatedConcOffset, int xi,
 		int surfacePos) = 0;
 
+    ////////////////////////////////////////////////////////////////////////////
 	virtual void
 	computeIncidentFlux(double currentTime,
 		Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos) = 0;
@@ -166,5 +170,3 @@ public:
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif

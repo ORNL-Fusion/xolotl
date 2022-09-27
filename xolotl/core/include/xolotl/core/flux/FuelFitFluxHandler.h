@@ -82,6 +82,8 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
+    ////////////////////////////////////////////////////////////////////////////
+    // DELETEME
 	void
 	computeIncidentFlux(
 		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
@@ -95,6 +97,7 @@ public:
 
 		return;
 	}
+    ////////////////////////////////////////////////////////////////////////////
 
 	void
 	computeIncidentFlux(double currentTime,

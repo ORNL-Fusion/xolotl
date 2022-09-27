@@ -92,8 +92,6 @@ FluxHandler::initializeFluxHandler(network::IReactionNetwork& network,
 
 	// Add it to the vector of fluxes
 	incidentFluxVec.push_back(tempVector);
-
-	return;
 }
 
 void
@@ -115,8 +113,32 @@ FluxHandler::recomputeFluxHandler(int surfacePos)
 		// Add it to the vector
 		incidentFluxVec[0][i - surfacePos] = incidentFlux;
 	}
+}
 
-	return;
+void
+FluxHandler::syncFluxIndices()
+{
+	auto ids_h =
+		Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+			fluxIndices.data(), fluxIndices.size());
+	fluxIds = Kokkos::View<IdType*>(
+		Kokkos::ViewAllocateWithoutInitializing("Flux Indices"),
+		fluxIndices.size());
+	deep_copy(fluxIds, ids_h);
+}
+
+void
+FluxHandler::syncIncidentFluxVec()
+{
+	incidentFlux = Kokkos::View<double**>(
+		"Incident Flux Vec", incidentFluxVec.size(), incidentFluxVec[0].size());
+	auto incidentFlux_h = create_mirror_view(incidentFlux);
+	for (std::size_t i = 0; i < incidentFluxVec.size(); ++i) {
+		for (std::size_t j = 0; j < incidentFluxVec[i].size(); ++j) {
+			incidentFlux_h(i, j) = incidentFluxVec[i][j];
+		}
+	}
+	deep_copy(incidentFlux, incidentFlux_h);
 }
 
 void
@@ -138,8 +160,6 @@ FluxHandler::initializeTimeProfile(const std::string& fileName)
 		time.push_back(xamp);
 		amplitudes.push_back(yamp);
 	}
-
-	return;
 }
 
 double
@@ -175,6 +195,8 @@ FluxHandler::getProfileAmplitude(double currentTime) const
 	return f;
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// DELETEME
 void
 FluxHandler::computeIncidentFlux(
 	double currentTime, double* updatedConcOffset, int xi, int surfacePos)
@@ -199,6 +221,7 @@ FluxHandler::computeIncidentFlux(
 
 	return;
 }
+////////////////////////////////////////////////////////////////////////////////
 
 void
 FluxHandler::computeIncidentFlux(double currentTime,
@@ -233,8 +256,6 @@ FluxHandler::incrementFluence(double dt)
 {
 	// The fluence is the flux times the time
 	fluence += fluxAmplitude * dt;
-
-	return;
 }
 
 void
@@ -242,8 +263,6 @@ FluxHandler::computeFluence(double time)
 {
 	// The fluence is the flux times the time
 	fluence = fluxAmplitude * time;
-
-	return;
 }
 
 double
