@@ -1,5 +1,4 @@
-#ifndef DUMMYADVECTIONHANDLER_H
-#define DUMMYADVECTIONHANDLER_H
+#pragma once
 
 // Includes
 #include <xolotl/core/advection/SurfaceAdvectionHandler.h>
@@ -62,6 +61,8 @@ public:
 	/**
 	 * \see IAdvectionHandler.h
 	 */
+    ////////////////////////////////////////////////////////////////////////////
+    // DELETEME
 	void
 	computeAdvection(network::IReactionNetwork& network,
 		const plsm::SpaceVector<double, 3>& pos, double** concVector,
@@ -71,6 +72,7 @@ public:
 		// Doesn't do anything
 		return;
 	}
+    ////////////////////////////////////////////////////////////////////////////
 
 	void
 	computeAdvection(network::IReactionNetwork& network,
@@ -101,4 +103,3 @@ public:
 } /* end namespace advection */
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif

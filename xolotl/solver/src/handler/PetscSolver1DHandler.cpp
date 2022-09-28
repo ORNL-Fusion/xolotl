@@ -136,7 +136,7 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 		advectionHandlers.size(), std::vector<core::RowColPair>{});
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(dof);
+	temperatureHandler->initialize(dof);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents
 	// diffusion

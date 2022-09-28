@@ -39,6 +39,8 @@ ProfileHandler::~ProfileHandler()
 {
 }
 
+////////////////////////////////////////////////////////////////////////////
+// DELETEME
 void
 ProfileHandler::initializeTemperature(const int dof,
 	network::IReactionNetwork::SparseFillMap& ofillMap,
@@ -62,11 +64,12 @@ ProfileHandler::initializeTemperature(const int dof,
 
 	return;
 }
+////////////////////////////////////////////////////////////////////////////
 
 void
-ProfileHandler::initializeTemperature(const int dof)
+ProfileHandler::initialize(const int dof)
 {
-	TemperatureHandler::initializeTemperature(dof);
+	TemperatureHandler::initialize(dof);
 
 	// Open file dataFile.dat containing the time and temperature
 	std::ifstream inputFile(tempFile.c_str());
@@ -81,8 +84,6 @@ ProfileHandler::initializeTemperature(const int dof)
 		time.push_back(xtemp);
 		temp.push_back(ytemp);
 	}
-
-	return;
 }
 
 double

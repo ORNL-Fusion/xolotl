@@ -69,6 +69,9 @@ TungstenAdvectionHandler::initialize(network::IReactionNetwork& network,
 		// Add Jacobian entry for this cluster
 		idPairs.push_back({clusterId, clusterId});
 	}
+
+    this->syncAdvectingClusters(network);
+    this->syncSinkStrengths();
 }
 } // namespace advection
 } // namespace core

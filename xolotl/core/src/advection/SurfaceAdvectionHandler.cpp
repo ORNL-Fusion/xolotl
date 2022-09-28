@@ -8,6 +8,26 @@ namespace core
 namespace advection
 {
 void
+SurfaceAdvectionHandler::syncAdvectionGrid()
+{
+	advecGrid = Kokkos::View<int****>(
+		Kokkos::ViewAllocateWithoutInitializing("Advection Grid"),
+		advectionGrid.size(), advectionGrid[0].size(),
+		advectionGrid[0][0].size(), advectingClusters.size());
+	auto advGrid_h = create_mirror_view(advecGrid);
+	for (IdType k = 0; k < advectionGrid.size(); ++k) {
+		for (IdType j = 0; j < advectionGrid[0].size(); ++j) {
+			for (IdType i = 0; i < advectionGrid[0][0].size(); ++i) {
+				for (IdType n = 0; n < advectingClusters.size(); ++n) {
+					advGrid_h(k, j, i, n) = advectionGrid[k][j][i][n];
+				}
+			}
+		}
+	}
+	deep_copy(advecGrid, advGrid_h);
+}
+
+void
 SurfaceAdvectionHandler::initializeAdvectionGrid(
 	std::vector<IAdvectionHandler*> advectionHandlers, std::vector<double> grid,
 	int nx, int xs, int ny, double hy, int ys, int nz, double hz, int zs)
@@ -84,9 +104,11 @@ SurfaceAdvectionHandler::initializeAdvectionGrid(
 		}
 	}
 
-	return;
+	syncAdvectionGrid();
 }
 
+////////////////////////////////////////////////////////////////////////////
+// DELETEME
 void
 SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	const plsm::SpaceVector<double, 3>& pos, double** concVector,
@@ -133,6 +155,7 @@ SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 
 	return;
 }
+////////////////////////////////////////////////////////////////////////////
 
 void
 SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
@@ -148,50 +171,6 @@ SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	// advecting clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 
-	////////////////////////////////////////////////////////////////////////////
-	// TODO: This needs to happen at initialization (probably)
-	using HostUnmanaged =
-		Kokkos::View<const IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto clusterIds_h =
-		HostUnmanaged(advectingClusters.data(), advectingClusters.size());
-	auto clusterIds = Kokkos::View<IdType*>(
-		"Advecting Cluster Ids", advectingClusters.size());
-	deep_copy(clusterIds, clusterIds_h);
-
-	auto sinkStrengths_h =
-		Kokkos::View<const double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
-			sinkStrengthVector.data(), sinkStrengthVector.size());
-	auto sinkStrengths =
-		Kokkos::View<double*>("Sink Strengths", sinkStrengthVector.size());
-	deep_copy(sinkStrengths, sinkStrengths_h);
-
-	using DeviceCluster = network::ClusterCommon<plsm::DeviceMemSpace>;
-	auto clusters = Kokkos::View<DeviceCluster*>(
-		Kokkos::ViewAllocateWithoutInitializing("Advecting Clusters"),
-		advectingClusters.size());
-	auto clusters_h = create_mirror_view(clusters);
-	for (IdType i = 0; i < advectingClusters.size(); ++i) {
-		clusters_h[i] = network.getClusterCommon(
-			advectingClusters[i], plsm::DeviceMemSpace{});
-	}
-	deep_copy(clusters, clusters_h);
-
-	auto advGrid = Kokkos::View<int****>("Advection Grid", advectionGrid.size(),
-		advectionGrid[0].size(), advectionGrid[0][0].size(),
-		advectingClusters.size());
-	auto advGrid_h = create_mirror_view(advGrid);
-	for (IdType k = 0; k < advectionGrid.size(); ++k) {
-		for (IdType j = 0; j < advectionGrid[0].size(); ++j) {
-			for (IdType i = 0; i < advectionGrid[0][0].size(); ++i) {
-				for (IdType n = 0; n < advectingClusters.size(); ++n) {
-					advGrid_h(k, j, i, n) = advectionGrid[k][j][i][n];
-				}
-			}
-		}
-	}
-	deep_copy(advGrid, advGrid_h);
-	////////////////////////////////////////////////////////////////////////////
-
 	if (concVector.size() < 3) {
 		throw std::runtime_error("Wrong size for 1D concentration stencil; "
 								 "should be at least 3, got " +
@@ -200,7 +179,11 @@ SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	Kokkos::Array<Kokkos::View<const double*>, 3> concVec = {
 		concVector[0], concVector[1], concVector[2]};
 
-    auto location_ = location;
+	auto location_ = location;
+    auto clusterIds = this->advClusterIds;
+    auto clusters = this->advClusters;
+    auto sinkStrengths = this->advSinkStrengths;
+    auto advGrid = this->advecGrid;
 	Kokkos::parallel_for(
 		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
 			auto currId = clusterIds[i];

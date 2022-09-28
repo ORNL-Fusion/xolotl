@@ -88,9 +88,12 @@ XGBAdvectionHandler::initialize(network::IReactionNetwork& network,
         idPairs.push_back({clusterId, clusterId});
 	}
 
-	return;
+    this->syncAdvectingClusters(network);
+    this->syncSinkStrengths();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// DELETEME
 void
 XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	const plsm::SpaceVector<double, 3>& pos, double** concVector,
@@ -153,6 +156,7 @@ XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 
 	return;
 }
+////////////////////////////////////////////////////////////////////////////////
 
 void
 XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,

@@ -1,5 +1,4 @@
-#ifndef ADVECTIONHANDLER_H
-#define ADVECTIONHANDLER_H
+#pragma once
 
 // Includes
 #include <xolotl/core/Constants.h>
@@ -25,12 +24,29 @@ protected:
 	//! The collection of advecting clusters.
 	std::vector<IdType> advectingClusters;
 
+    //! Device copy of advectingClusters
+    Kokkos::View<IdType*> advClusterIds;
+
+    //! Device clusters
+    using DeviceCluster = network::ClusterCommon<plsm::DeviceMemSpace>;
+    Kokkos::View<DeviceCluster*> advClusters;
+
 	//! The vector containing the value of the sink strength (called A) of the
 	//! advecting clusters
 	std::vector<double> sinkStrengthVector;
 
+    //! Device copy of sinkStrengthVector
+    Kokkos::View<double*> advSinkStrengths;
+
 	//! The number of dimensions of the problem
 	int dimension;
+
+protected:
+    void
+    syncAdvectingClusters(network::IReactionNetwork& network);
+
+    void
+    syncSinkStrengths();
 
 public:
 	//! The Constructor
@@ -114,4 +130,3 @@ public:
 } /* end namespace advection */
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif

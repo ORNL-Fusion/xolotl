@@ -97,6 +97,8 @@ HeatEquationHandler::setTemperature(Kokkos::View<const double*> solution)
 	localTemperature = elem_h();
 }
 
+////////////////////////////////////////////////////////////////////////////
+// DELETEME
 void
 HeatEquationHandler::computeTemperature(double** concVector,
 	double* updatedConcOffset, double hxLeft, double hxRight, int xi, double sy,
@@ -139,6 +141,7 @@ HeatEquationHandler::computeTemperature(double** concVector,
 			(oldConcBox[d][0] + oldConcBox[d][1] - 2.0 * oldConc);
 	}
 }
+////////////////////////////////////////////////////////////////////////////
 
 void
 HeatEquationHandler::computeTemperature(Kokkos::View<const double*>* concVector,

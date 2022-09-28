@@ -17,6 +17,8 @@ TemperatureHandler::~TemperatureHandler()
 {
 }
 
+////////////////////////////////////////////////////////////////////////////
+// DELETEME
 void
 TemperatureHandler::initializeTemperature(const int dof,
 	network::IReactionNetwork::SparseFillMap& ofillMap,
@@ -31,9 +33,10 @@ TemperatureHandler::initializeTemperature(const int dof,
 	// Add the temperature to dfill
 	dfillMap[_dof].emplace_back(_dof);
 }
+////////////////////////////////////////////////////////////////////////////
 
 void
-TemperatureHandler::initializeTemperature(const int dof)
+TemperatureHandler::initialize(const int dof)
 {
 	_dof = dof;
 }
