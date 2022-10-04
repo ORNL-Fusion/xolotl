@@ -55,11 +55,14 @@ public:
 	 *
 	 * \see IDiffusionHandler.h
 	 */
+    ////////////////////////////////////////////////////////////////////////////
+    // DELETEME
 	void
 	computeDiffusion(network::IReactionNetwork& network, double** concVector,
 		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
 		double sy = 0.0, int iy = 0, double sz = 0.0,
 		int iz = 0) const override;
+    ////////////////////////////////////////////////////////////////////////////
 
 	void
 	computeDiffusion(network::IReactionNetwork& network,

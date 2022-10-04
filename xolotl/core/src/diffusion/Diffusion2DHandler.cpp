@@ -72,6 +72,8 @@ Diffusion2DHandler::initializeDiffusionGrid(
 	return;
 }
 
+////////////////////////////////////////////////////////////////////////////
+// DELETEME
 void
 Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
 	double** concVector, double* updatedConcOffset, double hxLeft,
@@ -119,6 +121,7 @@ Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
 
 	return;
 }
+////////////////////////////////////////////////////////////////////////////
 
 void
 Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,

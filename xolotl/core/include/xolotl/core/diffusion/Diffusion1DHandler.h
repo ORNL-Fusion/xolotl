@@ -1,5 +1,4 @@
-#ifndef DIFFUSION1DHANDLER_H
-#define DIFFUSION1DHANDLER_H
+#pragma once
 
 // Includes
 #include <xolotl/core/diffusion/DiffusionHandler.h>
@@ -19,6 +18,12 @@ class Diffusion1DHandler : public DiffusionHandler
 private:
 	//! The vector to know which clusters are diffusing where
 	std::vector<std::vector<bool>> diffusionGrid;
+
+    Kokkos::View<int**> diffusGrid;
+
+protected:
+    void
+    syncDiffusionGrid();
 
 public:
 	//! The Constructor
@@ -52,11 +57,14 @@ public:
 	 *
 	 * \see IDiffusionHandler.h
 	 */
+    ////////////////////////////////////////////////////////////////////////////
+    // DELETEME
 	void
 	computeDiffusion(network::IReactionNetwork& network, double** concVector,
 		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
 		double sy = 0.0, int iy = 0, double sz = 0.0,
 		int iz = 0) const override;
+    ////////////////////////////////////////////////////////////////////////////
 
 	void
 	computeDiffusion(network::IReactionNetwork& network,
@@ -95,4 +103,3 @@ public:
 } /* end namespace diffusion */
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif

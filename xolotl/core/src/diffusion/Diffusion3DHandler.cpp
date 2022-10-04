@@ -80,6 +80,8 @@ Diffusion3DHandler::initializeDiffusionGrid(
 	return;
 }
 
+////////////////////////////////////////////////////////////////////////////
+// DELETEME
 void
 Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,
 	double** concVector, double* updatedConcOffset, double hxLeft,
@@ -132,6 +134,7 @@ Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,
 
 	return;
 }
+////////////////////////////////////////////////////////////////////////////
 
 void
 Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,

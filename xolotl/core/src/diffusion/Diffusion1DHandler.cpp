@@ -10,6 +10,20 @@ namespace core
 namespace diffusion
 {
 void
+Diffusion1DHandler::syncDiffusionGrid()
+{
+	diffusGrid = Kokkos::View<int**>(
+		"Diffusion Grid", diffusionGrid.size(), diffusingClusters.size());
+	auto diffGrid_h = create_mirror_view(diffusGrid);
+	for (IdType i = 0; i < diffusionGrid.size(); ++i) {
+		for (IdType j = 0; j < diffusingClusters.size(); ++j) {
+			diffGrid_h(i, j) = diffusionGrid[i][j];
+		}
+	}
+	deep_copy(diffusGrid, diffGrid_h);
+}
+
+void
 Diffusion1DHandler::initializeDiffusionGrid(
 	std::vector<advection::IAdvectionHandler*> advectionHandlers,
 	std::vector<double> grid, int nx, int xs, int ny, double hy, int ys, int nz,
@@ -61,9 +75,11 @@ Diffusion1DHandler::initializeDiffusionGrid(
 		}
 	}
 
-	return;
+	syncDiffusionGrid();
 }
 
+////////////////////////////////////////////////////////////////////////////
+// DELETEME
 void
 Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 	double** concVector, double* updatedConcOffset, double hxLeft,
@@ -106,6 +122,7 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 
 	return;
 }
+////////////////////////////////////////////////////////////////////////////
 
 void
 Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
@@ -122,34 +139,7 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 
 	////////////////////////////////////////////////////////////////////////////
 	// TODO: This needs to happen at initialization (probably)
-	using HostUnmanaged =
-		Kokkos::View<const IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto clusterIds_h =
-		HostUnmanaged(diffusingClusters.data(), diffusingClusters.size());
-	auto clusterIds = Kokkos::View<IdType*>(
-		"Diffusing Cluster Ids", diffusingClusters.size());
-	deep_copy(clusterIds, clusterIds_h);
 
-	using DeviceCluster = network::ClusterCommon<plsm::DeviceMemSpace>;
-	auto clusters = Kokkos::View<DeviceCluster*>(
-		Kokkos::ViewAllocateWithoutInitializing("Diffusing Clusters"),
-		diffusingClusters.size());
-	auto clusters_h = create_mirror_view(clusters);
-	for (IdType i = 0; i < diffusingClusters.size(); ++i) {
-		clusters_h[i] = network.getClusterCommon(
-			diffusingClusters[i], plsm::DeviceMemSpace{});
-	}
-	deep_copy(clusters, clusters_h);
-
-	auto diffGrid = Kokkos::View<int**>(
-		"Diffusion Grid", diffusionGrid.size(), diffusingClusters.size());
-	auto diffGrid_h = create_mirror_view(diffGrid);
-	for (IdType i = 0; i < diffusionGrid.size(); ++i) {
-		for (IdType j = 0; j < diffusingClusters.size(); ++j) {
-			diffGrid_h(i, j) = diffusionGrid[i][j];
-		}
-	}
-	deep_copy(diffGrid, diffGrid_h);
 	////////////////////////////////////////////////////////////////////////////
 
 	if (concVector.size() != 3) {
@@ -160,6 +150,9 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 	Kokkos::Array<Kokkos::View<const double*>, 3> concVec = {
 		concVector[0], concVector[1], concVector[2]};
 
+	auto diffGrid = diffusGrid;
+	auto clusterIds = this->diffClusterIds;
+	auto clusters = this->diffClusters;
 	Kokkos::parallel_for(
 		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
 			auto currId = clusterIds[i];

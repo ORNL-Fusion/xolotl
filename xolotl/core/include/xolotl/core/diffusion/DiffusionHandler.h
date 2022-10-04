@@ -1,7 +1,8 @@
-#ifndef DIFFUSIONHANDLER_H
-#define DIFFUSIONHANDLER_H
+#pragma once
 
 // Includes
+#include <Kokkos_View.hpp>
+
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/util/MathUtils.h>
 
@@ -22,8 +23,19 @@ protected:
 	//! Collection of diffusing clusters.
 	std::vector<IdType> diffusingClusters;
 
+	//! Device copy of diffusingClusters
+	Kokkos::View<IdType*> diffClusterIds;
+
+	//! Device clusters
+	using DeviceCluster = network::ClusterCommon<plsm::DeviceMemSpace>;
+	Kokkos::View<DeviceCluster*> diffClusters;
+
 	//! Migration energy threshold
 	double migrationThreshold;
+
+protected:
+	void
+	syncDiffusingClusters(network::IReactionNetwork& network);
 
 public:
 	//! The Constructor
@@ -47,30 +59,7 @@ public:
 	 */
 	void
 	initialize(network::IReactionNetwork& network,
-		std::vector<core::RowColPair>& idPairs) override
-	{
-		// Clear the index vector
-		diffusingClusters.clear();
-
-		// Consider each cluster
-		for (std::size_t i = 0; i < network.getNumClusters(); i++) {
-			auto cluster = network.getClusterCommon(i);
-
-			// Get its diffusion factor and migration energy
-			double diffFactor = cluster.getDiffusionFactor();
-			double migration = cluster.getMigrationEnergy();
-
-			// Don't do anything if the diffusion factor is 0.0
-			if (util::equal(diffFactor, 0.0) || migration > migrationThreshold)
-				continue;
-
-			// Note that cluster is diffusing.
-			diffusingClusters.emplace_back(i);
-
-			// Add a matrix entry for this cluster
-			idPairs.push_back({i, i});
-		}
-	}
+		std::vector<core::RowColPair>& idPairs) override;
 
 	/**
 	 * Get the total number of diffusing clusters in the network.
@@ -99,4 +88,3 @@ public:
 } /* end namespace diffusion */
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif

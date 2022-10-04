@@ -72,6 +72,8 @@ public:
 	 *
 	 * \see IDiffusionHandler.h
 	 */
+    ////////////////////////////////////////////////////////////////////////////
+    // DELETEME
 	void
 	computeDiffusion(network::IReactionNetwork& network, double** concVector,
 		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
@@ -79,6 +81,7 @@ public:
 	{
 		return;
 	}
+    ////////////////////////////////////////////////////////////////////////////
 
 	void
 	computeDiffusion(network::IReactionNetwork& network,
