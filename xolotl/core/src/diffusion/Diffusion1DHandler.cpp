@@ -16,8 +16,8 @@ Diffusion1DHandler::syncDiffusionGrid()
 		"Diffusion Grid", diffusionGrid.size(), diffusingClusters.size());
 	auto diffGrid_h = create_mirror_view(diffusGrid);
 	for (IdType i = 0; i < diffusionGrid.size(); ++i) {
-		for (IdType j = 0; j < diffusingClusters.size(); ++j) {
-			diffGrid_h(i, j) = diffusionGrid[i][j];
+		for (IdType n = 0; n < diffusingClusters.size(); ++n) {
+			diffGrid_h(i, n) = diffusionGrid[i][n];
 		}
 	}
 	deep_copy(diffusGrid, diffGrid_h);
@@ -136,11 +136,6 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 	// Currently true with C++11, but we'd like to be able to visit the
 	// diffusing clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
-
-	////////////////////////////////////////////////////////////////////////////
-	// TODO: This needs to happen at initialization (probably)
-
-	////////////////////////////////////////////////////////////////////////////
 
 	if (concVector.size() != 3) {
 		throw std::runtime_error(

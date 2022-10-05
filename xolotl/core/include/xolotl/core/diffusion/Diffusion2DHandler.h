@@ -1,5 +1,4 @@
-#ifndef DIFFUSION2DHANDLER_H
-#define DIFFUSION2DHANDLER_H
+#pragma once
 
 // Includes
 #include <xolotl/core/diffusion/DiffusionHandler.h>
@@ -19,6 +18,13 @@ class Diffusion2DHandler : public DiffusionHandler
 private:
 	//! The vector to know which clusters are diffusing where
 	std::vector<std::vector<std::vector<bool>>> diffusionGrid;
+
+    //! Device copy of diffusion grid
+    Kokkos::View<int***> diffusGrid;
+
+protected:
+    void
+    syncDiffusionGrid();
 
 public:
 	//! The Constructor
@@ -108,4 +114,3 @@ public:
 } /* end namespace diffusion */
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif

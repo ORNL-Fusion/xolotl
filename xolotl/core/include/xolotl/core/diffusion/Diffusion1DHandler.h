@@ -19,6 +19,7 @@ private:
 	//! The vector to know which clusters are diffusing where
 	std::vector<std::vector<bool>> diffusionGrid;
 
+    //! Device copy of diffusion grid
     Kokkos::View<int**> diffusGrid;
 
 protected:
