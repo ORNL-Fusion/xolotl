@@ -1,3 +1,6 @@
+#include <petscconf.h>
+#include <petscdmda_kokkos.hpp>
+
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
@@ -13,6 +16,9 @@ namespace solver
 {
 namespace handler
 {
+using HostUnmanaged =
+	Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+
 void
 PetscSolver2DHandler::createSolverContext(DM& da)
 {
@@ -540,21 +546,16 @@ PetscSolver2DHandler::updateConcentration(
 
 	// Pointers to the PETSc arrays that start at the beginning (localXS,
 	// localYS) of the local array
-	PetscScalar ***concs = nullptr, ***updatedConcs = nullptr;
-	// Get pointers to vector data
-	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
+	PetscOffsetView<const PetscScalar***> concs;
+	ierr = DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs);
 	checkPetscError(ierr,
 		"PetscSolver2DHandler::updateConcentration: "
-		"DMDAVecGetArrayDOFRead (localC) failed.");
-	ierr = DMDAVecGetArrayDOF(da, F, &updatedConcs);
+		"DMDAVecGetKokkosOffsetViewDOF (localC) failed.");
+	PetscOffsetView<PetscScalar***> updatedConcs;
+	ierr = DMDAVecGetKokkosOffsetViewDOFWrite(da, F, &updatedConcs);
 	checkPetscError(ierr,
 		"PetscSolver2DHandler::updateConcentration: "
-		"DMDAVecGetArrayDOF (F) failed.");
-
-	// The following pointers are set to the first position in the conc or
-	// updatedConc arrays that correspond to the beginning of the data for the
-	// current grid point. They are accessed just like regular arrays.
-	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
+		"DMDAVecGetKokkosOffsetViewDOFWrite (F) failed.");
 
 	// Degrees of freedom is the total number of clusters in the network
 	const auto dof = network.getDOF();
@@ -563,7 +564,8 @@ PetscSolver2DHandler::updateConcentration(
 	double sy = 1.0 / (hY * hY);
 
 	// Declarations for variables used in the loop
-	double* concVector[5]{nullptr};
+	using ConcSubView = Kokkos::View<const double*>;
+	Kokkos::Array<ConcSubView, 5> concVector;
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 	std::vector<double> incidentFluxVector;
 	double atomConc = 0.0, totalAtomConc = 0.0;
@@ -579,16 +581,23 @@ PetscSolver2DHandler::updateConcentration(
 			if (xi == surfacePosition[yj] && xi >= localXS &&
 				xi < localXS + localXM) {
 				// Compute the old and new array offsets
-				concOffset = concs[yj][xi];
-				updatedConcOffset = updatedConcs[yj][xi];
+				auto concOffset = subview(concs, yj, xi, Kokkos::ALL).view();
+				auto updatedConcOffset =
+					subview(updatedConcs, yj, xi, Kokkos::ALL).view();
 
 				// Fill the concVector with the pointer to the middle, left, and
 				// right grid points
 				concVector[0] = concOffset; // middle
-				concVector[1] = concs[yj][(PetscInt)xi - 1]; // left
-				concVector[2] = concs[yj][xi + 1]; // right
-				concVector[3] = concs[(PetscInt)yj - 1][xi]; // bottom
-				concVector[4] = concs[yj + 1][xi]; // top
+				concVector[1] =
+					subview(concs, yj, (PetscInt)xi - 1, Kokkos::ALL)
+						.view(); // left
+				concVector[2] =
+					subview(concs, yj, xi + 1, Kokkos::ALL).view(); // right
+				concVector[3] =
+					subview(concs, (PetscInt)yj - 1, xi, Kokkos::ALL)
+						.view(); // bottom
+				concVector[4] =
+					subview(concs, yj + 1, xi, Kokkos::ALL).view(); // top
 
 				// Compute the left and right hx
 				double hxLeft = 0.0, hxRight = 0.0;
@@ -605,13 +614,14 @@ PetscSolver2DHandler::updateConcentration(
 					hxRight = grid[xi + 1] - grid[xi];
 				}
 
-				temperatureHandler->computeTemperature(
-					concVector, updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
+				temperatureHandler->computeTemperature(concVector.data(),
+					updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
 			}
 
 			// Compute the old and new array offsets
-			concOffset = concs[yj][xi];
-			updatedConcOffset = updatedConcs[yj][xi];
+			auto concOffset = subview(concs, yj, xi, Kokkos::ALL).view();
+			auto updatedConcOffset =
+				subview(updatedConcs, yj, xi, Kokkos::ALL).view();
 
 			// Set the grid fraction
 			gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
@@ -650,10 +660,14 @@ PetscSolver2DHandler::updateConcentration(
 			// Fill the concVector with the pointer to the middle, left, and
 			// right grid points
 			concVector[0] = concOffset; // middle
-			concVector[1] = concs[yj][(PetscInt)xi - 1]; // left
-			concVector[2] = concs[yj][xi + 1]; // right
-			concVector[3] = concs[(PetscInt)yj - 1][xi]; // bottom
-			concVector[4] = concs[yj + 1][xi]; // top
+			concVector[1] = subview(concs, yj, (PetscInt)xi - 1, Kokkos::ALL)
+								.view(); // left
+			concVector[2] =
+				subview(concs, yj, xi + 1, Kokkos::ALL).view(); // right
+			concVector[3] = subview(concs, (PetscInt)yj - 1, xi, Kokkos::ALL)
+								.view(); // bottom
+			concVector[4] =
+				subview(concs, yj + 1, xi, Kokkos::ALL).view(); // top
 
 			// Compute the left and right hx
 			double hxLeft = 0.0, hxRight = 0.0;
@@ -670,11 +684,10 @@ PetscSolver2DHandler::updateConcentration(
 				hxRight = grid[xi + 1] - grid[xi];
 			}
 
-			// ---- Compute the temperature over the locally owned part of the
-			// grid -----
+			// Compute the temperature over the locally owned part of the grid
 			if (xi >= localXS && xi < localXS + localXM) {
-				temperatureHandler->computeTemperature(
-					concVector, updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
+				temperatureHandler->computeTemperature(concVector.data(),
+					updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
 			}
 		}
 
@@ -720,16 +733,12 @@ PetscSolver2DHandler::updateConcentration(
 				if (xi >= localXS && xi < localXS + localXM && yj >= localYS &&
 					yj < localYS + localYM) {
 					// Get the concentrations at this grid point
-					concOffset = concs[yj][xi];
+					auto concOffset =
+						subview(concs, yj, xi, Kokkos::ALL).view();
 
 					// Sum the total atom concentration
-					using HostUnmanaged = Kokkos::View<double*,
-						Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-					auto hConcs = HostUnmanaged(concOffset, dof);
-					auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-					deep_copy(dConcs, hConcs);
 					atomConc += psiNetwork.getTotalTrappedHeliumConcentration(
-									dConcs, 0) *
+									concOffset, 0) *
 						(grid[xi + 1] - grid[xi]);
 				}
 			}
@@ -759,16 +768,23 @@ PetscSolver2DHandler::updateConcentration(
 
 		for (auto xi = localXS; xi < localXS + localXM; xi++) {
 			// Compute the old and new array offsets
-			concOffset = concs[yj][xi];
-			updatedConcOffset = updatedConcs[yj][xi];
+			auto concOffset = subview(concs, yj, xi, Kokkos::ALL).view();
+			auto updatedConcOffset =
+				subview(updatedConcs, yj, xi, Kokkos::ALL).view();
 
 			// Fill the concVector with the pointer to the middle, left, right,
 			// bottom, and top grid points
 			concVector[0] = concOffset; // middle
-			concVector[1] = concs[yj][(PetscInt)xi - 1]; // left
-			concVector[2] = concs[yj][xi + 1]; // right
-			concVector[3] = concs[(PetscInt)yj - 1][xi]; // bottom
-			concVector[4] = concs[yj + 1][xi]; // top
+			concVector[1] = subview(concs, yj, (PetscInt)xi - 1,
+				Kokkos::ALL)
+								.view(); // left
+			concVector[2] =
+				subview(concs, yj, xi + 1, Kokkos::ALL).view(); // right
+			concVector[3] = subview(concs, (PetscInt)yj - 1, xi,
+				Kokkos::ALL)
+								.view(); // bottom
+			concVector[4] =
+				subview(concs, yj + 1, xi, Kokkos::ALL).view(); // top
 
 			// Compute the left and right hx
 			double hxLeft = 0.0, hxRight = 0.0;
@@ -809,17 +825,18 @@ PetscSolver2DHandler::updateConcentration(
 
 			// ---- Compute diffusion over the locally owned part of the grid
 			// -----
-			diffusionHandler->computeDiffusion(network, concVector,
-				updatedConcOffset, hxLeft, hxRight, xi - localXS, sy,
-				yj - localYS);
+			diffusionHandler->computeDiffusion(network,
+				core::StencilConcArray{concVector.data(), 5}, updatedConcOffset,
+				hxLeft, hxRight, xi - localXS, sy, yj - localYS);
 
 			// ---- Compute advection over the locally owned part of the grid
 			// ----- Set the grid position
 			gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 			for (auto i = 0; i < advectionHandlers.size(); i++) {
 				advectionHandlers[i]->computeAdvection(network, gridPosition,
-					concVector, updatedConcOffset, hxLeft, hxRight,
-					xi - localXS, hY, yj - localYS);
+					core::StencilConcArray{concVector.data(), 5},
+					updatedConcOffset, hxLeft, hxRight, xi - localXS, hY,
+					yj - localYS);
 			}
 
 			auto surfacePos = grid[surfacePosition[yj] + 1];
@@ -830,36 +847,25 @@ PetscSolver2DHandler::updateConcentration(
 
 			// ----- Compute the reaction fluxes over the locally owned part of
 			// the grid -----
-			using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
-				Kokkos::MemoryUnmanaged>;
-			auto hConcs = HostUnmanaged(concOffset, dof);
-			auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-			deep_copy(dConcs, hConcs);
-			auto hFlux = HostUnmanaged(updatedConcOffset, dof);
-			auto dFlux = Kokkos::View<double*>("Fluxes", dof);
-			deep_copy(dFlux, hFlux);
 			fluxCounter->increment();
 			fluxTimer->start();
-			network.computeAllFluxes(
-				dConcs, dFlux, xi + 1 - localXS, curDepth, curSpacing);
+			network.computeAllFluxes(concOffset, updatedConcOffset,
+				xi + 1 - localXS, curDepth, curSpacing);
 			fluxTimer->stop();
-			deep_copy(hFlux, dFlux);
 		}
 	}
 
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
+	ierr = DMDAVecRestoreKokkosOffsetViewDOF(da, localC, &concs);
 	checkPetscError(ierr,
 		"PetscSolver2DHandler::updateConcentration: "
-		"DMDAVecRestoreArrayDOFRead (localC) failed.");
-	ierr = DMDAVecRestoreArrayDOF(da, F, &updatedConcs);
+		"DMDAVecRestoreKokkosOffsetViewDOF (localC) failed.");
+	ierr = DMDAVecRestoreKokkosOffsetViewDOFWrite(da, F, &updatedConcs);
 	checkPetscError(ierr,
 		"PetscSolver2DHandler::updateConcentration: "
-		"DMDAVecRestoreArrayDOF (F) failed.");
-
-	return;
+		"DMDAVecRestoreKokkosOffsetViewDOFWrite (F) failed.");
 }
 
 void

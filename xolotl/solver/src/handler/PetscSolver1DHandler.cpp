@@ -80,7 +80,8 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		if (not sameTemperatureGrid) {
 			ss << "Temperature grid (nm): ";
 			for (auto i = 0; i < temperatureGrid.size(); i++) {
-				ss << temperatureGrid[i] - temperatureGrid[surfacePosition + 1] << " ";
+				ss << temperatureGrid[i] - temperatureGrid[surfacePosition + 1]
+				   << " ";
 			}
 			ss << std::endl;
 		}
@@ -181,7 +182,7 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 	auto oSize =
 		localXM * 2 * (difEntries.size() + advEntries.size() * nAdvec + 1);
 	auto nPartials = dSize + oSize;
-    // TODO: should the count used for this reservation be more exact?
+	// TODO: should the count used for this reservation be more exact?
 	std::vector<PetscInt> rows, cols;
 	rows.reserve(nPartials);
 	cols.reserve(nPartials);
@@ -236,11 +237,11 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 						component, i, i + offsets[0], rows, cols);
 				}
 			}
-            // Handle potential discrepancies in entry counts
-            for (auto i = advEntries[l].size(); i < nAdvec; ++i) {
-                rows.push_back(-1);
-                cols.push_back(-1);
-            }
+			// Handle potential discrepancies in entry counts
+			for (auto i = advEntries[l].size(); i < nAdvec; ++i) {
+				rows.push_back(-1);
+				cols.push_back(-1);
+			}
 			partialsCount += nAdvec * 2;
 		}
 		// network
@@ -252,7 +253,7 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 	//
 	std::cout << "count: " << partialsCount << "\nnPartialsEst: " << nPartials
 			  << "\nnPartials: " << rows.size() << std::endl;
-    nPartials = rows.size();
+	nPartials = rows.size();
 	ierr = MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data());
 	checkPetscError(ierr,
 		"PetscSolver1DHandler::initializeSolverContext: "
@@ -777,8 +778,7 @@ PetscSolver1DHandler::updateConcentration(
 			hxRight = temperatureGrid[xi + 1] - temperatureGrid[xi];
 		}
 
-		// ---- Compute the temperature over the locally owned part of the grid
-		// -----
+		// Compute the temperature over the locally owned part of the grid
 		if (xi >= localXS && xi < localXS + localXM) {
 			temperatureHandler->computeTemperature(
 				concVector.data(), updatedConcOffset, hxLeft, hxRight, xi);
@@ -1104,22 +1104,22 @@ PetscSolver1DHandler::computeJacobian(
 		// Boundary conditions
 		// Everything to the left of the surface is empty
 		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
-            valIndex += 3 * nDiff;
+			valIndex += 3 * nDiff;
 			valIndex += 2 * nAdvec;
-            valIndex += nNetworkEntries;
+			valIndex += nNetworkEntries;
 			continue;
-        }
+		}
 
 		// Free surface GB
-        if (std::find_if(begin(gbVector), end(gbVector), [=](auto&& pair) {
-                    return xi == pair[0]; }) != end(gbVector)) {
-            // TODO: If the gbVector is initialized before the preallocation, we
-            // could simply avoid the extra entries
-            valIndex += 3 * nDiff;
+		if (std::find_if(begin(gbVector), end(gbVector),
+				[=](auto&& pair) { return xi == pair[0]; }) != end(gbVector)) {
+			// TODO: If the gbVector is initialized before the preallocation, we
+			// could simply avoid the extra entries
+			valIndex += 3 * nDiff;
 			valIndex += 2 * nAdvec;
-            valIndex += nNetworkEntries;
-            continue;
-        }
+			valIndex += nNetworkEntries;
+			continue;
+		}
 
 		// Compute the left and right hx
 		double hxLeft = 0.0, hxRight = 0.0;
@@ -1184,7 +1184,7 @@ PetscSolver1DHandler::computeJacobian(
 		ierr, "PetscSolver1DHandler::computeJacobian: MatSetValuesCOO failed.");
 
 	// Reset the values
-    resetJacobianValues();
+	resetJacobianValues();
 
 	/*
 	 Restore vectors
