@@ -131,7 +131,6 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 	 * the nonzero coupling between degrees of freedom at one point with
 	 * degrees of freedom on the adjacent point to the left or right.
 	 */
-	// core::network::IReactionNetwork::SparseFillMap ofill;
 	std::vector<core::RowColPair> difEntries;
 	std::vector<std::vector<core::RowColPair>> advEntries(
 		advectionHandlers.size(), std::vector<core::RowColPair>{});
@@ -162,7 +161,7 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 	network.setGridSize(localXM + 2);
 
 	// Get the diagonal fill
-	nNetworkEntries = network.getDiagonalFill(dfill);
+	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
 	Mat J;
@@ -171,13 +170,14 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 		"PetscSolver1DHandler::initializeSolverContext: "
 		"TSGetRHSJacobian failed.");
 	auto nwEntries = convertToRowColPairList(dof, dfill);
+	nNetworkEntries = nwEntries.size();
 	//
 	// "+ 1" for temperature
 	auto dSize = localXM * (nNetworkEntries + difEntries.size() + 1);
 	// FIXME
 	int nAdvec = 0;
-	for (auto l = 0; l < advectionHandlers.size(); l++) {
-		nAdvec = std::max(nAdvec, advectionHandlers[l]->getNumberOfAdvecting());
+	for (auto&& handler : advectionHandlers) {
+		nAdvec = std::max(nAdvec, handler->getNumberOfAdvecting());
 	}
 	auto oSize =
 		localXM * 2 * (difEntries.size() + advEntries.size() * nAdvec + 1);
@@ -250,9 +250,7 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 		}
 		partialsCount += nwEntries.size();
 	}
-	//
-	std::cout << "count: " << partialsCount << "\nnPartialsEst: " << nPartials
-			  << "\nnPartials: " << rows.size() << std::endl;
+
 	nPartials = rows.size();
 	ierr = MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data());
 	checkPetscError(ierr,
@@ -923,8 +921,8 @@ PetscSolver1DHandler::computeJacobian(
 
 	// Get the total number of advecting clusters
 	int nAdvec = 0;
-	for (auto l = 0; l < advectionHandlers.size(); l++) {
-		nAdvec = std::max(nAdvec, advectionHandlers[l]->getNumberOfAdvecting());
+	for (auto&& handler : advectionHandlers) {
+		nAdvec = std::max(nAdvec, handler->getNumberOfAdvecting());
 	}
 
 	// Arguments for MatSetValuesStencil called below
@@ -1105,7 +1103,7 @@ PetscSolver1DHandler::computeJacobian(
 		// Everything to the left of the surface is empty
 		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
 			valIndex += 3 * nDiff;
-			valIndex += 2 * nAdvec;
+			valIndex += 2 * nAdvec * advectionHandlers.size();
 			valIndex += nNetworkEntries;
 			continue;
 		}
@@ -1116,7 +1114,7 @@ PetscSolver1DHandler::computeJacobian(
 			// TODO: If the gbVector is initialized before the preallocation, we
 			// could simply avoid the extra entries
 			valIndex += 3 * nDiff;
-			valIndex += 2 * nAdvec;
+			valIndex += 2 * nAdvec * advectionHandlers.size();
 			valIndex += nNetworkEntries;
 			continue;
 		}
