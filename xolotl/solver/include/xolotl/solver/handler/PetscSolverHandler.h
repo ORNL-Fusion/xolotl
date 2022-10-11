@@ -112,12 +112,6 @@ protected:
 	convertToRowColPairList(std::size_t dof,
 		const core::network::IReactionNetwork::SparseFillMap& fillMap);
 
-    /**
-     * Reset all jacobian values to zero
-     */
-    void
-    resetJacobianValues();
-
 public:
 	/**
 	 * Default constructor, deleted because we need to construct with objects.
@@ -131,6 +125,12 @@ public:
 	 * @param _perfHandler The perf handler to use.
 	 */
 	PetscSolverHandler(NetworkType& _network, const options::IOptions& options);
+
+    /**
+     * Reset all jacobian values to zero
+     */
+    void
+    resetJacobianValues();
 };
 // end class PetscSolverHandler
 

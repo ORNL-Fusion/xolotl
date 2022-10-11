@@ -91,12 +91,12 @@ PetscSolverHandler::convertToRowColPairList(std::size_t dof,
     std::vector<core::RowColPair> ret;
 	ret.reserve(nNonZeros);
 
-	for (auto i = 0; i < dof; ++i) {
+	for (IdType i = 0; i < dof; ++i) {
 		auto rowIter = fillMap.find(i);
 		if (rowIter == fillMap.end()) {
 			continue;
 		}
-		for (auto j : rowIter->second) {
+		for (IdType j : rowIter->second) {
 			ret.push_back({i,j});
 		}
 	}
