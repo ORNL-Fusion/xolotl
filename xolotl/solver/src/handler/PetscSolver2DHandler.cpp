@@ -230,7 +230,7 @@ PetscSolver2DHandler::initializeSolverContext(DM& da, TS& ts)
 				mapMatStencilsToCoords(component, j, i, j - 1, i, rows, cols);
 				mapMatStencilsToCoords(component, j, i, j + 1, i, rows, cols);
 			}
-			partialsCount += difEntries.size() * 3;
+			partialsCount += difEntries.size() * 5;
 			// advection
 			plsm::SpaceVector<double, 3> pos{0.0, 0.0, 0.0};
 			pos[0] = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
@@ -267,13 +267,10 @@ PetscSolver2DHandler::initializeSolverContext(DM& da, TS& ts)
 			partialsCount += nNetworkEntries;
 		}
 	}
-	//
-	std::cout << "count: " << partialsCount << "\nnPartialsEst: " << nPartials
-			  << "\nnPartials: " << rows.size() << std::endl;
 	nPartials = rows.size();
 	ierr = MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data());
 	checkPetscError(ierr,
-		"PetscSolver1DHandler::initializeSolverContext: "
+		"PetscSolver2DHandler::initializeSolverContext: "
 		"MatSetPreallocationCOO failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
@@ -1009,9 +1006,6 @@ PetscSolver2DHandler::computeJacobian(
 
 	// Declarations for variables used in the loop
 	double atomConc = 0.0, totalAtomConc = 0.0;
-
-	// Arguments for MatSetValuesStencil called below
-	MatStencil row, cols[5];
 	PetscScalar tempVals[5];
 	IdType tempIndices[1];
 	auto diffVals = std::vector<PetscScalar>(5 * nDiff);
@@ -1098,15 +1092,11 @@ PetscSolver2DHandler::computeJacobian(
 				xi > nX - 1 - rightOffset)
 				continue;
 			// Free surface GB
-			bool skip = false;
-			for (auto& pair : gbVector) {
-				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
-					skip = true;
-					break;
-				}
-			}
-			if (skip)
+			if (std::find_if(begin(gbVector), end(gbVector), [=](auto&& pair) {
+					return xi == pair[0] && yj == pair[1];
+				}) != end(gbVector)) {
 				continue;
+			}
 
 			// Get the partial derivatives for the temperature
 			if (xi >= localXS && xi < localXS + localXM) {
