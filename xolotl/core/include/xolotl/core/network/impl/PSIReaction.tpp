@@ -62,7 +62,7 @@ PSIDissociationReaction<TSpeciesEnum>::getRateForProduction(IndexType gridIndex)
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 double
-PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
+PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 {
 	using psi::hasDeuterium;
 	using psi::hasTritium;

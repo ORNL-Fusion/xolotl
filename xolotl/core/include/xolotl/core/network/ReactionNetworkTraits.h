@@ -153,6 +153,9 @@ struct ReactionTypeListHelper<TNetwork,
 template <typename TNetwork>
 using ReactionTypeList = typename ReactionTypeListHelper<TNetwork>::Type;
 
+template <typename TPoint, typename TSpecies>
+using Composition = plsm::EnumIndexed<TPoint, TSpecies>;
+
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 constexpr ReactionNetworkIndexType

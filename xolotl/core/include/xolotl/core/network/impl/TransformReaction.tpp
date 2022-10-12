@@ -14,7 +14,7 @@ namespace network
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-TransformReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+TransformReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex, double)
 {
 	auto cl = this->_clusterData->getCluster(_reactant);
 

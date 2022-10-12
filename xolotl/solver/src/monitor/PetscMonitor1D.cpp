@@ -249,7 +249,7 @@ PetscMonitor1D::setup()
 			while (iClusterExists) {
 				comp[specIdI()] = iSize;
 				auto clusterId = psiNetwork->findClusterId(comp);
-				// Check that the helium cluster is present in the network
+				// Check that it is present in the network
 				if (clusterId != NetworkType::invalidIndex()) {
 					_iClusterIds.push_back(clusterId);
 					iSize++;

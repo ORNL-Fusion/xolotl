@@ -85,7 +85,7 @@ AlloyDissociationReaction::getRateForProduction(IndexType gridIndex)
 
 KOKKOS_INLINE_FUNCTION
 double
-AlloyDissociationReaction::computeBindingEnergy()
+AlloyDissociationReaction::computeBindingEnergy(double time)
 {
 	using Species = typename Superclass::Species;
 	using Composition = typename Superclass::Composition;

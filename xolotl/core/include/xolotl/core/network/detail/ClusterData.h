@@ -152,6 +152,7 @@ private:
 		NUCLEATION,
 		SINK,
 		TRAP_MUTATION,
+		CONSTANT_REACTION,
 		NUM_BOOL_VALS
 	};
 
@@ -281,6 +282,19 @@ public:
 	setEnableTrapMutation(bool val)
 	{
 		setVal(_boolVals, TRAP_MUTATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableConstantReaction() const
+	{
+		return _boolVals[CONSTANT_REACTION];
+	}
+
+	void
+	setEnableConstantReaction(bool val)
+	{
+		setVal(_boolVals, CONSTANT_REACTION, val);
 	}
 
 private:

@@ -601,18 +601,18 @@ FeCrReactionGenerator::addTransforms(IndexType i, IndexType j, TTag tag) const
 		this->addTransformReaction(tag, {i, j});
 
 		//		std::cout << lo[static_cast<int>(Species::V)] << "-" <<
-		//lo[static_cast<int>(Species::I)] << "-" <<
-		//lo[static_cast<int>(Species::Free)] << "-"
+		// lo[static_cast<int>(Species::I)] << "-" <<
+		// lo[static_cast<int>(Species::Free)] << "-"
 		//				 << lo[static_cast<int>(Species::Trapped)] << "-" <<
-		//lo[static_cast<int>(Species::Junction)] << "-" <<
-		//lo[static_cast<int>(Species::Complex)] << "-"
+		// lo[static_cast<int>(Species::Junction)] << "-" <<
+		// lo[static_cast<int>(Species::Complex)] << "-"
 		//				 << lo[static_cast<int>(Species::Loop)] << " + "  <<
-		//loPr[static_cast<int>(Species::V)] << "-" <<
-		//loPr[static_cast<int>(Species::I)] << "-" <<
-		//loPr[static_cast<int>(Species::Free)] << "-"
+		// loPr[static_cast<int>(Species::V)] << "-" <<
+		// loPr[static_cast<int>(Species::I)] << "-" <<
+		// loPr[static_cast<int>(Species::Free)] << "-"
 		//				 << loPr[static_cast<int>(Species::Trapped)] << "-" <<
-		//loPr[static_cast<int>(Species::Junction)] << "-" <<
-		//loPr[static_cast<int>(Species::Complex)] << "-"
+		// loPr[static_cast<int>(Species::Junction)] << "-" <<
+		// loPr[static_cast<int>(Species::Complex)] << "-"
 		//				 << loPr[static_cast<int>(Species::Loop)] << std::endl;
 	}
 }

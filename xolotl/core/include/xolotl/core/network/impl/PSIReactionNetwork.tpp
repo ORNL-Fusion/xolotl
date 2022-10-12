@@ -282,9 +282,9 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 
 template <typename TSpeciesEnum>
 void
-PSIReactionNetwork<TSpeciesEnum>::updateReactionRates()
+PSIReactionNetwork<TSpeciesEnum>::updateReactionRates(double time)
 {
-	Superclass::updateReactionRates();
+	Superclass::updateReactionRates(time);
 
 	using TrapMutationReactionType =
 		typename Superclass::Traits::TrapMutationReactionType;
@@ -421,6 +421,12 @@ void
 PSIReactionGenerator<TSpeciesEnum>::operator()(
 	IndexType i, IndexType j, TTag tag) const
 {
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;

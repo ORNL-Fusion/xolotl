@@ -117,7 +117,7 @@ FeCrDissociationReaction::getRateForProduction(IndexType gridIndex)
 
 KOKKOS_INLINE_FUNCTION
 double
-FeCrDissociationReaction::computeRate(IndexType gridIndex)
+FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 {
 	double T = this->_clusterData->temperature(gridIndex);
 	constexpr double pi = ::xolotl::core::pi;
@@ -209,7 +209,7 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex)
 
 KOKKOS_INLINE_FUNCTION
 double
-FeCrDissociationReaction::computeBindingEnergy()
+FeCrDissociationReaction::computeBindingEnergy(double time)
 {
 	using Species = typename Superclass::Species;
 	using Composition = typename Superclass::Composition;

@@ -49,7 +49,7 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeBindingEnergy();
+	computeBindingEnergy(double time = 0.0);
 };
 
 template <typename TSpeciesEnum>

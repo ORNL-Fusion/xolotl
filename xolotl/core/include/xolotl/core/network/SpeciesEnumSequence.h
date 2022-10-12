@@ -79,6 +79,16 @@ template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 constexpr bool
 isVacancy(TSpeciesEnum val,
+	std::enable_if_t<(numberOfInterstitialSpecies<TSpeciesEnum>() == 2), int> =
+		0) noexcept
+{
+	return val == TSpeciesEnum::V || val == TSpeciesEnum::Basal;
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+constexpr bool
+isVacancy(TSpeciesEnum val,
 	std::enable_if_t<numberOfInterstitialSpecies<TSpeciesEnum>() == 1, int> =
 		0) noexcept
 {
