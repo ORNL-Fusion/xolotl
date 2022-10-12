@@ -81,13 +81,16 @@ constexpr double faultedBurgers = 0.333;
 constexpr double frankBurgers = 0.333;
 // Burgers vector magnitudes for loops in FeCr case
 // In lattice parameter units
-constexpr double fecrBurgers = 0.249;
+constexpr double fecrBurgers = 0.8660254038;
 constexpr double fecrLoopBurgers = 1.0;
 
 // Sink strength for Alloy case in nm^-2
 constexpr double alloysinkStrength = 1.0e-5;
 // Sink strength for FeCr case in nm^-2
 constexpr double fecrSinkStrength = 0.00025;
+
+// Phonon frequency for FeCr case
+constexpr double fecrPhononFrequency = 0.96e13;
 
 // FeCr detrap frequency
 constexpr double detrapFrequency = 0.1;

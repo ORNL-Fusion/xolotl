@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/impl/SinkReaction.tpp>
+#include <xolotl/core/network/impl/TransformReaction.tpp>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -16,7 +17,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	const double r1, const double dc0, const double dc1)
 {
 	constexpr double pi = ::xolotl::core::pi;
-	const double zs = 4.0 * pi * (r0 + r1 + 1.5 * ::xolotl::core::fecrBurgers);
+	const double zs = 4.0 * pi * (r0 + r1 + ::xolotl::core::fecrCoreRadius);
 
 	using Species = typename TRegion::EnumIndex;
 	auto lo0 = pairCl0Reg.getOrigin();
@@ -25,7 +26,11 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	if (lo0.isOnAxis(Species::I) and lo1.isOnAxis(Species::I))
 		return 1.1 * zs * (dc0 + dc1);
 
-	return zs * (dc0 + dc1);
+	// react_extension
+	if ((lo0.isOnAxis(Species::I) and lo1.isOnAxis(Species::V)) or
+		(lo0.isOnAxis(Species::V) and lo1.isOnAxis(Species::I)))
+		return 4.0 * pi * (r0 + r1 + ::xolotl::core::fecrCoreRadius + 0.25) *
+			(dc0 + dc1);
 
 	bool cl0IsSphere = (lo0.isOnAxis(Species::V) ||
 			 lo0.isOnAxis(Species::Complex) || lo0.isOnAxis(Species::I)),
@@ -107,18 +112,17 @@ FeCrDissociationReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return 0.0;
+	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 }
 
 KOKKOS_INLINE_FUNCTION
 double
 FeCrDissociationReaction::computeRate(IndexType gridIndex)
 {
-	return 0.0;
-
 	double T = this->_clusterData->temperature(gridIndex);
 	constexpr double pi = ::xolotl::core::pi;
 	using Species = typename Superclass::Species;
+	using Composition = typename Superclass::Composition;
 
 	double kPlus = this->asDerived()->getRateForProduction(gridIndex);
 	double E_b = this->asDerived()->computeBindingEnergy();
@@ -138,6 +142,21 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex)
 		 cl1IsTrap = lo1.isOnAxis(Species::Trap);
 
 	double kMinus = kPlus * std::exp(-E_b / (k_B * T));
+
+	// Recoil detrap
+	if ((lo0.isOnAxis(Species::Trap) && lo1.isOnAxis(Species::Free)) ||
+		(lo0.isOnAxis(Species::Free) && lo1.isOnAxis(Species::Trap))) {
+		auto cl = this->_clusterData->getCluster(_reactant);
+		Composition lo = cl.getRegion().getOrigin();
+		double kRecoil = exp(-(double)lo[Species::Trapped] / 10000.0);
+		if (lo[Species::Junction] > 0)
+			kRecoil = exp(-(double)lo[Species::Junction] / 400.0);
+
+		return (kMinus / this->_clusterData->atomicVolume()) + kRecoil;
+	}
+
+	// TODO: add 1d_emission_correction from SPICES
+	return (kMinus / this->_clusterData->atomicVolume());
 
 	// Standard case
 	if (cl0IsSphere and cl1IsSphere)
@@ -215,7 +234,7 @@ FeCrDissociationReaction::computeBindingEnergy()
 		}
 	}
 	else if (lo[Species::Complex] > 0) {
-		be = 0.1;
+		be = 0.01;
 	}
 	else if (lo.isOnAxis(Species::I)) {
 		double n = (double)(lo[Species::I] + hi[Species::I] - 1) / 2.0;
@@ -224,7 +243,7 @@ FeCrDissociationReaction::computeBindingEnergy()
 		}
 	}
 	else if (lo.isOnAxis(Species::Free)) {
-		double n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
+		double n = (double)(lo[Species::Free] + hi[Species::Free] - 1) / 2.0;
 		be = 4.33 - 5.76 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
 	}
 	else if (lo[Species::Trapped] > 0) {
@@ -260,7 +279,7 @@ FeCrSinkReaction::getSinkBias()
 	if (clReg.isSimplex()) {
 		Composition comp = clReg.getOrigin();
 		if (comp.isOnAxis(Species::I)) {
-			bias = 1.1;
+			bias = 1.05;
 		}
 	}
 
@@ -271,12 +290,57 @@ KOKKOS_INLINE_FUNCTION
 double
 FeCrSinkReaction::getSinkStrength()
 {
+	return ::xolotl::core::fecrSinkStrength;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeCrTransformReaction::getSize()
+{
+	using Species = typename Superclass::Species;
+	using Composition = typename Superclass::Composition;
+
 	auto cl = this->_clusterData->getCluster(this->_reactant);
-	auto radius = cl.getReactionRadius();
-	return 2.0 * ::xolotl::core::pi * ::xolotl::core::fecrSinkStrength /
-		(std::log(std::pow(::xolotl::core::pi *
-				::xolotl::core::fecrSinkStrength * radius * radius,
-			-0.5)));
+
+	auto clReg = cl.getRegion();
+	if (clReg.isSimplex()) {
+		Composition comp = clReg.getOrigin();
+		return comp[Species::Junction];
+	}
+
+	return 0.0;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeCrTransformReaction::getExponent()
+{
+	// Same for Loop and Trapped
+
+	return 2.0;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeCrTransformReaction::getBarrier()
+{
+	using Species = typename Superclass::Species;
+	using Composition = typename Superclass::Composition;
+
+	auto cl = this->_clusterData->getCluster(this->_product);
+
+	auto clReg = cl.getRegion();
+	if (clReg.isSimplex()) {
+		Composition comp1 = this->_clusterData->getCluster(this->_reactant)
+								.getRegion()
+								.getOrigin();
+		Composition comp = clReg.getOrigin();
+		if (comp[Species::Loop] > 0)
+			return 0.8; // Loop
+		return 0.75; // Trapped
+	}
+
+	return 0.0;
 }
 } // namespace network
 } // namespace core

@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/FeCrTraits.h>
 #include <xolotl/core/network/SinkReaction.h>
+#include <xolotl/core/network/TransformReaction.h>
 
 namespace xolotl
 {
@@ -85,6 +86,28 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getSinkStrength();
+};
+
+class FeCrTransformReaction :
+	public TransformReaction<FeCrReactionNetwork, FeCrTransformReaction>
+{
+public:
+	using Superclass =
+		TransformReaction<FeCrReactionNetwork, FeCrTransformReaction>;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getSize();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getExponent();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getBarrier();
 };
 } // namespace network
 } // namespace core

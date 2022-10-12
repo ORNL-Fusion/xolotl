@@ -80,6 +80,11 @@ public:
 	void
 	addSinks(IndexType i, TTag tag) const;
 
+	template <typename TTag>
+	KOKKOS_INLINE_FUNCTION
+	void
+	addTransforms(IndexType i, IndexType j, TTag tag) const;
+
 private:
 	ReactionCollection<Network>
 	getReactionCollection() const;

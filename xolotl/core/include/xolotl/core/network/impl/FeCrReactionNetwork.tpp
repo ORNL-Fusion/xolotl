@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/TransformReactionGenerator.tpp>
 #include <xolotl/core/network/impl/FeCrClusterGenerator.tpp>
 #include <xolotl/core/network/impl/FeCrReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
@@ -25,6 +26,8 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if (i == j) {
 		addSinks(i, tag);
 	}
+
+	addTransforms(i, j, tag);
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
@@ -569,12 +572,57 @@ FeCrReactionGenerator::addSinks(IndexType i, TTag tag) const
 	}
 }
 
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+FeCrReactionGenerator::addTransforms(IndexType i, IndexType j, TTag tag) const
+{
+	using Species = typename Network::Species;
+	using Composition = typename Network::Composition;
+
+	const auto& clReg = this->getCluster(i).getRegion();
+	Composition lo = clReg.getOrigin();
+
+	const auto& prReg = this->getCluster(j).getRegion();
+	Composition loPr = prReg.getOrigin();
+
+	// The first reactant need to be Junction
+	if (clReg.isSimplex() && lo[Species::Junction] == 0)
+		return;
+
+	// The second on should be Trapped or Loop
+	if (prReg.isSimplex() && loPr[Species::Trapped] == 0 &&
+		loPr[Species::Loop] == 0)
+		return;
+
+	// They need to be the same size
+	if (loPr[Species::Trapped] == lo[Species::Junction] ||
+		loPr[Species::Loop] == lo[Species::Junction]) {
+		this->addTransformReaction(tag, {i, j});
+
+		//		std::cout << lo[static_cast<int>(Species::V)] << "-" <<
+		//lo[static_cast<int>(Species::I)] << "-" <<
+		//lo[static_cast<int>(Species::Free)] << "-"
+		//				 << lo[static_cast<int>(Species::Trapped)] << "-" <<
+		//lo[static_cast<int>(Species::Junction)] << "-" <<
+		//lo[static_cast<int>(Species::Complex)] << "-"
+		//				 << lo[static_cast<int>(Species::Loop)] << " + "  <<
+		//loPr[static_cast<int>(Species::V)] << "-" <<
+		//loPr[static_cast<int>(Species::I)] << "-" <<
+		//loPr[static_cast<int>(Species::Free)] << "-"
+		//				 << loPr[static_cast<int>(Species::Trapped)] << "-" <<
+		//loPr[static_cast<int>(Species::Junction)] << "-" <<
+		//loPr[static_cast<int>(Species::Complex)] << "-"
+		//				 << loPr[static_cast<int>(Species::Loop)] << std::endl;
+	}
+}
+
 inline ReactionCollection<FeCrReactionGenerator::Network>
 FeCrReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<Network> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions());
+		this->getSinkReactions(), this->getTransformReactions());
 	return ret;
 }
 } // namespace detail

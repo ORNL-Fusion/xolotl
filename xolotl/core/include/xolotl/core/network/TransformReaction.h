@@ -10,14 +10,14 @@ namespace core
 namespace network
 {
 /**
- * @brief Class implementing sink reaction where
- * reactant -> 0 with a given rate
+ * @brief Class implementing transform reaction where
+ * reactant -> product with a given constant rate
  *
  * @tparam TNetwork The network type
  * @tparam TDerived The derived class type.
  */
 template <typename TNetwork, typename TDerived>
-class SinkReaction : public Reaction<TNetwork, TDerived>
+class TransformReaction : public Reaction<TNetwork, TDerived>
 {
 	friend class Reaction<TNetwork, TDerived>;
 
@@ -32,21 +32,25 @@ public:
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
 	using ClusterData = typename Superclass::ClusterData;
 
-	SinkReaction() = default;
+	TransformReaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
-	SinkReaction(ReactionDataRef reactionData, const ClusterData& clusterData,
-		IndexType reactionId, IndexType cluster0) :
+	TransformReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		IndexType cluster0, IndexType cluster1) :
 		Superclass(reactionData, clusterData, reactionId),
-		_reactant(cluster0)
+		_reactant(cluster0),
+		_product(cluster1)
 	{
 		this->initialize();
 	}
 
 	KOKKOS_INLINE_FUNCTION
-	SinkReaction(ReactionDataRef reactionData, const ClusterData& clusterData,
-		IndexType reactionId, const detail::ClusterSet& clusterSet) :
-		SinkReaction(reactionData, clusterData, reactionId, clusterSet.cluster0)
+	TransformReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		const detail::ClusterSet& clusterSet) :
+		TransformReaction(reactionData, clusterData, reactionId,
+			clusterSet.cluster0, clusterSet.cluster1)
 	{
 	}
 
@@ -72,16 +76,14 @@ private:
 	void
 	computeConnectivity(const Connectivity& connectivity)
 	{
-		// The reactant connects with the reactant
-		this->addConnectivity(_reactant, _reactant, connectivity);
+		// Nothing
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedConnectivity(const Connectivity& connectivity)
 	{
-		// The reactant connects with the reactant
-		this->addConnectivity(_reactant, _reactant, connectivity);
+		// Nothing
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -89,8 +91,8 @@ private:
 	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
 		IndexType gridIndex)
 	{
-		Kokkos::atomic_sub(&fluxes(_reactant),
-			concentrations(_reactant) * this->_rate(gridIndex));
+		Kokkos::atomic_sub(&fluxes(_reactant), this->_rate(gridIndex));
+		Kokkos::atomic_add(&fluxes(_product), this->_rate(gridIndex));
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -98,8 +100,7 @@ private:
 	computePartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex)
 	{
-		Kokkos::atomic_sub(
-			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+		return;
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -107,8 +108,7 @@ private:
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex)
 	{
-		Kokkos::atomic_sub(
-			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+		return;
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -123,17 +123,16 @@ private:
 	void
 	mapJacobianEntries(Connectivity connectivity)
 	{
-		_connEntries[0][0][0][0] = connectivity(_reactant, _reactant);
+		// Nothing
 	}
 
 protected:
 	IndexType _reactant;
+	IndexType _product;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
-
-	util::Array<IndexType, 1, 1, 1, 1> _connEntries;
 };
 } // namespace network
 } // namespace core
 } // namespace xolotl
 
-#include <xolotl/core/network/detail/SinkReactionGenerator.h>
+#include <xolotl/core/network/detail/TransformReactionGenerator.h>

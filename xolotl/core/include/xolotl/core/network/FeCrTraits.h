@@ -15,6 +15,7 @@ class FeCrReactionNetwork;
 class FeCrProductionReaction;
 class FeCrDissociationReaction;
 class FeCrSinkReaction;
+class FeCrTransformReaction;
 class FeCrClusterGenerator;
 
 enum class FeCrSpecies
@@ -65,8 +66,8 @@ struct SpeciesForGrouping<FeCrSpecies, 8>
 	static constexpr auto last = Sequence(FeCrSpecies::Loop);
 
 	KOKKOS_INLINE_FUNCTION
-	static constexpr std::underlying_type_t<FeCrSpecies> mapToMomentId(
-		EnumSequence<FeCrSpecies, 8>)
+	static constexpr std::underlying_type_t<FeCrSpecies>
+	mapToMomentId(EnumSequence<FeCrSpecies, 8>)
 	{
 		return 0;
 	}
@@ -82,9 +83,10 @@ struct ReactionNetworkTraits<FeCrReactionNetwork>
 	using ProductionReactionType = FeCrProductionReaction;
 	using DissociationReactionType = FeCrDissociationReaction;
 	using SinkReactionType = FeCrSinkReaction;
+	using TransformReactionType = FeCrTransformReaction;
 
 	using ReactionTypeList = std::tuple<ProductionReactionType,
-		DissociationReactionType, SinkReactionType>;
+		DissociationReactionType, SinkReactionType, TransformReactionType>;
 
 	using ClusterGenerator = FeCrClusterGenerator;
 };
