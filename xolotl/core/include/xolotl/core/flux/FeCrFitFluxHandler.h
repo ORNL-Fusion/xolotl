@@ -101,6 +101,15 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 
+		comp[NetworkType::Species::V] = 9;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe V9 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
 		// Interstitials
 		comp[NetworkType::Species::V] = 0;
 		comp[NetworkType::Species::I] = 1;

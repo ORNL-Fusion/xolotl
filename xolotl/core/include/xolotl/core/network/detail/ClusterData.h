@@ -142,6 +142,8 @@ private:
 		LATTICE_PARAM,
 		FISSION_RATE,
 		ZETA,
+		SINK_PORTION,
+		SINK_DENSITY,
 		NUM_FLOAT_VALS
 	};
 
@@ -217,6 +219,32 @@ public:
 	setZeta(double val)
 	{
 		setVal(_floatVals, ZETA, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	sinkPortion() const
+	{
+		return _floatVals[SINK_PORTION];
+	}
+
+	void
+	setSinkPortion(double val)
+	{
+		setVal(_floatVals, SINK_PORTION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	sinkDensity() const
+	{
+		return _floatVals[SINK_DENSITY];
+	}
+
+	void
+	setSinkDensity(double val)
+	{
+		setVal(_floatVals, SINK_DENSITY, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

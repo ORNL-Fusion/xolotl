@@ -238,7 +238,7 @@ FeCrClusterGenerator::getDiffusionFactor(
 	Composition comp(reg.getOrigin());
 	double diffusionFactor = 0.0;
 	// FeCr phonon frequency
-	constexpr double phononFrequency = 0.96e13;
+	constexpr double phononFrequency = ::xolotl::core::fecrPhononFrequency;
 	if (comp.isOnAxis(Species::Free)) {
 		const double jumpDistance = latticeParameter * sqrt(3.0) / 2.0;
 		constexpr double prefactorExponent = -0.7;

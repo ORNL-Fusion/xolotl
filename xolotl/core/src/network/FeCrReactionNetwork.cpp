@@ -36,6 +36,10 @@ template double
 ReactionNetwork<FeCrReactionNetwork>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
 
+template double
+ReactionNetwork<FeCrReactionNetwork>::getSmallConcentration(
+	ConcentrationsView concentrations, Species type, AmountType maxSize);
+
 double
 FeCrReactionNetwork::checkLatticeParameter(double latticeParameter)
 {

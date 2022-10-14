@@ -103,7 +103,7 @@ constexpr double fecrSinkStrength = 0.00025;
 constexpr double fecrPhononFrequency = 0.96e13;
 
 // FeCr detrap frequency
-constexpr double detrapFrequency = 0.1;
+constexpr double detrapFrequency = 0.0;
 
 // Sink strength for alphaZr case in nm^-2
 constexpr double alphaZrASinkStrength = 7.25e-8; // Single crystal

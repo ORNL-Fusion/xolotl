@@ -151,12 +151,12 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 		double kRecoil = exp(-(double)lo[Species::Trapped] / 10000.0);
 		if (lo[Species::Junction] > 0)
 			kRecoil = exp(-(double)lo[Species::Junction] / 400.0);
+		//			kRecoil = 0.0;
 
-		return (kMinus / this->_clusterData->atomicVolume()) + kRecoil;
+		return ((kMinus / this->_clusterData->atomicVolume()) +
+				   ::xolotl::core::detrapFrequency) *
+			kRecoil;
 	}
-
-	// TODO: add 1d_emission_correction from SPICES
-	return (kMinus / this->_clusterData->atomicVolume());
 
 	// Standard case
 	if (cl0IsSphere and cl1IsSphere)
@@ -164,8 +164,15 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
+	auto rCoal = ::xolotl::core::fecrCoalesceRadius;
 
-	double sigma = 0.0;
+	double a = r0 + r1 + rCoal;
+	double b = std::max(r0 + r1 - rCoal, 0.0);
+	double sigma = ::xolotl::core::pi * (a * a - b * b);
+
+	const double jumpDistance = this->_clusterData->latticeParameter() * sqrt(3.0) / 2.0;
+
+	return kMinus / (sigma * jumpDistance);
 
 	// Trap case
 	if (cl0IsTrap or cl1IsTrap) {
@@ -202,9 +209,7 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 		}
 	}
 
-	double burger = ::xolotl::core::fecrBurgers;
-
-	return kMinus / (sigma * burger * this->_clusterData->latticeParameter());
+	return kMinus / (sigma * jumpDistance);
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -261,7 +266,7 @@ FeCrDissociationReaction::computeBindingEnergy(double time)
 		be = 2.5;
 	}
 
-	return util::max(0.1, be);
+	return util::min(5.0, util::max(be, -5.0));
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -290,7 +295,35 @@ KOKKOS_INLINE_FUNCTION
 double
 FeCrSinkReaction::getSinkStrength()
 {
-	return ::xolotl::core::fecrSinkStrength;
+	auto density = this->_clusterData->sinkDensity(); // nm-2
+	auto portion = this->_clusterData->sinkPortion();
+	auto r = 1.0 / sqrt(::xolotl::core::pi * density);
+	auto rCore = ::xolotl::core::fecrCoreRadius;
+	auto temperature = this->_clusterData->temperature(0);
+	constexpr double K = 170.0e9; // GPa
+	constexpr double nu = 0.29;
+	constexpr double b = 0.25; // nm
+	double deltaV = 1.67 * this->_clusterData->atomicVolume();
+	constexpr double a0 = 0.91, a1 = -2.16, a2 = -0.92; // Random dipole
+	//	constexpr double a0 = 0.87, a1 = -5.12, a2 = -0.77; // Full network
+
+	double L = (K * b * deltaV * (1.0 - 2.0 * nu)) /
+		(2.0 * ::xolotl::core::pi * ::xolotl::core::kBoltzmann * temperature *
+			(1.0 - nu));
+
+	double delta = std::sqrt(rCore * rCore + (L * L) / 4.0);
+
+	double Z =
+		(2.0 * ::xolotl::core::pi * (a0 + a1 * (rCore / r)) *
+			(1.0 +
+				portion *
+					((std::log(r / rCore) *
+						 (a0 * r + a1 * delta + a2 * (delta - rCore))) /
+							(std::log(r / delta) * (a0 * r + a1 * rCore)) -
+						1.0))) /
+		(std::log(r / rCore));
+
+	return density * Z;
 }
 
 KOKKOS_INLINE_FUNCTION

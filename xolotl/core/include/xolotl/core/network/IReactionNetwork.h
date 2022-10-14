@@ -180,6 +180,12 @@ public:
 	virtual void
 	setZeta(double z) = 0;
 
+	virtual void
+	setSinkPortion(double p) = 0;
+
+	virtual void
+	setSinkDensity(double d) = 0;
+
 	bool
 	getEnableStdReaction() const noexcept
 	{
@@ -434,6 +440,10 @@ public:
 	virtual double
 	getTotalAtomConcentration(ConcentrationsView concentrations,
 		SpeciesId species, AmountType minSize = 0) = 0;
+
+	virtual double
+	getSmallConcentration(ConcentrationsView concentrations, SpeciesId species,
+		AmountType maxSize = 0) = 0;
 
 	/**
 	 * @brief Computes the diffusion flux exiting from this grid point.

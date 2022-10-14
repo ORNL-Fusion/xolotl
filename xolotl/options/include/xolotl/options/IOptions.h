@@ -466,6 +466,20 @@ public:
 	 */
 	virtual std::string
 	getFluxDepthProfileFilePath() const = 0;
+
+	/**
+	 * Obtain the value of the screw sink portion.
+	 * @return The portion.
+	 */
+	virtual double
+	getSinkPortion() const = 0;
+
+	/**
+	 * Obtain the value of the sink density.
+	 * @return The density.
+	 */
+	virtual double
+	getSinkDensity() const = 0;
 };
 // end class IOptions
 } /* namespace options */

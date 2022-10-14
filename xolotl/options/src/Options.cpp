@@ -68,7 +68,9 @@ Options::Options() :
 	xenonDiffusivity(-1.0),
 	fissionYield(0.25),
 	heVRatio(4.0),
-	migrationThreshold(std::numeric_limits<double>::infinity())
+	migrationThreshold(std::numeric_limits<double>::infinity()),
+	sinkPortion(0.0),
+	sinkDensity(0.0)
 {
 	return;
 }
@@ -233,7 +235,10 @@ Options::readParams(int argc, const char* argv[])
 		"ignored.")("fluxDepthProfileFilePath",
 		bpo::value<fs::path>(&fluxDepthProfileFilePath),
 		"The path to the custom flux profile file; the default is an empty "
-		"string that will use the default material associated flux handler.");
+		"string that will use the default material associated flux handler.")(
+		"sinkPortion", bpo::value<double>(&sinkPortion),
+		"The portion of screw sink.")("sinkDensity",
+		bpo::value<double>(&sinkDensity), "The sink density in nm-2.");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);

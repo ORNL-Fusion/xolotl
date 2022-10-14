@@ -207,6 +207,12 @@ public:
 	setZeta(double zeta) override;
 
 	void
+	setSinkPortion(double p) override;
+
+	void
+	setSinkDensity(double d) override;
+
+	void
 	setEnableStdReaction(bool reaction) override;
 
 	void
@@ -534,6 +540,27 @@ public:
 	}
 
 	/**
+	 * Get the total concentration of a given type of clusters
+	 * up to the specified size.
+	 *
+	 * @param concentration The vector of concentrations
+	 * @param type The type of atom we want the concentration of
+	 * @param maxSize The maximum number of atom to start counting
+	 * @return The total accumulated concentration
+	 */
+	double
+	getSmallConcentration(ConcentrationsView concentrations, Species type,
+		AmountType maxSize = 0);
+
+	double
+	getSmallConcentration(ConcentrationsView concentrations, SpeciesId species,
+		AmountType maxSize = 0) override
+	{
+		auto type = species.cast<Species>();
+		return getSmallConcentration(concentrations, type, maxSize);
+	}
+
+	/**
 	 * Get the total concentration of a given type of clusters only if it is
 	 * trapped in a vacancy.
 	 *
@@ -679,6 +706,10 @@ struct ReactionNetworkWorker
 	double
 	getTotalVolumeFraction(ConcentrationsView concentrations, Species type,
 		AmountType minSize = 0);
+
+	double
+	getSmallConcentration(ConcentrationsView concentrations, Species type,
+		AmountType maxSize = 0);
 };
 
 template <typename TImpl>

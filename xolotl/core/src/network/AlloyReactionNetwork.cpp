@@ -36,6 +36,10 @@ template double
 ReactionNetwork<AlloyReactionNetwork>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
 
+template double
+ReactionNetwork<AlloyReactionNetwork>::getSmallConcentration(
+	ConcentrationsView concentrations, Species type, AmountType maxSize);
+
 double
 AlloyReactionNetwork::checkLatticeParameter(double latticeParameter)
 {

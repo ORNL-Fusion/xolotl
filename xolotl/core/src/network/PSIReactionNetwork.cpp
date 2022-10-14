@@ -42,6 +42,10 @@ template double
 ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
 
+template double
+ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::getSmallConcentration(
+	ConcentrationsView concentrations, Species type, AmountType maxSize);
+
 // PSIHeliumSpeciesList
 template class PSIReactionNetwork<PSIHeliumSpeciesList>;
 
@@ -78,6 +82,11 @@ template double
 ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
 	getTotalVolumeFraction(
 		ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
+	getSmallConcentration(
+		ConcentrationsView concentrations, Species type, AmountType maxSize);
 
 // PSIDeuteriumSpeciesList
 template class PSIReactionNetwork<PSIDeuteriumSpeciesList>;
@@ -116,6 +125,11 @@ ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::
 	getTotalVolumeFraction(
 		ConcentrationsView concentrations, Species type, AmountType minSize);
 
+template double
+ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::
+	getSmallConcentration(
+		ConcentrationsView concentrations, Species type, AmountType maxSize);
+
 // PSITritiumSpeciesList
 template class PSIReactionNetwork<PSITritiumSpeciesList>;
 
@@ -152,6 +166,11 @@ template double
 ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::
 	getTotalVolumeFraction(
 		ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::
+	getSmallConcentration(
+		ConcentrationsView concentrations, Species type, AmountType maxSize);
 } // namespace network
 } // namespace core
 } // namespace xolotl

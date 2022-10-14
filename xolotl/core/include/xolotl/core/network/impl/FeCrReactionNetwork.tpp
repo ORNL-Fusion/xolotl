@@ -19,6 +19,15 @@ KOKKOS_INLINE_FUNCTION
 void
 FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
+	// Transform happens between sessile clusters
+	addTransforms(i, j, tag);
+
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+
 	using Species = typename Network::Species;
 	using Composition = typename Network::Composition;
 	using AmountType = typename Network::AmountType;
@@ -26,8 +35,6 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if (i == j) {
 		addSinks(i, tag);
 	}
-
-	addTransforms(i, j, tag);
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
@@ -268,6 +275,8 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				// No dissociation
 			}
 		}
+		// This never actually happens because only small V interact and
+		// Junctions are too big
 		else if (prodSize == 0) {
 			// Trap is the product
 			Composition comp = Composition::zero();
@@ -580,40 +589,30 @@ FeCrReactionGenerator::addTransforms(IndexType i, IndexType j, TTag tag) const
 	using Species = typename Network::Species;
 	using Composition = typename Network::Composition;
 
-	const auto& clReg = this->getCluster(i).getRegion();
-	Composition lo = clReg.getOrigin();
+	const auto& cl1Reg = this->getCluster(i).getRegion();
+	Composition lo1 = cl1Reg.getOrigin();
 
-	const auto& prReg = this->getCluster(j).getRegion();
-	Composition loPr = prReg.getOrigin();
+	const auto& cl2Reg = this->getCluster(j).getRegion();
+	Composition lo2 = cl2Reg.getOrigin();
 
 	// The first reactant need to be Junction
-	if (clReg.isSimplex() && lo[Species::Junction] == 0)
+	if (lo1[Species::Junction] == 0 and lo2[Species::Junction] == 0)
 		return;
 
+	// Which is Junction ?
+	auto junction = lo1[Species::Junction] > 0 ? i : j;
+	auto junctionReg = lo1[Species::Junction] > 0 ? lo1 : lo2;
+	auto other = lo1[Species::Junction] > 0 ? j : i;
+	auto otherReg = lo1[Species::Junction] > 0 ? lo2 : lo1;
+
 	// The second on should be Trapped or Loop
-	if (prReg.isSimplex() && loPr[Species::Trapped] == 0 &&
-		loPr[Species::Loop] == 0)
+	if (otherReg[Species::Trapped] == 0 && otherReg[Species::Loop] == 0)
 		return;
 
 	// They need to be the same size
-	if (loPr[Species::Trapped] == lo[Species::Junction] ||
-		loPr[Species::Loop] == lo[Species::Junction]) {
-		this->addTransformReaction(tag, {i, j});
-
-		//		std::cout << lo[static_cast<int>(Species::V)] << "-" <<
-		// lo[static_cast<int>(Species::I)] << "-" <<
-		// lo[static_cast<int>(Species::Free)] << "-"
-		//				 << lo[static_cast<int>(Species::Trapped)] << "-" <<
-		// lo[static_cast<int>(Species::Junction)] << "-" <<
-		// lo[static_cast<int>(Species::Complex)] << "-"
-		//				 << lo[static_cast<int>(Species::Loop)] << " + "  <<
-		// loPr[static_cast<int>(Species::V)] << "-" <<
-		// loPr[static_cast<int>(Species::I)] << "-" <<
-		// loPr[static_cast<int>(Species::Free)] << "-"
-		//				 << loPr[static_cast<int>(Species::Trapped)] << "-" <<
-		// loPr[static_cast<int>(Species::Junction)] << "-" <<
-		// loPr[static_cast<int>(Species::Complex)] << "-"
-		//				 << loPr[static_cast<int>(Species::Loop)] << std::endl;
+	if (otherReg[Species::Trapped] == junctionReg[Species::Junction] ||
+		otherReg[Species::Loop] == junctionReg[Species::Junction]) {
+		this->addTransformReaction(tag, {junction, other});
 	}
 }
 

@@ -36,6 +36,10 @@ template double
 ReactionNetwork<NEReactionNetwork>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
 
+template double
+ReactionNetwork<NEReactionNetwork>::getSmallConcentration(
+	ConcentrationsView concentrations, Species type, AmountType maxSize);
+
 double
 NEReactionNetwork::checkLatticeParameter(double latticeParameter)
 {

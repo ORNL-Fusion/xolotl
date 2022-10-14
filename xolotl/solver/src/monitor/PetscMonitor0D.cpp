@@ -231,9 +231,10 @@ PetscMonitor0D::setup()
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 			auto speciesName = network.getSpeciesName(id);
 			outputFile << speciesName << "_density " << speciesName
-					   << "_partial_density ";
+					   << "_partial_density " << speciesName << "_diameter "
+					   << speciesName << "_partial_diameter ";
 		}
-		outputFile << std::endl;
+		outputFile << "black_dot_density" << std::endl;
 		outputFile.close();
 
 		// computeFeCrAl0D will be called at each timestep
@@ -764,7 +765,7 @@ PetscMonitor0D::computeFeCrAl(
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	const auto dof = network.getDOF();
 	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 2, 0.0);
+	auto myData = std::vector<double>(numSpecies * 4 + 1, 0.0);
 
 	// Get the minimum size for the loop densities and diameters
 	auto minSizes = _solverHandler->getMinSizes();
@@ -783,9 +784,17 @@ PetscMonitor0D::computeFeCrAl(
 
 	// Loop on the species
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		myData[2 * id()] = network.getTotalConcentration(dConcs, id, 1);
-		myData[(2 * id()) + 1] =
+		myData[4 * id()] = network.getTotalConcentration(dConcs, id, 1);
+		myData[(4 * id()) + 1] =
 			network.getTotalConcentration(dConcs, id, minSizes[id()]);
+		myData[(4 * id()) + 2] = 2.0 *
+			network.getTotalRadiusConcentration(dConcs, id, 1) /
+			myData[4 * id()];
+		myData[(4 * id()) + 3] = 2.0 *
+			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
+			myData[4 * id() + 1];
+		myData[myData.size() - 1] +=
+			network.getSmallConcentration(dConcs, id, minSizes[id()]);
 	}
 
 	// Set the output precision
@@ -799,9 +808,10 @@ PetscMonitor0D::computeFeCrAl(
 	// Output the data
 	outputFile << timestep << " " << time << " ";
 	for (auto i = 0; i < numSpecies; ++i) {
-		outputFile << myData[i * 2] << " " << myData[(i * 2) + 1] << " ";
+		outputFile << myData[i * 4] << " " << myData[(i * 4) + 1] << " "
+				   << myData[(i * 4) + 2] << " " << myData[(i * 4) + 3] << " ";
 	}
-	outputFile << std::endl;
+	outputFile << myData[myData.size() - 1] << std::endl;
 
 	// Close the output file
 	outputFile.close();

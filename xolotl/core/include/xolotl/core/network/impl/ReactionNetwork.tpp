@@ -43,6 +43,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setLatticeParameter(opts.getLatticeParameter());
 	this->setFissionRate(opts.getFluxAmplitude());
 	this->setZeta(opts.getZeta());
+	this->setSinkPortion(opts.getSinkPortion());
+	this->setSinkDensity(opts.getSinkDensity());
 	auto map = opts.getProcesses();
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);
@@ -177,6 +179,22 @@ ReactionNetwork<TImpl>::setZeta(double z)
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::setSinkPortion(double p)
+{
+	_clusterData.h_view().setSinkPortion(p);
+	invalidateDataMirror();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setSinkDensity(double d)
+{
+	_clusterData.h_view().setSinkDensity(d);
+	invalidateDataMirror();
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::setEnableStdReaction(bool reaction)
 {
 	Superclass::setEnableStdReaction(reaction);
@@ -275,9 +293,11 @@ void
 ReactionNetwork<TImpl>::setTime(double time)
 {
 	_currentTime = time;
-	asDerived()->updateReactionRates(time);
 
-	invalidateDataMirror();
+	// TODO: make it update for AlphaZr only
+	//	asDerived()->updateReactionRates(time);
+	//
+	//	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -704,6 +724,14 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(
 }
 
 template <typename TImpl>
+double
+ReactionNetwork<TImpl>::getSmallConcentration(
+	ConcentrationsView concentrations, Species type, AmountType maxSize)
+{
+	return _worker.getSmallConcentration(concentrations, type, maxSize);
+}
+
+template <typename TImpl>
 void
 ReactionNetwork<TImpl>::updateOutgoingDiffFluxes(double* gridPointSolution,
 	double factor, std::vector<IndexType> diffusingIds,
@@ -1059,6 +1087,33 @@ ReactionNetworkWorker<TImpl>::getTotalVolumeFraction(
 	constexpr double sphereFactor = 4.0 * ::xolotl::core::pi / 3.0;
 
 	return conc * sphereFactor;
+}
+
+template <typename TImpl>
+double
+ReactionNetworkWorker<TImpl>::getSmallConcentration(
+	ConcentrationsView concentrations, Species type, AmountType maxSize)
+{
+	auto tiles = _nw._subpaving.getTiles();
+	double conc = 0.0;
+	Kokkos::parallel_reduce(
+		"ReactionNetworkWorker::getSmallConcentration", _nw._numClusters,
+		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			using util::max;
+			using util::min;
+			const auto& clReg = tiles(i).getRegion();
+			const auto& ival = clReg[type];
+			const auto factor = clReg.volume() / ival.length();
+			for (auto j = max((AmountType)1, ival.begin());
+				 j < min(maxSize, ival.end()); ++j) {
+				lsum += concentrations(i) * factor;
+			}
+		},
+		conc);
+
+	Kokkos::fence();
+
+	return conc;
 }
 
 template <typename TImpl>

@@ -121,7 +121,7 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Initialize the option specified concentration
-	if (hasConcentrations) {
+	if (not hasConcentrations) {
 		for (auto pair : initialConc) {
 			concOffset[pair.first] = pair.second;
 		}
@@ -330,12 +330,10 @@ PetscSolver0DHandler::updateConcentration(
 	fluxTimer->stop();
 	deep_copy(hFlux, dFlux);
 
-	/*
-	for (auto i = 0; i < dof; i++) {
-		std::cout << updatedConcOffset[i] << " ";
-	}
-	std::cout << "\n";
-	*/
+	//	for (auto i = 0; i < dof; i++) {
+	//		std::cout << updatedConcOffset[i] << " ";
+	//	}
+	//	std::cout << std::endl;
 
 	/*
 	 Restore vectors

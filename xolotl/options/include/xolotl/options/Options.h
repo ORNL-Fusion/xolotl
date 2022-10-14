@@ -258,7 +258,7 @@ protected:
 	double fissionYield;
 
 	/**
-	 * HeV ration, how many He per V are allowed
+	 * HeV ratio, how many He per V are allowed
 	 */
 	double heVRatio;
 
@@ -271,6 +271,16 @@ protected:
 	 * The path to the custom flux profile file
 	 */
 	fs::path fluxDepthProfileFilePath;
+
+	/**
+	 * Portion of screw sink
+	 */
+	double sinkPortion;
+
+	/**
+	 * Total sink density
+	 */
+	double sinkDensity;
 
 public:
 	/**
@@ -781,6 +791,24 @@ public:
 	getFluxDepthProfileFilePath() const override
 	{
 		return fluxDepthProfileFilePath.string();
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getSinkPortion() const override
+	{
+		return sinkPortion;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getSinkDensity() const override
+	{
+		return sinkDensity;
 	}
 };
 // end class Options
