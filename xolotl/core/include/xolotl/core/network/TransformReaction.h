@@ -80,14 +80,19 @@ private:
 	void
 	computeConnectivity(const Connectivity& connectivity)
 	{
-		// Nothing
+		// Everything connects with the reactant
+		this->addConnectivity(_reactant, _reactant, connectivity);
+		this->addConnectivity(_product, _reactant, connectivity);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedConnectivity(const Connectivity& connectivity)
 	{
-		// Nothing
+		// Everything connects with the reactant
+		this->addConnectivity(_reactant, _reactant, connectivity);
+		if (_product == _reactant)
+			this->addConnectivity(_product, _reactant, connectivity);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -95,8 +100,10 @@ private:
 	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
 		IndexType gridIndex)
 	{
-		Kokkos::atomic_sub(&fluxes(_reactant), this->_rate(gridIndex));
-		Kokkos::atomic_add(&fluxes(_product), this->_rate(gridIndex));
+		Kokkos::atomic_sub(&fluxes(_reactant),
+			this->_rate(gridIndex) * concentrations(_reactant));
+		Kokkos::atomic_add(&fluxes(_product),
+			this->_rate(gridIndex) * concentrations(_reactant));
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -104,7 +111,10 @@ private:
 	computePartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex)
 	{
-		return;
+		Kokkos::atomic_sub(
+			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+		Kokkos::atomic_add(
+			&values(_connEntries[1][0][0][0]), this->_rate(gridIndex));
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -112,7 +122,11 @@ private:
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex)
 	{
-		return;
+		Kokkos::atomic_sub(
+			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+		if (_product == _reactant)
+			Kokkos::atomic_add(
+				&values(_connEntries[1][0][0][0]), this->_rate(gridIndex));
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -143,13 +157,16 @@ private:
 	void
 	mapJacobianEntries(Connectivity connectivity)
 	{
-		// Nothing
+		_connEntries[0][0][0][0] = connectivity(_reactant, _reactant);
+		_connEntries[1][0][0][0] = connectivity(_product, _reactant);
 	}
 
 protected:
 	IndexType _reactant;
 	IndexType _product;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
+
+	util::Array<IndexType, 2, 1, 1, 1> _connEntries;
 };
 } // namespace network
 } // namespace core

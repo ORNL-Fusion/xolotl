@@ -170,7 +170,8 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 	double b = std::max(r0 + r1 - rCoal, 0.0);
 	double sigma = ::xolotl::core::pi * (a * a - b * b);
 
-	const double jumpDistance = this->_clusterData->latticeParameter() * sqrt(3.0) / 2.0;
+	const double jumpDistance =
+		this->_clusterData->latticeParameter() * sqrt(3.0) / 2.0;
 
 	return kMinus / (sigma * jumpDistance);
 
@@ -304,8 +305,8 @@ FeCrSinkReaction::getSinkStrength()
 	constexpr double nu = 0.29;
 	constexpr double b = 0.25; // nm
 	double deltaV = 1.67 * this->_clusterData->atomicVolume();
-	constexpr double a0 = 0.91, a1 = -2.16, a2 = -0.92; // Random dipole
-	//	constexpr double a0 = 0.87, a1 = -5.12, a2 = -0.77; // Full network
+	//	constexpr double a0 = 0.91, a1 = -2.16, a2 = -0.92; // Random dipole
+	constexpr double a0 = 0.87, a1 = -5.12, a2 = -0.77; // Full network
 
 	double L = (K * b * deltaV * (1.0 - 2.0 * nu)) /
 		(2.0 * ::xolotl::core::pi * ::xolotl::core::kBoltzmann * temperature *

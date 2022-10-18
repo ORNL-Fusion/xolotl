@@ -92,6 +92,10 @@ FeCrClusterGenerator::select(const Region& region) const
 		}
 	}
 
+	if (nAxis > 2) {
+		return false;
+	}
+
 	// V, I, Free are on one axis
 	if (region[Species::I].begin() > 0 || region[Species::V].begin() > 0 ||
 		region[Species::Free].begin() > 0) {

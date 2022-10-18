@@ -28,10 +28,6 @@ auto fecrNetworkGenerator = [](const options::IOptions& options) {
 	}
 	maxSize = pow(groupingWidth, i) - 1;
 	i = 0;
-	while (maxI + 1 > pow(groupingWidth, i)) {
-		++i;
-	}
-	maxI = pow(groupingWidth, i) - 1;
 
 	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
 		1, maxSize, maxI, maxSize, maxSize, maxSize, maxI, maxSize};
