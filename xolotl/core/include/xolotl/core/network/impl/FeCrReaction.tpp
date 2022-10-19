@@ -14,7 +14,7 @@ template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
 double
 getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
-	const double r1, const double dc0, const double dc1)
+	const double r1, const double dc0, const double dc1, const double rho)
 {
 	constexpr double pi = ::xolotl::core::pi;
 	const double zs = 4.0 * pi * (r0 + r1 + ::xolotl::core::fecrCoreRadius);
@@ -56,17 +56,20 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 
 	double rS = cl0IsSphere ? r0 : r1;
 	double rL = cl0IsSphere ? r1 : r0;
-	double rC = ::xolotl::core::fecrCoreRadius;
+	double rP = ::xolotl::core::fecrCoreRadius + rS;
 	if (!cl0IsSphere && !cl1IsSphere) {
-		rS = 0.0;
 		rL = r0 + r1;
-		rC = ::xolotl::core::fecrCoalesceRadius;
+		rP = ::xolotl::core::fecrCoalesceRadius;
 	}
-	double ratio = rL / (3.0 * (rS + rC));
+	double ratio = rL / (3.0 * rP);
 	double p = 1.0 / (1.0 + ratio * ratio);
-	double zl = 4.0 * pi * pi * rL / log(1.0 + 8.0 * rL / (rS + rC));
+	double zl = 4.0 * pi * pi * rL / log(1.0 + 8.0 * rL / rP);
+
+	// Minimum loop size
+	rL = cl0IsSphere ? r1 : r0;
 	double zd = -8.0 * pi * pi * rL /
-		log(pi * ::xolotl::core::fecrSinkStrength * (rS + rC) * (rS + rC));
+		log(pi * rho * (rS + ::xolotl::core::fecrCoreRadius) *
+			(rS + ::xolotl::core::fecrCoreRadius));
 
 	double k_plus = (dc0 + dc1) * (p * zs + (1.0 - p) * std::max(zd, zl));
 	double bias = 1.0;
@@ -96,7 +99,9 @@ FeCrProductionReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	auto rho = this->_clusterData->sinkDensity(); // nm-2
+
+	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rho);
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -112,7 +117,9 @@ FeCrDissociationReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	auto rho = this->_clusterData->sinkDensity(); // nm-2
+
+	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rho);
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -298,19 +305,19 @@ FeCrSinkReaction::getSinkStrength()
 {
 	auto density = this->_clusterData->sinkDensity(); // nm-2
 	auto portion = this->_clusterData->sinkPortion();
-	auto r = 1.0 / sqrt(::xolotl::core::pi * density);
+	auto r = 1.0 / sqrt(::xolotl::core::pi * density); // nm
 	auto rCore = ::xolotl::core::fecrCoreRadius;
 	auto temperature = this->_clusterData->temperature(0);
 	constexpr double K = 170.0e9; // GPa
 	constexpr double nu = 0.29;
 	constexpr double b = 0.25; // nm
-	double deltaV = 1.67 * this->_clusterData->atomicVolume();
+	double deltaV = 1.67 * this->_clusterData->atomicVolume() * 1.0e-27; // m3
 	//	constexpr double a0 = 0.91, a1 = -2.16, a2 = -0.92; // Random dipole
 	constexpr double a0 = 0.87, a1 = -5.12, a2 = -0.77; // Full network
+	constexpr double k_B = 1.380649e-23; // J K-1.
 
 	double L = (K * b * deltaV * (1.0 - 2.0 * nu)) /
-		(2.0 * ::xolotl::core::pi * ::xolotl::core::kBoltzmann * temperature *
-			(1.0 - nu));
+		(2.0 * ::xolotl::core::pi * k_B * temperature * (1.0 - nu));
 
 	double delta = std::sqrt(rCore * rCore + (L * L) / 4.0);
 
