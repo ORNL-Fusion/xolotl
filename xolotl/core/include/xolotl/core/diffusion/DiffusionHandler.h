@@ -1,8 +1,6 @@
 #pragma once
 
 // Includes
-#include <Kokkos_View.hpp>
-
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/util/MathUtils.h>
 

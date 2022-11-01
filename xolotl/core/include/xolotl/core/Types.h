@@ -1,5 +1,4 @@
-#include <Kokkos_Array.hpp>
-#include <Kokkos_View.hpp>
+#include <Kokkos_Core.hpp>
 #include <Kokkos_OffsetView.hpp>
 
 #include <xolotl/config.h>

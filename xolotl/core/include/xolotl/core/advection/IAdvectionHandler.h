@@ -4,7 +4,7 @@
 #include <array>
 #include <memory>
 
-#include <Kokkos_View.hpp>
+#include <Kokkos_Core.hpp>
 
 #include <plsm/SpaceVector.h>
 

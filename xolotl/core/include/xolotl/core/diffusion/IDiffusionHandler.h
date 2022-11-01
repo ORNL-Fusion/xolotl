@@ -3,6 +3,8 @@
 // Includes
 #include <memory>
 
+#include <Kokkos_Core.hpp>
+
 #include <xolotl/config.h>
 #include <xolotl/core/Types.h>
 #include <xolotl/core/advection/IAdvectionHandler.h>

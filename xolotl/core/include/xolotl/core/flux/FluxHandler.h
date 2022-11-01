@@ -3,8 +3,6 @@
 #include <memory>
 #include <vector>
 
-#include <Kokkos_View.hpp>
-
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/flux/IFluxHandler.h>
 #include <xolotl/options/IOptions.h>

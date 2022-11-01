@@ -3,7 +3,7 @@
 #include <memory>
 #include <vector>
 
-#include <Kokkos_View.hpp>
+#include <Kokkos_Core.hpp>
 
 #include <plsm/SpaceVector.h>
 

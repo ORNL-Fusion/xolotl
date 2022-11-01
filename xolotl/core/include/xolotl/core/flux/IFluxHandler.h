@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-#include <Kokkos_View.hpp>
+#include <Kokkos_Core.hpp>
 
 #include <xolotl/core/network/IReactionNetwork.h>
 
