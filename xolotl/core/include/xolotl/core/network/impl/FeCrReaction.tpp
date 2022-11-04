@@ -71,7 +71,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		log(pi * rho * (rS + ::xolotl::core::fecrCoreRadius) *
 			(rS + ::xolotl::core::fecrCoreRadius));
 
-	double k_plus = (dc0 + dc1) * (p * zs + (1.0 - p) * std::max(zd, zl));
+	double k_plus = (dc0 + dc1) * (p * zs + (1.0 - p) * util::max(zd, zl));
 	double bias = 1.0;
 	if (lo0.isOnAxis(Species::I) || lo1.isOnAxis(Species::I)) {
 		if (lo0.isOnAxis(Species::Free) || lo1.isOnAxis(Species::Free))
@@ -158,7 +158,7 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 		double kRecoil = exp(-(double)lo[Species::Trapped] / 10000.0);
 		if (lo[Species::Junction] > 0)
 			kRecoil = exp(-(double)lo[Species::Junction] / 400.0);
-		//			kRecoil = 0.0;
+		//		kRecoil = 0.0;
 
 		return ((kMinus / this->_clusterData->atomicVolume()) +
 				   ::xolotl::core::detrapFrequency) *
@@ -174,7 +174,7 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 	auto rCoal = ::xolotl::core::fecrCoalesceRadius;
 
 	double a = r0 + r1 + rCoal;
-	double b = std::max(r0 + r1 - rCoal, 0.0);
+	double b = util::max(r0 + r1 - rCoal, 0.0);
 	double sigma = ::xolotl::core::pi * (a * a - b * b);
 
 	const double jumpDistance =
@@ -198,8 +198,8 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 		for (auto q : _align4by4) {
 			double aOut = rA + rO;
 			double bOut = rA + rO * q;
-			double aIn = std::max(rA - rO, 0.0);
-			double bIn = std::max(rA - rO * q, 0.0);
+			double aIn = util::max(rA - rO, 0.0);
+			double bIn = util::max(rA - rO * q, 0.0);
 
 			sigma += _q4by4 * pi * (aOut * bOut - aIn * bIn);
 		}
@@ -210,8 +210,8 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 		for (auto q : _align4by4) {
 			double aOut = r0 + r1 + rO;
 			double bOut = r0 + r1 * q + rO;
-			double aIn = std::max(r0 + r1 - rO, 0.0);
-			double bIn = std::max(r0 + r1 * q - rO, 0.0);
+			double aIn = util::max(r0 + r1 - rO, 0.0);
+			double bIn = util::max(r0 + r1 * q - rO, 0.0);
 
 			sigma += _q4by4 * pi * (aOut * bOut - aIn * bIn);
 		}
@@ -319,7 +319,7 @@ FeCrSinkReaction::getSinkStrength()
 	double L = (K * b * deltaV * (1.0 - 2.0 * nu)) /
 		(2.0 * ::xolotl::core::pi * k_B * temperature * (1.0 - nu));
 
-	double delta = std::sqrt(rCore * rCore + (L * L) / 4.0);
+	double delta = sqrt(rCore * rCore + (L * L) / 4.0);
 
 	double Z =
 		(2.0 * ::xolotl::core::pi * (a0 + a1 * (rCore / r)) *
