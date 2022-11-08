@@ -31,52 +31,67 @@ FeCrClusterGenerator::refine(const Region& region, BoolArray& result) const
 		return false;
 	}
 
-	//	if (nAxis == 2) {
-	//		if (region[Species::Trap].end() - 1 < 1) {
-	//			for (auto& r : result) {
-	//				r = false;
-	//			}
-	//			return false;
-	//		}
-	//	}
-	//
-	//	if (nAxis == 0)
-	//		return true;
-	//
-	//	// I and Complex are always refined
-	//	if (region[Species::I].begin() > 0)
-	//		return true;
-	//	if (region[Species::Complex].begin() > 0)
-	//		return true;
-	//
-	//	// Smaller that the minimum size for grouping
-	//	if (region[Species::V].begin() < _groupingMin ||
-	//		region[Species::Free].begin() < _groupingMin ||
-	//		region[Species::Loop].begin() < _groupingMin ||
-	//		region[Species::Trapped].begin() < _groupingMin ||
-	//		region[Species::Junction].begin() < _groupingMin) {
-	//		return true;
-	//	}
+	if (nAxis == 0)
+		return true;
 
-	// Too large
-	if (region[Species::V].begin() > _maxSize &&
-		region[Species::Free].begin() > _maxSize &&
-		region[Species::Trapped].begin() > _maxSize &&
-		region[Species::Junction].begin() > _maxSize &&
-		region[Species::Loop].begin() > _maxSize) {
-		for (auto& r : result) {
-			r = false;
+	if (nAxis == 2) {
+		if (region[Species::Trap].end() - 1 < 1) {
+			for (auto& r : result) {
+				r = false;
+			}
+			return false;
 		}
-		return false;
 	}
 
-	//	if (region[Species::V].end() > _maxSize ||
-	//		region[Species::Free].end() > _maxSize ||
-	//		region[Species::Trapped].end() > _maxSize ||
-	//		region[Species::Junction].end() > _maxSize ||
-	//		region[Species::Loop].end() > _maxSize) {
-	//		return true;
-	//	}
+	// I and Complex are always refined
+	if (region[Species::I].begin() > 0)
+		return true;
+	if (region[Species::Complex].begin() > 0)
+		return true;
+
+	// Smaller that the minimum size for grouping
+	if (region[Species::V].begin() < _groupingMin &&
+		region[Species::Free].begin() < _groupingMin &&
+		region[Species::Loop].begin() < _groupingMin &&
+		region[Species::Trapped].begin() < _groupingMin &&
+		region[Species::Junction].begin() < _groupingMin) {
+		return true;
+	}
+
+	// Too large
+	if (region[Species::V].end() > _maxSize ||
+		region[Species::Free].end() > _maxSize ||
+		region[Species::Trapped].end() > _maxSize ||
+		region[Species::Junction].end() > _maxSize ||
+		region[Species::Loop].end() > _maxSize) {
+		return true;
+	}
+
+	if (region[Species::V].begin() > 0 &&
+		region[Species::V].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::V].begin(), 3) * 1.0e-7))
+		result[1] = false;
+	if (region[Species::Free].begin() > 0 &&
+		region[Species::Free].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::Free].begin(), 3) * 1.0e-7))
+		result[3] = false;
+	if (region[Species::Trapped].begin() > 0 &&
+		region[Species::Trapped].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::Trapped].begin(), 3) * 1.0e-7))
+		result[4] = false;
+	if (region[Species::Junction].begin() > 0 &&
+		region[Species::Junction].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::Junction].begin(), 3) * 1.0e-7))
+		result[5] = false;
+	if (region[Species::Loop].begin() > 0 &&
+		region[Species::Loop].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::Loop].begin(), 3) * 1.0e-7))
+		result[7] = false;
 
 	return true;
 }
@@ -119,11 +134,6 @@ FeCrClusterGenerator::select(const Region& region) const
 			return false;
 	}
 	else {
-		// Trapped, Junction, Complex, Loop are also on Trap
-		if (nAxis > 2) {
-			return false;
-		}
-
 		// Each region should have Trap = 1
 		if (region[Species::Trapped].begin() > 0 ||
 			region[Species::Junction].begin() > 0 ||
@@ -165,13 +175,13 @@ FeCrClusterGenerator::select(const Region& region) const
 			return false;
 	}
 
-	//	if (region[Species::V].begin() > _maxSize ||
-	//		region[Species::Free].begin() > _maxSize ||
-	//		region[Species::Trapped].begin() > _maxSize ||
-	//		region[Species::Complex].begin() > _maxSize ||
-	//		region[Species::Junction].begin() > _maxSize ||
-	//		region[Species::Loop].begin() > _maxSize)
-	//		return false;
+	if (region[Species::V].begin() > _maxSize ||
+		region[Species::Free].begin() > _maxSize ||
+		region[Species::Trapped].begin() > _maxSize ||
+		region[Species::Complex].begin() > _maxSize ||
+		region[Species::Junction].begin() > _maxSize ||
+		region[Species::Loop].begin() > _maxSize)
+		return false;
 
 	return true;
 }
@@ -244,10 +254,13 @@ FeCrClusterGenerator::getDiffusionFactor(
 	// FeCr phonon frequency
 	constexpr double phononFrequency = ::xolotl::core::fecrPhononFrequency;
 	if (comp.isOnAxis(Species::Free)) {
+		Composition hiComp(reg.getUpperLimitPoint());
+		double nF =
+			(double)(comp[Species::Free] + hiComp[Species::Free] - 1) / 2.0;
 		const double jumpDistance = latticeParameter * sqrt(3.0) / 2.0;
 		constexpr double prefactorExponent = -0.7;
 		return phononFrequency * jumpDistance * jumpDistance *
-			pow((double)comp[Species::Free], prefactorExponent) / (2.0);
+			pow(nF, prefactorExponent) / (2.0);
 	}
 	if (comp.isOnAxis(Species::V)) {
 		if (comp[Species::V] < 5) {

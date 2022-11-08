@@ -1,5 +1,7 @@
 #pragma once
 
+#include <Kokkos_Vector.hpp>
+
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/TransformReactionGenerator.tpp>
 #include <xolotl/core/network/impl/FeCrClusterGenerator.tpp>
@@ -49,16 +51,26 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 	// void + void → void
 	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V)) {
-		// Compute the composition of the new cluster
-		auto size = lo1[Species::V] + lo2[Species::V];
-		// Find the corresponding cluster
-		Composition comp = Composition::zero();
-		comp[Species::V] = size;
-		auto vProdId = subpaving.findTileId(comp);
-		if (vProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, vProdId});
-			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-				this->addDissociationReaction(tag, {vProdId, i, j});
+		// Find the grouped one
+		auto groupedReg = lo1[Species::V] > lo2[Species::V] ? cl1Reg : cl2Reg;
+		double singleSize = lo1[Species::V] > lo2[Species::V] ?
+			lo2[Species::V] :
+			lo1[Species::V];
+
+		for (auto k : makeIntervalRange(groupedReg[Species::V])) {
+			// Compute the composition of the new cluster
+			auto size = singleSize + k;
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::V] = size;
+			auto vProdId = subpaving.findTileId(comp);
+			if (vProdId != subpaving.invalidIndex() &&
+				vProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, vProdId});
+				previousIndex = vProdId;
+				if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+					this->addDissociationReaction(tag, {vProdId, i, j});
+				}
 			}
 		}
 		return;
@@ -68,36 +80,40 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if ((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
 		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I))) {
 		// Find out which one is which
-		auto vSize =
-			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
+		auto vReg = lo1.isOnAxis(Species::V) ? cl1Reg : cl2Reg;
 		auto iSize =
 			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
-		// Compute the product size
-		int prodSize = vSize - iSize;
-		// 3 cases
-		if (prodSize > 0) {
-			// Looking for V cluster
-			Composition comp = Composition::zero();
-			comp[Species::V] = prodSize;
-			auto vProdId = subpaving.findTileId(comp);
-			if (vProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, vProdId});
-				// No dissociation
+
+		for (auto k : makeIntervalRange(vReg[Species::V])) {
+			// Compute the product size
+			int prodSize = k - iSize;
+			// 3 cases
+			if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					previousIndex = vProdId;
+					// No dissociation
+				}
 			}
-		}
-		else if (prodSize < 0) {
-			// Looking for I cluster
-			Composition comp = Composition::zero();
-			comp[Species::I] = -prodSize;
-			auto iProdId = subpaving.findTileId(comp);
-			if (iProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, iProdId});
-				// No dissociation
+			else if (prodSize < 0) {
+				// Looking for I cluster
+				Composition comp = Composition::zero();
+				comp[Species::I] = -prodSize;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex()) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					// No dissociation
+				}
 			}
-		}
-		else {
-			// No product
-			this->addProductionReaction(tag, {i, j});
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
+			}
 		}
 		return;
 	}
@@ -157,43 +173,99 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if ((lo1.isOnAxis(Species::Free) && lo2.isOnAxis(Species::V)) ||
 		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Free))) {
 		// Find out which one is which
-		auto vSize =
-			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
-		auto fSize =
-			lo1.isOnAxis(Species::V) ? lo2[Species::Free] : lo1[Species::Free];
-		// Compute the product size
-		int prodSize = fSize - vSize;
-		if (prodSize > 0) {
-			//  Find the corresponding cluster
-			Composition comp = Composition::zero();
-			comp[Species::Free] = prodSize;
-			auto fProdId = subpaving.findTileId(comp);
-			if (fProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, fProdId});
-				// No dissociation
+		auto vReg = lo1.isOnAxis(Species::V) ? cl1Reg : cl2Reg;
+		auto fReg = lo1.isOnAxis(Species::V) ? cl2Reg : cl1Reg;
+
+		// Create a vector to know which products were already added
+		auto previousIds = Kokkos::vector<IndexType, plsm::DeviceMemSpace>(
+			vReg[Species::V].length() * fReg[Species::Free].length(),
+			subpaving.invalidIndex());
+		IndexType currentId = 0;
+
+		// Loop on the regions
+		for (auto k : makeIntervalRange(vReg[Species::V]))
+			for (auto l : makeIntervalRange(fReg[Species::Free])) {
+				// Compute the product size
+				int prodSize = l - k;
+				if (prodSize > 0) {
+					//  Find the corresponding cluster
+					Composition comp = Composition::zero();
+					comp[Species::Free] = prodSize;
+					auto fProdId = subpaving.findTileId(comp);
+					if (fProdId != subpaving.invalidIndex()) {
+						// Check it was not already added
+						auto alreadyIn = false;
+						for (auto id = 0; id < currentId; id++) {
+							if (fProdId == previousIds[id]) {
+								alreadyIn = true;
+								break;
+							}
+						}
+						if (not alreadyIn) {
+							this->addProductionReaction(tag, {i, j, fProdId});
+							previousIds[currentId] = fProdId;
+							currentId++;
+						}
+						// No dissociation
+					}
+					comp[Species::Free] = 0;
+					comp[Species::I] = prodSize;
+					auto iProdId = subpaving.findTileId(comp);
+					if (iProdId != subpaving.invalidIndex()) {
+						// Check it was not already added
+						auto alreadyIn = false;
+						for (auto id = 0; id < currentId; id++) {
+							if (iProdId == previousIds[id]) {
+								alreadyIn = true;
+								break;
+							}
+						}
+						if (not alreadyIn) {
+							this->addProductionReaction(tag, {i, j, iProdId});
+							previousIds[currentId] = iProdId;
+							currentId++;
+						}
+						// No dissociation
+					}
+				}
+				else if (prodSize < 0) {
+					// Looking for V cluster
+					Composition comp = Composition::zero();
+					comp[Species::V] = -prodSize;
+					auto vProdId = subpaving.findTileId(comp);
+					if (vProdId != subpaving.invalidIndex()) {
+						// Check it was not already added
+						auto alreadyIn = false;
+						for (auto id = 0; id < currentId; id++) {
+							if (vProdId == previousIds[id]) {
+								alreadyIn = true;
+								break;
+							}
+						}
+						if (not alreadyIn) {
+							this->addProductionReaction(tag, {i, j, vProdId});
+							previousIds[currentId] = vProdId;
+							currentId++;
+						}
+						// No dissociation
+					}
+				}
+				else {
+					// Check it was not already added
+					auto alreadyIn = false;
+					for (auto id = 0; id < currentId; id++) {
+						if (subpaving.invalidIndex() == previousIds[id]) {
+							alreadyIn = true;
+							break;
+						}
+					}
+					if (not alreadyIn) {
+						this->addProductionReaction(tag, {i, j});
+						previousIds[currentId] = subpaving.invalidIndex();
+						currentId++;
+					}
+				}
 			}
-			comp[Species::Free] = 0;
-			comp[Species::I] = prodSize;
-			auto iProdId = subpaving.findTileId(comp);
-			if (iProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, iProdId});
-				// No dissociation
-			}
-		}
-		else if (prodSize < 0) {
-			// Looking for V cluster
-			Composition comp = Composition::zero();
-			comp[Species::V] = -prodSize;
-			auto vProdId = subpaving.findTileId(comp);
-			if (vProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, vProdId});
-				// No dissociation
-			}
-		}
-		else {
-			// No product
-			this->addProductionReaction(tag, {i, j});
-		}
 		return;
 	}
 
@@ -203,36 +275,44 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		// Find out which one is which
 		auto vSize =
 			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
-		auto lSize =
-			lo1.isOnAxis(Species::V) ? lo2[Species::Loop] : lo1[Species::Loop];
-		// Compute the product size
-		int prodSize = lSize - vSize;
-		if (prodSize > 0) {
-			//  Find the corresponding cluster
-			Composition comp = Composition::zero();
-			comp[Species::Loop] = prodSize;
-			comp[Species::Trap] = 1;
-			auto lProdId = subpaving.findTileId(comp);
-			if (lProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, lProdId});
-				// No dissociation
+		auto lReg = lo1.isOnAxis(Species::V) ? cl2Reg : cl1Reg;
+
+		for (auto k : makeIntervalRange(lReg[Species::Loop])) {
+			// Compute the product size
+			int prodSize = k - vSize;
+			if (prodSize > 0) {
+				//  Find the corresponding cluster
+				Composition comp = Composition::zero();
+				comp[Species::Loop] = prodSize;
+				comp[Species::Trap] = 1;
+				auto lProdId = subpaving.findTileId(comp);
+				if (lProdId != subpaving.invalidIndex() &&
+					lProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, lProdId});
+					previousIndex = lProdId;
+					// No dissociation
+				}
+				comp[Species::Loop] = 0;
+				comp[Species::Complex] = prodSize;
+				auto cProdId = subpaving.findTileId(comp);
+				if (cProdId != subpaving.invalidIndex() &&
+					cProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, cProdId});
+					previousIndex = cProdId;
+					// No dissociation
+				}
 			}
-			comp[Species::Loop] = 0;
-			comp[Species::Complex] = prodSize;
-			auto cProdId = subpaving.findTileId(comp);
-			if (cProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, cProdId});
-				// No dissociation
-			}
-		}
-		else if (prodSize == 0) {
-			// Trap is the product
-			Composition comp = Composition::zero();
-			comp[Species::Trap] = 1;
-			auto tProdId = subpaving.findTileId(comp);
-			if (tProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, tProdId});
-				// No dissociation
+			else if (prodSize == 0) {
+				// Trap is the product
+				Composition comp = Composition::zero();
+				comp[Species::Trap] = 1;
+				auto tProdId = subpaving.findTileId(comp);
+				if (tProdId != subpaving.invalidIndex() &&
+					tProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, tProdId});
+					previousIndex = tProdId;
+					// No dissociation
+				}
 			}
 		}
 		return;
@@ -244,47 +324,57 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		// Find out which one is which
 		auto vSize =
 			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
-		auto jSize = lo1.isOnAxis(Species::V) ? lo2[Species::Junction] :
-												lo1[Species::Junction];
-		// Compute the product size
-		int prodSize = jSize - vSize;
-		if (prodSize > 0) {
-			//  Find the corresponding cluster
-			Composition comp = Composition::zero();
-			comp[Species::Junction] = prodSize;
-			comp[Species::Trap] = 1;
-			auto jProdId = subpaving.findTileId(comp);
-			if (jProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, jProdId});
-				// No dissociation
-				return;
+		auto jReg = lo1.isOnAxis(Species::V) ? cl2Reg : cl1Reg;
+
+		for (auto k : makeIntervalRange(jReg[Species::Junction])) {
+			// Compute the product size
+			int prodSize = k - vSize;
+			if (prodSize > 0) {
+				//  Find the corresponding cluster
+				Composition comp = Composition::zero();
+				comp[Species::Junction] = prodSize;
+				comp[Species::Trap] = 1;
+				auto jProdId = subpaving.findTileId(comp);
+				if (jProdId != subpaving.invalidIndex() &&
+					jProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, jProdId});
+					previousIndex = jProdId;
+					// No dissociation
+					return;
+				}
+				comp[Species::Junction] = 0;
+				comp[Species::Trapped] = prodSize;
+				auto tProdId = subpaving.findTileId(comp);
+				if (tProdId != subpaving.invalidIndex() &&
+					tProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, tProdId});
+					previousIndex = tProdId;
+					// No dissociation
+					return;
+				}
+				comp[Species::Trapped] = 0;
+				comp[Species::Complex] = prodSize;
+				auto cProdId = subpaving.findTileId(comp);
+				if (cProdId != subpaving.invalidIndex() &&
+					cProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, cProdId});
+					previousIndex = cProdId;
+					// No dissociation
+				}
 			}
-			comp[Species::Junction] = 0;
-			comp[Species::Trapped] = prodSize;
-			auto tProdId = subpaving.findTileId(comp);
-			if (tProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, tProdId});
-				// No dissociation
-				return;
-			}
-			comp[Species::Trapped] = 0;
-			comp[Species::Complex] = prodSize;
-			auto cProdId = subpaving.findTileId(comp);
-			if (cProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, cProdId});
-				// No dissociation
-			}
-		}
-		// This never actually happens because only small V interact and
-		// Junctions are too big
-		else if (prodSize == 0) {
-			// Trap is the product
-			Composition comp = Composition::zero();
-			comp[Species::Trap] = 1;
-			auto tProdId = subpaving.findTileId(comp);
-			if (tProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, tProdId});
-				// No dissociation
+			// This never actually happens because only small V interact and
+			// Junctions are too big
+			else if (prodSize == 0) {
+				// Trap is the product
+				Composition comp = Composition::zero();
+				comp[Species::Trap] = 1;
+				auto tProdId = subpaving.findTileId(comp);
+				if (tProdId != subpaving.invalidIndex() &&
+					tProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, tProdId});
+					previousIndex = tProdId;
+					// No dissociation
+				}
 			}
 		}
 		return;
@@ -319,19 +409,26 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	// int + trapped → trapped
 	if ((lo1[Species::Trapped] > 0 && lo2.isOnAxis(Species::I)) ||
 		(lo1.isOnAxis(Species::I) && lo2[Species::Trapped] > 0)) {
-		// Compute the composition of the new cluster
-		auto size = lo1[Species::I] + lo2[Species::I] + lo1[Species::Trapped] +
-			lo2[Species::Trapped]; // The other axis should be 0 so it should
-								   // work to add up everything
-		// Find the corresponding cluster
-		Composition comp = Composition::zero();
-		comp[Species::Trapped] = size;
-		comp[Species::Trap] = 1;
-		auto iProdId = subpaving.findTileId(comp);
-		if (iProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, iProdId});
-			if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
-				this->addDissociationReaction(tag, {iProdId, i, j});
+		// Find out which one is which
+		auto iSize =
+			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
+		auto tReg = lo1.isOnAxis(Species::I) ? cl2Reg : cl1Reg;
+
+		for (auto k : makeIntervalRange(tReg[Species::Trapped])) {
+			// Compute the composition of the new cluster
+			auto size = iSize + k;
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::Trapped] = size;
+			comp[Species::Trap] = 1;
+			auto tProdId = subpaving.findTileId(comp);
+			if (tProdId != subpaving.invalidIndex() &&
+				tProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, tProdId});
+				previousIndex = tProdId;
+				if (iSize == 1) {
+					this->addDissociationReaction(tag, {tProdId, i, j});
+				}
 			}
 		}
 		return;
@@ -340,18 +437,25 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	// int + free → free
 	if ((lo1.isOnAxis(Species::Free) && lo2.isOnAxis(Species::I)) ||
 		(lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::Free))) {
-		// Compute the composition of the new cluster
-		auto size = lo1[Species::I] + lo2[Species::I] + lo1[Species::Free] +
-			lo2[Species::Free]; // The other axis should be 0 so it should
-								// work to add up everything
-		// Find the corresponding cluster
-		Composition comp = Composition::zero();
-		comp[Species::Free] = size;
-		auto pProdId = subpaving.findTileId(comp);
-		if (pProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, pProdId});
-			if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
-				this->addDissociationReaction(tag, {pProdId, i, j});
+		// Find out which one is which
+		auto iSize =
+			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
+		auto fReg = lo1.isOnAxis(Species::I) ? cl2Reg : cl1Reg;
+
+		for (auto k : makeIntervalRange(fReg[Species::Free])) {
+			// Compute the composition of the new cluster
+			auto size = iSize + k;
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::Free] = size;
+			auto fProdId = subpaving.findTileId(comp);
+			if (fProdId != subpaving.invalidIndex() &&
+				fProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, fProdId});
+				previousIndex = fProdId;
+				if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
+					this->addDissociationReaction(tag, {fProdId, i, j});
+				}
 			}
 		}
 		return;
@@ -360,18 +464,25 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	// int + loop → loop
 	if ((lo1[Species::Loop] > 0 && lo2.isOnAxis(Species::I)) ||
 		(lo1.isOnAxis(Species::I) && lo2[Species::Loop] > 0)) {
-		// Compute the composition of the new cluster
-		auto size = lo1[Species::I] + lo2[Species::I] + lo1[Species::Loop] +
-			lo2[Species::Loop]; // The other axis should be 0 so it should
-								// work to add up everything
-		// Find the corresponding cluster
-		Composition comp = Composition::zero();
-		comp[Species::Loop] = size;
-		comp[Species::Trap] = 1;
-		auto iProdId = subpaving.findTileId(comp);
-		if (iProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, iProdId});
-			// No dissociation
+		// Find out which one is which
+		auto iSize =
+			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
+		auto lReg = lo1.isOnAxis(Species::I) ? cl2Reg : cl1Reg;
+
+		for (auto k : makeIntervalRange(lReg[Species::Loop])) {
+			// Compute the composition of the new cluster
+			auto size = iSize + k;
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::Loop] = size;
+			comp[Species::Trap] = 1;
+			auto lProdId = subpaving.findTileId(comp);
+			if (lProdId != subpaving.invalidIndex() &&
+				lProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, lProdId});
+				previousIndex = lProdId;
+				// No dissociation
+			}
 		}
 		return;
 	}
@@ -379,18 +490,25 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	// int + junction → junction
 	if ((lo1[Species::Junction] > 0 && lo2.isOnAxis(Species::I)) ||
 		(lo1.isOnAxis(Species::I) && lo2[Species::Junction] > 0)) {
-		// Compute the composition of the new cluster
-		auto size = lo1[Species::I] + lo2[Species::I] + lo1[Species::Junction] +
-			lo2[Species::Junction]; // The other axis should be 0 so it should
-									// work to add up everything
-		// Find the corresponding cluster
-		Composition comp = Composition::zero();
-		comp[Species::Junction] = size;
-		comp[Species::Trap] = 1;
-		auto iProdId = subpaving.findTileId(comp);
-		if (iProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, iProdId});
-			// No dissociation
+		// Find out which one is which
+		auto iSize =
+			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
+		auto jReg = lo1.isOnAxis(Species::I) ? cl2Reg : cl1Reg;
+
+		for (auto k : makeIntervalRange(jReg[Species::Junction])) {
+			// Compute the composition of the new cluster
+			auto size = iSize + k;
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::Junction] = size;
+			comp[Species::Trap] = 1;
+			auto jProdId = subpaving.findTileId(comp);
+			if (jProdId != subpaving.invalidIndex() &&
+				jProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, jProdId});
+				previousIndex = jProdId;
+				// No dissociation
+			}
 		}
 		return;
 	}
@@ -398,64 +516,102 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	// free + trapped → junction | trapped
 	if ((lo1[Species::Trapped] > 0 && lo2.isOnAxis(Species::Free)) ||
 		(lo1.isOnAxis(Species::Free) && lo2[Species::Trapped] > 0)) {
-		// Compute the composition of the new cluster
-		auto size = lo1[Species::Free] + lo2[Species::Free] +
-			lo1[Species::Trapped] +
-			lo2[Species::Trapped]; // The other axis should be 0 so it should
-								   // work to add up everything
+		// Find out which one is which
+		auto fReg = lo1.isOnAxis(Species::Free) ? cl1Reg : cl2Reg;
+		auto tReg = lo1.isOnAxis(Species::Free) ? cl2Reg : cl1Reg;
 
-		// Band condition
-		double nF = lo1[Species::Free] + lo2[Species::Free];
-		double nT = lo1[Species::Trapped] + lo2[Species::Trapped];
-		double ratio = std::fabs(nF - nT) / (nF + nT);
-		if (ratio < 0.5) {
-			// Product is junction
-			Composition comp = Composition::zero();
-			comp[Species::Junction] = size;
-			comp[Species::Trap] = 1;
-			auto iProdId = subpaving.findTileId(comp);
-			if (iProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, iProdId});
-				// No dissociation
+		// Create a vector to know which products were already added
+		auto previousIds = Kokkos::vector<IndexType, plsm::DeviceMemSpace>(
+			tReg[Species::Trapped].length() * fReg[Species::Free].length(),
+			subpaving.invalidIndex());
+		IndexType currentId = 0;
+
+		// Loop on the regions
+		for (auto k : makeIntervalRange(tReg[Species::Trapped]))
+			for (auto l : makeIntervalRange(fReg[Species::Free])) {
+				// Compute the composition of the new cluster
+				auto size = k + l;
+
+				// Band condition
+				double ratio = std::fabs(l - k) / (l + k);
+				if (ratio < 0.5) {
+					// Product is junction
+					Composition comp = Composition::zero();
+					comp[Species::Junction] = size;
+					comp[Species::Trap] = 1;
+					auto jProdId = subpaving.findTileId(comp);
+					if (jProdId != subpaving.invalidIndex()) {
+						// Check it was not already added
+						auto alreadyIn = false;
+						for (auto id = 0; id < currentId; id++) {
+							if (jProdId == previousIds[id]) {
+								alreadyIn = true;
+								break;
+							}
+						}
+						if (not alreadyIn) {
+							this->addProductionReaction(tag, {i, j, jProdId});
+							previousIds[currentId] = jProdId;
+							currentId++;
+						}
+						// No dissociation
+					}
+				}
+				else {
+					// Product is trapped
+					Composition comp = Composition::zero();
+					comp[Species::Trapped] = size;
+					comp[Species::Trap] = 1;
+					auto tProdId = subpaving.findTileId(comp);
+					if (tProdId != subpaving.invalidIndex()) {
+						// Check it was not already added
+						auto alreadyIn = false;
+						for (auto id = 0; id < currentId; id++) {
+							if (tProdId == previousIds[id]) {
+								alreadyIn = true;
+								break;
+							}
+						}
+						if (not alreadyIn) {
+							this->addProductionReaction(tag, {i, j, tProdId});
+							previousIds[currentId] = tProdId;
+							currentId++;
+						}
+						// No dissociation
+					}
+				}
 			}
-		}
-		else {
-			// Product is trapped
-			Composition comp = Composition::zero();
-			comp[Species::Trapped] = size;
-			comp[Species::Trap] = 1;
-			auto iProdId = subpaving.findTileId(comp);
-			if (iProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, iProdId});
-				// No dissociation
-			}
-		}
 		return;
 	}
 
 	// free + trap → trapped
 	if ((lo1.isOnAxis(Species::Free) && lo2.isOnAxis(Species::Trap)) ||
 		(lo1.isOnAxis(Species::Trap) && lo2.isOnAxis(Species::Free))) {
-		// Compute the composition of the new cluster
-		auto size = lo1[Species::Free] +
-			lo2[Species::Free]; // The other axis should be 0 so it should
-								// work to add up everything
-		// Find the corresponding cluster
-		Composition comp = Composition::zero();
-		comp[Species::Trapped] = size;
-		comp[Species::Trap] = 1;
-		auto tProdId = subpaving.findTileId(comp);
-		if (tProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, tProdId});
-			this->addDissociationReaction(tag, {tProdId, i, j});
-		}
+		// Find out which one is which
+		auto fReg = lo1.isOnAxis(Species::Free) ? cl1Reg : cl2Reg;
 
-		// Special dissociation
-		comp[Species::Trapped] = 0;
-		comp[Species::Junction] = size;
-		auto jProdId = subpaving.findTileId(comp);
-		if (jProdId != subpaving.invalidIndex()) {
-			this->addDissociationReaction(tag, {jProdId, i, j});
+		for (auto k : makeIntervalRange(fReg[Species::Free])) {
+			// Compute the composition of the new cluster
+			auto size = k;
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::Trapped] = size;
+			comp[Species::Trap] = 1;
+			auto tProdId = subpaving.findTileId(comp);
+			if (tProdId != subpaving.invalidIndex() &&
+				tProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, tProdId});
+				previousIndex = tProdId;
+				this->addDissociationReaction(tag, {tProdId, i, j});
+
+				// Special dissociation
+				comp[Species::Trapped] = 0;
+				comp[Species::Junction] = size;
+				auto jProdId = subpaving.findTileId(comp);
+				if (jProdId != subpaving.invalidIndex()) {
+					this->addDissociationReaction(tag, {jProdId, i, j});
+				}
+			}
 		}
 		return;
 	}
@@ -463,73 +619,143 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	// free + loop → junction | trapped | loop
 	if ((lo1[Species::Loop] > 0 && lo2.isOnAxis(Species::Free)) ||
 		(lo1.isOnAxis(Species::Free) && lo2[Species::Loop] > 0)) {
-		// Compute the composition of the new cluster
-		auto size = lo1[Species::Free] + lo2[Species::Free] +
-			lo1[Species::Loop] +
-			lo2[Species::Loop]; // The other axis should be 0 so it should
-								// work to add up everything
+		// Find out which one is which
+		auto fReg = lo1.isOnAxis(Species::Free) ? cl1Reg : cl2Reg;
+		auto lReg = lo1.isOnAxis(Species::Free) ? cl2Reg : cl1Reg;
 
-		// Band condition
-		double nF = lo1[Species::Free] + lo2[Species::Free];
-		double nL = lo1[Species::Loop] + lo2[Species::Loop];
-		double ratio = std::fabs(nF - nL) / (nF + nL);
-		if (ratio < 0.5) {
-			// Product is junction
-			Composition comp = Composition::zero();
-			comp[Species::Junction] = size;
-			comp[Species::Trap] = 1;
-			auto iProdId = subpaving.findTileId(comp);
-			if (iProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, iProdId});
-				// No dissociation
-			}
-		}
-		else {
-			// Restrictions
-			if (nF < nL) {
-				// Product is loop
-				Composition comp = Composition::zero();
-				comp[Species::Loop] = size;
-				comp[Species::Trap] = 1;
-				auto iProdId = subpaving.findTileId(comp);
-				if (iProdId != subpaving.invalidIndex()) {
-					this->addProductionReaction(tag, {i, j, iProdId});
-					// No dissociation
+		// Create a vector to know which products were already added
+		auto previousIds = Kokkos::vector<IndexType, plsm::DeviceMemSpace>(
+			lReg[Species::Loop].length() * fReg[Species::Free].length(),
+			subpaving.invalidIndex());
+		IndexType currentId = 0;
+
+		// Loop on the regions
+		for (auto k : makeIntervalRange(lReg[Species::Loop]))
+			for (auto l : makeIntervalRange(fReg[Species::Free])) {
+				// Compute the composition of the new cluster
+				auto size = k + l;
+
+				// Band condition
+				double ratio = std::fabs(l - k) / (l + k);
+				if (ratio < 0.5) {
+					// Product is junction
+					Composition comp = Composition::zero();
+					comp[Species::Junction] = size;
+					comp[Species::Trap] = 1;
+					auto jProdId = subpaving.findTileId(comp);
+					if (jProdId != subpaving.invalidIndex()) {
+						// Check it was not already added
+						auto alreadyIn = false;
+						for (auto id = 0; id < currentId; id++) {
+							if (jProdId == previousIds[id]) {
+								alreadyIn = true;
+								break;
+							}
+						}
+						if (not alreadyIn) {
+							this->addProductionReaction(tag, {i, j, jProdId});
+							previousIds[currentId] = jProdId;
+							currentId++;
+						}
+						// No dissociation
+					}
+				}
+				else {
+					// Restrictions
+					if (l < k) {
+						// Product is loop
+						Composition comp = Composition::zero();
+						comp[Species::Loop] = size;
+						comp[Species::Trap] = 1;
+						auto lProdId = subpaving.findTileId(comp);
+						if (lProdId != subpaving.invalidIndex()) {
+							// Check it was not already added
+							auto alreadyIn = false;
+							for (auto id = 0; id < currentId; id++) {
+								if (lProdId == previousIds[id]) {
+									alreadyIn = true;
+									break;
+								}
+							}
+							if (not alreadyIn) {
+								this->addProductionReaction(
+									tag, {i, j, lProdId});
+								previousIds[currentId] = lProdId;
+								currentId++;
+							}
+							// No dissociation
+						}
+					}
+					else {
+						// Product is trapped
+						Composition comp = Composition::zero();
+						comp[Species::Trapped] = size;
+						comp[Species::Trap] = 1;
+						auto tProdId = subpaving.findTileId(comp);
+						if (tProdId != subpaving.invalidIndex()) {
+							// Check it was not already added
+							auto alreadyIn = false;
+							for (auto id = 0; id < currentId; id++) {
+								if (tProdId == previousIds[id]) {
+									alreadyIn = true;
+									break;
+								}
+							}
+							if (not alreadyIn) {
+								this->addProductionReaction(
+									tag, {i, j, tProdId});
+								previousIds[currentId] = tProdId;
+								currentId++;
+							}
+							// No dissociation
+						}
+					}
 				}
 			}
-			else {
-				// Product is trapped
-				Composition comp = Composition::zero();
-				comp[Species::Trapped] = size;
-				comp[Species::Trap] = 1;
-				auto iProdId = subpaving.findTileId(comp);
-				if (iProdId != subpaving.invalidIndex()) {
-					this->addProductionReaction(tag, {i, j, iProdId});
-					// No dissociation
-				}
-			}
-		}
 		return;
 	}
 
 	// free + junction → junction
 	if ((lo1[Species::Junction] > 0 && lo2.isOnAxis(Species::Free)) ||
 		(lo1.isOnAxis(Species::Free) && lo2[Species::Junction] > 0)) {
-		// Compute the composition of the new cluster
-		auto size = lo1[Species::Free] + lo2[Species::Free] +
-			lo1[Species::Junction] +
-			lo2[Species::Junction]; // The other axis should be 0 so it should
-									// work to add up everything
+		// Find out which one is which
+		auto fReg = lo1.isOnAxis(Species::Free) ? cl1Reg : cl2Reg;
+		auto jReg = lo1.isOnAxis(Species::Free) ? cl2Reg : cl1Reg;
 
-		// Find the corresponding cluster
-		Composition comp = Composition::zero();
-		comp[Species::Junction] = size;
-		comp[Species::Trap] = 1;
-		auto jProdId = subpaving.findTileId(comp);
-		if (jProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, jProdId});
-			// No dissociation
-		}
+		// Create a vector to know which products were already added
+		auto previousIds = Kokkos::vector<IndexType, plsm::DeviceMemSpace>(
+			jReg[Species::Junction].length() * fReg[Species::Free].length(),
+			subpaving.invalidIndex());
+		IndexType currentId = 0;
+
+		// Loop on the regions
+		for (auto k : makeIntervalRange(jReg[Species::Junction]))
+			for (auto l : makeIntervalRange(fReg[Species::Free])) {
+				// Compute the composition of the new cluster
+				auto size = k + l;
+
+				// Find the corresponding cluster
+				Composition comp = Composition::zero();
+				comp[Species::Junction] = size;
+				comp[Species::Trap] = 1;
+				auto jProdId = subpaving.findTileId(comp);
+				if (jProdId != subpaving.invalidIndex()) {
+					// Check it was not already added
+					auto alreadyIn = false;
+					for (auto id = 0; id < currentId; id++) {
+						if (jProdId == previousIds[id]) {
+							alreadyIn = true;
+							break;
+						}
+					}
+					if (not alreadyIn) {
+						this->addProductionReaction(tag, {i, j, jProdId});
+						previousIds[currentId] = jProdId;
+						currentId++;
+					}
+					// No dissociation
+				}
+			}
 		return;
 	}
 
@@ -576,7 +802,7 @@ FeCrReactionGenerator::addSinks(IndexType i, TTag tag) const
 	}
 
 	// Free
-	if (clReg.isSimplex() && lo.isOnAxis(Species::Free)) {
+	if (lo.isOnAxis(Species::Free)) {
 		this->addSinkReaction(tag, {i, Network::invalidIndex()});
 	}
 }
@@ -610,6 +836,7 @@ FeCrReactionGenerator::addTransforms(IndexType i, IndexType j, TTag tag) const
 		return;
 
 	// They need to be the same size
+	// TODO: this only works is the grouping is the same in every direction
 	if (otherReg[Species::Trapped] == junctionReg[Species::Junction] ||
 		otherReg[Species::Loop] == junctionReg[Species::Junction]) {
 		this->addTransformReaction(tag, {junction, other});

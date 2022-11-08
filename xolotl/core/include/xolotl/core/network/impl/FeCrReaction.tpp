@@ -344,10 +344,8 @@ FeCrTransformReaction::getSize()
 	auto cl = this->_clusterData->getCluster(this->_reactant);
 
 	auto clReg = cl.getRegion();
-	if (clReg.isSimplex()) {
-		Composition comp = clReg.getOrigin();
-		return comp[Species::Junction];
-	}
+	Composition comp = clReg.getOrigin();
+	return comp[Species::Junction];
 
 	return 0.0;
 }
@@ -371,15 +369,10 @@ FeCrTransformReaction::getBarrier()
 	auto cl = this->_clusterData->getCluster(this->_product);
 
 	auto clReg = cl.getRegion();
-	if (clReg.isSimplex()) {
-		Composition comp1 = this->_clusterData->getCluster(this->_reactant)
-								.getRegion()
-								.getOrigin();
-		Composition comp = clReg.getOrigin();
-		if (comp[Species::Loop] > 0)
-			return 0.8; // Loop
-		return 0.75; // Trapped
-	}
+	Composition comp = clReg.getOrigin();
+	if (comp[Species::Loop] > 0)
+		return 0.8; // Loop
+	return 0.75; // Trapped
 
 	return 0.0;
 }
