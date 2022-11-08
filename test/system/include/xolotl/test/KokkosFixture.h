@@ -8,11 +8,13 @@ class KokkosFixture
 {
 public:
 	KokkosFixture() :
-		_guard(boost::unit_test::framework::master_test_suite().argc,
-			boost::unit_test::framework::master_test_suite().argv)
+		_guard((!Kokkos::is_initialized() && !Kokkos::is_finalized()) ?
+                std::make_unique<Kokkos::ScopeGuard>(
+                boost::unit_test::framework::master_test_suite().argc,
+			boost::unit_test::framework::master_test_suite().argv) : nullptr)
 	{
 	}
 
 private:
-	Kokkos::ScopeGuard _guard;
+    std::unique_ptr<Kokkos::ScopeGuard> _guard;
 };

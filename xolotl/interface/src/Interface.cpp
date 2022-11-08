@@ -22,7 +22,10 @@ class Context
 {
 public:
 	Context(int& argc, const char* argv[]) :
-		_kokkosContext(argc, const_cast<char**>(argv))
+		_kokkosContext((!Kokkos::is_initialized() && !Kokkos::is_finalized()) ?
+				std::make_unique<Kokkos::ScopeGuard>(
+					argc, const_cast<char**>(argv)) :
+				nullptr)
 	{
 		if (!initialized()) {
 			util::mpiInit(argc, argv);
@@ -57,7 +60,7 @@ public:
 
 private:
 	bool _mpiInitializedHere{false};
-	Kokkos::ScopeGuard _kokkosContext;
+	std::unique_ptr<Kokkos::ScopeGuard> _kokkosContext;
 };
 
 std::shared_ptr<solver::Solver>
