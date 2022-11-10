@@ -1,7 +1,5 @@
 #pragma once
 
-#include <Kokkos_Vector.hpp>
-
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/TransformReactionGenerator.tpp>
 #include <xolotl/core/network/impl/FeCrClusterGenerator.tpp>
@@ -40,6 +38,7 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
+	auto numClusters = this->getNumberOfClusters();
 
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
@@ -176,96 +175,62 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		auto vReg = lo1.isOnAxis(Species::V) ? cl1Reg : cl2Reg;
 		auto fReg = lo1.isOnAxis(Species::V) ? cl2Reg : cl1Reg;
 
-		// Create a vector to know which products were already added
-		auto previousIds = Kokkos::vector<IndexType, plsm::DeviceMemSpace>(
-			vReg[Species::V].length() * fReg[Species::Free].length(),
-			subpaving.invalidIndex());
-		IndexType currentId = 0;
+		// Compute the minimum and maximum size (on the I axis)
+		int minSize = fReg[Species::Free].begin() - vReg[Species::V].end() + 1;
+		int maxSize = fReg[Species::Free].end() - 1 - vReg[Species::V].begin();
 
-		// Loop on the regions
-		for (auto k : makeIntervalRange(vReg[Species::V]))
-			for (auto l : makeIntervalRange(fReg[Species::Free])) {
-				// Compute the product size
-				int prodSize = l - k;
-				if (prodSize > 0) {
-					//  Find the corresponding cluster
-					Composition comp = Composition::zero();
-					comp[Species::Free] = prodSize;
-					auto fProdId = subpaving.findTileId(comp);
-					if (fProdId != subpaving.invalidIndex()) {
-						// Check it was not already added
-						auto alreadyIn = false;
-						for (auto id = 0; id < currentId; id++) {
-							if (fProdId == previousIds[id]) {
-								alreadyIn = true;
-								break;
-							}
-						}
-						if (not alreadyIn) {
-							this->addProductionReaction(tag, {i, j, fProdId});
-							previousIds[currentId] = fProdId;
-							currentId++;
-						}
-						// No dissociation
-					}
-					comp[Species::Free] = 0;
-					comp[Species::I] = prodSize;
-					auto iProdId = subpaving.findTileId(comp);
-					if (iProdId != subpaving.invalidIndex()) {
-						// Check it was not already added
-						auto alreadyIn = false;
-						for (auto id = 0; id < currentId; id++) {
-							if (iProdId == previousIds[id]) {
-								alreadyIn = true;
-								break;
-							}
-						}
-						if (not alreadyIn) {
-							this->addProductionReaction(tag, {i, j, iProdId});
-							previousIds[currentId] = iProdId;
-							currentId++;
-						}
-						// No dissociation
-					}
+		// Recombine
+		if (minSize <= 0 and maxSize >= 0) {
+			this->addProductionReaction(tag, {i, j});
+		}
+
+		// Look for appropriate products
+		for (IndexType k = 0; k < numClusters; ++k) {
+			// Get the composition
+			const auto& prodReg = this->getCluster(k).getRegion();
+			Composition loProd = prodReg.getOrigin();
+			bool isGood = true;
+
+			// Void
+			if (minSize < 0) {
+				if (!loProd.isOnAxis(Species::V))
+					continue;
+				if (prodReg[Species::V].begin() > -minSize) {
+					isGood = false;
+					continue;
 				}
-				else if (prodSize < 0) {
-					// Looking for V cluster
-					Composition comp = Composition::zero();
-					comp[Species::V] = -prodSize;
-					auto vProdId = subpaving.findTileId(comp);
-					if (vProdId != subpaving.invalidIndex()) {
-						// Check it was not already added
-						auto alreadyIn = false;
-						for (auto id = 0; id < currentId; id++) {
-							if (vProdId == previousIds[id]) {
-								alreadyIn = true;
-								break;
-							}
-						}
-						if (not alreadyIn) {
-							this->addProductionReaction(tag, {i, j, vProdId});
-							previousIds[currentId] = vProdId;
-							currentId++;
-						}
-						// No dissociation
-					}
+				if (prodReg[Species::V].end() - 1 < -util::min(0, maxSize)) {
+					isGood = false;
+					continue;
 				}
-				else {
-					// Check it was not already added
-					auto alreadyIn = false;
-					for (auto id = 0; id < currentId; id++) {
-						if (subpaving.invalidIndex() == previousIds[id]) {
-							alreadyIn = true;
-							break;
-						}
-					}
-					if (not alreadyIn) {
-						this->addProductionReaction(tag, {i, j});
-						previousIds[currentId] = subpaving.invalidIndex();
-						currentId++;
-					}
+
+				if (isGood) {
+					this->addProductionReaction(tag, {i, j, k});
 				}
 			}
+			// Free and Int
+			if (maxSize > 0) {
+				if (!loProd.isOnAxis(Species::I) and
+					!loProd.isOnAxis(Species::Free))
+					continue;
+				if (prodReg[Species::I].begin() +
+						prodReg[Species::Free].begin() >
+					maxSize) {
+					isGood = false;
+					continue;
+				}
+				if (prodReg[Species::I].end() + prodReg[Species::Free].end() -
+						2 <
+					util::max(0, minSize)) {
+					isGood = false;
+					continue;
+				}
+
+				if (isGood) {
+					this->addProductionReaction(tag, {i, j, k});
+				}
+			}
+		}
 		return;
 	}
 
@@ -516,71 +481,61 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	// free + trapped → junction | trapped
 	if ((lo1[Species::Trapped] > 0 && lo2.isOnAxis(Species::Free)) ||
 		(lo1.isOnAxis(Species::Free) && lo2[Species::Trapped] > 0)) {
+		auto previousJunctionId = subpaving.invalidIndex();
+		auto previousTrappedId = subpaving.invalidIndex();
+
 		// Find out which one is which
 		auto fReg = lo1.isOnAxis(Species::Free) ? cl1Reg : cl2Reg;
 		auto tReg = lo1.isOnAxis(Species::Free) ? cl2Reg : cl1Reg;
 
-		// Create a vector to know which products were already added
-		auto previousIds = Kokkos::vector<IndexType, plsm::DeviceMemSpace>(
-			tReg[Species::Trapped].length() * fReg[Species::Free].length(),
-			subpaving.invalidIndex());
-		IndexType currentId = 0;
+		// Compute the minimum and maximum size (on the I axis)
+		int minSize =
+			fReg[Species::Free].begin() + tReg[Species::Trapped].begin();
+		int maxSize =
+			fReg[Species::Free].end() + tReg[Species::Trapped].end() - 2;
 
-		// Loop on the regions
-		for (auto k : makeIntervalRange(tReg[Species::Trapped]))
-			for (auto l : makeIntervalRange(fReg[Species::Free])) {
-				// Compute the composition of the new cluster
-				auto size = k + l;
-
-				// Band condition
-				double ratio = std::fabs(l - k) / (l + k);
-				if (ratio < 0.5) {
-					// Product is junction
-					Composition comp = Composition::zero();
-					comp[Species::Junction] = size;
-					comp[Species::Trap] = 1;
-					auto jProdId = subpaving.findTileId(comp);
-					if (jProdId != subpaving.invalidIndex()) {
-						// Check it was not already added
-						auto alreadyIn = false;
-						for (auto id = 0; id < currentId; id++) {
-							if (jProdId == previousIds[id]) {
-								alreadyIn = true;
-								break;
-							}
-						}
-						if (not alreadyIn) {
-							this->addProductionReaction(tag, {i, j, jProdId});
-							previousIds[currentId] = jProdId;
-							currentId++;
-						}
-						// No dissociation
-					}
+		for (auto size = minSize; size <= maxSize; size++) {
+			// Compute possible ratio
+			double minRatio = size, maxRatio = 0.0;
+			for (auto k : makeIntervalRange(tReg[Species::Trapped]))
+				for (auto l : makeIntervalRange(fReg[Species::Free])) {
+					if (l + k != size)
+						continue;
+					// Band condition
+					double ratio = fabs((double)(l - k)) / (double)(l + k);
+					if (ratio < minRatio)
+						minRatio = ratio;
+					if (ratio > maxRatio)
+						maxRatio = ratio;
 				}
-				else {
-					// Product is trapped
-					Composition comp = Composition::zero();
-					comp[Species::Trapped] = size;
-					comp[Species::Trap] = 1;
-					auto tProdId = subpaving.findTileId(comp);
-					if (tProdId != subpaving.invalidIndex()) {
-						// Check it was not already added
-						auto alreadyIn = false;
-						for (auto id = 0; id < currentId; id++) {
-							if (tProdId == previousIds[id]) {
-								alreadyIn = true;
-								break;
-							}
-						}
-						if (not alreadyIn) {
-							this->addProductionReaction(tag, {i, j, tProdId});
-							previousIds[currentId] = tProdId;
-							currentId++;
-						}
-						// No dissociation
-					}
+
+			// Junction case
+			if (minRatio < 0.5) {
+				Composition comp = Composition::zero();
+				comp[Species::Junction] = size;
+				comp[Species::Trap] = 1;
+				auto jProdId = subpaving.findTileId(comp);
+				if (jProdId != subpaving.invalidIndex() and
+					jProdId != previousJunctionId) {
+					this->addProductionReaction(tag, {i, j, jProdId});
+					previousJunctionId = jProdId;
+					// No dissociation
 				}
 			}
+			// Trapped case
+			if (maxRatio >= 0.5) {
+				Composition comp = Composition::zero();
+				comp[Species::Trapped] = size;
+				comp[Species::Trap] = 1;
+				auto tProdId = subpaving.findTileId(comp);
+				if (tProdId != subpaving.invalidIndex() and
+					tProdId != previousTrappedId) {
+					this->addProductionReaction(tag, {i, j, tProdId});
+					previousTrappedId = tProdId;
+					// No dissociation
+				}
+			}
+		}
 		return;
 	}
 
@@ -619,99 +574,87 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	// free + loop → junction | trapped | loop
 	if ((lo1[Species::Loop] > 0 && lo2.isOnAxis(Species::Free)) ||
 		(lo1.isOnAxis(Species::Free) && lo2[Species::Loop] > 0)) {
+		auto previousJunctionId = subpaving.invalidIndex();
+		auto previousLoopId = subpaving.invalidIndex();
+		auto previousTrappedId = subpaving.invalidIndex();
+
 		// Find out which one is which
 		auto fReg = lo1.isOnAxis(Species::Free) ? cl1Reg : cl2Reg;
 		auto lReg = lo1.isOnAxis(Species::Free) ? cl2Reg : cl1Reg;
 
-		// Create a vector to know which products were already added
-		auto previousIds = Kokkos::vector<IndexType, plsm::DeviceMemSpace>(
-			lReg[Species::Loop].length() * fReg[Species::Free].length(),
-			subpaving.invalidIndex());
-		IndexType currentId = 0;
+		// Compute the minimum and maximum size (on the I axis)
+		int minSize = fReg[Species::Free].begin() + lReg[Species::Loop].begin();
+		int maxSize = fReg[Species::Free].end() + lReg[Species::Loop].end() - 2;
 
-		// Loop on the regions
-		for (auto k : makeIntervalRange(lReg[Species::Loop]))
-			for (auto l : makeIntervalRange(fReg[Species::Free])) {
-				// Compute the composition of the new cluster
-				auto size = k + l;
+		for (auto size = minSize; size <= maxSize; size++) {
+			// Compute possible ratio
+			double minRatio = size, maxRatio = 0.0;
+			IndexType kMin = lReg[Species::Loop].end(), kMax = 0,
+					  lMin = fReg[Species::Free].end(), lMax = 0;
+			for (auto k : makeIntervalRange(lReg[Species::Loop]))
+				for (auto l : makeIntervalRange(fReg[Species::Free])) {
+					if (l + k != size)
+						continue;
+					// Band condition
+					double ratio = fabs((double)(l - k)) / (double)(l + k);
+					;
+					if (ratio < minRatio)
+						minRatio = ratio;
+					if (ratio > maxRatio)
+						maxRatio = ratio;
+					if (k < kMin)
+						kMin = k;
+					if (k > kMax)
+						kMax = k;
+					if (l < lMin)
+						lMin = l;
+					if (l > lMax)
+						lMax = l;
+				}
 
-				// Band condition
-				double ratio = std::fabs(l - k) / (l + k);
-				if (ratio < 0.5) {
-					// Product is junction
+			// Junction case
+			if (minRatio < 0.5) {
+				Composition comp = Composition::zero();
+				comp[Species::Junction] = size;
+				comp[Species::Trap] = 1;
+				auto jProdId = subpaving.findTileId(comp);
+				if (jProdId != subpaving.invalidIndex() and
+					jProdId != previousJunctionId) {
+					this->addProductionReaction(tag, {i, j, jProdId});
+					previousJunctionId = jProdId;
+					// No dissociation
+				}
+			}
+			// Trapped of Loop case
+			if (maxRatio > 0.5) {
+				// Loop
+				if (lMin < kMax) {
 					Composition comp = Composition::zero();
-					comp[Species::Junction] = size;
+					comp[Species::Loop] = size;
 					comp[Species::Trap] = 1;
-					auto jProdId = subpaving.findTileId(comp);
-					if (jProdId != subpaving.invalidIndex()) {
-						// Check it was not already added
-						auto alreadyIn = false;
-						for (auto id = 0; id < currentId; id++) {
-							if (jProdId == previousIds[id]) {
-								alreadyIn = true;
-								break;
-							}
-						}
-						if (not alreadyIn) {
-							this->addProductionReaction(tag, {i, j, jProdId});
-							previousIds[currentId] = jProdId;
-							currentId++;
-						}
+					auto lProdId = subpaving.findTileId(comp);
+					if (lProdId != subpaving.invalidIndex() and
+						lProdId != previousLoopId) {
+						this->addProductionReaction(tag, {i, j, lProdId});
+						previousLoopId = lProdId;
 						// No dissociation
 					}
 				}
-				else {
-					// Restrictions
-					if (l < k) {
-						// Product is loop
-						Composition comp = Composition::zero();
-						comp[Species::Loop] = size;
-						comp[Species::Trap] = 1;
-						auto lProdId = subpaving.findTileId(comp);
-						if (lProdId != subpaving.invalidIndex()) {
-							// Check it was not already added
-							auto alreadyIn = false;
-							for (auto id = 0; id < currentId; id++) {
-								if (lProdId == previousIds[id]) {
-									alreadyIn = true;
-									break;
-								}
-							}
-							if (not alreadyIn) {
-								this->addProductionReaction(
-									tag, {i, j, lProdId});
-								previousIds[currentId] = lProdId;
-								currentId++;
-							}
-							// No dissociation
-						}
-					}
-					else {
-						// Product is trapped
-						Composition comp = Composition::zero();
-						comp[Species::Trapped] = size;
-						comp[Species::Trap] = 1;
-						auto tProdId = subpaving.findTileId(comp);
-						if (tProdId != subpaving.invalidIndex()) {
-							// Check it was not already added
-							auto alreadyIn = false;
-							for (auto id = 0; id < currentId; id++) {
-								if (tProdId == previousIds[id]) {
-									alreadyIn = true;
-									break;
-								}
-							}
-							if (not alreadyIn) {
-								this->addProductionReaction(
-									tag, {i, j, tProdId});
-								previousIds[currentId] = tProdId;
-								currentId++;
-							}
-							// No dissociation
-						}
+				// Trapped
+				if (kMin < lMax) {
+					Composition comp = Composition::zero();
+					comp[Species::Trapped] = size;
+					comp[Species::Trap] = 1;
+					auto tProdId = subpaving.findTileId(comp);
+					if (tProdId != subpaving.invalidIndex() and
+						tProdId != previousTrappedId) {
+						this->addProductionReaction(tag, {i, j, tProdId});
+						previousTrappedId = tProdId;
+						// No dissociation
 					}
 				}
 			}
+		}
 		return;
 	}
 
@@ -722,40 +665,35 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		auto fReg = lo1.isOnAxis(Species::Free) ? cl1Reg : cl2Reg;
 		auto jReg = lo1.isOnAxis(Species::Free) ? cl2Reg : cl1Reg;
 
-		// Create a vector to know which products were already added
-		auto previousIds = Kokkos::vector<IndexType, plsm::DeviceMemSpace>(
-			jReg[Species::Junction].length() * fReg[Species::Free].length(),
-			subpaving.invalidIndex());
-		IndexType currentId = 0;
+		// Compute the minimum and maximum size (on the I axis)
+		int minSize =
+			fReg[Species::Free].begin() + jReg[Species::Junction].begin();
+		int maxSize =
+			fReg[Species::Free].end() + jReg[Species::Junction].end() - 2;
 
-		// Loop on the regions
-		for (auto k : makeIntervalRange(jReg[Species::Junction]))
-			for (auto l : makeIntervalRange(fReg[Species::Free])) {
-				// Compute the composition of the new cluster
-				auto size = k + l;
+		// Look for appropriate products
+		for (IndexType k = 0; k < numClusters; ++k) {
+			// Get the composition
+			const auto& prodReg = this->getCluster(k).getRegion();
+			Composition loProd = prodReg.getOrigin();
+			bool isGood = true;
 
-				// Find the corresponding cluster
-				Composition comp = Composition::zero();
-				comp[Species::Junction] = size;
-				comp[Species::Trap] = 1;
-				auto jProdId = subpaving.findTileId(comp);
-				if (jProdId != subpaving.invalidIndex()) {
-					// Check it was not already added
-					auto alreadyIn = false;
-					for (auto id = 0; id < currentId; id++) {
-						if (jProdId == previousIds[id]) {
-							alreadyIn = true;
-							break;
-						}
-					}
-					if (not alreadyIn) {
-						this->addProductionReaction(tag, {i, j, jProdId});
-						previousIds[currentId] = jProdId;
-						currentId++;
-					}
-					// No dissociation
-				}
+			// Junction
+			if (loProd[Species::Junction] == 0)
+				continue;
+			if (prodReg[Species::Junction].begin() > maxSize) {
+				isGood = false;
+				continue;
 			}
+			if (prodReg[Species::Junction].end() - 1 < minSize) {
+				isGood = false;
+				continue;
+			}
+
+			if (isGood) {
+				this->addProductionReaction(tag, {i, j, k});
+			}
+		}
 		return;
 	}
 
