@@ -7,6 +7,7 @@ using namespace std::string_literals;
 #include <boost/program_options.hpp>
 
 #include <xolotl/options/Options.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/Tokenizer.h>
 
@@ -110,7 +111,10 @@ Options::readParams(int argc, const char* argv[])
 	// Declare a group of options that will be
 	// allowed in config file
 	bpo::options_description config("Parameters");
-	config.add_options()("networkFile",
+	config.add_options()("logLevel",
+		bpo::value<std::string>()->default_value("info"),
+		"Logging output threshold. (default = info; available "
+		"debug,extra,info,warning,error).")("networkFile",
 		bpo::value<std::string>(&networkFilename),
 		"The HDF5 file to use for restart.")("tempHandler",
 		bpo::value<std::string>(&tempHandlerName)->default_value("constant"),
@@ -256,6 +260,8 @@ Options::readParams(int argc, const char* argv[])
 	}
 	store(parse_config_file(ifs, config), opts);
 	notify(opts);
+
+	util::Log::setLevelThreshold(opts["logLevel"].as<std::string>());
 
 	// Take care of the temperature
 	if (opts.count("tempParam")) {
