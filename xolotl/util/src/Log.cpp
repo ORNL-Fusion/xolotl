@@ -54,7 +54,7 @@ toString(Log::Level level)
 {
 	auto l = static_cast<LevelType>(level);
 	// if (l < sizeof(levelStrings) / sizeof(*levelStrings)) {
-    if (l < sizeof(levelStrings)) {
+	if (l < sizeof(levelStrings)) {
 		return levelStrings[level].c_str();
 	}
 	else {
@@ -66,8 +66,7 @@ Log::Level
 logLevelFromString(const std::string& levelStr)
 {
 	auto str = toUpper(levelStr);
-	auto it = std::find(
-		std::begin(levelStrings), std::end(levelStrings), str);
+	auto it = std::find(std::begin(levelStrings), std::end(levelStrings), str);
 	if (it == std::end(levelStrings)) {
 		throw std::runtime_error(
 			"invalid logging output threshold level specified: " + levelStr);
@@ -89,7 +88,8 @@ operator<<(std::ostream& os, Log::Level level)
 	return os;
 }
 
-Log::Log()
+void
+setupLogs()
 {
 	namespace keywords = boost::log::keywords;
 	namespace expr = boost::log::expressions;
@@ -120,6 +120,13 @@ Log::Log()
 	std::string mpiRankString = "";
 	if (mpiReady) {
 		auto rank = getMPIRank();
+
+		if (Log::_threshold > Log::Level::extra) {
+			if (rank > 0) {
+				return;
+			}
+		}
+
 		auto rankStr = std::to_string(rank);
 		logFileBaseName += "_" + rankStr;
 		mpiRankString = "(R" + rankStr + ") ";
@@ -143,9 +150,17 @@ Log::Log()
 	}
 }
 
+Log::Level Log::_threshold = Log::Level::info;
+
+Log::Log()
+{
+	setupLogs();
+}
+
 void
 Log::setLevelThreshold(Log::Level level)
 {
+	_threshold = level;
 	boost::log::core::get()->set_filter(severity >= level);
 }
 

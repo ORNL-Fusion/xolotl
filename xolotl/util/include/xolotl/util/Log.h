@@ -61,6 +61,11 @@ public:
 	 */
 	static void
 	flush();
+
+private:
+    static Level _threshold;
+    friend void
+    setupLogs();
 };
 
 /**
