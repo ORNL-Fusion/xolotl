@@ -154,6 +154,12 @@ protected:
 	//! The ratio of He per V in a bubble.
 	double heVRatio;
 
+	//! The sink density.
+	double sinkDensity;
+
+	//! The sink portion.
+	double sinkPortion;
+
 	//! The value to use to seed the random number generator.
 	unsigned int rngSeed;
 
@@ -395,6 +401,24 @@ public:
 	getBurstingFactor() const override
 	{
 		return burstingFactor;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	double
+	getSinkDensity() const override
+	{
+		return sinkDensity;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	double
+	getSinkPortion() const override
+	{
+		return sinkPortion;
 	}
 
 	/**

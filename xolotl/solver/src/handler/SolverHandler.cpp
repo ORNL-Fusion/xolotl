@@ -51,6 +51,8 @@ SolverHandler::SolverHandler(
 	burstingFactor(0.1),
 	rngSeed(0),
 	heVRatio(4.0),
+	sinkDensity(0.0),
+	sinkPortion(0.0),
 	previousTime(0.0),
 	nXeGB(0.0)
 {
@@ -447,6 +449,12 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 
 	// Set the HeV ratio
 	heVRatio = opts.getHeVRatio();
+
+	// Set the sink density
+	sinkDensity = opts.getSinkDensity();
+
+	// Set the sink portion
+	sinkPortion = opts.getSinkPortion();
 
 	// Which type of temperature grid to use
 	if (opts.getTempHandlerName() == "heat")

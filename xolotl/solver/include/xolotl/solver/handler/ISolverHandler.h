@@ -268,6 +268,22 @@ public:
 	getHeVRatio() const = 0;
 
 	/**
+	 * Get the sink density.
+	 *
+	 * @return The density
+	 */
+	virtual double
+	getSinkDensity() const = 0;
+
+	/**
+	 * Get the sink portion.
+	 *
+	 * @return The portion
+	 */
+	virtual double
+	getSinkPortion() const = 0;
+
+	/**
 	 * Get the grid left offset.
 	 *
 	 * @return The offset

@@ -49,6 +49,9 @@ protected:
 	std::shared_ptr<viz::IPlot> _scatterPlot;
 
 	std::vector<IdType> _clusterOrder;
+
+	std::vector<double> _nSink;
+	std::vector<double> _previousSinkRate;
 };
 } // namespace monitor
 } // namespace solver

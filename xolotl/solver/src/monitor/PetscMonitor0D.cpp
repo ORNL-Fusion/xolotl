@@ -234,8 +234,15 @@ PetscMonitor0D::setup()
 					   << "_partial_density " << speciesName << "_diameter "
 					   << speciesName << "_partial_diameter ";
 		}
-		outputFile << "black_dot_density" << std::endl;
+		outputFile
+			<< "111_partial_density 111_partial_diameter black_dot_density "
+			   "V_edge V_screw I_edge I_screw"
+			<< std::endl;
 		outputFile.close();
+
+		// Create data to track sink losses
+		_nSink = std::vector<double>(4, 0.0);
+		_previousSinkRate = std::vector<double>(4, 0.0);
 
 		// computeFeCrAl0D will be called at each timestep
 		ierr = TSMonitorSet(_ts, monitor::computeFeCrAl, this, nullptr);
@@ -765,7 +772,8 @@ PetscMonitor0D::computeFeCrAl(
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	const auto dof = network.getDOF();
 	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 4 + 1, 0.0);
+	auto networkSize = network.getNumClusters();
+	auto myData = std::vector<double>(numSpecies * 4 + 3, 0.0);
 
 	// Get the minimum size for the loop densities and diameters
 	auto minSizes = _solverHandler->getMinSizes();
@@ -775,6 +783,80 @@ PetscMonitor0D::computeFeCrAl(
 
 	// Get the pointer to the beginning of the solution data for this grid point
 	gridPointSolution = solutionArray[0];
+
+	// Get the delta time from the previous timestep to this timestep
+	double previousTime = _solverHandler->getPreviousTime();
+	double dt = time - previousTime;
+
+	// Compute the total number of impurities that were absorbed by sinks
+	if (timestep > 0) {
+		for (auto i = 0; i < 4; ++i) {
+			_nSink[i] += _previousSinkRate[i] * dt;
+			_previousSinkRate[i] = 0.0;
+		}
+	}
+
+	// Compute the sink strength for the previous rates
+	auto density = _solverHandler->getSinkDensity(); // nm-2
+	auto portion = _solverHandler->getSinkPortion();
+	auto r = 1.0 / sqrt(::xolotl::core::pi * density); // nm
+	auto rCore = ::xolotl::core::fecrCoreRadius;
+	auto temperature = gridPointSolution[dof];
+	constexpr double K = 170.0e9; // GPa
+	constexpr double nu = 0.29;
+	constexpr double b = 0.25; // nm
+	double deltaV = 1.67 * 0.5 * ::xolotl::core::ironLatticeConstant *
+		::xolotl::core::ironLatticeConstant *
+		::xolotl::core::ironLatticeConstant * 1.0e-27; // m3
+	//	constexpr double a0 = 0.91, a1 = -2.16, a2 = -0.92; // Random dipole
+	constexpr double a0 = 0.87, a1 = -5.12, a2 = -0.77; // Full network
+	constexpr double k_B = 1.380649e-23; // J K-1.
+	double L = (K * b * deltaV * (1.0 - 2.0 * nu)) /
+		(2.0 * ::xolotl::core::pi * k_B * temperature * (1.0 - nu));
+	double delta = sqrt(rCore * rCore + (L * L) / 4.0);
+	double edge = portion * density * 2.0 * ::xolotl::core::pi *
+		(a0 + a1 * (delta / r) + a2 * ((delta - rCore) / r)) /
+		std::log(r / delta);
+	double screw = (1.0 - portion) * density * 2.0 * ::xolotl::core::pi *
+		(a0 + a1 * (rCore / r)) / std::log(r / rCore);
+	// Loop on all the clusters
+	for (auto i = 0; i < networkSize; ++i) {
+		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
+		auto diffCoef = cluster.getDiffusionCoefficient(0);
+		if (util::equal(diffCoef, 0.0))
+			continue;
+
+		auto clReg = cluster.getRegion();
+		Composition clLo = clReg.getOrigin();
+		// V case
+		if (clLo[Spec::V] > 0) {
+			double size =
+				clLo[Spec::V] + (double)(clReg[Spec::V].length() - 1) / 2.0;
+			// edge
+			_previousSinkRate[0] +=
+				gridPointSolution[i] * diffCoef * edge * size;
+			// screw
+			_previousSinkRate[1] +=
+				gridPointSolution[i] * diffCoef * screw * size;
+		}
+		else {
+			// I and Free case
+			double bias = 1.0;
+			double size = clLo[Spec::Free] +
+				(double)(clReg[Spec::Free].length() - 1) / 2.0;
+			if (clLo[Spec::I] > 0) {
+				bias = 1.05;
+				size =
+					clLo[Spec::I] + (double)(clReg[Spec::I].length() - 1) / 2.0;
+			}
+			// edge
+			_previousSinkRate[2] +=
+				gridPointSolution[i] * diffCoef * edge * bias * size;
+			// screw
+			_previousSinkRate[3] +=
+				gridPointSolution[i] * diffCoef * screw * bias * size;
+		}
+	}
 
 	using HostUnmanaged =
 		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
@@ -787,14 +869,17 @@ PetscMonitor0D::computeFeCrAl(
 		myData[4 * id()] = network.getTotalConcentration(dConcs, id, 1);
 		myData[(4 * id()) + 1] =
 			network.getTotalConcentration(dConcs, id, minSizes[id()]);
-		myData[(4 * id()) + 2] = 2.0 *
-			network.getTotalRadiusConcentration(dConcs, id, 1) /
-			myData[4 * id()];
+		myData[(4 * id()) + 2] =
+			2.0 * network.getTotalRadiusConcentration(dConcs, id, 1);
 		myData[(4 * id()) + 3] = 2.0 *
-			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
-			myData[4 * id() + 1];
+			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]);
 		myData[myData.size() - 1] +=
 			network.getSmallConcentration(dConcs, id, minSizes[id()]);
+		if (network.getSpeciesLabel(id) == "Free" or
+			network.getSpeciesLabel(id) == "Trapped") {
+			myData[myData.size() - 3] += myData[(4 * id()) + 1];
+			myData[myData.size() - 2] += myData[(4 * id()) + 3];
+		}
 	}
 
 	// Set the output precision
@@ -809,9 +894,16 @@ PetscMonitor0D::computeFeCrAl(
 	outputFile << timestep << " " << time << " ";
 	for (auto i = 0; i < numSpecies; ++i) {
 		outputFile << myData[i * 4] << " " << myData[(i * 4) + 1] << " "
-				   << myData[(i * 4) + 2] << " " << myData[(i * 4) + 3] << " ";
+				   << myData[(i * 4) + 2] / myData[i * 4] << " "
+				   << myData[(i * 4) + 3] / myData[(i * 4) + 1] << " ";
 	}
-	outputFile << myData[myData.size() - 1] << std::endl;
+	outputFile << myData[myData.size() - 3] << " "
+			   << myData[myData.size() - 2] / myData[myData.size() - 3] << " "
+			   << myData[myData.size() - 1];
+	for (auto i = 0; i < 4; ++i) {
+		outputFile << " " << _nSink[i];
+	}
+	outputFile << std::endl;
 
 	// Close the output file
 	outputFile.close();
