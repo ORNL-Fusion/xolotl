@@ -297,6 +297,9 @@ PetscSolver0DHandler::updateConcentration(
 	// moments
 	const auto dof = network.getDOF();
 
+	// Update the time in the network
+	network.setTime(ftime);
+
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);
 	double temp = temperatureHandler->getTemperature(gridPosition, ftime);
@@ -327,6 +330,13 @@ PetscSolver0DHandler::updateConcentration(
 	network.computeAllFluxes(dConcs, dFlux);
 	fluxTimer->stop();
 	deep_copy(hFlux, dFlux);
+
+	/*
+	for (auto i = 0; i < dof; i++) {
+		std::cout << updatedConcOffset[i] << " ";
+	}
+	std::cout << "\n";
+	*/
 
 	/*
 	 Restore vectors
@@ -378,6 +388,9 @@ PetscSolver0DHandler::computeJacobian(
 
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
+
+	// Update the time in the network
+	network.setTime(ftime);
 
 	// Get the temperature from the temperature handler
 	concOffset = concs[0];

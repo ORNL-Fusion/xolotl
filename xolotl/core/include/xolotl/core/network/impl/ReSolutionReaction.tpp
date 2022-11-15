@@ -148,7 +148,8 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-ReSolutionReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+ReSolutionReaction<TNetwork, TDerived>::computeRate(
+	IndexType gridIndex, double time)
 {
 	// Get Zeta
 	auto zeta = this->_clusterData->zeta();
@@ -541,6 +542,49 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			}
 		}
 	}
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+ReSolutionReaction<TNetwork, TDerived>::computeConstantRates(
+	ConcentrationsView concentrations, RatesView rates, BelongingView isInSub,
+	OwnedSubMapView backMap, IndexType gridIndex)
+{
+	// Only consider cases where one of the products is in the sub network
+	// but not the dissociating cluster
+	if (isInSub[_reactant])
+		return;
+	if (not isInSub[_products[0]] and not isInSub[_products[0]])
+		return;
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	// Initialize the concentrations that will be used in the loops
+	auto cR = concentrations[_reactant];
+	Kokkos::Array<double, nMomentIds> cmR;
+	for (auto i : speciesRangeNoI) {
+		if (_reactantMomentIds[i()] == invalidIndex) {
+			cmR[i()] = 0.0;
+		}
+		else
+			cmR[i()] = concentrations[_reactantMomentIds[i()]];
+	}
+
+	// Compute the flux for the 0th order moments
+	double f = this->_coefs(0, 0, 0, 0) * cR;
+	for (auto i : speciesRangeNoI) {
+		f += this->_coefs(i() + 1, 0, 0, 0) * cmR[i()];
+	}
+	f *= this->_rate(gridIndex);
+	if (isInSub[_products[0]])
+		Kokkos::atomic_add(&rates(backMap(_products[0]), isInSub.extent(0)),
+			f / (double)_productVolumes[0]);
+	if (isInSub[_products[1]])
+		Kokkos::atomic_add(&rates(backMap(_products[1]), isInSub.extent(0)),
+			f / (double)_productVolumes[1]);
+
+	// TODO: add grouping
 }
 
 template <typename TNetwork, typename TDerived>

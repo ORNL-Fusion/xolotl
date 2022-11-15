@@ -282,9 +282,9 @@ PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
 
 template <typename TSpeciesEnum>
 void
-PSIReactionNetwork<TSpeciesEnum>::updateReactionRates()
+PSIReactionNetwork<TSpeciesEnum>::updateReactionRates(double time)
 {
-	Superclass::updateReactionRates();
+	Superclass::updateReactionRates(time);
 
 	using TrapMutationReactionType =
 		typename Superclass::Traits::TrapMutationReactionType;

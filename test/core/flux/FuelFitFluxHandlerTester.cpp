@@ -67,26 +67,32 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	double currTime = 1.0;
 
 	// The array of concentration
+	double oldConcentration[5 * dof];
 	double newConcentration[5 * dof];
 
 	// Initialize their values
 	for (int i = 0; i < 5 * dof; i++) {
+		oldConcentration[i] = 1.0e-5 * i;
 		newConcentration[i] = 0.0;
 	}
 
 	// The pointer to the grid point we want
+	double* conc = &oldConcentration[0];
+	double* concOffset = conc + dof;
 	double* updatedConc = &newConcentration[0];
 	double* updatedConcOffset = updatedConc + dof;
 
 	// Update the concentrations at some grid points
 	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 1, surfacePos);
+		currTime, concOffset, updatedConcOffset, 1, surfacePos);
+	concOffset = conc + 2 * dof;
 	updatedConcOffset = updatedConc + 2 * dof;
 	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 2, surfacePos);
+		currTime, concOffset, updatedConcOffset, 2, surfacePos);
+	concOffset = conc + 3 * dof;
 	updatedConcOffset = updatedConc + 3 * dof;
 	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 3, surfacePos);
+		currTime, concOffset, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[100], 1.0, 0.01);

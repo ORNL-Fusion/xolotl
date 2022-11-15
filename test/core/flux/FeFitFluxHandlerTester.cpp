@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 
 	// Update the concentrations
 	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 0, surfacePos);
+		currTime, nullptr, updatedConcOffset, 0, surfacePos);
 
 	// Check the value at some grid points
 	BOOST_REQUIRE_CLOSE(newConcentration[0], 1.49e-05, 0.01); // I

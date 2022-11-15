@@ -248,8 +248,8 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 				IdType largestId = 0;
 				//				for (auto i = 0; i < lVector[prodId].size();
 				// i++)
-				//{ 					if (lVector[prodId][i].second < largestG0)
-				//{ largestG0 =
+				//{ 					if (lVector[prodId][i].second <
+				//largestG0) { largestG0 =
 				// lVector[prodId][i].second; 						largestId =
 				// i;
 				//					}
@@ -350,6 +350,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	}
 
 	// TODO: re-solution and nucleation need to be added
+
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;

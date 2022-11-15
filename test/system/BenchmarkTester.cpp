@@ -16,6 +16,15 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 BOOST_AUTO_TEST_SUITE(Benchmark)
 
+BOOST_AUTO_TEST_CASE(AZr_1)
+{
+	if (getMPICommSize() > 1) {
+		return;
+	}
+	// 0D, 1000 in each direction, grouped
+	SystemTestCase{"benchmark_AZr_1", "AlphaZr.dat"}.withTimer().run();
+}
+
 // BOOST_AUTO_TEST_CASE(NE_1)
 //{
 //	if (getMPICommSize() > 1) {
@@ -51,7 +60,7 @@ BOOST_AUTO_TEST_SUITE(Benchmark)
 // 2D, longer
 //	SystemTestCase{"benchmark_NE_4"}.withTimer().run();
 //}
-
+//
 // BOOST_AUTO_TEST_CASE(NE_5)
 //{
 //	if (getMPICommSize() > 1) {

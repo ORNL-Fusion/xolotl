@@ -291,7 +291,9 @@ SystemTestCase::runXolotl() const
 	int argc = 2;
 	const char* argv[] = {exec.data(), paramsFileName.data()};
 	try {
-		xolotl::interface::XolotlInterface{argc, argv}.solveXolotl();
+		xolotl::interface::XolotlInterface {
+			argc, argv
+		}.solveXolotl();
 	}
 	catch (const std::exception& e) {
 		std::cout << e.what() << std::endl;

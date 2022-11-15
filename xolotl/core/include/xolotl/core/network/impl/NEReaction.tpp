@@ -11,9 +11,38 @@ namespace core
 {
 namespace network
 {
+template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
 double
-NEProductionReaction::computeRate(IndexType gridIndex)
+getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
+	const double r1, const double dc0, const double dc1)
+{
+	constexpr double pi = ::xolotl::core::pi;
+
+	double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
+
+	return kPlus;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+NEProductionReaction::getRateForProduction(IndexType gridIndex)
+{
+	auto cl0 = this->_clusterData->getCluster(_reactants[0]);
+	auto cl1 = this->_clusterData->getCluster(_reactants[1]);
+
+	double r0 = cl0.getReactionRadius();
+	double r1 = cl1.getReactionRadius();
+
+	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
+	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
+
+	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+NEProductionReaction::computeRate(IndexType gridIndex, double time)
 {
 	auto cl0 = this->_clusterData->getCluster(_reactants[0]);
 	auto cl1 = this->_clusterData->getCluster(_reactants[1]);
@@ -43,11 +72,7 @@ NEProductionReaction::computeRate(IndexType gridIndex)
 		return 4.0 * ::xolotl::core::pi * (r0 + r1) * rate;
 	}
 
-	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
-	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
-
-	rate = getRateForProduction(
-		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	rate = getRateForProduction(gridIndex);
 
 	return rate;
 }
@@ -711,7 +736,23 @@ NEDissociationReaction::computeBindingEnergy()
 
 KOKKOS_INLINE_FUNCTION
 double
-NEDissociationReaction::computeRate(IndexType gridIndex)
+NEDissociationReaction::getRateForProduction(IndexType gridIndex)
+{
+	auto cl0 = this->_clusterData->getCluster(_products[0]);
+	auto cl1 = this->_clusterData->getCluster(_products[1]);
+
+	double r0 = cl0.getReactionRadius();
+	double r1 = cl1.getReactionRadius();
+
+	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
+	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
+
+	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+NEDissociationReaction::computeRate(IndexType gridIndex, double time)
 {
 	double omega = this->_clusterData->atomicVolume();
 	double T = this->_clusterData->temperature(gridIndex);
@@ -723,9 +764,6 @@ NEDissociationReaction::computeRate(IndexType gridIndex)
 
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
-
-	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
-	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
 	// Read the rates if available// Read the rates if available
 	double rate = -1.0;
@@ -746,8 +784,7 @@ NEDissociationReaction::computeRate(IndexType gridIndex)
 		return (1.0 / omega) * 4.0 * ::xolotl::core::pi * (r0 + r1) * rate;
 	}
 
-	double kPlus = getRateForProduction(
-		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	double kPlus = getRateForProduction(gridIndex);
 	double E_b = this->computeBindingEnergy();
 
 	double kMinus = (1.0 / omega) * kPlus * std::exp(-E_b / (k_B * T));

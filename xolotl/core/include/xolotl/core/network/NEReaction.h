@@ -53,10 +53,14 @@ public:
 	{
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	double
+	getRateForProduction(IndexType gridIndex);
+
 private:
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex);
+	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -113,12 +117,16 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
+	getRateForProduction(IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	double
 	computeBindingEnergy();
 
 private:
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex);
+	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void

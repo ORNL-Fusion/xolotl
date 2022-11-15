@@ -11,5 +11,4 @@ perfHandler=dummy
 tempParam=2400
 grouping=1001 2 2
 process=sink reaction
-initialV=0.0
 radiusSize=15

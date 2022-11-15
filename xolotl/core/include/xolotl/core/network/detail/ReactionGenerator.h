@@ -43,6 +43,7 @@ public:
 		decltype(Kokkos::subview(std::declval<ClusterSetView>(),
 			std::declval<std::pair<IndexType, IndexType>>()));
 	using Connectivity = typename NetworkType::Connectivity;
+	using ConnectivitiesView = typename NetworkType::ConnectivitiesView;
 
 	struct Count
 	{
@@ -124,6 +125,12 @@ public:
 	void
 	generateConnectivity(ReactionCollection<NetworkType>& reactionCollection);
 
+	void
+	setConstantConnectivities(ConnectivitiesView conns)
+	{
+		_constantConns = conns;
+	}
+
 	const ClusterConnectivity<>&
 	getConnectivity() const
 	{
@@ -164,6 +171,8 @@ protected:
 
 	// Reaction energies
 	Kokkos::View<double**> _reactionEnergies;
+
+	ConnectivitiesView _constantConns;
 };
 
 template <typename TNetwork, typename TReaction,

@@ -32,6 +32,7 @@ public:
 	using ReactionTypes = ReactionTypeList<NetworkType>;
 	using Types = ReactionNetworkTypes<NetworkType>;
 	using ClusterData = typename Types::ClusterData;
+	using RateVector = IReactionNetwork::RateVector;
 
 private:
 	static constexpr std::size_t numReactionTypes =
@@ -140,11 +141,11 @@ public:
 	}
 
 	void
-	updateRates()
+	updateRates(double time = 0.0)
 	{
 		forEach(
 			"ReactionNetwork::updateReactionRates",
-			DEVICE_LAMBDA(auto&& reaction) { reaction.updateRates(); });
+			DEVICE_LAMBDA(auto&& reaction) { reaction.updateRates(time); });
 		Kokkos::fence();
 	}
 
