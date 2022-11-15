@@ -116,7 +116,7 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 		}
 
 		if (!fileClusterMap.is_allocated()) {
-			fileClusterMap = MapType(data.fileClusterMap.capacity());
+			fileClusterMap = MapType(data.fileClusterMap.size());
 		}
 
 		deep_copy(constantRates, data.constantRates);
@@ -128,8 +128,8 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 	{
 		std::uint64_t ret = 0;
 
-		ret += constantRates.required_allocation_size(
-			constantRates.extent(0), constantRates.extent(1));
+		ret += constantRates.required_allocation_size(constantRates.extent(0),
+			constantRates.extent(1), constantRates.extent(2));
 		ret += sizeof(fileClusterMap);
 
 		return ret;
@@ -138,11 +138,11 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 	void
 	initialize(IndexType size)
 	{
-		constantRates = View<double**>("Constant Rates", size, size + 1);
+		constantRates = View<double***>("Constant Rates", size, size + 1, 2);
 		fileClusterMap = MapType(size);
 	}
 
-	View<double**> constantRates;
+	View<double***> constantRates;
 	MapType fileClusterMap;
 };
 } // namespace detail

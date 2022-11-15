@@ -28,7 +28,16 @@ NEProductionReaction::computeRate(IndexType gridIndex)
 		auto clusterMap = this->_clusterData->extraData.fileClusterMap;
 		rate = this->_clusterData->extraData.constantRates(
 			clusterMap.value_at(clusterMap.find(_reactants[0])),
-			clusterMap.value_at(clusterMap.find(_reactants[1])));
+			clusterMap.value_at(clusterMap.find(_reactants[1])), 0);
+
+		if (this->_deltaG0 > 0.0) {
+			rate = this->_clusterData->extraData.constantRates(
+					   clusterMap.value_at(clusterMap.find(_reactants[0])),
+					   clusterMap.value_at(clusterMap.find(_reactants[1])), 1) *
+				std::exp(-this->_deltaG0 /
+					(::xolotl::core::kBoltzmann *
+						this->_clusterData->temperature(gridIndex)));
+		}
 	}
 	if (rate > 0) {
 		return 4.0 * ::xolotl::core::pi * (r0 + r1) * rate;
@@ -70,7 +79,7 @@ NEProductionReaction::computeFlux(
 		f *= (1.0 / omega) *
 			this->_clusterData->extraData.constantRates(
 				clusterMap.value_at(clusterMap.find(_reactants[0])),
-				clusterMap.value_at(clusterMap.find(_reactants[1]))) *
+				clusterMap.value_at(clusterMap.find(_reactants[1])), 0) *
 			4.0 * ::xolotl::core::pi * (r0 + r1) *
 			std::exp(this->_deltaG0 / ::xolotl::core::kBoltzmann *
 				this->_clusterData->temperature(gridIndex));
@@ -724,12 +733,17 @@ NEDissociationReaction::computeRate(IndexType gridIndex)
 		this->_clusterData->extraData.fileClusterMap.exists(_products[1])) {
 		auto clusterMap = this->_clusterData->extraData.fileClusterMap;
 		rate = this->_clusterData->extraData.constantRates(
-			clusterMap.value_at(clusterMap.find(_products[0])),
-			clusterMap.value_at(clusterMap.find(_products[1])));
+				   clusterMap.value_at(clusterMap.find(_products[0])),
+				   clusterMap.value_at(clusterMap.find(_products[1])), 0) *
+			std::exp(this->_deltaG0 / (k_B * T));
+		if (this->_deltaG0 > 0.0) {
+			rate = this->_clusterData->extraData.constantRates(
+				clusterMap.value_at(clusterMap.find(_products[0])),
+				clusterMap.value_at(clusterMap.find(_products[1])), 1);
+		}
 	}
 	if (rate > 0) {
-		return (1.0 / omega) * 4.0 * ::xolotl::core::pi * (r0 + r1) * rate *
-			std::exp(this->_deltaG0 / (k_B * T));
+		return (1.0 / omega) * 4.0 * ::xolotl::core::pi * (r0 + r1) * rate;
 	}
 
 	double kPlus = getRateForProduction(
@@ -984,7 +998,39 @@ KOKKOS_INLINE_FUNCTION
 double
 NESinkReaction::getSinkStrength()
 {
-	return 1.0e-3;
+	//	return 1.0e-3;
+	return 1.0e-5;
+}
+
+KOKKOS_INLINE_FUNCTION
+void
+NESinkReaction::computeFlux(
+	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
+{
+	Kokkos::atomic_sub(
+		&fluxes(_reactant), concentrations(_reactant) * this->_rate(gridIndex));
+	return;
+}
+
+KOKKOS_INLINE_FUNCTION
+void
+NESinkReaction::computePartialDerivatives(ConcentrationsView concentrations,
+	Kokkos::View<double*> values, IndexType gridIndex)
+{
+	Kokkos::atomic_sub(
+		&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+	return;
+}
+
+KOKKOS_INLINE_FUNCTION
+void
+NESinkReaction::computeReducedPartialDerivatives(
+	ConcentrationsView concentrations, Kokkos::View<double*> values,
+	IndexType gridIndex)
+{
+	Kokkos::atomic_sub(
+		&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+	return;
 }
 } // namespace network
 } // namespace core

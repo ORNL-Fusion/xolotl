@@ -142,8 +142,8 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+	computeIncidentFlux(double currentTime, double*, double* updatedConcOffset,
+		int xi, int surfacePos)
 	{
 		// Define only for a 0D case
 		if (incidentFluxVec[0].size() == 0) {

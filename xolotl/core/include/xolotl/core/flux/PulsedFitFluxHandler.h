@@ -119,8 +119,8 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+	computeIncidentFlux(double currentTime, double*, double* updatedConcOffset,
+		int xi, int surfacePos)
 	{
 		// Check in which phase of the pulse we are
 		int cycle = currentTime / deltaTime;

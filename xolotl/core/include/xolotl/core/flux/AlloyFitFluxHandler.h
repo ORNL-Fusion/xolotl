@@ -323,8 +323,8 @@ public:
 	 * grid point. \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+	computeIncidentFlux(double currentTime, double*, double* updatedConcOffset,
+		int xi, int surfacePos)
 	{
 		// Attenuation factor to model reduced production of new point defects
 		// with increasing dose (or time).

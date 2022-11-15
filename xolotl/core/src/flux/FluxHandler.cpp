@@ -176,8 +176,8 @@ FluxHandler::getProfileAmplitude(double currentTime) const
 }
 
 void
-FluxHandler::computeIncidentFlux(
-	double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+FluxHandler::computeIncidentFlux(double currentTime, double*,
+	double* updatedConcOffset, int xi, int surfacePos)
 {
 	// Skip if no index was set
 	if (fluxIndices.size() == 0)

@@ -309,7 +309,8 @@ PetscSolver0DHandler::updateConcentration(
 	}
 
 	// ----- Account for flux of incoming particles -----
-	fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, 0, 0);
+	fluxHandler->computeIncidentFlux(
+		ftime, concOffset, updatedConcOffset, 0, 0);
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid
 	// -----

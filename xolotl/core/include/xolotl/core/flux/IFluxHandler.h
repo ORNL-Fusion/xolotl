@@ -54,8 +54,8 @@ public:
 	 * @param surfacePos The current position of the surface
 	 */
 	virtual void
-	computeIncidentFlux(double currentTime, double* updatedConcOffset, int xi,
-		int surfacePos) = 0;
+	computeIncidentFlux(double currentTime, double* concOffset,
+		double* updatedConcOffset, int xi, int surfacePos) = 0;
 
 	/**
 	 * This operation increments the fluence at the current time step.

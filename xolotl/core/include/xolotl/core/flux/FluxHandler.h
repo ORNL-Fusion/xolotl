@@ -127,8 +127,8 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	virtual void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos);
+	computeIncidentFlux(double currentTime, double*, double* updatedConcOffset,
+		int xi, int surfacePos);
 
 	/**
 	 * \see IFluxHandler.h

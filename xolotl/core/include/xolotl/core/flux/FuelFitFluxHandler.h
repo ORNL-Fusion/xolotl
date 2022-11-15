@@ -5,6 +5,7 @@
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/util/MathUtils.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -39,6 +40,13 @@ private:
 	 */
 	double defectYield;
 
+	// The temperature
+	double temperature;
+
+	// The list of pure vacancy indices
+	std::vector<IdType> pureDefectIds;
+	std::vector<double> pureDefectFactors;
+
 public:
 	/**
 	 * The constructor
@@ -46,7 +54,8 @@ public:
 	FuelFitFluxHandler(const options::IOptions& options) :
 		FluxHandler(options),
 		xeYield(options.getFissionYield()),
-		defectYield(1.0e4)
+		defectYield(1.0e4),
+		temperature(options.getTempParam(0))
 	{
 	}
 
@@ -84,6 +93,17 @@ public:
 				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
+		pureDefectIds.push_back(cluster.getId());
+
+		comp[NetworkType::Species::V] = 2;
+		cluster = neNetwork.findCluster(comp, plsm::HostMemSpace{});
+		// Check that the helium cluster is present in the network
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::string("\nThe di-vacancy cluster is not "
+							  "present in the network, "
+							  "cannot use the flux option!");
+		}
+		pureDefectIds.push_back(cluster.getId());
 
 		comp[NetworkType::Species::V] = 0;
 		comp[NetworkType::Species::I] = 1;
@@ -107,6 +127,56 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 
+		// Read the information from the text file
+		pureDefectFactors = std::vector<double>(2, 0.0);
+		constexpr double k_B = ::xolotl::core::kBoltzmann;
+		std::ifstream reactionFile;
+		reactionFile.open("reactionRates.txt");
+		// Get the line
+		std::string line;
+		getline(reactionFile, line);
+		// Read the first line
+		std::vector<double> tokens;
+		util::Tokenizer<double>{line}(tokens);
+		// And start looping on the lines
+		while (tokens.size() > 0) {
+			// Find the Id of the cluster
+			NetworkType::Composition comp = NetworkType::Composition::zero();
+			comp[NetworkType::Species::Xe] = static_cast<IdType>(tokens[0]);
+			comp[NetworkType::Species::V] = static_cast<IdType>(tokens[1]);
+			comp[NetworkType::Species::I] = static_cast<IdType>(tokens[2]);
+
+			if (comp[NetworkType::Species::Xe] > 0 or
+				comp[NetworkType::Species::I] > 0) {
+				getline(reactionFile, line);
+				if (line == "Reactions")
+					break;
+				tokens = util::Tokenizer<double>{line}();
+				continue;
+			}
+
+			// Get the largetG0
+			double largestG0 = tokens[3] - k_B * temperature * tokens[4];
+			//			for (auto i = 3; i < tokens.size(); i += 4) {
+			//				auto g0 = tokens[i] - k_B * temperature * tokens[i +
+			// 1]; 				if (g0 < largestG0) largestG0 = g0;
+			//			}
+			// Loop on the linked clusters
+			for (auto i = 3; i < tokens.size(); i += 4) {
+				// Get its properties
+				auto g0 = tokens[i] - k_B * temperature * tokens[i + 1];
+				pureDefectFactors[comp[NetworkType::Species::V] - 1] +=
+					comp[NetworkType::Species::V] *
+					std::exp((largestG0 - g0) / (k_B * temperature));
+			}
+
+			getline(reactionFile, line);
+			if (line == "Reactions")
+				break;
+
+			tokens = util::Tokenizer<double>{line}();
+		}
+
 		return;
 	}
 
@@ -114,16 +184,24 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+	computeIncidentFlux(double currentTime, double* concOffset,
+		double* updatedConcOffset, int xi, int surfacePos)
 	{
 		// Skip if no index was set
 		if (fluxIndices.size() == 0)
 			return;
 
-		// Xe
-		updatedConcOffset[fluxIndices[0]] += defectYield * fluxAmplitude; // V
-		updatedConcOffset[fluxIndices[1]] += defectYield * fluxAmplitude; // I
+		// Compute the available site fraction
+		double availVFraction = 1.0; // nm-3
+		for (auto i = 0; i < pureDefectFactors.size(); i++) {
+			availVFraction -=
+				concOffset[pureDefectIds[i]] * pureDefectFactors[i];
+		}
+
+		updatedConcOffset[fluxIndices[0]] +=
+			defectYield * fluxAmplitude * availVFraction; // V
+		updatedConcOffset[fluxIndices[1]] +=
+			defectYield * fluxAmplitude * availVFraction; // I
 		updatedConcOffset[fluxIndices[2]] += xeYield * fluxAmplitude; // Xe
 
 		return;

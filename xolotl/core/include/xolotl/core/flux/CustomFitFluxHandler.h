@@ -275,8 +275,8 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+	computeIncidentFlux(double currentTime, double*, double* updatedConcOffset,
+		int xi, int surfacePos)
 	{
 		// Recompute the flux vector if a time profile is used
 		if (useTimeProfile) {

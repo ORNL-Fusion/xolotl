@@ -797,7 +797,7 @@ PetscSolver2DHandler::updateConcentration(
 
 			// ----- Account for flux of incoming particles -----
 			fluxHandler->computeIncidentFlux(
-				ftime, updatedConcOffset, xi, surfacePosition[yj]);
+				ftime, concOffset, updatedConcOffset, xi, surfacePosition[yj]);
 
 			// ---- Compute diffusion over the locally owned part of the grid
 			// -----
