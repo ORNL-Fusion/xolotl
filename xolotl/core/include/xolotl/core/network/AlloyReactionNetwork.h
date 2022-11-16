@@ -34,7 +34,8 @@ public:
 	IndexType
 	checkLargestClusterId();
 
-	void setConstantRates(RateVector) override
+	void
+	setConstantRates(RateVector) override
 	{
 	}
 

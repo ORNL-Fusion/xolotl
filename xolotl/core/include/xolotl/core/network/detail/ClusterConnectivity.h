@@ -65,7 +65,7 @@ public:
 	IndexType
 	operator()(IndexType rowId, IndexType columnId) const
 	{
-        return getPosition(rowId, columnId, *this);
+		return getPosition(rowId, columnId, *this);
 	}
 
 	std::uint64_t

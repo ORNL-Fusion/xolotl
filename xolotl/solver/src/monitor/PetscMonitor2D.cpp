@@ -2154,7 +2154,7 @@ PetscMonitor2D::monitorSurface(
 		// Render and save in file
 		std::stringstream fileName;
 		fileName << "surface_TS" << timestep << ".png";
-		_surfacePlot->write(fileName.str());
+		_surfacePlot->render(fileName.str());
 	}
 
 	// Restore the solutionArray
