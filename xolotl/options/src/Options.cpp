@@ -147,7 +147,7 @@ Options::readParams(int argc, const char* argv[])
 		"Number of dimensions for the simulation.")("material",
 		bpo::value<std::string>(&materialName),
 		"The material options are as follows: {W100, W110, W111, "
-		"W211, Pulsed, Fuel, Fe, 800H}.")("initialConc",
+		"W211, Pulsed, Fuel, Fe, 800H, AlphaZr}.")("initialConc",
 		bpo::value<std::string>(&initialConcentration),
 		"The name, size, and value of the initial concentration in the "
 		"material.")("zeta", bpo::value<double>(&zeta)->default_value(0.73),
@@ -188,7 +188,7 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"This option allows the user to define the boundaries of the network. "
 		"To do so, simply write the values in order "
-		"maxHe/Xe maxD maxT maxV maxI.")("radiusSize",
+		"maxHe/Xe/Basal maxD maxT maxV maxI.")("radiusSize",
 		bpo::value<std::string>(),
 		"This option allows the user to set a minimum size for the computation "
 		"for the average radii, in the same order as the netParam option "

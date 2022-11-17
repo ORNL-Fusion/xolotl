@@ -47,12 +47,16 @@ to run the code:
 
 as described in [Running
 Xolotl](https://github.com/ORNL-Fusion/xolotl/wiki/Running-Xolotl), with the
-description of the available options at [Parameter
-File](https://github.com/ORNL-Fusion/xolotl/wiki/Parameter-File).
+description of the different options at [Parameter
+File](https://github.com/ORNL-Fusion/xolotl/wiki/Parameter-File) and [PETSc Options]
+(https://github.com/ORNL-Fusion/xolotl/wiki/PETSc-Options).
 
 ## More Info
 If you want to contribute please check
 [Guidelines](https://github.com/ORNL-Fusion/xolotl/wiki/Guidelines).
+
+A list of publications using Xolotl is available at 
+[Publications](https://github.com/ORNL-Fusion/xolotl/wiki/Publications). 
 
 For any question you can send an email to our mailing list:
 xolotl-psi-development@lists.sourceforge.net.
