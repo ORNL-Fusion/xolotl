@@ -496,18 +496,20 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 		for (auto size = minSize; size <= maxSize; size++) {
 			// Compute possible ratio
-			double minRatio = size, maxRatio = 0.0;
-			for (auto k : makeIntervalRange(tReg[Species::Trapped]))
-				for (auto l : makeIntervalRange(fReg[Species::Free])) {
-					if (l + k != size)
-						continue;
-					// Band condition
-					double ratio = fabs((double)(l - k)) / (double)(l + k);
-					if (ratio < minRatio)
-						minRatio = ratio;
-					if (ratio > maxRatio)
-						maxRatio = ratio;
-				}
+			auto maxL = util::min(size - tReg[Species::Trapped].begin(),
+				fReg[Species::Free].end() - 1);
+			auto minL = util::max(size - tReg[Species::Trapped].end() + 1,
+				fReg[Species::Free].begin());
+
+			double minRatio =
+				fabs((double)size - (double)(2 * maxL)) / (double)size;
+			double maxRatio =
+				fabs((double)size - (double)(2 * minL)) / (double)size;
+			if (minRatio > maxRatio) {
+				double temp = minRatio;
+				minRatio = maxRatio;
+				maxRatio = temp;
+			}
 
 			// Junction case
 			if (minRatio < 0.5) {
@@ -588,29 +590,24 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 		for (auto size = minSize; size <= maxSize; size++) {
 			// Compute possible ratio
-			double minRatio = size, maxRatio = 0.0;
-			IndexType kMin = lReg[Species::Loop].end(), kMax = 0,
-					  lMin = fReg[Species::Free].end(), lMax = 0;
-			for (auto k : makeIntervalRange(lReg[Species::Loop]))
-				for (auto l : makeIntervalRange(fReg[Species::Free])) {
-					if (l + k != size)
-						continue;
-					// Band condition
-					double ratio = fabs((double)(l - k)) / (double)(l + k);
-					;
-					if (ratio < minRatio)
-						minRatio = ratio;
-					if (ratio > maxRatio)
-						maxRatio = ratio;
-					if (k < kMin)
-						kMin = k;
-					if (k > kMax)
-						kMax = k;
-					if (l < lMin)
-						lMin = l;
-					if (l > lMax)
-						lMax = l;
-				}
+			auto maxL = util::min(size - lReg[Species::Loop].begin(),
+				fReg[Species::Free].end() - 1);
+			auto minL = util::max(size - lReg[Species::Loop].end() + 1,
+				fReg[Species::Free].begin());
+			auto maxK = util::min(size - fReg[Species::Free].begin(),
+				lReg[Species::Loop].end() - 1);
+			auto minK = util::max(size - fReg[Species::Free].end() + 1,
+				lReg[Species::Loop].begin());
+
+			double minRatio =
+				fabs((double)size - (double)(2 * maxL)) / (double)size;
+			double maxRatio =
+				fabs((double)size - (double)(2 * minL)) / (double)size;
+			if (minRatio > maxRatio) {
+				double temp = minRatio;
+				minRatio = maxRatio;
+				maxRatio = temp;
+			}
 
 			// Junction case
 			if (minRatio < 0.5) {
@@ -628,7 +625,7 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Trapped of Loop case
 			if (maxRatio > 0.5) {
 				// Loop
-				if (lMin < kMax) {
+				if (minL < maxK) {
 					Composition comp = Composition::zero();
 					comp[Species::Loop] = size;
 					comp[Species::Trap] = 1;
@@ -641,7 +638,7 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					}
 				}
 				// Trapped
-				if (kMin < lMax) {
+				if (minK < maxL) {
 					Composition comp = Composition::zero();
 					comp[Species::Trapped] = size;
 					comp[Species::Trap] = 1;
