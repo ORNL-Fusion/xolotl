@@ -48,8 +48,8 @@ to run the code:
 as described in [Running
 Xolotl](https://github.com/ORNL-Fusion/xolotl/wiki/Running-Xolotl), with the
 description of the different options at [Parameter
-File](https://github.com/ORNL-Fusion/xolotl/wiki/Parameter-File) and [PETSc Options]
-(https://github.com/ORNL-Fusion/xolotl/wiki/PETSc-Options).
+File](https://github.com/ORNL-Fusion/xolotl/wiki/Parameter-File) and 
+[PETSc Options](https://github.com/ORNL-Fusion/xolotl/wiki/PETSc-Options).
 
 ## More Info
 If you want to contribute please check
