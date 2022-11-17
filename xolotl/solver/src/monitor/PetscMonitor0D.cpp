@@ -796,6 +796,7 @@ PetscMonitor0D::computeFeCrAl(
 		}
 	}
 
+	// TODO: move to network
 	// Compute the sink strength for the previous rates
 	auto density = _solverHandler->getSinkDensity(); // nm-2
 	auto portion = _solverHandler->getSinkPortion();
@@ -873,8 +874,11 @@ PetscMonitor0D::computeFeCrAl(
 			2.0 * network.getTotalRadiusConcentration(dConcs, id, 1);
 		myData[(4 * id()) + 3] = 2.0 *
 			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]);
-		myData[myData.size() - 1] +=
-			network.getSmallConcentration(dConcs, id, minSizes[id()]);
+		// Black dots
+		if (network.getSpeciesLabel(id) == "Trap")
+			myData[myData.size() - 1] +=
+				network.getSmallConcentration(dConcs, id, minSizes[id()]);
+		// 111
 		if (network.getSpeciesLabel(id) == "Free" or
 			network.getSpeciesLabel(id) == "Trapped") {
 			myData[myData.size() - 3] += myData[(4 * id()) + 1];
