@@ -2,8 +2,6 @@
 
 #include <string>
 
-#include <Kokkos_View.hpp>
-
 #include <xolotl/core/network/ReactionNetworkTraits.h>
 
 namespace xolotl

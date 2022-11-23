@@ -62,7 +62,8 @@ public:
 	{
 	}
 
-	static detail::CoefficientsView allocateCoefficientsView(IndexType)
+	static detail::CoefficientsView
+	allocateCoefficientsView(IndexType)
 	{
 		return detail::CoefficientsView();
 	}

@@ -22,7 +22,10 @@ class Context
 {
 public:
 	Context(int& argc, const char* argv[]) :
-		_kokkosContext(argc, const_cast<char**>(argv))
+		_kokkosContext((!Kokkos::is_initialized() && !Kokkos::is_finalized()) ?
+				std::make_unique<Kokkos::ScopeGuard>(
+					argc, const_cast<char**>(argv)) :
+				nullptr)
 	{
 		if (!initialized()) {
 			util::mpiInit(argc, argv);
@@ -57,7 +60,7 @@ public:
 
 private:
 	bool _mpiInitializedHere{false};
-	Kokkos::ScopeGuard _kokkosContext;
+	std::unique_ptr<Kokkos::ScopeGuard> _kokkosContext;
 };
 
 std::shared_ptr<solver::Solver>
@@ -111,6 +114,9 @@ try {
 	int rank;
 	MPI_Comm_rank(xolotlComm, &rank);
 
+	options::Options opts;
+	opts.readParams(argc, argv);
+
 	if (rank == 0) {
 		// Print the start message
 		XOLOTL_LOG << "Starting Xolotl (" << getExactVersionString() << ")\n";
@@ -119,9 +125,6 @@ try {
 		std::time_t currentTime = std::time(NULL);
 		XOLOTL_LOG << std::asctime(std::localtime(&currentTime)) << std::flush;
 	}
-
-	options::Options opts;
-	opts.readParams(argc, argv);
 
 	// Setup the solver
 	solver = factory::solver::SolverFactory::get().generate(opts);

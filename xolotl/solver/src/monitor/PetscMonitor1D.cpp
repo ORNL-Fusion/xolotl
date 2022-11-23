@@ -1884,7 +1884,7 @@ PetscMonitor1D::monitorScatter(
 		// Render and save in file
 		std::stringstream fileName;
 		fileName << "Scatter_TS" << timestep << ".png";
-		_scatterPlot->write(fileName.str());
+		_scatterPlot->render(fileName.str());
 	}
 
 	// Restore the solutionArray
@@ -2877,7 +2877,7 @@ PetscMonitor1D::monitorSeries(
 		// Render and save in file
 		std::stringstream fileName;
 		fileName << "log_series_TS" << timestep << ".ppm";
-		_seriesPlot->write(fileName.str());
+		_seriesPlot->render(fileName.str());
 	}
 
 	else {

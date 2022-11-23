@@ -1,3 +1,6 @@
+#include <algorithm>
+#include <cctype>
+
 #include <boost/log/attributes.hpp>
 #include <boost/log/core.hpp>
 #include <boost/log/expressions.hpp>
@@ -17,6 +20,15 @@ namespace xolotl
 {
 namespace util
 {
+std::string
+toUpper(const std::string& s)
+{
+	auto sret = s;
+	std::transform(begin(sret), end(sret), begin(sret),
+		[](unsigned char c) { return std::toupper(c); });
+	return sret;
+}
+
 BOOST_LOG_ATTRIBUTE_KEYWORD(severity, "Severity", Log::Level)
 BOOST_LOG_ATTRIBUTE_KEYWORD(process_id, "ProcessID",
 	boost::log::attributes::current_process_id::value_type)
@@ -32,19 +44,34 @@ getNativeProcessId(boost::log::value_ref<
 	return 0;
 }
 
+using LevelType = std::underlying_type_t<Log::Level>;
+
+static std::string levelStrings[] = {
+	"DEBUG", "EXTRA", "INFO", "WARNING", "ERROR"};
+
 const char*
 toString(Log::Level level)
 {
-	static const char* strings[] = {
-		"DEBUG", "EXTRA", "INFO", "WARNING", "ERROR"};
-
-	auto l = static_cast<std::size_t>(level);
-	if (l < sizeof(strings) / sizeof(*strings)) {
-		return strings[level];
+	auto l = static_cast<LevelType>(level);
+	// if (l < sizeof(levelStrings) / sizeof(*levelStrings)) {
+	if (l < sizeof(levelStrings)) {
+		return levelStrings[level].c_str();
 	}
 	else {
 		return nullptr;
 	}
+}
+
+Log::Level
+logLevelFromString(const std::string& levelStr)
+{
+	auto str = toUpper(levelStr);
+	auto it = std::find(std::begin(levelStrings), std::end(levelStrings), str);
+	if (it == std::end(levelStrings)) {
+		throw std::runtime_error(
+			"invalid logging output threshold level specified: " + levelStr);
+	}
+	return static_cast<Log::Level>(std::distance(std::begin(levelStrings), it));
 }
 
 std::ostream&
@@ -55,13 +82,14 @@ operator<<(std::ostream& os, Log::Level level)
 		os << str;
 	}
 	else {
-		os << static_cast<int>(level);
+		os << static_cast<LevelType>(level);
 	}
 
 	return os;
 }
 
-Log::Log()
+void
+setupLogs()
 {
 	namespace keywords = boost::log::keywords;
 	namespace expr = boost::log::expressions;
@@ -91,9 +119,17 @@ Log::Log()
 	std::string logFileExt = ".log";
 	std::string mpiRankString = "";
 	if (mpiReady) {
-		auto rank = std::to_string(getMPIRank());
-		logFileBaseName += "_" + rank;
-		mpiRankString = "(R" + rank + ") ";
+		auto rank = getMPIRank();
+
+		if (Log::_threshold > Log::Level::extra) {
+			if (rank > 0) {
+				return;
+			}
+		}
+
+		auto rankStr = std::to_string(rank);
+		logFileBaseName += "_" + rankStr;
+		mpiRankString = "(R" + rankStr + ") ";
 	}
 	boost::log::add_file_log(keywords::file_name = logFileBaseName + logFileExt,
 		keywords::format = expr::stream
@@ -112,6 +148,26 @@ Log::Log()
 			<< "MPI rank will not be included in log messages because MPI has "
 			   "not been initialized";
 	}
+}
+
+Log::Level Log::_threshold = Log::Level::info;
+
+Log::Log()
+{
+	setupLogs();
+}
+
+void
+Log::setLevelThreshold(Log::Level level)
+{
+	_threshold = level;
+	boost::log::core::get()->set_filter(severity >= level);
+}
+
+void
+Log::setLevelThreshold(const std::string& levelString)
+{
+	setLevelThreshold(logLevelFromString(levelString));
 }
 
 Log::LoggerType&
