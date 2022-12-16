@@ -52,7 +52,7 @@ DiffusionHandler::initialize(
 		diffusingClusters.emplace_back(i);
 
 		// Add a matrix entry for this cluster
-		idPairs.push_back({i, i});
+		idPairs.push_back(core::RowColPair{i, i});
 	}
 
     this->syncDiffusingClusters(network);

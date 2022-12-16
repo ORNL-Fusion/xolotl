@@ -724,6 +724,7 @@ PetscSolver2DHandler::updateConcentration(
 			auto updatedConcOffset =
 				subview(updatedConcs, yj, xi, Kokkos::ALL).view();
 
+			// FIXME: xi is out-of-range at some points
 			// Set the grid fraction
 			gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
 								  grid[surfacePosition[yj] + 1]) /
@@ -1069,6 +1070,7 @@ PetscSolver2DHandler::computeJacobian(
 			// Get the concentrations at this grid point
 			auto concOffset = subview(concs, yj, xi, Kokkos::ALL).view();
 
+			// FIXME: xi is out-of-range at some points
 			// Set the grid fraction
 			gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
 								  grid[surfacePosition[yj] + 1]) /
