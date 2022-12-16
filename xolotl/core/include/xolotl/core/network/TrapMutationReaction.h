@@ -62,7 +62,8 @@ public:
 		const ClusterData& clusterData, IndexType reactionId,
 		const detail::ClusterSet& clusterSet);
 
-	static detail::CoefficientsView allocateCoefficientsView(IndexType)
+	static detail::CoefficientsView
+	allocateCoefficientsView(IndexType)
 	{
 		return detail::CoefficientsView();
 	}

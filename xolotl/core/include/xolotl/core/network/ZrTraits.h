@@ -63,8 +63,8 @@ struct SpeciesForGrouping<ZrSpecies, 3>
 	static constexpr auto last = Sequence(ZrSpecies::I);
 
 	KOKKOS_INLINE_FUNCTION
-	static constexpr std::underlying_type_t<ZrSpecies> mapToMomentId(
-		EnumSequence<ZrSpecies, 3>)
+	static constexpr std::underlying_type_t<ZrSpecies>
+	mapToMomentId(EnumSequence<ZrSpecies, 3>)
 	{
 		return 0;
 	}
