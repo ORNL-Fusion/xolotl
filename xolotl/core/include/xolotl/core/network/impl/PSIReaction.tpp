@@ -1,6 +1,7 @@
 #pragma once
 
-#include <xolotl/core/network/PSIClusterGenerator.h>
+#include <boost/math/special_functions/gamma.hpp>
+
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/core/network/impl/SinkReaction.tpp>
 #include <xolotl/core/network/impl/TrapMutationReaction.tpp>
@@ -16,13 +17,148 @@ template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
 double
 getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
-	const double r1, const double dc0, const double dc1)
+	const double r1, const double dc0, const double dc1,
+	const double temperature, const double atomicVolume)
 {
 	constexpr double pi = ::xolotl::core::pi;
 
 	double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
 
-	return kPlus;
+	using Species = typename TRegion::EnumIndex;
+	xolotl::core::network::detail::Composition<typename TRegion::VectorType,
+		Species>
+		lo0 = pairCl0Reg.getOrigin();
+	xolotl::core::network::detail::Composition<typename TRegion::VectorType,
+		Species>
+		lo1 = pairCl1Reg.getOrigin();
+
+	// If both are pure helium
+	if (lo0.isOnAxis(Species::He) and lo1.isOnAxis(Species::He))
+		return kPlus;
+
+	// If no helium is involved
+	if (lo0[Species::He] == 0 or lo1[Species::He] == 0)
+		return kPlus;
+
+	// He + HeV
+	xolotl::core::network::detail::Composition<typename TRegion::VectorType,
+		Species>
+		hi0 = pairCl0Reg.getUpperLimitPoint();
+	xolotl::core::network::detail::Composition<typename TRegion::VectorType,
+		Species>
+		hi1 = pairCl1Reg.getUpperLimitPoint();
+
+	// Get the pure helium and bubble radii
+	double rHe = (lo0[Species::V] == 0) ? r0 : r1;
+	double rB = (lo0[Species::V] == 0) ? r1 : r0;
+
+	// Other constants
+	double beta =
+		(temperature > 0.0) ? 1.0 / (temperature * 1.380649e-23) : 0.0;
+	double T = temperature - 273.15;
+	double nu = 0.28005 + 0.05744e-4 * T + 0.54e-8 * T * T; // Poisson ratio
+	double gamma = 8.27 - 0.0032 * temperature; // W/He interface free energy
+
+	// Relaxation radius
+	auto nHe = (lo0[Species::V] == 0) ? lo0[Species::He] : lo1[Species::He];
+	double factor = 0.0;
+	switch (nHe) {
+	case 1:
+		factor = 0.36;
+		break;
+	case 2:
+		factor = 0.8;
+		break;
+	case 3:
+		factor = 1.16;
+		break;
+	case 4:
+		factor = 1.65;
+		break;
+	case 5:
+		factor = 2.03;
+		break;
+	case 6:
+		factor = 2.5; // TODO: update
+		break;
+	case 7:
+		factor = 3.0; // TODO: update
+		break;
+	}
+	double relaxVolume = factor * atomicVolume * 1.0e-27; // m^3
+
+	// Pressure
+	double vB =
+		(4.0 / 3.0) * ::xolotl::core::pi * rB * rB * rB * 1.0e-27; // m^3
+	double nHeB = (lo0[Species::V] == 0) ?
+		(double)(lo1[Species::He] + hi1[Species::He] - 1) / 2.0 :
+		(double)(lo0[Species::He] + hi0[Species::He] - 1) / 2.0;
+	double coeff_c =
+		(22.575 + 0.0064655 * temperature - 7.2645 * sqrt(1.0 / temperature));
+	double coeff_b = (-12.483 - 0.024549 * temperature);
+	double coeff_a = (1.0596 + 0.10604 * temperature -
+		19.641 * sqrt(1.0 / temperature) + (189.84 / temperature));
+	double coeff_d = -(vB / nHeB) * 6.023 * 1.0e29;
+
+	double d = coeff_d / coeff_a;
+	double c = coeff_c / coeff_a;
+	double b = coeff_b / coeff_a;
+	double a = b;
+	b = c, c = d;
+
+	double Q = (a * a - 3.0 * b) / 9.0;
+	double R = (2.0 * a * a * a - 9.0 * a * b + 27.0 * c) / 54.0;
+
+	double pMLB = 0.0;
+	if (R * R < Q * Q * Q) {
+		double theta = acos(R / sqrt(Q * Q * Q));
+		pMLB = -2.0 * sqrt(Q) * cos(theta / 3.0) - (a / 3.0);
+	}
+	else {
+		double A = -((R > 0) - (R < 0)) *
+			pow(fabs(R) + sqrt(R * R - Q * Q * Q), 1.0 / 3.0);
+		double B = Q / A;
+		pMLB = (A + B) - (a / 3.0);
+	}
+
+	double P = 1.0e8 * (1.0 / (pMLB * pMLB * pMLB)); // Pressure P is in Pa
+
+	// A(T)
+	double rBCube = rB * rB * rB * 1.0e-27; // m^3
+	double AT = (relaxVolume / 2.0) * ((1.0 + nu) / (1.0 - 2.0 * nu)) *
+		(P - (2.0 * gamma) / (rB * 1.0e-9)) * rBCube;
+
+	// Skip smaller clusters
+	double nV = (lo0[Species::V] + hi0[Species::V] + lo1[Species::V] +
+					hi1[Species::V] - 2) /
+		2.0;
+	if ((P - (2.0 * gamma) / (rB * 1.0e-9)) <= 0.0) {
+		//		std::cout << nHe << " " << lo0[Species::He] + lo1[Species::He] -
+		//nHe << " " << hi0[Species::He] + hi1[Species::He] - nHe - 2
+		//				 << " " << lo0[Species::V] + lo1[Species::V] << " " <<
+		//hi0[Species::V] + hi1[Species::V] - 2 << " " << rB << " " << 1 <<
+		//std::endl;
+		return kPlus;
+	}
+
+	// Incomplete gamma
+	auto upper = boost::math::tgamma(1.0 / 3.0, beta * AT / rBCube);
+	auto full = std::tgamma(1.0 / 3.0);
+
+	// Effective radius
+	double rEff = 3.0e9 * pow(beta * AT, 1.0 / 3.0) / (full - upper); // nm
+
+	// Remove changes that are too large
+	if (rEff / rB > 6.0)
+		return kPlus;
+
+	//	std::cout << nHe << " " << lo0[Species::He] + lo1[Species::He] - nHe <<
+	//" " << hi0[Species::He] + hi1[Species::He] - nHe - 2
+	//			 << " " << lo0[Species::V] + lo1[Species::V] << " " <<
+	//hi0[Species::V] + hi1[Species::V] - 2 << " " << rEff << " " << rEff / rB
+	//<< std::endl;
+
+	return 4.0 * pi * (rEff + rHe) * (dc0 + dc1);
 }
 
 template <typename TSpeciesEnum>
@@ -39,7 +175,11 @@ PSIProductionReaction<TSpeciesEnum>::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	double temperature = cl0.getTemperature(gridIndex);
+	double atomicVolume = this->_clusterData->atomicVolume();
+
+	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1,
+		temperature, atomicVolume);
 }
 
 template <typename TSpeciesEnum>
@@ -56,7 +196,11 @@ PSIDissociationReaction<TSpeciesEnum>::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	double temperature = cl0.getTemperature(gridIndex);
+	double atomicVolume = this->_clusterData->atomicVolume();
+
+	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1,
+		temperature, atomicVolume);
 }
 
 template <typename TSpeciesEnum>
@@ -172,7 +316,8 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 		AmountType lowerV = 16, higherV = 31;
 		AmountType minV = 1;
 		for (auto i = 1; i < higherV; i++) {
-			auto maxHe = psi::getMaxHePerV(i, 4.0);
+			auto maxHe = util::getMaxHePerVLoop(
+				i, this->_clusterData->latticeParameter(), 1000.0);
 			if (comp[Species::He] > maxHe)
 				minV = i;
 		}

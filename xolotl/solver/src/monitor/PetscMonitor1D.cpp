@@ -9,6 +9,7 @@
 #include <xolotl/solver/monitor/PetscMonitorFunctions.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/util/MathUtils.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 
 namespace xolotl
@@ -1889,8 +1890,6 @@ PetscMonitor1D::eventFunction(
 
 		// The depth parameter to know where the bursting should happen
 		double depthParam = _solverHandler->getTauBursting(); // nm
-		// The number of He per V in a bubble
-		double heVRatio = _solverHandler->getHeVRatio();
 
 		// For now we are not bursting
 		bool burst = false;
@@ -1919,8 +1918,15 @@ PetscMonitor1D::eventFunction(
 					psiNetwork->getTotalAtomConcentration(dConcs, specIdHe, 1);
 
 				// Compute the radius of the bubble from the number of helium
-				double nV = heDensity * (grid[xi + 1] - grid[xi]) / heVRatio;
 				double latticeParam = network.getLatticeParameter();
+				double nHe = heDensity * (grid[xi + 1] - grid[xi]);
+				double nV = 0.0, nHeLoop = 0.0;
+				while (nHe > nHeLoop) {
+					nV = nV + 1.0;
+					nHeLoop = util::getMaxHePerVLoop(
+						nV, latticeParam, gridPointSolution[dof]);
+				}
+
 				double tlcCubed = latticeParam * latticeParam * latticeParam;
 				double radius = (sqrt(3.0) / 4) * latticeParam +
 					cbrt((3.0 * tlcCubed * nV) / (8.0 * core::pi)) -

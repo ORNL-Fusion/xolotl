@@ -51,7 +51,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
@@ -602,7 +603,8 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
@@ -874,7 +876,8 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType network({maxHe, maxV, maxI}, 1, opts);
 
 	BOOST_REQUIRE(!network.hasDeuterium());
@@ -1170,7 +1173,8 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxV, maxI}, 1, opts);
 
@@ -1519,7 +1523,8 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxT, maxV, maxI}, 1, opts);
 

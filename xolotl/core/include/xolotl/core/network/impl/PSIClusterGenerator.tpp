@@ -21,7 +21,10 @@ PSIClusterGenerator<TSpeciesEnum>::PSIClusterGenerator(
 	_groupingMin(opts.getGroupingMin()),
 	_groupingWidthA(opts.getGroupingWidthA()),
 	_groupingWidthB(opts.getGroupingWidthB()),
-	_hevRatio(opts.getHeVRatio())
+	_temperature(opts.getTempParam()),
+	_lattice(opts.getLatticeParameter() <= 0.0 ?
+			xolotl::core::tungstenLatticeConstant :
+			opts.getLatticeParameter())
 {
 }
 
@@ -38,7 +41,10 @@ PSIClusterGenerator<TSpeciesEnum>::PSIClusterGenerator(
 	_groupingMin(opts.getGroupingMin()),
 	_groupingWidthA(opts.getGroupingWidthA()),
 	_groupingWidthB(opts.getGroupingWidthB()),
-	_hevRatio(opts.getHeVRatio())
+	_temperature(opts.getTempParam()),
+	_lattice(opts.getLatticeParameter() <= 0.0 ?
+			xolotl::core::tungstenLatticeConstant :
+			opts.getLatticeParameter())
 {
 }
 
@@ -49,9 +55,9 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	const Region& region, BoolArray& result) const
 {
 	using detail::toIndex;
-	using psi::getMaxHePerV;
 	using psi::hasDeuterium;
 	using psi::hasTritium;
+	using util::getMaxHePerVLoop;
 
 	for (auto& r : result) {
 		r = true;
@@ -137,18 +143,23 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	}
 
 	// Else refine around the edge
-	auto maxDPerV = [hevRatio = _hevRatio, maxD = _maxD](AmountType amtV) {
-		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio) * (maxD > 0);
+	auto maxDPerV = [lattice = _lattice, temperature = _temperature,
+						maxD = _maxD](AmountType amtV) {
+		return (2.0 / 3.0) * getMaxHePerVLoop(amtV, lattice, temperature) *
+			(maxD > 0);
 	};
-	auto maxTPerV = [hevRatio = _hevRatio, maxT = _maxT](AmountType amtV) {
-		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio) * (maxT > 0);
+	auto maxTPerV = [lattice = _lattice, temperature = _temperature,
+						maxT = _maxT](AmountType amtV) {
+		return (2.0 / 3.0) * getMaxHePerVLoop(amtV, lattice, temperature) *
+			(maxT > 0);
 	};
 	if (hi[Species::V] > 1) {
 		double factor = 1.0e-1;
 
-		if (lo[Species::He] <= getMaxHePerV(hi[Species::V] - 1, _hevRatio) &&
+		if (lo[Species::He] <=
+				getMaxHePerVLoop(hi[Species::V] - 1, _lattice, _temperature) &&
 			hi[Species::He] - 1 >=
-				getMaxHePerV(lo[Species::V] - 1, _hevRatio)) {
+				getMaxHePerVLoop(lo[Species::V] - 1, _lattice, _temperature)) {
 			if constexpr (hasDeuterium<Species>) {
 				if (region[Species::D].length() <
 					util::max((double)(_groupingWidthA + 1),
@@ -287,9 +298,9 @@ KOKKOS_INLINE_FUNCTION
 bool
 PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 {
-	using psi::getMaxHePerV;
 	using psi::hasDeuterium;
 	using psi::hasTritium;
+	using util::getMaxHePerVLoop;
 
 	// Remove 0
 	auto isZeroPoint = [](const Region& reg) {
@@ -382,8 +393,9 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		}
 	}
 
-	auto maxHPerV = [hevRatio = _hevRatio](AmountType amtV) {
-		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio);
+	auto maxHPerV = [lattice = _lattice, temperature = _temperature](
+						AmountType amtV) {
+		return (2.0 / 3.0) * getMaxHePerVLoop(amtV, lattice, temperature);
 	};
 
 	// The edge
@@ -391,11 +403,11 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		Composition lo = region.getOrigin();
 		Composition hi = region.getUpperLimitPoint();
 		auto hiV = util::min(hi[Species::V] - 1, _maxV);
-		auto hiHe =
-			util::min(hi[Species::He] - 1, getMaxHePerV(_maxV, _hevRatio));
+		auto hiHe = util::min(hi[Species::He] - 1,
+			(AmountType)getMaxHePerVLoop(_maxV, _lattice, _temperature));
 
 		// Too many helium
-		if (lo[Species::He] > getMaxHePerV(hiV, _hevRatio)) {
+		if (lo[Species::He] > getMaxHePerVLoop(hiV, _lattice, _temperature)) {
 			return false;
 		}
 
@@ -673,6 +685,7 @@ PSIClusterGenerator<TSpeciesEnum>::getReactionRadius(
 {
 	const auto& reg = cluster.getRegion();
 	double radius = 0.0;
+
 	if (reg.isSimplex()) {
 		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {
