@@ -134,10 +134,10 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		2.0;
 	if ((P - (2.0 * gamma) / (rB * 1.0e-9)) <= 0.0) {
 		//		std::cout << nHe << " " << lo0[Species::He] + lo1[Species::He] -
-		//nHe << " " << hi0[Species::He] + hi1[Species::He] - nHe - 2
+		// nHe << " " << hi0[Species::He] + hi1[Species::He] - nHe - 2
 		//				 << " " << lo0[Species::V] + lo1[Species::V] << " " <<
-		//hi0[Species::V] + hi1[Species::V] - 2 << " " << rB << " " << 1 <<
-		//std::endl;
+		// hi0[Species::V] + hi1[Species::V] - 2 << " " << rB << " " << 1 <<
+		// std::endl;
 		return kPlus;
 	}
 
@@ -155,7 +155,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	//	std::cout << nHe << " " << lo0[Species::He] + lo1[Species::He] - nHe <<
 	//" " << hi0[Species::He] + hi1[Species::He] - nHe - 2
 	//			 << " " << lo0[Species::V] + lo1[Species::V] << " " <<
-	//hi0[Species::V] + hi1[Species::V] - 2 << " " << rEff << " " << rEff / rB
+	// hi0[Species::V] + hi1[Species::V] - 2 << " " << rEff << " " << rEff / rB
 	//<< std::endl;
 
 	return 4.0 * pi * (rEff + rHe) * (dc0 + dc1);

@@ -1920,17 +1920,26 @@ PetscMonitor1D::eventFunction(
 				// Compute the radius of the bubble from the number of helium
 				double latticeParam = network.getLatticeParameter();
 				double nHe = heDensity * (grid[xi + 1] - grid[xi]);
-				double nV = 0.0, nHeLoop = 0.0;
+				double nV = 0.0, nHeLoop = 0.0, previousHeLoop = 0.0;
 				while (nHe > nHeLoop) {
+					previousHeLoop = nHeLoop;
 					nV = nV + 1.0;
 					nHeLoop = util::getMaxHePerVLoop(
 						nV, latticeParam, gridPointSolution[dof]);
 				}
+				double portion =
+					(nHe - previousHeLoop) / (nHeLoop - previousHeLoop);
+				nV = nV - 1.0 + portion;
 
 				double tlcCubed = latticeParam * latticeParam * latticeParam;
 				double radius = (sqrt(3.0) / 4) * latticeParam +
 					cbrt((3.0 * tlcCubed * nV) / (8.0 * core::pi)) -
 					cbrt((3.0 * tlcCubed) / (8.0 * core::pi));
+
+				if (nHe < 0.0)
+					radius = 0.0;
+				if (radius < 0.0)
+					radius = 0.0;
 
 				// Add randomness
 				double prob = prefactor *
