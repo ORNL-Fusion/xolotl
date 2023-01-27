@@ -625,18 +625,32 @@ try {
 
 	// Loop on the species
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		myData[6 * id()] = network.getTotalConcentration(dConcs, id, 1);
-		myData[6 * id() + 1] = network.getTotalAtomConcentration(dConcs, id, 1);
-		myData[(6 * id()) + 2] = 2.0 *
-			network.getTotalRadiusConcentration(dConcs, id, 1) /
-			myData[6 * id()];
-		myData[(6 * id()) + 3] =
-			network.getTotalConcentration(dConcs, id, minSizes[id()]);
-		myData[(6 * id()) + 4] =
-			network.getTotalAtomConcentration(dConcs, id, minSizes[id()]);
-		myData[(6 * id()) + 5] = 2.0 *
-			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
+		using Q = core::network::IReactionNetwork::TotalQuantity;
+		auto ms = static_cast<AmountType>(minSizes[id()]);
+		auto totals = network.getTotals(dConcs,
+			{{Q::total, id, 1}, {Q::atom, id, 1}, {Q::radius, id, 1},
+				{Q::total, id, ms}, {Q::atom, id, ms}, {Q::radius, id, ms}});
+
+		myData[6 * id()] = totals[0];
+		myData[6 * id() + 1] = totals[1];
+		myData[(6 * id()) + 2] = 2.0 * totals[2] / myData[6 * id()];
+		myData[(6 * id()) + 3] = totals[3];
+		myData[(6 * id()) + 4] = totals[4];
+		myData[(6 * id()) + 5] = 2.0 * totals[5] /
 			myData[(6 * id()) + 3];
+
+		// myData[6 * id()] = network.getTotalConcentration(dConcs, id, 1);
+		// myData[6 * id() + 1] = network.getTotalAtomConcentration(dConcs, id, 1);
+		// myData[(6 * id()) + 2] = 2.0 *
+		// 	network.getTotalRadiusConcentration(dConcs, id, 1) /
+		// 	myData[6 * id()];
+		// myData[(6 * id()) + 3] =
+		// 	network.getTotalConcentration(dConcs, id, minSizes[id()]);
+		// myData[(6 * id()) + 4] =
+		// 	network.getTotalAtomConcentration(dConcs, id, minSizes[id()]);
+		// myData[(6 * id()) + 5] = 2.0 *
+		// 	network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
+		// 	myData[(6 * id()) + 3];
 	}
 
 	// Output the data

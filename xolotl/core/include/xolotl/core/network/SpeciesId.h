@@ -57,7 +57,7 @@ public:
 
 	template <typename TSpeciesEnum>
 	TSpeciesEnum
-	cast()
+	cast() const
 	{
 		if (!(*this)) {
 			throw InvalidSpeciesId();

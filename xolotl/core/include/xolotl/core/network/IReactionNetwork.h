@@ -10,6 +10,7 @@
 #include <xolotl/core/network/detail/ClusterConnectivity.h>
 #include <xolotl/core/network/detail/ClusterData.h>
 #include <xolotl/core/network/detail/ReactionData.h>
+#include <xolotl/util/Array.h>
 
 namespace xolotl
 {
@@ -421,6 +422,27 @@ public:
 	 */
 	virtual IndexType
 	getDiagonalFill(SparseFillMap& fillMap) = 0;
+
+	struct TotalQuantity
+	{
+		enum Type
+		{
+			total,
+			atom,
+			radius,
+			volume,
+			trapped,
+			numQuantities
+		};
+
+		Type type;
+		SpeciesId species;
+		AmountType minSize = 0;
+	};
+
+	virtual std::vector<double>
+	getTotals(ConcentrationsView concentrations,
+		const std::vector<TotalQuantity>& quantities) = 0;
 
 	virtual double
 	getTotalConcentration(ConcentrationsView concentrations, SpeciesId species,
