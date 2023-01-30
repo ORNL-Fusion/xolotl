@@ -636,12 +636,11 @@ try {
 		myData[(6 * id()) + 2] = 2.0 * totals[2] / myData[6 * id()];
 		myData[(6 * id()) + 3] = totals[3];
 		myData[(6 * id()) + 4] = totals[4];
-		myData[(6 * id()) + 5] = 2.0 * totals[5] /
-			myData[(6 * id()) + 3];
+		myData[(6 * id()) + 5] = 2.0 * totals[5] / myData[(6 * id()) + 3];
 
 		// myData[6 * id()] = network.getTotalConcentration(dConcs, id, 1);
-		// myData[6 * id() + 1] = network.getTotalAtomConcentration(dConcs, id, 1);
-		// myData[(6 * id()) + 2] = 2.0 *
+		// myData[6 * id() + 1] = network.getTotalAtomConcentration(dConcs, id,
+		// 1); myData[(6 * id()) + 2] = 2.0 *
 		// 	network.getTotalRadiusConcentration(dConcs, id, 1) /
 		// 	myData[6 * id()];
 		// myData[(6 * id()) + 3] =

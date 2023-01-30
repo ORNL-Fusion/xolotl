@@ -435,9 +435,9 @@ public:
 			numQuantities
 		};
 
-		Type type;
-		SpeciesId species;
-		AmountType minSize = 0;
+		Type type{numQuantities};
+		SpeciesId species{};
+		AmountType minSize{0};
 	};
 
 	virtual std::vector<double>

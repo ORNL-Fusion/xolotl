@@ -902,10 +902,18 @@ PetscMonitor3D::computeHeliumRetention(
 				deep_copy(dConcs, hConcs);
 
 				// Get the total concentrations at this grid point
+				using Quant = core::network::IReactionNetwork::TotalQuantity;
+				std::vector<Quant> quant;
+				quant.reserve(numSpecies);
 				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-					myConcData[id()] +=
-						network.getTotalAtomConcentration(dConcs, id, 1) * hx *
-						hy * hz;
+					quant.push_back({Quant::atom, id, 1});
+				}
+				auto totals = network.getTotals(dConcs, quant);
+				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+                    myConcData[id()] += totals[id()] * hx * hy * hz;
+					// myConcData[id()] +=
+					// 	network.getTotalAtomConcentration(dConcs, id, 1) * hx *
+					// 	hy * hz;
 				}
 			}
 		}
@@ -1277,22 +1285,36 @@ PetscMonitor3D::computeXenonRetention(
 				double hx = grid[xi + 1] - grid[xi];
 
 				// Get the concentrations
-				xeConcentration +=
-					network.getTotalAtomConcentration(dConcs, Spec::Xe, 1) *
-					hx * hy * hz;
-				bubbleConcentration +=
-					network.getTotalConcentration(dConcs, Spec::Xe, 1) * hx *
-					hy * hz;
-				radii +=
-					network.getTotalRadiusConcentration(dConcs, Spec::Xe, 1) *
-					hx * hy * hz;
-				partialBubbleConcentration +=
-					network.getTotalConcentration(
-						dConcs, Spec::Xe, minSizes[0]) *
-					hx * hy * hz;
-				partialRadii += network.getTotalRadiusConcentration(
-									dConcs, Spec::Xe, minSizes[0]) *
-					hx * hy * hz;
+				using Q = core::network::IReactionNetwork::TotalQuantity;
+				auto id = core::network::SpeciesId(
+					Spec::Xe, network.getSpeciesListSize());
+				auto ms = static_cast<AmountType>(minSizes[id()]);
+				auto totals = network.getTotals(dConcs,
+					{{Q::atom, id, 1}, {Q::total, id, 1}, {Q::radius, id, 1},
+						{Q::total, id, ms}, {Q::radius, id, ms}});
+
+				xeConcentration += totals[0] * hx * hy * hz;
+				bubbleConcentration += totals[1] * hx * hy * hz;
+				radii += totals[2] * hx * hy * hz;
+				partialBubbleConcentration += totals[3] * hx * hy * hz;
+				partialRadii += totals[4] * hx * hy * hz;
+
+				// xeConcentration +=
+				// 	network.getTotalAtomConcentration(dConcs, Spec::Xe, 1) *
+				// 	hx * hy * hz;
+				// bubbleConcentration +=
+				// 	network.getTotalConcentration(dConcs, Spec::Xe, 1) * hx *
+				// 	hy * hz;
+				// radii +=
+				// 	network.getTotalRadiusConcentration(dConcs, Spec::Xe, 1) *
+				// 	hx * hy * hz;
+				// partialBubbleConcentration +=
+				// 	network.getTotalConcentration(
+				// 		dConcs, Spec::Xe, minSizes[0]) *
+				// 	hx * hy * hz;
+				// partialRadii += network.getTotalRadiusConcentration(
+				// 					dConcs, Spec::Xe, minSizes[0]) *
+				// 	hx * hy * hz;
 
 				// Set the volume fraction
 				double volumeFrac = network.getTotalVolumeFraction(
