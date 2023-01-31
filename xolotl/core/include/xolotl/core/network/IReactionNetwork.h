@@ -425,17 +425,16 @@ public:
 
 	struct TotalQuantity
 	{
-		enum Type
+		enum class Type
 		{
 			total,
 			atom,
 			radius,
 			volume,
-			trapped,
-			numQuantities
+			// trapped
 		};
 
-		Type type{numQuantities};
+		Type type{};
 		SpeciesId species{};
 		AmountType minSize{0};
 	};

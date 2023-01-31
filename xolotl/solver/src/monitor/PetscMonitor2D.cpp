@@ -838,13 +838,11 @@ PetscMonitor2D::computeHeliumRetention(
 			std::vector<Quant> quant;
 			quant.reserve(numSpecies);
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-				quant.push_back({Quant::atom, id, 1});
+				quant.push_back({Quant::Type::atom, id, 1});
 			}
 			auto totals = network.getTotals(dConcs, quant);
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-                myConcData[id()] += totals[id()] * hx * hy;
-				// myConcData[id()] +=
-				// 	network.getTotalAtomConcentration(dConcs, id, 1) * hx * hy;
+				myConcData[id()] += totals[id()] * hx * hy;
 			}
 		}
 	}
@@ -1201,13 +1199,14 @@ PetscMonitor2D::computeXenonRetention(
 			double hx = grid[xi + 1] - grid[xi];
 
 			// Get the concentrations
-			using Q = core::network::IReactionNetwork::TotalQuantity;
+			using Q = core::network::IReactionNetwork::TotalQuantity::Type;
 			auto id = core::network::SpeciesId(
 				Spec::Xe, network.getSpeciesListSize());
 			auto ms = static_cast<AmountType>(minSizes[id()]);
 			auto totals = network.getTotals(dConcs,
 				{{Q::atom, id, 1}, {Q::total, id, 1}, {Q::radius, id, 1},
-					{Q::total, id, ms}, {Q::radius, id, ms}});
+					{Q::total, id, ms}, {Q::radius, id, ms},
+					{Q::volume, id, ms}});
 
 			xeConcentration += totals[0] * hx * hy;
 			bubbleConcentration += totals[1] * hx * hy;
@@ -1215,24 +1214,8 @@ PetscMonitor2D::computeXenonRetention(
 			partialBubbleConcentration += totals[3] * hx * hy;
 			partialRadii += totals[4] * hx * hy;
 
-			// xeConcentration +=
-			// 	network.getTotalAtomConcentration(dConcs, Spec::Xe, 1) * hx *
-			// 	hy;
-			// bubbleConcentration +=
-			// 	network.getTotalConcentration(dConcs, Spec::Xe, 1) * hx * hy;
-			// radii += network.getTotalRadiusConcentration(dConcs, Spec::Xe, 1)
-			// * 	hx * hy; partialBubbleConcentration +=
-			// 	network.getTotalConcentration(dConcs, Spec::Xe, minSizes[0]) *
-			// 	hx * hy;
-			// partialRadii += network.getTotalRadiusConcentration(
-			// 					dConcs, Spec::Xe, minSizes[0]) *
-			// 	hx * hy;
+			_solverHandler->setVolumeFraction(totals[5], xi - xs, yj - ys);
 
-			// Set the volume fraction
-			double volumeFrac =
-				network.getTotalVolumeFraction(dConcs, Spec::Xe, minSizes[0]);
-			_solverHandler->setVolumeFraction(volumeFrac, xi - xs, yj - ys);
-			// Set the monomer concentration
 			_solverHandler->setMonomerConc(
 				gridPointSolution[xeCluster.getId()], xi - xs, yj - ys);
 		}

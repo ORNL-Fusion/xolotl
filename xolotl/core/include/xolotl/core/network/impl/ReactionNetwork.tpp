@@ -743,11 +743,13 @@ struct TotalFuncVolume
 template <typename TReactionNetwork>
 struct RuntimeTotalQuantityFunctor
 {
+    ////
 	// Required by Kokkos
 	using execution_space = Kokkos::DefaultExecutionSpace;
 	using value_type = double[];
 	using size_type = typename execution_space::size_type;
 	const unsigned value_count;
+    ////
 
 	using TotalQuantity = typename TReactionNetwork::TotalQuantity;
 	using Species = typename TReactionNetwork::Species;
@@ -764,7 +766,7 @@ struct RuntimeTotalQuantityFunctor
 	TotalFuncTotal<TReactionNetwork> totalMethod;
 	TotalFuncAtom<TReactionNetwork> atomMethod;
 	TotalFuncRadius<TReactionNetwork> radiusMethod;
-    TotalFuncVolume<TReactionNetwork> volumeMethod;
+	TotalFuncVolume<TReactionNetwork> volumeMethod;
 
 	RuntimeTotalQuantityFunctor(ConcentrationsView concs, TilesView tls,
 		ClusterDataView clData, Kokkos::View<TotalQuantity*> quant) :
@@ -805,24 +807,22 @@ struct RuntimeTotalQuantityFunctor
 			auto species = quant.species.template cast<Species>();
 			auto minSize = quant.minSize;
 			switch (quant.type) {
-			case TotalQuantity::total:
+			case TotalQuantity::Type::total:
 				totalMethod(concentrations, clusterData(), species, minSize,
 					clReg, i, lsum);
 				break;
-			case TotalQuantity::atom:
+			case TotalQuantity::Type::atom:
 				atomMethod(concentrations, clusterData(), species, minSize,
 					clReg, i, lsum);
 				break;
-			case TotalQuantity::radius:
+			case TotalQuantity::Type::radius:
 				radiusMethod(concentrations, clusterData(), species, minSize,
 					clReg, i, lsum);
 				break;
-			case TotalQuantity::volume:
+			case TotalQuantity::Type::volume:
 				volumeMethod(concentrations, clusterData(), species, minSize,
 					clReg, i, lsum);
-                break;
-			default:
-				return;
+				break;
 			}
 		}
 	}

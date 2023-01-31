@@ -496,7 +496,7 @@ PetscMonitor0D::computeXenonRetention(
 	deep_copy(dConcs, hConcs);
 
 	// Get the concentrations
-	using Q = core::network::IReactionNetwork::TotalQuantity;
+	using Q = core::network::IReactionNetwork::TotalQuantity::Type;
 	auto id = core::network::SpeciesId(Spec::Xe, network.getSpeciesListSize());
 	auto ms = static_cast<AmountType>(minSizes[id()]);
 	auto totals = network.getTotals(dConcs,
@@ -508,16 +508,6 @@ PetscMonitor0D::computeXenonRetention(
 	partialBubbleConcentration = totals[3];
 	partialSize = totals[4];
 	partialRadii = totals[5];
-
-	// xeConcentration = network.getTotalAtomConcentration(dConcs, Spec::Xe, 1);
-	// bubbleConcentration = network.getTotalConcentration(dConcs, Spec::Xe, 1);
-	// radii = network.getTotalRadiusConcentration(dConcs, Spec::Xe, 1);
-	// partialBubbleConcentration =
-	// 	network.getTotalConcentration(dConcs, Spec::Xe, minSizes[0]);
-	// partialRadii =
-	// 	network.getTotalRadiusConcentration(dConcs, Spec::Xe, minSizes[0]);
-	// partialSize =
-	// 	network.getTotalAtomConcentration(dConcs, Spec::Xe, minSizes[0]);
 
 	// Print the result
 	XOLOTL_LOG << "\nTime: " << time << '\n'
@@ -592,7 +582,7 @@ PetscMonitor0D::computeAlloy(
 
 	// Loop on the species
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using Q = core::network::IReactionNetwork::TotalQuantity;
+		using Q = core::network::IReactionNetwork::TotalQuantity::Type;
 		auto ms = static_cast<AmountType>(minSizes[id()]);
 		auto totals = network.getTotals(dConcs,
 			{{Q::total, id, 1}, {Q::radius, id, 1}, {Q::total, id, ms},
@@ -602,16 +592,6 @@ PetscMonitor0D::computeAlloy(
 		myData[(4 * id()) + 1] += 2.0 * totals[1] / myData[4 * id()];
 		myData[(4 * id()) + 2] += totals[2];
 		myData[(4 * id()) + 3] += 2.0 * totals[3] / myData[(4 * id()) + 2];
-
-		// myData[4 * id()] = network.getTotalConcentration(dConcs, id, 1);
-		// myData[(4 * id()) + 1] = 2.0 *
-		// 	network.getTotalRadiusConcentration(dConcs, id, 1) /
-		// 	myData[4 * id()];
-		// myData[(4 * id()) + 2] =
-		// 	network.getTotalConcentration(dConcs, id, minSizes[id()]);
-		// myData[(4 * id()) + 3] = 2.0 *
-		// 	network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
-		// 	myData[(4 * id()) + 2];
 	}
 
 	// Set the output precision
@@ -686,7 +666,7 @@ PetscMonitor0D::computeAlphaZr(
 
 	// Loop on the species
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using Q = core::network::IReactionNetwork::TotalQuantity;
+		using Q = core::network::IReactionNetwork::TotalQuantity::Type;
 		auto ms = static_cast<AmountType>(minSizes[id()]);
 		auto totals = network.getTotals(dConcs,
 			{{Q::total, id, 1}, {Q::atom, id, 1}, {Q::radius, id, 1},
@@ -698,19 +678,6 @@ PetscMonitor0D::computeAlphaZr(
 		myData[(6 * id()) + 3] = totals[3];
 		myData[(6 * id()) + 4] = totals[4];
 		myData[(6 * id()) + 5] = 2.0 * totals[5] / myData[(6 * id()) + 3];
-
-		// myData[6 * id()] = network.getTotalConcentration(dConcs, id, 1);
-		// myData[6 * id() + 1] = network.getTotalAtomConcentration(dConcs, id, 1);
-		// myData[(6 * id()) + 2] = 2.0 *
-		// 	network.getTotalRadiusConcentration(dConcs, id, 1) /
-		// 	myData[6 * id()];
-		// myData[(6 * id()) + 3] =
-		// 	network.getTotalConcentration(dConcs, id, minSizes[id()]);
-		// myData[(6 * id()) + 4] =
-		// 	network.getTotalAtomConcentration(dConcs, id, minSizes[id()]);
-		// myData[(6 * id()) + 5] = 2.0 *
-		// 	network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
-		// 	myData[(6 * id()) + 3];
 	}
 
 	// Set the output precision

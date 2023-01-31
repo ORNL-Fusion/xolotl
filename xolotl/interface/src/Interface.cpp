@@ -625,7 +625,7 @@ try {
 
 	// Loop on the species
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using Q = core::network::IReactionNetwork::TotalQuantity;
+		using Q = core::network::IReactionNetwork::TotalQuantity::Type;
 		auto ms = static_cast<AmountType>(minSizes[id()]);
 		auto totals = network.getTotals(dConcs,
 			{{Q::total, id, 1}, {Q::atom, id, 1}, {Q::radius, id, 1},
