@@ -641,12 +641,12 @@ ReactionNetwork<TImpl>::getLeftSideRate(
 template <typename TReactionNetwork>
 struct TotalFuncTotal
 {
-	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
-	using Species = typename TReactionNetwork::Species;
-	using Region = typename TReactionNetwork::Region;
 	using AmountType = typename TReactionNetwork::AmountType;
-	using IndexType = typename TReactionNetwork::IndexType;
 	using ClusterData = typename TReactionNetwork::ClusterData;
+	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
+	using IndexType = typename TReactionNetwork::IndexType;
+	using Region = typename TReactionNetwork::Region;
+	using Species = typename TReactionNetwork::Species;
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -666,12 +666,12 @@ struct TotalFuncTotal
 template <typename TReactionNetwork>
 struct TotalFuncAtom
 {
-	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
-	using Species = typename TReactionNetwork::Species;
-	using Region = typename TReactionNetwork::Region;
 	using AmountType = typename TReactionNetwork::AmountType;
-	using IndexType = typename TReactionNetwork::IndexType;
 	using ClusterData = typename TReactionNetwork::ClusterData;
+	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
+	using IndexType = typename TReactionNetwork::IndexType;
+	using Region = typename TReactionNetwork::Region;
+	using Species = typename TReactionNetwork::Species;
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -691,12 +691,12 @@ struct TotalFuncAtom
 template <typename TReactionNetwork>
 struct TotalFuncRadius
 {
-	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
-	using Species = typename TReactionNetwork::Species;
-	using Region = typename TReactionNetwork::Region;
 	using AmountType = typename TReactionNetwork::AmountType;
-	using IndexType = typename TReactionNetwork::IndexType;
 	using ClusterData = typename TReactionNetwork::ClusterData;
+	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
+	using IndexType = typename TReactionNetwork::IndexType;
+	using Region = typename TReactionNetwork::Region;
+	using Species = typename TReactionNetwork::Species;
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -713,20 +713,66 @@ struct TotalFuncRadius
 	}
 };
 
-template <typename F>
-struct RuntimeReduceFunctor
+template <typename TReactionNetwork>
+struct TotalFuncVolume
 {
-	// Required for functor:
+	using AmountType = typename TReactionNetwork::AmountType;
+	using ClusterData = typename TReactionNetwork::ClusterData;
+	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
+	using IndexType = typename TReactionNetwork::IndexType;
+	using Region = typename TReactionNetwork::Region;
+	using Species = typename TReactionNetwork::Species;
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	operator()(ConcentrationsView concentrations, ClusterData clusterData,
+		Species species, AmountType minSize, const Region& clReg, IndexType i,
+		double& lsum) const
+	{
+		using util::max;
+		const auto& ival = clReg[species];
+		const auto factor = clReg.volume() / ival.length();
+		const auto rRad = clusterData.reactionRadius(i);
+		const auto rRad3 = rRad * rRad * rRad;
+		for (auto j = max(minSize, ival.begin()); j < ival.end(); ++j) {
+			lsum += concentrations(i) * rRad3 * factor;
+		}
+	}
+};
+
+template <typename TReactionNetwork>
+struct RuntimeTotalQuantityFunctor
+{
+	// Required by Kokkos
 	using execution_space = Kokkos::DefaultExecutionSpace;
 	using value_type = double[];
 	using size_type = typename execution_space::size_type;
-
 	const unsigned value_count;
-	F func;
 
-	RuntimeReduceFunctor(const size_type arg_count, F f) :
-		value_count(arg_count),
-		func(f)
+	using TotalQuantity = typename TReactionNetwork::TotalQuantity;
+	using Species = typename TReactionNetwork::Species;
+	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
+	using TilesView = typename TReactionNetwork::Subpaving::TilesView;
+	using ClusterData = typename TReactionNetwork::ClusterData;
+	using ClusterDataView = typename Kokkos::DualView<ClusterData>::t_dev;
+
+	ConcentrationsView concentrations;
+	TilesView tiles;
+	ClusterDataView clusterData;
+	Kokkos::View<TotalQuantity*> quantities;
+
+	TotalFuncTotal<TReactionNetwork> totalMethod;
+	TotalFuncAtom<TReactionNetwork> atomMethod;
+	TotalFuncRadius<TReactionNetwork> radiusMethod;
+    TotalFuncVolume<TReactionNetwork> volumeMethod;
+
+	RuntimeTotalQuantityFunctor(ConcentrationsView concs, TilesView tls,
+		ClusterDataView clData, Kokkos::View<TotalQuantity*> quant) :
+		value_count(quant.size()),
+		concentrations(concs),
+		tiles(tls),
+		clusterData(clData),
+		quantities(quant)
 	{
 	}
 
@@ -752,18 +798,35 @@ struct RuntimeReduceFunctor
 	void
 	operator()(size_type i, double dst[]) const
 	{
-		for (size_type n = 0; n < static_cast<size_type>(value_count); ++n) {
-			func(i, n, dst[n]);
+		for (size_type n = 0; n < quantities.size(); ++n) {
+			const auto& clReg = tiles(i).getRegion();
+			const auto& quant = quantities(n);
+			auto& lsum = dst[n];
+			auto species = quant.species.template cast<Species>();
+			auto minSize = quant.minSize;
+			switch (quant.type) {
+			case TotalQuantity::total:
+				totalMethod(concentrations, clusterData(), species, minSize,
+					clReg, i, lsum);
+				break;
+			case TotalQuantity::atom:
+				atomMethod(concentrations, clusterData(), species, minSize,
+					clReg, i, lsum);
+				break;
+			case TotalQuantity::radius:
+				radiusMethod(concentrations, clusterData(), species, minSize,
+					clReg, i, lsum);
+				break;
+			case TotalQuantity::volume:
+				volumeMethod(concentrations, clusterData(), species, minSize,
+					clReg, i, lsum);
+                break;
+			default:
+				return;
+			}
 		}
 	}
 };
-
-template <typename F>
-RuntimeReduceFunctor<F>
-makeRuntimeReduceFunctor(unsigned count, F func)
-{
-	return RuntimeReduceFunctor<F>(count, func);
-}
 
 template <typename T>
 using HostUnmanaged =
@@ -774,8 +837,6 @@ std::vector<double>
 ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 	const std::vector<TotalQuantity>& quantities)
 {
-	auto functor = TotalReduceFunctor<TotalFuncTotal<TImpl>,
-		TotalFuncAtom<TImpl>, TotalFuncRadius<TImpl>>{};
 	auto tiles = _subpaving.getTiles();
 	auto clusterData = _clusterData.d_view;
 	auto result = std::vector<double>(quantities.size(), 0.0);
@@ -786,17 +847,11 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 		Kokkos::ViewAllocateWithoutInitializing("Quantities Requested"),
 		quantities.size());
 	deep_copy(quantView, quantViewHost);
+
 	Kokkos::parallel_reduce("ReactionNetworkWorker::getTotals",
 		this->_numClusters,
-		makeRuntimeReduceFunctor(
-			quantView.size(),
-			KOKKOS_LAMBDA(IndexType i, IndexType n, double& lsum) {
-				const auto& clReg = tiles(i).getRegion();
-				const auto& quant = quantView(n);
-				functor(concentrations, clusterData(), quant.type,
-					quant.species.cast<Species>(), quant.minSize,
-					tiles(i).getRegion(), i, lsum);
-			}),
+		RuntimeTotalQuantityFunctor<TImpl>{
+			concentrations, tiles, clusterData, quantView},
 		resultView);
 
 	Kokkos::fence();

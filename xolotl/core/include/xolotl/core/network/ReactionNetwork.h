@@ -470,39 +470,6 @@ public:
 	IndexType
 	getDiagonalFill(SparseFillMap& fillMap) override;
 
-	template <typename TTotal, typename TAtom, typename TRadius>
-	struct TotalReduceFunctor
-	{
-		TTotal totalMethod;
-		TAtom atomMethod;
-		TRadius radiusMethod;
-
-		KOKKOS_INLINE_FUNCTION
-		void
-		operator()(ConcentrationsView concentrations, ClusterData clusterData,
-			TotalQuantity::Type quantityType, Species species,
-			AmountType minSize, const Region& clReg, IndexType i,
-			double& lsum) const
-		{
-			switch (quantityType) {
-			case TotalQuantity::total:
-				totalMethod(concentrations, clusterData, species, minSize,
-					clReg, i, lsum);
-				break;
-			case TotalQuantity::atom:
-				atomMethod(concentrations, clusterData, species, minSize, clReg,
-					i, lsum);
-				break;
-			case TotalQuantity::radius:
-				radiusMethod(concentrations, clusterData, species, minSize,
-					clReg, i, lsum);
-				break;
-			default:
-				return;
-			}
-		}
-	};
-
 	std::vector<double>
 	getTotals(ConcentrationsView concentrations,
 		const std::vector<TotalQuantity>& quantities) override;
