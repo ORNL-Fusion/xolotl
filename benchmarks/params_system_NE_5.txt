@@ -2,12 +2,12 @@ petscArgs=-xenon_retention -ts_max_time 7.0e8 -ts_adapt_dt_max 5.0e3 -snes_stol 
 # -snes_test_display -snes_test_jacobian_view -snes_test_jacobian 1.0e-10
 vizHandler=dummy
 flux=8.0e-9
-netParam=19999 0 0 0 0
+netParam=1000 0 0 0 0
 material=Fuel
 dimensions=0
 perfHandler=os
 tempParam=1400
-grouping=101 10
-process=reaction partialReSo
+grouping=10001 10
+process=reaction fullReSo
 radiusSize=50
 xenonDiffusivity=0.075

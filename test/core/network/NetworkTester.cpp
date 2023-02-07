@@ -68,9 +68,14 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(defaut_constructor, T, network_types)
 	network.setEnableStdReaction(enableStdReaction);
 	BOOST_REQUIRE(network.getEnableStdReaction() == enableStdReaction);
 
-	bool enableReSolution = true;
-	network.setEnableReSolution(enableReSolution);
-	BOOST_REQUIRE(network.getEnableReSolution() == enableReSolution);
+	bool enableFullReSolution = true;
+	network.setEnableFullReSolution(enableFullReSolution);
+	BOOST_REQUIRE(network.getEnableFullReSolution() == enableFullReSolution);
+
+	bool enablePartialReSolution = true;
+	network.setEnablePartialReSolution(enablePartialReSolution);
+	BOOST_REQUIRE(
+		network.getEnablePartialReSolution() == enablePartialReSolution);
 
 	typename NetworkType::IndexType gridSize = 10;
 	network.setGridSize(gridSize);

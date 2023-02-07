@@ -45,7 +45,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setZeta(opts.getZeta());
 	auto map = opts.getProcesses();
 	this->setEnableStdReaction(map["reaction"]);
-	this->setEnableReSolution(map["resolution"]);
+	this->setEnableFullReSolution(map["fullReSo"]);
+	this->setEnablePartialReSolution(map["partialReSo"]);
 	this->setEnableNucleation(map["heterogeneous"]);
 	this->setEnableSink(map["sink"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
@@ -186,10 +187,20 @@ ReactionNetwork<TImpl>::setEnableStdReaction(bool reaction)
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setEnableReSolution(bool reaction)
+ReactionNetwork<TImpl>::setEnableFullReSolution(bool reaction)
 {
-	Superclass::setEnableReSolution(reaction);
-	_clusterData.h_view().setEnableReSolution(this->_enableReSolution);
+	Superclass::setEnableFullReSolution(reaction);
+	_clusterData.h_view().setEnableFullReSolution(this->_enableFullReSolution);
+	invalidateDataMirror();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnablePartialReSolution(bool reaction)
+{
+	Superclass::setEnablePartialReSolution(reaction);
+	_clusterData.h_view().setEnablePartialReSolution(
+		this->_enablePartialReSolution);
 	invalidateDataMirror();
 }
 

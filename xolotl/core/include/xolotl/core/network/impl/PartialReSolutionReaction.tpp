@@ -10,7 +10,7 @@ namespace network
 {
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
-ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
+PartialReSolutionReaction<TNetwork, TDerived>::PartialReSolutionReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, IndexType cluster0, IndexType cluster1,
 	IndexType cluster2) :
@@ -38,10 +38,10 @@ ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
-ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
+PartialReSolutionReaction<TNetwork, TDerived>::PartialReSolutionReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, const detail::ClusterSet& clusterSet) :
-	ReSolutionReaction(reactionData, clusterData, reactionId,
+	PartialReSolutionReaction(reactionData, clusterData, reactionId,
 		clusterSet.cluster0, clusterSet.cluster1, clusterSet.cluster2)
 {
 }
@@ -49,7 +49,7 @@ ReSolutionReaction<TNetwork, TDerived>::ReSolutionReaction(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
-ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
+PartialReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 {
 	// static
 	const auto dummyRegion = Region(Composition{});
@@ -148,7 +148,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeCoefficients()
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-ReSolutionReaction<TNetwork, TDerived>::computeRate(
+PartialReSolutionReaction<TNetwork, TDerived>::computeRate(
 	IndexType gridIndex, double time)
 {
 	// Get Zeta
@@ -198,7 +198,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeRate(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
-ReSolutionReaction<TNetwork, TDerived>::computeConnectivity(
+PartialReSolutionReaction<TNetwork, TDerived>::computeConnectivity(
 	const Connectivity& connectivity)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
@@ -273,7 +273,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeConnectivity(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
-ReSolutionReaction<TNetwork, TDerived>::computeReducedConnectivity(
+PartialReSolutionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 	const Connectivity& connectivity)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
@@ -327,7 +327,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
-ReSolutionReaction<TNetwork, TDerived>::computeFlux(
+PartialReSolutionReaction<TNetwork, TDerived>::computeFlux(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
@@ -393,7 +393,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeFlux(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
-ReSolutionReaction<TNetwork, TDerived>::computePartialDerivatives(
+PartialReSolutionReaction<TNetwork, TDerived>::computePartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
 	IndexType gridIndex)
 {
@@ -483,7 +483,7 @@ ReSolutionReaction<TNetwork, TDerived>::computePartialDerivatives(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
-ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
+PartialReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
 	IndexType gridIndex)
 {
@@ -547,7 +547,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
-ReSolutionReaction<TNetwork, TDerived>::computeConstantRates(
+PartialReSolutionReaction<TNetwork, TDerived>::computeConstantRates(
 	ConcentrationsView concentrations, RatesView rates, BelongingView isInSub,
 	OwnedSubMapView backMap, IndexType gridIndex)
 {
@@ -590,7 +590,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeConstantRates(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-ReSolutionReaction<TNetwork, TDerived>::computeLeftSideRate(
+PartialReSolutionReaction<TNetwork, TDerived>::computeLeftSideRate(
 	ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)
 {
 	// This type of reaction doesn't count
@@ -600,7 +600,7 @@ ReSolutionReaction<TNetwork, TDerived>::computeLeftSideRate(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
-ReSolutionReaction<TNetwork, TDerived>::mapJacobianEntries(
+PartialReSolutionReaction<TNetwork, TDerived>::mapJacobianEntries(
 	Connectivity connectivity)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();

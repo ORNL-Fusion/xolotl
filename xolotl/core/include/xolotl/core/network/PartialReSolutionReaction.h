@@ -16,7 +16,7 @@ namespace network
  * @tparam TDerived The derived class type.
  */
 template <typename TNetwork, typename TDerived>
-class ReSolutionReaction : public Reaction<TNetwork, TDerived>
+class PartialReSolutionReaction : public Reaction<TNetwork, TDerived>
 {
 	friend class Reaction<TNetwork, TDerived>;
 
@@ -38,22 +38,22 @@ public:
 	using ClusterData = typename Superclass::ClusterData;
 	using ReflectedRegion = typename Superclass::ReflectedRegion;
 
-	ReSolutionReaction() = default;
+	PartialReSolutionReaction() = default;
 
 	KOKKOS_INLINE_FUNCTION
-	ReSolutionReaction(ReactionDataRef reactionData,
+	PartialReSolutionReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		IndexType cluster0, IndexType cluster1, IndexType cluster2);
 
 	KOKKOS_INLINE_FUNCTION
-	ReSolutionReaction(ReactionDataRef reactionData,
+	PartialReSolutionReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		const detail::ClusterSet& clusterSet);
 
 	static detail::CoefficientsView
 	allocateCoefficientsView(IndexType size)
 	{
-		return detail::CoefficientsView("ReSolution Coefficients", size,
+		return detail::CoefficientsView("PartialReSolution Coefficients", size,
 			Superclass::coeffsSingleExtent, 1, 3,
 			Superclass::coeffsSingleExtent);
 	}
@@ -129,4 +129,4 @@ protected:
 } // namespace core
 } // namespace xolotl
 
-#include <xolotl/core/network/detail/ReSolutionReactionGenerator.h>
+#include <xolotl/core/network/detail/PartialReSolutionReactionGenerator.h>

@@ -56,7 +56,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_CLOSE(network.getInterstitialBias(), 1.15, 0.01);
 
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
-	BOOST_REQUIRE(network.getEnableReSolution() == false);
+	BOOST_REQUIRE(network.getEnableFullReSolution() == false);
+	BOOST_REQUIRE(network.getEnablePartialReSolution() == false);
 	BOOST_REQUIRE(network.getEnableSink() == true);
 
 	BOOST_REQUIRE_EQUAL(network.getGridSize(), 1);
@@ -1469,7 +1470,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_CLOSE(network.getInterstitialBias(), 1.15, 0.01);
 
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
-	BOOST_REQUIRE(network.getEnableReSolution() == false);
+	BOOST_REQUIRE(network.getEnableFullReSolution() == false);
+	BOOST_REQUIRE(network.getEnablePartialReSolution() == false);
 
 	BOOST_REQUIRE_EQUAL(network.getGridSize(), 1);
 

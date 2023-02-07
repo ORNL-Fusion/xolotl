@@ -68,6 +68,15 @@ BOOST_AUTO_TEST_CASE(NE_4)
 	SystemTestCase{"system_NE_4"}.run();
 }
 
+BOOST_AUTO_TEST_CASE(NE_5)
+{
+	if (getMPICommSize() > 1) {
+		return;
+	}
+	// 0D + full re-solution
+	SystemTestCase{"system_NE_5"}.run();
+}
+
 BOOST_AUTO_TEST_CASE(PSI_1)
 {
 	if (getMPICommSize() > 20) {

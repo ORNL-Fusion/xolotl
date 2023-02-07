@@ -52,7 +52,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_CLOSE(network.getInterstitialBias(), 1.15, 0.01);
 
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
-	BOOST_REQUIRE(network.getEnableReSolution() == false);
+	BOOST_REQUIRE(network.getEnableFullReSolution() == false);
+	BOOST_REQUIRE(network.getEnablePartialReSolution() == false);
 
 	BOOST_REQUIRE_EQUAL(network.getGridSize(), 1);
 
@@ -443,7 +444,7 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 }
 
-BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
+BOOST_AUTO_TEST_CASE(fullyRefined_PartialReSo)
 {
 	// Create the option to create a network
 	xolotl::options::Options opts;
@@ -451,7 +452,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=20 0 0 0 0" << std::endl
-			  << "process=reaction resolution" << std::endl;
+			  << "process=reaction partialReSo" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -468,7 +469,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 	network.setFissionRate(8.0e-9);
 
 	BOOST_REQUIRE(network.getEnableStdReaction() == true);
-	BOOST_REQUIRE(network.getEnableReSolution() == true);
+	BOOST_REQUIRE(network.getEnableFullReSolution() == false);
+	BOOST_REQUIRE(network.getEnablePartialReSolution() == true);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -584,7 +586,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 	}
 }
 
-BOOST_AUTO_TEST_CASE(grouped_ReSo)
+BOOST_AUTO_TEST_CASE(grouped_PartialReSo)
 {
 	// Create the option to create a network
 	xolotl::options::Options opts;
@@ -593,7 +595,7 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=25 0 0 0 0" << std::endl
 			  << "grouping=11 4" << std::endl
-			  << "process=reaction resolution" << std::endl;
+			  << "process=reaction partialReSo" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -726,6 +728,148 @@ BOOST_AUTO_TEST_CASE(grouped_ReSo)
 				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
 				auto index = std::distance(row.begin(), iter);
 				XOLOTL_REQUIRE_CLOSE(hPartials[startingIdx + index],
+					knownPartials[startingIdx + j], 0.01);
+			}
+			startingIdx += row.size();
+		}
+	}
+}
+
+BOOST_AUTO_TEST_CASE(fullyRefined_FullReSo)
+{
+	// Create the option to create a network
+	xolotl::options::Options opts;
+	// Create a good parameter file
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
+	paramFile << "netParam=20 0 0 0 0" << std::endl
+			  << "process=reaction fullReSo" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
+
+	using NetworkType = NEReactionNetwork;
+	using Spec = NetworkType::Species;
+	using Composition = NetworkType::Composition;
+	NetworkType network(
+		{(NetworkType::AmountType)opts.getMaxImpurity()}, 1, opts);
+	network.setFissionRate(8.0e-9);
+
+	BOOST_REQUIRE(network.getEnableStdReaction() == true);
+	BOOST_REQUIRE(network.getEnableFullReSolution() == true);
+	BOOST_REQUIRE(network.getEnablePartialReSolution() == false);
+
+	// Get the diagonal fill
+	const auto dof = network.getDOF();
+	NetworkType::SparseFillMap knownDFill;
+	knownDFill[0] = {
+		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19};
+	knownDFill[1] = {1, 0, 2};
+	knownDFill[2] = {2, 0, 1, 3};
+	knownDFill[3] = {3, 0, 2, 4};
+	knownDFill[4] = {4, 0, 3, 5};
+	knownDFill[5] = {5, 0, 4, 6};
+	knownDFill[6] = {6, 0, 5, 7};
+	knownDFill[7] = {7, 0, 6, 8};
+	knownDFill[8] = {8, 0, 7, 9};
+	knownDFill[9] = {9, 0, 8, 10};
+	knownDFill[10] = {10, 0, 9, 11};
+	knownDFill[11] = {11, 0, 10, 12};
+	knownDFill[12] = {12, 0, 11, 13};
+	knownDFill[13] = {13, 0, 12, 14};
+	knownDFill[14] = {14, 0, 13, 15};
+	knownDFill[15] = {15, 0, 14, 16};
+	knownDFill[16] = {16, 0, 15, 17};
+	knownDFill[17] = {17, 0, 16, 18};
+	knownDFill[18] = {18, 0, 17, 19};
+	knownDFill[19] = {19, 0, 18};
+	NetworkType::SparseFillMap dfill;
+	auto nPartials = network.getDiagonalFill(dfill);
+	BOOST_REQUIRE_EQUAL(nPartials, 94);
+	for (NetworkType::IndexType i = 0; i < dof; i++) {
+		auto rowIter = dfill.find(i);
+		if (rowIter != dfill.end()) {
+			const auto& row = rowIter->second;
+			BOOST_REQUIRE_EQUAL(row.size(), knownDFill[i].size());
+		}
+	}
+
+	// Set temperatures
+	std::vector<double> temperatures = {1000.0};
+	std::vector<double> depths = {1.0};
+	network.setTemperatures(temperatures, depths);
+	NetworkType::IndexType gridId = 0;
+
+	// Check the largest rate
+	BOOST_REQUIRE_CLOSE(network.getLargestRate(), 0.117914, 0.01);
+
+	// Create a concentration vector where every field is at 1.0
+	std::vector<double> concentrations(dof + 1, 1.0);
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(concentrations.data(), dof + 1);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof + 1);
+	deep_copy(dConcs, hConcs);
+
+	// Check the left side rate of 0th cluster
+	BOOST_REQUIRE_CLOSE(
+		network.getLeftSideRate(dConcs, 0, gridId), 1.720317, 0.01);
+
+	// Create a flux vector where every field is at 0.0
+	std::vector<double> fluxes(dof + 1, 0.0);
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hFluxes = HostUnmanaged(fluxes.data(), dof + 1);
+	auto dFluxes = Kokkos::View<double*>("Fluxes", dof + 1);
+	deep_copy(dFluxes, hFluxes);
+
+	// Check the fluxes computation
+	std::vector<double> knownFluxes = {-1.66109, 0.0524207, -0.00573323,
+		-0.00472296, -0.00411879, -0.00371241, -0.00341885, -0.00319631,
+		-0.00302165, -0.00288095, -0.00276526, -0.00266858, -0.0025867,
+		-0.00251658, -0.00245599, -0.00240321, -0.00235693, -0.00231611,
+		-0.00227994, 0.103619, 0.0};
+	network.computeAllFluxes(dConcs, dFluxes, gridId);
+	deep_copy(hFluxes, dFluxes);
+	for (NetworkType::IndexType i = 0; i < dof + 1; i++) {
+		BOOST_REQUIRE_CLOSE(fluxes[i], knownFluxes[i], 0.01);
+	}
+
+	// Check the partials computation
+	std::vector<double> knownPartials = {-2.07406, -0.0638178, -0.0682593,
+		-0.0715981, -0.0742535, -0.0764323, -0.0782536, -0.0797936, -0.081104,
+		-0.082222, -0.0831756, -0.0839859, -0.0846699, -0.0852411, -0.0857106,
+		-0.0860877, -0.0863801, -0.0865945, -0.0867366, 0.0190555, -0.0654933,
+		0.170893, 1.32135e-10, -0.070668, -0.00513103, 0.0649348, 7.83614e-12,
+		-0.0747888, -0.00408481, 0.0700659, 1.4546e-12, -0.0782694, -0.00344947,
+		0.0741507, 8.52124e-13, -0.0813125, -0.00301523, 0.0776001, 2.72348e-14,
+		-0.0840342, -0.00269627, 0.0806154, 8.81931e-15, -0.0865079,
+		-0.00245026, 0.0833116, 8.59322e-18, -0.0887835, -0.00225369, 0.0857619,
+		5.12087e-16, -0.0908965, -0.00209236, 0.0880156, 9.19561e-17,
+		-0.0928732, -0.00195713, 0.0901079, 2.83807e-19, -0.0947337,
+		-0.00184183, 0.0920651, 1.59104e-20, -0.0964936, -0.00174215, 0.0939069,
+		5.07792e-21, -0.0981656, -0.00165494, 0.095649, 9.06086e-22, -0.09976,
+		-0.0015779, 0.097304, 5.0607e-23, -0.101285, -0.00150924, 0.0988819,
+		1.60995e-23, -0.102748, -0.00144759, 0.100391, 1.57441e-25, -0.104155,
+		-0.00139188, 0.101839, 8.77139e-27, -0.105511, -0.00134124, 0.103231,
+		8.72407e-28, -0.000952774, 0.104572, 0.104572};
+	auto vals = Kokkos::View<double*>("solverPartials", nPartials);
+	network.computeAllPartials(dConcs, vals, gridId);
+	auto hPartials = create_mirror_view(vals);
+	deep_copy(hPartials, vals);
+	int startingIdx = 0;
+	for (NetworkType::IndexType i = 0; i < dof; i++) {
+		auto rowIter = dfill.find(i);
+		if (rowIter != dfill.end()) {
+			const auto& row = rowIter->second;
+			for (NetworkType::IndexType j = 0; j < row.size(); j++) {
+				auto iter = find(row.begin(), row.end(), knownDFill[i][j]);
+				auto index = std::distance(row.begin(), iter);
+				BOOST_REQUIRE_CLOSE(hPartials[startingIdx + index],
 					knownPartials[startingIdx + j], 0.01);
 			}
 			startingIdx += row.size();

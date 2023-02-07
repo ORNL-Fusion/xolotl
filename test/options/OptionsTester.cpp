@@ -246,7 +246,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(map["reaction"], false);
 	BOOST_REQUIRE_EQUAL(map["attenuation"], false);
 	BOOST_REQUIRE_EQUAL(map["bursting"], false);
-	BOOST_REQUIRE_EQUAL(map["resolution"], false);
+	BOOST_REQUIRE_EQUAL(map["fullReSo"], false);
+	BOOST_REQUIRE_EQUAL(map["partialReSo"], false);
 	BOOST_REQUIRE_EQUAL(map["heterogeneous"], false);
 
 	// Check the PETSc options

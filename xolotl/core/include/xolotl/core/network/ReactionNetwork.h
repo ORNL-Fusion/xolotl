@@ -209,7 +209,10 @@ public:
 	setEnableStdReaction(bool reaction) override;
 
 	void
-	setEnableReSolution(bool reaction) override;
+	setEnableFullReSolution(bool reaction) override;
+
+	void
+	setEnablePartialReSolution(bool reaction) override;
 
 	void
 	setEnableNucleation(bool reaction) override;

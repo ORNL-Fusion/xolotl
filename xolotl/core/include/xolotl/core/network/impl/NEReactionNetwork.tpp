@@ -1,7 +1,8 @@
 #pragma once
 
+#include <xolotl/core/network/detail/impl/FullReSolutionReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/NucleationReactionGenerator.tpp>
-#include <xolotl/core/network/detail/impl/ReSolutionReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/PartialReSolutionReactionGenerator.tpp>
 #include <xolotl/core/network/impl/NEClusterGenerator.tpp>
 #include <xolotl/core/network/impl/NEReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
@@ -39,6 +40,12 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
+	// Because only Xe_1 diffuses, this should work
+	// Add re-solution
+	auto xe1ID = lo1[Species::Xe] == 1 ? i : j;
+	auto otherID = lo1[Species::Xe] == 1 ? j : i;
+	this->addFullReSolutionReaction(tag, {otherID, xe1ID});
+
 	// General case
 	Kokkos::pair<AmountType, AmountType> bounds;
 	// Compute the bounds
@@ -74,8 +81,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		// Is the size of one of them one?
 		if (lo1[Species::Xe] == 1 || lo2[Species::Xe] == 1) {
 			this->addDissociationReaction(tag, {k, i, j});
-			// Also add re-solution
-			this->addReSolutionReaction(tag, {k, i, j});
+			this->addPartialReSolutionReaction(tag, {k, i, j});
 		}
 	}
 }
@@ -85,7 +91,8 @@ NEReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getReSolutionReactions(), this->getNucleationReactions());
+		this->getFullReSolutionReactions(),
+		this->getPartialReSolutionReactions(), this->getNucleationReactions());
 	return ret;
 }
 } // namespace detail

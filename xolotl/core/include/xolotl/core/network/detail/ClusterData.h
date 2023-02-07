@@ -146,7 +146,8 @@ private:
 	enum BoolValsIndex : int
 	{
 		STD_REACTION = 0,
-		RESOLUTION,
+		FULLRESO,
+		PARTIALRESO,
 		NUCLEATION,
 		SINK,
 		TRAP_MUTATION,
@@ -232,15 +233,28 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	bool
-	enableReSolution() const
+	enableFullReSolution() const
 	{
-		return _boolVals[RESOLUTION];
+		return _boolVals[FULLRESO];
 	}
 
 	void
-	setEnableReSolution(bool val)
+	setEnableFullReSolution(bool val)
 	{
-		setVal(_boolVals, RESOLUTION, val);
+		setVal(_boolVals, FULLRESO, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enablePartialReSolution() const
+	{
+		return _boolVals[PARTIALRESO];
+	}
+
+	void
+	setEnablePartialReSolution(bool val)
+	{
+		setVal(_boolVals, PARTIALRESO, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

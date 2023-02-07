@@ -1,7 +1,8 @@
 #pragma once
 
+#include <xolotl/core/network/impl/FullReSolutionReaction.tpp>
 #include <xolotl/core/network/impl/NucleationReaction.tpp>
-#include <xolotl/core/network/impl/ReSolutionReaction.tpp>
+#include <xolotl/core/network/impl/PartialReSolutionReaction.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 
 namespace xolotl
@@ -64,6 +65,21 @@ NEDissociationReaction::computeBindingEnergy(double time)
 	auto prod2 = this->_clusterData->getCluster(this->_products[1]);
 	return prod1.getFormationEnergy() + prod2.getFormationEnergy() -
 		cl.getFormationEnergy();
+}
+
+KOKKOS_INLINE_FUNCTION
+void
+NEFullReSolutionReaction::setSize()
+{
+	auto cl = this->_clusterData->getCluster(this->_reactant);
+	auto reg = cl.getRegion();
+	Composition lo = reg.getOrigin();
+	Composition hi = reg.getUpperLimitPoint();
+
+	this->_size =
+		((double)(hi[Species::Xe] - 1) * (double)hi[Species::Xe] / 2.0 -
+			(double)(lo[Species::Xe] - 1) * (double)lo[Species::Xe] / 2.0) /
+		reg.volume();
 }
 } // namespace network
 } // namespace core

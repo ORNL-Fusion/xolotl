@@ -1,8 +1,9 @@
 #pragma once
 
+#include <xolotl/core/network/FullReSolutionReaction.h>
 #include <xolotl/core/network/NETraits.h>
 #include <xolotl/core/network/NucleationReaction.h>
-#include <xolotl/core/network/ReSolutionReaction.h>
+#include <xolotl/core/network/PartialReSolutionReaction.h>
 
 namespace xolotl
 {
@@ -44,12 +45,27 @@ public:
 	computeBindingEnergy(double time = 0.0);
 };
 
-class NEReSolutionReaction :
-	public ReSolutionReaction<NEReactionNetwork, NEReSolutionReaction>
+class NEFullReSolutionReaction :
+	public FullReSolutionReaction<NEReactionNetwork, NEFullReSolutionReaction>
 {
 public:
 	using Superclass =
-		ReSolutionReaction<NEReactionNetwork, NEReSolutionReaction>;
+		FullReSolutionReaction<NEReactionNetwork, NEFullReSolutionReaction>;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	setSize();
+};
+
+class NEPartialReSolutionReaction :
+	public PartialReSolutionReaction<NEReactionNetwork,
+		NEPartialReSolutionReaction>
+{
+public:
+	using Superclass = PartialReSolutionReaction<NEReactionNetwork,
+		NEPartialReSolutionReaction>;
 
 	using Superclass::Superclass;
 };

@@ -192,15 +192,27 @@ public:
 	}
 
 	bool
-	getEnableReSolution() const noexcept
+	getEnableFullReSolution() const noexcept
 	{
-		return _enableReSolution;
+		return _enableFullReSolution;
 	}
 
 	virtual void
-	setEnableReSolution(bool reso)
+	setEnableFullReSolution(bool reso)
 	{
-		_enableReSolution = reso;
+		_enableFullReSolution = reso;
+	}
+
+	bool
+	getEnablePartialReSolution() const noexcept
+	{
+		return _enablePartialReSolution;
+	}
+
+	virtual void
+	setEnablePartialReSolution(bool reso)
+	{
+		_enablePartialReSolution = reso;
 	}
 
 	bool
@@ -476,7 +488,8 @@ protected:
 	double _impurityRadius{};
 	double _fissionRate{};
 	bool _enableStdReaction{};
-	bool _enableReSolution{};
+	bool _enableFullReSolution{};
+	bool _enablePartialReSolution{};
 	bool _enableNucleation{};
 	bool _enableSink{};
 	bool _enableTrapMutation{};

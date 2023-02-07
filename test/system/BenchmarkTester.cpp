@@ -70,6 +70,15 @@ BOOST_AUTO_TEST_CASE(NE_5)
 	SystemTestCase{"benchmark_NE_5"}.tolerance(5.0e-9).withTimer().run();
 }
 
+BOOST_AUTO_TEST_CASE(NE_6)
+{
+	if (getMPICommSize() > 1) {
+		return;
+	}
+	// 0D, full re-solution
+	SystemTestCase{"benchmark_NE_6"}.withTimer().run();
+}
+
 BOOST_AUTO_TEST_CASE(PSI_1)
 {
 	if (getMPICommSize() > 100) {
