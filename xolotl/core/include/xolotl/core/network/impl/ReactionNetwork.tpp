@@ -741,6 +741,57 @@ struct TotalFuncVolume
 };
 
 template <typename TReactionNetwork>
+struct TotalFuncTrapped
+{
+	using AmountType = typename TReactionNetwork::AmountType;
+	using ClusterData = typename TReactionNetwork::ClusterData;
+	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
+	using IndexType = typename TReactionNetwork::IndexType;
+	using Region = typename TReactionNetwork::Region;
+	using Species = typename TReactionNetwork::Species;
+
+	struct VacancyDetect
+	{
+		bool hasVacancy;
+		Species vIndex;
+	};
+
+	static constexpr VacancyDetect
+	checkVacancy() noexcept
+	{
+		for (auto i : TReactionNetwork::getSpeciesRangeNoI()) {
+			if (isVacancy(i)) {
+				return {true, i};
+			}
+		}
+		return {false, Species{}};
+	}
+
+	static constexpr VacancyDetect vd = checkVacancy();
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	operator()(ConcentrationsView concentrations, ClusterData clusterData,
+		Species species, AmountType minSize, const Region& clReg, IndexType i,
+		double& lsum) const
+	{
+		if constexpr (vd.hasVacancy) {
+			if (clReg[vd.vIndex].begin() > 0) {
+				const auto factor = clReg.volume() / clReg[species].length();
+				for (AmountType j : makeIntervalRange(clReg[species])) {
+					if (j >= minSize) {
+						lsum += concentrations(i) * j * factor;
+					}
+				}
+			}
+		}
+		else {
+			return;
+		}
+	}
+};
+
+template <typename TReactionNetwork>
 class RuntimeTotalQuantityFunctor
 {
 public:
@@ -811,6 +862,10 @@ public:
 				_volumeMethod(_concentrations, _clusterData(), species,
 					quant.minSize, clReg, i, dst[n]);
 				break;
+			case Q::trapped:
+				_trappedMethod(_concentrations, _clusterData(), species,
+					quant.minSize, clReg, i, dst[n]);
+				break;
 			}
 		}
 	}
@@ -825,6 +880,7 @@ private:
 	TotalFuncAtom<TReactionNetwork> _atomMethod;
 	TotalFuncRadius<TReactionNetwork> _radiusMethod;
 	TotalFuncVolume<TReactionNetwork> _volumeMethod;
+	TotalFuncTrapped<TReactionNetwork> _trappedMethod;
 };
 
 template <typename T>

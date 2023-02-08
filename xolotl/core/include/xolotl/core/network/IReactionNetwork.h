@@ -431,7 +431,7 @@ public:
 			atom,
 			radius,
 			volume,
-			// trapped
+			trapped
 		};
 
 		Type type{};
