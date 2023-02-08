@@ -435,7 +435,7 @@ public:
 		};
 
 		Type type{};
-		SpeciesId species{};
+		SpeciesId speciesId{};
 		AmountType minSize{0};
 	};
 

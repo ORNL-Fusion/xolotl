@@ -588,10 +588,10 @@ PetscMonitor0D::computeAlloy(
 			{{Q::total, id, 1}, {Q::radius, id, 1}, {Q::total, id, ms},
 				{Q::radius, id, ms}});
 
-		myData[4 * id()] += totals[0];
-		myData[(4 * id()) + 1] += 2.0 * totals[1] / myData[4 * id()];
-		myData[(4 * id()) + 2] += totals[2];
-		myData[(4 * id()) + 3] += 2.0 * totals[3] / myData[(4 * id()) + 2];
+		myData[4 * id()] = totals[0];
+		myData[(4 * id()) + 1] = 2.0 * totals[1] / myData[4 * id()];
+		myData[(4 * id()) + 2] = totals[2];
+		myData[(4 * id()) + 3] = 2.0 * totals[3] / myData[(4 * id()) + 2];
 	}
 
 	// Set the output precision

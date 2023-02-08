@@ -741,15 +741,14 @@ struct TotalFuncVolume
 };
 
 template <typename TReactionNetwork>
-struct RuntimeTotalQuantityFunctor
+class RuntimeTotalQuantityFunctor
 {
-    ////
+public:
 	// Required by Kokkos
 	using execution_space = Kokkos::DefaultExecutionSpace;
 	using value_type = double[];
 	using size_type = typename execution_space::size_type;
 	const unsigned value_count;
-    ////
 
 	using TotalQuantity = typename TReactionNetwork::TotalQuantity;
 	using Species = typename TReactionNetwork::Species;
@@ -758,23 +757,13 @@ struct RuntimeTotalQuantityFunctor
 	using ClusterData = typename TReactionNetwork::ClusterData;
 	using ClusterDataView = typename Kokkos::DualView<ClusterData>::t_dev;
 
-	ConcentrationsView concentrations;
-	TilesView tiles;
-	ClusterDataView clusterData;
-	Kokkos::View<TotalQuantity*> quantities;
-
-	TotalFuncTotal<TReactionNetwork> totalMethod;
-	TotalFuncAtom<TReactionNetwork> atomMethod;
-	TotalFuncRadius<TReactionNetwork> radiusMethod;
-	TotalFuncVolume<TReactionNetwork> volumeMethod;
-
 	RuntimeTotalQuantityFunctor(ConcentrationsView concs, TilesView tls,
 		ClusterDataView clData, Kokkos::View<TotalQuantity*> quant) :
 		value_count(quant.size()),
-		concentrations(concs),
-		tiles(tls),
-		clusterData(clData),
-		quantities(quant)
+		_concentrations(concs),
+		_tiles(tls),
+		_clusterData(clData),
+		_quantities(quant)
 	{
 	}
 
@@ -800,32 +789,42 @@ struct RuntimeTotalQuantityFunctor
 	void
 	operator()(size_type i, double dst[]) const
 	{
-		for (size_type n = 0; n < quantities.size(); ++n) {
-			const auto& clReg = tiles(i).getRegion();
-			const auto& quant = quantities(n);
-			auto& lsum = dst[n];
-			auto species = quant.species.template cast<Species>();
-			auto minSize = quant.minSize;
+		for (size_type n = 0; n < value_count; ++n) {
+			const auto& clReg = _tiles[i].getRegion();
+			const auto& quant = _quantities[n];
+			auto species = quant.speciesId.template unsafeCast<Species>();
+			using Q = typename TotalQuantity::Type;
 			switch (quant.type) {
-			case TotalQuantity::Type::total:
-				totalMethod(concentrations, clusterData(), species, minSize,
-					clReg, i, lsum);
+			case Q::total:
+				_totalMethod(_concentrations, _clusterData(), species,
+					quant.minSize, clReg, i, dst[n]);
 				break;
-			case TotalQuantity::Type::atom:
-				atomMethod(concentrations, clusterData(), species, minSize,
-					clReg, i, lsum);
+			case Q::atom:
+				_atomMethod(_concentrations, _clusterData(), species,
+					quant.minSize, clReg, i, dst[n]);
 				break;
-			case TotalQuantity::Type::radius:
-				radiusMethod(concentrations, clusterData(), species, minSize,
-					clReg, i, lsum);
+			case Q::radius:
+				_radiusMethod(_concentrations, _clusterData(), species,
+					quant.minSize, clReg, i, dst[n]);
 				break;
-			case TotalQuantity::Type::volume:
-				volumeMethod(concentrations, clusterData(), species, minSize,
-					clReg, i, lsum);
+			case Q::volume:
+				_volumeMethod(_concentrations, _clusterData(), species,
+					quant.minSize, clReg, i, dst[n]);
 				break;
 			}
 		}
 	}
+
+private:
+	ConcentrationsView _concentrations;
+	TilesView _tiles;
+	ClusterDataView _clusterData;
+	Kokkos::View<TotalQuantity*> _quantities;
+
+	TotalFuncTotal<TReactionNetwork> _totalMethod;
+	TotalFuncAtom<TReactionNetwork> _atomMethod;
+	TotalFuncRadius<TReactionNetwork> _radiusMethod;
+	TotalFuncVolume<TReactionNetwork> _volumeMethod;
 };
 
 template <typename T>
