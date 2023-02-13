@@ -2141,7 +2141,7 @@ PetscMonitor3D::monitorSurfaceXY(
 		// Render and save in file
 		std::stringstream fileName;
 		fileName << "surfaceXY_TS" << timestep << ".png";
-		_surfacePlotXY->write(fileName.str());
+		_surfacePlotXY->render(fileName.str());
 	}
 
 	// Restore the solutionArray
@@ -2271,7 +2271,7 @@ PetscMonitor3D::monitorSurfaceXZ(
 		// Render and save in file
 		std::stringstream fileName;
 		fileName << "surfaceXZ_TS" << timestep << ".png";
-		_surfacePlotXZ->write(fileName.str());
+		_surfacePlotXZ->render(fileName.str());
 	}
 
 	// Restore the solutionArray

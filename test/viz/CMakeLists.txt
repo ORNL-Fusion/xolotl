@@ -3,7 +3,6 @@ list(APPEND tests
 )
 if(VTKm_FOUND)
     list(APPEND tests
-        CMakeLists.txt
         CvsXDPTester.cpp
         CvsXYDPTester.cpp
         DataProviderTester.cpp

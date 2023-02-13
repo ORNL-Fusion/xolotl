@@ -995,7 +995,7 @@ PetscMonitor0D::monitorScatter(
 	// Render and save in file
 	std::stringstream fileName;
 	fileName << "Scatter_TS" << timestep << ".png";
-	_scatterPlot->write(fileName.str());
+	_scatterPlot->render(fileName.str());
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);

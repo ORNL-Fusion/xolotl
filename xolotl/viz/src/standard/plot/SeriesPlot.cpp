@@ -15,7 +15,6 @@
 
 // VTKM Dataset creator includes
 #include <vtkm/cont/DeviceAdapterAlgorithm.h>
-#include <vtkm/cont/testing/MakeTestDataSet.h>
 
 // VTKM Rendering includes
 #include <vtkm/rendering/Actor.h>
@@ -45,13 +44,13 @@ SeriesPlot::render(const std::string& fileName)
 {
 	// Check if the label provider is set
 	if (!plotLabelProvider) {
-		XOLOTL_LOG_WRN << "The LabelProvider is not set!!";
+		XOLOTL_LOG_WARN << "The LabelProvider is not set!!";
 		return;
 	}
 
 	// Check if the data provider is set
 	if (plotDataProviders->empty()) {
-		XOLOTL_LOG_WRN << "No DataProvider!!";
+		XOLOTL_LOG_WARN << "No DataProvider!!";
 		return;
 	}
 
@@ -98,7 +97,7 @@ SeriesPlot::render(const std::string& fileName)
 
 		// Accumulate the bounds of our data to focus camera
 		fieldBounds.X = dataSet.GetCoordinateSystem().GetBounds().X;
-		dataSet.GetField(i).GetRange(&fieldBounds.Y);
+		dataSet.GetField(plotDataProviders->at(i)->getDataName()).GetRange(&fieldBounds.Y);
 		bounds.Include(fieldBounds);
 
 		// Add Plot to our scene for later rendering
