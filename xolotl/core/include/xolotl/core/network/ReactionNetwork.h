@@ -275,10 +275,19 @@ public:
 		if constexpr (!std::is_same_v<plsm::HostMemSpace,
 						  plsm::DeviceMemSpace> &&
 			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+#ifdef __CUDACC__
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 20011, 20014
+#endif
+			// CUDA warns about calling __host__ functions here.
+			// However, his branch is never compiled using CUDA
 			auto id = getSubpavingMirror().findTileId(comp);
 			return getClusterDataMirror().getCluster(
 				id == _subpaving.invalidIndex() ? this->invalidIndex() :
 												  IndexType(id));
+#ifdef __CUDACC__
+#pragma nv_diagnostic pop
+#endif
 		}
 		else {
 			auto id = _subpaving.findTileId(comp);
@@ -351,7 +360,16 @@ public:
 		if constexpr (!std::is_same_v<plsm::HostMemSpace,
 						  plsm::DeviceMemSpace> &&
 			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+#ifdef __CUDACC__
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 20011, 20014
+#endif
+			// CUDA warns about calling a __host__ function here.
+			// However, his branch is never compiled using CUDA
 			return getClusterDataMirror().getCluster(clusterId);
+#ifdef __CUDACC__
+#pragma nv_diagnostic pop
+#endif
 		}
 		else {
 			return _clusterData.d_view().getCluster(clusterId);
