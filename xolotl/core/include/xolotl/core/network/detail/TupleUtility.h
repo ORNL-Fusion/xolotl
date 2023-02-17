@@ -83,6 +83,18 @@ struct TupleReverseHelper<std::tuple<T, Ts...>>
 
 template <typename TTuple>
 using TupleReverse = typename TupleReverseHelper<TTuple>::Type;
+
+template <template <typename...> typename Tpl, typename TTuple>
+struct TupleApplyAllHelper;
+
+template <template <typename...> typename Tpl, typename... Ts>
+struct TupleApplyAllHelper<Tpl, std::tuple<Ts...>>
+{
+    using Type = Tpl<Ts...>;
+};
+
+template <template <typename...> typename Tpl, typename TTuple>
+using TupleApplyAll = typename TupleApplyAllHelper<Tpl, TTuple>::Type;
 } // namespace detail
 } // namespace network
 } // namespace core

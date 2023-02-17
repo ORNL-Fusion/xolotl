@@ -496,12 +496,14 @@ PetscMonitor0D::computeXenonRetention(
 	deep_copy(dConcs, hConcs);
 
 	// Get the concentrations
-	using Q = core::network::IReactionNetwork::TotalQuantity::Type;
+	using TQ = core::network::IReactionNetwork::TotalQuantity;
+	using Q = TQ::Type;
+	using TQA = util::Array<TQ, 6>;
 	auto id = core::network::SpeciesId(Spec::Xe, network.getSpeciesListSize());
 	auto ms = static_cast<AmountType>(minSizes[id()]);
 	auto totals = network.getTotals(dConcs,
-		{{Q::total, id, 1}, {Q::atom, id, 1}, {Q::radius, id, 1},
-			{Q::total, id, ms}, {Q::atom, id, ms}, {Q::radius, id, ms}});
+		TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
+			TQ{Q::total, id, ms}, TQ{Q::atom, id, ms}, TQ{Q::radius, id, ms}});
 	bubbleConcentration = totals[0];
 	xeConcentration = totals[1];
 	radii = totals[2];
@@ -582,11 +584,13 @@ PetscMonitor0D::computeAlloy(
 
 	// Loop on the species
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using Q = core::network::IReactionNetwork::TotalQuantity::Type;
+		using TQ = core::network::IReactionNetwork::TotalQuantity;
+		using Q = TQ::Type;
+		using TQA = util::Array<TQ, 4>;
 		auto ms = static_cast<AmountType>(minSizes[id()]);
 		auto totals = network.getTotals(dConcs,
-			{{Q::total, id, 1}, {Q::radius, id, 1}, {Q::total, id, ms},
-				{Q::radius, id, ms}});
+			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
+				TQ{Q::radius, id, ms}});
 
 		myData[4 * id()] = totals[0];
 		myData[(4 * id()) + 1] = 2.0 * totals[1] / myData[4 * id()];
@@ -666,11 +670,14 @@ PetscMonitor0D::computeAlphaZr(
 
 	// Loop on the species
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using Q = core::network::IReactionNetwork::TotalQuantity::Type;
+		using TQ = core::network::IReactionNetwork::TotalQuantity;
+		using Q = TQ::Type;
+		using TQA = util::Array<TQ, 6>;
 		auto ms = static_cast<AmountType>(minSizes[id()]);
 		auto totals = network.getTotals(dConcs,
-			{{Q::total, id, 1}, {Q::atom, id, 1}, {Q::radius, id, 1},
-				{Q::total, id, ms}, {Q::atom, id, ms}, {Q::radius, id, ms}});
+			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
+				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
+				TQ{Q::radius, id, ms}});
 
 		myData[6 * id()] = totals[0];
 		myData[6 * id() + 1] = totals[1];

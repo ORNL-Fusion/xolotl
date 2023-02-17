@@ -1012,7 +1012,7 @@ PetscMonitor1D::computeHeliumRetention(
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 			quant.push_back({Quant::Type::atom, id, 1});
 		}
-		auto totals = network.getTotals(dConcs, quant);
+		auto totals = network.getTotalsVec(dConcs, quant);
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 			myConcData[id()] += totals[id()] * hx;
 		}
@@ -1342,14 +1342,16 @@ PetscMonitor1D::computeXenonRetention(
 		double hx = grid[xi + 1] - grid[xi];
 
 		// Get the concentrations
-		using Q = core::network::IReactionNetwork::TotalQuantity::Type;
+		using TQ = core::network::IReactionNetwork::TotalQuantity;
+		using Q = TQ::Type;
+		using TQA = util::Array<TQ, 7>;
 		auto id =
 			core::network::SpeciesId(Spec::Xe, network.getSpeciesListSize());
 		auto ms = static_cast<AmountType>(minSizes[id()]);
 		auto totals = network.getTotals(dConcs,
-			{{Q::total, id, 1}, {Q::atom, id, 1}, {Q::radius, id, 1},
-				{Q::total, id, ms}, {Q::atom, id, ms}, {Q::radius, id, ms},
-				{Q::volume, id, ms}});
+			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
+				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
+				TQ{Q::radius, id, ms}, TQ{Q::volume, id, ms}});
 
 		bubbleConcentration += totals[0] * hx;
 		xeConcentration += totals[1] * hx;
@@ -1573,11 +1575,13 @@ PetscMonitor1D::computeAlloy(
 
 		// Loop on the species
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			using Q = core::network::IReactionNetwork::TotalQuantity::Type;
+			using TQ = core::network::IReactionNetwork::TotalQuantity;
+			using Q = TQ::Type;
+			using TQA = util::Array<TQ, 4>;
 			auto ms = static_cast<AmountType>(minSizes[id()]);
 			auto totals = network.getTotals(dConcs,
-				{{Q::total, id, 1}, {Q::radius, id, 1}, {Q::total, id, ms},
-					{Q::radius, id, ms}});
+				TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1},
+					TQ{Q::total, id, ms}, TQ{Q::radius, id, ms}});
 
 			myData[4 * id()] += totals[0];
 			myData[(4 * id()) + 1] += 2.0 * totals[1] / myData[4 * id()];
@@ -2455,7 +2459,7 @@ PetscMonitor1D::computeTRIDYN(
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 				quant.push_back({Quant::Type::atom, id, 1});
 			}
-			auto totals = network.getTotals(dConcs, quant);
+			auto totals = network.getTotalsVec(dConcs, quant);
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 				myConcs[currIdx][id() + 1] += totals[id()];
 			}

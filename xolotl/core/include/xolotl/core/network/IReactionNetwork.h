@@ -439,8 +439,36 @@ public:
 		AmountType minSize{0};
 	};
 
-	virtual std::vector<double>
+	virtual util::Array<double, 1>
 	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 1>& quantities) = 0;
+
+	virtual util::Array<double, 2>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 2>& quantities) = 0;
+
+	virtual util::Array<double, 3>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 3>& quantities) = 0;
+
+	virtual util::Array<double, 4>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 4>& quantities) = 0;
+
+	virtual util::Array<double, 5>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 5>& quantities) = 0;
+
+	virtual util::Array<double, 6>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 6>& quantities) = 0;
+
+	virtual util::Array<double, 7>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 7>& quantities) = 0;
+
+	virtual std::vector<double>
+	getTotalsVec(ConcentrationsView concentrations,
 		const std::vector<TotalQuantity>& quantities) = 0;
 
 	virtual double

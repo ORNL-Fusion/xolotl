@@ -908,7 +908,7 @@ PetscMonitor3D::computeHeliumRetention(
 				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 					quant.push_back({Quant::Type::atom, id, 1});
 				}
-				auto totals = network.getTotals(dConcs, quant);
+				auto totals = network.getTotalsVec(dConcs, quant);
 				for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 					myConcData[id()] += totals[id()] * hx * hy * hz;
 				}
@@ -1282,17 +1282,19 @@ PetscMonitor3D::computeXenonRetention(
 				double hx = grid[xi + 1] - grid[xi];
 
 				// Get the concentrations
-				using Q = core::network::IReactionNetwork::TotalQuantity::Type;
+				using TQ = core::network::IReactionNetwork::TotalQuantity;
+				using Q = TQ::Type;
+				using TQA = util::Array<TQ, 6>;
 				auto id = core::network::SpeciesId(
 					Spec::Xe, network.getSpeciesListSize());
 				auto ms = static_cast<AmountType>(minSizes[id()]);
 				auto totals = network.getTotals(dConcs,
-					{{Q::atom, id, 1}, {Q::total, id, 1}, {Q::radius, id, 1},
-						{Q::total, id, ms}, {Q::radius, id, ms},
-						{Q::volume, id, ms}});
+					TQA{TQ{Q::atom, id, 1}, TQ{Q::total, id, 1},
+						TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
+						TQ{Q::radius, id, ms}, TQ{Q::volume, id, ms}});
 
-				xeConcentration += totals[0] * hx * hy * hz;
-				bubbleConcentration += totals[1] * hx * hy * hz;
+				bubbleConcentration += totals[0] * hx * hy * hz;
+				xeConcentration += totals[1] * hx * hy * hz;
 				radii += totals[2] * hx * hy * hz;
 				partialBubbleConcentration += totals[3] * hx * hy * hz;
 				partialRadii += totals[4] * hx * hy * hz;
