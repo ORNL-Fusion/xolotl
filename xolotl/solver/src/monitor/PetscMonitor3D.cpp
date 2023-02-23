@@ -1289,7 +1289,7 @@ PetscMonitor3D::computeXenonRetention(
 					Spec::Xe, network.getSpeciesListSize());
 				auto ms = static_cast<AmountType>(minSizes[id()]);
 				auto totals = network.getTotals(dConcs,
-					TQA{TQ{Q::atom, id, 1}, TQ{Q::total, id, 1},
+					TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1},
 						TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
 						TQ{Q::radius, id, ms}, TQ{Q::volume, id, ms}});
 
