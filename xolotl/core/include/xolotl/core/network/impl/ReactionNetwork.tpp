@@ -992,6 +992,45 @@ ReactionNetwork<TImpl>::getTotalsImpl(ConcentrationsView concentrations,
 	return result;
 }
 
+struct TotalQuantityError : std::runtime_error
+{
+	using TotalQuantity = IReactionNetwork::TotalQuantity;
+
+	explicit TotalQuantityError(const std::string& message) :
+		std::runtime_error(
+			"Unsupported total quantity specification ( " + message + " )")
+	{
+	}
+
+	template <typename TArray>
+	TotalQuantityError(const std::string& message, TArray&& quantities) :
+		TotalQuantityError(message + "\ngiven: " + toString(quantities))
+	{
+	}
+
+	static std::string
+	toString(TotalQuantity::Type type)
+	{
+		static constexpr const char* qTypes[] = {
+			"total", "atom", "radius", "volume", "trapped"};
+		using Id = std::underlying_type_t<TotalQuantity::Type>;
+		return qTypes[static_cast<Id>(type)];
+	}
+
+	template <typename TArray>
+	static std::string
+	toString(TArray&& quantities)
+	{
+		std::ostringstream oss;
+		oss << "[" << toString(quantities[0].type);
+		for (std::size_t i = 1; i < quantities.size(); ++i) {
+			oss << ", " << toString(quantities[i].type);
+		}
+		oss << "]";
+		return oss.str();
+	}
+};
+
 template <typename TImpl>
 util::Array<double, 1>
 ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
@@ -1006,7 +1045,8 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 		return getTotalsImpl<TQMethodAtom>(concentrations, quantities);
 	}
 
-	throw std::runtime_error("Unsupported total quantity specification");
+	throw TotalQuantityError(
+		"getTotals<1>: must specify one of { [total], [atom] }", quantities);
 }
 
 template <typename TImpl>
@@ -1021,7 +1061,8 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 			concentrations, quantities);
 	}
 
-	throw std::runtime_error("Unsupported total quantity specification");
+	throw TotalQuantityError(
+		"getTotals<2>: must specify [atom, atom]", quantities);
 }
 
 template <typename TImpl>
@@ -1036,7 +1077,8 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 			concentrations, quantities);
 	}
 
-	throw std::runtime_error("Unsupported total quantity specification");
+	throw TotalQuantityError(
+		"getTotals<3>: must specify [atom, atom, atom]", quantities);
 }
 
 template <typename TImpl>
@@ -1055,7 +1097,11 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 			TQMethodAtom>(concentrations, quantities);
 	}
 
-	throw std::runtime_error("Unsupported total quantity specification");
+	throw TotalQuantityError("getTotals<4>: must specify one of {\n"
+							 "\t[total, radius, total, radius],\n"
+							 "\t[atom, atom, atom, atom]\n"
+							 "}",
+		quantities);
 }
 
 template <typename TImpl>
@@ -1070,7 +1116,9 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 			TQMethodAtom, TQMethodAtom>(concentrations, quantities);
 	}
 
-	throw std::runtime_error("Unsupported total quantity specification");
+	throw TotalQuantityError(
+		"getTotals<5>: must specify [atom, atom, atom, atom, atom]",
+		quantities);
 }
 
 template <typename TImpl>
@@ -1091,7 +1139,11 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 			concentrations, quantities);
 	}
 
-	throw std::runtime_error("Unsupported total quantity specification");
+	throw TotalQuantityError("getTotals<6>: must specify one of{\n"
+							 "\t[total, atom, radius, total, atom, radius],\n"
+							 "\t[total, atom, radius, total, radius, volume]\n"
+							 "}",
+		quantities);
 }
 
 template <typename TImpl>
@@ -1108,7 +1160,10 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 			concentrations, quantities);
 	}
 
-	throw std::runtime_error("Unsupported total quantity specification");
+	throw TotalQuantityError(
+		"getTotals<7>: must specify\n"
+		"\t[total, atom, radius, total, atom, radius, volume]",
+		quantities);
 }
 
 template <typename TImpl>
@@ -1146,7 +1201,9 @@ ReactionNetwork<TImpl>::getTotalsVec(ConcentrationsView concentrations,
 		using A6 = util::Array<TotalQuantity, 6>;
 		return toVector(getTotals(concentrations, toArray(A6{})));
 	default:
-		throw std::runtime_error("Unsupported total quantity specification");
+		throw TotalQuantityError(
+			"getTotalsVec: Currently supports only up to 6; given size = " +
+			std::to_string(quantities.size()));
 		break;
 	}
 }
