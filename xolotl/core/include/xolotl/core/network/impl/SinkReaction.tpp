@@ -14,7 +14,7 @@ namespace network
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-SinkReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+SinkReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex, double time)
 {
 	auto cl = this->_clusterData->getCluster(_reactant);
 	double dc = cl.getDiffusionCoefficient(gridIndex);

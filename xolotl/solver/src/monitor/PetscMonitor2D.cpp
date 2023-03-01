@@ -1454,9 +1454,6 @@ PetscMonitor2D::eventFunction(
 			outputFile.close();
 		}
 
-		// Get the initial vacancy concentration
-		double initialVConc = _solverHandler->getInitialVConc();
-
 		// Loop on the possible yj
 		for (auto yj = 0; yj < My; yj++) {
 			if (TSNumber > 0) {
@@ -1572,14 +1569,14 @@ PetscMonitor2D::eventFunction(
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 			double threshold =
-				(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy;
+				core::tungstenDensity * (grid[xi] - grid[xi - 1]) * hy;
 			if (_nSurf[specIdI()][yj] > threshold) {
 				// The surface is moving
 				fvalue[0] = 0.0;
 			}
 
 			// Update the threshold for erosion (the cell size is not the same)
-			threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]) * hy;
+			threshold = core::tungstenDensity * (grid[xi + 1] - grid[xi]) * hy;
 			// Moving the surface back
 			if (_nSurf[specIdI()][yj] < -threshold * 0.9) {
 				// The surface is moving
@@ -1774,7 +1771,8 @@ PetscMonitor2D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		// double vConc =
 		// psiNetwork->getTotalAtomConcentration(dConcs, specIdV, 1);
 		//				// The density of tungsten is 62.8 atoms/nm3
-		//				double wConc = (62.8 - vConc + iConc) / 2.0;
+		//				double wConc = (core::tungstenDensity - vConc + iConc)
+		/// 2.0;
 		//
 		//				// Reset the concentrations
 		//				for (auto l = 0; l < dof; ++l) {
@@ -1850,9 +1848,6 @@ PetscMonitor2D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		PetscFunctionReturn(0);
 	}
 
-	// Get the initial vacancy concentration
-	double initialVConc = _solverHandler->getInitialVConc();
-
 	// Loop on the possible yj
 	for (auto yj = 0; yj < My; yj++) {
 		// Get the position of the surface at yj
@@ -1861,7 +1856,7 @@ PetscMonitor2D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 
 		// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 		double threshold =
-			(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy;
+			core::tungstenDensity * (grid[xi] - grid[xi - 1]) * hy;
 
 		// Move the surface up
 		if (_nSurf[specIdI()][yj] > threshold) {
@@ -1877,7 +1872,7 @@ PetscMonitor2D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 				_nSurf[specIdI()][yj] -= threshold;
 				// Update the thresold
 				threshold =
-					(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy;
+					core::tungstenDensity * (grid[xi] - grid[xi - 1]) * hy;
 			}
 
 			// Throw an exception if the position is negative
@@ -1940,9 +1935,13 @@ PetscMonitor2D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 						gridPointSolution[l] = 0.0;
 					}
 
+					auto initialConc = _solverHandler->getInitialConc();
+
 					if (vacancyIndex > 0 && nGridPoints > 0) {
-						// Initialize the vacancy concentration
-						gridPointSolution[vacancyIndex] = initialVConc;
+						// Initialize the concentration
+						for (auto pair : initialConc) {
+							gridPointSolution[pair.first] = pair.second;
+						}
 					}
 				}
 
@@ -1957,7 +1956,7 @@ PetscMonitor2D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 			while (_nSurf[specIdI()][yj] < 0.0) {
 				// Compute the threshold to a deeper grid point
 				threshold =
-					(62.8 - initialVConc) * (grid[xi + 1] - grid[xi]) * hy;
+					core::tungstenDensity * (grid[xi + 1] - grid[xi]) * hy;
 				// Set all the concentrations to 0.0 at xi = surfacePos + 1
 				// if xi is on this process
 				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
@@ -2155,7 +2154,7 @@ PetscMonitor2D::monitorSurface(
 		// Render and save in file
 		std::stringstream fileName;
 		fileName << "surface_TS" << timestep << ".png";
-		_surfacePlot->write(fileName.str());
+		_surfacePlot->render(fileName.str());
 	}
 
 	// Restore the solutionArray

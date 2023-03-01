@@ -1,6 +1,7 @@
 list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ClusterSet.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/ConstantReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/NucleationReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/PSITrapMutation.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionCollection.h
@@ -19,6 +20,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyTraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/Cluster.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ConstantReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/EnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/FeNetworkHandler.h
@@ -48,10 +50,16 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesEnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesId.h
     ${XOLOTL_CORE_HEADER_DIR}/network/TrapMutationReaction.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ZrClusterGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ZrNetworkHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ZrReaction.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ZrReactionNetwork.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/ZrTraits.h
 )
 
 list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ClusterData.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ConstantReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/NucleationReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReSolutionReactionGenerator.tpp
@@ -76,6 +84,9 @@ list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ReSolutionReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/SinkReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/TrapMutationReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrClusterGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrReactionNetwork.tpp
 )
 
 list(APPEND XOLOTL_CORE_SOURCES
@@ -90,6 +101,9 @@ list(APPEND XOLOTL_CORE_SOURCES
     ${XOLOTL_CORE_SOURCE_DIR}/network/NEReactionNetwork.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/NetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/PSINetworkHandler.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/ZrClusterGenerator.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/ZrNetworkHandler.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/ZrReactionNetwork.cpp
 )
 
 if(NOT ${XOLOTL_INCLUDE_RN_TPP_FILES})

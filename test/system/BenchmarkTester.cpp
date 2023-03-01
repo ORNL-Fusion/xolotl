@@ -16,6 +16,15 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 BOOST_AUTO_TEST_SUITE(Benchmark)
 
+BOOST_AUTO_TEST_CASE(AZr_1)
+{
+	if (getMPICommSize() > 1) {
+		return;
+	}
+	// 0D, 1000 in each direction, grouped
+	SystemTestCase{"benchmark_AZr_1", "AlphaZr.dat"}.withTimer().run();
+}
+
 BOOST_AUTO_TEST_CASE(NE_1)
 {
 	if (getMPICommSize() > 1) {
@@ -106,15 +115,6 @@ BOOST_AUTO_TEST_CASE(PSI_5)
 	SystemTestCase::copyFile("tridyn_benchmark_PSI_5.dat");
 	// 1D + ITER_BPO
 	SystemTestCase{"benchmark_PSI_5"}.tolerance(5.0e-10).withTimer().run();
-}
-
-BOOST_AUTO_TEST_CASE(PSI_6)
-{
-	if (getMPICommSize() < 20 || getMPICommSize() > 112) {
-		return;
-	}
-	// 1D + million
-	SystemTestCase{"benchmark_PSI_6"}.withTimer().run();
 }
 
 BOOST_AUTO_TEST_CASE(PSI_7)

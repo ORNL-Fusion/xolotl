@@ -7,7 +7,6 @@
 
 #include <Kokkos_Atomic.hpp>
 #include <Kokkos_Core.hpp>
-#include <Kokkos_Crs.hpp>
 #include <Kokkos_DualView.hpp>
 
 #include <plsm/Subpaving.h>
@@ -78,6 +77,11 @@ public:
 	using Ival = typename Region::IntervalType;
 	using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
 	using FluxesView = typename IReactionNetwork::FluxesView;
+	using RatesView = typename IReactionNetwork::RatesView;
+	using ConnectivitiesView = typename IReactionNetwork::ConnectivitiesView;
+	using SubMapView = typename IReactionNetwork::SubMapView;
+	using OwnedSubMapView = typename IReactionNetwork::OwnedSubMapView;
+	using BelongingView = typename IReactionNetwork::BelongingView;
 	using SparseFillMap = typename IReactionNetwork::SparseFillMap;
 	using ClusterData = typename Types::ClusterData;
 	using ClusterDataMirror = typename Types::ClusterDataMirror;
@@ -85,6 +89,11 @@ public:
 	using ClusterDataHostView = typename ClusterDataView::host_mirror_type;
 	using ReactionCollection = typename Types::ReactionCollection;
 	using Bounds = IReactionNetwork::Bounds;
+	using BoundVector = IReactionNetwork::BoundVector;
+	using MomentIdMap = IReactionNetwork::MomentIdMap;
+	using MomentIdMapVector = IReactionNetwork::MomentIdMapVector;
+	using RateVector = IReactionNetwork::RateVector;
+	using ConnectivitiesVector = IReactionNetwork::ConnectivitiesVector;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
 
 	template <typename PlsmContext>
@@ -212,6 +221,9 @@ public:
 	setEnableTrapMutation(bool reaction) override;
 
 	void
+	setEnableConstantReaction(bool reaction) override;
+
+	void
 	setEnableReducedJacobian(bool reduced) override;
 
 	void
@@ -220,6 +232,9 @@ public:
 	void
 	setTemperatures(const std::vector<double>& gridTemperatures,
 		const std::vector<double>& gridDepths) override;
+
+	void
+	setTime(double time) override;
 
 	std::uint64_t
 	getDeviceMemorySize() const noexcept override;
@@ -260,10 +275,19 @@ public:
 		if constexpr (!std::is_same_v<plsm::HostMemSpace,
 						  plsm::DeviceMemSpace> &&
 			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+#ifdef __CUDACC__
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 20011, 20014
+#endif
+			// CUDA warns about calling __host__ functions here.
+			// However, his branch is never compiled using CUDA
 			auto id = getSubpavingMirror().findTileId(comp);
 			return getClusterDataMirror().getCluster(
 				id == _subpaving.invalidIndex() ? this->invalidIndex() :
 												  IndexType(id));
+#ifdef __CUDACC__
+#pragma nv_diagnostic pop
+#endif
 		}
 		else {
 			auto id = _subpaving.findTileId(comp);
@@ -309,6 +333,22 @@ public:
 	Bounds
 	getAllClusterBounds() override;
 
+	MomentIdMap
+	getAllMomentIdInfo() override;
+
+	std::string
+	getHeaderString() override;
+
+	void initializeClusterMap(
+		BoundVector, MomentIdMapVector, MomentIdMap) override;
+
+	void
+	initializeReactions() override;
+
+	void setConstantRates(RateVector) override;
+
+	void setConstantConnectivities(ConnectivitiesVector) override;
+
 	PhaseSpace
 	getPhaseSpace() override;
 
@@ -320,7 +360,16 @@ public:
 		if constexpr (!std::is_same_v<plsm::HostMemSpace,
 						  plsm::DeviceMemSpace> &&
 			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+#ifdef __CUDACC__
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 20011, 20014
+#endif
+			// CUDA warns about calling a __host__ function here.
+			// However, his branch is never compiled using CUDA
 			return getClusterDataMirror().getCluster(clusterId);
+#ifdef __CUDACC__
+#pragma nv_diagnostic pop
+#endif
 		}
 		else {
 			return _clusterData.d_view().getCluster(clusterId);
@@ -378,6 +427,20 @@ public:
 	computeAllPartials(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex = 0,
 		double surfaceDepth = 0.0, double spacing = 0.0) override;
+
+	void
+	computeConstantRatesPreProcess(
+		ConcentrationsView, IndexType, double, double)
+	{
+	}
+
+	void
+	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		IndexType subId, IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0) final;
+
+	void
+	getConstantConnectivities(ConnectivitiesView conns, IndexType subId) final;
 
 	template <typename TReaction>
 	void
@@ -514,7 +577,7 @@ public:
 		AmountType minSize = 0);
 
 	void
-	updateReactionRates();
+	updateReactionRates(double time = 0.0);
 
 	void
 	updateOutgoingDiffFluxes(double* gridPointSolution, double factor,
@@ -568,6 +631,9 @@ private:
 
 	SparseFillMap _connectivityMap;
 
+	std::vector<BelongingView> isInSub;
+	std::vector<OwnedSubMapView> backMap;
+
 protected:
 	Kokkos::DualView<ClusterData> _clusterData;
 
@@ -576,6 +642,10 @@ protected:
 	ReactionCollection _reactions;
 
 	std::map<std::string, SpeciesId> _speciesLabelMap;
+
+	ConnectivitiesView _constantConns;
+
+	double _currentTime;
 };
 
 namespace detail

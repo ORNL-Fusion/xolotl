@@ -1572,9 +1572,6 @@ PetscMonitor3D::eventFunction(
 			outputFile.close();
 		}
 
-		// Get the initial vacancy concentration
-		double initialVConc = _solverHandler->getInitialVConc();
-
 		// Loop on the possible zk and yj
 		for (auto zk = 0; zk < Mz; zk++) {
 			for (auto yj = 0; yj < My; yj++) {
@@ -1637,7 +1634,7 @@ PetscMonitor3D::eventFunction(
 				// The density of tungsten is 62.8 atoms/nm3, thus the threshold
 				// is
 				double threshold =
-					(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy * hz;
+					core::tungstenDensity * (grid[xi] - grid[xi - 1]) * hy * hz;
 				if (_nSurf[specIdI()][yj][zk] > threshold) {
 					// The surface is moving
 					fvalue[0] = 0.0;
@@ -1646,7 +1643,7 @@ PetscMonitor3D::eventFunction(
 				// Update the threshold for erosion (the cell size is not the
 				// same)
 				threshold =
-					(62.8 - initialVConc) * (grid[xi + 1] - grid[xi]) * hy * hz;
+					core::tungstenDensity * (grid[xi + 1] - grid[xi]) * hy * hz;
 				// Moving the surface back
 				if (_nSurf[specIdI()][yj][zk] < -threshold * 0.9) {
 					// The surface is moving
@@ -1849,9 +1846,6 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		PetscFunctionReturn(0);
 	}
 
-	// Get the initial vacancy concentration
-	double initialVConc = _solverHandler->getInitialVConc();
-
 	// Loop on the possible zk and yj
 	for (auto zk = 0; zk < Mz; zk++) {
 		for (auto yj = 0; yj < My; yj++) {
@@ -1861,7 +1855,7 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 
 			// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
 			double threshold =
-				(62.8 - initialVConc) * (grid[xi] - grid[xi - 1]) * hy * hz;
+				core::tungstenDensity * (grid[xi] - grid[xi - 1]) * hy * hz;
 
 			// Move the surface up
 			if (_nSurf[specIdI()][yj][zk] > threshold) {
@@ -1877,7 +1871,7 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 					// Update the number of interstitials
 					_nSurf[specIdI()][yj][zk] -= threshold;
 					// Update the thresold
-					threshold = (62.8 - initialVConc) *
+					threshold = core::tungstenDensity *
 						(grid[xi] - grid[xi - 1]) * hy * hz;
 				}
 
@@ -1941,9 +1935,18 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 						// Set the new surface temperature
 						gridPointSolution[dof] = surfTemp;
 
+						// Reset the concentrations
+						for (auto l = 0; l < dof; ++l) {
+							gridPointSolution[l] = 0.0;
+						}
+
+						auto initialConc = _solverHandler->getInitialConc();
+
 						if (vacancyIndex > 0 && nGridPoints > 0) {
-							// Initialize the vacancy concentration
-							gridPointSolution[vacancyIndex] = initialVConc;
+							// Initialize the concentration
+							for (auto pair : initialConc) {
+								gridPointSolution[pair.first] = pair.second;
+							}
 						}
 					}
 
@@ -1958,7 +1961,7 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 				// negative
 				while (_nSurf[specIdI()][yj][zk] < 0.0) {
 					// Compute the threshold to a deeper grid point
-					threshold = (62.8 - initialVConc) *
+					threshold = core::tungstenDensity *
 						(grid[xi + 1] - grid[xi]) * hy * hz;
 					// Set all the concentrations to 0.0 at xi = surfacePos + 1
 					// if xi is on this process
@@ -2138,7 +2141,7 @@ PetscMonitor3D::monitorSurfaceXY(
 		// Render and save in file
 		std::stringstream fileName;
 		fileName << "surfaceXY_TS" << timestep << ".png";
-		_surfacePlotXY->write(fileName.str());
+		_surfacePlotXY->render(fileName.str());
 	}
 
 	// Restore the solutionArray
@@ -2268,7 +2271,7 @@ PetscMonitor3D::monitorSurfaceXZ(
 		// Render and save in file
 		std::stringstream fileName;
 		fileName << "surfaceXZ_TS" << timestep << ".png";
-		_surfacePlotXZ->write(fileName.str());
+		_surfacePlotXZ->render(fileName.str());
 	}
 
 	// Restore the solutionArray

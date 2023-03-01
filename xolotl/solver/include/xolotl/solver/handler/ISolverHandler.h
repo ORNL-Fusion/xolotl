@@ -232,8 +232,8 @@ public:
 	 *
 	 * @return The initial vacancy concentration
 	 */
-	virtual double
-	getInitialVConc() const = 0;
+	virtual std::vector<std::pair<IdType, double>>
+	getInitialConc() const = 0;
 
 	/**
 	 * Get the sputtering yield.
