@@ -162,6 +162,18 @@ public:
 			concentrations, clusterId, gridIndex);
 	}
 
+	/**
+	 * \see IReactionNetwork.h
+	 */
+	KOKKOS_INLINE_FUNCTION
+	double
+	contributeNetSigma(ConcentrationsView concentrations, IndexType clusterId,
+		IndexType gridIndex)
+	{
+		return asDerived()->computeNetSigma(
+			concentrations, clusterId, gridIndex);
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	void
 	defineJacobianEntries(Connectivity connectivity)
@@ -338,6 +350,11 @@ private:
 		IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
+	double
+	computeNetSigma(ConcentrationsView concentrations, IndexType clusterId,
+		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
 	void
 	mapJacobianEntries(Connectivity connectivity);
 
@@ -451,6 +468,14 @@ private:
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeNetSigma(ConcentrationsView concentrations, IndexType clusterId,
+		IndexType gridIndex)
+	{
+		return 0.0;
+	}
 
 	KOKKOS_INLINE_FUNCTION
 	void

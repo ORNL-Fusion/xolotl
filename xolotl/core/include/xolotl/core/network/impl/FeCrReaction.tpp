@@ -14,17 +14,15 @@ template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
 double
 getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
-	const double r1, const double dc0, const double dc1, const double rho)
+	const double r1, const double dc0, const double dc1, const double rho,
+	const double sigma0, const double sigma1)
 {
 	constexpr double pi = ::xolotl::core::pi;
-	const double zs = 4.0 * pi * (r0 + r1 + ::xolotl::core::fecrCoreRadius);
+	double zs = 4.0 * pi * (r0 + r1 + ::xolotl::core::fecrCoreRadius);
 
 	using Species = typename TRegion::EnumIndex;
 	auto lo0 = pairCl0Reg.getOrigin();
 	auto lo1 = pairCl1Reg.getOrigin();
-
-	if (lo0.isOnAxis(Species::I) and lo1.isOnAxis(Species::I))
-		return 1.1 * zs * (dc0 + dc1);
 
 	// react_extension
 	if ((lo0.isOnAxis(Species::I) and lo1.isOnAxis(Species::V)) or
@@ -48,30 +46,88 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	if (cl0IsTrap || cl1IsTrap) {
 		double rT = cl0IsTrap ? r0 : r1;
 		double rL = cl0IsTrap ? r1 : r0;
+		double sigmaL = cl0IsTrap ? sigma1 : sigma0;
 		double sigma = pi * (r0 + r1) * (r0 + r1);
-		if (rT > rL)
+		if (rT < rL)
 			sigma = 4.0 * pi * r0 * r1;
-		return 2.0 * (dc0 + dc1) * sigma;
+		return 2.0 * (dc0 + dc1) * sigma * sigmaL;
 	}
 
-	double rS = cl0IsSphere ? r0 : r1;
-	double rL = cl0IsSphere ? r1 : r0;
-	double rP = ::xolotl::core::fecrCoreRadius + rS;
-	if (!cl0IsSphere && !cl1IsSphere) {
-		rL = r0 + r1;
-		rP = ::xolotl::core::fecrCoalesceRadius;
-	}
-	double ratio = rL / (3.0 * rP);
+	double rB = (r0 > r1) ? r0 : r1;
+	double rs = (r0 > r1) ? r1 : r0;
+	double rint = ::xolotl::core::fecrCoreRadius + rs;
+	double ratio = rB / (3.0 * rint);
 	double p = 1.0 / (1.0 + ratio * ratio);
-	double zl = 4.0 * pi * pi * rL / log(1.0 + 8.0 * rL / rP);
+	double zd = 4.0 * pi * pi * rB / log(1.0 + 8.0 * rB / rint);
 
 	// Minimum loop size
-	rL = cl0IsSphere ? r1 : r0;
-	double zd = -8.0 * pi * pi * rL /
-		log(pi * rho * (rS + ::xolotl::core::fecrCoreRadius) *
-			(rS + ::xolotl::core::fecrCoreRadius));
+	rB = (r0 > r1) ? r0 : r1;
+	double zd_alt = 0.0;
+	if (rho > 0.0)
+		zd_alt = -8.0 * pi * pi * rB / log(pi * rho * rint * rint);
 
-	double k_plus = (dc0 + dc1) * (p * zs + (1.0 - p) * util::max(zd, zl));
+	// Loop + loop
+	if (!cl0IsSphere and !cl1IsSphere) {
+		double sigmaL = dc0 > 0.0 ? sigma0 : sigma1;
+		double rSessile = dc0 > 0.0 ? r1 : r0;
+		double rFree = dc0 > 0.0 ? r0 : r1;
+		double dFree = dc0 > 0.0 ? dc0 : dc1;
+
+		util::Array<double, 3, 2> align;
+		align[0] = {0.0, 0.0};
+		align[1] = {0.0, 0.0};
+		align[2] = {0.0, 0.0};
+
+		// Find what type of cluster is the sessile one
+		auto loSessile = dc0 > 0.0 ? lo1 : lo0;
+		if (loSessile[static_cast<int>(Species::Trapped)] > 0) {
+			align[0] = {1.0, 0.25};
+			align[1] = {0.333333, 0.75};
+		}
+		else if (loSessile[static_cast<int>(Species::Junction)] > 0) {
+			align[0] = {1.0, 0.142857};
+			align[1] = {0.333333, 0.4285714};
+			align[2] = {0.57735, 0.4285714};
+		}
+		else if (loSessile[static_cast<int>(Species::Loop)] > 0) {
+			align[0] = {0.57735, 1.0};
+		}
+
+		double sigma = 0.0;
+		for (auto i = 0; i < align.size(); i++) {
+			double ao = rFree + rSessile + ::xolotl::core::fecrCoalesceRadius;
+			double bo = rFree + rSessile * align[i][0] +
+				::xolotl::core::fecrCoalesceRadius;
+			double ai = util::max(
+				rFree + rSessile - ::xolotl::core::fecrCoalesceRadius, 0.0);
+			double bi = util::max(rFree + rSessile * align[i][0] -
+					::xolotl::core::fecrCoalesceRadius,
+				0.0);
+
+			sigma += pi * (ao * bo - ai * bi) * align[i][1];
+		}
+		double k_plus = 2.0 * dFree * sigma * sigmaL;
+
+		return k_plus;
+	}
+
+	double dsphere = cl0IsSphere ? dc0 : dc1;
+
+	double k_plus = dsphere * (p * zs + (1.0 - p) * util::max(zd, zd_alt));
+
+	// Loop + Sphere point cross section
+	if (!cl0IsSphere or !cl1IsSphere) {
+		double sigmaL = cl0IsSphere ? sigma1 : sigma0;
+		double rsphere = cl0IsSphere ? r0 : r1;
+		double rloop = cl0IsSphere ? r1 : r0;
+		double dloop = cl0IsSphere ? dc1 : dc0;
+		rint = rsphere + ::xolotl::core::fecrCoreRadius;
+		double sigma = pi * (rloop + rint) * (rloop + rint);
+		if (rloop > rint)
+			sigma = 4.0 * pi * rloop * rint;
+		k_plus += 2.0 * dloop * sigma * sigmaL;
+	}
+
 	double bias = 1.0;
 	if (lo0.isOnAxis(Species::I) || lo1.isOnAxis(Species::I)) {
 		if (lo0.isOnAxis(Species::Free) || lo1.isOnAxis(Species::Free))
@@ -101,7 +157,75 @@ FeCrProductionReaction::getRateForProduction(IndexType gridIndex)
 
 	auto rho = this->_clusterData->sinkDensity(); // nm-2
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rho);
+	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rho,
+		this->_clusterData->extraData.netSigma(_reactants[0]),
+		this->_clusterData->extraData.netSigma(_reactants[1]));
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeCrProductionReaction::computeNetSigma(
+	ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)
+{
+	double preFactor = 0.0;
+	// Check if our cluster is on the left side of this reaction
+	if (clusterId == _reactants[0]) {
+		preFactor = concentrations[_reactants[1]] * this->_coefs(0, 0, 0, 0);
+	}
+	if (clusterId == _reactants[1]) {
+		preFactor = concentrations[_reactants[0]] * this->_coefs(0, 0, 0, 0);
+	}
+
+	if (clusterId == _reactants[0] or clusterId == _reactants[1]) {
+		// Compute cross section
+		auto cl0 = this->_clusterData->getCluster(_reactants[0]);
+		auto cl1 = this->_clusterData->getCluster(_reactants[1]);
+
+		double r0 = cl0.getReactionRadius();
+		double r1 = cl1.getReactionRadius();
+		auto lo0 = cl0.getRegion().getOrigin();
+		auto lo1 = cl1.getRegion().getOrigin();
+
+		bool cl0IsSphere = (lo0.isOnAxis(Species::V) ||
+				 lo0.isOnAxis(Species::Complex) || lo0.isOnAxis(Species::I)),
+			 cl1IsSphere = (lo1.isOnAxis(Species::V) ||
+				 lo1.isOnAxis(Species::Complex) || lo1.isOnAxis(Species::I));
+		bool cl0IsTrap = lo0.isOnAxis(Species::Trap),
+			 cl1IsTrap = lo1.isOnAxis(Species::Trap);
+		// Sphere + sphere
+		if (cl0IsSphere && cl1IsSphere) {
+			return 0.0;
+		}
+
+		// With a trap
+		if (cl0IsTrap || cl1IsTrap) {
+			double rT = cl0IsTrap ? r0 : r1;
+			double rL = cl0IsTrap ? r1 : r0;
+			double sigma = pi * (r0 + r1) * (r0 + r1);
+			if (rT < rL)
+				sigma = 4.0 * pi * r0 * r1;
+			return preFactor * sigma;
+		}
+
+		// Loop + loop
+		if (!cl0IsSphere and !cl1IsSphere) {
+			return 0.0;
+		}
+
+		// Loop + sphere
+		if (!cl0IsSphere or !cl1IsSphere) {
+			double rsphere = cl0IsSphere ? r0 : r1;
+			double rloop = cl0IsSphere ? r1 : r0;
+			double rint = rsphere + ::xolotl::core::fecrCoreRadius;
+			double sigma = pi * (rloop + rint) * (rloop + rint);
+			if (rloop > rint)
+				sigma = 4.0 * pi * rloop * rint;
+			return preFactor * sigma;
+		}
+	}
+
+	// This cluster is not part of the reaction
+	return 0.0;
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -119,7 +243,11 @@ FeCrDissociationReaction::getRateForProduction(IndexType gridIndex)
 
 	auto rho = this->_clusterData->sinkDensity(); // nm-2
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rho);
+	double kPlus = getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1,
+		rho, this->_clusterData->extraData.netSigma(_products[0]),
+		this->_clusterData->extraData.netSigma(_products[1]));
+
+	return kPlus;
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -139,6 +267,7 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 	auto cl0 = this->_clusterData->getCluster(_products[0]);
 	auto cl1 = this->_clusterData->getCluster(_products[1]);
 
+	auto lo = this->_clusterData->getCluster(_reactant).getRegion().getOrigin();
 	auto lo0 = cl0.getRegion().getOrigin();
 	auto lo1 = cl1.getRegion().getOrigin();
 	bool cl0IsSphere = (lo0.isOnAxis(Species::V) ||
@@ -150,74 +279,35 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 
 	double kMinus = kPlus * std::exp(-E_b / (k_B * T));
 
-	// Recoil detrap
-	if ((lo0.isOnAxis(Species::Trap) && lo1.isOnAxis(Species::Free)) ||
-		(lo0.isOnAxis(Species::Free) && lo1.isOnAxis(Species::Trap))) {
-		auto cl = this->_clusterData->getCluster(_reactant);
-		Composition lo = cl.getRegion().getOrigin();
-		double kRecoil = exp(-(double)lo[Species::Trapped] / 10000.0);
-		if (lo[Species::Junction] > 0)
-			kRecoil = exp(-(double)lo[Species::Junction] / 400.0);
-		//		kRecoil = 0.0;
-
-		return ((kMinus / this->_clusterData->atomicVolume()) +
-				   ::xolotl::core::detrapFrequency) *
-			kRecoil;
-	}
-
 	// Standard case
-	if (cl0IsSphere and cl1IsSphere)
+	if (cl0IsSphere and cl1IsSphere) {
 		return (kMinus / this->_clusterData->atomicVolume());
+	}
 
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
-	auto rCoal = ::xolotl::core::fecrCoalesceRadius;
 
-	double a = r0 + r1 + rCoal;
-	double b = util::max(r0 + r1 - rCoal, 0.0);
-	double sigma = ::xolotl::core::pi * (a * a - b * b);
+	double rsphere = cl0IsSphere ? r0 : r1;
+	double rloop = cl0IsSphere ? r1 : r0;
 
-	const double jumpDistance =
-		this->_clusterData->latticeParameter() * sqrt(3.0) / 2.0;
+	double rint = rsphere + ::xolotl::core::fecrCoreRadius;
+	double sigma = pi * (rloop + rint) * (rloop + rint);
+	if (rloop > rint)
+		sigma = 4.0 * pi * rloop * rint;
 
-	return kMinus / (sigma * jumpDistance);
-
-	// Trap case
 	if (cl0IsTrap or cl1IsTrap) {
 		double rT = cl0IsTrap ? r0 : r1;
 		double rL = cl0IsTrap ? r1 : r0;
 		sigma = pi * (r0 + r1) * (r0 + r1);
-		if (rT > rL)
+		if (rT < rL)
 			sigma = 4.0 * pi * r0 * r1;
 	}
-	// Loop and sphere case
-	else if (cl0IsSphere or cl1IsSphere) {
-		double rA = cl0IsSphere ? r0 : r1;
-		double rP = cl0IsSphere ? r1 : r0;
-		double rO = rP + ::xolotl::core::fecrCoreRadius;
-		for (auto q : _align4by4) {
-			double aOut = rA + rO;
-			double bOut = rA + rO * q;
-			double aIn = util::max(rA - rO, 0.0);
-			double bIn = util::max(rA - rO * q, 0.0);
 
-			sigma += _q4by4 * pi * (aOut * bOut - aIn * bIn);
-		}
-	}
-	// Loop and loop
-	else {
-		double rO = ::xolotl::core::fecrCoalesceRadius;
-		for (auto q : _align4by4) {
-			double aOut = r0 + r1 + rO;
-			double bOut = r0 + r1 * q + rO;
-			double aIn = util::max(r0 + r1 - rO, 0.0);
-			double bIn = util::max(r0 + r1 * q - rO, 0.0);
+	double preFactor = 1.0 /
+		(sigma * this->_clusterData->latticeParameter() *
+			::xolotl::core::fecrBurgers);
 
-			sigma += _q4by4 * pi * (aOut * bOut - aIn * bIn);
-		}
-	}
-
-	return kMinus / (sigma * jumpDistance);
+	return kMinus * preFactor;
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -332,6 +422,20 @@ FeCrSinkReaction::getSinkStrength()
 		(std::log(r / rCore));
 
 	return density * Z;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeCrSinkReaction::computeNetSigma(
+	ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)
+{
+	// Check if our cluster is on the left side of this reaction
+	if (clusterId == _reactant) {
+		return this->asDerived()->getSinkStrength();
+	}
+
+	// This cluster is not part of the reaction
+	return 0.0;
 }
 
 KOKKOS_INLINE_FUNCTION

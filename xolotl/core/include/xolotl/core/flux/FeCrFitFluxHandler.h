@@ -232,32 +232,35 @@ public:
 	computeIncidentFlux(
 		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
 	{
-		updatedConcOffset[fluxIndices[0]] += fluxAmplitude * 11.7769; // V1
-		updatedConcOffset[fluxIndices[1]] += fluxAmplitude * 3.6300379; // V2
-		updatedConcOffset[fluxIndices[2]] += fluxAmplitude * 0.94389166; // V3
-		updatedConcOffset[fluxIndices[3]] += fluxAmplitude * 0.76565337; // V4
-		updatedConcOffset[fluxIndices[4]] += fluxAmplitude * 0.38057040; // V5
-		updatedConcOffset[fluxIndices[5]] += fluxAmplitude * 0.34432560; // V9
-		updatedConcOffset[fluxIndices[6]] += fluxAmplitude * 5.9403415; // I1
-		updatedConcOffset[fluxIndices[7]] += fluxAmplitude * 4.3737840; // I2
-		updatedConcOffset[fluxIndices[8]] += fluxAmplitude * 2.1009049; // I3
-		updatedConcOffset[fluxIndices[9]] += fluxAmplitude * 1.7910009; // Free4
+		updatedConcOffset[fluxIndices[0]] += fluxAmplitude * 11.776939094; // V1
+		updatedConcOffset[fluxIndices[1]] += fluxAmplitude * 1.815018938; // V2
+		updatedConcOffset[fluxIndices[2]] +=
+			fluxAmplitude * 0.31463055266666667; // V3
+		updatedConcOffset[fluxIndices[3]] += fluxAmplitude * 0.191413343; // V4
+		updatedConcOffset[fluxIndices[4]] += fluxAmplitude * 0.07611408; // V5
+		updatedConcOffset[fluxIndices[5]] += fluxAmplitude * 0.0382584; // V9
+		updatedConcOffset[fluxIndices[6]] += fluxAmplitude * 5.940341464; // I1
+		updatedConcOffset[fluxIndices[7]] += fluxAmplitude * 2.186892002; // I2
+		updatedConcOffset[fluxIndices[8]] +=
+			fluxAmplitude * 0.70030164666666661; // I3
+		updatedConcOffset[fluxIndices[9]] +=
+			fluxAmplitude * 0.447750235; // Free4
 		updatedConcOffset[fluxIndices[10]] +=
-			fluxAmplitude * 1.3093007; // Free5
+			fluxAmplitude * 0.261860134; // Free5
 		updatedConcOffset[fluxIndices[11]] +=
-			fluxAmplitude * 0.96875166; // Free6
+			fluxAmplitude * 0.16145861; // Free6
 		updatedConcOffset[fluxIndices[12]] +=
-			fluxAmplitude * 0.66476811; // Free7
+			fluxAmplitude * 0.094966872285714293; // Free7
 		updatedConcOffset[fluxIndices[13]] +=
-			fluxAmplitude * 0.18484848; // Free8
+			fluxAmplitude * 0.02310606; // Free8
 		updatedConcOffset[fluxIndices[14]] +=
-			fluxAmplitude * 0.23226550; // Free9
+			fluxAmplitude * 0.025807277555555556; // Free9
 		updatedConcOffset[fluxIndices[15]] +=
-			fluxAmplitude * 0.11597512; // Free12
+			fluxAmplitude * 0.0096645931666666674; // Free12
 		updatedConcOffset[fluxIndices[16]] +=
-			fluxAmplitude * 0.011597512; // Free16
+			fluxAmplitude * 0.00611631; // Free16
 		updatedConcOffset[fluxIndices[17]] +=
-			fluxAmplitude * 0.061616160; // Free20
+			fluxAmplitude * 0.0030808080; // Free20
 
 		return;
 	}

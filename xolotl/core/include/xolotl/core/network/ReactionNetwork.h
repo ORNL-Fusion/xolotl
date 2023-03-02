@@ -472,6 +472,10 @@ public:
 	getLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex) override;
 
+	double
+	getNetSigma(ConcentrationsView concentrations, IndexType clusterId,
+		IndexType gridIndex) override;
+
 	IndexType
 	getDiagonalFill(SparseFillMap& fillMap) override;
 

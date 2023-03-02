@@ -53,6 +53,20 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
+	getSinkBias()
+	{
+		return 1.0;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getSinkStrength()
+	{
+		return 0.0;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
 	computeRate(IndexType gridIndex, double time = 0.0);
 };
 

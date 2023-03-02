@@ -312,6 +312,14 @@ private:
 	}
 
 	KOKKOS_INLINE_FUNCTION
+	double
+	computeNetSigma(ConcentrationsView concentrations, IndexType clusterId,
+		IndexType gridIndex)
+	{
+		return 0.0;
+	}
+
+	KOKKOS_INLINE_FUNCTION
 	void
 	mapJacobianEntries(Connectivity connectivity)
 	{

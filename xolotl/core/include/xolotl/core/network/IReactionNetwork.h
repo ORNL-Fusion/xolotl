@@ -419,6 +419,13 @@ public:
 		IndexType gridIndex) = 0;
 
 	/**
+	 * @brief Returns the sum of absorption cross sections.
+	 */
+	virtual double
+	getNetSigma(ConcentrationsView concentrations, IndexType clusterId,
+		IndexType gridIndex) = 0;
+
+	/**
 	 * Get the diagonal fill for the Jacobian, corresponding to the reactions.
 	 * Also populates the inverse map.
 	 *

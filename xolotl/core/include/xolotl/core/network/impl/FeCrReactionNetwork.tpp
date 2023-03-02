@@ -12,6 +12,53 @@ namespace core
 {
 namespace network
 {
+void
+FeCrReactionNetwork::initializeExtraClusterData(
+	const options::IOptions& options)
+{
+	this->_clusterData.h_view().extraData.initialize(
+		this->_clusterData.h_view().numClusters);
+	this->copyClusterDataView();
+	this->invalidateDataMirror();
+}
+
+void
+FeCrReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
+	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
+{
+	auto data = this->_clusterData.h_view();
+	auto diffusionFactor = this->getClusterDataMirror().diffusionFactor;
+	auto sigma = create_mirror_view(data.extraData.netSigma);
+	for (auto i = 0; i < this->_numClusters; i++) {
+		if (diffusionFactor(i) == 0.0) {
+			sigma(i) = 0.0;
+			continue;
+		}
+		sigma(i) = this->getNetSigma(concentrations, i, gridIndex);
+	}
+	deep_copy(data.extraData.netSigma, sigma);
+	this->updateReactionRates(0.0);
+}
+
+void
+FeCrReactionNetwork::computePartialsPreProcess(
+	ConcentrationsView concentrations, Kokkos::View<double*> values,
+	IndexType gridIndex, double surfaceDepth, double spacing)
+{
+	auto data = this->_clusterData.h_view();
+	auto diffusionFactor = this->getClusterDataMirror().diffusionFactor;
+	auto sigma = create_mirror_view(data.extraData.netSigma);
+	for (auto i = 0; i < this->_numClusters; i++) {
+		if (diffusionFactor(i) == 0.0) {
+			sigma(i) = 0.0;
+			continue;
+		}
+		sigma(i) = this->getNetSigma(concentrations, i, gridIndex);
+	}
+	deep_copy(data.extraData.netSigma, sigma);
+	this->updateReactionRates(0.0);
+}
+
 namespace detail
 {
 template <typename TTag>
@@ -494,25 +541,15 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		int maxSize =
 			fReg[Species::Free].end() + tReg[Species::Trapped].end() - 2;
 
+		double ratio = 2.0 *
+			fabs((double)fReg[Species::Free].begin() -
+				(double)tReg[Species::Trapped].begin()) /
+			((double)fReg[Species::Free].begin() +
+				(double)tReg[Species::Trapped].begin());
+
 		for (auto size = minSize; size <= maxSize; size++) {
-			// Compute possible ratio
-			auto maxL = util::min(size - tReg[Species::Trapped].begin(),
-				fReg[Species::Free].end() - 1);
-			auto minL = util::max(size - tReg[Species::Trapped].end() + 1,
-				fReg[Species::Free].begin());
-
-			double minRatio =
-				fabs((double)size - (double)(2 * maxL)) / (double)size;
-			double maxRatio =
-				fabs((double)size - (double)(2 * minL)) / (double)size;
-			if (minRatio > maxRatio) {
-				double temp = minRatio;
-				minRatio = maxRatio;
-				maxRatio = temp;
-			}
-
 			// Junction case
-			if (minRatio < 0.5) {
+			if (ratio < 0.5) {
 				Composition comp = Composition::zero();
 				comp[Species::Junction] = size;
 				comp[Species::Trap] = 1;
@@ -525,7 +562,7 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				}
 			}
 			// Trapped case
-			if (maxRatio >= 0.5) {
+			if (ratio >= 0.5) {
 				Composition comp = Composition::zero();
 				comp[Species::Trapped] = size;
 				comp[Species::Trap] = 1;
@@ -588,29 +625,15 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		int minSize = fReg[Species::Free].begin() + lReg[Species::Loop].begin();
 		int maxSize = fReg[Species::Free].end() + lReg[Species::Loop].end() - 2;
 
+		double ratio = 2.0 *
+			fabs((double)fReg[Species::Free].begin() -
+				(double)lReg[Species::Loop].begin()) /
+			((double)fReg[Species::Free].begin() +
+				(double)lReg[Species::Loop].begin());
+
 		for (auto size = minSize; size <= maxSize; size++) {
-			// Compute possible ratio
-			auto maxL = util::min(size - lReg[Species::Loop].begin(),
-				fReg[Species::Free].end() - 1);
-			auto minL = util::max(size - lReg[Species::Loop].end() + 1,
-				fReg[Species::Free].begin());
-			auto maxK = util::min(size - fReg[Species::Free].begin(),
-				lReg[Species::Loop].end() - 1);
-			auto minK = util::max(size - fReg[Species::Free].end() + 1,
-				lReg[Species::Loop].begin());
-
-			double minRatio =
-				fabs((double)size - (double)(2 * maxL)) / (double)size;
-			double maxRatio =
-				fabs((double)size - (double)(2 * minL)) / (double)size;
-			if (minRatio > maxRatio) {
-				double temp = minRatio;
-				minRatio = maxRatio;
-				maxRatio = temp;
-			}
-
 			// Junction case
-			if (minRatio < 0.5) {
+			if (ratio < 0.5) {
 				Composition comp = Composition::zero();
 				comp[Species::Junction] = size;
 				comp[Species::Trap] = 1;
@@ -622,10 +645,10 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					// No dissociation
 				}
 			}
-			// Trapped of Loop case
-			if (maxRatio > 0.5) {
+			// Trapped or Loop case
+			if (ratio > 0.5) {
 				// Loop
-				if (minL < maxK) {
+				if (fReg[Species::Free].begin() < lReg[Species::Loop].begin()) {
 					Composition comp = Composition::zero();
 					comp[Species::Loop] = size;
 					comp[Species::Trap] = 1;
@@ -638,7 +661,7 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					}
 				}
 				// Trapped
-				if (minK < maxL) {
+				else {
 					Composition comp = Composition::zero();
 					comp[Species::Trapped] = size;
 					comp[Species::Trap] = 1;

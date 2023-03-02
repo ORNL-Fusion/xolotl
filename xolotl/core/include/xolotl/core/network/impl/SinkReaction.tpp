@@ -24,6 +24,22 @@ SinkReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex, double time)
 
 	return strength;
 }
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+double
+SinkReaction<TNetwork, TDerived>::computeNetSigma(
+	ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)
+{
+	// Check if our cluster is on the left side of this reaction
+	if (clusterId == _reactant) {
+		return this->asDerived()->getSinkBias() *
+			this->asDerived()->getSinkStrength();
+	}
+
+	// This cluster is not part of the reaction
+	return 0.0;
+}
 } // namespace network
 } // namespace core
 } // namespace xolotl

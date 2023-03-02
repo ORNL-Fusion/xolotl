@@ -660,6 +660,24 @@ ReactionNetwork<TImpl>::getLeftSideRate(
 
 template <typename TImpl>
 double
+ReactionNetwork<TImpl>::getNetSigma(
+	ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)
+{
+	double sigma = 0.0;
+	// Loop on all the reactions
+	_reactions.reduce(
+		"ReactionNetwork::getNetSigma",
+		DEVICE_LAMBDA(auto&& reaction, double& lsum) {
+			lsum += reaction.contributeNetSigma(
+				concentrations, clusterId, gridIndex);
+		},
+		sigma);
+
+	return sigma;
+}
+
+template <typename TImpl>
+double
 ReactionNetwork<TImpl>::getTotalConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize)
 {

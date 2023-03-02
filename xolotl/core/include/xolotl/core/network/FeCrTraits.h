@@ -90,6 +90,61 @@ struct ReactionNetworkTraits<FeCrReactionNetwork>
 
 	using ClusterGenerator = FeCrClusterGenerator;
 };
+
+namespace detail
+{
+template <typename PlsmContext>
+struct ClusterDataExtra<FeCrReactionNetwork, PlsmContext>
+{
+	using NetworkType = FeCrReactionNetwork;
+
+	template <typename TData>
+	using View = ViewType<TData, PlsmContext>;
+
+	using IndexType = detail::ReactionNetworkIndexType;
+
+	ClusterDataExtra() = default;
+
+	template <typename PC>
+	KOKKOS_INLINE_FUNCTION
+	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
+		netSigma(data.netSigma)
+	{
+	}
+
+	template <typename PC>
+	void
+	deepCopy(const ClusterDataExtra<NetworkType, PC>& data)
+	{
+		if (!data.netSigma.is_allocated()) {
+			return;
+		}
+
+		if (!netSigma.is_allocated()) {
+			netSigma = create_mirror_view(data.netSigma);
+		}
+		deep_copy(netSigma, data.netSigma);
+	}
+
+	std::uint64_t
+	getDeviceMemorySize() const noexcept
+	{
+		std::uint64_t ret = 0;
+
+		ret += netSigma.required_allocation_size(netSigma.extent(0));
+
+		return ret;
+	}
+
+	void
+	initialize(IndexType numClusters)
+	{
+		netSigma = View<double*>("Net Sigma", numClusters);
+	}
+
+	View<double*> netSigma;
+};
+} // namespace detail
 } // namespace network
 } // namespace core
 } // namespace xolotl

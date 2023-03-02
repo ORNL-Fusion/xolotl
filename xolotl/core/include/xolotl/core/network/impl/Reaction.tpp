@@ -1837,6 +1837,36 @@ ProductionReaction<TNetwork, TDerived>::computeLeftSideRate(
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
+double
+ProductionReaction<TNetwork, TDerived>::computeNetSigma(
+	ConcentrationsView concentrations, IndexType clusterId, IndexType gridIndex)
+{
+	double preFactor = 0.0;
+	// Check if our cluster is on the left side of this reaction
+	if (clusterId == _reactants[0]) {
+		preFactor = concentrations[_reactants[1]] * this->_coefs(0, 0, 0, 0);
+	}
+	if (clusterId == _reactants[1]) {
+		preFactor = concentrations[_reactants[0]] * this->_coefs(0, 0, 0, 0);
+	}
+
+	if (clusterId == _reactants[0] or clusterId == _reactants[1]) {
+		// Compute cross section
+		auto cl0 = this->_clusterData->getCluster(_reactants[0]);
+		auto cl1 = this->_clusterData->getCluster(_reactants[1]);
+
+		double r0 = cl0.getReactionRadius();
+		double r1 = cl1.getReactionRadius();
+
+		return preFactor * (r0 + r1) * (r0 + r1) * ::xolotl::core::pi;
+	}
+
+	// This cluster is not part of the reaction
+	return 0.0;
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
 void
 ProductionReaction<TNetwork, TDerived>::mapJacobianEntries(
 	Connectivity connectivity)

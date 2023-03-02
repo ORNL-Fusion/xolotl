@@ -1,8 +1,8 @@
 #pragma once
 
+#include <xolotl/core/network/ReactionNetwork.h>
 #include <xolotl/core/network/FeCrReaction.h>
 #include <xolotl/core/network/FeCrTraits.h>
-#include <xolotl/core/network/ReactionNetwork.h>
 
 namespace xolotl
 {
@@ -35,6 +35,19 @@ public:
 
 	IndexType
 	checkLargestClusterId();
+
+	void
+	initializeExtraClusterData(const options::IOptions& options);
+
+	void
+	computeFluxesPreProcess(ConcentrationsView concentrations,
+		FluxesView fluxes, IndexType gridIndex, double surfaceDepth,
+		double spacing);
+
+	void
+	computePartialsPreProcess(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+		double spacing);
 
 private:
 	double

@@ -24,6 +24,11 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getRateForProduction(IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeNetSigma(ConcentrationsView concentrations, IndexType clusterId,
+		IndexType gridIndex);
 };
 
 class FeCrDissociationReaction :
@@ -86,6 +91,11 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getSinkStrength();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeNetSigma(ConcentrationsView concentrations, IndexType clusterId,
+		IndexType gridIndex);
 };
 
 class FeCrTransformReaction :
