@@ -422,32 +422,31 @@ double
 FeCrSinkReaction::getSinkStrength()
 {
 	auto density = this->_clusterData->sinkDensity(); // nm-2
-	auto portion = this->_clusterData->sinkPortion(); // Portion of screw
-	auto rCoal = ::xolotl::core::fecrCoalesceRadius;
+	auto portion = this->_clusterData->sinkPortion(); // portion of screw
+	auto r = 1.0 / sqrt(::xolotl::core::pi * density); // nm
 	auto rCore = ::xolotl::core::fecrCoreRadius;
+	auto temperature = this->_clusterData->temperature(0);
+	constexpr double K = 170.0e9; // GPa
+	constexpr double nu = 0.29;
+	constexpr double b = 0.25; // nm
+	double deltaV = 1.67 * this->_clusterData->atomicVolume() * 1.0e-27; // m3
+	//	constexpr double a0 = 0.91, a1 = -2.16, a2 = -0.92; // Random dipole
+	constexpr double a0 = 0.87, a1 = -5.12, a2 = -0.77; // Full network
+	constexpr double k_B = 1.380649e-23; // J K-1.
 
-	auto cl = this->_clusterData->getCluster(this->_reactant);
-	auto r = cl.getReactionRadius();
+	double L = (K * b * deltaV * (1.0 - 2.0 * nu)) /
+		(2.0 * ::xolotl::core::pi * k_B * temperature * (1.0 - nu));
 
-	// Compute the cross section
-	double Z = 0.0;
+	double delta = sqrt(rCore * rCore + (L * L) / 4.0);
 
-	// Sphere
-	auto clReg = cl.getRegion();
-	Composition comp = clReg.getOrigin();
-	if (comp.isOnAxis(Species::I) or comp.isOnAxis(Species::V)) {
-		double r0 = (r + rCore);
-		Z = -4.0 * ::xolotl::core::pi *
-			((1.0 - portion) * this->getSinkBias() + portion) /
-			log(::xolotl::core::pi * density * r0 * r0);
-	}
-	// Loop
-	else {
-		Z = rCoal;
-
-		Z *= 2.0 * ::xolotl::core::fecrDisloAlignment *
-			((1.0 - portion) * this->getSinkBias() + portion);
-	}
+	double Z =
+		(2.0 * ::xolotl::core::pi * (a0 + a1 * (rCore / r)) *
+			(portion +
+				(1.0 - portion) * this->getSinkBias() *
+					((std::log(r / rCore) *
+						 (a0 * r + a1 * delta + a2 * (delta - rCore))) /
+						(std::log(r / delta) * (a0 * r + a1 * rCore))))) /
+		(std::log(r / rCore));
 
 	return density * Z;
 }

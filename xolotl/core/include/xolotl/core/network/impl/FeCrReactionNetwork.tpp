@@ -69,8 +69,36 @@ FeCrReactionNetwork::updateOutgoingSinkFluxes(
 	auto density = this->getClusterDataMirror().sinkDensity(); // nm-2
 	auto portion =
 		this->getClusterDataMirror().sinkPortion(); // Portion of screw
-	auto rCoal = ::xolotl::core::fecrCoalesceRadius;
+	auto r = 1.0 / sqrt(::xolotl::core::pi * density); // nm
 	auto rCore = ::xolotl::core::fecrCoreRadius;
+	auto temperature = this->getClusterDataMirror().temperature(0);
+	constexpr double K = 170.0e9; // GPa
+	constexpr double nu = 0.29;
+	constexpr double b = 0.25; // nm
+	double deltaV = 1.67 * this->getClusterDataMirror().atomicVolume() * 1.0e-27; // m3
+	//	constexpr double a0 = 0.91, a1 = -2.16, a2 = -0.92; // Random dipole
+	constexpr double a0 = 0.87, a1 = -5.12, a2 = -0.77; // Full network
+	constexpr double k_B = 1.380649e-23; // J K-1.
+
+	double L = (K * b * deltaV * (1.0 - 2.0 * nu)) /
+		(2.0 * ::xolotl::core::pi * k_B * temperature * (1.0 - nu));
+
+	double delta = sqrt(rCore * rCore + (L * L) / 4.0);
+
+	double edge =
+		(2.0 * ::xolotl::core::pi * (a0 + a1 * (rCore / r)) *
+
+				(1.0 - portion) *
+					((std::log(r / rCore) *
+						 (a0 * r + a1 * delta + a2 * (delta - rCore))) /
+						(std::log(r / delta) * (a0 * r + a1 * rCore)))) /
+		(std::log(r / rCore));
+
+	double screw =
+		(2.0 * ::xolotl::core::pi * (a0 + a1 * (rCore / r)) *
+			portion) /
+		(std::log(r / rCore));
+
 	auto diffusionFactor = this->getClusterDataMirror().diffusionFactor;
 	auto dof = this->getDOF();
 	using HostUnmanaged =
@@ -87,17 +115,11 @@ FeCrReactionNetwork::updateOutgoingSinkFluxes(
 		auto cluster = this->getCluster(i, plsm::HostMemSpace{});
 		const auto& clReg = cluster.getRegion();
 		Composition lo = clReg.getOrigin();
-		auto r = cluster.getReactionRadius();
 		auto diffCoef = cluster.getDiffusionCoefficient(gridIndex);
 		auto factor = density * gridPointSolution[i] * diffCoef;
 
 		// V case
 		if (lo[Species::V] > 0) {
-			double r0 = (r + rCore);
-			double edge = -4.0 * ::xolotl::core::pi * (1.0 - portion) /
-				log(::xolotl::core::pi * density * r0 * r0);
-			double screw = -4.0 * ::xolotl::core::pi * portion /
-				log(::xolotl::core::pi * density * r0 * r0);
 			double size =
 				lo[Species::V] + (double)(clReg[Species::V].length() - 1) / 2.0;
 			// edge
@@ -110,23 +132,17 @@ FeCrReactionNetwork::updateOutgoingSinkFluxes(
 			double bias = 1.0;
 			double size = lo[Species::Free] +
 				(double)(clReg[Species::Free].length() - 1) / 2.0;
-			double edge = 0.0, screw = 0.0;
 			if (lo[Species::I] > 0) {
 				bias = 1.05;
 				size = lo[Species::I] +
 					(double)(clReg[Species::I].length() - 1) / 2.0;
 				double r0 = (r + rCore);
-				edge = -4.0 * ::xolotl::core::pi * ((1.0 - portion) * bias) /
-					log(::xolotl::core::pi * density * r0 * r0);
-				screw = -4.0 * ::xolotl::core::pi * (portion) /
-					log(::xolotl::core::pi * density * r0 * r0);
+				edge *= bias;
 			}
 			else {
 				auto sigma = this->getNetSigma(dConcs, i, gridIndex);
-				edge = rCoal * 2.0 * ::xolotl::core::fecrDisloAlignment *
-					(1.0 - portion) * sigma;
-				screw = rCoal * 2.0 * ::xolotl::core::fecrDisloAlignment *
-					(portion)*sigma;
+				edge *= sigma;
+				screw *= sigma;
 			}
 			// edge
 			fluxes[2] += factor * edge * size;
