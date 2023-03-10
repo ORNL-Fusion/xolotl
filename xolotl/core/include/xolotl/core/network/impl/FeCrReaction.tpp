@@ -386,6 +386,12 @@ FeCrSinkReaction::computeRate(IndexType gridIndex, double time)
 
 	double strength = this->asDerived()->getSinkStrength() * dc;
 
+	auto clReg = cl.getRegion();
+	Composition comp = clReg.getOrigin();
+	if (comp.isOnAxis(Species::Free)) {
+		strength *= this->_clusterData->extraData.netSigma(this->_reactant);
+	}
+
 	return strength;
 }
 
@@ -440,8 +446,7 @@ FeCrSinkReaction::getSinkStrength()
 		Z = rCoal;
 
 		Z *= 2.0 * ::xolotl::core::fecrDisloAlignment *
-			((1.0 - portion) * this->getSinkBias() + portion) *
-			this->_clusterData->extraData.netSigma(this->_reactant);
+			((1.0 - portion) * this->getSinkBias() + portion);
 	}
 
 	return density * Z;
