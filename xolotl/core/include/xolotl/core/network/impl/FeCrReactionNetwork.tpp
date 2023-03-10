@@ -89,6 +89,7 @@ FeCrReactionNetwork::updateOutgoingSinkFluxes(
 		Composition lo = clReg.getOrigin();
 		auto r = cluster.getReactionRadius();
 		auto diffCoef = cluster.getDiffusionCoefficient(gridIndex);
+		auto factor = density * gridPointSolution[i] * diffCoef;
 
 		// V case
 		if (lo[Species::V] > 0) {
@@ -100,9 +101,9 @@ FeCrReactionNetwork::updateOutgoingSinkFluxes(
 			double size =
 				lo[Species::V] + (double)(clReg[Species::V].length() - 1) / 2.0;
 			// edge
-			fluxes[0] += gridPointSolution[i] * diffCoef * edge * size;
+			fluxes[0] += factor * edge * size;
 			// screw
-			fluxes[1] += gridPointSolution[i] * diffCoef * screw * size;
+			fluxes[1] += factor * screw * size;
 		}
 		else {
 			// I and Free case
@@ -128,9 +129,9 @@ FeCrReactionNetwork::updateOutgoingSinkFluxes(
 					(portion)*sigma;
 			}
 			// edge
-			fluxes[2] += gridPointSolution[i] * diffCoef * edge * size;
+			fluxes[2] += factor * edge * size;
 			// screw
-			fluxes[3] += gridPointSolution[i] * diffCoef * screw * size;
+			fluxes[3] += factor * screw * size;
 		}
 	}
 
