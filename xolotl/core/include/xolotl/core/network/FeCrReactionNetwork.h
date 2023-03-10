@@ -49,6 +49,10 @@ public:
 		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
 		double spacing);
 
+	void
+	updateOutgoingSinkFluxes(double* gridPointSolution,
+		std::vector<double>& fluxes, IndexType gridIndex) override;
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);

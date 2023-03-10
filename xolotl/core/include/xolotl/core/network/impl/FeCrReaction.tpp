@@ -42,6 +42,11 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		return zs * (dc0 + dc1);
 	}
 
+	// Sphere and trap
+	if ((cl0IsSphere and cl1IsTrap) or (cl1IsSphere and cl0IsTrap)) {
+		return zs * (dc0 + dc1);
+	}
+
 	// With a trap
 	if (cl0IsTrap || cl1IsTrap) {
 		double rT = cl0IsTrap ? r0 : r1;
@@ -287,6 +292,11 @@ FeCrDissociationReaction::computeRate(IndexType gridIndex, double)
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
 
+	// Sphere and trap
+	if ((cl0IsSphere and cl1IsTrap) or (cl1IsSphere and cl0IsTrap)) {
+		return (kMinus / this->_clusterData->atomicVolume());
+	}
+
 	double rsphere = cl0IsSphere ? r0 : r1;
 	double rloop = cl0IsSphere ? r1 : r0;
 
@@ -364,7 +374,19 @@ FeCrDissociationReaction::computeBindingEnergy(double time)
 		be = 2.5;
 	}
 
-	return util::min(5.0, util::max(be, -5.0));
+	return util::min(5.0, util::max(be, 0.1));
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeCrSinkReaction::computeRate(IndexType gridIndex, double time)
+{
+	auto cl = this->_clusterData->getCluster(_reactant);
+	double dc = cl.getDiffusionCoefficient(gridIndex);
+
+	double strength = this->asDerived()->getSinkStrength() * dc;
+
+	return strength;
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -394,32 +416,33 @@ double
 FeCrSinkReaction::getSinkStrength()
 {
 	auto density = this->_clusterData->sinkDensity(); // nm-2
-	auto portion = this->_clusterData->sinkPortion();
-	auto r = 1.0 / sqrt(::xolotl::core::pi * density); // nm
+	auto portion = this->_clusterData->sinkPortion(); // Portion of screw
+	auto rCoal = ::xolotl::core::fecrCoalesceRadius;
 	auto rCore = ::xolotl::core::fecrCoreRadius;
-	auto temperature = this->_clusterData->temperature(0);
-	constexpr double K = 170.0e9; // GPa
-	constexpr double nu = 0.29;
-	constexpr double b = 0.25; // nm
-	double deltaV = 1.67 * this->_clusterData->atomicVolume() * 1.0e-27; // m3
-	//	constexpr double a0 = 0.91, a1 = -2.16, a2 = -0.92; // Random dipole
-	constexpr double a0 = 0.87, a1 = -5.12, a2 = -0.77; // Full network
-	constexpr double k_B = 1.380649e-23; // J K-1.
 
-	double L = (K * b * deltaV * (1.0 - 2.0 * nu)) /
-		(2.0 * ::xolotl::core::pi * k_B * temperature * (1.0 - nu));
+	auto cl = this->_clusterData->getCluster(this->_reactant);
+	auto r = cl.getReactionRadius();
 
-	double delta = sqrt(rCore * rCore + (L * L) / 4.0);
+	// Compute the cross section
+	double Z = 0.0;
 
-	double Z =
-		(2.0 * ::xolotl::core::pi * (a0 + a1 * (rCore / r)) *
-			(1.0 +
-				portion *
-					((std::log(r / rCore) *
-						 (a0 * r + a1 * delta + a2 * (delta - rCore))) /
-							(std::log(r / delta) * (a0 * r + a1 * rCore)) -
-						1.0))) /
-		(std::log(r / rCore));
+	// Sphere
+	auto clReg = cl.getRegion();
+	Composition comp = clReg.getOrigin();
+	if (comp.isOnAxis(Species::I) or comp.isOnAxis(Species::V)) {
+		double r0 = (r + rCore);
+		Z = -4.0 * ::xolotl::core::pi *
+			((1.0 - portion) * this->getSinkBias() + portion) /
+			log(::xolotl::core::pi * density * r0 * r0);
+	}
+	// Loop
+	else {
+		Z = rCoal;
+
+		Z *= 2.0 * ::xolotl::core::fecrDisloAlignment *
+			((1.0 - portion) * this->getSinkBias() + portion) *
+			this->_clusterData->extraData.netSigma(this->_reactant);
+	}
 
 	return density * Z;
 }

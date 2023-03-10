@@ -93,6 +93,8 @@ constexpr double frankBurgers = 0.333;
 // In lattice parameter units
 constexpr double fecrBurgers = 0.8660254038;
 constexpr double fecrLoopBurgers = 1.0;
+// Dislocation alignment
+constexpr double fecrDisloAlignment = 0.785398;
 
 // Sink strength for Alloy case in nm^-2
 constexpr double alloysinkStrength = 1.0e-5;

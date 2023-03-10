@@ -67,29 +67,31 @@ FeCrClusterGenerator::refine(const Region& region, BoolArray& result) const
 		return true;
 	}
 
+	double factor = 1.0e-1;
 	if (region[Species::V].begin() > 0 &&
-		region[Species::V].length() < util::max((double)(_groupingWidth + 1),
-										  region[Species::V].begin() * 5.0e-2))
+		region[Species::V].length() <
+			util::max((double)(_groupingWidth + 1),
+				(double)region[Species::V].begin() * factor))
 		result[1] = false;
 	if (region[Species::Free].begin() > 0 &&
 		region[Species::Free].length() <
 			util::max((double)(_groupingWidth + 1),
-				region[Species::Free].begin() * 5.0e-2))
+				(double)region[Species::Free].begin() * factor))
 		result[3] = false;
 	if (region[Species::Trapped].begin() > 0 &&
 		region[Species::Trapped].length() <
 			util::max((double)(_groupingWidth + 1),
-				region[Species::Trapped].begin() * 5.0e-2))
+				(double)region[Species::Trapped].begin() * factor))
 		result[4] = false;
 	if (region[Species::Junction].begin() > 0 &&
 		region[Species::Junction].length() <
 			util::max((double)(_groupingWidth + 1),
-				region[Species::Junction].begin() * 5.0e-2))
+				(double)region[Species::Junction].begin() * factor))
 		result[5] = false;
 	if (region[Species::Loop].begin() > 0 &&
 		region[Species::Loop].length() <
 			util::max((double)(_groupingWidth + 1),
-				region[Species::Loop].begin() * 5.0e-2))
+				(double)region[Species::Loop].begin() * factor))
 		result[7] = false;
 
 	return true;

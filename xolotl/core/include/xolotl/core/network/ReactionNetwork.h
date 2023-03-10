@@ -602,6 +602,13 @@ public:
 		std::vector<IndexType> advectingIds, std::vector<double> sinkStrengths,
 		std::vector<double>& fluxes, IndexType gridIndex) override;
 
+	void
+	updateOutgoingSinkFluxes(double* gridPointSolution,
+		std::vector<double>& fluxes, IndexType gridIndex) override
+	{
+		return;
+	}
+
 private:
 	KOKKOS_INLINE_FUNCTION
 	TImpl*

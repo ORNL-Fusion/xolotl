@@ -485,6 +485,18 @@ public:
 		std::vector<IndexType> advectingIds, std::vector<double> sinkStrengths,
 		std::vector<double>& fluxes, IndexType gridIndex) = 0;
 
+	/**
+	 * @brief Computes the flux to the sinks from this grid point.
+	 *
+	 * @param gridPointSolution The array of local solution, indexed with
+	 * cluster Ids
+	 * @param fluxes The vector of fluxes to update
+	 * @param gridIndex The grid point location
+	 */
+	virtual void
+	updateOutgoingSinkFluxes(double* gridPointSolution,
+		std::vector<double>& fluxes, IndexType gridIndex) = 0;
+
 protected:
 	std::string _material;
 	double _latticeParameter{};

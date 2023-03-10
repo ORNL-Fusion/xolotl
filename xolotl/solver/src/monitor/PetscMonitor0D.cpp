@@ -796,68 +796,8 @@ PetscMonitor0D::computeFeCrAl(
 		}
 	}
 
-	// TODO: move to network
-	// Compute the sink strength for the previous rates
-	auto density = _solverHandler->getSinkDensity(); // nm-2
-	auto portion = _solverHandler->getSinkPortion();
-	auto r = 1.0 / sqrt(::xolotl::core::pi * density); // nm
-	auto rCore = ::xolotl::core::fecrCoreRadius;
-	auto temperature = gridPointSolution[dof];
-	constexpr double K = 170.0e9; // GPa
-	constexpr double nu = 0.29;
-	constexpr double b = 0.25; // nm
-	double deltaV = 1.67 * 0.5 * ::xolotl::core::ironLatticeConstant *
-		::xolotl::core::ironLatticeConstant *
-		::xolotl::core::ironLatticeConstant * 1.0e-27; // m3
-	//	constexpr double a0 = 0.91, a1 = -2.16, a2 = -0.92; // Random dipole
-	constexpr double a0 = 0.87, a1 = -5.12, a2 = -0.77; // Full network
-	constexpr double k_B = 1.380649e-23; // J K-1.
-	double L = (K * b * deltaV * (1.0 - 2.0 * nu)) /
-		(2.0 * ::xolotl::core::pi * k_B * temperature * (1.0 - nu));
-	double delta = sqrt(rCore * rCore + (L * L) / 4.0);
-	double edge = portion * density * 2.0 * ::xolotl::core::pi *
-		(a0 + a1 * (delta / r) + a2 * ((delta - rCore) / r)) /
-		std::log(r / delta);
-	double screw = (1.0 - portion) * density * 2.0 * ::xolotl::core::pi *
-		(a0 + a1 * (rCore / r)) / std::log(r / rCore);
-	// Loop on all the clusters
-	for (auto i = 0; i < networkSize; ++i) {
-		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
-		auto diffCoef = cluster.getDiffusionCoefficient(0);
-		if (util::equal(diffCoef, 0.0))
-			continue;
-
-		auto clReg = cluster.getRegion();
-		Composition clLo = clReg.getOrigin();
-		// V case
-		if (clLo[Spec::V] > 0) {
-			double size =
-				clLo[Spec::V] + (double)(clReg[Spec::V].length() - 1) / 2.0;
-			// edge
-			_previousSinkRate[0] +=
-				gridPointSolution[i] * diffCoef * edge * size;
-			// screw
-			_previousSinkRate[1] +=
-				gridPointSolution[i] * diffCoef * screw * size;
-		}
-		else {
-			// I and Free case
-			double bias = 1.0;
-			double size = clLo[Spec::Free] +
-				(double)(clReg[Spec::Free].length() - 1) / 2.0;
-			if (clLo[Spec::I] > 0) {
-				bias = 1.05;
-				size =
-					clLo[Spec::I] + (double)(clReg[Spec::I].length() - 1) / 2.0;
-			}
-			// edge
-			_previousSinkRate[2] +=
-				gridPointSolution[i] * diffCoef * edge * bias * size;
-			// screw
-			_previousSinkRate[3] +=
-				gridPointSolution[i] * diffCoef * screw * bias * size;
-		}
-	}
+	// Get the sink flux
+	network.updateOutgoingSinkFluxes(gridPointSolution, _previousSinkRate, 0);
 
 	using HostUnmanaged =
 		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
