@@ -43,9 +43,11 @@ monitorBubble(
 }
 
 void
-PetscMonitor0D::setup()
+PetscMonitor0D::setup(int loop)
 {
 	PetscErrorCode ierr;
+
+	_loopNumber = loop;
 
 	// Get xolotlViz handler registry
 	auto vizHandlerRegistry = _solverHandler->getVizHandler();
@@ -305,7 +307,7 @@ PetscMonitor0D::setup()
 			// the network from another file using a single-process
 			// MPI communicator.
 			{
-				io::XFile checkpointFile(_hdf5OutputName, grid, xolotlComm);
+				io::XFile checkpointFile(_hdf5OutputName, 1, xolotlComm);
 			}
 
 			// Copy the network group from the given file (if it has one).
@@ -422,7 +424,7 @@ PetscMonitor0D::startStop(
 	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
 	assert(concGroup);
 	auto tsGroup = concGroup->addTimestepGroup(
-		timestep, time, previousTime, currentTimeStep);
+		_loopNumber, timestep, time, previousTime, currentTimeStep);
 
 	// Determine the concentration values we will write.
 	io::XFile::TimestepGroup::Concs1DType concs(1);

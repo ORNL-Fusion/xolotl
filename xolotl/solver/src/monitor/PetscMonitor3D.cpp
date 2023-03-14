@@ -40,9 +40,11 @@ monitorSurfaceXZ(
 }
 
 void
-PetscMonitor3D::setup()
+PetscMonitor3D::setup(int loop)
 {
 	PetscErrorCode ierr;
+
+	_loopNumber = loop;
 
 	// Get the process ID
 	auto xolotlComm = util::getMPIComm();
@@ -112,7 +114,7 @@ PetscMonitor3D::setup()
 		networkFile = std::make_unique<io::XFile>(networkName);
 		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
-		if (hasConcentrations) {
+		if (hasConcentrations and _loopNumber == 0) {
 			lastTsGroup = concGroup->getLastTimestepGroup();
 		}
 	}
@@ -202,7 +204,7 @@ PetscMonitor3D::setup()
 
 			// Get the interstitial information at the surface if concentrations
 			// were stored
-			if (hasConcentrations) {
+			if (hasConcentrations and _loopNumber == 0) {
 				assert(lastTsGroup);
 
 				// Get the names of the species in the network
@@ -236,7 +238,7 @@ PetscMonitor3D::setup()
 			_sputteringYield = _solverHandler->getSputteringYield();
 
 			// Master process
-			if (procId == 0) {
+			if (procId == 0 and _loopNumber == 0) {
 				// Clear the file where the surface will be written
 				std::ofstream outputFile;
 				outputFile.open("surface.txt");
@@ -298,7 +300,7 @@ PetscMonitor3D::setup()
 		auto fluxHandler = _solverHandler->getFluxHandler();
 		// Get the previous time if concentrations were stored and initialize
 		// the fluence
-		if (hasConcentrations) {
+		if (hasConcentrations and _loopNumber == 0) {
 			// Get the previous time from the HDF5 file
 			double previousTime = lastTsGroup->readPreviousTime();
 			_solverHandler->setPreviousTime(previousTime);
@@ -371,7 +373,7 @@ PetscMonitor3D::setup()
 			"failed.");
 
 		// Master process
-		if (procId == 0) {
+		if (procId == 0 and _loopNumber == 0) {
 			auto numSpecies = network.getSpeciesListSize();
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
@@ -440,7 +442,7 @@ PetscMonitor3D::setup()
 
 		// Get the previous time if concentrations were stored and initialize
 		// the fluence
-		if (hasConcentrations) {
+		if (hasConcentrations and _loopNumber == 0) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
@@ -464,7 +466,7 @@ PetscMonitor3D::setup()
 			"failed.");
 
 		// Master process
-		if (procId == 0) {
+		if (procId == 0 and _loopNumber == 0) {
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
@@ -568,7 +570,7 @@ PetscMonitor3D::setup()
 			_hdf5Stride = 1.0;
 
 		// Compute the correct _hdf5Previous for a restart
-		if (hasConcentrations) {
+		if (hasConcentrations and _loopNumber == 0) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
@@ -578,14 +580,8 @@ PetscMonitor3D::setup()
 		}
 
 		// Don't do anything if both files have the same name
-		if (_hdf5OutputName != _solverHandler->getNetworkName()) {
-			// Get the physical grid in the x direction
-			auto grid = _solverHandler->getXGrid();
-
-			// Setup step size variables
-			double hy = _solverHandler->getStepSizeY();
-			double hz = _solverHandler->getStepSizeZ();
-
+		if (_hdf5OutputName != _solverHandler->getNetworkName() and
+			_loopNumber == 0) {
 			// Create a checkpoint file.
 			// Create and initialize a checkpoint file.
 			// We do this in its own scope so that the file
@@ -594,8 +590,7 @@ PetscMonitor3D::setup()
 			// the network from another file using a single-process
 			// MPI communicator.
 			{
-				io::XFile checkpointFile(
-					_hdf5OutputName, grid, xolotlComm, My, hy, Mz, hz);
+				io::XFile checkpointFile(_hdf5OutputName, 1, xolotlComm);
 			}
 
 			// Copy the network group from the given file (if it has one).
@@ -742,7 +737,7 @@ PetscMonitor3D::startStop(
 	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
 	assert(concGroup);
 	auto tsGroup = concGroup->addTimestepGroup(
-		timestep, time, previousTime, currentTimeStep);
+		_loopNumber, timestep, time, previousTime, currentTimeStep);
 
 	// Get the names of the species in the network
 	auto numSpecies = network.getSpeciesListSize();
@@ -1504,15 +1499,15 @@ PetscMonitor3D::eventFunction(
 	fvalue[0] = 1.0, fvalue[1] = 1.0;
 	_depthPositions.clear();
 
-	PetscInt TSNumber = -1;
-	ierr = TSGetStepNumber(ts, &TSNumber);
+	PetscInt tsNumber = -1;
+	ierr = TSGetStepNumber(ts, &tsNumber);
 
 	// Skip if it is the same TS as before
-	if (TSNumber == _previousTSNumber)
+	if (tsNumber == _previousTSNumber)
 		PetscFunctionReturn(0);
 
 	// Set the previous TS number
-	_previousTSNumber = TSNumber;
+	_previousTSNumber = tsNumber;
 
 	// Gets the process ID
 	auto xolotlComm = util::getMPIComm();
@@ -1553,7 +1548,7 @@ PetscMonitor3D::eventFunction(
 	// Work of the moving surface first
 	if (_solverHandler->moveSurface()) {
 		// Write the initial surface positions
-		if (procId == 0 && util::equal(time, 0.0)) {
+		if (procId == 0 and tsNumber == 0) {
 			std::ofstream outputFile;
 			outputFile.open("surface.txt", std::ios::app);
 			outputFile << time << " ";
@@ -1575,7 +1570,7 @@ PetscMonitor3D::eventFunction(
 		// Loop on the possible zk and yj
 		for (auto zk = 0; zk < Mz; zk++) {
 			for (auto yj = 0; yj < My; yj++) {
-				if (TSNumber > 0) {
+				if (tsNumber > 0) {
 					// Compute the total density of intersitials that escaped
 					// from the surface since last timestep using the stored
 					// flux
@@ -1877,41 +1872,17 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 
 				// Throw an exception if the position is negative
 				if (surfacePos + _solverHandler->getLeftOffset() < 2) {
-					PetscBool flagCheck;
-					ierr = PetscOptionsHasName(
-						NULL, NULL, "-check_collapse", &flagCheck);
+					_solverHandler->setSurfaceOffset(nGridPoints);
+					ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
 					CHKERRQ(ierr);
-					if (flagCheck) {
-						// Write the convergence reason
-						std::ofstream outputFile;
-						outputFile.open("solverStatus.txt");
-						outputFile << "overgrid" << std::endl;
-						outputFile.close();
-					}
-					throw std::runtime_error(
-						"\nxolotlSolver::Monitor3D: The surface "
-						"is trying to go outside of the grid!!");
-				}
-
-				// Printing information about the extension of the material
-				if (procId == 0) {
-					XOLOTL_LOG << "Adding " << nGridPoints
-							   << " points to the grid on " << yj * hy
-							   << " and " << zk * hz << " at time: " << time
-							   << " s.";
+					PetscFunctionReturn(0);
 				}
 
 				// Set it in the solver
 				_solverHandler->setSurfacePosition(surfacePos, yj, zk);
 
-				// Initialize the vacancy concentration and the temperature on
-				// the new grid points Get the single vacancy ID
-				auto singleVacancyCluster = network.getSingleVacancy();
-				auto vacancyIndex =
-					core::network::IReactionNetwork::invalidIndex();
-				if (singleVacancyCluster.getId() !=
-					core::network::IReactionNetwork::invalidIndex())
-					vacancyIndex = singleVacancyCluster.getId();
+				// Initialize the concentrations and the temperature on
+				// the new grid points
 				// Get the surface temperature
 				double temp = 0.0;
 				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym &&
@@ -1942,7 +1913,7 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 
 						auto initialConc = _solverHandler->getInitialConc();
 
-						if (vacancyIndex > 0 && nGridPoints > 0) {
+						if (nGridPoints > 0) {
 							// Initialize the concentration
 							for (auto pair : initialConc) {
 								gridPointSolution[pair.first] = pair.second;
@@ -1993,6 +1964,23 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 				_solverHandler->setSurfacePosition(surfacePos, yj, zk);
 			}
 		}
+	}
+
+	// Check if the overall surface should be moved back as well
+	auto minSurf = _solverHandler->getSurfacePosition(0);
+	// Loop on the possible yj and zk
+	for (auto yj = 0; yj < My; yj++)
+		for (auto zk = 0; zk < Mz; zk++) {
+			// Get the position of the surface at yj
+			auto surfacePos = _solverHandler->getSurfacePosition(yj, zk);
+			if (surfacePos < minSurf)
+				minSurf = surfacePos;
+		}
+	if (minSurf > 0) {
+		_solverHandler->setSurfaceOffset(minSurf);
+		ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
+		CHKERRQ(ierr);
+		PetscFunctionReturn(0);
 	}
 
 	// Write the surface positions

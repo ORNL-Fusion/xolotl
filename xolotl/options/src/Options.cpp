@@ -30,7 +30,6 @@ Options::Options() :
 	vizHandlerName(""),
 	materialName(""),
 	initialConcentration(""),
-	voidPortion(50.0),
 	dimensionNumber(1),
 	gridTypeName(""),
 	gridParam{},
@@ -152,9 +151,7 @@ Options::readParams(int argc, const char* argv[])
 		"The name, size, and value of the initial concentration in the "
 		"material.")("zeta", bpo::value<double>(&zeta)->default_value(0.73),
 		"The value of the electronic stopping power in the material (0.73 by "
-		"default).")("voidPortion", bpo::value<double>(&voidPortion),
-		"The value (in %) of the void portion at the start of the simulation.")(
-		"gridType",
+		"default).")("gridType",
 		bpo::value<std::string>(&gridTypeName)->default_value("uniform"),
 		"Grid type to use along X. (default = uniform; available "
 		"uniform,nonuniform,geometric,cheby,read")("gridParam",
