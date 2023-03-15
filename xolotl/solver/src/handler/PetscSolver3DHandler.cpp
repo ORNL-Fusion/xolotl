@@ -919,9 +919,16 @@ PetscSolver3DHandler::updateConcentration(
 				updatedConcOffset = updatedConcs[zk][yj][xi];
 
 				// Set the grid fraction
-				gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
-									  grid[surfacePosition[yj][zk] + 1]) /
-					(grid[grid.size() - 1] - grid[surfacePosition[yj][zk] + 1]);
+				if (xi < 0)
+					gridPosition[0] =
+						(grid[0] - grid[surfacePosition[yj][zk] + 1]) /
+						(grid[grid.size() - 1] -
+							grid[surfacePosition[yj][zk] + 1]);
+				else
+					gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
+										  grid[surfacePosition[yj][zk] + 1]) /
+						(grid[grid.size() - 1] -
+							grid[surfacePosition[yj][zk] + 1]);
 				gridPosition[1] = yj / nY;
 				gridPosition[2] = zk / nZ;
 
@@ -1332,9 +1339,16 @@ PetscSolver3DHandler::computeJacobian(
 				concOffset = concs[zk][yj][xi];
 
 				// Set the grid fraction
-				gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
-									  grid[surfacePosition[yj][zk] + 1]) /
-					(grid[grid.size() - 1] - grid[surfacePosition[yj][zk] + 1]);
+				if (xi < 0)
+					gridPosition[0] =
+						(grid[0] - grid[surfacePosition[yj][zk] + 1]) /
+						(grid[grid.size() - 1] -
+							grid[surfacePosition[yj][zk] + 1]);
+				else
+					gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 -
+										  grid[surfacePosition[yj][zk] + 1]) /
+						(grid[grid.size() - 1] -
+							grid[surfacePosition[yj][zk] + 1]);
 				gridPosition[1] = yj / nY;
 				gridPosition[2] = zk / nZ;
 
