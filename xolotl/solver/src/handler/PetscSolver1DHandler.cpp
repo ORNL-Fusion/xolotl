@@ -624,9 +624,13 @@ PetscSolver1DHandler::updateConcentration(
 		updatedConcOffset = updatedConcs[xi];
 
 		// Set the grid fraction
-		gridPosition[0] =
-			((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1]) /
-			(grid[grid.size() - 1] - grid[surfacePosition + 1]);
+		if (xi < 0)
+			gridPosition[0] = (grid[0] - grid[surfacePosition + 1]) /
+				(grid[grid.size() - 1] - grid[surfacePosition + 1]);
+		else
+			gridPosition[0] =
+				((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1]) /
+				(grid[grid.size() - 1] - grid[surfacePosition + 1]);
 
 		// Get the temperature from the temperature handler
 		temperatureHandler->setTemperature(concOffset);
@@ -905,11 +909,17 @@ PetscSolver1DHandler::computeJacobian(
 		concOffset = concs[xi];
 
 		// Set the grid fraction
-		gridPosition[0] =
-			((temperatureGrid[xi] + temperatureGrid[xi + 1]) / 2.0 -
-				temperatureGrid[surfacePosition + 1]) /
-			(temperatureGrid[temperatureGrid.size() - 1] -
-				temperatureGrid[surfacePosition + 1]);
+		if (xi < 0)
+			gridPosition[0] =
+				(temperatureGrid[0] - temperatureGrid[surfacePosition + 1]) /
+				(temperatureGrid[temperatureGrid.size() - 1] -
+					temperatureGrid[surfacePosition + 1]);
+		else
+			gridPosition[0] =
+				((temperatureGrid[xi] + temperatureGrid[xi + 1]) / 2.0 -
+					temperatureGrid[surfacePosition + 1]) /
+				(temperatureGrid[temperatureGrid.size() - 1] -
+					temperatureGrid[surfacePosition + 1]);
 
 		// Get the temperature from the temperature handler
 		temperatureHandler->setTemperature(concOffset);
