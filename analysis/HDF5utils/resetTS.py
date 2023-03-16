@@ -19,9 +19,10 @@ f = h5py.File('/home/sophie/Workspace/xolotl-dynamic-build/dynamicGrid/network_d
 ## Get the last timestep
 concGroup = f['concentrationsGroup']
 lastTS = concGroup.attrs['lastTimeStep']
+lastLoop = concGroup.attrs['lastLoop']
 
 ## Open the corresponding group
-groupName ='concentrationsGroup/concentration_' + str(lastTS)
+groupName ='concentrationsGroup/concentration_' + str(lastLoop) + '_' + str(lastTS)
 concGroup = f[groupName]
 
 ## Get all the attributes
