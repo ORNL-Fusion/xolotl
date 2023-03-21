@@ -14,7 +14,19 @@ public:
 	}
 
 	virtual void
-	setup() = 0;
+	setup(int loop) = 0;
+
+	virtual void
+	keepFlux(std::vector<std::vector<std::vector<double>>>& nSurf,
+		std::vector<std::vector<std::vector<double>>>& nBulk,
+		std::vector<std::vector<std::vector<double>>>& surfFlux,
+		std::vector<std::vector<std::vector<double>>>& bulkFlux) = 0;
+
+	virtual void
+	setFlux(std::vector<std::vector<std::vector<double>>>& nSurf,
+		std::vector<std::vector<std::vector<double>>>& nBulk,
+		std::vector<std::vector<std::vector<double>>>& surfFlux,
+		std::vector<std::vector<std::vector<double>>>& bulkFlux) = 0;
 };
 } // namespace monitor
 } // namespace solver

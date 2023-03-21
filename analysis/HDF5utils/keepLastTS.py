@@ -11,25 +11,26 @@
 import h5py
 
 ## Open the file we want to copy from
-f = h5py.File('/home/sophie/Data/Xolotl/network/networkTest.h5', 'r')
+f = h5py.File('/home/sophie/Workspace/xolotl-dynamicGrid-build/script/xolotlStop.h5', 'r')
 
 ## Get the last time step saved in the file
 concGroup = f['concentrationsGroup']
 timestep = concGroup.attrs['lastTimeStep']
+lastLoop = concGroup.attrs['lastLoop']
 
 ## Create the file to copy to
-fNew = h5py.File('/home/sophie/Data/Xolotl/network/networkNew.h5', 'a')
+fNew = h5py.File('/home/sophie/Workspace/xolotl-dynamicGrid-build/script/networkNew.h5', 'a')
 
 ## Create the concentration group
 concGroupNew = fNew.create_group('concentrationsGroup')
 
 ## Set the last time step
 concGroupNew.attrs['lastTimeStep'] = timestep
+concGroupNew.attrs['lastLoop'] = lastLoop
 
 ## Copy the last timestep group
-groupName ='concentration_' + str(timestep)
+groupName ='concentration_' + str(lastLoop) + '_' + str(timestep)
 concGroup.copy(groupName, concGroupNew)
 
 ## Copy the other groups
-f.copy('headerGroup', fNew)
 f.copy('networkGroup', fNew)

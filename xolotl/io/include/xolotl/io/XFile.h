@@ -42,10 +42,6 @@ public:
 		// Names of surface position attributes.
 		static const std::string surfacePosDataName;
 
-		// Names of interstitial attributes.
-		static const std::string nIntersAttrName;
-		static const std::string prevIFluxAttrName;
-
 		// Names of Helium attributes.
 		static const std::string nHeBurstAttrName;
 
@@ -63,6 +59,14 @@ public:
 
 		// Name of the concentrations data set.
 		static const std::string concDatasetName;
+
+		// Names of grid-specification attributes.
+		static const std::string nxAttrName;
+		static const std::string hxAttrName;
+		static const std::string nyAttrName;
+		static const std::string hyAttrName;
+		static const std::string nzAttrName;
+		static const std::string hzAttrName;
 
 	public:
 		// Concise name for surface representations.
@@ -86,12 +90,14 @@ public:
 		 * Construct the group name for the given time step.
 		 *
 		 * @param concGroup The parent concentration group.
+		 * @param loop The loop number in which it is.
 		 * @param timeStep The time step the group will represent.
 		 * @return A string to use for the name of the time step group for
 		 *          the given time step.
 		 */
 		static std::string
-		makeGroupName(const ConcentrationGroup& concGroup, int timeStep);
+		makeGroupName(
+			const ConcentrationGroup& concGroup, int loop, int timeStep);
 
 		/**
 		 * Construct a TimestepGroup.
@@ -104,20 +110,25 @@ public:
 		 * Create and populate a Timestep group within the given
 		 * concentration group.
 		 *
+		 * @param concGroup The concentration group
+		 * @param loop The loop number
 		 * @param timeStep The number of the time step
 		 * @param time The physical time at this time step
 		 * @param previousTime The physical time at the previous time step
 		 * @param deltaTime The physical length of the time step
 		 */
-		TimestepGroup(const ConcentrationGroup& concGroup, int timeStep,
-			double time, double previousTime, double deltaTime);
+		TimestepGroup(const ConcentrationGroup& concGroup, int loop,
+			int timeStep, double time, double previousTime, double deltaTime);
 
 		/**
 		 * Open a TimestepGroup within the given concentration group.
 		 *
+		 * @param concGroup The concentration group
+		 * @param loop The loop number
 		 * @param timeStep The time step of the desired group.
 		 */
-		TimestepGroup(const ConcentrationGroup& concGroup, int timeStep);
+		TimestepGroup(
+			const ConcentrationGroup& concGroup, int loop, int timeStep);
 
 		/**
 		 * Update a Timestep group within the given
@@ -131,15 +142,27 @@ public:
 		updateTimestepGroup(double time, double previousTime, double deltaTime);
 
 		/**
+		 * Save the grid information to our timestep group.
+		 *
+		 * @param grid The grid points in the x direction (depth)
+		 * @param ny The number of grid points in the y direction
+		 * @param hy The step size in the y direction
+		 * @param nz The number of grid points in the z direction
+		 * @param hz The step size in the z direction
+		 */
+		void
+		writeGrid(const std::vector<double>& grid, int ny = 0, double hy = 0.0,
+			int nz = 0, double hz = 0.0) const;
+
+		/**
 		 * Save the surface positions to our timestep group.
 		 *
-		 * @param iSurface The index of the surface position
 		 * @param nAtoms The quantity of atoms at the surface
 		 * @param previousFluxes The previous fluxes
 		 * @param atomNames The names for the atom types
 		 */
 		void
-		writeSurface1D(Surface1DType iSurface, std::vector<Data1DType> nAtoms,
+		writeSurface1D(std::vector<Data1DType> nAtoms,
 			std::vector<Data1DType> previousFluxes,
 			std::vector<std::string> atomNames) const;
 
@@ -288,13 +311,26 @@ public:
 		readPreviousTime(void) const;
 
 		/**
-		 * Read the surface position from our concentration group in
-		 * the case of a 1D grid (one surface position).
+		 * Read the grid size.
 		 *
-		 * @return The index of the surface position
+		 * @param nx The number of grid points in the x direction (depth)
+		 * @param hx The step size in the x direction
+		 * @param ny The number of grid points in the y direction
+		 * @param hy The step size in the y direction
+		 * @param nz The number of grid points in the z direction
+		 * @param hz The step size in the z direction
 		 */
-		Surface1DType
-		readSurface1D(void) const;
+		void
+		readSizes(int& nx, double& hx, int& ny, double& hy, int& nz,
+			double& hz) const;
+
+		/**
+		 * Read the grid.
+		 *
+		 * @return The grid
+		 */
+		std::vector<double>
+		readGrid() const;
 
 		/**
 		 * Read the surface position from our concentration group in
@@ -362,8 +398,9 @@ public:
 	class ConcentrationGroup : public HDF5File::Group
 	{
 	private:
-		// Name of our last timestep attribute.
+		// Name of our last timestep and loop attribute.
 		static const std::string lastTimestepAttrName;
+		static const std::string lastLoopAttrName;
 
 	public:
 		// Path of the concentrations group within the file.
@@ -377,14 +414,23 @@ public:
 		/**
 		 * Add a concentration timestep group for the given time step.
 		 *
+		 * @param loop The loop number
 		 * @param timeStep The number of the time step
 		 * @param time The physical time at this time step
 		 * @param previousTime The physical time at the previous time step
 		 * @param deltaTime The physical length of the time step
 		 */
 		std::unique_ptr<TimestepGroup>
-		addTimestepGroup(int timeStep, double time, double previousTime,
-			double deltaTime) const;
+		addTimestepGroup(int loop, int timeStep, double time,
+			double previousTime, double deltaTime) const;
+
+		/**
+		 * Obtain the last loop known to our group.
+		 *
+		 * @return Loop of last TimestepGroup written to our group.
+		 */
+		int
+		getLastLoop(void) const;
 
 		/**
 		 * Obtain the last timestep known to our group.
@@ -408,12 +454,13 @@ public:
 		/**
 		 * Access the TimestepGroup associated with the given time step.
 		 *
-		 * @param ts Time step of the desired TimestepGroup.
+		 * @param loop The loop number
+		 * @param timeStep Time step of the desired TimestepGroup.
 		 * @return TimestepGroup associated with the given time step.  Empty
 		 *          pointer if the given time step is not known to us.
 		 */
 		std::unique_ptr<TimestepGroup>
-		getTimestepGroup(int timeStep) const;
+		getTimestepGroup(int loop, int timeStep) const;
 
 		/**
 		 * Access the TimestepGroup associated with the last known time step.
@@ -423,63 +470,6 @@ public:
 		 */
 		std::unique_ptr<TimestepGroup>
 		getLastTimestepGroup(void) const;
-	};
-
-	// Our header group.
-	class HeaderGroup : public HDF5File::Group
-	{
-	private:
-		// Names of grid-specification attributes.
-		static const std::string nxAttrName;
-		static const std::string hxAttrName;
-		static const std::string nyAttrName;
-		static const std::string hyAttrName;
-		static const std::string nzAttrName;
-		static const std::string hzAttrName;
-
-	public:
-		// Path of the header group within the file.
-		static const fs::path path;
-
-		/**
-		 * Create the header group.
-		 * Default and copy constructors explicitly disallowed.
-		 */
-		HeaderGroup(void) = delete;
-		HeaderGroup(const HeaderGroup& other) = delete;
-
-		/**
-		 * Create and initialize the header group with the number of
-		 * points and step size in each direction.
-		 *
-		 * @param file The file in which the header should be added.
-		 * @param grid The grid points in the x direction (depth)
-		 * @param ny The number of grid points in the y direction
-		 * @param hy The step size in the y direction
-		 * @param nz The number of grid points in the z direction
-		 * @param hz The step size in the z direction
-		 */
-		HeaderGroup(const XFile& file, const std::vector<double>& grid, int ny,
-			double hy, int nz, double hz);
-
-		/**
-		 * Open an existing header group.
-		 */
-		HeaderGroup(const XFile& file);
-
-		/**
-		 * Read our file header.
-		 *
-		 * @param nx The number of grid points in the x direction (depth)
-		 * @param hx The step size in the x direction
-		 * @param ny The number of grid points in the y direction
-		 * @param hy The step size in the y direction
-		 * @param nz The number of grid points in the z direction
-		 * @param hz The step size in the z direction
-		 */
-		void
-		read(int& nx, double& hx, int& ny, double& hy, int& nz,
-			double& hz) const;
 	};
 
 	// A group describing a network within our HDF5 file.
@@ -635,18 +625,12 @@ public:
 	 * Create and initialize a checkpoint file.
 	 *
 	 * @param path Path of file to create.
-	 * @param grid The grid points in the x direction (depth)
+	 * @param create Dummy variable
 	 * @param _comm The MPI communicator used to access the file.
-	 * @param ny The number of grid points in the y direction
-	 * @param hy The step size in the y direction
-	 * @param nz The number of grid points in the z direction
-	 * @param hz The step size in the z direction
 	 * @param mode Access mode for file.  Only HDF5File Create* modes
 	 *              are supported.
 	 */
-	XFile(fs::path path, const std::vector<double>& grid,
-		MPI_Comm _comm = MPI_COMM_WORLD, int ny = 0, double hy = 0.0,
-		int nz = 0, double hz = 0.0,
+	XFile(fs::path path, int create, MPI_Comm _comm = MPI_COMM_WORLD,
 		AccessMode mode = AccessMode::CreateOrTruncateIfExists);
 
 	/**

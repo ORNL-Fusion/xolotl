@@ -143,13 +143,6 @@ public:
 	getMaterial() const = 0;
 
 	/**
-	 * Obtain the value of the void portion for the simulation.
-	 * @return The portion.
-	 */
-	virtual double
-	getVoidPortion() const = 0;
-
-	/**
 	 * Obtain the value of the concentration for the vacancies.
 	 *
 	 * @return The concentration value
