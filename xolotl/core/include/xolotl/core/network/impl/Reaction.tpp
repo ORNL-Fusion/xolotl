@@ -207,8 +207,7 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 	}
 	// General case
 	else
-		nOverlap = 
-			this->computeOverlap(cl1RR, cl2RR, pr1RR, pr2RR);
+		nOverlap = this->computeOverlap(cl1RR, cl2RR, pr1RR, pr2RR);
 
 	this->_coefs(0, 0, 0, 0) = nOverlap;
 	for (auto i : speciesRangeNoI) {
@@ -2027,8 +2026,7 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 	auto pr1RR = rRegions[0];
 	auto pr2RR = rRegions[1];
 
-	auto nOverlap =
-		this->computeOverlap(pr1RR, pr2RR, clRR, cl2RR);
+	auto nOverlap = this->computeOverlap(pr1RR, pr2RR, clRR, cl2RR);
 
 	// The first coefficient is simply the overlap because it is the sum over 1
 	this->_coefs(0, 0, 0, 0) = nOverlap;
