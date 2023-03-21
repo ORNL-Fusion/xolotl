@@ -95,6 +95,7 @@ public:
 	using RateVector = IReactionNetwork::RateVector;
 	using ConnectivitiesVector = IReactionNetwork::ConnectivitiesVector;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
+	using TotalQuantity = IReactionNetwork::TotalQuantity;
 
 	template <typename PlsmContext>
 	using Cluster = Cluster<TImpl, PlsmContext>;
@@ -486,6 +487,51 @@ public:
 
 	IndexType
 	getDiagonalFill(SparseFillMap& fillMap) override;
+
+	template <typename... TQMethods>
+	util::Array<double, sizeof...(TQMethods)>
+	getTotalsImpl(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, sizeof...(TQMethods)>& quantities);
+
+	template <template <typename> typename... TQMethods>
+	util::Array<double, sizeof...(TQMethods)>
+	getTotalsImpl(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, sizeof...(TQMethods)>& quantities)
+	{
+		return getTotalsImpl<TQMethods<TImpl>...>(concentrations, quantities);
+	}
+
+	util::Array<double, 1>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 1>& quantities) override;
+
+	util::Array<double, 2>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 2>& quantities) override;
+
+	util::Array<double, 3>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 3>& quantities) override;
+
+	util::Array<double, 4>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 4>& quantities) override;
+
+	util::Array<double, 5>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 5>& quantities) override;
+
+	util::Array<double, 6>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 6>& quantities) override;
+
+	util::Array<double, 7>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 7>& quantities) override;
+
+	std::vector<double>
+	getTotalsVec(ConcentrationsView concentrations,
+		const std::vector<TotalQuantity>& quantities) override;
 
 	/**
 	 * Get the total concentration of a given type of clusters.

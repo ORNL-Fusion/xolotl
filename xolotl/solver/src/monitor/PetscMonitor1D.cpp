@@ -989,9 +989,15 @@ PetscMonitor1D::computeHeliumRetention(
 		deep_copy(dConcs, hConcs);
 
 		// Get the total concentrations at this grid point
+		using Quant = core::network::IReactionNetwork::TotalQuantity;
+		std::vector<Quant> quant;
+		quant.reserve(numSpecies);
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			myConcData[id()] +=
-				network.getTotalAtomConcentration(dConcs, id, 1) * hx;
+			quant.push_back({Quant::Type::atom, id, 1});
+		}
+		auto totals = network.getTotalsVec(dConcs, quant);
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			myConcData[id()] += totals[id()] * hx;
 		}
 	}
 
@@ -1319,25 +1325,26 @@ PetscMonitor1D::computeXenonRetention(
 		double hx = grid[xi + 1] - grid[xi];
 
 		// Get the concentrations
-		xeConcentration +=
-			network.getTotalAtomConcentration(dConcs, Spec::Xe, 1) * hx;
-		bubbleConcentration +=
-			network.getTotalConcentration(dConcs, Spec::Xe, 1) * hx;
-		radii += network.getTotalRadiusConcentration(dConcs, Spec::Xe, 1) * hx;
-		partialBubbleConcentration =
-			network.getTotalConcentration(dConcs, Spec::Xe, minSizes[0]) * hx;
-		partialRadii +=
-			network.getTotalRadiusConcentration(dConcs, Spec::Xe, minSizes[0]) *
-			hx;
-		partialSize +=
-			network.getTotalAtomConcentration(dConcs, Spec::Xe, minSizes[0]) *
-			hx;
+		using TQ = core::network::IReactionNetwork::TotalQuantity;
+		using Q = TQ::Type;
+		using TQA = util::Array<TQ, 7>;
+		auto id =
+			core::network::SpeciesId(Spec::Xe, network.getSpeciesListSize());
+		auto ms = static_cast<AmountType>(minSizes[id()]);
+		auto totals = network.getTotals(dConcs,
+			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
+				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
+				TQ{Q::radius, id, ms}, TQ{Q::volume, id, ms}});
 
-		// Set the volume fraction
-		double volumeFrac =
-			network.getTotalVolumeFraction(dConcs, Spec::Xe, minSizes[0]);
-		_solverHandler->setVolumeFraction(volumeFrac, xi - xs);
-		// Set the monomer concentration
+		bubbleConcentration += totals[0] * hx;
+		xeConcentration += totals[1] * hx;
+		radii += totals[2] * hx;
+		partialBubbleConcentration += totals[3] * hx;
+		partialSize += totals[4] * hx;
+		partialRadii += totals[5] * hx;
+
+		_solverHandler->setVolumeFraction(totals[6], xi - xs);
+
 		_solverHandler->setMonomerConc(
 			gridPointSolution[xeCluster.getId()], xi - xs);
 	}
@@ -1548,13 +1555,18 @@ PetscMonitor1D::computeAlloy(
 
 		// Loop on the species
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			myData[4 * id()] += network.getTotalConcentration(dConcs, id, 1);
-			myData[(4 * id()) + 1] +=
-				2.0 * network.getTotalRadiusConcentration(dConcs, id, 1);
-			myData[(4 * id()) + 2] +=
-				network.getTotalConcentration(dConcs, id, minSizes[id()]);
-			myData[(4 * id()) + 3] += 2.0 *
-				network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]);
+			using TQ = core::network::IReactionNetwork::TotalQuantity;
+			using Q = TQ::Type;
+			using TQA = util::Array<TQ, 4>;
+			auto ms = static_cast<AmountType>(minSizes[id()]);
+			auto totals = network.getTotals(dConcs,
+				TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1},
+					TQ{Q::total, id, ms}, TQ{Q::radius, id, ms}});
+
+			myData[4 * id()] += totals[0];
+			myData[(4 * id()) + 1] += 2.0 * totals[1] / myData[4 * id()];
+			myData[(4 * id()) + 2] += totals[2];
+			myData[(4 * id()) + 3] += 2.0 * totals[3] / myData[(4 * id()) + 2];
 		}
 	}
 
@@ -2274,9 +2286,15 @@ PetscMonitor1D::computeTRIDYN(
 			auto currIdx = (PetscInt)xi - myFirstIdxToWrite;
 			myConcs[currIdx][0] = x;
 			// Get the total concentrations at this grid point
+			using Quant = core::network::IReactionNetwork::TotalQuantity;
+			std::vector<Quant> quant;
+			quant.reserve(numSpecies);
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-				myConcs[currIdx][id() + 1] +=
-					network.getTotalAtomConcentration(dConcs, id, 1);
+				quant.push_back({Quant::Type::atom, id, 1});
+			}
+			auto totals = network.getTotalsVec(dConcs, quant);
+			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+				myConcs[currIdx][id() + 1] += totals[id()];
 			}
 			myConcs[currIdx][numSpecies + 1] = networkTemp[currIdx];
 		}

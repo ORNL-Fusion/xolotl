@@ -832,9 +832,15 @@ PetscMonitor2D::computeHeliumRetention(
 			deep_copy(dConcs, hConcs);
 
 			// Get the total concentrations at this grid point
+			using Quant = core::network::IReactionNetwork::TotalQuantity;
+			std::vector<Quant> quant;
+			quant.reserve(numSpecies);
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-				myConcData[id()] +=
-					network.getTotalAtomConcentration(dConcs, id, 1) * hx * hy;
+				quant.push_back({Quant::Type::atom, id, 1});
+			}
+			auto totals = network.getTotalsVec(dConcs, quant);
+			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+				myConcData[id()] += totals[id()] * hx * hy;
 			}
 		}
 	}
@@ -1191,25 +1197,25 @@ PetscMonitor2D::computeXenonRetention(
 			double hx = grid[xi + 1] - grid[xi];
 
 			// Get the concentrations
-			xeConcentration +=
-				network.getTotalAtomConcentration(dConcs, Spec::Xe, 1) * hx *
-				hy;
-			bubbleConcentration +=
-				network.getTotalConcentration(dConcs, Spec::Xe, 1) * hx * hy;
-			radii += network.getTotalRadiusConcentration(dConcs, Spec::Xe, 1) *
-				hx * hy;
-			partialBubbleConcentration +=
-				network.getTotalConcentration(dConcs, Spec::Xe, minSizes[0]) *
-				hx * hy;
-			partialRadii += network.getTotalRadiusConcentration(
-								dConcs, Spec::Xe, minSizes[0]) *
-				hx * hy;
+			using TQ = core::network::IReactionNetwork::TotalQuantity;
+			using Q = TQ::Type;
+			using TQA = util::Array<TQ, 6>;
+			auto id = core::network::SpeciesId(
+				Spec::Xe, network.getSpeciesListSize());
+			auto ms = static_cast<AmountType>(minSizes[id()]);
+			auto totals = network.getTotals(dConcs,
+				TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1},
+					TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
+					TQ{Q::radius, id, ms}, TQ{Q::volume, id, ms}});
 
-			// Set the volume fraction
-			double volumeFrac =
-				network.getTotalVolumeFraction(dConcs, Spec::Xe, minSizes[0]);
-			_solverHandler->setVolumeFraction(volumeFrac, xi - xs, yj - ys);
-			// Set the monomer concentration
+			bubbleConcentration += totals[0] * hx * hy;
+			xeConcentration += totals[1] * hx * hy;
+			radii += totals[2] * hx * hy;
+			partialBubbleConcentration += totals[3] * hx * hy;
+			partialRadii += totals[4] * hx * hy;
+
+			_solverHandler->setVolumeFraction(totals[5], xi - xs, yj - ys);
+
 			_solverHandler->setMonomerConc(
 				gridPointSolution[xeCluster.getId()], xi - xs, yj - ys);
 		}

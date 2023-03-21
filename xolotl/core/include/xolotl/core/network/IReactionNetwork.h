@@ -10,6 +10,7 @@
 #include <xolotl/core/network/detail/ClusterConnectivity.h>
 #include <xolotl/core/network/detail/ClusterData.h>
 #include <xolotl/core/network/detail/ReactionData.h>
+#include <xolotl/util/Array.h>
 
 namespace xolotl
 {
@@ -421,6 +422,54 @@ public:
 	 */
 	virtual IndexType
 	getDiagonalFill(SparseFillMap& fillMap) = 0;
+
+	struct TotalQuantity
+	{
+		enum class Type
+		{
+			total,
+			atom,
+			radius,
+			volume,
+			trapped
+		};
+
+		Type type{};
+		SpeciesId speciesId{};
+		AmountType minSize{0};
+	};
+
+	virtual util::Array<double, 1>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 1>& quantities) = 0;
+
+	virtual util::Array<double, 2>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 2>& quantities) = 0;
+
+	virtual util::Array<double, 3>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 3>& quantities) = 0;
+
+	virtual util::Array<double, 4>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 4>& quantities) = 0;
+
+	virtual util::Array<double, 5>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 5>& quantities) = 0;
+
+	virtual util::Array<double, 6>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 6>& quantities) = 0;
+
+	virtual util::Array<double, 7>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 7>& quantities) = 0;
+
+	virtual std::vector<double>
+	getTotalsVec(ConcentrationsView concentrations,
+		const std::vector<TotalQuantity>& quantities) = 0;
 
 	virtual double
 	getTotalConcentration(ConcentrationsView concentrations, SpeciesId species,
