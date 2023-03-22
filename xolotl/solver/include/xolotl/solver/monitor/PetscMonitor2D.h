@@ -18,7 +18,31 @@ public:
 	using PetscMonitor::PetscMonitor;
 
 	void
-	setup() override;
+	setup(int loop) override;
+
+	void
+	keepFlux(std::vector<std::vector<std::vector<double>>>& nSurf,
+		std::vector<std::vector<std::vector<double>>>& nBulk,
+		std::vector<std::vector<std::vector<double>>>& surfFlux,
+		std::vector<std::vector<std::vector<double>>>& bulkFlux) override
+	{
+		nSurf.push_back(_nSurf);
+		nBulk.push_back(_nBulk);
+		surfFlux.push_back(_previousSurfFlux);
+		bulkFlux.push_back(_previousBulkFlux);
+	}
+
+	void
+	setFlux(std::vector<std::vector<std::vector<double>>>& nSurf,
+		std::vector<std::vector<std::vector<double>>>& nBulk,
+		std::vector<std::vector<std::vector<double>>>& surfFlux,
+		std::vector<std::vector<std::vector<double>>>& bulkFlux) override
+	{
+		_nSurf = nSurf[0];
+		_nBulk = nBulk[0];
+		_previousSurfFlux = surfFlux[0];
+		_previousBulkFlux = bulkFlux[0];
+	}
 
 	PetscErrorCode
 	monitorLargest(

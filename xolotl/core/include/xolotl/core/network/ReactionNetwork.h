@@ -95,6 +95,7 @@ public:
 	using RateVector = IReactionNetwork::RateVector;
 	using ConnectivitiesVector = IReactionNetwork::ConnectivitiesVector;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
+	using TotalQuantity = IReactionNetwork::TotalQuantity;
 
 	template <typename PlsmContext>
 	using Cluster = Cluster<TImpl, PlsmContext>;
@@ -275,10 +276,19 @@ public:
 		if constexpr (!std::is_same_v<plsm::HostMemSpace,
 						  plsm::DeviceMemSpace> &&
 			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+#ifdef __CUDACC__
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 20011, 20014
+#endif
+			// CUDA warns about calling __host__ functions here.
+			// However, his branch is never compiled using CUDA
 			auto id = getSubpavingMirror().findTileId(comp);
 			return getClusterDataMirror().getCluster(
 				id == _subpaving.invalidIndex() ? this->invalidIndex() :
 												  IndexType(id));
+#ifdef __CUDACC__
+#pragma nv_diagnostic pop
+#endif
 		}
 		else {
 			auto id = _subpaving.findTileId(comp);
@@ -358,7 +368,16 @@ public:
 		if constexpr (!std::is_same_v<plsm::HostMemSpace,
 						  plsm::DeviceMemSpace> &&
 			std::is_same_v<MemSpace, plsm::HostMemSpace>) {
+#ifdef __CUDACC__
+#pragma nv_diagnostic push
+#pragma nv_diag_suppress 20011, 20014
+#endif
+			// CUDA warns about calling a __host__ function here.
+			// However, his branch is never compiled using CUDA
 			return getClusterDataMirror().getCluster(clusterId);
+#ifdef __CUDACC__
+#pragma nv_diagnostic pop
+#endif
 		}
 		else {
 			return _clusterData.d_view().getCluster(clusterId);
@@ -475,6 +494,51 @@ public:
 
 	IndexType
 	getDiagonalFill(SparseFillMap& fillMap) override;
+
+	template <typename... TQMethods>
+	util::Array<double, sizeof...(TQMethods)>
+	getTotalsImpl(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, sizeof...(TQMethods)>& quantities);
+
+	template <template <typename> typename... TQMethods>
+	util::Array<double, sizeof...(TQMethods)>
+	getTotalsImpl(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, sizeof...(TQMethods)>& quantities)
+	{
+		return getTotalsImpl<TQMethods<TImpl>...>(concentrations, quantities);
+	}
+
+	util::Array<double, 1>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 1>& quantities) override;
+
+	util::Array<double, 2>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 2>& quantities) override;
+
+	util::Array<double, 3>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 3>& quantities) override;
+
+	util::Array<double, 4>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 4>& quantities) override;
+
+	util::Array<double, 5>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 5>& quantities) override;
+
+	util::Array<double, 6>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 6>& quantities) override;
+
+	util::Array<double, 7>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 7>& quantities) override;
+
+	std::vector<double>
+	getTotalsVec(ConcentrationsView concentrations,
+		const std::vector<TotalQuantity>& quantities) override;
 
 	/**
 	 * Get the total concentration of a given type of clusters.

@@ -30,7 +30,7 @@ for i in range(len(name)):
     f = h5py.File(name[i], 'r')
 
     ## Open the concentration group
-    groupName ='concentrationsGroup/concentration_' + str(timestep[i])
+    groupName ='concentrationsGroup/concentration_0_' + str(timestep[i])
     concGroup = f[groupName]
 
     ## Read the concentration and index datasets

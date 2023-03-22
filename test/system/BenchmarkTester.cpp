@@ -63,7 +63,7 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_5, *utf::label("0D"))
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_1, *utf::label("1D"))
 {
 	// 1D + HeV + 4e25 flux W100
-	SystemTestCase{"benchmark_PSI_1"}.mpiLimits(1, 100).withTimer().run();
+	SystemTestCase{"benchmark_PSI_1"}.tolerance(1.0e-5).mpiLimits(1, 100).withTimer().run();
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_2, *utf::label("1D"))
@@ -103,7 +103,7 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_5, *utf::label("1D"))
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_7, *utf::label("1D"))
 {
 	// 1D + pulsed
-	SystemTestCase{"benchmark_PSI_7"}.mpiLimits(4, 25).withTimer().run();
+	SystemTestCase{"benchmark_PSI_7"}.tolerance(1.0e-8).mpiLimits(4, 25).withTimer().run();
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_8, *utf::label("1D"))

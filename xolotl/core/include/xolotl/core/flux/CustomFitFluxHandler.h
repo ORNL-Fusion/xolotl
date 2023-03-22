@@ -382,6 +382,28 @@ public:
 			}
 		}
 
+		// Gets the process ID
+		int procId;
+		auto xolotlComm = util::getMPIComm();
+		MPI_Comm_rank(xolotlComm, &procId);
+
+		// Prints both incident vectors in a file
+		if (procId == 0 && incidentFluxVec.size() > 0) {
+			std::ofstream outputFile;
+			outputFile.open("incidentVectors.txt");
+			for (int i = 0; i < incidentFluxVec[0].size(); i++) {
+				outputFile << (xGrid[surfacePos + i] +
+								  xGrid[surfacePos + i + 1]) /
+							2.0 -
+						xGrid[surfacePos + 1]
+						   << " ";
+				for (int j = 0; j < incidentFluxVec.size(); j++)
+					outputFile << incidentFluxVec[j][i] << " ";
+				outputFile << std::endl;
+			}
+			outputFile.close();
+		}
+
 		syncIncidentFluxVec();
 	}
 

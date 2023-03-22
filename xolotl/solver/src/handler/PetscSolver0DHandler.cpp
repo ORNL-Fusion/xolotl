@@ -97,7 +97,8 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, TS& ts)
 }
 
 void
-PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
+PetscSolver0DHandler::initializeConcentration(
+	DM& da, Vec& C, DM& oldDA, Vec& oldC)
 {
 	PetscErrorCode ierr;
 
@@ -142,7 +143,7 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Initialize the option specified concentration
-	if (hasConcentrations) {
+	if (not hasConcentrations) {
 		for (auto pair : initialConc) {
 			concOffset[pair.first] = pair.second;
 		}

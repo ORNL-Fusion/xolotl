@@ -84,12 +84,6 @@ protected:
 	double zeta;
 
 	/**
-	 * Value of the portion of the void on the grid at the start of the
-	 * simulation.
-	 */
-	double voidPortion;
-
-	/**
 	 * Number of dimensions for the simulation.
 	 */
 	int dimensionNumber;
@@ -431,15 +425,6 @@ public:
 	getDimensionNumber() const override
 	{
 		return dimensionNumber;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	double
-	getVoidPortion() const override
-	{
-		return voidPortion;
 	}
 
 	/**

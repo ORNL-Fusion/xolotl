@@ -48,6 +48,9 @@ protected:
 	//! Map of connectivities
 	SparseFillMap dfill;
 
+	//! The offset at the surface
+	IdType surfaceOffset;
+
 	/**
 	 * A vector for holding the partial derivatives for one cluster in the order
 	 * that PETSc expects. It is sized in the createSolverContext() operation.
@@ -131,6 +134,17 @@ public:
      */
     void
     resetJacobianValues();
+    
+	/**
+	 * Set the number of grid points we want to move by at the surface.
+	 * \see ISolverHandler.h
+	 */
+	void
+	setSurfaceOffset(int offset)
+	{
+		surfaceOffset = offset;
+		return;
+	}
 };
 // end class PetscSolverHandler
 
