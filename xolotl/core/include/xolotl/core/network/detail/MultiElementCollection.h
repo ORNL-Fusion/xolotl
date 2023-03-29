@@ -172,7 +172,8 @@ public:
 	/**
 	 * @brief Does nothing
 	 */
-	void updateIndices(IndexType)
+	void
+	updateIndices(IndexType)
 	{
 	}
 

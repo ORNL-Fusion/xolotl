@@ -115,8 +115,20 @@ public:
 	getTotalTrappedHeliumConcentration(
 		ConcentrationsView concs, AmountType minSize = 0) override
 	{
-		return this->getTotalTrappedAtomConcentration(
-			concs, Species::He, minSize);
+		auto toReturn =
+			this->getTotalTrappedAtomConcentration(concs, Species::He, minSize);
+
+		if (this->_clusterData.h_view().enableLargeBubble()) {
+			// Get the large bubble contribution
+			auto dof = concs.size();
+			auto dHe = Kokkos::subview(concs, std::make_pair(dof - 2, dof - 1));
+			auto hHe = create_mirror_view(dHe);
+			deep_copy(hHe, dHe);
+
+			toReturn += hHe(0);
+		}
+
+		return toReturn;
 	}
 
 	IndexType

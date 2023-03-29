@@ -226,6 +226,9 @@ public:
 	setEnableBursting(bool reaction) override;
 
 	void
+	setEnableLargeBubble(bool reaction) override;
+
+	void
 	setEnableReducedJacobian(bool reduced) override;
 
 	void

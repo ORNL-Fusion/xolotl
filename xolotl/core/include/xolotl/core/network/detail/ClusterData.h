@@ -168,6 +168,7 @@ private:
 		SINK,
 		TRAP_MUTATION,
 		BURST,
+		LARGE_BUBBLE,
 		NUM_BOOL_VALS
 	};
 
@@ -427,6 +428,19 @@ public:
 	setEnableBurst(bool val)
 	{
 		setVal(_boolVals, BURST, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableLargeBubble() const
+	{
+		return _boolVals[LARGE_BUBBLE];
+	}
+
+	void
+	setEnableLargeBubble(bool val)
+	{
+		setVal(_boolVals, LARGE_BUBBLE, val);
 	}
 
 private:

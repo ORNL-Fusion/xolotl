@@ -53,6 +53,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
 	this->setEnableBursting(map["bursting"]);
+	this->setEnableLargeBubble(map["largeBubble"]);
 	std::string petscString = opts.getPetscArg();
 	auto tokens = util::Tokenizer<>{petscString}();
 	bool useReduced = false;
@@ -240,6 +241,14 @@ ReactionNetwork<TImpl>::setEnableBursting(bool reaction)
 {
 	this->_enableBursting = reaction;
 	_clusterData.h_view().setEnableBurst(this->_enableBursting);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableLargeBubble(bool reaction)
+{
+	this->_enableLargeBubble = reaction;
+	_clusterData.h_view().setEnableLargeBubble(this->_enableLargeBubble);
 }
 
 template <typename TImpl>

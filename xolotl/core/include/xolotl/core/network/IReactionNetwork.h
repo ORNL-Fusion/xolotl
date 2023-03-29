@@ -264,6 +264,18 @@ public:
 	}
 
 	bool
+	getEnableLargeBubble() const noexcept
+	{
+		return _enableLargeBubble;
+	}
+
+	virtual void
+	setEnableLargeBubble(bool enable)
+	{
+		_enableLargeBubble = enable;
+	}
+
+	bool
 	getEnableReducedJacobian() const noexcept
 	{
 		return _enableReducedJacobian;
@@ -423,6 +435,7 @@ protected:
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
 	bool _enableBursting{};
+	bool _enableLargeBubble{};
 	bool _enableReducedJacobian{};
 
 	IndexType _gridSize{};

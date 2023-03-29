@@ -36,6 +36,7 @@ SolverHandler::SolverHandler(
 	dimension(-1),
 	portion(0.0),
 	movingSurface(false),
+	largeBubbleModel(false),
 	isMirror(true),
 	useAttenuation(false),
 	fluxTempProfile(false),
@@ -430,6 +431,8 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	// Should we be able to move the surface?
 	auto map = opts.getProcesses();
 	movingSurface = map["movingSurface"];
+	// Should we use the large bubble model?
+	largeBubbleModel = map["largeBubble"];
 	// Should we be able to attenuate the modified trap mutation?
 	useAttenuation = map["attenuation"];
 

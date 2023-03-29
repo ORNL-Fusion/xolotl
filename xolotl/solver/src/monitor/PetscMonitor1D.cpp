@@ -503,7 +503,8 @@ PetscMonitor1D::setup()
 					outputFile << speciesName << "_surface ";
 				}
 			}
-			outputFile << "C_b av_He av_V" << std::endl;
+			if (_solverHandler->largeBubble())
+				outputFile << "C_b av_He av_V" << std::endl;
 			outputFile.close();
 
 			if (_solverHandler->temporalFlux()) {
@@ -952,10 +953,12 @@ PetscMonitor1D::computeHeliumRetention(
 	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 
+	// Check if we are using the large bubble model
+	auto largeBubble = _solverHandler->largeBubble();
 	// Store the concentration over the grid
 	auto numSpecies = network.getSpeciesListSize();
 	auto specIdI = network.getInterstitialSpeciesId();
-	auto myConcData = std::vector<double>(numSpecies + 3, 0.0);
+	auto myConcData = std::vector<double>(numSpecies + 3 * largeBubble, 0.0);
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal* gridPointSolution;
@@ -984,9 +987,14 @@ PetscMonitor1D::computeHeliumRetention(
 			myConcData[id()] +=
 				network.getTotalAtomConcentration(dConcs, id, 1) * hx;
 		}
-		myConcData[numSpecies] += gridPointSolution[dof - 3] * hx;
-		myConcData[numSpecies + 1] += gridPointSolution[dof - 2] * hx;
-		myConcData[numSpecies + 2] += gridPointSolution[dof - 1] * hx;
+		if (largeBubble) {
+			myConcData[numSpecies] +=
+				gridPointSolution[dof - 3] * hx; // Bubble conc
+			myConcData[numSpecies + 1] +=
+				gridPointSolution[dof - 2] * hx; // He conc
+			myConcData[numSpecies + 2] +=
+				gridPointSolution[dof - 1] * hx; // V conc
+		}
 	}
 
 	// Get the current process ID
@@ -995,10 +1003,10 @@ PetscMonitor1D::computeHeliumRetention(
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Determine total concentrations for He, D, T.
-	auto totalConcData = std::vector<double>(numSpecies + 3, 0.0);
+	auto totalConcData = std::vector<double>(numSpecies + 3 * largeBubble, 0.0);
 
-	MPI_Reduce(myConcData.data(), totalConcData.data(), numSpecies + 3,
-		MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+	MPI_Reduce(myConcData.data(), totalConcData.data(),
+		numSpecies + 3 * largeBubble, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
 	// Get the delta time from the previous timestep to this timestep
 	double previousTime = _solverHandler->getPreviousTime();
@@ -1209,10 +1217,14 @@ PetscMonitor1D::computeHeliumRetention(
 				outputFile << _nSurf[i] << " ";
 			}
 		}
-		outputFile << totalConcData[numSpecies] << " "
-				   << totalConcData[numSpecies + 1] / totalConcData[numSpecies]
-				   << " "
-				   << totalConcData[numSpecies + 2] / totalConcData[numSpecies];
+		if (largeBubble) {
+			outputFile << totalConcData[numSpecies] << " "
+					   << totalConcData[numSpecies + 1] /
+					totalConcData[numSpecies]
+					   << " "
+					   << totalConcData[numSpecies + 2] /
+					totalConcData[numSpecies];
+		}
 		outputFile << std::endl;
 		outputFile.close();
 

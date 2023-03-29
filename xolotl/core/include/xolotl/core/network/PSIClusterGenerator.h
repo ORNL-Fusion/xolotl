@@ -24,13 +24,16 @@ getMaxHePerV(double amtV) noexcept
 	 * It could support a mixture of up to nine
 	 * helium atoms with one vacancy.
 	 */
-	constexpr Kokkos::Array<AmountType, 1> maxHePerV = {6};
+	constexpr Kokkos::Array<AmountType, 30> maxHePerV = {8, 9, 14, 18, 20, 27,
+		30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101,
+		103, 105, 107, 109, 110, 112, 116};
 
 	if (amtV < maxHePerV.size()) {
 		return maxHePerV[(AmountType)amtV];
 	}
 
-	return (amtV * 4.0);
+	return util::max((4.0 * amtV),
+		maxHePerV[maxHePerV.size() - 1] + amtV - maxHePerV.size() + 1.0);
 }
 } // namespace psi
 

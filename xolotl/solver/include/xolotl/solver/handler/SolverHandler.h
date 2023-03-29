@@ -120,6 +120,9 @@ protected:
 	//! If the user wants to move the surface.
 	bool movingSurface;
 
+	//! If the user wants to use the large bubble model.
+	bool largeBubbleModel;
+
 	//! If the user wants to use x mirror boundary conditions or periodic ones.
 	bool isMirror;
 
@@ -353,6 +356,15 @@ public:
 	moveSurface() const override
 	{
 		return movingSurface;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	bool
+	largeBubble() const override
+	{
+		return largeBubbleModel;
 	}
 
 	/**

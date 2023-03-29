@@ -362,6 +362,14 @@ public:
 	moveSurface() const = 0;
 
 	/**
+	 * To know if we're using the large bubble model.
+	 *
+	 * @return True if we are.
+	 */
+	virtual bool
+	largeBubble() const = 0;
+
+	/**
 	 * To know if a temporal profile is used for the flux.
 	 *
 	 * @return True if temporal flux option is used.
