@@ -72,9 +72,12 @@ public:
 	 *
 	 * @param da The PETSc distributed array
 	 * @param C The PETSc solution vector
+	 * @param oldDA The previous PETSc distributed array
+	 * @param oldC The previous PETSc solution vector
+	 *
 	 */
 	virtual void
-	initializeConcentration(DM& da, Vec& C) = 0;
+	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC) = 0;
 
 	/**
 	 * Set the concentrations to 0.0 where the GBs are.
@@ -219,12 +222,26 @@ public:
 	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1) = 0;
 
 	/**
+	 * Set the number of grid points we want to move by at the surface.
+	 *
+	 * @param offset The number of grid points
+	 */
+	virtual void
+	setSurfaceOffset(int offset) = 0;
+
+	/**
+	 * Generate the grid for the temperature.
+	 */
+	virtual void
+	generateTemperatureGrid() = 0;
+
+	/**
 	 * Get the initial vacancy concentration.
 	 *
 	 * @return The initial vacancy concentration
 	 */
-	virtual double
-	getInitialVConc() const = 0;
+	virtual std::vector<std::pair<IdType, double>>
+	getInitialConc() const = 0;
 
 	/**
 	 * Get the sputtering yield.
@@ -487,6 +504,16 @@ public:
 	 */
 	virtual void
 	resetGBVector() = 0;
+
+	/**
+	 * Interpolate the temperature between the two grids.
+	 *
+	 * @param localTemp The local temperature vector wrt temperature grid
+	 * @return The local temperature vector wrt cluster grid
+	 */
+	virtual std::vector<double>
+	interpolateTemperature(
+		std::vector<double> localTemp = std::vector<double>()) = 0;
 };
 // end class ISolverHandler
 

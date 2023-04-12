@@ -4,13 +4,13 @@
 #include <unordered_map>
 
 #include <Kokkos_Core.hpp>
-#include <Kokkos_Crs.hpp>
 
 #include <xolotl/core/network/Cluster.h>
 #include <xolotl/core/network/SpeciesId.h>
 #include <xolotl/core/network/detail/ClusterConnectivity.h>
 #include <xolotl/core/network/detail/ClusterData.h>
 #include <xolotl/core/network/detail/ReactionData.h>
+#include <xolotl/util/Array.h>
 
 namespace xolotl
 {
@@ -31,9 +31,19 @@ public:
 	using OwnedConcentrationsView = Kokkos::View<double*>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
+	using RatesView = Kokkos::View<double**>;
+	using ConnectivitiesView = Kokkos::View<bool**>;
+	using SubMapView = Kokkos::View<AmountType*, Kokkos::MemoryUnmanaged>;
+	using OwnedSubMapView = Kokkos::View<AmountType*>;
+	using BelongingView = Kokkos::View<bool*>;
 	using Connectivity = detail::ClusterConnectivity<>;
 	using SparseFillMap = std::unordered_map<int, std::vector<int>>;
 	using Bounds = std::vector<std::vector<AmountType>>;
+	using BoundVector = std::vector<std::vector<std::vector<AmountType>>>;
+	using MomentIdMap = std::vector<std::vector<IdType>>;
+	using MomentIdMapVector = std::vector<std::vector<std::vector<IdType>>>;
+	using RateVector = std::vector<std::vector<double>>;
+	using ConnectivitiesVector = std::vector<std::vector<bool>>;
 	using PhaseSpace = std::vector<std::string>;
 
 	KOKKOS_INLINE_FUNCTION
@@ -276,6 +286,18 @@ public:
 	}
 
 	bool
+	getEnableConstantReaction() const noexcept
+	{
+		return _enableConstantReaction;
+	}
+
+	virtual void
+	setEnableConstantReaction(bool enable)
+	{
+		_enableConstantReaction = enable;
+	}
+
+	bool
 	getEnableReducedJacobian() const noexcept
 	{
 		return _enableReducedJacobian;
@@ -305,6 +327,12 @@ public:
 		const std::vector<double>& gridDepths) = 0;
 
 	/**
+	 * @brief To update time dependent rates.
+	 */
+	virtual void
+	setTime(double time) = 0;
+
+	/**
 	 * @brief Copies tile and cluster data from device to host.
 	 */
 	virtual void
@@ -329,6 +357,43 @@ public:
 	virtual Bounds
 	getAllClusterBounds() = 0;
 
+	/**
+	 * @brief Returns an object representing the the bounds of each
+	 * cluster in each dimension of the phase space.
+	 */
+	virtual MomentIdMap
+	getAllMomentIdInfo() = 0;
+
+	/**
+	 * @brief Return a string of cluster name in ID order.
+	 */
+	virtual std::string
+	getHeaderString() = 0;
+
+	/**
+	 * @brief Computes the map between the different cluster bounds and moment
+	 * IDs.
+	 */
+	virtual void initializeClusterMap(
+		BoundVector, MomentIdMapVector, MomentIdMap) = 0;
+
+	/**
+	 * @brief Initialize reactions in the case it was not already
+	 * done in the constructor.
+	 */
+	virtual void
+	initializeReactions() = 0;
+
+	/**
+	 * @brief Set the rates for constant reactions
+	 */
+	virtual void setConstantRates(RateVector) = 0;
+
+	/**
+	 * @brief Set the connectivities for constant reactions
+	 */
+	virtual void setConstantConnectivities(ConnectivitiesVector) = 0;
+
 	virtual PhaseSpace
 	getPhaseSpace() = 0;
 
@@ -349,6 +414,22 @@ public:
 	computeAllPartials(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex = 0,
 		double surfaceDepth = 0.0, double spacing = 0.0) = 0;
+
+	/**
+	 * @brief Updates the rates view with the rates from all the
+	 * reactions at this grid point, this is for multiple instances use.
+	 */
+	virtual void
+	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		IndexType subId, IndexType gridIndex = 0, double surfaceDepth = 0.0,
+		double spacing = 0.0) = 0;
+
+	/**
+	 * @brief Updates the rates view with the rates from all the
+	 * reactions at this grid point, this is for multiple instances use.
+	 */
+	virtual void
+	getConstantConnectivities(ConnectivitiesView conns, IndexType subId) = 0;
 
 	/**
 	 * @brief Returns the largest computed rate.
@@ -374,6 +455,54 @@ public:
 	 */
 	virtual IndexType
 	getDiagonalFill(SparseFillMap& fillMap) = 0;
+
+	struct TotalQuantity
+	{
+		enum class Type
+		{
+			total,
+			atom,
+			radius,
+			volume,
+			trapped
+		};
+
+		Type type{};
+		SpeciesId speciesId{};
+		AmountType minSize{0};
+	};
+
+	virtual util::Array<double, 1>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 1>& quantities) = 0;
+
+	virtual util::Array<double, 2>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 2>& quantities) = 0;
+
+	virtual util::Array<double, 3>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 3>& quantities) = 0;
+
+	virtual util::Array<double, 4>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 4>& quantities) = 0;
+
+	virtual util::Array<double, 5>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 5>& quantities) = 0;
+
+	virtual util::Array<double, 6>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 6>& quantities) = 0;
+
+	virtual util::Array<double, 7>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 7>& quantities) = 0;
+
+	virtual std::vector<double>
+	getTotalsVec(ConcentrationsView concentrations,
+		const std::vector<TotalQuantity>& quantities) = 0;
 
 	virtual double
 	getTotalConcentration(ConcentrationsView concentrations, SpeciesId species,
@@ -436,6 +565,7 @@ protected:
 	bool _enableAttenuation{};
 	bool _enableBursting{};
 	bool _enableLargeBubble{};
+	bool _enableConstantReaction{};
 	bool _enableReducedJacobian{};
 
 	IndexType _gridSize{};

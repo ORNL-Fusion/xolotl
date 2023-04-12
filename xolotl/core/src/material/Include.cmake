@@ -1,5 +1,6 @@
 list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/material/AlloyMaterialHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/material/AlphaZrMaterialHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/material/FeMaterialHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/material/FuelMaterialHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/material/IMaterialHandler.h
@@ -13,6 +14,7 @@ list(APPEND XOLOTL_CORE_HEADERS
 
 list(APPEND XOLOTL_CORE_SOURCES
     ${XOLOTL_CORE_SOURCE_DIR}/material/AlloyMaterialHandler.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/material/AlphaZrMaterialHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/material/FeMaterialHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/material/FuelMaterialHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/material/MaterialHandler.cpp

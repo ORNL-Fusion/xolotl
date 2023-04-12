@@ -13,6 +13,19 @@ namespace core
 {
 namespace network
 {
+template <typename TRegion>
+KOKKOS_INLINE_FUNCTION
+double
+getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
+	const double r1, const double dc0, const double dc1)
+{
+	constexpr double pi = ::xolotl::core::pi;
+
+	double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
+
+	return kPlus;
+}
+
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 void
@@ -34,46 +47,6 @@ PSIProductionReaction<TSpeciesEnum>::computeCoefficients()
 
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
-double
-PSIProductionReaction<TSpeciesEnum>::computeRate(IndexType gridIndex)
-{
-	// Standard case
-	if (not isLargeBubbleReaction) {
-		return Superclass::computeRate(gridIndex);
-	}
-
-	// static
-	const auto dummyRegion = Region(Composition{});
-
-	double r0 = 0.0, r1 = 0.0, dc0 = 0.0, dc1 = 0.0;
-	Region cl0Reg = dummyRegion, cl1Reg = dummyRegion;
-	auto largeBubbleId = this->_clusterData->bubbleId();
-
-	if (this->_reactants[0] == largeBubbleId) {
-		r0 = this->_clusterData->bubbleAvRadius();
-	}
-	else {
-		auto cl0 = this->_clusterData->getCluster(this->_reactants[0]);
-		r0 = cl0.getReactionRadius();
-		dc0 = cl0.getDiffusionCoefficient(gridIndex);
-		cl0Reg = cl0.getRegion();
-	}
-
-	if (this->_reactants[1] == largeBubbleId) {
-		r1 = this->_clusterData->bubbleAvRadius();
-	}
-	else {
-		auto cl1 = this->_clusterData->getCluster(this->_reactants[1]);
-		r1 = cl1.getReactionRadius();
-		dc1 = cl1.getDiffusionCoefficient(gridIndex);
-		cl1Reg = cl1.getRegion();
-	}
-
-	return getRateForProduction(cl0Reg, cl1Reg, r0, r1, dc0, dc1);
-}
-
-template <typename TSpeciesEnum>
-KOKKOS_INLINE_FUNCTION
 void
 PSIProductionReaction<TSpeciesEnum>::computeFlux(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
@@ -85,7 +58,7 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 
 	// The rate need to be computed each time because it depends on the current
 	// large bubble size
-	auto rate = computeRate(gridIndex);
+	auto rate = getRateForProduction(gridIndex);
 
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 	auto largeBubbleId = this->_clusterData->bubbleId();
@@ -258,7 +231,7 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 
 	// The rate need to be computed each time because it depends on the current
 	// large bubble size
-	auto rate = computeRate(gridIndex);
+	auto rate = getRateForProduction(gridIndex);
 
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 	auto largeBubbleId = this->_clusterData->bubbleId();
@@ -393,16 +366,16 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 				// The average V decreases
 				f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::I];
 				if (this->_reactants[0] == largeBubbleId) {
-					Kokkos::atomic_sub(&values(this->_connEntries[0][2][0][0]),
-						f * stdC);
-					Kokkos::atomic_sub(&values(this->_connEntries[0][2][1][0]),
-						f * bC);
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[0][2][0][0]), f * stdC);
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[0][2][1][0]), f * bC);
 				}
 				else {
-					Kokkos::atomic_sub(&values(this->_connEntries[1][2][1][0]),
-						f * stdC);
-					Kokkos::atomic_sub(&values(this->_connEntries[1][2][0][0]),
-						f * bC);
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[1][2][1][0]), f * stdC);
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[1][2][0][0]), f * bC);
 				}
 			}
 			// Or not
@@ -580,7 +553,73 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 double
-PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
+PSIProductionReaction<TSpeciesEnum>::getRateForProduction(IndexType gridIndex)
+{
+	auto cl0 = this->_clusterData->getCluster(this->_reactants[0]);
+	auto cl1 = this->_clusterData->getCluster(this->_reactants[1]);
+
+	// Standard case
+	if (not isLargeBubbleReaction) {
+		double r0 = cl0.getReactionRadius();
+		double r1 = cl1.getReactionRadius();
+
+		double dc0 = cl0.getDiffusionCoefficient(gridIndex);
+		double dc1 = cl1.getDiffusionCoefficient(gridIndex);
+
+		return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	}
+
+	// static
+	const auto dummyRegion = Region(Composition{});
+
+	double r0 = 0.0, r1 = 0.0, dc0 = 0.0, dc1 = 0.0;
+	Region cl0Reg = dummyRegion, cl1Reg = dummyRegion;
+	auto largeBubbleId = this->_clusterData->bubbleId();
+
+	if (this->_reactants[0] == largeBubbleId) {
+		r0 = this->_clusterData->bubbleAvRadius();
+	}
+	else {
+		auto cl0 = this->_clusterData->getCluster(this->_reactants[0]);
+		r0 = cl0.getReactionRadius();
+		dc0 = cl0.getDiffusionCoefficient(gridIndex);
+		cl0Reg = cl0.getRegion();
+	}
+
+	if (this->_reactants[1] == largeBubbleId) {
+		r1 = this->_clusterData->bubbleAvRadius();
+	}
+	else {
+		auto cl1 = this->_clusterData->getCluster(this->_reactants[1]);
+		r1 = cl1.getReactionRadius();
+		dc1 = cl1.getDiffusionCoefficient(gridIndex);
+		cl1Reg = cl1.getRegion();
+	}
+
+	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSIDissociationReaction<TSpeciesEnum>::getRateForProduction(IndexType gridIndex)
+{
+	auto cl0 = this->_clusterData->getCluster(this->_products[0]);
+	auto cl1 = this->_clusterData->getCluster(this->_products[1]);
+
+	double r0 = cl0.getReactionRadius();
+	double r1 = cl1.getReactionRadius();
+
+	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
+	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
+
+	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 {
 	using psi::hasDeuterium;
 	using psi::hasTritium;

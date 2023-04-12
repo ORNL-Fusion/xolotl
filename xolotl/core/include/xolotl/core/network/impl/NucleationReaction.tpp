@@ -31,7 +31,8 @@ NucleationReaction<TNetwork, TDerived>::NucleationReaction(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-NucleationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+NucleationReaction<TNetwork, TDerived>::computeRate(
+	IndexType gridIndex, double time)
 {
 	// We say there are 25 bubbles created per fission fragments and there
 	// are 2 fission fragments per fission

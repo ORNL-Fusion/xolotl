@@ -74,20 +74,14 @@ protected:
 	std::string materialName;
 
 	/**
-	 * Value of the initial vacancy concentration.
+	 * Value for initial concentrations.
 	 */
-	double initialVConcentration;
+	std::string initialConcentration;
 
 	/**
 	 * Value of the electronic stopping power.
 	 */
 	double zeta;
-
-	/**
-	 * Value of the portion of the void on the grid at the start of the
-	 * simulation.
-	 */
-	double voidPortion;
 
 	/**
 	 * Number of dimensions for the simulation.
@@ -404,10 +398,10 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
-	double
-	getInitialVConcentration() const override
+	std::string
+	getInitialConcentration() const override
 	{
-		return initialVConcentration;
+		return initialConcentration;
 	}
 
 	/**
@@ -426,15 +420,6 @@ public:
 	getDimensionNumber() const override
 	{
 		return dimensionNumber;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	double
-	getVoidPortion() const override
-	{
-		return voidPortion;
 	}
 
 	/**

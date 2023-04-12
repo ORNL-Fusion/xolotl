@@ -168,11 +168,18 @@ PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 	}
 
 	if (this->_enableLargeBubble) {
-		auto Cb = concentrations(this->_clusterData.h_view().bubbleId());
-		auto avHe =
-			concentrations(this->_clusterData.h_view().bubbleAvHeId()) / Cb;
-		auto avV =
-			concentrations(this->_clusterData.h_view().bubbleAvVId()) / Cb;
+		auto clusterDataMirror = this->getClusterDataMirror();
+
+		// Get the concentrations on the host
+		auto dConcs = Kokkos::subview(concentrations,
+			std::make_pair(clusterDataMirror.bubbleId(),
+				clusterDataMirror.bubbleAvVId() + 1));
+		auto hConcs = create_mirror_view(dConcs);
+		deep_copy(hConcs, dConcs);
+
+		auto Cb = hConcs(0);
+		auto avHe = hConcs(1) / Cb;
+		auto avV = hConcs(2) / Cb;
 		if (Cb == 0.0) {
 			avHe = 0.0;
 			avV = 0.0;
@@ -180,9 +187,8 @@ PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 
 		this->_clusterData.h_view().setBubbleAvHe(avHe);
 		this->_clusterData.h_view().setBubbleAvV(avV);
-		this->_clusterData.h_view().setBubbleAvRadius(std::max(0.0,
-			computeBubbleRadius(
-				avV, this->_clusterData.h_view().latticeParameter())));
+		this->_clusterData.h_view().setBubbleAvRadius(util::max(0.0,
+			computeBubbleRadius(avV, clusterDataMirror.latticeParameter())));
 	}
 }
 
@@ -202,11 +208,18 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 	}
 
 	if (this->_enableLargeBubble) {
-		auto Cb = concentrations(this->_clusterData.h_view().bubbleId());
-		auto avHe =
-			concentrations(this->_clusterData.h_view().bubbleAvHeId()) / Cb;
-		auto avV =
-			concentrations(this->_clusterData.h_view().bubbleAvVId()) / Cb;
+		auto clusterDataMirror = this->getClusterDataMirror();
+
+		// Get the concentrations on the host
+		auto dConcs = Kokkos::subview(concentrations,
+			std::make_pair(clusterDataMirror.bubbleId(),
+				clusterDataMirror.bubbleAvVId() + 1));
+		auto hConcs = create_mirror_view(dConcs);
+		deep_copy(hConcs, dConcs);
+
+		auto Cb = hConcs(0);
+		auto avHe = hConcs(1) / Cb;
+		auto avV = hConcs(2) / Cb;
 		if (Cb == 0.0) {
 			avHe = 0.0;
 			avV = 0.0;
@@ -214,17 +227,16 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 
 		this->_clusterData.h_view().setBubbleAvHe(avHe);
 		this->_clusterData.h_view().setBubbleAvV(avV);
-		this->_clusterData.h_view().setBubbleAvRadius(std::max(0.0,
-			computeBubbleRadius(
-				avV, this->_clusterData.h_view().latticeParameter())));
+		this->_clusterData.h_view().setBubbleAvRadius(util::max(0.0,
+			computeBubbleRadius(avV, clusterDataMirror.latticeParameter())));
 	}
 }
 
 template <typename TSpeciesEnum>
 void
-PSIReactionNetwork<TSpeciesEnum>::updateReactionRates()
+PSIReactionNetwork<TSpeciesEnum>::updateReactionRates(double time)
 {
-	Superclass::updateReactionRates();
+	Superclass::updateReactionRates(time);
 
 	using TrapMutationReactionType =
 		typename Superclass::Traits::TrapMutationReactionType;
@@ -235,7 +247,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateReactionRates()
 	Kokkos::parallel_for(
 		"PSIReactionNetwork::updateReactionRates", tmReactions.size(),
 		KOKKOS_LAMBDA(
-			IndexType i) { tmReactions[i].updateRates(largestRate); });
+			IndexType i) { tmReactions[i].updateLargestRates(largestRate); });
 }
 
 template <typename TSpeciesEnum>
@@ -394,25 +406,34 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
 	auto& subpaving = this->getSubpaving();
-	auto previousIndex = subpaving.invalidIndex();
 
 	// Special case for I + I
 	if (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::I)) {
 		// Compute the composition of the new cluster
 		auto minSize = lo1[Species::I] + lo2[Species::I];
 		auto maxSize = hi1[Species::I] + hi2[Species::I] - 2;
+		auto prodBounds = Kokkos::make_pair<int, int>(0, 0);
 		// Find the corresponding clusters
 		for (auto k = minSize; k <= maxSize; k++) {
+			// Check the bounds of the previous product
+			if (k >= prodBounds.first && k <= prodBounds.second) {
+				// Do nothing because we already added this reaction
+				continue;
+			}
 			Composition comp = Composition::zero();
 			comp[Species::I] = k;
 			auto iProdId = subpaving.findTileId(comp);
-			if (iProdId != subpaving.invalidIndex() &&
-				iProdId != previousIndex) {
+			if (iProdId != subpaving.invalidIndex()) {
 				this->addProductionReaction(tag, {i, j, iProdId});
 				if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
 					this->addDissociationReaction(tag, {iProdId, i, j});
 				}
-				previousIndex = iProdId;
+				// Update the bounds
+				const auto& prodReg = this->getCluster(iProdId).getRegion();
+				Composition loP = prodReg.getOrigin();
+				Composition hiP = prodReg.getUpperLimitPoint();
+				prodBounds.first = loP[Species::I];
+				prodBounds.second = hiP[Species::I] - 1;
 			}
 		}
 		return;
@@ -424,41 +445,63 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		// Find out which one is which
 		auto vReg = lo1.isOnAxis(Species::V) ? cl1Reg : cl2Reg;
 		auto iReg = lo1.isOnAxis(Species::I) ? cl1Reg : cl2Reg;
-		// I and V can be grouped
-		for (auto k : makeIntervalRange(iReg[Species::I]))
-			for (auto l : makeIntervalRange(vReg[Species::V])) {
-				// Compute the product size
-				int prodSize = (int)l - (int)k;
-				// 3 cases
-				if (prodSize > 0) {
-					// Looking for V cluster
-					Composition comp = Composition::zero();
-					comp[Species::V] = prodSize;
-					auto vProdId = subpaving.findTileId(comp);
-					if (vProdId != subpaving.invalidIndex() &&
-						vProdId != previousIndex) {
-						this->addProductionReaction(tag, {i, j, vProdId});
-						previousIndex = vProdId;
-						// No dissociation
-					}
-				}
-				else if (prodSize < 0) {
-					// Looking for I cluster
-					Composition comp = Composition::zero();
-					comp[Species::I] = -prodSize;
-					auto iProdId = subpaving.findTileId(comp);
-					if (iProdId != subpaving.invalidIndex() &&
-						iProdId != previousIndex) {
-						this->addProductionReaction(tag, {i, j, iProdId});
-						previousIndex = iProdId;
-						// No dissociation
-					}
-				}
-				else {
-					// No product
-					this->addProductionReaction(tag, {i, j});
+		// Compute the largest possible product and the smallest one
+		int largestProd =
+			(int)vReg[Species::V].end() - 1 - (int)iReg[Species::I].begin();
+		int smallestProd =
+			(int)vReg[Species::V].begin() - (int)iReg[Species::I].end() + 1;
+		auto prodBounds = Kokkos::make_pair<int, int>(0, 0);
+		// Loop on the products
+		for (int prodSize = smallestProd; prodSize <= largestProd; prodSize++) {
+			// Check the bounds of the previous product
+			if (prodSize >= prodBounds.first and
+				prodSize <= prodBounds.second and prodSize != 0) {
+				// Do nothing because we already added this reaction
+				continue;
+			}
+			// 3 cases
+			if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex()) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					// No dissociation
+
+					// Update the bounds
+					const auto& prodReg = this->getCluster(vProdId).getRegion();
+					Composition loP = prodReg.getOrigin();
+					Composition hiP = prodReg.getUpperLimitPoint();
+					prodBounds.first = loP[Species::V];
+					prodBounds.second = hiP[Species::V] - 1;
 				}
 			}
+			else if (prodSize < 0) {
+				// Looking for I cluster
+				Composition comp = Composition::zero();
+				comp[Species::I] = -prodSize;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex()) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					// No dissociation
+
+					// Update the bounds
+					const auto& prodReg = this->getCluster(iProdId).getRegion();
+					Composition loP = prodReg.getOrigin();
+					Composition hiP = prodReg.getUpperLimitPoint();
+					prodBounds.first = 1 - (int)hiP[Species::I];
+					prodBounds.second = -(int)loP[Species::I];
+				}
+			}
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
+				// Update the bounds
+				prodBounds.first = 0;
+				prodBounds.second = 0;
+			}
+		}
 		return;
 	}
 

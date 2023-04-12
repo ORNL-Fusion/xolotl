@@ -22,22 +22,28 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 	// + moments
 	const auto dof = network.getDOF();
 
-	// Set the position of the surface
-	surfacePosition = 0;
-	if (movingSurface)
-		surfacePosition = (IdType)(nX * portion / 100.0);
-
 	// We can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty() and movingSurface) {
+	if (not networkName.empty() and surfaceOffset == 0) {
 		io::XFile xfile(networkName);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 			auto tsGroup = concGroup->getLastTimestepGroup();
 			assert(tsGroup);
-			surfacePosition = tsGroup->readSurface1D();
+			grid = tsGroup->readGrid();
 		}
 	}
+	else {
+		// Generate the grid in the x direction which will give us the size of
+		// the DMDA
+		generateGrid(surfaceOffset);
+	}
+
+	// Update the number of grid points from the previous loop
+	nX = grid.size() - 2;
+
+	// Generate the separate grid for the temperature
+	generateTemperatureGrid();
 
 	// Prints info on one process
 	auto xolotlComm = util::getMPIComm();
@@ -57,9 +63,22 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 			ss << "free surface";
 		else
 			ss << bcString;
+		for (auto pair : initialConc) {
+			ss << ", initial concentration for Id: " << pair.first
+			   << " of: " << pair.second << " nm-3";
+		}
 		ss << ", grid (nm): ";
 		for (auto i = 1; i < grid.size() - 1; i++) {
-			ss << grid[i] - grid[surfacePosition + 1] << " ";
+			ss << grid[i] - grid[1] << " ";
+		}
+		ss << std::endl;
+
+		if (not sameTemperatureGrid) {
+			ss << "Temperature grid (nm): ";
+			for (auto i = 0; i < temperatureGrid.size(); i++) {
+				ss << temperatureGrid[i] - temperatureGrid[1] << " ";
+			}
+			ss << std::endl;
 		}
 		XOLOTL_LOG << ss.str();
 	}
@@ -91,7 +110,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 
 	// Initialize the surface of the first advection handler corresponding to
 	// the advection toward the surface (or a dummy one if it is deactivated)
-	advectionHandlers[0]->setLocation(grid[surfacePosition + 1] - grid[1]);
+	advectionHandlers[0]->setLocation(0.0);
 
 	/* The ofill (thought of as a dof by dof 2d (row-oriented) array represents
 	 * the nonzero coupling between degrees of freedom at one point with
@@ -142,40 +161,23 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	// Initialize the flux handler
-	fluxHandler->initializeFluxHandler(network, surfacePosition, grid);
+	fluxHandler->initializeFluxHandler(network, 0, grid);
 
 	return;
 }
 
 void
-PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
+PetscSolver1DHandler::initializeConcentration(
+	DM& da, Vec& C, DM& oldDA, Vec& oldC)
 {
 	PetscErrorCode ierr;
 
-	// Pointer for the concentration vector
-	PetscScalar** concentrations = nullptr;
-	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver1DHandler::initializeConcentration: "
-		"DMDAVecGetArrayDOF failed.");
+	temperature.clear();
 
 	// Initialize the last temperature at each grid point on this process
 	for (auto i = 0; i < localXM + 2; i++) {
 		temperature.push_back(0.0);
 	}
-
-	// Get the last time step written in the HDF5 file
-	bool hasConcentrations = false;
-	std::unique_ptr<io::XFile> xfile;
-	std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
-	if (not networkName.empty()) {
-		xfile = std::make_unique<io::XFile>(networkName);
-		concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
-		hasConcentrations = (concGroup and concGroup->hasTimesteps());
-	}
-
-	// Give the surface position to the temperature handler
-	temperatureHandler->updateSurfacePosition(surfacePosition);
 
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(
@@ -185,94 +187,339 @@ PetscSolver1DHandler::initializeConcentration(DM& da, Vec& C)
 	advectionHandlers[0]->initializeAdvectionGrid(
 		advectionHandlers, grid, localXM, localXS);
 
-	// Pointer for the concentration vector at a specific grid point
-	PetscScalar* concOffset = nullptr;
-
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
 	const auto dof = network.getDOF();
 
-	// Get the single vacancy ID
-	auto singleVacancyCluster = network.getSingleVacancy();
-	auto vacancyIndex = NetworkType::invalidIndex();
-	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
-		vacancyIndex = singleVacancyCluster.getId();
+	// If this is the first solver loop
+	if (surfaceOffset == 0) {
+		// Pointer for the concentration vector
+		PetscScalar** concentrations = nullptr;
+		ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"DMDAVecGetArrayDOF failed.");
 
-	// Loop on all the grid points
-	for (auto i = (PetscInt)localXS - 1;
-		 i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
-		// Temperature
-		plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
-		if (i < 0)
-			gridPosition[0] = (grid[0] - grid[surfacePosition + 1]) /
-				(grid[grid.size() - 1] - grid[surfacePosition + 1]);
-		else
-			gridPosition[0] =
-				((grid[i] + grid[i + 1]) / 2.0 - grid[surfacePosition + 1]) /
-				(grid[grid.size() - 1] - grid[surfacePosition + 1]);
-		auto temp = temperatureHandler->getTemperature(gridPosition, 0.0);
-		temperature[i - localXS + 1] = temp;
+		// Get the last time step written in the HDF5 file
+		bool hasConcentrations = false;
+		std::unique_ptr<io::XFile> xfile;
+		std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
+		if (not networkName.empty()) {
+			xfile = std::make_unique<io::XFile>(networkName);
+			concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
+			hasConcentrations = (concGroup and concGroup->hasTimesteps());
+		}
+
+		// Pointer for the concentration vector at a specific grid point
+		PetscScalar* concOffset = nullptr;
+
+		// Loop on all the grid points
+		for (auto i = (PetscInt)localXS - 1;
+			 i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
+			// Temperature
+			plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
+			if (i < 0)
+				gridPosition[0] = (temperatureGrid[0] - temperatureGrid[1]) /
+					(temperatureGrid[temperatureGrid.size() - 1] -
+						temperatureGrid[1]);
+			else
+				gridPosition[0] =
+					((temperatureGrid[i] + temperatureGrid[i + 1]) / 2.0 -
+						temperatureGrid[1]) /
+					(temperatureGrid[temperatureGrid.size() - 1] -
+						temperatureGrid[1]);
+			auto temp = temperatureHandler->getTemperature(gridPosition, 0.0);
+			temperature[i - localXS + 1] = temp;
+
+			// Boundary conditions
+			if (i < localXS || i >= localXS + localXM)
+				continue;
+
+			concOffset = concentrations[i];
+			concOffset[dof] = temp;
+
+			// Loop on all the clusters to initialize at 0.0
+			for (auto n = 0; n < dof; n++) {
+				concOffset[n] = 0.0;
+			}
+
+			// Initialize the option specified concentration
+			if (i >= leftOffset and not hasConcentrations and
+				i < nX - rightOffset) {
+				for (auto pair : initialConc) {
+					concOffset[pair.first] = pair.second;
+				}
+			}
+		}
+
+		// If the concentration must be set from the HDF5 file
+		if (hasConcentrations) {
+			// Read the concentrations from the HDF5 file for
+			// each of our grid points.
+			assert(concGroup);
+			auto tsGroup = concGroup->getLastTimestepGroup();
+			assert(tsGroup);
+			auto myConcs =
+				tsGroup->readConcentrations(*xfile, localXS, localXM);
+
+			// Apply the concentrations we just read.
+			for (auto i = 0; i < localXM; ++i) {
+				concOffset = concentrations[localXS + i];
+
+				for (auto const& currConcData : myConcs[i]) {
+					concOffset[currConcData.first] = currConcData.second;
+				}
+				// Get the temperature
+				double temp = myConcs[i][myConcs[i].size() - 1].second;
+				temperature[i + 1] = temp;
+			}
+		}
+
+		// Update the network with the temperature
+		auto networkTemp = interpolateTemperature();
+		std::vector<double> depths;
+		for (auto i = 0; i < networkTemp.size(); i++) {
+			if (localXS + i == nX + 1)
+				depths.push_back(grid[localXS + i] - grid[1]);
+			else
+				depths.push_back(
+					(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+					grid[1]);
+		}
+		network.setTemperatures(networkTemp, depths);
+
+		/*
+		 Restore vectors
+		 */
+		ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"DMDAVecRestoreArrayDOF failed.");
+	}
+	// Read from the previous vector
+	else {
+		// Get the boundaries of the old DMDA
+		PetscInt oldXs, oldXm;
+		ierr = DMDAGetCorners(oldDA, &oldXs, NULL, NULL, &oldXm, NULL, NULL);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"DMDAGetCorners failed.");
+
+		// Pointers to the PETSc arrays that start at the beginning (xs) of the
+		// local array
+		PetscScalar **concs = nullptr, **oldConcs = nullptr;
+		// Get pointers to vector data
+		ierr = DMDAVecGetArrayDOFRead(da, C, &concs);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"DMDAVecGetArrayDOFRead (C) failed.");
+		ierr = DMDAVecGetArrayDOF(oldDA, oldC, &oldConcs);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"DMDAVecGetArrayDOF (oldC) failed.");
+
+		// Get the procId
+		int procId;
+		MPI_Comm_rank(MPI_COMM_WORLD, &procId);
+
+		// We have to interpolate between grid points because the grid spacing
+		// is changing Loop on the current grid
+		for (int xi = 1; xi < nX; xi++) {
+			// Compute its distance from the bottom
+			double distance = grid[grid.size() - 2] - grid[xi + 1];
+			// Loop on the old grid to find the same distance
+			for (int i = 1; i < oldGrid.size() - 1; i++) {
+				double left = oldGrid[oldGrid.size() - 2] - oldGrid[i];
+				double right = oldGrid[oldGrid.size() - 2] - oldGrid[i + 1];
+				// Check the distance
+				if (distance > right - 1.0e-4) {
+					// Create the arrays to receive the data
+					PetscScalar *rightConc, *leftConc;
+
+					// Check where all the needed data is located
+					int procs[3] = {0, 0, 0};
+					if (i - 1 >= oldXs && i - 1 < oldXs + oldXm) {
+						procs[0] = procId;
+					}
+					if (i >= oldXs && i < oldXs + oldXm) {
+						procs[1] = procId;
+					}
+					// Take care of the receive proc
+					if (xi >= localXS && xi < localXS + localXM) {
+						procs[2] = procId;
+					}
+					// Get which processor will send and receive the information
+					int totalProcs[3] = {0, 0, 0};
+					MPI_Allreduce(&procs, &totalProcs, 3, MPI_INT, MPI_SUM,
+						MPI_COMM_WORLD);
+
+					// If the left data shares the same process as the new one
+					if (totalProcs[0] == totalProcs[2]) {
+						if (procId == totalProcs[2]) {
+							leftConc = oldConcs[i - 1];
+						}
+					}
+					else {
+						// We have to send the data
+						// Send the left data
+						if (procId == totalProcs[0]) {
+							// Send the values
+							MPI_Send(&oldConcs[i - 1][0], dof + 1, MPI_DOUBLE,
+								totalProcs[2], 2, MPI_COMM_WORLD);
+						}
+						// Receive the data on the new proc
+						if (procId == totalProcs[2]) {
+							// Receive the data
+							leftConc = new PetscScalar[dof + 1];
+							MPI_Recv(leftConc, dof + 1, MPI_DOUBLE,
+								totalProcs[0], 2, MPI_COMM_WORLD,
+								MPI_STATUS_IGNORE);
+						}
+					}
+
+					// If the right data shares the same process as the new one
+					if (totalProcs[1] == totalProcs[2]) {
+						if (procId == totalProcs[2]) {
+							rightConc = oldConcs[i];
+						}
+					}
+					else {
+						// We have to send the data
+						// Send the right data
+						if (procId == totalProcs[1]) {
+							// Send the values
+							MPI_Send(&oldConcs[i][0], dof + 1, MPI_DOUBLE,
+								totalProcs[2], 1, MPI_COMM_WORLD);
+						}
+						// Receive the data on the new proc
+						if (procId == totalProcs[2]) {
+							// Receive the data
+							rightConc = new PetscScalar[dof + 1];
+							MPI_Recv(rightConc, dof + 1, MPI_DOUBLE,
+								totalProcs[1], 1, MPI_COMM_WORLD,
+								MPI_STATUS_IGNORE);
+						}
+					}
+
+					// Compute the new value on the new proc
+					if (procId == totalProcs[2]) {
+						// Compute the location of the new grid point within the
+						// old segment
+						double xFactor = (distance - left) / (right - left);
+						// Get the pointer to the data we want to update
+						PetscScalar* newConc = concs[xi];
+						// Loop on the DOF
+						for (int k = 0; k < dof + 1; k++) {
+							newConc[k] = leftConc[k] +
+								(rightConc[k] - leftConc[k]) * xFactor;
+						}
+
+						if (totalProcs[2] != totalProcs[0])
+							delete leftConc;
+						if (totalProcs[2] != totalProcs[1])
+							delete rightConc;
+					}
+
+					break;
+				}
+			}
+		}
+
+		// Update the temperature
+		// Pointer for the concentration vector at a specific grid point
+		PetscScalar* concOffset = nullptr;
+		for (auto i = (PetscInt)localXS;
+			 i < (PetscInt)localXS + (PetscInt)localXM; i++) {
+			concOffset = concs[i];
+			temperature[i - localXS + 1] = concOffset[dof];
+		}
+		if (surfaceOffset > 0 and localXS == 0) {
+			temperature[1] = temperature[2];
+			concs[0][dof] = temperature[1];
+			for (auto pair : initialConc) {
+				concs[1][pair.first] = pair.second;
+			}
+		}
+		temperature[0] = temperature[1];
+		temperature[localXM + 1] = temperature[localXM];
+
+		// Update the network with the temperature
+		auto networkTemp = interpolateTemperature();
+		std::vector<double> depths;
+		for (auto i = 0; i < networkTemp.size(); i++) {
+			if (localXS + i == nX + 1)
+				depths.push_back(grid[localXS + i] - grid[1]);
+			else
+				depths.push_back(
+					(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+					grid[1]);
+		}
+		network.setTemperatures(networkTemp, depths);
+
+		// Restore the vectors
+		ierr = DMDAVecRestoreArrayDOFRead(da, C, &concs);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"DMDAVecRestoreArrayDOFRead (C) failed.");
+		ierr = DMDAVecRestoreArrayDOF(oldDA, oldC, &oldConcs);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"DMDAVecRestoreArrayDOF (oldC) failed.");
 
 		// Boundary conditions
-		if (i < localXS || i >= localXS + localXM)
-			continue;
+		// Set the index to scatter at the surface
+		PetscInt *lidxFrom, *lidxTo, lict = 0;
+		ierr = PetscMalloc1(1, &lidxTo);
+		ierr = PetscMalloc1(1, &lidxFrom);
+		lidxTo[0] = 0;
+		lidxFrom[0] = 0;
 
-		concOffset = concentrations[i];
-		concOffset[dof] = temp;
+		// Create the scatter object
+		VecScatter scatter;
+		IS isTo, isFrom;
+		ierr = ISCreateBlock(PetscObjectComm((PetscObject)da), dof + 1, 1,
+			lidxTo, PETSC_OWN_POINTER, &isTo);
+		ierr = ISCreateBlock(PetscObjectComm((PetscObject)oldDA), dof + 1, 1,
+			lidxFrom, PETSC_OWN_POINTER, &isFrom);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"ISCreateBlock failed.");
 
-		// Loop on all the clusters to initialize at 0.0
-		for (auto n = 0; n < dof; n++) {
-			concOffset[n] = 0.0;
-		}
+		// Create the scatter object
+		ierr = VecScatterCreate(oldC, isFrom, C, isTo, &scatter);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"VecScatterCreate failed.");
 
-		// Initialize the vacancy concentration
-		if (i >= surfacePosition + leftOffset and
-			vacancyIndex != NetworkType::invalidIndex() and
-			not hasConcentrations and i < nX - rightOffset) {
-			concOffset[vacancyIndex] = initialVConc;
-		}
+		// Do the scatter
+		ierr =
+			VecScatterBegin(scatter, oldC, C, INSERT_VALUES, SCATTER_FORWARD);
+		ierr = VecScatterEnd(scatter, oldC, C, INSERT_VALUES, SCATTER_FORWARD);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"VecScatter failed.");
+
+		// Destroy everything we don't need anymore
+		ierr = VecScatterDestroy(&scatter);
+		ierr = ISDestroy(&isTo);
+		ierr = ISDestroy(&isFrom);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"Destroy failed.");
+
+		// Reset the offset
+		surfaceOffset = 0;
+
+		//			VecView(oldC, PETSC_VIEWER_STDOUT_WORLD);
+		//			VecView(C, PETSC_VIEWER_STDOUT_WORLD);
+
+		// Destroy everything we don't need anymore
+		ierr = VecDestroy(&oldC);
+		ierr = DMDestroy(&oldDA);
+		checkPetscError(ierr,
+			"PetscSolver1DHandler::initializeConcentration: "
+			"Destroy failed.");
 	}
-
-	// If the concentration must be set from the HDF5 file
-	if (hasConcentrations) {
-		// Read the concentrations from the HDF5 file for
-		// each of our grid points.
-		assert(concGroup);
-		auto tsGroup = concGroup->getLastTimestepGroup();
-		assert(tsGroup);
-		auto myConcs = tsGroup->readConcentrations(*xfile, localXS, localXM);
-
-		// Apply the concentrations we just read.
-		for (auto i = 0; i < localXM; ++i) {
-			concOffset = concentrations[localXS + i];
-
-			for (auto const& currConcData : myConcs[i]) {
-				concOffset[currConcData.first] = currConcData.second;
-			}
-			// Get the temperature
-			double temp = myConcs[i][myConcs[i].size() - 1].second;
-			temperature[i + 1] = temp;
-		}
-	}
-
-	// Update the network with the temperature
-	std::vector<double> depths;
-	for (auto i = 0; i < temperature.size(); i++) {
-		if (localXS + i == nX + 1)
-			depths.push_back(grid[localXS + i] - grid[surfacePosition + 1]);
-		else
-			depths.push_back((grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
-				grid[surfacePosition + 1]);
-	}
-	network.setTemperatures(temperature, depths);
-
-	/*
-	 Restore vectors
-	 */
-	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver1DHandler::initializeConcentration: "
-		"DMDAVecRestoreArrayDOF failed.");
 
 	return;
 }
@@ -457,15 +704,16 @@ PetscSolver1DHandler::setConcVector(DM& da, Vec& C,
 		temperature[i + 1] = gridPointSolution[dof];
 	}
 	// Update the network with the temperature
+	auto networkTemp = interpolateTemperature();
 	std::vector<double> depths;
-	for (auto i = 0; i < temperature.size(); i++) {
+	for (auto i = 0; i < networkTemp.size(); i++) {
 		if (localXS + i == nX + 1)
-			depths.push_back(grid[localXS + i] - grid[surfacePosition + 1]);
+			depths.push_back(grid[localXS + i] - grid[1]);
 		else
-			depths.push_back((grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
-				grid[surfacePosition + 1]);
+			depths.push_back(
+				(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 - grid[1]);
 	}
-	network.setTemperatures(temperature, depths);
+	network.setTemperatures(networkTemp, depths);
 
 	// Restore the solutionArray
 	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations);
@@ -527,12 +775,11 @@ PetscSolver1DHandler::updateConcentration(
 		// near the surface
 		for (auto xi = localXS; xi < localXS + localXM; xi++) {
 			// Boundary conditions
-			if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+			if (xi < leftOffset || xi > nX - 1 - rightOffset)
 				continue;
 
 			// We are only interested in the helium near the surface
-			if ((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1] >
-				2.0)
+			if ((grid[xi] + grid[xi + 1]) / 2.0 - grid[1] > 2.0)
 				continue;
 
 			// Get the concentrations at this grid point
@@ -569,7 +816,7 @@ PetscSolver1DHandler::updateConcentration(
 	for (auto xi = (PetscInt)localXS - 1;
 		 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 		// Heat condition
-		if (xi == surfacePosition && xi >= localXS && xi < localXS + localXM) {
+		if (xi == 0 && xi >= localXS && xi < localXS + localXM) {
 			// Compute the old and new array offsets
 			concOffset = concs[xi];
 			updatedConcOffset = updatedConcs[xi];
@@ -583,16 +830,18 @@ PetscSolver1DHandler::updateConcentration(
 			// Compute the left and right hx
 			double hxLeft = 0.0, hxRight = 0.0;
 			if (xi >= 1 && xi < nX) {
-				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				hxLeft =
+					(temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+				hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 			}
 			else if (xi < 1) {
-				hxLeft = grid[xi + 1] - grid[xi];
-				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+				hxLeft = temperatureGrid[xi + 1] - temperatureGrid[xi];
+				hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 			}
 			else {
-				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-				hxRight = grid[xi + 1] - grid[xi];
+				hxLeft =
+					(temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+				hxRight = temperatureGrid[xi + 1] - temperatureGrid[xi];
 			}
 
 			temperatureHandler->computeTemperature(
@@ -604,9 +853,12 @@ PetscSolver1DHandler::updateConcentration(
 		updatedConcOffset = updatedConcs[xi];
 
 		// Set the grid fraction
-		gridPosition[0] =
-			((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1]) /
-			(grid[grid.size() - 1] - grid[surfacePosition + 1]);
+		if (xi < 0)
+			gridPosition[0] =
+				(grid[0] - grid[1]) / (grid[grid.size() - 1] - grid[1]);
+		else
+			gridPosition[0] = ((grid[xi] + grid[xi + 1]) / 2.0 - grid[1]) /
+				(grid[grid.size() - 1] - grid[1]);
 
 		// Get the temperature from the temperature handler
 		temperatureHandler->setTemperature(concOffset);
@@ -620,7 +872,7 @@ PetscSolver1DHandler::updateConcentration(
 
 		// Boundary conditions
 		// Everything to the left of the surface is empty
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
+		if (xi < leftOffset || xi > nX - 1 - rightOffset) {
 			continue;
 		}
 		// Free surface GB
@@ -643,16 +895,16 @@ PetscSolver1DHandler::updateConcentration(
 		// Compute the left and right hx
 		double hxLeft = 0.0, hxRight = 0.0;
 		if (xi >= 1 && xi < nX) {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			hxLeft = (temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+			hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 		}
 		else if (xi < 1) {
-			hxLeft = grid[xi + 1] - grid[xi];
-			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			hxLeft = temperatureGrid[xi + 1] - temperatureGrid[xi];
+			hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 		}
 		else {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-			hxRight = grid[xi + 1] - grid[xi];
+			hxLeft = (temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+			hxRight = temperatureGrid[xi + 1] - temperatureGrid[xi];
 		}
 
 		// ---- Compute the temperature over the locally owned part of the grid
@@ -663,18 +915,25 @@ PetscSolver1DHandler::updateConcentration(
 		}
 	}
 
-	if (tempHasChanged) {
+	// Share the information with all the processes
+	bool totalTempHasChanged = false;
+	auto xolotlComm = util::getMPIComm();
+	MPI_Allreduce(&tempHasChanged, &totalTempHasChanged, 1, MPI_C_BOOL, MPI_LOR,
+		xolotlComm);
+
+	if (totalTempHasChanged) {
 		// Update the network with the temperature
+		auto networkTemp = interpolateTemperature();
 		std::vector<double> depths;
-		for (auto i = 0; i < temperature.size(); i++) {
+		for (auto i = 0; i < networkTemp.size(); i++) {
 			if (localXS + i == nX + 1)
-				depths.push_back(grid[localXS + i] - grid[surfacePosition + 1]);
+				depths.push_back(grid[localXS + i] - grid[1]);
 			else
 				depths.push_back(
 					(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
-					grid[surfacePosition + 1]);
+					grid[1]);
 		}
-		network.setTemperatures(temperature, depths);
+		network.setTemperatures(networkTemp, depths);
 	}
 
 	// Loop over grid points computing ODE terms for each grid point
@@ -706,7 +965,7 @@ PetscSolver1DHandler::updateConcentration(
 
 		// Boundary conditions
 		// Everything to the left of the surface is empty
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset) {
+		if (xi < leftOffset || xi > nX - 1 - rightOffset) {
 			continue;
 		}
 		// Free surface GB
@@ -721,8 +980,7 @@ PetscSolver1DHandler::updateConcentration(
 			continue;
 
 		// ----- Account for flux of incoming particles -----
-		fluxHandler->computeIncidentFlux(
-			ftime, updatedConcOffset, xi, surfacePosition);
+		fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, xi, 0);
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
 		diffusionHandler->computeDiffusion(network, concVector,
@@ -736,7 +994,7 @@ PetscSolver1DHandler::updateConcentration(
 				concVector, updatedConcOffset, hxLeft, hxRight, xi - localXS);
 		}
 
-		auto surfacePos = grid[surfacePosition + 1];
+		auto surfacePos = grid[1];
 		auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
 		auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
 		auto curDepth = curXPos - surfacePos;
@@ -830,24 +1088,24 @@ PetscSolver1DHandler::computeJacobian(
 		// Compute the left and right hx
 		double hxLeft = 0.0, hxRight = 0.0;
 		if (xi >= 1 && xi < nX) {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			hxLeft = (temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+			hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 		}
 		else if (xi == -1) {
 			hxLeft = 0.0;
-			hxRight = (grid[xi + 2] + grid[xi + 1]) / 2.0;
+			hxRight = (temperatureGrid[xi + 2] + temperatureGrid[xi + 1]) / 2.0;
 		}
 		else if (xi < 1) {
-			hxLeft = grid[xi + 1] - grid[xi];
-			hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			hxLeft = temperatureGrid[xi + 1] - temperatureGrid[xi];
+			hxRight = (temperatureGrid[xi + 2] - temperatureGrid[xi]) / 2.0;
 		}
 		else {
-			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
-			hxRight = grid[xi + 1] - grid[xi];
+			hxLeft = (temperatureGrid[xi + 1] - temperatureGrid[xi - 1]) / 2.0;
+			hxRight = temperatureGrid[xi + 1] - temperatureGrid[xi];
 		}
 
 		// Heat condition
-		if (xi == surfacePosition && xi >= localXS && xi < localXS + localXM) {
+		if (xi == 0 && xi >= localXS && xi < localXS + localXM) {
 			// Get the partial derivatives for the temperature
 			auto setValues = temperatureHandler->computePartialsForTemperature(
 				tempVals, tempIndices, hxLeft, hxRight, xi);
@@ -878,9 +1136,16 @@ PetscSolver1DHandler::computeJacobian(
 		concOffset = concs[xi];
 
 		// Set the grid fraction
-		gridPosition[0] =
-			((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1]) /
-			(grid[grid.size() - 1] - grid[surfacePosition + 1]);
+		if (xi < 0)
+			gridPosition[0] = (temperatureGrid[0] - temperatureGrid[1]) /
+				(temperatureGrid[temperatureGrid.size() - 1] -
+					temperatureGrid[1]);
+		else
+			gridPosition[0] =
+				((temperatureGrid[xi] + temperatureGrid[xi + 1]) / 2.0 -
+					temperatureGrid[1]) /
+				(temperatureGrid[temperatureGrid.size() - 1] -
+					temperatureGrid[1]);
 
 		// Get the temperature from the temperature handler
 		temperatureHandler->setTemperature(concOffset);
@@ -894,7 +1159,7 @@ PetscSolver1DHandler::computeJacobian(
 
 		// Boundary conditions
 		// Everything to the left of the surface is empty
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+		if (xi < leftOffset || xi > nX - 1 - rightOffset)
 			continue;
 		// Free surface GB
 		bool skip = false;
@@ -935,18 +1200,25 @@ PetscSolver1DHandler::computeJacobian(
 		}
 	}
 
-	if (tempHasChanged) {
+	// Share the information with all the processes
+	bool totalTempHasChanged = false;
+	auto xolotlComm = util::getMPIComm();
+	MPI_Allreduce(&tempHasChanged, &totalTempHasChanged, 1, MPI_C_BOOL, MPI_LOR,
+		xolotlComm);
+
+	if (totalTempHasChanged) {
 		// Update the network with the temperature
+		auto networkTemp = interpolateTemperature();
 		std::vector<double> depths;
-		for (auto i = 0; i < temperature.size(); i++) {
+		for (auto i = 0; i < networkTemp.size(); i++) {
 			if (localXS + i == nX + 1)
-				depths.push_back(grid[localXS + i] - grid[surfacePosition + 1]);
+				depths.push_back(grid[localXS + i] - grid[1]);
 			else
 				depths.push_back(
 					(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
-					grid[surfacePosition + 1]);
+					grid[1]);
 		}
-		network.setTemperatures(temperature, depths);
+		network.setTemperatures(networkTemp, depths);
 	}
 
 	// Computing the trapped atom concentration is only needed for the
@@ -962,12 +1234,11 @@ PetscSolver1DHandler::computeJacobian(
 		// near the surface
 		for (auto xi = localXS; xi < localXS + localXM; xi++) {
 			// Boundary conditions
-			if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+			if (xi < leftOffset || xi > nX - 1 - rightOffset)
 				continue;
 
 			// We are only interested in the helium near the surface
-			if ((grid[xi] + grid[xi + 1]) / 2.0 - grid[surfacePosition + 1] >
-				2.0)
+			if ((grid[xi] + grid[xi + 1]) / 2.0 - grid[1] > 2.0)
 				continue;
 
 			// Get the concentrations at this grid point
@@ -1003,7 +1274,7 @@ PetscSolver1DHandler::computeJacobian(
 	for (auto xi = localXS; xi < localXS + localXM; xi++) {
 		// Boundary conditions
 		// Everything to the left of the surface is empty
-		if (xi < surfacePosition + leftOffset || xi > nX - 1 - rightOffset)
+		if (xi < leftOffset || xi > nX - 1 - rightOffset)
 			continue;
 
 		// Free surface GB
@@ -1110,7 +1381,7 @@ PetscSolver1DHandler::computeJacobian(
 		// Get the concentrations at this grid point
 		concOffset = concs[xi];
 
-		auto surfacePos = grid[surfacePosition + 1];
+		auto surfacePos = grid[1];
 		auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
 		auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
 		auto curDepth = curXPos - surfacePos;

@@ -25,6 +25,10 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 	XOLOTL_LOG << "SolverHandler: 0D simulation";
+	for (auto pair : initialConc) {
+		XOLOTL_LOG << ", initial concentration for Id: " << pair.first
+				   << " of: " << pair.second << " nm-3";
+	}
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = util::getMPIComm();
@@ -72,7 +76,8 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 }
 
 void
-PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
+PetscSolver0DHandler::initializeConcentration(
+	DM& da, Vec& C, DM& oldDA, Vec& oldC)
 {
 	PetscErrorCode ierr;
 
@@ -92,12 +97,6 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
 	const auto dof = network.getDOF();
-
-	// Get the single vacancy ID
-	auto singleVacancyCluster = network.getSingleVacancy();
-	auto vacancyIndex = NetworkType::invalidIndex();
-	if (singleVacancyCluster.getId() != NetworkType::invalidIndex())
-		vacancyIndex = singleVacancyCluster.getId();
 
 	// Get the concentration of the only grid point
 	concOffset = concentrations[0];
@@ -122,9 +121,11 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
 
-	// Initialize the vacancy concentration
-	if (vacancyIndex != NetworkType::invalidIndex() and not hasConcentrations) {
-		concOffset[vacancyIndex] = initialVConc;
+	// Initialize the option specified concentration
+	if (not hasConcentrations) {
+		for (auto pair : initialConc) {
+			concOffset[pair.first] = pair.second;
+		}
 	}
 
 	// If the concentration must be set from the HDF5 file
@@ -297,6 +298,9 @@ PetscSolver0DHandler::updateConcentration(
 	// moments
 	const auto dof = network.getDOF();
 
+	// Update the time in the network
+	network.setTime(ftime);
+
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);
 	double temp = temperatureHandler->getTemperature(gridPosition, ftime);
@@ -377,6 +381,9 @@ PetscSolver0DHandler::computeJacobian(
 
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
+
+	// Update the time in the network
+	network.setTime(ftime);
 
 	// Get the temperature from the temperature handler
 	concOffset = concs[0];

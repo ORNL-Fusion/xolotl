@@ -118,7 +118,7 @@ public:
 		auto toReturn =
 			this->getTotalTrappedAtomConcentration(concs, Species::He, minSize);
 
-		if (this->_clusterData.h_view().enableLargeBubble()) {
+		if (this->_enableLargeBubble) {
 			// Get the large bubble contribution
 			auto dof = concs.size();
 			auto dHe = Kokkos::subview(concs, std::make_pair(dof - 2, dof - 1));
@@ -141,7 +141,7 @@ public:
 	}
 
 	void
-	updateReactionRates();
+	updateReactionRates(double time = 0.0);
 
 	void
 	updateTrapMutationDisappearingRate(double totalTrappedHeliumConc) override;

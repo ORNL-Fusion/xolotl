@@ -16,24 +16,22 @@ getMaxHePerV(double amtV) noexcept
 {
 	using AmountType = IReactionNetwork::AmountType;
 
-	amtV = std::max(0.0, amtV);
-
 	/**
 	 * The maximum number of helium atoms that can be combined with a
 	 * vacancy cluster with size equal to the index i.
 	 * It could support a mixture of up to nine
 	 * helium atoms with one vacancy.
 	 */
-	constexpr Kokkos::Array<AmountType, 30> maxHePerV = {8, 9, 14, 18, 20, 27,
-		30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101,
-		103, 105, 107, 109, 110, 112, 116};
+	constexpr Kokkos::Array<double, 30> maxHePerV = {0, 9, 14, 18, 20, 27, 30,
+		35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101, 103,
+		105, 107, 109, 110, 112, 116};
 
-	if (amtV < maxHePerV.size()) {
-		return maxHePerV[(AmountType)amtV];
+	if ((int)amtV < maxHePerV.size()) {
+		return maxHePerV[(int)amtV];
 	}
-
 	return util::max((4.0 * amtV),
-		maxHePerV[maxHePerV.size() - 1] + amtV - maxHePerV.size() + 1.0);
+		(double)maxHePerV[maxHePerV.size() - 1] + amtV -
+			(double)maxHePerV.size() + 1.0);
 }
 } // namespace psi
 

@@ -7,8 +7,10 @@
 
 #if defined(KOKKOS_ENABLE_CUDA) && defined(KOKKOS_ENABLE_CUDA_LAMBDA)
 #define DEVICE_LAMBDA [=] __device__
+#define DEVICE_FUNCTION __device__
 #else
 #define DEVICE_LAMBDA [=]
+#define DEVICE_FUNCTION
 #endif
 
 #include <xolotl/core/network/detail/TupleUtility.h>
@@ -520,6 +522,7 @@ class MultiElementCollection
 
 public:
 	using IndexType = ::xolotl::IdType;
+	using ChainType = ElementSetMixinChain<sizeof...(TElems), TElems...>;
 
 	/**
 	 * @brief Default construct to empty collection
@@ -641,6 +644,20 @@ public:
 		_chain.invoke(func);
 	}
 
+	template <typename F, typename T>
+	struct ReduceFunctor
+	{
+		ChainType chain;
+		F func;
+
+		DEVICE_FUNCTION
+		void
+		operator()(const IndexType i, T& local) const
+		{
+			chain.reduce(func, i, local);
+		}
+	};
+
 	/**
 	 * @brief Perform a Kokkos parallel_reduce on all the elements in the
 	 * collection
@@ -658,10 +675,7 @@ public:
 	{
 		auto chain = _chain;
 		Kokkos::parallel_reduce(
-			_numElems,
-			DEVICE_LAMBDA(
-				const IndexType i, T& local) { chain.reduce(func, i, local); },
-			out);
+			_numElems, ReduceFunctor<F, T>{_chain, func}, out);
 	}
 
 	template <typename F, typename T>
@@ -670,15 +684,25 @@ public:
 	{
 		auto chain = _chain;
 		Kokkos::parallel_reduce(
-			label, _numElems,
-			DEVICE_LAMBDA(
-				const IndexType i, T& local) { chain.reduce(func, i, local); },
-			out);
+			label, _numElems, ReduceFunctor<F, T>{_chain, func}, out);
 	}
 
+	template <typename TElem, typename F, typename T>
+	struct ReduceOnFunctor
+	{
+		Kokkos::View<TElem*> view;
+		F func;
+
+		DEVICE_FUNCTION
+		void
+		operator()(const IndexType i, T& local) const
+		{
+			func(view[i], local);
+		}
+	};
+
 	/**
-	 * @brief Perform a Kokkos parallel_reduce on all the elements of a single
-	 * type
+	 * @brief Perform a Kokkos parallel_reduce on all the elements of one type
 	 */
 	template <typename TElem, typename F, typename T>
 	void
@@ -686,10 +710,7 @@ public:
 	{
 		auto view = getView<TElem>();
 		Kokkos::parallel_reduce(
-			view.size(),
-			DEVICE_LAMBDA(
-				const IndexType i, T& local) { func(view[i], local); },
-			out);
+			view.size(), ReduceOnFunctor<TElem, F, T>{view, func}, out);
 	}
 
 	template <typename TElem, typename F, typename T>
@@ -698,10 +719,7 @@ public:
 	{
 		auto view = getView<TElem>();
 		Kokkos::parallel_reduce(
-			label, view.size(),
-			DEVICE_LAMBDA(
-				const IndexType i, T& local) { func(view[i], local); },
-			out);
+			label, view.size(), ReduceOnFunctor<TElem, F, T>{view, func}, out);
 	}
 
 	/**
@@ -726,7 +744,7 @@ public:
 	}
 
 private:
-	ElementSetMixinChain<sizeof...(TElems), TElems...> _chain;
+	ChainType _chain;
 	std::size_t _numElems{};
 };
 

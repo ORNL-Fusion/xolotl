@@ -47,10 +47,8 @@ protected:
 	//! Map of connectivities
 	SparseFillMap dfill;
 
-	/**
-	 * The current temperature on the grid.
-	 */
-	std::vector<double> temperature;
+	//! The offset at the surface
+	IdType surfaceOffset;
 
 	/**
 	 * A vector for holding the partial derivatives for one cluster in the order
@@ -121,6 +119,17 @@ public:
 	 * @param _perfHandler The perf handler to use.
 	 */
 	PetscSolverHandler(NetworkType& _network, const options::IOptions& options);
+
+	/**
+	 * Set the number of grid points we want to move by at the surface.
+	 * \see ISolverHandler.h
+	 */
+	void
+	setSurfaceOffset(int offset)
+	{
+		surfaceOffset = offset;
+		return;
+	}
 };
 // end class PetscSolverHandler
 

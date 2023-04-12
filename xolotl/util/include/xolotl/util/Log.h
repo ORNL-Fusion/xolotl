@@ -39,6 +39,18 @@ public:
 	Log();
 
 	/**
+	 * @brief Set logging output threshold level
+	 */
+	static void
+	setLevelThreshold(Level level);
+
+	/**
+	 * @brief Set logging output threshold level
+	 */
+	static void
+	setLevelThreshold(const std::string& levelString);
+
+	/**
 	 * @brief Get a severity logger
 	 */
 	static LoggerType&
@@ -49,6 +61,11 @@ public:
 	 */
 	static void
 	flush();
+
+private:
+	static Level _threshold;
+	friend void
+	setupLogs();
 };
 
 /**

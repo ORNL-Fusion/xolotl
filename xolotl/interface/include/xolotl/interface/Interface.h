@@ -52,6 +52,12 @@ private:
 	 */
 	std::shared_ptr<solver::ISolver> solver;
 
+	/**
+	 * A vector of maps to know which cluster in subnetworks correspond
+	 * to which in the main network
+	 */
+	std::vector<std::vector<IdType>> fromSubNetwork;
+
 public:
 	/**
 	 * The default constructor
@@ -83,11 +89,13 @@ public:
 	 *
 	 * @param argc, argv The command line arguments
 	 * @param MPI_Comm The communicator to use
-	 * @return The pointer to the solver
 	 */
 	void
 	initializeXolotl(
 		int& argc, const char* argv[], MPI_Comm comm = MPI_COMM_WORLD);
+
+	void
+	initializeSolver();
 
 	/**
 	 * Set the final time and the dt.
@@ -238,6 +246,100 @@ public:
 	 */
 	std::vector<double>
 	getGridInfo(double& hy, double& hz);
+
+	/**
+	 * Get the cluster information
+	 *
+	 * @return The vector representing the bounds for each cluster
+	 */
+	std::vector<std::vector<AmountType>>
+	getAllClusterBounds();
+
+	/**
+	 * Get the cluster information
+	 *
+	 * @return The vector linking moment Ids to cluster Ids
+	 */
+	std::vector<std::vector<IdType>>
+	getAllMomentIdInfo();
+
+	/**
+	 * Computes the map between the different set of cluster bounds and moment
+	 * IDs.
+	 *
+	 * @param bounds A vector of cluster bounds
+	 * @param momIdInfo Information about which moment ID goes with which
+	 * cluster
+	 */
+	void
+	initializeClusterMaps(
+		std::vector<std::vector<std::vector<AmountType>>> bounds,
+		std::vector<std::vector<std::vector<IdType>>> momIdInfo);
+
+	/**
+	 * Initializes the reaction in a separate step.
+	 */
+	void
+	initializeReactions();
+
+	/**
+	 * Get the implanted flux for each sub network.
+	 *
+	 * @return The vector of vectors of flux, first is the ID and second is the
+	 * value.
+	 */
+	std::vector<std::vector<std::pair<IdType, double>>>
+	getImplantedFlux();
+
+	/**
+	 * Set the implanted flux for each sub network.
+	 *
+	 * @param fluxVector With first is the ID and second is the value
+	 */
+	void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector);
+
+	/**
+	 * Values for the rates to be set in constant reactions.
+	 *
+	 * @param rates All the rates
+	 */
+	void
+	setConstantRates(std::vector<std::vector<double>> rates);
+
+	/**
+	 * Compute the constant rates
+	 *
+	 * @param conc The concentration vector
+	 * @return A vector containing the rates for each sub instance
+	 */
+	std::vector<std::vector<std::vector<double>>>
+	computeConstantRates(std::vector<std::vector<double>> conc);
+
+	/**
+	 * Get the connectivity matrices
+	 *
+	 * @return A vector telling which reactants interact together
+	 */
+	std::vector<std::vector<std::vector<bool>>>
+	getConstantConnectivities();
+
+	/**
+	 * Set the connectivity matrices for constant reactions
+	 *
+	 * @param conns A vector telling which reactants interact together
+	 */
+	void
+	setConstantConnectivities(std::vector<std::vector<bool>> conns);
+
+	/**
+	 * Write the data in a file.
+	 *
+	 * @param time The current time
+	 * @param conc The concentration vector
+	 */
+	void
+	outputData(double time, std::vector<std::vector<double>> conc);
 
 	/**
 	 * Get whether the solve converged or not.

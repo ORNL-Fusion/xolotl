@@ -33,6 +33,7 @@ BOOST_AUTO_TEST_CASE(simple0D)
 				 "-fieldsplit_1_pc_type sor "
 				 "-ts_max_time 1000 "
 				 "-ts_max_steps 1 "
+				 "-ts_dt 0.1 "
 				 "-ts_exact_final_time stepover"
 			  << std::endl
 			  << "tempParam=900" << std::endl

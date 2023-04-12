@@ -31,14 +31,13 @@ SolverHandler::SolverHandler(
 	topOffset(1),
 	frontOffset(1),
 	backOffset(1),
-	initialVConc(0.0),
 	electronicStoppingPower(0.0),
 	dimension(-1),
-	portion(0.0),
 	movingSurface(false),
 	largeBubbleModel(false),
 	isMirror(true),
 	useAttenuation(false),
+	sameTemperatureGrid(true),
 	fluxTempProfile(false),
 	sputteringYield(0.0),
 	fluxHandler(nullptr),
@@ -49,7 +48,16 @@ SolverHandler::SolverHandler(
 	diffusionHandler(nullptr),
 	rngSeed(0),
 	previousTime(0.0),
-	nXeGB(0.0)
+	nXeGB(0.0),
+	gridType(""),
+	gridFileName(""),
+	gridParam0(0.0),
+	gridParam1(0.0),
+	gridParam2(0.0),
+	gridParam3(0.0),
+	gridParam4(0.0),
+	gridParam5(0.0)
+
 {
 }
 
@@ -58,285 +66,326 @@ SolverHandler::~SolverHandler()
 }
 
 void
-SolverHandler::generateGrid(const options::IOptions& opts)
+SolverHandler::generateGrid(int surfaceOffset)
 {
-	// Clear the grid
-	grid.clear();
+	// Initial case
+	if (surfaceOffset == 0) {
+		// Clear the grid
+		grid.clear();
 
-	// Doesn't mean anything in 0D
-	if (opts.getDimensionNumber() == 0)
-		return;
+		// Doesn't mean anything in 0D
+		if (dimension == 0)
+			return;
 
-	// Get the grid type
-	auto gridType = opts.getGridTypeName();
+		// Check if we want to read in the grid from a file
+		if (gridType == "read") {
+			// Open the corresponding file
+			std::ifstream inputFile(gridFileName.c_str());
+			if (!inputFile)
+				std::cerr << "\nCould not open the file containing the grid "
+							 "spacing information. "
+							 "Aborting!\n"
+						  << std::endl;
+			// Get the data
+			std::string line;
+			getline(inputFile, line);
 
-	// Check if we want to read in the grid from a file
-	if (gridType == "read") {
-		// Open the corresponding file
-		std::ifstream inputFile(opts.getGridFilename().c_str());
-		if (!inputFile)
-			std::cerr << "\nCould not open the file containing the grid "
-						 "spacing information. "
-						 "Aborting!\n"
-					  << std::endl;
-		// Get the data
-		std::string line;
-		getline(inputFile, line);
+			// Break the line into a vector
+			auto tokens = util::Tokenizer<double>{line}();
 
-		// Break the line into a vector
-		auto tokens = util::Tokenizer<double>{line}();
+			if (tokens.size() == 0)
+				std::cerr << "\nDid not read correctly the file containing the "
+							 "grid spacing information. "
+							 "Aborting!\n"
+						  << std::endl;
 
-		if (tokens.size() == 0)
-			std::cerr << "\nDid not read correctly the file containing the "
-						 "grid spacing information. "
-						 "Aborting!\n"
-					  << std::endl;
+			// Compute the offset to add to the grid for boundary conditions
+			double offset = tokens[1] - tokens[0];
+			// Add the first grid point
+			grid.push_back(0.0);
+			// Check the location of the first grid point
+			if (tokens[0] > 0.0) {
+				grid.push_back(offset);
+			}
 
-		// Compute the offset to add to the grid for boundary conditions
-		double offset = tokens[1] - tokens[0];
-		// Add the first grid point
-		grid.push_back(0.0);
-		// Check the location of the first grid point
-		if (tokens[0] > 0.0) {
-			grid.push_back(offset);
+			// Loop on the tokens
+			for (auto i = 0; i < tokens.size(); i++) {
+				grid.push_back(tokens[i] + offset);
+			}
+
+			// Add the last grid point for boundary conditions
+			grid.push_back(2.0 * tokens[tokens.size() - 1] -
+				tokens[tokens.size() - 2] + offset);
+
+			// Set the number of grid points
+			nX = grid.size() - 2;
+
+			// Get the number of dimension
+			auto dim = dimension;
+			if (dim > 1) {
+				nY = gridParam0;
+				hY = gridParam1;
+			}
+			if (dim > 2) {
+				nZ = gridParam2;
+				hZ = gridParam3;
+			}
+
+			return;
 		}
 
-		// Loop on the tokens
-		for (auto i = 0; i < tokens.size(); i++) {
-			grid.push_back(tokens[i] + offset);
+		// Maybe the user wants a Chebyshev grid
+		if (gridType == "cheby") {
+			// The first grid point will be at x = 0.0
+			grid.push_back(0.0);
+			grid.push_back(0.0);
+
+			// Set the number of grid points
+			nX = gridParam0;
+			auto hx = gridParam1;
+			// In that case hx correspond to the full length of the grid
+			for (auto l = 1; l <= nX - 1; l++) {
+				grid.push_back((hx / 2.0) *
+					(1.0 - cos(core::pi * double(l) / double(nX - 1))));
+			}
+			// The last grid point will be at x = hx
+			grid.push_back(hx);
+
+			// Get the number of dimensions
+			if (dimension > 1) {
+				nY = gridParam2;
+				hY = gridParam3;
+			}
+			if (dimension > 2) {
+				nZ = gridParam4;
+				hZ = gridParam5;
+			}
+
+			return;
+		}
+		// Check if the user wants a regular grid
+		if (gridType == "uniform") {
+			// Set the number of grid points
+			nX = gridParam0;
+			auto hx = gridParam1;
+			// The grid will me made of nx + 2 points separated by hx nm
+			for (auto l = 0; l <= nX + 1; l++) {
+				grid.push_back((double)l * hx);
+			}
+
+			// Get the number of dimensions
+			if (dimension > 1) {
+				nY = gridParam2;
+				hY = gridParam3;
+			}
+			if (dimension > 2) {
+				nZ = gridParam4;
+				hZ = gridParam5;
+			}
+
+			return;
 		}
 
-		// Add the last grid point for boundary conditions
-		grid.push_back(2.0 * tokens[tokens.size() - 1] -
-			tokens[tokens.size() - 2] + offset);
+		// If it is not regular do a fine mesh close to the surface and
+		// increase the step size when away from the surface
+		if (gridType == "nonuniform") {
+			// Initialize the value of the previous point
+			double previousPoint = 0.0;
+			// Set the number of grid points
+			nX = gridParam0;
+			// Set the position of the surface
+			IdType surfacePos = 0;
 
-		// Set the number of grid points
-		nX = grid.size() - 2;
+			// Loop on all the grid points
+			for (auto l = 0; l <= nX + 1; l++) {
+				// Add the previous point
+				grid.push_back(previousPoint);
+				// 0.1nm step near the surface (x < 2.5nm)
+				if (l < surfacePos + 26) {
+					previousPoint += 0.1;
+				}
+				// Then 0.25nm (2.5nm < x < 5.0nm)
+				else if (l < surfacePos + 36) {
+					previousPoint += 0.25;
+				}
+				// Then 0.5nm (5.0nm < x < 7.5nm)
+				else if (l < surfacePos + 41) {
+					previousPoint += 0.5;
+				}
+				// Then 1.0nm step size (7.5nm < x < 50.5)
+				else if (l < surfacePos + 84) {
+					previousPoint += 1.0;
+				}
+				// Then 2.0nm step size (50.5nm < x < 100.5)
+				else if (l < surfacePos + 109) {
+					previousPoint += 2.0;
+				}
+				// Then 5.0nm step size (100.5nm < x < 150.5)
+				else if (l < surfacePos + 119) {
+					previousPoint += 5.0;
+				}
+				// Then 10.0nm step size (150.5nm < x < 300.5)
+				else if (l < surfacePos + 134) {
+					previousPoint += 10.0;
+				}
+				// Then 20.0nm step size (300.5nm < x < 500.5)
+				else if (l < surfacePos + 144) {
+					previousPoint += 20.0;
+				}
+				// Then 50.0nm step size (500.5nm < x < 1000.5)
+				else if (l < surfacePos + 154) {
+					previousPoint += 50.0;
+				}
+				// Then 100.0nm step size (1000.5nm < x < 5000.5)
+				else if (l < surfacePos + 194) {
+					previousPoint += 100.0;
+				}
+				// Then 200.0nm step size (5000.5nm < x < 10000.5)
+				else if (l < surfacePos + 219) {
+					previousPoint += 200.0;
+				}
+				// Then 500.0nm step size (10000.5nm < x < 20000.5)
+				else if (l < surfacePos + 239) {
+					previousPoint += 500.0;
+				}
+				// Then 1.0um step size (20000.5nm < x < 30000.5nm )
+				else if (l < surfacePos + 249) {
+					previousPoint += 1000.0;
+				}
+				// Then 2.0um step size (30000.5nm < x < 50000.5)
+				else if (l < surfacePos + 259) {
+					previousPoint += 2000.0;
+				}
+				// Then 5.0um step size (50000.5nm < x < 100000.5)
+				else if (l < surfacePos + 269) {
+					previousPoint += 5000.0;
+				}
+				// Then 10.0um step size (100000.5nm < x < 200000.5nm )
+				else if (l < surfacePos + 279) {
+					previousPoint += 10000.0;
+				}
+				// Then 20.0um step size (200000.5nm < x < 500000.5)
+				else if (l < surfacePos + 294) {
+					previousPoint += 20000.0;
+				}
+				// Then 50.0um step size (500000.5nm < x < 1000000.5)
+				else if (l < surfacePos + 304) {
+					previousPoint += 50000.0;
+				}
+				// Then 100.0um step size (1mm < x < 2mm )
+				else if (l < surfacePos + 314) {
+					previousPoint += 100000.0;
+				}
+				// Then 200.0um step size (2mm < x < 5mm)
+				else if (l < surfacePos + 329) {
+					previousPoint += 200000.0;
+				}
+				// Then 500.0um step size (5mm < x < 10mm)
+				else if (l < surfacePos + 339) {
+					previousPoint += 500000.0;
+				}
+				// Then 1.0mm step size (10mm < x)
+				else {
+					previousPoint += 1000000.0;
+				}
+			}
 
-		// Get the number of dimensions
-		auto dim = opts.getDimensionNumber();
-		if (dim > 1) {
-			nY = opts.getGridParam(0);
-			hY = opts.getGridParam(1);
+			// Get the number of dimensions
+			if (dimension > 1) {
+				nY = gridParam1;
+				hY = gridParam2;
+			}
+			if (dimension > 2) {
+				nZ = gridParam3;
+				hZ = gridParam4;
+			}
+
+			return;
 		}
-		if (dim > 2) {
-			nZ = opts.getGridParam(2);
-			hZ = opts.getGridParam(3);
+		// If it is a geometric gradation grid
+		if (gridType == "geometric") {
+			// Initialize the value of the previous point
+			double previousPoint = 0.0;
+			// Set the number of grid points
+			nX = gridParam0;
+			// Set the gradation parameters
+			double width = 0.1, r = gridParam1;
+
+			// Loop on all the grid points
+			for (auto l = 0; l <= nX + 1; l++) {
+				// Add the previous point
+				grid.push_back(previousPoint);
+				// 0.1nm step near the surface
+				if (l < 1) {
+					previousPoint += width;
+				}
+				else {
+					previousPoint += width * pow(r, l - 1);
+				}
+			}
+
+			// Get the number of dimensions
+			if (dimension > 1) {
+				nY = gridParam2;
+				hY = gridParam3;
+			}
+			if (dimension > 2) {
+				nZ = gridParam4;
+				hZ = gridParam5;
+			}
+
+			return;
 		}
 
-		return;
+		throw std::runtime_error("\nThe grid type option was not recognized!");
 	}
+	// Modify grid
+	else {
+		// Transfer the grid
+		oldGrid = grid;
 
-	// Maybe the user wants a Chebyshev grid
-	if (gridType == "cheby") {
-		// The first grid point will be at x = 0.0
-		grid.push_back(0.0);
-		grid.push_back(0.0);
-
-		// Set the number of grid points
-		nX = opts.getGridParam(0);
-		auto hx = opts.getGridParam(1);
-		// In that case hx correspond to the full length of the grid
-		for (auto l = 1; l <= nX - 1; l++) {
-			grid.push_back((hx / 2.0) *
-				(1.0 - cos(core::pi * double(l) / double(nX - 1))));
-		}
-		// The last grid point will be at x = hx
-		grid.push_back(hx);
-
-		// Get the number of dimensions
-		auto dim = opts.getDimensionNumber();
-		if (dim > 1) {
-			nY = opts.getGridParam(2);
-			hY = opts.getGridParam(3);
-		}
-		if (dim > 2) {
-			nZ = opts.getGridParam(4);
-			hZ = opts.getGridParam(5);
-		}
-
-		return;
-	}
-	// Check if the user wants a regular grid
-	if (gridType == "uniform") {
-		// Set the number of grid points
-		nX = opts.getGridParam(0);
-		auto hx = opts.getGridParam(1);
-		// The grid will me made of nx + 2 points separated by hx nm
-		for (auto l = 0; l <= nX + 1; l++) {
-			grid.push_back((double)l * hx);
-		}
-
-		// Get the number of dimensions
-		auto dim = opts.getDimensionNumber();
-		if (dim > 1) {
-			nY = opts.getGridParam(2);
-			hY = opts.getGridParam(3);
-		}
-		if (dim > 2) {
-			nZ = opts.getGridParam(4);
-			hZ = opts.getGridParam(5);
-		}
-
-		return;
-	}
-
-	// If it is not regular do a fine mesh close to the surface and
-	// increase the step size when away from the surface
-	if (gridType == "nonuniform") {
-		// Initialize the value of the previous point
-		double previousPoint = 0.0;
-		// Set the number of grid points
-		nX = opts.getGridParam(0);
-		// Set the position of the surface
-		auto surfacePos = (IdType)(nX * opts.getVoidPortion() / 100.0);
-
-		// Loop on all the grid points
-		for (auto l = 0; l <= nX + 1; l++) {
-			// Add the previous point
-			grid.push_back(previousPoint);
-			// 0.1nm step near the surface (x < 2.5nm)
-			if (l < surfacePos + 26) {
-				previousPoint += 0.1;
+		// Adding grid points case
+		if (surfaceOffset > 0) {
+			// Compute the distance between what needs to be removed
+			double step = grid[surfaceOffset] - grid[0];
+			// Check the size of the two used last steps to know if we add a
+			// grid point
+			double step1 = grid[grid.size() - 2] - grid[grid.size() - 3];
+			double step2 = grid[grid.size() - 3] - grid[grid.size() - 4];
+			// Modify grid
+			if (step1 < step2 - 1.0e-4) {
+				grid[grid.size() - 2] += step;
+				// Update the last grid point for boundary conditions
+				grid[grid.size() - 1] =
+					2.0 * grid[grid.size() - 2] - grid[grid.size() - 3];
 			}
-			// Then 0.25nm (2.5nm < x < 5.0nm)
-			else if (l < surfacePos + 36) {
-				previousPoint += 0.25;
-			}
-			// Then 0.5nm (5.0nm < x < 7.5nm)
-			else if (l < surfacePos + 41) {
-				previousPoint += 0.5;
-			}
-			// Then 1.0nm step size (7.5nm < x < 50.5)
-			else if (l < surfacePos + 84) {
-				previousPoint += 1.0;
-			}
-			// Then 2.0nm step size (50.5nm < x < 100.5)
-			else if (l < surfacePos + 109) {
-				previousPoint += 2.0;
-			}
-			// Then 5.0nm step size (100.5nm < x < 150.5)
-			else if (l < surfacePos + 119) {
-				previousPoint += 5.0;
-			}
-			// Then 10.0nm step size (150.5nm < x < 300.5)
-			else if (l < surfacePos + 134) {
-				previousPoint += 10.0;
-			}
-			// Then 20.0nm step size (300.5nm < x < 500.5)
-			else if (l < surfacePos + 144) {
-				previousPoint += 20.0;
-			}
-			// Then 50.0nm step size (500.5nm < x < 1000.5)
-			else if (l < surfacePos + 154) {
-				previousPoint += 50.0;
-			}
-			// Then 100.0nm step size (1000.5nm < x < 5000.5)
-			else if (l < surfacePos + 194) {
-				previousPoint += 100.0;
-			}
-			// Then 200.0nm step size (5000.5nm < x < 10000.5)
-			else if (l < surfacePos + 219) {
-				previousPoint += 200.0;
-			}
-			// Then 500.0nm step size (10000.5nm < x < 20000.5)
-			else if (l < surfacePos + 239) {
-				previousPoint += 500.0;
-			}
-			// Then 1.0um step size (20000.5nm < x < 30000.5nm )
-			else if (l < surfacePos + 249) {
-				previousPoint += 1000.0;
-			}
-			// Then 2.0um step size (30000.5nm < x < 50000.5)
-			else if (l < surfacePos + 259) {
-				previousPoint += 2000.0;
-			}
-			// Then 5.0um step size (50000.5nm < x < 100000.5)
-			else if (l < surfacePos + 269) {
-				previousPoint += 5000.0;
-			}
-			// Then 10.0um step size (100000.5nm < x < 200000.5nm )
-			else if (l < surfacePos + 279) {
-				previousPoint += 10000.0;
-			}
-			// Then 20.0um step size (200000.5nm < x < 500000.5)
-			else if (l < surfacePos + 294) {
-				previousPoint += 20000.0;
-			}
-			// Then 50.0um step size (500000.5nm < x < 1000000.5)
-			else if (l < surfacePos + 304) {
-				previousPoint += 50000.0;
-			}
-			// Then 100.0um step size (1mm < x < 2mm )
-			else if (l < surfacePos + 314) {
-				previousPoint += 100000.0;
-			}
-			// Then 200.0um step size (2mm < x < 5mm)
-			else if (l < surfacePos + 329) {
-				previousPoint += 200000.0;
-			}
-			// Then 500.0um step size (5mm < x < 10mm)
-			else if (l < surfacePos + 339) {
-				previousPoint += 500000.0;
-			}
-			// Then 1.0mm step size (10mm < x)
+			// Add the value at the back of the grid
 			else {
-				previousPoint += 1000000.0;
+				// Update the value of the last point
+				grid[grid.size() - 1] = grid[grid.size() - 2] + step;
+				grid.push_back(
+					2.0 * grid[grid.size() - 1] - grid[grid.size() - 2]);
 			}
 		}
-
-		// Get the number of dimensions
-		auto dim = opts.getDimensionNumber();
-		if (dim > 1) {
-			nY = opts.getGridParam(1);
-			hY = opts.getGridParam(2);
+		// Removing grid points case
+		// (Work on the current grid because we want to keep the previous
+		// geometry in oldGrid)
+		else {
+			// Compute the distance between what needs to be removed
+			double step = grid[-surfaceOffset] - grid[0];
+			// Update the value of the last used grid point
+			grid[grid.size() - 2] -= step;
+			// Remove the last point if it is smaller to the second to last grid
+			// point
+			while (grid[grid.size() - 2] < grid[grid.size() - 3] + 1.0e-4) {
+				grid[grid.size() - 3] = grid[grid.size() - 2];
+				grid.pop_back();
+			}
+			// Update the last grid point for boundary conditions
+			grid[grid.size() - 1] =
+				2.0 * grid[grid.size() - 2] - grid[grid.size() - 3];
 		}
-		if (dim > 2) {
-			nZ = opts.getGridParam(3);
-			hZ = opts.getGridParam(4);
-		}
-
-		return;
 	}
-	// If it is a geometric gradation grid
-	if (gridType == "geometric") {
-		// Initialize the value of the previous point
-		double previousPoint = 0.0;
-		// Set the number of grid points
-		nX = opts.getGridParam(0);
-		// Set the position of the surface
-		auto surfacePos = (IdType)(nX * opts.getVoidPortion() / 100.0);
-		// Set the gradation parameters
-		double width = 0.1, r = opts.getGridParam(1);
-
-		// Loop on all the grid points
-		for (auto l = 0; l <= nX + 1; l++) {
-			// Add the previous point
-			grid.push_back(previousPoint);
-			// 0.1nm step near the surface
-			if (l < surfacePos + 1) {
-				previousPoint += width;
-			}
-			else {
-				previousPoint += width * pow(r, l - surfacePos - 1);
-			}
-		}
-
-		// Get the number of dimensions
-		auto dim = opts.getDimensionNumber();
-		if (dim > 1) {
-			nY = opts.getGridParam(2);
-			hY = opts.getGridParam(3);
-		}
-		if (dim > 2) {
-			nZ = opts.getGridParam(4);
-			hZ = opts.getGridParam(5);
-		}
-
-		return;
-	}
-
-	throw std::runtime_error("\nThe grid type option was not recognized!");
 
 	return;
 }
@@ -371,9 +420,6 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	// Set the network loader
 	networkName = opts.getNetworkFilename();
 
-	// Set the grid options
-	generateGrid(opts);
-
 	// Set the flux handler
 	fluxHandler = material->getFluxHandler().get();
 
@@ -398,20 +444,52 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 		minRadiusSizes[i] = minSizes[i];
 	}
 
-	// Set the initial vacancy concentration
-	initialVConc = opts.getInitialVConcentration();
+	// Set the initial concentration
+	auto initialConcString = opts.getInitialConcentration();
+	auto tokens = util::Tokenizer<>{initialConcString}();
+	IdType count = 0;
+	while (count < tokens.size()) {
+		auto comp = std::vector<AmountType>(network.getSpeciesListSize(), 0);
+
+		// Read the cluster type
+		auto clusterSpecies = network.parseSpeciesId(tokens[count]);
+		// Get the cluster
+		comp[clusterSpecies()] = std::stoi(tokens[count + 1]);
+		auto clusterId = network.findClusterId(comp);
+		// Check that it is present in the network
+		if (clusterId == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe requested cluster is not present "
+									 "in the network: " +
+				tokens[count] + "_" + tokens[count + 1] +
+				", cannot use the initial concentration option!");
+		}
+		else
+			initialConc.push_back(std::make_pair<IdType, double>(
+				(IdType)clusterId, std::stod(tokens[count + 2])));
+
+		count += 3;
+	}
 
 	// Set the electronic stopping power
 	electronicStoppingPower = opts.getZeta();
 
 	// Set the number of dimension
 	dimension = opts.getDimensionNumber();
-
-	// Set the void portion
-	portion = opts.getVoidPortion();
+	gridType = opts.getGridTypeName();
+	gridFileName = opts.getGridFilename();
+	gridParam0 = opts.getGridParam(0);
+	gridParam1 = opts.getGridParam(1);
+	gridParam2 = opts.getGridParam(2);
+	gridParam3 = opts.getGridParam(3);
+	gridParam4 = opts.getGridParam(4);
+	gridParam5 = opts.getGridParam(5);
 
 	// Set the sputtering yield
 	sputteringYield = opts.getSputteringYield();
+
+	// Which type of temperature grid to use
+	if (opts.getTempHandlerName() == "heat")
+		sameTemperatureGrid = false;
 
 	// Do we want a flux temporal profile?
 	fluxTempProfile = opts.useFluxTimeProfile();

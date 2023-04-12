@@ -3,6 +3,7 @@
 // Includes
 #include <xolotl/core/Constants.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/RandomNumberGenerator.h>
 
 namespace xolotl
@@ -44,6 +45,15 @@ protected:
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
 
+	//! Vector storing the previous grid in the x direction
+	std::vector<double> oldGrid;
+
+	//! Vector storing the grid for the temperature
+	std::vector<double> temperatureGrid;
+
+	//! The current temperature on the grid.
+	std::vector<double> temperature;
+
 	//! The number of grid points in the depth direction.
 	IdType nX;
 
@@ -83,7 +93,7 @@ protected:
 		backOffset;
 
 	//! The initial vacancy concentration.
-	double initialVConc;
+	std::vector<std::pair<IdType, double>> initialConc;
 
 	//! The vector of quantities to pass to MOOSE.
 	// 0: Xe rate, 1: previous flux, 2: monomer concentration, 3: volume
@@ -114,9 +124,6 @@ protected:
 	//! The number of dimensions for the problem.
 	int dimension;
 
-	//! The portion of void at the beginning of the problem.
-	double portion;
-
 	//! If the user wants to move the surface.
 	bool movingSurface;
 
@@ -128,6 +135,9 @@ protected:
 
 	//! If the user wants to attenuate the modified trap mutation.
 	bool useAttenuation;
+
+	//! What type of temperature grid to use.
+	bool sameTemperatureGrid;
 
 	//! If the user wants to use a temporal profile for the flux.
 	bool fluxTempProfile;
@@ -147,16 +157,23 @@ protected:
 	//! The number of xenon atoms that went to the GB
 	double nXeGB;
 
+	//! The grid options
+	std::string gridType;
+	std::string gridFileName;
+	double gridParam0, gridParam1, gridParam2, gridParam3, gridParam4,
+		gridParam5;
+
 	//! The random number generator to use.
 	std::unique_ptr<util::RandomNumberGenerator<int, unsigned int>> rng;
 
 	/**
 	 * Method generating the grid in the x direction
 	 *
-	 * @param opts The options
+	 * @param surfaceOffset The number of grid point to add/remove at the
+	 * surface
 	 */
 	void
-	generateGrid(const options::IOptions& opts);
+	generateGrid(int surfaceOffset);
 
 	/**
 	 * Constructor.
@@ -179,6 +196,131 @@ public:
 	initializeHandlers(core::material::IMaterialHandler* material,
 		core::temperature::ITemperatureHandler* tempHandler,
 		const options::IOptions& opts) override;
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	void
+	generateTemperatureGrid()
+	{
+		// Don't do anything if we want the same grid as the cluster one
+		if (sameTemperatureGrid) {
+			temperatureGrid = grid;
+			return;
+		}
+
+		// If the temperature grid already existed we need to save its values
+		std::vector<double> oldGrid;
+		if (temperatureGrid.size() > 0)
+			oldGrid = temperatureGrid;
+		// Clear the grid
+		temperatureGrid.clear();
+
+		// Doesn't mean anything in 0D
+		if (grid.size() == 0)
+			return;
+
+		// Compute the total width
+		auto n = grid.size() - 2;
+		auto h =
+			((grid[grid.size() - 3] + grid[grid.size() - 2]) / 2.0 - grid[1]) /
+			(n - 1.5);
+		for (auto i = 0; i < grid.size(); i++) {
+			temperatureGrid.push_back(i * h);
+		}
+
+		// The temperature values need to be updated to match the new grid
+		if (oldGrid.size() == 0)
+			return;
+
+		// Get the default temperature vector if needed
+		auto localTemp = temperature;
+		// First, broadcast the temperature vector so that each
+		// rank can access any temperature on the grid.
+		auto xolotlComm = util::getMPIComm();
+		int procId;
+		MPI_Comm_rank(xolotlComm, &procId);
+		int worldSize;
+		MPI_Comm_size(xolotlComm, &worldSize);
+
+		// Need to create an array of size worldSize where each entry
+		// is the number of element on the given procId
+		int toSend = localXM;
+		// Ghost cells
+		if (localXS == 0 || localXS + localXM == nX)
+			toSend++;
+		if (localXS == 0 && localXS + localXM == nX)
+			toSend++;
+
+		// Receiving array for number of elements
+		int counts[worldSize];
+		MPI_Allgather(&toSend, 1, MPI_INT, counts, 1, MPI_INT, xolotlComm);
+
+		// Define the displacements
+		int displacements[worldSize];
+		for (auto i = 0; i < worldSize; i++) {
+			if (i == 0)
+				displacements[i] = 0;
+			else
+				displacements[i] = displacements[i - 1] + counts[i - 1];
+		}
+
+		// Receiving array for temperatures
+		double broadcastedTemp[nX + 2];
+		double valuesToSend[toSend];
+		if (localXS == 0) {
+			for (auto i = 0; i < toSend; i++) {
+				valuesToSend[i] = localTemp[i];
+			}
+		}
+		else {
+			for (auto i = 0; i < toSend; i++) {
+				valuesToSend[i] = localTemp[i + 1];
+			}
+		}
+		MPI_Allgatherv(&valuesToSend, toSend, MPI_DOUBLE, &broadcastedTemp,
+			counts, displacements, MPI_DOUBLE, xolotlComm);
+
+		// Now we can interpolate the temperature for the local grid
+		std::vector<double> toReturn;
+		// Loop on the local grid including ghosts
+		for (auto i = localXS; i < localXS + localXM + 2; i++) {
+			// Get the grid location
+			double loc = 0.0;
+			if (i == 0)
+				loc = temperatureGrid[0] - temperatureGrid[1];
+			else
+				loc = (temperatureGrid[i - 1] + temperatureGrid[i]) / 2.0 -
+					temperatureGrid[1];
+
+			bool matched = false;
+			IdType jKeep = 0;
+			// Look for it in the temperature grid
+			for (auto j = jKeep; j < nX + 1; j++) {
+				double tempLoc1 = 0.0,
+					   tempLoc2 =
+						   (oldGrid[j] + oldGrid[j + 1]) / 2.0 - oldGrid[1];
+				if (j == 0)
+					tempLoc1 = oldGrid[0] - oldGrid[1];
+				else
+					tempLoc1 = (oldGrid[j - 1] + oldGrid[j]) / 2.0 - oldGrid[1];
+
+				if (loc >= tempLoc1 && loc < tempLoc2) {
+					double xLoc = (loc - tempLoc1) / (tempLoc2 - tempLoc1);
+					double y1 = broadcastedTemp[j], y2 = broadcastedTemp[j + 1];
+					toReturn.push_back(y1 + xLoc * (y2 - y1));
+					matched = true;
+					jKeep = j;
+					break;
+				}
+			}
+
+			if (not matched)
+				toReturn.push_back(broadcastedTemp[nX + 1]);
+		}
+
+		temperature = toReturn;
+	}
 
 	/**
 	 * \see ISolverHandler.h
@@ -219,10 +361,10 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	double
-	getInitialVConc() const override
+	std::vector<std::pair<IdType, double>>
+	getInitialConc() const override
 	{
-		return initialVConc;
+		return initialConc;
 	}
 
 	/**
@@ -535,6 +677,109 @@ public:
 	resetGBVector() override
 	{
 		gbVector.clear();
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	std::vector<double>
+	interpolateTemperature(
+		std::vector<double> localTemp = std::vector<double>()) override
+	{
+		// No need to interpolate if the grid are the same
+		if (sameTemperatureGrid)
+			return temperature;
+
+		// Get the default temperature vector if needed
+		if (localTemp.size() == 0)
+			localTemp = temperature;
+		// First, broadcast the temperature vector so that each
+		// rank can access any temperature on the grid.
+		auto xolotlComm = util::getMPIComm();
+		int procId;
+		MPI_Comm_rank(xolotlComm, &procId);
+		int worldSize;
+		MPI_Comm_size(xolotlComm, &worldSize);
+
+		// Need to create an array of size worldSize where each entry
+		// is the number of element on the given procId
+		int toSend = localXM;
+		// Ghost cells
+		if (localXS == 0 || localXS + localXM == nX)
+			toSend++;
+		if (localXS == 0 && localXS + localXM == nX)
+			toSend++;
+
+		// Receiving array for number of elements
+		int counts[worldSize];
+		MPI_Allgather(&toSend, 1, MPI_INT, counts, 1, MPI_INT, xolotlComm);
+
+		// Define the displacements
+		int displacements[worldSize];
+		for (auto i = 0; i < worldSize; i++) {
+			if (i == 0)
+				displacements[i] = 0;
+			else
+				displacements[i] = displacements[i - 1] + counts[i - 1];
+		}
+
+		// Receiving array for temperatures
+		double broadcastedTemp[nX + 2];
+		double valuesToSend[toSend];
+		if (localXS == 0) {
+			for (auto i = 0; i < toSend; i++) {
+				valuesToSend[i] = localTemp[i];
+			}
+		}
+		else {
+			for (auto i = 0; i < toSend; i++) {
+				valuesToSend[i] = localTemp[i + 1];
+			}
+		}
+		MPI_Allgatherv(&valuesToSend, toSend, MPI_DOUBLE, &broadcastedTemp,
+			counts, displacements, MPI_DOUBLE, xolotlComm);
+
+		// Now we can interpolate the temperature for the local grid
+		std::vector<double> toReturn;
+		// Loop on the local grid including ghosts
+		for (auto i = localXS; i < localXS + localXM + 2; i++) {
+			// Get the grid location
+			double loc = 0.0;
+			if (i == 0)
+				loc = grid[0] - grid[1];
+			else
+				loc = (grid[i - 1] + grid[i]) / 2.0 - grid[1];
+
+			bool matched = false;
+			IdType jKeep = 0;
+			// Look for it in the temperature grid
+			for (auto j = jKeep; j < nX + 1; j++) {
+				double tempLoc1 = 0.0,
+					   tempLoc2 =
+						   (temperatureGrid[j] + temperatureGrid[j + 1]) / 2.0 -
+					temperatureGrid[1];
+				if (j == 0)
+					tempLoc1 = temperatureGrid[0] - temperatureGrid[1];
+				else
+					tempLoc1 =
+						(temperatureGrid[j - 1] + temperatureGrid[j]) / 2.0 -
+						temperatureGrid[1];
+
+				if (loc >= tempLoc1 && loc < tempLoc2) {
+					double xLoc = (loc - tempLoc1) / (tempLoc2 - tempLoc1);
+					double y1 = broadcastedTemp[j], y2 = broadcastedTemp[j + 1];
+					toReturn.push_back(y1 + xLoc * (y2 - y1));
+					matched = true;
+					jKeep = j;
+					break;
+				}
+			}
+
+			if (not matched)
+				toReturn.push_back(broadcastedTemp[nX + 1]);
+		}
+
+		return toReturn;
 	}
 };
 } /* namespace handler */

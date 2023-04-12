@@ -161,6 +161,7 @@ ClusterData<TNetwork, MemSpace>::generate(const ClusterGenerator& generator,
 			data.reactionRadius(i) = generator.getReactionRadius(
 				cluster, latticeParameter, interstitialBias, impurityRadius);
 		});
+
 	Kokkos::fence();
 }
 } // namespace detail
