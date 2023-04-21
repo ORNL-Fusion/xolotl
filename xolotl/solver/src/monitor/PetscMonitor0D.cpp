@@ -8,6 +8,7 @@
 #include <xolotl/solver/monitor/PetscMonitorFunctions.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/util/Tokenizer.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 
 namespace xolotl
@@ -245,7 +246,49 @@ PetscMonitor0D::setup()
 		// Uncomment to clear the file where the retention will be written
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt");
-		outputFile << "#time content" << std::endl;
+		outputFile << "#time content ";
+
+		std::ifstream reactionFile;
+		reactionFile.open("reactionRates.txt");
+		// Get the line
+		std::string line;
+		getline(reactionFile, line);
+		// Read the first line
+		std::vector<double> tokens;
+		util::Tokenizer<double>{line}(tokens);
+		// And start looping on the lines
+		while (tokens.size() > 0) {
+			// Find the Id of the cluster
+			NetworkType::Composition comp = NetworkType::Composition::zero();
+			comp[NetworkType::Species::Xe] = static_cast<IdType>(tokens[0]);
+			comp[NetworkType::Species::V] = static_cast<IdType>(tokens[1]);
+			comp[NetworkType::Species::I] = static_cast<IdType>(tokens[2]);
+
+			auto clusterId = network.findCluster(comp).getId();
+			// Check that it is present in the network
+			if (clusterId != NetworkType::invalidIndex()) {
+				_clusterOrder.push_back(clusterId);
+				if (comp[NetworkType::Species::I] > 0)
+					outputFile << "I_" << comp[NetworkType::Species::I] << " ";
+				else if (comp[NetworkType::Species::V] > 0 and
+					comp[NetworkType::Species::Xe] == 0)
+					outputFile << "V_" << comp[NetworkType::Species::V] << " ";
+				else if (comp[NetworkType::Species::Xe] > 0 and
+					comp[NetworkType::Species::V] == 0)
+					outputFile << "Xe_" << comp[NetworkType::Species::Xe]
+							   << " ";
+				else
+					outputFile << "Xe_" << comp[NetworkType::Species::Xe]
+							   << "V_" << comp[NetworkType::Species::V] << " ";
+			}
+
+			getline(reactionFile, line);
+			if (line == "Reactions")
+				break;
+
+			tokens = util::Tokenizer<double>{line}();
+		}
+		outputFile << std::endl;
 		outputFile.close();
 	}
 
@@ -509,9 +552,11 @@ PetscMonitor0D::computeXenonRetention(
 	constexpr double k_B = ::xolotl::core::kBoltzmann;
 	std::ofstream outputFile;
 	outputFile.open("retentionOut.txt", std::ios::app);
-	outputFile << time << " " << xeConcentration << " " << gridPointSolution[0]
-			   << " " << gridPointSolution[1] << " " << gridPointSolution[2]
-			   << std::endl;
+	outputFile << time << " " << xeConcentration << " ";
+	for (auto id : _clusterOrder) {
+		outputFile << gridPointSolution[id] << " ";
+	}
+	outputFile << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray

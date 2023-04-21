@@ -98,7 +98,8 @@ constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
 // Transition size for basal faulted pyramids to basal c-loops
 constexpr double basalTransitionSize = 325;
 
-constexpr double uConcentration = 1.0;
+constexpr double uConcentration = 6.11;
+// constexpr double uConcentration = 1.0;
 
 constexpr double zFactor = 100.0;
 

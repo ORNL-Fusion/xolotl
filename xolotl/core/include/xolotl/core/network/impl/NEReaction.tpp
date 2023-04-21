@@ -19,7 +19,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 {
 	constexpr double pi = ::xolotl::core::pi;
 
-	double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
+	double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1) * ::xolotl::core::zFactor;
 
 	return kPlus;
 }
@@ -69,7 +69,8 @@ NEProductionReaction::computeRate(IndexType gridIndex, double time)
 		}
 	}
 	if (rate > 0) {
-		return 4.0 * ::xolotl::core::pi * (r0 + r1) * rate;
+		return 4.0 * ::xolotl::core::pi * (r0 + r1) * rate *
+			::xolotl::core::zFactor;
 	}
 
 	rate = getRateForProduction(gridIndex);
@@ -107,7 +108,8 @@ NEProductionReaction::computeFlux(
 				clusterMap.value_at(clusterMap.find(_reactants[1])), 0) *
 			4.0 * ::xolotl::core::pi * (r0 + r1) *
 			std::exp(this->_deltaG0 / ::xolotl::core::kBoltzmann *
-				this->_clusterData->temperature(gridIndex));
+				this->_clusterData->temperature(gridIndex)) *
+			::xolotl::core::zFactor;
 
 		Kokkos::atomic_add(
 			&fluxes[_reactants[0]], f / (double)_reactantVolumes[0]);
@@ -698,6 +700,10 @@ NEDissociationReaction::computeBindingEnergy()
 	// Compute the delta_G = G(p1) + G(p2) - G(r)
 	// Get the cluster ratio first
 	double xeSD = amtXe / amtV;
+
+	if (amtV == 0)
+		return 5.0;
+
 	// Fit parameters
 	double fitParams[8] = {0.022098470861651, -0.328234592987279,
 		1.9501944029492, -5.85771773178376, 9.18869701523602, -7.09118822290571,
@@ -781,7 +787,8 @@ NEDissociationReaction::computeRate(IndexType gridIndex, double time)
 		}
 	}
 	if (rate > 0) {
-		return (1.0 / omega) * 4.0 * ::xolotl::core::pi * (r0 + r1) * rate;
+		return (1.0 / omega) * 4.0 * ::xolotl::core::pi * (r0 + r1) * rate *
+			::xolotl::core::zFactor;
 	}
 
 	double kPlus = getRateForProduction(gridIndex);
@@ -1036,7 +1043,7 @@ double
 NESinkReaction::getSinkStrength()
 {
 	//	return 1.0e-3;
-	return 1.0e-5;
+	return 1.0e-4 * ::xolotl::core::zFactor;
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -1044,8 +1051,20 @@ void
 NESinkReaction::computeFlux(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
 {
-	Kokkos::atomic_sub(
-		&fluxes(_reactant), concentrations(_reactant) * this->_rate(gridIndex));
+	auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+	double omega = this->_clusterData->atomicVolume();
+	auto rate = this->_clusterData->extraData.constantRates(
+					clusterMap.value_at(clusterMap.find(_reactant)),
+					this->_clusterData->extraData.constantRates.extent(0), 0) *
+		::xolotl::core::zFactor * getSinkBias() / omega;
+	Kokkos::atomic_add(&fluxes(_reactant),
+		rate *
+			(::xolotl::core::uConcentration *
+					std::exp(this->_deltaG0 /
+						(::xolotl::core::kBoltzmann *
+							this->_clusterData->temperature(gridIndex))) -
+				concentrations(_reactant)));
+
 	return;
 }
 
@@ -1054,8 +1073,13 @@ void
 NESinkReaction::computePartialDerivatives(ConcentrationsView concentrations,
 	Kokkos::View<double*> values, IndexType gridIndex)
 {
-	Kokkos::atomic_sub(
-		&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+	auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+	double omega = this->_clusterData->atomicVolume();
+	auto rate = this->_clusterData->extraData.constantRates(
+					clusterMap.value_at(clusterMap.find(_reactant)),
+					this->_clusterData->extraData.constantRates.extent(0), 0) *
+		::xolotl::core::zFactor * getSinkBias() / omega;
+	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), rate);
 	return;
 }
 
@@ -1065,8 +1089,13 @@ NESinkReaction::computeReducedPartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
 	IndexType gridIndex)
 {
-	Kokkos::atomic_sub(
-		&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
+	auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+	double omega = this->_clusterData->atomicVolume();
+	auto rate = this->_clusterData->extraData.constantRates(
+					clusterMap.value_at(clusterMap.find(_reactant)),
+					this->_clusterData->extraData.constantRates.extent(0), 0) *
+		::xolotl::core::zFactor * getSinkBias() * omega;
+	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), rate);
 	return;
 }
 } // namespace network

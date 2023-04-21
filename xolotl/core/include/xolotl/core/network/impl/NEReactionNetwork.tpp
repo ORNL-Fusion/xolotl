@@ -249,7 +249,7 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 				//				for (auto i = 0; i < lVector[prodId].size();
 				// i++)
 				//{ 					if (lVector[prodId][i].second <
-				//largestG0) { largestG0 =
+				// largestG0) { largestG0 =
 				// lVector[prodId][i].second; 						largestId =
 				// i;
 				//					}
