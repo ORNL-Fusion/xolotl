@@ -76,7 +76,8 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 }
 
 void
-PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
+PetscSolver0DHandler::initializeConcentration(
+	DM& da, Vec& C, DM& oldDA, Vec& oldC)
 {
 	PetscErrorCode ierr;
 
@@ -330,13 +331,6 @@ PetscSolver0DHandler::updateConcentration(
 	network.computeAllFluxes(dConcs, dFlux);
 	fluxTimer->stop();
 	deep_copy(hFlux, dFlux);
-
-	/*
-	for (auto i = 0; i < dof; i++) {
-		std::cout << updatedConcOffset[i] << " ";
-	}
-	std::cout << "\n";
-	*/
 
 	/*
 	 Restore vectors

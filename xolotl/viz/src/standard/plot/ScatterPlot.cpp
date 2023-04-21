@@ -8,6 +8,7 @@
 #include <vtkm/cont/CoordinateSystem.h>
 #include <vtkm/cont/DataSet.h>
 #include <vtkm/cont/DataSetBuilderRectilinear.h>
+#include <vtkm/cont/DataSetBuilderUniform.h>
 #include <vtkm/cont/DeviceAdapter.h>
 #include <vtkm/cont/DynamicCellSet.h>
 #include <vtkm/cont/ErrorBadValue.h>
@@ -15,7 +16,6 @@
 
 // VTKM Dataset creator includes
 #include <vtkm/cont/DeviceAdapterAlgorithm.h>
-#include <vtkm/cont/testing/MakeTestDataSet.h>
 
 // VTKM Rendering includes
 #include <vtkm/rendering/Actor.h>
@@ -45,13 +45,13 @@ ScatterPlot::render(const std::string& fileName)
 {
 	// Check if the label provider is set
 	if (!plotLabelProvider) {
-		XOLOTL_LOG_WRN << "The LabelProvider is not set!!";
+		XOLOTL_LOG_WARN << "The LabelProvider is not set!!";
 		return;
 	}
 
 	// Check if the data provider is set
 	if (!plotDataProvider) {
-		XOLOTL_LOG_WRN << "The DataProvider is not set!!";
+		XOLOTL_LOG_WARN << "The DataProvider is not set!!";
 		return;
 	}
 

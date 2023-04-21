@@ -114,6 +114,9 @@ try {
 	int rank;
 	MPI_Comm_rank(xolotlComm, &rank);
 
+	options::Options opts;
+	opts.readParams(argc, argv);
+
 	if (rank == 0) {
 		// Print the start message
 		XOLOTL_LOG << "Starting Xolotl (" << getExactVersionString() << ")\n";
@@ -122,9 +125,6 @@ try {
 		std::time_t currentTime = std::time(NULL);
 		XOLOTL_LOG << std::asctime(std::localtime(&currentTime)) << std::flush;
 	}
-
-	options::Options opts;
-	opts.readParams(argc, argv);
 
 	// Setup the solver
 	solver = factory::solver::SolverFactory::get().generate(opts);
@@ -625,18 +625,21 @@ try {
 
 	// Loop on the species
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		myData[6 * id()] = network.getTotalConcentration(dConcs, id, 1);
-		myData[6 * id() + 1] = network.getTotalAtomConcentration(dConcs, id, 1);
-		myData[(6 * id()) + 2] = 2.0 *
-			network.getTotalRadiusConcentration(dConcs, id, 1) /
-			myData[6 * id()];
-		myData[(6 * id()) + 3] =
-			network.getTotalConcentration(dConcs, id, minSizes[id()]);
-		myData[(6 * id()) + 4] =
-			network.getTotalAtomConcentration(dConcs, id, minSizes[id()]);
-		myData[(6 * id()) + 5] = 2.0 *
-			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]) /
-			myData[(6 * id()) + 3];
+		using TQ = core::network::IReactionNetwork::TotalQuantity;
+		using Q = TQ::Type;
+		using TQA = util::Array<TQ, 6>;
+		auto ms = static_cast<AmountType>(minSizes[id()]);
+		auto totals = network.getTotals(dConcs,
+			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
+				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
+				TQ{Q::radius, id, ms}});
+
+		myData[6 * id()] = totals[0];
+		myData[6 * id() + 1] = totals[1];
+		myData[(6 * id()) + 2] = 2.0 * totals[2] / myData[6 * id()];
+		myData[(6 * id()) + 3] = totals[3];
+		myData[(6 * id()) + 4] = totals[4];
+		myData[(6 * id()) + 5] = 2.0 * totals[5] / myData[(6 * id()) + 3];
 	}
 
 	// Output the data

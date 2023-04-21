@@ -50,7 +50,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeConcentration(DM& da, Vec& C);
+	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC);
 
 	/**
 	 * \see ISolverHandler.h
@@ -103,6 +103,15 @@ public:
 	{
 		surfacePosition[j] = pos;
 
+		return;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	void
+	setSurfaceOffset(int offset, int j = -1, int k = -1)
+	{
 		return;
 	}
 };
