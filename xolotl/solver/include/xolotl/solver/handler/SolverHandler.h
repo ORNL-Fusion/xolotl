@@ -213,7 +213,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	generateTemperatureGrid()
+	generateTemperatureGrid() override
 	{
 		// Don't do anything if we want the same grid as the cluster one
 		if (sameTemperatureGrid) {
