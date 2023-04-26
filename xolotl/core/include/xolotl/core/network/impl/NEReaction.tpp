@@ -10,6 +10,8 @@ namespace core
 {
 namespace network
 {
+namespace ne
+{
 template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
 double
@@ -22,6 +24,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 
 	return kPlus;
 }
+} // namespace ne
 
 KOKKOS_INLINE_FUNCTION
 double
@@ -36,7 +39,7 @@ NEProductionReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	return ne::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -52,7 +55,7 @@ NEDissociationReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	return ne::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 }
 
 KOKKOS_INLINE_FUNCTION
