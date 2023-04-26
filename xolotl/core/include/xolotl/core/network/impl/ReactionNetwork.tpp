@@ -981,11 +981,15 @@ ReactionNetwork<TImpl>::getTotalsImpl(ConcentrationsView concentrations,
 	auto clusterData = _clusterData.d_view;
 	auto result = util::Array<double, N>{};
 
+	auto temp =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+			result.data(), result.size());
+
 	Kokkos::parallel_reduce("ReactionNetworkWorker::getTotals",
 		this->_numClusters,
 		TotalQuantityReduceFunctor<TImpl, TQMethods...>{
 			concentrations, tiles, clusterData, quantities},
-		result.data());
+		temp);
 
 	Kokkos::fence();
 
