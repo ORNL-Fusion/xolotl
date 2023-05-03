@@ -9,6 +9,8 @@ namespace core
 {
 namespace network
 {
+namespace zr
+{
 template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
 double
@@ -109,6 +111,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	// None of the clusters are loops (interaction is based on spherical volume)
 	return zs * (dc0 + dc1);
 }
+} // namespace zr
 
 KOKKOS_INLINE_FUNCTION
 double
@@ -144,7 +147,8 @@ ZrProductionReaction::getRateForProduction(IndexType gridIndex)
 	rdCl[1][1] = this->_clusterData->extraData.dislocationCaptureRadius(
 		_reactants[1], 1);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl, p);
+	return zr::getRate(
+		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl, p);
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -181,7 +185,8 @@ ZrDissociationReaction::getRateForProduction(IndexType gridIndex)
 	rdCl[1][1] =
 		this->_clusterData->extraData.dislocationCaptureRadius(_products[1], 1);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl, p);
+	return zr::getRate(
+		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl, p);
 }
 
 KOKKOS_INLINE_FUNCTION

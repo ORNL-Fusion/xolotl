@@ -1,4 +1,5 @@
 #include <xolotl/core/advection/TungstenAdvectionHandler.h>
+#include <xolotl/core/network/IPSIReactionNetwork.h>
 
 namespace xolotl
 {
