@@ -9,6 +9,8 @@ namespace core
 {
 namespace network
 {
+namespace alloy
+{
 template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
 double
@@ -50,6 +52,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 
 	return k_plus * bias;
 }
+} // namespace alloy
 
 KOKKOS_INLINE_FUNCTION
 double
@@ -64,7 +67,7 @@ AlloyProductionReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	return alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -80,7 +83,7 @@ AlloyDissociationReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	return alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 }
 
 KOKKOS_INLINE_FUNCTION

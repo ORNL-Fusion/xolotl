@@ -77,10 +77,8 @@ XFile::NetworkGroup::NetworkGroup(
 
 	// Convert it to char
 	std::vector<const char*> phaseSpaceChar;
-	for (auto name : phaseSpace) {
-		char* s = new char[name.size() + 1];
-		std::strcpy(s, name.c_str());
-		phaseSpaceChar.push_back(s);
+	for (auto&& name : phaseSpace) {
+		phaseSpaceChar.push_back(name.c_str());
 	}
 
 	// Write it as an attribute

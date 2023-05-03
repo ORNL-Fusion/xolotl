@@ -3,7 +3,6 @@
 
 // Includes
 #include <xolotl/core/advection/AdvectionHandler.h>
-#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
