@@ -812,13 +812,14 @@ PSIBurstingReaction<TSpeciesEnum>::getAppliedRate(IndexType gridIndex) const
 	}
 	else {
 		auto cl = this->_clusterData->getCluster(this->_reactant);
-		auto radius = cl.getReactionRadius();
+		radius = cl.getReactionRadius();
 	}
 
 	// Get the current depth
 	auto depth = this->_clusterData->getDepth();
 	auto tau = this->_clusterData->getTauBursting();
 	auto f = this->_clusterData->getFBursting();
+
 	return f * (radius / depth) *
 		util::min(1.0, exp(-(depth - tau) / (2.0 * tau)));
 }

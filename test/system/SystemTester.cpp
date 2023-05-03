@@ -107,6 +107,16 @@ BOOST_AUTO_TEST_CASE(PSI_4)
 	SystemTestCase{"system_PSI_4"}.tolerance(1.0e-4).run();
 }
 
+BOOST_AUTO_TEST_CASE(PSI_5)
+{
+	if (getMPICommSize() > 20) {
+		return;
+	}
+	// 1D + HeVI + advection + modifiedTM + attenuation + surface + largeBubble
+	// + bursting
+	SystemTestCase{"system_PSI_5"}.run();
+}
+
 BOOST_AUTO_TEST_CASE(Fe_1)
 {
 	if (getMPICommSize() > 1) {

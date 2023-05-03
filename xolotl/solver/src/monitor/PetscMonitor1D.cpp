@@ -506,7 +506,8 @@ PetscMonitor1D::setup(int loop)
 				}
 			}
 			if (_solverHandler->largeBubble())
-				outputFile << "C_b av_He av_V" << std::endl;
+				outputFile << "C_b av_He av_V";
+			outputFile << std::endl;
 			outputFile.close();
 
 			if (_solverHandler->temporalFlux()) {
