@@ -44,6 +44,7 @@ Options::Options() :
 	maxD(0),
 	maxT(0),
 	maxV(20),
+	maxPureV(20),
 	maxI(6),
 	leftBoundary(1),
 	rightBoundary(1),
@@ -185,7 +186,7 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"This option allows the user to define the boundaries of the network. "
 		"To do so, simply write the values in order "
-		"maxHe/Xe/Basal maxD maxT maxV maxI.")("radiusSize",
+		"maxHe/Xe/Basal maxD maxT maxV maxI maxPureV.")("radiusSize",
 		bpo::value<std::string>(),
 		"This option allows the user to set a minimum size for the computation "
 		"for the average radii, in the same order as the netParam option "
@@ -426,6 +427,12 @@ Options::readParams(int argc, const char* argv[])
 			maxV = strtol(tokens[3].c_str(), NULL, 10);
 			// Set the interstitial size
 			maxI = strtol(tokens[4].c_str(), NULL, 10);
+			if (tokens.size() > 5) {
+				// Set the pure V size
+				maxPureV = strtol(tokens[5].c_str(), NULL, 10);
+			}
+			else
+				maxPureV = maxV;
 		}
 	}
 

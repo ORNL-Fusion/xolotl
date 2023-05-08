@@ -159,6 +159,11 @@ protected:
 	int maxV;
 
 	/**
+	 * Maximum number of pure V
+	 */
+	int maxPureV;
+
+	/**
 	 * Maximum number of I
 	 */
 	int maxI;
@@ -551,6 +556,15 @@ public:
 	getMaxV() const override
 	{
 		return maxV;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
+	getMaxPureV() const override
+	{
+		return maxPureV;
 	}
 
 	/**

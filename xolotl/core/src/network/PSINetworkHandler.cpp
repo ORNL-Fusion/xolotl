@@ -28,9 +28,10 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	using AmountType = IReactionNetwork::AmountType;
 
 	// Get the boundaries from the options
-	AmountType maxV = options.getMaxV();
+	AmountType maxV = options.getMaxPureV();
 	AmountType maxI = options.getMaxI();
-	AmountType maxHe = psi::getMaxHePerV(maxV, options.getHeVRatio());
+	AmountType maxHe =
+		psi::getMaxHePerV(options.getMaxV(), options.getHeVRatio());
 	AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	AmountType groupingWidthHe = options.getGroupingWidthA();

@@ -277,6 +277,14 @@ public:
 	getMaxV() const = 0;
 
 	/**
+	 * Obtain the maximum value of pure vacancies to be used.
+	 *
+	 * @return The maximum value
+	 */
+	virtual int
+	getMaxPureV() const = 0;
+
+	/**
 	 * Obtain the maximum value of interstitials to be used.
 	 *
 	 * @return The maximum value

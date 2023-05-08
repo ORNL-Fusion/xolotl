@@ -90,7 +90,7 @@ struct TupleApplyAllHelper;
 template <template <typename...> typename Tpl, typename... Ts>
 struct TupleApplyAllHelper<Tpl, std::tuple<Ts...>>
 {
-    using Type = Tpl<Ts...>;
+	using Type = Tpl<Ts...>;
 };
 
 template <template <typename...> typename Tpl, typename TTuple>
