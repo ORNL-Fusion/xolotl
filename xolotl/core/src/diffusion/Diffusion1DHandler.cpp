@@ -78,52 +78,6 @@ Diffusion1DHandler::initializeDiffusionGrid(
 	syncDiffusionGrid();
 }
 
-////////////////////////////////////////////////////////////////////////////
-// DELETEME
-void
-Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
-	double** concVector, double* updatedConcOffset, double hxLeft,
-	double hxRight, int ix, double, int, double, int) const
-{
-	// Consider each diffusing cluster.
-	// TODO Maintaining a separate index assumes that diffusingClusters is
-	// visited in same order as diffusionGrid array for given point.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// diffusing clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-	int diffClusterIdx = 0;
-	for (auto const& currId : diffusingClusters) {
-		auto cluster = network.getClusterCommon(currId);
-
-		// Get the initial concentrations
-		double oldConc =
-			concVector[0][currId] * diffusionGrid[ix + 1][diffClusterIdx];
-		double oldLeftConc =
-			concVector[1][currId] * diffusionGrid[ix][diffClusterIdx];
-		double oldRightConc =
-			concVector[2][currId] * diffusionGrid[ix + 2][diffClusterIdx];
-
-		// Use a simple midpoint stencil to compute the concentration
-		double conc = (cluster.getDiffusionCoefficient(ix + 1) * 2.0 *
-						  (oldLeftConc + (hxLeft / hxRight) * oldRightConc -
-							  (1.0 + (hxLeft / hxRight)) * oldConc) /
-						  (hxLeft * (hxLeft + hxRight))) +
-			((cluster.getDiffusionCoefficient(ix + 2) -
-				 cluster.getDiffusionCoefficient(ix)) *
-				(oldRightConc - oldLeftConc) /
-				((hxLeft + hxRight) * (hxLeft + hxRight)));
-
-		// Update the concentration of the cluster
-		updatedConcOffset[currId] += conc;
-
-		// Increase the index
-		diffClusterIdx++;
-	}
-
-	return;
-}
-////////////////////////////////////////////////////////////////////////////
-
 void
 Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 	const StencilConcArray& concVector, Kokkos::View<double*> updatedConcOffset,

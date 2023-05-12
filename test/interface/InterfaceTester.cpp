@@ -25,7 +25,8 @@ BOOST_AUTO_TEST_CASE(simple0D)
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
 	paramFile << "vizHandler=dummy" << std::endl
-			  << "petscArgs=-fieldsplit_0_pc_type redundant "
+			  << "petscArgs=-dm_mat_type aijkokkos -dm_vec_type kokkos "
+                 "-fieldsplit_0_pc_type redundant "
 				 "-ts_max_snes_failures 200 "
 				 "-pc_fieldsplit_detect_coupling "
 				 "-ts_adapt_dt_max 10 "

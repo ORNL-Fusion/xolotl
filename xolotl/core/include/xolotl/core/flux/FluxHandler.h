@@ -112,11 +112,11 @@ protected:
 	void
 	recomputeFluxHandler(int surfacePos);
 
-    /**
-     * This method copies flux indices to device view
-     */
-    void
-    syncFluxIndices();
+	/**
+	 * This method copies flux indices to device view
+	 */
+	void
+	syncFluxIndices();
 
 	/**
 	 * This method copies incident flux data to device view
@@ -147,13 +147,6 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	////////////////////////////////////////////////////////////////////////////
-	// DELETEME
-	virtual void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos);
-
-	////////////////////////////////////////////////////////////////////////////
 	void
 	computeIncidentFlux(double currentTime,
 		Kokkos::View<double*> updatedConcOffset, int xi,

@@ -118,29 +118,6 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-    ////////////////////////////////////////////////////////////////////////////
-    // DELETEME
-	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
-	{
-		// Check in which phase of the pulse we are
-		int cycle = currentTime / deltaTime;
-		// The flux is 0.0 after alpha * deltaTime
-		if (currentTime - ((double)cycle * deltaTime) > alpha * deltaTime ||
-			util::equal(deltaTime, 0.0) || util::equal(alpha, 0.0))
-			return;
-
-		// Update the concentration array
-		updatedConcOffset[fluxIndices[0]] +=
-			incidentFluxVec[0][xi - surfacePos]; // V
-		updatedConcOffset[fluxIndices[1]] +=
-			incidentFluxVec[0][xi - surfacePos]; // I
-
-		return;
-	}
-    ////////////////////////////////////////////////////////////////////////////
-
 	void
 	computeIncidentFlux(double currentTime,
 		Kokkos::View<double*> updatedConcOffset, int xi,

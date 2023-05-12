@@ -9,8 +9,8 @@ namespace core
 namespace advection
 {
 void
-ZGBAdvectionHandler::initialize(network::IReactionNetwork& network,
-	std::vector<RowColPair>& idPairs)
+ZGBAdvectionHandler::initialize(
+	network::IReactionNetwork& network, std::vector<RowColPair>& idPairs)
 {
 	// Clear the index and sink strength vectors
 	advectingClusters.clear();
@@ -85,15 +85,15 @@ ZGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 		sinkStrengthVector.push_back(sinkStrength);
 
 		// Add Jacobian entry for this cluster
-        idPairs.push_back({clusterId, clusterId});
+		idPairs.push_back({clusterId, clusterId});
 	}
 
-    this->syncAdvectingClusters(network);
-    this->syncSinkStrengths();
+	this->syncAdvectingClusters(network);
+	this->syncSinkStrengths();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// DELETEME
+// DELETEME (after implementing the below version)
 void
 ZGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	const plsm::SpaceVector<double, 3>& pos, double** concVector,

@@ -344,28 +344,6 @@ public:
 	 * This operation computes the flux due to incoming particles at a given
 	 * grid point. \see IFluxHandler.h
 	 */
-	////////////////////////////////////////////////////////////////////////////
-	// DELETEME
-	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
-	{
-		// // Attenuation factor to model reduced production of new point defects
-		// // with increasing dose (or time).
-		// double attenuation = 1.0;
-		// if (tauFlux > 0.0 && currentTime > 0.0)
-		// 	attenuation = 1.0 - exp((-1.0 * tauFlux) / currentTime);
-
-		// // Update the concentration array
-		// for (int it = 0; it < ionDamage.fluxIndex.size(); ++it) {
-		// 	updatedConcOffset[ionDamage.fluxIndex[it]] +=
-		// 		attenuation * ionDamage.rate[it][xi - surfacePos];
-		// }
-
-		return;
-	}
-	////////////////////////////////////////////////////////////////////////////
-
 	void
 	computeIncidentFlux(double currentTime,
 		Kokkos::View<double*> updatedConcOffset, int xi,

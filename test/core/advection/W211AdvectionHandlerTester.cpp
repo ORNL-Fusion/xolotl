@@ -65,28 +65,29 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 	// Get its size
 	const int dof = network.getDOF();
 
-	// Create ofill
-	network::IReactionNetwork::SparseFillMap ofill;
-
 	// Create a collection of advection handlers
 	std::vector<IAdvectionHandler*> advectionHandlers;
 
 	// Create the advection handler and initialize it
 	W211AdvectionHandler advectionHandler;
-	advectionHandler.initialize(network, ofill);
+	std::vector<core::RowColPair> idPairs;
+	advectionHandler.initialize(network, idPairs);
 	advectionHandler.initializeAdvectionGrid(advectionHandlers, grid, 3, 0);
 
 	// Check the total number of advecting clusters
 	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 7);
 
-	// Check the clusters in ofill
-	BOOST_REQUIRE_EQUAL(ofill[1][0], 1);
-	BOOST_REQUIRE_EQUAL(ofill[3][0], 3);
-	BOOST_REQUIRE_EQUAL(ofill[5][0], 5);
-	BOOST_REQUIRE_EQUAL(ofill[7][0], 7);
-	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
-	BOOST_REQUIRE_EQUAL(ofill[11][0], 11);
-	BOOST_REQUIRE_EQUAL(ofill[13][0], 13);
+	// Check the clusters in idPairs
+	auto idsInclude = [&idPairs](core::RowColPair id) {
+		return std::find(begin(idPairs), end(idPairs), id) != end(idPairs);
+	};
+	BOOST_REQUIRE(idsInclude({1, 1}));
+	BOOST_REQUIRE(idsInclude({3, 3}));
+	BOOST_REQUIRE(idsInclude({5, 5}));
+	BOOST_REQUIRE(idsInclude({7, 7}));
+	BOOST_REQUIRE(idsInclude({9, 9}));
+	BOOST_REQUIRE(idsInclude({11, 11}));
+	BOOST_REQUIRE(idsInclude({13, 13}));
 
 	// Set the size parameter in the x direction
 	double hx = 1.0;

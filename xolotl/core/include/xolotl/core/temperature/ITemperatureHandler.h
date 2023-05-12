@@ -29,24 +29,6 @@ public:
 	{
 	}
 
-    ////////////////////////////////////////////////////////////////////////////
-    // DELETEME
-	/**
-	 * This operation initializes the variables that need to be
-	 * depending on the type of handler used.
-	 *
-	 * @param dof The number of degrees of freedom
-	 * @param ofillMap Map indicating row/column of diffusing variables in
-	 * off-diagonal fill map.
-	 * @param dfillMap Map indicating row/column of diffusing variables in
-	 * diagonal fill map.
-	 */
-	virtual void
-	initializeTemperature(const int dof,
-		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap) = 0;
-    ////////////////////////////////////////////////////////////////////////////
-
 	/**
 	 * This operation initializes the variables that need to be
 	 * depending on the type of handler used.
@@ -73,12 +55,6 @@ public:
 	 *
 	 * @param solution The pointer to the array of solutions
 	 */
-    ////////////////////////////////////////////////////////////////////////////
-    // DELETEME
-	virtual void
-	setTemperature(double* solution) = 0;
-    ////////////////////////////////////////////////////////////////////////////
-
 	virtual void
 	setTemperature(Kokkos::View<const double*> solution) = 0;
 
@@ -126,14 +102,6 @@ public:
 	 * direction
 	 * @param iz The position on the z grid
 	 */
-    ////////////////////////////////////////////////////////////////////////////
-    // DELETEME
-	virtual void
-	computeTemperature(double** concVector, double* updatedConcOffset,
-		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
-		double sz = 0.0, int iz = 0) = 0;
-    ////////////////////////////////////////////////////////////////////////////
-
 	virtual void
 	computeTemperature(Kokkos::View<const double*>* concVector,
 		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,

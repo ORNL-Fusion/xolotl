@@ -82,23 +82,6 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-    ////////////////////////////////////////////////////////////////////////////
-    // DELETEME
-	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
-	{
-		// Skip if no index was set
-		if (fluxIndices.size() == 0)
-			return;
-
-		// Update the concentration array
-		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
-
-		return;
-	}
-    ////////////////////////////////////////////////////////////////////////////
-
 	void
 	computeIncidentFlux(double currentTime,
 		Kokkos::View<double*> updatedConcOffset, int xi,

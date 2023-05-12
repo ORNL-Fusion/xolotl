@@ -43,13 +43,9 @@ BOOST_AUTO_TEST_CASE(check_getTemperature)
 					 "10.0 1.99779827918";
 	writeTempFile.close();
 
-	// Create ofill and dfill
-	network::IReactionNetwork::SparseFillMap ofill;
-	network::IReactionNetwork::SparseFillMap dfill;
-
 	// Create and initialize the temperature profile handler
 	auto testTemp = make_shared<temperature::ProfileHandler>("tempFile.dat");
-	testTemp->initializeTemperature(dof, ofill, dfill);
+	testTemp->initialize(dof);
 	plsm::SpaceVector<double, 3> pos{1.142857142857143, 0.0, 0.0};
 
 	// Vector to hold the user defined time values

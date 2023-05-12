@@ -54,13 +54,6 @@ public:
 	 * @param ix The position on the x grid
 	 * @param surfacePos The current position of the surface
 	 */
-    ////////////////////////////////////////////////////////////////////////////
-    // DELETEME
-	virtual void
-	computeIncidentFlux(double currentTime, double* updatedConcOffset, int xi,
-		int surfacePos) = 0;
-
-    ////////////////////////////////////////////////////////////////////////////
 	virtual void
 	computeIncidentFlux(double currentTime,
 		Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos) = 0;

@@ -93,7 +93,7 @@ YGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// DELETEME
+// DELETEME (after implementing the below version)
 void
 YGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	const plsm::SpaceVector<double, 3>& pos, double** concVector,

@@ -140,33 +140,6 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-    ////////////////////////////////////////////////////////////////////////////
-    // DELETEME
-	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
-	{
-		// Define only for a 0D case
-		if (incidentFluxVec[0].size() == 0) {
-			updatedConcOffset[fluxIndices[0]] += 2.11e-11; // He1
-			updatedConcOffset[fluxIndices[1]] += 1.49e-05; // I1
-			updatedConcOffset[fluxIndices[2]] += 9.91e-06; // V1
-			updatedConcOffset[fluxIndices[3]] += 1.51e-06; // V2
-			updatedConcOffset[fluxIndices[4]] += 2.60e-07; // V3
-			updatedConcOffset[fluxIndices[5]] += 1.58e-07; // V4
-			updatedConcOffset[fluxIndices[6]] += 6.29e-08; // V5
-			updatedConcOffset[fluxIndices[7]] += 3.16e-08; // V9
-		}
-
-		else {
-			throw std::runtime_error(
-				"\nThe iron problem is not defined for more than 0D!");
-		}
-
-		return;
-	}
-    ////////////////////////////////////////////////////////////////////////////
-
 	void
 	computeIncidentFlux(double currentTime,
 		Kokkos::View<double*> updatedConcOffset, int xi,

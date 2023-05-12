@@ -167,33 +167,6 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	////////////////////////////////////////////////////////////////////////////
-	// DELETEME
-	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
-	{
-		// Define only for a 0D case
-		if (xGrid.size() == 0) {
-			double cascadeEfficiency = (0.495 *
-					(1 - tanh(0.00040527088 * (currentTime / 100.0 - 5000.0))) +
-				0.025);
-
-			for (int i = 0; i < fluxIndices.size(); i++) {
-				updatedConcOffset[fluxIndices[i]] +=
-					incidentFluxVec[i][0] * cascadeEfficiency;
-			}
-		}
-
-		else {
-			throw std::runtime_error(
-				"\nThe alpha Zr problem is not defined for more than 0D!");
-		}
-
-		return;
-	}
-	////////////////////////////////////////////////////////////////////////////
-
 	void
 	computeIncidentFlux(double currentTime,
 		Kokkos::View<double*> updatedConcOffset, int xi,

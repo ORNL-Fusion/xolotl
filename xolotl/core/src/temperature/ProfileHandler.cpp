@@ -39,33 +39,6 @@ ProfileHandler::~ProfileHandler()
 {
 }
 
-////////////////////////////////////////////////////////////////////////////
-// DELETEME
-void
-ProfileHandler::initializeTemperature(const int dof,
-	network::IReactionNetwork::SparseFillMap& ofillMap,
-	network::IReactionNetwork::SparseFillMap& dfillMap)
-{
-	TemperatureHandler::initializeTemperature(dof, ofillMap, dfillMap);
-
-	// Open file dataFile.dat containing the time and temperature
-	std::ifstream inputFile(tempFile.c_str());
-	std::string line;
-
-	// Read the file and store the values in the two vectors
-	while (getline(inputFile, line)) {
-		if (!line.length() || line[0] == '#')
-			continue;
-		double xtemp = 0.0, ytemp = 0.0;
-		sscanf(line.c_str(), "%lf %lf", &xtemp, &ytemp);
-		time.push_back(xtemp);
-		temp.push_back(ytemp);
-	}
-
-	return;
-}
-////////////////////////////////////////////////////////////////////////////
-
 void
 ProfileHandler::initialize(const int dof)
 {

@@ -47,15 +47,6 @@ public:
 	/**
 	 * \see ITemperatureHandler.h
 	 */
-	////////////////////////////////////////////////////////////////////////////
-	// DELETEME
-	void
-	setTemperature(double* solution) override
-	{
-		localTemperature = solution[this->_dof];
-	}
-	////////////////////////////////////////////////////////////////////////////
-
 	void
 	setTemperature(Kokkos::View<const double*> solution) override;
 
@@ -89,14 +80,6 @@ public:
 	/**
 	 * \see ITemperatureHandler.h
 	 */
-	////////////////////////////////////////////////////////////////////////////
-	// DELETEME
-	void
-	computeTemperature(double** concVector, double* updatedConcOffset,
-		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
-		double sz = 0.0, int iz = 0) override;
-	////////////////////////////////////////////////////////////////////////////
-
 	void
 	computeTemperature(Kokkos::View<const double*>* concVector,
 		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
@@ -151,14 +134,6 @@ private:
 	 * Number of dimensions for the current simulation
 	 */
 	int dimension;
-
-	////////////////////////////////////////////////////////////////////////////
-    // DELETEME
-	/**
-	 * Hang on to single allocation for use in computeTemperature()
-	 */
-	std::vector<std::array<double, 2>> oldConcBox;
-	////////////////////////////////////////////////////////////////////////////
 };
 } // namespace temperature
 } // namespace core

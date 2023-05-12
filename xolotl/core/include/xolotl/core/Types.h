@@ -2,12 +2,13 @@
 #include <Kokkos_OffsetView.hpp>
 
 #include <xolotl/config.h>
+#include <xolotl/util/Array.h>
 
 namespace xolotl
 {
 namespace core
 {
-using RowColPair = Kokkos::Array<IdType, 2>;
+using RowColPair = util::Array<IdType, 2>;
 
 using StencilConcArray = Kokkos::Array<Kokkos::View<const double*>,
 	KOKKOS_INVALID_INDEX, Kokkos::Array<>::contiguous>;

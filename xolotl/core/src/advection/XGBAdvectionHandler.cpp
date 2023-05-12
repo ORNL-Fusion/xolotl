@@ -93,7 +93,7 @@ XGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 }
 
 ////////////////////////////////////////////////////////////////////////////////
-// DELETEME
+// DELETEME (after implementing the below version)
 void
 XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	const plsm::SpaceVector<double, 3>& pos, double** concVector,

@@ -10,6 +10,7 @@
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
 
 using namespace std;
@@ -72,11 +73,9 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	// Create a collection of advection handlers
 	std::vector<advection::IAdvectionHandler*> advectionHandlers;
 
-	// Create ofill
-	network::IReactionNetwork::SparseFillMap ofill;
-
 	// Initialize it
-	diffusionHandler.initializeOFill(network, ofill);
+	std::vector<core::RowColPair> idPairs;
+	diffusionHandler.initialize(network, idPairs);
 	diffusionHandler.initializeDiffusionGrid(
 		advectionHandlers, grid, 5, 0, 3, 1.0, 0, 3, 1.0, 0);
 
@@ -91,21 +90,19 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	double sz = 1.0;
 
 	// The arrays of concentration
-	double concentration[27 * dof];
-	double newConcentration[27 * dof];
+	test::DOFView concentration("concentration", 27, dof);
+	test::DOFView newConcentration("newConcentration", 27, dof);
 
 	// Initialize their values
-	for (int i = 0; i < 27 * dof; i++) {
-		concentration[i] = (double)i * i / 10.0;
-		newConcentration[i] = 0.0;
-	}
+	Kokkos::parallel_for(
+		Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {27, dof}),
+		KOKKOS_LAMBDA(int i, int n) {
+			auto id = static_cast<double>(i * dof + n);
+			concentration(i, n) = id * id / 10.0;
+		});
 
 	// Set the temperature to 1000K to initialize the diffusion coefficients
 	network.setTemperatures(temperatures, grid);
-
-	// Get pointers
-	double* conc = &concentration[0];
-	double* updatedConc = &newConcentration[0];
 
 	// Get the offset for the grid point in the middle
 	// Supposing the 27 grid points are laid-out as follow (a cube!):
@@ -113,35 +110,38 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	// 3 | 4 | 5    12 | 13 | 14    21 | 22 | 23
 	// 0 | 1 | 2    9  | 10 | 11    18 | 19 | 20
 	//   front         middle           back
-	double* concOffset = conc + 13 * dof;
-	double* updatedConcOffset = updatedConc + 13 * dof;
+	auto concOffset = subview(concentration, 13, Kokkos::ALL);
+	auto updatedConcOffset = subview(newConcentration, 13, Kokkos::ALL);
 
 	// Fill the concVector with the pointer to the middle, left, right, bottom,
 	// top, front, and back grid points
-	double* concVector[7]{};
+	Kokkos::Array<Kokkos::View<const double*>, 7> concVector;
 	concVector[0] = concOffset; // middle
-	concVector[1] = conc + 12 * dof; // left
-	concVector[2] = conc + 14 * dof; // right
-	concVector[3] = conc + 10 * dof; // bottom
-	concVector[4] = conc + 16 * dof; // top
-	concVector[5] = conc + 4 * dof; // front
-	concVector[6] = conc + 22 * dof; // back
+	concVector[1] = subview(concentration, 12, Kokkos::ALL); // left
+	concVector[2] = subview(concentration, 14, Kokkos::ALL); // right
+	concVector[3] = subview(concentration, 10, Kokkos::ALL); // bottom
+	concVector[4] = subview(concentration, 16, Kokkos::ALL); // top
+	concVector[5] = subview(concentration, 4, Kokkos::ALL); // front
+	concVector[6] = subview(concentration, 22, Kokkos::ALL); // back
 
 	// Compute the diffusion at this grid point
-	diffusionHandler.computeDiffusion(
-		network, concVector, updatedConcOffset, hx, hx, 0, sy, 1, sz, 1);
+	diffusionHandler.computeDiffusion(network,
+		StencilConcArray{concVector.data(), 7}, updatedConcOffset, hx, hx, 0,
+		sy, 1, sz, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 3.3744e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 1.6526e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 6.6489e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 8.7794e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 6.5338e+12, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[11], 1.6182e+11, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[13], 2.5353e+10, 0.01);
+	auto updatedConcOffsetMirror =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[1], 3.3744e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[3], 1.6526e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[5], 6.6489e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[7], 8.7794e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 6.5338e+12, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[11], 1.6182e+11, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[13], 2.5353e+10, 0.01);
 	BOOST_REQUIRE_CLOSE(
-		updatedConcOffset[15], 0.0, 0.01); // He_8 does not diffuse
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 2.6578e+09, 0.01);
+		updatedConcOffsetMirror[15], 0.0, 0.01); // He_8 does not diffuse
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[0], 2.6578e+09, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();

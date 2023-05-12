@@ -8,12 +8,16 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/temperature/HeatEquationHandler.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/test/config.h>
 
 using namespace std;
 using namespace xolotl;
 using namespace core;
 using namespace temperature;
+
+using Kokkos::ScopeGuard;
+BOOST_GLOBAL_FIXTURE(ScopeGuard);
 
 /**
  * This suite is responsible for testing the HeatEquationHandler.
@@ -41,53 +45,45 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 	BOOST_REQUIRE_CLOSE(
 		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
 
-	// Create ofill
-	network::IReactionNetwork::SparseFillMap ofill;
-	// Create dfill
-	network::IReactionNetwork::SparseFillMap dfill;
-
 	// Initialize it
-	heatHandler.initializeTemperature(dof, ofill, dfill);
-
-	// Check that the temperature "diffusion" is well set
-	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
-	BOOST_REQUIRE_EQUAL(dfill[9][0], 9);
+	heatHandler.initialize(dof);
 
 	// The size parameter in the x direction
 	double hx = 1.0;
 
 	// The arrays of concentration
-	double concentration[3 * (dof + 1)];
-	double newConcentration[3 * (dof + 1)];
+	test::DOFView concentration("concentration", 3, dof + 1);
+	test::DOFView newConcentration("newConcentration", 3, dof + 1);
 
 	// Initialize their values
-	for (int i = 0; i < 3 * (dof + 1); i++) {
-		concentration[i] = (double)i * i;
-		newConcentration[i] = 0.0;
-	}
-
-	// Get pointers
-	double* conc = &concentration[0];
-	double* updatedConc = &newConcentration[0];
+	Kokkos::parallel_for(
+		Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {3, dof + 1}),
+		KOKKOS_LAMBDA(int i, int n) {
+			auto id = static_cast<double>(i * (dof + 1) + n);
+			concentration(i, n) = id * id;
+		});
 
 	// Get the offset for the grid point in the middle
 	// Supposing the 3 grid points are laid-out as follow:
 	// 0 | 1 | 2
-	double* concOffset = conc + (dof + 1);
-	double* updatedConcOffset = updatedConc + (dof + 1);
+	auto concOffset = subview(concentration, 1, Kokkos::ALL);
+	auto updatedConcOffset = subview(newConcentration, 1, Kokkos::ALL);
 
 	// Fill the concVector with the pointer to the middle, left, and right grid
 	// points
-	double* concVector[3]{};
+	Kokkos::Array<Kokkos::View<const double*>, 3> concVector;
 	concVector[0] = concOffset; // middle
-	concVector[1] = conc; // left
-	concVector[2] = conc + 2 * (dof + 1); // right
+	concVector[1] = subview(concentration, 0, Kokkos::ALL); // left
+	concVector[2] = subview(concentration, 2, Kokkos::ALL); // right
 
 	// Compute the heat equation at this grid point
-	heatHandler.computeTemperature(concVector, updatedConcOffset, hx, hx, hx);
+	heatHandler.computeTemperature(
+		concVector.data(), updatedConcOffset, hx, hx, hx);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.367e+16, 0.01);
+	auto updatedConcOffsetMirror =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 1.367e+16, 0.01);
 
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
@@ -131,17 +127,8 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 	BOOST_REQUIRE_CLOSE(
 		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
 
-	// Create ofill
-	network::IReactionNetwork::SparseFillMap ofill;
-	// Create dfill
-	network::IReactionNetwork::SparseFillMap dfill;
-
 	// Initialize it
-	heatHandler.initializeTemperature(dof, ofill, dfill);
-
-	// Check that the temperature "diffusion" is well set
-	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
-	BOOST_REQUIRE_EQUAL(dfill[9][0], 9);
+	heatHandler.initialize(dof);
 
 	// The step size in the x direction
 	double hx = 1.0;
@@ -149,42 +136,42 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 	double sy = 1.0;
 
 	// The arrays of concentration
-	double concentration[9 * (dof + 1)];
-	double newConcentration[9 * (dof + 1)];
+	test::DOFView concentration("concentration", 9, dof + 1);
+	test::DOFView newConcentration("newConcentration", 9, dof + 1);
 
 	// Initialize their values
-	for (int i = 0; i < 9 * (dof + 1); i++) {
-		concentration[i] = (double)i * i;
-		newConcentration[i] = 0.0;
-	}
-
-	// Get pointers
-	double* conc = &concentration[0];
-	double* updatedConc = &newConcentration[0];
+	Kokkos::parallel_for(
+		Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {9, dof + 1}),
+		KOKKOS_LAMBDA(int i, int n) {
+			auto id = static_cast<double>(i * (dof + 1) + n);
+			concentration(i, n) = id * id;
+		});
 
 	// Get the offset for the grid point in the middle
 	// Supposing the 9 grid points are laid-out as follow:
 	// 6 | 7 | 8
 	// 3 | 4 | 5
 	// 0 | 1 | 2
-	double* concOffset = conc + 4 * (dof + 1);
-	double* updatedConcOffset = updatedConc + 4 * (dof + 1);
+	auto concOffset = subview(concentration, 4, Kokkos::ALL);
+	auto updatedConcOffset = subview(newConcentration, 4, Kokkos::ALL);
 
 	// Fill the concVector with the pointer to the middle, left, right, bottom,
 	// and top grid points
-	double* concVector[5]{};
+	Kokkos::Array<Kokkos::View<const double*>, 5> concVector;
 	concVector[0] = concOffset; // middle
-	concVector[1] = conc + 3 * (dof + 1); // left
-	concVector[2] = conc + 5 * (dof + 1); // right
-	concVector[3] = conc + 1 * (dof + 1); // bottom
-	concVector[4] = conc + 7 * (dof + 1); // top
+	concVector[1] = subview(concentration, 3, Kokkos::ALL); // left
+	concVector[2] = subview(concentration, 5, Kokkos::ALL); // right
+	concVector[3] = subview(concentration, 1, Kokkos::ALL); // bottom
+	concVector[4] = subview(concentration, 7, Kokkos::ALL); // top
 
 	// Compute the heat equation at this grid point
 	heatHandler.computeTemperature(
-		concVector, updatedConcOffset, hx, hx, hx, sy, 1);
+		concVector.data(), updatedConcOffset, hx, hx, hx, sy, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.367e+17, 0.01);
+	auto updatedConcOffsetMirror =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 1.367e+17, 0.01);
 
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
@@ -230,17 +217,8 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	BOOST_REQUIRE_CLOSE(
 		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
 
-	// Create ofill
-	network::IReactionNetwork::SparseFillMap ofill;
-	// Create dfill
-	network::IReactionNetwork::SparseFillMap dfill;
-
 	// Initialize it
-	heatHandler.initializeTemperature(dof, ofill, dfill);
-
-	// Check that the temperature "diffusion" is well set
-	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
-	BOOST_REQUIRE_EQUAL(dfill[9][0], 9);
+	heatHandler.initialize(dof);
 
 	// The step size in the x direction
 	double hx = 1.0;
@@ -250,18 +228,16 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	double sz = 1.0;
 
 	// The arrays of concentration
-	double concentration[27 * (dof + 1)];
-	double newConcentration[27 * (dof + 1)];
+	test::DOFView concentration("concentration", 27, dof + 1);
+	test::DOFView newConcentration("newConcentration", 27, dof + 1);
 
 	// Initialize their values
-	for (int i = 0; i < 27 * (dof + 1); i++) {
-		concentration[i] = (double)i * i / 10.0;
-		newConcentration[i] = 0.0;
-	}
-
-	// Get pointers
-	double* conc = &concentration[0];
-	double* updatedConc = &newConcentration[0];
+	Kokkos::parallel_for(
+		Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {27, dof + 1}),
+		KOKKOS_LAMBDA(int i, int n) {
+			auto id = static_cast<double>(i * (dof + 1) + n);
+			concentration(i, n) = id * id / 10.0;
+		});
 
 	// Get the offset for the grid point in the middle
 	// Supposing the 27 grid points are laid-out as follow (a cube!):
@@ -269,26 +245,28 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	// 3 | 4 | 5    12 | 13 | 14    21 | 22 | 23
 	// 0 | 1 | 2    9  | 10 | 11    18 | 19 | 20
 	//   front         middle           back
-	double* concOffset = conc + 13 * (dof + 1);
-	double* updatedConcOffset = updatedConc + 13 * (dof + 1);
+	auto concOffset = subview(concentration, 13, Kokkos::ALL);
+	auto updatedConcOffset = subview(newConcentration, 13, Kokkos::ALL);
 
 	// Fill the concVector with the pointer to the middle, left, right, bottom,
 	// top, front, and back grid points
-	double* concVector[7]{};
+	Kokkos::Array<Kokkos::View<const double*>, 7> concVector;
 	concVector[0] = concOffset; // middle
-	concVector[1] = conc + 12 * (dof + 1); // left
-	concVector[2] = conc + 14 * (dof + 1); // right
-	concVector[3] = conc + 10 * (dof + 1); // bottom
-	concVector[4] = conc + 16 * (dof + 1); // top
-	concVector[5] = conc + 4 * (dof + 1); // front
-	concVector[6] = conc + 22 * (dof + 1); // back
+	concVector[1] = subview(concentration, 12, Kokkos::ALL); // left
+	concVector[2] = subview(concentration, 14, Kokkos::ALL); // right
+	concVector[3] = subview(concentration, 10, Kokkos::ALL); // bottom
+	concVector[4] = subview(concentration, 16, Kokkos::ALL); // top
+	concVector[5] = subview(concentration, 4, Kokkos::ALL); // front
+	concVector[6] = subview(concentration, 22, Kokkos::ALL); // back
 
 	// Compute the heat equation at this grid point
 	heatHandler.computeTemperature(
-		concVector, updatedConcOffset, hx, hx, hx, sy, 1, sz, 1);
+		concVector.data(), updatedConcOffset, hx, hx, hx, sy, 1, sz, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.24397e+17, 0.01);
+	auto updatedConcOffsetMirror =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 1.24397e+17, 0.01);
 
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);

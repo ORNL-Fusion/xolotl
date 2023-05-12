@@ -99,62 +99,6 @@ Diffusion3DHandler::initializeDiffusionGrid(
 	syncDiffusionGrid();
 }
 
-////////////////////////////////////////////////////////////////////////////
-// DELETEME
-void
-Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,
-	double** concVector, double* updatedConcOffset, double hxLeft,
-	double hxRight, int ix, double sy, int iy, double sz, int iz) const
-{
-	// Loop on them
-	// TODO Maintaining a separate index assumes that diffusingClusters is
-	// visited in same order as diffusionGrid array for given point.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// diffusing clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-	int diffClusterIdx = 0;
-	for (auto const& currId : diffusingClusters) {
-		auto cluster = network.getClusterCommon(currId);
-
-		// Get the initial concentrations
-		double oldConc = concVector[0][currId] *
-			diffusionGrid[iz + 1][iy + 1][ix + 1][diffClusterIdx]; // middle
-		double oldLeftConc = concVector[1][currId] *
-			diffusionGrid[iz + 1][iy + 1][ix][diffClusterIdx]; // left
-		double oldRightConc = concVector[2][currId] *
-			diffusionGrid[iz + 1][iy + 1][ix + 2][diffClusterIdx]; // right
-		double oldBottomConc = concVector[3][currId] *
-			diffusionGrid[iz + 1][iy][ix + 1][diffClusterIdx]; // bottom
-		double oldTopConc = concVector[4][currId] *
-			diffusionGrid[iz + 1][iy + 2][ix + 1][diffClusterIdx]; // top
-		double oldFrontConc = concVector[5][currId] *
-			diffusionGrid[iz][iy + 1][ix + 1][diffClusterIdx]; // front
-		double oldBackConc = concVector[6][currId] *
-			diffusionGrid[iz + 2][iy + 1][ix + 1][diffClusterIdx]; // back
-
-		// Use a simple midpoint stencil to compute the concentration
-		double conc = cluster.getDiffusionCoefficient(ix + 1) *
-				(2.0 *
-						(oldLeftConc + (hxLeft / hxRight) * oldRightConc -
-							(1.0 + (hxLeft / hxRight)) * oldConc) /
-						(hxLeft * (hxLeft + hxRight)) +
-					sy * (oldBottomConc + oldTopConc - 2.0 * oldConc) +
-					sz * (oldFrontConc + oldBackConc - 2.0 * oldConc)) +
-			((cluster.getDiffusionCoefficient(ix + 2) -
-				 cluster.getDiffusionCoefficient(ix)) *
-				(oldRightConc - oldLeftConc) /
-				((hxLeft + hxRight) * (hxLeft + hxRight)));
-
-		// Update the concentration of the cluster
-		updatedConcOffset[currId] += conc;
-
-		++diffClusterIdx;
-	}
-
-	return;
-}
-////////////////////////////////////////////////////////////////////////////
-
 void
 Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,
 	const StencilConcArray& concVector, Kokkos::View<double*> updatedConcOffset,

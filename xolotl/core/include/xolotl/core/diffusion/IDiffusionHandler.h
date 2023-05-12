@@ -87,14 +87,6 @@ public:
 	 * direction
 	 * @param iz The position on the z grid
 	 */
-    ////////////////////////////////////////////////////////////////////////////
-    // DELETEME
-	virtual void
-	computeDiffusion(network::IReactionNetwork& network, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
-		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const = 0;
-    ////////////////////////////////////////////////////////////////////////////
-
 	virtual void
 	computeDiffusion(network::IReactionNetwork& network,
 		const StencilConcArray& concVector,

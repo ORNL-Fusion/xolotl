@@ -195,34 +195,6 @@ FluxHandler::getProfileAmplitude(double currentTime) const
 	return f;
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// DELETEME
-void
-FluxHandler::computeIncidentFlux(
-	double currentTime, double* updatedConcOffset, int xi, int surfacePos)
-{
-	// Skip if no index was set
-	if (fluxIndices.size() == 0)
-		return;
-
-	// Recompute the flux vector if a time profile is used
-	if (useTimeProfile) {
-		fluxAmplitude = getProfileAmplitude(currentTime);
-		recomputeFluxHandler(surfacePos);
-	}
-
-	if (incidentFluxVec[0].size() == 0) {
-		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
-		return;
-	}
-
-	// Update the concentration array
-	updatedConcOffset[fluxIndices[0]] += incidentFluxVec[0][xi - surfacePos];
-
-	return;
-}
-////////////////////////////////////////////////////////////////////////////////
-
 void
 FluxHandler::computeIncidentFlux(double currentTime,
 	Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos)

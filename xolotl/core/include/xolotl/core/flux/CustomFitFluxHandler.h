@@ -288,38 +288,6 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	////////////////////////////////////////////////////////////////////////////
-	// DELETEME
-	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
-	{
-		// Recompute the flux vector if a time profile is used
-		if (useTimeProfile) {
-			fluxAmplitude = getProfileAmplitude(currentTime);
-			recomputeFluxHandler(surfacePos);
-		}
-
-		if (xGrid.size() == 0) {
-			// Update the concentration array
-			for (int i = 0; i < fluxIndices.size(); i++) {
-				updatedConcOffset[fluxIndices[i]] +=
-					fluxAmplitude * reductionFactors[i];
-			}
-
-			return;
-		}
-
-		// Update the concentration array
-		for (int i = 0; i < fluxIndices.size(); i++) {
-			updatedConcOffset[fluxIndices[i]] +=
-				incidentFluxVec[i][xi - surfacePos];
-		}
-
-		return;
-	}
-	////////////////////////////////////////////////////////////////////////////
-
 	void
 	computeIncidentFlux(double currentTime,
 		Kokkos::View<double*> updatedConcOffset, int xi,

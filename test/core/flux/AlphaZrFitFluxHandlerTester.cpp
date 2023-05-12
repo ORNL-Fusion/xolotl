@@ -9,6 +9,7 @@
 #include <xolotl/core/flux/AlphaZrFitFluxHandler.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
 
 using namespace std;
@@ -66,22 +67,18 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	double currTime = 1.0;
 
 	// The array of concentration
-	double newConcentration[dof];
-
-	// Initialize their values
-	for (int i = 0; i < dof; i++) {
-		newConcentration[i] = 0.0;
-	}
+	test::DOFView conc("conc", 1, dof);
 
 	// The pointer to the grid point we want
-	double* updatedConc = &newConcentration[0];
-	double* updatedConcOffset = updatedConc;
+	auto updatedConcOffset = subview(conc, 0, Kokkos::ALL);
 
 	// Update the concentrations
 	testFitFlux->computeIncidentFlux(
 		currTime, updatedConcOffset, 0, surfacePos);
 
 	// Check the value at some grid points
+	auto newConcentration =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
 	BOOST_REQUIRE_CLOSE(newConcentration[0], 4.13357676e-07, 0.01); // I_1
 	BOOST_REQUIRE_CLOSE(newConcentration[1], 3.95414805e-08, 0.01); // I_2
 	BOOST_REQUIRE_CLOSE(newConcentration[19], 2.563377e-10, 0.01); // I_20

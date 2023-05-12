@@ -8,4 +8,4 @@ material=AlphaZr
 tempParam=573
 flux=1e-7
 radiusSize=85 85 85
-petscArgs=-dm_mat_type aijkokkos -dm_vec_type kokkos -alpha_zr -ts_dt 1.0e-12 -ts_adapt_clip 0.1,1.1 -ts_max_steps 100 -ts_max_snes_failures -1 -pc_fieldsplit_detect_coupling -ts_adapt_dt_max 1.0 -ts_exact_final_time stepover -ts_monitor -pc_type fieldsplit -fieldsplit_0_pc_type sor -fieldsplit_1_pc_type redundant -ts_max_time 5e3 -snes_force_iteration
+petscArgs=-dm_mat_type aijkokkos -dm_vec_type kokkos -alpha_zr -ts_dt 1.0e-12 -ts_adapt_clip 0.1,1.1 -ts_max_steps 100 -ts_max_snes_failures -1 -pc_fieldsplit_detect_coupling -ts_adapt_dt_max 1.0 -ts_exact_final_time stepover -ts_monitor -pc_type fieldsplit -fieldsplit_0_pc_type jacobi -fieldsplit_1_pc_type redundant -ts_max_time 5e3 -snes_force_iteration
