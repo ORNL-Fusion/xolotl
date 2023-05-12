@@ -135,6 +135,11 @@ public:
 			while (tokens.size() > 0) {
 				auto comp =
 					std::vector<AmountType>(network.getSpeciesListSize(), 0);
+				if (tokens.size() != 3) {
+					throw std::runtime_error(
+						"\nNot the correct number of cluster parameters for "
+						"the CustomFixFluxHandler: 3 expected.");
+				}
 
 				// Read the cluster type
 				auto clusterSpecies = network.parseSpeciesId(tokens[0]);
@@ -169,6 +174,11 @@ public:
 				getline(paramFile, line);
 				tokens = util::Tokenizer<>{line}();
 				std::vector<double> params;
+				if (tokens.size() != 17) {
+					throw std::runtime_error(
+						"\nNot the correct number of fit parameters for the "
+						"CustomFixFluxHandler: 17 expected.");
+				}
 				params.push_back(std::stod(tokens[0]));
 				params.push_back(std::stod(tokens[1]));
 				params.push_back(std::stod(tokens[2]));
