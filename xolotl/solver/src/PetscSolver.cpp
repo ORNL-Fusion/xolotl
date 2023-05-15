@@ -191,6 +191,8 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 
 	// Create the solver context
 	this->solverHandler->createSolverContext(da);
+    PetscCallVoid(DMSetVecType(da, VECKOKKOS));
+    PetscCallVoid(DMSetMatType(da, MATAIJKOKKOS));
 
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Extract global vector from DMDA to hold solution
