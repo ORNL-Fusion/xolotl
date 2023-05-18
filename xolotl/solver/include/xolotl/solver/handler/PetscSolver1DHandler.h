@@ -17,10 +17,6 @@ namespace handler
  */
 class PetscSolver1DHandler : public PetscSolverHandler
 {
-private:
-	//! The position of the surface
-	IdType surfacePosition;
-
 public:
 	PetscSolver1DHandler() = delete;
 
@@ -31,8 +27,7 @@ public:
 	 */
 	PetscSolver1DHandler(
 		NetworkType& _network, const options::IOptions& options) :
-		PetscSolverHandler(_network, options),
-		surfacePosition(0)
+		PetscSolverHandler(_network, options)
 	{
 	}
 
@@ -51,7 +46,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeConcentration(DM& da, Vec& C);
+	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC);
 
 	/**
 	 * \see ISolverHandler.h
@@ -93,7 +88,7 @@ public:
 	IdType
 	getSurfacePosition(IdType j = -1, IdType k = -1) const
 	{
-		return surfacePosition;
+		return 0;
 	}
 
 	/**
@@ -102,8 +97,6 @@ public:
 	void
 	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1)
 	{
-		surfacePosition = pos;
-
 		return;
 	}
 };

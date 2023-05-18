@@ -149,13 +149,6 @@ public:
 	getMaterial() const = 0;
 
 	/**
-	 * Obtain the value of the void portion for the simulation.
-	 * @return The portion.
-	 */
-	virtual double
-	getVoidPortion() const = 0;
-
-	/**
 	 * Obtain the interface location in nm.
 	 * @return The location.
 	 */

@@ -2,6 +2,7 @@
 
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/detail/ReactionGenerator.h>
+#include <xolotl/core/network/detail/TupleUtility.h>
 #include <xolotl/core/network/detail/impl/ClusterData.tpp>
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
@@ -47,9 +48,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);
 	this->setEnableNucleation(map["heterogeneous"]);
-	setEnableSink(map["sink"]);
+	this->setEnableSink(map["sink"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
+	this->setEnableConstantReaction(map["constant"]);
 	std::string petscString = opts.getPetscArg();
 	auto tokens = util::Tokenizer<>{petscString}();
 	bool useReduced = false;
@@ -65,6 +67,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	asDerived()->initializeExtraClusterData(opts);
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
+
+	// Skip the reactions for now if using constant reactions
+	if (map["constant"])
+		return;
 
 	Connectivity connectivity;
 	defineReactions(connectivity);
@@ -217,6 +223,15 @@ ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::setEnableConstantReaction(bool reaction)
+{
+	this->_enableConstantReaction = reaction;
+	_clusterData.h_view().setEnableConstantReaction(
+		this->_enableConstantReaction);
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::setEnableReducedJacobian(bool reduced)
 {
 	this->_enableReducedJacobian = reduced;
@@ -251,16 +266,26 @@ ReactionNetwork<TImpl>::setTemperatures(
 
 	asDerived()->updateExtraClusterData(gridTemps, gridDepths);
 
-	asDerived()->updateReactionRates();
+	asDerived()->updateReactionRates(_currentTime);
 
 	invalidateDataMirror();
 }
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::updateReactionRates()
+ReactionNetwork<TImpl>::setTime(double time)
 {
-	_reactions.updateRates();
+	_currentTime = time;
+	asDerived()->updateReactionRates(time);
+
+	invalidateDataMirror();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::updateReactionRates(double time)
+{
+	_reactions.updateRates(time);
 }
 
 template <typename TImpl>
@@ -337,6 +362,142 @@ ReactionNetwork<TImpl>::getAllClusterBounds()
 		bounds.push_back(boundVector);
 	}
 	return bounds;
+}
+
+template <typename TImpl>
+typename ReactionNetwork<TImpl>::MomentIdMap
+ReactionNetwork<TImpl>::getAllMomentIdInfo()
+{
+	// Create the object to return
+	MomentIdMap idMap;
+
+	auto clusterDataMirror = this->getClusterDataMirror();
+
+	// Loop on all the clusters
+	for (auto i = 0; i < this->_numClusters; ++i) {
+		auto cluster = clusterDataMirror.getCluster(i);
+		auto momIds = cluster.getMomentIds();
+		std::vector<IdType> temp;
+		for (auto j = 0; j < momIds.extent(0); j++) {
+			if (momIds(j) == this->invalidIndex())
+				continue;
+			temp.push_back(momIds(j));
+		}
+		idMap.push_back(temp);
+	}
+	return idMap;
+}
+
+template <typename TImpl>
+std::string
+ReactionNetwork<TImpl>::getHeaderString()
+{
+	// Create the object to return
+	std::stringstream header;
+
+	// Loop on all the clusters
+	auto numSpecies = getSpeciesListSize();
+	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+		auto speciesName = this->getSpeciesName(id);
+		header << speciesName << "_density " << speciesName << "_atom "
+			   << speciesName << "_diameter " << speciesName
+			   << "_partial_density " << speciesName << "_partial_atom "
+			   << speciesName << "_partial_diameter ";
+	}
+
+	return header.str();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::initializeClusterMap(
+	typename ReactionNetwork<TImpl>::BoundVector bounds,
+	typename ReactionNetwork<TImpl>::MomentIdMapVector momIdInfos,
+	typename ReactionNetwork<TImpl>::MomentIdMap fromSubNetwork)
+{
+	// Get the current bounds and moment id info
+	auto currentBounds = getAllClusterBounds();
+	auto currentMomIdInfo = getAllMomentIdInfo();
+
+	// Check that the sizes add up
+	IndexType nSubClusters = 0;
+	for (auto subBounds : bounds) {
+		nSubClusters += subBounds.size();
+	}
+	assert(this->_numClusters == nSubClusters);
+
+	IndexType nSubMomIds = 0;
+	for (auto subMomIdInfo : momIdInfos) {
+		for (auto momIds : subMomIdInfo) {
+			nSubMomIds += momIds.size();
+		}
+	}
+	assert(this->_numDOFs == nSubClusters + nSubMomIds);
+
+	// Create additional views to know how to treat each cluster
+	auto dof = this->_numDOFs;
+
+	for (auto subMap : fromSubNetwork) {
+		// Get the sub DOF and initialize the rate map
+		auto subDOF = subMap.size();
+		auto hMap =
+			Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+				subMap.data(), subDOF);
+		auto dMap = Kokkos::View<IdType*>("Sub Map", subDOF);
+		deep_copy(dMap, hMap);
+
+		auto localIsInSub = BelongingView("In Sub", dof);
+		auto localBackMap = OwnedSubMapView("Back Map", dof);
+
+		// Initialize them
+		Kokkos::parallel_for(
+			dof, KOKKOS_LAMBDA(const IndexType i) {
+				localIsInSub(i) = false;
+				localBackMap(i) = 0;
+			});
+		Kokkos::parallel_for(
+			dMap.extent(0), KOKKOS_LAMBDA(const IndexType i) {
+				auto id = dMap(i);
+				localIsInSub(id) = true;
+				localBackMap(id) = i;
+			});
+
+		isInSub.push_back(localIsInSub);
+		backMap.push_back(localBackMap);
+	}
+
+	return;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::initializeReactions()
+{
+	Connectivity connectivity;
+	defineReactions(connectivity);
+	generateDiagonalFill(connectivity);
+
+	return;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setConstantRates(
+	typename ReactionNetwork<TImpl>::RateVector rates)
+{
+	asDerived()->setConstantRates(rates);
+
+	return;
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setConstantConnectivities(
+	typename ReactionNetwork<TImpl>::ConnectivitiesVector conns)
+{
+	asDerived()->setConstantConnectivities(conns);
+
+	return;
 }
 
 template <typename TImpl>
@@ -421,6 +582,38 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 }
 
 template <typename TImpl>
+void
+ReactionNetwork<TImpl>::computeConstantRates(ConcentrationsView concentrations,
+	RatesView rates, IndexType subId, IndexType gridIndex, double surfaceDepth,
+	double spacing)
+{
+	asDerived()->computeConstantRatesPreProcess(
+		concentrations, gridIndex, surfaceDepth, spacing);
+
+	auto localInSub = isInSub[subId];
+	auto localBackMap = backMap[subId];
+	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
+		reaction.contributeConstantRates(
+			concentrations, rates, localInSub, localBackMap, gridIndex);
+	});
+	Kokkos::fence();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::getConstantConnectivities(
+	ConnectivitiesView conns, IndexType subId)
+{
+	auto localInSub = isInSub[subId];
+	auto localBackMap = backMap[subId];
+	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
+		reaction.contributeConstantConnectivities(
+			conns, localInSub, localBackMap);
+	});
+	Kokkos::fence();
+}
+
+template <typename TImpl>
 double
 ReactionNetwork<TImpl>::getLargestRate()
 {
@@ -444,6 +637,579 @@ ReactionNetwork<TImpl>::getLeftSideRate(
 		leftSideRate);
 
 	return leftSideRate;
+}
+
+template <typename TReactionNetwork, typename TDerived>
+struct TQMethodBase
+{
+	using AmountType = typename TReactionNetwork::AmountType;
+	using Species = typename TReactionNetwork::Species;
+	using Region = typename TReactionNetwork::Region;
+	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
+	using ClusterData = typename TReactionNetwork::ClusterData;
+	using TotalQuantity = typename TReactionNetwork::TotalQuantity;
+
+	TQMethodBase(const TotalQuantity& quant) :
+		_species(quant.speciesId.template cast<Species>()),
+		_minSize(quant.minSize)
+	{
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	operator()(double concentration, double reactionRadius, const Region& clReg,
+		double& lsum) const
+	{
+		using util::max;
+		const auto& ival = clReg[_species];
+		auto factor = clReg.volume() / ival.length();
+		asDerived()->updateFactor(factor, concentration, reactionRadius);
+		for (auto j = max(_minSize, ival.begin()); j < ival.end(); ++j) {
+			lsum += asDerived()->contribution(j, factor);
+		}
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	const TDerived*
+	asDerived() const
+	{
+		return static_cast<const TDerived*>(this);
+	}
+
+	Species _species;
+	AmountType _minSize;
+};
+
+template <typename TReactionNetwork>
+struct TQMethodTotal :
+	TQMethodBase<TReactionNetwork, TQMethodTotal<TReactionNetwork>>
+{
+	using Superclass =
+		TQMethodBase<TReactionNetwork, TQMethodTotal<TReactionNetwork>>;
+	using AmountType = typename Superclass::AmountType;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	updateFactor(double& factor, double conc, double) const
+	{
+		factor *= conc;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	contribution(AmountType j, double factor) const
+	{
+		return factor;
+	}
+};
+
+template <typename TReactionNetwork>
+struct TQMethodAtom :
+	TQMethodBase<TReactionNetwork, TQMethodAtom<TReactionNetwork>>
+{
+	using Superclass =
+		TQMethodBase<TReactionNetwork, TQMethodAtom<TReactionNetwork>>;
+	using AmountType = typename Superclass::AmountType;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	updateFactor(double& factor, double conc, double) const
+	{
+		factor *= conc;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	contribution(AmountType j, double factor) const
+	{
+		return j * factor;
+	}
+};
+
+template <typename TReactionNetwork>
+struct TQMethodRadius :
+	TQMethodBase<TReactionNetwork, TQMethodRadius<TReactionNetwork>>
+{
+	using Superclass =
+		TQMethodBase<TReactionNetwork, TQMethodRadius<TReactionNetwork>>;
+	using typename Superclass::AmountType;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	updateFactor(double& factor, double conc, double reactionRadius) const
+	{
+		factor *= conc * reactionRadius;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	contribution(AmountType j, double factor) const
+	{
+		return factor;
+	}
+};
+
+template <typename TReactionNetwork>
+struct TQMethodVolume :
+	TQMethodBase<TReactionNetwork, TQMethodVolume<TReactionNetwork>>
+{
+	using Superclass =
+		TQMethodBase<TReactionNetwork, TQMethodVolume<TReactionNetwork>>;
+	using typename Superclass::AmountType;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	updateFactor(double& factor, double conc, double reactionRadius) const
+	{
+		factor *= conc * reactionRadius * reactionRadius * reactionRadius;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	contribution(AmountType j, double factor) const
+	{
+		return factor;
+	}
+};
+
+template <typename TReactionNetwork>
+struct TQMethodTrapped :
+	TQMethodBase<TReactionNetwork, TQMethodTrapped<TReactionNetwork>>
+{
+	using Superclass =
+		TQMethodBase<TReactionNetwork, TQMethodTrapped<TReactionNetwork>>;
+	using typename Superclass::AmountType;
+	using typename Superclass::Region;
+	using typename Superclass::Species;
+
+	using Superclass::Superclass;
+
+	struct VacancyDetect
+	{
+		bool hasVacancy;
+		Species vIndex;
+	};
+
+	static constexpr VacancyDetect
+	checkVacancy() noexcept
+	{
+		for (auto s : TReactionNetwork::getSpeciesRangeNoI()) {
+			if (isVacancy(s)) {
+				return {true, s};
+			}
+		}
+		return {false, Species{}};
+	}
+
+	static constexpr VacancyDetect vd = checkVacancy();
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	operator()(double concentration, double reactionRadius, const Region& clReg,
+		double& lsum) const
+	{
+		if constexpr (vd.hasVacancy) {
+			if (clReg[vd.vIndex].begin() > 0) {
+				Superclass::operator()(
+					concentration, reactionRadius, clReg, lsum);
+			}
+		}
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	updateFactor(double& factor, double conc, double reactionRadius) const
+	{
+		factor *= conc;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	contribution(AmountType j, double factor) const
+	{
+		return j * factor;
+	}
+};
+
+template <typename... Ts>
+struct TQMethodChain
+{
+	template <typename T>
+	TQMethodChain(T&&)
+	{
+	}
+
+	template <typename... TArgs>
+	KOKKOS_INLINE_FUNCTION
+	void
+	operator()(TArgs&&...) const
+	{
+	}
+};
+
+template <typename THead, typename... TTail>
+struct TQMethodChain<THead, TTail...> : TQMethodChain<TTail...>
+{
+	using Superclass = TQMethodChain<TTail...>;
+	using Method = THead;
+	using TotalQuantity = typename Method::TotalQuantity;
+	using ClusterData = typename Method::ClusterData;
+	using Region = typename Method::Region;
+
+	static constexpr std::size_t _index = sizeof...(TTail);
+
+	TQMethodChain(const TotalQuantity quantities[]) :
+		Superclass(quantities),
+		_method(quantities[_index])
+	{
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	operator()(double concentration, double reactionRadius, const Region& clReg,
+		double dst[]) const
+	{
+		Superclass::operator()(concentration, reactionRadius, clReg, dst);
+
+		_method(concentration, reactionRadius, clReg, dst[_index]);
+	}
+
+	Method _method;
+};
+
+template <typename TReactionNetwork, typename... TQMethods>
+class TotalQuantityReduceFunctor
+{
+public:
+	static constexpr std::size_t N = sizeof...(TQMethods);
+
+	// Required by Kokkos
+	using execution_space = Kokkos::DefaultExecutionSpace;
+	using value_type = double[];
+	using size_type = typename execution_space::size_type;
+	const unsigned value_count = N;
+
+	using ConcentrationsView = typename TReactionNetwork::ConcentrationsView;
+	using TilesView = typename TReactionNetwork::Subpaving::TilesView;
+	using ClusterDataView = typename TReactionNetwork::ClusterDataView;
+	using TotalQuantity = typename TReactionNetwork::TotalQuantity;
+
+	TotalQuantityReduceFunctor(ConcentrationsView concs, TilesView tiles,
+		ClusterDataView clData,
+		const util::Array<TotalQuantity, N>& quantities) :
+		_concentrations(concs),
+		_tiles(tiles),
+		_clusterData(clData),
+		_methods(quantities.data())
+	{
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	init(double dst[]) const
+	{
+		for (unsigned i = 0; i < value_count; ++i) {
+			dst[i] = 0.0;
+		}
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	join(double dst[], const double src[]) const
+	{
+		for (unsigned i = 0; i < value_count; ++i) {
+			dst[i] += src[i];
+		}
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	operator()(size_type i, double dst[]) const
+	{
+		_methods(_concentrations[i], _clusterData().reactionRadius[i],
+			_tiles[i].getRegion(), dst);
+	}
+
+private:
+	ConcentrationsView _concentrations;
+	TilesView _tiles;
+	ClusterDataView _clusterData;
+
+	using ReverseMethodsTuple = detail::TupleReverse<std::tuple<TQMethods...>>;
+	using MethodChain =
+		detail::TupleApplyAll<TQMethodChain, ReverseMethodsTuple>;
+	MethodChain _methods;
+};
+
+template <std::size_t N>
+struct TQArrayMatcher
+{
+	using TotalQuantity = IReactionNetwork::TotalQuantity;
+	using Q = TotalQuantity::Type;
+
+	const util::Array<TotalQuantity, N>& quantities;
+
+	bool
+	operator()(const util::Array<Q, N>& check) const
+	{
+		for (std::size_t i = 0; i < N; ++i) {
+			if (quantities[i].type != check[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+};
+
+template <typename TImpl>
+template <typename... TQMethods>
+util::Array<double, sizeof...(TQMethods)>
+ReactionNetwork<TImpl>::getTotalsImpl(ConcentrationsView concentrations,
+	const util::Array<TotalQuantity, sizeof...(TQMethods)>& quantities)
+{
+	constexpr std::size_t N = sizeof...(TQMethods);
+
+	auto tiles = _subpaving.getTiles();
+	auto clusterData = _clusterData.d_view;
+	auto result = util::Array<double, N>{};
+
+	auto temp =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+			result.data(), result.size());
+
+	Kokkos::parallel_reduce("ReactionNetworkWorker::getTotals",
+		this->_numClusters,
+		TotalQuantityReduceFunctor<TImpl, TQMethods...>{
+			concentrations, tiles, clusterData, quantities},
+		temp);
+
+	Kokkos::fence();
+
+	return result;
+}
+
+struct TotalQuantityError : std::runtime_error
+{
+	using TotalQuantity = IReactionNetwork::TotalQuantity;
+
+	explicit TotalQuantityError(const std::string& message) :
+		std::runtime_error(
+			"Unsupported total quantity specification ( " + message + " )")
+	{
+	}
+
+	template <typename TArray>
+	TotalQuantityError(const std::string& message, TArray&& quantities) :
+		TotalQuantityError(message + "\ngiven: " + toString(quantities))
+	{
+	}
+
+	static std::string
+	toString(TotalQuantity::Type type)
+	{
+		static constexpr const char* qTypes[] = {
+			"total", "atom", "radius", "volume", "trapped"};
+		using Id = std::underlying_type_t<TotalQuantity::Type>;
+		return qTypes[static_cast<Id>(type)];
+	}
+
+	template <typename TArray>
+	static std::string
+	toString(TArray&& quantities)
+	{
+		std::ostringstream oss;
+		oss << "[" << toString(quantities[0].type);
+		for (std::size_t i = 1; i < quantities.size(); ++i) {
+			oss << ", " << toString(quantities[i].type);
+		}
+		oss << "]";
+		return oss.str();
+	}
+};
+
+template <typename TImpl>
+util::Array<double, 1>
+ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
+	const util::Array<TotalQuantity, 1>& quantities)
+{
+	using Q = TotalQuantity::Type;
+	auto match = TQArrayMatcher<1>{quantities};
+	if (match({Q::total})) {
+		return getTotalsImpl<TQMethodTotal>(concentrations, quantities);
+	}
+	if (match({Q::atom})) {
+		return getTotalsImpl<TQMethodAtom>(concentrations, quantities);
+	}
+
+	throw TotalQuantityError(
+		"getTotals<1>: must specify one of { [total], [atom] }", quantities);
+}
+
+template <typename TImpl>
+util::Array<double, 2>
+ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
+	const util::Array<TotalQuantity, 2>& quantities)
+{
+	using Q = TotalQuantity::Type;
+	auto match = TQArrayMatcher<2>{quantities};
+	if (match({Q::atom, Q::atom})) {
+		return getTotalsImpl<TQMethodAtom, TQMethodAtom>(
+			concentrations, quantities);
+	}
+
+	throw TotalQuantityError(
+		"getTotals<2>: must specify [atom, atom]", quantities);
+}
+
+template <typename TImpl>
+util::Array<double, 3>
+ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
+	const util::Array<TotalQuantity, 3>& quantities)
+{
+	using Q = TotalQuantity::Type;
+	auto match = TQArrayMatcher<3>{quantities};
+	if (match({Q::atom, Q::atom, Q::atom})) {
+		return getTotalsImpl<TQMethodAtom, TQMethodAtom, TQMethodAtom>(
+			concentrations, quantities);
+	}
+
+	throw TotalQuantityError(
+		"getTotals<3>: must specify [atom, atom, atom]", quantities);
+}
+
+template <typename TImpl>
+util::Array<double, 4>
+ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
+	const util::Array<TotalQuantity, 4>& quantities)
+{
+	using Q = TotalQuantity::Type;
+	auto match = TQArrayMatcher<4>{quantities};
+	if (match({Q::total, Q::radius, Q::total, Q::radius})) {
+		return getTotalsImpl<TQMethodTotal, TQMethodRadius, TQMethodTotal,
+			TQMethodRadius>(concentrations, quantities);
+	}
+	if (match({Q::atom, Q::atom, Q::atom, Q::atom})) {
+		return getTotalsImpl<TQMethodAtom, TQMethodAtom, TQMethodAtom,
+			TQMethodAtom>(concentrations, quantities);
+	}
+
+	throw TotalQuantityError("getTotals<4>: must specify one of {\n"
+							 "\t[total, radius, total, radius],\n"
+							 "\t[atom, atom, atom, atom]\n"
+							 "}",
+		quantities);
+}
+
+template <typename TImpl>
+util::Array<double, 5>
+ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
+	const util::Array<TotalQuantity, 5>& quantities)
+{
+	using Q = TotalQuantity::Type;
+	auto match = TQArrayMatcher<5>{quantities};
+	if (match({Q::atom, Q::atom, Q::atom, Q::atom, Q::atom})) {
+		return getTotalsImpl<TQMethodAtom, TQMethodAtom, TQMethodAtom,
+			TQMethodAtom, TQMethodAtom>(concentrations, quantities);
+	}
+
+	throw TotalQuantityError(
+		"getTotals<5>: must specify [atom, atom, atom, atom, atom]",
+		quantities);
+}
+
+template <typename TImpl>
+util::Array<double, 6>
+ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
+	const util::Array<TotalQuantity, 6>& quantities)
+{
+	using Q = TotalQuantity::Type;
+	auto match = TQArrayMatcher<6>{quantities};
+	if (match({Q::total, Q::atom, Q::radius, Q::total, Q::atom, Q::radius})) {
+		return getTotalsImpl<TQMethodTotal, TQMethodAtom, TQMethodRadius,
+			TQMethodTotal, TQMethodAtom, TQMethodRadius>(
+			concentrations, quantities);
+	}
+	if (match({Q::total, Q::atom, Q::radius, Q::total, Q::radius, Q::volume})) {
+		return getTotalsImpl<TQMethodTotal, TQMethodAtom, TQMethodRadius,
+			TQMethodTotal, TQMethodRadius, TQMethodVolume>(
+			concentrations, quantities);
+	}
+
+	throw TotalQuantityError("getTotals<6>: must specify one of{\n"
+							 "\t[total, atom, radius, total, atom, radius],\n"
+							 "\t[total, atom, radius, total, radius, volume]\n"
+							 "}",
+		quantities);
+}
+
+template <typename TImpl>
+util::Array<double, 7>
+ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
+	const util::Array<TotalQuantity, 7>& quantities)
+{
+	using Q = TotalQuantity::Type;
+	auto match = TQArrayMatcher<7>{quantities};
+	if (match({Q::total, Q::atom, Q::radius, Q::total, Q::atom, Q::radius,
+			Q::volume})) {
+		return getTotalsImpl<TQMethodTotal, TQMethodAtom, TQMethodRadius,
+			TQMethodTotal, TQMethodAtom, TQMethodRadius, TQMethodVolume>(
+			concentrations, quantities);
+	}
+
+	throw TotalQuantityError(
+		"getTotals<7>: must specify\n"
+		"\t[total, atom, radius, total, atom, radius, volume]",
+		quantities);
+}
+
+template <typename TImpl>
+std::vector<double>
+ReactionNetwork<TImpl>::getTotalsVec(ConcentrationsView concentrations,
+	const std::vector<TotalQuantity>& quantities)
+{
+	auto toArray = [&quantities](auto&& a) {
+		std::copy(begin(quantities), end(quantities), begin(a));
+		return a;
+	};
+	auto toVector = [](auto&& a) {
+		std::vector<double> result;
+		result.reserve(a.size());
+		std::copy(begin(a), end(a), std::back_inserter(result));
+		return result;
+	};
+	switch (quantities.size()) {
+	case 1:
+		using A1 = util::Array<TotalQuantity, 1>;
+		return toVector(getTotals(concentrations, toArray(A1{})));
+	case 2:
+		using A2 = util::Array<TotalQuantity, 2>;
+		return toVector(getTotals(concentrations, toArray(A2{})));
+	case 3:
+		using A3 = util::Array<TotalQuantity, 3>;
+		return toVector(getTotals(concentrations, toArray(A3{})));
+	case 4:
+		using A4 = util::Array<TotalQuantity, 4>;
+		return toVector(getTotals(concentrations, toArray(A4{})));
+	case 5:
+		using A5 = util::Array<TotalQuantity, 5>;
+		return toVector(getTotals(concentrations, toArray(A5{})));
+	case 6:
+		using A6 = util::Array<TotalQuantity, 6>;
+		return toVector(getTotals(concentrations, toArray(A6{})));
+	default:
+		throw TotalQuantityError(
+			"getTotalsVec: Currently supports only up to 6; given size = " +
+			std::to_string(quantities.size()));
+		break;
+	}
 }
 
 template <typename TImpl>
@@ -757,6 +1523,7 @@ void
 ReactionNetworkWorker<TImpl>::defineReactions(Connectivity& connectivity)
 {
 	auto generator = _nw.asDerived()->getReactionGenerator();
+	generator.setConstantConnectivities(_nw._constantConns);
 	_nw._reactions = generator.generateReactions();
 	connectivity = generator.getConnectivity();
 }

@@ -89,12 +89,6 @@ protected:
 	double zeta;
 
 	/**
-	 * Value of the portion of the void on the grid at the start of the
-	 * simulation.
-	 */
-	double voidPortion;
-
-	/**
 	 * The location of the interface between two materials.
 	 */
 	double interfaceLocation;
@@ -450,15 +444,6 @@ public:
 	getDimensionNumber() const override
 	{
 		return dimensionNumber;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	double
-	getVoidPortion() const override
-	{
-		return voidPortion;
 	}
 
 	/**

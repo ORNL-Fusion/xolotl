@@ -106,7 +106,6 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "material=W100" << std::endl
 		<< "initialConc=V 1 0.05" << std::endl
 		<< "dimensions=1" << std::endl
-		<< "voidPortion=60.0" << std::endl
 		<< "gridType=nonuniform" << std::endl
 		<< "gridParam=10" << std::endl
 		<< "process=diff" << std::endl
@@ -166,9 +165,6 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 
 	// Check the number of dimensions option
 	BOOST_REQUIRE_EQUAL(opts.getDimensionNumber(), 1);
-
-	// Check the void portion option
-	BOOST_REQUIRE_EQUAL(opts.getVoidPortion(), 60.0);
 
 	// Check the grid options
 	BOOST_REQUIRE_EQUAL(opts.getGridTypeName(), "nonuniform");

@@ -45,6 +45,9 @@ protected:
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;
 
+	//! Vector storing the previous grid in the x direction
+	std::vector<double> oldGrid;
+
 	//! Vector storing the grid for the temperature
 	std::vector<double> temperatureGrid;
 
@@ -127,9 +130,6 @@ protected:
 	//! The number of dimensions for the problem.
 	int dimension;
 
-	//! The portion of void at the beginning of the problem.
-	double portion;
-
 	//! If the user wants to move the surface.
 	bool movingSurface;
 
@@ -175,16 +175,23 @@ protected:
 	//! The number of xenon atoms that went to the GB
 	double nXeGB;
 
+	//! The grid options
+	std::string gridType;
+	std::string gridFileName;
+	double gridParam0, gridParam1, gridParam2, gridParam3, gridParam4,
+		gridParam5;
+
 	//! The random number generator to use.
 	std::unique_ptr<util::RandomNumberGenerator<int, unsigned int>> rng;
 
 	/**
 	 * Method generating the grid in the x direction
 	 *
-	 * @param opts The options
+	 * @param surfaceOffset The number of grid point to add/remove at the
+	 * surface
 	 */
 	void
-	generateGrid(const options::IOptions& opts);
+	generateGrid(int surfaceOffset);
 
 	/**
 	 * Constructor.
@@ -212,7 +219,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	generateTemperatureGrid(IdType surfacePos, IdType oldPos = 0)
+	generateTemperatureGrid() override
 	{
 		// Don't do anything if we want the same grid as the cluster one
 		if (sameTemperatureGrid) {
@@ -232,27 +239,22 @@ public:
 			return;
 
 		// Compute the total width
-		auto n = grid.size() - 2 - surfacePos;
-		auto width = ((grid[grid.size() - 3] + grid[grid.size() - 2]) / 2.0 -
-			grid[surfacePos + 1]);
+		auto n = grid.size() - 2;
+		auto width =
+			((grid[grid.size() - 3] + grid[grid.size() - 2]) / 2.0 - grid[1]);
 
 		auto newWidth = width;
 		auto newH = pow(newWidth, 1 / tempGridPower) / (n - 1.5);
 
-		// Void
-		for (auto i = 0; i < surfacePos + 1; i++) {
-			temperatureGrid.push_back(i * pow(newH, tempGridPower));
-		}
-
 		// Surface
-		temperatureGrid.push_back(
-			temperatureGrid[surfacePos] + (pow(newH, tempGridPower)));
+		temperatureGrid.push_back(0);
+		temperatureGrid.push_back(pow(newH, tempGridPower));
 
 		// Material
-		for (auto i = surfacePos + 2; i < grid.size(); i++) {
-			auto j = i - surfacePos - 1;
-			temperatureGrid.push_back(temperatureGrid[surfacePos + 1] +
-				(pow(j * newH, tempGridPower)));
+		for (auto i = 2; i < grid.size(); i++) {
+			auto j = i - 1;
+			temperatureGrid.push_back(
+				temperatureGrid[1] + (pow(j * newH, tempGridPower)));
 		}
 
 		// The temperature values need to be updated to match the new grid
@@ -312,30 +314,29 @@ public:
 		// Loop on the local grid including ghosts
 		for (auto i = localXS; i < localXS + localXM + 2; i++) {
 			// Left of surface
-			if (i <= surfacePos + 1) {
+			if (i < 0) {
 				toReturn.push_back(broadcastedTemp[nX]);
 				continue;
 			}
 			// Get the grid location
 			double loc = 0.0;
 			if (i == 0)
-				loc = temperatureGrid[0] - temperatureGrid[surfacePos + 1];
+				loc = temperatureGrid[0] - temperatureGrid[1];
 			else
 				loc = (temperatureGrid[i - 1] + temperatureGrid[i]) / 2.0 -
-					temperatureGrid[surfacePos + 1];
+					temperatureGrid[1];
 
 			bool matched = false;
 			IdType jKeep = 0;
 			// Look for it in the temperature grid
 			for (auto j = jKeep; j < nX + 1; j++) {
 				double tempLoc1 = 0.0,
-					   tempLoc2 = (oldGrid[j] + oldGrid[j + 1]) / 2.0 -
-					oldGrid[oldPos + 1];
+					   tempLoc2 =
+						   (oldGrid[j] + oldGrid[j + 1]) / 2.0 - oldGrid[1];
 				if (j == 0)
-					tempLoc1 = oldGrid[0] - oldGrid[oldPos + 1];
+					tempLoc1 = oldGrid[0] - oldGrid[1];
 				else
-					tempLoc1 = (oldGrid[j - 1] + oldGrid[j]) / 2.0 -
-						oldGrid[oldPos + 1];
+					tempLoc1 = (oldGrid[j - 1] + oldGrid[j]) / 2.0 - oldGrid[1];
 
 				if (loc >= tempLoc1 && loc < tempLoc2) {
 					double xLoc = (loc - tempLoc1) / (tempLoc2 - tempLoc1);
@@ -760,7 +761,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	std::vector<double>
-	interpolateTemperature(IdType pos,
+	interpolateTemperature(
 		std::vector<double> localTemp = std::vector<double>()) override
 	{
 		// No need to interpolate if the grid are the same
@@ -823,9 +824,9 @@ public:
 			// Get the grid location
 			double loc = 0.0;
 			if (i == 0)
-				loc = grid[0] - grid[pos + 1];
+				loc = grid[0] - grid[1];
 			else
-				loc = (grid[i - 1] + grid[i]) / 2.0 - grid[pos + 1];
+				loc = (grid[i - 1] + grid[i]) / 2.0 - grid[1];
 
 			bool matched = false;
 			IdType jKeep = 0;
@@ -834,13 +835,13 @@ public:
 				double tempLoc1 = 0.0,
 					   tempLoc2 =
 						   (temperatureGrid[j] + temperatureGrid[j + 1]) / 2.0 -
-					temperatureGrid[pos + 1];
+					temperatureGrid[1];
 				if (j == 0)
-					tempLoc1 = temperatureGrid[0] - temperatureGrid[pos + 1];
+					tempLoc1 = temperatureGrid[0] - temperatureGrid[1];
 				else
 					tempLoc1 =
 						(temperatureGrid[j - 1] + temperatureGrid[j]) / 2.0 -
-						temperatureGrid[pos + 1];
+						temperatureGrid[1];
 
 				if (loc >= tempLoc1 && loc < tempLoc2) {
 					double xLoc = (loc - tempLoc1) / (tempLoc2 - tempLoc1);

@@ -16,6 +16,14 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 BOOST_AUTO_TEST_SUITE(System)
 
+BOOST_AUTO_TEST_CASE(AZr_0)
+{
+	if (getMPICommSize() > 1) {
+		return;
+	}
+	SystemTestCase{"system_AZr_0", "AlphaZr.dat"}.run();
+}
+
 BOOST_AUTO_TEST_CASE(NE_0)
 {
 	if (getMPICommSize() > 1) {

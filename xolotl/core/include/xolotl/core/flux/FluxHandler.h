@@ -187,8 +187,26 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
+	virtual std::vector<std::pair<IdType, double>>
+	getImplantedFlux(std::vector<IdType> map)
+	{
+		return std::vector<std::pair<IdType, double>>();
+	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
 	virtual std::vector<double>
 	getInstantFlux(double time) const;
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector)
+	{
+		return;
+	}
 
 	/**
 	 * \see IFluxHandler.h

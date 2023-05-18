@@ -10,7 +10,6 @@ perfHandler=dummy
 tempParam=400
 grouping=11 4 2
 process=reaction diff movingSurface sink
-voidPortion=0.0
 initialConc=V 1 0.0
 pulse=100.0 1.0
 migrationThreshold=1.1

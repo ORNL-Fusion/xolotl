@@ -89,6 +89,7 @@ BOOST_AUTO_TEST_CASE(checkIO)
 
 	// Set the time step number
 	int timeStep = 0;
+	int loop = 0;
 
 	// Set the time information
 	double currentTime = 0.0001;
@@ -96,7 +97,6 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	double currentTimeStep = 0.000001;
 
 	// Set the surface information
-	XFile::TimestepGroup::Surface1DType iSurface = 3;
 	XFile::TimestepGroup::Data1DType nInter = 1.0;
 	XFile::TimestepGroup::Data1DType previousFlux = 0.1;
 	XFile::TimestepGroup::Data1DType nHe = 1.0;
@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	const std::string testFileName = "test_basic.h5";
 	{
 		BOOST_TEST_MESSAGE("Creating file.");
-		XFile testFile(testFileName, grid, MPI_COMM_WORLD);
+		XFile testFile(testFileName, 1, MPI_COMM_WORLD);
 		XFile::NetworkGroup netGroup(testFile, network);
 	}
 
@@ -154,7 +154,9 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 		auto tsGroup = concGroup->addTimestepGroup(
-			timeStep, currentTime, previousTime, currentTimeStep);
+			loop, timeStep, currentTime, previousTime, currentTimeStep);
+
+		tsGroup->writeGrid(grid);
 
 		std::vector<double> nSurf = {nHe, nD, nT, nV, nInter};
 		std::vector<double> previousSurfFlux = {previousHeFlux, previousDFlux,
@@ -162,7 +164,7 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		std::vector<std::string> surfNames = {
 			"Helium", "Deuterium", "Tritium", "Vacancy", "Interstitial"};
 		// Write the surface information
-		tsGroup->writeSurface1D(iSurface, nSurf, previousSurfFlux, surfNames);
+		tsGroup->writeSurface1D(nSurf, previousSurfFlux, surfNames);
 
 		std::vector<double> nBulk = {nHe, nV};
 		std::vector<double> previousBulkFlux = {previousHeFlux, previousVFlux};
@@ -192,13 +194,15 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		XFile testFile(
 			testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadOnly);
 
-		// Read the header of the written file
-		BOOST_TEST_MESSAGE("Checking test file header.");
+		// Access the last-written timestep group.
+		BOOST_TEST_MESSAGE("Checking test file last time step.");
+		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
+		BOOST_REQUIRE(concGroup);
+		auto tsGroup = concGroup->getLastTimestepGroup();
+		BOOST_REQUIRE(tsGroup);
 		int nx = 0, ny = 0, nz = 0;
 		double hx = 0.0, hy = 0.0, hz = 0.0;
-		auto headerGroup = testFile.getGroup<XFile::HeaderGroup>();
-		BOOST_REQUIRE(headerGroup);
-		headerGroup->read(nx, hx, ny, hy, nz, hz);
+		tsGroup->readSizes(nx, hx, ny, hy, nz, hz);
 
 		// Check the obtained values
 		BOOST_REQUIRE_EQUAL(nx, nGrid);
@@ -207,13 +211,6 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		BOOST_REQUIRE_CLOSE(hy, 0.0, 0.0001);
 		BOOST_REQUIRE_EQUAL(nz, 0);
 		BOOST_REQUIRE_CLOSE(hz, 0.0, 0.0001);
-
-		// Access the last-written timestep group.
-		BOOST_TEST_MESSAGE("Checking test file last time step.");
-		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
-		BOOST_REQUIRE(concGroup);
-		auto tsGroup = concGroup->getLastTimestepGroup();
-		BOOST_REQUIRE(tsGroup);
 
 		// Read the times
 		BOOST_TEST_MESSAGE("Checking test file last time step times.");
@@ -225,9 +222,6 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		BOOST_REQUIRE_CLOSE(previousReadTime, previousTime, 0.0001);
 
 		// Read the surface information
-		BOOST_TEST_MESSAGE(
-			"Checking test file last time step surface position.");
-		BOOST_REQUIRE_EQUAL(tsGroup->readSurface1D(), iSurface);
 		BOOST_REQUIRE_CLOSE(
 			tsGroup->readData1D("nInterstitialSurf"), nInter, 0.0001);
 		BOOST_REQUIRE_CLOSE(tsGroup->readData1D("previousFluxInterstitialSurf"),
@@ -353,7 +347,7 @@ BOOST_AUTO_TEST_CASE(checkSurface2D)
 		for (int i = 0; i < nGrid + 2; i++)
 			grid.push_back((double)i * stepSize);
 
-		XFile testFile(testFileName, grid, MPI_COMM_WORLD);
+		XFile testFile(testFileName, 1, MPI_COMM_WORLD);
 	}
 
 	// Set the time information
@@ -379,13 +373,14 @@ BOOST_AUTO_TEST_CASE(checkSurface2D)
 			testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadWrite);
 
 		// Set the time step number
+		int loop = 0;
 		int timeStep = 0;
 
 		// Add the concentration sub group
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 		auto tsGroup = concGroup->addTimestepGroup(
-			timeStep, currentTime, previousTime, currentTimeStep);
+			loop, timeStep, currentTime, previousTime, currentTimeStep);
 		BOOST_REQUIRE(tsGroup);
 
 		auto nSurf = {nHe, nInter};
@@ -492,7 +487,7 @@ BOOST_AUTO_TEST_CASE(checkSurface3D)
 		for (int i = 0; i < nGrid + 2; i++)
 			grid.push_back((double)i * stepSize);
 
-		XFile testFile(testFileName, grid, MPI_COMM_WORLD);
+		XFile testFile(testFileName, 1, MPI_COMM_WORLD);
 	}
 
 	// Set the time information
@@ -522,6 +517,7 @@ BOOST_AUTO_TEST_CASE(checkSurface3D)
 			testFileName, MPI_COMM_WORLD, XFile::AccessMode::OpenReadWrite);
 
 		// Set the time step number
+		int loop = 0;
 		int timeStep = 0;
 
 		// Add the concentration sub group
@@ -529,7 +525,7 @@ BOOST_AUTO_TEST_CASE(checkSurface3D)
 		BOOST_REQUIRE(concGroup);
 
 		auto tsGroup = concGroup->addTimestepGroup(
-			timeStep, currentTime, previousTime, currentTimeStep);
+			loop, timeStep, currentTime, previousTime, currentTimeStep);
 		BOOST_REQUIRE(tsGroup);
 
 		auto nSurf = {nV, nInter};

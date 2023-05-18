@@ -37,7 +37,8 @@ TrapMutationReaction<TNetwork, TDerived>::TrapMutationReaction(
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-TrapMutationReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+TrapMutationReaction<TNetwork, TDerived>::computeRate(
+	IndexType gridIndex, double time)
 {
 	return 0.0;
 }
@@ -163,6 +164,35 @@ TrapMutationReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 
 	auto rate = getAppliedRate(gridIndex);
 	Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), rate);
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
+void
+TrapMutationReaction<TNetwork, TDerived>::computeConstantRates(
+	ConcentrationsView concentrations, RatesView rates, BelongingView isInSub,
+	OwnedSubMapView backMap, IndexType gridIndex)
+{
+	if (!getEnabled()) {
+		return;
+	}
+
+	// Only consider cases where one of the products is in the sub network
+	// but not the dissociating cluster
+	if (isInSub[_heClId])
+		return;
+	if (not isInSub[_heVClId] and not isInSub[_iClId])
+		return;
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+	auto rate = getAppliedRate(gridIndex);
+	auto f = rate * concentrations[_heClId];
+
+	if (isInSub[_heClId])
+		Kokkos::atomic_add(&rates(backMap(_heClId), isInSub.extent(0)), f);
+	if (isInSub[_iClId])
+		Kokkos::atomic_add(&rates(backMap(_iClId), isInSub.extent(0)), f);
 }
 
 template <typename TNetwork, typename TDerived>

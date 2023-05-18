@@ -7,6 +7,7 @@ using namespace std::string_literals;
 #include <boost/program_options.hpp>
 
 #include <xolotl/options/Options.h>
+#include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/Tokenizer.h>
 
@@ -30,7 +31,6 @@ Options::Options() :
 	vizHandlerName(""),
 	materialName(""),
 	initialConcentration(""),
-	voidPortion(50.0),
 	interfaceLocation(-1000.0),
 	dimensionNumber(1),
 	gridTypeName(""),
@@ -112,7 +112,10 @@ Options::readParams(int argc, const char* argv[])
 	// Declare a group of options that will be
 	// allowed in config file
 	bpo::options_description config("Parameters");
-	config.add_options()("networkFile",
+	config.add_options()("logLevel",
+		bpo::value<std::string>()->default_value("info"),
+		"Logging output threshold. (default = info; available "
+		"debug,extra,info,warning,error).")("networkFile",
 		bpo::value<std::string>(&networkFilename),
 		"The HDF5 file to use for restart.")("tempHandler",
 		bpo::value<std::string>(&tempHandlerName)->default_value("constant"),
@@ -148,14 +151,12 @@ Options::readParams(int argc, const char* argv[])
 		"Number of dimensions for the simulation.")("material",
 		bpo::value<std::string>(&materialName),
 		"The material options are as follows: {W100, W110, W111, "
-		"W211, Pulsed, Fuel, Fe, 800H}.")("initialConc",
+		"W211, Pulsed, Fuel, Fe, 800H, AlphaZr}.")("initialConc",
 		bpo::value<std::string>(&initialConcentration),
 		"The name, size, and value of the initial concentration in the "
 		"material.")("zeta", bpo::value<double>(&zeta)->default_value(0.73),
 		"The value of the electronic stopping power in the material (0.73 by "
-		"default).")("voidPortion", bpo::value<double>(&voidPortion),
-		"The value (in %) of the void portion at the start of the simulation.")(
-		"interfaceLoc", bpo::value<double>(&interfaceLocation),
+		"default).")("interfaceLoc", bpo::value<double>(&interfaceLocation),
 		"The value (in nm) of the interface location between two materials "
 		"(-1000.0 nm by default).")("gridType",
 		bpo::value<std::string>(&gridTypeName)->default_value("uniform"),
@@ -176,7 +177,7 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"List of all the processes to use in the simulation (reaction, diff, "
 		"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, "
-		"heterogeneous, sink, soret).")("grain",
+		"heterogeneous, sink, soret, constant, noSolve).")("grain",
 		bpo::value<std::string>(&gbList),
 		"This option allows the user to add GB in the X, Y, or Z directions. "
 		"To do so, simply write the direction followed "
@@ -191,7 +192,7 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"This option allows the user to define the boundaries of the network. "
 		"To do so, simply write the values in order "
-		"maxHe/Xe maxD maxT maxV maxI.")("radiusSize",
+		"maxHe/Xe/Basal maxD maxT maxV maxI.")("radiusSize",
 		bpo::value<std::string>(),
 		"This option allows the user to set a minimum size for the computation "
 		"for the average radii, in the same order as the netParam option "
@@ -264,6 +265,8 @@ Options::readParams(int argc, const char* argv[])
 	}
 	store(parse_config_file(ifs, config), opts);
 	notify(opts);
+
+	util::Log::setLevelThreshold(opts["logLevel"].as<std::string>());
 
 	// Take care of the temperature
 	if (opts.count("tempParam")) {
@@ -378,6 +381,8 @@ Options::readParams(int argc, const char* argv[])
 		processMap["heterogeneous"] = false;
 		processMap["sink"] = false;
 		processMap["soret"] = false;
+		processMap["constant"] = false;
+		processMap["noSolve"] = false;
 
 		// Loop on the tokens
 		for (int i = 0; i < tokens.size(); ++i) {

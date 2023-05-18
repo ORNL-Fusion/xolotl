@@ -10,29 +10,30 @@ from matplotlib.colors import LogNorm
 ## Set the Zero
 zero = 1.0e-20
 
-## Select the timestep we want to read from
-timestep = 9
-
 ## Set the maximum size of helium/hydrogen
 maxSize = 401
 
 ## Open the file (the network/restart HDF5 file)
 f = h5py.File('/home/sophie/Workspace/xolotl-plsm-build/script/xolotlStop.h5', 'r')
 
+## Get the TS
+concGroup = f['concentrationsGroup']
+timestep = concGroup.attrs['lastTimeStep']
+lastLoop = concGroup.attrs['lastLoop']
+
 ## Open the concentration group
-groupName ='concentrationsGroup/concentration_' + str(timestep)
+groupName ='concentrationsGroup/concentration_' + str(lastLoop) + '_' + str(timestep)
 concGroup = f[groupName]
 
 ## Read the concentration and index datasets
 concDset = concGroup['concs']
 indexDset = concGroup['concs_startingIndices']
 
-## Read the surface position and time at the chosen time step
-surfacePos = concGroup.attrs['iSurface']
+## Read the time at the chosen time step
 time = concGroup.attrs['absoluteTime']
 
 ## Read the grid to know which grid point is which depth
-gridDset = f['headerGroup/grid']
+gridDset = concGroup['grid']
 
 ## Read how many normal and super clusters there are
 networkGroup = f['networkGroup']

@@ -135,6 +135,11 @@ public:
 			while (tokens.size() > 0) {
 				auto comp =
 					std::vector<AmountType>(network.getSpeciesListSize(), 0);
+				if (tokens.size() != 3) {
+					throw std::runtime_error(
+						"\nNot the correct number of cluster parameters for "
+						"the CustomFixFluxHandler: 3 expected.");
+				}
 
 				// Read the cluster type
 				auto clusterSpecies = network.parseSpeciesId(tokens[0]);
@@ -169,6 +174,11 @@ public:
 				getline(paramFile, line);
 				tokens = util::Tokenizer<>{line}();
 				std::vector<double> params;
+				if (tokens.size() != 17) {
+					throw std::runtime_error(
+						"\nNot the correct number of fit parameters for the "
+						"CustomFixFluxHandler: 17 expected.");
+				}
 				params.push_back(std::stod(tokens[0]));
 				params.push_back(std::stod(tokens[1]));
 				params.push_back(std::stod(tokens[2]));
@@ -329,6 +339,28 @@ public:
 				// Add it to the vector
 				incidentFluxVec[index][i - surfacePos] = incidentFlux;
 			}
+		}
+
+		// Gets the process ID
+		int procId;
+		auto xolotlComm = util::getMPIComm();
+		MPI_Comm_rank(xolotlComm, &procId);
+
+		// Prints both incident vectors in a file
+		if (procId == 0 && incidentFluxVec.size() > 0) {
+			std::ofstream outputFile;
+			outputFile.open("incidentVectors.txt");
+			for (int i = 0; i < incidentFluxVec[0].size(); i++) {
+				outputFile << (xGrid[surfacePos + i] +
+								  xGrid[surfacePos + i + 1]) /
+							2.0 -
+						xGrid[surfacePos + 1]
+						   << " ";
+				for (int j = 0; j < incidentFluxVec.size(); j++)
+					outputFile << incidentFluxVec[j][i] << " ";
+				outputFile << std::endl;
+			}
+			outputFile.close();
 		}
 
 		return;
