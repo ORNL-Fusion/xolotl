@@ -32,11 +32,6 @@ private:
 	std::vector<double> totalDepths;
 
 	/**
-	 * The reduction factors for each deposition.
-	 */
-	std::vector<double> reductionFactors;
-
-	/**
 	 * Value of the fit function integrated on the grid.
 	 */
 	std::vector<double> normFactors;
