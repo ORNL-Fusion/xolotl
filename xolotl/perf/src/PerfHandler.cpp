@@ -395,6 +395,9 @@ PerfHandler::reportStatistics(std::ostream& os,
 		iter->second.outputTo(os);
 	}
 
+    if (hwCounterStats.empty()) {
+        return;
+    }
 	os << "\nHardwareCounters:\n";
 	for (auto iter = hwCounterStats.begin(); iter != hwCounterStats.end();
 		 ++iter) {
