@@ -1089,7 +1089,7 @@ PetscSolver1DHandler::computeJacobian(
 	IdType tempIndices[1];
 	PetscScalar diffVals[3 * nDiff];
 	IdType diffIndices[nDiff];
-	PetscScalar soretDiffVals[6 * nDiff];
+	PetscScalar soretDiffVals[3 * nDiff];
 	IdType soretDiffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
 	IdType advecIndices[nAdvec];
@@ -1359,22 +1359,10 @@ PetscSolver1DHandler::computeJacobian(
 				cols[2].c = soretDiffIndices[i];
 
 				ierr = MatSetValuesStencil(
-					J, 1, &row, 3, cols, soretDiffVals + (6 * i), ADD_VALUES);
+					J, 1, &row, 3, cols, soretDiffVals + (3 * i), ADD_VALUES);
 				checkPetscError(ierr,
 					"PetscSolver1DHandler::computeJacobian: "
 					"MatSetValuesStencil (Soret diffusion, conc) failed.");
-
-				// Set grid coordinates and component numbers for the columns
-				// corresponding to the middle, left, and right grid points
-				cols[0].c = dof;
-				cols[1].c = dof;
-				cols[2].c = dof;
-
-				ierr = MatSetValuesStencil(J, 1, &row, 3, cols,
-					soretDiffVals + (6 * i) + 3, ADD_VALUES);
-				checkPetscError(ierr,
-					"PetscSolver1DHandler::computeJacobian: "
-					"MatSetValuesStencil (Soret diffusion, temp) failed.");
 			}
 		}
 

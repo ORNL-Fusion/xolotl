@@ -120,12 +120,13 @@ Options::readParams(int argc, const char* argv[])
 		"The HDF5 file to use for restart.")("tempHandler",
 		bpo::value<std::string>(&tempHandlerName)->default_value("constant"),
 		"Temperature handler to use. (default = constant; available "
-		"constant,gradient,heat,profile")("tempParam",
+		"constant,gradient,heat,ELM,profile")("tempParam",
 		bpo::value<std::string>(),
 		"At most two parameters for temperature handler. Alternatives:"
 		"constant -> temp; "
 		"gradient -> surfaceTemp bulkTemp; "
-		"heat -> heatFlux bulkTemp")("tempFile",
+		"heat -> heatFlux bulkTemp; "
+		"ELM -> bulkTemp")("tempFile",
 		bpo::value<std::string>(&tempProfileFilename),
 		"A temperature profile is given by the specified file, "
 		"then linear interpolation is used to fit the data."

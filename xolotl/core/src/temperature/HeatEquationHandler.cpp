@@ -14,8 +14,8 @@ namespace temperature
 namespace detail
 {
 auto heatEqTemperatureHandlerRegistration =
-	xolotl::factory::temperature::TemperatureHandlerFactory::Registration<
-		HeatEquationHandler>("heat");
+	xolotl::factory::temperature::TemperatureHandlerFactory::
+		RegistrationCollection<HeatEquationHandler>({"heat", "ELM"});
 }
 
 HeatEquationHandler::HeatEquationHandler(
@@ -99,6 +99,11 @@ HeatEquationHandler::HeatEquationHandler(const options::IOptions& options) :
 	}
 
 	interfaceLoc = options.getInterfaceLocation();
+
+	if (options.getTempHandlerName() == "ELM") {
+		elmFlux = true;
+		bulkTemperature = options.getTempParam(0);
+	}
 }
 
 HeatEquationHandler::~HeatEquationHandler()
@@ -360,18 +365,20 @@ HeatEquationHandler::getDGamma(double temp) const
 double
 HeatEquationHandler::getHeatFlux(double currentTime)
 {
-	// Initialize the value to return
-	double Qinter = 6.0e-12;
-	double Q0 = 7.4e-10;
-	double tau = 0.8 * 2.5e-4;
-	double freq = 50.0;
-	double cycleTime =
-		currentTime - (std::floor(currentTime * freq)) * (1.0 / freq);
-	double x = 0.0;
-	if (cycleTime > 0.0)
-		x = tau / cycleTime;
-	//	return Qinter;
-	return Qinter + Q0 * (1.0 + x * x) * x * x * exp(-x * x);
+	if (elmFlux) {
+		// Initialize the value to return
+		double Qinter = 6.0e-12;
+		double Q0 = 7.4e-10;
+		double tau = 0.8 * 2.5e-4;
+		double freq = 50.0;
+		double cycleTime =
+			currentTime - (std::floor(currentTime * freq)) * (1.0 / freq);
+		double x = 0.0;
+		if (cycleTime > 0.0)
+			x = tau / cycleTime;
+		//	return Qinter;
+		return Qinter + Q0 * (1.0 + x * x) * x * x * exp(-x * x);
+	}
 
 	double f = 0.0;
 	// If the time is smaller than or equal than the first stored time

@@ -78,7 +78,7 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, and right grid point
-		val[diffClusterIdx * 6] = -2.0 * beta[diffClusterIdx] * midDiff *
+		val[diffClusterIdx * 3] = -2.0 * beta[diffClusterIdx] * midDiff *
 				(leftTemp + (hxLeft / hxRight) * rightTemp -
 					(1.0 + (hxLeft / hxRight)) * midTemp) /
 				(hxLeft * (hxLeft + hxRight)) -
@@ -86,19 +86,13 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 				(rightTemp - leftTemp) /
 				((hxLeft + hxRight) * (hxLeft + hxRight)); // middle conc
 
-		val[(diffClusterIdx * 6) + 1] = beta[diffClusterIdx] * midDiff *
+		val[(diffClusterIdx * 3) + 1] = beta[diffClusterIdx] * midDiff *
 			(rightTemp - leftTemp) /
 			((hxLeft + hxRight) * (hxLeft + hxRight)); // left conc
 
-		val[(diffClusterIdx * 6) + 2] = -beta[diffClusterIdx] * midDiff *
+		val[(diffClusterIdx * 3) + 2] = -beta[diffClusterIdx] * midDiff *
 			(rightTemp - leftTemp) /
 			((hxLeft + hxRight) * (hxLeft + hxRight)); // right conc
-
-		val[(diffClusterIdx * 6) + 3] = 0.0; // middle temp
-
-		val[(diffClusterIdx * 6) + 4] = 0.0; // left temp
-
-		val[(diffClusterIdx * 6) + 5] = 0.0; // right temp
 
 		// Increase the index
 		diffClusterIdx++;

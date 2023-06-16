@@ -1197,31 +1197,6 @@ PetscMonitor1D::computeHeliumRetention(
 		}
 	}
 
-	// Create the local vector of temperature wrt temperatureGrid
-	std::vector<double> localTemperature;
-	// Loop on the local grid including ghosts
-	for (auto i = xs; i < xs + xm + 2; i++) {
-		// Get the pointer to the beginning of the solution data for this
-		// grid point
-		gridPointSolution = solutionArray[(PetscInt)i - 1];
-
-		// Get the local temperature
-		localTemperature.push_back(gridPointSolution[dof]);
-	}
-
-	// Interpolate
-	auto updatedTemperature =
-		_solverHandler->interpolateTemperature(localTemperature);
-
-	// Get the surface temperature
-	double temp = 0.0;
-	auto xi = _solverHandler->getLeftOffset();
-	if (xi >= xs && xi < xs + xm) {
-		temp = updatedTemperature[xi - xs + 1];
-	}
-	double surfTemp = 0.0;
-	MPI_Reduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
-
 	// Master process
 	if (procId == 0) {
 		// Get the fluence
@@ -1256,8 +1231,7 @@ PetscMonitor1D::computeHeliumRetention(
 		}
 		auto tempHandler = _solverHandler->getTemperatureHandler();
 		outputFile << _nHeliumBurst << " " << _nDeuteriumBurst << " "
-				   << _nTritiumBurst << " " << surfTemp << " "
-				   << tempHandler->getHeatFlux(time) << std::endl;
+				   << _nTritiumBurst << std::endl;
 		outputFile.close();
 
 		if (_solverHandler->temporalFlux()) {

@@ -153,6 +153,11 @@ private:
 	bool zeroFlux{false};
 
 	/**
+	 * ELM flux enables time-dependent heat flux
+	 */
+	bool elmFlux{false};
+
+	/**
 	 * Number of dimensions for the current simulation
 	 */
 	int dimension;
