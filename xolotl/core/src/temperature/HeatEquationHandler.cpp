@@ -31,23 +31,6 @@ HeatEquationHandler::HeatEquationHandler(
 	interfaceLoc(0.0),
 	fluxFile(filename)
 {
-	auto xolotlComm = util::getMPIComm();
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
-	if (procId == 0) {
-		if (fluxFile.size() == 0)
-			XOLOTL_LOG << "TemperatureHandler: Using the heat equation with "
-						  "a flux of: "
-					   << heatFlux << " W nm-2, and a bulk temperature of: "
-					   << bulkTemperature << " K";
-		else
-			XOLOTL_LOG << "TemperatureHandler: Using the heat equation with "
-						  "a flux file: "
-					   << fluxFile
-					   << " , and a bulk temperature of: " << bulkTemperature
-					   << " K";
-	}
-
 	if (fluxFile.size() > 0) {
 		// Open file dataFile.dat containing the time and temperature
 		std::ifstream inputFile(fluxFile.c_str());
@@ -102,7 +85,28 @@ HeatEquationHandler::HeatEquationHandler(const options::IOptions& options) :
 
 	if (options.getTempHandlerName() == "ELM") {
 		elmFlux = true;
+		zeroFlux = false;
 		bulkTemperature = options.getTempParam(0);
+	}
+
+	auto xolotlComm = util::getMPIComm();
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+	if (procId == 0) {
+		if (options.getTempHandlerName() == "ELM")
+			XOLOTL_LOG << "TemperatureHandler: Using the heat equation with "
+						  "a set ELM flux";
+		else if (fluxFile.size() == 0)
+			XOLOTL_LOG << "TemperatureHandler: Using the heat equation with "
+						  "a flux of: "
+					   << flux[0] << " W nm-2, and a bulk temperature of: "
+					   << bulkTemperature << " K";
+		else
+			XOLOTL_LOG << "TemperatureHandler: Using the heat equation with "
+						  "a flux file: "
+					   << fluxFile
+					   << " , and a bulk temperature of: " << bulkTemperature
+					   << " K";
 	}
 }
 
@@ -376,7 +380,6 @@ HeatEquationHandler::getHeatFlux(double currentTime)
 		double x = 0.0;
 		if (cycleTime > 0.0)
 			x = tau / cycleTime;
-		//	return Qinter;
 		return Qinter + Q0 * (1.0 + x * x) * x * x * exp(-x * x);
 	}
 

@@ -63,6 +63,8 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 			ss << "free surface";
 		else
 			ss << bcString;
+		if (isRobin)
+			ss << " and Robin for temperature";
 		for (auto pair : initialConc) {
 			ss << ", initial concentration for Id: " << pair.first
 			   << " of: " << pair.second << " nm-3";

@@ -504,7 +504,8 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	heVRatio = opts.getHeVRatio();
 
 	// Which type of temperature grid to use
-	if (opts.getTempHandlerName() == "heat") {
+	if (opts.getTempHandlerName() == "heat" or
+		opts.getTempHandlerName() == "ELM") {
 		sameTemperatureGrid = false;
 		// The temperature grid power only makes sense in this case
 		tempGridPower = opts.getTempGridPower();

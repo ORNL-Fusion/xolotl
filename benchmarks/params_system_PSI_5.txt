@@ -9,6 +9,7 @@ gridType=geometric
 gridParam=500 1.0292315
 tempGridPower=2.5
 tempHandler=ELM
+tempParam=400
 boundary=1 1
 xBCType=robin
 perfHandler=dummy
