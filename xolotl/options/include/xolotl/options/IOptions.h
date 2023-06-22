@@ -132,6 +132,14 @@ public:
 	virtual std::string
 	getPerfHandlerName() const = 0;
 
+    /**
+     * Should we write the performance report to a YAML file?
+     *
+     * @return true to enable YAML output
+     */
+    virtual bool
+    usePerfOutputYAML() const = 0;
+
 	/**
 	 * Obtain the name of the visualization handler to be used
 	 *

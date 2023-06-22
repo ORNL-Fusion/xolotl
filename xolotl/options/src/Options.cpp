@@ -28,6 +28,7 @@ Options::Options() :
 	fluxAmplitude(0.0),
 	fluxTimeProfileFlag(false),
 	perfHandlerName(""),
+	perfOutputYAMLFlag(false),
 	vizHandlerName(""),
 	materialName(""),
 	initialConcentration(""),
@@ -144,7 +145,9 @@ Options::readParams(int argc, const char* argv[])
 		"a constant flux should NOT be given)")("perfHandler",
 		bpo::value<std::string>(&perfHandlerName)->default_value("os"),
 		"Which set of performance handlers to use. (default = os, available "
-		"dummy,os,papi).")("vizHandler",
+		"dummy,os,papi).")("perfOutputYAML",
+		bpo::value<bool>(&perfOutputYAMLFlag),
+		"Should we write the performance report to a YAML file?")("vizHandler",
 		bpo::value<std::string>(&vizHandlerName)->default_value("dummy"),
 		"Which set of handlers to use for the visualization. (default = dummy, "
 		"available std,dummy).")("dimensions",

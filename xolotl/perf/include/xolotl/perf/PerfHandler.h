@@ -133,6 +133,9 @@ public:
 	getHardwareCounter(const std::string& name,
 		const IHardwareCounter::SpecType& ctrSpec) override;
 
+	void
+	reportData(std::ostream& os) const override;
+
 	/**
 	 * Collect statistics about any performance data collected by
 	 * processes of the program.
