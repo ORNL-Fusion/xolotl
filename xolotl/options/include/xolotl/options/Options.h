@@ -44,7 +44,7 @@ protected:
 	bool fluxFlag;
 
 	/**
-	 * Value for the  flux.
+	 * Value for the flux.
 	 */
 	double fluxAmplitude;
 
@@ -62,6 +62,11 @@ protected:
 	 * Name of the perf handler
 	 */
 	std::string perfHandlerName;
+
+    /**
+     * Output performance report to YAML file?
+     */
+    bool perfOutputYAMLFlag;
 
 	/**
 	 * Name of the viz handler
@@ -381,6 +386,15 @@ public:
 	{
 		return perfHandlerName;
 	}
+
+    /**
+     * \see IOptions.h
+     */
+    bool
+    usePerfOutputYAML() const override
+    {
+        return perfOutputYAMLFlag;
+    }
 
 	/**
 	 * \see IOptions.h
