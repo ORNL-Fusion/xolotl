@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sb
 
+rootDir='/home/4pf/build/xolotl/Debug/'
+
 def makePlot(x, groupName, data):
     nranks = len(data)
     y = [ [] for _ in range(nranks) ]
@@ -16,14 +18,18 @@ def makePlot(x, groupName, data):
             y[i].append(d[groupName][name])
 
     nx = len(x)
-    df = pd.DataFrame(
-            zip(x*nranks, ["0"]*nx+["1"]*nx+["2"]*nx+["3"]*nx, y[0]+y[1]+y[2]+y[3]),
+    rankArray = []
+    valArray = []
+    for r in range(nranks):
+        rankArray += [str(r)]*nx
+        valArray += y[r]
+    df = pd.DataFrame(zip(x*nranks, rankArray, valArray),
             columns=[groupName, "Rank", "Value"])
     plt.figure()
     sb.barplot(x=groupName, hue="Rank", y="Value", data=df)
 
 
-rootDir='/home/4pf/build/xolotl/serial/'
+
 files = glob.glob('perf_r[0-9]*.yaml', root_dir = rootDir)
 
 data = []
