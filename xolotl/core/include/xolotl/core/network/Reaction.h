@@ -202,7 +202,7 @@ protected:
 	 * overlap, making the reaction viable.
 	 */
 	KOKKOS_INLINE_FUNCTION
-	AmountType
+	double
 	computeOverlap(const ReflectedRegion& cl1RR, const ReflectedRegion& cl2RR,
 		const ReflectedRegion& pr1RR, const ReflectedRegion& pr2RR);
 

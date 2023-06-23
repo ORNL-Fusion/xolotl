@@ -75,7 +75,8 @@ FeCrReactionNetwork::updateOutgoingSinkFluxes(
 	constexpr double K = 170.0e9; // GPa
 	constexpr double nu = 0.29;
 	constexpr double b = 0.25; // nm
-	double deltaV = 1.67 * this->getClusterDataMirror().atomicVolume() * 1.0e-27; // m3
+	double deltaV =
+		1.67 * this->getClusterDataMirror().atomicVolume() * 1.0e-27; // m3
 	//	constexpr double a0 = 0.91, a1 = -2.16, a2 = -0.92; // Random dipole
 	constexpr double a0 = 0.87, a1 = -5.12, a2 = -0.77; // Full network
 	constexpr double k_B = 1.380649e-23; // J K-1.
@@ -85,18 +86,16 @@ FeCrReactionNetwork::updateOutgoingSinkFluxes(
 
 	double delta = sqrt(rCore * rCore + (L * L) / 4.0);
 
-	double edge =
-		(2.0 * ::xolotl::core::pi * (a0 + a1 * (rCore / r)) *
+	double edge = (2.0 * ::xolotl::core::pi * (a0 + a1 * (rCore / r)) *
 
-				(1.0 - portion) *
-					((std::log(r / rCore) *
-						 (a0 * r + a1 * delta + a2 * (delta - rCore))) /
-						(std::log(r / delta) * (a0 * r + a1 * rCore)))) /
+					  (1.0 - portion) *
+					  ((std::log(r / rCore) *
+						   (a0 * r + a1 * delta + a2 * (delta - rCore))) /
+						  (std::log(r / delta) * (a0 * r + a1 * rCore)))) /
 		(std::log(r / rCore));
 
 	double screw =
-		(2.0 * ::xolotl::core::pi * (a0 + a1 * (rCore / r)) *
-			portion) /
+		(2.0 * ::xolotl::core::pi * (a0 + a1 * (rCore / r)) * portion) /
 		(std::log(r / rCore));
 
 	auto diffusionFactor = this->getClusterDataMirror().diffusionFactor;

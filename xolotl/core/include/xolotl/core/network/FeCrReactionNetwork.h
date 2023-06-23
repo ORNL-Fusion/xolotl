@@ -1,8 +1,8 @@
 #pragma once
 
-#include <xolotl/core/network/ReactionNetwork.h>
 #include <xolotl/core/network/FeCrReaction.h>
 #include <xolotl/core/network/FeCrTraits.h>
+#include <xolotl/core/network/ReactionNetwork.h>
 
 namespace xolotl
 {

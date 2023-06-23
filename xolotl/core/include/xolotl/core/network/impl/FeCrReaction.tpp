@@ -79,23 +79,23 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		double dFree = dc0 > 0.0 ? dc0 : dc1;
 
 		util::Array<double, 3, 2> align;
-		align[0] = {0.0, 0.0};
-		align[1] = {0.0, 0.0};
-		align[2] = {0.0, 0.0};
+		align[0] = {{0.0, 0.0}};
+		align[1] = {{0.0, 0.0}};
+		align[2] = {{0.0, 0.0}};
 
 		// Find what type of cluster is the sessile one
 		auto loSessile = dc0 > 0.0 ? lo1 : lo0;
 		if (loSessile[static_cast<int>(Species::Trapped)] > 0) {
-			align[0] = {1.0, 0.25};
-			align[1] = {0.333333, 0.75};
+			align[0] = {{1.0, 0.25}};
+			align[1] = {{0.333333, 0.75}};
 		}
 		else if (loSessile[static_cast<int>(Species::Junction)] > 0) {
-			align[0] = {1.0, 0.142857};
-			align[1] = {0.333333, 0.4285714};
-			align[2] = {0.57735, 0.4285714};
+			align[0] = {{1.0, 0.142857}};
+			align[1] = {{0.333333, 0.4285714}};
+			align[2] = {{0.57735, 0.4285714}};
 		}
 		else if (loSessile[static_cast<int>(Species::Loop)] > 0) {
-			align[0] = {0.57735, 1.0};
+			align[0] = {{0.57735, 1.0}};
 		}
 
 		double sigma = 0.0;
