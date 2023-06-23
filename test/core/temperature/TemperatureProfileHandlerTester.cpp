@@ -43,6 +43,12 @@ BOOST_AUTO_TEST_CASE(check_getTemperature)
 					 "10.0 1.99779827918";
 	writeTempFile.close();
 
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
 	// Create ofill and dfill
 	network::IReactionNetwork::SparseFillMap ofill;
 	network::IReactionNetwork::SparseFillMap dfill;

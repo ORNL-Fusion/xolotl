@@ -14,11 +14,12 @@ namespace core
 namespace flux
 {
 FluxHandler::FluxHandler(const options::IOptions& options) :
-	fluence(0.0),
 	fluxAmplitude(0.0),
 	useTimeProfile(false),
 	normFactor(0.0)
 {
+	// Initialize the fluence vector
+	fluence.push_back(0.0);
 	// Wrong if both the flux and time profile options are used
 	if (options.useFluxAmplitude() && options.useFluxTimeProfile()) {
 		throw std::runtime_error("\nA constant flux value AND a time profile "
@@ -204,7 +205,20 @@ void
 FluxHandler::incrementFluence(double dt)
 {
 	// The fluence is the flux times the time
-	fluence += fluxAmplitude * dt;
+	fluence[0] += fluxAmplitude * dt;
+
+	if (reductionFactors.size() > 0) {
+		if (fluence.size() == 1) {
+			// Add entries
+			for (auto factor : reductionFactors)
+				fluence.push_back(0.0);
+		}
+
+		// Update entries
+		for (auto i = 0; i < reductionFactors.size(); i++) {
+			fluence[i + 1] += fluxAmplitude * dt * reductionFactors[i];
+		}
+	}
 
 	return;
 }
@@ -213,12 +227,25 @@ void
 FluxHandler::computeFluence(double time)
 {
 	// The fluence is the flux times the time
-	fluence = fluxAmplitude * time;
+	fluence[0] = fluxAmplitude * time;
+
+	if (reductionFactors.size() > 0) {
+		if (fluence.size() == 1) {
+			// Add entries
+			for (auto factor : reductionFactors)
+				fluence.push_back(0.0);
+		}
+
+		// Update entries
+		for (auto i = 0; i < reductionFactors.size(); i++) {
+			fluence[i + 1] = fluxAmplitude * time * reductionFactors[i];
+		}
+	}
 
 	return;
 }
 
-double
+std::vector<double>
 FluxHandler::getFluence() const
 {
 	return fluence;
@@ -261,6 +288,12 @@ std::vector<IdType>
 FluxHandler::getFluxIndices() const
 {
 	return fluxIndices;
+}
+
+std::vector<double>
+FluxHandler::getReductionFactors() const
+{
+	return reductionFactors;
 }
 
 } // end namespace flux

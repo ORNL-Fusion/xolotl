@@ -32,6 +32,12 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = util::getMPIComm();
+	int size;
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	if (size > 1) {
+		throw std::runtime_error("\nYou are trying to run a 0D simulation in "
+								 "parallel, this is not possible!");
+	}
 	ierr = DMDACreate1d(xolotlComm, DM_BOUNDARY_NONE, 1, dof + 1, 0, NULL, &da);
 	checkPetscError(ierr,
 		"PetscSolver0DHandler::createSolverContext: "
@@ -76,7 +82,8 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 }
 
 void
-PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
+PetscSolver0DHandler::initializeConcentration(
+	DM& da, Vec& C, DM& oldDA, Vec& oldC)
 {
 	PetscErrorCode ierr;
 
@@ -329,11 +336,6 @@ PetscSolver0DHandler::updateConcentration(
 	network.computeAllFluxes(dConcs, dFlux);
 	fluxTimer->stop();
 	deep_copy(hFlux, dFlux);
-
-	//	for (auto i = 0; i < dof; i++) {
-	//		std::cout << updatedConcOffset[i] << " ";
-	//	}
-	//	std::cout << std::endl;
 
 	/*
 	 Restore vectors
