@@ -510,6 +510,11 @@ PetscMonitor1D::setup(int loop)
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
 			outputFile << "#time fluence ";
+			// Get the generated clusters
+			auto factors = fluxHandler->getReductionFactors();
+			for (auto i = 0; i < factors.size(); i++) {
+				outputFile << "fluence_" << i << " ";
+			}
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 				auto speciesName = network.getSpeciesName(id);
 				outputFile << speciesName << "_content ";
@@ -1192,7 +1197,7 @@ PetscMonitor1D::computeHeliumRetention(
 	// Master process
 	if (procId == 0) {
 		// Get the fluence
-		double fluence = fluxHandler->getFluence();
+		auto fluence = fluxHandler->getFluence();
 
 		// Print the result
 		util::StringStream ss;
@@ -1201,13 +1206,16 @@ PetscMonitor1D::computeHeliumRetention(
 			ss << network.getSpeciesName(id)
 			   << " content = " << totalConcData[id()] << std::endl;
 		}
-		ss << "Fluence = " << fluence << std::endl << std::endl;
+		ss << "Fluence = " << fluence[0] << std::endl << std::endl;
 		XOLOTL_LOG << ss.str();
 
 		// Write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << time << " " << fluence << " ";
+		outputFile << time << " ";
+		for (auto flu : fluence) {
+			outputFile << flu << " ";
+		}
 		for (auto i = 0; i < numSpecies; ++i) {
 			outputFile << totalConcData[i] << " ";
 		}

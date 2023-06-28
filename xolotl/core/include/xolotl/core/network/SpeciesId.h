@@ -46,13 +46,13 @@ public:
 	{
 	}
 
-    KOKKOS_INLINE_FUNCTION
+	KOKKOS_INLINE_FUNCTION
 	operator bool() const noexcept
 	{
 		return (_id >= 0) && (_id < _nSpec);
 	}
 
-    KOKKOS_INLINE_FUNCTION
+	KOKKOS_INLINE_FUNCTION
 	int
 	operator()() const noexcept
 	{
@@ -77,7 +77,7 @@ public:
 		return static_cast<TSpeciesEnum>(_id);
 	}
 
-    KOKKOS_INLINE_FUNCTION
+	KOKKOS_INLINE_FUNCTION
 	SpeciesId&
 	operator++()
 	{
