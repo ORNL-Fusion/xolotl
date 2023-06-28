@@ -329,7 +329,7 @@ SystemTestCase::run() const
 		if (_approve) {
 			xolotl::fs::copy_file("./" + _outputFileName,
 				_dataDir + "/output/" + _caseName + ".txt",
-				xolotl::fs::copy_option::overwrite_if_exists);
+				xolotl::fs::copy_options::overwrite_existing);
 		}
 		else {
 			checkOutput("./" + _outputFileName,
@@ -343,7 +343,7 @@ SystemTestCase::copyFile(const std::string& fileName)
 {
 	xolotl::fs::copy_file(_dataDir + "/" + fileName,
 		xolotl::fs::absolute(fileName),
-		xolotl::fs::copy_option::overwrite_if_exists);
+		xolotl::fs::copy_options::overwrite_existing);
 }
 } // namespace test
 } // namespace xolotl
