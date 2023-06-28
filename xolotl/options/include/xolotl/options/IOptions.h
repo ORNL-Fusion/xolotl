@@ -84,6 +84,12 @@ public:
 	getTempProfileFilename() const = 0;
 
 	/**
+	 * Obtain the temperature grid power.
+	 */
+	virtual double
+	getTempGridPower() const = 0;
+
+	/**
 	 * Should we use the flux amplitude option?
 	 * If false, it will not be used.
 	 *
@@ -126,6 +132,14 @@ public:
 	virtual std::string
 	getPerfHandlerName() const = 0;
 
+    /**
+     * Should we write the performance report to a YAML file?
+     *
+     * @return true to enable YAML output
+     */
+    virtual bool
+    usePerfOutputYAML() const = 0;
+
 	/**
 	 * Obtain the name of the visualization handler to be used
 	 *
@@ -141,6 +155,13 @@ public:
 	 */
 	virtual std::string
 	getMaterial() const = 0;
+
+	/**
+	 * Obtain the interface location in nm.
+	 * @return The location.
+	 */
+	virtual double
+	getInterfaceLocation() const = 0;
 
 	/**
 	 * Obtain the value of the concentration for the vacancies.

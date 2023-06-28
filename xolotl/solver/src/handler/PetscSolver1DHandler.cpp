@@ -63,6 +63,8 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 			ss << "free surface";
 		else
 			ss << bcString;
+		if (isRobin)
+			ss << " and Robin for temperature";
 		for (auto pair : initialConc) {
 			ss << ", initial concentration for Id: " << pair.first
 			   << " of: " << pair.second << " nm-3";
@@ -146,6 +148,10 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
 
+	// The soret initialization needs to be done after the network
+	// because it adds connectivities the network would remove
+	soretDiffusionHandler->initialize(network, ofill, dfill, grid, localXS);
+
 	// Load up the block fills
 	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
 	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
@@ -155,7 +161,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		"DMDASetBlockFills failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-	vals = Kokkos::View<double*>("solverPartials", nPartials);
+	vals = Kokkos::View<double*>("solverPartials", nPartials + 1);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
@@ -182,6 +188,8 @@ PetscSolver1DHandler::initializeConcentration(
 	// Initialize the grid for the diffusion
 	diffusionHandler->initializeDiffusionGrid(
 		advectionHandlers, grid, localXM, localXS);
+	soretDiffusionHandler->updateSurfacePosition(0);
+	temperatureHandler->updateSurfacePosition(0, temperatureGrid);
 
 	// Initialize the grid for the advection
 	advectionHandlers[0]->initializeAdvectionGrid(
@@ -816,7 +824,8 @@ PetscSolver1DHandler::updateConcentration(
 	for (auto xi = (PetscInt)localXS - 1;
 		 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 		// Heat condition
-		if (xi == 0 && xi >= localXS && xi < localXS + localXM) {
+		if ((xi == 0 || (xi == nX - 1 && isRobin)) && xi >= localXS &&
+			xi < localXS + localXM) {
 			// Compute the old and new array offsets
 			concOffset = concs[xi];
 			updatedConcOffset = updatedConcs[xi];
@@ -845,7 +854,7 @@ PetscSolver1DHandler::updateConcentration(
 			}
 
 			temperatureHandler->computeTemperature(
-				concVector, updatedConcOffset, hxLeft, hxRight, xi);
+				ftime, concVector, updatedConcOffset, hxLeft, hxRight, xi);
 		}
 
 		// Compute the old and new array offsets
@@ -911,7 +920,7 @@ PetscSolver1DHandler::updateConcentration(
 		// -----
 		if (xi >= localXS && xi < localXS + localXM) {
 			temperatureHandler->computeTemperature(
-				concVector, updatedConcOffset, hxLeft, hxRight, xi);
+				ftime, concVector, updatedConcOffset, hxLeft, hxRight, xi);
 		}
 	}
 
@@ -963,7 +972,6 @@ PetscSolver1DHandler::updateConcentration(
 			hxRight = grid[xi + 1] - grid[xi];
 		}
 
-		// Boundary conditions
 		// Everything to the left of the surface is empty
 		if (xi < leftOffset || xi > nX - 1 - rightOffset) {
 			continue;
@@ -978,6 +986,14 @@ PetscSolver1DHandler::updateConcentration(
 		}
 		if (skip)
 			continue;
+
+		if (xi == 0)
+			continue;
+
+		// ---- Compute Soret diffusion over the locally owned part of the grid
+		// -----
+		soretDiffusionHandler->computeDiffusion(network, concVector,
+			updatedConcOffset, hxLeft, hxRight, xi - localXS);
 
 		// ----- Account for flux of incoming particles -----
 		fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, xi, 0);
@@ -1075,8 +1091,11 @@ PetscSolver1DHandler::computeJacobian(
 	IdType tempIndices[1];
 	PetscScalar diffVals[3 * nDiff];
 	IdType diffIndices[nDiff];
+	PetscScalar soretDiffVals[3 * nDiff];
+	IdType soretDiffIndices[nDiff];
 	PetscScalar advecVals[2 * nAdvec];
 	IdType advecIndices[nAdvec];
+	double** concVector = new double*[3];
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
 	/*
@@ -1104,11 +1123,21 @@ PetscSolver1DHandler::computeJacobian(
 			hxRight = temperatureGrid[xi + 1] - temperatureGrid[xi];
 		}
 
+		// Get the concentrations at this grid point
+		concOffset = concs[xi];
+
+		// Fill the concVector with the pointer to the middle, left, and right
+		// grid points
+		concVector[0] = concOffset; // middle
+		concVector[1] = concs[(PetscInt)xi - 1]; // left
+		concVector[2] = concs[xi + 1]; // right
+
 		// Heat condition
-		if (xi == 0 && xi >= localXS && xi < localXS + localXM) {
+		if ((xi == 0 || (xi == nX - 1 && isRobin)) && xi >= localXS &&
+			xi < localXS + localXM) {
 			// Get the partial derivatives for the temperature
 			auto setValues = temperatureHandler->computePartialsForTemperature(
-				tempVals, tempIndices, hxLeft, hxRight, xi);
+				ftime, concVector, tempVals, tempIndices, hxLeft, hxRight, xi);
 
 			if (setValues) {
 				// Set grid coordinate and component number for the row
@@ -1131,9 +1160,6 @@ PetscSolver1DHandler::computeJacobian(
 					"MatSetValuesStencil (temperature) failed.");
 			}
 		}
-
-		// Get the concentrations at this grid point
-		concOffset = concs[xi];
 
 		// Set the grid fraction
 		if (xi < 0)
@@ -1175,7 +1201,7 @@ PetscSolver1DHandler::computeJacobian(
 		// Get the partial derivatives for the temperature
 		if (xi >= localXS && xi < localXS + localXM) {
 			auto setValues = temperatureHandler->computePartialsForTemperature(
-				tempVals, tempIndices, hxLeft, hxRight, xi);
+				ftime, concVector, tempVals, tempIndices, hxLeft, hxRight, xi);
 
 			if (setValues) {
 				// Set grid coordinate and component number for the row
@@ -1287,6 +1313,16 @@ PetscSolver1DHandler::computeJacobian(
 		}
 		if (skip)
 			continue;
+
+		if (xi == 0)
+			continue;
+
+		// Fill the concVector with the pointer to the middle, left, and right
+		// grid points
+		concVector[0] = concs[xi]; // middle
+		concVector[1] = concs[(PetscInt)xi - 1]; // left
+		concVector[2] = concs[xi + 1]; // right
+
 		// Compute the left and right hx
 		double hxLeft = 0.0, hxRight = 0.0;
 		if (xi >= 1 && xi < nX) {
@@ -1300,6 +1336,36 @@ PetscSolver1DHandler::computeJacobian(
 		else {
 			hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
 			hxRight = grid[xi + 1] - grid[xi];
+		}
+
+		// Get the partial derivatives for the Soret diffusion
+		auto setValues = soretDiffusionHandler->computePartialsForDiffusion(
+			network, concVector, soretDiffVals, soretDiffIndices, hxLeft,
+			hxRight, xi - localXS);
+
+		// Loop on the number of diffusion cluster to set the values in the
+		// Jacobian
+		if (setValues) {
+			for (int i = 0; i < nDiff; i++) {
+				// Set grid coordinate and component number for the row
+				row.i = xi;
+				row.c = soretDiffIndices[i];
+
+				// Set grid coordinates and component numbers for the columns
+				// corresponding to the middle, left, and right grid points
+				cols[0].i = xi; // middle
+				cols[0].c = soretDiffIndices[i];
+				cols[1].i = (PetscInt)xi - 1; // left
+				cols[1].c = soretDiffIndices[i];
+				cols[2].i = xi + 1; // right
+				cols[2].c = soretDiffIndices[i];
+
+				ierr = MatSetValuesStencil(
+					J, 1, &row, 3, cols, soretDiffVals + (3 * i), ADD_VALUES);
+				checkPetscError(ierr,
+					"PetscSolver1DHandler::computeJacobian: "
+					"MatSetValuesStencil (Soret diffusion, conc) failed.");
+			}
 		}
 
 		// Get the partial derivatives for the diffusion
@@ -1415,7 +1481,6 @@ PetscSolver1DHandler::computeJacobian(
 			if (rowIter != dfill.end()) {
 				const auto& row = rowIter->second;
 				pdColIdsVectorSize = row.size();
-
 				// Loop over the list of column ids
 				for (auto j = 0; j < pdColIdsVectorSize; j++) {
 					// Set grid coordinate and component number for a column in

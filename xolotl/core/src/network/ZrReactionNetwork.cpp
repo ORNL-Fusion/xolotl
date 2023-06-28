@@ -35,7 +35,7 @@ ReactionNetwork<ZrReactionNetwork>::getTotalTrappedAtomConcentration(
 template double
 ReactionNetwork<ZrReactionNetwork>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
- 
+
 double
 ZrReactionNetwork::checkLatticeParameter(double latticeParameter)
 {
@@ -80,7 +80,7 @@ ZrReactionNetwork::checkLargestClusterId()
 
 	return maxLoc.loc;
 }
-  
+
 void
 ZrReactionNetwork::setConstantRates(RateVector rates)
 {

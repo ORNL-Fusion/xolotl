@@ -69,6 +69,9 @@ protected:
 	//! The grid step size in the z direction.
 	double hZ;
 
+	//! The power used for the temperature grid step size.
+	double tempGridPower;
+
 	//! The local start of grid points in the X direction.
 	IdType localXS;
 
@@ -118,6 +121,9 @@ protected:
 	//! The original diffusion handler created.
 	core::diffusion::IDiffusionHandler* diffusionHandler;
 
+	//! The original Soret diffusion handler created.
+	core::modified::ISoretDiffusionHandler* soretDiffusionHandler;
+
 	//! The vector of advection handlers.
 	std::vector<core::advection::IAdvectionHandler*> advectionHandlers;
 
@@ -132,6 +138,9 @@ protected:
 
 	//! If the user wants to use x mirror boundary conditions or periodic ones.
 	bool isMirror;
+
+	//! If the user wants to use x Robin boundary conditions for temperature.
+	bool isRobin;
 
 	//! If the user wants to attenuate the modified trap mutation.
 	bool useAttenuation;
@@ -231,11 +240,21 @@ public:
 
 		// Compute the total width
 		auto n = grid.size() - 2;
-		auto h =
-			((grid[grid.size() - 3] + grid[grid.size() - 2]) / 2.0 - grid[1]) /
-			(n - 1.5);
-		for (auto i = 0; i < grid.size(); i++) {
-			temperatureGrid.push_back(i * h);
+		auto width =
+			((grid[grid.size() - 3] + grid[grid.size() - 2]) / 2.0 - grid[1]);
+
+		auto newWidth = width;
+		auto newH = pow(newWidth, 1 / tempGridPower) / (n - 1.5);
+
+		// Surface
+		temperatureGrid.push_back(0);
+		temperatureGrid.push_back(pow(newH, tempGridPower));
+
+		// Material
+		for (auto i = 2; i < grid.size(); i++) {
+			auto j = i - 1;
+			temperatureGrid.push_back(
+				temperatureGrid[1] + (pow(j * newH, tempGridPower)));
 		}
 
 		// The temperature values need to be updated to match the new grid
@@ -294,6 +313,11 @@ public:
 		std::vector<double> toReturn;
 		// Loop on the local grid including ghosts
 		for (auto i = localXS; i < localXS + localXM + 2; i++) {
+			// Left of surface
+			if (i < 0) {
+				toReturn.push_back(broadcastedTemp[nX]);
+				continue;
+			}
 			// Get the grid location
 			double loc = 0.0;
 			if (i == 0)
@@ -325,7 +349,7 @@ public:
 			}
 
 			if (not matched)
-				toReturn.push_back(broadcastedTemp[nX + 1]);
+				toReturn.push_back(broadcastedTemp[nX]);
 		}
 
 		temperature = toReturn;
@@ -338,6 +362,15 @@ public:
 	getXGrid() const override
 	{
 		return grid;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	std::vector<double>
+	getTemperatureGrid() const override
+	{
+		return temperatureGrid;
 	}
 
 	/**
@@ -649,6 +682,15 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
+	core::modified::ISoretDiffusionHandler*
+	getSoretDiffusionHandler() const override
+	{
+		return soretDiffusionHandler;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
 	core::advection::IAdvectionHandler*
 	getAdvectionHandler() const override
 	{
@@ -811,8 +853,9 @@ public:
 				}
 			}
 
-			if (not matched)
+			if (not matched) {
 				toReturn.push_back(broadcastedTemp[nX + 1]);
+			}
 		}
 
 		return toReturn;

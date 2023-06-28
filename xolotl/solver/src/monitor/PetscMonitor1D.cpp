@@ -961,9 +961,17 @@ PetscMonitor1D::computeHeliumRetention(
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	const auto dof = network.getDOF();
 
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	ierr = DMGetLocalVector(da, &localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
 	// Get the array of concentration
 	PetscReal** solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Store the concentration over the grid
@@ -1229,6 +1237,7 @@ PetscMonitor1D::computeHeliumRetention(
 				outputFile << _nSurf[i] << " ";
 			}
 		}
+		auto tempHandler = _solverHandler->getTemperatureHandler();
 		outputFile << _nHeliumBurst << " " << _nDeuteriumBurst << " "
 				   << _nTritiumBurst << std::endl;
 		outputFile.close();
@@ -1250,7 +1259,9 @@ PetscMonitor1D::computeHeliumRetention(
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray);
+	CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(da, &localSolution);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
