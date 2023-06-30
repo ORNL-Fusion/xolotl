@@ -30,7 +30,6 @@ option(Xolotl_USE_64BIT_INDEX_TYPE "" ${PETSc_USE_64BIT_INDICES})
 # Note that we only need to list Boost component libraries that have a
 # library implementation (i.e., not header only) as required components.
 find_package(Boost REQUIRED COMPONENTS
-    filesystem
     log_setup
     log
     program_options

@@ -61,32 +61,6 @@ protected:
 	 */
 	std::vector<double> reactingPartialsForCluster;
 
-	/**
-	 * Number of valid partial derivatives for each reactant.
-	 */
-	std::vector<IdType> reactionSize;
-
-	/**
-	 * Starting index of items for each reactant within the reactionIndices
-	 * and reactionVals vectors.  E.g., the values for reactant i
-	 * are located at
-	 *      reactionIndices[reactionStartingIdx[i]+0],
-	 *      reactionIndices[reactionStartingIdx[i]+1]
-	 *      ...
-	 *      reactionIndices[reactionStartingIdx[i]+reactionSize[i]-1]
-	 */
-	std::vector<size_t> reactionStartingIdx;
-
-	/**
-	 * Indices for partial derivatives for all the reactions at one grid point.
-	 */
-	std::vector<IdType> reactionIndices;
-
-	/**
-	 * Partial derivatives for all reactions at one grid point.
-	 */
-	std::vector<PetscScalar> reactionVals;
-
 	//! Times and counters
 	std::shared_ptr<perf::ITimer> fluxTimer;
 	std::shared_ptr<perf::ITimer> partialDerivativeTimer;
