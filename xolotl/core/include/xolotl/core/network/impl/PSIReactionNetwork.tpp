@@ -169,7 +169,9 @@ PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 			"PSIReactionNetwork::computeFluxesPreProcess",
 			this->_clusterData.h_view().extraData.sinkMap.size(),
 			KOKKOS_LAMBDA(IndexType i) {
-				clusterData().extraData.leftSideRates(i) = 0.0;
+				clusterData().extraData.leftSideRates(i) =
+					this->getLeftSideRate(concentrations,
+						clusterData().extraData.sinkMap(i), gridIndex);
 			});
 
 		// Update the sink rate
@@ -196,7 +198,7 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 		// Compute the left side rates
 		auto& clusterData = this->_clusterData.d_view;
 		Kokkos::parallel_for(
-			"PSIReactionNetwork::computeFluxesPreProcess",
+			"PSIReactionNetwork::computePartialsPreProcess",
 			this->_clusterData.h_view().extraData.sinkMap.size(),
 			KOKKOS_LAMBDA(IndexType i) {
 				clusterData().extraData.leftSideRates(i) =
@@ -209,7 +211,8 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 		auto sinkReactions =
 			this->_reactions.template getView<SinkReactionType>();
 		Kokkos::parallel_for(
-			"PSIReactionNetwork::computeFluxesPreProcess", sinkReactions.size(),
+			"PSIReactionNetwork::computePartialsPreProcess",
+			sinkReactions.size(),
 			KOKKOS_LAMBDA(IndexType i) { sinkReactions[i].updateRates(); });
 	}
 }
