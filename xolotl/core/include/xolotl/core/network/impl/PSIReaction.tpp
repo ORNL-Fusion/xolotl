@@ -237,8 +237,33 @@ PSISinkReaction<TSpeciesEnum>::getSinkStrength()
 {
 	constexpr double pi = ::xolotl::core::pi;
 	double grainSize = 50000.0; // 50 um
-
 	return 1.0 / (pi * grainSize * grainSize);
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSISinkReaction<TSpeciesEnum>::computeRate(IndexType gridIndex, double time)
+{
+	auto cl = this->_clusterData->getCluster(this->_reactant);
+	double dc = cl.getDiffusionCoefficient(gridIndex);
+
+	auto rate = this->_clusterData->extraData.leftSideRates;
+	double s_m = 0.0;
+	if (rate.size() > 0) {
+		// Look for the correct index
+		auto sMap = this->_clusterData->extraData.sinkMap;
+		auto i = 0;
+		for (i; i < sMap.size(); i++) {
+			if (sMap(i) == this->_reactant)
+				break;
+		}
+		s_m = rate(i) / dc;
+	}
+
+	double strength = this->getSinkBias() * this->getSinkStrength() * dc;
+
+	return strength;
 }
 } // namespace network
 } // namespace core

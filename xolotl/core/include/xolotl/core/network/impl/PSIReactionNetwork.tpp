@@ -65,48 +65,66 @@ void
 PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	const std::vector<double>& gridTemps, const std::vector<double>& gridDepths)
 {
-	if (!this->_enableTrapMutation) {
-		return;
+	if (this->_enableTrapMutation) {
+		// Check which temperature index to use
+		IdType tempId = 0;
+		for (tempId = 0; tempId < gridDepths.size(); tempId++) {
+			if (gridDepths[tempId] > 0.01)
+				break;
+		}
+
+		_tmHandler->updateData(gridTemps[tempId]);
+
+		auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
+
+		using Kokkos::HostSpace;
+		using Kokkos::MemoryUnmanaged;
+
+		auto desorpInit = _tmHandler->getDesorptionInitializer();
+		auto subpaving = this->_subpaving;
+		IndexType desorpId = this->invalidIndex();
+		Kokkos::parallel_reduce(
+			1,
+			KOKKOS_LAMBDA(std::size_t, IndexType & running) {
+				Composition comp{};
+				comp[Species::He] = desorpInit.size;
+				running = static_cast<IndexType>(subpaving.findTileId(comp));
+			},
+			desorpId);
+		auto desorp = create_mirror_view(tmData.desorption);
+		desorp() = detail::Desorption{desorpInit, desorpId};
+		deep_copy(tmData.desorption, desorp);
+
+		auto depths = Kokkos::View<const double[7], HostSpace, MemoryUnmanaged>(
+			_tmHandler->getDepths().data());
+		deep_copy(tmData.tmDepths, depths);
+
+		auto vSizes =
+			Kokkos::View<const AmountType[7], HostSpace, MemoryUnmanaged>(
+				_tmHandler->getVacancySizes().data());
+		deep_copy(tmData.tmVSizes, vSizes);
+
+		this->invalidateDataMirror();
 	}
 
-	// Check which temperature index to use
-	IdType tempId = 0;
-	for (tempId = 0; tempId < gridDepths.size(); tempId++) {
-		if (gridDepths[tempId] > 0.01)
-			break;
+	if (this->_enableSink) {
+		using SinkReactionType = typename Superclass::Traits::SinkReactionType;
+		auto sinkReactions =
+			this->_reactions.template getView<SinkReactionType>();
+		this->_clusterData.h_view().extraData.initialize(sinkReactions.size());
+
+		this->copyClusterDataView();
+
+		auto& clusterData = this->_clusterData.d_view;
+		Kokkos::parallel_for(
+			"PSIReactionNetwork::updateExtraClusterData", sinkReactions.size(),
+			KOKKOS_LAMBDA(IndexType i) {
+				clusterData().extraData.sinkMap(i) =
+					sinkReactions(i).getReactantId();
+			});
+
+		this->invalidateDataMirror();
 	}
-
-	_tmHandler->updateData(gridTemps[tempId]);
-
-	auto& tmData = this->_clusterData.h_view().extraData.trapMutationData;
-
-	using Kokkos::HostSpace;
-	using Kokkos::MemoryUnmanaged;
-
-	auto desorpInit = _tmHandler->getDesorptionInitializer();
-	auto subpaving = this->_subpaving;
-	IndexType desorpId = this->invalidIndex();
-	Kokkos::parallel_reduce(
-		1,
-		KOKKOS_LAMBDA(std::size_t, IndexType & running) {
-			Composition comp{};
-			comp[Species::He] = desorpInit.size;
-			running = static_cast<IndexType>(subpaving.findTileId(comp));
-		},
-		desorpId);
-	auto desorp = create_mirror_view(tmData.desorption);
-	desorp() = detail::Desorption{desorpInit, desorpId};
-	deep_copy(tmData.desorption, desorp);
-
-	auto depths = Kokkos::View<const double[7], HostSpace, MemoryUnmanaged>(
-		_tmHandler->getDepths().data());
-	deep_copy(tmData.tmDepths, depths);
-
-	auto vSizes = Kokkos::View<const AmountType[7], HostSpace, MemoryUnmanaged>(
-		_tmHandler->getVacancySizes().data());
-	deep_copy(tmData.tmVSizes, vSizes);
-
-	this->invalidateDataMirror();
 }
 
 template <typename TSpeciesEnum>
@@ -144,6 +162,24 @@ PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
+	if (this->_enableSink) {
+		// Compute the left side rates
+		auto& clusterData = this->_clusterData.d_view;
+		Kokkos::parallel_for(
+			"PSIReactionNetwork::computeFluxesPreProcess",
+			this->_clusterData.h_view().extraData.sinkMap.size(),
+			KOKKOS_LAMBDA(IndexType i) {
+				clusterData().extraData.leftSideRates(i) = 0.0;
+			});
+
+		// Update the sink rate
+		using SinkReactionType = typename Superclass::Traits::SinkReactionType;
+		auto sinkReactions =
+			this->_reactions.template getView<SinkReactionType>();
+		Kokkos::parallel_for(
+			"PSIReactionNetwork::computeFluxesPreProcess", sinkReactions.size(),
+			KOKKOS_LAMBDA(IndexType i) { sinkReactions[i].updateRates(); });
+	}
 }
 
 template <typename TSpeciesEnum>
@@ -155,6 +191,26 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 	if (this->_enableTrapMutation) {
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
+	}
+	if (this->_enableSink) {
+		// Compute the left side rates
+		auto& clusterData = this->_clusterData.d_view;
+		Kokkos::parallel_for(
+			"PSIReactionNetwork::computeFluxesPreProcess",
+			this->_clusterData.h_view().extraData.sinkMap.size(),
+			KOKKOS_LAMBDA(IndexType i) {
+				clusterData().extraData.leftSideRates(i) =
+					this->getLeftSideRate(concentrations,
+						clusterData().extraData.sinkMap(i), gridIndex);
+			});
+
+		// Update the sink rate
+		using SinkReactionType = typename Superclass::Traits::SinkReactionType;
+		auto sinkReactions =
+			this->_reactions.template getView<SinkReactionType>();
+		Kokkos::parallel_for(
+			"PSIReactionNetwork::computeFluxesPreProcess", sinkReactions.size(),
+			KOKKOS_LAMBDA(IndexType i) { sinkReactions[i].updateRates(); });
 	}
 }
 
@@ -285,7 +341,6 @@ void
 PSIReactionNetwork<TSpeciesEnum>::updateReactionRates(double time)
 {
 	Superclass::updateReactionRates(time);
-
 	using TrapMutationReactionType =
 		typename Superclass::Traits::TrapMutationReactionType;
 	// TODO: is this just the local largest rate? Is it correct?

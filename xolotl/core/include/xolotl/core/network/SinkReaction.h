@@ -64,6 +64,13 @@ public:
 	double
 	computeRate(IndexType gridIndex, double time = 0.0);
 
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	getReactantId()
+	{
+		return _reactant;
+	}
+
 private:
 	KOKKOS_INLINE_FUNCTION
 	void

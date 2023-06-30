@@ -62,6 +62,7 @@ public:
 		PSISinkReaction<TSpeciesEnum>>;
 
 	using Superclass::Superclass;
+	using IndexType = typename Superclass::IndexType;
 
 	KOKKOS_INLINE_FUNCTION
 	double
@@ -70,6 +71,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getSinkStrength();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex, double time = 0.0);
 };
 template <typename TSpeciesEnum>
 class PSITrapMutationReaction :

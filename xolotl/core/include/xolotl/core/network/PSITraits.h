@@ -296,12 +296,19 @@ struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, MemSpace>
 {
 	using NetworkType = PSIReactionNetwork<TSpeciesEnum>;
 
+	template <typename TData>
+	using View = ViewType<TData, MemSpace>;
+
+	using IndexType = detail::ReactionNetworkIndexType;
+
 	ClusterDataExtra() = default;
 
 	template <typename MS>
 	KOKKOS_INLINE_FUNCTION
 	ClusterDataExtra(const ClusterDataExtra<NetworkType, MS>& data) :
-		trapMutationData(data.trapMutationData)
+		trapMutationData(data.trapMutationData),
+		leftSideRates(data.leftSideRates),
+		sinkMap(data.sinkMap)
 	{
 	}
 
@@ -310,17 +317,45 @@ struct ClusterDataExtra<PSIReactionNetwork<TSpeciesEnum>, MemSpace>
 	deepCopy(const ClusterDataExtra<NetworkType, MS>& data)
 	{
 		trapMutationData.deepCopy(data.trapMutationData);
+
+		if (!data.leftSideRates.is_allocated()) {
+			return;
+		}
+
+		if (!leftSideRates.is_allocated()) {
+			leftSideRates = create_mirror_view(data.leftSideRates);
+		}
+		deep_copy(leftSideRates, data.leftSideRates);
+
+		if (!sinkMap.is_allocated()) {
+			sinkMap = create_mirror_view(data.sinkMap);
+		}
+		deep_copy(sinkMap, data.sinkMap);
 	}
 
 	std::uint64_t
 	getDeviceMemorySize() const noexcept
 	{
-		return trapMutationData.getDeviceMemorySize();
+		std::uint64_t ret = 0;
+		ret += trapMutationData.getDeviceMemorySize();
+		ret += leftSideRates.required_allocation_size(leftSideRates.extent(0));
+		ret += sinkMap.required_allocation_size(sinkMap.extent(0));
+		return ret;
+	}
+
+	void
+	initialize(IndexType numClusters)
+	{
+		leftSideRates = View<double*>("Left Side Rates", numClusters);
+		sinkMap = View<IndexType*>("Sink Map", numClusters);
 	}
 
 	using TrapMutationData =
 		TrapMutationClusterData<ClusterDataCommon<MemSpace>>;
 	TrapMutationData trapMutationData;
+
+	View<double*> leftSideRates;
+	View<IndexType*> sinkMap;
 };
 } // namespace detail
 } // namespace network

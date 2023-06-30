@@ -68,10 +68,10 @@ protected:
 	 */
 	std::string perfHandlerName;
 
-    /**
-     * Output performance report to YAML file?
-     */
-    bool perfOutputYAMLFlag;
+	/**
+	 * Output performance report to YAML file?
+	 */
+	bool perfOutputYAMLFlag;
 
 	/**
 	 * Name of the viz handler
@@ -406,14 +406,14 @@ public:
 		return perfHandlerName;
 	}
 
-    /**
-     * \see IOptions.h
-     */
-    bool
-    usePerfOutputYAML() const override
-    {
-        return perfOutputYAMLFlag;
-    }
+	/**
+	 * \see IOptions.h
+	 */
+	bool
+	usePerfOutputYAML() const override
+	{
+		return perfOutputYAMLFlag;
+	}
 
 	/**
 	 * \see IOptions.h
