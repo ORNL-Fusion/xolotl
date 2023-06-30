@@ -104,11 +104,11 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		}
 	}
 	else if (lo[Species::V] > 0 and _maxPureV > _maxV) {
-		if (lo[Species::V] < _maxV and othersBeginAtZero(region, Species::V)) {
+		if (lo[Species::V] <= _maxV and othersBeginAtZero(region, Species::V)) {
 			return true;
 		}
 		if (region[Species::V].end() > _maxPureV) {
-			return true;
+			result[toIndex(Species::V)] = true;
 		}
 		if (region[Species::V].length() <
 				util::max((double)(_groupingWidthB + 1),
@@ -409,10 +409,11 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio);
 	};
 
+	Composition lo = region.getOrigin();
+	Composition hi = region.getUpperLimitPoint();
+
 	// The edge
 	if (region[Species::V].end() > 1) {
-		Composition lo = region.getOrigin();
-		Composition hi = region.getUpperLimitPoint();
 		auto hiV = util::min(hi[Species::V] - 1, _maxV);
 		auto hiHe =
 			util::min(hi[Species::He] - 1, getMaxHePerV(_maxV, _hevRatio));
