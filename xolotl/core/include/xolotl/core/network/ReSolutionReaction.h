@@ -58,8 +58,8 @@ public:
 			Superclass::coeffsSingleExtent);
 	}
 
-	static detail::ConstantRateView allocateConstantRateView(
-		IndexType, IndexType)
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
 	{
 		return detail::ConstantRateView();
 	}

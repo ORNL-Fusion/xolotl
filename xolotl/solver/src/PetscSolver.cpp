@@ -73,10 +73,10 @@ static char help[] = "Solves C_t =  -D*C_xx + F(C) + R(C) + from "
 					 "Brian Wirth's SciDAC project.\n";
 
 void
-PetscSolver::setupInitialConditions(DM da, Vec C)
+PetscSolver::setupInitialConditions(DM da, Vec C, DM oldDA, Vec oldC)
 {
 	// Initialize the concentrations in the solution vector
-	this->solverHandler->initializeConcentration(da, C);
+	this->solverHandler->initializeConcentration(da, C, oldDA, oldC);
 }
 
 /* ------------------------------------------------------------------- */
@@ -172,7 +172,7 @@ isPetscInitialized()
 }
 
 void
-PetscSolver::initialize()
+PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 {
 	PetscErrorCode ierr;
 
@@ -238,23 +238,19 @@ PetscSolver::initialize()
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = this->solverHandler->getNetworkName();
-	double time = 0.0, deltaTime = 1.0e-12;
-	if (!fileName.empty()) {
+	double deltaTime = 1.0e-12;
+	if (!fileName.empty() and loop == 0) {
 		io::XFile xfile(fileName);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 			auto tsGroup = concGroup->getLastTimestepGroup();
 			assert(tsGroup);
 			std::tie(time, deltaTime) = tsGroup->readTimes();
-
-			// Give the values to the solver
-			ierr = TSSetTime(ts, time);
-			checkPetscError(ierr, "PetscSolver::initialize: TSSetTime failed.");
-			ierr = TSSetTimeStep(ts, deltaTime);
-			checkPetscError(
-				ierr, "PetscSolver::initialize: TSSetTimeStep failed.");
 		}
 	}
+
+	// Give the values to the solver
+	setCurrentTimes(time, deltaTime);
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set solver options
@@ -290,12 +286,17 @@ PetscSolver::initialize()
 			"PetscSolver Exception: Wrong number of dimensions "
 			"to set the monitors.");
 	}
-	this->monitor->setup();
+	this->monitor->setup(loop);
+
+	// Set the saved data
+	if (loop > 0)
+		this->monitor->setFlux(
+			_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set initial conditions
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	setupInitialConditions(da, C);
+	setupInitialConditions(da, C, oldDA, oldC);
 
 	// Set the output precision for std::out
 	std::cout.precision(16);
@@ -371,74 +372,125 @@ void
 PetscSolver::solve()
 {
 	PetscErrorCode ierr;
-	// Start the solve Timer
-	solveTimer->start();
 
-	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	 Solve the ODE system
-	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	if (ts != NULL && C != NULL) {
-		// Push the options for the solve
-		ierr = PetscOptionsPush(petscOptions);
-		checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPush failed.");
-		if (!petscInitializedHere) {
-			// Reset the time step number
-			ierr = TSSetStepNumber(ts, 0);
-			checkPetscError(
-				ierr, "PetscSolver::solve: Reset Step Number failed.");
-			// Reset the GB location
-			// TODO: put a condition or move it to the interface
-			//			this->solverHandler->initGBLocation(da, C);
+	// Initialiaze the converged reason
+	TSConvergedReason reason = TS_CONVERGED_USER;
+	Vec oldC;
+	DM oldDA;
+	int loopNumber = 0;
+	double time = 0.0;
+
+	// Push the options for the solve
+	ierr = PetscOptionsPush(petscOptions);
+	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPush failed.");
+
+	while (reason == TS_CONVERGED_USER) {
+		// The interface already initialized the first loop
+		if (loopNumber > 0) {
+			initialize(loopNumber, time, oldDA, oldC);
 		}
 
-		// Start the PETSc Solve
-		ierr = TSSolve(ts, C);
-		checkPetscError(ierr, "PetscSolver::solve: TSSolve failed.");
+		/*
+		Solve the ODE system
+						- - - - - - - - - - - - - - - - - - - - - - - - - - - -
+		- - - - - - */
+		if (ts != NULL && C != NULL) {
+			// Start the solve Timer
+			solveTimer->start();
+			if (!petscInitializedHere) {
+				// Reset the time step number
+				ierr = TSSetStepNumber(ts, 0);
+				checkPetscError(
+					ierr, "PetscSolver::solve: Reset Step Number failed.");
+				// Reset the GB location
+				this->solverHandler->initGBLocation(da, C);
+			}
+			// Start the PETSc Solve
+			ierr = TSSolve(ts, C);
+			checkPetscError(ierr, "PetscSolver::solve: TSSolve failed.");
+			// Stop the timer
+			solveTimer->stop();
 
-		/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-		 Write in a file if everything went well or not.
-		 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	   */
-		// Check the option -check_collapse
-		PetscBool flagCheck;
-		ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
-		checkPetscError(ierr,
-			"PetscSolver::solve: PetscOptionsHasName (-check_collapse) "
-			"failed.");
-		if (flagCheck) {
-			// Open the output file
-			std::ofstream outputFile;
-			outputFile.open("solverStatus.txt");
+			// Save some data from the monitors for next loop
+			this->monitor->keepFlux(
+				_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
 
+			// We are done with the loop
+			loopNumber++;
+
+			// Catch the change in surface
 			// Get the converged reason from PETSc
-			TSConvergedReason reason;
 			ierr = TSGetConvergedReason(ts, &reason);
 			checkPetscError(
 				ierr, "PetscSolver::solve: TSGetConvergedReason failed.");
+			if (reason == TS_CONVERGED_USER)
+				std::cout << "Caught the change of surface!" << std::endl;
 
-			// Write it
-			if (reason == TS_CONVERGED_EVENT)
-				outputFile << "collapsed" << std::endl;
-			else if (reason == TS_DIVERGED_NONLINEAR_SOLVE ||
-				reason == TS_DIVERGED_STEP_REJECTED)
-				outputFile << "diverged" << std::endl;
-			else
-				outputFile << "good" << std::endl;
+			// Save the time
+			ierr = TSGetTime(ts, &time);
+			checkPetscError(ierr, "PetscSolver::solve: TSGetTime failed.");
 
-			outputFile.close();
+			// Save the old DA and associated vector
+			PetscInt dof;
+			ierr = DMDAGetDof(da, &dof);
+			checkPetscError(ierr, "PetscSolver::solve: DMDAGetDof failed.");
+
+			ierr = DMDACreateCompatibleDMDA(da, dof, &oldDA);
+			checkPetscError(
+				ierr, "PetscSolver::solve: DMDACreateCompatibleDMDA failed.");
+
+			// Save the old vector as a natural one to make the transfer easier
+			ierr = DMDACreateNaturalVector(oldDA, &oldC);
+			checkPetscError(
+				ierr, "PetscSolver::solve: DMDACreateNaturalVector failed.");
+			ierr = DMDAGlobalToNaturalBegin(oldDA, C, INSERT_VALUES, oldC);
+			ierr = DMDAGlobalToNaturalEnd(oldDA, C, INSERT_VALUES, oldC);
+			checkPetscError(
+				ierr, "PetscSolver::solve: DMDAGlobalToNatural failed.");
 		}
+		else {
+			throw std::string("PetscSolver Exception: Unable to solve! Data "
+							  "not configured properly.");
+		}
+	}
 
-		// Popping the option database
-		ierr = PetscOptionsPop();
-		checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPop failed.");
+	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+			 Write in a file if everything went well or not.
+			 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	   -*/
+
+	// Check the option -check_collapse
+	PetscBool flagCheck;
+	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
+	checkPetscError(ierr,
+		"PetscSolver::solve: PetscOptionsHasName (-check_collapse) "
+		"failed.");
+	if (flagCheck) {
+		// Open the output file
+		std::ofstream outputFile;
+		outputFile.open("solverStatus.txt");
+
+		// Get the converged reason from PETSc
+		TSConvergedReason reason;
+		ierr = TSGetConvergedReason(ts, &reason);
+		checkPetscError(
+			ierr, "PetscSolver::solve: TSGetConvergedReason failed.");
+
+		// Write it
+		if (reason == TS_CONVERGED_EVENT)
+			outputFile << "collapsed" << std::endl;
+		else if (reason == TS_DIVERGED_NONLINEAR_SOLVE ||
+			reason == TS_DIVERGED_STEP_REJECTED)
+			outputFile << "diverged" << std::endl;
+		else
+			outputFile << "good" << std::endl;
+
+		outputFile.close();
 	}
-	else {
-		throw std::runtime_error(
-			"PetscSolver Exception: Unable to solve! Data not "
-			"configured properly.");
-	}
-	// Stop the timer
-	solveTimer->stop();
+
+	// Popping the option database
+	ierr = PetscOptionsPop();
+	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPop failed.");
 }
 
 bool

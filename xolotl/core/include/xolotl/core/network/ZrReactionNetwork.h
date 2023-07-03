@@ -122,3 +122,7 @@ public:
 } // namespace xolotl
 
 #include <xolotl/core/network/ZrClusterGenerator.h>
+
+#if defined(XOLOTL_INCLUDE_RN_TPP_FILES)
+#include <xolotl/core/network/impl/ZrReactionNetwork.tpp>
+#endif

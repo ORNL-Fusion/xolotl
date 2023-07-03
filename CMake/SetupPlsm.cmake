@@ -99,6 +99,7 @@ endif()
 
 set(__plsm_opts
     -DKokkos_DIR=${Kokkos_DIR}
+    -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
     -DCMAKE_INSTALL_PREFIX=${__plsm_bin_dir}/install
     -DBUILD_TESTING=OFF
     -DPLSM_USE_64BIT_INDEX_TYPE=${Xolotl_USE_64BIT_INDEX_TYPE}

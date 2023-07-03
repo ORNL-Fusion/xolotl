@@ -190,7 +190,7 @@ protected:
 	 * overlap, making the reaction viable.
 	 */
 	KOKKOS_INLINE_FUNCTION
-	AmountType
+	double
 	computeOverlap(const ReflectedRegion& cl1RR, const ReflectedRegion& cl2RR,
 		const ReflectedRegion& pr1RR, const ReflectedRegion& pr2RR);
 
@@ -295,8 +295,8 @@ public:
 			Superclass::coeffsSingleExtent);
 	}
 
-	static detail::ConstantRateView allocateConstantRateView(
-		IndexType, IndexType)
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
 	{
 		return detail::ConstantRateView();
 	}
@@ -416,8 +416,8 @@ public:
 			Superclass::coeffsSingleExtent);
 	}
 
-	static detail::ConstantRateView allocateConstantRateView(
-		IndexType, IndexType)
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
 	{
 		return detail::ConstantRateView();
 	}

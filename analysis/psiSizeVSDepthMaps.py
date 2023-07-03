@@ -11,9 +11,6 @@ from matplotlib.colors import LogNorm
 ## Set the Zero
 zero = 1.0e-20
 
-## Select the timestep we want to read from
-timestep = 9
-
 ## Set the maximum size of helium/hydrogen
 maxSize = 201
 
@@ -23,21 +20,21 @@ f = h5py.File('/home/sophie/Workspace/xolotl-plsm-build/script/xolotlStop.h5', '
 ## Get the last time step saved in the file
 concGroup0 = f['concentrationsGroup']
 timestep = concGroup0.attrs['lastTimeStep']
+lastLoop = concGroup0.attrs['lastLoop']
 
 ## Open the concentration group
-groupName ='concentrationsGroup/concentration_' + str(timestep)
+groupName ='concentrationsGroup/concentration_' + str(lastLoop) + '_' + str(timestep)
 concGroup = f[groupName]
 
 ## Read the concentration and index datasets
 concDset = concGroup['concs']
 indexDset = concGroup['concs_startingIndices']
 
-## Read the surface position and time at the chosen time step
-surfacePos = concGroup.attrs['iSurface']
+## Read the time at the chosen time step
 time = concGroup.attrs['absoluteTime']
 
 ## Read the grid to know which grid point is which depth
-gridDset = f['headerGroup/grid']
+gridDset = concGroup['grid']
 gridSize = len(gridDset)
 
 ## Read how many normal and super clusters there are
@@ -52,7 +49,7 @@ tArray = np.empty([maxSize+1, gridSize])
 vArray = np.empty([maxSize+1, gridSize])
 for i in range(0, maxSize+1):
     for j in range(0, gridSize):
-        x[i][j] = gridDset[j] - gridDset[surfacePos]
+        x[i][j] = gridDset[j] - gridDset[1]
         y[i][j] = i
         heArray[i][j] = zero
         tArray[i][j] = zero
@@ -146,7 +143,7 @@ cb1 = hePlot.pcolor(x, y, heArray, norm=LogNorm(vmin=1.0e-10, vmax=zMaxPlus), cm
 #cb1 = hePlot.pcolor(x, y, heArray, vmin=-zMaxPlus, vmax=zMaxPlus, cmap="bwr", alpha=1.0)
 hePlot.set_xlabel("Depth (nm)",fontsize=22)
 hePlot.set_ylabel("Helium Cluster Size",fontsize=22)
-hePlot.set_xlim([0.1, gridDset[len(gridDset)-1] - gridDset[surfacePos]])
+hePlot.set_xlim([0.1, gridDset[len(gridDset)-1] - gridDset[1]])
 hePlot.set_ylim([0, maxSize])
 hePlot.set_xscale('log')
 hePlot.tick_params(axis='both', which='major', labelsize=20)
@@ -170,7 +167,7 @@ cb2 = tPlot.pcolor(x, y, tArray, norm=LogNorm(vmin=1.0e-10, vmax=zMaxPlus), cmap
 #cb2 = tPlot.pcolor(x, y, tArray, vmin=-zMaxPlus, vmax=zMaxPlus, cmap="bwr", alpha=1.0)
 tPlot.set_xlabel("Depth (nm)",fontsize=22)
 tPlot.set_ylabel("Tritium Cluster Size",fontsize=22)
-tPlot.set_xlim([0.1, gridDset[len(gridDset)-1] - gridDset[surfacePos]])
+tPlot.set_xlim([0.1, gridDset[len(gridDset)-1] - gridDset[1]])
 tPlot.set_ylim([0, maxSize])
 tPlot.set_xscale('log')
 tPlot.tick_params(axis='both', which='major', labelsize=20)
@@ -194,7 +191,7 @@ cb3 = vPlot.pcolor(x, y, vArray, norm=LogNorm(vmin=1.0e-10, vmax=zMaxPlus), cmap
 #cb3 = vPlot.pcolor(x, y, vArray, vmin=-zMaxPlus, vmax=zMaxPlus, cmap="bwr", alpha=1.0)
 vPlot.set_xlabel("Depth (nm)",fontsize=22)
 vPlot.set_ylabel("Tritium Cluster Size",fontsize=22)
-vPlot.set_xlim([0.1, gridDset[len(gridDset)-1] - gridDset[surfacePos]])
+vPlot.set_xlim([0.1, gridDset[len(gridDset)-1] - gridDset[1]])
 vPlot.set_ylim([0, maxSize])
 vPlot.set_xscale('log')
 vPlot.tick_params(axis='both', which='major', labelsize=20)

@@ -74,6 +74,7 @@ protected:
 	double _largestThreshold = 1.0e-12;
 
 	PetscInt _previousTSNumber = -1;
+	PetscInt _loopNumber = 0;
 
 	double _sputteringYield = 0.0;
 

@@ -47,6 +47,9 @@ protected:
 	//! Map of connectivities
 	SparseFillMap dfill;
 
+	//! The offset at the surface
+	IdType surfaceOffset;
+
 	/**
 	 * A vector for holding the partial derivatives for one cluster in the order
 	 * that PETSc expects. It is sized in the createSolverContext() operation.
@@ -57,32 +60,6 @@ protected:
 	 * allocations.
 	 */
 	std::vector<double> reactingPartialsForCluster;
-
-	/**
-	 * Number of valid partial derivatives for each reactant.
-	 */
-	std::vector<IdType> reactionSize;
-
-	/**
-	 * Starting index of items for each reactant within the reactionIndices
-	 * and reactionVals vectors.  E.g., the values for reactant i
-	 * are located at
-	 *      reactionIndices[reactionStartingIdx[i]+0],
-	 *      reactionIndices[reactionStartingIdx[i]+1]
-	 *      ...
-	 *      reactionIndices[reactionStartingIdx[i]+reactionSize[i]-1]
-	 */
-	std::vector<size_t> reactionStartingIdx;
-
-	/**
-	 * Indices for partial derivatives for all the reactions at one grid point.
-	 */
-	std::vector<IdType> reactionIndices;
-
-	/**
-	 * Partial derivatives for all reactions at one grid point.
-	 */
-	std::vector<PetscScalar> reactionVals;
 
 	//! Times and counters
 	std::shared_ptr<perf::ITimer> fluxTimer;
@@ -116,6 +93,17 @@ public:
 	 * @param _perfHandler The perf handler to use.
 	 */
 	PetscSolverHandler(NetworkType& _network, const options::IOptions& options);
+
+	/**
+	 * Set the number of grid points we want to move by at the surface.
+	 * \see ISolverHandler.h
+	 */
+	void
+	setSurfaceOffset(int offset)
+	{
+		surfaceOffset = offset;
+		return;
+	}
 };
 // end class PetscSolverHandler
 

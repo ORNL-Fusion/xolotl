@@ -20,8 +20,10 @@ MaterialHandler::MaterialHandler(const options::IOptions& options,
 	const IMaterialSubHandlerGenerator& subHandlerGenerator) :
 	_diffusionHandler(createDiffusionHandler(options)),
 	_advectionHandlers({subHandlerGenerator.generateAdvectionHandler()}),
-	_fluxHandler(subHandlerGenerator.generateFluxHandler(options))
+	_fluxHandler(subHandlerGenerator.generateFluxHandler(options)),
+	_soretDiffusionHandler(subHandlerGenerator.generateSoretDiffusionHandler())
 {
+	initializeSoretDiffusionHandler(options);
 	initializeAdvectionHandlers(options);
 
 	auto xolotlComm = util::getMPIComm();
@@ -76,6 +78,16 @@ MaterialHandler::createDiffusionHandler(const options::IOptions& options)
 		// The asked dimension is not good (e.g. -1, 4)
 		throw std::runtime_error(
 			"\nxolotlFactory: Bad dimension for the material factory.");
+	}
+}
+
+void
+MaterialHandler::initializeSoretDiffusionHandler(
+	const options::IOptions& options)
+{
+	if (!options.getProcesses().at("soret")) {
+		_soretDiffusionHandler =
+			std::make_shared<core::modified::DummySoretDiffusionHandler>();
 	}
 }
 

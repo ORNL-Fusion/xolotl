@@ -46,7 +46,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeConcentration(DM& da, Vec& C);
+	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC);
 
 	/**
 	 * \see ISolverHandler.h
@@ -113,6 +113,15 @@ public:
 	{
 		temperatures = temperature;
 		depths = std::vector<double>(1, 1.0);
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	void
+	setSurfaceOffset(int offset, int j = -1, int k = -1)
+	{
+		return;
 	}
 };
 // end class PetscSolver0DHandler

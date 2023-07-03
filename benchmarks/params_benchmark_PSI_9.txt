@@ -1,7 +1,7 @@
 dimensions=1
 process=reaction diff movingSurface advec modifiedTM attenuation
 gridType=nonuniform
-gridParam=40
+gridParam=36
 vizHandler=dummy
 perfHandler=os
 material=W111
@@ -15,4 +15,3 @@ netParam=8 0 0 10 6
 grouping=31 4 1
 tempHandler=profile
 tempFile=temp_benchmark_PSI_9.dat
-voidPortion=10.0

@@ -34,6 +34,11 @@ protected:
 	std::array<double, 2> tempParam;
 
 	/**
+	 * Value for the temperature grid power.
+	 */
+	double tempGridPower;
+
+	/**
 	 * Name of the input temperature profile file.
 	 */
 	std::string tempProfileFilename;
@@ -44,7 +49,7 @@ protected:
 	bool fluxFlag;
 
 	/**
-	 * Value for the  flux.
+	 * Value for the flux.
 	 */
 	double fluxAmplitude;
 
@@ -62,6 +67,11 @@ protected:
 	 * Name of the perf handler
 	 */
 	std::string perfHandlerName;
+
+	/**
+	 * Output performance report to YAML file?
+	 */
+	bool perfOutputYAMLFlag;
 
 	/**
 	 * Name of the viz handler
@@ -84,10 +94,9 @@ protected:
 	double zeta;
 
 	/**
-	 * Value of the portion of the void on the grid at the start of the
-	 * simulation.
+	 * The location of the interface between two materials.
 	 */
-	double voidPortion;
+	double interfaceLocation;
 
 	/**
 	 * Number of dimensions for the simulation.
@@ -337,6 +346,15 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
+	double
+	getTempGridPower() const override
+	{
+		return tempGridPower;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
 	std::string
 	getTempProfileFilename() const override
 	{
@@ -391,6 +409,15 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
+	bool
+	usePerfOutputYAML() const override
+	{
+		return perfOutputYAMLFlag;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
 	std::string
 	getVizHandlerName() const override
 	{
@@ -437,9 +464,9 @@ public:
 	 * \see IOptions.h
 	 */
 	double
-	getVoidPortion() const override
+	getInterfaceLocation() const override
 	{
-		return voidPortion;
+		return interfaceLocation;
 	}
 
 	/**

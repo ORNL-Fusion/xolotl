@@ -43,6 +43,11 @@ private:
 	bool initializedHere{false};
 
 	/**
+	 * Should we write performance statistics to a file?
+	 */
+	bool perfOutputYAML{false};
+
+	/**
 	 * The MPI and Kokkos environment
 	 */
 	std::unique_ptr<Context> context;

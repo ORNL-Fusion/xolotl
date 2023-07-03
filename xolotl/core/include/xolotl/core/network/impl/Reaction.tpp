@@ -39,14 +39,14 @@ Reaction<TNetwork, TDerived>::updateData(
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
-typename Reaction<TNetwork, TDerived>::AmountType
+double
 Reaction<TNetwork, TDerived>::computeOverlap(const ReflectedRegion& cl1RR,
 	const ReflectedRegion& cl2RR, const ReflectedRegion& pr1RR,
 	const ReflectedRegion& pr2RR)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
-	AmountType nOverlap = 1;
+	double nOverlap = 1.0;
 	for (auto i : speciesRangeNoI) {
 		// The width is the subset of the tiles for which the
 		// reaction is possible
@@ -208,8 +208,7 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 	}
 	// General case
 	else
-		nOverlap = static_cast<double>(
-			this->computeOverlap(cl1RR, cl2RR, pr1RR, pr2RR));
+		nOverlap = this->computeOverlap(cl1RR, cl2RR, pr1RR, pr2RR);
 
 	this->_coefs(0, 0, 0, 0) = nOverlap;
 	for (auto i : speciesRangeNoI) {
@@ -2028,8 +2027,7 @@ DissociationReaction<TNetwork, TDerived>::computeCoefficients()
 	auto pr1RR = rRegions[0];
 	auto pr2RR = rRegions[1];
 
-	auto nOverlap =
-		static_cast<double>(this->computeOverlap(pr1RR, pr2RR, clRR, cl2RR));
+	auto nOverlap = this->computeOverlap(pr1RR, pr2RR, clRR, cl2RR);
 
 	// The first coefficient is simply the overlap because it is the sum over 1
 	this->_coefs(0, 0, 0, 0) = nOverlap;

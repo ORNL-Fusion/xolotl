@@ -74,11 +74,11 @@ public:
 	computeFluence(double time) = 0;
 
 	/**
-	 * This operation returns the fluence.
+	 * This operation returns the total fluence and effective fluences.
 	 *
 	 * @return The fluence
 	 */
-	virtual double
+	virtual std::vector<double>
 	getFluence() const = 0;
 
 	/**
@@ -156,6 +156,14 @@ public:
 	 */
 	virtual std::vector<IdType>
 	getFluxIndices() const = 0;
+
+	/**
+	 * This operation gets the reduction factors each generated cluster.
+	 *
+	 * @return The factors
+	 */
+	virtual std::vector<double>
+	getReductionFactors() const = 0;
 };
 // end class IFluxHandler
 
