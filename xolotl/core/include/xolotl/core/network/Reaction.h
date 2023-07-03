@@ -250,7 +250,8 @@ public:
 	ProductionReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		IndexType cluster0, IndexType cluster1,
-		IndexType cluster2 = invalidIndex, IndexType cluster3 = invalidIndex);
+		IndexType cluster2 = invalidIndex, IndexType cluster3 = invalidIndex,
+		AmountType m = 1);
 
 	KOKKOS_INLINE_FUNCTION
 	ProductionReaction(ReactionDataRef reactionData,
@@ -318,6 +319,8 @@ protected:
 	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
 
 	util::Array<IndexType, 4, 1 + nMomentIds, 2, 1 + nMomentIds> _connEntries;
+
+	double _multi;
 };
 
 /**

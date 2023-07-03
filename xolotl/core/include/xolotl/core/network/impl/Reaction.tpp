@@ -119,10 +119,11 @@ KOKKOS_INLINE_FUNCTION
 ProductionReaction<TNetwork, TDerived>::ProductionReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, IndexType cluster0, IndexType cluster1,
-	IndexType cluster2, IndexType cluster3) :
+	IndexType cluster2, IndexType cluster3, AmountType m) :
 	Superclass(reactionData, clusterData, reactionId),
 	_reactants({cluster0, cluster1}),
-	_products({cluster2, cluster3})
+	_products({cluster2, cluster3}),
+	_multi((double)m)
 {
 	for (auto i : {0, 1}) {
 		this->copyMomentIds(_reactants[i], _reactantMomentIds[i]);
@@ -156,7 +157,7 @@ ProductionReaction<TNetwork, TDerived>::ProductionReaction(
 	IndexType reactionId, const detail::ClusterSet& clusterSet) :
 	ProductionReaction(reactionData, clusterData, reactionId,
 		clusterSet.cluster0, clusterSet.cluster1, clusterSet.cluster2,
-		clusterSet.cluster3)
+		clusterSet.cluster3, clusterSet.multiplier)
 {
 }
 
@@ -190,7 +191,7 @@ ProductionReaction<TNetwork, TDerived>::computeCoefficients()
 
 	// Initialize the reflected regions
 	auto rRegions = detail::updateReflectedRegionsForCoefs<nMomentIds>(
-		cl1Reg, cl2Reg, pr1Reg, pr2Reg);
+		cl1Reg, cl2Reg, pr1Reg, pr2Reg, _multi);
 	auto cl1RR = rRegions[0];
 	auto cl2RR = rRegions[1];
 	auto pr1RR = rRegions[2];
@@ -800,6 +801,7 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 
 	// Compute the flux for the 0th order moments
 	double f = this->_coefs(0, 0, 0, 0) * cR1 * cR2;
+
 	for (auto i : speciesRangeNoI) {
 		f += this->_coefs(i() + 1, 0, 0, 0) * cmR1[i()] * cR2;
 		f += this->_coefs(0, i() + 1, 0, 0) * cR1 * cmR2[i()];
@@ -817,7 +819,11 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 		if (prodId == invalidIndex) {
 			continue;
 		}
-		Kokkos::atomic_add(&fluxes[prodId], f / _productVolumes[p]);
+		double factor = 1.0;
+		if (p == 1)
+			factor = _multi;
+
+		Kokkos::atomic_add(&fluxes[prodId], factor * f / _productVolumes[p]);
 		p++;
 	}
 
@@ -862,6 +868,10 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 				continue;
 			}
 
+			double factor = 1.0;
+			if (p == 1)
+				factor = _multi;
+
 			if (_productMomentIds[p][k()] != invalidIndex) {
 				f = this->_coefs(0, 0, p + 2, k() + 1) * cR1 * cR2;
 				for (auto i : speciesRangeNoI) {
@@ -875,8 +885,8 @@ ProductionReaction<TNetwork, TDerived>::computeFlux(
 					}
 				}
 				f *= this->_rate(gridIndex);
-				Kokkos::atomic_add(
-					&fluxes[_productMomentIds[p][k()]], f / _productVolumes[p]);
+				Kokkos::atomic_add(&fluxes[_productMomentIds[p][k()]],
+					factor * f / _productVolumes[p]);
 			}
 		}
 	}
@@ -935,8 +945,13 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 		if (prodId == invalidIndex) {
 			continue;
 		}
+
+		double factor = 1.0;
+		if (p == 1)
+			factor = _multi;
+
 		Kokkos::atomic_add(&values(_connEntries[2 + p][0][0][0]),
-			this->_rate(gridIndex) * temp / _productVolumes[p]);
+			this->_rate(gridIndex) * temp * factor / _productVolumes[p]);
 	}
 
 	// Compute the values (d / dL_0^B)
@@ -956,8 +971,13 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 		if (prodId == invalidIndex) {
 			continue;
 		}
+
+		double factor = 1.0;
+		if (p == 1)
+			factor = _multi;
+
 		Kokkos::atomic_add(&values(_connEntries[2 + p][0][1][0]),
-			this->_rate(gridIndex) * temp / _productVolumes[p]);
+			this->_rate(gridIndex) * temp * factor / _productVolumes[p]);
 	}
 
 	for (auto i : speciesRangeNoI) {
@@ -979,8 +999,14 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 				if (prodId == invalidIndex) {
 					continue;
 				}
+
+				double factor = 1.0;
+				if (p == 1)
+					factor = _multi;
+
 				Kokkos::atomic_add(&values(_connEntries[2 + p][0][0][1 + i()]),
-					this->_rate(gridIndex) * temp / _productVolumes[p]);
+					this->_rate(gridIndex) * temp * factor /
+						_productVolumes[p]);
 			}
 		}
 
@@ -999,8 +1025,14 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 				if (prodId == invalidIndex) {
 					continue;
 				}
+
+				double factor = 1.0;
+				if (p == 1)
+					factor = _multi;
+
 				Kokkos::atomic_add(&values(_connEntries[2 + p][0][1][1 + i()]),
-					this->_rate(gridIndex) * temp / _productVolumes[p]);
+					this->_rate(gridIndex) * temp * factor /
+						_productVolumes[p]);
 			}
 		}
 	}
@@ -1105,6 +1137,10 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 			continue;
 		}
 
+		double factor = 1.0;
+		if (p == 1)
+			factor = _multi;
+
 		// Take care of the first moments
 		for (auto k : speciesRangeNoI) {
 			if (_productMomentIds[p][k()] != invalidIndex) {
@@ -1115,7 +1151,8 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 						this->_coefs(0, j() + 1, p + 2, k() + 1) * cmR2[j()];
 				}
 				Kokkos::atomic_add(&values(_connEntries[2 + p][1 + k()][0][0]),
-					this->_rate(gridIndex) * temp / _productVolumes[p]);
+					this->_rate(gridIndex) * temp * factor /
+						_productVolumes[p]);
 
 				// (d / dL_0^B)
 				temp = this->_coefs(0, 0, p + 2, k() + 1) * cR1;
@@ -1124,7 +1161,8 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 						this->_coefs(j() + 1, 0, p + 2, k() + 1) * cmR1[j()];
 				}
 				Kokkos::atomic_add(&values(_connEntries[2 + p][1 + k()][1][0]),
-					this->_rate(gridIndex) * temp / _productVolumes[p]);
+					this->_rate(gridIndex) * temp * factor /
+						_productVolumes[p]);
 
 				for (auto i : speciesRangeNoI) {
 					// (d / dL_1^A)
@@ -1137,7 +1175,8 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 						}
 						Kokkos::atomic_add(
 							&values(_connEntries[2 + p][1 + k()][0][1 + i()]),
-							this->_rate(gridIndex) * temp / _productVolumes[p]);
+							this->_rate(gridIndex) * temp * factor /
+								_productVolumes[p]);
 					}
 
 					// (d / dL_1^B)
@@ -1150,7 +1189,8 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 						}
 						Kokkos::atomic_add(
 							&values(_connEntries[2 + p][1 + k()][1][1 + i()]),
-							this->_rate(gridIndex) * temp / _productVolumes[p]);
+							this->_rate(gridIndex) * temp * factor /
+								_productVolumes[p]);
 					}
 				}
 			}
@@ -1212,8 +1252,13 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 		if (prodId == invalidIndex || prodId != _reactants[0]) {
 			continue;
 		}
+
+		double factor = 1.0;
+		if (p == 1)
+			factor = _multi;
+
 		Kokkos::atomic_add(&values(_connEntries[2 + p][0][0][0]),
-			this->_rate(gridIndex) * temp / _productVolumes[p]);
+			this->_rate(gridIndex) * temp * factor / _productVolumes[p]);
 	}
 
 	// Compute the values (d / dL_0^B)
@@ -1234,8 +1279,13 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 		if (prodId == invalidIndex || prodId != _reactants[1]) {
 			continue;
 		}
+
+		double factor = 1.0;
+		if (p == 1)
+			factor = _multi;
+
 		Kokkos::atomic_add(&values(_connEntries[2 + p][0][1][0]),
-			this->_rate(gridIndex) * temp / _productVolumes[p]);
+			this->_rate(gridIndex) * temp * factor / _productVolumes[p]);
 	}
 
 	// Take care of the first moments
@@ -1302,6 +1352,10 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 			continue;
 		}
 
+		double factor = 1.0;
+		if (p == 1)
+			factor = _multi;
+
 		// Take care of the first moments
 		for (auto k : speciesRangeNoI) {
 			if (_productMomentIds[p][k()] != invalidIndex) {
@@ -1315,7 +1369,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 					if (_productMomentIds[p][k()] == _reactantMomentIds[0][i()])
 						Kokkos::atomic_add(
 							&values(_connEntries[2 + p][1 + k()][0][1 + i()]),
-							this->_rate(gridIndex) * temp / _productVolumes[p]);
+							this->_rate(gridIndex) * temp * factor /
+								_productVolumes[p]);
 
 					// (d / dL_1^B)
 					temp = this->_coefs(0, i() + 1, p + 2, k() + 1) * cR1;
@@ -1326,7 +1381,8 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 					if (_productMomentIds[p][k()] == _reactantMomentIds[1][i()])
 						Kokkos::atomic_add(
 							&values(_connEntries[2 + p][1 + k()][1][1 + i()]),
-							this->_rate(gridIndex) * temp / _productVolumes[p]);
+							this->_rate(gridIndex) * temp * factor /
+								_productVolumes[p]);
 				}
 			}
 		}

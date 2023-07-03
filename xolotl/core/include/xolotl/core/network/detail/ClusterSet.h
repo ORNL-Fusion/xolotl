@@ -17,22 +17,25 @@ namespace detail
 struct ClusterSet
 {
 	using IndexType = IReactionNetwork::IndexType;
+	using AmountType = IReactionNetwork::AmountType;
 	static constexpr IndexType invalidIndex = IReactionNetwork::invalidIndex();
 
 	IndexType cluster0{invalidIndex};
 	IndexType cluster1{invalidIndex};
 	IndexType cluster2{invalidIndex};
 	IndexType cluster3{invalidIndex};
+	AmountType multiplier{1};
 
 	ClusterSet() = default;
 
 	KOKKOS_INLINE_FUNCTION
 	ClusterSet(IndexType cl0, IndexType cl1, IndexType cl2 = invalidIndex,
-		IndexType cl3 = invalidIndex) :
+		IndexType cl3 = invalidIndex, AmountType m = 1) :
 		cluster0{cl0},
 		cluster1{cl1},
 		cluster2{cl2},
-		cluster3{cl3}
+		cluster3{cl3},
+		multiplier{m}
 	{
 	}
 

@@ -23,7 +23,6 @@ class PSIProductionReaction :
 public:
 	using Superclass = ProductionReaction<PSIReactionNetwork<TSpeciesEnum>,
 		PSIProductionReaction<TSpeciesEnum>>;
-
 	using IndexType = typename Superclass::IndexType;
 	using Superclass::Superclass;
 
@@ -87,6 +86,8 @@ public:
 	using Superclass = BurstingReaction<PSIReactionNetwork<TSpeciesEnum>,
 		PSIBurstingReaction<TSpeciesEnum>>;
 	using IndexType = typename Superclass::IndexType;
+	using ConcentrationsView = typename Superclass::ConcentrationsView;
+	using FluxesView = typename Superclass::FluxesView;
 	using Superclass::Superclass;
 
 	KOKKOS_INLINE_FUNCTION

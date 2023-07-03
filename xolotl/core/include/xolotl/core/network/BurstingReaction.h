@@ -61,6 +61,11 @@ public:
 	void
 	updateRates(double largestRate);
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
+		IndexType gridIndex);
+
 private:
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -77,11 +82,6 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedConnectivity(const Connectivity& connectivity);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
-		IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void

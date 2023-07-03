@@ -538,9 +538,9 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 			return;
 		}
 
-		std::set<std::pair<IndexType, IndexType>> previousIndices;
-		previousIndices.insert(std::make_pair<IndexType, IndexType>(
-			subpaving.invalidIndex(), subpaving.invalidIndex()));
+		std::set<std::pair<IndexType, AmountType>> previousIndices;
+		previousIndices.insert(
+			std::make_pair<IndexType, AmountType>(subpaving.invalidIndex(), 0));
 
 		// Loop on the cluster
 		for (auto a = bounds[Species::He].first;
@@ -563,18 +563,19 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 				auto prodId = subpaving.findTileId(comp);
 				comp[Species::He] = 0;
 				comp[Species::V] = 0;
-				comp[Species::I] = nV - bounds[Species::V].first;
+				comp[Species::I] = 1;
+				auto iSize = nV - b;
 				auto iClusterId = subpaving.findTileId(comp);
 				auto key = std::make_pair<IndexType, IndexType>(
 					std::forward<IndexType>(prodId),
-					std::forward<IndexType>(iClusterId));
+					std::forward<AmountType>(iSize));
 				auto iter = previousIndices.find(key);
 				if (prodId != subpaving.invalidIndex() and
 					iClusterId != subpaving.invalidIndex() and
 					iter == previousIndices.end()) {
 					// Add the reaction
 					this->addProductionReaction(
-						tag, {i, j, prodId, iClusterId});
+						tag, {i, j, prodId, iClusterId, iSize});
 					// No dissociation
 					// Update the previous indices
 					previousIndices.insert(key);

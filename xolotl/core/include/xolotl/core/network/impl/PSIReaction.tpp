@@ -212,10 +212,6 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
 			be = prod1.getFormationEnergy() + prod2.getFormationEnergy() -
 				cl.getFormationEnergy();
 		}
-
-		//		std::cout << comp[Species::He] << " " << comp[Species::V] << " "
-		//<< be << " " << this->_products[0] << " " << lowerV << " " << higherV
-		//<< std::endl;
 	}
 
 	return util::max(be, -5.0);
@@ -254,13 +250,30 @@ PSIBurstingReaction<TSpeciesEnum>::getAppliedRate(IndexType gridIndex) const
 	auto cl = this->_clusterData->getCluster(this->_reactant);
 	auto clReg = cl.getRegion();
 	auto radius = cl.getReactionRadius();
+	Composition lo = clReg.getOrigin();
+	Composition hi = clReg.getUpperLimitPoint();
 
 	// Get the current depth
 	auto depth = this->_clusterData->getDepth();
 	auto tau = this->_clusterData->getTauBursting();
 	auto f = this->_clusterData->getFBursting();
-	return f * (radius / depth) *
-		util::min(1.0, exp(-(depth - tau) / (2.0 * tau)));
+	double beta_d = 0.01;
+	double alpha_p = 1.0e40;
+	double beta_p = 0.1;
+	auto d_l = depth * 2.0 / this->_clusterData->latticeParameter();
+	auto V_b = std::pow(d_l, 3.566) / 21.8;
+	auto a0 = this->_clusterData->latticeParameter();
+	auto a0Cubed = a0 * a0 * a0;
+	auto temp = depth - a0 * sqrt(3.0) / 4.0 +
+		cbrt(3.0 * a0Cubed / (8.0 * ::xolotl::core::pi));
+	auto V_d = temp * temp * temp * 8.0 * ::xolotl::core::pi / (3.0 * a0Cubed);
+	double V_n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
+	auto term1 = util::max(
+		0.0, util::min(1.0, (V_n - beta_d * V_b) / ((1.0 - beta_d) * V_b)));
+	auto term2 = util::max(1.0, alpha_p * util::min(1.0, (V_n - V_d) / beta_p));
+	auto term3 = util::min(1.0, exp(-(depth - tau) / (2.0 * tau)));
+
+	return f * term1 * term2 * term3;
 }
 } // namespace network
 } // namespace core

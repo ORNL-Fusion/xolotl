@@ -57,7 +57,8 @@ std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() > 1),
 		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
 		4>>
 updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
-	const TRegion& pr1Reg, const TRegion& pr2Reg)
+	const TRegion& pr1Reg, const TRegion& pr2Reg,
+	plsm::DifferenceType<typename TRegion::ScalarType> m = 1)
 {
 	using Species = typename TRegion::EnumIndex;
 	using Ival =
@@ -167,7 +168,8 @@ std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1),
 		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
 		4>>
 updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
-	const TRegion& pr1Reg, const TRegion& pr2Reg)
+	const TRegion& pr1Reg, const TRegion& pr2Reg,
+	plsm::DifferenceType<typename TRegion::ScalarType> m = 1)
 {
 	using Species = typename TRegion::EnumIndex;
 	using Ival =
@@ -193,8 +195,9 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 			Ival(pr1Reg[Species::I].begin() - pr1Reg[Species::V].end() + 1,
 				pr1Reg[Species::I].end() - pr1Reg[Species::V].begin());
 		pr2RR[vIndex] =
-			Ival(pr2Reg[Species::I].begin() - pr2Reg[Species::V].end() + 1,
-				pr2Reg[Species::I].end() - pr2Reg[Species::V].begin());
+			Ival(pr2Reg[Species::I].begin() * m - pr2Reg[Species::V].end() + 1,
+				(pr2Reg[Species::I].end() - 1) * m + 1 -
+					pr2Reg[Species::V].begin());
 	}
 	else {
 		// Project on V
@@ -207,9 +210,9 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 		pr1RR[vIndex] =
 			Ival(pr1Reg[Species::V].begin() - pr1Reg[Species::I].end() + 1,
 				pr1Reg[Species::V].end() - pr1Reg[Species::I].begin());
-		pr2RR[vIndex] =
-			Ival(pr2Reg[Species::V].begin() - pr2Reg[Species::I].end() + 1,
-				pr2Reg[Species::V].end() - pr2Reg[Species::I].begin());
+		pr2RR[vIndex] = Ival(
+			pr2Reg[Species::V].begin() - (pr2Reg[Species::I].end() - 1) * m,
+			pr2Reg[Species::V].end() - (pr2Reg[Species::I].begin() * m));
 	}
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
@@ -228,7 +231,8 @@ std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 0),
 		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
 		4>>
 updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
-	const TRegion& pr1Reg, const TRegion& pr2Reg)
+	const TRegion& pr1Reg, const TRegion& pr2Reg,
+	plsm::DifferenceType<typename TRegion::ScalarType> m = 1)
 {
 	return initReflectedRegions<Dim>(cl1Reg, cl2Reg, pr1Reg, pr2Reg);
 }
