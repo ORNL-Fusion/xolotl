@@ -167,9 +167,9 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 
 template <typename TSpeciesEnum>
 void
-PSIReactionNetwork<TSpeciesEnum>::updateReactionRates()
+PSIReactionNetwork<TSpeciesEnum>::updateReactionRates(double time)
 {
-	Superclass::updateReactionRates();
+	Superclass::updateReactionRates(time);
 
 	using TrapMutationReactionType =
 		typename Superclass::Traits::TrapMutationReactionType;
@@ -343,7 +343,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		// Compute the composition of the new cluster
 		auto minSize = lo1[Species::I] + lo2[Species::I];
 		auto maxSize = hi1[Species::I] + hi2[Species::I] - 2;
-		auto prodBounds = std::make_pair<int, int>(0, 0);
+		auto prodBounds = Kokkos::make_pair<int, int>(0, 0);
 		// Find the corresponding clusters
 		for (auto k = minSize; k <= maxSize; k++) {
 			// Check the bounds of the previous product
@@ -381,7 +381,7 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 			(int)vReg[Species::V].end() - 1 - (int)iReg[Species::I].begin();
 		int smallestProd =
 			(int)vReg[Species::V].begin() - (int)iReg[Species::I].end() + 1;
-		auto prodBounds = std::make_pair<int, int>(0, 0);
+		auto prodBounds = Kokkos::make_pair<int, int>(0, 0);
 		// Loop on the products
 		for (int prodSize = smallestProd; prodSize <= largestProd; prodSize++) {
 			// Check the bounds of the previous product

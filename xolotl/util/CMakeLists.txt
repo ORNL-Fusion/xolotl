@@ -25,7 +25,6 @@ add_library(xolotlUtil SHARED
 )
 target_link_libraries(xolotlUtil PUBLIC
     MPI::MPI_CXX
-    Boost::filesystem
     Boost::log_setup
     Boost::log
     Boost::dynamic_linking

@@ -63,9 +63,11 @@ monitorSeries(
 }
 
 void
-PetscMonitor1D::setup()
+PetscMonitor1D::setup(int loop)
 {
 	PetscErrorCode ierr;
+
+	_loopNumber = loop;
 
 	auto perfHandler = _solverHandler->getPerfHandler();
 
@@ -183,7 +185,7 @@ PetscMonitor1D::setup()
 		networkFile = std::make_unique<io::XFile>(networkName);
 		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
-		if (hasConcentrations) {
+		if (hasConcentrations and _loopNumber == 0) {
 			lastTsGroup = concGroup->getLastTimestepGroup();
 		}
 	}
@@ -247,7 +249,7 @@ PetscMonitor1D::setup()
 		while (iClusterExists) {
 			comp[specIdI()] = iSize;
 			auto clusterId = psiNetwork->findClusterId(comp);
-			// Check that the helium cluster is present in the network
+			// Check that it is present in the network
 			if (clusterId != NetworkType::invalidIndex()) {
 				_iClusterIds.push_back(clusterId);
 				iSize++;
@@ -258,9 +260,8 @@ PetscMonitor1D::setup()
 
 		// Get the interstitial information at the surface if concentrations
 		// were stored
-		if (hasConcentrations) {
+		if (hasConcentrations and _loopNumber == 0) {
 			assert(lastTsGroup);
-
 			// Get the names of the species in the network
 			std::vector<std::string> names;
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
@@ -292,7 +293,7 @@ PetscMonitor1D::setup()
 		_sputteringYield = _solverHandler->getSputteringYield();
 
 		// Master process
-		if (procId == 0) {
+		if (procId == 0 and _loopNumber == 0) {
 			// Clear the file where the surface will be written
 			std::ofstream outputFile;
 			outputFile.open("surface.txt");
@@ -415,7 +416,7 @@ PetscMonitor1D::setup()
 		auto fluxHandler = _solverHandler->getFluxHandler();
 		// Get the previous time if concentrations were stored and initialize
 		// the fluence
-		if (hasConcentrations) {
+		if (hasConcentrations and _loopNumber == 0) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
@@ -482,11 +483,16 @@ PetscMonitor1D::setup()
 			"failed.");
 
 		// Master process
-		if (procId == 0) {
+		if (procId == 0 and _loopNumber == 0) {
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
 			outputFile << "#time fluence ";
+			// Get the generated clusters
+			auto factors = fluxHandler->getReductionFactors();
+			for (auto i = 0; i < factors.size(); i++) {
+				outputFile << "fluence_" << i << " ";
+			}
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 				auto speciesName = network.getSpeciesName(id);
 				outputFile << speciesName << "_content ";
@@ -548,7 +554,7 @@ PetscMonitor1D::setup()
 
 		// Get the previous time if concentrations were stored and initialize
 		// the fluence
-		if (hasConcentrations) {
+		if (hasConcentrations and _loopNumber == 0) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
@@ -572,7 +578,7 @@ PetscMonitor1D::setup()
 			"failed.");
 
 		// Master process
-		if (procId == 0) {
+		if (procId == 0 and _loopNumber == 0) {
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
@@ -593,7 +599,7 @@ PetscMonitor1D::setup()
 
 	// Set the monitor to output data for Alloy
 	if (flagAlloy) {
-		if (procId == 0) {
+		if (procId == 0 and _loopNumber == 0) {
 			// Create/open the output files
 			std::fstream outputFile;
 			outputFile.open("Alloy.dat", std::fstream::out);
@@ -616,7 +622,7 @@ PetscMonitor1D::setup()
 
 	// Set the monitor to compute the temperature profile
 	if (flagTemp) {
-		if (procId == 0) {
+		if (procId == 0 and _loopNumber == 0) {
 			// Uncomment to clear the file where the retention will be written
 			std::ofstream outputFile;
 			outputFile.open("tempProf.txt");
@@ -636,11 +642,9 @@ PetscMonitor1D::setup()
 
 			// Get the physical grid
 			auto grid = _solverHandler->getXGrid();
-			// Get the position of the surface
-			auto surfacePos = _solverHandler->getSurfacePosition();
 
 			// Loop on the entire grid
-			for (auto xi = surfacePos + _solverHandler->getLeftOffset();
+			for (auto xi = _solverHandler->getLeftOffset();
 				 xi < Mx - _solverHandler->getRightOffset(); xi++) {
 				// Set x
 				double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
@@ -688,7 +692,7 @@ PetscMonitor1D::setup()
 
 		// Compute the correct _hdf5Previous for a restart
 		// Get the last time step written in the HDF5 file
-		if (hasConcentrations) {
+		if (hasConcentrations and _loopNumber == 0) {
 			assert(lastTsGroup);
 
 			// Get the previous time from the HDF5 file
@@ -698,25 +702,8 @@ PetscMonitor1D::setup()
 		}
 
 		// Don't do anything if both files have the same name
-		if (_hdf5OutputName != _solverHandler->getNetworkName()) {
-			PetscInt Mx;
-			PetscErrorCode ierr;
-
-			// Get the da from _ts
-			DM da;
-			ierr = TSGetDM(_ts, &da);
-			checkPetscError(ierr, "setupPetsc1DMonitor: TSGetDM failed.");
-
-			// Get the size of the total grid
-			ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-				PETSC_IGNORE, PETSC_IGNORE);
-			checkPetscError(ierr, "setupPetsc1DMonitor: DMDAGetInfo failed.");
-
-			// Get the physical grid
-			auto grid = _solverHandler->getXGrid();
-
+		if (_hdf5OutputName != _solverHandler->getNetworkName() and
+			_loopNumber == 0) {
 			// Create and initialize a checkpoint file.
 			// We do this in its own scope so that the file
 			// is closed when the file object goes out of scope.
@@ -724,7 +711,7 @@ PetscMonitor1D::setup()
 			// the network from another file using a single-process
 			// MPI communicator.
 			{
-				io::XFile checkpointFile(_hdf5OutputName, grid, xolotlComm);
+				io::XFile checkpointFile(_hdf5OutputName, 1, xolotlComm);
 			}
 
 			// Copy the network group from the given file (if it has one).
@@ -845,9 +832,6 @@ PetscMonitor1D::startStop(
 	// Create an array for the concentration
 	double concArray[dof + 1][2];
 
-	// Get the position of the surface
-	auto surfacePos = _solverHandler->getSurfacePosition();
-
 	// Open the existing HDF5 file
 	io::XFile checkpointFile(
 		_hdf5OutputName, xolotlComm, io::XFile::AccessMode::OpenReadWrite);
@@ -861,7 +845,12 @@ PetscMonitor1D::startStop(
 	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
 	assert(concGroup);
 	auto tsGroup = concGroup->addTimestepGroup(
-		timestep, time, previousTime, currentTimeStep);
+		_loopNumber, timestep, time, previousTime, currentTimeStep);
+
+	// Get the physical grid
+	auto grid = _solverHandler->getXGrid();
+	// Write it in the file
+	tsGroup->writeGrid(grid);
 
 	// Get the names of the species in the network
 	auto numSpecies = network.getSpeciesListSize();
@@ -873,7 +862,7 @@ PetscMonitor1D::startStop(
 	if (_solverHandler->moveSurface() || _solverHandler->getLeftOffset() == 1) {
 		// Write the surface positions and the associated interstitial
 		// quantities in the concentration sub group
-		tsGroup->writeSurface1D(surfacePos, _nSurf, _previousSurfFlux, names);
+		tsGroup->writeSurface1D(_nSurf, _previousSurfFlux, names);
 	}
 
 	// Write the bottom impurity information if the bottom is a free surface
@@ -938,8 +927,6 @@ PetscMonitor1D::computeHeliumRetention(
 
 	// Get the physical grid
 	auto grid = _solverHandler->getXGrid();
-	// Get the position of the surface
-	auto surfacePos = _solverHandler->getSurfacePosition();
 
 	// Get the network
 	using NetworkType = core::network::IPSIReactionNetwork;
@@ -947,9 +934,17 @@ PetscMonitor1D::computeHeliumRetention(
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	const auto dof = network.getDOF();
 
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	ierr = DMGetLocalVector(da, &localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
+	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
+	CHKERRQ(ierr);
 	// Get the array of concentration
 	PetscReal** solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray);
 	CHKERRQ(ierr);
 
 	// Store the concentration over the grid
@@ -963,7 +958,7 @@ PetscMonitor1D::computeHeliumRetention(
 	// Loop on the grid
 	for (auto xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
-		if (xi < surfacePos + _solverHandler->getLeftOffset() ||
+		if (xi < _solverHandler->getLeftOffset() ||
 			xi >= Mx - _solverHandler->getRightOffset())
 			continue;
 
@@ -980,9 +975,15 @@ PetscMonitor1D::computeHeliumRetention(
 		deep_copy(dConcs, hConcs);
 
 		// Get the total concentrations at this grid point
+		using Quant = core::network::IReactionNetwork::TotalQuantity;
+		std::vector<Quant> quant;
+		quant.reserve(numSpecies);
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			myConcData[id()] +=
-				network.getTotalAtomConcentration(dConcs, id, 1) * hx;
+			quant.push_back({Quant::Type::atom, id, 1});
+		}
+		auto totals = network.getTotalsVec(dConcs, quant);
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			myConcData[id()] += totals[id()] * hx;
 		}
 	}
 
@@ -1004,7 +1005,7 @@ PetscMonitor1D::computeHeliumRetention(
 	// Look at the fluxes leaving the free surface
 	if (_solverHandler->getLeftOffset() == 1) {
 		// Set the surface position
-		auto xi = surfacePos + 1;
+		auto xi = 1;
 
 		// Value to know on which processor is the surface
 		int surfaceProc = 0;
@@ -1177,7 +1178,7 @@ PetscMonitor1D::computeHeliumRetention(
 	// Master process
 	if (procId == 0) {
 		// Get the fluence
-		double fluence = fluxHandler->getFluence();
+		auto fluence = fluxHandler->getFluence();
 
 		// Print the result
 		util::StringStream ss;
@@ -1186,13 +1187,16 @@ PetscMonitor1D::computeHeliumRetention(
 			ss << network.getSpeciesName(id)
 			   << " content = " << totalConcData[id()] << std::endl;
 		}
-		ss << "Fluence = " << fluence << std::endl << std::endl;
+		ss << "Fluence = " << fluence[0] << std::endl << std::endl;
 		XOLOTL_LOG << ss.str();
 
 		// Write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << time << " " << fluence << " ";
+		outputFile << time << " ";
+		for (auto flu : fluence) {
+			outputFile << flu << " ";
+		}
 		for (auto i = 0; i < numSpecies; ++i) {
 			outputFile << totalConcData[i] << " ";
 		}
@@ -1226,7 +1230,9 @@ PetscMonitor1D::computeHeliumRetention(
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray);
+	CHKERRQ(ierr);
+	ierr = DMRestoreLocalVector(da, &localSolution);
 	CHKERRQ(ierr);
 
 	PetscFunctionReturn(0);
@@ -1309,25 +1315,26 @@ PetscMonitor1D::computeXenonRetention(
 		double hx = grid[xi + 1] - grid[xi];
 
 		// Get the concentrations
-		xeConcentration +=
-			network.getTotalAtomConcentration(dConcs, Spec::Xe, 1) * hx;
-		bubbleConcentration +=
-			network.getTotalConcentration(dConcs, Spec::Xe, 1) * hx;
-		radii += network.getTotalRadiusConcentration(dConcs, Spec::Xe, 1) * hx;
-		partialBubbleConcentration =
-			network.getTotalConcentration(dConcs, Spec::Xe, minSizes[0]) * hx;
-		partialRadii +=
-			network.getTotalRadiusConcentration(dConcs, Spec::Xe, minSizes[0]) *
-			hx;
-		partialSize +=
-			network.getTotalAtomConcentration(dConcs, Spec::Xe, minSizes[0]) *
-			hx;
+		using TQ = core::network::IReactionNetwork::TotalQuantity;
+		using Q = TQ::Type;
+		using TQA = util::Array<TQ, 7>;
+		auto id =
+			core::network::SpeciesId(Spec::Xe, network.getSpeciesListSize());
+		auto ms = static_cast<AmountType>(minSizes[id()]);
+		auto totals = network.getTotals(dConcs,
+			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
+				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
+				TQ{Q::radius, id, ms}, TQ{Q::volume, id, ms}});
 
-		// Set the volume fraction
-		double volumeFrac =
-			network.getTotalVolumeFraction(dConcs, Spec::Xe, minSizes[0]);
-		_solverHandler->setVolumeFraction(volumeFrac, xi - xs);
-		// Set the monomer concentration
+		bubbleConcentration += totals[0] * hx;
+		xeConcentration += totals[1] * hx;
+		radii += totals[2] * hx;
+		partialBubbleConcentration += totals[3] * hx;
+		partialSize += totals[4] * hx;
+		partialRadii += totals[5] * hx;
+
+		_solverHandler->setVolumeFraction(totals[6], xi - xs);
+
 		_solverHandler->setMonomerConc(
 			gridPointSolution[xeCluster.getId()], xi - xs);
 	}
@@ -1519,13 +1526,10 @@ PetscMonitor1D::computeAlloy(
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal* gridPointSolution;
 
-	// Get the position of the surface
-	auto surfacePos = _solverHandler->getSurfacePosition();
-
 	// Loop on the grid
 	for (auto xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
-		if (xi < surfacePos + _solverHandler->getLeftOffset() ||
+		if (xi < _solverHandler->getLeftOffset() ||
 			xi == Mx - _solverHandler->getRightOffset())
 			continue;
 
@@ -1541,13 +1545,18 @@ PetscMonitor1D::computeAlloy(
 
 		// Loop on the species
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			myData[4 * id()] += network.getTotalConcentration(dConcs, id, 1);
-			myData[(4 * id()) + 1] +=
-				2.0 * network.getTotalRadiusConcentration(dConcs, id, 1);
-			myData[(4 * id()) + 2] +=
-				network.getTotalConcentration(dConcs, id, minSizes[id()]);
-			myData[(4 * id()) + 3] += 2.0 *
-				network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]);
+			using TQ = core::network::IReactionNetwork::TotalQuantity;
+			using Q = TQ::Type;
+			using TQA = util::Array<TQ, 4>;
+			auto ms = static_cast<AmountType>(minSizes[id()]);
+			auto totals = network.getTotals(dConcs,
+				TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1},
+					TQ{Q::total, id, ms}, TQ{Q::radius, id, ms}});
+
+			myData[4 * id()] += totals[0];
+			myData[(4 * id()) + 1] += 2.0 * totals[1] / myData[4 * id()];
+			myData[(4 * id()) + 2] += totals[2];
+			myData[(4 * id()) + 3] += 2.0 * totals[3] / myData[(4 * id()) + 2];
 		}
 	}
 
@@ -1561,8 +1570,8 @@ PetscMonitor1D::computeAlloy(
 		for (auto i = 0; i < numSpecies; ++i) {
 			globalData[(4 * i) + 1] /= globalData[4 * i];
 			globalData[(4 * i) + 3] /= globalData[(4 * i) + 2];
-			globalData[4 * i] /= (grid[Mx] - grid[surfacePos + 1]);
-			globalData[(4 * i) + 2] /= (grid[Mx] - grid[surfacePos + 1]);
+			globalData[4 * i] /= (grid[Mx] - grid[1]);
+			globalData[(4 * i) + 2] /= (grid[Mx] - grid[1]);
 		}
 
 		// Set the output precision
@@ -1687,7 +1696,7 @@ PetscMonitor1D::monitorScatter(
 		// Render and save in file
 		std::stringstream fileName;
 		fileName << "Scatter_TS" << timestep << ".png";
-		_scatterPlot->write(fileName.str());
+		_scatterPlot->render(fileName.str());
 	}
 
 	// Restore the solutionArray
@@ -1713,15 +1722,16 @@ PetscMonitor1D::eventFunction(
 	_depthPositions.clear();
 	fvalue[0] = 1.0, fvalue[1] = 1.0;
 
-	PetscInt TSNumber = -1;
-	ierr = TSGetStepNumber(ts, &TSNumber);
+	PetscInt tsNumber = -1;
+	ierr = TSGetStepNumber(ts, &tsNumber);
+	CHKERRQ(ierr);
 
 	// Skip if it is the same TS as before
-	if (TSNumber == _previousTSNumber)
+	if (tsNumber == _previousTSNumber)
 		PetscFunctionReturn(0);
 
 	// Set the previous TS number
-	_previousTSNumber = TSNumber;
+	_previousTSNumber = tsNumber;
 
 	// Gets the process ID
 	auto xolotlComm = util::getMPIComm();
@@ -1741,8 +1751,7 @@ PetscMonitor1D::eventFunction(
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
 	// Get the position of the surface
-	auto surfacePos = _solverHandler->getSurfacePosition();
-	auto xi = surfacePos + _solverHandler->getLeftOffset();
+	auto xi = _solverHandler->getLeftOffset();
 
 	// Get the network
 	using NetworkType = core::network::IPSIReactionNetwork;
@@ -1764,10 +1773,10 @@ PetscMonitor1D::eventFunction(
 	// Work of the moving surface first
 	if (_solverHandler->moveSurface()) {
 		// Write the initial surface position
-		if (procId == 0 && util::equal(time, 0.0)) {
+		if (procId == 0 and tsNumber == 0) {
 			std::ofstream outputFile;
 			outputFile.open("surface.txt", std::ios::app);
-			outputFile << time << " " << grid[surfacePos + 1] - grid[1]
+			outputFile << time << " " << grid[grid.size() - 2] - grid[1]
 					   << std::endl;
 			outputFile.close();
 		}
@@ -1778,10 +1787,10 @@ PetscMonitor1D::eventFunction(
 
 		// if xi is on this process
 		if (xi >= xs && xi < xs + xm) {
-			// Get the concentrations at xi = surfacePos + 1
+			// Get the concentrations
 			gridPointSolution = solutionArray[xi];
 
-			if (TSNumber > 0) {
+			if (tsNumber > 0) {
 				// Compute the total density of intersitials that escaped from
 				// the surface since last timestep using the stored flux
 				_nSurf[specIdI()] += _previousSurfFlux[specIdI()] * dt;
@@ -1833,18 +1842,15 @@ PetscMonitor1D::eventFunction(
 		// Now that all the processes have the same value of nInterstitials,
 		// compare it to the threshold to now if we should move the surface
 
-		// Get the initial vacancy concentration
-		double initialVConc = _solverHandler->getInitialVConc();
-
 		// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
-		double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
+		double threshold = core::tungstenDensity * (grid[xi] - grid[xi - 1]);
 		if (_nSurf[specIdI()] > threshold) {
 			// The surface is moving
 			fvalue[0] = 0;
 		}
 
 		// Update the threshold for erosion (the cell size is not the same)
-		threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
+		threshold = core::tungstenDensity * (grid[xi + 1] - grid[xi]);
 		// Moving the surface back
 		if (_nSurf[specIdI()] < -threshold * 0.9) {
 			// The surface is moving
@@ -1901,9 +1907,6 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Get local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
-	// Get the position of the surface
-	auto surfacePos = _solverHandler->getSurfacePosition();
-
 	// Get the network
 	auto& network = _solverHandler->getNetwork();
 	auto dof = network.getDOF();
@@ -1938,14 +1941,8 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		PetscFunctionReturn(0);
 	}
 
-	// Save the current position
-	auto oldSurfacePos = surfacePos;
-
 	// Set the surface position
-	auto xi = surfacePos + _solverHandler->getLeftOffset();
-
-	// Get the initial vacancy concentration
-	double initialVConc = _solverHandler->getInitialVConc();
+	auto xi = _solverHandler->getLeftOffset();
 
 	// Get the network
 	using NetworkType = core::network::IPSIReactionNetwork;
@@ -1955,134 +1952,38 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	auto specIdI = psiNetwork->getInterstitialSpeciesId();
 
 	// The density of tungsten is 62.8 atoms/nm3, thus the threshold is
-	double threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
+	double threshold = core::tungstenDensity * (grid[xi] - grid[xi - 1]);
 
 	if (movingUp) {
 		int nGridPoints = 0;
 		// Move the surface up until it is smaller than the next threshold
 		while (_nSurf[specIdI()] > threshold &&
-			surfacePos + _solverHandler->getLeftOffset() - 2 >= 0) {
+			_solverHandler->getLeftOffset() - 2 >= 0) {
 			// Move the surface higher
-			surfacePos--;
-			xi = surfacePos + _solverHandler->getLeftOffset();
 			nGridPoints++;
 			// Update the number of interstitials
 			_nSurf[specIdI()] -= threshold;
-			// Update the thresold
-			threshold = (62.8 - initialVConc) * (grid[xi] - grid[xi - 1]);
-		}
 
-		// Throw an exception if the position is negative
-		if (surfacePos + _solverHandler->getLeftOffset() < 2) {
-			PetscBool flagCheck;
-			ierr =
-				PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
-			CHKERRQ(ierr);
-			if (flagCheck) {
-				// Write the convergence reason
-				std::ofstream outputFile;
-				outputFile.open("solverStatus.txt");
-				outputFile << "overgrid" << std::endl;
-				outputFile.close();
+			if (nGridPoints > 0) {
+				_solverHandler->setSurfaceOffset(nGridPoints);
+				ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
+				CHKERRQ(ierr);
+				PetscFunctionReturn(0);
 			}
-			throw std::runtime_error(
-				"\nxolotlSolver::Monitor1D: The surface is "
-				"trying to go outside of the grid!!");
-		}
-
-		// Printing information about the extension of the material
-		if (procId == 0) {
-			XOLOTL_LOG << "Adding " << nGridPoints
-					   << " points to the grid at time: " << time << " s.";
-		}
-
-		// Set it in the solver
-		_solverHandler->setSurfacePosition(surfacePos);
-
-		// Initialize the vacancy concentration and the temperature on the new
-		// grid points Get the single vacancy ID
-		auto singleVacancyCluster = network.getSingleVacancy();
-		auto vacancyIndex = core::network::IReactionNetwork::invalidIndex();
-		if (singleVacancyCluster.getId() !=
-			core::network::IReactionNetwork::invalidIndex())
-			vacancyIndex = singleVacancyCluster.getId();
-
-		// Get the complete data array, including ghost cells
-		Vec localSolution;
-		ierr = DMGetLocalVector(da, &localSolution);
-		CHKERRQ(ierr);
-		ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
-		CHKERRQ(ierr);
-		ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
-		CHKERRQ(ierr);
-		// Get the array of concentration
-		PetscReal** localSolutionArray;
-		ierr = DMDAVecGetArrayDOFRead(da, localSolution, &localSolutionArray);
-		CHKERRQ(ierr);
-
-		// Get the interpolated temperature
-		std::vector<double> localTemp;
-		for (PetscInt i = -1; i <= (PetscInt)xm; ++i) {
-			auto gridPointSolution = localSolutionArray[(PetscInt)xs + i];
-
-			// Get the temperature
-			localTemp.push_back(gridPointSolution[dof]);
-		}
-		// Restore the solutionArray
-		ierr =
-			DMDAVecRestoreArrayDOFRead(da, localSolution, &localSolutionArray);
-		CHKERRQ(ierr);
-		ierr = DMRestoreLocalVector(da, &localSolution);
-		CHKERRQ(ierr);
-
-		auto networkTemp =
-			_solverHandler->interpolateTemperature(oldSurfacePos, localTemp);
-
-		// Get the surface temperature
-		double temp = 0.0;
-		xi = oldSurfacePos + _solverHandler->getLeftOffset();
-		if (xi >= xs && xi < xs + xm) {
-			temp = networkTemp[xi - xs + 1];
-		}
-		double surfTemp = 0.0;
-		MPI_Allreduce(&temp, &surfTemp, 1, MPI_DOUBLE, MPI_SUM, xolotlComm);
-
-		// Loop on the new grid points
-		while (nGridPoints >= 0) {
-			// Position of the newly created grid point
-			xi = surfacePos + nGridPoints;
-
-			// If xi is on this process
-			if (xi >= xs && xi < xs + xm) {
-				// Get the concentrations
-				gridPointSolution = solutionArray[xi];
-
-				// Set the new surface temperature
-				gridPointSolution[dof] = surfTemp;
-
-				if (vacancyIndex !=
-						core::network::IReactionNetwork::invalidIndex() &&
-					nGridPoints > 0) {
-					// Initialize the vacancy concentration
-					gridPointSolution[vacancyIndex] = initialVConc;
-				}
-			}
-
-			// Decrease the number of grid points
-			--nGridPoints;
 		}
 	}
 
 	// Moving the surface back
 	else {
+		int nGridPoints = 0;
 		// Move it back as long as the number of interstitials in negative
 		while (_nSurf[specIdI()] < 0.0) {
 			// Compute the threshold to a deeper grid point
-			threshold = (62.8 - initialVConc) * (grid[xi + 1] - grid[xi]);
-			// Set all the concentrations to 0.0 at xi = surfacePos + 1
+			threshold = core::tungstenDensity * (grid[xi + 1] - grid[xi]);
+			// Set all the concentrations to 0.0 at xi = 1
 			// if xi is on this process
 			if (xi >= xs && xi < xs + xm) {
-				// Get the concentrations at xi = surfacePos + 1
+				// Get the concentrations at xi = 1
 				gridPointSolution = solutionArray[xi];
 				// Loop on DOF
 				for (auto i = 0; i < dof; i++) {
@@ -2091,44 +1992,15 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 			}
 
 			// Move the surface deeper
-			surfacePos++;
-			xi = surfacePos + _solverHandler->getLeftOffset();
+			nGridPoints--;
+			xi++;
 			// Update the number of interstitials
 			_nSurf[specIdI()] += threshold;
 		}
 
-		// Printing information about the extension of the material
-		if (procId == 0) {
-			XOLOTL_LOG << "Removing grid points to the grid at time: " << time
-					   << " s.";
-		}
-
-		// Set it in the solver
-		_solverHandler->setSurfacePosition(surfacePos);
-	}
-
-	// Set the new surface location in the solver handler
-	_solverHandler->generateTemperatureGrid(surfacePos, oldSurfacePos);
-
-	// Set the new surface location in the surface advection handler
-	auto advecHandler = _solverHandler->getAdvectionHandler();
-	advecHandler->setLocation(grid[surfacePos + 1] - grid[1]);
-
-	// Set the new surface in the temperature handler
-	auto tempHandler = _solverHandler->getTemperatureHandler();
-	tempHandler->updateSurfacePosition(surfacePos);
-
-	// Get the flux handler to reinitialize it
-	fluxHandler->initializeFluxHandler(
-		_solverHandler->getNetwork(), surfacePos, grid);
-
-	// Write the updated surface position
-	if (procId == 0) {
-		std::ofstream outputFile;
-		outputFile.open("surface.txt", std::ios::app);
-		outputFile << time << " " << grid[surfacePos + 1] - grid[1]
-				   << std::endl;
-		outputFile.close();
+		_solverHandler->setSurfaceOffset(nGridPoints);
+		ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
+		CHKERRQ(ierr);
 	}
 
 	// Restore the solutionArray
@@ -2214,10 +2086,6 @@ PetscMonitor1D::computeTRIDYN(
 	const auto dof = network.getDOF();
 	const auto numSpecies = network.getSpeciesListSize();
 
-	// Get the position of the surface
-	auto surfacePos =
-		static_cast<PetscInt>(_solverHandler->getSurfacePosition());
-
 	// Get the da from ts
 	DM da;
 	ierr = TSGetDM(ts, &da);
@@ -2250,7 +2118,7 @@ PetscMonitor1D::computeTRIDYN(
 	// Define a dataset for concentrations.
 	// Everyone must create the dataset with the same shape.
 	const auto numValsPerGridpoint = 5 + 2;
-	const auto firstIdxToWrite = (surfacePos + _solverHandler->getLeftOffset());
+	const auto firstIdxToWrite = (_solverHandler->getLeftOffset());
 	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
 	io::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {
 		(hsize_t)numGridpointsWithConcs, numValsPerGridpoint};
@@ -2278,8 +2146,7 @@ PetscMonitor1D::computeTRIDYN(
 		// Get the temperature
 		localTemp.push_back(gridPointSolution[dof]);
 	}
-	auto networkTemp =
-		_solverHandler->interpolateTemperature(surfacePos, localTemp);
+	auto networkTemp = _solverHandler->interpolateTemperature(localTemp);
 
 	for (auto xi = myFirstIdxToWrite; xi < myEndIdx; ++xi) {
 		if (xi >= firstIdxToWrite) {
@@ -2296,11 +2163,17 @@ PetscMonitor1D::computeTRIDYN(
 
 			// Get the total concentrations at this grid point
 			auto currIdx = (PetscInt)xi - myFirstIdxToWrite;
-			myConcs[currIdx][0] = (x - (grid[surfacePos + 1] - grid[1]));
+			myConcs[currIdx][0] = x;
 			// Get the total concentrations at this grid point
+			using Quant = core::network::IReactionNetwork::TotalQuantity;
+			std::vector<Quant> quant;
+			quant.reserve(numSpecies);
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-				myConcs[currIdx][id() + 1] +=
-					network.getTotalAtomConcentration(dConcs, id, 1);
+				quant.push_back({Quant::Type::atom, id, 1});
+			}
+			auto totals = network.getTotalsVec(dConcs, quant);
+			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+				myConcs[currIdx][id() + 1] += totals[id()];
 			}
 			myConcs[currIdx][numSpecies + 1] = networkTemp[currIdx];
 		}
@@ -2341,9 +2214,6 @@ PetscMonitor1D::profileTemperature(
 	// Get the network and dof
 	auto& network = _solverHandler->getNetwork();
 	const auto dof = network.getDOF();
-
-	// Get the position of the surface
-	auto surfacePos = _solverHandler->getSurfacePosition();
 
 	// Get the da from ts
 	DM da;
@@ -2390,10 +2260,10 @@ PetscMonitor1D::profileTemperature(
 
 	// Interpolate
 	auto updatedTemperature =
-		_solverHandler->interpolateTemperature(surfacePos, localTemperature);
+		_solverHandler->interpolateTemperature(localTemperature);
 
 	// Loop on the entire grid
-	for (auto xi = surfacePos + _solverHandler->getLeftOffset();
+	for (auto xi = _solverHandler->getLeftOffset();
 		 xi < Mx - _solverHandler->getRightOffset(); xi++) {
 		// Set x
 		double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
@@ -2564,7 +2434,7 @@ PetscMonitor1D::monitorSeries(
 		// Render and save in file
 		std::stringstream fileName;
 		fileName << "log_series_TS" << timestep << ".ppm";
-		_seriesPlot->write(fileName.str());
+		_seriesPlot->render(fileName.str());
 	}
 
 	else {

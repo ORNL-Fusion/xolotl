@@ -74,11 +74,11 @@ public:
 	computeFluence(double time) = 0;
 
 	/**
-	 * This operation returns the fluence.
+	 * This operation returns the total fluence and effective fluences.
 	 *
 	 * @return The fluence
 	 */
-	virtual double
+	virtual std::vector<double>
 	getFluence() const = 0;
 
 	/**
@@ -123,6 +123,23 @@ public:
 	setProportion(double a) = 0;
 
 	/**
+	 * Get the implanted flux for a specific sub network.
+	 *
+	 * @param The map of indices for this sub network
+	 * @return The vector flux, first is the ID and second is the value.
+	 */
+	virtual std::vector<std::pair<IdType, double>>
+	getImplantedFlux(std::vector<IdType> map) = 0;
+
+	/**
+	 * Set the implanted flux for each sub network.
+	 *
+	 * @param fluxVector With first is the ID and second is the value
+	 */
+	virtual void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector) = 0;
+
+	/**
 	 * This operation gets the vector of flux amplitudes for each cluster at
 	 * this time.
 	 *
@@ -139,6 +156,14 @@ public:
 	 */
 	virtual std::vector<IdType>
 	getFluxIndices() const = 0;
+
+	/**
+	 * This operation gets the reduction factors each generated cluster.
+	 *
+	 * @return The factors
+	 */
+	virtual std::vector<double>
+	getReductionFactors() const = 0;
 };
 // end class IFluxHandler
 

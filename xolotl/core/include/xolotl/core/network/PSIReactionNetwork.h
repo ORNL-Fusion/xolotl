@@ -118,7 +118,7 @@ public:
 	checkLargestClusterId();
 
 	void
-	updateReactionRates();
+	updateReactionRates(double time = 0.0);
 
 	void
 	updateTrapMutationDisappearingRate(double totalTrappedHeliumConc) override;

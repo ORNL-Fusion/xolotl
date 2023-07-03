@@ -3,6 +3,8 @@
 #include <stdexcept>
 #include <type_traits>
 
+#include <Kokkos_Macros.hpp>
+
 namespace xolotl
 {
 namespace core
@@ -44,11 +46,13 @@ public:
 	{
 	}
 
+	KOKKOS_INLINE_FUNCTION
 	operator bool() const noexcept
 	{
 		return (_id >= 0) && (_id < _nSpec);
 	}
 
+	KOKKOS_INLINE_FUNCTION
 	int
 	operator()() const noexcept
 	{
@@ -57,7 +61,7 @@ public:
 
 	template <typename TSpeciesEnum>
 	TSpeciesEnum
-	cast()
+	cast() const
 	{
 		if (!(*this)) {
 			throw InvalidSpeciesId();
@@ -65,6 +69,15 @@ public:
 		return static_cast<TSpeciesEnum>(_id);
 	}
 
+	template <typename TSpeciesEnum>
+	KOKKOS_INLINE_FUNCTION
+	TSpeciesEnum
+	unsafeCast() const
+	{
+		return static_cast<TSpeciesEnum>(_id);
+	}
+
+	KOKKOS_INLINE_FUNCTION
 	SpeciesId&
 	operator++()
 	{

@@ -13,7 +13,8 @@ PetscSolverHandler::PetscSolverHandler(
 	partialDerivativeTimer(perfHandler->getTimer("Partial Derivatives")),
 	fluxCounter(perfHandler->getEventCounter("Flux")),
 	partialDerivativeCounter(
-		perfHandler->getEventCounter("Partial Derivatives"))
+		perfHandler->getEventCounter("Partial Derivatives")),
+	surfaceOffset(0)
 {
 }
 

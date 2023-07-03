@@ -13,58 +13,60 @@ namespace core
 {
 namespace network
 {
+namespace psi
+{
+template <typename TRegion>
+KOKKOS_INLINE_FUNCTION
+double
+getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
+	const double r1, const double dc0, const double dc1)
+{
+	constexpr double pi = ::xolotl::core::pi;
+
+	double kPlus = 4.0 * pi * (r0 + r1) * (dc0 + dc1);
+
+	return kPlus;
+}
+} // namespace psi
+
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 double
-PSIProductionReaction<TSpeciesEnum>::computeRate(IndexType gridIndex)
+PSIProductionReaction<TSpeciesEnum>::getRateForProduction(IndexType gridIndex)
 {
-	auto rate = Superclass::computeRate(gridIndex);
+	auto cl0 = this->_clusterData->getCluster(this->_reactants[0]);
+	auto cl1 = this->_clusterData->getCluster(this->_reactants[1]);
 
-	using NetworkType = typename Superclass::NetworkType;
-	using Species = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
-	using AmountType = typename NetworkType::AmountType;
+	double r0 = cl0.getReactionRadius();
+	double r1 = cl1.getReactionRadius();
 
-	auto cl1 = this->_clusterData->getCluster(this->_reactants[0]);
-	auto cl2 = this->_clusterData->getCluster(this->_reactants[1]);
+	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
+	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	auto cl1Reg = cl1.getRegion();
-	auto cl2Reg = cl2.getRegion();
-
-	Composition lo1Comp(cl1Reg.getOrigin());
-	Composition lo2Comp(cl2Reg.getOrigin());
-	if (lo1Comp[Species::He] == 0)
-		return rate;
-	if (lo2Comp[Species::He] == 0)
-		return rate;
-
-	if (lo1Comp[Species::V] == 0 and lo2Comp[Species::V] == 0)
-		return rate;
-
-	double avHe = 0.0;
-	AmountType avV = 0;
-	if (lo1Comp[Species::V] > 0) {
-		Composition hi1Comp(cl1Reg.getUpperLimitPoint());
-		avHe = (hi1Comp[Species::He] + lo1Comp[Species::He]) / 2.0;
-		avV = (hi1Comp[Species::V] + lo1Comp[Species::V]) / 2.0;
-	}
-	else {
-		Composition hi2Comp(cl2Reg.getUpperLimitPoint());
-		avHe = (hi2Comp[Species::He] + lo2Comp[Species::He]) / 2.0;
-		avV = (hi2Comp[Species::V] + lo2Comp[Species::V]) / 2.0;
-	}
-	auto nHeEq = xolotl::core::network::psi::getMaxHePerVEq(
-		avV, this->_clusterData->latticeParameter(), 933.0);
-	double factor =
-		std::max(1.0 + 5.0 * (double)(nHeEq - avHe) / (double)nHeEq, 1.0);
-
-	return factor * rate;
+	return psi::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 }
 
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 double
-PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy()
+PSIDissociationReaction<TSpeciesEnum>::getRateForProduction(IndexType gridIndex)
+{
+	auto cl0 = this->_clusterData->getCluster(this->_products[0]);
+	auto cl1 = this->_clusterData->getCluster(this->_products[1]);
+
+	double r0 = cl0.getReactionRadius();
+	double r1 = cl1.getReactionRadius();
+
+	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
+	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
+
+	return psi::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 {
 	using psi::hasDeuterium;
 	using psi::hasTritium;

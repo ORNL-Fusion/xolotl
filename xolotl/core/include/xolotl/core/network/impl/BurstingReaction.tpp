@@ -81,7 +81,8 @@ BurstingReaction<TNetwork, TDerived>::computeCoefficients()
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
-BurstingReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex)
+BurstingReaction<TNetwork, TDerived>::computeRate(
+	IndexType gridIndex, double time)
 {
 	return 0.0;
 }

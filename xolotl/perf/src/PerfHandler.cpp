@@ -355,6 +355,43 @@ PerfHandler::aggregateStatistics(int myRank,
 }
 
 void
+PerfHandler::reportData(std::ostream& os) const
+{
+	// Output performance information in YAML format.
+	os << "\n---\n";
+
+	os << "Rank: " << util::getMPIRank() << '\n';
+
+	const char* indent = "    ";
+	os << "\nTimers:\n";
+	for (auto&& timer : allTimers) {
+		os << indent << timer.first << ": " << timer.second->getValue() << '\n';
+	}
+
+	os << "\nCounters:\n";
+	for (auto&& ctr : allEventCounters) {
+		os << indent << ctr.first << ": " << ctr.second->getValue() << '\n';
+	}
+
+	if (allHWCounterSets.empty()) {
+		return;
+	}
+	std::vector<std::string> hwcNames;
+	collectMyObjectNames(allHWCounterSets, hwcNames);
+	os << "\nHardwareCounters:\n";
+	for (auto&& hwc : allHWCounterSets) {
+		std::string baseName = hwc.first;
+
+		const auto& spec = hwc.second->getSpecification();
+		const auto& vals = hwc.second->getValues();
+		for (std::size_t i = 0; i < spec.size(); ++i) {
+			auto name = baseName + ":" + hwc.second->getCounterName(spec[i]);
+			os << indent << name << ": " << vals[i] << '\n';
+		}
+	}
+}
+
+void
 PerfHandler::collectStatistics(PerfObjStatsMap<ITimer::ValType>& timerStats,
 	PerfObjStatsMap<IEventCounter::ValType>& counterStats,
 	PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats)
@@ -383,7 +420,9 @@ PerfHandler::reportStatistics(std::ostream& os,
 	const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
 	const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) const
 {
-	os << "\nTimers:\n";
+	// Output performance information in YAML format.
+	os << "\n---\n"
+	   << "Timers:\n";
 	for (auto iter = timerStats.begin(); iter != timerStats.end(); ++iter) {
 		iter->second.outputTo(os);
 	}
@@ -393,6 +432,9 @@ PerfHandler::reportStatistics(std::ostream& os,
 		iter->second.outputTo(os);
 	}
 
+	if (hwCounterStats.empty()) {
+		return;
+	}
 	os << "\nHardwareCounters:\n";
 	for (auto iter = hwCounterStats.begin(); iter != hwCounterStats.end();
 		 ++iter) {

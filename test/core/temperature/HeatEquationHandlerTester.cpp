@@ -46,8 +46,18 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 	// Create dfill
 	network::IReactionNetwork::SparseFillMap dfill;
 
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
+	// Set a time
+	double time = 0.5;
+
 	// Initialize it
 	heatHandler.initializeTemperature(dof, ofill, dfill);
+	heatHandler.updateSurfacePosition(0, grid);
 
 	// Check that the temperature "diffusion" is well set
 	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
@@ -84,10 +94,11 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 	concVector[2] = conc + 2 * (dof + 1); // right
 
 	// Compute the heat equation at this grid point
-	heatHandler.computeTemperature(concVector, updatedConcOffset, hx, hx, hx);
+	heatHandler.computeTemperature(
+		time, concVector, updatedConcOffset, hx, hx, hx);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.367e+16, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 7500434287856011, 0.01);
 
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
@@ -104,15 +115,15 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		valPointer, indicesPointer, hx, hx, hx);
+		time, concVector, valPointer, indicesPointer, hx, hx, hx);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
 
 	// Check the values
-	BOOST_REQUIRE_CLOSE(val[0], -1.367e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 6.835e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -135508639961461, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 80171695638351, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 50744437570026, 0.01);
 }
 
 BOOST_AUTO_TEST_CASE(checkHeat2D)
@@ -131,6 +142,15 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 	BOOST_REQUIRE_CLOSE(
 		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
 
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
+	// Set a time
+	double time = 0.5;
+
 	// Create ofill
 	network::IReactionNetwork::SparseFillMap ofill;
 	// Create dfill
@@ -138,6 +158,7 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 
 	// Initialize it
 	heatHandler.initializeTemperature(dof, ofill, dfill);
+	heatHandler.updateSurfacePosition(0, grid);
 
 	// Check that the temperature "diffusion" is well set
 	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
@@ -181,10 +202,10 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 
 	// Compute the heat equation at this grid point
 	heatHandler.computeTemperature(
-		concVector, updatedConcOffset, hx, hx, hx, sy, 1);
+		time, concVector, updatedConcOffset, hx, hx, hx, sy, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.367e+17, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 30252398878103828, 0.01);
 
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
@@ -201,17 +222,17 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		valPointer, indicesPointer, hx, hx, hx, sy, 1);
+		time, concVector, valPointer, indicesPointer, hx, hx, hx, sy, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
 
 	// Check the values
-	BOOST_REQUIRE_CLOSE(val[0], -2.734e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 6.835e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -109442547402517, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 34626084704135, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 8451742066439, 0.01);
+	BOOST_REQUIRE_CLOSE(val[3], 21538913385287, 0.01);
+	BOOST_REQUIRE_CLOSE(val[4], 21538913385287, 0.01);
 }
 
 BOOST_AUTO_TEST_CASE(checkHeat3D)
@@ -230,6 +251,15 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	BOOST_REQUIRE_CLOSE(
 		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
 
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
+	// Set a time
+	double time = 0.5;
+
 	// Create ofill
 	network::IReactionNetwork::SparseFillMap ofill;
 	// Create dfill
@@ -237,6 +267,7 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 
 	// Initialize it
 	heatHandler.initializeTemperature(dof, ofill, dfill);
+	heatHandler.updateSurfacePosition(0, grid);
 
 	// Check that the temperature "diffusion" is well set
 	BOOST_REQUIRE_EQUAL(ofill[9][0], 9);
@@ -285,10 +316,10 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 
 	// Compute the heat equation at this grid point
 	heatHandler.computeTemperature(
-		concVector, updatedConcOffset, hx, hx, hx, sy, 1, sz, 1);
+		time, concVector, updatedConcOffset, hx, hx, hx, sy, 1, sz, 1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 1.24397e+17, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 49150205326843880, 0.01);
 
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
@@ -305,19 +336,19 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		valPointer, indicesPointer, hx, hx, hx, sy, 1, sz, 1);
+		time, concVector, valPointer, indicesPointer, hx, hx, hx, sy, 1, sz, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
 
 	// Check the values
-	BOOST_REQUIRE_CLOSE(val[0], -4.101e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[5], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[6], 6.835e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -164490411906709, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 29368449647960, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 25268952000254, 0.01);
+	BOOST_REQUIRE_CLOSE(val[3], 27318700824107, 0.01);
+	BOOST_REQUIRE_CLOSE(val[4], 27318700824107, 0.01);
+	BOOST_REQUIRE_CLOSE(val[5], 27318700824107, 0.01);
+	BOOST_REQUIRE_CLOSE(val[6], 27318700824107, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

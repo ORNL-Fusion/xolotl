@@ -57,12 +57,6 @@ main(int argc, char* argv[])
 			xolotl::io::XFile xfile(fname, MPI_COMM_WORLD,
 				xolotl::io::XFile::AccessMode::OpenReadWrite);
 
-			// Determine the number of grid points.
-			auto headerGroup = xfile.getGroup<xolotl::io::XFile::HeaderGroup>();
-			assert(headerGroup);
-			xolotl::io::HDF5File::Attribute<int> nxAttr(*headerGroup, "nx");
-			auto nx = nxAttr.get();
-
 			// Determine the last timestep written to the file.
 			auto concGroup =
 				xfile.getGroup<xolotl::io::XFile::ConcentrationGroup>();
@@ -71,13 +65,15 @@ main(int argc, char* argv[])
 				*concGroup, "lastTimeStep");
 			auto lastTimeStep = lastTimestepAttr.get();
 
-			std::cout << "nx: " << nx << '\n'
-					  << "last time step: " << lastTimeStep << std::endl;
+			std::cout << "last time step: " << lastTimeStep << std::endl;
 
 			// Open the timestep group associated with the
 			// last written timestep.
 			auto tsGroup = concGroup->getLastTimestepGroup();
 			assert(tsGroup);
+
+			xolotl::io::HDF5File::Attribute<int> nxAttr(*tsGroup, "nx");
+			auto nx = nxAttr.get();
 
 			// Convert the last written timestep's concentrations to
 			// the new representation.

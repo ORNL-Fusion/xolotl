@@ -46,6 +46,10 @@ public:
 	using Composition = typename Types::Composition;
 	using ConcentrationsView = IReactionNetwork::ConcentrationsView;
 	using FluxesView = IReactionNetwork::FluxesView;
+	using RatesView = IReactionNetwork::RatesView;
+	using ConnectivitiesView = IReactionNetwork::ConnectivitiesView;
+	using BelongingView = IReactionNetwork::BelongingView;
+	using OwnedSubMapView = IReactionNetwork::OwnedSubMapView;
 	using Connectivity = typename IReactionNetwork::Connectivity;
 	using ReactionDataRef = typename Types::ReactionDataRef;
 	using ClusterData = typename Types::ClusterData;
@@ -65,10 +69,10 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	void
-	updateRates()
+	updateRates(double time = 0.0)
 	{
 		for (IndexType i = 0; i < _rate.extent(0); ++i) {
-			_rate(i) = asDerived()->computeRate(i);
+			_rate(i) = asDerived()->computeRate(i, time);
 		}
 	}
 
@@ -129,6 +133,23 @@ public:
 			concentrations, values, gridIndex);
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	contributeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex)
+	{
+		asDerived()->computeConstantRates(
+			concentrations, rates, isInSub, backMap, gridIndex);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	contributeConstantConnectivities(ConnectivitiesView conns,
+		BelongingView isInSub, OwnedSubMapView backMap)
+	{
+		asDerived()->getConstantConnectivities(conns, isInSub, backMap);
+	}
+
 	/**
 	 * \see IReactionNetwork.h
 	 */
@@ -169,7 +190,7 @@ protected:
 	 * overlap, making the reaction viable.
 	 */
 	KOKKOS_INLINE_FUNCTION
-	AmountType
+	double
 	computeOverlap(const ReflectedRegion& cl1RR, const ReflectedRegion& cl2RR,
 		const ReflectedRegion& pr1RR, const ReflectedRegion& pr2RR);
 
@@ -237,6 +258,10 @@ public:
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using RatesView = typename Superclass::RatesView;
+	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using BelongingView = typename Superclass::BelongingView;
+	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using Composition = typename Superclass::Composition;
 	using Region = typename Superclass::Region;
 	using AmountType = typename Superclass::AmountType;
@@ -266,14 +291,14 @@ public:
 			Superclass::coeffsSingleExtent);
 	}
 
-	KOKKOS_INLINE_FUNCTION
-	double
-	computeRate(IndexType gridIndex);
-
 private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeCoefficients();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -297,6 +322,16 @@ private:
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	getConstantConnectivities(ConnectivitiesView conns, BelongingView isInSub,
+		OwnedSubMapView backMap);
 
 	KOKKOS_INLINE_FUNCTION
 	double
@@ -344,6 +379,10 @@ public:
 	using Connectivity = typename Superclass::Connectivity;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using RatesView = typename Superclass::RatesView;
+	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using BelongingView = typename Superclass::BelongingView;
+	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
 	using ReactionDataRef = typename Superclass::ReactionDataRef;
 	using ClusterData = typename Superclass::ClusterData;
@@ -376,7 +415,7 @@ private:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	computeRate(IndexType gridIndex);
+	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -400,6 +439,16 @@ private:
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
+		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	getConstantConnectivities(ConnectivitiesView conns, BelongingView isInSub,
+		OwnedSubMapView backMap);
 
 	KOKKOS_INLINE_FUNCTION
 	double

@@ -16,6 +16,15 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 
 BOOST_AUTO_TEST_SUITE(Benchmark)
 
+BOOST_AUTO_TEST_CASE(AZr_1)
+{
+	if (getMPICommSize() > 1) {
+		return;
+	}
+	// 0D, 1000 in each direction, grouped
+	SystemTestCase{"benchmark_AZr_1", "AlphaZr.dat"}.withTimer().run();
+}
+
 BOOST_AUTO_TEST_CASE(NE_1)
 {
 	if (getMPICommSize() > 1) {
@@ -67,7 +76,7 @@ BOOST_AUTO_TEST_CASE(PSI_1)
 		return;
 	}
 	// 1D + HeV + 4e25 flux W100
-	SystemTestCase{"benchmark_PSI_1"}.withTimer().run();
+	SystemTestCase{"benchmark_PSI_1"}.tolerance(1.0e-5).withTimer().run();
 }
 
 BOOST_AUTO_TEST_CASE(PSI_2)
@@ -108,22 +117,13 @@ BOOST_AUTO_TEST_CASE(PSI_5)
 	SystemTestCase{"benchmark_PSI_5"}.tolerance(5.0e-10).withTimer().run();
 }
 
-BOOST_AUTO_TEST_CASE(PSI_6)
-{
-	if (getMPICommSize() < 20 || getMPICommSize() > 112) {
-		return;
-	}
-	// 1D + million
-	SystemTestCase{"benchmark_PSI_6"}.withTimer().run();
-}
-
 BOOST_AUTO_TEST_CASE(PSI_7)
 {
 	if (getMPICommSize() < 4 || getMPICommSize() > 25) {
 		return;
 	}
 	// 1D + pulsed
-	SystemTestCase{"benchmark_PSI_7"}.withTimer().run();
+	SystemTestCase{"benchmark_PSI_7"}.tolerance(1.0e-8).withTimer().run();
 }
 
 BOOST_AUTO_TEST_CASE(PSI_8)

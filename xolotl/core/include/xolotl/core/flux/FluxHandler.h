@@ -28,6 +28,11 @@ protected:
 	std::vector<std::vector<double>> incidentFluxVec;
 
 	/**
+	 * The reduction factors for each deposition.
+	 */
+	std::vector<double> reductionFactors;
+
+	/**
 	 * Vector to hold the position at each grid
 	 * point (x position).
 	 */
@@ -36,7 +41,7 @@ protected:
 	/**
 	 *  Fluence.
 	 */
-	double fluence;
+	std::vector<double> fluence;
 
 	/**
 	 * The amplitude of the flux.
@@ -145,7 +150,7 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual double
+	virtual std::vector<double>
 	getFluence() const;
 
 	/**
@@ -187,14 +192,38 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
+	virtual std::vector<std::pair<IdType, double>>
+	getImplantedFlux(std::vector<IdType> map)
+	{
+		return std::vector<std::pair<IdType, double>>();
+	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
 	virtual std::vector<double>
 	getInstantFlux(double time) const;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
+	virtual void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector)
+	{
+		return;
+	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
 	virtual std::vector<IdType>
 	getFluxIndices() const;
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<double>
+	getReductionFactors() const;
 };
 // end class FluxHandler
 

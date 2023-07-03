@@ -11,6 +11,7 @@
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
+#include <xolotl/core/modified/ISoretDiffusionHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 #include <xolotl/options/IOptions.h>
@@ -72,9 +73,12 @@ public:
 	 *
 	 * @param da The PETSc distributed array
 	 * @param C The PETSc solution vector
+	 * @param oldDA The previous PETSc distributed array
+	 * @param oldC The previous PETSc solution vector
+	 *
 	 */
 	virtual void
-	initializeConcentration(DM& da, Vec& C) = 0;
+	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC) = 0;
 
 	/**
 	 * Set the concentrations to 0.0 where the GBs are.
@@ -175,6 +179,14 @@ public:
 	getXGrid() const = 0;
 
 	/**
+	 * Get the grid in the x direction for the temperature.
+	 *
+	 * @return The grid in the x direction
+	 */
+	virtual std::vector<double>
+	getTemperatureGrid() const = 0;
+
+	/**
 	 * Get the step size in the y direction.
 	 *
 	 * @return The step size in the y direction
@@ -219,21 +231,26 @@ public:
 	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1) = 0;
 
 	/**
-	 * Generate the grid for the temperature.
+	 * Set the number of grid points we want to move by at the surface.
 	 *
-	 * @param surfacePos The surface position
-	 * @param oldPos The old surface position
+	 * @param offset The number of grid points
 	 */
 	virtual void
-	generateTemperatureGrid(IdType surfacePos, IdType oldPos = 0) = 0;
+	setSurfaceOffset(int offset) = 0;
+
+	/**
+	 * Generate the grid for the temperature.
+	 */
+	virtual void
+	generateTemperatureGrid() = 0;
 
 	/**
 	 * Get the initial vacancy concentration.
 	 *
 	 * @return The initial vacancy concentration
 	 */
-	virtual double
-	getInitialVConc() const = 0;
+	virtual std::vector<std::pair<IdType, double>>
+	getInitialConc() const = 0;
 
 	/**
 	 * Get the sputtering yield.
@@ -242,6 +259,22 @@ public:
 	 */
 	virtual double
 	getSputteringYield() const = 0;
+
+	/**
+	 * Get the bursting depth parameter.
+	 *
+	 * @return The depth parameter
+	 */
+	virtual double
+	getTauBursting() const = 0;
+
+	/**
+	 * Get the bursting factor for likelihood of bursting.
+	 *
+	 * @return The factor
+	 */
+	virtual double
+	getBurstingFactor() const = 0;
 
 	/**
 	 * Get the grid left offset.
@@ -427,6 +460,14 @@ public:
 	getDiffusionHandler() const = 0;
 
 	/**
+	 * Get the Soret diffusion handler.
+	 *
+	 * @return The Soret diffusion handler
+	 */
+	virtual core::modified::ISoretDiffusionHandler*
+	getSoretDiffusionHandler() const = 0;
+
+	/**
 	 * Get the surface advection handler.
 	 *
 	 * @return The first advection handler
@@ -492,13 +533,12 @@ public:
 	/**
 	 * Interpolate the temperature between the two grids.
 	 *
-	 * @param pos The surface position
 	 * @param localTemp The local temperature vector wrt temperature grid
 	 * @return The local temperature vector wrt cluster grid
 	 */
 	virtual std::vector<double>
 	interpolateTemperature(
-		IdType pos, std::vector<double> localTemp = std::vector<double>()) = 0;
+		std::vector<double> localTemp = std::vector<double>()) = 0;
 };
 // end class ISolverHandler
 

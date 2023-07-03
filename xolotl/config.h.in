@@ -6,6 +6,9 @@
 #define TO_STRING(x) STRINGIFY(x)
 #include <cstdint>
 
+// Ensure we have fixed-width integer type definitions in std namespace.
+#include <cstdint>
+
 namespace xolotl
 {
 #if defined(XOLOTL_USE_64BIT_INDEX_TYPE)

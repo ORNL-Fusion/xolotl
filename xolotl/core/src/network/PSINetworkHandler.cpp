@@ -44,12 +44,6 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	AmountType groupingWidthV = options.getGroupingWidthB();
 	AmountType groupingWidthI = options.getGroupingWidthB();
 
-	if (maxI > options.getGroupingMin() and maxV >= options.getGroupingMin() and
-		options.getMaxImpurity() > 0) {
-		throw std::runtime_error("Both V and I are grouped, with He, this is "
-								 "not currently possible!");
-	}
-
 	if (options.getMaxImpurity() <= 0) {
 		maxHe = 0;
 		groupingWidthHe = 1;
@@ -119,7 +113,8 @@ generatePSIReactionNetwork(const options::IOptions& options)
 		maxI = pow(groupingWidthI, i) - 1;
 	}
 
-	if (maxI > options.getGroupingMin() and maxV >= options.getGroupingMin()) {
+	if (maxI > options.getGroupingMin() and maxV >= options.getGroupingMin() and
+		options.getMaxImpurity() == 0) {
 		// There should not be He here
 		return makePSIReactionNetwork<PSIHeliumSpeciesList>(
 			{0, maxV, maxI}, {{1, groupingWidthV, groupingWidthI}}, options);

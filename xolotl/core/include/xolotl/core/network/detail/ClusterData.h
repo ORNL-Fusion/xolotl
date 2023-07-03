@@ -2,8 +2,6 @@
 
 #include <string>
 
-#include <Kokkos_View.hpp>
-
 #include <xolotl/core/network/ReactionNetworkTraits.h>
 
 namespace xolotl
@@ -156,6 +154,7 @@ private:
 		SINK,
 		TRAP_MUTATION,
 		BURST,
+		CONSTANT_REACTION,
 		NUM_BOOL_VALS
 	};
 
@@ -337,6 +336,19 @@ public:
 	setEnableBurst(bool val)
 	{
 		setVal(_boolVals, BURST, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableConstantReaction() const
+	{
+		return _boolVals[CONSTANT_REACTION];
+	}
+
+	void
+	setEnableConstantReaction(bool val)
+	{
+		setVal(_boolVals, CONSTANT_REACTION, val);
 	}
 
 private:

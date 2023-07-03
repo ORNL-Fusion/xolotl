@@ -11,6 +11,8 @@ set(tests
     diffusion/Diffusion2DHandlerTester.cpp
     diffusion/Diffusion3DHandlerTester.cpp
     diffusion/DummyDiffusionHandlerTester.cpp
+    flux/AlloyFitFluxHandlerTester.cpp
+    flux/AlphaZrFitFluxHandlerTester.cpp
     flux/CustomFitFluxHandlerTester.cpp
     flux/FeFitFluxHandlerTester.cpp
     flux/FuelFitFluxHandlerTester.cpp
@@ -19,12 +21,15 @@ set(tests
     flux/W110FitFluxHandlerTester.cpp
     flux/W111FitFluxHandlerTester.cpp
     flux/W211FitFluxHandlerTester.cpp
+    modified/SoretDiffusionHandlerTester.cpp
+    modified/DummySoretDiffusionHandlerTester.cpp
     network/AlloyNetworkTester.cpp
     network/FeNetworkTester.cpp
     network/ModifiedTrapMutationTester.cpp
     network/NENetworkTester.cpp
     network/NetworkTester.cpp
     network/PSINetworkTester.cpp
+    network/ZrNetworkTester.cpp
     temperature/HeatEquationHandlerTester.cpp
     temperature/TemperatureConstantHandlerTester.cpp
     temperature/TemperatureGradientHandlerTester.cpp

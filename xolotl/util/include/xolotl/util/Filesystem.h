@@ -1,7 +1,7 @@
 #pragma once
 
-#include "boost/filesystem.hpp"
+#include <filesystem>
 namespace xolotl
 {
-namespace fs = ::boost::filesystem;
+namespace fs = ::std::filesystem;
 } /* namespace xolotl */
