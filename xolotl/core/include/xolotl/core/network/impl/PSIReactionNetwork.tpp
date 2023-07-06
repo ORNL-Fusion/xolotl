@@ -547,14 +547,9 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 			 a <= bounds[Species::He].second; a++)
 			for (auto b = bounds[Species::V].first;
 				 b <= bounds[Species::V].second; b++) {
-				auto nV = b;
-				auto nHeEq = xolotl::core::network::psi::getMaxHePerVEq(
-					nV, this->_clusterData.latticeParameter(), 933.0);
-				while (nHeEq < a) {
-					nV++;
-					nHeEq = xolotl::core::network::psi::getMaxHePerVEq(
-						nV, this->_clusterData.latticeParameter(), 933.0);
-				}
+				auto nV = b +
+					xolotl::core::network::psi::getDeltaV(
+						b, this->_clusterData.latticeParameter(), 933.0);
 
 				// Look for the product
 				Composition comp = Composition::zero();
@@ -633,11 +628,6 @@ PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
 			return;
 		}
 		// Bubble case
-		auto nHeLoop = xolotl::core::network::psi::getMaxHePerVLoop(
-			nV, this->_clusterData.latticeParameter(), 933.0);
-		if (hi[Species::He] - 1 < nHeLoop)
-			continue;
-
 		auto& subpaving = this->getSubpaving();
 		// Look for the V cluster of the same size
 		Composition comp = Composition::zero();

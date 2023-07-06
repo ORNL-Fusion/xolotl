@@ -176,7 +176,8 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 		AmountType lowerV = 16, higherV = 31;
 		AmountType minV = 1;
 		for (auto i = 1; i < higherV; i++) {
-			auto maxHe = psi::getMaxHePerV(i);
+			auto maxHe =
+				psi::getMaxHePerVLoop(i, tungstenLatticeConstant, 933.0);
 			if (comp[Species::He] > maxHe)
 				minV = i;
 		}
@@ -254,28 +255,36 @@ PSIBurstingReaction<TSpeciesEnum>::getAppliedRate(IndexType gridIndex) const
 	auto radius = cl.getReactionRadius();
 	Composition lo = clReg.getOrigin();
 	Composition hi = clReg.getUpperLimitPoint();
+	double V_n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
+	double He_n = (double)(lo[Species::He] + hi[Species::He] - 1) / 2.0;
 
 	// Get the current depth
 	auto depth = this->_clusterData->getDepth();
-	auto tau = this->_clusterData->getTauBursting();
-	auto f = this->_clusterData->getFBursting();
-	double beta_d = 0.01;
-	double alpha_p = 1.0e40;
-	double beta_p = 0.1;
-	auto d_l = depth * 2.0 / this->_clusterData->latticeParameter();
-	auto V_b = std::pow(d_l, 3.566) / 21.8;
-	auto a0 = this->_clusterData->latticeParameter();
-	auto a0Cubed = a0 * a0 * a0;
-	auto temp = depth - a0 * sqrt(3.0) / 4.0 +
-		cbrt(3.0 * a0Cubed / (8.0 * ::xolotl::core::pi));
-	auto V_d = temp * temp * temp * 8.0 * ::xolotl::core::pi / (3.0 * a0Cubed);
-	double V_n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
-	auto term1 = util::max(
-		0.0, util::min(1.0, (V_n - beta_d * V_b) / ((1.0 - beta_d) * V_b)));
-	auto term2 = util::max(1.0, alpha_p * util::min(1.0, (V_n - V_d) / beta_p));
-	auto term3 = util::min(1.0, exp(-(depth - tau) / (2.0 * tau)));
 
-	return f * term1 * term2 * term3;
+	// Get other parameters
+	auto f = this->_clusterData->getFBursting();
+	auto temp = this->_clusterData->temperature(gridIndex);
+
+	// Compute the V limit at this depth
+	double c = 2.24 + 4.68 * temp / 100000.0; // a/2
+	c *= tungstenLatticeConstant / 2.0; // nm
+	double d = 0.272 + 1.26 * temp / 100000.0;
+	double V_d = pow(depth / c, 1.0 / d);
+
+	// No burst
+	if (V_n < V_d)
+		return 0.0;
+
+	// Compute the corresponding He limit
+	double a3 = 5.8 - 9.04 * temp / 10000.0;
+	double b3 = 0.118 - 1.762 * temp / 100000.0;
+	double He_v = V_n * a3 / pow(V_n, b3);
+
+	// No burst
+	if (He_n < He_v)
+		return 0.0;
+
+	return f;
 }
 } // namespace network
 } // namespace core

@@ -36,57 +36,11 @@ getMaxHePerV(IReactionNetwork::AmountType amtV) noexcept
 }
 
 KOKKOS_INLINE_FUNCTION
-double
-computeBenedictF1(const double temp) noexcept
-{
-	return xolotl::core::A_11 / sqrt(temp) + xolotl::core::A01 +
-		xolotl::core::A21 * temp;
-}
-
-KOKKOS_INLINE_FUNCTION
-double
-computeBenedictF2(const double temp) noexcept
-{
-	return xolotl::core::A02 + xolotl::core::A22 * temp;
-}
-
-KOKKOS_INLINE_FUNCTION
-double
-computeBenedictF3(const double temp) noexcept
-{
-	return xolotl::core::A_23 / temp + xolotl::core::A_13 / sqrt(temp) +
-		xolotl::core::A03 + xolotl::core::A23 * temp;
-}
-
-KOKKOS_INLINE_FUNCTION
 IReactionNetwork::AmountType
-getMaxHePerVEq(IReactionNetwork::AmountType amtV, double latticeParameter,
+getDeltaV(IReactionNetwork::AmountType amtV, double latticeParameter,
 	double temp) noexcept
 {
-	using AmountType = IReactionNetwork::AmountType;
-	constexpr Kokkos::Array<AmountType, 15> maxHePerV = {
-		0, 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55, 60, 65, 70};
-
-	if (amtV < maxHePerV.size()) {
-		return maxHePerV[amtV];
-	}
-
-	double omega =
-		0.5 * latticeParameter * latticeParameter * latticeParameter * 1.0e-27;
-	double nume = amtV * omega;
-	double Fs = pow(3.0 * omega / (4.0 * xolotl::core::pi), 1.0 / 3.0);
-	double term1 = computeBenedictF1(temp) * pow(Fs, 1.0 / 3.0) *
-		pow((double)amtV, 1.0 / 9.0) *
-		pow(2.0 * xolotl::core::gammaEOS, -1.0 / 3.0);
-	double term2 = computeBenedictF2(temp) * pow(Fs, 2.0 / 3.0) *
-		pow((double)amtV, 2.0 / 9.0) *
-		pow(2.0 * xolotl::core::gammaEOS, -2.0 / 3.0);
-	double term3 = computeBenedictF3(temp) * Fs * pow((double)amtV, 1.0 / 3.0) /
-		(2.0 * xolotl::core::gammaEOS);
-
-	return util::max((AmountType)(nume / (term1 + term2 + term3)),
-		maxHePerV[maxHePerV.size() - 1] + amtV - (AmountType)maxHePerV.size() +
-			1);
+	return (IReactionNetwork::AmountType)(1.01 * pow((double)amtV, 0.643));
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -94,31 +48,28 @@ IReactionNetwork::AmountType
 getMaxHePerVLoop(IReactionNetwork::AmountType amtV, double latticeParameter,
 	double temp) noexcept
 {
-	using AmountType = IReactionNetwork::AmountType;
-	constexpr Kokkos::Array<AmountType, 15> maxHePerV = {
-		0, 9, 14, 18, 20, 27, 30, 35, 40, 45, 50, 55, 60, 65, 70};
+	/**
+	 * The maximum number of helium atoms that can be combined with a
+	 * vacancy cluster with size equal to the index i.
+	 * It could support a mixture of up to nine
+	 * helium atoms with one vacancy.
+	 */
+	constexpr Kokkos::Array<AmountType, 7> maxHePerV = {
+		0, 9, 14, 18, 20, 27, 30};
 
 	if (amtV < maxHePerV.size()) {
 		return maxHePerV[amtV];
 	}
 
-	double omega =
-		0.5 * latticeParameter * latticeParameter * latticeParameter * 1.0e-27;
-	double bEOS = latticeParameter * 0.5 * sqrt(3.0) * 1.0e-9;
-	double nume = amtV * omega;
-	double Fs = pow(3.0 * omega / (4.0 * xolotl::core::pi), 1.0 / 3.0);
-	double term1 = computeBenedictF1(temp) * pow(Fs, 1.0 / 3.0) *
-		pow((double)amtV, 1.0 / 9.0) *
-		pow(2.0 * xolotl::core::gammaEOS + xolotl::core::gEOS * bEOS,
-			-1.0 / 3.0);
-	double term2 = computeBenedictF2(temp) * pow(Fs, 2.0 / 3.0) *
-		pow((double)amtV, 2.0 / 9.0) *
-		pow(2.0 * xolotl::core::gammaEOS + xolotl::core::gEOS * bEOS,
-			-2.0 / 3.0);
-	double term3 = computeBenedictF3(temp) * Fs * pow((double)amtV, 1.0 / 3.0) /
-		(2.0 * xolotl::core::gammaEOS + xolotl::core::gEOS * bEOS);
+	double a1 = 12.6 - 3.04 * temp / 1000.0;
+	double a2 = 6.67 - 1.08 * temp / 1000.0;
+	double b1 = 1.1 - 9.78 * temp / 100000.0;
+	double b2 = 0.126 - 1.587 * temp / 100000.0;
 
-	return util::max((AmountType)(nume / (term1 + term2 + term3)),
+	double nHe = (double)amtV *
+		(a1 / pow((double)amtV, b1) + a2 / pow((double)amtV, b2));
+
+	return util::max((IReactionNetwork::AmountType)nHe,
 		maxHePerV[maxHePerV.size() - 1] + amtV - (AmountType)maxHePerV.size() +
 			1);
 }

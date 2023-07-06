@@ -103,19 +103,5 @@ constexpr double basalTransitionSize = 325;
 // Tungsten density in nm^-3
 constexpr double tungstenDensity = 62.8;
 
-// Parameters for W Benedict EOS
-constexpr double gammaEOS = 2.67;
-constexpr double gEOS = 156.1e9;
-constexpr double kEOS = 1.380649e-23;
-constexpr double A_11 = -5.5991e-27;
-constexpr double A01 = 1.74e-26;
-constexpr double A21 = 4.9833e-30;
-constexpr double A02 = -4.4658e-24;
-constexpr double A22 = -8.7825e-27;
-constexpr double A03 = 1.7595e-22;
-constexpr double A23 = 1.7608e-23;
-constexpr double A_13 = -3.2615e-21;
-constexpr double A_23 = 3.1524e-20;
-
 } /* end namespace core */
 } /* end namespace xolotl */
