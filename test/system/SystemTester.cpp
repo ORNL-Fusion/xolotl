@@ -117,6 +117,15 @@ BOOST_AUTO_TEST_CASE(PSI_5)
 	SystemTestCase{"system_PSI_5"}.run();
 }
 
+BOOST_AUTO_TEST_CASE(PSI_6)
+{
+	if (getMPICommSize() > 100) {
+		return;
+	}
+	// 1D + He + ELM + soret
+	SystemTestCase{"system_PSI_6"}.run();
+}
+
 BOOST_AUTO_TEST_CASE(Fe_1)
 {
 	if (getMPICommSize() > 1) {

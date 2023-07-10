@@ -19,6 +19,7 @@ SolverHandler::SolverHandler(
 	nZ(0),
 	hY(0.0),
 	hZ(0.0),
+	tempGridPower(2.5),
 	localXS(0),
 	localXM(0),
 	localYS(0),
@@ -36,6 +37,7 @@ SolverHandler::SolverHandler(
 	movingSurface(false),
 	largeBubbleModel(false),
 	isMirror(true),
+	isRobin(false),
 	useAttenuation(false),
 	sameTemperatureGrid(true),
 	fluxTempProfile(false),
@@ -46,6 +48,7 @@ SolverHandler::SolverHandler(
 	perfHandler(factory::perf::PerfHandlerFactory::get(perf::loadPerfHandlers)
 					.generate(options)),
 	diffusionHandler(nullptr),
+	soretDiffusionHandler(nullptr),
 	rngSeed(0),
 	previousTime(0.0),
 	nXeGB(0.0),
@@ -426,8 +429,9 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	// Set the temperature handler
 	temperatureHandler = tempHandler;
 
-	// Set the diffusion handler
+	// Set the diffusion handlers
 	diffusionHandler = material->getDiffusionHandler().get();
+	soretDiffusionHandler = material->getSoretDiffusionHandler().get();
 
 	// Set the advection handlers
 	auto handlers = material->getAdvectionHandler();
@@ -488,8 +492,12 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	sputteringYield = opts.getSputteringYield();
 
 	// Which type of temperature grid to use
-	if (opts.getTempHandlerName() == "heat")
+	if (opts.getTempHandlerName() == "heat" or
+		opts.getTempHandlerName() == "ELM") {
 		sameTemperatureGrid = false;
+		// The temperature grid power only makes sense in this case
+		tempGridPower = opts.getTempGridPower();
+	}
 
 	// Do we want a flux temporal profile?
 	fluxTempProfile = opts.useFluxTimeProfile();
@@ -497,6 +505,8 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	// Boundary conditions in the X direction
 	if (opts.getBCString() == "periodic")
 		isMirror = false;
+	if (opts.getBCString() == "robin")
+		isRobin = true;
 
 	// Set the boundary conditions (= 1: free surface; = 0: mirror)
 	leftOffset = opts.getLeftBoundary();

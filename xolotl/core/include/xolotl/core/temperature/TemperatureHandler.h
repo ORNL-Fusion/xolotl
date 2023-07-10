@@ -21,13 +21,14 @@ public:
 	void
 	initializeTemperature(int dof,
 		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap)
-		override; /**
-				   * This operation sets the temperature given by the solver.
-				   * Don't do anything.
-				   *
-				   * \see ITemperatureHandler.h
-				   */
+		network::IReactionNetwork::SparseFillMap& dfillMap) override;
+
+	/**
+	 * This operation sets the temperature given by the solver.
+	 * Don't do anything.
+	 *
+	 * \see ITemperatureHandler.h
+	 */
 	void
 	setTemperature(double* solution) override
 	{
@@ -65,7 +66,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	updateSurfacePosition(int surfacePos) override
+	updateSurfacePosition(int surfacePos, std::vector<double> grid) override
 	{
 		return;
 	}
@@ -78,9 +79,9 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	computeTemperature(double** concVector, double* updatedConcOffset,
-		double hxLeft, double hxRight, int xi, double sy = 0.0, int iy = 0,
-		double sz = 0.0, int iz = 0) override
+	computeTemperature(double currentTime, double** concVector,
+		double* updatedConcOffset, double hxLeft, double hxRight, int xi,
+		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override
 	{
 		return;
 	}
@@ -93,11 +94,23 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	bool
-	computePartialsForTemperature(double* val, IdType* indices, double hxLeft,
-		double hxRight, int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
-		int iz = 0) override
+	computePartialsForTemperature(double currentTime, double** concVector,
+		double* val, IdType* indices, double hxLeft, double hxRight, int xi,
+		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override
 	{
 		return false;
+	}
+
+	/**
+	 * Get the heat flux at this time.
+	 *
+	 * @param currentTime The current time
+	 * @return The heat flux
+	 */
+	double
+	getHeatFlux(double currentTime) override
+	{
+		return 0.0;
 	}
 
 protected:
@@ -105,6 +118,11 @@ protected:
 	 * The number of degrees of freedom in the network
 	 */
 	int _dof;
+
+	/**
+	 * The x grid
+	 */
+	std::vector<double> xGrid;
 };
 } // namespace temperature
 } // namespace core

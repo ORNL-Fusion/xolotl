@@ -204,7 +204,7 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 		"DMDASetBlockFills failed.");
 
 	// Initialize the arrays for the reaction partial derivatives
-	vals = Kokkos::View<double*>("solverPartials", nPartials);
+	vals = Kokkos::View<double*>("solverPartials", nPartials + 1);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
@@ -874,7 +874,8 @@ PetscSolver3DHandler::updateConcentration(
 	// points in X
 	for (auto zk = localZS; zk < localZS + localZM; zk++)
 		for (auto yj = localYS; yj < localYS + localYM; yj++) {
-			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
+			temperatureHandler->updateSurfacePosition(
+				surfacePosition[yj][zk], grid);
 			bool tempHasChanged = false;
 			for (auto xi = (PetscInt)localXS - 1;
 				 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
@@ -910,7 +911,7 @@ PetscSolver3DHandler::updateConcentration(
 						hxRight = grid[xi + 1] - grid[xi];
 					}
 
-					temperatureHandler->computeTemperature(concVector,
+					temperatureHandler->computeTemperature(ftime, concVector,
 						updatedConcOffset, hxLeft, hxRight, xi, sy, yj, sz, zk);
 				}
 
@@ -989,7 +990,7 @@ PetscSolver3DHandler::updateConcentration(
 				// ---- Compute the temperature over the locally owned part
 				// of the grid -----
 				if (xi >= localXS && xi < localXS + localXM) {
-					temperatureHandler->computeTemperature(concVector,
+					temperatureHandler->computeTemperature(ftime, concVector,
 						updatedConcOffset, hxLeft, hxRight, xi, sy, yj, sz, zk);
 				}
 			}
@@ -1229,6 +1230,7 @@ PetscSolver3DHandler::computeJacobian(
 	// Declarations for variables used in the loop
 	double atomConc = 0.0, totalAtomConc = 0.0;
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
+	double** concVector = new double*[7];
 
 	// Get the total number of diffusing clusters
 	const auto nDiff = std::max(diffusionHandler->getNumberOfDiffusing(), 0);
@@ -1255,7 +1257,8 @@ PetscSolver3DHandler::computeJacobian(
 	 */
 	for (auto zk = localZS; zk < localZS + localZM; zk++)
 		for (auto yj = localYS; yj < localYS + localYM; yj++) {
-			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
+			temperatureHandler->updateSurfacePosition(
+				surfacePosition[yj][zk], grid);
 			bool tempHasChanged = false;
 			for (auto xi = (PetscInt)localXS - 1;
 				 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
@@ -1278,14 +1281,27 @@ PetscSolver3DHandler::computeJacobian(
 					hxRight = grid[xi + 1] - grid[xi];
 				}
 
+				// Get the concentrations at this grid point
+				concOffset = concs[zk][yj][xi];
+
+				// Fill the concVector with the pointer to the middle, left,
+				// right, bottom, top, front, and back grid points
+				concVector[0] = concOffset; // middle
+				concVector[1] = concs[zk][yj][(PetscInt)xi - 1]; // left
+				concVector[2] = concs[zk][yj][xi + 1]; // right
+				concVector[3] = concs[zk][(PetscInt)yj - 1][xi]; // bottom
+				concVector[4] = concs[zk][yj + 1][xi]; // top
+				concVector[5] = concs[(PetscInt)zk - 1][yj][xi]; // front
+				concVector[6] = concs[zk + 1][yj][xi]; // back
+
 				// Heat condition
 				if (xi == surfacePosition[yj][zk] && xi >= localXS &&
 					xi < localXS + localXM) {
 					// Get the partial derivatives for the temperature
 					auto setValues =
-						temperatureHandler->computePartialsForTemperature(
-							tempVals, tempIndices, hxLeft, hxRight, xi, sy, yj,
-							sz, zk);
+						temperatureHandler->computePartialsForTemperature(ftime,
+							concVector, tempVals, tempIndices, hxLeft, hxRight,
+							xi, sy, yj, sz, zk);
 
 					if (setValues) {
 						// Set grid coordinate and component number for the
@@ -1335,9 +1351,6 @@ PetscSolver3DHandler::computeJacobian(
 					}
 				}
 
-				// Get the concentrations at this grid point
-				concOffset = concs[zk][yj][xi];
-
 				// Set the grid fraction
 				if (xi < 0)
 					gridPosition[0] =
@@ -1383,9 +1396,9 @@ PetscSolver3DHandler::computeJacobian(
 				// Get the partial derivatives for the temperature
 				if (xi >= localXS && xi < localXS + localXM) {
 					auto setValues =
-						temperatureHandler->computePartialsForTemperature(
-							tempVals, tempIndices, hxLeft, hxRight, xi, sy, yj,
-							sz, zk);
+						temperatureHandler->computePartialsForTemperature(ftime,
+							concVector, tempVals, tempIndices, hxLeft, hxRight,
+							xi, sy, yj, sz, zk);
 
 					if (setValues) {
 						// Set grid coordinate and component number for the

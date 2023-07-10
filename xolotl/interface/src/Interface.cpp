@@ -1,5 +1,6 @@
 // Includes
 #include <ctime>
+#include <fstream>
 #include <iostream>
 
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
@@ -152,6 +153,8 @@ try {
 
 	// Initialize the solver
 	solver->initialize();
+
+	perfOutputYAML = opts.usePerfOutputYAML();
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -677,6 +680,14 @@ try {
 
 	auto perfHandler = solverCast(solver)->getSolverHandler()->getPerfHandler();
 
+	// Get the MPI rank
+	int rank = util::getMPIRank();
+
+	if (perfOutputYAML) {
+		auto ofs = std::ofstream("perf_r" + std::to_string(rank) + ".yaml");
+		perfHandler->reportData(ofs);
+	}
+
 	// Report statistics about the performance data collected during
 	// the run we just completed.
 	perf::PerfObjStatsMap<perf::ITimer::ValType> timerStats;
@@ -684,15 +695,15 @@ try {
 	perf::PerfObjStatsMap<perf::IHardwareCounter::CounterType> hwCtrStats;
 	perfHandler->collectStatistics(timerStats, counterStats, hwCtrStats);
 
-	auto xolotlComm = util::getMPIComm();
-
-	// Get the MPI rank
-	int rank;
-	MPI_Comm_rank(xolotlComm, &rank);
 	if (rank == 0) {
 		util::StringStream ss;
 		perfHandler->reportStatistics(ss, timerStats, counterStats, hwCtrStats);
 		XOLOTL_LOG << ss.str();
+		// if (perfOutputYAML) {
+		// 	auto ofs = std::ofstream("perf.yaml");
+		// 	perfHandler->reportStatistics(
+		// 		ofs, timerStats, counterStats, hwCtrStats);
+		// }
 	}
 
 	solver.reset();

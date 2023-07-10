@@ -28,6 +28,9 @@ public:
 		const IHardwareCounter::SpecType& ctrSpec) override;
 
 	void
+	reportData(std::ostream& os) const override;
+
+	void
 	collectStatistics(PerfObjStatsMap<ITimer::ValType>& timerStats,
 		PerfObjStatsMap<IEventCounter::ValType>& counterStats,
 		PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats)
