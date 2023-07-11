@@ -71,7 +71,8 @@ Options::Options() :
 	xenonDiffusivity(-1.0),
 	fissionYield(0.25),
 	heVRatio(4.0),
-	migrationThreshold(std::numeric_limits<double>::infinity())
+	migrationThreshold(std::numeric_limits<double>::infinity()),
+	basalPortion(0.1)
 {
 	return;
 }
@@ -246,7 +247,10 @@ Options::readParams(int argc, const char* argv[])
 		"ignored.")("fluxDepthProfileFilePath",
 		bpo::value<fs::path>(&fluxDepthProfileFilePath),
 		"The path to the custom flux profile file; the default is an empty "
-		"string that will use the default material associated flux handler.");
+		"string that will use the default material associated flux handler.")(
+		"basalPortion", bpo::value<double>(&basalPortion)->default_value(0.1),
+		"The value of the basal portion generated for each V (0.1 by "
+		"default).");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);

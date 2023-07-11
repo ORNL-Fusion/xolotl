@@ -480,6 +480,14 @@ public:
 	 */
 	virtual std::string
 	getFluxDepthProfileFilePath() const = 0;
+
+	/**
+	 * Obtain the value of the basal portion.
+	 *
+	 * @return Qb
+	 */
+	virtual double
+	getBasalPortion() const = 0;
 };
 // end class IOptions
 } /* namespace options */

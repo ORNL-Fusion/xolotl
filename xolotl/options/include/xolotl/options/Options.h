@@ -281,6 +281,11 @@ protected:
 	 */
 	fs::path fluxDepthProfileFilePath;
 
+	/**
+	 * Value of the basal portion.
+	 */
+	double basalPortion;
+
 public:
 	/**
 	 * The constructor.
@@ -808,6 +813,15 @@ public:
 	getFluxDepthProfileFilePath() const override
 	{
 		return fluxDepthProfileFilePath.string();
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getBasalPortion() const override
+	{
+		return basalPortion;
 	}
 };
 // end class Options
