@@ -1,3 +1,4 @@
+
 #include <array>
 #include <iostream>
 
@@ -84,13 +85,6 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,
 	int) const
 {
-	// Consider each diffusing cluster.
-	// TODO Maintaining a separate index assumes that diffusingClusters is
-	// visited in same order as diffusionGrid array for given point.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// diffusing clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-
 	if (concVector.size() != 3) {
 		throw std::runtime_error(
 			"Wrong size for 1D concentration stencil; should be 3, got " +
@@ -111,21 +105,27 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 			double oldConc = concVec[0][currId] * diffGrid(ix + 1, i);
 			double oldLeftConc = concVec[1][currId] * diffGrid(ix, i);
 			double oldRightConc = concVec[2][currId] * diffGrid(ix + 2, i);
+			double leftDiff = cluster.getDiffusionCoefficient(ix);
+			double midDiff = cluster.getDiffusionCoefficient(ix + 1);
+			double rightDiff = cluster.getDiffusionCoefficient(ix + 2);
+			double leftTemp = cluster.getTemperature(ix);
+			double midTemp = cluster.getTemperature(ix + 1);
+			double rightTemp = cluster.getTemperature(ix + 2);
 
 			// Use a simple midpoint stencil to compute the concentration
-			// double conc = 1.0;
-			double conc = (cluster.getDiffusionCoefficient(ix + 1) * 2.0 *
+			double conc = (midDiff * 2.0 *
 							  (oldLeftConc + (hxLeft / hxRight) * oldRightConc -
 								  (1.0 + (hxLeft / hxRight)) * oldConc) /
 							  (hxLeft * (hxLeft + hxRight))) +
-				((cluster.getDiffusionCoefficient(ix + 2) -
-					 cluster.getDiffusionCoefficient(ix)) *
-					(oldRightConc - oldLeftConc) /
+				((rightDiff - leftDiff) * (oldRightConc - oldLeftConc) /
 					((hxLeft + hxRight) * (hxLeft + hxRight)));
 
 			// Update the concentration of the cluster
+			// TODO: Should this use atomic_?
 			updatedConcOffset[currId] += conc;
 		});
+
+    // TODO: Maybe we need a Kokkos::fence() here?
 }
 
 void
@@ -140,30 +140,32 @@ Diffusion1DHandler::computePartialsForDiffusion(
 	// diffusing clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
 	int diffClusterIdx = 0;
+
 	for (auto const& currId : diffusingClusters) {
 		auto cluster = network.getClusterCommon(currId);
 
 		// Set the cluster index, the PetscSolver will use it to compute
 		// the row and column indices for the Jacobian
 		indices[diffClusterIdx] = currId;
+		double leftDiff = cluster.getDiffusionCoefficient(ix),
+			   midDiff = cluster.getDiffusionCoefficient(ix + 1),
+			   rightDiff = cluster.getDiffusionCoefficient(ix + 2);
+		double leftTemp = cluster.getTemperature(ix),
+			   midTemp = cluster.getTemperature(ix + 1),
+			   rightTemp = cluster.getTemperature(ix + 2);
 
 		// Compute the partial derivatives for diffusion of this cluster
 		// for the middle, left, and right grid point
-		val[diffClusterIdx * 3] = -2.0 *
-			cluster.getDiffusionCoefficient(ix + 1) / (hxLeft * hxRight) *
+		val[diffClusterIdx * 3] = (-2.0 * midDiff / (hxLeft * hxRight)) *
 			diffusionGrid[ix + 1][diffClusterIdx]; // middle
 		val[(diffClusterIdx * 3) + 1] =
-			(cluster.getDiffusionCoefficient(ix + 1) * 2.0 /
-					(hxLeft * (hxLeft + hxRight)) +
-				(cluster.getDiffusionCoefficient(ix) -
-					cluster.getDiffusionCoefficient(ix + 2)) /
+			(midDiff * 2.0 / (hxLeft * (hxLeft + hxRight)) +
+				(leftDiff - rightDiff) /
 					((hxLeft + hxRight) * (hxLeft + hxRight))) *
 			diffusionGrid[ix][diffClusterIdx]; // left
 		val[(diffClusterIdx * 3) + 2] =
-			(cluster.getDiffusionCoefficient(ix + 1) * 2.0 /
-					(hxRight * (hxLeft + hxRight)) +
-				(cluster.getDiffusionCoefficient(ix + 2) -
-					cluster.getDiffusionCoefficient(ix)) /
+			(midDiff * 2.0 / (hxRight * (hxLeft + hxRight)) +
+				(rightDiff - leftDiff) /
 					((hxLeft + hxRight) * (hxLeft + hxRight))) *
 			diffusionGrid[ix + 2][diffClusterIdx]; // right
 

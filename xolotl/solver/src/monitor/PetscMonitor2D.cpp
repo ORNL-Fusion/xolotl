@@ -1001,7 +1001,7 @@ PetscMonitor2D::computeHeliumRetention(
 		}
 
 		// Get the fluence
-		double fluence = fluxHandler->getFluence();
+		auto fluence = fluxHandler->getFluence();
 
 		// Print the result
 		util::StringStream ss;
@@ -1010,13 +1010,13 @@ PetscMonitor2D::computeHeliumRetention(
 			ss << network.getSpeciesName(id)
 			   << " content = " << totalConcData[id()] << '\n';
 		}
-		ss << "Fluence = " << fluence << "\n\n";
+		ss << "Fluence = " << fluence[0] << "\n\n";
 		XOLOTL_LOG << ss.str();
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << time << ' ' << fluence << " ";
+		outputFile << time << ' ' << fluence[0] << " ";
 		for (auto i = 0; i < numSpecies; ++i) {
 			outputFile << totalConcData[i] << " ";
 		}

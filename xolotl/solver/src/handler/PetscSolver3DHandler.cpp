@@ -2,6 +2,7 @@
 #include <petscdmda_kokkos.hpp>
 
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/io/XFile.h>
@@ -323,10 +324,11 @@ PetscSolver3DHandler::initializeSolverContext(DM& da, TS& ts)
 		}
 	}
 	nPartials = rows.size();
-	PetscCallVoid(MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data()));
+	PetscCallVoid(
+		MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data()));
 
 	// Initialize the arrays for the reaction partial derivatives
-	vals = Kokkos::View<double*>("solverPartials", nPartials);
+	vals = Kokkos::View<double*>("solverPartials", nPartials + 1);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
@@ -655,10 +657,10 @@ PetscSolver3DHandler::initializeConcentration(
 		// Create the scatter object
 		VecScatter scatter;
 		IS isTo, isFrom;
-		PetscCallVoid(ISCreateBlock(PetscObjectComm((PetscObject)da), dof + 1, 1,
-			lidxTo, PETSC_OWN_POINTER, &isTo));
-		PetscCallVoid(ISCreateBlock(PetscObjectComm((PetscObject)oldDA), dof + 1, 1,
-			lidxFrom, PETSC_OWN_POINTER, &isFrom));
+		PetscCallVoid(ISCreateBlock(PetscObjectComm((PetscObject)da), dof + 1,
+			1, lidxTo, PETSC_OWN_POINTER, &isTo));
+		PetscCallVoid(ISCreateBlock(PetscObjectComm((PetscObject)oldDA),
+			dof + 1, 1, lidxFrom, PETSC_OWN_POINTER, &isFrom));
 
 		// Create the scatter object
 		PetscCallVoid(VecScatterCreate(oldC, isFrom, C, isTo, &scatter));
@@ -862,7 +864,8 @@ PetscSolver3DHandler::setConcVector(DM& da, Vec& C,
 	}
 
 	// Restore the solutionArray
-	PetscCallVoid(DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations));
+	PetscCallVoid(
+		DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations));
 	PetscCallVoid(DMRestoreLocalVector(da, &localSolution));
 
 	return;
@@ -901,7 +904,8 @@ PetscSolver3DHandler::updateConcentration(
 	// points in X
 	for (auto zk = localZS; zk < localZS + localZM; zk++)
 		for (auto yj = localYS; yj < localYS + localYM; yj++) {
-			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
+			temperatureHandler->updateSurfacePosition(
+				surfacePosition[yj][zk], grid);
 			bool tempHasChanged = false;
 			for (auto xi = (PetscInt)localXS - 1;
 				 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
@@ -948,8 +952,9 @@ PetscSolver3DHandler::updateConcentration(
 						hxRight = grid[xi + 1] - grid[xi];
 					}
 
-					temperatureHandler->computeTemperature(concVector.data(),
-						updatedConcOffset, hxLeft, hxRight, xi, sy, yj, sz, zk);
+					temperatureHandler->computeTemperature(ftime,
+						concVector.data(), updatedConcOffset, hxLeft, hxRight,
+						xi, sy, yj, sz, zk);
 				}
 
 				// Compute the old and new array offsets
@@ -1038,8 +1043,9 @@ PetscSolver3DHandler::updateConcentration(
 				// ---- Compute the temperature over the locally owned part
 				// of the grid -----
 				if (xi >= localXS && xi < localXS + localXM) {
-					temperatureHandler->computeTemperature(concVector.data(),
-						updatedConcOffset, hxLeft, hxRight, xi, sy, yj, sz, zk);
+					temperatureHandler->computeTemperature(ftime,
+						concVector.data(), updatedConcOffset, hxLeft, hxRight,
+						xi, sy, yj, sz, zk);
 				}
 			}
 
@@ -1246,6 +1252,8 @@ PetscSolver3DHandler::computeJacobian(
 	// The degree of freedom is the size of the network
 	const auto dof = network.getDOF();
 
+	using ConcSubView = Kokkos::View<const double*>;
+	Kokkos::Array<ConcSubView, 7> concVector;
 	// Get the total number of diffusing clusters
 	const auto nDiff = std::max(diffusionHandler->getNumberOfDiffusing(), 0);
 
@@ -1267,6 +1275,8 @@ PetscSolver3DHandler::computeJacobian(
 	auto diffIndices = std::vector<IdType>(nDiff);
 	auto advecVals = std::vector<PetscScalar>(2 * nAdvec);
 	auto advecIndices = std::vector<IdType>(nAdvec);
+	Kokkos::Array<ConcSubView::host_mirror_type, 7> hConcVec;
+	const double* hConcPtrVec[7];
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
 	/*
@@ -1275,9 +1285,10 @@ PetscSolver3DHandler::computeJacobian(
 	auto hTempVals = Kokkos::View<double*, Kokkos::HostSpace>(
 		"Host Temp Jac Vals", localZM * localYM * localXM * 7);
 	std::size_t valIndex = 0;
-	for (auto zk = localZS; zk < localZS + localZM; zk++) {
-		for (auto yj = localYS; yj < localYS + localYM; yj++) {
-			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
+	for (PetscInt zk = localZS; zk < localZS + localZM; zk++) {
+		for (PetscInt yj = localYS; yj < localYS + localYM; yj++) {
+			temperatureHandler->updateSurfacePosition(
+				surfacePosition[yj][zk], grid);
 			bool tempHasChanged = false;
 			for (auto xi = (PetscInt)localXS - 1;
 				 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
@@ -1305,14 +1316,33 @@ PetscSolver3DHandler::computeJacobian(
 					valIndex += 7;
 				}
 
+				// Get the concentrations at this grid point
+				auto concOffset =
+					subview(concs, zk, yj, xi, Kokkos::ALL).view();
+
+				int id = 0;
+				using A = std::array<PetscInt, 3>;
+				for (auto&& mId :
+					{A{zk, yj, xi}, A{zk, yj, xi - 1}, A{zk, yj, xi + 1},
+						A{zk, yj - 1, xi}, A{zk, yj + 1, xi}, A{zk - 1, yj, xi},
+						A{zk + 1, yj, xi}}) {
+					concVector[id] =
+						subview(concs, mId[0], mId[1], mId[2], Kokkos::ALL)
+							.view();
+					hConcVec[id] = create_mirror_view(concVector[id]);
+					deep_copy(hConcVec[id], concVector[id]);
+					hConcPtrVec[id] = hConcVec[id].data();
+					++id;
+				}
+
 				// Heat condition
 				if (xi == surfacePosition[yj][zk] && xi >= localXS &&
 					xi < localXS + localXM) {
 					// Get the partial derivatives for the temperature
 					auto setValues =
-						temperatureHandler->computePartialsForTemperature(
-							tempVals, tempIndices, hxLeft, hxRight, xi, sy, yj,
-							sz, zk);
+						temperatureHandler->computePartialsForTemperature(ftime,
+							hConcPtrVec, tempVals, tempIndices, hxLeft, hxRight,
+							xi, sy, yj, sz, zk);
 
 					if (setValues) {
 						hTempVals(tempIndex + 0) += tempVals[0];
@@ -1324,10 +1354,6 @@ PetscSolver3DHandler::computeJacobian(
 						hTempVals(tempIndex + 6) += tempVals[6];
 					}
 				}
-
-				// Get the concentrations at this grid point
-				auto concOffset =
-					subview(concs, zk, yj, xi, Kokkos::ALL).view();
 
 				// Set the grid fraction
 				if (xi < 0)
@@ -1372,9 +1398,9 @@ PetscSolver3DHandler::computeJacobian(
 				// Get the partial derivatives for the temperature
 				if (xi >= localXS && xi < localXS + localXM) {
 					auto setValues =
-						temperatureHandler->computePartialsForTemperature(
-							tempVals, tempIndices, hxLeft, hxRight, xi, sy, yj,
-							sz, zk);
+						temperatureHandler->computePartialsForTemperature(ftime,
+							hConcPtrVec, tempVals, tempIndices, hxLeft, hxRight,
+							xi, sy, yj, sz, zk);
 
 					if (setValues) {
 						hTempVals(tempIndex + 0) += tempVals[0];
@@ -1571,7 +1597,6 @@ PetscSolver3DHandler::computeJacobian(
 	 */
 	PetscCallVoid(DMDAVecRestoreKokkosOffsetViewDOF(da, localC, &concs));
 }
-
 } /* end namespace handler */
 } /* end namespace solver */
 } /* end namespace xolotl */

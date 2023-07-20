@@ -34,7 +34,7 @@ public:
 	 * depending on the type of handler used.
 	 *
 	 * @param dof The number of degrees of freedom
-     */
+	 */
 	virtual void
 	initialize(const int dof) = 0;
 
@@ -78,14 +78,16 @@ public:
 	 * This operation sets the surface position.
 	 *
 	 * @param surfacePos The surface location
+	 * @param grid The spatial grid for temperature
 	 */
 	virtual void
-	updateSurfacePosition(int surfacePos) = 0;
+	updateSurfacePosition(int surfacePos, std::vector<double> grid) = 0;
 
 	/**
 	 * Compute the flux due to the heat equation.
 	 * This method is called by the RHSFunction from the solver.
 	 *
+	 * @param currentTime The current time
 	 * @param concVector The pointer to the pointer of arrays of concentration
 	 * at middle/ left/right grid points
 	 * @param updatedConcOffset The pointer to the array of the concentration at
@@ -103,7 +105,8 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void
-	computeTemperature(Kokkos::View<const double*>* concVector,
+	computeTemperature(double currentTime,
+		Kokkos::View<const double*>* concVector,
 		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
 		int xi, double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) = 0;
 
@@ -111,6 +114,9 @@ public:
 	 * Compute the partials due to the heat equation.
 	 * This method is called by the RHSJacobian from the solver.
 	 *
+	 * @param currentTime The current time
+	 * @param concVector The pointer to the pointer of arrays of concentration
+	 * at middle/ left/right grid points
 	 * @param val The pointer to the array that will contain the values of
 	 * partials for the heat equation
 	 * @param indices The pointer to the array that will contain the indices of
@@ -129,9 +135,18 @@ public:
 	 * @return True if the partials were updated
 	 */
 	virtual bool
-	computePartialsForTemperature(double* val, IdType* indices, double hxLeft,
-		double hxRight, int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
-		int iz = 0) = 0;
+	computePartialsForTemperature(double currentTime, const double** concVector,
+		double* val, IdType* indices, double hxLeft, double hxRight, int xi,
+		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) = 0;
+
+	/**
+	 * Get the heat flux at this time.
+	 *
+	 * @param currentTime The current time
+	 * @return The heat flux
+	 */
+	virtual double
+	getHeatFlux(double currentTime) = 0;
 };
 // end class ITemperatureHandler
 

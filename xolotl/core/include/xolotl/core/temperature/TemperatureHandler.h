@@ -64,7 +64,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	updateSurfacePosition(int surfacePos) override
+	updateSurfacePosition(int surfacePos, std::vector<double> grid) override
 	{
 		return;
 	}
@@ -77,7 +77,8 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	computeTemperature(Kokkos::View<const double*>* concVector,
+	computeTemperature(double currentTime,
+		Kokkos::View<const double*>* concVector,
 		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
 		int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
 		int iz = 0) override
@@ -93,11 +94,23 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	bool
-	computePartialsForTemperature(double* val, IdType* indices, double hxLeft,
-		double hxRight, int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
-		int iz = 0) override
+	computePartialsForTemperature(double currentTime, const double** concVector,
+		double* val, IdType* indices, double hxLeft, double hxRight, int xi,
+		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override
 	{
 		return false;
+	}
+
+	/**
+	 * Get the heat flux at this time.
+	 *
+	 * @param currentTime The current time
+	 * @return The heat flux
+	 */
+	double
+	getHeatFlux(double currentTime) override
+	{
+		return 0.0;
 	}
 
 protected:
@@ -105,6 +118,11 @@ protected:
 	 * The number of degrees of freedom in the network
 	 */
 	int _dof;
+
+	/**
+	 * The x grid
+	 */
+	std::vector<double> xGrid;
 };
 } // namespace temperature
 } // namespace core

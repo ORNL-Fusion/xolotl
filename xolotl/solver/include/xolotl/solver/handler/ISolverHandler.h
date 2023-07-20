@@ -11,6 +11,7 @@
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
+#include <xolotl/core/modified/ISoretDiffusionHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 #include <xolotl/options/IOptions.h>
@@ -185,6 +186,14 @@ public:
 	 */
 	virtual std::vector<double>
 	getXGrid() const = 0;
+
+	/**
+	 * Get the grid in the x direction for the temperature.
+	 *
+	 * @return The grid in the x direction
+	 */
+	virtual std::vector<double>
+	getTemperatureGrid() const = 0;
 
 	/**
 	 * Get the step size in the y direction.
@@ -474,6 +483,14 @@ public:
 	 */
 	virtual core::diffusion::IDiffusionHandler*
 	getDiffusionHandler() const = 0;
+
+	/**
+	 * Get the Soret diffusion handler.
+	 *
+	 * @return The Soret diffusion handler
+	 */
+	virtual core::modified::ISoretDiffusionHandler*
+	getSoretDiffusionHandler() const = 0;
 
 	/**
 	 * Get the surface advection handler.

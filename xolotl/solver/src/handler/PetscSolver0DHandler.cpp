@@ -34,6 +34,13 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = util::getMPIComm();
+	int size;
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	if (size > 1) {
+		throw std::runtime_error("\nYou are trying to run a 0D simulation in "
+								 "parallel, this is not possible!");
+	}
+
 	PetscCallVoid(
 		DMDACreate1d(xolotlComm, DM_BOUNDARY_NONE, 1, dof + 1, 0, NULL, &da));
 	PetscCallVoid(DMSetFromOptions(da));

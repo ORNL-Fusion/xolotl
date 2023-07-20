@@ -45,8 +45,18 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 	BOOST_REQUIRE_CLOSE(
 		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
 
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
+	// Set a time
+	double time = 0.5;
+
 	// Initialize it
 	heatHandler.initialize(dof);
+	heatHandler.updateSurfacePosition(0, grid);
 
 	// The size parameter in the x direction
 	double hx = 1.0;
@@ -71,19 +81,20 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 
 	// Fill the concVector with the pointer to the middle, left, and right grid
 	// points
-	Kokkos::Array<Kokkos::View<const double*>, 3> concVector;
+	using ConcSubView = Kokkos::View<const double*>;
+	Kokkos::Array<ConcSubView, 3> concVector;
 	concVector[0] = concOffset; // middle
 	concVector[1] = subview(concentration, 0, Kokkos::ALL); // left
 	concVector[2] = subview(concentration, 2, Kokkos::ALL); // right
 
 	// Compute the heat equation at this grid point
 	heatHandler.computeTemperature(
-		concVector.data(), updatedConcOffset, hx, hx, hx);
+		time, concVector.data(), updatedConcOffset, hx, hx, hx);
 
 	// Check the new values of updatedConcOffset
 	auto updatedConcOffsetMirror =
 		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 1.367e+16, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 7.5004e+15, 0.01);
 
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
@@ -98,17 +109,28 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 	IdType* indicesPointer = &indices[0];
 	double* valPointer = &val[0];
 
+	Kokkos::Array<ConcSubView::host_mirror_type, 3> hConcVec;
+	const double* hConcPtrVec[3];
+	int id = 0;
+	for (auto&& xId : {1, 0, 2}) {
+		concVector[id] = subview(concentration, xId, Kokkos::ALL);
+		hConcVec[id] = create_mirror_view(concVector[id]);
+		deep_copy(hConcVec[id], concVector[id]);
+		hConcPtrVec[id] = hConcVec[id].data();
+		++id;
+	}
+
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		valPointer, indicesPointer, hx, hx, hx);
+		time, hConcPtrVec, valPointer, indicesPointer, hx, hx, hx);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
 
 	// Check the values
-	BOOST_REQUIRE_CLOSE(val[0], -1.367e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 6.835e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -135508639961461, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 80171695638351, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 50744437570026, 0.01);
 }
 
 BOOST_AUTO_TEST_CASE(checkHeat2D)
@@ -127,8 +149,18 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 	BOOST_REQUIRE_CLOSE(
 		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
 
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
+	// Set a time
+	double time = 0.5;
+
 	// Initialize it
 	heatHandler.initialize(dof);
+	heatHandler.updateSurfacePosition(0, grid);
 
 	// The step size in the x direction
 	double hx = 1.0;
@@ -157,7 +189,8 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 
 	// Fill the concVector with the pointer to the middle, left, right, bottom,
 	// and top grid points
-	Kokkos::Array<Kokkos::View<const double*>, 5> concVector;
+	using ConcSubView = Kokkos::View<const double*>;
+	Kokkos::Array<ConcSubView, 5> concVector;
 	concVector[0] = concOffset; // middle
 	concVector[1] = subview(concentration, 3, Kokkos::ALL); // left
 	concVector[2] = subview(concentration, 5, Kokkos::ALL); // right
@@ -166,7 +199,7 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 
 	// Compute the heat equation at this grid point
 	heatHandler.computeTemperature(
-		concVector.data(), updatedConcOffset, hx, hx, hx, sy, 1);
+		time, concVector.data(), updatedConcOffset, hx, hx, hx, sy, 1);
 
 	// Check the new values of updatedConcOffset
 	auto updatedConcOffsetMirror =
@@ -186,19 +219,30 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 	IdType* indicesPointer = &indices[0];
 	double* valPointer = &val[0];
 
+	Kokkos::Array<ConcSubView::host_mirror_type, 5> hConcVec;
+	const double* hConcPtrVec[5];
+	int id = 0;
+	for (auto&& xId : {4, 3, 5, 1, 7}) {
+		concVector[id] = subview(concentration, xId, Kokkos::ALL);
+		hConcVec[id] = create_mirror_view(concVector[id]);
+		deep_copy(hConcVec[id], concVector[id]);
+		hConcPtrVec[id] = hConcVec[id].data();
+		++id;
+	}
+
 	// Compute the partial derivatives for the heat equation a the grid point
 	heatHandler.computePartialsForTemperature(
-		valPointer, indicesPointer, hx, hx, hx, sy, 1);
+		time, hConcPtrVec, valPointer, indicesPointer, hx, hx, hx, sy, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
 
 	// Check the values
-	BOOST_REQUIRE_CLOSE(val[0], -2.734e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 6.835e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -109442547402517, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 34626084704135, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 8451742066439, 0.01);
+	BOOST_REQUIRE_CLOSE(val[3], 21538913385287, 0.01);
+	BOOST_REQUIRE_CLOSE(val[4], 21538913385287, 0.01);
 }
 
 BOOST_AUTO_TEST_CASE(checkHeat3D)
@@ -217,8 +261,18 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	BOOST_REQUIRE_CLOSE(
 		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
 
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
+	// Set a time
+	double time = 0.5;
+
 	// Initialize it
 	heatHandler.initialize(dof);
+	heatHandler.updateSurfacePosition(0, grid);
 
 	// The step size in the x direction
 	double hx = 1.0;
@@ -250,7 +304,8 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 
 	// Fill the concVector with the pointer to the middle, left, right, bottom,
 	// top, front, and back grid points
-	Kokkos::Array<Kokkos::View<const double*>, 7> concVector;
+	using ConcSubView = Kokkos::View<const double*>;
+	Kokkos::Array<ConcSubView, 7> concVector;
 	concVector[0] = concOffset; // middle
 	concVector[1] = subview(concentration, 12, Kokkos::ALL); // left
 	concVector[2] = subview(concentration, 14, Kokkos::ALL); // right
@@ -261,7 +316,7 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 
 	// Compute the heat equation at this grid point
 	heatHandler.computeTemperature(
-		concVector.data(), updatedConcOffset, hx, hx, hx, sy, 1, sz, 1);
+		time, concVector.data(), updatedConcOffset, hx, hx, hx, sy, 1, sz, 1);
 
 	// Check the new values of updatedConcOffset
 	auto updatedConcOffsetMirror =
@@ -281,21 +336,32 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	IdType* indicesPointer = &indices[0];
 	double* valPointer = &val[0];
 
+	Kokkos::Array<ConcSubView::host_mirror_type, 7> hConcVec;
+	const double* hConcPtrVec[7];
+	int id = 0;
+	for (auto&& xId : {13, 12, 14, 10, 16, 4, 22}) {
+		concVector[id] = subview(concentration, xId, Kokkos::ALL);
+		hConcVec[id] = create_mirror_view(concVector[id]);
+		deep_copy(hConcVec[id], concVector[id]);
+		hConcPtrVec[id] = hConcVec[id].data();
+		++id;
+	}
+
 	// Compute the partial derivatives for the heat equation a the grid point
-	heatHandler.computePartialsForTemperature(
-		valPointer, indicesPointer, hx, hx, hx, sy, 1, sz, 1);
+	heatHandler.computePartialsForTemperature(time, hConcPtrVec, valPointer,
+		indicesPointer, hx, hx, hx, sy, 1, sz, 1);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(indices[0], 9);
 
 	// Check the values
-	BOOST_REQUIRE_CLOSE(val[0], -4.101e+14, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[5], 6.835e+13, 0.01);
-	BOOST_REQUIRE_CLOSE(val[6], 6.835e+13, 0.01);
+	BOOST_REQUIRE_CLOSE(val[0], -164490411906709, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 29368449647960, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 25268952000254, 0.01);
+	BOOST_REQUIRE_CLOSE(val[3], 27318700824107, 0.01);
+	BOOST_REQUIRE_CLOSE(val[4], 27318700824107, 0.01);
+	BOOST_REQUIRE_CLOSE(val[5], 27318700824107, 0.01);
+	BOOST_REQUIRE_CLOSE(val[6], 27318700824107, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

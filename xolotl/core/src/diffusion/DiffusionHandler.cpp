@@ -17,7 +17,6 @@ DiffusionHandler::syncDiffusingClusters(network::IReactionNetwork& network)
 		"Diffusing Cluster Ids", diffusingClusters.size());
 	deep_copy(diffClusterIds, clusterIds_h);
 
-	using DeviceCluster = network::ClusterCommon<plsm::DeviceMemSpace>;
 	diffClusters = Kokkos::View<DeviceCluster*>(
 		Kokkos::ViewAllocateWithoutInitializing("Diffusing Clusters"),
 		diffusingClusters.size());

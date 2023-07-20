@@ -45,6 +45,12 @@ DummyHandler::getHardwareCounter(
 }
 
 void
+DummyHandler::reportData(std::ostream&) const
+{
+	return;
+}
+
+void
 DummyHandler::collectStatistics(PerfObjStatsMap<ITimer::ValType>&,
 	PerfObjStatsMap<IEventCounter::ValType>&,
 	PerfObjStatsMap<IHardwareCounter::CounterType>&)

@@ -204,13 +204,15 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
 	// Check that the fluence is 0.0 at the beginning
-	BOOST_REQUIRE_EQUAL(testFitFlux->getFluence(), 0.0);
+	auto fluence = testFitFlux->getFluence();
+	BOOST_REQUIRE_EQUAL(fluence[0], 0.0);
 
 	// Increment the fluence
 	testFitFlux->incrementFluence(1.0e-8);
 
 	// Check that the fluence is not 0.0 anymore
-	BOOST_REQUIRE_EQUAL(testFitFlux->getFluence(), 1.0e-8);
+	fluence = testFitFlux->getFluence();
+	BOOST_REQUIRE_EQUAL(fluence[0], 1.0e-8);
 
 	return;
 }

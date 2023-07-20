@@ -457,6 +457,11 @@ PetscMonitor1D::setup(int loop)
 			std::ofstream outputFile;
 			outputFile.open("retentionOut.txt");
 			outputFile << "#time fluence ";
+			// Get the generated clusters
+			auto factors = fluxHandler->getReductionFactors();
+			for (auto i = 0; i < factors.size(); i++) {
+				outputFile << "fluence_" << i << " ";
+			}
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 				auto speciesName = network.getSpeciesName(id);
 				outputFile << speciesName << "_content ";
@@ -867,9 +872,14 @@ PetscMonitor1D::computeHeliumRetention(
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	const auto dof = network.getDOF();
 
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	PetscCall(DMGetLocalVector(da, &localSolution));
+	PetscCall(DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution));
+	PetscCall(DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution));
 	// Get the array of concentration
 	PetscReal** solutionArray;
-	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
+	PetscCall(DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray));
 
 	// Store the concentration over the grid
 	auto numSpecies = network.getSpeciesListSize();
@@ -1102,7 +1112,7 @@ PetscMonitor1D::computeHeliumRetention(
 	// Master process
 	if (procId == 0) {
 		// Get the fluence
-		double fluence = fluxHandler->getFluence();
+		auto fluence = fluxHandler->getFluence();
 
 		// Print the result
 		util::StringStream ss;
@@ -1111,13 +1121,16 @@ PetscMonitor1D::computeHeliumRetention(
 			ss << network.getSpeciesName(id)
 			   << " content = " << totalConcData[id()] << std::endl;
 		}
-		ss << "Fluence = " << fluence << std::endl << std::endl;
+		ss << "Fluence = " << fluence[0] << std::endl << std::endl;
 		XOLOTL_LOG << ss.str();
 
 		// Write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << time << " " << fluence << " ";
+		outputFile << time << " ";
+		for (auto flu : fluence) {
+			outputFile << flu << " ";
+		}
 		for (auto i = 0; i < numSpecies; ++i) {
 			outputFile << totalConcData[i] << " ";
 		}
@@ -1131,6 +1144,7 @@ PetscMonitor1D::computeHeliumRetention(
 				outputFile << _nSurf[i] << " ";
 			}
 		}
+		auto tempHandler = _solverHandler->getTemperatureHandler();
 		outputFile << _nHeliumBurst << " " << _nDeuteriumBurst << " "
 				   << _nTritiumBurst << std::endl;
 		outputFile.close();
@@ -1152,7 +1166,8 @@ PetscMonitor1D::computeHeliumRetention(
 	}
 
 	// Restore the solutionArray
-	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray));
+	PetscCall(DMRestoreLocalVector(da, &localSolution));
 
 	PetscFunctionReturn(0);
 }

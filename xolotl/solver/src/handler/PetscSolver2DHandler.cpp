@@ -2,6 +2,7 @@
 #include <petscdmda_kokkos.hpp>
 
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/io/XFile.h>
@@ -265,10 +266,11 @@ PetscSolver2DHandler::initializeSolverContext(DM& da, TS& ts)
 		}
 	}
 	nPartials = rows.size();
-	PetscCallVoid(MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data()));
+	PetscCallVoid(
+		MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data()));
 
 	// Initialize the arrays for the reaction partial derivatives
-	vals = Kokkos::View<double*>("solverPartials", nPartials);
+	vals = Kokkos::View<double*>("solverPartials", nPartials + 1);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
@@ -585,10 +587,10 @@ PetscSolver2DHandler::initializeConcentration(
 		// Create the scatter object
 		VecScatter scatter;
 		IS isTo, isFrom;
-		PetscCallVoid(ISCreateBlock(PetscObjectComm((PetscObject)da), dof + 1, 1,
-			lidxTo, PETSC_OWN_POINTER, &isTo));
-		PetscCallVoid(ISCreateBlock(PetscObjectComm((PetscObject)oldDA), dof + 1, 1,
-			lidxFrom, PETSC_OWN_POINTER, &isFrom));
+		PetscCallVoid(ISCreateBlock(PetscObjectComm((PetscObject)da), dof + 1,
+			1, lidxTo, PETSC_OWN_POINTER, &isTo));
+		PetscCallVoid(ISCreateBlock(PetscObjectComm((PetscObject)oldDA),
+			dof + 1, 1, lidxFrom, PETSC_OWN_POINTER, &isFrom));
 
 		// Create the scatter object
 		PetscCallVoid(VecScatterCreate(oldC, isFrom, C, isTo, &scatter));
@@ -782,7 +784,8 @@ PetscSolver2DHandler::setConcVector(DM& da, Vec& C,
 	}
 
 	// Restore the solutionArray
-	PetscCallVoid(DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations));
+	PetscCallVoid(
+		DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations));
 	PetscCallVoid(DMRestoreLocalVector(da, &localSolution));
 
 	return;
@@ -819,7 +822,7 @@ PetscSolver2DHandler::updateConcentration(
 	// Loop over grid points first for the temperature, including the ghost
 	// points in X
 	for (auto yj = localYS; yj < localYS + localYM; yj++) {
-		temperatureHandler->updateSurfacePosition(surfacePosition[yj]);
+		temperatureHandler->updateSurfacePosition(surfacePosition[yj], grid);
 		bool tempHasChanged = false;
 		for (auto xi = (PetscInt)localXS - 1;
 			 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
@@ -860,7 +863,7 @@ PetscSolver2DHandler::updateConcentration(
 					hxRight = grid[xi + 1] - grid[xi];
 				}
 
-				temperatureHandler->computeTemperature(concVector.data(),
+				temperatureHandler->computeTemperature(ftime, concVector.data(),
 					updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
 			}
 
@@ -937,7 +940,7 @@ PetscSolver2DHandler::updateConcentration(
 
 			// Compute the temperature over the locally owned part of the grid
 			if (xi >= localXS && xi < localXS + localXM) {
-				temperatureHandler->computeTemperature(concVector.data(),
+				temperatureHandler->computeTemperature(ftime, concVector.data(),
 					updatedConcOffset, hxLeft, hxRight, xi, sy, yj);
 			}
 		}
@@ -1128,6 +1131,9 @@ PetscSolver2DHandler::computeJacobian(
 	// The degree of freedom is the size of the network
 	const auto dof = network.getDOF();
 
+	using ConcSubView = Kokkos::View<const double*>;
+	Kokkos::Array<ConcSubView, 5> concVector;
+
 	// Get the total number of diffusing clusters
 	const auto nDiff = std::max(diffusionHandler->getNumberOfDiffusing(), 0);
 
@@ -1148,6 +1154,8 @@ PetscSolver2DHandler::computeJacobian(
 	auto diffIndices = std::vector<IdType>(nDiff);
 	auto advecVals = std::vector<PetscScalar>(2 * nAdvec);
 	auto advecIndices = std::vector<IdType>(nAdvec);
+	Kokkos::Array<ConcSubView::host_mirror_type, 5> hConcVec;
+	const double* hConcPtrVec[5];
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
 	/*
@@ -1156,8 +1164,8 @@ PetscSolver2DHandler::computeJacobian(
 	auto hTempVals = Kokkos::View<double*, Kokkos::HostSpace>(
 		"Host Temp Jac Vals", localYM * localXM * 5);
 	std::size_t valIndex = 0;
-	for (auto yj = localYS; yj < localYS + localYM; yj++) {
-		temperatureHandler->updateSurfacePosition(surfacePosition[yj]);
+	for (PetscInt yj = localYS; yj < localYS + localYM; yj++) {
+		temperatureHandler->updateSurfacePosition(surfacePosition[yj], grid);
 		bool tempHasChanged = false;
 		for (auto xi = (PetscInt)localXS - 1;
 			 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
@@ -1185,13 +1193,29 @@ PetscSolver2DHandler::computeJacobian(
 				valIndex += 5;
 			}
 
+			// Get the concentrations at this grid point
+			auto concOffset = subview(concs, yj, xi, Kokkos::ALL).view();
+
+			int id = 0;
+			using A = std::array<PetscInt, 2>;
+			for (auto&& mId : {A{yj, xi}, A{yj, xi - 1}, A{yj, xi + 1},
+					 A{yj - 1, xi}, A{yj + 1, xi}}) {
+				concVector[id] =
+					subview(concs, mId[0], mId[1], Kokkos::ALL).view();
+				hConcVec[id] = create_mirror_view(concVector[id]);
+				deep_copy(hConcVec[id], concVector[id]);
+				hConcPtrVec[id] = hConcVec[id].data();
+				++id;
+			}
+
 			// Heat condition
 			if (xi == surfacePosition[yj] && xi >= localXS &&
 				xi < localXS + localXM) {
 				// Get the partial derivatives for the temperature
 				auto setValues =
-					temperatureHandler->computePartialsForTemperature(
-						tempVals, tempIndices, hxLeft, hxRight, xi, sy, yj);
+					temperatureHandler->computePartialsForTemperature(ftime,
+						hConcPtrVec, tempVals, tempIndices, hxLeft, hxRight, xi,
+						sy, yj);
 
 				if (setValues) {
 					hTempVals(tempIndex + 0) += tempVals[0];
@@ -1202,10 +1226,6 @@ PetscSolver2DHandler::computeJacobian(
 				}
 			}
 
-			// Get the concentrations at this grid point
-			auto concOffset = subview(concs, yj, xi, Kokkos::ALL).view();
-
-			// FIXME: xi is out-of-range at some points
 			// Set the grid fraction
 			if (xi < 0)
 				gridPosition[0] = (grid[0] - grid[surfacePosition[yj] + 1]) /
@@ -1242,8 +1262,9 @@ PetscSolver2DHandler::computeJacobian(
 			// Get the partial derivatives for the temperature
 			if (xi >= localXS && xi < localXS + localXM) {
 				auto setValues =
-					temperatureHandler->computePartialsForTemperature(
-						tempVals, tempIndices, hxLeft, hxRight, xi, sy, yj);
+					temperatureHandler->computePartialsForTemperature(ftime,
+						hConcPtrVec, tempVals, tempIndices, hxLeft, hxRight, xi,
+						sy, yj);
 
 				if (setValues) {
 					hTempVals(tempIndex + 0) += tempVals[0];

@@ -31,6 +31,11 @@ protected:
 	 */
 	Kokkos::View<double**> incidentFlux;
 
+    /**
+	 * The reduction factors for each deposition.
+	 */
+	std::vector<double> reductionFactors;
+
 	/**
 	 * Vector to hold the position at each grid
 	 * point (x position).
@@ -40,7 +45,7 @@ protected:
 	/**
 	 *  Fluence.
 	 */
-	double fluence;
+	std::vector<double> fluence;
 
 	/**
 	 * The amplitude of the flux.
@@ -167,7 +172,7 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual double
+	virtual std::vector<double>
 	getFluence() const;
 
 	/**
@@ -235,6 +240,12 @@ public:
 	 */
 	virtual std::vector<IdType>
 	getFluxIndices() const;
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<double>
+	getReductionFactors() const;
 };
 // end class FluxHandler
 

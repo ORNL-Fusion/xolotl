@@ -1036,10 +1036,10 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 {
 	using Q = TotalQuantity::Type;
 	auto match = TQArrayMatcher<1>{quantities};
-	if (match({Q::total})) {
+	if (match({{Q::total}})) {
 		return getTotalsImpl<TQMethodTotal>(concentrations, quantities);
 	}
-	if (match({Q::atom})) {
+	if (match({{Q::atom}})) {
 		return getTotalsImpl<TQMethodAtom>(concentrations, quantities);
 	}
 
@@ -1054,7 +1054,7 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 {
 	using Q = TotalQuantity::Type;
 	auto match = TQArrayMatcher<2>{quantities};
-	if (match({Q::atom, Q::atom})) {
+	if (match({{Q::atom, Q::atom}})) {
 		return getTotalsImpl<TQMethodAtom, TQMethodAtom>(
 			concentrations, quantities);
 	}
@@ -1070,7 +1070,7 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 {
 	using Q = TotalQuantity::Type;
 	auto match = TQArrayMatcher<3>{quantities};
-	if (match({Q::atom, Q::atom, Q::atom})) {
+	if (match({{Q::atom, Q::atom, Q::atom}})) {
 		return getTotalsImpl<TQMethodAtom, TQMethodAtom, TQMethodAtom>(
 			concentrations, quantities);
 	}
@@ -1086,11 +1086,11 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 {
 	using Q = TotalQuantity::Type;
 	auto match = TQArrayMatcher<4>{quantities};
-	if (match({Q::total, Q::radius, Q::total, Q::radius})) {
+	if (match({{Q::total, Q::radius, Q::total, Q::radius}})) {
 		return getTotalsImpl<TQMethodTotal, TQMethodRadius, TQMethodTotal,
 			TQMethodRadius>(concentrations, quantities);
 	}
-	if (match({Q::atom, Q::atom, Q::atom, Q::atom})) {
+	if (match({{Q::atom, Q::atom, Q::atom, Q::atom}})) {
 		return getTotalsImpl<TQMethodAtom, TQMethodAtom, TQMethodAtom,
 			TQMethodAtom>(concentrations, quantities);
 	}
@@ -1109,7 +1109,7 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 {
 	using Q = TotalQuantity::Type;
 	auto match = TQArrayMatcher<5>{quantities};
-	if (match({Q::atom, Q::atom, Q::atom, Q::atom, Q::atom})) {
+	if (match({{Q::atom, Q::atom, Q::atom, Q::atom, Q::atom}})) {
 		return getTotalsImpl<TQMethodAtom, TQMethodAtom, TQMethodAtom,
 			TQMethodAtom, TQMethodAtom>(concentrations, quantities);
 	}
@@ -1126,12 +1126,13 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 {
 	using Q = TotalQuantity::Type;
 	auto match = TQArrayMatcher<6>{quantities};
-	if (match({Q::total, Q::atom, Q::radius, Q::total, Q::atom, Q::radius})) {
+	if (match({{Q::total, Q::atom, Q::radius, Q::total, Q::atom, Q::radius}})) {
 		return getTotalsImpl<TQMethodTotal, TQMethodAtom, TQMethodRadius,
 			TQMethodTotal, TQMethodAtom, TQMethodRadius>(
 			concentrations, quantities);
 	}
-	if (match({Q::total, Q::atom, Q::radius, Q::total, Q::radius, Q::volume})) {
+	if (match(
+			{{Q::total, Q::atom, Q::radius, Q::total, Q::radius, Q::volume}})) {
 		return getTotalsImpl<TQMethodTotal, TQMethodAtom, TQMethodRadius,
 			TQMethodTotal, TQMethodRadius, TQMethodVolume>(
 			concentrations, quantities);
@@ -1151,8 +1152,8 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 {
 	using Q = TotalQuantity::Type;
 	auto match = TQArrayMatcher<7>{quantities};
-	if (match({Q::total, Q::atom, Q::radius, Q::total, Q::atom, Q::radius,
-			Q::volume})) {
+	if (match({{Q::total, Q::atom, Q::radius, Q::total, Q::atom, Q::radius,
+			Q::volume}})) {
 		return getTotalsImpl<TQMethodTotal, TQMethodAtom, TQMethodRadius,
 			TQMethodTotal, TQMethodAtom, TQMethodRadius, TQMethodVolume>(
 			concentrations, quantities);
