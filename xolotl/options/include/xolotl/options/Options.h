@@ -174,6 +174,11 @@ protected:
 	int maxV;
 
 	/**
+	 * Maximum number of pure V
+	 */
+	int maxPureV;
+
+	/**
 	 * Maximum number of I
 	 */
 	int maxI;
@@ -280,6 +285,11 @@ protected:
 	 * The path to the custom flux profile file
 	 */
 	fs::path fluxDepthProfileFilePath;
+
+	/**
+	 * Value of the basal portion.
+	 */
+	double basalPortion;
 
 public:
 	/**
@@ -599,6 +609,15 @@ public:
 	 * \see IOptions.h
 	 */
 	int
+	getMaxPureV() const override
+	{
+		return maxPureV;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
 	getMaxI() const override
 	{
 		return maxI;
@@ -808,6 +827,15 @@ public:
 	getFluxDepthProfileFilePath() const override
 	{
 		return fluxDepthProfileFilePath.string();
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getBasalPortion() const override
+	{
+		return basalPortion;
 	}
 };
 // end class Options
