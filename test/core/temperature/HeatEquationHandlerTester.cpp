@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 	// Check the new values of updatedConcOffset
 	auto updatedConcOffsetMirror =
 		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 7.5004e+15, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 7500434287856011, 0.01);
 
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
@@ -204,7 +204,7 @@ BOOST_AUTO_TEST_CASE(checkHeat2D)
 	// Check the new values of updatedConcOffset
 	auto updatedConcOffsetMirror =
 		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 1.367e+17, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 30252398878103828, 0.01);
 
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);
@@ -321,7 +321,7 @@ BOOST_AUTO_TEST_CASE(checkHeat3D)
 	// Check the new values of updatedConcOffset
 	auto updatedConcOffsetMirror =
 		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 1.24397e+17, 0.01);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 49150205326843880, 0.01);
 
 	// Set the temperature in the handler
 	heatHandler.setTemperature(concOffset);

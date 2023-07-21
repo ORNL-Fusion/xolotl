@@ -119,7 +119,9 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 		1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 27632823604, 0.01);
+	auto hUpdatedConcOffset =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(hUpdatedConcOffset[0], 27632823604, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = 1;
