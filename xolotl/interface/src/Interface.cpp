@@ -699,11 +699,6 @@ try {
 		util::StringStream ss;
 		perfHandler->reportStatistics(ss, timerStats, counterStats, hwCtrStats);
 		XOLOTL_LOG << ss.str();
-		// if (perfOutputYAML) {
-		// 	auto ofs = std::ofstream("perf.yaml");
-		// 	perfHandler->reportStatistics(
-		// 		ofs, timerStats, counterStats, hwCtrStats);
-		// }
 	}
 
 	solver.reset();
