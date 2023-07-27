@@ -218,6 +218,12 @@ public:
 	getProcesses() const = 0;
 
 	/**
+	 * Determine if the network is being distributed to subnetworks
+	 */
+	virtual bool
+	useSubnetworks() const = 0;
+
+	/**
 	 * Obtain the string listing the wanted GB.
 	 *
 	 * @return The string of GB
@@ -497,6 +503,5 @@ public:
 	virtual double
 	getBasalPortion() const = 0;
 };
-// end class IOptions
 } /* namespace options */
 } /* namespace xolotl */

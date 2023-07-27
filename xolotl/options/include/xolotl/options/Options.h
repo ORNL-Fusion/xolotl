@@ -73,6 +73,11 @@ protected:
 	 */
 	bool perfOutputYAMLFlag;
 
+    /**
+     * Enable multiple xolotl instances
+     */
+    bool subnetworksFlag;
+
 	/**
 	 * Name of the viz handler
 	 */
@@ -514,6 +519,15 @@ public:
 	{
 		return processMap;
 	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	bool
+	useSubnetworks() const override
+    {
+        return subnetworksFlag;
+    }
 
 	/**
 	 * \see IOptions.h
