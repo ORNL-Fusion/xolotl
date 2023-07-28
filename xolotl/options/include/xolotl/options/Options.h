@@ -73,10 +73,10 @@ protected:
 	 */
 	bool perfOutputYAMLFlag;
 
-    /**
-     * Enable multiple xolotl instances
-     */
-    bool subnetworksFlag;
+	/**
+	 * Enable multiple xolotl instances
+	 */
+	bool subnetworksFlag;
 
 	/**
 	 * Name of the viz handler
@@ -157,6 +157,11 @@ protected:
 	 * Use a HDF5 file?
 	 */
 	bool useHDF5Flag;
+
+	/**
+	 * Network parameters
+	 */
+	std::vector<IdType> networkParams;
 
 	/**
 	 * Maximum number of He or Xe
@@ -306,6 +311,12 @@ public:
 	 * The destructor.
 	 */
 	~Options();
+
+	/**
+	 * \see IOptions.h
+	 */
+	std::shared_ptr<IOptions>
+	makeCopy() const override;
 
 	/**
 	 * \see IOptions.h
@@ -520,14 +531,17 @@ public:
 		return processMap;
 	}
 
+	void
+	addProcess(const std::string& processKey) override;
+
 	/**
 	 * \see IOptions.h
 	 */
 	bool
 	useSubnetworks() const override
-    {
-        return subnetworksFlag;
-    }
+	{
+		return subnetworksFlag;
+	}
 
 	/**
 	 * \see IOptions.h
@@ -582,6 +596,21 @@ public:
 	{
 		return useHDF5Flag;
 	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	const std::vector<IdType>&
+	getNetworkParameters() const override
+	{
+		return networkParams;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	void
+	setNetworkParameters(const std::vector<IdType>& params) override;
 
 	/**
 	 * \see IOptions.h

@@ -45,10 +45,11 @@ XolotlInterface::XolotlInterface(int& argc, const char* argv[], MPI_Comm comm)
 }
 
 XolotlInterface::XolotlInterface(const std::shared_ptr<ComputeContext>& context,
-	const std::shared_ptr<options::IOptions>& opts) :
+	const std::shared_ptr<options::IOptions>& opts, MPI_Comm comm) :
 	computeContext(context),
 	options(opts)
 {
+    util::setMPIComm(comm);
 	initializeXolotl();
 	initializedHere = true;
 }
@@ -76,6 +77,8 @@ try {
 
 	options = std::make_shared<options::Options>();
 	options->readParams(argc, argv);
+
+    initializeXolotl();
 }
 catch (const std::exception& e) {
 	reportException(e);

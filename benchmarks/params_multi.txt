@@ -1,7 +1,7 @@
 dimensions=0
 process=reaction sink
 netParam=0 0 0 9 9
-multiInstance=true
+useSubnetworks=true
 grouping=506 2
 vizHandler=dummy
 perfHandler=dummy

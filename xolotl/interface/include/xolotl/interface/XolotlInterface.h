@@ -84,13 +84,14 @@ public:
 		int& argc, const char* argv[], MPI_Comm mpiComm = MPI_COMM_WORLD);
 
 	/**
-	 * Construct from preconfigured options object
+	 * Construct from preconfigured compute context and options
 	 *
 	 * @param opts The options object
 	 * @param mpiComm The communicator to use
 	 */
 	XolotlInterface(const std::shared_ptr<ComputeContext>& context,
-		const std::shared_ptr<options::IOptions>& opts);
+		const std::shared_ptr<options::IOptions>& opts,
+		MPI_Comm mpiComm = MPI_COMM_WORLD);
 
 	/**
 	 * The destructor
