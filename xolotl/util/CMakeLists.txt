@@ -6,7 +6,9 @@ set(XOLOTL_UTIL_HEADERS
     ${XOLOTL_UTIL_HEADER_DIR}/Array.h
     ${XOLOTL_UTIL_HEADER_DIR}/DoInOrder.h
     ${XOLOTL_UTIL_HEADER_DIR}/Filesystem.h
-    ${XOLOTL_UTIL_HEADER_DIR}/LinearStepRamp.h
+    ${XOLOTL_UTIL_HEADER_DIR}/IStepSequence.h
+    ${XOLOTL_UTIL_HEADER_DIR}/LinearStepSequence.h
+    ${XOLOTL_UTIL_HEADER_DIR}/GrowthFactorStepSequence.h
     ${XOLOTL_UTIL_HEADER_DIR}/Log.h
     ${XOLOTL_UTIL_HEADER_DIR}/MathUtils.h
     ${XOLOTL_UTIL_HEADER_DIR}/MPIUtils.h
@@ -16,6 +18,8 @@ set(XOLOTL_UTIL_HEADERS
 )
 
 set(XOLOTL_UTIL_SOURCES
+    ${XOLOTL_UTIL_SOURCE_DIR}/GrowthFactorStepSequence.cpp
+    ${XOLOTL_UTIL_SOURCE_DIR}/LinearStepSequence.cpp
     ${XOLOTL_UTIL_SOURCE_DIR}/Log.cpp
     ${XOLOTL_UTIL_SOURCE_DIR}/MPIUtils.cpp
 )
