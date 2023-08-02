@@ -49,7 +49,7 @@ XolotlInterface::XolotlInterface(const std::shared_ptr<ComputeContext>& context,
 	computeContext(context),
 	options(opts)
 {
-    util::setMPIComm(comm);
+	util::setMPIComm(comm);
 	initializeXolotl();
 	initializedHere = true;
 }
@@ -78,7 +78,7 @@ try {
 	options = std::make_shared<options::Options>();
 	options->readParams(argc, argv);
 
-    initializeXolotl();
+	initializeXolotl();
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -124,6 +124,7 @@ try {
 
 	// Initialize the solver
 	solver->initialize();
+	solverInitialized = true;
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -135,6 +136,7 @@ XolotlInterface::initializeSolver()
 try {
 	// Initialize the solver
 	solver->initialize();
+	solverInitialized = true;
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -645,7 +647,9 @@ void
 XolotlInterface::finalizeXolotl()
 try {
 	// Call solver finalize
-	solver->finalize();
+	if (solverInitialized) {
+		solver->finalize();
+	}
 
 	auto perfHandler = solverCast(solver)->getSolverHandler()->getPerfHandler();
 

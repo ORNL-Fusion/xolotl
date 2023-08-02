@@ -7,24 +7,30 @@ namespace xolotl
 {
 namespace interface
 {
+class PetscContext
+{
+public:
+	PetscContext()
+	{
+		PetscInitialize(nullptr, nullptr, nullptr, nullptr);
+	}
+
+	~PetscContext()
+	{
+		PetscFinalize();
+	}
+};
+
 MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 	const std::shared_ptr<options::IOptions>& options) :
 	_computeContext(context),
-	_options(options)
+	_options(options),
+	_petscContext(std::make_unique<PetscContext>())
 {
+	// Create primary (whole) network interface
 	auto primaryOpts = _options->makeCopy();
 	primaryOpts->addProcess("noSolve");
 	_primaryInstance = std::make_unique<XolotlInterface>(context, primaryOpts);
-
-	// FIXME: in coupled code, the primary does not initialize the solver
-	// I'm doing this so that petsc gets initialized
-	// The way XolotlInterface works now, if we call PetscInitialize here and
-	// PetscFinalize() in the destructor, things happen out-of-order so that the
-	// errors are thrown when the XolotlInterface instances are destructed
-	// Can we use something like a "PetscContext" that handles this?
-	// NOTE: there are other problems with not calling initializeSolver here.
-	// XolotlInterface still calls finalizeSolver on destruction.
-	_primaryInstance->initializeSolver();
 
 	std::vector<std::vector<std::vector<std::uint32_t>>> allBounds;
 	std::vector<std::vector<std::vector<xolotl::IdType>>> allMomIdInfo;
@@ -75,7 +81,6 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 
 MultiXolotl::~MultiXolotl()
 {
-	// FIXME: (maybe) need to destroy the subinstances before
 }
 
 void

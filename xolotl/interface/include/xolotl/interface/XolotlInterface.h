@@ -48,6 +48,11 @@ private:
 	bool initializedHere{false};
 
 	/**
+	 * Did this instance initialize the solver?
+	 */
+	bool solverInitialized{false};
+
+	/**
 	 * The MPI and Kokkos environment
 	 */
 	std::shared_ptr<ComputeContext> computeContext;

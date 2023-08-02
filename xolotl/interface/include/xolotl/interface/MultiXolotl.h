@@ -12,6 +12,7 @@ namespace xolotl
 namespace interface
 {
 class ComputeContext;
+class PetscContext;
 class XolotlInterface;
 
 class MultiXolotl : public IXolotlInterface
@@ -28,6 +29,7 @@ public:
 private:
 	std::shared_ptr<ComputeContext> _computeContext;
 	std::shared_ptr<options::IOptions> _options;
+	std::unique_ptr<PetscContext> _petscContext;
 	std::unique_ptr<XolotlInterface> _primaryInstance;
 	std::vector<std::unique_ptr<XolotlInterface>> _subInstances;
 	std::vector<IdType> _subDOFs;
