@@ -4,13 +4,17 @@ namespace xolotl
 {
 namespace util
 {
-LinearStepSequence::LinearStepSequence(
-	double initialValue, double finalValue, std::size_t steps) :
+LinearStepSequence::LinearStepSequence(double initialValue, double finalValue,
+	std::size_t rampSteps, std::size_t maxSteps) :
+	StepSequence(maxSteps),
 	_initialValue{initialValue},
 	_diff{finalValue - _initialValue},
-	_steps{static_cast<double>(steps - 1)}
+	_rampSteps{static_cast<double>(rampSteps)}
 {
-	start();
+}
+
+LinearStepSequence::~LinearStepSequence()
+{
 }
 
 void
@@ -24,7 +28,12 @@ void
 LinearStepSequence::step()
 {
 	++_currentStep;
-	_currentValue = _initialValue + _diff * (_currentStep / _steps);
+	if (_currentStep > _rampSteps) {
+		return;
+	}
+	auto newVal = _initialValue + _diff * (_currentStep / _rampSteps);
+	_stepSize = newVal - _currentValue;
+	_currentValue = newVal;
 }
 } // namespace util
 } // namespace xolotl

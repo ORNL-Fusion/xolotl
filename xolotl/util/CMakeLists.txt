@@ -7,6 +7,7 @@ set(XOLOTL_UTIL_HEADERS
     ${XOLOTL_UTIL_HEADER_DIR}/DoInOrder.h
     ${XOLOTL_UTIL_HEADER_DIR}/Filesystem.h
     ${XOLOTL_UTIL_HEADER_DIR}/IStepSequence.h
+    ${XOLOTL_UTIL_HEADER_DIR}/StepSequence.h
     ${XOLOTL_UTIL_HEADER_DIR}/LinearStepSequence.h
     ${XOLOTL_UTIL_HEADER_DIR}/GrowthFactorStepSequence.h
     ${XOLOTL_UTIL_HEADER_DIR}/Log.h

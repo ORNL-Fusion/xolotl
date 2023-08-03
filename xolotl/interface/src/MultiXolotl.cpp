@@ -2,6 +2,8 @@
 
 #include <xolotl/interface/MultiXolotl.h>
 #include <xolotl/interface/XolotlInterface.h>
+#include <xolotl/util/GrowthFactorStepSequence.h>
+#include <xolotl/util/LinearStepSequence.h>
 
 namespace xolotl
 {
@@ -86,6 +88,19 @@ MultiXolotl::~MultiXolotl()
 void
 MultiXolotl::solveXolotl()
 {
+	auto linStep = util::LinearStepSequence(0.0, 10.0, 10, 20);
+	for (linStep.start(); linStep; linStep.step()) {
+		std::cout << "step " << linStep.currentStep() << ": "
+				  << linStep.current() << '\n';
+	}
+
+	std::cout << '\n';
+
+	auto stepper = util::GrowthFactorStepSequence(1.0, 10.0, 1.3, 20);
+	for (stepper.start(); stepper; stepper.step()) {
+		std::cout << "step " << stepper.currentStep() << ": "
+				  << stepper.current() << '\n';
+	}
 }
 
 // InputParameters
