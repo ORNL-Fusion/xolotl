@@ -26,6 +26,9 @@ public:
 	void
 	solveXolotl() override;
 
+	void
+	solveStep();
+
 private:
 	std::shared_ptr<ComputeContext> _computeContext;
 	std::shared_ptr<options::IOptions> _options;
@@ -33,8 +36,9 @@ private:
 	std::unique_ptr<XolotlInterface> _primaryInstance;
 	std::vector<std::unique_ptr<XolotlInterface>> _subInstances;
 	std::vector<IdType> _subDOFs;
-	double _currentTime{};
 	double _maxDt{};
+	double _currentTime{};
+	double _currentDt{};
 	IdType _localXM{1};
 };
 

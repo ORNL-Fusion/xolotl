@@ -27,7 +27,8 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 	const std::shared_ptr<options::IOptions>& options) :
 	_computeContext(context),
 	_options(options),
-	_petscContext(std::make_unique<PetscContext>())
+	_petscContext(std::make_unique<PetscContext>()),
+	_maxDt(10.0 /* FIXME */)
 {
 	// Create primary (whole) network interface
 	auto primaryOpts = _options->makeCopy();
@@ -88,18 +89,94 @@ MultiXolotl::~MultiXolotl()
 void
 MultiXolotl::solveXolotl()
 {
-	auto linStep = util::LinearStepSequence(0.0, 10.0, 10, 20);
-	for (linStep.start(); linStep; linStep.step()) {
-		std::cout << "step " << linStep.currentStep() << ": "
-				  << linStep.current() << '\n';
+	auto seq = util::GrowthFactorStepSequence(1.0, _maxDt, 1.3, 20);
+	for (seq.start(); seq; seq.step()) {
+		_currentTime = seq.current();
+		_currentDt = seq.stepSize();
+		solveStep();
+	}
+}
+
+void
+MultiXolotl::solveStep()
+{
+	// Transfer the temperature to the full network
+	std::vector<double> temperatures;
+	std::vector<double> depths;
+	_subInstances[0]->getNetworkTemperature(temperatures, depths);
+	std::vector<std::vector<std::vector<double>>> fullConc;
+
+	// 0D
+	if (temperatures.size() < 2) {
+		std::vector<std::vector<double>> conc;
+		// Loop on the sub interfaces to get all the concentrations
+		for (auto i = 0; i < _subInstances.size(); i++) {
+			auto sparseConc = _subInstances[i]->getConcVector();
+			std::vector<double> subConc(_subDOFs[i], 0.0);
+			for (auto pair : sparseConc[0][0][0]) {
+				if (pair.first < _subDOFs[i]) {
+					subConc[pair.first] = pair.second;
+				}
+			}
+			conc.push_back(subConc);
+		}
+
+		fullConc.push_back(conc);
+
+		// Compute the new rates
+		std::vector<double> temperature = {temperatures[0]};
+		std::vector<double> depth = {depths[0]};
+		_primaryInstance->setNetworkTemperature(temperature, depth);
+		auto constantRates = _primaryInstance->computeConstantRates(conc, 0);
+
+		// Pass them
+		for (auto i = 0; i < _subInstances.size(); i++) {
+			_subInstances[i]->setConstantRates(constantRates[i], 0);
+		}
+	}
+	// 1D
+	else {
+		// Loop on the grid points
+		for (auto j = 0; j < temperatures.size() - 2; j++) {
+			std::vector<std::vector<double>> conc;
+			// Loop on the sub interfaces to get all the concentrations
+			for (auto i = 0; i < _subInstances.size(); i++) {
+				auto sparseConc = _subInstances[i]->getConcVector();
+				std::vector<double> subConc(_subDOFs[i], 0.0);
+				for (auto pair : sparseConc[0][0][j]) {
+					if (pair.first < _subDOFs[i]) {
+						subConc[pair.first] = pair.second;
+					}
+				}
+				conc.push_back(subConc);
+			}
+
+			fullConc.push_back(conc);
+
+			// Compute the new rates
+			std::vector<double> temperature = {temperatures[j + 1]};
+			std::vector<double> depth = {depths[j + 1]};
+			_primaryInstance->setNetworkTemperature(temperature, depth);
+			auto constantRates =
+				_primaryInstance->computeConstantRates(conc, 0);
+
+			// Pass them
+			for (auto i = 0; i < _subInstances.size(); i++) {
+				_subInstances[i]->setConstantRates(constantRates[i], j + 1);
+			}
+		}
 	}
 
-	std::cout << '\n';
+	// Print the result
+	_primaryInstance->outputData(
+		_current_time, fullConc, std::max((int)temperatures.size() - 2, 1));
 
-	auto stepper = util::GrowthFactorStepSequence(1.0, 10.0, 1.3, 20);
-	for (stepper.start(); stepper; stepper.step()) {
-		std::cout << "step " << stepper.currentStep() << ": "
-				  << stepper.current() << '\n';
+	// Solve
+	for (auto&& sub : _subInstances) {
+		// Set the time we want to reach
+		sub->setTimes(_currentTime, _currentDt);
+		// Run the solver
+		sub->solveXolotl();
 	}
 }
 
