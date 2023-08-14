@@ -84,6 +84,10 @@ public:
 		maxSizeV(options.getMaxV()),
 		maxSizeB(options.getMaxImpurity())
 	{
+		// Set the fraction of large vacancy clusters (n > 19) that become
+		// faulted basal pyramids:
+		if (maxSizeB > 18)
+			Qb = options.getBasalPortion(); // Basal
 	}
 
 	/**
@@ -105,13 +109,6 @@ public:
 
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
-
-		// Set the fraction of large vacancy clusters (n > 19) that become
-		// faulted basal pyramids:
-		if (maxSizeB > 18)
-			Qb = 0.10; // Basal
-		else
-			Qb = 0.0; // No basal
 
 		// Set the flux index corresponding the mobile interstitial clusters (n
 		// < 10)
@@ -138,7 +135,7 @@ public:
 				continue;
 			}
 			fluxIndices.push_back(cluster.getId());
-			if (i >= 19)
+			if (i > 18)
 				incidentFluxVec.push_back(
 					std::vector<double>(1, fluxV[i - 1] * (1 - Qb)));
 			else
@@ -154,7 +151,7 @@ public:
 				continue;
 			}
 			fluxIndices.push_back(cluster.getId());
-			if (i >= 19)
+			if (i > 18)
 				incidentFluxVec.push_back(
 					std::vector<double>(1, fluxV[i - 1] * (Qb)));
 			else
