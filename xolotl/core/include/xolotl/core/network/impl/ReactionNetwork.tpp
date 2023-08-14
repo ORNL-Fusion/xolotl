@@ -36,6 +36,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	_clusterData.h_view() = ClusterData(_subpaving, gridSize);
 	copyClusterDataView();
 
+	auto bounds = getAllClusterBounds();
+
 	this->setMaterial(opts.getMaterial());
 
 	// Set constants
@@ -483,9 +485,9 @@ ReactionNetwork<TImpl>::initializeReactions()
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setConstantRates(
-	typename ReactionNetwork<TImpl>::RateVector rates)
+	typename ReactionNetwork<TImpl>::RateVector rates, IndexType gridIndex)
 {
-	asDerived()->setConstantRates(rates);
+	asDerived()->setConstantRates(rates, gridIndex);
 
 	return;
 }

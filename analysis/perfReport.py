@@ -2,6 +2,7 @@
 
 import glob
 import io
+import os
 import sys
 import math
 import yaml
@@ -26,11 +27,11 @@ def makePlot(axis, x, groupName, data):
             columns=[groupName, "Rank", "Value"])
     sb.barplot(x=groupName, hue="Rank", y="Value", data=df, ax=axis)
 
-baseName=''
+baseName = ''
 if len(sys.argv) > 1:
     baseName = sys.argv[1] + '_'
 
-rootDir='/home/4pf/'
+rootDir = os.getcwd()
 if len(sys.argv) > 2:
     rootDir = sys.argv[2]
 

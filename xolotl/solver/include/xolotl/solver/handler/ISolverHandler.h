@@ -340,6 +340,16 @@ public:
 	getLocalNE() = 0;
 
 	/**
+	 * Get the network temperature and depth that can be passed to an app.
+	 *
+	 * @param temperatures The local vector of temperatures
+	 * @param depth The corresponding depths
+	 */
+	virtual void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths) = 0;
+
+	/**
 	 * Set the latest value of the Xe flux.
 	 *
 	 * @param flux The latest value of flux

@@ -34,6 +34,7 @@ Reaction<TNetwork, TDerived>::updateData(
 {
 	_clusterData = &clusterData;
 	_rate = reactionData.getRates(_reactionId);
+	_constantRates = reactionData.getConstantRates(_reactionId);
 }
 
 template <typename TNetwork, typename TDerived>

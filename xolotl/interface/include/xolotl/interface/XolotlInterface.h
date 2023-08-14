@@ -130,6 +130,14 @@ public:
 	void
 	initializeSolver();
 
+	void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths);
+
+	void
+	setNetworkTemperature(
+		std::vector<double> temperatures, std::vector<double> depths);
+
 	/**
 	 * Set the final time and the dt.
 	 *
@@ -338,7 +346,7 @@ public:
 	 * @param rates All the rates
 	 */
 	void
-	setConstantRates(std::vector<std::vector<double>> rates);
+	setConstantRates(std::vector<std::vector<double>> rates, IdType gridIndex);
 
 	/**
 	 * Compute the constant rates
@@ -347,7 +355,8 @@ public:
 	 * @return A vector containing the rates for each sub instance
 	 */
 	std::vector<std::vector<std::vector<double>>>
-	computeConstantRates(std::vector<std::vector<double>> conc);
+	computeConstantRates(
+		std::vector<std::vector<double>> conc, IdType gridIndex);
 
 	/**
 	 * Get the connectivity matrices
@@ -370,9 +379,11 @@ public:
 	 *
 	 * @param time The current time
 	 * @param conc The concentration vector
+	 * @param the local grid size
 	 */
 	void
-	outputData(double time, std::vector<std::vector<double>> conc);
+	outputData(double time, std::vector<std::vector<std::vector<double>>> conc,
+		IdType localSize);
 
 	/**
 	 * Get whether the solve converged or not.

@@ -2,6 +2,7 @@
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/core/network/ZrReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/perf/ScopedTimer.h>
 #include <xolotl/solver/PetscSolver.h>
@@ -95,7 +96,7 @@ PetscMonitor1D::setup(int loop)
 	// Flags to launch the monitors or not
 	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,
 		flagPerf, flagHeRetention, flagStatus, flagXeRetention, flagTRIDYN,
-		flagAlloy, flagTemp, flagLargest;
+		flagAlloy, flagTemp, flagLargest, flagZr;
 
 	// Check the option -check_negative
 	ierr = PetscOptionsHasName(NULL, NULL, "-check_negative", &flagNeg);
@@ -121,6 +122,11 @@ PetscMonitor1D::setup(int loop)
 	ierr = PetscOptionsHasName(NULL, NULL, "-plot_1d", &flag1DPlot);
 	checkPetscError(
 		ierr, "setupPetsc1DMonitor: PetscOptionsHasName (-plot_1d) failed.");
+
+	// Check the option -alpha_zr
+	ierr = PetscOptionsHasName(NULL, NULL, "-alpha_zr", &flagZr);
+	checkPetscError(
+		ierr, "setupPetsc0DMonitor: PetscOptionsHasName (-alpha_zr) failed.");
 
 	// Check the option -helium_retention
 	ierr =
@@ -423,6 +429,32 @@ PetscMonitor1D::setup(int loop)
 		ierr = TSMonitorSet(_ts, monitor::monitorPerf, this, nullptr);
 		checkPetscError(
 			ierr, "setupPetsc1DMonitor: TSMonitorSet (monitorPerf) failed.");
+	}
+
+	// Set the monitor to output data for AlphaZr
+	if (flagZr) {
+		auto& network = _solverHandler->getNetwork();
+		auto numSpecies = network.getSpeciesListSize();
+
+		// Create/open the output files
+		std::fstream outputFile;
+		outputFile.open("AlphaZr.dat", std::fstream::out);
+		outputFile << "#time_step time ";
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			auto speciesName = network.getSpeciesName(id);
+			outputFile << speciesName << "_density " << speciesName << "_atom "
+					   << speciesName << "_diameter " << speciesName
+					   << "_partial_density " << speciesName << "_partial_atom "
+					   << speciesName << "_partial_diameter ";
+		}
+
+		outputFile << std::endl;
+		outputFile.close();
+
+		// computeAlphaZr will be called at each timestep
+		ierr = TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr);
+		checkPetscError(
+			ierr, "setupPetsc1DMonitor: TSMonitorSet (computeAlphaZr) failed.");
 	}
 
 	// Set the monitor to compute the helium retention
@@ -1625,6 +1657,144 @@ PetscMonitor1D::computeAlloy(
 	}
 
 	// Restore the PETSC solution array
+	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor1D::computeAlphaZr(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	// Initial declarations
+	PetscErrorCode ierr;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+
+	PetscFunctionBeginUser;
+
+	// Get the MPI comm
+	auto xolotlComm = util::getMPIComm();
+
+	// Get the process ID
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+
+	// Get local coordinates
+	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
+
+	// Get the physical grid and its length
+	auto grid = _solverHandler->getXGrid();
+	auto xSize = grid.size();
+
+	// Get the da from ts
+	DM da;
+	ierr = TSGetDM(ts, &da);
+	CHKERRQ(ierr);
+
+	// Get the array of concentration
+	PetscReal** solutionArray;
+	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
+	CHKERRQ(ierr);
+
+	using NetworkType = core::network::ZrReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	// Degrees of freedom is the total number of clusters in the network
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+	const auto dof = network.getDOF();
+	auto numSpecies = network.getSpeciesListSize();
+	auto myData = std::vector<double>(numSpecies * 6, 0.0);
+
+	// Get the minimum size for the loop densities and diameters
+	auto minSizes = _solverHandler->getMinSizes();
+
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal* gridPointSolution;
+
+	// Get the position of the surface
+	auto surfacePos = _solverHandler->getSurfacePosition();
+
+	// Loop on the grid
+	for (auto xi = xs; xi < xs + xm; xi++) {
+		// Boundary conditions
+		if (xi < surfacePos + _solverHandler->getLeftOffset() ||
+			xi == Mx - _solverHandler->getRightOffset())
+			continue;
+
+		// Get the pointer to the beginning of the solution data for this grid
+		// point
+		gridPointSolution = solutionArray[xi];
+
+		double hx = grid[xi + 1] - grid[xi];
+
+		using HostUnmanaged =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+		auto hConcs = HostUnmanaged(gridPointSolution, dof);
+		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+		deep_copy(dConcs, hConcs);
+
+		// Loop on the species
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			myData[6 * id()] +=
+				network.getTotalConcentration(dConcs, id, 1) * hx;
+			myData[6 * id() + 1] +=
+				network.getTotalAtomConcentration(dConcs, id, 1) * hx;
+			myData[(6 * id()) + 2] +=
+				2.0 * network.getTotalRadiusConcentration(dConcs, id, 1) * hx;
+			myData[(6 * id()) + 3] +=
+				network.getTotalConcentration(dConcs, id, minSizes[id()]) * hx;
+			myData[(6 * id()) + 4] +=
+				network.getTotalAtomConcentration(dConcs, id, minSizes[id()]) *
+				hx;
+			myData[(6 * id()) + 5] += 2.0 *
+				network.getTotalRadiusConcentration(
+					dConcs, id, minSizes[id()]) *
+				hx;
+		}
+	}
+
+	// Sum all the concentrations through MPI reduce
+	auto globalData = std::vector<double>(myData.size(), 0.0);
+	MPI_Reduce(myData.data(), globalData.data(), myData.size(), MPI_DOUBLE,
+		MPI_SUM, 0, xolotlComm);
+
+	// Average the data
+	if (procId == 0) {
+		for (auto i = 0; i < numSpecies; ++i) {
+			if (globalData[6 * i] > 1.0e-16)
+				globalData[(6 * i) + 2] /= globalData[6 * i];
+			if (globalData[(6 * i) + 3] > 1.0e-16)
+				globalData[(6 * i) + 5] /= globalData[(6 * i) + 3];
+		}
+
+		// Set the output precision
+		const int outputPrecision = 5;
+
+		// Open the output file
+		std::fstream outputFile;
+		outputFile.open("AlphaZr.dat", std::fstream::out | std::fstream::app);
+		outputFile << std::setprecision(outputPrecision);
+
+		// Output the data
+		outputFile << timestep << " " << time << " ";
+
+		for (auto i = 0; i < numSpecies; ++i) {
+			outputFile << globalData[i * 6] << " " << globalData[(i * 6) + 1]
+					   << " " << globalData[(i * 6) + 2] << " "
+					   << globalData[(i * 6) + 3] << " "
+					   << globalData[(i * 6) + 4] << " "
+					   << globalData[(i * 6) + 5] << " ";
+		}
+
+		outputFile << std::endl;
+
+		// Close the output file
+		outputFile.close();
+	}
+
+	// Restore the PETSc solution array
 	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
 	CHKERRQ(ierr);
 

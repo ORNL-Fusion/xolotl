@@ -54,6 +54,12 @@ public:
 		return detail::CoefficientsView();
 	}
 
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
+	}
+
 private:
 	KOKKOS_INLINE_FUNCTION
 	void

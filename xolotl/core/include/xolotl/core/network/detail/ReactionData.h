@@ -15,6 +15,9 @@ namespace detail
 using CoefficientsView = Kokkos::View<double*****>;
 using CoefficientsViewUnmanaged =
 	Kokkos::View<double*****, Kokkos::MemoryUnmanaged>;
+using ConstantRateView = Kokkos::View<double****>;
+using ConstantRateViewUnmanaged =
+	Kokkos::View<double****, Kokkos::MemoryUnmanaged>;
 
 /**
  * @brief Stores all the information needed for a reaction
@@ -60,6 +63,9 @@ struct ReactionData
 			ret += coeffs[r].required_allocation_size(coeffs[r].extent(0),
 				coeffs[r].extent(1), coeffs[r].extent(2), coeffs[r].extent(3),
 				coeffs[r].extent(4));
+			ret += constantRates[r].required_allocation_size(
+				constantRates[r].extent(0), constantRates[r].extent(1),
+				constantRates[r].extent(2));
 		}
 
 		return ret;
@@ -77,6 +83,7 @@ struct ReactionData
 	Kokkos::View<double**> rates;
 	Kokkos::Array<IndexType, numReactionTypes + 1> reactionBeginIndices;
 	Kokkos::Array<CoefficientsView, numReactionTypes> coeffs;
+	Kokkos::Array<ConstantRateView, numReactionTypes> constantRates;
 };
 
 template <typename TNetwork>
@@ -99,6 +106,7 @@ struct ReactionDataRef
 	{
 		for (std::size_t r = 0; r < numReactionTypes; ++r) {
 			coeffs[r] = data.coeffs[r];
+			constantRates[r] = data.constantRates[r];
 		}
 	}
 
@@ -119,6 +127,22 @@ struct ReactionDataRef
 
 	KOKKOS_INLINE_FUNCTION
 	auto
+	getConstantRates(IndexType reactionId)
+	{
+		std::size_t r = 0;
+		for (; r < numReactionTypes; ++r) {
+			if (reactionId < reactionBeginIndices[r + 1]) {
+				break;
+			}
+		}
+		assert(r < numReactionTypes);
+		return Kokkos::subview(constantRates[r],
+			reactionId - reactionBeginIndices[r], Kokkos::ALL, Kokkos::ALL,
+			Kokkos::ALL);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	auto
 	getWidths(IndexType reactionId)
 	{
 		return Kokkos::subview(widths, reactionId, Kokkos::ALL);
@@ -135,6 +159,7 @@ struct ReactionDataRef
 	Kokkos::View<double**, Kokkos::MemoryUnmanaged> rates;
 	Kokkos::Array<IndexType, numReactionTypes + 1> reactionBeginIndices;
 	Kokkos::Array<CoefficientsViewUnmanaged, numReactionTypes> coeffs;
+	Kokkos::Array<ConstantRateViewUnmanaged, numReactionTypes> constantRates;
 };
 } // namespace detail
 } // namespace network

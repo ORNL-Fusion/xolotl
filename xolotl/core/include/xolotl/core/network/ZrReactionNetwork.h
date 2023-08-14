@@ -41,13 +41,16 @@ public:
 	checkLargestClusterId();
 
 	void
-	setConstantRates(RateVector rates) override;
+	setConstantRates(RateVector rates, IndexType gridIndex) override;
 
 	void
 	setConstantConnectivities(ConnectivitiesVector conns) override;
 
 	void
 	initializeExtraClusterData(const options::IOptions& options);
+
+	void
+	setGridSize(IndexType gridSize) override;
 
 private:
 	double

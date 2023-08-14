@@ -144,6 +144,35 @@ catch (const std::exception& e) {
 }
 
 void
+XolotlInterface::getNetworkTemperature(
+	std::vector<double>& temperatures, std::vector<double>& depths)
+try {
+	// Get the temperature and associated depth from the solver handler
+	solverCast(solver)->getSolverHandler()->getNetworkTemperature(
+		temperatures, depths);
+
+	return;
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::setNetworkTemperature(
+	std::vector<double> temperatures, std::vector<double> depths)
+try {
+	solverCast(solver)->getSolverHandler()->getNetwork().setTemperatures(
+		temperatures, depths);
+
+	return;
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
 XolotlInterface::setTimes(double finalTime, double dt)
 try {
 	// Set the time in the solver
@@ -446,11 +475,12 @@ catch (const std::exception& e) {
 }
 
 void
-XolotlInterface::setConstantRates(std::vector<std::vector<double>> rates)
+XolotlInterface::setConstantRates(
+	std::vector<std::vector<double>> rates, IdType gridIndex)
 try {
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
-	network.setConstantRates(rates);
+	network.setConstantRates(rates, gridIndex);
 }
 catch (const std::exception& e) {
 	reportException(e);
@@ -458,7 +488,8 @@ catch (const std::exception& e) {
 }
 
 std::vector<std::vector<std::vector<double>>>
-XolotlInterface::computeConstantRates(std::vector<std::vector<double>> conc)
+XolotlInterface::computeConstantRates(
+	std::vector<std::vector<double>> conc, IdType gridIndex)
 try {
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
@@ -486,7 +517,7 @@ try {
 			std::vector(subDOF, std::vector(subDOF + 1, 0.0));
 		auto dRates = Kokkos::View<double**>("dRates", subDOF, subDOF + 1);
 		auto hRates = Kokkos::create_mirror_view(dRates);
-		network.computeConstantRates(dConcs, dRates, l);
+		network.computeConstantRates(dConcs, dRates, l, gridIndex);
 
 		deep_copy(hRates, dRates);
 		// Copy element by element
@@ -553,14 +584,22 @@ catch (const std::exception& e) {
 }
 
 void
-XolotlInterface::outputData(double time, std::vector<std::vector<double>> conc)
+XolotlInterface::outputData(double time,
+	std::vector<std::vector<std::vector<double>>> conc, IdType localSize)
 try {
+	// Get the MPI comm
+	auto xolotlComm = util::getMPIComm();
+
+	// Get the process ID
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	const auto dof = network.getDOF();
 	auto networkSize = network.getNumClusters();
 
-	if (time == 0.0) {
+	if (time == 0.0 and procId == 0) {
 		// Create/open the output files
 		std::fstream outputFile;
 		outputFile.open("FullAlphaZr.dat", std::fstream::out);
@@ -570,63 +609,99 @@ try {
 		outputFile.close();
 	}
 
-	// Construct the full concentration vector first
-	std::vector<double> fullConc(dof, 0.0);
-	for (auto i = 0; i < conc.size(); i++)
-		for (auto j = 0; j < conc[i].size(); j++) {
-			fullConc[fromSubNetwork[i][j]] = conc[i][j];
-		}
-
-	// Set the output precision
-	const int outputPrecision = 5;
-
-	// Open the output file
-	std::fstream outputFile;
-	outputFile.open("FullAlphaZr.dat", std::fstream::out | std::fstream::app);
-	outputFile << std::setprecision(outputPrecision);
-
 	auto numSpecies = network.getSpeciesListSize();
 	auto myData = std::vector<double>(numSpecies * 6, 0.0);
 
 	// Get the minimum size for the loop densities and diameters
 	auto minSizes = solverCast(solver)->getSolverHandler()->getMinSizes();
 
-	using HostUnmanaged =
-		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto hConcs = HostUnmanaged(fullConc.data(), dof);
-	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-	deep_copy(dConcs, hConcs);
+	for (auto xi = 0; xi < localSize; xi++) {
+		// Construct the full concentration vector first
+		std::vector<double> fullConc(dof, 0.0);
+		for (auto i = 0; i < conc[xi].size(); i++)
+			for (auto j = 0; j < conc[xi][i].size(); j++) {
+				fullConc[fromSubNetwork[i][j]] = conc[xi][i][j];
+			}
 
-	// Loop on the species
-	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using TQ = core::network::IReactionNetwork::TotalQuantity;
-		using Q = TQ::Type;
-		using TQA = util::Array<TQ, 6>;
-		auto ms = static_cast<AmountType>(minSizes[id()]);
-		auto totals = network.getTotals(dConcs,
-			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
-				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
-				TQ{Q::radius, id, ms}});
+		// Set the output precision
+		const int outputPrecision = 5;
 
-		myData[6 * id()] = totals[0];
-		myData[6 * id() + 1] = totals[1];
-		myData[(6 * id()) + 2] = 2.0 * totals[2] / myData[6 * id()];
-		myData[(6 * id()) + 3] = totals[3];
-		myData[(6 * id()) + 4] = totals[4];
-		myData[(6 * id()) + 5] = 2.0 * totals[5] / myData[(6 * id()) + 3];
+		// Open the output file
+		std::fstream outputFile;
+		outputFile.open(
+			"FullAlphaZr.dat", std::fstream::out | std::fstream::app);
+		outputFile << std::setprecision(outputPrecision);
+
+		// Get the minimum size for the loop densities and diameters
+		auto minSizes = solverCast(solver)->getSolverHandler()->getMinSizes();
+
+		using HostUnmanaged =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+		auto hConcs = HostUnmanaged(fullConc.data(), dof);
+		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+		deep_copy(dConcs, hConcs);
+
+		double hx = 1.0;
+
+		// Loop on the species
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			using TQ = core::network::IReactionNetwork::TotalQuantity;
+			using Q = TQ::Type;
+			using TQA = util::Array<TQ, 6>;
+			auto ms = static_cast<AmountType>(minSizes[id()]);
+			auto totals = network.getTotals(dConcs,
+				TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1},
+					TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
+					TQ{Q::atom, id, ms}, TQ{Q::radius, id, ms}});
+
+			myData[6 * id()] += totals[0] * hx;
+			myData[(6 * id()) + 1] += totals[1] * hx;
+			myData[(6 * id()) + 2] += 2.0 * totals[2] * hx;
+			myData[(6 * id()) + 3] += totals[3] * hx;
+			myData[(6 * id()) + 4] += totals[4] * hx;
+			myData[(6 * id()) + 5] += 2.0 * totals[5] * hx;
+		}
 	}
 
-	// Output the data
-	outputFile << time << " ";
-	for (auto i = 0; i < numSpecies; ++i) {
-		outputFile << myData[i * 6] << " " << myData[(i * 6) + 1] << " "
-				   << myData[(i * 6) + 2] << " " << myData[(i * 6) + 3] << " "
-				   << myData[(i * 6) + 4] << " " << myData[(i * 6) + 5] << " ";
-	}
-	outputFile << std::endl;
+	// Sum all the concentrations through MPI reduce
+	auto globalData = std::vector<double>(myData.size(), 0.0);
+	MPI_Reduce(myData.data(), globalData.data(), myData.size(), MPI_DOUBLE,
+		MPI_SUM, 0, xolotlComm);
 
-	// Close the output file
-	outputFile.close();
+	// Average the data
+	if (procId == 0) {
+		// Set the output precision
+		const int outputPrecision = 5;
+
+		for (auto i = 0; i < numSpecies; ++i) {
+			if (globalData[6 * i] > 1.0e-16)
+				globalData[(6 * i) + 2] /= globalData[6 * i];
+			if (globalData[(6 * i) + 3] > 1.0e-16)
+				globalData[(6 * i) + 5] /= globalData[(6 * i) + 3];
+		}
+
+		// Open the output file
+		std::fstream outputFile;
+		outputFile.open(
+			"FullAlphaZr.dat", std::fstream::out | std::fstream::app);
+		outputFile << std::setprecision(outputPrecision);
+
+		// Output the data
+		outputFile << time << " ";
+
+		for (auto i = 0; i < numSpecies; ++i) {
+			outputFile << globalData[i * 6] << " " << globalData[(i * 6) + 1]
+					   << " " << globalData[(i * 6) + 2] << " "
+					   << globalData[(i * 6) + 3] << " "
+					   << globalData[(i * 6) + 4] << " "
+					   << globalData[(i * 6) + 5] << " ";
+		}
+
+		outputFile << std::endl;
+
+		// Close the output file
+		outputFile.close();
+	}
 }
 catch (const std::exception& e) {
 	reportException(e);

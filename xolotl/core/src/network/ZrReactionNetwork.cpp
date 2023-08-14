@@ -82,7 +82,7 @@ ZrReactionNetwork::checkLargestClusterId()
 }
 
 void
-ZrReactionNetwork::setConstantRates(RateVector rates)
+ZrReactionNetwork::setConstantRates(RateVector rates, IndexType gridIndex)
 {
 	auto dRateView = RatesView("dRates", rates.size(), rates[0].size());
 	auto hRateView = create_mirror_view(dRateView);
@@ -94,7 +94,7 @@ ZrReactionNetwork::setConstantRates(RateVector rates)
 
 	_reactions.forEachOn<ZrConstantReaction>(
 		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
-			reaction.setRate(dRateView);
+			reaction.setRate(dRateView, gridIndex);
 			reaction.updateRates();
 		});
 }
@@ -110,6 +110,14 @@ ZrReactionNetwork::setConstantConnectivities(ConnectivitiesVector conns)
 			hConnsView(i, j) = conns[i][j];
 		}
 	deep_copy(_constantConns, hConnsView);
+}
+
+void
+ZrReactionNetwork::setGridSize(IndexType gridSize)
+{
+	this->_clusterData.h_view().extraData.setGridSize(
+		this->_clusterData.h_view().numClusters, gridSize);
+	Superclass::setGridSize(gridSize);
 }
 
 void
