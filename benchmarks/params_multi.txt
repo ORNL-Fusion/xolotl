@@ -2,6 +2,7 @@ dimensions=0
 process=reaction sink
 netParam=0 0 0 9 9
 useSubnetworks=true
+couplingTimeStepParams=1.0e-12 1.0 1.1 0.0 5000.0 500
 grouping=506 2
 vizHandler=dummy
 perfHandler=dummy

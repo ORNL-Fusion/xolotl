@@ -4,9 +4,10 @@ namespace xolotl
 {
 namespace util
 {
-LinearStepSequence::LinearStepSequence(double initialValue, double finalValue,
-	std::size_t rampSteps, std::size_t maxSteps) :
-	StepSequence(maxSteps),
+LinearStepSequence::LinearStepSequence() = default;
+
+LinearStepSequence::LinearStepSequence(
+	double initialValue, double finalValue, std::size_t rampSteps) :
 	_initialValue{initialValue},
 	_diff{finalValue - _initialValue},
 	_rampSteps{static_cast<double>(rampSteps)}
@@ -31,8 +32,8 @@ LinearStepSequence::step()
 	if (_currentStep > _rampSteps) {
 		return;
 	}
-	auto newVal = _initialValue + _diff * (_currentStep / _rampSteps);
-	_stepSize = newVal - _currentValue;
+	auto newVal = _initialValue +
+		_diff * (static_cast<double>(_currentStep) / _rampSteps);
 	_currentValue = newVal;
 }
 } // namespace util

@@ -14,6 +14,7 @@ set(XOLOTL_UTIL_HEADERS
     ${XOLOTL_UTIL_HEADER_DIR}/MathUtils.h
     ${XOLOTL_UTIL_HEADER_DIR}/MPIUtils.h
     ${XOLOTL_UTIL_HEADER_DIR}/StreamTokenizer.h
+    ${XOLOTL_UTIL_HEADER_DIR}/TimeStepper.h
     ${XOLOTL_UTIL_HEADER_DIR}/Tokenizer.h
     ${XOLOTL_UTIL_HEADER_DIR}/RandomNumberGenerator.h
 )
@@ -23,6 +24,7 @@ set(XOLOTL_UTIL_SOURCES
     ${XOLOTL_UTIL_SOURCE_DIR}/LinearStepSequence.cpp
     ${XOLOTL_UTIL_SOURCE_DIR}/Log.cpp
     ${XOLOTL_UTIL_SOURCE_DIR}/MPIUtils.cpp
+    ${XOLOTL_UTIL_SOURCE_DIR}/TimeStepper.cpp
 )
 
 add_library(xolotlUtil SHARED

@@ -9,10 +9,10 @@ namespace util
 class LinearStepSequence : public StepSequence
 {
 public:
-	LinearStepSequence() = default;
+	LinearStepSequence();
 
-	LinearStepSequence(double initialValue, double finalValue,
-		std::size_t rampSteps, std::size_t maxSteps = 0);
+	LinearStepSequence(
+		double initialValue, double finalValue, std::size_t rampSteps);
 
 	virtual ~LinearStepSequence();
 

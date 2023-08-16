@@ -38,6 +38,12 @@ Options::Options() :
 	gridParam{},
 	gridFilename(""),
 	subnetworksFlag(false),
+	initialTimeStep(0.0),
+	maxTimeStep(0.0),
+	timeStepGrowthFactor(0.0),
+	startTime(0.0),
+	endTime(0.0),
+	numTimeSteps(0),
 	gbList(""),
 	groupingMin(std::numeric_limits<int>::max()),
 	groupingWidthA(1),
@@ -195,7 +201,12 @@ Options::readParams(int argc, const char* argv[])
 		"To do so, simply write the direction followed "
 		"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")(
 		"useSubnetworks", bpo::value<bool>(&subnetworksFlag),
-		"Should we distribute network across subnetworks?")("grouping",
+		"Should we distribute network across subnetworks?")(
+		"couplingTimeStepParams", bpo::value<std::string>(),
+		"This option allows the user to define the parameters that control the "
+		"multi-instance time-stepping. "
+		"To do so, simply write the values in order "
+		"initialDt maxDt growthFactor startTime endTime maxSteps.")("grouping",
 		bpo::value<std::string>(),
 		"The grouping parameters: the first integer is the size at which the "
 		"grouping starts (HeV clusters in the PSI case, Xe in the NE case), "
@@ -405,6 +416,30 @@ Options::readParams(int argc, const char* argv[])
 		for (auto&& token : tokens) {
 			addProcess(token);
 		}
+	}
+
+	// Take care of multi-instance params
+	if (opts.count("couplingTimeStepParams")) {
+		// Set parameters from tokenized list
+		auto paramString = opts["couplingTimeStepParams"].as<std::string>();
+		auto params = util::Tokenizer<double>{paramString}();
+
+		if (params.size() != 6) {
+			throw bpo::invalid_option_value(
+				"Options: Must provide six (6) values for time step "
+				"parameters. Aborting!");
+		}
+
+		initialTimeStep = params[0];
+		maxTimeStep = params[1];
+		timeStepGrowthFactor = params[2];
+		startTime = params[3];
+		endTime = params[4];
+		if (params[5] <= 0) {
+			throw bpo::invalid_option_value(
+				"Options: maxSteps must be a positive value. Aborting!");
+		}
+		numTimeSteps = static_cast<IdType>(params[5]);
 	}
 
 	// Take care of the gouping

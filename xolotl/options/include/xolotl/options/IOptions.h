@@ -237,6 +237,54 @@ public:
 	useSubnetworks() const = 0;
 
 	/**
+	 * Obtain the initial coupling time step
+	 *
+	 * @return The initial value
+	 */
+	virtual double
+	getInitialTimeStep() const = 0;
+
+	/**
+	 * Obtain the maximum coupling time step
+	 *
+	 * @return The maximum value
+	 */
+	virtual double
+	getMaxTimeStep() const = 0;
+
+	/**
+	 * Obtain the coupling time step growth factor
+	 *
+	 * @return The growth factor
+	 */
+	virtual double
+	getTimeStepGrowthFactor() const = 0;
+
+	/**
+	 * Obtain the coupling start time
+	 *
+	 * @return The start time
+	 */
+	virtual double
+	getStartTime() const = 0;
+
+	/**
+	 * Obtain the coupling end time
+	 *
+	 * @return The end time
+	 */
+	virtual double
+	getEndTime() const = 0;
+
+	/**
+	 * Obtain the max number of coupling time steps
+	 *
+	 * @return The max number of steps
+	 */
+	virtual IdType
+	getNumberOfTimeSteps() const = 0;
+
+	/**
 	 * Obtain the string listing the wanted GB.
 	 *
 	 * @return The string of GB

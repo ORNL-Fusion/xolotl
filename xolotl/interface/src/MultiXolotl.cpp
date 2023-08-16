@@ -4,6 +4,7 @@
 #include <xolotl/interface/XolotlInterface.h>
 #include <xolotl/util/GrowthFactorStepSequence.h>
 #include <xolotl/util/LinearStepSequence.h>
+#include <xolotl/util/TimeStepper.h>
 
 namespace xolotl
 {
@@ -27,8 +28,7 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 	const std::shared_ptr<options::IOptions>& options) :
 	_computeContext(context),
 	_options(options),
-	_petscContext(std::make_unique<PetscContext>()),
-	_maxDt(10.0 /* FIXME */)
+	_petscContext(std::make_unique<PetscContext>())
 {
 	// Create primary (whole) network interface
 	auto primaryOpts = _options->makeCopy();
@@ -135,15 +135,16 @@ MultiXolotl::~MultiXolotl()
 void
 MultiXolotl::solveXolotl()
 {
-	auto seq = util::GrowthFactorStepSequence(1.0, _maxDt, 1.3, 20);
+	auto timeStepper = util::TimeStepper(
+		std::make_unique<util::GrowthFactorStepSequence>(
+			_options->getInitialTimeStep(), _options->getMaxTimeStep(),
+			_options->getTimeStepGrowthFactor()),
+		_options->getStartTime(), _options->getEndTime(),
+		_options->getNumberOfTimeSteps());
 
-	/*
-	 * couplingTimeStepParams: initial, max, growthfactor, maxSteps
-	 */
-
-	for (seq.start(); seq; seq.step()) {
-		_currentTime = seq.current();
-		_currentDt = seq.stepSize();
+	for (timeStepper.start(); timeStepper; ++timeStepper) {
+		_currentTime = timeStepper.currentTime();
+		_currentDt = timeStepper.currentTimeStepSize();
 		solveStep();
 	}
 }

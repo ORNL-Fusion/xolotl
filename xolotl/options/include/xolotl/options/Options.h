@@ -79,6 +79,36 @@ protected:
 	bool subnetworksFlag;
 
 	/**
+	 * Initial coupling timestep
+	 */
+	double initialTimeStep;
+
+	/**
+	 * Maximum coupling timestep
+	 */
+	double maxTimeStep;
+
+	/**
+	 * Time step growth factor
+	 */
+	double timeStepGrowthFactor;
+
+	/**
+	 * Coupling start time
+	 */
+	double startTime;
+
+	/**
+	 * Coupling end time
+	 */
+	double endTime;
+
+	/**
+	 * Maximum coupling time steps
+	 */
+	IdType numTimeSteps;
+
+	/**
 	 * Name of the viz handler
 	 */
 	std::string vizHandlerName;
@@ -541,6 +571,60 @@ public:
 	useSubnetworks() const override
 	{
 		return subnetworksFlag;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getInitialTimeStep() const override
+	{
+		return initialTimeStep;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getMaxTimeStep() const override
+	{
+		return maxTimeStep;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getTimeStepGrowthFactor() const override
+	{
+		return timeStepGrowthFactor;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getStartTime() const override
+	{
+		return startTime;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getEndTime() const override
+	{
+		return endTime;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual IdType
+	getNumberOfTimeSteps() const override
+	{
+		return numTimeSteps;
 	}
 
 	/**

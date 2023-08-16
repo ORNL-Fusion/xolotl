@@ -9,8 +9,10 @@ namespace util
 class GrowthFactorStepSequence : public StepSequence
 {
 public:
-	GrowthFactorStepSequence(double initialValue, double finalValue,
-		double growthFactor = 1.0, std::size_t maxSteps = 0);
+	GrowthFactorStepSequence();
+
+	GrowthFactorStepSequence(
+		double initialValue, double finalValue, double growthFactor = 1.0);
 
 	virtual ~GrowthFactorStepSequence();
 
