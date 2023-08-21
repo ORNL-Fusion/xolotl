@@ -26,8 +26,14 @@ void
 TimeStepper::step()
 {
 	auto newTime = _currentTime + _seq->current();
-	_currentTime = std::min(newTime, _endTime);
 	_seq->step();
+
+	if (_currentTime == _endTime) {
+		_currentTime = newTime;
+	}
+	else {
+		_currentTime = std::min(newTime, _endTime);
+	}
 }
 
 [[nodiscard]] bool

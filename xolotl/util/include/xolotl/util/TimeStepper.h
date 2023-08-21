@@ -49,6 +49,12 @@ public:
 		return _seq->current();
 	}
 
+	[[nodiscard]] std::size_t
+	currentStep() const noexcept
+	{
+		return _seq->currentStep();
+	}
+
 private:
 	std::unique_ptr<IStepSequence> _seq;
 	std::size_t _maxSteps{};
