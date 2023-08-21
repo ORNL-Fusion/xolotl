@@ -1188,24 +1188,23 @@ PetscSolver2DHandler::computeJacobian(
 				hxRight = grid[xi + 1] - grid[xi];
 			}
 
-			auto tempIndex = valIndex;
-			if (xi >= localXS && xi < localXS + localXM) {
-				valIndex += 5;
-			}
-
 			// Get the concentrations at this grid point
 			auto concOffset = subview(concs, yj, xi, Kokkos::ALL).view();
 
-			int id = 0;
-			using A = std::array<PetscInt, 2>;
-			for (auto&& mId : {A{yj, xi}, A{yj, xi - 1}, A{yj, xi + 1},
-					 A{yj - 1, xi}, A{yj + 1, xi}}) {
-				concVector[id] =
-					subview(concs, mId[0], mId[1], Kokkos::ALL).view();
-				hConcVec[id] = create_mirror_view(concVector[id]);
-				deep_copy(hConcVec[id], concVector[id]);
-				hConcPtrVec[id] = hConcVec[id].data();
-				++id;
+			auto tempIndex = valIndex;
+			if (xi >= localXS && xi < localXS + localXM) {
+				int id = 0;
+				using A = std::array<PetscInt, 2>;
+				for (auto&& mId : {A{yj, xi}, A{yj, xi - 1}, A{yj, xi + 1},
+						 A{yj - 1, xi}, A{yj + 1, xi}}) {
+					concVector[id] =
+						subview(concs, mId[0], mId[1], Kokkos::ALL).view();
+					hConcVec[id] = create_mirror_view(concVector[id]);
+					deep_copy(hConcVec[id], concVector[id]);
+					hConcPtrVec[id] = hConcVec[id].data();
+					++id;
+				}
+				valIndex += 5;
 			}
 
 			// Heat condition

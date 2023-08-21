@@ -1098,23 +1098,22 @@ PetscSolver1DHandler::computeJacobian(
 			hxRight = temperatureGrid[xi + 1] - temperatureGrid[xi];
 		}
 
-		auto tempIndex = valIndex;
-		if (xi >= localXS && xi < localXS + localXM) {
-			valIndex += 3;
-		}
-
 		// Get the concentrations at this grid point
 		auto concOffset = subview(concs, xi, Kokkos::ALL).view();
 
-		// Fill the concVector with the pointer to the middle, left, and right
-		// grid points
-		int id = 0;
-		for (auto&& xId : {xi, (PetscInt)xi - 1, xi + 1}) {
-			concVector[id] = subview(concs, xId, Kokkos::ALL).view();
-			hConcVec[id] = create_mirror_view(concVector[id]);
-			deep_copy(hConcVec[id], concVector[id]);
-			hConcPtrVec[id] = hConcVec[id].data();
-			++id;
+		auto tempIndex = valIndex;
+		if (xi >= localXS && xi < localXS + localXM) {
+			// Fill the concVector with the pointer to the middle, left, and
+			// right grid points
+			int id = 0;
+			for (auto&& xId : {xi, (PetscInt)xi - 1, xi + 1}) {
+				concVector[id] = subview(concs, xId, Kokkos::ALL).view();
+				hConcVec[id] = create_mirror_view(concVector[id]);
+				deep_copy(hConcVec[id], concVector[id]);
+				hConcPtrVec[id] = hConcVec[id].data();
+				++id;
+			}
+			valIndex += 3;
 		}
 
 		// Heat condition

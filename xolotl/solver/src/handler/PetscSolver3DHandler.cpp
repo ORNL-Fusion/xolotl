@@ -1311,28 +1311,27 @@ PetscSolver3DHandler::computeJacobian(
 					hxRight = grid[xi + 1] - grid[xi];
 				}
 
-				auto tempIndex = valIndex;
-				if (xi >= localXS && xi < localXS + localXM) {
-					valIndex += 7;
-				}
-
 				// Get the concentrations at this grid point
 				auto concOffset =
 					subview(concs, zk, yj, xi, Kokkos::ALL).view();
 
-				int id = 0;
-				using A = std::array<PetscInt, 3>;
-				for (auto&& mId :
-					{A{zk, yj, xi}, A{zk, yj, xi - 1}, A{zk, yj, xi + 1},
-						A{zk, yj - 1, xi}, A{zk, yj + 1, xi}, A{zk - 1, yj, xi},
-						A{zk + 1, yj, xi}}) {
-					concVector[id] =
-						subview(concs, mId[0], mId[1], mId[2], Kokkos::ALL)
-							.view();
-					hConcVec[id] = create_mirror_view(concVector[id]);
-					deep_copy(hConcVec[id], concVector[id]);
-					hConcPtrVec[id] = hConcVec[id].data();
-					++id;
+				auto tempIndex = valIndex;
+				if (xi >= localXS && xi < localXS + localXM) {
+					int id = 0;
+					using A = std::array<PetscInt, 3>;
+					for (auto&& mId :
+						{A{zk, yj, xi}, A{zk, yj, xi - 1}, A{zk, yj, xi + 1},
+							A{zk, yj - 1, xi}, A{zk, yj + 1, xi},
+							A{zk - 1, yj, xi}, A{zk + 1, yj, xi}}) {
+						concVector[id] =
+							subview(concs, mId[0], mId[1], mId[2], Kokkos::ALL)
+								.view();
+						hConcVec[id] = create_mirror_view(concVector[id]);
+						deep_copy(hConcVec[id], concVector[id]);
+						hConcPtrVec[id] = hConcVec[id].data();
+						++id;
+					}
+					valIndex += 7;
 				}
 
 				// Heat condition
