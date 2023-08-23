@@ -27,19 +27,21 @@ TimeStepper::step()
 {
 	auto newTime = _currentTime + _seq->current();
 	_seq->step();
+	_currentTime = newTime;
 
-	if (_currentTime == _endTime) {
-		_currentTime = newTime;
-	}
-	else {
-		_currentTime = std::min(newTime, _endTime);
-	}
+	// TODO: should we add an option to require the end to be exact?
+	//  if (_currentTime == _endTime) {
+	//  	_currentTime = newTime;
+	//  }
+	//  else {
+	//  	_currentTime = std::min(newTime, _endTime);
+	//  }
 }
 
 [[nodiscard]] bool
 TimeStepper::valid() const noexcept
 {
-	return _currentTime <= _endTime &&
+	return _currentTime < _endTime &&
 		(_maxSteps == 0 || _seq->currentStep() <= _maxSteps);
 }
 } // namespace util

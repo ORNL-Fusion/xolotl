@@ -20,11 +20,11 @@ BOOST_AUTO_TEST_CASE(growthFactor)
 	for (stepper.start(); stepper; ++stepper) {
 		vals.push_back(stepper.currentTime());
 	}
-	BOOST_REQUIRE(vals.size() == 27);
+	BOOST_REQUIRE_EQUAL(vals.size(), 26);
 	BOOST_REQUIRE_CLOSE_FRACTION(0.0, vals[0], 1e-6);
 	BOOST_REQUIRE_CLOSE_FRACTION(1.0, vals[1], 1e-6);
 	BOOST_REQUIRE_CLOSE_FRACTION(2.3, vals[2], 1e-6);
-	BOOST_REQUIRE_CLOSE_FRACTION(200.0, vals[26], 1e-6);
+	BOOST_REQUIRE(200.0 <= stepper.currentTime());
 
 	// Reach max steps first
 	stepper = TimeStepper(
@@ -38,6 +38,13 @@ BOOST_AUTO_TEST_CASE(growthFactor)
 	BOOST_REQUIRE_CLOSE_FRACTION(11.0, vals[1], 1e-6);
 	BOOST_REQUIRE_CLOSE_FRACTION(12.3, vals[2], 1e-6);
 	BOOST_REQUIRE_CLOSE_FRACTION(152.015, vals[20], 1e-6);
+
+	stepper = TimeStepper(
+		std::make_unique<GrowthFactorStepSequence>(1.0e-12, 1.0, 1.1), 0.0,
+		5000.0, 10000);
+	for (stepper.start(); stepper; ++stepper) { }
+	BOOST_REQUIRE(stepper.currentStep() == 5280);
+	BOOST_REQUIRE(stepper.currentTime() >= 5000);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
