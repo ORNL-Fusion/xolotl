@@ -327,9 +327,11 @@ SystemTestCase::run() const
 
 	auto rank = getMPIRank();
 	auto perfFileName = "perf_r" + std::to_string(rank) + ".yaml";
-	auto newPerfFileName = _caseName + "_" + perfFileName;
 	auto cwd = xolotl::fs::current_path();
-	xolotl::fs::rename(cwd / perfFileName, cwd / newPerfFileName);
+	if (exists(cwd / perfFileName)) {
+		auto newPerfFileName = _caseName + "_" + perfFileName;
+		xolotl::fs::rename(cwd / perfFileName, cwd / newPerfFileName);
+	}
 
 	if (rank == 0) {
 		auto newFilePath = cwd / (_caseName + "_" + _outputFileName);
