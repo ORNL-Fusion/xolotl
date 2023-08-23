@@ -335,9 +335,9 @@ SystemTestCase::run() const
 {
 	if (!checkMPILimits()) {
 		if (getMPIRank() == 0) {
-            std::cout << "\nSkipping " << _caseName << std::endl;
+			std::cout << "\nSkipping " << _caseName << std::endl;
 		}
-        MPI_Barrier(MPI_COMM_WORLD);
+		MPI_Barrier(MPI_COMM_WORLD);
 		return;
 	}
 
