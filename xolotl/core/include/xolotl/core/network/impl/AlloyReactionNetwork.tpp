@@ -236,9 +236,9 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		auto iProdId = subpaving.findTileId(comp);
 		if (iProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, iProdId});
-			if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
-				this->addDissociationReaction(tag, {iProdId, i, j});
-			}
+			//			if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
+			//				this->addDissociationReaction(tag, {iProdId, i, j});
+			//			}
 		}
 		comp[Species::I] = 0;
 		comp[Species::Frank] = size;
@@ -356,9 +356,10 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				if (fProdId != subpaving.invalidIndex() &&
 					fProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, fProdId});
-					if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
-						this->addDissociationReaction(tag, {fProdId, i, j});
-					}
+					//					if (lo1[Species::I] == 1 || lo2[Species::I]
+					//== 1) {
+					// this->addDissociationReaction(tag, {fProdId, i, j});
+					//					}
 					previousIndex = fProdId;
 				}
 			}
