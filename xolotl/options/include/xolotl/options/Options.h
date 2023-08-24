@@ -291,6 +291,11 @@ protected:
 	 */
 	double basalPortion;
 
+	/**
+	 * Transition size, for instance from pyramic to c-loops.
+	 */
+	int transitionSize;
+
 public:
 	/**
 	 * The constructor.
@@ -836,6 +841,15 @@ public:
 	getBasalPortion() const override
 	{
 		return basalPortion;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
+	getTransitionSize() const override
+	{
+		return transitionSize;
 	}
 };
 // end class Options

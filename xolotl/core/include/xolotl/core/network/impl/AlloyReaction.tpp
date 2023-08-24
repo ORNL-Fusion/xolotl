@@ -139,7 +139,7 @@ AlloyDissociationReaction::computeBindingEnergy(double time)
 	//	else if (lo.isOnAxis(Species::I)) {
 	//		double n = (double)(lo[Species::I] + hi[Species::I] - 1) / 2.0;
 	//		if (prod1Comp.isOnAxis(Species::I) ||
-	//prod2Comp.isOnAxis(Species::I)) { 			be = 3.5 - 2.5 * (pow(n, 2.0
+	// prod2Comp.isOnAxis(Species::I)) { 			be = 3.5 - 2.5 * (pow(n, 2.0
 	/// 3.0) - pow(n - 1.0, 2.0 / 3.0));
 	//		}
 	//	}
