@@ -33,15 +33,21 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		return zs * (dc0 + dc1);
 	}
 
-	double p = 0.0, zl = 0.0;
-	if (r0 < r1) {
-		p = 1.0 / (1.0 + pow(r1 / (3.0 * (r0 + rCore)), 2.0));
-		zl = 4.0 * pow(pi, 2.0) * r1 / log(1.0 + 8.0 * r1 / (r0 + rCore));
+	// Both loops
+	double r_l = 0.0, r_s = 0.0;
+	if (not cl0IsSphere and not cl1IsSphere) {
+		r_l = (r0 < r1) ? r1 : r0;
+		r_s = (r0 < r1) ? r0 : r1;
 	}
+	// Loop and sphere
 	else {
-		p = 1.0 / (1.0 + pow(r0 / (3.0 * (r1 + rCore)), 2.0));
-		zl = 4.0 * pow(pi, 2.0) * r0 / log(1.0 + 8.0 * r0 / (r1 + rCore));
+		// Which one is sphere?
+		r_s = (cl0IsSphere) ? r0 : r1;
+		r_l = (cl0IsSphere) ? r1 : r0;
 	}
+
+	double p = 1.0 / (1.0 + pow(r_l / (r_s + rCore), 2.0));
+	double zl = 4.0 * pi * pi * r_l / log(1.0 + 8.0 * r_l / (r_s + rCore));
 
 	double k_plus = (dc0 + dc1) * (p * zs + (1.0 - p) * zl);
 	double bias = 1.0;
@@ -108,11 +114,12 @@ AlloyDissociationReaction::computeBindingEnergy(double time)
 	Composition prod2Comp = prod2Reg.getOrigin();
 	if (lo.isOnAxis(Species::Void)) {
 		double n = (double)(lo[Species::Void] + hi[Species::Void] - 1) / 2.0;
-		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
-			be = 3.5 - 3.45 * (pow(n + 1.0, 2.0 / 3.0) - pow(n, 2.0 / 3.0));
-		}
-		else if (prod1Comp.isOnAxis(Species::V) ||
-			prod2Comp.isOnAxis(Species::V)) {
+		//		if (prod1Comp.isOnAxis(Species::I) ||
+		// prod2Comp.isOnAxis(Species::I)) { 			be = 3.5 - 3.45 * (pow(n
+		// + 1.0, 2.0
+		/// 3.0) - pow(n, 2.0 / 3.0));
+		//		}
+		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
 			be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
 		}
 	}
@@ -129,14 +136,15 @@ AlloyDissociationReaction::computeBindingEnergy(double time)
 			be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
 		}
 	}
-	else if (lo.isOnAxis(Species::I)) {
-		double n = (double)(lo[Species::I] + hi[Species::I] - 1) / 2.0;
-		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
-			be = 3.5 - 2.5 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
-		}
-	}
+	//	else if (lo.isOnAxis(Species::I)) {
+	//		double n = (double)(lo[Species::I] + hi[Species::I] - 1) / 2.0;
+	//		if (prod1Comp.isOnAxis(Species::I) ||
+	// prod2Comp.isOnAxis(Species::I)) { 			be = 3.5 - 2.5 * (pow(n, 2.0
+	/// 3.0) - pow(n - 1.0, 2.0 / 3.0));
+	//		}
+	//	}
 
-	return util::max(0.1, be);
+	return util::min(5.0, util::max(be, 0.1));
 }
 
 KOKKOS_INLINE_FUNCTION

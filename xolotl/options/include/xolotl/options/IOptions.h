@@ -132,13 +132,13 @@ public:
 	virtual std::string
 	getPerfHandlerName() const = 0;
 
-    /**
-     * Should we write the performance report to a YAML file?
-     *
-     * @return true to enable YAML output
-     */
-    virtual bool
-    usePerfOutputYAML() const = 0;
+	/**
+	 * Should we write the performance report to a YAML file?
+	 *
+	 * @return true to enable YAML output
+	 */
+	virtual bool
+	usePerfOutputYAML() const = 0;
 
 	/**
 	 * Obtain the name of the visualization handler to be used
@@ -296,6 +296,14 @@ public:
 	 */
 	virtual int
 	getMaxV() const = 0;
+
+	/**
+	 * Obtain the maximum value of pure vacancies to be used.
+	 *
+	 * @return The maximum value
+	 */
+	virtual int
+	getMaxPureV() const = 0;
 
 	/**
 	 * Obtain the maximum value of interstitials to be used.
@@ -494,6 +502,22 @@ public:
 	 */
 	virtual double
 	getSinkDensity() const = 0;
+
+	/**
+	 * Obtain the value of the basal portion.
+	 *
+	 * @return Qb
+	 */
+	virtual double
+	getBasalPortion() const = 0;
+
+	/**
+	 * Obtain the transition size.
+	 *
+	 * @return The size
+	 */
+	virtual int
+	getTransitionSize() const = 0;
 };
 // end class IOptions
 } /* namespace options */

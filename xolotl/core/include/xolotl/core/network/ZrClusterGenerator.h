@@ -65,6 +65,7 @@ private:
 	AmountType _maxI;
 	AmountType _groupingMin;
 	AmountType _groupingWidth;
+	AmountType _transitionSize;
 };
 } // namespace network
 } // namespace core

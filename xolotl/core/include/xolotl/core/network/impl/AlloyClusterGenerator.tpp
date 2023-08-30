@@ -219,7 +219,7 @@ AlloyClusterGenerator::getMigrationEnergy(
 	Composition comp(reg.getOrigin());
 	double migrationEnergy = util::infinity<double>;
 	if (comp.isOnAxis(Species::Perfect)) {
-		return 0.7;
+		return 0.5;
 	}
 	if (comp.isOnAxis(Species::V)) {
 		return 1.3;

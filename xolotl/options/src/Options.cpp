@@ -47,6 +47,7 @@ Options::Options() :
 	maxD(0),
 	maxT(0),
 	maxV(20),
+	maxPureV(20),
 	maxI(6),
 	leftBoundary(1),
 	rightBoundary(1),
@@ -73,7 +74,9 @@ Options::Options() :
 	heVRatio(4.0),
 	migrationThreshold(std::numeric_limits<double>::infinity()),
 	sinkPortion(0.0),
-	sinkDensity(0.0)
+	sinkDensity(0.0),
+	basalPortion(0.1),
+	transitionSize(325)
 {
 	return;
 }
@@ -198,7 +201,7 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"This option allows the user to define the boundaries of the network. "
 		"To do so, simply write the values in order "
-		"maxHe/Xe/Basal maxD maxT maxV maxI.")("radiusSize",
+		"maxHe/Xe/Basal maxD maxT maxV maxI maxPureV.")("radiusSize",
 		bpo::value<std::string>(),
 		"This option allows the user to set a minimum size for the computation "
 		"for the average radii, in the same order as the netParam option "
@@ -251,7 +254,14 @@ Options::readParams(int argc, const char* argv[])
 		"string that will use the default material associated flux handler.")(
 		"sinkPortion", bpo::value<double>(&sinkPortion),
 		"The portion of screw sink.")("sinkDensity",
-		bpo::value<double>(&sinkDensity), "The sink density in nm-2.");
+		bpo::value<double>(&sinkDensity), "The sink density in nm-2.")(
+		"basalPortion", bpo::value<double>(&basalPortion)->default_value(0.1),
+		"The value of the basal portion generated for each V (0.1 by "
+		"default).")("transitionSize",
+		bpo::value<int>(&transitionSize)->default_value(325),
+		"The value for the transition within a type of cluster, for instance "
+		"basal (325 by "
+		"default).");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);
@@ -444,6 +454,12 @@ Options::readParams(int argc, const char* argv[])
 			maxV = strtol(tokens[3].c_str(), NULL, 10);
 			// Set the interstitial size
 			maxI = strtol(tokens[4].c_str(), NULL, 10);
+			if (tokens.size() > 5) {
+				// Set the pure V size
+				maxPureV = strtol(tokens[5].c_str(), NULL, 10);
+			}
+			else
+				maxPureV = maxV;
 		}
 	}
 

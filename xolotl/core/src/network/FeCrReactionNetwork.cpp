@@ -82,7 +82,7 @@ FeCrReactionNetwork::checkLargestClusterId()
 
 	return maxLoc.loc;
 }
-  
+
 void
 FeCrReactionNetwork::initializeExtraClusterData(
 	const options::IOptions& options)

@@ -126,7 +126,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "heVRatio=5.0" << std::endl
 		<< "migrationThreshold=1.0" << std::endl
 		<< "fluxDepthProfileFilePath=path/to/the/flux/profile/file.txt"
-		<< std::endl;
+		<< std::endl
+		<< "basalPortion=0.6" << std::endl
+		<< "transitionSize=300" << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -233,6 +235,12 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getFluxDepthProfileFilePath(),
 		"path/to/the/flux/profile/file.txt");
 
+	// Check the basal portion
+	BOOST_REQUIRE_EQUAL(opts.getBasalPortion(), 0.6);
+
+	// Check the transition size
+	BOOST_REQUIRE_EQUAL(opts.getTransitionSize(), 300);
+
 	// Check the physical processes option
 	auto map = opts.getProcesses();
 	BOOST_REQUIRE_EQUAL(map["diff"], true);
@@ -244,6 +252,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(map["bursting"], false);
 	BOOST_REQUIRE_EQUAL(map["resolution"], false);
 	BOOST_REQUIRE_EQUAL(map["heterogeneous"], false);
+	BOOST_REQUIRE_EQUAL(map["constant"], false);
 
 	// Check the PETSc options
 	BOOST_REQUIRE_EQUAL(opts.getPetscArg(),
@@ -287,6 +296,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5)
 	BOOST_REQUIRE_EQUAL(opts.getMaxT(), 0);
 	BOOST_REQUIRE_EQUAL(opts.getMaxV(), 5);
 	BOOST_REQUIRE_EQUAL(opts.getMaxI(), 3);
+	BOOST_REQUIRE_EQUAL(opts.getMaxPureV(), 5);
 
 	// Remove the created file
 	std::string tempFile = "param_good.txt";

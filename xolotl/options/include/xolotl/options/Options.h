@@ -68,10 +68,10 @@ protected:
 	 */
 	std::string perfHandlerName;
 
-    /**
-     * Output performance report to YAML file?
-     */
-    bool perfOutputYAMLFlag;
+	/**
+	 * Output performance report to YAML file?
+	 */
+	bool perfOutputYAMLFlag;
 
 	/**
 	 * Name of the viz handler
@@ -172,6 +172,11 @@ protected:
 	 * Maximum number of V
 	 */
 	int maxV;
+
+	/**
+	 * Maximum number of pure V
+	 */
+	int maxPureV;
 
 	/**
 	 * Maximum number of I
@@ -290,6 +295,16 @@ protected:
 	 * Total sink density
 	 */
 	double sinkDensity;
+
+	/**
+	 * Value of the basal portion.
+	 */
+	double basalPortion;
+
+	/**
+	 * Transition size, for instance from pyramic to c-loops.
+	 */
+	int transitionSize;
 
 public:
 	/**
@@ -416,14 +431,14 @@ public:
 		return perfHandlerName;
 	}
 
-    /**
-     * \see IOptions.h
-     */
-    bool
-    usePerfOutputYAML() const override
-    {
-        return perfOutputYAMLFlag;
-    }
+	/**
+	 * \see IOptions.h
+	 */
+	bool
+	usePerfOutputYAML() const override
+	{
+		return perfOutputYAMLFlag;
+	}
 
 	/**
 	 * \see IOptions.h
@@ -603,6 +618,15 @@ public:
 	getMaxV() const override
 	{
 		return maxV;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
+	getMaxPureV() const override
+	{
+		return maxPureV;
 	}
 
 	/**
@@ -833,9 +857,27 @@ public:
 	 * \see IOptions.h
 	 */
 	virtual double
+	getBasalPortion() const override
+	{
+		return basalPortion;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
 	getSinkDensity() const override
 	{
 		return sinkDensity;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
+	getTransitionSize() const override
+	{
+		return transitionSize;
 	}
 };
 // end class Options

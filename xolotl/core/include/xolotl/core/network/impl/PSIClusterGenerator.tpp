@@ -17,6 +17,7 @@ PSIClusterGenerator<TSpeciesEnum>::PSIClusterGenerator(
 	_maxD(opts.getMaxD()),
 	_maxT(opts.getMaxT()),
 	_maxV(opts.getMaxV()),
+	_maxPureV(opts.getMaxPureV()),
 	_maxI(opts.getMaxI()),
 	_groupingMin(opts.getGroupingMin()),
 	_groupingWidthA(opts.getGroupingWidthA()),
@@ -34,6 +35,7 @@ PSIClusterGenerator<TSpeciesEnum>::PSIClusterGenerator(
 	_maxD(opts.getMaxD()),
 	_maxT(opts.getMaxT()),
 	_maxV(opts.getMaxV()),
+	_maxPureV(opts.getMaxPureV()),
 	_maxI(opts.getMaxI()),
 	_groupingMin(opts.getGroupingMin()),
 	_groupingWidthA(opts.getGroupingWidthA()),
@@ -85,13 +87,13 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		}
 	}
 
-	// No impurity case
+	// No impurity case or pureV > V
 	if (lo[Species::V] > 0 and _maxHe == 0 and _maxD == 0 and _maxT == 0) {
-		if (lo[Species::V] < _groupingMin &&
+		if (lo[Species::V] < _groupingMin and
 			othersBeginAtZero(region, Species::V)) {
 			return true;
 		}
-		if (region[Species::V].end() > _maxV) {
+		if (region[Species::V].end() > _maxPureV) {
 			return true;
 		}
 		if (region[Species::V].length() <
@@ -101,11 +103,24 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 			return true;
 		}
 	}
-	else {
-		// V is never grouped
-		if (hi[Species::V] > 1 && othersBeginAtZero(region, Species::V)) {
+	else if (lo[Species::V] > 0 and _maxPureV > _maxV) {
+		if (lo[Species::V] <= _maxV and othersBeginAtZero(region, Species::V)) {
 			return true;
 		}
+		if (region[Species::V].end() > _maxPureV) {
+			result[toIndex(Species::V)] = true;
+		}
+		if (region[Species::V].length() <
+				util::max((double)(_groupingWidthB + 1),
+					region[Species::V].begin() * 1.0e-2) and
+			othersBeginAtZero(region, Species::V)) {
+			result[toIndex(Species::V)] = false;
+			return true;
+		}
+	}
+	// V is never grouped
+	if (hi[Species::V] > 1 && othersBeginAtZero(region, Species::V)) {
+		return true;
 	}
 
 	// Don't group under the given min for V
@@ -143,7 +158,7 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	auto maxTPerV = [hevRatio = _hevRatio, maxT = _maxT](AmountType amtV) {
 		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio) * (maxT > 0);
 	};
-	if (hi[Species::V] > 1) {
+	if (hi[Species::V] > 1 and lo[Species::V] <= _maxV) {
 		double factor = 1.0e-1;
 
 		if (lo[Species::He] <= getMaxHePerV(hi[Species::V] - 1, _hevRatio) &&
@@ -251,9 +266,13 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	}
 
 	// Border case
-	if (hi[Species::V] > _maxV + 1) {
+	if (hi[Species::V] > _maxPureV + 1) {
 		result[toIndex(Species::V)] = true;
 	}
+	if (hi[Species::V] > _maxV) {
+		result[toIndex(Species::V)] = true;
+	}
+
 	if (lo[Species::V] == 0) {
 		result[toIndex(Species::V)] = true;
 	}
@@ -350,7 +369,11 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		_maxD == 0 and _maxT == 0) {
 		return false;
 	}
-	if (region[Species::V].begin() > _maxV) {
+	if (region[Species::V].begin() > _maxPureV) {
+		return false;
+	}
+	if (region[Species::V].begin() > _maxV and
+		!region.getOrigin().isOnAxis(Species::V)) {
 		return false;
 	}
 
@@ -386,13 +409,19 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		return (2.0 / 3.0) * getMaxHePerV(amtV, hevRatio);
 	};
 
+	Composition lo = region.getOrigin();
+	Composition hi = region.getUpperLimitPoint();
+
 	// The edge
 	if (region[Species::V].end() > 1) {
-		Composition lo = region.getOrigin();
-		Composition hi = region.getUpperLimitPoint();
 		auto hiV = util::min(hi[Species::V] - 1, _maxV);
 		auto hiHe =
 			util::min(hi[Species::He] - 1, getMaxHePerV(_maxV, _hevRatio));
+
+		// No impurities above maxV
+		if (lo[Species::V] > _maxV and !lo.isOnAxis(Species::V)) {
+			return false;
+		}
 
 		// Too many helium
 		if (lo[Species::He] > getMaxHePerV(hiV, _hevRatio)) {
