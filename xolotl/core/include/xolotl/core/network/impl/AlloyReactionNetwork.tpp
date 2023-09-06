@@ -357,7 +357,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					fProdId != previousIndex) {
 					this->addProductionReaction(tag, {i, j, fProdId});
 					//					if (lo1[Species::I] == 1 ||
-					//lo2[Species::I]
+					// lo2[Species::I]
 					//== 1) {
 					// this->addDissociationReaction(tag, {fProdId, i, j});
 					//					}
