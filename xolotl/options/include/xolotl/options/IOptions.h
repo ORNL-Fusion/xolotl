@@ -496,6 +496,14 @@ public:
 	 */
 	virtual double
 	getBasalPortion() const = 0;
+
+	/**
+	 * Obtain the transition size.
+	 *
+	 * @return The size
+	 */
+	virtual int
+	getTransitionSize() const = 0;
 };
 // end class IOptions
 } /* namespace options */

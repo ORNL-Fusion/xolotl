@@ -127,7 +127,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "migrationThreshold=1.0" << std::endl
 		<< "fluxDepthProfileFilePath=path/to/the/flux/profile/file.txt"
 		<< std::endl
-		<< "basalPortion=0.6" << std::endl;
+		<< "basalPortion=0.6" << std::endl
+		<< "transitionSize=300" << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -236,6 +237,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 
 	// Check the basal portion
 	BOOST_REQUIRE_EQUAL(opts.getBasalPortion(), 0.6);
+
+	// Check the transition size
+	BOOST_REQUIRE_EQUAL(opts.getTransitionSize(), 300);
 
 	// Check the physical processes option
 	auto map = opts.getProcesses();

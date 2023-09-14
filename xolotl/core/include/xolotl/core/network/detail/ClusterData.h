@@ -101,6 +101,7 @@ struct ClusterDataCommon
 		numClusters(data.numClusters),
 		gridSize(data.gridSize),
 		_floatVals(data._floatVals),
+		_intVals(data._intVals),
 		_boolVals(data._boolVals),
 		temperature(data.temperature),
 		reactionRadius(data.reactionRadius),
@@ -141,6 +142,12 @@ private:
 		FISSION_RATE,
 		ZETA,
 		NUM_FLOAT_VALS
+	};
+
+	enum IntValsIndex : int
+	{
+		TRANSITION_SIZE = 0,
+		NUM_INT_VALS
 	};
 
 	enum BoolValsIndex : int
@@ -215,6 +222,19 @@ public:
 	setZeta(double val)
 	{
 		setVal(_floatVals, ZETA, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	transitionSize() const
+	{
+		return _intVals[TRANSITION_SIZE];
+	}
+
+	void
+	setTransitionSize(int val)
+	{
+		setVal(_intVals, TRANSITION_SIZE, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -297,6 +317,7 @@ public:
 
 private:
 	View<double[NUM_FLOAT_VALS]> _floatVals;
+	View<int[NUM_INT_VALS]> _intVals;
 	View<bool[NUM_BOOL_VALS]> _boolVals;
 
 public:

@@ -73,7 +73,8 @@ Options::Options() :
 	fissionYield(0.25),
 	heVRatio(4.0),
 	migrationThreshold(std::numeric_limits<double>::infinity()),
-	basalPortion(0.1)
+	basalPortion(0.1),
+	transitionSize(325)
 {
 	return;
 }
@@ -251,6 +252,10 @@ Options::readParams(int argc, const char* argv[])
 		"string that will use the default material associated flux handler.")(
 		"basalPortion", bpo::value<double>(&basalPortion)->default_value(0.1),
 		"The value of the basal portion generated for each V (0.1 by "
+		"default).")("transitionSize",
+		bpo::value<int>(&transitionSize)->default_value(325),
+		"The value for the transition within a type of cluster, for instance "
+		"basal (325 by "
 		"default).");
 
 	bpo::options_description visible("Allowed options");
