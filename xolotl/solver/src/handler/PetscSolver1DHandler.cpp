@@ -535,6 +535,14 @@ PetscSolver1DHandler::initializeConcentration(
 void
 PetscSolver1DHandler::initGBLocation(DM& da, Vec& C)
 {
+	// Need to use the NE network here
+	using NetworkType = core::network::NEReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	auto neNetwork = dynamic_cast<NetworkType*>(&network);
+	if (!neNetwork) {
+		return;
+	}
+
 	PetscErrorCode ierr;
 
 	// Pointer for the concentration vector
@@ -550,11 +558,6 @@ PetscSolver1DHandler::initGBLocation(DM& da, Vec& C)
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
 	const auto dof = network.getDOF();
-
-	// Need to use the NE network here
-	using NetworkType = core::network::NEReactionNetwork;
-	using Spec = typename NetworkType::Species;
-	auto& neNetwork = dynamic_cast<NetworkType&>(network);
 
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
@@ -573,7 +576,7 @@ PetscSolver1DHandler::initGBLocation(DM& da, Vec& C)
 
 			// Transfer the local amount of Xe clusters
 			setLocalXeRate(
-				neNetwork.getTotalAtomConcentration(dConcs, Spec::Xe, 1),
+				neNetwork->getTotalAtomConcentration(dConcs, Spec::Xe, 1),
 				xi - localXS);
 
 			// Loop on all the clusters to initialize at 0.0

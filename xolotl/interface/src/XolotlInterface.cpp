@@ -185,14 +185,15 @@ catch (const std::exception& e) {
 
 void
 XolotlInterface::solveXolotl()
-try {
+// try 
+{
 	// Launch the PetscSolver
 	solver->solve();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+// catch (const std::exception& e) {
+// 	reportException(e);
+// 	throw;
+// }
 
 std::vector<std::vector<std::vector<std::array<double, 4>>>>
 XolotlInterface::getLocalNE()
