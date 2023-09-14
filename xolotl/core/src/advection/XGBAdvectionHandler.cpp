@@ -10,7 +10,7 @@ namespace advection
 {
 void
 XGBAdvectionHandler::initialize(network::IReactionNetwork& network,
-	network::IReactionNetwork::SparseFillMap& ofillMap)
+	std::vector<RowColPair>& idPairs)
 {
 	// Clear the index and sink strength vectors
 	advectingClusters.clear();
@@ -84,14 +84,16 @@ XGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 		// Add the sink strength to the vector
 		sinkStrengthVector.push_back(sinkStrength);
 
-		// Set the off-diagonal part for the Jacobian to 1
-		// Set the ofill value to 1 for this cluster
-		ofillMap[clusterId].emplace_back(clusterId);
+		// Add Jacobian entry for this cluster
+        idPairs.push_back({clusterId, clusterId});
 	}
 
-	return;
+    this->syncAdvectingClusters(network);
+    this->syncSinkStrengths();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// DELETEME (after implementing the below version)
 void
 XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	const plsm::SpaceVector<double, 3>& pos, double** concVector,
@@ -153,6 +155,17 @@ XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	}
 
 	return;
+}
+////////////////////////////////////////////////////////////////////////////////
+
+void
+XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
+	const plsm::SpaceVector<double, 3>& pos, const StencilConcArray& concVector,
+	Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+	int ix, double hy, int iy, double hz, int iz) const
+{
+	// TODO
+	throw std::runtime_error("XGBAdvectionHandler: Not implemented");
 }
 
 void

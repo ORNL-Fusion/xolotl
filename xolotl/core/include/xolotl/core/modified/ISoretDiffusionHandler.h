@@ -5,6 +5,7 @@
 #include <memory>
 
 #include <xolotl/config.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
 namespace xolotl
@@ -42,9 +43,16 @@ public:
 	 */
 	virtual void
 	initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofill,
-		network::IReactionNetwork::SparseFillMap& dfill,
-		std::vector<double> grid, int xs) = 0;
+		std::vector<core::RowColPair>& idPairs, std::vector<double> grid,
+		int xs) = 0;
+
+	/**
+	 * Get the total number of diffusing clusters in the network.
+	 *
+	 * @return The number of diffusing clusters
+	 */
+	virtual int
+	getNumberOfDiffusing() const = 0;
 
 	/**
 	 * This operation sets the surface position.
@@ -77,9 +85,11 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void
-	computeDiffusion(network::IReactionNetwork& network, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
-		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const = 0;
+	computeDiffusion(network::IReactionNetwork& network,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0) const = 0;
 
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters
@@ -89,10 +99,8 @@ public:
 	 * @param network The network
 	 * @param concVector The pointer to the pointer of arrays of concentration
 	 * at middle/ left/right/bottom/top/front/back grid points
-	 * @param val The pointer to the array that will contain the values of
+	 * @param values The pointer to the array that will contain the values of
 	 * partials for the diffusion
-	 * @param indices The pointer to the array that will contain the indices of
-	 * the diffusing clusters in the network
 	 * @param hxLeft The step size on the left side of the point in the x
 	 * direction
 	 * @param hxRight The step size on the right side of the point in the x
@@ -109,9 +117,9 @@ public:
 	 */
 	virtual bool
 	computePartialsForDiffusion(network::IReactionNetwork& network,
-		double** concVector, double* val, IdType* indices, double hxLeft,
-		double hxRight, int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
-		int iz = 0) const = 0;
+		const StencilConcArray& concVector, Kokkos::View<double*> values,
+		double hxLeft, double hxRight, int ix, double sy = 0.0, int iy = 0,
+		double sz = 0.0, int iz = 0) const = 0;
 };
 // end class ISoretDiffusionHandler
 

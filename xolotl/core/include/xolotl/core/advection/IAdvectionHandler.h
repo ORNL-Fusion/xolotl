@@ -1,13 +1,15 @@
-#ifndef IADVECTIONHANDLER_H
-#define IADVECTIONHANDLER_H
+#pragma once
 
 // Includes
 #include <array>
 #include <memory>
 
+#include <Kokkos_Core.hpp>
+
 #include <plsm/SpaceVector.h>
 
 #include <xolotl/config.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
 namespace xolotl
@@ -40,7 +42,7 @@ public:
 	 */
 	virtual void
 	initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) = 0;
+		std::vector<RowColPair>& idPairs) = 0;
 
 	/**
 	 * Set the number of dimension
@@ -100,11 +102,22 @@ public:
 	 * @param hz The step size in the z direction
 	 * @param iz The position on the z grid
 	 */
+    ////////////////////////////////////////////////////////////////////////////
+    // DELETEME
 	virtual void
 	computeAdvection(network::IReactionNetwork& network,
 		const plsm::SpaceVector<double, 3>& pos, double** concVector,
 		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
 		double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0) const = 0;
+    ////////////////////////////////////////////////////////////////////////////
+
+	virtual void
+	computeAdvection(network::IReactionNetwork& network,
+		const plsm::SpaceVector<double, 3>& pos,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
+		int iz = 0) const = 0;
 
 	/**
 	 * Compute the partial derivatives due to the advection of all the helium
@@ -190,4 +203,3 @@ public:
 } /* namespace advection */
 } /* namespace core */
 } /* namespace xolotl */
-#endif

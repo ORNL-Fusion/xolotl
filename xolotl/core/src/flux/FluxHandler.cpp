@@ -93,8 +93,6 @@ FluxHandler::initializeFluxHandler(network::IReactionNetwork& network,
 
 	// Add it to the vector of fluxes
 	incidentFluxVec.push_back(tempVector);
-
-	return;
 }
 
 void
@@ -116,8 +114,32 @@ FluxHandler::recomputeFluxHandler(int surfacePos)
 		// Add it to the vector
 		incidentFluxVec[0][i - surfacePos] = incidentFlux;
 	}
+}
 
-	return;
+void
+FluxHandler::syncFluxIndices()
+{
+	auto ids_h =
+		Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+			fluxIndices.data(), fluxIndices.size());
+	fluxIds = Kokkos::View<IdType*>(
+		Kokkos::ViewAllocateWithoutInitializing("Flux Indices"),
+		fluxIndices.size());
+	deep_copy(fluxIds, ids_h);
+}
+
+void
+FluxHandler::syncIncidentFluxVec()
+{
+	incidentFlux = Kokkos::View<double**>(
+		"Incident Flux Vec", incidentFluxVec.size(), incidentFluxVec[0].size());
+	auto incidentFlux_h = create_mirror_view(incidentFlux);
+	for (std::size_t i = 0; i < incidentFluxVec.size(); ++i) {
+		for (std::size_t j = 0; j < incidentFluxVec[i].size(); ++j) {
+			incidentFlux_h(i, j) = incidentFluxVec[i][j];
+		}
+	}
+	deep_copy(incidentFlux, incidentFlux_h);
 }
 
 void
@@ -139,8 +161,6 @@ FluxHandler::initializeTimeProfile(const std::string& fileName)
 		time.push_back(xamp);
 		amplitudes.push_back(yamp);
 	}
-
-	return;
 }
 
 double
@@ -177,8 +197,8 @@ FluxHandler::getProfileAmplitude(double currentTime) const
 }
 
 void
-FluxHandler::computeIncidentFlux(
-	double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+FluxHandler::computeIncidentFlux(double currentTime,
+	Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos)
 {
 	// Skip if no index was set
 	if (fluxIndices.size() == 0)
@@ -190,15 +210,18 @@ FluxHandler::computeIncidentFlux(
 		recomputeFluxHandler(surfacePos);
 	}
 
+	double value{};
 	if (incidentFluxVec[0].size() == 0) {
-		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
-		return;
+		value = fluxAmplitude;
+	}
+	else {
+		value = incidentFluxVec[0][xi - surfacePos];
 	}
 
 	// Update the concentration array
-	updatedConcOffset[fluxIndices[0]] += incidentFluxVec[0][xi - surfacePos];
-
-	return;
+	auto id = fluxIndices[0];
+	Kokkos::parallel_for(
+		1, KOKKOS_LAMBDA(std::size_t) { updatedConcOffset[id] += value; });
 }
 
 void
@@ -219,8 +242,6 @@ FluxHandler::incrementFluence(double dt)
 			fluence[i + 1] += fluxAmplitude * dt * reductionFactors[i];
 		}
 	}
-
-	return;
 }
 
 void
@@ -241,8 +262,6 @@ FluxHandler::computeFluence(double time)
 			fluence[i + 1] = fluxAmplitude * time * reductionFactors[i];
 		}
 	}
-
-	return;
 }
 
 std::vector<double>

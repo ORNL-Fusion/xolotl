@@ -306,22 +306,19 @@ AlloyClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	}
 	if (lo.isOnAxis(Species::Void)) {
 		for (auto j : makeIntervalRange(reg[Species::Void])) {
-			radius +=
-				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+			radius += cbrt(0.75 * prefactor * latticeParameter * (double)j);
 		}
 		return radius / reg[Species::Void].length();
 	}
 	if (lo.isOnAxis(Species::V)) {
 		for (auto j : makeIntervalRange(reg[Species::V])) {
-			radius +=
-				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+			radius += cbrt(0.75 * prefactor * latticeParameter * (double)j);
 		}
 		return radius / reg[Species::V].length();
 	}
 	if (lo.isOnAxis(Species::I)) {
 		for (auto j : makeIntervalRange(reg[Species::I])) {
-			radius +=
-				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+			radius += cbrt(0.75 * prefactor * latticeParameter * (double)j);
 		}
 		return radius / reg[Species::I].length();
 	}

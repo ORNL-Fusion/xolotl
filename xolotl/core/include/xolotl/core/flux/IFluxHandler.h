@@ -1,8 +1,9 @@
-#ifndef IFLUXHANDLER_H
-#define IFLUXHANDLER_H
+#pragma once
 
 #include <string>
 #include <vector>
+
+#include <Kokkos_Core.hpp>
 
 #include <xolotl/core/network/IReactionNetwork.h>
 
@@ -54,8 +55,8 @@ public:
 	 * @param surfacePos The current position of the surface
 	 */
 	virtual void
-	computeIncidentFlux(double currentTime, double* updatedConcOffset, int xi,
-		int surfacePos) = 0;
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos) = 0;
 
 	/**
 	 * This operation increments the fluence at the current time step.
@@ -170,5 +171,3 @@ public:
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif

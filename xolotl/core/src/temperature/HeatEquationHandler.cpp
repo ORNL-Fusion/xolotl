@@ -18,6 +18,23 @@ auto heatEqTemperatureHandlerRegistration =
 		RegistrationCollection<HeatEquationHandler>({"heat", "ELM"});
 }
 
+KOKKOS_INLINE_FUNCTION
+double
+getBulkHeatFlux(double temp)
+{
+	// Convert the temperature to Celsius
+	double tempCelsius = temp - 273.0;
+
+	return (-8.7993 + 0.0845 * tempCelsius) * 1.0e-12;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+getBulkHeatFluxDerivative(double temp)
+{
+	return 0.0845 * 1.0e-12;
+}
+
 HeatEquationHandler::HeatEquationHandler(
 	double heatFlux, double bulkTemp, int dim, std::string filename) :
 	bulkTemperature(bulkTemp),
@@ -27,7 +44,6 @@ HeatEquationHandler::HeatEquationHandler(
 	heatConductivity(0.0),
 	zeroFlux(util::equal(heatFlux, 0.0)),
 	dimension(dim),
-	oldConcBox(dimension, {0.0, 0.0}),
 	interfaceLoc(0.0),
 	fluxFile(filename)
 {
@@ -126,174 +142,13 @@ HeatEquationHandler::getTemperature(
 }
 
 void
-HeatEquationHandler::computeTemperature(double currentTime, double** concVector,
-	double* updatedConcOffset, double hxLeft, double hxRight, int xi, double sy,
-	int iy, double sz, int iz)
+HeatEquationHandler::setTemperature(Kokkos::View<const double*> solution)
 {
-	// Skip if the flux is 0
-	if (zeroFlux) {
-		return;
-	}
+	auto elemView = subview(solution, this->_dof);
+	auto elem_h = create_mirror_view(elemView);
+	deep_copy(elem_h, elemView);
 
-	// Initial declaration
-	int index = this->_dof;
-
-	auto heatFlux = getHeatFlux(currentTime);
-
-	// Get the initial concentrations
-	double oldConc = concVector[0][index];
-	for (int d = 0; d < dimension; ++d) {
-		oldConcBox[d][0] = concVector[2 * d + 1][index];
-		oldConcBox[d][1] = concVector[2 * d + 2][index];
-	}
-
-	// Adjust the parameters
-	double alpha = getLocalHeatAlpha(xi), beta = getLocalHeatBeta(oldConc),
-		   gamma = getLocalHeatGamma(oldConc), dAlpha = getDAlpha(xi),
-		   dBeta = getDBeta(oldConc);
-
-	double s[3] = {0, sy, sz};
-
-	double x1 = xGrid[xi] - xGrid[surfacePosition + 1];
-	double x2 = xGrid[xi + 1] - xGrid[surfacePosition + 1];
-
-	// Surface and interface
-	if (xi == surfacePosition or (interfaceLoc > x1 and interfaceLoc <= x2)) {
-		// Boundary condition with heat flux
-		updatedConcOffset[index] += (2.0 * heatFlux * gamma / hxLeft) +
-			(2.0 * alpha * beta * gamma) * (oldConcBox[0][1] - oldConc) /
-				(hxLeft * hxRight);
-		// Second term for temperature dependent conductivity
-		updatedConcOffset[index] += -heatFlux * dAlpha * gamma / alpha +
-			heatFlux * heatFlux * gamma * dBeta / (alpha * beta * beta);
-	}
-	else if (xi == bulkPosition) {
-		// Boundary condition with heat flux
-		double bulkHeatFlux = getBulkHeatFlux(oldConc);
-		updatedConcOffset[index] += -(2.0 * bulkHeatFlux * gamma / hxRight) +
-			(2.0 * alpha * beta * gamma) * (oldConcBox[0][0] - oldConc) /
-				(hxLeft * hxRight);
-		// Second term for temperature dependent conductivity
-		updatedConcOffset[index] += -bulkHeatFlux * dAlpha * gamma / alpha +
-			bulkHeatFlux * bulkHeatFlux * gamma * dBeta / (alpha * beta * beta);
-	}
-	else {
-		// Use a simple midpoint stencil to compute the concentration
-		updatedConcOffset[index] += 2.0 * alpha * beta * gamma *
-			(oldConcBox[0][0] + (hxLeft / hxRight) * oldConcBox[0][1] -
-				(1.0 + (hxLeft / hxRight)) * oldConc) /
-			(hxLeft * (hxLeft + hxRight));
-		// Second term for temperature dependent conductivity
-		updatedConcOffset[index] += dAlpha * beta * gamma *
-				(oldConcBox[0][1] - oldConcBox[0][0]) / (hxLeft + hxRight) +
-			alpha * dBeta * gamma * (oldConcBox[0][1] - oldConcBox[0][0]) *
-				(oldConcBox[0][1] - oldConcBox[0][0]) /
-				((hxLeft + hxRight) * (hxLeft + hxRight));
-	}
-
-	// Deal with the potential additional dimensions
-	for (int d = 1; d < dimension; ++d) {
-		updatedConcOffset[index] += alpha * beta * gamma * s[d] *
-			(oldConcBox[d][0] + oldConcBox[d][1] - 2.0 * oldConc);
-	}
-}
-
-bool
-HeatEquationHandler::computePartialsForTemperature(double currentTime,
-	double** concVector, double* val, IdType* indices, double hxLeft,
-	double hxRight, int xi, double sy, int iy, double sz, int iz)
-{
-	// Skip if the flux is 0
-	if (zeroFlux) {
-		return false;
-	}
-
-	// Initial declaration
-	int index = this->_dof;
-
-	auto heatFlux = getHeatFlux(currentTime);
-
-	// Get the initial concentrations
-	double oldConc = concVector[0][index];
-	for (int d = 0; d < dimension; ++d) {
-		oldConcBox[d][0] = concVector[2 * d + 1][index];
-		oldConcBox[d][1] = concVector[2 * d + 2][index];
-	}
-
-	// Get the DOF
-	indices[0] = index;
-
-	double s[3] = {0, sy, sz};
-
-	double alpha = getLocalHeatAlpha(xi), beta = getLocalHeatBeta(oldConc),
-		   gamma = getLocalHeatGamma(oldConc), dAlpha = getDAlpha(xi),
-		   dBeta = getDBeta(oldConc), dGamma = getDGamma(oldConc),
-		   ddBeta = getDDBeta(oldConc);
-
-	// Compute the partials along the depth
-	val[0] = -2.0 * alpha * beta * gamma / (hxLeft * hxRight) +
-		alpha * (ddBeta * gamma + dGamma * dBeta) *
-			(oldConcBox[0][1] - oldConcBox[0][0]) *
-			(oldConcBox[0][1] - oldConcBox[0][0]) /
-			((hxLeft + hxRight) * (hxLeft + hxRight)) +
-		2.0 * alpha * (dBeta * gamma + beta * dGamma) *
-			(oldConcBox[0][0] + (hxLeft / hxRight) * oldConcBox[0][1] -
-				(1.0 + (hxLeft / hxRight)) * oldConc) /
-			((hxLeft + hxRight) * hxLeft) +
-		dAlpha * (dBeta * gamma + dGamma * beta) *
-			(oldConcBox[0][1] - oldConcBox[0][0]) / (hxLeft + hxRight);
-	val[1] = 2.0 * alpha * beta * gamma / (hxLeft * (hxLeft + hxRight)) -
-		beta * dAlpha * gamma / (hxLeft + hxRight) +
-		2.0 * alpha * dBeta * gamma * (oldConcBox[0][0] - oldConcBox[0][1]) /
-			((hxLeft + hxRight) * (hxLeft + hxRight));
-	val[2] = 2.0 * alpha * beta * gamma / (hxRight * (hxLeft + hxRight)) +
-		beta * dAlpha * gamma / (hxLeft + hxRight) +
-		2.0 * alpha * dBeta * gamma * (oldConcBox[0][1] - oldConcBox[0][0]) /
-			((hxLeft + hxRight) * (hxLeft + hxRight));
-
-	// Deal with the potential additional dimensions
-	for (int d = 1; d < dimension; ++d) {
-		val[0] -= 2.0 * alpha * beta * gamma * s[d];
-		val[2 * d + 1] = alpha * beta * gamma * s[d];
-		val[2 * d + 2] = alpha * beta * gamma * s[d];
-	}
-
-	double x1 = xGrid[xi] - xGrid[surfacePosition + 1];
-	double x2 = xGrid[xi + 1] - xGrid[surfacePosition + 1];
-
-	// Boundary condition with the heat flux
-	if (xi == surfacePosition or (interfaceLoc > x1 and interfaceLoc <= x2)) {
-		val[0] = 2.0 * heatFlux * dGamma / hxLeft -
-			2.0 * alpha * beta * gamma / (hxLeft * hxRight) +
-			2.0 * alpha * (dBeta * gamma + dGamma * beta) *
-				(oldConcBox[0][1] - oldConc) / (hxLeft * hxRight) -
-			heatFlux * dGamma * dAlpha / alpha +
-			heatFlux * heatFlux * (gamma * ddBeta + dGamma * dBeta) /
-				(alpha * beta * beta) -
-			2.0 * heatFlux * heatFlux * gamma * dBeta * dBeta *
-				(alpha * beta * beta * beta);
-		val[1] = 0.0;
-		val[2] = 2.0 * alpha * beta * gamma / (hxLeft * hxRight);
-	}
-	else if (xi == bulkPosition) {
-		double bulkHeatFlux = getBulkHeatFlux(oldConc);
-		double dBulk = getBulkHeatFluxDerivative(oldConc);
-		val[0] = -2.0 * bulkHeatFlux * dGamma / hxRight -
-			2.0 * alpha * beta * gamma / (hxLeft * hxRight) +
-			2.0 * alpha * (dBeta * gamma + dGamma * beta) *
-				(oldConcBox[0][0] - oldConc) / (hxLeft * hxRight) -
-			bulkHeatFlux * dAlpha * dGamma / alpha +
-			bulkHeatFlux * bulkHeatFlux * (gamma * ddBeta + dGamma * dBeta) /
-				(alpha * beta * beta) -
-			2.0 * bulkHeatFlux * bulkHeatFlux * gamma * dBeta * dBeta *
-				(alpha * beta * beta * beta) -
-			dBulk * gamma * dAlpha / alpha - 2.0 * dBulk * gamma / hxRight +
-			2.0 * bulkHeatFlux * dBulk * gamma * dBeta / (alpha * beta * beta);
-		val[1] = 2.0 * alpha * beta * gamma / (hxLeft * hxRight);
-		val[2] = 0.0;
-	}
-
-	return true;
+	localTemperature = elem_h();
 }
 
 double
@@ -309,8 +164,15 @@ HeatEquationHandler::getLocalHeatAlpha(int xi) const
 	return heatCond;
 }
 
+/**
+ * Get the temperature dependent part of the heat conductivity.
+ *
+ * @param temp The temperature
+ * @return Beta
+ */
+KOKKOS_INLINE_FUNCTION
 double
-HeatEquationHandler::getLocalHeatBeta(double temp) const
+getLocalHeatBeta(double temp) noexcept
 {
 	double heatCond =
 		(-2.4e-12 * temp * temp * temp * temp - 3.67e-10 * temp * temp * temp +
@@ -319,16 +181,31 @@ HeatEquationHandler::getLocalHeatBeta(double temp) const
 	return heatCond;
 }
 
+/**
+ * Get the inverse of the temperature dependent heat capacity times density
+ * (1.0/(\rho C_v)).
+ *
+ * @param temp The temperature
+ * @return Gamma
+ */
+KOKKOS_INLINE_FUNCTION
 double
-HeatEquationHandler::getLocalHeatGamma(double temp) const
+getLocalHeatGamma(double temp) noexcept
 {
 	double tungstenDensity = 19.25e-24; // kg nm-3
 	double capacity = -4.01e-6 * temp * temp + 3.61e-2 * temp + 119.0;
 	return 1.0 / (tungstenDensity * capacity);
 }
 
+/**
+ * Get the first temperature derivative of Beta.
+ *
+ * @param temp The temperature
+ * @return The derivative
+ */
+KOKKOS_INLINE_FUNCTION
 double
-HeatEquationHandler::getDBeta(double temp) const
+getDBeta(double temp) noexcept
 {
 	double heatCond = (-9.6e-12 * temp * temp * temp - 11.01e-10 * temp * temp +
 						  9.3e-5 * temp - 0.131) *
@@ -364,6 +241,200 @@ HeatEquationHandler::getDGamma(double temp) const
 	double capacity = -4.01e-6 * temp * temp + 3.61e-2 * temp + 119.0;
 	double dCapacity = 3.61e-2 - 8.02e-6 * temp;
 	return -dCapacity / (tungstenDensity * capacity * capacity);
+}
+
+void
+HeatEquationHandler::computeTemperature(double currentTime,
+	Kokkos::View<const double*>* concVector,
+	Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+	int xi, double sy, int iy, double sz, int iz)
+{
+	// Skip if the flux is 0
+	if (zeroFlux) {
+		return;
+	}
+
+	// Initial declaration
+	int index = this->_dof;
+	Kokkos::Array<double, 3> s = {0, sy, sz};
+	auto heatFlux = getHeatFlux(currentTime);
+
+	Kokkos::Array<Kokkos::View<const double*>, 7> concVec;
+	concVec[0] = concVector[0];
+	for (int d = 0; d < dimension; ++d) {
+		concVec[2 * d + 1] = concVector[2 * d + 1];
+		concVec[2 * d + 2] = concVector[2 * d + 2];
+	}
+
+	auto dim = dimension;
+	auto surfPos = surfacePosition;
+	auto htFlux = heatFlux;
+	auto bulkPos = bulkPosition;
+	// Adjust the parameters
+	double alpha = getLocalHeatAlpha(xi);
+	double dAlpha = getDAlpha(xi);
+
+	////////////////////////////////////////////////////////////////////////////
+	// TODO: Move this to the constructor (or change member to be a View
+	// util::Array<double, 3, 2> oldBox;
+	////////////////////////////////////////////////////////////////////////////
+
+	Kokkos::parallel_for(
+		1, KOKKOS_LAMBDA(std::size_t) {
+			// Get the initial concentrations
+			double oldConc = concVec[0][index];
+			double beta = getLocalHeatBeta(oldConc);
+			double gamma = getLocalHeatGamma(oldConc);
+			double dBeta = getDBeta(oldConc);
+			util::Array<double, 3, 2> oldBox;
+			for (int d = 0; d < dim; ++d) {
+				oldBox[d][0] = concVec[2 * d + 1][index];
+				oldBox[d][1] = concVec[2 * d + 2][index];
+			}
+
+			if (xi == surfPos) {
+				// Boundary condition with heat flux
+				updatedConcOffset[index] += (2.0 * htFlux * gamma / hxLeft) +
+					(2.0 * alpha * beta * gamma) * (oldBox[0][1] - oldConc) /
+						(hxLeft * hxRight);
+				// Second term for temperature dependent conductivity
+				updatedConcOffset[index] += -htFlux * dAlpha * gamma / alpha +
+					htFlux * htFlux * gamma * dBeta / (alpha * beta * beta);
+			}
+			else if (xi == bulkPos) {
+				// Boundary condition with heat flux
+				double bulkHeatFlux = getBulkHeatFlux(oldConc);
+				updatedConcOffset[index] +=
+					-(2.0 * bulkHeatFlux * gamma / hxRight) +
+					(2.0 * alpha * beta * gamma) * (oldBox[0][0] - oldConc) /
+						(hxLeft * hxRight);
+				// Second term for temperature dependent conductivity
+				updatedConcOffset[index] +=
+					-bulkHeatFlux * dAlpha * gamma / alpha +
+					bulkHeatFlux * bulkHeatFlux * gamma * dBeta /
+						(alpha * beta * beta);
+			}
+			else {
+				// Use a simple midpoint stencil to compute the concentration
+				updatedConcOffset[index] += 2.0 * alpha * beta * gamma *
+					(oldBox[0][0] + (hxLeft / hxRight) * oldBox[0][1] -
+						(1.0 + (hxLeft / hxRight)) * oldConc) /
+					(hxLeft * (hxLeft + hxRight));
+				// Second term for temperature dependent conductivity
+				updatedConcOffset[index] += dAlpha * beta * gamma *
+						(oldBox[0][1] - oldBox[0][0]) / (hxLeft + hxRight) +
+					alpha * dBeta * gamma * (oldBox[0][1] - oldBox[0][0]) *
+						(oldBox[0][1] - oldBox[0][0]) /
+						((hxLeft + hxRight) * (hxLeft + hxRight));
+			}
+
+			// Deal with the potential additional dimensions
+			for (int d = 1; d < dim; ++d) {
+				updatedConcOffset[index] += alpha * beta * gamma * s[d] *
+					(oldBox[d][0] + oldBox[d][1] - 2.0 * oldConc);
+			}
+		});
+}
+
+bool
+HeatEquationHandler::computePartialsForTemperature(double currentTime,
+	const double** concVector, double* val, IdType* indices, double hxLeft,
+	double hxRight, int xi, double sy, int iy, double sz, int iz)
+{
+	// Skip if the flux is 0
+	if (zeroFlux) {
+		return false;
+	}
+
+	// Initial declaration
+	int index = this->_dof;
+
+	auto heatFlux = getHeatFlux(currentTime);
+
+	// Get the initial concentrations
+	double oldConc = concVector[0][index];
+	util::Array<double, 3, 2> oldBox;
+	for (int d = 0; d < dimension; ++d) {
+		oldBox[d][0] = concVector[2 * d + 1][index];
+		oldBox[d][1] = concVector[2 * d + 2][index];
+	}
+
+	// Get the DOF
+	indices[0] = index;
+
+	double s[3] = {0, sy, sz};
+
+	double alpha = getLocalHeatAlpha(xi);
+	double beta = getLocalHeatBeta(oldConc);
+	double gamma = getLocalHeatGamma(oldConc);
+	double dAlpha = getDAlpha(xi);
+	double dBeta = getDBeta(oldConc);
+	double dGamma = getDGamma(oldConc);
+	double ddBeta = getDDBeta(oldConc);
+
+	// Compute the partials along the depth
+	val[0] = -2.0 * alpha * beta * gamma / (hxLeft * hxRight) +
+		alpha * (ddBeta * gamma + dGamma * dBeta) *
+			(oldBox[0][1] - oldBox[0][0]) * (oldBox[0][1] - oldBox[0][0]) /
+			((hxLeft + hxRight) * (hxLeft + hxRight)) +
+		2.0 * alpha * (dBeta * gamma + beta * dGamma) *
+			(oldBox[0][0] + (hxLeft / hxRight) * oldBox[0][1] -
+				(1.0 + (hxLeft / hxRight)) * oldConc) /
+			((hxLeft + hxRight) * hxLeft) +
+		dAlpha * (dBeta * gamma + dGamma * beta) *
+			(oldBox[0][1] - oldBox[0][0]) / (hxLeft + hxRight);
+	val[1] = 2.0 * alpha * beta * gamma / (hxLeft * (hxLeft + hxRight)) -
+		beta * dAlpha * gamma / (hxLeft + hxRight) +
+		2.0 * alpha * dBeta * gamma * (oldBox[0][0] - oldBox[0][1]) /
+			((hxLeft + hxRight) * (hxLeft + hxRight));
+	val[2] = 2.0 * alpha * beta * gamma / (hxRight * (hxLeft + hxRight)) +
+		beta * dAlpha * gamma / (hxLeft + hxRight) +
+		2.0 * alpha * dBeta * gamma * (oldBox[0][1] - oldBox[0][0]) /
+			((hxLeft + hxRight) * (hxLeft + hxRight));
+
+	// Deal with the potential additional dimensions
+	for (int d = 1; d < dimension; ++d) {
+		val[0] -= 2.0 * alpha * beta * gamma * s[d];
+		val[2 * d + 1] = alpha * beta * gamma * s[d];
+		val[2 * d + 2] = alpha * beta * gamma * s[d];
+	}
+
+	double x1 = xGrid[xi] - xGrid[surfacePosition + 1];
+	double x2 = xGrid[xi + 1] - xGrid[surfacePosition + 1];
+
+	// Boundary condition with the heat flux
+	if (xi == surfacePosition or (interfaceLoc > x1 and interfaceLoc <= x2)) {
+		val[0] = 2.0 * heatFlux * dGamma / hxLeft -
+			2.0 * alpha * beta * gamma / (hxLeft * hxRight) +
+			2.0 * alpha * (dBeta * gamma + dGamma * beta) *
+				(oldBox[0][1] - oldConc) / (hxLeft * hxRight) -
+			heatFlux * dGamma * dAlpha / alpha +
+			heatFlux * heatFlux * (gamma * ddBeta + dGamma * dBeta) /
+				(alpha * beta * beta) -
+			2.0 * heatFlux * heatFlux * gamma * dBeta * dBeta *
+				(alpha * beta * beta * beta);
+		val[1] = 0.0;
+		val[2] = 2.0 * alpha * beta * gamma / (hxLeft * hxRight);
+	}
+	else if (xi == bulkPosition) {
+		double bulkHeatFlux = getBulkHeatFlux(oldConc);
+		double dBulk = getBulkHeatFluxDerivative(oldConc);
+		val[0] = -2.0 * bulkHeatFlux * dGamma / hxRight -
+			2.0 * alpha * beta * gamma / (hxLeft * hxRight) +
+			2.0 * alpha * (dBeta * gamma + dGamma * beta) *
+				(oldBox[0][0] - oldConc) / (hxLeft * hxRight) -
+			bulkHeatFlux * dAlpha * dGamma / alpha +
+			bulkHeatFlux * bulkHeatFlux * (gamma * ddBeta + dGamma * dBeta) /
+				(alpha * beta * beta) -
+			2.0 * bulkHeatFlux * bulkHeatFlux * gamma * dBeta * dBeta *
+				(alpha * beta * beta * beta) -
+			dBulk * gamma * dAlpha / alpha - 2.0 * dBulk * gamma / hxRight +
+			2.0 * bulkHeatFlux * dBulk * gamma * dBeta / (alpha * beta * beta);
+		val[1] = 2.0 * alpha * beta * gamma / (hxLeft * hxRight);
+		val[2] = 0.0;
+	}
+
+	return true;
 }
 
 double
@@ -410,22 +481,6 @@ HeatEquationHandler::getHeatFlux(double currentTime)
 
 	return f;
 }
-
-double
-HeatEquationHandler::getBulkHeatFlux(double temp) const
-{
-	// Convert the temperature to Celsius
-	double tempCelsius = temp - 273.0;
-
-	return (-8.7993 + 0.0845 * tempCelsius) * 1.0e-12;
-}
-
-double
-HeatEquationHandler::getBulkHeatFluxDerivative(double temp) const
-{
-	return 0.0845 * 1.0e-12;
-}
-
 } // namespace temperature
 } // namespace core
 } // namespace xolotl

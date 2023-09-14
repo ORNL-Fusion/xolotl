@@ -8,6 +8,22 @@ namespace core
 namespace diffusion
 {
 void
+Diffusion2DHandler::syncDiffusionGrid()
+{
+	diffusGrid = Kokkos::View<int***>("Diffusion Grid", diffusionGrid.size(),
+		diffusionGrid[0].size(), diffusingClusters.size());
+	auto diffGrid_h = create_mirror_view(diffusGrid);
+	for (IdType j = 0; j < diffusionGrid.size(); ++j) {
+		for (IdType i = 0; i < diffusionGrid[j].size(); ++i) {
+			for (IdType n = 0; n < diffusingClusters.size(); ++n) {
+				diffGrid_h(j, i, n) = diffusionGrid[j][i][n];
+			}
+		}
+	}
+	deep_copy(diffusGrid, diffGrid_h);
+}
+
+void
 Diffusion2DHandler::initializeDiffusionGrid(
 	std::vector<advection::IAdvectionHandler*> advectionHandlers,
 	std::vector<double> grid, int nx, int xs, int ny, double hy, int ys, int nz,
@@ -69,13 +85,14 @@ Diffusion2DHandler::initializeDiffusionGrid(
 		}
 	}
 
-	return;
+	syncDiffusionGrid();
 }
 
 void
 Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
-	double** concVector, double* updatedConcOffset, double hxLeft,
-	double hxRight, int ix, double sy, int iy, double, int) const
+	const StencilConcArray& concVector, Kokkos::View<double*> updatedConcOffset,
+	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,
+	int) const
 {
 	// Consider each diffusing cluster.
 	// TODO Maintaining a separate index assumes that diffusingClusters is
@@ -83,41 +100,50 @@ Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
 	// Currently true with C++11, but we'd like to be able to visit the
 	// diffusing clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
-	int diffClusterIdx = 0;
-	for (auto const& currId : diffusingClusters) {
-		auto cluster = network.getClusterCommon(currId);
 
-		// Get the initial concentrations
-		double oldConc = concVector[0][currId] *
-			diffusionGrid[iy + 1][ix + 1][diffClusterIdx]; // middle
-		double oldLeftConc = concVector[1][currId] *
-			diffusionGrid[iy + 1][ix][diffClusterIdx]; // left
-		double oldRightConc = concVector[2][currId] *
-			diffusionGrid[iy + 1][ix + 2][diffClusterIdx]; // right
-		double oldBottomConc = concVector[3][currId] *
-			diffusionGrid[iy][ix + 1][diffClusterIdx]; // bottom
-		double oldTopConc = concVector[4][currId] *
-			diffusionGrid[iy + 2][ix + 1][diffClusterIdx]; // top
-
-		// Use a simple midpoint stencil to compute the concentration
-		double conc = cluster.getDiffusionCoefficient(ix + 1) *
-				(2.0 *
-						(oldLeftConc + (hxLeft / hxRight) * oldRightConc -
-							(1.0 + (hxLeft / hxRight)) * oldConc) /
-						(hxLeft * (hxLeft + hxRight)) +
-					sy * (oldBottomConc + oldTopConc - 2.0 * oldConc)) +
-			((cluster.getDiffusionCoefficient(ix + 2) -
-				 cluster.getDiffusionCoefficient(ix)) *
-				(oldRightConc - oldLeftConc) /
-				((hxLeft + hxRight) * (hxLeft + hxRight)));
-
-		// Update the concentration of the cluster
-		updatedConcOffset[currId] += conc;
-
-		++diffClusterIdx;
+	if (concVector.size() != 5) {
+		throw std::runtime_error(
+			"Wrong size for 2D concentration stencil; should be 5, got " +
+			std::to_string(concVector.size()));
 	}
+	Kokkos::Array<Kokkos::View<const double*>, 5> concVec = {concVector[0],
+		concVector[1], concVector[2], concVector[3], concVector[4]};
 
-	return;
+	auto diffGrid = diffusGrid;
+	auto clusterIds = this->diffClusterIds;
+	auto clusters = this->diffClusters;
+	Kokkos::parallel_for(
+		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+			auto currId = clusterIds[i];
+			auto cluster = clusters[i];
+
+			// Get the initial concentrations
+			double oldConc =
+				concVec[0][currId] * diffGrid(iy + 1, ix + 1, i); // middle
+			double oldLeftConc =
+				concVec[1][currId] * diffGrid(iy + 1, ix, i); // left
+			double oldRightConc =
+				concVec[2][currId] * diffGrid(iy + 1, ix + 2, i); // right
+			double oldBottomConc =
+				concVec[3][currId] * diffGrid(iy, ix + 1, i); // bottom
+			double oldTopConc =
+				concVec[4][currId] * diffGrid(iy + 2, ix + 1, i); // top
+
+			// Use a simple midpoint stencil to compute the concentration
+			double conc = cluster.getDiffusionCoefficient(ix + 1) *
+					(2.0 *
+							(oldLeftConc + (hxLeft / hxRight) * oldRightConc -
+								(1.0 + (hxLeft / hxRight)) * oldConc) /
+							(hxLeft * (hxLeft + hxRight)) +
+						sy * (oldBottomConc + oldTopConc - 2.0 * oldConc)) +
+				((cluster.getDiffusionCoefficient(ix + 2) -
+					 cluster.getDiffusionCoefficient(ix)) *
+					(oldRightConc - oldLeftConc) /
+					((hxLeft + hxRight) * (hxLeft + hxRight)));
+
+			// Update the concentration of the cluster
+			updatedConcOffset[currId] += conc;
+		});
 }
 
 void

@@ -41,6 +41,11 @@ private:
 	 */
 	fs::path profileFilePath;
 
+	/**
+	 * View copy of reductionFactors
+	 */
+	Kokkos::View<double*> reduxFactors;
+
 	using FluxHandler::FitFunction;
 
 	/**
@@ -149,8 +154,8 @@ public:
 						tokens[0] + "_" + tokens[1] +
 						", cannot use the flux option!");
 				}
-				else
-					fluxIndices.push_back(clusterId);
+
+				fluxIndices.push_back(clusterId);
 
 				// Get the reduction factor
 				reductionFactors.push_back(std::stod(tokens[2]));
@@ -234,10 +239,9 @@ public:
 							xGrid[surfacePos + 1];
 
 						// Compute the flux value
-						double incidentFlux =
-							fluxNormalized * FitFunction(x, index);
+						double incFlux = fluxNormalized * FitFunction(x, index);
 						// Add it to the vector
-						incidentFluxVec[index].push_back(incidentFlux);
+						incidentFluxVec[index].push_back(incFlux);
 					}
 
 					// The last value should always be 0.0 because of boundary
@@ -273,15 +277,26 @@ public:
 		// Close the file
 		paramFile.close();
 
-		return;
+		// Copy data to device views
+		auto reduxFactors_h =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+				reductionFactors.data(), reductionFactors.size());
+		reduxFactors = Kokkos::View<double*>(
+			Kokkos::ViewAllocateWithoutInitializing("Reduction Factors"),
+			reductionFactors.size());
+		deep_copy(reduxFactors, reduxFactors_h);
+
+        syncFluxIndices();
+		syncIncidentFluxVec();
 	}
 
 	/**
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
 	{
 		// Recompute the flux vector if a time profile is used
 		if (useTimeProfile) {
@@ -289,23 +304,26 @@ public:
 			recomputeFluxHandler(surfacePos);
 		}
 
+		auto ids = this->fluxIds;
 		if (xGrid.size() == 0) {
 			// Update the concentration array
-			for (int i = 0; i < fluxIndices.size(); i++) {
-				updatedConcOffset[fluxIndices[i]] +=
-					fluxAmplitude * reductionFactors[i];
-			}
-
-			return;
+			auto factors = this->reduxFactors;
+			auto amplitude = fluxAmplitude;
+			Kokkos::parallel_for(
+				ids.size(), KOKKOS_LAMBDA(std::size_t i) {
+					Kokkos::atomic_add(
+						&updatedConcOffset[ids[i]], amplitude * factors[i]);
+				});
 		}
-
-		// Update the concentration array
-		for (int i = 0; i < fluxIndices.size(); i++) {
-			updatedConcOffset[fluxIndices[i]] +=
-				incidentFluxVec[i][xi - surfacePos];
+		else {
+			// Update the concentration array
+			auto flux = this->incidentFlux;
+			Kokkos::parallel_for(
+				ids.size(), KOKKOS_LAMBDA(std::size_t i) {
+					Kokkos::atomic_add(
+						&updatedConcOffset[ids[i]], flux(i, xi - surfacePos));
+				});
 		}
-
-		return;
 	}
 
 	/**
@@ -318,9 +336,10 @@ public:
 		for (int index = 0; index < fluxIndices.size(); index++) {
 			// Factor the incident flux will be multiplied by
 			double fluxNormalized = 0.0;
-			if (normFactors[index] > 0.0)
+			if (normFactors[index] > 0.0) {
 				fluxNormalized = fluxAmplitude * reductionFactors[index] /
 					normFactors[index];
+			}
 
 			// Starts a i = surfacePos + 1 because the first values were already
 			// put in the vector
@@ -330,9 +349,9 @@ public:
 					(xGrid[i] + xGrid[i + 1]) / 2.0 - xGrid[surfacePos + 1];
 
 				// Compute the flux value
-				double incidentFlux = fluxNormalized * FitFunction(x, index);
+				double incFlux = fluxNormalized * FitFunction(x, index);
 				// Add it to the vector
-				incidentFluxVec[index][i - surfacePos] = incidentFlux;
+				incidentFluxVec[index][i - surfacePos] = incFlux;
 			}
 		}
 
@@ -358,7 +377,7 @@ public:
 			outputFile.close();
 		}
 
-		return;
+		syncIncidentFluxVec();
 	}
 
 	std::vector<double>

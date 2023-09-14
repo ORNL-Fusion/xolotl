@@ -316,6 +316,13 @@ public:
 		return findCluster(comp, plsm::HostMemSpace{}).getId();
 	}
 
+	ClusterCommon<plsm::DeviceMemSpace>
+	getClusterCommon(IndexType clusterId, plsm::DeviceMemSpace) override
+	{
+		return ClusterCommon<plsm::DeviceMemSpace>(
+			_clusterData.d_view.data(), clusterId);
+	}
+
 	ClusterCommon<plsm::HostMemSpace>
 	getClusterCommon(IndexType clusterId) override
 	{

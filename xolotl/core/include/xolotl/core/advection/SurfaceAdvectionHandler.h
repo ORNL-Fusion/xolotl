@@ -1,5 +1,4 @@
-#ifndef SURFACEADVECTIONHANDLER_H
-#define SURFACEADVECTIONHANDLER_H
+#pragma once
 
 // Includes
 #include <xolotl/core/advection/AdvectionHandler.h>
@@ -21,6 +20,12 @@ class SurfaceAdvectionHandler : public AdvectionHandler
 private:
 	//! The vector to know which clusters are moving where
 	std::vector<std::vector<std::vector<std::vector<bool>>>> advectionGrid;
+
+    Kokkos::View<int****> advecGrid;
+
+protected:
+    void
+    syncAdvectionGrid();
 
 public:
 	//! The Constructor
@@ -56,11 +61,22 @@ public:
 	 *
 	 * \see IAdvectionHandler.h
 	 */
+    ////////////////////////////////////////////////////////////////////////////
+    // DELETEME
 	void
 	computeAdvection(network::IReactionNetwork& network,
 		const plsm::SpaceVector<double, 3>& pos, double** concVector,
 		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
 		double hy = 0.0, int iy = 0, double hz = 0.0,
+		int iz = 0) const override;
+    ////////////////////////////////////////////////////////////////////////////
+
+	void
+	computeAdvection(network::IReactionNetwork& network,
+		const plsm::SpaceVector<double, 3>& pos,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
 		int iz = 0) const override;
 
 	/**
@@ -123,4 +139,3 @@ public:
 } /* end namespace advection */
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif

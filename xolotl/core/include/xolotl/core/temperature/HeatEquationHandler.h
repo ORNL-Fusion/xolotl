@@ -51,10 +51,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	setTemperature(double* solution) override
-	{
-		localTemperature = solution[this->_dof];
-	}
+	setTemperature(Kokkos::View<const double*> solution) override;
 
 	/**
 	 * \see ITemperatureHandler.h
@@ -90,15 +87,17 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	computeTemperature(double currentTime, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int xi,
-		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override;
+	computeTemperature(double currentTime,
+		Kokkos::View<const double*>* concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0) override;
 
 	/**
 	 * \see ITemperatureHandler.h
 	 */
 	bool
-	computePartialsForTemperature(double currentTime, double** concVector,
+	computePartialsForTemperature(double currentTime, const double** concVector,
 		double* val, IdType* indices, double hxLeft, double hxRight, int xi,
 		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override;
 
@@ -184,11 +183,6 @@ private:
 	double A = 10.846, B = -184.22, C = 872.47;
 
 	/**
-	 * Hang on to single allocation for use in computeTemperature()
-	 */
-	std::vector<std::array<double, 2>> oldConcBox;
-
-	/**
 	 * Get the spatially dependent part of the heat conductivity.
 	 *
 	 * @param xi The grid index
@@ -196,34 +190,6 @@ private:
 	 */
 	double
 	getLocalHeatAlpha(int xi) const;
-
-	/**
-	 * Get the temperature dependent part of the heat conductivity.
-	 *
-	 * @param temp The temperature
-	 * @return Beta
-	 */
-	double
-	getLocalHeatBeta(double temp) const;
-
-	/**
-	 * Get the inverse of the temperature dependent heat capacity times density
-	 * (1.0/(\rho C_v)).
-	 *
-	 * @param temp The temperature
-	 * @return Gamma
-	 */
-	double
-	getLocalHeatGamma(double temp) const;
-
-	/**
-	 * Get the first temperature derivative of Beta.
-	 *
-	 * @param temp The temperature
-	 * @return The derivative
-	 */
-	double
-	getDBeta(double temp) const;
 
 	/**
 	 * Get the second temperature derivative of Beta.
@@ -251,23 +217,6 @@ private:
 	 */
 	double
 	getDGamma(double temp) const;
-
-	/**
-	 * Get the bulk heat flux.
-	 *
-	 * @param temp The temperature
-	 * @return The flux
-	 */
-	double
-	getBulkHeatFlux(double temp) const;
-
-	/**
-	 * Get the bulk heat flux derivative.
-	 *
-	 * @param temp The temperature
-	 */
-	double
-	getBulkHeatFluxDerivative(double temp) const;
 };
 } // namespace temperature
 } // namespace core

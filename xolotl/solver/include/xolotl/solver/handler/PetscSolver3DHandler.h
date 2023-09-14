@@ -47,6 +47,12 @@ public:
 	createSolverContext(DM& da);
 
 	/**
+	 * \see ISolverHandler.h
+	 */
+	void
+	initializeSolverContext(DM& da, TS& ts);
+
+	/**
 	 * Initialize the concentration solution vector.
 	 * \see ISolverHandler.h
 	 */

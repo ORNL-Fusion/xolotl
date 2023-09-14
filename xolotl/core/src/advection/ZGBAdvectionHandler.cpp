@@ -9,8 +9,8 @@ namespace core
 namespace advection
 {
 void
-ZGBAdvectionHandler::initialize(network::IReactionNetwork& network,
-	network::IReactionNetwork::SparseFillMap& ofillMap)
+ZGBAdvectionHandler::initialize(
+	network::IReactionNetwork& network, std::vector<RowColPair>& idPairs)
 {
 	// Clear the index and sink strength vectors
 	advectingClusters.clear();
@@ -84,14 +84,16 @@ ZGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 		// Add the sink strength to the vector
 		sinkStrengthVector.push_back(sinkStrength);
 
-		// Set the off-diagonal part for the Jacobian to 1
-		// Set the ofill value to 1 for this cluster
-		ofillMap[clusterId].emplace_back(clusterId);
+		// Add Jacobian entry for this cluster
+		idPairs.push_back({clusterId, clusterId});
 	}
 
-	return;
+	this->syncAdvectingClusters(network);
+	this->syncSinkStrengths();
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// DELETEME (after implementing the below version)
 void
 ZGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	const plsm::SpaceVector<double, 3>& pos, double** concVector,
@@ -149,6 +151,17 @@ ZGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	}
 
 	return;
+}
+////////////////////////////////////////////////////////////////////////////////
+
+void
+ZGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
+	const plsm::SpaceVector<double, 3>& pos, const StencilConcArray& concVector,
+	Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+	int ix, double hy, int iy, double hz, int iz) const
+{
+	// TODO
+	throw std::runtime_error("ZGBAdvectionHandler: Not implemented");
 }
 
 void

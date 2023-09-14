@@ -20,6 +20,13 @@ private:
 	//! The vector to know which clusters are diffusing where
 	std::vector<std::vector<std::vector<std::vector<bool>>>> diffusionGrid;
 
+    //! Device copy of diffusion grid
+    Kokkos::View<int****> diffusGrid;
+
+protected:
+    void
+    syncDiffusionGrid();
+
 public:
 	//! The Constructor
 	Diffusion3DHandler(double threshold) : DiffusionHandler(threshold)
@@ -56,9 +63,10 @@ public:
 	 * \see IDiffusionHandler.h
 	 */
 	void
-	computeDiffusion(network::IReactionNetwork& network, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
-		double sy = 0.0, int iy = 0, double sz = 0.0,
+	computeDiffusion(network::IReactionNetwork& network,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
 		int iz = 0) const override;
 
 	/**

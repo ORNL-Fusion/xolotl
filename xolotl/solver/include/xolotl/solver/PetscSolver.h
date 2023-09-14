@@ -8,24 +8,6 @@ namespace xolotl
 {
 namespace solver
 {
-#ifndef CHECK_PETSC_ERROR
-#define CHECK_PETSC_ERROR
-/**
- * This operation checks a PETSc error code and throws an exception with given
- * error message.
- *
- * @param errorCode The PETSc error code.
- * @param errMsg The error message in the thrown exception.
- */
-inline void
-checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
-{
-	if (PetscUnlikely(errorCode)) {
-		throw std::runtime_error(errorMsg);
-	}
-}
-#endif
-
 /**
  * This class realizes the Solver interface to solve the
  * diffusion-reaction problem with the PETSc solvers from Argonne

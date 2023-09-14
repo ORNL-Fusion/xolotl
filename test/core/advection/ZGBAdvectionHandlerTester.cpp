@@ -65,13 +65,11 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 	// Get its size
 	const int dof = network.getDOF();
 
-	// Create ofill
-	network::IReactionNetwork::SparseFillMap ofill;
-
 	// Create the advection handler and initialize it with a sink at
 	// 2nm in the Z direction
 	ZGBAdvectionHandler advectionHandler;
-	advectionHandler.initialize(network, ofill);
+	std::vector<core::RowColPair> idPairs;
+	advectionHandler.initialize(network, idPairs);
 	advectionHandler.setLocation(2.0);
 	advectionHandler.setDimension(3);
 

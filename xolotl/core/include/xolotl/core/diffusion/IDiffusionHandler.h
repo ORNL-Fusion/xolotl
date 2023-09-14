@@ -1,10 +1,12 @@
-#ifndef IDIFFUSIONHANDLER_H
-#define IDIFFUSIONHANDLER_H
+#pragma once
 
 // Includes
 #include <memory>
 
+#include <Kokkos_Core.hpp>
+
 #include <xolotl/config.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
@@ -37,8 +39,8 @@ public:
 	 * @param ofill Map of connectivity for diffusing clusters.
 	 */
 	virtual void
-	initializeOFill(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) = 0;
+	initialize(network::IReactionNetwork& network,
+		std::vector<RowColPair>& idPairs) = 0;
 
 	/**
 	 * Initialize an array of the dimension of the physical domain times the
@@ -86,9 +88,11 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void
-	computeDiffusion(network::IReactionNetwork& network, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
-		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const = 0;
+	computeDiffusion(network::IReactionNetwork& network,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0) const = 0;
 
 	/**
 	 * Compute the partials due to the diffusion of all the diffusing clusters
@@ -138,4 +142,3 @@ public:
 } /* end namespace diffusion */
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif
