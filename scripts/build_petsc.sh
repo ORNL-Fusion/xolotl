@@ -4,13 +4,12 @@
 set -eu -o pipefail
 
 # Variables
-_dry_run=1 # TODO: change default back to 0
-echo "Dry Run (reset this default)"
 _prefix=$HOME/.local
+_dry_run=0
 _do_cleanup=1
 _do_pull=1
 _debug=0
-_use_cuda=1
+_use_cuda=0
 _petsc_extra_args=""
 _petsc_dir=$PWD
 _petsc_dir_arch_set=""
@@ -27,6 +26,9 @@ do
         ;;
     --skip-pull)
         _do_pull=0
+        ;;
+    --prefix=*)
+        _prefix="${1:9}" # strip "--prefix="
         ;;
     --petsc-dir=*)
         _petsc_dir="${1:12}" # strip "--petsc-dir="
