@@ -41,13 +41,13 @@ public:
 		return *this;
 	}
 
-    SystemTestCase&
-    mpiLimits(int a, int b = -1)
-    {
-        _mpiLimits[0] = a;
-        _mpiLimits[1] = b;
-        return *this;
-    }
+	SystemTestCase&
+	mpiLimits(int a, int b = -1)
+	{
+		_mpiLimits[0] = a;
+		_mpiLimits[1] = b;
+		return *this;
+	}
 
 	void
 	run() const;
@@ -56,8 +56,8 @@ public:
 	copyFile(const std::string& fileName);
 
 private:
-    bool
-    checkMPILimits() const;
+	bool
+	checkMPILimits() const;
 
 	bool
 	runXolotl() const;
@@ -82,7 +82,7 @@ private:
 
 	bool _enableTimer{false};
 
-    int _mpiLimits[2]{1, -1};
+	int _mpiLimits[2]{1, -1};
 };
 } // namespace test
 } // namespace xolotl

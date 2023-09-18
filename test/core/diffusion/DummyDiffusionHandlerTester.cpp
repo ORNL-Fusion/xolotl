@@ -83,8 +83,8 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	double hx = 1.0;
 
 	// The arrays of concentration
-    test::DOFView concentration("concentration", 3, dof);
-    test::DOFView newConcentration("newConcentration", 3, dof);
+	test::DOFView concentration("concentration", 3, dof);
+	test::DOFView newConcentration("newConcentration", 3, dof);
 
 	// Initialize their values
 	Kokkos::parallel_for(

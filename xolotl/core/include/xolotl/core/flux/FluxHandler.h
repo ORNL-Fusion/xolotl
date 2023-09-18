@@ -31,7 +31,7 @@ protected:
 	 */
 	Kokkos::View<double**> incidentFlux;
 
-    /**
+	/**
 	 * The reduction factors for each deposition.
 	 */
 	std::vector<double> reductionFactors;

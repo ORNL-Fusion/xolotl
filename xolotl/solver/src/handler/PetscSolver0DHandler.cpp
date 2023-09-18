@@ -75,7 +75,8 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, TS& ts)
 	cols.push_back(dof);
 	++nPartials;
 	//
-	PetscCallVoid(MatSetPreallocationCOO(J, rows.size(), rows.data(), cols.data()));
+	PetscCallVoid(
+		MatSetPreallocationCOO(J, rows.size(), rows.data(), cols.data()));
 
 	// Initialize the arrays for the reaction partial derivatives
 	vals = Kokkos::View<double*>("solverPartials", nPartials);

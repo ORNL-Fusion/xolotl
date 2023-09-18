@@ -12,7 +12,7 @@ using RowColPair = util::Array<IdType, 2>;
 
 using StencilConcArray = Kokkos::Array<Kokkos::View<const double*>,
 	KOKKOS_INVALID_INDEX, Kokkos::Array<>::contiguous>;
-}
+} // namespace core
 
 using DefaultMemSpace = Kokkos::DefaultExecutionSpace::memory_space;
 template <typename T>

@@ -357,8 +357,8 @@ public:
 		}
 
 		// Update the concentration array
-        auto ionDamageFluxIds = this->ionDamage.fluxIds;
-        auto ionDamageRate = this->ionDamage.rate;
+		auto ionDamageFluxIds = this->ionDamage.fluxIds;
+		auto ionDamageRate = this->ionDamage.rate;
 		Kokkos::parallel_for(
 			ionDamageFluxIds.size(), KOKKOS_LAMBDA(std::size_t i) {
 				Kokkos::atomic_add(&updatedConcOffset[ionDamageFluxIds[i]],

@@ -27,7 +27,8 @@ class IReactionNetwork
 public:
 	using IndexType = detail::ReactionNetworkIndexType;
 	using AmountType = detail::CompositionAmountType;
-	using ConcentrationsView = Kokkos::View<const double*, Kokkos::MemoryUnmanaged>;
+	using ConcentrationsView =
+		Kokkos::View<const double*, Kokkos::MemoryUnmanaged>;
 	using OwnedConcentrationsView = Kokkos::View<const double*>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
@@ -308,8 +309,8 @@ public:
 	virtual IndexType
 	findClusterId(const std::vector<AmountType>& composition) = 0;
 
-    virtual ClusterCommon<plsm::DeviceMemSpace>
-    getClusterCommon(IndexType clusterId, plsm::DeviceMemSpace) = 0;
+	virtual ClusterCommon<plsm::DeviceMemSpace>
+	getClusterCommon(IndexType clusterId, plsm::DeviceMemSpace) = 0;
 
 	virtual ClusterCommon<plsm::HostMemSpace>
 	getClusterCommon(IndexType clusterId) = 0;

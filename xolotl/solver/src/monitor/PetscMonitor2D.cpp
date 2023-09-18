@@ -47,7 +47,8 @@ PetscMonitor2D::setup(int loop)
 		flag2DPlot, flagLargest;
 
 	// Check the option -check_collapse
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck));
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck));
 
 	// Check the option -plot_perf
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf));
@@ -67,7 +68,8 @@ PetscMonitor2D::setup(int loop)
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus));
 
 	// Check the option -largest_conc
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest));
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest));
 
 	// Get the da from _ts
 	DM da;
@@ -316,7 +318,8 @@ PetscMonitor2D::setup(int loop)
 		}
 
 		// computeFluence will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
 
 		// computeHeliumRetention2D will be called at each timestep
 		PetscCallVoid(
@@ -402,7 +405,8 @@ PetscMonitor2D::setup(int loop)
 		}
 
 		// computeFluence will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
 
 		// computeXenonRetention2D will be called at each timestep
 		PetscCallVoid(
@@ -445,7 +449,8 @@ PetscMonitor2D::setup(int loop)
 		}
 
 		// monitorSurface2D will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorSurface, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorSurface, this, nullptr));
 	}
 
 	// Set the monitor to monitor the concentration of the largest cluster
@@ -460,7 +465,8 @@ PetscMonitor2D::setup(int loop)
 			NULL, NULL, "-largest_conc", &_largestThreshold, &flag));
 
 		// monitorLargest2D will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorLargest, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorLargest, this, nullptr));
 	}
 
 	// Set the monitor to save the status of the simulation in hdf5 file

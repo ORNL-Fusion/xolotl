@@ -58,8 +58,8 @@ public:
 	/**
 	 * \see ITemperatureHandler.h
 	 */
-    void
-    initialize(const int dof) override;
+	void
+	initialize(const int dof) override;
 
 	/**
 	 * This operation returns the temperature at the given position

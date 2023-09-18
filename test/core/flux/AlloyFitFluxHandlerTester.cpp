@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	double currTime = 1.0;
 
 	// The array of concentration
-    test::DOFView conc("conc", 7, dof);
+	test::DOFView conc("conc", 7, dof);
 
 	// The pointer to the grid point we want
 	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 		currTime, updatedConcOffset, 4, surfacePos);
 
 	// Check the value at some grid points
-    deep_copy(newConcentration, updatedConcOffset);
+	deep_copy(newConcentration, updatedConcOffset);
 	BOOST_REQUIRE_CLOSE(newConcentration[88], 0.0, 0.01); // I_1
 	BOOST_REQUIRE_CLOSE(newConcentration[91], 0.0, 0.01); // I_4
 	BOOST_REQUIRE_CLOSE(newConcentration[47], 0.0, 0.01); // Perfect_5

@@ -84,7 +84,7 @@ computeHeliumRetention(
 {
 	PetscFunctionBeginUser;
 	PetscCall(static_cast<IPetscMonitor*>(ictx)->computeHeliumRetention(
-			ts, timestep, time, solution));
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -94,7 +94,7 @@ computeXenonRetention(
 {
 	PetscFunctionBeginUser;
 	PetscCall(static_cast<IPetscMonitor*>(ictx)->computeXenonRetention(
-			ts, timestep, time, solution));
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 

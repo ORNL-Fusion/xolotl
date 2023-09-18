@@ -127,7 +127,8 @@ PetscMonitor1D::setup(int loop)
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-temp_profile", &flagTemp));
 
 	// Check the option -largest_conc
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest));
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest));
 
 	// Get the network and its size
 	auto& network = _solverHandler->getNetwork();
@@ -311,7 +312,8 @@ PetscMonitor1D::setup(int loop)
 		}
 
 		// monitorScatter1D will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorScatter, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorScatter, this, nullptr));
 	}
 
 	// Set the monitor to save 1D plot of many concentrations
@@ -445,7 +447,8 @@ PetscMonitor1D::setup(int loop)
 		}
 
 		// computeFluence will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
 
 		// computeHeliumRetention1D will be called at each timestep
 		PetscCallVoid(
@@ -535,7 +538,8 @@ PetscMonitor1D::setup(int loop)
 		}
 
 		// computeFluence will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
 
 		// computeXenonRetention1D will be called at each timestep
 		PetscCallVoid(
@@ -629,7 +633,8 @@ PetscMonitor1D::setup(int loop)
 			NULL, NULL, "-largest_conc", &_largestThreshold, &flag));
 
 		// monitorLargest1D will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorLargest, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorLargest, this, nullptr));
 	}
 
 	// Set the monitor to save the status of the simulation in hdf5 file

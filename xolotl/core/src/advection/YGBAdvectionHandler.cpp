@@ -9,8 +9,8 @@ namespace core
 namespace advection
 {
 void
-YGBAdvectionHandler::initialize(network::IReactionNetwork& network,
-	std::vector<RowColPair>& idPairs)
+YGBAdvectionHandler::initialize(
+	network::IReactionNetwork& network, std::vector<RowColPair>& idPairs)
 {
 	// Clear the index and sink strength vectors
 	advectingClusters.clear();
@@ -85,11 +85,11 @@ YGBAdvectionHandler::initialize(network::IReactionNetwork& network,
 		sinkStrengthVector.push_back(sinkStrength);
 
 		// Add Jacobian entry for this cluster
-        idPairs.push_back({clusterId, clusterId});
+		idPairs.push_back({clusterId, clusterId});
 	}
 
-    this->syncAdvectingClusters(network);
-    this->syncSinkStrengths();
+	this->syncAdvectingClusters(network);
+	this->syncSinkStrengths();
 }
 
 ////////////////////////////////////////////////////////////////////////////////

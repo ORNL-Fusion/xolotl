@@ -180,10 +180,10 @@ SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 		concVector[0], concVector[1], concVector[2]};
 
 	auto location_ = location;
-    auto clusterIds = this->advClusterIds;
-    auto clusters = this->advClusters;
-    auto sinkStrengths = this->advSinkStrengths;
-    auto advGrid = this->advecGrid;
+	auto clusterIds = this->advClusterIds;
+	auto clusters = this->advClusters;
+	auto sinkStrengths = this->advSinkStrengths;
+	auto advGrid = this->advecGrid;
 	Kokkos::parallel_for(
 		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
 			auto currId = clusterIds[i];

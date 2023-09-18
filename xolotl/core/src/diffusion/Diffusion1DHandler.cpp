@@ -125,7 +125,7 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 			updatedConcOffset[currId] += conc;
 		});
 
-    // TODO: Maybe we need a Kokkos::fence() here?
+	// TODO: Maybe we need a Kokkos::fence() here?
 }
 
 void

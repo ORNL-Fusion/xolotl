@@ -115,7 +115,7 @@ SoretDiffusionHandler::initialize(network::IReactionNetwork& network,
 	// Self-interstitial
 	auto specIdI = psiNetwork->getInterstitialSpeciesId();
 	comp[specIdI()] = 1;
-    addCluster(comp, 0.0128);
+	addCluster(comp, 0.0128);
 
 	this->syncDiffusingClusters(network);
 }

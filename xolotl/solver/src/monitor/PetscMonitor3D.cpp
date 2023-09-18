@@ -55,16 +55,19 @@ PetscMonitor3D::setup(int loop)
 		flag2DXYPlot, flag2DXZPlot, flagLargest;
 
 	// Check the option -check_collapse
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck));
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck));
 
 	// Check the option -plot_perf
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf));
 
 	// Check the option -plot_2d_xy
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-plot_2d_xy", &flag2DXYPlot));
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-plot_2d_xy", &flag2DXYPlot));
 
 	// Check the option -plot_2d_xz
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-plot_2d_xz", &flag2DXZPlot));
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-plot_2d_xz", &flag2DXZPlot));
 
 	// Check the option -helium_retention
 	PetscCallVoid(
@@ -78,7 +81,8 @@ PetscMonitor3D::setup(int loop)
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus));
 
 	// Check the option -largest_conc
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest));
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest));
 
 	// Get the network and its size
 	auto& network = _solverHandler->getNetwork();
@@ -330,7 +334,8 @@ PetscMonitor3D::setup(int loop)
 		}
 
 		// computeFluence will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
 
 		// computeHeliumRetention3D will be called at each timestep
 		PetscCallVoid(
@@ -417,7 +422,8 @@ PetscMonitor3D::setup(int loop)
 		}
 
 		// computeFluence will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
 
 		// computeXenonRetention3D will be called at each timestep
 		PetscCallVoid(
@@ -461,7 +467,8 @@ PetscMonitor3D::setup(int loop)
 		}
 
 		// monitorSurfaceXY will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorSurfaceXY, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorSurfaceXY, this, nullptr));
 	}
 
 	// Set the monitor to save surface plots of clusters concentration
@@ -490,7 +497,8 @@ PetscMonitor3D::setup(int loop)
 		}
 
 		// monitorSurfaceXZ will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorSurfaceXZ, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorSurfaceXZ, this, nullptr));
 	}
 
 	// Set the monitor to monitor the concentration of the largest cluster
@@ -505,7 +513,8 @@ PetscMonitor3D::setup(int loop)
 			NULL, NULL, "-largest_conc", &_largestThreshold, &flag));
 
 		// monitorLargest3D will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorLargest, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorLargest, this, nullptr));
 	}
 
 	// Set the monitor to save the status of the simulation in hdf5 file

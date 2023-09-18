@@ -42,8 +42,8 @@ protected:
 	//! The original network created from the network loader.
 	NetworkType& network;
 
-    //! The number of Jacobian entries (per block) from the network
-    int nNetworkEntries;
+	//! The number of Jacobian entries (per block) from the network
+	int nNetworkEntries;
 
 	//! Vector storing the grid in the x direction
 	std::vector<double> grid;

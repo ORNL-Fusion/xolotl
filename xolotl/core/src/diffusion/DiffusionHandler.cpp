@@ -54,7 +54,7 @@ DiffusionHandler::initialize(
 		idPairs.push_back(core::RowColPair{i, i});
 	}
 
-    this->syncDiffusingClusters(network);
+	this->syncDiffusingClusters(network);
 }
 } // namespace diffusion
 } // namespace core

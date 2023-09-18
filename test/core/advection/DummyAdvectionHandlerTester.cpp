@@ -69,11 +69,11 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 	DummyAdvectionHandler advectionHandler;
 
 	// Create ID pairs list
-    std::vector<core::RowColPair> idPairs;
+	std::vector<core::RowColPair> idPairs;
 
 	// Initialize it
 	advectionHandler.initialize(network, idPairs);
-    BOOST_REQUIRE(idPairs.empty());
+	BOOST_REQUIRE(idPairs.empty());
 
 	// Check the total number of advecting clusters, it should be 0 here
 	BOOST_REQUIRE_EQUAL(advectionHandler.getNumberOfAdvecting(), 0);

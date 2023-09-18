@@ -57,7 +57,8 @@ PetscMonitor0D::setup(int loop)
 		flagXeRetention, flagLargest, flagZr;
 
 	// Check the option -check_collapse
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck));
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck));
 
 	// Check the option -plot_1d
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-plot_1d", &flag1DPlot));
@@ -78,7 +79,8 @@ PetscMonitor0D::setup(int loop)
 		PetscOptionsHasName(NULL, NULL, "-xenon_retention", &flagXeRetention));
 
 	// Check the option -largest_conc
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest));
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest));
 
 	// Determine if we have an existing restart file,
 	// and if so, it it has had timesteps written to it.
@@ -133,7 +135,8 @@ PetscMonitor0D::setup(int loop)
 		_scatterPlot->setDataProvider(dataProvider);
 
 		// monitorScatter will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorScatter, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorScatter, this, nullptr));
 	}
 
 	// Set the monitor to save text file of the mean concentration of bubbles
@@ -183,7 +186,8 @@ PetscMonitor0D::setup(int loop)
 		outputFile.close();
 
 		// computeAlphaZr will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr));
 	}
 
 	// Set the monitor to compute the xenon content
@@ -227,7 +231,8 @@ PetscMonitor0D::setup(int loop)
 			NULL, NULL, "-largest_conc", &_largestThreshold, &flag));
 
 		// monitorLargest1D will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorLargest, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorLargest, this, nullptr));
 	}
 
 	// Set the monitor to save the status of the simulation in hdf5 file

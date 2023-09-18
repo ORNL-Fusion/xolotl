@@ -85,12 +85,12 @@ public:
 	 */
 	PetscSolverHandler(NetworkType& _network, const options::IOptions& options);
 
-    /**
-     * Reset all jacobian values to zero
-     */
-    void
-    resetJacobianValues();
-    
+	/**
+	 * Reset all jacobian values to zero
+	 */
+	void
+	resetJacobianValues();
+
 	/**
 	 * Set the number of grid points we want to move by at the surface.
 	 * \see ISolverHandler.h

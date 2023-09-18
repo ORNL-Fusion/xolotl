@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	double currTime = 1.0;
 
 	// The array of concentration
-    test::DOFView conc("conc", 6, dof);
+	test::DOFView conc("conc", 6, dof);
 
 	// The pointer to the grid point we want
 	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);

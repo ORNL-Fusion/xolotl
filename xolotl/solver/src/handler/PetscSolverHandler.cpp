@@ -89,7 +89,7 @@ PetscSolverHandler::convertToRowColPairList(std::size_t dof,
 		std::accumulate(fillMap.begin(), fillMap.end(), std::uint64_t{0},
 			[](std::uint64_t r, auto&& kvp) { return r + kvp.second.size(); });
 
-    std::vector<core::RowColPair> ret;
+	std::vector<core::RowColPair> ret;
 	ret.reserve(nNonZeros);
 
 	for (IdType i = 0; i < dof; ++i) {
@@ -98,7 +98,7 @@ PetscSolverHandler::convertToRowColPairList(std::size_t dof,
 			continue;
 		}
 		for (IdType j : rowIter->second) {
-			ret.push_back({i,j});
+			ret.push_back({i, j});
 		}
 	}
 

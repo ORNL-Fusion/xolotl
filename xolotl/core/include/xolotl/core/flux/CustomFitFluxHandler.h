@@ -286,7 +286,7 @@ public:
 			reductionFactors.size());
 		deep_copy(reduxFactors, reduxFactors_h);
 
-        syncFluxIndices();
+		syncFluxIndices();
 		syncIncidentFluxVec();
 	}
 

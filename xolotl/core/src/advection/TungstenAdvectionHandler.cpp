@@ -16,8 +16,8 @@ TungstenAdvectionHandler::TungstenAdvectionHandler(
 TungstenAdvectionHandler::~TungstenAdvectionHandler() = default;
 
 void
-TungstenAdvectionHandler::initialize(network::IReactionNetwork& network,
-	std::vector<RowColPair>& idPairs)
+TungstenAdvectionHandler::initialize(
+	network::IReactionNetwork& network, std::vector<RowColPair>& idPairs)
 {
 	// Clear the index and sink strength vectors
 	advectingClusters.clear();
@@ -71,8 +71,8 @@ TungstenAdvectionHandler::initialize(network::IReactionNetwork& network,
 		idPairs.push_back({clusterId, clusterId});
 	}
 
-    this->syncAdvectingClusters(network);
-    this->syncSinkStrengths();
+	this->syncAdvectingClusters(network);
+	this->syncSinkStrengths();
 }
 } // namespace advection
 } // namespace core

@@ -56,7 +56,7 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	}
 
 	// Too large
-	if (region[Species::Void].end() > _maxSize ||
+	if (region[Species::Void].end() > _maxVoid ||
 		region[Species::Faulted].end() > _maxSize ||
 		region[Species::Frank].end() > _maxSize) {
 		return true;
@@ -140,7 +140,7 @@ AlloyClusterGenerator::select(const Region& region) const
 			region[Species::Void].begin() <= _maxV)
 			return false;
 		if (region[Species::Void].begin() > 0 &&
-			region[Species::Void].begin() > _maxSize)
+			region[Species::Void].begin() > _maxVoid)
 			return false;
 	}
 
@@ -151,7 +151,7 @@ AlloyClusterGenerator::select(const Region& region) const
 		region[Species::Frank].end() - 1 <= _maxI)
 		return false;
 
-	if (region[Species::Void].begin() > _maxSize ||
+	if (region[Species::Void].begin() > _maxVoid ||
 		region[Species::Faulted].begin() > _maxSize ||
 		region[Species::Perfect].begin() >
 			util::min((AmountType)45, _maxSize) ||
