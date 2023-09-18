@@ -74,7 +74,9 @@ Options::Options() :
 	heVRatio(4.0),
 	migrationThreshold(std::numeric_limits<double>::infinity()),
 	basalPortion(0.1),
-	transitionSize(325)
+	transitionSize(325),
+	cascadeDose(-1.0),
+	cascadeEfficiency(0.0)
 {
 	return;
 }
@@ -256,6 +258,14 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<int>(&transitionSize)->default_value(325),
 		"The value for the transition within a type of cluster, for instance "
 		"basal (325 by "
+		"default).")("cascadeDose",
+		bpo::value<double>(&cascadeDose)->default_value(-1.0),
+		"The value of the dose at which the cascade overlap effect takes "
+		"effect, if negative there won't be an effect (-1.0 by "
+		"default).")("cascadeEfficiency",
+		bpo::value<double>(&cascadeEfficiency)->default_value(0.0),
+		"The value of the remaining efficiency once the overlap effect started "
+		"(0.0 by "
 		"default).");
 
 	bpo::options_description visible("Allowed options");

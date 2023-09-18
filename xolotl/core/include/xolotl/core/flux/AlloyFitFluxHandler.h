@@ -24,9 +24,6 @@ namespace flux
 class AlloyFitFluxHandler : public FluxHandler
 {
 private:
-	//! The time parameter for attenuation
-	double tauFlux;
-
 	/**
 	 * \see FluxHandler.h
 	 */
@@ -159,9 +156,7 @@ public:
 	/**
 	 * The constructor
 	 */
-	AlloyFitFluxHandler(const options::IOptions& options) :
-		FluxHandler(options),
-		tauFlux(0.0)
+	AlloyFitFluxHandler(const options::IOptions& options) : FluxHandler(options)
 	{
 	}
 
@@ -352,8 +347,12 @@ public:
 		// Attenuation factor to model reduced production of new point defects
 		// with increasing dose (or time).
 		double attenuation = 1.0;
-		if (tauFlux > 0.0 && currentTime > 0.0) {
-			attenuation = 1.0 - exp((-1.0 * tauFlux) / currentTime);
+		if (cascadeDose > 0.0) {
+			attenuation = ((1.0 - cascadeEfficiency) / 2.0) *
+					(1.0 -
+						tanh(100.0 *
+							(currentTime * fluxAmplitude - cascadeDose))) +
+				cascadeEfficiency;
 		}
 
 		// Update the concentration array
@@ -364,17 +363,6 @@ public:
 				Kokkos::atomic_add(&updatedConcOffset[ionDamageFluxIds[i]],
 					attenuation * ionDamageRate(i, xi - surfacePos));
 			});
-	}
-
-	/**
-	 * This operation sets the attenuation parameter.
-	 * \see IFluxHandler.h
-	 */
-	void
-	setTauFlux(double tau)
-	{
-		tauFlux = tau;
-		return;
 	}
 }; // namespace flux
 // end class AlloyFitFluxHandler

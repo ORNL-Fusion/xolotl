@@ -16,7 +16,9 @@ namespace flux
 FluxHandler::FluxHandler(const options::IOptions& options) :
 	fluxAmplitude(0.0),
 	useTimeProfile(false),
-	normFactor(0.0)
+	normFactor(0.0),
+	cascadeDose(options.getCascadeDose()),
+	cascadeEfficiency(options.getCascadeEfficiency())
 {
 	// Initialize the fluence vector
 	fluence.push_back(0.0);

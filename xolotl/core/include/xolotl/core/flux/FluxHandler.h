@@ -86,6 +86,16 @@ protected:
 	std::vector<double> amplitudes;
 
 	/**
+	 * Value of the cascade dose.
+	 */
+	double cascadeDose;
+
+	/**
+	 * Value of remaining cascade efficiency.
+	 */
+	double cascadeEfficiency;
+
+	/**
 	 * Function that calculates the flux at a given position x (in nm).
 	 * It needs to be implemented by the daughter classes.
 	 *

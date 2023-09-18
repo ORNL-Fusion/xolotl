@@ -175,9 +175,10 @@ public:
 				"\nThe alpha Zr problem is not defined for more than 0D!");
 		}
 
-		double cascadeEfficiency = (0.495 *
-				(1 - tanh(0.00040527088 * (currentTime / 100.0 - 5000.0))) +
-			0.025);
+		double cascadeEfficiency = ((1.0 - cascadeEfficiency) / 2.0) *
+				(1.0 -
+					tanh(100.0 * (currentTime * fluxAmplitude - cascadeDose))) +
+			cascadeEfficiency;
 
 		auto ids = this->fluxIds;
 		auto flux = this->incidentFlux;

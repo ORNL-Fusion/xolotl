@@ -504,6 +504,22 @@ public:
 	 */
 	virtual int
 	getTransitionSize() const = 0;
+
+	/**
+	 * Obtain the value of dose at which the cascade overlap takes effect.
+	 *
+	 * @return The dose
+	 */
+	virtual double
+	getCascadeDose() const = 0;
+
+	/**
+	 * Obtain the value of remaining cascade efficiency.
+	 *
+	 * @return The efficiency
+	 */
+	virtual double
+	getCascadeEfficiency() const = 0;
 };
 // end class IOptions
 } /* namespace options */

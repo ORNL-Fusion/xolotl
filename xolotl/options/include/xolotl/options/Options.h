@@ -296,6 +296,16 @@ protected:
 	 */
 	int transitionSize;
 
+	/**
+	 * Value of the cascade dose.
+	 */
+	double cascadeDose;
+
+	/**
+	 * Value of the remaining cascade efficiency.
+	 */
+	double cascadeEfficiency;
+
 public:
 	/**
 	 * The constructor.
@@ -850,6 +860,24 @@ public:
 	getTransitionSize() const override
 	{
 		return transitionSize;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getCascadeDose() const override
+	{
+		return cascadeDose;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getCascadeEfficiency() const override
+	{
+		return cascadeEfficiency;
 	}
 };
 // end class Options

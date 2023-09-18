@@ -32,7 +32,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
-	paramFile << "netParam=50 0 0 6 4" << std::endl;
+	paramFile << "netParam=50 50 0 6 4" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
