@@ -10,6 +10,7 @@ _do_cleanup=1
 _do_pull=1
 _debug=0
 _use_cuda=0
+_use_omp=0
 _petsc_extra_args=""
 _petsc_dir=$PWD
 _petsc_dir_arch_set=""
@@ -48,6 +49,9 @@ do
     --cuda)
         _use_cuda=1
         ;;
+    --openmp)
+        _use_omp=1
+        ;;
     --get-lapack)
         _petsc_extra_args="${_petsc_extra_args} --download-f2cblaslapack"
         ;;
@@ -82,9 +86,6 @@ if [ ${_use_cuda} -eq 1 ]; then
     _petsc_extra_args="${_petsc_extra_args} ${_petsc_cuda_args}"
 fi
 
-
-# source ./modules.sh
-
 cd ${_petsc_dir}
 echo "Working directory:"
 echo "$PWD"
@@ -113,11 +114,13 @@ if [ ${_do_pull} -eq 1 ]; then
 fi
 
 _conf_cmd="./configure \
+    ${_petsc_dir_arch_set} \
     --prefix=${_prefix} \
     --with-cc=mpicc \
     --with-cxx=mpicxx \
     --with-fc=0 \
     --with-cuda=${_use_cuda} \
+    --with-openmp=${_use_omp} \
     --with-debugging=${_debug} \
     --with-shared-libraries \
     --with-64-bit-indices \
