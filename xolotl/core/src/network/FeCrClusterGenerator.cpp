@@ -9,9 +9,10 @@ namespace network
 FeCrClusterGenerator::FeCrClusterGenerator(const options::IOptions& options) :
 	_minJunction(options.getMaxV()),
 	_maxI(options.getMaxI()),
-	_maxSize(options.getMaxImpurity()),
+	_maxSize(options.getMaxD()),
 	_groupingMin(options.getGroupingMin()),
-	_groupingWidth(options.getGroupingWidthA())
+	_groupingWidth(options.getGroupingWidthA()),
+	_maxHe(1)
 {
 }
 
@@ -20,9 +21,10 @@ FeCrClusterGenerator::FeCrClusterGenerator(
 	Superclass(refineDepth),
 	_minJunction(options.getMaxV()),
 	_maxI(options.getMaxI()),
-	_maxSize(options.getMaxImpurity()),
+	_maxSize(options.getMaxD()),
 	_groupingMin(options.getGroupingMin()),
-	_groupingWidth(options.getGroupingWidthA())
+	_groupingWidth(options.getGroupingWidthA()),
+	_maxHe(1)
 {
 }
 } // namespace network

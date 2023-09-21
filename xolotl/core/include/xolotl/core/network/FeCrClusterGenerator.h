@@ -63,6 +63,7 @@ private:
 	AmountType _maxI;
 	AmountType _minJunction;
 	AmountType _maxSize;
+	AmountType _maxHe;
 	AmountType _groupingMin;
 	AmountType _groupingWidth;
 };

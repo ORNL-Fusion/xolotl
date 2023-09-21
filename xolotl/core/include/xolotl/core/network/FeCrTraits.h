@@ -21,6 +21,7 @@ class FeCrClusterGenerator;
 
 enum class FeCrSpecies
 {
+	He,
 	Trap,
 	V,
 	I,
@@ -34,16 +35,17 @@ enum class FeCrSpecies
 inline const std::string&
 toLabelString(FeCrSpecies species)
 {
-	static const std::string labelArray[] = {
-		"Trap", "V", "I", "Free", "Trapped", "Junction", "Complex", "Loop"};
+	static const std::string labelArray[] = {"He", "Trap", "V", "I", "Free",
+		"Trapped", "Junction", "Complex", "Loop"};
 	return labelArray[static_cast<int>(species)];
 }
 
 inline const std::string&
 toNameString(FeCrSpecies species)
 {
-	static const std::string nameArray[] = {"Trap", "Void", "Interstitial110",
-		"Free111", "Trapped111", "Junction", "Complex", "Loop100"};
+	static const std::string nameArray[] = {"Helium", "Trap", "Void",
+		"Interstitial110", "Free111", "Trapped111", "Junction", "Complex",
+		"Loop100"};
 	return nameArray[static_cast<int>(species)];
 }
 
@@ -60,15 +62,15 @@ struct NumberOfVacancySpecies<FeCrSpecies> :
 };
 
 template <>
-struct SpeciesForGrouping<FeCrSpecies, 8>
+struct SpeciesForGrouping<FeCrSpecies, 9>
 {
-	using Sequence = EnumSequence<FeCrSpecies, 8>;
-	static constexpr auto first = Sequence(FeCrSpecies::Trap);
+	using Sequence = EnumSequence<FeCrSpecies, 9>;
+	static constexpr auto first = Sequence(FeCrSpecies::He);
 	static constexpr auto last = Sequence(FeCrSpecies::Loop);
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::underlying_type_t<FeCrSpecies>
-	mapToMomentId(EnumSequence<FeCrSpecies, 8>)
+	mapToMomentId(EnumSequence<FeCrSpecies, 9>)
 	{
 		return 0;
 	}
@@ -79,7 +81,7 @@ struct ReactionNetworkTraits<FeCrReactionNetwork>
 {
 	using Species = FeCrSpecies;
 
-	static constexpr std::size_t numSpecies = 8;
+	static constexpr std::size_t numSpecies = 9;
 
 	using ProductionReactionType = FeCrProductionReaction;
 	using DissociationReactionType = FeCrDissociationReaction;

@@ -222,6 +222,16 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 
+		comp[NetworkType::Species::Free] = 0;
+		comp[NetworkType::Species::He] = 1;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe single He cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
 		return;
 	}
 
@@ -261,6 +271,7 @@ public:
 			fluxAmplitude * 0.00611631; // Free16
 		updatedConcOffset[fluxIndices[17]] +=
 			fluxAmplitude * 0.0030808080; // Free20
+		updatedConcOffset[fluxIndices[18]] += 0.000146; // He, dpa s-1
 
 		return;
 	}

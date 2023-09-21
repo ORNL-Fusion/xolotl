@@ -135,7 +135,8 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				//  Find the corresponding cluster
 				Composition comp = Composition::zero();
 				comp[Species::Trapped] = prodSize;
-				comp[Species::Trap] = 1;
+				comp[Species::Trap] = tReg[Species::Trap].begin();
+				comp[Species::He] = tReg[Species::He].begin();
 				auto tProdId = subpaving.findTileId(comp);
 				if (tProdId != subpaving.invalidIndex() &&
 					tProdId != previousIndex) {
@@ -169,7 +170,8 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			else {
 				// Trap is the product
 				Composition comp = Composition::zero();
-				comp[Species::Trap] = 1;
+				comp[Species::Trap] = tReg[Species::Trap].begin();
+				comp[Species::He] = tReg[Species::He].begin();
 				auto tProdId = subpaving.findTileId(comp);
 				if (tProdId != subpaving.invalidIndex()) {
 					this->addProductionReaction(tag, {i, j, tProdId});
@@ -354,7 +356,8 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Find the corresponding cluster
 			Composition comp = Composition::zero();
 			comp[Species::Trapped] = size;
-			comp[Species::Trap] = 1;
+			comp[Species::Trap] = tReg[Species::Trap].begin();
+			comp[Species::He] = tReg[Species::He].begin();
 			auto tProdId = subpaving.findTileId(comp);
 			if (tProdId != subpaving.invalidIndex() &&
 				tProdId != previousIndex) {
@@ -476,7 +479,8 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			if (ratio < 0.5) {
 				Composition comp = Composition::zero();
 				comp[Species::Junction] = size;
-				comp[Species::Trap] = 1;
+				comp[Species::Trap] = tReg[Species::Trap].begin();
+				comp[Species::He] = tReg[Species::He].begin();
 				auto jProdId = subpaving.findTileId(comp);
 				if (jProdId != subpaving.invalidIndex() and
 					jProdId != previousJunctionId) {
@@ -489,7 +493,8 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			else {
 				Composition comp = Composition::zero();
 				comp[Species::Trapped] = size;
-				comp[Species::Trap] = 1;
+				comp[Species::Trap] = tReg[Species::Trap].begin();
+				comp[Species::He] = tReg[Species::He].begin();
 				auto tProdId = subpaving.findTileId(comp);
 				if (tProdId != subpaving.invalidIndex() and
 					tProdId != previousTrappedId) {
@@ -532,6 +537,30 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 				jProdId != previousJunctionId) {
 				this->addDissociationReaction(tag, {jProdId, i, j});
 				previousJunctionId = jProdId;
+			}
+		}
+		return;
+	}
+
+	// free + helium → trapped
+	if ((lo1.isOnAxis(Species::Free) && lo2.isOnAxis(Species::He)) ||
+		(lo1.isOnAxis(Species::He) && lo2.isOnAxis(Species::Free))) {
+		// Find out which one is which
+		auto fReg = lo1.isOnAxis(Species::Free) ? cl1Reg : cl2Reg;
+
+		for (auto k : makeIntervalRange(fReg[Species::Free])) {
+			// Compute the composition of the new cluster
+			auto size = k;
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::Trapped] = size;
+			comp[Species::He] = 1;
+			auto tProdId = subpaving.findTileId(comp);
+			if (tProdId != subpaving.invalidIndex() &&
+				tProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, tProdId});
+				previousIndex = tProdId;
+				// No dissociation
 			}
 		}
 		return;
@@ -634,6 +663,33 @@ FeCrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
+	// trapped + helium → trapped
+	if ((lo1[Species::Trapped] > 0 && lo2.isOnAxis(Species::He)) ||
+		(lo1.isOnAxis(Species::He) && lo2[Species::Trapped] > 0)) {
+		// Find out which one is which
+		auto tReg = lo1.isOnAxis(Species::He) ? cl2Reg : cl1Reg;
+
+		// Only helium trapped
+		if (tReg[Species::He].begin() > 0) {
+			for (auto k : makeIntervalRange(tReg[Species::Trapped])) {
+				// Compute the composition of the new cluster
+				auto size = k;
+				// Find the corresponding cluster
+				Composition comp = Composition::zero();
+				comp[Species::Trapped] = size;
+				comp[Species::He] = tReg[Species::He].begin() + 1;
+				auto tProdId = subpaving.findTileId(comp);
+				if (tProdId != subpaving.invalidIndex() &&
+					tProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, tProdId});
+					previousIndex = tProdId;
+					// No dissociation
+				}
+			}
+		}
+		return;
+	}
+
 	// Disso: complex → trap + int
 	if ((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::Trap)) ||
 		(lo1.isOnAxis(Species::Trap) && lo2.isOnAxis(Species::I))) {
@@ -706,12 +762,12 @@ FeCrReactionGenerator::addTransforms(IndexType i, IndexType j, TTag tag) const
 	auto other = lo1[Species::Junction] > 0 ? j : i;
 	auto otherReg = lo1[Species::Junction] > 0 ? lo2 : lo1;
 
-	// The second on should be Trapped or Loop
+	// The second one should be Trapped or Loop
 	if (otherReg[Species::Trapped] == 0 && otherReg[Species::Loop] == 0)
 		return;
 
 	// They need to be the same size
-	// TODO: this only works is the grouping is the same in every direction
+	// TODO: this only works if the grouping is the same in every direction
 	if (otherReg[Species::Trapped] == junctionReg[Species::Junction] ||
 		otherReg[Species::Loop] == junctionReg[Species::Junction]) {
 		this->addTransformReaction(tag, {junction, other});
