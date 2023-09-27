@@ -40,25 +40,25 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	if (nAxis == 0)
 		return true;
 
-	// V, I, and Perfect are always refined
+	// V, and I are always refined
 	if (region[Species::V].begin() > 0)
 		return true;
 	if (region[Species::I].begin() > 0)
-		return true;
-	if (region[Species::Perfect].begin() > 0)
 		return true;
 
 	// Smaller that the minimum size for grouping
 	if (region[Species::Void].begin() < _groupingMin &&
 		region[Species::Faulted].begin() < _groupingMin &&
-		region[Species::Frank].begin() < _groupingMin) {
+		region[Species::Frank].begin() < _groupingMin &&
+		region[Species::Perfect].begin() < _groupingMin) {
 		return true;
 	}
 
 	// Too large
 	if (region[Species::Void].end() > _maxVoid ||
 		region[Species::Faulted].end() > _maxSize ||
-		region[Species::Frank].end() > _maxSize) {
+		region[Species::Frank].end() > _maxSize ||
+		region[Species::Perfect].end() > _maxSize) {
 		return true;
 	}
 
@@ -77,6 +77,11 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 			util::max((double)(_groupingWidth + 1),
 				pow(region[Species::Frank].begin(), 1) * 5.0e-2))
 		result[5] = false;
+	if (region[Species::Perfect].begin() > 0 &&
+		region[Species::Perfect].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::Perfect].begin(), 1) * 5.0e-2))
+		result[4] = false;
 
 	return true;
 }
@@ -115,8 +120,7 @@ AlloyClusterGenerator::select(const Region& region) const
 			region[Species::Perfect].begin() < _maxI)
 			return false;
 		if (region[Species::Perfect].begin() > 0 &&
-			region[Species::Perfect].begin() >
-				util::min((AmountType)45, _maxSize))
+			region[Species::Perfect].begin() > _maxSize)
 			return false;
 
 		// Frank
@@ -153,8 +157,7 @@ AlloyClusterGenerator::select(const Region& region) const
 
 	if (region[Species::Void].begin() > _maxVoid ||
 		region[Species::Faulted].begin() > _maxSize ||
-		region[Species::Perfect].begin() >
-			util::min((AmountType)45, _maxSize) ||
+		region[Species::Perfect].begin() > _maxSize ||
 		region[Species::Frank].begin() > _maxSize)
 		return false;
 

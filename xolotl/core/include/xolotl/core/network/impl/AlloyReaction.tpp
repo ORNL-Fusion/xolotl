@@ -73,7 +73,28 @@ AlloyProductionReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	auto rate =
+		alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+
+	// Divide the rate by 2 for I + I -> Frank or perfect
+	if (cl0.getRegion().getOrigin().isOnAxis(Species::I) and
+		cl1.getRegion().getOrigin().isOnAxis(Species::I)) {
+		auto prod = this->_clusterData->getCluster(_products[0]);
+		if (not prod.getRegion().getOrigin().isOnAxis(Species::I)) {
+			return rate * 0.5;
+		}
+	}
+
+	// Divide the rate by 2 for V + V -> void or faulted
+	if (cl0.getRegion().getOrigin().isOnAxis(Species::V) and
+		cl1.getRegion().getOrigin().isOnAxis(Species::V)) {
+		auto prod = this->_clusterData->getCluster(_products[0]);
+		if (not prod.getRegion().getOrigin().isOnAxis(Species::V)) {
+			return rate * 0.5;
+		}
+	}
+
+	return rate;
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -89,7 +110,28 @@ AlloyDissociationReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	auto rate =
+		alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+
+	// Divide the rate by 2 for I + I -> Frank or perfect
+	if (cl0.getRegion().getOrigin().isOnAxis(Species::I) and
+		cl1.getRegion().getOrigin().isOnAxis(Species::I)) {
+		auto react = this->_clusterData->getCluster(_reactant);
+		if (not react.getRegion().getOrigin().isOnAxis(Species::I)) {
+			return rate * 0.5;
+		}
+	}
+
+	// Divide the rate by 2 for V + V -> void or faulted
+	if (cl0.getRegion().getOrigin().isOnAxis(Species::V) and
+		cl1.getRegion().getOrigin().isOnAxis(Species::V)) {
+		auto react = this->_clusterData->getCluster(_reactant);
+		if (not react.getRegion().getOrigin().isOnAxis(Species::V)) {
+			return rate * 0.5;
+		}
+	}
+
+	return rate;
 }
 
 KOKKOS_INLINE_FUNCTION
