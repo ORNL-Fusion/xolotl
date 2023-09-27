@@ -411,42 +411,44 @@ PetscSolver::solve()
 			// Stop the timer
 			solveTimer->stop();
 
-			// Save some data from the monitors for next loop
-			this->monitor->keepFlux(
-				_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
-
-			// We are done with the loop
-			loopNumber++;
-
 			// Catch the change in surface
 			// Get the converged reason from PETSc
 			ierr = TSGetConvergedReason(ts, &reason);
 			checkPetscError(
 				ierr, "PetscSolver::solve: TSGetConvergedReason failed.");
-			if (reason == TS_CONVERGED_USER)
+			if (reason == TS_CONVERGED_USER) {
 				std::cout << "Caught the change of surface!" << std::endl;
 
-			// Save the time
-			ierr = TSGetTime(ts, &time);
-			checkPetscError(ierr, "PetscSolver::solve: TSGetTime failed.");
+				// Save some data from the monitors for next loop
+				this->monitor->keepFlux(
+					_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
 
-			// Save the old DA and associated vector
-			PetscInt dof;
-			ierr = DMDAGetDof(da, &dof);
-			checkPetscError(ierr, "PetscSolver::solve: DMDAGetDof failed.");
+				// We are done with the loop
+				loopNumber++;
 
-			ierr = DMDACreateCompatibleDMDA(da, dof, &oldDA);
-			checkPetscError(
-				ierr, "PetscSolver::solve: DMDACreateCompatibleDMDA failed.");
+				// Save the time
+				ierr = TSGetTime(ts, &time);
+				checkPetscError(ierr, "PetscSolver::solve: TSGetTime failed.");
 
-			// Save the old vector as a natural one to make the transfer easier
-			ierr = DMDACreateNaturalVector(oldDA, &oldC);
-			checkPetscError(
-				ierr, "PetscSolver::solve: DMDACreateNaturalVector failed.");
-			ierr = DMDAGlobalToNaturalBegin(oldDA, C, INSERT_VALUES, oldC);
-			ierr = DMDAGlobalToNaturalEnd(oldDA, C, INSERT_VALUES, oldC);
-			checkPetscError(
-				ierr, "PetscSolver::solve: DMDAGlobalToNatural failed.");
+				// Save the old DA and associated vector
+				PetscInt dof;
+				ierr = DMDAGetDof(da, &dof);
+				checkPetscError(ierr, "PetscSolver::solve: DMDAGetDof failed.");
+
+				ierr = DMDACreateCompatibleDMDA(da, dof, &oldDA);
+				checkPetscError(ierr,
+					"PetscSolver::solve: DMDACreateCompatibleDMDA failed.");
+
+				// Save the old vector as a natural one to make the transfer
+				// easier
+				ierr = DMDACreateNaturalVector(oldDA, &oldC);
+				checkPetscError(ierr,
+					"PetscSolver::solve: DMDACreateNaturalVector failed.");
+				ierr = DMDAGlobalToNaturalBegin(oldDA, C, INSERT_VALUES, oldC);
+				ierr = DMDAGlobalToNaturalEnd(oldDA, C, INSERT_VALUES, oldC);
+				checkPetscError(
+					ierr, "PetscSolver::solve: DMDAGlobalToNatural failed.");
+			}
 		}
 		else {
 			throw std::string("PetscSolver Exception: Unable to solve! Data "

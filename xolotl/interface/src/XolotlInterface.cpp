@@ -185,7 +185,7 @@ catch (const std::exception& e) {
 
 void
 XolotlInterface::solveXolotl()
-// try 
+// try
 {
 	// Launch the PetscSolver
 	solver->solve();

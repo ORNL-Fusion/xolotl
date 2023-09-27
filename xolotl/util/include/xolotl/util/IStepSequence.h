@@ -18,8 +18,8 @@ public:
 	virtual double
 	current() const noexcept = 0;
 
-    virtual std::size_t
-    currentStep() const noexcept = 0;
+	virtual std::size_t
+	currentStep() const noexcept = 0;
 };
 } // namespace util
 } // namespace xolotl
