@@ -329,9 +329,6 @@ public:
 		return getClusterDataMirror().getClusterCommon(clusterId);
 	}
 
-	ClusterCommon<plsm::HostMemSpace>
-	getSingleVacancy() override;
-
 	IndexType
 	getLargestClusterId() override
 	{

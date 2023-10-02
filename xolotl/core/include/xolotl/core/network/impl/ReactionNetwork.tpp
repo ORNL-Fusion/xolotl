@@ -315,32 +315,6 @@ ReactionNetwork<TImpl>::syncClusterDataOnHost()
 }
 
 template <typename TImpl>
-ClusterCommon<plsm::HostMemSpace>
-ReactionNetwork<TImpl>::getSingleVacancy()
-{
-	Composition comp = Composition::zero();
-
-	// Find the vacancy index
-	constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
-	bool hasVacancy = false;
-	Species vIndex;
-	for (auto i : speciesRangeNoI) {
-		if (isVacancy(i)) {
-			hasVacancy = true;
-			vIndex = i;
-		}
-	}
-
-	// Update the composition if there is vacancy in the network
-	if (hasVacancy)
-		comp[vIndex] = 1;
-
-	auto clusterId = findCluster(comp, plsm::HostMemSpace{}).getId();
-
-	return getClusterDataMirror().getClusterCommon(clusterId);
-}
-
-template <typename TImpl>
 typename ReactionNetwork<TImpl>::Bounds
 ReactionNetwork<TImpl>::getAllClusterBounds()
 {

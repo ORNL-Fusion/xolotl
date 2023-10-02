@@ -315,9 +315,6 @@ public:
 	virtual ClusterCommon<plsm::HostMemSpace>
 	getClusterCommon(IndexType clusterId) = 0;
 
-	virtual ClusterCommon<plsm::HostMemSpace>
-	getSingleVacancy() = 0;
-
 	virtual IndexType
 	getLargestClusterId() = 0;
 

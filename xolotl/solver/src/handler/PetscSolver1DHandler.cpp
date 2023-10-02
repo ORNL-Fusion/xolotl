@@ -148,12 +148,12 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 	// TODO: do we need the ghost points?
 	network.setGridSize(localXM + 2);
 
-	// Get the diagonal fill
-	network.getDiagonalFill(dfill);
-
 	// The soret initialization needs to be done after the network
 	// because it adds connectivities the network would remove
 	soretDiffusionHandler->initialize(network, soretEntries, grid, localXS);
+
+	// Get the diagonal fill
+	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
 	Mat J;
