@@ -355,7 +355,7 @@ public:
 	 * @brief Set the rates for constant reactions
 	 */
 	virtual void
-	setConstantRates(RateVector, IndexType gridIndex) = 0;
+	setConstantRates(RatesView, IndexType gridIndex) = 0;
 
 	/**
 	 * @brief Set the connectivities for constant reactions

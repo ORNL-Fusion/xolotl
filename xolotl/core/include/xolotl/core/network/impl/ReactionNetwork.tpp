@@ -467,8 +467,6 @@ ReactionNetwork<TImpl>::initializeClusterMap(
 		isInSub.push_back(localIsInSub);
 		backMap.push_back(localBackMap);
 	}
-
-	return;
 }
 
 template <typename TImpl>
@@ -478,18 +476,13 @@ ReactionNetwork<TImpl>::initializeReactions()
 	Connectivity connectivity;
 	defineReactions(connectivity);
 	generateDiagonalFill(connectivity);
-
-	return;
 }
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setConstantRates(
-	typename ReactionNetwork<TImpl>::RateVector rates, IndexType gridIndex)
+ReactionNetwork<TImpl>::setConstantRates(RatesView rates, IndexType gridIndex)
 {
 	asDerived()->setConstantRates(rates, gridIndex);
-
-	return;
 }
 
 template <typename TImpl>
@@ -498,8 +491,6 @@ ReactionNetwork<TImpl>::setConstantConnectivities(
 	typename ReactionNetwork<TImpl>::ConnectivitiesVector conns)
 {
 	asDerived()->setConstantConnectivities(conns);
-
-	return;
 }
 
 template <typename TImpl>
@@ -1313,8 +1304,6 @@ ReactionNetwork<TImpl>::updateOutgoingDiffFluxes(double* gridPointSolution,
 			}
 		}
 	}
-
-	return;
 }
 
 template <typename TImpl>
@@ -1358,8 +1347,6 @@ ReactionNetwork<TImpl>::updateOutgoingAdvecFluxes(double* gridPointSolution,
 
 		advClusterIdx++;
 	}
-
-	return;
 }
 
 template <typename TImpl>

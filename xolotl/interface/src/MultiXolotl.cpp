@@ -64,6 +64,9 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 		// Moment Ids
 		auto momIdInfo = sub->getAllMomentIdInfo();
 		allMomIdInfo.push_back(momIdInfo);
+
+        // Constant rate capsules
+        _constantRates.push_back(sub->makeRatesCapsule());
 	}
 
 	// Pass data to primary
@@ -183,11 +186,11 @@ MultiXolotl::solveStep()
 		std::vector<double> temperature = {temperatures[0]};
 		std::vector<double> depth = {depths[0]};
 		_primaryInstance->setNetworkTemperature(temperature, depth);
-		auto constantRates = _primaryInstance->computeConstantRates(conc, 0);
+		_primaryInstance->computeConstantRates(conc, 0, _constantRates);
 
 		// Pass them
 		for (auto i = 0; i < _subInstances.size(); i++) {
-			_subInstances[i]->setConstantRates(constantRates[i], 0);
+			_subInstances[i]->setConstantRates(_constantRates[i], 0);
 		}
 	}
 	// 1D
@@ -213,12 +216,11 @@ MultiXolotl::solveStep()
 			std::vector<double> temperature = {temperatures[j + 1]};
 			std::vector<double> depth = {depths[j + 1]};
 			_primaryInstance->setNetworkTemperature(temperature, depth);
-			auto constantRates =
-				_primaryInstance->computeConstantRates(conc, 0);
+			_primaryInstance->computeConstantRates(conc, 0, _constantRates);
 
 			// Pass them
 			for (auto i = 0; i < _subInstances.size(); i++) {
-				_subInstances[i]->setConstantRates(constantRates[i], j + 1);
+				_subInstances[i]->setConstantRates(_constantRates[i], j + 1);
 			}
 		}
 	}

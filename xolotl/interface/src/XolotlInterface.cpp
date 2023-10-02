@@ -475,33 +475,51 @@ catch (const std::exception& e) {
 	throw;
 }
 
-void
-XolotlInterface::setConstantRates(
-	std::vector<std::vector<double>> rates, IdType gridIndex)
+struct RatesCapsule
+{
+	core::network::IReactionNetwork::RatesView view;
+};
+
+std::shared_ptr<RatesCapsule>
+XolotlInterface::makeRatesCapsule() const
 try {
-	// Get the network
-	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
-	network.setConstantRates(rates, gridIndex);
+	return std::make_shared<RatesCapsule>();
 }
 catch (const std::exception& e) {
 	reportException(e);
 	throw;
 }
 
-std::vector<std::vector<std::vector<double>>>
-XolotlInterface::computeConstantRates(
-	std::vector<std::vector<double>> conc, IdType gridIndex)
+void
+XolotlInterface::setConstantRates(
+	const std::shared_ptr<RatesCapsule>& rates, IdType gridIndex)
 try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	network.setConstantRates(rates->view, gridIndex);
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::computeConstantRates(std::vector<std::vector<double>> conc,
+	IdType gridIndex, std::vector<std::shared_ptr<RatesCapsule>>& rates)
+try {
+	assert(rates.size() == fromSubNetwork.size());
+
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	const auto dof = network.getDOF();
 
 	// Construct the full concentration vector first
 	std::vector<double> fullConc(dof, 0.0);
-	for (auto i = 0; i < conc.size(); i++)
+	for (auto i = 0; i < conc.size(); i++) {
 		for (auto j = 0; j < conc[i].size(); j++) {
 			fullConc[fromSubNetwork[i][j]] = conc[i][j];
 		}
+	}
 
 	auto hConcs =
 		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
@@ -510,26 +528,14 @@ try {
 	deep_copy(dConcs, hConcs);
 
 	// Loop on the sub network maps
-	std::vector<std::vector<std::vector<double>>> toReturn;
 	for (auto l = 0; l < fromSubNetwork.size(); l++) {
 		// Get the sub DOF and initialize the rate map
 		auto subDOF = fromSubNetwork[l].size();
-		std::vector<std::vector<double>> rateMap =
-			std::vector(subDOF, std::vector(subDOF + 1, 0.0));
-		auto dRates = Kokkos::View<double**>("dRates", subDOF, subDOF + 1);
-		auto hRates = Kokkos::create_mirror_view(dRates);
-		network.computeConstantRates(dConcs, dRates, l, gridIndex);
-
-		deep_copy(hRates, dRates);
-		// Copy element by element
-		for (auto i = 0; i < rateMap.size(); i++)
-			for (auto j = 0; j < rateMap[0].size(); j++) {
-				rateMap[i][j] = hRates(i, j);
-			}
-		toReturn.push_back(rateMap);
+		// TODO: should this allocation happen only once (in makeRatesCapsule)?
+		//       (we'd still need to zero out the data here)
+		rates[l]->view = Kokkos::View<double**>("dRates", subDOF, subDOF + 1);
+		network.computeConstantRates(dConcs, rates[l]->view, l, gridIndex);
 	}
-
-	return toReturn;
 }
 catch (const std::exception& e) {
 	reportException(e);

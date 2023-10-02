@@ -340,23 +340,29 @@ public:
 	void
 	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector);
 
+    std::shared_ptr<RatesCapsule>
+    makeRatesCapsule() const;
+
 	/**
 	 * Values for the rates to be set in constant reactions.
 	 *
 	 * @param rates All the rates
+     * @param gridIndex The grid index
 	 */
 	void
-	setConstantRates(std::vector<std::vector<double>> rates, IdType gridIndex);
+	setConstantRates(
+		const std::shared_ptr<RatesCapsule>& rates, IdType gridIndex);
 
 	/**
 	 * Compute the constant rates
 	 *
 	 * @param conc The concentration vector
-	 * @return A vector containing the rates for each sub instance
+     * @param gridIndex The grid index
+	 * @param rates A vector containing the rates for each sub instance
 	 */
-	std::vector<std::vector<std::vector<double>>>
-	computeConstantRates(
-		std::vector<std::vector<double>> conc, IdType gridIndex);
+	void
+	computeConstantRates(std::vector<std::vector<double>> conc,
+		IdType gridIndex, std::vector<std::shared_ptr<RatesCapsule>>& rates);
 
 	/**
 	 * Get the connectivity matrices

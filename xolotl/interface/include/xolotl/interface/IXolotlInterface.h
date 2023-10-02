@@ -4,6 +4,8 @@ namespace xolotl
 {
 namespace interface
 {
+struct RatesCapsule;
+
 class IXolotlInterface
 {
 public:
