@@ -236,10 +236,10 @@ PetscMonitor0D::setup(int loop)
 					   << "_partial_density " << speciesName << "_diameter "
 					   << speciesName << "_partial_diameter ";
 		}
-		outputFile
-			<< "111_partial_density 111_partial_diameter black_dot_density "
-			   "V_edge V_screw I_edge I_screw"
-			<< std::endl;
+		outputFile << "111_partial_density 111_partial_diameter "
+					  "black_dot_density He_mob "
+					  "V_edge V_screw I_edge I_screw"
+				   << std::endl;
 		outputFile.close();
 
 		// Create data to track sink losses
@@ -786,7 +786,7 @@ PetscMonitor0D::computeFeCrAl(
 	const auto dof = network.getDOF();
 	auto numSpecies = network.getSpeciesListSize();
 	auto networkSize = network.getNumClusters();
-	auto myData = std::vector<double>(numSpecies * 4 + 3, 0.0);
+	auto myData = std::vector<double>(numSpecies * 4 + 4, 0.0);
 
 	// Get the minimum size for the loop densities and diameters
 	auto minSizes = _solverHandler->getMinSizes();
@@ -829,15 +829,21 @@ PetscMonitor0D::computeFeCrAl(
 			network.getTotalRadiusConcentration(dConcs, id, minSizes[id()]);
 		// Black dots
 		if (network.getSpeciesLabel(id) == "Trap")
-			myData[myData.size() - 1] +=
+			myData[myData.size() - 2] +=
 				network.getSmallConcentration(dConcs, id, minSizes[id()]);
 		// 111
 		if (network.getSpeciesLabel(id) == "Free" or
 			network.getSpeciesLabel(id) == "Trapped") {
-			myData[myData.size() - 3] += myData[(4 * id()) + 1];
-			myData[myData.size() - 2] += myData[(4 * id()) + 3];
+			myData[myData.size() - 4] += myData[(4 * id()) + 1];
+			myData[myData.size() - 3] += myData[(4 * id()) + 3];
 		}
 	}
+	// mobile He
+	Composition heComp = Composition::zero();
+	heComp[Spec::He] = 1;
+	auto heCluster = network.findCluster(heComp, plsm::HostMemSpace{});
+	auto heId = heCluster.getId();
+	myData[myData.size() - 1] = gridPointSolution[heId];
 
 	// Set the output precision
 	const int outputPrecision = 5;
@@ -854,9 +860,9 @@ PetscMonitor0D::computeFeCrAl(
 				   << myData[(i * 4) + 2] / myData[i * 4] << " "
 				   << myData[(i * 4) + 3] / myData[(i * 4) + 1] << " ";
 	}
-	outputFile << myData[myData.size() - 3] << " "
-			   << myData[myData.size() - 2] / myData[myData.size() - 3] << " "
-			   << myData[myData.size() - 1];
+	outputFile << myData[myData.size() - 4] << " "
+			   << myData[myData.size() - 3] / myData[myData.size() - 4] << " "
+			   << myData[myData.size() - 2] << " " << myData[myData.size() - 1];
 	for (auto i = 0; i < 4; ++i) {
 		outputFile << " " << _nSink[i];
 	}
