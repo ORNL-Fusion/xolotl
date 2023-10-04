@@ -56,6 +56,7 @@ Options::Options() :
 	frontBoundary(1),
 	backBoundary(1),
 	xBC("mirror"),
+	heatLossPortion(-1.0),
 	burstingDepth(10.0),
 	burstingFactor(0.1),
 	rngUseSeed(false),
@@ -213,8 +214,10 @@ Options::readParams(int argc, const char* argv[])
 		"0 means mirror or periodic, 1 means free surface.")("xBCType",
 		bpo::value<std::string>(&xBC),
 		"The boundary conditions to use in the X direction, mirror (default), "
-		"periodic, or robin (for temperature).")("burstingDepth",
-		bpo::value<double>(&burstingDepth),
+		"periodic, or robin (for temperature).")("heatLossPortion",
+		bpo::value<double>(&heatLossPortion),
+		"The portion of heat lost in the bulk (-1.0 by default).")(
+		"burstingDepth", bpo::value<double>(&burstingDepth),
 		"The depth (in nm) after which there is an exponential decrease in the "
 		"probability of bursting (10.0 nm if nothing is specified).")(
 		"burstingFactor", bpo::value<double>(&burstingFactor),

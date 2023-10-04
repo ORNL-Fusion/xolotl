@@ -133,6 +133,114 @@ BOOST_AUTO_TEST_CASE(checkHeat1D)
 	BOOST_REQUIRE_CLOSE(val[2], 50744437570026, 0.01);
 }
 
+/**
+ * Method checking the initialization of the off-diagonal and diagonal part of
+ * the Jacobian, and the compute temperature methods.
+ */
+BOOST_AUTO_TEST_CASE(checkHeat1DPortion)
+{
+	// Set the DOF
+	const int dof = 9;
+
+	// Create the heat handler
+	auto heatHandler = HeatEquationHandler(5.0e-12, 1000.0, 1, 0.5);
+	heatHandler.setHeatCoefficient(tungstenHeatCoefficient);
+	heatHandler.setHeatConductivity(tungstenHeatConductivity);
+
+	// Check the initial temperatures
+	BOOST_REQUIRE_CLOSE(
+		heatHandler.getTemperature({0.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(
+		heatHandler.getTemperature({1.0, 0.0, 0.0}, 0.0), 1000.0, 0.01);
+
+	// Create a grid
+	std::vector<double> grid;
+	for (int l = 0; l < 5; l++) {
+		grid.push_back((double)l);
+	}
+
+	// Set a time
+	double time = 0.5;
+
+	// Initialize it
+	heatHandler.initialize(dof);
+	heatHandler.updateSurfacePosition(0, grid);
+
+	// The size parameter in the x direction
+	double hx = 1.0;
+
+	// The arrays of concentration
+	test::DOFView concentration("concentration", 3, dof + 1);
+	test::DOFView newConcentration("newConcentration", 3, dof + 1);
+
+	// Initialize their values
+	Kokkos::parallel_for(
+		Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {3, dof + 1}),
+		KOKKOS_LAMBDA(int i, int n) {
+			auto id = static_cast<double>(i * (dof + 1) + n);
+			concentration(i, n) = id * id;
+		});
+
+	// Get the offset for the grid point in the middle
+	// Supposing the 3 grid points are laid-out as follow:
+	// 0 | 1 | 2
+	auto concOffset = subview(concentration, 1, Kokkos::ALL);
+	auto updatedConcOffset = subview(newConcentration, 1, Kokkos::ALL);
+
+	// Fill the concVector with the pointer to the middle, left, and right grid
+	// points
+	using ConcSubView = Kokkos::View<const double*>;
+	Kokkos::Array<ConcSubView, 3> concVector;
+	concVector[0] = concOffset; // middle
+	concVector[1] = subview(concentration, 0, Kokkos::ALL); // left
+	concVector[2] = subview(concentration, 2, Kokkos::ALL); // right
+
+	// Compute the heat equation at this grid point
+	heatHandler.computeTemperature(
+		time, concVector.data(), updatedConcOffset, hx, hx, 2 * hx);
+
+	// Check the new values of updatedConcOffset
+	auto updatedConcOffsetMirror =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], -10871684694077318, 0.01);
+
+	// Set the temperature in the handler
+	heatHandler.setTemperature(concOffset);
+	// Check the updated temperature
+	plsm::SpaceVector<double, 3> pos{5.0, 0.0, 0.0};
+	BOOST_REQUIRE_CLOSE(heatHandler.getTemperature(pos, 1.0), 361.0, 0.01);
+
+	// Initialize the indices and values to set in the Jacobian
+	IdType indices[1];
+	double val[3];
+	// Get the pointer on them for the compute diffusion method
+	IdType* indicesPointer = &indices[0];
+	double* valPointer = &val[0];
+
+	Kokkos::Array<ConcSubView::host_mirror_type, 3> hConcVec;
+	const double* hConcPtrVec[3];
+	int id = 0;
+	for (auto&& xId : {1, 0, 2}) {
+		concVector[id] = subview(concentration, xId, Kokkos::ALL);
+		hConcVec[id] = create_mirror_view(concVector[id]);
+		deep_copy(hConcVec[id], concVector[id]);
+		hConcPtrVec[id] = hConcVec[id].data();
+		++id;
+	}
+
+	// Compute the partial derivatives for the heat equation a the grid point
+	heatHandler.computePartialsForTemperature(
+		time, hConcPtrVec, valPointer, indicesPointer, hx, hx, 2 * hx);
+
+	// Check the values for the indices
+	BOOST_REQUIRE_EQUAL(indices[0], 9);
+
+	// Check the values
+	BOOST_REQUIRE_CLOSE(val[0], -44925857369886.6, 0.01);
+	BOOST_REQUIRE_CLOSE(val[1], 44925857369886.6, 0.01);
+	BOOST_REQUIRE_CLOSE(val[2], 0.0, 0.01);
+}
+
 BOOST_AUTO_TEST_CASE(checkHeat2D)
 {
 	// Set the DOF

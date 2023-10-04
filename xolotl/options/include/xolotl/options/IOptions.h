@@ -340,6 +340,14 @@ public:
 	getBCString() const = 0;
 
 	/**
+	 * Obtain the value of the portion of heat lost to the bulk.
+	 *
+	 * @return The portion
+	 */
+	virtual double
+	getHeatLossPortion() const = 0;
+
+	/**
 	 * Obtain the value of the depth above which the bursting is happening.
 	 *
 	 * @return The depth

@@ -36,7 +36,7 @@ getBulkHeatFluxDerivative(double temp)
 }
 
 HeatEquationHandler::HeatEquationHandler(
-	double heatFlux, double bulkTemp, int dim, std::string filename) :
+	double heatFlux, double bulkTemp, int dim, double p, std::string filename) :
 	bulkTemperature(bulkTemp),
 	localTemperature(0.0),
 	surfacePosition(0),
@@ -45,7 +45,8 @@ HeatEquationHandler::HeatEquationHandler(
 	zeroFlux(util::equal(heatFlux, 0.0)),
 	dimension(dim),
 	interfaceLoc(0.0),
-	fluxFile(filename)
+	fluxFile(filename),
+	portion(p)
 {
 	if (fluxFile.size() > 0) {
 		// Open file dataFile.dat containing the time and temperature
@@ -70,7 +71,8 @@ HeatEquationHandler::HeatEquationHandler(
 
 HeatEquationHandler::HeatEquationHandler(const options::IOptions& options) :
 	HeatEquationHandler(options.getTempParam(0), options.getTempParam(1),
-		options.getDimensionNumber(), options.getTempProfileFilename())
+		options.getDimensionNumber(), options.getHeatLossPortion(),
+		options.getTempProfileFilename())
 {
 	// Set the heat coefficient which depends on the material
 	auto problemType = options.getMaterial();
@@ -302,17 +304,33 @@ HeatEquationHandler::computeTemperature(double currentTime,
 					htFlux * htFlux * gamma * dBeta / (alpha * beta * beta);
 			}
 			else if (xi == bulkPos) {
-				// Boundary condition with heat flux
-				double bulkHeatFlux = getBulkHeatFlux(oldConc);
-				updatedConcOffset[index] +=
-					-(2.0 * bulkHeatFlux * gamma / hxRight) +
-					(2.0 * alpha * beta * gamma) * (oldBox[0][0] - oldConc) /
-						(hxLeft * hxRight);
-				// Second term for temperature dependent conductivity
-				updatedConcOffset[index] +=
-					-bulkHeatFlux * dAlpha * gamma / alpha +
-					bulkHeatFlux * bulkHeatFlux * gamma * dBeta /
-						(alpha * beta * beta);
+				if (portion >= 0.0) {
+					updatedConcOffset[index] += 2.0 * alpha * beta * gamma *
+						(1.0 - portion) * (oldBox[0][0] - oldConc) /
+						(hxLeft * (hxLeft + hxRight));
+					updatedConcOffset[index] += dAlpha * beta * gamma *
+							(1.0 + (hxRight * portion) / hxLeft) *
+							(oldBox[0][0] - oldConc) / (hxLeft + hxRight) +
+						alpha * dBeta * gamma *
+							(1.0 + (hxRight * portion) / hxLeft) *
+							(1.0 + (hxRight * portion) / hxLeft) *
+							(oldBox[0][0] - oldConc) *
+							(oldBox[0][0] - oldConc) /
+							((hxLeft + hxRight) * (hxLeft + hxRight));
+				}
+				else {
+					// Boundary condition with heat flux
+					double bulkHeatFlux = getBulkHeatFlux(oldConc);
+					updatedConcOffset[index] +=
+						-(2.0 * bulkHeatFlux * gamma / hxRight) +
+						(2.0 * alpha * beta * gamma) *
+							(oldBox[0][0] - oldConc) / (hxLeft * hxRight);
+					// Second term for temperature dependent conductivity
+					updatedConcOffset[index] +=
+						-bulkHeatFlux * dAlpha * gamma / alpha +
+						bulkHeatFlux * bulkHeatFlux * gamma * dBeta /
+							(alpha * beta * beta);
+				}
 			}
 			else {
 				// Use a simple midpoint stencil to compute the concentration
@@ -417,21 +435,45 @@ HeatEquationHandler::computePartialsForTemperature(double currentTime,
 		val[2] = 2.0 * alpha * beta * gamma / (hxLeft * hxRight);
 	}
 	else if (xi == bulkPosition) {
-		double bulkHeatFlux = getBulkHeatFlux(oldConc);
-		double dBulk = getBulkHeatFluxDerivative(oldConc);
-		val[0] = -2.0 * bulkHeatFlux * dGamma / hxRight -
-			2.0 * alpha * beta * gamma / (hxLeft * hxRight) +
-			2.0 * alpha * (dBeta * gamma + dGamma * beta) *
-				(oldBox[0][0] - oldConc) / (hxLeft * hxRight) -
-			bulkHeatFlux * dAlpha * dGamma / alpha +
-			bulkHeatFlux * bulkHeatFlux * (gamma * ddBeta + dGamma * dBeta) /
-				(alpha * beta * beta) -
-			2.0 * bulkHeatFlux * bulkHeatFlux * gamma * dBeta * dBeta *
-				(alpha * beta * beta * beta) -
-			dBulk * gamma * dAlpha / alpha - 2.0 * dBulk * gamma / hxRight +
-			2.0 * bulkHeatFlux * dBulk * gamma * dBeta / (alpha * beta * beta);
-		val[1] = 2.0 * alpha * beta * gamma / (hxLeft * hxRight);
-		val[2] = 0.0;
+		if (portion >= 0.0) {
+			val[0] = -2.0 * alpha * beta * gamma * (1.0 - portion) /
+					(hxLeft * (hxLeft + hxRight)) +
+				dAlpha * beta * gamma * (1.0 + (hxRight * portion) / hxLeft) /
+					(hxLeft + hxRight) +
+				2.0 * alpha * dBeta * gamma *
+					(1.0 + (hxRight * portion) / hxLeft) *
+					(1.0 + (hxRight * portion) / hxLeft) *
+					(oldConc - oldBox[0][0]) /
+					((hxLeft + hxRight) * (hxLeft + hxRight));
+			val[1] = 2.0 * alpha * beta * gamma * (1.0 - portion) /
+					(hxLeft * (hxLeft + hxRight)) -
+				dAlpha * beta * gamma * (1.0 + (hxRight * portion) / hxLeft) /
+					(hxLeft + hxRight) -
+				2.0 * alpha * dBeta * gamma *
+					(1.0 + (hxRight * portion) / hxLeft) *
+					(1.0 + (hxRight * portion) / hxLeft) *
+					(oldConc - oldBox[0][0]) /
+					((hxLeft + hxRight) * (hxLeft + hxRight));
+			val[2] = 0.0;
+		}
+		else {
+			double bulkHeatFlux = getBulkHeatFlux(oldConc);
+			double dBulk = getBulkHeatFluxDerivative(oldConc);
+			val[0] = -2.0 * bulkHeatFlux * dGamma / hxRight -
+				2.0 * alpha * beta * gamma / (hxLeft * hxRight) +
+				2.0 * alpha * (dBeta * gamma + dGamma * beta) *
+					(oldBox[0][0] - oldConc) / (hxLeft * hxRight) -
+				bulkHeatFlux * dAlpha * dGamma / alpha +
+				bulkHeatFlux * bulkHeatFlux *
+					(gamma * ddBeta + dGamma * dBeta) / (alpha * beta * beta) -
+				2.0 * bulkHeatFlux * bulkHeatFlux * gamma * dBeta * dBeta *
+					(alpha * beta * beta * beta) -
+				dBulk * gamma * dAlpha / alpha - 2.0 * dBulk * gamma / hxRight +
+				2.0 * bulkHeatFlux * dBulk * gamma * dBeta /
+					(alpha * beta * beta);
+			val[1] = 2.0 * alpha * beta * gamma / (hxLeft * hxRight);
+			val[2] = 0.0;
+		}
 	}
 
 	return true;

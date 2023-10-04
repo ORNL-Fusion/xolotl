@@ -195,6 +195,11 @@ protected:
 	std::string xBC;
 
 	/**
+	 * Portion of heat lost in the bulk.
+	 */
+	double heatLossPortion;
+
+	/**
 	 * Depth for the bubble bursting in nm.
 	 */
 	double burstingDepth;
@@ -679,6 +684,15 @@ public:
 	getBCString() const override
 	{
 		return xBC;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	double
+	getHeatLossPortion() const override
+	{
+		return heatLossPortion;
 	}
 
 	/**

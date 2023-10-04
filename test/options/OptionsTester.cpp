@@ -112,6 +112,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "grouping=11 2 4" << std::endl
 		<< "sputtering=0.5" << std::endl
 		<< "boundary=1 1" << std::endl
+		<< "heatLossPortion=0.5" << std::endl
 		<< "burstingDepth=5.0" << std::endl
 		<< "burstingFactor=2.5" << std::endl
 		<< "zeta=0.6" << std::endl
@@ -196,6 +197,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getFrontBoundary(), 1);
 	BOOST_REQUIRE_EQUAL(opts.getBackBoundary(), 1);
 	BOOST_REQUIRE_EQUAL(opts.getBCString(), "mirror");
+	BOOST_REQUIRE_EQUAL(opts.getHeatLossPortion(), 0.5);
 
 	// Check the electronic stopping power option
 	BOOST_REQUIRE_EQUAL(opts.getZeta(), 0.6);

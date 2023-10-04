@@ -24,11 +24,12 @@ public:
 	 * @param flux The heat flux
 	 * @param bulkTemp The bulk temperature
 	 * @param dim the number of dimensions for the simulation
+	 * @param p The portion
 	 * @param filename The name of the file containing the heat flux time
 	 * profile
 	 */
-	HeatEquationHandler(
-		double flux, double bulkTemp, int dim, std::string filename = "");
+	HeatEquationHandler(double flux, double bulkTemp, int dim, double p = -1.0,
+		std::string filename = "");
 
 	/**
 	 * Construct from options
@@ -181,6 +182,11 @@ private:
 	 * Heat conductivity fit
 	 */
 	double A = 10.846, B = -184.22, C = 872.47;
+
+	/**
+	 * Heat conductivity fit
+	 */
+	double portion;
 
 	/**
 	 * Get the spatially dependent part of the heat conductivity.
