@@ -278,7 +278,8 @@ PetscMonitor3D::setup(int loop)
 			double previousTime = lastTsGroup->readPreviousTime();
 			_solverHandler->setPreviousTime(previousTime);
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->computeFluence(previousTime);
+			auto fluences = lastTsGroup->readFluence();
+			fluxHandler->setFluence(fluences);
 
 			// Get the names of the species in the network
 			std::vector<std::string> names;
@@ -418,7 +419,8 @@ PetscMonitor3D::setup(int loop)
 			// Initialize the fluence
 			auto fluxHandler = _solverHandler->getFluxHandler();
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->computeFluence(previousTime);
+			auto fluences = lastTsGroup->readFluence();
+			fluxHandler->setFluence(fluences);
 		}
 
 		// computeFluence will be called at each timestep
@@ -682,6 +684,16 @@ PetscMonitor3D::startStop(
 	assert(concGroup);
 	auto tsGroup = concGroup->addTimestepGroup(
 		_loopNumber, timestep, time, previousTime, currentTimeStep);
+
+	// Get the physical grid
+	auto grid = _solverHandler->getXGrid();
+	// Write it in the file
+	tsGroup->writeGrid(grid);
+
+	// Save the fluence
+	auto fluxHandler = _solverHandler->getFluxHandler();
+	auto fluence = fluxHandler->getFluence();
+	tsGroup->writeFluence(fluence);
 
 	// Get the names of the species in the network
 	auto numSpecies = network.getSpeciesListSize();

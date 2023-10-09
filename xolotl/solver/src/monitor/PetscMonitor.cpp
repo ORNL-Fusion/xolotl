@@ -210,6 +210,18 @@ PetscMonitor::computeFluence(
 {
 	PetscFunctionBeginUser;
 
+	// If it's a restart
+	std::string networkName = _solverHandler->getNetworkName();
+	bool hasConcentrations = false;
+	if (not networkName.empty()) {
+		auto networkFile = std::make_unique<io::XFile>(networkName);
+		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
+		hasConcentrations = (concGroup and concGroup->hasTimesteps());
+	}
+
+	if (timestep == 0 and hasConcentrations)
+		PetscFunctionReturn(0);
+
 	// Get the flux handler
 	auto fluxHandler = _solverHandler->getFluxHandler();
 

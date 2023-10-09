@@ -203,7 +203,8 @@ PetscMonitor0D::setup(int loop)
 			// Initialize the fluence
 			auto fluxHandler = _solverHandler->getFluxHandler();
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->computeFluence(previousTime);
+			auto fluences = lastTsGroup->readFluence();
+			fluxHandler->setFluence(fluences);
 		}
 
 		// computeXenonRetention0D will be called at each timestep
@@ -390,6 +391,11 @@ PetscMonitor0D::startStop(
 			concs[0].emplace_back(l, gridPointSolution[l]);
 		}
 	}
+
+	// Save the fluence
+	auto fluxHandler = _solverHandler->getFluxHandler();
+	auto fluence = fluxHandler->getFluence();
+	tsGroup->writeFluence(fluence);
 
 	// Write our concentration data to the current timestep group
 	// in the HDF5 file.

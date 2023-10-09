@@ -266,6 +266,12 @@ FluxHandler::computeFluence(double time)
 	}
 }
 
+void
+FluxHandler::setFluence(std::vector<double> f)
+{
+	fluence = f;
+}
+
 std::vector<double>
 FluxHandler::getFluence() const
 {

@@ -467,6 +467,25 @@ XFile::TimestepGroup::writeGrid(
 }
 
 void
+XFile::TimestepGroup::writeFluence(const std::vector<double>& fluences) const
+{
+	// Create, write, and close the fluences dataset
+	double fluenceArray[fluences.size()];
+	for (int i = 0; i < fluences.size(); i++) {
+		fluenceArray[i] = fluences[i];
+	}
+	std::array<hsize_t, 1> dims{(hsize_t)fluences.size()};
+	XFile::SimpleDataSpace<1> fluenceDSpace(dims);
+	hid_t datasetId = H5Dcreate2(getId(), "fluence", H5T_IEEE_F64LE,
+		fluenceDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+		H5P_DEFAULT, &fluenceArray);
+	status = H5Dclose(datasetId);
+
+	return;
+}
+
+void
 XFile::TimestepGroup::writeSurface1D(std::vector<Data1DType> nAtoms,
 	std::vector<Data1DType> previousFluxes,
 	std::vector<std::string> atomNames) const
@@ -927,6 +946,13 @@ std::vector<double>
 XFile::TimestepGroup::readGrid() const
 {
 	DataSet<std::vector<double>> dataset(*this, "grid");
+	return dataset.read();
+}
+
+std::vector<double>
+XFile::TimestepGroup::readFluence() const
+{
+	DataSet<std::vector<double>> dataset(*this, "fluence");
 	return dataset.read();
 }
 

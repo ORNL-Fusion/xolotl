@@ -75,6 +75,14 @@ public:
 	computeFluence(double time) = 0;
 
 	/**
+	 * This operation sets the fluence.
+	 *
+	 * @param fluence The current fluence
+	 */
+	virtual void
+	setFluence(std::vector<double> fluence) = 0;
+
+	/**
 	 * This operation returns the total fluence and effective fluences.
 	 *
 	 * @return The fluence

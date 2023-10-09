@@ -182,6 +182,12 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
+	virtual void
+	setFluence(std::vector<double> fluence);
+
+	/**
+	 * \see IFluxHandler.h
+	 */
 	virtual std::vector<double>
 	getFluence() const;
 

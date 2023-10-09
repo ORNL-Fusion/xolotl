@@ -212,6 +212,14 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	BOOST_REQUIRE_CLOSE(fluence[1], 7.28065893e-10, 0.001);
 	BOOST_REQUIRE_CLOSE(fluence[2], 1.976516e-11, 0.001);
 
+	// Check setFluence
+	std::vector<double> f = {1.0, 5.0, 0.2};
+	testFitFlux->setFluence(f);
+	fluence = testFitFlux->getFluence();
+	BOOST_REQUIRE_EQUAL(fluence[0], f[0]);
+	BOOST_REQUIRE_EQUAL(fluence[1], f[1]);
+	BOOST_REQUIRE_EQUAL(fluence[2], f[2]);
+
 	return;
 }
 
