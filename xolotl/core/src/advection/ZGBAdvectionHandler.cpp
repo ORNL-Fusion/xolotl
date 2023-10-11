@@ -92,13 +92,11 @@ ZGBAdvectionHandler::initialize(
 	this->syncSinkStrengths();
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// DELETEME (after implementing the below version)
 void
 ZGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
-	const plsm::SpaceVector<double, 3>& pos, double** concVector,
-	double* updatedConcOffset, double hxLeft, double hxRight, int ix, double hy,
-	int iy, double hz, int iz) const
+	const plsm::SpaceVector<double, 3>& pos, const StencilConcArray& concVector,
+	Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+	int ix, double hy, int iy, double hz, int iz) const
 {
 	// Consider each advecting cluster.
 	// TODO Maintaining a separate index assumes that advectingClusters is
@@ -107,61 +105,68 @@ ZGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	// Currently true with C++11, but we'd like to be able to visit the
 	// advecting clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
-	int advClusterIdx = 0;
-	for (auto const& currId : advectingClusters) {
-		auto cluster = network.getClusterCommon(currId);
 
-		// If we are on the sink, the behavior is not the same
-		// Both sides are giving their concentrations to the center
-		if (isPointOnSink(pos)) {
-			double oldFrontConc = concVector[5][currId]; // front
-			double oldBackConc = concVector[6][currId]; // back
-
-			double conc = (3.0 * sinkStrengthVector[advClusterIdx] *
-							  cluster.getDiffusionCoefficient(ix + 1)) *
-				((oldFrontConc + oldBackConc) / pow(hz, 5)) /
-				(kBoltzmann * cluster.getTemperature(ix + 1));
-
-			// Update the concentration of the cluster
-			updatedConcOffset[currId] += conc;
-		}
-		// Here we are NOT on the GB sink
-		else {
-			// Get the initial concentrations
-			double oldConc = concVector[0][currId]; // middle
-			double oldRightConc = concVector[6 * (pos[2] > location) +
-				5 * (pos[2] < location)][currId]; // back or front
-
-			// Get the a=d and b=d+h positions
-			double a = fabs(location - pos[2]);
-			double b = fabs(location - pos[2]) + hz;
-
-			// Compute the concentration as explained in the description of the
-			// method
-			double conc = (3.0 * sinkStrengthVector[advClusterIdx] *
-							  cluster.getDiffusionCoefficient(ix + 1)) *
-				((oldRightConc / pow(b, 4)) - (oldConc / pow(a, 4))) /
-				(kBoltzmann * cluster.getTemperature(ix + 1) * hz);
-
-			// Update the concentration of the cluster
-			updatedConcOffset[currId] += conc;
-		}
-
-		++advClusterIdx;
+	if (concVector.size() < 7) {
+		throw std::runtime_error("Wrong sizse for 3D concentration stencil; "
+								 "should be at least 5, got " +
+			std::to_string(concVector.size()));
 	}
+	Kokkos::Array<Kokkos::View<const double*>, 7> concVec = {concVector[0],
+		concVector[1], concVector[2], concVector[3], concVector[4],
+		concVector[5], concVector[6]};
 
-	return;
-}
-////////////////////////////////////////////////////////////////////////////////
+	auto location_ = location;
+	auto clusterIds = this->advClusterIds;
+	auto clusters = this->advClusters;
+	auto sinkStrengths = this->advSinkStrengths;
 
-void
-ZGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
-	const plsm::SpaceVector<double, 3>& pos, const StencilConcArray& concVector,
-	Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
-	int ix, double hy, int iy, double hz, int iz) const
-{
-	// TODO
-	throw std::runtime_error("ZGBAdvectionHandler: Not implemented");
+	// If we are on the sink, the behavior is not the same
+	// Both sides are giving their concentrations to the center
+	if (isPointOnSink(pos)) {
+		Kokkos::parallel_for(
+			clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+				auto currId = clusterIds[i];
+				auto cluster = clusters[i];
+
+				double oldFrontConc = concVec[5][currId]; // front
+				double oldBackConc = concVec[6][currId]; // back
+
+				double conc = (3.0 * sinkStrengths[i] *
+								  cluster.getDiffusionCoefficient(ix + 1)) *
+					((oldFrontConc + oldBackConc) / pow(hz, 5)) /
+					(kBoltzmann * cluster.getTemperature(ix + 1));
+
+				// Update the concentration of the cluster
+				updatedConcOffset[currId] += conc;
+			});
+	}
+	// Here we are NOT on the GB sink
+	else {
+		Kokkos::parallel_for(
+			clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+				auto currId = clusterIds[i];
+				auto cluster = clusters[i];
+
+				// Get the initial concentrations
+				double oldConc = concVec[0][currId]; // middle
+				double oldRightConc = concVec[6 * (pos[2] > location_) +
+					5 * (pos[2] < location_)][currId]; // back or front
+
+				// Get the a=d and b=d+h positions
+				double a = fabs(location_ - pos[2]);
+				double b = fabs(location_ - pos[2]) + hz;
+
+				// Compute the concentration as explained in the description of
+				// the method
+				double conc = (3.0 * sinkStrengths[i] *
+								  cluster.getDiffusionCoefficient(ix + 1)) *
+					((oldRightConc / pow(b, 4)) - (oldConc / pow(a, 4))) /
+					(kBoltzmann * cluster.getTemperature(ix + 1) * hz);
+
+				// Update the concentration of the cluster
+				updatedConcOffset[currId] += conc;
+			});
+	}
 }
 
 void

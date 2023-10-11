@@ -102,15 +102,6 @@ public:
 	 * @param hz The step size in the z direction
 	 * @param iz The position on the z grid
 	 */
-	////////////////////////////////////////////////////////////////////////////
-	// DELETEME
-	virtual void
-	computeAdvection(network::IReactionNetwork& network,
-		const plsm::SpaceVector<double, 3>& pos, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
-		double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0) const = 0;
-	////////////////////////////////////////////////////////////////////////////
-
 	virtual void
 	computeAdvection(network::IReactionNetwork& network,
 		const plsm::SpaceVector<double, 3>& pos,

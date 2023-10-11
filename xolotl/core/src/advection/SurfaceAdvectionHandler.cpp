@@ -107,56 +107,6 @@ SurfaceAdvectionHandler::initializeAdvectionGrid(
 	syncAdvectionGrid();
 }
 
-////////////////////////////////////////////////////////////////////////////
-// DELETEME
-void
-SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
-	const plsm::SpaceVector<double, 3>& pos, double** concVector,
-	double* updatedConcOffset, double hxLeft, double hxRight, int ix, double hy,
-	int iy, double hz, int iz) const
-{
-	// Consider each advecting cluster
-	// TODO Maintaining a separate index assumes that advectingClusters is
-	// visited in same order as advectionGrid array for given point
-	// and the sinkStrengthVector.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// advecting clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-	int advClusterIdx = 0;
-	for (auto const& currId : advectingClusters) {
-		auto cluster = network.getClusterCommon(currId);
-
-		// Get the initial concentrations
-		double oldConc = concVector[0][currId] *
-			advectionGrid[iz + 1][iy + 1][ix + 1][advClusterIdx]; // middle
-		double oldRightConc = concVector[2][currId] *
-			advectionGrid[iz + 1][iy + 1][ix + 2][advClusterIdx]; // right
-
-		// Compute the concentration as explained in the description of the
-		// method
-		double conc = (3.0 * sinkStrengthVector[advClusterIdx] *
-						  cluster.getDiffusionCoefficient(ix + 1)) *
-			((oldRightConc / pow(pos[0] - location + hxRight, 4)) -
-				(oldConc / pow(pos[0] - location, 4))) /
-			(kBoltzmann * cluster.getTemperature(ix + 1) * hxRight);
-
-		conc += (3.0 * sinkStrengthVector[advClusterIdx] * oldConc) *
-			(cluster.getDiffusionCoefficient(ix + 2) /
-					cluster.getTemperature(ix + 2) -
-				cluster.getDiffusionCoefficient(ix + 1) /
-					cluster.getTemperature(ix + 1)) /
-			(kBoltzmann * hxRight * pow(pos[0] - location, 4));
-
-		// Update the concentration of the cluster
-		updatedConcOffset[currId] += conc;
-
-		++advClusterIdx;
-	}
-
-	return;
-}
-////////////////////////////////////////////////////////////////////////////
-
 void
 SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	const plsm::SpaceVector<double, 3>& pos, const StencilConcArray& concVector,
