@@ -177,66 +177,57 @@ XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 
 void
 XGBAdvectionHandler::computePartialsForAdvection(
-	network::IReactionNetwork& network, double* val, IdType* indices,
+	network::IReactionNetwork& network, Kokkos::View<double*> val,
 	const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight,
 	int ix, double hy, int iy, double hz, int iz) const
 {
-	// Consider each advecting cluster.
-	// TODO Maintaining a separate index assumes that advectingClusters is
-	// visited in same order as advectionGrid array for given point
-	// and the sinkStrengthVector.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// advecting clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-	int advClusterIdx = 0;
-	for (auto const& currId : advectingClusters) {
-		auto cluster = network.getClusterCommon(currId);
-		// Get the diffusion coefficient of the cluster
-		double diffCoeff = cluster.getDiffusionCoefficient(ix + 1);
-		// Get the sink strength value
-		double sinkStrength = sinkStrengthVector[advClusterIdx];
+	auto location_ = location;
+	auto clusterIds = this->advClusterIds;
+	auto clusters = this->advClusters;
+	auto sinkStrengths = this->advSinkStrengths;
 
-		// Set the cluster index that will be used by PetscSolver
-		// to compute the row and column indices for the Jacobian
-		indices[advClusterIdx] = currId;
+	// If we are on the sink, the partial derivatives are not the same
+	// Both sides are giving their concentrations to the center
+	if (isPointOnSink(pos)) {
+		Kokkos::parallel_for(
+			clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+				auto temperature = clusters[i].getTemperature(ix + 1);
+				double diffCoeff = clusters[i].getDiffusionCoefficient(ix + 1);
+				double sinkStrength = sinkStrengths[i];
 
-		// If we are on the sink, the partial derivatives are not the same
-		// Both sides are giving their concentrations to the center
-		if (isPointOnSink(pos)) {
-			// 1D case
-			if (dimension == 1) {
-				val[advClusterIdx * 2] = (3.0 * sinkStrength * diffCoeff) /
-					(kBoltzmann * cluster.getTemperature(ix + 1) *
-						pow(hxLeft, 5)); // left
-				val[(advClusterIdx * 2) + 1] =
-					(3.0 * sinkStrength * diffCoeff) /
-					(kBoltzmann * cluster.getTemperature(ix + 1) *
-						pow(hxRight, 5)); // right
-			}
-		}
-		// Here we are NOT on the GB sink
-		else {
-			// Get the a=d and b=d+h positions
-			double a = fabs(location - pos[0]);
-			double b = fabs(location - pos[0]) + hxRight * (pos[0] > location) +
-				hxLeft * (pos[0] < location);
-
-			// Compute the partial derivatives for advection of this cluster
-			// as explained in the description of this method
-			val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff) /
-				(kBoltzmann * cluster.getTemperature(ix + 1) * pow(a, 4) *
-					(hxRight * (pos[0] > location) +
-						hxLeft * (pos[0] < location))); // middle
-			val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff) /
-				(kBoltzmann * cluster.getTemperature(ix + 1) * pow(b, 4) *
-					(hxRight * (pos[0] > location) +
-						hxLeft * (pos[0] < location))); // left or right
-		}
-
-		++advClusterIdx;
+				// 1D case
+				if (dimension == 1) {
+					val[i * 2] = (3.0 * sinkStrength * diffCoeff) /
+						(kBoltzmann * temperature * pow(hxLeft, 5)); // left
+					val[(i * 2) + 1] = (3.0 * sinkStrength * diffCoeff) /
+						(kBoltzmann * temperature * pow(hxRight, 5)); // right
+				}
+			});
 	}
+	// Here we are NOT on the GB sink
+	else {
+		// Get the a=d and b=d+h positions
+		double a = fabs(location - pos[0]);
+		double b = fabs(location - pos[0]) + hxRight * (pos[0] > location) +
+			hxLeft * (pos[0] < location);
+		Kokkos::parallel_for(
+			clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+				auto temperature = clusters[i].getTemperature(ix + 1);
+				double diffCoeff = clusters[i].getDiffusionCoefficient(ix + 1);
+				double sinkStrength = sinkStrengths[i];
 
-	return;
+				// Compute the partial derivatives for advection of this cluster
+				// as explained in the description of this method
+				val[i * 2] = -(3.0 * sinkStrength * diffCoeff) /
+					(kBoltzmann * temperature * (a * a * a * a) *
+						(hxRight * (pos[0] > location_) +
+							hxLeft * (pos[0] < location_))); // middle
+				val[(i * 2) + 1] = (3.0 * sinkStrength * diffCoeff) /
+					(kBoltzmann * temperature * (b * b * b * b) *
+						(hxRight * (pos[0] > location_) +
+							hxLeft * (pos[0] < location_))); // left or right
+			});
+	}
 }
 
 std::array<int, 3>

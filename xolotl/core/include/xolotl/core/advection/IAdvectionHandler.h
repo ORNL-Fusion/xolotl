@@ -118,8 +118,6 @@ public:
 	 * @param network The network
 	 * @param val The pointer to the array that will contain the values of
 	 * partials for the advection
-	 * @param indices The pointer to the array that will contain the indices of
-	 * the advecting cluster in the network
 	 * @param pos The position on the grid
 	 * @param hxLeft The step size on the left side of the point in the x
 	 * direction
@@ -132,10 +130,10 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void
-	computePartialsForAdvection(network::IReactionNetwork& network, double* val,
-		IdType* indices, const plsm::SpaceVector<double, 3>& pos, double hxLeft,
-		double hxRight, int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
-		int iz = 0) const = 0;
+	computePartialsForAdvection(network::IReactionNetwork& network,
+		Kokkos::View<double*> val, const plsm::SpaceVector<double, 3>& pos,
+		double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
+		double hz = 0.0, int iz = 0) const = 0;
 
 	/**
 	 * Compute the indices that will determine where the partial derivatives

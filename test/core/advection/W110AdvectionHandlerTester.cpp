@@ -127,8 +127,8 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 		StencilConcArray{concVector.data(), 3}, updatedConcOffset, hx, hx, 0);
 
 	// Check the new values of updatedConcOffset
-    auto updatedConcOffsetMirror =
-        create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	auto updatedConcOffsetMirror =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
 	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[1], -5.0843e+10, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[3], -5.0902e+10, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[5], -1.1519e+11, 0.01);
@@ -136,35 +136,25 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], -8.1459e+11, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[11], -2.6462e+10, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[13], -5.3572e+09, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[0], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[15], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffsetMirror[0], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffsetMirror[15], 0.0, 0.01); // Does not advect
 
 	// Initialize the rows, columns, and values to set in the Jacobian
 	int nAdvec = advectionHandler.getNumberOfAdvecting();
-	IdType indices[nAdvec];
-	double val[2 * nAdvec];
-	// Get the pointer on them for the compute advection method
-	IdType* indicesPointer = &indices[0];
-	double* valPointer = &val[0];
+	auto val = Kokkos::View<double*>("val", 2 * nAdvec);
 
 	// Compute the partial derivatives for the advection a the grid point 1
 	advectionHandler.computePartialsForAdvection(
-		network, valPointer, indicesPointer, gridPosition, hx, hx, 0);
-
-	// Check the values for the indices
-	BOOST_REQUIRE_EQUAL(indices[0], 1);
-	BOOST_REQUIRE_EQUAL(indices[1], 3);
-	BOOST_REQUIRE_EQUAL(indices[2], 5);
-	BOOST_REQUIRE_EQUAL(indices[3], 7);
-	BOOST_REQUIRE_EQUAL(indices[4], 9);
-	BOOST_REQUIRE_EQUAL(indices[5], 11);
-	BOOST_REQUIRE_EQUAL(indices[6], 13);
+		network, val, gridPosition, hx, hx, 0);
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], -205476899.0, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 12842306.0, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], -161884163.0, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], 10117760.0, 0.01);
+	auto valMirror = create_mirror_view_and_copy(Kokkos::HostSpace{}, val);
+	BOOST_REQUIRE_CLOSE(valMirror[0], -205476899.0, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[1], 12842306.0, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[2], -161884163.0, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[3], 10117760.0, 0.01);
 
 	// Get the stencil
 	auto stencil = advectionHandler.getStencilForAdvection(gridPosition);

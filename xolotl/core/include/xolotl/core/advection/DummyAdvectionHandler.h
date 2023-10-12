@@ -76,12 +76,11 @@ public:
 	 * \see IAdvectionHandler.h
 	 */
 	void
-	computePartialsForAdvection(network::IReactionNetwork& network, double* val,
-		IdType* indices, const plsm::SpaceVector<double, 3>& pos, double hxLeft,
-		double hxRight, int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
-		int iz = 0) const override
+	computePartialsForAdvection(network::IReactionNetwork& network,
+		Kokkos::View<double*> val, const plsm::SpaceVector<double, 3>& pos,
+		double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
+		double hz = 0.0, int iz = 0) const override
 	{
-		// Doesn't do anything
 		return;
 	}
 };

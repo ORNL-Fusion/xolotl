@@ -141,38 +141,28 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 1.4932e+12, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[11], 5.5940e+10, 0.01);
 	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[13], 1.5789e+10, 0.01);
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[0], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[15], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffsetMirror[0], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffsetMirror[15], 0.0, 0.01); // Does not advect
 
 	// Initialize the rows, columns, and values to set in the Jacobian
 	int nAdvec = advectionHandler.getNumberOfAdvecting();
-	IdType indices[nAdvec];
-	double val[7 * nAdvec];
-	// Get the pointer on them for the compute advection method
-	IdType* indicesPointer = &indices[0];
-	double* valPointer = &val[0];
+	auto val = Kokkos::View<double*>("val", 7 * nAdvec);
 
 	// Compute the partial derivatives for the advection a the grid point 1
-	advectionHandler.computePartialsForAdvection(network, valPointer,
-		indicesPointer, gridPosition, hx, hx, 0, hy, 1, hz, 1);
-
-	// Check the values for the indices
-	BOOST_REQUIRE_EQUAL(indices[0], 1);
-	BOOST_REQUIRE_EQUAL(indices[1], 3);
-	BOOST_REQUIRE_EQUAL(indices[2], 5);
-	BOOST_REQUIRE_EQUAL(indices[3], 7);
-	BOOST_REQUIRE_EQUAL(indices[4], 9);
-	BOOST_REQUIRE_EQUAL(indices[5], 11);
-	BOOST_REQUIRE_EQUAL(indices[6], 13);
+	advectionHandler.computePartialsForAdvection(
+		network, val, gridPosition, hx, hx, 0, hy, 1, hz, 1);
 
 	// Check values
-	BOOST_REQUIRE_CLOSE(val[0], 3.76893e+06, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], 3.76893e+06, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 3.45234e+06, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], 3.45234e+06, 0.01);
-	BOOST_REQUIRE_CLOSE(val[4], 4.16701e+06, 0.01);
-	BOOST_REQUIRE_CLOSE(val[5], 4.16701e+06, 0.01);
-	BOOST_REQUIRE_CLOSE(val[6], 7.13648e+06, 0.01);
+	auto valMirror = create_mirror_view_and_copy(Kokkos::HostSpace{}, val);
+	BOOST_REQUIRE_CLOSE(valMirror[0], 3.76893e+06, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[1], 3.76893e+06, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[2], 3.45234e+06, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[3], 3.45234e+06, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[4], 4.16701e+06, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[5], 4.16701e+06, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[6], 7.13648e+06, 0.01);
 
 	// Get the stencil
 	auto stencil = advectionHandler.getStencilForAdvection(gridPosition);

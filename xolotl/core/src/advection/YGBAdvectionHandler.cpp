@@ -169,58 +169,50 @@ YGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 
 void
 YGBAdvectionHandler::computePartialsForAdvection(
-	network::IReactionNetwork& network, double* val, IdType* indices,
+	network::IReactionNetwork& network, Kokkos::View<double*> val,
 	const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight,
 	int ix, double hy, int iy, double hz, int iz) const
 {
-	// Consider each advecting cluster.
-	// TODO Maintaining a separate index assumes that advectingClusters is
-	// visited in same order as advectionGrid array for given point
-	// and the sinkStrengthVector.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// advecting clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-	int advClusterIdx = 0;
-	for (auto const& currId : advectingClusters) {
-		auto cluster = network.getClusterCommon(currId);
-		// Get the diffusion coefficient of the cluster
-		double diffCoeff = cluster.getDiffusionCoefficient(ix + 1);
-		// Get the sink strength value
-		double sinkStrength = sinkStrengthVector[advClusterIdx];
+	auto location_ = location;
+	auto clusterIds = this->advClusterIds;
+	auto clusters = this->advClusters;
+	auto sinkStrengths = this->advSinkStrengths;
 
-		// Set the cluster index that will be used by PetscSolver
-		// to compute the row and column indices for the Jacobian
-		indices[advClusterIdx] = currId;
+	// If we are on the sink, the partial derivatives are not the same
+	// Both sides are giving their concentrations to the center
+	if (isPointOnSink(pos)) {
+		Kokkos::parallel_for(
+			clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+				double temperature = clusters[i].getTemperature(ix + 1);
+				double diffCoeff = clusters[i].getDiffusionCoefficient(ix + 1);
+				double sinkStrength = sinkStrengths[i];
 
-		// If we are on the sink, the partial derivatives are not the same
-		// Both sides are giving their concentrations to the center
-		if (isPointOnSink(pos)) {
-			val[advClusterIdx * 2] = (3.0 * sinkStrength * diffCoeff) /
-				(kBoltzmann * cluster.getTemperature(ix + 1) *
-					pow(hy, 5)); // top or bottom
-			val[(advClusterIdx * 2) + 1] =
-				val[advClusterIdx * 2]; // top or bottom
-		}
-		// Here we are NOT on the GB sink
-		else {
-			// Get the a=d and b=d+h positions
-			double a = fabs(location - pos[1]);
-			double b = fabs(location - pos[1]) + hy;
-
-			// Compute the partial derivatives for advection of this cluster as
-			// explained in the description of this method
-			val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff) /
-				(kBoltzmann * cluster.getTemperature(ix + 1) * hy *
-					pow(a, 4)); // middle
-			val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff) /
-				(kBoltzmann * cluster.getTemperature(ix + 1) * hy *
-					pow(b, 4)); // top or bottom
-		}
-
-		++advClusterIdx;
+				val[i * 2] = (3.0 * sinkStrength * diffCoeff) /
+					(kBoltzmann * temperature * pow(hy, 5)); // top or bottom
+				val[(i * 2) + 1] = val[i * 2]; // top or bottom
+			});
 	}
+	// Here we are NOT on the GB sink
+	else {
+		// Get the a=d and b=d+h positions
+		double a = fabs(location - pos[1]);
+		double b = fabs(location - pos[1]) + hy;
 
-	return;
+		Kokkos::parallel_for(
+			clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+				double temperature = clusters[i].getTemperature(ix + 1);
+				double diffCoeff = clusters[i].getDiffusionCoefficient(ix + 1);
+				double sinkStrength = sinkStrengths[i];
+
+				// Compute the partial derivatives for advection of this cluster
+				// as explained in the description of this method
+				val[i * 2] = -(3.0 * sinkStrength * diffCoeff) /
+					(kBoltzmann * temperature * hy * (a * a * a * a)); // middle
+				val[(i * 2) + 1] = (3.0 * sinkStrength * diffCoeff) /
+					(kBoltzmann * temperature * hy *
+						(b * b * b * b)); // top or bottom
+			});
+	}
 }
 
 std::array<int, 3>
