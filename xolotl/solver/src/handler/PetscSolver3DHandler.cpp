@@ -1273,8 +1273,6 @@ PetscSolver3DHandler::computeJacobian(
 	IdType tempIndices[1];
 	auto diffVals = std::vector<PetscScalar>(7 * nDiff);
 	auto diffIndices = std::vector<IdType>(nDiff);
-	auto advecVals = std::vector<PetscScalar>(2 * nAdvec);
-	auto advecIndices = std::vector<IdType>(nAdvec);
 	Kokkos::Array<ConcSubView::host_mirror_type, 7> hConcVec;
 	const double* hConcPtrVec[7];
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
@@ -1547,16 +1545,10 @@ PetscSolver3DHandler::computeJacobian(
 				gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 				for (auto l = 0; l < advectionHandlers.size(); l++) {
 					advectionHandlers[l]->computePartialsForAdvection(network,
-						advecVals.data(), advecIndices.data(), gridPosition,
-						hxLeft, hxRight, xi - localXS, hY, yj - localYS, hZ,
-						zk - localZS);
-
-					auto hAdvecVals =
-						HostUnmanaged(advecVals.data(), 2 * nAdvec);
-					deep_copy(
 						subview(vals,
 							std::make_pair(valIndex, valIndex + 2 * nAdvec)),
-						hAdvecVals);
+						gridPosition, hxLeft, hxRight, xi - localXS, hY,
+						yj - localYS, hZ, zk - localZS);
 					valIndex += 2 * nAdvec;
 				}
 

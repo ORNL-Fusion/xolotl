@@ -10,6 +10,7 @@
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
 
 using namespace std;
@@ -82,46 +83,47 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 	double hx = 1.0;
 
 	// The arrays of concentration
-	double concentration[3 * dof];
-	double newConcentration[3 * dof];
+	test::DOFView concentration("concentration", 3, dof);
+	test::DOFView newConcentration("newConcentration", 3, dof);
 
 	// Initialize their values
-	for (int i = 0; i < 3 * dof; i++) {
-		concentration[i] = (double)i * i;
-		newConcentration[i] = 0.0;
-	}
+	Kokkos::parallel_for(
+		Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {3, dof}),
+		KOKKOS_LAMBDA(int i, int n) {
+			auto id = static_cast<double>(i * dof + n);
+			concentration(i, n) = id * id;
+		});
 
 	// Set the temperature to 1000 K to initialize the diffusion coefficients
 	network.setTemperatures(temperatures, grid);
 
-	// Get pointers
-	double* conc = &concentration[0];
-	double* updatedConc = &newConcentration[0];
-
 	// Get the offset for the grid point in the middle
-	double* concOffset = conc + dof;
-	double* updatedConcOffset = updatedConc + dof;
+	auto concOffset = subview(concentration, 1, Kokkos::ALL);
+	auto updatedConcOffset = subview(newConcentration, 1, Kokkos::ALL);
 
 	// Fill the concVector with the pointer to the middle, left, and right grid
 	// points
-	double* concVector[3]{};
+	Kokkos::Array<Kokkos::View<const double*>, 3> concVector;
 	concVector[0] = concOffset; // middle
-	concVector[1] = conc; // left
-	concVector[2] = conc + 2 * dof; // right
+	concVector[1] = subview(concentration, 0, Kokkos::ALL); // left
+	concVector[2] = subview(concentration, 2, Kokkos::ALL); // right
 
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{hx, 0.0, 0.0};
 
 	// Compute the advection at this grid point
-	advectionHandler.computeAdvection(
-		network, gridPosition, concVector, updatedConcOffset, hx, hx, 1, 1);
+	advectionHandler.computeAdvection(network, gridPosition,
+		StencilConcArray{concVector.data(), 3}, updatedConcOffset, hx, hx, 1,
+		1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[1], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[3], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[5], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[7], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[9], 0.0, 0.01); // Does not advect
+    auto updatedConcOffsetMirror =
+        create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[1], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[3], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[5], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[7], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 0.0, 0.01); // Does not advect
 
 	// Don't even test the Jacobian because there is no advecting cluster
 

@@ -107,70 +107,12 @@ SurfaceAdvectionHandler::initializeAdvectionGrid(
 	syncAdvectionGrid();
 }
 
-////////////////////////////////////////////////////////////////////////////
-// DELETEME
-void
-SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
-	const plsm::SpaceVector<double, 3>& pos, double** concVector,
-	double* updatedConcOffset, double hxLeft, double hxRight, int ix, double hy,
-	int iy, double hz, int iz) const
-{
-	// Consider each advecting cluster
-	// TODO Maintaining a separate index assumes that advectingClusters is
-	// visited in same order as advectionGrid array for given point
-	// and the sinkStrengthVector.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// advecting clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-	int advClusterIdx = 0;
-	for (auto const& currId : advectingClusters) {
-		auto cluster = network.getClusterCommon(currId);
-
-		// Get the initial concentrations
-		double oldConc = concVector[0][currId] *
-			advectionGrid[iz + 1][iy + 1][ix + 1][advClusterIdx]; // middle
-		double oldRightConc = concVector[2][currId] *
-			advectionGrid[iz + 1][iy + 1][ix + 2][advClusterIdx]; // right
-
-		// Compute the concentration as explained in the description of the
-		// method
-		double conc = (3.0 * sinkStrengthVector[advClusterIdx] *
-						  cluster.getDiffusionCoefficient(ix + 1)) *
-			((oldRightConc / pow(pos[0] - location + hxRight, 4)) -
-				(oldConc / pow(pos[0] - location, 4))) /
-			(kBoltzmann * cluster.getTemperature(ix + 1) * hxRight);
-
-		conc += (3.0 * sinkStrengthVector[advClusterIdx] * oldConc) *
-			(cluster.getDiffusionCoefficient(ix + 2) /
-					cluster.getTemperature(ix + 2) -
-				cluster.getDiffusionCoefficient(ix + 1) /
-					cluster.getTemperature(ix + 1)) /
-			(kBoltzmann * hxRight * pow(pos[0] - location, 4));
-
-		// Update the concentration of the cluster
-		updatedConcOffset[currId] += conc;
-
-		++advClusterIdx;
-	}
-
-	return;
-}
-////////////////////////////////////////////////////////////////////////////
-
 void
 SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	const plsm::SpaceVector<double, 3>& pos, const StencilConcArray& concVector,
 	Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
 	int ix, double hy, int iy, double hz, int iz) const
 {
-	// Consider each advecting cluster
-	// TODO Maintaining a separate index assumes that advectingClusters is
-	// visited in same order as advectionGrid array for given point
-	// and the sinkStrengthVector.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// advecting clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-
 	if (concVector.size() < 3) {
 		throw std::runtime_error("Wrong size for 1D concentration stencil; "
 								 "should be at least 3, got " +
@@ -184,6 +126,8 @@ SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	auto clusters = this->advClusters;
 	auto sinkStrengths = this->advSinkStrengths;
 	auto advGrid = this->advecGrid;
+
+	// Consider each advecting cluster
 	Kokkos::parallel_for(
 		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
 			auto currId = clusterIds[i];
@@ -217,54 +161,45 @@ SurfaceAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 
 void
 SurfaceAdvectionHandler::computePartialsForAdvection(
-	network::IReactionNetwork& network, double* val, IdType* indices,
+	network::IReactionNetwork& network, Kokkos::View<double*> val,
 	const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight,
 	int ix, double hy, int iy, double hz, int iz) const
 {
-	// Get the number of advecting cluster
-	int nAdvec = advectingClusters.size();
+	auto location_ = location;
+	auto clusterIds = this->advClusterIds;
+	auto clusters = this->advClusters;
+	auto sinkStrengths = this->advSinkStrengths;
+	auto advGrid = this->advecGrid;
 
 	// Consider each advecting cluster.
-	// TODO Maintaining a separate index assumes that advectingClusters is
-	// visited in same order as advectionGrid array for given point
-	// and the sinkStrengthVector.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// advecting clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-	int advClusterIdx = 0;
-	for (auto const& currId : advectingClusters) {
-		auto cluster = network.getClusterCommon(currId);
-		// Get the diffusion coefficient of the cluster
-		double diffCoeff = cluster.getDiffusionCoefficient(ix + 1);
-		// Get the sink strength value
-		double sinkStrength = sinkStrengthVector[advClusterIdx];
+	Kokkos::parallel_for(
+		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+			auto currId = clusterIds[i];
+			auto cluster = clusters[i];
 
-		// Set the cluster index that will be used by PetscSolver
-		// to compute the row and column indices for the Jacobian
-		indices[advClusterIdx] = currId;
+			// Get the diffusion coefficient of the cluster
+			double diffCoeff = cluster.getDiffusionCoefficient(ix + 1);
+			// Get the sink strength value
+			double sinkStrength = sinkStrengths[i];
 
-		// Compute the partial derivatives for advection of this cluster as
-		// explained in the description of this method
-		val[advClusterIdx * 2] = -(3.0 * sinkStrength * diffCoeff) /
-			(kBoltzmann * cluster.getTemperature(ix + 1) * hxRight *
-				pow(pos[0] - location, 4)) *
-			advectionGrid[iz + 1][iy + 1][ix + 1][advClusterIdx]; // middle
-		val[advClusterIdx * 2] += (3.0 * sinkStrength) *
-			(cluster.getDiffusionCoefficient(ix + 2) /
-					cluster.getTemperature(ix + 2) -
-				cluster.getDiffusionCoefficient(ix + 1) /
-					cluster.getTemperature(ix + 1)) /
-			(kBoltzmann * hxRight * pow(pos[0] - location, 4)) *
-			advectionGrid[iz + 1][iy + 1][ix + 1][advClusterIdx]; // middle
-		val[(advClusterIdx * 2) + 1] = (3.0 * sinkStrength * diffCoeff) /
-			(kBoltzmann * cluster.getTemperature(ix + 1) * hxRight *
-				pow(pos[0] - location + hxRight, 4)) *
-			advectionGrid[iz + 1][iy + 1][ix + 2][advClusterIdx]; // right
-
-		++advClusterIdx;
-	}
-
-	return;
+			// Compute the partial derivatives for advection of this cluster as
+			// explained in the description of this method
+			val[i * 2] = -(3.0 * sinkStrength * diffCoeff) /
+				(kBoltzmann * cluster.getTemperature(ix + 1) * hxRight *
+					pow(pos[0] - location_, 4)) *
+				advGrid(iz + 1, iy + 1, ix + 1, i); // middle
+			val[i * 2] += (3.0 * sinkStrength) *
+				(cluster.getDiffusionCoefficient(ix + 2) /
+						cluster.getTemperature(ix + 2) -
+					cluster.getDiffusionCoefficient(ix + 1) /
+						cluster.getTemperature(ix + 1)) /
+				(kBoltzmann * hxRight * pow(pos[0] - location_, 4)) *
+				advGrid(iz + 1, iy + 1, ix + 1, i); // middle
+			val[(i * 2) + 1] = (3.0 * sinkStrength * diffCoeff) /
+				(kBoltzmann * cluster.getTemperature(ix + 1) * hxRight *
+					pow(pos[0] - location_ + hxRight, 4)) *
+				advGrid(iz + 1, iy + 1, ix + 2, i); // right
+		});
 }
 
 } /* end namespace advection */
