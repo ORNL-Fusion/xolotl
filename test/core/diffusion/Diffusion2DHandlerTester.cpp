@@ -140,32 +140,19 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = diffusionHandler.getNumberOfDiffusing();
-	IdType indices[nDiff];
-	double val[5 * nDiff];
-	// Get the pointer on them for the compute diffusion method
-	IdType* indicesPointer = &indices[0];
-	double* valPointer = &val[0];
+	auto val = Kokkos::View<double*>("val", 5 * nDiff);
 
 	// Compute the partial derivatives for the diffusion a the grid point 1
 	diffusionHandler.computePartialsForDiffusion(
-		network, valPointer, indicesPointer, hx, hx, 0, sy, 1);
-
-	// Check the values for the indices
-	BOOST_REQUIRE_EQUAL(indices[0], 0);
-	BOOST_REQUIRE_EQUAL(indices[1], 1);
-	BOOST_REQUIRE_EQUAL(indices[2], 3);
-	BOOST_REQUIRE_EQUAL(indices[3], 5);
-	BOOST_REQUIRE_EQUAL(indices[4], 7);
-	BOOST_REQUIRE_EQUAL(indices[5], 9);
-	BOOST_REQUIRE_EQUAL(indices[6], 11);
-	BOOST_REQUIRE_EQUAL(indices[7], 13);
+		network, val, hx, hx, 0, sy, 1);
 
 	// Check some values
-	BOOST_REQUIRE_CLOSE(val[0], -2021250, 0.01);
-	BOOST_REQUIRE_CLOSE(val[3], 505312, 0.01);
-	BOOST_REQUIRE_CLOSE(val[8], 6415444736, 0.01);
-	BOOST_REQUIRE_CLOSE(val[12], 3141913616, 0.01);
-	BOOST_REQUIRE_CLOSE(val[15], -5056420168, 0.01);
+	auto valMirror = create_mirror_view_and_copy(Kokkos::HostSpace{}, val);
+	BOOST_REQUIRE_CLOSE(valMirror[0], -2021250, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[3], 505312, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[8], 6415444736, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[12], 3141913616, 0.01);
+	BOOST_REQUIRE_CLOSE(valMirror[15], -5056420168, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

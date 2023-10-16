@@ -1271,8 +1271,6 @@ PetscSolver3DHandler::computeJacobian(
 	double atomConc = 0.0, totalAtomConc = 0.0;
 	PetscScalar tempVals[7];
 	IdType tempIndices[1];
-	auto diffVals = std::vector<PetscScalar>(7 * nDiff);
-	auto diffIndices = std::vector<IdType>(nDiff);
 	Kokkos::Array<ConcSubView::host_mirror_type, 7> hConcVec;
 	const double* hConcPtrVec[7];
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
@@ -1531,13 +1529,10 @@ PetscSolver3DHandler::computeJacobian(
 
 				// Get the partial derivatives for the diffusion
 				diffusionHandler->computePartialsForDiffusion(network,
-					diffVals.data(), diffIndices.data(), hxLeft, hxRight,
-					xi - localXS, sy, yj - localYS, sz, zk - localZS);
-
-				auto hDiffVals = HostUnmanaged(diffVals.data(), 7 * nDiff);
-				deep_copy(subview(vals,
-							  std::make_pair(valIndex, valIndex + 7 * nDiff)),
-					hDiffVals);
+					subview(
+						vals, std::make_pair(valIndex, valIndex + 7 * nDiff)),
+					hxLeft, hxRight, xi - localXS, sy, yj - localYS, sz,
+					zk - localZS);
 				valIndex += 7 * nDiff;
 
 				// Get the partial derivatives for the advection

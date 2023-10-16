@@ -102,8 +102,6 @@ public:
 	 * @param network The network
 	 * @param val The pointer to the array that will contain the values of
 	 * partials for the diffusion
-	 * @param indices The pointer to the array that will contain the indices of
-	 * the diffusing clusters in the network
 	 * @param hxLeft The step size on the left side of the point in the x
 	 * direction
 	 * @param hxRight The step size on the right side of the point in the x
@@ -117,9 +115,9 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void
-	computePartialsForDiffusion(network::IReactionNetwork& network, double* val,
-		IdType* indices, double hxLeft, double hxRight, int ix, double sy = 0.0,
-		int iy = 0, double sz = 0.0, int iz = 0) const = 0;
+	computePartialsForDiffusion(network::IReactionNetwork& network,
+		Kokkos::View<double*> val, double hxLeft, double hxRight, int ix,
+		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const = 0;
 
 	/**
 	 * Get the total number of diffusing clusters in the network.

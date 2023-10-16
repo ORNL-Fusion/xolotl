@@ -1060,8 +1060,6 @@ PetscSolver1DHandler::computeJacobian(
 	// Arguments for MatSetValuesStencil called below
 	PetscScalar tempVals[3];
 	IdType tempIndices[1];
-	auto diffVals = std::vector<PetscScalar>(3 * nDiff);
-	auto diffIndices = std::vector<IdType>(nDiff);
 	using ConcSubView = Kokkos::View<const double*>;
 	Kokkos::Array<ConcSubView, 3> concVector;
 	Kokkos::Array<ConcSubView::host_mirror_type, 3> hConcVec;
@@ -1296,12 +1294,9 @@ PetscSolver1DHandler::computeJacobian(
 		valIndex += 3 * nSoret;
 
 		// Get the partial derivatives for the diffusion
-		diffusionHandler->computePartialsForDiffusion(network, diffVals.data(),
-			diffIndices.data(), hxLeft, hxRight, xi - localXS);
-
-		auto hDiffVals = HostUnmanaged(diffVals.data(), 3 * nDiff);
-		deep_copy(subview(vals, std::make_pair(valIndex, valIndex + 3 * nDiff)),
-			hDiffVals);
+		diffusionHandler->computePartialsForDiffusion(network,
+			subview(vals, std::make_pair(valIndex, valIndex + 3 * nDiff)),
+			hxLeft, hxRight, xi - localXS);
 		valIndex += 3 * nDiff;
 
 		// Get the partial derivatives for the advection

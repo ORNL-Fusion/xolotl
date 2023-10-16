@@ -130,50 +130,36 @@ Diffusion1DHandler::computeDiffusion(network::IReactionNetwork& network,
 
 void
 Diffusion1DHandler::computePartialsForDiffusion(
-	network::IReactionNetwork& network, double* val, IdType* indices,
+	network::IReactionNetwork& network, Kokkos::View<double*> val,
 	double hxLeft, double hxRight, int ix, double, int, double, int) const
 {
-	// Loop on them
-	// TODO Maintaining a separate index assumes that diffusingClusters is
-	// visited in same order as diffusionGrid array for given point.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// diffusing clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-	int diffClusterIdx = 0;
+	auto diffGrid = diffusGrid;
+	auto clusterIds = this->diffClusterIds;
+	auto clusters = this->diffClusters;
 
-	for (auto const& currId : diffusingClusters) {
-		auto cluster = network.getClusterCommon(currId);
+	Kokkos::parallel_for(
+		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+			auto cluster = clusters[i];
 
-		// Set the cluster index, the PetscSolver will use it to compute
-		// the row and column indices for the Jacobian
-		indices[diffClusterIdx] = currId;
-		double leftDiff = cluster.getDiffusionCoefficient(ix),
-			   midDiff = cluster.getDiffusionCoefficient(ix + 1),
-			   rightDiff = cluster.getDiffusionCoefficient(ix + 2);
-		double leftTemp = cluster.getTemperature(ix),
-			   midTemp = cluster.getTemperature(ix + 1),
-			   rightTemp = cluster.getTemperature(ix + 2);
+			auto leftDiff = cluster.getDiffusionCoefficient(ix);
+			auto midDiff = cluster.getDiffusionCoefficient(ix + 1);
+			auto rightDiff = cluster.getDiffusionCoefficient(ix + 2);
 
-		// Compute the partial derivatives for diffusion of this cluster
-		// for the middle, left, and right grid point
-		val[diffClusterIdx * 3] = (-2.0 * midDiff / (hxLeft * hxRight)) *
-			diffusionGrid[ix + 1][diffClusterIdx]; // middle
-		val[(diffClusterIdx * 3) + 1] =
-			(midDiff * 2.0 / (hxLeft * (hxLeft + hxRight)) +
-				(leftDiff - rightDiff) /
-					((hxLeft + hxRight) * (hxLeft + hxRight))) *
-			diffusionGrid[ix][diffClusterIdx]; // left
-		val[(diffClusterIdx * 3) + 2] =
-			(midDiff * 2.0 / (hxRight * (hxLeft + hxRight)) +
-				(rightDiff - leftDiff) /
-					((hxLeft + hxRight) * (hxLeft + hxRight))) *
-			diffusionGrid[ix + 2][diffClusterIdx]; // right
-
-		// Increase the index
-		diffClusterIdx++;
-	}
-
-	return;
+			// Compute the partial derivatives for diffusion of this cluster
+			// for the middle, left, and right grid point
+			val[i * 3] = (-2.0 * midDiff / (hxLeft * hxRight)) *
+				diffGrid(ix + 1, i); // middle
+			val[(i * 3) + 1] =
+				(midDiff * 2.0 / (hxLeft * (hxLeft + hxRight)) +
+					(leftDiff - rightDiff) /
+						((hxLeft + hxRight) * (hxLeft + hxRight))) *
+				diffGrid(ix, i); // left
+			val[(i * 3) + 2] =
+				(midDiff * 2.0 / (hxRight * (hxLeft + hxRight)) +
+					(rightDiff - leftDiff) /
+						((hxLeft + hxRight) * (hxLeft + hxRight))) *
+				diffGrid(ix + 2, i); // right
+		});
 }
 
 } /* end namespace diffusion */
