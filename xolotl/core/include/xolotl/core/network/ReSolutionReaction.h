@@ -29,6 +29,7 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
 	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using ConnectivitiesPairView = typename Superclass::ConnectivitiesPairView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using Composition = typename Superclass::Composition;
@@ -99,7 +100,7 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
+		BelongingView isInSub, IndexType subId, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -118,6 +119,12 @@ private:
 	void
 	mapJacobianEntries(Connectivity connectivity);
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
+		OwnedSubMapView backMap, IndexType subId);
+
 protected:
 	IndexType _reactant;
 	double _reactantVolume;
@@ -130,6 +137,9 @@ protected:
 	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
 
 	util::Array<IndexType, 3, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
+	util::Array<IndexType, 3, Superclass::coeffsSingleExtent,
+		Superclass::coeffsSingleExtent>
+		_rateEntries;
 };
 } // namespace network
 } // namespace core

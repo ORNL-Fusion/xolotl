@@ -44,7 +44,7 @@ private:
 	std::unique_ptr<XolotlInterface> _primaryInstance;
 	std::vector<std::unique_ptr<XolotlInterface>> _subInstances;
 	std::vector<IdType> _subDOFs;
-    std::vector<std::shared_ptr<RatesCapsule>> _constantRates;
+	std::vector<std::shared_ptr<RatesCapsule>> _constantRates;
 };
 } // namespace interface
 } // namespace xolotl

@@ -476,6 +476,7 @@ ReactionNetwork<TImpl>::initializeReactions()
 	Connectivity connectivity;
 	defineReactions(connectivity);
 	generateDiagonalFill(connectivity);
+	setConstantRateEntries();
 }
 
 template <typename TImpl>
@@ -488,9 +489,45 @@ ReactionNetwork<TImpl>::setConstantRates(RatesView rates, IndexType gridIndex)
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setConstantConnectivities(
-	typename ReactionNetwork<TImpl>::ConnectivitiesVector conns)
+	typename ReactionNetwork<TImpl>::ConnectivitiesPair conns)
 {
 	asDerived()->setConstantConnectivities(conns);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::initializeRateEntries(
+	typename ReactionNetwork<TImpl>::ConnectivitiesPair conns, IndexType subId)
+{
+	auto dConnsRowsView = ConnectivitiesPairView(
+		"dConstantConnectivitiesRows", conns.first.size());
+	auto dConnsEntriesView = ConnectivitiesPairView(
+		"dConstantConnectivitiesEntries", conns.second.size());
+	auto hConnsRowsView = create_mirror_view(dConnsRowsView);
+	auto hConnsEntriesView = create_mirror_view(dConnsEntriesView);
+	for (auto i = 0; i < conns.first.size(); i++) {
+		hConnsRowsView(i) = conns.first[i];
+	}
+	for (auto i = 0; i < conns.second.size(); i++) {
+		hConnsEntriesView(i) = conns.second[i];
+	}
+	deep_copy(dConnsRowsView, hConnsRowsView);
+	deep_copy(dConnsEntriesView, hConnsEntriesView);
+
+	auto localInSub = isInSub[subId];
+	auto localBackMap = backMap[subId];
+	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
+		reaction.defineRateEntries(
+			dConnsRowsView, dConnsEntriesView, localInSub, localBackMap, subId);
+	});
+	Kokkos::fence();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setConstantRateEntries()
+{
+	asDerived()->setConstantRateEntries();
 }
 
 template <typename TImpl>
@@ -584,10 +621,9 @@ ReactionNetwork<TImpl>::computeConstantRates(ConcentrationsView concentrations,
 		concentrations, gridIndex, surfaceDepth, spacing);
 
 	auto localInSub = isInSub[subId];
-	auto localBackMap = backMap[subId];
 	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeConstantRates(
-			concentrations, rates, localInSub, localBackMap, gridIndex);
+			concentrations, rates, localInSub, subId, gridIndex);
 	});
 	Kokkos::fence();
 }
@@ -1513,7 +1549,8 @@ void
 ReactionNetworkWorker<TImpl>::defineReactions(Connectivity& connectivity)
 {
 	auto generator = _nw.asDerived()->getReactionGenerator();
-	generator.setConstantConnectivities(_nw._constantConns);
+	generator.setConstantConnectivities(
+		_nw._constantConnsRows, _nw._constantConnsEntries);
 	_nw._reactions = generator.generateReactions();
 	connectivity = generator.getConnectivity();
 }

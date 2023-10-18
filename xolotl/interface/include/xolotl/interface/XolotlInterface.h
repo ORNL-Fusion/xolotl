@@ -69,6 +69,11 @@ private:
 	std::vector<std::vector<IdType>> fromSubNetwork;
 
 	/**
+	 * The number of non zero entries in the constant rate object
+	 */
+	std::vector<IdType> _subEntries;
+
+	/**
 	 * A (possibly) shared instance of the options object
 	 */
 	std::shared_ptr<options::IOptions> options;
@@ -340,14 +345,14 @@ public:
 	void
 	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector);
 
-    std::shared_ptr<RatesCapsule>
-    makeRatesCapsule() const;
+	std::shared_ptr<RatesCapsule>
+	makeRatesCapsule() const;
 
 	/**
 	 * Values for the rates to be set in constant reactions.
 	 *
 	 * @param rates All the rates
-     * @param gridIndex The grid index
+	 * @param gridIndex The grid index
 	 */
 	void
 	setConstantRates(
@@ -357,7 +362,7 @@ public:
 	 * Compute the constant rates
 	 *
 	 * @param conc The concentration vector
-     * @param gridIndex The grid index
+	 * @param gridIndex The grid index
 	 * @param rates A vector containing the rates for each sub instance
 	 */
 	void
@@ -369,8 +374,19 @@ public:
 	 *
 	 * @return A vector telling which reactants interact together
 	 */
-	std::vector<std::vector<std::vector<bool>>>
+	std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>>
 	getConstantConnectivities();
+
+	/**
+	 * Set the rate entries from the connectivities
+	 *
+	 * @param conns The sparse connectivities
+	 * @param subId The corresponding subinterface id
+	 */
+	void
+	initializeRateEntries(
+		std::pair<std::vector<IdType>, std::vector<IdType>> conns,
+		IdType subId);
 
 	/**
 	 * Set the connectivity matrices for constant reactions
@@ -378,7 +394,8 @@ public:
 	 * @param conns A vector telling which reactants interact together
 	 */
 	void
-	setConstantConnectivities(std::vector<std::vector<bool>> conns);
+	setConstantConnectivities(
+		std::pair<std::vector<IdType>, std::vector<IdType>> conns);
 
 	/**
 	 * Write the data in a file.

@@ -533,7 +533,7 @@ try {
 		auto subDOF = fromSubNetwork[l].size();
 		// TODO: should this allocation happen only once (in makeRatesCapsule)?
 		//       (we'd still need to zero out the data here)
-		rates[l]->view = Kokkos::View<double**>("dRates", subDOF, subDOF + 1);
+		rates[l]->view = Kokkos::View<double*>("dRates", _subEntries[l]);
 		network.computeConstantRates(dConcs, rates[l]->view, l, gridIndex);
 	}
 }
@@ -542,7 +542,7 @@ catch (const std::exception& e) {
 	throw;
 }
 
-std::vector<std::vector<std::vector<bool>>>
+std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>>
 XolotlInterface::getConstantConnectivities()
 try {
 	// Get the network
@@ -550,23 +550,33 @@ try {
 	const auto dof = network.getDOF();
 
 	// Loop on the sub network maps
-	std::vector<std::vector<std::vector<bool>>> toReturn;
+	std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>> toReturn;
 	for (auto l = 0; l < fromSubNetwork.size(); l++) {
 		// Get the sub DOF and initialize the connectivity map
 		auto subDOF = fromSubNetwork[l].size();
-		std::vector<std::vector<bool>> connMap =
-			std::vector(subDOF, std::vector(subDOF + 1, false));
+		std::vector<IdType> rows;
+		std::vector<IdType> entries;
 		auto dConns = Kokkos::View<bool**>("dConns", subDOF, subDOF + 1);
 		auto hConns = Kokkos::create_mirror_view(dConns);
 		network.getConstantConnectivities(dConns, l);
 
 		deep_copy(hConns, dConns);
-		// Copy element by element
-		for (auto i = 0; i < connMap.size(); i++)
-			for (auto j = 0; j < connMap[0].size(); j++) {
-				connMap[i][j] = hConns(i, j);
+		// Create the sparse connectivity
+		rows.push_back(0);
+		for (auto i = 0; i < hConns.extent(0); i++) {
+			IdType count = 0;
+			for (auto j = 0; j < hConns.extent(1); j++) {
+				if (hConns(i, j)) {
+					entries.push_back(j);
+					count++;
+				}
 			}
-		toReturn.push_back(connMap);
+			rows.push_back(rows.back() + count);
+		}
+		_subEntries.push_back(entries.size());
+		toReturn.push_back(
+			std::make_pair<std::vector<IdType>, std::vector<IdType>>(
+				std::move(rows), std::move(entries)));
 	}
 
 	return toReturn;
@@ -577,7 +587,23 @@ catch (const std::exception& e) {
 }
 
 void
-XolotlInterface::setConstantConnectivities(std::vector<std::vector<bool>> conns)
+XolotlInterface::initializeRateEntries(
+	std::pair<std::vector<IdType>, std::vector<IdType>> conns, IdType subId)
+try {
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	network.initializeRateEntries(conns, subId);
+
+	return;
+}
+catch (const std::exception& e) {
+	reportException(e);
+	throw;
+}
+
+void
+XolotlInterface::setConstantConnectivities(
+	std::pair<std::vector<IdType>, std::vector<IdType>> conns)
 try {
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();

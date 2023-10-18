@@ -30,23 +30,39 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		if (diffusionFactor(i) != 0.0)
 			addSinks(i, tag);
 
-		if (this->_constantConns.extent(0) > 0) {
-			if (this->_constantConns(i, this->_numDOFs)) {
-				this->addConstantReaction(tag, {i, Network::invalidIndex()});
+		if (this->_constantConnsRows.extent(0) > 0) {
+			// Look for the entry
+			for (auto k = this->_constantConnsRows(i);
+				 k < this->_constantConnsRows(i + 1); k++) {
+				if (this->_constantConnsEntries(k) == this->_numDOFs) {
+					this->addConstantReaction(
+						tag, {i, Network::invalidIndex()});
+					break;
+				}
 			}
 		}
 	}
 
 	// Add every possibility
-	if (this->_constantConns.extent(0) > 0) {
-		if (this->_constantConns(i, j)) {
-			this->addConstantReaction(tag, {i, j});
+	if (this->_constantConnsRows.extent(0) > 0) {
+		// Look for the entry
+		for (auto k = this->_constantConnsRows(i);
+			 k < this->_constantConnsRows(i + 1); k++) {
+			if (this->_constantConnsEntries(k) == j) {
+				this->addConstantReaction(tag, {i, j});
+				break;
+			}
 		}
 	}
 	if (j != i) {
-		if (this->_constantConns.extent(0) > 0) {
-			if (this->_constantConns(j, i)) {
-				this->addConstantReaction(tag, {j, i});
+		if (this->_constantConnsRows.extent(0) > 0) {
+			// Look for the entry
+			for (auto k = this->_constantConnsRows(j);
+				 k < this->_constantConnsRows(j + 1); k++) {
+				if (this->_constantConnsEntries(k) == i) {
+					this->addConstantReaction(tag, {j, i});
+					break;
+				}
 			}
 		}
 	}

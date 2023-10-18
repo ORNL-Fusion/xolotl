@@ -65,8 +65,8 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 		auto momIdInfo = sub->getAllMomentIdInfo();
 		allMomIdInfo.push_back(momIdInfo);
 
-        // Constant rate capsules
-        _constantRates.push_back(sub->makeRatesCapsule());
+		// Constant rate capsules
+		_constantRates.push_back(sub->makeRatesCapsule());
 	}
 
 	// Pass data to primary
@@ -79,6 +79,7 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 		sub->setConstantConnectivities(connectivities[i]);
 		sub->initializeReactions();
 		sub->initializeSolver();
+		_primaryInstance->initializeRateEntries(connectivities[i], i);
 	}
 
 	// Fluxes

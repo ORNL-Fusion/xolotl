@@ -31,6 +31,7 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
 	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using ConnectivitiesPairView = typename Superclass::ConnectivitiesPairView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
@@ -90,30 +91,28 @@ public:
 		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 		if (_reactants[1] == invalidIndex) {
-			this->_constantRates(gridIndex, 0, 0) = rates(_reactants[0], dof);
+			this->_constantRates(gridIndex, 0, 0) = rates(_rateEntries[0][0]);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
 					this->_constantRates(gridIndex, 1 + i(), 0) =
-						rates(_reactantMomentIds[0][i()], dof);
+						rates(_rateEntries[1 + i()][0]);
 				}
 			}
 		}
 		else {
-			this->_constantRates(gridIndex, 0, 0) =
-				rates(_reactants[0], _reactants[1]);
+			this->_constantRates(gridIndex, 0, 0) = rates(_rateEntries[0][0]);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[1][i()] != invalidIndex) {
 					this->_constantRates(gridIndex, 0, 1 + i()) =
-						rates(_reactants[0], _reactantMomentIds[1][i()]);
+						rates(_rateEntries[0][1 + i()]);
 				}
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
 					this->_constantRates(gridIndex, 1 + i(), 0) =
-						rates(_reactantMomentIds[0][i()], _reactants[1]);
+						rates(_rateEntries[1 + i()][0]);
 					for (auto j : speciesRangeNoI) {
 						if (_reactantMomentIds[1][j()] != invalidIndex) {
 							this->_constantRates(gridIndex, 1 + i(), 1 + j()) =
-								rates(_reactantMomentIds[0][i()],
-									_reactantMomentIds[1][j()]);
+								rates(_rateEntries[1 + i()][1 + j()]);
 						}
 					}
 				}
@@ -300,7 +299,7 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex)
+		BelongingView isInSub, IndexType subId, IndexType gridIndex)
 	{
 		return;
 	}
@@ -350,6 +349,52 @@ private:
 		}
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
+		OwnedSubMapView backMap, IndexType subId)
+	{
+		auto dof = connectivityRow.extent(0) - 1;
+		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+
+		if (_reactants[1] == invalidIndex) {
+			_rateEntries[0][0] = this->getPosition(
+				_reactants[0], dof, connectivityRow, connectivityEntries);
+			for (auto i : speciesRangeNoI) {
+				if (_reactantMomentIds[0][i()] != invalidIndex) {
+					_rateEntries[1 + i()][0] =
+						this->getPosition(_reactantMomentIds[0][i()], dof,
+							connectivityRow, connectivityEntries);
+				}
+			}
+		}
+		else {
+			_rateEntries[0][0] = this->getPosition(_reactants[0], _reactants[1],
+				connectivityRow, connectivityEntries);
+			for (auto i : speciesRangeNoI) {
+				if (_reactantMomentIds[1][i()] != invalidIndex) {
+					_rateEntries[0][1 + i()] = this->getPosition(_reactants[0],
+						_reactantMomentIds[1][i()], connectivityRow,
+						connectivityEntries);
+				}
+				if (_reactantMomentIds[0][i()] != invalidIndex) {
+					_rateEntries[1 + i()][0] = this->getPosition(
+						_reactantMomentIds[0][i()], _reactants[1],
+						connectivityRow, connectivityEntries);
+					for (auto j : speciesRangeNoI) {
+						if (_reactantMomentIds[1][j()] != invalidIndex) {
+							_rateEntries[1 + i()][1 + j()] =
+								this->getPosition(_reactantMomentIds[0][i()],
+									_reactantMomentIds[1][j()], connectivityRow,
+									connectivityEntries);
+						}
+					}
+				}
+			}
+		}
+	}
+
 protected:
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
 	util::Array<IndexType, 2> _reactants{invalidIndex, invalidIndex};
@@ -358,6 +403,9 @@ protected:
 	util::Array<IndexType, 2, nMomentIds> _reactantMomentIds;
 
 	util::Array<IndexType, 1, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
+	util::Array<IndexType, Superclass::coeffsSingleExtent,
+		Superclass::coeffsSingleExtent>
+		_rateEntries;
 }; // namespace network
 } // namespace network
 } // namespace core

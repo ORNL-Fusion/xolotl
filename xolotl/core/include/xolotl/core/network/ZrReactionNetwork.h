@@ -32,7 +32,7 @@ public:
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using RateVector = typename Superclass::RateVector;
-	using ConnectivitiesVector = typename Superclass::ConnectivitiesVector;
+	using ConnectivitiesPair = typename Superclass::ConnectivitiesPair;
 	using RatesView = typename Superclass::RatesView;
 
 	using Superclass::Superclass;
@@ -44,7 +44,10 @@ public:
 	setConstantRates(RatesView rates, IndexType gridIndex) override;
 
 	void
-	setConstantConnectivities(ConnectivitiesVector conns) override;
+	setConstantConnectivities(ConnectivitiesPair conns) override;
+
+	void
+	setConstantRateEntries() override;
 
 	void
 	initializeExtraClusterData(const options::IOptions& options);

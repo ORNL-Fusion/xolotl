@@ -31,8 +31,9 @@ public:
 	using OwnedConcentrationsView = Kokkos::View<double*>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
-	using RatesView = Kokkos::View<double**>;
+	using RatesView = Kokkos::View<double*>;
 	using ConnectivitiesView = Kokkos::View<bool**>;
+	using ConnectivitiesPairView = Kokkos::View<IndexType*>;
 	using SubMapView = Kokkos::View<AmountType*, Kokkos::MemoryUnmanaged>;
 	using OwnedSubMapView = Kokkos::View<AmountType*>;
 	using BelongingView = Kokkos::View<bool*>;
@@ -43,7 +44,8 @@ public:
 	using MomentIdMap = std::vector<std::vector<IdType>>;
 	using MomentIdMapVector = std::vector<std::vector<std::vector<IdType>>>;
 	using RateVector = std::vector<std::vector<double>>;
-	using ConnectivitiesVector = std::vector<std::vector<bool>>;
+	using ConnectivitiesPair =
+		std::pair<std::vector<IdType>, std::vector<IdType>>;
 	using PhaseSpace = std::vector<std::string>;
 
 	KOKKOS_INLINE_FUNCTION
@@ -360,7 +362,18 @@ public:
 	/**
 	 * @brief Set the connectivities for constant reactions
 	 */
-	virtual void setConstantConnectivities(ConnectivitiesVector) = 0;
+	virtual void setConstantConnectivities(ConnectivitiesPair) = 0;
+
+	/**
+	 * @brief Set the rate entries to compute constant rates
+	 */
+	virtual void initializeRateEntries(ConnectivitiesPair, IndexType) = 0;
+
+	/**
+	 * @brief Set the rate entries for constant reactions
+	 */
+	virtual void
+	setConstantRateEntries() = 0;
 
 	virtual PhaseSpace
 	getPhaseSpace() = 0;

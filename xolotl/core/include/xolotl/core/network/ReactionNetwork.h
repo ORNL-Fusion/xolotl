@@ -79,6 +79,8 @@ public:
 	using FluxesView = typename IReactionNetwork::FluxesView;
 	using RatesView = typename IReactionNetwork::RatesView;
 	using ConnectivitiesView = typename IReactionNetwork::ConnectivitiesView;
+	using ConnectivitiesPairView =
+		typename IReactionNetwork::ConnectivitiesPairView;
 	using SubMapView = typename IReactionNetwork::SubMapView;
 	using OwnedSubMapView = typename IReactionNetwork::OwnedSubMapView;
 	using BelongingView = typename IReactionNetwork::BelongingView;
@@ -93,7 +95,7 @@ public:
 	using MomentIdMap = IReactionNetwork::MomentIdMap;
 	using MomentIdMapVector = IReactionNetwork::MomentIdMapVector;
 	using RateVector = IReactionNetwork::RateVector;
-	using ConnectivitiesVector = IReactionNetwork::ConnectivitiesVector;
+	using ConnectivitiesPair = IReactionNetwork::ConnectivitiesPair;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
 	using TotalQuantity = IReactionNetwork::TotalQuantity;
 
@@ -349,7 +351,12 @@ public:
 	void
 	setConstantRates(RatesView, IndexType gridIndex) override;
 
-	void setConstantConnectivities(ConnectivitiesVector) override;
+	void setConstantConnectivities(ConnectivitiesPair) override;
+
+	void initializeRateEntries(ConnectivitiesPair, IndexType) override;
+
+	void
+	setConstantRateEntries() override;
 
 	PhaseSpace
 	getPhaseSpace() override;
@@ -690,7 +697,8 @@ protected:
 
 	std::map<std::string, SpeciesId> _speciesLabelMap;
 
-	ConnectivitiesView _constantConns;
+	ConnectivitiesPairView _constantConnsRows;
+	ConnectivitiesPairView _constantConnsEntries;
 
 	double _currentTime;
 };
