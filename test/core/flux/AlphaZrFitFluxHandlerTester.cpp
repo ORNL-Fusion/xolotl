@@ -79,16 +79,16 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	// Check the value at some grid points
 	auto newConcentration =
 		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
-	BOOST_REQUIRE_CLOSE(newConcentration[0], 4.13357676e-07, 0.01); // I_1
-	BOOST_REQUIRE_CLOSE(newConcentration[1], 3.95414805e-08, 0.01); // I_2
-	BOOST_REQUIRE_CLOSE(newConcentration[19], 2.563377e-10, 0.01); // I_20
-	BOOST_REQUIRE_CLOSE(newConcentration[42], 5.116626e-11, 0.01); // I_43
-	BOOST_REQUIRE_CLOSE(newConcentration[200], 2.99444219e-07, 0.01); // V_1
-	BOOST_REQUIRE_CLOSE(newConcentration[219], 3.13544564e-10, 0.01); // V_20
-	BOOST_REQUIRE_CLOSE(newConcentration[265], 4.849896e-11, 0.01); // V_66
+	BOOST_REQUIRE_CLOSE(newConcentration[0], 4.141478e-07, 0.01); // I_1
+	BOOST_REQUIRE_CLOSE(newConcentration[1], 3.9617063976e-08, 0.01); // I_2
+	BOOST_REQUIRE_CLOSE(newConcentration[19], 2.568277e-10, 0.01); // I_20
+	BOOST_REQUIRE_CLOSE(newConcentration[42], 5.126406787e-11, 0.01); // I_43
+	BOOST_REQUIRE_CLOSE(newConcentration[200], 3.000166e-07, 0.01); // V_1
+	BOOST_REQUIRE_CLOSE(newConcentration[219], 3.141439e-10, 0.01); // V_20
+	BOOST_REQUIRE_CLOSE(newConcentration[265], 4.8591669e-11, 0.01); // V_66
 	BOOST_REQUIRE_CLOSE(newConcentration[100], 0.0, 0.01); // B_1
-	BOOST_REQUIRE_CLOSE(newConcentration[129], 2.287762e-11, 0.01); // B_30
-	BOOST_REQUIRE_CLOSE(newConcentration[165], 5.38877e-12, 0.01); // B_66
+	BOOST_REQUIRE_CLOSE(newConcentration[129], 2.292135e-11, 0.01); // B_30
+	BOOST_REQUIRE_CLOSE(newConcentration[165], 5.39907e-12, 0.01); // B_66
 
 	// Finalize MPI
 	MPI_Finalize();

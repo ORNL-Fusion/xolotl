@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 		22, 2, 3, 7, 8, 9, 13, 15, 10, 14, 16, 11, 12, 17, 21, 18, 20, 19};
 	NetworkType::SparseFillMap dfill;
 	auto nPartials = network.getDiagonalFill(dfill);
-	BOOST_REQUIRE_EQUAL(nPartials, 413);
+	BOOST_REQUIRE_EQUAL(nPartials, 401);
 	for (NetworkType::IndexType i = 0; i < dof; i++) {
 		auto rowIter = dfill.find(i);
 		if (rowIter != dfill.end()) {
@@ -488,8 +488,8 @@ BOOST_AUTO_TEST_CASE(grouped)
 		groupingWidth, groupingWidth, maxI + 1, groupingWidth, groupingWidth}};
 	NetworkType network = NetworkType(maxSpeciesAmounts, subdivRatios, 1, opts);
 
-	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 47);
-	BOOST_REQUIRE_EQUAL(network.getDOF(), 53);
+	BOOST_REQUIRE_EQUAL(network.getNumClusters(), 39);
+	BOOST_REQUIRE_EQUAL(network.getDOF(), 47);
 
 	BOOST_REQUIRE_CLOSE(network.getLatticeParameter(), 0.36, 0.01);
 	BOOST_REQUIRE_CLOSE(network.getAtomicVolume(), 0.011664, 0.01);
