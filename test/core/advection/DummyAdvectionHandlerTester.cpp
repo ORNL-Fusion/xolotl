@@ -117,13 +117,18 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 		1);
 
 	// Check the new values of updatedConcOffset
-    auto updatedConcOffsetMirror =
-        create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[1], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[3], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[5], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[7], 0.0, 0.01); // Does not advect
-	BOOST_REQUIRE_CLOSE(updatedConcOffsetMirror[9], 0.0, 0.01); // Does not advect
+	auto updatedConcOffsetMirror =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffsetMirror[1], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffsetMirror[3], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffsetMirror[5], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffsetMirror[7], 0.0, 0.01); // Does not advect
+	BOOST_REQUIRE_CLOSE(
+		updatedConcOffsetMirror[9], 0.0, 0.01); // Does not advect
 
 	// Don't even test the Jacobian because there is no advecting cluster
 

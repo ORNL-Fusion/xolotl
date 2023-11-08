@@ -150,7 +150,7 @@ BOOST_AUTO_TEST_CASE(checkAdvection)
 		network, val, gridPosition, hx, hx, 0);
 
 	// Check values
-    auto valMirror = create_mirror_view_and_copy(Kokkos::HostSpace{}, val);
+	auto valMirror = create_mirror_view_and_copy(Kokkos::HostSpace{}, val);
 	BOOST_REQUIRE_CLOSE(valMirror[0], -509225360.0, 0.01);
 	BOOST_REQUIRE_CLOSE(valMirror[1], 31826585.0, 0.01);
 	BOOST_REQUIRE_CLOSE(valMirror[2], -553468828.0, 0.01);
