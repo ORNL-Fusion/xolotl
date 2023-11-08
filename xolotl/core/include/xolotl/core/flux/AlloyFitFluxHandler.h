@@ -350,7 +350,7 @@ public:
 		if (cascadeDose > 0.0) {
 			attenuation = ((1.0 - cascadeEfficiency) / 2.0) *
 					(1.0 -
-						tanh(100.0 *
+						tanh(47.0 *
 							(currentTime * fluxAmplitude - cascadeDose))) +
 				cascadeEfficiency;
 		}

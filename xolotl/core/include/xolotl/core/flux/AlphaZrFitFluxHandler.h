@@ -175,17 +175,21 @@ public:
 				"\nThe alpha Zr problem is not defined for more than 0D!");
 		}
 
-		double cascadeEfficiency = ((1.0 - cascadeEfficiency) / 2.0) *
-				(1.0 -
-					tanh(100.0 * (currentTime * fluxAmplitude - cascadeDose))) +
-			cascadeEfficiency;
+		double attenuation = 1.0;
+		if (cascadeDose > 0.0) {
+			attenuation = ((1.0 - cascadeEfficiency) / 2.0) *
+					(1.0 -
+						tanh(47.0 *
+							(currentTime * fluxAmplitude - cascadeDose))) +
+				cascadeEfficiency;
+		}
 
 		auto ids = this->fluxIds;
 		auto flux = this->incidentFlux;
 		Kokkos::parallel_for(
 			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
 				Kokkos::atomic_add(
-					&updatedConcOffset[ids[i]], flux(i, 0) * cascadeEfficiency);
+					&updatedConcOffset[ids[i]], flux(i, 0) * attenuation);
 			});
 	}
 
