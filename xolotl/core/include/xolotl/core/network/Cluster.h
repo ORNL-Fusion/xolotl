@@ -19,6 +19,9 @@ class ClusterBase
 public:
 	using IndexType = detail::ReactionNetworkIndexType;
 
+	KOKKOS_DEFAULTED_FUNCTION
+	ClusterBase() = default;
+
 	KOKKOS_INLINE_FUNCTION
 	ClusterBase(IndexType id) : _id(id)
 	{
@@ -100,7 +103,8 @@ public:
 	using ClusterData = detail::ClusterDataCommon<MemSpace>;
 	using IndexType = typename Superclass::IndexType;
 
-	ClusterCommon() = delete;
+	KOKKOS_DEFAULTED_FUNCTION
+	ClusterCommon() = default;
 
 	KOKKOS_INLINE_FUNCTION
 	ClusterCommon(const ClusterData* data, IndexType id) :
@@ -110,7 +114,7 @@ public:
 	}
 
 private:
-	const ClusterData* _data;
+	const ClusterData* _data{nullptr};
 };
 
 /**
@@ -134,7 +138,8 @@ public:
 	using IndexType = typename Superclass::IndexType;
 	using Composition = typename Types::Composition;
 
-	Cluster() = delete;
+	KOKKOS_DEFAULTED_FUNCTION
+	Cluster() = default;
 
 	KOKKOS_INLINE_FUNCTION
 	Cluster(const ClusterData* data, IndexType id) : Superclass(id), _data{data}
@@ -163,7 +168,7 @@ public:
 	}
 
 private:
-	const ClusterData* _data;
+	const ClusterData* _data{nullptr};
 };
 } // namespace network
 } // namespace core

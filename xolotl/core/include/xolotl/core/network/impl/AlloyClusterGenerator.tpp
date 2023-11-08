@@ -40,43 +40,48 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	if (nAxis == 0)
 		return true;
 
-	// V, I, and Perfect are always refined
+	// V, and I are always refined
 	if (region[Species::V].begin() > 0)
 		return true;
 	if (region[Species::I].begin() > 0)
-		return true;
-	if (region[Species::Perfect].begin() > 0)
 		return true;
 
 	// Smaller that the minimum size for grouping
 	if (region[Species::Void].begin() < _groupingMin &&
 		region[Species::Faulted].begin() < _groupingMin &&
-		region[Species::Frank].begin() < _groupingMin) {
+		region[Species::Frank].begin() < _groupingMin &&
+		region[Species::Perfect].begin() < _groupingMin) {
 		return true;
 	}
 
 	// Too large
-	if (region[Species::Void].end() > _maxSize ||
+	if (region[Species::Void].end() > _maxVoid ||
 		region[Species::Faulted].end() > _maxSize ||
-		region[Species::Frank].end() > _maxSize) {
+		region[Species::Frank].end() > _maxSize ||
+		region[Species::Perfect].end() > _maxSize) {
 		return true;
 	}
 
 	if (region[Species::Void].begin() > 0 &&
 		region[Species::Void].length() <
 			util::max((double)(_groupingWidth + 1),
-				pow(region[Species::Void].begin(), 3) * 1.0e-7))
+				pow(region[Species::Void].begin(), 1) * 5.0e-2))
 		result[1] = false;
 	if (region[Species::Faulted].begin() > 0 &&
 		region[Species::Faulted].length() <
 			util::max((double)(_groupingWidth + 1),
-				pow(region[Species::Faulted].begin(), 3) * 1.0e-7))
+				pow(region[Species::Faulted].begin(), 1) * 5.0e-2))
 		result[2] = false;
 	if (region[Species::Frank].begin() > 0 &&
 		region[Species::Frank].length() <
 			util::max((double)(_groupingWidth + 1),
-				pow(region[Species::Frank].begin(), 3) * 1.0e-7))
+				pow(region[Species::Frank].begin(), 1) * 5.0e-2))
 		result[5] = false;
+	if (region[Species::Perfect].begin() > 0 &&
+		region[Species::Perfect].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::Perfect].begin(), 1) * 5.0e-2))
+		result[4] = false;
 
 	return true;
 }
@@ -115,8 +120,7 @@ AlloyClusterGenerator::select(const Region& region) const
 			region[Species::Perfect].begin() < _maxI)
 			return false;
 		if (region[Species::Perfect].begin() > 0 &&
-			region[Species::Perfect].begin() >
-				util::min((AmountType)45, _maxSize))
+			region[Species::Perfect].begin() > _maxSize)
 			return false;
 
 		// Frank
@@ -140,7 +144,7 @@ AlloyClusterGenerator::select(const Region& region) const
 			region[Species::Void].begin() <= _maxV)
 			return false;
 		if (region[Species::Void].begin() > 0 &&
-			region[Species::Void].begin() > _maxSize)
+			region[Species::Void].begin() > _maxVoid)
 			return false;
 	}
 
@@ -151,10 +155,9 @@ AlloyClusterGenerator::select(const Region& region) const
 		region[Species::Frank].end() - 1 <= _maxI)
 		return false;
 
-	if (region[Species::Void].begin() > _maxSize ||
+	if (region[Species::Void].begin() > _maxVoid ||
 		region[Species::Faulted].begin() > _maxSize ||
-		region[Species::Perfect].begin() >
-			util::min((AmountType)45, _maxSize) ||
+		region[Species::Perfect].begin() > _maxSize ||
 		region[Species::Frank].begin() > _maxSize)
 		return false;
 
@@ -306,22 +309,19 @@ AlloyClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	}
 	if (lo.isOnAxis(Species::Void)) {
 		for (auto j : makeIntervalRange(reg[Species::Void])) {
-			radius +=
-				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+			radius += cbrt(0.75 * prefactor * latticeParameter * (double)j);
 		}
 		return radius / reg[Species::Void].length();
 	}
 	if (lo.isOnAxis(Species::V)) {
 		for (auto j : makeIntervalRange(reg[Species::V])) {
-			radius +=
-				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+			radius += cbrt(0.75 * prefactor * latticeParameter * (double)j);
 		}
 		return radius / reg[Species::V].length();
 	}
 	if (lo.isOnAxis(Species::I)) {
 		for (auto j : makeIntervalRange(reg[Species::I])) {
-			radius +=
-				pow(0.75 * prefactor * latticeParameter * (double)j, 1.0 / 3.0);
+			radius += cbrt(0.75 * prefactor * latticeParameter * (double)j);
 		}
 		return radius / reg[Species::I].length();
 	}

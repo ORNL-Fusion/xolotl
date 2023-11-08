@@ -340,6 +340,14 @@ public:
 	getBCString() const = 0;
 
 	/**
+	 * Obtain the value of the portion of heat lost to the bulk.
+	 *
+	 * @return The portion
+	 */
+	virtual double
+	getHeatLossPortion() const = 0;
+
+	/**
 	 * Obtain the value of the depth above which the bursting is happening.
 	 *
 	 * @return The depth
@@ -518,6 +526,22 @@ public:
 	 */
 	virtual int
 	getTransitionSize() const = 0;
+
+	/**
+	 * Obtain the value of dose at which the cascade overlap takes effect.
+	 *
+	 * @return The dose
+	 */
+	virtual double
+	getCascadeDose() const = 0;
+
+	/**
+	 * Obtain the value of remaining cascade efficiency.
+	 *
+	 * @return The efficiency
+	 */
+	virtual double
+	getCascadeEfficiency() const = 0;
 };
 // end class IOptions
 } /* namespace options */

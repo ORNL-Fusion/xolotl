@@ -69,6 +69,15 @@ public:
 	createSolverContext(DM& da) = 0;
 
 	/**
+	 * Finish setting up solver dependencies
+	 *
+	 * @param da The PETSc distributed array
+	 * @param ts The PETSc time-stepper
+	 */
+	virtual void
+	initializeSolverContext(DM& da, TS& ts) = 0;
+
+	/**
 	 * Initialize the concentration solution vector.
 	 *
 	 * @param da The PETSc distributed array

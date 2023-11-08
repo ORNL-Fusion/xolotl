@@ -527,6 +527,8 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 		isMirror = false;
 	if (opts.getBCString() == "robin")
 		isRobin = true;
+	if (opts.getHeatLossPortion() >= 0.0)
+		isRobin = true;
 
 	// Set the boundary conditions (= 1: free surface; = 0: mirror)
 	leftOffset = opts.getLeftBoundary();

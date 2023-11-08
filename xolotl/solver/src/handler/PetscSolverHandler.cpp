@@ -55,6 +55,64 @@ PetscSolverHandler::ConvertToPetscSparseFillMap(
 	return ret;
 }
 
+std::array<std::vector<PetscInt>, 2>
+PetscSolverHandler::convertToCoordinateListPair(std::size_t dof,
+	const core::network::IReactionNetwork::SparseFillMap& fillMap)
+{
+	auto nNonZeros =
+		std::accumulate(fillMap.begin(), fillMap.end(), std::uint64_t{0},
+			[](std::uint64_t r, auto&& kvp) { return r + kvp.second.size(); });
+
+	std::array<std::vector<PetscInt>, 2> ret;
+	ret[0].reserve(nNonZeros);
+	ret[1].reserve(nNonZeros);
+
+	for (auto i = 0; i < dof; ++i) {
+		auto rowIter = fillMap.find(i);
+		if (rowIter == fillMap.end()) {
+			continue;
+		}
+		for (auto j : rowIter->second) {
+			ret[0].push_back(i);
+			ret[1].push_back(j);
+		}
+	}
+
+	return ret;
+}
+
+std::vector<core::RowColPair>
+PetscSolverHandler::convertToRowColPairList(std::size_t dof,
+	const core::network::IReactionNetwork::SparseFillMap& fillMap)
+{
+	auto nNonZeros =
+		std::accumulate(fillMap.begin(), fillMap.end(), std::uint64_t{0},
+			[](std::uint64_t r, auto&& kvp) { return r + kvp.second.size(); });
+
+	std::vector<core::RowColPair> ret;
+	ret.reserve(nNonZeros);
+
+	for (IdType i = 0; i < dof; ++i) {
+		auto rowIter = fillMap.find(i);
+		if (rowIter == fillMap.end()) {
+			continue;
+		}
+		for (IdType j : rowIter->second) {
+			ret.push_back({i, j});
+		}
+	}
+
+	return ret;
+}
+
+void
+PetscSolverHandler::resetJacobianValues()
+{
+	auto values = vals;
+	Kokkos::parallel_for(
+		"PetscSolverHandler::resetJacobianValues", values.size(),
+		KOKKOS_LAMBDA(const IdType i) { values(i) = 0.0; });
+}
 } /* end namespace handler */
 } /* end namespace solver */
 } /* end namespace xolotl */

@@ -2,6 +2,7 @@
 #define PETSCSOLVERHANDLER_H
 
 // Includes
+#include <xolotl/core/Types.h>
 #include <xolotl/perf/IEventCounter.h>
 #include <xolotl/perf/ITimer.h>
 #include <xolotl/solver/handler/SolverHandler.h>
@@ -12,24 +13,6 @@ namespace solver
 {
 namespace handler
 {
-#ifndef CHECK_PETSC_ERROR
-#define CHECK_PETSC_ERROR
-/**
- * This operation checks a PETSc error code and throws an exception with given
- * error message.
- *
- * @param errorCode The PETSc error code.
- * @param errMsg The error message in the thrown exception.
- */
-inline void
-checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
-{
-	if (PetscUnlikely(errorCode)) {
-		throw std::runtime_error(errorMsg);
-	}
-}
-#endif
-
 /**
  * This class and its subclasses realize the SolverHandler interface to solve
  * the diffusion-reaction problem with the PETSc solvers from Argonne
@@ -41,7 +24,7 @@ checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
 class PetscSolverHandler : public SolverHandler
 {
 protected:
-	//! Partial derivatives for all reactions at one grid point.
+	//! Partial derivatives at one grid point.
 	Kokkos::View<double*> vals;
 
 	//! Map of connectivities
@@ -80,6 +63,14 @@ protected:
 	ConvertToPetscSparseFillMap(size_t dof,
 		const core::network::IReactionNetwork::SparseFillMap& fillMap);
 
+	static std::array<std::vector<PetscInt>, 2>
+	convertToCoordinateListPair(std::size_t dof,
+		const core::network::IReactionNetwork::SparseFillMap& fillMap);
+
+	static std::vector<core::RowColPair>
+	convertToRowColPairList(std::size_t dof,
+		const core::network::IReactionNetwork::SparseFillMap& fillMap);
+
 public:
 	/**
 	 * Default constructor, deleted because we need to construct with objects.
@@ -93,6 +84,12 @@ public:
 	 * @param _perfHandler The perf handler to use.
 	 */
 	PetscSolverHandler(NetworkType& _network, const options::IOptions& options);
+
+	/**
+	 * Reset all jacobian values to zero
+	 */
+	void
+	resetJacobianValues();
 
 	/**
 	 * Set the number of grid points we want to move by at the surface.

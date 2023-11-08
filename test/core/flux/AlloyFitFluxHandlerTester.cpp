@@ -9,6 +9,7 @@
 #include <xolotl/core/flux/AlloyFitFluxHandler.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
 
 using namespace std;
@@ -31,7 +32,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
-	paramFile << "netParam=50 0 0 6 4" << std::endl;
+	paramFile << "netParam=50 50 0 6 4" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -70,54 +71,47 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	double currTime = 1.0;
 
 	// The array of concentration
-	double newConcentration[7 * dof];
-
-	// Initialize their values
-	for (int i = 0; i < 7 * dof; i++) {
-		newConcentration[i] = 0.0;
-	}
+	test::DOFView conc("conc", 7, dof);
 
 	// The pointer to the grid point we want
-	double* updatedConc = &newConcentration[0];
-	double* updatedConcOffset = updatedConc + dof;
+	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations
 	testFitFlux->computeIncidentFlux(
 		currTime, updatedConcOffset, 1, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[88 + dof], 4.49925, 0.01); // I_1
-	BOOST_REQUIRE_CLOSE(newConcentration[91 + dof], 0.2121075, 0.01); // I_4
-	BOOST_REQUIRE_CLOSE(
-		newConcentration[47 + dof], 0.071988, 0.01); // Perfect_5
-	BOOST_REQUIRE_CLOSE(newConcentration[87 + dof], 0.0, 0.01); // Perfect_45
-	BOOST_REQUIRE_CLOSE(newConcentration[dof], 0.017997, 0.01); // Frank_5
-	BOOST_REQUIRE_CLOSE(newConcentration[40 + dof], 0.0, 0.01); // Frank_45
-	BOOST_REQUIRE_CLOSE(newConcentration[180 + dof], 4.49925, 0.01); // V_1
-	BOOST_REQUIRE_CLOSE(newConcentration[185 + dof], 0.0835575, 0.01); // V_6
-	BOOST_REQUIRE_CLOSE(
-		newConcentration[92 + dof], 0.034892, 0.01); // Faulted_7
-	BOOST_REQUIRE_CLOSE(newConcentration[130 + dof], 0.0, 0.01); // Faulted_45
+	auto newConcentration =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(newConcentration[88], 4.49925, 0.01); // I_1
+	BOOST_REQUIRE_CLOSE(newConcentration[91], 0.2121075, 0.01); // I_4
+	BOOST_REQUIRE_CLOSE(newConcentration[47], 0.071988, 0.01); // Perfect_5
+	BOOST_REQUIRE_CLOSE(newConcentration[87], 0.0, 0.01); // Perfect_45
+	BOOST_REQUIRE_CLOSE(newConcentration[0], 0.017997, 0.01); // Frank_5
+	BOOST_REQUIRE_CLOSE(newConcentration[40], 0.0, 0.01); // Frank_45
+	BOOST_REQUIRE_CLOSE(newConcentration[180], 4.49925, 0.01); // V_1
+	BOOST_REQUIRE_CLOSE(newConcentration[185], 0.0835575, 0.01); // V_6
+	BOOST_REQUIRE_CLOSE(newConcentration[92], 0.034892, 0.01); // Faulted_7
+	BOOST_REQUIRE_CLOSE(newConcentration[130], 0.0, 0.01); // Faulted_45
 
-	updatedConcOffset = updatedConc + 4 * dof;
+	updatedConcOffset = subview(conc, 4, Kokkos::ALL);
 
 	// Update the concentrations
 	testFitFlux->computeIncidentFlux(
 		currTime, updatedConcOffset, 4, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[88 + 4 * dof], 0.0, 0.01); // I_1
-	BOOST_REQUIRE_CLOSE(newConcentration[91 + 4 * dof], 0.0, 0.01); // I_4
-	BOOST_REQUIRE_CLOSE(newConcentration[47 + 4 * dof], 0.0, 0.01); // Perfect_5
-	BOOST_REQUIRE_CLOSE(
-		newConcentration[87 + 4 * dof], 0.0, 0.01); // Perfect_45
-	BOOST_REQUIRE_CLOSE(newConcentration[4 * dof], 0.0, 0.01); // Frank_5
-	BOOST_REQUIRE_CLOSE(newConcentration[40 + 4 * dof], 0.0, 0.01); // Frank_45
-	BOOST_REQUIRE_CLOSE(newConcentration[180 + 4 * dof], 0.0, 0.01); // V_1
-	BOOST_REQUIRE_CLOSE(newConcentration[185 + 4 * dof], 0.0, 0.01); // V_6
-	BOOST_REQUIRE_CLOSE(newConcentration[92 + 4 * dof], 0.0, 0.01); // Faulted_7
-	BOOST_REQUIRE_CLOSE(
-		newConcentration[130 + 4 * dof], 0.0, 0.01); // Faulted_45
+	deep_copy(newConcentration, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(newConcentration[88], 0.0, 0.01); // I_1
+	BOOST_REQUIRE_CLOSE(newConcentration[91], 0.0, 0.01); // I_4
+	BOOST_REQUIRE_CLOSE(newConcentration[47], 0.0, 0.01); // Perfect_5
+	BOOST_REQUIRE_CLOSE(newConcentration[87], 0.0, 0.01); // Perfect_45
+	BOOST_REQUIRE_CLOSE(newConcentration[0], 0.0, 0.01); // Frank_5
+	BOOST_REQUIRE_CLOSE(newConcentration[40], 0.0, 0.01); // Frank_45
+	BOOST_REQUIRE_CLOSE(newConcentration[180], 0.0, 0.01); // V_1
+	BOOST_REQUIRE_CLOSE(newConcentration[185], 0.0, 0.01); // V_6
+	BOOST_REQUIRE_CLOSE(newConcentration[92], 0.0, 0.01); // Faulted_7
+	BOOST_REQUIRE_CLOSE(newConcentration[130], 0.0, 0.01); // Faulted_45
 
 	// Finalize MPI
 	MPI_Finalize();

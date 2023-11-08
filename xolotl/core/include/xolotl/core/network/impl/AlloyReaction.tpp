@@ -73,7 +73,28 @@ AlloyProductionReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	auto rate =
+		alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+
+	// Divide the rate by 2 for I + I -> Frank or perfect
+	if (cl0.getRegion().getOrigin().isOnAxis(Species::I) and
+		cl1.getRegion().getOrigin().isOnAxis(Species::I)) {
+		auto prod = this->_clusterData->getCluster(_products[0]);
+		if (not prod.getRegion().getOrigin().isOnAxis(Species::I)) {
+			return rate * 0.5;
+		}
+	}
+
+	// Divide the rate by 2 for V + V -> void or faulted
+	if (cl0.getRegion().getOrigin().isOnAxis(Species::V) and
+		cl1.getRegion().getOrigin().isOnAxis(Species::V)) {
+		auto prod = this->_clusterData->getCluster(_products[0]);
+		if (not prod.getRegion().getOrigin().isOnAxis(Species::V)) {
+			return rate * 0.5;
+		}
+	}
+
+	return rate;
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -89,7 +110,28 @@ AlloyDissociationReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	auto rate =
+		alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+
+	// Divide the rate by 2 for I + I -> Frank or perfect
+	if (cl0.getRegion().getOrigin().isOnAxis(Species::I) and
+		cl1.getRegion().getOrigin().isOnAxis(Species::I)) {
+		auto react = this->_clusterData->getCluster(_reactant);
+		if (not react.getRegion().getOrigin().isOnAxis(Species::I)) {
+			return rate * 0.5;
+		}
+	}
+
+	// Divide the rate by 2 for V + V -> void or faulted
+	if (cl0.getRegion().getOrigin().isOnAxis(Species::V) and
+		cl1.getRegion().getOrigin().isOnAxis(Species::V)) {
+		auto react = this->_clusterData->getCluster(_reactant);
+		if (not react.getRegion().getOrigin().isOnAxis(Species::V)) {
+			return rate * 0.5;
+		}
+	}
+
+	return rate;
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -113,27 +155,27 @@ AlloyDissociationReaction::computeBindingEnergy(double time)
 	Composition prod1Comp = prod1Reg.getOrigin();
 	Composition prod2Comp = prod2Reg.getOrigin();
 	if (lo.isOnAxis(Species::Void)) {
-		double n = (double)(lo[Species::Void] + hi[Species::Void] - 1) / 2.0;
+		double n = (double)(lo[Species::Void] + hi[Species::Void] - 1) * 0.5;
 		//		if (prod1Comp.isOnAxis(Species::I) ||
 		// prod2Comp.isOnAxis(Species::I)) { 			be = 3.5 - 3.45 * (pow(n
 		// + 1.0, 2.0
 		/// 3.0) - pow(n, 2.0 / 3.0));
 		//		}
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 1.9 - 3.1 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
 		}
 	}
 	else if (lo.isOnAxis(Species::Faulted)) {
 		double n =
-			(double)(lo[Species::Faulted] + hi[Species::Faulted] - 1) / 2.0;
+			(double)(lo[Species::Faulted] + hi[Species::Faulted] - 1) * 0.5;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.2 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 1.9 - 3.2 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
 		}
 	}
 	else if (lo.isOnAxis(Species::V)) {
-		double n = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
+		double n = (double)(lo[Species::V] + hi[Species::V] - 1) * 0.5;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.1 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
+			be = 1.9 - 3.1 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
 		}
 	}
 	//	else if (lo.isOnAxis(Species::I)) {

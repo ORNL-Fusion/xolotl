@@ -83,17 +83,19 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
 	{
-		// Skip if no index was set
-		if (fluxIndices.size() == 0)
+		if (fluxIndices.empty()) {
 			return;
+		}
 
-		// Update the concentration array
-		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
-
-		return;
+		auto id = fluxIndices[0];
+		auto amplitude = fluxAmplitude;
+		Kokkos::parallel_for(
+			1,
+			KOKKOS_LAMBDA(std::size_t) { updatedConcOffset[id] += amplitude; });
 	}
 };
 // end class FuelFitFluxHandler

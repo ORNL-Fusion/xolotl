@@ -12,7 +12,8 @@ generation tokamaks like ITER, as well as nuclear fuel in fission reactors.
 - Boost
 - Kokkos >= 3.2
 - HDF5
-- PETSc >= 3.14
+- PETSc >= 3.16 (configured with kokkos and kokkos-kernels; see
+  scripts/build_petsc.sh)
 
 ## Quick-Start Install
 If you have the above dependencies installed
