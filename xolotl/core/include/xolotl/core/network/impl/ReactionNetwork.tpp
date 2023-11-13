@@ -44,6 +44,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setLatticeParameter(opts.getLatticeParameter());
 	this->setFissionRate(opts.getFluxAmplitude());
 	this->setZeta(opts.getZeta());
+	_clusterData.h_view().setTransitionSize(opts.getTransitionSize());
 	auto map = opts.getProcesses();
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);
