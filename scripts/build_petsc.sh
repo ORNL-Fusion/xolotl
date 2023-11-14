@@ -79,7 +79,6 @@ fi
 if [ ${_use_cuda} -eq 1 ]; then
     _cuda_sm_ver=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader)
     _cuda_sm=${_cuda_sm_ver//./}
-    echo $cuda_sm
     _petsc_cuda_args=" \
         --with-cuda-arch=${_cuda_sm} \
         --CUDAOPTFLAGS=-O3"
