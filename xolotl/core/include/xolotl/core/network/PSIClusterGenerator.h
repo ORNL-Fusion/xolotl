@@ -40,6 +40,8 @@ IReactionNetwork::AmountType
 getDeltaV(IReactionNetwork::AmountType amtV, double latticeParameter,
 	double temp) noexcept
 {
+	if (amtV == 0)
+		return 1;
 	return (IReactionNetwork::AmountType)(1.01 * pow((double)amtV, 0.643));
 }
 
