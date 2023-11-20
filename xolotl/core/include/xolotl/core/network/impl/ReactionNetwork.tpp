@@ -497,7 +497,7 @@ ReactionNetwork<TImpl>::setConstantConnectivities(
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::initializeRateEntries(
-	typename ReactionNetwork<TImpl>::ConnectivitiesPair conns, IndexType subId)
+	const ConnectivitiesPair& conns, IndexType subId)
 {
 	auto dConnsRowsView = ConnectivitiesPairView(
 		"dConstantConnectivitiesRows", conns.first.size());
@@ -521,6 +521,17 @@ ReactionNetwork<TImpl>::initializeRateEntries(
 			dConnsRowsView, dConnsEntriesView, localInSub, localBackMap, subId);
 	});
 	Kokkos::fence();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::initializeRateEntries(
+	const std::vector<ConnectivitiesPair>& connectivities)
+{
+    _reactions.allocateRateEntries(connectivities.size());
+    for (IndexType i = 0; i < connectivities.size(); ++i) {
+        initializeRateEntries(connectivities[i], i);
+    }
 }
 
 template <typename TImpl>

@@ -385,8 +385,8 @@ public:
 	 */
 	void
 	initializeRateEntries(
-		std::pair<std::vector<IdType>, std::vector<IdType>> conns,
-		IdType subId);
+		const std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>>&
+			conns);
 
 	/**
 	 * Set the connectivity matrices for constant reactions

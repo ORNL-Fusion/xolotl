@@ -1,4 +1,5 @@
 // Includes
+#include <cassert>
 #include <ctime>
 #include <fstream>
 #include <iostream>
@@ -588,13 +589,12 @@ catch (const std::exception& e) {
 
 void
 XolotlInterface::initializeRateEntries(
-	std::pair<std::vector<IdType>, std::vector<IdType>> conns, IdType subId)
+	const std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>>&
+		conns)
 try {
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
-	network.initializeRateEntries(conns, subId);
-
-	return;
+	network.initializeRateEntries(conns);
 }
 catch (const std::exception& e) {
 	reportException(e);

@@ -32,12 +32,14 @@ struct ReactionData
 	using NetworkType = TNetwork;
 	using IndexType = ReactionNetworkIndexType;
 	using ReactionTypes = ReactionTypeList<NetworkType>;
+    using Props = ReactionNetworkProperties<NetworkType>;
 
 	static constexpr std::size_t numReactionTypes =
 		std::tuple_size<ReactionTypes>::value;
 
-	static constexpr std::size_t numSpeciesNoI =
-		NetworkType::getNumberOfSpeciesNoI();
+	static constexpr std::size_t numSpeciesNoI = Props::numSpeciesNoI;
+
+	static constexpr std::size_t coeffsSingleExtent = numSpeciesNoI + 1;
 
 	ReactionData() = default;
 
@@ -78,9 +80,19 @@ struct ReactionData
 			Kokkos::View<double**>("Reaction Rates", numReactions, gridSize);
 	}
 
+	void
+	allocateRateEntries(IndexType numSubInstances)
+	{
+		rateEntries =
+			Kokkos::View<IndexType** [3][coeffsSingleExtent][coeffsSingleExtent]>(
+				"Reaction Rate Entries", numReactions, numSubInstances);
+	}
+
 	IndexType numReactions{};
 	Kokkos::View<double**> widths;
 	Kokkos::View<double**> rates;
+	Kokkos::View<IndexType** [3][coeffsSingleExtent][coeffsSingleExtent]>
+		rateEntries;
 	Kokkos::Array<IndexType, numReactionTypes + 1> reactionBeginIndices;
 	Kokkos::Array<CoefficientsView, numReactionTypes> coeffs;
 	Kokkos::Array<ConstantRateView, numReactionTypes> constantRates;
@@ -92,9 +104,14 @@ struct ReactionDataRef
 	using NetworkType = TNetwork;
 	using IndexType = ReactionNetworkIndexType;
 	using ReactionTypes = ReactionTypeList<NetworkType>;
+    using Props = ReactionNetworkProperties<NetworkType>;
 
 	static constexpr std::size_t numReactionTypes =
 		std::tuple_size<ReactionTypes>::value;
+
+	static constexpr std::size_t numSpeciesNoI = Props::numSpeciesNoI;
+
+	static constexpr std::size_t coeffsSingleExtent = numSpeciesNoI + 1;
 
 	ReactionDataRef() = default;
 
@@ -102,6 +119,7 @@ struct ReactionDataRef
 	ReactionDataRef(const ReactionData<NetworkType>& data) :
 		widths(data.widths),
 		rates(data.rates),
+		rateEntries(data.rateEntries),
 		reactionBeginIndices(data.reactionBeginIndices)
 	{
 		for (std::size_t r = 0; r < numReactionTypes; ++r) {
@@ -155,8 +173,19 @@ struct ReactionDataRef
 		return Kokkos::subview(rates, reactionId, Kokkos::ALL);
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	auto
+	getRateEntries(IndexType reactionId)
+	{
+		using Kokkos::ALL;
+		return subview(rateEntries, reactionId, ALL, ALL, ALL, ALL);
+	}
+
 	Kokkos::View<double**, Kokkos::MemoryUnmanaged> widths;
 	Kokkos::View<double**, Kokkos::MemoryUnmanaged> rates;
+	Kokkos::View<IndexType** [3][coeffsSingleExtent][coeffsSingleExtent],
+		Kokkos::MemoryUnmanaged>
+		rateEntries;
 	Kokkos::Array<IndexType, numReactionTypes + 1> reactionBeginIndices;
 	Kokkos::Array<CoefficientsViewUnmanaged, numReactionTypes> coeffs;
 	Kokkos::Array<ConstantRateViewUnmanaged, numReactionTypes> constantRates;

@@ -70,6 +70,10 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	void
+	getRateEntries(ReactionDataRef reactionData);
+
+	KOKKOS_INLINE_FUNCTION
+	void
 	updateRates(double time = 0.0)
 	{
 		for (IndexType i = 0; i < _rate.extent(0); ++i) {
@@ -269,6 +273,10 @@ protected:
 	using ConstantRateSubView =
 		decltype(std::declval<ReactionDataRef>().getConstantRates(0));
 	ConstantRateSubView _constantRates;
+
+	using RateEntriesSubView =
+		decltype(std::declval<ReactionDataRef>().getRateEntries(0));
+	RateEntriesSubView _rateEntries;
 };
 
 /**
@@ -398,9 +406,6 @@ protected:
 	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
 
 	util::Array<IndexType, 4, 1 + nMomentIds, 2, 1 + nMomentIds> _connEntries;
-	util::Array<IndexType, 3, 3, Superclass::coeffsSingleExtent,
-		Superclass::coeffsSingleExtent>
-		_rateEntries;
 };
 
 /**
@@ -529,9 +534,6 @@ protected:
 	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
 
 	util::Array<IndexType, 3, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
-	util::Array<IndexType, 3, 3, Superclass::coeffsSingleExtent,
-		Superclass::coeffsSingleExtent>
-		_rateEntries;
 };
 } // namespace network
 } // namespace core

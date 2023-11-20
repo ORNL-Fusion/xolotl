@@ -113,10 +113,11 @@ ZrReactionNetwork::setConstantConnectivities(ConnectivitiesPair conns)
 void
 ZrReactionNetwork::setConstantRateEntries()
 {
+	auto rows = _constantConnsRows;
+	auto entries = _constantConnsEntries;
 	_reactions.forEachOn<ZrConstantReaction>(
 		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
-			reaction.defineRateEntries(
-				_constantConnsRows, _constantConnsEntries);
+			reaction.defineRateEntries(rows, entries);
 		});
 }
 

@@ -630,8 +630,9 @@ public:
 	{
 		auto view = getView<TElem>();
 		Kokkos::parallel_for(
-			label, view.size(),
-			DEVICE_LAMBDA(const IndexType i) { func(view[i]); });
+			label, view.size(), DEVICE_LAMBDA(const IndexType i) {
+				func(view[i]);
+			});
 	}
 
 	/**

@@ -39,6 +39,14 @@ Reaction<TNetwork, TDerived>::updateData(
 
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
+void
+Reaction<TNetwork, TDerived>::getRateEntries(ReactionDataRef reactionData)
+{
+	_rateEntries = reactionData.getRateEntries(_reactionId);
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_INLINE_FUNCTION
 double
 Reaction<TNetwork, TDerived>::computeOverlap(const ReflectedRegion& cl1RR,
 	const ReflectedRegion& cl2RR, const ReflectedRegion& pr1RR,
@@ -1315,7 +1323,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 			}
 
 			if (isInSub[prodId]) {
-				Kokkos::atomic_add(&rates(_rateEntries[subId][1 + p][0][0]),
+				Kokkos::atomic_add(
+					&rates(this->_rateEntries(subId, 1 + p, 0, 0)),
 					f / _productVolumes[p]);
 			}
 			p++;
@@ -1347,7 +1356,7 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 					}
 					f *= this->_rate(gridIndex);
 					Kokkos::atomic_add(
-						&rates(_rateEntries[subId][1 + p][1 + k()][0]),
+						&rates(this->_rateEntries(subId, 1 + p, 1 + k(), 0)),
 						f / _productVolumes[p]);
 				}
 			}
@@ -1363,8 +1372,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 		f *= this->_rate(gridIndex);
 
 		// First for the first reactant
-		Kokkos::atomic_sub(
-			&rates(_rateEntries[subId][0][0][0]), f / _reactantVolumes[0]);
+		Kokkos::atomic_sub(&rates(this->_rateEntries(subId, 0, 0, 0)),
+			f / _reactantVolumes[0]);
 		// For the products
 		for (auto p : {0, 1}) {
 			auto prodId = _products[p];
@@ -1372,7 +1381,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 				continue;
 			}
 			if (isInSub[prodId])
-				Kokkos::atomic_add(&rates(_rateEntries[subId][1 + p][0][0]),
+				Kokkos::atomic_add(
+					&rates(this->_rateEntries(subId, 1 + p, 0, 0)),
 					f / _productVolumes[p]);
 		}
 
@@ -1387,7 +1397,7 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 			f *= this->_rate(gridIndex);
 
 			// First for the first reactant
-			Kokkos::atomic_sub(&rates(_rateEntries[subId][0][0][1 + i()]),
+			Kokkos::atomic_sub(&rates(this->_rateEntries(subId, 0, 0, 1 + i())),
 				f / _reactantVolumes[0]);
 			// For the products
 			for (auto p : {0, 1}) {
@@ -1397,7 +1407,7 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 				}
 				if (isInSub[prodId])
 					Kokkos::atomic_add(
-						&rates(_rateEntries[subId][1 + p][0][1 + i()]),
+						&rates(this->_rateEntries(subId, 1 + p, 0, 1 + i())),
 						f / _productVolumes[p]);
 			}
 		}
@@ -1411,7 +1421,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 					f += this->_coefs(0, i() + 1, 0, k() + 1) * cmR2[i()];
 				}
 				f *= this->_rate(gridIndex);
-				Kokkos::atomic_sub(&rates(_rateEntries[subId][0][1 + k()][0]),
+				Kokkos::atomic_sub(
+					&rates(this->_rateEntries(subId, 0, 1 + k(), 0)),
 					f / _reactantVolumes[0]);
 
 				for (auto i : speciesRangeNoI) {
@@ -1424,7 +1435,7 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 					}
 					f *= this->_rate(gridIndex);
 					Kokkos::atomic_sub(
-						&rates(_rateEntries[subId][0][1 + k()][1 + i()]),
+						&rates(this->_rateEntries(subId, 0, 1 + k(), 1 + i())),
 						f / _reactantVolumes[0]);
 				}
 			}
@@ -1446,7 +1457,7 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 					}
 					f *= this->_rate(gridIndex);
 					Kokkos::atomic_add(
-						&rates(_rateEntries[subId][1 + p][1 + k()][0]),
+						&rates(this->_rateEntries(subId, 1 + p, 1 + k(), 0)),
 						f / _productVolumes[p]);
 
 					for (auto i : speciesRangeNoI) {
@@ -1459,9 +1470,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 								cmR2[j()];
 						}
 						f *= this->_rate(gridIndex);
-						Kokkos::atomic_add(
-							&rates(
-								_rateEntries[subId][1 + p][1 + k()][1 + i()]),
+						Kokkos::atomic_add(&rates(this->_rateEntries(
+											   subId, 1 + p, 1 + k(), 1 + i())),
 							f / _productVolumes[p]);
 					}
 				}
@@ -1478,8 +1488,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 		f *= this->_rate(gridIndex);
 
 		// First for the reactant
-		Kokkos::atomic_sub(
-			&rates(_rateEntries[subId][0][0][0]), f / _reactantVolumes[1]);
+		Kokkos::atomic_sub(&rates(this->_rateEntries(subId, 0, 0, 0)),
+			f / _reactantVolumes[1]);
 		// For the products
 		for (auto p : {0, 1}) {
 			auto prodId = _products[p];
@@ -1487,7 +1497,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 				continue;
 			}
 			if (isInSub[prodId]) {
-				Kokkos::atomic_add(&rates(_rateEntries[subId][1 + p][0][0]),
+				Kokkos::atomic_add(
+					&rates(this->_rateEntries(subId, 1 + p, 0, 0)),
 					f / _productVolumes[p]);
 			}
 		}
@@ -1503,7 +1514,7 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 			f *= this->_rate(gridIndex);
 
 			// First for the reactant
-			Kokkos::atomic_sub(&rates(_rateEntries[subId][0][0][1 + i()]),
+			Kokkos::atomic_sub(&rates(this->_rateEntries(subId, 0, 0, 1 + i())),
 				f / _reactantVolumes[1]);
 			// For the products
 			for (auto p : {0, 1}) {
@@ -1513,7 +1524,7 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 				}
 				if (isInSub[prodId])
 					Kokkos::atomic_add(
-						&rates(_rateEntries[subId][1 + p][0][1 + i()]),
+						&rates(this->_rateEntries(subId, 1 + p, 0, 1 + i())),
 						f / _productVolumes[p]);
 			}
 		}
@@ -1527,7 +1538,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 					f += this->_coefs(i() + 1, 0, 1, k() + 1) * cmR1[i()];
 				}
 				f *= this->_rate(gridIndex);
-				Kokkos::atomic_sub(&rates(_rateEntries[subId][0][1 + k()][0]),
+				Kokkos::atomic_sub(
+					&rates(this->_rateEntries(subId, 0, 1 + k(), 0)),
 					f / _reactantVolumes[1]);
 
 				// 1st moment contribution
@@ -1541,7 +1553,7 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 					}
 					f *= this->_rate(gridIndex);
 					Kokkos::atomic_sub(
-						&rates(_rateEntries[subId][0][1 + k()][1 + i()]),
+						&rates(this->_rateEntries(subId, 0, 1 + k(), 1 + i())),
 						f / _reactantVolumes[1]);
 				}
 			}
@@ -1563,7 +1575,7 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 					}
 					f *= this->_rate(gridIndex);
 					Kokkos::atomic_add(
-						&rates(_rateEntries[subId][1 + p][1 + k()][0]),
+						&rates(this->_rateEntries(subId, 1 + p, 1 + k(), 0)),
 						f / _productVolumes[p]);
 
 					// 1st moment contribution
@@ -1577,9 +1589,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 								cmR1[j()];
 						}
 						f *= this->_rate(gridIndex);
-						Kokkos::atomic_add(
-							&rates(
-								_rateEntries[subId][1 + p][1 + k()][1 + i()]),
+						Kokkos::atomic_add(&rates(this->_rateEntries(subId, 1 +
+											   p, 1 + k(), 1 + i())),
 							f / _productVolumes[p]);
 					}
 				}
@@ -1997,7 +2008,7 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 			}
 
 			if (isInSub[prodId]) {
-				_rateEntries[subId][1 + p][0][0] = this->getPosition(
+				this->_rateEntries(subId, 1 + p, 0, 0) = this->getPosition(
 					backMap(prodId), dof, connectivityRow, connectivityEntries);
 			}
 			p++;
@@ -2015,7 +2026,7 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 					continue;
 
 				if (_productMomentIds[p][k()] != invalidIndex) {
-					_rateEntries[subId][1 + p][1 + k()][0] =
+					this->_rateEntries(subId, 1 + p, 1 + k(), 0) =
 						this->getPosition(backMap(_productMomentIds[p][k()]),
 							dof, connectivityRow, connectivityEntries);
 				}
@@ -2025,8 +2036,9 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 	// Only the first reactant is in not the second one
 	else if (isInSub[_reactants[0]]) {
 		// First for the first reactant
-		_rateEntries[subId][0][0][0] = this->getPosition(backMap(_reactants[0]),
-			backMap(_reactants[0]), connectivityRow, connectivityEntries);
+		this->_rateEntries(subId, 0, 0, 0) =
+			this->getPosition(backMap(_reactants[0]), backMap(_reactants[0]),
+				connectivityRow, connectivityEntries);
 		// For the products
 		for (auto p : {0, 1}) {
 			auto prodId = _products[p];
@@ -2034,7 +2046,7 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 				continue;
 			}
 			if (isInSub[prodId])
-				_rateEntries[subId][1 + p][0][0] =
+				this->_rateEntries(subId, 1 + p, 0, 0) =
 					this->getPosition(backMap(prodId), backMap(_reactants[0]),
 						connectivityRow, connectivityEntries);
 		}
@@ -2044,7 +2056,7 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 			if (_reactantMomentIds[0][i()] == invalidIndex)
 				continue;
 			// First for the first reactant
-			_rateEntries[subId][0][0][1 + i()] = this->getPosition(
+			this->_rateEntries(subId, 0, 0, 1 + i()) = this->getPosition(
 				backMap(_reactants[0]), backMap(_reactantMomentIds[0][i()]),
 				connectivityRow, connectivityEntries);
 			// For the products
@@ -2054,9 +2066,10 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 					continue;
 				}
 				if (isInSub[prodId])
-					_rateEntries[subId][1 + p][0][1 + i()] = this->getPosition(
-						backMap(prodId), backMap(_reactantMomentIds[0][i()]),
-						connectivityRow, connectivityEntries);
+					this->_rateEntries(subId, 1 + p, 0, 1 + i()) =
+						this->getPosition(backMap(prodId),
+							backMap(_reactantMomentIds[0][i()]),
+							connectivityRow, connectivityEntries);
 			}
 		}
 
@@ -2064,14 +2077,14 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 		for (auto k : speciesRangeNoI) {
 			// For the first reactant
 			if (_reactantMomentIds[0][k()] != invalidIndex) {
-				_rateEntries[subId][0][1 + k()][0] = this->getPosition(
+				this->_rateEntries(subId, 0, 1 + k(), 0) = this->getPosition(
 					backMap(_reactantMomentIds[0][k()]), backMap(_reactants[0]),
 					connectivityRow, connectivityEntries);
 				// 1st moment contribution
 				for (auto i : speciesRangeNoI) {
 					if (_reactantMomentIds[0][i()] == invalidIndex)
 						continue;
-					_rateEntries[subId][0][1 + k()][1 + i()] =
+					this->_rateEntries(subId, 0, 1 + k(), 1 + i()) =
 						this->getPosition(backMap(_reactantMomentIds[0][k()]),
 							backMap(_reactantMomentIds[0][i()]),
 							connectivityRow, connectivityEntries);
@@ -2088,14 +2101,14 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 					continue;
 
 				if (_productMomentIds[p][k()] != invalidIndex) {
-					_rateEntries[subId][1 + p][1 + k()][0] =
+					this->_rateEntries(subId, 1 + p, 1 + k(), 0) =
 						this->getPosition(backMap(_productMomentIds[p][k()]),
 							backMap(_reactants[0]), connectivityRow,
 							connectivityEntries);
 					for (auto i : speciesRangeNoI) {
 						if (_reactantMomentIds[0][i()] == invalidIndex)
 							continue;
-						_rateEntries[subId][1 + p][1 + k()][1 + i()] =
+						this->_rateEntries(subId, 1 + p, 1 + k(), 1 + i()) =
 							this->getPosition(
 								backMap(_productMomentIds[p][k()]),
 								backMap(_reactantMomentIds[0][i()]),
@@ -2108,8 +2121,9 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 	// Last case, only the second product is in
 	else {
 		// First for the reactant
-		_rateEntries[subId][0][0][0] = this->getPosition(backMap(_reactants[1]),
-			backMap(_reactants[1]), connectivityRow, connectivityEntries);
+		this->_rateEntries(subId, 0, 0, 0) =
+			this->getPosition(backMap(_reactants[1]), backMap(_reactants[1]),
+				connectivityRow, connectivityEntries);
 		// For the products
 		for (auto p : {0, 1}) {
 			auto prodId = _products[p];
@@ -2117,7 +2131,7 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 				continue;
 			}
 			if (isInSub[prodId]) {
-				_rateEntries[subId][1 + p][0][0] =
+				this->_rateEntries(subId, 1 + p, 0, 0) =
 					this->getPosition(backMap(prodId), backMap(_reactants[1]),
 						connectivityRow, connectivityEntries);
 			}
@@ -2128,7 +2142,7 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 			if (_reactantMomentIds[1][i()] == invalidIndex)
 				continue;
 			// First for the reactant
-			_rateEntries[subId][0][0][1 + i()] = this->getPosition(
+			this->_rateEntries(subId, 0, 0, 1 + i()) = this->getPosition(
 				backMap(_reactants[1]), backMap(_reactantMomentIds[1][i()]),
 				connectivityRow, connectivityEntries);
 			// For the products
@@ -2138,9 +2152,10 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 					continue;
 				}
 				if (isInSub[prodId])
-					_rateEntries[subId][1 + p][0][1 + i()] = this->getPosition(
-						backMap(prodId), backMap(_reactantMomentIds[1][i()]),
-						connectivityRow, connectivityEntries);
+					this->_rateEntries(subId, 1 + p, 0, 1 + i()) =
+						this->getPosition(backMap(prodId),
+							backMap(_reactantMomentIds[1][i()]),
+							connectivityRow, connectivityEntries);
 			}
 		}
 
@@ -2148,14 +2163,14 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 		for (auto k : speciesRangeNoI) {
 			// For the second reactant
 			if (_reactantMomentIds[1][k()] != invalidIndex) {
-				_rateEntries[subId][0][1 + k()][0] = this->getPosition(
+				this->_rateEntries(subId, 0, 1 + k(), 0) = this->getPosition(
 					backMap(_reactantMomentIds[1][k()]), backMap(_reactants[1]),
 					connectivityRow, connectivityEntries);
 				// 1st moment contribution
 				for (auto i : speciesRangeNoI) {
 					if (_reactantMomentIds[1][i()] == invalidIndex)
 						continue;
-					_rateEntries[subId][0][1 + k()][1 + i()] =
+					this->_rateEntries(subId, 0, 1 + k(), 1 + i()) =
 						this->getPosition(backMap(_reactantMomentIds[1][k()]),
 							backMap(_reactantMomentIds[1][i()]),
 							connectivityRow, connectivityEntries);
@@ -2172,7 +2187,7 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 					continue;
 
 				if (_productMomentIds[p][k()] != invalidIndex) {
-					_rateEntries[subId][1 + p][1 + k()][0] =
+					this->_rateEntries(subId, 1 + p, 1 + k(), 0) =
 						this->getPosition(backMap(_productMomentIds[p][k()]),
 							backMap(_reactants[1]), connectivityRow,
 							connectivityEntries);
@@ -2180,7 +2195,7 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 					for (auto i : speciesRangeNoI) {
 						if (_reactantMomentIds[1][i()] == invalidIndex)
 							continue;
-						_rateEntries[subId][1 + p][1 + k()][1 + i()] =
+						this->_rateEntries(subId, 1 + p, 1 + k(), 1 + i()) =
 							this->getPosition(
 								backMap(_productMomentIds[p][k()]),
 								backMap(_reactantMomentIds[1][i()]),
@@ -2717,13 +2732,13 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 		// Compute the flux for the 0th order moments
 		double f = this->_coefs(0, 0, 0, 0) * this->_rate(gridIndex);
 		Kokkos::atomic_sub(
-			&rates(_rateEntries[subId][0][0][0]), f / _reactantVolume);
+			&rates(this->_rateEntries(subId, 0, 0, 0)), f / _reactantVolume);
 		if (isInSub[_products[0]])
-			Kokkos::atomic_add(
-				&rates(_rateEntries[subId][1][0][0]), f / _productVolumes[0]);
+			Kokkos::atomic_add(&rates(this->_rateEntries(subId, 1, 0, 0)),
+				f / _productVolumes[0]);
 		if (isInSub[_products[1]])
-			Kokkos::atomic_add(
-				&rates(_rateEntries[subId][2][0][0]), f / _productVolumes[1]);
+			Kokkos::atomic_add(&rates(this->_rateEntries(subId, 2, 0, 0)),
+				f / _productVolumes[1]);
 
 		// Now the moment contribtions
 		for (auto i : speciesRangeNoI) {
@@ -2731,13 +2746,15 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 				continue;
 
 			f = this->_coefs(i() + 1, 0, 0, 0) * this->_rate(gridIndex);
-			Kokkos::atomic_sub(&rates(_rateEntries[subId][0][0][1 + i()]),
+			Kokkos::atomic_sub(&rates(this->_rateEntries(subId, 0, 0, 1 + i())),
 				f / _reactantVolume);
 			if (isInSub[_products[0]])
-				Kokkos::atomic_add(&rates(_rateEntries[subId][1][0][1 + i()]),
+				Kokkos::atomic_add(
+					&rates(this->_rateEntries(subId, 1, 0, 1 + i())),
 					f / _productVolumes[0]);
 			if (isInSub[_products[1]])
-				Kokkos::atomic_add(&rates(_rateEntries[subId][2][0][1 + i()]),
+				Kokkos::atomic_add(
+					&rates(this->_rateEntries(subId, 2, 0, 1 + i())),
 					f / _productVolumes[1]);
 		}
 
@@ -2746,7 +2763,8 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 			// First for the reactant
 			if (_reactantMomentIds[k()] != invalidIndex) {
 				f = this->_coefs(0, 0, 0, k() + 1) * this->_rate(gridIndex);
-				Kokkos::atomic_sub(&rates(_rateEntries[subId][0][1 + k()][0]),
+				Kokkos::atomic_sub(
+					&rates(this->_rateEntries(subId, 0, 1 + k(), 0)),
 					f / _reactantVolume);
 
 				// 1st moment contribution
@@ -2756,7 +2774,7 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 					f = this->_coefs(i() + 1, 0, 0, k() + 1) *
 						this->_rate(gridIndex);
 					Kokkos::atomic_sub(
-						&rates(_rateEntries[subId][0][1 + k()][1 + i()]),
+						&rates(this->_rateEntries(subId, 0, 1 + k(), 1 + i())),
 						f / _reactantVolume);
 				}
 			}
@@ -2765,7 +2783,8 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 			if (isInSub[_products[0]] and
 				_productMomentIds[0][k()] != invalidIndex) {
 				f = this->_coefs(0, 0, 1, k() + 1) * this->_rate(gridIndex);
-				Kokkos::atomic_add(&rates(_rateEntries[subId][1][1 + k()][0]),
+				Kokkos::atomic_add(
+					&rates(this->_rateEntries(subId, 1, 1 + k(), 0)),
 					f / _productVolumes[0]);
 
 				// 1st moment contribution
@@ -2775,7 +2794,7 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 					f = this->_coefs(i() + 1, 0, 1, k() + 1) *
 						this->_rate(gridIndex);
 					Kokkos::atomic_add(
-						&rates(_rateEntries[subId][0][1 + k()][1 + i()]),
+						&rates(this->_rateEntries(subId, 0, 1 + k(), 1 + i())),
 						f / _productVolumes[0]);
 				}
 			}
@@ -2784,7 +2803,8 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 			if (isInSub[_products[1]] and
 				_productMomentIds[1][k()] != invalidIndex) {
 				f = this->_coefs(0, 0, 2, k() + 1) * this->_rate(gridIndex);
-				Kokkos::atomic_add(&rates(_rateEntries[subId][2][1 + k()][0]),
+				Kokkos::atomic_add(
+					&rates(this->_rateEntries(subId, 2, 1 + k(), 0)),
 					f / _productVolumes[1]);
 
 				// 1st moment contribution
@@ -2794,7 +2814,7 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 					f = this->_coefs(i() + 1, 0, 2, k() + 1) *
 						this->_rate(gridIndex);
 					Kokkos::atomic_add(
-						&rates(_rateEntries[subId][2][1 + k()][1 + i()]),
+						&rates(this->_rateEntries(subId, 2, 1 + k(), 1 + i())),
 						f / _productVolumes[1]);
 				}
 			}
@@ -2812,11 +2832,11 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 
 		// For the first product
 		if (isInSub[_products[0]])
-			Kokkos::atomic_add(&rates(_rateEntries[subId][1][0][0]),
+			Kokkos::atomic_add(&rates(this->_rateEntries(subId, 1, 0, 0)),
 				f / (double)_productVolumes[0]);
 		// For the second product
 		if (isInSub[_products[1]])
-			Kokkos::atomic_add(&rates(_rateEntries[subId][2][0][0]),
+			Kokkos::atomic_add(&rates(this->_rateEntries(subId, 2, 0, 0)),
 				f / (double)_productVolumes[1]);
 
 		// Take care of the first moments
@@ -2830,7 +2850,7 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 					}
 					f *= this->_rate(gridIndex);
 					Kokkos::atomic_add(
-						&rates(_rateEntries[subId][1][1 + k()][0]),
+						&rates(this->_rateEntries(subId, 1, 1 + k(), 0)),
 						f / _productVolumes[0]);
 				}
 			}
@@ -2844,7 +2864,7 @@ DissociationReaction<TNetwork, TDerived>::computeConstantRates(
 					}
 					f *= this->_rate(gridIndex);
 					Kokkos::atomic_add(
-						&rates(_rateEntries[subId][2][1 + k()][0]),
+						&rates(this->_rateEntries(subId, 2, 1 + k(), 0)),
 						f / _productVolumes[1]);
 				}
 			}
@@ -3048,14 +3068,15 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 	// First case where the reactant is in
 	if (isInSub[_reactant]) {
 		// Compute the flux for the 0th order moments
-		_rateEntries[subId][0][0][0] = this->getPosition(backMap(_reactant),
-			backMap(_reactant), connectivityRow, connectivityEntries);
+		this->_rateEntries(subId, 0, 0, 0) =
+			this->getPosition(backMap(_reactant), backMap(_reactant),
+				connectivityRow, connectivityEntries);
 		if (isInSub[_products[0]])
-			_rateEntries[subId][1][0][0] =
+			this->_rateEntries(subId, 1, 0, 0) =
 				this->getPosition(backMap(_products[0]), backMap(_reactant),
 					connectivityRow, connectivityEntries);
 		if (isInSub[_products[1]])
-			_rateEntries[subId][2][0][0] =
+			this->_rateEntries(subId, 2, 0, 0) =
 				this->getPosition(backMap(_products[1]), backMap(_reactant),
 					connectivityRow, connectivityEntries);
 
@@ -3064,15 +3085,15 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 			if (_reactantMomentIds[i()] == invalidIndex)
 				continue;
 
-			_rateEntries[subId][0][0][1 + i()] = this->getPosition(
+			this->_rateEntries(subId, 0, 0, 1 + i()) = this->getPosition(
 				backMap(_reactant), backMap(_reactantMomentIds[i()]),
 				connectivityRow, connectivityEntries);
 			if (isInSub[_products[0]])
-				_rateEntries[subId][1][0][1 + i()] = this->getPosition(
+				this->_rateEntries(subId, 1, 0, 1 + i()) = this->getPosition(
 					backMap(_products[0]), backMap(_reactantMomentIds[i()]),
 					connectivityRow, connectivityEntries);
 			if (isInSub[_products[1]])
-				_rateEntries[subId][2][0][1 + i()] = this->getPosition(
+				this->_rateEntries(subId, 2, 0, 1 + i()) = this->getPosition(
 					backMap(_products[1]), backMap(_reactantMomentIds[i()]),
 					connectivityRow, connectivityEntries);
 		}
@@ -3081,7 +3102,7 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 		for (auto k : speciesRangeNoI) {
 			// First for the reactant
 			if (_reactantMomentIds[k()] != invalidIndex) {
-				_rateEntries[subId][0][1 + k()][0] = this->getPosition(
+				this->_rateEntries(subId, 0, 1 + k(), 0) = this->getPosition(
 					backMap(_reactantMomentIds[k()]), backMap(_reactant),
 					connectivityRow, connectivityEntries);
 
@@ -3089,7 +3110,7 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 				for (auto i : speciesRangeNoI) {
 					if (_reactantMomentIds[i()] == invalidIndex)
 						continue;
-					_rateEntries[subId][0][1 + k()][1 + i()] =
+					this->_rateEntries(subId, 0, 1 + k(), 1 + i()) =
 						this->getPosition(backMap(_reactantMomentIds[k()]),
 							backMap(_reactantMomentIds[i()]), connectivityRow,
 							connectivityEntries);
@@ -3099,7 +3120,7 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 			// Now the first product
 			if (isInSub[_products[0]] and
 				_productMomentIds[0][k()] != invalidIndex) {
-				_rateEntries[subId][1][1 + k()][0] = this->getPosition(
+				this->_rateEntries(subId, 1, 1 + k(), 0) = this->getPosition(
 					backMap(_productMomentIds[0][k()]), backMap(_reactant),
 					connectivityRow, connectivityEntries);
 
@@ -3107,7 +3128,7 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 				for (auto i : speciesRangeNoI) {
 					if (_reactantMomentIds[i()] == invalidIndex)
 						continue;
-					_rateEntries[subId][1][1 + k()][1 + i()] =
+					this->_rateEntries(subId, 1, 1 + k(), 1 + i()) =
 						this->getPosition(backMap(_productMomentIds[0][k()]),
 							backMap(_reactantMomentIds[i()]), connectivityRow,
 							connectivityEntries);
@@ -3117,7 +3138,7 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 			// Finally the second product
 			if (isInSub[_products[1]] and
 				_productMomentIds[1][k()] != invalidIndex) {
-				_rateEntries[subId][2][1 + k()][0] = this->getPosition(
+				this->_rateEntries(subId, 2, 1 + k(), 0) = this->getPosition(
 					backMap(_productMomentIds[1][k()]), backMap(_reactant),
 					connectivityRow, connectivityEntries);
 
@@ -3125,7 +3146,7 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 				for (auto i : speciesRangeNoI) {
 					if (_reactantMomentIds[i()] == invalidIndex)
 						continue;
-					_rateEntries[subId][2][1 + k()][1 + i()] =
+					this->_rateEntries(subId, 2, 1 + k(), 1 + i()) =
 						this->getPosition(backMap(_productMomentIds[1][k()]),
 							backMap(_reactantMomentIds[i()]), connectivityRow,
 							connectivityEntries);
@@ -3139,12 +3160,12 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 
 		// For the first product
 		if (isInSub[_products[0]])
-			_rateEntries[subId][1][0][0] =
+			this->_rateEntries(subId, 1, 0, 0) =
 				this->getPosition(backMap(_products[0]), dof, connectivityRow,
 					connectivityEntries);
 		// For the second product
 		if (isInSub[_products[1]])
-			_rateEntries[subId][2][0][0] =
+			this->_rateEntries(subId, 2, 0, 0) =
 				this->getPosition(backMap(_products[1]), dof, connectivityRow,
 					connectivityEntries);
 
@@ -3153,7 +3174,7 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 			// For the first product
 			if (isInSub[_products[0]]) {
 				if (_productMomentIds[0][k()] != invalidIndex) {
-					_rateEntries[subId][1][1 + k()][0] =
+					this->_rateEntries(subId, 1, 1 + k(), 0) =
 						this->getPosition(backMap(_productMomentIds[0][k()]),
 							dof, connectivityRow, connectivityEntries);
 				}
@@ -3162,7 +3183,7 @@ DissociationReaction<TNetwork, TDerived>::mapRateEntries(
 			// For the second product
 			if (isInSub[_products[1]]) {
 				if (_productMomentIds[1][k()] != invalidIndex) {
-					_rateEntries[subId][2][1 + k()][0] =
+					this->_rateEntries(subId, 2, 1 + k(), 0) =
 						this->getPosition(backMap(_productMomentIds[1][k()]),
 							dof, connectivityRow, connectivityEntries);
 				}

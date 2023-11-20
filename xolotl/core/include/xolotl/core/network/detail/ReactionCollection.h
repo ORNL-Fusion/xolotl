@@ -78,6 +78,17 @@ public:
 	}
 
 	void
+	allocateRateEntries(IndexType numSubInstances)
+	{
+		_data.allocateRateEntries(numSubInstances);
+		auto reactionData = ReactionDataRef<NetworkType>(_data);
+		forEach(
+			"ReactionCollection::allocateRateEntries",
+			DEVICE_LAMBDA(
+				auto&& reaction) { reaction.getRateEntries(reactionData); });
+	}
+
+	void
 	setConnectivity(const ClusterConnectivity<>& connectivity)
 	{
 		auto conn = connectivity;

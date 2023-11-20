@@ -91,28 +91,28 @@ public:
 		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 		if (_reactants[1] == invalidIndex) {
-			this->_constantRates(gridIndex, 0, 0) = rates(_rateEntries[0][0]);
+			this->_constantRates(gridIndex, 0, 0) = rates(_constantRateEntries[0][0]);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
 					this->_constantRates(gridIndex, 1 + i(), 0) =
-						rates(_rateEntries[1 + i()][0]);
+						rates(_constantRateEntries[1 + i()][0]);
 				}
 			}
 		}
 		else {
-			this->_constantRates(gridIndex, 0, 0) = rates(_rateEntries[0][0]);
+			this->_constantRates(gridIndex, 0, 0) = rates(_constantRateEntries[0][0]);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[1][i()] != invalidIndex) {
 					this->_constantRates(gridIndex, 0, 1 + i()) =
-						rates(_rateEntries[0][1 + i()]);
+						rates(_constantRateEntries[0][1 + i()]);
 				}
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
 					this->_constantRates(gridIndex, 1 + i(), 0) =
-						rates(_rateEntries[1 + i()][0]);
+						rates(_constantRateEntries[1 + i()][0]);
 					for (auto j : speciesRangeNoI) {
 						if (_reactantMomentIds[1][j()] != invalidIndex) {
 							this->_constantRates(gridIndex, 1 + i(), 1 + j()) =
-								rates(_rateEntries[1 + i()][1 + j()]);
+								rates(_constantRateEntries[1 + i()][1 + j()]);
 						}
 					}
 				}
@@ -355,36 +355,37 @@ private:
 		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
 		OwnedSubMapView backMap, IndexType subId)
 	{
+		printf("constant");
 		auto dof = connectivityRow.extent(0) - 1;
 		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 		if (_reactants[1] == invalidIndex) {
-			_rateEntries[0][0] = this->getPosition(
+			_constantRateEntries[0][0] = this->getPosition(
 				_reactants[0], dof, connectivityRow, connectivityEntries);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
-					_rateEntries[1 + i()][0] =
+					_constantRateEntries[1 + i()][0] =
 						this->getPosition(_reactantMomentIds[0][i()], dof,
 							connectivityRow, connectivityEntries);
 				}
 			}
 		}
 		else {
-			_rateEntries[0][0] = this->getPosition(_reactants[0], _reactants[1],
+			_constantRateEntries[0][0] = this->getPosition(_reactants[0], _reactants[1],
 				connectivityRow, connectivityEntries);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[1][i()] != invalidIndex) {
-					_rateEntries[0][1 + i()] = this->getPosition(_reactants[0],
+					_constantRateEntries[0][1 + i()] = this->getPosition(_reactants[0],
 						_reactantMomentIds[1][i()], connectivityRow,
 						connectivityEntries);
 				}
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
-					_rateEntries[1 + i()][0] = this->getPosition(
+					_constantRateEntries[1 + i()][0] = this->getPosition(
 						_reactantMomentIds[0][i()], _reactants[1],
 						connectivityRow, connectivityEntries);
 					for (auto j : speciesRangeNoI) {
 						if (_reactantMomentIds[1][j()] != invalidIndex) {
-							_rateEntries[1 + i()][1 + j()] =
+							_constantRateEntries[1 + i()][1 + j()] =
 								this->getPosition(_reactantMomentIds[0][i()],
 									_reactantMomentIds[1][j()], connectivityRow,
 									connectivityEntries);
@@ -405,8 +406,8 @@ protected:
 	util::Array<IndexType, 1, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
 	util::Array<IndexType, Superclass::coeffsSingleExtent,
 		Superclass::coeffsSingleExtent>
-		_rateEntries;
-}; // namespace network
+		_constantRateEntries;
+};
 } // namespace network
 } // namespace core
 } // namespace xolotl

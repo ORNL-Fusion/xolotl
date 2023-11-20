@@ -353,7 +353,11 @@ public:
 
 	void setConstantConnectivities(ConnectivitiesPair) override;
 
-	void initializeRateEntries(ConnectivitiesPair, IndexType) override;
+	void
+	initializeRateEntries(const ConnectivitiesPair&, IndexType) override;
+
+	void
+	initializeRateEntries(const std::vector<ConnectivitiesPair>&) override;
 
 	void
 	setConstantRateEntries() override;

@@ -367,7 +367,11 @@ public:
 	/**
 	 * @brief Set the rate entries to compute constant rates
 	 */
-	virtual void initializeRateEntries(ConnectivitiesPair, IndexType) = 0;
+	virtual void
+	initializeRateEntries(const ConnectivitiesPair&, IndexType) = 0;
+
+	virtual void
+	initializeRateEntries(const std::vector<ConnectivitiesPair>&) = 0;
 
 	/**
 	 * @brief Set the rate entries for constant reactions
