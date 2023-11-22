@@ -542,6 +542,22 @@ public:
 	 */
 	virtual double
 	getCascadeEfficiency() const = 0;
+
+	/**
+	 * Obtain the value of helium implantation in FeCr.
+	 *
+	 * @return The rate
+	 */
+	virtual double
+	getHeliumRate() const = 0;
+
+	/**
+	 * Obtain the value of the barrier energy.
+	 *
+	 * @return The energy
+	 */
+	virtual double
+	getBarrierEnergy() const = 0;
 };
 // end class IOptions
 } /* namespace options */

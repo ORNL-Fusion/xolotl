@@ -44,6 +44,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setLatticeParameter(opts.getLatticeParameter());
 	this->setFissionRate(opts.getFluxAmplitude());
 	this->setZeta(opts.getZeta());
+	this->setBarrierEnergy(opts.getBarrierEnergy());
 	this->setSinkPortion(opts.getSinkPortion());
 	this->setSinkDensity(opts.getSinkDensity());
 	auto map = opts.getProcesses();
@@ -175,6 +176,14 @@ void
 ReactionNetwork<TImpl>::setZeta(double z)
 {
 	_clusterData.h_view().setZeta(z);
+	invalidateDataMirror();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setBarrierEnergy(double energy)
+{
+	_clusterData.h_view().setBarrierEnergy(energy);
 	invalidateDataMirror();
 }
 

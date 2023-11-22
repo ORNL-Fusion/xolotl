@@ -502,7 +502,7 @@ FeCrTransformReaction::getBarrier()
 	auto clReg = cl.getRegion();
 	Composition comp = clReg.getOrigin();
 	if (comp[Species::Loop] > 0)
-		return 0.8; // Loop
+		return this->_clusterData->barrierEnergy(); // Loop
 	return 0.75; // Trapped
 
 	return 0.0;

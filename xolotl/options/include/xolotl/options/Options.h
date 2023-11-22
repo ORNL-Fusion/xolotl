@@ -321,6 +321,16 @@ protected:
 	 */
 	double cascadeEfficiency;
 
+	/**
+	 * Value of the helium rate.
+	 */
+	double heliumRate;
+
+	/**
+	 * Value of the barrier energy.
+	 */
+	double barrierEnergy;
+
 public:
 	/**
 	 * The constructor.
@@ -920,6 +930,28 @@ public:
 	getCascadeEfficiency() const override
 	{
 		return cascadeEfficiency;
+	}
+
+	/**
+	 * Obtain the value of helium implantation in FeCr.
+	 *
+	 * @return The rate
+	 */
+	virtual double
+	getHeliumRate() const override
+	{
+		return heliumRate;
+	}
+
+	/**
+	 * Obtain the value of the barrier energy.
+	 *
+	 * @return The energy
+	 */
+	virtual double
+	getBarrierEnergy() const override
+	{
+		return barrierEnergy;
 	}
 };
 // end class Options

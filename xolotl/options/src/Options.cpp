@@ -79,7 +79,9 @@ Options::Options() :
 	basalPortion(0.1),
 	transitionSize(325),
 	cascadeDose(-1.0),
-	cascadeEfficiency(0.0)
+	cascadeEfficiency(0.0),
+	heliumRate(0.0),
+	barrierEnergy(1.0)
 {
 	return;
 }
@@ -274,6 +276,13 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<double>(&cascadeEfficiency)->default_value(0.0),
 		"The value of the remaining efficiency once the overlap effect started "
 		"(0.0 by "
+		"default).")("heliumRate",
+		bpo::value<double>(&heliumRate)->default_value(0.0),
+		"The value of helium rate (dpa-1, 0.0 by "
+		"default).")("barrierEnergy",
+		bpo::value<double>(&barrierEnergy)->default_value(1.0),
+		"The value of the energy barrier to form 100 loops "
+		"(1.0 eV by "
 		"default).");
 
 	bpo::options_description visible("Allowed options");

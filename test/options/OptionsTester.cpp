@@ -131,7 +131,9 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "basalPortion=0.6" << std::endl
 		<< "transitionSize=300" << std::endl
 		<< "cascadeDose=5000.0" << std::endl
-		<< "cascadeEfficiency=0.2" << std::endl;
+		<< "cascadeEfficiency=0.2" << std::endl
+		<< "heliumRate=10.0" << std::endl
+		<< "barrierEnergy=0.2" << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -248,6 +250,10 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Check the cascade options
 	BOOST_REQUIRE_EQUAL(opts.getCascadeDose(), 5000);
 	BOOST_REQUIRE_EQUAL(opts.getCascadeEfficiency(), 0.2);
+
+	// Check the FeCr options
+	BOOST_REQUIRE_EQUAL(opts.getHeliumRate(), 10.0);
+	BOOST_REQUIRE_EQUAL(opts.getBarrierEnergy(), 0.2);
 
 	// Check the physical processes option
 	auto map = opts.getProcesses();

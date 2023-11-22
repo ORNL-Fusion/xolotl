@@ -143,6 +143,7 @@ private:
 		ZETA,
 		SINK_PORTION,
 		SINK_DENSITY,
+		BARRIER_ENERGY,
 		NUM_FLOAT_VALS
 	};
 
@@ -250,6 +251,19 @@ public:
 	setSinkDensity(double val)
 	{
 		setVal(_floatVals, SINK_DENSITY, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	barrierEnergy() const
+	{
+		return _floatVals[BARRIER_ENERGY];
+	}
+
+	void
+	setBarrierEnergy(double val)
+	{
+		setVal(_floatVals, BARRIER_ENERGY, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

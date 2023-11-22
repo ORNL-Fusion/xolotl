@@ -19,6 +19,9 @@ namespace flux
 class FeCrFitFluxHandler : public FluxHandler
 {
 private:
+	//! Helium implantation
+	double heliumImplantation;
+
 	/**
 	 * \see FluxHandler.h
 	 */
@@ -33,7 +36,9 @@ public:
 	/**
 	 * The constructor
 	 */
-	FeCrFitFluxHandler(const options::IOptions& options) : FluxHandler(options)
+	FeCrFitFluxHandler(const options::IOptions& options) :
+		FluxHandler(options),
+		heliumImplantation(options.getHeliumRate())
 	{
 	}
 
@@ -277,7 +282,8 @@ public:
 					fluxAmplitude * 0.00611631; // Free16
 				updatedConcOffset[ids[17]] +=
 					fluxAmplitude * 0.0030808080; // Free20
-				updatedConcOffset[ids[18]] += 0.000146; // He, dpa s-1
+				updatedConcOffset[ids[18]] +=
+					fluxAmplitude * heliumImplantation; // He, dpa-1
 			});
 
 		return;
