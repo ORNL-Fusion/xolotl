@@ -528,10 +528,10 @@ void
 ReactionNetwork<TImpl>::initializeRateEntries(
 	const std::vector<ConnectivitiesPair>& connectivities)
 {
-    _reactions.allocateRateEntries(connectivities.size());
-    for (IndexType i = 0; i < connectivities.size(); ++i) {
-        initializeRateEntries(connectivities[i], i);
-    }
+	_reactions.allocateRateEntries(connectivities.size());
+	for (IndexType i = 0; i < connectivities.size(); ++i) {
+		initializeRateEntries(connectivities[i], i);
+	}
 }
 
 template <typename TImpl>

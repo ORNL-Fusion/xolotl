@@ -91,7 +91,8 @@ public:
 		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 		if (_reactants[1] == invalidIndex) {
-			this->_constantRates(gridIndex, 0, 0) = rates(_constantRateEntries[0][0]);
+			this->_constantRates(gridIndex, 0, 0) =
+				rates(_constantRateEntries[0][0]);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
 					this->_constantRates(gridIndex, 1 + i(), 0) =
@@ -100,7 +101,8 @@ public:
 			}
 		}
 		else {
-			this->_constantRates(gridIndex, 0, 0) = rates(_constantRateEntries[0][0]);
+			this->_constantRates(gridIndex, 0, 0) =
+				rates(_constantRateEntries[0][0]);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[1][i()] != invalidIndex) {
 					this->_constantRates(gridIndex, 0, 1 + i()) =
@@ -355,7 +357,6 @@ private:
 		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
 		OwnedSubMapView backMap, IndexType subId)
 	{
-		printf("constant");
 		auto dof = connectivityRow.extent(0) - 1;
 		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
@@ -371,13 +372,13 @@ private:
 			}
 		}
 		else {
-			_constantRateEntries[0][0] = this->getPosition(_reactants[0], _reactants[1],
-				connectivityRow, connectivityEntries);
+			_constantRateEntries[0][0] = this->getPosition(_reactants[0],
+				_reactants[1], connectivityRow, connectivityEntries);
 			for (auto i : speciesRangeNoI) {
 				if (_reactantMomentIds[1][i()] != invalidIndex) {
-					_constantRateEntries[0][1 + i()] = this->getPosition(_reactants[0],
-						_reactantMomentIds[1][i()], connectivityRow,
-						connectivityEntries);
+					_constantRateEntries[0][1 + i()] = this->getPosition(
+						_reactants[0], _reactantMomentIds[1][i()],
+						connectivityRow, connectivityEntries);
 				}
 				if (_reactantMomentIds[0][i()] != invalidIndex) {
 					_constantRateEntries[1 + i()][0] = this->getPosition(

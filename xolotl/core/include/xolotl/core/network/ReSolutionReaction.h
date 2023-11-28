@@ -137,9 +137,6 @@ protected:
 	util::Array<IndexType, 2, nMomentIds> _productMomentIds;
 
 	util::Array<IndexType, 3, 1 + nMomentIds, 1, 1 + nMomentIds> _connEntries;
-	util::Array<IndexType, 3, Superclass::coeffsSingleExtent,
-		Superclass::coeffsSingleExtent>
-		_rateEntries;
 };
 } // namespace network
 } // namespace core

@@ -169,11 +169,13 @@ private:
 			return;
 
 		if (isInSub[_heClId])
-			_rateEntries[0] = this->getPosition(backMap(_heClId),
-				isInSub.extent(0), connectivityRow, connectivityEntries);
+			this->_rateEntries(subId, 0, 0, 0) =
+				this->getPosition(backMap(_heClId), isInSub.extent(0),
+					connectivityRow, connectivityEntries);
 		if (isInSub[_iClId])
-			_rateEntries[1] = this->getPosition(backMap(_iClId),
-				isInSub.extent(0), connectivityRow, connectivityEntries);
+			this->_rateEntries(subId, 1, 0, 0) =
+				this->getPosition(backMap(_iClId), isInSub.extent(0),
+					connectivityRow, connectivityEntries);
 	}
 
 private:
@@ -184,7 +186,6 @@ private:
 	AmountType _vSize{};
 
 	util::Array<IndexType, 3, 1, 1, 1> _connEntries;
-	util::Array<IndexType, 2> _rateEntries;
 };
 } // namespace network
 } // namespace core

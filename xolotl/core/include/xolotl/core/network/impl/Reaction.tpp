@@ -1589,8 +1589,8 @@ ProductionReaction<TNetwork, TDerived>::computeConstantRates(
 								cmR1[j()];
 						}
 						f *= this->_rate(gridIndex);
-						Kokkos::atomic_add(&rates(this->_rateEntries(subId, 1 +
-											   p, 1 + k(), 1 + i())),
+						Kokkos::atomic_add(&rates(this->_rateEntries(
+											   subId, 1 + p, 1 + k(), 1 + i())),
 							f / _productVolumes[p]);
 					}
 				}

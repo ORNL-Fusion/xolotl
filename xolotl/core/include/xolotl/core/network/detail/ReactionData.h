@@ -32,7 +32,7 @@ struct ReactionData
 	using NetworkType = TNetwork;
 	using IndexType = ReactionNetworkIndexType;
 	using ReactionTypes = ReactionTypeList<NetworkType>;
-    using Props = ReactionNetworkProperties<NetworkType>;
+	using Props = ReactionNetworkProperties<NetworkType>;
 
 	static constexpr std::size_t numReactionTypes =
 		std::tuple_size<ReactionTypes>::value;
@@ -83,9 +83,9 @@ struct ReactionData
 	void
 	allocateRateEntries(IndexType numSubInstances)
 	{
-		rateEntries =
-			Kokkos::View<IndexType** [3][coeffsSingleExtent][coeffsSingleExtent]>(
-				"Reaction Rate Entries", numReactions, numSubInstances);
+		rateEntries = Kokkos::View<
+			IndexType** [3][coeffsSingleExtent][coeffsSingleExtent]>(
+			"Reaction Rate Entries", numReactions, numSubInstances);
 	}
 
 	IndexType numReactions{};
@@ -104,7 +104,7 @@ struct ReactionDataRef
 	using NetworkType = TNetwork;
 	using IndexType = ReactionNetworkIndexType;
 	using ReactionTypes = ReactionTypeList<NetworkType>;
-    using Props = ReactionNetworkProperties<NetworkType>;
+	using Props = ReactionNetworkProperties<NetworkType>;
 
 	static constexpr std::size_t numReactionTypes =
 		std::tuple_size<ReactionTypes>::value;

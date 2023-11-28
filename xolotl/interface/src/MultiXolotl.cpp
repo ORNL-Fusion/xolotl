@@ -1,6 +1,6 @@
-#include <cassert>
-
 #include <petsc.h>
+
+#include <cassert>
 
 #include <xolotl/interface/MultiXolotl.h>
 #include <xolotl/interface/XolotlInterface.h>
@@ -76,8 +76,8 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 
 	// Subnetwork reactions
 	auto connectivities = _primaryInstance->getConstantConnectivities();
-    assert(connectivities.size() == _subInstances.size());
-    _primaryInstance->initializeRateEntries(connectivities);
+	assert(connectivities.size() == _subInstances.size());
+	_primaryInstance->initializeRateEntries(connectivities);
 	for (IdType i = 0; i < _subInstances.size(); ++i) {
 		auto& sub = _subInstances[i];
 		sub->setConstantConnectivities(connectivities[i]);

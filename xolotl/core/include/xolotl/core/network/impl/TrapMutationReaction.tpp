@@ -190,9 +190,9 @@ TrapMutationReaction<TNetwork, TDerived>::computeConstantRates(
 	auto f = rate * concentrations[_heClId];
 
 	if (isInSub[_heClId])
-		Kokkos::atomic_add(&rates(_rateEntries[0]), f);
+		Kokkos::atomic_add(&rates(this->_rateEntries(subId, 0, 0, 0)), f);
 	if (isInSub[_iClId])
-		Kokkos::atomic_add(&rates(_rateEntries[1]), f);
+		Kokkos::atomic_add(&rates(this->_rateEntries(subId, 1, 0, 0)), f);
 }
 
 template <typename TNetwork, typename TDerived>
