@@ -458,6 +458,9 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 		auto clusterSpecies = network.parseSpeciesId(tokens[count]);
 		// Get the cluster
 		comp[clusterSpecies()] = std::stoi(tokens[count + 1]);
+		//		if (tokens[count] == "Xe") {
+		//			comp[1] = 1;
+		//		}
 		auto clusterId = network.findClusterId(comp);
 		// Check that it is present in the network
 		if (clusterId == NetworkType::invalidIndex()) {

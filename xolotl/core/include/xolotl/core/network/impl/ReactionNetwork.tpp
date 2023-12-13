@@ -1290,6 +1290,72 @@ ReactionNetwork<TImpl>::getTotalTrappedAtomConcentration(
 }
 
 template <typename TImpl>
+double
+ReactionNetwork<TImpl>::getTotalVolumeRatio(
+	ConcentrationsView concentrations, Species type, AmountType minSize)
+{
+	// Find the vacancy index
+	constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
+	bool hasVacancy = false;
+	Species vIndex;
+	for (auto i : speciesRangeNoI) {
+		if (isVacancy(i)) {
+			hasVacancy = true;
+			vIndex = i;
+		}
+	}
+
+	// Return 0 if there is not vacancy in the network
+	if (!hasVacancy)
+		return 0.0;
+
+	// Ratio times volume
+	auto tiles = _subpaving.getTiles();
+	double conc = 0.0;
+	auto clusterData = _clusterData.d_view;
+	Kokkos::parallel_reduce(
+		"ReactionNetwork::getTotalVolumeRatio", this->_numClusters,
+		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			const Region& clReg = tiles(i).getRegion();
+			if (clReg[vIndex].begin() > 0) {
+				const auto radius = clusterData().reactionRadius(i);
+				const double bubbleVolume = radius * radius * radius;
+				for (AmountType j : makeIntervalRange(clReg[type])) {
+					if (j >= minSize) {
+						for (AmountType l : makeIntervalRange(clReg[vIndex])) {
+							lsum += concentrations(i) * j * bubbleVolume / l;
+						}
+					}
+				}
+			}
+		},
+		conc);
+
+	// Volume
+	double volume = 0.0;
+	Kokkos::parallel_reduce(
+		"ReactionNetwork::getTotalVolumeRatio", this->_numClusters,
+		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			const Region& clReg = tiles(i).getRegion();
+			if (clReg[vIndex].begin() > 0) {
+				const auto factor = clReg.volume() / clReg[type].length();
+				const auto radius = clusterData().reactionRadius(i);
+				const double bubbleVolume = radius * radius * radius;
+				for (AmountType j : makeIntervalRange(clReg[type])) {
+					if (j >= minSize) {
+						lsum += concentrations(i) * bubbleVolume * factor;
+					}
+				}
+			}
+		},
+		volume);
+
+	Kokkos::fence();
+
+	return conc / volume;
+}
+
+template <typename TImpl>
 void
 ReactionNetwork<TImpl>::updateOutgoingDiffFluxes(double* gridPointSolution,
 	double factor, std::vector<IndexType> diffusingIds,

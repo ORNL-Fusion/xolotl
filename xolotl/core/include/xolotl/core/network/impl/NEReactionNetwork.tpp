@@ -71,8 +71,8 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			fileClusterNumber);
 
 	// The first loop will be on single clusters to get their properties
-	std::vector<double> mVector(fileClusterNumber, 0.0);
 	std::vector<double> g0Vector(fileClusterNumber, 0.0);
+	std::vector<IdType> smallestG0Id(fileClusterNumber, 0);
 	std::vector<std::vector<std::pair<double, double>>> lVector(
 		fileClusterNumber, std::vector<std::pair<double, double>>());
 	constexpr double k_B = ::xolotl::core::kBoltzmann;
@@ -102,34 +102,36 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 		auto g0 = h0 - k_B * temperature * s0;
 		auto D0 = tokens[5];
 		auto q = tokens[6];
-		auto mobility =
-			D0 * exp(-q / (k_B * temperature)) / (k_B * temperature);
-		g0Vector[count] = g0;
-		mVector[count] = mobility;
+		auto diffusivity = D0 * exp(-q / (k_B * temperature));
 		// Save the linkage information
-		std::pair<double, double> linkage(mobility, g0);
+		std::pair<double, double> linkage(diffusivity, g0);
 		lVector[count].push_back(linkage);
+		g0Vector[count] = g0;
 
 		// Loop on the linked clusters
 		for (auto i = 7; i < tokens.size(); i += 4) {
 			// Get its properties
 			auto g0Linked = tokens[i] - k_B * temperature * tokens[i + 1];
-			auto mobilityLinked = tokens[i + 2] *
-				exp(-tokens[i + 3] / (k_B * temperature)) / (k_B * temperature);
+			auto diffLinked =
+				tokens[i + 2] * exp(-tokens[i + 3] / (k_B * temperature));
 			// Save the linkage information
-			linkage.first = mobilityLinked;
+			linkage.first = diffLinked;
 			linkage.second = g0Linked;
 			lVector[count].push_back(linkage);
+
+			// Look for the smallest G0
+			if (g0Linked < g0Vector[count]) {
+				smallestG0Id[count] = (i - 7) / 4 + 1;
+				g0Vector[count] = g0Linked;
+			}
 		}
 		// Set values in the cluster
 		if (_clusterDataMirror.has_value()) {
 			// Compute the diffusivity with linkage
 			double diffusivity = 0.0;
-			double largestG0 = g0Vector[count];
-			IdType largestId = 0;
 			for (auto link : lVector[count]) {
 				diffusivity += link.first *
-					exp((largestG0 - link.second) / (k_B * temperature));
+					exp((g0Vector[count] - link.second) / (k_B * temperature));
 			}
 			this->_clusterDataMirror.value().diffusionFactor(rId) = diffusivity;
 			this->_clusterDataMirror.value().migrationEnergy(rId) = 0.0;
@@ -163,29 +165,21 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			// Get the coefficient rate
 			auto coefRate = tokens[3];
 
-			double largestG0 = g0Vector[map1Id];
-			IdType largestId = 0;
-
 			// Compute the full given rate for this sink
-			auto linkageRate = lVector[map1Id][largestId].first;
+			auto linkageRate = lVector[map1Id][smallestG0Id[map1Id]].first;
 			constantRates(map1Id, fileClusterNumber, 1) =
-				coefRate * k_B * temperature * linkageRate;
+				coefRate * linkageRate;
 			// Loop on the linked clusters
 			linkageRate = 0.0;
 			for (auto link : lVector[map1Id]) {
 				linkageRate += link.first *
-					exp((largestG0 - link.second) / (k_B * temperature));
+					exp((g0Vector[map1Id] - link.second) / (k_B * temperature));
 			}
 			// Save the value
 			constantRates(map1Id, fileClusterNumber, 0) =
-				coefRate * k_B * temperature * linkageRate;
+				coefRate * linkageRate;
 
-			double energy = 0.0;
-			for (auto i = 0; i < 1; i++) {
-				auto g0 = lVector[map1Id][i].second;
-				double li = exp((largestG0 - g0) / (k_B * temperature));
-				energy -= li * g0;
-			}
+			double energy = -g0Vector[map1Id];
 			reactionEnergies(map1Id, fileClusterNumber) = energy;
 		}
 		// Production case
@@ -203,11 +197,6 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			auto mapProdId =
 				fileClusterMap.value_at(fileClusterMap.find(prodId));
 
-			double largestG01 = g0Vector[map1Id];
-			IdType largestId1 = 0;
-			double largestG02 = g0Vector[map2Id];
-			IdType largestId2 = 0;
-
 			// Get the coefficient rate
 			//			double coefRate = static_cast<double>(tokens[9]);
 			double coefRate = 1.0;
@@ -217,68 +206,45 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			for (auto i = 0; i < lVector[map1Id].size(); i++) {
 				for (auto j = 0; j < lVector[map2Id].size(); j++) {
 					double d_a = lVector[map1Id][i].first;
-					double l_a = exp((largestG01 - lVector[map1Id][i].second) /
-						(k_B * temperature));
+					double l_a =
+						exp((g0Vector[map1Id] - lVector[map1Id][i].second) /
+							(k_B * temperature));
 					double d_b = lVector[map2Id][j].first;
-					double l_b = exp((largestG02 - lVector[map2Id][j].second) /
-						(k_B * temperature));
+					double l_b =
+						exp((g0Vector[map2Id] - lVector[map2Id][j].second) /
+							(k_B * temperature));
 					linkageRate += (d_a + d_b) * l_a * l_b;
 				}
 			}
 			// Save the value to the right
-			auto totalRate = coefRate * k_B * temperature * linkageRate;
+			auto totalRate = coefRate * linkageRate;
 			constantRates(map1Id, map2Id, 0) = totalRate;
 			constantRates(map2Id, map1Id, 0) = totalRate;
 
 			// Save the energy for this reaction
-			double energy = 0.0;
-			for (auto i = 0; i < 1; i++) {
-				auto g0 = lVector[map1Id][i].second;
-				double li = exp((largestG01 - g0) / (k_B * temperature));
-				energy -= li * g0;
-			}
-			for (auto i = 0; i < 1; i++) {
-				auto g0 = lVector[map2Id][i].second;
-				double li = exp((largestG02 - g0) / (k_B * temperature));
-				energy -= li * g0;
-			}
+			double energy = -g0Vector[map1Id] - g0Vector[map2Id];
 
 			if (prodId != this->invalidIndex()) {
-				double largestG0 = g0Vector[mapProdId];
-				IdType largestId = 0;
-				//				for (auto i = 0; i < lVector[prodId].size();
-				// i++)
-				//{ 					if (lVector[prodId][i].second <
-				// largestG0) { largestG0 =
-				// lVector[prodId][i].second; 						largestId =
-				// i;
-				//					}
-				//				}
-
 				linkageRate = 0.0;
 				for (auto i = 0; i < lVector[map1Id].size(); i++) {
 					for (auto j = 0; j < lVector[map2Id].size(); j++) {
 						for (auto k = 0; k < lVector[mapProdId].size(); k++) {
 							double d_a = lVector[map1Id][i].first;
 							double d_b = lVector[map2Id][j].first;
-							double l_z =
-								exp((largestG0 - lVector[mapProdId][k].second) /
-									(k_B * temperature));
+							double l_z = exp((g0Vector[mapProdId] -
+												 lVector[mapProdId][k].second) /
+								(k_B * temperature));
 							linkageRate += (d_a + d_b) * l_z;
 						}
 					}
 				}
 
-				totalRate = coefRate * k_B * temperature * linkageRate;
+				totalRate = coefRate * linkageRate;
 				constantRates(map1Id, map2Id, 1) = totalRate;
 				constantRates(map2Id, map1Id, 1) = totalRate;
 
-				// Add linkage
-				for (auto i = 0; i < 1; i++) {
-					auto g0 = lVector[mapProdId][i].second;
-					double li = exp((largestG0 - g0) / (k_B * temperature));
-					energy += li * g0;
-				}
+				// Add energy
+				energy += g0Vector[mapProdId];
 			}
 			reactionEnergies(map1Id, map2Id) = energy;
 			reactionEnergies(map2Id, map1Id) = energy;

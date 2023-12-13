@@ -600,6 +600,26 @@ public:
 	}
 
 	/**
+	 * Get the averaged species to defect ratio.
+	 *
+	 * @param concentration The vector of concentrations
+	 * @param type The type of atom we want the concentration of
+	 * @param minSize The minimum number of atom to start counting
+	 * @return The ratio
+	 */
+	double
+	getTotalVolumeRatio(ConcentrationsView concentrations, Species type,
+		AmountType minSize = 0);
+
+	double
+	getTotalVolumeRatio(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) override
+	{
+		auto type = species.cast<Species>();
+		return getTotalVolumeRatio(concentrations, type, minSize);
+	}
+
+	/**
 	 * Get the total concentration of a given type of clusters only if it is
 	 * trapped in a vacancy.
 	 *
@@ -755,6 +775,10 @@ struct ReactionNetworkWorker
 
 	double
 	getTotalVolumeFraction(ConcentrationsView concentrations, Species type,
+		AmountType minSize = 0);
+
+	double
+	getTotalVolumeRatio(ConcentrationsView concentrations, Species type,
 		AmountType minSize = 0);
 };
 

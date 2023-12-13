@@ -495,6 +495,10 @@ public:
 	getTotalAtomConcentration(ConcentrationsView concentrations,
 		SpeciesId species, AmountType minSize = 0) = 0;
 
+	virtual double
+	getTotalVolumeRatio(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) = 0;
+
 	/**
 	 * @brief Computes the diffusion flux exiting from this grid point.
 	 *

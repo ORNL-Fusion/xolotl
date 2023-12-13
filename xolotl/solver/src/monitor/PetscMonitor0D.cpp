@@ -261,27 +261,30 @@ PetscMonitor0D::setup(int loop)
 		// And start looping on the lines
 		while (tokens.size() > 0) {
 			// Find the Id of the cluster
-			NetworkType::Composition comp = NetworkType::Composition::zero();
-			comp[NetworkType::Species::Xe] = static_cast<IdType>(tokens[0]);
-			comp[NetworkType::Species::V] = static_cast<IdType>(tokens[1]);
-			comp[NetworkType::Species::I] = static_cast<IdType>(tokens[2]);
+			IdType nXe = static_cast<IdType>(tokens[0]);
+			IdType nV = static_cast<IdType>(tokens[1]);
+			IdType nI = static_cast<IdType>(tokens[2]);
+			auto comp =
+				std::vector<AmountType>(network.getSpeciesListSize(), 0);
+			auto clusterSpecies = network.parseSpeciesId("Xe");
+			comp[clusterSpecies()] = nXe;
+			clusterSpecies = network.parseSpeciesId("V");
+			comp[clusterSpecies()] = nV;
+			clusterSpecies = network.parseSpeciesId("I");
+			comp[clusterSpecies()] = nI;
 
-			auto clusterId = network.findCluster(comp).getId();
+			auto clusterId = network.findClusterId(comp);
 			// Check that it is present in the network
 			if (clusterId != NetworkType::invalidIndex()) {
 				_clusterOrder.push_back(clusterId);
-				if (comp[NetworkType::Species::I] > 0)
-					outputFile << "I_" << comp[NetworkType::Species::I] << " ";
-				else if (comp[NetworkType::Species::V] > 0 and
-					comp[NetworkType::Species::Xe] == 0)
-					outputFile << "V_" << comp[NetworkType::Species::V] << " ";
-				else if (comp[NetworkType::Species::Xe] > 0 and
-					comp[NetworkType::Species::V] == 0)
-					outputFile << "Xe_" << comp[NetworkType::Species::Xe]
-							   << " ";
+				if (nI > 0)
+					outputFile << "I_" << nI << " ";
+				else if (nV > 0 and nXe == 0)
+					outputFile << "V_" << nV << " ";
+				else if (nXe > 0 and nV == 0)
+					outputFile << "Xe_" << nXe << " ";
 				else
-					outputFile << "Xe_" << comp[NetworkType::Species::Xe]
-							   << "V_" << comp[NetworkType::Species::V] << " ";
+					outputFile << "Xe_" << nXe << "V_" << nV << " ";
 			}
 
 			getline(reactionFile, line);
@@ -290,7 +293,7 @@ PetscMonitor0D::setup(int loop)
 
 			tokens = util::Tokenizer<double>{line}();
 		}
-		outputFile << std::endl;
+		outputFile << "Xe/SD" << std::endl;
 		outputFile.close();
 	}
 
@@ -558,7 +561,8 @@ PetscMonitor0D::computeXenonRetention(
 	for (auto id : _clusterOrder) {
 		outputFile << gridPointSolution[id] << " ";
 	}
-	outputFile << std::endl;
+	auto ratio = network.getTotalVolumeRatio(dConcs, Spec::Xe, 1);
+	outputFile << ratio << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray
