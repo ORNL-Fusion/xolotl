@@ -72,10 +72,10 @@ public:
 	 * Finish setting up solver dependencies
 	 *
 	 * @param da The PETSc distributed array
-	 * @param ts The PETSc time-stepper
+	 * @param J The PETSc Jacobian matrix
 	 */
 	virtual void
-	initializeSolverContext(DM& da, TS& ts) = 0;
+	initializeSolverContext(DM& da, Mat& J) = 0;
 
 	/**
 	 * Initialize the concentration solution vector.

@@ -48,7 +48,7 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 }
 
 void
-PetscSolver0DHandler::initializeSolverContext(DM& da, TS& ts)
+PetscSolver0DHandler::initializeSolverContext(DM& da, Mat& J)
 {
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
@@ -67,8 +67,6 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, TS& ts)
 	auto nPartials = network.getDiagonalFill(dfill);
 
 	// Preallocate matrix
-	Mat J;
-	PetscCallVoid(TSGetRHSJacobian(ts, &J, nullptr, nullptr, nullptr));
 	auto [rows, cols] = convertToCoordinateListPair(dof, dfill);
 	// handling temperature (FIXME)
 	rows.push_back(dof);

@@ -126,7 +126,7 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 }
 
 void
-PetscSolver2DHandler::initializeSolverContext(DM& da, TS& ts)
+PetscSolver2DHandler::initializeSolverContext(DM& da, Mat& J)
 {
 	// + moments
 	const auto dof = network.getDOF();
@@ -169,8 +169,6 @@ PetscSolver2DHandler::initializeSolverContext(DM& da, TS& ts)
 	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
-	Mat J;
-	PetscCallVoid(TSGetRHSJacobian(ts, &J, nullptr, nullptr, nullptr));
 	auto nwEntries = convertToRowColPairList(dof, dfill);
 	nNetworkEntries = nwEntries.size();
 	//

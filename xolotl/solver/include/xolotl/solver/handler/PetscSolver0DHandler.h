@@ -46,7 +46,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeSolverContext(DM& da, TS& ts);
+	initializeSolverContext(DM& da, Mat& J);
 
 	/**
 	 * \see ISolverHandler.h
