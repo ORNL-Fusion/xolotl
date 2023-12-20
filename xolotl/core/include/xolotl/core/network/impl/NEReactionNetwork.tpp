@@ -32,9 +32,9 @@ NEReactionNetwork::readClusters(const std::string filename)
 	std::vector<double> tokens;
 	util::Tokenizer<double>{line}(tokens);
 	// And start looping on the lines
-	fileClusterNumber = 0;
+	IdType count = 0;
 	while (tokens.size() > 0) {
-		fileClusterNumber++;
+		count++;
 
 		getline(reactionFile, line);
 		if (line == "Reactions")
@@ -42,12 +42,16 @@ NEReactionNetwork::readClusters(const std::string filename)
 
 		tokens = util::Tokenizer<double>{line}();
 	}
+	this->_clusterData.h_view().extraData.fileClusterNumber = count;
 }
 
 void
 NEReactionNetwork::readReactions(double temperature, const std::string filename)
 {
 	syncClusterDataOnHost();
+
+	auto fileClusterNumber =
+		this->_clusterData.h_view().extraData.fileClusterNumber;
 
 	// Read the reactions from a file
 	std::ifstream reactionFile;
@@ -194,8 +198,6 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			comp[Species::V] = static_cast<IndexType>(tokens[7]);
 			comp[Species::I] = static_cast<IndexType>(tokens[8]);
 			auto prodId = findCluster(comp, plsm::HostMemSpace{}).getId();
-			auto mapProdId =
-				fileClusterMap.value_at(fileClusterMap.find(prodId));
 
 			// Get the coefficient rate
 			//			double coefRate = static_cast<double>(tokens[9]);
@@ -225,6 +227,8 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			double energy = -g0Vector[map1Id] - g0Vector[map2Id];
 
 			if (prodId != this->invalidIndex()) {
+				auto mapProdId =
+					fileClusterMap.value_at(fileClusterMap.find(prodId));
 				linkageRate = 0.0;
 				for (auto i = 0; i < lVector[map1Id].size(); i++) {
 					for (auto j = 0; j < lVector[map2Id].size(); j++) {
@@ -298,7 +302,8 @@ NEReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 		return;
 	}
 
-	this->_clusterData.h_view().extraData.initialize(fileClusterNumber);
+	this->_clusterData.h_view().extraData.initialize(
+		this->_clusterData.h_view().extraData.fileClusterNumber);
 	this->copyClusterDataView();
 }
 

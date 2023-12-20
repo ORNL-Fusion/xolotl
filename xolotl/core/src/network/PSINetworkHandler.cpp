@@ -28,9 +28,11 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	using AmountType = IReactionNetwork::AmountType;
 
 	// Get the boundaries from the options
-	AmountType maxV = options.getMaxV();
+	AmountType maxV = options.getMaxPureV();
+	AmountType maxHeV = options.getMaxV();
 	AmountType maxI = options.getMaxI();
-	AmountType maxHe = psi::getMaxHePerV(maxV, options.getHeVRatio());
+	AmountType maxHe =
+		psi::getMaxHePerV(options.getMaxV(), options.getHeVRatio());
 	AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	AmountType groupingWidthHe = options.getGroupingWidthA();
@@ -38,6 +40,8 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	AmountType groupingWidthT = options.getGroupingWidthA();
 	AmountType groupingWidthV = options.getGroupingWidthB();
 	AmountType groupingWidthI = options.getGroupingWidthB();
+	// To deal with pure with grouping
+	AmountType deltaI = 0;
 
 	if (options.getMaxImpurity() <= 0) {
 		maxHe = 0;
@@ -65,7 +69,7 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	}
 	else {
 		// Adapt max
-		int i = 0;
+		AmountType i = 0;
 		while (maxHe + 1 > pow(groupingWidthHe, i)) {
 			++i;
 		}
@@ -80,11 +84,22 @@ generatePSIReactionNetwork(const options::IOptions& options)
 			++i;
 		}
 		maxT = pow(groupingWidthT, i) - 1;
+
+		// V
 		i = 0;
 		while (maxV + 1 > pow(groupingWidthV, i)) {
 			++i;
 		}
 		maxV = pow(groupingWidthV, i) - 1;
+
+		// HeV
+		AmountType j = 0;
+		while (maxHeV + 1 > pow(groupingWidthV, j)) {
+			++j;
+		}
+		maxHeV = pow(groupingWidthV, j) - 1;
+
+		deltaI = i - j;
 	}
 
 	if (options.getGroupingMin() >= maxI) {
@@ -107,39 +122,66 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	}
 
 	if (maxD > 0 && maxT > 0) {
+		std::vector<PSIReactionNetwork<PSIFullSpeciesList>::SubdivisionRatio>
+			subdivRatios = {{groupingWidthHe, groupingWidthD, groupingWidthT,
+				groupingWidthV, groupingWidthI}};
+		auto it = subdivRatios.begin();
+		for (auto k = 0; k < deltaI; k++) {
+			it = subdivRatios.insert(it, {1, 1, 1, groupingWidthV, 1});
+		}
 		return makePSIReactionNetwork<PSIFullSpeciesList>(
-			{maxHe, maxD, maxT, maxV, maxI},
-			{{groupingWidthHe, groupingWidthD, groupingWidthT, groupingWidthV,
-				groupingWidthI}},
-			options);
+			{maxHe, maxD, maxT, maxV, maxI}, subdivRatios, options);
 	}
 	if (maxD > 0 && maxT <= 0) {
+		std::vector<
+			PSIReactionNetwork<PSIDeuteriumSpeciesList>::SubdivisionRatio>
+			subdivRatios = {{groupingWidthHe, groupingWidthD, groupingWidthV,
+				groupingWidthI}};
+		auto it = subdivRatios.begin();
+		for (auto k = 0; k < deltaI; k++) {
+			it = subdivRatios.insert(it, {1, 1, groupingWidthV, 1});
+		}
 		return makePSIReactionNetwork<PSIDeuteriumSpeciesList>(
-			{maxHe, maxD, maxV, maxI},
-			{{groupingWidthHe, groupingWidthD, groupingWidthV, groupingWidthI}},
-			options);
+			{maxHe, maxD, maxV, maxI}, subdivRatios, options);
 	}
 	if (maxD <= 0 && maxT > 0) {
+		std::vector<PSIReactionNetwork<PSITritiumSpeciesList>::SubdivisionRatio>
+			subdivRatios = {{groupingWidthHe, groupingWidthT, groupingWidthV,
+				groupingWidthI}};
+		auto it = subdivRatios.begin();
+		for (auto k = 0; k < deltaI; k++) {
+			it = subdivRatios.insert(it, {1, 1, groupingWidthV, 1});
+		}
 		return makePSIReactionNetwork<PSITritiumSpeciesList>(
-			{maxHe, maxT, maxV, maxI},
-			{{groupingWidthHe, groupingWidthT, groupingWidthV, groupingWidthI}},
-			options);
+			{maxHe, maxT, maxV, maxI}, subdivRatios, options);
 	}
 	else {
 		// Either V is grouped
 		if (options.getGroupingMin() > maxI) {
 			AmountType refineHe = (maxHe + 1) / groupingWidthHe;
 			AmountType refineV = (maxV + 1) / groupingWidthV;
+			std::vector<
+				PSIReactionNetwork<PSIHeliumSpeciesList>::SubdivisionRatio>
+				subdivRatios = {{refineHe, refineV, maxI + 1},
+					{groupingWidthHe, groupingWidthV, 1}};
+			auto it = subdivRatios.begin();
+			for (auto k = 0; k < deltaI; k++) {
+				it = subdivRatios.insert(it, {1, groupingWidthV, 1});
+			}
 			return makePSIReactionNetwork<PSIHeliumSpeciesList>(
-				{maxHe, maxV, maxI},
-				{{refineHe, refineV, maxI + 1},
-					{groupingWidthHe, groupingWidthV, 1}},
-				options);
+				{maxHe, maxV, maxI}, subdivRatios, options);
 		}
 		else {
+			std::vector<
+				PSIReactionNetwork<PSIHeliumSpeciesList>::SubdivisionRatio>
+				subdivRatios = {
+					{groupingWidthHe, groupingWidthV, groupingWidthI}};
+			auto it = subdivRatios.begin();
+			for (auto k = 0; k < deltaI; k++) {
+				it = subdivRatios.insert(it, {1, groupingWidthV, 1});
+			}
 			return makePSIReactionNetwork<PSIHeliumSpeciesList>(
-				{maxHe, maxV, maxI},
-				{{groupingWidthHe, groupingWidthV, groupingWidthI}}, options);
+				{maxHe, maxV, maxI}, subdivRatios, options);
 		}
 	}
 }

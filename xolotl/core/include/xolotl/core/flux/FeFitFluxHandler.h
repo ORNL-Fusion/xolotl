@@ -1,5 +1,4 @@
-#ifndef FEFITFLUXHANDLER_H
-#define FEFITFLUXHANDLER_H
+#pragma once
 
 #include <cmath>
 
@@ -142,27 +141,31 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(double currentTime, double*, double* updatedConcOffset,
-		int xi, int surfacePos)
+	computeIncidentFlux(double currentTime, Kokkos::View<const double*>,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
 	{
 		// Define only for a 0D case
-		if (incidentFluxVec[0].size() == 0) {
-			updatedConcOffset[fluxIndices[0]] += 2.11e-11; // He1
-			updatedConcOffset[fluxIndices[1]] += 1.49e-05; // I1
-			updatedConcOffset[fluxIndices[2]] += 9.91e-06; // V1
-			updatedConcOffset[fluxIndices[3]] += 1.51e-06; // V2
-			updatedConcOffset[fluxIndices[4]] += 2.60e-07; // V3
-			updatedConcOffset[fluxIndices[5]] += 1.58e-07; // V4
-			updatedConcOffset[fluxIndices[6]] += 6.29e-08; // V5
-			updatedConcOffset[fluxIndices[7]] += 3.16e-08; // V9
-		}
-
-		else {
+		if (incidentFluxVec[0].size() != 0) {
 			throw std::runtime_error(
 				"\nThe iron problem is not defined for more than 0D!");
 		}
 
-		return;
+		Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> ids_h{
+			fluxIndices.data(), 8};
+		Kokkos::View<IdType*> ids{"Flux Indices", 8};
+		deep_copy(ids, ids_h);
+		Kokkos::parallel_for(
+			1, KOKKOS_LAMBDA(std::size_t) {
+				updatedConcOffset[ids[0]] += 2.11e-11; // He1
+				updatedConcOffset[ids[1]] += 1.49e-05; // I1
+				updatedConcOffset[ids[2]] += 9.91e-06; // V1
+				updatedConcOffset[ids[3]] += 1.51e-06; // V2
+				updatedConcOffset[ids[4]] += 2.60e-07; // V3
+				updatedConcOffset[ids[5]] += 1.58e-07; // V4
+				updatedConcOffset[ids[6]] += 6.29e-08; // V5
+				updatedConcOffset[ids[7]] += 3.16e-08; // V9
+			});
 	}
 };
 // end class FeFitFluxHandler
@@ -170,5 +173,3 @@ public:
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif

@@ -98,6 +98,18 @@ public:
 		return *this;
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	bool
+	operator==(const Array<T, N0>& other)
+	{
+		for (auto i = 0; i < N0; ++i) {
+			if (this->operator[](i) != other[i]) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	void
 	DumpTo(std::ostream& os, size_t level = 0)
 	{

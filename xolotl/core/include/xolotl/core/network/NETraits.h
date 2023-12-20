@@ -99,7 +99,8 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 	KOKKOS_INLINE_FUNCTION
 	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
 		constantRates(data.constantRates),
-		fileClusterMap(data.fileClusterMap)
+		fileClusterMap(data.fileClusterMap),
+		fileClusterNumber(0)
 	{
 	}
 
@@ -131,6 +132,7 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 		ret += constantRates.required_allocation_size(constantRates.extent(0),
 			constantRates.extent(1), constantRates.extent(2));
 		ret += sizeof(fileClusterMap);
+		ret += sizeof(fileClusterNumber);
 
 		return ret;
 	}
@@ -144,6 +146,7 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 
 	View<double***> constantRates;
 	MapType fileClusterMap;
+	IdType fileClusterNumber;
 };
 } // namespace detail
 } // namespace network

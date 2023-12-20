@@ -10,6 +10,7 @@ AlloyClusterGenerator::AlloyClusterGenerator(const options::IOptions& options) :
 	_maxV(options.getMaxV()),
 	_maxI(options.getMaxI()),
 	_maxSize(options.getMaxImpurity()),
+	_maxVoid(options.getMaxD()),
 	_groupingMin(options.getGroupingMin()),
 	_groupingWidth(options.getGroupingWidthA())
 {
@@ -20,6 +21,7 @@ AlloyClusterGenerator::AlloyClusterGenerator(
 	Superclass(refineDepth),
 	_maxV(options.getMaxV()),
 	_maxI(options.getMaxI()),
+	_maxVoid(options.getMaxD()),
 	_maxSize(options.getMaxImpurity()),
 	_groupingMin(options.getGroupingMin()),
 	_groupingWidth(options.getGroupingWidthA())

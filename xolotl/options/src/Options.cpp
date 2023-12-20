@@ -23,13 +23,16 @@ Options::Options() :
 	tempHandlerName(""),
 	tempParam{},
 	tempProfileFilename(""),
+	tempGridPower(2.5),
 	fluxFlag(false),
 	fluxAmplitude(0.0),
 	fluxTimeProfileFlag(false),
 	perfHandlerName(""),
+	perfOutputYAMLFlag(false),
 	vizHandlerName(""),
 	materialName(""),
 	initialConcentration(""),
+	interfaceLocation(-1000.0),
 	dimensionNumber(1),
 	gridTypeName(""),
 	gridParam{},
@@ -44,6 +47,7 @@ Options::Options() :
 	maxD(0),
 	maxT(0),
 	maxV(20),
+	maxPureV(20),
 	maxI(6),
 	leftBoundary(1),
 	rightBoundary(1),
@@ -52,6 +56,7 @@ Options::Options() :
 	frontBoundary(1),
 	backBoundary(1),
 	xBC("mirror"),
+	heatLossPortion(-1.0),
 	burstingDepth(10.0),
 	burstingFactor(0.1),
 	rngUseSeed(false),
@@ -68,7 +73,11 @@ Options::Options() :
 	xenonDiffusivity(-1.0),
 	fissionYield(0.25),
 	heVRatio(4.0),
-	migrationThreshold(std::numeric_limits<double>::infinity())
+	migrationThreshold(std::numeric_limits<double>::infinity()),
+	basalPortion(0.1),
+	transitionSize(325),
+	cascadeDose(-1.0),
+	cascadeEfficiency(0.0)
 {
 	return;
 }
@@ -118,17 +127,21 @@ Options::readParams(int argc, const char* argv[])
 		"The HDF5 file to use for restart.")("tempHandler",
 		bpo::value<std::string>(&tempHandlerName)->default_value("constant"),
 		"Temperature handler to use. (default = constant; available "
-		"constant,gradient,heat,profile")("tempParam",
+		"constant,gradient,heat,ELM,profile")("tempParam",
 		bpo::value<std::string>(),
 		"At most two parameters for temperature handler. Alternatives:"
 		"constant -> temp; "
 		"gradient -> surfaceTemp bulkTemp; "
-		"heat -> heatFlux bulkTemp")("tempFile",
+		"heat -> heatFlux bulkTemp; "
+		"ELM -> bulkTemp")("tempFile",
 		bpo::value<std::string>(&tempProfileFilename),
 		"A temperature profile is given by the specified file, "
 		"then linear interpolation is used to fit the data."
-		" NOTE: no need for tempParam here.")("flux",
-		bpo::value<double>(&fluxAmplitude),
+		" NOTE: no need for tempParam here.")("tempGridPower",
+		bpo::value<double>(&tempGridPower),
+		"The value of the power to use to create the temperature grid spacing, "
+		"only used if heat temperature handler is used. (default = 2.5).")(
+		"flux", bpo::value<double>(&fluxAmplitude),
 		"The value of the incoming flux in #/nm2/s. If the Fuel case is used "
 		"it actually corresponds to the fission rate in #/nm3/s.")("fluxFile",
 		bpo::value<std::string>(&fluxTimeProfileFilePath),
@@ -138,7 +151,9 @@ Options::readParams(int argc, const char* argv[])
 		"a constant flux should NOT be given)")("perfHandler",
 		bpo::value<std::string>(&perfHandlerName)->default_value("os"),
 		"Which set of performance handlers to use. (default = os, available "
-		"dummy,os,papi).")("vizHandler",
+		"dummy,os,papi).")("perfOutputYAML",
+		bpo::value<bool>(&perfOutputYAMLFlag),
+		"Should we write the performance report to a YAML file?")("vizHandler",
 		bpo::value<std::string>(&vizHandlerName)->default_value("dummy"),
 		"Which set of handlers to use for the visualization. (default = dummy, "
 		"available std,dummy).")("dimensions",
@@ -151,7 +166,9 @@ Options::readParams(int argc, const char* argv[])
 		"The name, size, and value of the initial concentration in the "
 		"material.")("zeta", bpo::value<double>(&zeta)->default_value(0.73),
 		"The value of the electronic stopping power in the material (0.73 by "
-		"default).")("gridType",
+		"default).")("interfaceLoc", bpo::value<double>(&interfaceLocation),
+		"The value (in nm) of the interface location between two materials "
+		"(-1000.0 nm by default).")("gridType",
 		bpo::value<std::string>(&gridTypeName)->default_value("uniform"),
 		"Grid type to use along X. (default = uniform; available "
 		"uniform,nonuniform,geometric,cheby,read")("gridParam",
@@ -170,7 +187,7 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"List of all the processes to use in the simulation (reaction, diff, "
 		"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, "
-		"heterogeneous, sink, constant, noSolve).")("grain",
+		"heterogeneous, sink, soret, constant, noSolve).")("grain",
 		bpo::value<std::string>(&gbList),
 		"This option allows the user to add GB in the X, Y, or Z directions. "
 		"To do so, simply write the direction followed "
@@ -185,7 +202,7 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"This option allows the user to define the boundaries of the network. "
 		"To do so, simply write the values in order "
-		"maxHe/Xe/Basal maxD maxT maxV maxI.")("radiusSize",
+		"maxHe/Xe/Basal maxD maxT maxV maxI maxPureV.")("radiusSize",
 		bpo::value<std::string>(),
 		"This option allows the user to set a minimum size for the computation "
 		"for the average radii, in the same order as the netParam option "
@@ -196,8 +213,11 @@ Options::readParams(int argc, const char* argv[])
 		"then two for Y and two for Z. "
 		"0 means mirror or periodic, 1 means free surface.")("xBCType",
 		bpo::value<std::string>(&xBC),
-		"The boundary conditions to use in the X direction, mirror (default) "
-		"or periodic.")("burstingDepth", bpo::value<double>(&burstingDepth),
+		"The boundary conditions to use in the X direction, mirror (default), "
+		"periodic, or robin (for temperature).")("heatLossPortion",
+		bpo::value<double>(&heatLossPortion),
+		"The portion of heat lost in the bulk (-1.0 by default).")(
+		"burstingDepth", bpo::value<double>(&burstingDepth),
 		"The depth (in nm) after which there is an exponential decrease in the "
 		"probability of bursting (10.0 nm if nothing is specified).")(
 		"burstingFactor", bpo::value<double>(&burstingFactor),
@@ -237,7 +257,22 @@ Options::readParams(int argc, const char* argv[])
 		"string that will use the default material associated flux handler.")(
 		"reactionFilePath", bpo::value<fs::path>(&reactionFilePath),
 		"The path to the reaction rates file; the default is an empty "
-		"string.");
+		"string.")("basalPortion",
+		bpo::value<double>(&basalPortion)->default_value(0.1),
+		"The value of the basal portion generated for each V (0.1 by "
+		"default).")("transitionSize",
+		bpo::value<int>(&transitionSize)->default_value(325),
+		"The value for the transition within a type of cluster, for instance "
+		"basal (325 by "
+		"default).")("cascadeDose",
+		bpo::value<double>(&cascadeDose)->default_value(-1.0),
+		"The value of the dose at which the cascade overlap effect takes "
+		"effect, if negative there won't be an effect (-1.0 by "
+		"default).")("cascadeEfficiency",
+		bpo::value<double>(&cascadeEfficiency)->default_value(0.0),
+		"The value of the remaining efficiency once the overlap effect started "
+		"(0.0 by "
+		"default).");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);
@@ -375,6 +410,7 @@ Options::readParams(int argc, const char* argv[])
 		processMap["resolution"] = false;
 		processMap["heterogeneous"] = false;
 		processMap["sink"] = false;
+		processMap["soret"] = false;
 		processMap["constant"] = false;
 		processMap["noSolve"] = false;
 
@@ -429,6 +465,12 @@ Options::readParams(int argc, const char* argv[])
 			maxV = strtol(tokens[3].c_str(), NULL, 10);
 			// Set the interstitial size
 			maxI = strtol(tokens[4].c_str(), NULL, 10);
+			if (tokens.size() > 5) {
+				// Set the pure V size
+				maxPureV = strtol(tokens[5].c_str(), NULL, 10);
+			}
+			else
+				maxPureV = maxV;
 		}
 	}
 

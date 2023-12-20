@@ -45,6 +45,14 @@ public:
 		const std::string& name, const IHardwareCounter::SpecType& ctrSpec) = 0;
 
 	/**
+	 * Report performance data to the given stream
+	 *
+	 * @param os Stream to which to output data
+	 */
+	virtual void
+	reportData(std::ostream& os) const = 0;
+
+	/**
 	 * Collect statistics about any performance data collected by
 	 * processes of the program.
 	 *

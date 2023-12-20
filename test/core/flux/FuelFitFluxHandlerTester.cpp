@@ -9,6 +9,7 @@
 #include <xolotl/core/flux/FuelFitFluxHandler.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
 
 using namespace std;
@@ -67,37 +68,38 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	double currTime = 1.0;
 
 	// The array of concentration
-	double oldConcentration[5 * dof];
-	double newConcentration[5 * dof];
+	test::DOFView conc("conc", 5, dof);
+	test::DOFView updatedConc("updatedConc", 5, dof);
 
 	// Initialize their values
-	for (int i = 0; i < 5 * dof; i++) {
-		oldConcentration[i] = 1.0e-5 * i;
-		newConcentration[i] = 0.0;
-	}
+	for (int i = 0; i < 5; i++)
+		for (int j = 0; j < dof; j++) {
+			conc(i, j) = 1.0e-5 * i;
+			updatedConc(i, j) = 0.0;
+		}
 
 	// The pointer to the grid point we want
-	double* conc = &oldConcentration[0];
-	double* concOffset = conc + dof;
-	double* updatedConc = &newConcentration[0];
-	double* updatedConcOffset = updatedConc + dof;
+	auto concOffset = subview(conc, 1, Kokkos::ALL);
+	auto updatedConcOffset = subview(updatedConc, 1, Kokkos::ALL);
 
 	// Update the concentrations at some grid points
 	testFitFlux->computeIncidentFlux(
 		currTime, concOffset, updatedConcOffset, 1, surfacePos);
-	concOffset = conc + 2 * dof;
-	updatedConcOffset = updatedConc + 2 * dof;
+	concOffset = subview(conc, 2, Kokkos::ALL);
+	updatedConcOffset = subview(updatedConc, 2, Kokkos::ALL);
 	testFitFlux->computeIncidentFlux(
 		currTime, concOffset, updatedConcOffset, 2, surfacePos);
-	concOffset = conc + 3 * dof;
-	updatedConcOffset = updatedConc + 3 * dof;
+	concOffset = subview(conc, 3, Kokkos::ALL);
+	updatedConcOffset = subview(updatedConc, 3, Kokkos::ALL);
 	testFitFlux->computeIncidentFlux(
 		currTime, concOffset, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[100], 1.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[200], 1.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[300], 1.0, 0.01);
+	auto newConcentration =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, conc);
+	BOOST_REQUIRE_CLOSE(newConcentration(1, 0), 1.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 1.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(3, 0), 1.0, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

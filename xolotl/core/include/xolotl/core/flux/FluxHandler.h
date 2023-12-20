@@ -1,5 +1,4 @@
-#ifndef FLUXHANDLER_H
-#define FLUXHANDLER_H
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -28,6 +27,16 @@ protected:
 	std::vector<std::vector<double>> incidentFluxVec;
 
 	/**
+	 * View copy of incidentFluxVec
+	 */
+	Kokkos::View<double**> incidentFlux;
+
+	/**
+	 * The reduction factors for each deposition.
+	 */
+	std::vector<double> reductionFactors;
+
+	/**
 	 * Vector to hold the position at each grid
 	 * point (x position).
 	 */
@@ -36,7 +45,7 @@ protected:
 	/**
 	 *  Fluence.
 	 */
-	double fluence;
+	std::vector<double> fluence;
 
 	/**
 	 * The amplitude of the flux.
@@ -47,6 +56,11 @@ protected:
 	 * The indices of the incoming clusters.
 	 */
 	std::vector<IdType> fluxIndices;
+
+	/**
+	 * View copy of fluxIndices
+	 */
+	Kokkos::View<IdType*> fluxIds;
 
 	/**
 	 * Are we using a time profile for the amplitude of the incoming
@@ -70,6 +84,16 @@ protected:
 	 * time profile file.
 	 */
 	std::vector<double> amplitudes;
+
+	/**
+	 * Value of the cascade dose.
+	 */
+	double cascadeDose;
+
+	/**
+	 * Value of remaining cascade efficiency.
+	 */
+	double cascadeEfficiency;
 
 	/**
 	 * Function that calculates the flux at a given position x (in nm).
@@ -103,6 +127,18 @@ protected:
 	void
 	recomputeFluxHandler(int surfacePos);
 
+	/**
+	 * This method copies flux indices to device view
+	 */
+	void
+	syncFluxIndices();
+
+	/**
+	 * This method copies incident flux data to device view
+	 */
+	void
+	syncIncidentFluxVec();
+
 public:
 	FluxHandler(const options::IOptions&);
 
@@ -127,8 +163,9 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	virtual void
-	computeIncidentFlux(double currentTime, double*, double* updatedConcOffset,
-		int xi, int surfacePos);
+	computeIncidentFlux(double currentTime, Kokkos::View<const double*>,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override;
 
 	/**
 	 * \see IFluxHandler.h
@@ -145,7 +182,13 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual double
+	virtual void
+	setFluence(std::vector<double> fluence);
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<double>
 	getFluence() const;
 
 	/**
@@ -222,11 +265,15 @@ public:
 	 */
 	virtual std::vector<IdType>
 	getFluxIndices() const;
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<double>
+	getReductionFactors() const;
 };
 // end class FluxHandler
 
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif

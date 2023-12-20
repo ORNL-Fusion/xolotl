@@ -10,6 +10,7 @@
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
 
 using namespace std;
@@ -75,36 +76,34 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	double currTime = 1.0e-4;
 
 	// The array of concentration
-	double newConcentration[100 * dof];
-
-	// Initialize their values
-	for (int i = 0; i < 100 * dof; i++) {
-		newConcentration[i] = 0.0;
-	}
+	test::DOFView conc("conc", 100, dof);
 
 	// The pointer to the grid point we want
-	double* updatedConc = &newConcentration[0];
-	double* updatedConcOffset = updatedConc + 50 * dof;
+	auto updatedConcOffset = subview(conc, 50, Kokkos::ALL);
 
 	// Update the concentrations at some grid point
-	testFitFlux->computeIncidentFlux(
-		currTime, nullptr, updatedConcOffset, 50, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 50, surfacePos);
 
 	// Check the value at some grid point
-	BOOST_REQUIRE_CLOSE(newConcentration[200], 5.0295072885924443e-08, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[202], 5.0295072885924443e-08, 0.01);
+	auto newConcentration =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(newConcentration[0], 5.0295072885924443e-08, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[2], 5.0295072885924443e-08, 0.01);
 
 	// Check that the flux is 0.0 at later time
 	currTime = 8.0e-4;
-	updatedConcOffset = updatedConc + 22 * dof;
+	updatedConcOffset = subview(conc, 22, Kokkos::ALL);
 
 	// Update the concentrations at some grid point
-	testFitFlux->computeIncidentFlux(
-		currTime, nullptr, updatedConcOffset, 22, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 22, surfacePos);
+	newConcentration =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
 
 	// Check the value at some grid point
-	BOOST_REQUIRE_CLOSE(newConcentration[88], 0.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[90], 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[0], 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration[2], 0.0, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

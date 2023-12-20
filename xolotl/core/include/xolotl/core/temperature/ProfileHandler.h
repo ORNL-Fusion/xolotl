@@ -59,9 +59,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	initializeTemperature(const int dof,
-		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap) override;
+	initialize(const int dof) override;
 
 	/**
 	 * This operation returns the temperature at the given position

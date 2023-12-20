@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_CASE(simple0D)
 				 "-pc_fieldsplit_detect_coupling "
 				 "-ts_adapt_dt_max 10 "
 				 "-pc_type fieldsplit "
-				 "-fieldsplit_1_pc_type sor "
+				 "-fieldsplit_1_pc_type jacobi "
 				 "-ts_max_time 1000 "
 				 "-ts_max_steps 1 "
 				 "-ts_dt 0.1 "

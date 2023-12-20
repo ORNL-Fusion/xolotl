@@ -46,6 +46,8 @@ private:
 	// The list of pure vacancy indices
 	std::vector<IdType> pureDefectIds;
 	std::vector<double> pureDefectFactors;
+	Kokkos::View<IdType*> pureDefectIdsView;
+	Kokkos::View<double*> pureDefectFactorsView;
 
 public:
 	/**
@@ -177,6 +179,24 @@ public:
 			tokens = util::Tokenizer<double>{line}();
 		}
 
+		// Copy data to device views
+		auto pureDefectFactors_h =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+				pureDefectFactors.data(), pureDefectFactors.size());
+		pureDefectFactorsView = Kokkos::View<double*>(
+			Kokkos::ViewAllocateWithoutInitializing("Pure Defect Factors"),
+			pureDefectFactors.size());
+		deep_copy(pureDefectFactorsView, pureDefectFactors_h);
+		auto pureDefectIds_h =
+			Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+				pureDefectIds.data(), pureDefectIds.size());
+		pureDefectIdsView = Kokkos::View<IdType*>(
+			Kokkos::ViewAllocateWithoutInitializing("Pure Defect Ids"),
+			pureDefectIds.size());
+		deep_copy(pureDefectIdsView, pureDefectIds_h);
+
+		syncFluxIndices();
+
 		return;
 	}
 
@@ -184,27 +204,36 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(double currentTime, double* concOffset,
-		double* updatedConcOffset, int xi, int surfacePos)
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<const double*> concOffset,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
 	{
-		// Skip if no index was set
-		if (fluxIndices.size() == 0)
+		if (fluxIndices.empty()) {
 			return;
-
-		// Compute the available site fraction
-		double availVFraction = 1.0; // nm-3
-		for (auto i = 0; i < pureDefectFactors.size(); i++) {
-			availVFraction -=
-				concOffset[pureDefectIds[i]] * pureDefectFactors[i];
 		}
 
-		updatedConcOffset[fluxIndices[0]] +=
-			defectYield * fluxAmplitude * availVFraction; // V
-		updatedConcOffset[fluxIndices[1]] +=
-			defectYield * fluxAmplitude * availVFraction; // I
-		updatedConcOffset[fluxIndices[2]] += xeYield * fluxAmplitude; // Xe
+		auto factors = this->pureDefectFactorsView;
+		auto defectIds = this->pureDefectIdsView;
+		auto amplitude = fluxAmplitude;
+		auto yield = defectYield;
+		auto xenonYield = xeYield;
+		auto ids = this->fluxIds;
 
-		return;
+		Kokkos::parallel_for(
+			1, KOKKOS_LAMBDA(std::size_t) {
+				// Compute the available site fraction
+				double availVFraction = 1.0; // nm-3
+				for (auto i = 0; i < factors.size(); i++) {
+					availVFraction -= concOffset[defectIds[i]] * factors[i];
+				}
+
+				updatedConcOffset[ids[0]] +=
+					yield * amplitude * availVFraction; // V
+				updatedConcOffset[ids[1]] +=
+					yield * amplitude * availVFraction; // I
+				updatedConcOffset[ids[2]] += xenonYield * amplitude; // Xe
+			});
 	}
 
 	/**

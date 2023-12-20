@@ -1,4 +1,8 @@
+#include <petscconf.h>
+#include <petscdmda_kokkos.hpp>
+
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/io/XFile.h>
@@ -13,11 +17,12 @@ namespace solver
 {
 namespace handler
 {
+using HostUnmanaged =
+	Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+
 void
 PetscSolver3DHandler::createSolverContext(DM& da)
 {
-	PetscErrorCode ierr;
-
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
 	const auto dof = network.getDOF();
@@ -132,29 +137,27 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 
 	if (isMirror) {
-		ierr = DMDACreate3d(xolotlComm, DM_BOUNDARY_MIRROR,
+		PetscCallVoid(DMDACreate3d(xolotlComm, DM_BOUNDARY_MIRROR,
 			DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX,
 			nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof + 1, 1, NULL,
-			NULL, NULL, &da);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::createSolverContext: "
-			"DMDACreate3d failed.");
+			NULL, NULL, &da));
 	}
 	else {
-		ierr = DMDACreate3d(xolotlComm, DM_BOUNDARY_PERIODIC,
+		PetscCallVoid(DMDACreate3d(xolotlComm, DM_BOUNDARY_PERIODIC,
 			DM_BOUNDARY_PERIODIC, DM_BOUNDARY_PERIODIC, DMDA_STENCIL_STAR, nX,
 			nY, nZ, PETSC_DECIDE, PETSC_DECIDE, PETSC_DECIDE, dof + 1, 1, NULL,
-			NULL, NULL, &da);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::createSolverContext: "
-			"DMDACreate3d failed.");
+			NULL, NULL, &da));
 	}
-	ierr = DMSetFromOptions(da);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::createSolverContext: DMSetFromOptions failed.");
-	ierr = DMSetUp(da);
-	checkPetscError(
-		ierr, "PetscSolver3DHandler::createSolverContext: DMSetUp failed.");
+	PetscCallVoid(DMSetFromOptions(da));
+	PetscCallVoid(DMSetUp(da));
+}
+
+void
+PetscSolver3DHandler::initializeSolverContext(DM& da, TS& ts)
+{
+	// Degrees of freedom is the total number of clusters in the network
+	// + moments
+	const auto dof = network.getDOF();
 
 	// Initialize the surface of the first advection handler corresponding to
 	// the advection toward the surface (or a dummy one if it is deactivated)
@@ -165,26 +168,25 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 	 * the nonzero coupling between degrees of freedom at one point with
 	 * degrees of freedom on the adjacent point.
 	 */
-	core::network::IReactionNetwork::SparseFillMap ofill;
+	std::vector<core::RowColPair> difEntries;
+	std::vector<std::vector<core::RowColPair>> advEntries(
+		advectionHandlers.size(), std::vector<core::RowColPair>{});
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(dof, ofill, dfill);
+	temperatureHandler->initialize(dof);
 
 	// Fill ofill, the matrix of "off-diagonal" elements that represents
 	// diffusion
-	diffusionHandler->initializeOFill(network, ofill);
+	diffusionHandler->initialize(network, difEntries);
 	// Loop on the advection handlers to account the other "off-diagonal"
 	// elements
 	for (auto i = 0; i < advectionHandlers.size(); i++) {
-		advectionHandlers[i]->initialize(network, ofill);
+		advectionHandlers[i]->initialize(network, advEntries[i]);
 	}
 
 	// Get the local boundaries
 	PetscInt xs, xm, ys, ym, zs, zm;
-	ierr = DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::createSolverContext: "
-		"DMDAGetCorners failed.");
+	PetscCallVoid(DMDAGetCorners(da, &xs, &ys, &zs, &xm, &ym, &zm));
 	// Set it in the handler
 	setLocalCoordinates(xs, xm, ys, ym, zs, zm);
 
@@ -193,34 +195,152 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 	network.setGridSize(localXM + 2);
 
 	// Get the diagonal fill
-	auto nPartials = network.getDiagonalFill(dfill);
+	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
-	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
-	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
-	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::createSolverContext: "
-		"DMDASetBlockFills failed.");
+	Mat J;
+	PetscCallVoid(TSGetRHSJacobian(ts, &J, nullptr, nullptr, nullptr));
+	auto nwEntries = convertToRowColPairList(dof, dfill);
+	nNetworkEntries = nwEntries.size();
+	//
+	// "+ 1" for temperature
+	auto dSize =
+		localZM * localYM * localXM * (nNetworkEntries + difEntries.size() + 1);
+	// FIXME
+	int nAdvec = 0;
+	for (auto&& handler : advectionHandlers) {
+		nAdvec = std::max(nAdvec, handler->getNumberOfAdvecting());
+	}
+	auto oSize = localZM * localYM * localXM * 2 *
+		(difEntries.size() + advEntries.size() * nAdvec + 1);
+	auto nPartials = dSize + oSize;
+	// TODO: should the count used for this reservation be more exact?
+	std::vector<PetscInt> rows, cols;
+	rows.reserve(nPartials);
+	cols.reserve(nPartials);
+	auto mapMatStencilsToCoords =
+		[da](const core::RowColPair& component, PetscInt zRow, PetscInt yRow,
+			PetscInt xRow, PetscInt zCol, PetscInt yCol, PetscInt xCol,
+			std::vector<PetscInt>& gRows, std::vector<PetscInt>& gCols) {
+			PetscFunctionBeginUser;
+			MatStencil stCrds[2];
+			stCrds[0].k = zRow;
+			stCrds[0].j = yRow;
+			stCrds[0].i = xRow;
+			stCrds[0].c = component[0];
+			stCrds[1].k = zCol;
+			stCrds[1].j = yCol;
+			stCrds[1].i = xCol;
+			stCrds[1].c = component[1];
+			PetscInt coo[2];
+			PetscCall(DMDAMapMatStencilToGlobal(da, 2, stCrds, coo));
+			gRows.push_back(coo[0]);
+			gCols.push_back(coo[1]);
+			PetscFunctionReturn(0);
+		};
+	std::size_t partialsCount{0};
+	for (auto k = localZS; k < localZS + localZM; ++k) {
+		for (auto j = localYS; j < localYS + localYM; ++j) {
+			for (auto i = localXS; i < localXS + localXM; ++i) {
+				// temperature
+				mapMatStencilsToCoords(
+					{dof, dof}, k, j, i, k, j, i, rows, cols);
+				mapMatStencilsToCoords(
+					{dof, dof}, k, j, i, k, j, i - 1, rows, cols);
+				mapMatStencilsToCoords(
+					{dof, dof}, k, j, i, k, j, i + 1, rows, cols);
+				mapMatStencilsToCoords(
+					{dof, dof}, k, j, i, k, j - 1, i, rows, cols);
+				mapMatStencilsToCoords(
+					{dof, dof}, k, j, i, k, j + 1, i, rows, cols);
+				mapMatStencilsToCoords(
+					{dof, dof}, k, j, i, k - 1, j, i, rows, cols);
+				mapMatStencilsToCoords(
+					{dof, dof}, k, j, i, k + 1, j, i, rows, cols);
+				partialsCount += 7;
+			}
+		}
+	}
+	for (auto k = localZS; k < localZS + localZM; ++k) {
+		for (auto j = localYS; j < localYS + localYM; ++j) {
+			for (auto i = localXS; i < localXS + localXM; ++i) {
+				// diffusion
+				for (auto&& component : difEntries) {
+					mapMatStencilsToCoords(
+						component, k, j, i, k, j, i, rows, cols);
+					mapMatStencilsToCoords(
+						component, k, j, i, k, j, i - 1, rows, cols);
+					mapMatStencilsToCoords(
+						component, k, j, i, k, j, i + 1, rows, cols);
+					mapMatStencilsToCoords(
+						component, k, j, i, k, j - 1, i, rows, cols);
+					mapMatStencilsToCoords(
+						component, k, j, i, k, j + 1, i, rows, cols);
+					mapMatStencilsToCoords(
+						component, k, j, i, k - 1, j, i, rows, cols);
+					mapMatStencilsToCoords(
+						component, k, j, i, k + 1, j, i, rows, cols);
+				}
+				partialsCount += difEntries.size() * 7;
+				// advection
+				plsm::SpaceVector<double, 3> pos{0.0, 0.0, 0.0};
+				pos[0] = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
+				for (std::size_t l = 0; l < advectionHandlers.size(); ++l) {
+					auto offsets =
+						advectionHandlers[l]->getStencilForAdvection(pos);
+					if (advectionHandlers[l]->isPointOnSink(pos)) {
+						for (auto&& component : advEntries[l]) {
+							mapMatStencilsToCoords(component, k, j, i,
+								k - offsets[2], j - offsets[1], i - offsets[0],
+								rows, cols);
+							mapMatStencilsToCoords(component, k, j, i,
+								k + offsets[2], j + offsets[1], i + offsets[0],
+								rows, cols);
+						}
+					}
+					else {
+						for (auto&& component : advEntries[l]) {
+							mapMatStencilsToCoords(
+								component, k, j, i, k, j, i, rows, cols);
+							mapMatStencilsToCoords(component, k, j, i,
+								k + offsets[2], j + offsets[1], i + offsets[0],
+								rows, cols);
+						}
+					}
+					// Handle potential discrepancies in entry counts
+					for (auto i = advEntries[l].size(); i < nAdvec; ++i) {
+						rows.push_back(-1);
+						cols.push_back(-1);
+					}
+					partialsCount += nAdvec * 2;
+				}
+				// network
+				for (auto&& component : nwEntries) {
+					mapMatStencilsToCoords(
+						component, k, j, i, k, j, i, rows, cols);
+				}
+				partialsCount += nNetworkEntries;
+			}
+		}
+	}
+	nPartials = rows.size();
+	PetscCallVoid(
+		MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data()));
 
 	// Initialize the arrays for the reaction partial derivatives
-	vals = Kokkos::View<double*>("solverPartials", nPartials);
+	vals = Kokkos::View<double*>("solverPartials", nPartials + 1);
 
 	// Set the size of the partial derivatives vectors
 	reactingPartialsForCluster.resize(dof, 0.0);
 
 	// Initialize the flux handler
 	fluxHandler->initializeFluxHandler(network, surfacePosition[0][0], grid);
-
-	return;
 }
 
 void
 PetscSolver3DHandler::initializeConcentration(
 	DM& da, Vec& C, DM& oldDA, Vec& oldC)
 {
-	PetscErrorCode ierr;
-
 	// Initialize the last temperature at each grid point on this process
 	for (int i = 0; i < localXM + 2; i++) {
 		temperature.push_back(0.0);
@@ -242,10 +362,7 @@ PetscSolver3DHandler::initializeConcentration(
 	if (surfaceOffset == 0) {
 		// Pointer for the concentration vector
 		PetscScalar**** concentrations = nullptr;
-		ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"DMDAVecGetArrayDOF failed.");
+		PetscCallVoid(DMDAVecGetArrayDOF(da, C, &concentrations));
 
 		// Get the last time step written in the HDF5 file
 		bool hasConcentrations = false;
@@ -353,33 +470,21 @@ PetscSolver3DHandler::initializeConcentration(
 		/*
 		 Restore vectors
 		 */
-		ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"DMDAVecRestoreArrayDOF failed.");
+		PetscCallVoid(DMDAVecRestoreArrayDOF(da, C, &concentrations));
 	}
 	// Read from the previous vector
 	else {
 		// Get the boundaries of the old DMDA
 		PetscInt oldXs, oldXm, oldYs, oldYm, oldZs, oldZm;
-		ierr = DMDAGetCorners(
-			oldDA, &oldXs, &oldYs, &oldZs, &oldXm, &oldYm, &oldZm);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"DMDAGetCorners failed.");
+		PetscCallVoid(DMDAGetCorners(
+			oldDA, &oldXs, &oldYs, &oldZs, &oldXm, &oldYm, &oldZm));
 
 		// Pointers to the PETSc arrays that start at the beginning (xs, ys) of
 		// the local array
 		PetscScalar ****concs = nullptr, ****oldConcs = nullptr;
 		// Get pointers to vector data
-		ierr = DMDAVecGetArrayDOFRead(da, C, &concs);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"DMDAVecGetArrayDOFRead (C) failed.");
-		ierr = DMDAVecGetArrayDOF(oldDA, oldC, &oldConcs);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"DMDAVecGetArrayDOF (oldC) failed.");
+		PetscCallVoid(DMDAVecGetArrayDOFRead(da, C, &concs));
+		PetscCallVoid(DMDAVecGetArrayDOF(oldDA, oldC, &oldConcs));
 
 		// Get the procId
 		int procId;
@@ -538,65 +643,45 @@ PetscSolver3DHandler::initializeConcentration(
 		network.setTemperatures(networkTemp, depths);
 
 		// Restore the vectors
-		ierr = DMDAVecRestoreArrayDOFRead(da, C, &concs);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"DMDAVecRestoreArrayDOFRead (C) failed.");
-		ierr = DMDAVecRestoreArrayDOF(oldDA, oldC, &oldConcs);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"DMDAVecRestoreArrayDOF (oldC) failed.");
+		PetscCallVoid(DMDAVecRestoreArrayDOFRead(da, C, &concs));
+		PetscCallVoid(DMDAVecRestoreArrayDOF(oldDA, oldC, &oldConcs));
 
 		// Boundary conditions
 		// Set the index to scatter at the surface
 		PetscInt *lidxFrom, *lidxTo, lict = 0;
-		ierr = PetscMalloc1(1, &lidxTo);
-		ierr = PetscMalloc1(1, &lidxFrom);
+		PetscCallVoid(PetscMalloc1(1, &lidxTo));
+		PetscCallVoid(PetscMalloc1(1, &lidxFrom));
 		lidxTo[0] = 0;
 		lidxFrom[0] = 0;
 
 		// Create the scatter object
 		VecScatter scatter;
 		IS isTo, isFrom;
-		ierr = ISCreateBlock(PetscObjectComm((PetscObject)da), dof + 1, 1,
-			lidxTo, PETSC_OWN_POINTER, &isTo);
-		ierr = ISCreateBlock(PetscObjectComm((PetscObject)oldDA), dof + 1, 1,
-			lidxFrom, PETSC_OWN_POINTER, &isFrom);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"ISCreateBlock failed.");
+		PetscCallVoid(ISCreateBlock(PetscObjectComm((PetscObject)da), dof + 1,
+			1, lidxTo, PETSC_OWN_POINTER, &isTo));
+		PetscCallVoid(ISCreateBlock(PetscObjectComm((PetscObject)oldDA),
+			dof + 1, 1, lidxFrom, PETSC_OWN_POINTER, &isFrom));
 
 		// Create the scatter object
-		ierr = VecScatterCreate(oldC, isFrom, C, isTo, &scatter);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"VecScatterCreate failed.");
+		PetscCallVoid(VecScatterCreate(oldC, isFrom, C, isTo, &scatter));
 
 		// Do the scatter
-		ierr =
-			VecScatterBegin(scatter, oldC, C, INSERT_VALUES, SCATTER_FORWARD);
-		ierr = VecScatterEnd(scatter, oldC, C, INSERT_VALUES, SCATTER_FORWARD);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"VecScatter failed.");
+		PetscCallVoid(
+			VecScatterBegin(scatter, oldC, C, INSERT_VALUES, SCATTER_FORWARD));
+		PetscCallVoid(
+			VecScatterEnd(scatter, oldC, C, INSERT_VALUES, SCATTER_FORWARD));
 
 		// Destroy everything we don't need anymore
-		ierr = VecScatterDestroy(&scatter);
-		ierr = ISDestroy(&isTo);
-		ierr = ISDestroy(&isFrom);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"Destroy failed.");
+		PetscCallVoid(VecScatterDestroy(&scatter));
+		PetscCallVoid(ISDestroy(&isTo));
+		PetscCallVoid(ISDestroy(&isFrom));
 
 		// Reset the offset
 		surfaceOffset = 0;
 
 		// Destroy everything we don't need anymore
-		ierr = VecDestroy(&oldC);
-		ierr = DMDestroy(&oldDA);
-		checkPetscError(ierr,
-			"PetscSolver3DHandler::initializeConcentration: "
-			"Destroy failed.");
+		PetscCallVoid(VecDestroy(&oldC));
+		PetscCallVoid(DMDestroy(&oldDA));
 	}
 
 	return;
@@ -605,14 +690,9 @@ PetscSolver3DHandler::initializeConcentration(
 void
 PetscSolver3DHandler::initGBLocation(DM& da, Vec& C)
 {
-	PetscErrorCode ierr;
-
 	// Pointer for the concentration vector
 	PetscScalar**** concentrations = nullptr;
-	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::initGBLocation: "
-		"DMDAVecGetArrayDOF failed.");
+	PetscCallVoid(DMDAVecGetArrayDOF(da, C, &concentrations));
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar* concOffset = nullptr;
@@ -659,10 +739,7 @@ PetscSolver3DHandler::initGBLocation(DM& da, Vec& C)
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::initGBLocation: "
-		"DMDAVecRestoreArrayDOF failed.");
+	PetscCallVoid(DMDAVecRestoreArrayDOF(da, C, &concentrations));
 
 	return;
 }
@@ -671,15 +748,11 @@ std::vector<std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 PetscSolver3DHandler::getConcVector(DM& da, Vec& C)
 {
 	// Initial declaration
-	PetscErrorCode ierr;
 	const double* gridPointSolution = nullptr;
 
 	// Pointer for the concentration vector
 	PetscScalar**** concentrations = nullptr;
-	ierr = DMDAVecGetArrayDOFRead(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::getConcVector: "
-		"DMDAVecGetArrayDOFRead failed.");
+	PetscCallContinue(DMDAVecGetArrayDOFRead(da, C, &concentrations));
 
 	// Get the network and dof
 	auto& network = getNetwork();
@@ -716,10 +789,7 @@ PetscSolver3DHandler::getConcVector(DM& da, Vec& C)
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::getConcVector: "
-		"DMDAVecRestoreArrayDOFRead failed.");
+	PetscCallContinue(DMDAVecRestoreArrayDOFRead(da, C, &concentrations));
 
 	return toReturn;
 }
@@ -730,15 +800,10 @@ PetscSolver3DHandler::setConcVector(DM& da, Vec& C,
 		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
 		concVector)
 {
-	PetscErrorCode ierr;
-
 	// Pointer for the concentration vector
 	PetscScalar* gridPointSolution = nullptr;
 	PetscScalar**** concentrations = nullptr;
-	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::setConcVector: "
-		"DMDAVecGetArrayDOF failed.");
+	PetscCallVoid(DMDAVecGetArrayDOF(da, C, &concentrations));
 
 	// Loop on the grid points
 	for (auto k = 0; k < localZM; ++k) {
@@ -759,31 +824,16 @@ PetscSolver3DHandler::setConcVector(DM& da, Vec& C,
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::setConcVector: "
-		"DMDAVecRestoreArrayDOF failed.");
+	PetscCallVoid(DMDAVecRestoreArrayDOF(da, C, &concentrations));
 
 	// Get the complete data array, including ghost cells to set the
 	// temperature at the ghost points
 	Vec localSolution;
-	ierr = DMGetLocalVector(da, &localSolution);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::setConcVector: "
-		"DMGetLocalVector failed.");
-	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localSolution);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::setConcVector: "
-		"DMGlobalToLocalBegin failed.");
-	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localSolution);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::setConcVector: "
-		"DMGlobalToLocalEnd failed.");
+	PetscCallVoid(DMGetLocalVector(da, &localSolution));
+	PetscCallVoid(DMGlobalToLocalBegin(da, C, INSERT_VALUES, localSolution));
+	PetscCallVoid(DMGlobalToLocalEnd(da, C, INSERT_VALUES, localSolution));
 	// Get the array of concentration
-	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::setConcVector: "
-		"DMDAVecGetArrayDOFRead failed.");
+	PetscCallVoid(DMDAVecGetArrayDOFRead(da, localSolution, &concentrations));
 
 	// Getthe DOF of the network
 	const auto dof = network.getDOF();
@@ -814,14 +864,9 @@ PetscSolver3DHandler::setConcVector(DM& da, Vec& C,
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::setConcVector: "
-		"DMDAVecRestoreArrayDOFRead failed.");
-	ierr = DMRestoreLocalVector(da, &localSolution);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::setConcVector: "
-		"DMRestoreLocalVector failed.");
+	PetscCallVoid(
+		DMDAVecRestoreArrayDOFRead(da, localSolution, &concentrations));
+	PetscCallVoid(DMRestoreLocalVector(da, &localSolution));
 
 	return;
 }
@@ -830,32 +875,16 @@ void
 PetscSolver3DHandler::updateConcentration(
 	TS& ts, Vec& localC, Vec& F, PetscReal ftime)
 {
-	PetscErrorCode ierr;
-
 	// Get the local data vector from PETSc
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::updateConcentration: "
-		"TSGetDM failed.");
+	PetscCallVoid(TSGetDM(ts, &da));
 
 	// Pointers to the PETSc arrays that start at the beginning (localXS,
 	// localYS, localZS) of the local array
-	PetscScalar ****concs = nullptr, ****updatedConcs = nullptr;
-	// Get pointers to vector data
-	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::updateConcentration: "
-		"DMDAVecGetArrayDOFRead (localC) failed.");
-	ierr = DMDAVecGetArrayDOF(da, F, &updatedConcs);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::updateConcentration: "
-		"DMDAVecGetArrayDOF (F) failed.");
-
-	// The following pointers are set to the first position in the conc or
-	// updatedConc arrays that correspond to the beginning of the data for
-	// the current grid point. They are accessed just like regular arrays.
-	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
+	PetscOffsetView<const PetscScalar****> concs;
+	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
+	PetscOffsetView<PetscScalar****> updatedConcs;
+	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOFWrite(da, F, &updatedConcs));
 
 	// Degrees of freedom is the total number of clusters in the network
 	const auto dof = network.getDOF();
@@ -865,7 +894,8 @@ PetscSolver3DHandler::updateConcentration(
 	double sz = 1.0 / (hZ * hZ);
 
 	// Declarations for variables used in the loop
-	double* concVector[7]{nullptr};
+	using ConcSubView = Kokkos::View<const double*>;
+	Kokkos::Array<ConcSubView, 7> concVector;
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 	std::vector<double> incidentFluxVector;
 	double atomConc = 0.0, totalAtomConc = 0.0;
@@ -874,7 +904,8 @@ PetscSolver3DHandler::updateConcentration(
 	// points in X
 	for (auto zk = localZS; zk < localZS + localZM; zk++)
 		for (auto yj = localYS; yj < localYS + localYM; yj++) {
-			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
+			temperatureHandler->updateSurfacePosition(
+				surfacePosition[yj][zk], grid);
 			bool tempHasChanged = false;
 			for (auto xi = (PetscInt)localXS - 1;
 				 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
@@ -882,18 +913,29 @@ PetscSolver3DHandler::updateConcentration(
 				if (xi == surfacePosition[yj][zk] && xi >= localXS &&
 					xi < localXS + localXM) {
 					// Compute the old and new array offsets
-					concOffset = concs[zk][yj][xi];
-					updatedConcOffset = updatedConcs[zk][yj][xi];
+					auto concOffset =
+						subview(concs, zk, yj, xi, Kokkos::ALL).view();
+					auto updatedConcOffset =
+						subview(updatedConcs, zk, yj, xi, Kokkos::ALL).view();
 
 					// Fill the concVector with the pointer to the middle,
 					// left, and right grid points
 					concVector[0] = concOffset; // middle
-					concVector[1] = concs[zk][yj][(PetscInt)xi - 1]; // left
-					concVector[2] = concs[zk][yj][xi + 1]; // right
-					concVector[3] = concs[zk][(PetscInt)yj - 1][xi]; // bottom
-					concVector[4] = concs[zk][yj + 1][xi]; // top
-					concVector[5] = concs[(PetscInt)zk - 1][yj][xi]; // front
-					concVector[6] = concs[zk + 1][yj][xi]; // back
+					concVector[1] =
+						subview(concs, zk, yj, (PetscInt)xi - 1, Kokkos::ALL)
+							.view(); // left
+					concVector[2] = subview(concs, zk, yj, xi + 1, Kokkos::ALL)
+										.view(); // right
+					concVector[3] =
+						subview(concs, zk, (PetscInt)yj - 1, xi, Kokkos::ALL)
+							.view(); // bottom
+					concVector[4] = subview(concs, zk, yj + 1, xi, Kokkos::ALL)
+										.view(); // top
+					concVector[5] =
+						subview(concs, (PetscInt)zk - 1, yj, xi, Kokkos::ALL)
+							.view(); // front
+					concVector[6] = subview(concs, zk + 1, yj, xi, Kokkos::ALL)
+										.view(); // back
 
 					// Compute the left and right hx
 					double hxLeft = 0.0, hxRight = 0.0;
@@ -910,13 +952,16 @@ PetscSolver3DHandler::updateConcentration(
 						hxRight = grid[xi + 1] - grid[xi];
 					}
 
-					temperatureHandler->computeTemperature(concVector,
-						updatedConcOffset, hxLeft, hxRight, xi, sy, yj, sz, zk);
+					temperatureHandler->computeTemperature(ftime,
+						concVector.data(), updatedConcOffset, hxLeft, hxRight,
+						xi, sy, yj, sz, zk);
 				}
 
 				// Compute the old and new array offsets
-				concOffset = concs[zk][yj][xi];
-				updatedConcOffset = updatedConcs[zk][yj][xi];
+				auto concOffset =
+					subview(concs, zk, yj, xi, Kokkos::ALL).view();
+				auto updatedConcOffset =
+					subview(updatedConcs, zk, yj, xi, Kokkos::ALL).view();
 
 				// Set the grid fraction
 				if (xi < 0)
@@ -964,12 +1009,21 @@ PetscSolver3DHandler::updateConcentration(
 				// Fill the concVector with the pointer to the middle, left,
 				// and right grid points
 				concVector[0] = concOffset; // middle
-				concVector[1] = concs[zk][yj][(PetscInt)xi - 1]; // left
-				concVector[2] = concs[zk][yj][xi + 1]; // right
-				concVector[3] = concs[zk][(PetscInt)yj - 1][xi]; // bottom
-				concVector[4] = concs[zk][yj + 1][xi]; // top
-				concVector[5] = concs[(PetscInt)zk - 1][yj][xi]; // front
-				concVector[6] = concs[zk + 1][yj][xi]; // back
+				concVector[1] =
+					subview(concs, zk, yj, (PetscInt)xi - 1, Kokkos::ALL)
+						.view(); // left
+				concVector[2] =
+					subview(concs, zk, yj, xi + 1, Kokkos::ALL).view(); // right
+				concVector[3] =
+					subview(concs, zk, (PetscInt)yj - 1, xi, Kokkos::ALL)
+						.view(); // bottom
+				concVector[4] =
+					subview(concs, zk, yj + 1, xi, Kokkos::ALL).view(); // top
+				concVector[5] =
+					subview(concs, (PetscInt)zk - 1, yj, xi, Kokkos::ALL)
+						.view(); // front
+				concVector[6] =
+					subview(concs, zk + 1, yj, xi, Kokkos::ALL).view(); // back
 
 				// Compute the left and right hx
 				double hxLeft = 0.0, hxRight = 0.0;
@@ -989,8 +1043,9 @@ PetscSolver3DHandler::updateConcentration(
 				// ---- Compute the temperature over the locally owned part
 				// of the grid -----
 				if (xi >= localXS && xi < localXS + localXM) {
-					temperatureHandler->computeTemperature(concVector,
-						updatedConcOffset, hxLeft, hxRight, xi, sy, yj, sz, zk);
+					temperatureHandler->computeTemperature(ftime,
+						concVector.data(), updatedConcOffset, hxLeft, hxRight,
+						xi, sy, yj, sz, zk);
 				}
 			}
 
@@ -1039,18 +1094,13 @@ PetscSolver3DHandler::updateConcentration(
 						yj >= localYS && yj < localYS + localYM &&
 						zk >= localZS && zk < localZS + localZM) {
 						// Get the concentrations at this grid point
-						concOffset = concs[zk][yj][xi];
+						auto concOffset =
+							subview(concs, zk, yj, xi, Kokkos::ALL).view();
 
 						// Sum the total atom concentration
-						using HostUnmanaged = Kokkos::View<double*,
-							Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-						auto hConcs = HostUnmanaged(concOffset, dof);
-						auto dConcs =
-							Kokkos::View<double*>("Concentrations", dof);
-						deep_copy(dConcs, hConcs);
 						atomConc +=
 							psiNetwork.getTotalTrappedHeliumConcentration(
-								dConcs, 0) *
+								concOffset, 0) *
 							(grid[xi + 1] - grid[xi]);
 					}
 				}
@@ -1083,18 +1133,29 @@ PetscSolver3DHandler::updateConcentration(
 
 			for (auto xi = localXS; xi < localXS + localXM; xi++) {
 				// Compute the old and new array offsets
-				concOffset = concs[zk][yj][xi];
-				updatedConcOffset = updatedConcs[zk][yj][xi];
+				auto concOffset =
+					subview(concs, zk, yj, xi, Kokkos::ALL).view();
+				auto updatedConcOffset =
+					subview(updatedConcs, zk, yj, xi, Kokkos::ALL).view();
 
 				// Fill the concVector with the pointer to the middle, left,
 				// right, bottom, top, front, and back grid points
 				concVector[0] = concOffset; // middle
-				concVector[1] = concs[zk][yj][(PetscInt)xi - 1]; // left
-				concVector[2] = concs[zk][yj][xi + 1]; // right
-				concVector[3] = concs[zk][(PetscInt)yj - 1][xi]; // bottom
-				concVector[4] = concs[zk][yj + 1][xi]; // top
-				concVector[5] = concs[(PetscInt)zk - 1][yj][xi]; // front
-				concVector[6] = concs[zk + 1][yj][xi]; // back
+				concVector[1] =
+					subview(concs, zk, yj, (PetscInt)xi - 1, Kokkos::ALL)
+						.view(); // left
+				concVector[2] =
+					subview(concs, zk, yj, xi + 1, Kokkos::ALL).view(); // right
+				concVector[3] =
+					subview(concs, zk, (PetscInt)yj - 1, xi, Kokkos::ALL)
+						.view(); // bottom
+				concVector[4] =
+					subview(concs, zk, yj + 1, xi, Kokkos::ALL).view(); // top
+				concVector[5] =
+					subview(concs, (PetscInt)zk - 1, yj, xi, Kokkos::ALL)
+						.view(); // front
+				concVector[6] =
+					subview(concs, zk + 1, yj, xi, Kokkos::ALL).view(); // back
 
 				// Compute the left and right hx
 				double hxLeft = 0.0, hxRight = 0.0;
@@ -1137,7 +1198,8 @@ PetscSolver3DHandler::updateConcentration(
 
 				// ---- Compute diffusion over the locally owned part of the
 				// grid -----
-				diffusionHandler->computeDiffusion(network, concVector,
+				diffusionHandler->computeDiffusion(network,
+					core::StencilConcArray{concVector.data(), 7},
 					updatedConcOffset, hxLeft, hxRight, xi - localXS, sy,
 					yj - localYS, sz, zk - localZS);
 
@@ -1146,9 +1208,10 @@ PetscSolver3DHandler::updateConcentration(
 				gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 				for (auto i = 0; i < advectionHandlers.size(); i++) {
 					advectionHandlers[i]->computeAdvection(network,
-						gridPosition, concVector, updatedConcOffset, hxLeft,
-						hxRight, xi - localXS, hY, yj - localYS, hZ,
-						zk - localZS);
+						gridPosition,
+						core::StencilConcArray{concVector.data(), 7},
+						updatedConcOffset, hxLeft, hxRight, xi - localXS, hY,
+						yj - localYS, hZ, zk - localZS);
 				}
 
 				auto surfacePos = grid[surfacePosition[yj][zk] + 1];
@@ -1159,103 +1222,69 @@ PetscSolver3DHandler::updateConcentration(
 
 				// ----- Compute the reaction fluxes over the locally owned
 				// part of the grid -----
-				using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
-					Kokkos::MemoryUnmanaged>;
-				auto hConcs = HostUnmanaged(concOffset, dof);
-				auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-				deep_copy(dConcs, hConcs);
-				auto hFlux = HostUnmanaged(updatedConcOffset, dof);
-				auto dFlux = Kokkos::View<double*>("Fluxes", dof);
-				deep_copy(dFlux, hFlux);
 				fluxCounter->increment();
 				fluxTimer->start();
-				network.computeAllFluxes(
-					dConcs, dFlux, xi + 1 - localXS, curDepth, curSpacing);
+				network.computeAllFluxes(concOffset, updatedConcOffset,
+					xi + 1 - localXS, curDepth, curSpacing);
 				fluxTimer->stop();
-				deep_copy(hFlux, dFlux);
 			}
 		}
 
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::updateConcentration: "
-		"DMDAVecRestoreArrayDOFRead (localC) failed.");
-	ierr = DMDAVecRestoreArrayDOF(da, F, &updatedConcs);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::updateConcentration: "
-		"DMDAVecRestoreArrayDOF (F) failed.");
-
-	return;
+	PetscCallVoid(DMDAVecRestoreKokkosOffsetViewDOF(da, localC, &concs));
+	PetscCallVoid(DMDAVecRestoreKokkosOffsetViewDOFWrite(da, F, &updatedConcs));
 }
 
 void
 PetscSolver3DHandler::computeJacobian(
 	TS& ts, Vec& localC, Mat& J, PetscReal ftime)
 {
-	PetscErrorCode ierr;
-
 	// Get the distributed array
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::computeJacobian: "
-		"TSGetDM failed.");
+	PetscCallVoid(TSGetDM(ts, &da));
 
 	// Get pointers to vector data
-	PetscScalar**** concs = nullptr;
-	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::computeJacobian: "
-		"DMDAVecGetArrayDOFRead failed.");
+	PetscOffsetView<const PetscScalar****> concs;
+	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
 
 	// The degree of freedom is the size of the network
 	const auto dof = network.getDOF();
 
-	// Setup some step size variables
-	double sy = 1.0 / (hY * hY);
-	double sz = 1.0 / (hZ * hZ);
-
-	// Pointer to the concentrations at a given grid point
-	PetscScalar* concOffset = nullptr;
-
-	// Arguments for MatSetValuesStencil called below
-	MatStencil rowId;
-	MatStencil colIds[dof];
-	IdType pdColIdsVectorSize = 0;
-
-	// Declarations for variables used in the loop
-	double atomConc = 0.0, totalAtomConc = 0.0;
-	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
-
+	using ConcSubView = Kokkos::View<const double*>;
+	Kokkos::Array<ConcSubView, 7> concVector;
 	// Get the total number of diffusing clusters
 	const auto nDiff = std::max(diffusionHandler->getNumberOfDiffusing(), 0);
 
 	// Get the total number of advecting clusters
 	int nAdvec = 0;
-	for (auto l = 0; l < advectionHandlers.size(); l++) {
-		auto n = advectionHandlers[l]->getNumberOfAdvecting();
-		if (n > nAdvec)
-			nAdvec = n;
+	for (auto&& handler : advectionHandlers) {
+		nAdvec = std::max(nAdvec, handler->getNumberOfAdvecting());
 	}
 
-	// Arguments for MatSetValuesStencil called below
-	MatStencil row, cols[7];
+	// Setup some step size variables
+	double sy = 1.0 / (hY * hY);
+	double sz = 1.0 / (hZ * hZ);
+
+	// Declarations for variables used in the loop
+	double atomConc = 0.0, totalAtomConc = 0.0;
 	PetscScalar tempVals[7];
 	IdType tempIndices[1];
-	PetscScalar diffVals[7 * nDiff];
-	IdType diffIndices[nDiff];
-	PetscScalar advecVals[2 * nAdvec];
-	IdType advecIndices[nAdvec];
+	Kokkos::Array<ConcSubView::host_mirror_type, 7> hConcVec;
+	const double* hConcPtrVec[7];
+	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
 	/*
 	 Loop over grid points for the temperature, including ghosts
 	 */
-	for (auto zk = localZS; zk < localZS + localZM; zk++)
-		for (auto yj = localYS; yj < localYS + localYM; yj++) {
-			temperatureHandler->updateSurfacePosition(surfacePosition[yj][zk]);
+	auto hTempVals = Kokkos::View<double*, Kokkos::HostSpace>(
+		"Host Temp Jac Vals", localZM * localYM * localXM * 7);
+	std::size_t valIndex = 0;
+	for (PetscInt zk = localZS; zk < localZS + localZM; zk++) {
+		for (PetscInt yj = localYS; yj < localYS + localYM; yj++) {
+			temperatureHandler->updateSurfacePosition(
+				surfacePosition[yj][zk], grid);
 			bool tempHasChanged = false;
 			for (auto xi = (PetscInt)localXS - 1;
 				 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
@@ -1278,65 +1307,48 @@ PetscSolver3DHandler::computeJacobian(
 					hxRight = grid[xi + 1] - grid[xi];
 				}
 
+				// Get the concentrations at this grid point
+				auto concOffset =
+					subview(concs, zk, yj, xi, Kokkos::ALL).view();
+
+				auto tempIndex = valIndex;
+				if (xi >= localXS && xi < localXS + localXM) {
+					int id = 0;
+					using A = std::array<PetscInt, 3>;
+					for (auto&& mId :
+						{A{zk, yj, xi}, A{zk, yj, xi - 1}, A{zk, yj, xi + 1},
+							A{zk, yj - 1, xi}, A{zk, yj + 1, xi},
+							A{zk - 1, yj, xi}, A{zk + 1, yj, xi}}) {
+						concVector[id] =
+							subview(concs, mId[0], mId[1], mId[2], Kokkos::ALL)
+								.view();
+						hConcVec[id] = create_mirror_view(concVector[id]);
+						deep_copy(hConcVec[id], concVector[id]);
+						hConcPtrVec[id] = hConcVec[id].data();
+						++id;
+					}
+					valIndex += 7;
+				}
+
 				// Heat condition
 				if (xi == surfacePosition[yj][zk] && xi >= localXS &&
 					xi < localXS + localXM) {
 					// Get the partial derivatives for the temperature
 					auto setValues =
-						temperatureHandler->computePartialsForTemperature(
-							tempVals, tempIndices, hxLeft, hxRight, xi, sy, yj,
-							sz, zk);
+						temperatureHandler->computePartialsForTemperature(ftime,
+							hConcPtrVec, tempVals, tempIndices, hxLeft, hxRight,
+							xi, sy, yj, sz, zk);
 
 					if (setValues) {
-						// Set grid coordinate and component number for the
-						// row
-						row.i = xi;
-						row.j = yj;
-						row.k = zk;
-						row.c = tempIndices[0];
-
-						// Set grid coordinates and component numbers for
-						// the columns corresponding to the middle, left,
-						// and right grid points
-						cols[0].i = xi; // middle
-						cols[0].j = yj;
-						cols[0].k = zk;
-						cols[0].c = tempIndices[0];
-						cols[1].i = (PetscInt)xi - 1; // left
-						cols[1].j = yj;
-						cols[1].k = zk;
-						cols[1].c = tempIndices[0];
-						cols[2].i = xi + 1; // right
-						cols[2].j = yj;
-						cols[2].k = zk;
-						cols[2].c = tempIndices[0];
-						cols[3].i = xi; // bottom
-						cols[3].j = (PetscInt)yj - 1;
-						cols[3].k = zk;
-						cols[3].c = tempIndices[0];
-						cols[4].i = xi; // top
-						cols[4].j = yj + 1;
-						cols[4].k = zk;
-						cols[4].c = tempIndices[0];
-						cols[5].i = xi; // front
-						cols[5].j = yj;
-						cols[5].k = (PetscInt)zk - 1;
-						cols[5].c = tempIndices[0];
-						cols[6].i = xi; // back
-						cols[6].j = yj;
-						cols[6].k = zk + 1;
-						cols[6].c = tempIndices[0];
-
-						ierr = MatSetValuesStencil(
-							J, 1, &row, 7, cols, tempVals, ADD_VALUES);
-						checkPetscError(ierr,
-							"PetscSolver3DHandler::computeJacobian: "
-							"MatSetValuesStencil (temperature) failed.");
+						hTempVals(tempIndex + 0) += tempVals[0];
+						hTempVals(tempIndex + 1) += tempVals[1];
+						hTempVals(tempIndex + 2) += tempVals[2];
+						hTempVals(tempIndex + 3) += tempVals[3];
+						hTempVals(tempIndex + 4) += tempVals[4];
+						hTempVals(tempIndex + 5) += tempVals[5];
+						hTempVals(tempIndex + 6) += tempVals[6];
 					}
 				}
-
-				// Get the concentrations at this grid point
-				concOffset = concs[zk][yj][xi];
 
 				// Set the grid fraction
 				if (xi < 0)
@@ -1370,68 +1382,29 @@ PetscSolver3DHandler::computeJacobian(
 					continue;
 				// Free surface GB
 				bool skip = false;
-				for (auto& pair : gbVector) {
-					if (xi == std::get<0>(pair) && yj == std::get<1>(pair) &&
-						zk == std::get<2>(pair)) {
-						skip = true;
-						break;
-					}
-				}
-				if (skip)
+				if (std::find_if(
+						begin(gbVector), end(gbVector), [=](auto&& pair) {
+							return xi == pair[0] && yj == pair[1] &&
+								zk == pair[2];
+						}) != end(gbVector)) {
 					continue;
+				}
 
 				// Get the partial derivatives for the temperature
 				if (xi >= localXS && xi < localXS + localXM) {
 					auto setValues =
-						temperatureHandler->computePartialsForTemperature(
-							tempVals, tempIndices, hxLeft, hxRight, xi, sy, yj,
-							sz, zk);
+						temperatureHandler->computePartialsForTemperature(ftime,
+							hConcPtrVec, tempVals, tempIndices, hxLeft, hxRight,
+							xi, sy, yj, sz, zk);
 
 					if (setValues) {
-						// Set grid coordinate and component number for the
-						// row
-						row.i = xi;
-						row.j = yj;
-						row.k = zk;
-						row.c = tempIndices[0];
-
-						// Set grid coordinates and component numbers for
-						// the columns corresponding to the middle, left,
-						// and right grid points
-						cols[0].i = xi; // middle
-						cols[0].j = yj;
-						cols[0].k = zk;
-						cols[0].c = tempIndices[0];
-						cols[1].i = (PetscInt)xi - 1; // left
-						cols[1].j = yj;
-						cols[1].k = zk;
-						cols[1].c = tempIndices[0];
-						cols[2].i = xi + 1; // right
-						cols[2].j = yj;
-						cols[2].k = zk;
-						cols[2].c = tempIndices[0];
-						cols[3].i = xi; // bottom
-						cols[3].j = (PetscInt)yj - 1;
-						cols[3].k = zk;
-						cols[3].c = tempIndices[0];
-						cols[4].i = xi; // top
-						cols[4].j = yj + 1;
-						cols[4].k = zk;
-						cols[4].c = tempIndices[0];
-						cols[5].i = xi; // front
-						cols[5].j = yj;
-						cols[5].k = (PetscInt)zk - 1;
-						cols[5].c = tempIndices[0];
-						cols[6].i = xi; // back
-						cols[6].j = yj;
-						cols[6].k = zk + 1;
-						cols[6].c = tempIndices[0];
-
-						ierr = MatSetValuesStencil(
-							J, 1, &row, 7, cols, tempVals, ADD_VALUES);
-						checkPetscError(ierr,
-							"PetscSolver3DHandler::computeJacobian: "
-							"MatSetValuesStencil (temperature) failed.");
+						hTempVals(tempIndex + 0) += tempVals[0];
+						hTempVals(tempIndex + 1) += tempVals[1];
+						hTempVals(tempIndex + 2) += tempVals[2];
+						hTempVals(tempIndex + 3) += tempVals[3];
+						hTempVals(tempIndex + 4) += tempVals[4];
+						hTempVals(tempIndex + 5) += tempVals[5];
+						hTempVals(tempIndex + 6) += tempVals[6];
 					}
 				}
 			}
@@ -1453,10 +1426,14 @@ PetscSolver3DHandler::computeJacobian(
 				network.setTemperatures(temperature, depths);
 			}
 		}
+	}
+	deep_copy(subview(vals,
+				  std::make_pair(IdType{0}, localZM * localYM * localXM * 7)),
+		hTempVals);
 
 	// Loop over the grid points
-	for (auto zk = frontOffset; zk < nZ - backOffset; zk++)
-		for (auto yj = bottomOffset; yj < nY - topOffset; yj++) {
+	for (auto zk = localZS; zk < localZS + localZM; zk++) {
+		for (auto yj = localYS; yj < localYS + localYM; yj++) {
 			// Computing the trapped atom concentration is only needed for
 			// the attenuation
 			if (useAttenuation) {
@@ -1478,21 +1455,16 @@ PetscSolver3DHandler::computeJacobian(
 
 					// Check if we are on the right processor
 					if (xi >= localXS && xi < localXS + localXM &&
-						yj >= localYS && yj < localYS + localYM &&
-						zk >= localZS && zk < localZS + localZM) {
+						yj >= bottomOffset && yj < nY - topOffset &&
+						zk >= frontOffset && zk < nZ - backOffset) {
 						// Get the concentrations at this grid point
-						concOffset = concs[zk][yj][xi];
+						auto concOffset =
+							subview(concs, zk, yj, xi, Kokkos::ALL).view();
 
 						// Sum the total atom concentration
-						using HostUnmanaged = Kokkos::View<double*,
-							Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-						auto hConcs = HostUnmanaged(concOffset, dof);
-						auto dConcs =
-							Kokkos::View<double*>("Concentrations", dof);
-						deep_copy(dConcs, hConcs);
 						atomConc +=
 							psiNetwork.getTotalTrappedHeliumConcentration(
-								dConcs, 0) *
+								concOffset, 0) *
 							(grid[xi + 1] - grid[xi]);
 					}
 				}
@@ -1507,11 +1479,6 @@ PetscSolver3DHandler::computeJacobian(
 				psiNetwork.updateTrapMutationDisappearingRate(totalAtomConc);
 			}
 
-			// Skip if we are not on the right process
-			if (yj < localYS || yj >= localYS + localYM || zk < localZS ||
-				zk >= localZS + localZM)
-				continue;
-
 			// Set the grid position
 			gridPosition[1] = yj * hY;
 			gridPosition[2] = zk * hZ;
@@ -1522,6 +1489,29 @@ PetscSolver3DHandler::computeJacobian(
 				grid[surfacePosition[yj][zk] + 1] - grid[1]);
 
 			for (auto xi = localXS; xi < localXS + localXM; xi++) {
+				// Boundary conditions
+				// Everything to the left of the surface is empty
+				if (xi < surfacePosition[yj][zk] + leftOffset ||
+					xi > nX - 1 - rightOffset || yj < bottomOffset ||
+					yj > nY - 1 - topOffset || zk < frontOffset ||
+					zk > nZ - 1 - backOffset) {
+					valIndex += 7 * nDiff;
+					valIndex += 2 * nAdvec * advectionHandlers.size();
+					valIndex += nNetworkEntries;
+					continue;
+				}
+				// Free surface GB
+				if (std::find_if(
+						begin(gbVector), end(gbVector), [=](auto&& pair) {
+							return xi == pair[0] && yj == pair[1] &&
+								zk == pair[2];
+						}) != end(gbVector)) {
+					valIndex += 7 * nDiff;
+					valIndex += 2 * nAdvec * advectionHandlers.size();
+					valIndex += nNetworkEntries;
+					continue;
+				}
+
 				// Compute the left and right hx
 				double hxLeft = 0.0, hxRight = 0.0;
 				if (xi >= 1 && xi < nX) {
@@ -1537,143 +1527,29 @@ PetscSolver3DHandler::computeJacobian(
 					hxRight = grid[xi + 1] - grid[xi];
 				}
 
-				// Boundary conditions
-				// Everything to the left of the surface is empty
-				if (xi < surfacePosition[yj][zk] + leftOffset ||
-					xi > nX - 1 - rightOffset || yj < bottomOffset ||
-					yj > nY - 1 - topOffset || zk < frontOffset ||
-					zk > nZ - 1 - backOffset)
-					continue;
-				// Free surface GB
-				bool skip = false;
-				for (auto& pair : gbVector) {
-					if (xi == std::get<0>(pair) && yj == std::get<1>(pair) &&
-						zk == std::get<2>(pair)) {
-						skip = true;
-						break;
-					}
-				}
-				if (skip)
-					continue;
-
 				// Get the partial derivatives for the diffusion
-				diffusionHandler->computePartialsForDiffusion(network, diffVals,
-					diffIndices, hxLeft, hxRight, xi - localXS, sy,
-					yj - localYS, sz, zk - localZS);
-
-				// Loop on the number of diffusion cluster to set the values
-				// in the Jacobian
-				for (auto i = 0; i < nDiff; i++) {
-					// Set grid coordinate and component number for the row
-					row.i = xi;
-					row.j = yj;
-					row.k = zk;
-					row.c = diffIndices[i];
-
-					// Set grid coordinates and component numbers for the
-					// columns corresponding to the middle, left, right,
-					// bottom, top, front, and back grid points
-					cols[0].i = xi; // middle
-					cols[0].j = yj;
-					cols[0].k = zk;
-					cols[0].c = diffIndices[i];
-					cols[1].i = (PetscInt)xi - 1; // left
-					cols[1].j = yj;
-					cols[1].k = zk;
-					cols[1].c = diffIndices[i];
-					cols[2].i = xi + 1; // right
-					cols[2].j = yj;
-					cols[2].k = zk;
-					cols[2].c = diffIndices[i];
-					cols[3].i = xi; // bottom
-					cols[3].j = (PetscInt)yj - 1;
-					cols[3].k = zk;
-					cols[3].c = diffIndices[i];
-					cols[4].i = xi; // top
-					cols[4].j = yj + 1;
-					cols[4].k = zk;
-					cols[4].c = diffIndices[i];
-					cols[5].i = xi; // front
-					cols[5].j = yj;
-					cols[5].k = (PetscInt)zk - 1;
-					cols[5].c = diffIndices[i];
-					cols[6].i = xi; // back
-					cols[6].j = yj;
-					cols[6].k = zk + 1;
-					cols[6].c = diffIndices[i];
-
-					ierr = MatSetValuesStencil(
-						J, 1, &row, 7, cols, diffVals + (7 * i), ADD_VALUES);
-					checkPetscError(ierr,
-						"PetscSolver3DHandler::computeJacobian: "
-						"MatSetValuesStencil (diffusion) failed.");
-				}
+				diffusionHandler->computePartialsForDiffusion(network,
+					subview(
+						vals, std::make_pair(valIndex, valIndex + 7 * nDiff)),
+					hxLeft, hxRight, xi - localXS, sy, yj - localYS, sz,
+					zk - localZS);
+				valIndex += 7 * nDiff;
 
 				// Get the partial derivatives for the advection
 				// Set the grid position
 				gridPosition[0] = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 				for (auto l = 0; l < advectionHandlers.size(); l++) {
 					advectionHandlers[l]->computePartialsForAdvection(network,
-						advecVals, advecIndices, gridPosition, hxLeft, hxRight,
-						xi - localXS, hY, yj - localYS, hZ, zk - localZS);
-
-					// Get the stencil indices to know where to put the
-					// partial derivatives in the Jacobian
-					auto advecStencil =
-						advectionHandlers[l]->getStencilForAdvection(
-							gridPosition);
-
-					// Get the number of advecting clusters
-					nAdvec = advectionHandlers[l]->getNumberOfAdvecting();
-
-					// Loop on the number of advecting cluster to set the
-					// values in the Jacobian
-					for (auto i = 0; i < nAdvec; i++) {
-						// Set grid coordinate and component number for the
-						// row
-						row.i = xi;
-						row.j = yj;
-						row.k = zk;
-						row.c = advecIndices[i];
-
-						// If we are on the sink, the partial derivatives
-						// are not the same Both sides are giving their
-						// concentrations to the center
-						if (advectionHandlers[l]->isPointOnSink(gridPosition)) {
-							cols[0].i = (PetscInt)xi - advecStencil[0]; // left?
-							cols[0].j = yj - advecStencil[1]; // bottom?
-							cols[0].k = zk - advecStencil[2]; // back?
-							cols[0].c = advecIndices[i];
-							cols[1].i = xi + advecStencil[0]; // right?
-							cols[1].j = yj + advecStencil[1]; // top?
-							cols[1].k = zk + advecStencil[2]; // front?
-							cols[1].c = advecIndices[i];
-						}
-						else {
-							// Set grid coordinates and component numbers
-							// for the columns corresponding to the middle
-							// and other grid points
-							cols[0].i = xi; // middle
-							cols[0].j = yj;
-							cols[0].k = zk;
-							cols[0].c = advecIndices[i];
-							cols[1].i = xi + advecStencil[0]; // left or right?
-							cols[1].j = yj + advecStencil[1]; // bottom or top?
-							cols[1].k = zk + advecStencil[2]; // back or front?
-							cols[1].c = advecIndices[i];
-						}
-
-						// Update the matrix
-						ierr = MatSetValuesStencil(J, 1, &row, 2, cols,
-							advecVals + (2 * i), ADD_VALUES);
-						checkPetscError(ierr,
-							"PetscSolver3DHandler::computeJacobian: "
-							"MatSetValuesStencil (advection) failed.");
-					}
+						subview(vals,
+							std::make_pair(valIndex, valIndex + 2 * nAdvec)),
+						gridPosition, hxLeft, hxRight, xi - localXS, hY,
+						yj - localYS, hZ, zk - localZS);
+					valIndex += 2 * nAdvec;
 				}
 
 				// Get the concentration
-				concOffset = concs[zk][yj][xi];
+				auto concOffset =
+					subview(concs, zk, yj, xi, Kokkos::ALL).view();
 
 				// ----- Take care of the reactions for all the reactants
 				// -----
@@ -1685,75 +1561,28 @@ PetscSolver3DHandler::computeJacobian(
 				auto curSpacing = curXPos - prevXPos;
 
 				// Compute all the partial derivatives for the reactions
-				using HostUnmanaged = Kokkos::View<double*, Kokkos::HostSpace,
-					Kokkos::MemoryUnmanaged>;
-				auto hConcs = HostUnmanaged(concOffset, dof);
-				auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-				deep_copy(dConcs, hConcs);
 				partialDerivativeCounter->increment();
 				partialDerivativeTimer->start();
-				network.computeAllPartials(
-					dConcs, vals, xi + 1 - localXS, curDepth, curSpacing);
+				network.computeAllPartials(concOffset,
+					subview(vals,
+						std::make_pair(valIndex, valIndex + nNetworkEntries)),
+					xi + 1 - localXS, curDepth, curSpacing);
 				partialDerivativeTimer->stop();
-				auto hPartials = create_mirror_view(vals);
-				deep_copy(hPartials, vals);
-
-				// Variable for the loop on reactants
-				IdType startingIdx = 0;
-				// Update the column in the Jacobian that represents each
-				// DOF
-				for (auto i = 0; i < dof; i++) {
-					// Set grid coordinate and component number for the row
-					rowId.i = xi;
-					rowId.j = yj;
-					rowId.k = zk;
-					rowId.c = i;
-
-					// Number of partial derivatives
-					auto rowIter = dfill.find(i);
-					if (rowIter != dfill.end()) {
-						const auto& row = rowIter->second;
-						pdColIdsVectorSize = row.size();
-
-						// Loop over the list of column ids
-						for (auto j = 0; j < pdColIdsVectorSize; j++) {
-							// Set grid coordinate and component number for
-							// a column in the list
-							colIds[j].i = xi;
-							colIds[j].j = yj;
-							colIds[j].k = zk;
-							colIds[j].c = row[j];
-							// Get the partial derivative from the array of
-							// all of the partials
-							reactingPartialsForCluster[j] =
-								hPartials(startingIdx + j);
-						}
-						// Update the matrix
-						ierr = MatSetValuesStencil(J, 1, &rowId,
-							pdColIdsVectorSize, colIds,
-							reactingPartialsForCluster.data(), ADD_VALUES);
-						checkPetscError(ierr,
-							"PetscSolver3DHandler::computeJacobian: "
-							"MatSetValuesStencil (reactions) failed.");
-
-						// Increase the starting index
-						startingIdx += pdColIdsVectorSize;
-					}
-				}
+				valIndex += nNetworkEntries;
 			}
 		}
+	}
+	Kokkos::fence();
+	PetscCallVoid(MatSetValuesCOO(J, vals.data(), ADD_VALUES));
+
+	// Reset the values
+	resetJacobianValues();
 
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr,
-		"PetscSolver3DHandler::computeJacobian: "
-		"DMDAVecRestoreArrayDOFRead failed.");
-
-	return;
+	PetscCallVoid(DMDAVecRestoreKokkosOffsetViewDOF(da, localC, &concs));
 }
-
 } /* end namespace handler */
 } /* end namespace solver */
 } /* end namespace xolotl */

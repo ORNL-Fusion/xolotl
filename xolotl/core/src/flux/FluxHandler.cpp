@@ -14,11 +14,14 @@ namespace core
 namespace flux
 {
 FluxHandler::FluxHandler(const options::IOptions& options) :
-	fluence(0.0),
 	fluxAmplitude(0.0),
 	useTimeProfile(false),
-	normFactor(0.0)
+	normFactor(0.0),
+	cascadeDose(options.getCascadeDose()),
+	cascadeEfficiency(options.getCascadeEfficiency())
 {
+	// Initialize the fluence vector
+	fluence.push_back(0.0);
 	// Wrong if both the flux and time profile options are used
 	if (options.useFluxAmplitude() && options.useFluxTimeProfile()) {
 		throw std::runtime_error("\nA constant flux value AND a time profile "
@@ -92,8 +95,6 @@ FluxHandler::initializeFluxHandler(network::IReactionNetwork& network,
 
 	// Add it to the vector of fluxes
 	incidentFluxVec.push_back(tempVector);
-
-	return;
 }
 
 void
@@ -115,8 +116,32 @@ FluxHandler::recomputeFluxHandler(int surfacePos)
 		// Add it to the vector
 		incidentFluxVec[0][i - surfacePos] = incidentFlux;
 	}
+}
 
-	return;
+void
+FluxHandler::syncFluxIndices()
+{
+	auto ids_h =
+		Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+			fluxIndices.data(), fluxIndices.size());
+	fluxIds = Kokkos::View<IdType*>(
+		Kokkos::ViewAllocateWithoutInitializing("Flux Indices"),
+		fluxIndices.size());
+	deep_copy(fluxIds, ids_h);
+}
+
+void
+FluxHandler::syncIncidentFluxVec()
+{
+	incidentFlux = Kokkos::View<double**>(
+		"Incident Flux Vec", incidentFluxVec.size(), incidentFluxVec[0].size());
+	auto incidentFlux_h = create_mirror_view(incidentFlux);
+	for (std::size_t i = 0; i < incidentFluxVec.size(); ++i) {
+		for (std::size_t j = 0; j < incidentFluxVec[i].size(); ++j) {
+			incidentFlux_h(i, j) = incidentFluxVec[i][j];
+		}
+	}
+	deep_copy(incidentFlux, incidentFlux_h);
 }
 
 void
@@ -138,8 +163,6 @@ FluxHandler::initializeTimeProfile(const std::string& fileName)
 		time.push_back(xamp);
 		amplitudes.push_back(yamp);
 	}
-
-	return;
 }
 
 double
@@ -176,8 +199,9 @@ FluxHandler::getProfileAmplitude(double currentTime) const
 }
 
 void
-FluxHandler::computeIncidentFlux(double currentTime, double*,
-	double* updatedConcOffset, int xi, int surfacePos)
+FluxHandler::computeIncidentFlux(double currentTime,
+	Kokkos::View<const double*>, Kokkos::View<double*> updatedConcOffset,
+	int xi, int surfacePos)
 {
 	// Skip if no index was set
 	if (fluxIndices.size() == 0)
@@ -189,36 +213,67 @@ FluxHandler::computeIncidentFlux(double currentTime, double*,
 		recomputeFluxHandler(surfacePos);
 	}
 
+	double value{};
 	if (incidentFluxVec[0].size() == 0) {
-		updatedConcOffset[fluxIndices[0]] += fluxAmplitude;
-		return;
+		value = fluxAmplitude;
+	}
+	else {
+		value = incidentFluxVec[0][xi - surfacePos];
 	}
 
 	// Update the concentration array
-	updatedConcOffset[fluxIndices[0]] += incidentFluxVec[0][xi - surfacePos];
-
-	return;
+	auto id = fluxIndices[0];
+	Kokkos::parallel_for(
+		1, KOKKOS_LAMBDA(std::size_t) { updatedConcOffset[id] += value; });
 }
 
 void
 FluxHandler::incrementFluence(double dt)
 {
 	// The fluence is the flux times the time
-	fluence += fluxAmplitude * dt;
+	fluence[0] += fluxAmplitude * dt;
 
-	return;
+	if (reductionFactors.size() > 0) {
+		if (fluence.size() == 1) {
+			// Add entries
+			for (auto factor : reductionFactors)
+				fluence.push_back(0.0);
+		}
+
+		// Update entries
+		for (auto i = 0; i < reductionFactors.size(); i++) {
+			fluence[i + 1] += fluxAmplitude * dt * reductionFactors[i];
+		}
+	}
 }
 
 void
 FluxHandler::computeFluence(double time)
 {
 	// The fluence is the flux times the time
-	fluence = fluxAmplitude * time;
+	fluence[0] = fluxAmplitude * time;
 
-	return;
+	if (reductionFactors.size() > 0) {
+		if (fluence.size() == 1) {
+			// Add entries
+			for (auto factor : reductionFactors)
+				fluence.push_back(0.0);
+		}
+
+		// Update entries
+		for (auto i = 0; i < reductionFactors.size(); i++) {
+			fluence[i + 1] = fluxAmplitude * time * reductionFactors[i];
+		}
+	}
 }
 
-double
+void
+FluxHandler::setFluence(std::vector<double> f)
+{
+	fluence = f;
+}
+
+std::vector<double>
 FluxHandler::getFluence() const
 {
 	return fluence;
@@ -261,6 +316,12 @@ std::vector<IdType>
 FluxHandler::getFluxIndices() const
 {
 	return fluxIndices;
+}
+
+std::vector<double>
+FluxHandler::getReductionFactors() const
+{
+	return reductionFactors;
 }
 
 } // end namespace flux

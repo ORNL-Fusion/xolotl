@@ -62,8 +62,6 @@ private:
 	void
 	readReactions(
 		double temperature, const std::string filename = "reactionRates.txt");
-
-	IdType fileClusterNumber = 0;
 };
 
 namespace detail

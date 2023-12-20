@@ -85,6 +85,10 @@ public:
 		maxSizeV(options.getMaxV()),
 		maxSizeB(options.getMaxImpurity())
 	{
+		// Set the fraction of large vacancy clusters (n > 19) that become
+		// faulted basal pyramids:
+		if (maxSizeB > 18)
+			Qb = options.getBasalPortion(); // Basal
 	}
 
 	/**
@@ -103,13 +107,6 @@ public:
 	{
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
-
-		// Set the fraction of large vacancy clusters (n > 19) that become
-		// faulted basal pyramids:
-		if (maxSizeB > 18)
-			Qb = 0.10; // Basal
-		else
-			Qb = 0.0; // No basal
 
 		// Set the flux index corresponding the mobile interstitial clusters (n
 		// < 10)
@@ -136,7 +133,7 @@ public:
 				continue;
 			}
 			fluxIndices.push_back(cluster.getId());
-			if (i >= 19)
+			if (i > 18)
 				incidentFluxVec.push_back(
 					std::vector<double>(1, fluxV[i - 1] * (1 - Qb)));
 			else
@@ -152,41 +149,48 @@ public:
 				continue;
 			}
 			fluxIndices.push_back(cluster.getId());
-			if (i >= 19)
+			if (i > 18)
 				incidentFluxVec.push_back(
 					std::vector<double>(1, fluxV[i - 1] * (Qb)));
 			else
 				incidentFluxVec.push_back(std::vector<double>(1, 0.0));
 		}
 
-		return;
+		// Copy data to device views
+		syncFluxIndices();
+		syncIncidentFluxVec();
 	}
 
 	/**
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(double currentTime, double*, double* updatedConcOffset,
-		int xi, int surfacePos)
+	computeIncidentFlux(double currentTime, Kokkos::View<const double*>,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
 	{
 		// Define only for a 0D case
-		if (xGrid.size() == 0) {
-			double cascadeEfficiency = (0.495 *
-					(1 - tanh(0.00040527088 * (currentTime / 100.0 - 5000.0))) +
-				0.025);
-
-			for (int i = 0; i < fluxIndices.size(); i++) {
-				updatedConcOffset[fluxIndices[i]] +=
-					incidentFluxVec[i][0] * cascadeEfficiency;
-			}
-		}
-
-		else {
+		if (xGrid.size() != 0) {
 			throw std::runtime_error(
 				"\nThe alpha Zr problem is not defined for more than 0D!");
 		}
 
-		return;
+		double attenuation = 1.0;
+		if (cascadeDose > 0.0) {
+			attenuation = ((1.0 - cascadeEfficiency) / 2.0) *
+					(1.0 -
+						tanh(47.0 *
+							(currentTime * fluxAmplitude - cascadeDose))) +
+				cascadeEfficiency;
+		}
+
+		auto ids = this->fluxIds;
+		auto flux = this->incidentFlux;
+		Kokkos::parallel_for(
+			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
+				Kokkos::atomic_add(
+					&updatedConcOffset[ids[i]], flux(i, 0) * attenuation);
+			});
 	}
 
 	/**

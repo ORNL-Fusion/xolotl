@@ -34,6 +34,11 @@ protected:
 	std::array<double, 2> tempParam;
 
 	/**
+	 * Value for the temperature grid power.
+	 */
+	double tempGridPower;
+
+	/**
 	 * Name of the input temperature profile file.
 	 */
 	std::string tempProfileFilename;
@@ -44,7 +49,7 @@ protected:
 	bool fluxFlag;
 
 	/**
-	 * Value for the  flux.
+	 * Value for the flux.
 	 */
 	double fluxAmplitude;
 
@@ -62,6 +67,11 @@ protected:
 	 * Name of the perf handler
 	 */
 	std::string perfHandlerName;
+
+	/**
+	 * Output performance report to YAML file?
+	 */
+	bool perfOutputYAMLFlag;
 
 	/**
 	 * Name of the viz handler
@@ -82,6 +92,11 @@ protected:
 	 * Value of the electronic stopping power.
 	 */
 	double zeta;
+
+	/**
+	 * The location of the interface between two materials.
+	 */
+	double interfaceLocation;
 
 	/**
 	 * Number of dimensions for the simulation.
@@ -159,6 +174,11 @@ protected:
 	int maxV;
 
 	/**
+	 * Maximum number of pure V
+	 */
+	int maxPureV;
+
+	/**
 	 * Maximum number of I
 	 */
 	int maxI;
@@ -173,6 +193,11 @@ protected:
 	 * String of the list of wanted BC in X.
 	 */
 	std::string xBC;
+
+	/**
+	 * Portion of heat lost in the bulk.
+	 */
+	double heatLossPortion;
 
 	/**
 	 * Depth for the bubble bursting in nm.
@@ -271,6 +296,26 @@ protected:
 	 */
 	fs::path reactionFilePath;
 
+	/**
+	 * Value of the basal portion.
+	 */
+	double basalPortion;
+
+	/**
+	 * Transition size, for instance from pyramic to c-loops.
+	 */
+	int transitionSize;
+
+	/**
+	 * Value of the cascade dose.
+	 */
+	double cascadeDose;
+
+	/**
+	 * Value of the remaining cascade efficiency.
+	 */
+	double cascadeEfficiency;
+
 public:
 	/**
 	 * The constructor.
@@ -336,6 +381,15 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
+	double
+	getTempGridPower() const override
+	{
+		return tempGridPower;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
 	std::string
 	getTempProfileFilename() const override
 	{
@@ -390,6 +444,15 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
+	bool
+	usePerfOutputYAML() const override
+	{
+		return perfOutputYAMLFlag;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
 	std::string
 	getVizHandlerName() const override
 	{
@@ -430,6 +493,15 @@ public:
 	getDimensionNumber() const override
 	{
 		return dimensionNumber;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	double
+	getInterfaceLocation() const override
+	{
+		return interfaceLocation;
 	}
 
 	/**
@@ -562,6 +634,15 @@ public:
 	 * \see IOptions.h
 	 */
 	int
+	getMaxPureV() const override
+	{
+		return maxPureV;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
 	getMaxI() const override
 	{
 		return maxI;
@@ -608,6 +689,15 @@ public:
 	getBCString() const override
 	{
 		return xBC;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	double
+	getHeatLossPortion() const override
+	{
+		return heatLossPortion;
 	}
 
 	/**
@@ -780,6 +870,42 @@ public:
 	getReactionFilePath() const override
 	{
 		return reactionFilePath.string();
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getBasalPortion() const override
+	{
+		return basalPortion;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
+	getTransitionSize() const override
+	{
+		return transitionSize;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getCascadeDose() const override
+	{
+		return cascadeDose;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getCascadeEfficiency() const override
+	{
+		return cascadeEfficiency;
 	}
 };
 // end class Options

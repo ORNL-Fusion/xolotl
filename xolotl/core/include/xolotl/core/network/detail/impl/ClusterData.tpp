@@ -39,6 +39,7 @@ ClusterDataCommon<MemSpace>::ClusterDataCommon(
 	numClusters(numClusters_),
 	gridSize(gridSize_),
 	_floatVals("Floating Point Values" + labelStr<MemSpace>()),
+	_intVals("Integer Point Values" + labelStr<MemSpace>()),
 	_boolVals("Boolean Values" + labelStr<MemSpace>()),
 	temperature("Temperature" + labelStr<MemSpace>(), gridSize),
 	reactionRadius("Reaction Radius" + labelStr<MemSpace>(), numClusters),
@@ -56,6 +57,7 @@ inline void
 ClusterDataCommon<MemSpace>::deepCopy(const TClusterDataCommon& data)
 {
 	deep_copy(_floatVals, data._floatVals);
+	deep_copy(_intVals, data._intVals);
 	deep_copy(_boolVals, data._boolVals);
 	deep_copy(temperature, data.temperature);
 	deep_copy(reactionRadius, data.reactionRadius);
@@ -74,6 +76,7 @@ ClusterDataCommon<MemSpace>::getDeviceMemorySize() const noexcept
 	ret += sizeof(numClusters);
 	ret += sizeof(gridSize);
 	ret += _floatVals.required_allocation_size();
+	ret += _intVals.required_allocation_size();
 	ret += _boolVals.required_allocation_size();
 
 	ret += temperature.required_allocation_size(temperature.size());
