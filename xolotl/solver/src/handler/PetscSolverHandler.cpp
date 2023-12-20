@@ -6,14 +6,14 @@ namespace solver
 {
 namespace handler
 {
-PetscSolverHandler::PetscSolverHandler(
-	NetworkType& _network, const options::IOptions& options) :
-	SolverHandler(_network, options),
-	fluxTimer(perfHandler->getTimer("Flux")),
-	partialDerivativeTimer(perfHandler->getTimer("Partial Derivatives")),
-	fluxCounter(perfHandler->getEventCounter("Flux")),
+PetscSolverHandler::PetscSolverHandler(NetworkType& _network,
+	perf::IPerfHandler& _perfHandler, const options::IOptions& options) :
+	SolverHandler(_network, _perfHandler, options),
+	fluxTimer(perfHandler.getTimer("Flux")),
+	partialDerivativeTimer(perfHandler.getTimer("Partial Derivatives")),
+	fluxCounter(perfHandler.getEventCounter("Flux")),
 	partialDerivativeCounter(
-		perfHandler->getEventCounter("Partial Derivatives")),
+		perfHandler.getEventCounter("Partial Derivatives")),
 	surfaceOffset(0)
 {
 }

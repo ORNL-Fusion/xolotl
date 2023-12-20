@@ -4,6 +4,7 @@
 // Includes
 #include <xolotl/options/IOptions.h>
 #include <xolotl/perf/IPerfHandler.h>
+#include <xolotl/perf/ITimer.h>
 #include <xolotl/solver/ISolver.h>
 #include <xolotl/solver/monitor/IMonitor.h>
 
@@ -21,6 +22,12 @@ protected:
 	//! The string of option
 	std::string optionsString;
 
+	//! The perf handler
+	std::shared_ptr<perf::IPerfHandler> perfHandler;
+
+	//! The initialization timer
+	std::shared_ptr<perf::ITimer> initTimer;
+
 	//! The network
 	std::shared_ptr<core::network::IReactionNetwork> network;
 
@@ -36,13 +43,10 @@ protected:
 	//! The monitor
 	std::shared_ptr<monitor::IMonitor> monitor;
 
-	//! The perf handler
-	std::shared_ptr<perf::IPerfHandler> perfHandler;
-
 public:
 	using SolverHandlerGenerator =
 		std::function<std::shared_ptr<handler::ISolverHandler>(
-			core::network::IReactionNetwork&)>;
+			core::network::IReactionNetwork&, perf::IPerfHandler&)>;
 
 	/**
 	 * Default constructor, deleted because we must have arguments to construct.
@@ -67,10 +71,10 @@ public:
 	/**
 	 * @return The solver handler for this solver
 	 */
-	std::shared_ptr<handler::ISolverHandler>
+	handler::ISolverHandler*
 	getSolverHandler()
 	{
-		return solverHandler;
+		return solverHandler.get();
 	}
 };
 // end class Solver

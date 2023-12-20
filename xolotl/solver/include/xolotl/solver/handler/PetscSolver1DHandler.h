@@ -25,9 +25,9 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver1DHandler(
-		NetworkType& _network, const options::IOptions& options) :
-		PetscSolverHandler(_network, options)
+	PetscSolver1DHandler(NetworkType& _network,
+		perf::IPerfHandler& _perfHandler, const options::IOptions& options) :
+		PetscSolverHandler(_network, _perfHandler, options)
 	{
 	}
 

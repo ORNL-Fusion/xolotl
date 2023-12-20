@@ -42,6 +42,9 @@ protected:
 	//! The original network created from the network loader.
 	NetworkType& network;
 
+	//! the original perf handler created.
+	perf::IPerfHandler& perfHandler;
+
 	//! The number of Jacobian entries (per block) from the network
 	int nNetworkEntries;
 
@@ -114,9 +117,6 @@ protected:
 
 	//! The original temperature handler created.
 	core::temperature::ITemperatureHandler* temperatureHandler;
-
-	//! the original perf handler created.
-	std::shared_ptr<perf::IPerfHandler> perfHandler;
 
 	//! the original viz handler created.
 	std::shared_ptr<viz::IVizHandler> vizHandler;
@@ -202,7 +202,8 @@ protected:
 	 * @param _network The reaction network to use.
 	 * @param _perfHandler The perf handler to use.
 	 */
-	SolverHandler(NetworkType& _network, const options::IOptions& options);
+	SolverHandler(NetworkType& _network, perf::IPerfHandler& _perfHandler,
+		const options::IOptions& options);
 
 public:
 	//! The Constructor
@@ -658,10 +659,10 @@ public:
 	/**
 	 * \see ISolverHandler.h
 	 */
-	std::shared_ptr<perf::IPerfHandler>
+	perf::IPerfHandler*
 	getPerfHandler() const override
 	{
-		return perfHandler;
+		return &perfHandler;
 	}
 
 	/**
