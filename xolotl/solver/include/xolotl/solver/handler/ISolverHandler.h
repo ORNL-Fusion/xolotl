@@ -456,7 +456,7 @@ public:
 	 *
 	 * @return The perf handler
 	 */
-	virtual std::shared_ptr<perf::IPerfHandler>
+	virtual perf::IPerfHandler*
 	getPerfHandler() const = 0;
 
 	/**

@@ -10,9 +10,10 @@ namespace solver
 {
 namespace handler
 {
-SolverHandler::SolverHandler(
-	NetworkType& _network, const options::IOptions& options) :
+SolverHandler::SolverHandler(NetworkType& _network,
+	perf::IPerfHandler& _perfHandler, const options::IOptions& options) :
 	network(_network),
+	perfHandler(_perfHandler),
 	networkName(""),
 	nX(0),
 	nY(0),
@@ -45,8 +46,6 @@ SolverHandler::SolverHandler(
 	fluxHandler(nullptr),
 	temperatureHandler(nullptr),
 	vizHandler(factory::viz::VizHandlerFactory::get().generate(options)),
-	perfHandler(factory::perf::PerfHandlerFactory::get(perf::loadPerfHandlers)
-					.generate(options)),
 	diffusionHandler(nullptr),
 	soretDiffusionHandler(nullptr),
 	tauBursting(10.0),
