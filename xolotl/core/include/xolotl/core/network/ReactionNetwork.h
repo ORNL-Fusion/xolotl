@@ -724,28 +724,6 @@ struct ReactionNetworkWorker
 
 	void
 	defineMomentIds();
-
-	void
-	defineReactions(Connectivity& connectivity);
-
-	IndexType
-	getDiagonalFill(typename Network::SparseFillMap& fillMap);
-
-	double
-	getTotalConcentration(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalAtomConcentration(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalRadiusConcentration(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalVolumeFraction(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
 };
 
 template <typename TImpl>
