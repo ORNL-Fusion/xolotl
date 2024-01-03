@@ -697,7 +697,6 @@ XFile::TimestepGroup::writeBottom2D(std::vector<Data2DType> nAtoms,
 	// Create the dataspace for the dataset with dimension dims
 	std::array<hsize_t, 1> dims{(hsize_t)size};
 	XFile::SimpleDataSpace<1> dspace(dims);
-	double quantityArray[size];
 
 	// Loop on the names
 	for (auto i = 0; i < atomNames.size(); i++) {
@@ -753,7 +752,6 @@ XFile::TimestepGroup::writeBottom3D(std::vector<Data3DType> nAtoms,
 	// Create the array that will store the indices and fill it
 	int xSize = nAtoms[0].size();
 	int ySize = nAtoms[0][0].size();
-	int indexArray[xSize][ySize];
 
 	// Create the dataspace for the dataset with dimension dims
 	std::array<hsize_t, 2> dims{(hsize_t)xSize, (hsize_t)ySize};

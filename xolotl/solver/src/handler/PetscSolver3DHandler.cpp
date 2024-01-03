@@ -646,7 +646,8 @@ PetscSolver3DHandler::initializeConcentration(
 
 		// Boundary conditions
 		// Set the index to scatter at the surface
-		PetscInt *lidxFrom, *lidxTo, lict = 0;
+		PetscInt* lidxTo{nullptr};
+		PetscInt* lidxFrom{nullptr};
 		PetscCallVoid(PetscMalloc1(1, &lidxTo));
 		PetscCallVoid(PetscMalloc1(1, &lidxFrom));
 		lidxTo[0] = 0;
@@ -1379,7 +1380,6 @@ PetscSolver3DHandler::computeJacobian(
 					xi > nX - 1 - rightOffset)
 					continue;
 				// Free surface GB
-				bool skip = false;
 				if (std::find_if(
 						begin(gbVector), end(gbVector), [=](auto&& pair) {
 							return xi == pair[0] && yj == pair[1] &&

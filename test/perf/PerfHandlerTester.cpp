@@ -34,8 +34,6 @@ BOOST_GLOBAL_FIXTURE(MPIFixture)
 
 BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 {
-	unsigned int nGoodInits = 0;
-
 	try {
 		auto reg = factory::perf::PerfHandlerFactory::get().generate("dummy");
 		BOOST_REQUIRE((bool)reg);
@@ -50,8 +48,6 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 
 BOOST_AUTO_TEST_CASE(createOSHandlerReg)
 {
-	unsigned int nGoodInits = 0;
-
 	try {
 		auto reg = factory::perf::PerfHandlerFactory::get().generate("os");
 		BOOST_REQUIRE((bool)reg);
