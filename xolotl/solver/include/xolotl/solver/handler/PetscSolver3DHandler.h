@@ -97,7 +97,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	IdType
-	getSurfacePosition(IdType j = -1, IdType k = -1) const
+	getSurfacePosition(IdType j = badId, IdType k = badId) const
 	{
 		return surfacePosition[j][k];
 	}
@@ -106,7 +106,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1)
+	setSurfacePosition(IdType pos, IdType j = badId, IdType k = badId)
 	{
 		surfacePosition[j][k] = pos;
 
@@ -117,7 +117,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfaceOffset(int offset, int j = -1, int k = -1)
+	setSurfaceOffset(int offset) override
 	{
 		return;
 	}
