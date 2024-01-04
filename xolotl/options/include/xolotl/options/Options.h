@@ -235,6 +235,11 @@ protected:
 	std::string xBC;
 
 	/**
+	 * Portion of heat lost in the bulk.
+	 */
+	double heatLossPortion;
+
+	/**
 	 * Depth for the bubble bursting in nm.
 	 */
 	double burstingDepth;
@@ -330,6 +335,21 @@ protected:
 	 * Value of the basal portion.
 	 */
 	double basalPortion;
+
+	/**
+	 * Transition size, for instance from pyramic to c-loops.
+	 */
+	int transitionSize;
+
+	/**
+	 * Value of the cascade dose.
+	 */
+	double cascadeDose;
+
+	/**
+	 * Value of the remaining cascade efficiency.
+	 */
+	double cascadeEfficiency;
 
 public:
 	/**
@@ -797,6 +817,15 @@ public:
 	 * \see IOptions.h
 	 */
 	double
+	getHeatLossPortion() const override
+	{
+		return heatLossPortion;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	double
 	getBurstingDepth() const override
 	{
 		return burstingDepth;
@@ -963,6 +992,33 @@ public:
 	getBasalPortion() const override
 	{
 		return basalPortion;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
+	getTransitionSize() const override
+	{
+		return transitionSize;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getCascadeDose() const override
+	{
+		return cascadeDose;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getCascadeEfficiency() const override
+	{
+		return cascadeEfficiency;
 	}
 };
 // end class Options

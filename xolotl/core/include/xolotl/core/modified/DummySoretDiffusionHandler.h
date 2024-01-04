@@ -31,13 +31,18 @@ public:
 	/**
 	 * \see ISoretDiffusionHandler.h
 	 */
-	virtual void
+	void
 	initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofill,
-		network::IReactionNetwork::SparseFillMap& dfill,
-		std::vector<double> grid, int xs) override
+		std::vector<core::RowColPair>& idPairs, std::vector<double> grid,
+		int xs) override
 	{
 		return;
+	}
+
+	int
+	getNumberOfDiffusing() const override
+	{
+		return 0;
 	}
 
 	/**
@@ -52,10 +57,12 @@ public:
 	/**
 	 * \see ISoretDiffusionHandler.h
 	 */
-	virtual void
-	computeDiffusion(network::IReactionNetwork& network, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
-		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const
+	void
+	computeDiffusion(network::IReactionNetwork& network,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0) const override
 	{
 		return;
 	}
@@ -63,11 +70,11 @@ public:
 	/**
 	 * \see ISoretDiffusionHandler.h
 	 */
-	virtual bool
+	bool
 	computePartialsForDiffusion(network::IReactionNetwork& network,
-		double** concVector, double* val, IdType* indices, double hxLeft,
-		double hxRight, int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
-		int iz = 0) const
+		const StencilConcArray& concVector, Kokkos::View<double*> values,
+		double hxLeft, double hxRight, int ix, double sy = 0.0, int iy = 0,
+		double sz = 0.0, int iz = 0) const override
 	{
 		return false;
 	}

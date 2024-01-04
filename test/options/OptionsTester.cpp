@@ -112,6 +112,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "grouping=11 2 4" << std::endl
 		<< "sputtering=0.5" << std::endl
 		<< "boundary=1 1" << std::endl
+		<< "heatLossPortion=0.5" << std::endl
 		<< "burstingDepth=5.0" << std::endl
 		<< "burstingFactor=2.5" << std::endl
 		<< "zeta=0.6" << std::endl
@@ -127,7 +128,10 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "migrationThreshold=1.0" << std::endl
 		<< "fluxDepthProfileFilePath=path/to/the/flux/profile/file.txt"
 		<< std::endl
-		<< "basalPortion=0.6" << std::endl;
+		<< "basalPortion=0.6" << std::endl
+		<< "transitionSize=300" << std::endl
+		<< "cascadeDose=5000.0" << std::endl
+		<< "cascadeEfficiency=0.2" << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -193,6 +197,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getFrontBoundary(), 1);
 	BOOST_REQUIRE_EQUAL(opts.getBackBoundary(), 1);
 	BOOST_REQUIRE_EQUAL(opts.getBCString(), "mirror");
+	BOOST_REQUIRE_EQUAL(opts.getHeatLossPortion(), 0.5);
 
 	// Check the electronic stopping power option
 	BOOST_REQUIRE_EQUAL(opts.getZeta(), 0.6);
@@ -236,6 +241,13 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 
 	// Check the basal portion
 	BOOST_REQUIRE_EQUAL(opts.getBasalPortion(), 0.6);
+
+	// Check the transition size
+	BOOST_REQUIRE_EQUAL(opts.getTransitionSize(), 300);
+
+	// Check the cascade options
+	BOOST_REQUIRE_EQUAL(opts.getCascadeDose(), 5000);
+	BOOST_REQUIRE_EQUAL(opts.getCascadeEfficiency(), 0.2);
 
 	// Check the physical processes option
 	auto map = opts.getProcesses();

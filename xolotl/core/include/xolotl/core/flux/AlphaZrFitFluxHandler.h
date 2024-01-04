@@ -158,40 +158,35 @@ public:
 				incidentFluxVec.push_back(std::vector<double>(1, 0.0));
 		}
 
-		return;
+		// Copy data to device views
+		syncFluxIndices();
+		syncIncidentFluxVec();
 	}
 
 	/**
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
 	{
-		// Define only for a 0D case
-		if (xGrid.size() == 0) {
-			double cascadeEfficiency = (0.495 *
-					(1 - tanh(0.00040527088 * (currentTime / 100.0 - 5000.0))) +
-				0.025);
-
-			for (int i = 0; i < fluxIndices.size(); i++) {
-				updatedConcOffset[fluxIndices[i]] +=
-					incidentFluxVec[i][0] * cascadeEfficiency;
-			}
+		double attenuation = 1.0;
+		if (cascadeDose > 0.0) {
+			attenuation = ((1.0 - cascadeEfficiency) / 2.0) *
+					(1.0 -
+						tanh(47.0 *
+							(currentTime * fluxAmplitude - cascadeDose))) +
+				cascadeEfficiency;
 		}
 
-		else {
-			double cascadeEfficiency = (0.495 *
-					(1 - tanh(0.00040527088 * (currentTime / 100.0 - 5000.0))) +
-				0.025);
-
-			for (int i = 0; i < fluxIndices.size(); i++) {
-				updatedConcOffset[fluxIndices[i]] +=
-					incidentFluxVec[i][0] * cascadeEfficiency;
-			}
-		}
-
-		return;
+		auto ids = this->fluxIds;
+		auto flux = this->incidentFlux;
+		Kokkos::parallel_for(
+			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
+				Kokkos::atomic_add(
+					&updatedConcOffset[ids[i]], flux(i, 0) * attenuation);
+			});
 	}
 
 	/**

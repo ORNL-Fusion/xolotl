@@ -46,6 +46,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setLatticeParameter(opts.getLatticeParameter());
 	this->setFissionRate(opts.getFluxAmplitude());
 	this->setZeta(opts.getZeta());
+	_clusterData.h_view().setTransitionSize(opts.getTransitionSize());
 	auto map = opts.getProcesses();
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);
@@ -317,32 +318,6 @@ ReactionNetwork<TImpl>::syncClusterDataOnHost()
 }
 
 template <typename TImpl>
-ClusterCommon<plsm::HostMemSpace>
-ReactionNetwork<TImpl>::getSingleVacancy()
-{
-	Composition comp = Composition::zero();
-
-	// Find the vacancy index
-	constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
-	bool hasVacancy = false;
-	Species vIndex;
-	for (auto i : speciesRangeNoI) {
-		if (isVacancy(i)) {
-			hasVacancy = true;
-			vIndex = i;
-		}
-	}
-
-	// Update the composition if there is vacancy in the network
-	if (hasVacancy)
-		comp[vIndex] = 1;
-
-	auto clusterId = findCluster(comp, plsm::HostMemSpace{}).getId();
-
-	return getClusterDataMirror().getClusterCommon(clusterId);
-}
-
-template <typename TImpl>
 typename ReactionNetwork<TImpl>::Bounds
 ReactionNetwork<TImpl>::getAllClusterBounds()
 {
@@ -593,12 +568,6 @@ ReactionNetwork<TImpl>::computeAllPartials(ConcentrationsView concentrations,
 	Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
 	double spacing)
 {
-	// Reset the values
-	const auto& nValues = values.extent(0);
-	Kokkos::parallel_for(
-		"ReactionNetwork::computeAllPartials::resetValues", nValues,
-		KOKKOS_LAMBDA(const IndexType i) { values(i) = 0.0; });
-
 	asDerived()->computePartialsPreProcess(
 		concentrations, values, gridIndex, surfaceDepth, spacing);
 
