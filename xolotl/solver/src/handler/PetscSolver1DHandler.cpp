@@ -107,7 +107,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 }
 
 void
-PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
+PetscSolver1DHandler::initializeSolverContext(DM& da, Mat& J)
 {
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
@@ -156,8 +156,6 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
-	Mat J;
-	PetscCallVoid(TSGetRHSJacobian(ts, &J, nullptr, nullptr, nullptr));
 	auto nwEntries = convertToRowColPairList(dof, dfill);
 	nNetworkEntries = nwEntries.size();
 	//
@@ -545,7 +543,8 @@ PetscSolver1DHandler::initializeConcentration(
 
 		// Boundary conditions
 		// Set the index to scatter at the surface
-		PetscInt *lidxFrom, *lidxTo, lict = 0;
+        PetscInt* lidxTo{nullptr};
+		PetscInt* lidxFrom{nullptr};
 		PetscCallVoid(PetscMalloc1(1, &lidxTo));
 		PetscCallVoid(PetscMalloc1(1, &lidxFrom));
 		lidxTo[0] = 0;

@@ -108,27 +108,29 @@ PetscErrorCode
 RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void* ctx)
 {
 	PetscFunctionBeginUser;
-	PetscCall(static_cast<PetscSolver*>(ctx)->rhsJacobian(ts, ftime, C, A, J));
+    auto solver = static_cast<PetscSolver*>(ctx);
+	PetscCall(solver->rhsJacobian(ts, ftime, C, A, J));
 	PetscFunctionReturn(0);
 }
 
 PetscSolver::PetscSolver(const options::IOptions& options) :
 	Solver(options,
-		[&options](core::network::IReactionNetwork& network)
+		[&options](core::network::IReactionNetwork& network,
+			perf::IPerfHandler& perfHandler)
 			-> std::shared_ptr<handler::ISolverHandler> {
 			switch (options.getDimensionNumber()) {
 			case 0:
 				return std::make_shared<handler::PetscSolver0DHandler>(
-					network, options);
+					network, perfHandler, options);
 			case 1:
 				return std::make_shared<handler::PetscSolver1DHandler>(
-					network, options);
+					network, perfHandler, options);
 			case 2:
 				return std::make_shared<handler::PetscSolver2DHandler>(
-					network, options);
+					network, perfHandler, options);
 			case 3:
 				return std::make_shared<handler::PetscSolver3DHandler>(
-					network, options);
+					network, perfHandler, options);
 			default:
 				// The asked dimension is not good (e.g. -1, 4)
 				throw std::runtime_error(
@@ -199,6 +201,14 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	PetscCallVoid(DMCreateGlobalVector(da, &C));
 
+	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Create and set up Jacobian matrix
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+    Mat J;
+    PetscCallVoid(DMSetMatrixPreallocateSkip(da, PETSC_TRUE));
+    PetscCallVoid(DMCreateMatrix(da, &J));
+	this->solverHandler->initializeSolverContext(da, J);
+
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create timestepping solver context
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -210,10 +220,9 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	PetscCallVoid(TSSetDM(ts, da));
 	PetscCallVoid(TSSetProblemType(ts, TS_NONLINEAR));
 	PetscCallVoid(TSSetRHSFunction(ts, nullptr, RHSFunction, this));
-	PetscCallVoid(TSSetRHSJacobian(ts, nullptr, nullptr, RHSJacobian, this));
+	PetscCallVoid(TSSetRHSJacobian(ts, J, J, RHSJacobian, this));
 	PetscCallVoid(TSSetSolution(ts, C));
 
-	this->solverHandler->initializeSolverContext(da, ts);
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = this->solverHandler->getNetworkName();
@@ -281,6 +290,8 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 
 	// Pop the options
 	PetscCallVoid(PetscOptionsPop());
+
+	initTimer->stop();
 }
 
 void

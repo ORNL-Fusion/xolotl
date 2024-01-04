@@ -286,7 +286,7 @@ PerfHandler::aggregateStatistics(int myRank,
 	auto tsiter = stats.begin();
 	for (int idx = 0; idx < nObjs; ++idx) {
 		// broadcast the current object's name
-		int nameLen = (myRank == 0) ? tsiter->second.name.length() : -1;
+		int nameLen = (myRank == 0) ? (int)tsiter->second.name.length() : -1;
 		MPI_Bcast(&nameLen, 1, MPI_INT, 0, xolotlComm);
 		// we can safely cast away const on the tsiter data string because
 		// the only process that accesses that string is rank 0,

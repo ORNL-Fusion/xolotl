@@ -269,6 +269,7 @@ HeatEquationHandler::computeTemperature(double currentTime,
 	}
 
 	auto dim = dimension;
+    auto por = portion;
 	auto surfPos = surfacePosition;
 	auto htFlux = heatFlux;
 	auto bulkPos = bulkPosition;
@@ -304,16 +305,16 @@ HeatEquationHandler::computeTemperature(double currentTime,
 					htFlux * htFlux * gamma * dBeta / (alpha * beta * beta);
 			}
 			else if (xi == bulkPos) {
-				if (portion >= 0.0) {
+				if (por >= 0.0) {
 					updatedConcOffset[index] += 2.0 * alpha * beta * gamma *
-						(1.0 - portion) * (oldBox[0][0] - oldConc) /
+						(1.0 - por) * (oldBox[0][0] - oldConc) /
 						(hxLeft * (hxLeft + hxRight));
 					updatedConcOffset[index] += dAlpha * beta * gamma *
-							(1.0 + (hxRight * portion) / hxLeft) *
+							(1.0 + (hxRight * por) / hxLeft) *
 							(oldBox[0][0] - oldConc) / (hxLeft + hxRight) +
 						alpha * dBeta * gamma *
-							(1.0 + (hxRight * portion) / hxLeft) *
-							(1.0 + (hxRight * portion) / hxLeft) *
+							(1.0 + (hxRight * por) / hxLeft) *
+							(1.0 + (hxRight * por) / hxLeft) *
 							(oldBox[0][0] - oldConc) *
 							(oldBox[0][0] - oldConc) /
 							((hxLeft + hxRight) * (hxLeft + hxRight));

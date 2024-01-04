@@ -83,7 +83,8 @@ public:
 	 * @param _network The reaction network to use.
 	 * @param _perfHandler The perf handler to use.
 	 */
-	PetscSolverHandler(NetworkType& _network, const options::IOptions& options);
+	PetscSolverHandler(NetworkType& _network, perf::IPerfHandler& _perfHandler,
+		const options::IOptions& options);
 
 	/**
 	 * Reset all jacobian values to zero
