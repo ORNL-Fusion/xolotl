@@ -14,6 +14,7 @@ _use_omp=0
 _petsc_extra_args=""
 _petsc_dir=$PWD
 _petsc_dir_arch_set=""
+_opt_flags="-O3"
 
 # Read command-line arguments
 while [ $# -gt 0 ]
@@ -45,6 +46,7 @@ do
         ;;
     --debug|--dbg)
         _debug=1
+        _opt_flags="-O0"
         ;;
     --cuda)
         _use_cuda=1
@@ -125,8 +127,8 @@ _conf_cmd="./configure \
     --with-64-bit-indices \
     --download-kokkos \
     --download-kokkos-kernels \
-    --COPTFLAGS=-O3 \
-    --CXXOPTFLAGS=-O3"
+    --COPTFLAGS=${_opt_flags} \
+    --CXXOPTFLAGS=${_opt_flags}"
 
 _conf_cmd="${_conf_cmd} ${_petsc_extra_args}"
 _build_cmd="make ${_petsc_dir_arch_set} all"
