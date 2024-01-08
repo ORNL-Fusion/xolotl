@@ -299,7 +299,7 @@ protected:
 	/**
 	 * Transition size, for instance from pyramic to c-loops.
 	 */
-	int transitionSize;
+	std::vector<int> transitionSize;
 
 	/**
 	 * Value of the cascade dose.
@@ -310,6 +310,11 @@ protected:
 	 * Value of the remaining cascade efficiency.
 	 */
 	double cascadeEfficiency;
+
+	/**
+	 * Value of the barrier energy.
+	 */
+	double barrierEnergy;
 
 public:
 	/**
@@ -870,7 +875,7 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
-	int
+	std::vector<int>
 	getTransitionSize() const override
 	{
 		return transitionSize;
@@ -892,6 +897,17 @@ public:
 	getCascadeEfficiency() const override
 	{
 		return cascadeEfficiency;
+	}
+
+	/**
+	 * Obtain the value of the barrier energy.
+	 *
+	 * @return The energy
+	 */
+	virtual double
+	getBarrierEnergy() const override
+	{
+		return barrierEnergy;
 	}
 };
 // end class Options

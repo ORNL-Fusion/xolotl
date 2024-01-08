@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/TransformReactionGenerator.tpp>
 #include <xolotl/core/network/impl/AlloyClusterGenerator.tpp>
 #include <xolotl/core/network/impl/AlloyReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
@@ -18,6 +19,9 @@ KOKKOS_INLINE_FUNCTION
 void
 AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
+	// Transform happens between sessile clusters
+	addTransforms(i, j, tag);
+
 	// Check the diffusion factors
 	auto diffusionFactor = this->_clusterData.diffusionFactor;
 	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
@@ -43,7 +47,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
-	// vac + vac = vac | void and faulted
+	// vac + vac = vac | perfectV and faultedV
 	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V)) {
 		// Compute the composition of the new cluster
 		auto size = lo1[Species::V] + lo2[Species::V];
@@ -58,16 +62,16 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			}
 		}
 		comp[Species::V] = 0;
-		comp[Species::Void] = size;
-		auto voidProdId = subpaving.findTileId(comp);
-		if (voidProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, voidProdId});
+		comp[Species::PerfectV] = size;
+		auto pProdId = subpaving.findTileId(comp);
+		if (pProdId != subpaving.invalidIndex()) {
+			this->addProductionReaction(tag, {i, j, pProdId});
 			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-				this->addDissociationReaction(tag, {voidProdId, i, j});
+				this->addDissociationReaction(tag, {pProdId, i, j});
 			}
 		}
-		comp[Species::Void] = 0;
-		comp[Species::Faulted] = size;
+		comp[Species::PerfectV] = 0;
+		comp[Species::FaultedV] = size;
 		auto fProdId = subpaving.findTileId(comp);
 		if (fProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, fProdId});
@@ -78,46 +82,47 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-	// vac + void = void
-	if ((lo1.isOnAxis(Species::Void) && lo2.isOnAxis(Species::V)) ||
-		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Void))) {
-		// Void can be grouped
-		auto minSize = lo1[Species::V] + lo2[Species::V] + lo1[Species::Void] +
-			lo2[Species::Void];
-		auto maxSize = lo1[Species::V] + lo2[Species::V] + hi1[Species::Void] +
-			hi2[Species::Void] - 2; // The other axis should be 0 so it should
-									// work to add up everything
+	// vac + perfectV = perfectV
+	if ((lo1.isOnAxis(Species::PerfectV) && lo2.isOnAxis(Species::V)) ||
+		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::PerfectV))) {
+		// PerfectV can be grouped
+		auto minSize = lo1[Species::V] + lo2[Species::V] +
+			lo1[Species::PerfectV] + lo2[Species::PerfectV];
+		auto maxSize = lo1[Species::V] + lo2[Species::V] +
+			hi1[Species::PerfectV] + hi2[Species::PerfectV] -
+			2; // The other axis should be 0 so it should
+			   // work to add up everything
 		// Find the corresponding clusters
 		for (auto k = minSize; k <= maxSize; k++) {
 			Composition comp = Composition::zero();
-			comp[Species::Void] = k;
-			auto voidProdId = subpaving.findTileId(comp);
-			if (voidProdId != subpaving.invalidIndex() &&
-				voidProdId != previousIndex) {
-				this->addProductionReaction(tag, {i, j, voidProdId});
+			comp[Species::PerfectV] = k;
+			auto pProdId = subpaving.findTileId(comp);
+			if (pProdId != subpaving.invalidIndex() &&
+				pProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, pProdId});
 				if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-					this->addDissociationReaction(tag, {voidProdId, i, j});
+					this->addDissociationReaction(tag, {pProdId, i, j});
 				}
-				previousIndex = voidProdId;
+				previousIndex = pProdId;
 			}
 		}
 		return;
 	}
 
-	// vac + faulted = faulted
-	if ((lo1.isOnAxis(Species::Faulted) && lo2.isOnAxis(Species::V)) ||
-		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Faulted))) {
+	// vac + faultedV = faultedV
+	if ((lo1.isOnAxis(Species::FaultedV) && lo2.isOnAxis(Species::V)) ||
+		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::FaultedV))) {
 		// Faulted can be grouped
 		auto minSize = lo1[Species::V] + lo2[Species::V] +
-			lo1[Species::Faulted] + lo2[Species::Faulted];
+			lo1[Species::FaultedV] + lo2[Species::FaultedV];
 		auto maxSize = lo1[Species::V] + lo2[Species::V] +
-			hi1[Species::Faulted] + hi2[Species::Faulted] -
+			hi1[Species::FaultedV] + hi2[Species::FaultedV] -
 			2; // The other axis should be 0 so it should work
 			   // to add up everything
 		// Find the corresponding clusters
 		for (auto k = minSize; k <= maxSize; k++) {
 			Composition comp = Composition::zero();
-			comp[Species::Faulted] = k;
+			comp[Species::FaultedV] = k;
 			auto fProdId = subpaving.findTileId(comp);
 			if (fProdId != subpaving.invalidIndex() &&
 				fProdId != previousIndex) {
@@ -169,15 +174,15 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-	// vac + perfect = perfect | int | recombine | vac
-	if (((lo1.isOnAxis(Species::Perfect) && lo2.isOnAxis(Species::V)) ||
-			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Perfect)))) {
+	// vac + perfectI = perfectI | int | recombine | vac
+	if (((lo1.isOnAxis(Species::PerfectI) && lo2.isOnAxis(Species::V)) ||
+			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::PerfectI)))) {
 		// Find out which one is which
 		auto vSize =
 			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
 		// Perfect can be grouped
-		auto pReg = lo1.isOnAxis(Species::Perfect) ? cl1Reg : cl2Reg;
-		for (auto k : makeIntervalRange(pReg[Species::Perfect])) {
+		auto pReg = lo1.isOnAxis(Species::PerfectI) ? cl1Reg : cl2Reg;
+		for (auto k : makeIntervalRange(pReg[Species::PerfectI])) {
 			// Compute the product size
 			int prodSize = k - vSize;
 			if (prodSize > 0) {
@@ -192,7 +197,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					previousIndex = iProdId;
 				}
 				comp[Species::I] = 0;
-				comp[Species::Perfect] = prodSize;
+				comp[Species::PerfectI] = prodSize;
 				auto pProdId = subpaving.findTileId(comp);
 				if (pProdId != subpaving.invalidIndex() &&
 					pProdId != previousIndex) {
@@ -221,15 +226,15 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-	// vac + frank = frank | int | recombine | vac
-	if (((lo1.isOnAxis(Species::Frank) && lo2.isOnAxis(Species::V)) ||
-			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Frank)))) {
+	// vac + faultedI = faultedI | int | recombine | vac
+	if (((lo1.isOnAxis(Species::FaultedI) && lo2.isOnAxis(Species::V)) ||
+			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::FaultedI)))) {
 		// Find out which one is which
 		auto vSize =
 			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
 		// Frank can be grouped
-		auto fReg = lo1.isOnAxis(Species::Frank) ? cl1Reg : cl2Reg;
-		for (auto k : makeIntervalRange(fReg[Species::Frank])) {
+		auto fReg = lo1.isOnAxis(Species::FaultedI) ? cl1Reg : cl2Reg;
+		for (auto k : makeIntervalRange(fReg[Species::FaultedI])) {
 			// Compute the product size
 			int prodSize = k - vSize;
 			if (prodSize > 0) {
@@ -244,7 +249,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					// No dissociation
 				}
 				comp[Species::I] = 0;
-				comp[Species::Frank] = prodSize;
+				comp[Species::FaultedI] = prodSize;
 				auto fProdId = subpaving.findTileId(comp);
 				if (fProdId != subpaving.invalidIndex() &&
 					fProdId != previousIndex) {
@@ -273,7 +278,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-	// int + int = int | frank and perfect
+	// int + int = int | faultedI and perfectI
 	if (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::I)) {
 		// Compute the composition of the new cluster
 		auto size = lo1[Species::I] + lo2[Species::I];
@@ -288,14 +293,14 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			//			}
 		}
 		comp[Species::I] = 0;
-		comp[Species::Frank] = size;
+		comp[Species::FaultedI] = size;
 		auto fProdId = subpaving.findTileId(comp);
 		if (fProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, fProdId});
 			// No dissociation
 		}
-		comp[Species::Frank] = 0;
-		comp[Species::Perfect] = size;
+		comp[Species::FaultedI] = 0;
+		comp[Species::PerfectI] = size;
 		auto pProdId = subpaving.findTileId(comp);
 		if (pProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, pProdId});
@@ -304,19 +309,20 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-	// int + frank = frank
-	if ((lo1.isOnAxis(Species::Frank) && lo2.isOnAxis(Species::I)) ||
-		(lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::Frank))) {
+	// int + faultedI = faultedI
+	if ((lo1.isOnAxis(Species::FaultedI) && lo2.isOnAxis(Species::I)) ||
+		(lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::FaultedI))) {
 		// Frank can be grouped
-		auto minSize = lo1[Species::I] + lo2[Species::I] + lo1[Species::Frank] +
-			lo2[Species::Frank];
-		auto maxSize = lo1[Species::I] + lo2[Species::I] + hi1[Species::Frank] +
-			hi2[Species::Frank] - 2; // The other axis should be 0 so it should
-									 // work to add up everything
+		auto minSize = lo1[Species::I] + lo2[Species::I] +
+			lo1[Species::FaultedI] + lo2[Species::FaultedI];
+		auto maxSize = lo1[Species::I] + lo2[Species::I] +
+			hi1[Species::FaultedI] + hi2[Species::FaultedI] -
+			2; // The other axis should be 0 so it should
+			   // work to add up everything
 		// Find the corresponding clusters
 		for (auto k = minSize; k <= maxSize; k++) {
 			Composition comp = Composition::zero();
-			comp[Species::Frank] = k;
+			comp[Species::FaultedI] = k;
 			auto fProdId = subpaving.findTileId(comp);
 			if (fProdId != subpaving.invalidIndex() &&
 				fProdId != previousIndex) {
@@ -328,20 +334,20 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-	// int + perfect = perfect
-	if ((lo1.isOnAxis(Species::Perfect) && lo2.isOnAxis(Species::I)) ||
-		(lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::Perfect))) {
+	// int + perfectI = perfectI
+	if ((lo1.isOnAxis(Species::PerfectI) && lo2.isOnAxis(Species::I)) ||
+		(lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::PerfectI))) {
 		// Perfect can be grouped
 		auto minSize = lo1[Species::I] + lo2[Species::I] +
-			lo1[Species::Perfect] + lo2[Species::Perfect];
+			lo1[Species::PerfectI] + lo2[Species::PerfectI];
 		auto maxSize = lo1[Species::I] + lo2[Species::I] +
-			hi1[Species::Perfect] + hi2[Species::Perfect] -
+			hi1[Species::PerfectI] + hi2[Species::PerfectI] -
 			2; // The other axis should be 0 so it should
 			   // work to add up everything
 		// Find the corresponding clusters
 		for (auto k = minSize; k <= maxSize; k++) {
 			Composition comp = Composition::zero();
-			comp[Species::Perfect] = k;
+			comp[Species::PerfectI] = k;
 			auto pProdId = subpaving.findTileId(comp);
 			if (pProdId != subpaving.invalidIndex() &&
 				pProdId != previousIndex) {
@@ -353,15 +359,15 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-	// int + faulted = faulted | vac
-	if (((lo1.isOnAxis(Species::Faulted) && lo2.isOnAxis(Species::I)) ||
-			(lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::Faulted)))) {
+	// int + faultedV = faultedV | vac
+	if (((lo1.isOnAxis(Species::FaultedV) && lo2.isOnAxis(Species::I)) ||
+			(lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::FaultedV)))) {
 		// Find out which one is which
 		auto iSize =
 			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
 		// Faulted can be grouped
-		auto fReg = lo1.isOnAxis(Species::Faulted) ? cl1Reg : cl2Reg;
-		for (auto k : makeIntervalRange(fReg[Species::Faulted])) {
+		auto fReg = lo1.isOnAxis(Species::FaultedV) ? cl1Reg : cl2Reg;
+		for (auto k : makeIntervalRange(fReg[Species::FaultedV])) {
 			// Compute the product size
 			int prodSize = k - iSize;
 			if (prodSize > 0) {
@@ -376,7 +382,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					// No dissociation
 				}
 				comp[Species::V] = 0;
-				comp[Species::Faulted] = prodSize;
+				comp[Species::FaultedV] = prodSize;
 				auto fProdId = subpaving.findTileId(comp);
 				if (fProdId != subpaving.invalidIndex() &&
 					fProdId != previousIndex) {
@@ -389,15 +395,15 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-	// int + void = void | vac
-	if (((lo1.isOnAxis(Species::Void) && lo2.isOnAxis(Species::I)) ||
-			(lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::Void)))) {
+	// int + perfectV = perfectV | vac
+	if (((lo1.isOnAxis(Species::PerfectV) && lo2.isOnAxis(Species::I)) ||
+			(lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::PerfectV)))) {
 		// Find out which one is which
 		auto iSize =
 			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
-		// Void can be grouped
-		auto vReg = lo1.isOnAxis(Species::Void) ? cl1Reg : cl2Reg;
-		for (auto k : makeIntervalRange(vReg[Species::Void])) {
+		// PerfectV can be grouped
+		auto vReg = lo1.isOnAxis(Species::PerfectV) ? cl1Reg : cl2Reg;
+		for (auto k : makeIntervalRange(vReg[Species::PerfectV])) {
 			// Compute the product size
 			int prodSize = k - iSize;
 			if (prodSize > 0) {
@@ -412,192 +418,18 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					// No dissociation
 				}
 				comp[Species::V] = 0;
-				comp[Species::Void] = prodSize;
-				auto fProdId = subpaving.findTileId(comp);
-				if (fProdId != subpaving.invalidIndex() &&
-					fProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, fProdId});
+				comp[Species::PerfectV] = prodSize;
+				auto pProdId = subpaving.findTileId(comp);
+				if (pProdId != subpaving.invalidIndex() &&
+					pProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, pProdId});
 					//					if (lo1[Species::I] == 1 ||
 					// lo2[Species::I]
 					//== 1) {
-					// this->addDissociationReaction(tag, {fProdId, i, j});
+					// this->addDissociationReaction(tag, {pProdId, i, j});
 					//					}
-					previousIndex = fProdId;
-				}
-			}
-		}
-		return;
-	}
-
-	// perfect + faulted = faulted | vac | int | perfect | recombine
-	if (((lo1.isOnAxis(Species::Perfect) && lo2.isOnAxis(Species::Faulted)) ||
-			(lo1.isOnAxis(Species::Faulted) &&
-				lo2.isOnAxis(Species::Perfect)))) {
-		// Perfect and Faulted can be grouped
-		auto minSize = lo1[Species::Faulted] + lo2[Species::Faulted] -
-			hi1[Species::Perfect] - hi2[Species::Perfect] + 2;
-		auto maxSize = hi1[Species::Faulted] + hi2[Species::Faulted] -
-			lo1[Species::Perfect] - lo2[Species::Perfect] -
-			2; // The other axis should be 0 so it should
-			   // work to add up everything
-
-		for (auto k = minSize; k < maxSize; k++) {
-			// 3 cases
-			if (k > 0) {
-				// Looking for V cluster
-				Composition comp = Composition::zero();
-				comp[Species::V] = k;
-				auto vProdId = subpaving.findTileId(comp);
-				if (vProdId != subpaving.invalidIndex() &&
-					vProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, vProdId});
-					previousIndex = vProdId;
-					// No dissociation
-				}
-				comp[Species::V] = 0;
-				comp[Species::Faulted] = k;
-				auto fProdId = subpaving.findTileId(comp);
-				if (fProdId != subpaving.invalidIndex() &&
-					fProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, fProdId});
-					previousIndex = fProdId;
-					// No dissociation
-				}
-			}
-			else if (k < 0) {
-				// Looking for I cluster
-				Composition comp = Composition::zero();
-				comp[Species::I] = -k;
-				auto iProdId = subpaving.findTileId(comp);
-				if (iProdId != subpaving.invalidIndex() &&
-					iProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, iProdId});
-					previousIndex = iProdId;
-					// No dissociation
-				}
-				comp[Species::I] = 0;
-				comp[Species::Perfect] = -k;
-				auto pProdId = subpaving.findTileId(comp);
-				if (pProdId != subpaving.invalidIndex() &&
-					pProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, pProdId});
 					previousIndex = pProdId;
-					// No dissociation
 				}
-			}
-			else {
-				// No product
-				this->addProductionReaction(tag, {i, j});
-			}
-		}
-		return;
-	}
-
-	// perfect + frank = frank
-	if ((lo1.isOnAxis(Species::Frank) && lo2.isOnAxis(Species::Perfect)) ||
-		(lo1.isOnAxis(Species::Perfect) && lo2.isOnAxis(Species::Frank))) {
-		// Perfect and Frank can be grouped
-		auto minSize = lo1[Species::Perfect] + lo2[Species::Perfect] +
-			lo1[Species::Frank] + lo2[Species::Frank];
-		auto maxSize = hi1[Species::Perfect] + hi2[Species::Perfect] +
-			hi1[Species::Frank] + hi2[Species::Frank] -
-			4; // The other axis should be 0 so it should work
-			   // to add up everything
-		// Find the corresponding clusters
-		for (auto k = minSize; k <= maxSize; k++) {
-			Composition comp = Composition::zero();
-			comp[Species::Frank] = k;
-			auto fProdId = subpaving.findTileId(comp);
-			if (fProdId != subpaving.invalidIndex() &&
-				fProdId != previousIndex) {
-				this->addProductionReaction(tag, {i, j, fProdId});
-				previousIndex = fProdId;
-				// No dissociation
-			}
-		}
-		return;
-	}
-
-	// perfect + void = void | vac | int | perfect | recombine
-	if (((lo1.isOnAxis(Species::Void) && lo2.isOnAxis(Species::Perfect)) ||
-			(lo1.isOnAxis(Species::Perfect) && lo2.isOnAxis(Species::Void)))) {
-		// Perfect and Faulted can be grouped
-		auto minSize = lo1[Species::Void] + lo2[Species::Void] -
-			hi1[Species::Perfect] - hi2[Species::Perfect] + 2;
-		auto maxSize = hi1[Species::Void] + hi2[Species::Void] -
-			lo1[Species::Perfect] - lo2[Species::Perfect] -
-			2; // The other axis should be 0 so it should
-			   // work to add up everything
-
-		for (auto k = minSize; k < maxSize; k++) {
-			// 3 cases
-			if (k > 0) {
-				// Looking for V cluster
-				Composition comp = Composition::zero();
-				comp[Species::V] = k;
-				auto vProdId = subpaving.findTileId(comp);
-				if (vProdId != subpaving.invalidIndex() &&
-					vProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, vProdId});
-					previousIndex = vProdId;
-					// No dissociation
-				}
-				comp[Species::V] = 0;
-				comp[Species::Void] = k;
-				vProdId = subpaving.findTileId(comp);
-				if (vProdId != subpaving.invalidIndex() &&
-					vProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, vProdId});
-					previousIndex = vProdId;
-					// No dissociation
-				}
-			}
-			else if (k < 0) {
-				// Looking for I cluster
-				Composition comp = Composition::zero();
-				comp[Species::I] = -k;
-				auto iProdId = subpaving.findTileId(comp);
-				if (iProdId != subpaving.invalidIndex() &&
-					iProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, iProdId});
-					previousIndex = iProdId;
-					// No dissociation
-				}
-				comp[Species::I] = 0;
-				comp[Species::Perfect] = -k;
-				auto pProdId = subpaving.findTileId(comp);
-				if (pProdId != subpaving.invalidIndex() &&
-					pProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, pProdId});
-					previousIndex = pProdId;
-					// No dissociation
-				}
-			}
-			else {
-				// No product
-				this->addProductionReaction(tag, {i, j});
-			}
-		}
-		return;
-	}
-
-	// perfect + perfect = perfect
-	if (lo1.isOnAxis(Species::Perfect) && lo2.isOnAxis(Species::Perfect)) {
-		// Perfect can be grouped
-		auto minSize = lo1[Species::Perfect] + lo2[Species::Perfect];
-		auto maxSize = hi1[Species::Perfect] + hi2[Species::Perfect] -
-			2; // The other axis should be 0 so it should work
-			   // to add up everything
-		// Find the corresponding clusters
-		for (auto k = minSize; k <= maxSize; k++) {
-			Composition comp = Composition::zero();
-			comp[Species::Perfect] = k;
-			auto pProdId = subpaving.findTileId(comp);
-			if (pProdId != subpaving.invalidIndex() &&
-				pProdId != previousIndex) {
-				this->addProductionReaction(tag, {i, j, pProdId});
-				previousIndex = pProdId;
-				// No dissociation
 			}
 		}
 		return;
@@ -624,10 +456,66 @@ AlloyReactionGenerator::addSinks(IndexType i, TTag tag) const
 	if (clReg.isSimplex() && lo.isOnAxis(Species::V)) {
 		this->addSinkReaction(tag, {i, Network::invalidIndex()});
 	}
+}
 
-	// Perfect
-	if (clReg.isSimplex() && lo.isOnAxis(Species::Perfect)) {
-		this->addSinkReaction(tag, {i, Network::invalidIndex()});
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+AlloyReactionGenerator::addTransforms(IndexType i, IndexType j, TTag tag) const
+{
+	// Faulted becomes perfect above a size threshold
+	auto vSize = this->_clusterData.transitionSizeV();
+	auto iSize = this->_clusterData.transitionSizeI();
+
+	using Species = typename Network::Species;
+	using Composition = typename Network::Composition;
+
+	const auto& cl1Reg = this->getCluster(i).getRegion();
+	Composition lo1 = cl1Reg.getOrigin();
+
+	const auto& cl2Reg = this->getCluster(j).getRegion();
+	Composition lo2 = cl2Reg.getOrigin();
+
+	// Interstitial
+	if ((lo1[Species::PerfectI] > 0 and lo2[Species::FaultedI] > 0) or
+		(lo2[Species::PerfectI] > 0 and lo1[Species::FaultedI] > 0)) {
+		// Which is faulted ?
+		auto faulted = lo1[Species::FaultedI] > 0 ? i : j;
+		auto fReg = lo1[Species::FaultedI] > 0 ? lo1 : lo2;
+		auto perfect = lo1[Species::FaultedI] > 0 ? j : i;
+		auto pReg = lo1[Species::FaultedI] > 0 ? lo2 : lo1;
+
+		// Need to be the same size
+		if (fReg[Species::FaultedI] != pReg[Species::PerfectI])
+			return;
+
+		// Large enough
+		if (fReg[Species::FaultedI] < iSize)
+			return;
+
+		// Add it
+		this->addTransformReaction(tag, {faulted, perfect});
+	}
+
+	// Vacancy
+	if ((lo1[Species::PerfectV] > 0 and lo2[Species::FaultedV] > 0) or
+		(lo2[Species::PerfectV] > 0 and lo1[Species::FaultedV] > 0)) {
+		// Which is faulted ?
+		auto faulted = lo1[Species::FaultedV] > 0 ? i : j;
+		auto fReg = lo1[Species::FaultedV] > 0 ? lo1 : lo2;
+		auto perfect = lo1[Species::FaultedV] > 0 ? j : i;
+		auto pReg = lo1[Species::FaultedV] > 0 ? lo2 : lo1;
+
+		// Need to be the same size
+		if (fReg[Species::FaultedV] != pReg[Species::PerfectV])
+			return;
+
+		// Large enough
+		if (fReg[Species::FaultedV] < vSize)
+			return;
+
+		// Add it
+		this->addTransformReaction(tag, {faulted, perfect});
 	}
 }
 
@@ -636,7 +524,7 @@ AlloyReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<Network> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions());
+		this->getSinkReactions(), this->getTransformReactions());
 	return ret;
 }
 } // namespace detail

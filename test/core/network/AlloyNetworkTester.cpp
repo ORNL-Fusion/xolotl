@@ -140,16 +140,16 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	// Check the total concentrations
 	BOOST_REQUIRE_CLOSE(
-		network.getTotalConcentration(dConcs, Spec::Void, 1), 2.0, 0.01);
+		network.getTotalConcentration(dConcs, Spec::PerfectV, 1), 2.0, 0.01);
 	BOOST_REQUIRE_CLOSE(
-		network.getTotalAtomConcentration(dConcs, Spec::Perfect, 3), 30.0,
+		network.getTotalAtomConcentration(dConcs, Spec::PerfectI, 3), 30.0,
 		0.01);
 	BOOST_REQUIRE_CLOSE(
-		network.getTotalRadiusConcentration(dConcs, Spec::Frank, 6), 1.394446,
-		0.01);
+		network.getTotalRadiusConcentration(dConcs, Spec::FaultedI, 6),
+		1.394446, 0.01);
 	BOOST_REQUIRE_CLOSE(
-		network.getTotalTrappedAtomConcentration(dConcs, Spec::Faulted, 1), 0.0,
-		0.01);
+		network.getTotalTrappedAtomConcentration(dConcs, Spec::FaultedV, 1),
+		0.0, 0.01);
 
 	// Check the left side rate of 0th cluster
 	BOOST_REQUIRE_CLOSE(
@@ -291,14 +291,14 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 2);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 1);
 	auto momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
@@ -320,19 +320,19 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 2);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 3);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 1);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
 	comp[Spec::I] = 0;
-	comp[Spec::Void] = 7;
+	comp[Spec::PerfectV] = 7;
 	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 15);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.26912, 0.01);
@@ -349,19 +349,19 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 7);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 8);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 7);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 8);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 1);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
-	comp[Spec::Void] = 0;
-	comp[Spec::Frank] = 8;
+	comp[Spec::PerfectV] = 0;
+	comp[Spec::FaultedI] = 8;
 	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 3);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.49776, 0.01);
@@ -378,19 +378,19 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 8);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 9);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 8);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 9);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 1);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
-	comp[Spec::Frank] = 0;
-	comp[Spec::Perfect] = 5;
+	comp[Spec::FaultedI] = 0;
+	comp[Spec::PerfectI] = 5;
 	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 5);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.321142, 0.01);
@@ -407,19 +407,19 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 5);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 6);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 5);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 6);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
-	comp[Spec::Perfect] = 0;
-	comp[Spec::Faulted] = 7;
+	comp[Spec::PerfectI] = 0;
+	comp[Spec::FaultedV] = 7;
 	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 13);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.4656, 0.01);
@@ -436,14 +436,14 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 7);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 8);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 7);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 8);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 1);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 }
@@ -683,16 +683,16 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	// Check the total concentrations
 	BOOST_REQUIRE_CLOSE(
-		network.getTotalConcentration(dConcs, Spec::Void, 1), 14.0, 0.01);
+		network.getTotalConcentration(dConcs, Spec::PerfectV, 1), 14.0, 0.01);
 	BOOST_REQUIRE_CLOSE(
-		network.getTotalAtomConcentration(dConcs, Spec::Perfect, 3), 204.0,
+		network.getTotalAtomConcentration(dConcs, Spec::PerfectI, 3), 204.0,
 		0.01);
 	BOOST_REQUIRE_CLOSE(
-		network.getTotalRadiusConcentration(dConcs, Spec::Frank, 6), 9.377118,
-		0.01);
+		network.getTotalRadiusConcentration(dConcs, Spec::FaultedI, 6),
+		9.377118, 0.01);
 	BOOST_REQUIRE_CLOSE(
-		network.getTotalTrappedAtomConcentration(dConcs, Spec::Faulted, 1), 0.0,
-		0.01);
+		network.getTotalTrappedAtomConcentration(dConcs, Spec::FaultedV, 1),
+		0.0, 0.01);
 
 	// Check the left side rate of 0th cluster
 	BOOST_REQUIRE_CLOSE(
@@ -1146,14 +1146,14 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 2);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 1);
 	auto momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
@@ -1175,19 +1175,19 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 2);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 3);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 1);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
 	comp[Spec::I] = 0;
-	comp[Spec::Void] = 15;
+	comp[Spec::PerfectV] = 15;
 	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 19);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.361465, 0.01);
@@ -1204,19 +1204,19 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 15);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 20);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 15);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 20);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 1);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
-	comp[Spec::Void] = 0;
-	comp[Spec::Frank] = 12;
+	comp[Spec::PerfectV] = 0;
+	comp[Spec::FaultedI] = 12;
 	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 2);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.60856, 0.01);
@@ -1233,19 +1233,19 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 10);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 15);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 10);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 15);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 1);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
-	comp[Spec::Frank] = 0;
-	comp[Spec::Perfect] = 5;
+	comp[Spec::FaultedI] = 0;
+	comp[Spec::PerfectI] = 5;
 	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 5);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.321142, 0.01);
@@ -1262,19 +1262,19 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 5);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 6);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 5);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 6);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 
-	comp[Spec::Perfect] = 0;
-	comp[Spec::Faulted] = 20;
+	comp[Spec::PerfectI] = 0;
+	comp[Spec::FaultedV] = 20;
 	cluster = network.findCluster(comp, plsm::HostMemSpace{});
 	BOOST_REQUIRE_EQUAL(cluster.getId(), 16);
 	BOOST_REQUIRE_CLOSE(cluster.getReactionRadius(), 0.78702848, 0.01);
@@ -1291,14 +1291,14 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(hi[Spec::V], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::I], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Void], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Void], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Faulted], 20);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Faulted], 21);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Frank], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Frank], 1);
-	BOOST_REQUIRE_EQUAL(lo[Spec::Perfect], 0);
-	BOOST_REQUIRE_EQUAL(hi[Spec::Perfect], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectV], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectV], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedV], 20);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedV], 21);
+	BOOST_REQUIRE_EQUAL(lo[Spec::FaultedI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::FaultedI], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::PerfectI], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::PerfectI], 1);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 }

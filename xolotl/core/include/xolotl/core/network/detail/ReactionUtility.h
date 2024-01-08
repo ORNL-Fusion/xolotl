@@ -71,84 +71,84 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	auto pr2RR = rRegions[3];
 	auto vIndex = static_cast<std::underlying_type_t<Species>>(Species::V);
 	// The first product tells us how to project
-	if (pr1Reg[Species::I].end() > 1 || pr1Reg[Species::Perfect].end() > 1 ||
-		pr1Reg[Species::Frank].end() > 1) {
+	if (pr1Reg[Species::I].end() > 1 || pr1Reg[Species::PerfectI].end() > 1 ||
+		pr1Reg[Species::FaultedI].end() > 1) {
 		// Project on I
-		cl1RR[vIndex] =
-			Ival(cl1Reg[Species::I].begin() + cl1Reg[Species::Perfect].begin() +
-					cl1Reg[Species::Frank].begin() - cl1Reg[Species::V].end() -
-					cl1Reg[Species::Void].end() -
-					cl1Reg[Species::Faulted].end() + 3,
-				cl1Reg[Species::I].end() + cl1Reg[Species::Perfect].end() +
-					cl1Reg[Species::Frank].end() - cl1Reg[Species::V].begin() -
-					cl1Reg[Species::Void].begin() -
-					cl1Reg[Species::Faulted].begin() - 2);
-		cl2RR[vIndex] =
-			Ival(cl2Reg[Species::I].begin() + cl2Reg[Species::Perfect].begin() +
-					cl2Reg[Species::Frank].begin() - cl2Reg[Species::V].end() -
-					cl2Reg[Species::Void].end() -
-					cl2Reg[Species::Faulted].end() + 3,
-				cl2Reg[Species::I].end() + cl2Reg[Species::Perfect].end() +
-					cl2Reg[Species::Frank].end() - cl2Reg[Species::V].begin() -
-					cl2Reg[Species::Void].begin() -
-					cl2Reg[Species::Faulted].begin() - 2);
-		pr1RR[vIndex] =
-			Ival(pr1Reg[Species::I].begin() + pr1Reg[Species::Perfect].begin() +
-					pr1Reg[Species::Frank].begin() - pr1Reg[Species::V].end() -
-					pr1Reg[Species::Void].end() -
-					pr1Reg[Species::Faulted].end() + 3,
-				pr1Reg[Species::I].end() + pr1Reg[Species::Perfect].end() +
-					pr1Reg[Species::Frank].end() - pr1Reg[Species::V].begin() -
-					pr1Reg[Species::Void].begin() -
-					pr1Reg[Species::Faulted].begin() - 2);
-		pr2RR[vIndex] =
-			Ival(pr2Reg[Species::I].begin() + pr2Reg[Species::Perfect].begin() +
-					pr2Reg[Species::Frank].begin() - pr2Reg[Species::V].end() -
-					pr2Reg[Species::Void].end() -
-					pr2Reg[Species::Faulted].end() + 3,
-				pr2Reg[Species::I].end() + pr2Reg[Species::Perfect].end() +
-					pr2Reg[Species::Frank].end() - pr2Reg[Species::V].begin() -
-					pr2Reg[Species::Void].begin() -
-					pr2Reg[Species::Faulted].begin() - 2);
+		cl1RR[vIndex] = Ival(cl1Reg[Species::I].begin() +
+				cl1Reg[Species::PerfectI].begin() +
+				cl1Reg[Species::FaultedI].begin() - cl1Reg[Species::V].end() -
+				cl1Reg[Species::PerfectV].end() -
+				cl1Reg[Species::FaultedV].end() + 3,
+			cl1Reg[Species::I].end() + cl1Reg[Species::PerfectI].end() +
+				cl1Reg[Species::FaultedI].end() - cl1Reg[Species::V].begin() -
+				cl1Reg[Species::PerfectV].begin() -
+				cl1Reg[Species::FaultedV].begin() - 2);
+		cl2RR[vIndex] = Ival(cl2Reg[Species::I].begin() +
+				cl2Reg[Species::PerfectI].begin() +
+				cl2Reg[Species::FaultedI].begin() - cl2Reg[Species::V].end() -
+				cl2Reg[Species::PerfectV].end() -
+				cl2Reg[Species::FaultedV].end() + 3,
+			cl2Reg[Species::I].end() + cl2Reg[Species::PerfectI].end() +
+				cl2Reg[Species::FaultedI].end() - cl2Reg[Species::V].begin() -
+				cl2Reg[Species::PerfectV].begin() -
+				cl2Reg[Species::FaultedV].begin() - 2);
+		pr1RR[vIndex] = Ival(pr1Reg[Species::I].begin() +
+				pr1Reg[Species::PerfectI].begin() +
+				pr1Reg[Species::FaultedI].begin() - pr1Reg[Species::V].end() -
+				pr1Reg[Species::PerfectV].end() -
+				pr1Reg[Species::FaultedV].end() + 3,
+			pr1Reg[Species::I].end() + pr1Reg[Species::PerfectI].end() +
+				pr1Reg[Species::FaultedI].end() - pr1Reg[Species::V].begin() -
+				pr1Reg[Species::PerfectV].begin() -
+				pr1Reg[Species::FaultedV].begin() - 2);
+		pr2RR[vIndex] = Ival(pr2Reg[Species::I].begin() +
+				pr2Reg[Species::PerfectI].begin() +
+				pr2Reg[Species::FaultedI].begin() - pr2Reg[Species::V].end() -
+				pr2Reg[Species::PerfectV].end() -
+				pr2Reg[Species::FaultedV].end() + 3,
+			pr2Reg[Species::I].end() + pr2Reg[Species::PerfectI].end() +
+				pr2Reg[Species::FaultedI].end() - pr2Reg[Species::V].begin() -
+				pr2Reg[Species::PerfectV].begin() -
+				pr2Reg[Species::FaultedV].begin() - 2);
 	}
 	else {
 		// Project on V
 		cl1RR[vIndex] = Ival(cl1Reg[Species::V].begin() +
-				cl1Reg[Species::Void].begin() +
-				cl1Reg[Species::Faulted].begin() - cl1Reg[Species::I].end() -
-				cl1Reg[Species::Perfect].end() - cl1Reg[Species::Frank].end() +
-				3,
-			cl1Reg[Species::V].end() + cl1Reg[Species::Void].end() +
-				cl1Reg[Species::Faulted].end() - cl1Reg[Species::I].begin() -
-				cl1Reg[Species::Perfect].begin() -
-				cl1Reg[Species::Frank].begin() - 2);
+				cl1Reg[Species::PerfectV].begin() +
+				cl1Reg[Species::FaultedV].begin() - cl1Reg[Species::I].end() -
+				cl1Reg[Species::PerfectI].end() -
+				cl1Reg[Species::FaultedI].end() + 3,
+			cl1Reg[Species::V].end() + cl1Reg[Species::PerfectV].end() +
+				cl1Reg[Species::FaultedV].end() - cl1Reg[Species::I].begin() -
+				cl1Reg[Species::PerfectI].begin() -
+				cl1Reg[Species::FaultedI].begin() - 2);
 		cl2RR[vIndex] = Ival(cl2Reg[Species::V].begin() +
-				cl2Reg[Species::Void].begin() +
-				cl2Reg[Species::Faulted].begin() - cl2Reg[Species::I].end() -
-				cl2Reg[Species::Perfect].end() - cl2Reg[Species::Frank].end() +
-				3,
-			cl2Reg[Species::V].end() + cl2Reg[Species::Void].end() +
-				cl2Reg[Species::Faulted].end() - cl2Reg[Species::I].begin() -
-				cl2Reg[Species::Perfect].begin() -
-				cl2Reg[Species::Frank].begin() - 2);
+				cl2Reg[Species::PerfectV].begin() +
+				cl2Reg[Species::FaultedV].begin() - cl2Reg[Species::I].end() -
+				cl2Reg[Species::PerfectI].end() -
+				cl2Reg[Species::FaultedI].end() + 3,
+			cl2Reg[Species::V].end() + cl2Reg[Species::PerfectV].end() +
+				cl2Reg[Species::FaultedV].end() - cl2Reg[Species::I].begin() -
+				cl2Reg[Species::PerfectI].begin() -
+				cl2Reg[Species::FaultedI].begin() - 2);
 		pr1RR[vIndex] = Ival(pr1Reg[Species::V].begin() +
-				pr1Reg[Species::Void].begin() +
-				pr1Reg[Species::Faulted].begin() - pr1Reg[Species::I].end() -
-				pr1Reg[Species::Perfect].end() - pr1Reg[Species::Frank].end() +
-				3,
-			pr1Reg[Species::V].end() + pr1Reg[Species::Void].end() +
-				pr1Reg[Species::Faulted].end() - pr1Reg[Species::I].begin() -
-				pr1Reg[Species::Perfect].begin() -
-				pr1Reg[Species::Frank].begin() - 2);
+				pr1Reg[Species::PerfectV].begin() +
+				pr1Reg[Species::FaultedV].begin() - pr1Reg[Species::I].end() -
+				pr1Reg[Species::PerfectI].end() -
+				pr1Reg[Species::FaultedI].end() + 3,
+			pr1Reg[Species::V].end() + pr1Reg[Species::PerfectV].end() +
+				pr1Reg[Species::FaultedV].end() - pr1Reg[Species::I].begin() -
+				pr1Reg[Species::PerfectI].begin() -
+				pr1Reg[Species::FaultedI].begin() - 2);
 		pr2RR[vIndex] = Ival(pr2Reg[Species::V].begin() +
-				pr2Reg[Species::Void].begin() +
-				pr2Reg[Species::Faulted].begin() - pr2Reg[Species::I].end() -
-				pr2Reg[Species::Perfect].end() - pr2Reg[Species::Frank].end() +
-				3,
-			pr2Reg[Species::V].end() + pr2Reg[Species::Void].end() +
-				pr2Reg[Species::Faulted].end() - pr2Reg[Species::I].begin() -
-				pr2Reg[Species::Perfect].begin() -
-				pr2Reg[Species::Frank].begin() - 2);
+				pr2Reg[Species::PerfectV].begin() +
+				pr2Reg[Species::FaultedV].begin() - pr2Reg[Species::I].end() -
+				pr2Reg[Species::PerfectI].end() -
+				pr2Reg[Species::FaultedI].end() + 3,
+			pr2Reg[Species::V].end() + pr2Reg[Species::PerfectV].end() +
+				pr2Reg[Species::FaultedV].end() - pr2Reg[Species::I].begin() -
+				pr2Reg[Species::PerfectI].begin() -
+				pr2Reg[Species::FaultedI].begin() - 2);
 	}
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }

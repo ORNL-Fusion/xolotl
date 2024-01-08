@@ -510,7 +510,7 @@ public:
 	 *
 	 * @return The size
 	 */
-	virtual int
+	virtual std::vector<int>
 	getTransitionSize() const = 0;
 
 	/**
@@ -528,6 +528,14 @@ public:
 	 */
 	virtual double
 	getCascadeEfficiency() const = 0;
+
+	/**
+	 * Obtain the value of the barrier energy.
+	 *
+	 * @return The energy
+	 */
+	virtual double
+	getBarrierEnergy() const = 0;
 };
 // end class IOptions
 } /* namespace options */

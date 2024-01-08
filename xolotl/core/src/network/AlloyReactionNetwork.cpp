@@ -67,8 +67,8 @@ AlloyReactionNetwork::checkLargestClusterId()
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
 			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
-			auto size =
-				hi[Species::Void] + hi[Species::Frank] + hi[Species::Faulted];
+			auto size = hi[Species::PerfectV] + hi[Species::FaultedI] +
+				hi[Species::FaultedV] + hi[Species::PerfectI];
 			if (size > update.val) {
 				update.val = size;
 				update.loc = i;

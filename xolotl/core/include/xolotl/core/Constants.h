@@ -86,7 +86,6 @@ constexpr double alphaZrHeatConductivity = 0.0;
 // In lattice parameter units
 constexpr double perfectBurgers = 0.5;
 constexpr double faultedBurgers = 0.333;
-constexpr double frankBurgers = 0.333;
 
 // Sink strength for Alloy case in nm^-2
 constexpr double alloySinkStrength = 1.0e-5;

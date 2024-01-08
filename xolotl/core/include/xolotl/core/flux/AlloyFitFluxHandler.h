@@ -224,30 +224,30 @@ public:
 						AlloyAddImplantation(damageRates.back());
 					}
 				}
-				// Otherwise the clusters must be frank and perfect type
+				// Otherwise the clusters must be faulted and perfect type
 				else {
 					comp[NetworkType::Species::I] = 0;
-					comp[NetworkType::Species::Frank] = size;
+					comp[NetworkType::Species::FaultedI] = size;
 					auto fluxCluster1 =
 						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
-					comp[NetworkType::Species::Frank] = 0;
-					comp[NetworkType::Species::Perfect] = size;
+					comp[NetworkType::Species::FaultedI] = 0;
+					comp[NetworkType::Species::PerfectI] = size;
 					auto fluxCluster2 =
 						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 					if (fluxCluster1.getId() == NetworkType::invalidIndex() ||
 						fluxCluster2.getId() == NetworkType::invalidIndex()) {
 						// Throw error -> missing type
 						throw std::runtime_error(
-							"\nNo clusted of size: " + std::to_string(size) +
+							"\nNo cluster of size: " + std::to_string(size) +
 							", cannot use the flux option!");
 					}
 					else {
-						// Frank loop
+						// FaultedI loop
 						damageIds.push_back(fluxCluster1.getId());
 						double frac = 1.0 - cascade.perfectFraction;
 						damageRates.push_back(
 							AlloySetGeneration(size, it, frac));
-						// Perfect loop
+						// PerfectI loop
 						damageIds.push_back(fluxCluster2.getId());
 						frac = cascade.perfectFraction;
 						damageRates.push_back(
@@ -268,23 +268,34 @@ public:
 					damageIds.push_back(fluxCluster.getId());
 					damageRates.push_back(AlloySetGeneration(size, it, 1.0));
 				}
-				// Otherwise the clusters must be faulted type
+				// Otherwise the clusters must be faulted and frank type
 				else {
 					comp[NetworkType::Species::V] = 0;
-					comp[NetworkType::Species::Faulted] = size;
-					fluxCluster =
+					comp[NetworkType::Species::FaultedV] = size;
+					auto fluxCluster1 =
 						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
-					if (fluxCluster.getId() == NetworkType::invalidIndex()) {
+					comp[NetworkType::Species::FaultedV] = 0;
+					comp[NetworkType::Species::PerfectV] = size;
+					auto fluxCluster2 =
+						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+					if (fluxCluster1.getId() == NetworkType::invalidIndex() ||
+						fluxCluster2.getId() == NetworkType::invalidIndex()) {
 						// Throw error -> no available type
 						throw std::runtime_error(
-							"\nNo clusted of size: " + std::to_string(-size) +
+							"\nNo cluster of size: " + std::to_string(-size) +
 							", cannot use the flux option!");
 					}
 					else {
-						// Faulted loop
-						damageIds.push_back(fluxCluster.getId());
+						// FaultedI loop
+						damageIds.push_back(fluxCluster1.getId());
+						double frac = 1.0 - cascade.perfectFraction;
 						damageRates.push_back(
-							AlloySetGeneration(size, it, 1.0));
+							AlloySetGeneration(size, it, frac));
+						// PerfectI loop
+						damageIds.push_back(fluxCluster2.getId());
+						frac = cascade.perfectFraction;
+						damageRates.push_back(
+							AlloySetGeneration(size, it, frac));
 					}
 				}
 			}

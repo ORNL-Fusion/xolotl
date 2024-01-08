@@ -11,9 +11,10 @@ ZrClusterGenerator::ZrClusterGenerator(const options::IOptions& options) :
 	_maxB(options.getMaxImpurity()),
 	_maxI(options.getMaxI()),
 	_groupingMin(options.getGroupingMin()),
-	_groupingWidth(options.getGroupingWidthA()),
-	_transitionSize(options.getTransitionSize())
+	_groupingWidth(options.getGroupingWidthA())
 {
+	auto sizes = options.getTransitionSize();
+	_transitionSize = sizes[0];
 }
 
 ZrClusterGenerator::ZrClusterGenerator(
@@ -23,9 +24,10 @@ ZrClusterGenerator::ZrClusterGenerator(
 	_maxB(options.getMaxImpurity()),
 	_maxI(options.getMaxI()),
 	_groupingMin(options.getGroupingMin()),
-	_groupingWidth(options.getGroupingWidthA()),
-	_transitionSize(options.getTransitionSize())
+	_groupingWidth(options.getGroupingWidthA())
 {
+	auto sizes = options.getTransitionSize();
+	_transitionSize = sizes[0];
 }
 } // namespace network
 } // namespace core

@@ -141,12 +141,14 @@ private:
 		LATTICE_PARAM,
 		FISSION_RATE,
 		ZETA,
+		BARRIER_ENERGY,
 		NUM_FLOAT_VALS
 	};
 
 	enum IntValsIndex : int
 	{
-		TRANSITION_SIZE = 0,
+		TRANSITION_SIZE_V = 0,
+		TRANSITION_SIZE_I,
 		NUM_INT_VALS
 	};
 
@@ -225,16 +227,42 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
-	int
-	transitionSize() const
+	double
+	barrierEnergy() const
 	{
-		return _intVals[TRANSITION_SIZE];
+		return _floatVals[BARRIER_ENERGY];
 	}
 
 	void
-	setTransitionSize(int val)
+	setBarrierEnergy(double val)
 	{
-		setVal(_intVals, TRANSITION_SIZE, val);
+		setVal(_floatVals, BARRIER_ENERGY, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	transitionSizeV() const
+	{
+		return _intVals[TRANSITION_SIZE_V];
+	}
+
+	void
+	setTransitionSizeV(int val)
+	{
+		setVal(_intVals, TRANSITION_SIZE_V, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	transitionSizeI() const
+	{
+		return _intVals[TRANSITION_SIZE_I];
+	}
+
+	void
+	setTransitionSizeI(int val)
+	{
+		setVal(_intVals, TRANSITION_SIZE_I, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

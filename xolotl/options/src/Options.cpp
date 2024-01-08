@@ -75,9 +75,9 @@ Options::Options() :
 	heVRatio(4.0),
 	migrationThreshold(std::numeric_limits<double>::infinity()),
 	basalPortion(0.1),
-	transitionSize(325),
 	cascadeDose(-1.0),
-	cascadeEfficiency(0.0)
+	cascadeEfficiency(0.0),
+	barrierEnergy(1.0)
 {
 	return;
 }
@@ -257,11 +257,10 @@ Options::readParams(int argc, const char* argv[])
 		"string that will use the default material associated flux handler.")(
 		"basalPortion", bpo::value<double>(&basalPortion)->default_value(0.1),
 		"The value of the basal portion generated for each V (0.1 by "
-		"default).")("transitionSize",
-		bpo::value<int>(&transitionSize)->default_value(325),
-		"The value for the transition within a type of cluster, for instance "
-		"basal (325 by "
-		"default).")("cascadeDose",
+		"default).")("transitionSize", bpo::value<std::string>(),
+		"The size at which there is a transition, for basal for instance or "
+		"vacancy and interstitial transformation for alloy (it can take "
+		"multiple values.")("cascadeDose",
 		bpo::value<double>(&cascadeDose)->default_value(-1.0),
 		"The value of the dose at which the cascade overlap effect takes "
 		"effect, if negative there won't be an effect (-1.0 by "
@@ -269,6 +268,10 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<double>(&cascadeEfficiency)->default_value(0.0),
 		"The value of the remaining efficiency once the overlap effect started "
 		"(0.0 by "
+		"default).")("barrierEnergy",
+		bpo::value<double>(&barrierEnergy)->default_value(1.0),
+		"The value of the energy barrier to form 100 loops "
+		"(1.0 eV by "
 		"default).");
 
 	bpo::options_description visible("Allowed options");
@@ -531,6 +534,18 @@ Options::readParams(int argc, const char* argv[])
 		pulseTime = tokens[0];
 		pulseProportion = tokens[1];
 	}
+
+	// Take care of the transition size
+	if (opts.count("transitionSize")) {
+		// Break the argument into tokens.
+		auto tokens =
+			util::Tokenizer<int>{opts["transitionSize"].as<std::string>()}();
+		for (std::size_t i = 0; i < tokens.size(); ++i) {
+			transitionSize.push_back(tokens[i]);
+		}
+	}
+	else
+		transitionSize.push_back(325);
 }
 
 } // end namespace options

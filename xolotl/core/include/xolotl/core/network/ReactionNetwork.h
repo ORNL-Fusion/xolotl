@@ -207,6 +207,9 @@ public:
 	setZeta(double zeta) override;
 
 	void
+	setBarrierEnergy(double energy) override;
+
+	void
 	setEnableStdReaction(bool reaction) override;
 
 	void

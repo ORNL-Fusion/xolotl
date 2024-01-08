@@ -181,6 +181,9 @@ public:
 	virtual void
 	setZeta(double z) = 0;
 
+	virtual void
+	setBarrierEnergy(double energy) = 0;
+
 	bool
 	getEnableStdReaction() const noexcept
 	{

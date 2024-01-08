@@ -165,7 +165,7 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 
 				// Thermal radii:
 				if (lo[Species::Basal] < 1000) {
-					if (lo[Species::Basal] < data.transitionSize())
+					if (lo[Species::Basal] < data.transitionSizeV())
 						data.extraData.dislocationCaptureRadius(i, 0) = 1.1;
 					else
 						data.extraData.dislocationCaptureRadius(i, 0) =

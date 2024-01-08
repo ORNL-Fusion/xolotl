@@ -61,8 +61,8 @@ isVacancy(TSpeciesEnum val,
 	std::enable_if_t<(numberOfInterstitialSpecies<TSpeciesEnum>() > 2), int> =
 		0) noexcept
 {
-	return val == TSpeciesEnum::V || val == TSpeciesEnum::Void ||
-		val == TSpeciesEnum::Faulted;
+	return val == TSpeciesEnum::V || val == TSpeciesEnum::PerfectV ||
+		val == TSpeciesEnum::FaultedV;
 }
 
 template <typename TSpeciesEnum>

@@ -15,31 +15,32 @@ class AlloyReactionNetwork;
 class AlloyProductionReaction;
 class AlloyDissociationReaction;
 class AlloySinkReaction;
+class AlloyTransformReaction;
 class AlloyClusterGenerator;
 
 enum class AlloySpecies
 {
 	V,
-	Void,
-	Faulted,
+	PerfectV,
+	FaultedV,
 	I,
-	Perfect,
-	Frank
+	PerfectI,
+	FaultedI
 };
 
 inline const std::string&
 toLabelString(AlloySpecies species)
 {
 	static const std::string labelArray[] = {
-		"V", "Void", "Faulted", "I", "Perfect", "Frank"};
+		"V", "PerfectV", "FaultedV", "I", "PerfectI", "FaultedI"};
 	return labelArray[static_cast<int>(species)];
 }
 
 inline const std::string&
 toNameString(AlloySpecies species)
 {
-	static const std::string nameArray[] = {
-		"Vacancy", "Void", "Faulted", "Interstitial", "Perfect", "Frank"};
+	static const std::string nameArray[] = {"Vacancy", "PerfectV", "FaultedV",
+		"Interstitial", "PerfectI", "FaultedI"};
 	return nameArray[static_cast<int>(species)];
 }
 
@@ -60,7 +61,7 @@ struct SpeciesForGrouping<AlloySpecies, 6>
 {
 	using Sequence = EnumSequence<AlloySpecies, 6>;
 	static constexpr auto first = Sequence(AlloySpecies::V);
-	static constexpr auto last = Sequence(AlloySpecies::Frank);
+	static constexpr auto last = Sequence(AlloySpecies::FaultedI);
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::underlying_type_t<AlloySpecies>
@@ -80,9 +81,10 @@ struct ReactionNetworkTraits<AlloyReactionNetwork>
 	using ProductionReactionType = AlloyProductionReaction;
 	using DissociationReactionType = AlloyDissociationReaction;
 	using SinkReactionType = AlloySinkReaction;
+	using TransformReactionType = AlloyTransformReaction;
 
 	using ReactionTypeList = std::tuple<ProductionReactionType,
-		DissociationReactionType, SinkReactionType>;
+		DissociationReactionType, SinkReactionType, TransformReactionType>;
 
 	using ClusterGenerator = AlloyClusterGenerator;
 };

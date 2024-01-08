@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/AlloyTraits.h>
 #include <xolotl/core/network/SinkReaction.h>
+#include <xolotl/core/network/TransformReaction.h>
 
 namespace xolotl
 {
@@ -58,6 +59,28 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getSinkStrength();
+};
+
+class AlloyTransformReaction :
+	public TransformReaction<AlloyReactionNetwork, AlloyTransformReaction>
+{
+public:
+	using Superclass =
+		TransformReaction<AlloyReactionNetwork, AlloyTransformReaction>;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getSize();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getExponent();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getBarrier();
 };
 } // namespace network
 } // namespace core

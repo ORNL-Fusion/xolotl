@@ -148,7 +148,7 @@ ZrProductionReaction::getRateForProduction(IndexType gridIndex)
 		_reactants[1], 1);
 
 	return zr::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl,
-		p, this->_clusterData->transitionSize());
+		p, this->_clusterData->transitionSizeV());
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -186,7 +186,7 @@ ZrDissociationReaction::getRateForProduction(IndexType gridIndex)
 		this->_clusterData->extraData.dislocationCaptureRadius(_products[1], 1);
 
 	return zr::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl,
-		p, this->_clusterData->transitionSize());
+		p, this->_clusterData->transitionSizeV());
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -247,7 +247,7 @@ ZrDissociationReaction::computeBindingEnergy(double time)
 		double n = (double)(lo[Species::Basal] + hi[Species::Basal] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::Basal) ||
 			prod2Comp.isOnAxis(Species::Basal)) {
-			if (n < this->_clusterData->transitionSize()) {
+			if (n < this->_clusterData->transitionSizeV()) {
 				be = 1.762 +
 					((5.352 * sqrt(n - 1) + 0.122 * (n - 1) + 0.154 * (n - 1) -
 						 5.3) -
