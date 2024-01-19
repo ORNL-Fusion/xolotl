@@ -11,6 +11,6 @@ petscArgs=-ts_max_time 0.0005 -ts_adapt_dt_max 0.00001 -fieldsplit_1_pc_type red
 sputtering=0.0044
 initialConc=V 1 1e-18
 boundary=1 1
-netParam=8 0 0 10 6 false
+netParam=8 0 0 10 6
 grouping=31 4 1
 tempParam=1093

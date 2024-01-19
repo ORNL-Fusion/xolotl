@@ -41,7 +41,11 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_2, *utf::label("0D"))
 BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_3, *utf::label("3D"))
 {
 	// 3D
-	SystemTestCase{"benchmark_NE_3"}.mpiLimits(1, 3969).withTimer().run();
+	SystemTestCase{"benchmark_NE_3"}
+		.tolerance(1.0e-9)
+		.mpiLimits(1, 3969)
+		.withTimer()
+		.run();
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_4, *utf::label("2D"))
@@ -119,7 +123,11 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_8, *utf::label("1D"))
 	SystemTestCase::copyFile("flux_benchmark_PSI_8.dat");
 	SystemTestCase::copyFile("tridyn_benchmark_PSI_8.dat");
 	// 1D + PISCES + varying flux
-	SystemTestCase{"benchmark_PSI_8"}.mpiLimits(1, 20).withTimer().run();
+	SystemTestCase{"benchmark_PSI_8"}
+		.tolerance(1.0e-6)
+		.mpiLimits(1, 20)
+		.withTimer()
+		.run();
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_9, *utf::label("1D"))
@@ -127,7 +135,11 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_9, *utf::label("1D"))
 	SystemTestCase::copyFile("temp_benchmark_PSI_9.dat");
 	SystemTestCase::copyFile("tridyn_benchmark_PSI_9.dat");
 	// 1D + PISCES + varying temperature
-	SystemTestCase{"benchmark_PSI_9"}.mpiLimits(1, 20).withTimer().run();
+	SystemTestCase{"benchmark_PSI_9"}
+		.tolerance(1.0e-6)
+		.mpiLimits(1, 20)
+		.withTimer()
+		.run();
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_10, *utf::label("1D"))

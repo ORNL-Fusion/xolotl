@@ -269,7 +269,7 @@ HeatEquationHandler::computeTemperature(double currentTime,
 	}
 
 	auto dim = dimension;
-    auto por = portion;
+	auto por = portion;
 	auto surfPos = surfacePosition;
 	auto htFlux = heatFlux;
 	auto bulkPos = bulkPosition;
