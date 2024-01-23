@@ -771,9 +771,6 @@ PetscSolver1DHandler::updateConcentration(
 	// Degrees of freedom is the total number of clusters in the network
 	const auto dof = network.getDOF();
 
-	// Update the time in the network
-	network.setTime(ftime);
-
 	// Computing the trapped atom concentration is only needed for the
 	// attenuation
 	if (useAttenuation) {
@@ -1072,9 +1069,6 @@ PetscSolver1DHandler::computeJacobian(
 	Kokkos::Array<ConcSubView::host_mirror_type, 3> hConcVec;
 	const double* hConcPtrVec[3];
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
-
-	// Update the time in the network
-	network.setTime(ftime);
 
 	/*
 	 Loop over grid points for the temperature, including ghosts
