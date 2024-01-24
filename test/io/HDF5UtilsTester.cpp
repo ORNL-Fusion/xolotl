@@ -108,6 +108,9 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	XFile::TimestepGroup::Data1DType nV = 0.5;
 	XFile::TimestepGroup::Data1DType previousVFlux = 0.01;
 
+	// Fluence
+	std::vector<double> f = {1.0, 5.0, 0.2};
+
 	// Define a faux network composition vector.
 	BOOST_TEST_MESSAGE("Creating faux comp vec.");
 	auto testBoundsVec = createTestNetworkBounds();
@@ -157,6 +160,9 @@ BOOST_AUTO_TEST_CASE(checkIO)
 			loop, timeStep, currentTime, previousTime, currentTimeStep);
 
 		tsGroup->writeGrid(grid);
+
+		// Fluence
+		tsGroup->writeFluence(f);
 
 		std::vector<double> nSurf = {nHe, nD, nT, nV, nInter};
 		std::vector<double> previousSurfFlux = {previousHeFlux, previousDFlux,
@@ -220,6 +226,18 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		BOOST_REQUIRE_CLOSE(dt, currentTimeStep, 0.0001);
 		double previousReadTime = tsGroup->readPreviousTime();
 		BOOST_REQUIRE_CLOSE(previousReadTime, previousTime, 0.0001);
+
+		// Read the grid
+		auto h5Grid = tsGroup->readGrid();
+		for (auto i = 0; i < h5Grid.size(); i++) {
+			BOOST_REQUIRE_CLOSE(h5Grid[i], grid[i], 0.0001);
+		}
+
+		// Read the fluence
+		auto h5Fluence = tsGroup->readFluence();
+		for (auto i = 0; i < h5Fluence.size(); i++) {
+			BOOST_REQUIRE_CLOSE(h5Fluence[i], f[i], 0.0001);
+		}
 
 		// Read the surface information
 		BOOST_REQUIRE_CLOSE(

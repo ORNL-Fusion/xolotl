@@ -39,7 +39,7 @@ ClusterDataCommon<MemSpace>::ClusterDataCommon(
 	numClusters(numClusters_),
 	gridSize(gridSize_),
 	_floatVals("Floating Point Values" + labelStr<MemSpace>()),
-	_intVals("Index Values" + labelStr<MemSpace>()),
+	_intVals("Integer Point Values" + labelStr<MemSpace>()),
 	_boolVals("Boolean Values" + labelStr<MemSpace>()),
 	temperature("Temperature" + labelStr<MemSpace>(), gridSize),
 	reactionRadius("Reaction Radius" + labelStr<MemSpace>(), numClusters),

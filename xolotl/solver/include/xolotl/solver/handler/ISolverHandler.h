@@ -69,6 +69,15 @@ public:
 	createSolverContext(DM& da) = 0;
 
 	/**
+	 * Finish setting up solver dependencies
+	 *
+	 * @param da The PETSc distributed array
+	 * @param J The PETSc Jacobian matrix
+	 */
+	virtual void
+	initializeSolverContext(DM& da, Mat& J) = 0;
+
+	/**
 	 * Initialize the concentration solution vector.
 	 *
 	 * @param da The PETSc distributed array
@@ -218,7 +227,7 @@ public:
 	 * @return The position of the surface at this y,z coordinates
 	 */
 	virtual IdType
-	getSurfacePosition(IdType j = -1, IdType k = -1) const = 0;
+	getSurfacePosition(IdType j = badId, IdType k = badId) const = 0;
 
 	/**
 	 * Set the position of the surface.
@@ -228,7 +237,7 @@ public:
 	 * @param k The index on the grid in the z direction
 	 */
 	virtual void
-	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1) = 0;
+	setSurfacePosition(IdType pos, IdType j = badId, IdType k = badId) = 0;
 
 	/**
 	 * Set the number of grid points we want to move by at the surface.
@@ -432,7 +441,7 @@ public:
 	 *
 	 * @return The perf handler
 	 */
-	virtual std::shared_ptr<perf::IPerfHandler>
+	virtual perf::IPerfHandler*
 	getPerfHandler() const = 0;
 
 	/**

@@ -29,9 +29,9 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver3DHandler(
-		NetworkType& _network, const options::IOptions& options) :
-		PetscSolverHandler(_network, options)
+	PetscSolver3DHandler(NetworkType& _network,
+		perf::IPerfHandler& _perfHandler, const options::IOptions& options) :
+		PetscSolverHandler(_network, _perfHandler, options)
 	{
 	}
 
@@ -45,6 +45,12 @@ public:
 	 */
 	void
 	createSolverContext(DM& da);
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	void
+	initializeSolverContext(DM& da, Mat& J);
 
 	/**
 	 * Initialize the concentration solution vector.
@@ -91,7 +97,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	IdType
-	getSurfacePosition(IdType j = -1, IdType k = -1) const
+	getSurfacePosition(IdType j = badId, IdType k = badId) const
 	{
 		return surfacePosition[j][k];
 	}
@@ -100,7 +106,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1)
+	setSurfacePosition(IdType pos, IdType j = badId, IdType k = badId)
 	{
 		surfacePosition[j][k] = pos;
 
@@ -111,7 +117,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfaceOffset(int offset, int j = -1, int k = -1)
+	setSurfaceOffset(int offset) override
 	{
 		return;
 	}

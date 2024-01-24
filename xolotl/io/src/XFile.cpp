@@ -467,6 +467,25 @@ XFile::TimestepGroup::writeGrid(
 }
 
 void
+XFile::TimestepGroup::writeFluence(const std::vector<double>& fluences) const
+{
+	// Create, write, and close the fluences dataset
+	double fluenceArray[fluences.size()];
+	for (int i = 0; i < fluences.size(); i++) {
+		fluenceArray[i] = fluences[i];
+	}
+	std::array<hsize_t, 1> dims{(hsize_t)fluences.size()};
+	XFile::SimpleDataSpace<1> fluenceDSpace(dims);
+	hid_t datasetId = H5Dcreate2(getId(), "fluence", H5T_IEEE_F64LE,
+		fluenceDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+		H5P_DEFAULT, &fluenceArray);
+	status = H5Dclose(datasetId);
+
+	return;
+}
+
+void
 XFile::TimestepGroup::writeSurface1D(std::vector<Data1DType> nAtoms,
 	std::vector<Data1DType> previousFluxes,
 	std::vector<std::string> atomNames) const
@@ -678,7 +697,6 @@ XFile::TimestepGroup::writeBottom2D(std::vector<Data2DType> nAtoms,
 	// Create the dataspace for the dataset with dimension dims
 	std::array<hsize_t, 1> dims{(hsize_t)size};
 	XFile::SimpleDataSpace<1> dspace(dims);
-	double quantityArray[size];
 
 	// Loop on the names
 	for (auto i = 0; i < atomNames.size(); i++) {
@@ -734,7 +752,6 @@ XFile::TimestepGroup::writeBottom3D(std::vector<Data3DType> nAtoms,
 	// Create the array that will store the indices and fill it
 	int xSize = nAtoms[0].size();
 	int ySize = nAtoms[0][0].size();
-	int indexArray[xSize][ySize];
 
 	// Create the dataspace for the dataset with dimension dims
 	std::array<hsize_t, 2> dims{(hsize_t)xSize, (hsize_t)ySize};
@@ -907,6 +924,13 @@ std::vector<double>
 XFile::TimestepGroup::readGrid() const
 {
 	DataSet<std::vector<double>> dataset(*this, "grid");
+	return dataset.read();
+}
+
+std::vector<double>
+XFile::TimestepGroup::readFluence() const
+{
+	DataSet<std::vector<double>> dataset(*this, "fluence");
 	return dataset.read();
 }
 

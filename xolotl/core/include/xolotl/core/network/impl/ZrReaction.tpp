@@ -16,7 +16,7 @@ KOKKOS_INLINE_FUNCTION
 double
 getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	const double r1, const double dc0, const double dc1, double rdCl[2][2],
-	double p)
+	double p, int transitionSize)
 {
 	constexpr double pi = ::xolotl::core::pi;
 	constexpr double rCore = ::xolotl::core::alphaZrCoreRadius;
@@ -72,7 +72,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		if (cl0IsV)
 			Pl = 0.78 * pow(p, -2) + 0.66 * p - 0.44;
 		else if (lo0.isOnAxis(Species::Basal)) {
-			if (n0 < ::xolotl::core::basalTransitionSize)
+			if (n0 < transitionSize)
 				alpha = 1.0; // Completely spherical
 			Pl = p;
 		}
@@ -97,7 +97,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 		if (cl1IsV)
 			Pl = 0.78 * pow(p, -2) + 0.66 * p - 0.44;
 		else if (lo1.isOnAxis(Species::Basal)) {
-			if (n1 < ::xolotl::core::basalTransitionSize)
+			if (n1 < transitionSize)
 				alpha = 1.0; // Completely spherical
 			Pl = p;
 		}
@@ -147,8 +147,8 @@ ZrProductionReaction::getRateForProduction(IndexType gridIndex)
 	rdCl[1][1] = this->_clusterData->extraData.dislocationCaptureRadius(
 		_reactants[1], 1);
 
-	return zr::getRate(
-		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl, p);
+	return zr::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl,
+		p, this->_clusterData->transitionSize());
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -185,8 +185,8 @@ ZrDissociationReaction::getRateForProduction(IndexType gridIndex)
 	rdCl[1][1] =
 		this->_clusterData->extraData.dislocationCaptureRadius(_products[1], 1);
 
-	return zr::getRate(
-		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl, p);
+	return zr::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl,
+		p, this->_clusterData->transitionSize());
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -247,7 +247,7 @@ ZrDissociationReaction::computeBindingEnergy(double time)
 		double n = (double)(lo[Species::Basal] + hi[Species::Basal] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::Basal) ||
 			prod2Comp.isOnAxis(Species::Basal)) {
-			if (n < ::xolotl::core::basalTransitionSize) {
+			if (n < this->_clusterData->transitionSize()) {
 				be = 1.762 +
 					((5.352 * sqrt(n - 1) + 0.122 * (n - 1) + 0.154 * (n - 1) -
 						 5.3) -

@@ -22,9 +22,8 @@ monitorSurfaceXY(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<PetscMonitor3D*>(ictx)->monitorSurfaceXY(
-		ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<PetscMonitor3D*>(ictx)->monitorSurfaceXY(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -33,17 +32,14 @@ monitorSurfaceXZ(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<PetscMonitor3D*>(ictx)->monitorSurfaceXZ(
-		ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<PetscMonitor3D*>(ictx)->monitorSurfaceXZ(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
 void
 PetscMonitor3D::setup(int loop)
 {
-	PetscErrorCode ierr;
-
 	_loopNumber = loop;
 
 	// Get the process ID
@@ -59,46 +55,34 @@ PetscMonitor3D::setup(int loop)
 		flag2DXYPlot, flag2DXZPlot, flagLargest;
 
 	// Check the option -check_collapse
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
-	checkPetscError(ierr,
-		"setupPetsc3DMonitor: PetscOptionsHasName (-check_collapse) failed.");
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck));
 
 	// Check the option -plot_perf
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf);
-	checkPetscError(
-		ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-plot_perf) failed.");
+	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-plot_perf", &flagPerf));
 
 	// Check the option -plot_2d_xy
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d_xy", &flag2DXYPlot);
-	checkPetscError(
-		ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xy) failed.");
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-plot_2d_xy", &flag2DXYPlot));
 
 	// Check the option -plot_2d_xz
-	ierr = PetscOptionsHasName(NULL, NULL, "-plot_2d_xz", &flag2DXZPlot);
-	checkPetscError(
-		ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-plot_2d_xz) failed.");
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-plot_2d_xz", &flag2DXZPlot));
 
 	// Check the option -helium_retention
-	ierr =
-		PetscOptionsHasName(NULL, NULL, "-helium_retention", &flagHeRetention);
-	checkPetscError(ierr,
-		"setupPetsc3DMonitor: PetscOptionsHasName (-helium_retention) failed.");
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-helium_retention", &flagHeRetention));
 
 	// Check the option -xenon_retention
-	ierr =
-		PetscOptionsHasName(NULL, NULL, "-xenon_retention", &flagXeRetention);
-	checkPetscError(ierr,
-		"setupPetsc3DMonitor: PetscOptionsHasName (-xenon_retention) failed.");
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-xenon_retention", &flagXeRetention));
 
 	// Check the option -start_stop
-	ierr = PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus);
-	checkPetscError(
-		ierr, "setupPetsc3DMonitor: PetscOptionsHasName (-start_stop) failed.");
+	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus));
 
 	// Check the option -largest_conc
-	ierr = PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest);
-	checkPetscError(ierr,
-		"setupPetsc3DMonitor: PetscOptionsHasName (-largest_conc) failed.");
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest));
 
 	// Get the network and its size
 	auto& network = _solverHandler->getNetwork();
@@ -121,15 +105,13 @@ PetscMonitor3D::setup(int loop)
 
 	// Get the da from _ts
 	DM da;
-	ierr = TSGetDM(_ts, &da);
-	checkPetscError(ierr, "setupPetsc3DMonitor: TSGetDM failed.");
+	PetscCallVoid(TSGetDM(_ts, &da));
 
 	// Get the total size of the grid
 	PetscInt Mx, My, Mz;
-	ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
+	PetscCallVoid(DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
 		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-	checkPetscError(ierr, "setupPetsc3DMonitor: DMDAGetInfo failed.");
+		PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE));
 
 	// Get the number of species
 	auto numSpecies = network.getSpeciesListSize();
@@ -155,19 +137,14 @@ PetscMonitor3D::setup(int loop)
 	if (flagCheck) {
 		// Find the threshold
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(
-			NULL, NULL, "-check_collapse", &timeStepThreshold, &flag);
-		checkPetscError(ierr,
-			"setupPetsc3DMonitor: PetscOptionsGetReal (-check_collapse) "
-			"failed.");
+		PetscCallVoid(PetscOptionsGetReal(
+			NULL, NULL, "-check_collapse", &timeStepThreshold, &flag));
 		if (!flag)
 			timeStepThreshold = 1.0e-16;
 
 		// Set the post step process that tells the solver when to stop if the
 		// time step collapse
-		ierr = TSSetPostStep(_ts, checkTimeStep);
-		checkPetscError(
-			ierr, "setupPetsc3DMonitor: TSSetPostStep (checkTimeStep) failed.");
+		PetscCallVoid(TSSetPostStep(_ts, checkTimeStep));
 	}
 
 	// If the user wants the surface to be able to move
@@ -250,10 +227,8 @@ PetscMonitor3D::setup(int loop)
 		direction[0] = 0;
 		terminate[0] = PETSC_FALSE;
 		// Set the TSEvent
-		ierr = TSSetEventHandler(_ts, 1, direction, terminate,
-			monitor::eventFunction, monitor::postEventFunction, this);
-		checkPetscError(ierr,
-			"setupPetsc3DMonitor: TSSetEventHandler (eventFunction3D) failed.");
+		PetscCallVoid(TSSetEventHandler(_ts, 1, direction, terminate,
+			monitor::eventFunction, monitor::postEventFunction, this));
 	}
 
 	// Set the monitor to save performance plots (has to be in parallel)
@@ -280,9 +255,7 @@ PetscMonitor3D::setup(int loop)
 		}
 
 		// monitorPerf will be called at each timestep
-		ierr = TSMonitorSet(_ts, monitor::monitorPerf, this, nullptr);
-		checkPetscError(
-			ierr, "setupPetsc3DMonitor: TSMonitorSet (monitorPerf) failed.");
+		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorPerf, this, nullptr));
 	}
 
 	// Set the monitor to compute the helium fluence for the retention
@@ -296,7 +269,8 @@ PetscMonitor3D::setup(int loop)
 			double previousTime = lastTsGroup->readPreviousTime();
 			_solverHandler->setPreviousTime(previousTime);
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->computeFluence(previousTime);
+			auto fluences = lastTsGroup->readFluence();
+			fluxHandler->setFluence(fluences);
 
 			// Get the names of the species in the network
 			std::vector<std::string> names;
@@ -344,16 +318,12 @@ PetscMonitor3D::setup(int loop)
 		}
 
 		// computeFluence will be called at each timestep
-		ierr = TSMonitorSet(_ts, monitor::computeFluence, this, nullptr);
-		checkPetscError(
-			ierr, "setupPetsc3DMonitor: TSMonitorSet (computeFluence) failed.");
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
 
 		// computeHeliumRetention3D will be called at each timestep
-		ierr =
-			TSMonitorSet(_ts, monitor::computeHeliumRetention, this, nullptr);
-		checkPetscError(ierr,
-			"setupPetsc3DMonitor: TSMonitorSet (computeHeliumRetention) "
-			"failed.");
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeHeliumRetention, this, nullptr));
 
 		// Master process
 		if (procId == 0 and _loopNumber == 0) {
@@ -413,12 +383,10 @@ PetscMonitor3D::setup(int loop)
 	if (flagXeRetention) {
 		// Get the da from _ts
 		DM da;
-		ierr = TSGetDM(_ts, &da);
-		checkPetscError(ierr, "setupPetsc3DMonitor: TSGetDM failed.");
+		PetscCallVoid(TSGetDM(_ts, &da));
 		// Get the local boundaries
 		PetscInt xm, ym, zm;
-		ierr = DMDAGetCorners(da, NULL, NULL, NULL, &xm, &ym, &zm);
-		checkPetscError(ierr, "setupPetsc3DMonitor: DMDAGetCorners failed.");
+		PetscCallVoid(DMDAGetCorners(da, NULL, NULL, NULL, &xm, &ym, &zm));
 		// Create the local vectors on each process
 		_solverHandler->createLocalNE(xm, ym, zm);
 
@@ -433,19 +401,17 @@ PetscMonitor3D::setup(int loop)
 			// Initialize the fluence
 			auto fluxHandler = _solverHandler->getFluxHandler();
 			// Increment the fluence with the value at this current timestep
-			fluxHandler->computeFluence(previousTime);
+			auto fluences = lastTsGroup->readFluence();
+			fluxHandler->setFluence(fluences);
 		}
 
 		// computeFluence will be called at each timestep
-		ierr = TSMonitorSet(_ts, monitor::computeFluence, this, nullptr);
-		checkPetscError(
-			ierr, "setupPetsc3DMonitor: TSMonitorSet (computeFluence) failed.");
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
 
 		// computeXenonRetention3D will be called at each timestep
-		ierr = TSMonitorSet(_ts, monitor::computeXenonRetention, this, nullptr);
-		checkPetscError(ierr,
-			"setupPetsc3DMonitor: TSMonitorSet (computeXenonRetention) "
-			"failed.");
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeXenonRetention, this, nullptr));
 
 		// Master process
 		if (procId == 0 and _loopNumber == 0) {
@@ -485,9 +451,8 @@ PetscMonitor3D::setup(int loop)
 		}
 
 		// monitorSurfaceXY will be called at each timestep
-		ierr = TSMonitorSet(_ts, monitor::monitorSurfaceXY, this, nullptr);
-		checkPetscError(ierr,
-			"setupPetsc3DMonitor: TSMonitorSet (monitorSurfaceXY) failed.");
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorSurfaceXY, this, nullptr));
 	}
 
 	// Set the monitor to save surface plots of clusters concentration
@@ -516,9 +481,8 @@ PetscMonitor3D::setup(int loop)
 		}
 
 		// monitorSurfaceXZ will be called at each timestep
-		ierr = TSMonitorSet(_ts, monitor::monitorSurfaceXZ, this, nullptr);
-		checkPetscError(ierr,
-			"setupPetsc3DMonitor: TSMonitorSet (monitorSurfaceXZ) failed.");
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorSurfaceXZ, this, nullptr));
 	}
 
 	// Set the monitor to monitor the concentration of the largest cluster
@@ -529,25 +493,20 @@ PetscMonitor3D::setup(int loop)
 
 		// Find the threshold
 		PetscBool flag;
-		ierr = PetscOptionsGetReal(
-			NULL, NULL, "-largest_conc", &_largestThreshold, &flag);
-		checkPetscError(ierr,
-			"setupPetsc3DMonitor: PetscOptionsGetReal (-largest_conc) failed.");
+		PetscCallVoid(PetscOptionsGetReal(
+			NULL, NULL, "-largest_conc", &_largestThreshold, &flag));
 
 		// monitorLargest3D will be called at each timestep
-		ierr = TSMonitorSet(_ts, monitor::monitorLargest, this, nullptr);
-		checkPetscError(
-			ierr, "setupPetsc3DMonitor: TSMonitorSet (monitorLargest) failed.");
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorLargest, this, nullptr));
 	}
 
 	// Set the monitor to save the status of the simulation in hdf5 file
 	if (flagStatus) {
 		// Find the stride to know how often the HDF5 file has to be written
 		PetscBool flag;
-		ierr =
-			PetscOptionsGetReal(NULL, NULL, "-start_stop", &_hdf5Stride, &flag);
-		checkPetscError(ierr,
-			"setupPetsc3DMonitor: PetscOptionsGetReal (-start_stop) failed.");
+		PetscCallVoid(PetscOptionsGetReal(
+			NULL, NULL, "-start_stop", &_hdf5Stride, &flag));
 		if (!flag)
 			_hdf5Stride = 1.0;
 
@@ -586,16 +545,12 @@ PetscMonitor3D::setup(int loop)
 		}
 
 		// startStop3D will be called at each timestep
-		ierr = TSMonitorSet(_ts, monitor::startStop, this, nullptr);
-		checkPetscError(
-			ierr, "setupPetsc3DMonitor: TSMonitorSet (startStop) failed.");
+		PetscCallVoid(TSMonitorSet(_ts, monitor::startStop, this, nullptr));
 	}
 
 	// Set the monitor to simply change the previous time to the new time
 	// monitorTime will be called at each timestep
-	ierr = TSMonitorSet(_ts, monitor::monitorTime, this, nullptr);
-	checkPetscError(
-		ierr, "setupPetsc3DMonitor: TSMonitorSet (monitorTime) failed.");
+	PetscCallVoid(TSMonitorSet(_ts, monitor::monitorTime, this, nullptr));
 }
 
 PetscErrorCode
@@ -603,7 +558,6 @@ PetscMonitor3D::monitorLargest(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	// Initial declaration
-	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
@@ -611,12 +565,10 @@ PetscMonitor3D::monitorLargest(
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecGetArrayDOF(da, solution, &solutionArray));
 
 	// Get the local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
@@ -630,8 +582,7 @@ PetscMonitor3D::monitorLargest(
 				gridPointSolution = solutionArray[k][j][i];
 				// Check the concentration
 				if (gridPointSolution[_largestClusterId] > _largestThreshold) {
-					ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
-					CHKERRQ(ierr);
+					PetscCall(TSSetConvergedReason(ts, TS_CONVERGED_USER));
 					// Send an error
 					throw std::runtime_error(
 						"\nxolotlSolver::Monitor3D: The largest "
@@ -640,8 +591,7 @@ PetscMonitor3D::monitorLargest(
 			}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecRestoreArrayDOF(da, solution, &solutionArray));
 
 	PetscFunctionReturn(0);
 }
@@ -651,7 +601,6 @@ PetscMonitor3D::startStop(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	// Initial declarations
-	PetscErrorCode ierr;
 	const double ****solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
@@ -680,12 +629,10 @@ PetscMonitor3D::startStop(
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
 
 	// Get the network and dof
 	auto& network = _solverHandler->getNetwork();
@@ -712,14 +659,23 @@ PetscMonitor3D::startStop(
 
 	// Get the current time step
 	double currentTimeStep;
-	ierr = TSGetTimeStep(ts, &currentTimeStep);
-	CHKERRQ(ierr);
+	PetscCall(TSGetTimeStep(ts, &currentTimeStep));
 
 	// Add a concentration sub group
 	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
 	assert(concGroup);
 	auto tsGroup = concGroup->addTimestepGroup(
 		_loopNumber, timestep, time, previousTime, currentTimeStep);
+
+	// Get the physical grid
+	auto grid = _solverHandler->getXGrid();
+	// Write it in the file
+	tsGroup->writeGrid(grid);
+
+	// Save the fluence
+	auto fluxHandler = _solverHandler->getFluxHandler();
+	auto fluence = fluxHandler->getFluence();
+	tsGroup->writeFluence(fluence);
 
 	// Get the names of the species in the network
 	auto numSpecies = network.getSpeciesListSize();
@@ -799,8 +755,7 @@ PetscMonitor3D::startStop(
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
 
 	PetscFunctionReturn(0);
 }
@@ -810,7 +765,6 @@ PetscMonitor3D::computeHeliumRetention(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	// Initial declarations
-	PetscErrorCode ierr;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
@@ -825,8 +779,7 @@ PetscMonitor3D::computeHeliumRetention(
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 
 	// Get the physical grid in the x direction
 	auto grid = _solverHandler->getXGrid();
@@ -842,8 +795,7 @@ PetscMonitor3D::computeHeliumRetention(
 
 	// Get the array of concentration
 	double ****solutionArray, *gridPointSolution;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
 
 	// Store the concentration over the grid
 	auto numSpecies = network.getSpeciesListSize();
@@ -1087,10 +1039,9 @@ PetscMonitor3D::computeHeliumRetention(
 	if (procId == 0) {
 		// Get the total size of the grid rescale the concentrations
 		PetscInt Mx, My, Mz;
-		ierr = DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
+		PetscCall(DMDAGetInfo(da, PETSC_IGNORE, &Mx, &My, &Mz, PETSC_IGNORE,
 			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE,
-			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE);
-		CHKERRQ(ierr);
+			PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE, PETSC_IGNORE));
 
 		// Compute the total surface irradiated by the helium flux
 		double surface = (double)(My * Mz) * hy * hz;
@@ -1172,8 +1123,7 @@ PetscMonitor3D::computeHeliumRetention(
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
 
 	PetscFunctionReturn(0);
 }
@@ -1183,7 +1133,6 @@ PetscMonitor3D::computeXenonRetention(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	// Initial declarations
-	PetscErrorCode ierr;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
@@ -1193,8 +1142,7 @@ PetscMonitor3D::computeXenonRetention(
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 
 	// Get the physical grid
 	auto grid = _solverHandler->getXGrid();
@@ -1213,16 +1161,12 @@ PetscMonitor3D::computeXenonRetention(
 
 	// Get the complete data array, including ghost cells
 	Vec localSolution;
-	ierr = DMGetLocalVector(da, &localSolution);
-	CHKERRQ(ierr);
-	ierr = DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution);
-	CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution);
-	CHKERRQ(ierr);
+	PetscCall(DMGetLocalVector(da, &localSolution));
+	PetscCall(DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution));
+	PetscCall(DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution));
 	// Get the array of concentration
 	PetscReal ****solutionArray, *gridPointSolution;
-	ierr = DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray));
 
 	// Store the concentration and other values over the grid
 	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
@@ -1457,10 +1401,8 @@ PetscMonitor3D::computeXenonRetention(
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray);
-	CHKERRQ(ierr);
-	ierr = DMRestoreLocalVector(da, &localSolution);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray));
+	PetscCall(DMRestoreLocalVector(da, &localSolution));
 
 	PetscFunctionReturn(0);
 }
@@ -1470,7 +1412,6 @@ PetscMonitor3D::eventFunction(
 	TS ts, PetscReal time, Vec solution, PetscScalar* fvalue)
 {
 	// Initial declaration
-	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
@@ -1480,7 +1421,7 @@ PetscMonitor3D::eventFunction(
 	_depthPositions.clear();
 
 	PetscInt tsNumber = -1;
-	ierr = TSGetStepNumber(ts, &tsNumber);
+	PetscCall(TSGetStepNumber(ts, &tsNumber));
 
 	// Skip if it is the same TS as before
 	if (tsNumber == _previousTSNumber)
@@ -1496,12 +1437,10 @@ PetscMonitor3D::eventFunction(
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
 
 	// Get local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
@@ -1629,8 +1568,7 @@ PetscMonitor3D::eventFunction(
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
 
 	PetscFunctionReturn(0);
 }
@@ -1640,7 +1578,6 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	PetscReal time, Vec solution, PetscBool)
 {
 	// Initial declaration
-	PetscErrorCode ierr;
 	double ****solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
@@ -1657,12 +1594,10 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOF(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecGetArrayDOF(da, solution, &solutionArray));
 
 	// Get local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
@@ -1691,8 +1626,7 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Skip if nothing is moving
 	if (!moving) {
 		// Restore the solutionArray
-		ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
-		CHKERRQ(ierr);
+		PetscCall(DMDAVecRestoreArrayDOF(da, solution, &solutionArray));
 
 		PetscFunctionReturn(0);
 	}
@@ -1729,8 +1663,7 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 				// Throw an exception if the position is negative
 				if (surfacePos + _solverHandler->getLeftOffset() < 2) {
 					_solverHandler->setSurfaceOffset(nGridPoints);
-					ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
-					CHKERRQ(ierr);
+					PetscCall(TSSetConvergedReason(ts, TS_CONVERGED_USER));
 					PetscFunctionReturn(0);
 				}
 
@@ -1834,8 +1767,7 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		}
 	if (minSurf > 0) {
 		_solverHandler->setSurfaceOffset(minSurf);
-		ierr = TSSetConvergedReason(ts, TS_CONVERGED_USER);
-		CHKERRQ(ierr);
+		PetscCall(TSSetConvergedReason(ts, TS_CONVERGED_USER));
 		PetscFunctionReturn(0);
 	}
 
@@ -1859,8 +1791,7 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOF(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecRestoreArrayDOF(da, solution, &solutionArray));
 
 	PetscFunctionReturn(0);
 }
@@ -1870,7 +1801,6 @@ PetscMonitor3D::monitorSurfaceXY(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	// Initial declarations
-	PetscErrorCode ierr;
 	const double ****solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 	double x, y;
@@ -1888,12 +1818,10 @@ PetscMonitor3D::monitorSurfaceXY(
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
 
 	// Get local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
@@ -1974,8 +1902,7 @@ PetscMonitor3D::monitorSurfaceXY(
 		_surfacePlotXY->plotLabelProvider->timeLabel = timeLabel.str();
 		// Get the current time step
 		PetscReal currentTimeStep;
-		ierr = TSGetTimeStep(ts, &currentTimeStep);
-		CHKERRQ(ierr);
+		PetscCall(TSGetTimeStep(ts, &currentTimeStep));
 		// Give the timestep to the label provider
 		std::stringstream timeStepLabel;
 		timeStepLabel << "dt: " << std::setprecision(4) << currentTimeStep
@@ -1989,8 +1916,7 @@ PetscMonitor3D::monitorSurfaceXY(
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
 
 	PetscFunctionReturn(0);
 }
@@ -2000,7 +1926,6 @@ PetscMonitor3D::monitorSurfaceXZ(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	// Initial declarations
-	PetscErrorCode ierr;
 	const double ****solutionArray, *gridPointSolution;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 	double x, z;
@@ -2018,12 +1943,10 @@ PetscMonitor3D::monitorSurfaceXZ(
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 
 	// Get the solutionArray
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
 
 	// Get local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
@@ -2104,8 +2027,7 @@ PetscMonitor3D::monitorSurfaceXZ(
 		_surfacePlotXZ->plotLabelProvider->timeLabel = timeLabel.str();
 		// Get the current time step
 		PetscReal currentTimeStep;
-		ierr = TSGetTimeStep(ts, &currentTimeStep);
-		CHKERRQ(ierr);
+		PetscCall(TSGetTimeStep(ts, &currentTimeStep));
 		// Give the timestep to the label provider
 		std::stringstream timeStepLabel;
 		timeStepLabel << "dt: " << std::setprecision(4) << currentTimeStep
@@ -2119,8 +2041,7 @@ PetscMonitor3D::monitorSurfaceXZ(
 	}
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
 
 	PetscFunctionReturn(0);
 }

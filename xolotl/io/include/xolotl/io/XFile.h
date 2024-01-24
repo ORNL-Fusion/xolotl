@@ -155,6 +155,14 @@ public:
 			int nz = 0, double hz = 0.0) const;
 
 		/**
+		 * Save the fluence information to our timestep group.
+		 *
+		 * @param fluence The vector of fluences
+		 */
+		void
+		writeFluence(const std::vector<double>& fluence) const;
+
+		/**
 		 * Save the surface positions to our timestep group.
 		 *
 		 * @param nAtoms The quantity of atoms at the surface
@@ -321,6 +329,14 @@ public:
 		 */
 		std::vector<double>
 		readGrid() const;
+
+		/**
+		 * Read the fluences.
+		 *
+		 * @return The fluences
+		 */
+		std::vector<double>
+		readFluence() const;
 
 		/**
 		 * Read the surface position from our concentration group in

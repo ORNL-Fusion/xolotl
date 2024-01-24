@@ -70,10 +70,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 3);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 1);
 
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 100);
-
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
 	NetworkType::SparseFillMap knownDFill;
@@ -473,7 +469,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	// Check the left side rate of 0th cluster
 	BOOST_REQUIRE_CLOSE(
-		network.getLeftSideRate(dConcs, 0, gridId), 90972182875121.7, 0.01);
+		network.getLeftSideRate(dConcs, 0, gridId), 90972182875121, 0.01);
 
 	// Create a flux vector where every field is at 0.0
 	std::vector<double> fluxes(dof + 1, 0.0);
@@ -1481,10 +1477,6 @@ BOOST_AUTO_TEST_CASE(grouped)
 
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 3);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 1);
-
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 152);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();

@@ -10,6 +10,7 @@
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
 
 using namespace std;
@@ -69,79 +70,76 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	// Create the diffusion handler
 	SoretDiffusionHandler soretHandler;
 
-	// Create ofill
-	network::IReactionNetwork::SparseFillMap ofill;
-	network::IReactionNetwork::SparseFillMap dfill;
+	// Create coordinate entries list
+	std::vector<RowColPair> soretEntries;
 
 	// Initialize it
-	soretHandler.initialize(network, ofill, dfill, grid, 0);
+	soretHandler.initialize(network, soretEntries, grid, 0);
 
 	// Test which cluster diffuses
-	BOOST_REQUIRE_EQUAL(ofill[0][0], 1); // He_1
-	BOOST_REQUIRE_EQUAL(dfill[0][0], 1); // He_1
+	BOOST_REQUIRE_EQUAL(soretEntries.size(), 1);
+	BOOST_REQUIRE_EQUAL(soretEntries[0][0], 0);
+	BOOST_REQUIRE_EQUAL(soretEntries[0][1], 1);
 
 	// The size parameter in the x direction
 	double hx = 1.0;
 
 	// The arrays of concentration
-	double concentration[3 * dof];
-	double newConcentration[3 * dof];
+	test::DOFView concentration("concentration", 3, dof);
+	test::DOFView newConcentration("newConcentration", 3, dof);
 
 	// Initialize their values
-	for (int i = 0; i < 3 * dof; i++) {
-		concentration[i] = (double)i * i;
-		newConcentration[i] = 0.0;
-	}
+	Kokkos::parallel_for(
+		Kokkos::MDRangePolicy<Kokkos::Rank<2>>({0, 0}, {3, dof}),
+		KOKKOS_LAMBDA(int i, int n) {
+			auto id = static_cast<double>(i * dof + n);
+			concentration(i, n) = id * id;
+		});
 
 	// Set the temperatures
 	network.setTemperatures(temperatures, grid);
 
-	// Get pointers
-	double* conc = &concentration[0];
-	double* updatedConc = &newConcentration[0];
-
 	// Get the offset for the grid point in the middle
 	// Supposing the 3 grid points are laid-out as follow:
 	// 0 | 1 | 2
-	double* concOffset = conc + dof;
-	double* updatedConcOffset = updatedConc + dof;
+	auto concOffset = subview(concentration, 1, Kokkos::ALL);
+	auto updatedConcOffset = subview(newConcentration, 1, Kokkos::ALL);
 
 	// Fill the concVector with the pointer to the middle, left, and right grid
 	// points
-	double* concVector[3]{};
+	using ConcSubView = Kokkos::View<const double*>;
+	Kokkos::Array<ConcSubView, 3> concVector;
 	concVector[0] = concOffset; // middle
-	concVector[1] = conc; // left
-	concVector[2] = conc + 2 * dof; // right
+	concVector[1] = subview(concentration, 0, Kokkos::ALL); // left
+	concVector[2] = subview(concentration, 2, Kokkos::ALL); // right
 
 	// Compute the diffusion at this grid point
-	soretHandler.computeDiffusion(
-		network, concVector, updatedConcOffset, hx, hx, 1);
+	soretHandler.computeDiffusion(network,
+		core::StencilConcArray{concVector.data(), 3}, updatedConcOffset, hx, hx,
+		1);
 
 	// Check the new values of updatedConcOffset
-	BOOST_REQUIRE_CLOSE(updatedConcOffset[0], 27632823604, 0.01);
+	auto hUpdatedConcOffset =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
+	BOOST_REQUIRE_CLOSE(hUpdatedConcOffset[0], 27632823604, 0.01);
 
 	// Initialize the indices and values to set in the Jacobian
 	int nDiff = 1;
-	IdType indices[nDiff];
-	double val[3 * nDiff];
-	// Get the pointer on them for the compute diffusion method
-	IdType* indicesPointer = &indices[0];
-	double* valPointer = &val[0];
+	Kokkos::View<double*> values("values", 3 * nDiff);
 
 	// Compute the partial derivatives for the diffusion a the grid point 1
-	auto valid = soretHandler.computePartialsForDiffusion(
-		network, concVector, valPointer, indicesPointer, hx, hx, 0);
+	auto valid = soretHandler.computePartialsForDiffusion(network,
+		core::StencilConcArray{concVector.data(), 3}, values, hx, hx, 0);
+
+	auto hVals = create_mirror_view_and_copy(Kokkos::HostSpace{}, values);
 
 	// Check the values for the indices
 	BOOST_REQUIRE_EQUAL(valid, true);
 
-	// Check the values for the indices
-	BOOST_REQUIRE_EQUAL(indices[0], 0);
-
 	// Check some values
-	BOOST_REQUIRE_CLOSE(val[0], -1523706589, 0.01);
-	BOOST_REQUIRE_CLOSE(val[1], -8153185774, 0.01);
-	BOOST_REQUIRE_CLOSE(val[2], 8153185774, 0.01);
+	BOOST_REQUIRE_CLOSE(hVals[0], -1523706589, 0.01);
+	BOOST_REQUIRE_CLOSE(hVals[1], -8153185774, 0.01);
+	BOOST_REQUIRE_CLOSE(hVals[2], 8153185774, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

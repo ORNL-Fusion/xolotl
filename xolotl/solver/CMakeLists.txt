@@ -43,13 +43,14 @@ add_library(xolotlSolver SHARED
     ${XOLOTL_SOLVER_HEADERS}
 )
 target_link_libraries(xolotlSolver PUBLIC
+    Kokkos::kokkos
+    PETSc
     xolotlCore
     xolotlIO
     xolotlOptions
     xolotlFactory
     xolotlPerf
     xolotlViz
-    PETSc
 )
 target_include_directories(xolotlSolver PUBLIC
     $<BUILD_INTERFACE:${XOLOTL_SOLVER_INCLUDE_DIR}>

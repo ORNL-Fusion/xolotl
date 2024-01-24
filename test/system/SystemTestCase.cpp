@@ -276,6 +276,19 @@ SystemTestCase::SystemTestCase(const std::string& caseName) :
 }
 
 bool
+SystemTestCase::checkMPILimits() const
+{
+	auto commSize = getMPICommSize();
+	if (commSize < _mpiLimits[0]) {
+		return false;
+	}
+	if (-1 < _mpiLimits[1] && _mpiLimits[1] < commSize) {
+		return false;
+	}
+	return true;
+}
+
+bool
 SystemTestCase::runXolotl() const
 {
 	// Redirect console output
@@ -320,20 +333,37 @@ SystemTestCase::checkOutput(const std::string& outputFileName,
 void
 SystemTestCase::run() const
 {
+	if (!checkMPILimits()) {
+		if (getMPIRank() == 0) {
+			std::cout << "\nSkipping " << _caseName << std::endl;
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		return;
+	}
+
 	{
 		ScopedTimer timer{_caseName, _enableTimer};
 		BOOST_REQUIRE(runXolotl());
 	}
 
-	if (getMPIRank() == 0) {
+	auto rank = getMPIRank();
+	auto perfFileName = "perf_r" + std::to_string(rank) + ".yaml";
+	auto cwd = xolotl::fs::current_path();
+	if (exists(cwd / perfFileName)) {
+		auto newPerfFileName = _caseName + "_" + perfFileName;
+		xolotl::fs::rename(cwd / perfFileName, cwd / newPerfFileName);
+	}
+
+	if (rank == 0) {
+		auto newFilePath = cwd / (_caseName + "_" + _outputFileName);
+		xolotl::fs::rename(cwd / _outputFileName, newFilePath);
+		auto approveFileName = _dataDir + "/output/" + _caseName + ".txt";
 		if (_approve) {
-			xolotl::fs::copy_file("./" + _outputFileName,
-				_dataDir + "/output/" + _caseName + ".txt",
+			xolotl::fs::copy_file(newFilePath, approveFileName,
 				xolotl::fs::copy_options::overwrite_existing);
 		}
 		else {
-			checkOutput("./" + _outputFileName,
-				_dataDir + "/output/" + _caseName + ".txt");
+			checkOutput(newFilePath.string(), approveFileName);
 		}
 	}
 }

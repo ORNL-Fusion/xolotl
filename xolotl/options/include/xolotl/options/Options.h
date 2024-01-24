@@ -174,6 +174,11 @@ protected:
 	int maxV;
 
 	/**
+	 * Maximum number of pure V
+	 */
+	int maxPureV;
+
+	/**
 	 * Maximum number of I
 	 */
 	int maxI;
@@ -188,6 +193,11 @@ protected:
 	 * String of the list of wanted BC in X.
 	 */
 	std::string xBC;
+
+	/**
+	 * Portion of heat lost in the bulk.
+	 */
+	double heatLossPortion;
 
 	/**
 	 * Depth for the bubble bursting in nm.
@@ -275,6 +285,26 @@ protected:
 	 * The path to the custom flux profile file
 	 */
 	fs::path fluxDepthProfileFilePath;
+
+	/**
+	 * Value of the basal portion.
+	 */
+	double basalPortion;
+
+	/**
+	 * Transition size, for instance from pyramic to c-loops.
+	 */
+	int transitionSize;
+
+	/**
+	 * Value of the cascade dose.
+	 */
+	double cascadeDose;
+
+	/**
+	 * Value of the remaining cascade efficiency.
+	 */
+	double cascadeEfficiency;
 
 public:
 	/**
@@ -594,6 +624,15 @@ public:
 	 * \see IOptions.h
 	 */
 	int
+	getMaxPureV() const override
+	{
+		return maxPureV;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
 	getMaxI() const override
 	{
 		return maxI;
@@ -640,6 +679,15 @@ public:
 	getBCString() const override
 	{
 		return xBC;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	double
+	getHeatLossPortion() const override
+	{
+		return heatLossPortion;
 	}
 
 	/**
@@ -794,6 +842,42 @@ public:
 	getFluxDepthProfileFilePath() const override
 	{
 		return fluxDepthProfileFilePath.string();
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getBasalPortion() const override
+	{
+		return basalPortion;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
+	getTransitionSize() const override
+	{
+		return transitionSize;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getCascadeDose() const override
+	{
+		return cascadeDose;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getCascadeEfficiency() const override
+	{
+		return cascadeEfficiency;
 	}
 };
 // end class Options

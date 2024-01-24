@@ -47,6 +47,7 @@ Options::Options() :
 	maxD(0),
 	maxT(0),
 	maxV(20),
+	maxPureV(20),
 	maxI(6),
 	leftBoundary(1),
 	rightBoundary(1),
@@ -55,6 +56,7 @@ Options::Options() :
 	frontBoundary(1),
 	backBoundary(1),
 	xBC("mirror"),
+	heatLossPortion(-1.0),
 	burstingDepth(10.0),
 	burstingFactor(0.1),
 	rngUseSeed(false),
@@ -70,7 +72,11 @@ Options::Options() :
 	hydrogenFactor(0.25),
 	xenonDiffusivity(-1.0),
 	fissionYield(0.25),
-	migrationThreshold(std::numeric_limits<double>::infinity())
+	migrationThreshold(std::numeric_limits<double>::infinity()),
+	basalPortion(0.1),
+	transitionSize(325),
+	cascadeDose(-1.0),
+	cascadeEfficiency(0.0)
 {
 	return;
 }
@@ -196,7 +202,7 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"This option allows the user to define the boundaries of the network. "
 		"To do so, simply write the values in order "
-		"maxHe/Xe/Basal maxD maxT maxV maxI.")("radiusSize",
+		"maxHe/Xe/Basal maxD maxT maxV maxI maxPureV.")("radiusSize",
 		bpo::value<std::string>(),
 		"This option allows the user to set a minimum size for the computation "
 		"for the average radii, in the same order as the netParam option "
@@ -208,8 +214,10 @@ Options::readParams(int argc, const char* argv[])
 		"0 means mirror or periodic, 1 means free surface.")("xBCType",
 		bpo::value<std::string>(&xBC),
 		"The boundary conditions to use in the X direction, mirror (default), "
-		"periodic, or robin (for temperature).")("burstingDepth",
-		bpo::value<double>(&burstingDepth),
+		"periodic, or robin (for temperature).")("heatLossPortion",
+		bpo::value<double>(&heatLossPortion),
+		"The portion of heat lost in the bulk (-1.0 by default).")(
+		"burstingDepth", bpo::value<double>(&burstingDepth),
 		"The depth (in nm) after which there is an exponential decrease in the "
 		"probability of bursting (10.0 nm if nothing is specified).")(
 		"burstingFactor", bpo::value<double>(&burstingFactor),
@@ -244,7 +252,22 @@ Options::readParams(int argc, const char* argv[])
 		"ignored.")("fluxDepthProfileFilePath",
 		bpo::value<fs::path>(&fluxDepthProfileFilePath),
 		"The path to the custom flux profile file; the default is an empty "
-		"string that will use the default material associated flux handler.");
+		"string that will use the default material associated flux handler.")(
+		"basalPortion", bpo::value<double>(&basalPortion)->default_value(0.1),
+		"The value of the basal portion generated for each V (0.1 by "
+		"default).")("transitionSize",
+		bpo::value<int>(&transitionSize)->default_value(325),
+		"The value for the transition within a type of cluster, for instance "
+		"basal (325 by "
+		"default).")("cascadeDose",
+		bpo::value<double>(&cascadeDose)->default_value(-1.0),
+		"The value of the dose at which the cascade overlap effect takes "
+		"effect, if negative there won't be an effect (-1.0 by "
+		"default).")("cascadeEfficiency",
+		bpo::value<double>(&cascadeEfficiency)->default_value(0.0),
+		"The value of the remaining efficiency once the overlap effect started "
+		"(0.0 by "
+		"default).");
 
 	bpo::options_description visible("Allowed options");
 	visible.add(desc).add(config);
@@ -438,6 +461,12 @@ Options::readParams(int argc, const char* argv[])
 			maxV = strtol(tokens[3].c_str(), NULL, 10);
 			// Set the interstitial size
 			maxI = strtol(tokens[4].c_str(), NULL, 10);
+			if (tokens.size() > 5) {
+				// Set the pure V size
+				maxPureV = strtol(tokens[5].c_str(), NULL, 10);
+			}
+			else
+				maxPureV = maxV;
 		}
 	}
 

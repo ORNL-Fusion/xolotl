@@ -155,6 +155,7 @@ private:
 		BUBBLE = 0,
 		AV_HELIUM,
 		AV_VACANCY,
+		TRANSITION_SIZE,
 		NUM_INT_VALS
 	};
 
@@ -349,6 +350,18 @@ public:
 	setFBursting(double val)
 	{
 		setVal(_floatVals, F_BURSTING, val);
+	}
+
+	int
+	transitionSize() const
+	{
+		return _intVals[TRANSITION_SIZE];
+	}
+
+	void
+	setTransitionSize(int val)
+	{
+		setVal(_intVals, TRANSITION_SIZE, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

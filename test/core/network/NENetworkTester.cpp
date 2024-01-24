@@ -65,10 +65,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 1);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 1);
 
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE(vacancy.getId() == network.invalidIndex());
-
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
 	NetworkType::SparseFillMap knownDFill;
