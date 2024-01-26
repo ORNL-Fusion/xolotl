@@ -213,10 +213,6 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 			be = prod1.getFormationEnergy() + prod2.getFormationEnergy() -
 				cl.getFormationEnergy();
 		}
-
-		//		std::cout << comp[Species::He] << " " << comp[Species::V] << " "
-		//<< be << " " << this->_products[0] << " " << lowerV << " " << higherV
-		//<< std::endl;
 	}
 
 	return util::max(be, -5.0);
