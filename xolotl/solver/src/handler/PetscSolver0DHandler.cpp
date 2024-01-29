@@ -319,12 +319,6 @@ PetscSolver0DHandler::computeJacobian(
 	// moments
 	const auto dof = network.getDOF();
 
-	// Arguments for MatSetValuesStencil called below
-	MatStencil rowId;
-	MatStencil colIds[dof];
-	MatStencil colId;
-	IdType pdColIdsVectorSize = 0;
-
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
