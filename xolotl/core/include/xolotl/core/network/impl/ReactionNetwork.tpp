@@ -50,6 +50,9 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 		_clusterData.h_view().setTransitionSizeV(transitionSizes[0]);
 	if (transitionSizes.size() > 1)
 		_clusterData.h_view().setTransitionSizeI(transitionSizes[1]);
+	if (transitionSizes.size() == 1)
+		_clusterData.h_view().setTransitionSizeI(
+			(IndexType)(transitionSizes[0] * 0.9));
 	auto map = opts.getProcesses();
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);

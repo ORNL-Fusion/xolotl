@@ -162,20 +162,20 @@ AlloyDissociationReaction::computeBindingEnergy(double time)
 		/// 3.0) - pow(n, 2.0 / 3.0));
 		//		}
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.1 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
+			be = 1.0 - 3.1 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
 		}
 	}
 	else if (lo.isOnAxis(Species::FaultedV)) {
 		double n =
 			(double)(lo[Species::FaultedV] + hi[Species::FaultedV] - 1) * 0.5;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.2 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
+			be = 1.0 - 3.2 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
 		}
 	}
 	else if (lo.isOnAxis(Species::V)) {
 		double n = (double)(lo[Species::V] + hi[Species::V] - 1) * 0.5;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.9 - 3.1 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
+			be = 1.0 - 3.1 * (cbrt(n * n) - cbrt((n - 1.0) * (n - 1.0)));
 		}
 	}
 	//	else if (lo.isOnAxis(Species::I)) {
