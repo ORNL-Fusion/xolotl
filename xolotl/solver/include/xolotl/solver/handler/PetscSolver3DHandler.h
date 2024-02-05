@@ -114,6 +114,25 @@ public:
 	}
 
 	/**
+	.* \see ISolverHandler.h
+	 */
+	void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths)
+	{
+		temperatures = temperature;
+		for (auto i = 0; i < temperature.size(); i++) {
+			if (localXS + i == nX + 1)
+				depths.push_back(grid[localXS + i] -
+					grid[surfacePosition[localYS][localZS] + 1]);
+			else
+				depths.push_back(
+					(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+					grid[surfacePosition[localYS][localZS] + 1]);
+		}
+	}
+
+	/**
 	 * \see ISolverHandler.h
 	 */
 	void

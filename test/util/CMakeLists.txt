@@ -1,4 +1,6 @@
 set(tests
+    StepSequenceTester.cpp
+    TimeStepperTester.cpp
     TokenizerTester.cpp
 )
 

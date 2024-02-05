@@ -74,6 +74,41 @@ protected:
 	bool perfOutputYAMLFlag;
 
 	/**
+	 * Enable multiple xolotl instances
+	 */
+	bool subnetworksFlag;
+
+	/**
+	 * Initial coupling timestep
+	 */
+	double initialTimeStep;
+
+	/**
+	 * Maximum coupling timestep
+	 */
+	double maxTimeStep;
+
+	/**
+	 * Time step growth factor
+	 */
+	double timeStepGrowthFactor;
+
+	/**
+	 * Coupling start time
+	 */
+	double startTime;
+
+	/**
+	 * Coupling end time
+	 */
+	double endTime;
+
+	/**
+	 * Maximum coupling time steps
+	 */
+	IdType numTimeSteps;
+
+	/**
 	 * Name of the viz handler
 	 */
 	std::string vizHandlerName;
@@ -152,6 +187,11 @@ protected:
 	 * Use a HDF5 file?
 	 */
 	bool useHDF5Flag;
+
+	/**
+	 * Network parameters
+	 */
+	std::vector<IdType> networkParams;
 
 	/**
 	 * Maximum number of He or Xe
@@ -321,6 +361,12 @@ public:
 	 * The destructor.
 	 */
 	~Options();
+
+	/**
+	 * \see IOptions.h
+	 */
+	std::shared_ptr<IOptions>
+	makeCopy() const override;
 
 	/**
 	 * \see IOptions.h
@@ -535,6 +581,72 @@ public:
 		return processMap;
 	}
 
+	void
+	addProcess(const std::string& processKey) override;
+
+	/**
+	 * \see IOptions.h
+	 */
+	bool
+	useSubnetworks() const override
+	{
+		return subnetworksFlag;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getInitialTimeStep() const override
+	{
+		return initialTimeStep;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getMaxTimeStep() const override
+	{
+		return maxTimeStep;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getTimeStepGrowthFactor() const override
+	{
+		return timeStepGrowthFactor;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getStartTime() const override
+	{
+		return startTime;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getEndTime() const override
+	{
+		return endTime;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual IdType
+	getNumberOfTimeSteps() const override
+	{
+		return numTimeSteps;
+	}
+
 	/**
 	 * \see IOptions.h
 	 */
@@ -588,6 +700,21 @@ public:
 	{
 		return useHDF5Flag;
 	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	const std::vector<IdType>&
+	getNetworkParameters() const override
+	{
+		return networkParams;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	void
+	setNetworkParameters(const std::vector<IdType>& params) override;
 
 	/**
 	 * \see IOptions.h

@@ -47,6 +47,7 @@ using Unmanaged = typename UnmanagedHelper<TView>::Type;
 template <typename TNetwork, typename MemSpace>
 struct ClusterDataExtra
 {
+	using IndexType = detail::ReactionNetworkIndexType;
 	static_assert(Kokkos::is_memory_space<MemSpace>{});
 
 	ClusterDataExtra() = default;
@@ -68,6 +69,9 @@ struct ClusterDataExtra
 	{
 		return 0;
 	}
+
+	void
+	setGridSize(IndexType numClusters, IndexType gridSize){};
 };
 
 /**

@@ -20,20 +20,6 @@ namespace solver
 {
 namespace monitor
 {
-/**
- * This is a monitoring method that will compute average density and diameter
- * of defects.
- */
-PetscErrorCode
-computeAlphaZr(
-	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
-{
-	PetscFunctionBeginUser;
-	PetscCall(static_cast<PetscMonitor0D*>(ictx)->computeAlphaZr(
-		ts, timestep, time, solution));
-	PetscFunctionReturn(0);
-}
-
 PetscErrorCode
 monitorBubble(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)

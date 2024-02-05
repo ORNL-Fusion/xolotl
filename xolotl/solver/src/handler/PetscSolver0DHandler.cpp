@@ -63,6 +63,9 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, Mat& J)
 	// Initialize the temperature handler
 	temperatureHandler->initialize(dof);
 
+	// Tell the network the number of grid points on this process
+	network.setGridSize(1);
+
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
 
@@ -272,9 +275,6 @@ PetscSolver0DHandler::updateConcentration(
 	// moments
 	const auto dof = network.getDOF();
 
-	// Update the time in the network
-	network.setTime(ftime);
-
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);
 	double temp = temperatureHandler->getTemperature(gridPosition, ftime);
@@ -321,9 +321,6 @@ PetscSolver0DHandler::computeJacobian(
 
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
-
-	// Update the time in the network
-	network.setTime(ftime);
 
 	// Get the temperature from the temperature handler
 	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
