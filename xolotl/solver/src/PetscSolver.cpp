@@ -108,7 +108,7 @@ PetscErrorCode
 RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void* ctx)
 {
 	PetscFunctionBeginUser;
-    auto solver = static_cast<PetscSolver*>(ctx);
+	auto solver = static_cast<PetscSolver*>(ctx);
 	PetscCall(solver->rhsJacobian(ts, ftime, C, A, J));
 	PetscFunctionReturn(0);
 }
@@ -204,9 +204,9 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create and set up Jacobian matrix
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    Mat J;
-    PetscCallVoid(DMSetMatrixPreallocateSkip(da, PETSC_TRUE));
-    PetscCallVoid(DMCreateMatrix(da, &J));
+	Mat J;
+	PetscCallVoid(DMSetMatrixPreallocateSkip(da, PETSC_TRUE));
+	PetscCallVoid(DMCreateMatrix(da, &J));
 	this->solverHandler->initializeSolverContext(da, J);
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -222,7 +222,6 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	PetscCallVoid(TSSetRHSFunction(ts, nullptr, RHSFunction, this));
 	PetscCallVoid(TSSetRHSJacobian(ts, J, J, RHSJacobian, this));
 	PetscCallVoid(TSSetSolution(ts, C));
-
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = this->solverHandler->getNetworkName();
