@@ -8,6 +8,7 @@
 #include <xolotl/core/network/FeReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
+#include <xolotl/options/ConfOptions.h>
 
 using namespace std;
 using namespace xolotl::core;
@@ -40,7 +41,7 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(defaut_constructor, T, network_types)
 		maxSpeciesAmounts.push_back(1);
 	}
 	NetworkType network =
-		NetworkType(maxSpeciesAmounts, 1, xolotl::options::Options{});
+		NetworkType(maxSpeciesAmounts, 1, xolotl::options::ConfOptions{});
 
 	BOOST_REQUIRE(network.getNumClusters() > 0);
 	BOOST_REQUIRE(network.getDOF() > 0);

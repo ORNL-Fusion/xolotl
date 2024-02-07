@@ -365,18 +365,6 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
-	std::shared_ptr<IOptions>
-	makeCopy() const override;
-
-	/**
-	 * \see IOptions.h
-	 */
-	void
-	readParams(int argc, const char* argv[]) override;
-
-	/**
-	 * \see IOptions.h
-	 */
 	std::string
 	getNetworkFilename() const override
 	{
@@ -1020,7 +1008,58 @@ public:
 	{
 		return cascadeEfficiency;
 	}
+
+protected:
+	void
+	setNetworkParameters(const std::string& paramStr);
+
+	void
+	setTempParam(const std::string& paramStr);
+
+	void
+	checkTempProfileFilename() const;
+
+	void
+	checkFluxTimeProfileFilename() const;
+
+	void
+	checkPerfHandlerName() const;
+
+	void
+	checkVizHandlerName() const;
+
+	void
+	setGridParam(const std::string& paramStr);
+
+	void
+	checkGridFilename() const;
+
+	void
+	setRadiusMinSizes(const std::string& paramStr);
+
+	void
+	setBoundaries(const std::string& paramStr);
+
+	void
+	processRNGParam(const std::string& paramStr);
+
+	void
+	setProcesses(const std::string& processList);
+
+	void
+	setCouplingTimeStepParams(const std::string& paramString);
+
+	void
+	setPulseParams(const std::string& paramStr);
+
+	void
+	setGroupingParams(const std::string& paramString);
+
+	void
+	appendPetscArg(const std::string& arg);
 };
-// end class Options
+
+std::shared_ptr<IOptions>
+createOptions(int argc, const char* argv[]);
 } /* namespace options */
 } /* namespace xolotl */

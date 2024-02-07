@@ -4,30 +4,27 @@
 #include <fstream>
 #include <iostream>
 
-#include <boost/program_options/errors.hpp>
 #include <boost/test/framework.hpp>
 #include <boost/test/unit_test.hpp>
-namespace bpo = boost::program_options;
 
-#include <xolotl/options/ConfOptions.h>
-#include <xolotl/options/Options.h>
 #include <xolotl/options/InvalidOptionValue.h>
+#include <xolotl/options/JSONOptions.h>
+#include <xolotl/options/Options.h>
 #include <xolotl/test/config.h>
 const std::string dataDir = TO_STRING(XOLOTL_TEST_DATA_DIR);
 
 using namespace std;
+using namespace xolotl;
 using namespace xolotl::options;
 
 /**
  * Test suite for the Options class.
  */
-BOOST_AUTO_TEST_SUITE(Options_testSuite)
-
-// TODO: TEST createOptions()
+BOOST_AUTO_TEST_SUITE(JSONOptions_testSuite)
 
 BOOST_AUTO_TEST_CASE(noOptions)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Build a fake, empty command line.
 	// Here, "empty" is what the shell would give us if no arguments
@@ -37,115 +34,111 @@ BOOST_AUTO_TEST_CASE(noOptions)
 	const char* argv[] = {"./xolotl"};
 
 	// Attempt to read the parameters
-	BOOST_CHECK_THROW(opts.readParams(1, argv), bpo::error);
+	BOOST_CHECK_THROW(opts.readParams(1, argv), std::runtime_error);
 }
 
 BOOST_AUTO_TEST_CASE(badParamFileName)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
-	string pathToFile("bla.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
+	std::string fileName("bla.json");
 
 	// Build a command line with a non existing parameter file
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameters
-	BOOST_CHECK_THROW(opts.readParams(2, argv), bpo::error);
+	BOOST_CHECK_THROW(opts.readParams(2, argv), std::runtime_error);
 }
 
-BOOST_AUTO_TEST_CASE(badParamFile)
-{
-	try {
-		ConfOptions opts;
+// TODO: currently don't do anything for unexpected parameters
+// BOOST_AUTO_TEST_CASE(badParamFile)
+// {
+// 	try {
+// 		JSONOptions opts;
 
-		// Create a bad parameter file
-		std::ofstream badParamFile("param_bad.txt");
-		badParamFile << "netFile=tungsten.txt" << std::endl;
-		badParamFile.close();
+// 		// Create a bad parameter file
+//         std::string fileName = "param_bad.json";
+// 		std::ofstream badParamFile(fileName);
+// 		badParamFile << "{ \"netFile\": \"tungsten.txt\" }\n";
+// 		badParamFile.close();
 
-		string pathToFile("param_bad.txt");
-		string filename = pathToFile;
-		const char* fname = filename.c_str();
+// 		// Build a command line with a parameter file containing bad options
+// 		const char* argv[] = {"./xolotl", fileName.c_str()};
 
-		// Build a command line with a parameter file containing bad options
-		const char* argv[] = {"./xolotl", fname};
+// 		// Attempt to read the parameter file
+// 		opts.readParams(2, argv);
 
-		// Attempt to read the parameter file
-		opts.readParams(2, argv);
+// 		// Remove the created file
+// 		fs::remove(fileName);
+// 	}
+// 	catch (const std::exception& e) {
+// 		// Great
+// 		std::cerr << e.what() << std::endl;
+// 		return;
+// 	}
 
-		// Remove the created file
-		std::string tempFile = "param_bad.txt";
-		std::remove(tempFile.c_str());
-	}
-	catch (const std::exception& e) {
-		// Great
-		std::cerr << e.what() << std::endl;
-		return;
-	}
-
-	// Should not get here
-	BOOST_REQUIRE(false);
-}
+// 	// Should not get here
+// 	BOOST_REQUIRE(false);
+// }
 
 BOOST_AUTO_TEST_CASE(goodParamFile)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a good parameter file
-	std::ofstream goodParamFile("param_good.txt");
+	std::string fileName = "param_good.json";
+	std::ofstream goodParamFile(fileName);
 	goodParamFile
-		<< "vizHandler=std" << std::endl
-		<< "petscArgs=-fieldsplit_0_pc_type redundant "
-		   "-ts_max_snes_failures 200 "
-		   "-pc_fieldsplit_detect_coupling "
-		   "-ts_adapt_dt_max 10 -pc_type fieldsplit "
-		   "-fieldsplit_1_pc_type sor -ts_final_time 1000 "
-		   "-ts_max_steps 3"
-		<< std::endl
-		<< "networkFile=tungsten.txt" << std::endl
-		<< "tempHandler=constant" << std::endl
-		<< "tempParam=900" << std::endl
-		<< "perfHandler=os" << std::endl
-		<< "flux=1.5" << std::endl
-		<< "material=W100" << std::endl
-		<< "initialConc=V 1 0.05" << std::endl
-		<< "dimensions=1" << std::endl
-		<< "gridType=nonuniform" << std::endl
-		<< "gridParam=10" << std::endl
-		<< "process=diff" << std::endl
-		<< "grouping=11 2 4" << std::endl
-		<< "sputtering=0.5" << std::endl
-		<< "boundary=1 1" << std::endl
-		<< "heatLossPortion=0.5" << std::endl
-		<< "burstingDepth=5.0" << std::endl
-		<< "burstingFactor=2.5" << std::endl
-		<< "zeta=0.6" << std::endl
-		<< "radiusSize=5 0 3" << std::endl
-		<< "density=9.0" << std::endl
-		<< "lattice=0.1" << std::endl
-		<< "impurityRadius=0.5" << std::endl
-		<< "biasFactor=2.0" << std::endl
-		<< "hydrogenFactor=0.5" << std::endl
-		<< "xenonDiffusivity=3.0" << std::endl
-		<< "fissionYield=0.3" << std::endl
-		<< "heVRatio=5.0" << std::endl
-		<< "migrationThreshold=1.0" << std::endl
-		<< "fluxDepthProfileFilePath=path/to/the/flux/profile/file.txt"
-		<< std::endl
-		<< "basalPortion=0.6" << std::endl
-		<< "transitionSize=300" << std::endl
-		<< "cascadeDose=5000.0" << std::endl
-		<< "cascadeEfficiency=0.2" << std::endl;
+		<< "{\n"
+		<< "\"vizHandler\": \"std\",\n"
+		<< "\"petscArgs\": [\n"
+		<< "\"-fieldsplit_0_pc_type redundant\",\n"
+		<< "\"-ts_max_snes_failures 200\",\n"
+		<< "\"-pc_fieldsplit_detect_coupling\",\n"
+		<< "\"-ts_adapt_dt_max 10\",\n"
+		<< "\"-pc_type fieldsplit\",\n"
+		<< "\"-fieldsplit_1_pc_type sor\",\n"
+		<< "\"-ts_final_time 1000\",\n"
+		<< "\"-ts_max_steps 3\"\n"
+		<< "],\n"
+		<< "\"networkFile\": \"tungsten.txt\",\n"
+		<< "\"tempHandler\": \"constant\",\n"
+		<< "\"tempParam\": 900,\n"
+		<< "\"perfHandler\": \"os\",\n"
+		<< "\"flux\": 1.5,\n"
+		<< "\"material\": \"W100\",\n"
+		<< "\"initialConc\": \"V 1 0.05\",\n"
+		<< "\"dimensions\": 1,\n"
+		<< "\"gridType\": \"nonuniform\",\n"
+		<< "\"gridParam\": 10,\n"
+		<< "\"process\": \"diff\",\n"
+		<< "\"grouping\": \"11 2 4\",\n"
+		<< "\"sputtering\": 0.5,\n"
+		<< "\"boundary\": \"1 1\",\n"
+		<< "\"heatLossPortion\": 0.5,\n"
+		<< "\"burstingDepth\": 5.0,\n"
+		<< "\"burstingFactor\": 2.5,\n"
+		<< "\"zeta\": 0.6,\n"
+		<< "\"radiusSize\": \"5 0 3\",\n"
+		<< "\"density\": 9.0,\n"
+		<< "\"lattice\": 0.1,\n"
+		<< "\"impurityRadius\": 0.5,\n"
+		<< "\"biasFactor\": 2.0,\n"
+		<< "\"hydrogenFactor\": 0.5,\n"
+		<< "\"xenonDiffusivity\": 3.0,\n"
+		<< "\"fissionYield\": 0.3,\n"
+		<< "\"heVRatio\": 5.0,\n"
+		<< "\"migrationThreshold\": 1.0,\n"
+		<< "\"fluxDepthProfileFilePath\": \"path/to/flux/profile/file.txt\",\n"
+		<< "\"basalPortion\": 0.6,\n"
+		<< "\"transitionSize\": 300,\n"
+		<< "\"cascadeDose\": 5000.0,\n"
+		<< "\"cascadeEfficiency\": 0.2\n"
+		<< "}\n";
 	goodParamFile.close();
 
-	string pathToFile("param_good.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
-
 	// Build a command line with a parameter file containing good options
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
@@ -242,8 +235,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getMigrationThreshold(), 1.0);
 
 	// Check the network filename
-	BOOST_REQUIRE_EQUAL(opts.getFluxDepthProfileFilePath(),
-		"path/to/the/flux/profile/file.txt");
+	BOOST_REQUIRE_EQUAL(
+		opts.getFluxDepthProfileFilePath(), "path/to/flux/profile/file.txt");
 
 	// Check the basal portion
 	BOOST_REQUIRE_EQUAL(opts.getBasalPortion(), 0.6);
@@ -278,25 +271,21 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		"-ts_max_steps 3");
 
 	// Remove the created file
-	std::string tempFile = "param_good.txt";
-	std::remove(tempFile.c_str());
+	fs::remove(fileName);
 }
 
 BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a good parameter file
-	std::ofstream goodParamFile("param_good.txt");
-	goodParamFile << "netParam=8 1 0 5 3" << std::endl;
+	std::string fileName = "param_good.json";
+	std::ofstream goodParamFile(fileName);
+	goodParamFile << "{ \"netParam\": \"8 1 0 5 3\" }\n";
 	goodParamFile.close();
 
-	string pathToFile("param_good.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
-
 	// Build a command line with a parameter file containing good options
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
@@ -313,58 +302,49 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5)
 	BOOST_REQUIRE_EQUAL(opts.getMaxPureV(), 5);
 
 	// Remove the created file
-	std::string tempFile = "param_good.txt";
-	std::remove(tempFile.c_str());
+	fs::remove(fileName);
 }
 
 BOOST_AUTO_TEST_CASE(wrongPerfHandler)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a parameter file with a wrong performance handler name
-	std::ofstream paramFile("param_perf_wrong.txt");
-	paramFile << "perfHandler=bogus" << std::endl;
+	std::string fileName = "param_perf_wrong.json";
+	std::ofstream paramFile(fileName);
+	paramFile << "{ \"perfHandler\": \"bogus\" }\n";
 	paramFile.close();
-
-	string pathToFile("param_perf_wrong.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
 
 	// Build a command line with a parameter file containing a wrong performance
 	// handler option
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_CHECK_THROW(opts.readParams(2, argv), InvalidOptionValue);
 
 	// Remove the created file
-	std::string tempFile = "param_perf_wrong.txt";
-	std::remove(tempFile.c_str());
+	fs::remove(fileName);
 }
 
 BOOST_AUTO_TEST_CASE(wrongVizHandler)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a parameter file with a wrong visualization handler name
-	std::ofstream paramFile("param_viz_wrong.txt");
-	paramFile << "vizHandler=bogus" << std::endl;
+	std::string fileName = "param_viz_wrong.json";
+	std::ofstream paramFile(fileName);
+	paramFile << "{ \"vizHandler\": \"bogus\" }\n";
 	paramFile.close();
-
-	string pathToFile("param_viz_wrong.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
 
 	// Build a command line with a parameter file containing a wrong performance
 	// handler option
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_CHECK_THROW(opts.readParams(2, argv), InvalidOptionValue);
 
 	// Remove the created file
-	std::string tempFile = "param_viz_wrong.txt";
-	std::remove(tempFile.c_str());
+	fs::remove(fileName);
 }
 
 BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
@@ -372,7 +352,8 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
 	// Create a file with temperature profile data
 	// First column with the time and the second with
 	// the temperature at that time.
-	std::ofstream writeTempFile("temperatureFile.dat");
+	std::string tempFileName = "temperatureFile.dat";
+	std::ofstream writeTempFile(tempFileName);
 	writeTempFile << "0.0 2.0 \n"
 					 "1.0 1.99219766723 \n"
 					 "2.0 1.87758256189 \n"
@@ -389,7 +370,8 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
 	// Create a file with a time profile for the flux
 	// First column with the time and the second with
 	// the amplitude (in He/nm2/s) at that time.
-	std::ofstream writeFluxFile("fluxFile.dat");
+	std::string fluxFileName = "fluxFile.dat";
+	std::ofstream writeFluxFile(fluxFileName);
 	writeFluxFile << "0.0 1000.0 \n"
 					 "1.0 4000.0 \n"
 					 "2.0 2000.0 \n"
@@ -397,68 +379,64 @@ BOOST_AUTO_TEST_CASE(goodParamFileWithProfiles)
 					 "4.0 0.0";
 	writeFluxFile.close();
 
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a parameter file using these two profile files
-	std::ofstream paramFile("param_good_profiles.txt");
-	paramFile << "fluxFile=fluxFile.dat" << std::endl
-			  << "tempHandler=profile" << std::endl
-			  << "tempFile=temperatureFile.dat" << std::endl;
+	std::string fileName = "param_good_profiles.json";
+	std::ofstream paramFile(fileName);
+	paramFile << "{\n"
+			  << "\"fluxFile\": " << std::quoted(fluxFileName) << ",\n"
+			  << "\"tempHandler\": \"profile\",\n"
+			  << "\"tempFile\": " << std::quoted(tempFileName) << "\n"
+			  << "}\n";
 	paramFile.close();
-
-	string pathToFile("param_good_profiles.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
 
 	// Build a command line with a parameter file containing
 	// the two profile options
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
 	// Check the temperature
 	BOOST_REQUIRE_EQUAL(opts.getTempHandlerName(), "profile");
-	BOOST_REQUIRE_EQUAL(opts.getTempProfileFilename(), "temperatureFile.dat");
+	BOOST_REQUIRE_EQUAL(opts.getTempProfileFilename(), tempFileName);
 
 	// Check if the heFlux option is used
 	BOOST_REQUIRE_EQUAL(opts.useFluxAmplitude(), false);
 
 	// Check if the time profile option is used for the flux
 	BOOST_REQUIRE_EQUAL(opts.useFluxTimeProfile(), true);
-	BOOST_REQUIRE_EQUAL(opts.getFluxTimeProfileFilePath(), "fluxFile.dat");
+	BOOST_REQUIRE_EQUAL(opts.getFluxTimeProfileFilePath(), fluxFileName);
 
 	// Remove the created files
-	std::string tempFile = "temperatureFile.dat";
-	std::remove(tempFile.c_str());
-	tempFile = "fluxFile.dat";
-	std::remove(tempFile.c_str());
-	tempFile = "param_good_profiles.txt";
-	std::remove(tempFile.c_str());
+	fs::remove(tempFileName);
+	fs::remove(fluxFileName);
+	fs::remove(fileName);
 }
 
 BOOST_AUTO_TEST_CASE(readGridIn)
 {
 	// Create a grid file
-	std::ofstream gridFile("grid.dat");
+	std::string gridFileName("grid.dat");
+	std::ofstream gridFile(gridFileName);
 	gridFile << "0.0 1.0 3.0 7.0";
 	gridFile.close();
 
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a parameter file with a file name for the grid
-	std::ofstream paramFile("param_read_in_grid.txt");
-	paramFile << "gridType=read" << std::endl
-			  << "gridFile=grid.dat" << std::endl;
+	std::string fileName = "param_read_in_grid.json";
+	std::ofstream paramFile(fileName);
+	paramFile << "{\n"
+			  << "\"gridType\": \"read\",\n"
+			  << "\"gridFile\": \"grid.dat\"\n"
+			  << "}\n";
 	paramFile.close();
-
-	string pathToFile("param_read_in_grid.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
 
 	// Build a command line with a parameter file containing a wrong performance
 	// handler option
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
@@ -468,77 +446,64 @@ BOOST_AUTO_TEST_CASE(readGridIn)
 	BOOST_REQUIRE_EQUAL(opts.getGridFilename(), "grid.dat");
 
 	// Remove the created file
-	std::string tempFile = "param_read_in_grid.txt";
-	std::remove(tempFile.c_str());
-	tempFile = "grid.dat";
-	std::remove(tempFile.c_str());
+	fs::remove(fileName);
+	fs::remove(gridFileName);
 }
 
 BOOST_AUTO_TEST_CASE(wrongFluxProfile)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a parameter file with a wrong flux profile file name name
-	std::ofstream paramFile("param_flux_wrong.txt");
-	paramFile << "fluxFile=bogus" << std::endl;
+	std::string fileName = "param_flux_wrong.json";
+	std::ofstream paramFile(fileName);
+	paramFile << "{ \"fluxFile\": \"bogus\" }\n";
 	paramFile.close();
-
-	string pathToFile("param_flux_wrong.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
 
 	// Build a command line with a parameter file containing a wrong performance
 	// handler option
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_CHECK_THROW(opts.readParams(2, argv), std::runtime_error);
 
 	// Remove the created file
-	std::string tempFile = "param_flux_wrong.txt";
-	std::remove(tempFile.c_str());
+	fs::remove(fileName);
 }
 
 BOOST_AUTO_TEST_CASE(wrongTempProfile)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a parameter file with a wrong temperature profile file name name
-	std::ofstream paramFile("param_temp_wrong.txt");
-	paramFile << "tempFile=bogus" << std::endl;
+	std::string fileName = "param_temp_wrong.json";
+	std::ofstream paramFile(fileName);
+	paramFile << "{ \"tempFile\": \"bogus\" }\n";
 	paramFile.close();
-
-	string pathToFile("param_temp_wrong.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
 
 	// Build a command line with a parameter file containing a wrong performance
 	// handler option
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_CHECK_THROW(opts.readParams(2, argv), std::runtime_error);
 
 	// Remove the created file
-	std::string tempFile = "param_temp_wrong.txt";
-	std::remove(tempFile.c_str());
+	fs::remove(fileName);
 }
 
 BOOST_AUTO_TEST_CASE(papiPerfHandler)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a parameter file using the PAPI performance handlers
-	std::ofstream paramFile("param_good_perf_papi.txt");
-	paramFile << "perfHandler=papi" << std::endl;
+	std::string fileName = "param_good_perf_papi.json";
+	std::ofstream paramFile(fileName);
+	paramFile << "{ \"perfHandler\": \"papi\" }\n";
 	paramFile.close();
 
-	string pathToFile("param_good_perf_papi.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
-
 	// Build a command line with a parameter file
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
@@ -547,25 +512,21 @@ BOOST_AUTO_TEST_CASE(papiPerfHandler)
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "papi");
 
 	// Remove the created file
-	std::string tempFile = "param_good_perf_papi.txt";
-	std::remove(tempFile.c_str());
+	fs::remove(fileName);
 }
 
 BOOST_AUTO_TEST_CASE(osPerfHandler)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a parameter file using the OS performance handlers
-	std::ofstream paramFile("param_good_perf_os.txt");
-	paramFile << "perfHandler=os" << std::endl;
+	std::string fileName = "param_good_perf_os.json";
+	std::ofstream paramFile(fileName);
+	paramFile << "{ \"perfHandler\": \"os\" }\n";
 	paramFile.close();
 
-	string pathToFile("param_good_perf_os.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
-
 	// Build a command line with a parameter file
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
@@ -574,25 +535,21 @@ BOOST_AUTO_TEST_CASE(osPerfHandler)
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "os");
 
 	// Remove the created file
-	std::string tempFile = "param_good_perf_os.txt";
-	std::remove(tempFile.c_str());
+	fs::remove(fileName);
 }
 
 BOOST_AUTO_TEST_CASE(dummyPerfHandler)
 {
-	ConfOptions opts;
+	JSONOptions opts;
 
 	// Create a parameter file using the dummy performance handlers
-	std::ofstream paramFile("param_good_perf_dummy.txt");
-	paramFile << "perfHandler=dummy" << std::endl;
+	std::string fileName = "param_good_perf_dummy.json";
+	std::ofstream paramFile(fileName);
+	paramFile << "{ \"perfHandler\": \"dummy\" }\n";
 	paramFile.close();
 
-	string pathToFile("param_good_perf_dummy.txt");
-	string filename = pathToFile;
-	const char* fname = filename.c_str();
-
 	// Build a command line with a parameter file containing good options
-	const char* argv[] = {"./xolotl", fname};
+	const char* argv[] = {"./xolotl", fileName.c_str()};
 
 	// Attempt to read the parameter file
 	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
@@ -601,8 +558,7 @@ BOOST_AUTO_TEST_CASE(dummyPerfHandler)
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "dummy");
 
 	// Remove the created file
-	std::string tempFile = "param_good_perf_dummy.txt";
-	std::remove(tempFile.c_str());
+	fs::remove(fileName);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

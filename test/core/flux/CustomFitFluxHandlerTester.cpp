@@ -8,7 +8,7 @@
 
 #include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(CustomFitFluxHandlerTester_testSuite)
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 
 	// Create a file with flux profile data.
 	std::ofstream fluxFile("tridyn.dat");
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 BOOST_AUTO_TEST_CASE(checkFluence)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 
 	// Create a file with flux profile data.
 	std::ofstream fluxFile("tridyn.dat");

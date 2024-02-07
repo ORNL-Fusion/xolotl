@@ -34,6 +34,7 @@ find_package(Boost REQUIRED COMPONENTS
     log
     program_options
 )
+option(Xolotl_ENABLE_JSON "Enable JSON format for parameter files" ON)
 
 ## HDF5
 #set(HDF5_USE_STATIC_LIBRARIES yes)

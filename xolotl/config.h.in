@@ -4,6 +4,8 @@
 
 #cmakedefine XOLOTL_USE_64BIT_INDEX_TYPE
 
+#cmakedefine Xolotl_ENABLE_JSON
+
 #define STRINGIFY(x) #x
 #define TO_STRING(x) STRINGIFY(x)
 
