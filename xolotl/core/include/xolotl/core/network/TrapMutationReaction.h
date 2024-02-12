@@ -40,6 +40,7 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
 	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using ConnectivitiesPairView = typename Superclass::ConnectivitiesPairView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
@@ -66,6 +67,12 @@ public:
 	allocateCoefficientsView(IndexType)
 	{
 		return detail::CoefficientsView();
+	}
+
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -124,7 +131,7 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
+		BelongingView isInSub, IndexType subId, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -146,6 +153,29 @@ private:
 		_connEntries[0][0][0][0] = connectivity(_heClId, _heClId);
 		_connEntries[1][0][0][0] = connectivity(_heVClId, _heClId);
 		_connEntries[2][0][0][0] = connectivity(_iClId, _heClId);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
+		OwnedSubMapView backMap, IndexType subId)
+	{
+		// Only consider cases where one of the products is in the sub network
+		// but not the dissociating cluster
+		if (isInSub[_heClId])
+			return;
+		if (not isInSub[_heVClId] and not isInSub[_iClId])
+			return;
+
+		if (isInSub[_heClId])
+			this->_rateEntries(subId, 0, 0, 0) =
+				this->getPosition(backMap(_heClId), isInSub.extent(0),
+					connectivityRow, connectivityEntries);
+		if (isInSub[_iClId])
+			this->_rateEntries(subId, 1, 0, 0) =
+				this->getPosition(backMap(_iClId), isInSub.extent(0),
+					connectivityRow, connectivityEntries);
 	}
 
 private:

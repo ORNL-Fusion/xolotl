@@ -97,7 +97,8 @@ SeriesPlot::render(const std::string& fileName)
 
 		// Accumulate the bounds of our data to focus camera
 		fieldBounds.X = dataSet.GetCoordinateSystem().GetBounds().X;
-		dataSet.GetField(i).GetRange(&fieldBounds.Y);
+		dataSet.GetField(plotDataProviders->at(i)->getDataName())
+			.GetRange(&fieldBounds.Y);
 		bounds.Include(fieldBounds);
 
 		// Add Plot to our scene for later rendering

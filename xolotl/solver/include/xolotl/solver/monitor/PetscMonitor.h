@@ -43,6 +43,10 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
+	computeAlphaZr(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
+
+	PetscErrorCode
 	computeAlloy(
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
@@ -70,6 +74,7 @@ protected:
 	double _largestThreshold = 1.0e-12;
 
 	PetscInt _previousTSNumber = -1;
+	PetscInt _loopNumber = 0;
 
 	double _sputteringYield = 0.0;
 

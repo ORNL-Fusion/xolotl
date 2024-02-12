@@ -82,10 +82,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 5);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 4);
 
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 1);
-
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
 	NetworkType::SparseFillMap knownDFill;
@@ -905,10 +901,6 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 3);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 2);
 
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 2);
-
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
 	NetworkType::SparseFillMap knownDFill;
@@ -1202,10 +1194,6 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 4);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 3);
-
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 1);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -1553,10 +1541,6 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 4);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 3);
 
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 1);
-
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
 	NetworkType::SparseFillMap knownDFill;
@@ -1887,10 +1871,6 @@ BOOST_AUTO_TEST_CASE(HeVGrouped)
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(HeDVGrouped)
@@ -1932,10 +1912,6 @@ BOOST_AUTO_TEST_CASE(HeDVGrouped)
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 83);
 }
 
 BOOST_AUTO_TEST_CASE(HeTVGrouped)
@@ -1977,10 +1953,6 @@ BOOST_AUTO_TEST_CASE(HeTVGrouped)
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 83);
 }
 
 BOOST_AUTO_TEST_CASE(HeDTVGrouped)
@@ -2022,10 +1994,6 @@ BOOST_AUTO_TEST_CASE(HeDTVGrouped)
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 5);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 4);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 55);
 }
 
 BOOST_AUTO_TEST_CASE(IGrouped)
@@ -2067,10 +2035,6 @@ BOOST_AUTO_TEST_CASE(IGrouped)
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 2);
 }
 
 BOOST_AUTO_TEST_CASE(VIGrouped)
@@ -2112,10 +2076,6 @@ BOOST_AUTO_TEST_CASE(VIGrouped)
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 586);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

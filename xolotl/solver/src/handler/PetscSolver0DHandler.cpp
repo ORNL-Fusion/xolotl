@@ -1,4 +1,8 @@
+#include <petscconf.h>
+#include <petscdmda_kokkos.hpp>
+
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/handler/PetscSolver0DHandler.h>
 #include <xolotl/util/Log.h>
@@ -14,8 +18,6 @@ namespace handler
 void
 PetscSolver0DHandler::createSolverContext(DM& da)
 {
-	PetscErrorCode ierr;
-
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
 	const auto dof = network.getDOF();
@@ -32,16 +34,25 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 
 	// Get the MPI communicator on which to create the DMDA
 	auto xolotlComm = util::getMPIComm();
-	ierr = DMDACreate1d(xolotlComm, DM_BOUNDARY_NONE, 1, dof + 1, 0, NULL, &da);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::createSolverContext: "
-		"DMDACreate1d failed.");
-	ierr = DMSetFromOptions(da);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::createSolverContext: DMSetFromOptions failed.");
-	ierr = DMSetUp(da);
-	checkPetscError(
-		ierr, "PetscSolver0DHandler::createSolverContext: DMSetUp failed.");
+	int size;
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	if (size > 1) {
+		throw std::runtime_error("\nYou are trying to run a 0D simulation in "
+								 "parallel, this is not possible!");
+	}
+
+	PetscCallVoid(
+		DMDACreate1d(xolotlComm, DM_BOUNDARY_NONE, 1, dof + 1, 0, NULL, &da));
+	PetscCallVoid(DMSetFromOptions(da));
+	PetscCallVoid(DMSetUp(da));
+}
+
+void
+PetscSolver0DHandler::initializeSolverContext(DM& da, Mat& J)
+{
+	// Degrees of freedom is the total number of clusters in the network
+	// + moments
+	const auto dof = network.getDOF();
 
 	/* The ofill (thought of as a dof by dof 2d (row-oriented) array represents
 	 * the nonzero coupling between degrees of freedom at one point with
@@ -50,18 +61,23 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initializeTemperature(dof, ofill, dfill);
+	temperatureHandler->initialize(dof);
+
+	// Tell the network the number of grid points on this process
+	network.setGridSize(1);
 
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
 
-	// Load up the block fills
-	auto dfillsparse = ConvertToPetscSparseFillMap(dof + 1, dfill);
-	auto ofillsparse = ConvertToPetscSparseFillMap(dof + 1, ofill);
-	ierr = DMDASetBlockFillsSparse(da, dfillsparse.data(), ofillsparse.data());
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::createSolverContext: "
-		"DMDASetBlockFills failed.");
+	// Preallocate matrix
+	auto [rows, cols] = convertToCoordinateListPair(dof, dfill);
+	// handling temperature (FIXME)
+	rows.push_back(dof);
+	cols.push_back(dof);
+	++nPartials;
+	//
+	PetscCallVoid(
+		MatSetPreallocationCOO(J, rows.size(), rows.data(), cols.data()));
 
 	// Initialize the arrays for the reaction partial derivatives
 	vals = Kokkos::View<double*>("solverPartials", nPartials);
@@ -71,24 +87,18 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 
 	// Initialize the flux handler
 	fluxHandler->initializeFluxHandler(network, 0, grid);
-
-	return;
 }
 
 void
-PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
+PetscSolver0DHandler::initializeConcentration(
+	DM& da, Vec& C, DM& oldDA, Vec& oldC)
 {
-	PetscErrorCode ierr;
-
 	// Initialize the last temperature
 	temperature.push_back(0.0);
 
 	// Pointer for the concentration vector
 	PetscScalar** concentrations = nullptr;
-	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::initializeConcentration: "
-		"DMDAVecGetArrayDOF failed.");
+	PetscCallVoid(DMDAVecGetArrayDOF(da, C, &concentrations));
 
 	// Pointer for the concentration vector at a specific grid point
 	PetscScalar* concOffset = nullptr;
@@ -121,7 +131,7 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	}
 
 	// Initialize the option specified concentration
-	if (hasConcentrations) {
+	if (not hasConcentrations) {
 		for (auto pair : initialConc) {
 			concOffset[pair.first] = pair.second;
 		}
@@ -154,10 +164,7 @@ PetscSolver0DHandler::initializeConcentration(DM& da, Vec& C)
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::initializeConcentration: "
-		"DMDAVecRestoreArrayDOF failed.");
+	PetscCallVoid(DMDAVecRestoreArrayDOF(da, C, &concentrations));
 
 	return;
 }
@@ -166,15 +173,11 @@ std::vector<std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
 PetscSolver0DHandler::getConcVector(DM& da, Vec& C)
 {
 	// Initial declaration
-	PetscErrorCode ierr;
 	const double* gridPointSolution = nullptr;
 
 	// Pointer for the concentration vector
 	PetscScalar** concentrations = nullptr;
-	ierr = DMDAVecGetArrayDOFRead(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::getConcVector: "
-		"DMDAVecGetArrayDOFRead failed.");
+	PetscCallContinue(DMDAVecGetArrayDOFRead(da, C, &concentrations));
 
 	// Get the network and dof
 	auto& network = getNetwork();
@@ -203,10 +206,7 @@ PetscSolver0DHandler::getConcVector(DM& da, Vec& C)
 	toReturn.push_back(tempTempTempVector);
 
 	// Restore the solutionArray
-	ierr = DMDAVecRestoreArrayDOFRead(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::getConcVector: "
-		"DMDAVecRestoreArrayDOFRead failed.");
+	PetscCallContinue(DMDAVecRestoreArrayDOFRead(da, C, &concentrations));
 
 	return toReturn;
 }
@@ -217,15 +217,10 @@ PetscSolver0DHandler::setConcVector(DM& da, Vec& C,
 		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
 		concVector)
 {
-	PetscErrorCode ierr;
-
 	// Pointer for the concentration vector
 	PetscScalar* gridPointSolution = nullptr;
 	PetscScalar** concentrations = nullptr;
-	ierr = DMDAVecGetArrayDOF(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::setConcVector: "
-		"DMDAVecGetArrayDOF failed.");
+	PetscCallVoid(DMDAVecGetArrayDOF(da, C, &concentrations));
 
 	// Get the DOF of the network
 	const auto dof = network.getDOF();
@@ -247,10 +242,7 @@ PetscSolver0DHandler::setConcVector(DM& da, Vec& C,
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOF(da, C, &concentrations);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::setConcVector: "
-		"DMDAVecRestoreArrayDOF failed.");
+	PetscCallVoid(DMDAVecRestoreArrayDOF(da, C, &concentrations));
 
 	return;
 }
@@ -259,46 +251,29 @@ void
 PetscSolver0DHandler::updateConcentration(
 	TS& ts, Vec& localC, Vec& F, PetscReal ftime)
 {
-	PetscErrorCode ierr;
-
 	// Get the local data vector from PETSc
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::updateConcentration: "
-		"TSGetDM failed.");
+	PetscCallVoid(TSGetDM(ts, &da));
 
 	// Pointers to the PETSc arrays that start at the beginning of the
 	// local array
-	PetscScalar **concs = nullptr, **updatedConcs = nullptr;
-	// Get pointers to vector data
-	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::updateConcentration: "
-		"DMDAVecGetArrayDOFRead (localC) failed.");
-	ierr = DMDAVecGetArrayDOF(da, F, &updatedConcs);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::updateConcentration: "
-		"DMDAVecGetArrayDOF (F) failed.");
-
-	// The following pointers are set to the first position in the conc or
-	// updatedConc arrays that correspond to the beginning of the data for the
-	// current grid point. They are accessed just like regular arrays.
-	PetscScalar *concOffset = nullptr, *updatedConcOffset = nullptr;
+	PetscOffsetView<const PetscScalar**> concs;
+	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
+	PetscOffsetView<PetscScalar**> updatedConcs;
+	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOFWrite(da, F, &updatedConcs));
 
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
-	// Get the old and new array offsets
-	concOffset = concs[0];
-	updatedConcOffset = updatedConcs[0];
+	// The following pointers are set to the first position in the conc or
+	// updatedConc arrays that correspond to the beginning of the data for the
+	// current grid point.
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
+	auto updatedConcOffset = subview(updatedConcs, 0, Kokkos::ALL).view();
 
 	// Degrees of freedom is the total number of clusters in the network +
 	// moments
 	const auto dof = network.getDOF();
-
-	// Update the time in the network
-	network.setTime(ftime);
 
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);
@@ -316,83 +291,39 @@ PetscSolver0DHandler::updateConcentration(
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid
 	// -----
-	using HostUnmanaged =
-		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto hConcs = HostUnmanaged(concOffset, dof);
-	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-	deep_copy(dConcs, hConcs);
-	auto hFlux = HostUnmanaged(updatedConcOffset, dof);
-	auto dFlux = Kokkos::View<double*>("Fluxes", dof);
-	deep_copy(dFlux, hFlux);
 	fluxCounter->increment();
 	fluxTimer->start();
-	network.computeAllFluxes(dConcs, dFlux);
+	network.computeAllFluxes(concOffset, updatedConcOffset);
 	fluxTimer->stop();
-	deep_copy(hFlux, dFlux);
-
-	/*
-	for (auto i = 0; i < dof; i++) {
-		std::cout << updatedConcOffset[i] << " ";
-	}
-	std::cout << "\n";
-	*/
 
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::updateConcentration: "
-		"DMDAVecRestoreArrayDOFRead (localC) failed.");
-	ierr = DMDAVecRestoreArrayDOF(da, F, &updatedConcs);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::updateConcentration: "
-		"DMDAVecRestoreArrayDOF (F) failed.");
-
-	return;
+	PetscCallVoid(DMDAVecRestoreKokkosOffsetViewDOF(da, localC, &concs));
+	PetscCallVoid(DMDAVecRestoreKokkosOffsetViewDOFWrite(da, F, &updatedConcs));
 }
 
 void
 PetscSolver0DHandler::computeJacobian(
 	TS& ts, Vec& localC, Mat& J, PetscReal ftime)
 {
-	PetscErrorCode ierr;
-
 	// Get the distributed array
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::computeDiagonalJacobian: "
-		"TSGetDM failed.");
+	PetscCallVoid(TSGetDM(ts, &da));
 
 	// Get pointers to vector data
-	PetscScalar** concs = nullptr;
-	ierr = DMDAVecGetArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::computeDiagonalJacobian: "
-		"DMDAVecGetArrayDOFRead failed.");
-
-	// Pointer to the concentrations at a given grid point
-	PetscScalar* concOffset = nullptr;
+	PetscOffsetView<const PetscScalar**> concs;
+	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
 
 	// Degrees of freedom is the total number of clusters in the network +
 	// moments
 	const auto dof = network.getDOF();
 
-	// Arguments for MatSetValuesStencil called below
-	MatStencil rowId;
-	MatStencil colIds[dof];
-	MatStencil colId;
-	IdType pdColIdsVectorSize = 0;
-
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 
-	// Update the time in the network
-	network.setTime(ftime);
-
 	// Get the temperature from the temperature handler
-	concOffset = concs[0];
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 	temperatureHandler->setTemperature(concOffset);
 	double temp = temperatureHandler->getTemperature(gridPosition, ftime);
 
@@ -406,64 +337,20 @@ PetscSolver0DHandler::computeJacobian(
 	// ----- Take care of the reactions for all the reactants -----
 
 	// Compute all the partial derivatives for the reactions
-	using HostUnmanaged =
-		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto hConcs = HostUnmanaged(concOffset, dof);
-	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-	deep_copy(dConcs, hConcs);
 	partialDerivativeCounter->increment();
 	partialDerivativeTimer->start();
-	network.computeAllPartials(dConcs, vals);
+	network.computeAllPartials(concOffset, vals);
 	partialDerivativeTimer->stop();
-	auto hPartials = create_mirror_view(vals);
-	deep_copy(hPartials, vals);
 
-	// Variable for the loop on reactants
-	IdType startingIdx = 0;
+	PetscCallVoid(MatSetValuesCOO(J, vals.data(), ADD_VALUES));
 
-	// Update the column in the Jacobian that represents each DOF
-	for (auto i = 0; i < dof; i++) {
-		// Set grid coordinate and component number for the row
-		rowId.i = 0;
-		rowId.c = i;
-
-		// Number of partial derivatives
-		auto rowIter = dfill.find(i);
-		if (rowIter != dfill.end()) {
-			const auto& row = rowIter->second;
-			pdColIdsVectorSize = row.size();
-
-			// Loop over the list of column ids
-			for (auto j = 0; j < pdColIdsVectorSize; j++) {
-				// Set grid coordinate and component number for a column in the
-				// list
-				colIds[j].i = 0;
-				colIds[j].c = row[j];
-				// Get the partial derivative from the array of all of the
-				// partials
-				reactingPartialsForCluster[j] = hPartials(startingIdx + j);
-			}
-			// Update the matrix
-			ierr = MatSetValuesStencil(J, 1, &rowId, pdColIdsVectorSize, colIds,
-				reactingPartialsForCluster.data(), ADD_VALUES);
-			checkPetscError(ierr,
-				"PetscSolverExpHandler::computeDiagonalJacobian: "
-				"MatSetValuesStencil (reactions) failed.");
-
-			// Increase the starting index
-			startingIdx += pdColIdsVectorSize;
-		}
-	}
+	// Reset the values
+	resetJacobianValues();
 
 	/*
 	 Restore vectors
 	 */
-	ierr = DMDAVecRestoreArrayDOFRead(da, localC, &concs);
-	checkPetscError(ierr,
-		"PetscSolver0DHandler::computeDiagonalJacobian: "
-		"DMDAVecRestoreArrayDOFRead failed.");
-
-	return;
+	PetscCallVoid(DMDAVecRestoreKokkosOffsetViewDOF(da, localC, &concs));
 }
 
 } /* end namespace handler */

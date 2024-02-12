@@ -13,6 +13,8 @@ namespace core
 {
 namespace network
 {
+namespace psi
+{
 template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
 double
@@ -160,6 +162,7 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 
 	return 4.0 * pi * (rEff + rHe) * (dc0 + dc1);
 }
+} // namespace psi
 
 template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
@@ -178,7 +181,7 @@ PSIProductionReaction<TSpeciesEnum>::getRateForProduction(IndexType gridIndex)
 	double temperature = cl0.getTemperature(gridIndex);
 	double atomicVolume = this->_clusterData->atomicVolume();
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1,
+	return psi::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1,
 		temperature, atomicVolume);
 }
 
@@ -199,7 +202,7 @@ PSIDissociationReaction<TSpeciesEnum>::getRateForProduction(IndexType gridIndex)
 	double temperature = cl0.getTemperature(gridIndex);
 	double atomicVolume = this->_clusterData->atomicVolume();
 
-	return getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1,
+	return psi::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1,
 		temperature, atomicVolume);
 }
 
@@ -355,10 +358,6 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 			be = prod1.getFormationEnergy() + prod2.getFormationEnergy() -
 				cl.getFormationEnergy();
 		}
-
-		//		std::cout << comp[Species::He] << " " << comp[Species::V] << " "
-		//<< be << " " << this->_products[0] << " " << lowerV << " " << higherV
-		//<< std::endl;
 	}
 
 	return util::max(be, -5.0);

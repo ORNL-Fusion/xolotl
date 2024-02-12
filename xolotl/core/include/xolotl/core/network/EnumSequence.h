@@ -101,7 +101,7 @@ struct EnumSequence
 	 * @todo: Should these wrap?
 	 */
 	KOKKOS_INLINE_FUNCTION
-	EnumSequence&
+	constexpr EnumSequence&
 	operator++()
 	{
 		value = static_cast<Enum>(static_cast<Rep>(value) + 1);
@@ -112,7 +112,7 @@ struct EnumSequence
 	 * @brief Post-increment
 	 */
 	KOKKOS_INLINE_FUNCTION
-	EnumSequence
+	constexpr EnumSequence
 	operator++(int)
 	{
 		EnumSequence ret = *this;
@@ -257,7 +257,7 @@ public:
 		 * @brief Construct from sequence value
 		 */
 		KOKKOS_INLINE_FUNCTION
-		explicit Iterator(Sequence seq) noexcept : _curr{seq}
+		constexpr explicit Iterator(Sequence seq) noexcept : _curr{seq}
 		{
 		}
 
@@ -275,7 +275,7 @@ public:
 		 * @brief Increment
 		 */
 		KOKKOS_INLINE_FUNCTION
-		Iterator&
+		constexpr Iterator&
 		operator++() noexcept
 		{
 			++_curr;

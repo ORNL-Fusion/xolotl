@@ -10,6 +10,7 @@
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
 
 using namespace std;
@@ -73,31 +74,27 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	double currTime = 1.0;
 
 	// The array of concentration
-	double newConcentration[5 * dof];
-
-	// Initialize their values
-	for (int i = 0; i < 5 * dof; i++) {
-		newConcentration[i] = 0.0;
-	}
+	test::DOFView conc("conc", 5, dof);
 
 	// The pointer to the grid point we want
-	double* updatedConc = &newConcentration[0];
-	double* updatedConcOffset = updatedConc + dof;
+	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations at some grid points
 	testFitFlux->computeIncidentFlux(
 		currTime, updatedConcOffset, 1, surfacePos);
-	updatedConcOffset = updatedConc + 2 * dof;
+	updatedConcOffset = subview(conc, 2, Kokkos::ALL);
 	testFitFlux->computeIncidentFlux(
 		currTime, updatedConcOffset, 2, surfacePos);
-	updatedConcOffset = updatedConc + 3 * dof;
+	updatedConcOffset = subview(conc, 3, Kokkos::ALL);
 	testFitFlux->computeIncidentFlux(
 		currTime, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[9], 0.474936, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[18], 0.243233, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[27], 0.081830, 0.01);
+	auto newConcentration =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, conc);
+	BOOST_REQUIRE_CLOSE(newConcentration(1, 0), 0.474936, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 0.243233, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(3, 0), 0.081830, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

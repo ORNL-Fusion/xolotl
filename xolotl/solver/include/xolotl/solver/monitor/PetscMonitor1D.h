@@ -17,7 +17,42 @@ public:
 	using PetscMonitor::PetscMonitor;
 
 	void
-	setup() override;
+	setup(int loop) override;
+
+	void
+	keepFlux(std::vector<std::vector<std::vector<double>>>& nSurf,
+		std::vector<std::vector<std::vector<double>>>& nBulk,
+		std::vector<std::vector<std::vector<double>>>& surfFlux,
+		std::vector<std::vector<std::vector<double>>>& bulkFlux) override
+	{
+		std::vector<std::vector<double>> temp2D;
+		temp2D.push_back(_nSurf);
+		nSurf.push_back(temp2D);
+
+		temp2D.clear();
+		temp2D.push_back(_nBulk);
+		nBulk.push_back(temp2D);
+
+		temp2D.clear();
+		temp2D.push_back(_previousSurfFlux);
+		surfFlux.push_back(temp2D);
+
+		temp2D.clear();
+		temp2D.push_back(_previousBulkFlux);
+		bulkFlux.push_back(temp2D);
+	}
+
+	void
+	setFlux(std::vector<std::vector<std::vector<double>>>& nSurf,
+		std::vector<std::vector<std::vector<double>>>& nBulk,
+		std::vector<std::vector<std::vector<double>>>& surfFlux,
+		std::vector<std::vector<std::vector<double>>>& bulkFlux) override
+	{
+		_nSurf = nSurf[0][0];
+		_nBulk = nBulk[0][0];
+		_previousSurfFlux = surfFlux[0][0];
+		_previousBulkFlux = bulkFlux[0][0];
+	}
 
 	PetscErrorCode
 	monitorLargest(
@@ -49,6 +84,10 @@ public:
 	PetscErrorCode
 	postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		PetscReal time, Vec solution, PetscBool) override;
+
+	PetscErrorCode
+	computeAlphaZr(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
 	checkNegative(TS ts, PetscInt timestep, PetscReal time, Vec solution);

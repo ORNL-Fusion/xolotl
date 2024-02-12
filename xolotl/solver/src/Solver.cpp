@@ -2,6 +2,7 @@
 #include <xolotl/core/network/INetworkHandler.h>
 #include <xolotl/factory/material/MaterialHandlerFactory.h>
 #include <xolotl/factory/network/NetworkHandlerFactory.h>
+#include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
 #include <xolotl/solver/Solver.h>
 
@@ -11,6 +12,12 @@ namespace solver
 {
 Solver::Solver(
 	const options::IOptions& options, SolverHandlerGenerator handlerGenerator) :
+	perfHandler(factory::perf::PerfHandlerFactory::get(perf::loadPerfHandlers)
+					.generate(options)),
+	initTimer([](auto&& timer) {
+		timer->start();
+		return timer;
+	}(perfHandler->getTimer("Initialization"))),
 	network(factory::network::NetworkHandlerFactory::get(
 		core::network::loadNetworkHandlers)
 				.generate(options)
@@ -20,8 +27,7 @@ Solver::Solver(
 	temperatureHandler(
 		factory::temperature::TemperatureHandlerFactory::get().generate(
 			options)),
-	solverHandler(handlerGenerator(*network)),
-	perfHandler(solverHandler->getPerfHandler())
+	solverHandler(handlerGenerator(*network, *perfHandler))
 {
 	assert(solverHandler);
 	solverHandler->initializeHandlers(

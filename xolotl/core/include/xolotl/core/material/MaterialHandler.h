@@ -3,6 +3,7 @@
 #include <xolotl/core/advection/DummyAdvectionHandler.h>
 #include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
+#include <xolotl/core/modified/DummySoretDiffusionHandler.h>
 #include <xolotl/options/IOptions.h>
 
 namespace xolotl
@@ -34,6 +35,12 @@ public:
 	 */
 	virtual std::shared_ptr<core::advection::IAdvectionHandler>
 	generateAdvectionHandler() const = 0;
+
+	/**
+	 * Generate the Soret diffusion handler
+	 */
+	virtual std::shared_ptr<core::modified::ISoretDiffusionHandler>
+	generateSoretDiffusionHandler() const = 0;
 };
 
 /**
@@ -52,7 +59,9 @@ public:
  * specified flux handler type.
  */
 template <typename TFluxHandler,
-	typename TAdvectionHandler = core::advection::DummyAdvectionHandler>
+	typename TAdvectionHandler = core::advection::DummyAdvectionHandler,
+	typename TSoretDiffusionHandler =
+		core::modified::DummySoretDiffusionHandler>
 class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 {
 	std::shared_ptr<core::flux::IFluxHandler>
@@ -76,6 +85,15 @@ class MaterialSubHandlerGenerator : public IMaterialSubHandlerGenerator
 			TAdvectionHandler>::value);
 
 		return std::make_shared<TAdvectionHandler>();
+	}
+
+	std::shared_ptr<core::modified::ISoretDiffusionHandler>
+	generateSoretDiffusionHandler() const final
+	{
+		static_assert(std::is_base_of<core::modified::ISoretDiffusionHandler,
+			TSoretDiffusionHandler>::value);
+
+		return std::make_shared<TSoretDiffusionHandler>();
 	}
 };
 
@@ -105,6 +123,12 @@ public:
 		return _diffusionHandler;
 	}
 
+	std::shared_ptr<core::modified::ISoretDiffusionHandler>
+	getSoretDiffusionHandler() const final
+	{
+		return _soretDiffusionHandler;
+	}
+
 protected:
 	/**
 	 * @brief Construct with options and sub-handler generator
@@ -125,7 +149,13 @@ private:
 	createDiffusionHandler(const options::IOptions& options);
 
 	/**
-	 * Finish setting up advection handler(s) based on relevant options
+	 * Finish setting up Soret diffusion handler based on relevant options
+	 */
+	void
+	initializeSoretDiffusionHandler(const options::IOptions& options);
+
+	/**
+	 *Finish setting up advection handler(s) based on relevant options
 	 */
 	void
 	initializeAdvectionHandlers(const options::IOptions& options);
@@ -135,6 +165,8 @@ protected:
 	std::vector<std::shared_ptr<core::advection::IAdvectionHandler>>
 		_advectionHandlers;
 	std::shared_ptr<core::flux::IFluxHandler> _fluxHandler;
+	std::shared_ptr<core::modified::ISoretDiffusionHandler>
+		_soretDiffusionHandler;
 };
 } // namespace material
 } // namespace core

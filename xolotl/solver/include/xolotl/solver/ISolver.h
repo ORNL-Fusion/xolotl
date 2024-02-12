@@ -36,9 +36,15 @@ public:
 
 	/**
 	 * This operation performs all necessary initialization for the solver.
+	 *
+	 * @param loop The current loop number
+	 * @param time The current time
+	 * @param oldDA The previous distributed array
+	 * @param oldC The previous concentration vector
 	 */
 	virtual void
-	initialize() = 0;
+	initialize(int loop = 0, double time = 0.0, DM oldDA = nullptr,
+		Vec oldC = nullptr) = 0;
 
 	/**
 	 * This operation sets the wanted final time and max time step allowed.

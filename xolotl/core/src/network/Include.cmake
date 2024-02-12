@@ -108,6 +108,9 @@ list(APPEND XOLOTL_CORE_SOURCES
 
 if(NOT ${XOLOTL_INCLUDE_RN_TPP_FILES})
     list(APPEND XOLOTL_CORE_SOURCES
-        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetwork.cpp
+        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetworkFull.cpp
+        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetworkHelium.cpp
+        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetworkDeuterium.cpp
+        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetworkTritium.cpp
     )
 endif()

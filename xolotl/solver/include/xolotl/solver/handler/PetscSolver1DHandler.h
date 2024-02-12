@@ -17,10 +17,6 @@ namespace handler
  */
 class PetscSolver1DHandler : public PetscSolverHandler
 {
-private:
-	//! The position of the surface
-	IdType surfacePosition;
-
 public:
 	PetscSolver1DHandler() = delete;
 
@@ -29,10 +25,9 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver1DHandler(
-		NetworkType& _network, const options::IOptions& options) :
-		PetscSolverHandler(_network, options),
-		surfacePosition(0)
+	PetscSolver1DHandler(NetworkType& _network,
+		perf::IPerfHandler& _perfHandler, const options::IOptions& options) :
+		PetscSolverHandler(_network, _perfHandler, options)
 	{
 	}
 
@@ -51,7 +46,13 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeConcentration(DM& da, Vec& C);
+	initializeSolverContext(DM& da, Mat& J);
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	void
+	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC);
 
 	/**
 	 * \see ISolverHandler.h
@@ -91,22 +92,36 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	IdType
-	getSurfacePosition(IdType j = -1, IdType k = -1) const
+	getSurfacePosition(IdType j = badId, IdType k = badId) const
 	{
-		return surfacePosition;
+		return 0;
 	}
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1)
+	setSurfacePosition(IdType pos, IdType j = badId, IdType k = badId)
 	{
-		auto oldPos = surfacePosition;
-		surfacePosition = pos;
-		generateTemperatureGrid(surfacePosition, oldPos);
-
 		return;
+	}
+
+	/**
+	.* \see ISolverHandler.h
+	 */
+	void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths)
+	{
+		temperatures = interpolateTemperature();
+		for (auto i = 0; i < temperatures.size(); i++) {
+			if (localXS + i == nX + 1)
+				depths.push_back(grid[localXS + i] - grid[1]);
+			else
+				depths.push_back(
+					(grid[localXS + i + 1] + grid[localXS + i]) / 2.0 -
+					grid[1]);
+		}
 	}
 };
 // end class PetscSolver1DHandler

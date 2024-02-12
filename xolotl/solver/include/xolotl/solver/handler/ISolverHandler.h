@@ -11,6 +11,7 @@
 #include <xolotl/core/advection/IAdvectionHandler.h>
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
 #include <xolotl/core/material/IMaterialHandler.h>
+#include <xolotl/core/modified/ISoretDiffusionHandler.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 #include <xolotl/core/temperature/ITemperatureHandler.h>
 #include <xolotl/options/IOptions.h>
@@ -68,13 +69,25 @@ public:
 	createSolverContext(DM& da) = 0;
 
 	/**
+	 * Finish setting up solver dependencies
+	 *
+	 * @param da The PETSc distributed array
+	 * @param J The PETSc Jacobian matrix
+	 */
+	virtual void
+	initializeSolverContext(DM& da, Mat& J) = 0;
+
+	/**
 	 * Initialize the concentration solution vector.
 	 *
 	 * @param da The PETSc distributed array
 	 * @param C The PETSc solution vector
+	 * @param oldDA The previous PETSc distributed array
+	 * @param oldC The previous PETSc solution vector
+	 *
 	 */
 	virtual void
-	initializeConcentration(DM& da, Vec& C) = 0;
+	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC) = 0;
 
 	/**
 	 * Set the concentrations to 0.0 where the GBs are.
@@ -175,6 +188,14 @@ public:
 	getXGrid() const = 0;
 
 	/**
+	 * Get the grid in the x direction for the temperature.
+	 *
+	 * @return The grid in the x direction
+	 */
+	virtual std::vector<double>
+	getTemperatureGrid() const = 0;
+
+	/**
 	 * Get the step size in the y direction.
 	 *
 	 * @return The step size in the y direction
@@ -206,7 +227,7 @@ public:
 	 * @return The position of the surface at this y,z coordinates
 	 */
 	virtual IdType
-	getSurfacePosition(IdType j = -1, IdType k = -1) const = 0;
+	getSurfacePosition(IdType j = badId, IdType k = badId) const = 0;
 
 	/**
 	 * Set the position of the surface.
@@ -216,16 +237,21 @@ public:
 	 * @param k The index on the grid in the z direction
 	 */
 	virtual void
-	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1) = 0;
+	setSurfacePosition(IdType pos, IdType j = badId, IdType k = badId) = 0;
+
+	/**
+	 * Set the number of grid points we want to move by at the surface.
+	 *
+	 * @param offset The number of grid points
+	 */
+	virtual void
+	setSurfaceOffset(int offset) = 0;
 
 	/**
 	 * Generate the grid for the temperature.
-	 *
-	 * @param surfacePos The surface position
-	 * @param oldPos The old surface position
 	 */
 	virtual void
-	generateTemperatureGrid(IdType surfacePos, IdType oldPos = 0) = 0;
+	generateTemperatureGrid() = 0;
 
 	/**
 	 * Get the initial vacancy concentration.
@@ -321,6 +347,16 @@ public:
 	 */
 	virtual std::vector<std::vector<std::vector<std::array<double, 4>>>>&
 	getLocalNE() = 0;
+
+	/**
+	 * Get the network temperature and depth that can be passed to an app.
+	 *
+	 * @param temperatures The local vector of temperatures
+	 * @param depth The corresponding depths
+	 */
+	virtual void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths) = 0;
 
 	/**
 	 * Set the latest value of the Xe flux.
@@ -439,7 +475,7 @@ public:
 	 *
 	 * @return The perf handler
 	 */
-	virtual std::shared_ptr<perf::IPerfHandler>
+	virtual perf::IPerfHandler*
 	getPerfHandler() const = 0;
 
 	/**
@@ -457,6 +493,14 @@ public:
 	 */
 	virtual core::diffusion::IDiffusionHandler*
 	getDiffusionHandler() const = 0;
+
+	/**
+	 * Get the Soret diffusion handler.
+	 *
+	 * @return The Soret diffusion handler
+	 */
+	virtual core::modified::ISoretDiffusionHandler*
+	getSoretDiffusionHandler() const = 0;
 
 	/**
 	 * Get the surface advection handler.
@@ -524,13 +568,12 @@ public:
 	/**
 	 * Interpolate the temperature between the two grids.
 	 *
-	 * @param pos The surface position
 	 * @param localTemp The local temperature vector wrt temperature grid
 	 * @return The local temperature vector wrt cluster grid
 	 */
 	virtual std::vector<double>
 	interpolateTemperature(
-		IdType pos, std::vector<double> localTemp = std::vector<double>()) = 0;
+		std::vector<double> localTemp = std::vector<double>()) = 0;
 };
 // end class ISolverHandler
 

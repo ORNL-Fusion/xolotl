@@ -32,7 +32,7 @@ public:
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
 	using RateVector = typename Superclass::RateVector;
-	using ConnectivitiesVector = typename Superclass::ConnectivitiesVector;
+	using ConnectivitiesPair = typename Superclass::ConnectivitiesPair;
 	using RatesView = typename Superclass::RatesView;
 
 	using Superclass::Superclass;
@@ -41,13 +41,19 @@ public:
 	checkLargestClusterId();
 
 	void
-	setConstantRates(RateVector rates) override;
+	setConstantRates(RatesView rates, IndexType gridIndex) override;
 
 	void
-	setConstantConnectivities(ConnectivitiesVector conns) override;
+	setConstantConnectivities(ConnectivitiesPair conns) override;
+
+	void
+	setConstantRateEntries() override;
 
 	void
 	initializeExtraClusterData(const options::IOptions& options);
+
+	void
+	setGridSize(IndexType gridSize) override;
 
 private:
 	double
@@ -119,3 +125,7 @@ public:
 } // namespace xolotl
 
 #include <xolotl/core/network/ZrClusterGenerator.h>
+
+#if defined(XOLOTL_INCLUDE_RN_TPP_FILES)
+#include <xolotl/core/network/impl/ZrReactionNetwork.tpp>
+#endif

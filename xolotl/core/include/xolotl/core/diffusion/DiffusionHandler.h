@@ -1,5 +1,4 @@
-#ifndef DIFFUSIONHANDLER_H
-#define DIFFUSIONHANDLER_H
+#pragma once
 
 // Includes
 #include <xolotl/core/diffusion/IDiffusionHandler.h>
@@ -22,8 +21,19 @@ protected:
 	//! Collection of diffusing clusters.
 	std::vector<IdType> diffusingClusters;
 
+	//! Device copy of diffusingClusters
+	Kokkos::View<IdType*> diffClusterIds;
+
+	//! Device clusters
+	using DeviceCluster = network::ClusterCommon<plsm::DeviceMemSpace>;
+	Kokkos::View<DeviceCluster*> diffClusters;
+
 	//! Migration energy threshold
 	double migrationThreshold;
+
+protected:
+	void
+	syncDiffusingClusters(network::IReactionNetwork& network);
 
 public:
 	//! The Constructor
@@ -45,34 +55,9 @@ public:
 	 *
 	 * \see IDiffusionHandler.h
 	 */
-	virtual void
-	initializeOFill(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) override
-	{
-		// Clear the index vector
-		diffusingClusters.clear();
-
-		// Consider each cluster
-		for (std::size_t i = 0; i < network.getNumClusters(); i++) {
-			auto cluster = network.getClusterCommon(i);
-
-			// Get its diffusion factor and migration energy
-			double diffFactor = cluster.getDiffusionFactor();
-			double migration = cluster.getMigrationEnergy();
-
-			// Don't do anything if the diffusion factor is 0.0
-			if (util::equal(diffFactor, 0.0) || migration > migrationThreshold)
-				continue;
-
-			// Note that cluster is diffusing.
-			diffusingClusters.emplace_back(i);
-
-			// Set the ofill value to 1 for this cluster
-			ofillMap[i].emplace_back(i);
-		}
-
-		return;
-	}
+	void
+	initialize(network::IReactionNetwork& network,
+		std::vector<core::RowColPair>& idPairs) override;
 
 	/**
 	 * Get the total number of diffusing clusters in the network.
@@ -101,4 +86,3 @@ public:
 } /* end namespace diffusion */
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif

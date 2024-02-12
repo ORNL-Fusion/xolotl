@@ -160,6 +160,13 @@ struct ClusterDataExtra<ZrReactionNetwork, PlsmContext>
 			View<double**>("Dislocation Capture Radius", numClusters, 2);
 	}
 
+	void
+	setGridSize(IndexType numClusters, IndexType gridSize)
+	{
+		anisotropyRatio =
+			View<double**>("Anisotropy Ratio", numClusters, gridSize);
+	}
+
 	View<double**> anisotropyRatio;
 	View<double**> dislocationCaptureRadius;
 };

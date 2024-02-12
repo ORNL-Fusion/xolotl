@@ -25,9 +25,9 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver0DHandler(
-		NetworkType& _network, const options::IOptions& options) :
-		PetscSolverHandler(_network, options)
+	PetscSolver0DHandler(NetworkType& _network,
+		perf::IPerfHandler& _perfHandler, const options::IOptions& options) :
+		PetscSolverHandler(_network, _perfHandler, options)
 	{
 	}
 
@@ -46,7 +46,13 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeConcentration(DM& da, Vec& C);
+	initializeSolverContext(DM& da, Mat& J);
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	void
+	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC);
 
 	/**
 	 * \see ISolverHandler.h
@@ -90,7 +96,7 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	IdType
-	getSurfacePosition(IdType j = -1, IdType k = -1) const
+	getSurfacePosition(IdType j = badId, IdType k = badId) const
 	{
 		return 0;
 	}
@@ -99,7 +105,27 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1)
+	setSurfacePosition(IdType pos, IdType j = badId, IdType k = badId)
+	{
+		return;
+	}
+
+	/**
+	.* \see ISolverHandler.h
+	 */
+	void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths)
+	{
+		temperatures = temperature;
+		depths = std::vector<double>(1, 1.0);
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	void
+	setSurfaceOffset(int offset) override
 	{
 		return;
 	}

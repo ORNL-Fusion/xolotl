@@ -2,6 +2,7 @@
 #define PETSCSOLVERHANDLER_H
 
 // Includes
+#include <xolotl/core/Types.h>
 #include <xolotl/perf/IEventCounter.h>
 #include <xolotl/perf/ITimer.h>
 #include <xolotl/solver/handler/SolverHandler.h>
@@ -12,24 +13,6 @@ namespace solver
 {
 namespace handler
 {
-#ifndef CHECK_PETSC_ERROR
-#define CHECK_PETSC_ERROR
-/**
- * This operation checks a PETSc error code and throws an exception with given
- * error message.
- *
- * @param errorCode The PETSc error code.
- * @param errMsg The error message in the thrown exception.
- */
-inline void
-checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
-{
-	if (PetscUnlikely(errorCode)) {
-		throw std::runtime_error(errorMsg);
-	}
-}
-#endif
-
 /**
  * This class and its subclasses realize the SolverHandler interface to solve
  * the diffusion-reaction problem with the PETSc solvers from Argonne
@@ -41,11 +24,14 @@ checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
 class PetscSolverHandler : public SolverHandler
 {
 protected:
-	//! Partial derivatives for all reactions at one grid point.
+	//! Partial derivatives at one grid point.
 	Kokkos::View<double*> vals;
 
 	//! Map of connectivities
 	SparseFillMap dfill;
+
+	//! The offset at the surface
+	IdType surfaceOffset;
 
 	/**
 	 * A vector for holding the partial derivatives for one cluster in the order
@@ -57,32 +43,6 @@ protected:
 	 * allocations.
 	 */
 	std::vector<double> reactingPartialsForCluster;
-
-	/**
-	 * Number of valid partial derivatives for each reactant.
-	 */
-	std::vector<IdType> reactionSize;
-
-	/**
-	 * Starting index of items for each reactant within the reactionIndices
-	 * and reactionVals vectors.  E.g., the values for reactant i
-	 * are located at
-	 *      reactionIndices[reactionStartingIdx[i]+0],
-	 *      reactionIndices[reactionStartingIdx[i]+1]
-	 *      ...
-	 *      reactionIndices[reactionStartingIdx[i]+reactionSize[i]-1]
-	 */
-	std::vector<size_t> reactionStartingIdx;
-
-	/**
-	 * Indices for partial derivatives for all the reactions at one grid point.
-	 */
-	std::vector<IdType> reactionIndices;
-
-	/**
-	 * Partial derivatives for all reactions at one grid point.
-	 */
-	std::vector<PetscScalar> reactionVals;
 
 	//! Times and counters
 	std::shared_ptr<perf::ITimer> fluxTimer;
@@ -103,6 +63,14 @@ protected:
 	ConvertToPetscSparseFillMap(size_t dof,
 		const core::network::IReactionNetwork::SparseFillMap& fillMap);
 
+	static std::array<std::vector<PetscInt>, 2>
+	convertToCoordinateListPair(std::size_t dof,
+		const core::network::IReactionNetwork::SparseFillMap& fillMap);
+
+	static std::vector<core::RowColPair>
+	convertToRowColPairList(std::size_t dof,
+		const core::network::IReactionNetwork::SparseFillMap& fillMap);
+
 public:
 	/**
 	 * Default constructor, deleted because we need to construct with objects.
@@ -115,7 +83,25 @@ public:
 	 * @param _network The reaction network to use.
 	 * @param _perfHandler The perf handler to use.
 	 */
-	PetscSolverHandler(NetworkType& _network, const options::IOptions& options);
+	PetscSolverHandler(NetworkType& _network, perf::IPerfHandler& _perfHandler,
+		const options::IOptions& options);
+
+	/**
+	 * Reset all jacobian values to zero
+	 */
+	void
+	resetJacobianValues();
+
+	/**
+	 * Set the number of grid points we want to move by at the surface.
+	 * \see ISolverHandler.h
+	 */
+	void
+	setSurfaceOffset(int offset)
+	{
+		surfaceOffset = offset;
+		return;
+	}
 };
 // end class PetscSolverHandler
 

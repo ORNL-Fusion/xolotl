@@ -8,6 +8,7 @@ list(APPEND XOLOTL_CORE_HEADERS
 )
 
 list(APPEND XOLOTL_CORE_SOURCES
+    ${XOLOTL_CORE_SOURCE_DIR}/diffusion/DiffusionHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/diffusion/Diffusion1DHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/diffusion/Diffusion2DHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/diffusion/Diffusion3DHandler.cpp

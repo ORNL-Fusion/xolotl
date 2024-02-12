@@ -14,7 +14,23 @@ public:
 	using PetscMonitor::PetscMonitor;
 
 	void
-	setup() override;
+	setup(int loop) override;
+
+	void
+	keepFlux(std::vector<std::vector<std::vector<double>>>& nSurf,
+		std::vector<std::vector<std::vector<double>>>& nBulk,
+		std::vector<std::vector<std::vector<double>>>& surfFlux,
+		std::vector<std::vector<std::vector<double>>>& bulkFlux) override
+	{
+	}
+
+	void
+	setFlux(std::vector<std::vector<std::vector<double>>>& nSurf,
+		std::vector<std::vector<std::vector<double>>>& nBulk,
+		std::vector<std::vector<std::vector<double>>>& surfFlux,
+		std::vector<std::vector<std::vector<double>>>& bulkFlux) override
+	{
+	}
 
 	PetscErrorCode
 	monitorLargest(
@@ -36,7 +52,8 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
-	computeAlphaZr(TS ts, PetscInt timestep, PetscReal time, Vec solution);
+	computeAlphaZr(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
 	monitorBubble(TS ts, PetscInt timestep, PetscReal time, Vec solution);

@@ -34,6 +34,11 @@ protected:
 	std::array<double, 2> tempParam;
 
 	/**
+	 * Value for the temperature grid power.
+	 */
+	double tempGridPower;
+
+	/**
 	 * Name of the input temperature profile file.
 	 */
 	std::string tempProfileFilename;
@@ -44,7 +49,7 @@ protected:
 	bool fluxFlag;
 
 	/**
-	 * Value for the  flux.
+	 * Value for the flux.
 	 */
 	double fluxAmplitude;
 
@@ -62,6 +67,46 @@ protected:
 	 * Name of the perf handler
 	 */
 	std::string perfHandlerName;
+
+	/**
+	 * Output performance report to YAML file?
+	 */
+	bool perfOutputYAMLFlag;
+
+	/**
+	 * Enable multiple xolotl instances
+	 */
+	bool subnetworksFlag;
+
+	/**
+	 * Initial coupling timestep
+	 */
+	double initialTimeStep;
+
+	/**
+	 * Maximum coupling timestep
+	 */
+	double maxTimeStep;
+
+	/**
+	 * Time step growth factor
+	 */
+	double timeStepGrowthFactor;
+
+	/**
+	 * Coupling start time
+	 */
+	double startTime;
+
+	/**
+	 * Coupling end time
+	 */
+	double endTime;
+
+	/**
+	 * Maximum coupling time steps
+	 */
+	IdType numTimeSteps;
 
 	/**
 	 * Name of the viz handler
@@ -84,10 +129,9 @@ protected:
 	double zeta;
 
 	/**
-	 * Value of the portion of the void on the grid at the start of the
-	 * simulation.
+	 * The location of the interface between two materials.
 	 */
-	double voidPortion;
+	double interfaceLocation;
 
 	/**
 	 * Number of dimensions for the simulation.
@@ -145,6 +189,11 @@ protected:
 	bool useHDF5Flag;
 
 	/**
+	 * Network parameters
+	 */
+	std::vector<IdType> networkParams;
+
+	/**
 	 * Maximum number of He or Xe
 	 */
 	int maxImpurity;
@@ -165,6 +214,11 @@ protected:
 	int maxV;
 
 	/**
+	 * Maximum number of pure V
+	 */
+	int maxPureV;
+
+	/**
 	 * Maximum number of I
 	 */
 	int maxI;
@@ -179,6 +233,11 @@ protected:
 	 * String of the list of wanted BC in X.
 	 */
 	std::string xBC;
+
+	/**
+	 * Portion of heat lost in the bulk.
+	 */
+	double heatLossPortion;
 
 	/**
 	 * Depth for the bubble bursting in nm.
@@ -272,6 +331,26 @@ protected:
 	 */
 	fs::path fluxDepthProfileFilePath;
 
+	/**
+	 * Value of the basal portion.
+	 */
+	double basalPortion;
+
+	/**
+	 * Transition size, for instance from pyramic to c-loops.
+	 */
+	int transitionSize;
+
+	/**
+	 * Value of the cascade dose.
+	 */
+	double cascadeDose;
+
+	/**
+	 * Value of the remaining cascade efficiency.
+	 */
+	double cascadeEfficiency;
+
 public:
 	/**
 	 * The constructor.
@@ -282,6 +361,12 @@ public:
 	 * The destructor.
 	 */
 	~Options();
+
+	/**
+	 * \see IOptions.h
+	 */
+	std::shared_ptr<IOptions>
+	makeCopy() const override;
 
 	/**
 	 * \see IOptions.h
@@ -332,6 +417,15 @@ public:
 	getTempParam(std::size_t i = 0) const override
 	{
 		return tempParam[i];
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	double
+	getTempGridPower() const override
+	{
+		return tempGridPower;
 	}
 
 	/**
@@ -391,6 +485,15 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
+	bool
+	usePerfOutputYAML() const override
+	{
+		return perfOutputYAMLFlag;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
 	std::string
 	getVizHandlerName() const override
 	{
@@ -437,9 +540,9 @@ public:
 	 * \see IOptions.h
 	 */
 	double
-	getVoidPortion() const override
+	getInterfaceLocation() const override
 	{
-		return voidPortion;
+		return interfaceLocation;
 	}
 
 	/**
@@ -476,6 +579,72 @@ public:
 	getProcesses() const override
 	{
 		return processMap;
+	}
+
+	void
+	addProcess(const std::string& processKey) override;
+
+	/**
+	 * \see IOptions.h
+	 */
+	bool
+	useSubnetworks() const override
+	{
+		return subnetworksFlag;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getInitialTimeStep() const override
+	{
+		return initialTimeStep;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getMaxTimeStep() const override
+	{
+		return maxTimeStep;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getTimeStepGrowthFactor() const override
+	{
+		return timeStepGrowthFactor;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getStartTime() const override
+	{
+		return startTime;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getEndTime() const override
+	{
+		return endTime;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual IdType
+	getNumberOfTimeSteps() const override
+	{
+		return numTimeSteps;
 	}
 
 	/**
@@ -535,6 +704,21 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
+	const std::vector<IdType>&
+	getNetworkParameters() const override
+	{
+		return networkParams;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	void
+	setNetworkParameters(const std::vector<IdType>& params) override;
+
+	/**
+	 * \see IOptions.h
+	 */
 	int
 	getMaxImpurity() const override
 	{
@@ -566,6 +750,15 @@ public:
 	getMaxV() const override
 	{
 		return maxV;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
+	getMaxPureV() const override
+	{
+		return maxPureV;
 	}
 
 	/**
@@ -618,6 +811,15 @@ public:
 	getBCString() const override
 	{
 		return xBC;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	double
+	getHeatLossPortion() const override
+	{
+		return heatLossPortion;
 	}
 
 	/**
@@ -781,6 +983,42 @@ public:
 	getFluxDepthProfileFilePath() const override
 	{
 		return fluxDepthProfileFilePath.string();
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getBasalPortion() const override
+	{
+		return basalPortion;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	int
+	getTransitionSize() const override
+	{
+		return transitionSize;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getCascadeDose() const override
+	{
+		return cascadeDose;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getCascadeEfficiency() const override
+	{
+		return cascadeEfficiency;
 	}
 };
 // end class Options

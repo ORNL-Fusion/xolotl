@@ -7,8 +7,7 @@
  *      Author: Jay Jay Billings
  */
 
-#ifndef MATHUTILS_H_
-#define MATHUTILS_H_
+#pragma once
 
 #include <array>
 #include <cmath>
@@ -294,5 +293,3 @@ secondOrderOffsetSum(
 
 } /* end namespace util */
 } /* end namespace xolotl */
-
-#endif /* MATHUTILS_H_ */

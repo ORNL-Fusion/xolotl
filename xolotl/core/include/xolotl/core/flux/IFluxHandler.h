@@ -1,8 +1,9 @@
-#ifndef IFLUXHANDLER_H
-#define IFLUXHANDLER_H
+#pragma once
 
 #include <string>
 #include <vector>
+
+#include <Kokkos_Core.hpp>
 
 #include <xolotl/core/network/IReactionNetwork.h>
 
@@ -54,8 +55,8 @@ public:
 	 * @param surfacePos The current position of the surface
 	 */
 	virtual void
-	computeIncidentFlux(double currentTime, double* updatedConcOffset, int xi,
-		int surfacePos) = 0;
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos) = 0;
 
 	/**
 	 * This operation increments the fluence at the current time step.
@@ -74,11 +75,19 @@ public:
 	computeFluence(double time) = 0;
 
 	/**
-	 * This operation returns the fluence.
+	 * This operation sets the fluence.
+	 *
+	 * @param fluence The current fluence
+	 */
+	virtual void
+	setFluence(std::vector<double> fluence) = 0;
+
+	/**
+	 * This operation returns the total fluence and effective fluences.
 	 *
 	 * @return The fluence
 	 */
-	virtual double
+	virtual std::vector<double>
 	getFluence() const = 0;
 
 	/**
@@ -156,11 +165,17 @@ public:
 	 */
 	virtual std::vector<IdType>
 	getFluxIndices() const = 0;
+
+	/**
+	 * This operation gets the reduction factors each generated cluster.
+	 *
+	 * @return The factors
+	 */
+	virtual std::vector<double>
+	getReductionFactors() const = 0;
 };
 // end class IFluxHandler
 
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif

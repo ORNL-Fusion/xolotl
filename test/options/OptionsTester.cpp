@@ -106,13 +106,13 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "material=W100" << std::endl
 		<< "initialConc=V 1 0.05" << std::endl
 		<< "dimensions=1" << std::endl
-		<< "voidPortion=60.0" << std::endl
 		<< "gridType=nonuniform" << std::endl
 		<< "gridParam=10" << std::endl
 		<< "process=diff" << std::endl
 		<< "grouping=11 2 4" << std::endl
 		<< "sputtering=0.5" << std::endl
 		<< "boundary=1 1" << std::endl
+		<< "heatLossPortion=0.5" << std::endl
 		<< "burstingDepth=5.0" << std::endl
 		<< "burstingFactor=2.5" << std::endl
 		<< "zeta=0.6" << std::endl
@@ -127,7 +127,11 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "heVRatio=5.0" << std::endl
 		<< "migrationThreshold=1.0" << std::endl
 		<< "fluxDepthProfileFilePath=path/to/the/flux/profile/file.txt"
-		<< std::endl;
+		<< std::endl
+		<< "basalPortion=0.6" << std::endl
+		<< "transitionSize=300" << std::endl
+		<< "cascadeDose=5000.0" << std::endl
+		<< "cascadeEfficiency=0.2" << std::endl;
 	goodParamFile.close();
 
 	string pathToFile("param_good.txt");
@@ -167,9 +171,6 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Check the number of dimensions option
 	BOOST_REQUIRE_EQUAL(opts.getDimensionNumber(), 1);
 
-	// Check the void portion option
-	BOOST_REQUIRE_EQUAL(opts.getVoidPortion(), 60.0);
-
 	// Check the grid options
 	BOOST_REQUIRE_EQUAL(opts.getGridTypeName(), "nonuniform");
 	BOOST_REQUIRE_EQUAL(opts.getGridParam(0), 10);
@@ -196,6 +197,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getFrontBoundary(), 1);
 	BOOST_REQUIRE_EQUAL(opts.getBackBoundary(), 1);
 	BOOST_REQUIRE_EQUAL(opts.getBCString(), "mirror");
+	BOOST_REQUIRE_EQUAL(opts.getHeatLossPortion(), 0.5);
 
 	// Check the electronic stopping power option
 	BOOST_REQUIRE_EQUAL(opts.getZeta(), 0.6);
@@ -237,6 +239,16 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getFluxDepthProfileFilePath(),
 		"path/to/the/flux/profile/file.txt");
 
+	// Check the basal portion
+	BOOST_REQUIRE_EQUAL(opts.getBasalPortion(), 0.6);
+
+	// Check the transition size
+	BOOST_REQUIRE_EQUAL(opts.getTransitionSize(), 300);
+
+	// Check the cascade options
+	BOOST_REQUIRE_EQUAL(opts.getCascadeDose(), 5000);
+	BOOST_REQUIRE_EQUAL(opts.getCascadeEfficiency(), 0.2);
+
 	// Check the physical processes option
 	auto map = opts.getProcesses();
 	BOOST_REQUIRE_EQUAL(map["diff"], true);
@@ -248,6 +260,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(map["bursting"], false);
 	BOOST_REQUIRE_EQUAL(map["resolution"], false);
 	BOOST_REQUIRE_EQUAL(map["heterogeneous"], false);
+	BOOST_REQUIRE_EQUAL(map["constant"], false);
 
 	// Check the PETSc options
 	BOOST_REQUIRE_EQUAL(opts.getPetscArg(),
@@ -291,6 +304,7 @@ BOOST_AUTO_TEST_CASE(goodParamFileNoHDF5)
 	BOOST_REQUIRE_EQUAL(opts.getMaxT(), 0);
 	BOOST_REQUIRE_EQUAL(opts.getMaxV(), 5);
 	BOOST_REQUIRE_EQUAL(opts.getMaxI(), 3);
+	BOOST_REQUIRE_EQUAL(opts.getMaxPureV(), 5);
 
 	// Remove the created file
 	std::string tempFile = "param_good.txt";

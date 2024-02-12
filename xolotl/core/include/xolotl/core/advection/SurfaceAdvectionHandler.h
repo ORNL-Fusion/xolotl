@@ -1,9 +1,7 @@
-#ifndef SURFACEADVECTIONHANDLER_H
-#define SURFACEADVECTIONHANDLER_H
+#pragma once
 
 // Includes
 #include <xolotl/core/advection/AdvectionHandler.h>
-#include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -22,6 +20,12 @@ class SurfaceAdvectionHandler : public AdvectionHandler
 private:
 	//! The vector to know which clusters are moving where
 	std::vector<std::vector<std::vector<std::vector<bool>>>> advectionGrid;
+
+	Kokkos::View<int****> advecGrid;
+
+protected:
+	void
+	syncAdvectionGrid();
 
 public:
 	//! The Constructor
@@ -59,9 +63,10 @@ public:
 	 */
 	void
 	computeAdvection(network::IReactionNetwork& network,
-		const plsm::SpaceVector<double, 3>& pos, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
-		double hy = 0.0, int iy = 0, double hz = 0.0,
+		const plsm::SpaceVector<double, 3>& pos,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
 		int iz = 0) const override;
 
 	/**
@@ -81,10 +86,10 @@ public:
 	 * \see IAdvectionHandler.h
 	 */
 	void
-	computePartialsForAdvection(network::IReactionNetwork& network, double* val,
-		IdType* indices, const plsm::SpaceVector<double, 3>& pos, double hxLeft,
-		double hxRight, int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
-		int iz = 0) const override;
+	computePartialsForAdvection(network::IReactionNetwork& network,
+		Kokkos::View<double*> val, const plsm::SpaceVector<double, 3>& pos,
+		double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
+		double hz = 0.0, int iz = 0) const override;
 
 	/**
 	 * Compute the indices that will determine where the partial derivatives
@@ -124,4 +129,3 @@ public:
 } /* end namespace advection */
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif

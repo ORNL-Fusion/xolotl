@@ -10,6 +10,7 @@
 #include <xolotl/core/network/detail/ClusterConnectivity.h>
 #include <xolotl/core/network/detail/ClusterData.h>
 #include <xolotl/core/network/detail/ReactionData.h>
+#include <xolotl/util/Array.h>
 
 namespace xolotl
 {
@@ -26,12 +27,14 @@ class IReactionNetwork
 public:
 	using IndexType = detail::ReactionNetworkIndexType;
 	using AmountType = detail::CompositionAmountType;
-	using ConcentrationsView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
-	using OwnedConcentrationsView = Kokkos::View<double*>;
+	using ConcentrationsView =
+		Kokkos::View<const double*, Kokkos::MemoryUnmanaged>;
+	using OwnedConcentrationsView = Kokkos::View<const double*>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
-	using RatesView = Kokkos::View<double**>;
+	using RatesView = Kokkos::View<double*>;
 	using ConnectivitiesView = Kokkos::View<bool**>;
+	using ConnectivitiesPairView = Kokkos::View<IndexType*>;
 	using SubMapView = Kokkos::View<AmountType*, Kokkos::MemoryUnmanaged>;
 	using OwnedSubMapView = Kokkos::View<AmountType*>;
 	using BelongingView = Kokkos::View<bool*>;
@@ -42,7 +45,8 @@ public:
 	using MomentIdMap = std::vector<std::vector<IdType>>;
 	using MomentIdMapVector = std::vector<std::vector<std::vector<IdType>>>;
 	using RateVector = std::vector<std::vector<double>>;
-	using ConnectivitiesVector = std::vector<std::vector<bool>>;
+	using ConnectivitiesPair =
+		std::pair<std::vector<IdType>, std::vector<IdType>>;
 	using PhaseSpace = std::vector<std::string>;
 
 	KOKKOS_INLINE_FUNCTION
@@ -307,11 +311,11 @@ public:
 	virtual IndexType
 	findClusterId(const std::vector<AmountType>& composition) = 0;
 
-	virtual ClusterCommon<plsm::HostMemSpace>
-	getClusterCommon(IndexType clusterId) = 0;
+	virtual ClusterCommon<plsm::DeviceMemSpace>
+	getClusterCommon(IndexType clusterId, plsm::DeviceMemSpace) = 0;
 
 	virtual ClusterCommon<plsm::HostMemSpace>
-	getSingleVacancy() = 0;
+	getClusterCommon(IndexType clusterId) = 0;
 
 	virtual IndexType
 	getLargestClusterId() = 0;
@@ -353,12 +357,28 @@ public:
 	/**
 	 * @brief Set the rates for constant reactions
 	 */
-	virtual void setConstantRates(RateVector) = 0;
+	virtual void
+	setConstantRates(RatesView, IndexType gridIndex) = 0;
 
 	/**
 	 * @brief Set the connectivities for constant reactions
 	 */
-	virtual void setConstantConnectivities(ConnectivitiesVector) = 0;
+	virtual void setConstantConnectivities(ConnectivitiesPair) = 0;
+
+	/**
+	 * @brief Set the rate entries to compute constant rates
+	 */
+	virtual void
+	initializeRateEntries(const ConnectivitiesPair&, IndexType) = 0;
+
+	virtual void
+	initializeRateEntries(const std::vector<ConnectivitiesPair>&) = 0;
+
+	/**
+	 * @brief Set the rate entries for constant reactions
+	 */
+	virtual void
+	setConstantRateEntries() = 0;
 
 	virtual PhaseSpace
 	getPhaseSpace() = 0;
@@ -421,6 +441,54 @@ public:
 	 */
 	virtual IndexType
 	getDiagonalFill(SparseFillMap& fillMap) = 0;
+
+	struct TotalQuantity
+	{
+		enum class Type
+		{
+			total,
+			atom,
+			radius,
+			volume,
+			trapped
+		};
+
+		Type type{};
+		SpeciesId speciesId{};
+		AmountType minSize{0};
+	};
+
+	virtual util::Array<double, 1>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 1>& quantities) = 0;
+
+	virtual util::Array<double, 2>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 2>& quantities) = 0;
+
+	virtual util::Array<double, 3>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 3>& quantities) = 0;
+
+	virtual util::Array<double, 4>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 4>& quantities) = 0;
+
+	virtual util::Array<double, 5>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 5>& quantities) = 0;
+
+	virtual util::Array<double, 6>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 6>& quantities) = 0;
+
+	virtual util::Array<double, 7>
+	getTotals(ConcentrationsView concentrations,
+		const util::Array<TotalQuantity, 7>& quantities) = 0;
+
+	virtual std::vector<double>
+	getTotalsVec(ConcentrationsView concentrations,
+		const std::vector<TotalQuantity>& quantities) = 0;
 
 	virtual double
 	getTotalConcentration(ConcentrationsView concentrations, SpeciesId species,

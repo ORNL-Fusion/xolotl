@@ -8,24 +8,6 @@ namespace xolotl
 {
 namespace solver
 {
-#ifndef CHECK_PETSC_ERROR
-#define CHECK_PETSC_ERROR
-/**
- * This operation checks a PETSc error code and throws an exception with given
- * error message.
- *
- * @param errorCode The PETSc error code.
- * @param errMsg The error message in the thrown exception.
- */
-inline void
-checkPetscError(PetscErrorCode errorCode, const char* errorMsg)
-{
-	if (PetscUnlikely(errorCode)) {
-		throw std::runtime_error(errorMsg);
-	}
-}
-#endif
-
 /**
  * This class realizes the Solver interface to solve the
  * diffusion-reaction problem with the PETSc solvers from Argonne
@@ -71,15 +53,25 @@ private:
 	 */
 	std::shared_ptr<perf::ITimer> solveTimer;
 
+	// For the monitors
+	std::vector<std::vector<std::vector<double>>> _nSurf;
+	std::vector<std::vector<std::vector<double>>> _nBulk;
+	std::vector<std::vector<std::vector<double>>> _previousSurfFlux;
+	std::vector<std::vector<std::vector<double>>> _previousBulkFlux;
+
 	/**
 	 * This operation configures the initial conditions of the grid in Xolotl.
 	 *
 	 * @param data The DM (data manager) created by PETSc
 	 * @param solutionVector The solution vector that contains the PDE
 	 * solution and which needs to be initialized.
+	 * @param oldData The previous DM
+	 * @param oldSolution The previous solution vector that contains the PDE
+	 * solution.
 	 */
 	void
-	setupInitialConditions(DM data, Vec solutionVector);
+	setupInitialConditions(
+		DM data, Vec solutionVector, DM oldData, Vec oldSolution);
 
 public:
 	/**
@@ -99,7 +91,8 @@ public:
 	 * \see ISolver.h
 	 */
 	void
-	initialize() override;
+	initialize(int loop = 0, double time = 0.0, DM oldDA = nullptr,
+		Vec oldC = nullptr) override;
 
 	/**
 	 * \see ISolver.h
