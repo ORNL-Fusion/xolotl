@@ -33,6 +33,7 @@ public:
 	using Composition = typename Superclass::Composition;
 	using Region = typename Superclass::Region;
 	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using ConnectivitiesPairView = typename Superclass::ConnectivitiesPairView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
@@ -57,6 +58,12 @@ public:
 		return detail::CoefficientsView("Bursting Coefficients", size,
 			Superclass::coeffsSingleExtent, 1, 1,
 			Superclass::coeffsSingleExtent);
+	}
+
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
 	}
 
 	using Superclass::updateRates;
@@ -100,7 +107,7 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex)
+		BelongingView isInSub, IndexType subId, IndexType gridIndex)
 	{
 		return;
 	}
@@ -121,6 +128,15 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	mapJacobianEntries(Connectivity connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
+		OwnedSubMapView backMap, IndexType subId)
+	{
+		return;
+	}
 
 protected:
 	IndexType _reactant;

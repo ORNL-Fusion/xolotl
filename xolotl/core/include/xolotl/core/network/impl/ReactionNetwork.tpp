@@ -37,6 +37,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	_clusterData.h_view() = ClusterData(_subpaving, gridSize);
 	copyClusterDataView();
 
+	auto bounds = getAllClusterBounds();
+
 	this->setMaterial(opts.getMaterial());
 
 	// Set constants
@@ -477,8 +479,6 @@ ReactionNetwork<TImpl>::initializeClusterMap(
 		isInSub.push_back(localIsInSub);
 		backMap.push_back(localBackMap);
 	}
-
-	return;
 }
 
 template <typename TImpl>
@@ -488,28 +488,69 @@ ReactionNetwork<TImpl>::initializeReactions()
 	Connectivity connectivity;
 	defineReactions(connectivity);
 	generateDiagonalFill(connectivity);
-
-	return;
+	setConstantRateEntries();
 }
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setConstantRates(
-	typename ReactionNetwork<TImpl>::RateVector rates)
+ReactionNetwork<TImpl>::setConstantRates(RatesView rates, IndexType gridIndex)
 {
-	asDerived()->setConstantRates(rates);
-
-	return;
+	asDerived()->setConstantRates(rates, gridIndex);
 }
 
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setConstantConnectivities(
-	typename ReactionNetwork<TImpl>::ConnectivitiesVector conns)
+	typename ReactionNetwork<TImpl>::ConnectivitiesPair conns)
 {
 	asDerived()->setConstantConnectivities(conns);
+}
 
-	return;
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::initializeRateEntries(
+	const ConnectivitiesPair& conns, IndexType subId)
+{
+	auto dConnsRowsView = ConnectivitiesPairView(
+		"dConstantConnectivitiesRows", conns.first.size());
+	auto dConnsEntriesView = ConnectivitiesPairView(
+		"dConstantConnectivitiesEntries", conns.second.size());
+	auto hConnsRowsView = create_mirror_view(dConnsRowsView);
+	auto hConnsEntriesView = create_mirror_view(dConnsEntriesView);
+	for (auto i = 0; i < conns.first.size(); i++) {
+		hConnsRowsView(i) = conns.first[i];
+	}
+	for (auto i = 0; i < conns.second.size(); i++) {
+		hConnsEntriesView(i) = conns.second[i];
+	}
+	deep_copy(dConnsRowsView, hConnsRowsView);
+	deep_copy(dConnsEntriesView, hConnsEntriesView);
+
+	auto localInSub = isInSub[subId];
+	auto localBackMap = backMap[subId];
+	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
+		reaction.defineRateEntries(
+			dConnsRowsView, dConnsEntriesView, localInSub, localBackMap, subId);
+	});
+	Kokkos::fence();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::initializeRateEntries(
+	const std::vector<ConnectivitiesPair>& connectivities)
+{
+	_reactions.allocateRateEntries(connectivities.size());
+	for (IndexType i = 0; i < connectivities.size(); ++i) {
+		initializeRateEntries(connectivities[i], i);
+	}
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setConstantRateEntries()
+{
+	asDerived()->setConstantRateEntries();
 }
 
 template <typename TImpl>
@@ -597,10 +638,9 @@ ReactionNetwork<TImpl>::computeConstantRates(ConcentrationsView concentrations,
 		concentrations, gridIndex, surfaceDepth, spacing);
 
 	auto localInSub = isInSub[subId];
-	auto localBackMap = backMap[subId];
 	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeConstantRates(
-			concentrations, rates, localInSub, localBackMap, gridIndex);
+			concentrations, rates, localInSub, subId, gridIndex);
 	});
 	Kokkos::fence();
 }
@@ -1317,8 +1357,6 @@ ReactionNetwork<TImpl>::updateOutgoingDiffFluxes(double* gridPointSolution,
 			}
 		}
 	}
-
-	return;
 }
 
 template <typename TImpl>
@@ -1362,8 +1400,6 @@ ReactionNetwork<TImpl>::updateOutgoingAdvecFluxes(double* gridPointSolution,
 
 		advClusterIdx++;
 	}
-
-	return;
 }
 
 template <typename TImpl>
@@ -1530,7 +1566,8 @@ void
 ReactionNetworkWorker<TImpl>::defineReactions(Connectivity& connectivity)
 {
 	auto generator = _nw.asDerived()->getReactionGenerator();
-	generator.setConstantConnectivities(_nw._constantConns);
+	generator.setConstantConnectivities(
+		_nw._constantConnsRows, _nw._constantConnsEntries);
 	_nw._reactions = generator.generateReactions();
 	connectivity = generator.getConnectivity();
 }

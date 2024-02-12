@@ -82,34 +82,51 @@ ZrReactionNetwork::checkLargestClusterId()
 }
 
 void
-ZrReactionNetwork::setConstantRates(RateVector rates)
+ZrReactionNetwork::setConstantRates(RatesView rates, IndexType gridIndex)
 {
-	auto dRateView = RatesView("dRates", rates.size(), rates[0].size());
-	auto hRateView = create_mirror_view(dRateView);
-	for (auto i = 0; i < rates.size(); i++)
-		for (auto j = 0; j < rates[0].size(); j++) {
-			hRateView(i, j) = rates[i][j];
-		}
-	deep_copy(dRateView, hRateView);
-
 	_reactions.forEachOn<ZrConstantReaction>(
 		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
-			reaction.setRate(dRateView);
+			reaction.setRate(rates, gridIndex);
 			reaction.updateRates();
 		});
 }
 
 void
-ZrReactionNetwork::setConstantConnectivities(ConnectivitiesVector conns)
+ZrReactionNetwork::setConstantConnectivities(ConnectivitiesPair conns)
 {
-	_constantConns = ConnectivitiesView(
-		"dConstantConnectivities", conns.size(), conns[0].size());
-	auto hConnsView = create_mirror_view(_constantConns);
-	for (auto i = 0; i < conns.size(); i++)
-		for (auto j = 0; j < conns[0].size(); j++) {
-			hConnsView(i, j) = conns[i][j];
-		}
-	deep_copy(_constantConns, hConnsView);
+	_constantConnsRows = ConnectivitiesPairView(
+		"dConstantConnectivitiesRows", conns.first.size());
+	_constantConnsEntries = ConnectivitiesPairView(
+		"dConstantConnectivitiesEntries", conns.second.size());
+	auto hConnsRowsView = create_mirror_view(_constantConnsRows);
+	auto hConnsEntriesView = create_mirror_view(_constantConnsEntries);
+	for (auto i = 0; i < conns.first.size(); i++) {
+		hConnsRowsView(i) = conns.first[i];
+	}
+	for (auto i = 0; i < conns.second.size(); i++) {
+		hConnsEntriesView(i) = conns.second[i];
+	}
+	deep_copy(_constantConnsRows, hConnsRowsView);
+	deep_copy(_constantConnsEntries, hConnsEntriesView);
+}
+
+void
+ZrReactionNetwork::setConstantRateEntries()
+{
+	auto rows = _constantConnsRows;
+	auto entries = _constantConnsEntries;
+	_reactions.forEachOn<ZrConstantReaction>(
+		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
+			reaction.defineRateEntries(rows, entries);
+		});
+}
+
+void
+ZrReactionNetwork::setGridSize(IndexType gridSize)
+{
+	this->_clusterData.h_view().extraData.setGridSize(
+		this->_clusterData.h_view().numClusters, gridSize);
+	Superclass::setGridSize(gridSize);
 }
 
 void

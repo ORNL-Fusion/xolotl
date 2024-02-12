@@ -9,6 +9,7 @@
 
 // Ensure we have fixed-width integer type definitions in std namespace.
 #include <cstdint>
+#include <limits>
 
 namespace xolotl
 {

@@ -111,6 +111,17 @@ public:
 	}
 
 	/**
+	.* \see ISolverHandler.h
+	 */
+	void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths)
+	{
+		temperatures = temperature;
+		depths = std::vector<double>(1, 1.0);
+	}
+
+	/**
 	 * \see ISolverHandler.h
 	 */
 	void

@@ -130,12 +130,12 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
-	void
-	computeCoefficients();
-
-	KOKKOS_INLINE_FUNCTION
 	double
 	getRateForProduction(IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeCoefficients();
 
 	KOKKOS_INLINE_FUNCTION
 	void

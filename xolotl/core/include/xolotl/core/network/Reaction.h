@@ -48,6 +48,7 @@ public:
 	using FluxesView = IReactionNetwork::FluxesView;
 	using RatesView = IReactionNetwork::RatesView;
 	using ConnectivitiesView = IReactionNetwork::ConnectivitiesView;
+	using ConnectivitiesPairView = IReactionNetwork::ConnectivitiesPairView;
 	using BelongingView = IReactionNetwork::BelongingView;
 	using OwnedSubMapView = IReactionNetwork::OwnedSubMapView;
 	using Connectivity = typename IReactionNetwork::Connectivity;
@@ -66,6 +67,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void
 	updateData(ReactionDataRef reactionData, const ClusterData& clusterData);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	getRateEntries(ReactionDataRef reactionData);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -136,10 +141,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void
 	contributeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex)
+		BelongingView isInSub, IndexType subId, IndexType gridIndex)
 	{
 		asDerived()->computeConstantRates(
-			concentrations, rates, isInSub, backMap, gridIndex);
+			concentrations, rates, isInSub, subId, gridIndex);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -167,6 +172,17 @@ public:
 	defineJacobianEntries(Connectivity connectivity)
 	{
 		asDerived()->mapJacobianEntries(connectivity);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	defineRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries,
+		BelongingView isInSub = BelongingView(),
+		OwnedSubMapView backMap = OwnedSubMapView(), IndexType subId = 0)
+	{
+		asDerived()->mapRateEntries(
+			connectivityRow, connectivityEntries, isInSub, backMap, subId);
 	}
 
 protected:
@@ -220,6 +236,21 @@ protected:
 		connectivity.add(rowId, columnId);
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	getPosition(IndexType rowId, IndexType columnId,
+		const ConnectivitiesPairView connectivityRow,
+		const ConnectivitiesPairView connectivityEntries) const
+	{
+		for (auto pos = connectivityRow(rowId);
+			 pos < connectivityRow(rowId + 1); ++pos) {
+			if (connectivityEntries(pos) == columnId) {
+				return pos;
+			}
+		}
+		return invalidIndex;
+	}
+
 protected:
 	const ClusterData* _clusterData;
 
@@ -237,6 +268,15 @@ protected:
 	using CoefsSubView =
 		decltype(std::declval<ReactionDataRef>().getCoefficients(0));
 	CoefsSubView _coefs;
+
+	//! Constant Rates (only actually used for constant reactions
+	using ConstantRateSubView =
+		decltype(std::declval<ReactionDataRef>().getConstantRates(0));
+	ConstantRateSubView _constantRates;
+
+	using RateEntriesSubView =
+		decltype(std::declval<ReactionDataRef>().getRateEntries(0));
+	RateEntriesSubView _rateEntries;
 };
 
 /**
@@ -260,6 +300,7 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
 	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using ConnectivitiesPairView = typename Superclass::ConnectivitiesPairView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using Composition = typename Superclass::Composition;
@@ -290,13 +331,15 @@ public:
 			Superclass::coeffsSingleExtent);
 	}
 
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeCoefficients();
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	computeRate(IndexType gridIndex, double time = 0.0);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -313,10 +356,15 @@ public:
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex);
 
+private:
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex, double time = 0.0);
+
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
+		BelongingView isInSub, IndexType subId, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -328,7 +376,6 @@ public:
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
 
-private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConnectivity(const Connectivity& connectivity);
@@ -340,6 +387,12 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	mapJacobianEntries(Connectivity connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
+		OwnedSubMapView backMap, IndexType subId);
 
 protected:
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
@@ -378,6 +431,7 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
 	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using ConnectivitiesPairView = typename Superclass::ConnectivitiesPairView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
@@ -405,22 +459,15 @@ public:
 			Superclass::coeffsSingleExtent);
 	}
 
-private:
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeCoefficients();
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	computeRate(IndexType gridIndex, double time = 0.0);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeConnectivity(const Connectivity& connectivity);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeReducedConnectivity(const Connectivity& connectivity);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -437,10 +484,23 @@ private:
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex);
 
+private:
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex, double time = 0.0);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConnectivity(const Connectivity& connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeReducedConnectivity(const Connectivity& connectivity);
+
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
+		BelongingView isInSub, IndexType subId, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -455,6 +515,12 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	mapJacobianEntries(Connectivity connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
+		OwnedSubMapView backMap, IndexType subId);
 
 protected:
 	IndexType _reactant;

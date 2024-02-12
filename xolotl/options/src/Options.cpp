@@ -37,6 +37,13 @@ Options::Options() :
 	gridTypeName(""),
 	gridParam{},
 	gridFilename(""),
+	subnetworksFlag(false),
+	initialTimeStep(0.0),
+	maxTimeStep(0.0),
+	timeStepGrowthFactor(0.0),
+	startTime(0.0),
+	endTime(0.0),
+	numTimeSteps(0),
 	gbList(""),
 	groupingMin(std::numeric_limits<int>::max()),
 	groupingWidthA(1),
@@ -78,11 +85,16 @@ Options::Options() :
 	cascadeDose(-1.0),
 	cascadeEfficiency(0.0)
 {
-	return;
 }
 
 Options::~Options(void)
 {
+}
+
+std::shared_ptr<IOptions>
+Options::makeCopy() const
+{
+	return std::make_shared<Options>(*this);
 }
 
 void
@@ -191,7 +203,14 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(&gbList),
 		"This option allows the user to add GB in the X, Y, or Z directions. "
 		"To do so, simply write the direction followed "
-		"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")("grouping",
+		"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")(
+		"useSubnetworks", bpo::value<bool>(&subnetworksFlag),
+		"Should we distribute network across subnetworks?")(
+		"couplingTimeStepParams", bpo::value<std::string>(),
+		"This option allows the user to define the parameters that control the "
+		"multi-instance time-stepping. "
+		"To do so, simply write the values in order "
+		"initialDt maxDt growthFactor startTime endTime maxSteps.")("grouping",
 		bpo::value<std::string>(),
 		"The grouping parameters: the first integer is the size at which the "
 		"grouping starts (HeV clusters in the PSI case, Xe in the NE case), "
@@ -411,18 +430,33 @@ Options::readParams(int argc, const char* argv[])
 		processMap["noSolve"] = false;
 
 		// Loop on the tokens
-		for (int i = 0; i < tokens.size(); ++i) {
-			// Look for the key
-			if (processMap.find(tokens[i]) == processMap.end()) {
-				throw bpo::invalid_option_value(
-					"Options: The process name is not known: "s + tokens[i] +
-					". Aborting!");
-			}
-			else {
-				// Switch the value to true in the map
-				processMap[tokens[i]] = true;
-			}
+		for (auto&& token : tokens) {
+			addProcess(token);
 		}
+	}
+
+	// Take care of multi-instance params
+	if (opts.count("couplingTimeStepParams")) {
+		// Set parameters from tokenized list
+		auto paramString = opts["couplingTimeStepParams"].as<std::string>();
+		auto params = util::Tokenizer<double>{paramString}();
+
+		if (params.size() != 6) {
+			throw bpo::invalid_option_value(
+				"Options: Must provide six (6) values for time step "
+				"parameters. Aborting!");
+		}
+
+		initialTimeStep = params[0];
+		maxTimeStep = params[1];
+		timeStepGrowthFactor = params[2];
+		startTime = params[3];
+		endTime = params[4];
+		if (params[5] <= 0) {
+			throw bpo::invalid_option_value(
+				"Options: maxSteps must be a positive value. Aborting!");
+		}
+		numTimeSteps = static_cast<IdType>(params[5]);
 	}
 
 	// Take care of the gouping
@@ -442,32 +476,11 @@ Options::readParams(int argc, const char* argv[])
 
 	// Take care of the network parameters
 	if (opts.count("netParam")) {
-		// Break the argument into tokens.
-		auto tokens = util::Tokenizer<>{opts["netParam"].as<std::string>()}();
-
 		// Set the flag to not use the HDF5 file
 		useHDF5Flag = false;
-
-		// Set the value for the impurities
-		maxImpurity = strtol(tokens[0].c_str(), NULL, 10);
-
-		// Check if we have other values
-		if (tokens.size() > 1) {
-			// Set the deuterium size
-			maxD = strtol(tokens[1].c_str(), NULL, 10);
-			// Set the tritium size
-			maxT = strtol(tokens[2].c_str(), NULL, 10);
-			// Set the vacancy size
-			maxV = strtol(tokens[3].c_str(), NULL, 10);
-			// Set the interstitial size
-			maxI = strtol(tokens[4].c_str(), NULL, 10);
-			if (tokens.size() > 5) {
-				// Set the pure V size
-				maxPureV = strtol(tokens[5].c_str(), NULL, 10);
-			}
-			else
-				maxPureV = maxV;
-		}
+		// Set parameters from tokenized list
+		setNetworkParameters(
+			util::Tokenizer<IdType>{opts["netParam"].as<std::string>()}());
 	}
 
 	// Take care of the boundary conditions
@@ -532,5 +545,51 @@ Options::readParams(int argc, const char* argv[])
 	}
 }
 
+void
+Options::setNetworkParameters(const std::vector<IdType>& params)
+{
+	networkParams = params;
+
+	// Reset values
+	maxD = 0;
+	maxT = 0;
+	maxV = 20;
+	maxI = 6;
+	maxPureV = 20;
+
+	maxImpurity = params[0];
+
+	if (params.size() > 1) {
+		// Set the deuterium size
+		maxD = params[1];
+		// Set the tritium size
+		maxT = params[2];
+		// Set the vacancy size
+		maxV = params[3];
+		// Set the interstitial size
+		maxI = params[4];
+		if (params.size() > 5) {
+			// Set the pure V size
+			maxPureV = params[5];
+		}
+		else {
+			maxPureV = maxV;
+		}
+	}
+}
+
+void
+Options::addProcess(const std::string& processKey)
+{
+	// Look for the key
+	if (auto it = processMap.find(processKey); it != processMap.end()) {
+		// Switch the value to true in the map
+		processMap[processKey] = true;
+	}
+	else {
+		throw bpo::invalid_option_value(
+			"Options: The process name is not known: " + processKey);
+	}
+}
 } // end namespace options
 } // end namespace xolotl

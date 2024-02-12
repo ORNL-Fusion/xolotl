@@ -25,8 +25,7 @@ private:
 	double
 	FitFunction(double x)
 	{
-		// Not actually used
-		return 0.0;
+		return 1.0;
 	}
 
 	// Define the range of possible cluster sizes, and their respective
@@ -105,6 +104,9 @@ public:
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
 		std::vector<double> grid)
 	{
+		// Set the grid
+		xGrid = grid;
+
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
 
@@ -169,12 +171,6 @@ public:
 		Kokkos::View<double*> updatedConcOffset, int xi,
 		int surfacePos) override
 	{
-		// Define only for a 0D case
-		if (xGrid.size() != 0) {
-			throw std::runtime_error(
-				"\nThe alpha Zr problem is not defined for more than 0D!");
-		}
-
 		double attenuation = 1.0;
 		if (cascadeDose > 0.0) {
 			attenuation = ((1.0 - cascadeEfficiency) / 2.0) *

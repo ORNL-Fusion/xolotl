@@ -1,0 +1,12 @@
+dimensions=0
+process=reaction sink
+netParam=0 0 0 9 9
+useSubnetworks=true
+couplingTimeStepParams=1.0e-12 1.0 1.1 0.0 5000.0 10000
+grouping=506 2
+vizHandler=dummy
+perfHandler=dummy
+material=AlphaZr
+tempParam=553
+flux=1e-7
+petscArgs=-ts_dt 1.0e-12 -ts_max_steps 1000000 -ts_max_snes_failures -1 -pc_fieldsplit_detect_coupling -ts_adapt_dt_max 1.0 -ts_exact_final_time stepover -ts_monitor -pc_type fieldsplit -fieldsplit_0_pc_type sor -fieldsplit_1_pc_type redundant -ts_max_time 1.0e2 -snes_force_iteration
