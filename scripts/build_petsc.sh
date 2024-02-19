@@ -129,7 +129,7 @@ fi
 
 if [ ${_do_install} -eq 1 ]; then
     _prefix_arg="--prefix=${_prefix}"
-    _install_cmd="make ${_petsc_dir_arch_set} install"
+    _install_cmd="make ${_petsc_dir_arch_set} -B install"
 fi
 
 _conf_cmd="./configure \
@@ -150,9 +150,15 @@ _conf_cmd="${_conf_cmd} ${_petsc_extra_args}"
 _build_cmd="make ${_petsc_dir_arch_set} all"
 
 if [ ${_dry_run} -eq 0 ]; then
+    echo "Configure:"
+    echo ${_conf_cmd}
     ${_conf_cmd}
+    echo "Build:"
+    echo ${_build_cmd}
     ${_build_cmd}
     if [ ${_do_install} -eq 1 ]; then
+        echo "Install:"
+        echo ${_install_cmd}
         ${_install_cmd}
     fi
 else
