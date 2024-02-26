@@ -149,15 +149,15 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
+	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid);
+		std::vector<double> grid) override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	initializeTimeProfile(const std::string& fileName);
+	void
+	initializeTimeProfile(const std::string& fileName) override;
 
 	/**
 	 * \see IFluxHandler.h
@@ -170,50 +170,50 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	incrementFluence(double dt);
+	void
+	incrementFluence(double dt) override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	computeFluence(double time);
+	void
+	computeFluence(double time) override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	setFluence(std::vector<double> fluence);
+	void
+	setFluence(std::vector<double> fluence) override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<double>
-	getFluence() const;
+	std::vector<double>
+	getFluence() const override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	setFluxAmplitude(double flux);
+	void
+	setFluxAmplitude(double flux) override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual double
-	getFluxAmplitude() const;
+	double
+	getFluxAmplitude() const override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual double
-	getFluxRate() const;
+	double
+	getFluxRate() const override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	setPulseTime(double time)
+	void
+	setPulseTime(double time) override
 	{
 		return;
 	}
@@ -221,8 +221,8 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	setProportion(double a)
+	void
+	setProportion(double a) override
 	{
 		return;
 	}
@@ -230,8 +230,8 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<std::pair<IdType, double>>
-	getImplantedFlux(std::vector<IdType> map)
+	std::vector<std::pair<IdType, double>>
+	getImplantedFlux(std::vector<IdType> map) override
 	{
 		return std::vector<std::pair<IdType, double>>();
 	}
@@ -239,14 +239,8 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<double>
-	getInstantFlux(double time) const;
-
-	/**
-	 * \see IFluxHandler.h
-	 */
-	virtual void
-	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector)
+	void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector) override
 	{
 		return;
 	}
@@ -254,14 +248,20 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<IdType>
-	getFluxIndices() const;
+	std::vector<double>
+	getInstantFlux(double time) const override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<double>
-	getReductionFactors() const;
+	std::vector<IdType>
+	getFluxIndices() const override;
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	std::vector<double>
+	getReductionFactors() const override;
 };
 // end class FluxHandler
 

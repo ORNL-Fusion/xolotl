@@ -48,7 +48,7 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
 		// Only defined in 0D
 		if (xGrid.size() == 0) {

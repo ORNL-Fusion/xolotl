@@ -172,7 +172,7 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
 		// Setup the ion damage and implantation depth profile
 		if (false) {
@@ -364,7 +364,7 @@ public:
 					attenuation * ionDamageRate(i, xi - surfacePos));
 			});
 	}
-}; // namespace flux
+};
 // end class AlloyFitFluxHandler
 
 } // namespace flux

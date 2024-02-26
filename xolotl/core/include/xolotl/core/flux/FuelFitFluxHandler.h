@@ -53,7 +53,7 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
 		// Set the grid
 		xGrid = grid;
