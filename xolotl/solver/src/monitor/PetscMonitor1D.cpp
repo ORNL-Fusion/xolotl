@@ -404,7 +404,8 @@ PetscMonitor1D::setup(int loop)
 		outputFile.close();
 
 		// computeAlphaZr will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr));
 	}
 
 	// Set the monitor to compute the helium retention

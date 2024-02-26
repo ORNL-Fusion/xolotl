@@ -5,8 +5,8 @@ namespace xolotl
 {
 namespace factory
 {
-using ::xolotl::interface::IMaterialSubOptions;
 using ::xolotl::factory::interface::MaterialSubOptionsFactory;
+using ::xolotl::interface::IMaterialSubOptions;
 
 template MaterialSubOptionsFactory&
 Factory<MaterialSubOptionsFactory, IMaterialSubOptions>::get(

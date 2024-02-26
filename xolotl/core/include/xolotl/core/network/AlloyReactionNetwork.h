@@ -35,9 +35,13 @@ public:
 	checkLargestClusterId();
 
 	void
-	setConstantRates(RatesView, IndexType gridIndex) override
-	{
-	}
+	setConstantRates(RatesView rates, IndexType gridIndex) override;
+
+	void
+	setConstantConnectivities(ConnectivitiesPair conns) override;
+
+	void
+	setConstantRateEntries() override;
 
 private:
 	double

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/detail/impl/ConstantReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/impl/AlloyClusterGenerator.tpp>
 #include <xolotl/core/network/impl/AlloyReaction.tpp>
@@ -636,7 +637,7 @@ AlloyReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<Network> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions());
+		this->getSinkReactions(), this->getConstantReactions());
 	return ret;
 }
 } // namespace detail

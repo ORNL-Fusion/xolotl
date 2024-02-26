@@ -36,8 +36,6 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	_clusterData.h_view() = ClusterData(_subpaving, gridSize);
 	copyClusterDataView();
 
-	auto bounds = getAllClusterBounds();
-
 	this->setMaterial(opts.getMaterial());
 
 	// Set constants

@@ -78,6 +78,46 @@ AlloyReactionNetwork::checkLargestClusterId()
 
 	return maxLoc.loc;
 }
+
+void
+AlloyReactionNetwork::setConstantRates(RatesView rates, IndexType gridIndex)
+{
+	_reactions.forEachOn<AlloyConstantReaction>(
+		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
+			reaction.setRate(rates, gridIndex);
+			reaction.updateRates();
+		});
+}
+
+void
+AlloyReactionNetwork::setConstantConnectivities(ConnectivitiesPair conns)
+{
+	_constantConnsRows = ConnectivitiesPairView(
+		"dConstantConnectivitiesRows", conns.first.size());
+	_constantConnsEntries = ConnectivitiesPairView(
+		"dConstantConnectivitiesEntries", conns.second.size());
+	auto hConnsRowsView = create_mirror_view(_constantConnsRows);
+	auto hConnsEntriesView = create_mirror_view(_constantConnsEntries);
+	for (auto i = 0; i < conns.first.size(); i++) {
+		hConnsRowsView(i) = conns.first[i];
+	}
+	for (auto i = 0; i < conns.second.size(); i++) {
+		hConnsEntriesView(i) = conns.second[i];
+	}
+	deep_copy(_constantConnsRows, hConnsRowsView);
+	deep_copy(_constantConnsEntries, hConnsEntriesView);
+}
+
+void
+AlloyReactionNetwork::setConstantRateEntries()
+{
+	auto rows = _constantConnsRows;
+	auto entries = _constantConnsEntries;
+	_reactions.forEachOn<AlloyConstantReaction>(
+		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
+			reaction.defineRateEntries(rows, entries);
+		});
+}
 } // namespace network
 } // namespace core
 } // namespace xolotl

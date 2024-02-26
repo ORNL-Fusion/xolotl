@@ -151,7 +151,7 @@ AlloyClusterGenerator::select(const Region& region) const
 	if (region[Species::V].begin() == 0 && region[Species::I].begin() == 0 &&
 		region[Species::Void].end() - 1 <= _maxV &&
 		region[Species::Faulted].end() - 1 <= _maxV &&
-		region[Species::Perfect].end() - 1 < _maxI &&
+		region[Species::Perfect].end() - 1 <= _maxI &&
 		region[Species::Frank].end() - 1 <= _maxI)
 		return false;
 

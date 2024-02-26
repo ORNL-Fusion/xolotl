@@ -12,12 +12,12 @@ namespace interface
 class IMaterialSubOptions
 {
 public:
-    virtual ~IMaterialSubOptions()
-    {
-    }
+	virtual ~IMaterialSubOptions()
+	{
+	}
 
-    virtual std::vector<std::shared_ptr<options::IOptions>>
-    getSubOptions() const = 0;
+	virtual std::vector<std::shared_ptr<options::IOptions>>
+	getSubOptions() const = 0;
 };
-}
-}
+} // namespace interface
+} // namespace xolotl

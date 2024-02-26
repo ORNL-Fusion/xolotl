@@ -236,10 +236,7 @@ public:
 						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 					if (fluxCluster1.getId() == NetworkType::invalidIndex() ||
 						fluxCluster2.getId() == NetworkType::invalidIndex()) {
-						// Throw error -> missing type
-						throw std::runtime_error(
-							"\nNo clusted of size: " + std::to_string(size) +
-							", cannot use the flux option!");
+						continue;
 					}
 					else {
 						// Frank loop
@@ -275,10 +272,7 @@ public:
 					fluxCluster =
 						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 					if (fluxCluster.getId() == NetworkType::invalidIndex()) {
-						// Throw error -> no available type
-						throw std::runtime_error(
-							"\nNo clusted of size: " + std::to_string(-size) +
-							", cannot use the flux option!");
+						continue;
 					}
 					else {
 						// Faulted loop
