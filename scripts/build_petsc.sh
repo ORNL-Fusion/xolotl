@@ -71,6 +71,9 @@ do
     --get-hdf5)
         _petsc_extra_args="${_petsc_extra_args} --download-hdf5"
         ;;
+    --get-hypre)
+        _petsc_extra_args="${_petsc_extra_args} --download-hypre"
+        ;;
     *)
         echo "Unsupported argument: $1"
         exit 1
