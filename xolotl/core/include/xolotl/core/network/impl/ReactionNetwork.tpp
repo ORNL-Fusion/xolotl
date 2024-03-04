@@ -50,6 +50,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setTauBursting(opts.getBurstingDepth());
 	this->setFBursting(opts.getBurstingFactor());
 	_clusterData.h_view().setTransitionSize(opts.getTransitionSize());
+	_clusterData.h_view().setTemperature(opts.getTempParam(0));
 	auto map = opts.getProcesses();
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);

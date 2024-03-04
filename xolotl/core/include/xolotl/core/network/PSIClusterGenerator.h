@@ -8,32 +8,6 @@ namespace core
 {
 namespace network
 {
-namespace psi
-{
-KOKKOS_INLINE_FUNCTION
-double
-getMaxHePerV(double amtV) noexcept
-{
-	using AmountType = IReactionNetwork::AmountType;
-
-	/**
-	 * The maximum number of helium atoms that can be combined with a
-	 * vacancy cluster with size equal to the index i.
-	 * It could support a mixture of up to nine
-	 * helium atoms with one vacancy.
-	 */
-	constexpr Kokkos::Array<double, 30> maxHePerV = {0, 9, 14, 18, 20, 27, 30,
-		35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101, 103,
-		105, 107, 109, 110, 112, 116};
-
-	if ((int)amtV < maxHePerV.size()) {
-		return maxHePerV[(int)amtV];
-	}
-	return util::max((4.0 * amtV),
-		(double)maxHePerV[maxHePerV.size() - 1] + amtV -
-			(double)maxHePerV.size() + 1.0);
-}
-} // namespace psi
 
 template <typename TSpeciesEnum>
 class PSIClusterGenerator :
@@ -105,6 +79,11 @@ private:
 	AmountType _groupingMin;
 	AmountType _groupingWidthA;
 	AmountType _groupingWidthB;
+
+	// The temperature
+	double _temperature{933.0};
+	// The lattice parameter
+	double _lattice{xolotl::core::tungstenLatticeConstant};
 };
 } // namespace network
 } // namespace core

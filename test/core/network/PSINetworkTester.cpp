@@ -34,7 +34,8 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 1 1 1 1" << std::endl
-			  << "process=reaction" << std::endl;
+			  << "process=reaction" << std::endl
+			  << "tempParam=1000" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -47,11 +48,17 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	using Spec = NetworkType::Species;
 	using Composition = NetworkType::Composition;
 
-	// Get the boundaries from the options
+	// Get the temperature and lattice constant from the options
+	double latticeConst = opts.getLatticeParameter() <= 0.0 ?
+		xolotl::core::tungstenLatticeConstant :
+		opts.getLatticeParameter();
+	double temperature = opts.getTempParam();
+
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV);
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerVLoop(maxV, latticeConst, temperature);
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
@@ -581,6 +588,7 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 1 1 1 1" << std::endl
 			  << "process=reaction" << std::endl
+			  << "tempParam=1000" << std::endl
 			  << "petscArgs=-snes_mf_operator" << std::endl;
 	paramFile.close();
 
@@ -594,11 +602,17 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	using Spec = NetworkType::Species;
 	using Composition = NetworkType::Composition;
 
-	// Get the boundaries from the options
+	// Get the temperature and lattice constant from the options
+	double latticeConst = opts.getLatticeParameter() <= 0.0 ?
+		xolotl::core::tungstenLatticeConstant :
+		opts.getLatticeParameter();
+	double temperature = opts.getTempParam();
+
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV);
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerVLoop(maxV, latticeConst, temperature);
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
@@ -853,7 +867,8 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 0 2 2" << std::endl
-			  << "process=reaction" << std::endl;
+			  << "process=reaction" << std::endl
+			  << "tempParam=1000" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -866,11 +881,17 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	using Spec = NetworkType::Species;
 	using Composition = NetworkType::Composition;
 
-	// Get the boundaries from the options
+	// Get the temperature and lattice constant from the options
+	double latticeConst = opts.getLatticeParameter() <= 0.0 ?
+		xolotl::core::tungstenLatticeConstant :
+		opts.getLatticeParameter();
+	double temperature = opts.getTempParam();
+
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV);
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerVLoop(maxV, latticeConst, temperature);
 	NetworkType network({maxHe, maxV, maxI}, 1, opts);
 
 	BOOST_REQUIRE(!network.hasDeuterium());
@@ -1145,7 +1166,8 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 1 0 1 1" << std::endl
-			  << "process=reaction" << std::endl;
+			  << "process=reaction" << std::endl
+			  << "tempParam=1000" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -1158,11 +1180,17 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	using Spec = NetworkType::Species;
 	using Composition = NetworkType::Composition;
 
-	// Get the boundaries from the options
+	// Get the temperature and lattice constant from the options
+	double latticeConst = opts.getLatticeParameter() <= 0.0 ?
+		xolotl::core::tungstenLatticeConstant :
+		opts.getLatticeParameter();
+	double temperature = opts.getTempParam();
+
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV);
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerVLoop(maxV, latticeConst, temperature);
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxD, maxV, maxI}, 1, opts);
 
@@ -1490,7 +1518,8 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 1 1 1" << std::endl
-			  << "process=reaction" << std::endl;
+			  << "process=reaction" << std::endl
+			  << "tempParam=1000" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -1503,11 +1532,17 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	using Spec = NetworkType::Species;
 	using Composition = NetworkType::Composition;
 
-	// Get the boundaries from the options
+	// Get the temperature and lattice constant from the options
+	double latticeConst = opts.getLatticeParameter() <= 0.0 ?
+		xolotl::core::tungstenLatticeConstant :
+		opts.getLatticeParameter();
+	double temperature = opts.getTempParam();
+
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV);
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerVLoop(maxV, latticeConst, temperature);
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	NetworkType network({maxHe, maxT, maxV, maxI}, 1, opts);
 
@@ -2040,7 +2075,8 @@ BOOST_AUTO_TEST_CASE(LargeBubble)
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 0 5 2" << std::endl
-			  << "process=reaction largeBubble" << std::endl;
+			  << "process=reaction largeBubble" << std::endl
+			  << "tempParam=1000" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -2053,10 +2089,17 @@ BOOST_AUTO_TEST_CASE(LargeBubble)
 	using Spec = NetworkType::Species;
 	using Composition = NetworkType::Composition;
 
+	// Get the temperature and lattice constant from the options
+	double latticeConst = opts.getLatticeParameter() <= 0.0 ?
+		xolotl::core::tungstenLatticeConstant :
+		opts.getLatticeParameter();
+	double temperature = opts.getTempParam();
+
 	// Get the boundaries from the options
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
-	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV);
+	NetworkType::AmountType maxHe =
+		util::getMaxHePerVLoop(maxV, latticeConst, temperature);
 	NetworkType network({maxHe, maxV, maxI}, 1, opts);
 
 	BOOST_REQUIRE(!network.hasDeuterium());

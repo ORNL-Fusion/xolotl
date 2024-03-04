@@ -752,7 +752,9 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 		this->getCluster(this->largestClusterId).getRegion();
 	Composition hiLargest = largestReg.getUpperLimitPoint();
 	auto largestV = hiLargest[Species::V] - 1;
-	auto largestHe = psi::getMaxHePerV(largestV);
+	auto largestHe =
+		util::getMaxHePerVLoop(largestV, this->_clusterData.latticeParameter(),
+			this->_clusterData.getTemperature());
 
 	// General case
 	constexpr auto species = NetworkType::getSpeciesRange();
@@ -780,10 +782,14 @@ PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
 		if (lo1.isOnAxis(Species::He) or lo2.isOnAxis(Species::He)) {
 			// Is it trap mutation?
 			if (bounds[Species::He].first >
-				psi::getMaxHePerV(bounds[Species::V].first)) {
+				util::getMaxHePerVLoop(bounds[Species::V].first,
+					this->_clusterData.latticeParameter(),
+					this->getCluster(i).getTemperature(0))) {
 				AmountType iSize = 1;
 				while (bounds[Species::He].first >
-					psi::getMaxHePerV(bounds[Species::V].first + iSize)) {
+					util::getMaxHePerVLoop(bounds[Species::V].first + iSize,
+						this->_clusterData.latticeParameter(),
+						this->getCluster(i).getTemperature(0))) {
 					iSize++;
 				}
 				// Get the corresponding I cluster

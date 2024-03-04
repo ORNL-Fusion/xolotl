@@ -151,6 +151,7 @@ private:
 		DEPTH,
 		TAU_BURSTING,
 		F_BURSTING,
+		TEMPERATURE,
 		NUM_FLOAT_VALS
 	};
 
@@ -354,6 +355,19 @@ public:
 	setFBursting(double val)
 	{
 		setVal(_floatVals, F_BURSTING, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getTemperature() const
+	{
+		return _floatVals[TEMPERATURE];
+	}
+
+	void
+	setTemperature(double val)
+	{
+		setVal(_floatVals, TEMPERATURE, val);
 	}
 
 	int

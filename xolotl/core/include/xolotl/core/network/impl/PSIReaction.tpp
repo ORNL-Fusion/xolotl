@@ -95,8 +95,11 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 			auto avV = this->_clusterData->bubbleAvV();
 
 			// Sigmoid
-			double x =
-				((comp[Species::He] + avHe) / psi::getMaxHePerV(avV)) - 1.0;
+			double x = ((comp[Species::He] + avHe) /
+						   util::getMaxHePerVLoop(avV,
+							   this->_clusterData->latticeParameter(),
+							   cl.getTemperature(gridIndex))) -
+				1.0;
 			double sigmo = 1.0 / (1.0 + std::exp(-50.0 * x));
 			double nI = 1.0;
 
@@ -289,8 +292,11 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 			auto avV = this->_clusterData->bubbleAvV();
 
 			// Sigmoid
-			double x =
-				((comp[Species::He] + avHe) / psi::getMaxHePerV(avV)) - 1.0;
+			double x = ((comp[Species::He] + avHe) /
+						   util::getMaxHePerVLoop(avV,
+							   this->_clusterData->latticeParameter(),
+							   cl.getTemperature(gridIndex))) -
+				1.0;
 			double sigmo = 1.0 / (1.0 + std::exp(-50.0 * x));
 			double nI = 1.0;
 
@@ -731,8 +737,10 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 		Composition comp(clReg.getOrigin());
 		AmountType lowerV = 16, higherV = 31;
 		AmountType minV = 1;
+
 		for (auto i = 1; i < higherV; i++) {
-			auto maxHe = psi::getMaxHePerV(i);
+			auto maxHe = util::getMaxHePerVLoop(i,
+				this->_clusterData->latticeParameter(), cl.getTemperature(0));
 			if (comp[Species::He] > maxHe)
 				minV = i;
 		}

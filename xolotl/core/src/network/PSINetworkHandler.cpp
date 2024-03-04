@@ -28,11 +28,17 @@ generatePSIReactionNetwork(const options::IOptions& options)
 {
 	using AmountType = IReactionNetwork::AmountType;
 
+	// Get the temperature and lattice constant from the options
+	double latticeConst = options.getLatticeParameter() <= 0.0 ?
+		xolotl::core::tungstenLatticeConstant :
+		options.getLatticeParameter();
+	double temperature = options.getTempParam();
+
 	// Get the boundaries from the options
 	AmountType maxV = options.getMaxPureV();
 	AmountType maxHeV = options.getMaxV();
 	AmountType maxI = options.getMaxI();
-	AmountType maxHe = psi::getMaxHePerV(options.getMaxV());
+	AmountType maxHe = util::getMaxHePerVLoop(maxV, latticeConst, temperature);
 	AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	AmountType groupingWidthHe = options.getGroupingWidthA();
