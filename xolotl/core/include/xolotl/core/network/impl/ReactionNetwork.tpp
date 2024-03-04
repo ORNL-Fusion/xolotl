@@ -31,7 +31,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	_subpaving(subpaving),
 	_clusterData("Cluster Data"),
 	_worker(*this),
-	_speciesLabelMap(createSpeciesLabelMap())
+	_speciesLabelMap(createSpeciesLabelMap()),
+	_currentTime(0.0)
 {
 	_clusterData.h_view() = ClusterData(_subpaving, gridSize);
 	copyClusterDataView();
@@ -46,7 +47,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setLatticeParameter(opts.getLatticeParameter());
 	this->setFissionRate(opts.getFluxAmplitude());
 	this->setZeta(opts.getZeta());
+	this->setTauBursting(opts.getBurstingDepth());
+	this->setFBursting(opts.getBurstingFactor());
 	_clusterData.h_view().setTransitionSize(opts.getTransitionSize());
+	_clusterData.h_view().setTemperature(opts.getTempParam(0));
 	auto map = opts.getProcesses();
 	this->setEnableStdReaction(map["reaction"]);
 	this->setEnableReSolution(map["resolution"]);
@@ -54,6 +58,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableSink(map["sink"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
+	this->setEnableBursting(map["bursting"]);
+	this->setEnableLargeBubble(map["largeBubble"]);
 	this->setEnableConstantReaction(map["constant"]);
 	std::string petscString = opts.getPetscArg();
 	auto tokens = util::Tokenizer<>{petscString}();
@@ -70,6 +76,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	asDerived()->initializeExtraClusterData(opts);
 	generateClusterData(ClusterGenerator{opts});
 	defineMomentIds();
+
+	asDerived()->initializeExtraDOFs(opts);
 
 	// Skip the reactions for now if using constant reactions
 	if (map["constant"])
@@ -181,6 +189,20 @@ ReactionNetwork<TImpl>::setZeta(double z)
 
 template <typename TImpl>
 void
+ReactionNetwork<TImpl>::setTauBursting(double tau)
+{
+	_clusterData.h_view().setTauBursting(tau);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setFBursting(double f)
+{
+	_clusterData.h_view().setFBursting(f);
+}
+
+template <typename TImpl>
+void
 ReactionNetwork<TImpl>::setEnableStdReaction(bool reaction)
 {
 	Superclass::setEnableStdReaction(reaction);
@@ -222,6 +244,22 @@ ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 	Superclass::setEnableTrapMutation(reaction);
 	_clusterData.h_view().setEnableTrapMutation(this->_enableTrapMutation);
 	invalidateDataMirror();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableBursting(bool reaction)
+{
+	this->_enableBursting = reaction;
+	_clusterData.h_view().setEnableBurst(this->_enableBursting);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableLargeBubble(bool reaction)
+{
+	this->_enableLargeBubble = reaction;
+	_clusterData.h_view().setEnableLargeBubble(this->_enableLargeBubble);
 }
 
 template <typename TImpl>

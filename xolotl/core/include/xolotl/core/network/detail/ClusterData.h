@@ -145,12 +145,22 @@ private:
 		LATTICE_PARAM,
 		FISSION_RATE,
 		ZETA,
+		AV_HELIUM_CONTENT,
+		AV_VACANCY_CONTENT,
+		AV_RADIUS,
+		DEPTH,
+		TAU_BURSTING,
+		F_BURSTING,
+		TEMPERATURE,
 		NUM_FLOAT_VALS
 	};
 
 	enum IntValsIndex : int
 	{
-		TRANSITION_SIZE = 0,
+		BUBBLE = 0,
+		AV_HELIUM,
+		AV_VACANCY,
+		TRANSITION_SIZE,
 		NUM_INT_VALS
 	};
 
@@ -161,6 +171,8 @@ private:
 		NUCLEATION,
 		SINK,
 		TRAP_MUTATION,
+		BURST,
+		LARGE_BUBBLE,
 		CONSTANT_REACTION,
 		NUM_BOOL_VALS
 	};
@@ -229,6 +241,135 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
+	double
+	bubbleAvHe() const
+	{
+		return _floatVals[AV_HELIUM_CONTENT];
+	}
+
+	void
+	setBubbleAvHe(double val)
+	{
+		setVal(_floatVals, AV_HELIUM_CONTENT, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	bubbleAvV() const
+	{
+		return _floatVals[AV_VACANCY_CONTENT];
+	}
+
+	void
+	setBubbleAvV(double val)
+	{
+		setVal(_floatVals, AV_VACANCY_CONTENT, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	bubbleAvRadius() const
+	{
+		return _floatVals[AV_RADIUS];
+	}
+
+	void
+	setBubbleAvRadius(double val)
+	{
+		setVal(_floatVals, AV_RADIUS, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	bubbleId() const
+	{
+		return _intVals[BUBBLE];
+	}
+
+	void
+	setBubbleId(IndexType val)
+	{
+		setVal(_intVals, BUBBLE, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	bubbleAvHeId() const
+	{
+		return _intVals[AV_HELIUM];
+	}
+
+	void
+	setBubbleAvHeId(IndexType val)
+	{
+		setVal(_intVals, AV_HELIUM, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	bubbleAvVId() const
+	{
+		return _intVals[AV_VACANCY];
+	}
+
+	void
+	setBubbleAvVId(IndexType val)
+	{
+		setVal(_intVals, AV_VACANCY, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getDepth() const
+	{
+		return _floatVals[DEPTH];
+	}
+
+	void
+	setDepth(double val)
+	{
+		setVal(_floatVals, DEPTH, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getTauBursting() const
+	{
+		return _floatVals[TAU_BURSTING];
+	}
+
+	void
+	setTauBursting(double val)
+	{
+		setVal(_floatVals, TAU_BURSTING, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getFBursting() const
+	{
+		return _floatVals[F_BURSTING];
+	}
+
+	void
+	setFBursting(double val)
+	{
+		setVal(_floatVals, F_BURSTING, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getTemperature() const
+	{
+		return _floatVals[TEMPERATURE];
+	}
+
+	void
+	setTemperature(double val)
+	{
+		setVal(_floatVals, TEMPERATURE, val);
+	}
+
 	int
 	transitionSize() const
 	{
@@ -308,6 +449,32 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	bool
+	enableBurst() const
+	{
+		return _boolVals[BURST];
+	}
+
+	void
+	setEnableBurst(bool val)
+	{
+		setVal(_boolVals, BURST, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableLargeBubble() const
+	{
+		return _boolVals[LARGE_BUBBLE];
+	}
+
+	void
+	setEnableLargeBubble(bool val)
+	{
+		setVal(_boolVals, LARGE_BUBBLE, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
 	enableConstantReaction() const
 	{
 		return _boolVals[CONSTANT_REACTION];
@@ -321,7 +488,7 @@ public:
 
 private:
 	View<double[NUM_FLOAT_VALS]> _floatVals;
-	View<int[NUM_INT_VALS]> _intVals;
+	View<IndexType[NUM_INT_VALS]> _intVals;
 	View<bool[NUM_BOOL_VALS]> _boolVals;
 
 public:

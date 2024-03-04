@@ -270,30 +270,6 @@ public:
 	getSputteringYield() const = 0;
 
 	/**
-	 * Get the bursting depth parameter.
-	 *
-	 * @return The depth parameter
-	 */
-	virtual double
-	getTauBursting() const = 0;
-
-	/**
-	 * Get the bursting factor for likelihood of bursting.
-	 *
-	 * @return The factor
-	 */
-	virtual double
-	getBurstingFactor() const = 0;
-
-	/**
-	 * Get the HeV ratio.
-	 *
-	 * @return The ratio
-	 */
-	virtual double
-	getHeVRatio() const = 0;
-
-	/**
 	 * Get the grid left offset.
 	 *
 	 * @return The offset
@@ -431,12 +407,12 @@ public:
 	moveSurface() const = 0;
 
 	/**
-	 * To know if the bubble bursting should be used.
+	 * To know if we're using the large bubble model.
 	 *
-	 * @return True if we want the bubble bursting.
+	 * @return True if we are.
 	 */
 	virtual bool
-	burstBubbles() const = 0;
+	largeBubble() const = 0;
 
 	/**
 	 * To know if a temporal profile is used for the flux.

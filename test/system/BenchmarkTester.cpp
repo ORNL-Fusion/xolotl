@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_1, *utf::label("1D"))
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_2, *utf::label("1D"))
 {
-	// 1D + + HeV + 5e27 flux W100 + bursting
+	// 1D + HeV + 5e27 flux W100 + bursting
 	SystemTestCase{"benchmark_PSI_2"}.mpiLimits(1, 1).withTimer().run();
 }
 
@@ -146,6 +146,15 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_10, *utf::label("1D"))
 {
 	// 1D + reduced jacobian
 	SystemTestCase{"benchmark_PSI_10"}.mpiLimits(1, 20).withTimer().run();
+}
+
+BOOST_AUTO_TEST_CASE(PSI_11)
+{
+	if (getMPICommSize() > 4) {
+		return;
+	}
+	// 1D + HeV + 5e27 flux W100 + bursting + largeBubble
+	SystemTestCase{"benchmark_PSI_11"}.tolerance(1.0e-5).withTimer().run();
 }
 
 BOOST_AUTO_TEST_SUITE_END()

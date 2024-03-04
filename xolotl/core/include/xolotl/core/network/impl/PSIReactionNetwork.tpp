@@ -3,6 +3,7 @@
 #include <set>
 
 #include <xolotl/core/network/detail/PSITrapMutation.h>
+#include <xolotl/core/network/detail/impl/BurstingReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationClusterData.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationReactionGenerator.tpp>
@@ -58,6 +59,23 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraClusterData(
 	this->_clusterData.h_view().extraData.trapMutationData.initialize();
 	this->copyClusterDataView();
 	this->invalidateDataMirror();
+}
+
+template <typename TSpeciesEnum>
+void
+PSIReactionNetwork<TSpeciesEnum>::initializeExtraDOFs(
+	const options::IOptions& options)
+{
+	auto map = options.getProcesses();
+	if (not map["largeBubble"])
+		return;
+
+	largestClusterId = checkLargestClusterId();
+
+	this->_clusterData.h_view().setBubbleId(this->_numDOFs);
+	this->_clusterData.h_view().setBubbleAvHeId(this->_numDOFs + 1);
+	this->_clusterData.h_view().setBubbleAvVId(this->_numDOFs + 2);
+	this->_numDOFs += 3;
 }
 
 template <typename TSpeciesEnum>
@@ -144,6 +162,34 @@ PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
+
+	if (this->_enableBursting) {
+		this->_clusterData.h_view().setDepth(surfaceDepth);
+	}
+
+	if (this->_enableLargeBubble) {
+		auto clusterDataMirror = this->getClusterDataMirror();
+
+		// Get the concentrations on the host
+		auto dConcs = Kokkos::subview(concentrations,
+			std::make_pair(clusterDataMirror.bubbleId(),
+				clusterDataMirror.bubbleAvVId() + 1));
+		auto hConcs = create_mirror_view(dConcs);
+		deep_copy(hConcs, dConcs);
+
+		auto Cb = hConcs(0);
+		auto avHe = hConcs(1) / Cb;
+		auto avV = hConcs(2) / Cb;
+		if (Cb == 0.0) {
+			avHe = 0.0;
+			avV = 0.0;
+		}
+
+		this->_clusterData.h_view().setBubbleAvHe(avHe);
+		this->_clusterData.h_view().setBubbleAvV(avV);
+		this->_clusterData.h_view().setBubbleAvRadius(util::max(0.0,
+			computeBubbleRadius(avV, clusterDataMirror.latticeParameter())));
+	}
 }
 
 template <typename TSpeciesEnum>
@@ -156,127 +202,33 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 		updateDesorptionLeftSideRate(concentrations, gridIndex);
 		selectTrapMutationReactions(surfaceDepth, spacing);
 	}
-}
 
-template <typename TSpeciesEnum>
-void
-PSIReactionNetwork<TSpeciesEnum>::updateBurstingConcs(
-	double* gridPointSolution, double factor, std::vector<double>& nBurst)
-{
-	using detail::toIndex;
+	if (this->_enableBursting) {
+		this->_clusterData.h_view().setDepth(surfaceDepth);
+	}
 
-	// Loop on every cluster
-	for (unsigned int i = 0; i < this->getNumClusters(); i++) {
-		const auto& clReg =
-			this->getCluster(i, plsm::HostMemSpace{}).getRegion();
-		// Non-grouped clusters
-		if (clReg.isSimplex()) {
-			// Get the composition
-			Composition comp = clReg.getOrigin();
-			// Pure He, D, or T case
-			if (comp.isOnAxis(Species::He)) {
-				// Compute the number of atoms released
-				nBurst[toIndex(Species::He)] +=
-					gridPointSolution[i] * (double)comp[Species::He] * factor;
-				// Reset concentration
-				gridPointSolution[i] = 0.0;
-				continue;
-			}
-			if constexpr (psi::hasDeuterium<Species>) {
-				if (comp.isOnAxis(Species::D)) {
-					// Compute the number of atoms released
-					nBurst[toIndex(Species::D)] += gridPointSolution[i] *
-						(double)comp[Species::D] * factor;
-					// Reset concentration
-					gridPointSolution[i] = 0.0;
-					continue;
-				}
-			}
-			if constexpr (psi::hasTritium<Species>) {
-				if (comp.isOnAxis(Species::T)) {
-					// Compute the number of atoms released
-					nBurst[toIndex(Species::T)] += gridPointSolution[i] *
-						(double)comp[Species::T] * factor;
-					// Reset concentration
-					gridPointSolution[i] = 0.0;
-					continue;
-				}
-			}
-			// Mixed cluster case
-			if (!comp.isOnAxis(Species::V) && !comp.isOnAxis(Species::I)) {
-				// Compute the number of atoms released
-				nBurst[toIndex(Species::He)] +=
-					gridPointSolution[i] * (double)comp[Species::He] * factor;
-				if constexpr (psi::hasDeuterium<Species>) {
-					nBurst[toIndex(Species::D)] += gridPointSolution[i] *
-						(double)comp[Species::D] * factor;
-				}
-				if constexpr (psi::hasTritium<Species>) {
-					nBurst[toIndex(Species::T)] += gridPointSolution[i] *
-						(double)comp[Species::T] * factor;
-				}
-				// Transfer concentration to V of the same size
-				Composition vComp = Composition::zero();
-				vComp[Species::V] = comp[Species::V];
-				auto vCluster = this->findCluster(vComp, plsm::HostMemSpace{});
-				// Get the region
-				auto vReg = vCluster.getRegion();
-				double width = vReg[Species::V].length();
-				gridPointSolution[vCluster.getId()] +=
-					gridPointSolution[i] / width;
-				gridPointSolution[i] = 0.0;
+	if (this->_enableLargeBubble) {
+		auto clusterDataMirror = this->getClusterDataMirror();
 
-				continue;
-			}
+		// Get the concentrations on the host
+		auto dConcs = Kokkos::subview(concentrations,
+			std::make_pair(clusterDataMirror.bubbleId(),
+				clusterDataMirror.bubbleAvVId() + 1));
+		auto hConcs = create_mirror_view(dConcs);
+		deep_copy(hConcs, dConcs);
+
+		auto Cb = hConcs(0);
+		auto avHe = hConcs(1) / Cb;
+		auto avV = hConcs(2) / Cb;
+		if (Cb == 0.0) {
+			avHe = 0.0;
+			avV = 0.0;
 		}
-		// Grouped clusters
-		else {
-			// Compute the number of atoms released
-			double concFactor = clReg.volume() / clReg[Species::He].length();
-			for (auto j : makeIntervalRange(clReg[Species::He])) {
-				nBurst[toIndex(Species::He)] +=
-					gridPointSolution[i] * (double)j * concFactor * factor;
-			}
-			if constexpr (psi::hasDeuterium<Species>) {
-				concFactor = clReg.volume() / clReg[Species::D].length();
-				for (auto j : makeIntervalRange(clReg[Species::D])) {
-					nBurst[toIndex(Species::D)] +=
-						gridPointSolution[i] * (double)j * concFactor * factor;
-				}
-			}
-			if constexpr (psi::hasTritium<Species>) {
-				concFactor = clReg.volume() / clReg[Species::T].length();
-				for (auto j : makeIntervalRange(clReg[Species::T])) {
-					nBurst[toIndex(Species::T)] +=
-						gridPointSolution[i] * (double)j * concFactor * factor;
-				}
-			}
 
-			// Get the factor
-			concFactor = clReg.volume() / clReg[Species::V].length();
-			// Loop on the Vs
-			for (auto j : makeIntervalRange(clReg[Species::V])) {
-				// Transfer concentration to V of the same size
-				Composition vComp = Composition::zero();
-				vComp[Species::V] = j;
-				auto vCluster = this->findCluster(vComp, plsm::HostMemSpace{});
-				// Get the region
-				auto vReg = vCluster.getRegion();
-				double width = vReg[Species::V].length();
-				// TODO: refine formula with V moment
-				gridPointSolution[vCluster.getId()] +=
-					gridPointSolution[i] * concFactor / width;
-			}
-
-			// Reset the concentration and moments
-			gridPointSolution[i] = 0.0;
-			auto momentIds =
-				this->getCluster(i, plsm::HostMemSpace{}).getMomentIds();
-			for (std::size_t j = 0; j < momentIds.extent(0); j++) {
-				if (momentIds(j) != this->invalidIndex())
-					gridPointSolution[momentIds(j)] = 0.0;
-			}
-		}
+		this->_clusterData.h_view().setBubbleAvHe(avHe);
+		this->_clusterData.h_view().setBubbleAvV(avV);
+		this->_clusterData.h_view().setBubbleAvRadius(util::max(0.0,
+			computeBubbleRadius(avV, clusterDataMirror.latticeParameter())));
 	}
 }
 
@@ -295,7 +247,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateReactionRates(double time)
 	Kokkos::parallel_for(
 		"PSIReactionNetwork::updateReactionRates", tmReactions.size(),
 		KOKKOS_LAMBDA(
-			IndexType i) { tmReactions[i].updateRates(largestRate); });
+			IndexType i) { tmReactions[i].updateLargestRates(largestRate); });
 }
 
 template <typename TSpeciesEnum>
@@ -391,7 +343,8 @@ namespace detail
 template <typename TSpeciesEnum>
 PSIReactionGenerator<TSpeciesEnum>::PSIReactionGenerator(
 	const PSIReactionNetwork<TSpeciesEnum>& network) :
-	Superclass(network)
+	Superclass(network),
+	largestClusterId(network.largestClusterId)
 {
 	bool enableTrapMutation = network.getEnableTrapMutation();
 	if (!enableTrapMutation) {
@@ -421,12 +374,6 @@ void
 PSIReactionGenerator<TSpeciesEnum>::operator()(
 	IndexType i, IndexType j, TTag tag) const
 {
-	// Check the diffusion factors
-	auto diffusionFactor = this->_clusterData.diffusionFactor;
-	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-		return;
-	}
-
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
@@ -434,11 +381,21 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	constexpr auto species = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
 
+	auto numClusters = this->getNumberOfClusters();
+
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
 	if (i == j) {
-		addSinks(i, tag);
+		addBurstings(i, tag);
+		if (diffusionFactor(i) > 0.0)
+			addSinks(i, tag);
 	}
 
-	auto numClusters = this->getNumberOfClusters();
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+	if (this->_clusterData.enableLargeBubble())
+		addLargeBubbleReactions(i, j, tag);
 
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
@@ -726,13 +683,210 @@ PSIReactionGenerator<TSpeciesEnum>::addSinks(IndexType i, TTag tag) const
 }
 
 template <typename TSpeciesEnum>
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+PSIReactionGenerator<TSpeciesEnum>::addLargeBubbleReactions(
+	IndexType i, IndexType j, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	auto bubbleId = this->_clusterData.bubbleId();
+
+	if (i == j) {
+		const auto& clReg = this->getCluster(i).getRegion();
+		Composition lo = clReg.getOrigin();
+
+		// Check reaction with largest bubble
+		if (not clReg.isSimplex())
+			return;
+
+		// He case
+		if (lo.isOnAxis(Species::He)) {
+			// Only add trap mutation so that at run time it adds the I
+			// concentration if needed.
+			auto& subpaving = this->getSubpaving();
+			Composition comp = Composition::zero();
+			comp[Species::I] = 1;
+			auto iClusterId = subpaving.findTileId(comp);
+			if (iClusterId == NetworkType::invalidIndex()) {
+				this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+			}
+			else {
+				this->addProductionReaction(
+					tag, {i, bubbleId, bubbleId, iClusterId});
+			}
+		}
+		// V case
+		else if (lo.isOnAxis(Species::V)) {
+			// V_k + B -> B
+			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+		}
+		//		// I case
+		//		else if (lo.isOnAxis(Species::I)) {
+		//			// I_k + B -> B
+		//			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+		//		}
+	}
+
+	// Get the composition of each cluster
+	const auto& cl1Reg = this->getCluster(i).getRegion();
+	const auto& cl2Reg = this->getCluster(j).getRegion();
+	Composition lo1 = cl1Reg.getOrigin();
+	Composition hi1 = cl1Reg.getUpperLimitPoint();
+	Composition lo2 = cl2Reg.getOrigin();
+	Composition hi2 = cl2Reg.getUpperLimitPoint();
+
+	// Special case for I + I
+	if (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::I))
+		return;
+
+	// Special case for I + V
+	if ((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
+		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I)))
+		return;
+
+	// Find the edge of the phase space
+	const auto& largestReg =
+		this->getCluster(this->largestClusterId).getRegion();
+	Composition hiLargest = largestReg.getUpperLimitPoint();
+	auto largestV = hiLargest[Species::V] - 1;
+	auto largestHe =
+		util::getMaxHePerVLoop(largestV, this->_clusterData.latticeParameter(),
+			this->_clusterData.getTemperature());
+
+	// General case
+	constexpr auto species = NetworkType::getSpeciesRange();
+	constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
+	using BoundsArray = Kokkos::Array<Kokkos::pair<int, int>, numSpeciesNoI>;
+	plsm::EnumIndexed<BoundsArray, Species> bounds;
+	// Loop on the species
+	for (auto l : species) {
+		auto low = lo1[l] + lo2[l];
+		auto high = hi1[l] + hi2[l] - 2;
+		// Special case for I
+		if (l == Species::I) {
+			bounds[Species::V].first -= (int)high;
+			bounds[Species::V].second -= (int)low;
+		}
+		else {
+			bounds[l] = {low, high};
+		}
+	}
+
+	// If the products is larger than the current phasespace
+	if (bounds[Species::He].second > (int)largestHe or
+		bounds[Species::V].second > (int)largestV) {
+		// Special case for He
+		if (lo1.isOnAxis(Species::He) or lo2.isOnAxis(Species::He)) {
+			// Is it trap mutation?
+			if (bounds[Species::He].first >
+				util::getMaxHePerVLoop(bounds[Species::V].first,
+					this->_clusterData.latticeParameter(),
+					this->getCluster(i).getTemperature(0))) {
+				AmountType iSize = 1;
+				while (bounds[Species::He].first >
+					util::getMaxHePerVLoop(bounds[Species::V].first + iSize,
+						this->_clusterData.latticeParameter(),
+						this->getCluster(i).getTemperature(0))) {
+					iSize++;
+				}
+				// Get the corresponding I cluster
+				auto& subpaving = this->getSubpaving();
+				Composition comp = Composition::zero();
+				comp[Species::I] = iSize;
+				auto iClusterId = subpaving.findTileId(comp);
+				if (iClusterId != NetworkType::invalidIndex()) {
+					this->addProductionReaction(
+						tag, {i, j, bubbleId, iClusterId});
+				}
+				else {
+					this->addProductionReaction(tag, {i, j, bubbleId});
+				}
+			}
+			else {
+				// Standard absorption
+				this->addProductionReaction(tag, {i, j, bubbleId});
+			}
+		}
+		// Add the reaction
+		else {
+			this->addProductionReaction(tag, {i, j, bubbleId});
+		}
+	}
+
+	//	// Special case for I
+	//	if (lo1.isOnAxis(Species::I) or lo2.isOnAxis(Species::I)) {
+	//		// Find out which one is which
+	//		auto hevLo = lo1.isOnAxis(Species::I) ? lo2 : lo1;
+	//		auto iLo = lo1.isOnAxis(Species::I) ? lo1 : lo2;
+	//
+	//		if (iLo[Species::I] + hevLo[Species::V] > largestV) {
+	//			auto hevId = lo1.isOnAxis(Species::I) ? j : i;
+	//			auto iId = lo1.isOnAxis(Species::I) ? i : j;
+	//
+	//			// Add the reaction
+	//			this->addProductionReaction(tag, {iId, bubbleId, hevId});
+	//		}
+	//	}
+}
+
+template <typename TSpeciesEnum>
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+PSIReactionGenerator<TSpeciesEnum>::addBurstings(IndexType i, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	// Large bubble, add it once
+	if (i == 0) {
+		auto bubbleId = this->_clusterData.bubbleId();
+		this->addBurstingReaction(tag, {bubbleId, bubbleId});
+	}
+
+	const auto& clReg = this->getCluster(i).getRegion();
+	Composition lo = clReg.getOrigin();
+	Composition hi = clReg.getUpperLimitPoint();
+
+	// Need helium
+	if (hi[Species::He] == 1)
+		return;
+
+	// Loop on V
+	auto previousIndex = NetworkType::invalidIndex();
+	for (auto nV = lo[Species::V]; nV < hi[Species::V]; nV++) {
+		// Pure helium case
+		if (nV == 0) {
+			return;
+		}
+		// Bubble case
+		else {
+			auto& subpaving = this->getSubpaving();
+			// Look for the V cluster of the same size
+			Composition comp = Composition::zero();
+			comp[Species::V] = nV;
+			auto vClusterId = subpaving.findTileId(comp);
+			if (vClusterId != NetworkType::invalidIndex() and
+				vClusterId != previousIndex) {
+				this->addBurstingReaction(tag, {i, vClusterId});
+				previousIndex = vClusterId;
+			}
+		}
+	}
+}
+
+template <typename TSpeciesEnum>
 inline ReactionCollection<
 	typename PSIReactionGenerator<TSpeciesEnum>::NetworkType>
 PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions(), this->getTrapMutationReactions());
+		this->getSinkReactions(), this->getTrapMutationReactions(),
+		this->getBurstingReactions());
 	return ret;
 }
 } // namespace detail

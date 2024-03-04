@@ -337,22 +337,9 @@ public:
 		return detail::ConstantRateView();
 	}
 
-private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeCoefficients();
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	computeRate(IndexType gridIndex, double time = 0.0);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeConnectivity(const Connectivity& connectivity);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeReducedConnectivity(const Connectivity& connectivity);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -369,6 +356,11 @@ private:
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex);
 
+private:
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex, double time = 0.0);
+
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
@@ -383,6 +375,14 @@ private:
 	double
 	computeLeftSideRate(ConcentrationsView concentrations, IndexType clusterId,
 		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConnectivity(const Connectivity& connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeReducedConnectivity(const Connectivity& connectivity);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -465,22 +465,9 @@ public:
 		return detail::ConstantRateView();
 	}
 
-private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeCoefficients();
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	computeRate(IndexType gridIndex, double time = 0.0);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeConnectivity(const Connectivity& connectivity);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeReducedConnectivity(const Connectivity& connectivity);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -496,6 +483,19 @@ private:
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex);
+
+private:
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeRate(IndexType gridIndex, double time = 0.0);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConnectivity(const Connectivity& connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeReducedConnectivity(const Connectivity& connectivity);
 
 	KOKKOS_INLINE_FUNCTION
 	void

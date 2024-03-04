@@ -36,7 +36,7 @@ SolverHandler::SolverHandler(NetworkType& _network,
 	electronicStoppingPower(0.0),
 	dimension(-1),
 	movingSurface(false),
-	bubbleBursting(false),
+	largeBubbleModel(false),
 	isMirror(true),
 	isRobin(false),
 	useAttenuation(false),
@@ -48,10 +48,7 @@ SolverHandler::SolverHandler(NetworkType& _network,
 	vizHandler(factory::viz::VizHandlerFactory::get().generate(options)),
 	diffusionHandler(nullptr),
 	soretDiffusionHandler(nullptr),
-	tauBursting(10.0),
-	burstingFactor(0.1),
 	rngSeed(0),
-	heVRatio(4.0),
 	previousTime(0.0),
 	nXeGB(0.0),
 	gridType(""),
@@ -493,15 +490,6 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	// Set the sputtering yield
 	sputteringYield = opts.getSputteringYield();
 
-	// Set the sputtering yield
-	tauBursting = opts.getBurstingDepth();
-
-	// Set the bursting factor
-	burstingFactor = opts.getBurstingFactor();
-
-	// Set the HeV ratio
-	heVRatio = opts.getHeVRatio();
-
 	// Which type of temperature grid to use
 	if (opts.getTempHandlerName() == "heat" or
 		opts.getTempHandlerName() == "ELM") {
@@ -532,8 +520,8 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	// Should we be able to move the surface?
 	auto map = opts.getProcesses();
 	movingSurface = map["movingSurface"];
-	// Should we be able to burst bubbles?
-	bubbleBursting = map["bursting"];
+	// Should we use the large bubble model?
+	largeBubbleModel = map["largeBubble"];
 	// Should we be able to attenuate the modified trap mutation?
 	useAttenuation = map["attenuation"];
 

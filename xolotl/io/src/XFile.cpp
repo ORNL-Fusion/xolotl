@@ -806,26 +806,6 @@ XFile::TimestepGroup::writeBottom3D(std::vector<Data3DType> nAtoms,
 }
 
 void
-XFile::TimestepGroup::writeBursting(
-	Data1DType nHe, Data1DType nD, Data1DType nT)
-{
-	// Build a data space for scalar attributes.
-	XFile::ScalarDataSpace scalarDSpace;
-
-	// Add quantity of helium attribute
-	Attribute<Data1DType> nHeAttr(*this, nHeBurstAttrName, scalarDSpace);
-	nHeAttr.setTo(nHe);
-
-	// Add quantity of deuterium attribute
-	Attribute<Data1DType> nDAttr(*this, nDBurstAttrName, scalarDSpace);
-	nDAttr.setTo(nD);
-
-	// Add quantity of tritium attribute
-	Attribute<Data1DType> nTAttr(*this, nTBurstAttrName, scalarDSpace);
-	nTAttr.setTo(nT);
-}
-
-void
 XFile::TimestepGroup::writeConcentrationDataset(
 	int size, double concArray[][2], bool write, int i, int j, int k)
 {

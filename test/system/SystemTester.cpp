@@ -80,8 +80,18 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_4, *utf::label("1D"))
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_5, *utf::label("1D"))
 {
+	// 1D + HeVI + advection + modifiedTM + attenuation + surface + largeBubble
+	// + bursting
+	SystemTestCase{"system_PSI_5"}.mpiLimits(1, 20).run();
+}
+
+BOOST_AUTO_TEST_CASE(PSI_6)
+{
+	if (getMPICommSize() > 100) {
+		return;
+	}
 	// 1D + He + ELM + soret
-	SystemTestCase{"system_PSI_5"}.mpiLimits(1, 100).tolerance(1.0e-4).run();
+	SystemTestCase{"system_PSI_6"}.mpiLimits(1, 100).tolerance(1.0e-4).run();
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(Fe_1, *utf::label("0D"))

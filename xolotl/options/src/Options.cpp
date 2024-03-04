@@ -79,7 +79,6 @@ Options::Options() :
 	hydrogenFactor(0.25),
 	xenonDiffusivity(-1.0),
 	fissionYield(0.25),
-	heVRatio(4.0),
 	migrationThreshold(std::numeric_limits<double>::infinity()),
 	basalPortion(0.1),
 	transitionSize(325),
@@ -199,7 +198,8 @@ Options::readParams(int argc, const char* argv[])
 		bpo::value<std::string>(),
 		"List of all the processes to use in the simulation (reaction, diff, "
 		"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, "
-		"heterogeneous, sink, soret, constant, noSolve).")("grain",
+		"heterogeneous, sink, soret, constant, noSolve, largeBubble).")(
+		"grain", "heterogeneous, sink, soret, constant, noSolve).")("grain",
 		bpo::value<std::string>(&gbList),
 		"This option allows the user to add GB in the X, Y, or Z directions. "
 		"To do so, simply write the direction followed "
@@ -266,8 +266,6 @@ Options::readParams(int argc, const char* argv[])
 		"The diffusion coefficient for xenon in nm2 s-1.")("fissionYield",
 		bpo::value<double>(&fissionYield),
 		"The number of xenon created for each fission (default is 0.25).")(
-		"heVRatio", bpo::value<double>(&heVRatio),
-		"The number of He atoms allowed per V in a bubble.")(
 		"migrationThreshold", bpo::value<double>(&migrationThreshold),
 		"Set a limit on the migration energy above which the diffusion will be "
 		"ignored.")("fluxDepthProfileFilePath",
@@ -426,6 +424,7 @@ Options::readParams(int argc, const char* argv[])
 		processMap["resolution"] = false;
 		processMap["heterogeneous"] = false;
 		processMap["sink"] = false;
+		processMap["largeBubble"] = false;
 		processMap["soret"] = false;
 		processMap["constant"] = false;
 		processMap["noSolve"] = false;

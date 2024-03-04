@@ -183,6 +183,15 @@ public:
 	virtual void
 	setZeta(double z) = 0;
 
+	/**
+	 * @brief TauBursting and FBursting are used for the bursting rates.
+	 */
+	virtual void
+	setTauBursting(double tau) = 0;
+
+	virtual void
+	setFBursting(double f) = 0;
+
 	bool
 	getEnableStdReaction() const noexcept
 	{
@@ -253,6 +262,30 @@ public:
 	setEnableAttenuation(bool enable)
 	{
 		_enableAttenuation = enable;
+	}
+
+	bool
+	getEnableBursting() const noexcept
+	{
+		return _enableBursting;
+	}
+
+	virtual void
+	setEnableBursting(bool enable)
+	{
+		_enableBursting = enable;
+	}
+
+	bool
+	getEnableLargeBubble() const noexcept
+	{
+		return _enableLargeBubble;
+	}
+
+	virtual void
+	setEnableLargeBubble(bool enable)
+	{
+		_enableLargeBubble = enable;
 	}
 
 	bool
@@ -549,6 +582,8 @@ protected:
 	bool _enableSink{};
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
+	bool _enableBursting{};
+	bool _enableLargeBubble{};
 	bool _enableConstantReaction{};
 	bool _enableReducedJacobian{};
 

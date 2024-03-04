@@ -62,7 +62,7 @@ TrapMutationReaction<TNetwork, TDerived>::computeRate(double largestRate)
 template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 void
-TrapMutationReaction<TNetwork, TDerived>::updateRates(double largestRate)
+TrapMutationReaction<TNetwork, TDerived>::updateLargestRates(double largestRate)
 {
 	auto rate = this->asDerived()->computeRate(largestRate);
 	for (IndexType i = 0; i < this->_rate.extent(0); ++i) {

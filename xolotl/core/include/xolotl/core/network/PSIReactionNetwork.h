@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/PSIReaction.h>
 #include <xolotl/core/network/PSITraits.h>
@@ -43,6 +44,7 @@ public:
 	using IndexType = typename Superclass::IndexType;
 	using ConcentrationsView = typename Superclass::ConcentrationsView;
 	using FluxesView = typename Superclass::FluxesView;
+	using Connectivity = typename Superclass::Connectivity;
 
 	using Superclass::Superclass;
 
@@ -90,6 +92,9 @@ public:
 	initializeExtraClusterData(const options::IOptions& options);
 
 	void
+	initializeExtraDOFs(const options::IOptions& options);
+
+	void
 	updateExtraClusterData(const std::vector<double>& gridTemps,
 		const std::vector<double>& gridDepths);
 
@@ -110,16 +115,30 @@ public:
 	getTotalTrappedHeliumConcentration(
 		ConcentrationsView concs, AmountType minSize = 0) override
 	{
-		return this->getTotalTrappedAtomConcentration(
-			concs, Species::He, minSize);
-	}
+		auto toReturn =
+			this->getTotalTrappedAtomConcentration(concs, Species::He, minSize);
 
-	void
-	updateBurstingConcs(double* gridPointSolution, double factor,
-		std::vector<double>& nBurst) override;
+		if (this->_enableLargeBubble) {
+			// Get the large bubble contribution
+			auto dof = concs.size();
+			auto dHe = Kokkos::subview(concs, std::make_pair(dof - 2, dof - 1));
+			auto hHe = create_mirror_view(dHe);
+			deep_copy(hHe, dHe);
+
+			toReturn += hHe(0);
+		}
+
+		return toReturn;
+	}
 
 	IndexType
 	checkLargestClusterId();
+
+	IndexType
+	getLargestClusterId()
+	{
+		return largestClusterId;
+	}
 
 	void
 	updateReactionRates(double time = 0.0);
@@ -153,6 +172,21 @@ private:
 
 private:
 	std::unique_ptr<detail::TrapMutationHandler> _tmHandler;
+
+protected:
+	double
+	computeBubbleRadius(double vAmount, double latticeParameter)
+	{
+		double aCube = latticeParameter * latticeParameter * latticeParameter;
+
+		return (sqrt(3.0) / 4.0) * latticeParameter +
+			pow((3.0 * aCube * vAmount) / (8.0 * ::xolotl::core::pi),
+				(1.0 / 3.0)) -
+			pow((3.0 * aCube) / (8.0 * ::xolotl::core::pi), (1.0 / 3.0));
+	}
+
+public:
+	IndexType largestClusterId;
 };
 
 namespace detail
@@ -186,12 +220,24 @@ public:
 	void
 	addSinks(IndexType i, TTag tag) const;
 
+	template <typename TTag>
+	KOKKOS_INLINE_FUNCTION
+	void
+	addLargeBubbleReactions(IndexType i, IndexType j, TTag tag) const;
+
+	template <typename TTag>
+	KOKKOS_INLINE_FUNCTION
+	void
+	addBurstings(IndexType i, TTag tag) const;
+
 private:
 	ReactionCollection<NetworkType>
 	getReactionCollection() const;
 
 private:
 	Kokkos::Array<Kokkos::View<AmountType*>, 7> _tmVSizes;
+
+	IndexType largestClusterId;
 };
 } // namespace detail
 } // namespace network

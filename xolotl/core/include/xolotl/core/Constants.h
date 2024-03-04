@@ -9,6 +9,8 @@
 #include <cmath>
 #include <memory>
 
+#include <xolotl/config.h>
+
 namespace xolotl
 {
 namespace core
@@ -99,6 +101,9 @@ constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
 
 // Tungsten density in nm^-3
 constexpr double tungstenDensity = 62.8;
+
+// V value for which the grouping behavior changes for PSI
+constexpr IdType psiVThreshold = 150;
 
 // Parameters for W Benedict EOS
 constexpr double gammaEOS = 2.67;

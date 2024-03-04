@@ -11,4 +11,4 @@ tempParam=933
 grouping=21 4 4
 process=reaction diff advec modifiedTM attenuation movingSurface bursting
 gridType=nonuniform
-rng=print 0
+burstingFactor=2.0e8

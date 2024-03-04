@@ -1,3 +1,4 @@
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/network/PSINetworkHandler.h>
 
 namespace xolotl

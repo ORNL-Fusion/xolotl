@@ -38,10 +38,6 @@ public:
 	bool
 	select(const Region& region) const;
 
-	// KOKKOS_FUNCTION
-	// static AmountType
-	// getMaxHePerV(AmountType amtV, double ratio) noexcept;
-
 	template <typename PlsmContext>
 	KOKKOS_INLINE_FUNCTION
 	double

@@ -75,27 +75,6 @@ equal(double a, double b)
 
 KOKKOS_INLINE_FUNCTION
 double
-getMaxHePerV(double amtV, double ratio) noexcept
-{
-	/**
-	 * The maximum number of helium atoms that can be combined with a
-	 * vacancy cluster with size equal to the index i.
-	 * It could support a mixture of up to nine
-	 * helium atoms with one vacancy.
-	 */
-	constexpr Kokkos::Array<double, 30> maxHePerV = {0, 9, 14, 18, 20, 27, 30,
-		35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 98, 100, 101, 103,
-		105, 107, 109, 110, 112, 116};
-
-	if (amtV < maxHePerV.size()) {
-		return maxHePerV[(int)amtV];
-	}
-	return util::max((ratio * amtV),
-		maxHePerV[maxHePerV.size() - 1] + amtV - maxHePerV.size() + 1.0);
-}
-
-KOKKOS_INLINE_FUNCTION
-double
 computeBenedictF1(const double temp) noexcept
 {
 	return xolotl::core::A_11 / sqrt(temp) + xolotl::core::A01 +

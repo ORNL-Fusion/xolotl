@@ -83,7 +83,7 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	void
-	updateRates(double largestRate);
+	updateLargestRates(double largestRate);
 
 private:
 	KOKKOS_INLINE_FUNCTION

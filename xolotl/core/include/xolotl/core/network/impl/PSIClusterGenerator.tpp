@@ -160,21 +160,21 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	// Else refine around the edge
 	auto maxDPerV = [lattice = _lattice, temperature = _temperature,
 						maxD = _maxD](AmountType amtV) {
-		return (2.0 / 3.0) * getMaxHePerVLoop(amtV, lattice, temperature) *
-			(maxD > 0);
+		return (2.0 / 3.0) *
+			util::getMaxHePerVLoop(amtV, lattice, temperature) * (maxD > 0);
 	};
 	auto maxTPerV = [lattice = _lattice, temperature = _temperature,
 						maxT = _maxT](AmountType amtV) {
-		return (2.0 / 3.0) * getMaxHePerVLoop(amtV, lattice, temperature) *
-			(maxT > 0);
+		return (2.0 / 3.0) *
+			util::getMaxHePerVLoop(amtV, lattice, temperature) * (maxT > 0);
 	};
 	if (hi[Species::V] > 1 and lo[Species::V] <= _maxV) {
 		double factor = 1.0e-1;
 
-		if (lo[Species::He] <=
-				getMaxHePerVLoop(hi[Species::V] - 1, _lattice, _temperature) &&
-			hi[Species::He] - 1 >=
-				getMaxHePerVLoop(lo[Species::V] - 1, _lattice, _temperature)) {
+		if (lo[Species::He] <= util::getMaxHePerVLoop(hi[Species::V] - 1,
+								   _lattice, _temperature) &&
+			hi[Species::He] - 1 >= util::getMaxHePerVLoop(lo[Species::V] - 1,
+									   _lattice, _temperature)) {
 			if constexpr (hasDeuterium<Species>) {
 				if (region[Species::D].length() <
 					util::max((double)(_groupingWidthA + 1),
@@ -222,7 +222,6 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 					result[toIndex(Species::T)] = true;
 				}
 			}
-
 			return true;
 		}
 	}
@@ -418,7 +417,7 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 
 	auto maxHPerV = [lattice = _lattice, temperature = _temperature](
 						AmountType amtV) {
-		return (2.0 / 3.0) * getMaxHePerVLoop(amtV, lattice, temperature);
+		return (2.0 / 3.0) * util::getMaxHePerVLoop(amtV, lattice, temperature);
 	};
 
 	Composition lo = region.getOrigin();
@@ -428,7 +427,7 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 	if (region[Species::V].end() > 1) {
 		auto hiV = util::min(hi[Species::V] - 1, _maxV);
 		auto hiHe = util::min(hi[Species::He] - 1,
-			(AmountType)getMaxHePerVLoop(_maxV, _lattice, _temperature));
+			(AmountType)util::getMaxHePerVLoop(_maxV, _lattice, _temperature));
 
 		// No impurities above maxV
 		if (lo[Species::V] > _maxV and !lo.isOnAxis(Species::V)) {
@@ -436,7 +435,8 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		}
 
 		// Too many helium
-		if (lo[Species::He] > getMaxHePerVLoop(hiV, _lattice, _temperature)) {
+		if (lo[Species::He] >
+			(AmountType)util::getMaxHePerVLoop(hiV, _lattice, _temperature)) {
 			return false;
 		}
 

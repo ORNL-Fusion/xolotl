@@ -317,11 +317,6 @@ protected:
 	double fissionYield;
 
 	/**
-	 * HeV ration, how many He per V are allowed
-	 */
-	double heVRatio;
-
-	/**
 	 * Migration energy above which the diffusion will be ignored
 	 */
 	double migrationThreshold;
@@ -956,15 +951,6 @@ public:
 	getFissionYield() const override
 	{
 		return fissionYield;
-	}
-
-	/**
-	 * \see IOptions.h
-	 */
-	virtual double
-	getHeVRatio() const override
-	{
-		return heVRatio;
 	}
 
 	/**
