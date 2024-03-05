@@ -84,8 +84,6 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
-	// Get the size of the network
-	int networkSize = network.getNumClusters();
 
 	// Set the time step number
 	int timeStep = 0;

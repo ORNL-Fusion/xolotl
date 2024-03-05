@@ -22,7 +22,7 @@ private:
 	 * \see FluxHandler.h
 	 */
 	double
-	FitFunction(double x)
+	FitFunction(double x) override
 	{
 		// Not actually used
 		return 0.0;

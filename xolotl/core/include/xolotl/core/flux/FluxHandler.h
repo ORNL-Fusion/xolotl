@@ -157,7 +157,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	initializeTimeProfile(const std::string& fileName) override;
+	initializeTimeProfile(const std::string& fileName) final;
 
 	/**
 	 * \see IFluxHandler.h
@@ -195,7 +195,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	setFluxAmplitude(double flux) override;
+	setFluxAmplitude(double flux) final;
 
 	/**
 	 * \see IFluxHandler.h

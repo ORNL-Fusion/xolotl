@@ -39,7 +39,7 @@ private:
 	 * \see FluxHandler.h
 	 */
 	double
-	FitFunction(double x)
+	FitFunction(double x) override
 	{
 		// Compute the polynomial fit
 		double value = exp(-pow((x - mu) / (sqrt(2.0) * sigma), 2.0));

@@ -37,7 +37,7 @@ Solver::Solver(
 Solver::Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler) :
 	optionsString(""),
 	solverHandler(_solverHandler),
-	perfHandler(solverHandler->getPerfHandler())
+	perfHandler(_solverHandler->getPerfHandler())
 {
 }
 
