@@ -1637,24 +1637,10 @@ PetscMonitor1D::computeAlphaZr(
 		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 		deep_copy(dConcs, hConcs);
 
-		// Loop on the species
-		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			myData[6 * id()] +=
-				network.getTotalConcentration(dConcs, id, 1) * hx;
-			myData[6 * id() + 1] +=
-				network.getTotalAtomConcentration(dConcs, id, 1) * hx;
-			myData[(6 * id()) + 2] +=
-				2.0 * network.getTotalRadiusConcentration(dConcs, id, 1) * hx;
-			myData[(6 * id()) + 3] +=
-				network.getTotalConcentration(dConcs, id, minSizes[id()]) * hx;
-			myData[(6 * id()) + 4] +=
-				network.getTotalAtomConcentration(dConcs, id, minSizes[id()]) *
-				hx;
-			myData[(6 * id()) + 5] += 2.0 *
-				network.getTotalRadiusConcentration(
-					dConcs, id, minSizes[id()]) *
-				hx;
-		}
+        auto vals = network.getMonitorDataValues(dConcs, hx);
+        for (std::size_t i = 0; i < vals.size(); ++i) {
+            myData[i] += vals[i];
+        }
 	}
 
 	// Sum all the concentrations through MPI reduce

@@ -55,6 +55,12 @@ public:
 	void
 	setGridSize(IndexType gridSize) override;
 
+	std::string
+	getMonitorDataHeaderString() const override;
+
+	std::vector<double>
+	getMonitorDataValues(Kokkos::View<double*> conc, double fac) override;
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);

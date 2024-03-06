@@ -579,23 +579,13 @@ PetscMonitor0D::computeAlphaZr(
 	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 	deep_copy(dConcs, hConcs);
 
-	// Loop on the species
-	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using TQ = core::network::IReactionNetwork::TotalQuantity;
-		using Q = TQ::Type;
-		using TQA = util::Array<TQ, 6>;
-		auto ms = static_cast<AmountType>(minSizes[id()]);
-		auto totals = network.getTotals(dConcs,
-			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
-				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
-				TQ{Q::radius, id, ms}});
-
-		myData[6 * id()] = totals[0];
-		myData[6 * id() + 1] = totals[1];
-		myData[(6 * id()) + 2] = 2.0 * totals[2] / myData[6 * id()];
-		myData[(6 * id()) + 3] = totals[3];
-		myData[(6 * id()) + 4] = totals[4];
-		myData[(6 * id()) + 5] = 2.0 * totals[5] / myData[(6 * id()) + 3];
+	auto vals = network.getMonitorDataValues(dConcs, 1.0);
+	for (std::size_t i = 0; i < vals.size(); ++i) {
+		myData[i] += vals[i];
+	}
+	for (auto i = 0; i < numSpecies; ++i) {
+		myData[(6 * i) + 2] /= myData[6 * i];
+		myData[(6 * i) + 5] /= myData[6 * i + 3];
 	}
 
 	// Set the output precision

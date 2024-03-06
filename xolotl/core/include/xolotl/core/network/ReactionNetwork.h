@@ -239,6 +239,24 @@ public:
 	void
 	setTime(double time) override;
 
+	const std::vector<AmountType>&
+	getMinRadiusSizes() const override
+	{
+		return _minRadiusSizes;
+	}
+
+	std::string
+	getMonitorDataHeaderString() const override
+	{
+		return {};
+	}
+
+	virtual std::vector<double>
+	getMonitorDataValues(Kokkos::View<double*> conc, double fac) override
+	{
+		return {};
+	}
+
 	std::uint64_t
 	getDeviceMemorySize() const noexcept override;
 
@@ -342,9 +360,6 @@ public:
 
 	MomentIdMap
 	getAllMomentIdInfo() override;
-
-	std::string
-	getHeaderString() override;
 
 	void initializeClusterMap(
 		BoundVector, MomentIdMapVector, MomentIdMap) override;
@@ -662,6 +677,9 @@ private:
 	static std::map<std::string, SpeciesId>
 	createSpeciesLabelMap() noexcept;
 
+	static std::vector<AmountType>
+	computeMinRadiusSizes(const options::IOptions& opts);
+
 	void
 	defineMomentIds();
 
@@ -709,6 +727,8 @@ protected:
 	ConnectivitiesPairView _constantConnsEntries;
 
 	double _currentTime;
+
+	std::vector<AmountType> _minRadiusSizes;
 };
 
 namespace detail

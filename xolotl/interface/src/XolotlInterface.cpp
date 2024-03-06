@@ -637,7 +637,7 @@ try {
 		std::fstream outputFile;
 		outputFile.open("FullAlphaZr.dat", std::fstream::out);
 		outputFile << "#time ";
-		outputFile << network.getHeaderString();
+		outputFile << network.getMonitorDataHeaderString();
 		outputFile << std::endl;
 		outputFile.close();
 	}
@@ -675,25 +675,10 @@ try {
 		deep_copy(dConcs, hConcs);
 
 		double hx = 1.0;
-
-		// Loop on the species
-		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			using TQ = core::network::IReactionNetwork::TotalQuantity;
-			using Q = TQ::Type;
-			using TQA = util::Array<TQ, 6>;
-			auto ms = static_cast<AmountType>(minSizes[id()]);
-			auto totals = network.getTotals(dConcs,
-				TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1},
-					TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
-					TQ{Q::atom, id, ms}, TQ{Q::radius, id, ms}});
-
-			myData[6 * id()] += totals[0] * hx;
-			myData[(6 * id()) + 1] += totals[1] * hx;
-			myData[(6 * id()) + 2] += 2.0 * totals[2] * hx;
-			myData[(6 * id()) + 3] += totals[3] * hx;
-			myData[(6 * id()) + 4] += totals[4] * hx;
-			myData[(6 * id()) + 5] += 2.0 * totals[5] * hx;
-		}
+		auto vals = network.getMonitorDataValues(dConcs, hx);
+        for (std::size_t i = 0; i < vals.size(); ++i) {
+            myData[i] += vals[i];
+        }
 	}
 
 	// Sum all the concentrations through MPI reduce

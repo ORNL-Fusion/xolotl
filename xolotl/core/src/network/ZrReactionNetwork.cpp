@@ -219,6 +219,51 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 			}
 		}); // Goes with parallel_for
 }
+
+std::string
+ZrReactionNetwork::getMonitorDataHeaderString() const
+{
+	// Create the object to return
+	std::stringstream header;
+
+	// Loop on all the clusters
+	auto numSpecies = getSpeciesListSize();
+	for (auto id = SpeciesId(numSpecies); id; ++id) {
+		auto speciesName = this->getSpeciesName(id);
+		header << speciesName << "_density " << speciesName << "_atom "
+			   << speciesName << "_diameter " << speciesName
+			   << "_partial_density " << speciesName << "_partial_atom "
+			   << speciesName << "_partial_diameter ";
+	}
+
+	return header.str();
+}
+
+std::vector<double>
+ZrReactionNetwork::getMonitorDataValues(Kokkos::View<double*> conc, double fac)
+{
+	auto numSpecies = getSpeciesListSize();
+	auto ret = std::vector<double>(numSpecies * 6, 0.0);
+	const auto& minSizes = this->getMinRadiusSizes();
+	for (auto id = SpeciesId(numSpecies); id; ++id) {
+		using TQ = IReactionNetwork::TotalQuantity;
+		using Q = TQ::Type;
+		using TQA = util::Array<TQ, 6>;
+		auto ms = minSizes[id()];
+		auto totals = this->getTotals(conc,
+			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
+				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
+				TQ{Q::radius, id, ms}});
+
+		ret[(6 * id()) + 0] = totals[0] * fac;
+		ret[(6 * id()) + 1] = totals[1] * fac;
+		ret[(6 * id()) + 2] = totals[2] * 2.0 * fac;
+		ret[(6 * id()) + 3] = totals[3] * fac;
+		ret[(6 * id()) + 4] = totals[4] * fac;
+		ret[(6 * id()) + 5] = totals[5] * 2.0 * fac;
+	}
+	return ret;
+}
 } // namespace network
 } // namespace core
 } // namespace xolotl

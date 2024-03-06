@@ -335,10 +335,22 @@ public:
 	getAllMomentIdInfo() = 0;
 
 	/**
+	 * @brief Get the minimum sizes for average radius computation
+	 */
+	virtual const std::vector<AmountType>&
+	getMinRadiusSizes() const = 0;
+
+	/**
 	 * @brief Return a string of cluster name in ID order.
 	 */
 	virtual std::string
-	getHeaderString() = 0;
+	getMonitorDataHeaderString() const = 0;
+
+	/**
+	 * @brief Compute a list of data values for each species in ID order
+	 */
+	virtual std::vector<double>
+	getMonitorDataValues(Kokkos::View<double*> conc, double fac) = 0;
 
 	/**
 	 * @brief Computes the map between the different cluster bounds and moment
