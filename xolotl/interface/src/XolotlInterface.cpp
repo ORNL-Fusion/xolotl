@@ -633,20 +633,11 @@ try {
 	auto networkSize = network.getNumClusters();
 
 	if (time == 0.0 and procId == 0) {
-		// Create/open the output files
-		std::fstream outputFile;
-		outputFile.open("FullAlphaZr.dat", std::fstream::out);
-		outputFile << "#time ";
-		outputFile << network.getMonitorDataHeaderString();
-		outputFile << std::endl;
-		outputFile.close();
+		network.writeMonitorOutputHeader();
 	}
 
 	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 6, 0.0);
-
-	// Get the minimum size for the loop densities and diameters
-	auto minSizes = solverCast(solver)->getSolverHandler()->getMinSizes();
+	auto myData = std::vector<double>(network.getMonitorDataLineSize(), 0.0);
 
 	for (auto xi = 0; xi < localSize; xi++) {
 		// Construct the full concentration vector first
@@ -656,70 +647,16 @@ try {
 				fullConc[fromSubNetwork[i][j]] = conc[xi][i][j];
 			}
 
-		// Set the output precision
-		const int outputPrecision = 5;
-
-		// Open the output file
-		std::fstream outputFile;
-		outputFile.open(
-			"FullAlphaZr.dat", std::fstream::out | std::fstream::app);
-		outputFile << std::setprecision(outputPrecision);
-
-		// Get the minimum size for the loop densities and diameters
-		auto minSizes = solverCast(solver)->getSolverHandler()->getMinSizes();
-
 		using HostUnmanaged =
 			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
 		auto hConcs = HostUnmanaged(fullConc.data(), dof);
 		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 		deep_copy(dConcs, hConcs);
 
-		double hx = 1.0;
-		auto vals = network.getMonitorDataValues(dConcs, hx);
-        for (std::size_t i = 0; i < vals.size(); ++i) {
-            myData[i] += vals[i];
-        }
+		network.addMonitorDataValues(dConcs, 1.0, myData);
 	}
 
-	// Sum all the concentrations through MPI reduce
-	auto globalData = std::vector<double>(myData.size(), 0.0);
-	MPI_Reduce(myData.data(), globalData.data(), myData.size(), MPI_DOUBLE,
-		MPI_SUM, 0, xolotlComm);
-
-	// Average the data
-	if (procId == 0) {
-		// Set the output precision
-		const int outputPrecision = 5;
-
-		for (auto i = 0; i < numSpecies; ++i) {
-			if (globalData[6 * i] > 1.0e-16)
-				globalData[(6 * i) + 2] /= globalData[6 * i];
-			if (globalData[(6 * i) + 3] > 1.0e-16)
-				globalData[(6 * i) + 5] /= globalData[(6 * i) + 3];
-		}
-
-		// Open the output file
-		std::fstream outputFile;
-		outputFile.open(
-			"FullAlphaZr.dat", std::fstream::out | std::fstream::app);
-		outputFile << std::setprecision(outputPrecision);
-
-		// Output the data
-		outputFile << time << " ";
-
-		for (auto i = 0; i < numSpecies; ++i) {
-			outputFile << globalData[i * 6] << " " << globalData[(i * 6) + 1]
-					   << " " << globalData[(i * 6) + 2] << " "
-					   << globalData[(i * 6) + 3] << " "
-					   << globalData[(i * 6) + 4] << " "
-					   << globalData[(i * 6) + 5] << " ";
-		}
-
-		outputFile << std::endl;
-
-		// Close the output file
-		outputFile.close();
-	}
+	network.writeMonitorDataLine(myData, time);
 }
 catch (const std::exception& e) {
 	reportException(e);

@@ -1,5 +1,6 @@
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/impl/AlloyReactionNetwork.tpp>
+#include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
 {
@@ -117,6 +118,93 @@ AlloyReactionNetwork::setConstantRateEntries()
 		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
 			reaction.defineRateEntries(rows, entries);
 		});
+}
+
+std::string
+AlloyReactionNetwork::getMonitorDataHeaderString() const
+{
+	std::stringstream header;
+
+	auto numSpecies = getSpeciesListSize();
+	header << "#time ";
+	for (auto id = SpeciesId(numSpecies); id; ++id) {
+		auto speciesName = this->getSpeciesName(id);
+		header << speciesName << "_density " << speciesName << "_diameter "
+			   << speciesName << "_partial_density " << speciesName
+			   << "_partial_diameter ";
+	}
+
+	return header.str();
+}
+
+void
+AlloyReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
+	double fac, std::vector<double>& totalVals)
+{
+	auto numSpecies = getSpeciesListSize();
+	const auto& minSizes = this->getMinRadiusSizes();
+	for (auto id = SpeciesId(numSpecies); id; ++id) {
+		using TQ = IReactionNetwork::TotalQuantity;
+		using Q = TQ::Type;
+		using TQA = util::Array<TQ, 4>;
+		auto ms = minSizes[id()];
+		auto totals = this->getTotals(conc,
+			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
+				TQ{Q::radius, id, ms}});
+
+		totalVals[(4 * id()) + 0] += totals[0] * fac;
+		totalVals[(4 * id()) + 1] += totals[1] * 2.0 * fac;
+		totalVals[(4 * id()) + 2] += totals[2] * fac;
+		totalVals[(4 * id()) + 3] += totals[3] * 2.0 * fac;
+	}
+}
+
+void
+AlloyReactionNetwork::writeMonitorDataLine(
+	const std::vector<double>& localData, double time)
+{
+	auto numSpecies = getSpeciesListSize();
+
+	// Sum all the concentrations through MPI reduce
+	auto globalData = std::vector<double>(localData.size(), 0.0);
+	MPI_Reduce(localData.data(), globalData.data(), localData.size(),
+		MPI_DOUBLE, MPI_SUM, 0, util::getMPIComm());
+
+	if (util::getMPIRank() == 0) {
+		// Average the data
+		for (auto i = 0; i < numSpecies; ++i) {
+			auto id = [i](std::size_t n) { return 4 * i + n; };
+			globalData[id(1)] /= globalData[id(0)];
+			globalData[id(3)] /= globalData[id(2)];
+
+			// ///////////////////////////////////////////////////////////////
+			// FIXME: Is this supposed to happen?
+			// globalData[id(0)] /= (grid[Mx] - grid[1]);
+			// globalData[id(2)] /= (grid[Mx] - grid[1]);
+			// ///////////////////////////////////////////////////////////////
+		}
+
+		// Set the output precision
+		const int outputPrecision = 5;
+
+		// Open the output file
+		std::fstream outputFile;
+		outputFile.open(
+			getMonitorOutputFileName(), std::fstream::out | std::fstream::app);
+		outputFile << std::setprecision(outputPrecision);
+
+		// Output the data
+		outputFile << time << " ";
+		for (auto i = 0; i < numSpecies; ++i) {
+			auto id = [i](std::size_t n) { return 4 * i + n; };
+			outputFile << globalData[id(0)] << " " << globalData[id(1)] << " "
+					   << globalData[id(2)] << " " << globalData[id(3)] << " ";
+		}
+		outputFile << std::endl;
+
+		// Close the output file
+		outputFile.close();
+	}
 }
 } // namespace network
 } // namespace core

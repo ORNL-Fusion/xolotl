@@ -245,16 +245,51 @@ public:
 		return _minRadiusSizes;
 	}
 
-	std::string
-	getMonitorDataHeaderString() const override
+	[[noreturn]] std::string
+	getMonitorOutputFileName() const override
 	{
-		return {};
+		throw std::runtime_error("This function has not been implemented");
 	}
 
-	virtual std::vector<double>
-	getMonitorDataValues(Kokkos::View<double*> conc, double fac) override
+	[[noreturn]] std::string
+	getMonitorDataHeaderString() const override
 	{
-		return {};
+		throw std::runtime_error("This function has not been implemented");
+	}
+
+	std::vector<double>
+	getMonitorDataValues(Kokkos::View<const double*> conc, double fac) override
+	{
+		auto ret = std::vector<double>(getMonitorDataLineSize(), 0.0);
+		addMonitorDataValues(conc, fac, ret);
+		return ret;
+	}
+
+	void
+	addMonitorDataValues(Kokkos::View<const double*> conc, double fac,
+		std::vector<double>& totalVals) override
+	{
+		throw std::runtime_error("This function has not been implemented");
+	}
+
+	[[noreturn]] std::size_t
+	getMonitorDataLineSize() const override
+	{
+		throw std::runtime_error("This function has not been implemented");
+	}
+
+	void
+	writeMonitorOutputHeader() const override
+	{
+		std::ofstream(this->getMonitorOutputFileName())
+			<< this->getMonitorDataHeaderString() << std::endl;
+	}
+
+	void
+	writeMonitorDataLine(
+		const std::vector<double>& localData, double time) override
+	{
+		throw std::runtime_error("This function has not been implemented");
 	}
 
 	std::uint64_t

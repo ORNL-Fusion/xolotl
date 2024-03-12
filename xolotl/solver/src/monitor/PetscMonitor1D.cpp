@@ -1,3 +1,5 @@
+#include <petscdmda_kokkos.hpp>
+
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
@@ -385,23 +387,7 @@ PetscMonitor1D::setup(int loop)
 
 	// Set the monitor to output data for AlphaZr
 	if (flagZr) {
-		auto& network = _solverHandler->getNetwork();
-		auto numSpecies = network.getSpeciesListSize();
-
-		// Create/open the output files
-		std::fstream outputFile;
-		outputFile.open("AlphaZr.dat", std::fstream::out);
-		outputFile << "#time_step time ";
-		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			auto speciesName = network.getSpeciesName(id);
-			outputFile << speciesName << "_density " << speciesName << "_atom "
-					   << speciesName << "_diameter " << speciesName
-					   << "_partial_density " << speciesName << "_partial_atom "
-					   << speciesName << "_partial_diameter ";
-		}
-
-		outputFile << std::endl;
-		outputFile.close();
+		network.writeMonitorOutputHeader();
 
 		// computeAlphaZr will be called at each timestep
 		PetscCallVoid(
@@ -597,18 +583,7 @@ PetscMonitor1D::setup(int loop)
 	// Set the monitor to output data for Alloy
 	if (flagAlloy) {
 		if (procId == 0 and _loopNumber == 0) {
-			// Create/open the output files
-			std::fstream outputFile;
-			outputFile.open("Alloy.dat", std::fstream::out);
-			outputFile << "#time_step time ";
-			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-				auto speciesName = network.getSpeciesName(id);
-				outputFile << speciesName << "_density " << speciesName
-						   << "_diameter " << speciesName << "_partial_density "
-						   << speciesName << "_partial_diameter ";
-			}
-			outputFile << std::endl;
-			outputFile.close();
+			network.writeMonitorOutputHeader();
 		}
 
 		// computeAlloy1D will be called at each timestep
@@ -655,7 +630,6 @@ PetscMonitor1D::setup(int loop)
 	// Set the monitor to monitor the concentration of the largest cluster
 	if (flagLargest) {
 		// Look for the largest cluster
-		auto& network = _solverHandler->getNetwork();
 		_largestClusterId = network.getLargestClusterId();
 
 		// Find the threshold
@@ -1471,96 +1445,34 @@ PetscMonitor1D::computeAlloy(
 	PetscCall(TSGetDM(ts, &da));
 
 	// Get the array of concentration
-	PetscReal** solutionArray;
-	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
+	PetscOffsetView<const PetscScalar**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
 
 	using NetworkType = core::network::AlloyReactionNetwork;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
-	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 4, 0.0);
-
-	// Get the minimum size for the loop densities and diameters
-	auto minSizes = _solverHandler->getMinSizes();
-
-	// Declare the pointer for the concentrations at a specific grid point
-	PetscReal* gridPointSolution;
+	auto myData = std::vector<double>(network.getMonitorDataLineSize(), 0.0);
 
 	// Loop on the grid
 	for (auto xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
 		if (xi < _solverHandler->getLeftOffset() ||
-			xi == Mx - _solverHandler->getRightOffset())
+			xi == Mx - _solverHandler->getRightOffset()) {
 			continue;
+		}
 
 		// Get the pointer to the beginning of the solution data for this grid
 		// point
-		gridPointSolution = solutionArray[xi];
+		auto concOffset = subview(concs, xi, Kokkos::ALL).view();
 
-		using HostUnmanaged =
-			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-		auto hConcs = HostUnmanaged(gridPointSolution, dof);
-		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-		deep_copy(dConcs, hConcs);
-
-		// Loop on the species
-		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			using TQ = core::network::IReactionNetwork::TotalQuantity;
-			using Q = TQ::Type;
-			using TQA = util::Array<TQ, 4>;
-			auto ms = static_cast<AmountType>(minSizes[id()]);
-			auto totals = network.getTotals(dConcs,
-				TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1},
-					TQ{Q::total, id, ms}, TQ{Q::radius, id, ms}});
-
-			myData[4 * id()] += totals[0];
-			myData[(4 * id()) + 1] += 2.0 * totals[1] / myData[4 * id()];
-			myData[(4 * id()) + 2] += totals[2];
-			myData[(4 * id()) + 3] += 2.0 * totals[3] / myData[(4 * id()) + 2];
-		}
+		network.addMonitorDataValues(concOffset, 1.0, myData);
 	}
 
-	// Sum all the concentrations through MPI reduce
-	auto globalData = std::vector<double>(myData.size(), 0.0);
-	MPI_Reduce(myData.data(), globalData.data(), myData.size(), MPI_DOUBLE,
-		MPI_SUM, 0, xolotlComm);
-
-	// Average the data
-	if (procId == 0) {
-		for (auto i = 0; i < numSpecies; ++i) {
-			globalData[(4 * i) + 1] /= globalData[4 * i];
-			globalData[(4 * i) + 3] /= globalData[(4 * i) + 2];
-			globalData[4 * i] /= (grid[Mx] - grid[1]);
-			globalData[(4 * i) + 2] /= (grid[Mx] - grid[1]);
-		}
-
-		// Set the output precision
-		const int outputPrecision = 5;
-
-		// Open the output file
-		std::fstream outputFile;
-		outputFile.open("Alloy.dat", std::fstream::out | std::fstream::app);
-		outputFile << std::setprecision(outputPrecision);
-
-		// Output the data
-		outputFile << timestep << " " << time << " ";
-		for (auto i = 0; i < numSpecies; ++i) {
-			outputFile << globalData[i * 4] << " " << globalData[(i * 4) + 1]
-					   << " " << globalData[(i * 4) + 2] << " "
-					   << globalData[(i * 4) + 3] << " ";
-		}
-		outputFile << std::endl;
-
-		// Close the output file
-		outputFile.close();
-	}
+	network.writeMonitorDataLine(myData, time);
 
 	// Restore the PETSC solution array
-	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
 
 	PetscFunctionReturn(0);
 }
@@ -1570,7 +1482,6 @@ PetscMonitor1D::computeAlphaZr(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	// Initial declarations
-	PetscErrorCode ierr;
 	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
 
 	PetscFunctionBeginUser;
@@ -1591,29 +1502,17 @@ PetscMonitor1D::computeAlphaZr(
 
 	// Get the da from ts
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 
 	// Get the array of concentration
-	PetscReal** solutionArray;
-	ierr = DMDAVecGetArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscOffsetView<const PetscScalar**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
 
 	using NetworkType = core::network::ZrReactionNetwork;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
-	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 6, 0.0);
-
-	// Get the minimum size for the loop densities and diameters
-	auto minSizes = _solverHandler->getMinSizes();
-
-	// Declare the pointer for the concentrations at a specific grid point
-	PetscReal* gridPointSolution;
+	auto myData = std::vector<double>(network.getMonitorDataLineSize(), 0.0);
 
 	// Get the position of the surface
 	auto surfacePos = _solverHandler->getSurfacePosition();
@@ -1622,69 +1521,23 @@ PetscMonitor1D::computeAlphaZr(
 	for (auto xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
 		if (xi < surfacePos + _solverHandler->getLeftOffset() ||
-			xi == Mx - _solverHandler->getRightOffset())
+			xi == Mx - _solverHandler->getRightOffset()) {
 			continue;
+		}
 
 		// Get the pointer to the beginning of the solution data for this grid
 		// point
-		gridPointSolution = solutionArray[xi];
+		auto concOffset = subview(concs, xi, Kokkos::ALL).view();
 
 		double hx = grid[xi + 1] - grid[xi];
 
-		using HostUnmanaged =
-			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-		auto hConcs = HostUnmanaged(gridPointSolution, dof);
-		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-		deep_copy(dConcs, hConcs);
-
-        auto vals = network.getMonitorDataValues(dConcs, hx);
-        for (std::size_t i = 0; i < vals.size(); ++i) {
-            myData[i] += vals[i];
-        }
+		network.addMonitorDataValues(concOffset, hx, myData);
 	}
 
-	// Sum all the concentrations through MPI reduce
-	auto globalData = std::vector<double>(myData.size(), 0.0);
-	MPI_Reduce(myData.data(), globalData.data(), myData.size(), MPI_DOUBLE,
-		MPI_SUM, 0, xolotlComm);
-
-	// Average the data
-	if (procId == 0) {
-		for (auto i = 0; i < numSpecies; ++i) {
-			if (globalData[6 * i] > 1.0e-16)
-				globalData[(6 * i) + 2] /= globalData[6 * i];
-			if (globalData[(6 * i) + 3] > 1.0e-16)
-				globalData[(6 * i) + 5] /= globalData[(6 * i) + 3];
-		}
-
-		// Set the output precision
-		const int outputPrecision = 5;
-
-		// Open the output file
-		std::fstream outputFile;
-		outputFile.open("AlphaZr.dat", std::fstream::out | std::fstream::app);
-		outputFile << std::setprecision(outputPrecision);
-
-		// Output the data
-		outputFile << timestep << " " << time << " ";
-
-		for (auto i = 0; i < numSpecies; ++i) {
-			outputFile << globalData[i * 6] << " " << globalData[(i * 6) + 1]
-					   << " " << globalData[(i * 6) + 2] << " "
-					   << globalData[(i * 6) + 3] << " "
-					   << globalData[(i * 6) + 4] << " "
-					   << globalData[(i * 6) + 5] << " ";
-		}
-
-		outputFile << std::endl;
-
-		// Close the output file
-		outputFile.close();
-	}
+	network.writeMonitorDataLine(myData, time);
 
 	// Restore the PETSc solution array
-	ierr = DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray);
-	CHKERRQ(ierr);
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
 
 	PetscFunctionReturn(0);
 }

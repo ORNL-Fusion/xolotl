@@ -1,5 +1,6 @@
 #include <xolotl/core/network/ZrReactionNetwork.h>
 #include <xolotl/core/network/impl/ZrReactionNetwork.tpp>
+#include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
 {
@@ -223,11 +224,10 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 std::string
 ZrReactionNetwork::getMonitorDataHeaderString() const
 {
-	// Create the object to return
 	std::stringstream header;
 
-	// Loop on all the clusters
 	auto numSpecies = getSpeciesListSize();
+	header << "#time ";
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		auto speciesName = this->getSpeciesName(id);
 		header << speciesName << "_density " << speciesName << "_atom "
@@ -239,11 +239,11 @@ ZrReactionNetwork::getMonitorDataHeaderString() const
 	return header.str();
 }
 
-std::vector<double>
-ZrReactionNetwork::getMonitorDataValues(Kokkos::View<double*> conc, double fac)
+void
+ZrReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
+	double fac, std::vector<double>& totalVals)
 {
 	auto numSpecies = getSpeciesListSize();
-	auto ret = std::vector<double>(numSpecies * 6, 0.0);
 	const auto& minSizes = this->getMinRadiusSizes();
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		using TQ = IReactionNetwork::TotalQuantity;
@@ -255,14 +255,60 @@ ZrReactionNetwork::getMonitorDataValues(Kokkos::View<double*> conc, double fac)
 				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
 				TQ{Q::radius, id, ms}});
 
-		ret[(6 * id()) + 0] = totals[0] * fac;
-		ret[(6 * id()) + 1] = totals[1] * fac;
-		ret[(6 * id()) + 2] = totals[2] * 2.0 * fac;
-		ret[(6 * id()) + 3] = totals[3] * fac;
-		ret[(6 * id()) + 4] = totals[4] * fac;
-		ret[(6 * id()) + 5] = totals[5] * 2.0 * fac;
+		totalVals[(6 * id()) + 0] += totals[0] * fac;
+		totalVals[(6 * id()) + 1] += totals[1] * fac;
+		totalVals[(6 * id()) + 2] += totals[2] * 2.0 * fac;
+		totalVals[(6 * id()) + 3] += totals[3] * fac;
+		totalVals[(6 * id()) + 4] += totals[4] * fac;
+		totalVals[(6 * id()) + 5] += totals[5] * 2.0 * fac;
 	}
-	return ret;
+}
+
+void
+ZrReactionNetwork::writeMonitorDataLine(
+	const std::vector<double>& localData, double time)
+{
+	auto numSpecies = getSpeciesListSize();
+
+	// Sum all the concentrations through MPI reduce
+	auto globalData = std::vector<double>(localData.size(), 0.0);
+	MPI_Reduce(localData.data(), globalData.data(), localData.size(),
+		MPI_DOUBLE, MPI_SUM, 0, util::getMPIComm());
+
+	if (util::getMPIRank() == 0) {
+		// Average the data
+		for (auto i = 0; i < numSpecies; ++i) {
+			auto id = [i](std::size_t n) { return 6 * i + n; };
+			if (globalData[id(0)] > 1.0e-16) {
+				globalData[id(2)] /= globalData[id(0)];
+			}
+			if (globalData[id(3)] > 1.0e-16) {
+				globalData[id(5)] /= globalData[id(3)];
+			}
+		}
+
+		// Set the output precision
+		const int outputPrecision = 5;
+
+		// Open the output file
+		std::fstream outputFile;
+		outputFile.open(
+			getMonitorOutputFileName(), std::fstream::out | std::fstream::app);
+		outputFile << std::setprecision(outputPrecision);
+
+		// Output the data
+		outputFile << time << " ";
+		for (auto i = 0; i < numSpecies; ++i) {
+			auto id = [i](std::size_t n) { return 6 * i + n; };
+			outputFile << globalData[id(0)] << " " << globalData[id(1)] << " "
+					   << globalData[id(2)] << " " << globalData[id(3)] << " "
+					   << globalData[id(4)] << " " << globalData[id(5)] << " ";
+		}
+		outputFile << std::endl;
+
+		// Close the output file
+		outputFile.close();
+	}
 }
 } // namespace network
 } // namespace core
