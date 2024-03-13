@@ -23,7 +23,7 @@ private:
 	 * \see FluxHandler.h
 	 */
 	double
-	FitFunction(double x)
+	FitFunction(double x) override
 	{
 		return 1.0;
 	}
@@ -102,7 +102,7 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
 		// Set the grid
 		xGrid = grid;
@@ -193,7 +193,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	std::vector<std::pair<IdType, double>>
-	getImplantedFlux(std::vector<IdType> map)
+	getImplantedFlux(std::vector<IdType> map) override
 	{
 		std::vector<std::pair<IdType, double>> toReturn;
 		// Loop on the map
@@ -214,7 +214,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector)
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector) override
 	{
 		fluxIndices.clear();
 		incidentFluxVec.clear();

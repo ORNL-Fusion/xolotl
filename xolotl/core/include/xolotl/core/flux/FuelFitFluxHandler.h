@@ -23,7 +23,7 @@ private:
 	 * \see FluxHandler.h
 	 */
 	double
-	FitFunction(double x)
+	FitFunction(double x) override
 	{
 		// Constant flux
 		return 1.0;
@@ -53,7 +53,7 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
 		// Set the grid
 		xGrid = grid;

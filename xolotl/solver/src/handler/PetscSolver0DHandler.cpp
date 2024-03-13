@@ -271,10 +271,6 @@ PetscSolver0DHandler::updateConcentration(
 	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 	auto updatedConcOffset = subview(updatedConcs, 0, Kokkos::ALL).view();
 
-	// Degrees of freedom is the total number of clusters in the network +
-	// moments
-	const auto dof = network.getDOF();
-
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);
 	double temp = temperatureHandler->getTemperature(gridPosition, ftime);
@@ -314,10 +310,6 @@ PetscSolver0DHandler::computeJacobian(
 	// Get pointers to vector data
 	PetscOffsetView<const PetscScalar**> concs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
-
-	// Degrees of freedom is the total number of clusters in the network +
-	// moments
-	const auto dof = network.getDOF();
 
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
