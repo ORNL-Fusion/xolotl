@@ -19,6 +19,7 @@
 #include <xolotl/core/network/detail/ReactionCollection.h>
 #include <xolotl/options/IOptions.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/util/NotImplementedError.h>
 
 namespace xolotl
 {
@@ -248,13 +249,13 @@ public:
 	[[noreturn]] std::string
 	getMonitorOutputFileName() const override
 	{
-		throw std::runtime_error("This function has not been implemented");
+		throw util::NotImplementedError();
 	}
 
 	[[noreturn]] std::string
 	getMonitorDataHeaderString() const override
 	{
-		throw std::runtime_error("This function has not been implemented");
+		throw util::NotImplementedError();
 	}
 
 	std::vector<double>
@@ -269,13 +270,13 @@ public:
 	addMonitorDataValues(Kokkos::View<const double*> conc, double fac,
 		std::vector<double>& totalVals) override
 	{
-		throw std::runtime_error("This function has not been implemented");
+		throw util::NotImplementedError();
 	}
 
 	[[noreturn]] std::size_t
 	getMonitorDataLineSize() const override
 	{
-		throw std::runtime_error("This function has not been implemented");
+		throw util::NotImplementedError();
 	}
 
 	void
@@ -289,7 +290,7 @@ public:
 	writeMonitorDataLine(
 		const std::vector<double>& localData, double time) override
 	{
-		throw std::runtime_error("This function has not been implemented");
+		throw util::NotImplementedError();
 	}
 
 	std::uint64_t

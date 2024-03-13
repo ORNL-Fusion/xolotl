@@ -456,8 +456,6 @@ PetscMonitor0D::computeAlloy(
 	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 
 	using NetworkType = core::network::AlloyReactionNetwork;
-
-	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 
 	auto myData = network.getMonitorDataValues(concOffset, 1.0);
@@ -486,7 +484,6 @@ PetscMonitor0D::computeAlphaZr(
 	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 
 	using NetworkType = core::network::ZrReactionNetwork;
-
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 
 	auto myData = network.getMonitorDataValues(concOffset, 1.0);

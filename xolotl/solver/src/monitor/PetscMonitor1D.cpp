@@ -1449,8 +1449,6 @@ PetscMonitor1D::computeAlloy(
 	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
 
 	using NetworkType = core::network::AlloyReactionNetwork;
-
-	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	auto myData = std::vector<double>(network.getMonitorDataLineSize(), 0.0);
 
@@ -1466,7 +1464,9 @@ PetscMonitor1D::computeAlloy(
 		// point
 		auto concOffset = subview(concs, xi, Kokkos::ALL).view();
 
-		network.addMonitorDataValues(concOffset, 1.0, myData);
+		double hx = grid[xi + 1] - grid[xi];
+
+		network.addMonitorDataValues(concOffset, hx, myData);
 	}
 
 	network.writeMonitorDataLine(myData, time);

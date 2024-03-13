@@ -174,14 +174,12 @@ AlloyReactionNetwork::writeMonitorDataLine(
 		// Average the data
 		for (auto i = 0; i < numSpecies; ++i) {
 			auto id = [i](std::size_t n) { return 4 * i + n; };
-			globalData[id(1)] /= globalData[id(0)];
-			globalData[id(3)] /= globalData[id(2)];
-
-			// ///////////////////////////////////////////////////////////////
-			// FIXME: Is this supposed to happen?
-			// globalData[id(0)] /= (grid[Mx] - grid[1]);
-			// globalData[id(2)] /= (grid[Mx] - grid[1]);
-			// ///////////////////////////////////////////////////////////////
+			if (globalData[id(0)] > 1.0e-16) {
+				globalData[id(1)] /= globalData[id(0)];
+			}
+			if (globalData[id(2)] > 1.0e-16) {
+				globalData[id(3)] /= globalData[id(2)];
+			}
 		}
 
 		// Set the output precision
