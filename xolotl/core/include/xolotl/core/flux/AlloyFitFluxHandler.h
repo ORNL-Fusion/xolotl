@@ -34,123 +34,23 @@ private:
 		return 1.0;
 	}
 
-	/**
-	 * Computes the damage as a function of the data from SRIM
-	 *
-	 * @param x The position
-	 * @return The vector of damages
-	 */
-	std::vector<double>
-	AlloyDamageFunction(const double x)
-	{
-		std::vector<double> damage;
-		auto srimDamage = srim.getDamage();
-		for (int it = 0; it < srimDamage.size(); ++it) {
-			damage.push_back(srimDamage[it][0]);
-			for (int it2 = 1; it2 < srimDamage[it].size(); ++it2) {
-				damage[it] += srimDamage[it][it2] * pow(x, double(it2));
-			}
-		}
-		return damage;
-	}
+	std::vector<double> fluxI = {0.0, 53.574265, 3.476762215, 1.408162213,
+		0.982739683, 0.30225657, 0.327148562, 0.3094983, 0.12474936,
+		0.088058372, 0.133219224, 0.0, 0.0, 0.09539657, 0.0, 0.0, 0.0, 0.0,
+		0.102734767, 0.0, 0.0, 0.0, 0.0, 0.09539657, 0.0, 0.0, 0.0, 0.0,
+		0.058705581, 0.0, 0.0, 0.0, 0.0, 0.011007296, 0.0, 0.0, 0.0, 0.0,
+		0.011007297, 0.0, 0.0, 0.0, 0.0, 0.011007297};
 
-	/**
-	 * Computes the implantation as a function of the data from SRIM
-	 *
-	 * @param x The position
-	 * @return The value of implantation
-	 */
-	double
-	AlloyImplantationFunction(const double x)
-	{
-		// Find the correct depth region
-		for (int i = 0; i < srim.getDepth().size(); ++i) {
-			if (x <= srim.getDepth()[i]) {
-				return srim.getImplantation()[i];
-			}
-		}
-		return 0.0;
-	}
+	std::vector<double> fluxV = {0.0, 69.896085, 1.05768736, 0.320601267,
+		0.249215543, 0.16824146, 0.088914908, 0.17132574, 0.050966698,
+		0.054007957, 0.052681762, 0.0, 0.0, 0.094279052, 0.0, 0.0, 0.0, 0.0,
+		0.022809448, 0.0, 0.0, 0.0, 0.0, 0.045618896, 0.0, 0.0, 0.0, 0.0,
+		0.019768188, 0.0, 0.0, 0.0, 0.0, 0.027371338, 0.0, 0.0, 0.0, 0.0,
+		0.013685669, 0.0, 0.0, 0.0, 0.0, 0.009123779, 0.0, 0.0, 0.0, 0.0,
+		0.021288818, 0.0, 0.0, 0.0, 0.0, 0.012165039, 0.0, 0.0, 0.0, 0.0,
+		0.009123779, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.00608252};
 
-	/**
-	 * Computes the generation rate as a function of the data from SRIM
-	 *
-	 * @param size The size of the cluster
-	 * @param it The index of the cluster in the cascade
-	 * @param fraction The reduction fraction
-	 * @return The vector of damage rates
-	 */
-	std::vector<double>
-	AlloySetGeneration(const int size, const int it, const double fraction)
-	{
-		std::vector<double> damageRate;
-		// 0D case
-		if (xGrid.size() == 0) {
-			// Compute the rate at that position
-			std::vector<double> fitFlux = AlloyDamageFunction(0);
-			double rate = 0;
-			for (int j = 0; j < fitFlux.size(); ++j) {
-				rate += cascade.cascadeEfficiency[j] * fitFlux[j] *
-					cascade.clusterFraction[it][j];
-			}
-			rate = rate * fraction * fluxAmplitude / double(size);
-			// Add it to the vector
-			damageRate.push_back(rate);
-			return damageRate;
-		}
-
-		// 1D case
-		// Change this to grab the actual surface position
-		int surfacePos = 0;
-		damageRate.push_back(0.0);
-		for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
-			// Get the x position
-			auto x = xGrid[i + 1] - xGrid[surfacePos + 1];
-			// Compute the rate at that position
-			std::vector<double> fitFlux = AlloyDamageFunction(x);
-			double rate = 0;
-			for (int j = 0; j < fitFlux.size(); ++j) {
-				rate += cascade.cascadeEfficiency[j] * fitFlux[j] *
-					cascade.clusterFraction[it][j];
-			}
-			rate = rate * fraction * fluxAmplitude / double(size);
-
-			// Add it to the vector
-			damageRate.push_back(rate);
-		}
-		damageRate.push_back(0.0);
-		return damageRate;
-	}
-
-	/**
-	 * Adds contribution to the given input
-	 *
-	 * @param input The input to add to
-	 */
-	void
-	AlloyAddImplantation(std::vector<double>& input)
-	{
-		// Change this to grab the actual surface position
-		int surfacePos = 0;
-
-		for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
-			// Get the x position
-			auto x = xGrid[i] - xGrid[surfacePos];
-			// Add the implantation rate to the damage rate
-			input[i] += AlloyImplantationFunction(x);
-		}
-
-		return;
-	}
-
-	struct IonDamage
-	{
-		Kokkos::View<IdType*> fluxIds;
-		Kokkos::View<double**> rate;
-	} ionDamage;
-
-	Cascade cascade;
-	SRIMData srim;
+	double perfectFraction = 0.2;
 
 public:
 	/**
@@ -174,26 +74,9 @@ public:
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
 		std::vector<double> grid)
 	{
-		// Setup the ion damage and implantation depth profile
-		if (false) {
-			srim.setInSitu();
-			cascade.setBulk();
-		}
-		else if (true) {
-			srim.setBulk();
-			cascade.setBulk();
-		}
-
-		// Turn on/off implantation
-		bool implant = false;
-
 		// Set the grid
 		xGrid = grid;
 
-		if (xGrid.size() == 0) {
-			srim.setOverlap();
-			cascade.setOverlap();
-		}
 		auto xolotlComm = util::getMPIComm();
 		int procId;
 		MPI_Comm_rank(xolotlComm, &procId);
@@ -201,149 +84,154 @@ public:
 		using NetworkType = network::AlloyReactionNetwork;
 		auto alloyNetwork = dynamic_cast<NetworkType*>(&network);
 
-		std::vector<IdType> damageIds;
-		std::vector<std::vector<double>> damageRates;
-
-		// Iterate over all produced cluster species
-		for (int it = 0; it < cascade.clusterSizes.size(); ++it) {
-			// Get the size of the cluster
-			int size = cascade.clusterSizes[it];
-
-			// Check if cluster is interstitial type
-			if (size > 0) {
-				// See if theres an iType cluster of size
-				NetworkType::Composition comp =
-					NetworkType::Composition::zero();
-				comp[NetworkType::Species::I] = size;
-				auto fluxCluster =
-					alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
-				if (fluxCluster.getId() != NetworkType::invalidIndex()) {
-					damageIds.push_back(fluxCluster.getId());
-					damageRates.push_back(AlloySetGeneration(size, it, 1.0));
-					if (size == 1 && implant) {
-						AlloyAddImplantation(damageRates.back());
-					}
-				}
-				// Otherwise the clusters must be faulted and perfect type
-				else {
-					comp[NetworkType::Species::I] = 0;
-					comp[NetworkType::Species::FaultedI] = size;
-					auto fluxCluster1 =
-						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
-					comp[NetworkType::Species::FaultedI] = 0;
-					comp[NetworkType::Species::PerfectI] = size;
-					auto fluxCluster2 =
-						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
-					if (fluxCluster1.getId() == NetworkType::invalidIndex() ||
-						fluxCluster2.getId() == NetworkType::invalidIndex()) {
-						// Throw error -> missing type
-						throw std::runtime_error(
-							"\nNo cluster of size: " + std::to_string(size) +
-							", cannot use the flux option!");
-					}
-					else {
-						// FaultedI loop
-						damageIds.push_back(fluxCluster1.getId());
-						double frac = 1.0 - cascade.perfectFraction;
-						damageRates.push_back(
-							AlloySetGeneration(size, it, frac));
-						// PerfectI loop
-						damageIds.push_back(fluxCluster2.getId());
-						frac = cascade.perfectFraction;
-						damageRates.push_back(
-							AlloySetGeneration(size, it, frac));
-					}
-				}
+		// Set the flux index corresponding the interstitial clusters
+		NetworkType::Composition comp = NetworkType::Composition::zero();
+		for (int i = 0; i < fluxI.size(); i++) {
+			comp[NetworkType::Species::I] = i;
+			auto cluster =
+				alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+			if (cluster.getId() == NetworkType::invalidIndex()) {
+				continue;
 			}
-			// Check if cluster is vacancy type
-			else if (size < 0) {
-				size = -size;
-				// See if theres an vType cluster of size
-				NetworkType::Composition comp =
-					NetworkType::Composition::zero();
-				comp[NetworkType::Species::V] = size;
-				auto fluxCluster =
-					alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
-				if (fluxCluster.getId() != NetworkType::invalidIndex()) {
-					damageIds.push_back(fluxCluster.getId());
-					damageRates.push_back(AlloySetGeneration(size, it, 1.0));
-				}
-				// Otherwise the clusters must be faulted and frank type
-				else {
-					comp[NetworkType::Species::V] = 0;
-					comp[NetworkType::Species::FaultedV] = size;
-					auto fluxCluster1 =
-						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
-					comp[NetworkType::Species::FaultedV] = 0;
-					comp[NetworkType::Species::PerfectV] = size;
-					auto fluxCluster2 =
-						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
-					if (fluxCluster1.getId() == NetworkType::invalidIndex() ||
-						fluxCluster2.getId() == NetworkType::invalidIndex()) {
-						// Throw error -> no available type
-						throw std::runtime_error(
-							"\nNo cluster of size: " + std::to_string(-size) +
-							", cannot use the flux option!");
-					}
-					else {
-						// FaultedI loop
-						damageIds.push_back(fluxCluster1.getId());
-						double frac = 1.0 - cascade.perfectFraction;
-						damageRates.push_back(
-							AlloySetGeneration(size, it, frac));
-						// PerfectI loop
-						damageIds.push_back(fluxCluster2.getId());
-						frac = cascade.perfectFraction;
-						damageRates.push_back(
-							AlloySetGeneration(size, it, frac));
-					}
-				}
-			}
-			// Neither interstitial nor vacancy type cluster
+			fluxIndices.push_back(cluster.getId());
+			std::vector<double> tempVector;
+			if (xGrid.size() == 0)
+				tempVector.push_back(fluxI[i] * fluxAmplitude);
 			else {
-				// Throw error for size 0 cluster
-				throw std::runtime_error(
-					"\nThe cluster is of size 0 which is not possible, cannot "
-					"use the flux option!");
+				for (auto i = 0; i < xGrid.size(); i++) {
+					tempVector.push_back(fluxI[i] * fluxAmplitude);
+				}
 			}
+			incidentFluxVec.push_back(tempVector);
 		}
 
-		if (damageIds.size() != damageRates.size()) {
-			throw std::runtime_error("Ion damage ids and rates should have the "
-									 "same number of entries.");
+		comp[NetworkType::Species::I] = 0;
+
+		// Set the flux index corresponding the interstitial loops
+		for (int i = 0; i < fluxI.size(); i++) {
+			// Perfect
+			comp[NetworkType::Species::FaultedI] = 0;
+			comp[NetworkType::Species::PerfectI] = i;
+			auto cluster =
+				alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+			if (cluster.getId() == NetworkType::invalidIndex()) {
+				continue;
+			}
+			fluxIndices.push_back(cluster.getId());
+			std::vector<double> tempVector;
+			if (xGrid.size() == 0)
+				tempVector.push_back(
+					fluxI[i] * perfectFraction * fluxAmplitude);
+			else {
+				for (auto i = 0; i < xGrid.size(); i++) {
+					tempVector.push_back(
+						fluxI[i] * perfectFraction * fluxAmplitude);
+				}
+			}
+			incidentFluxVec.push_back(tempVector);
+
+			// Faulted
+			comp[NetworkType::Species::PerfectI] = 0;
+			comp[NetworkType::Species::FaultedI] = i;
+			cluster = alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+			if (cluster.getId() == NetworkType::invalidIndex()) {
+				continue;
+			}
+			fluxIndices.push_back(cluster.getId());
+			tempVector.clear();
+			if (xGrid.size() == 0)
+				tempVector.push_back(
+					fluxI[i] * (1.0 - perfectFraction) * fluxAmplitude);
+			else {
+				for (auto i = 0; i < xGrid.size(); i++) {
+					tempVector.push_back(
+						fluxI[i] * (1.0 - perfectFraction) * fluxAmplitude);
+				}
+			}
+			incidentFluxVec.push_back(tempVector);
+		}
+
+		comp[NetworkType::Species::FaultedI] = 0;
+		comp[NetworkType::Species::PerfectI] = 0;
+
+		// Set the flux index corresponding the vacancy clusters
+		for (int i = 0; i < fluxV.size(); i++) {
+			comp[NetworkType::Species::V] = i;
+			auto cluster =
+				alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+			if (cluster.getId() == NetworkType::invalidIndex()) {
+				continue;
+			}
+			fluxIndices.push_back(cluster.getId());
+			std::vector<double> tempVector;
+			if (xGrid.size() == 0)
+				tempVector.push_back(fluxV[i] * fluxAmplitude);
+			else {
+				for (auto i = 0; i < xGrid.size(); i++) {
+					tempVector.push_back(fluxV[i] * fluxAmplitude);
+				}
+			}
+			incidentFluxVec.push_back(tempVector);
+		}
+
+		comp[NetworkType::Species::V] = 0;
+
+		// Set the flux index corresponding the vacancy loops
+		for (int i = 0; i < fluxV.size(); i++) {
+			// Perfect
+			comp[NetworkType::Species::FaultedV] = 0;
+			comp[NetworkType::Species::PerfectV] = i;
+			auto cluster =
+				alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+			if (cluster.getId() == NetworkType::invalidIndex()) {
+				continue;
+			}
+			fluxIndices.push_back(cluster.getId());
+			std::vector<double> tempVector;
+			if (xGrid.size() == 0)
+				tempVector.push_back(
+					fluxV[i] * perfectFraction * fluxAmplitude);
+			else {
+				for (auto i = 0; i < xGrid.size(); i++) {
+					tempVector.push_back(
+						fluxV[i] * perfectFraction * fluxAmplitude);
+				}
+			}
+			incidentFluxVec.push_back(tempVector);
+
+			// Faulted
+			comp[NetworkType::Species::PerfectV] = 0;
+			comp[NetworkType::Species::FaultedV] = i;
+			cluster = alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+			if (cluster.getId() == NetworkType::invalidIndex()) {
+				continue;
+			}
+			fluxIndices.push_back(cluster.getId());
+			tempVector.clear();
+			if (xGrid.size() == 0)
+				tempVector.push_back(
+					fluxV[i] * (1.0 - perfectFraction) * fluxAmplitude);
+			else {
+				for (auto i = 0; i < xGrid.size(); i++) {
+					tempVector.push_back(
+						fluxV[i] * (1.0 - perfectFraction) * fluxAmplitude);
+				}
+			}
+			incidentFluxVec.push_back(tempVector);
 		}
 
 		if (procId == 0) {
 			std::ofstream outfile;
 			outfile.open("alloyFlux.dat");
-			for (int it = 0; it < damageIds.size(); ++it) {
-				outfile << damageIds[it] << ": ";
-				for (int xi = surfacePos; xi < std::max((int)grid.size(), 1);
-					 xi++) {
-					outfile << damageRates[it][xi - surfacePos] << " ";
+			for (int it = 0; it < fluxIndices.size(); ++it) {
+				outfile << fluxIndices[it] << ": ";
+				for (auto xi = 0; xi < std::max((int)grid.size(), 1); xi++) {
+					outfile << incidentFluxVec[it][xi] << " ";
 				}
 				outfile << std::endl;
 			}
 			outfile.close();
 		}
-
-		// Move ion damage data to device
-		std::size_t nDamageVals = damageIds.size();
-		Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>
-			ionDamageFluxIds_h(damageIds.data(), nDamageVals);
-		auto innerSize = xGrid.size() == 0 ? 1 : xGrid.size() - surfacePos + 1;
-		ionDamage = IonDamage{
-			Kokkos::View<IdType*>{"Ion Damage Flux Indices", nDamageVals},
-			Kokkos::View<double**>{"Ion Damage Rate", nDamageVals, innerSize}};
-		deep_copy(ionDamage.fluxIds, ionDamageFluxIds_h);
-
-		auto ionDamageRate_h = create_mirror_view(ionDamage.rate);
-		for (std::size_t i = 0; i < nDamageVals; ++i) {
-			for (std::size_t j = 0; j < damageRates[i].size(); ++j) {
-				ionDamageRate_h(i, j) = damageRates[i][j];
-			}
-		}
-		deep_copy(ionDamage.rate, ionDamageRate_h);
 	}
 
 	/**
@@ -367,12 +255,12 @@ public:
 		}
 
 		// Update the concentration array
-		auto ionDamageFluxIds = this->ionDamage.fluxIds;
-		auto ionDamageRate = this->ionDamage.rate;
+		auto ids = this->fluxIds;
+		auto flux = this->incidentFlux;
 		Kokkos::parallel_for(
-			ionDamageFluxIds.size(), KOKKOS_LAMBDA(std::size_t i) {
-				Kokkos::atomic_add(&updatedConcOffset[ionDamageFluxIds[i]],
-					attenuation * ionDamageRate(i, xi - surfacePos));
+			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
+				Kokkos::atomic_add(
+					&updatedConcOffset[ids[i]], attenuation * flux(i, xi));
 			});
 	}
 }; // namespace flux

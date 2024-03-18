@@ -111,12 +111,9 @@ public:
 		// Set the flux index corresponding the mobile interstitial clusters (n
 		// < 10)
 		NetworkType::Composition comp = NetworkType::Composition::zero();
-		comp[NetworkType::Species::I] = 1;
-		std::ostringstream oss;
-		auto cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
 		for (int i = 1; i <= std::min(maxSizeI, fluxI.size()); i++) {
 			comp[NetworkType::Species::I] = i;
-			cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
+			auto cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
 			if (cluster.getId() == NetworkType::invalidIndex()) {
 				continue;
 			}
@@ -128,7 +125,7 @@ public:
 		comp[NetworkType::Species::I] = 0;
 		for (int i = 1; i <= std::min(maxSizeV, fluxV.size()); i++) {
 			comp[NetworkType::Species::V] = i;
-			cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
+			auto cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
 			if (cluster.getId() == NetworkType::invalidIndex()) {
 				continue;
 			}
@@ -144,7 +141,7 @@ public:
 		comp[NetworkType::Species::V] = 0;
 		for (int i = 1; i <= std::min(maxSizeB, fluxV.size()); i++) {
 			comp[NetworkType::Species::Basal] = i;
-			cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
+			auto cluster = zrNetwork->findCluster(comp, plsm::HostMemSpace{});
 			if (cluster.getId() == NetworkType::invalidIndex()) {
 				continue;
 			}
