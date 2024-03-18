@@ -9,6 +9,11 @@ namespace util
 class IStepSequence
 {
 public:
+    virtual
+    ~IStepSequence()
+    {
+    }
+
 	virtual void
 	start() = 0;
 

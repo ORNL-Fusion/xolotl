@@ -95,8 +95,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	BOOST_REQUIRE_CLOSE(newConcentration(1, 0), 0.444777, 0.01);
 	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 0.247638, 0.01);
 	BOOST_REQUIRE_CLOSE(newConcentration(3, 0), 0.10758, 0.01);
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid)
@@ -156,8 +154,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid)
 	auto newConcentration =
 		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
 	BOOST_REQUIRE_CLOSE(newConcentration[0], 1.0, 0.01);
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkFluence)
@@ -193,8 +189,6 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
-	// Get its size
-	const int dof = network.getDOF();
 
 	// Create the W100 flux handler
 	auto testFitFlux = make_shared<W100FitFluxHandler>(opts);
@@ -213,8 +207,6 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	// Check that the fluence is not 0.0 anymore
 	fluence = testFitFlux->getFluence();
 	BOOST_REQUIRE_EQUAL(fluence[0], 1.0e-8);
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
@@ -289,8 +281,6 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
 	BOOST_REQUIRE_CLOSE(newConcentration(1, 0), 1.111943, 0.01);
 	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 0.619095, 0.01);
 	BOOST_REQUIRE_CLOSE(newConcentration(3, 0), 0.268961, 0.01);
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
@@ -420,8 +410,6 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 
 	// Finalize MPI
 	MPI_Finalize();
-
-	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()
