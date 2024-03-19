@@ -83,16 +83,16 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	// Check the value at some grid points
 	auto newConcentration =
 		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
-	BOOST_REQUIRE_CLOSE(newConcentration[93], 4.49925, 0.01); // I_1
-	BOOST_REQUIRE_CLOSE(newConcentration[96], 0.2121075, 0.01); // I_4
-	BOOST_REQUIRE_CLOSE(newConcentration[47], 0.071988, 0.01); // Perfect_5
+	BOOST_REQUIRE_CLOSE(newConcentration[92], 4.49925, 0.01); // I_1
+	BOOST_REQUIRE_CLOSE(newConcentration[95], 0.2121075, 0.01); // I_4
+	BOOST_REQUIRE_CLOSE(newConcentration[46], 0.071988, 0.01); // Perfect_5
 	BOOST_REQUIRE_CLOSE(newConcentration[87], 0.0, 0.01); // Perfect_45
 	BOOST_REQUIRE_CLOSE(newConcentration[0], 0.017997, 0.01); // Frank_5
 	BOOST_REQUIRE_CLOSE(newConcentration[40], 0.0, 0.01); // Frank_45
-	BOOST_REQUIRE_CLOSE(newConcentration[185], 4.49925, 0.01); // V_1
-	BOOST_REQUIRE_CLOSE(newConcentration[190], 0.0835575, 0.01); // V_6
-	BOOST_REQUIRE_CLOSE(newConcentration[97], 0.034892, 0.01); // Faulted_7
-	BOOST_REQUIRE_CLOSE(newConcentration[135], 0.0, 0.01); // Faulted_45
+	BOOST_REQUIRE_CLOSE(newConcentration[184], 4.49925, 0.01); // V_1
+	BOOST_REQUIRE_CLOSE(newConcentration[189], 0.0835575, 0.01); // V_6
+	BOOST_REQUIRE_CLOSE(newConcentration[96], 0.034892, 0.01); // Faulted_7
+	BOOST_REQUIRE_CLOSE(newConcentration[134], 0.0, 0.01); // Faulted_45
 
 	updatedConcOffset = subview(conc, 4, Kokkos::ALL);
 
