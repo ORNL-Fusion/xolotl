@@ -232,6 +232,10 @@ public:
 			}
 			outfile.close();
 		}
+
+		// Sync data
+		syncFluxIndices();
+		syncIncidentFluxVec();
 	}
 
 	/**
