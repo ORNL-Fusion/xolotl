@@ -115,15 +115,15 @@ AlloyClusterGenerator::select(const Region& region) const
 		if (region[Species::V].begin() > _maxV)
 			return false;
 
-		// Perfect
+		// Perfect I
 		if (region[Species::PerfectI].begin() > 0 &&
-			region[Species::PerfectI].begin() < _maxI)
+			region[Species::PerfectI].begin() <= _maxI)
 			return false;
 		if (region[Species::PerfectI].begin() > 0 &&
 			region[Species::PerfectI].begin() > _maxSize)
 			return false;
 
-		// Frank
+		// Faulted I
 		if (region[Species::FaultedI].begin() > 0 &&
 			region[Species::FaultedI].begin() <= _maxI)
 			return false;
@@ -131,7 +131,7 @@ AlloyClusterGenerator::select(const Region& region) const
 			region[Species::FaultedI].begin() > _maxSize)
 			return false;
 
-		// Faulted
+		// Faulted V
 		if (region[Species::FaultedV].begin() > 0 &&
 			region[Species::FaultedV].begin() <= _maxV)
 			return false;
@@ -139,7 +139,7 @@ AlloyClusterGenerator::select(const Region& region) const
 			region[Species::FaultedV].begin() > _maxSize)
 			return false;
 
-		// Void
+		// Perfect V
 		if (region[Species::PerfectV].begin() > 0 &&
 			region[Species::PerfectV].begin() <= _maxV)
 			return false;
