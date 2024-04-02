@@ -44,6 +44,12 @@ public:
 	}
 
 	[[nodiscard]] double
+	previousTime() const noexcept
+	{
+		return _previousTime;
+	}
+
+	[[nodiscard]] double
 	currentTimeStepSize() const noexcept
 	{
 		return _seq->current();
@@ -61,6 +67,7 @@ private:
 	double _startTime{};
 	double _endTime{};
 	double _currentTime{};
+	double _previousTime{};
 };
 } // namespace util
 } // namespace xolotl

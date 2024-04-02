@@ -46,7 +46,7 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	if (region[Species::I].begin() > 0)
 		return true;
 
-	// Smaller that the minimum size for grouping
+	// Smaller than the minimum size for grouping
 	if (region[Species::Void].begin() < _groupingMin &&
 		region[Species::Faulted].begin() < _groupingMin &&
 		region[Species::Frank].begin() < _groupingMin &&
@@ -55,12 +55,14 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	}
 
 	// Too large
-	if (region[Species::Void].end() > _maxVoid ||
-		region[Species::Faulted].end() > _maxSize ||
-		region[Species::Frank].end() > _maxSize ||
-		region[Species::Perfect].end() > _maxSize) {
+	if (region[Species::Void].end() > _maxVoid && _maxVoid > 0)
 		return true;
-	}
+	if (region[Species::Faulted].end() > _maxSize && _maxSize > 0)
+		return true;
+	if (region[Species::Frank].end() > _maxSize && _maxSize > 0)
+		return true;
+	if (region[Species::Perfect].end() > _maxSize && _maxSize > 0)
+		return true;
 
 	if (region[Species::Void].begin() > 0 &&
 		region[Species::Void].length() <

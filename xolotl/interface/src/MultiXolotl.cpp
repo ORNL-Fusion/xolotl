@@ -133,7 +133,13 @@ MultiXolotl::~MultiXolotl()
 
 	// Print the result
 	_primaryInstance->outputData(
-		currentTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
+		previousTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
+}
+
+double
+MultiXolotl::previousTime() const noexcept
+{
+	return _timeStepper.previousTime();
 }
 
 double
@@ -227,7 +233,7 @@ MultiXolotl::solveStep()
 
 	// Print the result
 	_primaryInstance->outputData(
-		currentTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
+		previousTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
 
 	// Solve
 	for (auto&& sub : _subInstances) {

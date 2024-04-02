@@ -358,6 +358,60 @@ public:
 					attenuation * ionDamageRate(i, xi - surfacePos));
 			});
 	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	std::vector<std::pair<IdType, double>>
+	getImplantedFlux(std::vector<IdType> map) override
+	{
+		std::vector<std::pair<IdType, double>> toReturn;
+
+		auto ionDamageFluxIds_h = create_mirror_view(ionDamage.fluxIds);
+		auto ionDamageRate_h = create_mirror_view(ionDamage.rate);
+		deep_copy(ionDamageFluxIds_h, ionDamage.fluxIds);
+		deep_copy(ionDamageRate_h, ionDamage.rate);
+		for (auto i = 0; i < map.size(); i++) {
+			// Look for this value in fluxIndices
+			for (auto j = 0; j < ionDamageFluxIds_h.size(); j++) {
+				if (map[i] == ionDamageFluxIds_h[j]) {
+					toReturn.push_back(
+						std::make_pair(i, ionDamageRate_h(j, 0)));
+					break;
+				}
+			}
+		}
+		return toReturn;
+	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector) override
+	{
+		std::size_t nDamageVals = fluxVector.size();
+		Kokkos::View<IdType*, Kokkos::HostSpace> ionDamageFluxIds_h(
+			"Ion Damage Flux Indices", nDamageVals);
+		auto innerSize = xGrid.size() == 0 ? 1 : xGrid.size() + 1;
+		Kokkos::View<double**, Kokkos::HostSpace> ionDamageRate_h(
+			"Ion Damage Rate", nDamageVals, innerSize);
+		deep_copy(ionDamage.fluxIds, ionDamageFluxIds_h);
+
+		// Loop on the flux vector
+		for (auto i = 0; i < fluxVector.size(); i++) {
+			ionDamageFluxIds_h(i) = fluxVector[i].first;
+			ionDamageRate_h(i, 0) = fluxVector[i].second;
+		}
+
+		ionDamage = IonDamage{
+			Kokkos::View<IdType*>{"Ion Damage Flux Indices", nDamageVals},
+			Kokkos::View<double**>{"Ion Damage Rate", nDamageVals, innerSize}};
+		deep_copy(ionDamage.fluxIds, ionDamageFluxIds_h);
+		deep_copy(ionDamage.rate, ionDamageRate_h);
+
+		return;
+	}
 };
 // end class AlloyFitFluxHandler
 

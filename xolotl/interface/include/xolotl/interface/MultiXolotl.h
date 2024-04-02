@@ -25,6 +25,9 @@ public:
 	virtual ~MultiXolotl();
 
 	double
+	previousTime() const noexcept;
+
+	double
 	currentTime() const noexcept;
 
 	double
