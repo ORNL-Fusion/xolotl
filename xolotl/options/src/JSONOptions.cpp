@@ -159,7 +159,17 @@ JSONOptions::readParams(int argc, const char* argv[])
 	}
 
 	if (tree.count("process")) {
-		setProcesses(tree.get<std::string>("process"));
+		auto node = tree.get_child("process");
+		if (node.empty()) {
+			// Treat as single string (space-separated list)
+			setProcesses(node.get_value<std::string>());
+		}
+		else {
+			// Treat as JSON list
+			for (auto&& item : node) {
+				addProcess(item.second.get_value<std::string>());
+			}
+		}
 	}
 
 	checkSetParam(tree, "grain", gbList);

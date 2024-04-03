@@ -362,6 +362,9 @@ public:
 	 */
 	~Options();
 
+    void
+    printAll(std::ostream& os) const override;
+
 	/**
 	 * \see IOptions.h
 	 */

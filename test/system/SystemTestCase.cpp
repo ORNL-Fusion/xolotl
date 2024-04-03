@@ -300,7 +300,7 @@ SystemTestCase::runXolotl() const
 
 	// Construct command-line
 	auto exec = _binDir + "/xolotl/xolotl";
-	auto paramsFileName = _dataDir + "/params_" + _caseName + ".txt";
+	auto paramsFileName = _dataDir + "/params_" + _caseName + ".json";
 	int argc = 2;
 	const char* argv[] = {exec.data(), paramsFileName.data()};
 	try {

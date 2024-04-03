@@ -5,8 +5,8 @@
 using namespace std::string_literals;
 
 #include <xolotl/options/ConfOptions.h>
-#include <xolotl/options/Options.h>
 #include <xolotl/options/InvalidOptionValue.h>
+#include <xolotl/options/Options.h>
 #ifdef Xolotl_ENABLE_JSON
 #include <xolotl/options/JSONOptions.h>
 #endif
@@ -95,6 +95,111 @@ Options::~Options()
 }
 
 void
+Options::printAll(std::ostream& os) const
+{
+	os << "networkFilename: \"" << networkFilename << "\"\n";
+	os << "tempHandlerName: \"" << tempHandlerName << "\"\n";
+	os << "tempParam: {" << tempParam[0] << ", " << tempParam[1] << "}\n";
+	os << "tempGridPower: " << tempGridPower << '\n';
+	os << "tempProfileFilename: \"" << tempProfileFilename << "\"\n";
+	os << "fluxFlag: " << std::boolalpha << fluxFlag << '\n';
+	os << "fluxAmplitude: " << fluxAmplitude << '\n';
+	os << "fluxTimeProfileFlag: " << std::boolalpha << fluxTimeProfileFlag
+	   << '\n';
+	os << "fluxTimeProfileFilePath: \"" << fluxTimeProfileFilePath << "\"\n";
+	os << "perfHandlerName: \"" << perfHandlerName << "\"\n";
+	os << "perfOutputYAMLFlag: " << std::boolalpha << perfOutputYAMLFlag
+	   << '\n';
+	os << "subnetworksFlag: " << std::boolalpha << subnetworksFlag << '\n';
+	os << "initialTimeStep: " << initialTimeStep << '\n';
+	os << "maxTimeStep: " << maxTimeStep << '\n';
+	os << "timeStepGrowthFactor: " << timeStepGrowthFactor << '\n';
+	os << "startTime: " << startTime << '\n';
+	os << "endTime: " << endTime << '\n';
+	os << "numTimeSteps: " << numTimeSteps << '\n';
+	os << "vizHandlerName: \"" << vizHandlerName << "\"\n";
+	os << "materialName: \"" << materialName << "\"\n";
+	os << "initialConcentration: \"" << initialConcentration << "\"\n";
+	os << "zeta: " << zeta << '\n';
+	os << "interfaceLocation: " << interfaceLocation << '\n';
+	os << "dimensionNumber: " << dimensionNumber << '\n';
+	os << "gridTypeName: \"" << gridTypeName << "\"\n";
+	os << "gridParam: {" << gridParam[0] << ", " << gridParam[1] << ", "
+	   << gridParam[2] << ", " << gridParam[3] << ", " << gridParam[4] << ", "
+	   << gridParam[5] << "}\n";
+	os << "gridFilename: \"" << gridFilename << "\"\n";
+	os << "gbList: \"" << gbList << "\"\n";
+	os << "groupingMin: " << groupingMin << '\n';
+	os << "groupingWidthA: " << groupingWidthA << '\n';
+	os << "groupingWidthB: " << groupingWidthB << '\n';
+	os << "sputteringYield: " << sputteringYield << '\n';
+	os << "useHDF5Flag: " << std::boolalpha << useHDF5Flag << '\n';
+	os << "networkParams:";
+	for (auto&& p : networkParams) {
+		os << ' ' << p;
+	}
+	os << '\n';
+	os << "maxImpurity: " << maxImpurity << '\n';
+	os << "maxD: " << maxD << '\n';
+	os << "maxT: " << maxT << '\n';
+	os << "maxV: " << maxV << '\n';
+	os << "maxI: " << maxI << '\n';
+	os << "maxPureV: " << maxPureV << '\n';
+
+	os << "leftBoundary: " << leftBoundary << '\n';
+	os << "rightBoundary: " << rightBoundary << '\n';
+	os << "bottomBoundary: " << bottomBoundary << '\n';
+	os << "topBoundary: " << topBoundary << '\n';
+	os << "frontBoundary: " << frontBoundary << '\n';
+	os << "backBoundary: " << backBoundary << '\n';
+
+	os << "xBC: \"" << xBC << "\"\n";
+
+	os << "heatLossPortion: " << heatLossPortion << '\n';
+	os << "burstingDepth: " << burstingDepth << '\n';
+	os << "burstingFactor: " << burstingFactor << '\n';
+	os << "rngSeed: " << rngSeed << '\n';
+	os << "rngUseSeed: " << std::boolalpha << rngUseSeed << '\n';
+	os << "rngPrintSeed: " << std::boolalpha << rngPrintSeed << '\n';
+
+	os << "radiusMinSizes:";
+	for (auto&& s : radiusMinSizes) {
+		os << ' ' << s;
+	}
+	os << '\n';
+
+	os << "density: " << density << '\n';
+	os << "pulseTime: " << pulseTime << '\n';
+	os << "pulseProportion: " << pulseProportion << '\n';
+	os << "latticeParameter: " << latticeParameter << '\n';
+	os << "impurityRadius: " << impurityRadius << '\n';
+	os << "biasFactor: " << biasFactor << '\n';
+	os << "hydrogenFactor: " << hydrogenFactor << '\n';
+	os << "xenonDiffusivity: " << xenonDiffusivity << '\n';
+	os << "fissionYield: " << fissionYield << '\n';
+	os << "heVRatio: " << heVRatio << '\n';
+	os << "migrationThreshold: " << migrationThreshold << '\n';
+
+	os << "fluxDepthProfileFilePath: \"" << fluxDepthProfileFilePath.string()
+	   << "\"\n";
+
+	os << "basalPortion: " << basalPortion << '\n';
+	os << "transitionSize: " << transitionSize << '\n';
+	os << "cascadeDose: " << cascadeDose << '\n';
+	os << "cascadeEfficiency: " << cascadeEfficiency << '\n';
+
+	os << "processMap:";
+	for (auto&& p : processMap) {
+		if (p.second) {
+			os << " \"" << p.first << "\"";
+		}
+	}
+	os << '\n';
+
+	os << "petscArg: \"" << petscArg << "\"\n";
+}
+
+void
 Options::setNetworkParameters(const std::vector<IdType>& params)
 {
 	networkParams = params;
@@ -136,6 +241,11 @@ Options::setNetworkParameters(const std::string& paramStr)
 void
 Options::addProcess(const std::string& processKey)
 {
+	// Initialize map if necessary
+	if (processMap.empty()) {
+		setProcesses("");
+	}
+
 	// Look for the key
 	if (auto it = processMap.find(processKey); it != processMap.end()) {
 		// Switch the value to true in the map
