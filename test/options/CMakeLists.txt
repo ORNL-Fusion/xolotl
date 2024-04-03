@@ -1,5 +1,6 @@
 list(APPEND tests
     OptionsTester.cpp
+    ConfOptionsTester.cpp
 )
 
 if(Xolotl_ENABLE_JSON)

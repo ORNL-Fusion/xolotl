@@ -8,7 +8,7 @@
     "dimensions": 1,
     "perfHandler": "dummy",
     "tempParam": 933,
-    "grouping": "21 4 4", 
+    "grouping": [21, 4, 4], 
     "process": [
         "reaction",
         "diff",

@@ -10,7 +10,7 @@
     "dimensions": 1,
     "perfHandler": "os",
     "tempParam": 933,
-    "grouping": "31 4 4",
+    "grouping": [31, 4, 4],
     "process": "reaction modifiedTM diff advec movingSurface",
     "petscArgs": [
         "-ts_dt 1.0e-12",

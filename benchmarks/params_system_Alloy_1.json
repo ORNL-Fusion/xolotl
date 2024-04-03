@@ -1,14 +1,14 @@
 {
     "dimensions": 0,
     "process": ["reaction", "sink"],
-    "netParam": "50 50 0 6 4",
+    "netParam": [50, 50, 0, 6, 4],
     "grouping": "506 2",
     "vizHandler": "dummy",
     "perfHandler": "dummy",
     "material": "800H",
     "tempParam": 623,
     "flux": 1e-7,
-    "radiusSize": "0 50 50 0 10 10",
+    "radiusSize": [0, 50, 50, 0, 10, 10],
     "petscArgs": [
         "-ts_dt 1.0e-12",
         "-ts_max_steps 1000000",

@@ -258,16 +258,22 @@ Options::addProcess(const std::string& processKey)
 }
 
 void
-Options::setTempParam(const std::string& paramStr)
+Options::setTempParam(const std::vector<double>& params)
 {
-	auto tokens = util::Tokenizer<double>{paramStr}();
-	if (tokens.size() > 2) {
+	if (params.size() > 2) {
 		throw InvalidOptionValue(
 			"Options: too many temperature parameters (expect 2 or less)");
 	}
-	for (std::size_t i = 0; i < tokens.size(); ++i) {
-		tempParam[i] = tokens[i];
+	for (std::size_t i = 0; i < params.size(); ++i) {
+		tempParam[i] = params[i];
 	}
+}
+
+void
+Options::setTempParam(const std::string& paramStr)
+{
+	auto tokens = util::Tokenizer<double>{paramStr}();
+	setTempParam(tokens);
 }
 
 void
@@ -317,17 +323,23 @@ Options::checkVizHandlerName() const
 }
 
 void
+Options::setGridParam(const std::vector<double>& params)
+{
+	if (params.size() > 6) {
+		throw InvalidOptionValue(
+			"Options: too many grid parameters (expect 6 or less)");
+	}
+	for (std::size_t i = 0; i < params.size(); ++i) {
+		gridParam[i] = params[i];
+	}
+}
+
+void
 Options::setGridParam(const std::string& paramStr)
 {
 	// Break the argument into tokens.
 	auto tokens = util::Tokenizer<double>{paramStr}();
-	if (tokens.size() > 6) {
-		throw InvalidOptionValue(
-			"Options: too many grid parameters (expect 6 or less)");
-	}
-	for (std::size_t i = 0; i < tokens.size(); ++i) {
-		gridParam[i] = tokens[i];
-	}
+	setGridParam(tokens);
 }
 
 void
@@ -342,15 +354,45 @@ Options::checkGridFilename() const
 }
 
 void
+Options::setRadiusMinSizes(const std::vector<int>& params)
+{
+	for (int i = 0; i < params.size(); i++) {
+		radiusMinSizes.push_back(params[i]);
+	}
+}
+
+void
 Options::setRadiusMinSizes(const std::string& paramStr)
 {
 	// Break the argument into tokens.
 	auto tokens = util::Tokenizer<int>{paramStr}();
+	setRadiusMinSizes(tokens);
+}
 
-	// Set the values
-	for (int i = 0; i < tokens.size(); i++) {
-		radiusMinSizes.push_back(tokens[i]);
+void
+Options::setBoundaries(const std::vector<int>& params)
+{
+	if (params.size() < 2) {
+		// TODO: should this be an error?
+		return;
 	}
+
+	// Set the left boundary
+	leftBoundary = params[0];
+	// Set the right boundary
+	rightBoundary = params[1];
+	if (params.size() > 2)
+		// Set the bottom boundary
+		bottomBoundary = params[2];
+	if (params.size() > 3)
+		// Set the top boundary
+		topBoundary = params[3];
+	if (params.size() > 4)
+		// Set the front boundary
+		frontBoundary = params[4];
+	if (params.size() > 5)
+		// Set the back boundary
+		backBoundary = params[5];
 }
 
 void
@@ -358,23 +400,7 @@ Options::setBoundaries(const std::string& paramStr)
 {
 	// Break the argument into tokens.
 	auto tokens = util::Tokenizer<int>{paramStr}();
-
-	// Set the left boundary
-	leftBoundary = tokens[0];
-	// Set the right boundary
-	rightBoundary = tokens[1];
-	if (tokens.size() > 2)
-		// Set the bottom boundary
-		bottomBoundary = tokens[2];
-	if (tokens.size() > 3)
-		// Set the top boundary
-		topBoundary = tokens[3];
-	if (tokens.size() > 4)
-		// Set the front boundary
-		frontBoundary = tokens[4];
-	if (tokens.size() > 5)
-		// Set the back boundary
-		backBoundary = tokens[5];
+	setBoundaries(tokens);
 }
 
 void
@@ -406,6 +432,14 @@ Options::processRNGParam(const std::string& paramStr)
 }
 
 void
+Options::setProcesses(const std::vector<std::string>& processList)
+{
+	for (auto&& processName : processList) {
+		addProcess(processName);
+	}
+}
+
+void
 Options::setProcesses(const std::string& processList)
 {
 	// Initialize the map of processes
@@ -425,19 +459,12 @@ Options::setProcesses(const std::string& processList)
 
 	// Break the argument into tokens.
 	auto tokens = util::Tokenizer<>{processList}();
-
-	// Loop on the tokens
-	for (auto&& token : tokens) {
-		addProcess(token);
-	}
+	setProcesses(tokens);
 }
 
 void
-Options::setCouplingTimeStepParams(const std::string& paramString)
+Options::setCouplingTimeStepParams(const std::vector<double>& params)
 {
-	// Set parameters from tokenized list
-	auto params = util::Tokenizer<double>{paramString}();
-
 	if (params.size() != 6) {
 		throw InvalidOptionValue(
 			"Options: Must provide six (6) values for time step "
@@ -457,6 +484,14 @@ Options::setCouplingTimeStepParams(const std::string& paramString)
 }
 
 void
+Options::setCouplingTimeStepParams(const std::string& paramString)
+{
+	// Set parameters from tokenized list
+	auto params = util::Tokenizer<double>{paramString}();
+	setCouplingTimeStepParams(params);
+}
+
+void
 Options::setPulseParams(const std::string& paramStr)
 {
 	// Break the argument into tokens.
@@ -467,19 +502,24 @@ Options::setPulseParams(const std::string& paramStr)
 }
 
 void
+Options::setGroupingParams(const std::vector<int>& params)
+{
+	// Set grouping minimum size
+	groupingMin = params[0];
+	// Set the grouping width in the first direction
+	groupingWidthA = params[1];
+	// Set the grouping width in the second direction
+	if (params.size() > 2) {
+		groupingWidthB = params[2];
+	}
+}
+
+void
 Options::setGroupingParams(const std::string& paramString)
 {
 	// Break the argument into tokens.
 	auto tokens = util::Tokenizer<int>{paramString}();
-
-	// Set grouping minimum size
-	groupingMin = tokens[0];
-	// Set the grouping width in the first direction
-	groupingWidthA = tokens[1];
-	// Set the grouping width in the second direction
-	if (tokens.size() > 2) {
-		groupingWidthB = tokens[2];
-	}
+	setGroupingParams(tokens);
 }
 
 void

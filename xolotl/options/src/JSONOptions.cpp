@@ -60,11 +60,17 @@ checkSetParam(const boost::property_tree::iptree& tree,
 		return true;
 	}
 	return false;
-	// if (tree.count(label)) {
-	// 	param = tree.get<TParam>(label);
-	// 	return true;
-	// }
-	// return false;
+}
+
+template <typename T>
+inline std::vector<T>
+asVector(const boost::property_tree::iptree& node)
+{
+	std::vector<T> ret;
+	for (auto&& item : node) {
+		ret.push_back(item.second.get_value<T>());
+	}
+	return ret;
 }
 
 JSONOptions::JSONOptions() = default;
@@ -110,7 +116,13 @@ JSONOptions::readParams(int argc, const char* argv[])
 	tempHandlerName = tree.get("tempHandler", "constant");
 
 	if (tree.count("tempParam")) {
-		setTempParam(tree.get<std::string>("tempParam"));
+        auto node = tree.get_child("tempParam");
+        if (node.empty()) {
+            setTempParam(node.get_value<std::string>());
+        }
+        else {
+            setTempParam(asVector<double>(node));
+        }
 	}
 
 	if (tree.count("tempFile")) {
@@ -151,7 +163,13 @@ JSONOptions::readParams(int argc, const char* argv[])
 	gridTypeName = tree.get("gridType", "uniform");
 
 	if (tree.count("gridParam")) {
-		setGridParam(tree.get<std::string>("gridParam"));
+		auto node = tree.get_child("gridParam");
+		if (node.empty()) {
+			setGridParam(node.get_value<std::string>());
+		}
+		else {
+			setGridParam(asVector<double>(node));
+		}
 	}
 
 	if (checkSetParam(tree, "gridFile", gridFilename)) {
@@ -161,14 +179,10 @@ JSONOptions::readParams(int argc, const char* argv[])
 	if (tree.count("process")) {
 		auto node = tree.get_child("process");
 		if (node.empty()) {
-			// Treat as single string (space-separated list)
 			setProcesses(node.get_value<std::string>());
 		}
 		else {
-			// Treat as JSON list
-			for (auto&& item : node) {
-				addProcess(item.second.get_value<std::string>());
-			}
+			setProcesses(asVector<std::string>(node));
 		}
 	}
 
@@ -177,12 +191,23 @@ JSONOptions::readParams(int argc, const char* argv[])
 	checkSetParam(tree, "useSubnetworks", subnetworksFlag);
 
 	if (tree.count("couplingTimeStepParams")) {
-		setCouplingTimeStepParams(
-			tree.get<std::string>("couplingTimeStepParams"));
+		auto node = tree.get_child("couplingTimeStepParams");
+		if (node.empty()) {
+			setCouplingTimeStepParams(node.get_value<std::string>());
+		}
+		else {
+			setCouplingTimeStepParams(asVector<double>(node));
+		}
 	}
 
 	if (tree.count("grouping")) {
-		setGroupingParams(tree.get<std::string>("grouping"));
+		auto node = tree.get_child("grouping");
+		if (node.empty()) {
+			setGroupingParams(node.get_value<std::string>());
+		}
+		else {
+			setGroupingParams(asVector<int>(node));
+		}
 	}
 
 	checkSetParam(tree, "sputtering", sputteringYield);
@@ -190,15 +215,33 @@ JSONOptions::readParams(int argc, const char* argv[])
 	if (tree.count("netParam")) {
 		// Set the flag to not use the HDF5 file
 		useHDF5Flag = false;
-		setNetworkParameters(tree.get<std::string>("netParam"));
+		auto node = tree.get_child("netParam");
+		if (node.empty()) {
+			setNetworkParameters(node.get_value<std::string>());
+		}
+		else {
+			setNetworkParameters(asVector<IdType>(node));
+		}
 	}
 
 	if (tree.count("radiusSize")) {
-		setRadiusMinSizes(tree.get<std::string>("radiusSize"));
+		auto node = tree.get_child("radiusSize");
+		if (node.empty()) {
+			setRadiusMinSizes(node.get_value<std::string>());
+		}
+		else {
+			setRadiusMinSizes(asVector<int>(node));
+		}
 	}
 
 	if (tree.count("boundary")) {
-		setBoundaries(tree.get<std::string>("boundary"));
+		auto node = tree.get_child("boundary");
+		if (node.empty()) {
+			setBoundaries(node.get_value<std::string>());
+		}
+		else {
+			setBoundaries(asVector<int>(node));
+		}
 	}
 
 	checkSetParam(tree, "xBCType", xBC);

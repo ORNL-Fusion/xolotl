@@ -362,8 +362,8 @@ public:
 	 */
 	~Options();
 
-    void
-    printAll(std::ostream& os) const override;
+	void
+	printAll(std::ostream& os) const override;
 
 	/**
 	 * \see IOptions.h
@@ -1017,6 +1017,9 @@ protected:
 	setNetworkParameters(const std::string& paramStr);
 
 	void
+	setTempParam(const std::vector<double>& params);
+
+	void
 	setTempParam(const std::string& paramStr);
 
 	void
@@ -1032,13 +1035,22 @@ protected:
 	checkVizHandlerName() const;
 
 	void
+	setGridParam(const std::vector<double>& params);
+
+	void
 	setGridParam(const std::string& paramStr);
 
 	void
 	checkGridFilename() const;
 
 	void
+	setRadiusMinSizes(const std::vector<int>& params);
+
+	void
 	setRadiusMinSizes(const std::string& paramStr);
+
+	void
+	setBoundaries(const std::vector<int>& params);
 
 	void
 	setBoundaries(const std::string& paramStr);
@@ -1047,13 +1059,22 @@ protected:
 	processRNGParam(const std::string& paramStr);
 
 	void
+	setProcesses(const std::vector<std::string>& processList);
+
+	void
 	setProcesses(const std::string& processList);
+
+	void
+	setCouplingTimeStepParams(const std::vector<double>& params);
 
 	void
 	setCouplingTimeStepParams(const std::string& paramString);
 
 	void
 	setPulseParams(const std::string& paramStr);
+
+	void
+	setGroupingParams(const std::vector<int>& params);
 
 	void
 	setGroupingParams(const std::string& paramString);
