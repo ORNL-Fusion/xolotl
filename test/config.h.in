@@ -5,6 +5,3 @@
 #define XOLOTL_BUILD_DIR @XOLOTL_BUILD_DIR@
 
 #define XOLOTL_TEST_DATA_DIR @XOLOTL_TEST_DATA_DIR@
-
-// #define STRINGIFY(x) #x
-// #define TO_STRING(x) STRINGIFY(x)

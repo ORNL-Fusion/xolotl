@@ -22,15 +22,6 @@ if(Xolotl_ENABLE_JSON)
     )
 endif()
 
-if(Xolotl_ENABLE_JSON)
-    set(XOLOTL_OPTIONS_HEADERS ${XOLOTL_OPTIONS_HEADERS}
-        ${XOLOTL_OPTIONS_HEADER_DIR}/JSONOptions.h
-    )
-    set(XOLOTL_OPTIONS_SOURCES ${XOLOTL_OPTIONS_SOURCES}
-        ${XOLOTL_OPTIONS_SOURCE_DIR}/JSONOptions.cpp
-    )
-endif()
-
 add_library(xolotlOptions SHARED
     ${XOLOTL_OPTIONS_SOURCES}
     ${XOLOTL_OPTIONS_HEADERS}
