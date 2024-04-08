@@ -39,6 +39,11 @@ ConfOptions::readParams(int argc, const char* argv[])
 		throw bpo::error("Options: parameter file name must not be empty");
 	}
 
+	XOLOTL_LOG_WARN
+		<< "WARNING: (ConfOptions) Parsing parameter files in config format is "
+		   "deprecated and may not be up-to-date. "
+		   "Consider converting your parameter file to JSON format.";
+
 	// The name of the parameter file
 	std::string param_file;
 
