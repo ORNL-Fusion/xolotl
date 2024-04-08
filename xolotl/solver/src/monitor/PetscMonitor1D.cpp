@@ -404,7 +404,8 @@ PetscMonitor1D::setup(int loop)
 		outputFile.close();
 
 		// computeAlphaZr will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr));
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr));
 	}
 
 	// Set the monitor to compute the helium retention
@@ -1184,7 +1185,6 @@ PetscMonitor1D::computeHeliumRetention(
 				outputFile << _nSurf[i] << " ";
 			}
 		}
-		auto tempHandler = _solverHandler->getTemperatureHandler();
 		outputFile << _nHeliumBurst << " " << _nDeuteriumBurst << " "
 				   << _nTritiumBurst << std::endl;
 		outputFile.close();
@@ -1265,7 +1265,6 @@ PetscMonitor1D::computeXenonRetention(
 	Composition xeComp = Composition::zero();
 	xeComp[Spec::Xe] = 1;
 	auto xeCluster = network.findCluster(xeComp, plsm::HostMemSpace{});
-	auto xeId = xeCluster.getId();
 
 	// Loop on the grid
 	for (auto xi = xs; xi < xs + xm; xi++) {
@@ -1463,7 +1462,6 @@ PetscMonitor1D::computeAlloy(
 
 	// Get the physical grid and its length
 	auto grid = _solverHandler->getXGrid();
-	auto xSize = grid.size();
 
 	// Get the da from ts
 	DM da;
@@ -1586,7 +1584,6 @@ PetscMonitor1D::computeAlphaZr(
 
 	// Get the physical grid and its length
 	auto grid = _solverHandler->getXGrid();
-	auto xSize = grid.size();
 
 	// Get the da from ts
 	DM da;
@@ -2079,11 +2076,9 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 
 	// Get the flux handler to know the flux amplitude.
 	auto fluxHandler = _solverHandler->getFluxHandler();
-	double heliumFluxAmplitude = fluxHandler->getFluxAmplitude();
 
 	// Get the delta time from the previous timestep to this timestep
 	double previousTime = _solverHandler->getPreviousTime();
-	double dt = time - previousTime;
 
 	// Take care of bursting
 	using NetworkType = core::network::IPSIReactionNetwork;
@@ -2441,9 +2436,6 @@ PetscMonitor1D::profileTemperature(
 	// Loop on the entire grid
 	for (auto xi = _solverHandler->getLeftOffset();
 		 xi < Mx - _solverHandler->getRightOffset(); xi++) {
-		// Set x
-		double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
-
 		double localTemp = 0.0;
 		// Check if this process is in charge of xi
 		if (xi >= xs && xi < xs + xm) {

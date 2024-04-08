@@ -457,8 +457,6 @@ XolotlInterface::computeConstantRates(std::vector<std::vector<double>> conc,
 
 	// Loop on the sub network maps
 	for (auto l = 0; l < fromSubNetwork.size(); l++) {
-		// Get the sub DOF and initialize the rate map
-		auto subDOF = fromSubNetwork[l].size();
 		// TODO: should this allocation happen only once (in makeRatesCapsule)?
 		//       (we'd still need to zero out the data here)
 		rates[l]->view = Kokkos::View<double*>("dRates", _subEntries[l]);
@@ -472,7 +470,6 @@ XolotlInterface::getConstantConnectivities() TRY
 {
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
-	const auto dof = network.getDOF();
 
 	// Loop on the sub network maps
 	std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>> toReturn;
@@ -545,7 +542,6 @@ XolotlInterface::outputData(double time,
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	const auto dof = network.getDOF();
-	auto networkSize = network.getNumClusters();
 
 	if (time == 0.0 and procId == 0) {
 		// Create/open the output files

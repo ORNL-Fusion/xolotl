@@ -410,7 +410,6 @@ PetscMonitor0D::computeXenonRetention(
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
 
 	// Get the array of concentration
 	PetscOffsetView<const PetscReal**> solutionArray;
@@ -489,7 +488,6 @@ PetscMonitor0D::computeAlloy(
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
 	auto numSpecies = network.getSpeciesListSize();
 	auto myData = std::vector<double>(numSpecies * 4, 0.0);
 
