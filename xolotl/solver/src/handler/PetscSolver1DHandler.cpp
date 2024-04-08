@@ -415,7 +415,7 @@ PetscSolver1DHandler::initializeConcentration(
 				// Check the distance
 				if (distance > right - 1.0e-4) {
 					// Create the arrays to receive the data
-                    std::vector<PetscScalar> leftConcVec, rightConcVec;
+					std::vector<PetscScalar> leftConcVec, rightConcVec;
 					PetscScalar *rightConc, *leftConc;
 
 					// Check where all the needed data is located
@@ -452,7 +452,7 @@ PetscSolver1DHandler::initializeConcentration(
 						// Receive the data on the new proc
 						if (procId == totalProcs[2]) {
 							// Receive the data
-                            leftConcVec.resize(dof + 1);
+							leftConcVec.resize(dof + 1);
 							leftConc = leftConcVec.data();
 							MPI_Recv(leftConc, dof + 1, MPI_DOUBLE,
 								totalProcs[0], 2, MPI_COMM_WORLD,
@@ -477,7 +477,7 @@ PetscSolver1DHandler::initializeConcentration(
 						// Receive the data on the new proc
 						if (procId == totalProcs[2]) {
 							// Receive the data
-                            rightConcVec.resize(dof + 1);
+							rightConcVec.resize(dof + 1);
 							rightConc = rightConcVec.data();
 							MPI_Recv(rightConc, dof + 1, MPI_DOUBLE,
 								totalProcs[1], 1, MPI_COMM_WORLD,
@@ -766,9 +766,6 @@ PetscSolver1DHandler::updateConcentration(
 	PetscOffsetView<PetscScalar**> updatedConcs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOFWrite(da, F, &updatedConcs));
 
-	// Degrees of freedom is the total number of clusters in the network
-	const auto dof = network.getDOF();
-
 	// Computing the trapped atom concentration is only needed for the
 	// attenuation
 	if (useAttenuation) {
@@ -1044,9 +1041,6 @@ PetscSolver1DHandler::computeJacobian(
 
 	PetscOffsetView<const PetscScalar**> concs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
-
-	// Degrees of freedom is the total number of clusters in the network
-	const auto dof = network.getDOF();
 
 	// Get the total number of diffusing clusters
 	const auto nSoret =
