@@ -7,9 +7,7 @@ using namespace std::string_literals;
 #include <xolotl/options/ConfOptions.h>
 #include <xolotl/options/InvalidOptionValue.h>
 #include <xolotl/options/Options.h>
-#ifdef Xolotl_ENABLE_JSON
 #include <xolotl/options/JSONOptions.h>
-#endif
 #include <xolotl/util/Filesystem.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
@@ -542,11 +540,9 @@ createOptions(int argc, const char* argv[])
 	auto filePath = fs::path(argv[1]);
 	auto ext = filePath.extension();
 
-#ifdef Xolotl_ENABLE_JSON
 	if (ext == ".json") {
 		return std::make_shared<JSONOptions>();
 	}
-#endif
 
 	return std::make_shared<ConfOptions>();
 }
