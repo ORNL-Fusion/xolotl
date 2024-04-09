@@ -673,9 +673,8 @@ SolverHandler::generateTemperatureGrid()
 				temperatureGrid[1];
 
 		bool matched = false;
-		IdType jKeep = 0;
 		// Look for it in the temperature grid
-		for (auto j = jKeep; j < nX + 1; j++) {
+		for (auto j = 0; j < nX + 1; j++) {
 			double tempLoc1 = 0.0,
 				   tempLoc2 = (oldGrid[j] + oldGrid[j + 1]) / 2.0 - oldGrid[1];
 			if (j == 0)
@@ -688,7 +687,6 @@ SolverHandler::generateTemperatureGrid()
 				double y1 = broadcastedTemp[j], y2 = broadcastedTemp[j + 1];
 				toReturn.push_back(y1 + xLoc * (y2 - y1));
 				matched = true;
-				jKeep = j;
 				break;
 			}
 		}

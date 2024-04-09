@@ -2074,12 +2074,6 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Get the physical grid
 	auto grid = _solverHandler->getXGrid();
 
-	// Get the flux handler to know the flux amplitude.
-	auto fluxHandler = _solverHandler->getFluxHandler();
-
-	// Get the delta time from the previous timestep to this timestep
-	double previousTime = _solverHandler->getPreviousTime();
-
 	// Take care of bursting
 	using NetworkType = core::network::IPSIReactionNetwork;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
