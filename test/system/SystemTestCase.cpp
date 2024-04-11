@@ -122,7 +122,7 @@ public:
 
 private:
 	bool _redirected{false};
-	int _fileDesc;
+	int _fileDesc{-1};
 };
 
 class ScopedTimer

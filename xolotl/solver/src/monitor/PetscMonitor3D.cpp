@@ -1202,7 +1202,6 @@ PetscMonitor3D::computeXenonRetention(
 	Composition xeComp = Composition::zero();
 	xeComp[Spec::Xe] = 1;
 	auto xeCluster = network.findCluster(xeComp, plsm::HostMemSpace{});
-	auto xeId = xeCluster.getId();
 
 	// Loop on the grid
 	for (auto zk = zs; zk < zs + zm; zk++) {
@@ -1725,8 +1724,6 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	using NetworkType = core::network::IPSIReactionNetwork;
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	auto dof = network.getDOF();
-	// Get the number of species
-	auto numSpecies = network.getSpeciesListSize();
 	auto specIdI = network.getInterstitialSpeciesId();
 
 	// Get the physical grid

@@ -766,9 +766,6 @@ PetscSolver1DHandler::updateConcentration(
 	PetscOffsetView<PetscScalar**> updatedConcs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOFWrite(da, F, &updatedConcs));
 
-	// Degrees of freedom is the total number of clusters in the network
-	const auto dof = network.getDOF();
-
 	// Computing the trapped atom concentration is only needed for the
 	// attenuation
 	if (useAttenuation) {
@@ -1044,9 +1041,6 @@ PetscSolver1DHandler::computeJacobian(
 
 	PetscOffsetView<const PetscScalar**> concs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
-
-	// Degrees of freedom is the total number of clusters in the network
-	const auto dof = network.getDOF();
 
 	// Get the total number of diffusing clusters
 	const auto nSoret =

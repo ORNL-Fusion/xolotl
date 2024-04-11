@@ -37,6 +37,19 @@ reportException(const std::exception& e)
 	std::cerr << "Aborting." << std::endl;
 }
 
+#ifdef XOLOTL_INTERFACE_REPORT_ERRORS
+#define TRY try
+#define CATCH \
+	catch (const std::exception& e) \
+	{ \
+		reportException(e); \
+		throw; \
+	}
+#else
+#define TRY
+#define CATCH
+#endif
+
 XolotlInterface::XolotlInterface() = default;
 
 XolotlInterface::XolotlInterface(int& argc, const char* argv[], MPI_Comm comm)
@@ -69,8 +82,9 @@ XolotlInterface::printSomething()
 }
 
 void
-XolotlInterface::initializeXolotl(int& argc, const char* argv[], MPI_Comm comm)
-try {
+XolotlInterface::initializeXolotl(
+	int& argc, const char* argv[], MPI_Comm comm) TRY
+{
 	computeContext = std::make_unique<ComputeContext>(argc, argv);
 
 	// Initialize the MPI communicator to use
@@ -81,14 +95,11 @@ try {
 
 	initializeXolotl();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::initializeXolotl()
-try {
+XolotlInterface::initializeXolotl() TRY
+{
 	if (util::getMPIRank() == 0) {
 		// Print the start message
 		XOLOTL_LOG << "Starting Xolotl (" << getExactVersionString() << ")\n";
@@ -127,228 +138,171 @@ try {
 	solver->initialize();
 	solverInitialized = true;
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::initializeSolver()
-try {
+XolotlInterface::initializeSolver() TRY
+{
 	// Initialize the solver
 	solver->initialize();
 	solverInitialized = true;
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::getNetworkTemperature(
-	std::vector<double>& temperatures, std::vector<double>& depths)
-try {
+	std::vector<double>& temperatures, std::vector<double>& depths) TRY
+{
 	// Get the temperature and associated depth from the solver handler
 	solverCast(solver)->getSolverHandler()->getNetworkTemperature(
 		temperatures, depths);
 
 	return;
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::setNetworkTemperature(
-	std::vector<double> temperatures, std::vector<double> depths)
-try {
+	std::vector<double> temperatures, std::vector<double> depths) TRY
+{
 	solverCast(solver)->getSolverHandler()->getNetwork().setTemperatures(
 		temperatures, depths);
 
 	return;
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::setTimes(double finalTime, double dt)
-try {
+XolotlInterface::setTimes(double finalTime, double dt) TRY
+{
 	// Set the time in the solver
 	solver->setTimes(finalTime, dt);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::solveXolotl()
-// try
+XolotlInterface::solveXolotl() TRY
 {
 	// Launch the PetscSolver
 	solver->solve();
 }
-// catch (const std::exception& e) {
-// 	reportException(e);
-// 	throw;
-// }
+CATCH
 
 std::vector<std::vector<std::vector<std::array<double, 4>>>>
-XolotlInterface::getLocalNE()
-try {
+XolotlInterface::getLocalNE() TRY
+{
 	// Get the solver handler and return the rate vector
 	return solverCast(solver)->getSolverHandler()->getLocalNE();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::setLocalNE(
 	const std::vector<std::vector<std::vector<std::array<double, 4>>>>&
-		rateVector)
-try {
+		rateVector) TRY
+{
 	// Set the rate vector
 	solverCast(solver)->getSolverHandler()->setLocalNE(rateVector);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::getLocalCoordinates(IdType& xs, IdType& xm, IdType& Mx,
-	IdType& ys, IdType& ym, IdType& My, IdType& zs, IdType& zm, IdType& Mz)
-try {
+	IdType& ys, IdType& ym, IdType& My, IdType& zs, IdType& zm, IdType& Mz) TRY
+{
 	// Get the local coordinates
 	solverCast(solver)->getSolverHandler()->getLocalCoordinates(
 		xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::setGBLocation(IdType i, IdType j, IdType k)
-try {
+XolotlInterface::setGBLocation(IdType i, IdType j, IdType k) TRY
+{
 	// Set the coordinate of the GB
 	solverCast(solver)->getSolverHandler()->setGBLocation(i, j, k);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::resetGBVector()
-try {
+XolotlInterface::resetGBVector() TRY
+{
 	// Reset the location
 	solverCast(solver)->getSolverHandler()->resetGBVector();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 std::vector<std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
-XolotlInterface::getConcVector()
-try {
+XolotlInterface::getConcVector() TRY
+{
 	// Get the vector
 	return solver->getConcVector();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::setConcVector(std::vector<
 	std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
-		concVector)
-try {
+		concVector) TRY
+{
 	// Set the vector
 	solver->setConcVector(concVector);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 double
-XolotlInterface::getPreviousTime()
-try {
+XolotlInterface::getPreviousTime() TRY
+{
 	return solverCast(solver)->getSolverHandler()->getPreviousTime();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::setPreviousTime(double time)
-try {
+XolotlInterface::setPreviousTime(double time) TRY
+{
 	// Update the fluence from here
 	solverCast(solver)->getSolverHandler()->setPreviousTime(time, true);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 double
-XolotlInterface::getCurrentDt()
-try {
+XolotlInterface::getCurrentDt() TRY
+{
 	return solver->getCurrentDt();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::setCurrentTimes(double time, double dt)
-try {
+XolotlInterface::setCurrentTimes(double time, double dt) TRY
+{
 	solver->setCurrentTimes(time, dt);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 double
-XolotlInterface::getNXeGB()
-try {
+XolotlInterface::getNXeGB() TRY
+{
 	return solverCast(solver)->getSolverHandler()->getNXeGB();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::setNXeGB(double nXe)
-try {
+XolotlInterface::setNXeGB(double nXe) TRY
+{
 	solverCast(solver)->getSolverHandler()->setNXeGB(nXe);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 TS&
-XolotlInterface::getTS()
+XolotlInterface::getTS() TRY
 {
 	return solver->getTS();
 }
+CATCH
 
 std::vector<double>
-XolotlInterface::getGridInfo(double& hy, double& hz)
-try {
+XolotlInterface::getGridInfo(double& hy, double& hz) TRY
+{
 	// Get the solver handler
 	auto solverHandler = solverCast(solver)->getSolverHandler();
 
@@ -358,42 +312,33 @@ try {
 
 	return solverHandler->getXGrid();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 std::vector<std::vector<AmountType>>
-XolotlInterface::getAllClusterBounds()
-try {
+XolotlInterface::getAllClusterBounds() TRY
+{
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 
 	return network.getAllClusterBounds();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 std::vector<std::vector<IdType>>
-XolotlInterface::getAllMomentIdInfo()
-try {
+XolotlInterface::getAllMomentIdInfo() TRY
+{
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 
 	return network.getAllMomentIdInfo();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::initializeClusterMaps(
 	std::vector<std::vector<std::vector<AmountType>>> bounds,
-	std::vector<std::vector<std::vector<IdType>>> momIdInfo)
-try {
+	std::vector<std::vector<std::vector<IdType>>> momIdInfo) TRY
+{
 	// Create the local maps
 	auto currentBounds = getAllClusterBounds();
 	auto currentMomIdInfo = getAllMomentIdInfo();
@@ -427,26 +372,20 @@ try {
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	network.initializeClusterMap(bounds, momIdInfo, fromSubNetwork);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::initializeReactions()
-try {
+XolotlInterface::initializeReactions() TRY
+{
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	network.initializeReactions();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 std::vector<std::vector<std::pair<IdType, double>>>
-XolotlInterface::getImplantedFlux()
-try {
+XolotlInterface::getImplantedFlux() TRY
+{
 	// Get the flux handler
 	auto fluxHandler = solverCast(solver)->getSolverHandler()->getFluxHandler();
 
@@ -458,23 +397,17 @@ try {
 
 	return toReturn;
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::setImplantedFlux(
-	std::vector<std::pair<IdType, double>> fluxVector)
-try {
+	std::vector<std::pair<IdType, double>> fluxVector) TRY
+{
 	// Get the flux handler
 	auto fluxHandler = solverCast(solver)->getSolverHandler()->getFluxHandler();
 	fluxHandler->setImplantedFlux(fluxVector);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 struct RatesCapsule
 {
@@ -482,32 +415,26 @@ struct RatesCapsule
 };
 
 std::shared_ptr<RatesCapsule>
-XolotlInterface::makeRatesCapsule() const
-try {
+XolotlInterface::makeRatesCapsule() const TRY
+{
 	return std::make_shared<RatesCapsule>();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::setConstantRates(
-	const std::shared_ptr<RatesCapsule>& rates, IdType gridIndex)
-try {
+	const std::shared_ptr<RatesCapsule>& rates, IdType gridIndex) TRY
+{
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	network.setConstantRates(rates->view, gridIndex);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::computeConstantRates(std::vector<std::vector<double>> conc,
-	IdType gridIndex, std::vector<std::shared_ptr<RatesCapsule>>& rates)
-try {
+	IdType gridIndex, std::vector<std::shared_ptr<RatesCapsule>>& rates) TRY
+{
 	assert(rates.size() == fromSubNetwork.size());
 
 	// Get the network
@@ -530,25 +457,19 @@ try {
 
 	// Loop on the sub network maps
 	for (auto l = 0; l < fromSubNetwork.size(); l++) {
-		// Get the sub DOF and initialize the rate map
-		auto subDOF = fromSubNetwork[l].size();
 		// TODO: should this allocation happen only once (in makeRatesCapsule)?
 		//       (we'd still need to zero out the data here)
 		rates[l]->view = Kokkos::View<double*>("dRates", _subEntries[l]);
 		network.computeConstantRates(dConcs, rates[l]->view, l, gridIndex);
 	}
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>>
-XolotlInterface::getConstantConnectivities()
-try {
+XolotlInterface::getConstantConnectivities() TRY
+{
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
-	const auto dof = network.getDOF();
 
 	// Loop on the sub network maps
 	std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>> toReturn;
@@ -582,44 +503,35 @@ try {
 
 	return toReturn;
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::initializeRateEntries(
 	const std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>>&
-		conns)
-try {
+		conns) TRY
+{
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	network.initializeRateEntries(conns);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::setConstantConnectivities(
-	std::pair<std::vector<IdType>, std::vector<IdType>> conns)
-try {
+	std::pair<std::vector<IdType>, std::vector<IdType>> conns) TRY
+{
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	network.setConstantConnectivities(conns);
 
 	return;
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
 XolotlInterface::outputData(double time,
-	std::vector<std::vector<std::vector<double>>> conc, IdType localSize)
-try {
+	std::vector<std::vector<std::vector<double>>> conc, IdType localSize) TRY
+{
 	// Get the MPI comm
 	auto xolotlComm = util::getMPIComm();
 
@@ -630,7 +542,6 @@ try {
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	const auto dof = network.getDOF();
-	auto networkSize = network.getNumClusters();
 
 	if (time == 0.0 and procId == 0) {
 		network.writeMonitorOutputHeader();
@@ -658,24 +569,18 @@ try {
 
 	network.writeMonitorDataLine(myData, time);
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 bool
-XolotlInterface::getConvergenceStatus()
-try {
+XolotlInterface::getConvergenceStatus() TRY
+{
 	return solver->getConvergenceStatus();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 void
-XolotlInterface::finalizeXolotl()
-try {
+XolotlInterface::finalizeXolotl() TRY
+{
 	// Call solver finalize
 	if (solverInitialized) {
 		solver->finalize();
@@ -706,10 +611,7 @@ try {
 
 	solver.reset();
 }
-catch (const std::exception& e) {
-	reportException(e);
-	throw;
-}
+CATCH
 
 } /* namespace interface */
 } /* namespace xolotl */
