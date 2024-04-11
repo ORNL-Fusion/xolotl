@@ -84,6 +84,9 @@ public:
 		using NetworkType = network::AlloyReactionNetwork;
 		auto alloyNetwork = dynamic_cast<NetworkType*>(&network);
 
+		auto omega = alloyNetwork->getAtomicVolume();
+		auto fluxFactor = fluxAmplitude / omega;
+
 		// Set the flux index corresponding the interstitial clusters
 		NetworkType::Composition comp = NetworkType::Composition::zero();
 		for (int i = 0; i < fluxI.size(); i++) {
@@ -96,10 +99,10 @@ public:
 			fluxIndices.push_back(cluster.getId());
 			std::vector<double> tempVector;
 			if (xGrid.size() == 0)
-				tempVector.push_back(fluxI[i] * fluxAmplitude);
+				tempVector.push_back(fluxI[i] * fluxFactor);
 			else {
 				for (auto i = 0; i < xGrid.size(); i++) {
-					tempVector.push_back(fluxI[i] * fluxAmplitude);
+					tempVector.push_back(fluxI[i] * fluxFactor);
 				}
 			}
 			incidentFluxVec.push_back(tempVector);
@@ -120,12 +123,11 @@ public:
 			fluxIndices.push_back(cluster.getId());
 			std::vector<double> tempVector;
 			if (xGrid.size() == 0)
-				tempVector.push_back(
-					fluxI[i] * perfectFraction * fluxAmplitude);
+				tempVector.push_back(fluxI[i] * perfectFraction * fluxFactor);
 			else {
 				for (auto i = 0; i < xGrid.size(); i++) {
 					tempVector.push_back(
-						fluxI[i] * perfectFraction * fluxAmplitude);
+						fluxI[i] * perfectFraction * fluxFactor);
 				}
 			}
 			incidentFluxVec.push_back(tempVector);
@@ -141,11 +143,11 @@ public:
 			tempVector.clear();
 			if (xGrid.size() == 0)
 				tempVector.push_back(
-					fluxI[i] * (1.0 - perfectFraction) * fluxAmplitude);
+					fluxI[i] * (1.0 - perfectFraction) * fluxFactor);
 			else {
 				for (auto i = 0; i < xGrid.size(); i++) {
 					tempVector.push_back(
-						fluxI[i] * (1.0 - perfectFraction) * fluxAmplitude);
+						fluxI[i] * (1.0 - perfectFraction) * fluxFactor);
 				}
 			}
 			incidentFluxVec.push_back(tempVector);
@@ -165,10 +167,10 @@ public:
 			fluxIndices.push_back(cluster.getId());
 			std::vector<double> tempVector;
 			if (xGrid.size() == 0)
-				tempVector.push_back(fluxV[i] * fluxAmplitude);
+				tempVector.push_back(fluxV[i] * fluxFactor);
 			else {
 				for (auto i = 0; i < xGrid.size(); i++) {
-					tempVector.push_back(fluxV[i] * fluxAmplitude);
+					tempVector.push_back(fluxV[i] * fluxFactor);
 				}
 			}
 			incidentFluxVec.push_back(tempVector);
@@ -189,12 +191,11 @@ public:
 			fluxIndices.push_back(cluster.getId());
 			std::vector<double> tempVector;
 			if (xGrid.size() == 0)
-				tempVector.push_back(
-					fluxV[i] * perfectFraction * fluxAmplitude);
+				tempVector.push_back(fluxV[i] * perfectFraction * fluxFactor);
 			else {
 				for (auto i = 0; i < xGrid.size(); i++) {
 					tempVector.push_back(
-						fluxV[i] * perfectFraction * fluxAmplitude);
+						fluxV[i] * perfectFraction * fluxFactor);
 				}
 			}
 			incidentFluxVec.push_back(tempVector);
@@ -210,11 +211,11 @@ public:
 			tempVector.clear();
 			if (xGrid.size() == 0)
 				tempVector.push_back(
-					fluxV[i] * (1.0 - perfectFraction) * fluxAmplitude);
+					fluxV[i] * (1.0 - perfectFraction) * fluxFactor);
 			else {
 				for (auto i = 0; i < xGrid.size(); i++) {
 					tempVector.push_back(
-						fluxV[i] * (1.0 - perfectFraction) * fluxAmplitude);
+						fluxV[i] * (1.0 - perfectFraction) * fluxFactor);
 				}
 			}
 			incidentFluxVec.push_back(tempVector);
