@@ -84,8 +84,12 @@ public:
 		using NetworkType = network::AlloyReactionNetwork;
 		auto alloyNetwork = dynamic_cast<NetworkType*>(&network);
 
+		double iTot = 0.0;
+		for (int i = 0; i < fluxI.size(); i++) {
+			iTot += fluxI[i] * i;
+		}
 		auto omega = alloyNetwork->getAtomicVolume();
-		auto fluxFactor = fluxAmplitude / omega;
+		auto fluxFactor = fluxAmplitude / (omega * iTot);
 
 		// Set the flux index corresponding the interstitial clusters
 		NetworkType::Composition comp = NetworkType::Composition::zero();
