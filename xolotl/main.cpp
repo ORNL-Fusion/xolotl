@@ -1,5 +1,6 @@
-#include <xolotl/interface/Interface.h>
 #include <cstdlib>
+
+#include <xolotl/interface/Interface.h>
 
 int
 main(int argc, const char* argv[])

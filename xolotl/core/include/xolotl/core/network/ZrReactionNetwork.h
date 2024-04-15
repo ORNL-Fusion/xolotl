@@ -55,6 +55,29 @@ public:
 	void
 	setGridSize(IndexType gridSize) override;
 
+	std::string
+	getMonitorOutputFileName() const override
+	{
+		return "AlphaZr.dat";
+	}
+
+	std::string
+	getMonitorDataHeaderString() const override;
+
+	void
+	addMonitorDataValues(Kokkos::View<const double*> conc, double fac,
+		std::vector<double>& totalVals) override;
+
+	std::size_t
+	getMonitorDataLineSize() const override
+	{
+		return getSpeciesListSize() * 6;
+	}
+
+	void
+	writeMonitorDataLine(
+		const std::vector<double>& localData, double time) override;
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);

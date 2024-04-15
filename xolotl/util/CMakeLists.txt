@@ -13,6 +13,7 @@ set(XOLOTL_UTIL_HEADERS
     ${XOLOTL_UTIL_HEADER_DIR}/Log.h
     ${XOLOTL_UTIL_HEADER_DIR}/MathUtils.h
     ${XOLOTL_UTIL_HEADER_DIR}/MPIUtils.h
+    ${XOLOTL_UTIL_HEADER_DIR}/NotImplementedError.h
     ${XOLOTL_UTIL_HEADER_DIR}/StreamTokenizer.h
     ${XOLOTL_UTIL_HEADER_DIR}/TimeStepper.h
     ${XOLOTL_UTIL_HEADER_DIR}/Tokenizer.h

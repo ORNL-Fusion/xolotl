@@ -194,9 +194,9 @@ PetscSolver0DHandler::getConcVector(DM& da, Vec& C)
 	// Create the temporary vector for this grid point
 	std::vector<std::pair<IdType, double>> tempVector;
 	for (auto l = 0; l < dof + 1; ++l) {
-		if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
-			tempVector.push_back(std::make_pair(l, gridPointSolution[l]));
-		}
+		//		if (std::fabs(gridPointSolution[l]) > 1.0e-20) {
+		tempVector.push_back(std::make_pair(l, gridPointSolution[l]));
+		//		}
 	}
 	std::vector<std::vector<std::pair<IdType, double>>> tempTempVector;
 	tempTempVector.push_back(tempVector);

@@ -31,12 +31,11 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	_subpaving(subpaving),
 	_clusterData("Cluster Data"),
 	_worker(*this),
-	_speciesLabelMap(createSpeciesLabelMap())
+	_speciesLabelMap(createSpeciesLabelMap()),
+	_minRadiusSizes(computeMinRadiusSizes(opts))
 {
 	_clusterData.h_view() = ClusterData(_subpaving, gridSize);
 	copyClusterDataView();
-
-	auto bounds = getAllClusterBounds();
 
 	this->setMaterial(opts.getMaterial());
 
@@ -363,26 +362,6 @@ ReactionNetwork<TImpl>::getAllMomentIdInfo()
 		idMap.push_back(temp);
 	}
 	return idMap;
-}
-
-template <typename TImpl>
-std::string
-ReactionNetwork<TImpl>::getHeaderString()
-{
-	// Create the object to return
-	std::stringstream header;
-
-	// Loop on all the clusters
-	auto numSpecies = getSpeciesListSize();
-	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		auto speciesName = this->getSpeciesName(id);
-		header << speciesName << "_density " << speciesName << "_atom "
-			   << speciesName << "_diameter " << speciesName
-			   << "_partial_density " << speciesName << "_partial_atom "
-			   << speciesName << "_partial_diameter ";
-	}
-
-	return header.str();
 }
 
 template <typename TImpl>
@@ -1383,6 +1362,20 @@ ReactionNetwork<TImpl>::createSpeciesLabelMap() noexcept
 			toLabelString(s.value), SpeciesId(s.value, getNumberOfSpecies()));
 	}
 	return labelMap;
+}
+
+template <typename TImpl>
+std::vector<AmountType>
+ReactionNetwork<TImpl>::computeMinRadiusSizes(const options::IOptions& opts)
+{
+	auto numSpecies = getNumberOfSpecies();
+	auto minRadiusSizes = std::vector<AmountType>(numSpecies, 1);
+	auto minSizes = opts.getRadiusMinSizes();
+	for (auto i = 0; i < std::min(minSizes.size(), minRadiusSizes.size());
+		 i++) {
+		minRadiusSizes[i] = minSizes[i];
+	}
+	return minRadiusSizes;
 }
 
 template <typename TImpl>

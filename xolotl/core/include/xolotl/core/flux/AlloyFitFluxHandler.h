@@ -236,10 +236,7 @@ public:
 						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 					if (fluxCluster1.getId() == NetworkType::invalidIndex() ||
 						fluxCluster2.getId() == NetworkType::invalidIndex()) {
-						// Throw error -> missing type
-						throw std::runtime_error(
-							"\nNo clusted of size: " + std::to_string(size) +
-							", cannot use the flux option!");
+						continue;
 					}
 					else {
 						// Frank loop
@@ -275,10 +272,7 @@ public:
 					fluxCluster =
 						alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 					if (fluxCluster.getId() == NetworkType::invalidIndex()) {
-						// Throw error -> no available type
-						throw std::runtime_error(
-							"\nNo clusted of size: " + std::to_string(-size) +
-							", cannot use the flux option!");
+						continue;
 					}
 					else {
 						// Faulted loop
@@ -363,6 +357,57 @@ public:
 				Kokkos::atomic_add(&updatedConcOffset[ionDamageFluxIds[i]],
 					attenuation * ionDamageRate(i, xi - surfacePos));
 			});
+	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	std::vector<std::pair<IdType, double>>
+	getImplantedFlux(std::vector<IdType> map) override
+	{
+		std::vector<std::pair<IdType, double>> toReturn;
+
+		auto ionDamageFluxIds_h = create_mirror_view(ionDamage.fluxIds);
+		auto ionDamageRate_h = create_mirror_view(ionDamage.rate);
+		deep_copy(ionDamageFluxIds_h, ionDamage.fluxIds);
+		deep_copy(ionDamageRate_h, ionDamage.rate);
+		for (auto i = 0; i < map.size(); i++) {
+			// Look for this value in fluxIndices
+			for (auto j = 0; j < ionDamageFluxIds_h.size(); j++) {
+				if (map[i] == ionDamageFluxIds_h[j]) {
+					toReturn.push_back(
+						std::make_pair(i, ionDamageRate_h(j, 0)));
+					break;
+				}
+			}
+		}
+		return toReturn;
+	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector) override
+	{
+		std::size_t nDamageVals = ionDamage.fluxIds.size();
+		if (fluxVector.size() != nDamageVals) {
+			throw std::runtime_error(
+				"AlloyFitFluxHandler::setImplantedFlux: "
+				"called with different number of ion damage values than "
+				"determined during initialization.");
+		}
+
+		// Loop on the flux vector
+		auto ionDamageFluxIds_h = create_mirror_view(ionDamage.fluxIds);
+		auto ionDamageRate_h = create_mirror_view(ionDamage.rate);
+		for (auto i = 0; i < nDamageVals; i++) {
+			ionDamageFluxIds_h(i) = fluxVector[i].first;
+			ionDamageRate_h(i, 0) = fluxVector[i].second;
+		}
+
+		deep_copy(ionDamage.fluxIds, ionDamageFluxIds_h);
+		deep_copy(ionDamage.rate, ionDamageRate_h);
 	}
 };
 // end class AlloyFitFluxHandler

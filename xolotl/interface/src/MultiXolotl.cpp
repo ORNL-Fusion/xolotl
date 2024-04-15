@@ -2,6 +2,8 @@
 
 #include <cassert>
 
+#include <xolotl/factory/interface/MaterialSubOptionsFactory.h>
+#include <xolotl/interface/IMaterialSubOptions.h>
 #include <xolotl/interface/MultiXolotl.h>
 #include <xolotl/interface/XolotlInterface.h>
 #include <xolotl/util/GrowthFactorStepSequence.h>
@@ -40,20 +42,14 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 	primaryOpts->addProcess("noSolve");
 	_primaryInstance = std::make_unique<XolotlInterface>(context, primaryOpts);
 
+	auto subOptions = factory::interface::MaterialSubOptionsFactory::get()
+						  .generate(*_options)
+						  ->getSubOptions();
+
 	std::vector<std::vector<std::vector<std::uint32_t>>> allBounds;
 	std::vector<std::vector<std::vector<xolotl::IdType>>> allMomIdInfo;
-	const auto& netParams = _options->getNetworkParameters();
-	auto tmpParams = netParams;
-	for (std::size_t i = 0; i < netParams.size(); ++i) {
-		if (netParams[i] == 0) {
-			continue;
-		}
-
+	for (auto&& subOpts : subOptions) {
 		// Create subinstances
-		tmpParams.assign(netParams.size(), 0);
-		tmpParams[i] = netParams[i];
-		auto subOpts = _options->makeCopy();
-		subOpts->setNetworkParameters(tmpParams);
 		subOpts->addProcess("constant");
 		auto& sub = _subInstances.emplace_back(
 			std::make_unique<XolotlInterface>(context, subOpts));
@@ -137,7 +133,13 @@ MultiXolotl::~MultiXolotl()
 
 	// Print the result
 	_primaryInstance->outputData(
-		currentTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
+		previousTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
+}
+
+double
+MultiXolotl::previousTime() const noexcept
+{
+	return _timeStepper.previousTime();
 }
 
 double
@@ -231,7 +233,7 @@ MultiXolotl::solveStep()
 
 	// Print the result
 	_primaryInstance->outputData(
-		currentTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
+		previousTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
 
 	// Solve
 	for (auto&& sub : _subInstances) {

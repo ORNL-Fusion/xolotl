@@ -18,6 +18,7 @@ TimeStepper::TimeStepper(std::unique_ptr<IStepSequence>&& stepSequence,
 void
 TimeStepper::start()
 {
+	_previousTime = _startTime;
 	_currentTime = _startTime;
 	_seq->start();
 }
@@ -27,6 +28,7 @@ TimeStepper::step()
 {
 	auto newTime = _currentTime + _seq->current();
 	_seq->step();
+	_previousTime = _currentTime;
 	_currentTime = newTime;
 
 	// TODO: should we add an option to require the end to be exact?

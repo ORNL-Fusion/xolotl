@@ -18,6 +18,7 @@
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 #include <xolotl/core/network/detail/ReactionCollection.h>
 #include <xolotl/options/IOptions.h>
+#include <xolotl/util/NotImplementedError.h>
 
 namespace xolotl
 {
@@ -238,6 +239,59 @@ public:
 	void
 	setTime(double time) override;
 
+	const std::vector<AmountType>&
+	getMinRadiusSizes() const override
+	{
+		return _minRadiusSizes;
+	}
+
+	[[noreturn]] std::string
+	getMonitorOutputFileName() const override
+	{
+		throw util::NotImplementedError();
+	}
+
+	[[noreturn]] std::string
+	getMonitorDataHeaderString() const override
+	{
+		throw util::NotImplementedError();
+	}
+
+	std::vector<double>
+	getMonitorDataValues(Kokkos::View<const double*> conc, double fac) override
+	{
+		auto ret = std::vector<double>(getMonitorDataLineSize(), 0.0);
+		addMonitorDataValues(conc, fac, ret);
+		return ret;
+	}
+
+	void
+	addMonitorDataValues(Kokkos::View<const double*> conc, double fac,
+		std::vector<double>& totalVals) override
+	{
+		throw util::NotImplementedError();
+	}
+
+	[[noreturn]] std::size_t
+	getMonitorDataLineSize() const override
+	{
+		throw util::NotImplementedError();
+	}
+
+	void
+	writeMonitorOutputHeader() const override
+	{
+		std::ofstream(this->getMonitorOutputFileName())
+			<< this->getMonitorDataHeaderString() << std::endl;
+	}
+
+	void
+	writeMonitorDataLine(
+		const std::vector<double>& localData, double time) override
+	{
+		throw util::NotImplementedError();
+	}
+
 	std::uint64_t
 	getDeviceMemorySize() const noexcept override;
 
@@ -341,9 +395,6 @@ public:
 
 	MomentIdMap
 	getAllMomentIdInfo() override;
-
-	std::string
-	getHeaderString() override;
 
 	void initializeClusterMap(
 		BoundVector, MomentIdMapVector, MomentIdMap) override;
@@ -661,6 +712,9 @@ private:
 	static std::map<std::string, SpeciesId>
 	createSpeciesLabelMap() noexcept;
 
+	static std::vector<AmountType>
+	computeMinRadiusSizes(const options::IOptions& opts);
+
 	void
 	defineMomentIds();
 
@@ -708,6 +762,8 @@ protected:
 	ConnectivitiesPairView _constantConnsEntries;
 
 	double _currentTime;
+
+	std::vector<AmountType> _minRadiusSizes;
 };
 
 namespace detail
