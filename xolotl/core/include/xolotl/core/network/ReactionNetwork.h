@@ -18,7 +18,6 @@
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 #include <xolotl/core/network/detail/ReactionCollection.h>
 #include <xolotl/options/IOptions.h>
-#include <xolotl/options/Options.h>
 #include <xolotl/util/NotImplementedError.h>
 
 namespace xolotl

@@ -8,7 +8,7 @@
 
 #include <xolotl/core/flux/W100FitFluxHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(W100FitFluxHandlerTester_testSuite)
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -100,7 +100,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -159,7 +159,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid)
 BOOST_AUTO_TEST_CASE(checkFluence)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -212,7 +212,7 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -286,7 +286,7 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
 BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);

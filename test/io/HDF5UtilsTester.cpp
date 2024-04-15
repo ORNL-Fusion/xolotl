@@ -8,7 +8,7 @@
 
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/io/XFile.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/MPITestUtils.h>
 
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	double const factor = 1.5;
 
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);

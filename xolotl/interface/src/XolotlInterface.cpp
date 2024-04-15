@@ -90,7 +90,7 @@ XolotlInterface::initializeXolotl(
 	// Initialize the MPI communicator to use
 	util::setMPIComm(comm);
 
-	options = std::make_shared<options::Options>();
+	options = options::createOptions(argc, argv);
 	options->readParams(argc, argv);
 
 	initializeXolotl();

@@ -17,7 +17,7 @@ makeXolotlInterface(int& argc, const char* argv[])
 	util::setMPIComm(MPI_COMM_WORLD);
 
 	// Get options
-	auto options = std::make_shared<options::Options>();
+	auto options = options::createOptions(argc, argv);
 	options->readParams(argc, argv);
 
 	// Create instance(s)

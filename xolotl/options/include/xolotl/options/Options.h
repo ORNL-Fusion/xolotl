@@ -362,17 +362,8 @@ public:
 	 */
 	~Options();
 
-	/**
-	 * \see IOptions.h
-	 */
-	std::shared_ptr<IOptions>
-	makeCopy() const override;
-
-	/**
-	 * \see IOptions.h
-	 */
 	void
-	readParams(int argc, const char* argv[]) override;
+	printAll(std::ostream& os) const override;
 
 	/**
 	 * \see IOptions.h
@@ -1020,7 +1011,79 @@ public:
 	{
 		return cascadeEfficiency;
 	}
+
+protected:
+	void
+	setNetworkParameters(const std::string& paramStr);
+
+	void
+	setTempParam(const std::vector<double>& params);
+
+	void
+	setTempParam(const std::string& paramStr);
+
+	void
+	checkTempProfileFilename() const;
+
+	void
+	checkFluxTimeProfileFilename() const;
+
+	void
+	checkPerfHandlerName() const;
+
+	void
+	checkVizHandlerName() const;
+
+	void
+	setGridParam(const std::vector<double>& params);
+
+	void
+	setGridParam(const std::string& paramStr);
+
+	void
+	checkGridFilename() const;
+
+	void
+	setRadiusMinSizes(const std::vector<int>& params);
+
+	void
+	setRadiusMinSizes(const std::string& paramStr);
+
+	void
+	setBoundaries(const std::vector<int>& params);
+
+	void
+	setBoundaries(const std::string& paramStr);
+
+	void
+	processRNGParam(const std::string& paramStr);
+
+	void
+	setProcesses(const std::vector<std::string>& processList);
+
+	void
+	setProcesses(const std::string& processList);
+
+	void
+	setCouplingTimeStepParams(const std::vector<double>& params);
+
+	void
+	setCouplingTimeStepParams(const std::string& paramString);
+
+	void
+	setPulseParams(const std::string& paramStr);
+
+	void
+	setGroupingParams(const std::vector<int>& params);
+
+	void
+	setGroupingParams(const std::string& paramString);
+
+	void
+	appendPetscArg(const std::string& arg);
 };
-// end class Options
+
+std::shared_ptr<IOptions>
+createOptions(int argc, const char* argv[]);
 } /* namespace options */
 } /* namespace xolotl */

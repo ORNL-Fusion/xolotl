@@ -6,7 +6,7 @@
 #include <xolotl/core/network/detail/impl/ClusterData.tpp>
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/Tokenizer.h>
 
@@ -82,7 +82,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 template <typename TImpl>
 ReactionNetwork<TImpl>::ReactionNetwork(
 	const Subpaving& subpaving, IndexType gridSize) :
-	ReactionNetwork(subpaving, gridSize, options::Options{})
+	ReactionNetwork(subpaving, gridSize, options::ConfOptions{})
 {
 }
 
