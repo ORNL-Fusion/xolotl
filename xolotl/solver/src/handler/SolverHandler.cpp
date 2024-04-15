@@ -793,9 +793,8 @@ SolverHandler::interpolateTemperature(std::vector<double> localTemp)
 			loc = (grid[i - 1] + grid[i]) / 2.0 - grid[1];
 
 		bool matched = false;
-		IdType jKeep = 0;
 		// Look for it in the temperature grid
-		for (auto j = jKeep; j < nX + 1; j++) {
+		for (auto j = 0; j < nX + 1; j++) {
 			double tempLoc1 = 0.0,
 				   tempLoc2 =
 					   (temperatureGrid[j] + temperatureGrid[j + 1]) / 2.0 -
@@ -811,7 +810,6 @@ SolverHandler::interpolateTemperature(std::vector<double> localTemp)
 				double y1 = broadcastedTemp[j], y2 = broadcastedTemp[j + 1];
 				toReturn.push_back(y1 + xLoc * (y2 - y1));
 				matched = true;
-				jKeep = j;
 				break;
 			}
 		}

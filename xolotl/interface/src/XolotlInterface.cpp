@@ -547,7 +547,6 @@ XolotlInterface::outputData(double time,
 		network.writeMonitorOutputHeader();
 	}
 
-	auto numSpecies = network.getSpeciesListSize();
 	auto myData = std::vector<double>(network.getMonitorDataLineSize(), 0.0);
 
 	for (auto xi = 0; xi < localSize; xi++) {
