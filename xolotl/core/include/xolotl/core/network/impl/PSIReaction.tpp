@@ -144,7 +144,7 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 				}
 			}
 		}
-		else if (prod2Reg.isSimplex()) {
+		if (prod2Reg.isSimplex()) {
 			auto orig2 = prod2Reg.getOrigin();
 			if constexpr (hasDeuterium<Species> && hasTritium<Species>) {
 				if (orig2.isOnAxis(Species::D) || orig2.isOnAxis(Species::T)) {

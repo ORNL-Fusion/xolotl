@@ -10,8 +10,8 @@
 namespace bpo = boost::program_options;
 
 #include <xolotl/options/ConfOptions.h>
-#include <xolotl/options/Options.h>
 #include <xolotl/options/InvalidOptionValue.h>
+#include <xolotl/options/Options.h>
 #include <xolotl/test/config.h>
 const std::string dataDir = TO_STRING(XOLOTL_TEST_DATA_DIR);
 

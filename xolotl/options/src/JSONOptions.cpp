@@ -116,13 +116,13 @@ JSONOptions::readParams(int argc, const char* argv[])
 	tempHandlerName = tree.get("tempHandler", "constant");
 
 	if (tree.count("tempParam")) {
-        auto node = tree.get_child("tempParam");
-        if (node.empty()) {
-            setTempParam(node.get_value<std::string>());
-        }
-        else {
-            setTempParam(asVector<double>(node));
-        }
+		auto node = tree.get_child("tempParam");
+		if (node.empty()) {
+			setTempParam(node.get_value<std::string>());
+		}
+		else {
+			setTempParam(asVector<double>(node));
+		}
 	}
 
 	if (tree.count("tempFile")) {

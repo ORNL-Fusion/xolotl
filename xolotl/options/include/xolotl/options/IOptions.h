@@ -29,8 +29,8 @@ public:
 	{
 	}
 
-    virtual void
-    printAll(std::ostream& os) const = 0;
+	virtual void
+	printAll(std::ostream& os) const = 0;
 
 	/**
 	 * Create copy of all options

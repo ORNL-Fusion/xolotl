@@ -6,8 +6,8 @@ using namespace std::string_literals;
 
 #include <xolotl/options/ConfOptions.h>
 #include <xolotl/options/InvalidOptionValue.h>
-#include <xolotl/options/Options.h>
 #include <xolotl/options/JSONOptions.h>
+#include <xolotl/options/Options.h>
 #include <xolotl/util/Filesystem.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
