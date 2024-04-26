@@ -997,24 +997,24 @@ XFile::TimestepGroup::readSurface3D(void) const -> Surface3DType
 }
 
 auto
-XFile::TimestepGroup::readData1D(const std::string& dataName) const
-	-> Data1DType
+XFile::TimestepGroup::readData1D(
+	const std::string& dataName) const -> Data1DType
 {
 	Attribute<Data1DType> attr(*this, dataName);
 	return attr.get();
 }
 
 auto
-XFile::TimestepGroup::readData2D(const std::string& dataName) const
-	-> Data2DType
+XFile::TimestepGroup::readData2D(
+	const std::string& dataName) const -> Data2DType
 {
 	DataSet<Data2DType> dataset(*this, dataName);
 	return dataset.read();
 }
 
 auto
-XFile::TimestepGroup::readData3D(const std::string& dataName) const
-	-> Data3DType
+XFile::TimestepGroup::readData3D(
+	const std::string& dataName) const -> Data3DType
 {
 	// Open the dataset
 	hid_t datasetId = H5Dopen(getId(), dataName.c_str(), H5P_DEFAULT);

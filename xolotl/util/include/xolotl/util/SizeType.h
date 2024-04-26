@@ -37,7 +37,8 @@ public:
 	{
 	}
 
-	constexpr operator T() const noexcept
+	constexpr
+	operator T() const noexcept
 	{
 		return _rep;
 	}

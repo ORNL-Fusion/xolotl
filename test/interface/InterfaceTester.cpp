@@ -49,9 +49,7 @@ BOOST_AUTO_TEST_CASE(simple0D)
 	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
 
 	// Create and run the solver
-	auto interface = xolotl::interface::XolotlInterface {
-		cl.argc, cl.argv
-	};
+	auto interface = xolotl::interface::XolotlInterface{cl.argc, cl.argv};
 	interface.solveXolotl();
 
 	// Get data to check
