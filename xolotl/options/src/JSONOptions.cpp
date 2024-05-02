@@ -76,6 +76,7 @@ asVector(const boost::property_tree::iptree& node)
 JSONOptions::JSONOptions() = default;
 
 JSONOptions::JSONOptions(const JSONOptions& other) :
+	Options(other),
 	_map(std::make_unique<boost::property_tree::iptree>(*other._map))
 {
 }
