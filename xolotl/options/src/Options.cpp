@@ -161,8 +161,8 @@ Options::readParams(int argc, const char* argv[])
 		"Number of dimensions for the simulation.")("material",
 		bpo::value<std::string>(&materialName),
 		"The material options are as follows: {W100, W110, W111, "
-		"W211, Pulsed, Fuel, Fe, 800H, AlphaZr}.")("initialConc",
-		bpo::value<std::string>(&initialConcentration),
+		"W211, Pulsed, Fuel, Fe, 800H5MeV, 800H9MeV, 800HNeutron, AlphaZr}.")(
+		"initialConc", bpo::value<std::string>(&initialConcentration),
 		"The name, size, and value of the initial concentration in the "
 		"material.")("zeta", bpo::value<double>(&zeta)->default_value(0.73),
 		"The value of the electronic stopping power in the material (0.73 by "

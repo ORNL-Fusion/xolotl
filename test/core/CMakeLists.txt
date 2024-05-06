@@ -11,7 +11,7 @@ set(tests
     diffusion/Diffusion2DHandlerTester.cpp
     diffusion/Diffusion3DHandlerTester.cpp
     diffusion/DummyDiffusionHandlerTester.cpp
-    flux/AlloyFitFluxHandlerTester.cpp
+    flux/AlloyFluxHandlerTester.cpp
     flux/AlphaZrFitFluxHandlerTester.cpp
     flux/CustomFitFluxHandlerTester.cpp
     flux/FeFitFluxHandlerTester.cpp

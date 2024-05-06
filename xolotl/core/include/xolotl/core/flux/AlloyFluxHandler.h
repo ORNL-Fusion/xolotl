@@ -1,12 +1,11 @@
-#ifndef ALLOYFITFLUXHANDLER_H
-#define ALLOYFITFLUXHANDLER_H
+#ifndef ALLOYFLUXHANDLER_H
+#define ALLOYFLUXHANDLER_H
 
 #include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 
-#include <xolotl/core/flux/AlloySRIMData.h>
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/util/MPIUtils.h>
@@ -21,9 +20,9 @@ namespace flux
  * This class realizes the FluxHandler interface to calculate the incident
  * fluxes for the alloy case.
  */
-class AlloyFitFluxHandler : public FluxHandler
+class AlloyFluxHandler : public FluxHandler
 {
-private:
+protected:
 	/**
 	 * \see FluxHandler.h
 	 */
@@ -34,21 +33,8 @@ private:
 		return 1.0;
 	}
 
-	std::vector<double> fluxI = {0.0, 819.7997037, 3.734253376, 1.530639902,
-		1.073205085, 0.317568641, 0.350114308, 0.336916494, 0.12711723,
-		0.08972981, 0.141014074, 0.0, 0.0, 0.097207294, 0.0, 0.0, 0.0, 0.0,
-		0.104684778, 0.0, 0.0, 0.0, 0.0, 0.097207294, 0.0, 0.0, 0.0, 0.0,
-		0.059819873, 0.0, 0.0, 0.0, 0.0, 0.011216226, 0.0, 0.0, 0.0, 0.0,
-		0.011216226, 0.0, 0.0, 0.0, 0.0, 0.011216226};
-
-	std::vector<double> fluxV = {0.0, 837.2746277, 1.129664564, 0.346149562,
-		0.266921211, 0.178571272, 0.09384643, 0.190148043, 0.054658911,
-		0.057757897, 0.057833813, 0.0, 0.0, 0.096068565, 0.0, 0.0, 0.0, 0.0,
-		0.023242395, 0.0, 0.0, 0.0, 0.0, 0.046484789, 0.0, 0.0, 0.0, 0.0,
-		0.020143409, 0.0, 0.0, 0.0, 0.0, 0.027890874, 0.0, 0.0, 0.0, 0.0,
-		0.013945437, 0.0, 0.0, 0.0, 0.0, 0.009296958, 0.0, 0.0, 0.0, 0.0,
-		0.021692902, 0.0, 0.0, 0.0, 0.0, 0.012395944, 0.0, 0.0, 0.0, 0.0,
-		0.009296958, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.006197972};
+	std::vector<double> fluxI;
+	std::vector<double> fluxV;
 
 	double perfectFraction = 0.2;
 
@@ -56,14 +42,14 @@ public:
 	/**
 	 * The constructor
 	 */
-	AlloyFitFluxHandler(const options::IOptions& options) : FluxHandler(options)
+	AlloyFluxHandler(const options::IOptions& options) : FluxHandler(options)
 	{
 	}
 
 	/**
 	 * The Destructor
 	 */
-	~AlloyFitFluxHandler()
+	~AlloyFluxHandler()
 	{
 	}
 
@@ -84,13 +70,8 @@ public:
 		using NetworkType = network::AlloyReactionNetwork;
 		auto alloyNetwork = dynamic_cast<NetworkType*>(&network);
 
-		double iTot = 0.0;
-		for (int i = 0; i < fluxI.size(); i++) {
-			iTot += fluxI[i] * i;
-		}
-
 		auto omega = alloyNetwork->getAtomicVolume();
-		auto fluxFactor = fluxAmplitude / (omega * iTot);
+		auto fluxFactor = fluxAmplitude / omega;
 
 		// Set the flux index corresponding the interstitial clusters
 		NetworkType::Composition comp = NetworkType::Composition::zero();
@@ -274,7 +255,7 @@ public:
 			});
 	}
 }; // namespace flux
-// end class AlloyFitFluxHandler
+// end class AlloyFluxHandler
 
 } // namespace flux
 } // namespace core

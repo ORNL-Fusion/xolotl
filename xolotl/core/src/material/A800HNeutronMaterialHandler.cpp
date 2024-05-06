@@ -1,4 +1,4 @@
-#include <xolotl/core/material/AlloyMaterialHandler.h>
+#include "../../include/xolotl/core/material/A800HNeutronMaterialHandler.h"
 
 namespace xolotl
 {
@@ -8,9 +8,9 @@ namespace material
 {
 namespace detail
 {
-auto alloyMaterialHandlerRegistrations =
+auto a800HNeutronMaterialHandlerRegistrations =
 	xolotl::factory::material::MaterialHandlerFactory::RegistrationCollection<
-		AlloyMaterialHandler>({"800H"});
+		A800HNeutronMaterialHandler>({"800HNeutron"});
 }
 } // namespace material
 } // namespace core

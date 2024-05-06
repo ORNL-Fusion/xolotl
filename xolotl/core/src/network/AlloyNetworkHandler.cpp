@@ -11,7 +11,7 @@ namespace detail
 {
 auto alloyNetworkHandlerRegistrations =
 	xolotl::factory::network::NetworkHandlerFactory::RegistrationCollection<
-		AlloyNetworkHandler>({"800H"});
+		AlloyNetworkHandler>({"800H5MeV", "800H9MeV", "800HNeutron"});
 }
 
 auto alloyNetworkGenerator = [](const options::IOptions& options) {

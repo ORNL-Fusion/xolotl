@@ -1,6 +1,8 @@
 list(APPEND XOLOTL_CORE_HEADERS
-    ${XOLOTL_CORE_HEADER_DIR}/flux/AlloyFitFluxHandler.h
-    ${XOLOTL_CORE_HEADER_DIR}/flux/AlloySRIMData.h
+    ${XOLOTL_CORE_HEADER_DIR}/flux/AlloyFluxHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/flux/A800H5MeVFluxHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/flux/A800H9MeVFluxHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/flux/A800HNeutronFluxHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/flux/AlphaZrFitFluxHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/flux/CustomFitFluxHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/flux/FeFitFluxHandler.h

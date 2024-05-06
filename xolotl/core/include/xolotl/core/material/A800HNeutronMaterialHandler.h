@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xolotl/core/flux/AlloyFitFluxHandler.h>
+#include <xolotl/core/flux/A800HNeutronFluxHandler.h>
 #include <xolotl/core/material/MaterialHandler.h>
 #include <xolotl/factory/material/MaterialHandlerFactory.h>
 
@@ -10,12 +10,12 @@ namespace core
 {
 namespace material
 {
-class AlloyMaterialHandler : public MaterialHandler
+class A800HNeutronMaterialHandler : public MaterialHandler
 {
 public:
-	AlloyMaterialHandler(const options::IOptions& options) :
+	A800HNeutronMaterialHandler(const options::IOptions& options) :
 		MaterialHandler(options,
-			MaterialSubHandlerGenerator<core::flux::AlloyFitFluxHandler>{})
+			MaterialSubHandlerGenerator<core::flux::A800HNeutronFluxHandler>{})
 	{
 	}
 };
