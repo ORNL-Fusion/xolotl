@@ -88,9 +88,9 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		auto vProdId = subpaving.findTileId(comp);
 		if (vProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, vProdId});
-			//			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-			//				this->addDissociationReaction(tag, {vProdId, i, j});
-			//			}
+			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+				this->addDissociationReaction(tag, {vProdId, i, j});
+			}
 		}
 		return;
 	}

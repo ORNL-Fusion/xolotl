@@ -181,6 +181,7 @@ double
 AlloyClusterGenerator::getFormationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
+	// These are actually never called
 	const auto& reg = cluster.getRegion();
 	Composition lo(reg.getOrigin());
 	double energy = 0.0;
