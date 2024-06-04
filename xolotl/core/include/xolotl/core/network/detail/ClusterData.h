@@ -3,6 +3,7 @@
 #include <string>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/core/network/detail/Types.h>
 
 namespace xolotl
 {

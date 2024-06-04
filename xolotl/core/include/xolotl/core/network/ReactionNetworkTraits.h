@@ -8,6 +8,7 @@
 
 #include <xolotl/config.h>
 #include <xolotl/core/network/SpeciesEnumSequence.h>
+#include <xolotl/core/network/detail/Types.h>
 
 namespace xolotl
 {
@@ -43,16 +44,6 @@ struct ReactionNetworkTraits
 
 namespace detail
 {
-using ReactionNetworkIndexType = ::xolotl::IdType;
-
-using CompositionAmountType = ::xolotl::AmountType;
-
-inline constexpr auto invalidNetworkIndex =
-	plsm::invalid<ReactionNetworkIndexType>;
-
-inline constexpr auto invalidSpeciesAmount =
-	plsm::invalid<CompositionAmountType>;
-
 /**
  * @brief Customization mechanism for adding arbitrary network-specific data
  * items to ClusterData (ClusterDataImpl).

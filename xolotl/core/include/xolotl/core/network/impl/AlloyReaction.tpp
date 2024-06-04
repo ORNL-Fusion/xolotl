@@ -16,46 +16,86 @@ template <typename TRegion>
 KOKKOS_INLINE_FUNCTION
 double
 getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
-	const double r1, const double dc0, const double dc1)
+	const double r1, const double dc0, const double dc1, double rdCl[2][2])
 {
 	constexpr double pi = ::xolotl::core::pi;
 	constexpr double rCore = ::xolotl::core::alloyCoreRadius;
 	const double zs = 4.0 * pi * (r0 + r1 + rCore);
+	const double p = 1.0;
+
 	using Species = typename TRegion::EnumIndex;
+	xolotl::core::network::detail::Composition<typename TRegion::VectorType,
+		Species>
+		lo0 = pairCl0Reg.getOrigin();
+	xolotl::core::network::detail::Composition<typename TRegion::VectorType,
+		Species>
+		lo1 = pairCl1Reg.getOrigin();
+
+	// Determine if clusters are vacancy or interstitial and initialize
+	// variables
+	bool cl0IsV = lo0.isOnAxis(Species::V) || lo0.isOnAxis(Species::PerfectV) ||
+		lo0.isOnAxis(Species::FaultedV);
+	bool cl1IsV = lo1.isOnAxis(Species::V) || lo1.isOnAxis(Species::PerfectV) ||
+		lo1.isOnAxis(Species::FaultedV);
+	double n0 = 0; // size of cluster 0
+	double n1 = 0; // size of cluster 1
+	double Pl = 1.0; // Capture efficiency for diffusing defect
+	double Pli = 1.0; // Capture efficiency for interstitial a-loop
+	double Plv = 1.0; // Capture efficiency for vacancy a-loops
+
+	// Determine parameters for cluster 0 based on cluster type and size
+	n0 = lo0[Species::V] + lo0[Species::PerfectV] + lo0[Species::FaultedV] +
+		lo0[Species::I] + lo0[Species::PerfectI] + lo0[Species::FaultedI];
+	n1 = lo1[Species::V] + lo1[Species::PerfectV] + lo1[Species::FaultedV] +
+		lo1[Species::I] + lo1[Species::PerfectI] + lo1[Species::FaultedI];
+
 	bool cl0IsSphere = (pairCl0Reg.getOrigin().isOnAxis(Species::V) ||
 			 pairCl0Reg.getOrigin().isOnAxis(Species::I)),
 		 cl1IsSphere = (pairCl1Reg.getOrigin().isOnAxis(Species::V) ||
 			 pairCl1Reg.getOrigin().isOnAxis(Species::I));
 
-	// Simple case
-	if (cl0IsSphere && cl1IsSphere) {
-		return zs * (dc0 + dc1);
+	// Cluster 0 is a dislocation loop
+	if (not cl0IsSphere) {
+		// Define the dislocation capture radius, transition coefficient, and
+		// then calculate the reaction rate
+		double rd = rdCl[0][cl1IsV];
+		double alpha = pow(1 + pow(r0 / (3 * (r1 + rd)), 2), -1);
+		double rateSpherical = 4.0 * pi * (r0 + r1 + rd);
+		double rateToroidal =
+			(4.0 * pi * pi * r0) / log(1 + (8 * r0) / (r1 + rd));
+
+		// Calculate the capture efficiency (assuming only prismatic loops)
+		if (cl0IsV)
+			Pl = 0.78 * pow(p, -2) + 0.66 * p - 0.44;
+		else
+			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
+
+		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
+			(dc0 + dc1);
 	}
 
-	// Both loops
-	double r_l = 0.0, r_s = 0.0;
-	if (not cl0IsSphere and not cl1IsSphere) {
-		r_l = (r0 < r1) ? r1 : r0;
-		r_s = (r0 < r1) ? r0 : r1;
-	}
-	// Loop and sphere
-	else {
-		// Which one is sphere?
-		r_s = (cl0IsSphere) ? r0 : r1;
-		r_l = (cl0IsSphere) ? r1 : r0;
-	}
+	// Cluster 1 is a dislocation loop:
+	if (not cl1IsSphere) {
+		// Define the dislocation capture radius, transition coefficient, and
+		// then calculate the reaction rate
+		double rd = rdCl[1][cl0IsV];
+		double alpha = pow(1 + pow(r1 / (3 * (r0 + rd)), 2), -1);
+		double rateSpherical = 4.0 * pi * (r0 + r1 + rd);
+		double rateToroidal =
+			(4.0 * pi * pi * r1) / log(1 + (8 * r1) / (r0 + rd));
 
-	double p = 1.0 / (1.0 + pow(r_l / (r_s + rCore), 2.0));
-	double zl = 4.0 * pi * pi * r_l / log(1.0 + 8.0 * r_l / (r_s + rCore));
+		// Calculate the capture efficiency (assuming only prismatic loops)
+		if (cl1IsV)
+			Pl = 0.78 * pow(p, -2) + 0.66 * p - 0.44;
+		else
+			Pl = 0.70 * pow(p, -2) + 0.78 * p - 0.47;
 
-	double k_plus = (dc0 + dc1) * (p * zs + (1.0 - p) * zl);
-	double bias = 1.0;
-	if (pairCl0Reg.getOrigin().isOnAxis(Species::I) ||
-		pairCl1Reg.getOrigin().isOnAxis(Species::I)) {
-		bias = 1.2;
+		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
+			(dc0 + dc1);
 	}
 
-	return k_plus * bias;
+	// None of the clusters are loops (interaction is based on spherical volume)
+	return zs * (dc0 + dc1);
 }
 } // namespace alloy
 
@@ -72,8 +112,20 @@ AlloyProductionReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	auto rate =
-		alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	// Create an array with all possible dislocation capture radii
+	// rdCl = {(rdI for cl0, rdV for cl0), (rdI for cl1, rdV for cl1)}
+	double rdCl[2][2] = {{0.0, 0.0}, {0.0, 0.0}};
+	rdCl[0][0] = this->_clusterData->extraData.dislocationCaptureRadius(
+		_reactants[0], 0);
+	rdCl[0][1] = this->_clusterData->extraData.dislocationCaptureRadius(
+		_reactants[0], 1);
+	rdCl[1][0] = this->_clusterData->extraData.dislocationCaptureRadius(
+		_reactants[1], 0);
+	rdCl[1][1] = this->_clusterData->extraData.dislocationCaptureRadius(
+		_reactants[1], 1);
+
+	auto rate = alloy::getRate(
+		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl);
 
 	// Divide the rate by 2 for I + I -> faulted or perfect
 	if (cl0.getRegion().getOrigin().isOnAxis(Species::I) and
@@ -100,8 +152,20 @@ AlloyDissociationReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	auto rate =
-		alloy::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
+	// Create an array with all possible dislocation capture radii
+	// rdCl = {(rdI for cl0, rdV for cl0), (rdI for cl1, rdV for cl1)}
+	double rdCl[2][2] = {{0.0, 0.0}, {0.0, 0.0}};
+	rdCl[0][0] =
+		this->_clusterData->extraData.dislocationCaptureRadius(_products[0], 0);
+	rdCl[0][1] =
+		this->_clusterData->extraData.dislocationCaptureRadius(_products[0], 1);
+	rdCl[1][0] =
+		this->_clusterData->extraData.dislocationCaptureRadius(_products[1], 0);
+	rdCl[1][1] =
+		this->_clusterData->extraData.dislocationCaptureRadius(_products[1], 1);
+
+	auto rate = alloy::getRate(
+		cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1, rdCl);
 
 	// Divide the rate by 2 for I + I -> faulted or perfect
 	if (cl0.getRegion().getOrigin().isOnAxis(Species::I) and
