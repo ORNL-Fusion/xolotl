@@ -40,14 +40,13 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	if (nAxis == 0)
 		return true;
 
-	// V, and I are always refined
-	if (region[Species::V].begin() > 0)
-		return true;
+	// I is always refined
 	if (region[Species::I].begin() > 0)
 		return true;
 
 	// Smaller that the minimum size for grouping
-	if (region[Species::PerfectV].begin() < _groupingMin &&
+	if (region[Species::V].begin() < _groupingMin &&
+		region[Species::PerfectV].begin() < _groupingMin &&
 		region[Species::FaultedV].begin() < _groupingMin &&
 		region[Species::FaultedI].begin() < _groupingMin &&
 		region[Species::PerfectI].begin() < _groupingMin) {
@@ -55,13 +54,19 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	}
 
 	// Too large
-	if (region[Species::PerfectV].end() > _maxSize ||
+	if (region[Species::V].end() > _maxSize ||
+		region[Species::PerfectV].end() > _maxSize ||
 		region[Species::FaultedV].end() > _maxSize ||
 		region[Species::FaultedI].end() > _maxSize ||
 		region[Species::PerfectI].end() > _maxSize) {
 		return true;
 	}
 
+	if (region[Species::V].begin() > 0 &&
+		region[Species::V].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::V].begin(), 1) * 5.0e-2))
+		result[0] = false;
 	if (region[Species::PerfectV].begin() > 0 &&
 		region[Species::PerfectV].length() <
 			util::max((double)(_groupingWidth + 1),
@@ -112,50 +117,56 @@ AlloyClusterGenerator::select(const Region& region) const
 			return false;
 
 		// V
-		if (region[Species::V].begin() > _maxV)
+		if (region[Species::V].begin() > _maxSize)
 			return false;
 
 		// Perfect I
 		if (region[Species::PerfectI].begin() > 0 &&
 			region[Species::PerfectI].begin() <= _maxI)
 			return false;
-		if (region[Species::PerfectI].begin() > 0 &&
-			region[Species::PerfectI].begin() > _maxSize)
+		if (region[Species::PerfectI].begin() > _maxSize)
 			return false;
 
 		// Faulted I
 		if (region[Species::FaultedI].begin() > 0 &&
 			region[Species::FaultedI].begin() <= _maxI)
 			return false;
-		if (region[Species::FaultedI].begin() > 0 &&
-			region[Species::FaultedI].begin() > _maxSize)
+		if (region[Species::FaultedI].begin() > _maxSize)
 			return false;
 
 		// Faulted V
 		if (region[Species::FaultedV].begin() > 0 &&
 			region[Species::FaultedV].begin() <= _maxV)
 			return false;
-		if (region[Species::FaultedV].begin() > 0 &&
-			region[Species::FaultedV].begin() > _maxSize)
+		if (region[Species::FaultedV].begin() > _maxSize)
 			return false;
 
 		// Perfect V
 		if (region[Species::PerfectV].begin() > 0 &&
 			region[Species::PerfectV].begin() <= _maxV)
 			return false;
-		if (region[Species::PerfectV].begin() > 0 &&
-			region[Species::PerfectV].begin() > _maxSize)
+		if (region[Species::PerfectV].begin() > _maxSize)
 			return false;
 	}
 
-	if (region[Species::V].begin() == 0 && region[Species::I].begin() == 0 &&
-		region[Species::PerfectV].end() - 1 <= _maxV &&
-		region[Species::FaultedV].end() - 1 <= _maxV &&
-		region[Species::PerfectI].end() - 1 < _maxI &&
+	if (region[Species::PerfectV].begin() > 0 &&
+		region[Species::PerfectV].end() - 1 <= _maxV)
+		return false;
+
+	if (region[Species::FaultedV].begin() > 0 &&
+		region[Species::FaultedV].end() - 1 <= _maxV)
+		return false;
+
+	if (region[Species::PerfectI].begin() > 0 &&
+		region[Species::PerfectI].end() - 1 <= _maxI)
+		return false;
+
+	if (region[Species::FaultedI].begin() > 0 &&
 		region[Species::FaultedI].end() - 1 <= _maxI)
 		return false;
 
-	if (region[Species::PerfectV].begin() > _maxSize ||
+	if (region[Species::V].begin() > _maxSize ||
+		region[Species::PerfectV].begin() > _maxSize ||
 		region[Species::FaultedV].begin() > _maxSize ||
 		region[Species::PerfectI].begin() > _maxSize ||
 		region[Species::FaultedI].begin() > _maxSize)
@@ -221,7 +232,7 @@ AlloyClusterGenerator::getMigrationEnergy(
 	const auto& reg = cluster.getRegion();
 	Composition comp(reg.getOrigin());
 	double migrationEnergy = util::infinity<double>;
-	if (comp.isOnAxis(Species::V)) {
+	if (comp.isOnAxis(Species::V) and comp[Species::V] <= _maxV) {
 		return 1.3;
 	}
 	if (comp.isOnAxis(Species::I)) {
@@ -239,7 +250,7 @@ AlloyClusterGenerator::getDiffusionFactor(
 	const auto& reg = cluster.getRegion();
 	Composition comp(reg.getOrigin());
 	double diffusionFactor = 0.0;
-	if (comp.isOnAxis(Species::V)) {
+	if (comp.isOnAxis(Species::V) and comp[Species::V] <= _maxV) {
 		const double jumpDistance = latticeParameter / sqrt(2.0);
 		constexpr double phononFrequency = 9.6e12;
 		constexpr double jumpsPerPhonon = 1.0;

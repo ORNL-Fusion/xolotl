@@ -37,6 +37,7 @@ protected:
 	std::vector<double> fluxV;
 
 	double perfectFraction = 0.2;
+	double voidFraction = 0.5;
 
 public:
 	/**
@@ -152,11 +153,27 @@ public:
 			}
 			fluxIndices.push_back(cluster.getId());
 			std::vector<double> tempVector;
-			if (xGrid.size() == 0)
-				tempVector.push_back(fluxV[i] * fluxFactor);
+
+			// Check if it is mobile or not for voids
+			if (cluster.getDiffusionFactor() == 0.0) {
+				// Void
+				if (xGrid.size() == 0)
+					tempVector.push_back(fluxV[i] * voidFraction * fluxFactor);
+				else {
+					for (auto i = 0; i < xGrid.size(); i++) {
+						tempVector.push_back(
+							fluxV[i] * voidFraction * fluxFactor);
+					}
+				}
+			}
 			else {
-				for (auto i = 0; i < xGrid.size(); i++) {
+				// Vacancy
+				if (xGrid.size() == 0)
 					tempVector.push_back(fluxV[i] * fluxFactor);
+				else {
+					for (auto i = 0; i < xGrid.size(); i++) {
+						tempVector.push_back(fluxV[i] * fluxFactor);
+					}
 				}
 			}
 			incidentFluxVec.push_back(tempVector);
@@ -166,9 +183,8 @@ public:
 
 		// Set the flux index corresponding the vacancy loops
 		for (int i = 0; i < fluxV.size(); i++) {
-			// Perfect
-			comp[NetworkType::Species::FaultedV] = 0;
-			comp[NetworkType::Species::PerfectV] = i;
+			// Faulted
+			comp[NetworkType::Species::FaultedV] = i;
 			auto cluster =
 				alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
 			if (cluster.getId() == NetworkType::invalidIndex()) {
@@ -177,31 +193,12 @@ public:
 			fluxIndices.push_back(cluster.getId());
 			std::vector<double> tempVector;
 			if (xGrid.size() == 0)
-				tempVector.push_back(fluxV[i] * perfectFraction * fluxFactor);
-			else {
-				for (auto i = 0; i < xGrid.size(); i++) {
-					tempVector.push_back(
-						fluxV[i] * perfectFraction * fluxFactor);
-				}
-			}
-			incidentFluxVec.push_back(tempVector);
-
-			// Faulted
-			comp[NetworkType::Species::PerfectV] = 0;
-			comp[NetworkType::Species::FaultedV] = i;
-			cluster = alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
-			if (cluster.getId() == NetworkType::invalidIndex()) {
-				continue;
-			}
-			fluxIndices.push_back(cluster.getId());
-			tempVector.clear();
-			if (xGrid.size() == 0)
 				tempVector.push_back(
-					fluxV[i] * (1.0 - perfectFraction) * fluxFactor);
+					fluxV[i] * (1.0 - voidFraction) * fluxFactor);
 			else {
 				for (auto i = 0; i < xGrid.size(); i++) {
 					tempVector.push_back(
-						fluxV[i] * (1.0 - perfectFraction) * fluxFactor);
+						fluxV[i] * (1.0 - voidFraction) * fluxFactor);
 				}
 			}
 			incidentFluxVec.push_back(tempVector);

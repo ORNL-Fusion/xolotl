@@ -47,8 +47,39 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
-	// vac + vac = vac | perfectV and faultedV
-	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V)) {
+	// vac + vac = vac | faultedV
+	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V) &&
+		diffusionFactor(i) > 0.0 && diffusionFactor(j) > 0.0) {
+		// Compute the composition of the new cluster
+		auto size = lo1[Species::V] + lo2[Species::V];
+		// Find the corresponding cluster
+		Composition comp = Composition::zero();
+		comp[Species::V] = size;
+		auto vProdId = subpaving.findTileId(comp);
+		if (vProdId != subpaving.invalidIndex()) {
+			// Check the diffusivity to distinguish V from Voids
+			if (diffusionFactor(vProdId) > 0.0) {
+				this->addProductionReaction(tag, {i, j, vProdId});
+				if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+					this->addDissociationReaction(tag, {vProdId, i, j});
+				}
+			}
+		}
+		comp[Species::V] = 0;
+		comp[Species::FaultedV] = size;
+		auto fProdId = subpaving.findTileId(comp);
+		if (fProdId != subpaving.invalidIndex()) {
+			this->addProductionReaction(tag, {i, j, fProdId});
+			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+				this->addDissociationReaction(tag, {fProdId, i, j});
+			}
+		}
+		return;
+	}
+
+	// vac + void = void
+	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V) &&
+		(diffusionFactor(i) > 0.0 || diffusionFactor(j) > 0.0)) {
 		// Compute the composition of the new cluster
 		auto size = lo1[Species::V] + lo2[Species::V];
 		// Find the corresponding cluster
@@ -57,27 +88,9 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		auto vProdId = subpaving.findTileId(comp);
 		if (vProdId != subpaving.invalidIndex()) {
 			this->addProductionReaction(tag, {i, j, vProdId});
-			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-				this->addDissociationReaction(tag, {vProdId, i, j});
-			}
-		}
-		comp[Species::V] = 0;
-		comp[Species::PerfectV] = size;
-		auto pProdId = subpaving.findTileId(comp);
-		if (pProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, pProdId});
-			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-				this->addDissociationReaction(tag, {pProdId, i, j});
-			}
-		}
-		comp[Species::PerfectV] = 0;
-		comp[Species::FaultedV] = size;
-		auto fProdId = subpaving.findTileId(comp);
-		if (fProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, fProdId});
-			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-				this->addDissociationReaction(tag, {fProdId, i, j});
-			}
+			//			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+			//				this->addDissociationReaction(tag, {vProdId, i, j});
+			//			}
 		}
 		return;
 	}

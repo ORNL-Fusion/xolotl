@@ -84,15 +84,6 @@ AlloyProductionReaction::getRateForProduction(IndexType gridIndex)
 		}
 	}
 
-	// Divide the rate by 2 for V + V -> perfect or faulted
-	if (cl0.getRegion().getOrigin().isOnAxis(Species::V) and
-		cl1.getRegion().getOrigin().isOnAxis(Species::V)) {
-		auto prod = this->_clusterData->getCluster(_products[0]);
-		if (not prod.getRegion().getOrigin().isOnAxis(Species::V)) {
-			return rate * 0.5;
-		}
-	}
-
 	return rate;
 }
 
@@ -117,15 +108,6 @@ AlloyDissociationReaction::getRateForProduction(IndexType gridIndex)
 		cl1.getRegion().getOrigin().isOnAxis(Species::I)) {
 		auto react = this->_clusterData->getCluster(_reactant);
 		if (not react.getRegion().getOrigin().isOnAxis(Species::I)) {
-			return rate * 0.5;
-		}
-	}
-
-	// Divide the rate by 2 for V + V -> perfect or faulted
-	if (cl0.getRegion().getOrigin().isOnAxis(Species::V) and
-		cl1.getRegion().getOrigin().isOnAxis(Species::V)) {
-		auto react = this->_clusterData->getCluster(_reactant);
-		if (not react.getRegion().getOrigin().isOnAxis(Species::V)) {
 			return rate * 0.5;
 		}
 	}

@@ -30,8 +30,8 @@ auto alloyNetworkGenerator = [](const options::IOptions& options) {
 	maxSize = pow(groupingWidth, i) - 1;
 
 	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
-		maxV, maxSize, maxSize, maxI, maxSize, maxSize};
-	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {{maxV + 1,
+		maxSize, maxSize, maxSize, maxI, maxSize, maxSize};
+	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {{groupingWidth,
 		groupingWidth, groupingWidth, maxI + 1, groupingWidth, groupingWidth}};
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
