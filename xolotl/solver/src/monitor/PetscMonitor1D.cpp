@@ -829,6 +829,9 @@ PetscMonitor1D::startStop(
 	if (_solverHandler->getRightOffset() == 1)
 		tsGroup->writeBottom1D(_nBulk, _previousBulkFlux, names);
 
+	// Check if we are using the large bubble model
+	auto largeBubble = _solverHandler->largeBubble();
+
 	// Determine the concentration values we will write.
 	// We only examine and collect the grid points we own.
 	// TODO measure impact of us building the flattened representation
@@ -842,6 +845,9 @@ PetscMonitor1D::startStop(
 			if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 				concs[i].emplace_back(l, gridPointSolution[l]);
 			}
+			// Need the values associated with the large bubble all the time
+			if (largeBubble and l > dof - 4)
+				concs[i].emplace_back(l, gridPointSolution[l]);
 		}
 	}
 
