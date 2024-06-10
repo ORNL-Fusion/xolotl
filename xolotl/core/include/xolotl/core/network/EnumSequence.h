@@ -41,7 +41,8 @@ struct EnumSequence
 	 * @brief Convert to enum type
 	 */
 	KOKKOS_INLINE_FUNCTION
-	constexpr operator Enum() const noexcept
+	constexpr
+	operator Enum() const noexcept
 	{
 		return value;
 	}

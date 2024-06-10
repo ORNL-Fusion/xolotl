@@ -1,3 +1,5 @@
+#include <cstdlib>
+
 #include <xolotl/interface/Interface.h>
 
 int
