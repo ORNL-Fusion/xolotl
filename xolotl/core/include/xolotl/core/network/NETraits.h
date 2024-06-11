@@ -117,11 +117,12 @@ struct ClusterDataExtra<NEReactionNetwork, PlsmContext>
 		}
 
 		if (!fileClusterMap.is_allocated()) {
-			fileClusterMap = MapType(data.fileClusterMap.size());
+			fileClusterMap = MapType(data.fileClusterMap.capacity());
 		}
 
 		deep_copy(constantRates, data.constantRates);
 		deep_copy(fileClusterMap, data.fileClusterMap);
+		fileClusterNumber = data.fileClusterNumber;
 	}
 
 	std::uint64_t

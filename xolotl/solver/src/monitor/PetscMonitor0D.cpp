@@ -267,7 +267,7 @@ PetscMonitor0D::setup(int loop)
 
 			tokens = util::Tokenizer<double>{line}();
 		}
-		outputFile << "Xe/SD" << std::endl;
+		outputFile << "Xe/SD var" << std::endl;
 		outputFile.close();
 	}
 
@@ -511,8 +511,9 @@ PetscMonitor0D::computeXenonRetention(
 	for (auto id : _clusterOrder) {
 		outputFile << gridPointSolution[id] << " ";
 	}
-	auto ratio = network.getTotalVolumeRatio(concs, Spec::Xe, 1);
-	outputFile << ratio << std::endl;
+	auto ratio = network.getTotalVolumeRatio(concs, Spec::Xe, 2);
+	auto variance = network.getTotalRatioVariance(concs, Spec::Xe, ratio, 2);
+	outputFile << ratio << " " << variance << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray

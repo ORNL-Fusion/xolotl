@@ -157,19 +157,20 @@ public:
 				continue;
 			}
 
-			// Get the largetG0
-			double largestG0 = tokens[3] - k_B * temperature * tokens[4];
-			//			for (auto i = 3; i < tokens.size(); i += 4) {
-			//				auto g0 = tokens[i] - k_B * temperature * tokens[i +
-			// 1]; 				if (g0 < largestG0) largestG0 = g0;
-			//			}
+			// Get the smallest G0
+			double smallestG0 = tokens[3] - k_B * temperature * tokens[4];
+			for (auto i = 3; i < tokens.size(); i += 4) {
+				auto g0 = tokens[i] - k_B * temperature * tokens[i + 1];
+				if (g0 < smallestG0)
+					smallestG0 = g0;
+			}
 			// Loop on the linked clusters
 			for (auto i = 3; i < tokens.size(); i += 4) {
 				// Get its properties
 				auto g0 = tokens[i] - k_B * temperature * tokens[i + 1];
 				pureDefectFactors[comp[NetworkType::Species::V] - 1] +=
 					comp[NetworkType::Species::V] *
-					std::exp((largestG0 - g0) / (k_B * temperature));
+					exp((smallestG0 - g0) / (k_B * temperature));
 			}
 
 			getline(reactionFile, line);
@@ -219,14 +220,16 @@ public:
 		auto yield = defectYield;
 		auto xenonYield = xeYield;
 		auto ids = this->fluxIds;
+		auto uConc = core::uConcentration;
 
 		Kokkos::parallel_for(
 			1, KOKKOS_LAMBDA(std::size_t) {
 				// Compute the available site fraction
-				double availVFraction = 1.0; // nm-3
+				double availVFraction = uConc; // nm-3
 				for (auto i = 0; i < factors.size(); i++) {
 					availVFraction -= concOffset[defectIds[i]] * factors[i];
 				}
+				availVFraction /= uConc;
 
 				updatedConcOffset[ids[0]] +=
 					yield * amplitude * availVFraction; // V

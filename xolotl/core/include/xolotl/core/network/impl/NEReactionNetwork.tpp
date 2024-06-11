@@ -199,6 +199,21 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 			comp[Species::I] = static_cast<IndexType>(tokens[8]);
 			auto prodId = findCluster(comp, plsm::HostMemSpace{}).getId();
 
+			if (static_cast<int>(tokens[9]) == 0) {
+				constantRates(map1Id, map2Id, 0) = 0.0;
+				constantRates(map2Id, map1Id, 0) = 0.0;
+				constantRates(map1Id, map2Id, 1) = 0.0;
+				constantRates(map2Id, map1Id, 1) = 0.0;
+				reactionEnergies(map1Id, map2Id) = 0.0;
+				reactionEnergies(map2Id, map1Id) = 0.0;
+
+				getline(reactionFile, line);
+				tokens.clear();
+				util::Tokenizer<double>{line}(tokens);
+
+				continue;
+			}
+
 			// Get the coefficient rate
 			//			double coefRate = static_cast<double>(tokens[9]);
 			double coefRate = 1.0;
@@ -274,6 +289,11 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 	mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
 	// Save its formation energy
 	clData().setVFormationEnergy(g0Vector[mapId]);
+	comp[Species::V] = 2;
+	rId = findCluster(comp, plsm::HostMemSpace{}).getId();
+	mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
+	// Save its formation energy
+	clData().setV2FormationEnergy(g0Vector[mapId]);
 
 	// Same with xenon
 	comp[Species::V] = 0;
@@ -291,8 +311,8 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 	deep_copy(clData().migrationEnergy,
 		this->_clusterDataMirror.value().migrationEnergy);
 
-	invalidateDataMirror();
-	copyClusterDataView();
+	this->invalidateDataMirror();
+	this->copyClusterDataView();
 }
 
 void
@@ -456,7 +476,7 @@ inline ReactionCollection<NEReactionGenerator::NetworkType>
 NEReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
-		this->_clusterData.extraData.fileClusterMap.size(),
+		this->_clusterData.extraData.fileClusterMap.capacity(),
 		this->_enableReadRates, this->getProductionReactions(),
 		this->getDissociationReactions(), this->getReSolutionReactions(),
 		this->getNucleationReactions(), this->getSinkReactions());

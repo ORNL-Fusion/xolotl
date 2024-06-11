@@ -36,7 +36,7 @@ public:
 				_reactants[0]) and
 			this->_clusterData->extraData.fileClusterMap.exists(
 				_reactants[1])) {
-			auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+			auto& clusterMap = this->_clusterData->extraData.fileClusterMap;
 			this->_deltaG0 = reactionData.reactionEnergies(
 				clusterMap.value_at(clusterMap.find(_reactants[0])),
 				clusterMap.value_at(clusterMap.find(_reactants[1])));
@@ -56,6 +56,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getRateForProduction(IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeBindingEnergy();
 
 private:
 	KOKKOS_INLINE_FUNCTION
@@ -99,7 +103,7 @@ public:
 		if (this->_clusterData->extraData.fileClusterMap.exists(
 				_products[0]) and
 			this->_clusterData->extraData.fileClusterMap.exists(_products[1])) {
-			auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+			auto& clusterMap = this->_clusterData->extraData.fileClusterMap;
 			this->_deltaG0 = reactionData.reactionEnergies(
 				clusterMap.value_at(clusterMap.find(_products[0])),
 				clusterMap.value_at(clusterMap.find(_products[1])));
@@ -179,10 +183,10 @@ public:
 		SinkReaction(reactionData, clusterData, reactionId, cluster0)
 	{
 		if (this->_clusterData->extraData.fileClusterMap.exists(_reactant)) {
-			auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+			auto& clusterMap = this->_clusterData->extraData.fileClusterMap;
 			this->_deltaG0 = reactionData.reactionEnergies(
 				clusterMap.value_at(clusterMap.find(_reactant)),
-				clusterMap.size());
+				this->_clusterData->extraData.fileClusterNumber);
 		}
 	}
 

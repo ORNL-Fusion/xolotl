@@ -50,6 +50,12 @@ NEProductionReaction::computeRate(IndexType gridIndex, double time)
 	auto cl0 = this->_clusterData->getCluster(_reactants[0]);
 	auto cl1 = this->_clusterData->getCluster(_reactants[1]);
 
+	Composition cl0Comp = cl0.getRegion().getOrigin();
+	Composition cl1Comp = cl1.getRegion().getOrigin();
+
+	//		if (cl0Comp[Species::Xe] > 0 and cl1Comp[Species::Xe] > 0)
+	//			return 0.0;
+
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
 
@@ -57,7 +63,7 @@ NEProductionReaction::computeRate(IndexType gridIndex, double time)
 	double rate = -1.0;
 	if (this->_clusterData->extraData.fileClusterMap.exists(_reactants[0]) and
 		this->_clusterData->extraData.fileClusterMap.exists(_reactants[1])) {
-		auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+		auto& clusterMap = this->_clusterData->extraData.fileClusterMap;
 		rate = this->_clusterData->extraData.constantRates(
 			clusterMap.value_at(clusterMap.find(_reactants[0])),
 			clusterMap.value_at(clusterMap.find(_reactants[1])), 0);
@@ -71,9 +77,8 @@ NEProductionReaction::computeRate(IndexType gridIndex, double time)
 						this->_clusterData->temperature(gridIndex)));
 		}
 	}
-	if (rate > 0) {
-		return 4.0 * ::xolotl::core::pi * (r0 + r1) * rate *
-			::xolotl::core::zFactor;
+	if (rate > 0.0) {
+		return rate * 4.0 * ::xolotl::core::pi * r0 * ::xolotl::core::zFactor;
 	}
 
 	rate = getRateForProduction(gridIndex);
@@ -103,15 +108,14 @@ NEProductionReaction::computeFlux(
 		double r1 = cl1.getReactionRadius();
 
 		// Compute the flux for the 0th order moments
-		auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+		auto& clusterMap = this->_clusterData->extraData.fileClusterMap;
 		double f = (1.0 / (omega * omega)) *
 			this->_clusterData->extraData.constantRates(
 				clusterMap.value_at(clusterMap.find(_reactants[0])),
 				clusterMap.value_at(clusterMap.find(_reactants[1])), 0) *
-			4.0 * ::xolotl::core::pi * (r0 + r1) *
 			exp(this->_deltaG0 / ::xolotl::core::kBoltzmann *
 				this->_clusterData->temperature(gridIndex)) *
-			::xolotl::core::zFactor;
+			4.0 * ::xolotl::core::pi * r0 * ::xolotl::core::zFactor;
 
 		Kokkos::atomic_add(
 			&fluxes[_reactants[0]], f / (double)_reactantVolumes[0]);
@@ -687,6 +691,7 @@ NEDissociationReaction::computeBindingEnergy()
 	auto prod2 = this->_clusterData->getCluster(this->_products[1]);
 	auto iFormation = this->_clusterData->getIFormationEnergy();
 	auto vFormation = this->_clusterData->getVFormationEnergy();
+	auto v2Formation = this->_clusterData->getV2FormationEnergy();
 	auto xeFormation = this->_clusterData->getXeFormationEnergy();
 
 	auto clReg = cl.getRegion();
@@ -711,16 +716,28 @@ NEDissociationReaction::computeBindingEnergy()
 		1.9501944029492, -5.85771773178376, 9.18869701523602, -7.09118822290571,
 		3.37190513184659, -1.03326651166341};
 
-	if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
+	if (prod1Comp.isOnAxis(Species::V) or prod2Comp.isOnAxis(Species::V)) {
 		double xeSDPower = xeSD * xeSD;
 		be = 0.0;
 		for (auto i = 0; i < 8; i++) {
 			be += (double)(i + 1) * fitParams[7 - i] * xeSDPower;
 			xeSDPower *= xeSD;
 		}
-		be += vFormation;
+
+		if (prod1Comp.isOnAxis(Species::V) and prod1Comp[Species::V] == 2) {
+			be *= 2.0;
+			be += v2Formation;
+		}
+		else if (prod2Comp.isOnAxis(Species::V) and
+			prod2Comp[Species::V] == 2) {
+			be *= 2.0;
+			be += v2Formation;
+		}
+		else {
+			be += vFormation;
+		}
 	}
-	if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
+	if (prod1Comp.isOnAxis(Species::I) or prod2Comp.isOnAxis(Species::I)) {
 		double xeSDPower = xeSD * xeSD;
 		be = 0.0;
 		for (auto i = 0; i < 8; i++) {
@@ -729,14 +746,14 @@ NEDissociationReaction::computeBindingEnergy()
 		}
 		be += iFormation;
 	}
-	if (prod1Comp.isOnAxis(Species::Xe) || prod2Comp.isOnAxis(Species::Xe)) {
+	if (prod1Comp.isOnAxis(Species::Xe) or prod2Comp.isOnAxis(Species::Xe)) {
 		double xeSDPower = xeSD;
 		be = 0.0;
 		for (auto i = 0; i < 8; i++) {
 			be -= (double)(i + 2) * fitParams[7 - i] * xeSDPower;
 			xeSDPower *= xeSD;
 		}
-		be = 5.0;
+		be += xeFormation;
 	}
 
 	return util::min(5.0, util::max(be, -1.0));
@@ -770,14 +787,20 @@ NEDissociationReaction::computeRate(IndexType gridIndex, double time)
 	auto cl0 = this->_clusterData->getCluster(_products[0]);
 	auto cl1 = this->_clusterData->getCluster(_products[1]);
 
+	Composition cl0Comp = cl0.getRegion().getOrigin();
+	Composition cl1Comp = cl1.getRegion().getOrigin();
+
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
+
+	//		if (cl0Comp[Species::Xe] > 0 and cl1Comp[Species::Xe] > 0)
+	//			return 0.0;
 
 	// Read the rates if available
 	double rate = -1.0;
 	if (this->_clusterData->extraData.fileClusterMap.exists(_products[0]) and
 		this->_clusterData->extraData.fileClusterMap.exists(_products[1])) {
-		auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+		auto& clusterMap = this->_clusterData->extraData.fileClusterMap;
 		rate = this->_clusterData->extraData.constantRates(
 				   clusterMap.value_at(clusterMap.find(_products[0])),
 				   clusterMap.value_at(clusterMap.find(_products[1])), 0) *
@@ -788,8 +811,8 @@ NEDissociationReaction::computeRate(IndexType gridIndex, double time)
 				clusterMap.value_at(clusterMap.find(_products[1])), 1);
 		}
 	}
-	if (rate > 0) {
-		return (1.0 / omega) * 4.0 * ::xolotl::core::pi * (r0 + r1) * rate *
+	if (rate > 0.0) {
+		return (1.0 / omega) * rate * 4.0 * ::xolotl::core::pi * r0 *
 			::xolotl::core::zFactor;
 	}
 
@@ -1044,6 +1067,7 @@ KOKKOS_INLINE_FUNCTION
 double
 NESinkReaction::getSinkStrength()
 {
+	// Not actually used
 	//	return 1.0e-3;
 	return 1.0e-4 * ::xolotl::core::zFactor;
 }
@@ -1053,7 +1077,7 @@ void
 NESinkReaction::computeFlux(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
 {
-	auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+	auto& clusterMap = this->_clusterData->extraData.fileClusterMap;
 	double omega = this->_clusterData->atomicVolume();
 	auto rate = ::xolotl::core::zFactor * getSinkBias() *
 		this->_clusterData->extraData.constantRates(
@@ -1076,7 +1100,7 @@ void
 NESinkReaction::computePartialDerivatives(ConcentrationsView concentrations,
 	Kokkos::View<double*> values, IndexType gridIndex)
 {
-	auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+	auto& clusterMap = this->_clusterData->extraData.fileClusterMap;
 	auto rate = this->_clusterData->extraData.constantRates(
 					clusterMap.value_at(clusterMap.find(_reactant)),
 					this->_clusterData->extraData.constantRates.extent(0), 0) *
@@ -1091,7 +1115,7 @@ NESinkReaction::computeReducedPartialDerivatives(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
 	IndexType gridIndex)
 {
-	auto clusterMap = this->_clusterData->extraData.fileClusterMap;
+	auto& clusterMap = this->_clusterData->extraData.fileClusterMap;
 	auto rate = this->_clusterData->extraData.constantRates(
 					clusterMap.value_at(clusterMap.find(_reactant)),
 					this->_clusterData->extraData.constantRates.extent(0), 0) *

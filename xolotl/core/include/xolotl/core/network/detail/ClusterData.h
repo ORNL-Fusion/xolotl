@@ -144,6 +144,7 @@ private:
 		I_FORMATION,
 		XE_FORMATION,
 		V_FORMATION,
+		V2_FORMATION,
 		NUM_FLOAT_VALS
 	};
 
@@ -252,6 +253,19 @@ public:
 	setVFormationEnergy(double val)
 	{
 		setVal(_floatVals, V_FORMATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getV2FormationEnergy() const
+	{
+		return _floatVals[V2_FORMATION];
+	}
+
+	void
+	setV2FormationEnergy(double val)
+	{
+		setVal(_floatVals, V2_FORMATION, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

@@ -160,30 +160,34 @@ NEClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	const auto& reg = cluster.getRegion();
 	double radius = 0.0;
 	double FourPi = 4.0 * ::xolotl::core::pi;
+	double omega =
+		0.25 * latticeParameter * latticeParameter * latticeParameter;
 	if (reg.isSimplex()) {
 		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {
-			radius = latticeParameter * ::xolotl::core::pi * 2.0;
+			radius = latticeParameter / 2.0;
 		}
 		else if (comp.isOnAxis(Species::Xe)) {
 			radius = impurityRadius;
 		}
 		else if (comp.isOnAxis(Species::V)) {
-			radius = latticeParameter * comp[Species::V] * ::xolotl::core::pi *
-				2.0 * sqrt(2.0);
+			radius = latticeParameter * sqrt(2.0) / 2.0;
 		}
 		else {
-			radius =
-				cbrt((3.0 * (double)comp[Species::Xe]) / (FourPi * _density));
+			radius = latticeParameter * sqrt(2.0) / 2.0 +
+				cbrt((3.0 * omega * (double)comp[Species::V]) / FourPi) -
+				cbrt((3.0 * omega) / FourPi);
 		}
 	}
 	else {
-		// Loop on the Xe range
-		for (auto j : makeIntervalRange(reg[Species::Xe])) {
-			radius += cbrt((3.0 * (double)j) / (FourPi * _density));
+		// Loop on the V range
+		for (auto j : makeIntervalRange(reg[Species::V])) {
+			radius += latticeParameter * sqrt(2.0) / 2.0 +
+				cbrt((3.0 * omega * (double)j) / FourPi) -
+				cbrt((3.0 * omega) / FourPi);
 		}
 		// Average the radius
-		radius /= reg[Species::Xe].length();
+		radius /= reg[Species::V].length();
 	}
 
 	return radius;
