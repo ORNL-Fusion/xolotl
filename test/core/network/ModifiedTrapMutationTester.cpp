@@ -9,7 +9,7 @@
 
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/core/network/impl/TrapMutationReaction.tpp>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 
 using namespace std;
@@ -147,7 +147,7 @@ private:
 		const std::string& materialName, const std::vector<double>& grid)
 	{
 		// Create the option to create a network
-		xolotl::options::Options opts;
+		xolotl::options::ConfOptions opts;
 		// Create a good parameter file
 		std::string parameterFile = "param.txt";
 		std::ofstream paramFile(parameterFile);

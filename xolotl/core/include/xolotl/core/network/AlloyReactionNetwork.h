@@ -35,9 +35,36 @@ public:
 	checkLargestClusterId();
 
 	void
-	setConstantRates(RateVector) override
+	setConstantRates(RatesView rates, IndexType gridIndex) override;
+
+	void
+	setConstantConnectivities(ConnectivitiesPair conns) override;
+
+	void
+	setConstantRateEntries() override;
+
+	std::string
+	getMonitorOutputFileName() const override
 	{
+		return "Alloy.dat";
 	}
+
+	std::string
+	getMonitorDataHeaderString() const override;
+
+	void
+	addMonitorDataValues(Kokkos::View<const double*> conc, double fac,
+		std::vector<double>& totalVals) override;
+
+	std::size_t
+	getMonitorDataLineSize() const override
+	{
+		return getSpeciesListSize() * 4;
+	}
+
+	void
+	writeMonitorDataLine(
+		const std::vector<double>& localData, double time) override;
 
 private:
 	double

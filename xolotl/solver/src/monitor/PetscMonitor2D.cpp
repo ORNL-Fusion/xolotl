@@ -1126,7 +1126,6 @@ PetscMonitor2D::computeXenonRetention(
 	Composition xeComp = Composition::zero();
 	xeComp[Spec::Xe] = 1;
 	auto xeCluster = network.findCluster(xeComp, plsm::HostMemSpace{});
-	auto xeId = xeCluster.getId();
 
 	// Loop on the grid
 	for (auto yj = ys; yj < ys + ym; yj++)
@@ -1664,7 +1663,7 @@ PetscMonitor2D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Take care of bursting
 	using NetworkType = core::network::IPSIReactionNetwork;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
-	auto specIdV = psiNetwork->getVacancySpeciesId();
+	// auto specIdV = psiNetwork->getVacancySpeciesId();
 	auto specIdI = psiNetwork->getInterstitialSpeciesId();
 	auto nBurst = std::vector<double>(3, 0.0);
 

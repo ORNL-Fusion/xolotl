@@ -114,7 +114,6 @@ XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	Kokkos::Array<Kokkos::View<const double*>, 5> concVec = {concVector[0],
 		concVector[1], concVector[2], concVector[3], concVector[4]};
 
-	auto location_ = location;
 	auto clusterIds = this->advClusterIds;
 	auto clusters = this->advClusters;
 	auto sinkStrengths = this->advSinkStrengths;
@@ -142,6 +141,7 @@ XGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	}
 	// Here we are NOT on the GB sink
 	else {
+		auto location_ = location;
 		Kokkos::parallel_for(
 			clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
 				// for (auto const& currId : advectingClusters) {
@@ -185,6 +185,7 @@ XGBAdvectionHandler::computePartialsForAdvection(
 	auto clusterIds = this->advClusterIds;
 	auto clusters = this->advClusters;
 	auto sinkStrengths = this->advSinkStrengths;
+	auto dim = this->dimension;
 
 	// If we are on the sink, the partial derivatives are not the same
 	// Both sides are giving their concentrations to the center
@@ -196,7 +197,7 @@ XGBAdvectionHandler::computePartialsForAdvection(
 				double sinkStrength = sinkStrengths[i];
 
 				// 1D case
-				if (dimension == 1) {
+				if (dim == 1) {
 					val[i * 2] = (3.0 * sinkStrength * diffCoeff) /
 						(kBoltzmann * temperature * pow(hxLeft, 5)); // left
 					val[(i * 2) + 1] = (3.0 * sinkStrength * diffCoeff) /

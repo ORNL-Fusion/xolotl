@@ -6,7 +6,7 @@
 #include <xolotl/core/network/detail/impl/ClusterData.tpp>
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/Tokenizer.h>
 
@@ -31,7 +31,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	_subpaving(subpaving),
 	_clusterData("Cluster Data"),
 	_worker(*this),
-	_speciesLabelMap(createSpeciesLabelMap())
+	_speciesLabelMap(createSpeciesLabelMap()),
+	_minRadiusSizes(computeMinRadiusSizes(opts))
 {
 	_clusterData.h_view() = ClusterData(_subpaving, gridSize);
 	copyClusterDataView();
@@ -89,7 +90,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 template <typename TImpl>
 ReactionNetwork<TImpl>::ReactionNetwork(
 	const Subpaving& subpaving, IndexType gridSize) :
-	ReactionNetwork(subpaving, gridSize, options::Options{})
+	ReactionNetwork(subpaving, gridSize, options::ConfOptions{})
 {
 }
 
@@ -380,26 +381,6 @@ ReactionNetwork<TImpl>::getAllMomentIdInfo()
 }
 
 template <typename TImpl>
-std::string
-ReactionNetwork<TImpl>::getHeaderString()
-{
-	// Create the object to return
-	std::stringstream header;
-
-	// Loop on all the clusters
-	auto numSpecies = getSpeciesListSize();
-	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		auto speciesName = this->getSpeciesName(id);
-		header << speciesName << "_density " << speciesName << "_atom "
-			   << speciesName << "_diameter " << speciesName
-			   << "_partial_density " << speciesName << "_partial_atom "
-			   << speciesName << "_partial_diameter ";
-	}
-
-	return header.str();
-}
-
-template <typename TImpl>
 void
 ReactionNetwork<TImpl>::initializeClusterMap(
 	typename ReactionNetwork<TImpl>::BoundVector bounds,
@@ -456,8 +437,6 @@ ReactionNetwork<TImpl>::initializeClusterMap(
 		isInSub.push_back(localIsInSub);
 		backMap.push_back(localBackMap);
 	}
-
-	return;
 }
 
 template <typename TImpl>
@@ -467,28 +446,69 @@ ReactionNetwork<TImpl>::initializeReactions()
 	Connectivity connectivity;
 	defineReactions(connectivity);
 	generateDiagonalFill(connectivity);
-
-	return;
+	setConstantRateEntries();
 }
 
 template <typename TImpl>
 void
-ReactionNetwork<TImpl>::setConstantRates(
-	typename ReactionNetwork<TImpl>::RateVector rates)
+ReactionNetwork<TImpl>::setConstantRates(RatesView rates, IndexType gridIndex)
 {
-	asDerived()->setConstantRates(rates);
-
-	return;
+	asDerived()->setConstantRates(rates, gridIndex);
 }
 
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setConstantConnectivities(
-	typename ReactionNetwork<TImpl>::ConnectivitiesVector conns)
+	typename ReactionNetwork<TImpl>::ConnectivitiesPair conns)
 {
 	asDerived()->setConstantConnectivities(conns);
+}
 
-	return;
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::initializeRateEntries(
+	const ConnectivitiesPair& conns, IndexType subId)
+{
+	auto dConnsRowsView = ConnectivitiesPairView(
+		"dConstantConnectivitiesRows", conns.first.size());
+	auto dConnsEntriesView = ConnectivitiesPairView(
+		"dConstantConnectivitiesEntries", conns.second.size());
+	auto hConnsRowsView = create_mirror_view(dConnsRowsView);
+	auto hConnsEntriesView = create_mirror_view(dConnsEntriesView);
+	for (auto i = 0; i < conns.first.size(); i++) {
+		hConnsRowsView(i) = conns.first[i];
+	}
+	for (auto i = 0; i < conns.second.size(); i++) {
+		hConnsEntriesView(i) = conns.second[i];
+	}
+	deep_copy(dConnsRowsView, hConnsRowsView);
+	deep_copy(dConnsEntriesView, hConnsEntriesView);
+
+	auto localInSub = isInSub[subId];
+	auto localBackMap = backMap[subId];
+	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
+		reaction.defineRateEntries(
+			dConnsRowsView, dConnsEntriesView, localInSub, localBackMap, subId);
+	});
+	Kokkos::fence();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::initializeRateEntries(
+	const std::vector<ConnectivitiesPair>& connectivities)
+{
+	_reactions.allocateRateEntries(connectivities.size());
+	for (IndexType i = 0; i < connectivities.size(); ++i) {
+		initializeRateEntries(connectivities[i], i);
+	}
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setConstantRateEntries()
+{
+	asDerived()->setConstantRateEntries();
 }
 
 template <typename TImpl>
@@ -576,10 +596,9 @@ ReactionNetwork<TImpl>::computeConstantRates(ConcentrationsView concentrations,
 		concentrations, gridIndex, surfaceDepth, spacing);
 
 	auto localInSub = isInSub[subId];
-	auto localBackMap = backMap[subId];
 	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
 		reaction.contributeConstantRates(
-			concentrations, rates, localInSub, localBackMap, gridIndex);
+			concentrations, rates, localInSub, subId, gridIndex);
 	});
 	Kokkos::fence();
 }
@@ -1430,8 +1449,6 @@ ReactionNetwork<TImpl>::updateOutgoingDiffFluxes(double* gridPointSolution,
 			}
 		}
 	}
-
-	return;
 }
 
 template <typename TImpl>
@@ -1475,8 +1492,6 @@ ReactionNetwork<TImpl>::updateOutgoingAdvecFluxes(double* gridPointSolution,
 
 		advClusterIdx++;
 	}
-
-	return;
 }
 
 template <typename TImpl>
@@ -1497,6 +1512,20 @@ ReactionNetwork<TImpl>::createSpeciesLabelMap() noexcept
 			toLabelString(s.value), SpeciesId(s.value, getNumberOfSpecies()));
 	}
 	return labelMap;
+}
+
+template <typename TImpl>
+std::vector<AmountType>
+ReactionNetwork<TImpl>::computeMinRadiusSizes(const options::IOptions& opts)
+{
+	auto numSpecies = getNumberOfSpecies();
+	auto minRadiusSizes = std::vector<AmountType>(numSpecies, 1);
+	auto minSizes = opts.getRadiusMinSizes();
+	for (auto i = 0; i < std::min(minSizes.size(), minRadiusSizes.size());
+		 i++) {
+		minRadiusSizes[i] = minSizes[i];
+	}
+	return minRadiusSizes;
 }
 
 template <typename TImpl>
@@ -1658,7 +1687,8 @@ void
 ReactionNetworkWorker<TImpl>::defineReactions(Connectivity& connectivity)
 {
 	auto generator = _nw.asDerived()->getReactionGenerator();
-	generator.setConstantConnectivities(_nw._constantConns);
+	generator.setConstantConnectivities(
+		_nw._constantConnsRows, _nw._constantConnsEntries);
 	_nw._reactions = generator.generateReactions();
 	connectivity = generator.getConnectivity();
 }

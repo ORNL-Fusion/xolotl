@@ -23,10 +23,9 @@ private:
 	 * \see FluxHandler.h
 	 */
 	double
-	FitFunction(double x)
+	FitFunction(double x) override
 	{
-		// Not actually used
-		return 0.0;
+		return 1.0;
 	}
 
 	// Define the range of possible cluster sizes, and their respective
@@ -103,8 +102,11 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
+		// Set the grid
+		xGrid = grid;
+
 		using NetworkType = network::ZrReactionNetwork;
 		auto zrNetwork = dynamic_cast<NetworkType*>(&network);
 
@@ -169,12 +171,6 @@ public:
 		Kokkos::View<double*> updatedConcOffset, int xi,
 		int surfacePos) override
 	{
-		// Define only for a 0D case
-		if (xGrid.size() != 0) {
-			throw std::runtime_error(
-				"\nThe alpha Zr problem is not defined for more than 0D!");
-		}
-
 		double attenuation = 1.0;
 		if (cascadeDose > 0.0) {
 			attenuation = ((1.0 - cascadeEfficiency) / 2.0) *
@@ -197,7 +193,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	std::vector<std::pair<IdType, double>>
-	getImplantedFlux(std::vector<IdType> map)
+	getImplantedFlux(std::vector<IdType> map) override
 	{
 		std::vector<std::pair<IdType, double>> toReturn;
 		// Loop on the map
@@ -218,7 +214,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector)
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector) override
 	{
 		fluxIndices.clear();
 		incidentFluxVec.clear();

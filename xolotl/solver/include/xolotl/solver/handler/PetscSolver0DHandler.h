@@ -25,9 +25,9 @@ public:
 	 *
 	 * @param _network The reaction network to use.
 	 */
-	PetscSolver0DHandler(
-		NetworkType& _network, const options::IOptions& options) :
-		PetscSolverHandler(_network, options)
+	PetscSolver0DHandler(NetworkType& _network,
+		perf::IPerfHandler& _perfHandler, const options::IOptions& options) :
+		PetscSolverHandler(_network, _perfHandler, options)
 	{
 	}
 
@@ -40,25 +40,25 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	createSolverContext(DM& da);
+	createSolverContext(DM& da) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeSolverContext(DM& da, TS& ts);
+	initializeSolverContext(DM& da, Mat& J) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC);
+	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	initGBLocation(DM& da, Vec& C)
+	initGBLocation(DM& da, Vec& C) override
 	{
 		// Doesn't do anything in 0D
 		return;
@@ -69,7 +69,7 @@ public:
 	 */
 	std::vector<
 		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
-	getConcVector(DM& da, Vec& C);
+	getConcVector(DM& da, Vec& C) override;
 
 	/**
 	 * \see ISolverHandler.h
@@ -78,25 +78,25 @@ public:
 	setConcVector(DM& da, Vec& C,
 		std::vector<
 			std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
-			concVector);
+			concVector) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	updateConcentration(TS& ts, Vec& localC, Vec& F, PetscReal ftime);
+	updateConcentration(TS& ts, Vec& localC, Vec& F, PetscReal ftime) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	computeJacobian(TS& ts, Vec& localC, Mat& J, PetscReal ftime);
+	computeJacobian(TS& ts, Vec& localC, Mat& J, PetscReal ftime) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	IdType
-	getSurfacePosition(IdType j = -1, IdType k = -1) const
+	getSurfacePosition(IdType j = badId, IdType k = badId) const override
 	{
 		return 0;
 	}
@@ -105,16 +105,27 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1)
+	setSurfacePosition(IdType pos, IdType j = badId, IdType k = badId) override
 	{
 		return;
+	}
+
+	/**
+	.* \see ISolverHandler.h
+	 */
+	void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths) override
+	{
+		temperatures = temperature;
+		depths = std::vector<double>(1, 1.0);
 	}
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfaceOffset(int offset, int j = -1, int k = -1)
+	setSurfaceOffset(int offset) override
 	{
 		return;
 	}

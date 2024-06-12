@@ -5,6 +5,7 @@ set -eu -o pipefail
 
 # Variables
 _prefix=$HOME/.local
+_do_install=1
 _dry_run=0
 _do_cleanup=1
 _do_pull=1
@@ -14,11 +15,17 @@ _use_omp=0
 _petsc_extra_args=""
 _petsc_dir=$PWD
 _petsc_dir_arch_set=""
+_prefix_arg=""
 
 # Read command-line arguments
 while [ $# -gt 0 ]
 do
     case $1 in
+    --help|-h)
+        echo "For help with this script please see:"
+        echo "https://github.com/ORNL-Fusion/xolotl/wiki/Build-Configuration#petsc-build-script"
+        exit 0
+        ;;
     --dry-run)
         _dry_run=1
         ;;
@@ -30,6 +37,9 @@ do
         ;;
     --prefix=*)
         _prefix="${1:9}" # strip "--prefix="
+        ;;
+    --no-install)
+        _do_install=0
         ;;
     --petsc-dir=*)
         _petsc_dir="${1:12}" # strip "--petsc-dir="
@@ -61,6 +71,9 @@ do
     --get-hdf5)
         _petsc_extra_args="${_petsc_extra_args} --download-hdf5"
         ;;
+    --get-hypre)
+        _petsc_extra_args="${_petsc_extra_args} --download-hypre"
+        ;;
     *)
         echo "Unsupported argument: $1"
         exit 1
@@ -69,7 +82,11 @@ do
     shift
 done
 
-_petsc_extra_args="${_petsc_extra_args} ${_petsc_dir_arch_set}"
+if [ ${_debug} -eq 0 ]; then
+    _petsc_extra_args="${_petsc_extra_args} \
+        --COPTFLAGS=-O3 \
+        --CXXOPTFLAGS=-O3"
+fi
 
 # Check for CUDA
 if ! [ -x "$(command -v nvidia-smi)" ]; then
@@ -79,9 +96,10 @@ fi
 if [ ${_use_cuda} -eq 1 ]; then
     _cuda_sm_ver=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader)
     _cuda_sm=${_cuda_sm_ver//./}
-    _petsc_cuda_args=" \
-        --with-cuda-arch=${_cuda_sm} \
-        --CUDAOPTFLAGS=-O3"
+    _petsc_cuda_args="--with-cuda-arch=${_cuda_sm}"
+    if [ ${_debug} -eq 0 ]; then
+        _petsc_cuda_args="${_petsc_cuda_args} --CUDAOPTFLAGS=-O3"
+    fi
     _petsc_extra_args="${_petsc_extra_args} ${_petsc_cuda_args}"
 fi
 
@@ -112,9 +130,14 @@ if [ ${_do_pull} -eq 1 ]; then
     fi
 fi
 
+if [ ${_do_install} -eq 1 ]; then
+    _prefix_arg="--prefix=${_prefix}"
+    _install_cmd="make ${_petsc_dir_arch_set} -B install"
+fi
+
 _conf_cmd="./configure \
     ${_petsc_dir_arch_set} \
-    --prefix=${_prefix} \
+    ${_prefix_arg} \
     --with-cc=mpicc \
     --with-cxx=mpicxx \
     --with-fc=0 \
@@ -124,22 +147,31 @@ _conf_cmd="./configure \
     --with-shared-libraries \
     --with-64-bit-indices \
     --download-kokkos \
-    --download-kokkos-kernels \
-    --COPTFLAGS=-O3 \
-    --CXXOPTFLAGS=-O3"
+    --download-kokkos-kernels"
 
 _conf_cmd="${_conf_cmd} ${_petsc_extra_args}"
 _build_cmd="make ${_petsc_dir_arch_set} all"
-_install_cmd="make ${_petsc_dir_arch_set} install"
 
 if [ ${_dry_run} -eq 0 ]; then
+    echo "Configure:"
+    echo ${_conf_cmd}
     ${_conf_cmd}
+    echo "Build:"
+    echo ${_build_cmd}
     ${_build_cmd}
-    ${_install_cmd}
+    if [ ${_do_install} -eq 1 ]; then
+        echo "Install:"
+        echo ${_install_cmd}
+        ${_install_cmd}
+    fi
 else
     echo "Configure:"
     echo ${_conf_cmd}
+    echo "Build:"
     echo ${_build_cmd}
-    echo ${_install_cmd}
+    if [ ${_do_install} -eq 1 ]; then
+        echo "Install:"
+        echo ${_install_cmd}
+    fi
 fi
 

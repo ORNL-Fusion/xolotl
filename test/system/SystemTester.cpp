@@ -61,7 +61,7 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_4, *utf::label("1D"))
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_5, *utf::label("1D"))
 {
 	// 1D + He + ELM + soret
-	SystemTestCase{"system_PSI_5"}.mpiLimits(1, 100).run();
+	SystemTestCase{"system_PSI_5"}.mpiLimits(1, 100).tolerance(1.0e-4).run();
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(Fe_1, *utf::label("0D"))

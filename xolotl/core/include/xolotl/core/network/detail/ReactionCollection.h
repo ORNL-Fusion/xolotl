@@ -68,6 +68,25 @@ public:
 	setGridSize(IndexType gridSize)
 	{
 		_data.setGridSize(gridSize);
+
+		_reactions.forEachType([gridSize, this](IndexType reactionTypeIndex,
+								   IndexType numReactions,
+								   auto reactionTypeTag) {
+			using ReactionType = typename decltype(reactionTypeTag)::Type;
+			_data.constantRates[reactionTypeIndex] =
+				ReactionType::allocateConstantRateView(numReactions, gridSize);
+		});
+	}
+
+	void
+	allocateRateEntries(IndexType numSubInstances)
+	{
+		_data.allocateRateEntries(numSubInstances);
+		auto reactionData = ReactionDataRef<NetworkType>(_data);
+		forEach(
+			"ReactionCollection::allocateRateEntries",
+			DEVICE_LAMBDA(
+				auto&& reaction) { reaction.getRateEntries(reactionData); });
 	}
 
 	void

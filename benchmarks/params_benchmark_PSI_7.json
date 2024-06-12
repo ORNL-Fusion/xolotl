@@ -1,0 +1,31 @@
+{
+    "vizHandler": "dummy",
+    "flux": 1.0e-2,
+    "netParam": "0 0 0 100 1000",
+    "gridParam": "51 200",
+    "boundary": "1 1",
+    "material": "Pulsed",
+    "dimensions": 1,
+    "perfHandler": "dummy",
+    "tempParam": 400,
+    "grouping": "10001 4 4",
+    "process": "reaction diff movingSurface",
+    "pulse": "2.0e-5 0.5",
+    "migrationThreshold": 1.1,
+    "petscArgs": [
+        "-helium_retention",
+        "-ts_dt 1e-10",
+        "-snes_force_iteration",
+        "-ts_max_time 2.0e-5",
+        "-ts_adapt_dt_max 1.0e-6",
+        "-ts_adapt_wnormtype INFINITY",
+        "-ts_exact_final_time stepover",
+        "-fieldsplit_0_pc_type jacobi",
+        "-ts_max_snes_failures -1",
+        "-pc_fieldsplit_detect_coupling",
+        "-ts_monitor",
+        "-pc_type fieldsplit",
+        "-fieldsplit_1_pc_type redundant",
+        "-ts_max_steps 1000000"
+    ]
+}

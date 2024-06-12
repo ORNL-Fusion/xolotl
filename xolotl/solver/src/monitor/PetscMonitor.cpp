@@ -98,6 +98,20 @@ computeXenonRetention(
 	PetscFunctionReturn(0);
 }
 
+/**
+ * This is a monitoring method that will compute average density and diameter
+ * of defects.
+ */
+PetscErrorCode
+computeAlphaZr(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
+{
+	PetscFunctionBeginUser;
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->computeAlphaZr(
+		ts, timestep, time, solution));
+	PetscFunctionReturn(0);
+}
+
 PetscErrorCode
 computeAlloy(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
@@ -335,6 +349,13 @@ PetscMonitor::monitorPerf(
 
 PetscErrorCode
 PetscMonitor::computeHeliumRetention(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor::computeAlphaZr(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	PetscFunctionReturn(0);

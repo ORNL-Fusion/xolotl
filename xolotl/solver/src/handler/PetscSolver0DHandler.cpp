@@ -48,7 +48,7 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 }
 
 void
-PetscSolver0DHandler::initializeSolverContext(DM& da, TS& ts)
+PetscSolver0DHandler::initializeSolverContext(DM& da, Mat& J)
 {
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
@@ -63,12 +63,13 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, TS& ts)
 	// Initialize the temperature handler
 	temperatureHandler->initialize(dof);
 
+	// Tell the network the number of grid points on this process
+	network.setGridSize(1);
+
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
 
 	// Preallocate matrix
-	Mat J;
-	PetscCallVoid(TSGetRHSJacobian(ts, &J, nullptr, nullptr, nullptr));
 	auto [rows, cols] = convertToCoordinateListPair(dof, dfill);
 	// handling temperature (FIXME)
 	rows.push_back(dof);
@@ -197,9 +198,9 @@ PetscSolver0DHandler::getConcVector(DM& da, Vec& C)
 	// Create the temporary vector for this grid point
 	std::vector<std::pair<IdType, double>> tempVector;
 	for (auto l = 0; l < dof + 1; ++l) {
-		if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
-			tempVector.push_back(std::make_pair(l, gridPointSolution[l]));
-		}
+		//		if (std::fabs(gridPointSolution[l]) > 1.0e-20) {
+		tempVector.push_back(std::make_pair(l, gridPointSolution[l]));
+		//		}
 	}
 	std::vector<std::vector<std::pair<IdType, double>>> tempTempVector;
 	tempTempVector.push_back(tempVector);
@@ -274,13 +275,6 @@ PetscSolver0DHandler::updateConcentration(
 	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 	auto updatedConcOffset = subview(updatedConcs, 0, Kokkos::ALL).view();
 
-	// Degrees of freedom is the total number of clusters in the network +
-	// moments
-	const auto dof = network.getDOF();
-
-	// Update the time in the network
-	network.setTime(ftime);
-
 	// Get the temperature from the temperature handler
 	temperatureHandler->setTemperature(concOffset);
 	double temp = temperatureHandler->getTemperature(gridPosition, ftime);
@@ -322,21 +316,8 @@ PetscSolver0DHandler::computeJacobian(
 	PetscOffsetView<const PetscScalar**> concs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
 
-	// Degrees of freedom is the total number of clusters in the network +
-	// moments
-	const auto dof = network.getDOF();
-
-	// Arguments for MatSetValuesStencil called below
-	MatStencil rowId;
-	MatStencil colIds[dof];
-	MatStencil colId;
-	IdType pdColIdsVectorSize = 0;
-
 	// Set the grid position
 	plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
-
-	// Update the time in the network
-	network.setTime(ftime);
 
 	// Get the temperature from the temperature handler
 	auto concOffset = subview(concs, 0, Kokkos::ALL).view();

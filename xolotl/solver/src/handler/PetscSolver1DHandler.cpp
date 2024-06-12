@@ -107,7 +107,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 }
 
 void
-PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
+PetscSolver1DHandler::initializeSolverContext(DM& da, Mat& J)
 {
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
@@ -156,8 +156,6 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, TS& ts)
 	network.getDiagonalFill(dfill);
 
 	// Load up the block fills
-	Mat J;
-	PetscCallVoid(TSGetRHSJacobian(ts, &J, nullptr, nullptr, nullptr));
 	auto nwEntries = convertToRowColPairList(dof, dfill);
 	nNetworkEntries = nwEntries.size();
 	//
@@ -417,6 +415,7 @@ PetscSolver1DHandler::initializeConcentration(
 				// Check the distance
 				if (distance > right - 1.0e-4) {
 					// Create the arrays to receive the data
+					std::vector<PetscScalar> leftConcVec, rightConcVec;
 					PetscScalar *rightConc, *leftConc;
 
 					// Check where all the needed data is located
@@ -453,7 +452,8 @@ PetscSolver1DHandler::initializeConcentration(
 						// Receive the data on the new proc
 						if (procId == totalProcs[2]) {
 							// Receive the data
-							leftConc = new PetscScalar[dof + 1];
+							leftConcVec.resize(dof + 1);
+							leftConc = leftConcVec.data();
 							MPI_Recv(leftConc, dof + 1, MPI_DOUBLE,
 								totalProcs[0], 2, MPI_COMM_WORLD,
 								MPI_STATUS_IGNORE);
@@ -477,7 +477,8 @@ PetscSolver1DHandler::initializeConcentration(
 						// Receive the data on the new proc
 						if (procId == totalProcs[2]) {
 							// Receive the data
-							rightConc = new PetscScalar[dof + 1];
+							rightConcVec.resize(dof + 1);
+							rightConc = rightConcVec.data();
 							MPI_Recv(rightConc, dof + 1, MPI_DOUBLE,
 								totalProcs[1], 1, MPI_COMM_WORLD,
 								MPI_STATUS_IGNORE);
@@ -496,11 +497,6 @@ PetscSolver1DHandler::initializeConcentration(
 							newConc[k] = leftConc[k] +
 								(rightConc[k] - leftConc[k]) * xFactor;
 						}
-
-						if (totalProcs[2] != totalProcs[0])
-							delete leftConc;
-						if (totalProcs[2] != totalProcs[1])
-							delete rightConc;
 					}
 
 					break;
@@ -545,7 +541,8 @@ PetscSolver1DHandler::initializeConcentration(
 
 		// Boundary conditions
 		// Set the index to scatter at the surface
-		PetscInt *lidxFrom, *lidxTo, lict = 0;
+		PetscInt* lidxTo{nullptr};
+		PetscInt* lidxFrom{nullptr};
 		PetscCallVoid(PetscMalloc1(1, &lidxTo));
 		PetscCallVoid(PetscMalloc1(1, &lidxFrom));
 		lidxTo[0] = 0;
@@ -590,6 +587,16 @@ PetscSolver1DHandler::initializeConcentration(
 void
 PetscSolver1DHandler::initGBLocation(DM& da, Vec& C)
 {
+	// Need to use the NE network here
+	using NetworkType = core::network::NEReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	auto neNetwork = dynamic_cast<NetworkType*>(&network);
+	if (!neNetwork) {
+		return;
+	}
+
+	PetscErrorCode ierr;
+
 	// Pointer for the concentration vector
 	PetscScalar** concentrations = nullptr;
 	PetscCallVoid(DMDAVecGetArrayDOF(da, C, &concentrations));
@@ -600,11 +607,6 @@ PetscSolver1DHandler::initGBLocation(DM& da, Vec& C)
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
 	const auto dof = network.getDOF();
-
-	// Need to use the NE network here
-	using NetworkType = core::network::NEReactionNetwork;
-	using Spec = typename NetworkType::Species;
-	auto& neNetwork = dynamic_cast<NetworkType&>(network);
 
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
@@ -621,7 +623,7 @@ PetscSolver1DHandler::initGBLocation(DM& da, Vec& C)
 
 			// Transfer the local amount of Xe clusters
 			setLocalXeRate(
-				neNetwork.getTotalAtomConcentration(dConcs, Spec::Xe, 1),
+				neNetwork->getTotalAtomConcentration(dConcs, Spec::Xe, 1),
 				xi - localXS);
 
 			// Loop on all the clusters to initialize at 0.0
@@ -763,9 +765,6 @@ PetscSolver1DHandler::updateConcentration(
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
 	PetscOffsetView<PetscScalar**> updatedConcs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOFWrite(da, F, &updatedConcs));
-
-	// Degrees of freedom is the total number of clusters in the network
-	const auto dof = network.getDOF();
 
 	// Computing the trapped atom concentration is only needed for the
 	// attenuation
@@ -1043,9 +1042,6 @@ PetscSolver1DHandler::computeJacobian(
 
 	PetscOffsetView<const PetscScalar**> concs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
-
-	// Degrees of freedom is the total number of clusters in the network
-	const auto dof = network.getDOF();
 
 	// Get the total number of diffusing clusters
 	const auto nSoret =
