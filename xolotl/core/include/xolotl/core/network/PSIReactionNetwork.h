@@ -30,8 +30,6 @@ class PSIReactionNetwork :
 	public ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>
 {
 	friend class ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
-	friend class detail::ReactionNetworkWorker<
-		PSIReactionNetwork<TSpeciesEnum>>;
 
 public:
 	using Superclass = ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;

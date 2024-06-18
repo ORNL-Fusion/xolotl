@@ -30,7 +30,6 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	Superclass(gridSize),
 	_subpaving(subpaving),
 	_clusterData("Cluster Data"),
-	_worker(*this),
 	_speciesLabelMap(createSpeciesLabelMap()),
 	_minRadiusSizes(computeMinRadiusSizes(opts))
 {
@@ -513,7 +512,8 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::updateDiffusionCoefficients()
 {
-	_worker.updateDiffusionCoefficients();
+	_clusterData.h_view().updateDiffusionCoefficients();
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
@@ -972,8 +972,7 @@ ReactionNetwork<TImpl>::getTotalsImpl(ConcentrationsView concentrations,
 		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
 			result.data(), result.size());
 
-	Kokkos::parallel_reduce("ReactionNetworkWorker::getTotals",
-		this->_numClusters,
+	Kokkos::parallel_reduce("ReactionNetwork::getTotals", this->_numClusters,
 		TotalQuantityReduceFunctor<TImpl, TQMethods...>{
 			concentrations, tiles, clusterData, quantities},
 		temp);
@@ -1456,16 +1455,18 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::defineMomentIds()
 {
-	_worker.defineMomentIds();
+	auto nMomentIds = _clusterData.h_view().defineMomentIds();
+	this->_numDOFs = _clusterData.h_view().numClusters + nMomentIds;
+	invalidateDataMirror();
 }
 
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::defineReactions(Connectivity& connectivity)
 {
-	// _worker.defineReactions(connectivity);
 	auto generator = asDerived()->getReactionGenerator();
-	generator.setConstantConnectivities(_constantConns);
+	generator.setConstantConnectivities(
+		_constantConnsRows, _constantConnsEntries);
 	_reactions = generator.generateReactions();
 	connectivity = generator.getConnectivity();
 }
@@ -1507,98 +1508,6 @@ ReactionNetwork<TImpl>::getDiagonalFill(SparseFillMap& fillMap)
 
 namespace detail
 {
-template <typename TImpl>
-void
-ReactionNetworkWorker<TImpl>::updateDiffusionCoefficients()
-{
-    //TODO: move to ClusterData or ClusterUpdater ?
-
-	using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
-	auto clusterData = _nw._clusterData.d_view;
-	auto updater = typename Network::ClusterUpdater{};
-	Kokkos::parallel_for(
-		"ReactionNetworkWorker::updateDiffusionCoefficients",
-		Range2D({0, 0},
-			{_nw._clusterData.h_view().numClusters,
-				_nw._clusterData.h_view().gridSize}),
-		KOKKOS_LAMBDA(IndexType i, IndexType j) {
-			if (!util::equal(clusterData().diffusionFactor(i), 0.0)) {
-				updater.updateDiffusionCoefficient(clusterData(), i, j);
-			}
-		});
-	Kokkos::fence();
-	_nw.invalidateDataMirror();
-}
-
-template <typename TImpl>
-void
-ReactionNetworkWorker<TImpl>::defineMomentIds()
-{
-    //TODO: Move this to ClusterData ?
-
-	constexpr auto speciesRange = Network::getSpeciesRangeForGrouping();
-
-	auto nClusters = _nw._clusterData.h_view().numClusters;
-	auto counts = Kokkos::View<IndexType*>("Moment Id Counts", nClusters);
-
-	auto data = _nw._clusterData.d_view.data();
-
-	IndexType nMomentIds = 0;
-	Kokkos::parallel_reduce(
-		"ReactionNetworkWorker::defineMomentIds::count", nClusters,
-		KOKKOS_LAMBDA(const IndexType i, IndexType& running) {
-			const auto& reg = data->getCluster(i).getRegion();
-			IndexType count = 0;
-			for (auto k : speciesRange) {
-				if (reg[k].length() != 1) {
-					++count;
-				}
-			}
-			running += count;
-			counts(i) = count;
-		},
-		nMomentIds);
-
-	Kokkos::parallel_scan(
-		"ReactionNetworkWorker::defineMomentIds::scan", nClusters,
-		KOKKOS_LAMBDA(IndexType i, IndexType & update, const bool finalPass) {
-			const auto temp = counts(i);
-			if (finalPass) {
-				counts(i) = update;
-			}
-			update += temp;
-		});
-
-	Kokkos::parallel_for(
-		"ReactionNetworkWorker::defineMomentIds::assignMomentIds", nClusters,
-		KOKKOS_LAMBDA(const IndexType i) {
-			for (IndexType j = 0; j < data->momentIds.extent(1); ++j) {
-				data->momentIds(i, j) = Network::invalidIndex();
-			}
-
-			const auto& reg = data->getCluster(i).getRegion();
-			IndexType current = counts(i);
-			for (auto k : speciesRange) {
-				if (reg[k].length() == 1) {
-					if (data->momentIds(i, Network::mapToMomentId(k)) ==
-						nClusters + current - 1)
-						continue;
-					data->momentIds(i, Network::mapToMomentId(k)) =
-						Network::invalidIndex();
-				}
-				else {
-					data->momentIds(i, Network::mapToMomentId(k)) =
-						nClusters + current;
-					++current;
-				}
-			}
-		});
-
-	Kokkos::fence();
-	_nw._numDOFs = nClusters + nMomentIds;
-	_nw.invalidateDataMirror();
-}
-
 template <typename TImpl>
 KOKKOS_INLINE_FUNCTION
 void
