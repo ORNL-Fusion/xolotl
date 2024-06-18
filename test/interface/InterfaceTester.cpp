@@ -7,7 +7,7 @@
 #include <boost/test/framework.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/interface/Interface.h>
+#include <xolotl/interface/XolotlInterface.h>
 #include <xolotl/test/CommandLine.h>
 
 using namespace std;
@@ -49,9 +49,7 @@ BOOST_AUTO_TEST_CASE(simple0D)
 	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
 
 	// Create and run the solver
-	auto interface = xolotl::interface::XolotlInterface {
-		cl.argc, cl.argv
-	};
+	auto interface = xolotl::interface::XolotlInterface{cl.argc, cl.argv};
 	interface.solveXolotl();
 
 	// Get data to check

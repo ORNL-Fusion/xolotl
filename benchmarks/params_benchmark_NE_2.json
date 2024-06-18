@@ -1,0 +1,27 @@
+{
+    "vizHandler": "dummy",
+    "flux": 8.0e-9,
+    "netParam": "100000 0 0 0 0",
+    "material": "Fuel",
+    "dimensions": 0,
+    "perfHandler": "os",
+    "tempParam": 1400,
+    "grouping": "101 2",
+    "process": "reaction",
+    "radiusSize": 50,
+    "xenonDiffusivity": 0.075,
+    "petscArgs": [
+        "-xenon_retention",
+        "-ts_max_time 7.0e8",
+        "-ts_adapt_dt_max 5.0e5",
+        "-ts_dt 1.0e-1",
+        "-ts_exact_final_time stepover",
+        "-fieldsplit_0_pc_type jacobi",
+        "-ts_max_snes_failures -1",
+        "-pc_fieldsplit_detect_coupling",
+        "-ts_monitor",
+        "-pc_type fieldsplit",
+        "-fieldsplit_1_pc_type redundant",
+        "-ts_max_steps 100"
+    ]
+}

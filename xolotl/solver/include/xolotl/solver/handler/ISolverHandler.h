@@ -227,7 +227,7 @@ public:
 	 * @return The position of the surface at this y,z coordinates
 	 */
 	virtual IdType
-	getSurfacePosition(IdType j = -1, IdType k = -1) const = 0;
+	getSurfacePosition(IdType j = badId, IdType k = badId) const = 0;
 
 	/**
 	 * Set the position of the surface.
@@ -237,7 +237,7 @@ public:
 	 * @param k The index on the grid in the z direction
 	 */
 	virtual void
-	setSurfacePosition(IdType pos, IdType j = -1, IdType k = -1) = 0;
+	setSurfacePosition(IdType pos, IdType j = badId, IdType k = badId) = 0;
 
 	/**
 	 * Set the number of grid points we want to move by at the surface.
@@ -347,6 +347,16 @@ public:
 	 */
 	virtual std::vector<std::vector<std::vector<std::array<double, 4>>>>&
 	getLocalNE() = 0;
+
+	/**
+	 * Get the network temperature and depth that can be passed to an app.
+	 *
+	 * @param temperatures The local vector of temperatures
+	 * @param depth The corresponding depths
+	 */
+	virtual void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths) = 0;
 
 	/**
 	 * Set the latest value of the Xe flux.

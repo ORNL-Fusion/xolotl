@@ -503,6 +503,7 @@ PetscSolver3DHandler::initializeConcentration(
 						// Check the distance
 						if (distance > right - 1.0e-4) {
 							// Create the arrays to receive the data
+							std::vector<PetscScalar> leftConcVec, rightConcVec;
 							PetscScalar *rightConc, *leftConc;
 
 							// Check where all the needed data is located
@@ -548,7 +549,8 @@ PetscSolver3DHandler::initializeConcentration(
 								// Receive the data on the new proc
 								if (procId == totalProcs[2]) {
 									// Receive the data
-									leftConc = new PetscScalar[dof + 1];
+									leftConcVec.resize(dof + 1);
+									leftConc = leftConcVec.data();
 									MPI_Recv(leftConc, dof + 1, MPI_DOUBLE,
 										totalProcs[0], 2, MPI_COMM_WORLD,
 										MPI_STATUS_IGNORE);
@@ -574,7 +576,8 @@ PetscSolver3DHandler::initializeConcentration(
 								// Receive the data on the new proc
 								if (procId == totalProcs[2]) {
 									// Receive the data
-									rightConc = new PetscScalar[dof + 1];
+									rightConcVec.resize(dof + 1);
+									rightConc = rightConcVec.data();
 									MPI_Recv(rightConc, dof + 1, MPI_DOUBLE,
 										totalProcs[1], 1, MPI_COMM_WORLD,
 										MPI_STATUS_IGNORE);
@@ -594,11 +597,6 @@ PetscSolver3DHandler::initializeConcentration(
 									newConc[k] = leftConc[k] +
 										(rightConc[k] - leftConc[k]) * xFactor;
 								}
-
-								if (totalProcs[2] != totalProcs[0])
-									delete leftConc;
-								if (totalProcs[2] != totalProcs[1])
-									delete rightConc;
 							}
 
 							break;
@@ -646,7 +644,8 @@ PetscSolver3DHandler::initializeConcentration(
 
 		// Boundary conditions
 		// Set the index to scatter at the surface
-		PetscInt *lidxFrom, *lidxTo, lict = 0;
+		PetscInt* lidxTo{nullptr};
+		PetscInt* lidxFrom{nullptr};
 		PetscCallVoid(PetscMalloc1(1, &lidxTo));
 		PetscCallVoid(PetscMalloc1(1, &lidxFrom));
 		lidxTo[0] = 0;
@@ -883,9 +882,6 @@ PetscSolver3DHandler::updateConcentration(
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
 	PetscOffsetView<PetscScalar****> updatedConcs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOFWrite(da, F, &updatedConcs));
-
-	// Degrees of freedom is the total number of clusters in the network
-	const auto dof = network.getDOF();
 
 	// Set some step size variable
 	double sy = 1.0 / (hY * hY);
@@ -1247,9 +1243,6 @@ PetscSolver3DHandler::computeJacobian(
 	PetscOffsetView<const PetscScalar****> concs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
 
-	// The degree of freedom is the size of the network
-	const auto dof = network.getDOF();
-
 	using ConcSubView = Kokkos::View<const double*>;
 	Kokkos::Array<ConcSubView, 7> concVector;
 	// Get the total number of diffusing clusters
@@ -1379,7 +1372,6 @@ PetscSolver3DHandler::computeJacobian(
 					xi > nX - 1 - rightOffset)
 					continue;
 				// Free surface GB
-				bool skip = false;
 				if (std::find_if(
 						begin(gbVector), end(gbVector), [=](auto&& pair) {
 							return xi == pair[0] && yj == pair[1] &&

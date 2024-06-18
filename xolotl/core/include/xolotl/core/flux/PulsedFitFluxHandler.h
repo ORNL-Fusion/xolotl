@@ -39,7 +39,7 @@ private:
 	 * \see FluxHandler.h
 	 */
 	double
-	FitFunction(double x)
+	FitFunction(double x) override
 	{
 		// Compute the polynomial fit
 		double value = exp(-pow((x - mu) / (sqrt(2.0) * sigma), 2.0));
@@ -70,7 +70,7 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
@@ -143,7 +143,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	setPulseTime(double time)
+	setPulseTime(double time) override
 	{
 		deltaTime = time;
 		return;
@@ -153,7 +153,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	setProportion(double a)
+	setProportion(double a) override
 	{
 		alpha = a;
 		return;

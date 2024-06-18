@@ -114,7 +114,6 @@ YGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	Kokkos::Array<Kokkos::View<const double*>, 5> concVec = {concVector[0],
 		concVector[1], concVector[2], concVector[3], concVector[4]};
 
-	auto location_ = location;
 	auto clusterIds = this->advClusterIds;
 	auto clusters = this->advClusters;
 	auto sinkStrengths = this->advSinkStrengths;
@@ -141,6 +140,7 @@ YGBAdvectionHandler::computeAdvection(network::IReactionNetwork& network,
 	}
 	// Here we are NOT on the GB sink
 	else {
+		auto location_ = location;
 		Kokkos::parallel_for(
 			clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
 				auto currId = clusterIds[i];
@@ -173,7 +173,6 @@ YGBAdvectionHandler::computePartialsForAdvection(
 	const plsm::SpaceVector<double, 3>& pos, double hxLeft, double hxRight,
 	int ix, double hy, int iy, double hz, int iz) const
 {
-	auto location_ = location;
 	auto clusterIds = this->advClusterIds;
 	auto clusters = this->advClusters;
 	auto sinkStrengths = this->advSinkStrengths;

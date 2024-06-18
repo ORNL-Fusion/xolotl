@@ -7,6 +7,7 @@
 #include <tuple>
 #include <vector>
 
+#include <xolotl/config.h>
 #include <xolotl/util/Array.h>
 #include <xolotl/util/Filesystem.h>
 
@@ -27,6 +28,15 @@ public:
 	virtual ~IOptions()
 	{
 	}
+
+	virtual void
+	printAll(std::ostream& os) const = 0;
+
+	/**
+	 * Create copy of all options
+	 */
+	virtual std::shared_ptr<IOptions>
+	makeCopy() const = 0;
 
 	/**
 	 * Read the parameters from the given file to set the different
@@ -218,6 +228,66 @@ public:
 	getProcesses() const = 0;
 
 	/**
+	 * Add enabled entry to process map
+	 */
+	virtual void
+	addProcess(const std::string& processKey) = 0;
+
+	/**
+	 * Determine if the network is being distributed to subnetworks
+	 */
+	virtual bool
+	useSubnetworks() const = 0;
+
+	/**
+	 * Obtain the initial coupling time step
+	 *
+	 * @return The initial value
+	 */
+	virtual double
+	getInitialTimeStep() const = 0;
+
+	/**
+	 * Obtain the maximum coupling time step
+	 *
+	 * @return The maximum value
+	 */
+	virtual double
+	getMaxTimeStep() const = 0;
+
+	/**
+	 * Obtain the coupling time step growth factor
+	 *
+	 * @return The growth factor
+	 */
+	virtual double
+	getTimeStepGrowthFactor() const = 0;
+
+	/**
+	 * Obtain the coupling start time
+	 *
+	 * @return The start time
+	 */
+	virtual double
+	getStartTime() const = 0;
+
+	/**
+	 * Obtain the coupling end time
+	 *
+	 * @return The end time
+	 */
+	virtual double
+	getEndTime() const = 0;
+
+	/**
+	 * Obtain the max number of coupling time steps
+	 *
+	 * @return The max number of steps
+	 */
+	virtual IdType
+	getNumberOfTimeSteps() const = 0;
+
+	/**
 	 * Obtain the string listing the wanted GB.
 	 *
 	 * @return The string of GB
@@ -264,6 +334,22 @@ public:
 	 */
 	virtual bool
 	useHDF5() const = 0;
+
+	/**
+	 * Obtain the list of network parameters
+	 *
+	 * @return vector of IDs
+	 */
+	virtual const std::vector<IdType>&
+	getNetworkParameters() const = 0;
+
+	/**
+	 * Replace all network parameters with given list
+	 *
+	 * @param params List of network parameters
+	 */
+	virtual void
+	setNetworkParameters(const std::vector<IdType>& params) = 0;
 
 	/**
 	 * Obtain the maximum value of impurities (He or Xe) to be used.
@@ -529,6 +615,5 @@ public:
 	virtual double
 	getCascadeEfficiency() const = 0;
 };
-// end class IOptions
 } /* namespace options */
 } /* namespace xolotl */

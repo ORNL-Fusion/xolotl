@@ -1,7 +1,10 @@
+#include <petscdmda_kokkos.hpp>
+
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/core/network/ZrReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/perf/ScopedTimer.h>
 #include <xolotl/solver/PetscSolver.h>
@@ -88,7 +91,7 @@ PetscMonitor1D::setup(int loop)
 	// Flags to launch the monitors or not
 	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,
 		flagPerf, flagHeRetention, flagStatus, flagXeRetention, flagTRIDYN,
-		flagAlloy, flagTemp, flagLargest;
+		flagAlloy, flagTemp, flagLargest, flagZr;
 
 	// Check the option -check_negative
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-check_negative", &flagNeg));
@@ -105,6 +108,9 @@ PetscMonitor1D::setup(int loop)
 
 	// Check the option -plot_1d
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-plot_1d", &flag1DPlot));
+
+	// Check the option -alpha_zr
+	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-alpha_zr", &flagZr));
 
 	// Check the option -helium_retention
 	PetscCallVoid(
@@ -379,6 +385,15 @@ PetscMonitor1D::setup(int loop)
 		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorPerf, this, nullptr));
 	}
 
+	// Set the monitor to output data for AlphaZr
+	if (flagZr) {
+		network.writeMonitorOutputHeader();
+
+		// computeAlphaZr will be called at each timestep
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr));
+	}
+
 	// Set the monitor to compute the helium retention
 	if (flagHeRetention) {
 		auto fluxHandler = _solverHandler->getFluxHandler();
@@ -568,18 +583,7 @@ PetscMonitor1D::setup(int loop)
 	// Set the monitor to output data for Alloy
 	if (flagAlloy) {
 		if (procId == 0 and _loopNumber == 0) {
-			// Create/open the output files
-			std::fstream outputFile;
-			outputFile.open("Alloy.dat", std::fstream::out);
-			outputFile << "#time_step time ";
-			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-				auto speciesName = network.getSpeciesName(id);
-				outputFile << speciesName << "_density " << speciesName
-						   << "_diameter " << speciesName << "_partial_density "
-						   << speciesName << "_partial_diameter ";
-			}
-			outputFile << std::endl;
-			outputFile.close();
+			network.writeMonitorOutputHeader();
 		}
 
 		// computeAlloy1D will be called at each timestep
@@ -626,7 +630,6 @@ PetscMonitor1D::setup(int loop)
 	// Set the monitor to monitor the concentration of the largest cluster
 	if (flagLargest) {
 		// Look for the largest cluster
-		auto& network = _solverHandler->getNetwork();
 		_largestClusterId = network.getLargestClusterId();
 
 		// Find the threshold
@@ -1156,7 +1159,6 @@ PetscMonitor1D::computeHeliumRetention(
 				outputFile << _nSurf[i] << " ";
 			}
 		}
-		auto tempHandler = _solverHandler->getTemperatureHandler();
 		outputFile << _nHeliumBurst << " " << _nDeuteriumBurst << " "
 				   << _nTritiumBurst << std::endl;
 		outputFile.close();
@@ -1237,7 +1239,6 @@ PetscMonitor1D::computeXenonRetention(
 	Composition xeComp = Composition::zero();
 	xeComp[Spec::Xe] = 1;
 	auto xeCluster = network.findCluster(xeComp, plsm::HostMemSpace{});
-	auto xeId = xeCluster.getId();
 
 	// Loop on the grid
 	for (auto xi = xs; xi < xs + xm; xi++) {
@@ -1435,103 +1436,104 @@ PetscMonitor1D::computeAlloy(
 
 	// Get the physical grid and its length
 	auto grid = _solverHandler->getXGrid();
-	auto xSize = grid.size();
 
 	// Get the da from ts
 	DM da;
 	PetscCall(TSGetDM(ts, &da));
 
 	// Get the array of concentration
-	PetscReal** solutionArray;
-	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
+	PetscOffsetView<const PetscScalar**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
 
 	using NetworkType = core::network::AlloyReactionNetwork;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
-
-	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
-	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 4, 0.0);
-
-	// Get the minimum size for the loop densities and diameters
-	auto minSizes = _solverHandler->getMinSizes();
-
-	// Declare the pointer for the concentrations at a specific grid point
-	PetscReal* gridPointSolution;
+	auto myData = std::vector<double>(network.getMonitorDataLineSize(), 0.0);
 
 	// Loop on the grid
 	for (auto xi = xs; xi < xs + xm; xi++) {
 		// Boundary conditions
 		if (xi < _solverHandler->getLeftOffset() ||
-			xi == Mx - _solverHandler->getRightOffset())
+			xi == Mx - _solverHandler->getRightOffset()) {
 			continue;
+		}
 
 		// Get the pointer to the beginning of the solution data for this grid
 		// point
-		gridPointSolution = solutionArray[xi];
+		auto concOffset = subview(concs, xi, Kokkos::ALL).view();
 
-		using HostUnmanaged =
-			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-		auto hConcs = HostUnmanaged(gridPointSolution, dof);
-		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-		deep_copy(dConcs, hConcs);
+		double hx = grid[xi + 1] - grid[xi];
 
-		// Loop on the species
-		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			using TQ = core::network::IReactionNetwork::TotalQuantity;
-			using Q = TQ::Type;
-			using TQA = util::Array<TQ, 4>;
-			auto ms = static_cast<AmountType>(minSizes[id()]);
-			auto totals = network.getTotals(dConcs,
-				TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1},
-					TQ{Q::total, id, ms}, TQ{Q::radius, id, ms}});
-
-			myData[4 * id()] += totals[0];
-			myData[(4 * id()) + 1] += 2.0 * totals[1] / myData[4 * id()];
-			myData[(4 * id()) + 2] += totals[2];
-			myData[(4 * id()) + 3] += 2.0 * totals[3] / myData[(4 * id()) + 2];
-		}
+		network.addMonitorDataValues(concOffset, hx, myData);
 	}
 
-	// Sum all the concentrations through MPI reduce
-	auto globalData = std::vector<double>(myData.size(), 0.0);
-	MPI_Reduce(myData.data(), globalData.data(), myData.size(), MPI_DOUBLE,
-		MPI_SUM, 0, xolotlComm);
-
-	// Average the data
-	if (procId == 0) {
-		for (auto i = 0; i < numSpecies; ++i) {
-			globalData[(4 * i) + 1] /= globalData[4 * i];
-			globalData[(4 * i) + 3] /= globalData[(4 * i) + 2];
-			globalData[4 * i] /= (grid[Mx] - grid[1]);
-			globalData[(4 * i) + 2] /= (grid[Mx] - grid[1]);
-		}
-
-		// Set the output precision
-		const int outputPrecision = 5;
-
-		// Open the output file
-		std::fstream outputFile;
-		outputFile.open("Alloy.dat", std::fstream::out | std::fstream::app);
-		outputFile << std::setprecision(outputPrecision);
-
-		// Output the data
-		outputFile << timestep << " " << time << " ";
-		for (auto i = 0; i < numSpecies; ++i) {
-			outputFile << globalData[i * 4] << " " << globalData[(i * 4) + 1]
-					   << " " << globalData[(i * 4) + 2] << " "
-					   << globalData[(i * 4) + 3] << " ";
-		}
-		outputFile << std::endl;
-
-		// Close the output file
-		outputFile.close();
-	}
+	network.writeMonitorDataLine(myData, time);
 
 	// Restore the PETSC solution array
-	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor1D::computeAlphaZr(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	// Initial declarations
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+
+	PetscFunctionBeginUser;
+
+	// Get the MPI comm
+	auto xolotlComm = util::getMPIComm();
+
+	// Get the process ID
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+
+	// Get local coordinates
+	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
+
+	// Get the physical grid and its length
+	auto grid = _solverHandler->getXGrid();
+
+	// Get the da from ts
+	DM da;
+	PetscCall(TSGetDM(ts, &da));
+
+	// Get the array of concentration
+	PetscOffsetView<const PetscScalar**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
+
+	using NetworkType = core::network::ZrReactionNetwork;
+
+	// Degrees of freedom is the total number of clusters in the network
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+	auto myData = std::vector<double>(network.getMonitorDataLineSize(), 0.0);
+
+	// Get the position of the surface
+	auto surfacePos = _solverHandler->getSurfacePosition();
+
+	// Loop on the grid
+	for (auto xi = xs; xi < xs + xm; xi++) {
+		// Boundary conditions
+		if (xi < surfacePos + _solverHandler->getLeftOffset() ||
+			xi == Mx - _solverHandler->getRightOffset()) {
+			continue;
+		}
+
+		// Get the pointer to the beginning of the solution data for this grid
+		// point
+		auto concOffset = subview(concs, xi, Kokkos::ALL).view();
+
+		double hx = grid[xi + 1] - grid[xi];
+
+		network.addMonitorDataValues(concOffset, hx, myData);
+	}
+
+	network.writeMonitorDataLine(myData, time);
+
+	// Restore the PETSc solution array
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
 
 	PetscFunctionReturn(0);
 }
@@ -1911,14 +1913,6 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Get the physical grid
 	auto grid = _solverHandler->getXGrid();
 
-	// Get the flux handler to know the flux amplitude.
-	auto fluxHandler = _solverHandler->getFluxHandler();
-	double heliumFluxAmplitude = fluxHandler->getFluxAmplitude();
-
-	// Get the delta time from the previous timestep to this timestep
-	double previousTime = _solverHandler->getPreviousTime();
-	double dt = time - previousTime;
-
 	// Take care of bursting
 	using NetworkType = core::network::IPSIReactionNetwork;
 	auto psiNetwork = dynamic_cast<NetworkType*>(&network);
@@ -2275,9 +2269,6 @@ PetscMonitor1D::profileTemperature(
 	// Loop on the entire grid
 	for (auto xi = _solverHandler->getLeftOffset();
 		 xi < Mx - _solverHandler->getRightOffset(); xi++) {
-		// Set x
-		double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
-
 		double localTemp = 0.0;
 		// Check if this process is in charge of xi
 		if (xi >= xs && xi < xs + xm) {

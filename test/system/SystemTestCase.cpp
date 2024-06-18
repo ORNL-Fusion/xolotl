@@ -13,7 +13,7 @@
 #include <boost/program_options.hpp>
 #include <boost/test/unit_test.hpp>
 
-#include <xolotl/interface/Interface.h>
+#include <xolotl/interface/XolotlInterface.h>
 #include <xolotl/perf/dummy/DummyTimer.h>
 #include <xolotl/perf/os/OSTimer.h>
 #include <xolotl/test/MPITestUtils.h>
@@ -122,7 +122,7 @@ public:
 
 private:
 	bool _redirected{false};
-	int _fileDesc;
+	int _fileDesc{-1};
 };
 
 class ScopedTimer
@@ -300,13 +300,11 @@ SystemTestCase::runXolotl() const
 
 	// Construct command-line
 	auto exec = _binDir + "/xolotl/xolotl";
-	auto paramsFileName = _dataDir + "/params_" + _caseName + ".txt";
+	auto paramsFileName = _dataDir + "/params_" + _caseName + ".json";
 	int argc = 2;
 	const char* argv[] = {exec.data(), paramsFileName.data()};
 	try {
-		xolotl::interface::XolotlInterface {
-			argc, argv
-		}.solveXolotl();
+		xolotl::interface::XolotlInterface{argc, argv}.solveXolotl();
 	}
 	catch (const std::exception& e) {
 		std::cout << e.what() << std::endl;

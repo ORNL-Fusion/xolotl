@@ -1,5 +1,6 @@
 #include <xolotl/core/network/ZrReactionNetwork.h>
 #include <xolotl/core/network/impl/ZrReactionNetwork.tpp>
+#include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
 {
@@ -82,34 +83,51 @@ ZrReactionNetwork::checkLargestClusterId()
 }
 
 void
-ZrReactionNetwork::setConstantRates(RateVector rates)
+ZrReactionNetwork::setConstantRates(RatesView rates, IndexType gridIndex)
 {
-	auto dRateView = RatesView("dRates", rates.size(), rates[0].size());
-	auto hRateView = create_mirror_view(dRateView);
-	for (auto i = 0; i < rates.size(); i++)
-		for (auto j = 0; j < rates[0].size(); j++) {
-			hRateView(i, j) = rates[i][j];
-		}
-	deep_copy(dRateView, hRateView);
-
 	_reactions.forEachOn<ZrConstantReaction>(
 		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
-			reaction.setRate(dRateView);
+			reaction.setRate(rates, gridIndex);
 			reaction.updateRates();
 		});
 }
 
 void
-ZrReactionNetwork::setConstantConnectivities(ConnectivitiesVector conns)
+ZrReactionNetwork::setConstantConnectivities(ConnectivitiesPair conns)
 {
-	_constantConns = ConnectivitiesView(
-		"dConstantConnectivities", conns.size(), conns[0].size());
-	auto hConnsView = create_mirror_view(_constantConns);
-	for (auto i = 0; i < conns.size(); i++)
-		for (auto j = 0; j < conns[0].size(); j++) {
-			hConnsView(i, j) = conns[i][j];
-		}
-	deep_copy(_constantConns, hConnsView);
+	_constantConnsRows = ConnectivitiesPairView(
+		"dConstantConnectivitiesRows", conns.first.size());
+	_constantConnsEntries = ConnectivitiesPairView(
+		"dConstantConnectivitiesEntries", conns.second.size());
+	auto hConnsRowsView = create_mirror_view(_constantConnsRows);
+	auto hConnsEntriesView = create_mirror_view(_constantConnsEntries);
+	for (auto i = 0; i < conns.first.size(); i++) {
+		hConnsRowsView(i) = conns.first[i];
+	}
+	for (auto i = 0; i < conns.second.size(); i++) {
+		hConnsEntriesView(i) = conns.second[i];
+	}
+	deep_copy(_constantConnsRows, hConnsRowsView);
+	deep_copy(_constantConnsEntries, hConnsEntriesView);
+}
+
+void
+ZrReactionNetwork::setConstantRateEntries()
+{
+	auto rows = _constantConnsRows;
+	auto entries = _constantConnsEntries;
+	_reactions.forEachOn<ZrConstantReaction>(
+		"ReactionCollection::setConstantRates", DEVICE_LAMBDA(auto&& reaction) {
+			reaction.defineRateEntries(rows, entries);
+		});
+}
+
+void
+ZrReactionNetwork::setGridSize(IndexType gridSize)
+{
+	this->_clusterData.h_view().extraData.setGridSize(
+		this->_clusterData.h_view().numClusters, gridSize);
+	Superclass::setGridSize(gridSize);
 }
 
 void
@@ -201,6 +219,96 @@ ZrReactionNetwork::initializeExtraClusterData(const options::IOptions& options)
 				}
 			}
 		}); // Goes with parallel_for
+}
+
+std::string
+ZrReactionNetwork::getMonitorDataHeaderString() const
+{
+	std::stringstream header;
+
+	auto numSpecies = getSpeciesListSize();
+	header << "#time ";
+	for (auto id = SpeciesId(numSpecies); id; ++id) {
+		auto speciesName = this->getSpeciesName(id);
+		header << speciesName << "_density " << speciesName << "_atom "
+			   << speciesName << "_diameter " << speciesName
+			   << "_partial_density " << speciesName << "_partial_atom "
+			   << speciesName << "_partial_diameter ";
+	}
+
+	return header.str();
+}
+
+void
+ZrReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
+	double fac, std::vector<double>& totalVals)
+{
+	auto numSpecies = getSpeciesListSize();
+	const auto& minSizes = this->getMinRadiusSizes();
+	for (auto id = SpeciesId(numSpecies); id; ++id) {
+		using TQ = IReactionNetwork::TotalQuantity;
+		using Q = TQ::Type;
+		using TQA = util::Array<TQ, 6>;
+		auto ms = minSizes[id()];
+		auto totals = this->getTotals(conc,
+			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
+				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
+				TQ{Q::radius, id, ms}});
+
+		totalVals[(6 * id()) + 0] += totals[0] * fac;
+		totalVals[(6 * id()) + 1] += totals[1] * fac;
+		totalVals[(6 * id()) + 2] += totals[2] * 2.0 * fac;
+		totalVals[(6 * id()) + 3] += totals[3] * fac;
+		totalVals[(6 * id()) + 4] += totals[4] * fac;
+		totalVals[(6 * id()) + 5] += totals[5] * 2.0 * fac;
+	}
+}
+
+void
+ZrReactionNetwork::writeMonitorDataLine(
+	const std::vector<double>& localData, double time)
+{
+	auto numSpecies = getSpeciesListSize();
+
+	// Sum all the concentrations through MPI reduce
+	auto globalData = std::vector<double>(localData.size(), 0.0);
+	MPI_Reduce(localData.data(), globalData.data(), localData.size(),
+		MPI_DOUBLE, MPI_SUM, 0, util::getMPIComm());
+
+	if (util::getMPIRank() == 0) {
+		// Average the data
+		for (auto i = 0; i < numSpecies; ++i) {
+			auto id = [i](std::size_t n) { return 6 * i + n; };
+			if (globalData[id(0)] > 1.0e-16) {
+				globalData[id(2)] /= globalData[id(0)];
+			}
+			if (globalData[id(3)] > 1.0e-16) {
+				globalData[id(5)] /= globalData[id(3)];
+			}
+		}
+
+		// Set the output precision
+		const int outputPrecision = 5;
+
+		// Open the output file
+		std::fstream outputFile;
+		outputFile.open(
+			getMonitorOutputFileName(), std::fstream::out | std::fstream::app);
+		outputFile << std::setprecision(outputPrecision);
+
+		// Output the data
+		outputFile << time << " ";
+		for (auto i = 0; i < numSpecies; ++i) {
+			auto id = [i](std::size_t n) { return 6 * i + n; };
+			outputFile << globalData[id(0)] << " " << globalData[id(1)] << " "
+					   << globalData[id(2)] << " " << globalData[id(3)] << " "
+					   << globalData[id(4)] << " " << globalData[id(5)] << " ";
+		}
+		outputFile << std::endl;
+
+		// Close the output file
+		outputFile.close();
+	}
 }
 } // namespace network
 } // namespace core

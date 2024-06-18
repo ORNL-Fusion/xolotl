@@ -108,7 +108,7 @@ PetscErrorCode
 RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void* ctx)
 {
 	PetscFunctionBeginUser;
-    auto solver = static_cast<PetscSolver*>(ctx);
+	auto solver = static_cast<PetscSolver*>(ctx);
 	PetscCall(solver->rhsJacobian(ts, ftime, C, A, J));
 	PetscFunctionReturn(0);
 }
@@ -204,9 +204,9 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create and set up Jacobian matrix
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-    Mat J;
-    PetscCallVoid(DMSetMatrixPreallocateSkip(da, PETSC_TRUE));
-    PetscCallVoid(DMCreateMatrix(da, &J));
+	Mat J;
+	PetscCallVoid(DMSetMatrixPreallocateSkip(da, PETSC_TRUE));
+	PetscCallVoid(DMCreateMatrix(da, &J));
 	this->solverHandler->initializeSolverContext(da, J);
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -222,7 +222,6 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	PetscCallVoid(TSSetRHSFunction(ts, nullptr, RHSFunction, this));
 	PetscCallVoid(TSSetRHSJacobian(ts, J, J, RHSJacobian, this));
 	PetscCallVoid(TSSetSolution(ts, C));
-
 
 	// Read the times if the information is in the HDF5 file
 	auto fileName = this->solverHandler->getNetworkName();
@@ -377,34 +376,36 @@ PetscSolver::solve()
 			// Stop the timer
 			solveTimer->stop();
 
-			// Save some data from the monitors for next loop
-			this->monitor->keepFlux(
-				_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
-
-			// We are done with the loop
-			loopNumber++;
-
 			// Catch the change in surface
 			// Get the converged reason from PETSc
 			PetscCallVoid(TSGetConvergedReason(ts, &reason));
-			if (reason == TS_CONVERGED_USER)
+			if (reason == TS_CONVERGED_USER) {
 				std::cout << "Caught the change of surface!" << std::endl;
 
-			// Save the time
-			PetscCallVoid(TSGetTime(ts, &time));
+				// Save some data from the monitors for next loop
+				this->monitor->keepFlux(
+					_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
 
-			// Save the old DA and associated vector
-			PetscInt dof;
-			PetscCallVoid(DMDAGetDof(da, &dof));
+				// We are done with the loop
+				loopNumber++;
 
-			PetscCallVoid(DMDACreateCompatibleDMDA(da, dof, &oldDA));
+				// Save the time
+				PetscCallVoid(TSGetTime(ts, &time));
 
-			// Save the old vector as a natural one to make the transfer easier
-			PetscCallVoid(DMDACreateNaturalVector(oldDA, &oldC));
-			PetscCallVoid(
-				DMDAGlobalToNaturalBegin(oldDA, C, INSERT_VALUES, oldC));
-			PetscCallVoid(
-				DMDAGlobalToNaturalEnd(oldDA, C, INSERT_VALUES, oldC));
+				// Save the old DA and associated vector
+				PetscInt dof;
+				PetscCallVoid(DMDAGetDof(da, &dof));
+
+				PetscCallVoid(DMDACreateCompatibleDMDA(da, dof, &oldDA));
+
+				// Save the old vector as a natural one to make the transfer
+				// easier
+				PetscCallVoid(DMDACreateNaturalVector(oldDA, &oldC));
+				PetscCallVoid(
+					DMDAGlobalToNaturalBegin(oldDA, C, INSERT_VALUES, oldC));
+				PetscCallVoid(
+					DMDAGlobalToNaturalEnd(oldDA, C, INSERT_VALUES, oldC));
+			}
 		}
 		else {
 			throw std::string("PetscSolver Exception: Unable to solve! Data "

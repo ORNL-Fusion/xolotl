@@ -4,10 +4,16 @@ set(XOLOTL_INTERFACE_HEADER_DIR ${XOLOTL_INTERFACE_INCLUDE_DIR}/xolotl/interface
 
 set(XOLOTL_INTERFACE_HEADERS
     ${XOLOTL_INTERFACE_HEADER_DIR}/Interface.h
+    ${XOLOTL_INTERFACE_HEADER_DIR}/MultiXolotl.h
+    ${XOLOTL_INTERFACE_HEADER_DIR}/XolotlInterface.h
 )
 
 set(XOLOTL_INTERFACE_SOURCES
     ${XOLOTL_INTERFACE_SOURCE_DIR}/Interface.cpp
+    ${XOLOTL_INTERFACE_SOURCE_DIR}/MultiXolotl.cpp
+    ${XOLOTL_INTERFACE_SOURCE_DIR}/XolotlInterface.cpp
+    ${XOLOTL_INTERFACE_SOURCE_DIR}/AlloySubOptions.cpp
+    ${XOLOTL_INTERFACE_SOURCE_DIR}/AlphaZrSubOptions.cpp
 )
 
 add_library(xolotlInterface SHARED

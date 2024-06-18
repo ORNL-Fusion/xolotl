@@ -22,7 +22,7 @@ private:
 	 * \see FluxHandler.h
 	 */
 	double
-	FitFunction(double x)
+	FitFunction(double x) override
 	{
 		// Value at which the flux goes to 0
 		double x1 = 10.0;

@@ -144,7 +144,7 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 				}
 			}
 		}
-		else if (prod2Reg.isSimplex()) {
+		if (prod2Reg.isSimplex()) {
 			auto orig2 = prod2Reg.getOrigin();
 			if constexpr (hasDeuterium<Species> && hasTritium<Species>) {
 				if (orig2.isOnAxis(Species::D) || orig2.isOnAxis(Species::T)) {
@@ -213,10 +213,6 @@ PSIDissociationReaction<TSpeciesEnum>::computeBindingEnergy(double time)
 			be = prod1.getFormationEnergy() + prod2.getFormationEnergy() -
 				cl.getFormationEnergy();
 		}
-
-		//		std::cout << comp[Species::He] << " " << comp[Species::V] << " "
-		//<< be << " " << this->_products[0] << " " << lowerV << " " << higherV
-		//<< std::endl;
 	}
 
 	return util::max(be, -5.0);

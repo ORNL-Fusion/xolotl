@@ -20,20 +20,6 @@ namespace solver
 {
 namespace monitor
 {
-/**
- * This is a monitoring method that will compute average density and diameter
- * of defects.
- */
-PetscErrorCode
-computeAlphaZr(
-	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
-{
-	PetscFunctionBeginUser;
-	PetscCall(static_cast<PetscMonitor0D*>(ictx)->computeAlphaZr(
-		ts, timestep, time, solution));
-	PetscFunctionReturn(0);
-}
-
 PetscErrorCode
 monitorBubble(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -147,43 +133,14 @@ PetscMonitor0D::setup(int loop)
 
 	// Set the monitor to output data for Alloy
 	if (flagAlloy) {
-		auto& network = _solverHandler->getNetwork();
-		auto numSpecies = network.getSpeciesListSize();
-		// Create/open the output files
-		std::fstream outputFile;
-		outputFile.open("Alloy.dat", std::fstream::out);
-		outputFile << "#time_step time ";
-		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			auto speciesName = network.getSpeciesName(id);
-			outputFile << speciesName << "_density " << speciesName
-					   << "_diameter " << speciesName << "_partial_density "
-					   << speciesName << "_partial_diameter ";
-		}
-		outputFile << std::endl;
-		outputFile.close();
+		_solverHandler->getNetwork().writeMonitorOutputHeader();
 
 		// computeAlloy0D will be called at each timestep
 		PetscCallVoid(TSMonitorSet(_ts, monitor::computeAlloy, this, nullptr));
 	}
 	// Set the monitor to output data for AlphaZr
 	if (flagZr) {
-		auto& network = _solverHandler->getNetwork();
-		auto numSpecies = network.getSpeciesListSize();
-
-		// Create/open the output files
-		std::fstream outputFile;
-		outputFile.open("AlphaZr.dat", std::fstream::out);
-		outputFile << "#time_step time ";
-		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			auto speciesName = network.getSpeciesName(id);
-			outputFile << speciesName << "_density " << speciesName << "_atom "
-					   << speciesName << "_diameter " << speciesName
-					   << "_partial_density " << speciesName << "_partial_atom "
-					   << speciesName << "_partial_diameter ";
-		}
-
-		outputFile << std::endl;
-		outputFile.close();
+		_solverHandler->getNetwork().writeMonitorOutputHeader();
 
 		// computeAlphaZr will be called at each timestep
 		PetscCallVoid(
@@ -424,7 +381,6 @@ PetscMonitor0D::computeXenonRetention(
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
 
 	// Get the array of concentration
 	PetscOffsetView<const PetscReal**> solutionArray;
@@ -494,62 +450,19 @@ PetscMonitor0D::computeAlloy(
 	PetscCall(TSGetDM(ts, &da));
 
 	// Get the array of concentration
-	PetscOffsetView<const PetscReal**> solutionArray;
-	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &solutionArray));
+	PetscOffsetView<const PetscReal**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 
 	using NetworkType = core::network::AlloyReactionNetwork;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
-
-	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
-	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 4, 0.0);
 
-	// Get the minimum size for the loop densities and diameters
-	auto minSizes = _solverHandler->getMinSizes();
+	auto myData = network.getMonitorDataValues(concOffset, 1.0);
 
-	// Get the pointer to the beginning of the solution data for this grid point
-	auto concs = subview(solutionArray, 0, Kokkos::ALL).view();
-
-	// Loop on the species
-	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using TQ = core::network::IReactionNetwork::TotalQuantity;
-		using Q = TQ::Type;
-		using TQA = util::Array<TQ, 4>;
-		auto ms = static_cast<AmountType>(minSizes[id()]);
-		auto totals = network.getTotals(concs,
-			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
-				TQ{Q::radius, id, ms}});
-
-		myData[4 * id()] = totals[0];
-		myData[(4 * id()) + 1] = 2.0 * totals[1] / myData[4 * id()];
-		myData[(4 * id()) + 2] = totals[2];
-		myData[(4 * id()) + 3] = 2.0 * totals[3] / myData[(4 * id()) + 2];
-	}
-
-	// Set the output precision
-	const int outputPrecision = 5;
-
-	// Open the output file
-	std::fstream outputFile;
-	outputFile.open("Alloy.dat", std::fstream::out | std::fstream::app);
-	outputFile << std::setprecision(outputPrecision);
-
-	// Output the data
-	outputFile << timestep << " " << time << " ";
-	for (auto i = 0; i < numSpecies; ++i) {
-		outputFile << myData[i * 4] << " " << myData[(i * 4) + 1] << " "
-				   << myData[(i * 4) + 2] << " " << myData[(i * 4) + 3] << " ";
-	}
-	outputFile << std::endl;
-
-	// Close the output file
-	outputFile.close();
+	network.writeMonitorDataLine(myData, time);
 
 	// Restore the PETSc solution array
-	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &solutionArray));
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
 
 	PetscFunctionReturn(0);
 }
@@ -565,77 +478,19 @@ PetscMonitor0D::computeAlphaZr(
 	PetscCall(TSGetDM(ts, &da));
 
 	// Get the array of concentration
-	PetscReal** solutionArray;
-	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
+	PetscOffsetView<const PetscScalar**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 
 	using NetworkType = core::network::ZrReactionNetwork;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
-
-	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
-	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 6, 0.0);
 
-	// Get the minimum size for the loop densities and diameters
-	auto minSizes = _solverHandler->getMinSizes();
+	auto myData = network.getMonitorDataValues(concOffset, 1.0);
 
-	// Declare the pointer for the concentrations at a specific grid point
-	PetscReal* gridPointSolution;
-
-	// Get the pointer to the beginning of the solution data for this grid point
-	gridPointSolution = solutionArray[0];
-
-	using HostUnmanaged =
-		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto hConcs = HostUnmanaged(gridPointSolution, dof);
-	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-	deep_copy(dConcs, hConcs);
-
-	// Loop on the species
-	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using TQ = core::network::IReactionNetwork::TotalQuantity;
-		using Q = TQ::Type;
-		using TQA = util::Array<TQ, 6>;
-		auto ms = static_cast<AmountType>(minSizes[id()]);
-		auto totals = network.getTotals(dConcs,
-			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
-				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
-				TQ{Q::radius, id, ms}});
-
-		myData[6 * id()] = totals[0];
-		myData[6 * id() + 1] = totals[1];
-		myData[(6 * id()) + 2] = 2.0 * totals[2] / myData[6 * id()];
-		myData[(6 * id()) + 3] = totals[3];
-		myData[(6 * id()) + 4] = totals[4];
-		myData[(6 * id()) + 5] = 2.0 * totals[5] / myData[(6 * id()) + 3];
-	}
-
-	// Set the output precision
-	const int outputPrecision = 5;
-
-	// Open the output file
-	std::fstream outputFile;
-	outputFile.open("AlphaZr.dat", std::fstream::out | std::fstream::app);
-	outputFile << std::setprecision(outputPrecision);
-
-	// Output the data
-	outputFile << timestep << " " << time << " ";
-
-	for (auto i = 0; i < numSpecies; ++i) {
-		outputFile << myData[i * 6] << " " << myData[(i * 6) + 1] << " "
-				   << myData[(i * 6) + 2] << " " << myData[(i * 6) + 3] << " "
-				   << myData[(i * 6) + 4] << " " << myData[(i * 6) + 5] << " ";
-	}
-
-	outputFile << std::endl;
-
-	// Close the output file
-	outputFile.close();
+	network.writeMonitorDataLine(myData, time);
 
 	// Restore the PETSc solution array
-	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
 
 	PetscFunctionReturn(0);
 }

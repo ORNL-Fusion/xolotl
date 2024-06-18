@@ -93,7 +93,7 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
 		// Clear everything
 		incidentFluxVec.clear();
@@ -381,7 +381,7 @@ public:
 	}
 
 	std::vector<double>
-	getInstantFlux(double time) const
+	getInstantFlux(double time) const override
 	{
 		// Create the vector to return
 		std::vector<double> toReturn;

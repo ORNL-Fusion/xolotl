@@ -32,8 +32,9 @@ public:
 	using OwnedConcentrationsView = Kokkos::View<const double*>;
 	using FluxesView = Kokkos::View<double*, Kokkos::MemoryUnmanaged>;
 	using OwnedFluxesView = Kokkos::View<double*>;
-	using RatesView = Kokkos::View<double**>;
+	using RatesView = Kokkos::View<double*>;
 	using ConnectivitiesView = Kokkos::View<bool**>;
+	using ConnectivitiesPairView = Kokkos::View<IndexType*>;
 	using SubMapView = Kokkos::View<AmountType*, Kokkos::MemoryUnmanaged>;
 	using OwnedSubMapView = Kokkos::View<AmountType*>;
 	using BelongingView = Kokkos::View<bool*>;
@@ -44,7 +45,8 @@ public:
 	using MomentIdMap = std::vector<std::vector<IdType>>;
 	using MomentIdMapVector = std::vector<std::vector<std::vector<IdType>>>;
 	using RateVector = std::vector<std::vector<double>>;
-	using ConnectivitiesVector = std::vector<std::vector<bool>>;
+	using ConnectivitiesPair =
+		std::pair<std::vector<IdType>, std::vector<IdType>>;
 	using PhaseSpace = std::vector<std::string>;
 
 	KOKKOS_INLINE_FUNCTION
@@ -333,10 +335,53 @@ public:
 	getAllMomentIdInfo() = 0;
 
 	/**
+	 * @brief Get the minimum sizes for average radius computation
+	 */
+	virtual const std::vector<AmountType>&
+	getMinRadiusSizes() const = 0;
+
+	/**
+	 * @brief Return a string file name to be used for monitor output
+	 */
+	virtual std::string
+	getMonitorOutputFileName() const = 0;
+
+	/**
 	 * @brief Return a string of cluster name in ID order.
 	 */
 	virtual std::string
-	getHeaderString() = 0;
+	getMonitorDataHeaderString() const = 0;
+
+	/**
+	 * @brief Compute a list of data values for each species in ID order
+	 */
+	virtual std::vector<double>
+	getMonitorDataValues(Kokkos::View<const double*> conc, double fac) = 0;
+
+	/**
+	 * @brief Add data values to elements of given output vector
+	 */
+	virtual void
+	addMonitorDataValues(Kokkos::View<const double*> conc, double fac,
+		std::vector<double>& totalVals) = 0;
+
+	/**
+	 * @brief Get number of data values (excluding time)
+	 */
+	virtual std::size_t
+	getMonitorDataLineSize() const = 0;
+
+	/**
+	 * @brief Open output file and write header comment line
+	 */
+	virtual void
+	writeMonitorOutputHeader() const = 0;
+
+	/**
+	 * @brief Append line of data values to monitor output file
+	 */
+	virtual void
+	writeMonitorDataLine(const std::vector<double>& localData, double time) = 0;
 
 	/**
 	 * @brief Computes the map between the different cluster bounds and moment
@@ -355,12 +400,28 @@ public:
 	/**
 	 * @brief Set the rates for constant reactions
 	 */
-	virtual void setConstantRates(RateVector) = 0;
+	virtual void
+	setConstantRates(RatesView, IndexType gridIndex) = 0;
 
 	/**
 	 * @brief Set the connectivities for constant reactions
 	 */
-	virtual void setConstantConnectivities(ConnectivitiesVector) = 0;
+	virtual void setConstantConnectivities(ConnectivitiesPair) = 0;
+
+	/**
+	 * @brief Set the rate entries to compute constant rates
+	 */
+	virtual void
+	initializeRateEntries(const ConnectivitiesPair&, IndexType) = 0;
+
+	virtual void
+	initializeRateEntries(const std::vector<ConnectivitiesPair>&) = 0;
+
+	/**
+	 * @brief Set the rate entries for constant reactions
+	 */
+	virtual void
+	setConstantRateEntries() = 0;
 
 	virtual PhaseSpace
 	getPhaseSpace() = 0;

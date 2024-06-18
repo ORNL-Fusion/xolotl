@@ -172,12 +172,14 @@ FluxHandler::getProfileAmplitude(double currentTime) const
 	double f = 0.0;
 
 	// If the time is smaller than or equal than the first stored time
-	if (currentTime <= time[0])
-		return f = amplitudes[0];
+	if (currentTime <= time[0]) {
+		return amplitudes[0];
+	}
 
 	// If the time is larger or equal to the last stored time
-	if (currentTime >= time[time.size() - 1])
-		return f = amplitudes[time.size() - 1];
+	if (currentTime >= time[time.size() - 1]) {
+		return amplitudes[time.size() - 1];
+	}
 
 	// Else loop to determine the interval the time falls in
 	// i.e. time[k] < time < time[k + 1]
@@ -235,8 +237,8 @@ FluxHandler::incrementFluence(double dt)
 	if (reductionFactors.size() > 0) {
 		if (fluence.size() == 1) {
 			// Add entries
-			for (auto factor : reductionFactors)
-				fluence.push_back(0.0);
+			std::fill_n(
+				std::back_inserter(fluence), reductionFactors.size(), 0.0);
 		}
 
 		// Update entries
@@ -255,8 +257,8 @@ FluxHandler::computeFluence(double time)
 	if (reductionFactors.size() > 0) {
 		if (fluence.size() == 1) {
 			// Add entries
-			for (auto factor : reductionFactors)
-				fluence.push_back(0.0);
+			std::fill_n(
+				std::back_inserter(fluence), reductionFactors.size(), 0.0);
 		}
 
 		// Update entries
