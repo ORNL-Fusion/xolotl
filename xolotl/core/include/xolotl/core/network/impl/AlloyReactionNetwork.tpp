@@ -161,36 +161,42 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if (((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
 			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I)))) {
 		// Find out which one is which
-		auto vSize =
-			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
 		auto iSize =
 			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
-		// Compute the product size
-		int prodSize = vSize - iSize;
-		// 3 cases
-		if (prodSize > 0) {
-			// Looking for V cluster
-			Composition comp = Composition::zero();
-			comp[Species::V] = prodSize;
-			auto vProdId = subpaving.findTileId(comp);
-			if (vProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, vProdId});
-				// No dissociation
+		// Vac can be grouped
+		auto vReg = lo1.isOnAxis(Species::V) ? cl1Reg : cl2Reg;
+		for (auto k : makeIntervalRange(vReg[Species::V])) {
+			// Compute the product size
+			int prodSize = k - iSize;
+			// 3 cases
+			if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					previousIndex = vProdId;
+					// No dissociation
+				}
 			}
-		}
-		else if (prodSize < 0) {
-			// Looking for I cluster
-			Composition comp = Composition::zero();
-			comp[Species::I] = -prodSize;
-			auto iProdId = subpaving.findTileId(comp);
-			if (iProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, iProdId});
-				// No dissociation
+			else if (prodSize < 0) {
+				// Looking for I cluster
+				Composition comp = Composition::zero();
+				comp[Species::I] = -prodSize;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex() &&
+					iProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					previousIndex = iProdId;
+					// No dissociation
+				}
 			}
-		}
-		else {
-			// No product
-			this->addProductionReaction(tag, {i, j});
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
+			}
 		}
 		return;
 	}
@@ -394,15 +400,6 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			if (prodSize > 0) {
 				//  Find the corresponding cluster
 				Composition comp = Composition::zero();
-				comp[Species::V] = prodSize;
-				auto vProdId = subpaving.findTileId(comp);
-				if (vProdId != subpaving.invalidIndex() &&
-					vProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, vProdId});
-					previousIndex = vProdId;
-					// No dissociation
-				}
-				comp[Species::V] = 0;
 				comp[Species::FaultedV] = prodSize;
 				auto fProdId = subpaving.findTileId(comp);
 				if (fProdId != subpaving.invalidIndex() &&
@@ -410,6 +407,18 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					this->addProductionReaction(tag, {i, j, fProdId});
 					previousIndex = fProdId;
 					// No dissociation
+				}
+				comp[Species::FaultedV] = 0;
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					// Only mobile vac
+					if (diffusionFactor(vProdId) > 0.0) {
+						this->addProductionReaction(tag, {i, j, vProdId});
+						previousIndex = vProdId;
+						// No dissociation
+					}
 				}
 			}
 		}
@@ -430,15 +439,6 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			if (prodSize > 0) {
 				//  Find the corresponding cluster
 				Composition comp = Composition::zero();
-				comp[Species::V] = prodSize;
-				auto vProdId = subpaving.findTileId(comp);
-				if (vProdId != subpaving.invalidIndex() &&
-					vProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, vProdId});
-					previousIndex = vProdId;
-					// No dissociation
-				}
-				comp[Species::V] = 0;
 				comp[Species::PerfectV] = prodSize;
 				auto pProdId = subpaving.findTileId(comp);
 				if (pProdId != subpaving.invalidIndex() &&
@@ -450,6 +450,18 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					// this->addDissociationReaction(tag, {pProdId, i, j});
 					//					}
 					previousIndex = pProdId;
+				}
+				comp[Species::PerfectV] = 0;
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					// Only mobile vac
+					if (diffusionFactor(vProdId) > 0.0) {
+						this->addProductionReaction(tag, {i, j, vProdId});
+						previousIndex = vProdId;
+						// No dissociation
+					}
 				}
 			}
 		}
