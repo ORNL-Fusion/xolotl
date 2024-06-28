@@ -79,6 +79,11 @@ protected:
 	bool subnetworksFlag;
 
 	/**
+	 * Which instance am I (0 is primary)
+	 */
+	int instanceID;
+
+	/**
 	 * Initial coupling timestep
 	 */
 	double initialTimeStep;
@@ -587,6 +592,15 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
+	int
+	getInstanceID() const override
+	{
+		return instanceID;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
 	virtual double
 	getInitialTimeStep() const override
 	{
@@ -1013,6 +1027,15 @@ public:
 	}
 
 protected:
+	/**
+	 * \see IOptions.h
+	 */
+	void
+	setInstanceID(int id) override
+	{
+		instanceID = id;
+	}
+
 	void
 	setNetworkParameters(const std::string& paramStr);
 

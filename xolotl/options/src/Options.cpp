@@ -38,6 +38,7 @@ Options::Options() :
 	gridParam{},
 	gridFilename(""),
 	subnetworksFlag(false),
+    instanceID(0),
 	initialTimeStep(0.0),
 	maxTimeStep(0.0),
 	timeStepGrowthFactor(0.0),

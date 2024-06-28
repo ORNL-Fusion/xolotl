@@ -17,8 +17,9 @@ class PetscMonitor : public IPetscMonitor
 public:
 	PetscMonitor();
 
-	PetscMonitor(
-		TS ts, const std::shared_ptr<handler::ISolverHandler>& solverHandler);
+	PetscMonitor(TS ts,
+		const std::shared_ptr<handler::ISolverHandler>& solverHandler,
+		const std::string& checkpointFileName = "xolotlStop.h5");
 
 	virtual ~PetscMonitor();
 

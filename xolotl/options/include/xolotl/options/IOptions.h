@@ -13,6 +13,10 @@
 
 namespace xolotl
 {
+namespace interface
+{
+class MultiXolotl;
+}
 namespace options
 {
 /**
@@ -238,6 +242,12 @@ public:
 	 */
 	virtual bool
 	useSubnetworks() const = 0;
+
+	/**
+	 * Get instance ID (0 is primary)
+	 */
+	virtual int
+	getInstanceID() const = 0;
 
 	/**
 	 * Obtain the initial coupling time step
@@ -614,6 +624,15 @@ public:
 	 */
 	virtual double
 	getCascadeEfficiency() const = 0;
+
+protected:
+	friend class ::xolotl::interface::MultiXolotl;
+
+	/**
+	 * Set instance ID (should only be used by MultiXolotl)
+	 */
+	virtual void
+	setInstanceID(int id) = 0;
 };
 } /* namespace options */
 } /* namespace xolotl */

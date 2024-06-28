@@ -153,10 +153,12 @@ postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[], PetscReal time,
 
 PetscMonitor::PetscMonitor() = default;
 
-PetscMonitor::PetscMonitor(
-	TS ts, const std::shared_ptr<handler::ISolverHandler>& solverHandler) :
+PetscMonitor::PetscMonitor(TS ts,
+	const std::shared_ptr<handler::ISolverHandler>& solverHandler,
+	const std::string& checkpointFileName) :
 	_ts(ts),
-	_solverHandler(solverHandler)
+	_solverHandler(solverHandler),
+	_hdf5OutputName(checkpointFileName)
 {
 }
 

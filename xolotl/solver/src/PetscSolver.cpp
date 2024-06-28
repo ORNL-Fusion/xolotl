@@ -244,34 +244,33 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	PetscCallVoid(TSSetFromOptions(ts));
 
+	auto chkName = "xolotlStop_" + std::to_string(this->instanceID) + ".h5";
+
 	// Switch on the number of dimensions to set the monitors
-	auto dim = this->solverHandler->getDimension();
+    auto dim = this->solverHandler->getDimension();
 	switch (dim) {
 	case 0:
-		// One dimension
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor0D>(ts, this->solverHandler);
-		break;
+		this->monitor = std::make_shared<monitor::PetscMonitor0D>(
+			ts, solverHandler, chkName);
+        break;
 	case 1:
-		// One dimension
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor1D>(ts, this->solverHandler);
-		break;
+		this->monitor = std::make_shared<monitor::PetscMonitor1D>(
+			ts, solverHandler, chkName);
+        break;
 	case 2:
-		// Two dimensions
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor2D>(ts, this->solverHandler);
-		break;
+		this->monitor = std::make_shared<monitor::PetscMonitor2D>(
+			ts, solverHandler, chkName);
+        break;
 	case 3:
-		// Three dimensions
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor3D>(ts, this->solverHandler);
-		break;
+		this->monitor = std::make_shared<monitor::PetscMonitor3D>(
+			ts, solverHandler, chkName);
+        break;
 	default:
 		throw std::runtime_error(
 			"PetscSolver Exception: Wrong number of dimensions "
 			"to set the monitors.");
 	}
+
 	this->monitor->setup(loop);
 
 	// Set the saved data

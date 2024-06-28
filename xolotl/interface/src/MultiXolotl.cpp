@@ -39,6 +39,7 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 {
 	// Create primary (whole) network interface
 	auto primaryOpts = _options->makeCopy();
+	primaryOpts->setInstanceID(0);
 	primaryOpts->addProcess("noSolve");
 	_primaryInstance = std::make_unique<XolotlInterface>(context, primaryOpts);
 
@@ -48,8 +49,11 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 
 	std::vector<std::vector<std::vector<std::uint32_t>>> allBounds;
 	std::vector<std::vector<std::vector<xolotl::IdType>>> allMomIdInfo;
-	for (auto&& subOpts : subOptions) {
+	for (int id = 0; id < subOptions.size(); ++id) {
+		auto& subOpts = subOptions[id];
+
 		// Create subinstances
+        subOpts->setInstanceID(id + 1);
 		subOpts->addProcess("constant");
 		auto& sub = _subInstances.emplace_back(
 			std::make_unique<XolotlInterface>(context, subOpts));

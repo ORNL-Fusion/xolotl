@@ -27,7 +27,8 @@ Solver::Solver(
 	temperatureHandler(
 		factory::temperature::TemperatureHandlerFactory::get().generate(
 			options)),
-	solverHandler(handlerGenerator(*network, *perfHandler))
+	solverHandler(handlerGenerator(*network, *perfHandler)),
+    instanceID(options.getInstanceID())
 {
 	assert(solverHandler);
 	solverHandler->initializeHandlers(
