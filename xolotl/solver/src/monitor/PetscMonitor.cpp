@@ -160,10 +160,20 @@ PetscMonitor::PetscMonitor(TS ts,
 	_solverHandler(solverHandler),
 	_hdf5OutputName(checkpointFileName)
 {
+	// Create the checkpoint file if necessary
+	if (this->checkForCreatingCheckpoint()) {
+		io::XFile checkpointFile(_hdf5OutputName, 1, util::getMPIComm());
+	}
 }
 
 PetscMonitor::~PetscMonitor()
 {
+}
+
+bool
+PetscMonitor::checkForCreatingCheckpoint() const
+{
+	return (not _hdf5OutputName.empty()) and (not fs::exists(_hdf5OutputName));
 }
 
 void
@@ -227,10 +237,10 @@ PetscMonitor::computeFluence(
 	PetscFunctionBeginUser;
 
 	// If it's a restart
-	std::string networkName = _solverHandler->getNetworkName();
 	bool hasConcentrations = false;
-	if (not networkName.empty()) {
-		auto networkFile = std::make_unique<io::XFile>(networkName);
+	if (_solverHandler->checkForRestart()) {
+		auto restartFilePath = _solverHandler->getRestartFilePath();
+		auto networkFile = std::make_unique<io::XFile>(restartFilePath);
 		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}

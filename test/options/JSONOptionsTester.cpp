@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "\"-ts_final_time 1000\",\n"
 		<< "\"-ts_max_steps 3\"\n"
 		<< "],\n"
-		<< "\"networkFile\": \"tungsten.txt\",\n"
+		<< "\"checkpointFile\": \"tungsten.txt\",\n"
 		<< "\"tempHandler\": \"constant\",\n"
 		<< "\"tempParam\": 900,\n"
 		<< "\"perfHandler\": \"os\",\n"
@@ -143,8 +143,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Attempt to read the parameter file
 	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
-	// Check the network filename
-	BOOST_REQUIRE_EQUAL(opts.getNetworkFilename(), "tungsten.txt");
+	// Check the checkpoint filename
+	BOOST_REQUIRE_EQUAL(opts.getCheckpointFilePath(), "tungsten.txt");
 
 	// Check the temperature
 	BOOST_REQUIRE_EQUAL(opts.getTempHandlerName(), "constant");
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Check the migration threshold option
 	BOOST_REQUIRE_EQUAL(opts.getMigrationThreshold(), 1.0);
 
-	// Check the network filename
+	// Check the flux depth profile filename
 	BOOST_REQUIRE_EQUAL(
 		opts.getFluxDepthProfileFilePath(), "path/to/flux/profile/file.txt");
 

@@ -52,12 +52,20 @@ public:
 	readParams(int argc, const char* argv[]) = 0;
 
 	/**
-	 * Get the name of the network file.
+	 * Get the name of the checkpoint file.
 	 *
-	 * @return the name of the network file
+	 * @return the name of the checkpoint file
 	 */
 	virtual std::string
-	getNetworkFilename() const = 0;
+	getCheckpointFilePath() const = 0;
+
+    /**
+     * Get the name of the restart file (could be difference from checkpoint).
+     *
+     * @return the name of the restart file
+     */
+    virtual std::string
+    getRestartFilePath() const = 0;
 
 	/**
 	 * Get the name of the solver to use
@@ -242,12 +250,6 @@ public:
 	 */
 	virtual bool
 	useSubnetworks() const = 0;
-
-	/**
-	 * Get instance ID (0 is primary)
-	 */
-	virtual int
-	getInstanceID() const = 0;
 
 	/**
 	 * Obtain the initial coupling time step
@@ -629,10 +631,19 @@ protected:
 	friend class ::xolotl::interface::MultiXolotl;
 
 	/**
-	 * Set instance ID (should only be used by MultiXolotl)
+	 * Set checkpoint file (should only be used by MultiXolotl)
 	 */
 	virtual void
-	setInstanceID(int id) = 0;
+	setCheckpointFilePath(const std::string& path) = 0;
+
+	/**
+	 * Set restart file
+     *
+     * This should only be used by MultiXolotl. For a single instance, the file
+     * name is read from the parameters
+	 */
+    virtual void
+    setRestartFilePath(const std::string& path) = 0;
 };
 } /* namespace options */
 } /* namespace xolotl */

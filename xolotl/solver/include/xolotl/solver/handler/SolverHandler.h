@@ -34,7 +34,7 @@ protected:
 	std::vector<std::array<IdType, 3>> gbVector;
 
 	//! The name of the network file
-	std::string networkName;
+	std::string restartFile;
 
 	//! The name of the free GB file
 	std::string gbFileName;
@@ -589,10 +589,16 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	std::string
-	getNetworkName() const override
+	getRestartFilePath() const override
 	{
-		return networkName;
+		return restartFile;
 	}
+
+    /**
+     * Are we restarting
+     */
+    bool
+    checkForRestart() const override;
 
 	/**
 	 * \see ISolverHandler.h

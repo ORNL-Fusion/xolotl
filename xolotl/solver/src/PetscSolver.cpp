@@ -224,9 +224,9 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	PetscCallVoid(TSSetSolution(ts, C));
 
 	// Read the times if the information is in the HDF5 file
-	auto fileName = this->solverHandler->getNetworkName();
 	double deltaTime = 1.0e-12;
-	if (!fileName.empty() and loop == 0) {
+	if (this->solverHandler->checkForRestart() and loop == 0) {
+		auto fileName = this->solverHandler->getRestartFilePath();
 		io::XFile xfile(fileName);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
@@ -244,27 +244,25 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	PetscCallVoid(TSSetFromOptions(ts));
 
-	auto chkName = "xolotlStop_" + std::to_string(this->instanceID) + ".h5";
-
 	// Switch on the number of dimensions to set the monitors
-    auto dim = this->solverHandler->getDimension();
+	auto dim = this->solverHandler->getDimension();
 	switch (dim) {
 	case 0:
 		this->monitor = std::make_shared<monitor::PetscMonitor0D>(
-			ts, solverHandler, chkName);
-        break;
+			ts, this->solverHandler, this->checkpointFile);
+		break;
 	case 1:
 		this->monitor = std::make_shared<monitor::PetscMonitor1D>(
-			ts, solverHandler, chkName);
-        break;
+			ts, this->solverHandler, this->checkpointFile);
+		break;
 	case 2:
 		this->monitor = std::make_shared<monitor::PetscMonitor2D>(
-			ts, solverHandler, chkName);
-        break;
+			ts, this->solverHandler, this->checkpointFile);
+		break;
 	case 3:
 		this->monitor = std::make_shared<monitor::PetscMonitor3D>(
-			ts, solverHandler, chkName);
-        break;
+			ts, this->solverHandler, this->checkpointFile);
+		break;
 	default:
 		throw std::runtime_error(
 			"PetscSolver Exception: Wrong number of dimensions "

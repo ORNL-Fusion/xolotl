@@ -28,7 +28,7 @@ Solver::Solver(
 		factory::temperature::TemperatureHandlerFactory::get().generate(
 			options)),
 	solverHandler(handlerGenerator(*network, *perfHandler)),
-    instanceID(options.getInstanceID())
+    checkpointFile(options.getCheckpointFilePath())
 {
 	assert(solverHandler);
 	solverHandler->initializeHandlers(
@@ -38,7 +38,8 @@ Solver::Solver(
 Solver::Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler) :
 	optionsString(""),
 	solverHandler(_solverHandler),
-	perfHandler(_solverHandler->getPerfHandler())
+	perfHandler(_solverHandler->getPerfHandler()),
+    checkpointFile("")
 {
 }
 

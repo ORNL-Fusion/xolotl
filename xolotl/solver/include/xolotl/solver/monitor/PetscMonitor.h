@@ -17,9 +17,9 @@ class PetscMonitor : public IPetscMonitor
 public:
 	PetscMonitor();
 
-	PetscMonitor(TS ts,
-		const std::shared_ptr<handler::ISolverHandler>& solverHandler,
-		const std::string& checkpointFileName = "xolotlStop.h5");
+	PetscMonitor(
+		TS ts, const std::shared_ptr<handler::ISolverHandler>& solverHandler,
+        const std::string& checkpointFileName);
 
 	virtual ~PetscMonitor();
 
@@ -64,6 +64,10 @@ public:
 		PetscReal time, Vec solution, PetscBool) override;
 
 protected:
+	bool
+	checkForCreatingCheckpoint() const;
+
+protected:
 	TS _ts;
 
 	std::shared_ptr<handler::ISolverHandler> _solverHandler;
@@ -85,7 +89,7 @@ protected:
 
 	PetscReal _hdf5Stride = 0.0;
 	PetscInt _hdf5Previous = 0;
-	std::string _hdf5OutputName = "xolotlStop.h5";
+	std::string _hdf5OutputName = "";
 };
 } // namespace monitor
 } // namespace solver

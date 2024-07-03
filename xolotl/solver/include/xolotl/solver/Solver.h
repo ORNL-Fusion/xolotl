@@ -40,8 +40,8 @@ protected:
 	//! The original solver handler.
 	std::shared_ptr<handler::ISolverHandler> solverHandler;
 
-    //! The instance ID for multi-instance (0 is root)
-    int instanceID;
+    //! The checkpoint file name
+    std::string checkpointFile;
 
 	//! The monitor
 	std::shared_ptr<monitor::IMonitor> monitor;

@@ -39,7 +39,7 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 {
 	// Create primary (whole) network interface
 	auto primaryOpts = _options->makeCopy();
-	primaryOpts->setInstanceID(0);
+	// primaryOpts->setCheckpointFilePath("xolotlStop_0.h5"); // don't need one?
 	primaryOpts->addProcess("noSolve");
 	_primaryInstance = std::make_unique<XolotlInterface>(context, primaryOpts);
 
@@ -53,7 +53,11 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 		auto& subOpts = subOptions[id];
 
 		// Create subinstances
-        subOpts->setInstanceID(id + 1);
+        if (false) {
+            subOpts->setRestartFilePath(""/*TODO*/);
+        }
+		subOpts->setCheckpointFilePath(
+			"xolotlStop_" + std::to_string(id + 1) + ".h5");
 		subOpts->addProcess("constant");
 		auto& sub = _subInstances.emplace_back(
 			std::make_unique<XolotlInterface>(context, subOpts));

@@ -27,10 +27,12 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 	// + moments
 	const auto dof = network.getDOF();
 
+	bool restarting = this->checkForRestart();
+
 	// We can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty() and surfaceOffset == 0) {
-		io::XFile xfile(networkName);
+	if (restarting and surfaceOffset == 0) {
+		io::XFile xfile(restartFile);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 			auto tsGroup = concGroup->getLastTimestepGroup();
@@ -65,8 +67,8 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 
 	// We can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty() and movingSurface) {
-		io::XFile xfile(networkName);
+	if (restarting and movingSurface) {
+		io::XFile xfile(restartFile);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 			auto tsGroup = concGroup->getLastTimestepGroup();
@@ -204,7 +206,6 @@ PetscSolver3DHandler::initializeSolverContext(DM& da, Mat& J)
 	// "+ 1" for temperature
 	auto dSize =
 		localZM * localYM * localXM * (nNetworkEntries + difEntries.size() + 1);
-	// FIXME
 	int nAdvec = 0;
 	for (auto&& handler : advectionHandlers) {
 		nAdvec = std::max(nAdvec, handler->getNumberOfAdvecting());
@@ -366,8 +367,8 @@ PetscSolver3DHandler::initializeConcentration(
 		bool hasConcentrations = false;
 		std::unique_ptr<io::XFile> xfile;
 		std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
-		if (not networkName.empty()) {
-			xfile = std::make_unique<io::XFile>(networkName);
+		if (this->checkForRestart()) {
+			xfile = std::make_unique<io::XFile>(restartFile);
 			concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
 			hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		}
