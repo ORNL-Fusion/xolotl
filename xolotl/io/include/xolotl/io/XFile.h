@@ -96,8 +96,8 @@ public:
 		 *          the given time step.
 		 */
 		static std::string
-		makeGroupName(
-			const ConcentrationGroup& concGroup, int loop, int timeStep);
+		makeGroupName(const ConcentrationGroup& concGroup, int ctrlStep,
+			int loop, int timeStep);
 
 		/**
 		 * Construct a TimestepGroup.
@@ -117,8 +117,9 @@ public:
 		 * @param previousTime The physical time at the previous time step
 		 * @param deltaTime The physical length of the time step
 		 */
-		TimestepGroup(const ConcentrationGroup& concGroup, int loop,
-			int timeStep, double time, double previousTime, double deltaTime);
+		TimestepGroup(const ConcentrationGroup& concGroup, int ctrlStep,
+			int loop, int timeStep, double time, double previousTime,
+			double deltaTime);
 
 		/**
 		 * Open a TimestepGroup within the given concentration group.
@@ -127,8 +128,8 @@ public:
 		 * @param loop The loop number
 		 * @param timeStep The time step of the desired group.
 		 */
-		TimestepGroup(
-			const ConcentrationGroup& concGroup, int loop, int timeStep);
+		TimestepGroup(const ConcentrationGroup& concGroup, int ctrlStep,
+			int loop, int timeStep);
 
 		/**
 		 * Update a Timestep group within the given
@@ -437,7 +438,7 @@ public:
 		 * @param deltaTime The physical length of the time step
 		 */
 		std::unique_ptr<TimestepGroup>
-		addTimestepGroup(int loop, int timeStep, double time,
+		addTimestepGroup(int ctrlStep, int loop, int timeStep, double time,
 			double previousTime, double deltaTime) const;
 
 		/**

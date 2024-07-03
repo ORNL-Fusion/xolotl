@@ -50,5 +50,11 @@ Solver::setCommandLineOptions(std::string arg)
 	optionsString = arg;
 }
 
+void
+Solver::setExternalControlStep(std::size_t step)
+{
+    assert(monitor);
+    monitor->setExternalControlStep(step);
+}
 } /* end namespace solver */
 } /* end namespace xolotl */

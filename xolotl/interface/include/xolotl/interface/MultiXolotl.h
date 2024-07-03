@@ -33,6 +33,9 @@ public:
 	double
 	currentDt() const noexcept;
 
+    std::size_t
+	currentStep() const noexcept;
+
 	void
 	solveXolotl() override;
 

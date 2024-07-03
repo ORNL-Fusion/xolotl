@@ -682,7 +682,7 @@ PetscMonitor3D::startStop(
 	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
 	assert(concGroup);
 	auto tsGroup = concGroup->addTimestepGroup(
-		_loopNumber, timestep, time, previousTime, currentTimeStep);
+		_ctrlStep, _loopNumber, timestep, time, previousTime, currentTimeStep);
 
 	// Get the physical grid
 	auto grid = _solverHandler->getXGrid();

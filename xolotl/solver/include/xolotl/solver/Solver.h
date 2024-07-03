@@ -72,6 +72,12 @@ public:
 	setCommandLineOptions(std::string arg);
 
 	/**
+	 * \see ISolver.h
+	 */
+    void
+    setExternalControlStep(std::size_t step) override;
+
+	/**
 	 * @return The solver handler for this solver
 	 */
 	handler::ISolverHandler*

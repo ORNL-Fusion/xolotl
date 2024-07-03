@@ -162,6 +162,12 @@ MultiXolotl::currentDt() const noexcept
 	return _timeStepper.currentTimeStepSize();
 }
 
+std::size_t
+MultiXolotl::currentStep() const noexcept
+{
+    return _timeStepper.currentStep();
+}
+
 void
 MultiXolotl::solveXolotl()
 {
@@ -247,6 +253,8 @@ MultiXolotl::solveStep()
 	for (auto&& sub : _subInstances) {
 		// Set the time we want to reach
 		sub->setTimes(currentTime(), currentDt());
+        // Provide our current step as the external control step
+        sub->setExternalControlStep(currentStep());
 		// Run the solver
 		sub->solveXolotl();
 	}

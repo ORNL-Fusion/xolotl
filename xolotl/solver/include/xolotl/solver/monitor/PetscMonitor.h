@@ -63,6 +63,12 @@ public:
 	postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		PetscReal time, Vec solution, PetscBool) override;
 
+    void
+    setExternalControlStep(std::size_t step) override
+    {
+        _ctrlStep = step;
+    }
+
 protected:
 	bool
 	checkForCreatingCheckpoint() const;
@@ -90,6 +96,8 @@ protected:
 	PetscReal _hdf5Stride = 0.0;
 	PetscInt _hdf5Previous = 0;
 	std::string _hdf5OutputName = "";
+
+    std::size_t _ctrlStep = 0;
 };
 } // namespace monitor
 } // namespace solver
