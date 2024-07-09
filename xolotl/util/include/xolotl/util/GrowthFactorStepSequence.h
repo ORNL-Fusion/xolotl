@@ -11,8 +11,8 @@ class GrowthFactorStepSequence : public StepSequence
 public:
 	GrowthFactorStepSequence();
 
-	GrowthFactorStepSequence(
-		double initialValue, double finalValue, double growthFactor = 1.0);
+	GrowthFactorStepSequence(double initialValue, double finalValue,
+		double growthFactor = 1.0, std::size_t initialStep = 0);
 
 	virtual ~GrowthFactorStepSequence();
 

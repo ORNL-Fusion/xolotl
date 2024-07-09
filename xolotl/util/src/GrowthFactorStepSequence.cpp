@@ -9,8 +9,9 @@ namespace util
 {
 GrowthFactorStepSequence::GrowthFactorStepSequence() = default;
 
-GrowthFactorStepSequence::GrowthFactorStepSequence(
-	double initialValue, double finalValue, double growthFactor) :
+GrowthFactorStepSequence::GrowthFactorStepSequence(double initialValue,
+	double finalValue, double growthFactor, std::size_t initialStep) :
+	StepSequence(initialStep),
 	_initialValue(initialValue),
 	_finalValue(finalValue),
 	_growthFactor(growthFactor)
@@ -24,7 +25,7 @@ GrowthFactorStepSequence::~GrowthFactorStepSequence()
 void
 GrowthFactorStepSequence::start()
 {
-	_currentStep = 0;
+	_currentStep = _initialStep;
 	_currentValue = _initialValue;
 }
 

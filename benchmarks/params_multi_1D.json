@@ -5,7 +5,7 @@
     "boundary": "1 1",
     "netParam": "1000 0 0 1000 1000",
     "useSubnetworks": true,
-    "couplingTimeStepParams": "1.0e-12 1.0 1.1 0.0 0.00001 5",
+    "couplingTimeStepParams": "1.0e-12 1.0 1.1 0.0 0.00001 10",
     "grouping": "101 2",
     "vizHandler": "dummy",
     "perfHandler": "dummy",
@@ -15,6 +15,7 @@
     "cascadeDose": 0.05,
     "cascadeEfficiency": 0.025,
     "radiusSize": "85 85 85",
+    "restartFile": "xolotlRestart.txt",
     "petscArgs": [
         "-start_stop",
         "-ts_dt 1.0e-12",

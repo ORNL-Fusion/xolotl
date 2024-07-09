@@ -33,7 +33,7 @@ public:
 	double
 	currentDt() const noexcept;
 
-    std::size_t
+	std::size_t
 	currentStep() const noexcept;
 
 	void
@@ -41,6 +41,10 @@ public:
 
 	void
 	solveStep();
+
+private:
+    void
+    writeStopData();
 
 private:
 	std::shared_ptr<ComputeContext> _computeContext;
@@ -51,6 +55,7 @@ private:
 	std::vector<std::unique_ptr<XolotlInterface>> _subInstances;
 	std::vector<IdType> _subDOFs;
 	std::vector<std::shared_ptr<RatesCapsule>> _constantRates;
+	bool _checkpointing{false};
 };
 } // namespace interface
 } // namespace xolotl

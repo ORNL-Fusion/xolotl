@@ -1,6 +1,7 @@
 #include <petsc.h>
 
 #include <cassert>
+#include <fstream>
 
 #include <xolotl/factory/interface/MaterialSubOptionsFactory.h>
 #include <xolotl/interface/IMaterialSubOptions.h>
@@ -8,6 +9,7 @@
 #include <xolotl/interface/XolotlInterface.h>
 #include <xolotl/util/GrowthFactorStepSequence.h>
 #include <xolotl/util/LinearStepSequence.h>
+#include <xolotl/util/Log.h>
 
 namespace xolotl
 {
@@ -26,38 +28,126 @@ struct PetscContext
 	}
 };
 
+auto
+readRestartFile(const std::string& fileName)
+{
+	auto ret = std::vector<std::string>{};
+	if (!fileName.empty()) {
+		auto ifs = std::ifstream(fileName);
+		std::string line;
+		while (std::getline(ifs, line)) {
+			ret.push_back(line);
+		}
+	}
+	return ret;
+}
+
+void
+writeRestartFile(const std::vector<std::string>& fileNames)
+{
+	auto ofs = std::ofstream("xolotlRestart.txt");
+	for (auto&& name : fileNames) {
+		ofs << name << '\n';
+	}
+}
+
+auto
+readStopData()
+{
+	auto ifs = std::ifstream("xolotlStop_data.txt");
+	double time, dt;
+	std::size_t step;
+	ifs >> step >> time >> dt;
+	return std::make_tuple(step, time, dt);
+}
+
+void
+MultiXolotl::writeStopData()
+{
+	auto ofs = std::ofstream("xolotlStop_data.txt");
+	ofs << currentStep() << ' ' << currentTime() << ' ' << currentDt() << '\n';
+}
+
+util::TimeStepper
+makeTimeStepper(const options::IOptions& options)
+{
+	auto initDt = options.getInitialTimeStep();
+	auto maxDt = options.getMaxTimeStep();
+	auto gf = options.getTimeStepGrowthFactor();
+	auto startTime = options.getStartTime();
+	auto endTime = options.getEndTime();
+	auto maxSteps = options.getNumberOfTimeSteps();
+
+	std::size_t step = 0;
+
+	if (!options.getRestartFilePath().empty()) {
+		std::tie(step, startTime, initDt) = readStopData();
+	}
+
+	auto sequence = std::make_unique<util::GrowthFactorStepSequence>(
+		initDt, maxDt, gf, step);
+
+	return util::TimeStepper(sequence, startTime, endTime, maxSteps);
+}
+
 MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 	const std::shared_ptr<options::IOptions>& options) :
 	_computeContext(context),
 	_options(options),
-	_timeStepper(std::make_unique<util::GrowthFactorStepSequence>(
-					 _options->getInitialTimeStep(), _options->getMaxTimeStep(),
-					 _options->getTimeStepGrowthFactor()),
-		_options->getStartTime(), _options->getEndTime(),
-		_options->getNumberOfTimeSteps()),
+	_timeStepper(makeTimeStepper(*options)),
 	_petscContext(std::make_unique<PetscContext>())
 {
+	// Check for restart
+	auto restartFile = _options->getRestartFilePath();
+	bool restarting = !restartFile.empty();
+
+	// Check for checkpoint
+	_checkpointing =
+		(_options->getPetscArg().find("-start_stop") != std::string::npos);
+	std::vector<std::string> checkpointFiles{"xolotlStop_0.h5"};
+
 	// Create primary (whole) network interface
 	auto primaryOpts = _options->makeCopy();
-	// primaryOpts->setCheckpointFilePath("xolotlStop_0.h5"); // don't need one?
+	primaryOpts->setCheckpointFilePath(checkpointFiles[0]); // don't need one?
 	primaryOpts->addProcess("noSolve");
 	_primaryInstance = std::make_unique<XolotlInterface>(context, primaryOpts);
 
+	// Generate suboptions
 	auto subOptions = factory::interface::MaterialSubOptionsFactory::get()
 						  .generate(*_options)
 						  ->getSubOptions();
 
+	// Get restart files
+	auto restartFiles = readRestartFile(restartFile);
+	if (restarting && restartFiles.size() != (subOptions.size() + 1)) {
+		auto msgstrm = std::stringstream()
+			<< "MultiXolotl: Number of restart files (" << restartFiles.size()
+			<< ") must match number of instances (" << (subOptions.size() + 1)
+			<< ")";
+		XOLOTL_ERROR(std::runtime_error, msgstrm.str());
+		// auto msg = msgstrm.str();
+		// XOLOTL_LOG_ERR << msg;
+		// throw std::runtime_error(msg);
+	}
+	if (restarting) {
+		primaryOpts->setRestartFilePath(restartFiles[0]);
+	}
+
+	// Create subinstances
 	std::vector<std::vector<std::vector<std::uint32_t>>> allBounds;
 	std::vector<std::vector<std::vector<xolotl::IdType>>> allMomIdInfo;
 	for (int id = 0; id < subOptions.size(); ++id) {
 		auto& subOpts = subOptions[id];
 
-		// Create subinstances
-        if (false) {
-            subOpts->setRestartFilePath(""/*TODO*/);
-        }
-		subOpts->setCheckpointFilePath(
+		// Handle restart and checkpoint files
+		if (restarting) {
+			subOpts->setRestartFilePath(restartFiles[id + 1]);
+		}
+		const auto& ckFile = checkpointFiles.emplace_back(
 			"xolotlStop_" + std::to_string(id + 1) + ".h5");
+		subOpts->setCheckpointFilePath(ckFile);
+
+		// Construct subinstance
 		subOpts->addProcess("constant");
 		auto& sub = _subInstances.emplace_back(
 			std::make_unique<XolotlInterface>(context, subOpts));
@@ -73,6 +163,11 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 
 		// Constant rate capsules
 		_constantRates.push_back(sub->makeRatesCapsule());
+	}
+
+	// Write restart file
+	if (_checkpointing) {
+		writeRestartFile(checkpointFiles);
 	}
 
 	// Pass data to primary
@@ -142,6 +237,11 @@ MultiXolotl::~MultiXolotl()
 	// Print the result
 	_primaryInstance->outputData(
 		previousTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
+
+	// Write stop data
+	if (_checkpointing) {
+		writeStopData();
+	}
 }
 
 double
@@ -165,7 +265,7 @@ MultiXolotl::currentDt() const noexcept
 std::size_t
 MultiXolotl::currentStep() const noexcept
 {
-    return _timeStepper.currentStep();
+	return _timeStepper.currentStep();
 }
 
 void
@@ -253,8 +353,8 @@ MultiXolotl::solveStep()
 	for (auto&& sub : _subInstances) {
 		// Set the time we want to reach
 		sub->setTimes(currentTime(), currentDt());
-        // Provide our current step as the external control step
-        sub->setExternalControlStep(currentStep());
+		// Provide our current step as the external control step
+		sub->setExternalControlStep(currentStep());
 		// Run the solver
 		sub->solveXolotl();
 	}

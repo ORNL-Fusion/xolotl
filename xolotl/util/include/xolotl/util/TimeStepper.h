@@ -16,6 +16,8 @@ public:
 	TimeStepper(std::unique_ptr<IStepSequence>&& stepSequence, double startTime,
 		double endTime, std::size_t maxSteps);
 
+    TimeStepper(TimeStepper&& other);
+
 	void
 	start();
 
