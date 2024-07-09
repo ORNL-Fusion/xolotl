@@ -1,4 +1,5 @@
 #include <xolotl/io/XFile.h>
+#include <xolotl/perf/ScopedTimer.h>
 #include <xolotl/solver/monitor/PetscMonitor.h>
 #include <xolotl/util/MPIUtils.h>
 
@@ -216,6 +217,63 @@ PetscMonitor::writeNetwork(MPI_Comm comm, const std::string& targetFileName,
 				checkpointFile, _solverHandler->getNetwork());
 		}
 	}
+}
+
+PetscErrorCode
+PetscMonitor::startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	PetscFunctionBeginUser;
+	perf::ScopedTimer myTimer(_startStopTimer);
+
+	// Compute the dt
+	double previousTime = _solverHandler->getPreviousTime();
+	double dt = time - previousTime;
+
+	// Don't do anything if it is not on the stride
+	if (((PetscInt)((time + dt / 10.0) / _hdf5Stride) <= _hdf5Previous) &&
+		(time > 0.0)) {
+		PetscFunctionReturn(0);
+	}
+
+	// Update the previous time
+	if ((PetscInt)((time + dt / 10.0) / _hdf5Stride) > _hdf5Previous) {
+		_hdf5Previous++;
+	}
+
+	// Gets MPI comm
+	auto xolotlComm = util::getMPIComm();
+
+	// Open the existing HDF5 file
+	io::XFile checkpointFile(
+		_hdf5OutputName, xolotlComm, io::XFile::AccessMode::OpenReadWrite);
+
+	// Get the current time step
+	double currentTimeStep;
+	PetscCall(TSGetTimeStep(ts, &currentTimeStep));
+
+	// Add a concentration time step group for the current time step.
+	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
+	assert(concGroup);
+	auto tsGroup = concGroup->addTimestepGroup(
+		_ctrlStep, _loopNumber, timestep, time, previousTime, currentTimeStep);
+
+	// Save the fluence
+	auto fluxHandler = _solverHandler->getFluxHandler();
+	auto fluence = fluxHandler->getFluence();
+	tsGroup->writeFluence(fluence);
+
+	// Get the names of the species in the network
+	auto& network = _solverHandler->getNetwork();
+	auto numSpecies = network.getSpeciesListSize();
+	std::vector<std::string> speciesNames;
+	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+		speciesNames.push_back(network.getSpeciesName(id));
+	}
+
+	this->startStopImpl(ts, timestep, time, solution, checkpointFile,
+		tsGroup.get(), speciesNames);
+
+	PetscFunctionReturn(0);
 }
 
 PetscErrorCode

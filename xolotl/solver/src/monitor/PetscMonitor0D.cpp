@@ -287,26 +287,14 @@ PetscMonitor0D::monitorLargest(
 }
 
 PetscErrorCode
-PetscMonitor0D::startStop(
-	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+PetscMonitor0D::startStopImpl(TS ts, PetscInt timestep, PetscReal time,
+	Vec solution, io::XFile& checkpointFile, io::XFile::TimestepGroup* tsGroup,
+	[[maybe_unused]] const std::vector<std::string>& speciesNames)
 {
 	// Initial declaration
 	const double **solutionArray, *gridPointSolution;
 
 	PetscFunctionBeginUser;
-
-	// Compute the dt
-	double previousTime = _solverHandler->getPreviousTime();
-	double dt = time - previousTime;
-
-	// Don't do anything if it is not on the stride
-	if (((PetscInt)((time + dt / 10.0) / _hdf5Stride) <= _hdf5Previous) &&
-		timestep > 0)
-		PetscFunctionReturn(0);
-
-	// Update the previous time
-	if ((PetscInt)((time + dt / 10.0) / _hdf5Stride) > _hdf5Previous)
-		_hdf5Previous++;
 
 	// Get the da from ts
 	DM da;
@@ -322,21 +310,6 @@ PetscMonitor0D::startStop(
 	// Create an array for the concentration
 	double concArray[dof + 1][2];
 
-	// Open the existing HDF5 file
-	auto xolotlComm = util::getMPIComm();
-	io::XFile checkpointFile(
-		_hdf5OutputName, xolotlComm, io::XFile::AccessMode::OpenReadWrite);
-
-	// Get the current time step
-	double currentTimeStep;
-	PetscCall(TSGetTimeStep(ts, &currentTimeStep));
-
-	// Add a concentration time step group for the current time step.
-	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
-	assert(concGroup);
-	auto tsGroup = concGroup->addTimestepGroup(
-		_ctrlStep, _loopNumber, timestep, time, previousTime, currentTimeStep);
-
 	// Determine the concentration values we will write.
 	io::XFile::TimestepGroup::Concs1DType concs(1);
 
@@ -348,11 +321,6 @@ PetscMonitor0D::startStop(
 			concs[0].emplace_back(l, gridPointSolution[l]);
 		}
 	}
-
-	// Save the fluence
-	auto fluxHandler = _solverHandler->getFluxHandler();
-	auto fluence = fluxHandler->getFluence();
-	tsGroup->writeFluence(fluence);
 
 	// Write our concentration data to the current timestep group
 	// in the HDF5 file.

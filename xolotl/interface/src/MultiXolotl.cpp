@@ -32,29 +32,46 @@ auto
 readRestartFile(const std::string& fileName)
 {
 	auto ret = std::vector<std::string>{};
-	if (!fileName.empty()) {
-		auto ifs = std::ifstream(fileName);
-		std::string line;
-		while (std::getline(ifs, line)) {
-			ret.push_back(line);
-		}
+	if (fileName.empty()) {
+		return ret;
 	}
+
+	auto ifs = std::ifstream(fileName);
+	if (!ifs) {
+		throw std::runtime_error("Problem opening file to read: " + fileName);
+	}
+
+	std::string line;
+	while (std::getline(ifs, line)) {
+		ret.push_back(line);
+	}
+
 	return ret;
 }
 
 void
 writeRestartFile(const std::vector<std::string>& fileNames)
 {
-	auto ofs = std::ofstream("xolotlRestart.txt");
+	std::string name = "xolotlRestart.txt";
+	auto ofs = std::ofstream(name);
+	if (!ofs) {
+		throw std::runtime_error("Problem opening file to write: " + name);
+	}
 	for (auto&& name : fileNames) {
 		ofs << name << '\n';
 	}
+	ofs.close();
+	XOLOTL_LOG << "MultiXolotl: Restart file written to: " << name;
 }
 
 auto
 readStopData()
 {
-	auto ifs = std::ifstream("xolotlStop_data.txt");
+	std::string name = "xolotlStop_data.txt";
+	auto ifs = std::ifstream(name);
+	if (!ifs) {
+		throw std::runtime_error("Problem opening file to read: " + name);
+	}
 	double time, dt;
 	std::size_t step;
 	ifs >> step >> time >> dt;
@@ -64,7 +81,11 @@ readStopData()
 void
 MultiXolotl::writeStopData()
 {
-	auto ofs = std::ofstream("xolotlStop_data.txt");
+	std::string name = "xolotlStop_data.txt";
+	auto ofs = std::ofstream(name);
+	if (!ofs) {
+		throw std::runtime_error("Problem opening file to write: " + name);
+	}
 	ofs << currentStep() << ' ' << currentTime() << ' ' << currentDt() << '\n';
 }
 
@@ -87,7 +108,7 @@ makeTimeStepper(const options::IOptions& options)
 	auto sequence = std::make_unique<util::GrowthFactorStepSequence>(
 		initDt, maxDt, gf, step);
 
-	return util::TimeStepper(sequence, startTime, endTime, maxSteps);
+	return util::TimeStepper(std::move(sequence), startTime, endTime, maxSteps);
 }
 
 MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,

@@ -736,8 +736,9 @@ PetscMonitor1D::monitorLargest(
 }
 
 PetscErrorCode
-PetscMonitor1D::startStop(
-	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+PetscMonitor1D::startStopImpl(TS ts, PetscInt timestep, PetscReal time,
+	Vec solution, io::XFile& checkpointFile, io::XFile::TimestepGroup* tsGroup,
+	const std::vector<std::string>& speciesNames)
 {
 	// Initial declaration
 	const double **solutionArray, *gridPointSolution;
@@ -745,27 +746,8 @@ PetscMonitor1D::startStop(
 
 	PetscFunctionBeginUser;
 
-	perf::ScopedTimer myTimer(_startStopTimer);
-
 	// Get local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
-
-	// Compute the dt
-	double previousTime = _solverHandler->getPreviousTime();
-	double dt = time - previousTime;
-
-	// Don't do anything if it is not on the stride
-	if (((PetscInt)((time + dt / 10.0) / _hdf5Stride) <= _hdf5Previous) &&
-		timestep > 0) {
-		PetscFunctionReturn(0);
-	}
-
-	// Update the previous time
-	if ((PetscInt)((time + dt / 10.0) / _hdf5Stride) > _hdf5Previous)
-		_hdf5Previous++;
-
-	// Gets MPI comm
-	auto xolotlComm = util::getMPIComm();
 
 	// Get the da from ts
 	DM da;
@@ -781,46 +763,19 @@ PetscMonitor1D::startStop(
 	// Create an array for the concentration
 	double concArray[dof + 1][2];
 
-	// Open the existing HDF5 file
-	io::XFile checkpointFile(
-		_hdf5OutputName, xolotlComm, io::XFile::AccessMode::OpenReadWrite);
-
-	// Get the current time step
-	double currentTimeStep;
-	PetscCall(TSGetTimeStep(ts, &currentTimeStep));
-
-	// Add a concentration time step group for the current time step.
-	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
-	assert(concGroup);
-	auto tsGroup = concGroup->addTimestepGroup(
-		_ctrlStep, _loopNumber, timestep, time, previousTime, currentTimeStep);
-
-	// Get the physical grid
+	// Get the physical grid and write to file
 	auto grid = _solverHandler->getXGrid();
-	// Write it in the file
 	tsGroup->writeGrid(grid);
-
-	// Save the fluence
-	auto fluxHandler = _solverHandler->getFluxHandler();
-	auto fluence = fluxHandler->getFluence();
-	tsGroup->writeFluence(fluence);
-
-	// Get the names of the species in the network
-	auto numSpecies = network.getSpeciesListSize();
-	std::vector<std::string> names;
-	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		names.push_back(network.getSpeciesName(id));
-	}
 
 	if (_solverHandler->moveSurface() || _solverHandler->getLeftOffset() == 1) {
 		// Write the surface positions and the associated interstitial
 		// quantities in the concentration sub group
-		tsGroup->writeSurface1D(_nSurf, _previousSurfFlux, names);
+		tsGroup->writeSurface1D(_nSurf, _previousSurfFlux, speciesNames);
 	}
 
 	// Write the bottom impurity information if the bottom is a free surface
 	if (_solverHandler->getRightOffset() == 1)
-		tsGroup->writeBottom1D(_nBulk, _previousBulkFlux, names);
+		tsGroup->writeBottom1D(_nBulk, _previousBulkFlux, speciesNames);
 
 	// Write the bursting information if the bubble bursting is used
 	if (_solverHandler->burstBubbles())
