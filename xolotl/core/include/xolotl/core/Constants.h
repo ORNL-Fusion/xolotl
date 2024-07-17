@@ -50,6 +50,10 @@ constexpr double heliumRadius = 0.30000000000000000;
 //! Single xenon radius. Given in units here of nm.
 constexpr double xenonRadius = 0.30000000000000000;
 
+//! Core radius. Given in units here of nm.
+constexpr double t91ICavRadius = 0.32000000000000000;
+constexpr double t91VCavRadius = 0.08000000000000000;
+
 // Tungsten heat coefficient = 1 / (rho * C)
 // constexpr double tungstenHeatCoefficient = 1.236e13;
 constexpr double tungstenHeatCoefficient = 3.8868e20;
@@ -91,6 +95,10 @@ constexpr double frankBurgers = 0.333;
 // Sink strength for Alloy case in nm^-2
 constexpr double alloySinkStrength = 1.0e-5;
 
+// Sink strength for T91 case in nm^-2
+constexpr double t91DisloStrength = 5.0e-4;
+constexpr double t91GBStrength = 3.7e-5;
+
 // Sink strength for alphaZr case in nm^-2
 constexpr double alphaZrASinkStrength = 7.25e-8; // Single crystal
 constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
@@ -99,6 +107,10 @@ constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
 
 // Tungsten density in nm^-3
 constexpr double tungstenDensity = 62.8;
+
+// Energies for thermal vacancy concentration in T91
+constexpr double t91FormationEntropy = 2.17; // in k_B
+constexpr double t91FormationEnergy = 1.79; // in eV
 
 } /* end namespace core */
 } /* end namespace xolotl */

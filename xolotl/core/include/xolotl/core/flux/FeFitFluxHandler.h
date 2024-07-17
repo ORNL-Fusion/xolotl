@@ -4,6 +4,7 @@
 
 #include <xolotl/core/flux/FluxHandler.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
+#include <xolotl/core/network/T91ReactionNetwork.h>
 
 namespace xolotl
 {
@@ -57,13 +58,28 @@ public:
 			incidentFluxVec.push_back(tempVector);
 		}
 
-		using NetworkType = network::FeReactionNetwork;
-		auto feNetwork = dynamic_cast<NetworkType*>(&network);
+		if (auto feNetwork =
+				dynamic_cast<network::FeReactionNetwork*>(&network)) {
+			addClusters(*feNetwork);
+		}
+		else if (auto t91Network =
+					 dynamic_cast<network::T91ReactionNetwork*>(&network)) {
+			addClusters(*t91Network);
+		}
 
+		return;
+	}
+
+	template <typename NetworkType>
+	void
+	addClusters(NetworkType& network)
+	{
 		// Set the flux index corresponding the the single helium cluster here
-		NetworkType::Composition comp = NetworkType::Composition::zero();
+		typename NetworkType::Composition comp =
+			NetworkType::Composition::zero();
 		comp[NetworkType::Species::He] = 1;
-		auto cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+
+		auto cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::runtime_error(
 				"\nThe single helium cluster is not present in the network, "
@@ -74,7 +90,7 @@ public:
 		// Look for interstitial now
 		comp[NetworkType::Species::He] = 0;
 		comp[NetworkType::Species::I] = 1;
-		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::runtime_error("\nThe single interstitial cluster is not "
 									 "present in the network, "
@@ -85,7 +101,7 @@ public:
 		// Look for vacancies now
 		comp[NetworkType::Species::I] = 0;
 		comp[NetworkType::Species::V] = 1;
-		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::runtime_error(
 				"\nThe single vacancy cluster is not present in the network, "
@@ -93,7 +109,7 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 2;
-		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::runtime_error(
 				"\nThe double vacancy cluster is not present in the network, "
@@ -101,7 +117,7 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 3;
-		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::runtime_error(
 				"\nThe triple vacancy cluster is not present in the network, "
@@ -109,7 +125,7 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 4;
-		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::runtime_error(
 				"\nThe quadruple vacancy cluster is not present "
@@ -118,7 +134,7 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 5;
-		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::runtime_error(
 				"\nVacancy 5 cluster is not present in the network, "
@@ -126,7 +142,7 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 		comp[NetworkType::Species::V] = 9;
-		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::runtime_error(
 				"\nVacancy 9 cluster is not present in the network, "

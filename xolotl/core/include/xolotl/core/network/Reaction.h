@@ -337,7 +337,7 @@ public:
 		return detail::ConstantRateView();
 	}
 
-private:
+protected:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeCoefficients();

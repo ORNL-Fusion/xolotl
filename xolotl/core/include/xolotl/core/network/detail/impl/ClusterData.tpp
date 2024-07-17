@@ -192,7 +192,7 @@ ClusterData<TNetwork, MemSpace>::defineMomentIds()
 {
 	constexpr auto speciesRange = TNetwork::getSpeciesRangeForGrouping();
 
-    auto numClusters = this->numClusters;
+	auto numClusters = this->numClusters;
 	auto counts = Kokkos::View<IndexType*>("Moment Id Counts", numClusters);
 
 	auto data = *this;
@@ -248,7 +248,7 @@ ClusterData<TNetwork, MemSpace>::defineMomentIds()
 		});
 
 	Kokkos::fence();
-    return nMomentIds;
+	return nMomentIds;
 }
 } // namespace detail
 } // namespace network
