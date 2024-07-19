@@ -418,6 +418,7 @@ public:
 		// Name of our last timestep and loop attribute.
 		static const std::string lastTimestepAttrName;
 		static const std::string lastLoopAttrName;
+		static const std::string lastCtrlStepAttrName;
 
 	public:
 		// Path of the concentrations group within the file.
@@ -440,6 +441,14 @@ public:
 		std::unique_ptr<TimestepGroup>
 		addTimestepGroup(int ctrlStep, int loop, int timeStep, double time,
 			double previousTime, double deltaTime) const;
+
+		/**
+		 * Obtain the last control step known to our group.
+		 *
+		 * @return Control step of last TimestepGroup written to our group.
+		 */
+		int
+		getLastControlStep(void) const;
 
 		/**
 		 * Obtain the last loop known to our group.

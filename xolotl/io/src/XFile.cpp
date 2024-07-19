@@ -233,6 +233,8 @@ const fs::path XFile::ConcentrationGroup::path = "/concentrationsGroup";
 const std::string XFile::ConcentrationGroup::lastTimestepAttrName =
 	"lastTimeStep";
 const std::string XFile::ConcentrationGroup::lastLoopAttrName = "lastLoop";
+const std::string XFile::ConcentrationGroup::lastCtrlStepAttrName =
+	"lastCtrlStep";
 
 XFile::ConcentrationGroup::ConcentrationGroup(const XFile& file, bool create) :
 	HDF5File::Group(file, ConcentrationGroup::path, create)
@@ -253,6 +255,11 @@ XFile::ConcentrationGroup::ConcentrationGroup(const XFile& file, bool create) :
 		Attribute<decltype(lastLoop)> lastLoopAttr(
 			*this, lastLoopAttrName, lastDSpace);
 		lastLoopAttr.setTo(lastLoop);
+
+		int lastCtrlStep = -1;
+		Attribute<decltype(lastCtrlStep)> lastCtrlStepAttr(
+			*this, lastCtrlStepAttrName, lastDSpace);
+		lastCtrlStepAttr.setTo(lastCtrlStep);
 	}
 }
 
@@ -267,7 +274,7 @@ XFile::ConcentrationGroup::addTimestepGroup(int ctrlStep, int loop,
 		H5P_DEFAULT);
 	if (groupExist) {
 		// Get the group
-        //FIXME: need to use ctrlStep
+		// FIXME: need to use ctrlStep
 		tsGroup = getTimestepGroup(loop, timeStep);
 		tsGroup->updateTimestepGroup(time, previousTime, deltaTime);
 	}
@@ -282,9 +289,17 @@ XFile::ConcentrationGroup::addTimestepGroup(int ctrlStep, int loop,
 	lastTimestepAttr.setTo(timeStep);
 	Attribute<decltype(loop)> lastLoopAttr(*this, lastLoopAttrName);
 	lastLoopAttr.setTo(loop);
-    //FIXME: add lastCtrlStep
+	Attribute<decltype(ctrlStep)> lastCtrlStepAttr(*this, lastCtrlStepAttrName);
+	lastCtrlStepAttr.setTo(ctrlStep);
 
 	return std::move(tsGroup);
+}
+
+int
+XFile::ConcentrationGroup::getLastControlStep(void) const
+{
+	Attribute<int> lastCtrlStepAttr(*this, lastCtrlStepAttrName);
+	return lastCtrlStepAttr.get();
 }
 
 int
@@ -308,8 +323,9 @@ XFile::ConcentrationGroup::getTimestepGroup(int loop, int timeStep) const
 
 	try {
 		// Open the sub-group associated with the desired time step.
-        // FIXME
-		tsGroup = std::make_unique<XFile::TimestepGroup>(*this, 0, loop, timeStep);
+		// FIXME
+		tsGroup =
+			std::make_unique<XFile::TimestepGroup>(*this, 0, loop, timeStep);
 	}
 	catch (HDF5Exception& e) {
 		// We were unable to open the group associated with the given time step.
@@ -329,10 +345,10 @@ XFile::ConcentrationGroup::getLastTimestepGroup(void) const
 		// if any time steps have been written.
 		auto lastTimeStep = getLastTimeStep();
 		auto lastLoop = getLastLoop();
-		if (lastTimeStep >= 0 and lastLoop >= 0) {
-            // FIXME
-			tsGroup =
-				std::make_unique<TimestepGroup>(*this, 0, lastLoop, lastTimeStep);
+		auto lastCtrlStep = getLastControlStep();
+		if (lastTimeStep >= 0 and lastLoop >= 0 and lastCtrlStep >= 0) {
+			tsGroup = std::make_unique<TimestepGroup>(
+				*this, lastCtrlStep, lastLoop, lastTimeStep);
 		}
 	}
 	catch (HDF5Exception& e) {
