@@ -418,19 +418,21 @@ PetscMonitor0D::computeXenonRetention(
 			   << "Xenon concentration = " << xeConcentration << "\n\n";
 
 	// Make sure the average partial radius makes sense
-	double averagePartialRadius = 0.0, averagePartialSize = 0.0;
+	double averagePartialRadius = 0.0, averagePartialSize = 0.0,
+		   averageRadius = 0.0;
 	if (partialBubbleConcentration > 1.e-16) {
 		averagePartialRadius = partialRadii / partialBubbleConcentration;
 		averagePartialSize = partialSize / partialBubbleConcentration;
 	}
+	if (bubbleConcentration > 1.0e-16)
+		averageRadius = radii / bubbleConcentration;
 
 	// Uncomment to write the content in a file
 	std::ofstream outputFile;
 	outputFile.open("retentionOut.txt", std::ios::app);
-	outputFile << time << " " << xeConcentration << " "
-			   << radii / bubbleConcentration << " " << averagePartialRadius
-			   << " " << partialBubbleConcentration << " " << averagePartialSize
-			   << std::endl;
+	outputFile << time << " " << xeConcentration << " " << averageRadius << " "
+			   << averagePartialRadius << " " << partialBubbleConcentration
+			   << " " << averagePartialSize << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray

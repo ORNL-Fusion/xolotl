@@ -1407,17 +1407,19 @@ PetscMonitor3D::computeXenonRetention(
 				   << "Xenon GB = " << nXenon / surface << "\n\n";
 
 		// Make sure the average partial radius makes sense
-		double averagePartialRadius = 0.0;
+		double averagePartialRadius = 0.0, averageRadius = 0.0;
 		if (totalConcData[3] > 1.e-16) {
 			averagePartialRadius = totalConcData[4] / totalConcData[3];
+		}
+		if (totalConcData[1] > 1.0e-16) {
+			averageRadius = totalConcData[2] / totalConcData[1];
 		}
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << time << " " << totalConcData[0] << " "
-				   << totalConcData[2] / totalConcData[1] << " "
-				   << averagePartialRadius << " " << nXenon / surface
+		outputFile << time << " " << totalConcData[0] << " " << averageRadius
+				   << " " << averagePartialRadius << " " << nXenon / surface
 				   << std::endl;
 		outputFile.close();
 	}
