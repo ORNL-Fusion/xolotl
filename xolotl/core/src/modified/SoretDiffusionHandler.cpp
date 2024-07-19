@@ -85,7 +85,7 @@ SoretDiffusionHandler::initialize(network::IReactionNetwork& network,
 			if (not util::equal(diffFactor, 0.0)) {
 				// Note that cluster is diffusing.
 				diffusingClusters.emplace_back(clusterId);
-				betaFactor.emplace_back(0.0065);
+				betaFactor.emplace_back(betaValue);
 
 				// This cluster interacts with temperature now
 				idPairs.push_back(core::RowColPair{clusterId, dof});
