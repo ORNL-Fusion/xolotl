@@ -1,3 +1,5 @@
+#include <cassert>
+
 #include <xolotl/util/TimeStepper.h>
 
 namespace xolotl
@@ -45,6 +47,20 @@ TimeStepper::valid() const noexcept
 {
 	return _currentTime < _endTime &&
 		(_maxSteps == 0 || _seq->currentStep() <= _maxSteps);
+}
+
+[[nodiscard]] double
+TimeStepper::timeAtStep(std::size_t step) const
+{
+	assert(step <= _maxSteps);
+	return _startTime + _seq->partialSumAt(step);
+}
+
+[[nodiscard]] double
+TimeStepper::timeStepSizeAtStep(std::size_t step) const
+{
+	assert(step <= _maxSteps);
+	return _seq->at(step);
 }
 } // namespace util
 } // namespace xolotl

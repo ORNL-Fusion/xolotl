@@ -22,6 +22,12 @@ public:
 	void
 	step() override;
 
+    double
+    at(std::size_t step) const override;
+
+    double
+    partialSumAt(std::size_t step) const override;
+
 private:
 	double _initialValue{};
 	double _finalValue{};

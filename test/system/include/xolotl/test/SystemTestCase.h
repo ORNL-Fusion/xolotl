@@ -13,6 +13,16 @@ public:
 	SystemTestOptions();
 };
 
+struct Restart
+{
+	bool value{false};
+
+	constexpr operator bool() const noexcept
+	{
+		return value;
+	}
+};
+
 class SystemTestCase
 {
 	friend class SystemTestOptions;
@@ -50,7 +60,7 @@ public:
 	}
 
 	void
-	run() const;
+	run(Restart restart = {}) const;
 
 	static void
 	copyFile(const std::string& fileName);
@@ -60,7 +70,10 @@ private:
 	checkMPILimits() const;
 
 	bool
-	runXolotl() const;
+	runXolotl(const std::string& fnTag = {}) const;
+
+	void
+	handleOutput() const;
 
 	void
 	checkOutput(const std::string& outputFileName,

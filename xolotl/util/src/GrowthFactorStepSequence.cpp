@@ -37,5 +37,23 @@ GrowthFactorStepSequence::step()
 	_currentValue = newVal;
 	++_currentStep;
 }
+
+double
+GrowthFactorStepSequence::at(std::size_t step) const
+{
+	return std::min(_initialValue * std::pow(_growthFactor, step), _finalValue);
+}
+
+double
+GrowthFactorStepSequence::partialSumAt(std::size_t step) const
+{
+	auto val = _initialValue;
+	auto sum = val;
+	for (std::size_t i = _initialStep; i < step; ++i) {
+		val = std::min(val * _growthFactor, _finalValue);
+		sum += val;
+	}
+	return sum;
+}
 } // namespace util
 } // namespace xolotl

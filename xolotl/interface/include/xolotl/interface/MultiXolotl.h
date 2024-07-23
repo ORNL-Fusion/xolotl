@@ -43,8 +43,11 @@ public:
 	solveStep();
 
 private:
-    void
-    writeStopData();
+	void
+	writeStopData();
+
+	void
+	startTimeStepper();
 
 private:
 	std::shared_ptr<ComputeContext> _computeContext;
@@ -55,7 +58,9 @@ private:
 	std::vector<std::unique_ptr<XolotlInterface>> _subInstances;
 	std::vector<IdType> _subDOFs;
 	std::vector<std::shared_ptr<RatesCapsule>> _constantRates;
+	bool _restarting{false};
 	bool _checkpointing{false};
+	std::vector<std::string> _checkpointFiles;
 };
 } // namespace interface
 } // namespace xolotl
