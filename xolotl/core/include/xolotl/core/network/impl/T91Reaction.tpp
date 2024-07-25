@@ -279,51 +279,56 @@ T91DissociationReaction::computeBindingEnergy(double time)
 		Composition comp = clReg.getOrigin();
 		Composition prod1Comp = prod1Reg.getOrigin();
 		Composition prod2Comp = prod2Reg.getOrigin();
+		// He
 		if (comp.isOnAxis(Species::He)) {
 			if (prod1Comp.isOnAxis(Species::He) ||
 				prod2Comp.isOnAxis(Species::He)) {
 				be = heBinding[comp[Species::He]];
 			}
 		}
+		// V
 		else if (comp.isOnAxis(Species::V)) {
 			auto size = comp[Species::V];
 			if (size < 5)
 				be = vBinding[size];
 			else
-				be = 2.03 -
-					3.0 *
+				be = 2.02 -
+					2.93 *
 						(pow((double)size, 2.0 / 3.0) -
 							pow((double)size - 1.0, 2.0 / 3.0));
 		}
+		// No I for now because only single I should be included in the
+		// simulation HeV
 		else if (comp[Species::He] > 0 and comp[Species::V] > 0) {
-			// HeV
+			auto amtHe = comp[Species::He], amtV = comp[Species::V];
+			auto ratio = (double)amtHe / (double)amtV;
 			if (prod1Comp.isOnAxis(Species::V) ||
 				prod2Comp.isOnAxis(Species::V)) {
-				auto amtHe = comp[Species::He], amtV = comp[Species::V];
-				be = 1.73 -
-					2.59 *
+				be = 2.02 -
+					2.93 *
 						(pow((double)amtV, 2.0 / 3.0) -
-							pow((double)amtV - 1.0, 2.0 / 3.0)) +
-					2.5 * log(1.0 + ((double)amtHe / (double)amtV));
+							pow((double)amtV - 1.0, 2.0 / 3.0)) -
+					0.1 * ratio * ratio + 1.59 * ratio;
 			}
 			if (prod1Comp.isOnAxis(Species::I) ||
 				prod2Comp.isOnAxis(Species::I)) {
-				auto amtHe = comp[Species::He], amtV = comp[Species::V];
-				be = 4.88 +
-					2.59 *
+				be = 3.77 +
+					2.93 *
 						(pow((double)amtV, 2.0 / 3.0) -
-							pow((double)amtV - 1.0, 2.0 / 3.0)) -
-					2.5 * log(1.0 + ((double)amtHe / (double)amtV));
+							pow((double)amtV - 1.0, 2.0 / 3.0)) +
+					0.09 * ratio * ratio - 1.35 * ratio;
 			}
-			//			if (prod1Comp.isOnAxis(Species::He) ||
-			//				prod2Comp.isOnAxis(Species::He)) {
-			//				auto amtHe = comp[Species::He], amtV =
-			//comp[Species::V]; 				be = 4.88 + 					2.59 * 						(pow((double)amtV, 2.0 / 3.0)
-			//- 							pow((double)amtV - 1.0, 2.0 / 3.0)) - 					2.5 * log(1.0 +
-			//((double)amtHe / (double)amtV));
-			//			}
+			if (prod1Comp.isOnAxis(Species::He) ||
+				prod2Comp.isOnAxis(Species::He)) {
+				be = 4.44 -
+					1.99 *
+						(pow((double)amtV, 2.0 / 3.0) -
+							pow((double)amtV - 1.0, 2.0 / 3.0)) +
+					0.07 * ratio * ratio - 1.06 * ratio;
+			}
 		}
 	}
+	// Grouped, only HeV should be grouped
 	else {
 		Composition lo = clReg.getOrigin();
 		Composition hi = clReg.getUpperLimitPoint();
@@ -332,21 +337,29 @@ T91DissociationReaction::computeBindingEnergy(double time)
 		// HeV
 		double amtHe = (double)(lo[Species::He] + hi[Species::He] - 1) / 2.0,
 			   amtV = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
+		auto ratio = (double)amtHe / (double)amtV;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
-			be = 1.73 -
-				2.59 * (pow(amtV, 2.0 / 3.0) - pow(amtV - 1.0, 2.0 / 3.0)) +
-				2.5 * log(1.0 + (amtHe / amtV));
+			be = 2.02 -
+				2.93 *
+					(pow((double)amtV, 2.0 / 3.0) -
+						pow((double)amtV - 1.0, 2.0 / 3.0)) -
+				0.1 * ratio * ratio + 1.59 * ratio;
 		}
 		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
-			be = 4.88 +
-				2.59 * (pow(amtV, 2.0 / 3.0) - pow(amtV - 1.0, 2.0 / 3.0)) -
-				2.5 * log(1.0 + (amtHe / amtV));
+			be = 3.77 +
+				2.93 *
+					(pow((double)amtV, 2.0 / 3.0) -
+						pow((double)amtV - 1.0, 2.0 / 3.0)) +
+				0.09 * ratio * ratio - 1.35 * ratio;
 		}
-		//		if (prod1Comp.isOnAxis(Species::He) ||
-		//prod2Comp.isOnAxis(Species::He)) { 			be = 4.88 + 				2.59 * (pow(amtV, 2.0
-		/// 3.0) - pow(amtV - 1.0, 2.0 / 3.0)) - 				2.5 * log(1.0 + (amtHe /
-		//amtV));
-		//		}
+		if (prod1Comp.isOnAxis(Species::He) ||
+			prod2Comp.isOnAxis(Species::He)) {
+			be = 4.44 -
+				1.99 *
+					(pow((double)amtV, 2.0 / 3.0) -
+						pow((double)amtV - 1.0, 2.0 / 3.0)) +
+				0.07 * ratio * ratio - 1.06 * ratio;
+		}
 	}
 
 	return util::min(5.0, util::max(be, -5.0));

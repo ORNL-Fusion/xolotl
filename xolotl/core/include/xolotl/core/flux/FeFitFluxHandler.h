@@ -29,12 +29,15 @@ private:
 		return 0.0;
 	}
 
+	double hePPM; // ppm / dpa
+
 public:
 	/**
 	 * The constructor
 	 */
 	FeFitFluxHandler(const options::IOptions& options) : FluxHandler(options)
 	{
+		hePPM = options.getHePPM(); // ppm / dpa
 	}
 
 	/**
@@ -51,13 +54,6 @@ public:
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
 		std::vector<double> grid) override
 	{
-		// Only defined in 0D
-		if (xGrid.size() == 0) {
-			// Add an empty vector
-			std::vector<double> tempVector;
-			incidentFluxVec.push_back(tempVector);
-		}
-
 		if (auto feNetwork =
 				dynamic_cast<network::FeReactionNetwork*>(&network)) {
 			addClusters(*feNetwork);
@@ -67,6 +63,10 @@ public:
 			addClusters(*t91Network);
 		}
 
+		// Copy data to device views
+		syncFluxIndices();
+		syncIncidentFluxVec();
+
 		return;
 	}
 
@@ -74,6 +74,10 @@ public:
 	void
 	addClusters(NetworkType& network)
 	{
+		// To scale the values to the default dose rate of 1.0e-6 dpa s-1
+		double factor = getFluxAmplitude() * 1.0e6;
+		auto omega = network.getAtomicVolume();
+
 		// Set the flux index corresponding the the single helium cluster here
 		typename NetworkType::Composition comp =
 			NetworkType::Composition::zero();
@@ -86,6 +90,8 @@ public:
 				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
+		incidentFluxVec.push_back(
+			std::vector<double>(1, factor * hePPM * 1.0e-12 / omega));
 
 		// Look for interstitial now
 		comp[NetworkType::Species::He] = 0;
@@ -97,6 +103,7 @@ public:
 									 "cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
+		incidentFluxVec.push_back(std::vector<double>(1, factor * 1.49e-5));
 
 		// Look for vacancies now
 		comp[NetworkType::Species::I] = 0;
@@ -108,6 +115,7 @@ public:
 				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
+		incidentFluxVec.push_back(std::vector<double>(1, factor * 9.91e-6));
 		comp[NetworkType::Species::V] = 2;
 		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
@@ -116,6 +124,7 @@ public:
 				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
+		incidentFluxVec.push_back(std::vector<double>(1, factor * 1.51e-6));
 		comp[NetworkType::Species::V] = 3;
 		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
@@ -124,6 +133,7 @@ public:
 				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
+		incidentFluxVec.push_back(std::vector<double>(1, factor * 2.60e-7));
 		comp[NetworkType::Species::V] = 4;
 		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
@@ -133,6 +143,7 @@ public:
 				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
+		incidentFluxVec.push_back(std::vector<double>(1, factor * 1.58e-7));
 		comp[NetworkType::Species::V] = 5;
 		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
@@ -141,6 +152,7 @@ public:
 				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
+		incidentFluxVec.push_back(std::vector<double>(1, factor * 6.29e-8));
 		comp[NetworkType::Species::V] = 9;
 		cluster = network.findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
@@ -149,6 +161,7 @@ public:
 				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
+		incidentFluxVec.push_back(std::vector<double>(1, factor * 3.16e-8));
 
 		return;
 	}
@@ -161,26 +174,11 @@ public:
 		Kokkos::View<double*> updatedConcOffset, int xi,
 		int surfacePos) override
 	{
-		// Define only for a 0D case
-		if (incidentFluxVec[0].size() != 0) {
-			throw std::runtime_error(
-				"\nThe iron problem is not defined for more than 0D!");
-		}
-
-		Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> ids_h{
-			fluxIndices.data(), 8};
-		Kokkos::View<IdType*> ids{"Flux Indices", 8};
-		deep_copy(ids, ids_h);
+		auto ids = this->fluxIds;
+		auto flux = this->incidentFlux;
 		Kokkos::parallel_for(
-			1, KOKKOS_LAMBDA(std::size_t) {
-				updatedConcOffset[ids[0]] += 2.11e-11; // He1
-				updatedConcOffset[ids[1]] += 1.49e-05; // I1
-				updatedConcOffset[ids[2]] += 9.91e-06; // V1
-				updatedConcOffset[ids[3]] += 1.51e-06; // V2
-				updatedConcOffset[ids[4]] += 2.60e-07; // V3
-				updatedConcOffset[ids[5]] += 1.58e-07; // V4
-				updatedConcOffset[ids[6]] += 6.29e-08; // V5
-				updatedConcOffset[ids[7]] += 3.16e-08; // V9
+			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
+				Kokkos::atomic_add(&updatedConcOffset[ids[i]], flux(i, 0));
 			});
 	}
 };

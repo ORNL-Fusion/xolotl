@@ -106,6 +106,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "\"tempParam\": 900,\n"
 		<< "\"perfHandler\": \"os\",\n"
 		<< "\"flux\": 1.5,\n"
+		<< "\"hePPM\": 0.5,\n"
 		<< "\"material\": \"W100\",\n"
 		<< "\"initialConc\": \"V 1 0.05\",\n"
 		<< "\"dimensions\": 1,\n"
@@ -154,6 +155,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Check if the flux option is used
 	BOOST_REQUIRE_EQUAL(opts.useFluxAmplitude(), true);
 	BOOST_REQUIRE_EQUAL(opts.getFluxAmplitude(), 1.5);
+	BOOST_REQUIRE_EQUAL(opts.getHePPM(), 0.5);
 
 	// Check the performance handler
 	BOOST_REQUIRE_EQUAL(opts.getPerfHandlerName(), "os");

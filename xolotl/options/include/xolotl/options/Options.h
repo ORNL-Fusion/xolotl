@@ -64,6 +64,11 @@ protected:
 	std::string fluxTimeProfileFilePath;
 
 	/**
+	 * Value for the helium portion.
+	 */
+	double hePPM;
+
+	/**
 	 * Name of the perf handler
 	 */
 	std::string perfHandlerName;
@@ -462,6 +467,15 @@ public:
 	getFluxTimeProfileFilePath() const override
 	{
 		return fluxTimeProfileFilePath;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	double
+	getHePPM() const override
+	{
+		return hePPM;
 	}
 
 	/**

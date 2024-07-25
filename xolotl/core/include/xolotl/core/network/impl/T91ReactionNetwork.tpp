@@ -101,6 +101,7 @@ T91ReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		else {
 			// No product
 			this->addProductionReaction(tag, {i, j});
+			// No dissociation
 		}
 		return;
 	}
@@ -160,11 +161,6 @@ T91ReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					isOnAxis2 = true;
 			}
 			if (isOnAxis1 || isOnAxis2) {
-				if (lo1.isOnAxis(Species::He) && lo2.isOnAxis(Species::He) &&
-					lo1[Species::He] == 1 && lo2[Species::He] == 1) {
-					continue;
-				}
-
 				this->addDissociationReaction(tag, {k, i, j});
 			}
 		}

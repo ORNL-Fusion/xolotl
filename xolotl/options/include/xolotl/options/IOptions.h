@@ -135,6 +135,15 @@ public:
 	getFluxTimeProfileFilePath() const = 0;
 
 	/**
+	 * Obtain the value of the intensity of the helium flux with respect to the
+	 * total flux to be used.
+	 *
+	 * @return The value of the helium flux
+	 */
+	virtual double
+	getHePPM() const = 0;
+
+	/**
 	 * Obtain the name of the perfomance handler to be used
 	 *
 	 * @return The name of the perf handler

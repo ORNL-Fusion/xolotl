@@ -27,6 +27,7 @@ Options::Options() :
 	fluxFlag(false),
 	fluxAmplitude(0.0),
 	fluxTimeProfileFlag(false),
+	hePPM(0.0),
 	perfHandlerName(""),
 	perfOutputYAMLFlag(false),
 	vizHandlerName(""),
@@ -105,6 +106,7 @@ Options::printAll(std::ostream& os) const
 	os << "fluxTimeProfileFlag: " << std::boolalpha << fluxTimeProfileFlag
 	   << '\n';
 	os << "fluxTimeProfileFilePath: \"" << fluxTimeProfileFilePath << "\"\n";
+	os << "hePPM: " << hePPM << '\n';
 	os << "perfHandlerName: \"" << perfHandlerName << "\"\n";
 	os << "perfOutputYAMLFlag: " << std::boolalpha << perfOutputYAMLFlag
 	   << '\n';

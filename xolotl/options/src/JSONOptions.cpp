@@ -143,6 +143,8 @@ JSONOptions::readParams(int argc, const char* argv[])
 		fluxTimeProfileFlag = true;
 	}
 
+	checkSetParam(tree, "hePPM", hePPM);
+
 	perfHandlerName = tree.get("perfHandler", "os");
 	checkPerfHandlerName();
 

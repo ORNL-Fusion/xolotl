@@ -7,7 +7,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/flux/FeFitFluxHandler.h>
-#include <xolotl/options/ConfOptions.h>
+#include <xolotl/options/JSONOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
@@ -28,11 +28,16 @@ BOOST_AUTO_TEST_SUITE(FeFitFluxHandlerTester_testSuite)
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 {
 	// Create the option to create a network
-	xolotl::options::ConfOptions opts;
+	xolotl::options::JSONOptions opts;
 	// Create a good parameter file
-	std::string parameterFile = "param.txt";
+	std::string parameterFile = "param.json";
 	std::ofstream paramFile(parameterFile);
-	paramFile << "netParam=10 0 0 10 10" << std::endl;
+	paramFile << "{" << std::endl;
+	paramFile << "\"netParam\" : \"10 0 0 10 10\", " << std::endl;
+	paramFile << "\"flux\" : 1.0e-6," << std::endl;
+	paramFile << "\"hePPM\" : 0.2," << std::endl;
+	paramFile << "\"material\" : \"Fe\" " << std::endl;
+	paramFile << "}" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -58,8 +63,6 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 
 	// Create the iron flux handler
 	auto testFitFlux = make_shared<FeFitFluxHandler>(opts);
-	// Set the flux amplitude
-	testFitFlux->setFluxAmplitude(1.0);
 	// Initialize the flux handler
 	testFitFlux->initializeFluxHandler(network, surfacePos, grid);
 
@@ -81,7 +84,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
 	BOOST_REQUIRE_CLOSE(newConcentration[0], 1.49e-05, 0.01); // I
 	BOOST_REQUIRE_CLOSE(newConcentration[1], 0.0, 0.01); // I_2
-	BOOST_REQUIRE_CLOSE(newConcentration[20], 2.11e-11, 0.01); // He
+	BOOST_REQUIRE_CLOSE(newConcentration[20], 1.692e-11, 0.01); // He
 	BOOST_REQUIRE_CLOSE(newConcentration[10], 9.91e-06, 0.01); // V
 	BOOST_REQUIRE_CLOSE(newConcentration[11], 1.51e-06, 0.01); // V_2
 	BOOST_REQUIRE_CLOSE(newConcentration[12], 2.60e-07, 0.01); // V_3
