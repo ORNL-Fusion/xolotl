@@ -14,6 +14,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/interface/Interface.h>
+#include <xolotl/interface/MultiXolotl.h>
 #include <xolotl/perf/dummy/DummyTimer.h>
 #include <xolotl/perf/os/OSTimer.h>
 #include <xolotl/test/MPITestUtils.h>
@@ -253,7 +254,7 @@ readOutputFile(const std::string& fileName)
 }
 
 void
-deleteLastLine(const std::string& fileName /*, int n */)
+deleteLastLines(const std::string& fileName, std::size_t n)
 {
 	if (getMPIRank() != 0) {
 		return;
@@ -263,9 +264,12 @@ deleteLastLine(const std::string& fileName /*, int n */)
 		auto ifs = std::ifstream(fileName);
 		auto ofs = std::ofstream("temp.txt");
 		std::string line{};
-		std::getline(ifs, line);
-		for (auto prevLine = line; std::getline(ifs, line); prevLine = line) {
-			ofs << prevLine << '\n';
+		// std::getline(ifs, line);
+		// for (auto prevLine = line; std::getline(ifs, line); prevLine = line)
+		// { 	ofs << prevLine << '\n';
+		// }
+		for (std::size_t i = 0; i < n && std::getline(ifs, line); ++i) {
+			ofs << line << '\n';
 		}
 	}
 
@@ -327,7 +331,7 @@ SystemTestCase::runXolotl(const std::string& fnTag) const
 	int argc = 2;
 	const char* argv[] = {exec.data(), paramsFileName.data()};
 	try {
-		xolotl::interface::makeXolotlInterface(argc, argv)->solveXolotl();
+		interface::makeXolotlInterface(argc, argv)->solveXolotl();
 	}
 	catch (const std::exception& e) {
 		std::cout << e.what() << std::endl;
@@ -353,7 +357,8 @@ SystemTestCase::run(Restart restart) const
 
 	if (restart) {
 		BOOST_REQUIRE(runXolotl("_checkpoint"));
-		deleteLastLine(_outputFileName);
+		auto lastStep = std::get<0>(interface::MultiXolotl::readStopData());
+		deleteLastLines(_outputFileName, lastStep + 1);
 		BOOST_REQUIRE(runXolotl("_restart"));
 	}
 	else {

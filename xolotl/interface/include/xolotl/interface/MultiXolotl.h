@@ -42,6 +42,9 @@ public:
 	void
 	solveStep();
 
+	static std::tuple<std::size_t, double, double>
+	readStopData();
+
 private:
 	void
 	writeStopData();

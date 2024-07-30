@@ -34,6 +34,17 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_1_restart, *utf::label("1D"))
 		Restart{true});
 }
 
+BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_2, *utf::label("1D"))
+{
+	SystemTestCase{"system_multi_AZr_2", "AlphaZr.dat"}.run();
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_2_restart, *utf::label("1D"))
+{
+	SystemTestCase{"system_multi_AZr_2", "AlphaZr.dat"}.tolerance(1.0e-5).run(
+		Restart{true});
+}
+
 BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_0, *utf::label("0D"))
 {
 	SystemTestCase{"system_NE_0"}.mpiLimits(1, 1).tolerance(1.0e-8).run();

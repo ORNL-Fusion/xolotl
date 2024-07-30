@@ -48,10 +48,10 @@ double
 GrowthFactorStepSequence::partialSumAt(std::size_t step) const
 {
 	auto val = _initialValue;
-	auto sum = val;
+	double sum = 0.0;
 	for (std::size_t i = _initialStep; i < step; ++i) {
-		val = std::min(val * _growthFactor, _finalValue);
 		sum += val;
+		val = std::min(val * _growthFactor, _finalValue);
 	}
 	return sum;
 }

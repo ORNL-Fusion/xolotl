@@ -17,6 +17,16 @@ TimeStepper::TimeStepper(std::unique_ptr<IStepSequence>&& stepSequence,
 {
 }
 
+TimeStepper::TimeStepper(TimeStepper&& other) = default;
+// {
+// 	_seq(std::move(stepSequence)),
+// 	_maxSteps(maxSteps),
+// 	_startTime(startTime),
+// 	_endTime(endTime)
+// }
+TimeStepper&
+TimeStepper::operator=(TimeStepper&& other) = default;
+
 void
 TimeStepper::start()
 {

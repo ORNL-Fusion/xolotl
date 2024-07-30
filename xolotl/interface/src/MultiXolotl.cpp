@@ -1,6 +1,7 @@
 #include <petsc.h>
 
 #include <cassert>
+#include <cmath>
 #include <fstream>
 
 #include <xolotl/factory/interface/MaterialSubOptionsFactory.h>
@@ -11,11 +12,15 @@
 #include <xolotl/util/GrowthFactorStepSequence.h>
 #include <xolotl/util/LinearStepSequence.h>
 #include <xolotl/util/Log.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl
 {
 namespace interface
 {
+using ::xolotl::util::round;
+inline constexpr int roundDigits = 14;
+
 struct PetscContext
 {
 	PetscContext()
@@ -65,8 +70,8 @@ writeRestartFile(const std::vector<std::string>& fileNames)
 	XOLOTL_LOG << "MultiXolotl: Restart file written to: " << name;
 }
 
-auto
-readStopData()
+std::tuple<std::size_t, double, double>
+MultiXolotl::readStopData()
 {
 	std::string name = "xolotlStop_data.txt";
 	auto ifs = std::ifstream(name);
@@ -100,11 +105,11 @@ MultiXolotl::writeStopData()
 		std::tie(lhTime, lhDt) = tsGroup->readTimes();
 	}
 
-	auto lastTime = _timeStepper.timeAtStep(lastStep - 1);
+	auto lastTime = round(_timeStepper.timeAtStep(lastStep), roundDigits);
 	auto lastDt = _timeStepper.timeStepSizeAtStep(lastStep);
 
-	ofs << lastStep << ' ' << std::setprecision(16) << lastTime << ' ' << lastDt
-		<< '\n';
+	ofs << lastStep << ' ' << std::setprecision(roundDigits) << lastTime << ' '
+		<< lastDt << '\n';
 }
 
 util::TimeStepper
@@ -121,7 +126,7 @@ makeTimeStepper(const options::IOptions& options)
 
 	auto restarting = (!options.getRestartFilePath().empty());
 	if (restarting) {
-		std::tie(step, startTime, initDt) = readStopData();
+		std::tie(step, startTime, initDt) = MultiXolotl::readStopData();
 	}
 
 	auto sequence = std::make_unique<util::GrowthFactorStepSequence>(
@@ -168,9 +173,6 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 			<< ") must match number of instances (" << (subOptions.size() + 1)
 			<< ")";
 		XOLOTL_ERROR(std::runtime_error, msgstrm.str());
-		// auto msg = msgstrm.str();
-		// XOLOTL_LOG_ERR << msg;
-		// throw std::runtime_error(msg);
 	}
 	if (_restarting) {
 		primaryOpts->setRestartFilePath(restartFiles[0]);
@@ -290,13 +292,13 @@ MultiXolotl::~MultiXolotl()
 double
 MultiXolotl::previousTime() const noexcept
 {
-	return _timeStepper.previousTime();
+	return round(_timeStepper.previousTime(), roundDigits);
 }
 
 double
 MultiXolotl::currentTime() const noexcept
 {
-	return _timeStepper.currentTime();
+	return round(_timeStepper.currentTime(), roundDigits);
 }
 
 double
