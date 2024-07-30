@@ -264,10 +264,6 @@ deleteLastLines(const std::string& fileName, std::size_t n)
 		auto ifs = std::ifstream(fileName);
 		auto ofs = std::ofstream("temp.txt");
 		std::string line{};
-		// std::getline(ifs, line);
-		// for (auto prevLine = line; std::getline(ifs, line); prevLine = line)
-		// { 	ofs << prevLine << '\n';
-		// }
 		for (std::size_t i = 0; i < n && std::getline(ifs, line); ++i) {
 			ofs << line << '\n';
 		}

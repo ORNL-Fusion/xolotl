@@ -59,13 +59,13 @@ public:
 	virtual std::string
 	getCheckpointFilePath() const = 0;
 
-    /**
-     * Get the name of the restart file (could be difference from checkpoint).
-     *
-     * @return the name of the restart file
-     */
-    virtual std::string
-    getRestartFilePath() const = 0;
+	/**
+	 * Get the name of the restart file (could be different from checkpoint).
+	 *
+	 * @return the name of the restart file
+	 */
+	virtual std::string
+	getRestartFilePath() const = 0;
 
 	/**
 	 * Get the name of the solver to use
@@ -638,12 +638,12 @@ protected:
 
 	/**
 	 * Set restart file
-     *
-     * This should only be used by MultiXolotl. For a single instance, the file
-     * name is read from the parameters
+	 *
+	 * This should only be used by MultiXolotl. For a single instance, the file
+	 * name is read from the parameters
 	 */
-    virtual void
-    setRestartFilePath(const std::string& path) = 0;
+	virtual void
+	setRestartFilePath(const std::string& path) = 0;
 };
 } /* namespace options */
 } /* namespace xolotl */

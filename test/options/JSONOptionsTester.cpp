@@ -101,7 +101,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "\"-ts_final_time 1000\",\n"
 		<< "\"-ts_max_steps 3\"\n"
 		<< "],\n"
-		<< "\"checkpointFile\": \"tungsten.txt\",\n"
+		<< "\"restartFile\": \"tungsten.txt\",\n"
 		<< "\"tempHandler\": \"constant\",\n"
 		<< "\"tempParam\": 900,\n"
 		<< "\"perfHandler\": \"os\",\n"
@@ -143,8 +143,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Attempt to read the parameter file
 	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
-	// Check the checkpoint filename
-	BOOST_REQUIRE_EQUAL(opts.getCheckpointFilePath(), "tungsten.txt");
+	// Check the restart filename
+	BOOST_REQUIRE_EQUAL(opts.getRestartFilePath(), "tungsten.txt");
 
 	// Check the temperature
 	BOOST_REQUIRE_EQUAL(opts.getTempHandlerName(), "constant");
