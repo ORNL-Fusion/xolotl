@@ -55,6 +55,14 @@ public:
 	virtual void
 	setTimes(double finalTime, double dt) = 0;
 
+    /**
+     * Set the current step from an external controller
+     *
+     * @param step the current step from the controller
+     */
+    virtual void
+    setExternalControlStep(std::size_t step) = 0;
+
 	/**
 	 * This operation get the concentration vector with the ids.
 	 *

@@ -11,6 +11,10 @@ class StepSequence : public IStepSequence
 public:
 	StepSequence() = default;
 
+	explicit StepSequence(std::size_t initialStep) : _initialStep(initialStep)
+	{
+	}
+
 	virtual ~StepSequence()
 	{
 	}
@@ -28,6 +32,7 @@ public:
 	}
 
 protected:
+	std::size_t _initialStep{0};
 	std::size_t _currentStep{};
 	double _currentValue{};
 };

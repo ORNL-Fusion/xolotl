@@ -16,6 +16,11 @@ public:
 	TimeStepper(std::unique_ptr<IStepSequence>&& stepSequence, double startTime,
 		double endTime, std::size_t maxSteps);
 
+	TimeStepper(TimeStepper&& other);
+
+    TimeStepper&
+    operator=(TimeStepper&& other);
+
 	void
 	start();
 
@@ -60,6 +65,12 @@ public:
 	{
 		return _seq->currentStep();
 	}
+
+	[[nodiscard]] double
+	timeAtStep(std::size_t step) const;
+
+	[[nodiscard]] double
+	timeStepSizeAtStep(std::size_t step) const;
 
 private:
 	std::unique_ptr<IStepSequence> _seq;

@@ -72,10 +72,10 @@ PetscMonitor0D::setup(int loop)
 	// and if so, it it has had timesteps written to it.
 	std::unique_ptr<io::XFile> networkFile;
 	std::unique_ptr<io::XFile::TimestepGroup> lastTsGroup;
-	std::string networkName = _solverHandler->getNetworkName();
 	bool hasConcentrations = false;
-	if (not networkName.empty()) {
-		networkFile = std::make_unique<io::XFile>(networkName);
+	if (_solverHandler->checkForRestart()) {
+		auto restartFilePath = _solverHandler->getRestartFilePath();
+		networkFile = std::make_unique<io::XFile>(restartFilePath);
 		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		if (hasConcentrations) {
@@ -214,7 +214,7 @@ PetscMonitor0D::setup(int loop)
 		}
 
 		// Don't do anything if both files have the same name
-		if (_hdf5OutputName != _solverHandler->getNetworkName()) {
+		if (_hdf5OutputName != _solverHandler->getRestartFilePath()) {
 			// Get the network
 			auto& network = _solverHandler->getNetwork();
 
@@ -240,8 +240,8 @@ PetscMonitor0D::setup(int loop)
 			// copy with HDF5's H5Ocopy implementation than it is
 			// when all processes call the copy function.
 			// The checkpoint file must be closed before doing this.
-			writeNetwork(
-				xolotlComm, _hdf5OutputName, _solverHandler->getNetworkName());
+			writeNetwork(xolotlComm, _hdf5OutputName,
+				_solverHandler->getRestartFilePath());
 		}
 
 		// startStop0D will be called at each timestep
@@ -287,26 +287,14 @@ PetscMonitor0D::monitorLargest(
 }
 
 PetscErrorCode
-PetscMonitor0D::startStop(
-	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+PetscMonitor0D::startStopImpl(TS ts, PetscInt timestep, PetscReal time,
+	Vec solution, io::XFile& checkpointFile, io::XFile::TimestepGroup* tsGroup,
+	[[maybe_unused]] const std::vector<std::string>& speciesNames)
 {
 	// Initial declaration
 	const double **solutionArray, *gridPointSolution;
 
 	PetscFunctionBeginUser;
-
-	// Compute the dt
-	double previousTime = _solverHandler->getPreviousTime();
-	double dt = time - previousTime;
-
-	// Don't do anything if it is not on the stride
-	if (((PetscInt)((time + dt / 10.0) / _hdf5Stride) <= _hdf5Previous) &&
-		timestep > 0)
-		PetscFunctionReturn(0);
-
-	// Update the previous time
-	if ((PetscInt)((time + dt / 10.0) / _hdf5Stride) > _hdf5Previous)
-		_hdf5Previous++;
 
 	// Get the da from ts
 	DM da;
@@ -322,21 +310,6 @@ PetscMonitor0D::startStop(
 	// Create an array for the concentration
 	double concArray[dof + 1][2];
 
-	// Open the existing HDF5 file
-	auto xolotlComm = util::getMPIComm();
-	io::XFile checkpointFile(
-		_hdf5OutputName, xolotlComm, io::XFile::AccessMode::OpenReadWrite);
-
-	// Get the current time step
-	double currentTimeStep;
-	PetscCall(TSGetTimeStep(ts, &currentTimeStep));
-
-	// Add a concentration time step group for the current time step.
-	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
-	assert(concGroup);
-	auto tsGroup = concGroup->addTimestepGroup(
-		_loopNumber, timestep, time, previousTime, currentTimeStep);
-
 	// Determine the concentration values we will write.
 	io::XFile::TimestepGroup::Concs1DType concs(1);
 
@@ -348,11 +321,6 @@ PetscMonitor0D::startStop(
 			concs[0].emplace_back(l, gridPointSolution[l]);
 		}
 	}
-
-	// Save the fluence
-	auto fluxHandler = _solverHandler->getFluxHandler();
-	auto fluence = fluxHandler->getFluence();
-	tsGroup->writeFluence(fluence);
 
 	// Write our concentration data to the current timestep group
 	// in the HDF5 file.

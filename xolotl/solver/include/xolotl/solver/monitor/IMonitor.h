@@ -27,6 +27,9 @@ public:
 		std::vector<std::vector<std::vector<double>>>& nBulk,
 		std::vector<std::vector<std::vector<double>>>& surfFlux,
 		std::vector<std::vector<std::vector<double>>>& bulkFlux) = 0;
+
+    virtual void
+    setExternalControlStep(std::size_t step) = 0;
 };
 } // namespace monitor
 } // namespace solver

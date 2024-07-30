@@ -233,6 +233,8 @@ const fs::path XFile::ConcentrationGroup::path = "/concentrationsGroup";
 const std::string XFile::ConcentrationGroup::lastTimestepAttrName =
 	"lastTimeStep";
 const std::string XFile::ConcentrationGroup::lastLoopAttrName = "lastLoop";
+const std::string XFile::ConcentrationGroup::lastCtrlStepAttrName =
+	"lastCtrlStep";
 
 XFile::ConcentrationGroup::ConcentrationGroup(const XFile& file, bool create) :
 	HDF5File::Group(file, ConcentrationGroup::path, create)
@@ -253,27 +255,33 @@ XFile::ConcentrationGroup::ConcentrationGroup(const XFile& file, bool create) :
 		Attribute<decltype(lastLoop)> lastLoopAttr(
 			*this, lastLoopAttrName, lastDSpace);
 		lastLoopAttr.setTo(lastLoop);
+
+		int lastCtrlStep = -1;
+		Attribute<decltype(lastCtrlStep)> lastCtrlStepAttr(
+			*this, lastCtrlStepAttrName, lastDSpace);
+		lastCtrlStepAttr.setTo(lastCtrlStep);
 	}
 }
 
 std::unique_ptr<XFile::TimestepGroup>
-XFile::ConcentrationGroup::addTimestepGroup(int loop, int timeStep, double time,
-	double previousTime, double deltaTime) const
+XFile::ConcentrationGroup::addTimestepGroup(int ctrlStep, int loop,
+	int timeStep, double time, double previousTime, double deltaTime) const
 {
 	std::unique_ptr<XFile::TimestepGroup> tsGroup;
 	// Check if this group already exist
 	bool groupExist = H5Lexists(getId(),
-		TimestepGroup::makeGroupName(*this, loop, timeStep).c_str(),
+		TimestepGroup::makeGroupName(*this, ctrlStep, loop, timeStep).c_str(),
 		H5P_DEFAULT);
 	if (groupExist) {
 		// Get the group
+		// FIXME: need to use ctrlStep
 		tsGroup = getTimestepGroup(loop, timeStep);
 		tsGroup->updateTimestepGroup(time, previousTime, deltaTime);
 	}
 	else {
 		// Create a group for the new timestep and loop.
 		tsGroup = std::make_unique<XFile::TimestepGroup>(
-			*this, loop, timeStep, time, previousTime, deltaTime);
+			*this, ctrlStep, loop, timeStep, time, previousTime, deltaTime);
 	}
 
 	// Update our last known timestep and loop.
@@ -281,8 +289,17 @@ XFile::ConcentrationGroup::addTimestepGroup(int loop, int timeStep, double time,
 	lastTimestepAttr.setTo(timeStep);
 	Attribute<decltype(loop)> lastLoopAttr(*this, lastLoopAttrName);
 	lastLoopAttr.setTo(loop);
+	Attribute<decltype(ctrlStep)> lastCtrlStepAttr(*this, lastCtrlStepAttrName);
+	lastCtrlStepAttr.setTo(ctrlStep);
 
 	return std::move(tsGroup);
+}
+
+int
+XFile::ConcentrationGroup::getLastControlStep(void) const
+{
+	Attribute<int> lastCtrlStepAttr(*this, lastCtrlStepAttrName);
+	return lastCtrlStepAttr.get();
 }
 
 int
@@ -306,7 +323,9 @@ XFile::ConcentrationGroup::getTimestepGroup(int loop, int timeStep) const
 
 	try {
 		// Open the sub-group associated with the desired time step.
-		tsGroup = std::make_unique<XFile::TimestepGroup>(*this, loop, timeStep);
+		// FIXME
+		tsGroup =
+			std::make_unique<XFile::TimestepGroup>(*this, 0, loop, timeStep);
 	}
 	catch (HDF5Exception& e) {
 		// We were unable to open the group associated with the given time step.
@@ -326,9 +345,10 @@ XFile::ConcentrationGroup::getLastTimestepGroup(void) const
 		// if any time steps have been written.
 		auto lastTimeStep = getLastTimeStep();
 		auto lastLoop = getLastLoop();
-		if (lastTimeStep >= 0 and lastLoop >= 0) {
-			tsGroup =
-				std::make_unique<TimestepGroup>(*this, lastLoop, lastTimeStep);
+		auto lastCtrlStep = getLastControlStep();
+		if (lastTimeStep >= 0 and lastLoop >= 0 and lastCtrlStep >= 0) {
+			tsGroup = std::make_unique<TimestepGroup>(
+				*this, lastCtrlStep, lastLoop, lastTimeStep);
 		}
 	}
 	catch (HDF5Exception& e) {
@@ -364,19 +384,20 @@ const std::string XFile::TimestepGroup::hzAttrName = "hz";
 const std::string XFile::TimestepGroup::concDatasetName = "concs";
 
 std::string
-XFile::TimestepGroup::makeGroupName(
-	const XFile::ConcentrationGroup& concGroup, int loop, int timeStep)
+XFile::TimestepGroup::makeGroupName(const XFile::ConcentrationGroup& concGroup,
+	int ctrlStep, int loop, int timeStep)
 {
 	std::ostringstream namestr;
-	namestr << concGroup.getName() << '/' << groupNamePrefix << loop << "_"
-			<< timeStep;
+	namestr << concGroup.getName() << '/' << groupNamePrefix << ctrlStep << "_"
+			<< loop << "_" << timeStep;
 	return namestr.str();
 }
 
 XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
-	int loop, int timeStep, double time, double previousTime,
+	int ctrlStep, int loop, int timeStep, double time, double previousTime,
 	double deltaTime) :
-	HDF5File::Group(concGroup, makeGroupName(concGroup, loop, timeStep), true)
+	HDF5File::Group(
+		concGroup, makeGroupName(concGroup, ctrlStep, loop, timeStep), true)
 {
 	// Get a dataspace for our scalar attributes.
 	XFile::ScalarDataSpace scalarDSpace;
@@ -396,9 +417,10 @@ XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
 	deltaTimeAttr.setTo(deltaTime);
 }
 
-XFile::TimestepGroup::TimestepGroup(
-	const XFile::ConcentrationGroup& concGroup, int loop, int timeStep) :
-	HDF5File::Group(concGroup, makeGroupName(concGroup, loop, timeStep), false)
+XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
+	int ctrlStep, int loop, int timeStep) :
+	HDF5File::Group(
+		concGroup, makeGroupName(concGroup, ctrlStep, loop, timeStep), false)
 {
 	// Base class opened the group, so nothing else to do.
 }
@@ -1002,24 +1024,24 @@ XFile::TimestepGroup::readSurface3D(void) const -> Surface3DType
 }
 
 auto
-XFile::TimestepGroup::readData1D(
-	const std::string& dataName) const -> Data1DType
+XFile::TimestepGroup::readData1D(const std::string& dataName) const
+	-> Data1DType
 {
 	Attribute<Data1DType> attr(*this, dataName);
 	return attr.get();
 }
 
 auto
-XFile::TimestepGroup::readData2D(
-	const std::string& dataName) const -> Data2DType
+XFile::TimestepGroup::readData2D(const std::string& dataName) const
+	-> Data2DType
 {
 	DataSet<Data2DType> dataset(*this, dataName);
 	return dataset.read();
 }
 
 auto
-XFile::TimestepGroup::readData3D(
-	const std::string& dataName) const -> Data3DType
+XFile::TimestepGroup::readData3D(const std::string& dataName) const
+	-> Data3DType
 {
 	// Open the dataset
 	hid_t datasetId = H5Dopen(getId(), dataName.c_str(), H5P_DEFAULT);

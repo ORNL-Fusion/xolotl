@@ -11,8 +11,8 @@ class GrowthFactorStepSequence : public StepSequence
 public:
 	GrowthFactorStepSequence();
 
-	GrowthFactorStepSequence(
-		double initialValue, double finalValue, double growthFactor = 1.0);
+	GrowthFactorStepSequence(double initialValue, double finalValue,
+		double growthFactor = 1.0, std::size_t initialStep = 0);
 
 	virtual ~GrowthFactorStepSequence();
 
@@ -21,6 +21,12 @@ public:
 
 	void
 	step() override;
+
+    double
+    at(std::size_t step) const override;
+
+    double
+    partialSumAt(std::size_t step) const override;
 
 private:
 	double _initialValue{};
