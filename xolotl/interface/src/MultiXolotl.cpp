@@ -236,7 +236,8 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 	}
 }
 
-MultiXolotl::~MultiXolotl()
+MultiXolotl::SubInstanceData
+MultiXolotl::getSubInstanceData()
 {
 	std::vector<double> temperatures;
 	std::vector<double> depths;
@@ -278,10 +279,15 @@ MultiXolotl::~MultiXolotl()
 			fullConc.push_back(conc);
 		}
 	}
+	return {temperatures, depths, fullConc};
+}
 
+MultiXolotl::~MultiXolotl()
+{
 	// Print the result
-	_primaryInstance->outputData(
-		previousTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
+	auto data = getSubInstanceData();
+	_primaryInstance->outputData(previousTime(), data.fullConc,
+		std::max((int)data.temperatures.size() - 2, 1));
 
 	// Write stop data
 	if (_checkpointing) {
@@ -333,77 +339,45 @@ MultiXolotl::solveXolotl()
 }
 
 void
+MultiXolotl::updateTemperaturesAndRates(
+	std::size_t gridIndex, const SubInstanceData& data)
+{
+	std::vector<double> temperature = {data.temperatures[gridIndex]};
+	std::vector<double> depth = {data.depths[gridIndex]};
+	_primaryInstance->setNetworkTemperature(temperature, depth);
+
+	// TODO: Just include (empty) ghost entries so the indices will line up
+	//       (This would require more extensive refactoring)
+	const auto& conc = data.fullConc.size() == 1 ? data.fullConc[0] :
+												   data.fullConc[gridIndex - 1];
+	_primaryInstance->computeConstantRates(conc, 0, _constantRates);
+
+	// Update sub-instances
+	for (auto i = 0; i < _subInstances.size(); i++) {
+		_subInstances[i]->setConstantRates(_constantRates[i], gridIndex);
+	}
+}
+
+void
 MultiXolotl::solveStep()
 {
 	// Transfer the temperature to the full network
-	std::vector<double> temperatures;
-	std::vector<double> depths;
-	_subInstances[0]->getNetworkTemperature(temperatures, depths);
-	std::vector<std::vector<std::vector<double>>> fullConc;
-
+	auto subInstanceData = getSubInstanceData();
 	// 0D
-	if (temperatures.size() < 2) {
-		std::vector<std::vector<double>> conc;
-		// Loop on the sub interfaces to get all the concentrations
-		for (auto i = 0; i < _subInstances.size(); i++) {
-			auto sparseConc = _subInstances[i]->getConcVector();
-			std::vector<double> subConc(_subDOFs[i], 0.0);
-			for (auto pair : sparseConc[0][0][0]) {
-				if (pair.first < _subDOFs[i]) {
-					subConc[pair.first] = pair.second;
-				}
-			}
-			conc.push_back(subConc);
-		}
-
-		fullConc.push_back(conc);
-
-		// Compute the new rates
-		std::vector<double> temperature = {temperatures[0]};
-		std::vector<double> depth = {depths[0]};
-		_primaryInstance->setNetworkTemperature(temperature, depth);
-		_primaryInstance->computeConstantRates(conc, 0, _constantRates);
-
-		// Pass them
-		for (auto i = 0; i < _subInstances.size(); i++) {
-			_subInstances[i]->setConstantRates(_constantRates[i], 0);
-		}
+	if (subInstanceData.temperatures.size() < 2) {
+		updateTemperaturesAndRates(0, subInstanceData);
 	}
 	// 1D
 	else {
 		// Loop on the grid points
-		for (auto j = 0; j < temperatures.size() - 2; j++) {
-			std::vector<std::vector<double>> conc;
-			// Loop on the sub interfaces to get all the concentrations
-			for (auto i = 0; i < _subInstances.size(); i++) {
-				auto sparseConc = _subInstances[i]->getConcVector();
-				std::vector<double> subConc(_subDOFs[i], 0.0);
-				for (auto pair : sparseConc[0][0][j]) {
-					if (pair.first < _subDOFs[i]) {
-						subConc[pair.first] = pair.second;
-					}
-				}
-				conc.push_back(subConc);
-			}
-
-			fullConc.push_back(conc);
-
-			// Compute the new rates
-			std::vector<double> temperature = {temperatures[j + 1]};
-			std::vector<double> depth = {depths[j + 1]};
-			_primaryInstance->setNetworkTemperature(temperature, depth);
-			_primaryInstance->computeConstantRates(conc, 0, _constantRates);
-
-			// Pass them
-			for (auto i = 0; i < _subInstances.size(); i++) {
-				_subInstances[i]->setConstantRates(_constantRates[i], j + 1);
-			}
+		for (auto j = 0; j < subInstanceData.temperatures.size() - 2; j++) {
+			updateTemperaturesAndRates(j + 1, subInstanceData);
 		}
 	}
 
 	// Print the result
-	_primaryInstance->outputData(
-		previousTime(), fullConc, std::max((int)temperatures.size() - 2, 1));
+	_primaryInstance->outputData(previousTime(), subInstanceData.fullConc,
+		std::max((int)subInstanceData.temperatures.size() - 2, 1));
 
 	// Solve
 	for (auto&& sub : _subInstances) {

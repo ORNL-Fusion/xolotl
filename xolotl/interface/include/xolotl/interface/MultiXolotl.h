@@ -52,6 +52,20 @@ private:
 	void
 	startTimeStepper();
 
+	struct SubInstanceData
+	{
+		std::vector<double> temperatures;
+		std::vector<double> depths;
+		std::vector<std::vector<std::vector<double>>> fullConc;
+	};
+
+	SubInstanceData
+	getSubInstanceData();
+
+	void
+	updateTemperaturesAndRates(
+		std::size_t gridIndex, const SubInstanceData& data);
+
 private:
 	std::shared_ptr<ComputeContext> _computeContext;
 	std::shared_ptr<options::IOptions> _options;
