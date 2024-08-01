@@ -18,10 +18,10 @@ protected:
 	 */
 	std::string checkpointFile;
 
-    /**
-     * The name of the file to use for restart
-     */
-    std::string restartFile;
+	/**
+	 * The name of the file to use for restart
+	 */
+	std::string restartFile;
 
 	/**
 	 * The options that will be given to PETSc.
@@ -382,11 +382,11 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
-    std::string
-    getRestartFilePath() const override
-    {
-        return restartFile;
-    }
+	std::string
+	getRestartFilePath() const override
+	{
+		return restartFile;
+	}
 
 	/**
 	 * \see IOptions.h
@@ -1036,14 +1036,14 @@ protected:
 		checkpointFile = path;
 	}
 
-    /**
-     * \see IOptions.h
-     */
-    void
-    setRestartFilePath(const std::string& path) override
-    {
-        restartFile = path;
-    }
+	/**
+	 * \see IOptions.h
+	 */
+	void
+	setRestartFilePath(const std::string& path) override
+	{
+		restartFile = path;
+	}
 
 	void
 	setNetworkParameters(const std::string& paramStr);

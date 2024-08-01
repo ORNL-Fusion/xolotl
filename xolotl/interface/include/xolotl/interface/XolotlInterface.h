@@ -154,11 +154,11 @@ public:
 
 	/**
 	 * Set the external control step
-     *
-     * @param step The current step from the external controller
+	 *
+	 * @param step The current step from the external controller
 	 */
-    void
-    setExternalControlStep(std::size_t step);
+	void
+	setExternalControlStep(std::size_t step);
 
 	/**
 	 * Run the PETSc solve

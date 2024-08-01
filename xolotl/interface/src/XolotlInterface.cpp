@@ -183,8 +183,8 @@ CATCH
 void
 XolotlInterface::setExternalControlStep(std::size_t step) TRY
 {
-    // Pass on to solver
-    solver->setExternalControlStep(step);
+	// Pass on to solver
+	solver->setExternalControlStep(step);
 }
 CATCH
 

@@ -17,7 +17,8 @@ struct Restart
 {
 	bool value{false};
 
-	constexpr operator bool() const noexcept
+	constexpr
+	operator bool() const noexcept
 	{
 		return value;
 	}

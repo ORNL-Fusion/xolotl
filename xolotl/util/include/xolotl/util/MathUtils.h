@@ -30,7 +30,7 @@ template <typename T>
 inline T
 round(T x, int nDigits)
 {
-    static_assert(std::is_floating_point_v<T>);
+	static_assert(std::is_floating_point_v<T>);
 	static constexpr T ten = static_cast<T>(10);
 	auto digits = static_cast<T>(nDigits);
 	auto power_of_10 = std::pow(ten, digits);

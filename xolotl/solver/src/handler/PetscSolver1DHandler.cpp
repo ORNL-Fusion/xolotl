@@ -29,7 +29,7 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 
 	// We can update the surface position
 	// if we are using a restart file
-    if (this->checkForRestart() and surfaceOffset == 0) {
+	if (this->checkForRestart() and surfaceOffset == 0) {
 		io::XFile xfile(restartFile);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {

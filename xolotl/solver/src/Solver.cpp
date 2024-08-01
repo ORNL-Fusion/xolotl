@@ -28,7 +28,7 @@ Solver::Solver(
 		factory::temperature::TemperatureHandlerFactory::get().generate(
 			options)),
 	solverHandler(handlerGenerator(*network, *perfHandler)),
-    checkpointFile(options.getCheckpointFilePath())
+	checkpointFile(options.getCheckpointFilePath())
 {
 	assert(solverHandler);
 	solverHandler->initializeHandlers(
@@ -39,7 +39,7 @@ Solver::Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler) :
 	optionsString(""),
 	solverHandler(_solverHandler),
 	perfHandler(_solverHandler->getPerfHandler()),
-    checkpointFile("")
+	checkpointFile("")
 {
 }
 
@@ -53,8 +53,8 @@ Solver::setCommandLineOptions(std::string arg)
 void
 Solver::setExternalControlStep(std::size_t step)
 {
-    assert(monitor);
-    monitor->setExternalControlStep(step);
+	assert(monitor);
+	monitor->setExternalControlStep(step);
 }
 } /* end namespace solver */
 } /* end namespace xolotl */

@@ -805,7 +805,9 @@ PetscMonitor1D::startStopImpl(TS ts, PetscInt timestep, PetscReal time,
 	// Restore the solutionArray
 	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
 
-	PetscCall(computeTRIDYN(ts, timestep, time, solution));
+	if (auto psiNetwork =
+			dynamic_cast<core::network::IPSIReactionNetwork*>(&network))
+		PetscCall(computeTRIDYN(ts, timestep, time, solution));
 
 	PetscFunctionReturn(0);
 }

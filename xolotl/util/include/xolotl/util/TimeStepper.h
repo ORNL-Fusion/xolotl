@@ -18,8 +18,8 @@ public:
 
 	TimeStepper(TimeStepper&& other);
 
-    TimeStepper&
-    operator=(TimeStepper&& other);
+	TimeStepper&
+	operator=(TimeStepper&& other);
 
 	void
 	start();

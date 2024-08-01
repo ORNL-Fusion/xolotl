@@ -34,9 +34,9 @@ struct ScopedTimer
 
 	~ScopedTimer()
 	{
-        if (timer) {
-            timer->stop();
-        }
+		if (timer) {
+			timer->stop();
+		}
 	}
 };
 } // end namespace perf

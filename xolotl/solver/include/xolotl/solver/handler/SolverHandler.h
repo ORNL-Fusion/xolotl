@@ -594,11 +594,11 @@ public:
 		return restartFile;
 	}
 
-    /**
-     * Are we restarting
-     */
-    bool
-    checkForRestart() const override;
+	/**
+	 * Are we restarting
+	 */
+	bool
+	checkForRestart() const override;
 
 	/**
 	 * \see ISolverHandler.h

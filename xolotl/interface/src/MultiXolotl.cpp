@@ -332,8 +332,6 @@ void
 MultiXolotl::solveXolotl()
 {
 	for (startTimeStepper(); _timeStepper; ++_timeStepper) {
-		XOLOTL_LOG << "Control Step: " << currentStep() << ", dt "
-				   << currentDt() << ", time " << currentTime();
 		solveStep();
 	}
 }

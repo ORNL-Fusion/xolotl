@@ -714,7 +714,7 @@ SolverHandler::createLocalNE(IdType a, IdType b, IdType c)
 bool
 SolverHandler::checkForRestart() const
 {
-    return (not restartFile.empty()) and fs::exists(restartFile);
+	return (not restartFile.empty()) and fs::exists(restartFile);
 }
 
 void
