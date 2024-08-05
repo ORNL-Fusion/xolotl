@@ -334,14 +334,6 @@ KOKKOS_INLINE_FUNCTION
 void
 NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
-	// Check the diffusion factors
-	auto diffusionFactor = this->_clusterData.diffusionFactor;
-	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-		return;
-	}
-
-	// TODO: re-solution and nucleation need to be added
-
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
@@ -352,10 +344,6 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 	auto numClusters = this->getNumberOfClusters();
 
-	if (i == j) {
-		addSinks(i, tag);
-	}
-
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
 	const auto& cl2Reg = this->getCluster(j).getRegion();
@@ -363,6 +351,64 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition hi1 = cl1Reg.getUpperLimitPoint();
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
+
+	// General case
+	constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
+	using BoundsArray =
+		Kokkos::Array<Kokkos::pair<AmountType, AmountType>, numSpeciesNoI>;
+	plsm::EnumIndexed<BoundsArray, Species> bounds;
+	// Loop on the species
+	for (auto l : species) {
+		auto low = lo1[l] + lo2[l];
+		auto high = hi1[l] + hi2[l] - 2;
+		// Special case for I
+		if (l == Species::I) {
+			bounds[Species::V].first -= high;
+			bounds[Species::V].second -= low;
+		}
+		else {
+			bounds[l] = {low, high};
+		}
+	}
+
+	if ((lo1[Species::Xe] == 1 and lo1[Species::V] == 1 and
+			lo2[Species::Xe] > 0 and lo2[Species::V] > 0) or
+		(lo2[Species::Xe] == 1 and lo2[Species::V] == 1 and
+			lo1[Species::Xe] > 0 and lo1[Species::V] > 0)) {
+		// Look for potential product
+		for (IndexType k = 0; k < numClusters; ++k) {
+			// Get the composition
+			const auto& prodReg = this->getCluster(k).getRegion();
+			bool isGood = true;
+			// Loop on the species
+			for (auto l : speciesNoI) {
+				if (prodReg[l()].begin() > bounds[l()].second) {
+					isGood = false;
+					break;
+				}
+				if (prodReg[l()].end() - 1 < bounds[l()].first) {
+					isGood = false;
+					break;
+				}
+			}
+
+			if (isGood) {
+				this->addReSolutionReaction(tag, {k, i, j});
+			}
+		}
+	}
+
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+
+	// TODO: re-solution and nucleation need to be added
+
+	if (i == j) {
+		addSinks(i, tag);
+	}
 
 	auto& subpaving = this->getSubpaving();
 
@@ -405,27 +451,7 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
-	// General case
-	constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
-	using BoundsArray =
-		Kokkos::Array<Kokkos::pair<AmountType, AmountType>, numSpeciesNoI>;
-	plsm::EnumIndexed<BoundsArray, Species> bounds;
-	// Loop on the species
-	for (auto l : species) {
-		auto low = lo1[l] + lo2[l];
-		auto high = hi1[l] + hi2[l] - 2;
-		// Special case for I
-		if (l == Species::I) {
-			bounds[Species::V].first -= high;
-			bounds[Species::V].second -= low;
-		}
-		else {
-			bounds[l] = {low, high};
-		}
-	}
-
 	// Look for potential product
-	IndexType nProd = 0;
 	for (IndexType k = 0; k < numClusters; ++k) {
 		// Get the composition
 		const auto& prodReg = this->getCluster(k).getRegion();
@@ -443,9 +469,12 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		}
 
 		if (isGood) {
-			nProd++;
 			this->addProductionReaction(tag, {i, j, k});
-			this->addDissociationReaction(tag, {k, i, j});
+			// Dissociation
+			if (lo1[Species::Xe] + lo1[Species::V] + lo1[Species::I] < 3 ||
+				lo2[Species::Xe] + lo2[Species::V] + lo2[Species::I] < 3) {
+				this->addDissociationReaction(tag, {k, i, j});
+			}
 		}
 	}
 }

@@ -133,11 +133,7 @@ PetscSolver0DHandler::initializeConcentration(
 	// Initialize the option specified concentration
 	if (not hasConcentrations) {
 		for (auto pair : initialConc) {
-			if (pair.first == 3)
-				//				concOffset[2861] = pair.second;
-				concOffset[4] = pair.second;
-			else
-				concOffset[pair.first] = pair.second;
+			concOffset[pair.first] = pair.second;
 		}
 	}
 
