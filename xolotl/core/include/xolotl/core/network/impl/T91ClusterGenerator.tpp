@@ -48,16 +48,17 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 	// Middle
 	Composition lo = region.getOrigin();
 	Composition hi = region.getUpperLimitPoint();
-	auto amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
-	auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
+	double amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
+	double amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
 	double amt = sqrt(amtHe * amtHe + amtV * amtV);
-	double ibe = 4.88 +
-		2.59 * (cbrt(amtV * amtV) - cbrt((amtV - 1.0) * (amtV - 1.0))) -
-		2.5 * log(1.0 + (amtHe / amtV));
+	double ratio = amtHe / amtV;
+	double ibe = 3.77 +
+		2.93 * (cbrt(amtV * amtV) - cbrt((amtV - 1.0) * (amtV - 1.0))) +
+		0.09 * ratio * ratio - 1.35 * ratio;
 	auto distance = fabs(ibe - 1.5);
-	//	if (distance < 1.2) {
+	//		if (distance < 1.2) {
 	if (distance < 1.5) {
-		auto comp = amt * amt * amt * 1.0e-6;
+		auto comp = amt * 1.0e-2;
 		if (region[Species::He].length() <
 			util::max(_groupingWidthHe + 1.0, comp)) {
 			result[0] = false;
