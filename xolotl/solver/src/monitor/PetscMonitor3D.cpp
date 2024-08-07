@@ -91,11 +91,10 @@ PetscMonitor3D::setup(int loop)
 	// and if so, it it has had timesteps written to it.
 	std::unique_ptr<io::XFile> networkFile;
 	std::unique_ptr<io::XFile::TimestepGroup> lastTsGroup;
-
-	std::string networkName = _solverHandler->getNetworkName();
 	bool hasConcentrations = false;
-	if (not networkName.empty()) {
-		networkFile = std::make_unique<io::XFile>(networkName);
+	if (_solverHandler->checkForRestart()) {
+		auto restartFilePath = _solverHandler->getRestartFilePath();
+		networkFile = std::make_unique<io::XFile>(restartFilePath);
 		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		if (hasConcentrations and _loopNumber == 0) {
@@ -539,7 +538,7 @@ PetscMonitor3D::setup(int loop)
 		}
 
 		// Don't do anything if both files have the same name
-		if (_hdf5OutputName != _solverHandler->getNetworkName() and
+		if (_hdf5OutputName != _solverHandler->getRestartFilePath() and
 			_loopNumber == 0) {
 			// Create a checkpoint file.
 			// Create and initialize a checkpoint file.
@@ -558,8 +557,8 @@ PetscMonitor3D::setup(int loop)
 			// copy with HDF5's H5Ocopy implementation than it is
 			// when all processes call the copy function.
 			// The checkpoint file must be closed before doing this.
-			writeNetwork(
-				xolotlComm, _hdf5OutputName, _solverHandler->getNetworkName());
+			writeNetwork(xolotlComm, _hdf5OutputName,
+				_solverHandler->getRestartFilePath());
 		}
 
 		// startStop3D will be called at each timestep
@@ -615,8 +614,9 @@ PetscMonitor3D::monitorLargest(
 }
 
 PetscErrorCode
-PetscMonitor3D::startStop(
-	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+PetscMonitor3D::startStopImpl(TS ts, PetscInt timestep, PetscReal time,
+	Vec solution, io::XFile& checkpointFile, io::XFile::TimestepGroup* tsGroup,
+	const std::vector<std::string>& speciesNames)
 {
 	// Initial declarations
 	const double ****solutionArray, *gridPointSolution;
@@ -627,23 +627,9 @@ PetscMonitor3D::startStop(
 	// Get the local coordinates
 	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 
-	// Compute the dt
-	double previousTime = _solverHandler->getPreviousTime();
-	double dt = time - previousTime;
-
-	// Don't do anything if it is not on the stride
-	if (((PetscInt)((time + dt / 10.0) / _hdf5Stride) <= _hdf5Previous) &&
-		timestep > 0)
-		PetscFunctionReturn(0);
-
-	// Update the previous time
-	if ((PetscInt)((time + dt / 10.0) / _hdf5Stride) > _hdf5Previous)
-		_hdf5Previous++;
-
 	// Gets the process ID (important when it is running in parallel)
 	auto xolotlComm = util::getMPIComm();
-	int procId;
-	MPI_Comm_rank(xolotlComm, &procId);
+	auto procId = util::getMPIRank();
 
 	// Get the da from ts
 	DM da;
@@ -671,47 +657,21 @@ PetscMonitor3D::startStop(
 		surfaceIndices.push_back(temp);
 	}
 
-	// Open the existing HDF5 file.
-	io::XFile checkpointFile(
-		_hdf5OutputName, xolotlComm, io::XFile::AccessMode::OpenReadWrite);
-
-	// Get the current time step
-	double currentTimeStep;
-	PetscCall(TSGetTimeStep(ts, &currentTimeStep));
-
-	// Add a concentration sub group
-	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
-	assert(concGroup);
-	auto tsGroup = concGroup->addTimestepGroup(
-		_loopNumber, timestep, time, previousTime, currentTimeStep);
-
 	// Get the physical grid
 	auto grid = _solverHandler->getXGrid();
 	// Write it in the file
 	tsGroup->writeGrid(grid);
 
-	// Save the fluence
-	auto fluxHandler = _solverHandler->getFluxHandler();
-	auto fluence = fluxHandler->getFluence();
-	tsGroup->writeFluence(fluence);
-
-	// Get the names of the species in the network
-	auto numSpecies = network.getSpeciesListSize();
-	std::vector<std::string> names;
-	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		names.push_back(network.getSpeciesName(id));
-	}
-
 	if (_solverHandler->moveSurface() || _solverHandler->getLeftOffset() == 1) {
 		// Write the surface positions and the associated interstitial
 		// quantities in the concentration sub group
 		tsGroup->writeSurface3D(
-			surfaceIndices, _nSurf, _previousSurfFlux, names);
+			surfaceIndices, _nSurf, _previousSurfFlux, speciesNames);
 	}
 
 	// Write the bottom impurity information if the bottom is a free surface
 	if (_solverHandler->getRightOffset() == 1)
-		tsGroup->writeBottom3D(_nBulk, _previousBulkFlux, names);
+		tsGroup->writeBottom3D(_nBulk, _previousBulkFlux, speciesNames);
 
 	// Write the bursting information if the bubble bursting is used
 	if (_solverHandler->burstBubbles())
@@ -1202,7 +1162,6 @@ PetscMonitor3D::computeXenonRetention(
 	Composition xeComp = Composition::zero();
 	xeComp[Spec::Xe] = 1;
 	auto xeCluster = network.findCluster(xeComp, plsm::HostMemSpace{});
-	auto xeId = xeCluster.getId();
 
 	// Loop on the grid
 	for (auto zk = zs; zk < zs + zm; zk++) {
@@ -1408,17 +1367,19 @@ PetscMonitor3D::computeXenonRetention(
 				   << "Xenon GB = " << nXenon / surface << "\n\n";
 
 		// Make sure the average partial radius makes sense
-		double averagePartialRadius = 0.0;
+		double averagePartialRadius = 0.0, averageRadius = 0.0;
 		if (totalConcData[3] > 1.e-16) {
 			averagePartialRadius = totalConcData[4] / totalConcData[3];
+		}
+		if (totalConcData[1] > 1.0e-16) {
+			averageRadius = totalConcData[2] / totalConcData[1];
 		}
 
 		// Uncomment to write the retention and the fluence in a file
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << time << " " << totalConcData[0] << " "
-				   << totalConcData[2] / totalConcData[1] << " "
-				   << averagePartialRadius << " " << nXenon / surface
+		outputFile << time << " " << totalConcData[0] << " " << averageRadius
+				   << " " << averagePartialRadius << " " << nXenon / surface
 				   << std::endl;
 		outputFile.close();
 	}
@@ -1725,8 +1686,6 @@ PetscMonitor3D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	using NetworkType = core::network::IPSIReactionNetwork;
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	auto dof = network.getDOF();
-	// Get the number of species
-	auto numSpecies = network.getSpeciesListSize();
 	auto specIdI = network.getInterstitialSpeciesId();
 
 	// Get the physical grid

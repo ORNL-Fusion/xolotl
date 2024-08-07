@@ -12,6 +12,7 @@
 #include <xolotl/solver/monitor/PetscMonitorFunctions.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/util/Tokenizer.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
 
 namespace xolotl
@@ -20,20 +21,6 @@ namespace solver
 {
 namespace monitor
 {
-/**
- * This is a monitoring method that will compute average density and diameter
- * of defects.
- */
-PetscErrorCode
-computeAlphaZr(
-	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
-{
-	PetscFunctionBeginUser;
-	PetscCall(static_cast<PetscMonitor0D*>(ictx)->computeAlphaZr(
-		ts, timestep, time, solution));
-	PetscFunctionReturn(0);
-}
-
 PetscErrorCode
 monitorBubble(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
@@ -86,10 +73,10 @@ PetscMonitor0D::setup(int loop)
 	// and if so, it it has had timesteps written to it.
 	std::unique_ptr<io::XFile> networkFile;
 	std::unique_ptr<io::XFile::TimestepGroup> lastTsGroup;
-	std::string networkName = _solverHandler->getNetworkName();
 	bool hasConcentrations = false;
-	if (not networkName.empty()) {
-		networkFile = std::make_unique<io::XFile>(networkName);
+	if (_solverHandler->checkForRestart()) {
+		auto restartFilePath = _solverHandler->getRestartFilePath();
+		networkFile = std::make_unique<io::XFile>(restartFilePath);
 		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		if (hasConcentrations) {
@@ -147,43 +134,14 @@ PetscMonitor0D::setup(int loop)
 
 	// Set the monitor to output data for Alloy
 	if (flagAlloy) {
-		auto& network = _solverHandler->getNetwork();
-		auto numSpecies = network.getSpeciesListSize();
-		// Create/open the output files
-		std::fstream outputFile;
-		outputFile.open("Alloy.dat", std::fstream::out);
-		outputFile << "#time_step time ";
-		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			auto speciesName = network.getSpeciesName(id);
-			outputFile << speciesName << "_density " << speciesName
-					   << "_diameter " << speciesName << "_partial_density "
-					   << speciesName << "_partial_diameter ";
-		}
-		outputFile << std::endl;
-		outputFile.close();
+		_solverHandler->getNetwork().writeMonitorOutputHeader();
 
 		// computeAlloy0D will be called at each timestep
 		PetscCallVoid(TSMonitorSet(_ts, monitor::computeAlloy, this, nullptr));
 	}
 	// Set the monitor to output data for AlphaZr
 	if (flagZr) {
-		auto& network = _solverHandler->getNetwork();
-		auto numSpecies = network.getSpeciesListSize();
-
-		// Create/open the output files
-		std::fstream outputFile;
-		outputFile.open("AlphaZr.dat", std::fstream::out);
-		outputFile << "#time_step time ";
-		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			auto speciesName = network.getSpeciesName(id);
-			outputFile << speciesName << "_density " << speciesName << "_atom "
-					   << speciesName << "_diameter " << speciesName
-					   << "_partial_density " << speciesName << "_partial_atom "
-					   << speciesName << "_partial_diameter ";
-		}
-
-		outputFile << std::endl;
-		outputFile.close();
+		_solverHandler->getNetwork().writeMonitorOutputHeader();
 
 		// computeAlphaZr will be called at each timestep
 		PetscCallVoid(
@@ -211,12 +169,62 @@ PetscMonitor0D::setup(int loop)
 		PetscCallVoid(
 			TSMonitorSet(_ts, monitor::computeXenonRetention, this, nullptr));
 
+		using NetworkType = core::network::NEReactionNetwork;
+		using Spec = typename NetworkType::Species;
+		using Composition = typename NetworkType::Composition;
+		using Region = typename NetworkType::Region;
+		auto& network =
+			dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+
 		// Uncomment to clear the file where the retention will be written
 		std::ofstream outputFile;
 		outputFile.open("retentionOut.txt");
-		outputFile << "#time Xenon_conc radius partial_radius "
-					  "partial_bubble_conc partial_size"
-				   << std::endl;
+		outputFile << "#time content ";
+
+		std::ifstream reactionFile;
+		reactionFile.open(_solverHandler->getReactionFilePath());
+		// Get the line
+		std::string line;
+		getline(reactionFile, line);
+		// Read the first line
+		std::vector<double> tokens;
+		util::Tokenizer<double>{line}(tokens);
+		// And start looping on the lines
+		while (tokens.size() > 0) {
+			// Find the Id of the cluster
+			IdType nXe = static_cast<IdType>(tokens[0]);
+			IdType nV = static_cast<IdType>(tokens[1]);
+			IdType nI = static_cast<IdType>(tokens[2]);
+			auto comp =
+				std::vector<AmountType>(network.getSpeciesListSize(), 0);
+			auto clusterSpecies = network.parseSpeciesId("Xe");
+			comp[clusterSpecies()] = nXe;
+			clusterSpecies = network.parseSpeciesId("V");
+			comp[clusterSpecies()] = nV;
+			clusterSpecies = network.parseSpeciesId("I");
+			comp[clusterSpecies()] = nI;
+
+			auto clusterId = network.findClusterId(comp);
+			// Check that it is present in the network
+			if (clusterId != NetworkType::invalidIndex()) {
+				_clusterOrder.push_back(clusterId);
+				if (nI > 0)
+					outputFile << "I_" << nI << " ";
+				else if (nV > 0 and nXe == 0)
+					outputFile << "V_" << nV << " ";
+				else if (nXe > 0 and nV == 0)
+					outputFile << "Xe_" << nXe << " ";
+				else
+					outputFile << "Xe_" << nXe << "V_" << nV << " ";
+			}
+
+			getline(reactionFile, line);
+			if (line == "Reactions")
+				break;
+
+			tokens = util::Tokenizer<double>{line}();
+		}
+		outputFile << "Xe/SD var" << std::endl;
 		outputFile.close();
 	}
 
@@ -257,7 +265,7 @@ PetscMonitor0D::setup(int loop)
 		}
 
 		// Don't do anything if both files have the same name
-		if (_hdf5OutputName != _solverHandler->getNetworkName()) {
+		if (_hdf5OutputName != _solverHandler->getRestartFilePath()) {
 			// Get the network
 			auto& network = _solverHandler->getNetwork();
 
@@ -283,8 +291,8 @@ PetscMonitor0D::setup(int loop)
 			// copy with HDF5's H5Ocopy implementation than it is
 			// when all processes call the copy function.
 			// The checkpoint file must be closed before doing this.
-			writeNetwork(
-				xolotlComm, _hdf5OutputName, _solverHandler->getNetworkName());
+			writeNetwork(xolotlComm, _hdf5OutputName,
+				_solverHandler->getRestartFilePath());
 		}
 
 		// startStop0D will be called at each timestep
@@ -330,26 +338,14 @@ PetscMonitor0D::monitorLargest(
 }
 
 PetscErrorCode
-PetscMonitor0D::startStop(
-	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+PetscMonitor0D::startStopImpl(TS ts, PetscInt timestep, PetscReal time,
+	Vec solution, io::XFile& checkpointFile, io::XFile::TimestepGroup* tsGroup,
+	[[maybe_unused]] const std::vector<std::string>& speciesNames)
 {
 	// Initial declaration
 	const double **solutionArray, *gridPointSolution;
 
 	PetscFunctionBeginUser;
-
-	// Compute the dt
-	double previousTime = _solverHandler->getPreviousTime();
-	double dt = time - previousTime;
-
-	// Don't do anything if it is not on the stride
-	if (((PetscInt)((time + dt / 10.0) / _hdf5Stride) <= _hdf5Previous) &&
-		timestep > 0)
-		PetscFunctionReturn(0);
-
-	// Update the previous time
-	if ((PetscInt)((time + dt / 10.0) / _hdf5Stride) > _hdf5Previous)
-		_hdf5Previous++;
 
 	// Get the da from ts
 	DM da;
@@ -365,21 +361,6 @@ PetscMonitor0D::startStop(
 	// Create an array for the concentration
 	double concArray[dof + 1][2];
 
-	// Open the existing HDF5 file
-	auto xolotlComm = util::getMPIComm();
-	io::XFile checkpointFile(
-		_hdf5OutputName, xolotlComm, io::XFile::AccessMode::OpenReadWrite);
-
-	// Get the current time step
-	double currentTimeStep;
-	PetscCall(TSGetTimeStep(ts, &currentTimeStep));
-
-	// Add a concentration time step group for the current time step.
-	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
-	assert(concGroup);
-	auto tsGroup = concGroup->addTimestepGroup(
-		_loopNumber, timestep, time, previousTime, currentTimeStep);
-
 	// Determine the concentration values we will write.
 	io::XFile::TimestepGroup::Concs1DType concs(1);
 
@@ -391,11 +372,6 @@ PetscMonitor0D::startStop(
 			concs[0].emplace_back(l, gridPointSolution[l]);
 		}
 	}
-
-	// Save the fluence
-	auto fluxHandler = _solverHandler->getFluxHandler();
-	auto fluence = fluxHandler->getFluence();
-	tsGroup->writeFluence(fluence);
 
 	// Write our concentration data to the current timestep group
 	// in the HDF5 file.
@@ -424,16 +400,19 @@ PetscMonitor0D::computeXenonRetention(
 
 	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
 
 	// Get the array of concentration
 	PetscOffsetView<const PetscReal**> solutionArray;
 	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &solutionArray));
 
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal* gridPointSolution;
+	PetscReal** solutionArrayH;
+	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArrayH));
+	gridPointSolution = solutionArrayH[0];
+
 	// Store the concentration and other values over the grid
-	double xeConcentration = 0.0, bubbleConcentration = 0.0, radii = 0.0,
-		   partialBubbleConcentration = 0.0, partialRadii = 0.0,
-		   partialSize = 0.0;
+	double xeConcentration = 0.0;
 
 	// Get the pointer to the beginning of the solution data for this grid point
 	auto concs = subview(solutionArray, 0, Kokkos::ALL).view();
@@ -442,39 +421,28 @@ PetscMonitor0D::computeXenonRetention(
 	auto minSizes = _solverHandler->getMinSizes();
 
 	// Get the concentrations
-	using TQ = core::network::IReactionNetwork::TotalQuantity;
-	using Q = TQ::Type;
-	using TQA = util::Array<TQ, 6>;
-	auto id = core::network::SpeciesId(Spec::Xe, network.getSpeciesListSize());
-	auto ms = static_cast<AmountType>(minSizes[id()]);
-	auto totals = network.getTotals(concs,
-		TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
-			TQ{Q::total, id, ms}, TQ{Q::atom, id, ms}, TQ{Q::radius, id, ms}});
-	bubbleConcentration = totals[0];
-	xeConcentration = totals[1];
-	radii = totals[2];
-	partialBubbleConcentration = totals[3];
-	partialSize = totals[4];
-	partialRadii = totals[5];
+	xeConcentration = network.getTotalAtomConcentration(concs, Spec::Xe, 1);
 
 	// Print the result
 	XOLOTL_LOG << "\nTime: " << time << '\n'
 			   << "Xenon concentration = " << xeConcentration << "\n\n";
 
-	// Make sure the average partial radius makes sense
-	double averagePartialRadius = 0.0, averagePartialSize = 0.0;
-	if (partialBubbleConcentration > 1.e-16) {
-		averagePartialRadius = partialRadii / partialBubbleConcentration;
-		averagePartialSize = partialSize / partialBubbleConcentration;
-	}
-
 	// Uncomment to write the content in a file
+	constexpr double k_B = ::xolotl::core::kBoltzmann;
 	std::ofstream outputFile;
 	outputFile.open("retentionOut.txt", std::ios::app);
-	outputFile << time << " " << xeConcentration << " "
-			   << radii / bubbleConcentration << " " << averagePartialRadius
-			   << " " << partialBubbleConcentration << " " << averagePartialSize
-			   << std::endl;
+	outputFile << time << " " << xeConcentration << " ";
+	for (auto id : _clusterOrder) {
+		outputFile << gridPointSolution[id] << " ";
+	}
+	if (xeConcentration < 1.0e-16)
+		outputFile << "0 0" << std::endl;
+	else {
+		auto ratio = network.getTotalVolumeRatio(concs, Spec::Xe, 2);
+		auto variance =
+			network.getTotalRatioVariance(concs, Spec::Xe, ratio, 2);
+		outputFile << ratio << " " << variance << std::endl;
+	}
 	outputFile.close();
 
 	// Restore the solutionArray
@@ -494,62 +462,19 @@ PetscMonitor0D::computeAlloy(
 	PetscCall(TSGetDM(ts, &da));
 
 	// Get the array of concentration
-	PetscOffsetView<const PetscReal**> solutionArray;
-	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &solutionArray));
+	PetscOffsetView<const PetscReal**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 
 	using NetworkType = core::network::AlloyReactionNetwork;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
-
-	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
-	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 4, 0.0);
 
-	// Get the minimum size for the loop densities and diameters
-	auto minSizes = _solverHandler->getMinSizes();
+	auto myData = network.getMonitorDataValues(concOffset, 1.0);
 
-	// Get the pointer to the beginning of the solution data for this grid point
-	auto concs = subview(solutionArray, 0, Kokkos::ALL).view();
-
-	// Loop on the species
-	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using TQ = core::network::IReactionNetwork::TotalQuantity;
-		using Q = TQ::Type;
-		using TQA = util::Array<TQ, 4>;
-		auto ms = static_cast<AmountType>(minSizes[id()]);
-		auto totals = network.getTotals(concs,
-			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
-				TQ{Q::radius, id, ms}});
-
-		myData[4 * id()] = totals[0];
-		myData[(4 * id()) + 1] = 2.0 * totals[1] / myData[4 * id()];
-		myData[(4 * id()) + 2] = totals[2];
-		myData[(4 * id()) + 3] = 2.0 * totals[3] / myData[(4 * id()) + 2];
-	}
-
-	// Set the output precision
-	const int outputPrecision = 5;
-
-	// Open the output file
-	std::fstream outputFile;
-	outputFile.open("Alloy.dat", std::fstream::out | std::fstream::app);
-	outputFile << std::setprecision(outputPrecision);
-
-	// Output the data
-	outputFile << timestep << " " << time << " ";
-	for (auto i = 0; i < numSpecies; ++i) {
-		outputFile << myData[i * 4] << " " << myData[(i * 4) + 1] << " "
-				   << myData[(i * 4) + 2] << " " << myData[(i * 4) + 3] << " ";
-	}
-	outputFile << std::endl;
-
-	// Close the output file
-	outputFile.close();
+	network.writeMonitorDataLine(myData, time);
 
 	// Restore the PETSc solution array
-	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &solutionArray));
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
 
 	PetscFunctionReturn(0);
 }
@@ -565,77 +490,19 @@ PetscMonitor0D::computeAlphaZr(
 	PetscCall(TSGetDM(ts, &da));
 
 	// Get the array of concentration
-	PetscReal** solutionArray;
-	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
+	PetscOffsetView<const PetscScalar**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 
 	using NetworkType = core::network::ZrReactionNetwork;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
-
-	// Degrees of freedom is the total number of clusters in the network
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto dof = network.getDOF();
-	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 6, 0.0);
 
-	// Get the minimum size for the loop densities and diameters
-	auto minSizes = _solverHandler->getMinSizes();
+	auto myData = network.getMonitorDataValues(concOffset, 1.0);
 
-	// Declare the pointer for the concentrations at a specific grid point
-	PetscReal* gridPointSolution;
-
-	// Get the pointer to the beginning of the solution data for this grid point
-	gridPointSolution = solutionArray[0];
-
-	using HostUnmanaged =
-		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
-	auto hConcs = HostUnmanaged(gridPointSolution, dof);
-	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
-	deep_copy(dConcs, hConcs);
-
-	// Loop on the species
-	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-		using TQ = core::network::IReactionNetwork::TotalQuantity;
-		using Q = TQ::Type;
-		using TQA = util::Array<TQ, 6>;
-		auto ms = static_cast<AmountType>(minSizes[id()]);
-		auto totals = network.getTotals(dConcs,
-			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
-				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
-				TQ{Q::radius, id, ms}});
-
-		myData[6 * id()] = totals[0];
-		myData[6 * id() + 1] = totals[1];
-		myData[(6 * id()) + 2] = 2.0 * totals[2] / myData[6 * id()];
-		myData[(6 * id()) + 3] = totals[3];
-		myData[(6 * id()) + 4] = totals[4];
-		myData[(6 * id()) + 5] = 2.0 * totals[5] / myData[(6 * id()) + 3];
-	}
-
-	// Set the output precision
-	const int outputPrecision = 5;
-
-	// Open the output file
-	std::fstream outputFile;
-	outputFile.open("AlphaZr.dat", std::fstream::out | std::fstream::app);
-	outputFile << std::setprecision(outputPrecision);
-
-	// Output the data
-	outputFile << timestep << " " << time << " ";
-
-	for (auto i = 0; i < numSpecies; ++i) {
-		outputFile << myData[i * 6] << " " << myData[(i * 6) + 1] << " "
-				   << myData[(i * 6) + 2] << " " << myData[(i * 6) + 3] << " "
-				   << myData[(i * 6) + 4] << " " << myData[(i * 6) + 5] << " ";
-	}
-
-	outputFile << std::endl;
-
-	// Close the output file
-	outputFile.close();
+	network.writeMonitorDataLine(myData, time);
 
 	// Restore the PETSc solution array
-	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
 
 	PetscFunctionReturn(0);
 }

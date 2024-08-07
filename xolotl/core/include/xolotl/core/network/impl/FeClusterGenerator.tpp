@@ -16,6 +16,7 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 	result[0] = true;
 	result[1] = true;
 	result[2] = true;
+
 	// I is never grouped
 	if (region[Species::I].begin() > 0) {
 		return true;

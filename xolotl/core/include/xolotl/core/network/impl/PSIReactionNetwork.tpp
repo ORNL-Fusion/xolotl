@@ -731,6 +731,7 @@ inline ReactionCollection<
 PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
+		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
 		this->getSinkReactions(), this->getTrapMutationReactions());
 	return ret;

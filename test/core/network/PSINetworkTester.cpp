@@ -5,6 +5,7 @@
 
 #include <xolotl/core/network/PSINetworkHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/MPITestUtils.h>
 #include <xolotl/test/PSINetworkTesterData.h>
@@ -29,7 +30,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 {
 	loadNetworkHandlers();
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -575,7 +576,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -848,7 +849,7 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1140,7 +1141,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1485,7 +1486,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1830,7 +1831,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 BOOST_AUTO_TEST_CASE(HeVGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1871,7 +1872,7 @@ BOOST_AUTO_TEST_CASE(HeVGrouped)
 BOOST_AUTO_TEST_CASE(HeDVGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1912,7 +1913,7 @@ BOOST_AUTO_TEST_CASE(HeDVGrouped)
 BOOST_AUTO_TEST_CASE(HeTVGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1953,7 +1954,7 @@ BOOST_AUTO_TEST_CASE(HeTVGrouped)
 BOOST_AUTO_TEST_CASE(HeDTVGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1994,7 +1995,7 @@ BOOST_AUTO_TEST_CASE(HeDTVGrouped)
 BOOST_AUTO_TEST_CASE(IGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -2035,7 +2036,7 @@ BOOST_AUTO_TEST_CASE(IGrouped)
 BOOST_AUTO_TEST_CASE(VIGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);

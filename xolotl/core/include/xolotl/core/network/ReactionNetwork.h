@@ -18,7 +18,7 @@
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 #include <xolotl/core/network/detail/ReactionCollection.h>
 #include <xolotl/options/IOptions.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/util/NotImplementedError.h>
 
 namespace xolotl
 {
@@ -28,9 +28,6 @@ namespace network
 {
 namespace detail
 {
-template <typename TImpl>
-struct ReactionNetworkWorker;
-
 template <typename TImpl, typename TDerived>
 class ReactionGeneratorBase;
 } // namespace detail
@@ -44,7 +41,6 @@ struct ReactionNetworkInterface
 template <typename TImpl>
 class ReactionNetwork : public ReactionNetworkInterface<TImpl>::Type
 {
-	friend class detail::ReactionNetworkWorker<TImpl>;
 	template <typename, typename>
 	friend class detail::ReactionGeneratorBase;
 
@@ -79,6 +75,8 @@ public:
 	using FluxesView = typename IReactionNetwork::FluxesView;
 	using RatesView = typename IReactionNetwork::RatesView;
 	using ConnectivitiesView = typename IReactionNetwork::ConnectivitiesView;
+	using ConnectivitiesPairView =
+		typename IReactionNetwork::ConnectivitiesPairView;
 	using SubMapView = typename IReactionNetwork::SubMapView;
 	using OwnedSubMapView = typename IReactionNetwork::OwnedSubMapView;
 	using BelongingView = typename IReactionNetwork::BelongingView;
@@ -93,7 +91,7 @@ public:
 	using MomentIdMap = IReactionNetwork::MomentIdMap;
 	using MomentIdMapVector = IReactionNetwork::MomentIdMapVector;
 	using RateVector = IReactionNetwork::RateVector;
-	using ConnectivitiesVector = IReactionNetwork::ConnectivitiesVector;
+	using ConnectivitiesPair = IReactionNetwork::ConnectivitiesPair;
 	using PhaseSpace = IReactionNetwork::PhaseSpace;
 	using TotalQuantity = IReactionNetwork::TotalQuantity;
 
@@ -228,6 +226,9 @@ public:
 	setEnableReducedJacobian(bool reduced) override;
 
 	void
+	setEnableReadRates(bool read) override;
+
+	void
 	setGridSize(IndexType gridSize) override;
 
 	void
@@ -236,6 +237,59 @@ public:
 
 	void
 	setTime(double time) override;
+
+	const std::vector<AmountType>&
+	getMinRadiusSizes() const override
+	{
+		return _minRadiusSizes;
+	}
+
+	[[noreturn]] std::string
+	getMonitorOutputFileName() const override
+	{
+		throw util::NotImplementedError();
+	}
+
+	[[noreturn]] std::string
+	getMonitorDataHeaderString() const override
+	{
+		throw util::NotImplementedError();
+	}
+
+	std::vector<double>
+	getMonitorDataValues(Kokkos::View<const double*> conc, double fac) override
+	{
+		auto ret = std::vector<double>(getMonitorDataLineSize(), 0.0);
+		addMonitorDataValues(conc, fac, ret);
+		return ret;
+	}
+
+	void
+	addMonitorDataValues(Kokkos::View<const double*> conc, double fac,
+		std::vector<double>& totalVals) override
+	{
+		throw util::NotImplementedError();
+	}
+
+	[[noreturn]] std::size_t
+	getMonitorDataLineSize() const override
+	{
+		throw util::NotImplementedError();
+	}
+
+	void
+	writeMonitorOutputHeader() const override
+	{
+		std::ofstream(this->getMonitorOutputFileName())
+			<< this->getMonitorDataHeaderString() << std::endl;
+	}
+
+	void
+	writeMonitorDataLine(
+		const std::vector<double>& localData, double time) override
+	{
+		throw util::NotImplementedError();
+	}
 
 	std::uint64_t
 	getDeviceMemorySize() const noexcept override;
@@ -341,18 +395,25 @@ public:
 	MomentIdMap
 	getAllMomentIdInfo() override;
 
-	std::string
-	getHeaderString() override;
-
 	void initializeClusterMap(
 		BoundVector, MomentIdMapVector, MomentIdMap) override;
 
 	void
 	initializeReactions() override;
 
-	void setConstantRates(RateVector) override;
+	void
+	setConstantRates(RatesView, IndexType gridIndex) override;
 
-	void setConstantConnectivities(ConnectivitiesVector) override;
+	void setConstantConnectivities(ConnectivitiesPair) override;
+
+	void
+	initializeRateEntries(const ConnectivitiesPair&, IndexType) override;
+
+	void
+	initializeRateEntries(const std::vector<ConnectivitiesPair>&) override;
+
+	void
+	setConstantRateEntries() override;
 
 	PhaseSpace
 	getPhaseSpace() override;
@@ -601,6 +662,47 @@ public:
 	}
 
 	/**
+	 * Get the averaged species to defect ratio.
+	 *
+	 * @param concentration The vector of concentrations
+	 * @param type The type of atom we want the concentration of
+	 * @param minSize The minimum number of atom to start counting
+	 * @return The ratio
+	 */
+	double
+	getTotalVolumeRatio(ConcentrationsView concentrations, Species type,
+		AmountType minSize = 0);
+
+	double
+	getTotalVolumeRatio(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) override
+	{
+		auto type = species.cast<Species>();
+		return getTotalVolumeRatio(concentrations, type, minSize);
+	}
+
+	/**
+	 * Get the variance associated with averaged species to defect ratio.
+	 *
+	 * @param concentration The vector of concentrations
+	 * @param type The type of atom we want the concentration of
+	 * @param minSize The minimum number of atom to start counting
+	 * @param mean The ration mean
+	 * @return The variance
+	 */
+	double
+	getTotalRatioVariance(ConcentrationsView concentrations, Species type,
+		double mean, AmountType minSize = 0);
+
+	double
+	getTotalRatioVariance(ConcentrationsView concentrations, SpeciesId species,
+		double mean, AmountType minSize = 0) override
+	{
+		auto type = species.cast<Species>();
+		return getTotalRatioVariance(concentrations, type, minSize);
+	}
+
+	/**
 	 * Get the total concentration of a given type of clusters only if it is
 	 * trapped in a vacancy.
 	 *
@@ -650,11 +752,21 @@ private:
 	static std::map<std::string, SpeciesId>
 	createSpeciesLabelMap() noexcept;
 
+	static std::vector<AmountType>
+	computeMinRadiusSizes(const options::IOptions& opts);
+
 	void
 	defineMomentIds();
 
 	void
 	generateClusterData(const ClusterGenerator& generator);
+
+	void
+	readClusters(const std::string filename = "reactionRates.txt");
+
+	void
+	readReactions(
+		double temperature, const std::string filename = "reactionRates.txt");
 
 	void
 	defineReactions(Connectivity& connectivity);
@@ -675,9 +787,6 @@ private:
 
 private:
 	std::optional<SubpavingMirror> _subpavingMirror;
-	std::optional<ClusterDataMirror> _clusterDataMirror;
-
-	detail::ReactionNetworkWorker<TImpl> _worker;
 
 	SparseFillMap _connectivityMap;
 
@@ -685,6 +794,8 @@ private:
 	std::vector<OwnedSubMapView> backMap;
 
 protected:
+	std::optional<ClusterDataMirror> _clusterDataMirror;
+
 	Kokkos::DualView<ClusterData> _clusterData;
 
 	Subpaving _subpaving;
@@ -693,61 +804,19 @@ protected:
 
 	std::map<std::string, SpeciesId> _speciesLabelMap;
 
-	ConnectivitiesView _constantConns;
+	// Reaction energies
+	Kokkos::View<double**> _reactionEnergies;
+
+	ConnectivitiesPairView _constantConnsRows;
+	ConnectivitiesPairView _constantConnsEntries;
 
 	double _currentTime;
+
+	std::vector<AmountType> _minRadiusSizes;
 };
 
 namespace detail
 {
-template <typename TImpl>
-struct ReactionNetworkWorker
-{
-	using Network = ReactionNetwork<TImpl>;
-	using Types = ReactionNetworkTypes<TImpl>;
-	using Species = typename Types::Species;
-	using ClusterData = typename Types::ClusterData;
-	using IndexType = typename Types::IndexType;
-	using AmountType = typename Types::AmountType;
-	using ReactionCollection = typename Types::ReactionCollection;
-	using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
-	using Connectivity = typename IReactionNetwork::Connectivity;
-
-	Network& _nw;
-
-	ReactionNetworkWorker(Network& network) : _nw(network)
-	{
-	}
-
-	void
-	updateDiffusionCoefficients();
-
-	void
-	defineMomentIds();
-
-	void
-	defineReactions(Connectivity& connectivity);
-
-	IndexType
-	getDiagonalFill(typename Network::SparseFillMap& fillMap);
-
-	double
-	getTotalConcentration(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalAtomConcentration(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalRadiusConcentration(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalVolumeFraction(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-};
-
 template <typename TImpl>
 class DefaultClusterUpdater
 {

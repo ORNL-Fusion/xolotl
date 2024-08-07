@@ -13,6 +13,11 @@ namespace xolotl
 {
 namespace io
 {
+#define CHK(f) \
+	if (f < 0) { \
+		throw std::runtime_error("I/O error"); \
+	}
+
 HDF5File::AccessMode
 XFile::EnsureCreateAccessMode(HDF5File::AccessMode mode)
 {
@@ -88,8 +93,8 @@ XFile::NetworkGroup::NetworkGroup(
 	XFile::SimpleDataSpace<1> phaseDSpace(dim);
 	hid_t attrId = H5Acreate2(getId(), phaseSpaceAttrName.c_str(), datatype,
 		phaseDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
-	auto status = H5Awrite(attrId, datatype, phaseSpaceChar.data());
-	status = H5Aclose(attrId);
+	CHK(H5Awrite(attrId, datatype, phaseSpaceChar.data()));
+	CHK(H5Aclose(attrId));
 
 	// Get the bounds for each cluster
 	auto bounds = network.getAllClusterBounds();
@@ -164,8 +169,8 @@ XFile::ClusterGroup::ClusterGroup(const NetworkGroup& networkGroup, int id,
 	XFile::SimpleDataSpace<1> boundDSpace(dim);
 	hid_t attrId = H5Acreate2(getId(), boundsAttrName.c_str(), H5T_STD_I32LE,
 		boundDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT);
-	auto status = H5Awrite(attrId, H5T_STD_I32LE, bounds.data());
-	status = H5Aclose(attrId);
+	CHK(H5Awrite(attrId, H5T_STD_I32LE, bounds.data()));
+	CHK(H5Aclose(attrId));
 
 	// Build a dataspace for our scalar attributes.
 	XFile::ScalarDataSpace scalarDSpace;
@@ -212,11 +217,11 @@ XFile::ClusterGroup::readCluster(double& formationEnergy,
 	hid_t attributeId = H5Aopen_name(getId(), boundsAttrName.c_str());
 	hid_t dataspaceId = H5Aget_space(attributeId);
 	hsize_t dims[1];
-	herr_t status = H5Sget_simple_extent_dims(dataspaceId, dims, NULL);
+	CHK(H5Sget_simple_extent_dims(dataspaceId, dims, NULL));
 	ClusterBoundsType bounds;
 	bounds.resize(dims[0]);
-	status = H5Aread(attributeId, H5T_STD_I32LE, bounds.data());
-	status = H5Aclose(attributeId);
+	CHK(H5Aread(attributeId, H5T_STD_I32LE, bounds.data()));
+	CHK(H5Aclose(attributeId));
 
 	return bounds;
 }
@@ -228,6 +233,8 @@ const fs::path XFile::ConcentrationGroup::path = "/concentrationsGroup";
 const std::string XFile::ConcentrationGroup::lastTimestepAttrName =
 	"lastTimeStep";
 const std::string XFile::ConcentrationGroup::lastLoopAttrName = "lastLoop";
+const std::string XFile::ConcentrationGroup::lastCtrlStepAttrName =
+	"lastCtrlStep";
 
 XFile::ConcentrationGroup::ConcentrationGroup(const XFile& file, bool create) :
 	HDF5File::Group(file, ConcentrationGroup::path, create)
@@ -248,27 +255,33 @@ XFile::ConcentrationGroup::ConcentrationGroup(const XFile& file, bool create) :
 		Attribute<decltype(lastLoop)> lastLoopAttr(
 			*this, lastLoopAttrName, lastDSpace);
 		lastLoopAttr.setTo(lastLoop);
+
+		int lastCtrlStep = -1;
+		Attribute<decltype(lastCtrlStep)> lastCtrlStepAttr(
+			*this, lastCtrlStepAttrName, lastDSpace);
+		lastCtrlStepAttr.setTo(lastCtrlStep);
 	}
 }
 
 std::unique_ptr<XFile::TimestepGroup>
-XFile::ConcentrationGroup::addTimestepGroup(int loop, int timeStep, double time,
-	double previousTime, double deltaTime) const
+XFile::ConcentrationGroup::addTimestepGroup(int ctrlStep, int loop,
+	int timeStep, double time, double previousTime, double deltaTime) const
 {
 	std::unique_ptr<XFile::TimestepGroup> tsGroup;
 	// Check if this group already exist
 	bool groupExist = H5Lexists(getId(),
-		TimestepGroup::makeGroupName(*this, loop, timeStep).c_str(),
+		TimestepGroup::makeGroupName(*this, ctrlStep, loop, timeStep).c_str(),
 		H5P_DEFAULT);
 	if (groupExist) {
 		// Get the group
+		// FIXME: need to use ctrlStep
 		tsGroup = getTimestepGroup(loop, timeStep);
 		tsGroup->updateTimestepGroup(time, previousTime, deltaTime);
 	}
 	else {
 		// Create a group for the new timestep and loop.
 		tsGroup = std::make_unique<XFile::TimestepGroup>(
-			*this, loop, timeStep, time, previousTime, deltaTime);
+			*this, ctrlStep, loop, timeStep, time, previousTime, deltaTime);
 	}
 
 	// Update our last known timestep and loop.
@@ -276,8 +289,17 @@ XFile::ConcentrationGroup::addTimestepGroup(int loop, int timeStep, double time,
 	lastTimestepAttr.setTo(timeStep);
 	Attribute<decltype(loop)> lastLoopAttr(*this, lastLoopAttrName);
 	lastLoopAttr.setTo(loop);
+	Attribute<decltype(ctrlStep)> lastCtrlStepAttr(*this, lastCtrlStepAttrName);
+	lastCtrlStepAttr.setTo(ctrlStep);
 
 	return std::move(tsGroup);
+}
+
+int
+XFile::ConcentrationGroup::getLastControlStep(void) const
+{
+	Attribute<int> lastCtrlStepAttr(*this, lastCtrlStepAttrName);
+	return lastCtrlStepAttr.get();
 }
 
 int
@@ -301,7 +323,9 @@ XFile::ConcentrationGroup::getTimestepGroup(int loop, int timeStep) const
 
 	try {
 		// Open the sub-group associated with the desired time step.
-		tsGroup = std::make_unique<XFile::TimestepGroup>(*this, loop, timeStep);
+		// FIXME
+		tsGroup =
+			std::make_unique<XFile::TimestepGroup>(*this, 0, loop, timeStep);
 	}
 	catch (HDF5Exception& e) {
 		// We were unable to open the group associated with the given time step.
@@ -321,9 +345,10 @@ XFile::ConcentrationGroup::getLastTimestepGroup(void) const
 		// if any time steps have been written.
 		auto lastTimeStep = getLastTimeStep();
 		auto lastLoop = getLastLoop();
-		if (lastTimeStep >= 0 and lastLoop >= 0) {
-			tsGroup =
-				std::make_unique<TimestepGroup>(*this, lastLoop, lastTimeStep);
+		auto lastCtrlStep = getLastControlStep();
+		if (lastTimeStep >= 0 and lastLoop >= 0 and lastCtrlStep >= 0) {
+			tsGroup = std::make_unique<TimestepGroup>(
+				*this, lastCtrlStep, lastLoop, lastTimeStep);
 		}
 	}
 	catch (HDF5Exception& e) {
@@ -359,19 +384,20 @@ const std::string XFile::TimestepGroup::hzAttrName = "hz";
 const std::string XFile::TimestepGroup::concDatasetName = "concs";
 
 std::string
-XFile::TimestepGroup::makeGroupName(
-	const XFile::ConcentrationGroup& concGroup, int loop, int timeStep)
+XFile::TimestepGroup::makeGroupName(const XFile::ConcentrationGroup& concGroup,
+	int ctrlStep, int loop, int timeStep)
 {
 	std::ostringstream namestr;
-	namestr << concGroup.getName() << '/' << groupNamePrefix << loop << "_"
-			<< timeStep;
+	namestr << concGroup.getName() << '/' << groupNamePrefix << ctrlStep << "_"
+			<< loop << "_" << timeStep;
 	return namestr.str();
 }
 
 XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
-	int loop, int timeStep, double time, double previousTime,
+	int ctrlStep, int loop, int timeStep, double time, double previousTime,
 	double deltaTime) :
-	HDF5File::Group(concGroup, makeGroupName(concGroup, loop, timeStep), true)
+	HDF5File::Group(
+		concGroup, makeGroupName(concGroup, ctrlStep, loop, timeStep), true)
 {
 	// Get a dataspace for our scalar attributes.
 	XFile::ScalarDataSpace scalarDSpace;
@@ -391,9 +417,10 @@ XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
 	deltaTimeAttr.setTo(deltaTime);
 }
 
-XFile::TimestepGroup::TimestepGroup(
-	const XFile::ConcentrationGroup& concGroup, int loop, int timeStep) :
-	HDF5File::Group(concGroup, makeGroupName(concGroup, loop, timeStep), false)
+XFile::TimestepGroup::TimestepGroup(const XFile::ConcentrationGroup& concGroup,
+	int ctrlStep, int loop, int timeStep) :
+	HDF5File::Group(
+		concGroup, makeGroupName(concGroup, ctrlStep, loop, timeStep), false)
 {
 	// Base class opened the group, so nothing else to do.
 }
@@ -458,9 +485,9 @@ XFile::TimestepGroup::writeGrid(
 		XFile::SimpleDataSpace<1> gridDSpace(dims);
 		hid_t datasetId = H5Dcreate2(getId(), "grid", H5T_IEEE_F64LE,
 			gridDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-		auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &gridArray);
-		status = H5Dclose(datasetId);
+		CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			&gridArray));
+		CHK(H5Dclose(datasetId));
 	}
 
 	return;
@@ -478,9 +505,9 @@ XFile::TimestepGroup::writeFluence(const std::vector<double>& fluences) const
 	XFile::SimpleDataSpace<1> fluenceDSpace(dims);
 	hid_t datasetId = H5Dcreate2(getId(), "fluence", H5T_IEEE_F64LE,
 		fluenceDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-	auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-		H5P_DEFAULT, &fluenceArray);
-	status = H5Dclose(datasetId);
+	CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+		&fluenceArray));
+	CHK(H5Dclose(datasetId));
 
 	return;
 }
@@ -532,11 +559,11 @@ XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
 			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 	// Write surface index data in the dataset
-	auto status = H5Dwrite(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL,
-		H5P_DEFAULT, iSurface.data());
+	CHK(H5Dwrite(datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+		iSurface.data()));
 
 	// Close the dataset
-	status = H5Dclose(datasetId);
+	CHK(H5Dclose(datasetId));
 
 	// Loop on the names
 	for (auto i = 0; i < atomNames.size(); i++) {
@@ -555,11 +582,11 @@ XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
 			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 		// Write quantityArray in the dataset
-		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &quantityArray);
+		CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			&quantityArray));
 
 		// Close the dataset
-		status = H5Dclose(datasetId);
+		CHK(H5Dclose(datasetId));
 		// Create the previous flux attribute name
 		std::ostringstream prevFluxName;
 		prevFluxName << previousFluxAttrName << atomNames[i] << surfAttrName;
@@ -575,11 +602,11 @@ XFile::TimestepGroup::writeSurface2D(const Surface2DType& iSurface,
 				indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 		// Write quantityArray in the dataset
-		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &quantityArray);
+		CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			&quantityArray));
 
 		// Close everything
-		status = H5Dclose(datasetId);
+		CHK(H5Dclose(datasetId));
 	}
 }
 
@@ -607,10 +634,10 @@ XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
 		H5Dcreate2(getId(), surfacePosDataName.c_str(), H5T_STD_I32LE,
 			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 	// Write in the dataset
-	auto status = H5Dwrite(
-		datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &indexArray);
+	CHK(H5Dwrite(
+		datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &indexArray));
 	// Close the dataset
-	status = H5Dclose(datasetId);
+	CHK(H5Dclose(datasetId));
 
 	// Loop on the names
 	for (auto k = 0; k < atomNames.size(); k++) {
@@ -631,11 +658,11 @@ XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
 		datasetId = H5Dcreate2(getId(), nName.str().c_str(), H5T_IEEE_F64LE,
 			indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		// Write in the dataset
-		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &quantityArray);
+		CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			&quantityArray));
 
 		// Close the dataset
-		status = H5Dclose(datasetId);
+		CHK(H5Dclose(datasetId));
 		// Create the previous flux attribute name
 		std::ostringstream prevFluxName;
 		prevFluxName << previousFluxAttrName << atomNames[k] << surfAttrName;
@@ -652,10 +679,10 @@ XFile::TimestepGroup::writeSurface3D(const Surface3DType& iSurface,
 			H5Dcreate2(getId(), prevFluxName.str().c_str(), H5T_IEEE_F64LE,
 				indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		// Write in the dataset
-		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &quantityArray);
+		CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			&quantityArray));
 		// Close the dataset
-		status = H5Dclose(datasetId);
+		CHK(H5Dclose(datasetId));
 	}
 }
 
@@ -716,11 +743,11 @@ XFile::TimestepGroup::writeBottom2D(std::vector<Data2DType> nAtoms,
 				dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 		// Write quantityArray in the dataset
-		auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &quantityArray);
+		CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			&quantityArray));
 
 		// Close the dataset
-		status = H5Dclose(datasetId);
+		CHK(H5Dclose(datasetId));
 		// Create the previous flux attribute name
 		std::ostringstream prevFluxName;
 		prevFluxName << previousFluxAttrName << atomNames[i] << bulkAttrName;
@@ -736,11 +763,11 @@ XFile::TimestepGroup::writeBottom2D(std::vector<Data2DType> nAtoms,
 				dspace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 
 		// Write quantityArray in the dataset
-		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &quantityArray);
+		CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			&quantityArray));
 
 		// Close everything
-		status = H5Dclose(datasetId);
+		CHK(H5Dclose(datasetId));
 	}
 }
 
@@ -777,11 +804,11 @@ XFile::TimestepGroup::writeBottom3D(std::vector<Data3DType> nAtoms,
 			H5Dcreate2(getId(), nName.str().c_str(), H5T_IEEE_F64LE,
 				indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		// Write in the dataset
-		auto status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &quantityArray);
+		CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			&quantityArray));
 
 		// Close the dataset
-		status = H5Dclose(datasetId);
+		CHK(H5Dclose(datasetId));
 		// Create the previous flux attribute name
 		std::ostringstream prevFluxName;
 		prevFluxName << previousFluxAttrName << atomNames[k] << bulkAttrName;
@@ -798,10 +825,10 @@ XFile::TimestepGroup::writeBottom3D(std::vector<Data3DType> nAtoms,
 			H5Dcreate2(getId(), prevFluxName.str().c_str(), H5T_IEEE_F64LE,
 				indexDSpace.getId(), H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
 		// Write in the dataset
-		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, &quantityArray);
+		CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			&quantityArray));
 		// Close the dataset
-		status = H5Dclose(datasetId);
+		CHK(H5Dclose(datasetId));
 	}
 }
 
@@ -852,16 +879,16 @@ XFile::TimestepGroup::writeConcentrationDataset(
 
 	// Create property list for independent dataset write.
 	hid_t propertyListId = H5Pcreate(H5P_DATASET_XFER);
-	auto status = H5Pset_dxpl_mpio(propertyListId, H5FD_MPIO_INDEPENDENT);
+	CHK(H5Pset_dxpl_mpio(propertyListId, H5FD_MPIO_INDEPENDENT));
 
 	if (write) {
 		// Write concArray in the dataset
-		status = H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			propertyListId, concArray);
+		CHK(H5Dwrite(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
+			propertyListId, concArray));
 	}
 
 	// Close dataset
-	status = H5Dclose(datasetId);
+	CHK(H5Dclose(datasetId));
 
 	return;
 }
@@ -972,14 +999,14 @@ XFile::TimestepGroup::readSurface3D(void) const -> Surface3DType
 
 	// Get the dimensions of the dataset
 	std::array<hsize_t, 2> dims;
-	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
+	CHK(H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr));
 
 	// Create the array that will receive the indices
 	Surface3DType::value_type index(dims[0] * dims[1]);
 
 	// Read the data set
-	status = H5Dread(
-		datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, index.data());
+	CHK(H5Dread(
+		datasetId, H5T_STD_I32LE, H5S_ALL, H5S_ALL, H5P_DEFAULT, index.data()));
 
 	// Loop on the length and fill the vector to return
 	Surface3DType toReturn(dims[0]);
@@ -990,31 +1017,31 @@ XFile::TimestepGroup::readSurface3D(void) const -> Surface3DType
 	}
 
 	// Close everything
-	status = H5Dclose(datasetId);
-	status = H5Sclose(dataspaceId);
+	CHK(H5Dclose(datasetId));
+	CHK(H5Sclose(dataspaceId));
 
 	return toReturn;
 }
 
 auto
-XFile::TimestepGroup::readData1D(const std::string& dataName) const
-	-> Data1DType
+XFile::TimestepGroup::readData1D(
+	const std::string& dataName) const -> Data1DType
 {
 	Attribute<Data1DType> attr(*this, dataName);
 	return attr.get();
 }
 
 auto
-XFile::TimestepGroup::readData2D(const std::string& dataName) const
-	-> Data2DType
+XFile::TimestepGroup::readData2D(
+	const std::string& dataName) const -> Data2DType
 {
 	DataSet<Data2DType> dataset(*this, dataName);
 	return dataset.read();
 }
 
 auto
-XFile::TimestepGroup::readData3D(const std::string& dataName) const
-	-> Data3DType
+XFile::TimestepGroup::readData3D(
+	const std::string& dataName) const -> Data3DType
 {
 	// Open the dataset
 	hid_t datasetId = H5Dopen(getId(), dataName.c_str(), H5P_DEFAULT);
@@ -1024,14 +1051,14 @@ XFile::TimestepGroup::readData3D(const std::string& dataName) const
 
 	// Get the dimensions of the dataset
 	std::array<hsize_t, 2> dims;
-	auto status = H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
+	CHK(H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr));
 
 	// Create the array that will receive the indices
 	Data3DType::value_type quantity(dims[0] * dims[1]);
 
 	// Read the data set
-	status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-		quantity.data());
+	CHK(H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+		quantity.data()));
 
 	// Loop on the length and fill the vector to return
 	Data3DType toReturn(dims[0]);
@@ -1043,8 +1070,8 @@ XFile::TimestepGroup::readData3D(const std::string& dataName) const
 	}
 
 	// Close everything
-	status = H5Dclose(datasetId);
-	status = H5Sclose(dataspaceId);
+	CHK(H5Dclose(datasetId));
+	CHK(H5Sclose(dataspaceId));
 
 	return toReturn;
 }
@@ -1072,15 +1099,14 @@ XFile::TimestepGroup::readGridPoint(int i, int j, int k) const -> Data3DType
 
 		// Get the dimensions of the dataset
 		std::array<hsize_t, 2> dims;
-		auto status =
-			H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr);
+		CHK(H5Sget_simple_extent_dims(dataspaceId, dims.data(), nullptr));
 
 		// Create the array that will receive the concentrations
 		Data3DType::value_type conc(dims[0] * dims[1]);
 
 		// Read the data set
-		status = H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL,
-			H5P_DEFAULT, conc.data());
+		CHK(H5Dread(datasetId, H5T_IEEE_F64LE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+			conc.data()));
 
 		// Loop on the length
 		toReturn.resize(dims[0]);
@@ -1092,8 +1118,8 @@ XFile::TimestepGroup::readGridPoint(int i, int j, int k) const -> Data3DType
 		}
 
 		// Close everything
-		status = H5Dclose(datasetId);
-		status = H5Sclose(dataspaceId);
+		CHK(H5Dclose(datasetId));
+		CHK(H5Sclose(dataspaceId));
 	}
 
 	return toReturn;

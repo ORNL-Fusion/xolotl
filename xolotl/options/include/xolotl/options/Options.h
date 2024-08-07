@@ -14,9 +14,14 @@ class Options : public IOptions
 {
 protected:
 	/**
-	 * The name of the file where the network is stored.
+	 * The name of the file to use for checkpoint
 	 */
-	std::string networkFilename;
+	std::string checkpointFile;
+
+	/**
+	 * The name of the file to use for restart
+	 */
+	std::string restartFile;
 
 	/**
 	 * The options that will be given to PETSc.
@@ -72,6 +77,41 @@ protected:
 	 * Output performance report to YAML file?
 	 */
 	bool perfOutputYAMLFlag;
+
+	/**
+	 * Enable multiple xolotl instances
+	 */
+	bool subnetworksFlag;
+
+	/**
+	 * Initial coupling timestep
+	 */
+	double initialTimeStep;
+
+	/**
+	 * Maximum coupling timestep
+	 */
+	double maxTimeStep;
+
+	/**
+	 * Time step growth factor
+	 */
+	double timeStepGrowthFactor;
+
+	/**
+	 * Coupling start time
+	 */
+	double startTime;
+
+	/**
+	 * Coupling end time
+	 */
+	double endTime;
+
+	/**
+	 * Maximum coupling time steps
+	 */
+	IdType numTimeSteps;
 
 	/**
 	 * Name of the viz handler
@@ -152,6 +192,11 @@ protected:
 	 * Use a HDF5 file?
 	 */
 	bool useHDF5Flag;
+
+	/**
+	 * Network parameters
+	 */
+	std::vector<IdType> networkParams;
 
 	/**
 	 * Maximum number of He or Xe
@@ -292,6 +337,11 @@ protected:
 	fs::path fluxDepthProfileFilePath;
 
 	/**
+	 * The path to the reaction rates file
+	 */
+	fs::path reactionFilePath;
+
+	/**
 	 * Value of the basal portion.
 	 */
 	double basalPortion;
@@ -322,19 +372,25 @@ public:
 	 */
 	~Options();
 
-	/**
-	 * \see IOptions.h
-	 */
 	void
-	readParams(int argc, const char* argv[]) override;
+	printAll(std::ostream& os) const override;
 
 	/**
 	 * \see IOptions.h
 	 */
 	std::string
-	getNetworkFilename() const override
+	getCheckpointFilePath() const override
 	{
-		return networkFilename;
+		return checkpointFile;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	std::string
+	getRestartFilePath() const override
+	{
+		return restartFile;
 	}
 
 	/**
@@ -535,6 +591,72 @@ public:
 		return processMap;
 	}
 
+	void
+	addProcess(const std::string& processKey) override;
+
+	/**
+	 * \see IOptions.h
+	 */
+	bool
+	useSubnetworks() const override
+	{
+		return subnetworksFlag;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getInitialTimeStep() const override
+	{
+		return initialTimeStep;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getMaxTimeStep() const override
+	{
+		return maxTimeStep;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getTimeStepGrowthFactor() const override
+	{
+		return timeStepGrowthFactor;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getStartTime() const override
+	{
+		return startTime;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getEndTime() const override
+	{
+		return endTime;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual IdType
+	getNumberOfTimeSteps() const override
+	{
+		return numTimeSteps;
+	}
+
 	/**
 	 * \see IOptions.h
 	 */
@@ -588,6 +710,21 @@ public:
 	{
 		return useHDF5Flag;
 	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	const std::vector<IdType>&
+	getNetworkParameters() const override
+	{
+		return networkParams;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	void
+	setNetworkParameters(const std::vector<IdType>& params) override;
 
 	/**
 	 * \see IOptions.h
@@ -861,6 +998,15 @@ public:
 	/**
 	 * \see IOptions.h
 	 */
+	virtual std::string
+	getReactionFilePath() const override
+	{
+		return reactionFilePath.string();
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
 	virtual double
 	getBasalPortion() const override
 	{
@@ -893,7 +1039,97 @@ public:
 	{
 		return cascadeEfficiency;
 	}
+
+protected:
+	/**
+	 * \see IOptions.h
+	 */
+	void
+	setCheckpointFilePath(const std::string& path) override
+	{
+		checkpointFile = path;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	void
+	setRestartFilePath(const std::string& path) override
+	{
+		restartFile = path;
+	}
+
+	void
+	setNetworkParameters(const std::string& paramStr);
+
+	void
+	setTempParam(const std::vector<double>& params);
+
+	void
+	setTempParam(const std::string& paramStr);
+
+	void
+	checkTempProfileFilename() const;
+
+	void
+	checkFluxTimeProfileFilename() const;
+
+	void
+	checkPerfHandlerName() const;
+
+	void
+	checkVizHandlerName() const;
+
+	void
+	setGridParam(const std::vector<double>& params);
+
+	void
+	setGridParam(const std::string& paramStr);
+
+	void
+	checkGridFilename() const;
+
+	void
+	setRadiusMinSizes(const std::vector<int>& params);
+
+	void
+	setRadiusMinSizes(const std::string& paramStr);
+
+	void
+	setBoundaries(const std::vector<int>& params);
+
+	void
+	setBoundaries(const std::string& paramStr);
+
+	void
+	processRNGParam(const std::string& paramStr);
+
+	void
+	setProcesses(const std::vector<std::string>& processList);
+
+	void
+	setProcesses(const std::string& processList);
+
+	void
+	setCouplingTimeStepParams(const std::vector<double>& params);
+
+	void
+	setCouplingTimeStepParams(const std::string& paramString);
+
+	void
+	setPulseParams(const std::string& paramStr);
+
+	void
+	setGroupingParams(const std::vector<int>& params);
+
+	void
+	setGroupingParams(const std::string& paramString);
+
+	void
+	appendPetscArg(const std::string& arg);
 };
-// end class Options
+
+std::shared_ptr<IOptions>
+createOptions(int argc, const char* argv[]);
 } /* namespace options */
 } /* namespace xolotl */

@@ -49,6 +49,23 @@ struct NumberOfVacancySpecies<FeSpeciesList> :
 };
 
 template <>
+struct SpeciesForGrouping<FeSpeciesList, 3>
+{
+	using Sequence = EnumSequence<FeSpeciesList, 3>;
+	static constexpr auto first = Sequence(FeSpeciesList::He);
+	static constexpr auto last = Sequence(FeSpeciesList::I);
+
+	KOKKOS_INLINE_FUNCTION
+	static constexpr std::underlying_type_t<FeSpeciesList>
+	mapToMomentId(EnumSequence<FeSpeciesList, 3> value)
+	{
+		if (value == FeSpeciesList::I)
+			return 1;
+		return value();
+	}
+};
+
+template <>
 struct ReactionNetworkTraits<FeReactionNetwork>
 {
 	using Species = FeSpeciesList;

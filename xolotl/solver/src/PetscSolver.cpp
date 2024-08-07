@@ -224,9 +224,9 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	PetscCallVoid(TSSetSolution(ts, C));
 
 	// Read the times if the information is in the HDF5 file
-	auto fileName = this->solverHandler->getNetworkName();
 	double deltaTime = 1.0e-12;
-	if (!fileName.empty() and loop == 0) {
+	if (this->solverHandler->checkForRestart() and loop == 0) {
+		auto fileName = this->solverHandler->getRestartFilePath();
 		io::XFile xfile(fileName);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
@@ -248,30 +248,27 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	auto dim = this->solverHandler->getDimension();
 	switch (dim) {
 	case 0:
-		// One dimension
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor0D>(ts, this->solverHandler);
+		this->monitor = std::make_shared<monitor::PetscMonitor0D>(
+			ts, this->solverHandler, this->checkpointFile);
 		break;
 	case 1:
-		// One dimension
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor1D>(ts, this->solverHandler);
+		this->monitor = std::make_shared<monitor::PetscMonitor1D>(
+			ts, this->solverHandler, this->checkpointFile);
 		break;
 	case 2:
-		// Two dimensions
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor2D>(ts, this->solverHandler);
+		this->monitor = std::make_shared<monitor::PetscMonitor2D>(
+			ts, this->solverHandler, this->checkpointFile);
 		break;
 	case 3:
-		// Three dimensions
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor3D>(ts, this->solverHandler);
+		this->monitor = std::make_shared<monitor::PetscMonitor3D>(
+			ts, this->solverHandler, this->checkpointFile);
 		break;
 	default:
 		throw std::runtime_error(
 			"PetscSolver Exception: Wrong number of dimensions "
 			"to set the monitors.");
 	}
+
 	this->monitor->setup(loop);
 
 	// Set the saved data
@@ -376,34 +373,36 @@ PetscSolver::solve()
 			// Stop the timer
 			solveTimer->stop();
 
-			// Save some data from the monitors for next loop
-			this->monitor->keepFlux(
-				_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
-
-			// We are done with the loop
-			loopNumber++;
-
 			// Catch the change in surface
 			// Get the converged reason from PETSc
 			PetscCallVoid(TSGetConvergedReason(ts, &reason));
-			if (reason == TS_CONVERGED_USER)
+			if (reason == TS_CONVERGED_USER) {
 				std::cout << "Caught the change of surface!" << std::endl;
 
-			// Save the time
-			PetscCallVoid(TSGetTime(ts, &time));
+				// Save some data from the monitors for next loop
+				this->monitor->keepFlux(
+					_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
 
-			// Save the old DA and associated vector
-			PetscInt dof;
-			PetscCallVoid(DMDAGetDof(da, &dof));
+				// We are done with the loop
+				loopNumber++;
 
-			PetscCallVoid(DMDACreateCompatibleDMDA(da, dof, &oldDA));
+				// Save the time
+				PetscCallVoid(TSGetTime(ts, &time));
 
-			// Save the old vector as a natural one to make the transfer easier
-			PetscCallVoid(DMDACreateNaturalVector(oldDA, &oldC));
-			PetscCallVoid(
-				DMDAGlobalToNaturalBegin(oldDA, C, INSERT_VALUES, oldC));
-			PetscCallVoid(
-				DMDAGlobalToNaturalEnd(oldDA, C, INSERT_VALUES, oldC));
+				// Save the old DA and associated vector
+				PetscInt dof;
+				PetscCallVoid(DMDAGetDof(da, &dof));
+
+				PetscCallVoid(DMDACreateCompatibleDMDA(da, dof, &oldDA));
+
+				// Save the old vector as a natural one to make the transfer
+				// easier
+				PetscCallVoid(DMDACreateNaturalVector(oldDA, &oldC));
+				PetscCallVoid(
+					DMDAGlobalToNaturalBegin(oldDA, C, INSERT_VALUES, oldC));
+				PetscCallVoid(
+					DMDAGlobalToNaturalEnd(oldDA, C, INSERT_VALUES, oldC));
+			}
 		}
 		else {
 			throw std::string("PetscSolver Exception: Unable to solve! Data "

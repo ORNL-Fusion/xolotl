@@ -16,7 +16,6 @@ _petsc_extra_args=""
 _petsc_dir=$PWD
 _petsc_dir_arch_set=""
 _prefix_arg=""
-_opt_flags="-O3"
 
 # Read command-line arguments
 while [ $# -gt 0 ]
@@ -56,7 +55,6 @@ do
         ;;
     --debug|--dbg)
         _debug=1
-        _opt_flags="-O0"
         ;;
     --cuda)
         _use_cuda=1
@@ -73,6 +71,9 @@ do
     --get-hdf5)
         _petsc_extra_args="${_petsc_extra_args} --download-hdf5"
         ;;
+    --get-hypre)
+        _petsc_extra_args="${_petsc_extra_args} --download-hypre"
+        ;;
     *)
         echo "Unsupported argument: $1"
         exit 1
@@ -81,7 +82,11 @@ do
     shift
 done
 
-_petsc_extra_args="${_petsc_extra_args} ${_petsc_dir_arch_set}"
+if [ ${_debug} -eq 0 ]; then
+    _petsc_extra_args="${_petsc_extra_args} \
+        --COPTFLAGS=-O3 \
+        --CXXOPTFLAGS=-O3"
+fi
 
 # Check for CUDA
 if ! [ -x "$(command -v nvidia-smi)" ]; then
@@ -91,9 +96,10 @@ fi
 if [ ${_use_cuda} -eq 1 ]; then
     _cuda_sm_ver=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader)
     _cuda_sm=${_cuda_sm_ver//./}
-    _petsc_cuda_args=" \
-        --with-cuda-arch=${_cuda_sm} \
-        --CUDAOPTFLAGS=-O3"
+    _petsc_cuda_args="--with-cuda-arch=${_cuda_sm}"
+    if [ ${_debug} -eq 0 ]; then
+        _petsc_cuda_args="${_petsc_cuda_args} --CUDAOPTFLAGS=-O3"
+    fi
     _petsc_extra_args="${_petsc_extra_args} ${_petsc_cuda_args}"
 fi
 
@@ -141,9 +147,7 @@ _conf_cmd="./configure \
     --with-shared-libraries \
     --with-64-bit-indices \
     --download-kokkos \
-    --download-kokkos-kernels \
-    --COPTFLAGS=${_opt_flags} \
-    --CXXOPTFLAGS=${_opt_flags}"
+    --download-kokkos-kernels"
 
 _conf_cmd="${_conf_cmd} ${_petsc_extra_args}"
 _build_cmd="make ${_petsc_dir_arch_set} all"

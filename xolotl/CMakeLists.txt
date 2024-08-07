@@ -3,6 +3,12 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(XOLOTL_BINARY_INCLUDE_DIR ${CMAKE_BINARY_DIR}/include)
 set(XOLOTL_BINARY_INCLUDE_DIR ${XOLOTL_BINARY_INCLUDE_DIR} PARENT_SCOPE)
 
+option(Xolotl_INTERFACE_REPORT_ERRORS
+    "If enabled, interface will catch and report (and rethrow) all exceptions."
+    OFF
+)
+set(XOLOTL_INTERFACE_REPORT_ERRORS ${Xolotl_INTERFACE_REPORT_ERRORS})
+
 configure_file(${CMAKE_CURRENT_LIST_DIR}/config.h.in
     ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/config.h
 )

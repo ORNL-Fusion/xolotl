@@ -40,25 +40,25 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	createSolverContext(DM& da);
+	createSolverContext(DM& da) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeSolverContext(DM& da, Mat& J);
+	initializeSolverContext(DM& da, Mat& J) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC);
+	initializeConcentration(DM& da, Vec& C, DM& oldDA, Vec& oldC) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	initGBLocation(DM& da, Vec& C)
+	initGBLocation(DM& da, Vec& C) override
 	{
 		// Doesn't do anything in 0D
 		return;
@@ -69,7 +69,7 @@ public:
 	 */
 	std::vector<
 		std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
-	getConcVector(DM& da, Vec& C);
+	getConcVector(DM& da, Vec& C) override;
 
 	/**
 	 * \see ISolverHandler.h
@@ -78,25 +78,25 @@ public:
 	setConcVector(DM& da, Vec& C,
 		std::vector<
 			std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>&
-			concVector);
+			concVector) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	updateConcentration(TS& ts, Vec& localC, Vec& F, PetscReal ftime);
+	updateConcentration(TS& ts, Vec& localC, Vec& F, PetscReal ftime) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	computeJacobian(TS& ts, Vec& localC, Mat& J, PetscReal ftime);
+	computeJacobian(TS& ts, Vec& localC, Mat& J, PetscReal ftime) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	IdType
-	getSurfacePosition(IdType j = badId, IdType k = badId) const
+	getSurfacePosition(IdType j = badId, IdType k = badId) const override
 	{
 		return 0;
 	}
@@ -105,9 +105,20 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setSurfacePosition(IdType pos, IdType j = badId, IdType k = badId)
+	setSurfacePosition(IdType pos, IdType j = badId, IdType k = badId) override
 	{
 		return;
+	}
+
+	/**
+	.* \see ISolverHandler.h
+	 */
+	void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths) override
+	{
+		temperatures = temperature;
+		depths = std::vector<double>(1, 1.0);
 	}
 
 	/**

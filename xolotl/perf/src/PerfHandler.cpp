@@ -116,10 +116,9 @@ PerfHandler::collectAllObjectNames(int myRank,
 	// Marshal all our object names.
 	auto myNamesBuf = std::make_unique<char[]>(nBytes);
 	char* pName = myNamesBuf.get();
-	for (auto nameIter = myNames.begin(); nameIter != myNames.end();
-		 ++nameIter) {
-		strcpy(pName, nameIter->c_str());
-		pName += (nameIter->length() + 1); // skip the NUL terminator
+	for (auto&& name : myNames) {
+		strncpy(pName, name.c_str(), name.length());
+		pName += (name.length() + 1); // skip the NUL terminator
 	}
 	assert(pName == (myNamesBuf.get() + nBytes));
 

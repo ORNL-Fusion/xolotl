@@ -4,11 +4,14 @@
 
 #cmakedefine XOLOTL_USE_64BIT_INDEX_TYPE
 
+#cmakedefine XOLOTL_INTERFACE_REPORT_ERRORS
+
 #define STRINGIFY(x) #x
 #define TO_STRING(x) STRINGIFY(x)
 
 // Ensure we have fixed-width integer type definitions in std namespace.
 #include <cstdint>
+#include <limits>
 
 namespace xolotl
 {

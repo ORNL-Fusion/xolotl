@@ -22,7 +22,7 @@ private:
 	 * \see FluxHandler.h
 	 */
 	double
-	FitFunction(double x)
+	FitFunction(double x) override
 	{
 		// Not actually used
 		return 0.0;
@@ -48,7 +48,7 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
 		// Only defined in 0D
 		if (xGrid.size() == 0) {
@@ -141,7 +141,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(double currentTime,
+	computeIncidentFlux(double currentTime, Kokkos::View<const double*>,
 		Kokkos::View<double*> updatedConcOffset, int xi,
 		int surfacePos) override
 	{

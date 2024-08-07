@@ -7,11 +7,16 @@
 #include <tuple>
 #include <vector>
 
+#include <xolotl/config.h>
 #include <xolotl/util/Array.h>
 #include <xolotl/util/Filesystem.h>
 
 namespace xolotl
 {
+namespace interface
+{
+class MultiXolotl;
+}
 namespace options
 {
 /**
@@ -28,6 +33,15 @@ public:
 	{
 	}
 
+	virtual void
+	printAll(std::ostream& os) const = 0;
+
+	/**
+	 * Create copy of all options
+	 */
+	virtual std::shared_ptr<IOptions>
+	makeCopy() const = 0;
+
 	/**
 	 * Read the parameters from the given file to set the different
 	 * Xolotl options.
@@ -38,12 +52,20 @@ public:
 	readParams(int argc, const char* argv[]) = 0;
 
 	/**
-	 * Get the name of the network file.
+	 * Get the name of the checkpoint file.
 	 *
-	 * @return the name of the network file
+	 * @return the name of the checkpoint file
 	 */
 	virtual std::string
-	getNetworkFilename() const = 0;
+	getCheckpointFilePath() const = 0;
+
+	/**
+	 * Get the name of the restart file (could be different from checkpoint).
+	 *
+	 * @return the name of the restart file
+	 */
+	virtual std::string
+	getRestartFilePath() const = 0;
 
 	/**
 	 * Get the name of the solver to use
@@ -218,6 +240,66 @@ public:
 	getProcesses() const = 0;
 
 	/**
+	 * Add enabled entry to process map
+	 */
+	virtual void
+	addProcess(const std::string& processKey) = 0;
+
+	/**
+	 * Determine if the network is being distributed to subnetworks
+	 */
+	virtual bool
+	useSubnetworks() const = 0;
+
+	/**
+	 * Obtain the initial coupling time step
+	 *
+	 * @return The initial value
+	 */
+	virtual double
+	getInitialTimeStep() const = 0;
+
+	/**
+	 * Obtain the maximum coupling time step
+	 *
+	 * @return The maximum value
+	 */
+	virtual double
+	getMaxTimeStep() const = 0;
+
+	/**
+	 * Obtain the coupling time step growth factor
+	 *
+	 * @return The growth factor
+	 */
+	virtual double
+	getTimeStepGrowthFactor() const = 0;
+
+	/**
+	 * Obtain the coupling start time
+	 *
+	 * @return The start time
+	 */
+	virtual double
+	getStartTime() const = 0;
+
+	/**
+	 * Obtain the coupling end time
+	 *
+	 * @return The end time
+	 */
+	virtual double
+	getEndTime() const = 0;
+
+	/**
+	 * Obtain the max number of coupling time steps
+	 *
+	 * @return The max number of steps
+	 */
+	virtual IdType
+	getNumberOfTimeSteps() const = 0;
+
+	/**
 	 * Obtain the string listing the wanted GB.
 	 *
 	 * @return The string of GB
@@ -264,6 +346,22 @@ public:
 	 */
 	virtual bool
 	useHDF5() const = 0;
+
+	/**
+	 * Obtain the list of network parameters
+	 *
+	 * @return vector of IDs
+	 */
+	virtual const std::vector<IdType>&
+	getNetworkParameters() const = 0;
+
+	/**
+	 * Replace all network parameters with given list
+	 *
+	 * @param params List of network parameters
+	 */
+	virtual void
+	setNetworkParameters(const std::vector<IdType>& params) = 0;
 
 	/**
 	 * Obtain the maximum value of impurities (He or Xe) to be used.
@@ -498,6 +596,14 @@ public:
 	getFluxDepthProfileFilePath() const = 0;
 
 	/**
+	 * Get the path to the reaction rate file.
+	 *
+	 * @return The path to the file
+	 */
+	virtual std::string
+	getReactionFilePath() const = 0;
+
+	/**
 	 * Obtain the value of the basal portion.
 	 *
 	 * @return Qb
@@ -528,7 +634,24 @@ public:
 	 */
 	virtual double
 	getCascadeEfficiency() const = 0;
+
+protected:
+	friend class ::xolotl::interface::MultiXolotl;
+
+	/**
+	 * Set checkpoint file (should only be used by MultiXolotl)
+	 */
+	virtual void
+	setCheckpointFilePath(const std::string& path) = 0;
+
+	/**
+	 * Set restart file
+	 *
+	 * This should only be used by MultiXolotl. For a single instance, the file
+	 * name is read from the parameters
+	 */
+	virtual void
+	setRestartFilePath(const std::string& path) = 0;
 };
-// end class IOptions
 } /* namespace options */
 } /* namespace xolotl */

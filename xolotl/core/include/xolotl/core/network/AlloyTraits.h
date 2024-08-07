@@ -15,6 +15,7 @@ class AlloyReactionNetwork;
 class AlloyProductionReaction;
 class AlloyDissociationReaction;
 class AlloySinkReaction;
+class AlloyConstantReaction;
 class AlloyClusterGenerator;
 
 enum class AlloySpecies
@@ -80,9 +81,10 @@ struct ReactionNetworkTraits<AlloyReactionNetwork>
 	using ProductionReactionType = AlloyProductionReaction;
 	using DissociationReactionType = AlloyDissociationReaction;
 	using SinkReactionType = AlloySinkReaction;
+	using ConstantReactionType = AlloyConstantReaction;
 
 	using ReactionTypeList = std::tuple<ProductionReactionType,
-		DissociationReactionType, SinkReactionType>;
+		DissociationReactionType, SinkReactionType, ConstantReactionType>;
 
 	using ClusterGenerator = AlloyClusterGenerator;
 };
