@@ -32,7 +32,8 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
-	paramFile << "netParam=100 0 0 0 0" << std::endl;
+	paramFile << "netParam=5 0 0 5 1" << std::endl
+			  << "tempParam=1500" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -52,8 +53,14 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 
 	// Create the network
 	using NetworkType = network::NEReactionNetwork;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxXe = opts.getMaxImpurity();
-	NetworkType network({maxXe}, grid.size(), opts);
+	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
+		maxXe, maxV, maxI};
+	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
+		{maxXe + 1, maxV + 1, maxI + 1}};
+	NetworkType network(maxSpeciesAmounts, subdivRatios, 1, opts);
 	// Get its size
 	const int dof = network.getDOF();
 
@@ -96,10 +103,10 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 
 	// Check the value at some grid points
 	auto newConcentration =
-		create_mirror_view_and_copy(Kokkos::HostSpace{}, conc);
-	BOOST_REQUIRE_CLOSE(newConcentration(1, 0), 1.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 1.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration(3, 0), 1.0, 0.01);
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConc);
+	BOOST_REQUIRE_CLOSE(newConcentration(1, 1), 10000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 10000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(3, 3), 0.25, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

@@ -426,6 +426,7 @@ private:
 public:
 	using Superclass = ClusterDataCommon<MemSpace>;
 	using ClusterGenerator = typename Traits::ClusterGenerator;
+	using ClusterUpdater = typename Types::ClusterUpdater;
 	using Subpaving =
 		plsm::MemSpaceSubpaving<MemSpace, typename Types::Subpaving>;
 	using TilesView = typename Subpaving::TilesView;
@@ -469,6 +470,12 @@ public:
 	void
 	generate(const ClusterGenerator& generator, double latticeParameter,
 		double interstitialBias, double impurityRadius);
+
+	void
+	updateDiffusionCoefficients();
+
+	IndexType
+	defineMomentIds();
 
 	TilesView tiles;
 	View<IndexType* [nMomentIds]> momentIds;

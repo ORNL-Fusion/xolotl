@@ -11,6 +11,7 @@ BOOST_GLOBAL_FIXTURE(KokkosFixture);
 #include <xolotl/test/MPITestUtils.h>
 #include <xolotl/test/SystemTestCase.h>
 using xolotl::test::getMPICommSize;
+using xolotl::test::Restart;
 using xolotl::test::SystemTestCase;
 
 BOOST_GLOBAL_FIXTURE(MPIFixture);
@@ -19,7 +20,40 @@ BOOST_AUTO_TEST_SUITE(System)
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(AZr_0, *utf::label("0D"))
 {
-	SystemTestCase{"system_AZr_0", "AlphaZr.dat"}.mpiLimits(1, 1).run();
+	SystemTestCase{"system_AZr_0", "AlphaZr.dat"}.mpiLimits(1).run();
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_0, *utf::label("0D"))
+{
+	SystemTestCase{"system_multi_AZr_0", "AlphaZr.dat"}.run();
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_0_restart, *utf::label("0D"))
+{
+	SystemTestCase{"system_multi_AZr_0", "AlphaZr.dat"}.tolerance(2.0e-5).run(
+		Restart{true});
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_1, *utf::label("1D"))
+{
+	SystemTestCase{"system_multi_AZr_1", "AlphaZr.dat"}.run();
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_1_restart, *utf::label("1D"))
+{
+	SystemTestCase{"system_multi_AZr_1", "AlphaZr.dat"}.tolerance(1.0e-5).run(
+		Restart{true});
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_2, *utf::label("1D"))
+{
+	SystemTestCase{"system_multi_AZr_2", "AlphaZr.dat"}.run();
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_2_restart, *utf::label("1D"))
+{
+	SystemTestCase{"system_multi_AZr_2", "AlphaZr.dat"}.tolerance(1.0e-5).run(
+		Restart{true});
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_0, *utf::label("0D"))

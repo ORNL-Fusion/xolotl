@@ -20,7 +20,6 @@ class NEClusterUpdater;
 class NEReactionNetwork : public ReactionNetwork<NEReactionNetwork>
 {
 	friend class ReactionNetwork<NEReactionNetwork>;
-	friend class detail::ReactionNetworkWorker<NEReactionNetwork>;
 
 public:
 	using Superclass = ReactionNetwork<NEReactionNetwork>;

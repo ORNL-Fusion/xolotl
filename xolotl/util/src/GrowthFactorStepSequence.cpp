@@ -9,8 +9,9 @@ namespace util
 {
 GrowthFactorStepSequence::GrowthFactorStepSequence() = default;
 
-GrowthFactorStepSequence::GrowthFactorStepSequence(
-	double initialValue, double finalValue, double growthFactor) :
+GrowthFactorStepSequence::GrowthFactorStepSequence(double initialValue,
+	double finalValue, double growthFactor, std::size_t initialStep) :
+	StepSequence(initialStep),
 	_initialValue(initialValue),
 	_finalValue(finalValue),
 	_growthFactor(growthFactor)
@@ -24,7 +25,7 @@ GrowthFactorStepSequence::~GrowthFactorStepSequence()
 void
 GrowthFactorStepSequence::start()
 {
-	_currentStep = 0;
+	_currentStep = _initialStep;
 	_currentValue = _initialValue;
 }
 
@@ -35,6 +36,24 @@ GrowthFactorStepSequence::step()
 	newVal = std::min(newVal, _finalValue);
 	_currentValue = newVal;
 	++_currentStep;
+}
+
+double
+GrowthFactorStepSequence::at(std::size_t step) const
+{
+	return std::min(_initialValue * std::pow(_growthFactor, step), _finalValue);
+}
+
+double
+GrowthFactorStepSequence::partialSumAt(std::size_t step) const
+{
+	auto val = _initialValue;
+	double sum = 0.0;
+	for (std::size_t i = _initialStep; i < step; ++i) {
+		sum += val;
+		val = std::min(val * _growthFactor, _finalValue);
+	}
+	return sum;
 }
 } // namespace util
 } // namespace xolotl

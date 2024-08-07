@@ -88,6 +88,7 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	// Set the time step number
 	int timeStep = 0;
 	int loop = 0;
+	int ctrlStep = 0;
 
 	// Set the time information
 	double currentTime = 0.0001;
@@ -154,8 +155,8 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		// Add a TimestepGroup.
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
-		auto tsGroup = concGroup->addTimestepGroup(
-			loop, timeStep, currentTime, previousTime, currentTimeStep);
+		auto tsGroup = concGroup->addTimestepGroup(ctrlStep, loop, timeStep,
+			currentTime, previousTime, currentTimeStep);
 
 		tsGroup->writeGrid(grid);
 
@@ -391,12 +392,13 @@ BOOST_AUTO_TEST_CASE(checkSurface2D)
 		// Set the time step number
 		int loop = 0;
 		int timeStep = 0;
+		int ctrlStep = 0;
 
 		// Add the concentration sub group
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
-		auto tsGroup = concGroup->addTimestepGroup(
-			loop, timeStep, currentTime, previousTime, currentTimeStep);
+		auto tsGroup = concGroup->addTimestepGroup(ctrlStep, loop, timeStep,
+			currentTime, previousTime, currentTimeStep);
 		BOOST_REQUIRE(tsGroup);
 
 		auto nSurf = {nHe, nInter};
@@ -535,13 +537,14 @@ BOOST_AUTO_TEST_CASE(checkSurface3D)
 		// Set the time step number
 		int loop = 0;
 		int timeStep = 0;
+		int ctrlStep = 0;
 
 		// Add the concentration sub group
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 
-		auto tsGroup = concGroup->addTimestepGroup(
-			loop, timeStep, currentTime, previousTime, currentTimeStep);
+		auto tsGroup = concGroup->addTimestepGroup(ctrlStep, loop, timeStep,
+			currentTime, previousTime, currentTimeStep);
 		BOOST_REQUIRE(tsGroup);
 
 		auto nSurf = {nV, nInter};

@@ -112,7 +112,7 @@ JSONOptions::readParams(int argc, const char* argv[])
 
 	util::Log::setLevelThreshold(tree.get("logLevel", "info"));
 
-	checkSetParam(tree, "networkFile", networkFilename);
+	checkSetParam(tree, "restartFile", restartFile);
 
 	tempHandlerName = tree.get("tempHandler", "constant");
 

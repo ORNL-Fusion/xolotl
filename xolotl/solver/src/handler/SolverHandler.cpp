@@ -14,7 +14,8 @@ SolverHandler::SolverHandler(NetworkType& _network,
 	perf::IPerfHandler& _perfHandler, const options::IOptions& options) :
 	network(_network),
 	perfHandler(_perfHandler),
-	networkName(""),
+	restartFile(options.getRestartFilePath()),
+	reactionFile(options.getReactionFilePath()),
 	nX(0),
 	nY(0),
 	nZ(0),
@@ -422,9 +423,6 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	rng = std::make_unique<util::RandomNumberGenerator<int, unsigned int>>(
 		rngSeed + myProcId);
 
-	// Set the network loader
-	networkName = opts.getNetworkFilename();
-
 	// Set the flux handler
 	fluxHandler = material->getFluxHandler().get();
 
@@ -715,6 +713,12 @@ SolverHandler::createLocalNE(IdType a, IdType b, IdType c)
 			}
 		}
 	}
+}
+
+bool
+SolverHandler::checkForRestart() const
+{
+	return (not restartFile.empty()) and fs::exists(restartFile);
 }
 
 void

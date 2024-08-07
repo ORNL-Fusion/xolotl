@@ -19,7 +19,8 @@ namespace options
 {
 Options::Options() :
 	petscArg(""),
-	networkFilename(""),
+	checkpointFile("xolotlStop.h5"),
+	restartFile(""),
 	tempHandlerName(""),
 	tempParam{},
 	tempProfileFilename(""),
@@ -95,7 +96,8 @@ Options::~Options()
 void
 Options::printAll(std::ostream& os) const
 {
-	os << "networkFilename: \"" << networkFilename << "\"\n";
+	os << "checkpointFile: \"" << checkpointFile << "\"\n";
+	os << "restartFile: \"" << restartFile << "\"\n";
 	os << "tempHandlerName: \"" << tempHandlerName << "\"\n";
 	os << "tempParam: {" << tempParam[0] << ", " << tempParam[1] << "}\n";
 	os << "tempGridPower: " << tempGridPower << '\n';

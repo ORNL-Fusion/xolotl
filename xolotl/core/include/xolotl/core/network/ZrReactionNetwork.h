@@ -21,7 +21,6 @@ class ZrClusterUpdater;
 class ZrReactionNetwork : public ReactionNetwork<ZrReactionNetwork>
 {
 	friend class ReactionNetwork<ZrReactionNetwork>;
-	friend class detail::ReactionNetworkWorker<ZrReactionNetwork>;
 
 public:
 	using Superclass = ReactionNetwork<ZrReactionNetwork>;

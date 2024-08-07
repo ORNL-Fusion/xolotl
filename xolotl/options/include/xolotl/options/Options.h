@@ -14,9 +14,14 @@ class Options : public IOptions
 {
 protected:
 	/**
-	 * The name of the file where the network is stored.
+	 * The name of the file to use for checkpoint
 	 */
-	std::string networkFilename;
+	std::string checkpointFile;
+
+	/**
+	 * The name of the file to use for restart
+	 */
+	std::string restartFile;
 
 	/**
 	 * The options that will be given to PETSc.
@@ -374,9 +379,18 @@ public:
 	 * \see IOptions.h
 	 */
 	std::string
-	getNetworkFilename() const override
+	getCheckpointFilePath() const override
 	{
-		return networkFilename;
+		return checkpointFile;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	std::string
+	getRestartFilePath() const override
+	{
+		return restartFile;
 	}
 
 	/**
@@ -1027,6 +1041,24 @@ public:
 	}
 
 protected:
+	/**
+	 * \see IOptions.h
+	 */
+	void
+	setCheckpointFilePath(const std::string& path) override
+	{
+		checkpointFile = path;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	void
+	setRestartFilePath(const std::string& path) override
+	{
+		restartFile = path;
+	}
+
 	void
 	setNetworkParameters(const std::string& paramStr);
 

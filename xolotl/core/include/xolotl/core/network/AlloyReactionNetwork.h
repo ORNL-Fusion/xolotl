@@ -18,7 +18,6 @@ class AlloyReactionGenerator;
 class AlloyReactionNetwork : public ReactionNetwork<AlloyReactionNetwork>
 {
 	friend class ReactionNetwork<AlloyReactionNetwork>;
-	friend class detail::ReactionNetworkWorker<AlloyReactionNetwork>;
 
 public:
 	using Superclass = ReactionNetwork<AlloyReactionNetwork>;

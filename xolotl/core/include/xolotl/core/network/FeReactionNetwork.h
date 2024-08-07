@@ -18,7 +18,6 @@ class FeReactionGenerator;
 class FeReactionNetwork : public ReactionNetwork<FeReactionNetwork>
 {
 	friend class ReactionNetwork<FeReactionNetwork>;
-	friend class detail::ReactionNetworkWorker<FeReactionNetwork>;
 
 public:
 	using Superclass = ReactionNetwork<FeReactionNetwork>;

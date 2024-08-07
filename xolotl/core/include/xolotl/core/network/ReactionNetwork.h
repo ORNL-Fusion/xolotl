@@ -28,9 +28,6 @@ namespace network
 {
 namespace detail
 {
-template <typename TImpl>
-struct ReactionNetworkWorker;
-
 template <typename TImpl, typename TDerived>
 class ReactionGeneratorBase;
 } // namespace detail
@@ -44,7 +41,6 @@ struct ReactionNetworkInterface
 template <typename TImpl>
 class ReactionNetwork : public ReactionNetworkInterface<TImpl>::Type
 {
-	friend class detail::ReactionNetworkWorker<TImpl>;
 	template <typename, typename>
 	friend class detail::ReactionGeneratorBase;
 
@@ -792,8 +788,6 @@ private:
 private:
 	std::optional<SubpavingMirror> _subpavingMirror;
 
-	detail::ReactionNetworkWorker<TImpl> _worker;
-
 	SparseFillMap _connectivityMap;
 
 	std::vector<BelongingView> isInSub;
@@ -823,62 +817,6 @@ protected:
 
 namespace detail
 {
-template <typename TImpl>
-struct ReactionNetworkWorker
-{
-	using Network = ReactionNetwork<TImpl>;
-	using Types = ReactionNetworkTypes<TImpl>;
-	using Species = typename Types::Species;
-	using ClusterData = typename Types::ClusterData;
-	using IndexType = typename Types::IndexType;
-	using AmountType = typename Types::AmountType;
-	using ReactionCollection = typename Types::ReactionCollection;
-	using ConcentrationsView = typename IReactionNetwork::ConcentrationsView;
-	using Connectivity = typename IReactionNetwork::Connectivity;
-
-	Network& _nw;
-
-	ReactionNetworkWorker(Network& network) : _nw(network)
-	{
-	}
-
-	void
-	updateDiffusionCoefficients();
-
-	void
-	defineMomentIds();
-
-	void
-	defineReactions(Connectivity& connectivity);
-
-	IndexType
-	getDiagonalFill(typename Network::SparseFillMap& fillMap);
-
-	double
-	getTotalConcentration(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalAtomConcentration(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalRadiusConcentration(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalVolumeFraction(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalVolumeRatio(ConcentrationsView concentrations, Species type,
-		AmountType minSize = 0);
-
-	double
-	getTotalRatioVariance(ConcentrationsView concentrations, Species type,
-		double mean, AmountType minSize = 0);
-};
-
 template <typename TImpl>
 class DefaultClusterUpdater
 {

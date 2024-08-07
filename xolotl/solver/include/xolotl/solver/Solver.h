@@ -40,6 +40,9 @@ protected:
 	//! The original solver handler.
 	std::shared_ptr<handler::ISolverHandler> solverHandler;
 
+	//! The checkpoint file name
+	std::string checkpointFile;
+
 	//! The monitor
 	std::shared_ptr<monitor::IMonitor> monitor;
 
@@ -67,6 +70,12 @@ public:
 	 */
 	void
 	setCommandLineOptions(std::string arg);
+
+	/**
+	 * \see ISolver.h
+	 */
+	void
+	setExternalControlStep(std::size_t step) override;
 
 	/**
 	 * @return The solver handler for this solver

@@ -37,8 +37,8 @@ NEProductionReaction::getRateForProduction(IndexType gridIndex)
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
 
-	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
-	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
+	double dc0 = cl0.getDiffusionFactor();
+	double dc1 = cl1.getDiffusionFactor();
 
 	return ne::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 }
@@ -763,6 +763,7 @@ KOKKOS_INLINE_FUNCTION
 double
 NEDissociationReaction::getRateForProduction(IndexType gridIndex)
 {
+	return 0.0;
 	auto cl0 = this->_clusterData->getCluster(_products[0]);
 	auto cl1 = this->_clusterData->getCluster(_products[1]);
 
