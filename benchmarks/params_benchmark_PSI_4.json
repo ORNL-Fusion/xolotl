@@ -9,7 +9,7 @@
         "attenuation",
         "bursting"
     ],
-    "netParam": "8 0 0 50 6 false",
+    "netParam": "8 0 0 50 6",
     "gridType": "nonuniform",
     "gridParam": 115,
     "vizHandler": "dummy",
