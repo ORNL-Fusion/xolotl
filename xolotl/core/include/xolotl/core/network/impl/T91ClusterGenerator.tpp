@@ -51,14 +51,10 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 	double amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
 	double amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
 	double amt = sqrt(amtHe * amtHe + amtV * amtV);
-	double ratio = amtHe / amtV;
-	double ibe = 3.77 +
-		2.93 * (cbrt(amtV * amtV) - cbrt((amtV - 1.0) * (amtV - 1.0))) +
-		0.09 * ratio * ratio - 1.35 * ratio;
-	auto distance = fabs(ibe - 1.5);
-	//		if (distance < 1.2) {
-	if (distance < 1.5) {
-		auto comp = amt * 1.0e-2;
+	double highRatio = (hi[Species::He] - 1) / xolotl::util::max(1.0,(double) lo[Species::V]);
+	double lowRatio = lo[Species::He] / xolotl::util::max(1.0,(double) (hi[Species::V] - 1));
+	if (lowRatio > 3.2 or highRatio < 1.8) {
+		auto comp = amt * amt * amt * 1.0e-4;
 		if (region[Species::He].length() <
 			util::max(_groupingWidthHe + 1.0, comp)) {
 			result[0] = false;
@@ -69,7 +65,7 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 		}
 	}
 	else {
-		auto comp = amt * amt * amt * 1.0e-4;
+		auto comp = amt * 1.0e-2;
 		if (region[Species::He].length() <
 			util::max(_groupingWidthHe + 1.0, comp)) {
 			result[0] = false;
