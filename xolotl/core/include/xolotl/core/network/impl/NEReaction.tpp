@@ -763,7 +763,6 @@ KOKKOS_INLINE_FUNCTION
 double
 NEDissociationReaction::getRateForProduction(IndexType gridIndex)
 {
-	return 0.0;
 	auto cl0 = this->_clusterData->getCluster(_products[0]);
 	auto cl1 = this->_clusterData->getCluster(_products[1]);
 
