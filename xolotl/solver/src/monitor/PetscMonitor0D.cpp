@@ -5,6 +5,7 @@
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
+#include <xolotl/core/network/T91ReactionNetwork.h>
 #include <xolotl/core/network/ZrReactionNetwork.h>
 #include <xolotl/io/XFile.h>
 #include <xolotl/solver/PetscSolver.h>
@@ -41,7 +42,7 @@ PetscMonitor0D::setup(int loop)
 
 	// Flags to launch the monitors or not
 	PetscBool flagCheck, flag1DPlot, flagBubble, flagStatus, flagAlloy,
-		flagXeRetention, flagLargest, flagZr;
+		flagXeRetention, flagLargest, flagT91, flagZr;
 
 	// Check the option -check_collapse
 	PetscCallVoid(
@@ -61,6 +62,10 @@ PetscMonitor0D::setup(int loop)
 
 	// Check the option -alpha_zr
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-alpha_zr", &flagZr));
+
+	// Check the option -t91
+	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-t91", &flagT91));
+
 	// Check the option -xenon_retention
 	PetscCallVoid(
 		PetscOptionsHasName(NULL, NULL, "-xenon_retention", &flagXeRetention));
@@ -136,9 +141,18 @@ PetscMonitor0D::setup(int loop)
 	if (flagAlloy) {
 		_solverHandler->getNetwork().writeMonitorOutputHeader();
 
-		// computeAlloy0D will be called at each timestep
+		// computeAlloy will be called at each timestep
 		PetscCallVoid(TSMonitorSet(_ts, monitor::computeAlloy, this, nullptr));
 	}
+
+	// Set the monitor to output data for T91
+	if (flagT91) {
+		_solverHandler->getNetwork().writeMonitorOutputHeader();
+
+		// computeT91 will be called at each timestep
+		PetscCallVoid(TSMonitorSet(_ts, monitor::computeT91, this, nullptr));
+	}
+
 	// Set the monitor to output data for AlphaZr
 	if (flagZr) {
 		_solverHandler->getNetwork().writeMonitorOutputHeader();
@@ -467,6 +481,34 @@ PetscMonitor0D::computeAlloy(
 	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
 
 	using NetworkType = core::network::AlloyReactionNetwork;
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+
+	auto myData = network.getMonitorDataValues(concOffset, 1.0);
+
+	network.writeMonitorDataLine(myData, time);
+
+	// Restore the PETSc solution array
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor0D::computeT91(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	PetscFunctionBeginUser;
+
+	// Get the da from ts
+	DM da;
+	PetscCall(TSGetDM(ts, &da));
+
+	// Get the array of concentration
+	PetscOffsetView<const PetscReal**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
+
+	using NetworkType = core::network::T91ReactionNetwork;
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 
 	auto myData = network.getMonitorDataValues(concOffset, 1.0);

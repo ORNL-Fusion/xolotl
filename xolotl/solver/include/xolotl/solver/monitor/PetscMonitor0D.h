@@ -50,6 +50,9 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
+	computeT91(TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
+
+	PetscErrorCode
 	monitorScatter(
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 

@@ -52,6 +52,9 @@ public:
 	computeAlloy(TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
 
 	virtual PetscErrorCode
+	computeT91(TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
+
+	virtual PetscErrorCode
 	computeAlphaZr(TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
 
 	virtual PetscErrorCode

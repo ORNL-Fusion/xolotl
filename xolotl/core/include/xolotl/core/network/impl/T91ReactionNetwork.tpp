@@ -193,6 +193,7 @@ inline ReactionCollection<T91ReactionGenerator::NetworkType>
 T91ReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
+		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
 		this->getSinkReactions());
 	return ret;

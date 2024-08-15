@@ -51,8 +51,10 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 	double amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
 	double amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
 	double amt = sqrt(amtHe * amtHe + amtV * amtV);
-	double highRatio = (hi[Species::He] - 1) / xolotl::util::max(1.0,(double) lo[Species::V]);
-	double lowRatio = lo[Species::He] / xolotl::util::max(1.0,(double) (hi[Species::V] - 1));
+	double highRatio =
+		(hi[Species::He] - 1) / xolotl::util::max(1.0, (double)lo[Species::V]);
+	double lowRatio =
+		lo[Species::He] / xolotl::util::max(1.0, (double)(hi[Species::V] - 1));
 	if (lowRatio > 3.2 or highRatio < 1.8) {
 		auto comp = amt * amt * amt * 1.0e-4;
 		if (region[Species::He].length() <
