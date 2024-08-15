@@ -13,6 +13,10 @@
 
 namespace xolotl
 {
+namespace interface
+{
+class MultiXolotl;
+}
 namespace options
 {
 /**
@@ -48,12 +52,20 @@ public:
 	readParams(int argc, const char* argv[]) = 0;
 
 	/**
-	 * Get the name of the network file.
+	 * Get the name of the checkpoint file.
 	 *
-	 * @return the name of the network file
+	 * @return the name of the checkpoint file
 	 */
 	virtual std::string
-	getNetworkFilename() const = 0;
+	getCheckpointFilePath() const = 0;
+
+	/**
+	 * Get the name of the restart file (could be different from checkpoint).
+	 *
+	 * @return the name of the restart file
+	 */
+	virtual std::string
+	getRestartFilePath() const = 0;
 
 	/**
 	 * Get the name of the solver to use
@@ -593,6 +605,14 @@ public:
 	getFluxDepthProfileFilePath() const = 0;
 
 	/**
+	 * Get the path to the reaction rate file.
+	 *
+	 * @return The path to the file
+	 */
+	virtual std::string
+	getReactionFilePath() const = 0;
+
+	/**
 	 * Obtain the value of the basal portion.
 	 *
 	 * @return Qb
@@ -623,6 +643,24 @@ public:
 	 */
 	virtual double
 	getCascadeEfficiency() const = 0;
+
+protected:
+	friend class ::xolotl::interface::MultiXolotl;
+
+	/**
+	 * Set checkpoint file (should only be used by MultiXolotl)
+	 */
+	virtual void
+	setCheckpointFilePath(const std::string& path) = 0;
+
+	/**
+	 * Set restart file
+	 *
+	 * This should only be used by MultiXolotl. For a single instance, the file
+	 * name is read from the parameters
+	 */
+	virtual void
+	setRestartFilePath(const std::string& path) = 0;
 };
 } /* namespace options */
 } /* namespace xolotl */

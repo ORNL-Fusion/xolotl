@@ -153,6 +153,7 @@ protected:
 	ClusterDataView _clusterDataView;
 	IndexType _numDOFs;
 	bool _enableReducedJacobian;
+	bool _enableReadRates;
 	IndexView _clusterProdReactionCounts;
 	IndexView _clusterDissReactionCounts;
 
@@ -170,6 +171,9 @@ protected:
 	Kokkos::View<DissociationReactionType*> _dissReactions;
 
 	ClusterConnectivity<> _connectivity;
+
+	// Reaction energies
+	Kokkos::View<double**> _reactionEnergies;
 
 	ConnectivitiesPairView _constantConnsRows;
 	ConnectivitiesPairView _constantConnsEntries;

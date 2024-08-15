@@ -33,11 +33,38 @@ public:
 	double
 	currentDt() const noexcept;
 
+	std::size_t
+	currentStep() const noexcept;
+
 	void
 	solveXolotl() override;
 
 	void
 	solveStep();
+
+	static std::tuple<std::size_t, double, double>
+	readStopData();
+
+private:
+	void
+	writeStopData();
+
+	void
+	startTimeStepper();
+
+	struct SubInstanceData
+	{
+		std::vector<double> temperatures;
+		std::vector<double> depths;
+		std::vector<std::vector<std::vector<double>>> fullConc;
+	};
+
+	SubInstanceData
+	getSubInstanceData();
+
+	void
+	updateTemperaturesAndRates(
+		std::size_t gridIndex, const SubInstanceData& data);
 
 private:
 	std::shared_ptr<ComputeContext> _computeContext;
@@ -48,6 +75,9 @@ private:
 	std::vector<std::unique_ptr<XolotlInterface>> _subInstances;
 	std::vector<IdType> _subDOFs;
 	std::vector<std::shared_ptr<RatesCapsule>> _constantRates;
+	bool _restarting{false};
+	bool _checkpointing{false};
+	std::vector<std::string> _checkpointFiles;
 };
 } // namespace interface
 } // namespace xolotl

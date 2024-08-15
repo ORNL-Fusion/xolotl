@@ -202,7 +202,8 @@ FluxHandler::getProfileAmplitude(double currentTime) const
 
 void
 FluxHandler::computeIncidentFlux(double currentTime,
-	Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos)
+	Kokkos::View<const double*>, Kokkos::View<double*> updatedConcOffset,
+	int xi, int surfacePos)
 {
 	// Skip if no index was set
 	if (fluxIndices.size() == 0)

@@ -22,7 +22,8 @@ Reaction<TNetwork, TDerived>::Reaction(ReactionDataRef reactionData,
 	_reactionId(reactionId),
 	_rate(reactionData.getRates(reactionId)),
 	_widths(reactionData.getWidths(reactionId)),
-	_coefs(reactionData.getCoefficients(reactionId))
+	_coefs(reactionData.getCoefficients(reactionId)),
+	_deltaG0(0.0)
 {
 }
 
@@ -685,6 +686,13 @@ void
 ProductionReaction<TNetwork, TDerived>::computeFlux(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
 {
+	int nProd = 0;
+	for (auto prodId : _products) {
+		if (prodId != invalidIndex) {
+			++nProd;
+		}
+	}
+
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 	// Initialize the concentrations that will be used in the loops
@@ -799,12 +807,6 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 	IndexType gridIndex)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
-	int nProd = 0;
-	for (auto prodId : _products) {
-		if (prodId != invalidIndex) {
-			++nProd;
-		}
-	}
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR1 = concentrations[_reactants[0]];
@@ -1075,12 +1077,6 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	IndexType gridIndex)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
-	int nProd = 0;
-	for (auto prodId : _products) {
-		if (prodId != invalidIndex) {
-			++nProd;
-		}
-	}
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR1 = concentrations[_reactants[0]];
@@ -2351,11 +2347,10 @@ DissociationReaction<TNetwork, TDerived>::computeRate(
 {
 	double omega = this->_clusterData->atomicVolume();
 	double T = this->_clusterData->temperature(gridIndex);
+	constexpr double k_B = ::xolotl::core::kBoltzmann;
 
 	double kPlus = this->asDerived()->getRateForProduction(gridIndex);
 	double E_b = this->asDerived()->computeBindingEnergy(time);
-
-	constexpr double k_B = ::xolotl::core::kBoltzmann;
 
 	double kMinus = (1.0 / omega) * kPlus * std::exp(-E_b / (k_B * T));
 

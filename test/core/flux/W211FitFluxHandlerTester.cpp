@@ -80,14 +80,14 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 1, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 1, surfacePos);
 	updatedConcOffset = subview(conc, 2, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 2, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 2, surfacePos);
 	updatedConcOffset = subview(conc, 3, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 3, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
 	auto newConcentration =

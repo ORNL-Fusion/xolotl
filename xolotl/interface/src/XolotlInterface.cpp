@@ -181,6 +181,14 @@ XolotlInterface::setTimes(double finalTime, double dt) TRY
 CATCH
 
 void
+XolotlInterface::setExternalControlStep(std::size_t step) TRY
+{
+	// Pass on to solver
+	solver->setExternalControlStep(step);
+}
+CATCH
+
+void
 XolotlInterface::solveXolotl() TRY
 {
 	// Launch the PetscSolver

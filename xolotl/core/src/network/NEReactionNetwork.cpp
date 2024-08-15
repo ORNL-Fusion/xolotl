@@ -67,8 +67,9 @@ NEReactionNetwork::checkLargestClusterId()
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
 			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
-			if (hi[Species::Xe] > update.val) {
-				update.val = hi[Species::Xe];
+			auto size = hi[Species::Xe] + hi[Species::V];
+			if (size > update.val) {
+				update.val = size;
 				update.loc = i;
 			}
 		},

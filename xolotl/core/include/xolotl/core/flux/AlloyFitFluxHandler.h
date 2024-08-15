@@ -334,7 +334,7 @@ public:
 	 * grid point. \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(double currentTime,
+	computeIncidentFlux(double currentTime, Kokkos::View<const double*>,
 		Kokkos::View<double*> updatedConcOffset, int xi,
 		int surfacePos) override
 	{

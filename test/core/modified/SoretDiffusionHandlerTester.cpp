@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	// Test which cluster diffuses
 	BOOST_REQUIRE_EQUAL(soretEntries.size(), 1);
 	BOOST_REQUIRE_EQUAL(soretEntries[0][0], 0);
-	BOOST_REQUIRE_EQUAL(soretEntries[0][1], 1);
+	BOOST_REQUIRE_EQUAL(soretEntries[0][1], 0);
 
 	// The size parameter in the x direction
 	double hx = 1.0;

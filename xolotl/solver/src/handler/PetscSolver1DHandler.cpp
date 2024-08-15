@@ -29,8 +29,8 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 
 	// We can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty() and surfaceOffset == 0) {
-		io::XFile xfile(networkName);
+	if (this->checkForRestart() and surfaceOffset == 0) {
+		io::XFile xfile(restartFile);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 			auto tsGroup = concGroup->getLastTimestepGroup();
@@ -162,7 +162,6 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, Mat& J)
 	// "+ 1" for temperature
 	auto dSize = localXM *
 		(nNetworkEntries + soretEntries.size() + difEntries.size() + 1);
-	// FIXME
 	int nAdvec = 0;
 	for (auto&& handler : advectionHandlers) {
 		nAdvec = std::max(nAdvec, handler->getNumberOfAdvecting());
@@ -296,8 +295,8 @@ PetscSolver1DHandler::initializeConcentration(
 		bool hasConcentrations = false;
 		std::unique_ptr<io::XFile> xfile;
 		std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
-		if (not networkName.empty()) {
-			xfile = std::make_unique<io::XFile>(networkName);
+		if (this->checkForRestart()) {
+			xfile = std::make_unique<io::XFile>(restartFile);
 			concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
 			hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		}
@@ -993,7 +992,8 @@ PetscSolver1DHandler::updateConcentration(
 			hxLeft, hxRight, xi - localXS);
 
 		// ----- Account for flux of incoming particles -----
-		fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, xi, 0);
+		fluxHandler->computeIncidentFlux(
+			ftime, concOffset, updatedConcOffset, xi, 0);
 
 		// ---- Compute diffusion over the locally owned part of the grid -----
 		diffusionHandler->computeDiffusion(network,

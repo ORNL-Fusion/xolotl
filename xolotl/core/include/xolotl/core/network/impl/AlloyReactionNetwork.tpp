@@ -675,6 +675,7 @@ inline ReactionCollection<AlloyReactionGenerator::Network>
 AlloyReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<Network> ret(this->_clusterData.gridSize,
+		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
 		this->getSinkReactions(), this->getConstantReactions());
 	return ret;

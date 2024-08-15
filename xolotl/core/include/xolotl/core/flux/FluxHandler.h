@@ -162,8 +162,8 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	void
-	computeIncidentFlux(double currentTime,
+	virtual void
+	computeIncidentFlux(double currentTime, Kokkos::View<const double*>,
 		Kokkos::View<double*> updatedConcOffset, int xi,
 		int surfacePos) override;
 
@@ -230,8 +230,17 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	std::vector<std::pair<IdType, double>>
-	getImplantedFlux(std::vector<IdType> map) override
+	virtual void
+	setFissionYield(double yield)
+	{
+		return;
+	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<std::pair<IdType, double>>
+	getImplantedFlux(std::vector<IdType> map)
 	{
 		return std::vector<std::pair<IdType, double>>();
 	}

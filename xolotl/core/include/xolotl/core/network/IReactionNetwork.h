@@ -279,6 +279,18 @@ public:
 		_enableReducedJacobian = reduced;
 	}
 
+	bool
+	getEnableReadRates() const noexcept
+	{
+		return _enableReadRates;
+	}
+
+	virtual void
+	setEnableReadRates(bool read)
+	{
+		_enableReadRates = read;
+	}
+
 	IndexType
 	getGridSize() const noexcept
 	{
@@ -545,6 +557,14 @@ public:
 	getTotalAtomConcentration(ConcentrationsView concentrations,
 		SpeciesId species, AmountType minSize = 0) = 0;
 
+	virtual double
+	getTotalVolumeRatio(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) = 0;
+
+	virtual double
+	getTotalRatioVariance(ConcentrationsView concentrations, SpeciesId species,
+		double mean, AmountType minSize = 0) = 0;
+
 	/**
 	 * @brief Computes the diffusion flux exiting from this grid point.
 	 *
@@ -594,6 +614,7 @@ protected:
 	bool _enableAttenuation{};
 	bool _enableConstantReaction{};
 	bool _enableReducedJacobian{};
+	bool _enableReadRates{};
 
 	IndexType _gridSize{};
 	IndexType _numDOFs{};

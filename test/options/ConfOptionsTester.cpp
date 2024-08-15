@@ -55,16 +55,16 @@ BOOST_AUTO_TEST_CASE(badParamFileName)
 
 BOOST_AUTO_TEST_CASE(badParamFile)
 {
+	string filename("param_bad.txt");
+
 	try {
 		ConfOptions opts;
 
 		// Create a bad parameter file
-		std::ofstream badParamFile("param_bad.txt");
+		std::ofstream badParamFile(filename);
 		badParamFile << "netFile=tungsten.txt" << std::endl;
 		badParamFile.close();
 
-		string pathToFile("param_bad.txt");
-		string filename = pathToFile;
 		const char* fname = filename.c_str();
 
 		// Build a command line with a parameter file containing bad options
@@ -72,14 +72,14 @@ BOOST_AUTO_TEST_CASE(badParamFile)
 
 		// Attempt to read the parameter file
 		opts.readParams(2, argv);
-
-		// Remove the created file
-		std::string tempFile = "param_bad.txt";
-		std::remove(tempFile.c_str());
 	}
 	catch (const std::exception& e) {
 		// Great
 		std::cerr << e.what() << std::endl;
+
+		// Remove the created file
+		xolotl::fs::remove(filename);
+
 		return;
 	}
 
@@ -102,7 +102,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		   "-fieldsplit_1_pc_type sor -ts_final_time 1000 "
 		   "-ts_max_steps 3"
 		<< std::endl
-		<< "networkFile=tungsten.txt" << std::endl
+		<< "restartFile=tungsten.txt" << std::endl
 		<< "tempHandler=constant" << std::endl
 		<< "tempParam=900" << std::endl
 		<< "perfHandler=os" << std::endl
@@ -148,8 +148,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Attempt to read the parameter file
 	BOOST_REQUIRE_NO_THROW(opts.readParams(2, argv));
 
-	// Check the network filename
-	BOOST_REQUIRE_EQUAL(opts.getNetworkFilename(), "tungsten.txt");
+	// Check the checkpoint filename
+	BOOST_REQUIRE_EQUAL(opts.getRestartFilePath(), "tungsten.txt");
 
 	// Check the temperature
 	BOOST_REQUIRE_EQUAL(opts.getTempHandlerName(), "constant");
@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Check the migration threshold option
 	BOOST_REQUIRE_EQUAL(opts.getMigrationThreshold(), 1.0);
 
-	// Check the network filename
+	// Check the flux depth profile filename
 	BOOST_REQUIRE_EQUAL(opts.getFluxDepthProfileFilePath(),
 		"path/to/the/flux/profile/file.txt");
 

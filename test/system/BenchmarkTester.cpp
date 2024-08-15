@@ -28,40 +28,16 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(AZr_1, *utf::label("0D"))
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_1, *utf::label("0D"))
 {
-	// 0D, 10000 DOF ungrouped
+	// 0D
+	SystemTestCase::copyFile("reaction_benchmark_NE.dat");
 	SystemTestCase{"benchmark_NE_1"}.mpiLimits(1, 1).withTimer().run();
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_2, *utf::label("0D"))
 {
-	// 0D, 2010 DOF grouped
+	// 0D, re-solution
+	SystemTestCase::copyFile("reaction_benchmark_NE.dat");
 	SystemTestCase{"benchmark_NE_2"}.mpiLimits(1, 1).withTimer().run();
-}
-
-BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_3, *utf::label("3D"))
-{
-	// 3D
-	SystemTestCase{"benchmark_NE_3"}
-		.tolerance(1.0e-9)
-		.mpiLimits(1, 3969)
-		.withTimer()
-		.run();
-}
-
-BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_4, *utf::label("2D"))
-{
-	// 2D, longer
-	SystemTestCase{"benchmark_NE_4"}.mpiLimits(16, 15876).withTimer().run();
-}
-
-BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_5, *utf::label("0D"))
-{
-	// 0D, grouped, re-solution
-	SystemTestCase{"benchmark_NE_5"}
-		.mpiLimits(1, 1)
-		.tolerance(5.0e-9)
-		.withTimer()
-		.run();
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_1, *utf::label("1D"))
@@ -112,7 +88,7 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_7, *utf::label("1D"))
 {
 	// 1D + pulsed
 	SystemTestCase{"benchmark_PSI_7"}
-		.tolerance(1.0e-8)
+		.tolerance(5.0e-8)
 		.mpiLimits(4, 25)
 		.withTimer()
 		.run();

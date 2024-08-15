@@ -71,7 +71,6 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, Mat& J)
 
 	// Preallocate matrix
 	auto [rows, cols] = convertToCoordinateListPair(dof, dfill);
-	// handling temperature (FIXME)
 	rows.push_back(dof);
 	cols.push_back(dof);
 	++nPartials;
@@ -124,8 +123,8 @@ PetscSolver0DHandler::initializeConcentration(
 	bool hasConcentrations = false;
 	std::unique_ptr<io::XFile> xfile;
 	std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
-	if (not networkName.empty()) {
-		xfile = std::make_unique<io::XFile>(networkName);
+	if (this->checkForRestart()) {
+		xfile = std::make_unique<io::XFile>(restartFile);
 		concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
 		hasConcentrations = (concGroup and concGroup->hasTimesteps());
 	}
@@ -283,7 +282,8 @@ PetscSolver0DHandler::updateConcentration(
 	}
 
 	// ----- Account for flux of incoming particles -----
-	fluxHandler->computeIncidentFlux(ftime, updatedConcOffset, 0, 0);
+	fluxHandler->computeIncidentFlux(
+		ftime, concOffset, updatedConcOffset, 0, 0);
 
 	// ----- Compute the reaction fluxes over the locally owned part of the grid
 	// -----

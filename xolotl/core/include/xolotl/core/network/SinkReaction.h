@@ -1,5 +1,8 @@
 #pragma once
 
+#include <math.h>
+
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/network/Reaction.h>
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 

@@ -226,6 +226,9 @@ public:
 	setEnableReducedJacobian(bool reduced) override;
 
 	void
+	setEnableReadRates(bool read) override;
+
+	void
 	setGridSize(IndexType gridSize) override;
 
 	void
@@ -659,6 +662,47 @@ public:
 	}
 
 	/**
+	 * Get the averaged species to defect ratio.
+	 *
+	 * @param concentration The vector of concentrations
+	 * @param type The type of atom we want the concentration of
+	 * @param minSize The minimum number of atom to start counting
+	 * @return The ratio
+	 */
+	double
+	getTotalVolumeRatio(ConcentrationsView concentrations, Species type,
+		AmountType minSize = 0);
+
+	double
+	getTotalVolumeRatio(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) override
+	{
+		auto type = species.cast<Species>();
+		return getTotalVolumeRatio(concentrations, type, minSize);
+	}
+
+	/**
+	 * Get the variance associated with averaged species to defect ratio.
+	 *
+	 * @param concentration The vector of concentrations
+	 * @param type The type of atom we want the concentration of
+	 * @param minSize The minimum number of atom to start counting
+	 * @param mean The ration mean
+	 * @return The variance
+	 */
+	double
+	getTotalRatioVariance(ConcentrationsView concentrations, Species type,
+		double mean, AmountType minSize = 0);
+
+	double
+	getTotalRatioVariance(ConcentrationsView concentrations, SpeciesId species,
+		double mean, AmountType minSize = 0) override
+	{
+		auto type = species.cast<Species>();
+		return getTotalRatioVariance(concentrations, type, minSize);
+	}
+
+	/**
 	 * Get the total concentration of a given type of clusters only if it is
 	 * trapped in a vacancy.
 	 *
@@ -718,6 +762,13 @@ private:
 	generateClusterData(const ClusterGenerator& generator);
 
 	void
+	readClusters(const std::string filename = "reactionRates.txt");
+
+	void
+	readReactions(
+		double temperature, const std::string filename = "reactionRates.txt");
+
+	void
 	defineReactions(Connectivity& connectivity);
 
 	void
@@ -736,7 +787,6 @@ private:
 
 private:
 	std::optional<SubpavingMirror> _subpavingMirror;
-	std::optional<ClusterDataMirror> _clusterDataMirror;
 
 	SparseFillMap _connectivityMap;
 
@@ -744,6 +794,8 @@ private:
 	std::vector<OwnedSubMapView> backMap;
 
 protected:
+	std::optional<ClusterDataMirror> _clusterDataMirror;
+
 	Kokkos::DualView<ClusterData> _clusterData;
 
 	Subpaving _subpaving;
@@ -751,6 +803,9 @@ protected:
 	ReactionCollection _reactions;
 
 	std::map<std::string, SpeciesId> _speciesLabelMap;
+
+	// Reaction energies
+	Kokkos::View<double**> _reactionEnergies;
 
 	ConnectivitiesPairView _constantConnsRows;
 	ConnectivitiesPairView _constantConnsEntries;

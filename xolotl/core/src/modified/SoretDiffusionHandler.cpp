@@ -5,6 +5,7 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/modified/SoretDiffusionHandler.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl
 {
@@ -85,10 +86,10 @@ SoretDiffusionHandler::initialize(network::IReactionNetwork& network,
 			if (not util::equal(diffFactor, 0.0)) {
 				// Note that cluster is diffusing.
 				diffusingClusters.emplace_back(clusterId);
-				betaFactor.emplace_back(0.0065);
+				betaFactor.emplace_back(betaValue);
 
-				// This cluster interacts with temperature now
-				idPairs.push_back(core::RowColPair{clusterId, dof});
+				// This cluster interacts with itself
+				idPairs.push_back(core::RowColPair{clusterId, clusterId});
 			}
 		}
 	};
@@ -96,6 +97,12 @@ SoretDiffusionHandler::initialize(network::IReactionNetwork& network,
 	// Helium
 	comp[specIdHe()] = 1;
 	addCluster(comp, 0.0065);
+	comp[specIdHe()] = 2;
+	addCluster(comp, 0.011);
+	comp[specIdHe()] = 3;
+	addCluster(comp, 0.013);
+	comp[specIdHe()] = 4;
+	addCluster(comp, 0.0566);
 	comp[specIdHe()] = 0;
 
 	// Hydrogen
@@ -116,6 +123,12 @@ SoretDiffusionHandler::initialize(network::IReactionNetwork& network,
 	auto specIdI = psiNetwork->getInterstitialSpeciesId();
 	comp[specIdI()] = 1;
 	addCluster(comp, 0.0128);
+	comp[specIdI()] = 0;
+
+	// Vacancy
+	auto specIdV = psiNetwork->getVacancySpeciesId();
+	comp[specIdV()] = 1;
+	addCluster(comp, 0.049);
 
 	this->syncDiffusingClusters(network);
 }
@@ -197,6 +210,11 @@ SoretDiffusionHandler::computePartialsForDiffusion(
 			double leftTemp = cluster.getTemperature(ix);
 			double midTemp = cluster.getTemperature(ix + 1);
 			double rightTemp = cluster.getTemperature(ix + 2);
+
+			// Skip if the concentrations are 0.0
+			if (util::equal(oldConc, 0.0) and util::equal(oldLeftConc, 0.0) and
+				util::equal(oldRightConc, 0.0))
+				return;
 
 			// Compute the partial derivatives for diffusion of this cluster
 			// for the middle, left, and right grid point

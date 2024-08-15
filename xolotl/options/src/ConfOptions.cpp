@@ -52,8 +52,8 @@ ConfOptions::readParams(int argc, const char* argv[])
 	desc.add_options()("help", "show this help message")("parameterFile",
 		bpo::value<std::string>(&param_file),
 		"When running Xolotl the name of the parameter file should immediately "
-		"follow the executable: xolotl/xolotl param.txt")("networkFile",
-		bpo::value<std::string>(&networkFilename),
+		"follow the executable: xolotl/xolotl param.txt")("restartFile",
+		bpo::value<std::string>(&restartFile),
 		"The HDF5 file to use for restart.");
 
 	bpo::positional_options_description p;
@@ -72,8 +72,8 @@ ConfOptions::readParams(int argc, const char* argv[])
 	config.add_options()("logLevel",
 		bpo::value<std::string>()->default_value("info"),
 		"Logging output threshold. (default = info; available "
-		"debug,extra,info,warning,error).")("networkFile",
-		bpo::value<std::string>(&networkFilename),
+		"debug,extra,info,warning,error).")("restartFile",
+		bpo::value<std::string>(&restartFile),
 		"The HDF5 file to use for restart.")("tempHandler",
 		bpo::value<std::string>(&tempHandlerName)->default_value("constant"),
 		"Temperature handler to use. (default = constant; available "
@@ -212,7 +212,10 @@ ConfOptions::readParams(int argc, const char* argv[])
 		bpo::value<fs::path>(&fluxDepthProfileFilePath),
 		"The path to the custom flux profile file; the default is an empty "
 		"string that will use the default material associated flux handler.")(
-		"basalPortion", bpo::value<double>(&basalPortion)->default_value(0.1),
+		"reactionFilePath", bpo::value<fs::path>(&reactionFilePath),
+		"The path to the reaction rates file; the default is an empty "
+		"string.")("basalPortion",
+		bpo::value<double>(&basalPortion)->default_value(0.1),
 		"The value of the basal portion generated for each V (0.1 by "
 		"default).")("transitionSize",
 		bpo::value<int>(&transitionSize)->default_value(325),
