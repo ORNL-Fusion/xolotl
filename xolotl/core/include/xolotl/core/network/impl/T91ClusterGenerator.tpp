@@ -67,11 +67,12 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 		}
 	}
 	else {
-		auto comp = amt * 1.0e-2;
+		auto comp = 0.15 * amtV;
 		if (region[Species::He].length() <
 			util::max(_groupingWidthHe + 1.0, comp)) {
 			result[0] = false;
 		}
+		comp = 0.05 * 21.23 * cbrt(amtV * amtV);
 		if (region[Species::V].length() <
 			util::max(_groupingWidthV + 1.0, comp)) {
 			result[1] = false;
