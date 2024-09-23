@@ -6,6 +6,7 @@
 #include <xolotl/config.h>
 #include <xolotl/interface/IXolotlInterface.h>
 #include <xolotl/options/IOptions.h>
+#include <xolotl/util/Profiling.h>
 #include <xolotl/util/TimeStepper.h>
 
 namespace xolotl
@@ -68,6 +69,7 @@ private:
 
 private:
 	std::shared_ptr<ComputeContext> _computeContext;
+	util::ProfileRegion _profRegion;
 	std::shared_ptr<options::IOptions> _options;
 	util::TimeStepper _timeStepper;
 	std::unique_ptr<PetscContext> _petscContext;

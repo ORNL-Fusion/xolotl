@@ -5,6 +5,7 @@
 #include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/factory/temperature/TemperatureHandlerFactory.h>
 #include <xolotl/solver/Solver.h>
+#include <xolotl/util/Profiling.h>
 
 namespace xolotl
 {

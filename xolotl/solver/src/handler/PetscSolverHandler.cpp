@@ -18,6 +18,11 @@ PetscSolverHandler::PetscSolverHandler(NetworkType& _network,
 {
 }
 
+PetscSolverHandler::~PetscSolverHandler()
+{
+	_profRegion.emplace("PetscSolverHandler");
+}
+
 std::vector<PetscInt>
 PetscSolverHandler::ConvertToPetscSparseFillMap(
 	size_t dof, const core::network::IReactionNetwork::SparseFillMap& fillMap)

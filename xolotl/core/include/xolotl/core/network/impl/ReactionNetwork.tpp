@@ -8,6 +8,7 @@
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/options/ConfOptions.h>
 #include <xolotl/util/Log.h>
+#include <xolotl/util/Profiling.h>
 #include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
@@ -100,6 +101,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(
 	const options::IOptions& opts) :
 	ReactionNetwork(
 		[&]() -> Subpaving {
+			util::pushProfRegion("Network");
+			// XOLOTL_PROF_REGION("plsm");
 			Region latticeRegion{};
 			for (std::size_t i = 0; i < getNumberOfSpecies(); ++i) {
 				latticeRegion[i] = Ival{0, maxSpeciesAmounts[i] + 1};
@@ -110,6 +113,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(
 		}(),
 		gridSize, opts)
 {
+	util::popProfRegion();
 }
 
 template <typename TImpl>
@@ -127,6 +131,15 @@ ReactionNetwork<TImpl>::ReactionNetwork(
 		}(),
 		gridSize, opts)
 {
+}
+
+template <typename TImpl>
+ReactionNetwork<TImpl>::~ReactionNetwork()
+{
+	_profileRegion.emplace("Network");
+	// XOLOTL_PROF_REGION("plsm");
+	_subpavingMirror.reset();
+	_subpaving = Subpaving();
 }
 
 template <typename TImpl>
@@ -386,6 +399,8 @@ ReactionNetwork<TImpl>::initializeClusterMap(
 	typename ReactionNetwork<TImpl>::MomentIdMapVector momIdInfos,
 	typename ReactionNetwork<TImpl>::MomentIdMap fromSubNetwork)
 {
+    XOLOTL_PROF_REGION("Network");
+
 	// Get the current bounds and moment id info
 	auto currentBounds = getAllClusterBounds();
 	auto currentMomIdInfo = getAllMomentIdInfo();
@@ -442,6 +457,7 @@ template <typename TImpl>
 void
 ReactionNetwork<TImpl>::initializeReactions()
 {
+    XOLOTL_PROF_REGION("Network");
 	Connectivity connectivity;
 	defineReactions(connectivity);
 	generateDiagonalFill(connectivity);
@@ -462,6 +478,7 @@ ReactionNetwork<TImpl>::setConstantConnectivities(
 {
 	asDerived()->setConstantConnectivities(conns);
 }
+
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::initializeRateEntries(
@@ -496,6 +513,7 @@ void
 ReactionNetwork<TImpl>::initializeRateEntries(
 	const std::vector<ConnectivitiesPair>& connectivities)
 {
+    XOLOTL_PROF_REGION("Network");
 	_reactions.allocateRateEntries(connectivities.size());
 	for (IndexType i = 0; i < connectivities.size(); ++i) {
 		initializeRateEntries(connectivities[i], i);

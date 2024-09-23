@@ -6,6 +6,7 @@
 #include <xolotl/perf/IEventCounter.h>
 #include <xolotl/perf/ITimer.h>
 #include <xolotl/solver/handler/SolverHandler.h>
+#include <xolotl/util/Profiling.h>
 
 namespace xolotl
 {
@@ -24,6 +25,8 @@ namespace handler
 class PetscSolverHandler : public SolverHandler
 {
 protected:
+	std::optional<util::ProfileRegion> _profRegion;
+
 	//! Partial derivatives at one grid point.
 	Kokkos::View<double*> vals;
 
@@ -85,6 +88,8 @@ public:
 	 */
 	PetscSolverHandler(NetworkType& _network, perf::IPerfHandler& _perfHandler,
 		const options::IOptions& options);
+
+	virtual ~PetscSolverHandler();
 
 	/**
 	 * Reset all jacobian values to zero

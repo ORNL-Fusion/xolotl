@@ -8,6 +8,7 @@
 
 #include <xolotl/config.h>
 #include <xolotl/core/network/SpeciesEnumSequence.h>
+#include <xolotl/util/Profiling.h>
 
 namespace xolotl
 {

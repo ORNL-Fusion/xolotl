@@ -24,6 +24,7 @@
         "-ts_adapt_dt_max 1.0",
         "-ts_exact_final_time stepover",
         "-ts_monitor",
+        "-dm_monitor",
         "-pc_type fieldsplit",
         "-fieldsplit_0_pc_type sor",
         "-fieldsplit_1_pc_type redundant",

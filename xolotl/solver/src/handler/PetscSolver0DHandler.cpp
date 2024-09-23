@@ -8,6 +8,7 @@
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
+#include <xolotl/util/Profiling.h>
 
 namespace xolotl
 {
@@ -18,6 +19,8 @@ namespace handler
 void
 PetscSolver0DHandler::createSolverContext(DM& da)
 {
+	XOLOTL_PROF_REGION("PetscSolverHandler");
+
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
 	const auto dof = network.getDOF();
@@ -50,6 +53,8 @@ PetscSolver0DHandler::createSolverContext(DM& da)
 void
 PetscSolver0DHandler::initializeSolverContext(DM& da, Mat& J)
 {
+	XOLOTL_PROF_REGION("PetscSolverHandler");
+
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
 	const auto dof = network.getDOF();
@@ -61,10 +66,16 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, Mat& J)
 	core::network::IReactionNetwork::SparseFillMap ofill;
 
 	// Initialize the temperature handler
-	temperatureHandler->initialize(dof);
+	{
+		XOLOTL_PROF_REGION("TemperatureHandler::initialize");
+		temperatureHandler->initialize(dof);
+	}
 
 	// Tell the network the number of grid points on this process
-	network.setGridSize(1);
+	{
+		XOLOTL_PROF_REGION("Network");
+		network.setGridSize(1);
+	}
 
 	// Get the diagonal fill
 	auto nPartials = network.getDiagonalFill(dfill);
@@ -75,8 +86,11 @@ PetscSolver0DHandler::initializeSolverContext(DM& da, Mat& J)
 	cols.push_back(dof);
 	++nPartials;
 	//
-	PetscCallVoid(
-		MatSetPreallocationCOO(J, rows.size(), rows.data(), cols.data()));
+	{
+		XOLOTL_PROF_REGION("Petsc");
+		PetscCallVoid(
+			MatSetPreallocationCOO(J, rows.size(), rows.data(), cols.data()));
+	}
 
 	// Initialize the arrays for the reaction partial derivatives
 	vals = Kokkos::View<double*>("solverPartials", nPartials);
@@ -92,6 +106,8 @@ void
 PetscSolver0DHandler::initializeConcentration(
 	DM& da, Vec& C, DM& oldDA, Vec& oldC)
 {
+	XOLOTL_PROF_REGION("PetscSolverHandler");
+
 	// Initialize the last temperature
 	temperature.push_back(0.0);
 

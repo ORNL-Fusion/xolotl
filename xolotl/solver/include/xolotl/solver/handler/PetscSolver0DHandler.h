@@ -32,7 +32,7 @@ public:
 	}
 
 	//! The Destructor
-	~PetscSolver0DHandler()
+	virtual ~PetscSolver0DHandler()
 	{
 	}
 

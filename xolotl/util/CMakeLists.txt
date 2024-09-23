@@ -25,6 +25,7 @@ set(XOLOTL_UTIL_SOURCES
     ${XOLOTL_UTIL_SOURCE_DIR}/LinearStepSequence.cpp
     ${XOLOTL_UTIL_SOURCE_DIR}/Log.cpp
     ${XOLOTL_UTIL_SOURCE_DIR}/MPIUtils.cpp
+    ${XOLOTL_UTIL_SOURCE_DIR}/Profiling.cpp
     ${XOLOTL_UTIL_SOURCE_DIR}/TimeStepper.cpp
 )
 

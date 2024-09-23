@@ -15,6 +15,7 @@
 #include <xolotl/solver/monitor/PetscMonitor3D.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/util/Profiling.h>
 
 PETSC_EXTERN PetscErrorCode
 PetscVFPrintfDefault(FILE*, const char[], va_list);
@@ -169,6 +170,7 @@ isPetscInitialized()
 void
 PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 {
+	XOLOTL_PROF_REGION("PetscSolver::init");
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
@@ -199,14 +201,20 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Extract global vector from DMDA to hold solution
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	PetscCallVoid(DMCreateGlobalVector(da, &C));
+	{
+		XOLOTL_PROF_REGION("Petsc");
+		PetscCallVoid(DMCreateGlobalVector(da, &C));
+	}
 
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create and set up Jacobian matrix
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	Mat J;
 	PetscCallVoid(DMSetMatrixPreallocateSkip(da, PETSC_TRUE));
-	PetscCallVoid(DMCreateMatrix(da, &J));
+	{
+		XOLOTL_PROF_REGION("Petsc");
+		PetscCallVoid(DMCreateMatrix(da, &J));
+	}
 	this->solverHandler->initializeSolverContext(da, J);
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -339,6 +347,7 @@ PetscSolver::setCurrentTimes(double time, double dt)
 void
 PetscSolver::solve()
 {
+	XOLOTL_PROF_REGION("PetscSolver::solve");
 	// Initialiaze the converged reason
 	TSConvergedReason reason = TS_CONVERGED_USER;
 	Vec oldC;
@@ -470,6 +479,7 @@ PetscSolver::getConvergenceStatus()
 void
 PetscSolver::finalize()
 {
+    XOLOTL_PROF_REGION("Petsc");
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Free work space.
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */

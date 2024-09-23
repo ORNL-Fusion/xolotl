@@ -85,7 +85,7 @@ public:
 	PetscSolver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler);
 
 	//! The Destructor
-	~PetscSolver();
+	virtual ~PetscSolver();
 
 	/**
 	 * \see ISolver.h

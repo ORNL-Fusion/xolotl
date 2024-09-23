@@ -9,6 +9,7 @@
 
 #include <xolotl/config.h>
 #include <xolotl/interface/IXolotlInterface.h>
+#include <xolotl/util/Profiling.h>
 
 namespace xolotl
 {
@@ -42,6 +43,16 @@ class ComputeContext;
 class XolotlInterface : public IXolotlInterface
 {
 private:
+	/**
+	 * Name to use for profile regions
+	 */
+	std::string _profName;
+
+	/**
+	 * For use at destructor to capture deallocations
+	 */
+	std::optional<util::ProfileRegion> _profRegion;
+
 	/**
 	 * Did this object initialize xolotl?
 	 */

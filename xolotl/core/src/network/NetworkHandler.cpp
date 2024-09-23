@@ -30,6 +30,7 @@ NetworkHandler::NetworkHandler(
 			auto speciesName = _network->getSpeciesName(id);
 			ss << speciesName << " ";
 		}
+        ss << "; device memory: " << _network->getDeviceMemorySize();
 		XOLOTL_LOG << ss.str();
 	}
 }

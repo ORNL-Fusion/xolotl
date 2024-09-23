@@ -13,6 +13,7 @@
 #include <xolotl/util/LinearStepSequence.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MathUtils.h>
+#include <xolotl/util/Profiling.h>
 
 namespace xolotl
 {
@@ -25,11 +26,13 @@ struct PetscContext
 {
 	PetscContext()
 	{
+		XOLOTL_PROF_REGION("Petsc");
 		PetscInitialize(nullptr, nullptr, nullptr, nullptr);
 	}
 
 	~PetscContext()
 	{
+		XOLOTL_PROF_REGION("Petsc");
 		PetscFinalize();
 	}
 };
@@ -141,6 +144,7 @@ makeTimeStepper(const options::IOptions& options)
 MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 	const std::shared_ptr<options::IOptions>& options) :
 	_computeContext(context),
+	_profRegion("MultiXolotl"),
 	_options(options),
 	_timeStepper(makeTimeStepper(*options)),
 	_petscContext(std::make_unique<PetscContext>()),
@@ -230,7 +234,8 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 	}
 
 	// Fluxes
-	auto fluxVector = _primaryInstance->getImplantedFlux();
+	std::vector<std::vector<std::pair<IdType, double>>> fluxVector;
+	fluxVector = _primaryInstance->getImplantedFlux();
 	for (IdType i = 0; i < _subInstances.size(); ++i) {
 		_subInstances[i]->setImplantedFlux(fluxVector[i]);
 	}
@@ -361,6 +366,7 @@ MultiXolotl::solveStep()
 {
 	// Transfer the temperature to the full network
 	auto subInstanceData = getSubInstanceData();
+
 	// 0D
 	if (subInstanceData.temperatures.size() < 2) {
 		updateTemperaturesAndRates(0, subInstanceData);

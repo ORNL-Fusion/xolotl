@@ -6,6 +6,7 @@
 #include <mpi.h>
 
 #include <xolotl/core/flux/FluxHandler.h>
+#include <xolotl/util/Profiling.h>
 
 namespace xolotl
 {
@@ -37,10 +38,19 @@ FluxHandler::FluxHandler(const options::IOptions& options) :
 	}
 }
 
+FluxHandler::~FluxHandler()
+{
+    XOLOTL_PROF_REGION("FluxHandler");
+    incidentFlux = Kokkos::View<double**>();
+    fluxIds = Kokkos::View<IdType*>();
+}
+
 void
 FluxHandler::initializeFluxHandler(network::IReactionNetwork& network,
 	int surfacePos, std::vector<double> grid)
 {
+    XOLOTL_PROF_REGION("FluxHandler");
+
 	// Set the grid
 	xGrid = grid;
 
@@ -121,6 +131,7 @@ FluxHandler::recomputeFluxHandler(int surfacePos)
 void
 FluxHandler::syncFluxIndices()
 {
+    XOLOTL_PROF_REGION("FluxHandler");
 	auto ids_h =
 		Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
 			fluxIndices.data(), fluxIndices.size());
@@ -133,6 +144,7 @@ FluxHandler::syncFluxIndices()
 void
 FluxHandler::syncIncidentFluxVec()
 {
+    XOLOTL_PROF_REGION("FluxHandler");
 	incidentFlux = Kokkos::View<double**>(
 		"Incident Flux Vec", incidentFluxVec.size(), incidentFluxVec[0].size());
 	auto incidentFlux_h = create_mirror_view(incidentFlux);

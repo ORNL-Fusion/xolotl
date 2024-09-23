@@ -95,6 +95,8 @@ ZrReactionNetwork::setConstantRates(RatesView rates, IndexType gridIndex)
 void
 ZrReactionNetwork::setConstantConnectivities(ConnectivitiesPair conns)
 {
+    XOLOTL_PROF_REGION("Network");
+
 	_constantConnsRows = ConnectivitiesPairView(
 		"dConstantConnectivitiesRows", conns.first.size());
 	_constantConnsEntries = ConnectivitiesPairView(

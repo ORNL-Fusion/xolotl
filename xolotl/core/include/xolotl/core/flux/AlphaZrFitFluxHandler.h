@@ -93,7 +93,7 @@ public:
 	/**
 	 * The Destructor
 	 */
-	~AlphaZrFitFluxHandler()
+	virtual ~AlphaZrFitFluxHandler()
 	{
 	}
 

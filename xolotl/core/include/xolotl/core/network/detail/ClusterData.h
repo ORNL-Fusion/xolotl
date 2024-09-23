@@ -71,7 +71,7 @@ struct ClusterDataExtra
 	}
 
 	void
-	setGridSize(IndexType numClusters, IndexType gridSize) {};
+	setGridSize(IndexType numClusters, IndexType gridSize){};
 };
 
 /**

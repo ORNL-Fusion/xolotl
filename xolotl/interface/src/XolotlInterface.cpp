@@ -15,12 +15,22 @@
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/util/Profiling.h>
 #include <xolotl/version.h>
 
 namespace xolotl
 {
 namespace interface
 {
+std::string
+getProfileName()
+{
+	static int __instanceCount = 0;
+	auto ret = "Xolotl" + std::to_string(__instanceCount);
+	++__instanceCount;
+	return ret;
+}
+
 std::shared_ptr<solver::Solver>
 solverCast(const std::shared_ptr<solver::ISolver>& solver) noexcept
 {
@@ -50,10 +60,15 @@ reportException(const std::exception& e)
 #define CATCH
 #endif
 
-XolotlInterface::XolotlInterface() = default;
+XolotlInterface::XolotlInterface()
+{
+	_profName = getProfileName();
+}
 
 XolotlInterface::XolotlInterface(int& argc, const char* argv[], MPI_Comm comm)
 {
+	_profName = getProfileName();
+	XOLOTL_PROF_REGION(_profName);
 	initializeXolotl(argc, argv, comm);
 	initializedHere = true;
 }
@@ -63,6 +78,8 @@ XolotlInterface::XolotlInterface(const std::shared_ptr<ComputeContext>& context,
 	computeContext(context),
 	options(opts)
 {
+	_profName = getProfileName();
+	XOLOTL_PROF_REGION(_profName);
 	util::setMPIComm(comm);
 	initializeXolotl();
 	initializedHere = true;
@@ -70,6 +87,7 @@ XolotlInterface::XolotlInterface(const std::shared_ptr<ComputeContext>& context,
 
 XolotlInterface::~XolotlInterface()
 {
+	_profRegion.emplace(_profName);
 	if (initializedHere) {
 		finalizeXolotl();
 	}
@@ -143,6 +161,8 @@ CATCH
 void
 XolotlInterface::initializeSolver() TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Initialize the solver
 	solver->initialize();
 	solverInitialized = true;
@@ -165,16 +185,18 @@ void
 XolotlInterface::setNetworkTemperature(
 	std::vector<double> temperatures, std::vector<double> depths) TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	solverCast(solver)->getSolverHandler()->getNetwork().setTemperatures(
 		temperatures, depths);
-
-	return;
 }
 CATCH
 
 void
 XolotlInterface::setTimes(double finalTime, double dt) TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Set the time in the solver
 	solver->setTimes(finalTime, dt);
 }
@@ -183,6 +205,8 @@ CATCH
 void
 XolotlInterface::setExternalControlStep(std::size_t step) TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Pass on to solver
 	solver->setExternalControlStep(step);
 }
@@ -191,6 +215,8 @@ CATCH
 void
 XolotlInterface::solveXolotl() TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Launch the PetscSolver
 	solver->solve();
 }
@@ -325,6 +351,7 @@ CATCH
 std::vector<std::vector<AmountType>>
 XolotlInterface::getAllClusterBounds() TRY
 {
+	XOLOTL_PROF_REGION(_profName);
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 
@@ -335,6 +362,7 @@ CATCH
 std::vector<std::vector<IdType>>
 XolotlInterface::getAllMomentIdInfo() TRY
 {
+	XOLOTL_PROF_REGION(_profName);
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 
@@ -347,6 +375,7 @@ XolotlInterface::initializeClusterMaps(
 	std::vector<std::vector<std::vector<AmountType>>> bounds,
 	std::vector<std::vector<std::vector<IdType>>> momIdInfo) TRY
 {
+	XOLOTL_PROF_REGION(_profName);
 	// Create the local maps
 	auto currentBounds = getAllClusterBounds();
 	auto currentMomIdInfo = getAllMomentIdInfo();
@@ -385,6 +414,8 @@ CATCH
 void
 XolotlInterface::initializeReactions() TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	network.initializeReactions();
@@ -394,6 +425,8 @@ CATCH
 std::vector<std::vector<std::pair<IdType, double>>>
 XolotlInterface::getImplantedFlux() TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Get the flux handler
 	auto fluxHandler = solverCast(solver)->getSolverHandler()->getFluxHandler();
 
@@ -411,6 +444,8 @@ void
 XolotlInterface::setImplantedFlux(
 	std::vector<std::pair<IdType, double>> fluxVector) TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Get the flux handler
 	auto fluxHandler = solverCast(solver)->getSolverHandler()->getFluxHandler();
 	fluxHandler->setImplantedFlux(fluxVector);
@@ -433,6 +468,8 @@ void
 XolotlInterface::setConstantRates(
 	const std::shared_ptr<RatesCapsule>& rates, IdType gridIndex) TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	network.setConstantRates(rates->view, gridIndex);
@@ -443,6 +480,8 @@ void
 XolotlInterface::computeConstantRates(std::vector<std::vector<double>> conc,
 	IdType gridIndex, std::vector<std::shared_ptr<RatesCapsule>>& rates) TRY
 {
+	// XOLOTL_PROF_REGION(_profName);
+
 	assert(rates.size() == fromSubNetwork.size());
 
 	// Get the network
@@ -476,6 +515,8 @@ CATCH
 std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>>
 XolotlInterface::getConstantConnectivities() TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 
@@ -518,6 +559,8 @@ XolotlInterface::initializeRateEntries(
 	const std::vector<std::pair<std::vector<IdType>, std::vector<IdType>>>&
 		conns) TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	network.initializeRateEntries(conns);
@@ -528,11 +571,11 @@ void
 XolotlInterface::setConstantConnectivities(
 	std::pair<std::vector<IdType>, std::vector<IdType>> conns) TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Get the network
 	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
 	network.setConstantConnectivities(conns);
-
-	return;
 }
 CATCH
 
@@ -540,6 +583,8 @@ void
 XolotlInterface::outputData(double time,
 	std::vector<std::vector<std::vector<double>>> conc, IdType localSize) TRY
 {
+	XOLOTL_PROF_REGION(_profName);
+
 	// Get the MPI comm
 	auto xolotlComm = util::getMPIComm();
 

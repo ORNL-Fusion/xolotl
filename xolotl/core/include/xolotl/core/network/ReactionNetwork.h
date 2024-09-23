@@ -19,6 +19,7 @@
 #include <xolotl/core/network/detail/ReactionCollection.h>
 #include <xolotl/options/IOptions.h>
 #include <xolotl/util/NotImplementedError.h>
+#include <xolotl/util/Profiling.h>
 
 namespace xolotl
 {
@@ -114,6 +115,8 @@ public:
 
 	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 		IndexType gridSize, const options::IOptions& opts);
+
+	virtual ~ReactionNetwork();
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::size_t
@@ -786,6 +789,8 @@ private:
 	generateDiagonalFill(const Connectivity& connectivity);
 
 private:
+	std::optional<util::ProfileRegion> _profileRegion;
+
 	std::optional<SubpavingMirror> _subpavingMirror;
 
 	SparseFillMap _connectivityMap;

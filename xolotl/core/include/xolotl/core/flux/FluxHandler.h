@@ -142,9 +142,7 @@ protected:
 public:
 	FluxHandler(const options::IOptions&);
 
-	~FluxHandler()
-	{
-	}
+	virtual ~FluxHandler();
 
 	/**
 	 * \see IFluxHandler.h
