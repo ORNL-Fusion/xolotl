@@ -27,11 +27,11 @@ target_link_libraries(xolotlInterface
     xolotlFactory
     xolotlSolver
     xolotlIO
-    xolotlOptions
     xolotlPerf
     xolotlUtil
     xolotlViz
     PUBLIC
+    xolotlOptions
     MPI::MPI_CXX
     Kokkos::kokkos
     PETSc

@@ -4,6 +4,7 @@
 
 using namespace std::string_literals;
 
+#include <xolotl/options/CommandLineError.h>
 #include <xolotl/options/ConfOptions.h>
 #include <xolotl/options/InvalidOptionValue.h>
 #include <xolotl/options/JSONOptions.h>
@@ -534,8 +535,10 @@ std::shared_ptr<IOptions>
 createOptions(int argc, const char* argv[])
 {
 	if (argc < 2) {
-		throw std::runtime_error(
-			"Options: parameter file name must not be empty");
+		throw CommandLineError(
+			"Usage:\n"
+            "    xolotl --help|-h\n"
+            "    xolotl <param-file>\n");
 	}
 
 	auto filePath = fs::path(argv[1]);
