@@ -23,6 +23,8 @@ using HostUnmanaged =
 void
 PetscSolver1DHandler::createSolverContext(DM& da)
 {
+	XOLOTL_PROF_REGION("PetscSolverHandler");
+
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
 	const auto dof = network.getDOF();
@@ -109,6 +111,8 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 void
 PetscSolver1DHandler::initializeSolverContext(DM& da, Mat& J)
 {
+	XOLOTL_PROF_REGION("PetscSolverHandler");
+
 	// Degrees of freedom is the total number of clusters in the network
 	// + moments
 	const auto dof = network.getDOF();
@@ -247,8 +251,11 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, Mat& J)
 	}
 
 	nPartials = rows.size();
-	PetscCallVoid(
-		MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data()));
+	{
+		XOLOTL_PROF_REGION("Petsc");
+		PetscCallVoid(
+			MatSetPreallocationCOO(J, nPartials, rows.data(), cols.data()));
+	}
 
 	// Initialize the arrays for the reaction partial derivatives
 	vals = Kokkos::View<double*>("solverPartials", nPartials + 1);
@@ -264,6 +271,8 @@ void
 PetscSolver1DHandler::initializeConcentration(
 	DM& da, Vec& C, DM& oldDA, Vec& oldC)
 {
+	XOLOTL_PROF_REGION("PetscSolverHandler");
+
 	temperature.clear();
 
 	// Initialize the last temperature at each grid point on this process
