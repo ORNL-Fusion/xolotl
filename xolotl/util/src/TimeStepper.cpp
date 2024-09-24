@@ -55,7 +55,7 @@ TimeStepper::step()
 [[nodiscard]] bool
 TimeStepper::valid() const noexcept
 {
-	return _currentTime < _endTime &&
+	return _previousTime < _endTime &&
 		(_maxSteps == 0 || _seq->currentStep() <= _maxSteps);
 }
 
