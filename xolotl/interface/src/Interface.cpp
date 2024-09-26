@@ -18,6 +18,9 @@ makeXolotlInterface(int& argc, const char* argv[])
 
 	// Get options
 	auto options = options::createOptions(argc, argv);
+    if (!options) {
+        return std::unique_ptr<IXolotlInterface>();
+    }
 	options->readParams(argc, argv);
 
 	// Create instance(s)

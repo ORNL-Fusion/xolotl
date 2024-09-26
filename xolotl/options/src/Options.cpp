@@ -531,16 +531,50 @@ Options::appendPetscArg(const std::string& arg)
 	petscArg += arg;
 }
 
+void
+printUsage(std::ostream& os)
+{
+	os << "Xolotl Usage:\n"
+	   << "\n"
+	   << "    xolotl --help|-h\n"
+	   << "    xolotl <param-file>\n";
+}
+
+void
+printHelp()
+{
+	printUsage(std::cout);
+	std::cout << "\n"
+			  << "\n"
+			  << "Command-line arguments:\n"
+			  << "\n"
+			  << "  --help|-h     Print this help message.\n"
+			  << "  <param-file>  File providing runtime parameters.\n"
+			  << "\n"
+			  << "\n"
+			  << "Xolotl (JSON) parameters:\n"
+			  << "\n";
+	JSONOptions{}.printHelp(std::cout);
+}
+
 std::shared_ptr<IOptions>
 createOptions(int argc, const char* argv[])
 {
+	// Handle empty command-line
 	if (argc < 2) {
-		throw CommandLineError(
-			"Usage:\n"
-            "    xolotl --help|-h\n"
-            "    xolotl <param-file>\n");
+		std::stringstream usage;
+		printUsage(usage);
+		throw CommandLineError(usage.str());
 	}
 
+	// Handle help output
+	auto arg1 = std::string(argv[1]);
+	if (arg1 == "--help" || arg1 == "-h") {
+		printHelp();
+		return std::shared_ptr<IOptions>();
+	}
+
+	// Handle parameter file
 	auto filePath = fs::path(argv[1]);
 	auto ext = filePath.extension();
 

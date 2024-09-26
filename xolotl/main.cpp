@@ -8,7 +8,10 @@ int
 main(int argc, const char* argv[])
 {
 	try {
-		xolotl::interface::makeXolotlInterface(argc, argv)->solveXolotl();
+		auto xi = xolotl::interface::makeXolotlInterface(argc, argv);
+		if (xi) {
+			xi->solveXolotl();
+		}
 	}
 	catch (const xolotl::options::CommandLineError& e) {
 		std::cout << e.what() << std::endl;

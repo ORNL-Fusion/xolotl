@@ -236,7 +236,7 @@ ConfOptions::readParams(int argc, const char* argv[])
 
 	if (opts.count("help")) {
 		std::cout << visible << std::endl;
-		std::exit(EXIT_SUCCESS);
+		return;
 	}
 
 	// Check that the file exist
