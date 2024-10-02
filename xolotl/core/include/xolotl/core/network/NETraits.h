@@ -47,6 +47,12 @@ toNameString(NESpecies species)
 }
 
 template <>
+struct NumberOfSpecies<NESpecies> :
+	std::integral_constant<std::size_t, 3>
+{
+};
+
+template <>
 struct NumberOfInterstitialSpecies<NESpecies> :
 	std::integral_constant<std::size_t, 1>
 {

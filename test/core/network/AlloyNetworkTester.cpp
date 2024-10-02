@@ -1158,4 +1158,69 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
 }
 
+BOOST_AUTO_TEST_CASE(traits)
+{
+	using NetworkType = AlloyReactionNetwork;
+	using Spec = NetworkType::Species;
+
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 6);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 6);
+	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 3);
+	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 3);
+
+	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Void), "Void");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Faulted), "Faulted");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Perfect), "Perfect");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Frank), "Frank");
+
+	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::Void), "Void");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::Faulted), "Faulted");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::Perfect), "Perfect");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::Frank), "Frank");
+
+	// parseSpeciesId / getSpeciesLabel / getSpeciesName
+    auto network = NetworkType();
+	auto sid = network.parseSpeciesId("V");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
+	sid = network.parseSpeciesId("Void");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::Void);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "Void");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Void");
+	sid = network.parseSpeciesId("Faulted");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::Faulted);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "Faulted");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Faulted");
+	sid = network.parseSpeciesId("I");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
+	sid = network.parseSpeciesId("Perfect");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::Perfect);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "Perfect");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Perfect");
+	sid = network.parseSpeciesId("Frank");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::Frank);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "Frank");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Frank");
+
+	// Define the sequence
+	using GroupingRange = SpeciesForGrouping<Spec, 6>;
+
+	// It should always return 0 because they are all orthogonal
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::Void), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::Faulted), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::Perfect), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::Frank), 0);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

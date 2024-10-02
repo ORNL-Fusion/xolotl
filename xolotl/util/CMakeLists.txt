@@ -17,6 +17,7 @@ set(XOLOTL_UTIL_HEADERS
     ${XOLOTL_UTIL_HEADER_DIR}/StreamTokenizer.h
     ${XOLOTL_UTIL_HEADER_DIR}/TimeStepper.h
     ${XOLOTL_UTIL_HEADER_DIR}/Tokenizer.h
+    ${XOLOTL_UTIL_HEADER_DIR}/TupleUtils.h
     ${XOLOTL_UTIL_HEADER_DIR}/RandomNumberGenerator.h
 )
 

@@ -12,7 +12,7 @@ namespace core
 namespace network
 {
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 double
 SinkReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex, double time)
 {

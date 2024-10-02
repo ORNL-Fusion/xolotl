@@ -989,4 +989,47 @@ BOOST_AUTO_TEST_CASE(fullyRefined_ReSo)
 //	}
 // }
 
+BOOST_AUTO_TEST_CASE(traits)
+{
+	using NetworkType = NEReactionNetwork;
+	using Spec = NetworkType::Species;
+
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 3);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 3);
+	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
+	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
+
+	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Xe), "Xe");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
+
+	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::Xe), "Xenon");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
+
+	// parseSpeciesId / getSpeciesLabel / getSpeciesName
+	auto network = NetworkType();
+	auto sid = network.parseSpeciesId("Xe");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::Xe);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "Xe");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Xenon");
+	sid = network.parseSpeciesId("V");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
+	sid = network.parseSpeciesId("I");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
+
+	// TODO: update for 3 species
+	// Define the sequence
+	using GroupingRange = SpeciesForGrouping<Spec, 1>;
+
+	// It should always return 0 because they are all orthogonal
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::Xe), 0);
+}
+
 BOOST_AUTO_TEST_SUITE_END()

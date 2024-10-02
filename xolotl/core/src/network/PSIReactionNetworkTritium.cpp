@@ -9,6 +9,9 @@ namespace network
 {
 template class PSIReactionNetwork<PSITritiumSpeciesList>;
 
+template ReactionNetwork<
+	PSIReactionNetwork<PSITritiumSpeciesList>>::ReactionNetwork();
+
 template ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::
 	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 		const std::vector<SubdivisionRatio>& subdivisionRatios,
