@@ -47,8 +47,7 @@ toNameString(NESpecies species)
 }
 
 template <>
-struct NumberOfSpecies<NESpecies> :
-	std::integral_constant<std::size_t, 3>
+struct NumberOfSpecies<NESpecies> : std::integral_constant<std::size_t, 3>
 {
 };
 
@@ -62,6 +61,23 @@ template <>
 struct NumberOfVacancySpecies<NESpecies> :
 	std::integral_constant<std::size_t, 1>
 {
+};
+
+template <>
+struct SpeciesForGrouping<NESpecies, 3>
+{
+	using Sequence = EnumSequence<NESpecies, 3>;
+	static constexpr auto first = Sequence(NESpecies::Xe);
+	static constexpr auto last = Sequence(NESpecies::I);
+
+	KOKKOS_INLINE_FUNCTION
+	static constexpr std::underlying_type_t<NESpecies>
+	mapToMomentId(EnumSequence<NESpecies, 3> value)
+	{
+		if (value == NESpecies::I)
+			return 1;
+		return value();
+	}
 };
 
 template <>

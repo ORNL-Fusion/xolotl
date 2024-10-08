@@ -1024,12 +1024,13 @@ BOOST_AUTO_TEST_CASE(traits)
 	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
 	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
 
-	// TODO: update for 3 species
 	// Define the sequence
-	using GroupingRange = SpeciesForGrouping<Spec, 1>;
+	using GroupingRange = SpeciesForGrouping<Spec, 3>;
 
-	// It should always return 0 because they are all orthogonal
+	// I goes on V
 	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::Xe), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 1);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 1);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
