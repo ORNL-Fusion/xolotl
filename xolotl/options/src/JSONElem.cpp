@@ -55,12 +55,12 @@ getElemColumnWidth(const std::deque<JSONElem>& elems, const unsigned lineLength,
 	unsigned width{23};
 	for (auto&& elem : elems) {
 		auto ss = formatFirstColumn(elem);
-		width = (max)(width, static_cast<unsigned>(ss.str().size()));
+		width = std::max(width, static_cast<unsigned>(ss.str().size()));
 	}
 
 	// If first column is longer than the start of the help column,
 	// we'll go to a new line
-	width = (min)(width, startOfHelpColumn - 1);
+	width = std::min(width, startOfHelpColumn - 1);
 
 	// add an additional space to improve readability
 	++width;
