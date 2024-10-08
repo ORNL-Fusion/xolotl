@@ -8,6 +8,8 @@ namespace core
 {
 namespace network
 {
+template ReactionNetwork<AlloyReactionNetwork>::ReactionNetwork();
+
 template ReactionNetwork<AlloyReactionNetwork>::ReactionNetwork(
 	const std::vector<AmountType>& maxSpeciesAmounts,
 	const std::vector<SubdivisionRatio>& subdivisionRatios, IndexType gridSize,

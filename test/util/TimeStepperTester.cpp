@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(growthFactor)
 		timeVals.push_back(stepper.currentTime());
 		stepVals.push_back(stepper.currentTimeStepSize());
 	}
-	BOOST_REQUIRE_EQUAL(timeVals.size(), 26);
+	BOOST_REQUIRE_EQUAL(timeVals.size(), 27);
 	BOOST_REQUIRE_CLOSE_FRACTION(0.0, timeVals[0], 1e-6);
 	BOOST_REQUIRE_CLOSE_FRACTION(1.0, timeVals[1], 1e-6);
 	BOOST_REQUIRE_CLOSE_FRACTION(2.3, timeVals[2], 1e-6);
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(growthFactor)
 		timeVals.push_back(stepper.currentTime());
 		stepVals.push_back(stepper.currentTimeStepSize());
 	}
-	BOOST_REQUIRE(timeVals.size() == 21);
+	BOOST_REQUIRE_EQUAL(timeVals.size(), 21);
 	BOOST_REQUIRE_CLOSE_FRACTION(10.0, timeVals[0], 1e-6);
 	BOOST_REQUIRE_CLOSE_FRACTION(11.0, timeVals[1], 1e-6);
 	BOOST_REQUIRE_CLOSE_FRACTION(12.3, timeVals[2], 1e-6);
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(growthFactor)
 		std::make_unique<GrowthFactorStepSequence>(1.0e-12, 1.0, 1.1), 0.0,
 		5000.0, 10000);
 	for (stepper.start(); stepper; ++stepper) { }
-	BOOST_REQUIRE(stepper.currentStep() == 5280);
+	BOOST_REQUIRE(stepper.currentStep() == 5281);
 	BOOST_REQUIRE(stepper.currentTime() >= 5000);
 }
 

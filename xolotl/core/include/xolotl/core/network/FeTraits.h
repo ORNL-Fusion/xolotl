@@ -37,6 +37,11 @@ toNameString(FeSpeciesList species)
 }
 
 template <>
+struct NumberOfSpecies<FeSpeciesList> : std::integral_constant<std::size_t, 3>
+{
+};
+
+template <>
 struct NumberOfInterstitialSpecies<FeSpeciesList> :
 	std::integral_constant<std::size_t, 1>
 {

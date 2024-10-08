@@ -15,7 +15,7 @@ namespace core
 namespace network
 {
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 Reaction<TNetwork, TDerived>::Reaction(ReactionDataRef reactionData,
 	const ClusterData& clusterData, IndexType reactionId) :
 	_clusterData(&clusterData),
@@ -126,7 +126,7 @@ Reaction<TNetwork, TDerived>::computeOverlap(const ReflectedRegion& cl1RR,
 }
 
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 ProductionReaction<TNetwork, TDerived>::ProductionReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, IndexType cluster0, IndexType cluster1,
@@ -161,7 +161,7 @@ ProductionReaction<TNetwork, TDerived>::ProductionReaction(
 }
 
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 ProductionReaction<TNetwork, TDerived>::ProductionReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, const detail::ClusterSet& clusterSet) :
@@ -2204,7 +2204,7 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 }
 
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 DissociationReaction<TNetwork, TDerived>::DissociationReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, IndexType cluster0, IndexType cluster1,
@@ -2232,7 +2232,7 @@ DissociationReaction<TNetwork, TDerived>::DissociationReaction(
 }
 
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 DissociationReaction<TNetwork, TDerived>::DissociationReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, const detail::ClusterSet& clusterSet) :

@@ -205,7 +205,7 @@ struct ReactionGeneratorTypeBuilderImpl<TReactionGeneratorParent,
 	using Type =
 		typename WrapTypeSpecificReactionGenerator<NetworkType, FrontReaction,
 			typename ReactionGeneratorTypeBuilderImpl<TReactionGeneratorParent,
-				TuplePopFront<ExtraReactions>>::Type>::Type;
+				util::TuplePopFront<ExtraReactions>>::Type>::Type;
 };
 
 template <typename TNetwork, typename TDerived>
@@ -225,10 +225,11 @@ struct ReactionGeneratorTypeBuilder
 			ReactionSecond>,
 		"Second reaction type must be a DissociationReaction");
 
-	using ExtraReactionTypes = TuplePopFront<TuplePopFront<ReactionTypes>>;
+	using ExtraReactionTypes =
+		util::TuplePopFront<util::TuplePopFront<ReactionTypes>>;
 	using Type = typename ReactionGeneratorTypeBuilderImpl<
 		ReactionGeneratorBase<TNetwork, TDerived>,
-		TupleReverse<ExtraReactionTypes>>::Type;
+		util::TupleReverse<ExtraReactionTypes>>::Type;
 };
 
 template <typename TNetwork, typename TDerived>

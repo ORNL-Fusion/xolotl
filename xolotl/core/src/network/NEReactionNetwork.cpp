@@ -7,6 +7,8 @@ namespace core
 {
 namespace network
 {
+template ReactionNetwork<NEReactionNetwork>::ReactionNetwork();
+
 template ReactionNetwork<NEReactionNetwork>::ReactionNetwork(
 	const std::vector<AmountType>& maxSpeciesAmounts,
 	const std::vector<SubdivisionRatio>& subdivisionRatios, IndexType gridSize,

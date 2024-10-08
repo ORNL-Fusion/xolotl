@@ -4,9 +4,7 @@
 
 namespace xolotl
 {
-namespace core
-{
-namespace network
+namespace util
 {
 namespace detail
 {
@@ -18,22 +16,34 @@ struct TuplePushFrontHelper<T, std::tuple<Ts...>>
 {
 	using Type = std::tuple<T, Ts...>;
 };
+}
 
-template <typename T, typename TTuple>
-using TuplePushFront = typename TuplePushFrontHelper<T, TTuple>::Type;
+template <typename TTuple, typename T>
+using TuplePushFront = typename detail::TuplePushFrontHelper<T, TTuple>::Type;
 
+namespace detail
+{
 template <typename TTuple>
 struct TuplePopFrontHelper;
+
+template <>
+struct TuplePopFrontHelper<std::tuple<>>
+{
+    using Type = std::tuple<>;
+};
 
 template <typename T, typename... Ts>
 struct TuplePopFrontHelper<std::tuple<T, Ts...>>
 {
 	using Type = std::tuple<Ts...>;
 };
+}
 
 template <typename TTuple>
-using TuplePopFront = typename TuplePopFrontHelper<TTuple>::Type;
+using TuplePopFront = typename detail::TuplePopFrontHelper<TTuple>::Type;
 
+namespace detail
+{
 template <typename TTuple, typename T>
 struct TuplePushBackHelper;
 
@@ -42,12 +52,21 @@ struct TuplePushBackHelper<std::tuple<Ts...>, T>
 {
 	using Type = std::tuple<Ts..., T>;
 };
+}
 
 template <typename TTuple, typename T>
-using TuplePushBack = typename TuplePushBackHelper<TTuple, T>::Type;
+using TuplePushBack = typename detail::TuplePushBackHelper<TTuple, T>::Type;
 
+namespace detail
+{
 template <typename TTuple>
 struct TuplePopBackHelper;
+
+template <>
+struct TuplePopBackHelper<std::tuple<>>
+{
+    using Type = std::tuple<>;
+};
 
 template <typename T>
 struct TuplePopBackHelper<std::tuple<T>>
@@ -59,12 +78,15 @@ template <typename T, typename... Ts>
 struct TuplePopBackHelper<std::tuple<T, Ts...>>
 {
 	using Type =
-		TuplePushFront<T, typename TuplePopBackHelper<std::tuple<Ts...>>::Type>;
+		TuplePushFront<typename TuplePopBackHelper<std::tuple<Ts...>>::Type, T>;
 };
+}
 
 template <typename TTuple>
-using TuplePopBack = typename TuplePopBackHelper<TTuple>::Type;
+using TuplePopBack = typename detail::TuplePopBackHelper<TTuple>::Type;
 
+namespace detail
+{
 template <typename TTuple>
 struct TupleReverseHelper;
 
@@ -80,10 +102,13 @@ struct TupleReverseHelper<std::tuple<T, Ts...>>
 	using Type =
 		TuplePushBack<typename TupleReverseHelper<std::tuple<Ts...>>::Type, T>;
 };
+}
 
 template <typename TTuple>
-using TupleReverse = typename TupleReverseHelper<TTuple>::Type;
+using TupleReverse = typename detail::TupleReverseHelper<TTuple>::Type;
 
+namespace detail
+{
 template <template <typename...> typename Tpl, typename TTuple>
 struct TupleApplyAllHelper;
 
@@ -92,10 +117,9 @@ struct TupleApplyAllHelper<Tpl, std::tuple<Ts...>>
 {
 	using Type = Tpl<Ts...>;
 };
+}
 
 template <template <typename...> typename Tpl, typename TTuple>
-using TupleApplyAll = typename TupleApplyAllHelper<Tpl, TTuple>::Type;
-} // namespace detail
-} // namespace network
-} // namespace core
+using TupleApplyAll = typename detail::TupleApplyAllHelper<Tpl, TTuple>::Type;
+} // namespace util
 } // namespace xolotl
