@@ -16,15 +16,28 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 	result[0] = true;
 	result[1] = true;
 	result[2] = true;
+
 	// I is never grouped
 	if (region[Species::I].begin() > 0) {
 		return true;
 	}
 
-	// V is never grouped
-	if (region[Species::V].end() > 1 && region[Species::V].begin() < 11 &&
-		region[Species::He].begin() == 0 && region[Species::I].begin() == 0) {
-		return true;
+	// V is grouped on its own
+	if (region[Species::V].end() > 1 && region[Species::He].begin() == 0 &&
+		region[Species::I].begin() == 0) {
+		if (region[Species::V].begin() < _groupingMin)
+			return true;
+		if (region[Species::V].end() > _maxV) {
+			return true;
+		}
+		if (region[Species::V].length() <
+			util::max((double)(_groupingWidthV + 1),
+				region[Species::V].begin() * 1.0e-1)) {
+			result[1] = false;
+			return true;
+		}
+		else
+			return true;
 	}
 
 	// He is never grouped
@@ -126,7 +139,7 @@ T91ClusterGenerator::select(const Region& region) const
 	}
 
 	// Vacancy
-	if (region[Species::V].begin() > 10 && region[Species::He].end() == 1 &&
+	if (region[Species::V].begin() > _maxV && region[Species::He].end() == 1 &&
 		region[Species::I].end() == 1) {
 		return false;
 	}
@@ -202,7 +215,7 @@ T91ClusterGenerator::getDiffusionFactor(
 		0.0, 5.2e+11, 3.1e+10, 8.0e+9, 1.2e+9};
 	// V diffusion factors in nm^2/s
 	constexpr Kokkos::Array<double, 5> vDiffusion = {
-		0.0, 6.8e+13, 6.8e+13, 6.8e+13, 6.8e+13};
+		0.0, 8.2e+11, 4.1e+11, 2.73e+11, 2.05e+11};
 
 	const auto& reg = cluster.getRegion();
 	double diffusionFactor = 0.0;

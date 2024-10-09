@@ -115,7 +115,7 @@ constexpr double tungstenDensity = 62.8;
 
 // Energies for thermal vacancy concentration in T91
 constexpr double t91FormationEntropy = 2.17; // in k_B
-constexpr double t91FormationEnergy = 1.79; // in eV
+constexpr double t91FormationEnergy = 2.02; // in eV
 
 } /* end namespace core */
 } /* end namespace xolotl */

@@ -184,7 +184,7 @@ T91ReactionGenerator::addSinks(IndexType i, TTag tag) const
 	}
 
 	// V
-	if (clReg.isSimplex() && lo.isOnAxis(Species::V)) {
+	if (clReg.isSimplex() && lo.isOnAxis(Species::V) && lo[Species::V] < 5) {
 		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
 	}
 }
