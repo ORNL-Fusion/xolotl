@@ -56,6 +56,11 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_2_restart, *utf::label("1D"))
 		Restart{true});
 }
 
+BOOST_AUTO_TEST_CASE_WITH_DECOR(multi_AZr_3_restart, *utf::label("0D"))
+{
+	SystemTestCase{"system_multi_AZr_3", "AlphaZr.dat"}.run(Restart{true});
+}
+
 BOOST_AUTO_TEST_CASE_WITH_DECOR(NE_0, *utf::label("0D"))
 {
 	if (getMPICommSize() > 1) {

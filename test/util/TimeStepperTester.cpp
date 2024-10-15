@@ -80,4 +80,38 @@ BOOST_AUTO_TEST_CASE(growthFactor)
 	BOOST_REQUIRE(stepper.currentTime() >= 5000);
 }
 
+BOOST_AUTO_TEST_CASE(restart)
+{
+	// Reach end time first
+	auto seq = std::make_unique<GrowthFactorStepSequence>(1.0, 10.0, 1.3);
+	auto stepper = TimeStepper(
+		std::make_unique<GrowthFactorStepSequence>(*seq), 0.0, 200.0, 10);
+	std::vector<double> timeVals;
+	std::vector<double> stepVals;
+	for (stepper.start(); stepper; ++stepper) {
+		timeVals.push_back(stepper.currentTime());
+		stepVals.push_back(stepper.currentTimeStepSize());
+	}
+
+	auto lastStep = stepper.currentStep() - 1;
+	auto lastTime = stepper.previousTime();
+
+	seq = std::make_unique<GrowthFactorStepSequence>(1.0, 1.0, 1.3, 10);
+	stepper = TimeStepper(std::move(seq), lastTime, 200.0, 15);
+	for (stepper.start(); stepper; ++stepper) {
+		timeVals.push_back(stepper.currentTime());
+		stepVals.push_back(stepper.currentTimeStepSize());
+	}
+	// We have a repeat when we restart
+	BOOST_REQUIRE_EQUAL(timeVals[10], timeVals[11]);
+
+	// 10 (+1) + 5 (+1)
+	BOOST_REQUIRE_EQUAL(timeVals.size(), 17);
+
+	BOOST_REQUIRE_EQUAL(stepVals[0], 1.0);
+	BOOST_REQUIRE_EQUAL(stepVals[10], 10.0);
+	BOOST_REQUIRE_EQUAL(stepVals[11], 1.0);
+	BOOST_REQUIRE_EQUAL(stepVals[16], 1.0);
+}
+
 BOOST_AUTO_TEST_SUITE_END()
