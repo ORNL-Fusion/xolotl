@@ -112,7 +112,9 @@ constexpr IdType psiVThreshold = 150;
 
 // Parameters for W Benedict EOS
 constexpr double gammaEOS = 2.67;
-constexpr double gEOS = 156.1e9;
+constexpr double gEOS1 = 1602.8;
+constexpr double gEOS2 = 0.1456;
+constexpr double gEOS3 = 3.28e-5;
 constexpr double kEOS = 1.380649e-23;
 constexpr double A_11 = -5.5991e-27;
 constexpr double A01 = 1.74e-26;

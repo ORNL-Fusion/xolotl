@@ -121,18 +121,22 @@ getMaxHePerVLoop(double amtV, double latticeParameter, double temp) noexcept
 	double omega =
 		0.5 * latticeParameter * latticeParameter * latticeParameter * 1.0e-27;
 	double bEOS = latticeParameter * 0.5 * sqrt(3.0) * 1.0e-9;
+	double tempCelsius = temp - 273.0;
+	double gEOS = (xolotl::core::gEOS1 - xolotl::core::gEOS2 * tempCelsius -
+					  xolotl::core::gEOS3 * tempCelsius * tempCelsius) *
+		1.0e6;
 	double nume = amtV * omega;
 	double Fs = pow(3.0 * omega / (4.0 * xolotl::core::pi), 1.0 / 3.0);
 	double term1 = computeBenedictF1(temp) * pow(Fs, 1.0 / 3.0) *
 		pow((double)amtV, 1.0 / 9.0) *
-		pow(2.0 * xolotl::core::gammaEOS + xolotl::core::gEOS * bEOS,
+		pow(2.0 * xolotl::core::gammaEOS + gEOS * bEOS,
 			-1.0 / 3.0);
 	double term2 = computeBenedictF2(temp) * pow(Fs, 2.0 / 3.0) *
 		pow((double)amtV, 2.0 / 9.0) *
-		pow(2.0 * xolotl::core::gammaEOS + xolotl::core::gEOS * bEOS,
+		pow(2.0 * xolotl::core::gammaEOS + gEOS * bEOS,
 			-2.0 / 3.0);
 	double term3 = computeBenedictF3(temp) * Fs * pow((double)amtV, 1.0 / 3.0) /
-		(2.0 * xolotl::core::gammaEOS + xolotl::core::gEOS * bEOS);
+		(2.0 * xolotl::core::gammaEOS + gEOS * bEOS);
 
 	return util::max((nume / (term1 + term2 + term3)),
 		maxHePerV[maxHePerV.size() - 1] + amtV - maxHePerV.size() + 1.0);
