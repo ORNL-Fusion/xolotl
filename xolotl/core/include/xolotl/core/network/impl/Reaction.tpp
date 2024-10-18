@@ -15,14 +15,15 @@ namespace core
 namespace network
 {
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 Reaction<TNetwork, TDerived>::Reaction(ReactionDataRef reactionData,
 	const ClusterData& clusterData, IndexType reactionId) :
 	_clusterData(&clusterData),
 	_reactionId(reactionId),
 	_rate(reactionData.getRates(reactionId)),
 	_widths(reactionData.getWidths(reactionId)),
-	_coefs(reactionData.getCoefficients(reactionId))
+	_coefs(reactionData.getCoefficients(reactionId)),
+	_deltaG0(0.0)
 {
 }
 
@@ -125,7 +126,7 @@ Reaction<TNetwork, TDerived>::computeOverlap(const ReflectedRegion& cl1RR,
 }
 
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 ProductionReaction<TNetwork, TDerived>::ProductionReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, IndexType cluster0, IndexType cluster1,
@@ -160,7 +161,7 @@ ProductionReaction<TNetwork, TDerived>::ProductionReaction(
 }
 
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 ProductionReaction<TNetwork, TDerived>::ProductionReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, const detail::ClusterSet& clusterSet) :
@@ -681,6 +682,13 @@ void
 ProductionReaction<TNetwork, TDerived>::computeFlux(
 	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
 {
+	int nProd = 0;
+	for (auto prodId : _products) {
+		if (prodId != invalidIndex) {
+			++nProd;
+		}
+	}
+
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 
 	// Initialize the concentrations that will be used in the loops
@@ -795,12 +803,6 @@ ProductionReaction<TNetwork, TDerived>::computePartialDerivatives(
 	IndexType gridIndex)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
-	int nProd = 0;
-	for (auto prodId : _products) {
-		if (prodId != invalidIndex) {
-			++nProd;
-		}
-	}
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR1 = concentrations[_reactants[0]];
@@ -1071,12 +1073,6 @@ ProductionReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	IndexType gridIndex)
 {
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
-	int nProd = 0;
-	for (auto prodId : _products) {
-		if (prodId != invalidIndex) {
-			++nProd;
-		}
-	}
 
 	// Initialize the concentrations that will be used in the loops
 	auto cR1 = concentrations[_reactants[0]];
@@ -2204,7 +2200,7 @@ ProductionReaction<TNetwork, TDerived>::mapRateEntries(
 }
 
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 DissociationReaction<TNetwork, TDerived>::DissociationReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, IndexType cluster0, IndexType cluster1,
@@ -2232,7 +2228,7 @@ DissociationReaction<TNetwork, TDerived>::DissociationReaction(
 }
 
 template <typename TNetwork, typename TDerived>
-KOKKOS_INLINE_FUNCTION
+KOKKOS_FUNCTION
 DissociationReaction<TNetwork, TDerived>::DissociationReaction(
 	ReactionDataRef reactionData, const ClusterData& clusterData,
 	IndexType reactionId, const detail::ClusterSet& clusterSet) :
@@ -2347,11 +2343,10 @@ DissociationReaction<TNetwork, TDerived>::computeRate(
 {
 	double omega = this->_clusterData->atomicVolume();
 	double T = this->_clusterData->temperature(gridIndex);
+	constexpr double k_B = ::xolotl::core::kBoltzmann;
 
 	double kPlus = this->asDerived()->getRateForProduction(gridIndex);
 	double E_b = this->asDerived()->computeBindingEnergy(time);
-
-	constexpr double k_B = ::xolotl::core::kBoltzmann;
 
 	double kMinus = (1.0 / omega) * kPlus * std::exp(-E_b / (k_B * T));
 

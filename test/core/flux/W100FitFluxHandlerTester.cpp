@@ -8,7 +8,7 @@
 
 #include <xolotl/core/flux/W100FitFluxHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(W100FitFluxHandlerTester_testSuite)
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -80,14 +80,14 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 1, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 1, surfacePos);
 	updatedConcOffset = subview(conc, 2, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 2, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 2, surfacePos);
 	updatedConcOffset = subview(conc, 3, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 3, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
 	auto newConcentration =
@@ -95,14 +95,12 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	BOOST_REQUIRE_CLOSE(newConcentration(1, 0), 0.444777, 0.01);
 	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 0.247638, 0.01);
 	BOOST_REQUIRE_CLOSE(newConcentration(3, 0), 0.10758, 0.01);
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -149,21 +147,19 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFluxNoGrid)
 	auto updatedConcOffset = subview(conc, 0, Kokkos::ALL);
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 0, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 0, surfacePos);
 
 	// Check the value at some grid points
 	auto newConcentration =
 		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConcOffset);
 	BOOST_REQUIRE_CLOSE(newConcentration[0], 1.0, 0.01);
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkFluence)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -193,8 +189,6 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
-	// Get its size
-	const int dof = network.getDOF();
 
 	// Create the W100 flux handler
 	auto testFitFlux = make_shared<W100FitFluxHandler>(opts);
@@ -213,14 +207,12 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	// Check that the fluence is not 0.0 anymore
 	fluence = testFitFlux->getFluence();
 	BOOST_REQUIRE_EQUAL(fluence[0], 1.0e-8);
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -274,14 +266,14 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
 	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 1, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 1, surfacePos);
 	updatedConcOffset = subview(conc, 2, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 2, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 2, surfacePos);
 	updatedConcOffset = subview(conc, 3, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 3, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
 	auto newConcentration =
@@ -289,14 +281,12 @@ BOOST_AUTO_TEST_CASE(checkFluxAmplitude)
 	BOOST_REQUIRE_CLOSE(newConcentration(1, 0), 1.111943, 0.01);
 	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 0.619095, 0.01);
 	BOOST_REQUIRE_CLOSE(newConcentration(3, 0), 0.268961, 0.01);
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -367,14 +357,14 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 1, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 1, surfacePos);
 	updatedConcOffset = subview(conc, 2, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 2, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 2, surfacePos);
 	updatedConcOffset = subview(conc, 3, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 3, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
 	auto newConcentration =
@@ -398,14 +388,14 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 
 	// Update the concentrations at some grid points
 	updatedConcOffset = subview(conc, 1, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 1, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 1, surfacePos);
 	updatedConcOffset = subview(conc, 2, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 2, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 2, surfacePos);
 	updatedConcOffset = subview(conc, 3, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 3, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
 	deep_copy(newConcentration, conc);
@@ -420,8 +410,6 @@ BOOST_AUTO_TEST_CASE(checkTimeProfileFlux)
 
 	// Finalize MPI
 	MPI_Finalize();
-
-	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

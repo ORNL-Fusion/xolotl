@@ -15,6 +15,7 @@ class AlloyReactionNetwork;
 class AlloyProductionReaction;
 class AlloyDissociationReaction;
 class AlloySinkReaction;
+class AlloyConstantReaction;
 class AlloyClusterGenerator;
 
 enum class AlloySpecies
@@ -42,6 +43,11 @@ toNameString(AlloySpecies species)
 		"Vacancy", "Void", "Faulted", "Interstitial", "Perfect", "Frank"};
 	return nameArray[static_cast<int>(species)];
 }
+
+template <>
+struct NumberOfSpecies<AlloySpecies> : std::integral_constant<std::size_t, 6>
+{
+};
 
 template <>
 struct NumberOfInterstitialSpecies<AlloySpecies> :
@@ -80,9 +86,10 @@ struct ReactionNetworkTraits<AlloyReactionNetwork>
 	using ProductionReactionType = AlloyProductionReaction;
 	using DissociationReactionType = AlloyDissociationReaction;
 	using SinkReactionType = AlloySinkReaction;
+	using ConstantReactionType = AlloyConstantReaction;
 
 	using ReactionTypeList = std::tuple<ProductionReactionType,
-		DissociationReactionType, SinkReactionType>;
+		DissociationReactionType, SinkReactionType, ConstantReactionType>;
 
 	using ClusterGenerator = AlloyClusterGenerator;
 };

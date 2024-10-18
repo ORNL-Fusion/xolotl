@@ -1,5 +1,8 @@
 #pragma once
 
+#include <math.h>
+
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/network/Reaction.h>
 #include <xolotl/core/network/SpeciesEnumSequence.h>
 
@@ -67,7 +70,7 @@ public:
 		return detail::ConstantRateView();
 	}
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	double
 	computeRate(IndexType gridIndex, double time = 0.0);
 

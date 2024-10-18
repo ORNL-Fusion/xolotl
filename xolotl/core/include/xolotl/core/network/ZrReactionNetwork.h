@@ -21,7 +21,6 @@ class ZrClusterUpdater;
 class ZrReactionNetwork : public ReactionNetwork<ZrReactionNetwork>
 {
 	friend class ReactionNetwork<ZrReactionNetwork>;
-	friend class detail::ReactionNetworkWorker<ZrReactionNetwork>;
 
 public:
 	using Superclass = ReactionNetwork<ZrReactionNetwork>;
@@ -55,6 +54,29 @@ public:
 	void
 	setGridSize(IndexType gridSize) override;
 
+	std::string
+	getMonitorOutputFileName() const override
+	{
+		return "AlphaZr.dat";
+	}
+
+	std::string
+	getMonitorDataHeaderString() const override;
+
+	void
+	addMonitorDataValues(Kokkos::View<const double*> conc, double fac,
+		std::vector<double>& totalVals) override;
+
+	std::size_t
+	getMonitorDataLineSize() const override
+	{
+		return getSpeciesListSize() * 6;
+	}
+
+	void
+	writeMonitorDataLine(
+		const std::vector<double>& localData, double time) override;
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);
@@ -72,6 +94,18 @@ private:
 
 	detail::ZrReactionGenerator
 	getReactionGenerator() const noexcept;
+
+	void
+	readClusters(const std::string filename)
+	{
+		return;
+	}
+
+	void
+	readReactions(double temperature, const std::string filename)
+	{
+		return;
+	}
 
 	void
 	defineReactions(Connectivity& connectivity);

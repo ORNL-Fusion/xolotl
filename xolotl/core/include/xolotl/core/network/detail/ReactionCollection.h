@@ -45,10 +45,11 @@ public:
 	ReactionCollection() = default;
 
 	template <typename... TViews>
-	ReactionCollection(IndexType gridSize, TViews... views) :
+	ReactionCollection(IndexType gridSize, IndexType clusterSize,
+		bool readRates, TViews... views) :
 		_reactions(views...),
-		_data(_reactions.getNumberOfElements(), gridSize,
-			_reactions.getElementBeginIndices())
+		_data(_reactions.getNumberOfElements(), gridSize, clusterSize,
+			readRates, _reactions.getElementBeginIndices())
 	{
 		static_assert(sizeof...(TViews) == numReactionTypes,
 			"Construction from views requires the number of views to match the "
@@ -246,6 +247,8 @@ public:
 
 private:
 	MultiElementCollection<ReactionTypes> _reactions;
+
+public:
 	ReactionData<NetworkType> _data;
 };
 } // namespace detail

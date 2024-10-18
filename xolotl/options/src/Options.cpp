@@ -4,14 +4,15 @@
 
 using namespace std::string_literals;
 
-#include <boost/program_options.hpp>
-
+#include <xolotl/options/CommandLineError.h>
+#include <xolotl/options/ConfOptions.h>
+#include <xolotl/options/InvalidOptionValue.h>
+#include <xolotl/options/JSONOptions.h>
 #include <xolotl/options/Options.h>
+#include <xolotl/util/Filesystem.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/Tokenizer.h>
-
-namespace bpo = boost::program_options;
 
 namespace xolotl
 {
@@ -19,7 +20,8 @@ namespace options
 {
 Options::Options() :
 	petscArg(""),
-	networkFilename(""),
+	checkpointFile("xolotlStop.h5"),
+	restartFile(""),
 	tempHandlerName(""),
 	tempParam{},
 	tempProfileFilename(""),
@@ -87,462 +89,111 @@ Options::Options() :
 {
 }
 
-Options::~Options(void)
+Options::~Options()
 {
-}
-
-std::shared_ptr<IOptions>
-Options::makeCopy() const
-{
-	return std::make_shared<Options>(*this);
 }
 
 void
-Options::readParams(int argc, const char* argv[])
+Options::printAll(std::ostream& os) const
 {
-	// Check that a file name is given
-	if (argc < 2) {
-		throw bpo::error("Options: parameter file name must not be empty");
+	os << "checkpointFile: \"" << checkpointFile << "\"\n";
+	os << "restartFile: \"" << restartFile << "\"\n";
+	os << "tempHandlerName: \"" << tempHandlerName << "\"\n";
+	os << "tempParam: {" << tempParam[0] << ", " << tempParam[1] << "}\n";
+	os << "tempGridPower: " << tempGridPower << '\n';
+	os << "tempProfileFilename: \"" << tempProfileFilename << "\"\n";
+	os << "fluxFlag: " << std::boolalpha << fluxFlag << '\n';
+	os << "fluxAmplitude: " << fluxAmplitude << '\n';
+	os << "fluxTimeProfileFlag: " << std::boolalpha << fluxTimeProfileFlag
+	   << '\n';
+	os << "fluxTimeProfileFilePath: \"" << fluxTimeProfileFilePath << "\"\n";
+	os << "perfHandlerName: \"" << perfHandlerName << "\"\n";
+	os << "perfOutputYAMLFlag: " << std::boolalpha << perfOutputYAMLFlag
+	   << '\n';
+	os << "subnetworksFlag: " << std::boolalpha << subnetworksFlag << '\n';
+	os << "initialTimeStep: " << initialTimeStep << '\n';
+	os << "maxTimeStep: " << maxTimeStep << '\n';
+	os << "timeStepGrowthFactor: " << timeStepGrowthFactor << '\n';
+	os << "startTime: " << startTime << '\n';
+	os << "endTime: " << endTime << '\n';
+	os << "numTimeSteps: " << numTimeSteps << '\n';
+	os << "vizHandlerName: \"" << vizHandlerName << "\"\n";
+	os << "materialName: \"" << materialName << "\"\n";
+	os << "initialConcentration: \"" << initialConcentration << "\"\n";
+	os << "zeta: " << zeta << '\n';
+	os << "interfaceLocation: " << interfaceLocation << '\n';
+	os << "dimensionNumber: " << dimensionNumber << '\n';
+	os << "gridTypeName: \"" << gridTypeName << "\"\n";
+	os << "gridParam: {" << gridParam[0] << ", " << gridParam[1] << ", "
+	   << gridParam[2] << ", " << gridParam[3] << ", " << gridParam[4] << ", "
+	   << gridParam[5] << "}\n";
+	os << "gridFilename: \"" << gridFilename << "\"\n";
+	os << "gbList: \"" << gbList << "\"\n";
+	os << "groupingMin: " << groupingMin << '\n';
+	os << "groupingWidthA: " << groupingWidthA << '\n';
+	os << "groupingWidthB: " << groupingWidthB << '\n';
+	os << "sputteringYield: " << sputteringYield << '\n';
+	os << "useHDF5Flag: " << std::boolalpha << useHDF5Flag << '\n';
+	os << "networkParams:";
+	for (auto&& p : networkParams) {
+		os << ' ' << p;
 	}
+	os << '\n';
+	os << "maxImpurity: " << maxImpurity << '\n';
+	os << "maxD: " << maxD << '\n';
+	os << "maxT: " << maxT << '\n';
+	os << "maxV: " << maxV << '\n';
+	os << "maxI: " << maxI << '\n';
+	os << "maxPureV: " << maxPureV << '\n';
 
-	// The name of the parameter file
-	std::string param_file;
+	os << "leftBoundary: " << leftBoundary << '\n';
+	os << "rightBoundary: " << rightBoundary << '\n';
+	os << "bottomBoundary: " << bottomBoundary << '\n';
+	os << "topBoundary: " << topBoundary << '\n';
+	os << "frontBoundary: " << frontBoundary << '\n';
+	os << "backBoundary: " << backBoundary << '\n';
+	os << "xBC: \"" << xBC << "\"\n";
 
-	// Parse the command line options.
-	bpo::options_description desc("Command line options");
-	desc.add_options()("help", "show this help message")("parameterFile",
-		bpo::value<std::string>(&param_file),
-		"When running Xolotl the name of the parameter file should immediately "
-		"follow the executable: xolotl/xolotl param.txt")("networkFile",
-		bpo::value<std::string>(&networkFilename),
-		"The HDF5 file to use for restart.");
-
-	bpo::positional_options_description p;
-	p.add("parameterFile", 1);
-
-	bpo::variables_map opts;
-
-	bpo::store(
-		bpo::command_line_parser(argc, argv).options(desc).positional(p).run(),
-		opts);
-	bpo::notify(opts);
-
-	// Declare a group of options that will be
-	// allowed in config file
-	bpo::options_description config("Parameters");
-	config.add_options()("logLevel",
-		bpo::value<std::string>()->default_value("info"),
-		"Logging output threshold. (default = info; available "
-		"debug,extra,info,warning,error).")("networkFile",
-		bpo::value<std::string>(&networkFilename),
-		"The HDF5 file to use for restart.")("tempHandler",
-		bpo::value<std::string>(&tempHandlerName)->default_value("constant"),
-		"Temperature handler to use. (default = constant; available "
-		"constant,gradient,heat,ELM,profile")("tempParam",
-		bpo::value<std::string>(),
-		"At most two parameters for temperature handler. Alternatives:"
-		"constant -> temp; "
-		"gradient -> surfaceTemp bulkTemp; "
-		"heat -> heatFlux bulkTemp; "
-		"ELM -> bulkTemp")("tempFile",
-		bpo::value<std::string>(&tempProfileFilename),
-		"A temperature profile is given by the specified file, "
-		"then linear interpolation is used to fit the data."
-		" NOTE: no need for tempParam here.")("tempGridPower",
-		bpo::value<double>(&tempGridPower),
-		"The value of the power to use to create the temperature grid spacing, "
-		"only used if heat temperature handler is used. (default = 2.5).")(
-		"flux", bpo::value<double>(&fluxAmplitude),
-		"The value of the incoming flux in #/nm2/s. If the Fuel case is used "
-		"it actually corresponds to the fission rate in #/nm3/s.")("fluxFile",
-		bpo::value<std::string>(&fluxTimeProfileFilePath),
-		"A time profile for the flux is given by the specified file, "
-		"then linear interpolation is used to fit the data."
-		"(NOTE: If a flux profile file is given, "
-		"a constant flux should NOT be given)")("perfHandler",
-		bpo::value<std::string>(&perfHandlerName)->default_value("os"),
-		"Which set of performance handlers to use. (default = os, available "
-		"dummy,os,papi).")("perfOutputYAML",
-		bpo::value<bool>(&perfOutputYAMLFlag),
-		"Should we write the performance report to a YAML file?")("vizHandler",
-		bpo::value<std::string>(&vizHandlerName)->default_value("dummy"),
-		"Which set of handlers to use for the visualization. (default = dummy, "
-		"available std,dummy).")("dimensions",
-		bpo::value<int>(&dimensionNumber),
-		"Number of dimensions for the simulation.")("material",
-		bpo::value<std::string>(&materialName),
-		"The material options are as follows: {W100, W110, W111, "
-		"W211, Pulsed, Fuel, Fe, 800H, AlphaZr}.")("initialConc",
-		bpo::value<std::string>(&initialConcentration),
-		"The name, size, and value of the initial concentration in the "
-		"material.")("zeta", bpo::value<double>(&zeta)->default_value(0.73),
-		"The value of the electronic stopping power in the material (0.73 by "
-		"default).")("interfaceLoc", bpo::value<double>(&interfaceLocation),
-		"The value (in nm) of the interface location between two materials "
-		"(-1000.0 nm by default).")("gridType",
-		bpo::value<std::string>(&gridTypeName)->default_value("uniform"),
-		"Grid type to use along X. (default = uniform; available "
-		"uniform,nonuniform,geometric,cheby,read")("gridParam",
-		bpo::value<std::string>(),
-		"At most six parameters for the grid. Alternatives:"
-		"uniform -> nX hX; "
-		"nonuniform -> nX; "
-		"geometric -> nX ratio"
-		"cheby -> nX width"
-		"The four additional parameters are for a uniform grid in Y and Z -> "
-		"nY hY nZ hZ.")("gridFile", bpo::value<std::string>(&gridFilename),
-		"A grid spacing is given by the specified file."
-		" NOTE: you need gridParam here only if in 2D/3D.")("petscArgs",
-		bpo::value<std::string>(&petscArg),
-		"All the arguments that will be given to PETSc.")("process",
-		bpo::value<std::string>(),
-		"List of all the processes to use in the simulation (reaction, diff, "
-		"advec, modifiedTM, movingSurface, bursting, attenuation, resolution, "
-		"heterogeneous, sink, soret, constant, noSolve, largeBubble).")(
-		"grain", "heterogeneous, sink, soret, constant, noSolve).")("grain",
-		bpo::value<std::string>(&gbList),
-		"This option allows the user to add GB in the X, Y, or Z directions. "
-		"To do so, simply write the direction followed "
-		"by the distance in nm, for instance: X 3.0 Z 2.5 Z 10.0 .")(
-		"useSubnetworks", bpo::value<bool>(&subnetworksFlag),
-		"Should we distribute network across subnetworks?")(
-		"couplingTimeStepParams", bpo::value<std::string>(),
-		"This option allows the user to define the parameters that control the "
-		"multi-instance time-stepping. "
-		"To do so, simply write the values in order "
-		"initialDt maxDt growthFactor startTime endTime maxSteps.")("grouping",
-		bpo::value<std::string>(),
-		"The grouping parameters: the first integer is the size at which the "
-		"grouping starts (HeV clusters in the PSI case, Xe in the NE case), "
-		"the second is the first width of the groups (He for PSI, Xe for NE), "
-		"and the third one in the second width of the groups (V for PSI).")(
-		"sputtering", bpo::value<double>(&sputteringYield),
-		"The sputtering yield (in atoms/ion) that will be used.")("netParam",
-		bpo::value<std::string>(),
-		"This option allows the user to define the boundaries of the network. "
-		"To do so, simply write the values in order "
-		"maxHe/Xe/Basal maxD maxT maxV maxI maxPureV.")("radiusSize",
-		bpo::value<std::string>(),
-		"This option allows the user to set a minimum size for the computation "
-		"for the average radii, in the same order as the netParam option "
-		"(default is 0).")("boundary", bpo::value<std::string>(),
-		"This option allows the user to choose the boundary conditions. "
-		"The first one correspond to the left side (surface) "
-		"and second one to the right (bulk), "
-		"then two for Y and two for Z. "
-		"0 means mirror or periodic, 1 means free surface.")("xBCType",
-		bpo::value<std::string>(&xBC),
-		"The boundary conditions to use in the X direction, mirror (default), "
-		"periodic, or robin (for temperature).")("heatLossPortion",
-		bpo::value<double>(&heatLossPortion),
-		"The portion of heat lost in the bulk (-1.0 by default).")(
-		"burstingDepth", bpo::value<double>(&burstingDepth),
-		"The depth (in nm) after which there is an exponential decrease in the "
-		"probability of bursting (10.0 nm if nothing is specified).")(
-		"burstingFactor", bpo::value<double>(&burstingFactor),
-		"This option allows the user to set the factor used in computing the "
-		"likelihood of a bursting event.")("rng", bpo::value<std::string>(),
-		"Allows user to specify seed used to initialize random number "
-		"generator (default = determined from current time) and "
-		"whether each process should print the seed value "
-		"it uses (default = don't print).")("density",
-		bpo::value<double>(&density),
-		"Sets a density in nm-3 for the number of xenon per volume in a bubble "
-		"for the NE case (default is 10.162795276841 nm-3 as before).")("pulse",
-		bpo::value<std::string>(),
-		"The total length of the pulse (in s) if the Pulsed material is used, "
-		"and the proportion of it that is "
-		"ON.")("lattice", bpo::value<double>(&latticeParameter),
-		"The length of the lattice side in nm.")("impurityRadius",
-		bpo::value<double>(&impurityRadius),
-		"The radius of the main impurity (He or Xe) in nm.")("biasFactor",
-		bpo::value<double>(&biasFactor),
-		"This option allows the user to set the bias factor reflecting the "
-		"fact that interstitial "
-		"clusters have a larger surrounding strain field.")("hydrogenFactor",
-		bpo::value<double>(&hydrogenFactor),
-		"The factor between the size of He and H.")("xenonDiffusivity",
-		bpo::value<double>(&xenonDiffusivity),
-		"The diffusion coefficient for xenon in nm2 s-1.")("fissionYield",
-		bpo::value<double>(&fissionYield),
-		"The number of xenon created for each fission (default is 0.25).")(
-		"migrationThreshold", bpo::value<double>(&migrationThreshold),
-		"Set a limit on the migration energy above which the diffusion will be "
-		"ignored.")("fluxDepthProfileFilePath",
-		bpo::value<fs::path>(&fluxDepthProfileFilePath),
-		"The path to the custom flux profile file; the default is an empty "
-		"string that will use the default material associated flux handler.")(
-		"basalPortion", bpo::value<double>(&basalPortion)->default_value(0.1),
-		"The value of the basal portion generated for each V (0.1 by "
-		"default).")("transitionSize",
-		bpo::value<int>(&transitionSize)->default_value(325),
-		"The value for the transition within a type of cluster, for instance "
-		"basal (325 by "
-		"default).")("cascadeDose",
-		bpo::value<double>(&cascadeDose)->default_value(-1.0),
-		"The value of the dose at which the cascade overlap effect takes "
-		"effect, if negative there won't be an effect (-1.0 by "
-		"default).")("cascadeEfficiency",
-		bpo::value<double>(&cascadeEfficiency)->default_value(0.0),
-		"The value of the remaining efficiency once the overlap effect started "
-		"(0.0 by "
-		"default).");
-
-	bpo::options_description visible("Allowed options");
-	visible.add(desc).add(config);
-
-	if (opts.count("help")) {
-		std::cout << visible << std::endl;
-		std::exit(EXIT_SUCCESS);
+	os << "heatLossPortion: " << heatLossPortion << '\n';
+	os << "burstingDepth: " << burstingDepth << '\n';
+	os << "burstingFactor: " << burstingFactor << '\n';
+	os << "rngSeed: " << rngSeed << '\n';
+	os << "rngUseSeed: " << std::boolalpha << rngUseSeed << '\n';
+	os << "rngPrintSeed: " << std::boolalpha << rngPrintSeed << '\n';
+	os << "radiusMinSizes:";
+	for (auto&& s : radiusMinSizes) {
+		os << ' ' << s;
 	}
+	os << '\n';
 
-	// Check that the file exist
-	if (!std::ifstream{argv[1]}) {
-		std::cout << visible << std::endl;
-		throw bpo::error("Options: unable to open parameter file: "s + argv[1]);
-	}
+	os << "density: " << density << '\n';
+	os << "pulseTime: " << pulseTime << '\n';
+	os << "pulseProportion: " << pulseProportion << '\n';
+	os << "latticeParameter: " << latticeParameter << '\n';
+	os << "impurityRadius: " << impurityRadius << '\n';
+	os << "biasFactor: " << biasFactor << '\n';
+	os << "hydrogenFactor: " << hydrogenFactor << '\n';
+	os << "xenonDiffusivity: " << xenonDiffusivity << '\n';
+	os << "fissionYield: " << fissionYield << '\n';
+	os << "migrationThreshold: " << migrationThreshold << '\n';
 
-	std::ifstream ifs(param_file);
-	if (!ifs) {
-		throw bpo::error(
-			"Options: unable to open parameter file: " + param_file);
-	}
-	store(parse_config_file(ifs, config), opts);
-	notify(opts);
+	os << "fluxDepthProfileFilePath: \"" << fluxDepthProfileFilePath.string()
+	   << "\"\n";
 
-	util::Log::setLevelThreshold(opts["logLevel"].as<std::string>());
+	os << "basalPortion: " << basalPortion << '\n';
+	os << "transitionSize: " << transitionSize << '\n';
+	os << "cascadeDose: " << cascadeDose << '\n';
+	os << "cascadeEfficiency: " << cascadeEfficiency << '\n';
 
-	// Take care of the temperature
-	if (opts.count("tempParam")) {
-		// Break the argument into tokens.
-		auto tokens =
-			util::Tokenizer<double>{opts["tempParam"].as<std::string>()}();
-		if (tokens.size() > 2) {
-			throw bpo::error(
-				"Options: too many temperature parameters (expect 2 or less)");
-		}
-		for (std::size_t i = 0; i < tokens.size(); ++i) {
-			tempParam[i] = tokens[i];
+	os << "processMap:";
+	for (auto&& p : processMap) {
+		if (p.second) {
+			os << " \"" << p.first << "\"";
 		}
 	}
+	os << '\n';
 
-	if (opts.count("tempFile")) {
-		// Check that the profile file exists
-		std::ifstream inFile(tempProfileFilename);
-		if (!inFile) {
-			throw bpo::error("Options: could not open file containing "
-							 "temperature profile data. Aborting!");
-		}
-	}
-
-	// Take care of the flux
-	if (opts.count("flux")) {
-		fluxFlag = true;
-	}
-	if (opts.count("fluxFile")) {
-		// Check that the profile file exists
-		std::ifstream inFile(fluxTimeProfileFilePath.c_str());
-		if (!inFile) {
-			throw bpo::error("Options: could not open file containing flux "
-							 "profile data. Aborting!");
-		}
-		else {
-			// Set the flag to use a flux profile to true
-			fluxTimeProfileFlag = true;
-		}
-	}
-
-	// Take care of the performance handler
-	if (opts.count("perfHandler")) {
-		std::string perfHandlers[] = {"dummy", "os", "papi"};
-		if (std::find(begin(perfHandlers), end(perfHandlers),
-				perfHandlerName) == end(perfHandlers)) {
-			throw bpo::invalid_option_value(
-				"Options: could not understand the performance handler type. "
-				"Aborting!");
-		}
-	}
-
-	// Take care of the visualization handler
-	if (opts.count("vizHandler")) {
-		// Determine the type of handlers we are being asked to use
-		if (!(vizHandlerName == "std" || vizHandlerName == "dummy")) {
-			throw bpo::invalid_option_value(
-				"Options: unrecognized argument in the visualization option "
-				"handler. Aborting!");
-		}
-	}
-
-	// Take care of the grid
-	if (opts.count("gridParam")) {
-		// Break the argument into tokens.
-		auto tokens =
-			util::Tokenizer<double>{opts["gridParam"].as<std::string>()}();
-		if (tokens.size() > 6) {
-			throw bpo::invalid_option_value(
-				"Options: too many grid parameters (expect 6 or less)");
-		}
-		for (std::size_t i = 0; i < tokens.size(); ++i) {
-			gridParam[i] = tokens[i];
-		}
-	}
-
-	if (opts.count("gridFile")) {
-		// Check that the file exists
-		std::ifstream inFile(gridFilename);
-		if (!inFile) {
-			throw bpo::invalid_option_value(
-				"Options: could not open file containing grid data. Aborting!");
-		}
-	}
-
-	// Take care of the radius minimum size
-	if (opts.count("radiusSize")) {
-		// Break the argument into tokens.
-		auto tokens =
-			util::Tokenizer<int>{opts["radiusSize"].as<std::string>()}();
-
-		// Set the values
-		for (int i = 0; i < tokens.size(); i++) {
-			radiusMinSizes.push_back(tokens[i]);
-		}
-	}
-
-	// Take care of the processes
-	if (opts.count("process")) {
-		// Break the argument into tokens.
-		auto tokens = util::Tokenizer<>{opts["process"].as<std::string>()}();
-
-		// Initialize the map of processes
-		processMap["reaction"] = false;
-		processMap["diff"] = false;
-		processMap["advec"] = false;
-		processMap["modifiedTM"] = false;
-		processMap["movingSurface"] = false;
-		processMap["bursting"] = false;
-		processMap["attenuation"] = false;
-		processMap["resolution"] = false;
-		processMap["heterogeneous"] = false;
-		processMap["sink"] = false;
-		processMap["largeBubble"] = false;
-		processMap["soret"] = false;
-		processMap["constant"] = false;
-		processMap["noSolve"] = false;
-
-		// Loop on the tokens
-		for (auto&& token : tokens) {
-			addProcess(token);
-		}
-	}
-
-	// Take care of multi-instance params
-	if (opts.count("couplingTimeStepParams")) {
-		// Set parameters from tokenized list
-		auto paramString = opts["couplingTimeStepParams"].as<std::string>();
-		auto params = util::Tokenizer<double>{paramString}();
-
-		if (params.size() != 6) {
-			throw bpo::invalid_option_value(
-				"Options: Must provide six (6) values for time step "
-				"parameters. Aborting!");
-		}
-
-		initialTimeStep = params[0];
-		maxTimeStep = params[1];
-		timeStepGrowthFactor = params[2];
-		startTime = params[3];
-		endTime = params[4];
-		if (params[5] <= 0) {
-			throw bpo::invalid_option_value(
-				"Options: maxSteps must be a positive value. Aborting!");
-		}
-		numTimeSteps = static_cast<IdType>(params[5]);
-	}
-
-	// Take care of the gouping
-	if (opts.count("grouping")) {
-		// Break the argument into tokens.
-		auto tokens =
-			util::Tokenizer<int>{opts["grouping"].as<std::string>()}();
-
-		// Set grouping minimum size
-		groupingMin = tokens[0];
-		// Set the grouping width in the first direction
-		groupingWidthA = tokens[1];
-		// Set the grouping width in the second direction
-		if (tokens.size() > 2)
-			groupingWidthB = tokens[2];
-	}
-
-	// Take care of the network parameters
-	if (opts.count("netParam")) {
-		// Set the flag to not use the HDF5 file
-		useHDF5Flag = false;
-		// Set parameters from tokenized list
-		setNetworkParameters(
-			util::Tokenizer<IdType>{opts["netParam"].as<std::string>()}());
-	}
-
-	// Take care of the boundary conditions
-	if (opts.count("boundary")) {
-		// Break the argument into tokens.
-		auto tokens =
-			util::Tokenizer<int>{opts["boundary"].as<std::string>()}();
-
-		// Set the left boundary
-		leftBoundary = tokens[0];
-		// Set the right boundary
-		rightBoundary = tokens[1];
-		if (tokens.size() > 2)
-			// Set the bottom boundary
-			bottomBoundary = tokens[2];
-		if (tokens.size() > 3)
-			// Set the top boundary
-			topBoundary = tokens[3];
-		if (tokens.size() > 4)
-			// Set the front boundary
-			frontBoundary = tokens[4];
-		if (tokens.size() > 5)
-			// Set the back boundary
-			backBoundary = tokens[5];
-	}
-
-	// Take care of the rng
-	if (opts.count("rng")) {
-		// Break the argument into tokens.
-		auto tokens = util::Tokenizer<>{opts["rng"].as<std::string>()}();
-		size_t currIdx = 0;
-
-		// Determine whether we should print the seed value.
-		bool shouldPrintSeed = false;
-		if (tokens[currIdx] == "print") {
-			shouldPrintSeed = true;
-			++currIdx;
-		}
-		rngPrintSeed = shouldPrintSeed;
-
-		if (currIdx < tokens.size()) {
-			// Convert arg to an integer.
-			char* ep = NULL;
-			auto useed = strtoul(tokens[currIdx].c_str(), &ep, 10);
-			if (ep != (tokens[currIdx].c_str() + tokens[currIdx].length())) {
-				throw bpo::invalid_option_value(
-					"Options: Invalid random number generator seed, must "
-					"be a non-negative integer. Aborting!");
-			}
-			setRNGSeed(useed);
-		}
-	}
-
-	// Take care of the flux pulse
-	if (opts.count("pulse")) {
-		// Break the argument into tokens.
-		auto tokens =
-			util::Tokenizer<double>{opts["pulse"].as<std::string>()}();
-
-		pulseTime = tokens[0];
-		pulseProportion = tokens[1];
-	}
+	os << "petscArg: \"" << petscArg << "\"\n";
 }
 
 void
@@ -579,17 +230,356 @@ Options::setNetworkParameters(const std::vector<IdType>& params)
 }
 
 void
+Options::setNetworkParameters(const std::string& paramStr)
+{
+	setNetworkParameters(util::Tokenizer<IdType>{paramStr}());
+}
+
+void
 Options::addProcess(const std::string& processKey)
 {
+	// Initialize map if necessary
+	if (processMap.empty()) {
+		setProcesses("");
+	}
+
 	// Look for the key
 	if (auto it = processMap.find(processKey); it != processMap.end()) {
 		// Switch the value to true in the map
 		processMap[processKey] = true;
 	}
 	else {
-		throw bpo::invalid_option_value(
+		throw InvalidOptionValue(
 			"Options: The process name is not known: " + processKey);
 	}
+}
+
+void
+Options::setTempParam(const std::vector<double>& params)
+{
+	if (params.size() > 2) {
+		throw InvalidOptionValue(
+			"Options: too many temperature parameters (expect 2 or less)");
+	}
+	for (std::size_t i = 0; i < params.size(); ++i) {
+		tempParam[i] = params[i];
+	}
+}
+
+void
+Options::setTempParam(const std::string& paramStr)
+{
+	auto tokens = util::Tokenizer<double>{paramStr}();
+	setTempParam(tokens);
+}
+
+void
+Options::checkTempProfileFilename() const
+{
+	// Check that the profile file exists
+	std::ifstream inFile(tempProfileFilename);
+	if (!inFile) {
+		throw std::runtime_error("Options: could not open file containing "
+								 "temperature profile data. Aborting!");
+	}
+}
+
+void
+Options::checkFluxTimeProfileFilename() const
+{
+	// Check that the profile file exists
+	std::ifstream inFile(fluxTimeProfileFilePath.c_str());
+	if (!inFile) {
+		throw std::runtime_error("Options: could not open file containing flux "
+								 "profile data. Aborting!");
+	}
+}
+
+void
+Options::checkPerfHandlerName() const
+{
+	static const std::string perfHandlers[] = {"dummy", "os", "papi"};
+	if (std::find(begin(perfHandlers), end(perfHandlers), perfHandlerName) ==
+		end(perfHandlers)) {
+		throw InvalidOptionValue(
+			"Options: could not understand the performance handler type: " +
+			perfHandlerName + ". Aborting!");
+	}
+}
+
+void
+Options::checkVizHandlerName() const
+{
+	// Determine the type of handlers we are being asked to use
+	if (!(vizHandlerName == "std" || vizHandlerName == "dummy")) {
+		throw InvalidOptionValue(
+			"Options: unrecognized argument in the visualization option "
+			"handler: " +
+			vizHandlerName + ". Aborting!");
+	}
+}
+
+void
+Options::setGridParam(const std::vector<double>& params)
+{
+	if (params.size() > 6) {
+		throw InvalidOptionValue(
+			"Options: too many grid parameters (expect 6 or less)");
+	}
+	for (std::size_t i = 0; i < params.size(); ++i) {
+		gridParam[i] = params[i];
+	}
+}
+
+void
+Options::setGridParam(const std::string& paramStr)
+{
+	// Break the argument into tokens.
+	auto tokens = util::Tokenizer<double>{paramStr}();
+	setGridParam(tokens);
+}
+
+void
+Options::checkGridFilename() const
+{
+	// Check that the file exists
+	std::ifstream inFile(gridFilename);
+	if (!inFile) {
+		throw std::runtime_error(
+			"Options: could not open file containing grid data. Aborting!");
+	}
+}
+
+void
+Options::setRadiusMinSizes(const std::vector<int>& params)
+{
+	for (int i = 0; i < params.size(); i++) {
+		radiusMinSizes.push_back(params[i]);
+	}
+}
+
+void
+Options::setRadiusMinSizes(const std::string& paramStr)
+{
+	// Break the argument into tokens.
+	auto tokens = util::Tokenizer<int>{paramStr}();
+	setRadiusMinSizes(tokens);
+}
+
+void
+Options::setBoundaries(const std::vector<int>& params)
+{
+	if (params.size() < 2) {
+		// TODO: should this be an error?
+		return;
+	}
+
+	// Set the left boundary
+	leftBoundary = params[0];
+	// Set the right boundary
+	rightBoundary = params[1];
+	if (params.size() > 2)
+		// Set the bottom boundary
+		bottomBoundary = params[2];
+	if (params.size() > 3)
+		// Set the top boundary
+		topBoundary = params[3];
+	if (params.size() > 4)
+		// Set the front boundary
+		frontBoundary = params[4];
+	if (params.size() > 5)
+		// Set the back boundary
+		backBoundary = params[5];
+}
+
+void
+Options::setBoundaries(const std::string& paramStr)
+{
+	// Break the argument into tokens.
+	auto tokens = util::Tokenizer<int>{paramStr}();
+	setBoundaries(tokens);
+}
+
+void
+Options::processRNGParam(const std::string& paramStr)
+{
+	// Break the argument into tokens.
+	auto tokens = util::Tokenizer<>{paramStr}();
+	size_t currIdx = 0;
+
+	// Determine whether we should print the seed value.
+	bool shouldPrintSeed = false;
+	if (tokens[currIdx] == "print") {
+		shouldPrintSeed = true;
+		++currIdx;
+	}
+	rngPrintSeed = shouldPrintSeed;
+
+	if (currIdx < tokens.size()) {
+		// Convert arg to an integer.
+		char* ep = NULL;
+		auto useed = strtoul(tokens[currIdx].c_str(), &ep, 10);
+		if (ep != (tokens[currIdx].c_str() + tokens[currIdx].length())) {
+			throw InvalidOptionValue(
+				"Options: Invalid random number generator seed, must "
+				"be a non-negative integer. Aborting!");
+		}
+		setRNGSeed(useed);
+	}
+}
+
+void
+Options::setProcesses(const std::vector<std::string>& processList)
+{
+	for (auto&& processName : processList) {
+		addProcess(processName);
+	}
+}
+
+void
+Options::setProcesses(const std::string& processList)
+{
+	// Initialize the map of processes
+	processMap["reaction"] = false;
+	processMap["diff"] = false;
+	processMap["advec"] = false;
+	processMap["modifiedTM"] = false;
+	processMap["movingSurface"] = false;
+	processMap["bursting"] = false;
+	processMap["attenuation"] = false;
+	processMap["resolution"] = false;
+	processMap["heterogeneous"] = false;
+	processMap["sink"] = false;
+	processMap["soret"] = false;
+	processMap["constant"] = false;
+	processMap["noSolve"] = false;
+
+	// Break the argument into tokens.
+	auto tokens = util::Tokenizer<>{processList}();
+	setProcesses(tokens);
+}
+
+void
+Options::setCouplingTimeStepParams(const std::vector<double>& params)
+{
+	if (params.size() != 6) {
+		throw InvalidOptionValue(
+			"Options: Must provide six (6) values for time step "
+			"parameters. Aborting!");
+	}
+
+	initialTimeStep = params[0];
+	maxTimeStep = params[1];
+	timeStepGrowthFactor = params[2];
+	startTime = params[3];
+	endTime = params[4];
+	if (params[5] <= 0) {
+		throw InvalidOptionValue(
+			"Options: maxSteps must be a positive value. Aborting!");
+	}
+	numTimeSteps = static_cast<IdType>(params[5]);
+}
+
+void
+Options::setCouplingTimeStepParams(const std::string& paramString)
+{
+	// Set parameters from tokenized list
+	auto params = util::Tokenizer<double>{paramString}();
+	setCouplingTimeStepParams(params);
+}
+
+void
+Options::setPulseParams(const std::string& paramStr)
+{
+	// Break the argument into tokens.
+	auto tokens = util::Tokenizer<double>{paramStr}();
+
+	pulseTime = tokens[0];
+	pulseProportion = tokens[1];
+}
+
+void
+Options::setGroupingParams(const std::vector<int>& params)
+{
+	// Set grouping minimum size
+	groupingMin = params[0];
+	// Set the grouping width in the first direction
+	groupingWidthA = params[1];
+	// Set the grouping width in the second direction
+	if (params.size() > 2) {
+		groupingWidthB = params[2];
+	}
+}
+
+void
+Options::setGroupingParams(const std::string& paramString)
+{
+	// Break the argument into tokens.
+	auto tokens = util::Tokenizer<int>{paramString}();
+	setGroupingParams(tokens);
+}
+
+void
+Options::appendPetscArg(const std::string& arg)
+{
+	if (!petscArg.empty()) {
+		petscArg += " ";
+	}
+	petscArg += arg;
+}
+
+void
+printUsage(std::ostream& os)
+{
+	os << "Xolotl Usage:\n"
+	   << "\n"
+	   << "    xolotl --help|-h\n"
+	   << "    xolotl <param-file>\n";
+}
+
+void
+printHelp()
+{
+	printUsage(std::cout);
+	std::cout << "\n"
+			  << "\n"
+			  << "Command-line arguments:\n"
+			  << "\n"
+			  << "  --help|-h     Print this help message.\n"
+			  << "  <param-file>  File providing runtime parameters.\n"
+			  << "\n"
+			  << "\n"
+			  << "Xolotl (JSON) parameters:\n"
+			  << "\n";
+	JSONOptions{}.printHelp(std::cout);
+}
+
+std::shared_ptr<IOptions>
+createOptions(int argc, const char* argv[])
+{
+	// Handle empty command-line
+	if (argc < 2) {
+		std::stringstream usage;
+		printUsage(usage);
+		throw CommandLineError(usage.str());
+	}
+
+	// Handle help output
+	auto arg1 = std::string(argv[1]);
+	if (arg1 == "--help" || arg1 == "-h") {
+		printHelp();
+		return std::shared_ptr<IOptions>();
+	}
+
+	// Handle parameter file
+	auto filePath = fs::path(argv[1]);
+	auto ext = filePath.extension();
+
+	if (ext == ".json") {
+		return std::make_shared<JSONOptions>();
+	}
+
+	return std::make_shared<ConfOptions>();
 }
 } // end namespace options
 } // end namespace xolotl

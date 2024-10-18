@@ -28,6 +28,17 @@ inline constexpr T epsilon = std::numeric_limits<T>::epsilon();
 template <typename T>
 inline constexpr T infinity = std::numeric_limits<T>::infinity();
 
+template <typename T>
+inline T
+round(T x, int nDigits)
+{
+	static_assert(std::is_floating_point_v<T>);
+	static constexpr T ten = static_cast<T>(10);
+	auto digits = static_cast<T>(nDigits);
+	auto power_of_10 = std::pow(ten, digits);
+	return std::round(x * power_of_10) / power_of_10;
+}
+
 //@{
 /**
  * Duplicate of the generic std::min and std::max to be used in device kernels

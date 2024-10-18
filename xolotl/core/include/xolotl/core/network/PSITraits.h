@@ -3,6 +3,7 @@
 #include <tuple>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/core/network/detail/ClusterData.h>
 #include <xolotl/core/network/detail/TrapMutationClusterData.h>
 
 namespace xolotl
@@ -112,6 +113,23 @@ struct NumberOfVacancySpecies<PSIFullSpeciesList> :
 {
 };
 
+template <>
+struct SpeciesForGrouping<PSIFullSpeciesList, 5>
+{
+	using Sequence = EnumSequence<PSIFullSpeciesList, 5>;
+	static constexpr auto first = Sequence(PSIFullSpeciesList::He);
+	static constexpr auto last = Sequence(PSIFullSpeciesList::I);
+
+	KOKKOS_INLINE_FUNCTION
+	static constexpr std::underlying_type_t<PSIFullSpeciesList>
+	mapToMomentId(EnumSequence<PSIFullSpeciesList, 5> value)
+	{
+		if (value == PSIFullSpeciesList::I)
+			return 3;
+		return value();
+	}
+};
+
 enum class PSIDeuteriumSpeciesList
 {
 	He,
@@ -164,6 +182,23 @@ struct NumberOfVacancySpecies<PSIDeuteriumSpeciesList> :
 {
 };
 
+template <>
+struct SpeciesForGrouping<PSIDeuteriumSpeciesList, 4>
+{
+	using Sequence = EnumSequence<PSIDeuteriumSpeciesList, 4>;
+	static constexpr auto first = Sequence(PSIDeuteriumSpeciesList::He);
+	static constexpr auto last = Sequence(PSIDeuteriumSpeciesList::I);
+
+	KOKKOS_INLINE_FUNCTION
+	static constexpr std::underlying_type_t<PSIDeuteriumSpeciesList>
+	mapToMomentId(EnumSequence<PSIDeuteriumSpeciesList, 4> value)
+	{
+		if (value == PSIDeuteriumSpeciesList::I)
+			return 2;
+		return value();
+	}
+};
+
 enum class PSITritiumSpeciesList
 {
 	He,
@@ -214,6 +249,23 @@ template <>
 struct NumberOfVacancySpecies<PSITritiumSpeciesList> :
 	std::integral_constant<std::size_t, 1>
 {
+};
+
+template <>
+struct SpeciesForGrouping<PSITritiumSpeciesList, 4>
+{
+	using Sequence = EnumSequence<PSITritiumSpeciesList, 4>;
+	static constexpr auto first = Sequence(PSITritiumSpeciesList::He);
+	static constexpr auto last = Sequence(PSITritiumSpeciesList::I);
+
+	KOKKOS_INLINE_FUNCTION
+	static constexpr std::underlying_type_t<PSITritiumSpeciesList>
+	mapToMomentId(EnumSequence<PSITritiumSpeciesList, 4> value)
+	{
+		if (value == PSITritiumSpeciesList::I)
+			return 2;
+		return value();
+	}
 };
 
 enum class PSIHeliumSpeciesList

@@ -20,7 +20,6 @@ class NEClusterUpdater;
 class NEReactionNetwork : public ReactionNetwork<NEReactionNetwork>
 {
 	friend class ReactionNetwork<NEReactionNetwork>;
-	friend class detail::ReactionNetworkWorker<NEReactionNetwork>;
 
 public:
 	using Superclass = ReactionNetwork<NEReactionNetwork>;
@@ -35,6 +34,9 @@ public:
 
 	IndexType
 	checkLargestClusterId();
+
+	void
+	initializeExtraClusterData(const options::IOptions& options);
 
 private:
 	double
@@ -52,6 +54,13 @@ private:
 
 	detail::NEReactionGenerator
 	getReactionGenerator() const noexcept;
+
+	void
+	readClusters(const std::string filename = "reactionRates.txt");
+
+	void
+	readReactions(
+		double temperature, const std::string filename = "reactionRates.txt");
 };
 
 namespace detail

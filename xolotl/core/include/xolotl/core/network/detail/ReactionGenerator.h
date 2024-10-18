@@ -153,6 +153,7 @@ protected:
 	ClusterDataView _clusterDataView;
 	IndexType _numDOFs;
 	bool _enableReducedJacobian;
+	bool _enableReadRates;
 	IndexView _clusterProdReactionCounts;
 	IndexView _clusterDissReactionCounts;
 
@@ -170,6 +171,9 @@ protected:
 	Kokkos::View<DissociationReactionType*> _dissReactions;
 
 	ClusterConnectivity<> _connectivity;
+
+	// Reaction energies
+	Kokkos::View<double**> _reactionEnergies;
 
 	ConnectivitiesPairView _constantConnsRows;
 	ConnectivitiesPairView _constantConnsEntries;
@@ -201,7 +205,7 @@ struct ReactionGeneratorTypeBuilderImpl<TReactionGeneratorParent,
 	using Type =
 		typename WrapTypeSpecificReactionGenerator<NetworkType, FrontReaction,
 			typename ReactionGeneratorTypeBuilderImpl<TReactionGeneratorParent,
-				TuplePopFront<ExtraReactions>>::Type>::Type;
+				util::TuplePopFront<ExtraReactions>>::Type>::Type;
 };
 
 template <typename TNetwork, typename TDerived>
@@ -221,10 +225,11 @@ struct ReactionGeneratorTypeBuilder
 			ReactionSecond>,
 		"Second reaction type must be a DissociationReaction");
 
-	using ExtraReactionTypes = TuplePopFront<TuplePopFront<ReactionTypes>>;
+	using ExtraReactionTypes =
+		util::TuplePopFront<util::TuplePopFront<ReactionTypes>>;
 	using Type = typename ReactionGeneratorTypeBuilderImpl<
 		ReactionGeneratorBase<TNetwork, TDerived>,
-		TupleReverse<ExtraReactionTypes>>::Type;
+		util::TupleReverse<ExtraReactionTypes>>::Type;
 };
 
 template <typename TNetwork, typename TDerived>

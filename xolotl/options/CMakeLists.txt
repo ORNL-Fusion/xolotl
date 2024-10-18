@@ -5,10 +5,16 @@ set(XOLOTL_OPTIONS_HEADER_DIR ${XOLOTL_OPTIONS_INCLUDE_DIR}/xolotl/options)
 set(XOLOTL_OPTIONS_HEADERS
     ${XOLOTL_OPTIONS_HEADER_DIR}/IOptions.h
     ${XOLOTL_OPTIONS_HEADER_DIR}/Options.h
+    ${XOLOTL_OPTIONS_HEADER_DIR}/ConfOptions.h
+    ${XOLOTL_OPTIONS_HEADER_DIR}/JSONOptions.h
+    ${XOLOTL_OPTIONS_HEADER_DIR}/detail/JSONElem.h
 )
 
 set(XOLOTL_OPTIONS_SOURCES
     ${XOLOTL_OPTIONS_SOURCE_DIR}/Options.cpp
+    ${XOLOTL_OPTIONS_SOURCE_DIR}/ConfOptions.cpp
+    ${XOLOTL_OPTIONS_SOURCE_DIR}/JSONOptions.cpp
+    ${XOLOTL_OPTIONS_SOURCE_DIR}/JSONElem.cpp
 )
 
 add_library(xolotlOptions SHARED
@@ -24,6 +30,7 @@ target_include_directories(xolotlOptions PUBLIC
     $<BUILD_INTERFACE:${XOLOTL_OPTIONS_INCLUDE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
+
 set_target_properties(xolotlOptions PROPERTIES
     INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
     INSTALL_RPATH_USE_LINK_PATH TRUE

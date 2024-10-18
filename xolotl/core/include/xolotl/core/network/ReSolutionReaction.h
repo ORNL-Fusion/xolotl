@@ -10,7 +10,7 @@ namespace network
 {
 /**
  * @brief Class implementing re-solution reaction where
- * X_n -> X_(n-1) + X_1 with a given rate
+ * Xe_nV_m -> Xe_(n-1)V_(m-1) + Xe_1V_1 with a given rate
  *
  * @tparam TNetwork The network type
  * @tparam TDerived The derived class type.

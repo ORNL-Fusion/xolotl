@@ -1,0 +1,33 @@
+{
+    "dimensions": 0,
+    "process": "sink reaction",
+    "boundary": "1 1",
+    "netParam": "1000 0 0 1000 1000",
+    "useSubnetworks": true,
+    "couplingTimeStepParams": "1.0e-9 1.0 1.8 0.0 1.0 40",
+    "grouping": "101 2",
+    "vizHandler": "dummy",
+    "perfHandler": "dummy",
+    "material": "AlphaZr",
+    "tempParam": 553,
+    "flux": 1e-7,
+    "cascadeDose": 0.05,
+    "cascadeEfficiency": 0.025,
+    "radiusSize": "85 85 85",
+    // "restartFile": "xolotlRestart.txt",
+    "petscArgs": [
+        "-start_stop 1e-7",
+        "-ts_dt 1.0e-12",
+        "-ts_max_steps 1000000",
+        "-ts_max_snes_failures -1",
+        "-pc_fieldsplit_detect_coupling",
+        "-ts_adapt_dt_max 1.0",
+        "-ts_exact_final_time stepover",
+        "-ts_monitor",
+        "-pc_type fieldsplit",
+        "-fieldsplit_0_pc_type sor",
+        "-fieldsplit_1_pc_type redundant",
+        "-ts_max_time 1.0e2",
+        "-snes_force_iteration"
+    ]
+}

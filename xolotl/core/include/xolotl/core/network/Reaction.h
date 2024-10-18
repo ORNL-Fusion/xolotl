@@ -60,7 +60,7 @@ public:
 
 	Reaction() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	Reaction(ReactionDataRef reactionData, const ClusterData& clusterData,
 		IndexType reactionId);
 
@@ -255,6 +255,7 @@ protected:
 	const ClusterData* _clusterData;
 
 	IndexType _reactionId{invalidIndex};
+	double _deltaG0;
 
 	//! Reaction rate (k)
 	using RateSubView = decltype(std::declval<ReactionDataRef>().getRates(0));
@@ -312,13 +313,13 @@ public:
 
 	ProductionReaction() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	ProductionReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		IndexType cluster0, IndexType cluster1,
 		IndexType cluster2 = invalidIndex, IndexType cluster3 = invalidIndex);
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	ProductionReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		const detail::ClusterSet& clusterSet);
@@ -441,12 +442,12 @@ public:
 
 	DissociationReaction() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	DissociationReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		IndexType cluster0, IndexType cluster1, IndexType cluster2);
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	DissociationReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		const detail::ClusterSet& clusterSet);

@@ -7,6 +7,7 @@ list(APPEND XOLOTL_FACTORY_HEADERS
     ${XOLOTL_FACTORY_HEADER_DIR}/impl/Factory.tpp
 )
 
+include(src/interface/Include.cmake)
 include(src/material/Include.cmake)
 include(src/network/Include.cmake)
 include(src/perf/Include.cmake)

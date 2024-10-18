@@ -9,6 +9,10 @@ namespace util
 class IStepSequence
 {
 public:
+	virtual ~IStepSequence()
+	{
+	}
+
 	virtual void
 	start() = 0;
 
@@ -20,6 +24,12 @@ public:
 
 	virtual std::size_t
 	currentStep() const noexcept = 0;
+
+	virtual double
+	at(std::size_t step) const = 0;
+
+	virtual double
+	partialSumAt(std::size_t step) const = 0;
 };
 } // namespace util
 } // namespace xolotl

@@ -27,10 +27,12 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 	// + moments
 	const auto dof = network.getDOF();
 
+	bool restarting = this->checkForRestart();
+
 	// We can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty() and surfaceOffset == 0) {
-		io::XFile xfile(networkName);
+	if (restarting and surfaceOffset == 0) {
+		io::XFile xfile(restartFile);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 			auto tsGroup = concGroup->getLastTimestepGroup();
@@ -65,8 +67,8 @@ PetscSolver3DHandler::createSolverContext(DM& da)
 
 	// We can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty() and movingSurface) {
-		io::XFile xfile(networkName);
+	if (restarting and movingSurface) {
+		io::XFile xfile(restartFile);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 			auto tsGroup = concGroup->getLastTimestepGroup();
@@ -204,7 +206,6 @@ PetscSolver3DHandler::initializeSolverContext(DM& da, Mat& J)
 	// "+ 1" for temperature
 	auto dSize =
 		localZM * localYM * localXM * (nNetworkEntries + difEntries.size() + 1);
-	// FIXME
 	int nAdvec = 0;
 	for (auto&& handler : advectionHandlers) {
 		nAdvec = std::max(nAdvec, handler->getNumberOfAdvecting());
@@ -366,8 +367,8 @@ PetscSolver3DHandler::initializeConcentration(
 		bool hasConcentrations = false;
 		std::unique_ptr<io::XFile> xfile;
 		std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
-		if (not networkName.empty()) {
-			xfile = std::make_unique<io::XFile>(networkName);
+		if (this->checkForRestart()) {
+			xfile = std::make_unique<io::XFile>(restartFile);
 			concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
 			hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		}
@@ -503,6 +504,7 @@ PetscSolver3DHandler::initializeConcentration(
 						// Check the distance
 						if (distance > right - 1.0e-4) {
 							// Create the arrays to receive the data
+							std::vector<PetscScalar> leftConcVec, rightConcVec;
 							PetscScalar *rightConc, *leftConc;
 
 							// Check where all the needed data is located
@@ -548,7 +550,8 @@ PetscSolver3DHandler::initializeConcentration(
 								// Receive the data on the new proc
 								if (procId == totalProcs[2]) {
 									// Receive the data
-									leftConc = new PetscScalar[dof + 1];
+									leftConcVec.resize(dof + 1);
+									leftConc = leftConcVec.data();
 									MPI_Recv(leftConc, dof + 1, MPI_DOUBLE,
 										totalProcs[0], 2, MPI_COMM_WORLD,
 										MPI_STATUS_IGNORE);
@@ -574,7 +577,8 @@ PetscSolver3DHandler::initializeConcentration(
 								// Receive the data on the new proc
 								if (procId == totalProcs[2]) {
 									// Receive the data
-									rightConc = new PetscScalar[dof + 1];
+									rightConcVec.resize(dof + 1);
+									rightConc = rightConcVec.data();
 									MPI_Recv(rightConc, dof + 1, MPI_DOUBLE,
 										totalProcs[1], 1, MPI_COMM_WORLD,
 										MPI_STATUS_IGNORE);
@@ -594,11 +598,6 @@ PetscSolver3DHandler::initializeConcentration(
 									newConc[k] = leftConc[k] +
 										(rightConc[k] - leftConc[k]) * xFactor;
 								}
-
-								if (totalProcs[2] != totalProcs[0])
-									delete leftConc;
-								if (totalProcs[2] != totalProcs[1])
-									delete rightConc;
 							}
 
 							break;
@@ -884,9 +883,6 @@ PetscSolver3DHandler::updateConcentration(
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
 	PetscOffsetView<PetscScalar****> updatedConcs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOFWrite(da, F, &updatedConcs));
-
-	// Degrees of freedom is the total number of clusters in the network
-	const auto dof = network.getDOF();
 
 	// Set some step size variable
 	double sy = 1.0 / (hY * hY);
@@ -1192,8 +1188,8 @@ PetscSolver3DHandler::updateConcentration(
 					continue;
 
 				// ----- Account for flux of incoming particles -----
-				fluxHandler->computeIncidentFlux(
-					ftime, updatedConcOffset, xi, surfacePosition[yj][zk]);
+				fluxHandler->computeIncidentFlux(ftime, concOffset,
+					updatedConcOffset, xi, surfacePosition[yj][zk]);
 
 				// ---- Compute diffusion over the locally owned part of the
 				// grid -----
@@ -1247,9 +1243,6 @@ PetscSolver3DHandler::computeJacobian(
 	// Get pointers to vector data
 	PetscOffsetView<const PetscScalar****> concs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
-
-	// The degree of freedom is the size of the network
-	const auto dof = network.getDOF();
 
 	using ConcSubView = Kokkos::View<const double*>;
 	Kokkos::Array<ConcSubView, 7> concVector;

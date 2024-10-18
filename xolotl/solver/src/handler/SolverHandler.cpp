@@ -14,7 +14,8 @@ SolverHandler::SolverHandler(NetworkType& _network,
 	perf::IPerfHandler& _perfHandler, const options::IOptions& options) :
 	network(_network),
 	perfHandler(_perfHandler),
-	networkName(""),
+	restartFile(options.getRestartFilePath()),
+	reactionFile(options.getReactionFilePath()),
 	nX(0),
 	nY(0),
 	nZ(0),
@@ -419,9 +420,6 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	rng = std::make_unique<util::RandomNumberGenerator<int, unsigned int>>(
 		rngSeed + myProcId);
 
-	// Set the network loader
-	networkName = opts.getNetworkFilename();
-
 	// Set the flux handler
 	fluxHandler = material->getFluxHandler().get();
 
@@ -458,6 +456,9 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 		auto clusterSpecies = network.parseSpeciesId(tokens[count]);
 		// Get the cluster
 		comp[clusterSpecies()] = std::stoi(tokens[count + 1]);
+		//		if (tokens[count] == "Xe") {
+		//			comp[1] = 1;
+		//		}
 		auto clusterId = network.findClusterId(comp);
 		// Check that it is present in the network
 		if (clusterId == NetworkType::invalidIndex()) {
@@ -661,9 +662,8 @@ SolverHandler::generateTemperatureGrid()
 				temperatureGrid[1];
 
 		bool matched = false;
-		IdType jKeep = 0;
 		// Look for it in the temperature grid
-		for (auto j = jKeep; j < nX + 1; j++) {
+		for (auto j = 0; j < nX + 1; j++) {
 			double tempLoc1 = 0.0,
 				   tempLoc2 = (oldGrid[j] + oldGrid[j + 1]) / 2.0 - oldGrid[1];
 			if (j == 0)
@@ -676,7 +676,6 @@ SolverHandler::generateTemperatureGrid()
 				double y1 = broadcastedTemp[j], y2 = broadcastedTemp[j + 1];
 				toReturn.push_back(y1 + xLoc * (y2 - y1));
 				matched = true;
-				jKeep = j;
 				break;
 			}
 		}
@@ -702,6 +701,12 @@ SolverHandler::createLocalNE(IdType a, IdType b, IdType c)
 			}
 		}
 	}
+}
+
+bool
+SolverHandler::checkForRestart() const
+{
+	return (not restartFile.empty()) and fs::exists(restartFile);
 }
 
 void
@@ -783,9 +788,8 @@ SolverHandler::interpolateTemperature(std::vector<double> localTemp)
 			loc = (grid[i - 1] + grid[i]) / 2.0 - grid[1];
 
 		bool matched = false;
-		IdType jKeep = 0;
 		// Look for it in the temperature grid
-		for (auto j = jKeep; j < nX + 1; j++) {
+		for (auto j = 0; j < nX + 1; j++) {
 			double tempLoc1 = 0.0,
 				   tempLoc2 =
 					   (temperatureGrid[j] + temperatureGrid[j + 1]) / 2.0 -
@@ -801,7 +805,6 @@ SolverHandler::interpolateTemperature(std::vector<double> localTemp)
 				double y1 = broadcastedTemp[j], y2 = broadcastedTemp[j + 1];
 				toReturn.push_back(y1 + xLoc * (y2 - y1));
 				matched = true;
-				jKeep = j;
 				break;
 			}
 		}

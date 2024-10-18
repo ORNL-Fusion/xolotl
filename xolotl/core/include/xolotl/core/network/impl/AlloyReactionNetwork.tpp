@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/detail/impl/ConstantReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/impl/AlloyClusterGenerator.tpp>
 #include <xolotl/core/network/impl/AlloyReaction.tpp>
@@ -18,22 +19,61 @@ KOKKOS_INLINE_FUNCTION
 void
 AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
-	// Check the diffusion factors
+	// Get the diffusion factors
 	auto diffusionFactor = this->_clusterData.diffusionFactor;
-	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-		return;
-	}
 
 	using Species = typename Network::Species;
 	using Composition = typename Network::Composition;
 	using AmountType = typename Network::AmountType;
 
 	if (i == j) {
-		addSinks(i, tag);
+		if (diffusionFactor(i) != 0.0)
+			addSinks(i, tag);
+
+		if (this->_constantConnsRows.extent(0) > 0) {
+			// Look for the entry
+			for (auto k = this->_constantConnsRows(i);
+				 k < this->_constantConnsRows(i + 1); k++) {
+				if (this->_constantConnsEntries(k) == this->_numDOFs) {
+					this->addConstantReaction(
+						tag, {i, Network::invalidIndex()});
+					break;
+				}
+			}
+		}
+	}
+
+	// Add every possibility
+	if (this->_constantConnsRows.extent(0) > 0) {
+		// Look for the entry
+		for (auto k = this->_constantConnsRows(i);
+			 k < this->_constantConnsRows(i + 1); k++) {
+			if (this->_constantConnsEntries(k) == j) {
+				this->addConstantReaction(tag, {i, j});
+				break;
+			}
+		}
+	}
+	if (j != i) {
+		if (this->_constantConnsRows.extent(0) > 0) {
+			// Look for the entry
+			for (auto k = this->_constantConnsRows(j);
+				 k < this->_constantConnsRows(j + 1); k++) {
+				if (this->_constantConnsEntries(k) == i) {
+					this->addConstantReaction(tag, {j, i});
+					break;
+				}
+			}
+		}
 	}
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
+
+	// Check the diffusion factor
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
 
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
@@ -635,8 +675,9 @@ inline ReactionCollection<AlloyReactionGenerator::Network>
 AlloyReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<Network> ret(this->_clusterData.gridSize,
+		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions());
+		this->getSinkReactions(), this->getConstantReactions());
 	return ret;
 }
 } // namespace detail
