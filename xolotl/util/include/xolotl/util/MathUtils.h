@@ -129,12 +129,10 @@ getMaxHePerVLoop(double amtV, double latticeParameter, double temp) noexcept
 	double Fs = pow(3.0 * omega / (4.0 * xolotl::core::pi), 1.0 / 3.0);
 	double term1 = computeBenedictF1(temp) * pow(Fs, 1.0 / 3.0) *
 		pow((double)amtV, 1.0 / 9.0) *
-		pow(2.0 * xolotl::core::gammaEOS + gEOS * bEOS,
-			-1.0 / 3.0);
+		pow(2.0 * xolotl::core::gammaEOS + gEOS * bEOS, -1.0 / 3.0);
 	double term2 = computeBenedictF2(temp) * pow(Fs, 2.0 / 3.0) *
 		pow((double)amtV, 2.0 / 9.0) *
-		pow(2.0 * xolotl::core::gammaEOS + gEOS * bEOS,
-			-2.0 / 3.0);
+		pow(2.0 * xolotl::core::gammaEOS + gEOS * bEOS, -2.0 / 3.0);
 	double term3 = computeBenedictF3(temp) * Fs * pow((double)amtV, 1.0 / 3.0) /
 		(2.0 * xolotl::core::gammaEOS + gEOS * bEOS);
 

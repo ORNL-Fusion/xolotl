@@ -124,10 +124,10 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 			return true;
 		}
 	}
-	// V is never grouped
-	if (hi[Species::V] > 1 && othersBeginAtZero(region, Species::V)) {
-		return true;
-	}
+	//	// V is never grouped
+	//	if (hi[Species::V] > 1 && othersBeginAtZero(region, Species::V)) {
+	//		return true;
+	//	}
 
 	// Don't group under the given min for V
 	if (lo[Species::V] < _groupingMin) {
@@ -171,6 +171,7 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 	if (hi[Species::V] > 1 and lo[Species::V] <= _maxV) {
 		double factor = 1.0e-1;
 
+		// Refines the hydrogen along the HeV ratio
 		if (lo[Species::He] <= util::getMaxHePerVLoop(hi[Species::V] - 1,
 								   _lattice, _temperature) &&
 			hi[Species::He] - 1 >= util::getMaxHePerVLoop(lo[Species::V] - 1,
@@ -226,17 +227,22 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		}
 	}
 
-	double factor = 5.0e-1;
+	double amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
+	double amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
+	double amt = sqrt(amtHe * amtHe + amtV * amtV);
 
-	if (region[Species::V].length() < _groupingWidthB + 1) {
+	// Equally spaced in He
+	auto comp = 0.15 * amtV;
+	if (region[Species::He].length() < util::max(_groupingWidthA + 1.0, comp)) {
+		result[toIndex(Species::He)] = false;
+	}
+	// Equally spaced in V
+	comp = 0.1 * 21.23 * cbrt(amtV * amtV);
+	if (region[Species::V].length() < util::max(_groupingWidthB + 1.0, comp)) {
 		result[toIndex(Species::V)] = false;
 	}
 
-	if (region[Species::He].length() <
-		util::max((double)(_groupingWidthA + 1),
-			(double)lo[Species::He] * (double)lo[Species::He] * factor)) {
-		result[toIndex(Species::He)] = false;
-	}
+	double factor = 5.0e-1;
 
 	if constexpr (hasDeuterium<Species>) {
 		if (region[Species::D].length() <
