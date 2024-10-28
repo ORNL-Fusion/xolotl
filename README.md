@@ -16,15 +16,20 @@ generation tokamaks like ITER, as well as nuclear fuel in fission reactors.
   scripts/build_petsc.sh)
 
 ## Quick-Start Install
-If you have the above dependencies installed
+PETSc can now install Kokkos, Boost, and HDF5 
+(see [PETSc build script](https://github.com/ORNL-Fusion/xolotl/wiki/Build-Configuration#petsc-build-script)):
 ```
+cd $HOME
+git clone https://gitlab.com/petsc/petsc.git
 git clone https://github.com/ORNL-Fusion/xolotl $HOME/xolotl-source
+cd xolotl-source/scripts
+chmod u+x build_petsc.sh
+./build_petsc.sh --prefix=$HOME/petsc-install --petsc-dir=$HOME/petsc --get-boost --get-hdf5
 mkdir $HOME/xolotl-build
 cd $HOME/xolotl-build
 cmake \
     -DCMAKE_BUILD_TYPE=Release \
-    -DKokkos_DIR=/opt/kokkos-install \
-    -DPETSC_DIR=/opt/petsc-install \
+    -DCMAKE_PREFIX_PATH=$HOME/petsc-install \
     -DCMAKE_INSTALL_PREFIX=$HOME/xolotl-build/install \
     $HOME/xolotl-source/
 make
