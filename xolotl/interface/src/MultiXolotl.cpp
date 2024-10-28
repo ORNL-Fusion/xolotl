@@ -231,9 +231,7 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 		sub->initializeReactions();
 		sub->initializeSolver();
 		if (_restarting) {
-			_timeStepper.start();
-			sub->setCurrentTimes(
-				_timeStepper.currentTime(), _timeStepper.currentTimeStepSize());
+			sub->setCurrentTimeStep(_timeStepper.startTimeStepSize());
 		}
 	}
 

@@ -287,6 +287,13 @@ XolotlInterface::setCurrentTimes(double time, double dt) TRY
 }
 CATCH
 
+void
+XolotlInterface::setCurrentTimeStep(double dt) TRY
+{
+	solver->setCurrentTimeStep(dt);
+}
+CATCH
+
 double
 XolotlInterface::getNXeGB() TRY
 {

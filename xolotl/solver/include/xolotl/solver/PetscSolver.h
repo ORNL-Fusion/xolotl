@@ -131,6 +131,12 @@ public:
 	 * \see ISolver.h
 	 */
 	void
+	setCurrentTimeStep(double dt);
+
+	/**
+	 * \see ISolver.h
+	 */
+	void
 	solve() override;
 
 	/**

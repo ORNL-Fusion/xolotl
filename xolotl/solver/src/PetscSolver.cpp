@@ -337,6 +337,12 @@ PetscSolver::setCurrentTimes(double time, double dt)
 }
 
 void
+PetscSolver::setCurrentTimeStep(double dt)
+{
+	PetscCallVoid(TSSetTimeStep(ts, dt));
+}
+
+void
 PetscSolver::solve()
 {
 	// Initialiaze the converged reason
