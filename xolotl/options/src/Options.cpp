@@ -474,6 +474,10 @@ Options::setCouplingTimeStepParams(const std::vector<double>& params)
 	initialTimeStep = params[0];
 	maxTimeStep = params[1];
 	timeStepGrowthFactor = params[2];
+	if (params[3] > 0.0) {
+		throw InvalidOptionValue("Options: unsupported value for startTime; "
+								 "should be 0.0 (or negative for restart).");
+	}
 	startTime = params[3];
 	endTime = params[4];
 	if (params[5] <= 0) {

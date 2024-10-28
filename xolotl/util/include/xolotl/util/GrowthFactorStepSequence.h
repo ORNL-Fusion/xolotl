@@ -22,6 +22,12 @@ public:
 	void
 	step() override;
 
+    double
+    startValue() const noexcept override
+    {
+        return _initialValue;
+    }
+
 	double
 	at(std::size_t step) const override;
 

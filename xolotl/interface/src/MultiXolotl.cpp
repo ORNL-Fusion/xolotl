@@ -126,7 +126,10 @@ makeTimeStepper(const options::IOptions& options)
 
 	auto restarting = (!options.getRestartFilePath().empty());
 	if (restarting) {
-		std::tie(step, startTime, initDt) = MultiXolotl::readStopData();
+		double lastTime, lastDt;
+		std::tie(step, lastTime, lastDt) = MultiXolotl::readStopData();
+		initDt = std::min(lastDt, maxDt);
+		startTime = lastTime;
 	}
 
 	auto sequence = std::make_unique<util::GrowthFactorStepSequence>(
@@ -227,6 +230,9 @@ MultiXolotl::MultiXolotl(const std::shared_ptr<ComputeContext>& context,
 		sub->setConstantConnectivities(connectivities[i]);
 		sub->initializeReactions();
 		sub->initializeSolver();
+		if (_restarting) {
+			sub->setCurrentTimeStep(_timeStepper.startTimeStepSize());
+		}
 	}
 
 	// Fluxes

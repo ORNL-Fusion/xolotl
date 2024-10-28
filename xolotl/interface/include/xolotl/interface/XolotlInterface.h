@@ -268,6 +268,14 @@ public:
 	setCurrentTimes(double currentTime, double currentDt);
 
 	/**
+	 * Set the current dt
+	 *
+	 * @param currentDt The current time step
+	 */
+	void
+	setCurrentTimeStep(double dt);
+
+	/**
 	 * Get the number of Xe that went to the GB.
 	 *
 	 * @return The number of Xenon
