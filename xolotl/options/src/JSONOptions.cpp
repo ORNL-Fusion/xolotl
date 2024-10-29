@@ -5,6 +5,7 @@
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
 
+#include <xolotl/options/InvalidOptionValue.h>
 #include <xolotl/options/JSONOptions.h>
 #include <xolotl/options/detail/JSONElem.h>
 #include <xolotl/util/Log.h>
@@ -93,6 +94,26 @@ std::shared_ptr<IOptions>
 JSONOptions::makeCopy() const
 {
 	return std::make_shared<JSONOptions>(*this);
+}
+
+void
+JSONOptions::setCouplingTimeStepParamsFromGroup(
+	const boost::property_tree::iptree& node)
+{
+	checkSetParam(node, "initialDt", initialTimeStep);
+	checkSetParam(node, "maxDt", maxTimeStep);
+	checkSetParam(node, "growthFactor", timeStepGrowthFactor);
+	checkSetParam(node, "startTime", startTime);
+	if (startTime > 0.0) {
+		throw InvalidOptionValue("Options: unsupported value for startTime; "
+								 "should be 0.0 (or negative for restart).");
+	}
+	checkSetParam(node, "endTime", endTime);
+	checkSetParam(node, "maxSteps", numTimeSteps);
+	if (numTimeSteps <= 0) {
+		throw InvalidOptionValue(
+			"Options: maxSteps must be a positive value. Aborting!");
+	}
 }
 
 detail::JSONElemVector
@@ -316,7 +337,12 @@ JSONOptions::defineHandlers()
 							node.get_value<std::string>());
 					}
 					else {
-						setCouplingTimeStepParams(asVector<double>(node));
+						if (node.count("maxDt")) {
+							setCouplingTimeStepParamsFromGroup(node);
+						}
+						else {
+							setCouplingTimeStepParams(asVector<double>(node));
+						}
 					}
 				}
 			})

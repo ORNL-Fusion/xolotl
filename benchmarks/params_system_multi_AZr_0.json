@@ -4,7 +4,14 @@
     "boundary": "1 1",
     "netParam": "1000 0 0 1000 1000",
     "useSubnetworks": true,
-    "couplingTimeStepParams": "1.0e-9 1.0 1.8 0.0 1.0 40",
+    "couplingTimeStepParams": {
+        "initialDt": 1.0e-9,
+        "maxDt": 1.0,
+        "growthFactor": 1.8,
+        "startTime": 0.0,
+        "endTime": 1.0,
+        "maxSteps": 40
+    },
     "grouping": "101 2",
     "vizHandler": "dummy",
     "perfHandler": "dummy",

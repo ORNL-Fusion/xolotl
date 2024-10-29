@@ -36,6 +36,10 @@ private:
 	detail::JSONElemVector
 	defineHandlers();
 
+	void
+	setCouplingTimeStepParamsFromGroup(
+		const boost::property_tree::iptree& node);
+
 	std::unique_ptr<boost::property_tree::iptree> _map;
 
 	friend class detail::JSONElem;
