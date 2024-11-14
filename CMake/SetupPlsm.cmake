@@ -51,7 +51,7 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${__plsm_bin_dir})
 if(NOT EXISTS ${__plsm_src_dir}/CMakeLists.txt)
     message(STATUS "    checkout")
     execute_process(
-        COMMAND ${GIT_EXECUTABLE} submodule update --init
+        COMMAND ${GIT_EXECUTABLE} submodule update --init external/plsm
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
         OUTPUT_FILE "${__external_bin_dir}/plsm_clone.out"
         ERROR_FILE "${__external_bin_dir}/plsm_clone.out"
