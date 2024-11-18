@@ -2,6 +2,7 @@ find_package(Git REQUIRED)
 
 message(STATUS "Setup PETSc")
 
+## Set directories
 set(__external_src_dir ${CMAKE_SOURCE_DIR}/external)
 set(__external_bin_dir ${CMAKE_BINARY_DIR}/external)
 
@@ -21,7 +22,7 @@ if(NOT EXISTS ${__petsc_src_dir}/configure)
     )
 endif()
 
-# Check for dependencies
+## Check for dependencies
 set(HDF5_PREFER_PARALLEL ON)
 find_package(HDF5 QUIET)
 find_package(Boost QUIET COMPONENTS
@@ -31,22 +32,34 @@ find_package(Boost QUIET COMPONENTS
 )
 find_package(LAPACK QUIET)
 
-# Set options
+## Set options
 set(__script_dir ${CMAKE_SOURCE_DIR}/scripts)
-option(Xolotl_ENABLE_CUDA "Enable CUDA backend for kokkos, etc." OFF)
 set(__build_opts
     --skip-pull
     --prefix=${__external_bin_dir}/petsc_install
 )
 
-if(CMAKE_BUILD_TYPE MATCHES "Debug")
+option(Xolotl_BUILD_PETSC_DEBUG
+    "Enable debugging symbols for petsc, kokkos, etc."
+    OFF
+)
+if(Xolotl_BUILD_PETSC_DEBUG)
     list(APPEND __build_opts --debug)
     message(STATUS "    - enable debugging")
 endif()
+
+option(Xolotl_ENABLE_CUDA "Enable CUDA backend for kokkos, etc." OFF)
+option(Xolotl_ENABLE_OPENMP "Enable OpenMP backend for kokkos" OFF)
 if(Xolotl_ENABLE_CUDA)
     list(APPEND __build_opts --cuda)
-    message(STATUS "    - use CUDA")
+    message(STATUS "    - using CUDA backend")
+elseif(Xolotl_ENABLE_OPENMP)
+    list(APPEND __build_opts --openmp)
+    message(STATUS "    - using OpenMP backend")
+else()
+    message(STATUS "    - using Serial backend")
 endif()
+
 if(NOT HDF5_FOUND)
     list(APPEND __build_opts --get-hdf5)
     message(STATUS "    - build HDF5")
@@ -59,6 +72,8 @@ if(NOT LAPACK_FOUND)
     list(APPEND __build_opts --get-lapack)
     message(STATUS "    - build BLAS/LAPACK")
 endif()
+
+## Perform build
 set(__output_file "${__external_bin_dir}/petsc_build.out")
 message(STATUS "    build (for output, follow ${__output_file})")
 execute_process(
@@ -77,3 +92,6 @@ if(NOT ${__build_ret} EQUAL 0)
 endif()
 
 list(APPEND CMAKE_PREFIX_PATH ${__external_bin_dir}/petsc_install)
+
+## Don't build when re-running CMake unless the user specifies this again
+set(Xolotl_BUILD_PETSC OFF CACHE PATH "" FORCE)
