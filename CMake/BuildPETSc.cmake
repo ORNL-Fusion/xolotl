@@ -53,6 +53,23 @@ option(Xolotl_ENABLE_OPENMP "Enable OpenMP backend for kokkos" OFF)
 if(Xolotl_ENABLE_CUDA)
     list(APPEND __build_opts --cuda)
     message(STATUS "    - using CUDA backend")
+    if(Xolotl_CUDA_SM)
+        list(APPEND __build_opts --cuda-sm=${Xolotl_CUDA_SM})
+    else()
+        execute_process(
+            COMMAND nvidia-smi
+            OUTPUT_VARIABLE __smi_out
+            ERROR_VARIABLE __smi_out
+            RESULT_VARIABLE __smi_avail
+        )
+        if(NOT ${__smi_avail} EQUAL 0)
+            message(FATAL_ERROR "
+                Unable to determine CUDA SM version (compute capability).
+                Please provide this in Xolotl_CUDA_SM.
+                "
+            )
+        endif()
+    endif()
 elseif(Xolotl_ENABLE_OPENMP)
     list(APPEND __build_opts --openmp)
     message(STATUS "    - using OpenMP backend")
@@ -76,8 +93,19 @@ endif()
 ## Perform build
 set(__output_file "${__external_bin_dir}/petsc_build.out")
 message(STATUS "    build (for output, follow ${__output_file})")
+set(__command bash ${__script_dir}/build_petsc.sh ${__build_opts})
+if(Xolotl_BUILD_PETSC_DRY_RUN)
+    string(REPLACE ";" " " __command_str "${__command}")
+    message(STATUS "Script Command:")
+    message(STATUS "${__command_str}")
+    execute_process(
+        COMMAND ${__command} --dry-run
+        WORKING_DIRECTORY "${__petsc_src_dir}"
+    )
+    message(FATAL_ERROR "Exiting")
+endif()
 execute_process(
-    COMMAND bash ${__script_dir}/build_petsc.sh ${__build_opts}
+    COMMAND ${__command}
     WORKING_DIRECTORY "${__petsc_src_dir}"
     OUTPUT_FILE "${__output_file}"
     ERROR_FILE "${__output_file}"
