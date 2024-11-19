@@ -131,7 +131,7 @@ public:
 	 * \see ISolver.h
 	 */
 	void
-	setCurrentTimeStep(double dt);
+	setCurrentTimeStep(double dt) override;
 
 	/**
 	 * \see ISolver.h

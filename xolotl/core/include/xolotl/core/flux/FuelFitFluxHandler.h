@@ -242,8 +242,8 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	setFissionYield(double yield)
+	void
+	setFissionYield(double yield) override
 	{
 		xeYield = yield;
 	}
