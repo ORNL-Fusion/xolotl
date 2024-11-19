@@ -1,8 +1,19 @@
 #!/bin/bash
 
+set -e
+
 echo -e "\nCheck gcc and clang compilers\n"
 gcc --version
 clang --version
+
+function run_tests () {
+    cd ${GITHUB_WORKSPACE}/../build
+    ctest --output-on-failure --label-exclude xolotl.tests.system
+    local __xolotl_ret=$?
+    ./test/system/SystemTester -- -t
+    local __xolotl_sys_ret=$?
+    return $((__xolotl_ret + __xolotl_sys_ret))
+}
 
 case "$1" in 
 
@@ -46,9 +57,7 @@ case "$1" in
     ;;
 
   test)
-    cd ${GITHUB_WORKSPACE}/../build
-    ctest -VV --label-exclude xolotl.tests.system
-    ./test/system/SystemTester -- -t
+    run_tests
     ;;
 
   *)
