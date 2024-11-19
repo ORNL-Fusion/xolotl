@@ -1,6 +1,6 @@
 #pragma once
 
-#include <cstdint>
+#include <cstddef>
 
 namespace xolotl
 {
@@ -19,8 +19,8 @@ public:
 	virtual void
 	step() = 0;
 
-    virtual double
-    startValue() const noexcept = 0;
+	virtual double
+	startValue() const noexcept = 0;
 
 	virtual double
 	current() const noexcept = 0;
