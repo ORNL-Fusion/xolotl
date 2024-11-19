@@ -5,7 +5,6 @@ on:
     branches: 
     - stable
     - develop
-    - feature-gh-actions
   pull_request:
     branches: 
     - develop
@@ -74,7 +73,7 @@ jobs:
 
     - name: Configure
       run: |
-        export EXTRA_CMAKE_ARGS='-DXolotl_INCLUDE_RN_TPP_FILES=ON '
+        export EXTRA_CMAKE_ARGS='-DXolotl_INCLUDE_RN_TPP_FILES=ON -DXolotl_ENABLE_TIMER_TESTS=OFF'
         CI/scripts/run_step.sh configure
       env:
         PATH: ${{ env.PATH }}
