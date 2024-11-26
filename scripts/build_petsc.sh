@@ -73,7 +73,9 @@ do
         _petsc_extra_args="${_petsc_extra_args} --download-boost"
         ;;
     --get-hdf5)
-        _petsc_extra_args="${_petsc_extra_args} --download-hdf5"
+        _petsc_extra_args="${_petsc_extra_args} \
+            --download-hdf5 \
+            --download-hdf5-configure-arguments=--enable-parallel"
         ;;
     --get-hypre)
         _petsc_extra_args="${_petsc_extra_args} --download-hypre"
@@ -146,10 +148,9 @@ fi
 _conf_cmd="./configure \
     ${_petsc_dir_arch_set} \
     ${_prefix_arg} \
-    --with-cc=mpicc \
-    --with-cxx=mpicxx \
     --with-fc=0 \
     --with-cuda=${_use_cuda} \
+    --with-mpi \
     --with-openmp=${_use_omp} \
     --with-debugging=${_debug} \
     --with-shared-libraries \
