@@ -46,7 +46,4 @@ set_target_properties(xolotlIO PROPERTIES
     INSTALL_RPATH_USE_LINK_PATH TRUE
 )
 
-get_target_property(__io_iid xolotlIO INTERFACE_INCLUDE_DIRECTORIES)
-message("xolotlIO IIDs: ${__io_iid}")
-
 install(TARGETS xolotlIO EXPORT Xolotl LIBRARY DESTINATION lib)

@@ -47,11 +47,11 @@ public:
 			return;
 		}
 		if (this->entries.size() == 0) {
-			Kokkos::atomic_increment(&this->row_map(rowId));
+			Kokkos::atomic_inc(&this->row_map(rowId));
 		}
 		else {
 			for (auto id = this->row_map(rowId);
-				 !Kokkos::atomic_compare_exchange_strong(
+				 !Kokkos::atomic_compare_exchange(
 					 &this->entries(id), invalidNetworkIndex, columnId);
 				 ++id) {
 				if (this->entries(id) == columnId) {

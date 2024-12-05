@@ -50,8 +50,7 @@ ConstantReactionGenerator<TBase>::addConstantReaction(
 	if (!this->_clusterData.enableConstantReaction())
 		return;
 
-	Kokkos::atomic_increment(
-		&_clusterConstantReactionCounts(clusterSet.cluster0));
+	Kokkos::atomic_inc(&_clusterConstantReactionCounts(clusterSet.cluster0));
 }
 
 template <typename TBase>
@@ -64,9 +63,9 @@ ConstantReactionGenerator<TBase>::addConstantReaction(
 		return;
 
 	auto id = _constantCrsRowMap(clusterSet.cluster0);
-	for (; !Kokkos::atomic_compare_exchange_strong(
-			 &_constantCrsClusterSets(id).cluster0, NetworkType::invalidIndex(),
-			 clusterSet.cluster0);
+	for (;
+		 !Kokkos::atomic_compare_exchange(&_constantCrsClusterSets(id).cluster0,
+			 NetworkType::invalidIndex(), clusterSet.cluster0);
 		 ++id) { }
 	_constantCrsClusterSets(id) = clusterSet;
 }

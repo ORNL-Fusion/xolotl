@@ -77,6 +77,10 @@ else()
     message(STATUS "    - using Serial backend")
 endif()
 
+if(Xolotl_KOKKOS_VERSION)
+    list(APPEND __build_opts --kokkos-version=${Xolotl_KOKKOS_VERSION})
+endif()
+
 if(NOT HDF5_FOUND)
     list(APPEND __build_opts --get-hdf5)
     message(STATUS "    - build HDF5")
