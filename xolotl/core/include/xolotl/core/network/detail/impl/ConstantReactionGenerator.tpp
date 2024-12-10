@@ -63,9 +63,9 @@ ConstantReactionGenerator<TBase>::addConstantReaction(
 		return;
 
 	auto id = _constantCrsRowMap(clusterSet.cluster0);
-	for (;
-		 !Kokkos::atomic_compare_exchange(&_constantCrsClusterSets(id).cluster0,
-			 NetworkType::invalidIndex(), clusterSet.cluster0);
+	for (; !util::atomicCompareExchangeStrong(
+			 &_constantCrsClusterSets(id).cluster0, NetworkType::invalidIndex(),
+			 clusterSet.cluster0);
 		 ++id) { }
 	_constantCrsClusterSets(id) = clusterSet;
 }

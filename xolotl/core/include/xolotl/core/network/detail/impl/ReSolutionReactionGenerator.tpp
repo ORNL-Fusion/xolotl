@@ -62,7 +62,7 @@ ReSolutionReactionGenerator<TBase>::addReSolutionReaction(
 		return;
 
 	auto id = _reSoCrsRowMap(clusterSet.cluster0);
-	for (; !Kokkos::atomic_compare_exchange(&_reSoCrsClusterSets(id).cluster0,
+	for (; !util::atomicCompareExchangeStrong(&_reSoCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
 		 ++id) { }
 	_reSoCrsClusterSets(id) = clusterSet;

@@ -57,7 +57,7 @@ NucleationReactionGenerator<TBase>::addNucleationReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
 	auto id = _nucleationCrsRowMap(clusterSet.cluster0);
-	for (; !Kokkos::atomic_compare_exchange(
+	for (; !util::atomicCompareExchangeStrong(
 			 &_nucleationCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
 		 ++id) { }

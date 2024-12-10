@@ -56,7 +56,7 @@ TrapMutationReactionGenerator<TBase>::addTrapMutationReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
 	auto id = _tmCrsRowMap(clusterSet.cluster1);
-	for (; !Kokkos::atomic_compare_exchange(&_tmCrsClusterSets(id).cluster1,
+	for (; !util::atomicCompareExchangeStrong(&_tmCrsClusterSets(id).cluster1,
 			 NetworkType::invalidIndex(), clusterSet.cluster1);
 		 ++id) { }
 	_tmCrsClusterSets(id) = clusterSet;

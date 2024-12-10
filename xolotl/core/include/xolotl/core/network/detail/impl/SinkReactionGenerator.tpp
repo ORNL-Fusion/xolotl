@@ -62,7 +62,7 @@ SinkReactionGenerator<TBase>::addSinkReaction(
 		return;
 
 	auto id = _sinkCrsRowMap(clusterSet.cluster0);
-	for (; !Kokkos::atomic_compare_exchange(&_sinkCrsClusterSets(id).cluster0,
+	for (; !util::atomicCompareExchangeStrong(&_sinkCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
 		 ++id) { }
 	_sinkCrsClusterSets(id) = clusterSet;

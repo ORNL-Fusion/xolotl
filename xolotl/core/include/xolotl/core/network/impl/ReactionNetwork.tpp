@@ -274,18 +274,6 @@ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
 	_reactions.setGridSize(gridSize);
 	_reactions.updateAll(_clusterData.d_view);
 	Kokkos::fence();
-
-    auto nrate = Kokkos::View<int*>("nrate", _reactions.getNumberOfReactions());
-	_reactions.forEach(DEVICE_LAMBDA(auto&& reaction) {
-		nrate[reaction._reactionId] = reaction._rate.extent(0);
-	});
-    Kokkos::fence();
-    auto nrate_h = create_mirror_view(nrate);
-    deep_copy(nrate_h, nrate);
-    for (int i = 0; i < nrate.size(); ++i) {
-        std::cout << nrate_h[i] << '\n';
-    }
-
 }
 
 template <typename TImpl>

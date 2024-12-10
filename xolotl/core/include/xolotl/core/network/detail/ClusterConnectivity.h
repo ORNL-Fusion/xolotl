@@ -3,6 +3,7 @@
 #include <Kokkos_Core.hpp>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/util/Atomics.h>
 
 namespace xolotl
 {
@@ -51,7 +52,7 @@ public:
 		}
 		else {
 			for (auto id = this->row_map(rowId);
-				 !Kokkos::atomic_compare_exchange(
+				 !util::atomicCompareExchangeStrong(
 					 &this->entries(id), invalidNetworkIndex, columnId);
 				 ++id) {
 				if (this->entries(id) == columnId) {
