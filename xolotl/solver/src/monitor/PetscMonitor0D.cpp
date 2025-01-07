@@ -13,6 +13,7 @@
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
+#include <xolotl/perf/ScopedTimer.h>
 
 namespace xolotl
 {
@@ -48,6 +49,11 @@ void
 PetscMonitor0D::setup(int loop)
 {
 	_loopNumber = loop;
+
+	// Get the timers
+	auto perfHandler = _solverHandler->getPerfHandler();
+	_eventFuncTimer = perfHandler->getTimer("monitor1D:event");
+	_postEventFuncTimer = perfHandler->getTimer("monitor1D:postEvent");
 
 	// Get xolotlViz handler registry
 	auto vizHandlerRegistry = _solverHandler->getVizHandler();
@@ -164,6 +170,15 @@ PetscMonitor0D::setup(int loop)
 
 		// computeAlloy0D will be called at each timestep
 		PetscCallVoid(TSMonitorSet(_ts, monitor::computeAlloy, this, nullptr));
+
+		// Set directions and terminate flags for the surface event
+		PetscInt direction[1];
+		PetscBool terminate[1];
+		direction[0] = 0;
+		terminate[0] = PETSC_FALSE;
+		// Set the TSEvent
+		PetscCallVoid(TSSetEventHandler(_ts, 1, direction, terminate,
+			monitor::eventFunction, monitor::postEventFunction, this));
 	}
 	// Set the monitor to output data for AlphaZr
 	if (flagZr) {
@@ -786,6 +801,173 @@ PetscMonitor0D::monitorBubble(
 
 	// Restore the solutionArray
 	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor0D::eventFunction(
+	TS ts, PetscReal time, Vec solution, PetscScalar* fvalue)
+{
+	// Initial declaration
+	double **solutionArray, *gridPointSolution;
+
+	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_eventFuncTimer);
+
+	fvalue[0] = 1.0;
+
+	PetscInt tsNumber = -1;
+	PetscCall(TSGetStepNumber(ts, &tsNumber));
+
+	// Skip if it is the same TS as before
+	if (tsNumber == _previousTSNumber)
+		PetscFunctionReturn(0);
+
+	// Set the previous TS number
+	_previousTSNumber = tsNumber;
+
+	// Overlap starts at a given dose/time
+
+	// Get the flux handler to know the dose rate.
+	auto fluxHandler = _solverHandler->getFluxHandler();
+	double doseRate = fluxHandler->getFluxAmplitude();
+	// TODO: change to dose
+	if (time > 1.0e-10) fvalue[0] = 0.0;
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
+	PetscReal time, Vec solution, PetscBool)
+{
+	// Initial declaration
+	double **solutionArray, *gridPointSolution;
+
+	PetscFunctionBeginUser;
+
+	perf::ScopedTimer myTimer(_postEventFuncTimer);
+
+	// Check if the overlap has started
+	if (nevents == 0) {
+		PetscFunctionReturn(0);
+	}
+
+	// Get the da from ts
+	DM da;
+	PetscCall(TSGetDM(ts, &da));
+
+	// Get the solutionArray
+	PetscCall(DMDAVecGetArrayDOF(da, solution, &solutionArray));
+
+	// Get the delta time from the previous timestep to this timestep
+	double previousTime = _solverHandler->getPreviousTime();
+	double dt = time - previousTime;
+
+	// Get the network and its size
+	using NetworkType = core::network::AlloyReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	using Region = typename NetworkType::Region;
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+	const auto networkSize = network.getNumClusters();
+	const auto dof = network.getDOF();
+
+	// Get the pointer to the beginning of the solution data for this grid point
+	gridPointSolution = solutionArray[0];
+	using HostUnmanaged =
+		Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+	auto hConcs = HostUnmanaged(gridPointSolution, dof);
+	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+	deep_copy(dConcs, hConcs);
+
+	// Volume of a 5 nm radius sphere
+	double cascadeVolume = 4.0 * ::xolotl::core::pi * 125.0 / 3.0;
+	// Ion conversion factor (dpa per ion)
+	double ionFactor = 1041.937632;
+	// V size threshold (44000 V)
+	AmountType vThreshold = 44000;
+
+	// Compute the void volume fraction for voids larger than 5 nm radius
+	auto voidVolumeFraction = network.getTotalVolumeFraction(dConcs, Spec::V, vThreshold);
+
+	// Compute how many I were available since last time step, above 5 keV
+	std::vector<double> iGeneration = {0, 0.028529737, 0.005994826, 0.002314166, 0.001583792,
+			0.000565448, 0.000571995, 0.000505504, 0.000258115, 0.000182199,
+			0.000242672, 0, 0, 0.000197382, 0, 0, 0, 0, 0.000212566, 0, 0, 0, 0,
+			0.000197382, 0, 0, 0, 0, 0.000121466, 0, 0, 0, 0, 2.27749E-05, 0, 0, 0,
+			0, 2.27749E-05, 0, 0, 0, 0, 2.27749E-05};
+
+	// Get the flux handler to know the dose rate.
+	auto fluxHandler = _solverHandler->getFluxHandler();
+	double doseRate = fluxHandler->getFluxAmplitude();
+
+	// Number of DPA per volume
+	auto omega = network.getAtomicVolume();
+	double dpa = doseRate * dt / omega;
+
+	double generatedI = 0.0;
+	for (auto i = 1; i < iGeneration.size(); i++) {
+		generatedI += i * iGeneration[i];
+	}
+
+	// Get the number that interact
+	double probability = (dpa / ionFactor) * cascadeVolume * voidVolumeFraction;
+	double interactI = generatedI * probability;
+
+	// Adjust the generation term
+	fluxHandler->setFluxCorrection(probability);
+
+	// Have to distribute everything depending on generated I sizes and existing V sizes
+	constexpr double sphereFactor = 4.0 * ::xolotl::core::pi / 3.0;
+
+	// Consider each cluster
+	for (auto i = 0; i < networkSize; i++) {
+		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
+		const Region& clReg = cluster.getRegion();
+		Composition lo = clReg.getOrigin();
+		Composition hi = clReg.getUpperLimitPoint();
+
+		// Only look at the larger voids
+		if (hi[Spec::V] <= vThreshold) continue;
+
+		// Compute its volume fraction
+		const auto ival = clReg[Spec::V];
+		const auto rRad = cluster.getReactionRadius();
+		const auto rRad3 = rRad * rRad * rRad;
+		double vFraction = 0.0;
+		AmountType vWeight = ival.end() - util::max(vThreshold, ival.begin());
+		for (auto j = util::max(vThreshold, ival.begin()); j < ival.end(); ++j) {
+			vFraction += gridPointSolution[i] * rRad3;
+		}
+		vFraction *= sphereFactor;
+		vFraction /= voidVolumeFraction;
+
+		// Loop on the I sizes
+		for (auto k = 1; k < iGeneration.size(); k++) {
+			double iPortion = k * iGeneration[k] / generatedI;
+
+			// Loop for the void cluster that is k smaller
+			Composition comp = Composition::zero();
+			for (auto j = util::max(vThreshold, ival.begin()); j < ival.end(); ++j) {
+				comp[Spec::V] = j - k;
+				auto vProdId = network.findCluster(comp, plsm::HostMemSpace{}).getId();
+
+				// Balance the concentrations
+				double amount = _previousInterI * iPortion * vFraction * dpa / (double) vWeight;
+				gridPointSolution[i] -= amount;
+				gridPointSolution[vProdId] += amount;
+			}
+		}
+	}
+
+	// Save the amount of interacting I
+	_previousInterI = interactI;
+
+	// Restore the solutionArray
+	PetscCall(DMDAVecRestoreArrayDOF(da, solution, &solutionArray));
 
 	PetscFunctionReturn(0);
 }

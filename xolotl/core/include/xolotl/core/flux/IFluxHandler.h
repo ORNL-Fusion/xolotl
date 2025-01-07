@@ -173,6 +173,14 @@ public:
 	 */
 	virtual std::vector<double>
 	getReductionFactors() const = 0;
+
+	/**
+	 * This operation sets a correction to the flux.
+	 *
+	 * @param delta The correction factor
+	 */
+	virtual void
+	setFluxCorrection(double delta) = 0;
 };
 // end class IFluxHandler
 

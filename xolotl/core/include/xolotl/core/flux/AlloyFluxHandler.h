@@ -34,10 +34,24 @@ protected:
 	}
 
 	std::vector<double> fluxI;
+	std::vector<double> highFluxI;
 	std::vector<double> fluxV;
 
 	double perfectFraction = 0.2;
 	double voidFraction = 0.5;
+
+	/**
+	 * Vector to hold the incident flux values at each grid
+	 * point (x position).
+	 */
+	std::vector<std::vector<double>> incidentHighFluxVec;
+	Kokkos::View<double**> incidentHighFlux;
+
+	/**
+	 * The indices of the incoming clusters.
+	 */
+	std::vector<IdType> highFluxIndices;
+	Kokkos::View<IdType*> highFluxIds;
 
 public:
 	/**
@@ -143,6 +157,74 @@ public:
 		comp[NetworkType::Species::FaultedI] = 0;
 		comp[NetworkType::Species::PerfectI] = 0;
 
+		// Set the flux index corresponding the high energy ions interstitial clusters
+		for (int i = 0; i < highFluxI.size(); i++) {
+			comp[NetworkType::Species::I] = i;
+			auto cluster =
+				alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+			if (cluster.getId() == NetworkType::invalidIndex()) {
+				continue;
+			}
+			fluxIndices.push_back(cluster.getId());
+			std::vector<double> tempVector;
+			if (xGrid.size() == 0)
+				tempVector.push_back(highFluxI[i] * fluxFactor);
+			else {
+				for (auto i = 0; i < xGrid.size(); i++) {
+					tempVector.push_back(highFluxI[i] * fluxFactor);
+				}
+			}
+			incidentFluxVec.push_back(tempVector);
+		}
+
+		comp[NetworkType::Species::I] = 0;
+
+		// Set the flux index corresponding the high energy ions interstitial loops
+		for (int i = 0; i < highFluxI.size(); i++) {
+			// Perfect
+			comp[NetworkType::Species::FaultedI] = 0;
+			comp[NetworkType::Species::PerfectI] = i;
+			auto cluster =
+				alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+			if (cluster.getId() == NetworkType::invalidIndex()) {
+				continue;
+			}
+			highFluxIndices.push_back(cluster.getId());
+			std::vector<double> tempVector;
+			if (xGrid.size() == 0)
+				tempVector.push_back(highFluxI[i] * perfectFraction * fluxFactor);
+			else {
+				for (auto i = 0; i < xGrid.size(); i++) {
+					tempVector.push_back(
+							highFluxI[i] * perfectFraction * fluxFactor);
+				}
+			}
+			incidentHighFluxVec.push_back(tempVector);
+
+			// Faulted
+			comp[NetworkType::Species::PerfectI] = 0;
+			comp[NetworkType::Species::FaultedI] = i;
+			cluster = alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+			if (cluster.getId() == NetworkType::invalidIndex()) {
+				continue;
+			}
+			highFluxIndices.push_back(cluster.getId());
+			tempVector.clear();
+			if (xGrid.size() == 0)
+				tempVector.push_back(
+						highFluxI[i] * (1.0 - perfectFraction) * fluxFactor);
+			else {
+				for (auto i = 0; i < xGrid.size(); i++) {
+					tempVector.push_back(
+							highFluxI[i] * (1.0 - perfectFraction) * fluxFactor);
+				}
+			}
+			incidentHighFluxVec.push_back(tempVector);
+		}
+
+		comp[NetworkType::Species::FaultedI] = 0;
+		comp[NetworkType::Species::PerfectI] = 0;
+
 		// Set the flux index corresponding the vacancy clusters
 		for (int i = 0; i < fluxV.size(); i++) {
 			comp[NetworkType::Species::V] = i;
@@ -220,6 +302,25 @@ public:
 		// Sync data
 		syncFluxIndices();
 		syncIncidentFluxVec();
+
+		// Sync high energy data
+		auto ids_h =
+			Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>(
+				highFluxIndices.data(), highFluxIndices.size());
+		highFluxIds = Kokkos::View<IdType*>(
+			Kokkos::ViewAllocateWithoutInitializing("Flux Indices"),
+			highFluxIndices.size());
+		deep_copy(highFluxIds, ids_h);
+
+		incidentHighFlux = Kokkos::View<double**>(
+			"Incident High Flux Vec", incidentHighFluxVec.size(), incidentHighFluxVec[0].size());
+		auto incidentFlux_h = create_mirror_view(incidentHighFlux);
+		for (std::size_t i = 0; i < incidentHighFluxVec.size(); ++i) {
+			for (std::size_t j = 0; j < incidentHighFluxVec[i].size(); ++j) {
+				incidentFlux_h(i, j) = incidentHighFluxVec[i][j];
+			}
+		}
+		deep_copy(incidentHighFlux, incidentFlux_h);
 	}
 
 	/**
@@ -231,24 +332,21 @@ public:
 		Kokkos::View<double*> updatedConcOffset, int xi,
 		int surfacePos) override
 	{
-		// Attenuation factor to model reduced production of new point defects
-		// with increasing dose (or time).
-		double attenuation = 1.0;
-		if (cascadeDose > 0.0) {
-			attenuation = ((1.0 - cascadeEfficiency) / 2.0) *
-					(1.0 -
-						tanh(47.0 *
-							(currentTime * fluxAmplitude - cascadeDose))) +
-				cascadeEfficiency;
-		}
-
 		// Update the concentration array
 		auto ids = this->fluxIds;
 		auto flux = this->incidentFlux;
 		Kokkos::parallel_for(
 			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
 				Kokkos::atomic_add(
-					&updatedConcOffset[ids[i]], attenuation * flux(i, xi));
+					&updatedConcOffset[ids[i]], flux(i, xi));
+			});
+		// Update the concentration array for high energy ions
+		ids = this->highFluxIds;
+		flux = this->incidentHighFlux;
+		Kokkos::parallel_for(
+			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
+				Kokkos::atomic_add(
+					&updatedConcOffset[ids[i]], (1.0 - deltaCorrection) * flux(i, xi));
 			});
 	}
 }; // namespace flux

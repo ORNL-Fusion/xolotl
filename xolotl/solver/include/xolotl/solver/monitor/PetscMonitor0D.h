@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/perf/ITimer.h>
 #include <xolotl/solver/monitor/PetscMonitor.h>
 
 namespace xolotl
@@ -57,10 +58,25 @@ public:
 	PetscErrorCode
 	monitorBubble(TS ts, PetscInt timestep, PetscReal time, Vec solution);
 
+	PetscErrorCode
+	eventFunction(
+		TS ts, PetscReal time, Vec solution, PetscScalar* fvalue) override;
+
+	PetscErrorCode
+	postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
+		PetscReal time, Vec solution, PetscBool) override;
+
 protected:
 	std::shared_ptr<viz::IPlot> _scatterPlot;
 
 	std::vector<IdType> _clusterOrder;
+
+	std::shared_ptr<perf::ITimer> _eventFuncTimer;
+	std::shared_ptr<perf::ITimer> _postEventFuncTimer;
+
+	double _previousInterI = 0.0;
+
+	std::vector<std::vector<std::vector<std::pair<IdType, AmountType> > > > _vProductMap;
 };
 } // namespace monitor
 } // namespace solver

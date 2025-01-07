@@ -96,6 +96,11 @@ protected:
 	double cascadeEfficiency;
 
 	/**
+	 * Value for correcting the flux
+	 */
+	double deltaCorrection = 0.0;
+
+	/**
 	 * Function that calculates the flux at a given position x (in nm).
 	 * It needs to be implemented by the daughter classes.
 	 *
@@ -262,6 +267,14 @@ public:
 	 */
 	virtual std::vector<double>
 	getReductionFactors() const;
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	void
+	setFluxCorrection(double delta) {
+		deltaCorrection = delta;
+	}
 };
 // end class FluxHandler
 
