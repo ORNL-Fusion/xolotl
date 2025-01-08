@@ -16,6 +16,35 @@ namespace core
 {
 namespace network
 {
+template <typename T>
+DualViewWrapper<T>::DualViewWrapper(const std::string& label) :
+	_dualView(Kokkos::ViewAllocateWithoutInitializing(label)),
+	d_view(_dualView.d_view),
+	h_view(_dualView.h_view)
+{
+	new (&h_view()) T();
+}
+
+template <typename T>
+DualViewWrapper<T>::~DualViewWrapper()
+{
+	h_view().~T();
+}
+
+template <typename T>
+void
+DualViewWrapper<T>::modify_host()
+{
+	_dualView.modify_host();
+}
+
+template <typename T>
+void
+DualViewWrapper<T>::sync_device()
+{
+	_dualView.sync_device();
+}
+
 template <typename TImpl>
 inline void
 ReactionNetwork<TImpl>::copyClusterDataView()
