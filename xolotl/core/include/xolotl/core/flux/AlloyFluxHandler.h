@@ -157,7 +157,8 @@ public:
 		comp[NetworkType::Species::FaultedI] = 0;
 		comp[NetworkType::Species::PerfectI] = 0;
 
-		// Set the flux index corresponding the high energy ions interstitial clusters
+		// Set the flux index corresponding the high energy ions interstitial
+		// clusters
 		for (int i = 0; i < highFluxI.size(); i++) {
 			comp[NetworkType::Species::I] = i;
 			auto cluster =
@@ -179,7 +180,8 @@ public:
 
 		comp[NetworkType::Species::I] = 0;
 
-		// Set the flux index corresponding the high energy ions interstitial loops
+		// Set the flux index corresponding the high energy ions interstitial
+		// loops
 		for (int i = 0; i < highFluxI.size(); i++) {
 			// Perfect
 			comp[NetworkType::Species::FaultedI] = 0;
@@ -192,11 +194,12 @@ public:
 			highFluxIndices.push_back(cluster.getId());
 			std::vector<double> tempVector;
 			if (xGrid.size() == 0)
-				tempVector.push_back(highFluxI[i] * perfectFraction * fluxFactor);
+				tempVector.push_back(
+					highFluxI[i] * perfectFraction * fluxFactor);
 			else {
 				for (auto i = 0; i < xGrid.size(); i++) {
 					tempVector.push_back(
-							highFluxI[i] * perfectFraction * fluxFactor);
+						highFluxI[i] * perfectFraction * fluxFactor);
 				}
 			}
 			incidentHighFluxVec.push_back(tempVector);
@@ -212,11 +215,11 @@ public:
 			tempVector.clear();
 			if (xGrid.size() == 0)
 				tempVector.push_back(
-						highFluxI[i] * (1.0 - perfectFraction) * fluxFactor);
+					highFluxI[i] * (1.0 - perfectFraction) * fluxFactor);
 			else {
 				for (auto i = 0; i < xGrid.size(); i++) {
 					tempVector.push_back(
-							highFluxI[i] * (1.0 - perfectFraction) * fluxFactor);
+						highFluxI[i] * (1.0 - perfectFraction) * fluxFactor);
 				}
 			}
 			incidentHighFluxVec.push_back(tempVector);
@@ -312,8 +315,8 @@ public:
 			highFluxIndices.size());
 		deep_copy(highFluxIds, ids_h);
 
-		incidentHighFlux = Kokkos::View<double**>(
-			"Incident High Flux Vec", incidentHighFluxVec.size(), incidentHighFluxVec[0].size());
+		incidentHighFlux = Kokkos::View<double**>("Incident High Flux Vec",
+			incidentHighFluxVec.size(), incidentHighFluxVec[0].size());
 		auto incidentFlux_h = create_mirror_view(incidentHighFlux);
 		for (std::size_t i = 0; i < incidentHighFluxVec.size(); ++i) {
 			for (std::size_t j = 0; j < incidentHighFluxVec[i].size(); ++j) {
@@ -337,16 +340,15 @@ public:
 		auto flux = this->incidentFlux;
 		Kokkos::parallel_for(
 			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
-				Kokkos::atomic_add(
-					&updatedConcOffset[ids[i]], flux(i, xi));
+				Kokkos::atomic_add(&updatedConcOffset[ids[i]], flux(i, xi));
 			});
 		// Update the concentration array for high energy ions
 		ids = this->highFluxIds;
 		flux = this->incidentHighFlux;
 		Kokkos::parallel_for(
 			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
-				Kokkos::atomic_add(
-					&updatedConcOffset[ids[i]], (1.0 - deltaCorrection) * flux(i, xi));
+				Kokkos::atomic_add(&updatedConcOffset[ids[i]],
+					(1.0 - deltaCorrection) * flux(i, xi));
 			});
 	}
 }; // namespace flux

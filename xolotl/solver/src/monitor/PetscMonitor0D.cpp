@@ -7,13 +7,13 @@
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/core/network/ZrReactionNetwork.h>
 #include <xolotl/io/XFile.h>
+#include <xolotl/perf/ScopedTimer.h>
 #include <xolotl/solver/PetscSolver.h>
 #include <xolotl/solver/monitor/PetscMonitor0D.h>
 #include <xolotl/solver/monitor/PetscMonitorFunctions.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/viz/dataprovider/CvsXDataProvider.h>
-#include <xolotl/perf/ScopedTimer.h>
 
 namespace xolotl
 {
@@ -834,7 +834,8 @@ PetscMonitor0D::eventFunction(
 	auto fluxHandler = _solverHandler->getFluxHandler();
 	double doseRate = fluxHandler->getFluxAmplitude();
 	// TODO: change to dose
-	if (time > 1.0e-10) fvalue[0] = 0.0;
+	if (time > 1.0e-10)
+		fvalue[0] = 0.0;
 
 	PetscFunctionReturn(0);
 }
@@ -891,14 +892,23 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	AmountType vThreshold = 44000;
 
 	// Compute the void volume fraction for voids larger than 5 nm radius
-	auto voidVolumeFraction = network.getTotalVolumeFraction(dConcs, Spec::V, vThreshold);
+	auto voidVolumeFraction =
+		network.getTotalVolumeFraction(dConcs, Spec::V, vThreshold);
+
+	// If the volume fraction is zero, nothing is happening
+	if (voidVolumeFraction == 0.0) {
+		// Restore the solutionArray
+		PetscCall(DMDAVecRestoreArrayDOF(da, solution, &solutionArray));
+
+		PetscFunctionReturn(0);
+	}
 
 	// Compute how many I were available since last time step, above 5 keV
-	std::vector<double> iGeneration = {0, 0.028529737, 0.005994826, 0.002314166, 0.001583792,
-			0.000565448, 0.000571995, 0.000505504, 0.000258115, 0.000182199,
-			0.000242672, 0, 0, 0.000197382, 0, 0, 0, 0, 0.000212566, 0, 0, 0, 0,
-			0.000197382, 0, 0, 0, 0, 0.000121466, 0, 0, 0, 0, 2.27749E-05, 0, 0, 0,
-			0, 2.27749E-05, 0, 0, 0, 0, 2.27749E-05};
+	std::vector<double> iGeneration = {0, 0.028529737, 0.005994826, 0.002314166,
+		0.001583792, 0.000565448, 0.000571995, 0.000505504, 0.000258115,
+		0.000182199, 0.000242672, 0, 0, 0.000197382, 0, 0, 0, 0, 0.000212566, 0,
+		0, 0, 0, 0.000197382, 0, 0, 0, 0, 0.000121466, 0, 0, 0, 0, 2.27749E-05,
+		0, 0, 0, 0, 2.27749E-05, 0, 0, 0, 0, 2.27749E-05};
 
 	// Get the flux handler to know the dose rate.
 	auto fluxHandler = _solverHandler->getFluxHandler();
@@ -920,7 +930,8 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Adjust the generation term
 	fluxHandler->setFluxCorrection(probability);
 
-	// Have to distribute everything depending on generated I sizes and existing V sizes
+	// Have to distribute everything depending on generated I sizes and existing
+	// V sizes
 	constexpr double sphereFactor = 4.0 * ::xolotl::core::pi / 3.0;
 
 	// Consider each cluster
@@ -931,7 +942,8 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		Composition hi = clReg.getUpperLimitPoint();
 
 		// Only look at the larger voids
-		if (hi[Spec::V] <= vThreshold) continue;
+		if (hi[Spec::V] <= vThreshold)
+			continue;
 
 		// Compute its volume fraction
 		const auto ival = clReg[Spec::V];
@@ -939,7 +951,8 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		const auto rRad3 = rRad * rRad * rRad;
 		double vFraction = 0.0;
 		AmountType vWeight = ival.end() - util::max(vThreshold, ival.begin());
-		for (auto j = util::max(vThreshold, ival.begin()); j < ival.end(); ++j) {
+		for (auto j = util::max(vThreshold, ival.begin()); j < ival.end();
+			 ++j) {
 			vFraction += gridPointSolution[i] * rRad3;
 		}
 		vFraction *= sphereFactor;
@@ -951,12 +964,15 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 
 			// Loop for the void cluster that is k smaller
 			Composition comp = Composition::zero();
-			for (auto j = util::max(vThreshold, ival.begin()); j < ival.end(); ++j) {
+			for (auto j = util::max(vThreshold, ival.begin()); j < ival.end();
+				 ++j) {
 				comp[Spec::V] = j - k;
-				auto vProdId = network.findCluster(comp, plsm::HostMemSpace{}).getId();
+				auto vProdId =
+					network.findCluster(comp, plsm::HostMemSpace{}).getId();
 
 				// Balance the concentrations
-				double amount = _previousInterI * iPortion * vFraction * dpa / (double) vWeight;
+				double amount = _previousInterI * iPortion * vFraction * dpa /
+					(double)vWeight;
 				gridPointSolution[i] -= amount;
 				gridPointSolution[vProdId] += amount;
 			}

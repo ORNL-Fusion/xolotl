@@ -76,7 +76,8 @@ protected:
 
 	double _previousInterI = 0.0;
 
-	std::vector<std::vector<std::vector<std::pair<IdType, AmountType> > > > _vProductMap;
+	std::vector<std::vector<std::vector<std::pair<IdType, AmountType>>>>
+		_vProductMap;
 };
 } // namespace monitor
 } // namespace solver

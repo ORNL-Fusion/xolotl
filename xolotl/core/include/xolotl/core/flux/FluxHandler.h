@@ -272,7 +272,8 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	setFluxCorrection(double delta) {
+	setFluxCorrection(double delta)
+	{
 		deltaCorrection = delta;
 	}
 };
