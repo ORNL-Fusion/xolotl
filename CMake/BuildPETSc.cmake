@@ -23,14 +23,26 @@ if(NOT EXISTS ${__petsc_src_dir}/configure)
 endif()
 
 ## Check for dependencies
-set(HDF5_PREFER_PARALLEL ON)
-find_package(HDF5 QUIET)
-find_package(Boost QUIET COMPONENTS
-    log_setup
-    log
-    program_options
-)
-find_package(LAPACK QUIET)
+#### HDF5
+option(Xolotl_BUILD_HDF5 "Have the PETSc build system build HDF5" OFF)
+if(NOT Xolotl_BUILD_HDF5)
+    set(HDF5_PREFER_PARALLEL ON)
+    find_package(HDF5 QUIET)
+endif()
+#### Boost
+option(Xolotl_BUILD_BOOST "Have the PETSc build system build Boost" OFF)
+if(NOT Xolotl_BUILD_BOOST)
+    find_package(Boost QUIET COMPONENTS
+        log_setup
+        log
+        program_options
+    )
+endif()
+#### BLAS/LAPACK
+option(Xolotl_BUILD_LAPACK "Have the PETSc build system build LAPACK" OFF)
+if(NOT Xolotl_BUILD_LAPACK)
+    find_package(LAPACK QUIET)
+endif()
 
 ## Set options
 set(__script_dir ${CMAKE_SOURCE_DIR}/scripts)
@@ -81,19 +93,32 @@ if(Xolotl_KOKKOS_VERSION)
     list(APPEND __build_opts --kokkos-version=${Xolotl_KOKKOS_VERSION})
 endif()
 
+## Include dependencies if necessary
+#### HDF5
 if(NOT HDF5_FOUND)
+    set(Xolotl_BUILD_HDF5 ON)
+endif()
+if(Xolotl_BUILD_HDF5)
     list(APPEND __build_opts --get-hdf5)
     message(STATUS "    - build HDF5")
     set(HDF5_ROOT "${__external_bin_dir}/petsc_install")
 endif()
+#### Boost
 if(NOT Boost_FOUND)
+    set(Xolotl_BUILD_BOOST ON)
+endif()
+if(Xolotl_BUILD_BOOST)
     list(APPEND __build_opts --get-boost)
     message(STATUS "    - build Boost")
     if(NOT Xolotl_BUILD_PETSC_DEBUG)
         set(Boost_USE_DEBUG_RUNTIME OFF CACHE INTERNAL "")
     endif()
 endif()
+#### LAPACK
 if(NOT LAPACK_FOUND)
+    set(Xolotl_BUILD_LAPACK ON)
+endif()
+if(Xolotl_BUILD_LAPACK)
     list(APPEND __build_opts --get-lapack)
     message(STATUS "    - build BLAS/LAPACK")
 endif()
