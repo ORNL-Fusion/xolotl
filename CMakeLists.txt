@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.20)
 
 # Fix cmake behavior for CMAKE_CXX_STANDARD with clang on Mac OS X.
 # See cmake documentation on CMP0025 policy for details.
