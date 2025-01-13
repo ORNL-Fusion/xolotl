@@ -171,6 +171,77 @@ PetscMonitor0D::setup(int loop)
 		// computeAlloy0D will be called at each timestep
 		PetscCallVoid(TSMonitorSet(_ts, monitor::computeAlloy, this, nullptr));
 
+		// Define the map that will be used in the post event function
+		using NetworkType = core::network::AlloyReactionNetwork;
+		using Spec = typename NetworkType::Species;
+		using Composition = typename NetworkType::Composition;
+		using Region = typename NetworkType::Region;
+		auto& aNetwork =
+			dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+		const auto networkSize = aNetwork.getNumClusters();
+
+		// Get the high energy flux generation term for I
+		auto fluxHandler = _solverHandler->getFluxHandler();
+		auto iGeneration = fluxHandler->getHighFluxVector();
+
+		// Consider each cluster
+		for (auto i = 0; i < networkSize; i++) {
+			auto cluster = aNetwork.getCluster(i, plsm::HostMemSpace{});
+			const Region& clReg = cluster.getRegion();
+			Composition lo = clReg.getOrigin();
+			Composition hi = clReg.getUpperLimitPoint();
+
+			// Only look at the larger voids
+			if (hi[Spec::V] <= vThreshold)
+				continue;
+
+			// Get the interval
+			const auto ival = clReg[Spec::V];
+			std::vector<std::vector<std::pair<IdType, AmountType>>> kMap;
+
+			// Loop on the I sizes
+			for (auto k = 1; k < iGeneration.size(); k++) {
+				// Initialize a few things
+				IdType previousId = NetworkType::invalidIndex();
+				AmountType count = 0;
+				std::vector<std::pair<IdType, AmountType>> jMap;
+
+				// Loop for the void cluster that is k smaller
+				Composition comp = Composition::zero();
+				for (auto j = util::max(vThreshold, ival.begin());
+					 j < ival.end(); ++j) {
+					comp[Spec::V] = j - k;
+					IdType vProdId =
+						aNetwork.findCluster(comp, plsm::HostMemSpace{})
+							.getId();
+
+					// Is it the same product as before?
+					if (vProdId == previousId) {
+						// Keep counting
+						count++;
+					}
+					else if (previousId != NetworkType::invalidIndex()) {
+						// Save information
+						count++;
+						auto vPair = std::make_pair(previousId, count);
+
+						// Add to the map (index j)
+						jMap.push_back(vPair);
+
+						// Reset
+						count = 0.0;
+						previousId = vProdId;
+					}
+				}
+
+				// Add to the map (index k)
+				kMap.push_back(jMap);
+			}
+
+			// Add to the map (index i)
+			_vProductMap.push_back(kMap);
+		}
+
 		// Set directions and terminate flags for the surface event
 		PetscInt direction[1];
 		PetscBool terminate[1];
@@ -888,8 +959,6 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	double cascadeVolume = 4.0 * ::xolotl::core::pi * 125.0 / 3.0;
 	// Ion conversion factor (dpa per ion)
 	double ionFactor = 1041.937632;
-	// V size threshold (44000 V)
-	AmountType vThreshold = 44000;
 
 	// Compute the void volume fraction for voids larger than 5 nm radius
 	auto voidVolumeFraction =
@@ -903,16 +972,12 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		PetscFunctionReturn(0);
 	}
 
-	// Compute how many I were available since last time step, above 5 keV
-	std::vector<double> iGeneration = {0, 0.028529737, 0.005994826, 0.002314166,
-		0.001583792, 0.000565448, 0.000571995, 0.000505504, 0.000258115,
-		0.000182199, 0.000242672, 0, 0, 0.000197382, 0, 0, 0, 0, 0.000212566, 0,
-		0, 0, 0, 0.000197382, 0, 0, 0, 0, 0.000121466, 0, 0, 0, 0, 2.27749E-05,
-		0, 0, 0, 0, 2.27749E-05, 0, 0, 0, 0, 2.27749E-05};
-
 	// Get the flux handler to know the dose rate.
 	auto fluxHandler = _solverHandler->getFluxHandler();
 	double doseRate = fluxHandler->getFluxAmplitude();
+
+	// Compute how many I were available since last time step, above 5 keV
+	auto iGeneration = fluxHandler->getHighFluxVector();
 
 	// Number of DPA per volume
 	auto omega = network.getAtomicVolume();
@@ -935,6 +1000,7 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	constexpr double sphereFactor = 4.0 * ::xolotl::core::pi / 3.0;
 
 	// Consider each cluster
+	AmountType validCluster = 0;
 	for (auto i = 0; i < networkSize; i++) {
 		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
 		const Region& clReg = cluster.getRegion();
@@ -944,6 +1010,8 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		// Only look at the larger voids
 		if (hi[Spec::V] <= vThreshold)
 			continue;
+
+		validCluster++;
 
 		// Compute its volume fraction
 		const auto ival = clReg[Spec::V];
@@ -962,19 +1030,13 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		for (auto k = 1; k < iGeneration.size(); k++) {
 			double iPortion = k * iGeneration[k] / generatedI;
 
-			// Loop for the void cluster that is k smaller
-			Composition comp = Composition::zero();
-			for (auto j = util::max(vThreshold, ival.begin()); j < ival.end();
-				 ++j) {
-				comp[Spec::V] = j - k;
-				auto vProdId =
-					network.findCluster(comp, plsm::HostMemSpace{}).getId();
-
+			// Use the map for the product
+			for (auto pair : _vProductMap[validCluster - 1][k - 1]) {
 				// Balance the concentrations
-				double amount = _previousInterI * iPortion * vFraction * dpa /
-					(double)vWeight;
+				double amount = _previousInterI * iPortion * vFraction * dpa *
+					pair.second / (double)vWeight;
 				gridPointSolution[i] -= amount;
-				gridPointSolution[vProdId] += amount;
+				gridPointSolution[pair.first] += amount;
 			}
 		}
 	}

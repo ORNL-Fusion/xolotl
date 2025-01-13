@@ -276,6 +276,15 @@ public:
 	{
 		deltaCorrection = delta;
 	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	virtual std::vector<double>
+	getHighFluxVector() const
+	{
+		return std::vector<double>();
+	}
 };
 // end class FluxHandler
 

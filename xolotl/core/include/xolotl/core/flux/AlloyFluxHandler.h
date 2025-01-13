@@ -351,6 +351,15 @@ public:
 					(1.0 - deltaCorrection) * flux(i, xi));
 			});
 	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	std::vector<double>
+	getHighFluxVector() const
+	{
+		return highFluxI;
+	}
 }; // namespace flux
 // end class AlloyFluxHandler
 

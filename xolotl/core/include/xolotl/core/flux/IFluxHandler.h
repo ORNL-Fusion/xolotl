@@ -181,6 +181,15 @@ public:
 	 */
 	virtual void
 	setFluxCorrection(double delta) = 0;
+
+	/**
+	 * This operation gets the flux coefficients related to high energy
+	 * implantation.
+	 *
+	 * @return The flux vector
+	 */
+	virtual std::vector<double>
+	getHighFluxVector() const = 0;
 };
 // end class IFluxHandler
 

@@ -75,6 +75,8 @@ protected:
 	std::shared_ptr<perf::ITimer> _postEventFuncTimer;
 
 	double _previousInterI = 0.0;
+	// V size threshold (44000 V)
+	AmountType vThreshold = 44000;
 
 	std::vector<std::vector<std::vector<std::pair<IdType, AmountType>>>>
 		_vProductMap;
