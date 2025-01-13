@@ -48,17 +48,17 @@ public:
 		return _currentTime;
 	}
 
-    [[nodiscard]] double
-    startTime() const noexcept
-    {
-        return _startTime;
-    }
+	[[nodiscard]] double
+	startTime() const noexcept
+	{
+		return _startTime;
+	}
 
-    [[nodiscard]] double
-    startTimeStepSize() const noexcept
-    {
-        return _seq->startValue();
-    }
+	[[nodiscard]] double
+	startTimeStepSize() const noexcept
+	{
+		return _seq->startValue();
+	}
 
 	[[nodiscard]] double
 	previousTime() const noexcept
