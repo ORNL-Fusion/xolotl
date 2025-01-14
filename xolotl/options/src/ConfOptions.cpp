@@ -212,10 +212,10 @@ ConfOptions::readParams(int argc, const char* argv[])
 		bpo::value<fs::path>(&fluxDepthProfileFilePath),
 		"The path to the custom flux profile file; the default is an empty "
 		"string that will use the default material associated flux handler.")(
-		"reactionFilePath", bpo::value<fs::path>(&reactionFilePath),
-		"The path to the reaction rates file; the default is an empty "
-		"string.")("basalPortion",
-		bpo::value<double>(&basalPortion)->default_value(0.1),
+		"reactionFilePath",
+		bpo::value<fs::path>(&reactionFilePath)->default_value("reaction.dat"),
+		"The path to the reaction rates file; the default is reaction.dat .")(
+		"basalPortion", bpo::value<double>(&basalPortion)->default_value(0.1),
 		"The value of the basal portion generated for each V (0.1 by "
 		"default).")("transitionSize",
 		bpo::value<int>(&transitionSize)->default_value(325),

@@ -29,10 +29,44 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 {
 	// Create the option to create a network
 	xolotl::options::ConfOptions opts;
+
+	// Create a file with reaction data.
+	std::ofstream reactionFile("reaction.dat");
+	reactionFile
+		<< "0 0 1 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "0 1 0 -0.160789024638881 -12.7387253625273 4.2488E+11 4.23317"
+		<< std::endl
+		<< "0 2 0 2.87060634573234 -8.37649260139129 9.9337E+11 3.43830674"
+		<< std::endl
+		<< "1 0 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 1 0 3.14296517286615 -1.4324963007117 0 0" << std::endl
+		<< "1 2 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 3 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 4 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 5 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 6 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 7 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 8 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "Reactions" << std::endl
+		<< "0 0 1 0.00596" << std::endl
+		<< "0 1 0 0.00596" << std::endl
+		<< "0 2 0 0.00596" << std::endl;
+	reactionFile.close();
+
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=5 0 0 5 1" << std::endl
+			  << "reactionFilePath=reaction.dat" << std::endl
 			  << "tempParam=1500" << std::endl;
 	paramFile.close();
 
@@ -61,6 +95,9 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
 		{maxXe + 1, maxV + 1, maxI + 1}};
 	NetworkType network(maxSpeciesAmounts, subdivRatios, 1, opts);
+
+	std::remove("reaction.dat");
+
 	// Get its size
 	const int dof = network.getDOF();
 

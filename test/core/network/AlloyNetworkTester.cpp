@@ -1185,7 +1185,7 @@ BOOST_AUTO_TEST_CASE(traits)
 	BOOST_REQUIRE_EQUAL(toNameString(Spec::Frank), "Frank");
 
 	// parseSpeciesId / getSpeciesLabel / getSpeciesName
-    auto network = NetworkType();
+	auto network = NetworkType();
 	auto sid = network.parseSpeciesId("V");
 	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
 	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
