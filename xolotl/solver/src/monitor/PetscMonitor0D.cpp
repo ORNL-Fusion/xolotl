@@ -161,8 +161,9 @@ PetscMonitor0D::setup(int loop)
 		outputFile << "#time_step time ";
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 			auto speciesName = network.getSpeciesName(id);
-			outputFile << speciesName << "_density " << speciesName
-					   << "_diameter " << speciesName << "_partial_density "
+			outputFile << speciesName << "_density " << speciesName << "_atom "
+					   << speciesName << "_diameter " << speciesName
+					   << "_partial_density " << speciesName << "_partial_atom "
 					   << speciesName << "_partial_diameter ";
 		}
 		outputFile << std::endl;
@@ -603,16 +604,19 @@ PetscMonitor0D::computeAlloy(
 	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 		using TQ = core::network::IReactionNetwork::TotalQuantity;
 		using Q = TQ::Type;
-		using TQA = util::Array<TQ, 4>;
+		using TQA = util::Array<TQ, 6>;
 		auto ms = static_cast<AmountType>(minSizes[id()]);
 		auto totals = network.getTotals(concs,
-			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
+			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
+				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
 				TQ{Q::radius, id, ms}});
 
-		myData[4 * id()] = totals[0];
-		myData[(4 * id()) + 1] = 2.0 * totals[1] / myData[4 * id()];
-		myData[(4 * id()) + 2] = totals[2];
-		myData[(4 * id()) + 3] = 2.0 * totals[3] / myData[(4 * id()) + 2];
+		myData[6 * id()] = totals[0];
+		myData[6 * id() + 1] = totals[1];
+		myData[(6 * id()) + 2] = 2.0 * totals[2] / myData[6 * id()];
+		myData[(6 * id()) + 3] = totals[3];
+		myData[(6 * id()) + 4] = totals[4];
+		myData[(6 * id()) + 5] = 2.0 * totals[5] / myData[(6 * id()) + 3];
 	}
 
 	// Set the output precision
@@ -626,10 +630,10 @@ PetscMonitor0D::computeAlloy(
 	// Output the data
 	outputFile << timestep << " " << time << " ";
 	for (auto i = 0; i < numSpecies; ++i) {
-		outputFile << myData[i * 4] << " " << myData[(i * 4) + 1] << " "
-				   << myData[(i * 4) + 2] << " " << myData[(i * 4) + 3] << " ";
+		outputFile << myData[i * 6] << " " << myData[(i * 6) + 1] << " "
+				   << myData[(i * 6) + 2] << " " << myData[(i * 6) + 3] << " "
+				   << myData[(i * 6) + 4] << " " << myData[(i * 6) + 5] << " ";
 	}
-	outputFile << std::endl;
 
 	// Close the output file
 	outputFile.close();
@@ -905,7 +909,7 @@ PetscMonitor0D::eventFunction(
 	auto fluxHandler = _solverHandler->getFluxHandler();
 	double doseRate = fluxHandler->getFluxAmplitude();
 	// TODO: change to dose
-	if (time > 1.0e-10)
+	if (time > 0.0)
 		fvalue[0] = 0.0;
 
 	PetscFunctionReturn(0);
@@ -969,6 +973,11 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		// Restore the solutionArray
 		PetscCall(DMDAVecRestoreArrayDOF(da, solution, &solutionArray));
 
+		std::fstream outputFile;
+		outputFile.open("Alloy.dat", std::fstream::app);
+		outputFile << "0.0" << std::endl;
+		outputFile.close();
+
 		PetscFunctionReturn(0);
 	}
 
@@ -991,6 +1000,11 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	// Get the number that interact
 	double probability = (dpa / ionFactor) * cascadeVolume * voidVolumeFraction;
 	double interactI = generatedI * probability;
+
+	std::fstream outputFile;
+	outputFile.open("Alloy.dat", std::fstream::app);
+	outputFile << probability << std::endl;
+	outputFile.close();
 
 	// Adjust the generation term
 	fluxHandler->setFluxCorrection(probability);
