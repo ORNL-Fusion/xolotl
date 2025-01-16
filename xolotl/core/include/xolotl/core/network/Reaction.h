@@ -19,6 +19,7 @@ namespace core
 {
 namespace network
 {
+template <typename TImpl> class ReactionNetwork;
 /**
  * @brief General reaction class where
  * reactants become products with a given rate
@@ -29,6 +30,7 @@ namespace network
 template <typename TNetwork, typename TDerived>
 class Reaction
 {
+    friend class ReactionNetwork<TNetwork>;
 	using Types = detail::ReactionNetworkTypes<TNetwork>;
 	using Props = detail::ReactionNetworkProperties<TNetwork>;
 

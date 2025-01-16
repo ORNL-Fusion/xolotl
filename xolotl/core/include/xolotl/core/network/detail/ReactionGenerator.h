@@ -6,6 +6,7 @@
 #include <xolotl/core/network/Reaction.h>
 #include <xolotl/core/network/ReactionNetworkTraits.h>
 #include <xolotl/core/network/detail/ReactionCollection.h>
+#include <xolotl/util/Atomics.h>
 
 namespace xolotl
 {

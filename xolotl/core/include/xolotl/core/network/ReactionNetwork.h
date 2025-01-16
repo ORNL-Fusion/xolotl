@@ -32,6 +32,30 @@ template <typename TImpl, typename TDerived>
 class ReactionGeneratorBase;
 } // namespace detail
 
+template <typename T>
+class DualViewWrapper
+{
+public:
+	DualViewWrapper() = default;
+
+	DualViewWrapper(const std::string& label);
+
+	~DualViewWrapper();
+
+	void
+	modify_host();
+
+	void
+	sync_device();
+
+private:
+    Kokkos::DualView<T> _dualView;
+
+public:
+	typename Kokkos::DualView<T>::t_dev d_view;
+	typename Kokkos::DualView<T>::t_host h_view;
+};
+
 template <typename TImpl>
 struct ReactionNetworkInterface
 {
@@ -796,7 +820,8 @@ private:
 protected:
 	std::optional<ClusterDataMirror> _clusterDataMirror;
 
-	Kokkos::DualView<ClusterData> _clusterData;
+	// Kokkos::DualView<ClusterData> _clusterData;
+	DualViewWrapper<ClusterData> _clusterData;
 
 	Subpaving _subpaving;
 

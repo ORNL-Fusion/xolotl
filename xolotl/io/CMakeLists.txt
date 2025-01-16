@@ -34,10 +34,9 @@ add_library(xolotlIO SHARED
 target_link_libraries(xolotlIO PUBLIC
     xolotlCore
     xolotlUtil
-    ${HDF5_LIBRARIES}
+    HDF5::HDF5
 )
 target_include_directories(xolotlIO PUBLIC
-    $<BUILD_INTERFACE:${HDF5_INCLUDE_DIR}>
     $<BUILD_INTERFACE:${XOLOTL_IO_INCLUDE_DIR}>
     $<INSTALL_INTERFACE:include>
 )
@@ -45,8 +44,5 @@ set_target_properties(xolotlIO PROPERTIES
     INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
     INSTALL_RPATH_USE_LINK_PATH TRUE
 )
-
-get_target_property(__io_iid xolotlIO INTERFACE_INCLUDE_DIRECTORIES)
-message("xolotlIO IIDs: ${__io_iid}")
 
 install(TARGETS xolotlIO EXPORT Xolotl LIBRARY DESTINATION lib)

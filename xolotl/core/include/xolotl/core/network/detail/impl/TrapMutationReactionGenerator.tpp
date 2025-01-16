@@ -46,7 +46,7 @@ void
 TrapMutationReactionGenerator<TBase>::addTrapMutationReaction(
 	Count, const ClusterSet& clusterSet) const
 {
-	Kokkos::atomic_increment(&_clusterTMReactionCounts(clusterSet.cluster1));
+	Kokkos::atomic_inc(&_clusterTMReactionCounts(clusterSet.cluster1));
 }
 
 template <typename TBase>
@@ -56,9 +56,8 @@ TrapMutationReactionGenerator<TBase>::addTrapMutationReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
 	auto id = _tmCrsRowMap(clusterSet.cluster1);
-	for (; !Kokkos::atomic_compare_exchange_strong(
-			 &_tmCrsClusterSets(id).cluster1, NetworkType::invalidIndex(),
-			 clusterSet.cluster1);
+	for (; !util::atomicCompareExchangeStrong(&_tmCrsClusterSets(id).cluster1,
+			 NetworkType::invalidIndex(), clusterSet.cluster1);
 		 ++id) { }
 	_tmCrsClusterSets(id) = clusterSet;
 }

@@ -13,6 +13,7 @@ _debug=0
 _use_cuda=0
 _cuda_sm_ver=0
 _use_omp=0
+_kokkos_spec="yes"
 _petsc_extra_args=""
 _petsc_dir=$PWD
 _petsc_dir_arch_set=""
@@ -65,6 +66,12 @@ do
         ;;
     --openmp)
         _use_omp=1
+        ;;
+    --kokkos-version=*)
+        _kokkos_ver="${1:17}" # strip "--kokkos-version="
+        __k_spec="--download-kokkos-commit=${_kokkos_ver}"
+        __kk_spec="--download-kokkos-kernels-commit=${_kokkos_ver}"
+        _petsc_extra_args="${_petsc_extra_args} ${__k_spec} ${__kk_spec}"
         ;;
     --get-lapack)
         _petsc_extra_args="${_petsc_extra_args} --download-f2cblaslapack"
