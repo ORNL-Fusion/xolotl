@@ -86,7 +86,8 @@ Options::Options() :
 	basalPortion(0.1),
 	transitionSize(325),
 	cascadeDose(-1.0),
-	cascadeEfficiency(0.0)
+	cascadeEfficiency(0.0),
+	reactionFilePath("reaction.dat")
 {
 }
 

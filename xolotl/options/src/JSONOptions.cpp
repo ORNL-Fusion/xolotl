@@ -515,7 +515,7 @@ JSONOptions::defineHandlers()
 		.add(
 			"reactionFilePath", ElemType::string,
 			"The path to the reaction rates file.\n"
-			"(default = \"\")",
+			"(default = \"reaction.dat\")",
 			JSON_ELEM_HANDLER { checkSetParam(tree, name, reactionFilePath); })
 		.add(
 			"basalPortion", ElemType::real,

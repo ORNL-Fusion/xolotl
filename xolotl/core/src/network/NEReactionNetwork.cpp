@@ -99,7 +99,9 @@ NEReactionNetwork::readClusters(const std::string filename)
 	std::ifstream reactionFile;
 	reactionFile.open(filename);
 	if (!reactionFile.good()) {
-		return;
+		throw std::string("\nIncorrect filename for reading reactions! \n"
+						  "Either provide reaction.dat or set the file path "
+						  "with the reactionFilePath option.");
 	}
 
 	// First find how big of an object we need to create

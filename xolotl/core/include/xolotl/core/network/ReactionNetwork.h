@@ -786,11 +786,11 @@ private:
 	generateClusterData(const ClusterGenerator& generator);
 
 	void
-	readClusters(const std::string filename = "reactionRates.txt");
+	readClusters(const std::string filename = "reaction.dat");
 
 	void
 	readReactions(
-		double temperature, const std::string filename = "reactionRates.txt");
+		double temperature, const std::string filename = "reaction.dat");
 
 	void
 	defineReactions(Connectivity& connectivity);
