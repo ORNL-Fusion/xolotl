@@ -34,7 +34,7 @@ case "$1" in
 
     cd ${GITHUB_WORKSPACE}/..
 
-    git clone https://gitlab.com/petsc/petsc.git -b v3.21.6 petsc
+    git clone https://gitlab.com/petsc/petsc.git -b v3.22.2 petsc
     cd petsc
     bash ${GITHUB_WORKSPACE}/../xolotl/scripts/build_petsc.sh \
         --prefix=${GITHUB_WORKSPACE}/../install \
