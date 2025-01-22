@@ -49,7 +49,8 @@ public:
 	sync_device();
 
 private:
-    Kokkos::DualView<T> _dualView;
+	Kokkos::DualView<T> _dualView;
+	bool _hasInstance{false};
 
 public:
 	typename Kokkos::DualView<T>::t_dev d_view;
