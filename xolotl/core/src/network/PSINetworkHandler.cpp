@@ -33,6 +33,26 @@ generatePSIReactionNetwork(const options::IOptions& options)
 		xolotl::core::tungstenLatticeConstant :
 		options.getLatticeParameter();
 	double temperature = options.getTempParam();
+	auto tempHandler = options.getTempHandlerName();
+	// Temperature profile case
+	if (tempHandler == "profile") {
+		auto fileName = options.getTempProfileFilename();
+		// Read the first temperature stored in the file
+		std::ifstream inputFile(fileName.c_str());
+		std::string line;
+		while (getline(inputFile, line)) {
+			if (!line.length() || line[0] == '#')
+				continue;
+			double xtemp = 0.0, ytemp = 0.0;
+			sscanf(line.c_str(), "%lf %lf", &xtemp, &ytemp);
+			temperature = ytemp;
+			break;
+		}
+	}
+	// Heat equation case
+	else if (tempHandler == "heat") {
+		temperature = options.getTempParam(1);
+	}
 
 	// Get the boundaries from the options
 	AmountType maxV = options.getMaxPureV();
