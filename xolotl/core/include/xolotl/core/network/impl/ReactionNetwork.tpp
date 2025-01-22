@@ -19,7 +19,7 @@ namespace network
 template <typename T>
 DualViewWrapper<T>::DualViewWrapper(const std::string& label) :
 	_dualView(Kokkos::ViewAllocateWithoutInitializing(label)),
-    _hasInstance(true),
+	_hasInstance(true),
 	d_view(_dualView.d_view),
 	h_view(_dualView.h_view)
 {
@@ -29,9 +29,9 @@ DualViewWrapper<T>::DualViewWrapper(const std::string& label) :
 template <typename T>
 DualViewWrapper<T>::~DualViewWrapper()
 {
-    if (_hasInstance) {
-        h_view().~T();
-    }
+	if (_hasInstance) {
+		h_view().~T();
+	}
 }
 
 template <typename T>
@@ -164,6 +164,11 @@ ReactionNetwork<TImpl>::ReactionNetwork(
 			return {ratio};
 		}(),
 		gridSize, opts)
+{
+}
+
+template <typename TImpl>
+ReactionNetwork<TImpl>::~ReactionNetwork()
 {
 }
 
