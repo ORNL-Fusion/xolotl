@@ -11,7 +11,7 @@ KOKKOS_INLINE_FUNCTION
 bool
 atomicCompareExchangeStrong(T* ptr, T expected, T desired)
 {
-    return expected == Kokkos::atomic_compare_exchange(ptr, expected, desired);
+	return expected == Kokkos::atomic_compare_exchange(ptr, expected, desired);
 }
-}
-}
+} // namespace util
+} // namespace xolotl
