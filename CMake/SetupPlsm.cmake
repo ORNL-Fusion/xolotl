@@ -1,3 +1,7 @@
+if(NOT Xolotl_USE_GIT)
+    return()
+endif()
+
 function(find_plsm __result)
     list(APPEND CMAKE_PREFIX_PATH ${plsm_DIR})
     find_package(plsm QUIET)

@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.20)
+cmake_minimum_required(VERSION 3.13)
 
 # Fix cmake behavior for CMAKE_CXX_STANDARD with clang on Mac OS X.
 # See cmake documentation on CMP0025 policy for details.
@@ -15,9 +15,12 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 project(Xolotl
-    VERSION ${VERSION}
+    VERSION 3.0.1
     LANGUAGES CXX
 )
+if(NOT Xolotl_VERSION_EXACT)
+    set(Xolotl_VERSION_EXACT ${Xolotl_VERSION})
+endif()
 enable_language(C)
 
 ## MPI
