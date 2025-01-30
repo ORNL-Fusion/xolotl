@@ -116,11 +116,13 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	test::DOFView updatedConc("updatedConc", 5, dof);
 
 	// Initialize their values
-	for (int i = 0; i < 5; i++)
-		for (int j = 0; j < dof; j++) {
-			conc(i, j) = 1.0e-5 * i;
-			updatedConc(i, j) = 0.0;
-		}
+	Kokkos::parallel_for(
+		dof, KOKKOS_LAMBDA(int j) {
+			for (int i = 0; i < 5; i++) {
+				conc(i, j) = 1.0e-5 * i;
+				updatedConc(i, j) = 0.0;
+			}
+		});
 
 	// The pointer to the grid point we want
 	auto concOffset = subview(conc, 1, Kokkos::ALL);

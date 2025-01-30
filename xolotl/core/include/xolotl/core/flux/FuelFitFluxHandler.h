@@ -226,6 +226,7 @@ public:
 		auto yield = defectYield;
 		auto xenonYield = xeYield;
 		auto ids = this->fluxIds;
+		auto uConc = this->uConc;
 
 		Kokkos::parallel_for(
 			1, KOKKOS_LAMBDA(std::size_t) {
