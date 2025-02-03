@@ -13,7 +13,6 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationReactionGenerator.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/detail/TupleUtility.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyNetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReaction.h

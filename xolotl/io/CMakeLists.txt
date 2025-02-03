@@ -34,10 +34,9 @@ add_library(xolotlIO SHARED
 target_link_libraries(xolotlIO PUBLIC
     xolotlCore
     xolotlUtil
-    ${HDF5_LIBRARIES}
+    HDF5::HDF5
 )
 target_include_directories(xolotlIO PUBLIC
-    ${HDF5_INCLUDE_DIR}
     $<BUILD_INTERFACE:${XOLOTL_IO_INCLUDE_DIR}>
     $<INSTALL_INTERFACE:include>
 )

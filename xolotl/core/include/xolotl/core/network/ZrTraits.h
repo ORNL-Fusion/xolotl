@@ -44,6 +44,11 @@ toNameString(ZrSpecies species)
 }
 
 template <>
+struct NumberOfSpecies<ZrSpecies> : std::integral_constant<std::size_t, 3>
+{
+};
+
+template <>
 struct NumberOfInterstitialSpecies<ZrSpecies> :
 	std::integral_constant<std::size_t, 1>
 {

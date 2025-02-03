@@ -101,6 +101,14 @@ public:
 	setCurrentTimes(double currentTime, double currentDt) = 0;
 
 	/**
+	 * Set the current dt.
+	 *
+	 * @param currentDt The current time step
+	 */
+	virtual void
+	setCurrentTimeStep(double dt) = 0;
+
+	/**
 	 * This operation directs the Solver to perform the solve. If the solve
 	 * fails, it will throw an exception of type std::runtime_error.
 	 */

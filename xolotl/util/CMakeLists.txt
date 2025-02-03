@@ -4,6 +4,7 @@ set(XOLOTL_UTIL_HEADER_DIR ${XOLOTL_UTIL_INCLUDE_DIR}/xolotl/util)
 
 set(XOLOTL_UTIL_HEADERS
     ${XOLOTL_UTIL_HEADER_DIR}/Array.h
+    ${XOLOTL_UTIL_HEADER_DIR}/Atomics.h
     ${XOLOTL_UTIL_HEADER_DIR}/DoInOrder.h
     ${XOLOTL_UTIL_HEADER_DIR}/Filesystem.h
     ${XOLOTL_UTIL_HEADER_DIR}/IStepSequence.h
@@ -17,6 +18,7 @@ set(XOLOTL_UTIL_HEADERS
     ${XOLOTL_UTIL_HEADER_DIR}/StreamTokenizer.h
     ${XOLOTL_UTIL_HEADER_DIR}/TimeStepper.h
     ${XOLOTL_UTIL_HEADER_DIR}/Tokenizer.h
+    ${XOLOTL_UTIL_HEADER_DIR}/TupleUtils.h
     ${XOLOTL_UTIL_HEADER_DIR}/RandomNumberGenerator.h
 )
 

@@ -49,7 +49,7 @@ SinkReactionGenerator<TBase>::addSinkReaction(
 	if (!this->_clusterData.enableSink())
 		return;
 
-	Kokkos::atomic_increment(&_clusterSinkReactionCounts(clusterSet.cluster0));
+	Kokkos::atomic_inc(&_clusterSinkReactionCounts(clusterSet.cluster0));
 }
 
 template <typename TBase>
@@ -62,9 +62,8 @@ SinkReactionGenerator<TBase>::addSinkReaction(
 		return;
 
 	auto id = _sinkCrsRowMap(clusterSet.cluster0);
-	for (; !Kokkos::atomic_compare_exchange_strong(
-			 &_sinkCrsClusterSets(id).cluster0, NetworkType::invalidIndex(),
-			 clusterSet.cluster0);
+	for (; !util::atomicCompareExchangeStrong(&_sinkCrsClusterSets(id).cluster0,
+			 NetworkType::invalidIndex(), clusterSet.cluster0);
 		 ++id) { }
 	_sinkCrsClusterSets(id) = clusterSet;
 }

@@ -69,7 +69,7 @@ public:
 	 * \see ISolver.h
 	 */
 	void
-	setCommandLineOptions(std::string arg);
+	setCommandLineOptions(std::string arg) override;
 
 	/**
 	 * \see ISolver.h
