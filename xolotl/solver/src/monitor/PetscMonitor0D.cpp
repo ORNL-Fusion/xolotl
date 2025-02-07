@@ -592,7 +592,7 @@ PetscMonitor0D::computeAlloy(
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	const auto dof = network.getDOF();
 	auto numSpecies = network.getSpeciesListSize();
-	auto myData = std::vector<double>(numSpecies * 4, 0.0);
+	auto myData = std::vector<double>(numSpecies * 6, 0.0);
 
 	// Get the minimum size for the loop densities and diameters
 	auto minSizes = _solverHandler->getMinSizes();
