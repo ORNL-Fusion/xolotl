@@ -19,6 +19,8 @@ namespace core
 {
 namespace network
 {
+template <typename TImpl>
+class ReactionNetwork;
 /**
  * @brief General reaction class where
  * reactants become products with a given rate
@@ -29,6 +31,7 @@ namespace network
 template <typename TNetwork, typename TDerived>
 class Reaction
 {
+	friend class ReactionNetwork<TNetwork>;
 	using Types = detail::ReactionNetworkTypes<TNetwork>;
 	using Props = detail::ReactionNetworkProperties<TNetwork>;
 
@@ -60,7 +63,7 @@ public:
 
 	Reaction() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	Reaction(ReactionDataRef reactionData, const ClusterData& clusterData,
 		IndexType reactionId);
 
@@ -313,13 +316,13 @@ public:
 
 	ProductionReaction() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	ProductionReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		IndexType cluster0, IndexType cluster1,
 		IndexType cluster2 = invalidIndex, IndexType cluster3 = invalidIndex);
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	ProductionReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		const detail::ClusterSet& clusterSet);
@@ -442,12 +445,12 @@ public:
 
 	DissociationReaction() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	DissociationReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		IndexType cluster0, IndexType cluster1, IndexType cluster2);
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	DissociationReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		const detail::ClusterSet& clusterSet);

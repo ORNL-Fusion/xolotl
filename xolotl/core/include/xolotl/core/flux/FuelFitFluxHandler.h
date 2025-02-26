@@ -43,6 +43,9 @@ private:
 	// The temperature
 	double temperature;
 
+	// The uranium concentration
+	double uConc;
+
 	// The list of pure vacancy indices
 	std::vector<IdType> pureDefectIds;
 	std::vector<double> pureDefectFactors;
@@ -75,6 +78,9 @@ public:
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
 		std::vector<double> grid) override
 	{
+		// Get the uranium concentration
+		uConc = 1.0 / network.getAtomicVolume();
+
 		// Set the grid
 		xGrid = grid;
 
@@ -220,7 +226,7 @@ public:
 		auto yield = defectYield;
 		auto xenonYield = xeYield;
 		auto ids = this->fluxIds;
-		auto uConc = core::uConcentration;
+		auto uConc = this->uConc;
 
 		Kokkos::parallel_for(
 			1, KOKKOS_LAMBDA(std::size_t) {
@@ -242,8 +248,8 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	setFissionYield(double yield)
+	void
+	setFissionYield(double yield) override
 	{
 		xeYield = yield;
 	}

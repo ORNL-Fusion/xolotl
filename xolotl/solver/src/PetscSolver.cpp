@@ -177,6 +177,13 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 		PetscCallVoid(PetscInitialize(NULL, NULL, NULL, help));
 		petscInitializedHere = true;
 	}
+	// Free memory
+	if (loop > 0) {
+		PetscCallVoid(PetscOptionsDestroy(&petscOptions));
+		PetscCallVoid(VecDestroy(&C));
+		PetscCallVoid(TSDestroy(&ts));
+		PetscCallVoid(DMDestroy(&da));
+	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create the solver options
@@ -337,6 +344,12 @@ PetscSolver::setCurrentTimes(double time, double dt)
 }
 
 void
+PetscSolver::setCurrentTimeStep(double dt)
+{
+	PetscCallVoid(TSSetTimeStep(ts, dt));
+}
+
+void
 PetscSolver::solve()
 {
 	// Initialiaze the converged reason
@@ -352,7 +365,9 @@ PetscSolver::solve()
 	while (reason == TS_CONVERGED_USER) {
 		// The interface already initialized the first loop
 		if (loopNumber > 0) {
+			PetscCallVoid(PetscOptionsPop());
 			initialize(loopNumber, time, oldDA, oldC);
+			PetscCallVoid(PetscOptionsPush(petscOptions));
 		}
 
 		/*

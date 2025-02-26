@@ -49,7 +49,7 @@ ReSolutionReactionGenerator<TBase>::addReSolutionReaction(
 	if (!this->_clusterData.enableReSolution())
 		return;
 
-	Kokkos::atomic_increment(&_clusterReSoReactionCounts(clusterSet.cluster0));
+	Kokkos::atomic_inc(&_clusterReSoReactionCounts(clusterSet.cluster0));
 }
 
 template <typename TBase>
@@ -62,9 +62,8 @@ ReSolutionReactionGenerator<TBase>::addReSolutionReaction(
 		return;
 
 	auto id = _reSoCrsRowMap(clusterSet.cluster0);
-	for (; !Kokkos::atomic_compare_exchange_strong(
-			 &_reSoCrsClusterSets(id).cluster0, NetworkType::invalidIndex(),
-			 clusterSet.cluster0);
+	for (; !util::atomicCompareExchangeStrong(&_reSoCrsClusterSets(id).cluster0,
+			 NetworkType::invalidIndex(), clusterSet.cluster0);
 		 ++id) { }
 	_reSoCrsClusterSets(id) = clusterSet;
 }

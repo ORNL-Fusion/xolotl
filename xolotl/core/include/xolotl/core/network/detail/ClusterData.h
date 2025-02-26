@@ -71,7 +71,7 @@ struct ClusterDataExtra
 	}
 
 	void
-	setGridSize(IndexType numClusters, IndexType gridSize) {};
+	setGridSize(IndexType numClusters, IndexType gridSize){};
 };
 
 /**
@@ -285,6 +285,7 @@ public:
 		setVal(_floatVals, XE_FORMATION, val);
 	}
 
+	KOKKOS_INLINE_FUNCTION
 	int
 	transitionSize() const
 	{

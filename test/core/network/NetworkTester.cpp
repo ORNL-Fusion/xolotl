@@ -33,6 +33,38 @@ using network_types =
 
 BOOST_AUTO_TEST_CASE_TEMPLATE(defaut_constructor, T, network_types)
 {
+	// Create a file with reaction data for NE.
+	std::ofstream reactionFile("reaction.dat");
+	reactionFile
+		<< "0 0 1 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "0 1 0 -0.160789024638881 -12.7387253625273 4.2488E+11 4.23317"
+		<< std::endl
+		<< "0 2 0 2.87060634573234 -8.37649260139129 9.9337E+11 3.43830674"
+		<< std::endl
+		<< "1 0 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 1 0 3.14296517286615 -1.4324963007117 0 0" << std::endl
+		<< "1 2 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 3 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 4 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 5 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 6 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 7 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 8 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "Reactions" << std::endl
+		<< "0 0 1 0.00596" << std::endl
+		<< "0 1 0 0.00596" << std::endl
+		<< "0 2 0 0.00596" << std::endl;
+	reactionFile.close();
+
 	using NetworkType = T;
 	constexpr auto speciesRange = NetworkType::getSpeciesRange();
 	std::vector<typename NetworkType::AmountType> maxSpeciesAmounts;
@@ -42,6 +74,9 @@ BOOST_AUTO_TEST_CASE_TEMPLATE(defaut_constructor, T, network_types)
 	}
 	NetworkType network =
 		NetworkType(maxSpeciesAmounts, 1, xolotl::options::ConfOptions{});
+
+	// Remove the file because it is not needed anymore
+	std::remove("reaction.dat");
 
 	BOOST_REQUIRE(network.getNumClusters() > 0);
 	BOOST_REQUIRE(network.getDOF() > 0);

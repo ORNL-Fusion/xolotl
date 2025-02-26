@@ -18,12 +18,7 @@ TimeStepper::TimeStepper(std::unique_ptr<IStepSequence>&& stepSequence,
 }
 
 TimeStepper::TimeStepper(TimeStepper&& other) = default;
-// {
-// 	_seq(std::move(stepSequence)),
-// 	_maxSteps(maxSteps),
-// 	_startTime(startTime),
-// 	_endTime(endTime)
-// }
+
 TimeStepper&
 TimeStepper::operator=(TimeStepper&& other) = default;
 
@@ -55,7 +50,7 @@ TimeStepper::step()
 [[nodiscard]] bool
 TimeStepper::valid() const noexcept
 {
-	return _currentTime < _endTime &&
+	return _previousTime < _endTime &&
 		(_maxSteps == 0 || _seq->currentStep() <= _maxSteps);
 }
 

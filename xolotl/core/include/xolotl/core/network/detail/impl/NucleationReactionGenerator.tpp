@@ -47,8 +47,7 @@ void
 NucleationReactionGenerator<TBase>::addNucleationReaction(
 	Count, const ClusterSet& clusterSet) const
 {
-	Kokkos::atomic_increment(
-		&_clusterNucleationReactionCounts(clusterSet.cluster0));
+	Kokkos::atomic_inc(&_clusterNucleationReactionCounts(clusterSet.cluster0));
 }
 
 template <typename TBase>
@@ -58,7 +57,7 @@ NucleationReactionGenerator<TBase>::addNucleationReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
 	auto id = _nucleationCrsRowMap(clusterSet.cluster0);
-	for (; !Kokkos::atomic_compare_exchange_strong(
+	for (; !util::atomicCompareExchangeStrong(
 			 &_nucleationCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
 		 ++id) { }

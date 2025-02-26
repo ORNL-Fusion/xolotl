@@ -23,7 +23,6 @@ set(tests
     flux/W211FitFluxHandlerTester.cpp
     modified/SoretDiffusionHandlerTester.cpp
     modified/DummySoretDiffusionHandlerTester.cpp
-    network/SpeciesEnumSequenceTester.cpp
     network/AlloyNetworkTester.cpp
     network/FeNetworkTester.cpp
     network/ModifiedTrapMutationTester.cpp

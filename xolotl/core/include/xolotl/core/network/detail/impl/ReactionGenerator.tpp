@@ -117,7 +117,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::addProductionReaction(
 	if (!_clusterData.enableStdReaction())
 		return;
 
-	Kokkos::atomic_increment(&_clusterProdReactionCounts(clusterSet.cluster0));
+	Kokkos::atomic_inc(&_clusterProdReactionCounts(clusterSet.cluster0));
 }
 
 template <typename TNetwork, typename TDerived>
@@ -130,9 +130,8 @@ ReactionGeneratorBase<TNetwork, TDerived>::addProductionReaction(
 		return;
 
 	auto id = _prodCrsRowMap(clusterSet.cluster0);
-	for (; !Kokkos::atomic_compare_exchange_strong(
-			 &_prodCrsClusterSets(id).cluster0, NetworkType::invalidIndex(),
-			 clusterSet.cluster0);
+	for (; !util::atomicCompareExchangeStrong(&_prodCrsClusterSets(id).cluster0,
+			 NetworkType::invalidIndex(), clusterSet.cluster0);
 		 ++id) { }
 	_prodCrsClusterSets(id) = clusterSet;
 }
@@ -146,7 +145,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::addDissociationReaction(
 	if (!_clusterData.enableStdReaction())
 		return;
 
-	Kokkos::atomic_increment(&_clusterDissReactionCounts(clusterSet.cluster1));
+	Kokkos::atomic_inc(&_clusterDissReactionCounts(clusterSet.cluster1));
 }
 
 template <typename TNetwork, typename TDerived>
@@ -159,9 +158,8 @@ ReactionGeneratorBase<TNetwork, TDerived>::addDissociationReaction(
 		return;
 
 	auto id = _dissCrsRowMap(clusterSet.cluster1);
-	for (; !Kokkos::atomic_compare_exchange_strong(
-			 &_dissCrsClusterSets(id).cluster1, NetworkType::invalidIndex(),
-			 clusterSet.cluster1);
+	for (; !util::atomicCompareExchangeStrong(&_dissCrsClusterSets(id).cluster1,
+			 NetworkType::invalidIndex(), clusterSet.cluster1);
 		 ++id) { }
 	_dissCrsClusterSets(id) = clusterSet;
 }
@@ -220,7 +218,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 		"ReactionGeneratorBase::generateConnectivity::diagonal", this->_numDOFs,
 		KOKKOS_LAMBDA(const IndexType i) {
 			auto id = tmpConn.row_map(i);
-			for (; !Kokkos::atomic_compare_exchange_strong(
+			for (; !util::atomicCompareExchangeStrong(
 					 &tmpConn.entries(id), NetworkType::invalidIndex(), i);
 				 ++id) {
 				if (tmpConn.entries(id) == i) {

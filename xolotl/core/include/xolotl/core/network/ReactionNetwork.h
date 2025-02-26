@@ -32,6 +32,31 @@ template <typename TImpl, typename TDerived>
 class ReactionGeneratorBase;
 } // namespace detail
 
+template <typename T>
+class DualViewWrapper
+{
+public:
+	DualViewWrapper() = default;
+
+	DualViewWrapper(const std::string& label);
+
+	~DualViewWrapper();
+
+	void
+	modify_host();
+
+	void
+	sync_device();
+
+private:
+	Kokkos::DualView<T> _dualView;
+	bool _hasInstance{false};
+
+public:
+	typename Kokkos::DualView<T>::t_dev d_view;
+	typename Kokkos::DualView<T>::t_host h_view;
+};
+
 template <typename TImpl>
 struct ReactionNetworkInterface
 {
@@ -101,7 +126,7 @@ public:
 	void
 	copyClusterDataView();
 
-	ReactionNetwork() = default;
+	ReactionNetwork();
 
 	ReactionNetwork(const Subpaving& subpaving, IndexType gridSize,
 		const options::IOptions& opts);
@@ -114,6 +139,8 @@ public:
 
 	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 		IndexType gridSize, const options::IOptions& opts);
+
+	~ReactionNetwork();
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::size_t
@@ -762,11 +789,11 @@ private:
 	generateClusterData(const ClusterGenerator& generator);
 
 	void
-	readClusters(const std::string filename = "reactionRates.txt");
+	readClusters(const std::string filename = "reaction.dat");
 
 	void
 	readReactions(
-		double temperature, const std::string filename = "reactionRates.txt");
+		double temperature, const std::string filename = "reaction.dat");
 
 	void
 	defineReactions(Connectivity& connectivity);
@@ -796,7 +823,8 @@ private:
 protected:
 	std::optional<ClusterDataMirror> _clusterDataMirror;
 
-	Kokkos::DualView<ClusterData> _clusterData;
+	// Kokkos::DualView<ClusterData> _clusterData;
+	DualViewWrapper<ClusterData> _clusterData;
 
 	Subpaving _subpaving;
 

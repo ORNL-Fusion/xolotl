@@ -4,6 +4,7 @@
 
 using namespace std::string_literals;
 
+#include <xolotl/options/CommandLineError.h>
 #include <xolotl/options/ConfOptions.h>
 #include <xolotl/options/InvalidOptionValue.h>
 #include <xolotl/options/JSONOptions.h>
@@ -86,7 +87,8 @@ Options::Options() :
 	basalPortion(0.1),
 	transitionSize(325),
 	cascadeDose(-1.0),
-	cascadeEfficiency(0.0)
+	cascadeEfficiency(0.0),
+	reactionFilePath("reaction.dat")
 {
 }
 
@@ -475,6 +477,10 @@ Options::setCouplingTimeStepParams(const std::vector<double>& params)
 	initialTimeStep = params[0];
 	maxTimeStep = params[1];
 	timeStepGrowthFactor = params[2];
+	if (params[3] > 0.0) {
+		throw InvalidOptionValue("Options: unsupported value for startTime; "
+								 "should be 0.0 (or negative for restart).");
+	}
 	startTime = params[3];
 	endTime = params[4];
 	if (params[5] <= 0) {
@@ -532,14 +538,50 @@ Options::appendPetscArg(const std::string& arg)
 	petscArg += arg;
 }
 
+void
+printUsage(std::ostream& os)
+{
+	os << "Xolotl Usage:\n"
+	   << "\n"
+	   << "    xolotl --help|-h\n"
+	   << "    xolotl <param-file>\n";
+}
+
+void
+printHelp()
+{
+	printUsage(std::cout);
+	std::cout << "\n"
+			  << "\n"
+			  << "Command-line arguments:\n"
+			  << "\n"
+			  << "  --help|-h     Print this help message.\n"
+			  << "  <param-file>  File providing runtime parameters.\n"
+			  << "\n"
+			  << "\n"
+			  << "Xolotl (JSON) parameters:\n"
+			  << "\n";
+	JSONOptions{}.printHelp(std::cout);
+}
+
 std::shared_ptr<IOptions>
 createOptions(int argc, const char* argv[])
 {
+	// Handle empty command-line
 	if (argc < 2) {
-		throw std::runtime_error(
-			"Options: parameter file name must not be empty");
+		std::stringstream usage;
+		printUsage(usage);
+		throw CommandLineError(usage.str());
 	}
 
+	// Handle help output
+	auto arg1 = std::string(argv[1]);
+	if (arg1 == "--help" || arg1 == "-h") {
+		printHelp();
+		return std::shared_ptr<IOptions>();
+	}
+
+	// Handle parameter file
 	auto filePath = fs::path(argv[1]);
 	auto ext = filePath.extension();
 

@@ -2,13 +2,13 @@
 
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/detail/ReactionGenerator.h>
-#include <xolotl/core/network/detail/TupleUtility.h>
 #include <xolotl/core/network/detail/impl/ClusterData.tpp>
 #include <xolotl/core/network/detail/impl/ReactionGenerator.tpp>
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/options/ConfOptions.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/Tokenizer.h>
+#include <xolotl/util/TupleUtils.h>
 
 namespace xolotl
 {
@@ -16,12 +16,50 @@ namespace core
 {
 namespace network
 {
+template <typename T>
+DualViewWrapper<T>::DualViewWrapper(const std::string& label) :
+	_dualView(Kokkos::ViewAllocateWithoutInitializing(label)),
+	_hasInstance(true),
+	d_view(_dualView.d_view),
+	h_view(_dualView.h_view)
+{
+	new (&h_view()) T();
+}
+
+template <typename T>
+DualViewWrapper<T>::~DualViewWrapper()
+{
+	if (_hasInstance) {
+		h_view().~T();
+	}
+}
+
+template <typename T>
+void
+DualViewWrapper<T>::modify_host()
+{
+	_dualView.modify_host();
+}
+
+template <typename T>
+void
+DualViewWrapper<T>::sync_device()
+{
+	_dualView.sync_device();
+}
+
 template <typename TImpl>
 inline void
 ReactionNetwork<TImpl>::copyClusterDataView()
 {
 	_clusterData.modify_host();
 	_clusterData.sync_device();
+}
+
+template <typename TImpl>
+ReactionNetwork<TImpl>::ReactionNetwork() :
+	_speciesLabelMap(createSpeciesLabelMap())
+{
 }
 
 template <typename TImpl>
@@ -126,6 +164,11 @@ ReactionNetwork<TImpl>::ReactionNetwork(
 			return {ratio};
 		}(),
 		gridSize, opts)
+{
+}
+
+template <typename TImpl>
+ReactionNetwork<TImpl>::~ReactionNetwork()
 {
 }
 
@@ -946,9 +989,8 @@ private:
 	TilesView _tiles;
 	ClusterDataView _clusterData;
 
-	using ReverseMethodsTuple = detail::TupleReverse<std::tuple<TQMethods...>>;
-	using MethodChain =
-		detail::TupleApplyAll<TQMethodChain, ReverseMethodsTuple>;
+	using ReverseMethodsTuple = util::TupleReverse<std::tuple<TQMethods...>>;
+	using MethodChain = util::TupleApplyAll<TQMethodChain, ReverseMethodsTuple>;
 	MethodChain _methods;
 };
 

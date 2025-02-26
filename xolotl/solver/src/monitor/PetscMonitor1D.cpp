@@ -1951,6 +1951,9 @@ PetscMonitor1D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 			if (nGridPoints > 0) {
 				_solverHandler->setSurfaceOffset(nGridPoints);
 				PetscCall(TSSetConvergedReason(ts, TS_CONVERGED_USER));
+
+				// Restore the solutionArray
+				PetscCall(DMDAVecRestoreArrayDOF(da, solution, &solutionArray));
 				PetscFunctionReturn(0);
 			}
 		}

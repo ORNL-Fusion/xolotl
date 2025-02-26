@@ -56,11 +56,11 @@ private:
 	getReactionGenerator() const noexcept;
 
 	void
-	readClusters(const std::string filename = "reactionRates.txt");
+	readClusters(const std::string filename = "reaction.dat");
 
 	void
 	readReactions(
-		double temperature, const std::string filename = "reactionRates.txt");
+		double temperature, const std::string filename = "reaction.dat");
 };
 
 namespace detail
