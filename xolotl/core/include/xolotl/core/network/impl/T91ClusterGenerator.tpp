@@ -68,6 +68,7 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 		(hi[Species::He] - 1) / xolotl::util::max(1.0, (double)lo[Species::V]);
 	double lowRatio =
 		lo[Species::He] / xolotl::util::max(1.0, (double)(hi[Species::V] - 1));
+	// Coarse outside of the ratio
 	if (lowRatio > 3.2 or highRatio < 1.8) {
 		auto comp = amt * amt * amt * 1.0e-4;
 		if (region[Species::He].length() <
@@ -79,6 +80,7 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 			result[1] = false;
 		}
 	}
+	// Refined along the ratio
 	else {
 		auto comp = 0.15 * amtV;
 		if (region[Species::He].length() <
@@ -157,7 +159,7 @@ T91ClusterGenerator::getMigrationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
 	// I migration energy in eV
-	constexpr double iOneMigrationEnergy = 0.2;
+	constexpr double iOneMigrationEnergy = 0.22;
 	// He migration energies in eV
 	constexpr Kokkos::Array<double, 5> heMigration = {
 		0.0, 0.064, 0.064, 0.064, 0.054};
