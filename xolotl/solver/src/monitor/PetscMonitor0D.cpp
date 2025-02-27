@@ -959,8 +959,10 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	auto dConcs = Kokkos::View<double*>("Concentrations", dof);
 	deep_copy(dConcs, hConcs);
 
-	// Volume of a 5 nm radius sphere
-	double cascadeVolume = 4.0 * ::xolotl::core::pi * 125.0 / 3.0;
+	// Volume of a ~2.5 nm radius sphere
+	double cascadeVolume = 90.0;
+	// Sub cascades
+	double subCascadeFactor = 333.0;
 	// Ion conversion factor (dpa per ion)
 	double ionFactor = 1041.937632;
 
@@ -998,7 +1000,8 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 	}
 
 	// Get the number that interact
-	double probability = (dpa / ionFactor) * cascadeVolume * voidVolumeFraction;
+	double probability = (dpa / ionFactor) * cascadeVolume * subCascadeFactor *
+		voidVolumeFraction;
 	double interactI = generatedI * probability;
 
 	std::fstream outputFile;
