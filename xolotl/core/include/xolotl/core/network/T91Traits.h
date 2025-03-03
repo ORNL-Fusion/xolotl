@@ -17,6 +17,7 @@ class T91ClusterGenerator;
 enum class T91SpeciesList
 {
 	He,
+	Trap,
 	V,
 	I
 };
@@ -24,7 +25,7 @@ enum class T91SpeciesList
 inline const std::string&
 toLabelString(T91SpeciesList species)
 {
-	static const std::string labelArray[] = {"He", "V", "I"};
+	static const std::string labelArray[] = {"He", "Trap", "V", "I"};
 	return labelArray[static_cast<int>(species)];
 }
 
@@ -32,7 +33,7 @@ inline const std::string&
 toNameString(T91SpeciesList species)
 {
 	static const std::string nameArray[] = {
-		"Helium", "Vacancy", "Interstitial"};
+		"Helium", "Trap", "Vacancy", "Interstitial"};
 	return nameArray[static_cast<int>(species)];
 }
 
@@ -49,11 +50,17 @@ struct NumberOfVacancySpecies<T91SpeciesList> :
 };
 
 template <>
+struct NumberOfTrapSpecies<T91SpeciesList> :
+	std::integral_constant<std::size_t, 1>
+{
+};
+
+template <>
 struct ReactionNetworkTraits<T91ReactionNetwork>
 {
 	using Species = T91SpeciesList;
 
-	static constexpr std::size_t numSpecies = 3;
+	static constexpr std::size_t numSpecies = 4;
 
 	using ProductionReactionType = T91ProductionReaction;
 	using DissociationReactionType = T91DissociationReaction;

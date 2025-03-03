@@ -112,6 +112,12 @@ struct NumberOfVacancySpecies<PSIFullSpeciesList> :
 };
 
 template <>
+struct NumberOfTrapSpecies<PSIFullSpeciesList> :
+	std::integral_constant<std::size_t, 0>
+{
+};
+
+template <>
 struct SpeciesForGrouping<PSIFullSpeciesList, 5>
 {
 	using Sequence = EnumSequence<PSIFullSpeciesList, 5>;
@@ -177,6 +183,12 @@ struct NumberOfInterstitialSpecies<PSIDeuteriumSpeciesList> :
 template <>
 struct NumberOfVacancySpecies<PSIDeuteriumSpeciesList> :
 	std::integral_constant<std::size_t, 1>
+{
+};
+
+template <>
+struct NumberOfTrapSpecies<PSIDeuteriumSpeciesList> :
+	std::integral_constant<std::size_t, 0>
 {
 };
 
@@ -250,6 +262,12 @@ struct NumberOfVacancySpecies<PSITritiumSpeciesList> :
 };
 
 template <>
+struct NumberOfTrapSpecies<PSITritiumSpeciesList> :
+	std::integral_constant<std::size_t, 0>
+{
+};
+
+template <>
 struct SpeciesForGrouping<PSITritiumSpeciesList, 4>
 {
 	using Sequence = EnumSequence<PSITritiumSpeciesList, 4>;
@@ -303,6 +321,12 @@ struct NumberOfInterstitialSpecies<PSIHeliumSpeciesList> :
 template <>
 struct NumberOfVacancySpecies<PSIHeliumSpeciesList> :
 	std::integral_constant<std::size_t, 1>
+{
+};
+
+template <>
+struct NumberOfTrapSpecies<PSIHeliumSpeciesList> :
+	std::integral_constant<std::size_t, 0>
 {
 };
 

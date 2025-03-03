@@ -129,6 +129,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "\"xenonDiffusivity\": 3.0,\n"
 		<< "\"fissionYield\": 0.3,\n"
 		<< "\"heVRatio\": 5.0,\n"
+		<< "\"trapBinding\": 2.0,\n"
 		<< "\"migrationThreshold\": 1.0,\n"
 		<< "\"fluxDepthProfileFilePath\": \"path/to/flux/profile/file.txt\",\n"
 		<< "\"basalPortion\": 0.6,\n"
@@ -230,8 +231,11 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	// Check the fission yield option
 	BOOST_REQUIRE_EQUAL(opts.getFissionYield(), 0.3);
 
-	// Check the HeV ration option
+	// Check the HeV ratio option
 	BOOST_REQUIRE_EQUAL(opts.getHeVRatio(), 5.0);
+
+	// Check the trap binding energy
+	BOOST_REQUIRE_EQUAL(opts.getTrapBinding(), 2.0);
 
 	// Check the migration threshold option
 	BOOST_REQUIRE_EQUAL(opts.getMigrationThreshold(), 1.0);

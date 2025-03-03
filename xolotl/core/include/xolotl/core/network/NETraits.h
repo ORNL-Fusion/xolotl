@@ -64,6 +64,11 @@ struct NumberOfVacancySpecies<NESpecies> :
 };
 
 template <>
+struct NumberOfTrapSpecies<NESpecies> : std::integral_constant<std::size_t, 0>
+{
+};
+
+template <>
 struct SpeciesForGrouping<NESpecies, 3>
 {
 	using Sequence = EnumSequence<NESpecies, 3>;

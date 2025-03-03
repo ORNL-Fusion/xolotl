@@ -71,7 +71,7 @@ struct ClusterDataExtra
 	}
 
 	void
-	setGridSize(IndexType numClusters, IndexType gridSize){};
+	setGridSize(IndexType numClusters, IndexType gridSize) {};
 };
 
 /**
@@ -149,6 +149,7 @@ private:
 		XE_FORMATION,
 		V_FORMATION,
 		V2_FORMATION,
+		TRAP_BINDING,
 		NUM_FLOAT_VALS
 	};
 
@@ -283,6 +284,19 @@ public:
 	setXeFormationEnergy(double val)
 	{
 		setVal(_floatVals, XE_FORMATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getTrapBindingEnergy() const
+	{
+		return _floatVals[TRAP_BINDING];
+	}
+
+	void
+	setTrapBindingEnergy(double val)
+	{
+		setVal(_floatVals, TRAP_BINDING, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

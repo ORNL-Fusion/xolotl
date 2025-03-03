@@ -62,6 +62,12 @@ struct NumberOfVacancySpecies<AlloySpecies> :
 };
 
 template <>
+struct NumberOfTrapSpecies<AlloySpecies> :
+	std::integral_constant<std::size_t, 0>
+{
+};
+
+template <>
 struct SpeciesForGrouping<AlloySpecies, 6>
 {
 	using Sequence = EnumSequence<AlloySpecies, 6>;

@@ -279,6 +279,7 @@ T91DissociationReaction::computeBindingEnergy(double time)
 		Composition comp = clReg.getOrigin();
 		Composition prod1Comp = prod1Reg.getOrigin();
 		Composition prod2Comp = prod2Reg.getOrigin();
+
 		// He
 		if (comp.isOnAxis(Species::He)) {
 			if (prod1Comp.isOnAxis(Species::He) ||
@@ -296,6 +297,10 @@ T91DissociationReaction::computeBindingEnergy(double time)
 					2.93 *
 						(pow((double)size, 2.0 / 3.0) -
 							pow((double)size - 1.0, 2.0 / 3.0));
+		}
+		// Trap
+		else if (comp[Species::Trap] > 0) {
+			be = this->_clusterData->getTrapBindingEnergy();
 		}
 		// No I for now because only single I should be included in the
 		// simulation HeV

@@ -327,9 +327,14 @@ protected:
 	double fissionYield;
 
 	/**
-	 * HeV ration, how many He per V are allowed
+	 * HeV ratio, how many He per V are allowed
 	 */
 	double heVRatio;
+
+	/**
+	 * Trap binding energy
+	 */
+	double trapBinding;
 
 	/**
 	 * Migration energy above which the diffusion will be ignored
@@ -989,6 +994,15 @@ public:
 	getHeVRatio() const override
 	{
 		return heVRatio;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getTrapBinding() const override
+	{
+		return trapBinding;
 	}
 
 	/**

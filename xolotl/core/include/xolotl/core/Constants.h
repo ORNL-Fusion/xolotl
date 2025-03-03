@@ -42,6 +42,9 @@ constexpr double alphaZrLatticeConstant = 0.32294500000000000; // the a-constant
 constexpr double alloyCoreRadius = 0.36000000000000000;
 
 //! Core radius. Given in units here of nm.
+constexpr double feCrCoreRadius = 0.37000000000000000;
+
+//! Core radius. Given in units here of nm.
 constexpr double alphaZrCoreRadius = 0.64500000000000000;
 
 //! Single helium radius. Given in units here of nm.

@@ -31,6 +31,11 @@ struct NumberOfVacancySpecies : std::integral_constant<std::size_t, 0>
 };
 
 template <typename TSpeciesEnum>
+struct NumberOfTrapSpecies : std::integral_constant<std::size_t, 0>
+{
+};
+
+template <typename TSpeciesEnum>
 KOKKOS_INLINE_FUNCTION
 constexpr std::size_t
 numberOfSpecies() noexcept
@@ -52,6 +57,14 @@ constexpr std::size_t
 numberOfVacancySpecies() noexcept
 {
 	return NumberOfVacancySpecies<TSpeciesEnum>::value;
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+constexpr std::size_t
+numberOfTrapSpecies() noexcept
+{
+	return NumberOfTrapSpecies<TSpeciesEnum>::value;
 }
 
 template <typename TSpeciesEnum>

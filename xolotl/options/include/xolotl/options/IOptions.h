@@ -588,6 +588,14 @@ public:
 	getHeVRatio() const = 0;
 
 	/**
+	 * Obtain the value of the binding energy for traps
+	 *
+	 * @return The value of the energy
+	 */
+	virtual double
+	getTrapBinding() const = 0;
+
+	/**
 	 * Obtain the value of the migration energy threshold for effective
 	 * diffusivity.
 	 *

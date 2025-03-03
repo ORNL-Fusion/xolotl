@@ -13,18 +13,23 @@ KOKKOS_INLINE_FUNCTION
 bool
 T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
-	result[0] = true;
-	result[1] = true;
-	result[2] = true;
+	for (auto& r : result) {
+		r = true;
+	}
 
 	// I is never grouped
 	if (region[Species::I].begin() > 0) {
 		return true;
 	}
 
+	// Trap is never grouped
+	if (region[Species::Trap].begin() > 0) {
+		return true;
+	}
+
 	// V is grouped on its own
 	if (region[Species::V].end() > 1 && region[Species::He].begin() == 0 &&
-		region[Species::I].begin() == 0) {
+		region[Species::I].begin() == 0 && region[Species::Trap].begin() == 0) {
 		if (region[Species::V].begin() < _groupingMin)
 			return true;
 		if (region[Species::V].end() > _maxV) {
@@ -33,7 +38,7 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 		if (region[Species::V].length() <
 			util::max((double)(_groupingWidthV + 1),
 				region[Species::V].begin() * 1.0e-1)) {
-			result[1] = false;
+			result[2] = false;
 			return true;
 		}
 		else
@@ -42,7 +47,8 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 
 	// He is never grouped
 	if (region[Species::He].end() > 1 && region[Species::He].begin() < 5 &&
-		region[Species::V].begin() == 0 && region[Species::I].begin() == 0) {
+		region[Species::V].begin() == 0 && region[Species::I].begin() == 0 &&
+		region[Species::Trap].begin() == 0) {
 		return true;
 	}
 
@@ -77,7 +83,7 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 		}
 		if (region[Species::V].length() <
 			util::max(_groupingWidthV + 1.0, comp)) {
-			result[1] = false;
+			result[2] = false;
 		}
 	}
 	// Refined along the ratio
@@ -90,7 +96,7 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 		comp = 0.05 * 21.23 * cbrt(amtV * amtV);
 		if (region[Species::V].length() <
 			util::max(_groupingWidthV + 1.0, comp)) {
-			result[1] = false;
+			result[2] = false;
 		}
 	}
 
@@ -99,16 +105,16 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 		result[0] = true;
 	}
 	if (region[Species::V].begin() == 0) {
-		result[1] = true;
+		result[2] = true;
 	}
 	if (region[Species::He].end() > _maxHe + 1) {
 		result[0] = true;
 	}
 	if (region[Species::V].end() > _maxV + 1) {
-		result[1] = true;
+		result[2] = true;
 	}
 
-	if (!result[0] && !result[1]) {
+	if (!result[0] && !result[2]) {
 		return false;
 	}
 
@@ -121,28 +127,38 @@ T91ClusterGenerator::select(const Region& region) const
 {
 	// Remove 0
 	if (region[Species::He].end() == 1 && region[Species::V].end() == 1 &&
-		region[Species::I].end() == 1) {
+		region[Species::I].end() == 1 && region[Species::Trap].end() == 1) {
 		return false;
 	}
 
 	// Interstitials
 	if (region[Species::I].begin() > 0 &&
-		(region[Species::He].begin() > 0 || region[Species::V].begin() > 0)) {
+		(region[Species::He].begin() > 0 || region[Species::V].begin() > 0 ||
+			region[Species::Trap].begin() > 0)) {
 		return false;
 	}
 
-	// Helium
+	// Helium and Trap + Helium
 	if (region[Species::He].begin() > 4 && region[Species::V].end() == 1 &&
 		region[Species::I].end() == 1) {
+		return false;
+	}
+	if (region[Species::He].begin() > 4 && region[Species::V].begin() == 0 &&
+		region[Species::Trap].begin() > 0 && region[Species::V].end() > 1) {
 		return false;
 	}
 	if (region[Species::He].begin() > _maxHe) {
 		return false;
 	}
 
+	// Remove trap and vacancy
+	if (region[Species::V].begin() > 0 && region[Species::Trap].begin() > 0) {
+		return false;
+	}
+
 	// Vacancy
 	if (region[Species::V].begin() > _maxV && region[Species::He].end() == 1 &&
-		region[Species::I].end() == 1) {
+		region[Species::I].end() == 1 && region[Species::Trap].end() == 1) {
 		return false;
 	}
 	if (region[Species::V].begin() > _maxV) {
@@ -280,6 +296,9 @@ T91ClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 			double termTwo =
 				pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed, (1.0 / 3.0));
 			radius = impurityRadius + termOne - termTwo;
+		}
+		else if (comp[Species::Trap] > 0) {
+			radius = ::xolotl::core::feCrCoreRadius;
 		}
 		else {
 			radius = latticeParameter *

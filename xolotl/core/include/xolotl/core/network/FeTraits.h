@@ -54,6 +54,12 @@ struct NumberOfVacancySpecies<FeSpeciesList> :
 };
 
 template <>
+struct NumberOfTrapSpecies<FeSpeciesList> :
+	std::integral_constant<std::size_t, 0>
+{
+};
+
+template <>
 struct SpeciesForGrouping<FeSpeciesList, 3>
 {
 	using Sequence = EnumSequence<FeSpeciesList, 3>;

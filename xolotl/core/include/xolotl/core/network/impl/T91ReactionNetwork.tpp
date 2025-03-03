@@ -106,6 +106,34 @@ T91ReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
+	// Special case for He_nTrap + He_m -> He_n+mV_2
+	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() &&
+		((lo1.isOnAxis(Species::He) and not lo2.isOnAxis(Species::Trap) and
+			 lo2[Species::Trap] == 1) ||
+			(lo2.isOnAxis(Species::He) and not lo1.isOnAxis(Species::Trap) and
+				lo1[Species::Trap] == 1))) {
+		// Check the product doesn't exist
+		Composition comp = Composition::zero();
+		comp[Species::He] = lo1[Species::He] + lo2[Species::He];
+		comp[Species::Trap] = lo1[Species::Trap] + lo2[Species::Trap];
+		auto tProdId = subpaving.findTileId(comp);
+		if (tProdId == subpaving.invalidIndex()) {
+			// Look for the larger bubble
+			comp[Species::Trap] = 0;
+			comp[Species::V] = 2;
+			auto bProdId = subpaving.findTileId(comp);
+			if (bProdId != subpaving.invalidIndex()) {
+				// Look for the I cluster for trap-mutation
+				comp[Species::He] = 0;
+				comp[Species::V] = 0;
+				comp[Species::I] = 1;
+				auto iProdId = subpaving.findTileId(comp);
+				this->addProductionReaction(tag, {i, j, bProdId, iProdId});
+				// No dissociation
+			}
+		}
+	}
+
 	// Remove bubble + bubble
 	if (lo1[Species::He] > 0 and lo1[Species::V] > 0 and
 		lo2[Species::He] > 0 and lo2[Species::V] > 0)
@@ -161,6 +189,16 @@ T91ReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					isOnAxis2 = true;
 			}
 			if (isOnAxis1 || isOnAxis2) {
+				// Prevent He_nV_1 -> He_n + V_1
+				if (prodReg[Species::V].begin() == 1 and
+					(lo1.isOnAxis(Species::V) or lo2.isOnAxis(Species::V)))
+					continue;
+
+				// Prevent He_nTrap -> Trap + He_n
+				if ((lo1.isOnAxis(Species::Trap) and lo2[Species::He] > 1) or
+					(lo2.isOnAxis(Species::Trap) and lo1[Species::He] > 1))
+					continue;
+
 				this->addDissociationReaction(tag, {k, i, j});
 			}
 		}

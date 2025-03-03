@@ -83,6 +83,7 @@ Options::Options() :
 	xenonDiffusivity(-1.0),
 	fissionYield(0.25),
 	heVRatio(4.0),
+	trapBinding(1.0),
 	migrationThreshold(std::numeric_limits<double>::infinity()),
 	basalPortion(0.1),
 	transitionSize(325),
@@ -181,6 +182,7 @@ Options::printAll(std::ostream& os) const
 	os << "xenonDiffusivity: " << xenonDiffusivity << '\n';
 	os << "fissionYield: " << fissionYield << '\n';
 	os << "heVRatio: " << heVRatio << '\n';
+	os << "trapBinding: " << trapBinding << '\n';
 	os << "migrationThreshold: " << migrationThreshold << '\n';
 
 	os << "fluxDepthProfileFilePath: \"" << fluxDepthProfileFilePath.string()

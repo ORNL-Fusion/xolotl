@@ -43,9 +43,9 @@ auto t91NetworkGenerator = [](const options::IOptions& options) {
 	}
 
 	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
-		maxHe, maxV, maxI};
+		maxHe, 1, maxV, maxI};
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
-		{groupingWidthHe, groupingWidthV, maxI + 1}};
+		{groupingWidthHe, 2, groupingWidthV, maxI + 1}};
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 

@@ -249,8 +249,7 @@ JSONOptions::defineHandlers()
 				checkSetParam(tree, name, initialConcentration);
 			})
 		.add(
-			"hePPM", ElemType::real,
-			"Helium PPM.",
+			"hePPM", ElemType::real, "Helium PPM.",
 			JSON_ELEM_HANDLER { checkSetParam(tree, name, hePPM); })
 		.add(
 			"zeta", ElemType::real,
@@ -501,6 +500,9 @@ JSONOptions::defineHandlers()
 			"heVRatio", ElemType::real,
 			"The number of He atoms allowed per V in a bubble.",
 			JSON_ELEM_HANDLER { checkSetParam(tree, name, heVRatio); })
+		.add(
+			"trapBinding", ElemType::real, "The binding energy for traps.",
+			JSON_ELEM_HANDLER { checkSetParam(tree, name, trapBinding); })
 		.add(
 			"migrationThreshold", ElemType::real,
 			"Set a limit on the migration energy above which the diffusion "
