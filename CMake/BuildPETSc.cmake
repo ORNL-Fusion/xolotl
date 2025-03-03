@@ -49,6 +49,8 @@ set(__script_dir ${CMAKE_SOURCE_DIR}/scripts)
 set(__build_opts
     --skip-pull
     --prefix=${__external_bin_dir}/petsc_install
+    --extra-petsc-config-arg=--with-cc=${CMAKE_C_COMPILER}
+    --extra-petsc-config-arg=--with-cxx=${CMAKE_CXX_COMPILER}
 )
 
 option(Xolotl_BUILD_PETSC_DEBUG
@@ -60,9 +62,10 @@ if(Xolotl_BUILD_PETSC_DEBUG)
     message(STATUS "    - enable debugging")
 endif()
 
-option(Xolotl_ENABLE_CUDA "Enable CUDA backend for kokkos, etc." OFF)
-option(Xolotl_ENABLE_OPENMP "Enable OpenMP backend for kokkos" OFF)
-if(Xolotl_ENABLE_CUDA)
+set(Xolotl_BACKEND "Set kokkos backend: SERIAL, OPENMP, CUDA, HIP" CACHE STRING "SERIAL")
+set_property(CACHE Xolotl_BACKEND PROPERTY STRINGS "SERIAL" "OPENMP" "CUDA" "HIP")
+string(TOUPPER ${Xolotl_BACKEND} __backend)
+if(__backend STREQUAL "CUDA")
     list(APPEND __build_opts --cuda)
     message(STATUS "    - using CUDA backend")
     if(Xolotl_CUDA_SM)
@@ -82,11 +85,16 @@ if(Xolotl_ENABLE_CUDA)
             )
         endif()
     endif()
-elseif(Xolotl_ENABLE_OPENMP)
+elseif(__backend STREQUAL "OPENMP")
     list(APPEND __build_opts --openmp)
     message(STATUS "    - using OpenMP backend")
-else()
+elseif(__backend STREQUAL "HIP")
+    list(APPEND __build_opts --hip)
+    message(STATUS "    - using HIP backend")
+elseif(__backend STREQUAL "SERIAL")
     message(STATUS "    - using Serial backend")
+else()
+    message(FATAL_ERROR "Invalid backend specified: ${__backend}")
 endif()
 
 if(Xolotl_KOKKOS_VERSION)

@@ -8,6 +8,9 @@
 #if defined(KOKKOS_ENABLE_CUDA) && defined(KOKKOS_ENABLE_CUDA_LAMBDA)
 #define DEVICE_LAMBDA [=] __device__
 #define DEVICE_FUNCTION __device__
+#elif defined(KOKKOS_ENABLE_HIP)
+#define DEVICE_LAMBDA [=] __device__
+#define DEVICE_FUNCTION __device__
 #else
 #define DEVICE_LAMBDA [=]
 #define DEVICE_FUNCTION

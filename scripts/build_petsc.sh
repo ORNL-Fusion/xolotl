@@ -11,6 +11,7 @@ _do_cleanup=1
 _do_pull=1
 _debug=0
 _use_cuda=0
+_use_hip=0
 _cuda_sm_ver=0
 _use_omp=0
 _kokkos_spec="yes"
@@ -64,6 +65,9 @@ do
     --cuda-sm=*)
         _cuda_sm_ver="${1:10}" # strip "--cuda-sm="
         ;;
+    --hip)
+	_use_hip=1
+	;;
     --openmp)
         _use_omp=1
         ;;
@@ -87,6 +91,10 @@ do
     --get-hypre)
         _petsc_extra_args="${_petsc_extra_args} --download-hypre"
         ;;
+    --extra-petsc-config-arg=*)
+	__extra_arg="${1:25}"
+	_petsc_extra_args="${_petsc_extra_args} ${__extra_arg}"
+	;;
     *)
         echo "Unsupported argument: $1"
         exit 1
@@ -118,6 +126,16 @@ if [ ${_use_cuda} -eq 1 ]; then
         _petsc_cuda_args="${_petsc_cuda_args} --CUDAOPTFLAGS=-O3"
     fi
     _petsc_extra_args="${_petsc_extra_args} ${_petsc_cuda_args}"
+fi
+
+# Handle HIP arguments
+if [ ${_use_hip} -eq 1 ]; then
+    _petsc_hip_args=""
+    # _petsc_hip_args="--with-hip-arch=..."
+    if [ ${_debug} -eq 0 ]; then
+	_petsc_hip_args="${_petsc_hip_args} --HIPOPTFLAGS=-O3"
+    fi
+    _petsc_extra_args="${_petsc_extra_args} ${_petsc_hip_args}"
 fi
 
 cd ${_petsc_dir}
@@ -157,6 +175,7 @@ _conf_cmd="./configure \
     ${_prefix_arg} \
     --with-fc=0 \
     --with-cuda=${_use_cuda} \
+    --with-hip=${_use_hip} \
     --with-mpi \
     --with-openmp=${_use_omp} \
     --with-debugging=${_debug} \
