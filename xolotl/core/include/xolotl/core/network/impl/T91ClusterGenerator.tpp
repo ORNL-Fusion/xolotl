@@ -93,7 +93,7 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 			util::max(_groupingWidthHe + 1.0, comp)) {
 			result[0] = false;
 		}
-		comp = 0.05 * 21.23 * cbrt(amtV * amtV);
+		comp = 0.25 * 21.23 * cbrt(amtV * amtV);
 		if (region[Species::V].length() <
 			util::max(_groupingWidthV + 1.0, comp)) {
 			result[2] = false;
