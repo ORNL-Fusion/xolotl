@@ -180,6 +180,7 @@ T91ReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Increase nProd
 			nProd++;
 			this->addProductionReaction(tag, {i, j, k});
+
 			// Loop on the species
 			bool isOnAxis1 = false, isOnAxis2 = false;
 			for (auto l : species) {
