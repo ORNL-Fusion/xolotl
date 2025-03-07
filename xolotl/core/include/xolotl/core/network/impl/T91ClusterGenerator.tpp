@@ -166,6 +166,15 @@ T91ClusterGenerator::select(const Region& region) const
 		return false;
 	}
 
+	// Remove HeV with high He/V ratio
+	Composition lo = region.getOrigin();
+	Composition hi = region.getUpperLimitPoint();
+	double lowRatio =
+		lo[Species::He] / xolotl::util::max(1.0, (double)(hi[Species::V] - 1));
+	if (lowRatio > 3.5) {
+		return false;
+	}
+
 	return true;
 }
 
