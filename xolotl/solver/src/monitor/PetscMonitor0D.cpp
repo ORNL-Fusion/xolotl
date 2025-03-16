@@ -613,10 +613,12 @@ PetscMonitor0D::computeAlloy(
 
 		myData[6 * id()] = totals[0];
 		myData[6 * id() + 1] = totals[1];
-		myData[(6 * id()) + 2] = 2.0 * totals[2] / myData[6 * id()];
+		if (totals[0] > 1.0e-16)
+			myData[(6 * id()) + 2] = 2.0 * totals[2] / totals[0];
 		myData[(6 * id()) + 3] = totals[3];
 		myData[(6 * id()) + 4] = totals[4];
-		myData[(6 * id()) + 5] = 2.0 * totals[5] / myData[(6 * id()) + 3];
+		if (totals[3] > 1.0e-16)
+			myData[(6 * id()) + 5] = 2.0 * totals[5] / totals[3];
 	}
 
 	// Set the output precision
@@ -909,7 +911,7 @@ PetscMonitor0D::eventFunction(
 	auto fluxHandler = _solverHandler->getFluxHandler();
 	double doseRate = fluxHandler->getFluxAmplitude();
 	// TODO: change to dose
-	if (time > 0.0)
+	if (tsNumber > 0)
 		fvalue[0] = 0.0;
 
 	PetscFunctionReturn(0);
