@@ -43,6 +43,16 @@ class XolotlInterface : public IXolotlInterface
 {
 private:
 	/**
+	 * ID to distinguish from other instances
+	 */
+	int _instanceId;
+
+	/**
+	 * Label to distinguish from other instances
+	 */
+	std::string _instanceLabel;
+
+	/**
 	 * Did this object initialize xolotl?
 	 */
 	bool initializedHere{false};
@@ -431,6 +441,12 @@ public:
 	 */
 	bool
 	getConvergenceStatus();
+
+	/**
+	 * Get perfHandler from instance solver
+	 */
+	const perf::IPerfHandler*
+	getPerfHandler() const;
 
 	/**
 	 * Finalize the solve

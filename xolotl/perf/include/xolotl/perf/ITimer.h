@@ -3,6 +3,7 @@
 
 #include <float.h>
 
+#include <memory>
 #include <string>
 
 #include <mpi.h>
@@ -74,6 +75,21 @@ public:
 	 */
 	virtual std::string
 	getUnits() const = 0;
+
+	/**
+	 * Add the given Timer's value to my value.
+	 *
+	 * @param t The timer whose value should be added to my value.
+	 * @return Myself after adding the given timer's value.
+	 */
+	virtual ITimer&
+	operator+=(const ITimer&) = 0;
+
+	/**
+	 * Get copy in a new shared_ptr
+	 */
+	virtual std::shared_ptr<ITimer>
+	copy() const = 0;
 };
 // end class ITimer
 

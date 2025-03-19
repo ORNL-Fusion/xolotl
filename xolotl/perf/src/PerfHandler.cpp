@@ -354,22 +354,25 @@ PerfHandler::aggregateStatistics(int myRank,
 }
 
 void
-PerfHandler::reportData(std::ostream& os) const
+PerfHandler::reportData(std::ostream& os, const std::string& label) const
 {
 	// Output performance information in YAML format.
-	os << "\n---\n";
-
-	os << "Rank: " << util::getMPIRank() << '\n';
+	// os << "\n---\n";
+	os << label << ":\n";
 
 	const char* indent = "    ";
-	os << "\nTimers:\n";
+	os << indent << "Rank: " << util::getMPIRank() << '\n';
+
+	os << indent << "Timers:\n";
 	for (auto&& timer : allTimers) {
-		os << indent << timer.first << ": " << timer.second->getValue() << '\n';
+		os << indent << indent << timer.first << ": "
+		   << timer.second->getValue() << '\n';
 	}
 
-	os << "\nCounters:\n";
+	os << indent << "Counters:\n";
 	for (auto&& ctr : allEventCounters) {
-		os << indent << ctr.first << ": " << ctr.second->getValue() << '\n';
+		os << indent << indent << ctr.first << ": " << ctr.second->getValue()
+		   << '\n';
 	}
 
 	if (allHWCounterSets.empty()) {
@@ -377,7 +380,7 @@ PerfHandler::reportData(std::ostream& os) const
 	}
 	std::vector<std::string> hwcNames;
 	collectMyObjectNames(allHWCounterSets, hwcNames);
-	os << "\nHardwareCounters:\n";
+	os << indent << "HardwareCounters:\n";
 	for (auto&& hwc : allHWCounterSets) {
 		std::string baseName = hwc.first;
 
@@ -385,7 +388,7 @@ PerfHandler::reportData(std::ostream& os) const
 		const auto& vals = hwc.second->getValues();
 		for (std::size_t i = 0; i < spec.size(); ++i) {
 			auto name = baseName + ":" + hwc.second->getCounterName(spec[i]);
-			os << indent << name << ": " << vals[i] << '\n';
+			os << indent << indent << name << ": " << vals[i] << '\n';
 		}
 	}
 }
@@ -439,6 +442,44 @@ PerfHandler::reportStatistics(std::ostream& os,
 		 ++iter) {
 		iter->second.outputTo(os);
 	}
+}
+
+IPerfHandler&
+PerfHandler::operator+=(const IPerfHandler& h)
+{
+	const auto& other = dynamic_cast<const PerfHandler&>(h);
+
+	for (auto kv : other.allTimers) {
+		auto it = allTimers.find(kv.first);
+		if (it == allTimers.end()) {
+			allTimers.emplace(kv.first, kv.second->copy());
+		}
+		else {
+			(*it->second) += *kv.second;
+		}
+	}
+
+	for (auto kv : other.allEventCounters) {
+		auto it = allEventCounters.find(kv.first);
+		if (it == allEventCounters.end()) {
+			allEventCounters.emplace(kv.first, kv.second->copy());
+		}
+		else {
+			(*it->second) += *kv.second;
+		}
+	}
+
+	for (auto kv : other.allHWCounterSets) {
+		auto it = allHWCounterSets.find(kv.first);
+		if (it == allHWCounterSets.end()) {
+            allHWCounterSets.emplace(kv.first, kv.second->copy());
+        }
+		else {
+			(*it->second) += *kv.second;
+		}
+	}
+
+	return *this;
 }
 
 void

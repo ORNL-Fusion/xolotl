@@ -45,7 +45,7 @@ DummyHandler::getHardwareCounter(
 }
 
 void
-DummyHandler::reportData(std::ostream&) const
+DummyHandler::reportData(std::ostream&, const std::string&) const
 {
 	return;
 }

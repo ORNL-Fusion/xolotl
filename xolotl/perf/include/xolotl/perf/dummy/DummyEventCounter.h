@@ -49,6 +49,18 @@ public:
 	increment()
 	{
 	}
+
+	IEventCounter&
+	operator+=(const IEventCounter&) override
+	{
+		return *this;
+	}
+
+	std::shared_ptr<IEventCounter>
+	copy() const override
+	{
+		return std::make_shared<DummyEventCounter>(*this);
+	}
 };
 // end class DummyEventCounter
 

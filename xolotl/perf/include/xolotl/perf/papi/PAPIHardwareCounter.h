@@ -119,8 +119,14 @@ public:
 	 * or the operation will throw a std::invalid_argument exception.
 	 * @return Myself after adding the given counter set's values.
 	 */
-	virtual IHardwareCounter&
-	operator+=(const IHardwareCounter& c);
+	IHardwareCounter&
+	operator+=(const IHardwareCounter& c) override;
+
+	std::shared_ptr<IHardwareCounter>
+	copy() const override
+	{
+		return std::make_shared<PAPIHardwareCounter>(*this);
+	}
 };
 } // namespace papi
 } // namespace perf

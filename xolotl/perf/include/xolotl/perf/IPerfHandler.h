@@ -50,7 +50,7 @@ public:
 	 * @param os Stream to which to output data
 	 */
 	virtual void
-	reportData(std::ostream& os) const = 0;
+	reportData(std::ostream& os, const std::string& label = "xolotl") const = 0;
 
 	/**
 	 * Collect statistics about any performance data collected by
@@ -81,6 +81,12 @@ public:
 		const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
 		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats)
 		const = 0;
+
+    /**
+     * Integrate data from another perfHandler
+     */
+    virtual IPerfHandler&
+    operator+=(const IPerfHandler&) = 0;
 };
 
 void

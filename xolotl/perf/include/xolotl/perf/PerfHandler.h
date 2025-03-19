@@ -134,7 +134,7 @@ public:
 		const IHardwareCounter::SpecType& ctrSpec) override;
 
 	void
-	reportData(std::ostream& os) const override;
+	reportData(std::ostream& os, const std::string& label = "xolotl") const override;
 
 	/**
 	 * Collect statistics about any performance data collected by
@@ -166,6 +166,9 @@ public:
 		const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
 		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwStats)
 		const override;
+
+    IPerfHandler&
+    operator+=(const IPerfHandler& other) override;
 };
 } // namespace perf
 } // namespace xolotl

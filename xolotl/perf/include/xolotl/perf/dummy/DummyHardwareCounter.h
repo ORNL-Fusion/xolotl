@@ -105,6 +105,18 @@ public:
 	{
 		return std::string();
 	}
+
+	IHardwareCounter&
+	operator+=(const IHardwareCounter&) override
+	{
+		return *this;
+	}
+
+	std::shared_ptr<IHardwareCounter>
+	copy() const override
+	{
+		return std::make_shared<DummyHardwareCounter>(*this);
+	}
 };
 
 } // end namespace dummy
