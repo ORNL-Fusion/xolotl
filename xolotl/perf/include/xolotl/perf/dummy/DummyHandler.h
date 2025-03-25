@@ -40,8 +40,8 @@ public:
 	reportStatistics(std::ostream& os,
 		const PerfObjStatsMap<ITimer::ValType>& timerStats,
 		const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
-		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats)
-		const override;
+		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats,
+		const std::string& label) const override;
 
 	IPerfHandler&
 	operator+=(const IPerfHandler&) override

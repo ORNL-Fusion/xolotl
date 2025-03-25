@@ -11,6 +11,7 @@
 #include <xolotl/perf/EventCounter.h>
 #include <xolotl/perf/PerfHandler.h>
 #include <xolotl/perf/dummy/DummyHardwareCounter.h>
+#include <xolotl/util/Indent.h>
 #include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
@@ -360,20 +361,22 @@ PerfHandler::reportData(std::ostream& os, const std::string& label) const
 	// os << "\n---\n";
 	os << label << ":\n";
 
-	const char* indent = "    ";
+	auto indent = util::Indent();
 	os << indent << "Rank: " << util::getMPIRank() << '\n';
 
 	os << indent << "Timers:\n";
+	++indent;
 	for (auto&& timer : allTimers) {
-		os << indent << indent << timer.first << ": "
-		   << timer.second->getValue() << '\n';
+		os << indent << timer.first << ": " << timer.second->getValue() << '\n';
 	}
+	--indent;
 
 	os << indent << "Counters:\n";
+	++indent;
 	for (auto&& ctr : allEventCounters) {
-		os << indent << indent << ctr.first << ": " << ctr.second->getValue()
-		   << '\n';
+		os << indent << ctr.first << ": " << ctr.second->getValue() << '\n';
 	}
+	--indent;
 
 	if (allHWCounterSets.empty()) {
 		return;
@@ -381,6 +384,7 @@ PerfHandler::reportData(std::ostream& os, const std::string& label) const
 	std::vector<std::string> hwcNames;
 	collectMyObjectNames(allHWCounterSets, hwcNames);
 	os << indent << "HardwareCounters:\n";
+	++indent;
 	for (auto&& hwc : allHWCounterSets) {
 		std::string baseName = hwc.first;
 
@@ -388,9 +392,10 @@ PerfHandler::reportData(std::ostream& os, const std::string& label) const
 		const auto& vals = hwc.second->getValues();
 		for (std::size_t i = 0; i < spec.size(); ++i) {
 			auto name = baseName + ":" + hwc.second->getCounterName(spec[i]);
-			os << indent << indent << name << ": " << vals[i] << '\n';
+			os << indent << name << ": " << vals[i] << '\n';
 		}
 	}
+    --indent;
 }
 
 void
@@ -420,28 +425,38 @@ void
 PerfHandler::reportStatistics(std::ostream& os,
 	const PerfObjStatsMap<ITimer::ValType>& timerStats,
 	const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
-	const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) const
+	const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats,
+	const std::string& label) const
 {
 	// Output performance information in YAML format.
-	os << "\n---\n"
-	   << "Timers:\n";
-	for (auto iter = timerStats.begin(); iter != timerStats.end(); ++iter) {
-		iter->second.outputTo(os);
-	}
+	// os << "\n---\n"
+	os << label << ":\n";
 
-	os << "\nCounters:\n";
-	for (auto iter = counterStats.begin(); iter != counterStats.end(); ++iter) {
-		iter->second.outputTo(os);
+	auto indent = util::Indent();
+    os << indent << "Timers:\n";
+    ++indent;
+	for (auto iter = timerStats.begin(); iter != timerStats.end(); ++iter) {
+		iter->second.outputTo(os, indent);
 	}
+    --indent;
+
+	os << "\n" << indent << "Counters:\n";
+    ++indent;
+	for (auto iter = counterStats.begin(); iter != counterStats.end(); ++iter) {
+		iter->second.outputTo(os, indent);
+	}
+    --indent;
 
 	if (hwCounterStats.empty()) {
 		return;
 	}
-	os << "\nHardwareCounters:\n";
+	os << "\n" << indent << "HardwareCounters:\n";
+    ++indent;
 	for (auto iter = hwCounterStats.begin(); iter != hwCounterStats.end();
 		 ++iter) {
-		iter->second.outputTo(os);
+		iter->second.outputTo(os, indent);
 	}
+    --indent;
 }
 
 IPerfHandler&
@@ -472,8 +487,8 @@ PerfHandler::operator+=(const IPerfHandler& h)
 	for (auto kv : other.allHWCounterSets) {
 		auto it = allHWCounterSets.find(kv.first);
 		if (it == allHWCounterSets.end()) {
-            allHWCounterSets.emplace(kv.first, kv.second->copy());
-        }
+			allHWCounterSets.emplace(kv.first, kv.second->copy());
+		}
 		else {
 			(*it->second) += *kv.second;
 		}

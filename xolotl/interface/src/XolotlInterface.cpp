@@ -637,6 +637,9 @@ XolotlInterface::finalizeXolotl() TRY
 
 	if (options->usePerfOutputYAML()) {
 		auto filename = "perf_r" + std::to_string(rank) + ".yaml";
+		if (!options->useSubnetworks()) {
+			fs::remove(filename);
+		}
 		auto ofs = std::fstream(filename, std::ios::app);
 		perfHandler->reportData(ofs, _instanceLabel);
 	}
@@ -650,8 +653,22 @@ XolotlInterface::finalizeXolotl() TRY
 
 	if (rank == 0) {
 		util::StringStream ss;
-		perfHandler->reportStatistics(ss, timerStats, counterStats, hwCtrStats);
-		XOLOTL_LOG << ss.str();
+		perfHandler->reportStatistics(
+			ss, timerStats, counterStats, hwCtrStats, _instanceLabel);
+		if (options->usePerfOutputYAML()) {
+			if (!options->useSubnetworks()) {
+				fs::remove("perf_stats.yaml");
+			}
+			auto ofs = std::fstream("perf_stats.yaml", std::ios::app);
+			ofs << ss.str();
+			if (!options->useSubnetworks()) {
+				XOLOTL_LOG << "Performance data written to perf_r#.yaml "
+							  "(per rank) and perf_stats.yaml";
+			}
+		}
+		else {
+			XOLOTL_LOG << ss.str();
+		}
 	}
 
 	solver.reset();

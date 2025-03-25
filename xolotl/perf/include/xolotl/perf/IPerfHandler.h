@@ -79,14 +79,14 @@ public:
 	reportStatistics(std::ostream& os,
 		const PerfObjStatsMap<ITimer::ValType>& timerStats,
 		const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
-		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats)
-		const = 0;
+		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats,
+		const std::string& label = "xolotl") const = 0;
 
-    /**
-     * Integrate data from another perfHandler
-     */
-    virtual IPerfHandler&
-    operator+=(const IPerfHandler&) = 0;
+	/**
+	 * Integrate data from another perfHandler
+	 */
+	virtual IPerfHandler&
+	operator+=(const IPerfHandler&) = 0;
 };
 
 void

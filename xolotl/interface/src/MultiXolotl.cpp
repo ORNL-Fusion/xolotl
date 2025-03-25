@@ -326,8 +326,17 @@ MultiXolotl::~MultiXolotl()
 
 	if (rank == 0) {
 		util::StringStream ss;
-		perfHandler->reportStatistics(ss, timerStats, counterStats, hwCtrStats);
-		XOLOTL_LOG << ss.str();
+		perfHandler->reportStatistics(
+			ss, timerStats, counterStats, hwCtrStats, "total");
+		if (_options->usePerfOutputYAML()) {
+			auto ofs = std::ofstream("perf_stats.yaml");
+			ofs << ss.str();
+			XOLOTL_LOG << "Performance data written to perf_r#.yaml (per rank) "
+						  "and perf_stats.yaml";
+		}
+		else {
+			XOLOTL_LOG << ss.str();
+		}
 	}
 }
 
