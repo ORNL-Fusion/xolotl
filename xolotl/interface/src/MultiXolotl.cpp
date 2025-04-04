@@ -5,13 +5,16 @@
 #include <fstream>
 
 #include <xolotl/factory/interface/MaterialSubOptionsFactory.h>
+#include <xolotl/factory/perf/PerfHandlerFactory.h>
 #include <xolotl/interface/IMaterialSubOptions.h>
 #include <xolotl/interface/MultiXolotl.h>
 #include <xolotl/interface/XolotlInterface.h>
 #include <xolotl/io/XFile.h>
+#include <xolotl/perf/IPerfHandler.h>
 #include <xolotl/util/GrowthFactorStepSequence.h>
 #include <xolotl/util/LinearStepSequence.h>
 #include <xolotl/util/Log.h>
+#include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -298,6 +301,42 @@ MultiXolotl::~MultiXolotl()
 	// Write stop data
 	if (_checkpointing) {
 		writeStopData();
+	}
+
+	// Aggregate performance data
+	auto perfHandler =
+		factory::perf::PerfHandlerFactory::get().generate(*_options);
+	for (auto&& sub : _subInstances) {
+		(*perfHandler) += (*sub->getPerfHandler());
+	}
+	int rank = util::getMPIRank();
+	if (_options->usePerfOutputYAML()) {
+		auto filename = "perf_r" + std::to_string(rank) + ".yaml";
+		fs::remove(filename);
+		auto ofs = std::ofstream(filename);
+		perfHandler->reportData(ofs, "total");
+	}
+
+	// Report statistics about the performance data collected during
+	// the run we just completed.
+	perf::PerfObjStatsMap<perf::ITimer::ValType> timerStats;
+	perf::PerfObjStatsMap<perf::IEventCounter::ValType> counterStats;
+	perf::PerfObjStatsMap<perf::IHardwareCounter::CounterType> hwCtrStats;
+	perfHandler->collectStatistics(timerStats, counterStats, hwCtrStats);
+
+	if (rank == 0) {
+		util::StringStream ss;
+		perfHandler->reportStatistics(
+			ss, timerStats, counterStats, hwCtrStats, "total");
+		if (_options->usePerfOutputYAML()) {
+			auto ofs = std::ofstream("perf_stats.yaml");
+			ofs << ss.str();
+			XOLOTL_LOG << "Performance data written to perf_r#.yaml (per rank) "
+						  "and perf_stats.yaml";
+		}
+		else {
+			XOLOTL_LOG << ss.str();
+		}
 	}
 }
 

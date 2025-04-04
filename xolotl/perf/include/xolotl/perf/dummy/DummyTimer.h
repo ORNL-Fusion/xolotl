@@ -68,6 +68,18 @@ public:
 	{
 		return "";
 	}
+
+	ITimer&
+	operator+=(const ITimer&) override
+	{
+		return *this;
+	}
+
+	std::shared_ptr<ITimer>
+	copy() const override
+	{
+		return std::make_shared<DummyTimer>(*this);
+	}
 };
 // end class DummyTimer
 

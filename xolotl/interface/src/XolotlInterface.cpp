@@ -21,6 +21,21 @@ namespace xolotl
 {
 namespace interface
 {
+int
+generateInstanceId()
+{
+	static int __instanceCount = 0;
+	auto ret = __instanceCount;
+	++__instanceCount;
+	return ret;
+}
+
+std::string
+generateInstanceLabel(int id)
+{
+	return "Xolotl" + std::to_string(id);
+}
+
 std::shared_ptr<solver::Solver>
 solverCast(const std::shared_ptr<solver::ISolver>& solver) noexcept
 {
@@ -50,9 +65,15 @@ reportException(const std::exception& e)
 #define CATCH
 #endif
 
-XolotlInterface::XolotlInterface() = default;
+XolotlInterface::XolotlInterface() :
+	_instanceId(generateInstanceId()),
+	_instanceLabel(generateInstanceLabel(_instanceId))
+{
+}
 
-XolotlInterface::XolotlInterface(int& argc, const char* argv[], MPI_Comm comm)
+XolotlInterface::XolotlInterface(int& argc, const char* argv[], MPI_Comm comm) :
+	_instanceId(generateInstanceId()),
+	_instanceLabel(generateInstanceLabel(_instanceId))
 {
 	initializeXolotl(argc, argv, comm);
 	initializedHere = true;
@@ -60,6 +81,8 @@ XolotlInterface::XolotlInterface(int& argc, const char* argv[], MPI_Comm comm)
 
 XolotlInterface::XolotlInterface(const std::shared_ptr<ComputeContext>& context,
 	const std::shared_ptr<options::IOptions>& opts, MPI_Comm comm) :
+	_instanceId(generateInstanceId()),
+	_instanceLabel(generateInstanceLabel(_instanceId)),
 	computeContext(context),
 	options(opts)
 {
@@ -592,6 +615,13 @@ XolotlInterface::getConvergenceStatus() TRY
 }
 CATCH
 
+const perf::IPerfHandler*
+XolotlInterface::getPerfHandler() const TRY
+{
+	return solverCast(solver)->getSolverHandler()->getPerfHandler();
+}
+CATCH
+
 void
 XolotlInterface::finalizeXolotl() TRY
 {
@@ -606,8 +636,12 @@ XolotlInterface::finalizeXolotl() TRY
 	int rank = util::getMPIRank();
 
 	if (options->usePerfOutputYAML()) {
-		auto ofs = std::ofstream("perf_r" + std::to_string(rank) + ".yaml");
-		perfHandler->reportData(ofs);
+		auto filename = "perf_r" + std::to_string(rank) + ".yaml";
+		if (!options->useSubnetworks()) {
+			fs::remove(filename);
+		}
+		auto ofs = std::fstream(filename, std::ios::app);
+		perfHandler->reportData(ofs, _instanceLabel);
 	}
 
 	// Report statistics about the performance data collected during
@@ -619,8 +653,22 @@ XolotlInterface::finalizeXolotl() TRY
 
 	if (rank == 0) {
 		util::StringStream ss;
-		perfHandler->reportStatistics(ss, timerStats, counterStats, hwCtrStats);
-		XOLOTL_LOG << ss.str();
+		perfHandler->reportStatistics(
+			ss, timerStats, counterStats, hwCtrStats, _instanceLabel);
+		if (options->usePerfOutputYAML()) {
+			if (!options->useSubnetworks()) {
+				fs::remove("perf_stats.yaml");
+			}
+			auto ofs = std::fstream("perf_stats.yaml", std::ios::app);
+			ofs << ss.str();
+			if (!options->useSubnetworks()) {
+				XOLOTL_LOG << "Performance data written to perf_r#.yaml "
+							  "(per rank) and perf_stats.yaml";
+			}
+		}
+		else {
+			XOLOTL_LOG << ss.str();
+		}
 	}
 
 	solver.reset();

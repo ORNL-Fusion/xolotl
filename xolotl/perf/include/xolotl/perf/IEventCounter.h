@@ -55,6 +55,18 @@ public:
 	 */
 	virtual void
 	increment() = 0;
+
+    /**
+     * Add the given counter's value to my value
+     */
+    virtual IEventCounter&
+    operator+=(const IEventCounter&) = 0;
+
+    /**
+     * Get copy in a new shared_ptr
+     */
+    virtual std::shared_ptr<IEventCounter>
+    copy() const = 0;
 };
 // end class IEventCounter
 

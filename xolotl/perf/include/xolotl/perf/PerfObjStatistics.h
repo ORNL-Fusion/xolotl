@@ -1,9 +1,10 @@
-#ifndef PERFOBJSTATISTICS_H
-#define PERFOBJSTATISTICS_H
+#pragma once
 
 #include <iostream>
 #include <map>
 #include <string>
+
+#include <xolotl/util/Indent.h>
 
 namespace xolotl
 {
@@ -77,18 +78,18 @@ struct PerfObjStatistics
 	 * @param os The output stream on which we will write our statistics.
 	 */
 	void
-	outputTo(std::ostream& os) const
+	outputTo(std::ostream& os, util::Indent& indent) const
 	{
 		// Output data in YAML format.
-		const char* nameIndent = "  ";
-		const char* propIndent = "    ";
-		os << nameIndent << name << ":\n"
-		   << propIndent << "process_count: " << processCount << '\n'
-		   << propIndent << "min: " << min << '\n'
-		   << propIndent << "max: " << max << '\n'
-		   << propIndent << "average: " << average << '\n'
-		   << propIndent << "stdev: " << stdev << '\n'
+		os << indent << name << ":\n";
+		++indent;
+		os << indent << "process_count: " << processCount << '\n'
+		   << indent << "min: " << min << '\n'
+		   << indent << "max: " << max << '\n'
+		   << indent << "average: " << average << '\n'
+		   << indent << "stdev: " << stdev << '\n'
 		   << std::endl;
+		--indent;
 	}
 };
 
@@ -101,5 +102,3 @@ using PerfObjStatsMap = std::map<std::string, PerfObjStatistics<T>>;
 
 } // end namespace perf
 } // end namespace xolotl
-
-#endif // PERFOBJSTATISTICS_H

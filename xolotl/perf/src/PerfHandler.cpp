@@ -11,6 +11,7 @@
 #include <xolotl/perf/EventCounter.h>
 #include <xolotl/perf/PerfHandler.h>
 #include <xolotl/perf/dummy/DummyHardwareCounter.h>
+#include <xolotl/util/Indent.h>
 #include <xolotl/util/MPIUtils.h>
 
 namespace xolotl
@@ -354,30 +355,36 @@ PerfHandler::aggregateStatistics(int myRank,
 }
 
 void
-PerfHandler::reportData(std::ostream& os) const
+PerfHandler::reportData(std::ostream& os, const std::string& label) const
 {
 	// Output performance information in YAML format.
-	os << "\n---\n";
+	// os << "\n---\n";
+	os << label << ":\n";
 
-	os << "Rank: " << util::getMPIRank() << '\n';
+	auto indent = util::Indent();
+	os << indent << "Rank: " << util::getMPIRank() << '\n';
 
-	const char* indent = "    ";
-	os << "\nTimers:\n";
+	os << indent << "Timers:\n";
+	++indent;
 	for (auto&& timer : allTimers) {
 		os << indent << timer.first << ": " << timer.second->getValue() << '\n';
 	}
+	--indent;
 
-	os << "\nCounters:\n";
+	os << indent << "Counters:\n";
+	++indent;
 	for (auto&& ctr : allEventCounters) {
 		os << indent << ctr.first << ": " << ctr.second->getValue() << '\n';
 	}
+	--indent;
 
 	if (allHWCounterSets.empty()) {
 		return;
 	}
 	std::vector<std::string> hwcNames;
 	collectMyObjectNames(allHWCounterSets, hwcNames);
-	os << "\nHardwareCounters:\n";
+	os << indent << "HardwareCounters:\n";
+	++indent;
 	for (auto&& hwc : allHWCounterSets) {
 		std::string baseName = hwc.first;
 
@@ -388,6 +395,7 @@ PerfHandler::reportData(std::ostream& os) const
 			os << indent << name << ": " << vals[i] << '\n';
 		}
 	}
+    --indent;
 }
 
 void
@@ -417,28 +425,76 @@ void
 PerfHandler::reportStatistics(std::ostream& os,
 	const PerfObjStatsMap<ITimer::ValType>& timerStats,
 	const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
-	const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats) const
+	const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats,
+	const std::string& label) const
 {
 	// Output performance information in YAML format.
-	os << "\n---\n"
-	   << "Timers:\n";
-	for (auto iter = timerStats.begin(); iter != timerStats.end(); ++iter) {
-		iter->second.outputTo(os);
-	}
+	// os << "\n---\n"
+	os << label << ":\n";
 
-	os << "\nCounters:\n";
-	for (auto iter = counterStats.begin(); iter != counterStats.end(); ++iter) {
-		iter->second.outputTo(os);
+	auto indent = util::Indent();
+    os << indent << "Timers:\n";
+    ++indent;
+	for (auto iter = timerStats.begin(); iter != timerStats.end(); ++iter) {
+		iter->second.outputTo(os, indent);
 	}
+    --indent;
+
+	os << "\n" << indent << "Counters:\n";
+    ++indent;
+	for (auto iter = counterStats.begin(); iter != counterStats.end(); ++iter) {
+		iter->second.outputTo(os, indent);
+	}
+    --indent;
 
 	if (hwCounterStats.empty()) {
 		return;
 	}
-	os << "\nHardwareCounters:\n";
+	os << "\n" << indent << "HardwareCounters:\n";
+    ++indent;
 	for (auto iter = hwCounterStats.begin(); iter != hwCounterStats.end();
 		 ++iter) {
-		iter->second.outputTo(os);
+		iter->second.outputTo(os, indent);
 	}
+    --indent;
+}
+
+IPerfHandler&
+PerfHandler::operator+=(const IPerfHandler& h)
+{
+	const auto& other = dynamic_cast<const PerfHandler&>(h);
+
+	for (auto kv : other.allTimers) {
+		auto it = allTimers.find(kv.first);
+		if (it == allTimers.end()) {
+			allTimers.emplace(kv.first, kv.second->copy());
+		}
+		else {
+			(*it->second) += *kv.second;
+		}
+	}
+
+	for (auto kv : other.allEventCounters) {
+		auto it = allEventCounters.find(kv.first);
+		if (it == allEventCounters.end()) {
+			allEventCounters.emplace(kv.first, kv.second->copy());
+		}
+		else {
+			(*it->second) += *kv.second;
+		}
+	}
+
+	for (auto kv : other.allHWCounterSets) {
+		auto it = allHWCounterSets.find(kv.first);
+		if (it == allHWCounterSets.end()) {
+			allHWCounterSets.emplace(kv.first, kv.second->copy());
+		}
+		else {
+			(*it->second) += *kv.second;
+		}
+	}
+
+	return *this;
 }
 
 void
