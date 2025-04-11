@@ -65,27 +65,27 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	if (region[Species::V].begin() > 0 &&
 		region[Species::V].length() <
 			util::max((double)(_groupingWidth + 1),
-				pow(region[Species::V].begin(), 1) * 5.0e-2))
+				pow(region[Species::V].begin(), 0.75) * 0.5))
 		result[0] = false;
 	if (region[Species::PerfectV].begin() > 0 &&
 		region[Species::PerfectV].length() <
 			util::max((double)(_groupingWidth + 1),
-				pow(region[Species::PerfectV].begin(), 1) * 5.0e-2))
+				pow(region[Species::PerfectV].begin(), 0.75) * 0.5))
 		result[1] = false;
 	if (region[Species::FaultedV].begin() > 0 &&
 		region[Species::FaultedV].length() <
 			util::max((double)(_groupingWidth + 1),
-				pow(region[Species::FaultedV].begin(), 1) * 5.0e-2))
+				pow(region[Species::FaultedV].begin(), 0.75) * 0.5))
 		result[2] = false;
 	if (region[Species::FaultedI].begin() > 0 &&
 		region[Species::FaultedI].length() <
 			util::max((double)(_groupingWidth + 1),
-				pow(region[Species::FaultedI].begin(), 1) * 5.0e-2))
+				pow(region[Species::FaultedI].begin(), 0.75) * 0.5))
 		result[5] = false;
 	if (region[Species::PerfectI].begin() > 0 &&
 		region[Species::PerfectI].length() <
 			util::max((double)(_groupingWidth + 1),
-				pow(region[Species::PerfectI].begin(), 1) * 5.0e-2))
+				pow(region[Species::PerfectI].begin(), 0.75) * 0.5))
 		result[4] = false;
 
 	return true;
