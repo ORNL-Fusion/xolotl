@@ -143,6 +143,11 @@ private:
 		FISSION_RATE,
 		ZETA,
 		BARRIER_ENERGY,
+		AV_VOID_RAD,
+		AV_PERFV_RAD,
+		AV_FAULV_RAD,
+		AV_PERFI_RAD,
+		AV_FAULI_RAD,
 		NUM_FLOAT_VALS
 	};
 
@@ -150,6 +155,16 @@ private:
 	{
 		TRANSITION_SIZE_V = 0,
 		TRANSITION_SIZE_I,
+		VOID_ID,
+		PERFV_ID,
+		FAULV_ID,
+		PERFI_ID,
+		FAULI_ID,
+		AV_VOID_ID,
+		AV_PERFV_ID,
+		AV_FAULV_ID,
+		AV_PERFI_ID,
+		AV_FAULI_ID,
 		NUM_INT_VALS
 	};
 
@@ -160,6 +175,7 @@ private:
 		NUCLEATION,
 		SINK,
 		TRAP_MUTATION,
+		LARGE_BUBBLE,
 		CONSTANT_REACTION,
 		NUM_BOOL_VALS
 	};
@@ -241,6 +257,71 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
+	double
+	voidAvRad() const
+	{
+		return _floatVals[AV_VOID_RAD];
+	}
+
+	void
+	setVoidAvRad(double val)
+	{
+		setVal(_floatVals, AV_VOID_RAD, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	perfVAvRad() const
+	{
+		return _floatVals[AV_PERFV_RAD];
+	}
+
+	void
+	setPerfVAvRad(double val)
+	{
+		setVal(_floatVals, AV_PERFV_RAD, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	faulVAvRad() const
+	{
+		return _floatVals[AV_FAULV_RAD];
+	}
+
+	void
+	setFaulVAvRad(double val)
+	{
+		setVal(_floatVals, AV_FAULV_RAD, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	perfIAvRad() const
+	{
+		return _floatVals[AV_PERFI_RAD];
+	}
+
+	void
+	setPerfIAvRad(double val)
+	{
+		setVal(_floatVals, AV_PERFI_RAD, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	faulIAvRad() const
+	{
+		return _floatVals[AV_FAULI_RAD];
+	}
+
+	void
+	setFaulIAvRad(double val)
+	{
+		setVal(_floatVals, AV_FAULI_RAD, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
 	int
 	transitionSizeV() const
 	{
@@ -264,6 +345,136 @@ public:
 	setTransitionSizeI(int val)
 	{
 		setVal(_intVals, TRANSITION_SIZE_I, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	voidId() const
+	{
+		return _floatVals[VOID_ID];
+	}
+
+	void
+	setVoidId(int val)
+	{
+		setVal(_floatVals, VOID_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	perfVId() const
+	{
+		return _floatVals[PERFV_ID];
+	}
+
+	void
+	setPerfVId(int val)
+	{
+		setVal(_floatVals, PERFV_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	faulVId() const
+	{
+		return _floatVals[FAULV_ID];
+	}
+
+	void
+	setFaulVId(int val)
+	{
+		setVal(_floatVals, FAULV_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	perfIId() const
+	{
+		return _floatVals[PERFI_ID];
+	}
+
+	void
+	setPerfIId(int val)
+	{
+		setVal(_floatVals, PERFI_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	faulIId() const
+	{
+		return _floatVals[FAULI_ID];
+	}
+
+	void
+	setFaulIId(int val)
+	{
+		setVal(_floatVals, FAULI_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	voidAvId() const
+	{
+		return _floatVals[AV_VOID_ID];
+	}
+
+	void
+	setVoidAvId(int val)
+	{
+		setVal(_floatVals, AV_VOID_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	perfVAvId() const
+	{
+		return _floatVals[AV_PERFV_ID];
+	}
+
+	void
+	setPerfVAvId(int val)
+	{
+		setVal(_floatVals, AV_PERFV_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	faulVAvId() const
+	{
+		return _floatVals[AV_FAULV_ID];
+	}
+
+	void
+	setFaulVAvId(int val)
+	{
+		setVal(_floatVals, AV_FAULV_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	perfIAvId() const
+	{
+		return _floatVals[AV_PERFI_ID];
+	}
+
+	void
+	setPerfIAvId(int val)
+	{
+		setVal(_floatVals, AV_PERFI_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	faulIAvId() const
+	{
+		return _floatVals[AV_FAULI_ID];
+	}
+
+	void
+	setFaulIAvId(int val)
+	{
+		setVal(_floatVals, AV_FAULI_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -329,6 +540,19 @@ public:
 	setEnableTrapMutation(bool val)
 	{
 		setVal(_boolVals, TRAP_MUTATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableLargeBubble() const
+	{
+		return _boolVals[LARGE_BUBBLE];
+	}
+
+	void
+	setEnableLargeBubble(bool val)
+	{
+		setVal(_boolVals, LARGE_BUBBLE, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

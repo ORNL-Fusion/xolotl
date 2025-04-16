@@ -257,6 +257,18 @@ public:
 	}
 
 	bool
+	getEnableLargeBubble() const noexcept
+	{
+		return _enableLargeBubble;
+	}
+
+	virtual void
+	setEnableLargeBubble(bool enable)
+	{
+		_enableLargeBubble = enable;
+	}
+
+	bool
 	getEnableConstantReaction() const noexcept
 	{
 		return _enableConstantReaction;
@@ -534,6 +546,7 @@ protected:
 	bool _enableSink{};
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
+	bool _enableLargeBubble{};
 	bool _enableConstantReaction{};
 	bool _enableReducedJacobian{};
 

@@ -140,6 +140,67 @@ AlloyProductionReaction::getRateForProduction(IndexType gridIndex)
 }
 
 KOKKOS_INLINE_FUNCTION
+void
+AlloyProductionReaction::computeCoefficients()
+{
+	// Check if the large bubble is involved
+	if (isLargeBubbleReaction) {
+		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+		for (auto i : speciesRangeNoI) {
+			this->_widths(i()) = 1.0;
+		}
+		this->_coefs(0, 0, 0, 0) = 1.0;
+	}
+	else {
+		// Standard case
+		Superclass::computeCoefficients();
+	}
+}
+
+KOKKOS_INLINE_FUNCTION
+void
+AlloyProductionReaction::computeFlux(
+	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
+{
+	// Standard case
+	if (not isLargeBubbleReaction) {
+		return Superclass::computeFlux(concentrations, fluxes, gridIndex);
+	}
+
+	// The rate need to be computed each time because it depends on the current
+	// large bubble size
+	auto rate = getRateForProduction(gridIndex);
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+	//	auto largeBubbleId = this->_clusterData->bubbleId();
+
+	// Large bubble is one of the reactants
+	// TODO
+}
+
+KOKKOS_INLINE_FUNCTION
+void
+AlloyProductionReaction::computePartialDerivatives(
+	ConcentrationsView concentrations, Kokkos::View<double*> values,
+	IndexType gridIndex)
+{
+	// Standard case
+	if (not isLargeBubbleReaction) {
+		return Superclass::computePartialDerivatives(
+			concentrations, values, gridIndex);
+	}
+
+	// The rate need to be computed each time because it depends on the current
+	// large bubble size
+	auto rate = getRateForProduction(gridIndex);
+
+	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+	//	auto largeBubbleId = this->_clusterData->bubbleId();
+
+	// TODO
+}
+
+KOKKOS_INLINE_FUNCTION
 double
 AlloyDissociationReaction::getRateForProduction(IndexType gridIndex)
 {

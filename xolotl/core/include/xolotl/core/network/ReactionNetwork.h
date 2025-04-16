@@ -225,6 +225,9 @@ public:
 	setEnableTrapMutation(bool reaction) override;
 
 	void
+	setEnableLargeBubble(bool reaction) override;
+
+	void
 	setEnableConstantReaction(bool reaction) override;
 
 	void

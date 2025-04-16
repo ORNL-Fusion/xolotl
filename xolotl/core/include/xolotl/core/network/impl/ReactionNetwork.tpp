@@ -60,6 +60,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableSink(map["sink"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
+	this->setEnableLargeBubble(map["largeBubble"]);
 	this->setEnableConstantReaction(map["constant"]);
 	std::string petscString = opts.getPetscArg();
 	auto tokens = util::Tokenizer<>{petscString}();
@@ -236,6 +237,14 @@ ReactionNetwork<TImpl>::setEnableTrapMutation(bool reaction)
 	Superclass::setEnableTrapMutation(reaction);
 	_clusterData.h_view().setEnableTrapMutation(this->_enableTrapMutation);
 	invalidateDataMirror();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableLargeBubble(bool reaction)
+{
+	this->_enableLargeBubble = reaction;
+	_clusterData.h_view().setEnableLargeBubble(this->_enableLargeBubble);
 }
 
 template <typename TImpl>

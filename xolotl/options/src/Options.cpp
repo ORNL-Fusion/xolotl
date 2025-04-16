@@ -411,6 +411,7 @@ Options::readParams(int argc, const char* argv[])
 		processMap["heterogeneous"] = false;
 		processMap["sink"] = false;
 		processMap["soret"] = false;
+		processMap["largeBubble"] = false;
 		processMap["constant"] = false;
 		processMap["noSolve"] = false;
 

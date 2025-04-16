@@ -12,6 +12,132 @@ namespace core
 {
 namespace network
 {
+
+void
+AlloyReactionNetwork::initializeExtraDOFs(const options::IOptions& options)
+{
+	auto map = options.getProcesses();
+	if (not map["largeBubble"])
+		return;
+
+	this->_clusterData.h_view().setVoidId(this->_numDOFs);
+	this->_clusterData.h_view().setVoidAvId(this->_numDOFs + 1);
+	this->_clusterData.h_view().setPerfVId(this->_numDOFs + 2);
+	this->_clusterData.h_view().setPerfVAvId(this->_numDOFs + 3);
+	this->_clusterData.h_view().setFaulVId(this->_numDOFs + 4);
+	this->_clusterData.h_view().setFaulVAvId(this->_numDOFs + 5);
+	this->_clusterData.h_view().setPerfIId(this->_numDOFs + 6);
+	this->_clusterData.h_view().setPerfIAvId(this->_numDOFs + 7);
+	this->_clusterData.h_view().setFaulIId(this->_numDOFs + 8);
+	this->_clusterData.h_view().setFaulIAvId(this->_numDOFs + 9);
+	this->_numDOFs += 10;
+}
+
+void
+AlloyReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
+	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
+{
+	if (this->_enableLargeBubble) {
+		auto clusterDataMirror = this->getClusterDataMirror();
+
+		// Get the concentrations on the host
+		auto dConcs = Kokkos::subview(concentrations,
+			std::make_pair(
+				clusterDataMirror.voidId(), clusterDataMirror.faulIId() + 1));
+		auto hConcs = create_mirror_view(dConcs);
+		deep_copy(hConcs, dConcs);
+
+		// Compute the average composition of each defect
+		for (int i; i < 5; i++) {
+			auto conc = hConcs(2 * i);
+			auto avComp = hConcs(2 * i + 1) / conc;
+			if (conc == 0.0)
+				avComp = 0.0;
+			// Compute and save the radius from that
+			switch (i) {
+			// Void
+			case 0:
+				this->_clusterData.h_view().setVoidAvRad(util::max(0.0,
+					computeBubbleRadius(
+						avComp, clusterDataMirror.latticeParameter())));
+			// Perfect V
+			case 1:
+				this->_clusterData.h_view().setPerfVAvRad(util::max(0.0,
+					computeBubbleRadius(
+						avComp, clusterDataMirror.latticeParameter())));
+			// Faulted V
+			case 2:
+				this->_clusterData.h_view().setFaulVAvRad(util::max(0.0,
+					computeBubbleRadius(
+						avComp, clusterDataMirror.latticeParameter())));
+			// Perfect I
+			case 3:
+				this->_clusterData.h_view().setPerfIAvRad(util::max(0.0,
+					computeBubbleRadius(
+						avComp, clusterDataMirror.latticeParameter())));
+			// Faulted I
+			case 4:
+				this->_clusterData.h_view().setFaulIAvRad(util::max(0.0,
+					computeBubbleRadius(
+						avComp, clusterDataMirror.latticeParameter())));
+			}
+		}
+	}
+}
+
+void
+AlloyReactionNetwork::computePartialsPreProcess(
+	ConcentrationsView concentrations, Kokkos::View<double*> values,
+	IndexType gridIndex, double surfaceDepth, double spacing)
+{
+	if (this->_enableLargeBubble) {
+		auto clusterDataMirror = this->getClusterDataMirror();
+
+		// Get the concentrations on the host
+		auto dConcs = Kokkos::subview(concentrations,
+			std::make_pair(
+				clusterDataMirror.voidId(), clusterDataMirror.faulIId() + 1));
+		auto hConcs = create_mirror_view(dConcs);
+		deep_copy(hConcs, dConcs);
+
+		// Compute the average composition of each defect
+		for (int i; i < 5; i++) {
+			auto conc = hConcs(2 * i);
+			auto avComp = hConcs(2 * i + 1) / conc;
+			if (conc == 0.0)
+				avComp = 0.0;
+			// Compute and save the radius from that
+			switch (i) {
+			// Void
+			case 0:
+				this->_clusterData.h_view().setVoidAvRad(util::max(0.0,
+					computeBubbleRadius(
+						avComp, clusterDataMirror.latticeParameter())));
+			// Perfect V
+			case 1:
+				this->_clusterData.h_view().setPerfVAvRad(util::max(0.0,
+					computeBubbleRadius(
+						avComp, clusterDataMirror.latticeParameter())));
+			// Faulted V
+			case 2:
+				this->_clusterData.h_view().setFaulVAvRad(util::max(0.0,
+					computeBubbleRadius(
+						avComp, clusterDataMirror.latticeParameter())));
+			// Perfect I
+			case 3:
+				this->_clusterData.h_view().setPerfIAvRad(util::max(0.0,
+					computeBubbleRadius(
+						avComp, clusterDataMirror.latticeParameter())));
+			// Faulted I
+			case 4:
+				this->_clusterData.h_view().setFaulIAvRad(util::max(0.0,
+					computeBubbleRadius(
+						avComp, clusterDataMirror.latticeParameter())));
+			}
+		}
+	}
+}
+
 namespace detail
 {
 template <typename TTag>

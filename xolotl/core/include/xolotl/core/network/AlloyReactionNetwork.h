@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/Constants.h>
 #include <xolotl/core/network/AlloyReaction.h>
 #include <xolotl/core/network/AlloyTraits.h>
 #include <xolotl/core/network/ReactionNetwork.h>
@@ -41,6 +42,32 @@ public:
 
 	void
 	initializeExtraClusterData(const options::IOptions& options);
+
+	void
+	initializeExtraDOFs(const options::IOptions& options);
+
+	void
+	computeFluxesPreProcess(ConcentrationsView concentrations,
+		FluxesView fluxes, IndexType gridIndex, double surfaceDepth,
+		double spacing);
+
+	void
+	computePartialsPreProcess(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+		double spacing);
+
+protected:
+	double
+	computeBubbleRadius(double vAmount, double latticeParameter)
+	{
+		// TODO: update formula
+		double aCube = latticeParameter * latticeParameter * latticeParameter;
+
+		return (sqrt(3.0) / 4.0) * latticeParameter +
+			pow((3.0 * aCube * vAmount) / (8.0 * ::xolotl::core::pi),
+				(1.0 / 3.0)) -
+			pow((3.0 * aCube) / (8.0 * ::xolotl::core::pi), (1.0 / 3.0));
+	}
 
 private:
 	double
@@ -90,6 +117,11 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void
 	addTransforms(IndexType i, IndexType j, TTag tag) const;
+
+	template <typename TTag>
+	KOKKOS_INLINE_FUNCTION
+	void
+	addSingleSizeReactions(IndexType i, IndexType j, TTag tag) const;
 
 private:
 	ReactionCollection<Network>
