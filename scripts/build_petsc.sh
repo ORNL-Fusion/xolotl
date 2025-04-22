@@ -118,6 +118,8 @@ if [ ${_use_cuda} -eq 1 ]; then
         _petsc_cuda_args="${_petsc_cuda_args} --CUDAOPTFLAGS=-O3"
     fi
     _petsc_extra_args="${_petsc_extra_args} ${_petsc_cuda_args}"
+else
+    _petsc_extra_args="${_petsc_extra_args} --with-cudac=0"
 fi
 
 cd ${_petsc_dir}
