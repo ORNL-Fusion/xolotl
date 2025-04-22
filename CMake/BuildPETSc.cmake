@@ -49,13 +49,19 @@ set(__script_dir ${CMAKE_SOURCE_DIR}/scripts)
 set(__build_opts
     --skip-pull
     --prefix=${__external_bin_dir}/petsc_install
+    --petsc-dir=${__petsc_src_dir}
 )
+set(__petsc_arch "rel")
+if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "")
+    message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+endif()
 
 option(Xolotl_BUILD_PETSC_DEBUG
     "Enable debugging symbols for petsc, kokkos, etc."
     OFF
 )
 if(Xolotl_BUILD_PETSC_DEBUG)
+    set(__petsc_arch "dbg")
     list(APPEND __build_opts --debug)
     message(STATUS "    - enable debugging")
 endif()
@@ -63,6 +69,7 @@ endif()
 option(Xolotl_ENABLE_CUDA "Enable CUDA backend for kokkos, etc." OFF)
 option(Xolotl_ENABLE_OPENMP "Enable OpenMP backend for kokkos" OFF)
 if(Xolotl_ENABLE_CUDA)
+    string(APPEND __petsc_arch "-cuda")
     list(APPEND __build_opts --cuda)
     message(STATUS "    - using CUDA backend")
     if(Xolotl_CUDA_SM)
@@ -83,11 +90,14 @@ if(Xolotl_ENABLE_CUDA)
         endif()
     endif()
 elseif(Xolotl_ENABLE_OPENMP)
+    string(APPEND __petsc_arch "-omp")
     list(APPEND __build_opts --openmp)
     message(STATUS "    - using OpenMP backend")
 else()
     message(STATUS "    - using Serial backend")
 endif()
+
+list(APPEND __build_opts --petsc-arch=${__petsc_arch})
 
 if(Xolotl_KOKKOS_VERSION)
     list(APPEND __build_opts --kokkos-version=${Xolotl_KOKKOS_VERSION})
@@ -121,6 +131,12 @@ endif()
 if(Xolotl_BUILD_LAPACK)
     list(APPEND __build_opts --get-lapack)
     message(STATUS "    - build BLAS/LAPACK")
+endif()
+#### HYPRE
+option(Xolotl_BUILD_HYPRE "Have PETSc build system build HYPRE" OFF)
+if(Xolotl_BUILD_HYPRE)
+    list(APPEND __build_opts --get-hypre)
+    message(STATUS "    - build HYPRE")
 endif()
 
 ## Perform build
