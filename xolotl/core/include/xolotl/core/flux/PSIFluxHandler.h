@@ -35,7 +35,7 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);

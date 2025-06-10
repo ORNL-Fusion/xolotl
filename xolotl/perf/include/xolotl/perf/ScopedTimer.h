@@ -3,6 +3,7 @@
 #include <memory>
 
 #include <xolotl/perf/ITimer.h>
+#include <xolotl/util/Log.h>
 
 namespace xolotl
 {
@@ -23,12 +24,19 @@ struct ScopedTimer
 
 	ScopedTimer(std::shared_ptr<ITimer> _timer) : timer(_timer)
 	{
-		timer->start();
+		if (timer) {
+			timer->start();
+		}
+		else {
+			XOLOTL_LOG_XTRA << "Scoping a timer that does not exist";
+		}
 	}
 
 	~ScopedTimer()
 	{
-		timer->stop();
+		if (timer) {
+			timer->stop();
+		}
 	}
 };
 } // end namespace perf

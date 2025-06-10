@@ -8,7 +8,7 @@
 
 #include <xolotl/core/network/PSIReactionNetwork.h>
 #include <xolotl/io/XFile.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/MPITestUtils.h>
 
@@ -52,7 +52,7 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	double const factor = 1.5;
 
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -84,12 +84,11 @@ BOOST_AUTO_TEST_CASE(checkIO)
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
-	// Get the size of the network
-	int networkSize = network.getNumClusters();
 
 	// Set the time step number
 	int timeStep = 0;
 	int loop = 0;
+	int ctrlStep = 0;
 
 	// Set the time information
 	double currentTime = 0.0001;
@@ -156,8 +155,8 @@ BOOST_AUTO_TEST_CASE(checkIO)
 		// Add a TimestepGroup.
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
-		auto tsGroup = concGroup->addTimestepGroup(
-			loop, timeStep, currentTime, previousTime, currentTimeStep);
+		auto tsGroup = concGroup->addTimestepGroup(ctrlStep, loop, timeStep,
+			currentTime, previousTime, currentTimeStep);
 
 		tsGroup->writeGrid(grid);
 
@@ -393,12 +392,13 @@ BOOST_AUTO_TEST_CASE(checkSurface2D)
 		// Set the time step number
 		int loop = 0;
 		int timeStep = 0;
+		int ctrlStep = 0;
 
 		// Add the concentration sub group
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
-		auto tsGroup = concGroup->addTimestepGroup(
-			loop, timeStep, currentTime, previousTime, currentTimeStep);
+		auto tsGroup = concGroup->addTimestepGroup(ctrlStep, loop, timeStep,
+			currentTime, previousTime, currentTimeStep);
 		BOOST_REQUIRE(tsGroup);
 
 		auto nSurf = {nHe, nInter};
@@ -537,13 +537,14 @@ BOOST_AUTO_TEST_CASE(checkSurface3D)
 		// Set the time step number
 		int loop = 0;
 		int timeStep = 0;
+		int ctrlStep = 0;
 
 		// Add the concentration sub group
 		auto concGroup = testFile.getGroup<XFile::ConcentrationGroup>();
 		BOOST_REQUIRE(concGroup);
 
-		auto tsGroup = concGroup->addTimestepGroup(
-			loop, timeStep, currentTime, previousTime, currentTimeStep);
+		auto tsGroup = concGroup->addTimestepGroup(ctrlStep, loop, timeStep,
+			currentTime, previousTime, currentTimeStep);
 		BOOST_REQUIRE(tsGroup);
 
 		auto nSurf = {nV, nInter};

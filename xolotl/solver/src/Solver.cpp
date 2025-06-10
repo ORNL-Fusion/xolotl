@@ -13,21 +13,22 @@ namespace solver
 Solver::Solver(
 	const options::IOptions& options, SolverHandlerGenerator handlerGenerator) :
 	perfHandler(factory::perf::PerfHandlerFactory::get(perf::loadPerfHandlers)
-					.generate(options)),
+			.generate(options)),
 	initTimer([](auto&& timer) {
 		timer->start();
 		return timer;
 	}(perfHandler->getTimer("Initialization"))),
 	network(factory::network::NetworkHandlerFactory::get(
 		core::network::loadNetworkHandlers)
-				.generate(options)
-				->getNetwork()),
+			.generate(options)
+			->getNetwork()),
 	materialHandler(
 		factory::material::MaterialHandlerFactory::get().generate(options)),
 	temperatureHandler(
 		factory::temperature::TemperatureHandlerFactory::get().generate(
 			options)),
-	solverHandler(handlerGenerator(*network, *perfHandler))
+	solverHandler(handlerGenerator(*network, *perfHandler)),
+	checkpointFile(options.getCheckpointFilePath())
 {
 	assert(solverHandler);
 	solverHandler->initializeHandlers(
@@ -37,7 +38,8 @@ Solver::Solver(
 Solver::Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler) :
 	optionsString(""),
 	solverHandler(_solverHandler),
-	perfHandler(solverHandler->getPerfHandler())
+	perfHandler(_solverHandler->getPerfHandler()),
+	checkpointFile("")
 {
 }
 
@@ -48,5 +50,11 @@ Solver::setCommandLineOptions(std::string arg)
 	optionsString = arg;
 }
 
+void
+Solver::setExternalControlStep(std::size_t step)
+{
+	assert(monitor);
+	monitor->setExternalControlStep(step);
+}
 } /* end namespace solver */
 } /* end namespace xolotl */

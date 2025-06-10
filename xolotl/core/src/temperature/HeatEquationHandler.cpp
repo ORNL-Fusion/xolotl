@@ -500,11 +500,11 @@ HeatEquationHandler::getHeatFlux(double currentTime)
 	double f = 0.0;
 	// If the time is smaller than or equal than the first stored time
 	if (currentTime <= time[0])
-		return f = flux[0];
+		return flux[0];
 
 	// If the time is larger or equal to the last stored time
 	if (currentTime >= time[time.size() - 1])
-		return f = flux[time.size() - 1];
+		return flux[time.size() - 1];
 
 	// Else loop to determine the interval the time falls in
 	// i.e. time[k] < time < time[k + 1]

@@ -68,11 +68,11 @@ ProfileHandler::getTemperature(
 
 	// If the time is smaller than or equal than the first stored time
 	if (currentTime <= time[0])
-		return f = temp[0];
+		return temp[0];
 
 	// If the time is larger or equal to the last stored time
 	if (currentTime >= time[time.size() - 1])
-		return f = temp[time.size() - 1];
+		return temp[time.size() - 1];
 
 	// Else loop to determine the interval the time falls in
 	// i.e. time[k] < time < time[k + 1]

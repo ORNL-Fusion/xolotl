@@ -131,8 +131,8 @@ FeDissociationReaction::computeBindingEnergy(double time)
 		Composition prod1Comp = prod1Reg.getOrigin();
 		Composition prod2Comp = prod2Reg.getOrigin();
 		// HeV
-		double amtHe = (double)(lo[Species::He] + hi[Species::He] - 1) / 2.0,
-			   amtV = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
+		auto amtHe = (double)(lo[Species::He] + hi[Species::He] - 1) / 2.0;
+		auto amtV = (double)(lo[Species::V] + hi[Species::V] - 1) / 2.0;
 		if (prod1Comp.isOnAxis(Species::V) || prod2Comp.isOnAxis(Species::V)) {
 			be = 1.73 -
 				2.59 * (pow(amtV, 2.0 / 3.0) - pow(amtV - 1.0, 2.0 / 3.0)) +

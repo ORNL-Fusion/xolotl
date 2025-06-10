@@ -97,7 +97,6 @@ generatePSIReactionNetwork(const options::IOptions& options)
 		while (maxHeV + 1 > pow(groupingWidthV, j)) {
 			++j;
 		}
-		maxHeV = pow(groupingWidthV, j) - 1;
 
 		deltaI = i - j;
 	}

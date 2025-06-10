@@ -96,6 +96,8 @@ constexpr double alphaZrCSinkStrength = 2.25e-8; // Single crystal
 // constexpr double alphaZrASinkStrength = 2e-5; //cold-worked Zr
 // constexpr double alphaZrCSinkStrength = 5e-6; //cold-worked Zr
 
+constexpr double zFactor = 100.0;
+
 // Tungsten density in nm^-3
 constexpr double tungstenDensity = 62.8;
 

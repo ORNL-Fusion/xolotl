@@ -44,6 +44,11 @@ toNameString(ZrSpecies species)
 }
 
 template <>
+struct NumberOfSpecies<ZrSpecies> : std::integral_constant<std::size_t, 3>
+{
+};
+
+template <>
 struct NumberOfInterstitialSpecies<ZrSpecies> :
 	std::integral_constant<std::size_t, 1>
 {
@@ -158,6 +163,13 @@ struct ClusterDataExtra<ZrReactionNetwork, PlsmContext>
 			View<double**>("Anisotropy Ratio", numClusters, gridSize);
 		dislocationCaptureRadius =
 			View<double**>("Dislocation Capture Radius", numClusters, 2);
+	}
+
+	void
+	setGridSize(IndexType numClusters, IndexType gridSize)
+	{
+		anisotropyRatio =
+			View<double**>("Anisotropy Ratio", numClusters, gridSize);
 	}
 
 	View<double**> anisotropyRatio;

@@ -56,6 +56,14 @@ public:
 	setTimes(double finalTime, double dt) = 0;
 
 	/**
+	 * Set the current step from an external controller
+	 *
+	 * @param step the current step from the controller
+	 */
+	virtual void
+	setExternalControlStep(std::size_t step) = 0;
+
+	/**
 	 * This operation get the concentration vector with the ids.
 	 *
 	 * @return The concentration vector
@@ -91,6 +99,14 @@ public:
 	 */
 	virtual void
 	setCurrentTimes(double currentTime, double currentDt) = 0;
+
+	/**
+	 * Set the current dt.
+	 *
+	 * @param currentDt The current time step
+	 */
+	virtual void
+	setCurrentTimeStep(double dt) = 0;
 
 	/**
 	 * This operation directs the Solver to perform the solve. If the solve

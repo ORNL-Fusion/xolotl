@@ -23,9 +23,10 @@ public:
 	using AmountType = typename NetworkType::AmountType;
 	using BoolArray = plsm::refine::BoolVec<Region>;
 
-	NEClusterGenerator(const options::IOptions& opts);
+	NEClusterGenerator(const options::IOptions& options);
 
-	NEClusterGenerator(const options::IOptions& opts, std::size_t refineDepth);
+	NEClusterGenerator(
+		const options::IOptions& options, std::size_t refineDepth);
 
 	KOKKOS_INLINE_FUNCTION
 	bool
@@ -60,10 +61,12 @@ public:
 
 private:
 	AmountType _maxXe;
+	AmountType _maxV{0};
+	AmountType _groupingMin;
+	AmountType _groupingWidthXe;
+	AmountType _groupingWidthV;
 	double _xeDiffusivity;
 	bool _xeDiffusive;
-	AmountType _groupingMin;
-	AmountType _groupingWidth;
 	double _density;
 };
 } // namespace network

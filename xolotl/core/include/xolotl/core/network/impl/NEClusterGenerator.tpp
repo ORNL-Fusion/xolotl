@@ -13,21 +13,69 @@ KOKKOS_INLINE_FUNCTION
 bool
 NEClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
-	if (region[Species::Xe].begin() < _groupingMin) {
-		result[0] = true;
+	result[0] = true;
+	result[1] = true;
+	result[2] = true;
+
+	// I is never grouped
+	if (region[Species::I].begin() > 0) {
 		return true;
 	}
-	if (region[Species::Xe].end() > _maxXe) {
-		result[0] = true;
+
+	// V is never grouped
+	if (region[Species::V].end() > 1 && region[Species::V].begin() < 3 &&
+		region[Species::Xe].begin() == 0 && region[Species::I].begin() == 0) {
 		return true;
 	}
+
+	// Xe is never grouped
+	if (region[Species::Xe].end() > 1 && region[Species::Xe].begin() < 2 &&
+		region[Species::V].begin() == 0 && region[Species::I].begin() == 0) {
+		return true;
+	}
+
+	// XeV
+	if (region[Species::Xe].begin() < _groupingMin &&
+		region[Species::V].begin() < _groupingMin) {
+		return true;
+	}
+
+	// Edges
+	if (region[Species::Xe].end() > _maxXe + 1 &&
+		region[Species::V].end() > _maxV + 1) {
+		return true;
+	}
+
+	// Middle
 	if (region[Species::Xe].length() <
-		util::max((double)(_groupingWidth + 1),
-			region[Species::Xe].begin() * 2.0e-2)) {
+		util::max((double)(_groupingWidthXe + 1),
+			region[Species::Xe].begin() * 1.0e-1)) {
 		result[0] = false;
+	}
+	if (region[Species::V].length() <
+		util::max((double)(_groupingWidthV + 1),
+			region[Species::V].begin() * 1.0e-1)) {
+		result[1] = false;
+	}
+
+	// Edges
+	if (region[Species::Xe].begin() == 0) {
+		result[0] = true;
+	}
+	if (region[Species::V].begin() == 0) {
+		result[1] = true;
+	}
+	if (region[Species::Xe].end() > _maxXe + 1) {
+		result[0] = true;
+	}
+	if (region[Species::V].end() > _maxV + 1) {
+		result[1] = true;
+	}
+
+	if (!result[0] && !result[1]) {
 		return false;
 	}
-	result[0] = true;
+
 	return true;
 }
 
@@ -36,11 +84,38 @@ bool
 NEClusterGenerator::select(const Region& region) const
 {
 	// Remove 0
-	if (region[Species::Xe].end() == 1) {
+	if (region[Species::Xe].end() == 1 && region[Species::V].end() == 1 &&
+		region[Species::I].end() == 1) {
 		return false;
 	}
 
+	// Interstitials
+	if (region[Species::I].begin() > 0 &&
+		(region[Species::Xe].begin() > 0 || region[Species::V].begin() > 0)) {
+		return false;
+	}
+
+	// Xenon
+	if (region[Species::Xe].begin() > 1 && region[Species::V].end() == 1 &&
+		region[Species::I].end() == 1) {
+		return false;
+	}
 	if (region[Species::Xe].begin() > _maxXe) {
+		return false;
+	}
+
+	// Vacancy
+	if (region[Species::V].begin() > 2 && region[Species::Xe].end() == 1 &&
+		region[Species::I].end() == 1) {
+		return false;
+	}
+	if (region[Species::V].begin() > _maxV) {
+		return false;
+	}
+
+	// Xe_1V
+	if (region[Species::Xe].begin() == 1 && region[Species::V].end() > 9 &&
+		region[Species::I].end() == 1) {
 		return false;
 	}
 
@@ -53,27 +128,8 @@ double
 NEClusterGenerator::getFormationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
-	/**
-	 * The set of xenon formation energies up to Xe_29 indexed by size. That is
-	 * E_(f,Xe_1) = xeFormationEnergies[1]. The value at index zero is just
-	 * padding to make the indexing easy.
-	 */
-	constexpr Kokkos::Array<double, 30> xeFormationEnergies = {0.0, 7.0, 12.15,
-		17.15, 21.90, 26.50, 31.05, 35.30, 39.45, 43.00, 46.90, 50.65, 53.90,
-		56.90, 59.80, 62.55, 65.05, 67.45, 69.45, 71.20, 72.75, 74.15, 75.35,
-		76.40, 77.25, 77.95, 78.45, 78.80, 78.95, 79.0};
-
-	const auto& reg = cluster.getRegion();
-	if (reg.isSimplex()) {
-		auto amtXe = reg.getOrigin()[0];
-		if (amtXe < xeFormationEnergies.size()) {
-			return xeFormationEnergies[amtXe];
-		}
-		else {
-			return 79.0;
-		}
-	}
-	return 79.0;
+	// Not used?
+	return 0.0;
 }
 
 template <typename PlsmContext>
@@ -82,17 +138,7 @@ double
 NEClusterGenerator::getMigrationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
-	constexpr double xeOneMigration = 1.0;
-
-	const auto& reg = cluster.getRegion();
-	double migrationEnergy = util::infinity<double>;
-	if (reg.isSimplex()) {
-		auto amtXe = reg.getOrigin()[0];
-		if (amtXe <= 1) {
-			migrationEnergy = _xeDiffusive ? 0.0 : xeOneMigration;
-		}
-	}
-	return migrationEnergy;
+	return util::infinity<double>;
 }
 
 template <typename PlsmContext>
@@ -101,17 +147,7 @@ double
 NEClusterGenerator::getDiffusionFactor(
 	const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
-	constexpr double xeOneDiffusion = 1.0;
-
-	const auto& reg = cluster.getRegion();
-	double diffusionFactor = 0.0;
-	if (reg.isSimplex()) {
-		auto amtXe = reg.getOrigin()[0];
-		if (amtXe == 1) {
-			diffusionFactor = _xeDiffusive ? _xeDiffusivity : xeOneDiffusion;
-		}
-	}
-	return diffusionFactor;
+	return 0.0;
 }
 
 template <typename PlsmContext>
@@ -124,21 +160,34 @@ NEClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	const auto& reg = cluster.getRegion();
 	double radius = 0.0;
 	double FourPi = 4.0 * ::xolotl::core::pi;
+	double omega =
+		0.25 * latticeParameter * latticeParameter * latticeParameter;
 	if (reg.isSimplex()) {
 		Composition comp(reg.getOrigin());
-		// Compute the reaction radius
-		radius = pow((3.0 * (double)comp[Species::Xe]) / (FourPi * _density),
-			(1.0 / 3.0));
-		if (comp[Species::Xe] == 1)
+		if (comp.isOnAxis(Species::I)) {
+			radius = latticeParameter / 2.0;
+		}
+		else if (comp.isOnAxis(Species::Xe)) {
 			radius = impurityRadius;
+		}
+		else if (comp.isOnAxis(Species::V)) {
+			radius = latticeParameter * sqrt(2.0) / 2.0;
+		}
+		else {
+			radius = latticeParameter * sqrt(2.0) / 2.0 +
+				cbrt((3.0 * omega * (double)comp[Species::V]) / FourPi) -
+				cbrt((3.0 * omega) / FourPi);
+		}
 	}
 	else {
-		// Loop on the range
-		for (auto j : makeIntervalRange(reg[Species::Xe])) {
-			radius += pow((3.0 * (double)j) / (FourPi * _density), (1.0 / 3.0));
+		// Loop on the V range
+		for (auto j : makeIntervalRange(reg[Species::V])) {
+			radius += latticeParameter * sqrt(2.0) / 2.0 +
+				cbrt((3.0 * omega * (double)j) / FourPi) -
+				cbrt((3.0 * omega) / FourPi);
 		}
 		// Average the radius
-		radius /= reg.volume();
+		radius /= reg[Species::V].length();
 	}
 
 	return radius;

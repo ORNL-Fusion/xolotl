@@ -8,7 +8,7 @@
 
 #include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(CustomFitFluxHandlerTester_testSuite)
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 
 	// Create a file with flux profile data.
 	std::ofstream fluxFile("tridyn.dat");
@@ -112,11 +112,11 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 1, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 1, surfacePos);
 	updatedConcOffset = subview(conc, 2, Kokkos::ALL);
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 2, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 2, surfacePos);
 
 	// Check the value at some grid points
 	auto newConcentration =
@@ -126,14 +126,12 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	BOOST_REQUIRE_CLOSE(newConcentration(1, 46), 0.0, 0.01);
 	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 3.60006e-06, 0.01);
 	BOOST_REQUIRE_CLOSE(newConcentration(2, 16), 0.0398406, 0.01);
-
-	return;
 }
 
 BOOST_AUTO_TEST_CASE(checkFluence)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 
 	// Create a file with flux profile data.
 	std::ofstream fluxFile("tridyn.dat");
@@ -189,8 +187,6 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
-	// Get its size
-	const int dof = network.getDOF();
 
 	// Create the W100 flux handler
 	auto testFitFlux = make_shared<CustomFitFluxHandler>(opts);
@@ -219,8 +215,6 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	BOOST_REQUIRE_EQUAL(fluence[0], f[0]);
 	BOOST_REQUIRE_EQUAL(fluence[1], f[1]);
 	BOOST_REQUIRE_EQUAL(fluence[2], f[2]);
-
-	return;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

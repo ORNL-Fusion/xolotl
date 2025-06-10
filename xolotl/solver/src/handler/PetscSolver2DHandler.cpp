@@ -27,10 +27,12 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 	// + moments
 	const auto dof = network.getDOF();
 
+	bool restarting = this->checkForRestart();
+
 	// We can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty() and surfaceOffset == 0) {
-		io::XFile xfile(networkName);
+	if (restarting and surfaceOffset == 0) {
+		io::XFile xfile(restartFile);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 			auto tsGroup = concGroup->getLastTimestepGroup();
@@ -54,8 +56,8 @@ PetscSolver2DHandler::createSolverContext(DM& da)
 
 	// We can update the surface position
 	// if we are using a restart file
-	if (not networkName.empty() and movingSurface) {
-		io::XFile xfile(networkName);
+	if (restarting and movingSurface) {
+		io::XFile xfile(restartFile);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
 			auto tsGroup = concGroup->getLastTimestepGroup();
@@ -174,7 +176,6 @@ PetscSolver2DHandler::initializeSolverContext(DM& da, Mat& J)
 	//
 	// "+ 1" for temperature
 	auto dSize = localYM * localXM * (nNetworkEntries + difEntries.size() + 1);
-	// FIXME
 	int nAdvec = 0;
 	for (auto&& handler : advectionHandlers) {
 		nAdvec = std::max(nAdvec, handler->getNumberOfAdvecting());
@@ -310,8 +311,8 @@ PetscSolver2DHandler::initializeConcentration(
 		bool hasConcentrations = false;
 		std::unique_ptr<io::XFile> xfile;
 		std::unique_ptr<io::XFile::ConcentrationGroup> concGroup;
-		if (not networkName.empty()) {
-			xfile = std::make_unique<io::XFile>(networkName);
+		if (this->checkForRestart()) {
+			xfile = std::make_unique<io::XFile>(restartFile);
 			concGroup = xfile->getGroup<io::XFile::ConcentrationGroup>();
 			hasConcentrations = (concGroup and concGroup->hasTimesteps());
 		}
@@ -322,7 +323,7 @@ PetscSolver2DHandler::initializeConcentration(
 		// Loop on all the grid points
 		for (auto j = localYS; j < localYS + localYM; j++) {
 			for (auto i = (PetscInt)localXS - 1;
-				 i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
+				i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
 				// Temperature
 				plsm::SpaceVector<double, 3> gridPosition{0.0, j * hY, 0.0};
 				if (i < 0)
@@ -439,6 +440,7 @@ PetscSolver2DHandler::initializeConcentration(
 					// Check the distance
 					if (distance > right - 1.0e-4) {
 						// Create the arrays to receive the data
+						std::vector<PetscScalar> leftConcVec, rightConcVec;
 						PetscScalar *rightConc, *leftConc;
 
 						// Check where all the needed data is located
@@ -481,7 +483,8 @@ PetscSolver2DHandler::initializeConcentration(
 							// Receive the data on the new proc
 							if (procId == totalProcs[2]) {
 								// Receive the data
-								leftConc = new PetscScalar[dof + 1];
+								leftConcVec.resize(dof + 1);
+								leftConc = leftConcVec.data();
 								MPI_Recv(leftConc, dof + 1, MPI_DOUBLE,
 									totalProcs[0], 2, MPI_COMM_WORLD,
 									MPI_STATUS_IGNORE);
@@ -507,7 +510,8 @@ PetscSolver2DHandler::initializeConcentration(
 							// Receive the data on the new proc
 							if (procId == totalProcs[2]) {
 								// Receive the data
-								rightConc = new PetscScalar[dof + 1];
+								rightConcVec.resize(dof + 1);
+								rightConc = rightConcVec.data();
 								MPI_Recv(rightConc, dof + 1, MPI_DOUBLE,
 									totalProcs[1], 1, MPI_COMM_WORLD,
 									MPI_STATUS_IGNORE);
@@ -526,11 +530,6 @@ PetscSolver2DHandler::initializeConcentration(
 								newConc[k] = leftConc[k] +
 									(rightConc[k] - leftConc[k]) * xFactor;
 							}
-
-							if (totalProcs[2] != totalProcs[0])
-								delete leftConc;
-							if (totalProcs[2] != totalProcs[1])
-								delete rightConc;
 						}
 
 						break;
@@ -542,7 +541,7 @@ PetscSolver2DHandler::initializeConcentration(
 			// Pointer for the concentration vector at a specific grid point
 			PetscScalar* concOffset = nullptr;
 			for (auto i = (PetscInt)localXS;
-				 i < (PetscInt)localXS + (PetscInt)localXM; i++) {
+				i < (PetscInt)localXS + (PetscInt)localXM; i++) {
 				concOffset = concs[yj][i];
 				temperature[i - localXS + 1] = concOffset[dof];
 			}
@@ -805,9 +804,6 @@ PetscSolver2DHandler::updateConcentration(
 	PetscOffsetView<PetscScalar***> updatedConcs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOFWrite(da, F, &updatedConcs));
 
-	// Degrees of freedom is the total number of clusters in the network
-	const auto dof = network.getDOF();
-
 	// Set some step size variable
 	double sy = 1.0 / (hY * hY);
 
@@ -824,7 +820,7 @@ PetscSolver2DHandler::updateConcentration(
 		temperatureHandler->updateSurfacePosition(surfacePosition[yj], grid);
 		bool tempHasChanged = false;
 		for (auto xi = (PetscInt)localXS - 1;
-			 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
+			xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 			// Heat condition
 			if (xi == surfacePosition[yj] && xi >= localXS &&
 				xi < localXS + localXM) {
@@ -871,7 +867,6 @@ PetscSolver2DHandler::updateConcentration(
 			auto updatedConcOffset =
 				subview(updatedConcs, yj, xi, Kokkos::ALL).view();
 
-			// FIXME: xi is out-of-range at some points
 			// Set the grid fraction
 			if (xi < 0)
 				gridPosition[0] = (grid[0] - grid[surfacePosition[yj] + 1]) /
@@ -975,7 +970,7 @@ PetscSolver2DHandler::updateConcentration(
 
 			// Loop over grid points
 			for (auto xi = surfacePosition[yj] + leftOffset;
-				 xi < nX - rightOffset; xi++) {
+				xi < nX - rightOffset; xi++) {
 				// We are only interested in the helium near the surface
 				if ((grid[xi] + grid[xi + 1]) / 2.0 -
 						grid[surfacePosition[yj] + 1] >
@@ -1074,7 +1069,7 @@ PetscSolver2DHandler::updateConcentration(
 
 			// ----- Account for flux of incoming particles -----
 			fluxHandler->computeIncidentFlux(
-				ftime, updatedConcOffset, xi, surfacePosition[yj]);
+				ftime, concOffset, updatedConcOffset, xi, surfacePosition[yj]);
 
 			// ---- Compute diffusion over the locally owned part of the grid
 			// -----
@@ -1127,9 +1122,6 @@ PetscSolver2DHandler::computeJacobian(
 	PetscOffsetView<const PetscScalar***> concs;
 	PetscCallVoid(DMDAVecGetKokkosOffsetViewDOF(da, localC, &concs));
 
-	// The degree of freedom is the size of the network
-	const auto dof = network.getDOF();
-
 	using ConcSubView = Kokkos::View<const double*>;
 	Kokkos::Array<ConcSubView, 5> concVector;
 
@@ -1163,7 +1155,7 @@ PetscSolver2DHandler::computeJacobian(
 		temperatureHandler->updateSurfacePosition(surfacePosition[yj], grid);
 		bool tempHasChanged = false;
 		for (auto xi = (PetscInt)localXS - 1;
-			 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
+			xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 			// Compute the left and right hx
 			double hxLeft = 0.0, hxRight = 0.0;
 			if (xi >= 1 && xi < nX) {
@@ -1301,7 +1293,7 @@ PetscSolver2DHandler::computeJacobian(
 
 			// Loop over grid points
 			for (auto xi = surfacePosition[yj] + leftOffset;
-				 xi < nX - rightOffset; xi++) {
+				xi < nX - rightOffset; xi++) {
 				// We are only interested in the helium near the surface
 				if ((grid[xi] + grid[xi + 1]) / 2.0 -
 						grid[surfacePosition[yj] + 1] >

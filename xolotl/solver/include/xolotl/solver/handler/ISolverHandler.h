@@ -349,6 +349,16 @@ public:
 	getLocalNE() = 0;
 
 	/**
+	 * Get the network temperature and depth that can be passed to an app.
+	 *
+	 * @param temperatures The local vector of temperatures
+	 * @param depth The corresponding depths
+	 */
+	virtual void
+	getNetworkTemperature(
+		std::vector<double>& temperatures, std::vector<double>& depths) = 0;
+
+	/**
 	 * Set the latest value of the Xe flux.
 	 *
 	 * @param flux The latest value of flux
@@ -517,12 +527,31 @@ public:
 	getNetwork() const = 0;
 
 	/**
-	 * Get the network name.
+	 * Get the restart file name.
 	 *
-	 * @return The network name
+	 * @return The restart file name
 	 */
 	virtual std::string
-	getNetworkName() const = 0;
+	getRestartFilePath() const = 0;
+
+	/**
+	 * Check if we are using restart
+	 *
+	 * @return whether we are using restart
+	 *
+	 * Returns true if the restart file name is a non-empty and if the named
+	 * file exists on the system
+	 */
+	virtual bool
+	checkForRestart() const = 0;
+
+	/**
+	 * Get the reaction rate file name.
+	 *
+	 * @return The reaction file name
+	 */
+	virtual std::string
+	getReactionFilePath() const = 0;
 
 	/**
 	 * Access the random number generator.

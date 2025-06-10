@@ -2,6 +2,7 @@
 
 #include <memory>
 
+#include <xolotl/perf/ITimer.h>
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/solver/monitor/IPetscMonitor.h>
 #include <xolotl/viz/IPlot.h>
@@ -17,14 +18,18 @@ class PetscMonitor : public IPetscMonitor
 public:
 	PetscMonitor();
 
-	PetscMonitor(
-		TS ts, const std::shared_ptr<handler::ISolverHandler>& solverHandler);
+	PetscMonitor(TS ts,
+		const std::shared_ptr<handler::ISolverHandler>& solverHandler,
+		const std::string& checkpointFileName);
 
 	virtual ~PetscMonitor();
 
 	void
 	writeNetwork(MPI_Comm comm, const std::string& targetFileName,
 		const std::string& srcFileName = "") override;
+
+	PetscErrorCode
+	startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
 	monitorTime(
@@ -43,6 +48,10 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
+	computeAlphaZr(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
+
+	PetscErrorCode
 	computeAlloy(
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
@@ -58,10 +67,27 @@ public:
 	postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		PetscReal time, Vec solution, PetscBool) override;
 
+	void
+	setExternalControlStep(std::size_t step) override
+	{
+		_ctrlStep = step;
+	}
+
+protected:
+	bool
+	checkForCreatingCheckpoint() const;
+
+	virtual PetscErrorCode
+	startStopImpl(TS ts, PetscInt timestep, PetscReal time, Vec solution,
+		io::XFile& checkpointFile, io::XFile::TimestepGroup* tsGroup,
+		const std::vector<std::string>& speciesNames) = 0;
+
 protected:
 	TS _ts;
 
 	std::shared_ptr<handler::ISolverHandler> _solverHandler;
+
+	std::shared_ptr<perf::ITimer> _startStopTimer;
 
 	std::shared_ptr<viz::IPlot> _perfPlot;
 
@@ -80,7 +106,9 @@ protected:
 
 	PetscReal _hdf5Stride = 0.0;
 	PetscInt _hdf5Previous = 0;
-	std::string _hdf5OutputName = "xolotlStop.h5";
+	std::string _hdf5OutputName = "";
+
+	std::size_t _ctrlStep = 0;
 };
 } // namespace monitor
 } // namespace solver

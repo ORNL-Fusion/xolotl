@@ -54,13 +54,16 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	}
 
 	// Too large
-	if (region[Species::V].end() > _maxSize ||
-		region[Species::PerfectV].end() > _maxSize ||
-		region[Species::FaultedV].end() > _maxSize ||
-		region[Species::FaultedI].end() > _maxSize ||
-		region[Species::PerfectI].end() > _maxSize) {
+	if (region[Species::V].end() > _maxSize && _maxSize > 0)
 		return true;
-	}
+	if (region[Species::PerfectV].end() > _maxSize && _maxSize > 0)
+		return true;
+	if (region[Species::FaultedV].end() > _maxSize && _maxSize > 0)
+		return true;
+	if (region[Species::PerfectI].end() > _maxSize && _maxSize > 0)
+		return true;
+	if (region[Species::FaultedI].end() > _maxSize && _maxSize > 0)
+		return true;
 
 	if (region[Species::V].begin() > 0 &&
 		region[Species::V].length() <

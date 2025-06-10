@@ -1,0 +1,32 @@
+{
+    "dimensions": 1,
+    "process": "sink reaction diff",
+    "gridParam": "10 1",
+    "boundary": "1 1",
+    "netParam": "500000 0 0 500000 500000",
+    "useSubnetworks": true,
+    "couplingTimeStepParams": "1.0e-12 1.0 1.1 0.0 0.00001 500000",
+    "grouping": "101 2",
+    "vizHandler": "dummy",
+    "perfHandler": "dummy",
+    "material": "AlphaZr",
+    "tempParam": 553,
+    "flux": 1e-7,
+    "cascadeDose": 0.05,
+    "cascadeEfficiency": 0.025,
+    "radiusSize": "85 85 85",
+    "petscArgs": [
+        "-ts_dt 1.0e-12",
+        "-ts_max_steps 1000000",
+        "-ts_max_snes_failures -1",
+        "-pc_fieldsplit_detect_coupling",
+        "-ts_adapt_dt_max 1.0",
+        "-ts_exact_final_time stepover",
+        "-ts_monitor",
+        "-pc_type fieldsplit",
+        "-fieldsplit_0_pc_type sor",
+        "-fieldsplit_1_pc_type redundant",
+        "-ts_max_time 1.0e2",
+        "-snes_force_iteration"
+    ]
+}

@@ -8,7 +8,7 @@
 
 #include <xolotl/core/modified/SoretDiffusionHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
@@ -33,7 +33,7 @@ BOOST_AUTO_TEST_SUITE(SoretDiffusionHandler_testSuite)
 BOOST_AUTO_TEST_CASE(checkDiffusion)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -79,7 +79,7 @@ BOOST_AUTO_TEST_CASE(checkDiffusion)
 	// Test which cluster diffuses
 	BOOST_REQUIRE_EQUAL(soretEntries.size(), 1);
 	BOOST_REQUIRE_EQUAL(soretEntries[0][0], 0);
-	BOOST_REQUIRE_EQUAL(soretEntries[0][1], 1);
+	BOOST_REQUIRE_EQUAL(soretEntries[0][1], 0);
 
 	// The size parameter in the x direction
 	double hx = 1.0;

@@ -30,8 +30,6 @@ class PSIReactionNetwork :
 	public ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>
 {
 	friend class ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
-	friend class detail::ReactionNetworkWorker<
-		PSIReactionNetwork<TSpeciesEnum>>;
 
 public:
 	using Superclass = ReactionNetwork<PSIReactionNetwork<TSpeciesEnum>>;
@@ -149,6 +147,18 @@ private:
 	getReactionGenerator() const noexcept
 	{
 		return detail::PSIReactionGenerator<Species>{*this};
+	}
+
+	void
+	readClusters(const std::string filename)
+	{
+		return;
+	}
+
+	void
+	readReactions(double temperature, const std::string filename)
+	{
+		return;
 	}
 
 private:

@@ -12,6 +12,9 @@ get_filename_component(XOLOTL_TEST_DATA_DIR
 )
 set(XOLOTL_BUILD_DIR ${CMAKE_BINARY_DIR})
 
+option(Xolotl_ENABLE_TIMER_TESTS "Include tests for accurate timing" ON)
+set(XOLOTL_ENABLE_TIMER_TESTS ${Xolotl_ENABLE_TIMER_TESTS})
+
 execute_process(COMMAND
     ${CMAKE_COMMAND} -E make_directory ${XOLOTL_BINARY_INCLUDE_DIR}/xolotl/test
 )

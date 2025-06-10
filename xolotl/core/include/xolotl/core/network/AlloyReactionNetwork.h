@@ -19,7 +19,6 @@ class AlloyReactionGenerator;
 class AlloyReactionNetwork : public ReactionNetwork<AlloyReactionNetwork>
 {
 	friend class ReactionNetwork<AlloyReactionNetwork>;
-	friend class detail::ReactionNetworkWorker<AlloyReactionNetwork>;
 
 public:
 	using Superclass = ReactionNetwork<AlloyReactionNetwork>;
@@ -36,8 +35,18 @@ public:
 	checkLargestClusterId();
 
 	void
-	setConstantRates(RateVector) override
+	setConstantRates(RatesView rates, IndexType gridIndex) override;
+
+	void
+	setConstantConnectivities(ConnectivitiesPair conns) override;
+
+	void
+	setConstantRateEntries() override;
+
+	std::string
+	getMonitorOutputFileName() const override
 	{
+		return "Alloy.dat";
 	}
 
 	void
@@ -56,7 +65,6 @@ public:
 		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
 		double spacing);
 
-protected:
 	double
 	computeBubbleRadius(double vAmount, double latticeParameter)
 	{
@@ -68,6 +76,23 @@ protected:
 				(1.0 / 3.0)) -
 			pow((3.0 * aCube) / (8.0 * ::xolotl::core::pi), (1.0 / 3.0));
 	}
+
+	std::string
+	getMonitorDataHeaderString() const override;
+
+	void
+	addMonitorDataValues(Kokkos::View<const double*> conc, double fac,
+		std::vector<double>& totalVals) override;
+
+	std::size_t
+	getMonitorDataLineSize() const override
+	{
+		return getSpeciesListSize() * 4;
+	}
+
+	void
+	writeMonitorDataLine(
+		const std::vector<double>& localData, double time) override;
 
 private:
 	double
@@ -85,6 +110,18 @@ private:
 
 	detail::AlloyReactionGenerator
 	getReactionGenerator() const noexcept;
+
+	void
+	readClusters(const std::string filename)
+	{
+		return;
+	}
+
+	void
+	readReactions(double temperature, const std::string filename)
+	{
+		return;
+	}
 };
 
 namespace detail

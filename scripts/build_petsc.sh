@@ -11,12 +11,13 @@ _do_cleanup=1
 _do_pull=1
 _debug=0
 _use_cuda=0
+_cuda_sm_ver=0
 _use_omp=0
+_kokkos_spec="yes"
 _petsc_extra_args=""
 _petsc_dir=$PWD
 _petsc_dir_arch_set=""
 _prefix_arg=""
-_opt_flags="-O3"
 
 # Read command-line arguments
 while [ $# -gt 0 ]
@@ -56,13 +57,21 @@ do
         ;;
     --debug|--dbg)
         _debug=1
-        _opt_flags="-O0"
         ;;
     --cuda)
         _use_cuda=1
         ;;
+    --cuda-sm=*)
+        _cuda_sm_ver="${1:10}" # strip "--cuda-sm="
+        ;;
     --openmp)
         _use_omp=1
+        ;;
+    --kokkos-version=*)
+        _kokkos_ver="${1:17}" # strip "--kokkos-version="
+        __k_spec="--download-kokkos-commit=${_kokkos_ver}"
+        __kk_spec="--download-kokkos-kernels-commit=${_kokkos_ver}"
+        _petsc_extra_args="${_petsc_extra_args} ${__k_spec} ${__kk_spec}"
         ;;
     --get-lapack)
         _petsc_extra_args="${_petsc_extra_args} --download-f2cblaslapack"
@@ -71,7 +80,12 @@ do
         _petsc_extra_args="${_petsc_extra_args} --download-boost"
         ;;
     --get-hdf5)
-        _petsc_extra_args="${_petsc_extra_args} --download-hdf5"
+        _petsc_extra_args="${_petsc_extra_args} \
+            --download-hdf5 \
+            --download-hdf5-configure-arguments=--enable-parallel"
+        ;;
+    --get-hypre)
+        _petsc_extra_args="${_petsc_extra_args} --download-hypre"
         ;;
     *)
         echo "Unsupported argument: $1"
@@ -81,19 +95,28 @@ do
     shift
 done
 
-_petsc_extra_args="${_petsc_extra_args} ${_petsc_dir_arch_set}"
-
-# Check for CUDA
-if ! [ -x "$(command -v nvidia-smi)" ]; then
-    _use_cuda=0
+if [ ${_debug} -eq 0 ]; then
+    _petsc_extra_args="${_petsc_extra_args} \
+        --COPTFLAGS=-O3 \
+        --CXXOPTFLAGS=-O3"
 fi
 
+# Handle CUDA arguments
 if [ ${_use_cuda} -eq 1 ]; then
-    _cuda_sm_ver=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader)
+    if [ ${_cuda_sm_ver} -eq 0 ]; then
+        # Check for driver
+        if ! [ -x "$(command -v nvidia-smi)" ]; then
+            echo "Unable to determine CUDA SM version (compute capability)."
+            echo " - please provide with '--cuda-sm=*'"
+        else
+            _cuda_sm_ver=$(nvidia-smi --query-gpu=compute_cap --format=csv,noheader)
+        fi
+    fi
     _cuda_sm=${_cuda_sm_ver//./}
-    _petsc_cuda_args=" \
-        --with-cuda-arch=${_cuda_sm} \
-        --CUDAOPTFLAGS=-O3"
+    _petsc_cuda_args="--with-cuda-arch=${_cuda_sm}"
+    if [ ${_debug} -eq 0 ]; then
+        _petsc_cuda_args="${_petsc_cuda_args} --CUDAOPTFLAGS=-O3"
+    fi
     _petsc_extra_args="${_petsc_extra_args} ${_petsc_cuda_args}"
 fi
 
@@ -126,32 +149,35 @@ fi
 
 if [ ${_do_install} -eq 1 ]; then
     _prefix_arg="--prefix=${_prefix}"
-    _install_cmd="make ${_petsc_dir_arch_set} install"
+    _install_cmd="make ${_petsc_dir_arch_set} -B install"
 fi
 
 _conf_cmd="./configure \
     ${_petsc_dir_arch_set} \
     ${_prefix_arg} \
-    --with-cc=mpicc \
-    --with-cxx=mpicxx \
     --with-fc=0 \
     --with-cuda=${_use_cuda} \
+    --with-mpi \
     --with-openmp=${_use_omp} \
     --with-debugging=${_debug} \
     --with-shared-libraries \
     --with-64-bit-indices \
     --download-kokkos \
-    --download-kokkos-kernels \
-    --COPTFLAGS=${_opt_flags} \
-    --CXXOPTFLAGS=${_opt_flags}"
+    --download-kokkos-kernels"
 
 _conf_cmd="${_conf_cmd} ${_petsc_extra_args}"
 _build_cmd="make ${_petsc_dir_arch_set} all"
 
 if [ ${_dry_run} -eq 0 ]; then
+    echo "Configure:"
+    echo ${_conf_cmd}
     ${_conf_cmd}
+    echo "Build:"
+    echo ${_build_cmd}
     ${_build_cmd}
     if [ ${_do_install} -eq 1 ]; then
+        echo "Install:"
+        echo ${_install_cmd}
         ${_install_cmd}
     fi
 else

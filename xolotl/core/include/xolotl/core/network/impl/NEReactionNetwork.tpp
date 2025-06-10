@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/detail/impl/NucleationReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/ReSolutionReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/impl/NEClusterGenerator.tpp>
 #include <xolotl/core/network/impl/NEReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
@@ -19,15 +20,13 @@ KOKKOS_INLINE_FUNCTION
 void
 NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
-	// Check the diffusion factors
-	auto diffusionFactor = this->_clusterData.diffusionFactor;
-	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
-		return;
-	}
-
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
+
+	constexpr auto species = NetworkType::getSpeciesRange();
+	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
+	constexpr auto invalidIndex = NetworkType::invalidIndex();
 
 	auto numClusters = this->getNumberOfClusters();
 
@@ -40,43 +39,151 @@ NEReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
 	// General case
-	Kokkos::pair<AmountType, AmountType> bounds;
-	// Compute the bounds
-	auto low = lo1[Species::Xe] + lo2[Species::Xe];
-	auto high = hi1[Species::Xe] + hi2[Species::Xe] - 2;
-	bounds = {low, high};
+	constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
+	using BoundsArray =
+		Kokkos::Array<Kokkos::pair<AmountType, AmountType>, numSpeciesNoI>;
+	plsm::EnumIndexed<BoundsArray, Species> bounds;
+	// Loop on the species
+	for (auto l : species) {
+		auto low = lo1[l] + lo2[l];
+		auto high = hi1[l] + hi2[l] - 2;
+		// Special case for I
+		if (l == Species::I) {
+			bounds[Species::V].first -= high;
+			bounds[Species::V].second -= low;
+		}
+		else {
+			bounds[l] = {low, high};
+		}
+	}
+
+	if ((lo1[Species::Xe] == 1 and lo1[Species::V] == 1 and
+			lo2[Species::Xe] > 0 and lo2[Species::V] > 0) or
+		(lo2[Species::Xe] == 1 and lo2[Species::V] == 1 and
+			lo1[Species::Xe] > 0 and lo1[Species::V] > 0)) {
+		// Look for potential product
+		for (IndexType k = 0; k < numClusters; ++k) {
+			// Get the composition
+			const auto& prodReg = this->getCluster(k).getRegion();
+			bool isGood = true;
+			// Loop on the species
+			for (auto l : speciesNoI) {
+				if (prodReg[l()].begin() > bounds[l()].second) {
+					isGood = false;
+					break;
+				}
+				if (prodReg[l()].end() - 1 < bounds[l()].first) {
+					isGood = false;
+					break;
+				}
+			}
+
+			if (isGood) {
+				this->addReSolutionReaction(tag, {k, i, j});
+			}
+		}
+	}
+
+	// Check the diffusion factors
+	auto diffusionFactor = this->_clusterData.diffusionFactor;
+	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
+		return;
+	}
+
+	// TODO: re-solution and nucleation need to be added
+
+	if (i == j) {
+		addSinks(i, tag);
+	}
+
+	auto& subpaving = this->getSubpaving();
+
+	// Special case for I + V
+	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() &&
+		((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
+			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I)))) {
+		// Find out which one is which
+		auto vSize =
+			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
+		auto iSize =
+			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
+		// Compute the product size
+		int prodSize = vSize - iSize;
+		// 3 cases
+		if (prodSize > 0) {
+			// Looking for V cluster
+			Composition comp = Composition::zero();
+			comp[Species::V] = prodSize;
+			auto vProdId = subpaving.findTileId(comp);
+			if (vProdId != invalidIndex) {
+				this->addProductionReaction(tag, {i, j, vProdId});
+				this->addDissociationReaction(tag, {vProdId, i, j});
+			}
+		}
+		else if (prodSize < 0) {
+			// Looking for I cluster
+			Composition comp = Composition::zero();
+			comp[Species::I] = -prodSize;
+			auto iProdId = subpaving.findTileId(comp);
+			if (iProdId != invalidIndex) {
+				this->addProductionReaction(tag, {i, j, iProdId});
+				this->addDissociationReaction(tag, {iProdId, i, j});
+			}
+		}
+		else {
+			// No product
+			this->addProductionReaction(tag, {i, j});
+		}
+		return;
+	}
 
 	// Look for potential product
 	for (IndexType k = 0; k < numClusters; ++k) {
 		// Get the composition
 		const auto& prodReg = this->getCluster(k).getRegion();
-		// Check the bounds
-		if (prodReg[Species::Xe].begin() > bounds.second) {
-			continue;
-		}
-		else if (prodReg[Species::Xe].end() - 1 < bounds.first) {
-			continue;
+		bool isGood = true;
+		// Loop on the species
+		for (auto l : speciesNoI) {
+			if (prodReg[l()].begin() > bounds[l()].second) {
+				isGood = false;
+				break;
+			}
+			if (prodReg[l()].end() - 1 < bounds[l()].first) {
+				isGood = false;
+				break;
+			}
 		}
 
-		if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1[Species::Xe] == 1 &&
-			lo2[Species::Xe] == 1) {
-			if (this->_clusterData.enableNucleation())
-				this->addNucleationReaction(tag, {i, k});
-			else
-				this->addProductionReaction(tag, {i, j, k});
-		}
-		else
+		if (isGood) {
 			this->addProductionReaction(tag, {i, j, k});
+			// Dissociation
+			if (lo1[Species::Xe] + lo1[Species::V] + lo1[Species::I] < 3 ||
+				lo2[Species::Xe] + lo2[Species::V] + lo2[Species::I] < 3) {
+				this->addDissociationReaction(tag, {k, i, j});
+			}
+		}
+	}
+}
 
-		if (!cl1Reg.isSimplex() && !cl2Reg.isSimplex()) {
-			continue;
-		}
-		// Is the size of one of them one?
-		if (lo1[Species::Xe] == 1 || lo2[Species::Xe] == 1) {
-			this->addDissociationReaction(tag, {k, i, j});
-			// Also add re-solution
-			this->addReSolutionReaction(tag, {k, i, j});
-		}
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+NEReactionGenerator::addSinks(IndexType i, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	const auto& clReg = this->getCluster(i).getRegion();
+	Composition lo = clReg.getOrigin();
+
+	// I
+	if (clReg.isSimplex() && lo.isOnAxis(Species::I)) {
+		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
+	}
+
+	// V
+	if (clReg.isSimplex() && lo.isOnAxis(Species::V) && lo[Species::V] < 3) {
+		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
 	}
 }
 
@@ -84,8 +191,11 @@ inline ReactionCollection<NEReactionGenerator::NetworkType>
 NEReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
-		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getReSolutionReactions(), this->getNucleationReactions());
+		this->_clusterData.extraData.fileClusterMap.capacity(),
+		this->_enableReadRates, this->getProductionReactions(),
+		this->getDissociationReactions(), this->getReSolutionReactions(),
+		this->getNucleationReactions(), this->getSinkReactions());
+	ret._data.reactionEnergies = this->_reactionEnergies;
 	return ret;
 }
 } // namespace detail
@@ -103,28 +213,46 @@ void
 NEClusterUpdater::updateDiffusionCoefficient(
 	const ClusterData& data, IndexType clusterId, IndexType gridIndex) const
 {
-	// If the diffusivity is given
 	if (data.migrationEnergy(clusterId) > 0.0) {
-		// Intrinsic diffusion
-		double kernel = -3.04 / (kBoltzmann * data.temperature(gridIndex));
-		double D3 = 7.6e8 * exp(kernel); // nm2/s
+		//		using Species = typename NetworkType::Species;
+		//		using Composition = typename NetworkType::Composition;
+		//		const auto& clReg = data.tiles(clusterId).getRegion();
+		//		Composition lo = clReg.getOrigin();
+		//		if (clReg.isSimplex() && lo[Species::V] == 1 && lo[Species::Xe]
+		//== 1) {
+		//			// Intrinsic diffusion
+		//			double kernel = -3.04 / (kBoltzmann *
+		// data.temperature(gridIndex)); 			double D3 = 7.6e8 *
+		// exp(kernel);
+		// // nm2/s
+		//
+		//			// We need the fission rate now
+		//			double fissionRate = data.fissionRate(0) * 1.0e27; // #/m3/s
+		//
+		//			// Athermal diffusion
+		//			double D1 = (8e-40 * fissionRate) * 1.0e18; // nm2/s
+		//
+		//			// Radiation-enhanced diffusion
+		//			kernel = -1.2 / (kBoltzmann * data.temperature(gridIndex));
+		//			double D2 =
+		//				(5.6e-25 * sqrt(fissionRate) * exp(kernel)) * 1.0e18; //
+		// nm2/s
+		//
+		//			data.diffusionCoefficient(clusterId, gridIndex) = D1 + D2 +
+		// D3;
+		//
+		//			return;
+		//		}
 
-		// We need the fission rate now
-		double fissionRate = data.fissionRate() * 1.0e27; // #/m3/s
-
-		// Athermal diffusion
-		double D1 = (8e-40 * fissionRate) * 1.0e18; // nm2/s
-
-		// Radiation-enhanced diffusion
-		kernel = -1.2 / (kBoltzmann * data.temperature(gridIndex));
-		double D2 =
-			(5.6e-25 * sqrt(fissionRate) * exp(kernel)) * 1.0e18; // nm2/s
-
-		data.diffusionCoefficient(clusterId, gridIndex) = D1 + D2 + D3;
+		data.diffusionCoefficient(clusterId, gridIndex) =
+			data.diffusionFactor(clusterId) *
+			exp(-data.migrationEnergy(clusterId) /
+				(kBoltzmann * data.temperature(gridIndex)));
 
 		return;
 	}
 
+	// If the diffusivity is given
 	data.diffusionCoefficient(clusterId, gridIndex) =
 		data.diffusionFactor(clusterId);
 }

@@ -9,7 +9,7 @@
 #include <xolotl/core/flux/A800H5MeVFluxHandler.h>
 #include <xolotl/core/flux/A800H9MeVFluxHandler.h>
 #include <xolotl/core/flux/A800HNeutronFluxHandler.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
@@ -30,7 +30,7 @@ BOOST_AUTO_TEST_SUITE(A800HFluxHandlerTester_testSuite)
 BOOST_AUTO_TEST_CASE(check800H5MeV)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -79,7 +79,8 @@ BOOST_AUTO_TEST_CASE(check800H5MeV)
 	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations
-	testFlux->computeIncidentFlux(currTime, updatedConcOffset, 1, surfacePos);
+	testFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+			updatedConcOffset, 1, surfacePos);
 
 	// Check the value at some grid points
 	auto newConcentration =
@@ -98,7 +99,8 @@ BOOST_AUTO_TEST_CASE(check800H5MeV)
 	updatedConcOffset = subview(conc, 4, Kokkos::ALL);
 
 	// Update the concentrations
-	testFlux->computeIncidentFlux(currTime, updatedConcOffset, 4, surfacePos);
+	testFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+			updatedConcOffset, 4, surfacePos);
 
 	// Check the value at some grid points
 	deep_copy(newConcentration, updatedConcOffset);
@@ -119,7 +121,7 @@ BOOST_AUTO_TEST_CASE(check800H5MeV)
 BOOST_AUTO_TEST_CASE(check800H9MeV)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -167,7 +169,8 @@ BOOST_AUTO_TEST_CASE(check800H9MeV)
 	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations
-	testFlux->computeIncidentFlux(currTime, updatedConcOffset, 1, surfacePos);
+	testFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+			updatedConcOffset, 1, surfacePos);
 
 	// Check the value at some grid points
 	auto newConcentration =
@@ -186,7 +189,8 @@ BOOST_AUTO_TEST_CASE(check800H9MeV)
 	updatedConcOffset = subview(conc, 4, Kokkos::ALL);
 
 	// Update the concentrations
-	testFlux->computeIncidentFlux(currTime, updatedConcOffset, 4, surfacePos);
+	testFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+			updatedConcOffset, 4, surfacePos);
 
 	// Check the value at some grid points
 	deep_copy(newConcentration, updatedConcOffset);
@@ -207,7 +211,7 @@ BOOST_AUTO_TEST_CASE(check800H9MeV)
 BOOST_AUTO_TEST_CASE(check800HNeutron)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -255,7 +259,8 @@ BOOST_AUTO_TEST_CASE(check800HNeutron)
 	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations
-	testFlux->computeIncidentFlux(currTime, updatedConcOffset, 1, surfacePos);
+	testFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+			updatedConcOffset, 1, surfacePos);
 
 	// Check the value at some grid points
 	auto newConcentration =
@@ -274,7 +279,8 @@ BOOST_AUTO_TEST_CASE(check800HNeutron)
 	updatedConcOffset = subview(conc, 4, Kokkos::ALL);
 
 	// Update the concentrations
-	testFlux->computeIncidentFlux(currTime, updatedConcOffset, 4, surfacePos);
+	testFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+			updatedConcOffset, 4, surfacePos);
 
 	// Check the value at some grid points
 	deep_copy(newConcentration, updatedConcOffset);

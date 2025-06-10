@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/AlloyTraits.h>
+#include <xolotl/core/network/ConstantReaction.h>
 #include <xolotl/core/network/SinkReaction.h>
 #include <xolotl/core/network/TransformReaction.h>
 
@@ -241,6 +242,16 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getBarrier();
+};
+
+class AlloyConstantReaction :
+	public ConstantReaction<AlloyReactionNetwork, AlloyConstantReaction>
+{
+public:
+	using Superclass =
+		ConstantReaction<AlloyReactionNetwork, AlloyConstantReaction>;
+
+	using Superclass::Superclass;
 };
 } // namespace network
 } // namespace core

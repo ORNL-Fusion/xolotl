@@ -19,6 +19,8 @@ namespace core
 {
 namespace network
 {
+template <typename TImpl>
+class ReactionNetwork;
 /**
  * @brief General reaction class where
  * reactants become products with a given rate
@@ -29,6 +31,7 @@ namespace network
 template <typename TNetwork, typename TDerived>
 class Reaction
 {
+	friend class ReactionNetwork<TNetwork>;
 	using Types = detail::ReactionNetworkTypes<TNetwork>;
 	using Props = detail::ReactionNetworkProperties<TNetwork>;
 
@@ -48,6 +51,7 @@ public:
 	using FluxesView = IReactionNetwork::FluxesView;
 	using RatesView = IReactionNetwork::RatesView;
 	using ConnectivitiesView = IReactionNetwork::ConnectivitiesView;
+	using ConnectivitiesPairView = IReactionNetwork::ConnectivitiesPairView;
 	using BelongingView = IReactionNetwork::BelongingView;
 	using OwnedSubMapView = IReactionNetwork::OwnedSubMapView;
 	using Connectivity = typename IReactionNetwork::Connectivity;
@@ -59,13 +63,17 @@ public:
 
 	Reaction() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	Reaction(ReactionDataRef reactionData, const ClusterData& clusterData,
 		IndexType reactionId);
 
 	KOKKOS_INLINE_FUNCTION
 	void
 	updateData(ReactionDataRef reactionData, const ClusterData& clusterData);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	getRateEntries(ReactionDataRef reactionData);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -136,10 +144,10 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void
 	contributeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex)
+		BelongingView isInSub, IndexType subId, IndexType gridIndex)
 	{
 		asDerived()->computeConstantRates(
-			concentrations, rates, isInSub, backMap, gridIndex);
+			concentrations, rates, isInSub, subId, gridIndex);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -167,6 +175,17 @@ public:
 	defineJacobianEntries(Connectivity connectivity)
 	{
 		asDerived()->mapJacobianEntries(connectivity);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	defineRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries,
+		BelongingView isInSub = BelongingView(),
+		OwnedSubMapView backMap = OwnedSubMapView(), IndexType subId = 0)
+	{
+		asDerived()->mapRateEntries(
+			connectivityRow, connectivityEntries, isInSub, backMap, subId);
 	}
 
 protected:
@@ -220,10 +239,26 @@ protected:
 		connectivity.add(rowId, columnId);
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	getPosition(IndexType rowId, IndexType columnId,
+		const ConnectivitiesPairView connectivityRow,
+		const ConnectivitiesPairView connectivityEntries) const
+	{
+		for (auto pos = connectivityRow(rowId);
+			pos < connectivityRow(rowId + 1); ++pos) {
+			if (connectivityEntries(pos) == columnId) {
+				return pos;
+			}
+		}
+		return invalidIndex;
+	}
+
 protected:
 	const ClusterData* _clusterData;
 
 	IndexType _reactionId{invalidIndex};
+	double _deltaG0;
 
 	//! Reaction rate (k)
 	using RateSubView = decltype(std::declval<ReactionDataRef>().getRates(0));
@@ -237,6 +272,15 @@ protected:
 	using CoefsSubView =
 		decltype(std::declval<ReactionDataRef>().getCoefficients(0));
 	CoefsSubView _coefs;
+
+	//! Constant Rates (only actually used for constant reactions
+	using ConstantRateSubView =
+		decltype(std::declval<ReactionDataRef>().getConstantRates(0));
+	ConstantRateSubView _constantRates;
+
+	using RateEntriesSubView =
+		decltype(std::declval<ReactionDataRef>().getRateEntries(0));
+	RateEntriesSubView _rateEntries;
 };
 
 /**
@@ -260,6 +304,7 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
 	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using ConnectivitiesPairView = typename Superclass::ConnectivitiesPairView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using Composition = typename Superclass::Composition;
@@ -271,13 +316,13 @@ public:
 
 	ProductionReaction() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	ProductionReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		IndexType cluster0, IndexType cluster1,
 		IndexType cluster2 = invalidIndex, IndexType cluster3 = invalidIndex);
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	ProductionReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		const detail::ClusterSet& clusterSet);
@@ -288,6 +333,12 @@ public:
 		return detail::CoefficientsView("Production Coefficients", size,
 			Superclass::coeffsSingleExtent, Superclass::coeffsSingleExtent, 4,
 			Superclass::coeffsSingleExtent);
+	}
+
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
 	}
 
 private:
@@ -311,7 +362,7 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
+		BelongingView isInSub, IndexType subId, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -326,6 +377,12 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	mapJacobianEntries(Connectivity connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
+		OwnedSubMapView backMap, IndexType subId);
 
 protected:
 	KOKKOS_INLINE_FUNCTION
@@ -378,6 +435,7 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
 	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using ConnectivitiesPairView = typename Superclass::ConnectivitiesPairView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using AmountType = typename Superclass::AmountType;
@@ -387,12 +445,12 @@ public:
 
 	DissociationReaction() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	DissociationReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		IndexType cluster0, IndexType cluster1, IndexType cluster2);
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	DissociationReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
 		const detail::ClusterSet& clusterSet);
@@ -403,6 +461,12 @@ public:
 		return detail::CoefficientsView("Dissociation Coefficients", size,
 			Superclass::coeffsSingleExtent, 1, 3,
 			Superclass::coeffsSingleExtent);
+	}
+
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
 	}
 
 private:
@@ -440,7 +504,7 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
+		BelongingView isInSub, IndexType subId, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -455,6 +519,12 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	mapJacobianEntries(Connectivity connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
+		OwnedSubMapView backMap, IndexType subId);
 
 protected:
 	IndexType _reactant;

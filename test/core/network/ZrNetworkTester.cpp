@@ -4,6 +4,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/network/ZrReactionNetwork.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
 
@@ -23,7 +24,7 @@ BOOST_AUTO_TEST_SUITE(ZrNetwork_testSuite)
 BOOST_AUTO_TEST_CASE(fullyRefined)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1386,7 +1387,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 BOOST_AUTO_TEST_CASE(grouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -4030,6 +4031,50 @@ BOOST_AUTO_TEST_CASE(grouped)
 	BOOST_REQUIRE_EQUAL(hi[Spec::Basal], 60);
 	momId = cluster.getMomentIds();
 	BOOST_REQUIRE_EQUAL(momId.extent(0), 1);
+}
+
+BOOST_AUTO_TEST_CASE(traits)
+{
+	using NetworkType = ZrReactionNetwork;
+	using Spec = NetworkType::Species;
+
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 3);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 3);
+	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
+	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 2);
+
+	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Basal), "Basal");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
+
+	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::Basal), "Basal");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
+
+	// parseSpeciesId / getSpeciesLabel / getSpeciesName
+	auto network = NetworkType();
+	auto sid = network.parseSpeciesId("V");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
+	sid = network.parseSpeciesId("Basal");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::Basal);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "Basal");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Basal");
+	sid = network.parseSpeciesId("I");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
+
+	// Define the sequence
+	using GroupingRange = SpeciesForGrouping<Spec, 3>;
+
+	// It should always return 0 because they are all orthogonal
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::Basal), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 0);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -13,7 +13,8 @@
 #define DEVICE_FUNCTION
 #endif
 
-#include <xolotl/core/network/detail/TupleUtility.h>
+#include <xolotl/config.h>
+#include <xolotl/util/TupleUtils.h>
 
 namespace xolotl
 {
