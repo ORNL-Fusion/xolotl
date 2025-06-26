@@ -419,130 +419,130 @@ public:
 	int
 	voidId() const
 	{
-		return _floatVals[VOID_ID];
+		return _intVals[VOID_ID];
 	}
 
 	void
 	setVoidId(int val)
 	{
-		setVal(_floatVals, VOID_ID, val);
+		setVal(_intVals, VOID_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	int
 	perfVId() const
 	{
-		return _floatVals[PERFV_ID];
+		return _intVals[PERFV_ID];
 	}
 
 	void
 	setPerfVId(int val)
 	{
-		setVal(_floatVals, PERFV_ID, val);
+		setVal(_intVals, PERFV_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	int
 	faulVId() const
 	{
-		return _floatVals[FAULV_ID];
+		return _intVals[FAULV_ID];
 	}
 
 	void
 	setFaulVId(int val)
 	{
-		setVal(_floatVals, FAULV_ID, val);
+		setVal(_intVals, FAULV_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	int
 	perfIId() const
 	{
-		return _floatVals[PERFI_ID];
+		return _intVals[PERFI_ID];
 	}
 
 	void
 	setPerfIId(int val)
 	{
-		setVal(_floatVals, PERFI_ID, val);
+		setVal(_intVals, PERFI_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	int
 	faulIId() const
 	{
-		return _floatVals[FAULI_ID];
+		return _intVals[FAULI_ID];
 	}
 
 	void
 	setFaulIId(int val)
 	{
-		setVal(_floatVals, FAULI_ID, val);
+		setVal(_intVals, FAULI_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	int
 	voidAvId() const
 	{
-		return _floatVals[AV_VOID_ID];
+		return _intVals[AV_VOID_ID];
 	}
 
 	void
 	setVoidAvId(int val)
 	{
-		setVal(_floatVals, AV_VOID_ID, val);
+		setVal(_intVals, AV_VOID_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	int
 	perfVAvId() const
 	{
-		return _floatVals[AV_PERFV_ID];
+		return _intVals[AV_PERFV_ID];
 	}
 
 	void
 	setPerfVAvId(int val)
 	{
-		setVal(_floatVals, AV_PERFV_ID, val);
+		setVal(_intVals, AV_PERFV_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	int
 	faulVAvId() const
 	{
-		return _floatVals[AV_FAULV_ID];
+		return _intVals[AV_FAULV_ID];
 	}
 
 	void
 	setFaulVAvId(int val)
 	{
-		setVal(_floatVals, AV_FAULV_ID, val);
+		setVal(_intVals, AV_FAULV_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	int
 	perfIAvId() const
 	{
-		return _floatVals[AV_PERFI_ID];
+		return _intVals[AV_PERFI_ID];
 	}
 
 	void
 	setPerfIAvId(int val)
 	{
-		setVal(_floatVals, AV_PERFI_ID, val);
+		setVal(_intVals, AV_PERFI_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
 	int
 	faulIAvId() const
 	{
-		return _floatVals[AV_FAULI_ID];
+		return _intVals[AV_FAULI_ID];
 	}
 
 	void
 	setFaulIAvId(int val)
 	{
-		setVal(_floatVals, AV_FAULI_ID, val);
+		setVal(_intVals, AV_FAULI_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

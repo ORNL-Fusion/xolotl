@@ -456,6 +456,7 @@ Options::setProcesses(const std::string& processList)
 	processMap["sink"] = false;
 	processMap["soret"] = false;
 	processMap["constant"] = false;
+	processMap["largeBubble"] = false;
 	processMap["noSolve"] = false;
 
 	// Break the argument into tokens.

@@ -70,8 +70,9 @@ AlloyReactionNetwork::checkLargestClusterId()
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
 			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
-			auto size = hi[Species::PerfectV] + hi[Species::FaultedI] +
-				hi[Species::FaultedV] + hi[Species::PerfectI];
+			auto size = hi[Species::V] + hi[Species::PerfectV] +
+				hi[Species::FaultedI] + hi[Species::FaultedV] +
+				hi[Species::PerfectI];
 			if (size > update.val) {
 				update.val = size;
 				update.loc = i;
@@ -239,6 +240,25 @@ AlloyReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 		totalVals[(4 * id()) + 2] += totals[2] * fac;
 		totalVals[(4 * id()) + 3] += totals[3] * 2.0 * fac;
 	}
+	if (this->_enableLargeBubble) {
+		// Get the single size data
+		auto voidId = this->_clusterData.h_view().voidId();
+		auto vConc = conc(voidId);
+		auto avComp = conc(voidId + 1) / vConc;
+		if (vConc == 0.0)
+			avComp = 0.0;
+
+		// Add the single size data for voids
+		auto avRadius = util::max(0.0,
+			computeBubbleRadius(
+				avComp, this->_clusterData.h_view().latticeParameter()));
+		totalVals[0] += vConc * fac;
+		totalVals[1] += vConc * avRadius * 2.0 * fac;
+		if (avComp > minSizes[0]) {
+			totalVals[2] += vConc * fac;
+			totalVals[3] += vConc * avRadius * 2.0 * fac;
+		}
+	}
 }
 
 void
@@ -259,9 +279,13 @@ AlloyReactionNetwork::writeMonitorDataLine(
 			if (globalData[id(0)] > 1.0e-16) {
 				globalData[id(1)] /= globalData[id(0)];
 			}
+			else
+				globalData[id(1)] = 0.0;
 			if (globalData[id(2)] > 1.0e-16) {
 				globalData[id(3)] /= globalData[id(2)];
 			}
+			else
+				globalData[id(3)] = 0.0;
 		}
 
 		// Set the output precision
@@ -274,13 +298,13 @@ AlloyReactionNetwork::writeMonitorDataLine(
 		outputFile << std::setprecision(outputPrecision);
 
 		// Output the data
+		outputFile << std::endl;
 		outputFile << time << " ";
 		for (auto i = 0; i < numSpecies; ++i) {
 			auto id = [i](std::size_t n) { return 4 * i + n; };
 			outputFile << globalData[id(0)] << " " << globalData[id(1)] << " "
 					   << globalData[id(2)] << " " << globalData[id(3)] << " ";
 		}
-		outputFile << std::endl;
 
 		// Close the output file
 		outputFile.close();

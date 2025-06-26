@@ -67,29 +67,28 @@ public:
 					this->_reactants[i], this->_reactantMomentIds[i]);
 			}
 			else {
-				auto shift = this->_reactants[i] - numClusters;
-				std::cout << shift << std::endl;
+				auto shift = (this->_reactants[i] - numClusters) / 2;
 				switch (shift) {
 				// Void
 				case 0:
 					this->_reactantMomentIds[i][0] =
-						this->_clusterData->voidId();
+						this->_clusterData->voidAvId();
 				// Perfect V
 				case 1:
 					this->_reactantMomentIds[i][0] =
-						this->_clusterData->perfVId();
+						this->_clusterData->perfVAvId();
 				// Faulted V
 				case 2:
 					this->_reactantMomentIds[i][0] =
-						this->_clusterData->faulVId();
+						this->_clusterData->faulVAvId();
 				// Perfect I
 				case 3:
 					this->_reactantMomentIds[i][0] =
-						this->_clusterData->perfIId();
+						this->_clusterData->perfIAvId();
 				// Faulted I
 				case 4:
 					this->_reactantMomentIds[i][0] =
-						this->_clusterData->faulIId();
+						this->_clusterData->faulIAvId();
 				}
 			}
 			if (this->_products[i] < numClusters) {
@@ -104,29 +103,28 @@ public:
 					}
 				}
 				else {
-					auto shift = this->_products[i] - numClusters;
-					std::cout << shift << std::endl;
+					auto shift = (this->_products[i] - numClusters) / 2;
 					switch (shift) {
 					// Void
 					case 0:
 						this->_productMomentIds[i][0] =
-							this->_clusterData->voidId();
+							this->_clusterData->voidAvId();
 					// Perfect V
 					case 1:
 						this->_productMomentIds[i][0] =
-							this->_clusterData->perfVId();
+							this->_clusterData->perfVAvId();
 					// Faulted V
 					case 2:
 						this->_productMomentIds[i][0] =
-							this->_clusterData->faulVId();
+							this->_clusterData->faulVAvId();
 					// Perfect I
 					case 3:
 						this->_productMomentIds[i][0] =
-							this->_clusterData->perfIId();
+							this->_clusterData->perfIAvId();
 					// Faulted I
 					case 4:
 						this->_productMomentIds[i][0] =
-							this->_clusterData->faulIId();
+							this->_clusterData->faulIAvId();
 					}
 				}
 			}

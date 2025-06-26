@@ -259,6 +259,7 @@ AlloyClusterGenerator::getDiffusionFactor(
 		constexpr double phononFrequency = 9.6e12;
 		constexpr double jumpsPerPhonon = 1.0;
 		constexpr double prefactorExponent = -1.0;
+
 		return phononFrequency * jumpsPerPhonon * jumpDistance * jumpDistance *
 			pow((double)comp[Species::V], prefactorExponent) / (6.0);
 	}
@@ -267,6 +268,7 @@ AlloyClusterGenerator::getDiffusionFactor(
 		constexpr double phononFrequency = 9.6e12;
 		constexpr double jumpsPerPhonon = 1.0;
 		constexpr double prefactorExponent = -1.0;
+
 		return phononFrequency * jumpsPerPhonon * jumpDistance * jumpDistance *
 			pow((double)comp[Species::I], prefactorExponent) / (6.0);
 	}

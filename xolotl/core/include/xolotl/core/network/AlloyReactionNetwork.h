@@ -34,6 +34,12 @@ public:
 	IndexType
 	checkLargestClusterId();
 
+	IndexType
+	getLargestClusterId()
+	{
+		return largestClusterId;
+	}
+
 	void
 	setConstantRates(RatesView rates, IndexType gridIndex) override;
 
@@ -68,13 +74,11 @@ public:
 	double
 	computeBubbleRadius(double vAmount, double latticeParameter)
 	{
-		// TODO: update formula
-		double aCube = latticeParameter * latticeParameter * latticeParameter;
+		// Voids
+		const double prefactor =
+			0.25 * latticeParameter * latticeParameter / ::xolotl::core::pi;
 
-		return (sqrt(3.0) / 4.0) * latticeParameter +
-			pow((3.0 * aCube * vAmount) / (8.0 * ::xolotl::core::pi),
-				(1.0 / 3.0)) -
-			pow((3.0 * aCube) / (8.0 * ::xolotl::core::pi), (1.0 / 3.0));
+		return cbrt(0.75 * prefactor * latticeParameter * vAmount);
 	}
 
 	std::string
@@ -93,6 +97,9 @@ public:
 	void
 	writeMonitorDataLine(
 		const std::vector<double>& localData, double time) override;
+
+public:
+	IndexType largestClusterId;
 
 private:
 	double
@@ -140,6 +147,12 @@ public:
 
 	using Superclass::Superclass;
 
+	AlloyReactionGenerator(const AlloyReactionNetwork& network) :
+		Superclass(network),
+		largestClusterId(network.largestClusterId)
+	{
+	}
+
 	template <typename TTag>
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -163,6 +176,8 @@ public:
 private:
 	ReactionCollection<Network>
 	getReactionCollection() const;
+
+	IndexType largestClusterId;
 };
 } // namespace detail
 } // namespace network

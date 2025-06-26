@@ -222,8 +222,8 @@ PetscMonitor0D::setup(int loop)
 		direction[0] = 0;
 		terminate[0] = PETSC_FALSE;
 		// Set the TSEvent
-		PetscCallVoid(TSSetEventHandler(_ts, 1, direction, terminate,
-			monitor::eventFunction, monitor::postEventFunction, this));
+		//		PetscCallVoid(TSSetEventHandler(_ts, 1, direction, terminate,
+		//			monitor::eventFunction, monitor::postEventFunction, this));
 	}
 	// Set the monitor to output data for AlphaZr
 	if (flagZr) {

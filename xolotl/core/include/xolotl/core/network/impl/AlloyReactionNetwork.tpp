@@ -21,6 +21,8 @@ AlloyReactionNetwork::initializeExtraDOFs(const options::IOptions& options)
 	if (not map["largeBubble"])
 		return;
 
+	largestClusterId = checkLargestClusterId();
+
 	this->_clusterData.h_view().setVoidId(this->_numDOFs);
 	this->_clusterData.h_view().setVoidAvId(this->_numDOFs + 1);
 	this->_clusterData.h_view().setPerfVId(this->_numDOFs + 2);
@@ -204,6 +206,10 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
 		return;
 	}
+
+	// Large bubble reactions
+	if (this->_clusterData.enableLargeBubble())
+		addSingleSizeReactions(i, j, tag);
 
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
@@ -715,6 +721,72 @@ AlloyReactionGenerator::addTransforms(IndexType i, IndexType j, TTag tag) const
 
 		// Add it
 		this->addTransformReaction(tag, {faulted, perfect});
+	}
+}
+
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+AlloyReactionGenerator::addSingleSizeReactions(
+	IndexType i, IndexType j, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	auto voidId = this->_clusterData.voidId();
+
+	if (i == j) {
+		const auto& clReg = this->getCluster(i).getRegion();
+		Composition lo = clReg.getOrigin();
+
+		// Check reaction with largest bubble
+		if (not clReg.isSimplex())
+			return;
+
+		// V case
+		if (lo.isOnAxis(Species::V)) {
+			// V_k + B -> B
+			this->addProductionReaction(tag, {i, voidId, voidId});
+		}
+		// I case
+		else if (lo.isOnAxis(Species::I)) {
+			// I_k + B -> B
+			this->addProductionReaction(tag, {i, voidId, voidId});
+		}
+	}
+
+	// Get the composition of each cluster
+	const auto& cl1Reg = this->getCluster(i).getRegion();
+	const auto& cl2Reg = this->getCluster(j).getRegion();
+	Composition lo1 = cl1Reg.getOrigin();
+	Composition hi1 = cl1Reg.getUpperLimitPoint();
+	Composition lo2 = cl2Reg.getOrigin();
+	Composition hi2 = cl2Reg.getUpperLimitPoint();
+
+	// Find the edge of the phase space
+	const auto& largestReg = this->getCluster(largestClusterId).getRegion();
+	Composition hiLargest = largestReg.getUpperLimitPoint();
+	auto largestSize = hiLargest[Species::V] + hiLargest[Species::PerfectV] +
+		hiLargest[Species::FaultedV] + hiLargest[Species::PerfectI] +
+		hiLargest[Species::FaultedI] - 5; // Don't know which one was saved
+
+	// V_a + V_b -> V
+	if (hi1[Species::V] + hi2[Species::V] - 2 > largestSize) {
+		this->addProductionReaction(tag, {i, j, voidId});
+	}
+
+	// I_a + V -> V_b
+	if ((lo1.isOnAxis(Species::I) and lo2.isOnAxis(Species::V)) or
+		(lo1.isOnAxis(Species::V) and lo2.isOnAxis(Species::I))) {
+		// It should be around the largest size value
+		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
+				hi2[Species::I] - 4 >
+			largestSize) {
+			// Need to know which one is I
+			auto iId = lo1[Species::I] > 0 ? i : j;
+			auto vId = lo1[Species::I] > 0 ? j : i;
+			//			this->addProductionReaction(tag, {iId, voidId, vId});
+		}
 	}
 }
 

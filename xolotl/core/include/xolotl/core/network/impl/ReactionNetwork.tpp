@@ -124,6 +124,8 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 
 	readReactions(opts.getTempParam(), opts.getReactionFilePath());
 
+	asDerived()->initializeExtraDOFs(opts);
+
 	// Skip the reactions for now if using constant reactions
 	if (map["constant"])
 		return;
