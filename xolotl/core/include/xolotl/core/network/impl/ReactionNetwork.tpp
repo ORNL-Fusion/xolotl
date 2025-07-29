@@ -20,8 +20,8 @@ template <typename T>
 DualViewWrapper<T>::DualViewWrapper(const std::string& label) :
 	_dualView(Kokkos::ViewAllocateWithoutInitializing(label)),
 	_hasInstance(true),
-	d_view(_dualView.d_view),
-	h_view(_dualView.h_view)
+	d_view(_dualView.view_device()),
+	h_view(_dualView.view_host())
 {
 	new (&h_view()) T();
 }
@@ -1253,7 +1253,6 @@ ReactionNetwork<TImpl>::getTotalsVec(ConcentrationsView concentrations,
 		throw TotalQuantityError(
 			"getTotalsVec: Currently supports only up to 6; given size = " +
 			std::to_string(quantities.size()));
-		break;
 	}
 }
 
