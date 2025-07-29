@@ -4,6 +4,7 @@
 #include <xolotl/core/network/AlloyReaction.h>
 #include <xolotl/core/network/AlloyTraits.h>
 #include <xolotl/core/network/ReactionNetwork.h>
+#include <xolotl/util/MathUtils.h>
 
 namespace xolotl
 {
@@ -72,13 +73,38 @@ public:
 		double spacing);
 
 	double
-	computeBubbleRadius(double vAmount, double latticeParameter)
+	computeBubbleRadius(
+		double amount, double latticeParameter, IndexType typeSwitch = 0)
 	{
-		// Voids
+		// Find the edge of the phase space
+		const auto& largestReg = this->getCluster(largestClusterId).getRegion();
+		Composition hiLargest = largestReg.getUpperLimitPoint();
+		double largestSize = hiLargest[Species::V] +
+			hiLargest[Species::PerfectV] + hiLargest[Species::FaultedV] +
+			hiLargest[Species::PerfectI] + hiLargest[Species::FaultedI] -
+			5; // Don't know which one was saved
+
+		// Get the minimum amount for a valid value
+		amount = util::max(amount, largestSize);
+
+		// Prefactor
 		const double prefactor =
 			0.25 * latticeParameter * latticeParameter / ::xolotl::core::pi;
 
-		return cbrt(0.75 * prefactor * latticeParameter * vAmount);
+		// Compute the radius
+		switch (typeSwitch) {
+		// Void
+		case 0:
+			return cbrt(0.75 * prefactor * latticeParameter * amount);
+		// Perfect V
+		case 1:
+			return sqrt((amount * prefactor) / ::xolotl::core::perfectBurgers);
+		// Faulted V
+		case 2:
+			return sqrt((amount * prefactor) / ::xolotl::core::faultedBurgers);
+		}
+
+		return 0.0;
 	}
 
 	std::string

@@ -47,7 +47,7 @@ public:
 	Factory(const Factory&) = delete;
 
 	static TFactory&
-	get(const UserInitializer& callback = []() { });
+	get(const UserInitializer& callback = []() {});
 
 	std::shared_ptr<THandlerBase>
 	generate(const std::string& name, const options::IOptions& options);

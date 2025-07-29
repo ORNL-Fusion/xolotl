@@ -72,7 +72,7 @@ struct ClusterDataExtra
 	}
 
 	void
-	setGridSize(IndexType numClusters, IndexType gridSize) { };
+	setGridSize(IndexType numClusters, IndexType gridSize) {};
 };
 
 /**
@@ -152,6 +152,7 @@ private:
 		AV_FAULV_RAD,
 		AV_PERFI_RAD,
 		AV_FAULI_RAD,
+		AV_FAULV,
 		I_FORMATION,
 		XE_FORMATION,
 		V_FORMATION,
@@ -361,6 +362,19 @@ public:
 	setFaulVAvRad(double val)
 	{
 		setVal(_floatVals, AV_FAULV_RAD, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	faulVAv() const
+	{
+		return _floatVals[AV_FAULV];
+	}
+
+	void
+	setFaulVAv(double val)
+	{
+		setVal(_floatVals, AV_FAULV, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

@@ -12,8 +12,9 @@ template <typename TBase>
 TransformReactionGenerator<TBase>::TransformReactionGenerator(
 	const NetworkType& network) :
 	Superclass(network),
-	_clusterTransformReactionCounts(
-		"Transform Reaction Counts", Superclass::getNumberOfClusters())
+	_clusterTransformReactionCounts("Transform Reaction Counts",
+		Superclass::getNumberOfClusters() + 10) // For SSBM
+// TODO: find a way to make the +10 above cleaner
 {
 }
 
@@ -67,7 +68,7 @@ TransformReactionGenerator<TBase>::addTransformReaction(
 	for (; !Kokkos::atomic_compare_exchange_strong(
 			 &_transformCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
-		++id) { }
+		 ++id) { }
 	_transformCrsClusterSets(id) = clusterSet;
 }
 } // namespace detail

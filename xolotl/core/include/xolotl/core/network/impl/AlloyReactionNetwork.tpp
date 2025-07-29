@@ -62,27 +62,33 @@ AlloyReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
 			case 0:
 				this->_clusterData.h_view().setVoidAvRad(util::max(0.0,
 					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+						avComp, clusterDataMirror.latticeParameter(), i)));
+				break;
 			// Perfect V
 			case 1:
 				this->_clusterData.h_view().setPerfVAvRad(util::max(0.0,
 					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+						avComp, clusterDataMirror.latticeParameter(), i)));
+				break;
 			// Faulted V
 			case 2:
 				this->_clusterData.h_view().setFaulVAvRad(util::max(0.0,
 					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+						avComp, clusterDataMirror.latticeParameter(), i)));
+				this->_clusterData.h_view().setFaulVAv(avComp);
+				break;
 			// Perfect I
 			case 3:
 				this->_clusterData.h_view().setPerfIAvRad(util::max(0.0,
 					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+						avComp, clusterDataMirror.latticeParameter(), i)));
+				break;
 			// Faulted I
 			case 4:
 				this->_clusterData.h_view().setFaulIAvRad(util::max(0.0,
 					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+						avComp, clusterDataMirror.latticeParameter(), i)));
+				break;
 			}
 		}
 	}
@@ -115,27 +121,33 @@ AlloyReactionNetwork::computePartialsPreProcess(
 			case 0:
 				this->_clusterData.h_view().setVoidAvRad(util::max(0.0,
 					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+						avComp, clusterDataMirror.latticeParameter(), i)));
+				break;
 			// Perfect V
 			case 1:
 				this->_clusterData.h_view().setPerfVAvRad(util::max(0.0,
 					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+						avComp, clusterDataMirror.latticeParameter(), i)));
+				break;
 			// Faulted V
 			case 2:
 				this->_clusterData.h_view().setFaulVAvRad(util::max(0.0,
 					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+						avComp, clusterDataMirror.latticeParameter(), i)));
+				this->_clusterData.h_view().setFaulVAv(avComp);
+				break;
 			// Perfect I
 			case 3:
 				this->_clusterData.h_view().setPerfIAvRad(util::max(0.0,
 					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+						avComp, clusterDataMirror.latticeParameter(), i)));
+				break;
 			// Faulted I
 			case 4:
 				this->_clusterData.h_view().setFaulIAvRad(util::max(0.0,
 					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+						avComp, clusterDataMirror.latticeParameter(), i)));
+				break;
 			}
 		}
 	}
@@ -165,7 +177,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		if (this->_constantConnsRows.extent(0) > 0) {
 			// Look for the entry
 			for (auto k = this->_constantConnsRows(i);
-				k < this->_constantConnsRows(i + 1); k++) {
+				 k < this->_constantConnsRows(i + 1); k++) {
 				if (this->_constantConnsEntries(k) == this->_numDOFs) {
 					this->addConstantReaction(
 						tag, {i, Network::invalidIndex()});
@@ -179,7 +191,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if (this->_constantConnsRows.extent(0) > 0) {
 		// Look for the entry
 		for (auto k = this->_constantConnsRows(i);
-			k < this->_constantConnsRows(i + 1); k++) {
+			 k < this->_constantConnsRows(i + 1); k++) {
 			if (this->_constantConnsEntries(k) == j) {
 				this->addConstantReaction(tag, {i, j});
 				break;
@@ -190,7 +202,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		if (this->_constantConnsRows.extent(0) > 0) {
 			// Look for the entry
 			for (auto k = this->_constantConnsRows(j);
-				k < this->_constantConnsRows(j + 1); k++) {
+				 k < this->_constantConnsRows(j + 1); k++) {
 				if (this->_constantConnsEntries(k) == i) {
 					this->addConstantReaction(tag, {j, i});
 					break;
@@ -721,6 +733,14 @@ AlloyReactionGenerator::addTransforms(IndexType i, IndexType j, TTag tag) const
 
 		// Add it
 		this->addTransformReaction(tag, {faulted, perfect});
+
+		// Single size case
+		if (this->_clusterData.enableLargeBubble() and
+			fReg[Species::FaultedV] == vSize) {
+			auto perfVId = this->_clusterData.perfVId();
+			auto faulVId = this->_clusterData.faulVId();
+			this->addTransformReaction(tag, {faulVId, perfVId});
+		}
 	}
 }
 
@@ -734,6 +754,8 @@ AlloyReactionGenerator::addSingleSizeReactions(
 	using Composition = typename NetworkType::Composition;
 
 	auto voidId = this->_clusterData.voidId();
+	auto perfVId = this->_clusterData.perfVId();
+	auto faulVId = this->_clusterData.faulVId();
 
 	if (i == j) {
 		const auto& clReg = this->getCluster(i).getRegion();
@@ -747,11 +769,15 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		if (lo.isOnAxis(Species::V)) {
 			// V_k + B -> B
 			this->addProductionReaction(tag, {i, voidId, voidId});
+			this->addProductionReaction(tag, {i, perfVId, perfVId});
+			this->addProductionReaction(tag, {i, faulVId, faulVId});
 		}
 		// I case
 		else if (lo.isOnAxis(Species::I)) {
 			// I_k + B -> B
 			this->addProductionReaction(tag, {i, voidId, voidId});
+			this->addProductionReaction(tag, {i, perfVId, perfVId});
+			this->addProductionReaction(tag, {i, faulVId, faulVId});
 		}
 	}
 
@@ -775,19 +801,34 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		this->addProductionReaction(tag, {i, j, voidId});
 	}
 
-	// I_a + V -> V_b
-	if ((lo1.isOnAxis(Species::I) and lo2.isOnAxis(Species::V)) or
-		(lo1.isOnAxis(Species::V) and lo2.isOnAxis(Species::I))) {
-		// It should be around the largest size value
-		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
-				hi2[Species::I] - 4 >
-			largestSize) {
-			// Need to know which one is I
-			auto iId = lo1[Species::I] > 0 ? i : j;
-			auto vId = lo1[Species::I] > 0 ? j : i;
-			//			this->addProductionReaction(tag, {iId, voidId, vId});
-		}
+	// V_a + L^V_b -> L^V
+	if (hi1[Species::V] + hi2[Species::PerfectV] - 2 > largestSize) {
+		this->addProductionReaction(tag, {i, j, perfVId});
 	}
+	if (hi2[Species::V] + hi1[Species::PerfectV] - 2 > largestSize) {
+		this->addProductionReaction(tag, {j, i, perfVId});
+	}
+
+	if (hi1[Species::V] + hi2[Species::FaultedV] - 2 > largestSize) {
+		this->addProductionReaction(tag, {i, j, faulVId});
+	}
+	if (hi2[Species::V] + hi1[Species::FaultedV] - 2 > largestSize) {
+		this->addProductionReaction(tag, {j, i, faulVId});
+	}
+
+	// I_a + V -> V_b (skip for now)
+	//	if ((lo1.isOnAxis(Species::I) and lo2.isOnAxis(Species::V)) or
+	//		(lo1.isOnAxis(Species::V) and lo2.isOnAxis(Species::I))) {
+	//		// It should be around the largest size value
+	//		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
+	//				hi2[Species::I] - 4 >
+	//			largestSize) {
+	//			// Need to know which one is I
+	//			auto iId = lo1[Species::I] > 0 ? i : j;
+	//			auto vId = lo1[Species::I] > 0 ? j : i;
+	//			this->addProductionReaction(tag, {iId, voidId, vId});
+	//		}
+	//	}
 }
 
 inline ReactionCollection<AlloyReactionGenerator::Network>

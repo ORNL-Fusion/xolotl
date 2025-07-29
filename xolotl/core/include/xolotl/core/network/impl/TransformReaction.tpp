@@ -12,6 +12,28 @@ namespace core
 namespace network
 {
 template <typename TNetwork, typename TDerived>
+KOKKOS_FUNCTION
+TransformReaction<TNetwork, TDerived>::TransformReaction(
+	ReactionDataRef reactionData, const ClusterData& clusterData,
+	IndexType reactionId, IndexType cluster0, IndexType cluster1) :
+	Superclass(reactionData, clusterData, reactionId),
+	_reactant(cluster0),
+	_product(cluster1)
+{
+	this->initialize();
+}
+
+template <typename TNetwork, typename TDerived>
+KOKKOS_FUNCTION
+TransformReaction<TNetwork, TDerived>::TransformReaction(
+	ReactionDataRef reactionData, const ClusterData& clusterData,
+	IndexType reactionId, const detail::ClusterSet& clusterSet) :
+	TransformReaction(reactionData, clusterData, reactionId,
+		clusterSet.cluster0, clusterSet.cluster1)
+{
+}
+
+template <typename TNetwork, typename TDerived>
 KOKKOS_INLINE_FUNCTION
 double
 TransformReaction<TNetwork, TDerived>::computeRate(IndexType gridIndex, double)

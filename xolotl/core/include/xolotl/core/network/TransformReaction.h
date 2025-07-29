@@ -39,25 +39,15 @@ public:
 
 	TransformReaction() = default;
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	TransformReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
-		IndexType cluster0, IndexType cluster1) :
-		Superclass(reactionData, clusterData, reactionId),
-		_reactant(cluster0),
-		_product(cluster1)
-	{
-		this->initialize();
-	}
+		IndexType cluster0, IndexType cluster1);
 
-	KOKKOS_INLINE_FUNCTION
+	KOKKOS_FUNCTION
 	TransformReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
-		const detail::ClusterSet& clusterSet) :
-		TransformReaction(reactionData, clusterData, reactionId,
-			clusterSet.cluster0, clusterSet.cluster1)
-	{
-	}
+		const detail::ClusterSet& clusterSet);
 
 	static detail::CoefficientsView
 	allocateCoefficientsView(IndexType)
@@ -74,33 +64,6 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeRate(IndexType gridIndex, double time = 0.0);
-
-private:
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeCoefficients()
-	{
-		// No coefs
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeConnectivity(const Connectivity& connectivity)
-	{
-		// Everything connects with the reactant
-		this->addConnectivity(_reactant, _reactant, connectivity);
-		this->addConnectivity(_product, _reactant, connectivity);
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeReducedConnectivity(const Connectivity& connectivity)
-	{
-		// Everything connects with the reactant
-		this->addConnectivity(_reactant, _reactant, connectivity);
-		if (_product == _reactant)
-			this->addConnectivity(_product, _reactant, connectivity);
-	}
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -122,6 +85,33 @@ private:
 			&values(_connEntries[0][0][0][0]), this->_rate(gridIndex));
 		Kokkos::atomic_add(
 			&values(_connEntries[1][0][0][0]), this->_rate(gridIndex));
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConnectivity(const Connectivity& connectivity)
+	{
+		// Everything connects with the reactant
+		this->addConnectivity(_reactant, _reactant, connectivity);
+		this->addConnectivity(_product, _reactant, connectivity);
+	}
+
+protected:
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeCoefficients()
+	{
+		// No coefs
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeReducedConnectivity(const Connectivity& connectivity)
+	{
+		// Everything connects with the reactant
+		this->addConnectivity(_reactant, _reactant, connectivity);
+		if (_product == _reactant)
+			this->addConnectivity(_product, _reactant, connectivity);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -190,7 +180,7 @@ protected:
 	IndexType _product;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
 
-	util::Array<IndexType, 2, 1, 1, 1> _connEntries;
+	util::Array<IndexType, 2, 2, 1, 1> _connEntries;
 };
 } // namespace network
 } // namespace core

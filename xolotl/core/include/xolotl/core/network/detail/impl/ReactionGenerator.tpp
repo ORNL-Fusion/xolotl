@@ -132,7 +132,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::addProductionReaction(
 	auto id = _prodCrsRowMap(clusterSet.cluster0);
 	for (; !util::atomicCompareExchangeStrong(&_prodCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
-		++id) { }
+		 ++id) { }
 	_prodCrsClusterSets(id) = clusterSet;
 }
 
@@ -160,7 +160,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::addDissociationReaction(
 	auto id = _dissCrsRowMap(clusterSet.cluster1);
 	for (; !util::atomicCompareExchangeStrong(&_dissCrsClusterSets(id).cluster1,
 			 NetworkType::invalidIndex(), clusterSet.cluster1);
-		++id) { }
+		 ++id) { }
 	_dissCrsClusterSets(id) = clusterSet;
 }
 
@@ -220,7 +220,7 @@ ReactionGeneratorBase<TNetwork, TDerived>::generateConnectivity(
 			auto id = tmpConn.row_map(i);
 			for (; !util::atomicCompareExchangeStrong(
 					 &tmpConn.entries(id), NetworkType::invalidIndex(), i);
-				++id) {
+				 ++id) {
 				if (tmpConn.entries(id) == i) {
 					break;
 				}

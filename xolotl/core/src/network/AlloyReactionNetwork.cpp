@@ -239,24 +239,48 @@ AlloyReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 		totalVals[(4 * id()) + 1] += totals[1] * 2.0 * fac;
 		totalVals[(4 * id()) + 2] += totals[2] * fac;
 		totalVals[(4 * id()) + 3] += totals[3] * 2.0 * fac;
-	}
-	if (this->_enableLargeBubble) {
-		// Get the single size data
-		auto voidId = this->_clusterData.h_view().voidId();
-		auto vConc = conc(voidId);
-		auto avComp = conc(voidId + 1) / vConc;
-		if (vConc == 0.0)
-			avComp = 0.0;
 
-		// Add the single size data for voids
-		auto avRadius = util::max(0.0,
-			computeBubbleRadius(
-				avComp, this->_clusterData.h_view().latticeParameter()));
-		totalVals[0] += vConc * fac;
-		totalVals[1] += vConc * avRadius * 2.0 * fac;
-		if (avComp > minSizes[0]) {
-			totalVals[2] += vConc * fac;
-			totalVals[3] += vConc * avRadius * 2.0 * fac;
+		// SSBM case
+		if (this->_enableLargeBubble) {
+			IndexType ssbmId = 0;
+			switch (id()) {
+			// Void
+			case 0:
+				ssbmId = this->_clusterData.h_view().voidId();
+				break;
+			// Perfect V
+			case 1:
+				ssbmId = this->_clusterData.h_view().perfVId();
+				break;
+			// Faulted V
+			case 2:
+				ssbmId = this->_clusterData.h_view().faulVId();
+				break;
+			default:
+				ssbmId = 0;
+				break;
+			}
+
+			// Compute average numbers
+			auto vConc = 0.0;
+			auto avComp = 0.0;
+			if (ssbmId > 0) {
+				vConc = conc(ssbmId);
+				if (vConc > 1.0e-16)
+					avComp = conc(ssbmId + 1) / vConc;
+			}
+
+			// Add the single size data
+			auto avRadius = util::max(0.0,
+				computeBubbleRadius(avComp,
+					this->_clusterData.h_view().latticeParameter(), id()));
+
+			totalVals[(4 * id()) + 0] += vConc * fac;
+			totalVals[(4 * id()) + 1] += vConc * avRadius * 2.0 * fac;
+			if (avComp > minSizes[id()]) {
+				totalVals[(4 * id()) + 2] += vConc * fac;
+				totalVals[(4 * id()) + 3] += vConc * avRadius * 2.0 * fac;
+			}
 		}
 	}
 }

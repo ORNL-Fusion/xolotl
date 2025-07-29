@@ -73,22 +73,27 @@ public:
 				case 0:
 					this->_reactantMomentIds[i][0] =
 						this->_clusterData->voidAvId();
+					break;
 				// Perfect V
 				case 1:
 					this->_reactantMomentIds[i][0] =
 						this->_clusterData->perfVAvId();
+					break;
 				// Faulted V
 				case 2:
 					this->_reactantMomentIds[i][0] =
 						this->_clusterData->faulVAvId();
+					break;
 				// Perfect I
 				case 3:
 					this->_reactantMomentIds[i][0] =
 						this->_clusterData->perfIAvId();
+					break;
 				// Faulted I
 				case 4:
 					this->_reactantMomentIds[i][0] =
 						this->_clusterData->faulIAvId();
+					break;
 				}
 			}
 			if (this->_products[i] < numClusters) {
@@ -109,22 +114,27 @@ public:
 					case 0:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->voidAvId();
+						break;
 					// Perfect V
 					case 1:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->perfVAvId();
+						break;
 					// Faulted V
 					case 2:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->faulVAvId();
+						break;
 					// Perfect I
 					case 3:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->perfIAvId();
+						break;
 					// Faulted I
 					case 4:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->faulIAvId();
+						break;
 					}
 				}
 			}
@@ -230,6 +240,37 @@ public:
 	using Superclass::Superclass;
 
 	KOKKOS_INLINE_FUNCTION
+	AlloyTransformReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		IndexType cluster0, IndexType cluster1)
+	{
+		this->_clusterData = &clusterData;
+		this->_reactionId = reactionId;
+		this->_rate = reactionData.getRates(reactionId);
+		this->_widths = reactionData.getWidths(reactionId);
+		this->_coefs = reactionData.getCoefficients(reactionId);
+
+		this->_reactant = cluster0;
+		this->_product = cluster1;
+
+		auto numClusters = clusterData.numClusters;
+		// Check if the single size is involved
+		if (cluster0 >= numClusters)
+			isLargeBubbleReaction = true;
+
+		this->initialize();
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	AlloyTransformReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		const detail::ClusterSet& clusterSet) :
+		AlloyTransformReaction(reactionData, clusterData, reactionId,
+			clusterSet.cluster0, clusterSet.cluster1)
+	{
+	}
+
+	KOKKOS_INLINE_FUNCTION
 	double
 	getSize();
 
@@ -240,6 +281,42 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getBarrier();
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeConnectivity(const Connectivity& connectivity)
+	{
+		Superclass::computeConnectivity(connectivity);
+
+		if (isLargeBubbleReaction) {
+			this->addConnectivity(
+				this->_product + 1, this->_reactant, connectivity);
+		}
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapJacobianEntries(Connectivity connectivity)
+	{
+		Superclass::mapJacobianEntries(connectivity);
+
+		if (isLargeBubbleReaction) {
+			_connEntries[1][1][0][0] = connectivity(_product + 1, _reactant);
+		}
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
+		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computePartialDerivatives(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex);
+
+private:
+	bool isLargeBubbleReaction = false;
 };
 
 class AlloyConstantReaction :

@@ -183,7 +183,7 @@ PetscMonitor0D::setup(int loop)
 				// Loop for the void cluster that is k smaller
 				Composition comp = Composition::zero();
 				for (auto j = util::max(vThreshold, ival.begin());
-					j < ival.end(); ++j) {
+					 j < ival.end(); ++j) {
 					comp[Spec::V] = j - k;
 					IdType vProdId =
 						aNetwork.findCluster(comp, plsm::HostMemSpace{})
@@ -900,7 +900,7 @@ PetscMonitor0D::postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[],
 		double vFraction = 0.0;
 		AmountType vWeight = ival.end() - util::max(vThreshold, ival.begin());
 		for (auto j = util::max(vThreshold, ival.begin()); j < ival.end();
-			++j) {
+			 ++j) {
 			vFraction += gridPointSolution[i] * rRad3;
 		}
 		vFraction *= sphereFactor;
