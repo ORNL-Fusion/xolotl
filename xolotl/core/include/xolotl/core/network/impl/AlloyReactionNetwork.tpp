@@ -501,7 +501,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			this->addProductionReaction(tag, {i, j, iProdId});
 			//			if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
 			//				this->addDissociationReaction(tag, {iProdId, i, j});
-			//			}
+			//	}
 		}
 		comp[Species::I] = 0;
 		comp[Species::FaultedI] = size;
@@ -816,19 +816,45 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		this->addProductionReaction(tag, {j, i, faulVId});
 	}
 
-	// I_a + V -> V_b (skip for now)
-	//	if ((lo1.isOnAxis(Species::I) and lo2.isOnAxis(Species::V)) or
-	//		(lo1.isOnAxis(Species::V) and lo2.isOnAxis(Species::I))) {
-	//		// It should be around the largest size value
-	//		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
-	//				hi2[Species::I] - 4 >
-	//			largestSize) {
-	//			// Need to know which one is I
-	//			auto iId = lo1[Species::I] > 0 ? i : j;
-	//			auto vId = lo1[Species::I] > 0 ? j : i;
-	//			this->addProductionReaction(tag, {iId, voidId, vId});
-	//		}
-	//	}
+	// I_a + V -> V_b
+	if ((lo1.isOnAxis(Species::I) and lo2.isOnAxis(Species::V)) or
+		(lo1.isOnAxis(Species::V) and lo2.isOnAxis(Species::I))) {
+		// It should be around the largest size value
+		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
+				hi2[Species::I] - 4 >
+			largestSize) {
+			// Need to know which one is I
+			auto iId = lo1[Species::I] > 0 ? i : j;
+			auto vId = lo1[Species::I] > 0 ? j : i;
+			this->addProductionReaction(tag, {iId, voidId, vId});
+		}
+	}
+
+	// I_a + L^V -> L^V_b
+	if ((lo1.isOnAxis(Species::I) and lo2.isOnAxis(Species::PerfectV)) or
+		(lo1.isOnAxis(Species::PerfectV) and lo2.isOnAxis(Species::I))) {
+		// It should be around the largest size value
+		if (hi1[Species::PerfectV] + hi2[Species::PerfectV] + hi1[Species::I] +
+				hi2[Species::I] - 4 >
+			largestSize) {
+			// Need to know which one is I
+			auto iId = lo1[Species::I] > 0 ? i : j;
+			auto vId = lo1[Species::I] > 0 ? j : i;
+			this->addProductionReaction(tag, {iId, perfVId, vId});
+		}
+	}
+	if ((lo1.isOnAxis(Species::I) and lo2.isOnAxis(Species::FaultedV)) or
+		(lo1.isOnAxis(Species::FaultedV) and lo2.isOnAxis(Species::I))) {
+		// It should be around the largest size value
+		if (hi1[Species::FaultedV] + hi2[Species::FaultedV] + hi1[Species::I] +
+				hi2[Species::I] - 4 >
+			largestSize) {
+			// Need to know which one is I
+			auto iId = lo1[Species::I] > 0 ? i : j;
+			auto vId = lo1[Species::I] > 0 ? j : i;
+			this->addProductionReaction(tag, {iId, faulVId, vId});
+		}
+	}
 }
 
 inline ReactionCollection<AlloyReactionGenerator::Network>

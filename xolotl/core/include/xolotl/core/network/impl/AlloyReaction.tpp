@@ -282,47 +282,54 @@ AlloyProductionReaction::computeFlux(
 			// Compute the flux
 			double f = this->_coefs(0, 0, 0, 0) * concentrations(stdClusterId) *
 				concentrations(ssbmId) * rate;
+
+			// Special factor to deal with the threshold size
+			double gauss = 1.0;
+
+			// Special case where the product is not the single size
+			if (this->_products[0] < numClusters) {
+				// Only if the large void has a specific size
+				auto avVoid =
+					concentrations(ssbmId + 1) / concentrations(ssbmId);
+				if (concentrations(ssbmId) == 0.0)
+					avVoid = 0.0;
+
+				// Get the product composition
+				auto pr = this->_clusterData->getCluster(this->_products[0]);
+				auto prReg = pr.getRegion();
+				Composition prComp(prReg.getOrigin());
+
+				// Target value for the reaction to happen
+				double target = prComp[Species::V] + prComp[Species::PerfectV] +
+					prComp[Species::FaultedV] + comp[Species::I];
+
+				// Gaussian function around it
+				double twoSigmaTwo = 0.1;
+				gauss =
+					exp(-(avVoid - target) * (avVoid - target) / twoSigmaTwo) /
+					sqrt(::xolotl::core::pi * twoSigmaTwo);
+
+				// The large bubble concentration decreases
+				Kokkos::atomic_sub(&fluxes[ssbmId], f * gauss);
+				// The product concentration increases
+				Kokkos::atomic_add(&fluxes[this->_products[0]], f * gauss);
+
+				// The V size decreases even more
+				Kokkos::atomic_sub(&fluxes[this->_clusterData->voidAvId()],
+					f *
+						(prComp[Species::V] + prComp[Species::PerfectV] +
+							prComp[Species::FaultedV]) *
+						gauss);
+			}
+
+			// In every case
+
 			// The standard cluster always loses the flux
-			Kokkos::atomic_sub(&fluxes[stdClusterId], f);
+			Kokkos::atomic_sub(&fluxes[stdClusterId], f * gauss);
 
 			// The V size decreases
-			Kokkos::atomic_sub(&fluxes[ssbmId + 1], f * comp[Species::I]);
-			//
-			//			// Special case where the product is not the single size
-			//			// Not used currently
-			//			if (this->_products[0] < numClusters) {
-			//				// Only if the large void has a specific size
-			//				auto avVoid =
-			//concentrations(this->_clusterData->voidAvId()) /
-			//					concentrations(ssbmId);
-			//				if (concentrations(ssbmId) == 0.0)
-			//					avVoid = 0.0;
-			//
-			//				// Get the product composition
-			//				auto pr =
-			//this->_clusterData->getCluster(this->_products[0]); 				auto prReg =
-			//pr.getRegion(); 				Composition prComp(prReg.getOrigin());
-			//
-			//				// Target value for the reaction to happen
-			//				double target = prComp[Species::V] +
-			//comp[Species::I];
-			//
-			//				// Gaussian function around it
-			//				double gauss =
-			//					exp(-(avVoid - target) * (avVoid - target) /
-			//0.5);
-			//
-			//				// The large bubble concentration decreases
-			//				Kokkos::atomic_sub(&fluxes[ssbmId], f * gauss);
-			//				// The product concentration increases
-			//				Kokkos::atomic_add(&fluxes[this->_products[0]], f *
-			//gauss);
-			//
-			//				// The V size decreases even more
-			//				Kokkos::atomic_sub(
-			//					&fluxes[this->_clusterData->voidAvId()], f *
-			//prComp[Species::V]);
-			//			}
+			Kokkos::atomic_sub(
+				&fluxes[ssbmId + 1], f * comp[Species::I] * gauss);
 		}
 	}
 
@@ -435,7 +442,85 @@ AlloyProductionReaction::computePartialDerivatives(
 			// Compute the flux
 			double f = this->_coefs(0, 0, 0, 0) * rate;
 
+			// Special factor to deal with the threshold size
+			double gauss = 1.0;
+
+			// Special case where the product is not the single size
+			if (this->_products[0] < numClusters) {
+				// Only if the large void has a specific size
+				auto avVoid =
+					concentrations(ssbmId + 1) / concentrations(ssbmId);
+				if (concentrations(ssbmId) == 0.0)
+					avVoid = 0.0;
+
+				// Get the product composition
+				auto pr = this->_clusterData->getCluster(this->_products[0]);
+				auto prReg = pr.getRegion();
+				Composition prComp(prReg.getOrigin());
+
+				// Target value for the reaction to happen
+				double target = prComp[Species::V] + prComp[Species::PerfectV] +
+					prComp[Species::FaultedV] + comp[Species::I];
+
+				// Gaussian function around it
+				double twoSigmaTwo = 0.1;
+				double gauss =
+					exp(-(avVoid - target) * (avVoid - target) / twoSigmaTwo) /
+					sqrt(::xolotl::core::pi * twoSigmaTwo);
+
+				// Update the rate
+				f = this->_coefs(0, 0, 0, 0) * rate * gauss;
+
+				// The large bubble concentration decreases
+				if (this->_reactants[0] >= numClusters) {
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[0][0][0][0]), f * stdC);
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[0][0][1][0]), f * bC);
+				}
+				else {
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[1][0][1][0]), f * stdC);
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[1][0][0][0]), f * bC);
+				}
+				// The product concentration increases
+				if (this->_reactants[0] >= numClusters) {
+					Kokkos::atomic_add(
+						&values(this->_connEntries[2][0][0][0]), f * stdC);
+					Kokkos::atomic_add(
+						&values(this->_connEntries[2][0][1][0]), f * bC);
+				}
+				else {
+					Kokkos::atomic_add(
+						&values(this->_connEntries[2][0][1][0]), f * stdC);
+					Kokkos::atomic_add(
+						&values(this->_connEntries[2][0][0][0]), f * bC);
+				}
+
+				// The V size decreases even more
+				f = this->_coefs(0, 0, 0, 0) * rate *
+					(prComp[Species::V] + prComp[Species::PerfectV] +
+						prComp[Species::FaultedV]) *
+					gauss;
+				if (this->_reactants[0] >= numClusters) {
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[0][1][0][0]), f * stdC);
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[0][1][1][0]), f * bC);
+				}
+				else {
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[1][1][1][0]), f * stdC);
+					Kokkos::atomic_sub(
+						&values(this->_connEntries[1][1][0][0]), f * bC);
+				}
+			}
+
+			// In every case
+
 			// The standard cluster always loses the flux
+			f = this->_coefs(0, 0, 0, 0) * rate * gauss;
 			if (this->_reactants[0] >= numClusters) {
 				Kokkos::atomic_sub(
 					&values(this->_connEntries[1][0][0][0]), f * stdC);
@@ -450,7 +535,7 @@ AlloyProductionReaction::computePartialDerivatives(
 			}
 
 			// The V size decreases
-			f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::I];
+			f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::I] * gauss;
 			if (this->_reactants[0] >= numClusters) {
 				Kokkos::atomic_sub(
 					&values(this->_connEntries[0][1][0][0]), f * stdC);
@@ -463,82 +548,6 @@ AlloyProductionReaction::computePartialDerivatives(
 				Kokkos::atomic_sub(
 					&values(this->_connEntries[1][1][0][0]), f * bC);
 			}
-			//
-			//			// Special case where the product is not the single size
-			//			// This is not used currently
-			//			if (this->_products[0] < numClusters) {
-			//				// Only if the large void has a specific size
-			//				auto avVoid =
-			//concentrations(this->_clusterData->voidAvId()) /
-			//					concentrations(ssbmId);
-			//				if (concentrations(ssbmId) == 0.0)
-			//					avVoid = 0.0;
-			//
-			//				// Get the product composition
-			//				auto pr =
-			//this->_clusterData->getCluster(this->_products[0]); 				auto prReg =
-			//pr.getRegion(); 				Composition prComp(prReg.getOrigin());
-			//
-			//				// Target value for the reaction to happen
-			//				double target = prComp[Species::V] +
-			//comp[Species::I];
-			//
-			//				// Gaussian function around it
-			//				double gauss =
-			//					exp(-(avVoid - target) * (avVoid - target) /
-			//0.5);
-			//
-			//				// Update the rate
-			//				f *= gauss;
-			//
-			//				// The large bubble concentration decreases
-			//				if (this->_reactants[0] >= numClusters) {
-			//					Kokkos::atomic_sub(
-			//						&values(this->_connEntries[0][0][0][0]), f *
-			//stdC); 					Kokkos::atomic_sub(
-			//						&values(this->_connEntries[0][0][1][0]), f *
-			//bC);
-			//				}
-			//				else {
-			//					Kokkos::atomic_sub(
-			//						&values(this->_connEntries[1][0][1][0]), f *
-			//stdC); 					Kokkos::atomic_sub(
-			//						&values(this->_connEntries[1][0][0][0]), f *
-			//bC);
-			//				}
-			//				// The product concentration increases
-			//				if (this->_reactants[0] >= numClusters) {
-			//					Kokkos::atomic_add(
-			//						&values(this->_connEntries[2][0][0][0]), f *
-			//stdC); 					Kokkos::atomic_add(
-			//						&values(this->_connEntries[2][0][1][0]), f *
-			//bC);
-			//				}
-			//				else {
-			//					Kokkos::atomic_add(
-			//						&values(this->_connEntries[2][0][1][0]), f *
-			//stdC); 					Kokkos::atomic_add(
-			//						&values(this->_connEntries[2][0][0][0]), f *
-			//bC);
-			//				}
-			//
-			//				// The V size decreases even more
-			//				f = this->_coefs(0, 0, 0, 0) * rate *
-			//prComp[Species::V]; 				if (this->_reactants[0] >= numClusters) {
-			//					Kokkos::atomic_sub(
-			//						&values(this->_connEntries[0][1][0][0]), f *
-			//stdC); 					Kokkos::atomic_sub(
-			//						&values(this->_connEntries[0][1][1][0]), f *
-			//bC);
-			//				}
-			//				else {
-			//					Kokkos::atomic_sub(
-			//						&values(this->_connEntries[1][1][1][0]), f *
-			//stdC); 					Kokkos::atomic_sub(
-			//						&values(this->_connEntries[1][1][0][0]), f *
-			//bC);
-			//				}
-			//			}
 		}
 	}
 
