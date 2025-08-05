@@ -64,7 +64,7 @@ ReSolutionReactionGenerator<TBase>::addReSolutionReaction(
 	auto id = _reSoCrsRowMap(clusterSet.cluster0);
 	for (; !util::atomicCompareExchangeStrong(&_reSoCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
-		 ++id) { }
+		++id) { }
 	_reSoCrsClusterSets(id) = clusterSet;
 }
 } // namespace detail

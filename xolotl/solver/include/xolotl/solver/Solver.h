@@ -63,7 +63,7 @@ public:
 	Solver(const std::shared_ptr<handler::ISolverHandler>& _solverHandler);
 
 	//! The Destructor
-	virtual ~Solver(){};
+	virtual ~Solver() { };
 
 	/**
 	 * \see ISolver.h

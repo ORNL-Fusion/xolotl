@@ -302,7 +302,7 @@ public:
 			for (int it = 0; it < damageIds.size(); ++it) {
 				outfile << damageIds[it] << ": ";
 				for (int xi = surfacePos; xi < std::max((int)grid.size(), 1);
-					 xi++) {
+					xi++) {
 					outfile << damageRates[it][xi - surfacePos] << " ";
 				}
 				outfile << std::endl;

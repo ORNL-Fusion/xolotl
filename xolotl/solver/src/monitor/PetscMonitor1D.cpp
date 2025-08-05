@@ -514,7 +514,7 @@ PetscMonitor1D::setup(int loop)
 				// Loop on them
 				for (auto i : indices) {
 					for (auto id = core::network::SpeciesId(numSpecies); id;
-						 ++id) {
+						++id) {
 						auto speciesName = network.getSpeciesName(id);
 						if (bounds[i][2 * id()] > 0)
 							outputFile << speciesName << "_"
@@ -613,7 +613,7 @@ PetscMonitor1D::setup(int loop)
 
 			// Loop on the entire grid
 			for (auto xi = _solverHandler->getLeftOffset();
-				 xi < Mx - _solverHandler->getRightOffset(); xi++) {
+				xi < Mx - _solverHandler->getRightOffset(); xi++) {
 				// Set x
 				double x = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
 				outputFile << x << " ";
@@ -1765,7 +1765,7 @@ PetscMonitor1D::eventFunction(
 
 		// Loop on the full grid of interest
 		for (xi = _solverHandler->getLeftOffset();
-			 xi < Mx - _solverHandler->getRightOffset(); xi++) {
+			xi < Mx - _solverHandler->getRightOffset(); xi++) {
 			// If this is the locally owned part of the grid
 			if (xi >= xs && xi < xs + xm) {
 				// Get the distance from the surface
@@ -2230,7 +2230,7 @@ PetscMonitor1D::profileTemperature(
 
 	// Loop on the entire grid
 	for (auto xi = _solverHandler->getLeftOffset();
-		 xi < Mx - _solverHandler->getRightOffset(); xi++) {
+		xi < Mx - _solverHandler->getRightOffset(); xi++) {
 		double localTemp = 0.0;
 		// Check if this process is in charge of xi
 		if (xi >= xs && xi < xs + xm) {

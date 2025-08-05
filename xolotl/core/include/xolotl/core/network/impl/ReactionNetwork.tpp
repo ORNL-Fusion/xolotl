@@ -20,8 +20,8 @@ template <typename T>
 DualViewWrapper<T>::DualViewWrapper(const std::string& label) :
 	_dualView(Kokkos::ViewAllocateWithoutInitializing(label)),
 	_hasInstance(true),
-	d_view(_dualView.d_view),
-	h_view(_dualView.h_view)
+	d_view(_dualView.view_device()),
+	h_view(_dualView.view_host())
 {
 	new (&h_view()) T();
 }
@@ -1637,7 +1637,7 @@ ReactionNetwork<TImpl>::computeMinRadiusSizes(const options::IOptions& opts)
 	auto minRadiusSizes = std::vector<AmountType>(numSpecies, 1);
 	auto minSizes = opts.getRadiusMinSizes();
 	for (auto i = 0; i < std::min(minSizes.size(), minRadiusSizes.size());
-		 i++) {
+		i++) {
 		minRadiusSizes[i] = minSizes[i];
 	}
 	return minRadiusSizes;

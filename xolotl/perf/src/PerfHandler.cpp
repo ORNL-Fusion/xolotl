@@ -104,7 +104,7 @@ PerfHandler::collectAllObjectNames(int myRank,
 	// Determine amount of space required for names
 	unsigned int nBytes = 0;
 	for (auto nameIter = myNames.begin(); nameIter != myNames.end();
-		 ++nameIter) {
+		++nameIter) {
 		// Add enough space for the name plus a NUL terminating character.
 		nBytes += (nameIter->length() + 1);
 	}
@@ -395,7 +395,7 @@ PerfHandler::reportData(std::ostream& os, const std::string& label) const
 			os << indent << name << ": " << vals[i] << '\n';
 		}
 	}
-    --indent;
+	--indent;
 }
 
 void
@@ -433,30 +433,30 @@ PerfHandler::reportStatistics(std::ostream& os,
 	os << label << ":\n";
 
 	auto indent = util::Indent();
-    os << indent << "Timers:\n";
-    ++indent;
+	os << indent << "Timers:\n";
+	++indent;
 	for (auto iter = timerStats.begin(); iter != timerStats.end(); ++iter) {
 		iter->second.outputTo(os, indent);
 	}
-    --indent;
+	--indent;
 
 	os << "\n" << indent << "Counters:\n";
-    ++indent;
+	++indent;
 	for (auto iter = counterStats.begin(); iter != counterStats.end(); ++iter) {
 		iter->second.outputTo(os, indent);
 	}
-    --indent;
+	--indent;
 
 	if (hwCounterStats.empty()) {
 		return;
 	}
 	os << "\n" << indent << "HardwareCounters:\n";
-    ++indent;
+	++indent;
 	for (auto iter = hwCounterStats.begin(); iter != hwCounterStats.end();
-		 ++iter) {
+		++iter) {
 		iter->second.outputTo(os, indent);
 	}
-    --indent;
+	--indent;
 }
 
 IPerfHandler&
