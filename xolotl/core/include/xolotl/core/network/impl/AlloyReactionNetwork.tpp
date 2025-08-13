@@ -712,6 +712,14 @@ AlloyReactionGenerator::addTransforms(IndexType i, IndexType j, TTag tag) const
 
 		// Add it
 		this->addTransformReaction(tag, {faulted, perfect});
+
+		// Single size case
+		if (this->_clusterData.enableLargeBubble() and
+			fReg[Species::FaultedI] == iSize) { // So that it's only added once
+			IndexType perfIId = this->_clusterData.perfIId();
+			IndexType faulIId = this->_clusterData.faulIId();
+			this->addTransformReaction(tag, {faulIId, perfIId});
+		}
 	}
 
 	// Vacancy
@@ -736,9 +744,9 @@ AlloyReactionGenerator::addTransforms(IndexType i, IndexType j, TTag tag) const
 
 		// Single size case
 		if (this->_clusterData.enableLargeBubble() and
-			fReg[Species::FaultedV] == vSize) {
-			auto perfVId = this->_clusterData.perfVId();
-			auto faulVId = this->_clusterData.faulVId();
+			fReg[Species::FaultedV] == vSize) { // So that it's only added once
+			IndexType perfVId = this->_clusterData.perfVId();
+			IndexType faulVId = this->_clusterData.faulVId();
 			this->addTransformReaction(tag, {faulVId, perfVId});
 		}
 	}
@@ -753,9 +761,11 @@ AlloyReactionGenerator::addSingleSizeReactions(
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 
-	auto voidId = this->_clusterData.voidId();
-	auto perfVId = this->_clusterData.perfVId();
-	auto faulVId = this->_clusterData.faulVId();
+	IndexType voidId = this->_clusterData.voidId();
+	IndexType perfVId = this->_clusterData.perfVId();
+	IndexType faulVId = this->_clusterData.faulVId();
+	IndexType perfIId = this->_clusterData.perfIId();
+	IndexType faulIId = this->_clusterData.faulIId();
 
 	if (i == j) {
 		const auto& clReg = this->getCluster(i).getRegion();
@@ -771,6 +781,8 @@ AlloyReactionGenerator::addSingleSizeReactions(
 			this->addProductionReaction(tag, {i, voidId, voidId});
 			this->addProductionReaction(tag, {i, perfVId, perfVId});
 			this->addProductionReaction(tag, {i, faulVId, faulVId});
+			this->addProductionReaction(tag, {i, perfIId, perfIId});
+			this->addProductionReaction(tag, {i, faulIId, faulIId});
 		}
 		// I case
 		else if (lo.isOnAxis(Species::I)) {
@@ -778,6 +790,8 @@ AlloyReactionGenerator::addSingleSizeReactions(
 			this->addProductionReaction(tag, {i, voidId, voidId});
 			this->addProductionReaction(tag, {i, perfVId, perfVId});
 			this->addProductionReaction(tag, {i, faulVId, faulVId});
+			this->addProductionReaction(tag, {i, perfIId, perfIId});
+			this->addProductionReaction(tag, {i, faulIId, faulIId});
 		}
 	}
 
@@ -814,6 +828,32 @@ AlloyReactionGenerator::addSingleSizeReactions(
 	}
 	if (hi2[Species::V] + hi1[Species::FaultedV] - 2 > largestSize) {
 		this->addProductionReaction(tag, {j, i, faulVId});
+	}
+
+	// V_a + L^I -> L^I_b
+	if ((lo1.isOnAxis(Species::V) and lo2.isOnAxis(Species::PerfectI)) or
+		(lo1.isOnAxis(Species::PerfectI) and lo2.isOnAxis(Species::V))) {
+		// It should be around the largest size value
+		if (hi1[Species::PerfectI] + hi2[Species::PerfectI] + hi1[Species::V] +
+				hi2[Species::V] - 4 >
+			largestSize) {
+			// Need to know which one is I
+			auto vId = lo1[Species::V] > 0 ? i : j;
+			auto iId = lo1[Species::V] > 0 ? j : i;
+			this->addProductionReaction(tag, {vId, perfIId, iId});
+		}
+	}
+	if ((lo1.isOnAxis(Species::V) and lo2.isOnAxis(Species::FaultedI)) or
+		(lo1.isOnAxis(Species::FaultedI) and lo2.isOnAxis(Species::V))) {
+		// It should be around the largest size value
+		if (hi1[Species::FaultedI] + hi2[Species::FaultedI] + hi1[Species::V] +
+				hi2[Species::V] - 4 >
+			largestSize) {
+			// Need to know which one is I
+			auto vId = lo1[Species::V] > 0 ? i : j;
+			auto iId = lo1[Species::V] > 0 ? j : i;
+			this->addProductionReaction(tag, {vId, faulIId, iId});
+		}
 	}
 
 	// I_a + V -> V_b
@@ -854,6 +894,21 @@ AlloyReactionGenerator::addSingleSizeReactions(
 			auto vId = lo1[Species::I] > 0 ? j : i;
 			this->addProductionReaction(tag, {iId, faulVId, vId});
 		}
+	}
+
+	// I_a + L^I_b -> L^I
+	if (hi1[Species::I] + hi2[Species::PerfectI] - 2 > largestSize) {
+		this->addProductionReaction(tag, {i, j, perfIId});
+	}
+	if (hi2[Species::I] + hi1[Species::PerfectI] - 2 > largestSize) {
+		this->addProductionReaction(tag, {j, i, perfIId});
+	}
+
+	if (hi1[Species::I] + hi2[Species::FaultedI] - 2 > largestSize) {
+		this->addProductionReaction(tag, {i, j, faulIId});
+	}
+	if (hi2[Species::I] + hi1[Species::FaultedI] - 2 > largestSize) {
+		this->addProductionReaction(tag, {j, i, faulIId});
 	}
 }
 

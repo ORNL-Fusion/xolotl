@@ -256,6 +256,14 @@ AlloyReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 			case 2:
 				ssbmId = this->_clusterData.h_view().faulVId();
 				break;
+			// Perfect I
+			case 4:
+				ssbmId = this->_clusterData.h_view().perfIId();
+				break;
+			// Faulted I
+			case 5:
+				ssbmId = this->_clusterData.h_view().faulIId();
+				break;
 			default:
 				ssbmId = 0;
 				break;

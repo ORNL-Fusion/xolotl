@@ -102,8 +102,13 @@ public:
 		// Faulted V
 		case 2:
 			return sqrt((amount * prefactor) / ::xolotl::core::faultedBurgers);
+		// Perfect I
+		case 3:
+			return sqrt((amount * prefactor) / ::xolotl::core::perfectBurgers);
+		// Faulted I
+		case 4:
+			return sqrt((amount * prefactor) / ::xolotl::core::faultedBurgers);
 		}
-
 		return 0.0;
 	}
 
