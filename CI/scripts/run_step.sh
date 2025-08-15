@@ -19,7 +19,7 @@ case "$1" in
 
   configure)
 
-    git config --global --add safe.directory ${GITHUB_WORKSPACE}
+    git config --global --add safe.directory '*'
    
     case "${GH_JOBNAME}" in
       *"clang"*)
