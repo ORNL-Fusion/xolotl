@@ -18,6 +18,8 @@ template ReactionNetwork<FeReactionNetwork>::ReactionNetwork(
 	const std::vector<AmountType>& maxSpeciesAmounts, IndexType gridSize,
 	const options::IOptions& opts);
 
+template ReactionNetwork<FeReactionNetwork>::~ReactionNetwork();
+
 template double
 ReactionNetwork<FeReactionNetwork>::getTotalConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);

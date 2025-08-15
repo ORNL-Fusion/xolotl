@@ -21,6 +21,9 @@ template ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::
 	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 		IndexType gridSize, const options::IOptions& opts);
 
+template ReactionNetwork<
+	PSIReactionNetwork<PSIDeuteriumSpeciesList>>::~ReactionNetwork();
+
 template double
 ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::
 	getTotalConcentration(
