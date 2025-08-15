@@ -34,18 +34,13 @@ case "$1" in
 
     cd ${GITHUB_WORKSPACE}/..
 
-    git clone https://gitlab.com/petsc/petsc.git -b v3.22.2 petsc
-    cd petsc
-    bash ${GITHUB_WORKSPACE}/../xolotl/scripts/build_petsc.sh \
-        --prefix=${GITHUB_WORKSPACE}/../install \
-        --skip-pull
-
     cd ${GITHUB_WORKSPACE}/..
     mkdir build
     cd build
 
     cmake \
-        -DCMAKE_PREFIX_PATH=${GITHUB_WORKSPACE}/../install \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DXolotl_BUILD_PETSC=ON \
         ${EXTRA_CMAKE_ARGS} \
         ${GITHUB_WORKSPACE}
    
