@@ -10,9 +10,9 @@ generation tokamaks like ITER, as well as nuclear fuel in fission reactors.
 - CMake >= 3.13
 - MPI
 - Boost
-- Kokkos >= 4.4
+- Kokkos >= 4.6
 - HDF5
-- PETSc >= 3.16 (configured with kokkos and kokkos-kernels; see
+- PETSc >= 3.23 (configured with kokkos and kokkos-kernels; see
   scripts/build_petsc.sh)
 
 ## Quick-Start Install
