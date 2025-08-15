@@ -41,6 +41,7 @@ case "$1" in
     cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DXolotl_BUILD_PETSC=ON \
+        -DXolotl_BUILD_PETSC_DUMP_ERROR_FILE=ON \
         ${EXTRA_CMAKE_ARGS} \
         ${GITHUB_WORKSPACE}
    

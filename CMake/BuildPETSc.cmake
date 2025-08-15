@@ -52,9 +52,6 @@ set(__build_opts
     --petsc-dir=${__petsc_src_dir}
 )
 set(__petsc_arch "rel")
-if(NOT "${CMAKE_BUILD_TYPE}" STREQUAL "")
-    message("CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-endif()
 
 option(Xolotl_BUILD_PETSC_DEBUG
     "Enable debugging symbols for petsc, kokkos, etc."
@@ -161,6 +158,9 @@ execute_process(
     RESULT_VARIABLE __build_ret
 )
 if(NOT ${__build_ret} EQUAL 0)
+    if(Xolotl_BUILD_PETSC_DUMP_ERROR_FILE)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E cat ${__output_file})
+    endif()
     message(FATAL_ERROR "
         Failed to build PETSc
         See \"${__output_file}\"
