@@ -581,7 +581,18 @@ JSONOptions::readParams(int argc, const char* argv[])
 	auto ss = stripComments(ifs);
 	boost::property_tree::read_json(ss, *_map);
 
-	defineHandlers().processParams();
+	auto handlers = defineHandlers();
+
+	// Checking the option names first
+	auto& tree = *_map;
+	for (const auto& leaf : tree) {
+		if (!handlers.checkName(leaf.first)) {
+			throw InvalidOptionValue(
+				"Options: unsupported option: " + leaf.first);
+		}
+	}
+
+	handlers.processParams();
 }
 } // namespace options
 } // namespace xolotl
