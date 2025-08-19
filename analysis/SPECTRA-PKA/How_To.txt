@@ -1,0 +1,46 @@
+#########################
+INPUT FILE:
+
+flux_filename="fluxes_specter.dat"
+# neutron energy spectrum
+
+results_stub="V" 
+# output name
+
+num_columns=6
+# do not change
+
+columns= pka_filename pka_ratios parent_ele parent_num ngamma_parent_mass ngamma_daughter_mass
+"../pka/V050s.asc" 0.00250000 V 050 49.94715668  50.94395766
+"../pka/V051s.asc" 0.99750000 V 051 50.94395766  51.94477364
+# get values from Wikipedia, files from https://fispact.ukaea.uk/nuclear-data/downloads/ (TENDL-2023)
+
+flux_norm_type=2
+pka_filetype=2 
+do_mtd_sums=.true.
+do_ngamma_estimate=.t.
+do_global_sums=.t.
+do_exclude_light_from_total=.t.
+# do not change
+
+number_pka_files=2 
+# number of pka files listed
+
+flux_rescale_value=3.25e15
+max_global_recoils=400
+energies_once_perfile=.t. 
+do_tdam=.t.
+# do not change
+
+assumed_ed=40.0
+# threshold displacement energy
+
+#########################
+Run the code: ../spectra-pka V.in
+3 files are created, search the .out file to get the "elemental" distribution
+tail -n +22000 V.out > temp.dat
+head -n 750 temp.dat > V_elemental.dat
+
+#########################
+Plot the results with plotPKAs.py, update the density and mass in it.
+
