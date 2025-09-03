@@ -33,6 +33,7 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	AmountType maxI = options.getMaxI();
 	AmountType maxHe =
 		psi::getMaxHePerV(options.getMaxV(), options.getHeVRatio());
+
 	AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	AmountType maxT = 2.0 / 3.0 * (double)maxHe;
 	AmountType groupingWidthHe = options.getGroupingWidthA();
@@ -54,6 +55,20 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	if (options.getMaxT() <= 0) {
 		maxT = 0;
 		groupingWidthT = 1;
+	}
+	if (maxHe == 0 and maxT > 0) {
+		maxT = psi::getMaxHPerV(options.getMaxV(),
+			options.getLatticeParameter() < 0.0 ?
+				::xolotl::core::tungstenLatticeConstant :
+				options.getLatticeParameter(),
+			options.getTempParam());
+	}
+	if (maxHe == 0 and maxD > 0) {
+		maxD = psi::getMaxHPerV(options.getMaxV(),
+			options.getLatticeParameter() < 0.0 ?
+				::xolotl::core::tungstenLatticeConstant :
+				options.getLatticeParameter(),
+			options.getTempParam());
 	}
 	if (maxV <= 0) {
 		maxHe = options.getMaxImpurity();

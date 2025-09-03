@@ -390,9 +390,19 @@ namespace detail
 {
 template <typename TSpeciesEnum>
 PSIReactionGenerator<TSpeciesEnum>::PSIReactionGenerator(
-	const PSIReactionNetwork<TSpeciesEnum>& network) :
+	PSIReactionNetwork<TSpeciesEnum>& network) :
 	Superclass(network)
 {
+	// Look for single helium
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	using AmountType = typename NetworkType::AmountType;
+	auto comp = std::vector<AmountType>(network.getSpeciesListSize(), 0);
+	// Helium is always first
+	comp[0] = 1;
+	auto heId = network.findClusterId(comp);
+	hasHelium = (heId == NetworkType::invalidIndex()) ? false : true;
+
 	bool enableTrapMutation = network.getEnableTrapMutation();
 	if (!enableTrapMutation) {
 		return;
@@ -636,18 +646,66 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 		}
 	}
 
-	// Special case for trap-mutation
+	// Special case for trap-mutation for He or H
+	// TODO: Combined trap-mutation
 	if (nProd == 0) {
-		// Look for larger clusters only if one of the reactant is pure He
-		if (!(cl1Reg.isSimplex() && lo1.isOnAxis(Species::He)) &&
-			!(cl2Reg.isSimplex() && lo2.isOnAxis(Species::He))) {
-			return;
+		// Hydrogen case if there is no He in the network
+		if (not hasHelium) {
+			if constexpr (psi::hasDeuterium<Species>) {
+				// Look for larger clusters only if one of the reactants is pure
+				// D
+				if (not(cl1Reg.isSimplex() and lo1.isOnAxis(Species::D)) &&
+					not(cl2Reg.isSimplex() and lo2.isOnAxis(Species::D))) {
+					return;
+				}
+
+				// Check that both reactants contain D
+				if (cl1Reg[Species::D].begin() < 1 ||
+					cl2Reg[Species::D].begin() < 1) {
+					return;
+				}
+
+				// Pure H cannot cluster
+				if (cl1Reg[Species::D].begin() == 1 and
+					cl2Reg[Species::D].begin() == 1) {
+					return;
+				}
+			}
+			if constexpr (psi::hasTritium<Species>) {
+				// Look for larger clusters only if one of the reactants is pure
+				// T
+				if (not(cl1Reg.isSimplex() and lo1.isOnAxis(Species::T)) &&
+					not(cl2Reg.isSimplex() and lo2.isOnAxis(Species::T))) {
+					return;
+				}
+
+				// Check that both reactants contain T
+				if (cl1Reg[Species::T].begin() < 1 ||
+					cl2Reg[Species::T].begin() < 1) {
+					return;
+				}
+
+				// Pure H cannot cluster
+				if (cl1Reg[Species::T].begin() == 1 and
+					cl2Reg[Species::T].begin() == 1) {
+					return;
+				}
+			}
 		}
 
-		// Check that both reactants contain He
-		if (cl1Reg[Species::He].begin() < 1 ||
-			cl2Reg[Species::He].begin() < 1) {
-			return;
+		// Else, He leads the trap-mutation
+		else {
+			// Look for larger clusters only if one of the reactants is pure He
+			if (not(cl1Reg.isSimplex() and lo1.isOnAxis(Species::He)) &&
+				not(cl2Reg.isSimplex() and lo2.isOnAxis(Species::He))) {
+				return;
+			}
+
+			// Check that both reactants contain He
+			if (cl1Reg[Species::He].begin() < 1 ||
+				cl2Reg[Species::He].begin() < 1) {
+				return;
+			}
 		}
 
 		// Loop on possible I sizes

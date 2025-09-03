@@ -144,7 +144,7 @@ private:
 	checkImpurityRadius(double impurityRadius);
 
 	detail::PSIReactionGenerator<Species>
-	getReactionGenerator() const noexcept
+	getReactionGenerator() noexcept
 	{
 		return detail::PSIReactionGenerator<Species>{*this};
 	}
@@ -184,7 +184,7 @@ public:
 	using Superclass = ReactionGenerator<PSIReactionNetwork<TSpeciesEnum>,
 		PSIReactionGenerator<TSpeciesEnum>>;
 
-	PSIReactionGenerator(const PSIReactionNetwork<TSpeciesEnum>& network);
+	PSIReactionGenerator(PSIReactionNetwork<TSpeciesEnum>& network);
 
 	template <typename TTag>
 	KOKKOS_INLINE_FUNCTION
@@ -202,6 +202,8 @@ private:
 
 private:
 	Kokkos::Array<Kokkos::View<AmountType*>, 7> _tmVSizes;
+
+	bool hasHelium = false;
 };
 } // namespace detail
 } // namespace network
