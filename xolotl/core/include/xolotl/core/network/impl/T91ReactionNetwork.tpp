@@ -159,7 +159,6 @@ T91ReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	}
 
 	// Look for potential product
-	IndexType nProd = 0;
 	for (IndexType k = 0; k < numClusters; ++k) {
 		// Get the composition
 		const auto& prodReg = this->getCluster(k).getRegion();
@@ -177,8 +176,6 @@ T91ReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		}
 
 		if (isGood) {
-			// Increase nProd
-			nProd++;
 			this->addProductionReaction(tag, {i, j, k});
 
 			// Loop on the species

@@ -47,6 +47,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
 	auto& subpaving = this->getSubpaving();
+	auto previousIndex = subpaving.invalidIndex();
 
 	// Special case for I + I
 	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1.isOnAxis(Species::I) &&
@@ -67,40 +68,44 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	}
 
 	// Special case for I + V
-	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() &&
-		((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
-			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I)))) {
-		// Find out which one is which
-		auto vSize =
-			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
-		auto iSize =
-			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
-		// Compute the product size
-		int prodSize = vSize - iSize;
-		// 3 cases
-		if (prodSize > 0) {
-			// Looking for V cluster
-			Composition comp = Composition::zero();
-			comp[Species::V] = prodSize;
-			auto vProdId = subpaving.findTileId(comp);
-			if (vProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, vProdId});
-				// No dissociation
+	if ((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
+		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I))) {
+		// Compute the largest possible product and the smallest one
+		int largestProd = (int)hi1[Species::V] + (int)hi2[Species::V] - 2 -
+			(int)lo1[Species::I] - (int)lo2[Species::I];
+		int smallestProd = (int)lo1[Species::V] + (int)lo2[Species::V] -
+			(int)hi1[Species::I] - (int)hi2[Species::I] + 2;
+		// Loop on the products
+		for (int prodSize = smallestProd; prodSize <= largestProd; prodSize++) {
+			// 3 cases
+			if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					// No dissociation
+					previousIndex = vProdId;
+				}
 			}
-		}
-		else if (prodSize < 0) {
-			// Looking for I cluster
-			Composition comp = Composition::zero();
-			comp[Species::I] = -prodSize;
-			auto iProdId = subpaving.findTileId(comp);
-			if (iProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, iProdId});
-				// No dissociation
+			else if (prodSize < 0) {
+				// Looking for I cluster
+				Composition comp = Composition::zero();
+				comp[Species::I] = -prodSize;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex() &&
+					iProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					// No dissociation
+					previousIndex = iProdId;
+				}
 			}
-		}
-		else {
-			// No product
-			this->addProductionReaction(tag, {i, j});
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
+			}
 		}
 		return;
 	}
@@ -146,6 +151,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			// Increase nProd
 			nProd++;
 			this->addProductionReaction(tag, {i, j, k});
+
 			// Loop on the species
 			bool isOnAxis1 = false, isOnAxis2 = false;
 			for (auto l : species) {
@@ -184,6 +190,11 @@ FeReactionGenerator::addSinks(IndexType i, TTag tag) const
 
 	// V
 	if (clReg.isSimplex() && lo.isOnAxis(Species::V) && lo[Species::V] < 5) {
+		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
+	}
+
+	// He
+	if (clReg.isSimplex() && lo.isOnAxis(Species::He) && lo[Species::He] < 4) {
 		this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
 	}
 }

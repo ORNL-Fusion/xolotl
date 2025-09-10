@@ -22,12 +22,6 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 		return true;
 	}
 
-	// V is never grouped
-	if (region[Species::V].end() > 1 && region[Species::V].begin() < 11 &&
-		region[Species::He].begin() == 0 && region[Species::I].begin() == 0) {
-		return true;
-	}
-
 	// He is never grouped
 	if (region[Species::He].end() > 1 && region[Species::He].begin() < 9 &&
 		region[Species::V].begin() == 0 && region[Species::I].begin() == 0) {
@@ -46,38 +40,28 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 		return true;
 	}
 
-	// Middle
+	// V is grouped
 	Composition lo = region.getOrigin();
 	Composition hi = region.getUpperLimitPoint();
-	auto amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
-	auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
-	double amt = sqrt(amtHe * amtHe + amtV * amtV);
-	double ibe = 4.88 +
-		2.59 * (cbrt(amtV * amtV) - cbrt((amtV - 1.0) * (amtV - 1.0))) -
-		2.5 * log(1.0 + (amtHe / amtV));
-	auto distance = fabs(ibe - 1.5);
-	//	if (distance < 1.2) {
-	if (distance < 1.5) {
-		auto comp = amt * amt * amt * 1.0e-6;
-		if (region[Species::He].length() <
-			util::max(_groupingWidthHe + 1.0, comp)) {
-			result[0] = false;
-		}
+	if (region[Species::V].end() > 1 && region[Species::V].begin() < 9 &&
+		region[Species::He].begin() == 0 && region[Species::I].begin() == 0) {
+		auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
 		if (region[Species::V].length() <
-			util::max(_groupingWidthV + 1.0, comp)) {
+			util::max(_groupingWidthV + 1.0, pow(amtV, 0.8))) {
 			result[1] = false;
 		}
 	}
-	else {
-		auto comp = amt * amt * amt * 1.0e-4;
-		if (region[Species::He].length() <
-			util::max(_groupingWidthHe + 1.0, comp)) {
-			result[0] = false;
-		}
-		if (region[Species::V].length() <
-			util::max(_groupingWidthV + 1.0, comp)) {
-			result[1] = false;
-		}
+
+	// Middle
+	auto amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
+	auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
+	if (region[Species::He].length() <
+		util::max(_groupingWidthHe + 1.0, pow(amtHe, 0.8))) {
+		result[0] = false;
+	}
+	if (region[Species::V].length() <
+		util::max(_groupingWidthV + 1.0, pow(amtV, 0.8))) {
+		result[1] = false;
 	}
 
 	// Edges
@@ -127,10 +111,6 @@ FeClusterGenerator::select(const Region& region) const
 	}
 
 	// Vacancy
-	if (region[Species::V].begin() > 10 && region[Species::He].end() == 1 &&
-		region[Species::I].end() == 1) {
-		return false;
-	}
 	if (region[Species::V].begin() > _maxV) {
 		return false;
 	}
@@ -184,13 +164,13 @@ FeClusterGenerator::getDiffusionFactor(
 	const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
 	// I diffusion factors in nm^2/s
-	constexpr double iOneDiffusionFactor = 1.0e+11;
+	constexpr double iOneDiffusionFactor = 2.0e+11;
 	// He diffusion factors in nm^2/s
 	constexpr Kokkos::Array<double, 4> heDiffusion = {
-		0.0, 1.0e+11, 5.0e+10, 3.3e+10};
+		0.0, 2.0e+11, 1.0e+11, 6.7e+10};
 	// V diffusion factors in nm^2/s
 	constexpr Kokkos::Array<double, 5> vDiffusion = {
-		0.0, 1.0e+11, 5.0e+10, 3.3e+10, 2.5e+10};
+		0.0, 2.0e+11, 1.0e+11, 6.7e+10, 5.0e+10};
 
 	const auto& reg = cluster.getRegion();
 	double diffusionFactor = 0.0;
