@@ -162,8 +162,6 @@ FeDissociationReaction::computeBindingEnergy(double time)
 							(pow((double)amtV, 2.0 / 3.0) -
 								pow((double)amtV - 1.0, 2.0 / 3.0)) -
 						p * omega;
-				//				std::cout << amtHe << "-" << amtV << " : " << be
-				//<< std::endl;
 			}
 		}
 	}

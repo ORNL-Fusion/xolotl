@@ -182,7 +182,7 @@ FeReactionNetwork::writeMonitorDataLine(
 	if (util::getMPIRank() == 0) {
 		// Average the data
 		for (auto i = 0; i < numSpecies; ++i) {
-			auto id = [i](std::size_t n) { return 4 * i + n; };
+			auto id = [i](std::size_t n) { return 1 + 4 * i + n; };
 			if (globalData[id(0)] > 1.0e-16) {
 				globalData[id(1)] /= globalData[id(0)];
 			}
@@ -201,9 +201,9 @@ FeReactionNetwork::writeMonitorDataLine(
 		outputFile << std::setprecision(outputPrecision);
 
 		// Output the data
-		outputFile << time << " ";
+		outputFile << time << " " << globalData[0] << " ";
 		for (auto i = 0; i < numSpecies; ++i) {
-			auto id = [i](std::size_t n) { return 4 * i + n; };
+			auto id = [i](std::size_t n) { return 1 + 4 * i + n; };
 			outputFile << globalData[id(0)] << " " << globalData[id(1)] << " "
 					   << globalData[id(2)] << " " << globalData[id(3)] << " ";
 		}
