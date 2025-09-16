@@ -21,6 +21,7 @@ class AlloyClusterGenerator;
 
 enum class AlloySpecies
 {
+	He,
 	V,
 	PerfectV,
 	FaultedV,
@@ -33,20 +34,20 @@ inline const std::string&
 toLabelString(AlloySpecies species)
 {
 	static const std::string labelArray[] = {
-		"V", "PerfectV", "FaultedV", "I", "PerfectI", "FaultedI"};
+		"He", "V", "PerfectV", "FaultedV", "I", "PerfectI", "FaultedI"};
 	return labelArray[static_cast<int>(species)];
 }
 
 inline const std::string&
 toNameString(AlloySpecies species)
 {
-	static const std::string nameArray[] = {"Vacancy", "PerfectV", "FaultedV",
-		"Interstitial", "PerfectI", "FaultedI"};
+	static const std::string nameArray[] = {"Helium", "Vacancy", "PerfectV",
+		"FaultedV", "Interstitial", "PerfectI", "FaultedI"};
 	return nameArray[static_cast<int>(species)];
 }
 
 template <>
-struct NumberOfSpecies<AlloySpecies> : std::integral_constant<std::size_t, 6>
+struct NumberOfSpecies<AlloySpecies> : std::integral_constant<std::size_t, 7>
 {
 };
 
@@ -63,17 +64,20 @@ struct NumberOfVacancySpecies<AlloySpecies> :
 };
 
 template <>
-struct SpeciesForGrouping<AlloySpecies, 6>
+struct SpeciesForGrouping<AlloySpecies, 7>
 {
-	using Sequence = EnumSequence<AlloySpecies, 6>;
-	static constexpr auto first = Sequence(AlloySpecies::V);
+	using Sequence = EnumSequence<AlloySpecies, 7>;
+	static constexpr auto first = Sequence(AlloySpecies::He);
 	static constexpr auto last = Sequence(AlloySpecies::FaultedI);
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::underlying_type_t<AlloySpecies>
-	mapToMomentId(EnumSequence<AlloySpecies, 6>)
+	mapToMomentId(EnumSequence<AlloySpecies, 7> value)
 	{
-		return 0;
+		if (value == AlloySpecies::He)
+			return 0;
+		else
+			return 1;
 	}
 };
 
@@ -82,7 +86,7 @@ struct ReactionNetworkTraits<AlloyReactionNetwork>
 {
 	using Species = AlloySpecies;
 
-	static constexpr std::size_t numSpecies = 6;
+	static constexpr std::size_t numSpecies = 7;
 
 	using ProductionReactionType = AlloyProductionReaction;
 	using DissociationReactionType = AlloyDissociationReaction;

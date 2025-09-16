@@ -66,9 +66,9 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 22);
 	typename NetworkType::PhaseSpace phaseSpace = network.getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 6);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 7);
 
-	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 6);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 7);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 1);
 
 	// Get the diagonal fill
@@ -1163,8 +1163,8 @@ BOOST_AUTO_TEST_CASE(traits)
 	using NetworkType = AlloyReactionNetwork;
 	using Spec = NetworkType::Species;
 
-	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 6);
-	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 6);
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 7);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 7);
 	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 3);
 	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 3);
 

@@ -249,6 +249,9 @@ JSONOptions::defineHandlers()
 				checkSetParam(tree, name, initialConcentration);
 			})
 		.add(
+			"hePPM", ElemType::real, "Helium PPM.",
+			JSON_ELEM_HANDLER { checkSetParam(tree, name, hePPM); })
+		.add(
 			"zeta", ElemType::real,
 			"The value of the electronic stopping power in the material.\n"
 			"(default = 0.73)",

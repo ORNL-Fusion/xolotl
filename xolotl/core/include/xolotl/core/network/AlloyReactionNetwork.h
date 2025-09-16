@@ -79,7 +79,7 @@ public:
 		// Find the edge of the phase space
 		const auto& largestReg = this->getCluster(largestClusterId).getRegion();
 		Composition hiLargest = largestReg.getUpperLimitPoint();
-		double largestSize = hiLargest[Species::V] +
+		double largestSize = hiLargest[Species::He] + hiLargest[Species::V] +
 			hiLargest[Species::PerfectV] + hiLargest[Species::FaultedV] +
 			hiLargest[Species::PerfectI] + hiLargest[Species::FaultedI] -
 			5; // Don't know which one was saved

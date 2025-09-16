@@ -11,7 +11,9 @@ AlloyClusterGenerator::AlloyClusterGenerator(const options::IOptions& options) :
 	_maxI(options.getMaxI()),
 	_maxSize(options.getMaxImpurity()),
 	_groupingMin(options.getGroupingMin()),
-	_groupingWidth(options.getGroupingWidthA())
+	_groupingWidthA(options.getGroupingWidthA()),
+	_groupingWidthB(options.getGroupingWidthB()),
+	_hevRatio(options.getHeVRatio())
 {
 }
 
@@ -22,7 +24,9 @@ AlloyClusterGenerator::AlloyClusterGenerator(
 	_maxI(options.getMaxI()),
 	_maxSize(options.getMaxImpurity()),
 	_groupingMin(options.getGroupingMin()),
-	_groupingWidth(options.getGroupingWidthA())
+	_groupingWidthA(options.getGroupingWidthA()),
+	_groupingWidthB(options.getGroupingWidthB()),
+	_hevRatio(options.getHeVRatio())
 {
 }
 } // namespace network

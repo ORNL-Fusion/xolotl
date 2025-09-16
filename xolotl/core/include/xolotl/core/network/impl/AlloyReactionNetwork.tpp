@@ -651,6 +651,94 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		}
 		return;
 	}
+
+	// He + V = HeV
+	if ((lo1.isOnAxis(Species::He) and lo2.isOnAxis(Species::V)) or
+		(lo1.isOnAxis(Species::V) and lo2.isOnAxis(Species::He))) {
+		// Void can be grouped
+		auto minSize = lo1[Species::V] + lo2[Species::V];
+		auto maxSize = hi1[Species::V] + hi2[Species::V] - 2;
+		// Find the corresponding clusters
+		for (auto k = minSize; k <= maxSize; k++) {
+			Composition comp = Composition::zero();
+			comp[Species::He] = lo1[Species::He] + lo2[Species::He];
+			comp[Species::V] = k;
+			auto vProdId = subpaving.findTileId(comp);
+			if (vProdId != subpaving.invalidIndex() &&
+				vProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, vProdId});
+				// No dissociation
+				previousIndex = vProdId;
+			}
+		}
+		return;
+	}
+
+	// He + HeV = HeV
+	if (lo1[Species::He] > 0 and lo2[Species::He] > 0) {
+		// HeV can be grouped
+		auto minVSize = lo1[Species::V] + lo2[Species::V];
+		auto maxVSize = hi1[Species::V] + hi2[Species::V] - 2;
+		auto minHeSize = lo1[Species::He] + lo2[Species::He];
+		auto maxHeSize = hi1[Species::He] + hi2[Species::He] - 2;
+		// Find the corresponding clusters
+		for (auto k = minHeSize; k <= maxHeSize; k++) {
+			for (auto l = minVSize; l <= maxVSize; l++) {
+				Composition comp = Composition::zero();
+				comp[Species::He] = k;
+				comp[Species::V] = l;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					// No dissociation
+					previousIndex = vProdId;
+				}
+				if (vProdId == subpaving.invalidIndex()) {
+					// Trap mutation
+					comp[Species::V] = l + 1;
+					vProdId = subpaving.findTileId(comp);
+					if (vProdId != subpaving.invalidIndex() &&
+						vProdId != previousIndex) {
+						// Get the I product
+						Composition iComp = Composition::zero();
+						iComp[Species::I] = 1;
+						auto iProdId = subpaving.findTileId(iComp);
+						if (iProdId != subpaving.invalidIndex()) {
+							this->addProductionReaction(
+								tag, {i, j, vProdId, iProdId});
+						}
+					}
+				}
+			}
+		}
+		return;
+	}
+
+	// V + HeV = HeV
+	if (lo1.isOnAxis(Species::V) or lo2.isOnAxis(Species::V)) {
+		// HeV can be grouped
+		auto minVSize = lo1[Species::V] + lo2[Species::V];
+		auto maxVSize = hi1[Species::V] + hi2[Species::V] - 2;
+		auto minHeSize = lo1[Species::He] + lo2[Species::He];
+		auto maxHeSize = hi1[Species::He] + hi2[Species::He] - 2;
+		// Find the corresponding clusters
+		for (auto l = minVSize; l <= maxVSize; l++) {
+			for (auto k = minHeSize; k <= maxHeSize; k++) {
+				Composition comp = Composition::zero();
+				comp[Species::He] = k;
+				comp[Species::V] = l;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					// No dissociation
+					previousIndex = vProdId;
+				}
+			}
+		}
+		return;
+	}
 }
 
 template <typename TTag>

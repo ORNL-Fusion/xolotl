@@ -8,6 +8,16 @@ namespace core
 {
 namespace network
 {
+namespace alloy
+{
+KOKKOS_INLINE_FUNCTION
+IReactionNetwork::AmountType
+getMaxHePerV(IReactionNetwork::AmountType amtV, double ratio) noexcept
+{
+	return amtV * ratio;
+}
+} // namespace alloy
+
 class AlloyClusterGenerator :
 	public plsm::refine::Detector<AlloyClusterGenerator>
 {
@@ -65,7 +75,9 @@ private:
 	AmountType _maxI;
 	AmountType _maxSize;
 	AmountType _groupingMin;
-	AmountType _groupingWidth;
+	AmountType _groupingWidthA;
+	AmountType _groupingWidthB;
+	AmountType _hevRatio;
 };
 } // namespace network
 } // namespace core

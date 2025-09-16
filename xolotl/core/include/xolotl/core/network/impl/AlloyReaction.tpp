@@ -49,10 +49,10 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 	n1 = lo1[Species::V] + lo1[Species::PerfectV] + lo1[Species::FaultedV] +
 		lo1[Species::I] + lo1[Species::PerfectI] + lo1[Species::FaultedI];
 
-	bool cl0IsSphere = (pairCl0Reg.getOrigin().isOnAxis(Species::V) ||
-			 pairCl0Reg.getOrigin().isOnAxis(Species::I)),
-		 cl1IsSphere = (pairCl1Reg.getOrigin().isOnAxis(Species::V) ||
-			 pairCl1Reg.getOrigin().isOnAxis(Species::I));
+	bool cl0IsSphere = (lo0[Species::He] > 0 or lo0[Species::V] > 0 or
+			 lo0.isOnAxis(Species::I)),
+		 cl1IsSphere = (lo1[Species::He] > 0 or lo1[Species::V] > 0 or
+			 lo1.isOnAxis(Species::I));
 
 	// Cluster 0 is a dislocation loop
 	if (not cl0IsSphere) {

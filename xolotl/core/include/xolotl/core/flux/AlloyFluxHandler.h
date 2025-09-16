@@ -40,6 +40,8 @@ protected:
 	double perfectFraction = 0.2;
 	double voidFraction = 0.5;
 
+	double hePPM; // ppm / dpa
+
 	/**
 	 * Vector to hold the incident flux values at each grid
 	 * point (x position).
@@ -59,6 +61,7 @@ public:
 	 */
 	AlloyFluxHandler(const options::IOptions& options) : FluxHandler(options)
 	{
+		hePPM = options.getHePPM(); // ppm / dpa
 	}
 
 	/**
@@ -88,8 +91,31 @@ public:
 		auto omega = alloyNetwork->getAtomicVolume();
 		auto fluxFactor = fluxAmplitude / omega;
 
+		// Set the flux index corresponding the the single helium cluster here
+		typename NetworkType::Composition comp =
+			NetworkType::Composition::zero();
+		comp[NetworkType::Species::He] = 1;
+
+		auto cluster = alloyNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error(
+				"\nThe single helium cluster is not present in the network, "
+				"cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+		std::vector<double> tempVector;
+		if (xGrid.size() == 0)
+			tempVector.push_back(fluxFactor * hePPM * 1.0e-12);
+		else {
+			for (auto i = 0; i < xGrid.size(); i++) {
+				tempVector.push_back(fluxFactor * hePPM * 1.0e-12);
+			}
+		}
+		incidentFluxVec.push_back(tempVector);
+
+		comp[NetworkType::Species::He] = 0;
+
 		// Set the flux index corresponding the interstitial clusters
-		NetworkType::Composition comp = NetworkType::Composition::zero();
 		for (int i = 0; i < fluxI.size(); i++) {
 			comp[NetworkType::Species::I] = i;
 			auto cluster =
@@ -335,6 +361,17 @@ public:
 		Kokkos::View<double*> updatedConcOffset, int xi,
 		int surfacePos) override
 	{
+		// Attenuation factor to model reduced production of new point defects
+		// with increasing dose (or time).
+		double attenuation = 1.0;
+		if (cascadeDose > 0.0) {
+			attenuation = ((1.0 - cascadeEfficiency) / 2.0) *
+					(1.0 -
+						tanh(47.0 *
+							(currentTime * fluxAmplitude - cascadeDose))) +
+				cascadeEfficiency;
+		}
+
 		// Update the concentration array
 		auto ids = this->fluxIds;
 		auto flux = this->incidentFlux;
