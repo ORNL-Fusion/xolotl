@@ -101,6 +101,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 		}
 	}
 	this->setEnableReducedJacobian(useReduced);
+
 	if (opts.getReactionFilePath().length() > 0)
 		this->setEnableReadRates(true);
 	else

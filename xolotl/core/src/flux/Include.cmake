@@ -9,6 +9,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/flux/IFluxHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/flux/PSIFluxHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/flux/PulsedFitFluxHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/flux/RPVFitFluxHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/flux/W100FitFluxHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/flux/W110FitFluxHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/flux/W111FitFluxHandler.h

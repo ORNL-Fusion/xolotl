@@ -239,7 +239,7 @@ JSONOptions::defineHandlers()
 		.add(
 			"material", ElemType::string,
 			"Label for material being used.\n"
-			"{W100, W110, W111, W211, Pulsed, Fuel, Fe, 800H, AlphaZr}",
+			"{W100, W110, W111, W211, Pulsed, Fuel, Fe, 800H, AlphaZr, RPV}",
 			JSON_ELEM_HANDLER { checkSetParam(tree, name, materialName); })
 		.add(
 			"initialConc", ElemType::string,

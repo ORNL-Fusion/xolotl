@@ -102,5 +102,13 @@ constexpr double zFactor = 100.0;
 // Tungsten density in nm^-3
 constexpr double tungstenDensity = 62.8;
 
+// Energies for thermal vacancy concentration in BCC Fe alloys
+constexpr double feBCCFormationEntropy = 2.17; // in k_B
+constexpr double feBCCFormationEnergy = 2.02; // in eV
+
+// Sink strength for BCC Fe alloys in nm^-2
+constexpr double feBCCDisloStrength = 5.0e-4;
+constexpr double feBCCGBStrength = 3.7e-5;
+
 } /* end namespace core */
 } /* end namespace xolotl */

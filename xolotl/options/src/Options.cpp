@@ -87,7 +87,7 @@ Options::Options() :
 	transitionSize(325),
 	cascadeDose(-1.0),
 	cascadeEfficiency(0.0),
-	reactionFilePath("reaction.dat")
+	reactionFilePath("")
 {
 }
 

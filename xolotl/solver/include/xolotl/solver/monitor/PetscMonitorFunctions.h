@@ -48,6 +48,9 @@ computeAlloy(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx);
 
 extern PetscErrorCode
+computeRPV(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx);
+
+extern PetscErrorCode
 monitorScatter(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx);
 
