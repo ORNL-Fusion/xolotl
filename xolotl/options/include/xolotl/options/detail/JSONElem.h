@@ -96,6 +96,9 @@ public:
 	void
 	print(std::ostream& os) const;
 
+	bool
+	checkName(const std::string& name) const;
+
 private:
 	std::deque<JSONElem> _elems;
 };

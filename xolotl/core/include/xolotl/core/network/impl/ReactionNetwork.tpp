@@ -1254,7 +1254,6 @@ ReactionNetwork<TImpl>::getTotalsVec(ConcentrationsView concentrations,
 		throw TotalQuantityError(
 			"getTotalsVec: Currently supports only up to 6; given size = " +
 			std::to_string(quantities.size()));
-		break;
 	}
 }
 

@@ -140,7 +140,7 @@ public:
 	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 		IndexType gridSize, const options::IOptions& opts);
 
-	~ReactionNetwork();
+	virtual ~ReactionNetwork();
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::size_t

@@ -594,8 +594,6 @@ PetscSolver1DHandler::initGBLocation(DM& da, Vec& C)
 		return;
 	}
 
-	PetscErrorCode ierr;
-
 	// Pointer for the concentration vector
 	PetscScalar** concentrations = nullptr;
 	PetscCallVoid(DMDAVecGetArrayDOF(da, C, &concentrations));
