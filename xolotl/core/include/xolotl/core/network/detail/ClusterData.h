@@ -147,12 +147,13 @@ private:
 		FISSION_RATE,
 		ZETA,
 		BARRIER_ENERGY,
-		AV_VOID_RAD,
+		AV_BUBBLE_RAD,
 		AV_PERFV_RAD,
 		AV_FAULV_RAD,
 		AV_PERFI_RAD,
 		AV_FAULI_RAD,
 		AV_FAULV,
+		AV_FAULI,
 		I_FORMATION,
 		XE_FORMATION,
 		V_FORMATION,
@@ -164,11 +165,12 @@ private:
 	{
 		TRANSITION_SIZE_V = 0,
 		TRANSITION_SIZE_I,
-		VOID_ID,
+		BUBBLE_ID,
 		PERFV_ID,
 		FAULV_ID,
 		PERFI_ID,
 		FAULI_ID,
+		AV_HE_ID,
 		AV_VOID_ID,
 		AV_PERFV_ID,
 		AV_FAULV_ID,
@@ -327,15 +329,15 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	voidAvRad() const
+	bubbleAvRad() const
 	{
-		return _floatVals[AV_VOID_RAD];
+		return _floatVals[AV_BUBBLE_RAD];
 	}
 
 	void
-	setVoidAvRad(double val)
+	setBubbleAvRad(double val)
 	{
-		setVal(_floatVals, AV_VOID_RAD, val);
+		setVal(_floatVals, AV_BUBBLE_RAD, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -404,6 +406,19 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
+	double
+	faulIAv() const
+	{
+		return _floatVals[AV_FAULI];
+	}
+
+	void
+	setFaulIAv(double val)
+	{
+		setVal(_floatVals, AV_FAULI, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
 	int
 	transitionSizeV() const
 	{
@@ -431,15 +446,15 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	int
-	voidId() const
+	bubbleId() const
 	{
-		return _intVals[VOID_ID];
+		return _intVals[BUBBLE_ID];
 	}
 
 	void
-	setVoidId(int val)
+	setBubbleId(int val)
 	{
-		setVal(_intVals, VOID_ID, val);
+		setVal(_intVals, BUBBLE_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -492,6 +507,19 @@ public:
 	setFaulIId(int val)
 	{
 		setVal(_intVals, FAULI_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	heAvId() const
+	{
+		return _intVals[AV_HE_ID];
+	}
+
+	void
+	setHeAvId(int val)
+	{
+		setVal(_intVals, AV_HE_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

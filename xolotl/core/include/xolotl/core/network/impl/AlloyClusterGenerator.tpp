@@ -23,7 +23,7 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 		r = true;
 	}
 
-	// Check if others begin at 0.0
+	// Check if others begin at 0
 	auto othersBeginAtZero = [](const Region& reg, Species species) {
 		for (auto s : NetworkType::getSpeciesRange()) {
 			if (s.value != species && reg[s].begin() != 0) {
@@ -53,6 +53,9 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	if (nAxis == 0)
 		return true;
 
+	Composition lo = region.getOrigin();
+	Composition hi = region.getUpperLimitPoint();
+
 	// Smaller that the minimum size for grouping
 	if (region[Species::He].begin() < _groupingMin &&
 		region[Species::V].begin() < _groupingMin &&
@@ -62,9 +65,6 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 		region[Species::PerfectI].begin() < _groupingMin) {
 		return true;
 	}
-
-	Composition lo = region.getOrigin();
-	Composition hi = region.getUpperLimitPoint();
 
 	// I is always refined
 	if (region[Species::I].begin() > 0)
@@ -76,14 +76,13 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 			othersBeginAtZero(region, Species::PerfectV)) {
 			return true;
 		}
-		if (region[Species::PerfectV].end() > _maxSize) {
+		if (region[Species::PerfectV].end() > _maxLoopSize) {
 			return true;
 		}
 		if (region[Species::PerfectV].length() <
 			util::max((double)(_groupingWidthB + 1),
 				pow(region[Species::PerfectV].begin(), 0.75) * 0.5)) {
 			result[toIndex(Species::PerfectV)] = false;
-			return true;
 		}
 	}
 
@@ -92,14 +91,13 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 			othersBeginAtZero(region, Species::FaultedV)) {
 			return true;
 		}
-		if (region[Species::FaultedV].end() > _maxSize) {
+		if (region[Species::FaultedV].end() > _maxLoopSize) {
 			return true;
 		}
 		if (region[Species::FaultedV].length() <
 			util::max((double)(_groupingWidthB + 1),
 				pow(region[Species::FaultedV].begin(), 0.75) * 0.5)) {
 			result[toIndex(Species::FaultedV)] = false;
-			return true;
 		}
 	}
 
@@ -108,14 +106,13 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 			othersBeginAtZero(region, Species::PerfectI)) {
 			return true;
 		}
-		if (region[Species::PerfectI].end() > _maxSize) {
+		if (region[Species::PerfectI].end() > _maxLoopSize) {
 			return true;
 		}
 		if (region[Species::PerfectI].length() <
 			util::max((double)(_groupingWidthB + 1),
 				pow(region[Species::PerfectI].begin(), 0.75) * 0.5)) {
 			result[toIndex(Species::PerfectI)] = false;
-			return true;
 		}
 	}
 
@@ -124,14 +121,13 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 			othersBeginAtZero(region, Species::FaultedI)) {
 			return true;
 		}
-		if (region[Species::FaultedI].end() > _maxSize) {
+		if (region[Species::FaultedI].end() > _maxLoopSize) {
 			return true;
 		}
 		if (region[Species::FaultedI].length() <
 			util::max((double)(_groupingWidthB + 1),
 				pow(region[Species::FaultedI].begin(), 0.75) * 0.5)) {
 			result[toIndex(Species::FaultedI)] = false;
-			return true;
 		}
 	}
 
@@ -145,7 +141,6 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 			util::max((double)(_groupingWidthB + 1),
 				pow(region[Species::V].begin(), 0.75) * 0.5)) {
 			result[toIndex(Species::V)] = false;
-			return true;
 		}
 	}
 
@@ -232,6 +227,9 @@ AlloyClusterGenerator::select(const Region& region) const
 		return true;
 	};
 
+	Composition lo = region.getOrigin();
+	Composition hi = region.getUpperLimitPoint();
+
 	// Interstitials
 	if (region[Species::I].begin() > 0 &&
 		!region.getOrigin().isOnAxis(Species::I)) {
@@ -246,13 +244,21 @@ AlloyClusterGenerator::select(const Region& region) const
 		othersEndAtOne(region, Species::He)) {
 		return false;
 	}
+	// He can only cluster with V
+	if (region[Species::He].begin() > 1 && hi[Species::V] == 1) {
+		return false;
+	}
 
 	// Loops
 	if (region[Species::PerfectV].begin() > 0 &&
 		!region.getOrigin().isOnAxis(Species::PerfectV)) {
 		return false;
 	}
-	if (region[Species::PerfectV].begin() > _maxSize) {
+	if (region[Species::PerfectV].begin() > 0 && region.isSimplex() &&
+		region[Species::PerfectV].begin() <= _maxV) {
+		return false;
+	}
+	if (region[Species::PerfectV].begin() > _maxLoopSize) {
 		return false;
 	}
 
@@ -260,7 +266,11 @@ AlloyClusterGenerator::select(const Region& region) const
 		!region.getOrigin().isOnAxis(Species::FaultedV)) {
 		return false;
 	}
-	if (region[Species::FaultedV].begin() > _maxSize) {
+	if (region[Species::FaultedV].begin() > 0 && region.isSimplex() &&
+		region[Species::FaultedV].begin() <= _maxV) {
+		return false;
+	}
+	if (region[Species::FaultedV].begin() > _maxLoopSize) {
 		return false;
 	}
 
@@ -268,7 +278,11 @@ AlloyClusterGenerator::select(const Region& region) const
 		!region.getOrigin().isOnAxis(Species::PerfectI)) {
 		return false;
 	}
-	if (region[Species::PerfectI].begin() > _maxSize) {
+	if (region[Species::PerfectI].begin() > 0 && region.isSimplex() &&
+		region[Species::PerfectI].begin() <= _maxI) {
+		return false;
+	}
+	if (region[Species::PerfectI].begin() > _maxLoopSize) {
 		return false;
 	}
 
@@ -276,7 +290,19 @@ AlloyClusterGenerator::select(const Region& region) const
 		!region.getOrigin().isOnAxis(Species::FaultedI)) {
 		return false;
 	}
-	if (region[Species::FaultedI].begin() > _maxSize) {
+	if (region[Species::FaultedI].begin() > 0 && region.isSimplex() &&
+		region[Species::FaultedI].begin() <= _maxI) {
+		return false;
+	}
+	if (region[Species::FaultedI].begin() > _maxLoopSize) {
+		return false;
+	}
+	if (region[Species::PerfectV].end() - 1 <= _maxV &&
+		region[Species::FaultedV].end() - 1 <= _maxV &&
+		region[Species::PerfectI].end() - 1 <= _maxI &&
+		region[Species::FaultedI].end() - 1 <= _maxI &&
+		region[Species::He].begin() == 0 && region[Species::V].begin() == 0 &&
+		region[Species::I].begin() == 0) {
 		return false;
 	}
 
@@ -284,9 +310,6 @@ AlloyClusterGenerator::select(const Region& region) const
 	if (region[Species::V].begin() > _maxSize) {
 		return false;
 	}
-
-	Composition lo = region.getOrigin();
-	Composition hi = region.getUpperLimitPoint();
 
 	// The edge
 	if (region[Species::V].end() > 1) {
@@ -314,41 +337,25 @@ AlloyClusterGenerator::getFormationEnergy(
 	const auto& reg = cluster.getRegion();
 	Composition lo(reg.getOrigin());
 	double energy = 0.0;
-	if (lo.isOnAxis(Species::PerfectI)) {
-		for (auto j : makeIntervalRange(reg[Species::PerfectI])) {
-			energy += 3.4 + 2.0 * (pow((double)j, 2.0 / 3.0) - 1.0);
+	if (lo[Species::He] == 1) {
+		for (auto j : makeIntervalRange(reg[Species::He])) {
+			for (auto i : makeIntervalRange(reg[Species::V])) {
+				double ratio = ((double)j) / (double)i;
+				energy += 3.2 * (1.0 - exp(-0.4167 * pow(ratio, 0.9477)));
+			}
 		}
-		return energy / reg[Species::PerfectI].length();
+		return energy / (reg[Species::He].length() * reg[Species::V].length());
 	}
-	if (lo.isOnAxis(Species::FaultedI)) {
-		for (auto j : makeIntervalRange(reg[Species::FaultedI])) {
-			energy += 3.4 + 2.0 * (pow((double)j, 2.0 / 3.0) - 1.0);
+	if (lo[Species::He] > 1) {
+		for (auto j : makeIntervalRange(reg[Species::He])) {
+			for (auto i : makeIntervalRange(reg[Species::V])) {
+				double ratio_before = ((double)j - 1.0) / (double)i;
+				double ratio = ((double)j) / (double)i;
+				energy += (2.101 + 1.545 * (ratio_before / ratio)) * 3.2 *
+					(1.0 - exp(-0.4167 * pow(ratio, 0.9477)));
+			}
 		}
-		return energy / reg[Species::FaultedI].length();
-	}
-	if (lo.isOnAxis(Species::FaultedV)) {
-		for (auto j : makeIntervalRange(reg[Species::FaultedV])) {
-			energy += 1.9 + 2.0 * (pow((double)j, 2.0 / 3.0) - 1.0);
-		}
-		return energy / reg[Species::FaultedV].length();
-	}
-	if (lo.isOnAxis(Species::PerfectV)) {
-		for (auto j : makeIntervalRange(reg[Species::PerfectV])) {
-			energy += 1.9 + 2.0 * (pow((double)j, 2.0 / 3.0) - 1.0);
-		}
-		return energy / reg[Species::PerfectV].length();
-	}
-	if (lo.isOnAxis(Species::V)) {
-		for (auto j : makeIntervalRange(reg[Species::V])) {
-			energy += 1.9 + 3.4 * (pow((double)j, 2.0 / 3.0) - 1.0);
-		}
-		return energy / reg[Species::V].length();
-	}
-	if (lo.isOnAxis(Species::I)) {
-		for (auto j : makeIntervalRange(reg[Species::I])) {
-			energy += 3.4 + 3.5 * (pow((double)j, 2.0 / 3.0) - 1.0);
-		}
-		return energy / reg[Species::I].length();
+		return energy / (reg[Species::He].length() * reg[Species::V].length());
 	}
 	return 0.0;
 }

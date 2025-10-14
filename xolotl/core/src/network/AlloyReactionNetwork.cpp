@@ -70,9 +70,9 @@ AlloyReactionNetwork::checkLargestClusterId()
 		KOKKOS_LAMBDA(IndexType i, Reducer::value_type & update) {
 			const Region& clReg = clData().getCluster(i).getRegion();
 			Composition hi = clReg.getUpperLimitPoint();
-			auto size = hi[Species::V] + hi[Species::PerfectV] +
-				hi[Species::FaultedI] + hi[Species::FaultedV] +
-				hi[Species::PerfectI];
+			auto size = hi[Species::He] + hi[Species::V] +
+				hi[Species::PerfectV] + hi[Species::FaultedI] +
+				hi[Species::FaultedV] + hi[Species::PerfectI];
 			if (size > update.val) {
 				update.val = size;
 				update.loc = i;
@@ -243,29 +243,41 @@ AlloyReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 		// SSBM case
 		if (this->_enableLargeBubble) {
 			IndexType ssbmId = 0;
+			IndexType ssbmSizeId = 0;
 			switch (id()) {
-			// Void
+			// He
 			case 0:
-				ssbmId = this->_clusterData.h_view().voidId();
+				ssbmId = this->_clusterData.h_view().bubbleId();
+				ssbmSizeId = ssbmId + 2;
+				break;
+			// Void
+			case 1:
+				ssbmId = this->_clusterData.h_view().bubbleId();
+				ssbmSizeId = ssbmId + 1;
 				break;
 			// Perfect V
-			case 1:
+			case 2:
 				ssbmId = this->_clusterData.h_view().perfVId();
+				ssbmSizeId = ssbmId + 1;
 				break;
 			// Faulted V
-			case 2:
+			case 3:
 				ssbmId = this->_clusterData.h_view().faulVId();
+				ssbmSizeId = ssbmId + 1;
 				break;
 			// Perfect I
-			case 4:
+			case 5:
 				ssbmId = this->_clusterData.h_view().perfIId();
+				ssbmSizeId = ssbmId + 1;
 				break;
 			// Faulted I
-			case 5:
+			case 6:
 				ssbmId = this->_clusterData.h_view().faulIId();
+				ssbmSizeId = ssbmId + 1;
 				break;
 			default:
 				ssbmId = 0;
+				ssbmSizeId = 0;
 				break;
 			}
 
@@ -275,7 +287,7 @@ AlloyReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 			if (ssbmId > 0) {
 				vConc = conc(ssbmId);
 				if (vConc > 1.0e-16)
-					avComp = conc(ssbmId + 1) / vConc;
+					avComp = conc(ssbmSizeId) / vConc;
 			}
 
 			// Add the single size data

@@ -90,6 +90,16 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 			Pl = 0.78 / (p * p) + 0.66 * p - 0.44;
 		else
 			Pl = 0.70 / (p * p) + 0.78 * p - 0.47;
+		//
+		//		std::cout << ((1 - alpha) * rateToroidal * Pl + alpha *
+		//rateSpherical) * 				(dc0 + dc1) << " " << rd << std::endl; 		std::cout <<
+		//lo0[Species::He] << " " << lo0[Species::V] << " " <<
+		//lo0[Species::PerfectV] << " " << lo0[Species::FaultedV] << " " <<
+		//				lo0[Species::I]  << " " << lo0[Species::PerfectI] << " "
+		//<<  lo0[Species::FaultedI] << std::endl; 		std::cout << lo1[Species::He]
+		//<< " " << lo1[Species::V] << " " << lo1[Species::PerfectV] << " " <<
+		//lo1[Species::FaultedV] << " " << 				lo1[Species::I]  << " " <<
+		//lo1[Species::PerfectI] << " " <<  lo1[Species::FaultedI] << std::endl;
 
 		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
 			(dc0 + dc1);
@@ -152,9 +162,9 @@ AlloyProductionReaction::getRateForProduction(IndexType gridIndex)
 	if (this->_reactants[0] >= numClusters) {
 		auto i = (this->_reactants[0] - numClusters) / 2;
 		switch (i) {
-		// Void
+		// Bubble
 		case 0:
-			r0 = this->_clusterData->voidAvRad();
+			r0 = this->_clusterData->bubbleAvRad();
 			cl0Reg[Species::V] = {1, 2};
 			break;
 		// Perfect V
@@ -203,7 +213,7 @@ AlloyProductionReaction::getRateForProduction(IndexType gridIndex)
 		switch (i) {
 		// Void
 		case 0:
-			r1 = this->_clusterData->voidAvRad();
+			r1 = this->_clusterData->bubbleAvRad();
 			cl1Reg[Species::V] = {1, 2};
 			rdCl[1][0] = 0.79;
 			rdCl[1][1] = 1.59;
@@ -435,6 +445,15 @@ AlloyProductionReaction::computeFlux(
 				Kokkos::atomic_add(&fluxes[ssbmId + 1], f * comp[Species::I]);
 			}
 		}
+
+		// Helium case
+		if (comp[Species::He] > 0) {
+			// The standard cluster always loses the flux
+			Kokkos::atomic_sub(&fluxes[stdClusterId], f);
+
+			// The He size increases
+			Kokkos::atomic_add(&fluxes[ssbmId + 2], f * comp[Species::He]);
+		}
 	}
 
 	// Large bubble is one of the product
@@ -479,6 +498,18 @@ AlloyProductionReaction::computeFlux(
 			Kokkos::atomic_add(&fluxes[this->_products[0]], f);
 			Kokkos::atomic_add(&fluxes[this->_products[0] + 1], f * totalSize);
 		}
+
+		// Helium case
+		if (orig1.isOnAxis(Species::He) or orig2.isOnAxis(Species::He)) {
+			// Compute the total size
+			auto totalSize = comp1[Species::He] + comp2[Species::He];
+			// Both reactants decrease
+			Kokkos::atomic_sub(&fluxes[this->_reactants[0]], f);
+			Kokkos::atomic_sub(&fluxes[this->_reactants[1]], f);
+			// The large bubble increases, as well as average He
+			Kokkos::atomic_add(&fluxes[this->_products[0]], f);
+			Kokkos::atomic_add(&fluxes[this->_products[0] + 1], f * totalSize);
+		}
 	}
 }
 
@@ -500,7 +531,6 @@ AlloyProductionReaction::computePartialDerivatives(
 
 	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
 	auto numClusters = this->_clusterData->numClusters;
-	auto voidId = this->_clusterData->voidId();
 
 	// Large bubble is one of the reactants
 	if (this->_reactants[0] >= numClusters or
@@ -815,6 +845,40 @@ AlloyProductionReaction::computePartialDerivatives(
 				}
 			}
 		}
+
+		// Helium case
+		if (comp[Species::He] > 0) {
+			// It should always be a bubble here
+
+			// The standard cluster always loses the flux
+			if (this->_reactants[0] >= numClusters) {
+				Kokkos::atomic_sub(
+					&values(this->_connEntries[1][0][0][0]), f * stdC);
+				Kokkos::atomic_sub(
+					&values(this->_connEntries[1][0][1][0]), f * bC);
+			}
+			else {
+				Kokkos::atomic_sub(
+					&values(this->_connEntries[0][0][1][0]), f * stdC);
+				Kokkos::atomic_sub(
+					&values(this->_connEntries[0][0][0][0]), f * bC);
+			}
+
+			// The He size increases
+			f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::He];
+			if (this->_reactants[0] >= numClusters) {
+				Kokkos::atomic_add(
+					&values(this->_connEntries[0][2][0][0]), f * stdC);
+				Kokkos::atomic_add(
+					&values(this->_connEntries[0][2][1][0]), f * bC);
+			}
+			else {
+				Kokkos::atomic_add(
+					&values(this->_connEntries[1][2][1][0]), f * stdC);
+				Kokkos::atomic_add(
+					&values(this->_connEntries[1][2][0][0]), f * bC);
+			}
+		}
 	}
 
 	// Large bubble is one of the product
@@ -850,9 +914,9 @@ AlloyProductionReaction::computePartialDerivatives(
 			Kokkos::atomic_add(
 				&values(this->_connEntries[2][0][1][0]), f * cR1);
 			f = this->_coefs(0, 0, 0, 0) * rate *
-					(comp1[Species::V] + comp2[Species::V] +
-						comp1[Species::PerfectV] + comp2[Species::PerfectV]) +
-				comp1[Species::FaultedV] + comp2[Species::FaultedV];
+				(comp1[Species::V] + comp2[Species::V] +
+					comp1[Species::PerfectV] + comp2[Species::PerfectV] +
+					comp1[Species::FaultedV] + comp2[Species::FaultedV]);
 			Kokkos::atomic_add(
 				&values(this->_connEntries[2][1][0][0]), f * cR2);
 			Kokkos::atomic_add(
@@ -877,13 +941,38 @@ AlloyProductionReaction::computePartialDerivatives(
 			Kokkos::atomic_add(
 				&values(this->_connEntries[2][0][1][0]), f * cR1);
 			f = this->_coefs(0, 0, 0, 0) * rate *
-					(comp1[Species::I] + comp2[Species::I] +
-						comp1[Species::PerfectI] + comp2[Species::PerfectI]) +
-				comp1[Species::FaultedI] + comp2[Species::FaultedI];
+				(comp1[Species::I] + comp2[Species::I] +
+					comp1[Species::PerfectI] + comp2[Species::PerfectI] +
+					comp1[Species::FaultedI] + comp2[Species::FaultedI]);
 			Kokkos::atomic_add(
 				&values(this->_connEntries[2][1][0][0]), f * cR2);
 			Kokkos::atomic_add(
 				&values(this->_connEntries[2][1][1][0]), f * cR1);
+		}
+
+		// Helium case
+		if (orig1.isOnAxis(Species::He) or orig2.isOnAxis(Species::He)) {
+			// Both reactants decrease
+			Kokkos::atomic_sub(
+				&values(this->_connEntries[0][0][0][0]), f * cR2);
+			Kokkos::atomic_sub(
+				&values(this->_connEntries[1][0][0][0]), f * cR2);
+			Kokkos::atomic_sub(
+				&values(this->_connEntries[0][0][1][0]), f * cR1);
+			Kokkos::atomic_sub(
+				&values(this->_connEntries[1][0][1][0]), f * cR1);
+
+			// The large bubble increases, as well as average He
+			Kokkos::atomic_add(
+				&values(this->_connEntries[2][0][0][0]), f * cR2);
+			Kokkos::atomic_add(
+				&values(this->_connEntries[2][0][1][0]), f * cR1);
+			f = this->_coefs(0, 0, 0, 0) * rate *
+				(comp1[Species::He] + comp2[Species::He]);
+			Kokkos::atomic_add(
+				&values(this->_connEntries[2][2][0][0]), f * cR2);
+			Kokkos::atomic_add(
+				&values(this->_connEntries[2][2][1][0]), f * cR1);
 		}
 	}
 }
@@ -948,6 +1037,12 @@ AlloyDissociationReaction::computeBindingEnergy(double time)
 	Composition hi = clReg.getUpperLimitPoint();
 	Composition prod1Comp = prod1Reg.getOrigin();
 	Composition prod2Comp = prod2Reg.getOrigin();
+
+	// HeV case
+	if (lo[Species::He] > 0) {
+		be = prod1.getFormationEnergy() + prod2.getFormationEnergy() -
+			cl.getFormationEnergy();
+	}
 	if (lo.isOnAxis(Species::PerfectV)) {
 		double n =
 			(double)(lo[Species::PerfectV] + hi[Species::PerfectV] - 1) * 0.5;
@@ -1062,10 +1157,26 @@ AlloyTransformReaction::computeFlux(
 	if (not isLargeBubbleReaction)
 		return;
 
-	// The size of the Perfect loop increases by the size of the Faulted loop
-	auto fSize = this->_clusterData->faulVAv();
-	Kokkos::atomic_add(&fluxes(this->_clusterData->perfVAvId()),
-		this->_rate(gridIndex) * concentrations(_reactant) * fSize);
+	auto numClusters = this->_clusterData->numClusters;
+
+	// Switch on V or I type loop
+	auto typeId = (_reactant - numClusters) / 2;
+	// SSBM V type
+	if (typeId < 3) {
+		// The size of the Perfect loop increases by the size of the Faulted
+		// loop
+		auto fSize = this->_clusterData->faulVAv();
+		Kokkos::atomic_add(&fluxes(this->_clusterData->perfVAvId()),
+			this->_rate(gridIndex) * concentrations(_reactant) * fSize);
+	}
+	// SSBM I type
+	else {
+		// The size of the Perfect loop increases by the size of the Faulted
+		// loop
+		auto fSize = this->_clusterData->faulIAv();
+		Kokkos::atomic_add(&fluxes(this->_clusterData->perfIAvId()),
+			this->_rate(gridIndex) * concentrations(_reactant) * fSize);
+	}
 }
 
 KOKKOS_INLINE_FUNCTION
@@ -1080,8 +1191,21 @@ AlloyTransformReaction::computePartialDerivatives(
 	if (not isLargeBubbleReaction)
 		return;
 
+	auto numClusters = this->_clusterData->numClusters;
+
+	// Switch on V or I type loop
+	auto typeId = (_reactant - numClusters) / 2;
+
+	double fSize = 0.0;
+	// SSBM V type
+	if (typeId < 3) {
+		fSize = this->_clusterData->faulVAv();
+	}
+	// SSBM I type
+	else {
+		fSize = this->_clusterData->faulIAv();
+	}
 	// The size of the Perfect loop increases by the size of the Faulted loop
-	auto fSize = this->_clusterData->faulVAv();
 	Kokkos::atomic_add(
 		&values(_connEntries[1][1][0][0]), this->_rate(gridIndex) * fSize);
 }

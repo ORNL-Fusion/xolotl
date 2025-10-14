@@ -13,8 +13,8 @@ TransformReactionGenerator<TBase>::TransformReactionGenerator(
 	const NetworkType& network) :
 	Superclass(network),
 	_clusterTransformReactionCounts("Transform Reaction Counts",
-		Superclass::getNumberOfClusters() + 10) // For SSBM
-// TODO: find a way to make the +10 above cleaner
+		Superclass::getNumberOfClusters() + 11) // For SSBM
+// TODO: find a way to make the +11 above cleaner
 {
 }
 

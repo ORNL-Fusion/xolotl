@@ -69,10 +69,12 @@ public:
 			else {
 				auto shift = (this->_reactants[i] - numClusters) / 2;
 				switch (shift) {
-				// Void
+				// Bubble
 				case 0:
 					this->_reactantMomentIds[i][0] =
 						this->_clusterData->voidAvId();
+					this->_reactantMomentIds[i][1] =
+						this->_clusterData->heAvId();
 					break;
 				// Perfect V
 				case 1:
@@ -110,10 +112,12 @@ public:
 				else {
 					auto shift = (this->_products[i] - numClusters) / 2;
 					switch (shift) {
-					// Void
+					// Bubble
 					case 0:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->voidAvId();
+						this->_productMomentIds[i][1] =
+							this->_clusterData->heAvId();
 						break;
 					// Perfect V
 					case 1:

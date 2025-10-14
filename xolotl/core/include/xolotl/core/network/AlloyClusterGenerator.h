@@ -74,6 +74,7 @@ private:
 	AmountType _maxV;
 	AmountType _maxI;
 	AmountType _maxSize;
+	AmountType _maxLoopSize;
 	AmountType _groupingMin;
 	AmountType _groupingWidthA;
 	AmountType _groupingWidthB;

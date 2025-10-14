@@ -23,17 +23,18 @@ AlloyReactionNetwork::initializeExtraDOFs(const options::IOptions& options)
 
 	largestClusterId = checkLargestClusterId();
 
-	this->_clusterData.h_view().setVoidId(this->_numDOFs);
+	this->_clusterData.h_view().setBubbleId(this->_numDOFs);
 	this->_clusterData.h_view().setVoidAvId(this->_numDOFs + 1);
-	this->_clusterData.h_view().setPerfVId(this->_numDOFs + 2);
-	this->_clusterData.h_view().setPerfVAvId(this->_numDOFs + 3);
-	this->_clusterData.h_view().setFaulVId(this->_numDOFs + 4);
-	this->_clusterData.h_view().setFaulVAvId(this->_numDOFs + 5);
-	this->_clusterData.h_view().setPerfIId(this->_numDOFs + 6);
-	this->_clusterData.h_view().setPerfIAvId(this->_numDOFs + 7);
-	this->_clusterData.h_view().setFaulIId(this->_numDOFs + 8);
-	this->_clusterData.h_view().setFaulIAvId(this->_numDOFs + 9);
-	this->_numDOFs += 10;
+	this->_clusterData.h_view().setHeAvId(this->_numDOFs + 2);
+	this->_clusterData.h_view().setPerfVId(this->_numDOFs + 3);
+	this->_clusterData.h_view().setPerfVAvId(this->_numDOFs + 4);
+	this->_clusterData.h_view().setFaulVId(this->_numDOFs + 5);
+	this->_clusterData.h_view().setFaulVAvId(this->_numDOFs + 6);
+	this->_clusterData.h_view().setPerfIId(this->_numDOFs + 7);
+	this->_clusterData.h_view().setPerfIAvId(this->_numDOFs + 8);
+	this->_clusterData.h_view().setFaulIId(this->_numDOFs + 9);
+	this->_clusterData.h_view().setFaulIAvId(this->_numDOFs + 10);
+	this->_numDOFs += 11;
 }
 
 void
@@ -46,21 +47,29 @@ AlloyReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
 		// Get the concentrations on the host
 		auto dConcs = Kokkos::subview(concentrations,
 			std::make_pair(
-				clusterDataMirror.voidId(), clusterDataMirror.faulIId() + 1));
+				clusterDataMirror.bubbleId(), clusterDataMirror.faulIId() + 1));
 		auto hConcs = create_mirror_view(dConcs);
 		deep_copy(hConcs, dConcs);
 
 		// Compute the average composition of each defect
-		for (int i; i < 5; i++) {
-			auto conc = hConcs(2 * i);
-			auto avComp = hConcs(2 * i + 1) / conc;
+		for (int i = 0; i < 5; i++) {
+			IndexType denId = 2 * i + 1;
+			IndexType avId = 2 * i + 2;
+			// Special case for bubbles
+			if (i == 0) {
+				denId = 0;
+				avId = 1;
+			}
+
+			auto conc = hConcs(denId);
+			auto avComp = hConcs(avId) / conc;
 			if (conc == 0.0)
 				avComp = 0.0;
 			// Compute and save the radius from that
 			switch (i) {
 			// Void
 			case 0:
-				this->_clusterData.h_view().setVoidAvRad(util::max(0.0,
+				this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
 					computeBubbleRadius(
 						avComp, clusterDataMirror.latticeParameter(), i)));
 				break;
@@ -88,6 +97,7 @@ AlloyReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
 				this->_clusterData.h_view().setFaulIAvRad(util::max(0.0,
 					computeBubbleRadius(
 						avComp, clusterDataMirror.latticeParameter(), i)));
+				this->_clusterData.h_view().setFaulIAv(avComp);
 				break;
 			}
 		}
@@ -105,21 +115,29 @@ AlloyReactionNetwork::computePartialsPreProcess(
 		// Get the concentrations on the host
 		auto dConcs = Kokkos::subview(concentrations,
 			std::make_pair(
-				clusterDataMirror.voidId(), clusterDataMirror.faulIId() + 1));
+				clusterDataMirror.bubbleId(), clusterDataMirror.faulIId() + 1));
 		auto hConcs = create_mirror_view(dConcs);
 		deep_copy(hConcs, dConcs);
 
 		// Compute the average composition of each defect
-		for (int i; i < 5; i++) {
-			auto conc = hConcs(2 * i);
-			auto avComp = hConcs(2 * i + 1) / conc;
+		for (int i = 0; i < 5; i++) {
+			IndexType denId = 2 * i + 1;
+			IndexType avId = 2 * i + 2;
+			// Special case for bubbles
+			if (i == 0) {
+				denId = 0;
+				avId = 1;
+			}
+
+			auto conc = hConcs(denId);
+			auto avComp = hConcs(avId) / conc;
 			if (conc == 0.0)
 				avComp = 0.0;
 			// Compute and save the radius from that
 			switch (i) {
 			// Void
 			case 0:
-				this->_clusterData.h_view().setVoidAvRad(util::max(0.0,
+				this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
 					computeBubbleRadius(
 						avComp, clusterDataMirror.latticeParameter(), i)));
 				break;
@@ -147,6 +165,7 @@ AlloyReactionNetwork::computePartialsPreProcess(
 				this->_clusterData.h_view().setFaulIAvRad(util::max(0.0,
 					computeBubbleRadius(
 						avComp, clusterDataMirror.latticeParameter(), i)));
+				this->_clusterData.h_view().setFaulIAv(avComp);
 				break;
 			}
 		}
@@ -849,7 +868,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 
-	IndexType voidId = this->_clusterData.voidId();
+	IndexType bubbleId = this->_clusterData.bubbleId();
 	IndexType perfVId = this->_clusterData.perfVId();
 	IndexType faulVId = this->_clusterData.faulVId();
 	IndexType perfIId = this->_clusterData.perfIId();
@@ -866,7 +885,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// V case
 		if (lo.isOnAxis(Species::V)) {
 			// V_k + B -> B
-			this->addProductionReaction(tag, {i, voidId, voidId});
+			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
 			this->addProductionReaction(tag, {i, perfVId, perfVId});
 			this->addProductionReaction(tag, {i, faulVId, faulVId});
 			this->addProductionReaction(tag, {i, perfIId, perfIId});
@@ -875,11 +894,17 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// I case
 		else if (lo.isOnAxis(Species::I)) {
 			// I_k + B -> B
-			this->addProductionReaction(tag, {i, voidId, voidId});
+			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
 			this->addProductionReaction(tag, {i, perfVId, perfVId});
 			this->addProductionReaction(tag, {i, faulVId, faulVId});
 			this->addProductionReaction(tag, {i, perfIId, perfIId});
 			this->addProductionReaction(tag, {i, faulIId, faulIId});
+		}
+
+		// He case
+		else if (lo.isOnAxis(Species::I)) {
+			// He_k + B -> B
+			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
 		}
 	}
 
@@ -898,23 +923,28 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		hiLargest[Species::FaultedV] + hiLargest[Species::PerfectI] +
 		hiLargest[Species::FaultedI] - 5; // Don't know which one was saved
 
-	// V_a + V_b -> V
-	if (hi1[Species::V] + hi2[Species::V] - 2 > largestSize) {
-		this->addProductionReaction(tag, {i, j, voidId});
+	// He_a + He_bV -> B
+	if (hi1[Species::He] + hi2[Species::He] - 2 > 100) {
+		this->addProductionReaction(tag, {i, j, bubbleId});
+	}
+
+	// V_a + HeV_b -> B
+	if (hi1[Species::V] + hi2[Species::V] - 2 > 100) {
+		this->addProductionReaction(tag, {i, j, bubbleId});
 	}
 
 	// V_a + L^V_b -> L^V
-	if (hi1[Species::V] + hi2[Species::PerfectV] - 2 > largestSize) {
+	if (hi1[Species::V] + hi2[Species::PerfectV] - 2 > 600) {
 		this->addProductionReaction(tag, {i, j, perfVId});
 	}
-	if (hi2[Species::V] + hi1[Species::PerfectV] - 2 > largestSize) {
+	if (hi2[Species::V] + hi1[Species::PerfectV] - 2 > 600) {
 		this->addProductionReaction(tag, {j, i, perfVId});
 	}
 
-	if (hi1[Species::V] + hi2[Species::FaultedV] - 2 > largestSize) {
+	if (hi1[Species::V] + hi2[Species::FaultedV] - 2 > 600) {
 		this->addProductionReaction(tag, {i, j, faulVId});
 	}
-	if (hi2[Species::V] + hi1[Species::FaultedV] - 2 > largestSize) {
+	if (hi2[Species::V] + hi1[Species::FaultedV] - 2 > 600) {
 		this->addProductionReaction(tag, {j, i, faulVId});
 	}
 
@@ -924,7 +954,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// It should be around the largest size value
 		if (hi1[Species::PerfectI] + hi2[Species::PerfectI] + hi1[Species::V] +
 				hi2[Species::V] - 4 >
-			largestSize) {
+			600) {
 			// Need to know which one is I
 			auto vId = lo1[Species::V] > 0 ? i : j;
 			auto iId = lo1[Species::V] > 0 ? j : i;
@@ -936,7 +966,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// It should be around the largest size value
 		if (hi1[Species::FaultedI] + hi2[Species::FaultedI] + hi1[Species::V] +
 				hi2[Species::V] - 4 >
-			largestSize) {
+			600) {
 			// Need to know which one is I
 			auto vId = lo1[Species::V] > 0 ? i : j;
 			auto iId = lo1[Species::V] > 0 ? j : i;
@@ -944,17 +974,17 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		}
 	}
 
-	// I_a + V -> V_b
-	if ((lo1.isOnAxis(Species::I) and lo2.isOnAxis(Species::V)) or
-		(lo1.isOnAxis(Species::V) and lo2.isOnAxis(Species::I))) {
+	// I_a + B -> HeV_b
+	if ((lo1.isOnAxis(Species::I) and lo2[Species::V] > 0) or
+		(lo1[Species::V] > 0 and lo2.isOnAxis(Species::I))) {
 		// It should be around the largest size value
 		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
 				hi2[Species::I] - 4 >
-			largestSize) {
+			100) {
 			// Need to know which one is I
 			auto iId = lo1[Species::I] > 0 ? i : j;
 			auto vId = lo1[Species::I] > 0 ? j : i;
-			this->addProductionReaction(tag, {iId, voidId, vId});
+			this->addProductionReaction(tag, {iId, bubbleId, vId});
 		}
 	}
 
@@ -964,7 +994,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// It should be around the largest size value
 		if (hi1[Species::PerfectV] + hi2[Species::PerfectV] + hi1[Species::I] +
 				hi2[Species::I] - 4 >
-			largestSize) {
+			600) {
 			// Need to know which one is I
 			auto iId = lo1[Species::I] > 0 ? i : j;
 			auto vId = lo1[Species::I] > 0 ? j : i;
@@ -976,7 +1006,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// It should be around the largest size value
 		if (hi1[Species::FaultedV] + hi2[Species::FaultedV] + hi1[Species::I] +
 				hi2[Species::I] - 4 >
-			largestSize) {
+			600) {
 			// Need to know which one is I
 			auto iId = lo1[Species::I] > 0 ? i : j;
 			auto vId = lo1[Species::I] > 0 ? j : i;
@@ -985,17 +1015,17 @@ AlloyReactionGenerator::addSingleSizeReactions(
 	}
 
 	// I_a + L^I_b -> L^I
-	if (hi1[Species::I] + hi2[Species::PerfectI] - 2 > largestSize) {
+	if (hi1[Species::I] + hi2[Species::PerfectI] - 2 > 600) {
 		this->addProductionReaction(tag, {i, j, perfIId});
 	}
-	if (hi2[Species::I] + hi1[Species::PerfectI] - 2 > largestSize) {
+	if (hi2[Species::I] + hi1[Species::PerfectI] - 2 > 600) {
 		this->addProductionReaction(tag, {j, i, perfIId});
 	}
 
-	if (hi1[Species::I] + hi2[Species::FaultedI] - 2 > largestSize) {
+	if (hi1[Species::I] + hi2[Species::FaultedI] - 2 > 600) {
 		this->addProductionReaction(tag, {i, j, faulIId});
 	}
-	if (hi2[Species::I] + hi1[Species::FaultedI] - 2 > largestSize) {
+	if (hi2[Species::I] + hi1[Species::FaultedI] - 2 > 600) {
 		this->addProductionReaction(tag, {j, i, faulIId});
 	}
 }

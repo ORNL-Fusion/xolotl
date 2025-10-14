@@ -93,7 +93,7 @@ public:
 
 		// Compute the radius
 		switch (typeSwitch) {
-		// Void
+		// Bubble
 		case 0:
 			return cbrt(0.75 * prefactor * latticeParameter * amount);
 		// Perfect V

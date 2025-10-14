@@ -10,11 +10,17 @@ AlloyClusterGenerator::AlloyClusterGenerator(const options::IOptions& options) :
 	_maxV(options.getMaxV()),
 	_maxI(options.getMaxI()),
 	_maxSize(options.getMaxImpurity()),
+	_maxLoopSize(options.getMaxImpurity()),
 	_groupingMin(options.getGroupingMin()),
 	_groupingWidthA(options.getGroupingWidthA()),
 	_groupingWidthB(options.getGroupingWidthB()),
 	_hevRatio(options.getHeVRatio())
 {
+	// Check if SSBM is used
+	auto process = options.getProcesses();
+	if (process["largeBubble"]) {
+		_maxLoopSize = util::max(600, options.getMaxImpurity());
+	}
 }
 
 AlloyClusterGenerator::AlloyClusterGenerator(
@@ -23,11 +29,17 @@ AlloyClusterGenerator::AlloyClusterGenerator(
 	_maxV(options.getMaxV()),
 	_maxI(options.getMaxI()),
 	_maxSize(options.getMaxImpurity()),
+	_maxLoopSize(options.getMaxImpurity()),
 	_groupingMin(options.getGroupingMin()),
 	_groupingWidthA(options.getGroupingWidthA()),
 	_groupingWidthB(options.getGroupingWidthB()),
 	_hevRatio(options.getHeVRatio())
 {
+	// Check if SSBM is used
+	auto process = options.getProcesses();
+	if (process["largeBubble"]) {
+		_maxLoopSize = util::max(600, options.getMaxImpurity());
+	}
 }
 } // namespace network
 } // namespace core
