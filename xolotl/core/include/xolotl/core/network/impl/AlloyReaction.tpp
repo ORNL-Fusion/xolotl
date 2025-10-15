@@ -90,16 +90,6 @@ getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, const double r0,
 			Pl = 0.78 / (p * p) + 0.66 * p - 0.44;
 		else
 			Pl = 0.70 / (p * p) + 0.78 * p - 0.47;
-		//
-		//		std::cout << ((1 - alpha) * rateToroidal * Pl + alpha *
-		//rateSpherical) * 				(dc0 + dc1) << " " << rd << std::endl; 		std::cout <<
-		//lo0[Species::He] << " " << lo0[Species::V] << " " <<
-		//lo0[Species::PerfectV] << " " << lo0[Species::FaultedV] << " " <<
-		//				lo0[Species::I]  << " " << lo0[Species::PerfectI] << " "
-		//<<  lo0[Species::FaultedI] << std::endl; 		std::cout << lo1[Species::He]
-		//<< " " << lo1[Species::V] << " " << lo1[Species::PerfectV] << " " <<
-		//lo1[Species::FaultedV] << " " << 				lo1[Species::I]  << " " <<
-		//lo1[Species::PerfectI] << " " <<  lo1[Species::FaultedI] << std::endl;
 
 		return ((1 - alpha) * rateToroidal * Pl + alpha * rateSpherical) *
 			(dc0 + dc1);

@@ -291,9 +291,18 @@ AlloyReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 			}
 
 			// Add the single size data
-			auto avRadius = util::max(0.0,
-				computeBubbleRadius(avComp,
-					this->_clusterData.h_view().latticeParameter(), id()));
+			auto avRadius = 0.0;
+			IndexType radiusId = 0;
+			if (vConc > 1.0e-16) {
+				if (id() > 4)
+					radiusId = id() - 2;
+				else if (id() > 1)
+					radiusId = id() - 1;
+				avRadius = util::max(0.0,
+					computeBubbleRadius(avComp,
+						this->_clusterData.h_view().latticeParameter(),
+						radiusId));
+			}
 
 			totalVals[(4 * id()) + 0] += vConc * fac;
 			totalVals[(4 * id()) + 1] += vConc * avRadius * 2.0 * fac;
