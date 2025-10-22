@@ -202,6 +202,18 @@ JSONElemVector::print(std::ostream& os) const
 	}
 }
 
+bool
+JSONElemVector::checkName(const std::string& name) const
+{
+	// Loop on the elements to check the name
+	auto it = std::find_if(_elems.begin(), _elems.end(),
+		[&name](const JSONElem& elem) { return elem.name() == name; });
+
+	if (it == _elems.end())
+		return false;
+	return true;
+}
+
 void
 JSONElemVector::processParams()
 {
