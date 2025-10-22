@@ -323,7 +323,7 @@ PetscSolver2DHandler::initializeConcentration(
 		// Loop on all the grid points
 		for (auto j = localYS; j < localYS + localYM; j++) {
 			for (auto i = (PetscInt)localXS - 1;
-				i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
+				 i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
 				// Temperature
 				plsm::SpaceVector<double, 3> gridPosition{0.0, j * hY, 0.0};
 				if (i < 0)
@@ -541,7 +541,7 @@ PetscSolver2DHandler::initializeConcentration(
 			// Pointer for the concentration vector at a specific grid point
 			PetscScalar* concOffset = nullptr;
 			for (auto i = (PetscInt)localXS;
-				i < (PetscInt)localXS + (PetscInt)localXM; i++) {
+				 i < (PetscInt)localXS + (PetscInt)localXM; i++) {
 				concOffset = concs[yj][i];
 				temperature[i - localXS + 1] = concOffset[dof];
 			}
@@ -820,7 +820,7 @@ PetscSolver2DHandler::updateConcentration(
 		temperatureHandler->updateSurfacePosition(surfacePosition[yj], grid);
 		bool tempHasChanged = false;
 		for (auto xi = (PetscInt)localXS - 1;
-			xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
+			 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 			// Heat condition
 			if (xi == surfacePosition[yj] && xi >= localXS &&
 				xi < localXS + localXM) {
@@ -970,7 +970,7 @@ PetscSolver2DHandler::updateConcentration(
 
 			// Loop over grid points
 			for (auto xi = surfacePosition[yj] + leftOffset;
-				xi < nX - rightOffset; xi++) {
+				 xi < nX - rightOffset; xi++) {
 				// We are only interested in the helium near the surface
 				if ((grid[xi] + grid[xi + 1]) / 2.0 -
 						grid[surfacePosition[yj] + 1] >
@@ -1155,7 +1155,7 @@ PetscSolver2DHandler::computeJacobian(
 		temperatureHandler->updateSurfacePosition(surfacePosition[yj], grid);
 		bool tempHasChanged = false;
 		for (auto xi = (PetscInt)localXS - 1;
-			xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
+			 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 			// Compute the left and right hx
 			double hxLeft = 0.0, hxRight = 0.0;
 			if (xi >= 1 && xi < nX) {
@@ -1293,7 +1293,7 @@ PetscSolver2DHandler::computeJacobian(
 
 			// Loop over grid points
 			for (auto xi = surfacePosition[yj] + leftOffset;
-				xi < nX - rightOffset; xi++) {
+				 xi < nX - rightOffset; xi++) {
 				// We are only interested in the helium near the surface
 				if ((grid[xi] + grid[xi + 1]) / 2.0 -
 						grid[surfacePosition[yj] + 1] >

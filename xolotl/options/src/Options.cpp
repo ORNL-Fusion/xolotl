@@ -446,6 +446,7 @@ Options::setProcesses(const std::string& processList)
 	// Initialize the map of processes
 	processMap["reaction"] = false;
 	processMap["diff"] = false;
+	processMap["spherical"] = false;
 	processMap["advec"] = false;
 	processMap["modifiedTM"] = false;
 	processMap["movingSurface"] = false;

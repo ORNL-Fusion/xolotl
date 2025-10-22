@@ -444,7 +444,7 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	minRadiusSizes = std::vector<size_t>(numSpecies, 1);
 	auto minSizes = opts.getRadiusMinSizes();
 	for (auto i = 0; i < std::min(minSizes.size(), minRadiusSizes.size());
-		i++) {
+		 i++) {
 		minRadiusSizes[i] = minSizes[i];
 	}
 

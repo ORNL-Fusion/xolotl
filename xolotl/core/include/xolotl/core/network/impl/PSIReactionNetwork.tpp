@@ -88,7 +88,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	IndexType desorpId = this->invalidIndex();
 	Kokkos::parallel_reduce(
 		1,
-		KOKKOS_LAMBDA(std::size_t, IndexType& running) {
+		KOKKOS_LAMBDA(std::size_t, IndexType & running) {
 			Composition comp{};
 			comp[Species::He] = desorpInit.size;
 			running = static_cast<IndexType>(subpaving.findTileId(comp));

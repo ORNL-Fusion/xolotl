@@ -366,7 +366,7 @@ PetscMonitor2D::setup(int loop)
 				// Loop on them
 				for (auto i : indices) {
 					for (auto id = core::network::SpeciesId(numSpecies); id;
-						++id) {
+						 ++id) {
 						auto speciesName = network.getSpeciesName(id);
 						if (bounds[i][2 * id()] > 0)
 							outputFile << speciesName << "_"
@@ -1517,7 +1517,7 @@ PetscMonitor2D::eventFunction(
 			// Get the surface position
 			auto surfacePos = _solverHandler->getSurfacePosition(yj);
 			for (auto xi = surfacePos + _solverHandler->getLeftOffset();
-				xi < Mx - _solverHandler->getRightOffset(); xi++) {
+				 xi < Mx - _solverHandler->getRightOffset(); xi++) {
 				bool localBurst = false;
 				// If this is the locally owned part of the grid
 				if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {

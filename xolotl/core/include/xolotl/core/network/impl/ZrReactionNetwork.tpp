@@ -33,7 +33,7 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		if (this->_constantConnsRows.extent(0) > 0) {
 			// Look for the entry
 			for (auto k = this->_constantConnsRows(i);
-				k < this->_constantConnsRows(i + 1); k++) {
+				 k < this->_constantConnsRows(i + 1); k++) {
 				if (this->_constantConnsEntries(k) == this->_numDOFs) {
 					this->addConstantReaction(
 						tag, {i, Network::invalidIndex()});
@@ -47,7 +47,7 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if (this->_constantConnsRows.extent(0) > 0) {
 		// Look for the entry
 		for (auto k = this->_constantConnsRows(i);
-			k < this->_constantConnsRows(i + 1); k++) {
+			 k < this->_constantConnsRows(i + 1); k++) {
 			if (this->_constantConnsEntries(k) == j) {
 				this->addConstantReaction(tag, {i, j});
 				break;
@@ -58,7 +58,7 @@ ZrReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		if (this->_constantConnsRows.extent(0) > 0) {
 			// Look for the entry
 			for (auto k = this->_constantConnsRows(j);
-				k < this->_constantConnsRows(j + 1); k++) {
+				 k < this->_constantConnsRows(j + 1); k++) {
 				if (this->_constantConnsEntries(k) == i) {
 					this->addConstantReaction(tag, {j, i});
 					break;

@@ -298,7 +298,7 @@ JSONOptions::defineHandlers()
 		.add(
 			"process", ElemType::list_string,
 			"List of all the processes to use in the simulation.\n"
-			"{reaction, diff, advec, modifiedTM, movingSurface, "
+			"{reaction, diff, spherical, advec, modifiedTM, movingSurface, "
 			"bursting, attenuation, resolution, heterogeneous, "
 			"sink, soret, constant, noSolve}",
 			JSON_ELEM_HANDLER {

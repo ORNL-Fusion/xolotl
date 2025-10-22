@@ -58,7 +58,7 @@ TrapMutationReactionGenerator<TBase>::addTrapMutationReaction(
 	auto id = _tmCrsRowMap(clusterSet.cluster1);
 	for (; !util::atomicCompareExchangeStrong(&_tmCrsClusterSets(id).cluster1,
 			 NetworkType::invalidIndex(), clusterSet.cluster1);
-		++id) { }
+		 ++id) { }
 	_tmCrsClusterSets(id) = clusterSet;
 }
 } // namespace detail
