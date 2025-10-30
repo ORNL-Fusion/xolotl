@@ -32,6 +32,15 @@ ReactionNetwork<AlloyReactionNetwork>::getTotalAtomConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
 
 template double
+ReactionNetwork<AlloyReactionNetwork>::getTotalVolumeRatio(
+	ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<AlloyReactionNetwork>::getTotalRatioVariance(
+	ConcentrationsView concentrations, Species type, double mean,
+	AmountType minSize);
+
+template double
 ReactionNetwork<AlloyReactionNetwork>::getTotalTrappedAtomConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
 

@@ -66,7 +66,7 @@ ConstantReactionGenerator<TBase>::addConstantReaction(
 	for (; !util::atomicCompareExchangeStrong(
 			 &_constantCrsClusterSets(id).cluster0, NetworkType::invalidIndex(),
 			 clusterSet.cluster0);
-		 ++id) { }
+		++id) { }
 	_constantCrsClusterSets(id) = clusterSet;
 }
 } // namespace detail

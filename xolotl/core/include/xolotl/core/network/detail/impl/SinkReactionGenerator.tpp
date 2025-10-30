@@ -64,7 +64,7 @@ SinkReactionGenerator<TBase>::addSinkReaction(
 	auto id = _sinkCrsRowMap(clusterSet.cluster0);
 	for (; !util::atomicCompareExchangeStrong(&_sinkCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
-		 ++id) { }
+		++id) { }
 	_sinkCrsClusterSets(id) = clusterSet;
 }
 } // namespace detail

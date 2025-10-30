@@ -60,7 +60,7 @@ NucleationReactionGenerator<TBase>::addNucleationReaction(
 	for (; !util::atomicCompareExchangeStrong(
 			 &_nucleationCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
-		 ++id) { }
+		++id) { }
 	_nucleationCrsClusterSets(id) = clusterSet;
 }
 } // namespace detail

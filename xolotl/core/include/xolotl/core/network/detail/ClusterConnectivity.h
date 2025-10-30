@@ -52,9 +52,9 @@ public:
 		}
 		else {
 			for (auto id = this->row_map(rowId);
-				 !util::atomicCompareExchangeStrong(
-					 &this->entries(id), invalidNetworkIndex, columnId);
-				 ++id) {
+				!util::atomicCompareExchangeStrong(
+					&this->entries(id), invalidNetworkIndex, columnId);
+				++id) {
 				if (this->entries(id) == columnId) {
 					break;
 				}
@@ -86,7 +86,7 @@ private:
 	getPosition(IndexType rowId, IndexType columnId, const Crs& crs) const
 	{
 		for (auto pos = crs.row_map(rowId); pos < crs.row_map(rowId + 1);
-			 ++pos) {
+			++pos) {
 			if (crs.entries(pos) == columnId) {
 				return pos;
 			}
