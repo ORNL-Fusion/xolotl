@@ -306,7 +306,7 @@ PetscSolver1DHandler::initializeConcentration(
 
 		// Loop on all the grid points
 		for (auto i = (PetscInt)localXS - 1;
-			 i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
+			i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
 			// Temperature
 			plsm::SpaceVector<double, 3> gridPosition{0.0, 0.0, 0.0};
 			if (i < 0)
@@ -507,7 +507,7 @@ PetscSolver1DHandler::initializeConcentration(
 		// Pointer for the concentration vector at a specific grid point
 		PetscScalar* concOffset = nullptr;
 		for (auto i = (PetscInt)localXS;
-			 i < (PetscInt)localXS + (PetscInt)localXM; i++) {
+			i < (PetscInt)localXS + (PetscInt)localXM; i++) {
 			concOffset = concs[i];
 			temperature[i - localXS + 1] = concOffset[dof];
 		}
@@ -811,7 +811,7 @@ PetscSolver1DHandler::updateConcentration(
 	// points
 	bool tempHasChanged = false;
 	for (auto xi = (PetscInt)localXS - 1;
-		 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
+		xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 		// Heat condition
 		if ((xi == 0 || (xi == nX - 1 && isRobin)) && xi >= localXS &&
 			xi < localXS + localXM) {
@@ -1068,7 +1068,7 @@ PetscSolver1DHandler::computeJacobian(
 		"Host Temp Jac Vals", localXM * 3);
 	std::size_t valIndex = 0;
 	for (auto xi = (PetscInt)localXS - 1;
-		 xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
+		xi <= (PetscInt)localXS + (PetscInt)localXM; xi++) {
 		// Compute the left and right hx
 		double hxLeft = 0.0, hxRight = 0.0;
 		if (xi >= 1 && xi < nX) {

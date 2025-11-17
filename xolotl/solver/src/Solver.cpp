@@ -13,15 +13,15 @@ namespace solver
 Solver::Solver(
 	const options::IOptions& options, SolverHandlerGenerator handlerGenerator) :
 	perfHandler(factory::perf::PerfHandlerFactory::get(perf::loadPerfHandlers)
-					.generate(options)),
+			.generate(options)),
 	initTimer([](auto&& timer) {
 		timer->start();
 		return timer;
 	}(perfHandler->getTimer("Initialization"))),
 	network(factory::network::NetworkHandlerFactory::get(
 		core::network::loadNetworkHandlers)
-				.generate(options)
-				->getNetwork()),
+			.generate(options)
+			->getNetwork()),
 	materialHandler(
 		factory::material::MaterialHandlerFactory::get().generate(options)),
 	temperatureHandler(

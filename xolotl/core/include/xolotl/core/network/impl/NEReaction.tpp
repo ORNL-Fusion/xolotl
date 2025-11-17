@@ -53,9 +53,6 @@ NEProductionReaction::computeRate(IndexType gridIndex, double time)
 	Composition cl0Comp = cl0.getRegion().getOrigin();
 	Composition cl1Comp = cl1.getRegion().getOrigin();
 
-	//		if (cl0Comp[Species::Xe] > 0 and cl1Comp[Species::Xe] > 0)
-	//			return 0.0;
-
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
 
@@ -792,9 +789,6 @@ NEDissociationReaction::computeRate(IndexType gridIndex, double time)
 
 	double r0 = cl0.getReactionRadius();
 	double r1 = cl1.getReactionRadius();
-
-	//		if (cl0Comp[Species::Xe] > 0 and cl1Comp[Species::Xe] > 0)
-	//			return 0.0;
 
 	// Read the rates if available
 	double rate = -1.0;

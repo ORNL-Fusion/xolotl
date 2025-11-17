@@ -1466,7 +1466,7 @@ ReactionNetwork<TImpl>::getTotalRatioVariance(ConcentrationsView concentrations,
 	double conc = 0.0;
 	auto clusterData = _clusterData.d_view;
 	Kokkos::parallel_reduce(
-		"ReactionNetwork::getTotalVolumeRatio", this->_numClusters,
+		"ReactionNetwork::getTotalRatioVariance", this->_numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
 			const Region& clReg = tiles(i).getRegion();
 			if (clReg[vIndex].begin() > 0) {
@@ -1487,7 +1487,141 @@ ReactionNetwork<TImpl>::getTotalRatioVariance(ConcentrationsView concentrations,
 	// Volume
 	double volume = 0.0;
 	Kokkos::parallel_reduce(
-		"ReactionNetwork::getTotalVolumeRatio", this->_numClusters,
+		"ReactionNetwork::getTotalRatioVariance", this->_numClusters,
+		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			const Region& clReg = tiles(i).getRegion();
+			if (clReg[vIndex].begin() > 0) {
+				const auto factor = clReg.volume() / clReg[type].length();
+				const auto radius = clusterData().reactionRadius(i);
+				const double bubbleVolume = radius * radius * radius;
+				for (AmountType j : makeIntervalRange(clReg[type])) {
+					if (j >= minSize) {
+						lsum += concentrations(i) * bubbleVolume * factor;
+					}
+				}
+			}
+		},
+		volume);
+
+	Kokkos::fence();
+
+	return conc / volume;
+}
+
+template <typename TImpl>
+double
+ReactionNetwork<TImpl>::getTotalVolumeRadius(
+	ConcentrationsView concentrations, Species type, AmountType minSize)
+{
+	// Find the vacancy index
+	constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
+	bool hasVacancy = false;
+	Species vIndex;
+	for (auto i : speciesRangeNoI) {
+		if (isVacancy(i)) {
+			hasVacancy = true;
+			vIndex = i;
+		}
+	}
+
+	// Return 0 if there is not vacancy in the network
+	if (!hasVacancy)
+		return 0.0;
+
+	// Ratio times volume
+	auto tiles = _subpaving.getTiles();
+	double conc = 0.0;
+	auto clusterData = _clusterData.d_view;
+	Kokkos::parallel_reduce(
+		"ReactionNetwork::getTotalVolumeRadius", this->_numClusters,
+		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			const Region& clReg = tiles(i).getRegion();
+			if (clReg[vIndex].begin() > 0) {
+				const auto radius = clusterData().reactionRadius(i);
+				const double bubbleVolume = radius * radius * radius;
+				for (AmountType j : makeIntervalRange(clReg[type])) {
+					if (j >= minSize) {
+						for (AmountType l : makeIntervalRange(clReg[vIndex])) {
+							lsum += concentrations(i) * radius * bubbleVolume;
+						}
+					}
+				}
+			}
+		},
+		conc);
+
+	// Volume
+	double volume = 0.0;
+	Kokkos::parallel_reduce(
+		"ReactionNetwork::getTotalVolumeRadius", this->_numClusters,
+		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			const Region& clReg = tiles(i).getRegion();
+			if (clReg[vIndex].begin() > 0) {
+				const auto factor = clReg.volume() / clReg[type].length();
+				const auto radius = clusterData().reactionRadius(i);
+				const double bubbleVolume = radius * radius * radius;
+				for (AmountType j : makeIntervalRange(clReg[type])) {
+					if (j >= minSize) {
+						lsum += concentrations(i) * bubbleVolume * factor;
+					}
+				}
+			}
+		},
+		volume);
+
+	Kokkos::fence();
+
+	return conc / volume;
+}
+
+template <typename TImpl>
+double
+ReactionNetwork<TImpl>::getTotalRadiusVariance(
+	ConcentrationsView concentrations, Species type, double mean,
+	AmountType minSize)
+{
+	// Find the vacancy index
+	constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
+	bool hasVacancy = false;
+	Species vIndex;
+	for (auto i : speciesRangeNoI) {
+		if (isVacancy(i)) {
+			hasVacancy = true;
+			vIndex = i;
+		}
+	}
+
+	// Return 0 if there is not vacancy in the network
+	if (!hasVacancy)
+		return 0.0;
+
+	// Distance times volume
+	auto tiles = _subpaving.getTiles();
+	double conc = 0.0;
+	auto clusterData = _clusterData.d_view;
+	Kokkos::parallel_reduce(
+		"ReactionNetwork::getTotalRadiusVariance", this->_numClusters,
+		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+			const Region& clReg = tiles(i).getRegion();
+			if (clReg[vIndex].begin() > 0) {
+				const auto radius = clusterData().reactionRadius(i);
+				const double bubbleVolume = radius * radius * radius;
+				for (AmountType j : makeIntervalRange(clReg[type])) {
+					if (j >= minSize) {
+						for (AmountType l : makeIntervalRange(clReg[vIndex])) {
+							auto d = (radius)-mean;
+							lsum += d * d * concentrations(i) * bubbleVolume;
+						}
+					}
+				}
+			}
+		},
+		conc);
+
+	// Volume
+	double volume = 0.0;
+	Kokkos::parallel_reduce(
+		"ReactionNetwork::getTotalRadiusVariance", this->_numClusters,
 		KOKKOS_LAMBDA(IndexType i, double& lsum) {
 			const Region& clReg = tiles(i).getRegion();
 			if (clReg[vIndex].begin() > 0) {
@@ -1636,7 +1770,7 @@ ReactionNetwork<TImpl>::computeMinRadiusSizes(const options::IOptions& opts)
 	auto minRadiusSizes = std::vector<AmountType>(numSpecies, 1);
 	auto minSizes = opts.getRadiusMinSizes();
 	for (auto i = 0; i < std::min(minSizes.size(), minRadiusSizes.size());
-		 i++) {
+		i++) {
 		minRadiusSizes[i] = minSizes[i];
 	}
 	return minRadiusSizes;

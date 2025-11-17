@@ -104,7 +104,7 @@ PerfHandler::collectAllObjectNames(int myRank,
 	// Determine amount of space required for names
 	unsigned int nBytes = 0;
 	for (auto nameIter = myNames.begin(); nameIter != myNames.end();
-		 ++nameIter) {
+		++nameIter) {
 		// Add enough space for the name plus a NUL terminating character.
 		nBytes += (nameIter->length() + 1);
 	}
