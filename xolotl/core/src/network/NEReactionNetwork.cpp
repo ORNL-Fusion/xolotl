@@ -361,30 +361,39 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 	Composition comp = Composition::zero();
 	comp[Species::I] = 1;
 	auto rId = findCluster(comp, plsm::HostMemSpace{}).getId();
-	auto mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
-	// Save its formation energy
-	clData().setIFormationEnergy(g0Vector[mapId]);
+	if (rId != this->invalidIndex()) {
+		auto mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
+		// Save its formation energy
+		clData().setIFormationEnergy(g0Vector[mapId]);
+	}
 
 	// Same with vacancy
 	comp[Species::I] = 0;
 	comp[Species::V] = 1;
 	rId = findCluster(comp, plsm::HostMemSpace{}).getId();
-	mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
-	// Save its formation energy
-	clData().setVFormationEnergy(g0Vector[mapId]);
+	if (rId != this->invalidIndex()) {
+		auto mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
+		// Save its formation energy
+		clData().setVFormationEnergy(g0Vector[mapId]);
+	}
+
 	comp[Species::V] = 2;
 	rId = findCluster(comp, plsm::HostMemSpace{}).getId();
-	mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
-	// Save its formation energy
-	clData().setV2FormationEnergy(g0Vector[mapId]);
+	if (rId != this->invalidIndex()) {
+		auto mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
+		// Save its formation energy
+		clData().setV2FormationEnergy(g0Vector[mapId]);
+	}
 
 	// Same with xenon
 	comp[Species::V] = 0;
 	comp[Species::Xe] = 1;
 	rId = findCluster(comp, plsm::HostMemSpace{}).getId();
-	mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
-	// Save its formation energy
-	clData().setXeFormationEnergy(g0Vector[mapId]);
+	if (rId != this->invalidIndex()) {
+		auto mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
+		// Save its formation energy
+		clData().setXeFormationEnergy(g0Vector[mapId]);
+	}
 
 	deep_copy(this->_reactionEnergies, reactionEnergies);
 	deep_copy(clData().extraData.constantRates, constantRates);
