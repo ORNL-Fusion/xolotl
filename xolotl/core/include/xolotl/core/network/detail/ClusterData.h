@@ -71,7 +71,7 @@ struct ClusterDataExtra
 	}
 
 	void
-	setGridSize(IndexType numClusters, IndexType gridSize) {};
+	setGridSize(IndexType numClusters, IndexType gridSize) { };
 };
 
 /**
@@ -165,6 +165,7 @@ private:
 		RESOLUTION,
 		NUCLEATION,
 		SINK,
+		TRAP,
 		TRAP_MUTATION,
 		READ_RATES,
 		CONSTANT_REACTION,
@@ -362,6 +363,19 @@ public:
 	setEnableSink(bool val)
 	{
 		setVal(_boolVals, SINK, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableTrap() const
+	{
+		return _boolVals[TRAP];
+	}
+
+	void
+	setEnableTrap(bool val)
+	{
+		setVal(_boolVals, TRAP, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

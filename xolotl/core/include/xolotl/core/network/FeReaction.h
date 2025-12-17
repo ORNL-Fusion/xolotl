@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/FeTraits.h>
 #include <xolotl/core/network/SinkReaction.h>
+#include <xolotl/core/network/TrapReaction.h>
 
 namespace xolotl
 {
@@ -57,6 +58,34 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	getSinkStrength();
+};
+
+class FeTrapReaction : public TrapReaction<FeReactionNetwork, FeTrapReaction>
+{
+public:
+	using Superclass = TrapReaction<FeReactionNetwork, FeTrapReaction>;
+
+	using Superclass::Superclass;
+
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	getId();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getEnergy();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getStrength();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getFrequency();
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getDensity();
 };
 } // namespace network
 } // namespace core

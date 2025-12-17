@@ -16,15 +16,22 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 	result[0] = true;
 	result[1] = true;
 	result[2] = true;
+	result[3] = true;
 
 	// I is never grouped
 	if (region[Species::I].begin() > 0) {
 		return true;
 	}
 
+	// Trap is never grouped
+	if (region[Species::Trap].begin() > 0) {
+		return true;
+	}
+
 	// He is never grouped
 	if (region[Species::He].end() > 1 && region[Species::He].begin() < 9 &&
-		region[Species::V].begin() == 0 && region[Species::I].begin() == 0) {
+		region[Species::V].begin() == 0 && region[Species::I].begin() == 0 &&
+		region[Species::Trap].begin() == 0) {
 		return true;
 	}
 
@@ -48,7 +55,7 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 		auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
 		if (region[Species::V].length() <
 			util::max(_groupingWidthV + 1.0, pow(amtV, 0.8))) {
-			result[1] = false;
+			result[2] = false;
 		}
 	}
 
@@ -57,28 +64,28 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 	auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
 	if (region[Species::He].length() <
 		util::max(_groupingWidthHe + 1.0, pow(amtHe, 0.8))) {
-		result[0] = false;
+		result[1] = false;
 	}
 	if (region[Species::V].length() <
 		util::max(_groupingWidthV + 1.0, pow(amtV, 0.8))) {
-		result[1] = false;
+		result[2] = false;
 	}
 
 	// Edges
 	if (region[Species::He].begin() == 0) {
-		result[0] = true;
+		result[1] = true;
 	}
 	if (region[Species::V].begin() == 0) {
-		result[1] = true;
+		result[2] = true;
 	}
 	if (region[Species::He].end() > _maxHe + 1) {
-		result[0] = true;
-	}
-	if (region[Species::V].end() > _maxV + 1) {
 		result[1] = true;
 	}
+	if (region[Species::V].end() > _maxV + 1) {
+		result[2] = true;
+	}
 
-	if (!result[0] && !result[1]) {
+	if (!result[1] && !result[2]) {
 		return false;
 	}
 
@@ -91,19 +98,27 @@ FeClusterGenerator::select(const Region& region) const
 {
 	// Remove 0
 	if (region[Species::He].end() == 1 && region[Species::V].end() == 1 &&
-		region[Species::I].end() == 1) {
+		region[Species::I].end() == 1 && region[Species::Trap].end() == 1) {
 		return false;
 	}
 
 	// Interstitials
 	if (region[Species::I].begin() > 0 &&
-		(region[Species::He].begin() > 0 || region[Species::V].begin() > 0)) {
+		(region[Species::He].begin() > 0 || region[Species::V].begin() > 0 ||
+			region[Species::Trap].begin() > 0)) {
+		return false;
+	}
+
+	// Trap
+	if (region[Species::Trap].begin() > 0 &&
+		(region[Species::He].begin() > 0 || region[Species::V].begin() > 0 ||
+			region[Species::I].begin() > 0)) {
 		return false;
 	}
 
 	// Helium
 	if (region[Species::He].begin() > 8 && region[Species::V].end() == 1 &&
-		region[Species::I].end() == 1) {
+		region[Species::I].end() == 1 && region[Species::Trap].end() == 1) {
 		return false;
 	}
 	if (region[Species::He].begin() > _maxHe) {
@@ -211,6 +226,9 @@ FeClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {
 			radius = latticeParameter * cbrt(3.0 / ::xolotl::core::pi) * 0.5;
+		}
+		else if (comp.isOnAxis(Species::Trap)) {
+			radius = 0.0; // Should not actually be used anywhere
 		}
 		else if (comp.isOnAxis(Species::He)) {
 			double FourPi = 4.0 * ::xolotl::core::pi;

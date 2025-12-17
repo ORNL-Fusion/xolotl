@@ -722,24 +722,30 @@ BOOST_AUTO_TEST_CASE(traits)
 	using NetworkType = FeReactionNetwork;
 	using Spec = NetworkType::Species;
 
-	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 3);
-	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 3);
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 4);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 4);
 	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
 	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
 
 	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Trap), "Trap");
 	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
 	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
 	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
 
 	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::Trap), "Trap");
 	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
 	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
 	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
 
 	// parseSpeciesId / getSpeciesLabel / getSpeciesName
 	auto network = NetworkType();
-	auto sid = network.parseSpeciesId("He");
+	auto sid = network.parseSpeciesId("Trap");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::Trap);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "Trap");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Trap");
+	sid = network.parseSpeciesId("He");
 	BOOST_REQUIRE(sid.cast<Spec>() == Spec::He);
 	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "He");
 	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Helium");
@@ -756,9 +762,9 @@ BOOST_AUTO_TEST_CASE(traits)
 	using GroupingRange = SpeciesForGrouping<Spec, 3>;
 
 	// I goes on V
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 1);
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 1);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 1);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 2);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 2);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -1,5 +1,6 @@
 #include <xolotl/core/network/FeNetworkHandler.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -42,10 +43,20 @@ auto feNetworkGenerator = [](const options::IOptions& options) {
 		maxV = pow(groupingWidthV, i) - 1;
 	}
 
+	// Find out how many traps we need from the options
+	NetworkType::AmountType nTraps = 0;
+	// Get the string from the options
+	auto trapString = options.getTrapParameters();
+	// Break the string apart
+	auto tokens = util::Tokenizer<>{trapString}();
+	// We should have 4 parameters per trap
+	nTraps = tokens.size() / 4;
+
+	// Define the network
 	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
-		maxHe, maxV, maxI};
+		nTraps, maxHe, maxV, maxI};
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
-		{groupingWidthHe, groupingWidthV, maxI + 1}};
+		{nTraps + 1, groupingWidthHe, groupingWidthV, maxI + 1}};
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 

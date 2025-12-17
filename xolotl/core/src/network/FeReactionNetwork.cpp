@@ -1,6 +1,7 @@
 #include <xolotl/core/network/FeReactionNetwork.h>
 #include <xolotl/core/network/impl/FeReactionNetwork.tpp>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -79,6 +80,22 @@ FeReactionNetwork::checkLargestClusterId()
 		Reducer(maxLoc));
 
 	return maxLoc.loc;
+}
+
+void
+FeReactionNetwork::setReactionParams(std::string trapParams)
+{
+	// Convert the string to a vector of values
+	auto tokens = util::Tokenizer<double>{trapParams}();
+	// Set them in the corresponding reactions
+	_reactions.forEachOn<FeTrapReaction>(
+		"ReactionCollection::setReactionParams",
+		DEVICE_LAMBDA(auto&& reaction) {
+			auto i = reaction.getId();
+			// Get the corresponding parameters
+			reaction.setParameters(tokens[4 * i], tokens[4 * i + 1],
+				tokens[4 * i + 2], tokens[4 * i + 3]);
+		});
 }
 
 std::string

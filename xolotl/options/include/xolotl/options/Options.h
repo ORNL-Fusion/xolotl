@@ -134,6 +134,11 @@ protected:
 	std::string initialConcentration;
 
 	/**
+	 * Value for trap parameters.
+	 */
+	std::string trapParameters;
+
+	/**
 	 * Value of the electronic stopping power.
 	 */
 	double zeta;
@@ -545,6 +550,15 @@ public:
 	getInitialConcentration() const override
 	{
 		return initialConcentration;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	std::string
+	getTrapParameters() const override
+	{
+		return trapParameters;
 	}
 
 	/**
@@ -1155,6 +1169,9 @@ protected:
 
 	void
 	appendPetscArg(const std::string& arg);
+
+	void
+	appendTrapParams(const std::string& arg);
 };
 
 std::shared_ptr<IOptions>

@@ -34,6 +34,10 @@ public:
 	IndexType
 	checkLargestClusterId();
 
+	void setReactionParams(std::string) override {
+	        return;
+	}
+
 	std::string
 	getMonitorOutputFileName() const override
 	{

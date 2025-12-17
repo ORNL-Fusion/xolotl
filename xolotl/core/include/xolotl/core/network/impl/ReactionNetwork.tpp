@@ -89,6 +89,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableReSolution(map["resolution"]);
 	this->setEnableNucleation(map["heterogeneous"]);
 	this->setEnableSink(map["sink"]);
+	this->setEnableTrap(map["trap"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
 	this->setEnableConstantReaction(map["constant"]);
@@ -262,6 +263,15 @@ ReactionNetwork<TImpl>::setEnableSink(bool reaction)
 {
 	this->_enableSink = reaction;
 	_clusterData.h_view().setEnableSink(this->_enableSink);
+	invalidateDataMirror();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableTrap(bool reaction)
+{
+	this->_enableTrap = reaction;
+	_clusterData.h_view().setEnableTrap(this->_enableTrap);
 	invalidateDataMirror();
 }
 
@@ -551,6 +561,13 @@ void
 ReactionNetwork<TImpl>::setConstantRateEntries()
 {
 	asDerived()->setConstantRateEntries();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setReactionParams(std::string trapParams)
+{
+	asDerived()->setReactionParams(trapParams);
 }
 
 template <typename TImpl>
@@ -1638,7 +1655,7 @@ ReactionNetwork<TImpl>::computeMinRadiusSizes(const options::IOptions& opts)
 	auto minRadiusSizes = std::vector<AmountType>(numSpecies, 1);
 	auto minSizes = opts.getRadiusMinSizes();
 	for (auto i = 0; i < std::min(minSizes.size(), minRadiusSizes.size());
-		 i++) {
+		i++) {
 		minRadiusSizes[i] = minSizes[i];
 	}
 	return minRadiusSizes;

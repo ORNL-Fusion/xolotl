@@ -12,10 +12,12 @@ class FeReactionNetwork;
 class FeProductionReaction;
 class FeDissociationReaction;
 class FeSinkReaction;
+class FeTrapReaction;
 class FeClusterGenerator;
 
 enum class FeSpeciesList
 {
+	Trap,
 	He,
 	V,
 	I
@@ -24,7 +26,7 @@ enum class FeSpeciesList
 inline const std::string&
 toLabelString(FeSpeciesList species)
 {
-	static const std::string labelArray[] = {"He", "V", "I"};
+	static const std::string labelArray[] = {"Trap", "He", "V", "I"};
 	return labelArray[static_cast<int>(species)];
 }
 
@@ -32,12 +34,12 @@ inline const std::string&
 toNameString(FeSpeciesList species)
 {
 	static const std::string nameArray[] = {
-		"Helium", "Vacancy", "Interstitial"};
+		"Trap", "Helium", "Vacancy", "Interstitial"};
 	return nameArray[static_cast<int>(species)];
 }
 
 template <>
-struct NumberOfSpecies<FeSpeciesList> : std::integral_constant<std::size_t, 3>
+struct NumberOfSpecies<FeSpeciesList> : std::integral_constant<std::size_t, 4>
 {
 };
 
@@ -55,7 +57,7 @@ struct NumberOfVacancySpecies<FeSpeciesList> :
 
 template <>
 struct NumberOfTrapSpecies<FeSpeciesList> :
-	std::integral_constant<std::size_t, 0>
+	std::integral_constant<std::size_t, 1>
 {
 };
 
@@ -71,7 +73,7 @@ struct SpeciesForGrouping<FeSpeciesList, 3>
 	mapToMomentId(EnumSequence<FeSpeciesList, 3> value)
 	{
 		if (value == FeSpeciesList::I)
-			return 1;
+			return 2;
 		return value();
 	}
 };
@@ -81,14 +83,15 @@ struct ReactionNetworkTraits<FeReactionNetwork>
 {
 	using Species = FeSpeciesList;
 
-	static constexpr std::size_t numSpecies = 3;
+	static constexpr std::size_t numSpecies = 4;
 
 	using ProductionReactionType = FeProductionReaction;
 	using DissociationReactionType = FeDissociationReaction;
 	using SinkReactionType = FeSinkReaction;
+	using TrapReactionType = FeTrapReaction;
 
 	using ReactionTypeList = std::tuple<ProductionReactionType,
-		DissociationReactionType, SinkReactionType>;
+		DissociationReactionType, SinkReactionType, TrapReactionType>;
 
 	using ClusterGenerator = FeClusterGenerator;
 };

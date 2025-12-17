@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/impl/SinkReaction.tpp>
+#include <xolotl/core/network/impl/TrapReaction.tpp>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -238,6 +239,46 @@ FeSinkReaction::getSinkStrength()
 		-4.0 * pi * rho * (r + r0) / log(pi * rho * (r + r0) * (r + r0));
 
 	return strength;
+}
+
+KOKKOS_INLINE_FUNCTION
+IdType
+FeTrapReaction::getId()
+{
+	using Composition = typename Superclass::Composition;
+
+	// Here the id is the size of the trap
+	auto cl = this->_clusterData->getCluster(this->_trapped);
+	Composition comp = cl.getRegion().getOrigin();
+	return comp[Species::Trap] - 1;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeTrapReaction::getStrength()
+{
+	return strength;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeTrapReaction::getEnergy()
+{
+	return energy;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeTrapReaction::getFrequency()
+{
+	return frequency;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+FeTrapReaction::getDensity()
+{
+	return density;
 }
 } // namespace network
 } // namespace core

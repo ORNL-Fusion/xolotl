@@ -13,6 +13,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationReactionGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyNetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReaction.h
@@ -54,6 +55,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/T91ReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/T91Traits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/TrapMutationReaction.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/TrapReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/ZrClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/ZrNetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/ZrReaction.h
@@ -70,6 +72,7 @@ list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/SinkReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/TrapMutationClusterData.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/TrapMutationReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/TrapReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyClusterGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyReactionNetwork.tpp
@@ -91,6 +94,7 @@ list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/T91Reaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/T91ReactionNetwork.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/TrapMutationReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/TrapReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrClusterGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrReactionNetwork.tpp

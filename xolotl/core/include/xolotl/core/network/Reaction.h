@@ -246,7 +246,7 @@ protected:
 		const ConnectivitiesPairView connectivityEntries) const
 	{
 		for (auto pos = connectivityRow(rowId);
-			 pos < connectivityRow(rowId + 1); ++pos) {
+			pos < connectivityRow(rowId + 1); ++pos) {
 			if (connectivityEntries(pos) == columnId) {
 				return pos;
 			}

@@ -2,6 +2,7 @@
 
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/TrapReactionGenerator.tpp>
 #include <xolotl/core/network/impl/FeClusterGenerator.tpp>
 #include <xolotl/core/network/impl/FeReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
@@ -32,9 +33,13 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	constexpr auto species = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
 
+	// Add the sinks
 	if (i == j) {
 		addSinks(i, tag);
 	}
+
+	// Add the traps between He and Traps
+	addTraps(i, j, tag);
 
 	auto numClusters = this->getNumberOfClusters();
 
@@ -199,13 +204,43 @@ FeReactionGenerator::addSinks(IndexType i, TTag tag) const
 	}
 }
 
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+FeReactionGenerator::addTraps(IndexType i, IndexType j, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	// Look for He 1 and trap
+	const auto& clReg1 = this->getCluster(i).getRegion();
+	Composition lo1 = clReg1.getOrigin();
+	const auto& clReg2 = this->getCluster(j).getRegion();
+	Composition lo2 = clReg2.getOrigin();
+
+	if (clReg1.isSimplex() and clReg2.isSimplex()) {
+		if ((lo1.isOnAxis(Species::He) and lo2.isOnAxis(Species::Trap)) or
+			(lo2.isOnAxis(Species::He) and lo1.isOnAxis(Species::Trap))) {
+			// Which one is which?
+			auto trapId = lo1.isOnAxis(Species::Trap) ? i : j;
+			auto heId = lo1.isOnAxis(Species::Trap) ? j : i;
+
+			// Only single helium can trap
+			Composition loHe = this->getCluster(heId).getRegion().getOrigin();
+			if (loHe[Species::He] == 1) {
+				this->addTrapReaction(tag, {heId, trapId});
+			}
+		}
+	}
+}
+
 inline ReactionCollection<FeReactionGenerator::NetworkType>
 FeReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
 		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions());
+		this->getSinkReactions(), this->getTrapReactions());
 	return ret;
 }
 } // namespace detail
