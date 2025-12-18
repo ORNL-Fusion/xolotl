@@ -37,6 +37,7 @@ SolverHandler::SolverHandler(NetworkType& _network,
 	electronicStoppingPower(0.0),
 	dimension(-1),
 	movingSurface(false),
+	isSSBM(false),
 	bubbleBursting(false),
 	isMirror(true),
 	isRobin(false),
@@ -537,6 +538,8 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	bubbleBursting = map["bursting"];
 	// Should we be able to attenuate the modified trap mutation?
 	useAttenuation = map["attenuation"];
+	// Should we use the single size bubble model?
+	isSSBM = map["SSBM"];
 
 	// Some safeguards about what to use with what
 	if (leftOffset == 0 &&

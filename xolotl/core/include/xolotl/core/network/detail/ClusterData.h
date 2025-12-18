@@ -149,12 +149,16 @@ private:
 		XE_FORMATION,
 		V_FORMATION,
 		V2_FORMATION,
+		AV_BUBBLE_RAD,
 		NUM_FLOAT_VALS
 	};
 
 	enum IntValsIndex : int
 	{
 		TRANSITION_SIZE = 0,
+		BUBBLE_ID,
+		AV_H_ID,
+		AV_VOID_ID,
 		NUM_INT_VALS
 	};
 
@@ -167,6 +171,7 @@ private:
 		TRAP_MUTATION,
 		READ_RATES,
 		CONSTANT_REACTION,
+		LARGE_BUBBLE,
 		NUM_BOOL_VALS
 	};
 
@@ -286,6 +291,19 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
+	double
+	bubbleAvRad() const
+	{
+		return _floatVals[AV_BUBBLE_RAD];
+	}
+
+	void
+	setBubbleAvRad(double val)
+	{
+		setVal(_floatVals, AV_BUBBLE_RAD, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
 	int
 	transitionSize() const
 	{
@@ -296,6 +314,45 @@ public:
 	setTransitionSize(int val)
 	{
 		setVal(_intVals, TRANSITION_SIZE, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	bubbleId() const
+	{
+		return _intVals[BUBBLE_ID];
+	}
+
+	void
+	setBubbleId(int val)
+	{
+		setVal(_intVals, BUBBLE_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	hAvId() const
+	{
+		return _intVals[AV_H_ID];
+	}
+
+	void
+	setHAvId(int val)
+	{
+		setVal(_intVals, AV_H_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	voidAvId() const
+	{
+		return _intVals[AV_VOID_ID];
+	}
+
+	void
+	setVoidAvId(int val)
+	{
+		setVal(_intVals, AV_VOID_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -387,6 +444,19 @@ public:
 	setEnableConstantReaction(bool val)
 	{
 		setVal(_boolVals, CONSTANT_REACTION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableSSBM() const
+	{
+		return _boolVals[LARGE_BUBBLE];
+	}
+
+	void
+	setEnableSSBM(bool val)
+	{
+		setVal(_boolVals, LARGE_BUBBLE, val);
 	}
 
 private:

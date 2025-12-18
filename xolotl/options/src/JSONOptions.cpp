@@ -300,7 +300,7 @@ JSONOptions::defineHandlers()
 			"List of all the processes to use in the simulation.\n"
 			"{reaction, diff, advec, modifiedTM, movingSurface, "
 			"bursting, attenuation, resolution, heterogeneous, "
-			"sink, soret, constant, noSolve}",
+			"sink, soret, constant, noSolve, SSBM}",
 			JSON_ELEM_HANDLER {
 				if (tree.count(name)) {
 					auto node = tree.get_child(name);

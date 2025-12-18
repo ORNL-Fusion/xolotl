@@ -139,6 +139,9 @@ protected:
 	//! If the user wants to move the surface.
 	bool movingSurface;
 
+	//! If the user wants to use the single size bubble model.
+	bool isSSBM;
+
 	//! If the user wants to burst bubbles.
 	bool bubbleBursting;
 
@@ -440,6 +443,15 @@ public:
 	moveSurface() const override
 	{
 		return movingSurface;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	bool
+	ssbm() const override
+	{
+		return isSSBM;
 	}
 
 	/**

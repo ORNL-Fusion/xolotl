@@ -91,6 +91,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
 	this->setEnableConstantReaction(map["constant"]);
+	this->setEnableSSBM(map["SSBM"]);
 	std::string petscString = opts.getPetscArg();
 	auto tokens = util::Tokenizer<>{petscString}();
 	bool useReduced = false;
@@ -114,6 +115,9 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	defineMomentIds();
 
 	readReactions(opts.getTempParam(), opts.getReactionFilePath());
+
+	// For SSBM for instance
+	asDerived()->initializeExtraDOFs(opts);
 
 	// Skip the reactions for now if using constant reactions
 	if (map["constant"])
@@ -295,6 +299,14 @@ ReactionNetwork<TImpl>::setEnableReadRates(bool read)
 {
 	this->_enableReadRates = read;
 	_clusterData.h_view().setEnableReadRates(this->_enableReadRates);
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableSSBM(bool ssbm)
+{
+	this->_enableSSBM = ssbm;
+	_clusterData.h_view().setEnableSSBM(this->_enableSSBM);
 }
 
 template <typename TImpl>

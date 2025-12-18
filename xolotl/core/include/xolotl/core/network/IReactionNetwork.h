@@ -291,6 +291,18 @@ public:
 		_enableReadRates = read;
 	}
 
+	bool
+	getEnableSSBM() const noexcept
+	{
+		return _enableSSBM;
+	}
+
+	virtual void
+	setEnableSSBM(bool ssbm)
+	{
+		_enableSSBM = ssbm;
+	}
+
 	IndexType
 	getGridSize() const noexcept
 	{
@@ -615,6 +627,7 @@ protected:
 	bool _enableConstantReaction{};
 	bool _enableReducedJacobian{};
 	bool _enableReadRates{};
+	bool _enableSSBM{};
 
 	IndexType _gridSize{};
 	IndexType _numDOFs{};

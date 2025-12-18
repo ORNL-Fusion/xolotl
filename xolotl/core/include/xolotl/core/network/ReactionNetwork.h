@@ -195,6 +195,11 @@ public:
 	}
 
 	void
+	initializeExtraDOFs(const options::IOptions&)
+	{
+	}
+
+	void
 	updateExtraClusterData(
 		const std::vector<double>&, const std::vector<double>&)
 	{
@@ -254,6 +259,9 @@ public:
 
 	void
 	setEnableReadRates(bool read) override;
+
+	void
+	setEnableSSBM(bool ssbm) override;
 
 	void
 	setGridSize(IndexType gridSize) override;
