@@ -850,6 +850,14 @@ PSIReactionGenerator<TSpeciesEnum>::addSinks(IndexType i, TTag tag) const
 		if (lo[Species::V] == 1)
 			this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
 	}
+
+	// D
+	if constexpr (psi::hasDeuterium<Species>) {
+		if (clReg.isSimplex() && lo.isOnAxis(Species::D)) {
+			if (lo[Species::D] == 1)
+				this->addSinkReaction(tag, {i, NetworkType::invalidIndex()});
+		}
+	}
 }
 
 template <typename TSpeciesEnum>
