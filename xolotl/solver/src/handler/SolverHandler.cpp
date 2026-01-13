@@ -191,124 +191,143 @@ SolverHandler::generateGrid(int surfaceOffset)
 
 			return;
 		}
-
-		// If it is not regular do a fine mesh close to the surface and
-		// increase the step size when away from the surface
 		if (gridType == "nonuniform") {
-			// Initialize the value of the previous point
+			// New meaning: gridParam0 is TOTAL LENGTH in nm
+			const double totalLengthNm = gridParam0;
+
 			double previousPoint = 0.0;
-			// Set the number of grid points
-			nX = gridParam0;
-			// Set the position of the surface
 			IdType surfacePos = 0;
 
-			// Loop on all the grid points
-			for (auto l = 0; l <= nX + 1; l++) {
-				// Add the previous point
+			grid.clear();
+			grid.reserve(2048);
+
+
+			IdType l = 0;
+
+			// Build interior nodes up to the requested total length.
+			while (previousPoint < totalLengthNm) {
 				grid.push_back(previousPoint);
-				// 0.1nm step near the surface (x < 2.5nm)
+
+				// Legacy dx schedule (unchanged)
 				if (l < surfacePos + 26) {
 					previousPoint += 0.1;
 				}
-				// Then 0.25nm (2.5nm < x < 5.0nm)
 				else if (l < surfacePos + 36) {
 					previousPoint += 0.25;
 				}
-				// Then 0.5nm (5.0nm < x < 7.5nm)
 				else if (l < surfacePos + 41) {
 					previousPoint += 0.5;
 				}
-				// Then 1.0nm step size (7.5nm < x < 50.5)
 				else if (l < surfacePos + 84) {
 					previousPoint += 1.0;
 				}
-				// Then 2.0nm step size (50.5nm < x < 100.5)
 				else if (l < surfacePos + 109) {
 					previousPoint += 2.0;
 				}
-				// Then 5.0nm step size (100.5nm < x < 150.5)
 				else if (l < surfacePos + 119) {
 					previousPoint += 5.0;
 				}
-				// Then 10.0nm step size (150.5nm < x < 300.5)
 				else if (l < surfacePos + 134) {
 					previousPoint += 10.0;
 				}
-				// Then 20.0nm step size (300.5nm < x < 500.5)
 				else if (l < surfacePos + 144) {
 					previousPoint += 20.0;
 				}
-				// Then 50.0nm step size (500.5nm < x < 1000.5)
 				else if (l < surfacePos + 154) {
 					previousPoint += 50.0;
 				}
-				// Then 100.0nm step size (1000.5nm < x < 5000.5)
 				else if (l < surfacePos + 194) {
 					previousPoint += 100.0;
 				}
-				// Then 200.0nm step size (5000.5nm < x < 10000.5)
 				else if (l < surfacePos + 219) {
 					previousPoint += 200.0;
 				}
-				// Then 500.0nm step size (10000.5nm < x < 20000.5)
 				else if (l < surfacePos + 239) {
 					previousPoint += 500.0;
 				}
-				// Then 1.0um step size (20000.5nm < x < 30000.5nm )
 				else if (l < surfacePos + 249) {
 					previousPoint += 1000.0;
 				}
-				// Then 2.0um step size (30000.5nm < x < 50000.5)
 				else if (l < surfacePos + 259) {
 					previousPoint += 2000.0;
 				}
-				// Then 5.0um step size (50000.5nm < x < 100000.5)
 				else if (l < surfacePos + 269) {
 					previousPoint += 5000.0;
 				}
-				// Then 10.0um step size (100000.5nm < x < 200000.5nm )
 				else if (l < surfacePos + 279) {
 					previousPoint += 10000.0;
 				}
-				// Then 20.0um step size (200000.5nm < x < 500000.5)
 				else if (l < surfacePos + 294) {
 					previousPoint += 20000.0;
 				}
-				// Then 50.0um step size (500000.5nm < x < 1000000.5)
 				else if (l < surfacePos + 304) {
 					previousPoint += 50000.0;
 				}
-				// Then 100.0um step size (1mm < x < 2mm )
 				else if (l < surfacePos + 314) {
 					previousPoint += 100000.0;
 				}
-				// Then 200.0um step size (2mm < x < 5mm)
 				else if (l < surfacePos + 329) {
 					previousPoint += 200000.0;
 				}
-				// Then 500.0um step size (5mm < x < 10mm)
 				else if (l < surfacePos + 339) {
 					previousPoint += 500000.0;
 				}
-				// Then 1.0mm step size (10mm < x)
 				else {
 					previousPoint += 1000000.0;
 				}
+
+				++l;
 			}
 
-			// Get the number of dimensions
+			// At this point, previousPoint is the first point >= totalLengthNm,
+			// but legacy grid includes that value as the next pushed point.
+
+			grid.push_back(previousPoint);
+
+			{
+				// Use current l for the next dx step, still using legacy schedule:
+				if (l < surfacePos + 26) previousPoint += 0.1;
+				else if (l < surfacePos + 36) previousPoint += 0.25;
+				else if (l < surfacePos + 41) previousPoint += 0.5;
+				else if (l < surfacePos + 84) previousPoint += 1.0;
+				else if (l < surfacePos + 109) previousPoint += 2.0;
+				else if (l < surfacePos + 119) previousPoint += 5.0;
+				else if (l < surfacePos + 134) previousPoint += 10.0;
+				else if (l < surfacePos + 144) previousPoint += 20.0;
+				else if (l < surfacePos + 154) previousPoint += 50.0;
+				else if (l < surfacePos + 194) previousPoint += 100.0;
+				else if (l < surfacePos + 219) previousPoint += 200.0;
+				else if (l < surfacePos + 239) previousPoint += 500.0;
+				else if (l < surfacePos + 249) previousPoint += 1000.0;
+				else if (l < surfacePos + 259) previousPoint += 2000.0;
+				else if (l < surfacePos + 269) previousPoint += 5000.0;
+				else if (l < surfacePos + 279) previousPoint += 10000.0;
+				else if (l < surfacePos + 294) previousPoint += 20000.0;
+				else if (l < surfacePos + 304) previousPoint += 50000.0;
+				else if (l < surfacePos + 314) previousPoint += 100000.0;
+				else if (l < surfacePos + 329) previousPoint += 200000.0;
+				else if (l < surfacePos + 339) previousPoint += 500000.0;
+				else previousPoint += 1000000.0;
+
+				grid.push_back(previousPoint);
+			}
+
+			// Set nX to match the convention used elsewhere: interior = grid.size() - 2
+			nX = static_cast<IdType>(grid.size() - 2);
+
+			// 2D/3D conventions
 			if (dimension > 1) {
-				nY = gridParam1;
-				hY = gridParam2;
+				nY = gridParam2;
+				hY = gridParam3;
 			}
 			if (dimension > 2) {
-				nZ = gridParam3;
-				hZ = gridParam4;
+				nZ = gridParam4;
+				hZ = gridParam5;
 			}
 
 			return;
 		}
-		// If it is a geometric gradation grid
+			// If it is a geometric gradation grid
 		if (gridType == "geometric") {
 			// Initialize the value of the previous point
 			double previousPoint = 0.0;
