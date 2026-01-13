@@ -3,7 +3,7 @@
     "flux": 4.0e5,
     "netParam": "8 0 0 6 6",
     "gridType": "nonuniform",
-    "gridParam": 36,
+    "gridParam": 5,
     "boundary": "1 0",
     "material": "W100",
     "dimensions": 1,
