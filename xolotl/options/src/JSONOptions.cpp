@@ -541,6 +541,11 @@ JSONOptions::defineHandlers()
 			"(default = 0.0)",
 			JSON_ELEM_HANDLER { checkSetParam(tree, name, cascadeEfficiency); })
 		.add(
+			"sinkStrength", ElemType::real,
+			"The value of the sink strength in nm-2.\n"
+			"(default = 0.0)",
+			JSON_ELEM_HANDLER { checkSetParam(tree, name, sinkStrength); })
+		.add(
 			"petscArgs", ElemType::list_string,
 			"List of strings to be joined verbatim and passed to PETSc.",
 			JSON_ELEM_HANDLER {

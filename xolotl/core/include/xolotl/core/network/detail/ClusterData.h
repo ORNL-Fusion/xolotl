@@ -150,6 +150,7 @@ private:
 		V_FORMATION,
 		V2_FORMATION,
 		AV_BUBBLE_RAD,
+		SINK_STRENGTH,
 		NUM_FLOAT_VALS
 	};
 
@@ -301,6 +302,19 @@ public:
 	setBubbleAvRad(double val)
 	{
 		setVal(_floatVals, AV_BUBBLE_RAD, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	sinkStrength() const
+	{
+		return _floatVals[SINK_STRENGTH];
+	}
+
+	void
+	setSinkStrength(double val)
+	{
+		setVal(_floatVals, SINK_STRENGTH, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

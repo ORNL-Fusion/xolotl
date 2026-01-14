@@ -835,11 +835,7 @@ KOKKOS_INLINE_FUNCTION
 double
 PSISinkReaction<TSpeciesEnum>::getSinkStrength()
 {
-	return 1.0e-4; // 1.0e14 m-2
-	constexpr double pi = ::xolotl::core::pi;
-	double grainSize = 50000.0; // 50 um
-
-	return 1.0 / (pi * grainSize * grainSize);
+	return this->_clusterData->sinkStrength();
 }
 } // namespace network
 } // namespace core

@@ -361,6 +361,11 @@ protected:
 	 */
 	double cascadeEfficiency;
 
+	/**
+	 * Value of the sink strength.
+	 */
+	double sinkStrength;
+
 public:
 	/**
 	 * The constructor.
@@ -1038,6 +1043,15 @@ public:
 	getCascadeEfficiency() const override
 	{
 		return cascadeEfficiency;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	getSinkStrength() const override
+	{
+		return sinkStrength;
 	}
 
 protected:

@@ -10,6 +10,7 @@
     "tempParam": 400,
     "grouping": "11 4 2",
     "process": "reaction diff movingSurface sink",
+    "sinkStrength": 1.273e-10,
     "initialConc": "V 1 0.0",
     "pulse": "100.0 1.0",
     "migrationThreshold": 1.1,

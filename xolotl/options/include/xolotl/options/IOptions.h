@@ -635,6 +635,14 @@ public:
 	virtual double
 	getCascadeEfficiency() const = 0;
 
+	/**
+	 * Obtain the value of the sink strength.
+	 *
+	 * @return The strength in nm-2
+	 */
+	virtual double
+	getSinkStrength() const = 0;
+
 protected:
 	friend class ::xolotl::interface::MultiXolotl;
 
