@@ -942,19 +942,19 @@ PSIReactionGenerator<TSpeciesEnum>::addSingleSizeReactions(
 		this->addProductionReaction(tag, {i, j, bubbleId});
 	}
 
-	//	// I_a + B -> HV_b
-	//	if ((lo1.isOnAxis(Species::I) and lo2[Species::V] > 0) or
-	//		(lo1[Species::V] > 0 and lo2.isOnAxis(Species::I))) {
-	//		// It should be around the largest size value
-	//		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
-	//				hi2[Species::I] - 4 >
-	//			largestVSize) {
-	//			// Need to know which one is I
-	//			auto iId = lo1[Species::I] > 0 ? i : j;
-	//			auto vId = lo1[Species::I] > 0 ? j : i;
-	//			this->addProductionReaction(tag, {iId, bubbleId, vId});
-	//		}
-	//	}
+	// I_a + B -> HV_b
+	if ((lo1.isOnAxis(Species::I) and lo2[Species::V] > 0) or
+		(lo1[Species::V] > 0 and lo2.isOnAxis(Species::I))) {
+		// It should be around the largest size value
+		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
+				hi2[Species::I] - 4 >
+			largestVSize) {
+			// Need to know which one is I
+			auto iId = lo1[Species::I] > 0 ? i : j;
+			auto vId = lo1[Species::I] > 0 ? j : i;
+			this->addProductionReaction(tag, {iId, bubbleId, vId});
+		}
+	}
 }
 
 template <typename TSpeciesEnum>

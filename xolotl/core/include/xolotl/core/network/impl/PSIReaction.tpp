@@ -152,6 +152,7 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 			concentrations(ssbmId) * rate;
 
 		// Vacancy case
+		// V_k + B -> B
 		if (comp[Species::V] > 0) {
 			// The standard cluster always loses the flux
 			Kokkos::atomic_sub(&fluxes[stdClusterId], f);
@@ -167,6 +168,7 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 
 			// Special case where the product is not the single size
 			if (this->_products[0] < numClusters) {
+				// I_a + B -> HV_b
 				// Only if the large void has a specific size
 				auto avVoid =
 					concentrations(ssbmId + 1) / concentrations(ssbmId);
@@ -202,12 +204,14 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 			// The standard cluster always loses the flux
 			Kokkos::atomic_sub(&fluxes[stdClusterId], f * gauss);
 
+			// I_k + B -> B
 			// The V size decreases
 			Kokkos::atomic_sub(
 				&fluxes[ssbmId + 1], f * comp[Species::I] * gauss);
 		}
 
 		// H case
+		// H_k + B -> B
 		if constexpr (psi::hasDeuterium<Species>) {
 			if (comp[Species::D] > 0) {
 				// The standard cluster always loses the flux
@@ -271,6 +275,7 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 		double f = this->_coefs(0, 0, 0, 0) * cR1 * cR2 * rate;
 
 		// Vacancy case
+		// V_a + HV_b -> B
 		if (orig1.isOnAxis(Species::V) or orig2.isOnAxis(Species::V)) {
 			// Compute the total size
 			auto totalSize = comp1[Species::V] + comp2[Species::V];
@@ -283,17 +288,21 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 		}
 
 		// H case
+		// H_a + H_bV -> B
 		if constexpr (psi::hasDeuterium<Species>) {
 			if (orig1.isOnAxis(Species::D) or orig2.isOnAxis(Species::D)) {
 				// Compute the total size
-				auto totalSize = comp1[Species::D] + comp2[Species::D];
+				auto totalDSize = comp1[Species::D] + comp2[Species::D];
+				auto totalVSize = comp1[Species::V] + comp2[Species::V];
 				// Both reactants decrease
 				Kokkos::atomic_sub(&fluxes[this->_reactants[0]], f);
 				Kokkos::atomic_sub(&fluxes[this->_reactants[1]], f);
-				// The large bubble increases, as well as average H
+				// The large bubble increases, as well as average H and V
 				Kokkos::atomic_add(&fluxes[this->_products[0]], f);
 				Kokkos::atomic_add(
-					&fluxes[this->_products[0] + 1], f * totalSize);
+					&fluxes[this->_products[0] + 2], f * totalDSize);
+				Kokkos::atomic_add(
+					&fluxes[this->_products[0] + 1], f * totalVSize);
 			}
 		}
 	}
@@ -650,7 +659,7 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 				Kokkos::atomic_sub(
 					&values(this->_connEntries[1][0][1][0]), f * cR1);
 
-				// The large bubble increases, as well as average H
+				// The large bubble increases, as well as average H and V
 				Kokkos::atomic_add(
 					&values(this->_connEntries[2][0][0][0]), f * cR2);
 				Kokkos::atomic_add(
@@ -661,6 +670,12 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 					&values(this->_connEntries[2][2][0][0]), f * cR2);
 				Kokkos::atomic_add(
 					&values(this->_connEntries[2][2][1][0]), f * cR1);
+				f = this->_coefs(0, 0, 0, 0) * rate *
+					(comp1[Species::V] + comp2[Species::V]);
+				Kokkos::atomic_add(
+					&values(this->_connEntries[2][1][0][0]), f * cR2);
+				Kokkos::atomic_add(
+					&values(this->_connEntries[2][1][1][0]), f * cR1);
 			}
 		}
 	}
