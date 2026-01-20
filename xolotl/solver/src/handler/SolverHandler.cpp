@@ -195,19 +195,22 @@ SolverHandler::generateGrid(int surfaceOffset)
 		// If it is not regular do a fine mesh close to the surface and
 		// increase the step size when away from the surface
 		if (gridType == "nonuniform") {
+			// New meaning: gridParam0 is TOTAL LENGTH in nm
+			const double totalLengthNm = gridParam0;
 			// Initialize the value of the previous point
 			double previousPoint = 0.0;
-			// Set the number of grid points
-			nX = gridParam0;
 			// Set the position of the surface
 			IdType surfacePos = 0;
+			// Initialize length
+			IdType l = 0;
 
-			// Loop on all the grid points
-			for (auto l = 0; l <= nX + 1; l++) {
+			// Build interior nodes up to the requested total length
+			while (previousPoint < totalLengthNm) {
 				// Add the previous point
 				grid.push_back(previousPoint);
+				// Legacy dx schedule (unchanged)
 				// 0.1nm step near the surface (x < 2.5nm)
-				if (l < surfacePos + 26) {
+				if (l < surfacePos + 26) { 
 					previousPoint += 0.1;
 				}
 				// Then 0.25nm (2.5nm < x < 5.0nm)
@@ -294,7 +297,46 @@ SolverHandler::generateGrid(int surfaceOffset)
 				else {
 					previousPoint += 1000000.0;
 				}
+
+				++l;
 			}
+
+			// At this point, previousPoint is the first point >= totalLengthNm,
+			// but legacy grid includes that value as the next pushed point.
+
+			grid.push_back(previousPoint);
+
+			{
+				// Use surfacePos to then calculate previousPoint 
+				// Use current l for the next dx step, still using legacy schedule:
+				if (l < surfacePos + 26) previousPoint += 0.1;
+				else if (l < surfacePos + 36) previousPoint += 0.25;
+				else if (l < surfacePos + 41) previousPoint += 0.5;
+				else if (l < surfacePos + 84) previousPoint += 1.0;
+				else if (l < surfacePos + 109) previousPoint += 2.0;
+				else if (l < surfacePos + 119) previousPoint += 5.0;
+				else if (l < surfacePos + 134) previousPoint += 10.0;
+				else if (l < surfacePos + 144) previousPoint += 20.0;
+				else if (l < surfacePos + 154) previousPoint += 50.0;
+				else if (l < surfacePos + 194) previousPoint += 100.0;
+				else if (l < surfacePos + 219) previousPoint += 200.0;
+				else if (l < surfacePos + 239) previousPoint += 500.0;
+				else if (l < surfacePos + 249) previousPoint += 1000.0;
+				else if (l < surfacePos + 259) previousPoint += 2000.0;
+				else if (l < surfacePos + 269) previousPoint += 5000.0;
+				else if (l < surfacePos + 279) previousPoint += 10000.0;
+				else if (l < surfacePos + 294) previousPoint += 20000.0;
+				else if (l < surfacePos + 304) previousPoint += 50000.0;
+				else if (l < surfacePos + 314) previousPoint += 100000.0;
+				else if (l < surfacePos + 329) previousPoint += 200000.0;
+				else if (l < surfacePos + 339) previousPoint += 500000.0;
+				else previousPoint += 1000000.0;
+
+				grid.push_back(previousPoint);
+			}
+
+			// Set nX to match the convention used elsewhere: interior = grid.size() - 2
+			nX = static_cast<IdType>(grid.size() - 2);
 
 			// Get the number of dimensions
 			if (dimension > 1) {
@@ -308,7 +350,7 @@ SolverHandler::generateGrid(int surfaceOffset)
 
 			return;
 		}
-		// If it is a geometric gradation grid
+			// If it is a geometric gradation grid
 		if (gridType == "geometric") {
 			// Initialize the value of the previous point
 			double previousPoint = 0.0;

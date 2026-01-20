@@ -2,7 +2,7 @@
     "dimensions": 1,
     "process": "reaction advec modifiedTM diff movingSurface attenuation",
     "gridType": "nonuniform",
-    "gridParam": 36,
+    "gridParam": 5,
     "vizHandler": "dummy",
     "perfHandler": "os",
     "material": "W111",

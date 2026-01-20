@@ -10,5 +10,5 @@ if(${DOXYGEN_FOUND})
     set(DOXYGEN_INTERACTIVE_SVG YES)
     set(DOXYGEN_DISTRIBUTE_GROUP_DOC YES)
 
-    doxygen_add_docs(xolotlDocs ${CMAKE_SOURCE_DIR}/xolotl)
+    doxygen_add_docs(xolotlDocs ${CMAKE_SOURCE_DIR}/xolotl ${CMAKE_SOURCE_DIR}/README.md)
 endif()

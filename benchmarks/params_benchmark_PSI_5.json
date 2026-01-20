@@ -10,7 +10,7 @@
         "bursting"
     ],
     "gridType": "nonuniform",
-    "gridParam": 115,
+    "gridParam": 130.5,
     "vizHandler": "dummy",
     "perfHandler": "os",
     "material": "W100",
