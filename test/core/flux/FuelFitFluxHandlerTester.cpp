@@ -7,8 +7,9 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/core/flux/FuelFitFluxHandler.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
 
 using namespace std;
@@ -27,11 +28,46 @@ BOOST_AUTO_TEST_SUITE(FuelFitFluxHandlerTester_testSuite)
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
+
+	// Create a file with reaction data.
+	std::ofstream reactionFile("reaction.dat");
+	reactionFile
+		<< "0 0 1 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "0 1 0 -0.160789024638881 -12.7387253625273 4.2488E+11 4.23317"
+		<< std::endl
+		<< "0 2 0 2.87060634573234 -8.37649260139129 9.9337E+11 3.43830674"
+		<< std::endl
+		<< "1 0 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 1 0 3.14296517286615 -1.4324963007117 0 0" << std::endl
+		<< "1 2 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 3 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 4 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 5 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 6 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 7 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "1 8 0 11.2375337876032 22.3998792567472 4.0767E+11 4.08453089"
+		<< std::endl
+		<< "Reactions" << std::endl
+		<< "0 0 1 0.00596" << std::endl
+		<< "0 1 0 0.00596" << std::endl
+		<< "0 2 0 0.00596" << std::endl;
+	reactionFile.close();
+
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
-	paramFile << "netParam=100 0 0 0 0" << std::endl;
+	paramFile << "netParam=5 0 0 5 1" << std::endl
+			  << "reactionFilePath=reaction.dat" << std::endl
+			  << "tempParam=1500" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -51,8 +87,17 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 
 	// Create the network
 	using NetworkType = network::NEReactionNetwork;
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxXe = opts.getMaxImpurity();
-	NetworkType network({maxXe}, grid.size(), opts);
+	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
+		maxXe, maxV, maxI};
+	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
+		{maxXe + 1, maxV + 1, maxI + 1}};
+	NetworkType network(maxSpeciesAmounts, subdivRatios, 1, opts);
+
+	std::remove("reaction.dat");
+
 	// Get its size
 	const int dof = network.getDOF();
 
@@ -67,31 +112,40 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	double currTime = 1.0;
 
 	// The array of concentration
-	double newConcentration[5 * dof];
+	test::DOFView conc("conc", 5, dof);
+	test::DOFView updatedConc("updatedConc", 5, dof);
 
 	// Initialize their values
-	for (int i = 0; i < 5 * dof; i++) {
-		newConcentration[i] = 0.0;
-	}
+	Kokkos::parallel_for(
+		dof, KOKKOS_LAMBDA(int j) {
+			for (int i = 0; i < 5; i++) {
+				conc(i, j) = 1.0e-5 * i;
+				updatedConc(i, j) = 0.0;
+			}
+		});
 
 	// The pointer to the grid point we want
-	double* updatedConc = &newConcentration[0];
-	double* updatedConcOffset = updatedConc + dof;
+	auto concOffset = subview(conc, 1, Kokkos::ALL);
+	auto updatedConcOffset = subview(updatedConc, 1, Kokkos::ALL);
 
 	// Update the concentrations at some grid points
 	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 1, surfacePos);
-	updatedConcOffset = updatedConc + 2 * dof;
+		currTime, concOffset, updatedConcOffset, 1, surfacePos);
+	concOffset = subview(conc, 2, Kokkos::ALL);
+	updatedConcOffset = subview(updatedConc, 2, Kokkos::ALL);
 	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 2, surfacePos);
-	updatedConcOffset = updatedConc + 3 * dof;
+		currTime, concOffset, updatedConcOffset, 2, surfacePos);
+	concOffset = subview(conc, 3, Kokkos::ALL);
+	updatedConcOffset = subview(updatedConc, 3, Kokkos::ALL);
 	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 3, surfacePos);
+		currTime, concOffset, updatedConcOffset, 3, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[100], 1.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[200], 1.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[300], 1.0, 0.01);
+	auto newConcentration =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, updatedConc);
+	BOOST_REQUIRE_CLOSE(newConcentration(1, 1), 10000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 10000.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(3, 3), 0.25, 0.01);
 
 	// Finalize MPI
 	MPI_Finalize();

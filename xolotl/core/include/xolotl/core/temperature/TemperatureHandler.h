@@ -19,9 +19,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	initializeTemperature(int dof,
-		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap) override;
+	initialize(int dof) override;
 
 	/**
 	 * This operation sets the temperature given by the solver.
@@ -30,7 +28,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	setTemperature(double* solution) override
+	setTemperature(Kokkos::View<const double*> solution) override
 	{
 		return;
 	}
@@ -79,9 +77,11 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	void
-	computeTemperature(double currentTime, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int xi,
-		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override
+	computeTemperature(double currentTime,
+		Kokkos::View<const double*>* concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int xi, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0) override
 	{
 		return;
 	}
@@ -94,7 +94,7 @@ public:
 	 * \see ITemperatureHandler.h
 	 */
 	bool
-	computePartialsForTemperature(double currentTime, double** concVector,
+	computePartialsForTemperature(double currentTime, const double** concVector,
 		double* val, IdType* indices, double hxLeft, double hxRight, int xi,
 		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) override
 	{

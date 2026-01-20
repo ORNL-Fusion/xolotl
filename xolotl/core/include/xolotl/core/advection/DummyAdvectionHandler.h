@@ -1,5 +1,4 @@
-#ifndef DUMMYADVECTIONHANDLER_H
-#define DUMMYADVECTIONHANDLER_H
+#pragma once
 
 // Includes
 #include <xolotl/core/advection/SurfaceAdvectionHandler.h>
@@ -37,7 +36,7 @@ public:
 	 */
 	void
 	initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) override
+		std::vector<RowColPair>& idPairs) override
 	{
 		// Clear the index and sink strength vectors
 		advectingClusters.clear();
@@ -64,11 +63,12 @@ public:
 	 */
 	void
 	computeAdvection(network::IReactionNetwork& network,
-		const plsm::SpaceVector<double, 3>& pos, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
-		double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0) const override
+		const plsm::SpaceVector<double, 3>& pos,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
+		int iz = 0) const override
 	{
-		// Doesn't do anything
 		return;
 	}
 
@@ -76,12 +76,11 @@ public:
 	 * \see IAdvectionHandler.h
 	 */
 	void
-	computePartialsForAdvection(network::IReactionNetwork& network, double* val,
-		IdType* indices, const plsm::SpaceVector<double, 3>& pos, double hxLeft,
-		double hxRight, int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
-		int iz = 0) const override
+	computePartialsForAdvection(network::IReactionNetwork& network,
+		Kokkos::View<double*> val, const plsm::SpaceVector<double, 3>& pos,
+		double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
+		double hz = 0.0, int iz = 0) const override
 	{
-		// Doesn't do anything
 		return;
 	}
 };
@@ -90,4 +89,3 @@ public:
 } /* end namespace advection */
 } /* end namespace core */
 } /* end namespace xolotl */
-#endif

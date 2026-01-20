@@ -5,6 +5,7 @@
 #include <xolotl/core/diffusion/Diffusion2DHandler.h>
 #include <xolotl/core/diffusion/Diffusion3DHandler.h>
 #include <xolotl/core/diffusion/DummyDiffusionHandler.h>
+#include <xolotl/core/diffusion/Spherical1DHandler.h>
 #include <xolotl/core/material/MaterialHandler.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
@@ -63,6 +64,9 @@ MaterialHandler::createDiffusionHandler(const options::IOptions& options)
 			migrationThreshold);
 		break;
 	case 1:
+		if (options.getProcesses().at("spherical"))
+			return std::make_shared<core::diffusion::Spherical1DHandler>(
+				migrationThreshold);
 		return std::make_shared<core::diffusion::Diffusion1DHandler>(
 			migrationThreshold);
 		break;

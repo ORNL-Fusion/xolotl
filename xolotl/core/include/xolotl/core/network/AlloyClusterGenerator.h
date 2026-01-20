@@ -64,6 +64,7 @@ private:
 	AmountType _maxV;
 	AmountType _maxI;
 	AmountType _maxSize;
+	AmountType _maxVoid;
 	AmountType _groupingMin;
 	AmountType _groupingWidth;
 };

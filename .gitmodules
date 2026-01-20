@@ -1,3 +1,6 @@
 [submodule "external/plsm"]
 	path = external/plsm
 	url = https://github.com/ORNL-Fusion/plsm.git
+[submodule "external/petsc"]
+	path = external/petsc
+	url = https://gitlab.com/petsc/petsc.git

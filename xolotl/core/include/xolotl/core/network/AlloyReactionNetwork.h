@@ -18,7 +18,6 @@ class AlloyReactionGenerator;
 class AlloyReactionNetwork : public ReactionNetwork<AlloyReactionNetwork>
 {
 	friend class ReactionNetwork<AlloyReactionNetwork>;
-	friend class detail::ReactionNetworkWorker<AlloyReactionNetwork>;
 
 public:
 	using Superclass = ReactionNetwork<AlloyReactionNetwork>;
@@ -35,9 +34,36 @@ public:
 	checkLargestClusterId();
 
 	void
-	setConstantRates(RateVector) override
+	setConstantRates(RatesView rates, IndexType gridIndex) override;
+
+	void
+	setConstantConnectivities(ConnectivitiesPair conns) override;
+
+	void
+	setConstantRateEntries() override;
+
+	std::string
+	getMonitorOutputFileName() const override
 	{
+		return "Alloy.dat";
 	}
+
+	std::string
+	getMonitorDataHeaderString() const override;
+
+	void
+	addMonitorDataValues(Kokkos::View<const double*> conc, double fac,
+		std::vector<double>& totalVals) override;
+
+	std::size_t
+	getMonitorDataLineSize() const override
+	{
+		return getSpeciesListSize() * 4;
+	}
+
+	void
+	writeMonitorDataLine(
+		const std::vector<double>& localData, double time) override;
 
 private:
 	double
@@ -55,6 +81,18 @@ private:
 
 	detail::AlloyReactionGenerator
 	getReactionGenerator() const noexcept;
+
+	void
+	readClusters(const std::string filename)
+	{
+		return;
+	}
+
+	void
+	readReactions(double temperature, const std::string filename)
+	{
+		return;
+	}
 };
 
 namespace detail

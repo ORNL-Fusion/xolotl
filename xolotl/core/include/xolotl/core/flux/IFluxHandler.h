@@ -1,8 +1,9 @@
-#ifndef IFLUXHANDLER_H
-#define IFLUXHANDLER_H
+#pragma once
 
 #include <string>
 #include <vector>
+
+#include <Kokkos_Core.hpp>
 
 #include <xolotl/core/network/IReactionNetwork.h>
 
@@ -48,14 +49,15 @@ public:
 	 * grid point.
 	 *
 	 * @param currentTime The time
-	 * @param updatedConcOffset The pointer to the array of the concentration at
-	 * the grid point where the diffusion is computed
+	 * @param concOffset The concentrations at this grid point
+	 * @param updatedConcOffset The concentrations to update at this grid poitn
 	 * @param ix The position on the x grid
 	 * @param surfacePos The current position of the surface
 	 */
 	virtual void
-	computeIncidentFlux(double currentTime, double* updatedConcOffset, int xi,
-		int surfacePos) = 0;
+	computeIncidentFlux(double currentTime,
+		Kokkos::View<const double*> concOffset,
+		Kokkos::View<double*> updatedConcOffset, int xi, int surfacePos) = 0;
 
 	/**
 	 * This operation increments the fluence at the current time step.
@@ -72,6 +74,14 @@ public:
 	 */
 	virtual void
 	computeFluence(double time) = 0;
+
+	/**
+	 * This operation sets the fluence.
+	 *
+	 * @param fluence The current fluence
+	 */
+	virtual void
+	setFluence(std::vector<double> fluence) = 0;
 
 	/**
 	 * This operation returns the total fluence and effective fluences.
@@ -117,10 +127,18 @@ public:
 	/**
 	 * This operation sets proportion of the pulse that is on.
 	 *
-	 * @param a The proprotion
+	 * @param a The proportion
 	 */
 	virtual void
 	setProportion(double a) = 0;
+
+	/**
+	 * This operation sets the fission yield.
+	 *
+	 * @param yield The yield
+	 */
+	virtual void
+	setFissionYield(double yield) = 0;
 
 	/**
 	 * Get the implanted flux for a specific sub network.
@@ -170,5 +188,3 @@ public:
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif

@@ -619,11 +619,11 @@ HDF5File::DataSet<T>::parWrite2D(
 	doInOrder(
 		[cwRank, &dataFileSpace, &dataOffsets, &dataCounts]() {
 			const auto totalDims = dataFileSpace.getDims();
-			std::cout << cwRank << ": "
-					  << "fileDims: " << totalDims[0] << ", " << totalDims[1]
-					  << "\n  offset: " << dataOffsets[0] << ", "
-					  << dataOffsets[1] << "\n  count: " << dataCounts[0]
-					  << ", " << dataCounts[1] << std::endl;
+			std::cout << cwRank << ": " << "fileDims: " << totalDims[0] << ", "
+					  << totalDims[1] << "\n  offset: " << dataOffsets[0]
+					  << ", " << dataOffsets[1]
+					  << "\n  count: " << dataCounts[0] << ", " << dataCounts[1]
+					  << std::endl;
 		},
 		comm, "dataspaces");
 #endif // READY

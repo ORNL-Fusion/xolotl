@@ -14,6 +14,7 @@ list(APPEND XOLOTL_CORE_HEADERS
 )
 
 list(APPEND XOLOTL_CORE_SOURCES
+    ${XOLOTL_CORE_SOURCE_DIR}/advection/AdvectionHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/advection/SurfaceAdvectionHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/advection/TungstenAdvectionHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/advection/XGBAdvectionHandler.cpp

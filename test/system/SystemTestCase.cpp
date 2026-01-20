@@ -14,6 +14,7 @@
 #include <boost/test/unit_test.hpp>
 
 #include <xolotl/interface/Interface.h>
+#include <xolotl/interface/MultiXolotl.h>
 #include <xolotl/perf/dummy/DummyTimer.h>
 #include <xolotl/perf/os/OSTimer.h>
 #include <xolotl/test/MPITestUtils.h>
@@ -122,7 +123,7 @@ public:
 
 private:
 	bool _redirected{false};
-	int _fileDesc;
+	int _fileDesc{-1};
 };
 
 class ScopedTimer
@@ -252,6 +253,26 @@ readOutputFile(const std::string& fileName)
 	return ret;
 }
 
+void
+deleteLastLines(const std::string& fileName, std::size_t n)
+{
+	if (getMPIRank() != 0) {
+		return;
+	}
+
+	{
+		auto ifs = std::ifstream(fileName);
+		auto ofs = std::ofstream("temp.txt");
+		std::string line{};
+		for (std::size_t i = 0; i < n && std::getline(ifs, line); ++i) {
+			ofs << line << '\n';
+		}
+	}
+
+	xolotl::fs::remove(fileName);
+	xolotl::fs::rename("temp.txt", fileName);
+}
+
 const std::string SystemTestCase::_dataDir = TO_STRING(XOLOTL_TEST_DATA_DIR);
 const std::string SystemTestCase::_binDir = TO_STRING(XOLOTL_BUILD_DIR);
 const std::string SystemTestCase::_defaultOutputFileName = "retentionOut.txt";
@@ -276,24 +297,37 @@ SystemTestCase::SystemTestCase(const std::string& caseName) :
 }
 
 bool
-SystemTestCase::runXolotl() const
+SystemTestCase::checkMPILimits() const
 {
+	auto commSize = getMPICommSize();
+	if (commSize < _mpiLimits[0]) {
+		return false;
+	}
+	if (-1 < _mpiLimits[1] && _mpiLimits[1] < commSize) {
+		return false;
+	}
+	return true;
+}
+
+bool
+SystemTestCase::runXolotl(const std::string& fnTag) const
+{
+	ScopedTimer timer{_caseName + fnTag, _enableTimer};
+
 	// Redirect console output
 	StdOutRedirect redir;
 	if (!_noRedirect) {
 		redir = StdOutRedirect{
-			_binDir + "/test/system/stdout_" + _caseName + ".txt"};
+			_binDir + "/test/system/stdout_" + _caseName + fnTag + ".txt"};
 	}
 
 	// Construct command-line
 	auto exec = _binDir + "/xolotl/xolotl";
-	auto paramsFileName = _dataDir + "/params_" + _caseName + ".txt";
+	auto paramsFileName = _dataDir + "/params_" + _caseName + fnTag + ".json";
 	int argc = 2;
 	const char* argv[] = {exec.data(), paramsFileName.data()};
 	try {
-		xolotl::interface::XolotlInterface {
-			argc, argv
-		}.solveXolotl();
+		interface::makeXolotlInterface(argc, argv)->solveXolotl();
 	}
 	catch (const std::exception& e) {
 		std::cout << e.what() << std::endl;
@@ -307,6 +341,55 @@ SystemTestCase::runXolotl() const
 }
 
 void
+SystemTestCase::run(Restart restart) const
+{
+	if (!checkMPILimits()) {
+		if (getMPIRank() == 0) {
+			std::cout << "\nSkipping " << _caseName << std::endl;
+		}
+		MPI_Barrier(MPI_COMM_WORLD);
+		return;
+	}
+
+	if (restart) {
+		BOOST_REQUIRE(runXolotl("_checkpoint"));
+		auto lastStep = std::get<0>(interface::MultiXolotl::readStopData());
+		deleteLastLines(_outputFileName, lastStep + 1);
+		BOOST_REQUIRE(runXolotl("_restart"));
+	}
+	else {
+		BOOST_REQUIRE(runXolotl());
+	}
+
+	handleOutput();
+}
+
+void
+SystemTestCase::handleOutput() const
+{
+	auto rank = getMPIRank();
+	auto perfFileName = "perf_r" + std::to_string(rank) + ".yaml";
+	auto cwd = xolotl::fs::current_path();
+	if (exists(cwd / perfFileName)) {
+		auto newPerfFileName = _caseName + "_" + perfFileName;
+		xolotl::fs::rename(cwd / perfFileName, cwd / newPerfFileName);
+	}
+
+	if (rank == 0) {
+		auto newFilePath = cwd / (_caseName + "_" + _outputFileName);
+		xolotl::fs::rename(cwd / _outputFileName, newFilePath);
+		auto approveFileName = _dataDir + "/output/" + _caseName + ".txt";
+		if (_approve) {
+			xolotl::fs::copy_file(newFilePath, approveFileName,
+				xolotl::fs::copy_options::overwrite_existing);
+		}
+		else {
+			checkOutput(newFilePath.string(), approveFileName);
+		}
+	}
+}
+
+void
 SystemTestCase::checkOutput(const std::string& outputFileName,
 	const std::string& expectedOutputFileName) const
 {
@@ -315,27 +398,6 @@ SystemTestCase::checkOutput(const std::string& outputFileName,
 	BOOST_REQUIRE(expectedData.size() == data.size());
 	auto diffNorm = computeDiffNorm(data, expectedData);
 	BOOST_REQUIRE_SMALL(diffNorm, _tolerance);
-}
-
-void
-SystemTestCase::run() const
-{
-	{
-		ScopedTimer timer{_caseName, _enableTimer};
-		BOOST_REQUIRE(runXolotl());
-	}
-
-	if (getMPIRank() == 0) {
-		if (_approve) {
-			xolotl::fs::copy_file("./" + _outputFileName,
-				_dataDir + "/output/" + _caseName + ".txt",
-				xolotl::fs::copy_options::overwrite_existing);
-		}
-		else {
-			checkOutput("./" + _outputFileName,
-				_dataDir + "/output/" + _caseName + ".txt");
-		}
-	}
 }
 
 void

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <xolotl/factory/Factory.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 
 namespace xolotl
 {
@@ -41,7 +41,7 @@ template <typename TFactory, typename THandlerBase>
 std::shared_ptr<THandlerBase>
 Factory<TFactory, THandlerBase>::generate(const std::string& name)
 {
-	return generate(name, options::Options{});
+	return generate(name, options::ConfOptions{});
 }
 
 template <typename TFactory, typename THandlerBase>

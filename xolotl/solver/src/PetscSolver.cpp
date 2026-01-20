@@ -43,13 +43,11 @@ overridePetscVFPrintf(FILE* fd, const char format[], va_list Argp)
 {
 	PetscFunctionBeginUser;
 
-	PetscErrorCode ierr;
 	if (fd == stdout || fd == stderr) {
 		constexpr std::size_t BIG = 1024;
 		char buff[BIG];
 		std::size_t length;
-		ierr = PetscVSNPrintf(buff, BIG, format, &length, Argp);
-		CHKERRQ(ierr);
+		PetscCall(PetscVSNPrintf(buff, BIG, format, &length, Argp));
 		if (fd == stderr) {
 			XOLOTL_LOG_ERR << buff;
 		}
@@ -58,8 +56,7 @@ overridePetscVFPrintf(FILE* fd, const char format[], va_list Argp)
 		}
 	}
 	else {
-		ierr = PetscVFPrintfDefault(fd, format, Argp);
-		CHKERRQ(ierr);
+		PetscCall(PetscVFPrintfDefault(fd, format, Argp));
 	}
 
 	PetscFunctionReturn(0);
@@ -99,9 +96,7 @@ PetscErrorCode
 RHSFunction(TS ts, PetscReal ftime, Vec C, Vec F, void* ctx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr =
-		static_cast<PetscSolver*>(ctx)->rhsFunction(ts, ftime, C, F);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<PetscSolver*>(ctx)->rhsFunction(ts, ftime, C, F));
 	PetscFunctionReturn(0);
 }
 
@@ -113,29 +108,29 @@ PetscErrorCode
 RHSJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J, void* ctx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr =
-		static_cast<PetscSolver*>(ctx)->rhsJacobian(ts, ftime, C, A, J);
-	CHKERRQ(ierr);
+	auto solver = static_cast<PetscSolver*>(ctx);
+	PetscCall(solver->rhsJacobian(ts, ftime, C, A, J));
 	PetscFunctionReturn(0);
 }
 
 PetscSolver::PetscSolver(const options::IOptions& options) :
 	Solver(options,
-		[&options](core::network::IReactionNetwork& network)
+		[&options](core::network::IReactionNetwork& network,
+			perf::IPerfHandler& perfHandler)
 			-> std::shared_ptr<handler::ISolverHandler> {
 			switch (options.getDimensionNumber()) {
 			case 0:
 				return std::make_shared<handler::PetscSolver0DHandler>(
-					network, options);
+					network, perfHandler, options);
 			case 1:
 				return std::make_shared<handler::PetscSolver1DHandler>(
-					network, options);
+					network, perfHandler, options);
 			case 2:
 				return std::make_shared<handler::PetscSolver2DHandler>(
-					network, options);
+					network, perfHandler, options);
 			case 3:
 				return std::make_shared<handler::PetscSolver3DHandler>(
-					network, options);
+					network, perfHandler, options);
 			default:
 				// The asked dimension is not good (e.g. -1, 4)
 				throw std::runtime_error(
@@ -174,72 +169,71 @@ isPetscInitialized()
 void
 PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 {
-	PetscErrorCode ierr;
-
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Initialize program
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	if (!isPetscInitialized()) {
 		PetscVFPrintf = overridePetscVFPrintf;
-		ierr = PetscInitialize(NULL, NULL, NULL, help);
-		checkPetscError(
-			ierr, "PetscSolver::initialize: PetscInitialize failed.");
+		PetscCallVoid(PetscInitialize(NULL, NULL, NULL, help));
 		petscInitializedHere = true;
+	}
+	// Free memory
+	if (loop > 0) {
+		PetscCallVoid(PetscOptionsDestroy(&petscOptions));
+		PetscCallVoid(VecDestroy(&C));
+		PetscCallVoid(TSDestroy(&ts));
+		PetscCallVoid(DMDestroy(&da));
 	}
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create the solver options
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = PetscOptionsCreate(&petscOptions);
-	checkPetscError(
-		ierr, "PetscSolver::initialize: PetscOptionsCreate failed.");
-	ierr = PetscOptionsInsertString(petscOptions, optionsString.c_str());
-	checkPetscError(
-		ierr, "PetscSolver::initialize: PetscOptionsInsertString failed.");
-	ierr = PetscOptionsPush(petscOptions);
-	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPush failed.");
+	PetscCallVoid(PetscOptionsCreate(&petscOptions));
+	PetscCallVoid(
+		PetscOptionsInsertString(petscOptions, optionsString.c_str()));
+	PetscCallVoid(PetscOptionsPush(petscOptions));
 
 	// Check the option -snes_mf_operator
 	PetscBool flagReduced;
-	ierr = PetscOptionsHasName(NULL, NULL, "-snes_mf_operator", &flagReduced);
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-snes_mf_operator", &flagReduced));
 
 	// Create the solver context
 	this->solverHandler->createSolverContext(da);
+	PetscCallVoid(DMSetVecType(da, VECKOKKOS));
+	PetscCallVoid(DMSetMatType(da, MATAIJKOKKOS));
 
 	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Extract global vector from DMDA to hold solution
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = DMCreateGlobalVector(da, &C);
-	checkPetscError(
-		ierr, "PetscSolver::initialize: DMCreateGlobalVector failed.");
+	PetscCallVoid(DMCreateGlobalVector(da, &C));
+
+	/*  - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+	 Create and set up Jacobian matrix
+	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
+	Mat J;
+	PetscCallVoid(DMSetMatrixPreallocateSkip(da, PETSC_TRUE));
+	PetscCallVoid(DMCreateMatrix(da, &J));
+	this->solverHandler->initializeSolverContext(da, J);
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Create timestepping solver context
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
 	// Get the MPI communicator
 	auto xolotlComm = util::getMPIComm();
-	ierr = TSCreate(xolotlComm, &ts);
-	checkPetscError(ierr, "PetscSolver::initialize: TSCreate failed.");
-	ierr = TSSetType(ts, TSARKIMEX);
-	checkPetscError(ierr, "PetscSolver::initialize: TSSetType failed.");
-	ierr = TSARKIMEXSetFullyImplicit(ts, PETSC_TRUE);
-	checkPetscError(
-		ierr, "PetscSolver::initialize: TSARKIMEXSetFullyImplicit failed.");
-	ierr = TSSetDM(ts, da);
-	checkPetscError(ierr, "PetscSolver::initialize: TSSetDM failed.");
-	ierr = TSSetProblemType(ts, TS_NONLINEAR);
-	checkPetscError(ierr, "PetscSolver::initialize: TSSetProblemType failed.");
-	ierr = TSSetRHSFunction(ts, nullptr, RHSFunction, this);
-	checkPetscError(ierr, "PetscSolver::initialize: TSSetRHSFunction failed.");
-	ierr = TSSetRHSJacobian(ts, nullptr, nullptr, RHSJacobian, this);
-	checkPetscError(ierr, "PetscSolver::initialize: TSSetRHSJacobian failed.");
-	ierr = TSSetSolution(ts, C);
-	checkPetscError(ierr, "PetscSolver::initialize: TSSetSolution failed.");
+	PetscCallVoid(TSCreate(xolotlComm, &ts));
+	PetscCallVoid(TSSetType(ts, TSARKIMEX));
+	PetscCallVoid(TSARKIMEXSetFullyImplicit(ts, PETSC_TRUE));
+	PetscCallVoid(TSSetDM(ts, da));
+	PetscCallVoid(TSSetProblemType(ts, TS_NONLINEAR));
+	PetscCallVoid(TSSetRHSFunction(ts, nullptr, RHSFunction, this));
+	PetscCallVoid(TSSetRHSJacobian(ts, J, J, RHSJacobian, this));
+	PetscCallVoid(TSSetSolution(ts, C));
 
 	// Read the times if the information is in the HDF5 file
-	auto fileName = this->solverHandler->getNetworkName();
 	double deltaTime = 1.0e-12;
-	if (!fileName.empty() and loop == 0) {
+	if (this->solverHandler->checkForRestart() and loop == 0) {
+		auto fileName = this->solverHandler->getRestartFilePath();
 		io::XFile xfile(fileName);
 		auto concGroup = xfile.getGroup<io::XFile::ConcentrationGroup>();
 		if (concGroup and concGroup->hasTimesteps()) {
@@ -255,37 +249,33 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Set solver options
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = TSSetFromOptions(ts);
-	checkPetscError(ierr, "PetscSolver::initialize: TSSetFromOptions failed.");
+	PetscCallVoid(TSSetFromOptions(ts));
 
 	// Switch on the number of dimensions to set the monitors
 	auto dim = this->solverHandler->getDimension();
 	switch (dim) {
 	case 0:
-		// One dimension
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor0D>(ts, this->solverHandler);
+		this->monitor = std::make_shared<monitor::PetscMonitor0D>(
+			ts, this->solverHandler, this->checkpointFile);
 		break;
 	case 1:
-		// One dimension
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor1D>(ts, this->solverHandler);
+		this->monitor = std::make_shared<monitor::PetscMonitor1D>(
+			ts, this->solverHandler, this->checkpointFile);
 		break;
 	case 2:
-		// Two dimensions
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor2D>(ts, this->solverHandler);
+		this->monitor = std::make_shared<monitor::PetscMonitor2D>(
+			ts, this->solverHandler, this->checkpointFile);
 		break;
 	case 3:
-		// Three dimensions
-		this->monitor =
-			std::make_shared<monitor::PetscMonitor3D>(ts, this->solverHandler);
+		this->monitor = std::make_shared<monitor::PetscMonitor3D>(
+			ts, this->solverHandler, this->checkpointFile);
 		break;
 	default:
 		throw std::runtime_error(
 			"PetscSolver Exception: Wrong number of dimensions "
 			"to set the monitors.");
 	}
+
 	this->monitor->setup(loop);
 
 	// Set the saved data
@@ -302,31 +292,24 @@ PetscSolver::initialize(int loop, double time, DM oldDA, Vec oldC)
 	std::cout.precision(16);
 
 	// Pop the options
-	ierr = PetscOptionsPop();
-	checkPetscError(ierr, "PetscSolver::initialize: PetscOptionsPop failed.");
+	PetscCallVoid(PetscOptionsPop());
+
+	initTimer->stop();
 }
 
 void
 PetscSolver::setTimes(double finalTime, double dt)
 {
-	PetscErrorCode ierr;
-
 	// Get the default values for the dt
 	TSAdapt adapt;
-	ierr = TSGetAdapt(ts, &adapt);
-	checkPetscError(ierr, "PetscSolver::setTimes: TSGetAdapt failed.");
+	PetscCallVoid(TSGetAdapt(ts, &adapt));
 	PetscReal hmin, hmax;
-	ierr = TSAdaptGetStepLimits(adapt, &hmin, &hmax);
-	checkPetscError(
-		ierr, "PetscSolver::setTimes: TSAdaptGetStepLimits failed.");
+	PetscCallVoid(TSAdaptGetStepLimits(adapt, &hmin, &hmax));
 	// Set the new max value
-	ierr = TSAdaptSetStepLimits(adapt, hmin, dt);
-	checkPetscError(
-		ierr, "PetscSolver::setTimes: TSAdaptSetStepLimits failed.");
+	PetscCallVoid(TSAdaptSetStepLimits(adapt, hmin, dt));
 
 	// Give the final time value to the solver
-	ierr = TSSetMaxTime(ts, finalTime);
-	checkPetscError(ierr, "PetscSolver::setTimes: TSSetMaxTime failed.");
+	PetscCallVoid(TSSetMaxTime(ts, finalTime));
 }
 
 std::vector<std::vector<std::vector<std::vector<std::pair<IdType, double>>>>>
@@ -345,12 +328,9 @@ PetscSolver::setConcVector(std::vector<std::vector<
 double
 PetscSolver::getCurrentDt()
 {
-	PetscErrorCode ierr;
-
 	// Get the value from the solver
 	double currentTimeStep;
-	ierr = TSGetTimeStep(ts, &currentTimeStep);
-	checkPetscError(ierr, "PetscSolver::getCurrentDt: TSGetTimeStep failed.");
+	PetscCallContinue(TSGetTimeStep(ts, &currentTimeStep));
 
 	return currentTimeStep;
 }
@@ -358,21 +338,20 @@ PetscSolver::getCurrentDt()
 void
 PetscSolver::setCurrentTimes(double time, double dt)
 {
-	PetscErrorCode ierr;
-
 	// Give the values to the solver
-	ierr = TSSetTime(ts, time);
-	checkPetscError(ierr, "PetscSolver::setCurrentTimes: TSSetTime failed.");
-	ierr = TSSetTimeStep(ts, dt);
-	checkPetscError(
-		ierr, "PetscSolver::setCurrentTimes: TSSetTimeStep failed.");
+	PetscCallVoid(TSSetTime(ts, time));
+	PetscCallVoid(TSSetTimeStep(ts, dt));
+}
+
+void
+PetscSolver::setCurrentTimeStep(double dt)
+{
+	PetscCallVoid(TSSetTimeStep(ts, dt));
 }
 
 void
 PetscSolver::solve()
 {
-	PetscErrorCode ierr;
-
 	// Initialiaze the converged reason
 	TSConvergedReason reason = TS_CONVERGED_USER;
 	Vec oldC;
@@ -381,13 +360,14 @@ PetscSolver::solve()
 	double time = 0.0;
 
 	// Push the options for the solve
-	ierr = PetscOptionsPush(petscOptions);
-	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPush failed.");
+	PetscCallVoid(PetscOptionsPush(petscOptions));
 
 	while (reason == TS_CONVERGED_USER) {
 		// The interface already initialized the first loop
 		if (loopNumber > 0) {
+			PetscCallVoid(PetscOptionsPop());
 			initialize(loopNumber, time, oldDA, oldC);
+			PetscCallVoid(PetscOptionsPush(petscOptions));
 		}
 
 		/*
@@ -399,54 +379,45 @@ PetscSolver::solve()
 			solveTimer->start();
 			if (!petscInitializedHere) {
 				// Reset the time step number
-				ierr = TSSetStepNumber(ts, 0);
-				checkPetscError(
-					ierr, "PetscSolver::solve: Reset Step Number failed.");
+				PetscCallVoid(TSSetStepNumber(ts, 0));
 				// Reset the GB location
 				this->solverHandler->initGBLocation(da, C);
 			}
 			// Start the PETSc Solve
-			ierr = TSSolve(ts, C);
-			checkPetscError(ierr, "PetscSolver::solve: TSSolve failed.");
+			PetscCallVoid(TSSolve(ts, C));
 			// Stop the timer
 			solveTimer->stop();
 
-			// Save some data from the monitors for next loop
-			this->monitor->keepFlux(
-				_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
-
-			// We are done with the loop
-			loopNumber++;
-
 			// Catch the change in surface
 			// Get the converged reason from PETSc
-			ierr = TSGetConvergedReason(ts, &reason);
-			checkPetscError(
-				ierr, "PetscSolver::solve: TSGetConvergedReason failed.");
-			if (reason == TS_CONVERGED_USER)
+			PetscCallVoid(TSGetConvergedReason(ts, &reason));
+			if (reason == TS_CONVERGED_USER) {
 				std::cout << "Caught the change of surface!" << std::endl;
 
-			// Save the time
-			ierr = TSGetTime(ts, &time);
-			checkPetscError(ierr, "PetscSolver::solve: TSGetTime failed.");
+				// Save some data from the monitors for next loop
+				this->monitor->keepFlux(
+					_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
 
-			// Save the old DA and associated vector
-			PetscInt dof;
-			ierr = DMDAGetDof(da, &dof);
-			checkPetscError(ierr, "PetscSolver::solve: DMDAGetDof failed.");
+				// We are done with the loop
+				loopNumber++;
 
-			ierr = DMDACreateCompatibleDMDA(da, dof, &oldDA);
-			checkPetscError(
-				ierr, "PetscSolver::solve: DMDACreateCompatibleDMDA failed.");
+				// Save the time
+				PetscCallVoid(TSGetTime(ts, &time));
 
-			// Save the old vector as a natural one to make the transfer easier
-			ierr = DMDACreateNaturalVector(oldDA, &oldC);
-			checkPetscError(
-				ierr, "PetscSolver::solve: DMDACreateNaturalVector failed.");
-			ierr = DMDAGlobalToNaturalBegin(oldDA, C, INSERT_VALUES, oldC);
-			ierr = DMDAGlobalToNaturalEnd(oldDA, C, INSERT_VALUES, oldC);
-			checkPetscError(
-				ierr, "PetscSolver::solve: DMDAGlobalToNatural failed.");
+				// Save the old DA and associated vector
+				PetscInt dof;
+				PetscCallVoid(DMDAGetDof(da, &dof));
+
+				PetscCallVoid(DMDACreateCompatibleDMDA(da, dof, &oldDA));
+
+				// Save the old vector as a natural one to make the transfer
+				// easier
+				PetscCallVoid(DMDACreateNaturalVector(oldDA, &oldC));
+				PetscCallVoid(
+					DMDAGlobalToNaturalBegin(oldDA, C, INSERT_VALUES, oldC));
+				PetscCallVoid(
+					DMDAGlobalToNaturalEnd(oldDA, C, INSERT_VALUES, oldC));
+			}
 		}
 		else {
 			throw std::string("PetscSolver Exception: Unable to solve! Data "
@@ -456,15 +427,12 @@ PetscSolver::solve()
 
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 			 Write in a file if everything went well or not.
-			 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-	   -*/
+	- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
 	// Check the option -check_collapse
 	PetscBool flagCheck;
-	ierr = PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck);
-	checkPetscError(ierr,
-		"PetscSolver::solve: PetscOptionsHasName (-check_collapse) "
-		"failed.");
+	PetscCallVoid(
+		PetscOptionsHasName(NULL, NULL, "-check_collapse", &flagCheck));
 	if (flagCheck) {
 		// Open the output file
 		std::ofstream outputFile;
@@ -472,9 +440,7 @@ PetscSolver::solve()
 
 		// Get the converged reason from PETSc
 		TSConvergedReason reason;
-		ierr = TSGetConvergedReason(ts, &reason);
-		checkPetscError(
-			ierr, "PetscSolver::solve: TSGetConvergedReason failed.");
+		PetscCallVoid(TSGetConvergedReason(ts, &reason));
 
 		// Write it
 		if (reason == TS_CONVERGED_EVENT)
@@ -489,20 +455,15 @@ PetscSolver::solve()
 	}
 
 	// Popping the option database
-	ierr = PetscOptionsPop();
-	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsPop failed.");
+	PetscCallVoid(PetscOptionsPop());
 }
 
 bool
 PetscSolver::getConvergenceStatus()
 {
-	PetscErrorCode ierr;
-
 	// Get the converged reason from PETSc
 	TSConvergedReason reason;
-	ierr = TSGetConvergedReason(ts, &reason);
-	checkPetscError(ierr,
-		"PetscSolver::getConvergenceStatus: TSGetConvergedReason failed.");
+	PetscCallContinue(TSGetConvergedReason(ts, &reason));
 
 	// Check if it was sent by the user
 	bool userReason = false;
@@ -524,42 +485,31 @@ PetscSolver::getConvergenceStatus()
 void
 PetscSolver::finalize()
 {
-	PetscErrorCode ierr;
-
 	/* - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 	 Free work space.
 	 - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - */
-	ierr = PetscOptionsDestroy(&petscOptions);
-	checkPetscError(ierr, "PetscSolver::solve: PetscOptionsDestroy failed.");
-	ierr = VecDestroy(&C);
-	checkPetscError(ierr, "PetscSolver::solve: VecDestroy failed.");
-	ierr = TSDestroy(&ts);
-	checkPetscError(ierr, "PetscSolver::solve: TSDestroy failed.");
-	ierr = DMDestroy(&da);
-	checkPetscError(ierr, "PetscSolver::solve: DMDestroy failed.");
+	PetscCallVoid(PetscOptionsDestroy(&petscOptions));
+	PetscCallVoid(VecDestroy(&C));
+	PetscCallVoid(TSDestroy(&ts));
+	PetscCallVoid(DMDestroy(&da));
 
 	if (petscInitializedHere) {
-		ierr = PetscFinalize();
-		checkPetscError(ierr, "PetscSolver::finalize: PetscFinalize failed.");
+		PetscCallVoid(PetscFinalize());
 	}
 }
 
 double
 PetscSolver::getXolotlTime()
 {
-	PetscErrorCode ierr;
-
 	// The most recent time that Xolotl converged
 	PetscReal CurrentXolotlTime;
-	ierr = TSGetTime(ts, &CurrentXolotlTime);
-	checkPetscError(ierr, "PetscSolver::getXolotlTime: TSGetTime failed.");
+	PetscCallContinue(TSGetTime(ts, &CurrentXolotlTime));
 	return CurrentXolotlTime;
 }
 
 PetscErrorCode
 PetscSolver::rhsFunction(TS ts, PetscReal ftime, Vec C, Vec F)
 {
-	PetscErrorCode ierr;
 	PetscFunctionBeginUser;
 
 	// Start the RHSFunction Timer
@@ -567,24 +517,19 @@ PetscSolver::rhsFunction(TS ts, PetscReal ftime, Vec C, Vec F)
 
 	// Get the local data vector from PETSc
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 	Vec localC;
-	ierr = DMGetLocalVector(da, &localC);
-	CHKERRQ(ierr);
+	PetscCall(DMGetLocalVector(da, &localC));
 
 	// Scatter ghost points to local vector, using the 2-step process
 	// DMGlobalToLocalBegin(),DMGlobalToLocalEnd().
 	// By placing code between these two statements, computations can be
 	// done while messages are in transition.
-	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
-	CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
-	CHKERRQ(ierr);
+	PetscCall(DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC));
+	PetscCall(DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC));
 
 	// Set the initial values of F
-	ierr = VecSet(F, 0.0);
-	CHKERRQ(ierr);
+	PetscCall(VecSet(F, 0.0));
 
 	// Compute the new concentrations
 	this->solverHandler->updateConcentration(ts, localC, F, ftime);
@@ -593,8 +538,7 @@ PetscSolver::rhsFunction(TS ts, PetscReal ftime, Vec C, Vec F)
 	rhsFunctionTimer->stop();
 
 	// Return the local vector
-	ierr = DMRestoreLocalVector(da, &localC);
-	CHKERRQ(ierr);
+	PetscCall(DMRestoreLocalVector(da, &localC));
 
 	PetscFunctionReturn(0);
 }
@@ -602,48 +546,37 @@ PetscSolver::rhsFunction(TS ts, PetscReal ftime, Vec C, Vec F)
 PetscErrorCode
 PetscSolver::rhsJacobian(TS ts, PetscReal ftime, Vec C, Mat A, Mat J)
 {
-	PetscErrorCode ierr;
 	PetscFunctionBeginUser;
 
 	// Start the RHSJacobian timer
 	rhsJacobianTimer->start();
 
 	// Get the matrix from PETSc
-	ierr = MatZeroEntries(J);
-	CHKERRQ(ierr);
+	PetscCall(MatZeroEntries(J));
 	DM da;
-	ierr = TSGetDM(ts, &da);
-	CHKERRQ(ierr);
+	PetscCall(TSGetDM(ts, &da));
 	Vec localC;
-	ierr = DMGetLocalVector(da, &localC);
-	CHKERRQ(ierr);
+	PetscCall(DMGetLocalVector(da, &localC));
 
 	// Get the complete data array
-	ierr = DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC);
-	CHKERRQ(ierr);
-	ierr = DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC);
-	CHKERRQ(ierr);
+	PetscCall(DMGlobalToLocalBegin(da, C, INSERT_VALUES, localC));
+	PetscCall(DMGlobalToLocalEnd(da, C, INSERT_VALUES, localC));
 
 	// Get the solver handler
 	this->solverHandler->computeJacobian(ts, localC, J, ftime);
 
 	// Return the local vector
-	ierr = DMRestoreLocalVector(da, &localC);
-	CHKERRQ(ierr);
+	PetscCall(DMRestoreLocalVector(da, &localC));
 
-	ierr = MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY);
-	CHKERRQ(ierr);
-	ierr = MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY);
-	CHKERRQ(ierr);
+	// PetscCall(MatAssemblyBegin(J, MAT_FINAL_ASSEMBLY));
+	// PetscCall(MatAssemblyEnd(J, MAT_FINAL_ASSEMBLY));
 
 	if (A != J) {
-		ierr = MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY);
-		CHKERRQ(ierr);
-		ierr = MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY);
-		CHKERRQ(ierr);
+		PetscCall(MatAssemblyBegin(A, MAT_FINAL_ASSEMBLY));
+		PetscCall(MatAssemblyEnd(A, MAT_FINAL_ASSEMBLY));
 	}
 
-	//	ierr = MatView(J, PETSC_VIEWER_STDOUT_WORLD);
+	// PetscCall(MatView(J, PETSC_VIEWER_STDOUT_WORLD));
 
 	// Stop the RHSJacobian timer
 	rhsJacobianTimer->stop();

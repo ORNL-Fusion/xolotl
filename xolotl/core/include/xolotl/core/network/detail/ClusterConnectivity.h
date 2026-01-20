@@ -3,6 +3,7 @@
 #include <Kokkos_Core.hpp>
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/util/Atomics.h>
 
 namespace xolotl
 {
@@ -47,13 +48,13 @@ public:
 			return;
 		}
 		if (this->entries.size() == 0) {
-			Kokkos::atomic_increment(&this->row_map(rowId));
+			Kokkos::atomic_inc(&this->row_map(rowId));
 		}
 		else {
 			for (auto id = this->row_map(rowId);
-				 !Kokkos::atomic_compare_exchange_strong(
-					 &this->entries(id), invalidNetworkIndex, columnId);
-				 ++id) {
+				!util::atomicCompareExchangeStrong(
+					&this->entries(id), invalidNetworkIndex, columnId);
+				++id) {
 				if (this->entries(id) == columnId) {
 					break;
 				}
@@ -85,7 +86,7 @@ private:
 	getPosition(IndexType rowId, IndexType columnId, const Crs& crs) const
 	{
 		for (auto pos = crs.row_map(rowId); pos < crs.row_map(rowId + 1);
-			 ++pos) {
+			++pos) {
 			if (crs.entries(pos) == columnId) {
 				return pos;
 			}

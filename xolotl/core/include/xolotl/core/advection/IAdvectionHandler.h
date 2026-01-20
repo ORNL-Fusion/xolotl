@@ -1,13 +1,15 @@
-#ifndef IADVECTIONHANDLER_H
-#define IADVECTIONHANDLER_H
+#pragma once
 
 // Includes
 #include <array>
 #include <memory>
 
+#include <Kokkos_Core.hpp>
+
 #include <plsm/SpaceVector.h>
 
 #include <xolotl/config.h>
+#include <xolotl/core/Types.h>
 #include <xolotl/core/network/IReactionNetwork.h>
 
 namespace xolotl
@@ -40,7 +42,7 @@ public:
 	 */
 	virtual void
 	initialize(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) = 0;
+		std::vector<RowColPair>& idPairs) = 0;
 
 	/**
 	 * Set the number of dimension
@@ -102,9 +104,11 @@ public:
 	 */
 	virtual void
 	computeAdvection(network::IReactionNetwork& network,
-		const plsm::SpaceVector<double, 3>& pos, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
-		double hy = 0.0, int iy = 0, double hz = 0.0, int iz = 0) const = 0;
+		const plsm::SpaceVector<double, 3>& pos,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
+		int iz = 0) const = 0;
 
 	/**
 	 * Compute the partial derivatives due to the advection of all the helium
@@ -114,8 +118,6 @@ public:
 	 * @param network The network
 	 * @param val The pointer to the array that will contain the values of
 	 * partials for the advection
-	 * @param indices The pointer to the array that will contain the indices of
-	 * the advecting cluster in the network
 	 * @param pos The position on the grid
 	 * @param hxLeft The step size on the left side of the point in the x
 	 * direction
@@ -128,10 +130,10 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void
-	computePartialsForAdvection(network::IReactionNetwork& network, double* val,
-		IdType* indices, const plsm::SpaceVector<double, 3>& pos, double hxLeft,
-		double hxRight, int ix, double hy = 0.0, int iy = 0, double hz = 0.0,
-		int iz = 0) const = 0;
+	computePartialsForAdvection(network::IReactionNetwork& network,
+		Kokkos::View<double*> val, const plsm::SpaceVector<double, 3>& pos,
+		double hxLeft, double hxRight, int ix, double hy = 0.0, int iy = 0,
+		double hz = 0.0, int iz = 0) const = 0;
 
 	/**
 	 * Compute the indices that will determine where the partial derivatives
@@ -190,4 +192,3 @@ public:
 } /* namespace advection */
 } /* namespace core */
 } /* namespace xolotl */
-#endif

@@ -1,5 +1,4 @@
-#ifndef FLUXHANDLER_H
-#define FLUXHANDLER_H
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -28,6 +27,11 @@ protected:
 	std::vector<std::vector<double>> incidentFluxVec;
 
 	/**
+	 * View copy of incidentFluxVec
+	 */
+	Kokkos::View<double**> incidentFlux;
+
+	/**
 	 * The reduction factors for each deposition.
 	 */
 	std::vector<double> reductionFactors;
@@ -54,6 +58,11 @@ protected:
 	std::vector<IdType> fluxIndices;
 
 	/**
+	 * View copy of fluxIndices
+	 */
+	Kokkos::View<IdType*> fluxIds;
+
+	/**
 	 * Are we using a time profile for the amplitude of the incoming
 	 * flux?
 	 */
@@ -75,6 +84,16 @@ protected:
 	 * time profile file.
 	 */
 	std::vector<double> amplitudes;
+
+	/**
+	 * Value of the cascade dose.
+	 */
+	double cascadeDose;
+
+	/**
+	 * Value of remaining cascade efficiency.
+	 */
+	double cascadeEfficiency;
 
 	/**
 	 * Function that calculates the flux at a given position x (in nm).
@@ -108,6 +127,18 @@ protected:
 	void
 	recomputeFluxHandler(int surfacePos);
 
+	/**
+	 * This method copies flux indices to device view
+	 */
+	void
+	syncFluxIndices();
+
+	/**
+	 * This method copies incident flux data to device view
+	 */
+	void
+	syncIncidentFluxVec();
+
 public:
 	FluxHandler(const options::IOptions&);
 
@@ -118,64 +149,71 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
+	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid);
+		std::vector<double> grid) override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	initializeTimeProfile(const std::string& fileName);
+	void
+	initializeTimeProfile(const std::string& fileName) final;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos);
+	void
+	computeIncidentFlux(double currentTime, Kokkos::View<const double*>,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	incrementFluence(double dt);
+	void
+	incrementFluence(double dt) override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	computeFluence(double time);
+	void
+	computeFluence(double time) override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<double>
-	getFluence() const;
+	void
+	setFluence(std::vector<double> fluence) override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	setFluxAmplitude(double flux);
+	std::vector<double>
+	getFluence() const override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual double
-	getFluxAmplitude() const;
+	void
+	setFluxAmplitude(double flux) final;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual double
-	getFluxRate() const;
+	double
+	getFluxAmplitude() const override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	setPulseTime(double time)
+	double
+	getFluxRate() const override;
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	void
+	setPulseTime(double time) override
 	{
 		return;
 	}
@@ -183,8 +221,8 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual void
-	setProportion(double a)
+	void
+	setProportion(double a) override
 	{
 		return;
 	}
@@ -192,8 +230,17 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<std::pair<IdType, double>>
-	getImplantedFlux(std::vector<IdType> map)
+	void
+	setFissionYield(double yield) override
+	{
+		return;
+	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	std::vector<std::pair<IdType, double>>
+	getImplantedFlux(std::vector<IdType> map) override
 	{
 		return std::vector<std::pair<IdType, double>>();
 	}
@@ -201,14 +248,8 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<double>
-	getInstantFlux(double time) const;
-
-	/**
-	 * \see IFluxHandler.h
-	 */
-	virtual void
-	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector)
+	void
+	setImplantedFlux(std::vector<std::pair<IdType, double>> fluxVector) override
 	{
 		return;
 	}
@@ -216,19 +257,23 @@ public:
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<IdType>
-	getFluxIndices() const;
+	std::vector<double>
+	getInstantFlux(double time) const override;
 
 	/**
 	 * \see IFluxHandler.h
 	 */
-	virtual std::vector<double>
-	getReductionFactors() const;
+	std::vector<IdType>
+	getFluxIndices() const override;
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+	std::vector<double>
+	getReductionFactors() const override;
 };
 // end class FluxHandler
 
 } // namespace flux
 } // namespace core
 } // namespace xolotl
-
-#endif

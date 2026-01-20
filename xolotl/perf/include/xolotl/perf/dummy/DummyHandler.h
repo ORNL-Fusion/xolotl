@@ -28,7 +28,7 @@ public:
 		const IHardwareCounter::SpecType& ctrSpec) override;
 
 	void
-	reportData(std::ostream& os) const override;
+	reportData(std::ostream& os, const std::string& label = "") const override;
 
 	void
 	collectStatistics(PerfObjStatsMap<ITimer::ValType>& timerStats,
@@ -40,8 +40,14 @@ public:
 	reportStatistics(std::ostream& os,
 		const PerfObjStatsMap<ITimer::ValType>& timerStats,
 		const PerfObjStatsMap<IEventCounter::ValType>& counterStats,
-		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats)
-		const override;
+		const PerfObjStatsMap<IHardwareCounter::CounterType>& hwCounterStats,
+		const std::string& label) const override;
+
+	IPerfHandler&
+	operator+=(const IPerfHandler&) override
+	{
+		return *this;
+	}
 };
 } // namespace dummy
 } // namespace perf

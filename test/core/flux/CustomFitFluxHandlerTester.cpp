@@ -8,8 +8,9 @@
 
 #include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
-#include <xolotl/options/Options.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
+#include <xolotl/test/Util.h>
 #include <xolotl/util/MPIUtils.h>
 
 using namespace std;
@@ -28,7 +29,7 @@ BOOST_AUTO_TEST_SUITE(CustomFitFluxHandlerTester_testSuite)
 BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 
 	// Create a file with flux profile data.
 	std::ofstream fluxFile("tridyn.dat");
@@ -105,38 +106,32 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	double currTime = 1.0;
 
 	// The array of concentration
-	double newConcentration[6 * dof];
-
-	// Initialize their values
-	for (int i = 0; i < 6 * dof; i++) {
-		newConcentration[i] = 0.0;
-	}
+	test::DOFView conc("conc", 6, dof);
 
 	// The pointer to the grid point we want
-	double* updatedConc = &newConcentration[0];
-	double* updatedConcOffset = updatedConc + dof;
+	auto updatedConcOffset = subview(conc, 1, Kokkos::ALL);
 
 	// Update the concentrations at some grid points
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 1, surfacePos);
-	updatedConcOffset = updatedConc + 2 * dof;
-	testFitFlux->computeIncidentFlux(
-		currTime, updatedConcOffset, 2, surfacePos);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 1, surfacePos);
+	updatedConcOffset = subview(conc, 2, Kokkos::ALL);
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 2, surfacePos);
 
 	// Check the value at some grid points
-	BOOST_REQUIRE_CLOSE(newConcentration[104], 0.0015776, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[120], 0.01840469, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[150], 0.0, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[208], 3.60006e-06, 0.01);
-	BOOST_REQUIRE_CLOSE(newConcentration[224], 0.0398406, 0.01);
-
-	return;
+	auto newConcentration =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, conc);
+	BOOST_REQUIRE_CLOSE(newConcentration(1, 0), 0.0015776, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(1, 16), 0.01840469, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(1, 46), 0.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(2, 0), 3.60006e-06, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(2, 16), 0.0398406, 0.01);
 }
 
 BOOST_AUTO_TEST_CASE(checkFluence)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 
 	// Create a file with flux profile data.
 	std::ofstream fluxFile("tridyn.dat");
@@ -192,8 +187,6 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
 	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
-	// Get its size
-	const int dof = network.getDOF();
 
 	// Create the W100 flux handler
 	auto testFitFlux = make_shared<CustomFitFluxHandler>(opts);
@@ -215,10 +208,13 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	BOOST_REQUIRE_CLOSE(fluence[1], 7.28065893e-10, 0.001);
 	BOOST_REQUIRE_CLOSE(fluence[2], 1.976516e-11, 0.001);
 
-	// Finalize MPI
-	MPI_Finalize();
-
-	return;
+	// Check setFluence
+	std::vector<double> f = {1.0, 5.0, 0.2};
+	testFitFlux->setFluence(f);
+	fluence = testFitFlux->getFluence();
+	BOOST_REQUIRE_EQUAL(fluence[0], f[0]);
+	BOOST_REQUIRE_EQUAL(fluence[1], f[1]);
+	BOOST_REQUIRE_EQUAL(fluence[2], f[2]);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -4,14 +4,19 @@ list(APPEND tests
     dummy/DummyEventCounterTester.cpp
     dummy/DummyHardwareCounterTester.cpp
     dummy/DummyTimerTester.cpp
-    os/OSTimerTester.cpp
 )
+
+if(Xolotl_ENABLE_TIMER_TESTS)
+    list(APPEND tests os/OSTimerTester.cpp)
+endif()
 
 if(PAPI_FOUND)
     list(APPEND tests
         papi/PAPIHardwareCounterTester.cpp
-        papi/PAPITimerTester.cpp
     )
+    if(Xolotl_ENABLE_TIMER_TESTS)
+        list(APPEND tests papi/PAPITimerTester.cpp)
+    endif()
 endif(PAPI_FOUND)
 
 if(CMAKE_BUILD_TYPE MATCHES "^Debug$")

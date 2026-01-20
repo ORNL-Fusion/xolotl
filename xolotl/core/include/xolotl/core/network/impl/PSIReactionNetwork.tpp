@@ -89,7 +89,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateExtraClusterData(
 	IndexType desorpId = this->invalidIndex();
 	Kokkos::parallel_reduce(
 		1,
-		KOKKOS_LAMBDA(std::size_t, IndexType & running) {
+		KOKKOS_LAMBDA(std::size_t, IndexType& running) {
 			Composition comp{};
 			comp[Species::He] = desorpInit.size;
 			running = static_cast<IndexType>(subpaving.findTileId(comp));
@@ -538,44 +538,54 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 			return;
 		}
 
-		std::set<std::pair<IndexType, AmountType>> previousIndices;
-		previousIndices.insert(
-			std::make_pair<IndexType, AmountType>(subpaving.invalidIndex(), 0));
+		// Loop on possible I sizes
+		// TODO: get the correct value for maxISize
+		AmountType maxISize = 6;
+		for (AmountType n = 1; n <= maxISize; ++n) {
+			// Find the corresponding cluster
+			Composition comp = Composition::zero();
+			comp[Species::I] = n;
+			auto iClusterId = subpaving.findTileId(comp);
 
-		// Loop on the cluster
-		for (auto a = bounds[Species::He].first;
-			 a <= bounds[Species::He].second; a++)
-			for (auto b = bounds[Species::V].first;
-				 b <= bounds[Species::V].second; b++) {
-				auto nV = b +
-					xolotl::core::network::psi::getDeltaV(
-						b, this->_clusterData.latticeParameter(), 933.0);
+			// Check the I cluster exists
+			if (iClusterId == NetworkType::invalidIndex())
+				continue;
 
-				// Look for the product
-				Composition comp = Composition::zero();
-				comp[Species::He] = a;
-				comp[Species::V] = nV;
-				auto prodId = subpaving.findTileId(comp);
-				comp[Species::He] = 0;
-				comp[Species::V] = 0;
-				comp[Species::I] = 1;
-				auto iSize = nV - b;
-				auto iClusterId = subpaving.findTileId(comp);
-				auto key = std::make_pair<IndexType, IndexType>(
-					std::forward<IndexType>(prodId),
-					std::forward<AmountType>(iSize));
-				auto iter = previousIndices.find(key);
-				if (prodId != subpaving.invalidIndex() and
-					iClusterId != subpaving.invalidIndex() and
-					iter == previousIndices.end()) {
-					// Add the reaction
-					this->addProductionReaction(
-						tag, {i, j, prodId, iClusterId, iSize});
+			bounds[Species::V].first += 1;
+			bounds[Species::V].second += 1;
+
+			// Look for potential product
+			IndexType nProd = 0;
+			for (IndexType k = 0; k < numClusters; ++k) {
+				// Get the composition
+				const auto& prodReg = this->getCluster(k).getRegion();
+				bool isGood = true;
+				// Loop on the species
+				// TODO: check l correspond to the same species in bounds
+				// and prod
+				for (auto l : speciesNoI) {
+					if (prodReg[l()].begin() > bounds[l()].second) {
+						isGood = false;
+						break;
+					}
+					if (prodReg[l()].end() - 1 < bounds[l()].first) {
+						isGood = false;
+						break;
+					}
+				}
+
+				if (isGood) {
+					// Increase nProd
+					nProd++;
+					this->addProductionReaction(tag, {i, j, k, iClusterId});
 					// No dissociation
-					// Update the previous indices
-					previousIndices.insert(key);
 				}
 			}
+			// Stop if we found a product
+			if (nProd > 0) {
+				break;
+			}
+		}
 	}
 }
 
@@ -647,6 +657,7 @@ inline ReactionCollection<
 PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
+		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
 		this->getSinkReactions(), this->getTrapMutationReactions(),
 		this->getBurstingReactions());

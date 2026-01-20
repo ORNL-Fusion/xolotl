@@ -1,8 +1,9 @@
-#ifndef ITEMPERATUREHANDLER_H
-#define ITEMPERATUREHANDLER_H
+#pragma once
 
 #include <memory>
 #include <vector>
+
+#include <Kokkos_Core.hpp>
 
 #include <plsm/SpaceVector.h>
 
@@ -33,15 +34,9 @@ public:
 	 * depending on the type of handler used.
 	 *
 	 * @param dof The number of degrees of freedom
-	 * @param ofillMap Map indicating row/column of diffusing variables in
-	 * off-diagonal fill map.
-	 * @param dfillMap Map indicating row/column of diffusing variables in
-	 * diagonal fill map.
 	 */
 	virtual void
-	initializeTemperature(const int dof,
-		network::IReactionNetwork::SparseFillMap& ofillMap,
-		network::IReactionNetwork::SparseFillMap& dfillMap) = 0;
+	initialize(const int dof) = 0;
 
 	/**
 	 * This operation returns the temperature at the given position
@@ -61,7 +56,7 @@ public:
 	 * @param solution The pointer to the array of solutions
 	 */
 	virtual void
-	setTemperature(double* solution) = 0;
+	setTemperature(Kokkos::View<const double*> solution) = 0;
 
 	/**
 	 * This operation sets the heat coefficient to use in the equation.
@@ -110,9 +105,10 @@ public:
 	 * @param iz The position on the z grid
 	 */
 	virtual void
-	computeTemperature(double currentTime, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int xi,
-		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) = 0;
+	computeTemperature(double currentTime,
+		Kokkos::View<const double*>* concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int xi, double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) = 0;
 
 	/**
 	 * Compute the partials due to the heat equation.
@@ -139,7 +135,7 @@ public:
 	 * @return True if the partials were updated
 	 */
 	virtual bool
-	computePartialsForTemperature(double currentTime, double** concVector,
+	computePartialsForTemperature(double currentTime, const double** concVector,
 		double* val, IdType* indices, double hxLeft, double hxRight, int xi,
 		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) = 0;
 
@@ -157,5 +153,3 @@ public:
 } // namespace temperature
 } // namespace core
 } // namespace xolotl
-
-#endif

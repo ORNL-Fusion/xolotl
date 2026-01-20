@@ -14,7 +14,6 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationReactionGenerator.h
-    ${XOLOTL_CORE_HEADER_DIR}/network/detail/TupleUtility.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyNetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/AlloyReaction.h
@@ -112,6 +111,9 @@ list(APPEND XOLOTL_CORE_SOURCES
 
 if(NOT ${XOLOTL_INCLUDE_RN_TPP_FILES})
     list(APPEND XOLOTL_CORE_SOURCES
-        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetwork.cpp
+        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetworkFull.cpp
+        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetworkHelium.cpp
+        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetworkDeuterium.cpp
+        ${XOLOTL_CORE_SOURCE_DIR}/network/PSIReactionNetworkTritium.cpp
     )
 endif()

@@ -101,3 +101,8 @@ public:
 #define XOLOTL_LOG_XTRA XOLOTL_LOG_SEV(::xolotl::util::Log::extra)
 #define XOLOTL_LOG_WARN XOLOTL_LOG_SEV(::xolotl::util::Log::warning)
 #define XOLOTL_LOG_ERR XOLOTL_LOG_SEV(::xolotl::util::Log::error)
+
+#define XOLOTL_ERROR(ErrorType, msg) \
+	XOLOTL_LOG_ERR << msg; \
+	::xolotl::util::Log::flush(); \
+	throw ErrorType(msg);

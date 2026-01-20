@@ -17,6 +17,12 @@ class IPSIReactionNetwork : public IReactionNetwork
 public:
 	using IReactionNetwork::IReactionNetwork;
 
+	IPSIReactionNetwork() = default;
+
+	virtual ~IPSIReactionNetwork()
+	{
+	}
+
 	virtual SpeciesId
 	getHeliumSpeciesId() const = 0;
 

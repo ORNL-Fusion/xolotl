@@ -14,6 +14,7 @@
 #include <xolotl/perf/IPerfHandler.h>
 #include <xolotl/perf/PerfObjStatistics.h>
 #include <xolotl/test/MPITestUtils.h>
+#include <xolotl/test/config.h>
 
 using namespace xolotl;
 
@@ -34,8 +35,6 @@ BOOST_GLOBAL_FIXTURE(MPIFixture)
 
 BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 {
-	unsigned int nGoodInits = 0;
-
 	try {
 		auto reg = factory::perf::PerfHandlerFactory::get().generate("dummy");
 		BOOST_REQUIRE((bool)reg);
@@ -50,8 +49,6 @@ BOOST_AUTO_TEST_CASE(createDummyHandlerReg)
 
 BOOST_AUTO_TEST_CASE(createOSHandlerReg)
 {
-	unsigned int nGoodInits = 0;
-
 	try {
 		auto reg = factory::perf::PerfHandlerFactory::get().generate("os");
 		BOOST_REQUIRE((bool)reg);
@@ -126,10 +123,12 @@ BOOST_AUTO_TEST_CASE(aggregateStats)
 			BOOST_REQUIRE_EQUAL(timerStatsObj.name, "testTimer");
 			BOOST_REQUIRE_EQUAL(
 				timerStatsObj.processCount, (unsigned int)cwSize);
+#ifdef XOLOTL_ENABLE_TIMER_TESTS
 			BOOST_REQUIRE_CLOSE(timerStatsObj.average, nTimedSeconds, 0.03);
 			BOOST_REQUIRE_CLOSE(timerStatsObj.min, nTimedSeconds, 0.03);
 			BOOST_REQUIRE_CLOSE(timerStatsObj.max, nTimedSeconds, 0.03);
 			BOOST_REQUIRE_SMALL(timerStatsObj.stdev, 0.001);
+#endif
 
 			// Next check counts.  We can compute exactly what the values
 			// should be.

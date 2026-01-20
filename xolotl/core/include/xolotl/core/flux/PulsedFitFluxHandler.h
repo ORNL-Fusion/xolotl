@@ -39,7 +39,7 @@ private:
 	 * \see FluxHandler.h
 	 */
 	double
-	FitFunction(double x)
+	FitFunction(double x) override
 	{
 		// Compute the polynomial fit
 		double value = exp(-pow((x - mu) / (sqrt(2.0) * sigma), 2.0));
@@ -70,7 +70,7 @@ public:
 	 */
 	void
 	initializeFluxHandler(network::IReactionNetwork& network, int surfacePos,
-		std::vector<double> grid)
+		std::vector<double> grid) override
 	{
 		// Call the general method
 		FluxHandler::initializeFluxHandler(network, surfacePos, grid);
@@ -119,8 +119,9 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	computeIncidentFlux(
-		double currentTime, double* updatedConcOffset, int xi, int surfacePos)
+	computeIncidentFlux(double currentTime, Kokkos::View<const double*>,
+		Kokkos::View<double*> updatedConcOffset, int xi,
+		int surfacePos) override
 	{
 		// Check in which phase of the pulse we are
 		int cycle = currentTime / deltaTime;
@@ -130,19 +131,19 @@ public:
 			return;
 
 		// Update the concentration array
-		updatedConcOffset[fluxIndices[0]] +=
-			incidentFluxVec[0][xi - surfacePos]; // V
-		updatedConcOffset[fluxIndices[1]] +=
-			incidentFluxVec[0][xi - surfacePos]; // I
-
-		return;
+		auto value = incidentFluxVec[0][xi - surfacePos];
+		Kokkos::Array<IdType, 2> ids = {fluxIndices[0], fluxIndices[1]};
+		Kokkos::parallel_for(
+			2, KOKKOS_LAMBDA(std::size_t i) {
+				updatedConcOffset[ids[i]] += value;
+			});
 	}
 
 	/**
 	 * \see IFluxHandler.h
 	 */
 	void
-	setPulseTime(double time)
+	setPulseTime(double time) override
 	{
 		deltaTime = time;
 		return;
@@ -152,7 +153,7 @@ public:
 	 * \see IFluxHandler.h
 	 */
 	void
-	setProportion(double a)
+	setProportion(double a) override
 	{
 		alpha = a;
 		return;

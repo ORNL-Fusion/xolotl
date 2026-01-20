@@ -18,7 +18,6 @@ class FeReactionGenerator;
 class FeReactionNetwork : public ReactionNetwork<FeReactionNetwork>
 {
 	friend class ReactionNetwork<FeReactionNetwork>;
-	friend class detail::ReactionNetworkWorker<FeReactionNetwork>;
 
 public:
 	using Superclass = ReactionNetwork<FeReactionNetwork>;
@@ -51,6 +50,18 @@ private:
 
 	detail::FeReactionGenerator
 	getReactionGenerator() const noexcept;
+
+	void
+	readClusters(const std::string filename)
+	{
+		return;
+	}
+
+	void
+	readReactions(double temperature, const std::string filename)
+	{
+		return;
+	}
 };
 
 namespace detail

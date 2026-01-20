@@ -8,6 +8,25 @@ namespace core
 namespace diffusion
 {
 void
+Diffusion3DHandler::syncDiffusionGrid()
+{
+	diffusGrid = Kokkos::View<int****>("Diffusion Grid", diffusionGrid.size(),
+		diffusionGrid[0].size(), diffusionGrid[0][0].size(),
+		diffusingClusters.size());
+	auto diffGrid_h = create_mirror_view(diffusGrid);
+	for (IdType k = 0; k < diffusionGrid.size(); ++k) {
+		for (IdType j = 0; j < diffusionGrid[k].size(); ++j) {
+			for (IdType i = 0; i < diffusionGrid[k][j].size(); ++i) {
+				for (IdType n = 0; n < diffusingClusters.size(); ++n) {
+					diffGrid_h(k, j, i, n) = diffusionGrid[k][j][i][n];
+				}
+			}
+		}
+	}
+	deep_copy(diffusGrid, diffGrid_h);
+}
+
+void
 Diffusion3DHandler::initializeDiffusionGrid(
 	std::vector<advection::IAdvectionHandler*> advectionHandlers,
 	std::vector<double> grid, int nx, int xs, int ny, double hy, int ys, int nz,
@@ -77,13 +96,14 @@ Diffusion3DHandler::initializeDiffusionGrid(
 		}
 	}
 
-	return;
+	syncDiffusionGrid();
 }
 
 void
 Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,
-	double** concVector, double* updatedConcOffset, double hxLeft,
-	double hxRight, int ix, double sy, int iy, double sz, int iz) const
+	const StencilConcArray& concVector, Kokkos::View<double*> updatedConcOffset,
+	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,
+	int iz) const
 {
 	// Loop on them
 	// TODO Maintaining a separate index assumes that diffusingClusters is
@@ -91,106 +111,101 @@ Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,
 	// Currently true with C++11, but we'd like to be able to visit the
 	// diffusing clusters in any order (so that we can parallelize).
 	// Maybe with a zip? or a std::transform?
-	int diffClusterIdx = 0;
-	for (auto const& currId : diffusingClusters) {
-		auto cluster = network.getClusterCommon(currId);
 
-		// Get the initial concentrations
-		double oldConc = concVector[0][currId] *
-			diffusionGrid[iz + 1][iy + 1][ix + 1][diffClusterIdx]; // middle
-		double oldLeftConc = concVector[1][currId] *
-			diffusionGrid[iz + 1][iy + 1][ix][diffClusterIdx]; // left
-		double oldRightConc = concVector[2][currId] *
-			diffusionGrid[iz + 1][iy + 1][ix + 2][diffClusterIdx]; // right
-		double oldBottomConc = concVector[3][currId] *
-			diffusionGrid[iz + 1][iy][ix + 1][diffClusterIdx]; // bottom
-		double oldTopConc = concVector[4][currId] *
-			diffusionGrid[iz + 1][iy + 2][ix + 1][diffClusterIdx]; // top
-		double oldFrontConc = concVector[5][currId] *
-			diffusionGrid[iz][iy + 1][ix + 1][diffClusterIdx]; // front
-		double oldBackConc = concVector[6][currId] *
-			diffusionGrid[iz + 2][iy + 1][ix + 1][diffClusterIdx]; // back
-
-		// Use a simple midpoint stencil to compute the concentration
-		double conc = cluster.getDiffusionCoefficient(ix + 1) *
-				(2.0 *
-						(oldLeftConc + (hxLeft / hxRight) * oldRightConc -
-							(1.0 + (hxLeft / hxRight)) * oldConc) /
-						(hxLeft * (hxLeft + hxRight)) +
-					sy * (oldBottomConc + oldTopConc - 2.0 * oldConc) +
-					sz * (oldFrontConc + oldBackConc - 2.0 * oldConc)) +
-			((cluster.getDiffusionCoefficient(ix + 2) -
-				 cluster.getDiffusionCoefficient(ix)) *
-				(oldRightConc - oldLeftConc) /
-				((hxLeft + hxRight) * (hxLeft + hxRight)));
-
-		// Update the concentration of the cluster
-		updatedConcOffset[currId] += conc;
-
-		++diffClusterIdx;
+	if (concVector.size() != 7) {
+		throw std::runtime_error(
+			"Wrong size for 3D concentration stencil; should be 7, got " +
+			std::to_string(concVector.size()));
 	}
+	Kokkos::Array<Kokkos::View<const double*>, 7> concVec = {concVector[0],
+		concVector[1], concVector[2], concVector[3], concVector[4],
+		concVector[5], concVector[6]};
 
-	return;
+	auto diffGrid = diffusGrid;
+	auto clusterIds = this->diffClusterIds;
+	auto clusters = this->diffClusters;
+	Kokkos::parallel_for(
+		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+			auto id = clusterIds[i];
+			auto cluster = clusters[i];
+
+			// Get the initial concentrations
+			double oldConc =
+				concVec[0][id] * diffGrid(iz + 1, iy + 1, ix + 1, i); // middle
+			double oldLeftConc =
+				concVec[1][id] * diffGrid(iz + 1, iy + 1, ix, i); // left
+			double oldRightConc =
+				concVec[2][id] * diffGrid(iz + 1, iy + 1, ix + 2, i); // right
+			double oldBottomConc =
+				concVec[3][id] * diffGrid(iz + 1, iy, ix + 1, i); // bottom
+			double oldTopConc =
+				concVec[4][id] * diffGrid(iz + 1, iy + 2, ix + 1, i); // top
+			double oldFrontConc =
+				concVec[5][id] * diffGrid(iz, iy + 1, ix + 1, i); // front
+			double oldBackConc =
+				concVec[6][id] * diffGrid(iz + 2, iy + 1, ix + 1, i); // back
+
+			// Use a simple midpoint stencil to compute the concentration
+			double conc = cluster.getDiffusionCoefficient(ix + 1) *
+					(2.0 *
+							(oldLeftConc + (hxLeft / hxRight) * oldRightConc -
+								(1.0 + (hxLeft / hxRight)) * oldConc) /
+							(hxLeft * (hxLeft + hxRight)) +
+						sy * (oldBottomConc + oldTopConc - 2.0 * oldConc) +
+						sz * (oldFrontConc + oldBackConc - 2.0 * oldConc)) +
+				((cluster.getDiffusionCoefficient(ix + 2) -
+					 cluster.getDiffusionCoefficient(ix)) *
+					(oldRightConc - oldLeftConc) /
+					((hxLeft + hxRight) * (hxLeft + hxRight)));
+
+			// Update the concentration of the cluster
+			updatedConcOffset[id] += conc;
+		});
 }
 
 void
 Diffusion3DHandler::computePartialsForDiffusion(
-	network::IReactionNetwork& network, double* val, IdType* indices,
+	network::IReactionNetwork& network, Kokkos::View<double*> val,
 	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,
 	int iz) const
 {
-	// Consider each diffusing cluster.
-	// TODO Maintaining a separate index assumes that diffusingClusters is
-	// visited in same order as diffusionGrid array for given point.
-	// Currently true with C++11, but we'd like to be able to visit the
-	// diffusing clusters in any order (so that we can parallelize).
-	// Maybe with a zip? or a std::transform?
-	int diffClusterIdx = 0;
-	for (auto const& currId : diffusingClusters) {
-		auto cluster = network.getClusterCommon(currId);
+	auto diffGrid = diffusGrid;
+	auto clusterIds = this->diffClusterIds;
+	auto clusters = this->diffClusters;
 
-		// Set the cluster index, the PetscSolver will use it to compute
-		// the row and column indices for the Jacobian
-		indices[diffClusterIdx] = currId;
+	Kokkos::parallel_for(
+		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
+			auto cluster = clusters[i];
 
-		// Compute the partial derivatives for diffusion of this cluster
-		// for the middle, left, right, bottom, top, front, and back grid point
-		val[diffClusterIdx * 7] = -2.0 *
-			cluster.getDiffusionCoefficient(ix + 1) *
-			((1.0 / (hxLeft * hxRight)) + sy + sz) *
-			diffusionGrid[iz + 1][iy + 1][ix + 1][diffClusterIdx]; // middle
-		val[(diffClusterIdx * 7) + 1] =
-			(cluster.getDiffusionCoefficient(ix + 1) * 2.0 /
-					(hxLeft * (hxLeft + hxRight)) +
-				(cluster.getDiffusionCoefficient(ix) -
-					cluster.getDiffusionCoefficient(ix + 2)) /
-					((hxLeft + hxRight) * (hxLeft + hxRight))) *
-			diffusionGrid[iz + 1][iy + 1][ix][diffClusterIdx]; // left
-		val[(diffClusterIdx * 7) + 2] =
-			(cluster.getDiffusionCoefficient(ix + 1) * 2.0 /
-					(hxRight * (hxLeft + hxRight)) +
-				(cluster.getDiffusionCoefficient(ix + 2) -
-					cluster.getDiffusionCoefficient(ix)) /
-					((hxLeft + hxRight) * (hxLeft + hxRight))) *
-			diffusionGrid[iz + 1][iy + 1][ix + 2][diffClusterIdx]; // right
-		val[(diffClusterIdx * 7) + 3] =
-			cluster.getDiffusionCoefficient(ix + 1) * sy *
-			diffusionGrid[iz + 1][iy][ix + 1][diffClusterIdx]; // bottom
-		val[(diffClusterIdx * 7) + 4] =
-			cluster.getDiffusionCoefficient(ix + 1) * sy *
-			diffusionGrid[iz + 1][iy + 2][ix + 1][diffClusterIdx]; // top
-		val[(diffClusterIdx * 7) + 5] =
-			cluster.getDiffusionCoefficient(ix + 1) * sz *
-			diffusionGrid[iz][iy + 1][ix + 1][diffClusterIdx]; // front
-		val[(diffClusterIdx * 7) + 6] =
-			cluster.getDiffusionCoefficient(ix + 1) * sz *
-			diffusionGrid[iz + 2][iy + 1][ix + 1][diffClusterIdx]; // back
+			auto leftDiff = cluster.getDiffusionCoefficient(ix);
+			auto midDiff = cluster.getDiffusionCoefficient(ix + 1);
+			auto rightDiff = cluster.getDiffusionCoefficient(ix + 2);
 
-		// Increase the index
-		diffClusterIdx++;
-	}
-
-	return;
+			// Compute the partial derivatives for diffusion of this cluster
+			// for the middle, left, right, bottom, top, front, and back grid
+			// point
+			val[i * 7] = -2.0 * midDiff *
+				((1.0 / (hxLeft * hxRight)) + sy + sz) *
+				diffGrid(iz + 1, iy + 1, ix + 1, i); // middle
+			val[(i * 7) + 1] =
+				(midDiff * 2.0 / (hxLeft * (hxLeft + hxRight)) +
+					(leftDiff - rightDiff) /
+						((hxLeft + hxRight) * (hxLeft + hxRight))) *
+				diffGrid(iz + 1, iy + 1, ix, i); // left
+			val[(i * 7) + 2] =
+				(midDiff * 2.0 / (hxRight * (hxLeft + hxRight)) +
+					(rightDiff - leftDiff) /
+						((hxLeft + hxRight) * (hxLeft + hxRight))) *
+				diffGrid(iz + 1, iy + 1, ix + 2, i); // right
+			val[(i * 7) + 3] =
+				midDiff * sy * diffGrid(iz + 1, iy, ix + 1, i); // bottom
+			val[(i * 7) + 4] =
+				midDiff * sy * diffGrid(iz + 1, iy + 2, ix + 1, i); // top
+			val[(i * 7) + 5] =
+				midDiff * sz * diffGrid(iz, iy + 1, ix + 1, i); // front
+			val[(i * 7) + 6] =
+				midDiff * sz * diffGrid(iz + 2, iy + 1, ix + 1, i); // back
+		});
 }
 
 } /* end namespace diffusion */

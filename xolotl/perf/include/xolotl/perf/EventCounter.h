@@ -53,6 +53,22 @@ public:
 	{
 		++value;
 	}
+
+	/**
+	 * Add the given counter's value to my value
+	 */
+	IEventCounter&
+	operator+=(const IEventCounter& c) override
+	{
+		value += c.getValue();
+		return *this;
+	}
+
+	std::shared_ptr<IEventCounter>
+	copy() const override
+	{
+		return std::make_shared<EventCounter>(*this);
+	}
 };
 // end class EventCounter
 

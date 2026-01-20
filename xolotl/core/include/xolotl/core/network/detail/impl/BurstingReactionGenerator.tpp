@@ -50,8 +50,7 @@ BurstingReactionGenerator<TBase>::addBurstingReaction(
 	if (!this->_clusterData.enableBurst())
 		return;
 
-	Kokkos::atomic_increment(
-		&_clusterBurstingReactionCounts(clusterSet.cluster0));
+	Kokkos::atomic_inc(&_clusterBurstingReactionCounts(clusterSet.cluster0));
 }
 
 template <typename TBase>
@@ -64,10 +63,10 @@ BurstingReactionGenerator<TBase>::addBurstingReaction(
 		return;
 
 	auto id = _burstingCrsRowMap(clusterSet.cluster0);
-	for (; !Kokkos::atomic_compare_exchange_strong(
+	for (; !util::atomicCompareExchangeStrong(
 			 &_burstingCrsClusterSets(id).cluster0, NetworkType::invalidIndex(),
 			 clusterSet.cluster0);
-		 ++id) { }
+		++id) { }
 	_burstingCrsClusterSets(id) = clusterSet;
 }
 } // namespace detail

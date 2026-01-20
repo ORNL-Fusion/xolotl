@@ -47,6 +47,7 @@ using Unmanaged = typename UnmanagedHelper<TView>::Type;
 template <typename TNetwork, typename MemSpace>
 struct ClusterDataExtra
 {
+	using IndexType = detail::ReactionNetworkIndexType;
 	static_assert(Kokkos::is_memory_space<MemSpace>{});
 
 	ClusterDataExtra() = default;
@@ -68,6 +69,9 @@ struct ClusterDataExtra
 	{
 		return 0;
 	}
+
+	void
+	setGridSize(IndexType numClusters, IndexType gridSize) { };
 };
 
 /**
@@ -101,6 +105,7 @@ struct ClusterDataCommon
 		numClusters(data.numClusters),
 		gridSize(data.gridSize),
 		_floatVals(data._floatVals),
+		_intVals(data._intVals),
 		_boolVals(data._boolVals),
 		temperature(data.temperature),
 		reactionRadius(data.reactionRadius),
@@ -143,7 +148,17 @@ private:
 		DEPTH,
 		TAU_BURSTING,
 		F_BURSTING,
+		I_FORMATION,
+		XE_FORMATION,
+		V_FORMATION,
+		V2_FORMATION,
 		NUM_FLOAT_VALS
+	};
+
+	enum IntValsIndex : int
+	{
+		TRANSITION_SIZE = 0,
+		NUM_INT_VALS
 	};
 
 	enum BoolValsIndex : int
@@ -154,6 +169,7 @@ private:
 		SINK,
 		TRAP_MUTATION,
 		BURST,
+		READ_RATES,
 		CONSTANT_REACTION,
 		NUM_BOOL_VALS
 	};
@@ -234,6 +250,18 @@ public:
 		setVal(_floatVals, DEPTH, val);
 	}
 
+	double
+	getIFormationEnergy() const
+	{
+		return _floatVals[I_FORMATION];
+	}
+
+	void
+	setIFormationEnergy(double val)
+	{
+		setVal(_floatVals, I_FORMATION, val);
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	double
 	getTauBursting() const
@@ -247,6 +275,18 @@ public:
 		setVal(_floatVals, TAU_BURSTING, val);
 	}
 
+	double
+	getVFormationEnergy() const
+	{
+		return _floatVals[V_FORMATION];
+	}
+
+	void
+	setVFormationEnergy(double val)
+	{
+		setVal(_floatVals, V_FORMATION, val);
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	double
 	getFBursting() const
@@ -258,6 +298,44 @@ public:
 	setFBursting(double val)
 	{
 		setVal(_floatVals, F_BURSTING, val);
+	}
+
+	double
+	getV2FormationEnergy() const
+	{
+		return _floatVals[V2_FORMATION];
+	}
+
+	void
+	setV2FormationEnergy(double val)
+	{
+		setVal(_floatVals, V2_FORMATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getXeFormationEnergy() const
+	{
+		return _floatVals[XE_FORMATION];
+	}
+
+	void
+	setXeFormationEnergy(double val)
+	{
+		setVal(_floatVals, XE_FORMATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	transitionSize() const
+	{
+		return _intVals[TRANSITION_SIZE];
+	}
+
+	void
+	setTransitionSize(int val)
+	{
+		setVal(_intVals, TRANSITION_SIZE, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
@@ -338,6 +416,18 @@ public:
 		setVal(_boolVals, BURST, val);
 	}
 
+	bool
+	enableReadRates() const
+	{
+		return _boolVals[READ_RATES];
+	}
+
+	void
+	setEnableReadRates(bool val)
+	{
+		setVal(_boolVals, READ_RATES, val);
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	bool
 	enableConstantReaction() const
@@ -353,6 +443,7 @@ public:
 
 private:
 	View<double[NUM_FLOAT_VALS]> _floatVals;
+	View<int[NUM_INT_VALS]> _intVals;
 	View<bool[NUM_BOOL_VALS]> _boolVals;
 
 public:
@@ -388,6 +479,7 @@ private:
 public:
 	using Superclass = ClusterDataCommon<MemSpace>;
 	using ClusterGenerator = typename Traits::ClusterGenerator;
+	using ClusterUpdater = typename Types::ClusterUpdater;
 	using Subpaving =
 		plsm::MemSpaceSubpaving<MemSpace, typename Types::Subpaving>;
 	using TilesView = typename Subpaving::TilesView;
@@ -431,6 +523,12 @@ public:
 	void
 	generate(const ClusterGenerator& generator, double latticeParameter,
 		double interstitialBias, double impurityRadius);
+
+	void
+	updateDiffusionCoefficients();
+
+	IndexType
+	defineMomentIds();
 
 	TilesView tiles;
 	View<IndexType* [nMomentIds]> momentIds;

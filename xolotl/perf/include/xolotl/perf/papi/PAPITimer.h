@@ -103,11 +103,17 @@ public:
 	 * @param t The timer whose value should be added to my value.
 	 * @return Myself after adding the given timer's value.
 	 */
-	virtual ITimer&
-	operator+=(const ITimer& t)
+	ITimer&
+	operator+=(const ITimer& t) override
 	{
 		val += t.getValue();
 		return *this;
+	}
+
+	std::shared_ptr<ITimer>
+	copy() const override
+	{
+		return std::make_shared<PAPITimer>(*this);
 	}
 };
 } // namespace papi

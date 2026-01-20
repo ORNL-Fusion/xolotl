@@ -17,7 +17,7 @@ function(version_from_git)
     )
 
     if(DEFINED ARG_GIT_EXECUTABLE)
-        set( GIT_EXECUTABLE "${ARG_GIT_EXECUTABLE}")
+        set(GIT_EXECUTABLE "${ARG_GIT_EXECUTABLE}")
     else()
         # Find Git or bail out
         find_package(Git)
@@ -114,6 +114,28 @@ function(version_from_git)
 
 endfunction(version_from_git)
 
+## Check if it's appropriate to use git
+find_package(Git)
+if(NOT GIT_FOUND)
+    ## Git not available
+    set(Xolotl_USE_GIT FALSE CACHE INTERNAL "")
+    return()
+endif()
+execute_process(
+    COMMAND "${GIT_EXECUTABLE}" rev-parse --is-inside-work-tree
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    RESULT_VARIABLE git_result
+    OUTPUT_VARIABLE git_output
+    ERROR_VARIABLE git_error
+)
+if(NOT git_result EQUAL 0)
+    ## Not using Git for source
+    set(Xolotl_USE_GIT FALSE CACHE INTERNAL "")
+    return()
+endif()
+
+## Follow through
+set(Xolotl_USE_GIT TRUE CACHE INTERNAL "")
 option(Xolotl_VERSION_LOG "Print details of version from git" OFF)
 version_from_git(LOG ${Xolotl_VERSION_LOG})
 set(Xolotl_VERSION_EXACT ${VERSION_EXACT})

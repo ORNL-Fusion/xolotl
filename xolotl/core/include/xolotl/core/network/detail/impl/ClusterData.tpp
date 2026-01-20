@@ -1,5 +1,7 @@
 #pragma once
 
+#include <xolotl/util/MathUtils.h>
+
 namespace xolotl
 {
 namespace core
@@ -39,6 +41,7 @@ ClusterDataCommon<MemSpace>::ClusterDataCommon(
 	numClusters(numClusters_),
 	gridSize(gridSize_),
 	_floatVals("Floating Point Values" + labelStr<MemSpace>()),
+	_intVals("Integer Point Values" + labelStr<MemSpace>()),
 	_boolVals("Boolean Values" + labelStr<MemSpace>()),
 	temperature("Temperature" + labelStr<MemSpace>(), gridSize),
 	reactionRadius("Reaction Radius" + labelStr<MemSpace>(), numClusters),
@@ -56,6 +59,7 @@ inline void
 ClusterDataCommon<MemSpace>::deepCopy(const TClusterDataCommon& data)
 {
 	deep_copy(_floatVals, data._floatVals);
+	deep_copy(_intVals, data._intVals);
 	deep_copy(_boolVals, data._boolVals);
 	deep_copy(temperature, data.temperature);
 	deep_copy(reactionRadius, data.reactionRadius);
@@ -74,6 +78,7 @@ ClusterDataCommon<MemSpace>::getDeviceMemorySize() const noexcept
 	ret += sizeof(numClusters);
 	ret += sizeof(gridSize);
 	ret += _floatVals.required_allocation_size();
+	ret += _intVals.required_allocation_size();
 	ret += _boolVals.required_allocation_size();
 
 	ret += temperature.required_allocation_size(temperature.size());
@@ -160,6 +165,90 @@ ClusterData<TNetwork, MemSpace>::generate(const ClusterGenerator& generator,
 		});
 
 	Kokkos::fence();
+}
+
+template <typename TNetwork, typename MemSpace>
+inline void
+ClusterData<TNetwork, MemSpace>::updateDiffusionCoefficients()
+{
+	using Range2D = Kokkos::MDRangePolicy<Kokkos::Rank<2>>;
+	auto data = *this;
+	auto updater = ClusterUpdater{};
+	Kokkos::parallel_for(
+		"ClusterData::updateDiffusionCoefficients",
+		Range2D({0, 0}, {this->numClusters, this->gridSize}),
+		KOKKOS_LAMBDA(IndexType i, IndexType j) {
+			if (!util::equal(data.diffusionFactor(i), 0.0)) {
+				updater.updateDiffusionCoefficient(data, i, j);
+			}
+		});
+
+	Kokkos::fence();
+}
+
+template <typename TNetwork, typename MemSpace>
+inline typename ClusterData<TNetwork, MemSpace>::IndexType
+ClusterData<TNetwork, MemSpace>::defineMomentIds()
+{
+	constexpr auto speciesRange = TNetwork::getSpeciesRangeForGrouping();
+
+	auto numClusters = this->numClusters;
+	auto counts = Kokkos::View<IndexType*>("Moment Id Counts", numClusters);
+
+	auto data = *this;
+	IndexType nMomentIds = 0;
+	Kokkos::parallel_reduce(
+		"ClusterData::defineMomentIds::count", numClusters,
+		KOKKOS_LAMBDA(const IndexType i, IndexType& running) {
+			const auto& reg = data.getCluster(i).getRegion();
+			IndexType count = 0;
+			for (auto k : speciesRange) {
+				if (reg[k].length() != 1) {
+					++count;
+				}
+			}
+			running += count;
+			counts(i) = count;
+		},
+		nMomentIds);
+
+	Kokkos::parallel_scan(
+		"ClusterData::defineMomentIds::scan", numClusters,
+		KOKKOS_LAMBDA(IndexType i, IndexType & update, const bool finalPass) {
+			const auto temp = counts(i);
+			if (finalPass) {
+				counts(i) = update;
+			}
+			update += temp;
+		});
+
+	Kokkos::parallel_for(
+		"ClusterData::defineMomentIds::assignMomentIds", numClusters,
+		KOKKOS_LAMBDA(const IndexType i) {
+			for (IndexType j = 0; j < data.momentIds.extent(1); ++j) {
+				data.momentIds(i, j) = TNetwork::invalidIndex();
+			}
+
+			const auto& reg = data.getCluster(i).getRegion();
+			IndexType current = counts(i);
+			for (auto k : speciesRange) {
+				if (reg[k].length() == 1) {
+					if (data.momentIds(i, TNetwork::mapToMomentId(k)) ==
+						numClusters + current - 1)
+						continue;
+					data.momentIds(i, TNetwork::mapToMomentId(k)) =
+						TNetwork::invalidIndex();
+				}
+				else {
+					data.momentIds(i, TNetwork::mapToMomentId(k)) =
+						numClusters + current;
+					++current;
+				}
+			}
+		});
+
+	Kokkos::fence();
+	return nMomentIds;
 }
 } // namespace detail
 } // namespace network

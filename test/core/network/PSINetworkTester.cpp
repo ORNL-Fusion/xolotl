@@ -2,9 +2,11 @@
 #define BOOST_TEST_MODULE Regression
 
 #include <boost/test/unit_test.hpp>
+namespace utf = boost::unit_test;
 
 #include <xolotl/core/network/PSINetworkHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
+#include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/MPITestUtils.h>
 #include <xolotl/test/PSINetworkTesterData.h>
@@ -23,13 +25,13 @@ BOOST_GLOBAL_FIXTURE(MPIFixture);
 /**
  * This suite is responsible for testing the PSI network.
  */
-BOOST_AUTO_TEST_SUITE(PSINetwork_testSuite)
+BOOST_AUTO_TEST_SUITE(PSINetwork)
 
 BOOST_AUTO_TEST_CASE(fullyRefined)
 {
 	loadNetworkHandlers();
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -80,10 +82,6 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 5);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 4);
-
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 1);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -579,7 +577,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -852,7 +850,7 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -902,73 +900,44 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 3);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 2);
 
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 2);
-
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
 	NetworkType::SparseFillMap knownDFill;
-	knownDFill[0] = {0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18, 20, 21, 23,
-		24, 26, 27, 29, 1, 4, 25, 28, 7, 22, 10, 19, 13, 16};
-	knownDFill[1] = {
-		1, 0, 2, 3, 6, 9, 12, 15, 18, 21, 24, 27, 7, 25, 10, 22, 13, 19, 16};
-	knownDFill[2] = {2, 0, 3, 1, 4, 5, 7, 8, 10, 11, 13, 14, 16, 17, 19, 20, 22,
-		23, 25, 26, 28, 6, 9, 12, 15, 18, 21, 24, 27, 29};
-	knownDFill[3] = {3, 0, 1, 2, 4, 7, 10, 13, 16, 19, 22, 6};
-	knownDFill[4] = {4, 0, 5, 1, 6, 2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34};
-	knownDFill[5] = {5, 0, 6, 2, 4, 7, 10, 13, 16, 19, 22, 8};
-	knownDFill[6] = {6, 0, 1, 2, 5, 3, 4, 7, 10, 13, 16, 19, 22, 9};
-	knownDFill[7] = {7, 0, 8, 1, 9, 2, 3, 4, 5, 6, 10, 11, 12, 13, 14, 15, 16,
-		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32};
-	knownDFill[8] = {8, 0, 9, 2, 7, 4, 5, 10, 13, 16, 19, 22, 11};
-	knownDFill[9] = {9, 0, 1, 2, 8, 3, 7, 4, 6, 10, 13, 16, 19, 22, 12};
-	knownDFill[10] = {10, 0, 11, 1, 12, 2, 3, 4, 7, 5, 6, 8, 9, 13, 14, 15, 16,
-		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
-	knownDFill[11] = {11, 0, 12, 2, 10, 4, 8, 5, 7, 13, 16, 19, 22, 14};
-	knownDFill[12] = {12, 0, 1, 2, 11, 3, 10, 4, 9, 6, 7, 13, 16, 19, 22, 15};
-	knownDFill[13] = {13, 0, 14, 1, 15, 2, 3, 4, 10, 5, 6, 7, 8, 9, 11, 12, 16,
-		17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
-	knownDFill[14] = {14, 0, 15, 2, 13, 4, 11, 5, 10, 7, 8, 16, 19, 22, 17};
-	knownDFill[15] = {
-		15, 0, 1, 2, 14, 3, 13, 4, 12, 6, 10, 7, 9, 16, 19, 22, 18};
-	knownDFill[16] = {16, 0, 17, 1, 18, 2, 3, 4, 13, 5, 6, 7, 10, 8, 9, 11, 12,
-		14, 15, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
-	knownDFill[17] = {17, 0, 18, 2, 16, 4, 14, 5, 13, 7, 11, 8, 10, 19, 22, 20};
-	knownDFill[18] = {
-		18, 0, 1, 2, 17, 3, 16, 4, 15, 6, 13, 7, 12, 9, 10, 19, 22, 21};
-	knownDFill[19] = {19, 0, 20, 1, 21, 2, 3, 4, 16, 5, 6, 7, 13, 8, 9, 10, 11,
-		12, 14, 15, 17, 18, 22, 23, 24, 25, 26, 27};
-	knownDFill[20] = {
-		20, 0, 21, 2, 19, 4, 17, 5, 16, 7, 14, 8, 13, 10, 11, 22, 23};
-	knownDFill[21] = {
-		21, 0, 1, 2, 20, 3, 19, 4, 18, 6, 16, 7, 15, 9, 13, 10, 12, 22, 24};
-	knownDFill[22] = {22, 0, 23, 1, 24, 2, 3, 4, 19, 5, 6, 7, 16, 8, 9, 10, 13,
-		11, 12, 14, 15, 17, 18, 20, 21, 25};
-	knownDFill[23] = {
-		23, 0, 24, 2, 22, 4, 20, 5, 19, 7, 17, 8, 16, 10, 14, 11, 13, 26};
-	knownDFill[24] = {
-		24, 0, 1, 2, 23, 3, 22, 4, 21, 6, 19, 7, 18, 9, 16, 10, 15, 12, 13, 27};
-	knownDFill[25] = {25, 0, 26, 1, 27, 2, 4, 22, 7, 19, 10, 16, 13};
-	knownDFill[26] = {26, 0, 27, 2, 25, 4, 23, 5, 22, 7, 20, 8, 19, 10, 17, 11,
-		16, 13, 14, 28};
-	knownDFill[27] = {27, 0, 1, 2, 26, 4, 24, 6, 22, 7, 21, 9, 19, 10, 18, 12,
-		16, 13, 15, 29};
-	knownDFill[28] = {
-		28, 0, 29, 2, 4, 25, 26, 7, 22, 23, 8, 10, 19, 20, 11, 13, 16, 17, 14};
-	knownDFill[29] = {
-		29, 0, 2, 28, 4, 27, 7, 24, 9, 22, 10, 21, 12, 19, 13, 18, 15, 16, 30};
-	knownDFill[30] = {30, 4, 28, 29, 7, 25, 26, 27, 10, 22, 23, 24, 11, 12, 13,
-		19, 20, 21, 14, 15, 16, 17, 18, 31};
-	knownDFill[31] = {31, 4, 30, 7, 28, 29, 10, 25, 26, 27, 13, 22, 23, 24, 14,
-		15, 16, 19, 20, 21, 17, 18, 32};
-	knownDFill[32] = {32, 4, 31, 7, 30, 10, 28, 29, 13, 25, 26, 27, 16, 22, 23,
-		24, 17, 18, 19, 20, 21, 33};
-	knownDFill[33] = {33, 4, 32, 7, 31, 10, 30, 13, 28, 29, 16, 25, 26, 27, 19,
-		22, 23, 24, 20, 21, 34};
-	knownDFill[34] = {34, 4, 33, 7, 32, 10, 31, 13, 30, 16, 28, 29, 19, 25, 26,
-		27, 22, 23, 24};
+	knownDFill[0] = {0, 2, 3, 5, 6, 8, 9, 11, 12, 14, 15, 17, 18, 20, 21, 23, 24, 26, 27, 29, 1, 4, 25, 28, 7, 22, 10, 19, 13, 16};
+        knownDFill[1] = {1, 0, 2, 3, 6, 9, 12, 15, 18, 21, 24, 27, 7, 25, 10, 22, 13, 19, 16};
+        knownDFill[2] = {2, 0, 3, 1, 4, 5, 7, 8, 10, 11, 13, 14, 16, 17, 19, 20, 22, 23, 25, 26, 28, 6, 9, 12, 15, 18, 21, 24, 27, 29};
+        knownDFill[3] = {3, 0, 1, 2, 4, 7, 10, 13, 16, 19, 22, 6};
+        knownDFill[4] = {4, 0, 5, 1, 6, 2, 3, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34};
+        knownDFill[5] = {5, 0, 6, 2, 4, 7, 10, 13, 16, 19, 22, 8};
+        knownDFill[6] = {6, 0, 1, 2, 5, 3, 4, 7, 10, 13, 16, 19, 22, 9};
+        knownDFill[7] = {7, 0, 8, 1, 9, 2, 3, 4, 5, 6, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32};
+        knownDFill[8] = {8, 0, 9, 2, 7, 4, 5, 10, 13, 16, 19, 22, 11};
+        knownDFill[9] = {9, 0, 1, 2, 8, 3, 7, 4, 6, 10, 13, 16, 19, 22, 12};
+        knownDFill[10] = {10, 0, 11, 1, 12, 2, 3, 4, 7, 5, 6, 8, 9, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31};
+        knownDFill[11] = {11, 0, 12, 2, 10, 4, 8, 5, 7, 13, 16, 19, 22, 14};
+        knownDFill[12] = {12, 0, 1, 2, 11, 3, 10, 4, 9, 6, 7, 13, 16, 19, 22, 15};
+        knownDFill[13] = {13, 0, 14, 1, 15, 2, 3, 4, 10, 5, 6, 7, 8, 9, 11, 12, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30};
+        knownDFill[14] = {14, 0, 15, 2, 13, 4, 11, 5, 10, 7, 8, 16, 19, 22, 17};
+        knownDFill[15] = {15, 0, 1, 2, 14, 3, 13, 4, 12, 6, 10, 7, 9, 16, 19, 22, 18};
+        knownDFill[16] = {16, 0, 17, 1, 18, 2, 3, 4, 13, 5, 6, 7, 10, 8, 9, 11, 12, 14, 15, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29};
+        knownDFill[17] = {17, 0, 18, 2, 16, 4, 14, 5, 13, 7, 11, 8, 10, 19, 22, 20};
+        knownDFill[18] = {18, 0, 1, 2, 17, 3, 16, 4, 15, 6, 13, 7, 12, 9, 10, 19, 22, 21};
+        knownDFill[19] = {19, 0, 20, 1, 21, 2, 3, 4, 16, 5, 6, 7, 13, 8, 9, 10, 11, 12, 14, 15, 17, 18, 22, 23, 24, 25, 26, 27};
+        knownDFill[20] = {20, 0, 21, 2, 19, 4, 17, 5, 16, 7, 14, 8, 13, 10, 11, 22, 23};
+        knownDFill[21] = {21, 0, 1, 2, 20, 3, 19, 4, 18, 6, 16, 7, 15, 9, 13, 10, 12, 22, 24};
+        knownDFill[22] = {22, 0, 23, 1, 24, 2, 3, 4, 19, 5, 6, 7, 16, 8, 9, 10, 13, 11, 12, 14, 15, 17, 18, 20, 21, 25};
+        knownDFill[23] = {23, 0, 24, 2, 22, 4, 20, 5, 19, 7, 17, 8, 16, 10, 14, 11, 13, 26};
+        knownDFill[24] = {24, 0, 1, 2, 23, 3, 22, 4, 21, 6, 19, 7, 18, 9, 16, 10, 15, 12, 13, 27};
+        knownDFill[25] = {25, 0, 26, 1, 27, 2, 4, 22, 7, 19, 10, 16, 13};
+        knownDFill[26] = {26, 0, 27, 2, 25, 4, 23, 5, 22, 7, 20, 8, 19, 10, 17, 11, 16, 13, 14, 28};
+        knownDFill[27] = {27, 0, 1, 2, 26, 4, 24, 6, 22, 7, 21, 9, 19, 10, 18, 12, 16, 13, 15, 29};
+        knownDFill[28] = {28, 0, 29, 2, 4, 25, 26, 7, 22, 23, 8, 10, 19, 20, 11, 13, 16, 17, 14};
+        knownDFill[29] = {29, 0, 2, 28, 4, 27, 7, 24, 9, 22, 10, 21, 12, 19, 13, 18, 15, 16, 30};
+        knownDFill[30] = {30, 4, 28, 29, 7, 25, 26, 27, 10, 22, 23, 24, 11, 12, 13, 19, 20, 21, 14, 15, 16, 17, 18, 31};
+        knownDFill[31] = {31, 4, 30, 7, 28, 29, 10, 25, 26, 27, 13, 22, 23, 24, 14, 15, 16, 19, 20, 21, 17, 18, 32};
+        knownDFill[32] = {32, 4, 31, 7, 30, 10, 28, 29, 13, 25, 26, 27, 16, 22, 23, 24, 17, 18, 19, 20, 21, 33};
+        knownDFill[33] = {33, 4, 32, 7, 31, 10, 30, 13, 28, 29, 16, 25, 26, 27, 19, 22, 23, 24, 20, 21, 34};
+        knownDFill[34] = {34, 4, 33, 7, 32, 10, 31, 13, 30, 16, 28, 29, 19, 25, 26, 27, 22, 23, 24};
 
 	NetworkType::SparseFillMap dfill;
 	auto nPartials = network.getDiagonalFill(dfill);
@@ -1148,7 +1117,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1198,10 +1167,6 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 4);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 3);
-
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 1);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -1497,7 +1462,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1547,10 +1512,6 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 4);
 	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 3);
-
-	// Check the single vacancy
-	auto vacancy = network.getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 1);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -1846,7 +1807,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 BOOST_AUTO_TEST_CASE(HeVGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1871,27 +1832,23 @@ BOOST_AUTO_TEST_CASE(HeVGrouped)
 			.generate(opts)
 			->getNetwork());
 
-	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 2874);
-	BOOST_REQUIRE_EQUAL(network->getDOF(), 3300);
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 3152);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 3617);
 
 	// TODO: Test each value explicitly?
 	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
-	BOOST_REQUIRE_EQUAL(bounds.size(), 2874);
+	BOOST_REQUIRE_EQUAL(bounds.size(), 3152);
 	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
 	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 0);
 }
 
 BOOST_AUTO_TEST_CASE(HeDVGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1916,27 +1873,23 @@ BOOST_AUTO_TEST_CASE(HeDVGrouped)
 			.generate(opts)
 			->getNetwork());
 
-	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 4967);
-	BOOST_REQUIRE_EQUAL(network->getDOF(), 6656);
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 5698);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 7188);
 
 	// TODO: Test each value explicitly?
 	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
-	BOOST_REQUIRE_EQUAL(bounds.size(), 4967);
+	BOOST_REQUIRE_EQUAL(bounds.size(), 5698);
 	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
 	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 83);
 }
 
 BOOST_AUTO_TEST_CASE(HeTVGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -1961,27 +1914,23 @@ BOOST_AUTO_TEST_CASE(HeTVGrouped)
 			.generate(opts)
 			->getNetwork());
 
-	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 4967);
-	BOOST_REQUIRE_EQUAL(network->getDOF(), 6656);
+	BOOST_REQUIRE_EQUAL(network->getNumClusters(), 5698);
+	BOOST_REQUIRE_EQUAL(network->getDOF(), 7188);
 
 	// TODO: Test each value explicitly?
 	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
-	BOOST_REQUIRE_EQUAL(bounds.size(), 4967);
+	BOOST_REQUIRE_EQUAL(bounds.size(), 5698);
 	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
 	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 83);
 }
 
 BOOST_AUTO_TEST_CASE(HeDTVGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -2017,16 +1966,12 @@ BOOST_AUTO_TEST_CASE(HeDTVGrouped)
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 5);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 4);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 55);
 }
 
 BOOST_AUTO_TEST_CASE(IGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -2062,16 +2007,12 @@ BOOST_AUTO_TEST_CASE(IGrouped)
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
-
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 2);
 }
 
 BOOST_AUTO_TEST_CASE(VIGrouped)
 {
 	// Create the option to create a network
-	xolotl::options::Options opts;
+	xolotl::options::ConfOptions opts;
 	// Create a good parameter file
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
@@ -2107,10 +2048,210 @@ BOOST_AUTO_TEST_CASE(VIGrouped)
 
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
 	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
+}
 
-	// Check the single vacancy
-	auto vacancy = network->getSingleVacancy();
-	BOOST_REQUIRE_EQUAL(vacancy.getId(), 586);
+BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_Full, *utf::label("traits"))
+{
+	using NetworkType = PSIReactionNetwork<PSIFullSpeciesList>;
+	using Spec = NetworkType::Species;
+
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 5);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 5);
+	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
+	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
+
+	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::D), "D");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::T), "T");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
+
+	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::D), "Deuterium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::T), "Tritium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
+
+	// parseSpeciesId / getSpeciesLabel / getSpeciesName
+	auto network = NetworkType();
+	auto sid = network.parseSpeciesId("He");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::He);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "He");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Helium");
+	sid = network.parseSpeciesId("D");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::D);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "D");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Deuterium");
+	sid = network.parseSpeciesId("T");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::T);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "T");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Tritium");
+	sid = network.parseSpeciesId("V");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
+	sid = network.parseSpeciesId("I");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
+
+	// Define the sequence
+	using GroupingRange = SpeciesForGrouping<Spec, 5>;
+
+	// I goes on V
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::D), 1);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::T), 2);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 3);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 3);
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_HeD, *utf::label("traits"))
+{
+	using NetworkType = PSIReactionNetwork<PSIDeuteriumSpeciesList>;
+	using Spec = NetworkType::Species;
+
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 4);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 4);
+	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
+	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
+
+	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::D), "D");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
+
+	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::D), "Deuterium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
+
+	// parseSpeciesId / getSpeciesLabel / getSpeciesName
+	auto network = NetworkType();
+	auto sid = network.parseSpeciesId("He");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::He);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "He");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Helium");
+	sid = network.parseSpeciesId("D");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::D);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "D");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Deuterium");
+	sid = network.parseSpeciesId("V");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
+	sid = network.parseSpeciesId("I");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
+
+	// Define the sequence
+	using GroupingRange = SpeciesForGrouping<Spec, 4>;
+
+	// I goes on V
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::D), 1);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 2);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 2);
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_HeT, *utf::label("traits"))
+{
+	using NetworkType = PSIReactionNetwork<PSITritiumSpeciesList>;
+	using Spec = NetworkType::Species;
+
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 4);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 4);
+	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
+	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
+
+	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::T), "T");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
+
+	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::T), "Tritium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
+
+	// parseSpeciesId / getSpeciesLabel / getSpeciesName
+	auto network = NetworkType();
+	auto sid = network.parseSpeciesId("He");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::He);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "He");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Helium");
+	sid = network.parseSpeciesId("T");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::T);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "T");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Tritium");
+	sid = network.parseSpeciesId("V");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
+	sid = network.parseSpeciesId("I");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
+
+	// Define the sequence
+	using GroupingRange = SpeciesForGrouping<Spec, 4>;
+
+	// I goes on V
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::T), 1);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 2);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 2);
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_He, *utf::label("traits"))
+{
+	using NetworkType = PSIReactionNetwork<PSIHeliumSpeciesList>;
+	using Spec = NetworkType::Species;
+
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 3);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 3);
+	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
+	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
+
+	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
+
+	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
+
+	// parseSpeciesId / getSpeciesLabel / getSpeciesName
+	auto network = NetworkType();
+	auto sid = network.parseSpeciesId("He");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::He);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "He");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Helium");
+	sid = network.parseSpeciesId("V");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
+	sid = network.parseSpeciesId("I");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
+
+	// Define the sequence
+	using GroupingRange = SpeciesForGrouping<Spec, 3>;
+
+	// I goes on V
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 1);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 1);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

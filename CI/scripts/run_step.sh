@@ -1,0 +1,63 @@
+#!/bin/bash
+
+set -e
+
+echo -e "\nCheck gcc and clang compilers\n"
+gcc --version
+clang --version
+
+function run_tests () {
+    cd ${GITHUB_WORKSPACE}/../build
+    ctest --output-on-failure --label-exclude xolotl.tests.system
+    local __xolotl_ret=$?
+    ./test/system/SystemTester -- -t
+    local __xolotl_sys_ret=$?
+    return $((__xolotl_ret + __xolotl_sys_ret))
+}
+
+case "$1" in 
+
+  configure)
+
+    git config --global --add safe.directory '*'
+   
+    case "${GH_JOBNAME}" in
+      *"clang"*)
+        export CC=clang
+        export CXX=clang++
+        export OMPI_CC=clang
+        export OMPI_CXX=clang++
+      ;;
+      *)
+      ;;
+    esac
+
+    cd ${GITHUB_WORKSPACE}/..
+
+    cd ${GITHUB_WORKSPACE}/..
+    mkdir build
+    cd build
+
+    cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DXolotl_BUILD_PETSC=ON \
+        -DXolotl_BUILD_PETSC_DUMP_ERROR_FILE=ON \
+        ${EXTRA_CMAKE_ARGS} \
+        ${GITHUB_WORKSPACE}
+   
+    ;;
+
+  build)
+    cd ${GITHUB_WORKSPACE}/../build
+    make -j4
+    ;;
+
+  test)
+    run_tests
+    ;;
+
+  *)
+    echo " Invalid step" "$1"
+    exit -1
+    ;;
+esac

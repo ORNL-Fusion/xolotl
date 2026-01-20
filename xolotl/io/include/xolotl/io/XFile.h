@@ -87,8 +87,8 @@ public:
 		 *          the given time step.
 		 */
 		static std::string
-		makeGroupName(
-			const ConcentrationGroup& concGroup, int loop, int timeStep);
+		makeGroupName(const ConcentrationGroup& concGroup, int ctrlStep,
+			int loop, int timeStep);
 
 		/**
 		 * Construct a TimestepGroup.
@@ -108,8 +108,9 @@ public:
 		 * @param previousTime The physical time at the previous time step
 		 * @param deltaTime The physical length of the time step
 		 */
-		TimestepGroup(const ConcentrationGroup& concGroup, int loop,
-			int timeStep, double time, double previousTime, double deltaTime);
+		TimestepGroup(const ConcentrationGroup& concGroup, int ctrlStep,
+			int loop, int timeStep, double time, double previousTime,
+			double deltaTime);
 
 		/**
 		 * Open a TimestepGroup within the given concentration group.
@@ -118,8 +119,8 @@ public:
 		 * @param loop The loop number
 		 * @param timeStep The time step of the desired group.
 		 */
-		TimestepGroup(
-			const ConcentrationGroup& concGroup, int loop, int timeStep);
+		TimestepGroup(const ConcentrationGroup& concGroup, int ctrlStep,
+			int loop, int timeStep);
 
 		/**
 		 * Update a Timestep group within the given
@@ -144,6 +145,14 @@ public:
 		void
 		writeGrid(const std::vector<double>& grid, int ny = 0, double hy = 0.0,
 			int nz = 0, double hz = 0.0) const;
+
+		/**
+		 * Save the fluence information to our timestep group.
+		 *
+		 * @param fluence The vector of fluences
+		 */
+		void
+		writeFluence(const std::vector<double>& fluence) const;
 
 		/**
 		 * Save the surface positions to our timestep group.
@@ -314,6 +323,14 @@ public:
 		readGrid() const;
 
 		/**
+		 * Read the fluences.
+		 *
+		 * @return The fluences
+		 */
+		std::vector<double>
+		readFluence() const;
+
+		/**
 		 * Read the surface position from our concentration group in
 		 * the case of a 2D grid (a vector of surface positions).
 		 *
@@ -382,6 +399,7 @@ public:
 		// Name of our last timestep and loop attribute.
 		static const std::string lastTimestepAttrName;
 		static const std::string lastLoopAttrName;
+		static const std::string lastCtrlStepAttrName;
 
 	public:
 		// Path of the concentrations group within the file.
@@ -402,8 +420,16 @@ public:
 		 * @param deltaTime The physical length of the time step
 		 */
 		std::unique_ptr<TimestepGroup>
-		addTimestepGroup(int loop, int timeStep, double time,
+		addTimestepGroup(int ctrlStep, int loop, int timeStep, double time,
 			double previousTime, double deltaTime) const;
+
+		/**
+		 * Obtain the last control step known to our group.
+		 *
+		 * @return Control step of last TimestepGroup written to our group.
+		 */
+		int
+		getLastControlStep(void) const;
 
 		/**
 		 * Obtain the last loop known to our group.

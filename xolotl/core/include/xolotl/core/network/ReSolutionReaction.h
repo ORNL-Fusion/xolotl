@@ -10,7 +10,7 @@ namespace network
 {
 /**
  * @brief Class implementing re-solution reaction where
- * X_n -> X_(n-1) + X_1 with a given rate
+ * Xe_nV_m -> Xe_(n-1)V_(m-1) + Xe_1V_1 with a given rate
  *
  * @tparam TNetwork The network type
  * @tparam TDerived The derived class type.
@@ -29,6 +29,7 @@ public:
 	using FluxesView = typename Superclass::FluxesView;
 	using RatesView = typename Superclass::RatesView;
 	using ConnectivitiesView = typename Superclass::ConnectivitiesView;
+	using ConnectivitiesPairView = typename Superclass::ConnectivitiesPairView;
 	using BelongingView = typename Superclass::BelongingView;
 	using OwnedSubMapView = typename Superclass::OwnedSubMapView;
 	using Composition = typename Superclass::Composition;
@@ -56,6 +57,12 @@ public:
 		return detail::CoefficientsView("ReSolution Coefficients", size,
 			Superclass::coeffsSingleExtent, 1, 3,
 			Superclass::coeffsSingleExtent);
+	}
+
+	static detail::ConstantRateView
+	allocateConstantRateView(IndexType, IndexType)
+	{
+		return detail::ConstantRateView();
 	}
 
 private:
@@ -93,7 +100,7 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeConstantRates(ConcentrationsView concentrations, RatesView rates,
-		BelongingView isInSub, OwnedSubMapView backMap, IndexType gridIndex);
+		BelongingView isInSub, IndexType subId, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -111,6 +118,12 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	mapJacobianEntries(Connectivity connectivity);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	mapRateEntries(ConnectivitiesPairView connectivityRow,
+		ConnectivitiesPairView connectivityEntries, BelongingView isInSub,
+		OwnedSubMapView backMap, IndexType subId);
 
 protected:
 	IndexType _reactant;

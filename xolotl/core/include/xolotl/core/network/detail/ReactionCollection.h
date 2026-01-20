@@ -45,10 +45,11 @@ public:
 	ReactionCollection() = default;
 
 	template <typename... TViews>
-	ReactionCollection(IndexType gridSize, TViews... views) :
+	ReactionCollection(IndexType gridSize, IndexType clusterSize,
+		bool readRates, TViews... views) :
 		_reactions(views...),
-		_data(_reactions.getNumberOfElements(), gridSize,
-			_reactions.getElementBeginIndices())
+		_data(_reactions.getNumberOfElements(), gridSize, clusterSize,
+			readRates, _reactions.getElementBeginIndices())
 	{
 		static_assert(sizeof...(TViews) == numReactionTypes,
 			"Construction from views requires the number of views to match the "
@@ -67,6 +68,25 @@ public:
 	setGridSize(IndexType gridSize)
 	{
 		_data.setGridSize(gridSize);
+
+		_reactions.forEachType([gridSize, this](IndexType reactionTypeIndex,
+								   IndexType numReactions,
+								   auto reactionTypeTag) {
+			using ReactionType = typename decltype(reactionTypeTag)::Type;
+			_data.constantRates[reactionTypeIndex] =
+				ReactionType::allocateConstantRateView(numReactions, gridSize);
+		});
+	}
+
+	void
+	allocateRateEntries(IndexType numSubInstances)
+	{
+		_data.allocateRateEntries(numSubInstances);
+		auto reactionData = ReactionDataRef<NetworkType>(_data);
+		forEach(
+			"ReactionCollection::allocateRateEntries",
+			DEVICE_LAMBDA(
+				auto&& reaction) { reaction.getRateEntries(reactionData); });
 	}
 
 	void
@@ -227,6 +247,8 @@ public:
 
 private:
 	MultiElementCollection<ReactionTypes> _reactions;
+
+public:
 	ReactionData<NetworkType> _data;
 };
 } // namespace detail

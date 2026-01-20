@@ -20,3 +20,8 @@ inline constexpr double defaultZeroTol = 1.0e-12;
 
 #define XOLOTL_REQUIRE_CLOSE(a, b, relTol) \
 	XOLOTL_REQUIRE_CLOSE_ZT(a, b, relTol, ::xolotl::test::defaultZeroTol)
+
+namespace xolotl::test
+{
+using DOFView = Kokkos::View<double**, Kokkos::LayoutRight>;
+}

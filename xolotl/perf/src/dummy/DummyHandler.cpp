@@ -45,7 +45,7 @@ DummyHandler::getHardwareCounter(
 }
 
 void
-DummyHandler::reportData(std::ostream&) const
+DummyHandler::reportData(std::ostream&, const std::string&) const
 {
 	return;
 }
@@ -63,7 +63,8 @@ void
 DummyHandler::reportStatistics(std::ostream&,
 	const PerfObjStatsMap<ITimer::ValType>&,
 	const PerfObjStatsMap<IEventCounter::ValType>&,
-	const PerfObjStatsMap<IHardwareCounter::CounterType>&) const
+	const PerfObjStatsMap<IHardwareCounter::CounterType>&,
+	const std::string&) const
 {
 	// do nothing
 	return;

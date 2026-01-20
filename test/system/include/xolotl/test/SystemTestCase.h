@@ -13,6 +13,17 @@ public:
 	SystemTestOptions();
 };
 
+struct Restart
+{
+	bool value{false};
+
+	constexpr
+	operator bool() const noexcept
+	{
+		return value;
+	}
+};
+
 class SystemTestCase
 {
 	friend class SystemTestOptions;
@@ -41,15 +52,29 @@ public:
 		return *this;
 	}
 
+	SystemTestCase&
+	mpiLimits(int a, int b = -1)
+	{
+		_mpiLimits[0] = a;
+		_mpiLimits[1] = b;
+		return *this;
+	}
+
 	void
-	run() const;
+	run(Restart restart = {}) const;
 
 	static void
 	copyFile(const std::string& fileName);
 
 private:
 	bool
-	runXolotl() const;
+	checkMPILimits() const;
+
+	bool
+	runXolotl(const std::string& fnTag = {}) const;
+
+	void
+	handleOutput() const;
 
 	void
 	checkOutput(const std::string& outputFileName,
@@ -70,6 +95,8 @@ private:
 	double _tolerance{defaultTolerance};
 
 	bool _enableTimer{false};
+
+	int _mpiLimits[2]{1, -1};
 };
 } // namespace test
 } // namespace xolotl

@@ -37,7 +37,9 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
-	startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
+	startStopImpl(TS ts, PetscInt timestep, PetscReal time, Vec solution,
+		io::XFile& checkpointFile, io::XFile::TimestepGroup* tsGroup,
+		const std::vector<std::string>& speciesNames) override;
 
 	PetscErrorCode
 	computeXenonRetention(
@@ -52,7 +54,8 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
-	computeAlphaZr(TS ts, PetscInt timestep, PetscReal time, Vec solution);
+	computeAlphaZr(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
 	monitorBubble(TS ts, PetscInt timestep, PetscReal time, Vec solution);

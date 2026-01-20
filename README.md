@@ -10,26 +10,36 @@ generation tokamaks like ITER, as well as nuclear fuel in fission reactors.
 - CMake >= 3.13
 - MPI
 - Boost
-- Kokkos >= 3.2
+- Kokkos >= 4.6
 - HDF5
-- PETSc >= 3.14
+- PETSc >= 3.23 (configured with kokkos and kokkos-kernels; see
+  scripts/build_petsc.sh)
 
 ## Quick-Start Install
-If you have the above dependencies installed
+Xolotl can now build all dependencies (using PETSc's build system) during the
+CMake configure step:
 ```
+cd $HOME
 git clone https://github.com/ORNL-Fusion/xolotl $HOME/xolotl-source
 mkdir $HOME/xolotl-build
 cd $HOME/xolotl-build
 cmake \
+    -DXolotl_BUILD_PETSC=ON \
+    [-DXolotl_ENABLE_CUDA=ON | -DXolotl_ENABLE_OPENMP=ON] \
     -DCMAKE_BUILD_TYPE=Release \
-    -DKokkos_DIR=/opt/kokkos-install \
-    -DPETSC_DIR=/opt/petsc-install \
     -DCMAKE_INSTALL_PREFIX=$HOME/xolotl-build/install \
     $HOME/xolotl-source/
 make
 make test
 make install
 ```
+
+If Boost, HDF5, or LAPACK are not found during configuration, they will
+automatically be requested from PETSc's build system. Or you can specify this
+directly via `-DXolotl_BUILD_BOOST=ON`, *etc.*
+
+If you wish to configure and install PETSc separately, use (or reference) our
+[PETSc build script](https://github.com/ORNL-Fusion/xolotl/wiki/Build-Configuration#petsc-build-script).
 
 ## Wiki
 You can find more information about this code on our

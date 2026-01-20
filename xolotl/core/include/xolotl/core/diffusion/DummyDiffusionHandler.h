@@ -38,8 +38,7 @@ public:
 	 * \see IDiffusionHandler.h
 	 */
 	void
-	initializeOFill(network::IReactionNetwork& network,
-		network::IReactionNetwork::SparseFillMap& ofillMap) override
+	initialize(network::IReactionNetwork&, std::vector<RowColPair>&) override
 	{
 		// Clear the index vector
 		diffusingClusters.clear();
@@ -74,9 +73,11 @@ public:
 	 * \see IDiffusionHandler.h
 	 */
 	void
-	computeDiffusion(network::IReactionNetwork& network, double** concVector,
-		double* updatedConcOffset, double hxLeft, double hxRight, int ix,
-		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const override
+	computeDiffusion(network::IReactionNetwork& network,
+		const StencilConcArray& concVector,
+		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
+		int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0) const override
 	{
 		return;
 	}
@@ -91,9 +92,9 @@ public:
 	 * \see IDiffusionHandler.h
 	 */
 	void
-	computePartialsForDiffusion(network::IReactionNetwork& network, double* val,
-		IdType* indices, double hxLeft, double hxRight, int ix, double sy = 0.0,
-		int iy = 0, double sz = 0.0, int iz = 0) const override
+	computePartialsForDiffusion(network::IReactionNetwork& network,
+		Kokkos::View<double*> val, double hxLeft, double hxRight, int ix,
+		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const override
 	{
 		return;
 	}

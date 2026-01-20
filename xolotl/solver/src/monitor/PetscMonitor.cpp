@@ -1,4 +1,5 @@
 #include <xolotl/io/XFile.h>
+#include <xolotl/perf/ScopedTimer.h>
 #include <xolotl/solver/monitor/PetscMonitor.h>
 #include <xolotl/util/MPIUtils.h>
 
@@ -17,20 +18,15 @@ double timeStepThreshold = 0.0;
 PetscErrorCode
 checkTimeStep(TS ts)
 {
-	// Initial declarations
-	PetscErrorCode ierr;
-
 	PetscFunctionBeginUser;
 
 	// Get the time step from ts
 	PetscReal timestep;
-	ierr = TSGetTimeStep(ts, &timestep);
-	CHKERRQ(ierr);
+	PetscCall(TSGetTimeStep(ts, &timestep));
 
 	// Stop when the time step is lower than the user defined threshold
 	if (timestep < timeStepThreshold) {
-		ierr = TSSetConvergedReason(ts, TS_CONVERGED_EVENT);
-		CHKERRQ(ierr);
+		PetscCall(TSSetConvergedReason(ts, TS_CONVERGED_EVENT));
 	}
 
 	PetscFunctionReturn(0);
@@ -40,9 +36,8 @@ PetscErrorCode
 monitorTime(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<IPetscMonitor*>(ictx)->monitorTime(
-		ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->monitorTime(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -51,9 +46,8 @@ computeFluence(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<IPetscMonitor*>(ictx)->computeFluence(
-		ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->computeFluence(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -61,9 +55,8 @@ PetscErrorCode
 monitorPerf(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<IPetscMonitor*>(ictx)->monitorPerf(
-		ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->monitorPerf(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -72,9 +65,8 @@ monitorLargest(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<IPetscMonitor*>(ictx)->monitorLargest(
-		ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->monitorLargest(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -82,9 +74,8 @@ PetscErrorCode
 startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<IPetscMonitor*>(ictx)->startStop(
-		ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->startStop(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -93,10 +84,8 @@ computeHeliumRetention(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr =
-		static_cast<IPetscMonitor*>(ictx)->computeHeliumRetention(
-			ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->computeHeliumRetention(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -105,10 +94,22 @@ computeXenonRetention(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr =
-		static_cast<IPetscMonitor*>(ictx)->computeXenonRetention(
-			ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->computeXenonRetention(
+		ts, timestep, time, solution));
+	PetscFunctionReturn(0);
+}
+
+/**
+ * This is a monitoring method that will compute average density and diameter
+ * of defects.
+ */
+PetscErrorCode
+computeAlphaZr(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
+{
+	PetscFunctionBeginUser;
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->computeAlphaZr(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -116,9 +117,8 @@ PetscErrorCode
 computeAlloy(TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<IPetscMonitor*>(ictx)->computeAlloy(
-		ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->computeAlloy(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -127,9 +127,8 @@ monitorScatter(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<IPetscMonitor*>(ictx)->monitorScatter(
-		ts, timestep, time, solution);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->monitorScatter(
+		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
 
@@ -138,9 +137,8 @@ eventFunction(
 	TS ts, PetscReal time, Vec solution, PetscScalar* fvalue, void* ctx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<IPetscMonitor*>(ctx)->eventFunction(
-		ts, time, solution, fvalue);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ctx)->eventFunction(
+		ts, time, solution, fvalue));
 	PetscFunctionReturn(0);
 }
 
@@ -149,23 +147,34 @@ postEventFunction(TS ts, PetscInt nevents, PetscInt eventList[], PetscReal time,
 	Vec solution, PetscBool fwd, void* ctx)
 {
 	PetscFunctionBeginUser;
-	PetscErrorCode ierr = static_cast<IPetscMonitor*>(ctx)->postEventFunction(
-		ts, nevents, eventList, time, solution, fwd);
-	CHKERRQ(ierr);
+	PetscCall(static_cast<IPetscMonitor*>(ctx)->postEventFunction(
+		ts, nevents, eventList, time, solution, fwd));
 	PetscFunctionReturn(0);
 }
 
 PetscMonitor::PetscMonitor() = default;
 
-PetscMonitor::PetscMonitor(
-	TS ts, const std::shared_ptr<handler::ISolverHandler>& solverHandler) :
+PetscMonitor::PetscMonitor(TS ts,
+	const std::shared_ptr<handler::ISolverHandler>& solverHandler,
+	const std::string& checkpointFileName) :
 	_ts(ts),
-	_solverHandler(solverHandler)
+	_solverHandler(solverHandler),
+	_hdf5OutputName(checkpointFileName)
 {
+	// Create the checkpoint file if necessary
+	if (this->checkForCreatingCheckpoint()) {
+		io::XFile checkpointFile(_hdf5OutputName, 1, util::getMPIComm());
+	}
 }
 
 PetscMonitor::~PetscMonitor()
 {
+}
+
+bool
+PetscMonitor::checkForCreatingCheckpoint() const
+{
+	return (not _hdf5OutputName.empty()) and (not fs::exists(_hdf5OutputName));
 }
 
 void
@@ -211,6 +220,63 @@ PetscMonitor::writeNetwork(MPI_Comm comm, const std::string& targetFileName,
 }
 
 PetscErrorCode
+PetscMonitor::startStop(TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	PetscFunctionBeginUser;
+	perf::ScopedTimer myTimer(_startStopTimer);
+
+	// Compute the dt
+	double previousTime = _solverHandler->getPreviousTime();
+	double dt = time - previousTime;
+
+	// Don't do anything if it is not on the stride
+	if (((PetscInt)((time + dt / 10.0) / _hdf5Stride) <= _hdf5Previous) &&
+		(time > 0.0)) {
+		PetscFunctionReturn(0);
+	}
+
+	// Update the previous time
+	if ((PetscInt)((time + dt / 10.0) / _hdf5Stride) > _hdf5Previous) {
+		_hdf5Previous++;
+	}
+
+	// Gets MPI comm
+	auto xolotlComm = util::getMPIComm();
+
+	// Open the existing HDF5 file
+	io::XFile checkpointFile(
+		_hdf5OutputName, xolotlComm, io::XFile::AccessMode::OpenReadWrite);
+
+	// Get the current time step
+	double currentTimeStep;
+	PetscCall(TSGetTimeStep(ts, &currentTimeStep));
+
+	// Add a concentration time step group for the current time step.
+	auto concGroup = checkpointFile.getGroup<io::XFile::ConcentrationGroup>();
+	assert(concGroup);
+	auto tsGroup = concGroup->addTimestepGroup(
+		_ctrlStep, _loopNumber, timestep, time, previousTime, currentTimeStep);
+
+	// Save the fluence
+	auto fluxHandler = _solverHandler->getFluxHandler();
+	auto fluence = fluxHandler->getFluence();
+	tsGroup->writeFluence(fluence);
+
+	// Get the names of the species in the network
+	auto& network = _solverHandler->getNetwork();
+	auto numSpecies = network.getSpeciesListSize();
+	std::vector<std::string> speciesNames;
+	for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+		speciesNames.push_back(network.getSpeciesName(id));
+	}
+
+	this->startStopImpl(ts, timestep, time, solution, checkpointFile,
+		tsGroup.get(), speciesNames);
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
 PetscMonitor::monitorTime(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
@@ -228,6 +294,18 @@ PetscMonitor::computeFluence(
 {
 	PetscFunctionBeginUser;
 
+	// If it's a restart
+	bool hasConcentrations = false;
+	if (_solverHandler->checkForRestart()) {
+		auto restartFilePath = _solverHandler->getRestartFilePath();
+		auto networkFile = std::make_unique<io::XFile>(restartFilePath);
+		auto concGroup = networkFile->getGroup<io::XFile::ConcentrationGroup>();
+		hasConcentrations = (concGroup and concGroup->hasTimesteps());
+	}
+
+	if (timestep == 0 and hasConcentrations)
+		PetscFunctionReturn(0);
+
 	// Get the flux handler
 	auto fluxHandler = _solverHandler->getFluxHandler();
 
@@ -244,9 +322,6 @@ PetscErrorCode
 PetscMonitor::monitorPerf(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
-	// To check PETSc errors
-	PetscErrorCode ierr;
-
 	PetscFunctionBeginUser;
 
 	// Get the number of processes
@@ -326,8 +401,7 @@ PetscMonitor::monitorPerf(
 		_perfPlot->plotLabelProvider->timeLabel = timeLabel.str();
 		// Get the current time step
 		PetscReal currentTimeStep;
-		ierr = TSGetTimeStep(ts, &currentTimeStep);
-		CHKERRQ(ierr);
+		PetscCall(TSGetTimeStep(ts, &currentTimeStep));
 		// Give the timestep to the label provider
 		std::ostringstream timeStepLabel;
 		timeStepLabel << "dt: " << std::setprecision(4) << currentTimeStep
@@ -345,6 +419,13 @@ PetscMonitor::monitorPerf(
 
 PetscErrorCode
 PetscMonitor::computeHeliumRetention(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor::computeAlphaZr(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	PetscFunctionReturn(0);
