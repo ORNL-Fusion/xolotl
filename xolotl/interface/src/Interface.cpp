@@ -1,6 +1,7 @@
 #include <xolotl/interface/ComputeContext.h>
 #include <xolotl/interface/Interface.h>
 #include <xolotl/interface/MultiXolotl.h>
+#include <xolotl/interface/NetworkHandlerClassGenerator.h>
 #include <xolotl/interface/XolotlInterface.h>
 #include <xolotl/options/Options.h>
 #include <xolotl/util/MPIUtils.h>
@@ -22,6 +23,11 @@ makeXolotlInterface(int& argc, const char* argv[])
 		return std::unique_ptr<IXolotlInterface>();
 	}
 	options->readParams(argc, argv);
+
+	// Check for custom network
+	if (!options->getReactionNetworkFileName().empty()) {
+		generateNetworkHandler(options.get());
+	}
 
 	// Create instance(s)
 	if (options->useSubnetworks()) {

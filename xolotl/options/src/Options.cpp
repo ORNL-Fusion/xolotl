@@ -23,6 +23,7 @@ Options::Options() :
 	checkpointFile("xolotlStop.h5"),
 	restartFile(""),
 	tempHandlerName(""),
+    reactionNetworkFileName(""),
 	tempParam{},
 	tempProfileFilename(""),
 	tempGridPower(2.5),

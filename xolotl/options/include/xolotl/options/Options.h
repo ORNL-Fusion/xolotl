@@ -28,6 +28,11 @@ protected:
 	 */
 	std::string petscArg;
 
+    /**
+     * Name of JSON file describing a custom reaction network
+     */
+    std::string reactionNetworkFileName;
+
 	/**
 	 * Name of the temperature handler to use
 	 */
@@ -411,6 +416,15 @@ public:
 		return petscArg;
 	}
 
+    /**
+     * \see IOptions.h
+     */
+    std::string
+    getReactionNetworkFileName() const override
+    {
+        return reactionNetworkFileName;
+    }
+
 	/**
 	 * \see IOptions.h
 	 */
@@ -518,6 +532,15 @@ public:
 	{
 		return materialName;
 	}
+
+    /**
+     * \see IOptions.h
+     */
+    void
+    setMaterial(const std::string& material) override
+    {
+        materialName = material;
+    }
 
 	/**
 	 * \see IOptions.h

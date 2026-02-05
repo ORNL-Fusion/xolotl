@@ -83,6 +83,14 @@ public:
 	virtual std::string
 	getPetscArg() const = 0;
 
+    /**
+     * Get the file describing custom reaction network
+     *
+     * @return name of the network file
+     */
+    virtual std::string
+    getReactionNetworkFileName() const = 0;
+
 	/**
 	 * Obtain the name of the temperature handler to be used
 	 *
@@ -177,6 +185,12 @@ public:
 	 */
 	virtual std::string
 	getMaterial() const = 0;
+
+    /**
+     * Modify the name of the material
+     */
+    virtual void
+    setMaterial(const std::string& material) = 0;
 
 	/**
 	 * Obtain the interface location in nm.

@@ -21,6 +21,7 @@ set(XOLOTL_UTIL_HEADERS
     ${XOLOTL_UTIL_HEADER_DIR}/Tokenizer.h
     ${XOLOTL_UTIL_HEADER_DIR}/TupleUtils.h
     ${XOLOTL_UTIL_HEADER_DIR}/RandomNumberGenerator.h
+    ${XOLOTL_UTIL_HEADER_DIR}/StreamUtils.h
 )
 
 set(XOLOTL_UTIL_SOURCES
@@ -28,6 +29,7 @@ set(XOLOTL_UTIL_SOURCES
     ${XOLOTL_UTIL_SOURCE_DIR}/LinearStepSequence.cpp
     ${XOLOTL_UTIL_SOURCE_DIR}/Log.cpp
     ${XOLOTL_UTIL_SOURCE_DIR}/MPIUtils.cpp
+    ${XOLOTL_UTIL_SOURCE_DIR}/StreamUtils.cpp
     ${XOLOTL_UTIL_SOURCE_DIR}/TimeStepper.cpp
 )
 
@@ -53,3 +55,4 @@ set_target_properties(xolotlUtil PROPERTIES
 )
 
 install(TARGETS xolotlUtil EXPORT Xolotl LIBRARY DESTINATION lib)
+install(DIRECTORY ${XOLOTL_UTIL_INCLUDE_DIR}/xolotl DESTINATION include)

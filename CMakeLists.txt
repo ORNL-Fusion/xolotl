@@ -26,6 +26,8 @@ enable_language(C)
 ## MPI
 find_package(MPI REQUIRED)
 
+option(Xolotl_INSTALL_BUILT_DEPS "" ON)
+
 ## PETSc
 option(Xolotl_BUILD_PETSC "" OFF)
 if(Xolotl_BUILD_PETSC)

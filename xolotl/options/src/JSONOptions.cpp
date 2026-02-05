@@ -1,5 +1,6 @@
 #include <fstream>
 
+// FIXME: the following define is to ignore a deprecation warning in boost
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/property_tree/json_parser.hpp>
@@ -10,6 +11,7 @@
 #include <xolotl/options/detail/JSONElem.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
+#include <xolotl/util/StreamUtils.h>
 
 using namespace std::string_literals;
 
@@ -17,40 +19,6 @@ namespace xolotl
 {
 namespace options
 {
-std::stringstream
-stripComments(std::ifstream& ifs)
-{
-	std::stringstream ss;
-	std::string line;
-	bool cCommenting = false;
-	while (std::getline(ifs, line)) {
-		for (auto it = begin(line); it != end(line); ++it) {
-			if (cCommenting) {
-				if (*it == '*' && next(it) != end(line) && *next(it) == '/') {
-					cCommenting = false;
-					++it;
-				}
-				continue;
-			}
-			if (*it == '#') {
-				break;
-			}
-			if (*it == '/') {
-				if (next(it) != end(line) && *next(it) == '/') {
-					break;
-				}
-				if (next(it) != end(line) && *next(it) == '*') {
-					cCommenting = true;
-					++it;
-					continue;
-				}
-			}
-			ss << *it;
-		}
-	}
-	return ss;
-}
-
 template <typename TParam>
 inline bool
 checkSetParam(const boost::property_tree::iptree& tree,
@@ -134,12 +102,23 @@ JSONOptions::defineHandlers()
 			"{debug,extra,info,warning,error}\n"
 			"(default = info)",
 			JSON_ELEM_HANDLER {
+#ifndef NDEBUG
+				util::Log::setLevelThreshold(tree.get(name, "debug"));
+#else
 				util::Log::setLevelThreshold(tree.get(name, "info"));
+#endif
 			})
 		.add(
 			"restartFile", ElemType::string,
 			"The HDF5 file to use for restart.",
 			JSON_ELEM_HANDLER { checkSetParam(tree, name, restartFile); })
+		.add(
+			"reactionNetworkFile", ElemType::string,
+			"JSON file describing a custom reaction network.\n"
+			"(default = \"\")",
+			JSON_ELEM_HANDLER {
+				checkSetParam(tree, name, reactionNetworkFileName);
+			})
 		.add(
 			"tempHandler", ElemType::string,
 			"Temperature handler to use.\n"
@@ -578,7 +557,7 @@ JSONOptions::readParams(int argc, const char* argv[])
 		throw std::runtime_error("Unable to open file: "s + argv[1]);
 	}
 
-	auto ss = stripComments(ifs);
+	auto ss = util::stripComments(ifs);
 	boost::property_tree::read_json(ss, *_map);
 
 	auto handlers = defineHandlers();

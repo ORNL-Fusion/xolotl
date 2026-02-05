@@ -31,3 +31,4 @@ set_target_properties(xolotlFactory PROPERTIES
 )
 
 install(TARGETS xolotlFactory EXPORT Xolotl LIBRARY DESTINATION lib)
+install(DIRECTORY ${XOLOTL_FACTORY_INCLUDE_DIR}/xolotl DESTINATION include)

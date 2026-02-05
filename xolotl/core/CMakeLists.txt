@@ -37,3 +37,4 @@ set_target_properties(xolotlCore PROPERTIES
 )
 
 install(TARGETS xolotlCore EXPORT Xolotl LIBRARY DESTINATION lib)
+install(DIRECTORY ${XOLOTL_CORE_INCLUDE_DIR}/xolotl DESTINATION include)

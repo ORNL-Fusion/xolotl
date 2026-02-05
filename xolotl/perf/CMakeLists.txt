@@ -47,3 +47,4 @@ if(PAPI_FOUND)
 endif(PAPI_FOUND)
 
 install(TARGETS xolotlPerf EXPORT Xolotl LIBRARY DESTINATION lib)
+install(DIRECTORY ${XOLOTL_PERF_INCLUDE_DIR}/xolotl DESTINATION include)

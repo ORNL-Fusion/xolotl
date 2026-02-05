@@ -101,10 +101,16 @@ if(__do_src_update)
     endif()
 endif()
 
+if(Xolotl_INSTALL_BUILT_DEPS)
+    set(__install_dir ${CMAKE_INSTALL_PREFIX})
+else()
+    set(__install_dir ${__plsm_bin_dir}/install)
+endif()
+
 set(__plsm_opts
     -DKokkos_DIR=${Kokkos_DIR}
     -DCMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}
-    -DCMAKE_INSTALL_PREFIX=${__plsm_bin_dir}/install
+    -DCMAKE_INSTALL_PREFIX=${__install_dir}
     -DBUILD_TESTING=OFF
     -DPLSM_USE_64BIT_INDEX_TYPE=${Xolotl_USE_64BIT_INDEX_TYPE}
 )

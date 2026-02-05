@@ -22,6 +22,12 @@ if(NOT EXISTS ${__petsc_src_dir}/configure)
     )
 endif()
 
+if(Xolotl_INSTALL_BUILT_DEPS)
+    set(__install_prefix ${CMAKE_INSTALL_PREFIX})
+else()
+    set(__install_prefix ${__external_bin_dir}/petsc_install)
+endif()
+
 ## Check for dependencies
 #### HDF5
 option(Xolotl_BUILD_HDF5 "Have the PETSc build system build HDF5" OFF)
@@ -48,7 +54,7 @@ endif()
 set(__script_dir ${CMAKE_SOURCE_DIR}/scripts)
 set(__build_opts
     --skip-pull
-    --prefix=${__external_bin_dir}/petsc_install
+    --prefix=${__install_prefix}
     --petsc-dir=${__petsc_src_dir}
 )
 set(__petsc_arch "rel")
@@ -108,7 +114,7 @@ endif()
 if(Xolotl_BUILD_HDF5)
     list(APPEND __build_opts --get-hdf5)
     message(STATUS "    - build HDF5")
-    set(HDF5_ROOT "${__external_bin_dir}/petsc_install")
+    set(HDF5_ROOT "${__install_prefix}")
 endif()
 #### Boost
 if(NOT Boost_FOUND)
@@ -168,8 +174,8 @@ if(NOT ${__build_ret} EQUAL 0)
     )
 endif()
 
-list(APPEND CMAKE_PREFIX_PATH "${__external_bin_dir}/petsc_install")
+list(APPEND CMAKE_PREFIX_PATH "${__install_prefix}")
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} CACHE PATH "" FORCE)
 
 ## Don't build when re-running CMake unless the user specifies this again
-set(Xolotl_BUILD_PETSC OFF CACHE PATH "" FORCE)
+set(Xolotl_BUILD_PETSC OFF CACHE BOOL "" FORCE)

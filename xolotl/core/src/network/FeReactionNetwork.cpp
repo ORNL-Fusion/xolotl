@@ -7,7 +7,8 @@ namespace core
 {
 namespace network
 {
-template ReactionNetwork<FeReactionNetwork>::ReactionNetwork();
+template
+ReactionNetwork<FeReactionNetwork>::ReactionNetwork();
 
 template ReactionNetwork<FeReactionNetwork>::ReactionNetwork(
 	const std::vector<AmountType>& maxSpeciesAmounts,
@@ -63,8 +64,7 @@ FeReactionNetwork::checkLargestClusterId()
 {
 	// Copy the cluster data for the parallel loop
 	auto clData = _clusterData.d_view;
-	using Reducer = Kokkos::MaxLoc<FeReactionNetwork::AmountType,
-		FeReactionNetwork::IndexType>;
+	using Reducer = Kokkos::MaxLoc<AmountType, IndexType>;
 	Reducer::value_type maxLoc;
 	Kokkos::parallel_reduce(
 		"FeReactionNetwork::checkLargestClusterId", _numClusters,

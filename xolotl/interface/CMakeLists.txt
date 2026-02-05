@@ -14,7 +14,17 @@ set(XOLOTL_INTERFACE_SOURCES
     ${XOLOTL_INTERFACE_SOURCE_DIR}/XolotlInterface.cpp
     ${XOLOTL_INTERFACE_SOURCE_DIR}/AlloySubOptions.cpp
     ${XOLOTL_INTERFACE_SOURCE_DIR}/AlphaZrSubOptions.cpp
+    ${XOLOTL_INTERFACE_SOURCE_DIR}/NetworkHandlerClassGenerator.cpp
 )
+
+option(Xolotl_ENABLE_NETWORK_GENERATOR "" ON)
+if(Xolotl_ENABLE_NETWORK_GENERATOR)
+    # find_package(Boost REQUIRED COMPONENTS dll)
+    list(APPEND XOLOTL_INTERFACE_HEADERS 
+        ${XOLOTL_INTERFACE_HEADER_DIR}/NetworkHandlerClassGenerator.h)
+    list(APPEND XOLOTL_INTERFACE_SOURCES 
+        ${XOLOTL_INTERFACE_SOURCE_DIR}/NetworkHandlerClassGenerator.cpp)
+endif()
 
 add_library(xolotlInterface SHARED
     ${XOLOTL_INTERFACE_SOURCES}
