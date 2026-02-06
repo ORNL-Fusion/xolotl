@@ -19,7 +19,7 @@ AlloyClusterGenerator::AlloyClusterGenerator(const options::IOptions& options) :
 	// Check if SSBM is used
 	auto process = options.getProcesses();
 	if (process["largeBubble"]) {
-		_maxLoopSize = util::max(600, options.getMaxImpurity());
+		_maxLoopSize = 2000;
 	}
 }
 
@@ -38,7 +38,7 @@ AlloyClusterGenerator::AlloyClusterGenerator(
 	// Check if SSBM is used
 	auto process = options.getProcesses();
 	if (process["largeBubble"]) {
-		_maxLoopSize = util::max(600, options.getMaxImpurity());
+		_maxLoopSize = 2000;
 	}
 }
 } // namespace network

@@ -178,8 +178,10 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	if (lo[Species::V] == 0) {
 		result[toIndex(Species::V)] = true;
 	}
+	
+	AmountType maxHe = 1;
 
-	if (hi[Species::He] > _maxSize) {
+	if (hi[Species::He] > maxHe) {
 		result[toIndex(Species::He)] = true;
 	}
 	if (lo[Species::He] == 0) {
@@ -229,6 +231,8 @@ AlloyClusterGenerator::select(const Region& region) const
 
 	Composition lo = region.getOrigin();
 	Composition hi = region.getUpperLimitPoint();
+	
+	AmountType maxHe = 1;
 
 	// Interstitials
 	if (region[Species::I].begin() > 0 &&
@@ -301,10 +305,22 @@ AlloyClusterGenerator::select(const Region& region) const
 		region[Species::FaultedV].end() - 1 <= _maxV &&
 		region[Species::PerfectI].end() - 1 <= _maxI &&
 		region[Species::FaultedI].end() - 1 <= _maxI &&
-		region[Species::He].begin() == 0 && region[Species::V].begin() == 0 &&
-		region[Species::I].begin() == 0) {
+		region[Species::He].end() == 1 && region[Species::V].end() == 1 &&
+		region[Species::I].end() == 1) {
 		return false;
 	}
+	if (region[Species::PerfectV].begin() > 0 and
+	        region[Species::PerfectV].end() - 1 <= _maxV)
+	        return false;
+	if (region[Species::FaultedV].begin() > 0 and
+	        region[Species::FaultedV].end() - 1 <= _maxV)
+	        return false;
+	if (region[Species::PerfectI].begin() > 0 and
+	        region[Species::PerfectI].end() - 1 <= _maxI)
+	        return false;
+	if (region[Species::FaultedI].begin() > 0 and
+	        region[Species::FaultedI].end() - 1 <= _maxI)
+	        return false;
 
 	// Vacancy
 	if (region[Species::V].begin() > _maxSize) {
@@ -312,14 +328,11 @@ AlloyClusterGenerator::select(const Region& region) const
 	}
 
 	// The edge
-	if (region[Species::V].end() > 1) {
+	if (region[Species::V].end() > 1 and region[Species::He].end() > 1) {
 		auto hiV = util::min(hi[Species::V] - 1, _maxSize);
-		auto hiHe =
-			util::min(hi[Species::He] - 1, getMaxHePerV(_maxSize, _hevRatio));
-
 		// Too many helium
 		if (lo[Species::He] >
-			util::min(getMaxHePerV(hiV, _hevRatio), _maxSize)) {
+			util::min(getMaxHePerV(hiV, _hevRatio), maxHe)) {
 			return false;
 		}
 	}

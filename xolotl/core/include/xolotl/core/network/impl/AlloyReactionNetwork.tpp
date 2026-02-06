@@ -188,6 +188,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	using Species = typename Network::Species;
 	using Composition = typename Network::Composition;
 	using AmountType = typename Network::AmountType;
+	constexpr auto speciesRange = NetworkType::getSpeciesRange();
 
 	if (i == j) {
 		if (diffusionFactor(i) != 0.0)
@@ -902,7 +903,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		}
 
 		// He case
-		else if (lo.isOnAxis(Species::I)) {
+		else if (lo.isOnAxis(Species::He)) {
 			// He_k + B -> B
 			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
 		}
@@ -924,28 +925,33 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		hiLargest[Species::FaultedI] - 5; // Don't know which one was saved
 
 	// He_a + He_bV -> B
-	if (hi1[Species::He] + hi2[Species::He] - 2 > 100) {
+	if (hi1[Species::He] + hi2[Species::He] - 2 > 1) {
 		this->addProductionReaction(tag, {i, j, bubbleId});
 	}
 
 	// V_a + HeV_b -> B
-	if (hi1[Species::V] + hi2[Species::V] - 2 > 100) {
+	if (hi1[Species::V] + hi2[Species::V] - 2 > 10000) {
 		this->addProductionReaction(tag, {i, j, bubbleId});
 	}
 
 	// V_a + L^V_b -> L^V
-	if (hi1[Species::V] + hi2[Species::PerfectV] - 2 > 600) {
+	if (lo1[Species::PerfectV] > 0 or lo2[Species::PerfectV] > 0) {
+	if (hi1[Species::V] + hi2[Species::PerfectV] - 2 > 2000) {
 		this->addProductionReaction(tag, {i, j, perfVId});
 	}
-	if (hi2[Species::V] + hi1[Species::PerfectV] - 2 > 600) {
+	if (hi2[Species::V] + hi1[Species::PerfectV] - 2 > 2000) {
 		this->addProductionReaction(tag, {j, i, perfVId});
 	}
+	}
 
-	if (hi1[Species::V] + hi2[Species::FaultedV] - 2 > 600) {
+
+	if (lo1[Species::FaultedV] > 0 or lo2[Species::FaultedV] > 0) {
+	if (hi1[Species::V] + hi2[Species::FaultedV] - 2 > 2000) {
 		this->addProductionReaction(tag, {i, j, faulVId});
 	}
-	if (hi2[Species::V] + hi1[Species::FaultedV] - 2 > 600) {
+	if (hi2[Species::V] + hi1[Species::FaultedV] - 2 > 2000) {
 		this->addProductionReaction(tag, {j, i, faulVId});
+	}
 	}
 
 	// V_a + L^I -> L^I_b
@@ -954,7 +960,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// It should be around the largest size value
 		if (hi1[Species::PerfectI] + hi2[Species::PerfectI] + hi1[Species::V] +
 				hi2[Species::V] - 4 >
-			600) {
+			2000) {
 			// Need to know which one is I
 			auto vId = lo1[Species::V] > 0 ? i : j;
 			auto iId = lo1[Species::V] > 0 ? j : i;
@@ -966,7 +972,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// It should be around the largest size value
 		if (hi1[Species::FaultedI] + hi2[Species::FaultedI] + hi1[Species::V] +
 				hi2[Species::V] - 4 >
-			600) {
+			2000) {
 			// Need to know which one is I
 			auto vId = lo1[Species::V] > 0 ? i : j;
 			auto iId = lo1[Species::V] > 0 ? j : i;
@@ -980,7 +986,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// It should be around the largest size value
 		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
 				hi2[Species::I] - 4 >
-			100) {
+			10000) {
 			// Need to know which one is I
 			auto iId = lo1[Species::I] > 0 ? i : j;
 			auto vId = lo1[Species::I] > 0 ? j : i;
@@ -994,7 +1000,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// It should be around the largest size value
 		if (hi1[Species::PerfectV] + hi2[Species::PerfectV] + hi1[Species::I] +
 				hi2[Species::I] - 4 >
-			600) {
+			2000) {
 			// Need to know which one is I
 			auto iId = lo1[Species::I] > 0 ? i : j;
 			auto vId = lo1[Species::I] > 0 ? j : i;
@@ -1006,7 +1012,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// It should be around the largest size value
 		if (hi1[Species::FaultedV] + hi2[Species::FaultedV] + hi1[Species::I] +
 				hi2[Species::I] - 4 >
-			600) {
+			2000) {
 			// Need to know which one is I
 			auto iId = lo1[Species::I] > 0 ? i : j;
 			auto vId = lo1[Species::I] > 0 ? j : i;
@@ -1015,17 +1021,17 @@ AlloyReactionGenerator::addSingleSizeReactions(
 	}
 
 	// I_a + L^I_b -> L^I
-	if (hi1[Species::I] + hi2[Species::PerfectI] - 2 > 600) {
+	if (hi1[Species::I] + hi2[Species::PerfectI] - 2 > 2000) {
 		this->addProductionReaction(tag, {i, j, perfIId});
 	}
-	if (hi2[Species::I] + hi1[Species::PerfectI] - 2 > 600) {
+	if (hi2[Species::I] + hi1[Species::PerfectI] - 2 > 2000) {
 		this->addProductionReaction(tag, {j, i, perfIId});
 	}
 
-	if (hi1[Species::I] + hi2[Species::FaultedI] - 2 > 600) {
+	if (hi1[Species::I] + hi2[Species::FaultedI] - 2 > 2000) {
 		this->addProductionReaction(tag, {i, j, faulIId});
 	}
-	if (hi2[Species::I] + hi1[Species::FaultedI] - 2 > 600) {
+	if (hi2[Species::I] + hi1[Species::FaultedI] - 2 > 2000) {
 		this->addProductionReaction(tag, {j, i, faulIId});
 	}
 }

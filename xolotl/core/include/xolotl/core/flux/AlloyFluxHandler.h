@@ -377,7 +377,7 @@ public:
 		auto flux = this->incidentFlux;
 		Kokkos::parallel_for(
 			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
-				Kokkos::atomic_add(&updatedConcOffset[ids[i]], flux(i, xi));
+				Kokkos::atomic_add(&updatedConcOffset[ids[i]], flux(i, xi) * attenuation);
 			});
 		// Update the concentration array for high energy ions
 		ids = this->highFluxIds;
@@ -385,7 +385,7 @@ public:
 		Kokkos::parallel_for(
 			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
 				Kokkos::atomic_add(&updatedConcOffset[ids[i]],
-					(1.0 - deltaCorrection) * flux(i, xi));
+					(1.0 - deltaCorrection) * flux(i, xi) * attenuation);
 			});
 	}
 

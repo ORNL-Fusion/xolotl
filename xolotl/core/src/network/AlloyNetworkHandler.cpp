@@ -21,6 +21,7 @@ auto alloyNetworkGenerator = [](const options::IOptions& options) {
 	NetworkType::AmountType maxV = options.getMaxV();
 	NetworkType::AmountType maxI = options.getMaxI();
 	NetworkType::AmountType maxSize = options.getMaxImpurity();
+	NetworkType::AmountType maxHe = 1;
 	NetworkType::AmountType maxLoopSize = options.getMaxImpurity();
 	NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
 	// Adapt maxSize
@@ -29,10 +30,15 @@ auto alloyNetworkGenerator = [](const options::IOptions& options) {
 		++i;
 	}
 	maxSize = pow(groupingWidth, i) - 1;
+	i = 0;
+	while (maxHe + 1 > pow(groupingWidth, i)) {
+		++i;
+	}
+	maxHe = pow(groupingWidth, i) - 1;
 	// Check if SSBM is used
 	auto process = options.getProcesses();
 	if (process["largeBubble"]) {
-		maxLoopSize = util::max(600, options.getMaxImpurity());
+		maxLoopSize = 2000;
 	}
 	i = 0;
 	while (maxLoopSize + 1 > pow(groupingWidth, i)) {
@@ -40,7 +46,7 @@ auto alloyNetworkGenerator = [](const options::IOptions& options) {
 	}
 	maxLoopSize = pow(groupingWidth, i) - 1;
 
-	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxSize, maxSize,
+	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxHe, maxSize,
 		maxLoopSize, maxLoopSize, maxI, maxLoopSize, maxLoopSize};
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
 		{groupingWidth, groupingWidth, groupingWidth, groupingWidth, maxI + 1,

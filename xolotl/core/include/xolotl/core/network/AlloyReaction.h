@@ -62,6 +62,7 @@ public:
 		const auto dummyRegion = Region(Composition{});
 
 		for (auto i : {0, 1}) {
+		        // Reactants 
 			if (this->_reactants[i] < numClusters) {
 				this->copyMomentIds(
 					this->_reactants[i], this->_reactantMomentIds[i]);
@@ -75,40 +76,61 @@ public:
 						this->_clusterData->voidAvId();
 					this->_reactantMomentIds[i][1] =
 						this->_clusterData->heAvId();
+				        for (IndexType j = 2; j < Superclass::nMomentIds; ++j) {
+					        this->_reactantMomentIds[i][j] =
+						Superclass::invalidIndex;
+				        }
 					break;
 				// Perfect V
 				case 1:
 					this->_reactantMomentIds[i][0] =
 						this->_clusterData->perfVAvId();
+				        for (IndexType j = 1; j < Superclass::nMomentIds; ++j) {
+					        this->_reactantMomentIds[i][j] =
+						Superclass::invalidIndex;
+				        }
 					break;
 				// Faulted V
 				case 2:
 					this->_reactantMomentIds[i][0] =
 						this->_clusterData->faulVAvId();
+				        for (IndexType j = 1; j < Superclass::nMomentIds; ++j) {
+					        this->_reactantMomentIds[i][j] =
+						Superclass::invalidIndex;
+				        }
 					break;
 				// Perfect I
 				case 3:
 					this->_reactantMomentIds[i][0] =
 						this->_clusterData->perfIAvId();
+				        for (IndexType j = 1; j < Superclass::nMomentIds; ++j) {
+					        this->_reactantMomentIds[i][j] =
+						Superclass::invalidIndex;
+				        }
 					break;
 				// Faulted I
 				case 4:
 					this->_reactantMomentIds[i][0] =
 						this->_clusterData->faulIAvId();
+				        for (IndexType j = 1; j < Superclass::nMomentIds; ++j) {
+					        this->_reactantMomentIds[i][j] =
+						Superclass::invalidIndex;
+				        }
 					break;
 				}
 			}
-			if (this->_products[i] < numClusters) {
-				this->copyMomentIds(
-					this->_products[i], this->_productMomentIds[i]);
+			// Products
+			if (this->_products[i] == Superclass::invalidIndex) {
+				for (IndexType j = 0; j < Superclass::nMomentIds; ++j) {
+					this->_productMomentIds[i][j] =
+						Superclass::invalidIndex;
+				}
 			}
 			else {
-				if (this->_products[i] == Superclass::invalidIndex) {
-					for (IndexType j = 0; j < Superclass::nMomentIds; ++j) {
-						this->_productMomentIds[i][j] =
-							Superclass::invalidIndex;
-					}
-				}
+			        if (this->_products[i] < numClusters) {
+				        this->copyMomentIds(
+					        this->_products[i], this->_productMomentIds[i]);
+			        }
 				else {
 					auto shift = (this->_products[i] - numClusters) / 2;
 					switch (shift) {
@@ -118,26 +140,46 @@ public:
 							this->_clusterData->voidAvId();
 						this->_productMomentIds[i][1] =
 							this->_clusterData->heAvId();
+				                for (IndexType j = 2; j < Superclass::nMomentIds; ++j) {
+					                this->_productMomentIds[i][j] =
+						        Superclass::invalidIndex;
+				                }
 						break;
 					// Perfect V
 					case 1:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->perfVAvId();
+				                for (IndexType j = 1; j < Superclass::nMomentIds; ++j) {
+					                this->_productMomentIds[i][j] =
+						        Superclass::invalidIndex;
+				                }
 						break;
 					// Faulted V
 					case 2:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->faulVAvId();
+				                for (IndexType j = 1; j < Superclass::nMomentIds; ++j) {
+					                this->_productMomentIds[i][j] =
+						        Superclass::invalidIndex;
+				                }
 						break;
 					// Perfect I
 					case 3:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->perfIAvId();
+				                for (IndexType j = 1; j < Superclass::nMomentIds; ++j) {
+					                this->_productMomentIds[i][j] =
+						        Superclass::invalidIndex;
+				                }
 						break;
 					// Faulted I
 					case 4:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->faulIAvId();
+				                for (IndexType j = 1; j < Superclass::nMomentIds; ++j) {
+					                this->_productMomentIds[i][j] =
+						        Superclass::invalidIndex;
+				                }
 						break;
 					}
 				}

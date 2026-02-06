@@ -76,16 +76,8 @@ public:
 	computeBubbleRadius(
 		double amount, double latticeParameter, IndexType typeSwitch = 0)
 	{
-		// Find the edge of the phase space
-		const auto& largestReg = this->getCluster(largestClusterId).getRegion();
-		Composition hiLargest = largestReg.getUpperLimitPoint();
-		double largestSize = hiLargest[Species::He] + hiLargest[Species::V] +
-			hiLargest[Species::PerfectV] + hiLargest[Species::FaultedV] +
-			hiLargest[Species::PerfectI] + hiLargest[Species::FaultedI] -
-			5; // Don't know which one was saved
-
 		// Get the minimum amount for a valid value
-		amount = util::max(amount, largestSize);
+		amount = util::max(amount, 10.0);
 
 		// Prefactor
 		const double prefactor =
