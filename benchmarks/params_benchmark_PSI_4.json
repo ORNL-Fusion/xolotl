@@ -15,7 +15,7 @@
     "vizHandler": "dummy",
     "perfHandler": "os",
     "material": "W100",
-    "fluxDepthProfileFilePath": "tridyn_benchmark_PSI_4.dat",
+    "customFluxFilePath": "tridyn_benchmark_PSI_4.dat",
     "tempParam": 343,
     "flux": 349.285,
     "sputtering": 0.00272598,
