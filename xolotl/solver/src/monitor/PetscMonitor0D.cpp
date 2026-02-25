@@ -4,6 +4,7 @@
 #include <xolotl/core/Types.h>
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
+#include <xolotl/core/network/VReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/core/network/ZrReactionNetwork.h>
 #include <xolotl/io/XFile.h>
@@ -608,7 +609,7 @@ PetscMonitor0D::monitorBubble(
 	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
 
 	// Get the network
-	using NetworkType = core::network::FeReactionNetwork;
+	using NetworkType = core::network::VReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using Region = typename NetworkType::Region;
