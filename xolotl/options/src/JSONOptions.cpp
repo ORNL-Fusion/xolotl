@@ -298,7 +298,7 @@ JSONOptions::defineHandlers()
 		.add(
 			"process", ElemType::list_string,
 			"List of all the processes to use in the simulation.\n"
-			"{reaction, diff, advec, modifiedTM, movingSurface, "
+			"{reaction, diff, spherical, advec, modifiedTM, movingSurface, "
 			"bursting, attenuation, resolution, heterogeneous, "
 			"sink, soret, constant, noSolve, SSBM}",
 			JSON_ELEM_HANDLER {
@@ -505,12 +505,12 @@ JSONOptions::defineHandlers()
 				checkSetParam(tree, name, migrationThreshold);
 			})
 		.add(
-			"fluxDepthProfileFilePath", ElemType::string,
+			"customFluxFilePath", ElemType::string,
 			"The path to the custom flux profile file; the default is an empty "
 			"string that will use the default material associated flux "
 			"handler.",
 			JSON_ELEM_HANDLER {
-				checkSetParam(tree, name, fluxDepthProfileFilePath);
+				checkSetParam(tree, name, customFluxFilePath);
 			})
 		.add(
 			"reactionFilePath", ElemType::string,

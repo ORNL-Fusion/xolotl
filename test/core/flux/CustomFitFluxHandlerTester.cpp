@@ -8,6 +8,7 @@
 
 #include <xolotl/core/flux/CustomFitFluxHandler.h>
 #include <xolotl/core/network/PSIReactionNetwork.h>
+#include <xolotl/core/network/ZrReactionNetwork.h>
 #include <xolotl/options/ConfOptions.h>
 #include <xolotl/test/CommandLine.h>
 #include <xolotl/test/Util.h>
@@ -59,7 +60,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 0 10 6" << std::endl
-			  << "fluxDepthProfileFilePath=tridyn.dat" << std::endl;
+			  << "customFluxFilePath=tridyn.dat" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -161,7 +162,7 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	std::string parameterFile = "param.txt";
 	std::ofstream paramFile(parameterFile);
 	paramFile << "netParam=8 0 0 10 6" << std::endl
-			  << "fluxDepthProfileFilePath=tridyn.dat" << std::endl;
+			  << "customFluxFilePath=tridyn.dat" << std::endl;
 	paramFile.close();
 
 	// Create a fake command line to read the options
@@ -215,6 +216,76 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	BOOST_REQUIRE_EQUAL(fluence[0], f[0]);
 	BOOST_REQUIRE_EQUAL(fluence[1], f[1]);
 	BOOST_REQUIRE_EQUAL(fluence[2], f[2]);
+}
+
+
+
+BOOST_AUTO_TEST_CASE(check0D)
+{
+	// Create the option to create a network
+	xolotl::options::ConfOptions opts;
+
+	// Create a file with flux profile data.
+	std::ofstream fluxFile("tridyn.dat");
+	fluxFile
+		<< "V 1 60.0" << std::endl
+		<< "I 1 60.0" << std::endl;
+	fluxFile.close();
+
+	// Create a good parameter file
+	std::string parameterFile = "param.txt";
+	std::ofstream paramFile(parameterFile);
+	paramFile << "netParam=10 0 0 10 10" << std::endl
+			  << "customFluxFilePath=tridyn.dat" << std::endl;
+	paramFile.close();
+
+	// Create a fake command line to read the options
+	test::CommandLine<2> cl{{"fakeXolotlAppNameForTests", parameterFile}};
+	opts.readParams(cl.argc, cl.argv);
+
+	std::remove(parameterFile.c_str());
+
+	// Create the network
+	using NetworkType =
+		network::ZrReactionNetwork;
+	NetworkType::AmountType maxB = opts.getMaxImpurity();
+	NetworkType::AmountType maxV = opts.getMaxV();
+	NetworkType::AmountType maxI = opts.getMaxI();
+	NetworkType network({maxV, maxB, maxI}, 1, opts);
+	// Get its size
+	const int dof = network.getDOF();
+
+	// Create the W100 flux handler
+	auto testFitFlux = make_shared<CustomFitFluxHandler>(opts);
+	// Set the flux amplitude
+	testFitFlux->setFluxAmplitude(1.0);
+	// Initialize the flux handler
+	testFitFlux->initializeFluxHandler(network, 0, std::vector<double>());	
+	
+	// Check the cluster Ids
+	auto idVector = testFitFlux->getFluxIndices();
+	BOOST_REQUIRE_EQUAL(idVector.size(), 2);
+	BOOST_REQUIRE_EQUAL(idVector[0], 20);
+	BOOST_REQUIRE_EQUAL(idVector[1], 0);
+
+	// Create a time
+	double currTime = 1.0;
+
+	// The array of concentration
+	test::DOFView conc("conc", 1, dof);
+
+	// The pointer to the grid point we want
+	auto updatedConcOffset = subview(conc, 0, Kokkos::ALL);
+
+	// Update the concentrations at some grid points
+	testFitFlux->computeIncidentFlux(currTime, Kokkos::View<const double*>(),
+		updatedConcOffset, 0, 0);
+		
+	// Check the value at some grid points
+	auto newConcentration =
+		create_mirror_view_and_copy(Kokkos::HostSpace{}, conc);
+	BOOST_REQUIRE_CLOSE(newConcentration(0, 20), 60.0, 0.01);
+	BOOST_REQUIRE_CLOSE(newConcentration(0, 0), 60.0, 0.01);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -1255,9 +1255,6 @@ PetscSolver1DHandler::computeJacobian(
 			continue;
 		}
 
-		if (xi == 0)
-			continue;
-
 		// Fill the concVector with the pointer to the middle, left, and right
 		// grid points
 		concVector[0] = subview(concs, xi, Kokkos::ALL).view(); // middle

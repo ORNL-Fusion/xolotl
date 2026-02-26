@@ -2,7 +2,7 @@
     "vizHandler": "dummy",
     "flux": 5e9,
     "netParam": "8 0 0 50 6 false",
-    "gridParam": "39 0.5",
+    "gridParam": "6.5 0.5",
     "boundary": "1 0",
     "material": "W100",
     "dimensions": 1,

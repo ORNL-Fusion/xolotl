@@ -130,7 +130,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "fissionYield=0.3" << std::endl
 		<< "heVRatio=5.0" << std::endl
 		<< "migrationThreshold=1.0" << std::endl
-		<< "fluxDepthProfileFilePath=path/to/the/flux/profile/file.txt"
+		<< "customFluxFilePath=path/to/the/custom/flux/file.txt"
 		<< std::endl
 		<< "basalPortion=0.6" << std::endl
 		<< "transitionSize=300" << std::endl
@@ -240,8 +240,8 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 	BOOST_REQUIRE_EQUAL(opts.getMigrationThreshold(), 1.0);
 
 	// Check the flux depth profile filename
-	BOOST_REQUIRE_EQUAL(opts.getFluxDepthProfileFilePath(),
-		"path/to/the/flux/profile/file.txt");
+	BOOST_REQUIRE_EQUAL(opts.getCustomFluxFilePath(),
+		"path/to/the/custom/flux/file.txt");
 
 	// Check the basal portion
 	BOOST_REQUIRE_EQUAL(opts.getBasalPortion(), 0.6);
