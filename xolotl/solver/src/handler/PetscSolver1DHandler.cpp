@@ -619,8 +619,8 @@ PetscSolver1DHandler::initGBLocation(DM& da, Vec& C)
 			deep_copy(dConcs, hConcs);
 
 			// Transfer the local amount of Xe clusters
-			setLocalXeRate(
-				neNetwork->getTotalAtomConcentration(dConcs, Spec::Xe, 1),
+			setLocalDefectRate(
+				neNetwork->getTotalAtomConcentration(dConcs, Spec::Xe, 1), 0,
 				xi - localXS);
 
 			// Loop on all the clusters to initialize at 0.0

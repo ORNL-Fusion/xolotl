@@ -99,6 +99,16 @@ computeXenonRetention(
 	PetscFunctionReturn(0);
 }
 
+PetscErrorCode
+computePassData(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
+{
+	PetscFunctionBeginUser;
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->computePassData(
+		ts, timestep, time, solution));
+	PetscFunctionReturn(0);
+}
+
 /**
  * This is a monitoring method that will compute average density and diameter
  * of defects.

@@ -49,6 +49,9 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
 
 	virtual PetscErrorCode
+	computePassData(TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
+
+	virtual PetscErrorCode
 	computeAlloy(TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
 
 	virtual PetscErrorCode

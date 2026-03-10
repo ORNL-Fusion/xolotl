@@ -181,8 +181,8 @@ public:
 	 *
 	 * @return The vector
 	 */
-	std::vector<std::vector<std::vector<std::array<double, 4>>>>
-	getLocalNE();
+	std::vector<std::vector<std::vector<std::vector<double>>>>
+	getLocalDefects();
 
 	/**
 	 * Set the vector of data from an app
@@ -190,8 +190,8 @@ public:
 	 * @param The vector
 	 */
 	void
-	setLocalNE(
-		const std::vector<std::vector<std::vector<std::array<double, 4>>>>&
+	setLocalDefects(
+		const std::vector<std::vector<std::vector<std::vector<double>>>>&
 			rateVector);
 
 	/**

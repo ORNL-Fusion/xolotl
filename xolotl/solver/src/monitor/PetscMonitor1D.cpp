@@ -91,7 +91,7 @@ PetscMonitor1D::setup(int loop)
 	// Flags to launch the monitors or not
 	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,
 		flagPerf, flagHeRetention, flagStatus, flagXeRetention, flagTRIDYN,
-		flagAlloy, flagTemp, flagLargest, flagZr;
+		flagAlloy, flagTemp, flagLargest, flagZr, flagPassData;
 
 	// Check the option -check_negative
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-check_negative", &flagNeg));
@@ -119,6 +119,9 @@ PetscMonitor1D::setup(int loop)
 	// Check the option -xenon_retention
 	PetscCallVoid(
 		PetscOptionsHasName(NULL, NULL, "-xenon_retention", &flagXeRetention));
+
+	// Check the option -pass_data
+	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-pass_data", &flagPassData));
 
 	// Check the option -start_stop
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus));
@@ -536,8 +539,6 @@ PetscMonitor1D::setup(int loop)
 		// Get the local boundaries
 		PetscInt xm;
 		PetscCallVoid(DMDAGetCorners(da, NULL, NULL, NULL, &xm, NULL, NULL));
-		// Create the local vectors on each process
-		_solverHandler->createLocalNE(xm);
 
 		// Get the previous time if concentrations were stored and initialize
 		// the fluence
@@ -572,6 +573,22 @@ PetscMonitor1D::setup(int loop)
 					   << std::endl;
 			outputFile.close();
 		}
+	}
+
+	// Set the monitor to pass data
+	if (flagPassData) {
+		// Get the da from _ts
+		DM da;
+		PetscCallVoid(TSGetDM(_ts, &da));
+		// Get the local boundaries
+		PetscInt xm;
+		PetscCallVoid(DMDAGetCorners(da, NULL, NULL, NULL, &xm, NULL, NULL));
+		// Create the local vectors on each process
+		_solverHandler->createLocalDefects(1, xm);
+
+		// computePassData will be called at each timestep
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computePassData, this, nullptr));
 	}
 
 	// Set the monitor to output data for TRIDYN
@@ -1249,36 +1266,111 @@ PetscMonitor1D::computeXenonRetention(
 	MPI_Reduce(myConcData.data(), totalConcData.data(), myConcData.size(),
 		MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
+	// Master process
+	if (procId == 0) {
+		// Print the result
+		XOLOTL_LOG << std::endl
+				   << "Time: " << time << std::endl
+				   << "Xenon concentration = " << totalConcData[0] << std::endl
+				   << std::endl;
+
+		// Make sure the average partial radius makes sense
+		double averagePartialRadius = 0.0, averagePartialSize = 0.0,
+			   averageRadius = 0.0;
+		if (totalConcData[3] > 1.e-16) {
+			averagePartialRadius = totalConcData[4] / totalConcData[3];
+			averagePartialSize = totalConcData[5] / totalConcData[3];
+		}
+		if (totalConcData[1] > 1.0e-16)
+			averageRadius = totalConcData[2] / totalConcData[1];
+
+		// Uncomment to write the content in a file
+		std::ofstream outputFile;
+		outputFile.open("retentionOut.txt", std::ios::app);
+		outputFile << time << " " << totalConcData[0] << " " << averageRadius
+				   << " " << averagePartialRadius << " " << totalConcData[3]
+				   << " " << averagePartialSize << std::endl;
+		outputFile.close();
+	}
+
+	// Restore the solutionArray
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray));
+	PetscCall(DMRestoreLocalVector(da, &localSolution));
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor1D::computePassData(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	// Initial declarations
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+
+	PetscFunctionBeginUser;
+
+	// Get the da from ts
+	DM da;
+	PetscCall(TSGetDM(ts, &da));
+
+	// Get local coordinates
+	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
+
+	// Get the physical grid
+	auto grid = _solverHandler->getXGrid();
+
+	// Degrees of freedom is the total number of clusters in the network
+	auto& network = _solverHandler->getNetwork();
+	const auto dof = network.getDOF();
+
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	PetscCall(DMGetLocalVector(da, &localSolution));
+	PetscCall(DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution));
+	PetscCall(DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution));
+	// Get the array of concentration
+	PetscReal** solutionArray;
+	PetscCall(DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray));
+
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal* gridPointSolution;
+
+	// Get the current process ID
+	auto xolotlComm = util::getMPIComm();
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+
 	// GB
 	// Get the delta time from the previous timestep to this timestep
 	double dt = time - _solverHandler->getPreviousTime();
 	// Sum and gather the previous flux
-	double globalXeFlux = 0.0;
+	double globalDefectFlux = 0.0;
 	// Get the vector from the solver handler
 	auto gbVector = _solverHandler->getGBVector();
 	// Get the previous flux vector
-	auto& localNE = _solverHandler->getLocalNE();
+	auto& localDefects = _solverHandler->getLocalDefects();
 	// Loop on the GB
 	for (auto const& pair : gbVector) {
 		// Middle
 		auto xi = std::get<0>(pair);
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm) {
-			double previousXeFlux = std::get<1>(localNE[xi - xs][0][0]);
-			globalXeFlux += previousXeFlux * (grid[xi + 1] - grid[xi]);
+			double previousDefectFlux = localDefects[xi - xs][0][0][1];
+			globalDefectFlux += previousDefectFlux * (grid[xi + 1] - grid[xi]);
 			// Set the amount in the vector we keep
-			_solverHandler->setLocalXeRate(previousXeFlux * dt, xi - xs);
+			_solverHandler->setLocalDefectRate(
+				previousDefectFlux * dt, 0, xi - xs);
 		}
 	}
-	double totalXeFlux = 0.0;
-	MPI_Reduce(
-		&globalXeFlux, &totalXeFlux, 1, MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
+	double totalDefectFlux = 0.0;
+	MPI_Reduce(&globalDefectFlux, &totalDefectFlux, 1, MPI_DOUBLE, MPI_SUM, 0,
+		xolotlComm);
 	// Master process
 	if (procId == 0) {
 		// Get the previous value of Xe that went to the GB
 		double nXenon = _solverHandler->getNXeGB();
 		// Compute the total number of Xe that went to the GB
-		nXenon += totalXeFlux * dt;
+		nXenon += totalDefectFlux * dt;
 		_solverHandler->setNXeGB(nXenon);
 	}
 
@@ -1332,7 +1424,7 @@ PetscMonitor1D::computeXenonRetention(
 
 			// Middle
 			xi = std::get<0>(pair);
-			_solverHandler->setPreviousXeFlux(myRate[0], xi - xs);
+			_solverHandler->setPreviousDefectFlux(myRate[0], 0, xi - xs);
 		}
 	}
 
@@ -1342,29 +1434,7 @@ PetscMonitor1D::computeXenonRetention(
 		double nXenon = _solverHandler->getNXeGB();
 
 		// Print the result
-		XOLOTL_LOG << std::endl
-				   << "Time: " << time << std::endl
-				   << "Xenon concentration = " << totalConcData[0] << std::endl
-				   << "Xenon GB = " << nXenon << std::endl
-				   << std::endl;
-
-		// Make sure the average partial radius makes sense
-		double averagePartialRadius = 0.0, averagePartialSize = 0.0,
-			   averageRadius = 0.0;
-		if (totalConcData[3] > 1.e-16) {
-			averagePartialRadius = totalConcData[4] / totalConcData[3];
-			averagePartialSize = totalConcData[5] / totalConcData[3];
-		}
-		if (totalConcData[1] > 1.0e-16)
-			averageRadius = totalConcData[2] / totalConcData[1];
-
-		// Uncomment to write the content in a file
-		std::ofstream outputFile;
-		outputFile.open("retentionOut.txt", std::ios::app);
-		outputFile << time << " " << totalConcData[0] << " " << averageRadius
-				   << " " << averagePartialRadius << " " << totalConcData[3]
-				   << " " << averagePartialSize << std::endl;
-		outputFile.close();
+		XOLOTL_LOG << "Xenon GB = " << nXenon << std::endl << std::endl;
 	}
 
 	// Restore the solutionArray

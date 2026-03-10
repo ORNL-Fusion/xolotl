@@ -219,21 +219,21 @@ XolotlInterface::solveXolotl() TRY
 }
 CATCH
 
-std::vector<std::vector<std::vector<std::array<double, 4>>>>
-XolotlInterface::getLocalNE() TRY
+std::vector<std::vector<std::vector<std::vector<double>>>>
+XolotlInterface::getLocalDefects() TRY
 {
 	// Get the solver handler and return the rate vector
-	return solverCast(solver)->getSolverHandler()->getLocalNE();
+	return solverCast(solver)->getSolverHandler()->getLocalDefects();
 }
 CATCH
 
 void
-XolotlInterface::setLocalNE(
-	const std::vector<std::vector<std::vector<std::array<double, 4>>>>&
+XolotlInterface::setLocalDefects(
+	const std::vector<std::vector<std::vector<std::vector<double>>>>&
 		rateVector) TRY
 {
 	// Set the rate vector
-	solverCast(solver)->getSolverHandler()->setLocalNE(rateVector);
+	solverCast(solver)->getSolverHandler()->setLocalDefects(rateVector);
 }
 CATCH
 

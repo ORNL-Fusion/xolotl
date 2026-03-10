@@ -108,9 +108,8 @@ protected:
 	std::vector<std::pair<IdType, double>> initialConc;
 
 	//! The vector of quantities to pass to MOOSE.
-	// 0: Xe rate, 1: previous flux, 2: monomer concentration, 3: volume
-	// fraction
-	std::vector<std::vector<std::vector<std::array<double, 4>>>> localNE;
+	// First: defect rates, second: previous fluxes, then additional data
+	std::vector<std::vector<std::vector<std::vector<double>>>> localDefects;
 
 	//! The electronic stopping power for re-solution
 	double electronicStoppingPower;
@@ -322,45 +321,47 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	createLocalNE(IdType a, IdType b = 1, IdType c = 1) override;
+	createLocalDefects(
+		IdType numDefects, IdType a, IdType b = 1, IdType c = 1) override;
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	setLocalXeRate(double rate, IdType i, IdType j = 0, IdType k = 0) override
+	setLocalDefectRate(double rate, IdType defectType, IdType i, IdType j = 0,
+		IdType k = 0) override
 	{
-		std::get<0>(localNE[i][j][k]) += rate;
+		localDefects[i][j][k][defectType] += rate;
 	}
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	setLocalNE(
-		const std::vector<std::vector<std::vector<std::array<double, 4>>>>&
+	setLocalDefects(
+		const std::vector<std::vector<std::vector<std::vector<double>>>>&
 			rateVector) override
 	{
-		localNE = rateVector;
+		localDefects = rateVector;
 	}
 
 	/**
 	 * \see ISolverHandler.h
 	 */
-	std::vector<std::vector<std::vector<std::array<double, 4>>>>&
-	getLocalNE() override
+	std::vector<std::vector<std::vector<std::vector<double>>>>&
+	getLocalDefects() override
 	{
-		return localNE;
+		return localDefects;
 	}
 
 	/**
 	 * \see ISolverHandler.h
 	 */
 	void
-	setPreviousXeFlux(
-		double flux, IdType i, IdType j = 0, IdType k = 0) override
+	setPreviousDefectFlux(double flux, IdType defectType, IdType i,
+		IdType j = 0, IdType k = 0) override
 	{
-		std::get<1>(localNE[i][j][k]) = flux;
+		localDefects[i][j][k][2 * defectType + 1] = flux;
 	}
 
 	/**
@@ -369,7 +370,7 @@ public:
 	void
 	setMonomerConc(double conc, IdType i, IdType j = 0, IdType k = 0) override
 	{
-		std::get<2>(localNE[i][j][k]) = conc;
+		localDefects[i][j][k][2] = conc;
 	}
 
 	/**
@@ -379,7 +380,7 @@ public:
 	setVolumeFraction(
 		double frac, IdType i, IdType j = 0, IdType k = 0) override
 	{
-		std::get<3>(localNE[i][j][k]) = frac;
+		localDefects[i][j][k][3] = frac;
 	}
 
 	/**

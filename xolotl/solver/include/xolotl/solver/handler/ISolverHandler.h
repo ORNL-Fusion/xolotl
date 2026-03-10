@@ -310,43 +310,47 @@ public:
 	getRightOffset() const = 0;
 
 	/**
-	 * Create the local NE data vector.
+	 * Create the local defect data vector.
 	 *
+	 * @param numDefects The number of defect types we want to keep track of
 	 * @param a The size in the x direction
 	 * @param b The size in the y direction
 	 * @param c The size in the y direction
 	 */
 	virtual void
-	createLocalNE(IdType a, IdType b = 1, IdType c = 1) = 0;
+	createLocalDefects(
+		IdType numDefects, IdType a, IdType b = 1, IdType c = 1) = 0;
 
 	/**
-	 * Set the latest value of the local Xe rate.
+	 * Set the latest value of the local defect rate.
 	 *
 	 * @param rate The latest value of rate
+	 * @param defectType Which defect the rate correcponds to
 	 * @param i The x coordinate of the location
 	 * @param j The y coordinate of the location
 	 * @param z The z coordinate of the location
 	 */
 	virtual void
-	setLocalXeRate(double rate, IdType i, IdType j = 0, IdType k = 0) = 0;
+	setLocalDefectRate(double rate, IdType defectType, IdType i, IdType j = 0,
+		IdType k = 0) = 0;
 
 	/**
-	 * Set the whole vector of local NE data.
+	 * Set the whole vector of local defect data.
 	 *
 	 * @param rateVector The vector
 	 */
 	virtual void
-	setLocalNE(
-		const std::vector<std::vector<std::vector<std::array<double, 4>>>>&
+	setLocalDefects(
+		const std::vector<std::vector<std::vector<std::vector<double>>>>&
 			rateVector) = 0;
 
 	/**
-	 * Get the local NE data vector that needs to be passed to an app.
+	 * Get the local defect data vector that needs to be passed to an app.
 	 *
 	 * @return The vector
 	 */
-	virtual std::vector<std::vector<std::vector<std::array<double, 4>>>>&
-	getLocalNE() = 0;
+	virtual std::vector<std::vector<std::vector<std::vector<double>>>>&
+	getLocalDefects() = 0;
 
 	/**
 	 * Get the network temperature and depth that can be passed to an app.
@@ -362,12 +366,14 @@ public:
 	 * Set the latest value of the Xe flux.
 	 *
 	 * @param flux The latest value of flux
+	 * @param defectType Which defect the flux correcponds to
 	 * @param i The x coordinate of the location
 	 * @param j The y coordinate of the location
 	 * @param z The z coordinate of the location
 	 */
 	virtual void
-	setPreviousXeFlux(double flux, IdType i, IdType j = 0, IdType k = 0) = 0;
+	setPreviousDefectFlux(double flux, IdType defectType, IdType i,
+		IdType j = 0, IdType k = 0) = 0;
 
 	/**
 	 * Set the latest value of the Xe monomer concentration.

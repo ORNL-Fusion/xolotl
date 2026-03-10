@@ -61,6 +61,10 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
+	computePassData(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
+
+	PetscErrorCode
 	eventFunction(
 		TS ts, PetscReal time, Vec solution, PetscScalar* fvalue) override;
 
