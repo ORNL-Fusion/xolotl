@@ -68,7 +68,7 @@ TransformReactionGenerator<TBase>::addTransformReaction(
 	for (; !Kokkos::atomic_compare_exchange_strong(
 			 &_transformCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
-		 ++id) { }
+		++id) { }
 	_transformCrsClusterSets(id) = clusterSet;
 }
 } // namespace detail

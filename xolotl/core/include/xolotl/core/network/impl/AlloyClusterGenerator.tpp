@@ -178,8 +178,8 @@ AlloyClusterGenerator::refine(const Region& region, BoolArray& result) const
 	if (lo[Species::V] == 0) {
 		result[toIndex(Species::V)] = true;
 	}
-	
-	AmountType maxHe = 1;
+
+	AmountType maxHe = 5;
 
 	if (hi[Species::He] > maxHe) {
 		result[toIndex(Species::He)] = true;
@@ -231,8 +231,8 @@ AlloyClusterGenerator::select(const Region& region) const
 
 	Composition lo = region.getOrigin();
 	Composition hi = region.getUpperLimitPoint();
-	
-	AmountType maxHe = 1;
+
+	AmountType maxHe = 5;
 
 	// Interstitials
 	if (region[Species::I].begin() > 0 &&
@@ -310,17 +310,17 @@ AlloyClusterGenerator::select(const Region& region) const
 		return false;
 	}
 	if (region[Species::PerfectV].begin() > 0 and
-	        region[Species::PerfectV].end() - 1 <= _maxV)
-	        return false;
+		region[Species::PerfectV].end() - 1 <= _maxV)
+		return false;
 	if (region[Species::FaultedV].begin() > 0 and
-	        region[Species::FaultedV].end() - 1 <= _maxV)
-	        return false;
+		region[Species::FaultedV].end() - 1 <= _maxV)
+		return false;
 	if (region[Species::PerfectI].begin() > 0 and
-	        region[Species::PerfectI].end() - 1 <= _maxI)
-	        return false;
+		region[Species::PerfectI].end() - 1 <= _maxI)
+		return false;
 	if (region[Species::FaultedI].begin() > 0 and
-	        region[Species::FaultedI].end() - 1 <= _maxI)
-	        return false;
+		region[Species::FaultedI].end() - 1 <= _maxI)
+		return false;
 
 	// Vacancy
 	if (region[Species::V].begin() > _maxSize) {
@@ -331,8 +331,7 @@ AlloyClusterGenerator::select(const Region& region) const
 	if (region[Species::V].end() > 1 and region[Species::He].end() > 1) {
 		auto hiV = util::min(hi[Species::V] - 1, _maxSize);
 		// Too many helium
-		if (lo[Species::He] >
-			util::min(getMaxHePerV(hiV, _hevRatio), maxHe)) {
+		if (lo[Species::He] > util::min(getMaxHePerV(hiV, _hevRatio), maxHe)) {
 			return false;
 		}
 	}

@@ -538,6 +538,12 @@ JSONOptions::defineHandlers()
 					transitionSize.push_back(325);
 			})
 		.add(
+			"barrierEnergy", ElemType::real,
+			"The energy barrier of the transition within a type of cluster, "
+			"for instance basal, in eV.\n"
+			"(default = 1.0)",
+			JSON_ELEM_HANDLER { checkSetParam(tree, name, barrierEnergy); })
+		.add(
 			"cascadeDose", ElemType::real,
 			"The value of the dose at which the cascade overlap effect takes "
 			"effect, if negative there won't be an effect.\n"

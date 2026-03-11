@@ -47,6 +47,9 @@ void
 NucleationReactionGenerator<TBase>::addNucleationReaction(
 	Count, const ClusterSet& clusterSet) const
 {
+	if (!this->_clusterData.enableNucleation())
+		return;
+
 	Kokkos::atomic_inc(&_clusterNucleationReactionCounts(clusterSet.cluster0));
 }
 
@@ -56,11 +59,14 @@ void
 NucleationReactionGenerator<TBase>::addNucleationReaction(
 	Construct, const ClusterSet& clusterSet) const
 {
+	if (!this->_clusterData.enableNucleation())
+		return;
+
 	auto id = _nucleationCrsRowMap(clusterSet.cluster0);
 	for (; !util::atomicCompareExchangeStrong(
 			 &_nucleationCrsClusterSets(id).cluster0,
 			 NetworkType::invalidIndex(), clusterSet.cluster0);
-		 ++id) { }
+		++id) { }
 	_nucleationCrsClusterSets(id) = clusterSet;
 }
 } // namespace detail

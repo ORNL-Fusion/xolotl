@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/detail/impl/ConstantReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/NucleationReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/TransformReactionGenerator.tpp>
 #include <xolotl/core/network/impl/AlloyClusterGenerator.tpp>
@@ -197,7 +198,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		if (this->_constantConnsRows.extent(0) > 0) {
 			// Look for the entry
 			for (auto k = this->_constantConnsRows(i);
-				 k < this->_constantConnsRows(i + 1); k++) {
+				k < this->_constantConnsRows(i + 1); k++) {
 				if (this->_constantConnsEntries(k) == this->_numDOFs) {
 					this->addConstantReaction(
 						tag, {i, Network::invalidIndex()});
@@ -211,7 +212,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	if (this->_constantConnsRows.extent(0) > 0) {
 		// Look for the entry
 		for (auto k = this->_constantConnsRows(i);
-			 k < this->_constantConnsRows(i + 1); k++) {
+			k < this->_constantConnsRows(i + 1); k++) {
 			if (this->_constantConnsEntries(k) == j) {
 				this->addConstantReaction(tag, {i, j});
 				break;
@@ -222,7 +223,7 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		if (this->_constantConnsRows.extent(0) > 0) {
 			// Look for the entry
 			for (auto k = this->_constantConnsRows(j);
-				 k < this->_constantConnsRows(j + 1); k++) {
+				k < this->_constantConnsRows(j + 1); k++) {
 				if (this->_constantConnsEntries(k) == i) {
 					this->addConstantReaction(tag, {j, i});
 					break;
@@ -687,6 +688,11 @@ AlloyReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 			if (vProdId != subpaving.invalidIndex() &&
 				vProdId != previousIndex) {
 				this->addProductionReaction(tag, {i, j, vProdId});
+
+				// Nucleation
+				if (comp[Species::He] == 1 and comp[Species::V] == 1) {
+					this->addNucleationReaction(tag, {i, j, vProdId});
+				}
 				// No dissociation
 				previousIndex = vProdId;
 			}
@@ -925,33 +931,32 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		hiLargest[Species::FaultedI] - 5; // Don't know which one was saved
 
 	// He_a + He_bV -> B
-	if (hi1[Species::He] + hi2[Species::He] - 2 > 1) {
+	if (hi1[Species::He] + hi2[Species::He] - 2 > 5) {
 		this->addProductionReaction(tag, {i, j, bubbleId});
 	}
 
 	// V_a + HeV_b -> B
-	if (hi1[Species::V] + hi2[Species::V] - 2 > 10000) {
+	if (hi1[Species::V] + hi2[Species::V] - 2 > 2000) {
 		this->addProductionReaction(tag, {i, j, bubbleId});
 	}
 
 	// V_a + L^V_b -> L^V
 	if (lo1[Species::PerfectV] > 0 or lo2[Species::PerfectV] > 0) {
-	if (hi1[Species::V] + hi2[Species::PerfectV] - 2 > 2000) {
-		this->addProductionReaction(tag, {i, j, perfVId});
+		if (hi1[Species::V] + hi2[Species::PerfectV] - 2 > 2000) {
+			this->addProductionReaction(tag, {i, j, perfVId});
+		}
+		if (hi2[Species::V] + hi1[Species::PerfectV] - 2 > 2000) {
+			this->addProductionReaction(tag, {j, i, perfVId});
+		}
 	}
-	if (hi2[Species::V] + hi1[Species::PerfectV] - 2 > 2000) {
-		this->addProductionReaction(tag, {j, i, perfVId});
-	}
-	}
-
 
 	if (lo1[Species::FaultedV] > 0 or lo2[Species::FaultedV] > 0) {
-	if (hi1[Species::V] + hi2[Species::FaultedV] - 2 > 2000) {
-		this->addProductionReaction(tag, {i, j, faulVId});
-	}
-	if (hi2[Species::V] + hi1[Species::FaultedV] - 2 > 2000) {
-		this->addProductionReaction(tag, {j, i, faulVId});
-	}
+		if (hi1[Species::V] + hi2[Species::FaultedV] - 2 > 2000) {
+			this->addProductionReaction(tag, {i, j, faulVId});
+		}
+		if (hi2[Species::V] + hi1[Species::FaultedV] - 2 > 2000) {
+			this->addProductionReaction(tag, {j, i, faulVId});
+		}
 	}
 
 	// V_a + L^I -> L^I_b
@@ -986,7 +991,7 @@ AlloyReactionGenerator::addSingleSizeReactions(
 		// It should be around the largest size value
 		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
 				hi2[Species::I] - 4 >
-			10000) {
+			2000) {
 			// Need to know which one is I
 			auto iId = lo1[Species::I] > 0 ? i : j;
 			auto vId = lo1[Species::I] > 0 ? j : i;
@@ -1043,7 +1048,7 @@ AlloyReactionGenerator::getReactionCollection() const
 		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
 		this->getSinkReactions(), this->getTransformReactions(),
-		this->getConstantReactions());
+		this->getNucleationReactions(), this->getConstantReactions());
 	return ret;
 }
 } // namespace detail

@@ -105,10 +105,10 @@ public:
 		fluxIndices.push_back(cluster.getId());
 		std::vector<double> tempVector;
 		if (xGrid.size() == 0)
-			tempVector.push_back(fluxFactor * hePPM * 1.0e-12);
+			tempVector.push_back(fluxFactor * hePPM * 1.0e-6);
 		else {
 			for (auto i = 0; i < xGrid.size(); i++) {
-				tempVector.push_back(fluxFactor * hePPM * 1.0e-12);
+				tempVector.push_back(fluxFactor * hePPM * 1.0e-6);
 			}
 		}
 		incidentFluxVec.push_back(tempVector);
@@ -377,7 +377,8 @@ public:
 		auto flux = this->incidentFlux;
 		Kokkos::parallel_for(
 			ids.size(), KOKKOS_LAMBDA(std::size_t i) {
-				Kokkos::atomic_add(&updatedConcOffset[ids[i]], flux(i, xi) * attenuation);
+				Kokkos::atomic_add(
+					&updatedConcOffset[ids[i]], flux(i, xi) * attenuation);
 			});
 		// Update the concentration array for high energy ions
 		ids = this->highFluxIds;

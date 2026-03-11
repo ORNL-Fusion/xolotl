@@ -16,6 +16,7 @@ class AlloyProductionReaction;
 class AlloyDissociationReaction;
 class AlloySinkReaction;
 class AlloyTransformReaction;
+class AlloyNucleationReaction;
 class AlloyConstantReaction;
 class AlloyClusterGenerator;
 
@@ -92,11 +93,12 @@ struct ReactionNetworkTraits<AlloyReactionNetwork>
 	using DissociationReactionType = AlloyDissociationReaction;
 	using SinkReactionType = AlloySinkReaction;
 	using TransformReactionType = AlloyTransformReaction;
+	using NucleationReactionType = AlloyNucleationReaction;
 	using ConstantReactionType = AlloyConstantReaction;
 
-	using ReactionTypeList =
-		std::tuple<ProductionReactionType, DissociationReactionType,
-			SinkReactionType, TransformReactionType, ConstantReactionType>;
+	using ReactionTypeList = std::tuple<ProductionReactionType,
+		DissociationReactionType, SinkReactionType, TransformReactionType,
+		NucleationReactionType, ConstantReactionType>;
 
 	using ClusterGenerator = AlloyClusterGenerator;
 };

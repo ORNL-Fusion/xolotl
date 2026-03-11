@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/impl/NucleationReaction.tpp>
 #include <xolotl/core/network/impl/SinkReaction.tpp>
 #include <xolotl/core/network/impl/TransformReaction.tpp>
 #include <xolotl/util/MathUtils.h>
@@ -1133,6 +1134,7 @@ KOKKOS_INLINE_FUNCTION
 double
 AlloyTransformReaction::getBarrier()
 {
+	std::cout << this->_clusterData->barrierEnergy() << std::endl;
 	return this->_clusterData->barrierEnergy();
 }
 

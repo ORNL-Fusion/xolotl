@@ -1664,7 +1664,7 @@ ReactionNetwork<TImpl>::computeMinRadiusSizes(const options::IOptions& opts)
 	auto minRadiusSizes = std::vector<AmountType>(numSpecies, 1);
 	auto minSizes = opts.getRadiusMinSizes();
 	for (auto i = 0; i < std::min(minSizes.size(), minRadiusSizes.size());
-		 i++) {
+		i++) {
 		minRadiusSizes[i] = minSizes[i];
 	}
 	return minRadiusSizes;

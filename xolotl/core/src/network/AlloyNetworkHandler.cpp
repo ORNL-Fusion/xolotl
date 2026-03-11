@@ -21,7 +21,7 @@ auto alloyNetworkGenerator = [](const options::IOptions& options) {
 	NetworkType::AmountType maxV = options.getMaxV();
 	NetworkType::AmountType maxI = options.getMaxI();
 	NetworkType::AmountType maxSize = options.getMaxImpurity();
-	NetworkType::AmountType maxHe = 1;
+	NetworkType::AmountType maxHe = 5;
 	NetworkType::AmountType maxLoopSize = options.getMaxImpurity();
 	NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
 	// Adapt maxSize

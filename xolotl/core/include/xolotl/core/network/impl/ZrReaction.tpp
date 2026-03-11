@@ -222,7 +222,7 @@ ZrDissociationReaction::computeBindingEnergy(double time)
 			else if (n < 66)
 				be = 2.03 - 3.4 * (pow(n, 0.70) - pow(n - 1.0, 0.70));
 			else if (n < 925) {
-				Efn1 = 0.11 * n + 1.741 * (sqrt(n)) * log(4.588 * sqrt(n));
+				Efn1 = 0.11 * n + 1.741 * (sqrt(n))*log(4.588 * sqrt(n));
 				Efn2 = 0.11 * (n - 1) +
 					1.741 * (sqrt(n - 1)) * log(4.588 * sqrt(n - 1));
 				be = 2.03 - (Efn1 - Efn2);

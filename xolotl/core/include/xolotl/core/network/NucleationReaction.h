@@ -11,7 +11,7 @@ namespace network
 {
 /**
  * @brief Class implementing nucleation reaction where
- * X_1 + X_1 -> X_2 with a given rate
+ * X_A + Y_B -> X_AY_B with a given rate
  *
  * @tparam TNetwork The network type
  * @tparam TDerived The derived class type.
@@ -42,7 +42,7 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	NucleationReaction(ReactionDataRef reactionData,
 		const ClusterData& clusterData, IndexType reactionId,
-		IndexType cluster0, IndexType cluster1);
+		IndexType cluster0, IndexType cluster1, IndexType cluster2);
 
 	KOKKOS_INLINE_FUNCTION
 	NucleationReaction(ReactionDataRef reactionData,
@@ -134,10 +134,10 @@ private:
 	}
 
 protected:
-	IndexType _reactant;
-	IndexType _product;
 	static constexpr auto invalidIndex = Superclass::invalidIndex;
-	util::Array<IndexType, 2, 1, 1, 1> _connEntries;
+	util::Array<IndexType, 2> _reactants{invalidIndex, invalidIndex};
+	IndexType _product;
+	util::Array<IndexType, 3, 2> _connEntries;
 };
 } // namespace network
 } // namespace core
