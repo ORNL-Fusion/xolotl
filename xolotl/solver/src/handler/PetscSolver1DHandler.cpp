@@ -147,6 +147,9 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, Mat& J)
 	// Tell the network the number of grid points on this process with ghosts
 	// TODO: do we need the ghost points?
 	network.setGridSize(localXM + 2);
+	// Give it the total depth as well
+	auto totalDepth = (grid[nX - 1] + grid[nX]) / 2.0 - grid[1];
+	network.setTotalDepth(totalDepth);
 
 	// The soret initialization needs to be done after the network
 	// because it adds connectivities the network would remove
@@ -158,7 +161,7 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, Mat& J)
 	// Load up the block fills
 	auto nwEntries = convertToRowColPairList(dof, dfill);
 	nNetworkEntries = nwEntries.size();
-	//
+
 	// "+ 1" for temperature
 	auto dSize = localXM *
 		(nNetworkEntries + soretEntries.size() + difEntries.size() + 1);
@@ -304,6 +307,19 @@ PetscSolver1DHandler::initializeConcentration(
 		// Pointer for the concentration vector at a specific grid point
 		PetscScalar* concOffset = nullptr;
 
+		// Compute the volume of the sphere if using spherical coordinates
+		double volume = 0.0;
+		if (isSpherical) {
+			// Compute the surface of the sphere for each grid point and sum
+			// them
+			for (auto j = 1; j < grid.size() - 1; j++) {
+				auto loc = (grid[j] + grid[j + 1]) / 2.0 - grid[1];
+				auto dr = grid[j + 1] - grid[j];
+				auto surface = 4.0 * ::xolotl::core::pi * loc * loc;
+				volume += surface * dr;
+			}
+		}
+
 		// Loop on all the grid points
 		for (auto i = (PetscInt)localXS - 1;
 			i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
@@ -337,9 +353,33 @@ PetscSolver1DHandler::initializeConcentration(
 			// Initialize the option specified concentration
 			if (i >= leftOffset and not hasConcentrations and
 				i < nX - rightOffset) {
+				// For spherical coordinates we rescale the values
+				if (isSpherical) {
+					// Compute the sphere surface at this radius
+					auto loc = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
+					auto surface = 4.0 * ::xolotl::core::pi * loc * loc;
+					// std::cout << i << " " << loc << " " << surface << " " <<
+					// volume << std::endl;
+					for (auto pair : initialConc) {
+						concOffset[pair.first] = pair.second;
+					}
+				}
+				// Standard coordinates
+				else {
+					for (auto pair : initialConc) {
+						concOffset[pair.first] = pair.second;
+					}
+				}
+			}
+			if (isSpherical and i == nX - rightOffset and
+				not hasConcentrations) {
+				// Compute the sphere surface at this radius
+				auto loc = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
+				auto surface = 4.0 * ::xolotl::core::pi * loc * loc;
 				for (auto pair : initialConc) {
 					concOffset[pair.first] = pair.second;
 				}
+				concOffset[1] = 0.0000001;
 			}
 		}
 
@@ -358,11 +398,12 @@ PetscSolver1DHandler::initializeConcentration(
 				concOffset = concentrations[localXS + i];
 
 				for (auto const& currConcData : myConcs[i]) {
+					// Skipping the temperature to use the one defined in the
+					// option
+					if (currConcData.first == dof)
+						continue;
 					concOffset[currConcData.first] = currConcData.second;
 				}
-				// Get the temperature
-				double temp = myConcs[i][myConcs[i].size() - 1].second;
-				temperature[i + 1] = temp;
 			}
 		}
 
@@ -965,6 +1006,26 @@ PetscSolver1DHandler::updateConcentration(
 			hxRight = grid[xi + 1] - grid[xi];
 		}
 
+		// Special case for spherical coordinates
+		if (isSpherical and xi == nX - rightOffset) {
+			// ---- Compute diffusion over the locally owned part of the grid
+			// -----
+			diffusionHandler->computeDiffusion(network,
+				core::StencilConcArray{concVector.data(), 3}, updatedConcOffset,
+				hxLeft, hxRight, xi - localXS, true);
+
+			auto surfacePos = grid[1];
+			auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
+			auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
+			auto curDepth = curXPos - surfacePos;
+			auto curSpacing = curXPos - prevXPos;
+
+			// ----- Compute the reaction fluxes over the locally owned part of
+			// the grid -----
+			network.computeAllFluxes(concOffset, updatedConcOffset,
+				xi + 1 - localXS, curDepth, curSpacing);
+		}
+
 		// Everything to the left of the surface is empty
 		if (xi < leftOffset || xi > nX - 1 - rightOffset) {
 			continue;
@@ -1146,6 +1207,7 @@ PetscSolver1DHandler::computeJacobian(
 		// Everything to the left of the surface is empty
 		if (xi < leftOffset || xi > nX - 1 - rightOffset)
 			continue;
+
 		// Free surface GB
 		bool skip = false;
 		for (auto& pair : gbVector) {
@@ -1234,6 +1296,56 @@ PetscSolver1DHandler::computeJacobian(
 	// Loop over the grid points
 	for (auto xi = localXS; xi < localXS + localXM; xi++) {
 		// Boundary conditions
+
+		// Special case for spherical coordinates
+		if (isSpherical and xi == nX - rightOffset) {
+			// Compute the left and right hx
+			double hxLeft = 0.0, hxRight = 0.0;
+			if (xi >= 1 && xi < nX) {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			}
+			else if (xi < 1) {
+				hxLeft = grid[xi + 1] - grid[xi];
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			}
+			else {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = grid[xi + 1] - grid[xi];
+			}
+
+			valIndex += 3 * nSoret;
+
+			// Get the partial derivatives for the diffusion
+			diffusionHandler->computePartialsForDiffusion(network,
+				subview(vals, std::make_pair(valIndex, valIndex + 3 * nDiff)),
+				hxLeft, hxRight, xi - localXS, true);
+
+			valIndex += 3 * nDiff;
+			valIndex += 2 * nAdvec * advectionHandlers.size();
+
+			// Get the concentrations at this grid point
+			auto concOffset = subview(concs, xi, Kokkos::ALL).view();
+
+			auto surfacePos = grid[1];
+			auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
+			auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
+			auto curDepth = curXPos - surfacePos;
+			auto curSpacing = curXPos - prevXPos;
+
+			// Compute all the partial derivatives for the reactions
+			partialDerivativeCounter->increment();
+			partialDerivativeTimer->start();
+			network.computeAllPartials(concOffset,
+				subview(
+					vals, std::make_pair(valIndex, valIndex + nNetworkEntries)),
+				xi + 1 - localXS, curDepth, curSpacing);
+			partialDerivativeTimer->stop();
+			valIndex += nNetworkEntries;
+
+			continue;
+		}
+
 		// Everything to the left of the surface is empty
 		if (xi < leftOffset || xi > nX - 1 - rightOffset) {
 			valIndex += 3 * nSoret;

@@ -115,6 +115,9 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 
 	readReactions(opts.getTempParam(), opts.getReactionFilePath());
 
+	// Extra potential DOFs
+	asDerived()->initializeExtraDOFs(opts);
+
 	// Skip the reactions for now if using constant reactions
 	if (map["constant"])
 		return;
@@ -1675,6 +1678,7 @@ ReactionNetwork<TImpl>::defineReactions(Connectivity& connectivity)
 		_constantConnsRows, _constantConnsEntries);
 	_reactions = generator.generateReactions();
 	connectivity = generator.getConnectivity();
+	asDerived()->setConnectivity(connectivity);
 }
 
 template <typename TImpl>

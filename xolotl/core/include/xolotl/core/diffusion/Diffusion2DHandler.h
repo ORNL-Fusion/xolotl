@@ -64,7 +64,7 @@ public:
 	computeDiffusion(network::IReactionNetwork& network,
 		const StencilConcArray& concVector,
 		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
-		int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int ix, bool isBC = false, double sy = 0.0, int iy = 0, double sz = 0.0,
 		int iz = 0) const override;
 
 	/**
@@ -98,7 +98,7 @@ public:
 	void
 	computePartialsForDiffusion(network::IReactionNetwork& network,
 		Kokkos::View<double*> val, double hxLeft, double hxRight, int ix,
-		double sy = 0.0, int iy = 0, double sz = 0.0,
+		bool isBC = false, double sy = 0.0, int iy = 0, double sz = 0.0,
 		int iz = 0) const override;
 };
 // end class Diffusion2DHandler

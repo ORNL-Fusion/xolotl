@@ -65,6 +65,12 @@ public:
 	writeMonitorDataLine(
 		const std::vector<double>& localData, double time) override;
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	setConnectivity(Connectivity)
+	{
+	}
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);

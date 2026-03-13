@@ -41,8 +41,9 @@ double
 LiClusterGenerator::getMigrationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
-	// TODO
-	return 0.5;
+	// From paper: 141.5 kJ mol-1
+	//	return 0.0;
+	return 141500.0 * xolotl::core::kBoltzmann / 8.314;
 }
 
 template <typename PlsmContext>
@@ -51,8 +52,11 @@ double
 LiClusterGenerator::getDiffusionFactor(
 	const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
-	// TODO
-	return 1.0e+11;
+	// From paper: 1.29e-5 m2 s-1
+	return 1.29e13;
+	//	return 6.86e6;
+	//	return 1.18e6;
+	//	return 1.0e4;
 }
 
 template <typename PlsmContext>

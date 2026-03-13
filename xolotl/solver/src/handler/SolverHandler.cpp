@@ -40,6 +40,7 @@ SolverHandler::SolverHandler(NetworkType& _network,
 	bubbleBursting(false),
 	isMirror(true),
 	isRobin(false),
+	isSpherical(false),
 	useAttenuation(false),
 	sameTemperatureGrid(true),
 	fluxTempProfile(false),
@@ -537,6 +538,8 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 	bubbleBursting = map["bursting"];
 	// Should we be able to attenuate the modified trap mutation?
 	useAttenuation = map["attenuation"];
+	// Are we using spherical coordinates?
+	isSpherical = map["spherical"];
 
 	// Some safeguards about what to use with what
 	if (leftOffset == 0 &&
