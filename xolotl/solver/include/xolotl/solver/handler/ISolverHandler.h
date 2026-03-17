@@ -376,26 +376,17 @@ public:
 		IdType j = 0, IdType k = 0) = 0;
 
 	/**
-	 * Set the latest value of the Xe monomer concentration.
+	 * Set the latest value of a given quantity to store in the defect vector.
 	 *
-	 * @param conc The latest value of conc
+	 * @param value The latest value
+	 * @param position The index in the vector
 	 * @param i The x coordinate of the location
 	 * @param j The y coordinate of the location
 	 * @param z The z coordinate of the location
 	 */
 	virtual void
-	setMonomerConc(double conc, IdType i, IdType j = 0, IdType k = 0) = 0;
-
-	/**
-	 * Set the latest value of the volume fraction.
-	 *
-	 * @param frac The latest value of the fraction
-	 * @param i The x coordinate of the location
-	 * @param j The y coordinate of the location
-	 * @param z The z coordinate of the location
-	 */
-	virtual void
-	setVolumeFraction(double frac, IdType i, IdType j = 0, IdType k = 0) = 0;
+	setDefectExtraValue(double value, IdType position, IdType i, IdType j = 0,
+		IdType k = 0) = 0;
 
 	/**
 	 * Set the coordinates covered by the local grid.

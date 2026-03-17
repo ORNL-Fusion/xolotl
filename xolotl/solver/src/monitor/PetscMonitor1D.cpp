@@ -1248,10 +1248,10 @@ PetscMonitor1D::computeXenonRetention(
 		partialSize += totals[4] * hx;
 		partialRadii += totals[5] * hx;
 
-		_solverHandler->setVolumeFraction(totals[6], xi - xs);
+		_solverHandler->setDefectExtraValue(totals[6], 3, xi - xs);
 
-		_solverHandler->setMonomerConc(
-			gridPointSolution[xeCluster.getId()], xi - xs);
+		_solverHandler->setDefectExtraValue(
+			gridPointSolution[xeCluster.getId()], 2, xi - xs);
 	}
 
 	// Get the current process ID

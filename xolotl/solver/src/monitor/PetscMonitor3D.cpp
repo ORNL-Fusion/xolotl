@@ -1215,11 +1215,11 @@ PetscMonitor3D::computeXenonRetention(
 				partialBubbleConcentration += totals[3] * hx * hy * hz;
 				partialRadii += totals[4] * hx * hy * hz;
 
-				_solverHandler->setVolumeFraction(
-					totals[5], xi - xs, yj - ys, zk - zs);
+				_solverHandler->setDefectExtraValue(
+					totals[5], 3, xi - xs, yj - ys, zk - zs);
 
-				_solverHandler->setMonomerConc(
-					gridPointSolution[xeCluster.getId()], xi - xs, yj - ys,
+				_solverHandler->setDefectExtraValue(
+					gridPointSolution[xeCluster.getId()], 2, xi - xs, yj - ys,
 					zk - zs);
 			}
 		}

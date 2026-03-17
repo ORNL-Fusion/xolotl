@@ -368,19 +368,10 @@ public:
 	 * \see ISolverHandler.h
 	 */
 	void
-	setMonomerConc(double conc, IdType i, IdType j = 0, IdType k = 0) override
+	setDefectExtraValue(double value, IdType position, IdType i, IdType j = 0,
+		IdType k = 0) override
 	{
-		localDefects[i][j][k][2] = conc;
-	}
-
-	/**
-	 * \see ISolverHandler.h
-	 */
-	void
-	setVolumeFraction(
-		double frac, IdType i, IdType j = 0, IdType k = 0) override
-	{
-		localDefects[i][j][k][3] = frac;
+		localDefects[i][j][k][position] = value;
 	}
 
 	/**
