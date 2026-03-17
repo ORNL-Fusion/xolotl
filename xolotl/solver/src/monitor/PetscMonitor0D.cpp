@@ -31,6 +31,16 @@ monitorBubble(
 	PetscFunctionReturn(0);
 }
 
+PetscErrorCode
+monitorGeneric(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
+{
+	PetscFunctionBeginUser;
+	PetscCall(static_cast<PetscMonitor0D*>(ictx)->monitorGeneric(
+		ts, timestep, time, solution));
+	PetscFunctionReturn(0);
+}
+
 void
 PetscMonitor0D::setup(int loop)
 {
@@ -40,8 +50,8 @@ PetscMonitor0D::setup(int loop)
 	auto vizHandlerRegistry = _solverHandler->getVizHandler();
 
 	// Flags to launch the monitors or not
-	PetscBool flagCheck, flag1DPlot, flagBubble, flagStatus, flagAlloy,
-		flagXeRetention, flagLargest, flagZr;
+	PetscBool flagCheck, flag1DPlot, flagBubble, flagStatus, flagMonitorGeneric,
+		flagAlloy, flagXeRetention, flagLargest, flagZr;
 
 	// Check the option -check_collapse
 	PetscCallVoid(
@@ -55,6 +65,10 @@ PetscMonitor0D::setup(int loop)
 
 	// Check the option -bubble
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-bubble", &flagBubble));
+
+	// Check the option -monitor_generic
+	PetscCallVoid(PetscOptionsHasName(
+		NULL, NULL, "-monitor_generic", &flagMonitorGeneric));
 
 	// Check the option -alloy
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-alloy", &flagAlloy));
@@ -132,6 +146,13 @@ PetscMonitor0D::setup(int loop)
 		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorBubble, this, nullptr));
 	}
 
+	// Set the monitor to use generic output data
+	if (flagMonitorGeneric) {
+		_solverHandler->getNetwork().writeMonitorOutputHeader();
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::monitorGeneric, this, nullptr));
+	}
+
 	// Set the monitor to output data for Alloy
 	if (flagAlloy) {
 		_solverHandler->getNetwork().writeMonitorOutputHeader();
@@ -139,6 +160,7 @@ PetscMonitor0D::setup(int loop)
 		// computeAlloy0D will be called at each timestep
 		PetscCallVoid(TSMonitorSet(_ts, monitor::computeAlloy, this, nullptr));
 	}
+
 	// Set the monitor to output data for AlphaZr
 	if (flagZr) {
 		_solverHandler->getNetwork().writeMonitorOutputHeader();
@@ -451,6 +473,33 @@ PetscMonitor0D::computeXenonRetention(
 
 	// Restore the solutionArray
 	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &solutionArray));
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor0D::monitorGeneric(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	PetscFunctionBeginUser;
+
+	// Get the da from ts
+	DM da;
+	PetscCall(TSGetDM(ts, &da));
+
+	// Get the array of concentration
+	PetscOffsetView<const PetscReal**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
+
+	auto& network = _solverHandler->getNetwork();
+
+	auto myData = network.getMonitorDataValues(concOffset, 1.0);
+
+	network.writeMonitorDataLine(myData, time);
+
+	// Restore the PETSc solution array
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
 
 	PetscFunctionReturn(0);
 }

@@ -46,6 +46,10 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
+	monitorGeneric(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
+
+	PetscErrorCode
 	computeAlloy(
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 

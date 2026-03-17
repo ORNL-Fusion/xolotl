@@ -7,7 +7,7 @@
 #include <xolotl/util/Filesystem.h>
 #include <xolotl/util/Log.h>
 #include <xolotl/util/MPIUtils.h>
-#include <xolotl/util/Tokenizer.h>
+#include <xolotl/util/StreamTokenizer.h>
 
 namespace xolotl
 {
@@ -21,6 +21,11 @@ namespace flux
 class CustomFitFluxHandler : public FluxHandler
 {
 private:
+	/**
+	 * Problem dimension number
+	 */
+	int dimensions;
+
 	/**
 	 * Parameters for the polynomial fits that will be read from a file
 	 */
@@ -77,6 +82,7 @@ public:
 	 */
 	CustomFitFluxHandler(const options::IOptions& options) :
 		FluxHandler(options),
+		dimensions(options.getDimensionNumber()),
 		profileFilePath(options.getFluxDepthProfileFilePath())
 	{
 	}
@@ -122,17 +128,17 @@ public:
 					<< "No parameter files for custom flux, the flux will be 0";
 		}
 		else {
-			// Get the line
-			std::string line;
-			getline(paramFile, line);
+			// Get the first line
+			auto tokenizer = util::StreamTokenizer(paramFile);
+			std::vector<std::string> tokens;
+			tokenizer.loadLine(tokens);
 
 			using AmountType = network::IReactionNetwork::AmountType;
 
-			// Read the first line
-			auto tokens = util::Tokenizer<>{line}();
 			// And start looping on the lines
 			int index = 0;
-			while (tokens.size() > 0) {
+			for (; tokens.size() > 0;
+				++index, tokens.clear(), tokenizer.loadLine(tokens)) {
 				auto comp =
 					std::vector<AmountType>(network.getSpeciesListSize(), 0);
 				if (tokens.size() != 3) {
@@ -170,9 +176,13 @@ public:
 							   "check if this is really what you want to do.";
 				}
 
+				if (dimensions == 0) {
+					continue;
+				}
+
 				// Set the parameters for the fit
-				getline(paramFile, line);
-				tokens = util::Tokenizer<>{line}();
+				tokens.clear();
+				tokenizer.loadLine(tokens);
 				std::vector<double> params;
 				if (tokens.size() != 17) {
 					throw std::runtime_error(
@@ -248,12 +258,6 @@ public:
 					// conditions
 					incidentFluxVec[index].push_back(0.0);
 				}
-
-				// Read the next line
-				getline(paramFile, line);
-				tokens = util::Tokenizer<>{line}();
-				// Increase the index
-				index++;
 			}
 
 			// Prints both incident vectors in a file

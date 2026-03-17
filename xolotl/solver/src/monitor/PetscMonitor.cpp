@@ -432,6 +432,13 @@ PetscMonitor::computeAlphaZr(
 }
 
 PetscErrorCode
+PetscMonitor::monitorGeneric(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
 PetscMonitor::computeAlloy(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
