@@ -453,7 +453,7 @@ PerfHandler::reportStatistics(std::ostream& os,
 	os << "\n" << indent << "HardwareCounters:\n";
 	++indent;
 	for (auto iter = hwCounterStats.begin(); iter != hwCounterStats.end();
-		 ++iter) {
+		++iter) {
 		iter->second.outputTo(os, indent);
 	}
 	--indent;

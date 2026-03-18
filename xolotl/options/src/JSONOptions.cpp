@@ -484,12 +484,12 @@ JSONOptions::defineHandlers()
 				checkSetParam(tree, name, migrationThreshold);
 			})
 		.add(
-			"fluxDepthProfileFilePath", ElemType::string,
+			"customFluxFilePath", ElemType::string,
 			"The path to the custom flux profile file; the default is an empty "
 			"string that will use the default material associated flux "
 			"handler.",
 			JSON_ELEM_HANDLER {
-				checkSetParam(tree, name, fluxDepthProfileFilePath);
+				checkSetParam(tree, name, customFluxFilePath);
 			})
 		.add(
 			"reactionFilePath", ElemType::string,

@@ -339,7 +339,7 @@ protected:
 	/**
 	 * The path to the custom flux profile file
 	 */
-	fs::path fluxDepthProfileFilePath;
+	fs::path customFluxFilePath;
 
 	/**
 	 * The path to the reaction rates file
@@ -1013,9 +1013,9 @@ public:
 	 * \see IOptions.h
 	 */
 	virtual std::string
-	getFluxDepthProfileFilePath() const override
+	getCustomFluxFilePath() const override
 	{
-		return fluxDepthProfileFilePath.string();
+		return customFluxFilePath.string();
 	}
 
 	/**

@@ -83,7 +83,7 @@ public:
 	CustomFitFluxHandler(const options::IOptions& options) :
 		FluxHandler(options),
 		dimensions(options.getDimensionNumber()),
-		profileFilePath(options.getFluxDepthProfileFilePath())
+		profileFilePath(options.getCustomFluxFilePath())
 	{
 	}
 
@@ -291,7 +291,9 @@ public:
 		deep_copy(reduxFactors, reduxFactors_h);
 
 		syncFluxIndices();
-		syncIncidentFluxVec();
+		if (dimensions > 0) {
+			syncIncidentFluxVec();
+		}
 	}
 
 	/**

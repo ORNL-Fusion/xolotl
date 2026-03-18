@@ -182,8 +182,7 @@ Options::printAll(std::ostream& os) const
 	os << "heVRatio: " << heVRatio << '\n';
 	os << "migrationThreshold: " << migrationThreshold << '\n';
 
-	os << "fluxDepthProfileFilePath: \"" << fluxDepthProfileFilePath.string()
-	   << "\"\n";
+	os << "customFluxFilePath: \"" << customFluxFilePath.string() << "\"\n";
 
 	os << "basalPortion: " << basalPortion << '\n';
 	os << "transitionSize: " << transitionSize << '\n';
