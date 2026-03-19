@@ -116,6 +116,13 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_7, *utf::label("1D"))
 	SystemTestCase{"system_PSI_7"}.mpiLimits(1, 100).tolerance(1.0e-4).run();
 }
 
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_8, *utf::label("1D"))
+{
+	SystemTestCase::copyFile("temp_system_PSI_8.dat");
+	// 1D + He + TDS
+	SystemTestCase{"system_PSI_8"}.mpiLimits(1, 50).run();
+}
+
 BOOST_AUTO_TEST_CASE_WITH_DECOR(Fe_1, *utf::label("0D"))
 {
 	// 0D
