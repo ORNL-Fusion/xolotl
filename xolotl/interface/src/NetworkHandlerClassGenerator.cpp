@@ -84,12 +84,14 @@ findReplace(std::string str, const std::string& from, const std::string& to)
 }
 
 NetworkHandlerClassGenerator::NetworkHandlerClassGenerator(
-	const fs::path& rnFilePath, const std::string& material,
+	const fs::path& rnFile, const std::string& material,
 	const std::string& userMaterial) :
-	_rnFilePath(rnFilePath),
+	_rnFile(rnFile),
 	_material(material),
 	_userMaterial(userMaterial),
-	_genDir(fs::current_path() / ".xgrn")
+	_genDir(fs::current_path() / ".xgrn"),
+	_buildDir(_genDir / "build"),
+	_execFile(boost::dll::program_location().parent_path().string())
 {
 	readNetworkFile();
 	_baseName = removeSpaces(_networkData.label) + "_u_";
@@ -103,15 +105,17 @@ NetworkHandlerClassGenerator::NetworkHandlerClassGenerator(
 	_reactionNetwork = _baseName + "ReactionNetwork";
 	_networkHandler = _baseName + "NetworkHandler";
 	_materialHandler = _baseName + "MaterialHandler";
+
+	_networkLibFile = _buildDir / ("lib" + _networkHandler + ".so");
 }
 
 void
 NetworkHandlerClassGenerator::readNetworkFile()
 {
-	std::ifstream ifs(_rnFilePath);
+	std::ifstream ifs(_rnFile);
 	if (!ifs) {
 		XOLOTL_ERROR(std::runtime_error,
-			"Unable to open reaction network file: " + _rnFilePath.string());
+			"Unable to open reaction network file: " + _rnFile.string());
 	}
 
 	auto ss = util::stripComments(ifs);
@@ -1493,16 +1497,15 @@ NetworkHandlerClassGenerator::generateBuild()
 {
 	writeCMakeLists();
 
-	fs::path execDir{boost::dll::program_location().parent_path().string()};
+	auto execDir = _execFile.parent_path();
 	auto xolotlPrefix = execDir.parent_path();
-	auto buildDir = _genDir / "build";
-	fs::create_directories(buildDir);
+	fs::create_directories(_buildDir);
 	XOLOTL_LOG_XTRA << "XNGEN: xolotl install prefix: " << xolotlPrefix;
 	std::stringstream cmdss;
-	cmdss << "cmake -S " << _genDir << " -B " << buildDir
+	cmdss << "cmake -S " << _genDir << " -B " << _buildDir
 		  << " -DCMAKE_PREFIX_PATH=" << xolotlPrefix;
 
-	auto outputFile = buildDir / "out.txt";
+	auto outputFile = _buildDir / "out.txt";
 	fs::remove(outputFile);
 	auto redirect = " >> " + outputFile.string() + " 2>&1";
 
@@ -1517,7 +1520,7 @@ NetworkHandlerClassGenerator::generateBuild()
 	cmdss.str("");
 	auto nthreads = std::thread::hardware_concurrency();
 	nthreads = std::lround(std::ceil(0.25 * nthreads));
-	cmdss << "cmake --build " << buildDir << " -j " << nthreads;
+	cmdss << "cmake --build " << _buildDir << " -j " << nthreads;
 	XOLOTL_LOG_XTRA << "XNGEN: build command: " << cmdss.str();
 	std::cout << std::flush;
 	rv = std::system((cmdss.str() + redirect).c_str());
@@ -1526,8 +1529,6 @@ NetworkHandlerClassGenerator::generateBuild()
 			"build step failed; see " + outputFile.string());
 	}
 	XOLOTL_LOG_XTRA << "XNGEN: build return: " << rv;
-
-	_networkLibFile = buildDir / ("lib" + _networkHandler + ".so");
 }
 
 void
@@ -1549,38 +1550,73 @@ broadcastString(std::string& str)
 	MPI_Bcast(str.data(), len + 1, MPI_CHAR, 0, comm);
 }
 
+bool
+NetworkHandlerClassGenerator::needToGenerate() const
+{
+	if (!exists(_networkLibFile)) {
+		return true;
+	}
+	auto rnFileMTime = last_write_time(_rnFile);
+	auto exeBuildTime = last_write_time(_execFile);
+	auto libBuildTime = last_write_time(_networkLibFile);
+	return (exeBuildTime > libBuildTime) || (libBuildTime < rnFileMTime);
+}
+
+template <typename F>
+void
+time(F&& f, const std::string& message)
+{
+	XOLOTL_LOG << message << "... ";
+	auto start = std::chrono::steady_clock::now();
+	f();
+	auto end = std::chrono::steady_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end - start;
+	XOLOTL_LOG << "  " << elapsed_seconds.count() << "s\n";
+	::xolotl::util::Log::flush();
+}
+
+void
+NetworkHandlerClassGenerator::generate()
+{
+	if (!this->needToGenerate()) {
+		return;
+	}
+	time(
+		[this] {
+			generateTraits();
+			generateReactions();
+			generateClusterGenerator();
+			generateNetwork();
+			generateNetworkHandler();
+		},
+		"Generate custom network code");
+
+	time([this] { this->generateBuild(); }, "Build custom network");
+}
+
 void
 generateNetworkHandler(options::IOptions* options)
 {
-	XOLOTL_LOG << "Generating network code";
-	auto start = std::chrono::steady_clock::now();
-
 	std::string libFile;
+
 	if (util::getMPIRank() == 0) {
-		const auto& rnFilePath = options->getReactionNetworkFileName();
+		const auto& rnFile = options->getReactionNetworkFileName();
 		const auto& material = options->getMaterial();
 		auto userMat = material + "_u";
 		options->setMaterial(userMat);
-
-		NetworkHandlerClassGenerator gen{rnFilePath, material, userMat};
-		gen.generateTraits();
-		gen.generateReactions();
-		gen.generateClusterGenerator();
-		gen.generateNetwork();
-		gen.generateNetworkHandler();
-		gen.generateBuild();
-
-		libFile = gen.getLibraryFile();
+		auto gen = NetworkHandlerClassGenerator{rnFile, material, userMat};
+		libFile = gen.getLibraryFileName();
+		gen.generate();
 	}
 
 	broadcastString(libFile);
-	loadLibrary(libFile);
 
-	auto end = std::chrono::steady_clock::now();
-	std::chrono::duration<double> elapsed_seconds = end - start;
-	XOLOTL_LOG << "Elapsed time: " << elapsed_seconds.count() << "s"
-			   << std::endl;
-	::xolotl::util::Log::flush();
+	if (util::getMPIRank() == 0) {
+		time([&] { loadLibrary(libFile); }, "Load custom network");
+	}
+	else {
+		loadLibrary(libFile);
+	}
 }
 } // namespace interface
 } // namespace xolotl

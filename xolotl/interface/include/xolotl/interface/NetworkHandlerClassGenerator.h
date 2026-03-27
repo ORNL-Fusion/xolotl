@@ -17,8 +17,11 @@ class NetworkHandlerClassGenerator
 public:
 	NetworkHandlerClassGenerator() = default;
 
-	explicit NetworkHandlerClassGenerator(const fs::path& rnFilePath,
+	explicit NetworkHandlerClassGenerator(const fs::path& rnFile,
 		const std::string& material, const std::string& userMaterial);
+
+	void
+	generate();
 
 	void
 	generateClusterGenerator();
@@ -41,11 +44,11 @@ public:
 	void
 	generateBuild();
 
-    const fs::path&
-    getLibraryFile() const
-    {
-        return _networkLibFile;
-    }
+	const fs::path&
+	getLibraryFileName() const
+	{
+		return _networkLibFile;
+	}
 
 private:
 	void
@@ -72,14 +75,15 @@ private:
 	void
 	writeCMakeLists();
 
-    void
-    loadLibrary();
+	bool
+	needToGenerate() const;
 
 private:
-	fs::path _rnFilePath;
+	fs::path _rnFile;
 	std::string _material;
-    std::string _userMaterial;
+	std::string _userMaterial;
 	fs::path _genDir;
+	fs::path _buildDir;
 	std::string _baseName;
 	std::string _speciesList;
 	std::string _prodReaction;
@@ -89,8 +93,9 @@ private:
 	std::string _reactionGenerator;
 	std::string _reactionNetwork;
 	std::string _networkHandler;
-    std::string _materialHandler;
-    fs::path _networkLibFile;
+	std::string _materialHandler;
+	fs::path _networkLibFile;
+    fs::path _execFile;
 
 	struct NetworkData
 	{
@@ -103,14 +108,19 @@ private:
 
 	struct SpeciesData
 	{
-        enum class Type { impurity, vacancy, interstitial };
+		enum class Type
+		{
+			impurity,
+			vacancy,
+			interstitial
+		};
 		std::string name;
 		std::string label;
 		Type type;
 		std::array<AmountType, 2> bounds;
 	};
 	std::vector<SpeciesData> _speciesData;
-    std::unordered_map<std::string, const SpeciesData*> _speciesLabelMap;
+	std::unordered_map<std::string, const SpeciesData*> _speciesLabelMap;
 
 	struct ClusterData
 	{
@@ -126,9 +136,9 @@ private:
 	struct ReactionData
 	{
 		std::vector<std::string> reactantLabels;
-        std::vector<const SpeciesData*> reactants;
+		std::vector<const SpeciesData*> reactants;
 		std::vector<std::string> productLabels;
-        std::vector<const SpeciesData*> products;
+		std::vector<const SpeciesData*> products;
 		std::string type;
 		std::string bindingExpr;
 	};
