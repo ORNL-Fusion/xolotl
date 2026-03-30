@@ -209,8 +209,8 @@ NetworkHandlerClassGenerator::readNetworkFile()
 				"every cluster record must specify \"radius\"");
 		}
 		clData.radiusExpr = elNode.get<std::string>("radius");
-		clData.migrationEnergy = elNode.get("migrationEnergy", nan);
-		clData.diffusionFactor = elNode.get("diffusionFactor", nan);
+		clData.migrationEnergy = elNode.get("migration_energy", nan);
+		clData.diffusionFactor = elNode.get("diffusion_factor", nan);
 	}
 	// group clusters by species
 	_clusterGroups.assign(_speciesData.size(), {});
@@ -445,17 +445,24 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 			continue;
 		}
 		auto species = "Species::" + clGroup[0]->type;
-		ofs << "    if (comp.isOnAxis(" << species << ")) {\n";
+		ofs << "    if (comp.isOnAxis(" << species << ")) {\n"
+			<< "      auto amt = comp[" << species << "];\n";
 		for (auto cl : clGroup) {
 			if (std::isnan(cl->migrationEnergy)) {
 				continue;
 			}
 			if (cl->size[0] < maxAmount) {
-				ofs << "      auto amt = comp[" << species << "];\n"
-					<< "      if (" << cl->size[0] << " <= amt && "
-					<< "          amt <= " << cl->size[1] << ") {\n"
-					<< "        return " << cl->migrationEnergy << ";\n"
-					<< "      }\n";
+				if (cl->size[1] < maxAmount) {
+					ofs << "      if (" << cl->size[0] << " <= amt &&\n"
+						<< "          amt <= " << cl->size[1] << ") {\n"
+						<< "        return " << cl->migrationEnergy << ";\n"
+						<< "      }\n";
+				}
+				else {
+					ofs << "      if (amt == " << cl->size[0] << ") {\n"
+						<< "        return " << cl->migrationEnergy << ";\n"
+						<< "      }\n";
+				}
 			}
 			else {
 				ofs << "      return " << cl->migrationEnergy << ";\n";
@@ -483,17 +490,24 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 			continue;
 		}
 		auto species = "Species::" + clGroup[0]->type;
-		ofs << "    if (comp.isOnAxis(" << species << ")) {\n";
+		ofs << "    if (comp.isOnAxis(" << species << ")) {\n"
+			<< "      auto amt = comp[" << species << "];\n";
 		for (auto cl : clGroup) {
 			if (std::isnan(cl->diffusionFactor)) {
 				continue;
 			}
 			if (cl->size[0] < maxAmount) {
-				ofs << "      auto amt = comp[" << species << "];\n"
-					<< "      if (" << cl->size[0] << " <= amt && "
-					<< "          amt <= " << cl->size[1] << ") {\n"
-					<< "        return " << cl->diffusionFactor << ";\n"
-					<< "      }\n";
+				if (cl->size[1] < maxAmount) {
+					ofs << "      if (" << cl->size[0] << " <= amt &&\n"
+						<< "          amt <= " << cl->size[1] << ") {\n"
+						<< "        return " << cl->diffusionFactor << ";\n"
+						<< "      }\n";
+				}
+				else {
+					ofs << "      if (amt == " << cl->size[0] << ") {\n"
+						<< "        return " << cl->diffusionFactor << ";\n"
+						<< "      }\n";
+				}
 			}
 			else {
 				ofs << "      return " << cl->diffusionFactor << ";\n";
@@ -540,11 +554,19 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 		for (auto cl : clGroup) {
 			const auto& expr = cl->radiusExpr;
 			if (cl->size[0] < maxAmount) {
-				ofs << "      if (" << cl->size[0] << " <= amt && "
-					<< "          amt <= " << cl->size[1] << ") {\n"
-					<< "        // parsed from: " << expr << "\n"
-					<< "        return " << parseRadiusExpr(expr) << ";\n"
-					<< "      }\n";
+				if (cl->size[1] < maxAmount) {
+					ofs << "      if (" << cl->size[0] << " <= amt &&\n"
+						<< "          amt <= " << cl->size[1] << ") {\n"
+						<< "        // parsed from: " << expr << "\n"
+						<< "        return " << parseRadiusExpr(expr) << ";\n"
+						<< "      }\n";
+				}
+				else {
+					ofs << "      if (amt == " << cl->size[0] << ") {\n"
+						<< "        // parsed from: " << expr << "\n"
+						<< "        return " << parseRadiusExpr(expr) << ";\n"
+						<< "      }\n";
+				}
 			}
 			else {
 				ofs << "      // parsed from: " << expr << "\n"
@@ -554,6 +576,7 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 		ofs << "    }\n";
 	}
 	ofs << "  }\n"
+		   "  return 0.0;\n"
 		   "}\n"
 		   "}\n";
 
@@ -703,15 +726,16 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 		<< _dissReaction << "::computeBindingEnergy(double time) {\n"
 		<< "  using Species = typename Superclass::Species;\n"
 		   "  using Composition = typename Superclass::Composition;\n"
+		   "  double be = 5.0;\n"
 		   "  auto cl = this->_clusterData->getCluster(this->_reactant);\n"
-		   "  auto prod1 = "
+		   "  auto prod1 =\n"
 		   "    this->_clusterData->getCluster(this->_products[0]);\n"
-		   "  auto prod2 = "
+		   "  auto prod2 =\n"
 		   "    this->_clusterData->getCluster(this->_products[1]);\n"
 		   "  auto clReg = cl.getRegion();\n"
 		   "  auto prod1Reg = prod1.getRegion();\n"
 		   "  auto prod2Reg = prod2.getRegion();\n"
-		   "  if (clReg.isSimplex() && prod1Reg.isSimplex() && "
+		   "  if (clReg.isSimplex() && prod1Reg.isSimplex() &&\n"
 		   "      prod2Reg.isSimplex()) {\n";
 	for (auto&& [key, rnGroup] : _dissociationReactionGroups) {
 		if (!rnGroup.general) {
@@ -733,10 +757,11 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 			// TODO: cases for specific sizes
 		}
 		ofs << "      // parsed from: " << expr << "\n"
-			<< "      return " << parseBindingExpr(expr) << ";\n"
+			<< "      be = " << parseBindingExpr(expr) << ";\n"
 			<< "    }\n";
 	}
 	ofs << "  }\n"
+		   "  return util::max(-5.0, std::min(be, 5.0));\n"
 		   "}\n\n";
 
 	ofs << "KOKKOS_INLINE_FUNCTION\n"
@@ -1211,9 +1236,9 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		<< "  constexpr double lpConstant = " << _networkData.latticeParameter
 		<< ";\n"
 		<< "  if (latticeParameter != lpConstant) {\n"
-		   "    XOLOTL_LOG_WARN\n"
-		   "      << \"Changing lattice parameter in custom network\";\n"
 		   "    if (latticeParameter > 0.0) {\n"
+		   "      XOLOTL_LOG_WARN\n"
+		   "        << \"Changing lattice parameter in custom network\";\n"
 		   "      return latticeParameter;\n"
 		   "    }\n"
 		   "  }\n"
@@ -1232,6 +1257,7 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		<< "{\n"
 		   "  return impurityRadius;\n" // TODO: ?
 		   "}\n"
+		   "\n"
 		<< _reactionNetwork << "::IndexType\n"
 		<< _reactionNetwork << "::checkLargestClusterId()\n"
 		<< "{\n"
@@ -1310,9 +1336,8 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		<< " * id()) + 5] += totals[5] * fac;\n"
 		<< "\n"
 		<< "    totalVals[(" << 2 * nVars << " * id()) + 2] *= 2.0;\n"
-		<< "    totalVals[(" << 2 * nVars
-		<< " * id()) + 5] *= 2.0;\n"
-		   "  }\n"
+		<< "    totalVals[(" << 2 * nVars << " * id()) + 5] *= 2.0;\n"
+		<< "  }\n"
 		   "}\n"
 		   "\n";
 
@@ -1419,8 +1444,6 @@ NetworkHandlerClassGenerator::generateNetworkHandler()
 		   "auto nwGenerator = [](const options::IOptions& options) {\n"
 		<< "  using NetworkType = " << _reactionNetwork << ";\n"
 		<< "  using AmountType = NetworkType::AmountType;\n"
-		   "  std::cout << \"hello from generated network handler!\" << "
-		   "std::endl;\n"
 		   "  AmountType maxV = options.getMaxV();\n"
 		   "  AmountType maxI = options.getMaxI();\n"
 		   "  std::vector<AmountType> maxSpeciesAmounts = {\n"
