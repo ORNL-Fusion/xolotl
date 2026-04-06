@@ -40,7 +40,7 @@ ConfOptions::readParams(int argc, const char* argv[])
 	}
 
 	XOLOTL_LOG_WARN
-		<< "WARNING: (ConfOptions) Parsing parameter files in config format is "
+		<< "(ConfOptions) Parsing parameter files in config format is "
 		   "deprecated and may not be up-to-date. "
 		   "Consider converting your parameter file to JSON format.";
 

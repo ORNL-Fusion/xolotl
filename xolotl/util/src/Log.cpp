@@ -106,12 +106,12 @@ setupLogs()
 	// Print info and warning messages to stdout
 	boost::log::add_console_log(
 		std::cout, keywords::auto_flush = true, keywords::format = "%Message%")
-		->set_filter(Log::info <= severity && severity < Log::error);
+		->set_filter(Log::info <= severity && severity < Log::warning);
 	// Print error messages to stderr
 	boost::log::add_console_log(std::cerr, keywords::auto_flush = true,
 		keywords::format = expr::stream << "[" << severity << "] "
 										<< expr::message)
-		->set_filter(severity >= Log::error);
+		->set_filter(severity >= Log::warning);
 
 	// Print all messages to log file with extra metadata
 	bool mpiReady = mpiInitialized();
