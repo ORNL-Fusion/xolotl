@@ -62,6 +62,14 @@ max(const T& a, const T& b)
 	}
 	return a;
 }
+
+template <typename T>
+KOKKOS_INLINE_FUNCTION
+const T&
+clamp(const T& v, const T& a, const T& b)
+{
+	return max(a, min(v, b));
+}
 //@}
 
 /**

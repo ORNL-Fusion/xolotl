@@ -761,7 +761,8 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 			<< "    }\n";
 	}
 	ofs << "  }\n"
-		   "  return util::max(-5.0, std::min(be, 5.0));\n"
+            " return util::max(-5.0, util::min(be, 5.0));\n"
+		   // "  return util::clamp(be, -5.0, 5.0);\n"
 		   "}\n\n";
 
 	ofs << "KOKKOS_INLINE_FUNCTION\n"
@@ -1029,6 +1030,7 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		   "  auto& subpaving = this->getSubpaving();\n"
 		   "\n"
 		   "  if (cl1Reg.isSimplex() && cl2Reg.isSimplex()) {\n";
+
 	auto checkVacItrPair = [](const SpeciesData* r1, const SpeciesData* r2) {
 		constexpr auto vac = SpeciesData::Type::vacancy;
 		constexpr auto itr = SpeciesData::Type::interstitial;
@@ -1041,6 +1043,7 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		const SpeciesData* nul{nullptr};
 		return std::make_tuple(false, nul, nul);
 	};
+
 	for (auto&& [key, grp] : _productionReactionGroups) {
 		auto r1 = grp.general->reactants[0];
 		auto r2 = grp.general->reactants[1];
@@ -1119,6 +1122,7 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 			}
 		}
 	}
+
 	for (auto&& [key, grp] : _dissociationReactionGroups) {
 		auto r1 = grp.general->products[0];
 		auto r2 = grp.general->products[1];
@@ -1151,7 +1155,7 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		   "void\n"
 		<< _reactionGenerator << "::addSinks(IndexType i, TTag tag) const\n"
 		<< "{\n"
-		   "  " // TODO: no sinks for now
+		   "" // TODO: no sinks for now
 		   "}\n"
 		   "\n"
 		<< "inline\n"
