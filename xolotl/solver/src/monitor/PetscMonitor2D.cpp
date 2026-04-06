@@ -1107,8 +1107,7 @@ PetscMonitor2D::computeXenonRetention(
 			using TQ = core::network::IReactionNetwork::TotalQuantity;
 			using Q = TQ::Type;
 			using TQA = util::Array<TQ, 6>;
-			auto id = core::network::SpeciesId(
-				Spec::Xe, network.getSpeciesListSize());
+			auto id = core::network::SpeciesId(Spec::Xe);
 			auto ms = static_cast<AmountType>(minSizes[id()]);
 			auto totals = network.getTotals(dConcs,
 				TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1},

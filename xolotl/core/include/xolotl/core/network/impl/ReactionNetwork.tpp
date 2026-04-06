@@ -1756,8 +1756,7 @@ ReactionNetwork<TImpl>::createSpeciesLabelMap() noexcept
 {
 	std::map<std::string, SpeciesId> labelMap;
 	for (auto s : getSpeciesRange()) {
-		labelMap.emplace(
-			toLabelString(s.value), SpeciesId(s.value, getNumberOfSpecies()));
+		labelMap.emplace(toLabelString(s.value), SpeciesId(s.value));
 	}
 	return labelMap;
 }

@@ -1188,6 +1188,7 @@ BOOST_AUTO_TEST_CASE(traits)
 	auto network = NetworkType();
 	auto sid = network.parseSpeciesId("V");
 	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
+	BOOST_REQUIRE(sid == SpeciesId{Spec::V});
 	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
 	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
 	sid = network.parseSpeciesId("Void");
