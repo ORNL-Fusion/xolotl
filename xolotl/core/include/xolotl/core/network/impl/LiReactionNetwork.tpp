@@ -53,7 +53,6 @@ LiReactionNetwork::getTritiumFlux(
 	double RT = getRT(temperature);
 
 	// Beta rate
-	double betaE = diffusionE + adsorptionE;
 	double tFlux = TSphereConc * (1.0 - thetaH - thetaT) * 1.0e13 *
 		exp(-betaE / RT) / sqrt(surfaceSites);
 
@@ -63,7 +62,7 @@ LiReactionNetwork::getTritiumFlux(
 	tFlux -= surfaceSites * adjSites * RT * exp(-dissolutionE / RT) * thetaT /
 		(2.0 * nAv * planckConstant);
 
-	return tFlux;
+	return -tFlux;
 }
 
 void
@@ -130,7 +129,6 @@ LiReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
 		// Concentration of T at the edge of the sphere
 		auto TSphereConc = concentrations(0);
 		// Beta term
-		double betaE = diffusionE + adsorptionE;
 		tFlux += TSphereConc * (1.0 - thetaH - thetaT) * 1.0e13 *
 			exp(-betaE / RT) / sqrt(surfaceSites);
 
@@ -253,7 +251,6 @@ LiReactionNetwork::computePartialsPreProcess(ConcentrationsView concentrations,
 		// Concentration of T at the edge of the sphere
 		auto TSphereConc = concentrations(0);
 		// Beta term
-		double betaE = diffusionE + adsorptionE;
 		tPartialThetaH -=
 			TSphereConc * 1.0e13 * exp(-betaE / RT) / sqrt(surfaceSites);
 		tPartialThetaT -=
@@ -280,25 +277,6 @@ LiReactionNetwork::computePartialsPreProcess(ConcentrationsView concentrations,
 			exp(-betaE / RT) / sqrt(surfaceSites);
 		Kokkos::atomic_add(
 			&values[this->_connEntries(5)], tPartialConc / surfaceSites);
-
-		// The sphere T concentration also depends on theta from the BC in the
-		// spherical diffusion handler through the beta and dissolution rates
-		double tFluxThetaH =
-			TSphereConc * 1.0e13 * exp(-betaE / RT) / sqrt(surfaceSites);
-		double tFluxThetaT =
-			TSphereConc * 1.0e13 * exp(-betaE / RT) / sqrt(surfaceSites);
-
-		tFluxThetaH -= surfaceSites * adjSites * exp(-dissolutionE / RT) *
-			thetaT * getQadsTheta(thetaH + thetaT) /
-			(2.0 * nAv * planckConstant);
-		tFluxThetaT += surfaceSites * adjSites * RT * exp(-dissolutionE / RT) *
-			(1.0 - thetaT * getQadsTheta(thetaH + thetaT) / RT) /
-			(2.0 * nAv * planckConstant);
-
-		Kokkos::atomic_sub(
-			&values[this->_connEntries(6)], tFluxThetaH / spacing);
-		Kokkos::atomic_sub(
-			&values[this->_connEntries(7)], tFluxThetaT / spacing);
 	}
 }
 

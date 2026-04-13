@@ -354,7 +354,7 @@ private:
 	//! Constants
 	const double gasConstant = 8.314; // J K^-1 mol^-1
 	const double nAv = 6.022e23;
-	const double planckConstant = 6.626e-34; // J s, h
+	const double planckConstant = 6.626e-16; // kg nm^2 s^-1, h
 	const double sphereSurface = 12.56e12; // 1 mm radius in nm^2, A_S
 	const double purgeFlow = 5.0e20; // nm^3 s^-1, V_p
 	const double condensationCoef = 0.4; // sigma
@@ -362,6 +362,7 @@ private:
 	const double adsorptionE = 15.0e21; // kg nm^2 s^-2 mol^-1
 	const double solutionE = 23.0e21; // kg nm^2 s^-2 mol^-1
 	const double diffusionE = 141.5e21; // kg nm^2 s^-2 mol^-1
+	const double betaE = diffusionE + adsorptionE;
 	const double t2MolWeight = 6.032e-3; // kg mol^-1
 	const double h2MolWeight = 2.016e-3; // kg mol^-1
 	const double htMolWeight = 4.024e-3; // kg mol^-1
