@@ -77,7 +77,7 @@ public:
 	 */
 	CustomFitFluxHandler(const options::IOptions& options) :
 		FluxHandler(options),
-		profileFilePath(options.getFluxDepthProfileFilePath())
+		profileFilePath(options.getCustomFluxFilePath())
 	{
 	}
 
@@ -168,6 +168,18 @@ public:
 							<< "One of the reduction factors for the custom "
 							   "flux is negative, "
 							   "check if this is really what you want to do.";
+				}
+
+				// 0D case
+				if (xGrid.size() == 0) {
+					// Skip the fit parameters
+
+					// Read the next line
+					getline(paramFile, line);
+					tokens = util::Tokenizer<>{line}();
+					// Increase the index
+					index++;
+					continue;
 				}
 
 				// Set the parameters for the fit
@@ -287,7 +299,8 @@ public:
 		deep_copy(reduxFactors, reduxFactors_h);
 
 		syncFluxIndices();
-		syncIncidentFluxVec();
+		if (xGrid.size() > 0)
+			syncIncidentFluxVec();
 	}
 
 	/**

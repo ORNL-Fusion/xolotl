@@ -94,46 +94,47 @@ public:
 		NetworkType::Composition comp = NetworkType::Composition::zero();
 		comp[NetworkType::Species::V] = 1;
 		auto cluster = neNetwork.findCluster(comp, plsm::HostMemSpace{});
-		// Check that the helium cluster is present in the network
+		// Check that the vacancy cluster is present in the network
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string(
-				"\nThe single vacancy cluster is not present in the network, "
-				"cannot use the flux option!");
+			fluxIndices.push_back(NetworkType::invalidIndex());
+			pureDefectIds.push_back(NetworkType::invalidIndex());
 		}
-		fluxIndices.push_back(cluster.getId());
-		pureDefectIds.push_back(cluster.getId());
+		else {
+			fluxIndices.push_back(cluster.getId());
+			pureDefectIds.push_back(cluster.getId());
+		}
 
 		comp[NetworkType::Species::V] = 2;
 		cluster = neNetwork.findCluster(comp, plsm::HostMemSpace{});
-		// Check that the helium cluster is present in the network
+		// Check that the di-vacancy cluster is present in the network
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string("\nThe di-vacancy cluster is not "
-							  "present in the network, "
-							  "cannot use the flux option!");
+			pureDefectIds.push_back(NetworkType::invalidIndex());
 		}
-		pureDefectIds.push_back(cluster.getId());
+		else {
+			pureDefectIds.push_back(cluster.getId());
+		}
 
 		comp[NetworkType::Species::V] = 0;
 		comp[NetworkType::Species::I] = 1;
 		cluster = neNetwork.findCluster(comp, plsm::HostMemSpace{});
-		// Check that the helium cluster is present in the network
+		// Check that the interstitial cluster is present in the network
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string("\nThe single interstitial cluster is not "
-							  "present in the network, "
-							  "cannot use the flux option!");
+			fluxIndices.push_back(NetworkType::invalidIndex());
 		}
-		fluxIndices.push_back(cluster.getId());
+		else {
+			fluxIndices.push_back(cluster.getId());
+		}
 
 		comp[NetworkType::Species::I] = 0;
 		comp[NetworkType::Species::Xe] = 1;
 		cluster = neNetwork.findCluster(comp, plsm::HostMemSpace{});
-		// Check that the helium cluster is present in the network
+		// Check that the xenon cluster is present in the network
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::string("\nThe single xenon cluster is not "
-							  "present in the network, "
-							  "cannot use the flux option!");
+			fluxIndices.push_back(NetworkType::invalidIndex());
 		}
-		fluxIndices.push_back(cluster.getId());
+		else {
+			fluxIndices.push_back(cluster.getId());
+		}
 
 		// Read the information from the text file
 		pureDefectFactors = std::vector<double>(2, 0.0);
@@ -220,6 +221,8 @@ public:
 			return;
 		}
 
+		using NetworkType = network::NEReactionNetwork;
+
 		auto factors = this->pureDefectFactorsView;
 		auto defectIds = this->pureDefectIdsView;
 		auto amplitude = fluxAmplitude;
@@ -233,15 +236,22 @@ public:
 				// Compute the available site fraction
 				double availVFraction = uConc; // nm-3
 				for (auto i = 0; i < factors.size(); i++) {
-					availVFraction -= concOffset[defectIds[i]] * factors[i];
+					if (defectIds[i] != NetworkType::invalidIndex())
+						availVFraction -= concOffset[defectIds[i]] * factors[i];
 				}
 				availVFraction /= uConc;
 
-				updatedConcOffset[ids[0]] +=
-					yield * amplitude * availVFraction; // V
-				updatedConcOffset[ids[1]] +=
-					yield * amplitude * availVFraction; // I
-				updatedConcOffset[ids[2]] += xenonYield * amplitude; // Xe
+				if (ids[0] != NetworkType::invalidIndex()) {
+					updatedConcOffset[ids[0]] +=
+						yield * amplitude * availVFraction; // V
+				}
+				if (ids[1] != NetworkType::invalidIndex()) {
+					updatedConcOffset[ids[1]] +=
+						yield * amplitude * availVFraction; // I
+				}
+				if (ids[2] != NetworkType::invalidIndex()) {
+					updatedConcOffset[ids[2]] += xenonYield * amplitude; // Xe
+				}
 			});
 	}
 

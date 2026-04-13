@@ -193,8 +193,11 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 		fileClusterMap.insert(rId, count);
 
 		// Get its properties and save it
+		auto dege = 1.0;
+		if (comp[Species::I] == 0)
+			dege = getDegeneracy(comp[Species::V]);
 		auto h0 = tokens[3];
-		auto s0 = tokens[4];
+		auto s0 = tokens[4] + std::log(dege);
 		auto g0 = h0 - k_B * temperature * s0;
 		auto D0 = tokens[5];
 		auto q = tokens[6];
@@ -207,7 +210,8 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 		// Loop on the linked clusters
 		for (auto i = 7; i < tokens.size(); i += 4) {
 			// Get its properties
-			auto g0Linked = tokens[i] - k_B * temperature * tokens[i + 1];
+			auto g0Linked = tokens[i] -
+				k_B * temperature * (tokens[i + 1] + std::log(dege));
 			auto diffLinked =
 				tokens[i + 2] * exp(-tokens[i + 3] / (k_B * temperature));
 			// Save the linkage information
@@ -221,6 +225,7 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 				g0Vector[count] = g0Linked;
 			}
 		}
+
 		// Set values in the cluster
 		if (_clusterDataMirror.has_value()) {
 			// Compute the diffusivity with linkage
@@ -370,30 +375,39 @@ NEReactionNetwork::readReactions(double temperature, const std::string filename)
 	Composition comp = Composition::zero();
 	comp[Species::I] = 1;
 	auto rId = findCluster(comp, plsm::HostMemSpace{}).getId();
-	auto mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
-	// Save its formation energy
-	clData().setIFormationEnergy(g0Vector[mapId]);
+	if (rId != this->invalidIndex()) {
+		auto mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
+		// Save its formation energy
+		clData().setIFormationEnergy(g0Vector[mapId]);
+	}
 
 	// Same with vacancy
 	comp[Species::I] = 0;
 	comp[Species::V] = 1;
 	rId = findCluster(comp, plsm::HostMemSpace{}).getId();
-	mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
-	// Save its formation energy
-	clData().setVFormationEnergy(g0Vector[mapId]);
+	if (rId != this->invalidIndex()) {
+		auto mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
+		// Save its formation energy
+		clData().setVFormationEnergy(g0Vector[mapId]);
+	}
+
 	comp[Species::V] = 2;
 	rId = findCluster(comp, plsm::HostMemSpace{}).getId();
-	mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
-	// Save its formation energy
-	clData().setV2FormationEnergy(g0Vector[mapId]);
+	if (rId != this->invalidIndex()) {
+		auto mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
+		// Save its formation energy
+		clData().setV2FormationEnergy(g0Vector[mapId]);
+	}
 
 	// Same with xenon
 	comp[Species::V] = 0;
 	comp[Species::Xe] = 1;
 	rId = findCluster(comp, plsm::HostMemSpace{}).getId();
-	mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
-	// Save its formation energy
-	clData().setXeFormationEnergy(g0Vector[mapId]);
+	if (rId != this->invalidIndex()) {
+		auto mapId = fileClusterMap.value_at(fileClusterMap.find(rId));
+		// Save its formation energy
+		clData().setXeFormationEnergy(g0Vector[mapId]);
+	}
 
 	deep_copy(this->_reactionEnergies, reactionEnergies);
 	deep_copy(clData().extraData.constantRates, constantRates);

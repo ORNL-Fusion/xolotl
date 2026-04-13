@@ -67,6 +67,27 @@ private:
 	void
 	readReactions(
 		double temperature, const std::string filename = "reaction.dat");
+
+	double
+	getDegeneracy(IndexType v)
+	{
+		switch (v) {
+		case 2:
+			return 6.0;
+		case 3:
+			return 8.0;
+		case 4:
+			return 2.0;
+		case 5:
+			return 6.0;
+		case 7:
+			return 8.0;
+		case 8:
+			return 8.0;
+		default:
+			return 1.0;
+		}
+	}
 };
 
 namespace detail

@@ -40,9 +40,9 @@ MaterialHandler::MaterialHandler(const options::IOptions& options,
 				ss << process.first << " ";
 			}
 		}
-		if (!options.getFluxDepthProfileFilePath().empty()) {
+		if (!options.getCustomFluxFilePath().empty()) {
 			ss << "; a custom fit flux handler is used reading: "
-			   << options.getFluxDepthProfileFilePath();
+			   << options.getCustomFluxFilePath();
 		}
 		XOLOTL_LOG << ss.str();
 	}

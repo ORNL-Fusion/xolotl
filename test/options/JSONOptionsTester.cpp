@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 		<< "\"fissionYield\": 0.3,\n"
 		<< "\"heVRatio\": 5.0,\n"
 		<< "\"migrationThreshold\": 1.0,\n"
-		<< "\"fluxDepthProfileFilePath\": \"path/to/flux/profile/file.txt\",\n"
+		<< "\"customFluxFilePath\": \"path/to/custom/flux/file.txt\",\n"
 		<< "\"basalPortion\": 0.6,\n"
 		<< "\"transitionSize\": 300,\n"
 		<< "\"cascadeDose\": 5000.0,\n"
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(goodParamFile)
 
 	// Check the flux depth profile filename
 	BOOST_REQUIRE_EQUAL(
-		opts.getFluxDepthProfileFilePath(), "path/to/flux/profile/file.txt");
+		opts.getCustomFluxFilePath(), "path/to/custom/flux/file.txt");
 
 	// Check the basal portion
 	BOOST_REQUIRE_EQUAL(opts.getBasalPortion(), 0.6);

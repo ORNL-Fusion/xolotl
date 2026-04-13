@@ -575,6 +575,14 @@ public:
 	getTotalRatioVariance(ConcentrationsView concentrations, SpeciesId species,
 		double mean, AmountType minSize = 0) = 0;
 
+	virtual double
+	getTotalVolumeRadius(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) = 0;
+
+	virtual double
+	getTotalRadiusVariance(ConcentrationsView concentrations, SpeciesId species,
+		double mean, AmountType minSize = 0) = 0;
+
 	/**
 	 * @brief Computes the diffusion flux exiting from this grid point.
 	 *
