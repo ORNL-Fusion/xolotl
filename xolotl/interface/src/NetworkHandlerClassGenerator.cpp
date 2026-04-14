@@ -418,6 +418,13 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 		   "bool\n"
 		<< _clusterGenerator << "::select(const Region& region) const\n"
 		<< "{\n"
+        << "  int nAxis = 0;\n";
+    for (auto&& spec : _speciesData) {
+        ofs << "  nAxis += (region[Species::" << spec.label << "].begin() > 0);\n";
+    }
+    ofs << "  if (nAxis != 1) {\n"
+           "    return false;\n"
+           "  }\n"
 		   "  return true;\n"
 		   "}\n"
 		   "\n"
