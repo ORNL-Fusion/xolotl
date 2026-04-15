@@ -64,8 +64,12 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		else
 			ss << bcString;
 		ss << " and bulk BC: ";
-		if (rightOffset == 1)
-			ss << "free surface";
+		if (rightOffset == 1) {
+			if (isRecomb)
+				ss << "surface recombination";
+			else
+				ss << "free surface";
+		}
 		else
 			ss << bcString;
 		if (isRobin)
@@ -307,19 +311,6 @@ PetscSolver1DHandler::initializeConcentration(
 		// Pointer for the concentration vector at a specific grid point
 		PetscScalar* concOffset = nullptr;
 
-		// Compute the volume of the sphere if using spherical coordinates
-		double volume = 0.0;
-		if (isSpherical) {
-			// Compute the surface of the sphere for each grid point and sum
-			// them
-			for (auto j = 1; j < grid.size() - 1; j++) {
-				auto loc = (grid[j] + grid[j + 1]) / 2.0 - grid[1];
-				auto dr = grid[j + 1] - grid[j];
-				auto surface = 4.0 * ::xolotl::core::pi * loc * loc;
-				volume += surface * dr;
-			}
-		}
-
 		// Loop on all the grid points
 		for (auto i = (PetscInt)localXS - 1;
 			i <= (PetscInt)localXS + (PetscInt)localXM; i++) {
@@ -353,29 +344,11 @@ PetscSolver1DHandler::initializeConcentration(
 			// Initialize the option specified concentration
 			if (i >= leftOffset and not hasConcentrations and
 				i < nX - rightOffset) {
-				// For spherical coordinates we rescale the values
-				if (isSpherical) {
-					// Compute the sphere surface at this radius
-					auto loc = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
-					auto surface = 4.0 * ::xolotl::core::pi * loc * loc;
-					// std::cout << i << " " << loc << " " << surface << " " <<
-					// volume << std::endl;
-					for (auto pair : initialConc) {
-						concOffset[pair.first] = pair.second;
-					}
-				}
-				// Standard coordinates
-				else {
-					for (auto pair : initialConc) {
-						concOffset[pair.first] = pair.second;
-					}
+				for (auto pair : initialConc) {
+					concOffset[pair.first] = pair.second;
 				}
 			}
-			if (isSpherical and i == nX - rightOffset and
-				not hasConcentrations) {
-				// Compute the sphere surface at this radius
-				auto loc = (grid[i] + grid[i + 1]) / 2.0 - grid[1];
-				auto surface = 4.0 * ::xolotl::core::pi * loc * loc;
+			if (i == nX - rightOffset and not hasConcentrations and isRecomb) {
 				for (auto pair : initialConc) {
 					concOffset[pair.first] = pair.second;
 				}
@@ -1006,8 +979,8 @@ PetscSolver1DHandler::updateConcentration(
 			hxRight = grid[xi + 1] - grid[xi];
 		}
 
-		// Special case for spherical coordinates
-		if (isSpherical and xi == nX - rightOffset) {
+		// Special case for surface recombination
+		if (xi == nX - rightOffset and isRecomb) {
 			// ---- Compute diffusion over the locally owned part of the grid
 			// -----
 			diffusionHandler->computeDiffusion(network,
@@ -1297,8 +1270,8 @@ PetscSolver1DHandler::computeJacobian(
 	for (auto xi = localXS; xi < localXS + localXM; xi++) {
 		// Boundary conditions
 
-		// Special case for spherical coordinates
-		if (isSpherical and xi == nX - rightOffset) {
+		// Special case for surface recombination
+		if (isRecomb and xi == nX - rightOffset) {
 			// Compute the left and right hx
 			double hxLeft = 0.0, hxRight = 0.0;
 			if (xi >= 1 && xi < nX) {

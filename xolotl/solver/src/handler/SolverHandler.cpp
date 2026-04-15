@@ -40,6 +40,7 @@ SolverHandler::SolverHandler(NetworkType& _network,
 	bubbleBursting(false),
 	isMirror(true),
 	isRobin(false),
+	isRecomb(false),
 	isSpherical(false),
 	useAttenuation(false),
 	sameTemperatureGrid(true),
@@ -586,6 +587,8 @@ SolverHandler::initializeHandlers(core::material::IMaterialHandler* material,
 		isMirror = false;
 	if (opts.getBCString() == "robin")
 		isRobin = true;
+	if (opts.getBCString() == "recombination")
+		isRecomb = true;
 	if (opts.getHeatLossPortion() >= 0.0)
 		isRobin = true;
 
