@@ -91,7 +91,7 @@ NetworkHandlerClassGenerator::NetworkHandlerClassGenerator(
 	_userMaterial(userMaterial),
 	_genDir(fs::current_path() / ".xgrn"),
 	_buildDir(_genDir / "build"),
-	_execFile(boost::dll::program_location().parent_path().string())
+	_execFile(boost::dll::program_location().string())
 {
 	readNetworkFile();
 	_baseName = removeSpaces(_networkData.label) + "_u_";
@@ -1533,6 +1533,7 @@ NetworkHandlerClassGenerator::generateBuild()
 
 	auto execDir = _execFile.parent_path();
 	auto xolotlPrefix = execDir.parent_path();
+    fs::remove_all(_buildDir);
 	fs::create_directories(_buildDir);
 	XOLOTL_LOG_XTRA << "XNGEN: xolotl install prefix: " << xolotlPrefix;
 	std::stringstream cmdss;
@@ -1540,7 +1541,6 @@ NetworkHandlerClassGenerator::generateBuild()
 		  << " -DCMAKE_PREFIX_PATH=" << xolotlPrefix;
 
 	auto outputFile = _buildDir / "out.txt";
-	fs::remove(outputFile);
 	auto redirect = " >> " + outputFile.string() + " 2>&1";
 
 	XOLOTL_LOG_XTRA << "XNGEN: config command: " << cmdss.str();
