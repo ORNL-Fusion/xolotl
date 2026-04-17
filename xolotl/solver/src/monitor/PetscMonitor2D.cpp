@@ -774,6 +774,9 @@ PetscMonitor2D::computeHeliumRetention(
 			for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
 				myConcData[id()] += totals[id()] * hx * hy;
 			}
+
+			// Save the total H concentration
+			_solverHandler->setDefectExtraValue(totals[1], 4, xi - xs, yj - ys);
 		}
 	}
 
@@ -1122,8 +1125,7 @@ PetscMonitor2D::computeXenonRetention(
 			using TQ = core::network::IReactionNetwork::TotalQuantity;
 			using Q = TQ::Type;
 			using TQA = util::Array<TQ, 6>;
-			auto id = core::network::SpeciesId(
-				Spec::Xe, network.getSpeciesListSize());
+			auto id = core::network::SpeciesId(Spec::Xe);
 			auto ms = static_cast<AmountType>(minSizes[id()]);
 			auto totals = network.getTotals(dConcs,
 				TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1},
@@ -1233,11 +1235,15 @@ PetscMonitor2D::computePassData(
 	int procId;
 	MPI_Comm_rank(xolotlComm, &procId);
 
+	// Which defect types we want to look at?
+	auto defectTypes = _solverHandler->getPassingDefectTypes();
+	auto numDefects = defectTypes.size();
+
 	// GB
 	// Get the delta time from the previous timestep to this timestep
 	double dt = time - _solverHandler->getPreviousTime();
 	// Sum and gather the previous flux
-	double globalDefectFlux = 0.0;
+	std::vector<double> globalDefectFlux(numDefects, 0.0);
 	// Get the vector from the solver handler
 	auto gbVector = _solverHandler->getGBVector();
 	// Get the previous Xe flux vector
@@ -1249,23 +1255,27 @@ PetscMonitor2D::computePassData(
 		auto yj = std::get<1>(pair);
 		// Check we are on the right proc
 		if (xi >= xs && xi < xs + xm && yj >= ys && yj < ys + ym) {
-			double previousDefectFlux = localDefects[xi - xs][yj - ys][0][1];
-			globalDefectFlux +=
-				previousDefectFlux * (grid[xi + 1] - grid[xi]) * hy;
-			// Set the amount in the vector we keep
-			_solverHandler->setLocalDefectRate(
-				previousDefectFlux * dt, 0, xi - xs, yj - ys);
+			// Loop on defects
+			for (auto i = 0; i < numDefects; i++) {
+				double previousDefectFlux =
+					localDefects[xi - xs][yj - ys][0][numDefects + i];
+				globalDefectFlux[i] +=
+					previousDefectFlux * (grid[xi + 1] - grid[xi]) * hy;
+				// Set the amount in the vector we keep
+				_solverHandler->setLocalDefectRate(
+					previousDefectFlux * dt, i, xi - xs, yj - ys);
+			}
 		}
 	}
-	double totalDefectFlux = 0.0;
-	MPI_Reduce(&globalDefectFlux, &totalDefectFlux, 1, MPI_DOUBLE, MPI_SUM, 0,
-		xolotlComm);
+	auto totalDefectFlux = std::vector<double>(numDefects, 0.0);
+	MPI_Reduce(globalDefectFlux.data(), totalDefectFlux.data(), numDefects,
+		MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 	// Master process
 	if (procId == 0) {
 		// Get the previous value of Xe that went to the GB
 		double nXenon = _solverHandler->getNXeGB();
 		// Compute the total number of Xe that went to the GB
-		nXenon += totalDefectFlux * dt;
+		nXenon += totalDefectFlux[0] * dt;
 		_solverHandler->setNXeGB(nXenon);
 	}
 
@@ -1339,20 +1349,16 @@ PetscMonitor2D::computePassData(
 			// Middle
 			xi = std::get<0>(pair);
 			yj = std::get<1>(pair);
-			_solverHandler->setPreviousDefectFlux(
-				myRate[0], 0, xi - xs, yj - ys);
+
+			// Loop on the defects
+			for (auto i = 0; i < numDefects; i++) {
+				// Find the rate index
+				auto clusterSpecies = network.parseSpeciesId(defectTypes[i]);
+				std::cout << i << " " << clusterSpecies << std::endl;
+				_solverHandler->setPreviousDefectFlux(
+					myRate[clusterSpecies], i, xi - xs, yj - ys);
+			}
 		}
-	}
-
-	// Master process
-	if (procId == 0) {
-		// Compute the total surface irradiated
-		double surface = (double)My * hy;
-		// Get the number of Xe that went to the GB
-		double nXenon = _solverHandler->getNXeGB();
-
-		// Print the result
-		XOLOTL_LOG << "Xenon GB = " << nXenon / surface << "\n\n";
 	}
 
 	// Restore the solutionArray

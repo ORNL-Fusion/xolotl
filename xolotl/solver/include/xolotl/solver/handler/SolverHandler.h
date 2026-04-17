@@ -5,6 +5,7 @@
 #include <xolotl/solver/handler/ISolverHandler.h>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/RandomNumberGenerator.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -32,6 +33,9 @@ protected:
 	 * The first pair is the location of a grid point (X,Y),
 	 */
 	std::vector<std::array<IdType, 3>> gbVector;
+
+	//! The vector of defect types to be passed
+	std::vector<std::string> defectTypes;
 
 	//! The name of the network file
 	std::string restartFile;
@@ -352,6 +356,25 @@ public:
 	getLocalDefects() override
 	{
 		return localDefects;
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	void
+	setPassingDefectTypes(std::string types) override
+	{
+		// Read the type and save them in a vector
+		defectTypes = util::Tokenizer<>{types}();
+	}
+
+	/**
+	 * \see ISolverHandler.h
+	 */
+	std::vector<std::string>
+	getPassingDefectTypes() override
+	{
+		return defectTypes;
 	}
 
 	/**

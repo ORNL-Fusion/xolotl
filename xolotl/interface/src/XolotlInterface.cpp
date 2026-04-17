@@ -238,6 +238,13 @@ XolotlInterface::setLocalDefects(
 CATCH
 
 void
+XolotlInterface::setPassingDefectTypes(std::string types) TRY
+{
+	solverCast(solver)->getSolverHandler()->setPassingDefectTypes(types);
+}
+CATCH
+
+void
 XolotlInterface::getLocalCoordinates(IdType& xs, IdType& xm, IdType& Mx,
 	IdType& ys, IdType& ym, IdType& My, IdType& zs, IdType& zm, IdType& Mz) TRY
 {

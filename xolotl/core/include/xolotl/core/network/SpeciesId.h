@@ -11,6 +11,9 @@ namespace core
 {
 namespace network
 {
+template <typename TSpeciesEnum>
+struct NumberOfSpecies;
+
 class InvalidSpeciesId : public std::runtime_error
 {
 public:
@@ -36,9 +39,9 @@ public:
 
 	template <typename TSpeciesEnum,
 		std::enable_if_t<std::is_enum<TSpeciesEnum>::value, int> = 0>
-	SpeciesId(TSpeciesEnum species, int numberOfSpecies) :
+	SpeciesId(TSpeciesEnum species) :
 		_id(static_cast<std::underlying_type_t<TSpeciesEnum>>(species)),
-		_nSpec(numberOfSpecies)
+		_nSpec(NumberOfSpecies<TSpeciesEnum>::value)
 	{
 	}
 
@@ -88,6 +91,13 @@ public:
 private:
 	int _id{0};
 	int _nSpec;
+
+	friend std::ostream&
+	operator<<(std::ostream& os, SpeciesId id)
+	{
+		os << id();
+		return os;
+	}
 };
 } // namespace network
 } // namespace core

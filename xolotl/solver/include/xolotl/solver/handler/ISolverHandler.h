@@ -353,6 +353,22 @@ public:
 	getLocalDefects() = 0;
 
 	/**
+	 * Set the types of defects we want to pass.
+	 *
+	 * @param types The names of defects
+	 */
+	virtual void
+	setPassingDefectTypes(std::string types) = 0;
+
+	/**
+	 * Get the types of defects we want to pass.
+	 *
+	 * @return The names of defects
+	 */
+	virtual std::vector<std::string>
+	getPassingDefectTypes() = 0;
+
+	/**
 	 * Get the network temperature and depth that can be passed to an app.
 	 *
 	 * @param temperatures The local vector of temperatures

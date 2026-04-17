@@ -195,6 +195,14 @@ public:
 			rateVector);
 
 	/**
+	 * Set the type of defects to pass to an app
+	 *
+	 * @param types The types
+	 */
+	void
+	setPassingDefectTypes(std::string types);
+
+	/**
 	 * Get the local coordinates of the grid, sizes and indices
 	 *
 	 * @param xs, xm The start and width in the X direction on the local MPI
