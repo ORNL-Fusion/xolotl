@@ -228,37 +228,45 @@ public:
 						normFactors[index] +=
 							FitFunction(x, index) * (xGrid[i + 1] - xGrid[i]);
 					}
-
-					// Factor the incident flux will be multiplied by to get
-					// the wanted intensity
-					double fluxNormalized = 0.0;
-					if (normFactors[index] > 0.0) {
-						fluxNormalized = fluxAmplitude *
-							reductionFactors[index] / normFactors[index];
-					}
-
+					
 					// Clear the flux vector
 					incidentFluxVec[index].clear();
 					// The first value corresponding to the surface position
 					// should always be 0.0
 					incidentFluxVec[index].push_back(0.0);
+					if (normFactors[index] > 0.0) {
+					        // Factor the incident flux will be multiplied by to get
+					        // the wanted intensity
+						double fluxNormalized = fluxAmplitude *
+							reductionFactors[index] / normFactors[index];
+							
+					        // Starts at i = surfacePos + 1 because the first value was
+					        // already put in the vector
+					        for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
+						        // Get the x position
+						        auto x = (xGrid[i] + xGrid[i + 1]) / 2.0 -
+							        xGrid[surfacePos + 1];
 
-					// Starts at i = surfacePos + 1 because the first value was
-					// already put in the vector
-					for (int i = surfacePos + 1; i < xGrid.size() - 3; i++) {
-						// Get the x position
-						auto x = (xGrid[i] + xGrid[i + 1]) / 2.0 -
-							xGrid[surfacePos + 1];
+						        // Compute the flux value
+						        double incFlux = fluxNormalized * FitFunction(x, index);
+						        // Add it to the vector
+						        incidentFluxVec[index].push_back(incFlux);
+					        }
 
-						// Compute the flux value
-						double incFlux = fluxNormalized * FitFunction(x, index);
-						// Add it to the vector
-						incidentFluxVec[index].push_back(incFlux);
+					        // The last value should always be 0.0 because of boundary
+					        // conditions
+					        incidentFluxVec[index].push_back(0.0);
 					}
-
-					// The last value should always be 0.0 because of boundary
-					// conditions
-					incidentFluxVec[index].push_back(0.0);
+					else {
+					        // The grid spacing is too wide, put the full amount in the first grid point
+					        int i = surfacePos + 1;
+					        incidentFluxVec[index].push_back((fluxAmplitude *
+							reductionFactors[index]) / (xGrid[i + 1] - xGrid[i]));
+							
+					        for (int i = surfacePos + 2; i < xGrid.size() - 2; i++) {
+						        incidentFluxVec[index].push_back(0.0);
+					        }
+					}
 				}
 
 				// Read the next line
