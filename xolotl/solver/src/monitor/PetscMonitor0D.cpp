@@ -613,7 +613,8 @@ PetscMonitor0D::monitorBubble(
 	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
 
 	// Get the network
-	using NetworkType = core::network::VReactionNetwork;
+	using NetworkType = core::network::FeReactionNetwork;
+	// using NetworkType = core::network::VReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using Region = typename NetworkType::Region;
