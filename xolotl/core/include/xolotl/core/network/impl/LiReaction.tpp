@@ -61,6 +61,7 @@ KOKKOS_INLINE_FUNCTION
 double
 LiDissociationReaction::computeBindingEnergy(double time)
 {
+        return 1.6; // Dissociation energy
 	double be = 5.0;
 
 	return util::min(5.0, util::max(be, -5.0));

@@ -45,6 +45,10 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
 
 	virtual PetscErrorCode
+	computeHydrogenRetention(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
+
+	virtual PetscErrorCode
 	computeTritiumRelease(
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) = 0;
 

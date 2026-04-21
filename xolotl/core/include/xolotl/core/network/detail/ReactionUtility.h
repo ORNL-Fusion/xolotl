@@ -231,7 +231,8 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
  */
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
-std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1),
+std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1 and
+numberOfInterstitialSpecies<typename TRegion::EnumIndex>() == 1),
 	Kokkos::Array<
 		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
 		4>>
@@ -280,6 +281,50 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 			Ival(pr2Reg[Species::V].begin() - pr2Reg[Species::I].end() + 1,
 				pr2Reg[Species::V].end() - pr2Reg[Species::I].begin());
 	}
+	return {cl1RR, cl2RR, pr1RR, pr2RR};
+}
+
+/**
+ * @brief Specific case with one type of V but no I
+ *
+ * @tparam Dim The number of dimension for the reflected region
+ * @tparam TRegion The region where the I needs to be reflected
+ */
+template <std::size_t Dim, typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1 and
+numberOfInterstitialSpecies<typename TRegion::EnumIndex>() == 0),
+	Kokkos::Array<
+		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
+		4>>
+updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
+	const TRegion& pr1Reg, const TRegion& pr2Reg)
+{
+	using Species = typename TRegion::EnumIndex;
+	using Ival =
+		plsm::Interval<plsm::DifferenceType<typename TRegion::ScalarType>>;
+
+	// Initialize the reflected regions
+	auto rRegions = initReflectedRegions<Dim>(cl1Reg, cl2Reg, pr1Reg, pr2Reg);
+	auto cl1RR = rRegions[0];
+	auto cl2RR = rRegions[1];
+	auto pr1RR = rRegions[2];
+	auto pr2RR = rRegions[3];
+	auto vIndex = static_cast<std::underlying_type_t<Species>>(Species::V);
+	// Project on V
+	cl1RR[vIndex] =
+		Ival(cl1Reg[Species::V].begin(),
+			cl1Reg[Species::V].end());
+	cl2RR[vIndex] =
+		Ival(cl2Reg[Species::V].begin(),
+			cl2Reg[Species::V].end());
+	pr1RR[vIndex] =
+		Ival(pr1Reg[Species::V].begin(),
+			pr1Reg[Species::V].end());
+	pr2RR[vIndex] =
+		Ival(pr2Reg[Species::V].begin(),
+			pr2Reg[Species::V].end());
+	
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
 
@@ -335,7 +380,8 @@ getReflectedDispersionForCoefs(const TRegion& clReg)
  */
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
-std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1),
+std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1 and
+numberOfInterstitialSpecies<typename TRegion::EnumIndex>() == 1),
 	plsm::SpaceVector<double, Dim>>
 getReflectedDispersionForCoefs(const TRegion& clReg)
 {
@@ -344,6 +390,23 @@ getReflectedDispersionForCoefs(const TRegion& clReg)
 	auto vIndex = static_cast<std::underlying_type_t<Species>>(Species::V);
 	auto iIndex = static_cast<std::underlying_type_t<Species>>(Species::I);
 	disp[vIndex] += disp[iIndex] - 1.0;
+	return disp;
+}
+
+/**
+ * @brief Specific case with one V and no I.
+ *
+ * @tparam Dim The number of dimension for the reflected region
+ * @tparam TRegion The region where the I needs to be reflected
+ */
+template <std::size_t Dim, typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1 and
+numberOfInterstitialSpecies<typename TRegion::EnumIndex>() == 0),
+	plsm::SpaceVector<double, Dim>>
+getReflectedDispersionForCoefs(const TRegion& clReg)
+{
+	auto disp = clReg.dispersion();
 	return disp;
 }
 

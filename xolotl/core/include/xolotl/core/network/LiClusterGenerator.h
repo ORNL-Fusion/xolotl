@@ -68,6 +68,7 @@ public:
 private:
 	// Maximum size of single species
 	AmountType _maxH{1};
+	AmountType _maxV{1};
 };
 } // namespace network
 } // namespace core

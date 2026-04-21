@@ -14,9 +14,15 @@ bool
 LiClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
 	result[0] = true;
+	result[1] = true;
 
 	// H is never grouped
 	if (region[Species::H].begin() > 0) {
+		return true;
+	}
+
+	// V is never grouped
+	if (region[Species::V].begin() > 0) {
 		return true;
 	}
 
@@ -27,9 +33,18 @@ KOKKOS_INLINE_FUNCTION
 bool
 LiClusterGenerator::select(const Region& region) const
 {
-	// Remove 0
-	if (region[Species::H].end() == 1) {
+        int nAxis = (region[Species::H].begin() > 0) +
+		(region[Species::V].begin() > 0);
+
+	if (nAxis > 1) {
 		return false;
+	}
+
+	if (region.isSimplex()) {
+		// Each cluster should be on one axis and one axis only
+		if (nAxis != 1) {
+			return false;
+		}
 	}
 
 	return true;
@@ -41,9 +56,14 @@ double
 LiClusterGenerator::getMigrationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
-	// From paper: 141.5 kJ mol-1
-	//	return 0.0;
-	return 141500.0 * xolotl::core::kBoltzmann / 8.314;
+	const auto& reg = cluster.getRegion();
+	Composition comp(reg.getOrigin());
+	double migrationEnergy = util::infinity<double>;
+	if (comp.isOnAxis(Species::H)) {
+		return 0.5;
+	}
+	
+	return migrationEnergy;
 }
 
 template <typename PlsmContext>
@@ -52,11 +72,14 @@ double
 LiClusterGenerator::getDiffusionFactor(
 	const Cluster<PlsmContext>& cluster, double latticeParameter) const noexcept
 {
-	// From paper: 1.29e-5 m2 s-1
-	return 1.29e13;
-	//	return 6.86e6;
-	//	return 1.18e6;
-	//	return 1.0e4;
+	const auto& reg = cluster.getRegion();
+	Composition comp(reg.getOrigin());
+	double diffusionFactor = 0.0;
+	if (comp.isOnAxis(Species::H)) {
+	        return 4.07e15;
+	}
+	
+	return diffusionFactor;
 }
 
 template <typename PlsmContext>
@@ -66,8 +89,13 @@ LiClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	double latticeParameter, double interstitialBias,
 	double impurityRadius) const noexcept
 {
-	// TODO
-	return impurityRadius;
+	const auto& reg = cluster.getRegion();
+	Composition comp(reg.getOrigin());
+	if (comp.isOnAxis(Species::H)) {
+	        return 0.0529;
+	}
+	
+	return latticeParameter;
 }
 } // namespace network
 } // namespace core

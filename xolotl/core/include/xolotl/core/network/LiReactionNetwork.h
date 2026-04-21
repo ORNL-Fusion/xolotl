@@ -97,8 +97,8 @@ private:
 	double
 	computeAtomicVolume(double latticeParameter)
 	{
-		// TODO
-		return 0.5 * latticeParameter * latticeParameter * latticeParameter;
+		// 4 atoms per cell
+		return 0.25 * latticeParameter * latticeParameter * latticeParameter;
 	}
 
 	double

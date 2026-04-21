@@ -90,6 +90,16 @@ computeHeliumRetention(
 }
 
 PetscErrorCode
+computeHydrogenRetention(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
+{
+	PetscFunctionBeginUser;
+	PetscCall(static_cast<IPetscMonitor*>(ictx)->computeHydrogenRetention(
+		ts, timestep, time, solution));
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
 computeTritiumRelease(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
@@ -429,6 +439,13 @@ PetscMonitor::monitorPerf(
 
 PetscErrorCode
 PetscMonitor::computeHeliumRetention(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor::computeHydrogenRetention(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	PetscFunctionReturn(0);

@@ -68,6 +68,10 @@ public:
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 
 	PetscErrorCode
+	computeHydrogenRetention(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
+
+	PetscErrorCode
 	computeTritiumRelease(
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
 

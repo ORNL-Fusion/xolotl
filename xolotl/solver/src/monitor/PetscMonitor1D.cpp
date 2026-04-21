@@ -92,7 +92,7 @@ PetscMonitor1D::setup(int loop)
 	// Flags to launch the monitors or not
 	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,
 		flagPerf, flagHeRetention, flagStatus, flagXeRetention, flagTRIDYN,
-		flagAlloy, flagTemp, flagLargest, flagZr, flagLi;
+		flagAlloy, flagTemp, flagLargest, flagZr, flagLi, flagHRetention;
 
 	// Check the option -check_negative
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-check_negative", &flagNeg));
@@ -120,6 +120,10 @@ PetscMonitor1D::setup(int loop)
 	// Check the option -xenon_retention
 	PetscCallVoid(
 		PetscOptionsHasName(NULL, NULL, "-xenon_retention", &flagXeRetention));
+
+	// Check the option -hydrogen_retention
+	PetscCallVoid(PetscOptionsHasName(
+		NULL, NULL, "-hydrogen_retention", &flagHRetention));
 
 	// Check the option -start_stop
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus));
@@ -574,6 +578,45 @@ PetscMonitor1D::setup(int loop)
 			outputFile << "#time Xenon_content radius partial_radius "
 						  "partial_bubble_conc partial_size"
 					   << std::endl;
+			outputFile.close();
+		}
+	}
+
+	// Set the monitor to compute the hydrogen retention
+	if (flagHRetention) {
+		// Get the da from _ts
+		DM da;
+		PetscCallVoid(TSGetDM(_ts, &da));
+
+		// Get the previous time if concentrations were stored and initialize
+		// the fluence
+		if (hasConcentrations and _loopNumber == 0) {
+			assert(lastTsGroup);
+
+			// Get the previous time from the HDF5 file
+			double previousTime = lastTsGroup->readPreviousTime();
+			_solverHandler->setPreviousTime(previousTime);
+			// Initialize the fluence
+			auto fluxHandler = _solverHandler->getFluxHandler();
+			// Increment the fluence with the value at this current timestep
+			auto fluences = lastTsGroup->readFluence();
+			fluxHandler->setFluence(fluences);
+		}
+
+		// computeFluence will be called at each timestep
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeFluence, this, nullptr));
+
+		// computeHydrogenRetention will be called at each timestep
+		PetscCallVoid(TSMonitorSet(
+			_ts, monitor::computeHydrogenRetention, this, nullptr));
+
+		// Master process
+		if (procId == 0 and _loopNumber == 0) {
+			// Uncomment to clear the file where the retention will be written
+			std::ofstream outputFile;
+			outputFile.open("retentionOut.txt");
+			outputFile << "#time fluence hydrogen_content" << std::endl;
 			outputFile.close();
 		}
 	}
@@ -1390,6 +1433,130 @@ PetscMonitor1D::computeXenonRetention(
 		outputFile << time << " " << totalConcData[0] << " " << averageRadius
 				   << " " << averagePartialRadius << " " << totalConcData[3]
 				   << " " << averagePartialSize << std::endl;
+		outputFile.close();
+	}
+
+	// Restore the solutionArray
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, localSolution, &solutionArray));
+	PetscCall(DMRestoreLocalVector(da, &localSolution));
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor1D::computeHydrogenRetention(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	// Initial declarations
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+
+	PetscFunctionBeginUser;
+
+	// Get local coordinates
+	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
+
+	// Get the flux handler that will be used to know the fluence
+	auto fluxHandler = _solverHandler->getFluxHandler();
+
+	// Get the da from ts
+	DM da;
+	PetscCall(TSGetDM(ts, &da));
+
+	// Get the physical grid
+	auto grid = _solverHandler->getXGrid();
+
+	// Get the network
+	using NetworkType = core::network::LiReactionNetwork;
+	using AmountType = NetworkType::AmountType;
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+	const auto dof = network.getDOF();
+
+	// Get the complete data array, including ghost cells
+	Vec localSolution;
+	PetscCall(DMGetLocalVector(da, &localSolution));
+	PetscCall(DMGlobalToLocalBegin(da, solution, INSERT_VALUES, localSolution));
+	PetscCall(DMGlobalToLocalEnd(da, solution, INSERT_VALUES, localSolution));
+	// Get the array of concentration
+	PetscReal** solutionArray;
+	PetscCall(DMDAVecGetArrayDOFRead(da, localSolution, &solutionArray));
+
+	// Store the concentration over the grid
+	auto numSpecies = network.getSpeciesListSize();
+	auto myConcData = std::vector<double>(numSpecies, 0.0);
+
+	// Declare the pointer for the concentrations at a specific grid point
+	PetscReal* gridPointSolution;
+
+	// Loop on the grid
+	for (auto xi = xs; xi < xs + xm; xi++) {
+		// Boundary conditions
+		if (xi < _solverHandler->getLeftOffset() ||
+			xi >= Mx - _solverHandler->getRightOffset())
+			continue;
+
+		// Get the pointer to the beginning of the solution data for this grid
+		// point
+		gridPointSolution = solutionArray[xi];
+
+		double hx = grid[xi + 1] - grid[xi];
+
+		using HostUnmanaged =
+			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
+		auto hConcs = HostUnmanaged(gridPointSolution, dof);
+		auto dConcs = Kokkos::View<double*>("Concentrations", dof);
+		deep_copy(dConcs, hConcs);
+
+		// Get the total concentrations at this grid point
+		using Quant = core::network::IReactionNetwork::TotalQuantity;
+		std::vector<Quant> quant;
+		quant.reserve(numSpecies);
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			quant.push_back({Quant::Type::atom, id, 1});
+		}
+		auto totals = network.getTotalsVec(dConcs, quant);
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			myConcData[id()] += totals[id()] * hx;
+		}
+	}
+
+	// Get the current process ID
+	auto xolotlComm = util::getMPIComm();
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+
+	// Determine total concentrations for He, D, T.
+	auto totalConcData = std::vector<double>(numSpecies, 0.0);
+
+	MPI_Reduce(myConcData.data(), totalConcData.data(), numSpecies, MPI_DOUBLE,
+		MPI_SUM, 0, xolotlComm);
+
+	// Get the delta time from the previous timestep to this timestep
+	double previousTime = _solverHandler->getPreviousTime();
+	double dt = time - previousTime;
+
+	// Master process
+	if (procId == 0) {
+		// Get the fluence
+		auto fluence = fluxHandler->getFluence();
+
+		// Print the result
+		util::StringStream ss;
+		ss << std::endl << "Time: " << time << std::endl;
+		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
+			ss << network.getSpeciesName(id)
+			   << " content = " << totalConcData[id()] << std::endl;
+		}
+		ss << "Fluence = " << fluence[0] << std::endl << std::endl;
+		XOLOTL_LOG << ss.str();
+
+		// Write the retention and the fluence in a file
+		std::ofstream outputFile;
+		outputFile.open("retentionOut.txt", std::ios::app);
+		outputFile << time << " ";
+		for (auto flu : fluence) {
+			outputFile << flu << " ";
+		}
+		outputFile << totalConcData[0] << std::endl;
 		outputFile.close();
 	}
 

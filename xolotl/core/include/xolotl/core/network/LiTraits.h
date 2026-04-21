@@ -20,25 +20,26 @@ class LiClusterGenerator;
 
 enum class LiSpecies
 {
-	H
+	H,
+	V
 };
 
 inline const std::string&
 toLabelString(LiSpecies species)
 {
-	static const std::string labelArray[] = {"H"};
+	static const std::string labelArray[] = {"H", "V"};
 	return labelArray[static_cast<int>(species)];
 }
 
 inline const std::string&
 toNameString(LiSpecies species)
 {
-	static const std::string nameArray[] = {"Hydrogen"};
+	static const std::string nameArray[] = {"Hydrogen", "Vacancy"};
 	return nameArray[static_cast<int>(species)];
 }
 
 template <>
-struct NumberOfSpecies<LiSpecies> : std::integral_constant<std::size_t, 1>
+struct NumberOfSpecies<LiSpecies> : std::integral_constant<std::size_t, 2>
 {
 };
 
@@ -50,20 +51,20 @@ struct NumberOfInterstitialSpecies<LiSpecies> :
 
 template <>
 struct NumberOfVacancySpecies<LiSpecies> :
-	std::integral_constant<std::size_t, 0>
+	std::integral_constant<std::size_t, 1>
 {
 };
 
 template <>
-struct SpeciesForGrouping<LiSpecies, 1>
+struct SpeciesForGrouping<LiSpecies, 2>
 {
-	using Sequence = EnumSequence<LiSpecies, 1>;
+	using Sequence = EnumSequence<LiSpecies, 2>;
 	static constexpr auto first = Sequence(LiSpecies::H);
-	static constexpr auto last = Sequence(LiSpecies::H);
+	static constexpr auto last = Sequence(LiSpecies::V);
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::underlying_type_t<LiSpecies>
-	mapToMomentId(EnumSequence<LiSpecies, 1> value)
+	mapToMomentId(EnumSequence<LiSpecies, 2> value)
 	{
 		return value();
 	}
@@ -74,7 +75,7 @@ struct ReactionNetworkTraits<LiReactionNetwork>
 {
 	using Species = LiSpecies;
 
-	static constexpr std::size_t numSpecies = 1;
+	static constexpr std::size_t numSpecies = 2;
 
 	// using ReactionType = LiReaction;
 	using ProductionReactionType = LiProductionReaction;

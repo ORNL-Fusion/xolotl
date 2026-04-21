@@ -19,9 +19,11 @@ auto liNetworkGenerator = [](const options::IOptions& options) {
 
 	// Get the boundaries from the options
 	NetworkType::AmountType maxH = options.getMaxImpurity();
+	NetworkType::AmountType maxV = options.getMaxV();
 
-	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxH};
-	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {{maxH + 1}};
+	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxH, maxV};
+	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
+		{maxH + 1, maxV + 1}};
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 
