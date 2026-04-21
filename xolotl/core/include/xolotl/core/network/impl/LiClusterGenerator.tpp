@@ -36,15 +36,8 @@ LiClusterGenerator::select(const Region& region) const
         int nAxis = (region[Species::H].begin() > 0) +
 		(region[Species::V].begin() > 0);
 
-	if (nAxis > 1) {
+	if (nAxis == 0) {
 		return false;
-	}
-
-	if (region.isSimplex()) {
-		// Each cluster should be on one axis and one axis only
-		if (nAxis != 1) {
-			return false;
-		}
 	}
 
 	return true;

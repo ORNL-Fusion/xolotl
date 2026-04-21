@@ -37,7 +37,7 @@ LiProductionReaction::getRateForProduction(IndexType gridIndex)
 
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
-
+	
 	return li::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
 }
 
