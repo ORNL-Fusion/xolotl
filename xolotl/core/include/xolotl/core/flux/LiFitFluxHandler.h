@@ -71,9 +71,52 @@ public:
 				"cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
+		
+		// Vacancy
+		comp[NetworkType::Species::H] = 0;
+		comp[NetworkType::Species::V] = 1;
+		cluster = liNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error(
+				"\nThe single vacancy cluster is not present in the network, "
+				"cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
 
 		return;
 	}
+
+	/**
+	 * \see IFluxHandler.h
+	 */
+        void
+        computeIncidentFlux(double currentTime,
+	        Kokkos::View<const double*>, Kokkos::View<double*> updatedConcOffset,
+	        int xi, int surfacePos)
+        {
+	        // Skip if no index was set
+	        if (fluxIndices.size() == 0)
+		        return;
+
+	        // Recompute the flux vector if a time profile is used
+	        if (useTimeProfile) {
+		        fluxAmplitude = getProfileAmplitude(currentTime);
+		        recomputeFluxHandler(surfacePos);
+	        }
+
+	        double value{};
+	        if (incidentFluxVec[0].size() == 0) {
+		        value = fluxAmplitude;
+	        }
+	        else {
+		        value = incidentFluxVec[0][xi - surfacePos];
+	        }
+
+		auto ids = fluxIndices;
+	        // Update the concentration array
+	        Kokkos::parallel_for(
+		        ids.size(), KOKKOS_LAMBDA(std::size_t i) { updatedConcOffset[ids[i]] += value; });
+        }
 };
 // end class LiFitFluxHandler
 
