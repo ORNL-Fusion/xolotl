@@ -104,13 +104,7 @@ public:
 		        recomputeFluxHandler(surfacePos);
 	        }
 
-	        double value{};
-	        if (incidentFluxVec[0].size() == 0) {
-		        value = fluxAmplitude;
-	        }
-	        else {
-		        value = incidentFluxVec[0][xi - surfacePos];
-	        }
+	        double value{fluxAmplitude};
 
 		auto ids = fluxIndices;
 	        // Update the concentration array

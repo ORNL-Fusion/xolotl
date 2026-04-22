@@ -1482,7 +1482,7 @@ PetscMonitor1D::computeHydrogenRetention(
 
 	// Store the concentration over the grid
 	auto numSpecies = network.getSpeciesListSize();
-	auto myConcData = std::vector<double>(numSpecies, 0.0);
+	auto myConcData = std::vector<double>(numSpecies + 1, 0.0);
 
 	// Declare the pointer for the concentrations at a specific grid point
 	PetscReal* gridPointSolution;
@@ -1499,6 +1499,11 @@ PetscMonitor1D::computeHydrogenRetention(
 		gridPointSolution = solutionArray[xi];
 
 		double hx = grid[xi + 1] - grid[xi];
+		// Compute the sphere surface at this radius
+		auto loc = (grid[xi] + grid[xi + 1]) / 2.0 - grid[1];
+		auto surface = 4.0 * ::xolotl::core::pi * loc * loc;
+		// Update the local volume
+		myConcData[numSpecies] += hx * surface;
 
 		using HostUnmanaged =
 			Kokkos::View<double*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged>;
@@ -1515,7 +1520,7 @@ PetscMonitor1D::computeHydrogenRetention(
 		}
 		auto totals = network.getTotalsVec(dConcs, quant);
 		for (auto id = core::network::SpeciesId(numSpecies); id; ++id) {
-			myConcData[id()] += totals[id()] * hx;
+			myConcData[id()] += totals[id()] * hx * surface;
 		}
 	}
 
@@ -1525,10 +1530,10 @@ PetscMonitor1D::computeHydrogenRetention(
 	MPI_Comm_rank(xolotlComm, &procId);
 
 	// Determine total concentrations for He, D, T.
-	auto totalConcData = std::vector<double>(numSpecies, 0.0);
+	auto totalConcData = std::vector<double>(numSpecies + 1, 0.0);
 
-	MPI_Reduce(myConcData.data(), totalConcData.data(), numSpecies, MPI_DOUBLE,
-		MPI_SUM, 0, xolotlComm);
+	MPI_Reduce(myConcData.data(), totalConcData.data(), numSpecies + 1,
+		MPI_DOUBLE, MPI_SUM, 0, xolotlComm);
 
 	// Get the delta time from the previous timestep to this timestep
 	double previousTime = _solverHandler->getPreviousTime();
@@ -1546,7 +1551,9 @@ PetscMonitor1D::computeHydrogenRetention(
 			ss << network.getSpeciesName(id)
 			   << " content = " << totalConcData[id()] << std::endl;
 		}
-		ss << "Fluence = " << fluence[0] << std::endl << std::endl;
+		ss << "Total generated H = " << fluence[0] * totalConcData[numSpecies]
+		   << std::endl
+		   << std::endl;
 		XOLOTL_LOG << ss.str();
 
 		// Write the retention and the fluence in a file
@@ -1554,7 +1561,7 @@ PetscMonitor1D::computeHydrogenRetention(
 		outputFile.open("retentionOut.txt", std::ios::app);
 		outputFile << time << " ";
 		for (auto flu : fluence) {
-			outputFile << flu << " ";
+			outputFile << flu * totalConcData[numSpecies] << " ";
 		}
 		outputFile << totalConcData[0] << std::endl;
 		outputFile.close();
