@@ -23,11 +23,21 @@ namespace solver
 namespace monitor
 {
 PetscErrorCode
-monitorBubble(
+monitorBubbleV(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
-	PetscCall(static_cast<PetscMonitor0D*>(ictx)->monitorBubble(
+	PetscCall(static_cast<PetscMonitor0D*>(ictx)->monitorBubbleV(
+		ts, timestep, time, solution));
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+monitorBubbleFe(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
+{
+	PetscFunctionBeginUser;
+	PetscCall(static_cast<PetscMonitor0D*>(ictx)->monitorBubbleFe(
 		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
@@ -41,7 +51,7 @@ PetscMonitor0D::setup(int loop)
 	auto vizHandlerRegistry = _solverHandler->getVizHandler();
 
 	// Flags to launch the monitors or not
-	PetscBool flagCheck, flag1DPlot, flagBubble, flagStatus, flagAlloy,
+	PetscBool flagCheck, flag1DPlot, flagBubbleV, flagBubbleFe, flagStatus, flagAlloy,
 		flagXeRetention, flagLargest, flagZr;
 
 	// Check the option -check_collapse
@@ -54,9 +64,12 @@ PetscMonitor0D::setup(int loop)
 	// Check the option -start_stop
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus));
 
-	// Check the option -bubble
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-bubble", &flagBubble));
-
+	// Check the option -bubble_v
+	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-bubble_v", &flagBubbleV));
+	
+	// Check the option -bubble_fe
+	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-bubble_fe", &flagBubbleFe));
+	
 	// Check the option -alloy
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-alloy", &flagAlloy));
 
@@ -127,10 +140,16 @@ PetscMonitor0D::setup(int loop)
 			TSMonitorSet(_ts, monitor::monitorScatter, this, nullptr));
 	}
 
-	// Set the monitor to save text file of the mean concentration of bubbles
-	if (flagBubble) {
-		// monitorBubble0D will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorBubble, this, nullptr));
+	// Set the monitor to save text file of the mean concentration of bubbles using vanadium reaction network
+	if (flagBubbleV) {
+		// monitorBubbleV will be called at each timestep
+		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorBubbleV, this, nullptr));
+	}
+	
+	// Set the monitor to save text file of the mean concentration of bubbles using Fe reaction network
+	if (flagBubbleFe) {
+		// monitorBubbleFe will be called at each timestep
+		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorBubbleFe, this, nullptr));
 	}
 
 	// Set the monitor to output data for Alloy
@@ -591,9 +610,80 @@ PetscMonitor0D::monitorScatter(
 
 	PetscFunctionReturn(0);
 }
-
+// Bubble Monitor function for using Vanadium reaction Network
 PetscErrorCode
-PetscMonitor0D::monitorBubble(
+PetscMonitor0D::monitorBubbleV(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	// Initial declaration
+	double **solutionArray, *gridPointSolution;
+
+	PetscFunctionBeginUser;
+
+	// Don't do anything if it is not on the stride
+	//	if (timestep % 10 != 0)
+	//		PetscFunctionReturn(0);
+
+	// Get the da from ts
+	DM da;
+	PetscCall(TSGetDM(ts, &da));
+
+	// Get the solutionArray
+	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
+
+	// Get the network
+	using NetworkType = core::network::VReactionNetwork;
+	using Spec = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	using Region = typename NetworkType::Region;
+
+	// Get the network and its size
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+	const auto networkSize = network.getNumClusters();
+
+	// Create the output file
+	std::ofstream outputFile;
+	std::stringstream name;
+	name << "bubble_v_" << timestep << ".dat";
+	outputFile.open(name.str());
+	outputFile << "#lo_He hi_He lo_V hi_V conc" << std::endl;
+
+	// Get the pointer to the beginning of the solution data for this grid point
+	gridPointSolution = solutionArray[0];
+
+	// Initialize the total helium and concentration before looping
+	double concTot = 0.0, heliumTot = 0.0;
+
+	// Consider each cluster.
+	for (auto i = 0; i < networkSize; i++) {
+		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
+		const Region& clReg = cluster.getRegion();
+		Composition lo = clReg.getOrigin();
+		Composition hi = clReg.getUpperLimitPoint();
+
+		if (lo.isOnAxis(Spec::I) || lo.isOnAxis(Spec::V) ||
+			lo.isOnAxis(Spec::He))
+			continue;
+
+		// For compatibility with previous versions, we output
+		// the value of a closed upper bound of the He and V intervals.
+		outputFile << lo[Spec::He] << " " << hi[Spec::He] - 1 << " "
+				   << lo[Spec::V] << " " << hi[Spec::V] - 1 << " "
+				   << gridPointSolution[i] << std::endl;
+	}
+
+	// Close the file
+	outputFile.close();
+
+	// Restore the solutionArray
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
+
+	PetscFunctionReturn(0);
+}
+
+// Bubble Monitor function for using Fe reaction Network
+PetscErrorCode
+PetscMonitor0D::monitorBubbleFe(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
 	// Initial declaration
@@ -614,7 +704,6 @@ PetscMonitor0D::monitorBubble(
 
 	// Get the network
 	using NetworkType = core::network::FeReactionNetwork;
-	// using NetworkType = core::network::VReactionNetwork;
 	using Spec = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using Region = typename NetworkType::Region;
@@ -626,7 +715,7 @@ PetscMonitor0D::monitorBubble(
 	// Create the output file
 	std::ofstream outputFile;
 	std::stringstream name;
-	name << "bubble_" << timestep << ".dat";
+	name << "bubble_fe_" << timestep << ".dat";
 	outputFile.open(name.str());
 	outputFile << "#lo_He hi_He lo_V hi_V conc" << std::endl;
 
