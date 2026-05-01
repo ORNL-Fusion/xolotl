@@ -142,6 +142,13 @@ PetscMonitor0D::setup(int loop)
 
 	// Set the monitor to save text file of the mean concentration of bubbles using vanadium reaction network
 	if (flagBubbleV) {
+	
+		// creating the file and writing the header
+		std::ofstream outputFile;
+    		outputFile.open("bubbleV.dat");
+    		outputFile << "#time lo_He hi_He lo_V hi_V conc" << std::endl;
+    		outputFile.close();
+    		
 		// monitorBubbleV will be called at each timestep
 		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorBubbleV, this, nullptr));
 	}
@@ -642,11 +649,15 @@ PetscMonitor0D::monitorBubbleV(
 	const auto networkSize = network.getNumClusters();
 
 	// Create the output file
+	//std::ofstream outputFile;
+	//std::stringstream name;
+	//name << "bubble_v_" << timestep << ".dat";
+	//outputFile.open(name.str());
+	//outputFile << "#lo_He hi_He lo_V hi_V conc" << std::endl;
+	
+	// Appending to the output file
 	std::ofstream outputFile;
-	std::stringstream name;
-	name << "bubble_v_" << timestep << ".dat";
-	outputFile.open(name.str());
-	outputFile << "#lo_He hi_He lo_V hi_V conc" << std::endl;
+    	outputFile.open("bubbleV.dat", std::ios::app);
 
 	// Get the pointer to the beginning of the solution data for this grid point
 	gridPointSolution = solutionArray[0];
@@ -667,9 +678,10 @@ PetscMonitor0D::monitorBubbleV(
 
 		// For compatibility with previous versions, we output
 		// the value of a closed upper bound of the He and V intervals.
-		outputFile << lo[Spec::He] << " " << hi[Spec::He] - 1 << " "
-				   << lo[Spec::V] << " " << hi[Spec::V] - 1 << " "
-				   << gridPointSolution[i] << std::endl;
+		outputFile << time << " " 
+			   <<lo[Spec::He] << " " << hi[Spec::He] - 1 << " "
+		 	   << lo[Spec::V] << " " << hi[Spec::V] - 1 << " "
+			   << gridPointSolution[i] << std::endl;
 	}
 
 	// Close the file
