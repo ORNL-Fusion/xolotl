@@ -541,6 +541,11 @@ JSONOptions::defineHandlers()
 			"(default = 0.0)",
 			JSON_ELEM_HANDLER { checkSetParam(tree, name, cascadeEfficiency); })
 		.add(
+			"loopPortion", ElemType::real,
+			"The value of the 100 loop portion generated from 111 loops.\n"
+			"(default = 0.5)",
+			JSON_ELEM_HANDLER { checkSetParam(tree, name, loopPortion); })
+		.add(
 			"petscArgs", ElemType::list_string,
 			"List of strings to be joined verbatim and passed to PETSc.",
 			JSON_ELEM_HANDLER {

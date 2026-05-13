@@ -62,6 +62,7 @@ RPVProductionReaction::getRateForProduction(IndexType gridIndex)
 	auto loProd = prod.getRegion().getOrigin();
 
 	// Split the rate for loops
+	auto loopPortion = this->_clusterData->getLoopPortion();
 	auto lo1 = cl0.getRegion().getOrigin();
 	auto lo2 = cl1.getRegion().getOrigin();
 	if (lo1[(int)Species::I] > 3 and lo2[(int)Species::I] > 3) {
@@ -70,14 +71,14 @@ RPVProductionReaction::getRateForProduction(IndexType gridIndex)
 			// Check the sizes
 			auto loProd = prod.getRegion().getOrigin();
 			if (loProd[(int)Species::I] >= 40) {
-				return rate * 0.5;
+				return rate * (1.0 - loopPortion);
 			}
 		}
 		if (prod.getRegion().getOrigin().isOnAxis(Species::Loop)) {
 			// Check the sizes
 			auto loProd = prod.getRegion().getOrigin();
 			if (loProd[(int)Species::Loop] >= 40) {
-				return rate * 0.5;
+				return rate * loopPortion;
 			}
 		}
 	}

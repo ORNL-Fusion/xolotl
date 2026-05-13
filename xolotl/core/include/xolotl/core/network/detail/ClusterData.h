@@ -149,6 +149,7 @@ private:
 		XE_FORMATION,
 		V_FORMATION,
 		V2_FORMATION,
+		LOOP_PORTION,
 		NUM_FLOAT_VALS
 	};
 
@@ -272,6 +273,19 @@ public:
 	setV2FormationEnergy(double val)
 	{
 		setVal(_floatVals, V2_FORMATION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getLoopPortion() const
+	{
+		return _floatVals[LOOP_PORTION];
+	}
+
+	void
+	setLoopPortion(double val)
+	{
+		setVal(_floatVals, LOOP_PORTION, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

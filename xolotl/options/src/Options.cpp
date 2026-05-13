@@ -87,7 +87,8 @@ Options::Options() :
 	transitionSize(325),
 	cascadeDose(-1.0),
 	cascadeEfficiency(0.0),
-	reactionFilePath("")
+	reactionFilePath("reaction.dat"),
+	loopPortion(0.5)
 {
 }
 
@@ -187,6 +188,7 @@ Options::printAll(std::ostream& os) const
 	os << "transitionSize: " << transitionSize << '\n';
 	os << "cascadeDose: " << cascadeDose << '\n';
 	os << "cascadeEfficiency: " << cascadeEfficiency << '\n';
+	os << "loopPortion: " << loopPortion << '\n';
 
 	os << "processMap:";
 	for (auto&& p : processMap) {

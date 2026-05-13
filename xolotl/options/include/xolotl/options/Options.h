@@ -361,6 +361,11 @@ protected:
 	 */
 	double cascadeEfficiency;
 
+	/**
+	 * Value of the 100 loop portion.
+	 */
+	double loopPortion;
+
 public:
 	/**
 	 * The constructor.
@@ -1038,6 +1043,15 @@ public:
 	getCascadeEfficiency() const override
 	{
 		return cascadeEfficiency;
+	}
+	
+	/**
+	 * \see IOptions.h
+	 */
+	virtual double
+	get100LoopPortion() const override
+	{
+	        return loopPortion;
 	}
 
 protected:

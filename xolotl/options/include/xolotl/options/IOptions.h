@@ -635,6 +635,14 @@ public:
 	virtual double
 	getCascadeEfficiency() const = 0;
 
+	/**
+	 * Obtain the value of the 100 loop portion.
+	 *
+	 * @return The portion
+	 */
+	virtual double
+	get100LoopPortion() const = 0;
+
 protected:
 	friend class ::xolotl::interface::MultiXolotl;
 
