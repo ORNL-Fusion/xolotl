@@ -73,9 +73,10 @@ private:
 
 private:
 	// Maximum size of single species
-	AmountType _maxV{0};
+	AmountType _maxSize{0};
+	AmountType _maxI{0};
 	AmountType _groupingMin;
-	AmountType _groupingWidthV;
+	AmountType _groupingWidth;
 };
 } // namespace network
 } // namespace core

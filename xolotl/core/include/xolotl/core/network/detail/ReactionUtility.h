@@ -153,10 +153,8 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
 
-// JMR edit:
-
 /**
- * @brief Specific case with two typse of V  (Zr - basal). Here it can be
+ * @brief Specific case with two types of V  (Zr - basal). Here it can be
  * reflected of V or I depending on the product type.
  *
  * @tparam Dim The number of dimension for the reflected region
@@ -224,8 +222,6 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
 
-// end JMR edit
-
 /**
  * @brief Specific case with one type of V. Here it can be reflected
  * of V or I depending on the product type.
@@ -235,7 +231,9 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
  */
 template <std::size_t Dim, typename TRegion>
 KOKKOS_INLINE_FUNCTION
-std::enable_if_t<(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1),
+std::enable_if_t<
+	(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1 and
+		numberOfInterstitialSpecies<typename TRegion::EnumIndex>() == 1),
 	Kokkos::Array<
 		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
 		4>>
@@ -283,6 +281,77 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 		pr2RR[vIndex] =
 			Ival(pr2Reg[Species::V].begin() - pr2Reg[Species::I].end() + 1,
 				pr2Reg[Species::V].end() - pr2Reg[Species::I].begin());
+	}
+	return {cl1RR, cl2RR, pr1RR, pr2RR};
+}
+
+/**
+ * @brief Specific case with one type of V and more than one I. Here it can be
+ * reflected of V or I depending on the product type.
+ *
+ * @tparam Dim The number of dimension for the reflected region
+ * @tparam TRegion The region where the I needs to be reflected
+ */
+template <std::size_t Dim, typename TRegion>
+KOKKOS_INLINE_FUNCTION
+std::enable_if_t<
+	(numberOfVacancySpecies<typename TRegion::EnumIndex>() == 1 and
+		numberOfInterstitialSpecies<typename TRegion::EnumIndex>() != 1),
+	Kokkos::Array<
+		plsm::Region<plsm::DifferenceType<typename TRegion::ScalarType>, Dim>,
+		4>>
+updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
+	const TRegion& pr1Reg, const TRegion& pr2Reg)
+{
+	using Species = typename TRegion::EnumIndex;
+	using Ival =
+		plsm::Interval<plsm::DifferenceType<typename TRegion::ScalarType>>;
+
+	// Initialize the reflected regions
+	auto rRegions = initReflectedRegions<Dim>(cl1Reg, cl2Reg, pr1Reg, pr2Reg);
+	auto cl1RR = rRegions[0];
+	auto cl2RR = rRegions[1];
+	auto pr1RR = rRegions[2];
+	auto pr2RR = rRegions[3];
+	auto vIndex = static_cast<std::underlying_type_t<Species>>(Species::V);
+	// The first product tells us how to project
+	if (pr1Reg[Species::I].end() > 1) {
+		// Project on I
+		cl1RR[vIndex] = Ival(cl1Reg[Species::I].begin() +
+				cl1Reg[Species::Loop].begin() - cl1Reg[Species::V].end() + 1,
+			cl1Reg[Species::I].end() + cl1Reg[Species::Loop].end() -
+				cl1Reg[Species::V].begin() - 1);
+		cl2RR[vIndex] = Ival(cl2Reg[Species::I].begin() +
+				cl2Reg[Species::Loop].begin() - cl2Reg[Species::V].end() + 1,
+			cl2Reg[Species::I].end() + cl2Reg[Species::Loop].end() -
+				cl2Reg[Species::V].begin() - 1);
+		pr1RR[vIndex] = Ival(pr1Reg[Species::I].begin() +
+				pr1Reg[Species::Loop].begin() - pr1Reg[Species::V].end() + 1,
+			pr1Reg[Species::I].end() + pr1Reg[Species::Loop].end() -
+				pr1Reg[Species::V].begin() - 1);
+		pr2RR[vIndex] = Ival(pr2Reg[Species::I].begin() +
+				pr2Reg[Species::Loop].begin() - pr2Reg[Species::V].end() + 1,
+			pr2Reg[Species::I].end() + pr2Reg[Species::Loop].end() -
+				pr2Reg[Species::V].begin() - 1);
+	}
+	else {
+		// Project on V
+		cl1RR[vIndex] = Ival(cl1Reg[Species::V].begin() -
+				cl1Reg[Species::I].end() - cl1Reg[Species::Loop].end() + 2,
+			cl1Reg[Species::V].end() - cl1Reg[Species::I].begin() -
+				cl1Reg[Species::Loop].begin());
+		cl2RR[vIndex] = Ival(cl2Reg[Species::V].begin() -
+				cl2Reg[Species::I].end() - cl2Reg[Species::Loop].end() + 2,
+			cl2Reg[Species::V].end() - cl2Reg[Species::I].begin() -
+				cl2Reg[Species::Loop].begin());
+		pr1RR[vIndex] = Ival(pr1Reg[Species::V].begin() -
+				pr1Reg[Species::I].end() - pr1Reg[Species::Loop].end() + 2,
+			pr1Reg[Species::V].end() - pr1Reg[Species::I].begin() -
+				pr1Reg[Species::Loop].begin());
+		pr2RR[vIndex] = Ival(pr2Reg[Species::V].begin() -
+				pr2Reg[Species::I].end() - pr2Reg[Species::Loop].end() + 2,
+			pr2Reg[Species::V].end() - pr2Reg[Species::I].begin() -
+				pr2Reg[Species::Loop].begin());
 	}
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }

@@ -68,10 +68,66 @@ public:
 		using NetworkType = network::RPVReactionNetwork;
 		auto feNetwork = dynamic_cast<NetworkType*>(&network);
 
-		// Set the flux index corresponding the the single helium cluster here
+		// Set the flux index corresponding the single void cluster here
 		NetworkType::Composition comp = NetworkType::Composition::zero();
-		comp[NetworkType::Species::I] = 1;
+		comp[NetworkType::Species::V] = 1;
 		auto cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error(
+				"\nThe single void cluster is not present in the network, "
+				"cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::V] = 2;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe V2 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::V] = 3;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe V3 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::V] = 4;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe V4 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::V] = 5;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe V5 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::V] = 9;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe V9 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		// Interstitials
+		comp[NetworkType::Species::V] = 0;
+		comp[NetworkType::Species::I] = 1;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
 			throw std::runtime_error("\nThe single interstitial cluster is not "
 									 "present in the network, "
@@ -79,55 +135,102 @@ public:
 		}
 		fluxIndices.push_back(cluster.getId());
 
-		// Look for vacancies now
-		comp[NetworkType::Species::I] = 0;
-		comp[NetworkType::Species::V] = 1;
+		comp[NetworkType::Species::I] = 2;
 		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::runtime_error(
-				"\nThe single vacancy cluster is not present in the network, "
-				"cannot use the flux option!");
+			throw std::runtime_error("\nThe I2 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
-		comp[NetworkType::Species::V] = 2;
+
+		comp[NetworkType::Species::I] = 3;
 		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::runtime_error(
-				"\nThe double vacancy cluster is not present in the network, "
-				"cannot use the flux option!");
+			throw std::runtime_error("\nThe I3 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
-		comp[NetworkType::Species::V] = 3;
+
+		comp[NetworkType::Species::I] = 4;
 		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::runtime_error(
-				"\nThe triple vacancy cluster is not present in the network, "
-				"cannot use the flux option!");
+			throw std::runtime_error("\nThe I4 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
-		comp[NetworkType::Species::V] = 4;
+
+		comp[NetworkType::Species::I] = 5;
 		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::runtime_error(
-				"\nThe quadruple vacancy cluster is not present "
-				"in the network, "
-				"cannot use the flux option!");
+			throw std::runtime_error("\nThe I5 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
-		comp[NetworkType::Species::V] = 5;
+
+		comp[NetworkType::Species::I] = 6;
 		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::runtime_error(
-				"\nVacancy 5 cluster is not present in the network, "
-				"cannot use the flux option!");
+			throw std::runtime_error("\nThe I6 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
-		comp[NetworkType::Species::V] = 9;
+
+		comp[NetworkType::Species::I] = 7;
 		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
 		if (cluster.getId() == NetworkType::invalidIndex()) {
-			throw std::runtime_error(
-				"\nVacancy 9 cluster is not present in the network, "
-				"cannot use the flux option!");
+			throw std::runtime_error("\nThe I7 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::I] = 8;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe I8 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::I] = 9;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe I9 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::I] = 12;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe I12 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::I] = 16;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe I16 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
+		}
+		fluxIndices.push_back(cluster.getId());
+
+		comp[NetworkType::Species::I] = 20;
+		cluster = feNetwork->findCluster(comp, plsm::HostMemSpace{});
+		if (cluster.getId() == NetworkType::invalidIndex()) {
+			throw std::runtime_error("\nThe I20 cluster is not "
+									 "present in the network, "
+									 "cannot use the flux option!");
 		}
 		fluxIndices.push_back(cluster.getId());
 
@@ -149,18 +252,35 @@ public:
 		}
 
 		Kokkos::View<IdType*, Kokkos::HostSpace, Kokkos::MemoryUnmanaged> ids_h{
-			fluxIndices.data(), 7};
-		Kokkos::View<IdType*> ids{"Flux Indices", 7};
+			fluxIndices.data(), 18};
+		Kokkos::View<IdType*> ids{"Flux Indices", 18};
 		deep_copy(ids, ids_h);
 		Kokkos::parallel_for(
 			1, KOKKOS_LAMBDA(std::size_t) {
-				updatedConcOffset[ids[0]] += 1.49e-05 * scalingFactor; // I1
-				updatedConcOffset[ids[1]] += 9.91e-06 * scalingFactor; // V1
-				updatedConcOffset[ids[2]] += 1.51e-06 * scalingFactor; // V2
-				updatedConcOffset[ids[3]] += 2.60e-07 * scalingFactor; // V3
-				updatedConcOffset[ids[4]] += 1.58e-07 * scalingFactor; // V4
-				updatedConcOffset[ids[5]] += 6.29e-08 * scalingFactor; // V5
-				updatedConcOffset[ids[6]] += 3.16e-08 * scalingFactor; // V9
+				updatedConcOffset[ids[0]] += scalingFactor * 11.776939094; // V1
+				updatedConcOffset[ids[1]] += scalingFactor * 1.815018938; // V2
+				updatedConcOffset[ids[2]] +=
+					scalingFactor * 0.31463055266666667; // V3
+				updatedConcOffset[ids[3]] += scalingFactor * 0.191413343; // V4
+				updatedConcOffset[ids[4]] += scalingFactor * 0.07611408; // V5
+				updatedConcOffset[ids[5]] += scalingFactor * 0.0382584; // V9
+				updatedConcOffset[ids[6]] += scalingFactor * 5.940341464; // I1
+				updatedConcOffset[ids[7]] += scalingFactor * 2.186892002; // I2
+				updatedConcOffset[ids[8]] +=
+					scalingFactor * 0.70030164666666661; // I3
+				updatedConcOffset[ids[9]] += scalingFactor * 0.447750235; // I4
+				updatedConcOffset[ids[10]] += scalingFactor * 0.261860134; // I5
+				updatedConcOffset[ids[11]] += scalingFactor * 0.16145861; // I6
+				updatedConcOffset[ids[12]] +=
+					scalingFactor * 0.094966872285714293; // I7
+				updatedConcOffset[ids[13]] += scalingFactor * 0.02310606; // I8
+				updatedConcOffset[ids[14]] +=
+					scalingFactor * 0.025807277555555556; // I9
+				updatedConcOffset[ids[15]] +=
+					scalingFactor * 0.0096645931666666674; // I12
+				updatedConcOffset[ids[16]] += scalingFactor * 0.00611631; // I16
+				updatedConcOffset[ids[17]] +=
+					scalingFactor * 0.0030808080; // I20
 			});
 	}
 };

@@ -17,31 +17,114 @@ RPVClusterGenerator::refine(const Region& region, BoolArray& result) const
 		r = true;
 	}
 
-	// I is never grouped
-	if (region[Species::I].begin() > 0) {
+	// Count the number of axis it is on
+	int nAxis = 0;
+	for (auto s : NetworkType::getSpeciesRange()) {
+		if (region[s].begin() > 0) {
+			nAxis++;
+		}
+	}
+
+	// Cannot be on more than 1 axis
+	if (nAxis > 1) {
+		for (auto& r : result) {
+			r = false;
+		}
+		return false;
+	}
+
+	// Cannot be 0 axis
+	if (nAxis == 0)
 		return true;
+
+	// Check if others begin at 0
+	auto othersBeginAtZero = [](const Region& reg, Species species) {
+		for (auto s : NetworkType::getSpeciesRange()) {
+			if (s.value != species && reg[s].begin() != 0) {
+				return false;
+			}
+		}
+		return true;
+	};
+
+	using detail::toIndex;
+
+	// Get the bounds
+	Composition lo = region.getOrigin();
+	Composition hi = region.getUpperLimitPoint();
+
+	// Smaller than the minimum size for grouping
+	if (lo[Species::V] < _groupingMin && lo[Species::I] < _groupingMin &&
+		lo[Species::Loop] < _groupingMin) {
+		return true;
+	}
+
+	// I is grouped on its own
+	if (lo[Species::I] > 0) {
+		if (lo[Species::I] < _groupingMin &&
+			othersBeginAtZero(region, Species::I)) {
+			return true;
+		}
+		if (region[Species::I].end() > _maxSize) {
+			return true;
+		}
+		if (region[Species::I].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::I].begin(), 0.75) * 0.5)) {
+			result[toIndex(Species::I)] = false;
+		}
 	}
 
 	// V is grouped on its own
-	if (region[Species::V].end() > 1 && region[Species::I].begin() == 0) {
-		if (region[Species::V].begin() < _groupingMin)
-			return true;
-		if (region[Species::V].end() > _maxV) {
+	if (lo[Species::V] > 0) {
+		if (lo[Species::V] < _groupingMin &&
+			othersBeginAtZero(region, Species::V)) {
 			return true;
 		}
-		if (region[Species::V].begin() > 0 &&
-			region[Species::V].length() <
-				util::max((double)(_groupingWidthV + 1),
-					pow(region[Species::V].begin(), 0.75) * 0.1))
-			result[0] = false;
-		else
+		if (region[Species::V].end() > _maxSize) {
 			return true;
+		}
+		if (region[Species::V].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::V].begin(), 0.75) * 0.5)) {
+			result[toIndex(Species::V)] = false;
+		}
+	}
+
+	// Loop is grouped on its own
+	if (lo[Species::Loop] > 0) {
+		if (lo[Species::Loop] < _groupingMin &&
+			othersBeginAtZero(region, Species::Loop)) {
+			return true;
+		}
+		if (region[Species::Loop].end() > _maxSize) {
+			return true;
+		}
+		if (region[Species::Loop].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::Loop].begin(), 0.75) * 0.5)) {
+			result[toIndex(Species::Loop)] = false;
+		}
 	}
 
 	// Edges
-	if (region[Species::V].end() > _maxV + 1) {
+	if (region[Species::I].end() > _maxSize + 1) {
 		return true;
 	}
+	if (region[Species::V].end() > _maxSize + 1) {
+		return true;
+	}
+	if (region[Species::Loop].end() > _maxSize + 1) {
+		return true;
+	}
+
+	int axis = 0;
+	for (auto& r : result) {
+		axis += r;
+	}
+
+	if (axis == 0)
+		return false;
 
 	return true;
 }
@@ -51,22 +134,65 @@ bool
 RPVClusterGenerator::select(const Region& region) const
 {
 	// Remove 0
-	if (region[Species::V].end() == 1 && region[Species::I].end() == 1) {
+	auto isZeroPoint = [](const Region& reg) {
+		for (const auto& ival : reg) {
+			if (ival.end() != 1) {
+				return false;
+			}
+		}
+		return true;
+	};
+	if (isZeroPoint(region)) {
 		return false;
 	}
+
+	auto othersEndAtOne = [](const Region& reg, Species species) {
+		for (auto s : NetworkType::getSpeciesRange()) {
+			if (s.value != species && reg[s].end() != 1) {
+				return false;
+			}
+		}
+		return true;
+	};
+
+	Composition lo = region.getOrigin();
+	Composition hi = region.getUpperLimitPoint();
 
 	// Interstitials
-	if (region[Species::I].begin() > 0 && region[Species::V].begin() > 0) {
+	if (region[Species::I].begin() > 0 &&
+		!region.getOrigin().isOnAxis(Species::I)) {
+		return false;
+	}
+	if (region[Species::I].begin() > _maxSize) {
 		return false;
 	}
 
-	// Vacancy
-	if (region[Species::V].begin() > _maxV && region[Species::I].end() == 1) {
+	// Vacancies
+	if (region[Species::V].begin() > 0 &&
+		!region.getOrigin().isOnAxis(Species::V)) {
 		return false;
 	}
-	if (region[Species::V].begin() > _maxV) {
+	if (region[Species::V].begin() > _maxSize) {
 		return false;
 	}
+
+	// Loops
+	if (region[Species::Loop].begin() > 0 &&
+		!region.getOrigin().isOnAxis(Species::Loop)) {
+		return false;
+	}
+	if (region[Species::Loop].begin() > 0 && region.isSimplex() &&
+		region[Species::Loop].begin() <= _maxI) {
+		return false;
+	}
+	if (region[Species::Loop].begin() > _maxSize) {
+		return false;
+	}
+
+	if (region[Species::V].begin() == 0 && region[Species::I].begin() == 0 &&
+		region[Species::Loop].end() - 1 <= _maxI &&
+		region[Species::Loop].begin() > 1)
+		return false;
 
 	return true;
 }
@@ -77,19 +203,24 @@ double
 RPVClusterGenerator::getMigrationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {
-	// I migration energy in eV
-	constexpr double iOneMigrationEnergy = 0.22;
 	// V migration energies in eV
 	constexpr Kokkos::Array<double, 5> vMigration = {
 		0.0, 0.63, 0.50, 0.36, 0.44};
 
 	const auto& reg = cluster.getRegion();
+	Composition comp(reg.getOrigin());
 	double migrationEnergy = util::infinity<double>;
 	if (reg.isSimplex()) {
-		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {
-			if (comp[Species::I] == 1) {
-				migrationEnergy = iOneMigrationEnergy;
+			switch (comp[Species::I]) {
+			case 1:
+				return 0.34;
+			case 2:
+				return 0.42;
+			case 3:
+				return 0.43;
+			default:
+				return 0.9;
 			}
 		}
 		else if (comp.isOnAxis(Species::V)) {
@@ -98,6 +229,10 @@ RPVClusterGenerator::getMigrationEnergy(
 				migrationEnergy = vMigration[amtV];
 			}
 		}
+	}
+	else {
+		if (comp.isOnAxis(Species::I))
+			migrationEnergy = 0.9;
 	}
 	return migrationEnergy;
 }
@@ -115,12 +250,15 @@ RPVClusterGenerator::getDiffusionFactor(
 		0.0, 8.2e+11, 4.1e+11, 2.73e+11, 2.05e+11};
 
 	const auto& reg = cluster.getRegion();
+	Composition comp(reg.getOrigin());
 	double diffusionFactor = 0.0;
 	if (reg.isSimplex()) {
-		Composition comp(reg.getOrigin());
 		if (comp.isOnAxis(Species::I)) {
-			if (comp[Species::I] == 1) {
-				diffusionFactor = iOneDiffusionFactor;
+			if (comp[Species::I] < 4) {
+				diffusionFactor = iOneDiffusionFactor / comp[Species::I];
+			}
+			else {
+				diffusionFactor = 2.965e11 * pow(comp[Species::I], -0.7);
 			}
 		}
 		else if (comp.isOnAxis(Species::V)) {
@@ -128,6 +266,14 @@ RPVClusterGenerator::getDiffusionFactor(
 			if (amtV < vDiffusion.size()) {
 				diffusionFactor = vDiffusion[amtV];
 			}
+		}
+	}
+	else {
+		if (comp.isOnAxis(Species::I)) {
+			Composition hiComp(reg.getUpperLimitPoint());
+			double nF =
+				(double)(comp[Species::I] + hiComp[Species::I] - 1) / 2.0;
+			diffusionFactor = 2.965e11 * pow(comp[Species::I], -0.7);
 		}
 	}
 
@@ -143,18 +289,40 @@ RPVClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 {
 	const auto& reg = cluster.getRegion();
 	double radius = 0.0;
-	if (reg.isSimplex()) {
-		Composition comp(reg.getOrigin());
-		if (comp.isOnAxis(Species::I)) {
-			radius = latticeParameter * cbrt(3.0 / ::xolotl::core::pi) * 0.5;
-		}
-		else {
+	Composition comp(reg.getOrigin());
+	Composition hiComp(reg.getUpperLimitPoint());
+
+	// Constants
+	const double prefactor =
+		0.5 * latticeParameter * latticeParameter / ::xolotl::core::pi;
+	constexpr double fecrBurgers = 0.8660254038;
+	constexpr double fecrLoopBurgers = 1.0;
+
+	// I case
+	if (comp.isOnAxis(Species::I)) {
+		// Sphere
+		if (comp[Species::I] < 4) {
 			radius = latticeParameter *
-				cbrt((3.0 * comp[Species::V]) / ::xolotl::core::pi) * 0.5;
+				cbrt(3.0 * comp[Species::I] / ::xolotl::core::pi) * 0.5;
+		}
+		// (111) Loop
+		else {
+			for (auto j : makeIntervalRange(reg[Species::I])) {
+				radius += sqrt(((double)j * prefactor) / fecrBurgers);
+			}
+			// Average the radius
+			radius /= reg[Species::I].length();
 		}
 	}
+	// (100) Loop
+	else if (comp.isOnAxis(Species::Loop)) {
+		for (auto j : makeIntervalRange(reg[Species::Loop])) {
+			radius += sqrt(((double)j * prefactor) / fecrLoopBurgers);
+		}
+		radius /= reg[Species::Loop].length();
+	}
+	// V case
 	else {
-		// Loop on the V range
 		for (auto j : makeIntervalRange(reg[Species::V])) {
 			radius += latticeParameter *
 				cbrt((3.0 * (double)j) / ::xolotl::core::pi) * 0.5;

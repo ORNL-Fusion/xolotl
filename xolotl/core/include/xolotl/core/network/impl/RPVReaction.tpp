@@ -55,8 +55,34 @@ RPVProductionReaction::getRateForProduction(IndexType gridIndex)
 	double dc0 = cl0.getDiffusionCoefficient(gridIndex);
 	double dc1 = cl1.getDiffusionCoefficient(gridIndex);
 
-	return rpv::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1,
+	auto rate = rpv::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1,
 		this->_clusterData->latticeParameter());
+
+	auto prod = this->_clusterData->getCluster(_products[0]);
+	auto loProd = prod.getRegion().getOrigin();
+
+	// Split the rate for loops
+	auto lo1 = cl0.getRegion().getOrigin();
+	auto lo2 = cl1.getRegion().getOrigin();
+	if (lo1[(int)Species::I] > 3 and lo2[(int)Species::I] > 3) {
+		auto prod = this->_clusterData->getCluster(_products[0]);
+		if (prod.getRegion().getOrigin().isOnAxis(Species::I)) {
+			// Check the sizes
+			auto loProd = prod.getRegion().getOrigin();
+			if (loProd[(int)Species::I] >= 40) {
+				return rate * 0.5;
+			}
+		}
+		if (prod.getRegion().getOrigin().isOnAxis(Species::Loop)) {
+			// Check the sizes
+			auto loProd = prod.getRegion().getOrigin();
+			if (loProd[(int)Species::Loop] >= 40) {
+				return rate * 0.5;
+			}
+		}
+	}
+
+	return rate;
 }
 
 KOKKOS_INLINE_FUNCTION

@@ -47,116 +47,186 @@ RPVReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
 	auto& subpaving = this->getSubpaving();
+	auto previousIndex = subpaving.invalidIndex();
 
-	// Special case for I + I
-	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1.isOnAxis(Species::I) &&
-		lo2.isOnAxis(Species::I)) {
+	// I + I = I and Loop
+	if (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::I)) {
 		// Compute the composition of the new cluster
-		auto size = lo1[Species::I] + lo2[Species::I];
-		// Find the corresponding cluster
+		auto minSize = lo1[Species::I] + lo2[Species::I];
+		auto maxSize = hi1[Species::I] + hi2[Species::I] - 2;
+
 		Composition comp = Composition::zero();
-		comp[Species::I] = size;
-		auto iProdId = subpaving.findTileId(comp);
-		if (iProdId != subpaving.invalidIndex()) {
-			this->addProductionReaction(tag, {i, j, iProdId});
-			if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
-				this->addDissociationReaction(tag, {iProdId, i, j});
-			}
-		}
-		return;
-	}
-
-	// Special case for I + V
-	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() &&
-		((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
-			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I)))) {
-		// Find out which one is which
-		auto vSize =
-			lo1.isOnAxis(Species::V) ? lo1[Species::V] : lo2[Species::V];
-		auto iSize =
-			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
-		// Compute the product size
-		int prodSize = vSize - iSize;
-		// 3 cases
-		if (prodSize > 0) {
-			// Looking for V cluster
-			Composition comp = Composition::zero();
-			comp[Species::V] = prodSize;
-			auto vProdId = subpaving.findTileId(comp);
-			if (vProdId != subpaving.invalidIndex()) {
-				this->addProductionReaction(tag, {i, j, vProdId});
-				// No dissociation
-			}
-		}
-		else if (prodSize < 0) {
-			// Looking for I cluster
-			Composition comp = Composition::zero();
-			comp[Species::I] = -prodSize;
+		// Loop on the possibilities
+		for (auto k = minSize; k <= maxSize; k++) {
+			// Find the corresponding cluster
+			comp[Species::I] = k;
+			comp[Species::Loop] = 0;
 			auto iProdId = subpaving.findTileId(comp);
-			if (iProdId != subpaving.invalidIndex()) {
+			if (iProdId != subpaving.invalidIndex() and
+				iProdId != previousIndex) {
 				this->addProductionReaction(tag, {i, j, iProdId});
-				// No dissociation
+				if (lo1[Species::I] == 1 || lo2[Species::I] == 1) {
+					this->addDissociationReaction(tag, {iProdId, i, j});
+				}
+				previousIndex = iProdId;
+
+				// Find the corresponding Loop if above 40
+				if (k >= 40) {
+					comp[Species::I] = 0;
+					comp[Species::Loop] = k;
+					auto lProdId = subpaving.findTileId(comp);
+					if (lProdId != subpaving.invalidIndex()) {
+						// Only if both reactants are 111 loops
+						if (lo1[Species::I] > 3 and lo2[Species::I] > 3)
+							this->addProductionReaction(tag, {i, j, lProdId});
+					}
+				}
 			}
-		}
-		else {
-			// No product
-			this->addProductionReaction(tag, {i, j});
-			// No dissociation
 		}
 		return;
 	}
 
-	// General case
-	constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
-	using BoundsArray =
-		Kokkos::Array<Kokkos::pair<AmountType, AmountType>, numSpeciesNoI>;
-	plsm::EnumIndexed<BoundsArray, Species> bounds;
-	// Loop on the species
-	for (auto l : species) {
-		auto low = lo1[l] + lo2[l];
-		auto high = hi1[l] + hi2[l] - 2;
-		// Special case for I
-		if (l == Species::I) {
-			bounds[Species::V].first -= high;
-			bounds[Species::V].second -= low;
+	// V + I = V or I or 0
+	if ((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
+		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I))) {
+		// They both can be grouped
+		auto vReg = lo1.isOnAxis(Species::V) ? cl1Reg : cl2Reg;
+		auto iReg = lo1.isOnAxis(Species::V) ? cl2Reg : cl1Reg;
+
+		Composition loV = vReg.getOrigin();
+		Composition hiV = vReg.getUpperLimitPoint();
+		Composition loI = iReg.getOrigin();
+		Composition hiI = iReg.getUpperLimitPoint();
+
+		int minSize = loV[Species::V] - hiI[Species::I] + 1;
+		int maxSize = hiV[Species::V] - 1 - loI[Species::I];
+		Composition comp = Composition::zero();
+		// Loop on the possibilities
+		for (int k = minSize; k <= maxSize; k++) {
+			// 3 cases
+			if (k > 0) {
+				// Looking for V cluster
+				comp[Species::V] = k;
+				comp[Species::I] = 0;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() and
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					// No dissociation
+					previousIndex = vProdId;
+				}
+			}
+			else if (k < 0) {
+				// Looking for I cluster
+				comp[Species::I] = -k;
+				comp[Species::V] = 0;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex() and
+					iProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					// No dissociation
+					previousIndex = iProdId;
+				}
+			}
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
+				// No dissociation
+			}
 		}
-		else {
-			bounds[l] = {low, high};
-		}
+		return;
 	}
 
-	// Look for potential product
-	for (IndexType k = 0; k < numClusters; ++k) {
-		// Get the composition
-		const auto& prodReg = this->getCluster(k).getRegion();
-		bool isGood = true;
-		// Loop on the species
-		for (auto l : speciesNoI) {
-			if (prodReg[l()].begin() > bounds[l()].second) {
-				isGood = false;
-				break;
-			}
-			if (prodReg[l()].end() - 1 < bounds[l()].first) {
-				isGood = false;
-				break;
+	// V + V = V
+	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V)) {
+		// Compute the composition of the new cluster
+		auto minSize = lo1[Species::V] + lo2[Species::V];
+		auto maxSize = hi1[Species::V] + hi2[Species::V] - 2;
+
+		Composition comp = Composition::zero();
+		// Loop on the possibilities
+		for (auto k = minSize; k <= maxSize; k++) {
+			// Find the corresponding cluster
+			comp[Species::V] = k;
+			auto vProdId = subpaving.findTileId(comp);
+			if (vProdId != subpaving.invalidIndex() and
+				vProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, vProdId});
+				if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+					this->addDissociationReaction(tag, {vProdId, i, j});
+				}
+				previousIndex = vProdId;
 			}
 		}
+		return;
+	}
 
-		if (isGood) {
-			this->addProductionReaction(tag, {i, j, k});
+	// I + Loop = Loop
+	if (lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::Loop) ||
+		(lo1.isOnAxis(Species::Loop) && lo2.isOnAxis(Species::I))) {
+		// Compute the composition of the new cluster
+		auto minSize = lo1[Species::I] + lo2[Species::I] + lo1[Species::Loop] +
+			lo2[Species::Loop];
+		auto maxSize = hi1[Species::I] + hi2[Species::I] + hi1[Species::Loop] +
+			hi2[Species::Loop] - 4;
 
-			// Loop on the species
-			bool isOnAxis1 = false, isOnAxis2 = false;
-			for (auto l : species) {
-				if (lo1.isOnAxis(l()) && lo1[l()] == 1)
-					isOnAxis1 = true;
-				if (lo2.isOnAxis(l()) && lo2[l()] == 1)
-					isOnAxis2 = true;
-			}
-			if (isOnAxis1 || isOnAxis2) {
-				this->addDissociationReaction(tag, {k, i, j});
+		Composition comp = Composition::zero();
+		// Loop on the possibilities
+		for (auto k = minSize; k <= maxSize; k++) {
+			// Find the corresponding cluster
+			comp[Species::Loop] = k;
+			auto lProdId = subpaving.findTileId(comp);
+			if (lProdId != subpaving.invalidIndex() and
+				lProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, lProdId});
+				// No Dissociation
+				previousIndex = lProdId;
 			}
 		}
+		return;
+	}
+
+	// V + Loop = Loop or I
+	if ((lo1.isOnAxis(Species::Loop) && lo2.isOnAxis(Species::V)) ||
+		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::Loop))) {
+		// They both can be grouped
+		auto vReg = lo1.isOnAxis(Species::V) ? cl1Reg : cl2Reg;
+		auto lReg = lo1.isOnAxis(Species::V) ? cl2Reg : cl1Reg;
+
+		Composition loV = vReg.getOrigin();
+		Composition hiV = vReg.getUpperLimitPoint();
+		Composition loL = lReg.getOrigin();
+		Composition hiL = lReg.getUpperLimitPoint();
+
+		int minSize = loV[Species::V] - hiL[Species::Loop] + 1;
+		int maxSize = hiV[Species::V] - 1 - loL[Species::Loop];
+		Composition comp = Composition::zero();
+		// Loop on the possibilities
+		for (int k = minSize; k <= maxSize; k++) {
+			// k is always negative here
+			// Looking for loop cluster
+			comp[Species::Loop] = -k;
+			auto lProdId = subpaving.findTileId(comp);
+			if (lProdId != subpaving.invalidIndex() and
+				lProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, lProdId});
+				// No dissociation
+				previousIndex = lProdId;
+			}
+			// Test if I exist
+			else if (lProdId == subpaving.invalidIndex()) {
+				comp[Species::Loop] = 0;
+				comp[Species::I] = -k;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex() and
+					iProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					// No dissociation
+					previousIndex = iProdId;
+				}
+			}
+		}
+		return;
 	}
 }
 

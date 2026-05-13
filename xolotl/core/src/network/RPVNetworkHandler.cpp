@@ -18,25 +18,25 @@ auto rpvNetworkGenerator = [](const options::IOptions& options) {
 	using NetworkType = core::network::RPVReactionNetwork;
 
 	// Get the boundaries from the options
-	NetworkType::AmountType maxV = options.getMaxV();
-	NetworkType::AmountType maxI = options.getMaxI();
-	NetworkType::AmountType groupingWidthV = options.getGroupingWidthA();
+	NetworkType::AmountType maxSize = options.getMaxV();
+	NetworkType::AmountType groupingWidth = options.getGroupingWidthA();
 	// Take care of the case with no grouping
-	if (options.getGroupingMin() > maxV) {
-		groupingWidthV = maxV + 1;
+	if (options.getGroupingMin() > maxSize) {
+		groupingWidth = maxSize + 1;
 	}
 	else {
-		// Adapt maxV
+		// Adapt maxSize
 		int i = 0;
-		while (maxV + 1 > pow(groupingWidthV, i)) {
+		while (maxSize + 1 > pow(groupingWidth, i)) {
 			++i;
 		}
-		maxV = pow(groupingWidthV, i) - 1;
+		maxSize = pow(groupingWidth, i) - 1;
 	}
 
-	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {maxV, maxI};
+	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
+		maxSize, maxSize, maxSize};
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
-		{groupingWidthV, maxI + 1}};
+		{groupingWidth, groupingWidth, groupingWidth}};
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 
