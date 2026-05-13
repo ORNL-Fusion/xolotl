@@ -33,6 +33,15 @@ ReactionNetwork<FeReactionNetwork>::getTotalAtomConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
 
 template double
+ReactionNetwork<FeReactionNetwork>::getTotalVolumeRatio(
+	ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<FeReactionNetwork>::getTotalRatioVariance(
+	ConcentrationsView concentrations, Species type, double mean,
+	AmountType minSize);
+
+template double
 ReactionNetwork<FeReactionNetwork>::getTotalTrappedAtomConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
 

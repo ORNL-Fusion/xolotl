@@ -64,8 +64,12 @@ PetscSolver1DHandler::createSolverContext(DM& da)
 		else
 			ss << bcString;
 		ss << " and bulk BC: ";
-		if (rightOffset == 1)
-			ss << "free surface";
+		if (rightOffset == 1) {
+			if (isRecomb)
+				ss << "surface recombination";
+			else
+				ss << "free surface";
+		}
 		else
 			ss << bcString;
 		if (isRobin)
@@ -147,6 +151,9 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, Mat& J)
 	// Tell the network the number of grid points on this process with ghosts
 	// TODO: do we need the ghost points?
 	network.setGridSize(localXM + 2);
+	// Give it the total depth as well
+	auto totalDepth = (grid[nX - 1] + grid[nX]) / 2.0 - grid[1];
+	network.setTotalDepth(totalDepth);
 
 	// The soret initialization needs to be done after the network
 	// because it adds connectivities the network would remove
@@ -158,7 +165,7 @@ PetscSolver1DHandler::initializeSolverContext(DM& da, Mat& J)
 	// Load up the block fills
 	auto nwEntries = convertToRowColPairList(dof, dfill);
 	nNetworkEntries = nwEntries.size();
-	//
+
 	// "+ 1" for temperature
 	auto dSize = localXM *
 		(nNetworkEntries + soretEntries.size() + difEntries.size() + 1);
@@ -341,6 +348,12 @@ PetscSolver1DHandler::initializeConcentration(
 					concOffset[pair.first] = pair.second;
 				}
 			}
+			if (i == nX - rightOffset and not hasConcentrations and isRecomb) {
+				for (auto pair : initialConc) {
+					concOffset[pair.first] = pair.second;
+				}
+				concOffset[1] = 0.0000001;
+			}
 		}
 
 		// If the concentration must be set from the HDF5 file
@@ -358,11 +371,12 @@ PetscSolver1DHandler::initializeConcentration(
 				concOffset = concentrations[localXS + i];
 
 				for (auto const& currConcData : myConcs[i]) {
+					// Skipping the temperature to use the one defined in the
+					// option
+					if (currConcData.first == dof)
+						continue;
 					concOffset[currConcData.first] = currConcData.second;
 				}
-				// Get the temperature
-				double temp = myConcs[i][myConcs[i].size() - 1].second;
-				temperature[i + 1] = temp;
 			}
 		}
 
@@ -965,6 +979,26 @@ PetscSolver1DHandler::updateConcentration(
 			hxRight = grid[xi + 1] - grid[xi];
 		}
 
+		// Special case for surface recombination
+		if (xi == nX - rightOffset and isRecomb) {
+			// ---- Compute diffusion over the locally owned part of the grid
+			// -----
+			diffusionHandler->computeDiffusion(network,
+				core::StencilConcArray{concVector.data(), 3}, updatedConcOffset,
+				hxLeft, hxRight, xi - localXS, true);
+
+			auto surfacePos = grid[1];
+			auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
+			auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
+			auto curDepth = curXPos - surfacePos;
+			auto curSpacing = curXPos - prevXPos;
+
+			// ----- Compute the reaction fluxes over the locally owned part of
+			// the grid -----
+			network.computeAllFluxes(concOffset, updatedConcOffset,
+				xi + 1 - localXS, curDepth, curSpacing);
+		}
+
 		// Everything to the left of the surface is empty
 		if (xi < leftOffset || xi > nX - 1 - rightOffset) {
 			continue;
@@ -1146,6 +1180,7 @@ PetscSolver1DHandler::computeJacobian(
 		// Everything to the left of the surface is empty
 		if (xi < leftOffset || xi > nX - 1 - rightOffset)
 			continue;
+
 		// Free surface GB
 		bool skip = false;
 		for (auto& pair : gbVector) {
@@ -1234,6 +1269,56 @@ PetscSolver1DHandler::computeJacobian(
 	// Loop over the grid points
 	for (auto xi = localXS; xi < localXS + localXM; xi++) {
 		// Boundary conditions
+
+		// Special case for surface recombination
+		if (isRecomb and xi == nX - rightOffset) {
+			// Compute the left and right hx
+			double hxLeft = 0.0, hxRight = 0.0;
+			if (xi >= 1 && xi < nX) {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			}
+			else if (xi < 1) {
+				hxLeft = grid[xi + 1] - grid[xi];
+				hxRight = (grid[xi + 2] - grid[xi]) / 2.0;
+			}
+			else {
+				hxLeft = (grid[xi + 1] - grid[xi - 1]) / 2.0;
+				hxRight = grid[xi + 1] - grid[xi];
+			}
+
+			valIndex += 3 * nSoret;
+
+			// Get the partial derivatives for the diffusion
+			diffusionHandler->computePartialsForDiffusion(network,
+				subview(vals, std::make_pair(valIndex, valIndex + 3 * nDiff)),
+				hxLeft, hxRight, xi - localXS, true);
+
+			valIndex += 3 * nDiff;
+			valIndex += 2 * nAdvec * advectionHandlers.size();
+
+			// Get the concentrations at this grid point
+			auto concOffset = subview(concs, xi, Kokkos::ALL).view();
+
+			auto surfacePos = grid[1];
+			auto curXPos = (grid[xi] + grid[xi + 1]) / 2.0;
+			auto prevXPos = (grid[xi - 1] + grid[xi]) / 2.0;
+			auto curDepth = curXPos - surfacePos;
+			auto curSpacing = curXPos - prevXPos;
+
+			// Compute all the partial derivatives for the reactions
+			partialDerivativeCounter->increment();
+			partialDerivativeTimer->start();
+			network.computeAllPartials(concOffset,
+				subview(
+					vals, std::make_pair(valIndex, valIndex + nNetworkEntries)),
+				xi + 1 - localXS, curDepth, curSpacing);
+			partialDerivativeTimer->stop();
+			valIndex += nNetworkEntries;
+
+			continue;
+		}
+
 		// Everything to the left of the surface is empty
 		if (xi < leftOffset || xi > nX - 1 - rightOffset) {
 			valIndex += 3 * nSoret;
@@ -1254,9 +1339,6 @@ PetscSolver1DHandler::computeJacobian(
 			valIndex += nNetworkEntries;
 			continue;
 		}
-
-		if (xi == 0)
-			continue;
 
 		// Fill the concVector with the pointer to the middle, left, and right
 		// grid points

@@ -200,6 +200,11 @@ public:
 	{
 	}
 
+	void
+	initializeExtraDOFs(const options::IOptions&)
+	{
+	}
+
 	std::size_t
 	getSpeciesListSize() const noexcept override
 	{
@@ -257,6 +262,12 @@ public:
 
 	void
 	setGridSize(IndexType gridSize) override;
+
+	//! This method does nothing but some submethods save the value
+	void
+	setTotalDepth(double depth) override
+	{
+	}
 
 	void
 	setTemperatures(const std::vector<double>& gridTemperatures,
@@ -444,6 +455,13 @@ public:
 
 	PhaseSpace
 	getPhaseSpace() override;
+
+	double
+	getTritiumFlux(double thetaH, double thetaT, double TSphereConc,
+		double temperature) override
+	{
+		return 0.0;
+	}
 
 	template <typename MemSpace>
 	KOKKOS_INLINE_FUNCTION
@@ -714,7 +732,7 @@ public:
 	 * @param concentration The vector of concentrations
 	 * @param type The type of atom we want the concentration of
 	 * @param minSize The minimum number of atom to start counting
-	 * @param mean The ration mean
+	 * @param mean The ratio mean
 	 * @return The variance
 	 */
 	double
@@ -727,6 +745,47 @@ public:
 	{
 		auto type = species.cast<Species>();
 		return getTotalRatioVariance(concentrations, type, minSize);
+	}
+
+	/**
+	 * Get the averaged radius weighted with volume as well.
+	 *
+	 * @param concentration The vector of concentrations
+	 * @param type The type of atom we want the concentration of
+	 * @param minSize The minimum number of atom to start counting
+	 * @return The radius
+	 */
+	double
+	getTotalVolumeRadius(ConcentrationsView concentrations, Species type,
+		AmountType minSize = 0);
+
+	double
+	getTotalVolumeRadius(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) override
+	{
+		auto type = species.cast<Species>();
+		return getTotalVolumeRadius(concentrations, type, minSize);
+	}
+
+	/**
+	 * Get the variance associated with averaged radius.
+	 *
+	 * @param concentration The vector of concentrations
+	 * @param type The type of atom we want the concentration of
+	 * @param minSize The minimum number of atom to start counting
+	 * @param mean The radius mean
+	 * @return The variance
+	 */
+	double
+	getTotalRadiusVariance(ConcentrationsView concentrations, Species type,
+		double mean, AmountType minSize = 0);
+
+	double
+	getTotalRadiusVariance(ConcentrationsView concentrations, SpeciesId species,
+		double mean, AmountType minSize = 0) override
+	{
+		auto type = species.cast<Species>();
+		return getTotalRadiusVariance(concentrations, type, minSize);
 	}
 
 	/**
@@ -841,6 +900,9 @@ protected:
 	double _currentTime;
 
 	std::vector<AmountType> _minRadiusSizes;
+
+	//! Connectivites for surface coverage
+	Kokkos::View<IndexType*> _connEntries;
 };
 
 namespace detail

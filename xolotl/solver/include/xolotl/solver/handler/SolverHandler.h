@@ -148,6 +148,12 @@ protected:
 	//! If the user wants to use x Robin boundary conditions for temperature.
 	bool isRobin;
 
+	//! If the user wants to use x gas recombination boundary conditions at the surface.
+	bool isRecomb;
+
+	//! If the user wants to use sperical coordinates.
+	bool isSpherical;
+
 	//! If the user wants to attenuate the modified trap mutation.
 	bool useAttenuation;
 

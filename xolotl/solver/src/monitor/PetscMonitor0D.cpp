@@ -238,7 +238,7 @@ PetscMonitor0D::setup(int loop)
 
 			tokens = util::Tokenizer<double>{line}();
 		}
-		outputFile << "Xe/SD var" << std::endl;
+		outputFile << "Xe/SD var R_b var" << std::endl;
 		outputFile.close();
 	}
 
@@ -450,12 +450,16 @@ PetscMonitor0D::computeXenonRetention(
 		outputFile << gridPointSolution[id] << " ";
 	}
 	if (xeConcentration < 1.0e-16)
-		outputFile << "0 0" << std::endl;
+		outputFile << "0 0 0 0" << std::endl;
 	else {
 		auto ratio = network.getTotalVolumeRatio(concs, Spec::Xe, 2);
 		auto variance =
 			network.getTotalRatioVariance(concs, Spec::Xe, ratio, 2);
-		outputFile << ratio << " " << variance << std::endl;
+		auto radius = network.getTotalVolumeRadius(concs, Spec::Xe, 2);
+		auto radVar =
+			network.getTotalRadiusVariance(concs, Spec::Xe, radius, 2);
+		outputFile << ratio << " " << variance << " " << radius << " " << radVar
+				   << std::endl;
 	}
 	outputFile.close();
 

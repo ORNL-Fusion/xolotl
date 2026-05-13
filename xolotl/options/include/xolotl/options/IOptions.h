@@ -593,7 +593,7 @@ public:
 	 * @return The path to the file
 	 */
 	virtual std::string
-	getFluxDepthProfileFilePath() const = 0;
+	getCustomFluxFilePath() const = 0;
 
 	/**
 	 * Get the path to the reaction rate file.

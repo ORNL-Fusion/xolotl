@@ -40,6 +40,15 @@ ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
 		ConcentrationsView concentrations, Species type, AmountType minSize);
 
 template double
+ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::getTotalVolumeRatio(
+	ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
+	getTotalRatioVariance(ConcentrationsView concentrations, Species type,
+		double mean, AmountType minSize);
+
+template double
 ReactionNetwork<PSIReactionNetwork<PSIHeliumSpeciesList>>::
 	getTotalTrappedAtomConcentration(
 		ConcentrationsView concentrations, Species type, AmountType minSize);

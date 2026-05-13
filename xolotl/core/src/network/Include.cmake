@@ -29,6 +29,11 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/INetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/IPSIReactionNetwork.h
     ${XOLOTL_CORE_HEADER_DIR}/network/IReactionNetwork.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/LiClusterGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/LiNetworkHandler.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/LiReaction.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/LiReactionNetwork.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/LiTraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NEClusterGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NENetworkHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/NEReaction.h
@@ -80,6 +85,9 @@ list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/NEReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/NEReactionNetwork.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/NucleationReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/LiClusterGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/LiReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/LiReactionNetwork.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/PSIClusterGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/PSIReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/PSIReactionNetwork.tpp
@@ -107,6 +115,9 @@ list(APPEND XOLOTL_CORE_SOURCES
     ${XOLOTL_CORE_SOURCE_DIR}/network/NENetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/NEReactionNetwork.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/NetworkHandler.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/LiClusterGenerator.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/LiNetworkHandler.cpp
+    ${XOLOTL_CORE_SOURCE_DIR}/network/LiReactionNetwork.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/PSINetworkHandler.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/RPVClusterGenerator.cpp
     ${XOLOTL_CORE_SOURCE_DIR}/network/RPVNetworkHandler.cpp

@@ -300,6 +300,9 @@ public:
 	virtual void
 	setGridSize(IndexType gridSize) = 0;
 
+	virtual void
+	setTotalDepth(double depth) = 0;
+
 	/**
 	 * @brief Takes a vector of temperatures and associated depths along X and
 	 * updates the diffusion coefficients and rates accordingly.
@@ -439,6 +442,13 @@ public:
 	getPhaseSpace() = 0;
 
 	/**
+	 * @brief Compute the flux needed for BC at the surface.
+	 */
+	virtual double
+	getTritiumFlux(double thetaH, double thetaT, double TSphereConc,
+		double temperature) = 0;
+
+	/**
 	 * @brief Updates the fluxes view with the rates from all the
 	 * reactions at this grid point, the fluxes are used by the RHS function.
 	 */
@@ -563,6 +573,14 @@ public:
 
 	virtual double
 	getTotalRatioVariance(ConcentrationsView concentrations, SpeciesId species,
+		double mean, AmountType minSize = 0) = 0;
+
+	virtual double
+	getTotalVolumeRadius(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) = 0;
+
+	virtual double
+	getTotalRadiusVariance(ConcentrationsView concentrations, SpeciesId species,
 		double mean, AmountType minSize = 0) = 0;
 
 	/**

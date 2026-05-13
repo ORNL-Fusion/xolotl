@@ -181,8 +181,7 @@ Options::printAll(std::ostream& os) const
 	os << "heVRatio: " << heVRatio << '\n';
 	os << "migrationThreshold: " << migrationThreshold << '\n';
 
-	os << "fluxDepthProfileFilePath: \"" << fluxDepthProfileFilePath.string()
-	   << "\"\n";
+	os << "customFluxFilePath: \"" << customFluxFilePath.string() << "\"\n";
 
 	os << "basalPortion: " << basalPortion << '\n';
 	os << "transitionSize: " << transitionSize << '\n';
@@ -446,6 +445,7 @@ Options::setProcesses(const std::string& processList)
 	// Initialize the map of processes
 	processMap["reaction"] = false;
 	processMap["diff"] = false;
+	processMap["spherical"] = false;
 	processMap["advec"] = false;
 	processMap["modifiedTM"] = false;
 	processMap["movingSurface"] = false;

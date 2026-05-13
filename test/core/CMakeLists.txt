@@ -10,6 +10,7 @@ set(tests
     diffusion/Diffusion1DHandlerTester.cpp
     diffusion/Diffusion2DHandlerTester.cpp
     diffusion/Diffusion3DHandlerTester.cpp
+    diffusion/Spherical1DHandlerTester.cpp
     diffusion/DummyDiffusionHandlerTester.cpp
     flux/AlloyFitFluxHandlerTester.cpp
     flux/AlphaZrFitFluxHandlerTester.cpp

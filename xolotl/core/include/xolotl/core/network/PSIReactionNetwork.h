@@ -36,6 +36,7 @@ public:
 	using Subpaving = typename Superclass::Subpaving;
 	using SubdivisionRatio = typename Superclass::SubdivisionRatio;
 	using Composition = typename Superclass::Composition;
+	using Connectivity = typename Superclass::Connectivity;
 	using Species = typename Superclass::Species;
 	using AmountType = typename Superclass::AmountType;
 	using IndexType = typename Superclass::IndexType;
@@ -57,19 +58,19 @@ public:
 	SpeciesId
 	getHeliumSpeciesId() const override
 	{
-		return SpeciesId{Species::He, Superclass::getNumberOfSpecies()};
+		return SpeciesId{Species::He};
 	}
 
 	SpeciesId
 	getVacancySpeciesId() const override
 	{
-		return SpeciesId{Species::V, Superclass::getNumberOfSpecies()};
+		return SpeciesId{Species::V};
 	}
 
 	SpeciesId
 	getInterstitialSpeciesId() const override
 	{
-		return SpeciesId{Species::I, Superclass::getNumberOfSpecies()};
+		return SpeciesId{Species::I};
 	}
 
 	bool
@@ -128,6 +129,12 @@ public:
 	void
 	updateDesorptionLeftSideRate(
 		ConcentrationsView concentrations, IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	setConnectivity(Connectivity)
+	{
+	}
 
 private:
 	double

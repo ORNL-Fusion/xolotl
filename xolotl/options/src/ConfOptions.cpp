@@ -40,7 +40,7 @@ ConfOptions::readParams(int argc, const char* argv[])
 	}
 
 	XOLOTL_LOG_WARN
-		<< "WARNING: (ConfOptions) Parsing parameter files in config format is "
+		<< "(ConfOptions) Parsing parameter files in config format is "
 		   "deprecated and may not be up-to-date. "
 		   "Consider converting your parameter file to JSON format.";
 
@@ -208,8 +208,8 @@ ConfOptions::readParams(int argc, const char* argv[])
 		"The number of He atoms allowed per V in a bubble.")(
 		"migrationThreshold", bpo::value<double>(&migrationThreshold),
 		"Set a limit on the migration energy above which the diffusion will be "
-		"ignored.")("fluxDepthProfileFilePath",
-		bpo::value<fs::path>(&fluxDepthProfileFilePath),
+		"ignored.")("customFluxFilePath",
+		bpo::value<fs::path>(&customFluxFilePath),
 		"The path to the custom flux profile file; the default is an empty "
 		"string that will use the default material associated flux handler.")(
 		"reactionFilePath",

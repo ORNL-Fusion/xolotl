@@ -102,8 +102,8 @@ Diffusion3DHandler::initializeDiffusionGrid(
 void
 Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,
 	const StencilConcArray& concVector, Kokkos::View<double*> updatedConcOffset,
-	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,
-	int iz) const
+	double hxLeft, double hxRight, int ix, bool isBC, double sy, int iy,
+	double sz, int iz) const
 {
 	// Loop on them
 	// TODO Maintaining a separate index assumes that diffusingClusters is
@@ -166,8 +166,8 @@ Diffusion3DHandler::computeDiffusion(network::IReactionNetwork& network,
 void
 Diffusion3DHandler::computePartialsForDiffusion(
 	network::IReactionNetwork& network, Kokkos::View<double*> val,
-	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,
-	int iz) const
+	double hxLeft, double hxRight, int ix, bool isBC, double sy, int iy,
+	double sz, int iz) const
 {
 	auto diffGrid = diffusGrid;
 	auto clusterIds = this->diffClusterIds;
