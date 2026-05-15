@@ -71,6 +71,12 @@ PSIClusterGenerator<TSpeciesEnum>::refine(
 		return true;
 	};
 
+	// Trap is never grouped
+	if (lo[Species::Trap] > 0) {
+		return true;
+	}
+
+	// I
 	if (lo[Species::I] > 0) {
 		if (lo[Species::I] < _groupingMin &&
 			othersBeginAtZero(region, Species::I)) {
@@ -331,6 +337,12 @@ PSIClusterGenerator<TSpeciesEnum>::select(const Region& region) const
 		}
 		return true;
 	};
+
+	// Traps
+	if (region[Species::Trap].begin() > 0 &&
+		!region.getOrigin().isOnAxis(Species::Trap)) {
+		return false;
+	}
 
 	// Interstitials
 	if (region[Species::I].begin() > 0 &&
@@ -749,6 +761,10 @@ PSIClusterGenerator<TSpeciesEnum>::getReactionRadius(
 				return (impurityRadius + termOne - termTwo) *
 					_hydrogenRadiusFactor;
 			}
+		}
+		if (comp.isOnAxis(Species::Trap)) {
+			// Should not actually be used anywhere
+			return 0.0;
 		}
 
 		return (sqrt(3.0) / 4.0) * latticeParameter +

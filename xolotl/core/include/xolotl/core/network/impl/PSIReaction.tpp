@@ -4,6 +4,7 @@
 #include <xolotl/core/network/impl/Reaction.tpp>
 #include <xolotl/core/network/impl/SinkReaction.tpp>
 #include <xolotl/core/network/impl/TrapMutationReaction.tpp>
+#include <xolotl/core/network/impl/TrapReaction.tpp>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -235,6 +236,51 @@ PSISinkReaction<TSpeciesEnum>::getSinkStrength()
 	double grainSize = 50000.0; // 50 um
 
 	return 1.0 / (pi * grainSize * grainSize);
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+typename PSITrapReaction<TSpeciesEnum>::IndexType
+PSITrapReaction<TSpeciesEnum>::getId()
+{
+	using Composition = typename Superclass::Composition;
+
+	// Here the id is the size of the trap
+	auto cl = this->_clusterData->getCluster(this->_trapped);
+	Composition comp = cl.getRegion().getOrigin();
+	return comp[PSITrapReaction<TSpeciesEnum>::Species::Trap] - 1;
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSITrapReaction<TSpeciesEnum>::getStrength()
+{
+	return this->strength;
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSITrapReaction<TSpeciesEnum>::getEnergy()
+{
+	return this->energy;
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSITrapReaction<TSpeciesEnum>::getFrequency()
+{
+	return this->frequency;
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSITrapReaction<TSpeciesEnum>::getDensity()
+{
+	return this->density;
 }
 } // namespace network
 } // namespace core

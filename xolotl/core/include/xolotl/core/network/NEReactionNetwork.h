@@ -36,6 +36,12 @@ public:
 	checkLargestClusterId();
 
 	void
+	setReactionParams(std::string) override
+	{
+		return;
+	}
+
+	void
 	initializeExtraClusterData(const options::IOptions& options);
 
 	KOKKOS_INLINE_FUNCTION

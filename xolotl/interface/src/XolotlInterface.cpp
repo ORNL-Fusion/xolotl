@@ -160,6 +160,11 @@ XolotlInterface::initializeXolotl() TRY
 	// Initialize the solver
 	solver->initialize();
 	solverInitialized = true;
+
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	// Set the parameters
+	network.setReactionParams(options->getTrapParameters());
 }
 CATCH
 

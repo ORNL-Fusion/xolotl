@@ -45,8 +45,13 @@ class PSIDissociationReaction;
 
 template <typename TSpeciesEnum>
 class PSISinkReaction;
+
+template <typename TSpeciesEnum>
+class PSITrapReaction;
+
 template <typename TSpeciesEnum>
 class PSITrapMutationReaction;
+
 template <typename TSpeciesEnum>
 class PSIClusterGenerator;
 
@@ -55,6 +60,7 @@ struct TrapMutationClusterData;
 
 enum class PSIFullSpeciesList
 {
+	Trap,
 	He,
 	D,
 	T,
@@ -81,7 +87,7 @@ struct HasTritium<PSIFullSpeciesList> : std::true_type
 inline const std::string&
 toLabelString(PSIFullSpeciesList species)
 {
-	static const std::string labelArray[] = {"He", "D", "T", "V", "I"};
+	static const std::string labelArray[] = {"Trap", "He", "D", "T", "V", "I"};
 	return labelArray[static_cast<int>(species)];
 }
 
@@ -89,13 +95,13 @@ inline const std::string&
 toNameString(PSIFullSpeciesList species)
 {
 	static const std::string nameArray[] = {
-		"Helium", "Deuterium", "Tritium", "Vacancy", "Interstitial"};
+		"Trap", "Helium", "Deuterium", "Tritium", "Vacancy", "Interstitial"};
 	return nameArray[static_cast<int>(species)];
 }
 
 template <>
 struct NumberOfSpecies<PSIFullSpeciesList> :
-	std::integral_constant<std::size_t, 5>
+	std::integral_constant<std::size_t, 6>
 {
 };
 
@@ -112,24 +118,25 @@ struct NumberOfVacancySpecies<PSIFullSpeciesList> :
 };
 
 template <>
-struct SpeciesForGrouping<PSIFullSpeciesList, 5>
+struct SpeciesForGrouping<PSIFullSpeciesList, 6>
 {
-	using Sequence = EnumSequence<PSIFullSpeciesList, 5>;
+	using Sequence = EnumSequence<PSIFullSpeciesList, 6>;
 	static constexpr auto first = Sequence(PSIFullSpeciesList::He);
 	static constexpr auto last = Sequence(PSIFullSpeciesList::I);
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::underlying_type_t<PSIFullSpeciesList>
-	mapToMomentId(EnumSequence<PSIFullSpeciesList, 5> value)
+	mapToMomentId(EnumSequence<PSIFullSpeciesList, 6> value)
 	{
 		if (value == PSIFullSpeciesList::I)
 			return 3;
-		return value();
+		return value() - 1;
 	}
 };
 
 enum class PSIDeuteriumSpeciesList
 {
+	Trap,
 	He,
 	D,
 	V,
@@ -150,7 +157,7 @@ struct HasDeuterium<PSIDeuteriumSpeciesList> : std::true_type
 inline const std::string&
 toLabelString(PSIDeuteriumSpeciesList species)
 {
-	static const std::string labelArray[] = {"He", "D", "V", "I"};
+	static const std::string labelArray[] = {"Trap", "He", "D", "V", "I"};
 	return labelArray[static_cast<int>(species)];
 }
 
@@ -158,13 +165,13 @@ inline const std::string&
 toNameString(PSIDeuteriumSpeciesList species)
 {
 	static const std::string nameArray[] = {
-		"Helium", "Deuterium", "Vacancy", "Interstitial"};
+		"Trap", "Helium", "Deuterium", "Vacancy", "Interstitial"};
 	return nameArray[static_cast<int>(species)];
 }
 
 template <>
 struct NumberOfSpecies<PSIDeuteriumSpeciesList> :
-	std::integral_constant<std::size_t, 4>
+	std::integral_constant<std::size_t, 5>
 {
 };
 
@@ -181,24 +188,25 @@ struct NumberOfVacancySpecies<PSIDeuteriumSpeciesList> :
 };
 
 template <>
-struct SpeciesForGrouping<PSIDeuteriumSpeciesList, 4>
+struct SpeciesForGrouping<PSIDeuteriumSpeciesList, 5>
 {
-	using Sequence = EnumSequence<PSIDeuteriumSpeciesList, 4>;
+	using Sequence = EnumSequence<PSIDeuteriumSpeciesList, 5>;
 	static constexpr auto first = Sequence(PSIDeuteriumSpeciesList::He);
 	static constexpr auto last = Sequence(PSIDeuteriumSpeciesList::I);
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::underlying_type_t<PSIDeuteriumSpeciesList>
-	mapToMomentId(EnumSequence<PSIDeuteriumSpeciesList, 4> value)
+	mapToMomentId(EnumSequence<PSIDeuteriumSpeciesList, 5> value)
 	{
 		if (value == PSIDeuteriumSpeciesList::I)
 			return 2;
-		return value();
+		return value() - 1;
 	}
 };
 
 enum class PSITritiumSpeciesList
 {
+	Trap,
 	He,
 	T,
 	V,
@@ -219,7 +227,7 @@ struct HasTritium<PSITritiumSpeciesList> : std::true_type
 inline const std::string&
 toLabelString(PSITritiumSpeciesList species)
 {
-	static const std::string labelArray[] = {"He", "T", "V", "I"};
+	static const std::string labelArray[] = {"Trap", "He", "T", "V", "I"};
 	return labelArray[static_cast<int>(species)];
 }
 
@@ -227,13 +235,13 @@ inline const std::string&
 toNameString(PSITritiumSpeciesList species)
 {
 	static const std::string nameArray[] = {
-		"Helium", "Tritium", "Vacancy", "Interstitial"};
+		"Trap", "Helium", "Tritium", "Vacancy", "Interstitial"};
 	return nameArray[static_cast<int>(species)];
 }
 
 template <>
 struct NumberOfSpecies<PSITritiumSpeciesList> :
-	std::integral_constant<std::size_t, 4>
+	std::integral_constant<std::size_t, 5>
 {
 };
 
@@ -250,24 +258,25 @@ struct NumberOfVacancySpecies<PSITritiumSpeciesList> :
 };
 
 template <>
-struct SpeciesForGrouping<PSITritiumSpeciesList, 4>
+struct SpeciesForGrouping<PSITritiumSpeciesList, 5>
 {
-	using Sequence = EnumSequence<PSITritiumSpeciesList, 4>;
+	using Sequence = EnumSequence<PSITritiumSpeciesList, 5>;
 	static constexpr auto first = Sequence(PSITritiumSpeciesList::He);
 	static constexpr auto last = Sequence(PSITritiumSpeciesList::I);
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::underlying_type_t<PSITritiumSpeciesList>
-	mapToMomentId(EnumSequence<PSITritiumSpeciesList, 4> value)
+	mapToMomentId(EnumSequence<PSITritiumSpeciesList, 5> value)
 	{
 		if (value == PSITritiumSpeciesList::I)
 			return 2;
-		return value();
+		return value() - 1;
 	}
 };
 
 enum class PSIHeliumSpeciesList
 {
+	Trap,
 	He,
 	V,
 	I
@@ -276,7 +285,7 @@ enum class PSIHeliumSpeciesList
 inline const std::string&
 toLabelString(PSIHeliumSpeciesList species)
 {
-	static const std::string labelArray[] = {"He", "V", "I"};
+	static const std::string labelArray[] = {"Trap", "He", "V", "I"};
 	return labelArray[static_cast<int>(species)];
 }
 
@@ -284,13 +293,13 @@ inline const std::string&
 toNameString(PSIHeliumSpeciesList species)
 {
 	static const std::string nameArray[] = {
-		"Helium", "Vacancy", "Interstitial"};
+		"Trap", "Helium", "Vacancy", "Interstitial"};
 	return nameArray[static_cast<int>(species)];
 }
 
 template <>
 struct NumberOfSpecies<PSIHeliumSpeciesList> :
-	std::integral_constant<std::size_t, 3>
+	std::integral_constant<std::size_t, 4>
 {
 };
 
@@ -307,19 +316,19 @@ struct NumberOfVacancySpecies<PSIHeliumSpeciesList> :
 };
 
 template <>
-struct SpeciesForGrouping<PSIHeliumSpeciesList, 3>
+struct SpeciesForGrouping<PSIHeliumSpeciesList, 4>
 {
-	using Sequence = EnumSequence<PSIHeliumSpeciesList, 3>;
+	using Sequence = EnumSequence<PSIHeliumSpeciesList, 4>;
 	static constexpr auto first = Sequence(PSIHeliumSpeciesList::He);
 	static constexpr auto last = Sequence(PSIHeliumSpeciesList::I);
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::underlying_type_t<PSIHeliumSpeciesList>
-	mapToMomentId(EnumSequence<PSIHeliumSpeciesList, 3> value)
+	mapToMomentId(EnumSequence<PSIHeliumSpeciesList, 4> value)
 	{
 		if (value == PSIHeliumSpeciesList::I)
 			return 1;
-		return value();
+		return value() - 1;
 	}
 };
 
@@ -333,10 +342,12 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 	using ProductionReactionType = PSIProductionReaction<Species>;
 	using DissociationReactionType = PSIDissociationReaction<Species>;
 	using SinkReactionType = PSISinkReaction<Species>;
+	using TrapReactionType = PSITrapReaction<Species>;
 	using TrapMutationReactionType = PSITrapMutationReaction<Species>;
 
-	using ReactionTypeList = std::tuple<ProductionReactionType,
-		DissociationReactionType, SinkReactionType, TrapMutationReactionType>;
+	using ReactionTypeList =
+		std::tuple<ProductionReactionType, DissociationReactionType,
+			SinkReactionType, TrapMutationReactionType, TrapReactionType>;
 
 	using ClusterGenerator = PSIClusterGenerator<Species>;
 };

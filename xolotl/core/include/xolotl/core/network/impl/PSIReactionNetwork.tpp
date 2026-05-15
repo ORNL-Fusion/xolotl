@@ -6,9 +6,11 @@
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationClusterData.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/TrapReactionGenerator.tpp>
 #include <xolotl/core/network/impl/PSIClusterGenerator.tpp>
 #include <xolotl/core/network/impl/PSIReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -386,6 +388,23 @@ PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 	return maxLoc.loc;
 }
 
+template <typename TSpeciesEnum>
+void
+PSIReactionNetwork<TSpeciesEnum>::setReactionParams(std::string trapParams)
+{
+	// Convert the string to a vector of values
+	auto tokens = util::Tokenizer<double>{trapParams}();
+	// Set them in the corresponding reactions
+	this->_reactions.template forEachOn<PSITrapReaction<TSpeciesEnum>>(
+		"ReactionCollection::setReactionParams",
+		DEVICE_LAMBDA(auto&& reaction) {
+			auto i = reaction.getId();
+			// Get the corresponding parameters
+			reaction.setParameters(tokens[4 * i], tokens[4 * i + 1],
+				tokens[4 * i + 2], tokens[4 * i + 3]);
+		});
+}
+
 namespace detail
 {
 template <typename TSpeciesEnum>
@@ -434,9 +453,13 @@ PSIReactionGenerator<TSpeciesEnum>::operator()(
 	constexpr auto species = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
 
+	// Add the sinks
 	if (i == j) {
 		addSinks(i, tag);
 	}
+
+	// Add the trapping reactions between single mobile gas and traps
+	addTraps(i, j, tag);
 
 	auto numClusters = this->getNumberOfClusters();
 
@@ -726,6 +749,71 @@ PSIReactionGenerator<TSpeciesEnum>::addSinks(IndexType i, TTag tag) const
 }
 
 template <typename TSpeciesEnum>
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+PSIReactionGenerator<TSpeciesEnum>::addTraps(
+	IndexType i, IndexType j, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	// Get the compositions
+	const auto& clReg1 = this->getCluster(i).getRegion();
+	Composition lo1 = clReg1.getOrigin();
+	const auto& clReg2 = this->getCluster(j).getRegion();
+	Composition lo2 = clReg2.getOrigin();
+
+	if (clReg1.isSimplex() and clReg2.isSimplex()) {
+		// Look for He 1 and trap
+		if ((lo1.isOnAxis(Species::He) and lo2.isOnAxis(Species::Trap)) or
+			(lo2.isOnAxis(Species::He) and lo1.isOnAxis(Species::Trap))) {
+			// Which one is which?
+			auto trapId = lo1.isOnAxis(Species::Trap) ? i : j;
+			auto heId = lo1.isOnAxis(Species::Trap) ? j : i;
+
+			// Only single helium can trap
+			Composition loHe = this->getCluster(heId).getRegion().getOrigin();
+			if (loHe[Species::He] == 1) {
+				this->addTrapReaction(tag, {heId, trapId});
+			}
+		}
+
+		// Look for D 1 and trap
+		if constexpr (psi::hasDeuterium<Species>) {
+			if ((lo1.isOnAxis(Species::D) and lo2.isOnAxis(Species::Trap)) or
+				(lo2.isOnAxis(Species::D) and lo1.isOnAxis(Species::Trap))) {
+				// Which one is which?
+				auto trapId = lo1.isOnAxis(Species::Trap) ? i : j;
+				auto dId = lo1.isOnAxis(Species::Trap) ? j : i;
+
+				// Only single deuterium can trap
+				Composition loD = this->getCluster(dId).getRegion().getOrigin();
+				if (loD[Species::D] == 1) {
+					this->addTrapReaction(tag, {dId, trapId});
+				}
+			}
+		}
+
+		// Look for T 1 and trap
+		if constexpr (psi::hasTritium<Species>) {
+			if ((lo1.isOnAxis(Species::T) and lo2.isOnAxis(Species::Trap)) or
+				(lo2.isOnAxis(Species::T) and lo1.isOnAxis(Species::Trap))) {
+				// Which one is which?
+				auto trapId = lo1.isOnAxis(Species::Trap) ? i : j;
+				auto tId = lo1.isOnAxis(Species::Trap) ? j : i;
+
+				// Only single tritium can trap
+				Composition loT = this->getCluster(tId).getRegion().getOrigin();
+				if (loT[Species::T] == 1) {
+					this->addTrapReaction(tag, {tId, trapId});
+				}
+			}
+		}
+	}
+}
+
+template <typename TSpeciesEnum>
 inline ReactionCollection<
 	typename PSIReactionGenerator<TSpeciesEnum>::NetworkType>
 PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
@@ -733,7 +821,8 @@ PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
 		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions(), this->getTrapMutationReactions());
+		this->getSinkReactions(), this->getTrapMutationReactions(),
+		this->getTrapReactions());
 	return ret;
 }
 } // namespace detail

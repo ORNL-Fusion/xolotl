@@ -34,6 +34,12 @@ public:
 	IndexType
 	checkLargestClusterId();
 
+	void
+	setReactionParams(std::string) override
+	{
+		return;
+	}
+
 	KOKKOS_INLINE_FUNCTION
 	void
 	setConnectivity(Connectivity)

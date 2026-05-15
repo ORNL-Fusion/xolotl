@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
-	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
+	NetworkType network({0, maxHe, maxD, maxT, maxV, maxI}, 1, opts);
 
 	BOOST_REQUIRE(network.hasDeuterium());
 	BOOST_REQUIRE(network.hasTritium());
@@ -78,10 +78,10 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 156);
 	typename NetworkType::PhaseSpace phaseSpace = network.getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 5);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 6);
 
-	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 5);
-	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 4);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 6);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 5);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -432,8 +432,10 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	auto momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 5);
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
@@ -459,8 +461,10 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 5);
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
@@ -486,8 +490,10 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 5);
 
 	comp[Spec::He] = 0;
 	comp[Spec::D] = 1;
@@ -514,8 +520,10 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 2);
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 5);
 
 	comp[Spec::D] = 0;
 	comp[Spec::T] = 1;
@@ -542,8 +550,10 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 1);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 5);
 
 	comp[Spec::V] = 1;
 	comp[Spec::He] = 8;
@@ -570,8 +580,10 @@ BOOST_AUTO_TEST_CASE(fullyRefined)
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 4);
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 1);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 5);
 }
 
 BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
@@ -603,7 +615,7 @@ BOOST_AUTO_TEST_CASE(reducedMatrixMethod)
 	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
-	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, 1, opts);
+	NetworkType network({0, maxHe, maxD, maxT, maxV, maxI}, 1, opts);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -873,7 +885,7 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
-	NetworkType network({maxHe, maxV, maxI}, 1, opts);
+	NetworkType network({0, maxHe, maxV, maxI}, 1, opts);
 
 	BOOST_REQUIRE(!network.hasDeuterium());
 	BOOST_REQUIRE(!network.hasTritium());
@@ -895,10 +907,10 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 35);
 	typename NetworkType::PhaseSpace phaseSpace = network.getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
 
-	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 3);
-	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 2);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 4);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 3);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -1066,8 +1078,10 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::He], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	auto momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 2);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
@@ -1089,8 +1103,10 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 2);
 	BOOST_REQUIRE_EQUAL(lo[Spec::He], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 2);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
@@ -1112,8 +1128,10 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::He], 5);
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 6);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 2);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
 
 	comp[Spec::He] = 4;
 	comp[Spec::V] = 1;
@@ -1135,8 +1153,10 @@ BOOST_AUTO_TEST_CASE(HeliumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::I], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::He], 4);
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 5);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 2);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
 }
 
 BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
@@ -1166,7 +1186,7 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType::AmountType maxD = 2.0 / 3.0 * (double)maxHe;
-	NetworkType network({maxHe, maxD, maxV, maxI}, 1, opts);
+	NetworkType network({0, maxHe, maxD, maxV, maxI}, 1, opts);
 
 	BOOST_REQUIRE(network.hasDeuterium());
 	BOOST_REQUIRE(!network.hasTritium());
@@ -1188,10 +1208,10 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 56);
 	typename NetworkType::PhaseSpace phaseSpace = network.getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 5);
 
-	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 4);
-	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 3);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 5);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 4);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -1379,8 +1399,10 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::D], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	auto momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
@@ -1404,8 +1426,10 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::D], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
@@ -1429,8 +1453,10 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 6);
 	BOOST_REQUIRE_EQUAL(lo[Spec::D], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
 
 	comp[Spec::He] = 0;
 	comp[Spec::D] = 1;
@@ -1455,8 +1481,10 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::D], 1);
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
 
 	comp[Spec::He] = 3;
 	comp[Spec::V] = 1;
@@ -1480,8 +1508,10 @@ BOOST_AUTO_TEST_CASE(DeuteriumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 4);
 	BOOST_REQUIRE_EQUAL(lo[Spec::D], 1);
 	BOOST_REQUIRE_EQUAL(hi[Spec::D], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
 }
 
 BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
@@ -1511,7 +1541,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = psi::getMaxHePerV(maxV, opts.getHeVRatio());
 	NetworkType::AmountType maxT = 2.0 / 3.0 * (double)maxHe;
-	NetworkType network({maxHe, maxT, maxV, maxI}, 1, opts);
+	NetworkType network({0, maxHe, maxT, maxV, maxI}, 1, opts);
 
 	BOOST_REQUIRE(!network.hasDeuterium());
 	BOOST_REQUIRE(network.hasTritium());
@@ -1533,10 +1563,10 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	typename NetworkType::Bounds bounds = network.getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 56);
 	typename NetworkType::PhaseSpace phaseSpace = network.getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 5);
 
-	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 4);
-	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 3);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpecies(), 5);
+	BOOST_REQUIRE_EQUAL(network.getNumberOfSpeciesNoI(), 4);
 
 	// Get the diagonal fill
 	const auto dof = network.getDOF();
@@ -1725,7 +1755,7 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 1);
 	auto momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
 
 	comp[Spec::V] = 0;
 	comp[Spec::I] = 1;
@@ -1749,8 +1779,10 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
 
 	comp[Spec::I] = 0;
 	comp[Spec::He] = 5;
@@ -1774,8 +1806,10 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 6);
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 0);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 1);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
 
 	comp[Spec::He] = 0;
 	comp[Spec::T] = 1;
@@ -1800,8 +1834,10 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 1);
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 1);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
 
 	comp[Spec::He] = 3;
 	comp[Spec::V] = 1;
@@ -1825,8 +1861,10 @@ BOOST_AUTO_TEST_CASE(TritiumSpeciesList)
 	BOOST_REQUIRE_EQUAL(hi[Spec::He], 4);
 	BOOST_REQUIRE_EQUAL(lo[Spec::T], 1);
 	BOOST_REQUIRE_EQUAL(hi[Spec::T], 2);
+	BOOST_REQUIRE_EQUAL(lo[Spec::Trap], 0);
+	BOOST_REQUIRE_EQUAL(hi[Spec::Trap], 1);
 	momId = cluster.getMomentIds();
-	BOOST_REQUIRE_EQUAL(momId.extent(0), 3);
+	BOOST_REQUIRE_EQUAL(momId.extent(0), 4);
 }
 
 BOOST_AUTO_TEST_CASE(HeVGrouped)
@@ -1864,10 +1902,10 @@ BOOST_AUTO_TEST_CASE(HeVGrouped)
 	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 2874);
 	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
 
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
 }
 
 BOOST_AUTO_TEST_CASE(HeDVGrouped)
@@ -1905,10 +1943,10 @@ BOOST_AUTO_TEST_CASE(HeDVGrouped)
 	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 4967);
 	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 5);
 
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 5);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 4);
 }
 
 BOOST_AUTO_TEST_CASE(HeTVGrouped)
@@ -1946,10 +1984,10 @@ BOOST_AUTO_TEST_CASE(HeTVGrouped)
 	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 4967);
 	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 5);
 
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 5);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 4);
 }
 
 BOOST_AUTO_TEST_CASE(HeDTVGrouped)
@@ -1987,10 +2025,10 @@ BOOST_AUTO_TEST_CASE(HeDTVGrouped)
 	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 2383);
 	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 5);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 6);
 
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 5);
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 4);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 6);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 5);
 }
 
 BOOST_AUTO_TEST_CASE(IGrouped)
@@ -2028,10 +2066,10 @@ BOOST_AUTO_TEST_CASE(IGrouped)
 	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 813);
 	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
 
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
 }
 
 BOOST_AUTO_TEST_CASE(VIGrouped)
@@ -2069,10 +2107,10 @@ BOOST_AUTO_TEST_CASE(VIGrouped)
 	typename NetworkType::Bounds bounds = network->getAllClusterBounds();
 	BOOST_REQUIRE_EQUAL(bounds.size(), 1091);
 	typename NetworkType::PhaseSpace phaseSpace = network->getPhaseSpace();
-	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 3);
+	BOOST_REQUIRE_EQUAL(phaseSpace.size(), 4);
 
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 3);
-	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 2);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpecies(), 4);
+	BOOST_REQUIRE_EQUAL(network->getNumberOfSpeciesNoI(), 3);
 }
 
 BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_Full, *utf::label("traits"))
@@ -2080,12 +2118,13 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_Full, *utf::label("traits"))
 	using NetworkType = PSIReactionNetwork<PSIFullSpeciesList>;
 	using Spec = NetworkType::Species;
 
-	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 5);
-	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 5);
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 6);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 6);
 	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
 	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
 
 	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Trap), "Trap");
 	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
 	BOOST_REQUIRE_EQUAL(toLabelString(Spec::D), "D");
 	BOOST_REQUIRE_EQUAL(toLabelString(Spec::T), "T");
@@ -2093,6 +2132,7 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_Full, *utf::label("traits"))
 	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
 
 	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::Trap), "Trap");
 	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
 	BOOST_REQUIRE_EQUAL(toNameString(Spec::D), "Deuterium");
 	BOOST_REQUIRE_EQUAL(toNameString(Spec::T), "Tritium");
@@ -2109,6 +2149,112 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_Full, *utf::label("traits"))
 	BOOST_REQUIRE(sid.cast<Spec>() == Spec::D);
 	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "D");
 	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Deuterium");
+	sid = network.parseSpeciesId("T");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::T);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "T");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Tritium");
+	sid = network.parseSpeciesId("V");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
+	sid = network.parseSpeciesId("I");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
+
+	// Define the sequence
+	using GroupingRange = SpeciesForGrouping<Spec, 6>;
+
+	// I goes on V
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::D), 1);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::T), 2);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 3);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 3);
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_HeD, *utf::label("traits"))
+{
+	using NetworkType = PSIReactionNetwork<PSIDeuteriumSpeciesList>;
+	using Spec = NetworkType::Species;
+
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 5);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 5);
+	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
+	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
+
+	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Trap), "Trap");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::D), "D");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
+
+	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::D), "Deuterium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
+
+	// parseSpeciesId / getSpeciesLabel / getSpeciesName
+	auto network = NetworkType();
+	auto sid = network.parseSpeciesId("He");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::He);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "He");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Helium");
+	sid = network.parseSpeciesId("D");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::D);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "D");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Deuterium");
+	sid = network.parseSpeciesId("V");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
+	sid = network.parseSpeciesId("I");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
+
+	// Define the sequence
+	using GroupingRange = SpeciesForGrouping<Spec, 5>;
+
+	// I goes on V
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::D), 1);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 2);
+	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 2);
+}
+
+BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_HeT, *utf::label("traits"))
+{
+	using NetworkType = PSIReactionNetwork<PSITritiumSpeciesList>;
+	using Spec = NetworkType::Species;
+
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 5);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 5);
+	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
+	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
+
+	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Trap), "Trap");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::T), "T");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
+
+	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::Trap), "Trap");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::T), "Tritium");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
+
+	// parseSpeciesId / getSpeciesLabel / getSpeciesName
+	auto network = NetworkType();
+	auto sid = network.parseSpeciesId("He");
+	BOOST_REQUIRE(sid.cast<Spec>() == Spec::He);
+	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "He");
+	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Helium");
 	sid = network.parseSpeciesId("T");
 	BOOST_REQUIRE(sid.cast<Spec>() == Spec::T);
 	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "T");
@@ -2127,109 +2273,6 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_Full, *utf::label("traits"))
 
 	// I goes on V
 	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::D), 1);
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::T), 2);
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 3);
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 3);
-}
-
-BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_HeD, *utf::label("traits"))
-{
-	using NetworkType = PSIReactionNetwork<PSIDeuteriumSpeciesList>;
-	using Spec = NetworkType::Species;
-
-	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 4);
-	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 4);
-	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
-	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
-
-	// toLabelString
-	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
-	BOOST_REQUIRE_EQUAL(toLabelString(Spec::D), "D");
-	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
-	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
-
-	// toNameString
-	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
-	BOOST_REQUIRE_EQUAL(toNameString(Spec::D), "Deuterium");
-	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
-	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
-
-	// parseSpeciesId / getSpeciesLabel / getSpeciesName
-	auto network = NetworkType();
-	auto sid = network.parseSpeciesId("He");
-	BOOST_REQUIRE(sid.cast<Spec>() == Spec::He);
-	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "He");
-	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Helium");
-	sid = network.parseSpeciesId("D");
-	BOOST_REQUIRE(sid.cast<Spec>() == Spec::D);
-	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "D");
-	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Deuterium");
-	sid = network.parseSpeciesId("V");
-	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
-	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
-	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
-	sid = network.parseSpeciesId("I");
-	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
-	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
-	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
-
-	// Define the sequence
-	using GroupingRange = SpeciesForGrouping<Spec, 4>;
-
-	// I goes on V
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::D), 1);
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 2);
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 2);
-}
-
-BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_HeT, *utf::label("traits"))
-{
-	using NetworkType = PSIReactionNetwork<PSITritiumSpeciesList>;
-	using Spec = NetworkType::Species;
-
-	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 4);
-	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 4);
-	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
-	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
-
-	// toLabelString
-	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
-	BOOST_REQUIRE_EQUAL(toLabelString(Spec::T), "T");
-	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
-	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
-
-	// toNameString
-	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
-	BOOST_REQUIRE_EQUAL(toNameString(Spec::T), "Tritium");
-	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
-	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
-
-	// parseSpeciesId / getSpeciesLabel / getSpeciesName
-	auto network = NetworkType();
-	auto sid = network.parseSpeciesId("He");
-	BOOST_REQUIRE(sid.cast<Spec>() == Spec::He);
-	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "He");
-	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Helium");
-	sid = network.parseSpeciesId("T");
-	BOOST_REQUIRE(sid.cast<Spec>() == Spec::T);
-	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "T");
-	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Tritium");
-	sid = network.parseSpeciesId("V");
-	BOOST_REQUIRE(sid.cast<Spec>() == Spec::V);
-	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "V");
-	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Vacancy");
-	sid = network.parseSpeciesId("I");
-	BOOST_REQUIRE(sid.cast<Spec>() == Spec::I);
-	BOOST_REQUIRE_EQUAL(network.getSpeciesLabel(sid), "I");
-	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
-
-	// Define the sequence
-	using GroupingRange = SpeciesForGrouping<Spec, 4>;
-
-	// I goes on V
-	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);
 	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::T), 1);
 	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::V), 2);
 	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::I), 2);
@@ -2240,17 +2283,19 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_He, *utf::label("traits"))
 	using NetworkType = PSIReactionNetwork<PSIHeliumSpeciesList>;
 	using Spec = NetworkType::Species;
 
-	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 3);
-	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 3);
+	static_assert(ReactionNetworkTraits<NetworkType>::numSpecies == 4);
+	BOOST_REQUIRE_EQUAL(numberOfSpecies<Spec>(), 4);
 	BOOST_REQUIRE_EQUAL(numberOfInterstitialSpecies<Spec>(), 1);
 	BOOST_REQUIRE_EQUAL(numberOfVacancySpecies<Spec>(), 1);
 
 	// toLabelString
+	BOOST_REQUIRE_EQUAL(toLabelString(Spec::Trap), "Trap");
 	BOOST_REQUIRE_EQUAL(toLabelString(Spec::He), "He");
 	BOOST_REQUIRE_EQUAL(toLabelString(Spec::V), "V");
 	BOOST_REQUIRE_EQUAL(toLabelString(Spec::I), "I");
 
 	// toNameString
+	BOOST_REQUIRE_EQUAL(toNameString(Spec::Trap), "Trap");
 	BOOST_REQUIRE_EQUAL(toNameString(Spec::He), "Helium");
 	BOOST_REQUIRE_EQUAL(toNameString(Spec::V), "Vacancy");
 	BOOST_REQUIRE_EQUAL(toNameString(Spec::I), "Interstitial");
@@ -2271,7 +2316,7 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(traits_He, *utf::label("traits"))
 	BOOST_REQUIRE_EQUAL(network.getSpeciesName(sid), "Interstitial");
 
 	// Define the sequence
-	using GroupingRange = SpeciesForGrouping<Spec, 3>;
+	using GroupingRange = SpeciesForGrouping<Spec, 4>;
 
 	// I goes on V
 	BOOST_REQUIRE_EQUAL(GroupingRange::mapToMomentId(Spec::He), 0);

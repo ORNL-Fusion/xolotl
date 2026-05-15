@@ -40,6 +40,12 @@ public:
 	checkLargestClusterId();
 
 	void
+	setReactionParams(std::string) override
+	{
+		return;
+	}
+
+	void
 	setConstantRates(RatesView rates, IndexType gridIndex) override;
 
 	void

@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
+	NetworkType network({0, maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 	// Get its size
 	const int dof = network.getDOF();
 
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
 	NetworkType::AmountType maxD = opts.getMaxD();
 	NetworkType::AmountType maxT = opts.getMaxT();
-	NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
+	NetworkType network({0, maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 
 	// Create the W100 flux handler
 	auto testFitFlux = make_shared<CustomFitFluxHandler>(opts);
@@ -217,8 +217,6 @@ BOOST_AUTO_TEST_CASE(checkFluence)
 	BOOST_REQUIRE_EQUAL(fluence[1], f[1]);
 	BOOST_REQUIRE_EQUAL(fluence[2], f[2]);
 }
-
-
 
 BOOST_AUTO_TEST_CASE(check0D)
 {
