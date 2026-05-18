@@ -140,13 +140,13 @@ PetscMonitor0D::setup(int loop)
 			TSMonitorSet(_ts, monitor::monitorScatter, this, nullptr));
 	}
 
-	// Set the monitor to save text file of the mean concentration of bubbles using vanadium reaction network
+	// Set the monitor to save text file of the integrated quatities using vanadium reaction network
 	if (flagBubbleV) {
 	
 		// creating the file and writing the header
 		std::ofstream outputFile;
     		outputFile.open("bubbleV.dat");
-    		outputFile << "#time lo_He hi_He lo_V hi_V conc" << std::endl;
+    		outputFile << "#time totalHe totalV bubbleDensity" << std::endl;
     		outputFile.close();
     		
 		// monitorBubbleV will be called at each timestep
@@ -647,13 +647,6 @@ PetscMonitor0D::monitorBubbleV(
 	// Get the network and its size
 	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
 	const auto networkSize = network.getNumClusters();
-
-	// Create the output file
-	//std::ofstream outputFile;
-	//std::stringstream name;
-	//name << "bubble_v_" << timestep << ".dat";
-	//outputFile.open(name.str());
-	//outputFile << "#lo_He hi_He lo_V hi_V conc" << std::endl;
 	
 	// Appending to the output file
 	std::ofstream outputFile;
@@ -663,7 +656,12 @@ PetscMonitor0D::monitorBubbleV(
 	gridPointSolution = solutionArray[0];
 
 	// Initialize the total helium and concentration before looping
-	double concTot = 0.0, heliumTot = 0.0;
+	// double concTot = 0.0, heliumTot = 0.0;
+	
+	// Initialize the integrated quantities, totalHe, totalV and bubbledensity before looping
+	double totalHe = 0.0;
+	double totalV = 0.0;
+	double bubbleDensity = 0.0;
 
 	// Consider each cluster.
 	for (auto i = 0; i < networkSize; i++) {
@@ -675,16 +673,26 @@ PetscMonitor0D::monitorBubbleV(
 		if (lo.isOnAxis(Spec::I) || lo.isOnAxis(Spec::V) ||
 			lo.isOnAxis(Spec::He))
 			continue;
+		double conc = gridPointSolution[i];
 
-		// For compatibility with previous versions, we output
-		// the value of a closed upper bound of the He and V intervals.
-		outputFile << time << " " 
-			   <<lo[Spec::He] << " " << hi[Spec::He] - 1 << " "
-		 	   << lo[Spec::V] << " " << hi[Spec::V] - 1 << " "
-			   << gridPointSolution[i] << std::endl;
+		// Average number of He and V
+		double avgHe = 0.5 * (lo[Spec::He] + (hi[Spec::He] - 1));
+		double avgV =  0.5 * (lo[Spec::V] + (hi[Spec::V] - 1));
+
+		// Total number of He and Vacancies
+		totalHe += avgHe * conc;
+		totalV += avgV * conc;
+
+		// bubble density
+		bubbleDensity += conc;	
 	}
 
-	// Close the file
+	// write and close the file
+	outputFile << time << " " 
+	  	   << totalHe << " "
+		   << totalV << " "
+	    	   << bubbleDensity << " "
+	    	   << std::endl;
 	outputFile.close();
 
 	// Restore the solutionArray
