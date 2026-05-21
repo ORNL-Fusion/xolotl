@@ -56,12 +56,13 @@ public:
 	PetscErrorCode
 	computeAlphaZr(
 		TS ts, PetscInt timestep, PetscReal time, Vec solution) override;
+		
+	PetscErrorCode
+	computeV(
+		TS ts, PetscInt timestep, PetscReal time, Vec solution) ;
 
 //	PetscErrorCode
 //	monitorBubble(TS ts, PetscInt timestep, PetscReal time, Vec solution);
-
-	PetscErrorCode monitorBubbleV(
-        TS ts, PetscInt timestep, PetscReal time, Vec solution);
 
     	PetscErrorCode monitorBubbleFe(
         TS ts, PetscInt timestep, PetscReal time, Vec solution);

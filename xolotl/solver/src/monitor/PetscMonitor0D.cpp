@@ -23,21 +23,21 @@ namespace solver
 namespace monitor
 {
 PetscErrorCode
-monitorBubbleV(
-	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
-{
-	PetscFunctionBeginUser;
-	PetscCall(static_cast<PetscMonitor0D*>(ictx)->monitorBubbleV(
-		ts, timestep, time, solution));
-	PetscFunctionReturn(0);
-}
-
-PetscErrorCode
 monitorBubbleFe(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
 {
 	PetscFunctionBeginUser;
 	PetscCall(static_cast<PetscMonitor0D*>(ictx)->monitorBubbleFe(
+		ts, timestep, time, solution));
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+computeV(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution, void* ictx)
+{
+	PetscFunctionBeginUser;
+	PetscCall(static_cast<PetscMonitor0D*>(ictx)->computeV(
 		ts, timestep, time, solution));
 	PetscFunctionReturn(0);
 }
@@ -51,8 +51,8 @@ PetscMonitor0D::setup(int loop)
 	auto vizHandlerRegistry = _solverHandler->getVizHandler();
 
 	// Flags to launch the monitors or not
-	PetscBool flagCheck, flag1DPlot, flagBubbleV, flagBubbleFe, flagStatus, flagAlloy,
-		flagXeRetention, flagLargest, flagZr;
+	PetscBool flagCheck, flag1DPlot, flagBubbleFe, flagStatus, flagAlloy,
+		flagXeRetention, flagLargest, flagZr, flagV;
 
 	// Check the option -check_collapse
 	PetscCallVoid(
@@ -64,9 +64,6 @@ PetscMonitor0D::setup(int loop)
 	// Check the option -start_stop
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-start_stop", &flagStatus));
 
-	// Check the option -bubble_v
-	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-bubble_v", &flagBubbleV));
-	
 	// Check the option -bubble_fe
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-bubble_fe", &flagBubbleFe));
 	
@@ -75,6 +72,9 @@ PetscMonitor0D::setup(int loop)
 
 	// Check the option -alpha_zr
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-alpha_zr", &flagZr));
+	
+	// Check the option -v
+	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-v", &flagV));
 	// Check the option -xenon_retention
 	PetscCallVoid(
 		PetscOptionsHasName(NULL, NULL, "-xenon_retention", &flagXeRetention));
@@ -139,19 +139,6 @@ PetscMonitor0D::setup(int loop)
 		PetscCallVoid(
 			TSMonitorSet(_ts, monitor::monitorScatter, this, nullptr));
 	}
-
-	// Set the monitor to save text file of the integrated quatities using vanadium reaction network
-	if (flagBubbleV) {
-	
-		// creating the file and writing the header
-		std::ofstream outputFile;
-    		outputFile.open("bubbleV.dat");
-    		outputFile << "#time totalHe totalV bubbleDensity" << std::endl;
-    		outputFile.close();
-    		
-		// monitorBubbleV will be called at each timestep
-		PetscCallVoid(TSMonitorSet(_ts, monitor::monitorBubbleV, this, nullptr));
-	}
 	
 	// Set the monitor to save text file of the mean concentration of bubbles using Fe reaction network
 	if (flagBubbleFe) {
@@ -173,6 +160,15 @@ PetscMonitor0D::setup(int loop)
 		// computeAlphaZr will be called at each timestep
 		PetscCallVoid(
 			TSMonitorSet(_ts, monitor::computeAlphaZr, this, nullptr));
+	}
+
+	// Set the monitor to output data for V
+	if (flagV) {
+		_solverHandler->getNetwork().writeMonitorOutputHeader();
+
+		// computeV will be called at each timestep
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeV, this, nullptr));
 	}
 
 	// Set the monitor to compute the xenon content
@@ -539,6 +535,34 @@ PetscMonitor0D::computeAlphaZr(
 }
 
 PetscErrorCode
+PetscMonitor0D::computeV(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	PetscFunctionBeginUser;
+
+	// Get the da from ts
+	DM da;
+	PetscCall(TSGetDM(ts, &da));
+
+	// Get the array of concentration
+	PetscOffsetView<const PetscScalar**> concs;
+	PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &concs));
+	auto concOffset = subview(concs, 0, Kokkos::ALL).view();
+
+	using NetworkType = core::network::VReactionNetwork;
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+
+	auto myData = network.getMonitorDataValues(concOffset, 1.0);
+
+	network.writeMonitorDataLine(myData, time);
+
+	// Restore the PETSc solution array
+	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
 PetscMonitor0D::monitorScatter(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)
 {
@@ -617,89 +641,7 @@ PetscMonitor0D::monitorScatter(
 
 	PetscFunctionReturn(0);
 }
-// Bubble Monitor function for using Vanadium reaction Network
-PetscErrorCode
-PetscMonitor0D::monitorBubbleV(
-	TS ts, PetscInt timestep, PetscReal time, Vec solution)
-{
-	// Initial declaration
-	double **solutionArray, *gridPointSolution;
 
-	PetscFunctionBeginUser;
-
-	// Don't do anything if it is not on the stride
-	//	if (timestep % 10 != 0)
-	//		PetscFunctionReturn(0);
-
-	// Get the da from ts
-	DM da;
-	PetscCall(TSGetDM(ts, &da));
-
-	// Get the solutionArray
-	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
-
-	// Get the network
-	using NetworkType = core::network::VReactionNetwork;
-	using Spec = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
-	using Region = typename NetworkType::Region;
-
-	// Get the network and its size
-	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-	const auto networkSize = network.getNumClusters();
-	
-	// Appending to the output file
-	std::ofstream outputFile;
-    	outputFile.open("bubbleV.dat", std::ios::app);
-
-	// Get the pointer to the beginning of the solution data for this grid point
-	gridPointSolution = solutionArray[0];
-
-	// Initialize the total helium and concentration before looping
-	// double concTot = 0.0, heliumTot = 0.0;
-	
-	// Initialize the integrated quantities, totalHe, totalV and bubbledensity before looping
-	double totalHe = 0.0;
-	double totalV = 0.0;
-	double bubbleDensity = 0.0;
-
-	// Consider each cluster.
-	for (auto i = 0; i < networkSize; i++) {
-		auto cluster = network.getCluster(i, plsm::HostMemSpace{});
-		const Region& clReg = cluster.getRegion();
-		Composition lo = clReg.getOrigin();
-		Composition hi = clReg.getUpperLimitPoint();
-
-		if (lo.isOnAxis(Spec::I) || lo.isOnAxis(Spec::V) ||
-			lo.isOnAxis(Spec::He))
-			continue;
-		double conc = gridPointSolution[i];
-
-		// Average number of He and V
-		double avgHe = 0.5 * (lo[Spec::He] + (hi[Spec::He] - 1));
-		double avgV =  0.5 * (lo[Spec::V] + (hi[Spec::V] - 1));
-
-		// Total number of He and Vacancies
-		totalHe += avgHe * conc;
-		totalV += avgV * conc;
-
-		// bubble density
-		bubbleDensity += conc;	
-	}
-
-	// write and close the file
-	outputFile << time << " " 
-	  	   << totalHe << " "
-		   << totalV << " "
-	    	   << bubbleDensity << " "
-	    	   << std::endl;
-	outputFile.close();
-
-	// Restore the solutionArray
-	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
-
-	PetscFunctionReturn(0);
-}
 
 // Bubble Monitor function for using Fe reaction Network
 PetscErrorCode
