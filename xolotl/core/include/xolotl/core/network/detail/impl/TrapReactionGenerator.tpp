@@ -61,9 +61,9 @@ TrapReactionGenerator<TBase>::addTrapReaction(
 	if (!this->_clusterData.enableTrap())
 		return;
 
-	auto id = _trapCrsRowMap(clusterSet.cluster0);
+	auto id = _trapCrsRowMap(clusterSet.cluster1);
 	for (; !util::atomicCompareExchangeStrong(&_trapCrsClusterSets(id).cluster1,
-			 NetworkType::invalidIndex(), clusterSet.cluster0);
+			 NetworkType::invalidIndex(), clusterSet.cluster1);
 		++id) { }
 	_trapCrsClusterSets(id) = clusterSet;
 }
