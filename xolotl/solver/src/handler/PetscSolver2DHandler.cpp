@@ -630,8 +630,8 @@ PetscSolver2DHandler::initGBLocation(DM& da, Vec& C)
 	const auto dof = network.getDOF();
 
 	// Need to use the NE network here
-	using NetworkType = core::network::NEReactionNetwork;
-	using Spec = typename NetworkType::Species;
+	using NetworkType = core::network::IPSIReactionNetwork;
+//	using Spec = typename NetworkType::Species;
 	auto& neNetwork = dynamic_cast<NetworkType&>(network);
 
 	// Loop on the GB
@@ -652,9 +652,9 @@ PetscSolver2DHandler::initGBLocation(DM& da, Vec& C)
 			deep_copy(dConcs, hConcs);
 
 			// Transfer the local amount of Xe clusters
-			setLocalDefectRate(
+/*			setLocalDefectRate(
 				neNetwork.getTotalAtomConcentration(dConcs, Spec::Xe, 1), 0,
-				xi - localXS, yj - localYS);
+				xi - localXS, yj - localYS);*/
 
 			// Loop on all the clusters to initialize at 0.0
 			for (auto n = 0; n < dof; n++) {
@@ -1059,13 +1059,15 @@ PetscSolver2DHandler::updateConcentration(
 			// Free surface GB
 			bool skip = false;
 			for (auto& pair : gbVector) {
+
 				if (xi == std::get<0>(pair) && yj == std::get<1>(pair)) {
 					skip = true;
 					break;
 				}
 			}
-			if (skip)
+			if (skip) {
 				continue;
+			}
 
 			// ----- Account for flux of incoming particles -----
 			fluxHandler->computeIncidentFlux(

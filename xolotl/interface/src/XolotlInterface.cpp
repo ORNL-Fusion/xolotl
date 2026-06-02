@@ -156,6 +156,9 @@ XolotlInterface::initializeXolotl() TRY
 	if (processMap["constant"]) {
 		return;
 	}
+	
+	// Temporary
+	setPassingDefectTypes("D V");
 
 	// Initialize the solver
 	solver->initialize();

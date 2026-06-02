@@ -262,7 +262,7 @@ public:
 					        int i = surfacePos + 1;
 					        incidentFluxVec[index].push_back((fluxAmplitude *
 							reductionFactors[index]) / (xGrid[i + 1] - xGrid[i]));
-							
+						
 					        for (int i = surfacePos + 2; i < xGrid.size() - 2; i++) {
 						        incidentFluxVec[index].push_back(0.0);
 					        }

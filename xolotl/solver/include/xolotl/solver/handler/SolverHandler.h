@@ -384,7 +384,7 @@ public:
 	setPreviousDefectFlux(double flux, IdType defectType, IdType i,
 		IdType j = 0, IdType k = 0) override
 	{
-		localDefects[i][j][k][2 * defectType + 1] = flux;
+		localDefects[i][j][k][defectTypes.size() + defectType] = flux;
 	}
 
 	/**

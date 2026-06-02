@@ -435,8 +435,13 @@ PetscMonitor2D::setup(int loop)
 		// Get the local boundaries
 		PetscInt xm, ym;
 		PetscCallVoid(DMDAGetCorners(da, NULL, NULL, NULL, &xm, &ym, NULL));
+
+	        // Which defect types we want to look at?
+	        auto defectTypes = _solverHandler->getPassingDefectTypes();
+	        auto numDefects = defectTypes.size();
+	        
 		// Create the local vectors on each process
-		_solverHandler->createLocalDefects(1, xm, ym);
+		_solverHandler->createLocalDefects(numDefects, xm, ym);
 
 		// computePassData will be called at each timestep
 		PetscCallVoid(
@@ -1354,7 +1359,6 @@ PetscMonitor2D::computePassData(
 			for (auto i = 0; i < numDefects; i++) {
 				// Find the rate index
 				auto clusterSpecies = network.parseSpeciesId(defectTypes[i]);
-				std::cout << i << " " << clusterSpecies << std::endl;
 				_solverHandler->setPreviousDefectFlux(
 					myRate[clusterSpecies], i, xi - xs, yj - ys);
 			}
