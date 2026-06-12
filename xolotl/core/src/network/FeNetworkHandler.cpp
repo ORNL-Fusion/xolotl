@@ -1,6 +1,8 @@
 #include <xolotl/core/network/FeNetworkHandler.h>
 #include <xolotl/core/network/FeReactionNetwork.h>
 #include <xolotl/util/Tokenizer.h>
+#include <iostream> // debugging
+#include <fstream>  // debugging
 
 namespace xolotl
 {
@@ -57,8 +59,41 @@ auto feNetworkGenerator = [](const options::IOptions& options) {
 		nTraps, maxHe, maxV, maxI};
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
 		{nTraps + 1, groupingWidthHe, groupingWidthV, maxI + 1}};
+	
+	// Debugging
+
+	std::ofstream outFile("division.logOut",std::ios::app);
+
+	if (!outFile.is_open()) {
+    		std::cerr << "Error: Could not open division.logOut\n";
+	}
+
+	// ---- Write maxSpeciesAmounts ----
+	outFile << "maxSpeciesAmounts:\n";
+	for (size_t i = 0; i < maxSpeciesAmounts.size(); i++) {
+	    outFile << "  [" << i << "] = "
+	            << maxSpeciesAmounts[i] << "\n";
+	}
+
+	// ---- Write subdivRatios ----
+	outFile << "subdivRatios:\n";
+	for (size_t i = 0; i < subdivRatios.size(); i++) {
+	    const auto& r = subdivRatios[i];
+
+	    outFile << "  [" << i << "] = { "
+        	    << r[0] << ", "
+	            << r[1] << ", "
+       	 	    << r[2] << ", "
+	            << r[3] << " }\n";
+	}
+
+	outFile << "-----------------------------\n";
+
+	// Close explicitly (optional but clean)
+	outFile.close();
+	
 	auto network = std::make_shared<NetworkType>(
-		maxSpeciesAmounts, subdivRatios, 1, options);
+                maxSpeciesAmounts, subdivRatios, 1, options);
 
 	return network;
 };

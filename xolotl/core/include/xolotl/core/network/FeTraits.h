@@ -1,6 +1,7 @@
 #pragma once
 
 #include <xolotl/core/network/ReactionNetworkTraits.h>
+#include <xolotl/core/network/detail/ClusterData.h>
 
 namespace xolotl
 {
@@ -95,6 +96,66 @@ struct ReactionNetworkTraits<FeReactionNetwork>
 
 	using ClusterGenerator = FeClusterGenerator;
 };
+
+namespace detail
+{
+template <typename PlsmContext>
+struct ClusterDataExtra<FeReactionNetwork, PlsmContext>
+{
+	using NetworkType = FeReactionNetwork;
+
+	template <typename TData>
+	using View = ViewType<TData, PlsmContext>;
+
+	using IndexType = detail::ReactionNetworkIndexType;
+
+	ClusterDataExtra() = default;
+
+	template <typename PC>
+	KOKKOS_INLINE_FUNCTION
+	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
+		dislocationCaptureRadius(data.dislocationCaptureRadius)
+	{
+	}
+
+	template <typename PC>
+	void
+	deepCopy(const ClusterDataExtra<NetworkType, PC>& data)
+	{
+		if (!data.dislocationCaptureRadius.is_allocated()) {
+			return;
+		}
+
+		if (!dislocationCaptureRadius.is_allocated()) {
+			dislocationCaptureRadius =
+				create_mirror_view(data.dislocationCaptureRadius);
+		}
+
+		deep_copy(dislocationCaptureRadius, data.dislocationCaptureRadius);
+	}
+
+	std::uint64_t
+	getDeviceMemorySize() const noexcept
+	{
+		std::uint64_t ret = 0;
+
+		ret += dislocationCaptureRadius.required_allocation_size(
+			dislocationCaptureRadius.extent(0),
+			dislocationCaptureRadius.extent(1));
+
+		return ret;
+	}
+
+	void
+	initialize(IndexType numClusters, IndexType gridSize = 0)
+	{
+		dislocationCaptureRadius =
+			View<double**>("Dislocation Capture Radius", numClusters, 2);
+	}
+
+	View<double**> dislocationCaptureRadius;
+};
+} // namespace detail
 } // namespace network
 } // namespace core
 } // namespace xolotl

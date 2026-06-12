@@ -2,6 +2,7 @@
 #include <xolotl/core/network/impl/FeReactionNetwork.tpp>
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/Tokenizer.h>
+#include <xolotl/core/network/impl/FeReaction.tpp>
 
 namespace xolotl
 {
@@ -39,6 +40,25 @@ ReactionNetwork<FeReactionNetwork>::getTotalTrappedAtomConcentration(
 template double
 ReactionNetwork<FeReactionNetwork>::getTotalVolumeFraction(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
+template double //for SSBM connected to IReactionNetwork.h
+ReactionNetwork<FeReactionNetwork>::getTotalVolumeRadius(
+        ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double //for SSBM connected to IReactionNetwork.h
+ReactionNetwork<FeReactionNetwork>::getTotalRadiusVariance(
+        ConcentrationsView concentrations, Species type, double mean ,AmountType minSize);
+
+void //for SSBM 
+FeReactionNetwork::initializeExtraClusterData(
+	const options::IOptions& options)
+{
+	this->_clusterData.h_view().extraData.initialize(
+		this->_clusterData.h_view().numClusters,
+		this->_clusterData.h_view().gridSize);
+	this->copyClusterDataView();
+
+	auto data = this->_clusterData.h_view();
+}
 
 double
 FeReactionNetwork::checkLatticeParameter(double latticeParameter)
@@ -108,8 +128,7 @@ FeReactionNetwork::getMonitorDataHeaderString() const
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		auto speciesName = this->getSpeciesName(id);
 		header << speciesName << "_density " << speciesName << "_diameter "
-			   << speciesName << "_partial_density " << speciesName
-			   << "_partial_diameter ";
+			   << speciesName << "_partial_density " << speciesName << "_partial_diameter ";
 	}
 
 	return header.str();
@@ -124,6 +143,11 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 	using TQ = IReactionNetwork::TotalQuantity;
 	using Q = TQ::Type;
 	using TQA = util::Array<TQ, 4>;
+	
+	double conc_SSBM_total = 0.0;
+	double vol_SSBM_total = 0.0;
+	double vol_fac_SSBM = 0.0;
+
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		auto ms = minSizes[id()];
 		auto totals = this->getTotals(conc,
@@ -135,6 +159,62 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 		totalVals[1 + (4 * id()) + 2] += totals[2] * fac;
 		totalVals[1 + (4 * id()) + 3] += totals[3] * 2.0 * fac;
 
+
+
+		// SSBM case
+		if (this->_enableLargeBubble) {
+			IndexType ssbmId = 0;
+			IndexType ssbmSizeId = 0;
+			switch (id()) {
+			// He
+			case 0:
+				ssbmId = this->_clusterData.h_view().bubbleId();
+				ssbmSizeId = ssbmId + 2;
+				break;
+			// Void
+			case 1:
+				ssbmId = this->_clusterData.h_view().bubbleId();
+				ssbmSizeId = ssbmId + 1;
+				break;
+			default:
+				ssbmId = 0;
+				ssbmSizeId = 0;
+				break;
+			}
+
+			// Compute average numbers
+			auto vConc = 0.0;
+			auto avComp = 0.0;
+			if (ssbmId > 0) {
+				vConc = conc(ssbmId);
+				if (vConc > 1.0e-16)
+					avComp = conc(ssbmSizeId) / vConc;
+			}
+
+			// Add the single size data
+			auto avRadius = 0.0;
+			IndexType radiusId = 0;
+			if (vConc > 1.0e-16) {
+				if (id() > 4)
+					radiusId = id() - 2;
+				else if (id() > 1)
+					radiusId = id() - 1;
+				avRadius = util::max(0.0,
+					computeBubbleRadius(avComp,
+						this->_clusterData.h_view().latticeParameter()));
+			}
+
+			vol_fac_SSBM = 350.704 *avRadius *avRadius *avRadius; //radius to vacancy for He, V assumed same
+			conc_SSBM_total += vConc * fac;
+			vol_SSBM_total += vConc *vol_fac_SSBM* fac;
+
+			totalVals[1+(4 * id()) + 0] += vConc * fac;
+			totalVals[1+(4 * id()) + 1] += vConc * avRadius * 2.0 * fac;
+			if (avComp > minSizes[id()]) {
+				totalVals[1+(4 * id()) + 2] += vConc * fac;
+				totalVals[1+(4 * id()) + 3] += vConc * avRadius * 2.0 * fac;
+			}
+		}
 		// Special case for trapped helium
 		if (id() == 0) {
 			// Find the vacancy index
@@ -180,7 +260,11 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 
 			Kokkos::fence();
 
-			totalVals[0] += heConc * fac / cavConc;
+			double totalHe = heConc * fac + vol_SSBM_total;
+			double totalCav = cavConc + conc_SSBM_total;
+
+			totalVals[0] += totalHe / totalCav;
+			
 		}
 	}
 }

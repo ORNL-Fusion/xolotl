@@ -303,6 +303,18 @@ public:
 		_enableReadRates = read;
 	}
 
+	bool
+	getEnableSSBM() const noexcept //for SSBM
+	{
+		return _enableSSBM;
+	}
+
+	virtual void
+	setEnableSSBM(bool ssbm) //for SSBM
+	{
+		_enableSSBM = ssbm;
+	}
+
 	IndexType
 	getGridSize() const noexcept
 	{
@@ -582,6 +594,14 @@ public:
 	getTotalRatioVariance(ConcentrationsView concentrations, SpeciesId species,
 		double mean, AmountType minSize = 0) = 0;
 
+	virtual double //for SSBM
+	getTotalVolumeRadius(ConcentrationsView concentrations, SpeciesId species,
+		AmountType minSize = 0) = 0;
+
+	virtual double //for SSBM
+	getTotalRadiusVariance(ConcentrationsView concentrations, SpeciesId species,
+		double mean, AmountType minSize = 0) = 0;
+
 	/**
 	 * @brief Computes the diffusion flux exiting from this grid point.
 	 *
@@ -627,12 +647,14 @@ protected:
 	bool _enableReSolution{};
 	bool _enableNucleation{};
 	bool _enableSink{};
-	bool _enableTrap{};
+	bool _enableTrap{}; //disable for SSBM later
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
 	bool _enableConstantReaction{};
 	bool _enableReducedJacobian{};
 	bool _enableReadRates{};
+	bool _enableSSBM{}; //for SSBM
+	bool _enableLargeBubble{}; //for SSBM
 
 	IndexType _gridSize{};
 	IndexType _numDOFs{};
