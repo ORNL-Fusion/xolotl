@@ -149,9 +149,9 @@ private:
 		XE_FORMATION,
 		V_FORMATION,
 		V2_FORMATION,
-		TRAP_BINDING, // disable for SSBM later
+		TRAP_BINDING, 
 		AV_BUBBLE_RAD, // for SSBM
-		SINK_STRENGTH, //Check if necessary for SSBM
+		SINK_STRENGTH,
 		NUM_FLOAT_VALS
 	};
 
@@ -159,9 +159,8 @@ private:
 	{
 		TRANSITION_SIZE = 0,
 		BUBBLE_ID, //for SSBM
-		AV_H_ID, //Check if necessary for SSBM ~ avg H ID
-		AV_He_ID, //Check if necessary for SSBM ~ avg He ID
-		AV_VOID_ID, //Check if necessary for SSBM ~ avg Void ID
+		AV_He_ID,
+		AV_VOID_ID,
 		NUM_INT_VALS
 	};
 
@@ -171,7 +170,7 @@ private:
 		RESOLUTION,
 		NUCLEATION,
 		SINK,
-		TRAP, //disable for SSBM later
+		TRAP,
 		TRAP_MUTATION,
 		READ_RATES,
 		CONSTANT_REACTION,
@@ -357,19 +356,6 @@ public:
 	setBubbleId(int val) //for SSBM
 	{
 		setVal(_intVals, BUBBLE_ID, val);
-	}
-
-	KOKKOS_INLINE_FUNCTION
-	int
-	hAvId() const //check if necessary
-	{
-		return _intVals[AV_H_ID];
-	}
-
-	void
-	setHAvId(int val) //check if necessary
-	{
-		setVal(_intVals, AV_H_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

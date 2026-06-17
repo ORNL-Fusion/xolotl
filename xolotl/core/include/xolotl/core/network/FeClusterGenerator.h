@@ -10,6 +10,16 @@ namespace core
 {
 namespace network
 {
+namespace fe
+{
+KOKKOS_INLINE_FUNCTION
+IReactionNetwork::AmountType
+getMaxHePerV(IReactionNetwork::AmountType amtV, double ratio) noexcept
+{
+	return amtV * ratio;
+}
+} // namespace fe
+	
 class FeClusterGenerator : public plsm::refine::Detector<FeClusterGenerator>
 {
 public:

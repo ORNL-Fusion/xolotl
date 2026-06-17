@@ -89,7 +89,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableReSolution(map["resolution"]);
 	this->setEnableNucleation(map["heterogeneous"]);
 	this->setEnableSink(map["sink"]);
-	this->setEnableTrap(map["trap"]); //disable for SSBM later
+	this->setEnableTrap(map["trap"]); 
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
 	this->setEnableConstantReaction(map["constant"]);

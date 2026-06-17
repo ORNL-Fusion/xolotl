@@ -127,8 +127,8 @@ FeReactionNetwork::getMonitorDataHeaderString() const
 	header << "#time He_cav ";
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		auto speciesName = this->getSpeciesName(id);
-		header << speciesName << "_density " << speciesName << "_diameter "
-			   << speciesName << "_partial_density " << speciesName << "_partial_diameter ";
+		header << speciesName << "_density_SSBM " << speciesName << "_diameter_SSBM "
+                           << speciesName << "_partial_density_SSBM " << speciesName << "_partial_diameter_SSBM ";
 	}
 
 	return header.str();
@@ -144,9 +144,8 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 	using Q = TQ::Type;
 	using TQA = util::Array<TQ, 4>;
 	
-	double conc_SSBM_total = 0.0;
-	double vol_SSBM_total = 0.0;
-	double vol_fac_SSBM = 0.0;
+	double ahecomp_SSBMtotal = 0.0;
+	double avcomp_SSBMtotal = 0.0;
 
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		auto ms = minSizes[id()];
@@ -154,42 +153,45 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
 				TQ{Q::radius, id, ms}});
 
-		totalVals[1 + (4 * id()) + 0] += totals[0] * fac;
-		totalVals[1 + (4 * id()) + 1] += totals[1] * 2.0 * fac;
-		totalVals[1 + (4 * id()) + 2] += totals[2] * fac;
-		totalVals[1 + (4 * id()) + 3] += totals[3] * 2.0 * fac;
-
-
-
+		totalVals[1 + (4 * id()) + 0] += totals[0] * fac * 0;
+		totalVals[1 + (4 * id()) + 1] += totals[1] * 2.0 * fac * 0;
+		totalVals[1 + (4 * id()) + 2] += totals[2] * fac * 0;
+		totalVals[1 + (4 * id()) + 3] += totals[3] * 2.0 * fac * 0;
+		
 		// SSBM case
-		if (this->_enableLargeBubble) {
+		if (this->_enableSSBM) {
 			IndexType ssbmId = 0;
 			IndexType ssbmSizeId = 0;
-			switch (id()) {
-			// He
-			case 0:
-				ssbmId = this->_clusterData.h_view().bubbleId();
-				ssbmSizeId = ssbmId + 2;
-				break;
-			// Void
-			case 1:
-				ssbmId = this->_clusterData.h_view().bubbleId();
-				ssbmSizeId = ssbmId + 1;
-				break;
-			default:
-				ssbmId = 0;
-				ssbmSizeId = 0;
-				break;
-			}
 
 			// Compute average numbers
-			auto vConc = 0.0;
-			auto avComp = 0.0;
-			if (ssbmId > 0) {
-				vConc = conc(ssbmId);
-				if (vConc > 1.0e-16)
-					avComp = conc(ssbmSizeId) / vConc;
-			}
+                        auto heConc = 0.0;
+                        auto aheComp = 0.0;
+
+                        auto vConc = 0.0;
+                        auto avComp = 0.0;
+
+                        switch (id()) {
+                        // He
+                        case 0:
+                                ssbmId = this->_clusterData.h_view().bubbleId();
+                                ssbmSizeId = ssbmId + 2;
+                                heConc = conc(ssbmId);
+                                if (heConc > 1.0e-16)
+                                        aheComp = conc(ssbmSizeId) / heConc;
+                                break;
+                        // Void
+                        case 1:
+                                ssbmId = this->_clusterData.h_view().bubbleId();
+                                ssbmSizeId = ssbmId + 1;
+                                vConc = conc(ssbmId);
+                                if (vConc > 1.0e-16)
+                                        avComp = conc(ssbmSizeId) / vConc;
+                                break;
+                        default:
+                                ssbmId = 0;
+                                ssbmSizeId = 0;
+                                break;
+                        }
 
 			// Add the single size data
 			auto avRadius = 0.0;
@@ -204,16 +206,18 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 						this->_clusterData.h_view().latticeParameter()));
 			}
 
-			vol_fac_SSBM = 350.704 *avRadius *avRadius *avRadius; //radius to vacancy for He, V assumed same
-			conc_SSBM_total += vConc * fac;
-			vol_SSBM_total += vConc *vol_fac_SSBM* fac;
+			ahecomp_SSBMtotal += aheComp * fac;
+                        avcomp_SSBMtotal += avComp * fac;
+
 
 			totalVals[1+(4 * id()) + 0] += vConc * fac;
 			totalVals[1+(4 * id()) + 1] += vConc * avRadius * 2.0 * fac;
 			if (avComp > minSizes[id()]) {
 				totalVals[1+(4 * id()) + 2] += vConc * fac;
 				totalVals[1+(4 * id()) + 3] += vConc * avRadius * 2.0 * fac;
+
 			}
+
 		}
 		// Special case for trapped helium
 		if (id() == 0) {
@@ -260,8 +264,8 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 
 			Kokkos::fence();
 
-			double totalHe = heConc * fac + vol_SSBM_total;
-			double totalCav = cavConc + conc_SSBM_total;
+			double totalHe = heConc * fac * 0 + ahecomp_SSBMtotal;
+			double totalCav = cavConc * 0 +  avcomp_SSBMtotal;
 
 			totalVals[0] += totalHe / totalCav;
 			

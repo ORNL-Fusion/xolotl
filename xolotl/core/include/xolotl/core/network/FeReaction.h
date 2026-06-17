@@ -94,9 +94,9 @@ public:
 						this->_productMomentIds[i][0] =
 							this->_clusterData->voidAvId();
 						this->_productMomentIds[i][1] =
-							this->_clusterData->hAvId();
+							this->_clusterData->heAvId();
 						this->_productMomentIds[i][2] = 
-							this->_clusterData->hAvId();	
+							this->_clusterData->heAvId();	
 				}
 			}
 		}

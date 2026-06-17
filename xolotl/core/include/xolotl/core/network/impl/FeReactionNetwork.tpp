@@ -1,11 +1,13 @@
 #pragma once
 
+#include <xolotl/core/network/detail/impl/ConstantReactionGenerator.tpp>
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/TrapReactionGenerator.tpp>
 #include <xolotl/core/network/impl/FeClusterGenerator.tpp>
 #include <xolotl/core/network/impl/FeReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
+
 
 namespace xolotl
 {
@@ -33,7 +35,7 @@ void
 FeReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
 	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
 {
-	if (this->_enableLargeBubble) {
+	if (this->_enableSSBM) {
 		auto clusterDataMirror = this->getClusterDataMirror();
 
 		// Get the concentrations on the host
@@ -42,17 +44,20 @@ FeReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
 				clusterDataMirror.bubbleId(), clusterDataMirror.bubbleId() + 2));
 		auto heConcs = create_mirror_view(dConcs);
 		deep_copy(heConcs, dConcs);
+		
+		// Compute the average composition of each defect
+		IndexType denId = 0;
+		IndexType avId = 1;
 
-		// Compute the average composition for V
-
-			auto conc = heConcs(0);
-			auto avComp = heConcs(1) / conc;
-			if (conc == 0.0)
-				avComp = 0.0;
-			// Compute and save the radius from that
-				this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
-					computeBubbleRadius(
-						avComp, clusterDataMirror.latticeParameter())));
+		auto conc = heConcs(denId);
+		auto avComp = heConcs(avId) / conc;
+		if (conc == 0.0)
+			avComp = 0.0;
+			
+		// Void
+			this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
+				computeBubbleRadius(
+					avComp, clusterDataMirror.latticeParameter())));
 	}
 }
 
@@ -61,7 +66,7 @@ FeReactionNetwork::computePartialsPreProcess(
 	ConcentrationsView concentrations, Kokkos::View<double*> values,
 	IndexType gridIndex, double surfaceDepth, double spacing)
 {
-	if (this->_enableLargeBubble) {
+	if (this->_enableSSBM) {
 		auto clusterDataMirror = this->getClusterDataMirror();
 
 		// Get the concentrations on the host SSBM
@@ -99,24 +104,29 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
-
-	constexpr auto species = NetworkType::getSpeciesRange();
+	
+	constexpr auto speciesRange = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
 
-	// Add the sinks
+	auto& subpaving = this->getSubpaving();
+	auto previousIndex = subpaving.invalidIndex();
+
+	// Sinks
 	if (i == j) {
 		addSinks(i, tag);
 	}
 
-	// SSBM
-	if (this->_clusterData.enableSSBM())
-		addSingleSizeReactions(i, j, tag);
-	
 	// Add the traps between He and Traps
-
-
+	// addTraps(i, j, tag);
+	
 	auto numClusters = this->getNumberOfClusters();
 
+	// SSBM
+
+	// Large bubble reactions *** HERE we arent accessing function at all
+	 if (this->_clusterData.enableSSBM())
+		addSingleSizeReactions(i, j, tag);
+	
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
 	const auto& cl2Reg = this->getCluster(j).getRegion();
@@ -125,8 +135,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
-	auto& subpaving = this->getSubpaving();
-	auto previousIndex = subpaving.invalidIndex();
+	
 
 	// Special case for I + I
 	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1.isOnAxis(Species::I) &&
@@ -195,7 +204,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		Kokkos::Array<Kokkos::pair<AmountType, AmountType>, numSpeciesNoI>;
 	plsm::EnumIndexed<BoundsArray, Species> bounds;
 	// Loop on the species
-	for (auto l : species) {
+	for (auto l : speciesRange) {
 		auto low = lo1[l] + lo2[l];
 		auto high = hi1[l] + hi2[l] - 2;
 		// Special case for I
@@ -233,7 +242,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 			// Loop on the species
 			bool isOnAxis1 = false, isOnAxis2 = false;
-			for (auto l : species) {
+			for (auto l : speciesRange) {
 				if (lo1.isOnAxis(l()) && lo1[l()] == 1)
 					isOnAxis1 = true;
 				if (lo2.isOnAxis(l()) && lo2[l()] == 1)
@@ -303,32 +312,18 @@ FeReactionGenerator::addSingleSizeReactions(
 			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
 		}
 		// I case
-		if (lo.isOnAxis(Species::I)) {
+		else if (lo.isOnAxis(Species::I)) {
 			// I_k + B -> B
 			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
 		}
 
-		// H case
-		
-			if (lo.isOnAxis(Species::He)) {
-				// H_k + B -> B
-
-				// Only add trap mutation so that at run time it adds the I
-				// concentration if needed.
-				auto& subpaving = this->getSubpaving();
-				Composition comp = Composition::zero();
-				comp[Species::I] = 1;
-				auto iClusterId = subpaving.findTileId(comp);
-				if (iClusterId == NetworkType::invalidIndex()) {
-					this->addProductionReaction(tag, {i, bubbleId, bubbleId});
-				}
-				else {
-					this->addProductionReaction(
-						tag, {i, bubbleId, bubbleId, iClusterId});
-				}
-			}
-		
+		// He case
+		else if (lo.isOnAxis(Species::He)) {
+			// He_k + B -> B
+			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+		}
 	}
+
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
 	const auto& cl2Reg = this->getCluster(j).getRegion();
@@ -341,19 +336,20 @@ FeReactionGenerator::addSingleSizeReactions(
 	const auto& largestReg = this->getCluster(largestClusterId).getRegion();
 	Composition hiLargest = largestReg.getUpperLimitPoint();
 	auto largestVSize = hiLargest[Species::V] - 1;
-	auto largestImpSize = hiLargest[Species::He] - 1;
+	auto largestHeSize = hiLargest[Species::He] - 1;
 
-	// H_a + H_bV -> B
-		if (hi1[Species::He] + hi2[Species::He] - 2 > largestImpSize) {
-			this->addProductionReaction(tag, {i, j, bubbleId});
-		}
+	// He_a + He_bV -> B
+	if (hi1[Species::He] + hi2[Species::He] - 2 > largestHeSize) {
+		this->addProductionReaction(tag, {i, j, bubbleId});
+	}
 
-	// V_a + HV_b -> B
+	// V_a + HeV_b -> B
 	if (hi1[Species::V] + hi2[Species::V] - 2 > largestVSize) {
 		this->addProductionReaction(tag, {i, j, bubbleId});
 	}
 
-	// I_a + B -> HV_b
+
+	// I_a + B -> HeV_b
 	if ((lo1.isOnAxis(Species::I) and lo2[Species::V] > 0) or
 		(lo1[Species::V] > 0 and lo2.isOnAxis(Species::I))) {
 		// It should be around the largest size value
@@ -366,6 +362,7 @@ FeReactionGenerator::addSingleSizeReactions(
 			this->addProductionReaction(tag, {iId, bubbleId, vId});
 		}
 	}
+
 }
 
 

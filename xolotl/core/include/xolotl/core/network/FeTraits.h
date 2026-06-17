@@ -102,6 +102,7 @@ namespace detail
 template <typename PlsmContext>
 struct ClusterDataExtra<FeReactionNetwork, PlsmContext>
 {
+	//Here to prevent function errors without rewritting other parts of code, output is 0 for everything or no return	
 	using NetworkType = FeReactionNetwork;
 
 	template <typename TData>
@@ -111,37 +112,17 @@ struct ClusterDataExtra<FeReactionNetwork, PlsmContext>
 
 	ClusterDataExtra() = default;
 
-	template <typename PC>
-	KOKKOS_INLINE_FUNCTION
-	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
-		dislocationCaptureRadius(data.dislocationCaptureRadius)
-	{
-	}
 
 	template <typename PC>
 	void
 	deepCopy(const ClusterDataExtra<NetworkType, PC>& data)
 	{
-		if (!data.dislocationCaptureRadius.is_allocated()) {
-			return;
-		}
-
-		if (!dislocationCaptureRadius.is_allocated()) {
-			dislocationCaptureRadius =
-				create_mirror_view(data.dislocationCaptureRadius);
-		}
-
-		deep_copy(dislocationCaptureRadius, data.dislocationCaptureRadius);
 	}
-
+	
 	std::uint64_t
 	getDeviceMemorySize() const noexcept
 	{
 		std::uint64_t ret = 0;
-
-		ret += dislocationCaptureRadius.required_allocation_size(
-			dislocationCaptureRadius.extent(0),
-			dislocationCaptureRadius.extent(1));
 
 		return ret;
 	}
@@ -149,11 +130,7 @@ struct ClusterDataExtra<FeReactionNetwork, PlsmContext>
 	void
 	initialize(IndexType numClusters, IndexType gridSize = 0)
 	{
-		dislocationCaptureRadius =
-			View<double**>("Dislocation Capture Radius", numClusters, 2);
 	}
-
-	View<double**> dislocationCaptureRadius;
 };
 } // namespace detail
 } // namespace network
