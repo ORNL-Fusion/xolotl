@@ -952,7 +952,8 @@ PSIReactionGenerator<TSpeciesEnum>::addSingleSizeReactions(
 			// Need to know which one is I
 			auto iId = lo1[Species::I] > 0 ? i : j;
 			auto vId = lo1[Species::I] > 0 ? j : i;
-			this->addProductionReaction(tag, {iId, bubbleId, vId});
+			// TODO: this is not implemented in PSIReaction
+			// this->addProductionReaction(tag, {iId, bubbleId, vId});
 		}
 	}
 }

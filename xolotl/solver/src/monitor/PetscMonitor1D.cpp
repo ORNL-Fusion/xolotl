@@ -1148,10 +1148,10 @@ PetscMonitor1D::computeHeliumRetention(
 		// Single size bubble model data
 		if (ssbm) {
 			outputFile << totalConcData[numSpecies] << " "
-					   << totalConcData[numSpecies + 2] /
+					   << totalConcData[numSpecies + 1] /
 					totalConcData[numSpecies]
 					   << " "
-					   << totalConcData[numSpecies + 1] /
+					   << totalConcData[numSpecies + 2] /
 					totalConcData[numSpecies];
 		}
 		outputFile << std::endl;

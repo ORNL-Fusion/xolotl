@@ -35,12 +35,11 @@ getMaxHePerV(IReactionNetwork::AmountType amtV, double ratio) noexcept
 }
 
 KOKKOS_INLINE_FUNCTION
-IReactionNetwork::AmountType
-getMaxHPerV(IReactionNetwork::AmountType amtV, double latticeParameter,
-	double temp) noexcept
+double
+getMaxHPerV(double amtV, double latticeParameter, double temp) noexcept
 {
 	// Special case for 1 V
-	if (amtV == 1)
+	if (amtV < 1.5)
 		return 6;
 
 	// Compute the radius first (in nm)
@@ -68,7 +67,7 @@ getMaxHPerV(IReactionNetwork::AmountType amtV, double latticeParameter,
 	double nM = 6.02214e23 * (4.0 * ::xolotl::core::pi * rBm * rBm * rBm) /
 		(3.0 * v * 1.0e-6);
 
-	return (IReactionNetwork::AmountType)(2.0 * nM);
+	return 2.0 * nM;
 }
 } // namespace psi
 

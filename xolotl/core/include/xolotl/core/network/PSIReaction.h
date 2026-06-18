@@ -72,9 +72,12 @@ public:
 			}
 			else {
 				// Bubble
-				this->_reactantMomentIds[i][0] = this->_clusterData->voidAvId();
-				this->_reactantMomentIds[i][1] = this->_clusterData->hAvId();
-				this->_reactantMomentIds[i][2] = this->_clusterData->hAvId();
+				this->_reactantMomentIds[i][0] =
+					this->_clusterData->hAvId(); // He
+				this->_reactantMomentIds[i][1] =
+					this->_clusterData->hAvId(); // H
+				this->_reactantMomentIds[i][2] =
+					this->_clusterData->voidAvId(); // V
 			}
 
 			// Products
@@ -93,8 +96,12 @@ public:
 					// Bubble
 					this->_productMomentIds[i][0] =
 						this->_clusterData->voidAvId();
-					this->_productMomentIds[i][1] = this->_clusterData->hAvId();
-					this->_productMomentIds[i][2] = this->_clusterData->hAvId();
+					this->_productMomentIds[i][0] =
+						this->_clusterData->hAvId(); // He
+					this->_productMomentIds[i][1] =
+						this->_clusterData->hAvId(); // H
+					this->_productMomentIds[i][2] =
+						this->_clusterData->voidAvId(); // V
 				}
 			}
 		}
@@ -152,6 +159,22 @@ public:
 
 private:
 	bool isLargeBubbleReaction = false;
+
+	/**
+	 * Generic sigmoid function.
+	 *
+	 * @param x The variable value
+	 * @param target The value at which the sigmoid switches
+	 * @param sharp The sharpness parameter of the function (higher -> sharper)
+	 * @return The sigmoid value at this x
+	 */
+	KOKKOS_INLINE_FUNCTION
+	double
+	computeSigmoid(double x, double target, double sharp)
+	{
+		double value = x / target - 1.0;
+		return 1.0 / (1.0 + exp(-sharp * target * value));
+	}
 };
 
 template <typename TSpeciesEnum>
