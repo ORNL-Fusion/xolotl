@@ -144,10 +144,21 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraDOFs(
 		return;
 
 	largestClusterId = checkLargestClusterId();
+	// Save the maximum sizes to be used in reactions
+	const auto& clReg =
+		this->getCluster(largestClusterId, plsm::HostMemSpace{}).getRegion();
+	Composition comp = clReg.getUpperLimitPoint();
+	this->_clusterData.h_view().setMaxVSize(comp[Species::V] - 1);
+	if constexpr (psi::hasDeuterium<Species>) {
+		this->_clusterData.h_view().setMaxHSize(comp[Species::D] - 1);
+	}
+	if constexpr (psi::hasTritium<Species>) {
+		this->_clusterData.h_view().setMaxHSize(comp[Species::T] - 1);
+	}
 
 	this->_clusterData.h_view().setBubbleId(this->_numDOFs);
-	this->_clusterData.h_view().setVoidAvId(this->_numDOFs + 1);
-	this->_clusterData.h_view().setHAvId(this->_numDOFs + 2);
+	this->_clusterData.h_view().setHAvId(this->_numDOFs + 1);
+	this->_clusterData.h_view().setVoidAvId(this->_numDOFs + 2);
 	this->_numDOFs += 3;
 }
 
@@ -888,7 +899,8 @@ PSIReactionGenerator<TSpeciesEnum>::addSingleSizeReactions(
 		// I case
 		if (lo.isOnAxis(Species::I)) {
 			// I_k + B -> B
-			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+			//			this->addProductionReaction(tag, {i, bubbleId,
+			//bubbleId});
 		}
 
 		// H case
@@ -908,6 +920,11 @@ PSIReactionGenerator<TSpeciesEnum>::addSingleSizeReactions(
 				else {
 					this->addProductionReaction(
 						tag, {i, bubbleId, bubbleId, iClusterId});
+
+					// Dissociation B -> B + H_1
+					if (lo[Species::D] == 1)
+						this->addDissociationReaction(
+							tag, {bubbleId, i, bubbleId});
 				}
 			}
 		}

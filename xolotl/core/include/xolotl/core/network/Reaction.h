@@ -469,11 +469,21 @@ public:
 		return detail::ConstantRateView();
 	}
 
-private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeCoefficients();
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
+		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computePartialDerivatives(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex);
+
+private:
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeRate(IndexType gridIndex, double time = 0.0);
@@ -485,16 +495,6 @@ private:
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedConnectivity(const Connectivity& connectivity);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
-		IndexType gridIndex);
-
-	KOKKOS_INLINE_FUNCTION
-	void
-	computePartialDerivatives(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex);
 
 	KOKKOS_INLINE_FUNCTION
 	void

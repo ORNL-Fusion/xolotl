@@ -913,9 +913,9 @@ PetscMonitor1D::computeHeliumRetention(
 			myConcData[numSpecies] +=
 				gridPointSolution[dof - 3] * hx; // Bubble conc
 			myConcData[numSpecies + 1] +=
-				gridPointSolution[dof - 2] * hx; // V conc
+				gridPointSolution[dof - 2] * hx; // H conc
 			myConcData[numSpecies + 2] +=
-				gridPointSolution[dof - 1] * hx; // H conc
+				gridPointSolution[dof - 1] * hx; // V conc
 		}
 	}
 

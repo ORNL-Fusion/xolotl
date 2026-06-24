@@ -160,6 +160,8 @@ private:
 		BUBBLE_ID,
 		AV_H_ID,
 		AV_VOID_ID,
+		MAX_H_SIZE,
+		MAX_V_SIZE,
 		NUM_INT_VALS
 	};
 
@@ -367,6 +369,32 @@ public:
 	setVoidAvId(int val)
 	{
 		setVal(_intVals, AV_VOID_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	maxHSize() const
+	{
+		return _intVals[MAX_H_SIZE];
+	}
+
+	void
+	setMaxHSize(int val)
+	{
+		setVal(_intVals, MAX_H_SIZE, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	maxVSize() const
+	{
+		return _intVals[MAX_V_SIZE];
+	}
+
+	void
+	setMaxVSize(int val)
+	{
+		setVal(_intVals, MAX_V_SIZE, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
