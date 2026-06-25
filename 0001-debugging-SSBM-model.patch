@@ -1,0 +1,3018 @@
+From 78708c808c768e017e0b1af7883c776c78cd1b50 Mon Sep 17 00:00:00 2001
+From: Zakar Joseph White <zwhite6@login1.cn.isaac.utk.edu>
+Date: Wed, 17 Jun 2026 17:29:16 -0400
+Subject: [PATCH] debugging SSBM model
+
+---
+ ...-SSBM-and-updated-Binding-energy-189.patch | 1990 +++++++++++++++++
+ .../xolotl/core/network/FeClusterGenerator.h  |   10 +
+ .../include/xolotl/core/network/FeReaction.h  |    4 +-
+ .../xolotl/core/network/FeReaction.tpp        |    0
+ .../xolotl/core/network/FeReactionNetwork.h   |    7 +-
+ .../include/xolotl/core/network/FeTraits.h    |   27 +-
+ .../xolotl/core/network/IReactionNetwork.h    |    4 +-
+ .../xolotl/core/network/detail/ClusterData.h  |   24 +-
+ .../xolotl/core/network/impl/FeReaction.tpp   |  337 ++-
+ .../core/network/impl/FeReactionNetwork.tpp   |  105 +-
+ .../core/network/impl/ReactionNetwork.tpp     |    2 +-
+ xolotl/core/src/network/FeReactionNetwork.cpp |   86 +-
+ 12 files changed, 2237 insertions(+), 359 deletions(-)
+ create mode 100644 0001-Updated-to-add-SSBM-and-updated-Binding-energy-189.patch
+ delete mode 100644 xolotl/core/include/xolotl/core/network/FeReaction.tpp
+
+diff --git a/0001-Updated-to-add-SSBM-and-updated-Binding-energy-189.patch b/0001-Updated-to-add-SSBM-and-updated-Binding-energy-189.patch
+new file mode 100644
+index 00000000..5b20c965
+--- /dev/null
++++ b/0001-Updated-to-add-SSBM-and-updated-Binding-energy-189.patch
+@@ -0,0 +1,1990 @@
++From bdbb06421037cc1ab2104616f235831f439d125c Mon Sep 17 00:00:00 2001
++From: Zakar Joseph White <zwhite6@login1.cn.isaac.utk.edu>
++Date: Fri, 12 Jun 2026 10:55:31 -0400
++Subject: [PATCH] Updated to add SSBM and updated Binding energy (#189)
++
++---
++ .../include/xolotl/core/network/FeReaction.h  | 142 ++++
++ .../xolotl/core/network/FeReaction.tpp        |   0
++ .../xolotl/core/network/FeReactionNetwork.h   |  55 ++
++ .../include/xolotl/core/network/FeTraits.h    |  61 ++
++ .../xolotl/core/network/IReactionNetwork.h    |  24 +-
++ .../xolotl/core/network/ReactionNetwork.h     |  49 ++
++ .../xolotl/core/network/detail/ClusterData.h  | 107 ++-
++ .../xolotl/core/network/impl/FeReaction.tpp   | 703 +++++++++++++++++-
++ .../core/network/impl/FeReactionNetwork.tpp   | 169 ++++-
++ .../core/network/impl/ReactionNetwork.tpp     | 149 +++-
++ xolotl/core/src/network/FeNetworkHandler.cpp  |  37 +-
++ xolotl/core/src/network/FeReactionNetwork.cpp |  90 ++-
++ 12 files changed, 1569 insertions(+), 17 deletions(-)
++ create mode 100644 xolotl/core/include/xolotl/core/network/FeReaction.tpp
++
++diff --git a/xolotl/core/include/xolotl/core/network/FeReaction.h b/xolotl/core/include/xolotl/core/network/FeReaction.h
++index 65549eb0..b2e1e7c6 100644
++--- a/xolotl/core/include/xolotl/core/network/FeReaction.h
+++++ b/xolotl/core/include/xolotl/core/network/FeReaction.h
++@@ -3,6 +3,7 @@
++ #include <xolotl/core/network/FeTraits.h>
++ #include <xolotl/core/network/SinkReaction.h>
++ #include <xolotl/core/network/TrapReaction.h>
+++#include <xolotl/core/network/ConstantReaction.h>
++ 
++ namespace xolotl
++ {
++@@ -20,10 +21,141 @@ public:
++ 		ProductionReaction<FeReactionNetwork, FeProductionReaction>;
++ 
++ 	using Superclass::Superclass;
+++	using NetworkType = typename Superclass::NetworkType;
+++	using ReactionDataRef = typename Superclass::ReactionDataRef;
+++	using ClusterData = typename Superclass::ClusterData;
+++	using IndexType = typename Superclass::IndexType;
+++	using Composition = typename Superclass::Composition;
+++	using Region = typename Superclass::Region;
+++	using ConcentrationsView = typename Superclass::ConcentrationsView;
+++	using FluxesView = typename Superclass::FluxesView;
+++	using Species = typename Superclass::Species;
+++
+++	KOKKOS_INLINE_FUNCTION
+++	FeProductionReaction(ReactionDataRef reactionData,
+++		const ClusterData& clusterData, IndexType reactionId,
+++		IndexType cluster0, IndexType cluster1,
+++		IndexType cluster2 = Superclass::invalidIndex,
+++		IndexType cluster3 = Superclass::invalidIndex)
+++	{
+++		this->_clusterData = &clusterData;
+++		this->_reactionId = reactionId;
+++		this->_rate = reactionData.getRates(reactionId);
+++		this->_widths = reactionData.getWidths(reactionId);
+++		this->_coefs = reactionData.getCoefficients(reactionId);
+++
+++		this->_reactants = {cluster0, cluster1};
+++		this->_products = {cluster2, cluster3};
+++
+++		auto numClusters = clusterData.numClusters;
+++		// Check if the single size is involved
+++		if (cluster0 >= numClusters)
+++			isLargeBubbleReaction = true;
+++		if (cluster1 >= numClusters)
+++			isLargeBubbleReaction = true;
+++		if (cluster2 != Superclass::invalidIndex and cluster2 >= numClusters)
+++			isLargeBubbleReaction = true;
+++		if (cluster3 != Superclass::invalidIndex and cluster3 >= numClusters)
+++			isLargeBubbleReaction = true;
+++
+++		// static
+++		const auto dummyRegion = Region(Composition{});
+++
+++		for (auto i : {0, 1}) {
+++			// Reactants
+++			if (this->_reactants[i] < numClusters) {
+++				this->copyMomentIds(
+++					this->_reactants[i], this->_reactantMomentIds[i]);
+++			}
+++			else {
+++				// Bubble
+++					this->_reactantMomentIds[i][0] =
+++						this->_clusterData->voidAvId();
+++					this->_reactantMomentIds[i][1] =
+++						this->_clusterData->heAvId();
+++					for (IndexType j = 2; j < Superclass::nMomentIds; ++j) {
+++						this->_reactantMomentIds[i][j] =
+++							Superclass::invalidIndex;
+++				}
+++			}
+++			// Products
+++			if (this->_products[i] == Superclass::invalidIndex) {
+++				for (IndexType j = 0; j < Superclass::nMomentIds; ++j) {
+++					this->_productMomentIds[i][j] = Superclass::invalidIndex;
+++				}
+++			}
+++			else {
+++				if (this->_products[i] < numClusters) {
+++					this->copyMomentIds(
+++						this->_products[i], this->_productMomentIds[i]);
+++				}
+++				else {
+++					// Bubble
+++						this->_productMomentIds[i][0] =
+++							this->_clusterData->voidAvId();
+++						this->_productMomentIds[i][1] =
+++							this->_clusterData->hAvId();
+++						this->_productMomentIds[i][2] = 
+++							this->_clusterData->hAvId();	
+++				}
+++			}
+++		}
+++		
+++
+++		const auto& cl1Reg = (this->_reactants[0] < numClusters) ?
+++			this->_clusterData->getCluster(this->_reactants[0]).getRegion() :
+++			dummyRegion;
+++		const auto& cl2Reg = (this->_reactants[1] < numClusters) ?
+++			this->_clusterData->getCluster(this->_reactants[1]).getRegion() :
+++			dummyRegion;
+++		const auto& pr1Reg = (this->_products[0] == Superclass::invalidIndex) ?
+++			dummyRegion :
+++			(this->_products[0] < numClusters) ?
+++			this->_clusterData->getCluster(this->_products[0]).getRegion() :
+++			dummyRegion;
+++		const auto& pr2Reg = (this->_products[1] == Superclass::invalidIndex) ?
+++			dummyRegion :
+++			(this->_products[1] < numClusters) ?
+++			this->_clusterData->getCluster(this->_products[1]).getRegion() :
+++			dummyRegion;
+++
+++		this->_reactantVolumes = {cl1Reg.volume(), cl2Reg.volume()};
+++		this->_productVolumes = {pr1Reg.volume(), pr2Reg.volume()};
+++
+++		this->initialize();
+++	}
+++
+++	KOKKOS_INLINE_FUNCTION
+++	FeProductionReaction(ReactionDataRef reactionData,
+++		const ClusterData& clusterData, IndexType reactionId,
+++		const detail::ClusterSet& clusterSet) :
+++		FeProductionReaction(reactionData, clusterData, reactionId,
+++			clusterSet.cluster0, clusterSet.cluster1, clusterSet.cluster2,
+++			clusterSet.cluster3)
+++	{
+++	}
++ 
++ 	KOKKOS_INLINE_FUNCTION
++ 	double
++ 	getRateForProduction(IndexType gridIndex);
+++
+++	KOKKOS_INLINE_FUNCTION
+++	void
+++	computeCoefficients();
+++
+++	KOKKOS_INLINE_FUNCTION
+++	void
+++	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
+++		IndexType gridIndex);
+++
+++	KOKKOS_INLINE_FUNCTION
+++	void
+++	computePartialDerivatives(ConcentrationsView concentrations,
+++		Kokkos::View<double*> values, IndexType gridIndex);
+++
+++private:
+++	bool isLargeBubbleReaction = false;
+++
++ };
++ 
++ class FeDissociationReaction :
++@@ -87,6 +219,16 @@ public:
++ 	double
++ 	getDensity();
++ };
+++
+++class FeConstantReaction :
+++	public ConstantReaction<FeReactionNetwork, FeConstantReaction>
+++{
+++public:
+++	using Superclass =
+++		ConstantReaction<FeReactionNetwork, FeConstantReaction>;
+++
+++	using Superclass::Superclass;
+++};
++ } // namespace network
++ } // namespace core
++ } // namespace xolotl
++diff --git a/xolotl/core/include/xolotl/core/network/FeReaction.tpp b/xolotl/core/include/xolotl/core/network/FeReaction.tpp
++new file mode 100644
++index 00000000..e69de29b
++diff --git a/xolotl/core/include/xolotl/core/network/FeReactionNetwork.h b/xolotl/core/include/xolotl/core/network/FeReactionNetwork.h
++index a935d860..12701d5f 100644
++--- a/xolotl/core/include/xolotl/core/network/FeReactionNetwork.h
+++++ b/xolotl/core/include/xolotl/core/network/FeReactionNetwork.h
++@@ -3,6 +3,8 @@
++ #include <xolotl/core/network/FeReaction.h>
++ #include <xolotl/core/network/FeTraits.h>
++ #include <xolotl/core/network/ReactionNetwork.h>
+++#include <xolotl/util/MathUtils.h>
+++#include <xolotl/core/Constants.h>
++ 
++ namespace xolotl
++ {
++@@ -42,6 +44,43 @@ public:
++ 		return "Fe.dat";
++ 	}
++ 
+++	void
+++	initializeExtraClusterData(const options::IOptions& options);
+++
+++	void
+++	initializeExtraDOFs(const options::IOptions& options);
+++
+++	void
+++	computeFluxesPreProcess(ConcentrationsView concentrations,
+++		FluxesView fluxes, IndexType gridIndex, double surfaceDepth,
+++		double spacing);
+++
+++	void
+++	computePartialsPreProcess(ConcentrationsView concentrations,
+++		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+++		double spacing);
+++
+++	double
+++	computeBubbleRadius(
+++		double amount, double latticeParameter)
+++	{
+++		// Find the edge of the phase space
+++		const auto& largestReg = this->getCluster(largestClusterId).getRegion();
+++		Composition hiLargest = largestReg.getUpperLimitPoint();
+++		double largestSize = hiLargest[Species::V] - 1;
+++
+++		// Get the minimum amount for a valid value
+++		amount = util::max(amount, largestSize);
+++
+++		return (sqrt(3.0) / 4.0) * latticeParameter +
+++			pow((3.0 * pow(latticeParameter, 3.0) * amount) /
+++					(8.0 * ::xolotl::core::pi),
+++				(1.0 / 3.0)) -
+++			pow((3.0 * pow(latticeParameter, 3.0)) / (8.0 * ::xolotl::core::pi),
+++				(1.0 / 3.0));
+++	}
+++
+++
++ 	std::string
++ 	getMonitorDataHeaderString() const override;
++ 
++@@ -59,6 +98,9 @@ public:
++ 	writeMonitorDataLine(
++ 		const std::vector<double>& localData, double time) override;
++ 
+++public:
+++	IndexType largestClusterId;
+++
++ private:
++ 	double
++ 	checkLatticeParameter(double latticeParameter);
++@@ -106,6 +148,12 @@ public:
++ 
++ 	using Superclass::Superclass;
++ 
+++	FeReactionGenerator(const FeReactionNetwork& network) :
+++		Superclass(network),
+++		largestClusterId(network.largestClusterId)
+++	{
+++	}
+++	
++ 	template <typename TTag>
++ 	KOKKOS_INLINE_FUNCTION
++ 	void
++@@ -116,6 +164,11 @@ public:
++ 	void
++ 	addSinks(IndexType i, TTag tag) const;
++ 
+++	template <typename TTag>
+++	KOKKOS_INLINE_FUNCTION
+++	void
+++	addSingleSizeReactions(IndexType i, IndexType j, TTag tag) const;
+++
++ 	template <typename TTag>
++ 	KOKKOS_INLINE_FUNCTION
++ 	void
++@@ -124,6 +177,8 @@ public:
++ private:
++ 	ReactionCollection<NetworkType>
++ 	getReactionCollection() const;
+++
+++	IndexType largestClusterId;
++ };
++ } // namespace detail
++ } // namespace network
++diff --git a/xolotl/core/include/xolotl/core/network/FeTraits.h b/xolotl/core/include/xolotl/core/network/FeTraits.h
++index e143865e..250d4b8b 100644
++--- a/xolotl/core/include/xolotl/core/network/FeTraits.h
+++++ b/xolotl/core/include/xolotl/core/network/FeTraits.h
++@@ -1,6 +1,7 @@
++ #pragma once
++ 
++ #include <xolotl/core/network/ReactionNetworkTraits.h>
+++#include <xolotl/core/network/detail/ClusterData.h>
++ 
++ namespace xolotl
++ {
++@@ -95,6 +96,66 @@ struct ReactionNetworkTraits<FeReactionNetwork>
++ 
++ 	using ClusterGenerator = FeClusterGenerator;
++ };
+++
+++namespace detail
+++{
+++template <typename PlsmContext>
+++struct ClusterDataExtra<FeReactionNetwork, PlsmContext>
+++{
+++	using NetworkType = FeReactionNetwork;
+++
+++	template <typename TData>
+++	using View = ViewType<TData, PlsmContext>;
+++
+++	using IndexType = detail::ReactionNetworkIndexType;
+++
+++	ClusterDataExtra() = default;
+++
+++	template <typename PC>
+++	KOKKOS_INLINE_FUNCTION
+++	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
+++		dislocationCaptureRadius(data.dislocationCaptureRadius)
+++	{
+++	}
+++
+++	template <typename PC>
+++	void
+++	deepCopy(const ClusterDataExtra<NetworkType, PC>& data)
+++	{
+++		if (!data.dislocationCaptureRadius.is_allocated()) {
+++			return;
+++		}
+++
+++		if (!dislocationCaptureRadius.is_allocated()) {
+++			dislocationCaptureRadius =
+++				create_mirror_view(data.dislocationCaptureRadius);
+++		}
+++
+++		deep_copy(dislocationCaptureRadius, data.dislocationCaptureRadius);
+++	}
+++
+++	std::uint64_t
+++	getDeviceMemorySize() const noexcept
+++	{
+++		std::uint64_t ret = 0;
+++
+++		ret += dislocationCaptureRadius.required_allocation_size(
+++			dislocationCaptureRadius.extent(0),
+++			dislocationCaptureRadius.extent(1));
+++
+++		return ret;
+++	}
+++
+++	void
+++	initialize(IndexType numClusters, IndexType gridSize = 0)
+++	{
+++		dislocationCaptureRadius =
+++			View<double**>("Dislocation Capture Radius", numClusters, 2);
+++	}
+++
+++	View<double**> dislocationCaptureRadius;
+++};
+++} // namespace detail
++ } // namespace network
++ } // namespace core
++ } // namespace xolotl
++diff --git a/xolotl/core/include/xolotl/core/network/IReactionNetwork.h b/xolotl/core/include/xolotl/core/network/IReactionNetwork.h
++index 8de3c4d8..ae239b0e 100644
++--- a/xolotl/core/include/xolotl/core/network/IReactionNetwork.h
+++++ b/xolotl/core/include/xolotl/core/network/IReactionNetwork.h
++@@ -303,6 +303,18 @@ public:
++ 		_enableReadRates = read;
++ 	}
++ 
+++	bool
+++	getEnableSSBM() const noexcept //for SSBM
+++	{
+++		return _enableSSBM;
+++	}
+++
+++	virtual void
+++	setEnableSSBM(bool ssbm) //for SSBM
+++	{
+++		_enableSSBM = ssbm;
+++	}
+++
++ 	IndexType
++ 	getGridSize() const noexcept
++ 	{
++@@ -582,6 +594,14 @@ public:
++ 	getTotalRatioVariance(ConcentrationsView concentrations, SpeciesId species,
++ 		double mean, AmountType minSize = 0) = 0;
++ 
+++	virtual double //for SSBM
+++	getTotalVolumeRadius(ConcentrationsView concentrations, SpeciesId species,
+++		AmountType minSize = 0) = 0;
+++
+++	virtual double //for SSBM
+++	getTotalRadiusVariance(ConcentrationsView concentrations, SpeciesId species,
+++		double mean, AmountType minSize = 0) = 0;
+++
++ 	/**
++ 	 * @brief Computes the diffusion flux exiting from this grid point.
++ 	 *
++@@ -627,12 +647,14 @@ protected:
++ 	bool _enableReSolution{};
++ 	bool _enableNucleation{};
++ 	bool _enableSink{};
++-	bool _enableTrap{};
+++	bool _enableTrap{}; //disable for SSBM later
++ 	bool _enableTrapMutation{};
++ 	bool _enableAttenuation{};
++ 	bool _enableConstantReaction{};
++ 	bool _enableReducedJacobian{};
++ 	bool _enableReadRates{};
+++	bool _enableSSBM{}; //for SSBM
+++	bool _enableLargeBubble{}; //for SSBM
++ 
++ 	IndexType _gridSize{};
++ 	IndexType _numDOFs{};
++diff --git a/xolotl/core/include/xolotl/core/network/ReactionNetwork.h b/xolotl/core/include/xolotl/core/network/ReactionNetwork.h
++index 323d331c..9b092ab6 100644
++--- a/xolotl/core/include/xolotl/core/network/ReactionNetwork.h
+++++ b/xolotl/core/include/xolotl/core/network/ReactionNetwork.h
++@@ -194,6 +194,11 @@ public:
++ 	{
++ 	}
++ 
+++	void
+++	initializeExtraDOFs(const options::IOptions&)
+++	{
+++	}
+++
++ 	void
++ 	updateExtraClusterData(
++ 		const std::vector<double>&, const std::vector<double>&)
++@@ -258,6 +263,9 @@ public:
++ 	void
++ 	setEnableReadRates(bool read) override;
++ 
+++	void
+++	setEnableSSBM(bool ssbm) override; //for SSBM
+++
++ 	void
++ 	setGridSize(IndexType gridSize) override;
++ 
++@@ -734,6 +742,47 @@ public:
++ 		return getTotalRatioVariance(concentrations, type, minSize);
++ 	}
++ 
+++	/**
+++	 * Get the averaged radius weighted with volume as well.
+++	 *
+++	 * @param concentration The vector of concentrations
+++	 * @param type The type of atom we want the concentration of
+++	 * @param minSize The minimum number of atom to start counting
+++	 * @return The radius
+++	 */
+++	double
+++	getTotalVolumeRadius(ConcentrationsView concentrations, Species type,
+++		AmountType minSize = 0);
+++
+++	double
+++	getTotalVolumeRadius(ConcentrationsView concentrations, SpeciesId species,
+++		AmountType minSize = 0) override
+++	{
+++		auto type = species.cast<Species>();
+++		return getTotalVolumeRadius(concentrations, type, minSize);
+++	}
+++
+++	/**
+++	 * Get the variance associated with averaged radius.
+++	 *
+++	 * @param concentration The vector of concentrations
+++	 * @param type The type of atom we want the concentration of
+++	 * @param minSize The minimum number of atom to start counting
+++	 * @param mean The radius mean
+++	 * @return The variance
+++	 */
+++	double
+++	getTotalRadiusVariance(ConcentrationsView concentrations, Species type,
+++		double mean, AmountType minSize = 0);
+++
+++	double
+++	getTotalRadiusVariance(ConcentrationsView concentrations, SpeciesId species,
+++		double mean, AmountType minSize = 0) override
+++	{
+++		auto type = species.cast<Species>();
+++		return getTotalRadiusVariance(concentrations, type, minSize);
+++	}
+++
++ 	/**
++ 	 * Get the total concentration of a given type of clusters only if it is
++ 	 * trapped in a vacancy.
++diff --git a/xolotl/core/include/xolotl/core/network/detail/ClusterData.h b/xolotl/core/include/xolotl/core/network/detail/ClusterData.h
++index f33a807a..6bac5e7b 100644
++--- a/xolotl/core/include/xolotl/core/network/detail/ClusterData.h
+++++ b/xolotl/core/include/xolotl/core/network/detail/ClusterData.h
++@@ -149,13 +149,19 @@ private:
++ 		XE_FORMATION,
++ 		V_FORMATION,
++ 		V2_FORMATION,
++-		TRAP_BINDING,
+++		TRAP_BINDING, // disable for SSBM later
+++		AV_BUBBLE_RAD, // for SSBM
+++		SINK_STRENGTH, //Check if necessary for SSBM
++ 		NUM_FLOAT_VALS
++ 	};
++ 
++ 	enum IntValsIndex : int
++ 	{
++ 		TRANSITION_SIZE = 0,
+++		BUBBLE_ID, //for SSBM
+++		AV_H_ID, //Check if necessary for SSBM ~ avg H ID
+++		AV_He_ID, //Check if necessary for SSBM ~ avg He ID
+++		AV_VOID_ID, //Check if necessary for SSBM ~ avg Void ID
++ 		NUM_INT_VALS
++ 	};
++ 
++@@ -165,10 +171,11 @@ private:
++ 		RESOLUTION,
++ 		NUCLEATION,
++ 		SINK,
++-		TRAP,
+++		TRAP, //disable for SSBM later
++ 		TRAP_MUTATION,
++ 		READ_RATES,
++ 		CONSTANT_REACTION,
+++		LARGE_BUBBLE, //for SSBM
++ 		NUM_BOOL_VALS
++ 	};
++ 
++@@ -289,13 +296,39 @@ public:
++ 
++ 	KOKKOS_INLINE_FUNCTION
++ 	double
++-	getTrapBindingEnergy() const
+++	bubbleAvRad() const //for SSBM
+++	{
+++		return _floatVals[AV_BUBBLE_RAD];
+++	}
+++
+++	void
+++	setBubbleAvRad(double val) //for SSBM
+++	{
+++		setVal(_floatVals, AV_BUBBLE_RAD, val);
+++	}
+++
+++	KOKKOS_INLINE_FUNCTION
+++	double
+++	sinkStrength() const //for SSBM
+++	{
+++		return _floatVals[SINK_STRENGTH];
+++	}
+++
+++	void
+++	setSinkStrength(double val) //for SSBM
+++	{
+++		setVal(_floatVals, SINK_STRENGTH, val);
+++	}
+++
+++	KOKKOS_INLINE_FUNCTION
+++	double
+++	getTrapBindingEnergy() const //disable for SSBM later
++ 	{
++ 		return _floatVals[TRAP_BINDING];
++ 	}
++ 
++ 	void
++-	setTrapBindingEnergy(double val)
+++	setTrapBindingEnergy(double val) //disable for SSBM later
++ 	{
++ 		setVal(_floatVals, TRAP_BINDING, val);
++ 	}
++@@ -313,6 +346,59 @@ public:
++ 		setVal(_intVals, TRANSITION_SIZE, val);
++ 	}
++ 
+++	KOKKOS_INLINE_FUNCTION
+++	int
+++	bubbleId() const //for SSBM
+++	{
+++		return _intVals[BUBBLE_ID];
+++	}
+++
+++	void
+++	setBubbleId(int val) //for SSBM
+++	{
+++		setVal(_intVals, BUBBLE_ID, val);
+++	}
+++
+++	KOKKOS_INLINE_FUNCTION
+++	int
+++	hAvId() const //check if necessary
+++	{
+++		return _intVals[AV_H_ID];
+++	}
+++
+++	void
+++	setHAvId(int val) //check if necessary
+++	{
+++		setVal(_intVals, AV_H_ID, val);
+++	}
+++
+++	KOKKOS_INLINE_FUNCTION
+++        int
+++        heAvId() const //check if necessary
+++        {
+++                return _intVals[AV_He_ID];
+++        }
+++
+++        void
+++        setHeAvId(int val) //check if necessary
+++        {
+++                setVal(_intVals, AV_He_ID, val);
+++        }
+++
+++
+++	KOKKOS_INLINE_FUNCTION
+++	int
+++	voidAvId() const //check if neccessary
+++	{
+++		return _intVals[AV_VOID_ID];
+++	}
+++
+++	void
+++	setVoidAvId(int val) //check if neccessary
+++	{
+++		setVal(_intVals, AV_VOID_ID, val);
+++	}
+++
++ 	KOKKOS_INLINE_FUNCTION
++ 	bool
++ 	enableStdReaction() const
++@@ -417,6 +503,19 @@ public:
++ 		setVal(_boolVals, CONSTANT_REACTION, val);
++ 	}
++ 
+++	KOKKOS_INLINE_FUNCTION
+++	bool
+++	enableSSBM() const //for SSBM
+++	{
+++		return _boolVals[LARGE_BUBBLE];
+++	}
+++
+++	void
+++	setEnableSSBM(bool val) //for SSBM
+++	{
+++		setVal(_boolVals, LARGE_BUBBLE, val);
+++	}
+++
++ private:
++ 	View<double[NUM_FLOAT_VALS]> _floatVals;
++ 	View<int[NUM_INT_VALS]> _intVals;
++diff --git a/xolotl/core/include/xolotl/core/network/impl/FeReaction.tpp b/xolotl/core/include/xolotl/core/network/impl/FeReaction.tpp
++index 433dad32..0c6a4432 100644
++--- a/xolotl/core/include/xolotl/core/network/impl/FeReaction.tpp
+++++ b/xolotl/core/include/xolotl/core/network/impl/FeReaction.tpp
++@@ -43,6 +43,699 @@ FeProductionReaction::getRateForProduction(IndexType gridIndex)
++ 	return fe::getRate(cl0.getRegion(), cl1.getRegion(), r0, r1, dc0, dc1);
++ }
++ 
+++KOKKOS_INLINE_FUNCTION
+++void
+++FeProductionReaction::computeCoefficients()
+++{
+++	// Check if the large bubble is involved
+++	if (isLargeBubbleReaction) {
+++		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+++		for (auto i : speciesRangeNoI) {
+++			this->_widths(i()) = 1.0;
+++		}
+++		this->_coefs(0, 0, 0, 0) = 1.0;
+++	}
+++	else {
+++		// Standard case
+++		Superclass::computeCoefficients();
+++	}
+++}
+++
+++KOKKOS_INLINE_FUNCTION
+++void
+++FeProductionReaction::computeFlux(
+++	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
+++{
+++	// Standard case
+++	if (not isLargeBubbleReaction) {
+++		return Superclass::computeFlux(concentrations, fluxes, gridIndex);
+++	}
+++
+++	// The rate need to be computed each time because it depends on the current
+++	// large bubble size
+++	auto rate = getRateForProduction(gridIndex);
+++
+++	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+++	auto numClusters = this->_clusterData->numClusters;
+++
+++	// Large bubble is one of the reactants
+++	if (this->_reactants[0] >= numClusters or
+++		this->_reactants[1] >= numClusters) {
+++		// Get the standard cluster
+++		auto stdClusterId = (this->_reactants[0] >= numClusters) ?
+++			this->_reactants[1] :
+++			this->_reactants[0];
+++		auto cl = this->_clusterData->getCluster(stdClusterId);
+++		auto clReg = cl.getRegion();
+++		auto orig = clReg.getOrigin();
+++		Composition comp(orig);
+++		// Get the SSBM cluster
+++		auto ssbmId = (this->_reactants[0] >= numClusters) ?
+++			this->_reactants[0] :
+++			this->_reactants[1];
+++		// Get the index to switch between V and I type SSBM
+++		auto typeId = (ssbmId - numClusters) / 2;
+++
+++		// Compute the flux
+++		double f = this->_coefs(0, 0, 0, 0) * concentrations(stdClusterId) *
+++			concentrations(ssbmId) * rate;
+++
+++		// Vacancy case
+++		if (comp[Species::V] > 0) {
+++			// SSBM V case
+++			if (typeId < 3) {
+++				// The standard cluster always loses the flux
+++				Kokkos::atomic_sub(&fluxes[stdClusterId], f);
+++
+++				// The V size increases (kind of cheating on the ID)
+++				Kokkos::atomic_add(&fluxes[ssbmId + 1], f * comp[Species::V]);
+++			}
+++			// SSBM I case
+++			else {
+++				// Special factor to deal with the threshold size
+++				double gauss = 1.0;
+++
+++				// Special case where the product is not the single size
+++				if (this->_products[0] < numClusters) {
+++					// Only if the large loop has a specific size
+++					auto avLoop =
+++						concentrations(ssbmId + 1) / concentrations(ssbmId);
+++					if (concentrations(ssbmId) == 0.0)
+++						avLoop = 0.0;
+++
+++					// Get the product composition
+++					auto pr =
+++						this->_clusterData->getCluster(this->_products[0]);
+++					auto prReg = pr.getRegion();
+++					Composition prComp(prReg.getOrigin());
+++
+++					// Target value for the reaction to happen
+++					double target = comp[Species::V];
+++
+++					// Gaussian function around it
+++					double twoSigmaTwo = 0.1;
+++					gauss = exp(-(avLoop - target) * (avLoop - target) /
+++								twoSigmaTwo) /
+++						sqrt(::xolotl::core::pi * twoSigmaTwo);
+++
+++					// The large bubble concentration decreases
+++					Kokkos::atomic_sub(&fluxes[ssbmId], f * gauss);
+++					// The product concentration increases
+++					Kokkos::atomic_add(&fluxes[this->_products[0]], f * gauss);
+++
+++					// The I size decreases even more
+++					Kokkos::atomic_sub(&fluxes[ssbmId + 1],
+++						f * 0 *	gauss);
+++				}
+++
+++				// In every case
+++
+++				// The standard cluster always loses the flux
+++				Kokkos::atomic_sub(&fluxes[stdClusterId], f * gauss);
+++
+++				// The I size decreases
+++				Kokkos::atomic_sub(
+++					&fluxes[ssbmId + 1], f * comp[Species::V] * gauss);
+++			}
+++		}
+++
+++		// Interstitial case
+++		if (comp[Species::I] > 0) {
+++			// SSBM V case
+++			if (typeId < 3) {
+++				// Special factor to deal with the threshold size
+++				double gauss = 1.0;
+++
+++				// Special case where the product is not the single size
+++				if (this->_products[0] < numClusters) {
+++					// Only if the large void has a specific size
+++					auto avVoid =
+++						concentrations(ssbmId + 1) / concentrations(ssbmId);
+++					if (concentrations(ssbmId) == 0.0)
+++						avVoid = 0.0;
+++
+++					// Get the product composition
+++					auto pr =
+++						this->_clusterData->getCluster(this->_products[0]);
+++					auto prReg = pr.getRegion();
+++					Composition prComp(prReg.getOrigin());
+++
+++					// Target value for the reaction to happen
+++					double target = prComp[Species::V] + comp[Species::I];
+++
+++					// Gaussian function around it
+++					double twoSigmaTwo = 0.1;
+++					gauss = exp(-(avVoid - target) * (avVoid - target) /
+++								twoSigmaTwo) /
+++						sqrt(::xolotl::core::pi * twoSigmaTwo);
+++
+++					// The large bubble concentration decreases
+++					Kokkos::atomic_sub(&fluxes[ssbmId], f * gauss);
+++					// The product concentration increases
+++					Kokkos::atomic_add(&fluxes[this->_products[0]], f * gauss);
+++
+++					// The V size decreases even more
+++					Kokkos::atomic_sub(&fluxes[ssbmId + 1],
+++						f * prComp[Species::V] * gauss);
+++				}
+++
+++				// In every case
+++
+++				// The standard cluster always loses the flux
+++				Kokkos::atomic_sub(&fluxes[stdClusterId], f * gauss);
+++
+++				// The V size decreases
+++				Kokkos::atomic_sub(
+++					&fluxes[ssbmId + 1], f * comp[Species::I] * gauss);
+++			}
+++			// SSBM I case
+++			else {
+++				// The standard cluster always loses the flux
+++				Kokkos::atomic_sub(&fluxes[stdClusterId], f);
+++
+++				// The I size increases
+++				Kokkos::atomic_add(&fluxes[ssbmId + 1], f * comp[Species::I]);
+++			}
+++		}
+++
+++		// Helium case
+++		if (comp[Species::He] > 0) {
+++			// The standard cluster always loses the flux
+++			Kokkos::atomic_sub(&fluxes[stdClusterId], f);
+++
+++			// The He size increases
+++			Kokkos::atomic_add(&fluxes[ssbmId + 2], f * comp[Species::He]);
+++		}
+++	}
+++
+++	// Large bubble is one of the product
+++	else {
+++		auto cR1 = concentrations[this->_reactants[0]];
+++		auto cR2 = concentrations[this->_reactants[1]];
+++		auto cl1 = this->_clusterData->getCluster(this->_reactants[0]);
+++		auto cl1Reg = cl1.getRegion();
+++		auto orig1 = cl1Reg.getOrigin();
+++		Composition comp1(orig1);
+++		auto cl2 = this->_clusterData->getCluster(this->_reactants[1]);
+++		auto cl2Reg = cl2.getRegion();
+++		auto orig2 = cl2Reg.getOrigin();
+++		Composition comp2(orig2);
+++
+++		double f = this->_coefs(0, 0, 0, 0) * cR1 * cR2 * rate;
+++
+++		// Vacancy case
+++		if (orig1.isOnAxis(Species::V) or orig2.isOnAxis(Species::V)) {
+++			// Compute the total size
+++			auto totalSize = comp1[Species::V] + comp2[Species::V];
+++			// Both reactants decrease
+++			Kokkos::atomic_sub(&fluxes[this->_reactants[0]], f);
+++			Kokkos::atomic_sub(&fluxes[this->_reactants[1]], f);
+++			// The large bubble increases, as well as average V
+++			Kokkos::atomic_add(&fluxes[this->_products[0]], f);
+++			Kokkos::atomic_add(&fluxes[this->_products[0] + 1], f * totalSize);
+++		}
+++
+++		// Interstitial case
+++		if (orig1.isOnAxis(Species::I) or orig2.isOnAxis(Species::I)) {
+++			// Compute the total size
+++			auto totalSize = comp1[Species::I] + comp2[Species::I];
+++			// Both reactants decrease
+++			Kokkos::atomic_sub(&fluxes[this->_reactants[0]], f);
+++			Kokkos::atomic_sub(&fluxes[this->_reactants[1]], f);
+++			// The large bubble increases, as well as average I
+++			Kokkos::atomic_add(&fluxes[this->_products[0]], f);
+++			Kokkos::atomic_add(&fluxes[this->_products[0] + 1], f * totalSize);
+++		}
+++
+++		// Helium case
+++		if (orig1.isOnAxis(Species::He) or orig2.isOnAxis(Species::He)) {
+++			// Compute the total size
+++			auto totalSize = comp1[Species::He] + comp2[Species::He];
+++			// Both reactants decrease
+++			Kokkos::atomic_sub(&fluxes[this->_reactants[0]], f);
+++			Kokkos::atomic_sub(&fluxes[this->_reactants[1]], f);
+++			// The large bubble increases, as well as average He
+++			Kokkos::atomic_add(&fluxes[this->_products[0]], f);
+++			Kokkos::atomic_add(&fluxes[this->_products[0] + 1], f * totalSize);
+++		}
+++	}
+++}
+++
+++KOKKOS_INLINE_FUNCTION
+++void
+++FeProductionReaction::computePartialDerivatives(
+++	ConcentrationsView concentrations, Kokkos::View<double*> values,
+++	IndexType gridIndex)
+++{
+++	// Standard case
+++	if (not isLargeBubbleReaction) {
+++		return Superclass::computePartialDerivatives(
+++			concentrations, values, gridIndex);
+++	}
+++
+++	// The rate need to be computed each time because it depends on the current
+++	// large bubble size
+++	auto rate = getRateForProduction(gridIndex);
+++
+++	constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+++	auto numClusters = this->_clusterData->numClusters;
+++
+++	// Large bubble is one of the reactants
+++	if (this->_reactants[0] >= numClusters or
+++		this->_reactants[1] >= numClusters) {
+++		// Get the standard cluster
+++		auto stdClusterId = (this->_reactants[0] >= numClusters) ?
+++			this->_reactants[1] :
+++			this->_reactants[0];
+++		auto cl = this->_clusterData->getCluster(stdClusterId);
+++		auto clReg = cl.getRegion();
+++		auto orig = clReg.getOrigin();
+++		Composition comp(orig);
+++		// Get the SSBM cluster
+++		auto ssbmId = (this->_reactants[0] >= numClusters) ?
+++			this->_reactants[0] :
+++			this->_reactants[1];
+++		// Get the concentrations
+++		auto stdC = concentrations(stdClusterId);
+++		auto bC = concentrations(ssbmId);
+++		// Get the index to switch between V and I type SSBM
+++		auto typeId = (ssbmId - numClusters) / 2;
+++
+++		// Compute the flux
+++		double f = this->_coefs(0, 0, 0, 0) * rate;
+++
+++		// Vacancy case
+++		if (comp[Species::V] > 0) {
+++			// SSBM V case
+++			if (typeId < 3) {
+++				// The standard cluster always loses the flux
+++				if (this->_reactants[0] >= numClusters) {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][0][0][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][0][1][0]), f * bC);
+++				}
+++				else {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][0][1][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][0][0][0]), f * bC);
+++				}
+++
+++				// The V size increases
+++				f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::V];
+++				if (this->_reactants[0] >= numClusters) {
+++					Kokkos::atomic_add(
+++						&values(this->_connEntries[0][1][0][0]), f * stdC);
+++					Kokkos::atomic_add(
+++						&values(this->_connEntries[0][1][1][0]), f * bC);
+++				}
+++				else {
+++					Kokkos::atomic_add(
+++						&values(this->_connEntries[1][1][1][0]), f * stdC);
+++					Kokkos::atomic_add(
+++						&values(this->_connEntries[1][1][0][0]), f * bC);
+++				}
+++			}
+++			// SSBM I case
+++			else {
+++				// Special factor to deal with the threshold size
+++				double gauss = 1.0;
+++
+++				// Special case where the product is not the single size
+++				if (this->_products[0] < numClusters) {
+++					// Only if the large void has a specific size
+++					auto avLoop =
+++						concentrations(ssbmId + 1) / concentrations(ssbmId);
+++					if (concentrations(ssbmId) == 0.0)
+++						avLoop = 0.0;
+++
+++					// Get the product composition
+++					auto pr =
+++						this->_clusterData->getCluster(this->_products[0]);
+++					auto prReg = pr.getRegion();
+++					Composition prComp(prReg.getOrigin());
+++
+++					// Target value for the reaction to happen
+++					double target = comp[Species::V];
+++
+++					// Gaussian function around it
+++					double twoSigmaTwo = 0.1;
+++					double gauss = exp(-(avLoop - target) * (avLoop - target) /
+++									   twoSigmaTwo) /
+++						sqrt(::xolotl::core::pi * twoSigmaTwo);
+++
+++					// Update the rate
+++					f = this->_coefs(0, 0, 0, 0) * rate * gauss;
+++
+++					// The large bubble concentration decreases
+++					if (this->_reactants[0] >= numClusters) {
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[0][0][0][0]), f * stdC);
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[0][0][1][0]), f * bC);
+++					}
+++					else {
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[1][0][1][0]), f * stdC);
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[1][0][0][0]), f * bC);
+++					}
+++					// The product concentration increases
+++					if (this->_reactants[0] >= numClusters) {
+++						Kokkos::atomic_add(
+++							&values(this->_connEntries[2][0][0][0]), f * stdC);
+++						Kokkos::atomic_add(
+++							&values(this->_connEntries[2][0][1][0]), f * bC);
+++					}
+++					else {
+++						Kokkos::atomic_add(
+++							&values(this->_connEntries[2][0][1][0]), f * stdC);
+++						Kokkos::atomic_add(
+++							&values(this->_connEntries[2][0][0][0]), f * bC);
+++					}
+++
+++					// The I size decreases even more
+++					f = this->_coefs(0, 0, 0, 0) * rate * 0 * gauss;
+++					if (this->_reactants[0] >= numClusters) {
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[0][1][0][0]), f * stdC);
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[0][1][1][0]), f * bC);
+++					}
+++					else {
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[1][1][1][0]), f * stdC);
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[1][1][0][0]), f * bC);
+++					}
+++				}
+++
+++				// In every case
+++
+++				// The standard cluster always loses the flux
+++				f = this->_coefs(0, 0, 0, 0) * rate * gauss;
+++				if (this->_reactants[0] >= numClusters) {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][0][0][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][0][1][0]), f * bC);
+++				}
+++				else {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][0][1][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][0][0][0]), f * bC);
+++				}
+++
+++				// The I size decreases
+++				f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::V] * gauss;
+++				if (this->_reactants[0] >= numClusters) {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][1][0][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][1][1][0]), f * bC);
+++				}
+++				else {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][1][1][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][1][0][0]), f * bC);
+++				}
+++			}
+++		}
+++		// Interstitial case
+++		if (comp[Species::I] > 0) {
+++			// SSBM V case
+++			if (typeId < 3) {
+++				// Special factor to deal with the threshold size
+++				double gauss = 1.0;
+++
+++				// Special case where the product is not the single size
+++				if (this->_products[0] < numClusters) {
+++					// Only if the large void has a specific size
+++					auto avVoid =
+++						concentrations(ssbmId + 1) / concentrations(ssbmId);
+++					if (concentrations(ssbmId) == 0.0)
+++						avVoid = 0.0;
+++
+++					// Get the product composition
+++					auto pr =
+++						this->_clusterData->getCluster(this->_products[0]);
+++					auto prReg = pr.getRegion();
+++					Composition prComp(prReg.getOrigin());
+++
+++					// Target value for the reaction to happen
+++					double target = prComp[Species::V] +
+++						comp[Species::I];
+++
+++					// Gaussian function around it
+++					double twoSigmaTwo = 0.1;
+++					double gauss = exp(-(avVoid - target) * (avVoid - target) /
+++									   twoSigmaTwo) /
+++						sqrt(::xolotl::core::pi * twoSigmaTwo);
+++
+++					// Update the rate
+++					f = this->_coefs(0, 0, 0, 0) * rate * gauss;
+++
+++					// The large bubble concentration decreases
+++					if (this->_reactants[0] >= numClusters) {
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[0][0][0][0]), f * stdC);
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[0][0][1][0]), f * bC);
+++					}
+++					else {
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[1][0][1][0]), f * stdC);
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[1][0][0][0]), f * bC);
+++					}
+++					// The product concentration increases
+++					if (this->_reactants[0] >= numClusters) {
+++						Kokkos::atomic_add(
+++							&values(this->_connEntries[2][0][0][0]), f * stdC);
+++						Kokkos::atomic_add(
+++							&values(this->_connEntries[2][0][1][0]), f * bC);
+++					}
+++					else {
+++						Kokkos::atomic_add(
+++							&values(this->_connEntries[2][0][1][0]), f * stdC);
+++						Kokkos::atomic_add(
+++							&values(this->_connEntries[2][0][0][0]), f * bC);
+++					}
+++
+++					// The V size decreases even more
+++					f = this->_coefs(0, 0, 0, 0) * rate *
+++						prComp[Species::V] *
+++						gauss;
+++					if (this->_reactants[0] >= numClusters) {
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[0][1][0][0]), f * stdC);
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[0][1][1][0]), f * bC);
+++					}
+++					else {
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[1][1][1][0]), f * stdC);
+++						Kokkos::atomic_sub(
+++							&values(this->_connEntries[1][1][0][0]), f * bC);
+++					}
+++				}
+++
+++				// In every case
+++
+++				// The standard cluster always loses the flux
+++				f = this->_coefs(0, 0, 0, 0) * rate * gauss;
+++				if (this->_reactants[0] >= numClusters) {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][0][0][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][0][1][0]), f * bC);
+++				}
+++				else {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][0][1][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][0][0][0]), f * bC);
+++				}
+++
+++				// The V size decreases
+++				f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::I] * gauss;
+++				if (this->_reactants[0] >= numClusters) {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][1][0][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][1][1][0]), f * bC);
+++				}
+++				else {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][1][1][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][1][0][0]), f * bC);
+++				}
+++			}
+++			// SSBM I case
+++			else {
+++				// The standard cluster always loses the flux
+++				if (this->_reactants[0] >= numClusters) {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][0][0][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[1][0][1][0]), f * bC);
+++				}
+++				else {
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][0][1][0]), f * stdC);
+++					Kokkos::atomic_sub(
+++						&values(this->_connEntries[0][0][0][0]), f * bC);
+++				}
+++
+++				// The V size increases
+++				f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::V];
+++				if (this->_reactants[0] >= numClusters) {
+++					Kokkos::atomic_add(
+++						&values(this->_connEntries[0][1][0][0]), f * stdC);
+++					Kokkos::atomic_add(
+++						&values(this->_connEntries[0][1][1][0]), f * bC);
+++				}
+++				else {
+++					Kokkos::atomic_add(
+++						&values(this->_connEntries[1][1][1][0]), f * stdC);
+++					Kokkos::atomic_add(
+++						&values(this->_connEntries[1][1][0][0]), f * bC);
+++				}
+++			}
+++		}
+++
+++		// Helium case
+++		if (comp[Species::He] > 0) {
+++			// It should always be a bubble here
+++
+++			// The standard cluster always loses the flux
+++			if (this->_reactants[0] >= numClusters) {
+++				Kokkos::atomic_sub(
+++					&values(this->_connEntries[1][0][0][0]), f * stdC);
+++				Kokkos::atomic_sub(
+++					&values(this->_connEntries[1][0][1][0]), f * bC);
+++			}
+++			else {
+++				Kokkos::atomic_sub(
+++					&values(this->_connEntries[0][0][1][0]), f * stdC);
+++				Kokkos::atomic_sub(
+++					&values(this->_connEntries[0][0][0][0]), f * bC);
+++			}
+++
+++			// The He size increases
+++			f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::He];
+++			if (this->_reactants[0] >= numClusters) {
+++				Kokkos::atomic_add(
+++					&values(this->_connEntries[0][2][0][0]), f * stdC);
+++				Kokkos::atomic_add(
+++					&values(this->_connEntries[0][2][1][0]), f * bC);
+++			}
+++			else {
+++				Kokkos::atomic_add(
+++					&values(this->_connEntries[1][2][1][0]), f * stdC);
+++				Kokkos::atomic_add(
+++					&values(this->_connEntries[1][2][0][0]), f * bC);
+++			}
+++		}
+++	}
+++
+++	// Large bubble is one of the product
+++	else {
+++		auto cR1 = concentrations[this->_reactants[0]];
+++		auto cR2 = concentrations[this->_reactants[1]];
+++		auto cl1 = this->_clusterData->getCluster(this->_reactants[0]);
+++		auto cl1Reg = cl1.getRegion();
+++		auto orig1 = cl1Reg.getOrigin();
+++		Composition comp1(orig1);
+++		auto cl2 = this->_clusterData->getCluster(this->_reactants[1]);
+++		auto cl2Reg = cl2.getRegion();
+++		auto orig2 = cl2Reg.getOrigin();
+++		Composition comp2(orig2);
+++
+++		double f = this->_coefs(0, 0, 0, 0) * rate;
+++
+++		// Vacancy case
+++		if (orig1.isOnAxis(Species::V) or orig2.isOnAxis(Species::V)) {
+++			// Both reactants decrease
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[0][0][0][0]), f * cR2);
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[1][0][0][0]), f * cR2);
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[0][0][1][0]), f * cR1);
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[1][0][1][0]), f * cR1);
+++
+++			// The large bubble increases, as well as average V
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][0][0][0]), f * cR2);
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][0][1][0]), f * cR1);
+++			f = this->_coefs(0, 0, 0, 0) * rate *
+++				(comp1[Species::V] + comp2[Species::V]);
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][1][0][0]), f * cR2);
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][1][1][0]), f * cR1);
+++		}
+++
+++		// Interstitial case
+++		if (orig1.isOnAxis(Species::I) or orig2.isOnAxis(Species::I)) {
+++			// Both reactants decrease
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[0][0][0][0]), f * cR2);
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[1][0][0][0]), f * cR2);
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[0][0][1][0]), f * cR1);
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[1][0][1][0]), f * cR1);
+++
+++			// The large bubble increases, as well as average I
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][0][0][0]), f * cR2);
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][0][1][0]), f * cR1);
+++			f = this->_coefs(0, 0, 0, 0) * rate *
+++				(comp1[Species::I] + comp2[Species::I]);
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][1][0][0]), f * cR2);
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][1][1][0]), f * cR1);
+++		}
+++
+++		// Helium case
+++		if (orig1.isOnAxis(Species::He) or orig2.isOnAxis(Species::He)) {
+++			// Both reactants decrease
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[0][0][0][0]), f * cR2);
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[1][0][0][0]), f * cR2);
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[0][0][1][0]), f * cR1);
+++			Kokkos::atomic_sub(
+++				&values(this->_connEntries[1][0][1][0]), f * cR1);
+++
+++			// The large bubble increases, as well as average He
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][0][0][0]), f * cR2);
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][0][1][0]), f * cR1);
+++			f = this->_coefs(0, 0, 0, 0) * rate *
+++				(comp1[Species::He] + comp2[Species::He]);
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][2][0][0]), f * cR2);
+++			Kokkos::atomic_add(
+++				&values(this->_connEntries[2][2][1][0]), f * cR1);
+++		}
+++	}
+++}
+++
+++
++ KOKKOS_INLINE_FUNCTION
++ double
++ FeDissociationReaction::getRateForProduction(IndexType gridIndex)
++@@ -65,7 +758,7 @@ FeDissociationReaction::computeBindingEnergy(double time)
++ {
++ 	using Species = typename Superclass::Species;
++ 	using Composition = typename Superclass::Composition;
++-
+++	
++ 	constexpr double heTrapTable[9] = {
++ 		0.0, 4.31, 2.90, 2.02, 1.09, 0.58, 0.13, -0.25, -0.59};
++ 
++@@ -150,7 +843,7 @@ FeDissociationReaction::computeBindingEnergy(double time)
++ 						2.59 *
++ 							(pow((double)amtV, 2.0 / 3.0) -
++ 								pow((double)amtV - 1.0, 2.0 / 3.0)) +
++-						p * omega;
+++						2.50 * log( 1 + ((double)amtHe) /((double)amtV));
++ 			}
++ 			// HeV -> I
++ 			if (prod1Comp.isOnAxis(Species::I) ||
++@@ -162,7 +855,7 @@ FeDissociationReaction::computeBindingEnergy(double time)
++ 						2.59 *
++ 							(pow((double)amtV, 2.0 / 3.0) -
++ 								pow((double)amtV - 1.0, 2.0 / 3.0)) -
++-						p * omega;
+++						2.50 * log( 1 + ((double)amtHe) /((double)amtV));
++ 			}
++ 		}
++ 	}
++@@ -187,12 +880,12 @@ FeDissociationReaction::computeBindingEnergy(double time)
++ 			return 5.0;
++ 			be = 1.73 -
++ 				2.59 * (pow(amtV, 2.0 / 3.0) - pow(amtV - 1.0, 2.0 / 3.0)) +
++-				p * omega;
+++				2.50 * log( 1 + ((double)amtHe) /((double)amtV));
++ 		}
++ 		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
++ 			be = 4.88 +
++ 				2.59 * (pow(amtV, 2.0 / 3.0) - pow(amtV - 1.0, 2.0 / 3.0)) -
++-				p * omega;
+++				2.50 * log( 1 + ((double)amtHe) /((double)amtV));
++ 		}
++ 	}
++ 
++diff --git a/xolotl/core/include/xolotl/core/network/impl/FeReactionNetwork.tpp b/xolotl/core/include/xolotl/core/network/impl/FeReactionNetwork.tpp
++index 1eb609e9..2ff3f48c 100644
++--- a/xolotl/core/include/xolotl/core/network/impl/FeReactionNetwork.tpp
+++++ b/xolotl/core/include/xolotl/core/network/impl/FeReactionNetwork.tpp
++@@ -13,6 +13,76 @@ namespace core
++ {
++ namespace network
++ {
+++
+++void
+++FeReactionNetwork::initializeExtraDOFs(const options::IOptions& options)
+++{
+++	auto map = options.getProcesses();
+++	if (not map["largeBubble"])
+++		return;
+++
+++	largestClusterId = checkLargestClusterId();
+++
+++	this->_clusterData.h_view().setBubbleId(this->_numDOFs);
+++	this->_clusterData.h_view().setVoidAvId(this->_numDOFs + 1);
+++	this->_clusterData.h_view().setHeAvId(this->_numDOFs + 2);
+++	this->_numDOFs += 3;
+++}
+++
+++void
+++FeReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
+++	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
+++{
+++	if (this->_enableLargeBubble) {
+++		auto clusterDataMirror = this->getClusterDataMirror();
+++
+++		// Get the concentrations on the host
+++		auto dConcs = Kokkos::subview(concentrations,
+++			std::make_pair(
+++				clusterDataMirror.bubbleId(), clusterDataMirror.bubbleId() + 2));
+++		auto heConcs = create_mirror_view(dConcs);
+++		deep_copy(heConcs, dConcs);
+++
+++		// Compute the average composition for V
+++
+++			auto conc = heConcs(0);
+++			auto avComp = heConcs(1) / conc;
+++			if (conc == 0.0)
+++				avComp = 0.0;
+++			// Compute and save the radius from that
+++				this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
+++					computeBubbleRadius(
+++						avComp, clusterDataMirror.latticeParameter())));
+++	}
+++}
+++
+++void
+++FeReactionNetwork::computePartialsPreProcess(
+++	ConcentrationsView concentrations, Kokkos::View<double*> values,
+++	IndexType gridIndex, double surfaceDepth, double spacing)
+++{
+++	if (this->_enableLargeBubble) {
+++		auto clusterDataMirror = this->getClusterDataMirror();
+++
+++		// Get the concentrations on the host SSBM
+++		auto dConcs = Kokkos::subview(concentrations,
+++			std::make_pair(
+++				clusterDataMirror.bubbleId(),clusterDataMirror.bubbleId() + 2));
+++		auto heConcs = create_mirror_view(dConcs);
+++		deep_copy(heConcs, dConcs);
+++
+++		// Compute the average composition for V
+++			auto conc = heConcs(0);
+++			auto avComp = heConcs(1) / conc;
+++			if (conc == 0.0)
+++				avComp = 0.0;
+++			// Void
+++				this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
+++					computeBubbleRadius(avComp, clusterDataMirror.latticeParameter())));
+++		}
+++}
+++
+++
++ namespace detail
++ {
++ template <typename TTag>
++@@ -20,7 +90,7 @@ KOKKOS_INLINE_FUNCTION
++ void
++ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
++ {
++-	// Check the diffusion factors
+++		// Check the diffusion factors
++ 	auto diffusionFactor = this->_clusterData.diffusionFactor;
++ 	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
++ 		return;
++@@ -38,8 +108,12 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
++ 		addSinks(i, tag);
++ 	}
++ 
+++	// SSBM
+++	if (this->_clusterData.enableSSBM())
+++		addSingleSizeReactions(i, j, tag);
+++	
++ 	// Add the traps between He and Traps
++-	addTraps(i, j, tag);
+++
++ 
++ 	auto numClusters = this->getNumberOfClusters();
++ 
++@@ -204,6 +278,97 @@ FeReactionGenerator::addSinks(IndexType i, TTag tag) const
++ 	}
++ }
++ 
+++template <typename TTag>
+++KOKKOS_INLINE_FUNCTION
+++void
+++FeReactionGenerator::addSingleSizeReactions(
+++	IndexType i, IndexType j, TTag tag) const
+++{
+++	using Species = typename NetworkType::Species;
+++	using Composition = typename NetworkType::Composition;
+++
+++	IndexType bubbleId = this->_clusterData.bubbleId();
+++
+++	if (i == j) {
+++		const auto& clReg = this->getCluster(i).getRegion();
+++		Composition lo = clReg.getOrigin();
+++
+++		// Check reaction with largest bubble
+++		if (not clReg.isSimplex())
+++			return;
+++
+++		// V case
+++		if (lo.isOnAxis(Species::V)) {
+++			// V_k + B -> B
+++			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+++		}
+++		// I case
+++		if (lo.isOnAxis(Species::I)) {
+++			// I_k + B -> B
+++			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+++		}
+++
+++		// H case
+++		
+++			if (lo.isOnAxis(Species::He)) {
+++				// H_k + B -> B
+++
+++				// Only add trap mutation so that at run time it adds the I
+++				// concentration if needed.
+++				auto& subpaving = this->getSubpaving();
+++				Composition comp = Composition::zero();
+++				comp[Species::I] = 1;
+++				auto iClusterId = subpaving.findTileId(comp);
+++				if (iClusterId == NetworkType::invalidIndex()) {
+++					this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+++				}
+++				else {
+++					this->addProductionReaction(
+++						tag, {i, bubbleId, bubbleId, iClusterId});
+++				}
+++			}
+++		
+++	}
+++	// Get the composition of each cluster
+++	const auto& cl1Reg = this->getCluster(i).getRegion();
+++	const auto& cl2Reg = this->getCluster(j).getRegion();
+++	Composition lo1 = cl1Reg.getOrigin();
+++	Composition hi1 = cl1Reg.getUpperLimitPoint();
+++	Composition lo2 = cl2Reg.getOrigin();
+++	Composition hi2 = cl2Reg.getUpperLimitPoint();
+++
+++	// Find the edge of the phase space
+++	const auto& largestReg = this->getCluster(largestClusterId).getRegion();
+++	Composition hiLargest = largestReg.getUpperLimitPoint();
+++	auto largestVSize = hiLargest[Species::V] - 1;
+++	auto largestImpSize = hiLargest[Species::He] - 1;
+++
+++	// H_a + H_bV -> B
+++		if (hi1[Species::He] + hi2[Species::He] - 2 > largestImpSize) {
+++			this->addProductionReaction(tag, {i, j, bubbleId});
+++		}
+++
+++	// V_a + HV_b -> B
+++	if (hi1[Species::V] + hi2[Species::V] - 2 > largestVSize) {
+++		this->addProductionReaction(tag, {i, j, bubbleId});
+++	}
+++
+++	// I_a + B -> HV_b
+++	if ((lo1.isOnAxis(Species::I) and lo2[Species::V] > 0) or
+++		(lo1[Species::V] > 0 and lo2.isOnAxis(Species::I))) {
+++		// It should be around the largest size value
+++		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
+++				hi2[Species::I] - 4 >
+++			largestVSize) {
+++			// Need to know which one is I
+++			auto iId = lo1[Species::I] > 0 ? i : j;
+++			auto vId = lo1[Species::I] > 0 ? j : i;
+++			this->addProductionReaction(tag, {iId, bubbleId, vId});
+++		}
+++	}
+++}
+++
+++
++ template <typename TTag>
++ KOKKOS_INLINE_FUNCTION
++ void
++diff --git a/xolotl/core/include/xolotl/core/network/impl/ReactionNetwork.tpp b/xolotl/core/include/xolotl/core/network/impl/ReactionNetwork.tpp
++index af69ccc8..0b408c6b 100644
++--- a/xolotl/core/include/xolotl/core/network/impl/ReactionNetwork.tpp
+++++ b/xolotl/core/include/xolotl/core/network/impl/ReactionNetwork.tpp
++@@ -89,10 +89,11 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
++ 	this->setEnableReSolution(map["resolution"]);
++ 	this->setEnableNucleation(map["heterogeneous"]);
++ 	this->setEnableSink(map["sink"]);
++-	this->setEnableTrap(map["trap"]);
+++	this->setEnableTrap(map["trap"]); //disable for SSBM later
++ 	this->setEnableTrapMutation(map["modifiedTM"]);
++ 	this->setEnableAttenuation(map["attenuation"]);
++ 	this->setEnableConstantReaction(map["constant"]);
+++	this->setEnableSSBM(map["SSBM"]); //SSBM model
++ 	std::string petscString = opts.getPetscArg();
++ 	auto tokens = util::Tokenizer<>{petscString}();
++ 	bool useReduced = false;
++@@ -117,6 +118,10 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
++ 
++ 	readReactions(opts.getTempParam(), opts.getReactionFilePath());
++ 
+++	// For SSBM for instance
+++	asDerived()->initializeExtraDOFs(opts); //enable for SSBM
+++
+++
++ 	// Skip the reactions for now if using constant reactions
++ 	if (map["constant"])
++ 		return;
++@@ -308,6 +313,14 @@ ReactionNetwork<TImpl>::setEnableReadRates(bool read)
++ 	_clusterData.h_view().setEnableReadRates(this->_enableReadRates);
++ }
++ 
+++template <typename TImpl>
+++void
+++ReactionNetwork<TImpl>::setEnableSSBM(bool ssbm)
+++{
+++	this->_enableSSBM = ssbm;
+++	_clusterData.h_view().setEnableSSBM(this->_enableSSBM);
+++}
+++
++ template <typename TImpl>
++ void
++ ReactionNetwork<TImpl>::setGridSize(IndexType gridSize)
++@@ -1527,6 +1540,140 @@ ReactionNetwork<TImpl>::getTotalRatioVariance(ConcentrationsView concentrations,
++ 	return conc / volume;
++ }
++ 
+++template <typename TImpl>
+++double
+++ReactionNetwork<TImpl>::getTotalVolumeRadius(
+++	ConcentrationsView concentrations, Species type, AmountType minSize)
+++{
+++	// Find the vacancy index
+++	constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
+++	bool hasVacancy = false;
+++	Species vIndex;
+++	for (auto i : speciesRangeNoI) {
+++		if (isVacancy(i)) {
+++			hasVacancy = true;
+++			vIndex = i;
+++		}
+++	}
+++
+++	// Return 0 if there is not vacancy in the network
+++	if (!hasVacancy)
+++		return 0.0;
+++
+++	// Ratio times volume
+++	auto tiles = _subpaving.getTiles();
+++	double conc = 0.0;
+++	auto clusterData = _clusterData.d_view;
+++	Kokkos::parallel_reduce(
+++		"ReactionNetwork::getTotalVolumeRadius", this->_numClusters,
+++		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+++			const Region& clReg = tiles(i).getRegion();
+++			if (clReg[vIndex].begin() > 0) {
+++				const auto radius = clusterData().reactionRadius(i);
+++				const double bubbleVolume = radius * radius * radius;
+++				for (AmountType j : makeIntervalRange(clReg[type])) {
+++					if (j >= minSize) {
+++						for (AmountType l : makeIntervalRange(clReg[vIndex])) {
+++							lsum += concentrations(i) * radius * bubbleVolume;
+++						}
+++					}
+++				}
+++			}
+++		},
+++		conc);
+++
+++	// Volume
+++	double volume = 0.0;
+++	Kokkos::parallel_reduce(
+++		"ReactionNetwork::getTotalVolumeRadius", this->_numClusters,
+++		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+++			const Region& clReg = tiles(i).getRegion();
+++			if (clReg[vIndex].begin() > 0) {
+++				const auto factor = clReg.volume() / clReg[type].length();
+++				const auto radius = clusterData().reactionRadius(i);
+++				const double bubbleVolume = radius * radius * radius;
+++				for (AmountType j : makeIntervalRange(clReg[type])) {
+++					if (j >= minSize) {
+++						lsum += concentrations(i) * bubbleVolume * factor;
+++					}
+++				}
+++			}
+++		},
+++		volume);
+++
+++	Kokkos::fence();
+++
+++	return conc / volume;
+++}
+++
+++template <typename TImpl>
+++double
+++ReactionNetwork<TImpl>::getTotalRadiusVariance(
+++	ConcentrationsView concentrations, Species type, double mean,
+++	AmountType minSize)
+++{
+++	// Find the vacancy index
+++	constexpr auto speciesRangeNoI = getSpeciesRangeNoI();
+++	bool hasVacancy = false;
+++	Species vIndex;
+++	for (auto i : speciesRangeNoI) {
+++		if (isVacancy(i)) {
+++			hasVacancy = true;
+++			vIndex = i;
+++		}
+++	}
+++
+++	// Return 0 if there is not vacancy in the network
+++	if (!hasVacancy)
+++		return 0.0;
+++
+++	// Distance times volume
+++	auto tiles = _subpaving.getTiles();
+++	double conc = 0.0;
+++	auto clusterData = _clusterData.d_view;
+++	Kokkos::parallel_reduce(
+++		"ReactionNetwork::getTotalRadiusVariance", this->_numClusters,
+++		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+++			const Region& clReg = tiles(i).getRegion();
+++			if (clReg[vIndex].begin() > 0) {
+++				const auto radius = clusterData().reactionRadius(i);
+++				const double bubbleVolume = radius * radius * radius;
+++				for (AmountType j : makeIntervalRange(clReg[type])) {
+++					if (j >= minSize) {
+++						for (AmountType l : makeIntervalRange(clReg[vIndex])) {
+++							auto d = (radius)-mean;
+++							lsum += d * d * concentrations(i) * bubbleVolume;
+++						}
+++					}
+++				}
+++			}
+++		},
+++		conc);
+++
+++	// Volume
+++	double volume = 0.0;
+++	Kokkos::parallel_reduce(
+++		"ReactionNetwork::getTotalRadiusVariance", this->_numClusters,
+++		KOKKOS_LAMBDA(IndexType i, double& lsum) {
+++			const Region& clReg = tiles(i).getRegion();
+++			if (clReg[vIndex].begin() > 0) {
+++				const auto factor = clReg.volume() / clReg[type].length();
+++				const auto radius = clusterData().reactionRadius(i);
+++				const double bubbleVolume = radius * radius * radius;
+++				for (AmountType j : makeIntervalRange(clReg[type])) {
+++					if (j >= minSize) {
+++						lsum += concentrations(i) * bubbleVolume * factor;
+++					}
+++				}
+++			}
+++		},
+++		volume);
+++
+++	Kokkos::fence();
+++
+++	return conc / volume;
+++}
+++
++ template <typename TImpl>
++ void
++ ReactionNetwork<TImpl>::updateOutgoingDiffFluxes(double* gridPointSolution,
++diff --git a/xolotl/core/src/network/FeNetworkHandler.cpp b/xolotl/core/src/network/FeNetworkHandler.cpp
++index 63e85030..480412c2 100644
++--- a/xolotl/core/src/network/FeNetworkHandler.cpp
+++++ b/xolotl/core/src/network/FeNetworkHandler.cpp
++@@ -1,6 +1,8 @@
++ #include <xolotl/core/network/FeNetworkHandler.h>
++ #include <xolotl/core/network/FeReactionNetwork.h>
++ #include <xolotl/util/Tokenizer.h>
+++#include <iostream> // debugging
+++#include <fstream>  // debugging
++ 
++ namespace xolotl
++ {
++@@ -57,8 +59,41 @@ auto feNetworkGenerator = [](const options::IOptions& options) {
++ 		nTraps, maxHe, maxV, maxI};
++ 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
++ 		{nTraps + 1, groupingWidthHe, groupingWidthV, maxI + 1}};
+++	
+++	// Debugging
+++
+++	std::ofstream outFile("division.logOut",std::ios::app);
+++
+++	if (!outFile.is_open()) {
+++    		std::cerr << "Error: Could not open division.logOut\n";
+++	}
+++
+++	// ---- Write maxSpeciesAmounts ----
+++	outFile << "maxSpeciesAmounts:\n";
+++	for (size_t i = 0; i < maxSpeciesAmounts.size(); i++) {
+++	    outFile << "  [" << i << "] = "
+++	            << maxSpeciesAmounts[i] << "\n";
+++	}
+++
+++	// ---- Write subdivRatios ----
+++	outFile << "subdivRatios:\n";
+++	for (size_t i = 0; i < subdivRatios.size(); i++) {
+++	    const auto& r = subdivRatios[i];
+++
+++	    outFile << "  [" << i << "] = { "
+++        	    << r[0] << ", "
+++	            << r[1] << ", "
+++       	 	    << r[2] << ", "
+++	            << r[3] << " }\n";
+++	}
+++
+++	outFile << "-----------------------------\n";
+++
+++	// Close explicitly (optional but clean)
+++	outFile.close();
+++	
++ 	auto network = std::make_shared<NetworkType>(
++-		maxSpeciesAmounts, subdivRatios, 1, options);
+++                maxSpeciesAmounts, subdivRatios, 1, options);
++ 
++ 	return network;
++ };
++diff --git a/xolotl/core/src/network/FeReactionNetwork.cpp b/xolotl/core/src/network/FeReactionNetwork.cpp
++index 6d0658e7..08a314fb 100644
++--- a/xolotl/core/src/network/FeReactionNetwork.cpp
+++++ b/xolotl/core/src/network/FeReactionNetwork.cpp
++@@ -2,6 +2,7 @@
++ #include <xolotl/core/network/impl/FeReactionNetwork.tpp>
++ #include <xolotl/util/MPIUtils.h>
++ #include <xolotl/util/Tokenizer.h>
+++#include <xolotl/core/network/impl/FeReaction.tpp>
++ 
++ namespace xolotl
++ {
++@@ -39,6 +40,25 @@ ReactionNetwork<FeReactionNetwork>::getTotalTrappedAtomConcentration(
++ template double
++ ReactionNetwork<FeReactionNetwork>::getTotalVolumeFraction(
++ 	ConcentrationsView concentrations, Species type, AmountType minSize);
+++template double //for SSBM connected to IReactionNetwork.h
+++ReactionNetwork<FeReactionNetwork>::getTotalVolumeRadius(
+++        ConcentrationsView concentrations, Species type, AmountType minSize);
+++
+++template double //for SSBM connected to IReactionNetwork.h
+++ReactionNetwork<FeReactionNetwork>::getTotalRadiusVariance(
+++        ConcentrationsView concentrations, Species type, double mean ,AmountType minSize);
+++
+++void //for SSBM 
+++FeReactionNetwork::initializeExtraClusterData(
+++	const options::IOptions& options)
+++{
+++	this->_clusterData.h_view().extraData.initialize(
+++		this->_clusterData.h_view().numClusters,
+++		this->_clusterData.h_view().gridSize);
+++	this->copyClusterDataView();
+++
+++	auto data = this->_clusterData.h_view();
+++}
++ 
++ double
++ FeReactionNetwork::checkLatticeParameter(double latticeParameter)
++@@ -108,8 +128,7 @@ FeReactionNetwork::getMonitorDataHeaderString() const
++ 	for (auto id = SpeciesId(numSpecies); id; ++id) {
++ 		auto speciesName = this->getSpeciesName(id);
++ 		header << speciesName << "_density " << speciesName << "_diameter "
++-			   << speciesName << "_partial_density " << speciesName
++-			   << "_partial_diameter ";
+++			   << speciesName << "_partial_density " << speciesName << "_partial_diameter ";
++ 	}
++ 
++ 	return header.str();
++@@ -124,6 +143,11 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
++ 	using TQ = IReactionNetwork::TotalQuantity;
++ 	using Q = TQ::Type;
++ 	using TQA = util::Array<TQ, 4>;
+++	
+++	double conc_SSBM_total = 0.0;
+++	double vol_SSBM_total = 0.0;
+++	double vol_fac_SSBM = 0.0;
+++
++ 	for (auto id = SpeciesId(numSpecies); id; ++id) {
++ 		auto ms = minSizes[id()];
++ 		auto totals = this->getTotals(conc,
++@@ -135,6 +159,62 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
++ 		totalVals[1 + (4 * id()) + 2] += totals[2] * fac;
++ 		totalVals[1 + (4 * id()) + 3] += totals[3] * 2.0 * fac;
++ 
+++
+++
+++		// SSBM case
+++		if (this->_enableLargeBubble) {
+++			IndexType ssbmId = 0;
+++			IndexType ssbmSizeId = 0;
+++			switch (id()) {
+++			// He
+++			case 0:
+++				ssbmId = this->_clusterData.h_view().bubbleId();
+++				ssbmSizeId = ssbmId + 2;
+++				break;
+++			// Void
+++			case 1:
+++				ssbmId = this->_clusterData.h_view().bubbleId();
+++				ssbmSizeId = ssbmId + 1;
+++				break;
+++			default:
+++				ssbmId = 0;
+++				ssbmSizeId = 0;
+++				break;
+++			}
+++
+++			// Compute average numbers
+++			auto vConc = 0.0;
+++			auto avComp = 0.0;
+++			if (ssbmId > 0) {
+++				vConc = conc(ssbmId);
+++				if (vConc > 1.0e-16)
+++					avComp = conc(ssbmSizeId) / vConc;
+++			}
+++
+++			// Add the single size data
+++			auto avRadius = 0.0;
+++			IndexType radiusId = 0;
+++			if (vConc > 1.0e-16) {
+++				if (id() > 4)
+++					radiusId = id() - 2;
+++				else if (id() > 1)
+++					radiusId = id() - 1;
+++				avRadius = util::max(0.0,
+++					computeBubbleRadius(avComp,
+++						this->_clusterData.h_view().latticeParameter()));
+++			}
+++
+++			vol_fac_SSBM = 350.704 *avRadius *avRadius *avRadius; //radius to vacancy for He, V assumed same
+++			conc_SSBM_total += vConc * fac;
+++			vol_SSBM_total += vConc *vol_fac_SSBM* fac;
+++
+++			totalVals[1+(4 * id()) + 0] += vConc * fac;
+++			totalVals[1+(4 * id()) + 1] += vConc * avRadius * 2.0 * fac;
+++			if (avComp > minSizes[id()]) {
+++				totalVals[1+(4 * id()) + 2] += vConc * fac;
+++				totalVals[1+(4 * id()) + 3] += vConc * avRadius * 2.0 * fac;
+++			}
+++		}
++ 		// Special case for trapped helium
++ 		if (id() == 0) {
++ 			// Find the vacancy index
++@@ -180,7 +260,11 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
++ 
++ 			Kokkos::fence();
++ 
++-			totalVals[0] += heConc * fac / cavConc;
+++			double totalHe = heConc * fac + vol_SSBM_total;
+++			double totalCav = cavConc + conc_SSBM_total;
+++
+++			totalVals[0] += totalHe / totalCav;
+++			
++ 		}
++ 	}
++ }
++-- 
++2.43.7
++
+diff --git a/xolotl/core/include/xolotl/core/network/FeClusterGenerator.h b/xolotl/core/include/xolotl/core/network/FeClusterGenerator.h
+index bbe34baa..c81e03d0 100644
+--- a/xolotl/core/include/xolotl/core/network/FeClusterGenerator.h
++++ b/xolotl/core/include/xolotl/core/network/FeClusterGenerator.h
+@@ -10,6 +10,16 @@ namespace core
+ {
+ namespace network
+ {
++namespace fe
++{
++KOKKOS_INLINE_FUNCTION
++IReactionNetwork::AmountType
++getMaxHePerV(IReactionNetwork::AmountType amtV, double ratio) noexcept
++{
++	return amtV * ratio;
++}
++} // namespace fe
++	
+ class FeClusterGenerator : public plsm::refine::Detector<FeClusterGenerator>
+ {
+ public:
+diff --git a/xolotl/core/include/xolotl/core/network/FeReaction.h b/xolotl/core/include/xolotl/core/network/FeReaction.h
+index b2e1e7c6..d20bb987 100644
+--- a/xolotl/core/include/xolotl/core/network/FeReaction.h
++++ b/xolotl/core/include/xolotl/core/network/FeReaction.h
+@@ -94,9 +94,9 @@ public:
+ 						this->_productMomentIds[i][0] =
+ 							this->_clusterData->voidAvId();
+ 						this->_productMomentIds[i][1] =
+-							this->_clusterData->hAvId();
++							this->_clusterData->heAvId();
+ 						this->_productMomentIds[i][2] = 
+-							this->_clusterData->hAvId();	
++							this->_clusterData->heAvId();	
+ 				}
+ 			}
+ 		}
+diff --git a/xolotl/core/include/xolotl/core/network/FeReaction.tpp b/xolotl/core/include/xolotl/core/network/FeReaction.tpp
+deleted file mode 100644
+index e69de29b..00000000
+diff --git a/xolotl/core/include/xolotl/core/network/FeReactionNetwork.h b/xolotl/core/include/xolotl/core/network/FeReactionNetwork.h
+index 12701d5f..e62ca487 100644
+--- a/xolotl/core/include/xolotl/core/network/FeReactionNetwork.h
++++ b/xolotl/core/include/xolotl/core/network/FeReactionNetwork.h
+@@ -72,12 +72,7 @@ public:
+ 		// Get the minimum amount for a valid value
+ 		amount = util::max(amount, largestSize);
+ 
+-		return (sqrt(3.0) / 4.0) * latticeParameter +
+-			pow((3.0 * pow(latticeParameter, 3.0) * amount) /
+-					(8.0 * ::xolotl::core::pi),
+-				(1.0 / 3.0)) -
+-			pow((3.0 * pow(latticeParameter, 3.0)) / (8.0 * ::xolotl::core::pi),
+-				(1.0 / 3.0));
++                return latticeParameter * pow((3.0 * amount) / ::xolotl::core::pi, (1.0 / 3.0)) * 0.5;
+ 	}
+ 
+ 
+diff --git a/xolotl/core/include/xolotl/core/network/FeTraits.h b/xolotl/core/include/xolotl/core/network/FeTraits.h
+index 250d4b8b..9030bf1f 100644
+--- a/xolotl/core/include/xolotl/core/network/FeTraits.h
++++ b/xolotl/core/include/xolotl/core/network/FeTraits.h
+@@ -102,6 +102,7 @@ namespace detail
+ template <typename PlsmContext>
+ struct ClusterDataExtra<FeReactionNetwork, PlsmContext>
+ {
++	//Here to prevent function errors without rewritting other parts of code, output is 0 for everything or no return	
+ 	using NetworkType = FeReactionNetwork;
+ 
+ 	template <typename TData>
+@@ -111,49 +112,25 @@ struct ClusterDataExtra<FeReactionNetwork, PlsmContext>
+ 
+ 	ClusterDataExtra() = default;
+ 
+-	template <typename PC>
+-	KOKKOS_INLINE_FUNCTION
+-	ClusterDataExtra(const ClusterDataExtra<NetworkType, PC>& data) :
+-		dislocationCaptureRadius(data.dislocationCaptureRadius)
+-	{
+-	}
+ 
+ 	template <typename PC>
+ 	void
+ 	deepCopy(const ClusterDataExtra<NetworkType, PC>& data)
+ 	{
+-		if (!data.dislocationCaptureRadius.is_allocated()) {
+-			return;
+-		}
+-
+-		if (!dislocationCaptureRadius.is_allocated()) {
+-			dislocationCaptureRadius =
+-				create_mirror_view(data.dislocationCaptureRadius);
+-		}
+-
+-		deep_copy(dislocationCaptureRadius, data.dislocationCaptureRadius);
+ 	}
+-
++	
+ 	std::uint64_t
+ 	getDeviceMemorySize() const noexcept
+ 	{
+ 		std::uint64_t ret = 0;
+ 
+-		ret += dislocationCaptureRadius.required_allocation_size(
+-			dislocationCaptureRadius.extent(0),
+-			dislocationCaptureRadius.extent(1));
+-
+ 		return ret;
+ 	}
+ 
+ 	void
+ 	initialize(IndexType numClusters, IndexType gridSize = 0)
+ 	{
+-		dislocationCaptureRadius =
+-			View<double**>("Dislocation Capture Radius", numClusters, 2);
+ 	}
+-
+-	View<double**> dislocationCaptureRadius;
+ };
+ } // namespace detail
+ } // namespace network
+diff --git a/xolotl/core/include/xolotl/core/network/IReactionNetwork.h b/xolotl/core/include/xolotl/core/network/IReactionNetwork.h
+index ae239b0e..d0dcb3b4 100644
+--- a/xolotl/core/include/xolotl/core/network/IReactionNetwork.h
++++ b/xolotl/core/include/xolotl/core/network/IReactionNetwork.h
+@@ -647,14 +647,14 @@ protected:
+ 	bool _enableReSolution{};
+ 	bool _enableNucleation{};
+ 	bool _enableSink{};
+-	bool _enableTrap{}; //disable for SSBM later
++	bool _enableTrap{}; 
+ 	bool _enableTrapMutation{};
+ 	bool _enableAttenuation{};
+ 	bool _enableConstantReaction{};
+ 	bool _enableReducedJacobian{};
+ 	bool _enableReadRates{};
+ 	bool _enableSSBM{}; //for SSBM
+-	bool _enableLargeBubble{}; //for SSBM
++
+ 
+ 	IndexType _gridSize{};
+ 	IndexType _numDOFs{};
+diff --git a/xolotl/core/include/xolotl/core/network/detail/ClusterData.h b/xolotl/core/include/xolotl/core/network/detail/ClusterData.h
+index 6bac5e7b..df4ee063 100644
+--- a/xolotl/core/include/xolotl/core/network/detail/ClusterData.h
++++ b/xolotl/core/include/xolotl/core/network/detail/ClusterData.h
+@@ -149,9 +149,9 @@ private:
+ 		XE_FORMATION,
+ 		V_FORMATION,
+ 		V2_FORMATION,
+-		TRAP_BINDING, // disable for SSBM later
++		TRAP_BINDING, 
+ 		AV_BUBBLE_RAD, // for SSBM
+-		SINK_STRENGTH, //Check if necessary for SSBM
++		SINK_STRENGTH,
+ 		NUM_FLOAT_VALS
+ 	};
+ 
+@@ -159,9 +159,8 @@ private:
+ 	{
+ 		TRANSITION_SIZE = 0,
+ 		BUBBLE_ID, //for SSBM
+-		AV_H_ID, //Check if necessary for SSBM ~ avg H ID
+-		AV_He_ID, //Check if necessary for SSBM ~ avg He ID
+-		AV_VOID_ID, //Check if necessary for SSBM ~ avg Void ID
++		AV_He_ID,
++		AV_VOID_ID,
+ 		NUM_INT_VALS
+ 	};
+ 
+@@ -171,7 +170,7 @@ private:
+ 		RESOLUTION,
+ 		NUCLEATION,
+ 		SINK,
+-		TRAP, //disable for SSBM later
++		TRAP,
+ 		TRAP_MUTATION,
+ 		READ_RATES,
+ 		CONSTANT_REACTION,
+@@ -359,19 +358,6 @@ public:
+ 		setVal(_intVals, BUBBLE_ID, val);
+ 	}
+ 
+-	KOKKOS_INLINE_FUNCTION
+-	int
+-	hAvId() const //check if necessary
+-	{
+-		return _intVals[AV_H_ID];
+-	}
+-
+-	void
+-	setHAvId(int val) //check if necessary
+-	{
+-		setVal(_intVals, AV_H_ID, val);
+-	}
+-
+ 	KOKKOS_INLINE_FUNCTION
+         int
+         heAvId() const //check if necessary
+diff --git a/xolotl/core/include/xolotl/core/network/impl/FeReaction.tpp b/xolotl/core/include/xolotl/core/network/impl/FeReaction.tpp
+index 0c6a4432..ba1fd59f 100644
+--- a/xolotl/core/include/xolotl/core/network/impl/FeReaction.tpp
++++ b/xolotl/core/include/xolotl/core/network/impl/FeReaction.tpp
+@@ -101,73 +101,24 @@ FeProductionReaction::computeFlux(
+ 			concentrations(ssbmId) * rate;
+ 
+ 		// Vacancy case
++		// V_k + B -> B
+ 		if (comp[Species::V] > 0) {
+ 			// SSBM V case
+-			if (typeId < 3) {
+ 				// The standard cluster always loses the flux
+ 				Kokkos::atomic_sub(&fluxes[stdClusterId], f);
+ 
+ 				// The V size increases (kind of cheating on the ID)
+ 				Kokkos::atomic_add(&fluxes[ssbmId + 1], f * comp[Species::V]);
+-			}
+-			// SSBM I case
+-			else {
+-				// Special factor to deal with the threshold size
+-				double gauss = 1.0;
+-
+-				// Special case where the product is not the single size
+-				if (this->_products[0] < numClusters) {
+-					// Only if the large loop has a specific size
+-					auto avLoop =
+-						concentrations(ssbmId + 1) / concentrations(ssbmId);
+-					if (concentrations(ssbmId) == 0.0)
+-						avLoop = 0.0;
+-
+-					// Get the product composition
+-					auto pr =
+-						this->_clusterData->getCluster(this->_products[0]);
+-					auto prReg = pr.getRegion();
+-					Composition prComp(prReg.getOrigin());
+-
+-					// Target value for the reaction to happen
+-					double target = comp[Species::V];
+-
+-					// Gaussian function around it
+-					double twoSigmaTwo = 0.1;
+-					gauss = exp(-(avLoop - target) * (avLoop - target) /
+-								twoSigmaTwo) /
+-						sqrt(::xolotl::core::pi * twoSigmaTwo);
+-
+-					// The large bubble concentration decreases
+-					Kokkos::atomic_sub(&fluxes[ssbmId], f * gauss);
+-					// The product concentration increases
+-					Kokkos::atomic_add(&fluxes[this->_products[0]], f * gauss);
+-
+-					// The I size decreases even more
+-					Kokkos::atomic_sub(&fluxes[ssbmId + 1],
+-						f * 0 *	gauss);
+-				}
+-
+-				// In every case
+-
+-				// The standard cluster always loses the flux
+-				Kokkos::atomic_sub(&fluxes[stdClusterId], f * gauss);
+-
+-				// The I size decreases
+-				Kokkos::atomic_sub(
+-					&fluxes[ssbmId + 1], f * comp[Species::V] * gauss);
+-			}
+ 		}
+ 
+ 		// Interstitial case
+ 		if (comp[Species::I] > 0) {
+-			// SSBM V case
+-			if (typeId < 3) {
+ 				// Special factor to deal with the threshold size
+ 				double gauss = 1.0;
+ 
+ 				// Special case where the product is not the single size
+ 				if (this->_products[0] < numClusters) {
++					// I_a + B -> HV_b
+ 					// Only if the large void has a specific size
+ 					auto avVoid =
+ 						concentrations(ssbmId + 1) / concentrations(ssbmId);
+@@ -207,15 +158,6 @@ FeProductionReaction::computeFlux(
+ 				// The V size decreases
+ 				Kokkos::atomic_sub(
+ 					&fluxes[ssbmId + 1], f * comp[Species::I] * gauss);
+-			}
+-			// SSBM I case
+-			else {
+-				// The standard cluster always loses the flux
+-				Kokkos::atomic_sub(&fluxes[stdClusterId], f);
+-
+-				// The I size increases
+-				Kokkos::atomic_add(&fluxes[ssbmId + 1], f * comp[Species::I]);
+-			}
+ 		}
+ 
+ 		// Helium case
+@@ -225,7 +167,42 @@ FeProductionReaction::computeFlux(
+ 
+ 			// The He size increases
+ 			Kokkos::atomic_add(&fluxes[ssbmId + 2], f * comp[Species::He]);
+-		}
++/*
++				// Trap mutation case
++				// Compute the average concentrations
++				auto conc = concentrations(ssbmId);
++				auto avV = concentrations(ssbmId + 1) / conc;
++				auto avHe = concentrations(ssbmId + 2) / conc;
++				if (conc == 0.0) {
++					avV = 0.0;
++					avHe = 0.0;
++				}
++
++				// Sigmoid
++				double x = ((comp[Species::He] + avHe) /
++							   fe::getMaxHePerV(avV,avHe/avV)) -
++					1.0;
++				double sigmo = 1.0 / (1.0 + std::exp(-50.0 * x));
++				double nI = 1.0;
++
++				// The other product increases
++				if (this->_products[1] != Superclass::invalidIndex) {
++					Kokkos::atomic_add(
++						&fluxes[this->_products[1]], nI * f * sigmo);
++
++					// The average V increases
++					Composition prodComp(
++						this->_clusterData->getCluster(this->_products[1])
++							.getRegion()
++							.getOrigin());
++					Kokkos::atomic_add(&fluxes[ssbmId + 1],
++						nI * f * prodComp[Species::I] * sigmo);
++				}
++				else {
++					Kokkos::atomic_add(&fluxes[ssbmId + 1], nI * f * sigmo);
++				}
++*/
++			}
+ 	}
+ 
+ 	// Large bubble is one of the product
+@@ -244,6 +221,7 @@ FeProductionReaction::computeFlux(
+ 		double f = this->_coefs(0, 0, 0, 0) * cR1 * cR2 * rate;
+ 
+ 		// Vacancy case
++		// V_a + HV_b -> B
+ 		if (orig1.isOnAxis(Species::V) or orig2.isOnAxis(Species::V)) {
+ 			// Compute the total size
+ 			auto totalSize = comp1[Species::V] + comp2[Species::V];
+@@ -268,15 +246,18 @@ FeProductionReaction::computeFlux(
+ 		}
+ 
+ 		// Helium case
++		// He_a + He_bV -> B
+ 		if (orig1.isOnAxis(Species::He) or orig2.isOnAxis(Species::He)) {
+ 			// Compute the total size
+-			auto totalSize = comp1[Species::He] + comp2[Species::He];
++			auto totalHeSize = comp1[Species::He] + comp2[Species::He];
++			auto totalVSize = comp1[Species::V] + comp2[Species::V];
+ 			// Both reactants decrease
+ 			Kokkos::atomic_sub(&fluxes[this->_reactants[0]], f);
+ 			Kokkos::atomic_sub(&fluxes[this->_reactants[1]], f);
+-			// The large bubble increases, as well as average He
++			// The large bubble increases, as well as average He and V
+ 			Kokkos::atomic_add(&fluxes[this->_products[0]], f);
+-			Kokkos::atomic_add(&fluxes[this->_products[0] + 1], f * totalSize);
++			Kokkos::atomic_add(&fluxes[this->_products[0] + 2], f * totalHeSize);
++			Kokkos::atomic_add(&fluxes[this->_products[0] + 1], f * totalVSize);
+ 		}
+ 	}
+ }
+@@ -327,7 +308,6 @@ FeProductionReaction::computePartialDerivatives(
+ 		// Vacancy case
+ 		if (comp[Species::V] > 0) {
+ 			// SSBM V case
+-			if (typeId < 3) {
+ 				// The standard cluster always loses the flux
+ 				if (this->_reactants[0] >= numClusters) {
+ 					Kokkos::atomic_sub(
+@@ -356,118 +336,10 @@ FeProductionReaction::computePartialDerivatives(
+ 					Kokkos::atomic_add(
+ 						&values(this->_connEntries[1][1][0][0]), f * bC);
+ 				}
+-			}
+-			// SSBM I case
+-			else {
+-				// Special factor to deal with the threshold size
+-				double gauss = 1.0;
+-
+-				// Special case where the product is not the single size
+-				if (this->_products[0] < numClusters) {
+-					// Only if the large void has a specific size
+-					auto avLoop =
+-						concentrations(ssbmId + 1) / concentrations(ssbmId);
+-					if (concentrations(ssbmId) == 0.0)
+-						avLoop = 0.0;
+-
+-					// Get the product composition
+-					auto pr =
+-						this->_clusterData->getCluster(this->_products[0]);
+-					auto prReg = pr.getRegion();
+-					Composition prComp(prReg.getOrigin());
+-
+-					// Target value for the reaction to happen
+-					double target = comp[Species::V];
+-
+-					// Gaussian function around it
+-					double twoSigmaTwo = 0.1;
+-					double gauss = exp(-(avLoop - target) * (avLoop - target) /
+-									   twoSigmaTwo) /
+-						sqrt(::xolotl::core::pi * twoSigmaTwo);
+-
+-					// Update the rate
+-					f = this->_coefs(0, 0, 0, 0) * rate * gauss;
+-
+-					// The large bubble concentration decreases
+-					if (this->_reactants[0] >= numClusters) {
+-						Kokkos::atomic_sub(
+-							&values(this->_connEntries[0][0][0][0]), f * stdC);
+-						Kokkos::atomic_sub(
+-							&values(this->_connEntries[0][0][1][0]), f * bC);
+-					}
+-					else {
+-						Kokkos::atomic_sub(
+-							&values(this->_connEntries[1][0][1][0]), f * stdC);
+-						Kokkos::atomic_sub(
+-							&values(this->_connEntries[1][0][0][0]), f * bC);
+-					}
+-					// The product concentration increases
+-					if (this->_reactants[0] >= numClusters) {
+-						Kokkos::atomic_add(
+-							&values(this->_connEntries[2][0][0][0]), f * stdC);
+-						Kokkos::atomic_add(
+-							&values(this->_connEntries[2][0][1][0]), f * bC);
+-					}
+-					else {
+-						Kokkos::atomic_add(
+-							&values(this->_connEntries[2][0][1][0]), f * stdC);
+-						Kokkos::atomic_add(
+-							&values(this->_connEntries[2][0][0][0]), f * bC);
+-					}
+-
+-					// The I size decreases even more
+-					f = this->_coefs(0, 0, 0, 0) * rate * 0 * gauss;
+-					if (this->_reactants[0] >= numClusters) {
+-						Kokkos::atomic_sub(
+-							&values(this->_connEntries[0][1][0][0]), f * stdC);
+-						Kokkos::atomic_sub(
+-							&values(this->_connEntries[0][1][1][0]), f * bC);
+-					}
+-					else {
+-						Kokkos::atomic_sub(
+-							&values(this->_connEntries[1][1][1][0]), f * stdC);
+-						Kokkos::atomic_sub(
+-							&values(this->_connEntries[1][1][0][0]), f * bC);
+-					}
+-				}
+-
+-				// In every case
+-
+-				// The standard cluster always loses the flux
+-				f = this->_coefs(0, 0, 0, 0) * rate * gauss;
+-				if (this->_reactants[0] >= numClusters) {
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[1][0][0][0]), f * stdC);
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[1][0][1][0]), f * bC);
+-				}
+-				else {
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[0][0][1][0]), f * stdC);
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[0][0][0][0]), f * bC);
+-				}
+-
+-				// The I size decreases
+-				f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::V] * gauss;
+-				if (this->_reactants[0] >= numClusters) {
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[0][1][0][0]), f * stdC);
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[0][1][1][0]), f * bC);
+-				}
+-				else {
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[1][1][1][0]), f * stdC);
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[1][1][0][0]), f * bC);
+-				}
+-			}
+ 		}
+ 		// Interstitial case
+-		if (comp[Species::I] > 0) {
++/*		if (comp[Species::I] > 0) {
+ 			// SSBM V case
+-			if (typeId < 3) {
+ 				// Special factor to deal with the threshold size
+ 				double gauss = 1.0;
+ 
+@@ -541,8 +413,7 @@ FeProductionReaction::computePartialDerivatives(
+ 						Kokkos::atomic_sub(
+ 							&values(this->_connEntries[1][1][0][0]), f * bC);
+ 					}
+-				}
+-
++			}
+ 				// In every case
+ 
+ 				// The standard cluster always loses the flux
+@@ -575,39 +446,7 @@ FeProductionReaction::computePartialDerivatives(
+ 						&values(this->_connEntries[1][1][0][0]), f * bC);
+ 				}
+ 			}
+-			// SSBM I case
+-			else {
+-				// The standard cluster always loses the flux
+-				if (this->_reactants[0] >= numClusters) {
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[1][0][0][0]), f * stdC);
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[1][0][1][0]), f * bC);
+-				}
+-				else {
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[0][0][1][0]), f * stdC);
+-					Kokkos::atomic_sub(
+-						&values(this->_connEntries[0][0][0][0]), f * bC);
+-				}
+-
+-				// The V size increases
+-				f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::V];
+-				if (this->_reactants[0] >= numClusters) {
+-					Kokkos::atomic_add(
+-						&values(this->_connEntries[0][1][0][0]), f * stdC);
+-					Kokkos::atomic_add(
+-						&values(this->_connEntries[0][1][1][0]), f * bC);
+-				}
+-				else {
+-					Kokkos::atomic_add(
+-						&values(this->_connEntries[1][1][1][0]), f * stdC);
+-					Kokkos::atomic_add(
+-						&values(this->_connEntries[1][1][0][0]), f * bC);
+-				}
+-			}
+-		}
+-
++*/
+ 		// Helium case
+ 		if (comp[Species::He] > 0) {
+ 			// It should always be a bubble here
+@@ -640,6 +479,86 @@ FeProductionReaction::computePartialDerivatives(
+ 				Kokkos::atomic_add(
+ 					&values(this->_connEntries[1][2][0][0]), f * bC);
+ 			}
++		
++/*			// Compute the average concentrations
++				auto conc = concentrations(ssbmId);
++				auto avV = concentrations(ssbmId + 1) / conc;
++				auto avHe = concentrations(ssbmId + 2) / conc;
++				if (conc == 0.0) {
++					avV = 0.0;
++					avHe = 0.0;
++				}
++
++				// Sigmoid
++				double x = ((comp[Species::He] + avHe) /
++							   fe::getMaxHePerV(avV,avHe/avV)) -
++					1.0;
++				double sigmo = 1.0 / (1.0 + std::exp(-50.0 * x));
++				double nI = 1.0;
++
++				// The other product increases
++				f = this->_coefs(0, 0, 0, 0) * rate * nI;
++				if (this->_products[1] != Superclass::invalidIndex) {
++					if (this->_reactants[0] >= numClusters) {
++						Kokkos::atomic_add(
++							&values(this->_connEntries[3][0][0][0]),
++							f * sigmo * stdC);
++						Kokkos::atomic_add(
++							&values(this->_connEntries[3][0][1][0]),
++							f * sigmo * bC);
++					}
++					else {
++						Kokkos::atomic_add(
++							&values(this->_connEntries[3][0][1][0]),
++							f * sigmo * stdC);
++						Kokkos::atomic_add(
++							&values(this->_connEntries[3][0][0][0]),
++							f * sigmo * bC);
++					}
++					// The average V increases
++					Composition prodComp(
++						this->_clusterData->getCluster(this->_products[1])
++							.getRegion()
++							.getOrigin());
++					f = this->_coefs(0, 0, 0, 0) * rate * nI *
++						prodComp[Species::I];
++					if (this->_reactants[0] >= numClusters) {
++						Kokkos::atomic_add(
++							&values(this->_connEntries[0][2][0][0]),
++							f * sigmo * stdC);
++						Kokkos::atomic_add(
++							&values(this->_connEntries[0][2][1][0]),
++							f * sigmo * bC);
++					}
++					else {
++						Kokkos::atomic_add(
++							&values(this->_connEntries[1][2][1][0]),
++							f * sigmo * stdC);
++						Kokkos::atomic_add(
++							&values(this->_connEntries[1][2][0][0]),
++							f * sigmo * bC);
++					}
++				}
++				else {
++					f = this->_coefs(0, 0, 0, 0) * rate * nI;
++					if (this->_reactants[0] >= numClusters) {
++						Kokkos::atomic_add(
++							&values(this->_connEntries[0][2][0][0]),
++							f * sigmo * stdC);
++						Kokkos::atomic_add(
++							&values(this->_connEntries[0][2][1][0]),
++							f * sigmo * bC);
++					}
++					else {
++						Kokkos::atomic_add(
++							&values(this->_connEntries[1][2][1][0]),
++							f * sigmo * stdC);
++						Kokkos::atomic_add(
++							&values(this->_connEntries[1][2][0][0]),
++							f * sigmo * bC);
++					}
++				}
++*/
+ 		}
+ 	}
+ 
+diff --git a/xolotl/core/include/xolotl/core/network/impl/FeReactionNetwork.tpp b/xolotl/core/include/xolotl/core/network/impl/FeReactionNetwork.tpp
+index 2ff3f48c..2f95571b 100644
+--- a/xolotl/core/include/xolotl/core/network/impl/FeReactionNetwork.tpp
++++ b/xolotl/core/include/xolotl/core/network/impl/FeReactionNetwork.tpp
+@@ -1,5 +1,6 @@
+ #pragma once
+ 
++#include <xolotl/core/network/detail/impl/ConstantReactionGenerator.tpp>
+ #include <xolotl/core/Constants.h>
+ #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
+ #include <xolotl/core/network/detail/impl/TrapReactionGenerator.tpp>
+@@ -7,6 +8,7 @@
+ #include <xolotl/core/network/impl/FeReaction.tpp>
+ #include <xolotl/core/network/impl/ReactionNetwork.tpp>
+ 
++
+ namespace xolotl
+ {
+ namespace core
+@@ -33,7 +35,7 @@ void
+ FeReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
+ 	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
+ {
+-	if (this->_enableLargeBubble) {
++	if (this->_enableSSBM) {
+ 		auto clusterDataMirror = this->getClusterDataMirror();
+ 
+ 		// Get the concentrations on the host
+@@ -42,17 +44,20 @@ FeReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
+ 				clusterDataMirror.bubbleId(), clusterDataMirror.bubbleId() + 2));
+ 		auto heConcs = create_mirror_view(dConcs);
+ 		deep_copy(heConcs, dConcs);
+-
+-		// Compute the average composition for V
+-
+-			auto conc = heConcs(0);
+-			auto avComp = heConcs(1) / conc;
+-			if (conc == 0.0)
+-				avComp = 0.0;
+-			// Compute and save the radius from that
+-				this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
+-					computeBubbleRadius(
+-						avComp, clusterDataMirror.latticeParameter())));
++		
++		// Compute the average composition of each defect
++		IndexType denId = 0;
++		IndexType avId = 1;
++
++		auto conc = heConcs(denId);
++		auto avComp = heConcs(avId) / conc;
++		if (conc == 0.0)
++			avComp = 0.0;
++			
++		// Void
++			this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
++				computeBubbleRadius(
++					avComp, clusterDataMirror.latticeParameter())));
+ 	}
+ }
+ 
+@@ -61,7 +66,7 @@ FeReactionNetwork::computePartialsPreProcess(
+ 	ConcentrationsView concentrations, Kokkos::View<double*> values,
+ 	IndexType gridIndex, double surfaceDepth, double spacing)
+ {
+-	if (this->_enableLargeBubble) {
++	if (this->_enableSSBM) {
+ 		auto clusterDataMirror = this->getClusterDataMirror();
+ 
+ 		// Get the concentrations on the host SSBM
+@@ -99,24 +104,29 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
+ 	using Species = typename NetworkType::Species;
+ 	using Composition = typename NetworkType::Composition;
+ 	using AmountType = typename NetworkType::AmountType;
+-
+-	constexpr auto species = NetworkType::getSpeciesRange();
++	
++	constexpr auto speciesRange = NetworkType::getSpeciesRange();
+ 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
+ 
+-	// Add the sinks
++	auto& subpaving = this->getSubpaving();
++	auto previousIndex = subpaving.invalidIndex();
++
++	// Sinks
+ 	if (i == j) {
+ 		addSinks(i, tag);
+ 	}
+ 
+-	// SSBM
+-	if (this->_clusterData.enableSSBM())
+-		addSingleSizeReactions(i, j, tag);
+-	
+ 	// Add the traps between He and Traps
+-
+-
++	// addTraps(i, j, tag);
++	
+ 	auto numClusters = this->getNumberOfClusters();
+ 
++	// SSBM
++
++	// Large bubble reactions *** HERE we arent accessing function at all
++	 if (this->_clusterData.enableSSBM())
++		addSingleSizeReactions(i, j, tag);
++	
+ 	// Get the composition of each cluster
+ 	const auto& cl1Reg = this->getCluster(i).getRegion();
+ 	const auto& cl2Reg = this->getCluster(j).getRegion();
+@@ -125,8 +135,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
+ 	Composition lo2 = cl2Reg.getOrigin();
+ 	Composition hi2 = cl2Reg.getUpperLimitPoint();
+ 
+-	auto& subpaving = this->getSubpaving();
+-	auto previousIndex = subpaving.invalidIndex();
++	
+ 
+ 	// Special case for I + I
+ 	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1.isOnAxis(Species::I) &&
+@@ -195,7 +204,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
+ 		Kokkos::Array<Kokkos::pair<AmountType, AmountType>, numSpeciesNoI>;
+ 	plsm::EnumIndexed<BoundsArray, Species> bounds;
+ 	// Loop on the species
+-	for (auto l : species) {
++	for (auto l : speciesRange) {
+ 		auto low = lo1[l] + lo2[l];
+ 		auto high = hi1[l] + hi2[l] - 2;
+ 		// Special case for I
+@@ -233,7 +242,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
+ 
+ 			// Loop on the species
+ 			bool isOnAxis1 = false, isOnAxis2 = false;
+-			for (auto l : species) {
++			for (auto l : speciesRange) {
+ 				if (lo1.isOnAxis(l()) && lo1[l()] == 1)
+ 					isOnAxis1 = true;
+ 				if (lo2.isOnAxis(l()) && lo2[l()] == 1)
+@@ -303,32 +312,18 @@ FeReactionGenerator::addSingleSizeReactions(
+ 			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+ 		}
+ 		// I case
+-		if (lo.isOnAxis(Species::I)) {
++		else if (lo.isOnAxis(Species::I)) {
+ 			// I_k + B -> B
+ 			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+ 		}
+ 
+-		// H case
+-		
+-			if (lo.isOnAxis(Species::He)) {
+-				// H_k + B -> B
+-
+-				// Only add trap mutation so that at run time it adds the I
+-				// concentration if needed.
+-				auto& subpaving = this->getSubpaving();
+-				Composition comp = Composition::zero();
+-				comp[Species::I] = 1;
+-				auto iClusterId = subpaving.findTileId(comp);
+-				if (iClusterId == NetworkType::invalidIndex()) {
+-					this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+-				}
+-				else {
+-					this->addProductionReaction(
+-						tag, {i, bubbleId, bubbleId, iClusterId});
+-				}
+-			}
+-		
++		// He case
++		else if (lo.isOnAxis(Species::He)) {
++			// He_k + B -> B
++			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
++		}
+ 	}
++
+ 	// Get the composition of each cluster
+ 	const auto& cl1Reg = this->getCluster(i).getRegion();
+ 	const auto& cl2Reg = this->getCluster(j).getRegion();
+@@ -341,19 +336,20 @@ FeReactionGenerator::addSingleSizeReactions(
+ 	const auto& largestReg = this->getCluster(largestClusterId).getRegion();
+ 	Composition hiLargest = largestReg.getUpperLimitPoint();
+ 	auto largestVSize = hiLargest[Species::V] - 1;
+-	auto largestImpSize = hiLargest[Species::He] - 1;
++	auto largestHeSize = hiLargest[Species::He] - 1;
+ 
+-	// H_a + H_bV -> B
+-		if (hi1[Species::He] + hi2[Species::He] - 2 > largestImpSize) {
+-			this->addProductionReaction(tag, {i, j, bubbleId});
+-		}
++	// He_a + He_bV -> B
++	if (hi1[Species::He] + hi2[Species::He] - 2 > largestHeSize) {
++		this->addProductionReaction(tag, {i, j, bubbleId});
++	}
+ 
+-	// V_a + HV_b -> B
++	// V_a + HeV_b -> B
+ 	if (hi1[Species::V] + hi2[Species::V] - 2 > largestVSize) {
+ 		this->addProductionReaction(tag, {i, j, bubbleId});
+ 	}
+ 
+-	// I_a + B -> HV_b
++
++	// I_a + B -> HeV_b
+ 	if ((lo1.isOnAxis(Species::I) and lo2[Species::V] > 0) or
+ 		(lo1[Species::V] > 0 and lo2.isOnAxis(Species::I))) {
+ 		// It should be around the largest size value
+@@ -366,6 +362,7 @@ FeReactionGenerator::addSingleSizeReactions(
+ 			this->addProductionReaction(tag, {iId, bubbleId, vId});
+ 		}
+ 	}
++
+ }
+ 
+ 
+diff --git a/xolotl/core/include/xolotl/core/network/impl/ReactionNetwork.tpp b/xolotl/core/include/xolotl/core/network/impl/ReactionNetwork.tpp
+index 0b408c6b..839afa5d 100644
+--- a/xolotl/core/include/xolotl/core/network/impl/ReactionNetwork.tpp
++++ b/xolotl/core/include/xolotl/core/network/impl/ReactionNetwork.tpp
+@@ -89,7 +89,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
+ 	this->setEnableReSolution(map["resolution"]);
+ 	this->setEnableNucleation(map["heterogeneous"]);
+ 	this->setEnableSink(map["sink"]);
+-	this->setEnableTrap(map["trap"]); //disable for SSBM later
++	this->setEnableTrap(map["trap"]); 
+ 	this->setEnableTrapMutation(map["modifiedTM"]);
+ 	this->setEnableAttenuation(map["attenuation"]);
+ 	this->setEnableConstantReaction(map["constant"]);
+diff --git a/xolotl/core/src/network/FeReactionNetwork.cpp b/xolotl/core/src/network/FeReactionNetwork.cpp
+index 08a314fb..aa76f54b 100644
+--- a/xolotl/core/src/network/FeReactionNetwork.cpp
++++ b/xolotl/core/src/network/FeReactionNetwork.cpp
+@@ -127,8 +127,8 @@ FeReactionNetwork::getMonitorDataHeaderString() const
+ 	header << "#time He_cav ";
+ 	for (auto id = SpeciesId(numSpecies); id; ++id) {
+ 		auto speciesName = this->getSpeciesName(id);
+-		header << speciesName << "_density " << speciesName << "_diameter "
+-			   << speciesName << "_partial_density " << speciesName << "_partial_diameter ";
++		header << speciesName << "_density_SSBM " << speciesName << "_diameter_SSBM "
++                           << speciesName << "_partial_density_SSBM " << speciesName << "_partial_diameter_SSBM ";
+ 	}
+ 
+ 	return header.str();
+@@ -144,9 +144,8 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
+ 	using Q = TQ::Type;
+ 	using TQA = util::Array<TQ, 4>;
+ 	
+-	double conc_SSBM_total = 0.0;
+-	double vol_SSBM_total = 0.0;
+-	double vol_fac_SSBM = 0.0;
++	double ahecomp_SSBMtotal = 0.0;
++	double avcomp_SSBMtotal = 0.0;
+ 
+ 	for (auto id = SpeciesId(numSpecies); id; ++id) {
+ 		auto ms = minSizes[id()];
+@@ -154,42 +153,45 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
+ 			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
+ 				TQ{Q::radius, id, ms}});
+ 
+-		totalVals[1 + (4 * id()) + 0] += totals[0] * fac;
+-		totalVals[1 + (4 * id()) + 1] += totals[1] * 2.0 * fac;
+-		totalVals[1 + (4 * id()) + 2] += totals[2] * fac;
+-		totalVals[1 + (4 * id()) + 3] += totals[3] * 2.0 * fac;
+-
+-
+-
++		totalVals[1 + (4 * id()) + 0] += totals[0] * fac * 0;
++		totalVals[1 + (4 * id()) + 1] += totals[1] * 2.0 * fac * 0;
++		totalVals[1 + (4 * id()) + 2] += totals[2] * fac * 0;
++		totalVals[1 + (4 * id()) + 3] += totals[3] * 2.0 * fac * 0;
++		
+ 		// SSBM case
+-		if (this->_enableLargeBubble) {
++		if (this->_enableSSBM) {
+ 			IndexType ssbmId = 0;
+ 			IndexType ssbmSizeId = 0;
+-			switch (id()) {
+-			// He
+-			case 0:
+-				ssbmId = this->_clusterData.h_view().bubbleId();
+-				ssbmSizeId = ssbmId + 2;
+-				break;
+-			// Void
+-			case 1:
+-				ssbmId = this->_clusterData.h_view().bubbleId();
+-				ssbmSizeId = ssbmId + 1;
+-				break;
+-			default:
+-				ssbmId = 0;
+-				ssbmSizeId = 0;
+-				break;
+-			}
+ 
+ 			// Compute average numbers
+-			auto vConc = 0.0;
+-			auto avComp = 0.0;
+-			if (ssbmId > 0) {
+-				vConc = conc(ssbmId);
+-				if (vConc > 1.0e-16)
+-					avComp = conc(ssbmSizeId) / vConc;
+-			}
++                        auto heConc = 0.0;
++                        auto aheComp = 0.0;
++
++                        auto vConc = 0.0;
++                        auto avComp = 0.0;
++
++                        switch (id()) {
++                        // He
++                        case 0:
++                                ssbmId = this->_clusterData.h_view().bubbleId();
++                                ssbmSizeId = ssbmId + 2;
++                                heConc = conc(ssbmId);
++                                if (heConc > 1.0e-16)
++                                        aheComp = conc(ssbmSizeId) / heConc;
++                                break;
++                        // Void
++                        case 1:
++                                ssbmId = this->_clusterData.h_view().bubbleId();
++                                ssbmSizeId = ssbmId + 1;
++                                vConc = conc(ssbmId);
++                                if (vConc > 1.0e-16)
++                                        avComp = conc(ssbmSizeId) / vConc;
++                                break;
++                        default:
++                                ssbmId = 0;
++                                ssbmSizeId = 0;
++                                break;
++                        }
+ 
+ 			// Add the single size data
+ 			auto avRadius = 0.0;
+@@ -204,16 +206,18 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
+ 						this->_clusterData.h_view().latticeParameter()));
+ 			}
+ 
+-			vol_fac_SSBM = 350.704 *avRadius *avRadius *avRadius; //radius to vacancy for He, V assumed same
+-			conc_SSBM_total += vConc * fac;
+-			vol_SSBM_total += vConc *vol_fac_SSBM* fac;
++			ahecomp_SSBMtotal += aheComp * fac;
++                        avcomp_SSBMtotal += avComp * fac;
++
+ 
+ 			totalVals[1+(4 * id()) + 0] += vConc * fac;
+ 			totalVals[1+(4 * id()) + 1] += vConc * avRadius * 2.0 * fac;
+ 			if (avComp > minSizes[id()]) {
+ 				totalVals[1+(4 * id()) + 2] += vConc * fac;
+ 				totalVals[1+(4 * id()) + 3] += vConc * avRadius * 2.0 * fac;
++
+ 			}
++
+ 		}
+ 		// Special case for trapped helium
+ 		if (id() == 0) {
+@@ -260,8 +264,8 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
+ 
+ 			Kokkos::fence();
+ 
+-			double totalHe = heConc * fac + vol_SSBM_total;
+-			double totalCav = cavConc + conc_SSBM_total;
++			double totalHe = heConc * fac * 0 + ahecomp_SSBMtotal;
++			double totalCav = cavConc * 0 +  avcomp_SSBMtotal;
+ 
+ 			totalVals[0] += totalHe / totalCav;
+ 			
+-- 
+2.43.7
+

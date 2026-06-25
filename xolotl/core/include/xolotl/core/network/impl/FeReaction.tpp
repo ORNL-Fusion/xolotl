@@ -1,5 +1,6 @@
 #pragma once
 
+#include <xolotl/core/network/FeClusterGenerator.h>
 #include <xolotl/core/network/impl/SinkReaction.tpp>
 #include <xolotl/core/network/impl/TrapReaction.tpp>
 #include <xolotl/util/MathUtils.h>

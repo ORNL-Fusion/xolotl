@@ -321,13 +321,13 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	getTrapBindingEnergy() const //disable for SSBM later
+	getTrapBindingEnergy() const 
 	{
 		return _floatVals[TRAP_BINDING];
 	}
 
 	void
-	setTrapBindingEnergy(double val) //disable for SSBM later
+	setTrapBindingEnergy(double val) 
 	{
 		setVal(_floatVals, TRAP_BINDING, val);
 	}

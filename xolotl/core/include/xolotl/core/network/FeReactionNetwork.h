@@ -71,7 +71,6 @@ public:
 
 		// Get the minimum amount for a valid value
 		amount = util::max(amount, largestSize);
-
                 return latticeParameter * pow((3.0 * amount) / ::xolotl::core::pi, (1.0 / 3.0)) * 0.5;
 	}
 

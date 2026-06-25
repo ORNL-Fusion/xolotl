@@ -127,8 +127,8 @@ FeReactionNetwork::getMonitorDataHeaderString() const
 	header << "#time He_cav ";
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		auto speciesName = this->getSpeciesName(id);
-		header << speciesName << "_density_SSBM " << speciesName << "_diameter_SSBM "
-                           << speciesName << "_partial_density_SSBM " << speciesName << "_partial_diameter_SSBM ";
+		header << speciesName << "_density " << speciesName << "_diameter "
+                           << speciesName << "_partial_density " << speciesName << "_partial_diameter ";
 	}
 
 	return header.str();
@@ -153,10 +153,10 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
 				TQ{Q::radius, id, ms}});
 
-		totalVals[1 + (4 * id()) + 0] += totals[0] * fac * 0;
-		totalVals[1 + (4 * id()) + 1] += totals[1] * 2.0 * fac * 0;
-		totalVals[1 + (4 * id()) + 2] += totals[2] * fac * 0;
-		totalVals[1 + (4 * id()) + 3] += totals[3] * 2.0 * fac * 0;
+		totalVals[1 + (4 * id()) + 0] += totals[0] * fac;
+		totalVals[1 + (4 * id()) + 1] += totals[1] * 2.0 * fac;
+		totalVals[1 + (4 * id()) + 2] += totals[2] * fac;
+		totalVals[1 + (4 * id()) + 3] += totals[3] * 2.0 * fac;
 		
 		// SSBM case
 		if (this->_enableSSBM) {
@@ -264,8 +264,8 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 
 			Kokkos::fence();
 
-			double totalHe = heConc * fac * 0 + ahecomp_SSBMtotal;
-			double totalCav = cavConc * 0 +  avcomp_SSBMtotal;
+			double totalHe = heConc * fac + ahecomp_SSBMtotal;
+			double totalCav = cavConc +  avcomp_SSBMtotal;
 
 			totalVals[0] += totalHe / totalCav;
 			

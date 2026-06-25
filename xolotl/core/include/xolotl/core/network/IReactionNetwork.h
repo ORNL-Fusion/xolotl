@@ -310,9 +310,9 @@ public:
 	}
 
 	virtual void
-	setEnableSSBM(bool ssbm) //for SSBM
+	setEnableSSBM(bool sink) //for SSBM temp sink to test model
 	{
-		_enableSSBM = ssbm;
+		_enableSSBM = sink;
 	}
 
 	IndexType
