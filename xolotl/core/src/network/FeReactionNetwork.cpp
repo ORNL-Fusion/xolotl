@@ -175,9 +175,10 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
                         case 0:
                                 ssbmId = this->_clusterData.h_view().bubbleId();
                                 ssbmSizeId = ssbmId + 2;
-                                heConc = conc(ssbmId);
-                                if (heConc > 1.0e-16)
-                                        aheComp = conc(ssbmSizeId) / heConc;
+                                vConc = conc(ssbmId);
+                                if (vConc > 1.0e-16)
+                                        avComp = conc(ssbmSizeId) / vConc;
+					ahecomp_SSBMtotal += avComp * fac;
                                 break;
                         // Void
                         case 1:
@@ -186,6 +187,7 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
                                 vConc = conc(ssbmId);
                                 if (vConc > 1.0e-16)
                                         avComp = conc(ssbmSizeId) / vConc;
+					avcomp_SSBMtotal += avComp * fac;
                                 break;
                         default:
                                 ssbmId = 0;
@@ -206,17 +208,15 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 						this->_clusterData.h_view().latticeParameter()));
 			}
 
-			ahecomp_SSBMtotal += aheComp * fac;
-                        avcomp_SSBMtotal += avComp * fac;
-
 
 			totalVals[1+(4 * id()) + 0] += vConc * fac;
 			totalVals[1+(4 * id()) + 1] += vConc * avRadius * 2.0 * fac;
+			
 			if (avComp > minSizes[id()]) {
 				totalVals[1+(4 * id()) + 2] += vConc * fac;
 				totalVals[1+(4 * id()) + 3] += vConc * avRadius * 2.0 * fac;
-
 			}
+
 
 		}
 		// Special case for trapped helium

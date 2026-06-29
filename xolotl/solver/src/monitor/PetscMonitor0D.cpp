@@ -387,6 +387,8 @@ PetscMonitor0D::startStopImpl(TS ts, PetscInt timestep, PetscReal time,
 		if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 			concs[0].emplace_back(l, gridPointSolution[l]);
 		}
+		else if (l > dof - 11)
+			concs[0].emplace_back(l, gridPointSolution[l]);
 	}
 
 	// Write our concentration data to the current timestep group
