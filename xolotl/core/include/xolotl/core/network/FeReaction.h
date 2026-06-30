@@ -79,28 +79,30 @@ public:
 				}
 			}
 			// Products
-			if (this->_products[i] == Superclass::invalidIndex) {
-				for (IndexType j = 0; j < Superclass::nMomentIds; ++j) {
-					this->_productMomentIds[i][j] = Superclass::invalidIndex;
-				}
+			if (this->_products[i] < numClusters) {
+				this->copyMomentIds(
+					this->_products[i], this->_productMomentIds[i]);
 			}
 			else {
-				if (this->_products[i] < numClusters) {
-					this->copyMomentIds(
-						this->_products[i], this->_productMomentIds[i]);
+				if (this->_products[i] == Superclass::invalidIndex) {
+					for (IndexType j = 0; j < Superclass::nMomentIds; ++j) {
+						this->_productMomentIds[i][j] =
+							Superclass::invalidIndex;
+					}
 				}
 				else {
 					// Bubble
-						this->_productMomentIds[i][0] =
-							this->_clusterData->voidAvId();
-						this->_productMomentIds[i][1] =
-							this->_clusterData->heAvId();
-						this->_productMomentIds[i][2] = 
-							this->_clusterData->heAvId();	
+					this->_productMomentIds[i][0] =
+						this->_clusterData->voidAvId();
+					this->_productMomentIds[i][1] =
+						this->_clusterData->heAvId();
+					for (IndexType j = 2; j < Superclass::nMomentIds; ++j) {
+						this->_productMomentIds[i][j] =
+							Superclass::invalidIndex;
+					}
 				}
 			}
-		}
-		
+		}	
 
 		const auto& cl1Reg = (this->_reactants[0] < numClusters) ?
 			this->_clusterData->getCluster(this->_reactants[0]).getRegion() :

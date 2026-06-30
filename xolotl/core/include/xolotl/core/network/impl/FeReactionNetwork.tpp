@@ -133,7 +133,7 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
 
-	// vac + vac = vac
+	// V + V = V
 	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V) &&
 		diffusionFactor(i) > 0.0 && diffusionFactor(j) > 0.0) {
 		// Compute the composition of the new cluster
@@ -142,40 +142,12 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		Composition comp = Composition::zero();
 		comp[Species::V] = size;
 		auto vProdId = subpaving.findTileId(comp);
-		if (vProdId != subpaving.invalidIndex()) {
-			// Check the diffusivity to distinguish V from Voids
-			if (diffusionFactor(vProdId) > 0.0) {
-				this->addProductionReaction(tag, {i, j, vProdId});
-				if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-					this->addDissociationReaction(tag, {vProdId, i, j});
-				}
-			}
-			// Special case for void dissociation
-			else if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
+		if (vProdId != subpaving.invalidIndex() && vProdId != previousIndex) {
+			this->addProductionReaction(tag, {i, j, vProdId});
+			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
 				this->addDissociationReaction(tag, {vProdId, i, j});
 			}
-		}
-		return;
-	}
-
-	// vac + void = void
-	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V)) {
-		// Void can be grouped
-		auto minSize = lo1[Species::V] + lo2[Species::V];
-		auto maxSize = hi1[Species::V] + hi2[Species::V] - 2;
-		// Find the corresponding clusters
-		for (auto k = minSize; k <= maxSize; k++) {
-			Composition comp = Composition::zero();
-			comp[Species::V] = k;
-			auto vProdId = subpaving.findTileId(comp);
-			if (vProdId != subpaving.invalidIndex() &&
-				vProdId != previousIndex) {
-				this->addProductionReaction(tag, {i, j, vProdId});
-				if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-					this->addDissociationReaction(tag, {vProdId, i, j});
-				}
-				previousIndex = vProdId;
-			}
+			previousIndex = vProdId;
 		}
 		return;
 	}
