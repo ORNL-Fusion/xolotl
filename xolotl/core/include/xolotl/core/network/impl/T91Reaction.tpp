@@ -90,11 +90,12 @@ T91ProductionReaction::computeFlux(
 	if (nProd == 0) {
 		// Compute thermal vacancy concentration
 		double omega = this->_clusterData->atomicVolume();
-		double thermalVConc = exp(::xolotl::core::t91FormationEntropy) *
-			exp(-::xolotl::core::t91FormationEnergy /
-				(::xolotl::core::kBoltzmann *
-					this->_clusterData->temperature(gridIndex))) /
-			omega;
+		// double thermalVConc = exp(::xolotl::core::t91FormationEntropy) *
+		//	exp(-::xolotl::core::t91FormationEnergy /
+		//		(::xolotl::core::kBoltzmann *
+		//			this->_clusterData->temperature(gridIndex))) /
+		//	omega;
+		double thermalVConc = 0.0;
 
 		// Which one is V?
 		auto cl0 = this->_clusterData->getCluster(_reactants[0]);
@@ -106,7 +107,8 @@ T91ProductionReaction::computeFlux(
 		auto cI = cl0Comp.isOnAxis(Species::V) ? concentrations[_reactants[1]] :
 												 concentrations[_reactants[0]];
 
-		double f = this->_rate(gridIndex) * cI * (cV + thermalVConc);
+		// double f = this->_rate(gridIndex) * cI * (cV + thermalVConc);
+		double f = this->_rate(gridIndex) * cI * cV;
 
 		Kokkos::atomic_sub(&fluxes[_reactants[0]], f);
 		Kokkos::atomic_sub(&fluxes[_reactants[1]], f);
@@ -133,11 +135,12 @@ T91ProductionReaction::computePartialDerivatives(
 	if (nProd == 0) {
 		// Compute thermal vacancy concentration
 		double omega = this->_clusterData->atomicVolume();
-		double thermalVConc = exp(::xolotl::core::t91FormationEntropy) *
-			exp(-::xolotl::core::t91FormationEnergy /
-				(::xolotl::core::kBoltzmann *
-					this->_clusterData->temperature(gridIndex))) /
-			omega;
+		// double thermalVConc = exp(::xolotl::core::t91FormationEntropy) *
+		//	exp(-::xolotl::core::t91FormationEnergy /
+		//		(::xolotl::core::kBoltzmann *
+		//			this->_clusterData->temperature(gridIndex))) /
+		//	omega;
+		double thermalVConc = 0.0;
 
 		// Which one is V?
 		auto cl0 = this->_clusterData->getCluster(_reactants[0]);
@@ -157,17 +160,21 @@ T91ProductionReaction::computePartialDerivatives(
 			Kokkos::atomic_sub(&values(_connEntries[1][0][0][0]), f * cI);
 
 			// Second partial (I)
-			Kokkos::atomic_sub(
-				&values(_connEntries[0][0][1][0]), f * (cV + thermalVConc));
-			Kokkos::atomic_sub(
-				&values(_connEntries[1][0][1][0]), f * (cV + thermalVConc));
+			// Kokkos::atomic_sub(
+			//	&values(_connEntries[0][0][1][0]), f * (cV + thermalVConc));
+			// Kokkos::atomic_sub(
+			//	&values(_connEntries[1][0][1][0]), f * (cV + thermalVConc));
+			Kokkos::atomic_sub(&values(_connEntries[0][0][1][0]), f * cV);
+			Kokkos::atomic_sub(&values(_connEntries[1][0][1][0]), f * cV);
 		}
 		else {
 			// First partial (I)
-			Kokkos::atomic_sub(
-				&values(_connEntries[0][0][0][0]), f * (cV + thermalVConc));
-			Kokkos::atomic_sub(
-				&values(_connEntries[1][0][0][0]), f * (cV + thermalVConc));
+			// Kokkos::atomic_sub(
+			//	&values(_connEntries[0][0][0][0]), f * (cV + thermalVConc));
+			// Kokkos::atomic_sub(
+			//	&values(_connEntries[1][0][0][0]), f * (cV + thermalVConc));
+			Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), f * cV);
+			Kokkos::atomic_sub(&values(_connEntries[1][0][0][0]), f * cV);
 
 			// Second partial (V)
 			Kokkos::atomic_sub(&values(_connEntries[0][0][1][0]), f * cI);
@@ -197,11 +204,12 @@ T91ProductionReaction::computeReducedPartialDerivatives(
 	if (nProd == 0) {
 		// Compute thermal vacancy concentration
 		double omega = this->_clusterData->atomicVolume();
-		double thermalVConc = exp(::xolotl::core::t91FormationEntropy) *
-			exp(-::xolotl::core::t91FormationEnergy /
-				(::xolotl::core::kBoltzmann *
-					this->_clusterData->temperature(gridIndex))) /
-			omega;
+		// double thermalVConc = exp(::xolotl::core::t91FormationEntropy) *
+		//	exp(-::xolotl::core::t91FormationEnergy /
+		//		(::xolotl::core::kBoltzmann *
+		//			this->_clusterData->temperature(gridIndex))) /
+		//	omega;
+		double thermalVConc = 0.0;
 
 		// Which one is V?
 		auto cl0 = this->_clusterData->getCluster(_reactants[0]);
@@ -220,13 +228,15 @@ T91ProductionReaction::computeReducedPartialDerivatives(
 			Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), f * cI);
 
 			// Second partial (I)
-			Kokkos::atomic_sub(
-				&values(_connEntries[1][0][1][0]), f * (cV + thermalVConc));
+			// Kokkos::atomic_sub(
+			//	&values(_connEntries[1][0][1][0]), f * (cV + thermalVConc));
+			Kokkos::atomic_sub(&values(_connEntries[1][0][1][0]), f * cV);
 		}
 		else {
 			// First partial (I)
-			Kokkos::atomic_sub(
-				&values(_connEntries[0][0][0][0]), f * (cV + thermalVConc));
+			// Kokkos::atomic_sub(
+			//	&values(_connEntries[0][0][0][0]), f * (cV + thermalVConc));
+			Kokkos::atomic_sub(&values(_connEntries[0][0][0][0]), f * cV);
 
 			// Second partial (V)
 			Kokkos::atomic_sub(&values(_connEntries[1][0][1][0]), f * cI);
@@ -312,16 +322,18 @@ T91DissociationReaction::computeBindingEnergy(double time)
 				be = 2.02 -
 					2.93 *
 						(pow((double)amtV, 2.0 / 3.0) -
-							pow((double)amtV - 1.0, 2.0 / 3.0)) -
-					0.1 * ratio * ratio + 1.59 * ratio;
+							pow((double)amtV - 1.0, 2.0 / 3.0)) +
+					2.5 * log(1.0 + ratio);
+				//		0.1 * ratio * ratio + 1.59 * ratio;
 			}
 			if (prod1Comp.isOnAxis(Species::I) ||
 				prod2Comp.isOnAxis(Species::I)) {
 				be = 3.77 +
 					2.93 *
 						(pow((double)amtV, 2.0 / 3.0) -
-							pow((double)amtV - 1.0, 2.0 / 3.0)) +
-					0.09 * ratio * ratio - 1.35 * ratio;
+							pow((double)amtV - 1.0, 2.0 / 3.0)) -
+					2.5 * log(1.0 + ratio);
+				//        	0.09 * ratio * ratio - 1.35 * ratio;
 			}
 			if (prod1Comp.isOnAxis(Species::He) ||
 				prod2Comp.isOnAxis(Species::He)) {
@@ -347,15 +359,17 @@ T91DissociationReaction::computeBindingEnergy(double time)
 			be = 2.02 -
 				2.93 *
 					(pow((double)amtV, 2.0 / 3.0) -
-						pow((double)amtV - 1.0, 2.0 / 3.0)) -
-				0.1 * ratio * ratio + 1.59 * ratio;
+						pow((double)amtV - 1.0, 2.0 / 3.0)) +
+				2.5 * log(1.0 + ratio);
+			//		0.1 * ratio * ratio + 1.59 * ratio;
 		}
 		if (prod1Comp.isOnAxis(Species::I) || prod2Comp.isOnAxis(Species::I)) {
 			be = 3.77 +
 				2.93 *
 					(pow((double)amtV, 2.0 / 3.0) -
-						pow((double)amtV - 1.0, 2.0 / 3.0)) +
-				0.09 * ratio * ratio - 1.35 * ratio;
+						pow((double)amtV - 1.0, 2.0 / 3.0)) -
+				2.5 * log(1.0 + ratio);
+			//		0.09 * ratio * ratio - 1.35 * ratio;
 		}
 		if (prod1Comp.isOnAxis(Species::He) ||
 			prod2Comp.isOnAxis(Species::He)) {

@@ -37,7 +37,10 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 		}
 		if (region[Species::V].length() <
 			util::max((double)(_groupingWidthV + 1),
-				region[Species::V].begin() * 1.0e-1)) {
+				pow(util::max(
+						(int)(region[Species::V].begin() - _groupingMin), 0),
+					0.75) *
+					3.0)) {
 			result[2] = false;
 			return true;
 		}
@@ -70,35 +73,19 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 	double amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
 	double amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
 	double amt = sqrt(amtHe * amtHe + amtV * amtV);
-	double highRatio =
-		(hi[Species::He] - 1) / xolotl::util::max(1.0, (double)lo[Species::V]);
-	double lowRatio =
-		lo[Species::He] / xolotl::util::max(1.0, (double)(hi[Species::V] - 1));
-	// Coarse outside of the ratio
-	if ((lowRatio > 3.2 or highRatio < 1.8) and
-		(lo[Species::He] > 100 or lo[Species::V] > 100)) {
-		auto comp = amt * amt * amt * 1.0e-4;
-		if (region[Species::He].length() <
-			util::max(_groupingWidthHe + 1.0, comp)) {
-			result[0] = false;
-		}
-		if (region[Species::V].length() <
-			util::max(_groupingWidthV + 1.0, comp)) {
-			result[2] = false;
-		}
+	if (region[Species::He].length() <
+		util::max((double)(_groupingWidthHe + 1),
+			pow(util::max((int)(region[Species::He].begin() - _groupingMin), 0),
+				0.75) *
+				3.0)) {
+		result[0] = false;
 	}
-	// Refined along the ratio
-	else {
-		auto comp = 0.15 * amtV;
-		if (region[Species::He].length() <
-			util::max(_groupingWidthHe + 1.0, comp)) {
-			result[0] = false;
-		}
-		comp = 0.06 * 21.23 * cbrt(amtV * amtV);
-		if (region[Species::V].length() <
-			util::max(_groupingWidthV + 1.0, comp)) {
-			result[2] = false;
-		}
+	if (region[Species::V].length() <
+		util::max((double)(_groupingWidthV + 1),
+			pow(util::max((int)(region[Species::V].begin() - _groupingMin), 0),
+				0.75) *
+				3.0)) {
+		result[2] = false;
 	}
 
 	// Edges

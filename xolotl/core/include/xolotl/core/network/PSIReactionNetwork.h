@@ -119,8 +119,10 @@ public:
 	IndexType
 	checkLargestClusterId();
 
-	void setReactionParams(std::string) override {
-	        return;
+	void
+	setReactionParams(std::string) override
+	{
+		return;
 	}
 
 	void
