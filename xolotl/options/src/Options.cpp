@@ -540,15 +540,6 @@ Options::appendPetscArg(const std::string& arg)
 }
 
 void
-Options::appendTrapParams(const std::string& arg)
-{
-	if (!trapParameters.empty()) {
-		trapParameters += " ";
-	}
-	trapParameters += arg;
-}
-
-void
 printUsage(std::ostream& os)
 {
 	os << "Xolotl Usage:\n"

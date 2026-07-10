@@ -250,38 +250,6 @@ PSITrapReaction<TSpeciesEnum>::getId()
 	Composition comp = cl.getRegion().getOrigin();
 	return comp[PSITrapReaction<TSpeciesEnum>::Species::Trap] - 1;
 }
-
-template <typename TSpeciesEnum>
-KOKKOS_INLINE_FUNCTION
-double
-PSITrapReaction<TSpeciesEnum>::getStrength()
-{
-	return this->strength;
-}
-
-template <typename TSpeciesEnum>
-KOKKOS_INLINE_FUNCTION
-double
-PSITrapReaction<TSpeciesEnum>::getEnergy()
-{
-	return this->energy;
-}
-
-template <typename TSpeciesEnum>
-KOKKOS_INLINE_FUNCTION
-double
-PSITrapReaction<TSpeciesEnum>::getFrequency()
-{
-	return this->frequency;
-}
-
-template <typename TSpeciesEnum>
-KOKKOS_INLINE_FUNCTION
-double
-PSITrapReaction<TSpeciesEnum>::getDensity()
-{
-	return this->density;
-}
 } // namespace network
 } // namespace core
 } // namespace xolotl

@@ -91,7 +91,7 @@ public:
 
 	KOKKOS_FUNCTION
 	void
-	setParameters(double den, double en, double str, double fre)
+	setParameters(std::vector<double> den, double en, double str, double fre)
 	{
 		density = den;
 		energy = en;
@@ -104,6 +104,34 @@ public:
 	getId()
 	{
 		return this->asDerived()->getId();
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getEnergy()
+	{
+		return energy;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getStrength()
+	{
+		return strength;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getFrequency()
+	{
+		return frequency;
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	std::vector<double>
+	getDensity()
+	{
+		return density;
 	}
 
 private:
@@ -201,7 +229,7 @@ protected:
 	util::Array<IndexType, 2, 2> _connEntries;
 
 	// Trap parameters
-	double density = 0.0;
+	std::vector<double> density;
 	double energy = 0.0;
 	double strength = 0.0;
 	double frequency = 0.0;

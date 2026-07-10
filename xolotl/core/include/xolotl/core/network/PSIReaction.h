@@ -88,22 +88,6 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	IndexType
 	getId();
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	getEnergy();
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	getStrength();
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	getFrequency();
-
-	KOKKOS_INLINE_FUNCTION
-	double
-	getDensity();
 };
 
 template <typename TSpeciesEnum>

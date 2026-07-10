@@ -120,7 +120,7 @@ public:
 	IndexType
 	checkLargestClusterId();
 
-	void setReactionParams(std::string) override;
+	void setReactionParams(std::vector<double>, std::string) override;
 
 	void
 	updateReactionRates(double time = 0.0);

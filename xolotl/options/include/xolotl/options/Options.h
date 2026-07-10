@@ -1141,9 +1141,6 @@ protected:
 
 	void
 	appendPetscArg(const std::string& arg);
-
-	void
-	appendTrapParams(const std::string& arg);
 };
 
 std::shared_ptr<IOptions>

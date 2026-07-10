@@ -453,7 +453,7 @@ public:
 	/**
 	 * @brief Set the parameters for trap reactions
 	 */
-	virtual void setReactionParams(std::string) = 0;
+	virtual void setReactionParams(std::vector<double>, std::string) = 0;
 
 	virtual PhaseSpace
 	getPhaseSpace() = 0;

@@ -26,7 +26,7 @@ TrapReaction<TNetwork, TDerived>::computeFlux(
 	auto trapDensity = this->asDerived()->getDensity();
 
 	// Compute the total trapping flux
-	double flux = trappingRate * (trapDensity - ct) * cm;
+	double flux = trappingRate * (trapDensity[gridIndex] - ct) * cm;
 	flux -= deTrappingRate * ct;
 
 	// The trapped concentration increases
@@ -51,7 +51,7 @@ TrapReaction<TNetwork, TDerived>::computePartialDerivatives(
 	auto trapDensity = this->asDerived()->getDensity();
 
 	// Compute the partial with respect to the mobile concentration
-	double partial = trappingRate * (trapDensity - ct);
+	double partial = trappingRate * (trapDensity[gridIndex] - ct);
 	Kokkos::atomic_sub(&values(_connEntries[0][0]), partial);
 	Kokkos::atomic_add(&values(_connEntries[1][0]), partial);
 
@@ -77,7 +77,7 @@ TrapReaction<TNetwork, TDerived>::computeReducedPartialDerivatives(
 	auto trapDensity = this->asDerived()->getDensity();
 
 	// Compute the partial with respect to the mobile concentration
-	double partial = trappingRate * (trapDensity - ct);
+	double partial = trappingRate * (trapDensity[gridIndex] - ct);
 	Kokkos::atomic_sub(&values(_connEntries[0][0]), partial);
 
 	// Compute the partial with respect to the trapped concentration

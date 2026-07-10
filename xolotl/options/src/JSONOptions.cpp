@@ -249,16 +249,9 @@ JSONOptions::defineHandlers()
 				checkSetParam(tree, name, initialConcentration);
 			})
 		.add(
-			"trapParams", ElemType::list_string,
-			"The density (nm-3), energy (eV), strength (nm2), frequency (s-1) "
-			"of a given trap.",
-			JSON_ELEM_HANDLER {
-				if (tree.count(name)) {
-					for (auto&& elem : tree.get_child(name)) {
-						appendTrapParams(elem.second.data());
-					}
-				}
-			})
+			"trapParams", ElemType::string,
+			"The name of the file with the trap data.",
+			JSON_ELEM_HANDLER { checkSetParam(tree, name, trapParameters); })
 		.add(
 			"zeta", ElemType::real,
 			"The value of the electronic stopping power in the material.\n"

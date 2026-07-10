@@ -390,19 +390,82 @@ PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 
 template <typename TSpeciesEnum>
 void
-PSIReactionNetwork<TSpeciesEnum>::setReactionParams(std::string trapParams)
+PSIReactionNetwork<TSpeciesEnum>::setReactionParams(
+	std::vector<double> grid, std::string trapParamFile)
 {
-	// Convert the string to a vector of values
-	auto tokens = util::Tokenizer<double>{trapParams}();
-	// Set them in the corresponding reactions
-	this->_reactions.template forEachOn<PSITrapReaction<TSpeciesEnum>>(
-		"ReactionCollection::setReactionParams",
-		DEVICE_LAMBDA(auto&& reaction) {
-			auto i = reaction.getId();
-			// Get the corresponding parameters
-			reaction.setParameters(tokens[4 * i], tokens[4 * i + 1],
-				tokens[4 * i + 2], tokens[4 * i + 3]);
-		});
+	// Read the parameter file
+	std::ifstream paramFile(trapParamFile);
+
+	if (!paramFile.good()) {
+		// Print a message
+		XOLOTL_LOG
+			<< "No parameter file for trap reactions, they will not be used.";
+	}
+	else {
+		// Get the reactions
+		auto trapReactions =
+			this->_reactions.template getView<PSITrapReaction<TSpeciesEnum>>();
+
+		// Get the line
+		std::string line;
+		getline(paramFile, line);
+
+		// Read the first line
+		auto tokens = util::Tokenizer<double>{line}();
+		// And start looping on the lines
+		int index = 0;
+		while (tokens.size() > 0) {
+			if (tokens.size() != 3) {
+				throw std::runtime_error(
+					"\nNot the correct number of trap parameters for "
+					"the TrapReaction: 3 expected.");
+			}
+
+			// Keep the values
+			auto params = tokens;
+			std::vector<double> densities;
+
+			// Get the parameters for the fit
+			getline(paramFile, line);
+			tokens = util::Tokenizer<double>{line}();
+			if (tokens.size() == 1) {
+				// Same density everywhere
+				densities = std::vector<double>(this->_gridSize, tokens[0]);
+			}
+			else if (tokens.size() != 17) {
+				throw std::runtime_error(
+					"\nNot the correct number of fit parameters for the "
+					"trap reaction density: 17 expected.");
+			}
+			else {
+				double totalDepth = tokens[16] + 0.1;
+
+				// Loop on the grid to provide the density at each grid point
+				densities.push_back(0.0);
+				for (auto j = 1; j < grid.size(); j++) {
+					double den = 0.0;
+					double x = (grid[j] + grid[j + 1]) / 2.0 - grid[1];
+					if (x > totalDepth)
+						den = 0.0;
+					else {
+						for (auto i = 0; i < 16; i++)
+							den += tokens[i] * pow(x, (double)i);
+					}
+
+					densities.push_back(den);
+				}
+			}
+
+			// Set the reaction parameters
+			trapReactions(index).setParameters(
+				densities, params[0], params[1], params[2]);
+			index++;
+
+			// Read the next line
+			getline(paramFile, line);
+			tokens = util::Tokenizer<double>{line}();
+		}
+	}
 }
 
 namespace detail

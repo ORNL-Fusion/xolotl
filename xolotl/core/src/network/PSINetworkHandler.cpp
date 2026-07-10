@@ -118,10 +118,18 @@ generatePSIReactionNetwork(const options::IOptions& options)
 	AmountType nTraps = 0;
 	// Get the string from the options
 	auto trapString = options.getTrapParameters();
-	// Break the string apart
-	auto tokens = util::Tokenizer<>{trapString}();
-	// We should have 4 parameters per trap
-	nTraps = tokens.size() / 4;
+	// Open the file and counts the lines if the file exist
+	std::ifstream paramFile(trapString);
+
+	if (paramFile.good()) {
+		int nLines = 0;
+		std::string line;
+
+		while (std::getline(paramFile, line))
+			++nLines;
+		// We should have 2 lines per trap
+		nTraps = nLines / 2;
+	}
 
 	if (maxI > options.getGroupingMin() and maxV >= options.getGroupingMin() and
 		options.getMaxImpurity() == 0) {
