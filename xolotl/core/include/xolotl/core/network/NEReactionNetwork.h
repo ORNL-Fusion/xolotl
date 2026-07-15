@@ -34,6 +34,12 @@ public:
 
 	IndexType
 	checkLargestClusterId();
+	
+	void
+	setReactionParams(std::vector<double>, std::string) override
+	{
+		return;
+	}
 
 	void
 	initializeExtraClusterData(const options::IOptions& options);

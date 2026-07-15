@@ -1,6 +1,6 @@
 #pragma once
 
-#include <xolotl/core/network/impl/SinkReaction.tpp>
+#include <xolotl/core/network/impl/TrapReaction.tpp>
 #include <xolotl/util/MathUtils.h>
 
 namespace xolotl
@@ -65,6 +65,18 @@ LiDissociationReaction::computeBindingEnergy(double time)
 	double be = 5.0;
 
 	return util::min(5.0, util::max(be, -5.0));
+}
+
+KOKKOS_INLINE_FUNCTION
+typename LiTrapReaction::IndexType
+LiTrapReaction::getId()
+{
+	using Composition = typename Superclass::Composition;
+
+	// Here the id is the size of the trap
+	auto cl = this->_clusterData->getCluster(this->_trapped);
+	Composition comp = cl.getRegion().getOrigin();
+	return comp[LiTrapReaction::Species::Trap] - 1;
 }
 } // namespace network
 } // namespace core

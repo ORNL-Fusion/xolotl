@@ -249,6 +249,10 @@ JSONOptions::defineHandlers()
 				checkSetParam(tree, name, initialConcentration);
 			})
 		.add(
+			"trapParams", ElemType::string,
+			"The name of the file with the trap data.",
+			JSON_ELEM_HANDLER { checkSetParam(tree, name, trapParameters); })
+		.add(
 			"zeta", ElemType::real,
 			"The value of the electronic stopping power in the material.\n"
 			"(default = 0.73)",
@@ -300,7 +304,7 @@ JSONOptions::defineHandlers()
 			"List of all the processes to use in the simulation.\n"
 			"{reaction, diff, spherical, advec, modifiedTM, movingSurface, "
 			"bursting, attenuation, resolution, heterogeneous, "
-			"sink, soret, constant, noSolve}",
+			"sink, soret, constant, noSolve, trap}",
 			JSON_ELEM_HANDLER {
 				if (tree.count(name)) {
 					auto node = tree.get_child(name);

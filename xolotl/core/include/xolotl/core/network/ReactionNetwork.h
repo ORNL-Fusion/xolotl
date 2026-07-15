@@ -247,6 +247,9 @@ public:
 
 	void
 	setEnableSink(bool reaction) override;
+	
+	void
+	setEnableTrap(bool reaction) override;
 
 	void
 	setEnableTrapMutation(bool reaction) override;
@@ -452,6 +455,8 @@ public:
 
 	void
 	setConstantRateEntries() override;
+	
+	void setReactionParams(std::vector<double>, std::string) override;
 
 	PhaseSpace
 	getPhaseSpace() override;

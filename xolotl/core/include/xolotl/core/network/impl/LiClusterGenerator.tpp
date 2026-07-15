@@ -15,6 +15,12 @@ LiClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
 	result[0] = true;
 	result[1] = true;
+	result[2] = true;
+
+	// Trap is never grouped
+	if (region[Species::Trap].begin() > 0) {
+		return true;
+	}
 
 	// H is never grouped
 	if (region[Species::H].begin() > 0) {
@@ -33,7 +39,7 @@ KOKKOS_INLINE_FUNCTION
 bool
 LiClusterGenerator::select(const Region& region) const
 {
-        int nAxis = (region[Species::H].begin() > 0) +
+        int nAxis = (region[Species::Trap].begin() > 0) +(region[Species::H].begin() > 0) +
 		(region[Species::V].begin() > 0);
 
 	if (nAxis == 0) {

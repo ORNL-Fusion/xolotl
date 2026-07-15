@@ -2,6 +2,7 @@
 
 #include <xolotl/core/network/LiTraits.h>
 #include <xolotl/core/network/SinkReaction.h>
+#include <xolotl/core/network/TrapReaction.h>
 
 namespace xolotl
 {
@@ -41,6 +42,22 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	double
 	computeBindingEnergy(double time = 0.0);
+};
+
+class LiTrapReaction :
+	public TrapReaction<LiReactionNetwork,
+		LiTrapReaction>
+{
+public:
+	using Superclass = TrapReaction<LiReactionNetwork,
+		LiTrapReaction>;
+
+	using Superclass::Superclass;
+	using IndexType = typename Superclass::IndexType;
+
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	getId();
 };
 } // namespace network
 } // namespace core

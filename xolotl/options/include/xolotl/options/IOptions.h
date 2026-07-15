@@ -186,12 +186,20 @@ public:
 	getInterfaceLocation() const = 0;
 
 	/**
-	 * Obtain the value of the concentration for the vacancies.
+	 * Obtain the value of the concentration  simple clusters.
 	 *
-	 * @return The concentration value
+	 * @return A string of cluster types, sizes, and concentrations
 	 */
 	virtual std::string
 	getInitialConcentration() const = 0;
+	
+	/**
+	 * Obtain the string for the traps filename traps.
+	 *
+	 * @return The filename
+	 */
+	virtual std::string
+	getTrapParameters() const = 0;
 
 	/**
 	 * Obtain the value of the electronic stopping power.

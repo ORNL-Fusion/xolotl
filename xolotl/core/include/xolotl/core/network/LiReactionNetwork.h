@@ -35,6 +35,8 @@ public:
 	IndexType
 	checkLargestClusterId();
 
+	void setReactionParams(std::vector<double>, std::string) override;
+
 	void
 	setTotalDepth(double depth) override
 	{
@@ -397,6 +399,11 @@ public:
 
 	void
 	addConnectivity(Connectivity& conn);
+
+	template <typename TTag>
+	KOKKOS_INLINE_FUNCTION
+	void
+	addTraps(IndexType i, IndexType j, TTag tag) const;
 
 private:
 	ReactionCollection<NetworkType>

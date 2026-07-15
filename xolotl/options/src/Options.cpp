@@ -34,6 +34,7 @@ Options::Options() :
 	vizHandlerName(""),
 	materialName(""),
 	initialConcentration(""),
+	trapParameters(""),
 	interfaceLocation(-1000.0),
 	dimensionNumber(1),
 	gridTypeName(""),
@@ -122,6 +123,7 @@ Options::printAll(std::ostream& os) const
 	os << "vizHandlerName: \"" << vizHandlerName << "\"\n";
 	os << "materialName: \"" << materialName << "\"\n";
 	os << "initialConcentration: \"" << initialConcentration << "\"\n";
+	os << "trapParameters: \"" << trapParameters << "\"\n";
 	os << "zeta: " << zeta << '\n';
 	os << "interfaceLocation: " << interfaceLocation << '\n';
 	os << "dimensionNumber: " << dimensionNumber << '\n';
@@ -454,6 +456,7 @@ Options::setProcesses(const std::string& processList)
 	processMap["resolution"] = false;
 	processMap["heterogeneous"] = false;
 	processMap["sink"] = false;
+	processMap["trap"] = false;
 	processMap["soret"] = false;
 	processMap["constant"] = false;
 	processMap["noSolve"] = false;

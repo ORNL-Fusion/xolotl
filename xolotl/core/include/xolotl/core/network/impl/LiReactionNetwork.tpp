@@ -1,9 +1,11 @@
 #pragma once
 
 #include <xolotl/core/Constants.h>
+#include <xolotl/core/network/detail/impl/TrapReactionGenerator.tpp>
 #include <xolotl/core/network/impl/LiClusterGenerator.tpp>
 #include <xolotl/core/network/impl/LiReaction.tpp>
 #include <xolotl/core/network/impl/ReactionNetwork.tpp>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -320,6 +322,85 @@ LiReactionNetwork::setConnectivity(LiReactionNetwork::Connectivity conn)
 	return;
 }
 
+void
+LiReactionNetwork::setReactionParams(
+	std::vector<double> grid, std::string trapParamFile)
+{
+	// Read the parameter file
+	std::ifstream paramFile(trapParamFile);
+
+	if (!paramFile.good()) {
+		// Print a message
+		XOLOTL_LOG
+			<< "No parameter file for trap reactions, they will not be used.";
+	}
+	else {
+		// Get the reactions
+		auto trapReactions =
+			this->_reactions.template getView<LiTrapReaction>();
+
+		// Get the line
+		std::string line;
+		getline(paramFile, line);
+
+		// Read the first line
+		auto tokens = util::Tokenizer<double>{line}();
+		// And start looping on the lines
+		int index = 0;
+		while (tokens.size() > 0) {
+			if (tokens.size() != 3) {
+				throw std::runtime_error(
+					"\nNot the correct number of trap parameters for "
+					"the TrapReaction: 3 expected.");
+			}
+
+			// Keep the values
+			auto params = tokens;
+			std::vector<double> densities;
+
+			// Get the parameters for the fit
+			getline(paramFile, line);
+			tokens = util::Tokenizer<double>{line}();
+			if (tokens.size() == 1) {
+				// Same density everywhere
+				densities = std::vector<double>(this->_gridSize, tokens[0]);
+			}
+			else if (tokens.size() != 17) {
+				throw std::runtime_error(
+					"\nNot the correct number of fit parameters for the "
+					"trap reaction density: 17 expected.");
+			}
+			else {
+				double totalDepth = tokens[16] + 0.1;
+
+				// Loop on the grid to provide the density at each grid point
+				densities.push_back(0.0);
+				for (auto j = 1; j < grid.size(); j++) {
+					double den = 0.0;
+					double x = (grid[j] + grid[j + 1]) / 2.0 - grid[1];
+					if (x > totalDepth)
+						den = 0.0;
+					else {
+						for (auto i = 0; i < 16; i++)
+							den += tokens[i] * pow(x, (double)i);
+					}
+
+					densities.push_back(den);
+				}
+			}
+
+			// Set the reaction parameters
+			trapReactions(index).setParameters(
+				densities, params[0], params[1], params[2]);
+			index++;
+
+			// Read the next line
+			getline(paramFile, line);
+			tokens = util::Tokenizer<double>{line}();
+		}
+	}
+}
+
 namespace detail
 {
 template <typename TTag>
@@ -339,6 +420,9 @@ LiReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 
 	constexpr auto species = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
+
+	// Add the trapping reactions between single mobile gas and traps
+	addTraps(i, j, tag);
 
 	auto numClusters = this->getNumberOfClusters();
 
@@ -437,12 +521,44 @@ LiReactionGenerator::addConnectivity(Connectivity& conn)
 		});
 }
 
+template <typename TTag>
+KOKKOS_INLINE_FUNCTION
+void
+LiReactionGenerator::addTraps(IndexType i, IndexType j, TTag tag) const
+{
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+
+	// Get the compositions
+	const auto& clReg1 = this->getCluster(i).getRegion();
+	Composition lo1 = clReg1.getOrigin();
+	const auto& clReg2 = this->getCluster(j).getRegion();
+	Composition lo2 = clReg2.getOrigin();
+
+	if (clReg1.isSimplex() and clReg2.isSimplex()) {
+		// Look for H 1 and trap
+		if ((lo1.isOnAxis(Species::H) and lo2.isOnAxis(Species::Trap)) or
+			(lo2.isOnAxis(Species::H) and lo1.isOnAxis(Species::Trap))) {
+			// Which one is which?
+			auto trapId = lo1.isOnAxis(Species::Trap) ? i : j;
+			auto hId = lo1.isOnAxis(Species::Trap) ? j : i;
+
+			// Only single hydrogen can trap
+			Composition loH = this->getCluster(hId).getRegion().getOrigin();
+			if (loH[Species::H] == 1) {
+				this->addTrapReaction(tag, {hId, trapId});
+			}
+		}
+	}
+}
+
 inline ReactionCollection<LiReactionGenerator::NetworkType>
 LiReactionGenerator::getReactionCollection() const
 {
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
 		this->_clusterData.numClusters, this->_enableReadRates,
-		this->getProductionReactions(), this->getDissociationReactions());
+		this->getProductionReactions(), this->getDissociationReactions(),
+		this->getTrapReactions());
 	return ret;
 }
 } // namespace detail

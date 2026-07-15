@@ -230,6 +230,18 @@ public:
 	{
 		_enableSink = sink;
 	}
+	
+	bool
+	getEnableTrap() const noexcept
+	{
+		return _enableTrap;
+	}
+
+	virtual void
+	setEnableTrap(bool trap)
+	{
+		_enableTrap = trap;
+	}
 
 	bool
 	getEnableTrapMutation() const noexcept
@@ -437,6 +449,11 @@ public:
 	 */
 	virtual void
 	setConstantRateEntries() = 0;
+	
+	/**
+	 * @brief Set the parameters for trap reactions
+	 */
+	virtual void setReactionParams(std::vector<double>, std::string) = 0;
 
 	virtual PhaseSpace
 	getPhaseSpace() = 0;
@@ -628,6 +645,7 @@ protected:
 	bool _enableReSolution{};
 	bool _enableNucleation{};
 	bool _enableSink{};
+	bool _enableTrap{};
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
 	bool _enableConstantReaction{};

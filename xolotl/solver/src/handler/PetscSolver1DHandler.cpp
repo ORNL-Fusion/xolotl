@@ -1014,8 +1014,8 @@ PetscSolver1DHandler::updateConcentration(
 		if (skip)
 			continue;
 
-		if (xi == 0)
-			continue;
+		//		if (xi == 0)
+		//			continue;
 
 		// ---- Compute Soret diffusion over the locally owned part of the grid
 		// -----
