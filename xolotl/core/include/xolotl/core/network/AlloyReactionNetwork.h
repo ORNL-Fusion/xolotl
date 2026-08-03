@@ -34,7 +34,8 @@ public:
 	checkLargestClusterId();
 
 	void
-	setReactionParams(std::vector<double>, std::string) override
+	setReactionParams(
+		std::vector<double>, IdType xs, IdType xm, std::string) override
 	{
 		return;
 	}

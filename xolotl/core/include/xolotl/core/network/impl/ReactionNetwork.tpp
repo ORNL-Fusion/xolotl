@@ -568,9 +568,9 @@ ReactionNetwork<TImpl>::setConstantRateEntries()
 template <typename TImpl>
 void
 ReactionNetwork<TImpl>::setReactionParams(
-	std::vector<double> densities, std::string trapParams)
+	std::vector<double> grid, IdType xs, IdType xm, std::string trapParams)
 {
-	asDerived()->setReactionParams(densities, trapParams);
+	asDerived()->setReactionParams(grid, xs, xm, trapParams);
 }
 
 template <typename TImpl>

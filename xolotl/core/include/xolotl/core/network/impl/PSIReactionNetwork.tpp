@@ -391,7 +391,7 @@ PSIReactionNetwork<TSpeciesEnum>::checkLargestClusterId()
 template <typename TSpeciesEnum>
 void
 PSIReactionNetwork<TSpeciesEnum>::setReactionParams(
-	std::vector<double> grid, std::string trapParamFile)
+	std::vector<double> grid, IdType xs, IdType xm, std::string trapParamFile)
 {
 	// Read the parameter file
 	std::ifstream paramFile(trapParamFile);
@@ -442,7 +442,7 @@ PSIReactionNetwork<TSpeciesEnum>::setReactionParams(
 
 				// Loop on the grid to provide the density at each grid point
 				densities.push_back(0.0);
-				for (auto j = 1; j < grid.size(); j++) {
+				for (auto j = xs + 1; j < xs + xm + 1; j++) {
 					double den = 0.0;
 					double x = (grid[j] + grid[j + 1]) / 2.0 - grid[1];
 					if (x > totalDepth)
@@ -451,8 +451,7 @@ PSIReactionNetwork<TSpeciesEnum>::setReactionParams(
 						for (auto i = 0; i < 16; i++)
 							den += tokens[i] * pow(x, (double)i);
 					}
-
-					densities.push_back(den);
+					densities.push_back(util::max(den, 0.0));
 				}
 			}
 

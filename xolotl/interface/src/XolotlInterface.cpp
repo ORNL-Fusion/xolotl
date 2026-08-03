@@ -166,8 +166,10 @@ XolotlInterface::initializeXolotl() TRY
 	// Get the grid
 	double hy, hz;
 	auto grid = getGridInfo(hy, hz);
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+	getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
 	// Set the parameters
-	network.setReactionParams(grid, options->getTrapParameters());
+	network.setReactionParams(grid, xs, xm, options->getTrapParameters());
 }
 CATCH
 

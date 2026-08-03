@@ -456,7 +456,9 @@ public:
 	void
 	setConstantRateEntries() override;
 
-	void setReactionParams(std::vector<double>, std::string) override;
+	void
+	setReactionParams(
+		std::vector<double>, IdType xs, IdType xm, std::string) override;
 
 	PhaseSpace
 	getPhaseSpace() override;
