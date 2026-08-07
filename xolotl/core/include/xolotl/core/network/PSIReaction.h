@@ -3,6 +3,7 @@
 #include <xolotl/core/network/PSITraits.h>
 #include <xolotl/core/network/Reaction.h>
 #include <xolotl/core/network/SinkReaction.h>
+#include <xolotl/core/network/TransformReaction.h>
 #include <xolotl/core/network/TrapMutationReaction.h>
 
 namespace xolotl
@@ -159,22 +160,6 @@ public:
 
 private:
 	bool isLargeBubbleReaction = false;
-
-	/**
-	 * Generic sigmoid function.
-	 *
-	 * @param x The variable value
-	 * @param target The value at which the sigmoid switches
-	 * @param sharp The sharpness parameter of the function (higher -> sharper)
-	 * @return The sigmoid value at this x
-	 */
-	KOKKOS_INLINE_FUNCTION
-	double
-	computeSigmoid(double x, double target, double sharp)
-	{
-		double value = x / target - 1.0;
-		return 1.0 / (1.0 + exp(-sharp * target * value));
-	}
 };
 
 template <typename TSpeciesEnum>
@@ -335,6 +320,96 @@ public:
 	double
 	getSinkStrength();
 };
+
+template <typename TSpeciesEnum>
+class PSITransformReaction :
+	public TransformReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSITransformReaction<TSpeciesEnum>>
+{
+public:
+	using Superclass = TransformReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSITransformReaction<TSpeciesEnum>>;
+
+	using Superclass::Superclass;
+	using NetworkType = typename Superclass::NetworkType;
+	using ReactionDataRef = typename Superclass::ReactionDataRef;
+	using ClusterData = typename Superclass::ClusterData;
+	using IndexType = typename Superclass::IndexType;
+	using Composition = typename Superclass::Composition;
+	using Region = typename Superclass::Region;
+	using ConcentrationsView = typename Superclass::ConcentrationsView;
+	using FluxesView = typename Superclass::FluxesView;
+	using Species = typename Superclass::Species;
+
+	KOKKOS_INLINE_FUNCTION
+	PSITransformReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		IndexType cluster0, IndexType cluster1)
+	{
+		this->_clusterData = &clusterData;
+		this->_reactionId = reactionId;
+		this->_rate = reactionData.getRates(reactionId);
+		this->_widths = reactionData.getWidths(reactionId);
+		this->_coefs = reactionData.getCoefficients(reactionId);
+
+		this->_reactant = cluster0;
+		this->_product = cluster1;
+
+		auto numClusters = clusterData.numClusters;
+		// Check if the single size is involved
+		if (cluster0 >= numClusters)
+			isLargeBubbleReaction = true;
+		if (cluster1 >= numClusters)
+			isLargeBubbleReaction = true;
+
+		// static
+		const auto dummyRegion = Region(Composition{});
+
+		// Product
+		if (this->_product < numClusters) {
+			this->copyMomentIds(this->_product, this->_productMomentIds);
+		}
+		else {
+			// Bubble
+			this->_productMomentIds[0] = this->_clusterData->hAvId(); // He
+			this->_productMomentIds[1] = this->_clusterData->hAvId(); // H
+			this->_productMomentIds[2] = this->_clusterData->voidAvId(); // V
+		}
+
+		this->initialize();
+	}
+
+	KOKKOS_FUNCTION
+	PSITransformReaction(ReactionDataRef reactionData,
+		const ClusterData& clusterData, IndexType reactionId,
+		const detail::ClusterSet& clusterSet) :
+		PSITransformReaction(reactionData, clusterData, reactionId,
+			clusterSet.cluster0, clusterSet.cluster1)
+	{
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getAppliedRate(IndexType gridIndex) const;
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeCoefficients();
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computeFlux(ConcentrationsView concentrations, FluxesView fluxes,
+		IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	computePartialDerivatives(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex);
+
+private:
+	bool isLargeBubbleReaction = false;
+};
+
 template <typename TSpeciesEnum>
 class PSITrapMutationReaction :
 	public TrapMutationReaction<PSIReactionNetwork<TSpeciesEnum>,

@@ -46,6 +46,8 @@ class PSIDissociationReaction;
 template <typename TSpeciesEnum>
 class PSISinkReaction;
 template <typename TSpeciesEnum>
+class PSITransformReaction;
+template <typename TSpeciesEnum>
 class PSITrapMutationReaction;
 template <typename TSpeciesEnum>
 class PSIClusterGenerator;
@@ -333,10 +335,12 @@ struct ReactionNetworkTraits<PSIReactionNetwork<TSpeciesEnum>>
 	using ProductionReactionType = PSIProductionReaction<Species>;
 	using DissociationReactionType = PSIDissociationReaction<Species>;
 	using SinkReactionType = PSISinkReaction<Species>;
+	using TransformReactionType = PSITransformReaction<Species>;
 	using TrapMutationReactionType = PSITrapMutationReaction<Species>;
 
-	using ReactionTypeList = std::tuple<ProductionReactionType,
-		DissociationReactionType, SinkReactionType, TrapMutationReactionType>;
+	using ReactionTypeList =
+		std::tuple<ProductionReactionType, DissociationReactionType,
+			SinkReactionType, TransformReactionType, TrapMutationReactionType>;
 
 	using ClusterGenerator = PSIClusterGenerator<Species>;
 };

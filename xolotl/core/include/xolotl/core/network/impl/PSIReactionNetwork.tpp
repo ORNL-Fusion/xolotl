@@ -4,6 +4,7 @@
 
 #include <xolotl/core/network/detail/PSITrapMutation.h>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
+#include <xolotl/core/network/detail/impl/TransformReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationClusterData.tpp>
 #include <xolotl/core/network/detail/impl/TrapMutationReactionGenerator.tpp>
 #include <xolotl/core/network/impl/PSIClusterGenerator.tpp>
@@ -194,6 +195,13 @@ PSIReactionNetwork<TSpeciesEnum>::computeFluxesPreProcess(
 		// Compute and save the radius from that
 		this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
 			computeBubbleRadius(avComp, clusterDataMirror.latticeParameter())));
+
+		// Set the depth for bursting
+		this->_clusterData.h_view().setDepth(surfaceDepth);
+
+		// Set the largest rate
+		auto largestRate = this->getLargestRate();
+		this->_clusterData.h_view().setFBursting(largestRate);
 	}
 }
 
@@ -229,6 +237,13 @@ PSIReactionNetwork<TSpeciesEnum>::computePartialsPreProcess(
 		// Compute and save the radius from that
 		this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
 			computeBubbleRadius(avComp, clusterDataMirror.latticeParameter())));
+
+		// Set the depth for bursting
+		this->_clusterData.h_view().setDepth(surfaceDepth);
+
+		// Set the largest rate
+		auto largestRate = this->getLargestRate();
+		this->_clusterData.h_view().setFBursting(largestRate);
 	}
 }
 
@@ -891,6 +906,11 @@ PSIReactionGenerator<TSpeciesEnum>::addSingleSizeReactions(
 		if (not clReg.isSimplex())
 			return;
 
+		// Bursting, add it once
+		if (i == 0) {
+			// this->addTransformReaction(tag, {bubbleId, bubbleId});
+		}
+
 		// V case
 		if (lo.isOnAxis(Species::V)) {
 			// V_k + B -> B
@@ -900,7 +920,7 @@ PSIReactionGenerator<TSpeciesEnum>::addSingleSizeReactions(
 		if (lo.isOnAxis(Species::I)) {
 			// I_k + B -> B
 			//			this->addProductionReaction(tag, {i, bubbleId,
-			//bubbleId});
+			// bubbleId});
 		}
 
 		// H case
@@ -983,7 +1003,8 @@ PSIReactionGenerator<TSpeciesEnum>::getReactionCollection() const
 	ReactionCollection<NetworkType> ret(this->_clusterData.gridSize,
 		this->_clusterData.numClusters, this->_enableReadRates,
 		this->getProductionReactions(), this->getDissociationReactions(),
-		this->getSinkReactions(), this->getTrapMutationReactions());
+		this->getSinkReactions(), this->getTransformReactions(),
+		this->getTrapMutationReactions());
 	return ret;
 }
 } // namespace detail

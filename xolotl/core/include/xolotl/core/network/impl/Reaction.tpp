@@ -572,8 +572,6 @@ ProductionReaction<TNetwork, TDerived>::computeConnectivity(
 		if (prodId == invalidIndex) {
 			continue;
 		}
-		auto prod = this->_clusterData->getCluster(prodId);
-		const auto& prodReg = prod.getRegion();
 
 		// With reactant 1
 		this->addConnectivity(prodId, _reactants[0], connectivity);
@@ -650,8 +648,6 @@ ProductionReaction<TNetwork, TDerived>::computeReducedConnectivity(
 		if (prodId == invalidIndex) {
 			continue;
 		}
-		auto prod = this->_clusterData->getCluster(prodId);
-		const auto& prodReg = prod.getRegion();
 
 		// With reactant 1
 		if (prodId == _reactants[0])

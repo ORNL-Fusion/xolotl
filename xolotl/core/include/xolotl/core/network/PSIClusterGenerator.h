@@ -39,8 +39,8 @@ double
 getMaxHPerV(double amtV, double latticeParameter, double temp) noexcept
 {
 	// Special case for 1 V
-	if (amtV < 1.5)
-		return 6;
+	if (amtV < 1.5 and amtV >= 0.0)
+		return 6.0;
 
 	// Compute the radius first (in nm)
 	double rB = (sqrt(3.0) / 4.0) * latticeParameter +
@@ -68,6 +68,54 @@ getMaxHPerV(double amtV, double latticeParameter, double temp) noexcept
 		(3.0 * v * 1.0e-6);
 
 	return 2.0 * nM;
+}
+
+KOKKOS_INLINE_FUNCTION
+double
+getMaxHPerVdV(double amtV, double latticeParameter, double temp) noexcept
+{
+	// Special case for 1 V
+	if (amtV < 1.5 and amtV >= 0.0)
+		return 0.0;
+
+	// Compute the radius first (in nm)
+	double rB = (sqrt(3.0) / 4.0) * latticeParameter +
+		pow((3.0 * pow(latticeParameter, 3.0) * (double)amtV) /
+				(8.0 * ::xolotl::core::pi),
+			(1.0 / 3.0)) -
+		pow((3.0 * pow(latticeParameter, 3.0)) / (8.0 * ::xolotl::core::pi),
+			(1.0 / 3.0));
+
+	// Radius in m
+	double rBm = rB * 1.0e-9;
+	double rBmdV = 1.0e-9 *
+		(pow(latticeParameter, 3.0) / (8.0 * ::xolotl::core::pi)) *
+		pow((3.0 * pow(latticeParameter, 3.0) * (double)amtV) /
+				(8.0 * ::xolotl::core::pi),
+			(-2.0 / 3.0));
+
+	// Compute the shear modulus (in Pa)
+	double G = 163.4e9 * (1.0 - 0.18 * (temp / 3700.0));
+
+	// Compute the loop punching pressure (in MPa)
+	double p = ((2.0 * 2.65 / rBm) + (G * 3.0e-10 / rBm)) * 1.0e-6;
+	double pdV = -(2.0 * 2.65 + G * 3.0e-10) * 1.0e-6 * rBmdV / (rBm * rBm);
+
+	// Equation of state to get the molar volume (in cm3 / mol)
+	double v = 176.33 * pow(p, -1.0 / 3.0) - 633.675 * pow(p, -2.0 / 3.0) -
+		304.574 * pow(p, -4.0 / 3.0) + (731.393 + 8.59805 * temp) / p;
+	double vdV = -(176.33 / 3.0) * pdV * pow(p, -4.0 / 3.0) +
+		((2.0 * 633.675) / 3.0) * pdV * pow(p, -5.0 / 3.0) +
+		((4.0 * 304.574) / 3.0) * pdV * pow(p, -7.0 / 3.0) -
+		(731.393 + 8.59805 * temp) * pdV / (p * p);
+
+	// Get the number of hydrogen molecules
+	double m = rBm * rBm * rBm;
+	double mdV = 3.0 * rBmdV * rBm * rBm;
+	double nMdV = (6.02214e23 * (4.0 * ::xolotl::core::pi) / (3.0 * 1.0e-6)) *
+		(mdV * v - m * vdV) / (v * v);
+
+	return 2.0 * nMdV;
 }
 } // namespace psi
 

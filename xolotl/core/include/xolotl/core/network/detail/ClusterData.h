@@ -151,6 +151,8 @@ private:
 		V2_FORMATION,
 		AV_BUBBLE_RAD,
 		SINK_STRENGTH,
+		DEPTH,
+		F_BURSTING,
 		NUM_FLOAT_VALS
 	};
 
@@ -317,6 +319,32 @@ public:
 	setSinkStrength(double val)
 	{
 		setVal(_floatVals, SINK_STRENGTH, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getDepth() const
+	{
+		return _floatVals[DEPTH];
+	}
+
+	void
+	setDepth(double val)
+	{
+		setVal(_floatVals, DEPTH, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getFBursting() const
+	{
+		return _floatVals[F_BURSTING];
+	}
+
+	void
+	setFBursting(double val)
+	{
+		setVal(_floatVals, F_BURSTING, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

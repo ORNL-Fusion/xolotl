@@ -209,13 +209,13 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 			double largestVSize = this->_clusterData->maxVSize();
 
 			// Threshold contribution
-			double sigmo = computeSigmoid(avV, largestVSize, 2.0);
+			double sigmo = util::computeSigmoid(avV, largestVSize, 2.0);
 
 			// H/V contribution
 			double maxH = psi::getMaxHPerV(util::max(avV - 1.0, 1.0),
 				this->_clusterData->latticeParameter(),
 				cl.getTemperature(gridIndex));
-			sigmo *= 1.0 - computeSigmoid(avH, maxH, 2.0);
+			sigmo *= 1.0 - util::computeSigmoid(avH, maxH, 2.0);
 
 			// The standard cluster always loses the flux
 			Kokkos::atomic_sub(&fluxes[stdClusterId], f * sigmo);
@@ -250,9 +250,13 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 					this->_clusterData->latticeParameter(),
 					cl.getTemperature(gridIndex));
 				double sigmo =
-					computeSigmoid(comp[Species::D] + avH, maxH, 2.0);
+					util::computeSigmoid(comp[Species::D] + avH, maxH, 2.0);
 				if (maxH == 0.0)
 					sigmo = 1.0;
+				if (avH < 1.0)
+					sigmo = 0.0;
+				if (avV <= 0.0 or conc < 1.0e-16)
+					sigmo = 0.0;
 
 				// The other product increases
 				if (this->_products[1] != Superclass::invalidIndex) {
@@ -420,13 +424,13 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 			double largestVSize = this->_clusterData->maxVSize();
 
 			// Threshold contribution
-			double sigmo = computeSigmoid(avV, largestVSize, 2.0);
+			double sigmo = util::computeSigmoid(avV, largestVSize, 2.0);
 
 			// H/V contribution
 			double maxH = psi::getMaxHPerV(util::max(avV - 1.0, 1.0),
 				this->_clusterData->latticeParameter(),
 				cl.getTemperature(gridIndex));
-			sigmo *= 1.0 - computeSigmoid(avH, maxH, 2.0);
+			sigmo *= 1.0 - util::computeSigmoid(avH, maxH, 2.0);
 
 			// The standard cluster always loses the flux
 			f = this->_coefs(0, 0, 0, 0) * rate * sigmo;
@@ -508,22 +512,60 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 					this->_clusterData->latticeParameter(),
 					cl.getTemperature(gridIndex));
 				double sigmo =
-					computeSigmoid(comp[Species::D] + avH, maxH, 2.0);
+					util::computeSigmoid(comp[Species::D] + avH, maxH, 2.0);
 				if (maxH == 0.0)
 					sigmo = 1.0;
+				if (avH < 1.0)
+					sigmo = 0.0;
+				if (avV <= 0.0 or bC < 1.0e-16)
+					sigmo = 0.0;
 
 				// The other product increases
 				f = this->_coefs(0, 0, 0, 0) * rate * sigmo;
 				if (this->_products[1] != Superclass::invalidIndex) {
+					// Compute the terms depending on average H and V
+					double w = psi::getMaxHPerV(avV,
+						this->_clusterData->latticeParameter(),
+						cl.getTemperature(gridIndex));
+					double wdV = psi::getMaxHPerVdV(avV,
+						this->_clusterData->latticeParameter(),
+						cl.getTemperature(gridIndex));
+					double y = -2.0 * (comp[Species::D] + avH) + 2.0 * w;
+					double ydH = -2.0;
+					double ydV = 2.0 * wdV;
+					double z = 1.0 + exp(y);
+					double zdH = ydH * exp(y);
+					double zdV = ydV * exp(y);
+					double g = 1.0 / z;
+					double gdH = -zdH / (z * z);
+					double gdV = -zdV / (z * z);
+					if (g == 0.0) {
+						gdH = 0.0;
+						gdV = 0.0;
+					}
+					double fdH = this->_coefs(0, 0, 0, 0) * rate * gdH * stdC;
+					double fdV = this->_coefs(0, 0, 0, 0) * rate * gdV * stdC;
+					if (avV <= 0.0 or bC < 1.0e-16) {
+						fdH = 0.0;
+						fdV = 0.0;
+					}
 					if (this->_reactants[0] >= numClusters) {
 						Kokkos::atomic_add(
 							&values(this->_connEntries[3][0][0][0]), f * stdC);
+						Kokkos::atomic_add(
+							&values(this->_connEntries[3][0][0][2]), fdH);
+						Kokkos::atomic_add(
+							&values(this->_connEntries[3][0][0][3]), fdV);
 						Kokkos::atomic_add(
 							&values(this->_connEntries[3][0][1][0]), f * bC);
 					}
 					else {
 						Kokkos::atomic_add(
 							&values(this->_connEntries[3][0][1][0]), f * stdC);
+						Kokkos::atomic_add(
+							&values(this->_connEntries[3][0][1][2]), fdH);
+						Kokkos::atomic_add(
+							&values(this->_connEntries[3][0][1][3]), fdV);
 						Kokkos::atomic_add(
 							&values(this->_connEntries[3][0][0][0]), f * bC);
 					}
@@ -538,11 +580,19 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 						Kokkos::atomic_add(
 							&values(this->_connEntries[0][3][0][0]), f * stdC);
 						Kokkos::atomic_add(
+							&values(this->_connEntries[0][3][0][2]), fdH);
+						Kokkos::atomic_add(
+							&values(this->_connEntries[0][3][0][3]), fdV);
+						Kokkos::atomic_add(
 							&values(this->_connEntries[0][3][1][0]), f * bC);
 					}
 					else {
 						Kokkos::atomic_add(
 							&values(this->_connEntries[1][3][1][0]), f * stdC);
+						Kokkos::atomic_add(
+							&values(this->_connEntries[1][3][1][2]), fdH);
+						Kokkos::atomic_add(
+							&values(this->_connEntries[1][3][1][3]), fdV);
 						Kokkos::atomic_add(
 							&values(this->_connEntries[1][3][0][0]), f * bC);
 					}
@@ -979,6 +1029,114 @@ double
 PSISinkReaction<TSpeciesEnum>::getSinkStrength()
 {
 	return this->_clusterData->sinkStrength();
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+double
+PSITransformReaction<TSpeciesEnum>::getAppliedRate(IndexType gridIndex) const
+{
+	using NetworkType = typename Superclass::NetworkType;
+	using Species = typename NetworkType::Species;
+	using Composition = typename NetworkType::Composition;
+	using AmountType = typename NetworkType::AmountType;
+
+	// Get the radius of the cluster
+	double radius = 0.0;
+	if (isLargeBubbleReaction) {
+		radius = this->_clusterData->bubbleAvRad();
+	}
+	else {
+		auto cl = this->_clusterData->getCluster(this->_reactant);
+		radius = cl.getReactionRadius();
+	}
+
+	// Get the current depth
+	auto depth = this->_clusterData->getDepth();
+	auto f = this->_clusterData->getFBursting();
+
+	// TODO: change rate
+	return f * util::computeSigmoid(radius, depth, 2.0);
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+void
+PSITransformReaction<TSpeciesEnum>::computeCoefficients()
+{
+	// Check if the large bubble is involved
+	if (isLargeBubbleReaction) {
+		constexpr auto speciesRangeNoI = NetworkType::getSpeciesRangeNoI();
+		for (auto i : speciesRangeNoI) {
+			this->_widths(i()) = 1.0;
+		}
+		this->_coefs(0, 0, 0, 0) = 1.0;
+	}
+	else {
+		// Standard case
+		Superclass::computeCoefficients();
+	}
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+void
+PSITransformReaction<TSpeciesEnum>::computeFlux(
+	ConcentrationsView concentrations, FluxesView fluxes, IndexType gridIndex)
+{
+	// Standard case
+	if (not isLargeBubbleReaction) {
+		return Superclass::computeFlux(concentrations, fluxes, gridIndex);
+	}
+
+	auto rate = this->getAppliedRate(gridIndex);
+
+	auto ssbmId = this->_product;
+	auto avV = concentrations(ssbmId + 2) / concentrations(ssbmId);
+	auto avH = concentrations(ssbmId + 1) / concentrations(ssbmId);
+	if (concentrations(ssbmId) == 0.0) {
+		avV = 0.0;
+		avH = 0.0;
+	}
+
+	// Get the largest cluster
+	double largestHSize = this->_clusterData->maxHSize();
+	// Threshold contribution
+	double sigmo = util::computeSigmoid(avH, largestHSize, 2.0);
+
+	Kokkos::atomic_sub(
+		&fluxes[ssbmId + 1], rate * concentrations[ssbmId + 1] * sigmo);
+}
+
+template <typename TSpeciesEnum>
+KOKKOS_INLINE_FUNCTION
+void
+PSITransformReaction<TSpeciesEnum>::computePartialDerivatives(
+	ConcentrationsView concentrations, Kokkos::View<double*> values,
+	IndexType gridIndex)
+{
+	// Standard case
+	if (not isLargeBubbleReaction) {
+		return Superclass::computePartialDerivatives(
+			concentrations, values, gridIndex);
+	}
+
+	auto rate = this->getAppliedRate(gridIndex);
+
+	auto ssbmId = this->_product;
+	auto avV = concentrations(ssbmId + 2) / concentrations(ssbmId);
+	auto avH = concentrations(ssbmId + 1) / concentrations(ssbmId);
+	if (concentrations(ssbmId) == 0.0) {
+		avV = 0.0;
+		avH = 0.0;
+	}
+
+	// Get the largest cluster
+	double largestHSize = this->_clusterData->maxHSize();
+	// Threshold contribution
+	double sigmo = util::computeSigmoid(avH, largestHSize, 2.0);
+
+	Kokkos::atomic_sub(&values(this->_connEntries[1][2][0][0]), rate * sigmo);
 }
 } // namespace network
 } // namespace core

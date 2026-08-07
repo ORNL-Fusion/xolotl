@@ -225,5 +225,21 @@ secondOrderOffsetSum(
 	return toReturn;
 }
 
+/**
+ * Computes a sigmoid
+ *
+ * @param x The variable value
+ * @param target The value at which the sigmoid switches
+ * @param sharp The sharpness parameter of the function (higher -> sharper)
+ * @return The sigmoid value at this x
+ */
+KOKKOS_INLINE_FUNCTION
+double
+computeSigmoid(double x, double target, double sharp)
+{
+	double value = x / target - 1.0;
+	return 1.0 / (1.0 + exp(-sharp * target * value));
+}
+
 } /* end namespace util */
 } /* end namespace xolotl */
