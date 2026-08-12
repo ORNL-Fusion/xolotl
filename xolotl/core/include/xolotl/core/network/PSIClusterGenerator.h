@@ -34,6 +34,77 @@ getMaxHePerV(IReactionNetwork::AmountType amtV, double ratio) noexcept
 			1);
 }
 
+/**
+ * Continuous maximum number of He per V, for use in the single size bubble
+ * model (SSBM).
+ *
+ * IMPORTANT: this is deliberately distinct from getMaxHePerV() above. That
+ * function takes an INTEGER vacancy count and returns an INTEGER from a lookup
+ * table, which is correct for generating the discrete cluster network. The SSBM
+ * evaluates the He/V closure at the *average* V of the large bubble, which is a
+ * continuous solution variable (moment / concentration). Truncating it to an
+ * integer makes the residual a staircase in the state vector: the sigmoid
+ * centre jumps every time <V> crosses an integer, the Jacobian is zero almost
+ * everywhere and undefined on the jumps, and Newton has nothing to converge to.
+ *
+ * This function must therefore stay C^1 in amtV, and getMaxHePerVdV() below
+ * must remain its exact derivative.
+ *
+ * TODO: the current form reproduces the asymptotic ratio only. Replace the
+ * body with a proper He equation of state -- Hammond et al., Sci. Rep. 10
+ * (2020) 2192 is parameter-free and was written for coarse-grained models like
+ * this one; the MLB-EOS on feature-PSI-large-bubble is the other candidate.
+ * When you do, derive getMaxHePerVdV analytically the same way getMaxHPerVdV
+ * is derived (chain rule through r_B -> p -> v_molar -> n_molecules).
+ *
+ * @param amtV The average number of vacancies in the bubble (continuous)
+ * @param latticeParameter The lattice parameter
+ * @param temp The temperature
+ * @return The maximum number of He the bubble can hold at this size
+ */
+KOKKOS_INLINE_FUNCTION
+double
+getMaxHePerVCont(double amtV, double latticeParameter, double temp) noexcept
+{
+	// Floor. Newton can produce slightly negative <V> on intermediate
+	// iterates; clamping here keeps the function defined and keeps the
+	// derivative consistent with getMaxHePerVdV.
+	//
+	// KNOWN LIMITATION: this clamp makes the function C^0 but not C^1 -- there
+	// is a slope discontinuity exactly at amtV == 1.0 (below it the value is
+	// constant, above it linear). Verified against central differences: the
+	// analytic derivative agrees to machine precision everywhere except at
+	// amtV == 1.0, where the one-sided FD is half the analytic value.
+	//
+	// This is enormously better than truncating to the integer lookup table,
+	// which is discontinuous at EVERY integer, and a kink on a measure-zero
+	// set is normally harmless for Newton. But if you see the solver stalling
+	// with <V> pinned near 1, smooth the floor, e.g.
+	//     double v = 0.5 * (amtV + sqrt(amtV * amtV + eps));   // softplus-like
+	// and update getMaxHePerVdV to match.
+	double v = util::max(amtV, 1.0);
+
+	constexpr double hevRatio = 4.0;
+	return hevRatio * v;
+}
+
+/**
+ * Derivative of getMaxHePerVCont with respect to amtV.
+ * Must be kept exactly consistent with getMaxHePerVCont: the Jacobian entries
+ * for the SSBM trap mutation sigmoid chain-rule through this.
+ */
+KOKKOS_INLINE_FUNCTION
+double
+getMaxHePerVdV(double amtV, double latticeParameter, double temp) noexcept
+{
+	// Below the floor applied in getMaxHePerVCont the function is constant
+	if (amtV < 1.0)
+		return 0.0;
+
+	constexpr double hevRatio = 4.0;
+	return hevRatio;
+}
+
 KOKKOS_INLINE_FUNCTION
 double
 getMaxHPerV(double amtV, double latticeParameter, double temp) noexcept
