@@ -72,12 +72,25 @@ public:
 					this->_reactants[i], this->_reactantMomentIds[i]);
 			}
 			else {
-				// Bubble
+				// Bubble.
+				// The moment layout is network-relative: slot 0 is the gas
+				// (He) moment, the last slot (nMomentIds-1) is the V moment,
+				// and any slots in between are H-isotope moments, which only
+				// exist when the network has D and/or T. For a pure-He network
+				// nMomentIds == 2, so V lives in slot 1, NOT slot 2 --
+				// hardcoding 2 overruns the array there.
+				//
+				// Note the SSBM carries only three DOFs (C_b, gas moment,
+				// V moment), so the He and H moments deliberately alias the
+				// same hAvId(). See the static_assert in PSIReactionNetwork:
+				// mixed He/D/T SSBM networks are not currently supported.
 				this->_reactantMomentIds[i][0] =
 					this->_clusterData->hAvId(); // He
-				this->_reactantMomentIds[i][1] =
-					this->_clusterData->hAvId(); // H
-				this->_reactantMomentIds[i][2] =
+				for (IndexType j = 1; j + 1 < Superclass::nMomentIds; ++j) {
+					this->_reactantMomentIds[i][j] =
+						this->_clusterData->hAvId(); // H isotope(s)
+				}
+				this->_reactantMomentIds[i][Superclass::nMomentIds - 1] =
 					this->_clusterData->voidAvId(); // V
 			}
 
@@ -94,14 +107,19 @@ public:
 					}
 				}
 				else {
-					// Bubble
-					this->_productMomentIds[i][0] =
-						this->_clusterData->voidAvId();
+					// Bubble (same network-relative layout as the reactants:
+					// gas moment in slot 0, V moment in the last slot).
+					// NOTE: the original code assigned slot 0 twice (voidAvId
+					// then hAvId); the first assignment was dead code and has
+					// been removed.
 					this->_productMomentIds[i][0] =
 						this->_clusterData->hAvId(); // He
-					this->_productMomentIds[i][1] =
-						this->_clusterData->hAvId(); // H
-					this->_productMomentIds[i][2] =
+					for (IndexType j = 1; j + 1 < Superclass::nMomentIds;
+						 ++j) {
+						this->_productMomentIds[i][j] =
+							this->_clusterData->hAvId(); // H isotope(s)
+					}
+					this->_productMomentIds[i][Superclass::nMomentIds - 1] =
 						this->_clusterData->voidAvId(); // V
 				}
 			}
@@ -213,10 +231,15 @@ public:
 			this->copyMomentIds(this->_reactant, this->_reactantMomentIds);
 		}
 		else {
-			// Bubble
+			// Bubble (network-relative layout: gas moment in slot 0,
+			// V moment in the last slot)
 			this->_reactantMomentIds[0] = this->_clusterData->hAvId(); // He
-			this->_reactantMomentIds[1] = this->_clusterData->hAvId(); // H
-			this->_reactantMomentIds[2] = this->_clusterData->voidAvId(); // V
+			for (IndexType j = 1; j + 1 < Superclass::nMomentIds; ++j) {
+				this->_reactantMomentIds[j] =
+					this->_clusterData->hAvId(); // H isotope(s)
+			}
+			this->_reactantMomentIds[Superclass::nMomentIds - 1] =
+				this->_clusterData->voidAvId(); // V
 		}
 
 		for (auto i : {0, 1}) {
@@ -233,14 +256,19 @@ public:
 					}
 				}
 				else {
-					// Bubble
-					this->_productMomentIds[i][0] =
-						this->_clusterData->voidAvId();
+					// Bubble (same network-relative layout as the reactants:
+					// gas moment in slot 0, V moment in the last slot).
+					// NOTE: the original code assigned slot 0 twice (voidAvId
+					// then hAvId); the first assignment was dead code and has
+					// been removed.
 					this->_productMomentIds[i][0] =
 						this->_clusterData->hAvId(); // He
-					this->_productMomentIds[i][1] =
-						this->_clusterData->hAvId(); // H
-					this->_productMomentIds[i][2] =
+					for (IndexType j = 1; j + 1 < Superclass::nMomentIds;
+						 ++j) {
+						this->_productMomentIds[i][j] =
+							this->_clusterData->hAvId(); // H isotope(s)
+					}
+					this->_productMomentIds[i][Superclass::nMomentIds - 1] =
 						this->_clusterData->voidAvId(); // V
 				}
 			}
