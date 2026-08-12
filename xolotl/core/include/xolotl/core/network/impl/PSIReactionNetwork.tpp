@@ -149,12 +149,64 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraDOFs(
 	const auto& clReg =
 		this->getCluster(largestClusterId, plsm::HostMemSpace{}).getRegion();
 	Composition comp = clReg.getUpperLimitPoint();
-	this->_clusterData.h_view().setMaxVSize(comp[Species::V] - 1);
-	if constexpr (psi::hasDeuterium<Species>) {
-		this->_clusterData.h_view().setMaxHSize(comp[Species::D] - 1);
+
+	// The SSBM carries exactly three DOFs: C_b, ONE gas moment, one V moment.
+	// There is no separate He moment slot, so if the network resolves BOTH a
+	// He axis and a hydrogen axis with real extent, the two gas contents would
+	// be summed into hAvId() and every sigmoid consuming <gas> would be wrong.
+	//
+	// Note this is deliberately a check on actual network extent, not on the
+	// species enum: the hydrogen SSBM runs on a PSIFull-style network that has
+	// a He axis present but of zero extent, and must keep working.
+	//
+	// Adding a fourth DOF is the long-term fix (it also touches connectivity
+	// sizing, monitor output indexing, and restart I/O). Until then, fail
+	// loudly rather than returning quietly incorrect answers.
+	{
+		bool hasHeExtent = comp[Species::He] > 1;
+		bool hasHydrogenExtent = false;
+		if constexpr (psi::hasDeuterium<Species>) {
+			hasHydrogenExtent = hasHydrogenExtent or comp[Species::D] > 1;
+		}
+		if constexpr (psi::hasTritium<Species>) {
+			hasHydrogenExtent = hasHydrogenExtent or comp[Species::T] > 1;
+		}
+		if (hasHeExtent and hasHydrogenExtent) {
+			throw std::runtime_error(
+				"The single size bubble model (SSBM) supports one gas species "
+				"at a time: the bubble has a single gas moment DOF, which He "
+				"and hydrogen would have to share. Set either the He or the "
+				"D/T maximum size to zero in netParam, or extend the SSBM to "
+				"a fourth DOF.");
+		}
 	}
-	if constexpr (psi::hasTritium<Species>) {
-		this->_clusterData.h_view().setMaxHSize(comp[Species::T] - 1);
+
+	this->_clusterData.h_view().setMaxVSize(comp[Species::V] - 1);
+	// maxHSize is the maximum size along the GAS axis, i.e. whichever species
+	// occupies the single shared gas moment slot. The guard above has already
+	// established that exactly one gas axis has extent, so pick that one.
+	//
+	// This must be extent-based, not enum-based. Upstream used
+	// `if constexpr (hasDeuterium)`, which leaves maxHSize seeded from an
+	// empty D axis when a He-only problem is run on a network that merely has
+	// D in its species list -- and leaves it entirely unset on a pure-He
+	// network, where neither the D nor the T branch fires. Either way
+	// PSITransformReaction::computeFlux, which reads maxHSize() as the
+	// sigmoid target for bursting, gets a meaningless value.
+	{
+		auto gasMaxSize = comp[Species::He] - 1;
+		if constexpr (psi::hasDeuterium<Species>) {
+			if (comp[Species::D] > 1)
+				gasMaxSize = comp[Species::D] - 1;
+		}
+		if constexpr (psi::hasTritium<Species>) {
+			// Exclusive with D by construction: upstream had two independent
+			// `if`s here, so a network with both set maxHSize from D and then
+			// immediately overwrote it with T.
+			if (comp[Species::T] > 1)
+				gasMaxSize = comp[Species::T] - 1;
+		}
+		this->_clusterData.h_view().setMaxHSize(gasMaxSize);
 	}
 
 	this->_clusterData.h_view().setBubbleId(this->_numDOFs);
@@ -948,6 +1000,29 @@ PSIReactionGenerator<TSpeciesEnum>::addSingleSizeReactions(
 				}
 			}
 		}
+
+		// He case
+		// He_k + B -> B, with the trap mutation I product where I is modeled.
+		//
+		// NOTE: no He dissociation channel (B -> B + He_1) is registered here,
+		// unlike the H case above. He binding to vacancies in W is strong and
+		// thermal re-emission is slow at PFC temperatures, so this is a
+		// deliberate modeling assumption rather than an omission -- but it
+		// should be stated explicitly in any write-up, and revisited if the
+		// bubble needs a way to shed gas other than bursting.
+		if (lo.isOnAxis(Species::He)) {
+			auto& subpaving = this->getSubpaving();
+			Composition comp = Composition::zero();
+			comp[Species::I] = 1;
+			auto iClusterId = subpaving.findTileId(comp);
+			if (iClusterId == NetworkType::invalidIndex()) {
+				this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+			}
+			else {
+				this->addProductionReaction(
+					tag, {i, bubbleId, bubbleId, iClusterId});
+			}
+		}
 	}
 
 	// Get the composition of each cluster
@@ -967,15 +1042,26 @@ PSIReactionGenerator<TSpeciesEnum>::addSingleSizeReactions(
 	if constexpr (psi::hasDeuterium<Species>)
 		largestImpSize = hiLargest[Species::D] - 1;
 
-	// H_a + H_bV -> B
+	// X_a + Y_b -> B  (overflow off the edge of the resolved phase space)
+	//
+	// SINGLE REGISTRATION. Each axis test used to call addProductionReaction
+	// independently, so a pair satisfying two tests registered the identical
+	// reaction {i, j, bubbleId} twice, and it then contributed twice to both
+	// the flux and the Jacobian. Evaluate all the triggers, register once.
+	bool overflowsPhaseSpace = false;
 	if constexpr (psi::hasDeuterium<Species>) {
-		if (hi1[Species::D] + hi2[Species::D] - 2 > largestImpSize) {
-			this->addProductionReaction(tag, {i, j, bubbleId});
-		}
+		overflowsPhaseSpace = overflowsPhaseSpace or
+			(hi1[Species::D] + hi2[Species::D] - 2 > largestImpSize);
 	}
+	// He edge taken directly from hiLargest rather than largestImpSize, which
+	// is overwritten by the D value above on mixed networks.
+	overflowsPhaseSpace = overflowsPhaseSpace or
+		(hi1[Species::He] + hi2[Species::He] - 2 >
+			(int)hiLargest[Species::He] - 1);
+	overflowsPhaseSpace = overflowsPhaseSpace or
+		(hi1[Species::V] + hi2[Species::V] - 2 > largestVSize);
 
-	// V_a + HV_b -> B
-	if (hi1[Species::V] + hi2[Species::V] - 2 > largestVSize) {
+	if (overflowsPhaseSpace) {
 		this->addProductionReaction(tag, {i, j, bubbleId});
 	}
 
