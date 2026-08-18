@@ -2117,7 +2117,7 @@ PetscMonitor1D::computeTRIDYN(
 
 	// Define a dataset for concentrations.
 	// Everyone must create the dataset with the same shape.
-	const auto numValsPerGridpoint = 5 + 2;
+	const auto numValsPerGridpoint = 6 + 2;
 	const auto firstIdxToWrite = (_solverHandler->getLeftOffset());
 	const auto numGridpointsWithConcs = (Mx - firstIdxToWrite);
 	io::HDF5File::SimpleDataSpace<2>::Dimensions concsDsetDims = {

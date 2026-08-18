@@ -123,6 +123,16 @@ BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_8, *utf::label("1D"))
 	SystemTestCase{"system_PSI_8"}.mpiLimits(1, 50).run();
 }
 
+BOOST_AUTO_TEST_CASE_WITH_DECOR(PSI_9, *utf::label("1D"))
+{
+	SystemTestCase::copyFile("heat_system_PSI_9.dat");
+	SystemTestCase::copyFile("flux_system_PSI_9.dat");
+	SystemTestCase::copyFile("tridyn_system_PSI_9.dat");
+	SystemTestCase::copyFile("trap_system_PSI_9.dat");
+	// 1D + D + heat + trap
+	SystemTestCase{"system_PSI_9"}.mpiLimits(1, 50).run();
+}
+
 BOOST_AUTO_TEST_CASE_WITH_DECOR(Fe_1, *utf::label("0D"))
 {
 	// 0D

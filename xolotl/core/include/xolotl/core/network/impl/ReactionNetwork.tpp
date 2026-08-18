@@ -1208,10 +1208,16 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 			TQMethodTotal, TQMethodRadius, TQMethodVolume>(
 			concentrations, quantities);
 	}
+	if (match({{Q::atom, Q::atom, Q::atom, Q::atom, Q::atom, Q::atom}})) {
+		return getTotalsImpl<TQMethodAtom, TQMethodAtom, TQMethodAtom,
+			TQMethodAtom, TQMethodAtom, TQMethodAtom>(
+			concentrations, quantities);
+	}
 
 	throw TotalQuantityError("getTotals<6>: must specify one of{\n"
 							 "\t[total, atom, radius, total, atom, radius],\n"
 							 "\t[total, atom, radius, total, radius, volume]\n"
+							 "\t[atom, atom, atom, atom, atom, atom]\n"
 							 "}",
 		quantities);
 }
