@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 
+#include <boost/rational.hpp>
+
 #include <xolotl/config.h>
 #include <xolotl/options/IOptions.h>
 #include <xolotl/util/Filesystem.h>
@@ -95,7 +97,7 @@ private:
 	std::string _networkHandler;
 	std::string _materialHandler;
 	fs::path _networkLibFile;
-    fs::path _execFile;
+	fs::path _execFile;
 
 	struct NetworkData
 	{
@@ -117,34 +119,60 @@ private:
 		std::string name;
 		std::string label;
 		Type type;
-		std::array<AmountType, 2> bounds;
+
+		struct Interaction
+		{
+			std::string species;
+			boost::rational<AmountType> ratio;
+		};
+		std::vector<Interaction> interact;
 	};
 	std::vector<SpeciesData> _speciesData;
 	std::unordered_map<std::string, const SpeciesData*> _speciesLabelMap;
 
+	struct ClusterType
+	{
+		std::string label{};
+		const SpeciesData* species{nullptr};
+		std::array<std::string, 2> constituentLabels{};
+		std::array<const SpeciesData*, 2> constituents{nullptr, nullptr};
+	};
+
 	struct ClusterData
 	{
-		std::string type;
+		ClusterType type;
 		std::array<AmountType, 2> size;
 		std::string radiusExpr;
 		double migrationEnergy;
 		double diffusionFactor;
 	};
 	std::vector<ClusterData> _clusterData;
-	std::vector<std::vector<const ClusterData*>> _clusterGroups;
+	struct ClusterGroup
+	{
+		ClusterType type;
+		std::vector<const ClusterData*> cases;
+		const ClusterData* general{nullptr};
+	};
+	std::unordered_map<std::string, ClusterGroup> _clusterGroups;
 
-	struct ReactionData
+	struct ReactionParts
 	{
 		std::vector<std::string> reactantLabels;
-		std::vector<const SpeciesData*> reactants;
+		std::vector<ClusterType> reactants;
 		std::vector<std::string> productLabels;
-		std::vector<const SpeciesData*> products;
+		std::vector<ClusterType> products;
+	};
+	struct ReactionData
+	{
+        ReactionParts parts;
 		std::string type;
+		AmountType size;
 		std::string bindingExpr;
 	};
 	std::vector<ReactionData> _reactionData;
 	struct ReactionGroup
 	{
+        ReactionParts parts;
 		std::vector<const ReactionData*> cases;
 		const ReactionData* general{nullptr};
 	};

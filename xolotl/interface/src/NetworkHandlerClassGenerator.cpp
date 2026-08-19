@@ -12,6 +12,7 @@
 #define BOOST_BIND_GLOBAL_PLACEHOLDERS
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/ptree.hpp>
+#include <boost/rational.hpp>
 
 #include <xolotl/interface/NetworkHandlerClassGenerator.h>
 #include <xolotl/util/Filesystem.h>
@@ -19,6 +20,8 @@
 #include <xolotl/util/MPIUtils.h>
 #include <xolotl/util/StreamUtils.h>
 #include <xolotl/util/Tokenizer.h>
+
+using namespace std::string_literals;
 
 namespace xolotl
 {
@@ -83,6 +86,8 @@ findReplace(std::string str, const std::string& from, const std::string& to)
 	return str;
 }
 
+auto xOr = [](auto&& a, auto&& b) { return !a != !b; };
+
 NetworkHandlerClassGenerator::NetworkHandlerClassGenerator(
 	const fs::path& rnFile, const std::string& material,
 	const std::string& userMaterial) :
@@ -109,6 +114,17 @@ NetworkHandlerClassGenerator::NetworkHandlerClassGenerator(
 	_networkLibFile = _buildDir / ("lib" + _networkHandler + ".so");
 }
 
+template <typename TArray, typename TEnum>
+struct EnumIndexed : TArray
+{
+	using DimType = std::underlying_type_t<TEnum>;
+	decltype(auto)
+	operator[](TEnum enumVal)
+	{
+		return TArray::operator[](static_cast<DimType>(enumVal));
+	}
+};
+
 void
 NetworkHandlerClassGenerator::readNetworkFile()
 {
@@ -122,7 +138,9 @@ NetworkHandlerClassGenerator::readNetworkFile()
 	boost::property_tree::iptree tree;
 	boost::property_tree::read_json(ss, tree);
 
-	// network
+	/*
+	 * network
+	 */
 	auto nwNode = tree.get_child("network");
 	_networkData.label = nwNode.get<std::string>("label");
 	_networkData.desc = nwNode.get("description", "");
@@ -137,15 +155,23 @@ NetworkHandlerClassGenerator::readNetworkFile()
 	}
 	_networkData.atomicVolume = nwNode.get<double>("atomic_volume");
 
-	auto mapSpeciesType = [](const std::string& type) {
+	using SpType = SpeciesData::Type;
+	EnumIndexed<std::array<std::vector<SpeciesData>, 3>, SpType> spTypeMap;
+	auto mapSpeciesType = [&](const std::string& type) -> SpeciesData& {
 		if (type == "impurity") {
-			return SpeciesData::Type::impurity;
+			auto& sp = spTypeMap[SpType::impurity].emplace_back();
+			sp.type = SpType::impurity;
+			return sp;
 		}
 		else if (type == "vacancy") {
-			return SpeciesData::Type::vacancy;
+			auto& sp = spTypeMap[SpType::vacancy].emplace_back();
+			sp.type = SpType::vacancy;
+			return sp;
 		}
 		else if (type == "interstitial") {
-			return SpeciesData::Type::interstitial;
+			auto& sp = spTypeMap[SpType::interstitial].emplace_back();
+			sp.type = SpType::interstitial;
+			return sp;
 		}
 		else {
 			XOLOTL_ERROR(std::invalid_argument,
@@ -153,17 +179,27 @@ NetworkHandlerClassGenerator::readNetworkFile()
 		}
 	};
 
-	// species
+	/*
+	 * species
+	 */
 	auto spNode = tree.get_child("species");
 	for (auto&& [_, elNode] : spNode) {
-		auto& spData = _speciesData.emplace_back();
+		auto& spData = mapSpeciesType(toLower(elNode.get<std::string>("type")));
 		spData.name = elNode.get<std::string>("name");
 		spData.label = elNode.get<std::string>("label");
-		spData.type = mapSpeciesType(toLower(elNode.get<std::string>("type")));
-		auto bIter = begin(elNode.get_child("bounds"));
-		spData.bounds[0] = bIter->second.get_value<AmountType>();
-		spData.bounds[1] = std::next(bIter)->second.get_value<AmountType>();
+		if (elNode.count("interact")) {
+			auto ixNode = elNode.get_child("interact");
+			auto ixSpecies = ixNode.get<std::string>("species");
+			auto ixR = ixNode.get<boost::rational<AmountType>>("ratio");
+			spData.interact.push_back({.species = ixSpecies, .ratio = ixR});
+		}
 	}
+	const auto& impSp = spTypeMap[SpType::impurity];
+	std::copy(begin(impSp), end(impSp), std::back_inserter(_speciesData));
+	const auto& vacSp = spTypeMap[SpType::vacancy];
+	std::copy(begin(vacSp), end(vacSp), std::back_inserter(_speciesData));
+	const auto& intSp = spTypeMap[SpType::interstitial];
+	std::copy(begin(intSp), end(intSp), std::back_inserter(_speciesData));
 	for (auto&& sp : _speciesData) {
 		if (!_speciesLabelMap.try_emplace(sp.label, &sp).second) {
 			XOLOTL_ERROR(std::invalid_argument,
@@ -173,21 +209,57 @@ NetworkHandlerClassGenerator::readNetworkFile()
 
 	auto checkSpeciesLabel = [*this](const std::string& label,
 								 const std::string& msgPrefix) {
-		auto it = std::find_if(begin(_speciesData), end(_speciesData),
-			[&label](auto&& sp) { return sp.label == label; });
-		if (it == end(_speciesData)) {
+		if (!_speciesLabelMap.count(label)) {
 			XOLOTL_ERROR(std::invalid_argument,
 				msgPrefix + " species (" + label +
 					") not found in species list");
 		}
 	};
 
-	// clusters
+	/*
+	 ************
+	 * clusters *
+	 ************
+	 */
+
+	// parse label string as one species or two separated with a hyphen
+	auto parseClusterType = [&](const std::string& label) {
+		auto pos = label.find("-");
+		if (pos == std::string::npos) {
+			checkSpeciesLabel(label, "cluster");
+			return std::array{label, ""s};
+		}
+		auto label0 = label.substr(0, pos);
+		auto label1 = label.substr(pos + 1);
+		checkSpeciesLabel(label0, "cluster");
+		checkSpeciesLabel(label1, "cluster");
+		return std::array{label0, label1};
+	};
+
+	auto getClusterConstituents = [this](
+									  const std::array<std::string, 2> labels) {
+		const SpeciesData* sp0 = _speciesLabelMap.at(labels[0]);
+		const SpeciesData* sp1 = nullptr;
+		if (!labels[1].empty()) {
+			sp1 = _speciesLabelMap.at(labels[1]);
+		}
+		return std::array{sp0, sp1};
+	};
+
+	// read clusters
 	auto clNode = tree.get_child("clusters");
 	for (auto&& [_, elNode] : clNode) {
 		auto& clData = _clusterData.emplace_back();
-		clData.type = elNode.get<std::string>("type");
-		checkSpeciesLabel(clData.type, "cluster");
+		// cluster type
+		auto typeLabel = elNode.get<std::string>("type");
+		clData.type.label = typeLabel;
+		clData.type.constituentLabels = parseClusterType(typeLabel);
+		clData.type.constituents =
+			getClusterConstituents(clData.type.constituentLabels);
+		if (clData.type.constituents[1] == nullptr) {
+			clData.type.species = clData.type.constituents[0];
+		}
+		// cluster size range
 		clData.size = {maxAmount, maxAmount};
 		if (elNode.count("size")) {
 			auto sizeNode = elNode.get_child("size");
@@ -204,40 +276,57 @@ NetworkHandlerClassGenerator::readNetworkFile()
 				clData.size[1] = sizeNode.back().second.get_value<AmountType>();
 			}
 		}
+		// cluster radius
 		if (!elNode.count("radius")) {
 			XOLOTL_ERROR(std::invalid_argument,
 				"every cluster record must specify \"radius\"");
 		}
 		clData.radiusExpr = elNode.get<std::string>("radius");
+		// cluster parameters
 		clData.migrationEnergy = elNode.get("migration_energy", nan);
 		clData.diffusionFactor = elNode.get("diffusion_factor", nan);
 	}
-	// group clusters by species
-	_clusterGroups.assign(_speciesData.size(), {});
-	for (std::size_t i = 0; i < _speciesData.size(); ++i) {
-		const ClusterData* general = nullptr;
-		for (const auto& cl : _clusterData) {
-			if (cl.type == _speciesData[i].label) {
-				if (cl.size.size() == 0) {
-					general = &cl;
-				}
-				else {
-					_clusterGroups[i].push_back(&cl);
-				}
-			}
+	// group clusters by type
+	for (const auto& cl : _clusterData) {
+		auto& grp = _clusterGroups[cl.type.label];
+		if (grp.type.label.empty()) {
+			grp.type = cl.type;
 		}
-		if (general != nullptr) {
-			_clusterGroups[i].push_back(general);
+		if (cl.size[0] == maxAmount && cl.size[1] == maxAmount) {
+			if (grp.general != nullptr) {
+				XOLOTL_ERROR(std::runtime_error,
+					"multiple definitions of general case for " +
+						cl.type.label + " type clusters");
+			}
+			grp.general = &cl;
+		}
+		else {
+			grp.cases.push_back(&cl);
 		}
 	}
 
-	auto parseReactionExpr = [checkSpeciesLabel](const std::string& expr) {
+	auto checkClusterTypeLabel = [*this](const std::string& label,
+									 const std::string& msgPrefix) {
+		if (!_clusterGroups.count(label) && label != "0") {
+			XOLOTL_ERROR(std::invalid_argument,
+				msgPrefix + " cluster type (" + label + ") not found");
+		}
+	};
+
+	/*
+	 *************
+	 * reactions *
+	 *************
+	 */
+
+	// parse expression to get reactant and product labels
+	auto parseReactionExpr = [checkClusterTypeLabel](const std::string& expr) {
 		auto lr = util::Tokenizer<>{expr, "->"}();
 		auto reactants = util::Tokenizer<>{lr[0], "+"}();
 		auto products = util::Tokenizer<>{lr[1], "+"}();
 		for (auto& r : reactants) {
 			r = removeSpaces(r);
-			checkSpeciesLabel(r, "reactant");
+			checkClusterTypeLabel(r, "reactant");
 		}
 		for (auto& p : products) {
 			p = removeSpaces(p);
@@ -249,17 +338,17 @@ NetworkHandlerClassGenerator::readNetworkFile()
 				products.clear();
 				break;
 			}
-			checkSpeciesLabel(p, "product");
+			checkClusterTypeLabel(p, "product");
 		}
 		return std::make_tuple(reactants, products);
 	};
 
-	// reactions
+	// read reactions
 	auto rnNode = tree.get_child("reactions");
 	for (auto&& [_, elNode] : rnNode) {
 		auto& rnData = _reactionData.emplace_back();
 		if (elNode.count("expr")) {
-			std::tie(rnData.reactantLabels, rnData.productLabels) =
+			std::tie(rnData.parts.reactantLabels, rnData.parts.productLabels) =
 				parseReactionExpr(elNode.get<std::string>("expr"));
 		}
 		else {
@@ -268,57 +357,75 @@ NetworkHandlerClassGenerator::readNetworkFile()
 					"Reaction must be expressed either as \"expr\" or as "
 					"\"reactants\" and \"products\"");
 			}
+
+			// get reactant labels from list
 			auto reactantNode = elNode.get_child("reactants");
 			if (reactantNode.empty()) {
 				XOLOTL_ERROR(std::runtime_error, "Reactant list empty");
 			}
 			for (auto&& reac : reactantNode) {
 				auto s = reac.second.get_value<std::string>();
-				checkSpeciesLabel(s, "reactant");
-				rnData.reactantLabels.push_back(s);
+				checkClusterTypeLabel(s, "reactant");
+				rnData.parts.reactantLabels.push_back(s);
 			}
 
+			// get product labels from list
 			auto productNode = elNode.get_child("products");
 			if (productNode.empty()) {
 				XOLOTL_ERROR(std::runtime_error, "Product list empty");
 			}
 			for (auto&& prod : productNode) {
 				auto s = prod.second.get_value<std::string>();
-				checkSpeciesLabel(s, "product");
-				rnData.productLabels.push_back(s);
+				checkClusterTypeLabel(s, "product");
+				rnData.parts.productLabels.push_back(s);
 			}
 		}
-		for (auto&& r : rnData.reactantLabels) {
-			rnData.reactants.push_back(_speciesLabelMap.at(r));
+		for (auto&& r : rnData.parts.reactantLabels) {
+			rnData.parts.reactants.push_back(_clusterGroups.at(r).type);
 		}
-		for (auto&& p : rnData.productLabels) {
-			rnData.products.push_back(_speciesLabelMap.at(p));
+		if (rnData.parts.productLabels == std::vector{"0"s}) { }
+		else {
+			for (auto&& p : rnData.parts.productLabels) {
+				rnData.parts.products.push_back(_clusterGroups.at(p).type);
+			}
 		}
-		rnData.type = elNode.get<std::string>("type");
+		rnData.size = elNode.get("size", maxAmount);
 		if (elNode.count("binding")) {
 			rnData.bindingExpr = elNode.get<std::string>("binding");
 		}
 	}
 	// group reactions by species set
 	for (const auto& rn : _reactionData) {
-		if (rn.reactants.size() > 1) {
+		if (rn.parts.reactants.size() > 1) {
 			std::string key{};
-			for (const auto& r : rn.reactantLabels) {
+			for (const auto& r : rn.parts.reactantLabels) {
 				key += r;
 			}
-			for (const auto& p : rn.productLabels) {
+			for (const auto& p : rn.parts.productLabels) {
 				key += p;
 			}
 			auto& grp = _productionReactionGroups[key];
-			grp.general = &rn;
+			grp.parts = rn.parts;
+			if (rn.size == maxAmount) {
+				grp.general = &rn;
+			}
+			else {
+				grp.cases.push_back(&rn);
+			}
 		}
 		else {
-			std::string key = rn.reactantLabels[0];
-			for (const auto& prod : rn.productLabels) {
-				key += prod;
+			std::string key = rn.parts.reactantLabels[0];
+			for (const auto& p : rn.parts.productLabels) {
+				key += p;
 			}
 			auto& grp = _dissociationReactionGroups[key];
-			grp.general = &rn;
+			grp.parts = rn.parts;
+			if (rn.size == maxAmount) {
+				grp.general = &rn;
+			}
+			else {
+				grp.cases.push_back(&rn);
+			}
 		}
 	}
 }
@@ -399,6 +506,8 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 	auto filePath = _genDir / (_clusterGenerator + ".tpp");
 	auto ofs = openFile(filePath);
 	ofs << "#pragma once\n"
+		   "#include <ratio>\n"
+		   "\n"
 		   "#include <xolotl/core/Constants.h>\n"
 		   "#include <xolotl/util/MathUtils.h>\n"
 		   "\n"
@@ -409,8 +518,9 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 		<< "  const Region& region, BoolArray& result) const\n"
 		   "{\n"
 		   "  // no grouping\n"
-		   "  result[0] = true;\n"
-		   "  result[1] = true;\n"
+		   "  for (auto& res : result) {\n"
+		   "    res = true;\n"
+		   "  }\n"
 		   "  return true;\n"
 		   "}\n"
 		   "\n"
@@ -418,13 +528,40 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 		   "bool\n"
 		<< _clusterGenerator << "::select(const Region& region) const\n"
 		<< "{\n"
-        << "  int nAxis = 0;\n";
-    for (auto&& spec : _speciesData) {
-        ofs << "  nAxis += (region[Species::" << spec.label << "].begin() > 0);\n";
-    }
-    ofs << "  if (nAxis != 1) {\n"
-           "    return false;\n"
-           "  }\n"
+		<< "  int nAxis = 0;\n";
+	for (auto&& spec : _speciesData) {
+		ofs << "  {\n"
+			<< "  const auto& sIv = region[Species::" << spec.label << "];\n"
+			<< "  bool snz = (sIv.begin() > 0);\n"
+			   "  nAxis += snz;\n";
+		for (auto&& ix : spec.interact) {
+			ofs << "  {\n"
+				<< "  auto ixSpec = Species::" << ix.species << ";\n"
+				<< "  const auto& ixIv = region[ixSpec];\n"
+				<< "  constexpr auto iR = std::ratio<\n"
+				<< "    " << ix.ratio.numerator() << ",\n"
+				<< "    " << ix.ratio.denominator() << "\n"
+				<< "    >{};\n"
+				<< "  if (snz && (sIv.begin() \% iR.den == 0) &&\n"
+				<< "      (ixIv.begin() == iR.num * sIv.begin() / iR.den)) {\n";
+			for (auto&& sp : _speciesData) {
+				if (sp.label == spec.label || sp.label == ix.species) {
+					continue;
+				}
+				ofs << "    if (region[Species::" << sp.label << "]\n"
+					<< "        .begin() > 0) {\n"
+					<< "      return false;\n"
+					   "    }\n";
+			}
+			ofs << "    return true;\n"
+				   "  }\n"
+				   "  }\n";
+		}
+		ofs << "  }\n";
+	}
+	ofs << "  if (nAxis != 1) {\n"
+		   "    return false;\n"
+		   "  }\n"
 		   "  return true;\n"
 		   "}\n"
 		   "\n"
@@ -447,14 +584,18 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 		   "  const auto& reg = cluster.getRegion();\n"
 		   "  if (reg.isSimplex()) {\n";
 	ofs << "    Composition comp(reg.getOrigin());\n";
-	for (auto&& clGroup : _clusterGroups) {
-		if (clGroup.empty()) {
+	for (auto&& [type, grp] : _clusterGroups) {
+		if (grp.cases.empty()) {
 			continue;
 		}
-		auto species = "Species::" + clGroup[0]->type;
+		if (grp.type.species == nullptr) {
+			// TODO
+			continue;
+		}
+		auto species = "Species::" + type;
 		ofs << "    if (comp.isOnAxis(" << species << ")) {\n"
 			<< "      auto amt = comp[" << species << "];\n";
-		for (auto cl : clGroup) {
+		for (auto cl : grp.cases) {
 			if (std::isnan(cl->migrationEnergy)) {
 				continue;
 			}
@@ -471,8 +612,10 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 						<< "      }\n";
 				}
 			}
-			else {
-				ofs << "      return " << cl->migrationEnergy << ";\n";
+		}
+		if (grp.general) {
+			if (!std::isnan(grp.general->migrationEnergy)) {
+				ofs << "      return " << grp.general->migrationEnergy << ";\n";
 			}
 		}
 		ofs << "    }\n";
@@ -492,14 +635,18 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 		   "  const auto& reg = cluster.getRegion();\n"
 		   "  if (reg.isSimplex()) {\n";
 	ofs << "    Composition comp(reg.getOrigin());\n";
-	for (auto&& clGroup : _clusterGroups) {
-		if (clGroup.empty()) {
+	for (auto&& [type, grp] : _clusterGroups) {
+		if (grp.cases.empty()) {
 			continue;
 		}
-		auto species = "Species::" + clGroup[0]->type;
+		if (grp.type.species == nullptr) {
+			// TODO
+			continue;
+		}
+		auto species = "Species::" + type;
 		ofs << "    if (comp.isOnAxis(" << species << ")) {\n"
 			<< "      auto amt = comp[" << species << "];\n";
-		for (auto cl : clGroup) {
+		for (auto cl : grp.cases) {
 			if (std::isnan(cl->diffusionFactor)) {
 				continue;
 			}
@@ -516,8 +663,10 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 						<< "      }\n";
 				}
 			}
-			else {
-				ofs << "      return " << cl->diffusionFactor << ";\n";
+		}
+		if (grp.general) {
+			if (!std::isnan(grp.general->diffusionFactor)) {
+				ofs << "      return " << grp.general->diffusionFactor << ";\n";
 			}
 		}
 		ofs << "    }\n";
@@ -551,36 +700,70 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 		   "  const auto& reg = cluster.getRegion();\n"
 		   "  if (reg.isSimplex()) {\n";
 	ofs << "    Composition comp(reg.getOrigin());\n";
-	for (auto&& clGroup : _clusterGroups) {
-		if (clGroup.empty()) {
+	for (auto&& [_, grp] : _clusterGroups) {
+		if (grp.cases.empty()) {
+			// TODO: do I need this?
 			continue;
 		}
-		auto species = "Species::" + clGroup[0]->type;
-		ofs << "    if (comp.isOnAxis(" << species << ")) {\n"
-			<< "      auto amt = comp[" << species << "];\n";
-		for (auto cl : clGroup) {
-			const auto& expr = cl->radiusExpr;
-			if (cl->size[0] < maxAmount) {
-				if (cl->size[1] < maxAmount) {
-					ofs << "      if (" << cl->size[0] << " <= amt &&\n"
-						<< "          amt <= " << cl->size[1] << ") {\n"
-						<< "        // parsed from: " << expr << "\n"
-						<< "        return " << parseRadiusExpr(expr) << ";\n"
-						<< "      }\n";
+		if (grp.type.species == nullptr) {
+			auto s1 = grp.type.constituentLabels[0];
+			auto s2 = grp.type.constituentLabels[1];
+			auto spec1 = "Species::" + s1;
+			auto spec2 = "Species::" + s2;
+			auto amt1 = "amt" + s1;
+			auto amt2 = "amt" + s2;
+			ofs << "    {\n"
+				<< "    auto " << amt1 << " = comp[" << spec1 << "];\n"
+				<< "    auto " << amt2 << " = comp[" << spec2 << "];\n"
+				<< "    if (\n"
+				<< "        " << amt1 << " > 0\n"
+				<< "        && " << amt2 << " > 0";
+			for (const auto& sp : _speciesData) {
+				if (sp.label == s1 || sp.label == s2) {
+					continue;
 				}
-				else {
-					ofs << "      if (amt == " << cl->size[0] << ") {\n"
-						<< "        // parsed from: " << expr << "\n"
-						<< "        return " << parseRadiusExpr(expr) << ";\n"
-						<< "      }\n";
-				}
+				ofs << "        && comp[Species::" << sp.label << "] == 0\n";
 			}
-			else {
-				ofs << "      // parsed from: " << expr << "\n"
-					<< "      return " << parseRadiusExpr(expr) << ";\n";
+			ofs << "        ) {\n";
+			for (auto cl : grp.cases) {
+				const auto& rExpr = cl->radiusExpr;
+				auto expr = parseRadiusExpr(rExpr);
+				ofs << "      return " << expr << ";\n";
 			}
+			ofs << "    }\n"
+				<< "    }\n";
 		}
-		ofs << "    }\n";
+		else {
+			auto species = "Species::" + grp.type.label;
+			ofs << "    if (comp.isOnAxis(" << species << ")) {\n"
+				<< "      auto amt = comp[" << species << "];\n";
+			for (auto cl : grp.cases) {
+				const auto& rExpr = cl->radiusExpr;
+				auto expr = parseRadiusExpr(rExpr);
+				if (cl->size[0] < maxAmount) {
+					if (cl->size[1] < maxAmount) {
+						ofs << "      if (" << cl->size[0] << " <= amt &&\n"
+							<< "          amt <= " << cl->size[1] << ") {\n"
+							<< "        // parsed from: " << rExpr << "\n"
+							<< "        return " << expr << ";\n"
+							<< "      }\n";
+					}
+					else {
+						ofs << "      if (amt == " << cl->size[0] << ") {\n"
+							<< "        // parsed from: " << rExpr << "\n"
+							<< "        return " << expr << ";\n"
+							<< "      }\n";
+					}
+				}
+			}
+			if (grp.general) {
+				const auto& rExpr = grp.general->radiusExpr;
+				auto expr = parseRadiusExpr(rExpr);
+				ofs << "      // parsed from: " << rExpr << "\n"
+					<< "      return " << expr << ";\n";
+			}
+			ofs << "    }\n";
+		}
 	}
 	ofs << "  }\n"
 		   "  return 0.0;\n"
@@ -684,7 +867,8 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 	ofs << "  template <typename TRegion>\n"
 		   "  KOKKOS_INLINE_FUNCTION\n"
 		   "  double\n"
-		   "  getRate(const TRegion& pairCl0Reg, const TRegion& pairCl1Reg, \n"
+		   "  getRate(const TRegion& pairCl0Reg, const TRegion& "
+		   "pairCl1Reg, \n"
 		   "      const double r0, const double r1, const double dc0, \n"
 		   "      const double dc1) {\n"
 		   "    constexpr double pi = ::xolotl::core::pi;\n"
@@ -728,6 +912,24 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 		return expr;
 	};
 
+	auto expressCases = [&](auto&& rnGroup) {
+		std::stringstream oss;
+		for (auto&& rnCase : rnGroup.cases) {
+			const auto& expr = rnCase->bindingExpr;
+			oss << "    if (amt == " << rnCase->size << ") {\n"
+				<< "      be = " << parseBindingExpr(expr) << ";\n"
+				<< "    }\n"
+				<< "    else ";
+		}
+		oss << "    {\n";
+		if (rnGroup.general) {
+			const auto& expr = rnGroup.general->bindingExpr;
+			oss << "      be = " << parseBindingExpr(expr) << ";\n";
+		}
+		oss << "    }\n";
+		return oss.str();
+	};
+
 	ofs << "KOKKOS_INLINE_FUNCTION\n"
 		   "double\n"
 		<< _dissReaction << "::computeBindingEnergy(double time) {\n"
@@ -743,32 +945,148 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 		   "  auto prod1Reg = prod1.getRegion();\n"
 		   "  auto prod2Reg = prod2.getRegion();\n"
 		   "  if (clReg.isSimplex() && prod1Reg.isSimplex() &&\n"
-		   "      prod2Reg.isSimplex()) {\n";
+		   "      prod2Reg.isSimplex()) {\n"
+		   "    Composition rComp = clReg.getOrigin();\n"
+		   "    Composition p1Comp = prod1Reg.getOrigin();\n"
+		   "    Composition p2Comp = prod2Reg.getOrigin();\n"
+		   "\n"
+		   "  constexpr auto species = NetworkType::getSpeciesRange();\n"
+		   "  auto matchSpeciesPair =\n"
+		   "    [&species](Composition comp, Species s1, Species s2) {\n"
+		   "      if (comp[s1] == 0 || comp[s2] == 0) { return false; }\n"
+		   "      for (auto l : species) {\n"
+		   "        if (l == s1 || l == s2) { continue; }\n"
+		   "        if (comp[l] != 0) { return false; }\n"
+		   "      }\n"
+		   "      return true;\n"
+		   "    };\n";
 	for (auto&& [key, rnGroup] : _dissociationReactionGroups) {
-		if (!rnGroup.general) {
-			XOLOTL_ERROR(std::invalid_argument,
-				"no general case provided for reaction " + key);
+		const auto& reactants = rnGroup.parts.reactants;
+		auto r = reactants[0];
+		auto p1 = rnGroup.parts.products[0];
+		auto p2 = rnGroup.parts.products[1];
+		if (reactants.size() == 1 && r.species == nullptr) {
+			if (!rnGroup.general) {
+				XOLOTL_ERROR(std::invalid_argument,
+					"no general case provided for reaction " + key);
+			}
+			const auto& expr = rnGroup.general->bindingExpr;
+			auto rSp1Label = r.constituentLabels[0];
+			auto rSp2Label = r.constituentLabels[1];
+			auto rSp1Ref = "Species::" + rSp1Label;
+			auto rSp2Ref = "Species::" + rSp2Label;
+
+			if (p1.species && p2.species) {
+				auto p1SpRef = "Species::" + p1.label;
+				auto p2SpRef = "Species::" + p2.label;
+				ofs << "    if (matchSpeciesPair(rComp,\n"
+					<< "          " << rSp1Ref << ", " << rSp2Ref << ") &&\n"
+					<< "        (p1Comp.isOnAxis(" << p1SpRef << ") &&\n"
+					<< "        p2Comp.isOnAxis(" << p2SpRef << ")) ||\n"
+					<< "        (p1Comp.isOnAxis(" << p2SpRef << ") &&\n"
+					<< "        p2Comp.isOnAxis(" << p1SpRef << "))) {\n"
+					<< "      auto amt" << rSp1Label << " =\n"
+					<< "        rComp[" << rSp1Ref << "];\n"
+					<< "      auto amt" << rSp2Label << " =\n"
+					<< "        rComp[" << rSp2Ref << "];\n"
+					<< "      // parsed from: " << expr << "\n"
+					<< "      be = " << parseBindingExpr(expr) << ";\n"
+					<< "    }\n";
+			}
+			else if (xOr(p1.species, p2.species)) {
+				std::string pfx = "Species::";
+				auto [p1SpRef, p2Sp1Ref, p2Sp2Ref] = p1.species ?
+					std::make_tuple(pfx + p1.label,
+						pfx + p2.constituentLabels[0],
+						pfx + p2.constituentLabels[1]) :
+					std::make_tuple(pfx + p2.label,
+						pfx + p1.constituentLabels[0],
+						pfx + p1.constituentLabels[1]);
+				ofs << "    if (matchSpeciesPair(rComp,\n"
+					<< "          " << rSp1Ref << ", " << rSp2Ref << ") &&\n"
+					<< "        (p1Comp.isOnAxis(" << p1SpRef << ") &&\n"
+					<< "        matchSpeciesPair(p2Comp,\n"
+					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << ")) ||\n"
+					<< "        (p2Comp.isOnAxis(" << p1SpRef << ") &&\n"
+					<< "        matchSpeciesPair(p1Comp,\n"
+					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << "))) {\n"
+					<< "      auto amt" << rSp1Label << " =\n"
+					<< "        rComp[" << rSp1Ref << "];\n"
+					<< "      auto amt" << rSp2Label << " =\n"
+					<< "        rComp[" << rSp2Ref << "];\n"
+					<< "      // parsed from: " << expr << "\n"
+					<< "      be = " << parseBindingExpr(expr) << ";\n"
+					<< "    }\n";
+			}
+			else {
+				auto p1Sp1Ref = "Species::" + p1.constituentLabels[0];
+				auto p1Sp2Ref = "Species::" + p1.constituentLabels[1];
+				auto p2Sp1Ref = "Species::" + p2.constituentLabels[0];
+				auto p2Sp2Ref = "Species::" + p2.constituentLabels[1];
+				ofs << "    if (matchSpeciesPair(rComp,\n"
+					<< "          " << rSp1Ref << ", " << rSp2Ref << ") &&\n"
+					<< "        (matchSpeciesPair(p1Comp,\n"
+					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << ") &&\n"
+					<< "        matchSpeciesPair(p2Comp,\n"
+					<< "          " << p1Sp1Ref << ", " << p1Sp2Ref << ")) ||\n"
+					<< "        (matchSpeciesPair(p2Comp,\n"
+					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << ") &&\n"
+					<< "        matchSpeciesPair(p1Comp,\n"
+					<< "          " << p1Sp1Ref << ", " << p1Sp2Ref << "))) {\n"
+					<< "      auto amt" << rSp1Label << " =\n"
+					<< "        rComp[" << rSp1Ref << "];\n"
+					<< "      auto amt" << rSp2Label << " =\n"
+					<< "        rComp[" << rSp2Ref << "];\n"
+					<< "      // parsed from: " << expr << "\n"
+					<< "      be = " << parseBindingExpr(expr) << ";\n"
+					<< "    }\n";
+			}
+			ofs << "    else";
+			continue;
 		}
-		auto rSpec = rnGroup.general->reactantLabels[0];
-		auto p1Spec = rnGroup.general->productLabels[0];
-		auto p2Spec = rnGroup.general->productLabels[1];
-		const auto& expr = rnGroup.general->bindingExpr;
-		ofs << "    Composition rComp = clReg.getOrigin();\n"
-			   "    Composition p1Comp = prod1Reg.getOrigin();\n"
-			   "    Composition p2Comp = prod2Reg.getOrigin();\n"
-			<< "    if (rComp.isOnAxis(Species::" << rSpec << ") &&\n"
-			<< "        p1Comp.isOnAxis(Species::" << p1Spec << ") &&\n"
-			<< "        p2Comp.isOnAxis(Species::" << p2Spec << ")) {\n"
-			<< "      auto amt = rComp[Species::" << rSpec << "];\n";
-		for (auto rn : rnGroup.cases) {
-			// TODO: cases for specific sizes
+		if (reactants.size() == 1 && xOr(p1.species, p2.species)) {
+			auto rSpLabel = r.label;
+			std::string pfx = "Species::";
+			auto rSpRef = pfx + reactants[0].label;
+			auto [p1SpRef, p2Sp1Ref, p2Sp2Ref] = p1.species ?
+				std::make_tuple(pfx + p1.label, pfx + p2.constituentLabels[0],
+					pfx + p2.constituentLabels[1]) :
+				std::make_tuple(pfx + p2.label, pfx + p1.constituentLabels[0],
+					pfx + p1.constituentLabels[1]);
+			ofs << "    if (rComp.isOnAxis(" << rSpRef << ") &&\n"
+				<< "        (p1Comp.isOnAxis(" << p1SpRef << ") &&\n"
+				<< "          matchSpeciesPair(p2Comp,\n"
+				<< "            " << p2Sp1Ref << ", " << p2Sp2Ref << ")) ||\n"
+				<< "        (p2Comp.isOnAxis(" << p1SpRef << ") &&\n"
+				<< "          matchSpeciesPair(p1Comp,\n"
+				<< "            " << p2Sp2Ref << ", " << p2Sp2Ref << "))) {\n"
+				<< "      auto amt = rComp[" << rSpRef << "];\n"
+				<< expressCases(rnGroup)
+				// << "      be = " << parseBindingExpr(expr) << ";\n"
+				<< "    }\n";
+			ofs << "    else";
+			continue;
 		}
-		ofs << "      // parsed from: " << expr << "\n"
-			<< "      be = " << parseBindingExpr(expr) << ";\n"
-			<< "    }\n";
+		if (reactants.size() == 1 && p1.label == p2.label) {
+			auto spec = p1.label;
+			auto specRef = "Species::" + spec;
+			auto rSpLabel = r.label;
+			auto rSpRef = "Species::" + rSpLabel;
+			ofs << "    if (rComp.isOnAxis(" << rSpRef << ") &&\n"
+				<< "        p1Comp.isOnAxis(" << specRef << ") &&\n"
+				<< "        p2Comp.isOnAxis(" << specRef << ")) {\n"
+				<< "      auto amt = rComp[" << rSpRef << "];\n"
+				<< expressCases(rnGroup)
+				// << "      be = " << parseBindingExpr(expr) << ";\n"
+				<< "    }\n";
+			ofs << "    else";
+			continue;
+		}
+		XOLOTL_ERROR(std::runtime_error, "unsupported reaction case");
 	}
-	ofs << "  }\n"
-            " return util::max(-5.0, util::min(be, 5.0));\n"
+	ofs << "    {}\n"
+		   "  }\n"
+		   " return util::max(-5.0, util::min(be, 5.0));\n"
 		   // "  return util::clamp(be, -5.0, 5.0);\n"
 		   "}\n\n";
 
@@ -1027,7 +1345,8 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		   "  using AmountType = typename NetworkType::AmountType;\n"
 		   "\n"
 		   "  constexpr auto species = NetworkType::getSpeciesRange();\n"
-		   "  constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();\n"
+		   "  constexpr auto speciesNoI = "
+		   "    NetworkType::getSpeciesRangeNoI();\n"
 		   "\n"
 		   "  const auto& cl1Reg = this->getCluster(i).getRegion();\n"
 		   "  const auto& cl2Reg = this->getCluster(j).getRegion();\n"
@@ -1035,6 +1354,35 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		   "  Composition lo2 = cl2Reg.getOrigin();\n"
 		   "\n"
 		   "  auto& subpaving = this->getSubpaving();\n"
+		   "\n"
+		   "  auto matchSpeciesPair =\n"
+		   "    [&species](Composition lo, Species s1, Species s2) {\n"
+		   "      if (lo[s1] == 0 || lo[s2] == 0) { return false; }\n"
+		   "      for (auto l : species) {\n"
+		   "        if (l == s1 || l == s2) { continue; }\n"
+		   "        if (lo[l] != 0) { return false; }\n"
+		   "      }\n"
+		   "      return true;\n"
+		   "    };\n"
+		   "\n"
+		   "  auto tryAddProdReaction = [&](const auto& comp) {\n"
+		   "    if (comp == Composition::zero()) {\n"
+		   "      return;\n"
+		   "    }\n"
+		   "    auto pId = subpaving.findTileId(comp);\n"
+		   "    if (pId != subpaving.invalidIndex()) {\n"
+		   "      this->addProductionReaction(tag, {i, j, pId});\n"
+		   "    }\n"
+		   "  };\n"
+		   "  auto tryAddDissReaction = [&](const auto& comp) {\n"
+		   "    if (comp == Composition::zero()) {\n"
+		   "      return;\n"
+		   "    }\n"
+		   "    auto rId = subpaving.findTileId(comp);\n"
+		   "    if (rId != subpaving.invalidIndex()) {\n"
+		   "      this->addDissociationReaction(tag, {rId, i, j});\n"
+		   "    }\n"
+		   "  };\n"
 		   "\n"
 		   "  if (cl1Reg.isSimplex() && cl2Reg.isSimplex()) {\n";
 
@@ -1052,107 +1400,294 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 	};
 
 	for (auto&& [key, grp] : _productionReactionGroups) {
-		auto r1 = grp.general->reactants[0];
-		auto r2 = grp.general->reactants[1];
-		const auto& products = grp.general->products;
-		if (r1->label == r2->label) {
-			auto spec = r1->label;
+		auto r1 = grp.parts.reactants[0];
+		auto r2 = grp.parts.reactants[1];
+		const auto& products = grp.parts.products;
+		if (products.size() == 1 && products[0].species == nullptr) {
+			// interaction cases
+			ofs << "    {\n"
+				   "    Composition comp = Composition::zero();\n";
+			if (r1.species && r2.species) {
+				auto r1SpRef = "Species::" + r1.label;
+				auto r2SpRef = "Species::" + r2.label;
+				ofs << "    if (lo1.isOnAxis(" << r1SpRef << ") &&\n"
+					<< "        lo2.isOnAxis(" << r2SpRef << ")) {\n"
+					<< "      comp[" << r1SpRef << "] =\n"
+					<< "        lo1[" << r1SpRef << "];\n"
+					<< "      comp[" << r2SpRef << "] =\n"
+					<< "        lo2[" << r2SpRef << "];\n"
+					<< "      tryAddProdReaction(comp);\n"
+					<< "    }\n"
+					<< "    if (lo2.isOnAxis(" << r1SpRef << ") &&\n"
+					<< "        lo1.isOnAxis(" << r2SpRef << ")) {\n"
+					<< "      comp[" << r1SpRef << "] =\n"
+					<< "        lo2[" << r1SpRef << "];\n"
+					<< "      comp[" << r2SpRef << "] =\n"
+					<< "        lo1[" << r2SpRef << "];\n"
+					<< "      tryAddProdReaction(comp);\n"
+					<< "    }\n";
+			}
+			else if (xOr(r1.species, r2.species)) {
+				std::string pfx = "Species::";
+				auto [r1SpRef, r2Sp1Ref, r2Sp2Ref] = r1.species ?
+					std::make_tuple(pfx + r1.label,
+						pfx + r2.constituentLabels[0],
+						pfx + r2.constituentLabels[1]) :
+					std::make_tuple(pfx + r2.label,
+						pfx + r1.constituentLabels[0],
+						pfx + r1.constituentLabels[1]);
+				ofs << "    if (lo1.isOnAxis(" << r1SpRef << ") &&\n"
+					<< "        matchSpeciesPair(lo2,\n"
+					<< "          " << r2Sp1Ref << ", " << r2Sp2Ref << ")) {\n"
+					<< "      comp = Composition::zero();\n"
+					<< "      comp[" << r1SpRef << "] +=\n"
+					<< "        lo1[" << r1SpRef << "];\n"
+					<< "      comp[" << r2Sp1Ref << "] +=\n"
+					<< "        lo2[" << r2Sp1Ref << "];\n"
+					<< "      comp[" << r2Sp2Ref << "] +=\n"
+					<< "        lo2[" << r2Sp2Ref << "];\n"
+					<< "      tryAddProdReaction(comp);\n"
+					<< "    }\n"
+					<< "    if (lo2.isOnAxis(" << r1SpRef << ") &&\n"
+					<< "        matchSpeciesPair(lo1,\n"
+					<< "          " << r2Sp1Ref << ", " << r2Sp2Ref << ")) {\n"
+					<< "      comp = Composition::zero();\n"
+					<< "      comp[" << r1SpRef << "] +=\n"
+					<< "        lo2[" << r1SpRef << "];\n"
+					<< "      comp[" << r2Sp1Ref << "] +=\n"
+					<< "        lo1[" << r2Sp1Ref << "];\n"
+					<< "      comp[" << r2Sp2Ref << "] +=\n"
+					<< "        lo1[" << r2Sp2Ref << "];\n"
+					<< "      tryAddProdReaction(comp);\n"
+					<< "    }\n";
+			}
+			else {
+				auto sp1Label = r1.constituentLabels[0];
+				auto sp2Label = r1.constituentLabels[1];
+				if (sp1Label != r2.constituentLabels[0] ||
+					sp2Label != r2.constituentLabels[1]) {
+					XOLOTL_ERROR(
+						std::runtime_error, "unsupported reaction case");
+				}
+				auto sp1Ref = "Species::" + sp1Label;
+				auto sp2Ref = "Species::" + sp2Label;
+				ofs << "    if (matchSpeciesPair(lo1, sp1Ref, sp2Ref) &&\n"
+					<< "        matchSpeciesPair(lo2, sp1Ref, sp2Ref)) {\n"
+					<< "      comp[" << sp1Ref << "] +=\n"
+					<< "        lo1[" << sp1Ref << "] +\n"
+					<< "        lo2[" << sp1Ref << "];\n"
+					<< "      comp[" << sp2Ref << "] +=\n"
+					<< "        lo1[" << sp2Ref << "] +\n"
+					<< "        lo2[" << sp2Ref << "];\n"
+					<< "      tryAddProdReaction(comp);\n"
+					<< "    }\n";
+			}
+			ofs << "    }\n";
+			continue;
+		}
+		if (r1.label == r2.label) {
+			auto spec = r1.label;
 			auto specRef = "Species::" + spec;
-			auto pSpRef = "Species::" + products[0]->label;
+			auto pSpRef = "Species::" + products[0].label;
 			ofs << "    if (lo1.isOnAxis(" << specRef << ") &&\n"
 				<< "        lo2.isOnAxis(" << specRef << ")) {\n"
 				<< "      auto size = lo1[" << specRef << "] +\n"
 				<< "        lo2[" << specRef << "];\n"
 				<< "      Composition comp = Composition::zero();\n"
 				<< "      comp[" << pSpRef << "] = size;\n"
-				<< "      auto pId = subpaving.findTileId(comp);\n"
-				<< "      if (pId != subpaving.invalidIndex()) {\n"
-				<< "        this->addProductionReaction(tag, {i, j, pId});\n"
-				<< "      }\n"
+				<< "      tryAddProdReaction(comp);\n"
 				<< "    }\n";
 		}
-		else {
-			auto [flag, v, i] = checkVacItrPair(r1, r2);
-			if (flag) {
-				auto vSpec = v->label;
-				auto iSpec = i->label;
-				auto vSpecRef = "Species::" + vSpec;
-				auto iSpecRef = "Species::" + iSpec;
-				ofs << "    if ((lo1.isOnAxis(" << vSpecRef << ") &&\n"
-					<< "        lo2.isOnAxis(" << iSpecRef << ")) ||\n"
-					<< "        (lo1.isOnAxis(" << iSpecRef << ") &&\n"
-					<< "        lo2.isOnAxis(" << vSpecRef << "))) {\n"
-					<< "      auto vSize = lo1.isOnAxis(" << vSpecRef << ") ?\n"
-					<< "          lo1[" << vSpecRef << "] :\n"
-					<< "          lo2[" << vSpecRef << "];\n"
-					<< "      auto iSize = lo1.isOnAxis(" << iSpecRef << ") ?\n"
-					<< "          lo1[" << iSpecRef << "] :\n"
-					<< "          lo2[" << iSpecRef << "];\n"
-					<< "      auto prodSize = vSize - iSize;\n";
-				if (products.empty()) {
-					ofs << "      if (prodSize == 0) {\n"
-						   "        this->addProductionReaction(tag, {i, j});\n"
-						   "      }\n";
-				}
-				else if (products.size() == 1 &&
-					products[0]->type == SpeciesData::Type::vacancy) {
-					ofs << "      if (prodSize > 0) {\n"
-						<< "        Composition comp = Composition::zero();\n"
-						<< "        comp[" << vSpecRef << "] = prodSize;\n"
-						<< "        auto pId = subpaving.findTileId(comp);\n"
-						   "        if (pId != subpaving.invalidIndex()) {\n"
-						   "          this->addProductionReaction(\n"
-						   "            tag, {i, j, pId});\n"
-						   "        }\n"
-						   "      }\n";
-				}
-				else if (products.size() == 1 &&
-					products[0]->type == SpeciesData::Type::interstitial) {
-					ofs << "      if (prodSize < 0) {\n"
-						<< "        Composition comp = Composition::zero();\n"
-						<< "        comp[" << iSpecRef << "] = -prodSize;\n"
-						<< "        auto pId = subpaving.findTileId(comp);\n"
-						   "        if (pId != subpaving.invalidIndex()) {\n"
-						   "          this->addProductionReaction(\n"
-						   "            tag, {i, j, pId});\n"
-						   "        }\n"
-						   "      }\n";
-				}
-				else {
-					XOLOTL_ERROR(
-						std::runtime_error, "unsupported reaction case");
-				}
-				ofs << "    }\n";
+		else if (auto [f, v, i] = checkVacItrPair(r1.species, r2.species); f) {
+			auto vSpec = v->label;
+			auto iSpec = i->label;
+			auto vSpecRef = "Species::" + vSpec;
+			auto iSpecRef = "Species::" + iSpec;
+			ofs << "    if ((lo1.isOnAxis(" << vSpecRef << ") &&\n"
+				<< "        lo2.isOnAxis(" << iSpecRef << ")) ||\n"
+				<< "        (lo1.isOnAxis(" << iSpecRef << ") &&\n"
+				<< "        lo2.isOnAxis(" << vSpecRef << "))) {\n"
+				<< "      auto vSize = lo1.isOnAxis(" << vSpecRef << ") ?\n"
+				<< "          lo1[" << vSpecRef << "] :\n"
+				<< "          lo2[" << vSpecRef << "];\n"
+				<< "      auto iSize = lo1.isOnAxis(" << iSpecRef << ") ?\n"
+				<< "          lo1[" << iSpecRef << "] :\n"
+				<< "          lo2[" << iSpecRef << "];\n"
+				<< "      int prodSize = vSize - iSize;\n";
+			if (products.empty()) {
+				ofs << "      if (prodSize == 0) {\n"
+					   "        this->addProductionReaction(tag, {i, j});\n"
+					   "      }\n";
+			}
+			else if (products.size() == 1 &&
+				products[0].species->type == SpeciesData::Type::vacancy) {
+				ofs << "      if (prodSize > 0) {\n"
+					<< "        Composition comp = Composition::zero();\n"
+					<< "        comp[" << vSpecRef << "] = prodSize;\n"
+					<< "        tryAddProdReaction(comp);\n"
+					   "      }\n";
+			}
+			else if (products.size() == 1 &&
+				products[0].species->type == SpeciesData::Type::interstitial) {
+				ofs << "      if (prodSize < 0) {\n"
+					<< "        Composition comp = Composition::zero();\n"
+					<< "        comp[" << iSpecRef << "] = -prodSize;\n"
+					<< "        tryAddProdReaction(comp);\n"
+					   "      }\n";
 			}
 			else {
 				XOLOTL_ERROR(std::runtime_error, "unsupported reaction case");
 			}
+			ofs << "    }\n";
+		}
+		else {
+			XOLOTL_ERROR(std::runtime_error, "unsupported reaction case");
 		}
 	}
 
 	for (auto&& [key, grp] : _dissociationReactionGroups) {
-		auto r1 = grp.general->products[0];
-		auto r2 = grp.general->products[1];
-		const auto& reactants = grp.general->reactants;
-		if (r1->label == r2->label) {
-			auto spec = r1->label;
+		auto p1 = grp.parts.products[0];
+		auto p2 = grp.parts.products[1];
+		const auto& reactants = grp.parts.reactants;
+		if (reactants.size() == 1 && reactants[0].species == nullptr) {
+			// interaction cases
+			ofs << "    {\n"
+				   "    Composition comp = Composition::zero();\n";
+			if (p1.species && p2.species) {
+				auto p1SpRef = "Species::" + p1.label;
+				auto p2SpRef = "Species::" + p2.label;
+				ofs << "    if (lo1.isOnAxis(" << p1SpRef << ") &&\n"
+					<< "        lo2.isOnAxis(" << p2SpRef << ")) {\n"
+					<< "      comp[" << p1SpRef << "] =\n"
+					<< "        lo1[" << p1SpRef << "];\n"
+					<< "      comp[" << p2SpRef << "] =\n"
+					<< "        lo2[" << p2SpRef << "];\n"
+					<< "      tryAddDissReaction(comp);\n"
+					<< "    }\n"
+					<< "    if (lo2.isOnAxis(" << p1SpRef << ") &&\n"
+					<< "        lo1.isOnAxis(" << p2SpRef << ")) {\n"
+					<< "      comp[" << p1SpRef << "] =\n"
+					<< "        lo2[" << p1SpRef << "];\n"
+					<< "      comp[" << p2SpRef << "] =\n"
+					<< "        lo1[" << p2SpRef << "];\n"
+					<< "      tryAddDissReaction(comp);\n"
+					<< "    }\n";
+			}
+			else if (xOr(p1.species, p2.species)) {
+				std::string pfx = "Species::";
+				auto [p1SpRef, p2Sp1Ref, p2Sp2Ref] = p1.species ?
+					std::make_tuple(pfx + p1.label,
+						pfx + p2.constituentLabels[0],
+						pfx + p2.constituentLabels[1]) :
+					std::make_tuple(pfx + p2.label,
+						pfx + p1.constituentLabels[0],
+						pfx + p1.constituentLabels[1]);
+				ofs << "    if (lo1.isOnAxis(" << p1SpRef << ") &&\n"
+					<< "        matchSpeciesPair(lo2,\n"
+					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << ")) {\n"
+					<< "      comp = Composition::zero();\n"
+					<< "      comp[" << p1SpRef << "] +=\n"
+					<< "        lo1[" << p1SpRef << "];\n"
+					<< "      comp[" << p2Sp1Ref << "] +=\n"
+					<< "        lo2[" << p2Sp1Ref << "];\n"
+					<< "      comp[" << p2Sp2Ref << "] +=\n"
+					<< "        lo2[" << p2Sp2Ref << "];\n"
+					<< "      tryAddDissReaction(comp);\n"
+					<< "    }\n"
+					<< "    if (lo2.isOnAxis(" << p1SpRef << ") &&\n"
+					<< "        matchSpeciesPair(lo1,\n"
+					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << ")) {\n"
+					<< "      comp = Composition::zero();\n"
+					<< "      comp[" << p1SpRef << "] +=\n"
+					<< "        lo2[" << p1SpRef << "];\n"
+					<< "      comp[" << p2Sp1Ref << "] +=\n"
+					<< "        lo1[" << p2Sp1Ref << "];\n"
+					<< "      comp[" << p2Sp2Ref << "] +=\n"
+					<< "        lo1[" << p2Sp2Ref << "];\n"
+					<< "      tryAddDissReaction(comp);\n"
+					<< "    }\n";
+			}
+			else {
+				auto sp1Label = p1.constituentLabels[0];
+				auto sp2Label = p1.constituentLabels[1];
+				if (sp1Label != p2.constituentLabels[0] ||
+					sp2Label != p2.constituentLabels[1]) {
+					XOLOTL_ERROR(
+						std::runtime_error, "unsupported reaction case");
+				}
+				auto sp1Ref = "Species::" + sp1Label;
+				auto sp2Ref = "Species::" + sp2Label;
+				ofs << "    if (matchSpeciesPair(lo1,\n"
+					<< "          " << sp1Ref << ", " << sp2Ref << ") &&\n"
+					<< "        matchSpeciesPair(lo2,\n"
+					<< "          " << sp1Ref << ", " << sp2Ref << ")) {\n"
+					<< "      comp[" << sp1Ref << "] +=\n"
+					<< "        lo1[" << sp1Ref << "] +\n"
+					<< "        lo2[" << sp1Ref << "];\n"
+					<< "      comp[" << sp2Ref << "] +=\n"
+					<< "        lo1[" << sp2Ref << "] +\n"
+					<< "        lo2[" << sp2Ref << "];\n"
+					<< "      tryAddDissReaction(comp);\n"
+					<< "    }\n";
+			}
+			ofs << "    }\n";
+			continue;
+		}
+		if (reactants.size() == 1 && !(p1.species && p2.species)) {
+			// One of the products is an interaction
+			auto rSpRef = "Species::" + reactants[0].label;
+			ofs << "    Composition comp = Composition::zero();\n";
+			if (xOr(p1.species, p2.species)) {
+				std::string pfx = "Species::";
+				auto [p1SpRef, p2Sp1Ref, p2Sp2Ref] = p1.species ?
+					std::make_tuple(pfx + p1.label,
+						pfx + p2.constituentLabels[0],
+						pfx + p2.constituentLabels[1]) :
+					std::make_tuple(pfx + p2.label,
+						pfx + p1.constituentLabels[0],
+						pfx + p1.constituentLabels[1]);
+				ofs << "    if (lo1.isOnAxis(" << p1SpRef << ") &&\n"
+					<< "        matchSpeciesPair(lo2,\n"
+					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << ")) {\n"
+					<< "      comp = Composition::zero();\n"
+					<< "      comp[" << p1SpRef << "] +=\n"
+					<< "        lo1[" << p1SpRef << "];\n"
+					<< "      comp[" << p2Sp1Ref << "] +=\n"
+					<< "        lo2[" << p2Sp1Ref << "];\n"
+					<< "      comp[" << p2Sp2Ref << "] +=\n"
+					<< "        lo2[" << p2Sp2Ref << "];\n"
+					<< "      tryAddDissReaction(comp);\n"
+					<< "    }\n"
+					<< "    if (lo2.isOnAxis(" << p1SpRef << ") &&\n"
+					<< "        matchSpeciesPair(lo1,\n"
+					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << ")) {\n"
+					<< "      comp = Composition::zero();\n"
+					<< "      comp[" << p1SpRef << "] +=\n"
+					<< "        lo2[" << p1SpRef << "];\n"
+					<< "      comp[" << p2Sp1Ref << "] +=\n"
+					<< "        lo1[" << p2Sp1Ref << "];\n"
+					<< "      comp[" << p2Sp2Ref << "] +=\n"
+					<< "        lo1[" << p2Sp2Ref << "];\n"
+					<< "      tryAddDissReaction(comp);\n"
+					<< "    }\n";
+			}
+			continue;
+		}
+		if (reactants.size() == 1 && p1.label == p2.label) {
+			auto spec = p1.label;
 			auto specRef = "Species::" + spec;
-			auto rSpRef = "Species::" + reactants[0]->label;
+			auto rSpRef = "Species::" + reactants[0].label;
 			ofs << "    if (lo1.isOnAxis(" << specRef << ") &&\n"
 				<< "        lo2.isOnAxis(" << specRef << ")) {\n"
 				<< "      auto size = lo1[" << specRef << "] +\n"
 				<< "        lo2[" << specRef << "];\n"
 				<< "      Composition comp = Composition::zero();\n"
 				<< "      comp[" << rSpRef << "] = size;\n"
-				<< "      auto pId = subpaving.findTileId(comp);\n"
-				<< "      if (pId != subpaving.invalidIndex()) {\n"
-				<< "        this->addDissociationReaction(tag, {pId, i, j});\n"
-				<< "      }\n"
+				<< "      tryAddDissReaction(comp);\n"
 				<< "    }\n";
+			continue;
 		}
-		else {
-			XOLOTL_ERROR(std::runtime_error, "unsupported reaction case");
-		}
+		XOLOTL_ERROR(std::runtime_error, "unsupported reaction case");
 	}
 	ofs << "  }\n"
 		   "}\n"
@@ -1170,9 +1705,11 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		<< _reactionGenerator << "::getReactionCollection() const\n"
 		<< "{\n"
 		   "  ReactionCollection<NetworkType> ret(\n"
-		   "    this->_clusterData.gridSize, this->_clusterData.numClusters,\n"
+		   "    this->_clusterData.gridSize, "
+		   "this->_clusterData.numClusters,\n"
 		   "    this->_enableReadRates, this->getProductionReactions(),\n"
-		   "    this->getDissociationReactions(), this->getSinkReactions());\n"
+		   "    this->getDissociationReactions(), "
+		   "this->getSinkReactions());\n"
 		   "  return ret;\n"
 		   "}\n";
 
@@ -1226,7 +1763,8 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		<< "\n"
 		<< "template double\n"
 		<< "ReactionNetwork<" << _reactionNetwork << ">\n"
-		<< "  ::getTotalAtomConcentration(ConcentrationsView concentrations,\n"
+		<< "  ::getTotalAtomConcentration(ConcentrationsView "
+		   "concentrations,\n"
 		   "    Species type, AmountType minSize);\n"
 		<< "\n"
 		<< "template double\n"
@@ -1280,7 +1818,8 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		<< _reactionNetwork << "::checkLargestClusterId\",\n"
 		<< "    _numClusters,\n"
 		   "    KOKKOS_LAMBDA(IndexType i, Reducer::value_type& update) {\n"
-		   "      const Region& clReg = clData().getCluster(i).getRegion();\n"
+		   "      const Region& clReg = "
+		   "clData().getCluster(i).getRegion();\n"
 		   "      Composition hi = clReg.getUpperLimitPoint();\n"
 		   "      auto size = hi[Species::V];\n" // TODO: ?
 		   "      if (size > update.val) {\n"
@@ -1365,7 +1904,8 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		<< "  const std::vector<double>& localData, double time)\n"
 		   "{\n"
 		   "  auto numSpecies = getSpeciesListSize();\n"
-		   "  auto globalData = std::vector<double>(localData.size(), 0.0);\n"
+		   "  auto globalData = std::vector<double>(localData.size(), "
+		   "0.0);\n"
 		   "  MPI_Reduce(localData.data(), globalData.data(),\n"
 		   "    localData.size(), MPI_DOUBLE, MPI_SUM, 0,\n"
 		   "    util::getMPIComm());\n"
@@ -1436,7 +1976,8 @@ NetworkHandlerClassGenerator::generateNetworkHandler()
 
 	filePath = _genDir / (_networkHandler + ".cpp");
 	ofs = openFile(filePath);
-	ofs << "#include <xolotl/factory/network/NetworkHandlerFactory.h>\n"
+	ofs << "#include <plsm/EnumIndexed.h>\n"
+		<< "#include <xolotl/factory/network/NetworkHandlerFactory.h>\n"
 		<< "#include <" << _networkHandler << ".h>\n"
 		<< "#include <" << _reactionNetwork << ".h>\n"
 		<< "\n"
@@ -1444,7 +1985,8 @@ NetworkHandlerClassGenerator::generateNetworkHandler()
 		   "{\n"
 		   "namespace detail\n"
 		   "{\n"
-		   "using NHF = ::xolotl::factory::network::NetworkHandlerFactory;\n"
+		   "using NHF = "
+		   "::xolotl::factory::network::NetworkHandlerFactory;\n"
 		   "template <typename T>\n"
 		   "using RegCol = NHF::RegistrationCollection<T>;\n"
 		   "auto networkHandlerRegistrations =\n"
@@ -1454,13 +1996,29 @@ NetworkHandlerClassGenerator::generateNetworkHandler()
 		   "\n"
 		   "auto nwGenerator = [](const options::IOptions& options) {\n"
 		<< "  using NetworkType = " << _reactionNetwork << ";\n"
-		<< "  using AmountType = NetworkType::AmountType;\n"
-		   "  AmountType maxV = options.getMaxV();\n"
-		   "  AmountType maxI = options.getMaxI();\n"
-		   "  std::vector<AmountType> maxSpeciesAmounts = {\n"
-		   "    maxV, maxI};\n"
-		   "  std::vector<NetworkType::SubdivisionRatio> subdivRatios = {\n"
-		   "    {maxV + 1, maxI + 1}};\n"
+		<< "  using Species = NetworkType::Species;\n"
+		   "  using AmountType = NetworkType::AmountType;\n"
+		   "  const auto& params = options.getNetworkParameters();\n"
+		   "  auto nSpecies = NetworkType::getNumberOfSpecies();\n"
+		   "  auto maxSpeciesAmounts = std::vector<AmountType>(nSpecies);\n"
+		   "  plsm::EnumIndexed<NetworkType::SubdivisionRatio, Species> rat;\n";
+	for (auto&& sp : _speciesData) {
+		switch (sp.type) {
+		case SpeciesData::Type::impurity:
+			ofs << "  rat[Species::" << sp.label << "] = params[0] + 1;\n";
+			break;
+		case SpeciesData::Type::vacancy:
+			ofs << "  rat[Species::" << sp.label << "] = params[3] + 1;\n";
+			break;
+		case SpeciesData::Type::interstitial:
+			ofs << "  rat[Species::" << sp.label << "] = params[4] + 1;\n";
+			break;
+		}
+	}
+	ofs << "  std::vector<NetworkType::SubdivisionRatio> subdivRatios{{rat}};\n"
+		<< "  for (std::size_t i = 0; i < nSpecies; ++i) {\n"
+		   "    maxSpeciesAmounts[i] = rat[i] - 1;\n"
+		   "  }\n"
 		   "  auto network = std::make_shared<NetworkType>(\n"
 		   "    maxSpeciesAmounts, subdivRatios, 1, options);\n"
 		   "  return network;\n"
@@ -1492,7 +2050,8 @@ NetworkHandlerClassGenerator::generateNetworkHandler()
 		<< "\n"
 		<< "namespace detail\n"
 		   "{\n"
-		   "using MHF = ::xolotl::factory::material::MaterialHandlerFactory;\n"
+		   "using MHF = "
+		   "::xolotl::factory::material::MaterialHandlerFactory;\n"
 		   "template <typename T>\n"
 		   "using RegCol = MHF::RegistrationCollection<T>;\n"
 		   "auto materialHandlerRegistrations = RegCol<"
@@ -1533,7 +2092,7 @@ NetworkHandlerClassGenerator::generateBuild()
 
 	auto execDir = _execFile.parent_path();
 	auto xolotlPrefix = execDir.parent_path();
-    fs::remove_all(_buildDir);
+	fs::remove_all(_buildDir);
 	fs::create_directories(_buildDir);
 	XOLOTL_LOG_XTRA << "XNGEN: xolotl install prefix: " << xolotlPrefix;
 	std::stringstream cmdss;
