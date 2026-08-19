@@ -401,7 +401,7 @@ JSONOptions::defineHandlers()
 		.add(
 			"xBCType", ElemType::string,
 			"The boundary conditions to use in the X direction.\n"
-			"{mirror,periodic,robin (for temperature)}\n"
+			"{mirror,periodic,robin (for temperature),recombination}\n"
 			"(default = mirror)",
 			JSON_ELEM_HANDLER { checkSetParam(tree, name, xBC); })
 		.add(

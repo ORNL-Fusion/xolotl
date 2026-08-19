@@ -155,6 +155,8 @@ private:
 	enum IntValsIndex : int
 	{
 		TRANSITION_SIZE = 0,
+		T_COVERAGE_ID,
+		H_COVERAGE_ID,
 		NUM_INT_VALS
 	};
 
@@ -296,6 +298,32 @@ public:
 	setTransitionSize(int val)
 	{
 		setVal(_intVals, TRANSITION_SIZE, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	tCoverageId() const
+	{
+		return _intVals[T_COVERAGE_ID];
+	}
+
+	void
+	setTCoverageId(int val)
+	{
+		setVal(_intVals, T_COVERAGE_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	hCoverageId() const
+	{
+		return _intVals[H_COVERAGE_ID];
+	}
+
+	void
+	setHCoverageId(int val)
+	{
+		setVal(_intVals, H_COVERAGE_ID, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

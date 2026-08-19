@@ -38,6 +38,12 @@ public:
 	void
 	initializeExtraClusterData(const options::IOptions& options);
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	setConnectivity(Connectivity)
+	{
+	}
+
 private:
 	double
 	checkLatticeParameter(double latticeParameter);

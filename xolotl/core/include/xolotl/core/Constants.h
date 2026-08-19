@@ -38,6 +38,9 @@ constexpr double ironLatticeConstant = 0.28700000000000000;
 //! Lattice Parameter. Given in units here of nm.
 constexpr double alphaZrLatticeConstant = 0.32294500000000000; // the a-constant
 
+//! Lattice Parameter for Li (TODO: find actual value)
+constexpr double liLatticeConstant = 0.5000000000000000;
+
 //! Core radius. Given in units here of nm.
 constexpr double alloyCoreRadius = 0.36000000000000000;
 
@@ -46,6 +49,9 @@ constexpr double alphaZrCoreRadius = 0.64500000000000000;
 
 //! Single helium radius. Given in units here of nm.
 constexpr double heliumRadius = 0.30000000000000000;
+
+//! Single hydrogen radius. Given in units here of nm. TODO get an actual value.
+constexpr double hydrogenRadius = 0.10000000000000000;
 
 //! Single xenon radius. Given in units here of nm.
 constexpr double xenonRadius = 0.30000000000000000;

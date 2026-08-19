@@ -91,8 +91,8 @@ Diffusion2DHandler::initializeDiffusionGrid(
 void
 Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
 	const StencilConcArray& concVector, Kokkos::View<double*> updatedConcOffset,
-	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,
-	int) const
+	double hxLeft, double hxRight, int ix, bool isBC, double sy, int iy,
+	double sz, int) const
 {
 	// Consider each diffusing cluster.
 	// TODO Maintaining a separate index assumes that diffusingClusters is
@@ -149,7 +149,8 @@ Diffusion2DHandler::computeDiffusion(network::IReactionNetwork& network,
 void
 Diffusion2DHandler::computePartialsForDiffusion(
 	network::IReactionNetwork& network, Kokkos::View<double*> val,
-	double hxLeft, double hxRight, int ix, double sy, int iy, double, int) const
+	double hxLeft, double hxRight, int ix, bool isBC, double sy, int iy, double,
+	int) const
 {
 	auto diffGrid = diffusGrid;
 	auto clusterIds = this->diffClusterIds;

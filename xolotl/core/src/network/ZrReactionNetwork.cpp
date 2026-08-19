@@ -32,6 +32,15 @@ ReactionNetwork<ZrReactionNetwork>::getTotalAtomConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
 
 template double
+ReactionNetwork<ZrReactionNetwork>::getTotalVolumeRatio(
+	ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<ZrReactionNetwork>::getTotalRatioVariance(
+	ConcentrationsView concentrations, Species type, double mean,
+	AmountType minSize);
+
+template double
 ReactionNetwork<ZrReactionNetwork>::getTotalTrappedAtomConcentration(
 	ConcentrationsView concentrations, Species type, AmountType minSize);
 

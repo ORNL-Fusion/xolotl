@@ -200,6 +200,11 @@ public:
 	{
 	}
 
+	void
+	initializeExtraDOFs(const options::IOptions&)
+	{
+	}
+
 	std::size_t
 	getSpeciesListSize() const noexcept override
 	{
@@ -257,6 +262,12 @@ public:
 
 	void
 	setGridSize(IndexType gridSize) override;
+
+	//! This method does nothing but some submethods save the value
+	void
+	setTotalDepth(double depth) override
+	{
+	}
 
 	void
 	setTemperatures(const std::vector<double>& gridTemperatures,
@@ -444,6 +455,13 @@ public:
 
 	PhaseSpace
 	getPhaseSpace() override;
+
+	double
+	getTritiumFlux(double thetaH, double thetaT, double TSphereConc,
+		double temperature) override
+	{
+		return 0.0;
+	}
 
 	template <typename MemSpace>
 	KOKKOS_INLINE_FUNCTION
@@ -882,6 +900,9 @@ protected:
 	double _currentTime;
 
 	std::vector<AmountType> _minRadiusSizes;
+
+	//! Connectivites for surface coverage
+	Kokkos::View<IndexType*> _connEntries;
 };
 
 namespace detail

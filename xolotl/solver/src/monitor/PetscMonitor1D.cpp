@@ -3,6 +3,7 @@
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/AlloyReactionNetwork.h>
 #include <xolotl/core/network/IPSIReactionNetwork.h>
+#include <xolotl/core/network/LiReactionNetwork.h>
 #include <xolotl/core/network/NEReactionNetwork.h>
 #include <xolotl/core/network/ZrReactionNetwork.h>
 #include <xolotl/io/XFile.h>
@@ -91,7 +92,7 @@ PetscMonitor1D::setup(int loop)
 	// Flags to launch the monitors or not
 	PetscBool flagNeg, flagCollapse, flag2DPlot, flag1DPlot, flagSeries,
 		flagPerf, flagHeRetention, flagStatus, flagXeRetention, flagTRIDYN,
-		flagAlloy, flagTemp, flagLargest, flagZr;
+		flagAlloy, flagTemp, flagLargest, flagZr, flagLi;
 
 	// Check the option -check_negative
 	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-check_negative", &flagNeg));
@@ -135,6 +136,9 @@ PetscMonitor1D::setup(int loop)
 	// Check the option -largest_conc
 	PetscCallVoid(
 		PetscOptionsHasName(NULL, NULL, "-largest_conc", &flagLargest));
+
+	// Check the option -tritium_release
+	PetscCallVoid(PetscOptionsHasName(NULL, NULL, "-tritium_release", &flagLi));
 
 	// Get the network and its size
 	auto& network = _solverHandler->getNetwork();
@@ -689,6 +693,22 @@ PetscMonitor1D::setup(int loop)
 		PetscCallVoid(TSMonitorSet(_ts, monitor::startStop, this, nullptr));
 	}
 
+	// Set the monitor to output data for Li
+	if (flagLi) {
+		// Master process
+		if (procId == 0) {
+			// Create the file to write in
+			std::ofstream outputFile;
+			outputFile.open("tRelease.txt");
+			outputFile << "#time rate" << std::endl;
+			outputFile.close();
+		}
+
+		// computeTritiumRelease will be called at each timestep
+		PetscCallVoid(
+			TSMonitorSet(_ts, monitor::computeTritiumRelease, this, nullptr));
+	}
+
 	// Set the monitor to simply change the previous time to the new time
 	// monitorTime will be called at each timestep
 	PetscCallVoid(TSMonitorSet(_ts, monitor::monitorTime, this, nullptr));
@@ -791,7 +811,10 @@ PetscMonitor1D::startStopImpl(TS ts, PetscInt timestep, PetscReal time,
 		auto gridPointSolution = solutionArray[xs + i];
 
 		for (auto l = 0; l < dof + 1; ++l) {
-			if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
+			// Always save the extra dofs
+			if (l > dof - 3)
+				concs[i].emplace_back(l, gridPointSolution[l]);
+			else if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 				concs[i].emplace_back(l, gridPointSolution[l]);
 			}
 		}
@@ -807,6 +830,10 @@ PetscMonitor1D::startStopImpl(TS ts, PetscInt timestep, PetscReal time,
 
 	if (auto psiNetwork =
 			dynamic_cast<core::network::IPSIReactionNetwork*>(&network))
+		PetscCall(computeTRIDYN(ts, timestep, time, solution));
+
+	if (auto liNetwork =
+			dynamic_cast<core::network::LiReactionNetwork*>(&network))
 		PetscCall(computeTRIDYN(ts, timestep, time, solution));
 
 	PetscFunctionReturn(0);
@@ -1216,8 +1243,7 @@ PetscMonitor1D::computeXenonRetention(
 		using TQ = core::network::IReactionNetwork::TotalQuantity;
 		using Q = TQ::Type;
 		using TQA = util::Array<TQ, 7>;
-		auto id =
-			core::network::SpeciesId(Spec::Xe);
+		auto id = core::network::SpeciesId(Spec::Xe);
 		auto ms = static_cast<AmountType>(minSizes[id()]);
 		auto totals = network.getTotals(dConcs,
 			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
@@ -2419,6 +2445,110 @@ PetscMonitor1D::monitorSeries(
 	}
 
 	// Restore the solutionArray
+	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
+
+	PetscFunctionReturn(0);
+}
+
+PetscErrorCode
+PetscMonitor1D::computeTritiumRelease(
+	TS ts, PetscInt timestep, PetscReal time, Vec solution)
+{
+	// Initial declarations
+	const double **solutionArray, *gridPointSolution;
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+
+	PetscFunctionBeginUser;
+
+	// Get the MPI comm
+	auto xolotlComm = util::getMPIComm();
+
+	// Get the process ID
+	int procId;
+	MPI_Comm_rank(xolotlComm, &procId);
+
+	// Get local coordinates
+	_solverHandler->getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
+
+	// Get the physical grid and its length
+	auto grid = _solverHandler->getXGrid();
+
+	// Get the da from ts
+	DM da;
+	PetscCall(TSGetDM(ts, &da));
+
+	// Get the solutionArray
+	PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArray));
+
+	using NetworkType = core::network::LiReactionNetwork;
+	auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
+	const auto dof = network.getDOF();
+	std::array<double, 1> myConcData{0.0};
+
+	// Loop on the grid
+	for (auto xi = xs; xi < xs + xm; xi++) {
+		// Boundary conditions
+		if (xi < _solverHandler->getLeftOffset() ||
+			xi >= Mx - _solverHandler->getRightOffset())
+			continue;
+
+		// Get the pointer to the beginning of the solution data for this grid
+		// point
+		gridPointSolution = solutionArray[xi];
+
+		double hx = grid[xi + 1] - grid[xi];
+
+		myConcData[0] += gridPointSolution[0] * hx;
+	}
+
+	// Determine total concentrations for He, D, T.
+	auto totalConcData = std::vector<double>(1, 0.0);
+
+	MPI_Allreduce(myConcData.data(), totalConcData.data(), 1, MPI_DOUBLE,
+		MPI_SUM, xolotlComm);
+
+	// Set the bottom surface position
+	auto xi = Mx - 1;
+
+	// Check we are on the right proc
+	if (xi >= xs && xi < xs + xm) {
+		// Get the pointer to the beginning of the solution data for this
+		// grid point
+		gridPointSolution = solutionArray[xi];
+
+		// Get the surface coverages and temperature
+		double thetaH = gridPointSolution[1];
+		double thetaT = gridPointSolution[2];
+		double temperature = gridPointSolution[3];
+
+		// Compute the release rate
+		double rate = network.computeTritiumRelease(
+			thetaH, thetaT, gridPointSolution[0], temperature);
+
+		// Compute the purge
+		auto Hconc = network.computeHydrogenPurge(temperature);
+		auto Tconc =
+			network.computeTritiumPurge(thetaH, thetaT, Hconc, temperature);
+		// Get the molecule concentrations in the purge
+		auto T2conc = Tconc * Tconc / (2.0 * (Hconc + Tconc));
+		auto H2conc = Hconc * Hconc / (2.0 * (Hconc + Tconc));
+		auto HTconc = Hconc * Tconc / (Hconc + Tconc);
+
+		auto flux = network.getTritiumFlux(
+			thetaH, thetaT, gridPointSolution[0], temperature);
+
+		// Write the retention and the fluence in a file
+		std::ofstream outputFile;
+		outputFile.open("tRelease.txt", std::ios::app);
+		outputFile << time << " " << rate << " " << thetaH << " " << thetaT
+				   << " " << temperature << " " << gridPointSolution[0] << " "
+				   << totalConcData[0] << " " << Hconc << " " << Tconc << " "
+				   << H2conc << " " << HTconc << " " << T2conc << " " << flux
+				   << std::endl;
+		outputFile.close();
+	}
+
+	// Restore the PETSC solution array
 	PetscCall(DMDAVecRestoreArrayDOFRead(da, solution, &solutionArray));
 
 	PetscFunctionReturn(0);

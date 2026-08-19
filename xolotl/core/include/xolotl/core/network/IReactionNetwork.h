@@ -300,6 +300,9 @@ public:
 	virtual void
 	setGridSize(IndexType gridSize) = 0;
 
+	virtual void
+	setTotalDepth(double depth) = 0;
+
 	/**
 	 * @brief Takes a vector of temperatures and associated depths along X and
 	 * updates the diffusion coefficients and rates accordingly.
@@ -437,6 +440,13 @@ public:
 
 	virtual PhaseSpace
 	getPhaseSpace() = 0;
+
+	/**
+	 * @brief Compute the flux needed for BC at the surface.
+	 */
+	virtual double
+	getTritiumFlux(double thetaH, double thetaT, double TSphereConc,
+		double temperature) = 0;
 
 	/**
 	 * @brief Updates the fluxes view with the rates from all the
