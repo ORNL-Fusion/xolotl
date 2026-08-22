@@ -23,11 +23,28 @@ PSIClusterGenerator<TSpeciesEnum>::PSIClusterGenerator(
 	_groupingWidthA(opts.getGroupingWidthA()),
 	_groupingWidthB(opts.getGroupingWidthB()),
 	_hevRatio(opts.getHeVRatio()),
-	_temperature(opts.getTempParam()),
 	_lattice(opts.getLatticeParameter() <= 0.0 ?
 			xolotl::core::tungstenLatticeConstant :
 			opts.getLatticeParameter())
 {
+	// Set the temperature from the options
+	auto tempType = opts.getTempHandlerName();
+	if (tempType == "profile") {
+		// Get the profile file name
+		auto fileName = opts.getTempProfileFilename();
+		std::ifstream inputFile(fileName.c_str());
+		std::string line;
+
+		// Get the first line
+		getline(inputFile, line);
+
+		// Temperature is the second argument
+		double xtemp = 0.0, ytemp = 0.0;
+		sscanf(line.c_str(), "%lf %lf", &xtemp, &ytemp);
+		_temperature = ytemp;
+	}
+	else
+		_temperature = opts.getTempParam();
 }
 
 template <typename TSpeciesEnum>
@@ -45,11 +62,28 @@ PSIClusterGenerator<TSpeciesEnum>::PSIClusterGenerator(
 	_groupingWidthA(opts.getGroupingWidthA()),
 	_groupingWidthB(opts.getGroupingWidthB()),
 	_hevRatio(opts.getHeVRatio()),
-	_temperature(opts.getTempParam()),
 	_lattice(opts.getLatticeParameter() <= 0.0 ?
 			xolotl::core::tungstenLatticeConstant :
 			opts.getLatticeParameter())
 {
+	// Set the temperature from the options
+	auto tempType = opts.getTempHandlerName();
+	if (tempType == "profile") {
+		// Get the profile file name
+		auto fileName = opts.getTempProfileFilename();
+		std::ifstream inputFile(fileName.c_str());
+		std::string line;
+
+		// Get the first line
+		getline(inputFile, line);
+
+		// Temperature is the second argument
+		double xtemp = 0.0, ytemp = 0.0;
+		sscanf(line.c_str(), "%lf %lf", &xtemp, &ytemp);
+		_temperature = ytemp;
+	}
+	else
+		_temperature = opts.getTempParam();
 }
 
 template <typename TSpeciesEnum>

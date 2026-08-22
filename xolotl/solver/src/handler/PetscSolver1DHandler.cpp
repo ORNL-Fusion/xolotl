@@ -358,13 +358,11 @@ PetscSolver1DHandler::initializeConcentration(
 				concOffset = concentrations[localXS + i];
 
 				for (auto const& currConcData : myConcs[i]) {
-					if (currConcData.first == 6428)
-						continue;
 					concOffset[currConcData.first] = currConcData.second;
 				}
 				// Get the temperature
-				//	double temp = myConcs[i][myConcs[i].size() - 1].second;
-				//	temperature[i + 1] = temp;
+				// double temp = myConcs[i][myConcs[i].size() - 1].second;
+				// temperature[i + 1] = temp;
 			}
 		}
 
