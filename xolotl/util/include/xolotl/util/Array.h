@@ -76,12 +76,6 @@ template <typename T, uint32_t N0>
 class Array<T, N0> : public Kokkos::Array<T, N0>
 {
 public:
-	KOKKOS_DEFAULTED_FUNCTION
-	Array() = default;
-
-	KOKKOS_DEFAULTED_FUNCTION
-	Array(const Array<T, N0>& other) = default;
-
 	void
 	Init(const T& val)
 	{

@@ -68,7 +68,8 @@ TungstenAdvectionHandler::initialize(
 		sinkStrengthVector.push_back(sinkStrength);
 
 		// Add Jacobian entry for this cluster
-		idPairs.push_back({clusterId, clusterId});
+		auto p = RowColPair{clusterId, clusterId};
+		idPairs.push_back(p);
 	}
 
 	this->syncAdvectingClusters(network);

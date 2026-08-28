@@ -26,7 +26,7 @@ struct ViewTypeHelper
 	using ViewType = std::conditional_t<
 		std::is_same_v<plsm::HostMemSpace, plsm::DeviceMemSpace>, HostView,
 		std::conditional_t<std::is_same_v<MemSpace, plsm::DeviceMemSpace>,
-			DeviceView, typename DeviceView::HostMirror>>;
+			DeviceView, typename DeviceView::host_mirror_type>>;
 };
 
 template <typename TData, typename MemSpace>
