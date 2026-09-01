@@ -12,6 +12,119 @@ namespace core
 {
 namespace network
 {
+void
+RPVReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
+	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
+{
+	// Set S diffusivity from V concentration
+	// Get the single vacancy cluster
+	auto& subpaving = this->getSubpaving();
+	Composition comp = Composition::zero();
+	comp[Species::V] = 1;
+	auto vId = subpaving.findTileId(comp);
+	if (vId == subpaving.invalidIndex())
+		throw std::runtime_error(
+			"The Vacancy cluster is not present in the network");
+
+	auto singleVConc = concentrations(vId);
+
+	// Compute the equilibrium concentration with a 1.85 eV formation energy
+	double kernel =
+		-1.0 / (kBoltzmann * _clusterData.h_view().temperature(gridIndex));
+	auto concEq = exp(kernel * 1.85) / _atomicVolume;
+
+	// Get the solute cluster
+	comp[Species::V] = 0;
+	comp[Species::S] = 1;
+	auto sId = subpaving.findTileId(comp);
+	if (sId == subpaving.invalidIndex())
+		throw std::runtime_error(
+			"The Solute cluster is not present in the network");
+
+	// Get its migration energy and diffusion factor
+	auto migration = _clusterData.h_view().migrationEnergy(sId);
+	auto diffFactor = _clusterData.h_view().diffusionFactor(sId);
+
+	// Set the diffusion coefficient
+	double diffCoef =
+		diffFactor * exp(kernel * migration) * singleVConc / concEq;
+	// double diffCoef = 0.0;
+	_clusterData.h_view().diffusionCoefficient(sId, gridIndex) = diffCoef;
+
+	// Set sink term from the precipitate population
+	// Get the radius concentration R * C above a given size
+	auto radiusConc =
+		getTotalRadiusConcentration(concentrations, Species::S, 44);
+	_clusterData.h_view().setPrecipitateStrength(
+		4.0 * ::xolotl::core::pi * radiusConc);
+
+	// Update the sink rates
+	using SinkReactionType = typename Superclass::Traits::SinkReactionType;
+	auto sinkReactions = this->_reactions.template getView<SinkReactionType>();
+	Kokkos::parallel_for(
+		"RPVReactionNetwork::updateReactionRates", sinkReactions.size(),
+		KOKKOS_LAMBDA(IndexType i) { sinkReactions[i].updateRates(); });
+
+	invalidateDataMirror();
+}
+
+void
+RPVReactionNetwork::computePartialsPreProcess(ConcentrationsView concentrations,
+	Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+	double spacing)
+{
+	// Set S diffusivity from V concentration
+	// Get the single vacancy cluster
+	auto& subpaving = this->getSubpaving();
+	Composition comp = Composition::zero();
+	comp[Species::V] = 1;
+	auto vId = subpaving.findTileId(comp);
+	if (vId == subpaving.invalidIndex())
+		throw std::runtime_error(
+			"The Vacancy cluster is not present in the network");
+
+	auto singleVConc = concentrations(vId);
+
+	// Compute the equilibrium concentration with a 1.85 eV formation energy
+	double kernel =
+		-1.0 / (kBoltzmann * _clusterData.h_view().temperature(gridIndex));
+	auto concEq = exp(kernel * 1.85) / _atomicVolume;
+
+	// Get the solute cluster
+	comp[Species::V] = 0;
+	comp[Species::S] = 1;
+	auto sId = subpaving.findTileId(comp);
+	if (sId == subpaving.invalidIndex())
+		throw std::runtime_error(
+			"The Solute cluster is not present in the network");
+
+	// Get its migration energy and diffusion factor
+	auto migration = _clusterData.h_view().migrationEnergy(sId);
+	auto diffFactor = _clusterData.h_view().diffusionFactor(sId);
+
+	// Set the diffusion coefficient
+	double diffCoef =
+		diffFactor * exp(kernel * migration) * singleVConc / concEq;
+	// double diffCoef = 0.0;
+	_clusterData.h_view().diffusionCoefficient(sId, gridIndex) = diffCoef;
+
+	// Set sink term from the precipitate population
+	// Get the radius concentration R * C above a given size
+	auto radiusConc =
+		getTotalRadiusConcentration(concentrations, Species::S, 44);
+	_clusterData.h_view().setPrecipitateStrength(
+		4.0 * ::xolotl::core::pi * radiusConc);
+
+	// Update the sink rates
+	using SinkReactionType = typename Superclass::Traits::SinkReactionType;
+	auto sinkReactions = this->_reactions.template getView<SinkReactionType>();
+	Kokkos::parallel_for(
+		"RPVReactionNetwork::updateReactionRates", sinkReactions.size(),
+		KOKKOS_LAMBDA(IndexType i) { sinkReactions[i].updateRates(); });
+
+	invalidateDataMirror();
+}
+
 namespace detail
 {
 template <typename TTag>
@@ -32,12 +145,6 @@ RPVReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	constexpr auto species = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
 
-	if (i == j) {
-		addSinks(i, tag);
-	}
-
-	auto numClusters = this->getNumberOfClusters();
-
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
 	const auto& cl2Reg = this->getCluster(j).getRegion();
@@ -45,6 +152,12 @@ RPVReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition hi1 = cl1Reg.getUpperLimitPoint();
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
+
+	if (i == j) {
+		addSinks(i, tag);
+	}
+
+	auto numClusters = this->getNumberOfClusters();
 
 	auto& subpaving = this->getSubpaving();
 	auto previousIndex = subpaving.invalidIndex();
@@ -156,6 +269,30 @@ RPVReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 					this->addDissociationReaction(tag, {vProdId, i, j});
 				}
 				previousIndex = vProdId;
+			}
+		}
+		return;
+	}
+
+	// S + S = S
+	if (lo1.isOnAxis(Species::S) && lo2.isOnAxis(Species::S)) {
+		// Compute the composition of the new cluster
+		auto minSize = lo1[Species::S] + lo2[Species::S];
+		auto maxSize = hi1[Species::S] + hi2[Species::S] - 2;
+
+		Composition comp = Composition::zero();
+		// Loop on the possibilities
+		for (auto k = minSize; k <= maxSize; k++) {
+			// Find the corresponding cluster
+			comp[Species::S] = k;
+			auto sProdId = subpaving.findTileId(comp);
+			if (sProdId != subpaving.invalidIndex() and
+				sProdId != previousIndex) {
+				this->addProductionReaction(tag, {i, j, sProdId});
+				if (lo1[Species::S] == 1 || lo2[Species::S] == 1) {
+					this->addDissociationReaction(tag, {sProdId, i, j});
+				}
+				previousIndex = sProdId;
 			}
 		}
 		return;

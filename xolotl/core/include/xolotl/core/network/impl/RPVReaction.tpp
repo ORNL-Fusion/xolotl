@@ -293,7 +293,15 @@ RPVDissociationReaction::computeBindingEnergy(double time)
 		else
 			be = 2.02 - 2.93 * (pow(n, 2.0 / 3.0) - pow(n - 1.0, 2.0 / 3.0));
 	}
-	// No I for now because only single I
+	// Solutes/Precipitates TODO compute from formation energy
+	if (lo.isOnAxis(Species::S)) {
+		auto prod1 = this->_clusterData->getCluster(this->_products[0]);
+		auto prod2 = this->_clusterData->getCluster(this->_products[1]);
+
+		be = prod1.getFormationEnergy() + prod2.getFormationEnergy() -
+			cl.getFormationEnergy();
+	}
+	// No I because I loops are stable
 
 	return util::min(5.0, util::max(be, -5.0));
 }
@@ -326,8 +334,11 @@ RPVSinkReaction::getSinkStrength()
 {
 	auto bias = this->getSinkBias();
 
+	// Get the precipitate strength
+	auto precipitateStrength = this->_clusterData->getPrecipitateStrength();
+
 	double strength = ::xolotl::core::feBCCDisloStrength * bias +
-		::xolotl::core::feBCCGBStrength;
+		::xolotl::core::feBCCGBStrength + precipitateStrength;
 
 	return strength;
 }

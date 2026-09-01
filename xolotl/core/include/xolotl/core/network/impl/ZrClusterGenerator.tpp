@@ -104,15 +104,6 @@ ZrClusterGenerator::select(const Region& region) const
 template <typename PlsmContext>
 KOKKOS_INLINE_FUNCTION
 double
-ZrClusterGenerator::getFormationEnergy(
-	const Cluster<PlsmContext>& cluster) const noexcept
-{
-	return 0.0;
-}
-
-template <typename PlsmContext>
-KOKKOS_INLINE_FUNCTION
-double
 ZrClusterGenerator::getMigrationEnergy(
 	const Cluster<PlsmContext>& cluster) const noexcept
 {

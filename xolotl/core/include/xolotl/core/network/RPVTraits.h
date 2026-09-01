@@ -16,6 +16,7 @@ class RPVClusterGenerator;
 
 enum class RPVSpeciesList
 {
+	S,
 	V,
 	I,
 	Loop
@@ -24,14 +25,15 @@ enum class RPVSpeciesList
 inline const std::string&
 toLabelString(RPVSpeciesList species)
 {
-	static const std::string labelArray[] = {"V", "I", "Loop"};
+	static const std::string labelArray[] = {"S", "V", "I", "Loop"};
 	return labelArray[static_cast<int>(species)];
 }
 
 inline const std::string&
 toNameString(RPVSpeciesList species)
 {
-	static const std::string nameArray[] = {"Vacancy", "Interstitial", "Loop"};
+	static const std::string nameArray[] = {
+		"Solute", "Vacancy", "Interstitial", "Loop"};
 	return nameArray[static_cast<int>(species)];
 }
 
@@ -48,17 +50,19 @@ struct NumberOfVacancySpecies<RPVSpeciesList> :
 };
 
 template <>
-struct SpeciesForGrouping<RPVSpeciesList, 3>
+struct SpeciesForGrouping<RPVSpeciesList, 4>
 {
-	using Sequence = EnumSequence<RPVSpeciesList, 3>;
-	static constexpr auto first = Sequence(RPVSpeciesList::V);
+	using Sequence = EnumSequence<RPVSpeciesList, 4>;
+	static constexpr auto first = Sequence(RPVSpeciesList::S);
 	static constexpr auto last = Sequence(RPVSpeciesList::Loop);
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::underlying_type_t<RPVSpeciesList>
-	mapToMomentId(EnumSequence<RPVSpeciesList, 3>)
+	mapToMomentId(EnumSequence<RPVSpeciesList, 4> value)
 	{
-		return 0;
+		if (value == RPVSpeciesList::I or value == RPVSpeciesList::Loop)
+			return 1;
+		return value();
 	}
 };
 
@@ -67,7 +71,7 @@ struct ReactionNetworkTraits<RPVReactionNetwork>
 {
 	using Species = RPVSpeciesList;
 
-	static constexpr std::size_t numSpecies = 3;
+	static constexpr std::size_t numSpecies = 4;
 
 	using ProductionReactionType = RPVProductionReaction;
 	using DissociationReactionType = RPVDissociationReaction;

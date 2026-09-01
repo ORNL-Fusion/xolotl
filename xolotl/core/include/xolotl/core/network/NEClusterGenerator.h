@@ -39,7 +39,9 @@ public:
 	template <typename PlsmContext>
 	KOKKOS_INLINE_FUNCTION
 	double
-	getFormationEnergy(const Cluster<PlsmContext>& cluster) const noexcept;
+	getFormationEnergy(const Cluster<PlsmContext>& cluster,
+		double latticeParameter, double interstitialBias,
+		double impurityRadius) const noexcept;
 
 	template <typename PlsmContext>
 	KOKKOS_INLINE_FUNCTION

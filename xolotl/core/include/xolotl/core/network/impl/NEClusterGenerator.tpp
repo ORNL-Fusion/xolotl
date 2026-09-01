@@ -125,8 +125,9 @@ NEClusterGenerator::select(const Region& region) const
 template <typename PlsmContext>
 KOKKOS_INLINE_FUNCTION
 double
-NEClusterGenerator::getFormationEnergy(
-	const Cluster<PlsmContext>& cluster) const noexcept
+NEClusterGenerator::getFormationEnergy(const Cluster<PlsmContext>& cluster,
+	double latticeParameter, double interstitialBias,
+	double impurityRadius) const noexcept
 {
 	// Not used?
 	return 0.0;

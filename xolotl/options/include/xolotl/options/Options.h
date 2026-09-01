@@ -1044,14 +1044,14 @@ public:
 	{
 		return cascadeEfficiency;
 	}
-	
+
 	/**
 	 * \see IOptions.h
 	 */
 	virtual double
 	get100LoopPortion() const override
 	{
-	        return loopPortion;
+		return loopPortion;
 	}
 
 protected:

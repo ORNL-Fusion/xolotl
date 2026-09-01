@@ -54,9 +54,25 @@ RPVClusterGenerator::refine(const Region& region, BoolArray& result) const
 	Composition hi = region.getUpperLimitPoint();
 
 	// Smaller than the minimum size for grouping
-	if (lo[Species::V] < _groupingMin && lo[Species::I] < _groupingMin &&
-		lo[Species::Loop] < _groupingMin) {
+	if (lo[Species::S] < _groupingMin && lo[Species::V] < _groupingMin &&
+		lo[Species::I] < _groupingMin && lo[Species::Loop] < _groupingMin) {
 		return true;
+	}
+
+	// S is grouped on its own
+	if (lo[Species::S] > 0) {
+		if (lo[Species::S] < _groupingMin &&
+			othersBeginAtZero(region, Species::S)) {
+			return true;
+		}
+		if (region[Species::S].end() > _maxSize) {
+			return true;
+		}
+		if (region[Species::S].length() <
+			util::max((double)(_groupingWidth + 1),
+				pow(region[Species::S].begin(), 0.75) * 0.5)) {
+			result[toIndex(Species::S)] = false;
+		}
 	}
 
 	// I is grouped on its own
@@ -108,6 +124,9 @@ RPVClusterGenerator::refine(const Region& region, BoolArray& result) const
 	}
 
 	// Edges
+	if (region[Species::S].end() > _maxSize + 1) {
+		return true;
+	}
 	if (region[Species::I].end() > _maxSize + 1) {
 		return true;
 	}
@@ -158,6 +177,15 @@ RPVClusterGenerator::select(const Region& region) const
 	Composition lo = region.getOrigin();
 	Composition hi = region.getUpperLimitPoint();
 
+	// Solutes
+	if (region[Species::S].begin() > 0 &&
+		!region.getOrigin().isOnAxis(Species::S)) {
+		return false;
+	}
+	if (region[Species::S].begin() > _maxSize) {
+		return false;
+	}
+
 	// Interstitials
 	if (region[Species::I].begin() > 0 &&
 		!region.getOrigin().isOnAxis(Species::I)) {
@@ -189,7 +217,8 @@ RPVClusterGenerator::select(const Region& region) const
 		return false;
 	}
 
-	if (region[Species::V].begin() == 0 && region[Species::I].begin() == 0 &&
+	if (region[Species::S].begin() == 0 && region[Species::V].begin() == 0 &&
+		region[Species::I].begin() == 0 &&
 		region[Species::Loop].end() - 1 <= _maxI &&
 		region[Species::Loop].begin() > 1)
 		return false;
@@ -227,6 +256,11 @@ RPVClusterGenerator::getMigrationEnergy(
 			auto amtV = comp[Species::V];
 			if (amtV < vMigration.size()) {
 				migrationEnergy = vMigration[amtV];
+			}
+		}
+		else if (comp.isOnAxis(Species::S)) {
+			if (comp[Species::S] == 1) {
+				migrationEnergy = 0.6;
 			}
 		}
 	}
@@ -267,6 +301,11 @@ RPVClusterGenerator::getDiffusionFactor(
 				diffusionFactor = vDiffusion[amtV];
 			}
 		}
+		else if (comp.isOnAxis(Species::S)) {
+			if (comp[Species::S] == 1) {
+				diffusionFactor = 1.0e13;
+			}
+		}
 	}
 	else {
 		if (comp.isOnAxis(Species::I)) {
@@ -298,8 +337,18 @@ RPVClusterGenerator::getReactionRadius(const Cluster<PlsmContext>& cluster,
 	constexpr double fecrBurgers = 0.8660254038;
 	constexpr double fecrLoopBurgers = 1.0;
 
+	// Precipitate case
+	if (comp.isOnAxis(Species::S)) {
+		// Sphere TODO
+		for (auto j : makeIntervalRange(reg[Species::S])) {
+			radius += latticeParameter *
+				cbrt((3.0 * (double)j) / ::xolotl::core::pi) * 0.5;
+		}
+		// Average the radius
+		radius /= reg[Species::S].length();
+	}
 	// I case
-	if (comp.isOnAxis(Species::I)) {
+	else if (comp.isOnAxis(Species::I)) {
 		// Sphere
 		if (comp[Species::I] < 4) {
 			radius = latticeParameter *

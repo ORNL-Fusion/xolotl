@@ -91,6 +91,16 @@ private:
 	{
 		return;
 	}
+
+	void
+	computeFluxesPreProcess(ConcentrationsView concentrations,
+		FluxesView fluxes, IndexType gridIndex, double surfaceDepth,
+		double spacing);
+
+	void
+	computePartialsPreProcess(ConcentrationsView concentrations,
+		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+		double spacing);
 };
 
 namespace detail

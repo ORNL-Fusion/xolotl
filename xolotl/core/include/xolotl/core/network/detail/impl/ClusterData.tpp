@@ -156,7 +156,8 @@ ClusterData<TNetwork, MemSpace>::generate(const ClusterGenerator& generator,
 		"ClusterData::generate", this->numClusters,
 		KOKKOS_LAMBDA(const IndexType i) {
 			auto cluster = data.getCluster(i);
-			data.formationEnergy(i) = generator.getFormationEnergy(cluster);
+			data.formationEnergy(i) = generator.getFormationEnergy(
+				cluster, latticeParameter, interstitialBias, impurityRadius);
 			data.migrationEnergy(i) = generator.getMigrationEnergy(cluster);
 			data.diffusionFactor(i) =
 				generator.getDiffusionFactor(cluster, latticeParameter);

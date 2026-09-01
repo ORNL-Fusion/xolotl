@@ -41,10 +41,30 @@ public:
 	template <typename PlsmContext>
 	KOKKOS_INLINE_FUNCTION
 	double
-	getFormationEnergy(const Cluster<PlsmContext>& cluster) const noexcept
+	getFormationEnergy(const Cluster<PlsmContext>& cluster,
+		double latticeParameter, double interstitialBias,
+		double impurityRadius) const noexcept
 	{
-		// Always return 0.0 here because we use capillary laws for the
-		// binding energies
+		// Formation energies are defined for solute/precipitates only
+		auto clReg = cluster.getRegion();
+		Composition lo = clReg.getOrigin();
+		Composition hi = clReg.getUpperLimitPoint();
+
+		constexpr double sEnergy[15] = {0.0, 0.21, 0.37, 0.55, 0.73, 0.92, 1.10,
+			1.29, 1.45, 1.60, 1.77, 1.94, 2.12, 2.3, 2.45};
+
+		if (lo.isOnAxis(Species::S)) {
+			// Smaller sizes
+			if (lo[Species::S] < 15)
+				return sEnergy[lo[Species::S]];
+			// J to eV
+			double conversionFactor = 6.241509e18;
+			double sigma = 0.27 * conversionFactor * 1.0e-18; // eV / nm2
+			double radius = this->getReactionRadius(
+				cluster, latticeParameter, interstitialBias, impurityRadius);
+			return 4.0 * ::xolotl::core::pi * radius * radius * sigma;
+		}
+
 		return 0.0;
 	}
 

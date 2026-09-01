@@ -34,9 +34,9 @@ auto rpvNetworkGenerator = [](const options::IOptions& options) {
 	}
 
 	std::vector<NetworkType::AmountType> maxSpeciesAmounts = {
-		maxSize, maxSize, maxSize};
+		maxSize, maxSize, maxSize, maxSize};
 	std::vector<NetworkType::SubdivisionRatio> subdivRatios = {
-		{groupingWidth, groupingWidth, groupingWidth}};
+		{groupingWidth, groupingWidth, groupingWidth, groupingWidth}};
 	auto network = std::make_shared<NetworkType>(
 		maxSpeciesAmounts, subdivRatios, 1, options);
 

@@ -150,6 +150,7 @@ private:
 		V_FORMATION,
 		V2_FORMATION,
 		LOOP_PORTION,
+		PRECIPITATE_SINK,
 		NUM_FLOAT_VALS
 	};
 
@@ -286,6 +287,19 @@ public:
 	setLoopPortion(double val)
 	{
 		setVal(_floatVals, LOOP_PORTION, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	double
+	getPrecipitateStrength() const
+	{
+		return _floatVals[PRECIPITATE_SINK];
+	}
+
+	void
+	setPrecipitateStrength(double val)
+	{
+		setVal(_floatVals, PRECIPITATE_SINK, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION

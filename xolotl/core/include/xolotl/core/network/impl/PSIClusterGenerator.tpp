@@ -490,7 +490,8 @@ template <typename PlsmContext>
 KOKKOS_INLINE_FUNCTION
 double
 PSIClusterGenerator<TSpeciesEnum>::getFormationEnergy(
-	const Cluster<PlsmContext>& cluster) const noexcept
+	const Cluster<PlsmContext>& cluster, double latticeParameter,
+	double interstitialBias, double impurityRadius) const noexcept
 {
 	constexpr auto infinity = util::infinity<double>;
 

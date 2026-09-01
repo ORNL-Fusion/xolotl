@@ -10,7 +10,6 @@ namespace viz
  */
 enum PlotType
 {
-
 	/**
 	 * ScatterPlot
 	 */

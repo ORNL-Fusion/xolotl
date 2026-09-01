@@ -169,8 +169,9 @@ AlloyClusterGenerator::select(const Region& region) const
 template <typename PlsmContext>
 KOKKOS_INLINE_FUNCTION
 double
-AlloyClusterGenerator::getFormationEnergy(
-	const Cluster<PlsmContext>& cluster) const noexcept
+AlloyClusterGenerator::getFormationEnergy(const Cluster<PlsmContext>& cluster,
+	double latticeParameter, double interstitialBias,
+	double impurityRadius) const noexcept
 {
 	const auto& reg = cluster.getRegion();
 	Composition lo(reg.getOrigin());
