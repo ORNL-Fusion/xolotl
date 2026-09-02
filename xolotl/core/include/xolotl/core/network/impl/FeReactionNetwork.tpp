@@ -1,6 +1,5 @@
 #pragma once
 
-#include <xolotl/core/network/detail/impl/ConstantReactionGenerator.tpp>
 #include <xolotl/core/Constants.h>
 #include <xolotl/core/network/detail/impl/SinkReactionGenerator.tpp>
 #include <xolotl/core/network/detail/impl/TrapReactionGenerator.tpp>
@@ -14,76 +13,74 @@ namespace core
 {
 namespace network
 {
-
 void
 FeReactionNetwork::initializeExtraDOFs(const options::IOptions& options)
 {
-	auto map = options.getProcesses();
-	if (not map["SSBM"])
-		return;
+        auto map = options.getProcesses();
+        if (not map["SSBM"])
+                return;
 
-	largestClusterId = checkLargestClusterId();
+        largestClusterId = checkLargestClusterId();
 
-	this->_clusterData.h_view().setBubbleId(this->_numDOFs);
-	this->_clusterData.h_view().setVoidAvId(this->_numDOFs + 1);
-	this->_clusterData.h_view().setHeAvId(this->_numDOFs + 2);
-	this->_numDOFs += 3;
+        this->_clusterData.h_view().setBubbleId(this->_numDOFs);
+        this->_clusterData.h_view().setHeAvId(this->_numDOFs + 1);
+        this->_clusterData.h_view().setVoidAvId(this->_numDOFs + 2);
+        this->_numDOFs += 3;
 }
 
 void
 FeReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
-	FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
+        FluxesView fluxes, IndexType gridIndex, double surfaceDepth, double spacing)
 {
-	if (this->_enableSSBM) {
-		auto clusterDataMirror = this->getClusterDataMirror();
-		
-		// Get the concentrations on the host
-		auto dConcs = Kokkos::subview(concentrations,
-			std::make_pair(
-				clusterDataMirror.bubbleId(), clusterDataMirror.bubbleId() + 2));
-		auto heConcs = create_mirror_view(dConcs);
-		
-		deep_copy(heConcs, dConcs);
-	
-		// Compute the average composition of each defect
-			auto conc = heConcs(0);
-			auto avComp = heConcs(1) / conc;
-			if (conc == 0.0 )
-				avComp = 0.0;
-		// Void
-			this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
-				computeBubbleRadius(
-					avComp, clusterDataMirror.latticeParameter())));
-	}
+        if (this->_enableSSBM) {
+                auto clusterDataMirror = this->getClusterDataMirror();
+
+                // Get the concentrations on the host
+                auto dConcs = Kokkos::subview(concentrations,
+                        std::make_pair(
+                                clusterDataMirror.bubbleId(), clusterDataMirror.bubbleId() + 2));
+                auto heConcs = create_mirror_view(dConcs);
+
+                deep_copy(heConcs, dConcs);
+
+                // Compute the average composition of each defect
+                        auto conc = heConcs(0);
+                        auto avComp = heConcs(1) / conc;
+                        if (conc == 0.0 )
+                                avComp = 0.0;
+                // Void
+                        this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
+                                computeBubbleRadius(
+                                        avComp, clusterDataMirror.latticeParameter(), 2 )));
+        }
 }
 
 void
 FeReactionNetwork::computePartialsPreProcess(
-	ConcentrationsView concentrations, Kokkos::View<double*> values,
-	IndexType gridIndex, double surfaceDepth, double spacing)
+        ConcentrationsView concentrations, Kokkos::View<double*> values,
+        IndexType gridIndex, double surfaceDepth, double spacing)
 {
-	if (this->_enableSSBM) {
-		auto clusterDataMirror = this->getClusterDataMirror();
+        if (this->_enableSSBM) {
+                auto clusterDataMirror = this->getClusterDataMirror();
 
-		// Get the concentrations on the host SSBM
-		auto dConcs = Kokkos::subview(concentrations,
-			std::make_pair(
-				clusterDataMirror.bubbleId(),clusterDataMirror.bubbleId() + 2));
-		auto heConcs = create_mirror_view(dConcs);
-		deep_copy(heConcs, dConcs);
+                // Get the concentrations on the host SSBM
+                auto dConcs = Kokkos::subview(concentrations,
+                        std::make_pair(
+                                clusterDataMirror.bubbleId(),clusterDataMirror.bubbleId() + 2));
+                auto heConcs = create_mirror_view(dConcs);
+                deep_copy(heConcs, dConcs);
 
-		// Compute the average composition for V
-			auto conc = heConcs(0);
-			auto avComp = 1; //heConcs(1) / conc;
-		//	if (conc <= 0.0 || heConcs(1) <= 0)
-		//		avComp = 0.0;
-		// Void
-			this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
-				computeBubbleRadius(
-					avComp, clusterDataMirror.latticeParameter())));
-		}
+                // Compute the average composition for V
+                        auto conc = heConcs(0);
+                        auto avComp = heConcs(1) / conc;
+                      if (conc == 0.0 )
+                              avComp = 0.0;
+                // Void
+                        this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
+                                computeBubbleRadius(
+                                        avComp, clusterDataMirror.latticeParameter(), 2 )));
+                }
 }
-
 
 namespace detail
 {
@@ -92,7 +89,7 @@ KOKKOS_INLINE_FUNCTION
 void
 FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 {
-		// Check the diffusion factors
+	// Check the diffusion factors
 	auto diffusionFactor = this->_clusterData.diffusionFactor;
 	if (diffusionFactor(i) == 0.0 && diffusionFactor(j) == 0.0) {
 		return;
@@ -101,29 +98,29 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	using Species = typename NetworkType::Species;
 	using Composition = typename NetworkType::Composition;
 	using AmountType = typename NetworkType::AmountType;
-	
-	constexpr auto speciesRange = NetworkType::getSpeciesRange();
+
+	constexpr auto species = NetworkType::getSpeciesRange();
 	constexpr auto speciesNoI = NetworkType::getSpeciesRangeNoI();
 
-	auto& subpaving = this->getSubpaving();
-	auto previousIndex = subpaving.invalidIndex();
-
-	// Sinks
+	// Add the sinks
 	if (i == j) {
 		addSinks(i, tag);
 	}
 
 	// Add the traps between He and Traps
-	// addTraps(i, j, tag);
-	
+	addTraps(i, j, tag);
+
 	auto numClusters = this->getNumberOfClusters();
+
 
 	// SSBM
 
 	// Large bubble reactions
 	if (this->_clusterData.enableSSBM())
 		addSingleSizeReactions(i, j, tag);
-	
+
+	// Std model
+
 	// Get the composition of each cluster
 	const auto& cl1Reg = this->getCluster(i).getRegion();
 	const auto& cl2Reg = this->getCluster(j).getRegion();
@@ -132,159 +129,8 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 	Composition lo2 = cl2Reg.getOrigin();
 	Composition hi2 = cl2Reg.getUpperLimitPoint();
 
-
-	// V + V = V
-	if (lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::V) &&
-		diffusionFactor(i) > 0.0 && diffusionFactor(j) > 0.0) {
-		// Compute the composition of the new cluster
-		auto size = lo1[Species::V] + lo2[Species::V];
-		// Find the corresponding cluster
-		Composition comp = Composition::zero();
-		comp[Species::V] = size;
-		auto vProdId = subpaving.findTileId(comp);
-		if (vProdId != subpaving.invalidIndex() && vProdId != previousIndex) {
-			this->addProductionReaction(tag, {i, j, vProdId});
-			if (lo1[Species::V] == 1 || lo2[Species::V] == 1) {
-				this->addDissociationReaction(tag, {vProdId, i, j});
-			}
-			previousIndex = vProdId;
-		}
-		return;
-	}
-
-	// vac + int = vac | int | recombine
-	if (((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
-			(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I)))) {
-		// Find out which one is which
-		auto iSize =
-			lo1.isOnAxis(Species::I) ? lo1[Species::I] : lo2[Species::I];
-		// Vac can be grouped
-		auto vReg = lo1.isOnAxis(Species::V) ? cl1Reg : cl2Reg;
-		for (auto k : makeIntervalRange(vReg[Species::V])) {
-			// Compute the product size
-			int prodSize = k - iSize;
-			// 3 cases
-			if (prodSize > 0) {
-				// Looking for V cluster
-				Composition comp = Composition::zero();
-				comp[Species::V] = prodSize;
-				auto vProdId = subpaving.findTileId(comp);
-				if (vProdId != subpaving.invalidIndex() &&
-					vProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, vProdId});
-					previousIndex = vProdId;
-					// No dissociation
-				}
-			}
-			else if (prodSize < 0) {
-				// Looking for I cluster
-				Composition comp = Composition::zero();
-				comp[Species::I] = -prodSize;
-				auto iProdId = subpaving.findTileId(comp);
-				if (iProdId != subpaving.invalidIndex() &&
-					iProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, iProdId});
-					previousIndex = iProdId;
-					// No dissociation
-				}
-			}
-			else {
-				// No product
-				this->addProductionReaction(tag, {i, j});
-			}
-		}
-		return;
-	}
-
-	// He + V = HeV
-	if ((lo1.isOnAxis(Species::He) and lo2.isOnAxis(Species::V)) or
-		(lo1.isOnAxis(Species::V) and lo2.isOnAxis(Species::He))) {
-		// Void can be grouped
-		auto minSize = lo1[Species::V] + lo2[Species::V];
-		auto maxSize = hi1[Species::V] + hi2[Species::V] - 2;
-		// Find the corresponding clusters
-		for (auto k = minSize; k <= maxSize; k++) {
-			Composition comp = Composition::zero();
-			comp[Species::He] = lo1[Species::He] + lo2[Species::He];
-			comp[Species::V] = k;
-			auto vProdId = subpaving.findTileId(comp);
-			if (vProdId != subpaving.invalidIndex() &&
-				vProdId != previousIndex) {
-				this->addProductionReaction(tag, {i, j, vProdId});
-
-				// No dissociation
-				previousIndex = vProdId;
-			}
-		}
-		return;
-	}
-
-	// He + HeV = HeV
-	if (lo1[Species::He] > 0 and lo2[Species::He] > 0) {
-		// HeV can be grouped
-		auto minVSize = lo1[Species::V] + lo2[Species::V];
-		auto maxVSize = hi1[Species::V] + hi2[Species::V] - 2;
-		auto minHeSize = lo1[Species::He] + lo2[Species::He];
-		auto maxHeSize = hi1[Species::He] + hi2[Species::He] - 2;
-		// Find the corresponding clusters
-		for (auto k = minHeSize; k <= maxHeSize; k++) {
-			for (auto l = minVSize; l <= maxVSize; l++) {
-				Composition comp = Composition::zero();
-				comp[Species::He] = k;
-				comp[Species::V] = l;
-				auto vProdId = subpaving.findTileId(comp);
-				if (vProdId != subpaving.invalidIndex() &&
-					vProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, vProdId});
-					// No dissociation
-					previousIndex = vProdId;
-				}
-				if (vProdId == subpaving.invalidIndex()) {
-					// Trap mutation
-					comp[Species::V] = l + 1;
-					vProdId = subpaving.findTileId(comp);
-					if (vProdId != subpaving.invalidIndex() &&
-						vProdId != previousIndex) {
-						// Get the I product
-						Composition iComp = Composition::zero();
-						iComp[Species::I] = 1;
-						auto iProdId = subpaving.findTileId(iComp);
-						if (iProdId != subpaving.invalidIndex()) {
-							this->addProductionReaction(
-								tag, {i, j, vProdId, iProdId});
-						}
-					}
-				}
-			}
-		}
-		return;
-	}
-
-	// V + HeV = HeV
-	if (lo1.isOnAxis(Species::V) or lo2.isOnAxis(Species::V)) {
-		// HeV can be grouped
-		auto minVSize = lo1[Species::V] + lo2[Species::V];
-		auto maxVSize = hi1[Species::V] + hi2[Species::V] - 2;
-		auto minHeSize = lo1[Species::He] + lo2[Species::He];
-		auto maxHeSize = hi1[Species::He] + hi2[Species::He] - 2;
-		// Find the corresponding clusters
-		for (auto l = minVSize; l <= maxVSize; l++) {
-			for (auto k = minHeSize; k <= maxHeSize; k++) {
-				Composition comp = Composition::zero();
-				comp[Species::He] = k;
-				comp[Species::V] = l;
-				auto vProdId = subpaving.findTileId(comp);
-				if (vProdId != subpaving.invalidIndex() &&
-					vProdId != previousIndex) {
-					this->addProductionReaction(tag, {i, j, vProdId});
-					// No dissociation
-					previousIndex = vProdId;
-				}
-			}
-		}
-		return;
-	}
-
+	auto& subpaving = this->getSubpaving();
+	auto previousIndex = subpaving.invalidIndex();
 
 	// Special case for I + I
 	if (cl1Reg.isSimplex() && cl2Reg.isSimplex() && lo1.isOnAxis(Species::I) &&
@@ -304,6 +150,109 @@ FeReactionGenerator::operator()(IndexType i, IndexType j, TTag tag) const
 		return;
 	}
 
+	// Special case for I + V
+	if ((lo1.isOnAxis(Species::I) && lo2.isOnAxis(Species::V)) ||
+		(lo1.isOnAxis(Species::V) && lo2.isOnAxis(Species::I))) {
+		// Compute the largest possible product and the smallest one
+		int largestProd = (int)hi1[Species::V] + (int)hi2[Species::V] - 2 -
+			(int)lo1[Species::I] - (int)lo2[Species::I];
+		int smallestProd = (int)lo1[Species::V] + (int)lo2[Species::V] -
+			(int)hi1[Species::I] - (int)hi2[Species::I] + 2;
+		// Loop on the products
+		for (int prodSize = smallestProd; prodSize <= largestProd; prodSize++) {
+			// 3 cases
+			if (prodSize > 0) {
+				// Looking for V cluster
+				Composition comp = Composition::zero();
+				comp[Species::V] = prodSize;
+				auto vProdId = subpaving.findTileId(comp);
+				if (vProdId != subpaving.invalidIndex() &&
+					vProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, vProdId});
+					// No dissociation
+					previousIndex = vProdId;
+				}
+			}
+			else if (prodSize < 0) {
+				// Looking for I cluster
+				Composition comp = Composition::zero();
+				comp[Species::I] = -prodSize;
+				auto iProdId = subpaving.findTileId(comp);
+				if (iProdId != subpaving.invalidIndex() &&
+					iProdId != previousIndex) {
+					this->addProductionReaction(tag, {i, j, iProdId});
+					// No dissociation
+					previousIndex = iProdId;
+				}
+			}
+			else {
+				// No product
+				this->addProductionReaction(tag, {i, j});
+			}
+		}
+		return;
+	}
+
+	// General case
+	constexpr auto numSpeciesNoI = NetworkType::getNumberOfSpeciesNoI();
+	using BoundsArray =
+		Kokkos::Array<Kokkos::pair<AmountType, AmountType>, numSpeciesNoI>;
+	plsm::EnumIndexed<BoundsArray, Species> bounds;
+	// Loop on the species
+	for (auto l : species) {
+		auto low = lo1[l] + lo2[l];
+		auto high = hi1[l] + hi2[l] - 2;
+		// Special case for I
+		if (l == Species::I) {
+			bounds[Species::V].first -= high;
+			bounds[Species::V].second -= low;
+		}
+		else {
+			bounds[l] = {low, high};
+		}
+	}
+
+	// Look for potential product
+	IndexType nProd = 0;
+	for (IndexType k = 0; k < numClusters; ++k) {
+		// Get the composition
+		const auto& prodReg = this->getCluster(k).getRegion();
+		bool isGood = true;
+		// Loop on the species
+		for (auto l : speciesNoI) {
+			if (prodReg[l()].begin() > bounds[l()].second) {
+				isGood = false;
+				break;
+			}
+			if (prodReg[l()].end() - 1 < bounds[l()].first) {
+				isGood = false;
+				break;
+			}
+		}
+
+		if (isGood) {
+			// Increase nProd
+			nProd++;
+			this->addProductionReaction(tag, {i, j, k});
+
+			// Loop on the species
+			bool isOnAxis1 = false, isOnAxis2 = false;
+			for (auto l : species) {
+				if (lo1.isOnAxis(l()) && lo1[l()] == 1)
+					isOnAxis1 = true;
+				if (lo2.isOnAxis(l()) && lo2[l()] == 1)
+					isOnAxis2 = true;
+			}
+			if (isOnAxis1 || isOnAxis2) {
+				if (lo1.isOnAxis(Species::He) && lo2.isOnAxis(Species::He) &&
+					lo1[Species::He] == 1 && lo2[Species::He] == 1) {
+					continue;
+				}
+
+				this->addDissociationReaction(tag, {k, i, j});
+			}
+		}
+	}
 }
 
 template <typename TTag>
@@ -337,79 +286,164 @@ template <typename TTag>
 KOKKOS_INLINE_FUNCTION
 void
 FeReactionGenerator::addSingleSizeReactions(
-	IndexType i, IndexType j, TTag tag) const
+        IndexType i, IndexType j, TTag tag) const
 {
-	using Species = typename NetworkType::Species;
-	using Composition = typename NetworkType::Composition;
+        using Species = typename NetworkType::Species;
+        using Composition = typename NetworkType::Composition;
 
-	IndexType bubbleId = this->_clusterData.bubbleId();
-	const auto& clReg = this->getCluster(i).getRegion();
-        Composition lo = clReg.getOrigin();	
+        IndexType bubbleId = this->_clusterData.bubbleId();
+        const auto& clReg = this->getCluster(i).getRegion();
+        Composition lo = clReg.getOrigin();
 
-	// Check reaction with largest bubble
-	if (clReg.isSimplex()){
-	if (i == j) {
+        // Get the composition of each cluster
+        const auto& cl1Reg = this->getCluster(i).getRegion();
+        const auto& cl2Reg = this->getCluster(j).getRegion();
+        Composition lo1 = cl1Reg.getOrigin();
+        Composition hi1 = cl1Reg.getUpperLimitPoint();
+        Composition lo2 = cl2Reg.getOrigin();
+        Composition hi2 = cl2Reg.getUpperLimitPoint();
 
-		// V case
-		if (lo.isOnAxis(Species::V)) {
-			// V_k + B -> B
-			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+	auto& subpaving = this->getSubpaving();
+	Composition comp = Composition::zero();
+	auto iClusterId = subpaving.findTileId(comp);
+
+//      std::ofstream outFile("FeReactionNetwork.logOut",std::ios::app);
+
+        // Check reaction with largest bubble
+        if (clReg.isSimplex()){
+        if (i == j) {
+
+                // V case
+                if (lo.isOnAxis(Species::V)) {
+                	// V_k + B -> B
+                        
+			if (iClusterId == NetworkType::invalidIndex()) {
+				this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+			}
+			else {
+				this->addProductionReaction(tag, {i, bubbleId, bubbleId, iClusterId});
+
+                        	// B -> B + V_k
+                        	if (lo[Species::V] == 1){
+                                	//outFile << "Vcase Diss. Start\n";
+	                                //this->addDissociationReaction(tag, {bubbleId, i, bubbleId});
+        	                        //outFile << "Vcase Diss. End\n";
+                	                //outFile << "-----------------------------\n";
+                        	}
+			}
+                }
+                // I case
+                else if (lo.isOnAxis(Species::I)) {
+                        // I_k + B -> B
+                        this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+
+                        // B -> B + V_k
+                        bool isOnAxis1 = false, isOnAxis2 = false;
+                        if (lo1.isOnAxis(Species::I) && lo1[Species::I] == 1)
+                                        isOnAxis1 = true;
+                        if (lo2.isOnAxis(Species::I) && lo2[Species::I] == 1)
+                                        isOnAxis2 = true;
+/*
+                        if (isOnAxis1 || isOnAxis2)
+                        {
+                                outFile << "Icase Diss. Start\n";
+                                this->addDissociationReaction(tag, {bubbleId, i, bubbleId});
+                                outFile << "Icase Diss. End\n";
+                                outFile << "-----------------------------\n";
+                        }
+*/
+                }
+
+                // He case
+                else if (lo.isOnAxis(Species::He)) {
+                        // He_k + B -> B
+			if (iClusterId == NetworkType::invalidIndex()) {
+                                this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+                        }
+                        else {
+	                        this->addProductionReaction(tag, {i, bubbleId, bubbleId, iClusterId});
+
+                        // B -> B + He_k
+                        if (lo[Species::He] == 1)
+                        {
+                        //      outFile << "Hecase Diss. Start\n";
+                              this->addDissociationReaction(tag, {bubbleId, i, bubbleId});
+                        //      outFile << "Hecase Diss. End\n";
+                        //      outFile << "-----------------------------\n";
+                        }
+
+                	}
 		}
-		// I case
-		else if (lo.isOnAxis(Species::I)) {
-			// I_k + B -> B
-			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
-		}
+        }
+        }
 
-		// He case
-		else if (lo.isOnAxis(Species::He)) {
-			// He_k + B -> B
-			this->addProductionReaction(tag, {i, bubbleId, bubbleId});
-		}
-	
+        // Find the edge of the phase space
+        const auto& largestReg = this->getCluster(largestClusterId).getRegion();
+        Composition hiLargest = largestReg.getUpperLimitPoint();
+        auto largestVSize = hiLargest[Species::V] - 1;
+        auto largestHeSize = hiLargest[Species::He] - 1;
 
-	}
-	}
-	// Get the composition of each cluster
-	const auto& cl1Reg = this->getCluster(i).getRegion();
-	const auto& cl2Reg = this->getCluster(j).getRegion();
-	Composition lo1 = cl1Reg.getOrigin();
-	Composition hi1 = cl1Reg.getUpperLimitPoint();
-	Composition lo2 = cl2Reg.getOrigin();
-	Composition hi2 = cl2Reg.getUpperLimitPoint();
+        // He_a + He_bV -> B
+        if (hi1[Species::He] + hi2[Species::He] - 2 > largestHeSize) {
+                // He_a + He_bV -> B
+                this->addProductionReaction(tag, {i, j, bubbleId});
 
-	// Find the edge of the phase space
-	const auto& largestReg = this->getCluster(largestClusterId).getRegion();
-	Composition hiLargest = largestReg.getUpperLimitPoint();
-	auto largestVSize = hiLargest[Species::V] - 1;
-	auto largestHeSize = hiLargest[Species::He] - 1;
+                // B -> He_a + He_bV
+                bool isOnAxis1 = false, isOnAxis2 = false;
+                if (lo1.isOnAxis(Species::He) && lo1[Species::He] == 1)
+                        isOnAxis1 = true;
+                if (lo2.isOnAxis(Species::He) && lo2[Species::He] == 1)
+                        isOnAxis2 = true;
 
-	// He_a + He_bV -> B
-	if (hi1[Species::He] + hi2[Species::He] - 2 > largestHeSize) {
-		this->addProductionReaction(tag, {i, j, bubbleId});
-	}
+                if (isOnAxis1 || isOnAxis2)
+                {
+                //      outFile << "He+HeV case Diss. Start\n";
+                //      this->addDissociationReaction(tag, {bubbleId, i, j});
+                //      outFile << "He+HeV case Diss. End\n";
+                //      outFile << "-----------------------------\n";
+                }
 
-	// V_a + HeV_b -> B
-	if (hi1[Species::V] + hi2[Species::V] - 2 > largestVSize) {
-		this->addProductionReaction(tag, {i, j, bubbleId});
-
-	}
+        }
 
 
-	// I_a + B -> HeV_b
-	if ((lo1.isOnAxis(Species::I) and lo2[Species::V] > 0) or
-		(lo1[Species::V] > 0 and lo2.isOnAxis(Species::I))) {
-		// It should be around the largest size value
-		if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
-				hi2[Species::I] - 4 >
-			largestVSize) {
-			// Need to know which one is I
-			auto iId = lo1[Species::I] > 0 ? i : j;
-			auto vId = lo1[Species::I] > 0 ? j : i;
-			this->addProductionReaction(tag, {iId, bubbleId, vId});
-			
-		}
-	}
+        // V_a + HeV_b -> B
+        if (hi1[Species::V] + hi2[Species::V] - 2 > largestVSize) {
+                this->addProductionReaction(tag, {i, j, bubbleId});
+
+                 // B -> He_a + He_bV
+                bool isOnAxis1 = false, isOnAxis2 = false;
+                if (lo1.isOnAxis(Species::V) && lo1[Species::V] == 1)
+                        isOnAxis1 = true;
+                if (lo2.isOnAxis(Species::V) && lo2[Species::V] == 1)
+                        isOnAxis2 = true;
+
+                if (isOnAxis1 || isOnAxis2)
+                {
+                //      outFile << "V+HeV case Diss. Start\n";
+                //      this->addDissociationReaction(tag, {bubbleId, i, j});
+                //      outFile << "V+HeV case Diss. End\n";
+                //      outFile << "-----------------------------\n";
+                }
+
+        }
+
+
+        // I_a + B -> HeV_b
+        if ((lo1.isOnAxis(Species::I) and lo2[Species::V] > 0) or
+                (lo1[Species::V] > 0 and lo2.isOnAxis(Species::I))) {
+                // It should be around the largest size value
+                if (hi1[Species::V] + hi2[Species::V] + hi1[Species::I] +
+                                hi2[Species::I] - 4 >
+                        largestVSize) {
+                        // Need to know which one is I
+                        auto iId = lo1[Species::I] > 0 ? i : j;
+                        auto vId = lo1[Species::I] > 0 ? j : i;
+                        this->addProductionReaction(tag, {iId, bubbleId, vId});
+
+                }
+        }
+
+//      outFile.close();
 }
 
 

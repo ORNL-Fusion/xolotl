@@ -124,11 +124,16 @@ FeReactionNetwork::getMonitorDataHeaderString() const
 	std::stringstream header;
 
 	auto numSpecies = getSpeciesListSize();
-	header << "#time He_cav ";
+//        header << "#time He_cav_CD ";
+	header << "#time He_cav_CD He_cav_Total ";
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		auto speciesName = this->getSpeciesName(id);
-		header << speciesName << "_density " << speciesName << "_diameter "
-                           << speciesName << "_partial_density " << speciesName << "_partial_diameter ";
+		header << speciesName << "_density_CD " << speciesName << "_diameter_CD "
+                           << speciesName << "_partial_density_CD " << speciesName << "_partial_diameter_CD "
+			   << speciesName << "_number_density_SSBM " << speciesName << "_diameter_SSBM "
+                           << speciesName << "_partial_number_density_SSBM " << speciesName << "_partial_diameter_SSBM "
+			   << speciesName << "_density_Total " << speciesName << "_diameter_Total "
+                           << speciesName << "_partial_density_Total " << speciesName << "_partial_diameter_Total ";
 	}
 
 	return header.str();
@@ -144,81 +149,80 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 	using Q = TQ::Type;
 	using TQA = util::Array<TQ, 4>;
 	
-	double ahecomp_SSBMtotal = 0.0;
-	double avcomp_SSBMtotal = 0.0;
-
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		auto ms = minSizes[id()];
 		auto totals = this->getTotals(conc,
-			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
-				TQ{Q::radius, id, ms}});
+			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1},
+		       		TQ{Q::total, id, ms},TQ{Q::radius, id, ms}});
+	// Cluster Dynamics case
+		totalVals[2 + (12 * id()) + 0] += totals[0] * fac;
+		totalVals[2 + (12 * id()) + 1] += totals[1] * 2.0 * fac;
+		totalVals[2 + (12 * id()) + 2] += totals[2] * fac;
+		totalVals[2 + (12 * id()) + 3] += totals[3] * 2.0 * fac;
 
-		totalVals[1 + (4 * id()) + 0] += totals[0] * fac;
-		totalVals[1 + (4 * id()) + 1] += totals[1] * 2.0 * fac;
-		totalVals[1 + (4 * id()) + 2] += totals[2] * fac;
-		totalVals[1 + (4 * id()) + 3] += totals[3] * 2.0 * fac;
-		
-		// SSBM case
+		totalVals[2 + (12 * id()) + 8] += totals[0] * fac;
+                totalVals[2 + (12 * id()) + 9] += totals[1] * 2.0 * fac;
+                totalVals[2 + (12 * id()) + 10] += totals[2] * fac;
+                totalVals[2 + (12 * id()) + 11] += totals[3] * 2.0 * fac;
+	// SSBM case
 		if (this->_enableSSBM) {
 			IndexType ssbmId = 0;
 			IndexType ssbmSizeId = 0;
 
-			// Compute average numbers
-                        auto heConc = 0.0;
-                        auto aheComp = 0.0;
-
-                        auto vConc = 0.0;
-                        auto avComp = 0.0;
-
                         switch (id()) {
                         // He
-                        case 0:
-                                ssbmId = this->_clusterData.h_view().bubbleId();
-                                ssbmSizeId = ssbmId + 2;
-                                vConc = conc(ssbmId);
-                                if (vConc > 1.0e-16)
-                                        avComp = conc(ssbmSizeId) / vConc;
-					ahecomp_SSBMtotal += avComp * fac;
-                                break;
-                        // Void
                         case 1:
                                 ssbmId = this->_clusterData.h_view().bubbleId();
                                 ssbmSizeId = ssbmId + 1;
-                                vConc = conc(ssbmId);
-                                if (vConc > 1.0e-16)
-                                        avComp = conc(ssbmSizeId) / vConc;
-					avcomp_SSBMtotal += avComp * fac;
-                                break;
+				break;
+                        // Void
+                        case 2:
+                                ssbmId = this->_clusterData.h_view().bubbleId();
+                                ssbmSizeId = ssbmId + 2;
+				break;
                         default:
                                 ssbmId = 0;
                                 ssbmSizeId = 0;
                                 break;
                         }
 
+			// Compute average numbers
+			auto vConc = 0.0;
+			auto avComp = 0.0;
+			if (ssbmId > 0) {
+				vConc = conc(ssbmId);
+				if (vConc > 1.0e-16)
+					avComp = conc(ssbmSizeId) / vConc;
+			}
+
 			// Add the single size data
 			auto avRadius = 0.0;
 			IndexType radiusId = 0;
 			if (vConc > 1.0e-16) {
-				if (id() > 4)
-					radiusId = id() - 2;
-				else if (id() > 1)
-					radiusId = id() - 1;
+				radiusId = id();
 				avRadius = util::max(0.0,
 					computeBubbleRadius(avComp,
-						this->_clusterData.h_view().latticeParameter()));
+						this->_clusterData.h_view().latticeParameter(), radiusId));
 			}
 
 
-			totalVals[1+(4 * id()) + 0] += vConc * fac;
-			totalVals[1+(4 * id()) + 1] += vConc * avRadius * 2.0 * fac;
+			totalVals[2+(12 * id()) + 4] = avComp * fac;
+			totalVals[2+(12 * id()) + 5] = avComp * avRadius * 2.0 * fac;
 			
+			totalVals[2+(12 * id()) + 8] += vConc * fac;
+                        totalVals[2+(12 * id()) + 9] += vConc * avRadius * 2.0 * fac;
+
+
 			if (avComp > minSizes[id()]) {
-				totalVals[1+(4 * id()) + 2] += vConc * fac;
-				totalVals[1+(4 * id()) + 3] += vConc * avRadius * 2.0 * fac;
+				totalVals[2+(12 * id()) + 6] = avComp * fac;
+				totalVals[2+(12 * id()) + 7] = avComp * avRadius * 2.0 * fac;
+				totalVals[2+(12 * id()) + 10] += vConc * fac;
+                                totalVals[2+(12 * id()) + 11] += vConc * avRadius * 2.0 * fac;
 			}
 
 
 		}
+	
 		// Special case for trapped helium
 		if (id() == 0) {
 			// Find the vacancy index
@@ -232,6 +236,7 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 				}
 			}
 
+			// Cluster dynamics case
 			auto tiles = _subpaving.getTiles();
 			double heConc = 0.0;
 			Kokkos::parallel_reduce(
@@ -264,13 +269,25 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 
 			Kokkos::fence();
 
-			double totalHe = heConc * fac + ahecomp_SSBMtotal;
-			double totalCav = cavConc +  avcomp_SSBMtotal;
-
-			totalVals[0] += totalHe / totalCav;
+			// Output
+                        totalVals[0] += heConc * fac / cavConc;
 			
+			// SSBM case
+			if (this->_enableSSBM) {
+			IndexType ssbmId = this->_clusterData.h_view().bubbleId();
+	                        IndexType ssbmSizeId_He = ssbmId + 1;
+
+
+				double totalCav_SSBM = cavConc + conc(ssbmId); 
+				double totalHe_SSBM = heConc + conc(ssbmId) * (conc(ssbmSizeId_He) / conc(ssbmId)); 
+				
+				totalVals[1] += totalHe_SSBM * fac / totalCav_SSBM;
+			}
+
 		}
+	
 	}
+	
 }
 
 void
@@ -287,13 +304,42 @@ FeReactionNetwork::writeMonitorDataLine(
 	if (util::getMPIRank() == 0) {
 		// Average the data
 		for (auto i = 0; i < numSpecies; ++i) {
-			auto id = [i](std::size_t n) { return 1 + 4 * i + n; };
+			auto id = [i](std::size_t n) { return 2 + 12 * i + n; };
 			if (globalData[id(0)] > 1.0e-16) {
 				globalData[id(1)] /= globalData[id(0)];
 			}
+			else
+				globalData[id(1)] = 0.0;
+
 			if (globalData[id(2)] > 1.0e-16) {
 				globalData[id(3)] /= globalData[id(2)];
 			}
+			else
+                                globalData[id(3)] = 0.0;
+
+			if (globalData[id(4)] > 1.0e-16) {
+                                globalData[id(5)] /= globalData[id(4)];
+                        }
+                        else
+                                globalData[id(5)] = 0.0;
+
+			if (globalData[id(6)] > 1.0e-16) {
+                                globalData[id(7)] /= globalData[id(6)];
+			}
+			else
+                                globalData[id(7)] = 0.0;
+
+			if (globalData[id(8)] > 1.0e-16) {
+                                globalData[id(9)] /= globalData[id(8)];
+                        }
+                        else
+                                globalData[id(9)] = 0.0;
+
+			if (globalData[id(10)] > 1.0e-16) {
+                                globalData[id(11)] /= globalData[id(10)];
+                        }
+			else
+                                globalData[id(11)] = 0.0;
 		}
 
 		// Set the output precision
@@ -306,11 +352,15 @@ FeReactionNetwork::writeMonitorDataLine(
 		outputFile << std::setprecision(outputPrecision);
 
 		// Output the data
-		outputFile << time << " " << globalData[0] << " ";
+		outputFile << time << " " << globalData[0] << " " << globalData[1] << " ";
 		for (auto i = 0; i < numSpecies; ++i) {
-			auto id = [i](std::size_t n) { return 1 + 4 * i + n; };
+			auto id = [i](std::size_t n) { return 2 + 12 * i + n; };
 			outputFile << globalData[id(0)] << " " << globalData[id(1)] << " "
-					   << globalData[id(2)] << " " << globalData[id(3)] << " ";
+					   << globalData[id(2)] << " " << globalData[id(3)] << " "
+					   << globalData[id(4)] << " " << globalData[id(5)] << " "
+			                   << globalData[id(6)] << " " << globalData[id(7)] << " "
+					   << globalData[id(8)] << " " << globalData[id(9)] << " "
+                                           << globalData[id(10)] << " " << globalData[id(11)] << " ";
 		}
 		outputFile << std::endl;
 

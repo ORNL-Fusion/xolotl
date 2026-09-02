@@ -469,7 +469,7 @@ public:
 		return detail::ConstantRateView();
 	}
 
-	KOKKOS_INLINE_FUNCTION
+/*	KOKKOS_INLINE_FUNCTION
         void
         computeCoefficients();
 
@@ -482,7 +482,7 @@ public:
         void
         computePartialDerivatives(ConcentrationsView concentrations,
                 Kokkos::View<double*> values, IndexType gridIndex);
-
+*/
 private:
 	KOKKOS_INLINE_FUNCTION
 	double
@@ -496,7 +496,7 @@ private:
 	void
 	computeReducedConnectivity(const Connectivity& connectivity);
 
-/*	KOKKOS_INLINE_FUNCTION
+	KOKKOS_INLINE_FUNCTION
         void
         computeCoefficients();
 	
@@ -509,7 +509,7 @@ private:
 	void
 	computePartialDerivatives(ConcentrationsView concentrations,
 		Kokkos::View<double*> values, IndexType gridIndex);
-*/
+
 	KOKKOS_INLINE_FUNCTION
 	void
 	computeReducedPartialDerivatives(ConcentrationsView concentrations,

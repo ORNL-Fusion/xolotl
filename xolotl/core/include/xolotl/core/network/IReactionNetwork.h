@@ -647,14 +647,13 @@ protected:
 	bool _enableReSolution{};
 	bool _enableNucleation{};
 	bool _enableSink{};
-	bool _enableTrap{}; 
+	bool _enableTrap{};
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
 	bool _enableConstantReaction{};
 	bool _enableReducedJacobian{};
 	bool _enableReadRates{};
 	bool _enableSSBM{}; //for SSBM
-
 
 	IndexType _gridSize{};
 	IndexType _numDOFs{};

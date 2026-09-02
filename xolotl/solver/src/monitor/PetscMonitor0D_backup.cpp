@@ -383,16 +383,10 @@ PetscMonitor0D::startStopImpl(TS ts, PetscInt timestep, PetscReal time,
 	// Access the solution data for the current grid point.
 	gridPointSolution = solutionArray[0];
 
-
-	// Check if we are using the single size bubble model
-	auto ssbm = _solverHandler->ssbm();
-
 	for (auto l = 0; l < dof + 1; ++l) {
 		if (std::fabs(gridPointSolution[l]) > 1.0e-16) {
 			concs[0].emplace_back(l, gridPointSolution[l]);
 		}
-		else if (ssbm and l > dof - 4)
-			concs[0].emplace_back(l, gridPointSolution[l]);
 	}
 
 	// Write our concentration data to the current timestep group
@@ -473,83 +467,6 @@ PetscMonitor0D::computeXenonRetention(
 	PetscFunctionReturn(0);
 }
 
-/*PetscErrorCode
-PetscMonitor0D::computeHeliumRetention(
-        TS ts, PetscInt timestep, PetscReal time, Vec solution)
-{
-        PetscFunctionBeginUser;
-
-        // Get the da from ts
-        DM da;
-        PetscCall(TSGetDM(ts, &da));
-
-        using NetworkType = core::network::NEReactionNetwork;
-        using Spec = typename NetworkType::Species;
-        using Composition = typename NetworkType::Composition;
-
-        // Degrees of freedom is the total number of clusters in the network
-        auto& network = dynamic_cast<NetworkType&>(_solverHandler->getNetwork());
-
-        // Get the array of concentration
-        PetscOffsetView<const PetscReal**> solutionArray;
-        PetscCall(DMDAVecGetKokkosOffsetViewDOF(da, solution, &solutionArray));
-
-
-	// Check if we are using the single size bubble model
-        auto ssbm = _solverHandler->ssbm();
-
-        // Store the concentration over the grid
-        auto numSpecies = network.getSpeciesListSize();
-        auto specIdI = network.getInterstitialSpeciesId();
-        auto myConcData = std::vector<double>(numSpecies + 3 * ssbm, 0.0);
-
-
-        // Declare the pointer for the concentrations at a specific grid point
-        PetscReal* gridPointSolution;
-        PetscReal** solutionArrayH;
-        PetscCall(DMDAVecGetArrayDOFRead(da, solution, &solutionArrayH));
-        gridPointSolution = solutionArrayH[0];
-
-        // Store the concentration and other values over the grid
-        double heConcentration = 0.0;
-
-        // Get the pointer to the beginning of the solution data for this grid point
-        auto concs = subview(solutionArray, 0, Kokkos::ALL).view();
-
-        // Get the minimum size for the radius
-        auto minSizes = _solverHandler->getMinSizes();
-
-        // Get the concentrations
-        heConcentration = network.getTotalAtomConcentration(concs, Spec::He, 1);
-
-        // Print the result
-        XOLOTL_LOG << "\nTime: " << time << '\n'
-                           << "Helium concentration = " << heConcentration << "\n\n";
-
-        // Uncomment to write the content in a file
-        constexpr double k_B = ::xolotl::core::kBoltzmann;
-        std::ofstream outputFile;
-        outputFile.open("retentionOut.txt", std::ios::app);
-        outputFile << time << " " << heConcentration << " ";
-        for (auto id : _clusterOrder) {
-                outputFile << gridPointSolution[id] << " ";
-        }
-        if (heConcentration < 1.0e-16)
-                outputFile << "0 0" << std::endl;
-        else {
-                auto ratio = network.getTotalVolumeRatio(concs, Spec::He, 2);
-                auto variance =
-                        network.getTotalRatioVariance(concs, Spec::He, ratio, 2);
-                outputFile << ratio << " " << variance << std::endl;
-        }
-        outputFile.close();
-
-        // Restore the solutionArray
-        PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &solutionArray));
-
-        PetscFunctionReturn(0);
-}
-*/
 PetscErrorCode
 PetscMonitor0D::computeAlloy(
 	TS ts, PetscInt timestep, PetscReal time, Vec solution)

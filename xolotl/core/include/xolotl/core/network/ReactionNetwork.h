@@ -140,7 +140,7 @@ public:
 	ReactionNetwork(const std::vector<AmountType>& maxSpeciesAmounts,
 		IndexType gridSize, const options::IOptions& opts);
 
-	virtual ~ReactionNetwork();
+	~ReactionNetwork();
 
 	KOKKOS_INLINE_FUNCTION
 	static constexpr std::size_t
@@ -264,7 +264,7 @@ public:
 	setEnableReadRates(bool read) override;
 
 	void
-	setEnableSSBM(bool ssbm) override; //for SSBM
+	setEnableSSBM(bool ssbm) override;
 
 	void
 	setGridSize(IndexType gridSize) override;

@@ -89,11 +89,11 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableReSolution(map["resolution"]);
 	this->setEnableNucleation(map["heterogeneous"]);
 	this->setEnableSink(map["sink"]);
-	this->setEnableTrap(map["trap"]); 
+	this->setEnableTrap(map["trap"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
 	this->setEnableConstantReaction(map["constant"]);
-	this->setEnableSSBM(map["SSBM"]); //SSBM model
+	this->setEnableSSBM(map["SSBM"]);
 	std::string petscString = opts.getPetscArg();
 	auto tokens = util::Tokenizer<>{petscString}();
 	bool useReduced = false;
@@ -119,8 +119,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	readReactions(opts.getTempParam(), opts.getReactionFilePath());
 
 	// For SSBM for instance
-	asDerived()->initializeExtraDOFs(opts); //enable for SSBM
-
+	asDerived()->initializeExtraDOFs(opts);
 
 	// Skip the reactions for now if using constant reactions
 	if (map["constant"])

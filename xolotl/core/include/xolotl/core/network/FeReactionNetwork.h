@@ -45,35 +45,70 @@ public:
 	}
 
 	void
-	initializeExtraClusterData(const options::IOptions& options);
+        initializeExtraClusterData(const options::IOptions& options);
 
-	void
-	initializeExtraDOFs(const options::IOptions& options);
+        void
+        initializeExtraDOFs(const options::IOptions& options);
 
-	void
-	computeFluxesPreProcess(ConcentrationsView concentrations,
-		FluxesView fluxes, IndexType gridIndex, double surfaceDepth,
-		double spacing);
+        void
+        computeFluxesPreProcess(ConcentrationsView concentrations,
+                FluxesView fluxes, IndexType gridIndex, double surfaceDepth,
+                double spacing);
 
-	void
-	computePartialsPreProcess(ConcentrationsView concentrations,
-		Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
-		double spacing);
+        void
+        computePartialsPreProcess(ConcentrationsView concentrations,
+                Kokkos::View<double*> values, IndexType gridIndex, double surfaceDepth,
+                double spacing);
 
-	double
-	computeBubbleRadius(
-		double amount, double latticeParameter)
-	{
-		// Find the edge of the phase space
-		const auto& largestReg = this->getCluster(largestClusterId).getRegion();
-		Composition hiLargest = largestReg.getUpperLimitPoint();
-		double largestSize = hiLargest[Species::V] - 1;
+        double
+        computeBubbleRadius(
+                double amount, double latticeParameter, IndexType typeSwitch)
+        {
+                // Find the edge of the phase space
+                const auto& largestReg = this->getCluster(largestClusterId).getRegion();
+                Composition hiLargest = largestReg.getUpperLimitPoint();
+                double largestSize =100.0;// hiLargest[Species::V] - 1;
 
-		// Get the minimum amount for a valid value
-		amount = util::max(amount, largestSize);
-                return latticeParameter * pow((3.0 * amount) / ::xolotl::core::pi, (1.0 / 3.0)) * 0.5;
+                // Get the minimum amount for a valid value
+                amount = util::max(amount, largestSize);
+        	double radius = 0.0;
+
+		return latticeParameter * pow((3.0 * amount) / ::xolotl::core::pi, (1.0 / 3.0)) * 0.5;
+
+	 	switch (typeSwitch) {
+		// Trap
+		case 0:
+			{
+				radius = 0.0;
+			}
+		// Heliem	
+		case 1:
+			{
+				double FourPi = 4.0 * ::xolotl::core::pi;
+        	                double aCubed = pow(latticeParameter, 3);
+	                        double termOne =
+                                	pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed * amount,
+                        	                (1.0 / 3.0));
+                	        double termTwo =
+        	                        pow((3.0 / FourPi) * (1.0 / 10.0) * aCubed, (1.0 / 3.0));
+	                        radius = heliumRadius + termOne - termTwo;
+			}
+		// Bubble (V)
+		case 2:
+			{
+				radius = latticeParameter *
+                                	pow((3.0 * amount) / ::xolotl::core::pi,
+                                        	(1.0 / 3.0)) * 0.5;
+			}
+		// Interstitial
+		case 3:
+			{
+				radius =  latticeParameter * pow(3.0 / ::xolotl::core::pi, (1.0 / 3.0)) * 0.5;
+			}
+		}       
+        	
+		return radius;
 	}
-
 
 	std::string
 	getMonitorDataHeaderString() const override;
@@ -85,7 +120,7 @@ public:
 	std::size_t
 	getMonitorDataLineSize() const override
 	{
-		return 1 + getSpeciesListSize() * 4;
+		return 2 + getSpeciesListSize() * 12;
 	}
 
 	void
@@ -147,7 +182,7 @@ public:
 		largestClusterId(network.largestClusterId)
 	{
 	}
-	
+
 	template <typename TTag>
 	KOKKOS_INLINE_FUNCTION
 	void
@@ -171,7 +206,7 @@ public:
 private:
 	ReactionCollection<NetworkType>
 	getReactionCollection() const;
-
+	
 	IndexType largestClusterId;
 };
 } // namespace detail

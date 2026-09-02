@@ -149,7 +149,7 @@ private:
 		XE_FORMATION,
 		V_FORMATION,
 		V2_FORMATION,
-		TRAP_BINDING, 
+		TRAP_BINDING,
 		AV_BUBBLE_RAD, // for SSBM
 		SINK_STRENGTH,
 		NUM_FLOAT_VALS
@@ -174,7 +174,7 @@ private:
 		TRAP_MUTATION,
 		READ_RATES,
 		CONSTANT_REACTION,
-		LARGE_BUBBLE, //for SSBM
+		SSBM,
 		NUM_BOOL_VALS
 	};
 
@@ -321,13 +321,13 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	double
-	getTrapBindingEnergy() const 
+	getTrapBindingEnergy() const
 	{
 		return _floatVals[TRAP_BINDING];
 	}
 
 	void
-	setTrapBindingEnergy(double val) 
+	setTrapBindingEnergy(double val)
 	{
 		setVal(_floatVals, TRAP_BINDING, val);
 	}
@@ -360,13 +360,13 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
         int
-        heAvId() const //check if necessary
+        heAvId() const //for SSBM
         {
                 return _intVals[AV_He_ID];
         }
 
         void
-        setHeAvId(int val) //check if necessary
+        setHeAvId(int val) //for SSBM
         {
                 setVal(_intVals, AV_He_ID, val);
         }
@@ -374,13 +374,13 @@ public:
 
 	KOKKOS_INLINE_FUNCTION
 	int
-	voidAvId() const //check if neccessary
+	voidAvId() const //for SSBM
 	{
 		return _intVals[AV_VOID_ID];
 	}
 
 	void
-	setVoidAvId(int val) //check if neccessary
+	setVoidAvId(int val) //for SSBM
 	{
 		setVal(_intVals, AV_VOID_ID, val);
 	}
@@ -488,18 +488,18 @@ public:
 	{
 		setVal(_boolVals, CONSTANT_REACTION, val);
 	}
-
+	
 	KOKKOS_INLINE_FUNCTION
 	bool
 	enableSSBM() const //for SSBM
 	{
-		return _boolVals[LARGE_BUBBLE];
+		return _boolVals[SSBM];
 	}
 
 	void
 	setEnableSSBM(bool val) //for SSBM
 	{
-		setVal(_boolVals, LARGE_BUBBLE, val);
+		setVal(_boolVals, SSBM, val);
 	}
 
 private:

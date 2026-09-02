@@ -431,6 +431,14 @@ public:
 	moveSurface() const = 0;
 
 	/**
+         * To know if we're using the single size bubble model.
+         *
+         * @return True if we are.
+         */
+        virtual bool
+        ssbm() const = 0;
+
+	/**
 	 * To know if the bubble bursting should be used.
 	 *
 	 * @return True if we want the bubble bursting.
