@@ -6,7 +6,7 @@ rate theory to model the time evolution of the divertor material in next
 generation tokamaks like ITER, as well as nuclear fuel in fission reactors.
 
 ## Required Dependencies
-- C++17 compiler
+- C++20 compiler
 - CMake >= 3.13
 - MPI
 - Boost
