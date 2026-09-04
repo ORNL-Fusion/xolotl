@@ -27,16 +27,19 @@ using AmountType = std::uint32_t;
 namespace detail
 {
 template <typename T, typename Enable = void>
-struct BadId : std::integral_constant<T, std::numeric_limits<T>::max()>
+struct Bad : std::integral_constant<T, std::numeric_limits<T>::max()>
 {
 };
 
 template <typename T>
-struct BadId<T, std::enable_if_t<std::is_signed_v<T>>> :
+struct Bad<T, std::enable_if_t<std::is_signed_v<T>>> :
 	std::integral_constant<T, -1>
 {
 };
 } // namespace detail
 
-inline constexpr auto badId = detail::BadId<IdType>();
+inline constexpr auto badId = detail::Bad<IdType>();
+
+template <typename T>
+inline constexpr auto bad = detail::Bad<T>();
 } // namespace xolotl

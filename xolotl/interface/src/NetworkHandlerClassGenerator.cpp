@@ -187,6 +187,9 @@ NetworkHandlerClassGenerator::readNetworkFile()
 		auto& spData = mapSpeciesType(toLower(elNode.get<std::string>("type")));
 		spData.name = elNode.get<std::string>("name");
 		spData.label = elNode.get<std::string>("label");
+		if (elNode.count("max_pure_amount")) {
+			spData.maxPure = elNode.get<AmountType>("max_pure_amount");
+		}
 		if (elNode.count("interact")) {
 			auto ixNode = elNode.get_child("interact");
 			auto ixSpecies = ixNode.get<std::string>("species");
@@ -493,7 +496,16 @@ NetworkHandlerClassGenerator::generateClusterGeneratorHeader()
 		   "    double impurityRadius) const noexcept;\n"
 		   "\n"
 		   "private:\n";
-	ofs << "  AmountType _maxV{0};\n";
+	for (auto&& spec : _speciesData) {
+		for (auto&& ix : spec.interact) {
+			auto spLab = spec.label;
+			auto ispLab = ix.species;
+			auto ixLab = spLab + ispLab;
+			ofs << "  AmountType _ix_" << ixLab << "_max_" << spLab << ";\n"
+				<< "  AmountType _ix_" << ixLab << "_max_" << ispLab << ";\n";
+		}
+	}
+	// ofs << "  AmountType _maxV{0};\n";
 	ofs << "};\n";
 
 	// close namespace
@@ -528,41 +540,53 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 		   "bool\n"
 		<< _clusterGenerator << "::select(const Region& region) const\n"
 		<< "{\n"
-		<< "  int nAxis = 0;\n";
+		   "  constexpr auto species = NetworkType::getSpeciesRange();\n"
+		   "  auto matchSpeciesPair =\n"
+		   "    [&species](Composition lo, Species s1, Species s2) {\n"
+		   "      if (lo[s1] == 0 || lo[s2] == 0) { return false; }\n"
+		   "      for (auto l : species) {\n"
+		   "        if (l == s1 || l == s2) { continue; }\n"
+		   "        if (lo[l] != 0) { return false; }\n"
+		   "      }\n"
+		   "      return true;\n"
+		   "    };\n"
+		   "\n"
+		   "  auto origin = Composition(region.getOrigin());\n";
+
 	for (auto&& spec : _speciesData) {
-		ofs << "  {\n"
-			<< "  const auto& sIv = region[Species::" << spec.label << "];\n"
-			<< "  bool snz = (sIv.begin() > 0);\n"
-			   "  nAxis += snz;\n";
-		for (auto&& ix : spec.interact) {
-			ofs << "  {\n"
-				<< "  auto ixSpec = Species::" << ix.species << ";\n"
-				<< "  const auto& ixIv = region[ixSpec];\n"
-				<< "  constexpr auto iR = std::ratio<\n"
-				<< "    " << ix.ratio.numerator() << ",\n"
-				<< "    " << ix.ratio.denominator() << "\n"
-				<< "    >{};\n"
-				<< "  if (snz && (sIv.begin() \% iR.den == 0) &&\n"
-				<< "      (ixIv.begin() == iR.num * sIv.begin() / iR.den)) {\n";
-			for (auto&& sp : _speciesData) {
-				if (sp.label == spec.label || sp.label == ix.species) {
-					continue;
-				}
-				ofs << "    if (region[Species::" << sp.label << "]\n"
-					<< "        .begin() > 0) {\n"
-					<< "      return false;\n"
-					   "    }\n";
-			}
-			ofs << "    return true;\n"
-				   "  }\n"
-				   "  }\n";
+		auto spRef = "Species::" + spec.label;
+		auto mxp = spec.maxPure;
+		ofs << "  if (region.isSimplex() &&\n"
+			<< "      origin.isOnAxis(" << spRef << ")) {\n";
+
+		if (mxp != bad<AmountType>) {
+			ofs << "    if (origin[" << spRef << "] <= " << mxp << ") {\n"
+				<< "      return true;\n"
+				<< "    }\n";
+		}
+		else {
+			ofs << "    return true;\n";
 		}
 		ofs << "  }\n";
+		for (auto&& ix : spec.interact) {
+			auto ispRef = "Species::" + ix.species;
+			auto ixLab = spec.label + ix.species;
+			auto ixSpMax = "_ix_" + ixLab + "_max_" + spec.label;
+			auto ixISpMax = "_ix_" + ixLab + "_max_" + ix.species;
+			ofs << "  {\n"
+				<< "  constexpr auto sp = " << spRef << ";\n"
+				<< "  constexpr auto ix = " << ispRef << ";\n"
+				<< "  if (matchSpeciesPair(origin, sp, ix)) {\n"
+				<< "    if (origin[sp] <= " << ixSpMax << " &&\n"
+				<< "        origin[ix] <= " << ixISpMax << ") {\n"
+				<< "      return true;\n"
+				<< "    }\n"
+				<< "    return false;\n"
+				<< "  }\n"
+				<< "  }\n";
+		}
 	}
-	ofs << "  if (nAxis != 1) {\n"
-		   "    return false;\n"
-		   "  }\n"
-		   "  return true;\n"
+	ofs << "  return false;\n"
 		   "}\n"
 		   "\n"
 		   "template <typename PlsmContext>\n"
@@ -772,13 +796,70 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 
 	filePath = _genDir / (_clusterGenerator + ".cpp");
 	ofs = openFile(filePath);
-	ofs << "#include <" << _reactionNetwork << ".h>\n"
+	ofs << "#include <ratio>\n"
+		<< "#include <" << _reactionNetwork << ".h>\n"
 		<< "namespace xolotl::core::network {\n"
 		<< _clusterGenerator << "::" << _clusterGenerator << "(\n"
-		<< "  const options::IOptions& options) :\n"
-		   "  _maxV(options.getMaxV())\n"
-		   "{\n"
-		   "}\n"
+		<< "  const options::IOptions& options)\n"
+		<< "{\n"
+		   "  const auto& params = options.getNetworkParameters();\n";
+	for (auto&& spec : _speciesData) {
+		for (auto&& ix : spec.interact) {
+			auto spLab = spec.label;
+			auto spRef = "Species::" + spLab;
+			auto ispLab = ix.species;
+			auto ispRef = "Species::" + ispLab;
+			auto ixLab = spLab + ispLab;
+			auto spMaxVar = "_ix_" + ixLab + "_max_" + spLab;
+			auto spMaxOpt = "max" + spLab;
+			auto ispMaxVar = "_ix_" + ixLab + "_max_" + ispLab;
+			auto ispMaxOpt = "max" + ispLab;
+			ofs << "  {\n"
+				<< "  AmountType " << spMaxOpt << " =\n";
+			switch (spec.type) {
+			case SpeciesData::Type::impurity:
+				ofs << "    params[0];\n";
+				break;
+			case SpeciesData::Type::vacancy:
+				ofs << "    params[3];\n";
+				break;
+			case SpeciesData::Type::interstitial:
+				ofs << "    params[4];\n";
+				break;
+			}
+			ofs << "  AmountType " << ispMaxOpt << " =\n";
+			switch (_speciesLabelMap[ispLab]->type) {
+			case SpeciesData::Type::impurity:
+				ofs << "    params[0];\n";
+				break;
+			case SpeciesData::Type::vacancy:
+				ofs << "    params[3];\n";
+				break;
+			case SpeciesData::Type::interstitial:
+				ofs << "    params[4];\n";
+				break;
+			}
+			ofs << "  constexpr auto iR = std::ratio<\n"
+				<< "    " << ix.ratio.numerator() << ",\n"
+				<< "    " << ix.ratio.denominator() << ">{};\n"
+				<< "  if (iR.num <= iR.den) {\n"
+				<< "    " << ispMaxVar << " = " << ispMaxOpt << ";\n"
+				<< "    " << spMaxVar << " = " << ispMaxOpt << " *\n"
+				<< "      iR.num / iR.den;\n"
+				<< "    " << spMaxVar << " = std::max(\n"
+				<< "      " << spMaxVar << ", " << spMaxOpt << ");\n"
+				<< "  }\n"
+				<< "  else {\n"
+				<< "    " << spMaxVar << " = " << spMaxOpt << ";\n"
+				<< "    " << ispMaxVar << " = " << spMaxOpt << " *\n"
+				<< "      iR.den / iR.num;\n"
+				<< "    " << ispMaxVar << " = std::max(\n"
+				<< "      " << ispMaxVar << ", " << ispMaxOpt << ");\n"
+				<< "  }\n"
+				<< "  }\n";
+		}
+	}
+	ofs << "}\n"
 		   "}\n";
 }
 
@@ -1227,6 +1308,12 @@ NetworkHandlerClassGenerator::generateNetworkHeader()
 		   "\n"
 		   "  IndexType\n"
 		   "  checkLargestClusterId();\n"
+		   "\n"
+		   "  KOKKOS_INLINE_FUNCTION\n"
+		   "  void\n"
+		   "  setConnectivity(Connectivity)\n"
+		   "  {\n"
+		   "  }\n"
 		   "\n"
 		   "  std::string\n"
 		   "  getMonitorOutputFileName() const override\n"

@@ -119,6 +119,7 @@ private:
 		std::string name;
 		std::string label;
 		Type type;
+		AmountType maxPure{bad<AmountType>};
 
 		struct Interaction
 		{
@@ -164,7 +165,7 @@ private:
 	};
 	struct ReactionData
 	{
-        ReactionParts parts;
+		ReactionParts parts;
 		std::string type;
 		AmountType size;
 		std::string bindingExpr;
@@ -172,7 +173,7 @@ private:
 	std::vector<ReactionData> _reactionData;
 	struct ReactionGroup
 	{
-        ReactionParts parts;
+		ReactionParts parts;
 		std::vector<const ReactionData*> cases;
 		const ReactionData* general{nullptr};
 	};
