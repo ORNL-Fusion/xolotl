@@ -388,6 +388,19 @@ FeProductionReaction::computePartialDerivatives(
 				Kokkos::atomic_add(
 					&values(this->_connEntries[1][3][0][0]), f * bC);
 			}
+
+			//_connEntries[][][][] understanding still shaky, looked over 800H, H-Blister, and Reaction.cpp files
+			//the work shown here is the copied directly from H-Blister file, although I think we may need to change this
+			//if instability still occur, this is my first suspect
+			// current understanding of _connEntries[a][b][c][d]
+			// a is the term we are looking at in the reaction ~ A+B -> C
+			// A is 0, B is 1, C is 2
+			// b is the derivative we want to take respect to
+			// Trap is 0, He is 1, V is 2, I is 3 (in H-Blister different species are involved thus a differnt ordering)
+			// c is the moment ordering 
+			// 0 is zeroth moment, 1 is first moment, 2 is second moment
+			// d is something I am not sure of
+			// Please correct if I am missing something/everything
 		}
 		// Interstitial case
 		if (comp[Species::I] > 0) {
@@ -451,9 +464,9 @@ FeProductionReaction::computePartialDerivatives(
 			}
 		}
 
-		// H case
+		// He case
 			if (comp[Species::He] > 0) {
-				// H_k + B -> B
+				// He_k + B -> B
 
 				// The standard cluster always loses the flux
 				if (this->_reactants[0] >= numClusters) {
@@ -469,7 +482,7 @@ FeProductionReaction::computePartialDerivatives(
 						&values(this->_connEntries[0][0][0][0]), f * bC);
 				}
 
-				// The H size increases
+				// The He size increases
 				f = this->_coefs(0, 0, 0, 0) * rate * comp[Species::He];
 				if (this->_reactants[0] >= numClusters) {
 					Kokkos::atomic_add(
@@ -534,8 +547,8 @@ FeProductionReaction::computePartialDerivatives(
 				&values(this->_connEntries[2][3][1][0]), f * cR1);
 		}
 
-		// H case
-		// H_a + H_bV -> B
+		// He case
+		// He_a + He_bV -> B
 			if (orig1.isOnAxis(Species::He) or orig2.isOnAxis(Species::He)) {
 				// Both reactants decrease
 				Kokkos::atomic_sub(
@@ -604,7 +617,7 @@ FeDissociationReaction::computeFlux(
 	double omega = this->_clusterData->atomicVolume();
 	double T = this->_clusterData->temperature(gridIndex);
 	constexpr double k_B = ::xolotl::core::kBoltzmann;
-	double E_b = 1.9; // H in Void
+	double E_b = 1.9; // He in Void converged binding energy value
 
 	rate *= (1.0 / omega) * std::exp(-E_b / (k_B * T));
 
@@ -621,12 +634,10 @@ FeDissociationReaction::computeFlux(
 	Composition comp(orig);
 
 	// Get the SSBM cluster
-	auto ssbmId = (this->_products[0] >= numClusters) ? this->_products[0] :
-														this->_products[1];
+	auto ssbmId = (this->_products[0] >= numClusters) ? this->_products[0] : this->_products[1];
 
 	// Compute the flux
-	double f = this->_coefs(0, 0, 0, 0) * rate * concentrations(stdClusterId) *
-		concentrations(ssbmId);
+	double f = this->_coefs(0, 0, 0, 0) * rate * concentrations(stdClusterId) * concentrations(ssbmId);
 
 	// Large bubble is the reactant
 	if (this->_reactant >= numClusters) {

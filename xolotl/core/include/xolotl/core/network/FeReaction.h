@@ -69,11 +69,11 @@ public:
 			else {
 				// Bubble
 					this->_reactantMomentIds[i][0] =
-						this->_clusterData->heAvId();
+						this->_clusterData->heAvId(); //Placeholder of bubble
 					this->_reactantMomentIds[i][1] =
-						this->_clusterData->heAvId();
+						this->_clusterData->heAvId(); //for He
 					this->_reactantMomentIds[i][2] =
-                                                this->_clusterData->voidAvId();
+                                                this->_clusterData->voidAvId(); //for V
 			}
 			// Products
 			if (this->_products[i] < numClusters) {
@@ -90,13 +90,11 @@ public:
 				else {
 					// Bubble
 					this->_productMomentIds[i][0] =
-                                                this->_clusterData->voidAvId();
-					this->_productMomentIds[i][0] =
-						this->_clusterData->heAvId();
+						this->_clusterData->heAvId(); //Placeholder of bubble
 					this->_productMomentIds[i][1] =
-						this->_clusterData->heAvId();
+						this->_clusterData->heAvId(); // for He
 					this->_productMomentIds[i][2] =
-                                                this->_clusterData->voidAvId();
+                                                this->_clusterData->voidAvId(); // for V
 				}
 			}
 		}	
@@ -213,11 +211,11 @@ public:
                         else {
                                 // Bubble
                                 this->_reactantMomentIds[0] =
-                                        this->_clusterData->heAvId(); // He
+                                        this->_clusterData->heAvId(); // placeholeder of bubble
 				this->_reactantMomentIds[1] =
-                                        this->_clusterData->heAvId(); // He
+                                        this->_clusterData->heAvId(); // for He
                                 this->_reactantMomentIds[2] =
-                                        this->_clusterData->voidAvId(); // V
+                                        this->_clusterData->voidAvId(); // for V
                         }
                 for (auto i : {0, 1}) {
 			// Products
@@ -235,13 +233,11 @@ public:
 				else {
 					// Bubble
 					this->_productMomentIds[i][0] =
-						this->_clusterData->voidAvId();
-					this->_productMomentIds[i][0] =
-						this->_clusterData->heAvId(); // He
+						this->_clusterData->heAvId(); // placeholeder of bubble
 					this->_productMomentIds[i][1] =
-						this->_clusterData->heAvId(); // H
+						this->_clusterData->heAvId(); // for He
 					this->_productMomentIds[i][2] =
-						this->_clusterData->voidAvId(); // V
+						this->_clusterData->voidAvId(); // for V
 				}
 			}
                 }

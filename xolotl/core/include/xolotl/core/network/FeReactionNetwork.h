@@ -73,8 +73,11 @@ public:
                 amount = util::max(amount, largestSize);
         	double radius = 0.0;
 
-		return latticeParameter * pow((3.0 * amount) / ::xolotl::core::pi, (1.0 / 3.0)) * 0.5;
+		return latticeParameter * pow((3.0 * amount) / ::xolotl::core::pi, (1.0 / 3.0)) * 0.5; // matches V in Reaction bubble radius
 
+		// Idea for section to match bubble radius with how reaction radius is found in reaction bubble radius, current implimentation
+		// yields unphysical results, but could edit this later. For now it is all skipped and defaults to V radius calcuation. More so 
+		// for Std model than SSBM
 	 	switch (typeSwitch) {
 		// Trap
 		case 0:

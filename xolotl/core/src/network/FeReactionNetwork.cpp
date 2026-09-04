@@ -155,10 +155,13 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1},
 		       		TQ{Q::total, id, ms},TQ{Q::radius, id, ms}});
 	// Cluster Dynamics case
-		totalVals[2 + (12 * id()) + 0] += totals[0] * fac;
-		totalVals[2 + (12 * id()) + 1] += totals[1] * 2.0 * fac;
-		totalVals[2 + (12 * id()) + 2] += totals[2] * fac;
-		totalVals[2 + (12 * id()) + 3] += totals[3] * 2.0 * fac;
+	// Template totalVals[2 + (12 * id()) + 0]
+	// 2 is for He Cavities, 12 is for repeated output for each species, "0" is placement for density and diameter  
+
+		totalVals[2 + (12 * id()) + 0] += totals[0] * fac; // total density
+		totalVals[2 + (12 * id()) + 1] += totals[1] * 2.0 * fac; // total diameter
+		totalVals[2 + (12 * id()) + 2] += totals[2] * fac; // partial density
+		totalVals[2 + (12 * id()) + 3] += totals[3] * 2.0 * fac; // partial diameter
 
 		totalVals[2 + (12 * id()) + 8] += totals[0] * fac;
                 totalVals[2 + (12 * id()) + 9] += totals[1] * 2.0 * fac;
@@ -170,15 +173,17 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 			IndexType ssbmSizeId = 0;
 
                         switch (id()) {
+				// id() ordering is based on FeTraits
+				// 0 is traps, 1 is He, 2 is V, 3 is I
                         // He
                         case 1:
                                 ssbmId = this->_clusterData.h_view().bubbleId();
-                                ssbmSizeId = ssbmId + 1;
+                                ssbmSizeId = ssbmId + 1; // based in DOF intialization for SSBM
 				break;
                         // Void
                         case 2:
                                 ssbmId = this->_clusterData.h_view().bubbleId();
-                                ssbmSizeId = ssbmId + 2;
+                                ssbmSizeId = ssbmId + 2; // based in DOF intialization for SSBM
 				break;
                         default:
                                 ssbmId = 0;
@@ -213,6 +218,7 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
                         totalVals[2+(12 * id()) + 9] += vConc * avRadius * 2.0 * fac;
 
 
+			//Partial size calcuation
 			if (avComp > minSizes[id()]) {
 				totalVals[2+(12 * id()) + 6] = avComp * fac;
 				totalVals[2+(12 * id()) + 7] = avComp * avRadius * 2.0 * fac;
@@ -279,7 +285,7 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 
 
 				double totalCav_SSBM = cavConc + conc(ssbmId); 
-				double totalHe_SSBM = heConc + conc(ssbmId) * (conc(ssbmSizeId_He) / conc(ssbmId)); 
+				double totalHe_SSBM = heConc + conc(ssbmId) * (conc(ssbmSizeId_He) / conc(ssbmId)); //simplier way to write as heConc + conc(ssbmSizeId_He), I choose this way for logic completeness
 				
 				totalVals[1] += totalHe_SSBM * fac / totalCav_SSBM;
 			}
@@ -305,36 +311,42 @@ FeReactionNetwork::writeMonitorDataLine(
 		// Average the data
 		for (auto i = 0; i < numSpecies; ++i) {
 			auto id = [i](std::size_t n) { return 2 + 12 * i + n; };
+			// He diameter in std model
 			if (globalData[id(0)] > 1.0e-16) {
 				globalData[id(1)] /= globalData[id(0)];
 			}
 			else
 				globalData[id(1)] = 0.0;
-
+			
+			// V diameter std model
 			if (globalData[id(2)] > 1.0e-16) {
 				globalData[id(3)] /= globalData[id(2)];
 			}
 			else
                                 globalData[id(3)] = 0.0;
-
+			
+			// He diameter in SSBM
 			if (globalData[id(4)] > 1.0e-16) {
                                 globalData[id(5)] /= globalData[id(4)];
                         }
                         else
                                 globalData[id(5)] = 0.0;
-
+			
+			// V diameter in SSBM
 			if (globalData[id(6)] > 1.0e-16) {
                                 globalData[id(7)] /= globalData[id(6)];
 			}
 			else
                                 globalData[id(7)] = 0.0;
 
+			// He diameter std + SSBM
 			if (globalData[id(8)] > 1.0e-16) {
                                 globalData[id(9)] /= globalData[id(8)];
                         }
                         else
                                 globalData[id(9)] = 0.0;
 
+			// V diameter in std + SSBM 
 			if (globalData[id(10)] > 1.0e-16) {
                                 globalData[id(11)] /= globalData[id(10)];
                         }

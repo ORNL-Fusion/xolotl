@@ -22,9 +22,10 @@ FeReactionNetwork::initializeExtraDOFs(const options::IOptions& options)
 
         largestClusterId = checkLargestClusterId();
 
-        this->_clusterData.h_view().setBubbleId(this->_numDOFs);
-        this->_clusterData.h_view().setHeAvId(this->_numDOFs + 1);
-        this->_clusterData.h_view().setVoidAvId(this->_numDOFs + 2);
+	
+        this->_clusterData.h_view().setBubbleId(this->_numDOFs); 	// ssbmID = 0 is for bubble concentration
+        this->_clusterData.h_view().setHeAvId(this->_numDOFs + 1); 	// ssbmID = 1 is for bubble concentration * nHe
+        this->_clusterData.h_view().setVoidAvId(this->_numDOFs + 2);	// ssbmID = 2 is for bubble concentration * nV
         this->_numDOFs += 3;
 }
 
@@ -51,7 +52,7 @@ FeReactionNetwork::computeFluxesPreProcess(ConcentrationsView concentrations,
                 // Void
                         this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
                                 computeBubbleRadius(
-                                        avComp, clusterDataMirror.latticeParameter(), 2 )));
+                                        avComp, clusterDataMirror.latticeParameter(), 2 ))); // "2" is a placeholder for function in case we want more detailed computeBubbleRadius in the future 
         }
 }
 
@@ -78,7 +79,7 @@ FeReactionNetwork::computePartialsPreProcess(
                 // Void
                         this->_clusterData.h_view().setBubbleAvRad(util::max(0.0,
                                 computeBubbleRadius(
-                                        avComp, clusterDataMirror.latticeParameter(), 2 )));
+                                        avComp, clusterDataMirror.latticeParameter(), 2 ))); // "2" is a placeholder for function in case we want more detailed computeBubbleRadius in the future
                 }
 }
 
@@ -288,7 +289,9 @@ void
 FeReactionGenerator::addSingleSizeReactions(
         IndexType i, IndexType j, TTag tag) const
 {
-        using Species = typename NetworkType::Species;
+        // Added SSBM Reactions
+	
+	using Species = typename NetworkType::Species;
         using Composition = typename NetworkType::Composition;
 
         IndexType bubbleId = this->_clusterData.bubbleId();
@@ -307,7 +310,6 @@ FeReactionGenerator::addSingleSizeReactions(
 	Composition comp = Composition::zero();
 	auto iClusterId = subpaving.findTileId(comp);
 
-//      std::ofstream outFile("FeReactionNetwork.logOut",std::ios::app);
 
         // Check reaction with largest bubble
         if (clReg.isSimplex()){
@@ -318,17 +320,17 @@ FeReactionGenerator::addSingleSizeReactions(
                 	// V_k + B -> B
                         
 			if (iClusterId == NetworkType::invalidIndex()) {
+				// Just for production reation
 				this->addProductionReaction(tag, {i, bubbleId, bubbleId});
 			}
 			else {
+				//Production and dissociation reaction
 				this->addProductionReaction(tag, {i, bubbleId, bubbleId, iClusterId});
 
                         	// B -> B + V_k
+				// Currently commented out to test SSBM without V dissocaition, should add later if stable
                         	if (lo[Species::V] == 1){
-                                	//outFile << "Vcase Diss. Start\n";
 	                                //this->addDissociationReaction(tag, {bubbleId, i, bubbleId});
-        	                        //outFile << "Vcase Diss. End\n";
-                	                //outFile << "-----------------------------\n";
                         	}
 			}
                 }
@@ -337,19 +339,17 @@ FeReactionGenerator::addSingleSizeReactions(
                         // I_k + B -> B
                         this->addProductionReaction(tag, {i, bubbleId, bubbleId});
 
-                        // B -> B + V_k
-                        bool isOnAxis1 = false, isOnAxis2 = false;
+                        // B -> B + I_k
+			// Currently commented out to test SSBM without I dissocaition, should add later if stable
+/*                      bool isOnAxis1 = false, isOnAxis2 = false;
                         if (lo1.isOnAxis(Species::I) && lo1[Species::I] == 1)
                                         isOnAxis1 = true;
                         if (lo2.isOnAxis(Species::I) && lo2[Species::I] == 1)
                                         isOnAxis2 = true;
-/*
+
                         if (isOnAxis1 || isOnAxis2)
                         {
-                                outFile << "Icase Diss. Start\n";
                                 this->addDissociationReaction(tag, {bubbleId, i, bubbleId});
-                                outFile << "Icase Diss. End\n";
-                                outFile << "-----------------------------\n";
                         }
 */
                 }
@@ -358,19 +358,19 @@ FeReactionGenerator::addSingleSizeReactions(
                 else if (lo.isOnAxis(Species::He)) {
                         // He_k + B -> B
 			if (iClusterId == NetworkType::invalidIndex()) {
-                                this->addProductionReaction(tag, {i, bubbleId, bubbleId});
+                        	// Just for production reation
+			        this->addProductionReaction(tag, {i, bubbleId, bubbleId});
                         }
                         else {
+				//Production and dissociation reaction
 	                        this->addProductionReaction(tag, {i, bubbleId, bubbleId, iClusterId});
 
-                        // B -> B + He_k
-                        if (lo[Species::He] == 1)
-                        {
-                        //      outFile << "Hecase Diss. Start\n";
-                              this->addDissociationReaction(tag, {bubbleId, i, bubbleId});
-                        //      outFile << "Hecase Diss. End\n";
-                        //      outFile << "-----------------------------\n";
-                        }
+	                        // B -> B + He_k
+				
+                	        if (lo[Species::He] == 1)
+                        	{
+                             		this->addDissociationReaction(tag, {bubbleId, i, bubbleId});
+                        	}
 
                 	}
 		}
@@ -386,10 +386,11 @@ FeReactionGenerator::addSingleSizeReactions(
         // He_a + He_bV -> B
         if (hi1[Species::He] + hi2[Species::He] - 2 > largestHeSize) {
                 // He_a + He_bV -> B
-                this->addProductionReaction(tag, {i, j, bubbleId});
+		this->addProductionReaction(tag, {i, j, bubbleId});
 
                 // B -> He_a + He_bV
-                bool isOnAxis1 = false, isOnAxis2 = false;
+		// Currently commented out, this section looks at transition between SSBM and Std model
+/*                bool isOnAxis1 = false, isOnAxis2 = false;
                 if (lo1.isOnAxis(Species::He) && lo1[Species::He] == 1)
                         isOnAxis1 = true;
                 if (lo2.isOnAxis(Species::He) && lo2[Species::He] == 1)
@@ -397,12 +398,9 @@ FeReactionGenerator::addSingleSizeReactions(
 
                 if (isOnAxis1 || isOnAxis2)
                 {
-                //      outFile << "He+HeV case Diss. Start\n";
-                //      this->addDissociationReaction(tag, {bubbleId, i, j});
-                //      outFile << "He+HeV case Diss. End\n";
-                //      outFile << "-----------------------------\n";
+                      this->addDissociationReaction(tag, {bubbleId, i, j});
                 }
-
+*/
         }
 
 
@@ -411,7 +409,8 @@ FeReactionGenerator::addSingleSizeReactions(
                 this->addProductionReaction(tag, {i, j, bubbleId});
 
                  // B -> He_a + He_bV
-                bool isOnAxis1 = false, isOnAxis2 = false;
+		 // Currently commented out, this section looks at transition between SSBM and Std model
+/*              bool isOnAxis1 = false, isOnAxis2 = false;
                 if (lo1.isOnAxis(Species::V) && lo1[Species::V] == 1)
                         isOnAxis1 = true;
                 if (lo2.isOnAxis(Species::V) && lo2[Species::V] == 1)
@@ -419,12 +418,9 @@ FeReactionGenerator::addSingleSizeReactions(
 
                 if (isOnAxis1 || isOnAxis2)
                 {
-                //      outFile << "V+HeV case Diss. Start\n";
                 //      this->addDissociationReaction(tag, {bubbleId, i, j});
-                //      outFile << "V+HeV case Diss. End\n";
-                //      outFile << "-----------------------------\n";
                 }
-
+*/
         }
 
 
@@ -443,7 +439,6 @@ FeReactionGenerator::addSingleSizeReactions(
                 }
         }
 
-//      outFile.close();
 }
 
 
