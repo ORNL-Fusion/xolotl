@@ -76,9 +76,7 @@ public:
 				// The moment layout is network-relative: slot 0 is the gas
 				// (He) moment, the last slot (nMomentIds-1) is the V moment,
 				// and any slots in between are H-isotope moments, which only
-				// exist when the network has D and/or T. For a pure-He network
-				// nMomentIds == 2, so V lives in slot 1, NOT slot 2 --
-				// hardcoding 2 overruns the array there.
+				// exist when the network has D and/or T. 
 				//
 				// Note the SSBM carries only three DOFs (C_b, gas moment,
 				// V moment), so the He and H moments deliberately alias the
@@ -110,8 +108,7 @@ public:
 					// Bubble (same network-relative layout as the reactants:
 					// gas moment in slot 0, V moment in the last slot).
 					// NOTE: the original code assigned slot 0 twice (voidAvId
-					// then hAvId); the first assignment was dead code and has
-					// been removed.
+					// then hAvId)
 					this->_productMomentIds[i][0] =
 						this->_clusterData->hAvId(); // He
 					for (IndexType j = 1; j + 1 < Superclass::nMomentIds;
@@ -259,8 +256,7 @@ public:
 					// Bubble (same network-relative layout as the reactants:
 					// gas moment in slot 0, V moment in the last slot).
 					// NOTE: the original code assigned slot 0 twice (voidAvId
-					// then hAvId); the first assignment was dead code and has
-					// been removed.
+					// then hAvId)
 					this->_productMomentIds[i][0] =
 						this->_clusterData->hAvId(); // He
 					for (IndexType j = 1; j + 1 < Superclass::nMomentIds;
