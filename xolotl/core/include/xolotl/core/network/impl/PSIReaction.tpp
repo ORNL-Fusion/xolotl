@@ -279,10 +279,7 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 
 		// He case
 		// He_k + B -> B
-		// Structurally parallel to the H block above, retargeted to
-		// Species::He. Uses the CONTINUOUS He/V closure (see
-		// getMaxHePerVCont in PSIClusterGenerator.h) because avV is a
-		// continuous solution variable.
+		// Structurally parallel to the H block above, retargeted to He. 
 		if (comp[Species::He] > 0) {
 			// The standard cluster always loses the flux
 			Kokkos::atomic_sub(&fluxes[stdClusterId], f);
@@ -291,7 +288,7 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 			Kokkos::atomic_add(&fluxes[ssbmId + 1], f * comp[Species::He]);
 
 			// Trap mutation case
-			// Compute the average concentrations. Guard BEFORE dividing:
+			// Compute the average concentrations. Guard before dividing:
 			// Newton produces tiny and occasionally negative concentrations
 			// on intermediate iterates, and dividing first raises FE flags
 			// even when the result is later overwritten.
@@ -329,7 +326,7 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 					&fluxes[ssbmId + 2], f * prodComp[Species::I] * sigmo);
 			}
 			else {
-				// I is not explicitly modeled
+				// I is not currently explicitly modeled
 				Kokkos::atomic_add(&fluxes[ssbmId + 2], f * sigmo);
 			}
 		}
@@ -355,9 +352,7 @@ PSIProductionReaction<TSpeciesEnum>::computeFlux(
 		// SINGLE DISPATCH. The original code had one independent `if` per
 		// species axis. For a reaction such as He_a + V_b -> B, both the V
 		// test and the He test are true, so both blocks fired: the reactants
-		// were subtracted twice and the product added twice. Non-conservative
-		// source terms in a stiff implicit solve are a direct route to the
-		// solver failing to converge.
+		// were subtracted twice and the product added twice. 
 		//
 		// Here the reaction is handled exactly once and the moments are
 		// accumulated from the same totals.
@@ -413,7 +408,7 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 	//
 	// _connEntries is declared
 	//     util::Array<IndexType, 4, 1 + nMomentIds, 2, 1 + nMomentIds>
-	// so BOTH the second and the fourth index range over 1 + nMomentIds with
+	// so both the second and the fourth index range over 1 + nMomentIds with
 	// the same layout: 0 is the concentration, 1..nMomentIds are the moments.
 	// The gas (He) moment is always slot 1; the V moment is always the last
 	// slot, nMomentIds.
@@ -421,8 +416,7 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 	// For the full He/D/V network nMomentIds == 3, so V is slot 3 and the
 	// hardcoded literals that used to appear here happened to be right. For a
 	// pure-He network nMomentIds == 2, so V is slot 2 and a literal 3 reads
-	// past the end of the array. Always use these constants, in both index
-	// positions.
+	// past the end of the array.
 	constexpr auto gasMomId = 1;
 	constexpr auto vMomId = Superclass::nMomentIds;
 
@@ -744,7 +738,7 @@ PSIProductionReaction<TSpeciesEnum>::computePartialDerivatives(
 
 			// Sigmoid for trap mutation
 			// He_k + B -> B + I
-			// These guards must match computeFlux EXACTLY. If the residual and
+			// These guards must match computeFlux. If the residual and
 			// the Jacobian apply different guards they describe different
 			// functions and Newton will not converge.
 			double maxHe = psi::getMaxHePerVCont(avV,
