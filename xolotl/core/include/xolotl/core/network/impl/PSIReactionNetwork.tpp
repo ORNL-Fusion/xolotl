@@ -151,17 +151,11 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraDOFs(
 	Composition comp = clReg.getUpperLimitPoint();
 
 	// The SSBM carries exactly three DOFs: C_b, ONE gas moment, one V moment.
-	// There is no separate He moment slot, so if the network resolves BOTH a
+	// There is no separate He moment slot, so if the network resolves both a
 	// He axis and a hydrogen axis with real extent, the two gas contents would
 	// be summed into hAvId() and every sigmoid consuming <gas> would be wrong.
 	//
-	// Note this is deliberately a check on actual network extent, not on the
-	// species enum: the hydrogen SSBM runs on a PSIFull-style network that has
-	// a He axis present but of zero extent, and must keep working.
 	//
-	// Adding a fourth DOF is the long-term fix (it also touches connectivity
-	// sizing, monitor output indexing, and restart I/O). Until then, fail
-	// loudly rather than returning quietly incorrect answers.
 	{
 		bool hasHeExtent = comp[Species::He] > 1;
 		bool hasHydrogenExtent = false;
@@ -182,11 +176,11 @@ PSIReactionNetwork<TSpeciesEnum>::initializeExtraDOFs(
 	}
 
 	this->_clusterData.h_view().setMaxVSize(comp[Species::V] - 1);
-	// maxHSize is the maximum size along the GAS axis, i.e. whichever species
+	// maxHSize is the maximum size along the gas axis, i.e. whichever species
 	// occupies the single shared gas moment slot. The guard above has already
 	// established that exactly one gas axis has extent, so pick that one.
 	//
-	// This must be extent-based, not enum-based. Upstream used
+	// Upstream used
 	// `if constexpr (hasDeuterium)`, which leaves maxHSize seeded from an
 	// empty D axis when a He-only problem is run on a network that merely has
 	// D in its species list -- and leaves it entirely unset on a pure-He
@@ -1044,7 +1038,7 @@ PSIReactionGenerator<TSpeciesEnum>::addSingleSizeReactions(
 
 	// X_a + Y_b -> B  (overflow off the edge of the resolved phase space)
 	//
-	// SINGLE REGISTRATION. Each axis test used to call addProductionReaction
+	// Each axis test used to call addProductionReaction
 	// independently, so a pair satisfying two tests registered the identical
 	// reaction {i, j, bubbleId} twice, and it then contributed twice to both
 	// the flux and the Jacobian. Evaluate all the triggers, register once.
