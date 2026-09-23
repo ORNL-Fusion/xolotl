@@ -88,6 +88,7 @@ ReactionNetwork<TImpl>::ReactionNetwork(const Subpaving& subpaving,
 	this->setEnableReSolution(map["resolution"]);
 	this->setEnableNucleation(map["heterogeneous"]);
 	this->setEnableSink(map["sink"]);
+	this->setEnableTrap(map["trap"]);
 	this->setEnableTrapMutation(map["modifiedTM"]);
 	this->setEnableAttenuation(map["attenuation"]);
 	this->setEnableConstantReaction(map["constant"]);
@@ -264,6 +265,15 @@ ReactionNetwork<TImpl>::setEnableSink(bool reaction)
 {
 	this->_enableSink = reaction;
 	_clusterData.h_view().setEnableSink(this->_enableSink);
+	invalidateDataMirror();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setEnableTrap(bool reaction)
+{
+	this->_enableTrap = reaction;
+	_clusterData.h_view().setEnableTrap(this->_enableTrap);
 	invalidateDataMirror();
 }
 
@@ -553,6 +563,14 @@ void
 ReactionNetwork<TImpl>::setConstantRateEntries()
 {
 	asDerived()->setConstantRateEntries();
+}
+
+template <typename TImpl>
+void
+ReactionNetwork<TImpl>::setReactionParams(
+	std::vector<double> grid, IdType xs, IdType xm, std::string trapParams)
+{
+	asDerived()->setReactionParams(grid, xs, xm, trapParams);
 }
 
 template <typename TImpl>
@@ -1190,10 +1208,16 @@ ReactionNetwork<TImpl>::getTotals(ConcentrationsView concentrations,
 			TQMethodTotal, TQMethodRadius, TQMethodVolume>(
 			concentrations, quantities);
 	}
+	if (match({{Q::atom, Q::atom, Q::atom, Q::atom, Q::atom, Q::atom}})) {
+		return getTotalsImpl<TQMethodAtom, TQMethodAtom, TQMethodAtom,
+			TQMethodAtom, TQMethodAtom, TQMethodAtom>(
+			concentrations, quantities);
+	}
 
 	throw TotalQuantityError("getTotals<6>: must specify one of{\n"
 							 "\t[total, atom, radius, total, atom, radius],\n"
 							 "\t[total, atom, radius, total, radius, volume]\n"
+							 "\t[atom, atom, atom, atom, atom, atom]\n"
 							 "}",
 		quantities);
 }

@@ -129,9 +129,14 @@ protected:
 	std::string materialName;
 
 	/**
-	 * Value for initial concentrations.
+	 * String for initial concentrations.
 	 */
 	std::string initialConcentration;
+
+	/**
+	 * String for trap parameters.
+	 */
+	std::string trapParameters;
 
 	/**
 	 * Value of the electronic stopping power.
@@ -549,6 +554,15 @@ public:
 	getInitialConcentration() const override
 	{
 		return initialConcentration;
+	}
+
+	/**
+	 * \see IOptions.h
+	 */
+	std::string
+	getTrapParameters() const override
+	{
+		return trapParameters;
 	}
 
 	/**

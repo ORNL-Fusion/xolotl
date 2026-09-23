@@ -75,7 +75,7 @@ struct ReactionData
 				coeffs[r].extent(4));
 			ret += constantRates[r].required_allocation_size(
 				constantRates[r].extent(0), constantRates[r].extent(1),
-				constantRates[r].extent(2));
+				constantRates[r].extent(2), constantRates[r].extent(3));
 		}
 
 		return ret;

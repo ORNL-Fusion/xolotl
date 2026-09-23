@@ -10,6 +10,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReactionUtility.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/ReSolutionReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/SinkReactionGenerator.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapReactionGenerator.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationClusterData.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationHandler.h
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/TrapMutationReactionGenerator.h
@@ -51,6 +52,7 @@ list(APPEND XOLOTL_CORE_HEADERS
     ${XOLOTL_CORE_HEADER_DIR}/network/ReactionNetworkTraits.h
     ${XOLOTL_CORE_HEADER_DIR}/network/ReSolutionReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SinkReaction.h
+    ${XOLOTL_CORE_HEADER_DIR}/network/TrapReaction.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesEnumSequence.h
     ${XOLOTL_CORE_HEADER_DIR}/network/SpeciesId.h
     ${XOLOTL_CORE_HEADER_DIR}/network/TrapMutationReaction.h
@@ -68,6 +70,7 @@ list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/ReSolutionReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/SinkReactionGenerator.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/TrapReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/TrapMutationClusterData.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/detail/impl/TrapMutationReactionGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/AlloyClusterGenerator.tpp
@@ -90,6 +93,7 @@ list(APPEND XOLOTL_CORE_TPP_FILES
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ReactionNetwork.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ReSolutionReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/SinkReaction.tpp
+    ${XOLOTL_CORE_HEADER_DIR}/network/impl/TrapReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/TrapMutationReaction.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrClusterGenerator.tpp
     ${XOLOTL_CORE_HEADER_DIR}/network/impl/ZrReaction.tpp

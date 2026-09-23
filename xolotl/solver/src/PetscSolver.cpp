@@ -395,6 +395,11 @@ PetscSolver::solve()
 				std::cout << "Caught the change of surface!" << std::endl;
 
 				// Save some data from the monitors for next loop
+				// Clear the vectors first
+				_nSurf.clear();
+				_nBulk.clear();
+				_previousSurfFlux.clear();
+				_previousBulkFlux.clear();
 				this->monitor->keepFlux(
 					_nSurf, _nBulk, _previousSurfFlux, _previousBulkFlux);
 

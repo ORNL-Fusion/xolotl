@@ -121,6 +121,10 @@ public:
 	checkLargestClusterId();
 
 	void
+	setReactionParams(
+		std::vector<double>, IdType xs, IdType xm, std::string) override;
+
+	void
 	updateReactionRates(double time = 0.0);
 
 	void
@@ -202,6 +206,11 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void
 	addSinks(IndexType i, TTag tag) const;
+
+	template <typename TTag>
+	KOKKOS_INLINE_FUNCTION
+	void
+	addTraps(IndexType i, IndexType j, TTag tag) const;
 
 private:
 	ReactionCollection<NetworkType>

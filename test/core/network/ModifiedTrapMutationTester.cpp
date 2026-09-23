@@ -168,7 +168,7 @@ private:
 		AmountType maxHe = opts.getMaxImpurity();
 		AmountType maxD = opts.getMaxD();
 		AmountType maxT = opts.getMaxT();
-		NetworkType network({maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
+		NetworkType network({0, maxHe, maxD, maxT, maxV, maxI}, grid.size(), opts);
 
 		return network;
 	}
