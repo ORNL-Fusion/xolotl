@@ -72,13 +72,12 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 	Composition hi = region.getUpperLimitPoint();
 	double amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
 	double amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
-	double amt = sqrt(amtHe * amtHe + amtV * amtV);
 	if (region[Species::He].length() <
 		util::max((double)(_groupingWidthHe + 1),
 			pow(util::max((int)(region[Species::He].begin() - _groupingMin), 0),
 				0.75) *
 				3.0)) {
-		result[0] = false;
+		result[1] = false;
 	}
 	if (region[Species::V].length() <
 		util::max((double)(_groupingWidthV + 1),
@@ -90,19 +89,19 @@ T91ClusterGenerator::refine(const Region& region, BoolArray& result) const
 
 	// Edges
 	if (region[Species::He].begin() == 0) {
-		result[0] = true;
+		result[1] = true;
 	}
 	if (region[Species::V].begin() == 0) {
 		result[2] = true;
 	}
 	if (region[Species::He].end() > _maxHe + 1) {
-		result[0] = true;
+		result[1] = true;
 	}
 	if (region[Species::V].end() > _maxV + 1) {
 		result[2] = true;
 	}
 
-	if (!result[0] && !result[2]) {
+	if (!result[1] && !result[2]) {
 		return false;
 	}
 

@@ -13,10 +13,9 @@ KOKKOS_INLINE_FUNCTION
 bool
 FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 {
-	result[0] = true;
-	result[1] = true;
-	result[2] = true;
-	result[3] = true;
+	for (auto& r : result) {
+		r = true;
+	}
 
 	// I is never grouped
 	if (region[Species::I].begin() > 0) {
@@ -54,7 +53,11 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 		region[Species::He].begin() == 0 && region[Species::I].begin() == 0) {
 		auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
 		if (region[Species::V].length() <
-			util::max(_groupingWidthV + 1.0, pow(amtV, 0.8))) {
+			util::max((double)(_groupingWidthV + 1),
+				pow(util::max(
+						(int)(region[Species::V].begin() - _groupingMin), 0),
+					0.75) *
+					3.0)) {
 			result[2] = false;
 		}
 	}
@@ -63,11 +66,17 @@ FeClusterGenerator::refine(const Region& region, BoolArray& result) const
 	auto amtHe = 0.5 * (lo[Species::He] + hi[Species::He] - 1);
 	auto amtV = 0.5 * (lo[Species::V] + hi[Species::V] - 1);
 	if (region[Species::He].length() <
-		util::max(_groupingWidthHe + 1.0, pow(amtHe, 0.8))) {
+		util::max((double)(_groupingWidthHe + 1),
+			pow(util::max((int)(region[Species::He].begin() - _groupingMin), 0),
+				0.75) *
+				3.0)) {
 		result[1] = false;
 	}
 	if (region[Species::V].length() <
-		util::max(_groupingWidthV + 1.0, pow(amtV, 0.8))) {
+		util::max((double)(_groupingWidthV + 1),
+			pow(util::max((int)(region[Species::V].begin() - _groupingMin), 0),
+				0.75) *
+				3.0)) {
 		result[2] = false;
 	}
 

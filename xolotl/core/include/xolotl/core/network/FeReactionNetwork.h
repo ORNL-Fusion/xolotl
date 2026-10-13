@@ -52,7 +52,7 @@ public:
 	std::size_t
 	getMonitorDataLineSize() const override
 	{
-		return 1 + getSpeciesListSize() * 4;
+		return 1 + getSpeciesListSize() * 6;
 	}
 
 	void

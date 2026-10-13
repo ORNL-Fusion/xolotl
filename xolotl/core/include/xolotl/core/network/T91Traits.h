@@ -16,8 +16,8 @@ class T91ClusterGenerator;
 
 enum class T91SpeciesList
 {
-	He,
 	Trap,
+	He,
 	V,
 	I
 };
@@ -25,7 +25,7 @@ enum class T91SpeciesList
 inline const std::string&
 toLabelString(T91SpeciesList species)
 {
-	static const std::string labelArray[] = {"He", "Trap", "V", "I"};
+	static const std::string labelArray[] = {"Trap", "He", "V", "I"};
 	return labelArray[static_cast<int>(species)];
 }
 
@@ -33,7 +33,7 @@ inline const std::string&
 toNameString(T91SpeciesList species)
 {
 	static const std::string nameArray[] = {
-		"Helium", "Trap", "Vacancy", "Interstitial"};
+		"Trap", "Helium", "Vacancy", "Interstitial"};
 	return nameArray[static_cast<int>(species)];
 }
 

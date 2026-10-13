@@ -107,9 +107,10 @@ FeReactionNetwork::getMonitorDataHeaderString() const
 	header << "#time He_cav ";
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		auto speciesName = this->getSpeciesName(id);
-		header << speciesName << "_density " << speciesName << "_diameter "
-			   << speciesName << "_partial_density " << speciesName
-			   << "_partial_diameter ";
+		header << speciesName << "_density " << speciesName << "_atomic "
+			   << speciesName << "_diameter " << speciesName
+			   << "_partial_density " << speciesName << "_partial_atomic "
+			   << speciesName << "_partial_diameter ";
 	}
 
 	return header.str();
@@ -123,17 +124,20 @@ FeReactionNetwork::addMonitorDataValues(Kokkos::View<const double*> conc,
 	const auto& minSizes = this->getMinRadiusSizes();
 	using TQ = IReactionNetwork::TotalQuantity;
 	using Q = TQ::Type;
-	using TQA = util::Array<TQ, 4>;
+	using TQA = util::Array<TQ, 6>;
 	for (auto id = SpeciesId(numSpecies); id; ++id) {
 		auto ms = minSizes[id()];
 		auto totals = this->getTotals(conc,
-			TQA{TQ{Q::total, id, 1}, TQ{Q::radius, id, 1}, TQ{Q::total, id, ms},
+			TQA{TQ{Q::total, id, 1}, TQ{Q::atom, id, 1}, TQ{Q::radius, id, 1},
+				TQ{Q::total, id, ms}, TQ{Q::atom, id, ms},
 				TQ{Q::radius, id, ms}});
 
-		totalVals[1 + (4 * id()) + 0] += totals[0] * fac;
-		totalVals[1 + (4 * id()) + 1] += totals[1] * 2.0 * fac;
-		totalVals[1 + (4 * id()) + 2] += totals[2] * fac;
-		totalVals[1 + (4 * id()) + 3] += totals[3] * 2.0 * fac;
+		totalVals[1 + (6 * id()) + 0] += totals[0] * fac;
+		totalVals[1 + (6 * id()) + 1] += totals[1] * fac;
+		totalVals[1 + (6 * id()) + 2] += totals[2] * 2.0 * fac;
+		totalVals[1 + (6 * id()) + 3] += totals[3] * fac;
+		totalVals[1 + (6 * id()) + 4] += totals[4] * fac;
+		totalVals[1 + (6 * id()) + 5] += totals[5] * 2.0 * fac;
 
 		// Special case for trapped helium
 		if (id() == 0) {
@@ -199,12 +203,12 @@ FeReactionNetwork::writeMonitorDataLine(
 	if (util::getMPIRank() == 0) {
 		// Average the data
 		for (auto i = 0; i < numSpecies; ++i) {
-			auto id = [i](std::size_t n) { return 1 + 4 * i + n; };
+			auto id = [i](std::size_t n) { return 1 + 6 * i + n; };
 			if (globalData[id(0)] > 1.0e-16) {
-				globalData[id(1)] /= globalData[id(0)];
+				globalData[id(2)] /= globalData[id(0)];
 			}
-			if (globalData[id(2)] > 1.0e-16) {
-				globalData[id(3)] /= globalData[id(2)];
+			if (globalData[id(3)] > 1.0e-16) {
+				globalData[id(5)] /= globalData[id(3)];
 			}
 		}
 
@@ -220,9 +224,10 @@ FeReactionNetwork::writeMonitorDataLine(
 		// Output the data
 		outputFile << time << " " << globalData[0] << " ";
 		for (auto i = 0; i < numSpecies; ++i) {
-			auto id = [i](std::size_t n) { return 1 + 4 * i + n; };
+			auto id = [i](std::size_t n) { return 1 + 6 * i + n; };
 			outputFile << globalData[id(0)] << " " << globalData[id(1)] << " "
-					   << globalData[id(2)] << " " << globalData[id(3)] << " ";
+					   << globalData[id(2)] << " " << globalData[id(3)] << " "
+					   << globalData[id(4)] << " " << globalData[id(5)] << " ";
 		}
 		outputFile << std::endl;
 

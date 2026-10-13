@@ -10,7 +10,6 @@ namespace viz
  */
 enum PlottingStyle
 {
-
 	/**
 	 * The data will be shown as points, whether it is a ScatterPlot, a
 	 * SurfacePlot, or a VideoPlot.
@@ -35,7 +34,6 @@ enum PlottingStyle
 	 * surface as well as colors.
 	 */
 	GRID
-
 };
 
 // end enum PlottingStyle

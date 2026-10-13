@@ -57,7 +57,7 @@ BOOST_AUTO_TEST_CASE(checkComputeIncidentFlux)
 	NetworkType::AmountType maxV = opts.getMaxV();
 	NetworkType::AmountType maxI = opts.getMaxI();
 	NetworkType::AmountType maxHe = opts.getMaxImpurity();
-	NetworkType network({maxHe, maxV, maxI}, grid.size(), opts);
+	NetworkType network({1, maxHe, maxV, maxI}, grid.size(), opts);
 	// Get its size
 	const int dof = network.getDOF();
 
