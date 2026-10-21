@@ -39,6 +39,15 @@ ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
 		ConcentrationsView concentrations, Species type, AmountType minSize);
 
 template double
+ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::getTotalVolumeRatio(
+	ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::getTotalRatioVariance(
+	ConcentrationsView concentrations, Species type, double mean,
+	AmountType minSize);
+
+template double
 ReactionNetwork<PSIReactionNetwork<PSIFullSpeciesList>>::
 	getTotalTrappedAtomConcentration(
 		ConcentrationsView concentrations, Species type, AmountType minSize);

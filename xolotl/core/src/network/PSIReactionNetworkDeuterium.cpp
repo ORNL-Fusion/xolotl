@@ -41,6 +41,16 @@ ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::
 
 template double
 ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::
+	getTotalVolumeRatio(
+		ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::
+	getTotalRatioVariance(ConcentrationsView concentrations, Species type,
+		double mean, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSIDeuteriumSpeciesList>>::
 	getTotalTrappedAtomConcentration(
 		ConcentrationsView concentrations, Species type, AmountType minSize);
 

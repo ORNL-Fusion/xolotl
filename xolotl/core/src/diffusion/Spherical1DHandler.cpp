@@ -41,7 +41,9 @@ Spherical1DHandler::initializeDiffusionGrid(
 	double hz, int zs)
 {
 	// Physical grid first
-	physicalGrid = grid;
+	for (int i = 0; i < nx + 2; i++) {
+		physicalGrid.push_back(grid[i + xs]);
+	}
 
 	// Get the number of diffusing clusters
 	const int nDiff = diffusingClusters.size();
@@ -95,8 +97,8 @@ Spherical1DHandler::initializeDiffusionGrid(
 void
 Spherical1DHandler::computeDiffusion(network::IReactionNetwork& network,
 	const StencilConcArray& concVector, Kokkos::View<double*> updatedConcOffset,
-	double hxLeft, double hxRight, int ix, double sy, int iy, double sz,
-	int) const
+	double hxLeft, double hxRight, int ix, bool isBC, double sy, int iy,
+	double sz, int) const
 {
 	if (concVector.size() != 3) {
 		throw std::runtime_error(
@@ -109,6 +111,12 @@ Spherical1DHandler::computeDiffusion(network::IReactionNetwork& network,
 	auto diffGrid = diffusGrid;
 	auto clusterIds = this->diffClusterIds;
 	auto clusters = this->diffClusters;
+
+	// Compute alpha
+	auto alpha = network.getTritiumFlux(concVector[0][1], concVector[0][2],
+					 concVector[0][0], clusters[0].getTemperature(ix + 1)) /
+		clusters[0].getDiffusionCoefficient(ix + 1);
+
 	Kokkos::parallel_for(
 		clusterIds.size(), KOKKOS_LAMBDA(IdType i) {
 			auto currId = clusterIds[i];
@@ -123,27 +131,46 @@ Spherical1DHandler::computeDiffusion(network::IReactionNetwork& network,
 			double midTemp = cluster.getTemperature(ix + 1);
 			double rightTemp = cluster.getTemperature(ix + 2);
 
-			// Use a simple midpoint stencil to compute the concentration
-			// The usual term is there assuming the temperature is the same
-			// everywhere
-			double conc = (midDiff * 2.0 *
-				(oldLeftConc + (hxLeft / hxRight) * oldRightConc -
-					(1.0 + (hxLeft / hxRight)) * oldConc) /
-				(hxLeft * (hxLeft + hxRight)));
+			// Surface location
+			if (isBC) {
+				// Boundary condition depending on the flux at the surface
+				double conc =
+					(midDiff * 2.0 * (oldLeftConc + hxLeft * alpha - oldConc) /
+						(hxLeft * (hxLeft + hxRight)));
 
-			// The one specific to spherical coordinates
-			conc += 2.0 * midDiff * (oldConc - oldLeftConc) /
-				(physGrid(ix + 1) * hxLeft);
+				// The one specific to spherical coordinates
+				conc += 2.0 * midDiff * (oldConc - oldLeftConc) /
+					(physGrid(ix + 1) * hxLeft);
 
-			// Update the concentration of the cluster
-			updatedConcOffset[currId] += conc;
+				// Update the concentration of the cluster
+				updatedConcOffset[currId] += conc;
+			}
+
+			// Everywhere else
+			else {
+				// Use a simple midpoint stencil to compute the concentration
+				// The usual term is there assuming the temperature is the same
+				// everywhere
+				double conc = (midDiff * 2.0 *
+					(oldLeftConc + (hxLeft / hxRight) * oldRightConc -
+						(1.0 + (hxLeft / hxRight)) * oldConc) /
+					(hxLeft * (hxLeft + hxRight)));
+
+				// The one specific to spherical coordinates
+				conc += 2.0 * midDiff * (oldConc - oldLeftConc) /
+					(physGrid(ix + 1) * hxLeft);
+
+				// Update the concentration of the cluster
+				updatedConcOffset[currId] += conc;
+			}
 		});
 }
 
 void
 Spherical1DHandler::computePartialsForDiffusion(
 	network::IReactionNetwork& network, Kokkos::View<double*> val,
-	double hxLeft, double hxRight, int ix, double, int, double, int) const
+	double hxLeft, double hxRight, int ix, bool isBC, double, int, double,
+	int) const
 {
 	auto diffGrid = diffusGrid;
 	auto clusterIds = this->diffClusterIds;
@@ -157,18 +184,33 @@ Spherical1DHandler::computePartialsForDiffusion(
 			auto midDiff = cluster.getDiffusionCoefficient(ix + 1);
 			auto rightDiff = cluster.getDiffusionCoefficient(ix + 2);
 
-			// Compute the partial derivatives for diffusion of this cluster
-			// for the middle, left, and right grid point
-			val[i * 3] = (-2.0 * midDiff / (hxLeft * hxRight) +
-							 2.0 * midDiff / (physGrid(ix + 1) * hxLeft)) *
-				diffGrid(ix + 1, i); // middle
-			val[(i * 3) + 1] =
-				(midDiff * 2.0 / (hxLeft * (hxLeft + hxRight)) -
-					2.0 * midDiff / (physGrid(ix + 1) * hxLeft)) *
-				diffGrid(ix, i); // left
-			val[(i * 3) + 2] =
-				(midDiff * 2.0 / (hxRight * (hxLeft + hxRight))) *
-				diffGrid(ix + 2, i); // right
+			// Surface location
+			if (isBC) {
+				val[i * 3] = (-2.0 * midDiff / (hxLeft * (hxLeft + hxRight)) +
+								 2.0 * midDiff / (physGrid(ix + 1) * hxLeft)) *
+					diffGrid(ix + 1, i); // middle
+				val[(i * 3) + 1] =
+					(midDiff * 2.0 / (hxLeft * (hxLeft + hxRight)) -
+						2.0 * midDiff / (physGrid(ix + 1) * hxLeft)) *
+					diffGrid(ix, i); // left
+				val[(i * 3) + 2] = 0.0; // right
+			}
+
+			// Everywhere else
+			else {
+				// Compute the partial derivatives for diffusion of this cluster
+				// for the middle, left, and right grid point
+				val[i * 3] = (-2.0 * midDiff / (hxLeft * hxRight) +
+								 2.0 * midDiff / (physGrid(ix + 1) * hxLeft)) *
+					diffGrid(ix + 1, i); // middle
+				val[(i * 3) + 1] =
+					(midDiff * 2.0 / (hxLeft * (hxLeft + hxRight)) -
+						2.0 * midDiff / (physGrid(ix + 1) * hxLeft)) *
+					diffGrid(ix, i); // left
+				val[(i * 3) + 2] =
+					(midDiff * 2.0 / (hxRight * (hxLeft + hxRight))) *
+					diffGrid(ix + 2, i); // right
+			}
 		});
 }
 

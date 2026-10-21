@@ -40,6 +40,13 @@ public:
 	checkLargestClusterId();
 
 	void
+	setReactionParams(
+		std::vector<double>, IdType xs, IdType xm, std::string) override
+	{
+		return;
+	}
+
+	void
 	setConstantRates(RatesView rates, IndexType gridIndex) override;
 
 	void
@@ -76,6 +83,12 @@ public:
 	void
 	writeMonitorDataLine(
 		const std::vector<double>& localData, double time) override;
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	setConnectivity(Connectivity)
+	{
+	}
 
 private:
 	double

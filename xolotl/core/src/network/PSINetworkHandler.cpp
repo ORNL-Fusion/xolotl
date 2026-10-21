@@ -1,4 +1,5 @@
 #include <xolotl/core/network/PSINetworkHandler.h>
+#include <xolotl/util/Tokenizer.h>
 
 namespace xolotl
 {
@@ -113,46 +114,63 @@ generatePSIReactionNetwork(const options::IOptions& options)
 		maxI = pow(groupingWidthI, i) - 1;
 	}
 
+	// Find out how many traps we need from the options
+	AmountType nTraps = 0;
+	// Get the string from the options
+	auto trapString = options.getTrapParameters();
+	// Open the file and counts the lines if the file exist
+	std::ifstream paramFile(trapString);
+
+	if (paramFile.good()) {
+		int nLines = 0;
+		std::string line;
+
+		while (std::getline(paramFile, line))
+			++nLines;
+		// We should have 2 lines per trap
+		nTraps = nLines / 2;
+	}
+
 	if (maxI > options.getGroupingMin() and maxV >= options.getGroupingMin() and
 		options.getMaxImpurity() == 0) {
-		// There should not be He here
-		return makePSIReactionNetwork<PSIHeliumSpeciesList>(
-			{0, maxV, maxI}, {{1, groupingWidthV, groupingWidthI}}, options);
+		// There should not be He here nor trap
+		return makePSIReactionNetwork<PSIHeliumSpeciesList>({0, 0, maxV, maxI},
+			{{1, 1, groupingWidthV, groupingWidthI}}, options);
 	}
 
 	if (maxD > 0 && maxT > 0) {
 		std::vector<PSIReactionNetwork<PSIFullSpeciesList>::SubdivisionRatio>
-			subdivRatios = {{groupingWidthHe, groupingWidthD, groupingWidthT,
+			subdivRatios = {{1, groupingWidthHe, groupingWidthD, groupingWidthT,
 				groupingWidthV, groupingWidthI}};
 		auto it = subdivRatios.begin();
 		for (auto k = 0; k < deltaI; k++) {
-			it = subdivRatios.insert(it, {1, 1, 1, groupingWidthV, 1});
+			it = subdivRatios.insert(it, {1, 1, 1, 1, groupingWidthV, 1});
 		}
 		return makePSIReactionNetwork<PSIFullSpeciesList>(
-			{maxHe, maxD, maxT, maxV, maxI}, subdivRatios, options);
+			{nTraps, maxHe, maxD, maxT, maxV, maxI}, subdivRatios, options);
 	}
 	if (maxD > 0 && maxT <= 0) {
 		std::vector<
 			PSIReactionNetwork<PSIDeuteriumSpeciesList>::SubdivisionRatio>
-			subdivRatios = {{groupingWidthHe, groupingWidthD, groupingWidthV,
+			subdivRatios = {{1, groupingWidthHe, groupingWidthD, groupingWidthV,
 				groupingWidthI}};
 		auto it = subdivRatios.begin();
 		for (auto k = 0; k < deltaI; k++) {
-			it = subdivRatios.insert(it, {1, 1, groupingWidthV, 1});
+			it = subdivRatios.insert(it, {1, 1, 1, groupingWidthV, 1});
 		}
 		return makePSIReactionNetwork<PSIDeuteriumSpeciesList>(
-			{maxHe, maxD, maxV, maxI}, subdivRatios, options);
+			{nTraps, maxHe, maxD, maxV, maxI}, subdivRatios, options);
 	}
 	if (maxD <= 0 && maxT > 0) {
 		std::vector<PSIReactionNetwork<PSITritiumSpeciesList>::SubdivisionRatio>
-			subdivRatios = {{groupingWidthHe, groupingWidthT, groupingWidthV,
+			subdivRatios = {{1, groupingWidthHe, groupingWidthT, groupingWidthV,
 				groupingWidthI}};
 		auto it = subdivRatios.begin();
 		for (auto k = 0; k < deltaI; k++) {
-			it = subdivRatios.insert(it, {1, 1, groupingWidthV, 1});
+			it = subdivRatios.insert(it, {1, 1, 1, groupingWidthV, 1});
 		}
 		return makePSIReactionNetwork<PSITritiumSpeciesList>(
-			{maxHe, maxT, maxV, maxI}, subdivRatios, options);
+			{nTraps, maxHe, maxT, maxV, maxI}, subdivRatios, options);
 	}
 	else {
 		// Either V is grouped
@@ -161,26 +179,26 @@ generatePSIReactionNetwork(const options::IOptions& options)
 			AmountType refineV = (maxV + 1) / groupingWidthV;
 			std::vector<
 				PSIReactionNetwork<PSIHeliumSpeciesList>::SubdivisionRatio>
-				subdivRatios = {{refineHe, refineV, maxI + 1},
-					{groupingWidthHe, groupingWidthV, 1}};
+				subdivRatios = {{1, refineHe, refineV, maxI + 1},
+					{1, groupingWidthHe, groupingWidthV, 1}};
 			auto it = subdivRatios.begin();
 			for (auto k = 0; k < deltaI; k++) {
-				it = subdivRatios.insert(it, {1, groupingWidthV, 1});
+				it = subdivRatios.insert(it, {1, 1, groupingWidthV, 1});
 			}
 			return makePSIReactionNetwork<PSIHeliumSpeciesList>(
-				{maxHe, maxV, maxI}, subdivRatios, options);
+				{nTraps, maxHe, maxV, maxI}, subdivRatios, options);
 		}
 		else {
 			std::vector<
 				PSIReactionNetwork<PSIHeliumSpeciesList>::SubdivisionRatio>
 				subdivRatios = {
-					{groupingWidthHe, groupingWidthV, groupingWidthI}};
+					{1, groupingWidthHe, groupingWidthV, groupingWidthI}};
 			auto it = subdivRatios.begin();
 			for (auto k = 0; k < deltaI; k++) {
-				it = subdivRatios.insert(it, {1, groupingWidthV, 1});
+				it = subdivRatios.insert(it, {1, 1, groupingWidthV, 1});
 			}
 			return makePSIReactionNetwork<PSIHeliumSpeciesList>(
-				{maxHe, maxV, maxI}, subdivRatios, options);
+				{nTraps, maxHe, maxV, maxI}, subdivRatios, options);
 		}
 	}
 }

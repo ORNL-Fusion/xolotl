@@ -232,6 +232,18 @@ public:
 	}
 
 	bool
+	getEnableTrap() const noexcept
+	{
+		return _enableTrap;
+	}
+
+	virtual void
+	setEnableTrap(bool trap)
+	{
+		_enableTrap = trap;
+	}
+
+	bool
 	getEnableTrapMutation() const noexcept
 	{
 		return _enableTrapMutation;
@@ -299,6 +311,9 @@ public:
 
 	virtual void
 	setGridSize(IndexType gridSize) = 0;
+
+	virtual void
+	setTotalDepth(double depth) = 0;
 
 	/**
 	 * @brief Takes a vector of temperatures and associated depths along X and
@@ -435,8 +450,22 @@ public:
 	virtual void
 	setConstantRateEntries() = 0;
 
+	/**
+	 * @brief Set the parameters for trap reactions
+	 */
+	virtual void
+	setReactionParams(
+		std::vector<double>, IdType xs, IdType xm, std::string) = 0;
+
 	virtual PhaseSpace
 	getPhaseSpace() = 0;
+
+	/**
+	 * @brief Compute the flux needed for BC at the surface.
+	 */
+	virtual double
+	getTritiumFlux(double thetaH, double thetaT, double TSphereConc,
+		double temperature) = 0;
 
 	/**
 	 * @brief Updates the fluxes view with the rates from all the
@@ -618,6 +647,7 @@ protected:
 	bool _enableReSolution{};
 	bool _enableNucleation{};
 	bool _enableSink{};
+	bool _enableTrap{};
 	bool _enableTrapMutation{};
 	bool _enableAttenuation{};
 	bool _enableConstantReaction{};

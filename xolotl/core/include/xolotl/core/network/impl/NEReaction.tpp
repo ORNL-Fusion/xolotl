@@ -110,8 +110,9 @@ NEProductionReaction::computeFlux(
 			this->_clusterData->extraData.constantRates(
 				clusterMap.value_at(clusterMap.find(_reactants[0])),
 				clusterMap.value_at(clusterMap.find(_reactants[1])), 0) *
-			exp(this->_deltaG0 / ::xolotl::core::kBoltzmann *
-				this->_clusterData->temperature(gridIndex)) *
+			exp(this->_deltaG0 /
+				(::xolotl::core::kBoltzmann *
+					this->_clusterData->temperature(gridIndex))) *
 			4.0 * ::xolotl::core::pi * r0 * ::xolotl::core::zFactor;
 
 		Kokkos::atomic_add(

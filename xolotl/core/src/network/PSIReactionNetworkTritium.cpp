@@ -40,6 +40,15 @@ ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::
 		ConcentrationsView concentrations, Species type, AmountType minSize);
 
 template double
+ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::getTotalVolumeRatio(
+	ConcentrationsView concentrations, Species type, AmountType minSize);
+
+template double
+ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::
+	getTotalRatioVariance(ConcentrationsView concentrations, Species type,
+		double mean, AmountType minSize);
+
+template double
 ReactionNetwork<PSIReactionNetwork<PSITritiumSpeciesList>>::
 	getTotalTrappedAtomConcentration(
 		ConcentrationsView concentrations, Species type, AmountType minSize);

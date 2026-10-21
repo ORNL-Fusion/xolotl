@@ -36,6 +36,7 @@ public:
 	using Subpaving = typename Superclass::Subpaving;
 	using SubdivisionRatio = typename Superclass::SubdivisionRatio;
 	using Composition = typename Superclass::Composition;
+	using Connectivity = typename Superclass::Connectivity;
 	using Species = typename Superclass::Species;
 	using AmountType = typename Superclass::AmountType;
 	using IndexType = typename Superclass::IndexType;
@@ -120,6 +121,10 @@ public:
 	checkLargestClusterId();
 
 	void
+	setReactionParams(
+		std::vector<double>, IdType xs, IdType xm, std::string) override;
+
+	void
 	updateReactionRates(double time = 0.0);
 
 	void
@@ -128,6 +133,12 @@ public:
 	void
 	updateDesorptionLeftSideRate(
 		ConcentrationsView concentrations, IndexType gridIndex);
+
+	KOKKOS_INLINE_FUNCTION
+	void
+	setConnectivity(Connectivity)
+	{
+	}
 
 private:
 	double
@@ -195,6 +206,11 @@ public:
 	KOKKOS_INLINE_FUNCTION
 	void
 	addSinks(IndexType i, TTag tag) const;
+
+	template <typename TTag>
+	KOKKOS_INLINE_FUNCTION
+	void
+	addTraps(IndexType i, IndexType j, TTag tag) const;
 
 private:
 	ReactionCollection<NetworkType>

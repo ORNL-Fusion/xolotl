@@ -80,6 +80,7 @@ public:
 	 * @param hxRight The step size on the right side of the point in the x
 	 * direction
 	 * @param ix The position on the x grid
+	 * @param isBC Whether this location has a special BC behavior
 	 * @param sy The space parameter, depending on the grid step size in the y
 	 * direction
 	 * @param iy The position on the y grid
@@ -91,7 +92,7 @@ public:
 	computeDiffusion(network::IReactionNetwork& network,
 		const StencilConcArray& concVector,
 		Kokkos::View<double*> updatedConcOffset, double hxLeft, double hxRight,
-		int ix, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int ix, bool isBC = false, double sy = 0.0, int iy = 0, double sz = 0.0,
 		int iz = 0) const = 0;
 
 	/**
@@ -107,6 +108,7 @@ public:
 	 * @param hxRight The step size on the right side of the point in the x
 	 * direction
 	 * @param ix The position on the x grid
+	 * @param isBC Whether this location has a special BC behavior
 	 * @param sy The space parameter, depending on the grid step size in the y
 	 * direction
 	 * @param iy The position on the y grid
@@ -117,7 +119,8 @@ public:
 	virtual void
 	computePartialsForDiffusion(network::IReactionNetwork& network,
 		Kokkos::View<double*> val, double hxLeft, double hxRight, int ix,
-		double sy = 0.0, int iy = 0, double sz = 0.0, int iz = 0) const = 0;
+		bool isBC = false, double sy = 0.0, int iy = 0, double sz = 0.0,
+		int iz = 0) const = 0;
 
 	/**
 	 * Get the total number of diffusing clusters in the network.

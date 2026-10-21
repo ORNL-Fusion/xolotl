@@ -4,6 +4,7 @@
 #include <xolotl/core/network/Reaction.h>
 #include <xolotl/core/network/SinkReaction.h>
 #include <xolotl/core/network/TrapMutationReaction.h>
+#include <xolotl/core/network/TrapReaction.h>
 
 namespace xolotl
 {
@@ -71,6 +72,24 @@ public:
 	double
 	getSinkStrength();
 };
+
+template <typename TSpeciesEnum>
+class PSITrapReaction :
+	public TrapReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSITrapReaction<TSpeciesEnum>>
+{
+public:
+	using Superclass = TrapReaction<PSIReactionNetwork<TSpeciesEnum>,
+		PSITrapReaction<TSpeciesEnum>>;
+
+	using Superclass::Superclass;
+	using IndexType = typename Superclass::IndexType;
+
+	KOKKOS_INLINE_FUNCTION
+	IndexType
+	getId();
+};
+
 template <typename TSpeciesEnum>
 class PSITrapMutationReaction :
 	public TrapMutationReaction<PSIReactionNetwork<TSpeciesEnum>,

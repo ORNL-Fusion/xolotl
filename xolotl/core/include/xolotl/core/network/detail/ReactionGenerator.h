@@ -141,6 +141,13 @@ public:
 		return _connectivity;
 	}
 
+	KOKKOS_INLINE_FUNCTION
+	void
+	addConnectivity(Connectivity& conn)
+	{
+		return;
+	}
+
 protected:
 	TDerived*
 	asDerived()

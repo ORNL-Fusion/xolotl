@@ -163,6 +163,16 @@ XolotlInterface::initializeXolotl() TRY
 	// Initialize the solver
 	solver->initialize();
 	solverInitialized = true;
+
+	// Get the network
+	auto& network = solverCast(solver)->getSolverHandler()->getNetwork();
+	// Get the grid
+	double hy, hz;
+	auto grid = getGridInfo(hy, hz);
+	IdType xs, xm, Mx, ys, ym, My, zs, zm, Mz;
+	getLocalCoordinates(xs, xm, Mx, ys, ym, My, zs, zm, Mz);
+	// Set the parameters
+	network.setReactionParams(grid, xs, xm, options->getTrapParameters());
 }
 CATCH
 

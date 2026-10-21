@@ -153,8 +153,6 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
 
-// JMR edit:
-
 /**
  * @brief Specific case with two typse of V  (Zr - basal). Here it can be
  * reflected of V or I depending on the product type.
@@ -223,8 +221,6 @@ updateReflectedRegionsForCoefs(const TRegion& cl1Reg, const TRegion& cl2Reg,
 	}
 	return {cl1RR, cl2RR, pr1RR, pr2RR};
 }
-
-// end JMR edit
 
 /**
  * @brief Specific case with one type of V. Here it can be reflected

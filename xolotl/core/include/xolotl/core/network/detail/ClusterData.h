@@ -26,7 +26,7 @@ struct ViewTypeHelper
 	using ViewType = std::conditional_t<
 		std::is_same_v<plsm::HostMemSpace, plsm::DeviceMemSpace>, HostView,
 		std::conditional_t<std::is_same_v<MemSpace, plsm::DeviceMemSpace>,
-			DeviceView, typename DeviceView::HostMirror>>;
+			DeviceView, typename DeviceView::host_mirror_type>>;
 };
 
 template <typename TData, typename MemSpace>
@@ -155,6 +155,8 @@ private:
 	enum IntValsIndex : int
 	{
 		TRANSITION_SIZE = 0,
+		T_COVERAGE_ID,
+		H_COVERAGE_ID,
 		NUM_INT_VALS
 	};
 
@@ -164,6 +166,7 @@ private:
 		RESOLUTION,
 		NUCLEATION,
 		SINK,
+		TRAP,
 		TRAP_MUTATION,
 		READ_RATES,
 		CONSTANT_REACTION,
@@ -299,6 +302,32 @@ public:
 	}
 
 	KOKKOS_INLINE_FUNCTION
+	int
+	tCoverageId() const
+	{
+		return _intVals[T_COVERAGE_ID];
+	}
+
+	void
+	setTCoverageId(int val)
+	{
+		setVal(_intVals, T_COVERAGE_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	int
+	hCoverageId() const
+	{
+		return _intVals[H_COVERAGE_ID];
+	}
+
+	void
+	setHCoverageId(int val)
+	{
+		setVal(_intVals, H_COVERAGE_ID, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
 	bool
 	enableStdReaction() const
 	{
@@ -348,6 +377,19 @@ public:
 	setEnableSink(bool val)
 	{
 		setVal(_boolVals, SINK, val);
+	}
+
+	KOKKOS_INLINE_FUNCTION
+	bool
+	enableTrap() const
+	{
+		return _boolVals[TRAP];
+	}
+
+	void
+	setEnableTrap(bool val)
+	{
+		setVal(_boolVals, TRAP, val);
 	}
 
 	KOKKOS_INLINE_FUNCTION
