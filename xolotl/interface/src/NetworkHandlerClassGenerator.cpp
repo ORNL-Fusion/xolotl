@@ -392,7 +392,23 @@ NetworkHandlerClassGenerator::readNetworkFile()
 				rnData.parts.products.push_back(_clusterGroups.at(p).type);
 			}
 		}
-		rnData.size = elNode.get("size", maxAmount);
+		rnData.size = {maxAmount, maxAmount};
+		if (elNode.count("size")) {
+			auto sizeNode = elNode.get_child("size");
+			if (sizeNode.empty()) {
+				rnData.size[0] = sizeNode.get_value<AmountType>();
+			}
+			else {
+				if (sizeNode.size() > 2) {
+					XOLOTL_ERROR(std::invalid_argument,
+						"reaction \"size\" must specify at most two values");
+				}
+				rnData.size[0] =
+					sizeNode.front().second.get_value<AmountType>();
+				rnData.size[1] = sizeNode.back().second.get_value<AmountType>();
+			}
+		}
+
 		if (elNode.count("binding")) {
 			rnData.bindingExpr = elNode.get<std::string>("binding");
 		}
@@ -409,8 +425,14 @@ NetworkHandlerClassGenerator::readNetworkFile()
 			}
 			auto& grp = _productionReactionGroups[key];
 			grp.parts = rn.parts;
-			if (rn.size == maxAmount) {
+			if (rn.size[0] == maxAmount && rn.size[1] == maxAmount) {
+				if (grp.general != nullptr) {
+					XOLOTL_ERROR(std::runtime_error,
+						"multiple definitions of general case for " + rn.type +
+							" type reactions");
+				}
 				grp.general = &rn;
+				grp.size = {0, maxAmount};
 			}
 			else {
 				grp.cases.push_back(&rn);
@@ -423,11 +445,19 @@ NetworkHandlerClassGenerator::readNetworkFile()
 			}
 			auto& grp = _dissociationReactionGroups[key];
 			grp.parts = rn.parts;
-			if (rn.size == maxAmount) {
+			if (rn.size[0] == maxAmount && rn.size[1] == maxAmount) {
+				if (grp.general != nullptr) {
+					XOLOTL_ERROR(std::runtime_error,
+						"multiple definitions of general case for " + rn.type +
+							" type reactions");
+				}
 				grp.general = &rn;
+				grp.size = {0, maxAmount};
 			}
 			else {
 				grp.cases.push_back(&rn);
+				grp.size[0] = std::min(grp.size[0], rn.size[0]);
+				grp.size[1] = std::max(grp.size[1], rn.size[1]);
 			}
 		}
 	}
@@ -997,7 +1027,8 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 		std::stringstream oss;
 		for (auto&& rnCase : rnGroup.cases) {
 			const auto& expr = rnCase->bindingExpr;
-			oss << "    if (amt == " << rnCase->size << ") {\n"
+			oss << "    if (amt >= " << rnCase->size[0] << " &&\n"
+				<< "        amt < " << rnCase->size[1] << ") {\n"
 				<< "      be = " << parseBindingExpr(expr) << ";\n"
 				<< "    }\n"
 				<< "    else ";
@@ -1314,14 +1345,14 @@ NetworkHandlerClassGenerator::generateNetworkHeader()
 		   "  setConnectivity(Connectivity)\n"
 		   "  {\n"
 		   "  }\n"
-           "\n"
-           "  void\n"
-           "  setReactionParams(\n"
-           "  std::vector<double>, IdType, IdType, std::string) override\n"
-           "  {\n"
-           "    return;\n"
-           "  }\n"
-           "\n"
+		   "\n"
+		   "  void\n"
+		   "  setReactionParams(\n"
+		   "  std::vector<double>, IdType, IdType, std::string) override\n"
+		   "  {\n"
+		   "    return;\n"
+		   "  }\n"
+		   "\n"
 		   "  std::string\n"
 		   "  getMonitorOutputFileName() const override\n"
 		   "  {\n"
@@ -1477,6 +1508,13 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		   "      this->addDissociationReaction(tag, {rId, i, j});\n"
 		   "    }\n"
 		   "  };\n"
+		   "  auto clSize = [&species](const auto& comp) {\n"
+		   "    AmountType sz = 0;\n"
+		   "    for (auto l : species) {\n"
+		   "      sz += comp[l];\n"
+		   "    }\n"
+		   "    return sz;\n"
+		   "  };\n"
 		   "\n"
 		   "  if (cl1Reg.isSimplex() && cl2Reg.isSimplex()) {\n";
 
@@ -1497,7 +1535,8 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		auto r1 = grp.parts.reactants[0];
 		auto r2 = grp.parts.reactants[1];
 		const auto& products = grp.parts.products;
-		if (products.size() == 1 && products[0].species == nullptr) {
+		if (products.size() == 1 &&
+			(products[0].species == nullptr || xOr(r1.species, r2.species))) {
 			// interaction cases
 			ofs << "    {\n"
 				   "    Composition comp = Composition::zero();\n";
@@ -1506,53 +1545,89 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 				auto r2SpRef = "Species::" + r2.label;
 				ofs << "    if (lo1.isOnAxis(" << r1SpRef << ") &&\n"
 					<< "        lo2.isOnAxis(" << r2SpRef << ")) {\n"
-					<< "      comp[" << r1SpRef << "] =\n"
+					<< "      comp[" << r1SpRef << "] +=\n"
 					<< "        lo1[" << r1SpRef << "];\n"
-					<< "      comp[" << r2SpRef << "] =\n"
+					<< "      comp[" << r2SpRef << "] +=\n"
 					<< "        lo2[" << r2SpRef << "];\n"
 					<< "      tryAddProdReaction(comp);\n"
 					<< "    }\n"
 					<< "    if (lo2.isOnAxis(" << r1SpRef << ") &&\n"
 					<< "        lo1.isOnAxis(" << r2SpRef << ")) {\n"
-					<< "      comp[" << r1SpRef << "] =\n"
+					<< "      comp[" << r1SpRef << "] +=\n"
 					<< "        lo2[" << r1SpRef << "];\n"
-					<< "      comp[" << r2SpRef << "] =\n"
+					<< "      comp[" << r2SpRef << "] +=\n"
 					<< "        lo1[" << r2SpRef << "];\n"
 					<< "      tryAddProdReaction(comp);\n"
 					<< "    }\n";
 			}
 			else if (xOr(r1.species, r2.species)) {
 				std::string pfx = "Species::";
-				auto [r1SpRef, r2Sp1Ref, r2Sp2Ref] = r1.species ?
-					std::make_tuple(pfx + r1.label,
-						pfx + r2.constituentLabels[0],
-						pfx + r2.constituentLabels[1]) :
-					std::make_tuple(pfx + r2.label,
-						pfx + r1.constituentLabels[0],
-						pfx + r1.constituentLabels[1]);
+				auto [r1Sp, r2Sp1, r2Sp2] = r1.species ?
+					std::make_tuple(
+						r1.species, r2.constituents[0], r2.constituents[1]) :
+					std::make_tuple(
+						r2.species, r1.constituents[0], r1.constituents[1]);
+				auto [r1SpRef, r2Sp1Ref, r2Sp2Ref] = std::make_tuple(
+					pfx + r1Sp->label, pfx + r2Sp1->label, pfx + r2Sp2->label);
 				ofs << "    if (lo1.isOnAxis(" << r1SpRef << ") &&\n"
 					<< "        matchSpeciesPair(lo2,\n"
 					<< "          " << r2Sp1Ref << ", " << r2Sp2Ref << ")) {\n"
-					<< "      comp = Composition::zero();\n"
-					<< "      comp[" << r1SpRef << "] +=\n"
-					<< "        lo1[" << r1SpRef << "];\n"
-					<< "      comp[" << r2Sp1Ref << "] +=\n"
-					<< "        lo2[" << r2Sp1Ref << "];\n"
-					<< "      comp[" << r2Sp2Ref << "] +=\n"
-					<< "        lo2[" << r2Sp2Ref << "];\n"
-					<< "      tryAddProdReaction(comp);\n"
+					<< "      comp = Composition::zero();\n";
+				if (r1Sp->type == SpeciesData::Type::interstitial) {
+					if (r2Sp1->type == SpeciesData::Type::vacancy) {
+						ofs << "      comp[" << r2Sp1Ref << "] +=\n"
+							<< "        lo2[" << r2Sp1Ref << "] -\n"
+							<< "        lo1[" << r1SpRef << "];\n"
+							<< "      comp[" << r2Sp2Ref << "] +=\n"
+							<< "        lo2[" << r2Sp2Ref << "];\n";
+					}
+					else if (r2Sp2->type == SpeciesData::Type::vacancy) {
+						ofs << "      comp[" << r2Sp2Ref << "] +=\n"
+							<< "        lo2[" << r2Sp2Ref << "] -\n"
+							<< "        lo1[" << r1SpRef << "];\n"
+							<< "      comp[" << r2Sp1Ref << "] +=\n"
+							<< "        lo2[" << r2Sp1Ref << "];\n";
+					}
+				}
+				else {
+					ofs << "      comp[" << r1SpRef << "] +=\n"
+						<< "        lo1[" << r1SpRef << "];\n"
+						<< "      comp[" << r2Sp1Ref << "] +=\n"
+						<< "        lo2[" << r2Sp1Ref << "];\n"
+						<< "      comp[" << r2Sp2Ref << "] +=\n"
+						<< "        lo2[" << r2Sp2Ref << "];\n";
+				}
+				ofs << "      tryAddProdReaction(comp);\n"
 					<< "    }\n"
 					<< "    if (lo2.isOnAxis(" << r1SpRef << ") &&\n"
 					<< "        matchSpeciesPair(lo1,\n"
 					<< "          " << r2Sp1Ref << ", " << r2Sp2Ref << ")) {\n"
-					<< "      comp = Composition::zero();\n"
-					<< "      comp[" << r1SpRef << "] +=\n"
-					<< "        lo2[" << r1SpRef << "];\n"
-					<< "      comp[" << r2Sp1Ref << "] +=\n"
-					<< "        lo1[" << r2Sp1Ref << "];\n"
-					<< "      comp[" << r2Sp2Ref << "] +=\n"
-					<< "        lo1[" << r2Sp2Ref << "];\n"
-					<< "      tryAddProdReaction(comp);\n"
+					<< "      comp = Composition::zero();\n";
+				if (r1Sp->type == SpeciesData::Type::interstitial) {
+					if (r2Sp1->type == SpeciesData::Type::vacancy) {
+						ofs << "      comp[" << r2Sp1Ref << "] +=\n"
+							<< "        lo2[" << r2Sp1Ref << "] -\n"
+							<< "        lo1[" << r1SpRef << "];\n"
+							<< "      comp[" << r2Sp2Ref << "] +=\n"
+							<< "        lo2[" << r2Sp2Ref << "];\n";
+					}
+					else if (r2Sp2->type == SpeciesData::Type::vacancy) {
+						ofs << "      comp[" << r2Sp2Ref << "] +=\n"
+							<< "        lo2[" << r2Sp2Ref << "] -\n"
+							<< "        lo1[" << r1SpRef << "];\n"
+							<< "      comp[" << r2Sp1Ref << "] +=\n"
+							<< "        lo2[" << r2Sp1Ref << "];\n";
+					}
+				}
+				else {
+					ofs << "      comp[" << r1SpRef << "] +=\n"
+						<< "        lo2[" << r1SpRef << "];\n"
+						<< "      comp[" << r2Sp1Ref << "] +=\n"
+						<< "        lo1[" << r2Sp1Ref << "];\n"
+						<< "      comp[" << r2Sp2Ref << "] +=\n"
+						<< "        lo1[" << r2Sp2Ref << "];\n";
+				}
+				ofs << "      tryAddProdReaction(comp);\n"
 					<< "    }\n";
 			}
 			else {
@@ -1639,11 +1714,16 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		}
 	}
 
+	ofs << "    if (!(clSize(lo1) == 1 || clSize(lo2) == 1)) {\n"
+		<< "      return;\n"
+		<< "    }\n";
+
 	for (auto&& [key, grp] : _dissociationReactionGroups) {
 		auto p1 = grp.parts.products[0];
 		auto p2 = grp.parts.products[1];
 		const auto& reactants = grp.parts.reactants;
-		if (reactants.size() == 1 && reactants[0].species == nullptr) {
+		if (reactants.size() == 1 &&
+			(reactants[0].species == nullptr || xOr(p1.species, p2.species))) {
 			// interaction cases
 			ofs << "    {\n"
 				   "    Composition comp = Composition::zero();\n";
@@ -1652,54 +1732,119 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 				auto p2SpRef = "Species::" + p2.label;
 				ofs << "    if (lo1.isOnAxis(" << p1SpRef << ") &&\n"
 					<< "        lo2.isOnAxis(" << p2SpRef << ")) {\n"
-					<< "      comp[" << p1SpRef << "] =\n"
+					<< "      comp[" << p1SpRef << "] +=\n"
 					<< "        lo1[" << p1SpRef << "];\n"
-					<< "      comp[" << p2SpRef << "] =\n"
+					<< "      comp[" << p2SpRef << "] +=\n"
 					<< "        lo2[" << p2SpRef << "];\n"
 					<< "      tryAddDissReaction(comp);\n"
 					<< "    }\n"
 					<< "    if (lo2.isOnAxis(" << p1SpRef << ") &&\n"
 					<< "        lo1.isOnAxis(" << p2SpRef << ")) {\n"
-					<< "      comp[" << p1SpRef << "] =\n"
+					<< "      comp[" << p1SpRef << "] +=\n"
 					<< "        lo2[" << p1SpRef << "];\n"
-					<< "      comp[" << p2SpRef << "] =\n"
+					<< "      comp[" << p2SpRef << "] +=\n"
 					<< "        lo1[" << p2SpRef << "];\n"
 					<< "      tryAddDissReaction(comp);\n"
 					<< "    }\n";
 			}
 			else if (xOr(p1.species, p2.species)) {
 				std::string pfx = "Species::";
-				auto [p1SpRef, p2Sp1Ref, p2Sp2Ref] = p1.species ?
-					std::make_tuple(pfx + p1.label,
-						pfx + p2.constituentLabels[0],
-						pfx + p2.constituentLabels[1]) :
-					std::make_tuple(pfx + p2.label,
-						pfx + p1.constituentLabels[0],
-						pfx + p1.constituentLabels[1]);
+				auto [p1Sp, p2Sp1, p2Sp2] = p1.species ?
+					std::make_tuple(
+						p1.species, p2.constituents[0], p2.constituents[1]) :
+					std::make_tuple(
+						p2.species, p1.constituents[0], p1.constituents[1]);
+				auto [p1SpRef, p2Sp1Ref, p2Sp2Ref] = std::make_tuple(
+					pfx + p1Sp->label, pfx + p2Sp1->label, pfx + p2Sp2->label);
 				ofs << "    if (lo1.isOnAxis(" << p1SpRef << ") &&\n"
 					<< "        matchSpeciesPair(lo2,\n"
 					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << ")) {\n"
-					<< "      comp = Composition::zero();\n"
-					<< "      comp[" << p1SpRef << "] +=\n"
-					<< "        lo1[" << p1SpRef << "];\n"
-					<< "      comp[" << p2Sp1Ref << "] +=\n"
-					<< "        lo2[" << p2Sp1Ref << "];\n"
-					<< "      comp[" << p2Sp2Ref << "] +=\n"
-					<< "        lo2[" << p2Sp2Ref << "];\n"
-					<< "      tryAddDissReaction(comp);\n"
-					<< "    }\n"
+					<< "      comp = Composition::zero();\n";
+				auto r = reactants[0];
+				if (p1Sp->type == SpeciesData::Type::interstitial) {
+					if (p2Sp1->type == SpeciesData::Type::vacancy) {
+						ofs << "      comp[" << p2Sp1Ref << "] +=\n"
+							<< "        lo2[" << p2Sp1Ref << "] -\n"
+							<< "        lo1[" << p1SpRef << "];\n"
+							<< "      comp[" << p2Sp2Ref << "] +=\n"
+							<< "        lo2[" << p2Sp2Ref << "];\n";
+					}
+					else if (p2Sp2->type == SpeciesData::Type::vacancy) {
+						ofs << "      comp[" << p2Sp2Ref << "] +=\n"
+							<< "        lo2[" << p2Sp2Ref << "] -\n"
+							<< "        lo1[" << p1SpRef << "];\n"
+							<< "      comp[" << p2Sp1Ref << "] +=\n"
+							<< "        lo2[" << p2Sp1Ref << "];\n";
+					}
+				}
+				else {
+					ofs << "      comp[" << p1SpRef << "] +=\n"
+						<< "        lo1[" << p1SpRef << "];\n"
+						<< "      comp[" << p2Sp1Ref << "] +=\n"
+						<< "        lo2[" << p2Sp1Ref << "];\n"
+						<< "      comp[" << p2Sp2Ref << "] +=\n"
+						<< "        lo2[" << p2Sp2Ref << "];\n";
+				}
+				if (r.species) {
+					auto rSpRef = pfx + r.label;
+					ofs << "      if(comp.isOnAxis(" << rSpRef << ")) {\n"
+						<< "        tryAddDissReaction(comp);\n"
+						<< "      }\n";
+				}
+				else {
+					auto rSp1Ref = pfx + r.constituentLabels[0];
+					auto rSp2Ref = pfx + r.constituentLabels[1];
+					ofs << "      if(matchSpeciesPair(comp,\n"
+						<< "          " << rSp1Ref << ", " << rSp2Ref
+						<< ")) {\n"
+						<< "        tryAddDissReaction(comp);\n"
+						<< "      }\n";
+				}
+				ofs << "    }\n"
 					<< "    if (lo2.isOnAxis(" << p1SpRef << ") &&\n"
 					<< "        matchSpeciesPair(lo1,\n"
 					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << ")) {\n"
-					<< "      comp = Composition::zero();\n"
-					<< "      comp[" << p1SpRef << "] +=\n"
-					<< "        lo2[" << p1SpRef << "];\n"
-					<< "      comp[" << p2Sp1Ref << "] +=\n"
-					<< "        lo1[" << p2Sp1Ref << "];\n"
-					<< "      comp[" << p2Sp2Ref << "] +=\n"
-					<< "        lo1[" << p2Sp2Ref << "];\n"
-					<< "      tryAddDissReaction(comp);\n"
-					<< "    }\n";
+					<< "      comp = Composition::zero();\n";
+				if (p1Sp->type == SpeciesData::Type::interstitial) {
+					if (p2Sp1->type == SpeciesData::Type::vacancy) {
+						ofs << "      comp[" << p2Sp1Ref << "] +=\n"
+							<< "        lo2[" << p2Sp1Ref << "] -\n"
+							<< "        lo1[" << p1SpRef << "];\n"
+							<< "      comp[" << p2Sp2Ref << "] +=\n"
+							<< "        lo2[" << p2Sp2Ref << "];\n";
+					}
+					else if (p2Sp2->type == SpeciesData::Type::vacancy) {
+						ofs << "      comp[" << p2Sp2Ref << "] +=\n"
+							<< "        lo2[" << p2Sp2Ref << "] -\n"
+							<< "        lo1[" << p1SpRef << "];\n"
+							<< "      comp[" << p2Sp1Ref << "] +=\n"
+							<< "        lo2[" << p2Sp1Ref << "];\n";
+					}
+				}
+				else {
+					ofs << "      comp[" << p1SpRef << "] +=\n"
+						<< "        lo2[" << p1SpRef << "];\n"
+						<< "      comp[" << p2Sp1Ref << "] +=\n"
+						<< "        lo1[" << p2Sp1Ref << "];\n"
+						<< "      comp[" << p2Sp2Ref << "] +=\n"
+						<< "        lo1[" << p2Sp2Ref << "];\n";
+				}
+				if (r.species) {
+					auto rSpRef = pfx + r.label;
+					ofs << "      if (comp.isOnAxis(" << rSpRef << ")) {\n"
+						<< "        tryAddDissReaction(comp);\n"
+						<< "      }\n";
+				}
+				else {
+					auto rSp1Ref = pfx + r.constituentLabels[0];
+					auto rSp2Ref = pfx + r.constituentLabels[1];
+					ofs << "      if (matchSpeciesPair(comp,\n"
+						<< "          " << rSp1Ref << ", " << rSp2Ref
+						<< ")) {\n"
+						<< "        tryAddDissReaction(comp);\n"
+						<< "      }\n";
+				}
+				ofs << "    }\n";
 			}
 			else {
 				auto sp1Label = p1.constituentLabels[0];
@@ -1775,9 +1920,12 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 				<< "        lo2.isOnAxis(" << specRef << ")) {\n"
 				<< "      auto size = lo1[" << specRef << "] +\n"
 				<< "        lo2[" << specRef << "];\n"
-				<< "      Composition comp = Composition::zero();\n"
-				<< "      comp[" << rSpRef << "] = size;\n"
-				<< "      tryAddDissReaction(comp);\n"
+				<< "      if (size >= " << grp.size[0] << " &&\n"
+				<< "          size < " << grp.size[1] << ") {\n"
+				<< "        Composition comp = Composition::zero();\n"
+				<< "        comp[" << rSpRef << "] = size;\n"
+				<< "        tryAddDissReaction(comp);\n"
+				<< "      }\n"
 				<< "    }\n";
 			continue;
 		}

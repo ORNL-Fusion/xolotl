@@ -167,13 +167,14 @@ private:
 	{
 		ReactionParts parts;
 		std::string type;
-		AmountType size;
+        std::array<AmountType, 2> size;
 		std::string bindingExpr;
 	};
 	std::vector<ReactionData> _reactionData;
 	struct ReactionGroup
 	{
 		ReactionParts parts;
+        std::array<AmountType, 2> size{bad<AmountType>, 0};
 		std::vector<const ReactionData*> cases;
 		const ReactionData* general{nullptr};
 	};
