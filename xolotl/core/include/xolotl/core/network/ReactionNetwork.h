@@ -285,6 +285,30 @@ public:
 		return _minRadiusSizes;
 	}
 
+	std::string
+	getGenericMonitorOutputFileName() const final;
+
+	std::string
+	getGenericMonitorDataHeaderString() const final;
+
+	std::vector<double>
+	getGenericMonitorDataValues(
+		Kokkos::View<const double*> conc, double fac) final;
+
+	void
+	addGenericMonitorDataValues(Kokkos::View<const double*> conc, double fac,
+		std::vector<double>& totalVals) final;
+
+	std::size_t
+	getGenericMonitorDataLineSize() const final;
+
+	void
+	writeGenericMonitorOutputHeader() const final;
+
+	void
+	writeGenericMonitorDataLine(
+		const std::vector<double>& localData, double time) final;
+
 	[[noreturn]] std::string
 	getMonitorOutputFileName() const override
 	{
@@ -325,7 +349,7 @@ public:
 			<< this->getMonitorDataHeaderString() << std::endl;
 	}
 
-	void
+	[[noreturn]] void
 	writeMonitorDataLine(
 		const std::vector<double>& localData, double time) override
 	{
