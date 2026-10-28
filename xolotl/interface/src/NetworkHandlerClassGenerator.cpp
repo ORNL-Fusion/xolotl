@@ -1353,26 +1353,6 @@ NetworkHandlerClassGenerator::generateNetworkHeader()
 		   "    return;\n"
 		   "  }\n"
 		   "\n"
-		   "  std::string\n"
-		   "  getMonitorOutputFileName() const override\n"
-		   "  {\n"
-		   "    return \"monitor.dat\";\n"
-		   "  }\n"
-		   "\n"
-		   "  std::string\n"
-		   "  getMonitorDataHeaderString() const override;\n"
-		   "\n"
-		   "  void\n"
-		   "  addMonitorDataValues(Kokkos::View<const double*> conc,\n"
-		   "    double fac, std::vector<double>& totalVals) override;\n"
-		   "\n"
-		   "  std::size_t\n"
-		   "  getMonitorDataLineSize() const override;\n"
-		   "\n"
-		   "  void\n"
-		   "  writeMonitorDataLine(const std::vector<double>& localData,\n"
-		   "    double time) override;\n"
-		   "\n"
 		   "private:\n"
 		   "  double\n"
 		   "  checkLatticeParameter(double latticeParameter);\n"
@@ -1969,7 +1949,6 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 	ofs = openFile(filePath);
 	ofs << "#include <" << _reactionNetwork << ".h>\n"
 		<< "#include <" << _reactionNetwork << ".tpp>\n"
-		<< "#include <xolotl/util/MPIUtils.h>\n"
 		<< "\n"
 		<< "namespace xolotl::core::network\n"
 		<< "{\n"
@@ -2073,120 +2052,6 @@ NetworkHandlerClassGenerator::generateNetworkImpl()
 		   "  return maxLoc.loc;\n"
 		   "}\n"
 		   "\n";
-
-	std::size_t nVars = 3;
-
-	ofs << "std::string\n"
-		<< _reactionNetwork << "::getMonitorDataHeaderString() const\n"
-		<< "{\n"
-		   "  std::stringstream header;\n"
-		   "  auto numSpecies = getSpeciesListSize();\n"
-		   "  header << \"#time \";\n"
-		   "  for (auto id = SpeciesId(numSpecies); id; ++id) {\n"
-		   "    auto speciesName = this->getSpeciesName(id);\n"
-		   "    header << speciesName << \"_density \"\n"
-		   "      << speciesName << \"_atom \"\n"
-		   "      << speciesName << \"_diameter \"\n"
-		   "      << speciesName << \"_partial_density \"\n"
-		   "      << speciesName << \"_partial_atom \"\n"
-		   "      << speciesName << \"_partial_diameter \";\n"
-		   "  }\n"
-		   "  return header.str();\n"
-		   "}\n"
-		   "\n";
-
-	ofs << "void\n"
-		<< _reactionNetwork << "::addMonitorDataValues(\n"
-		<< "  Kokkos::View<const double*> conc, double fac,\n"
-		   "  std::vector<double>& totalVals)\n"
-		   "{\n"
-		   "  auto numSpecies = getSpeciesListSize();\n"
-		   "  const auto& minSizes = this->getMinRadiusSizes();\n"
-		   "  for (auto id = SpeciesId(numSpecies); id; ++id) {\n"
-		   "    using TQ = IReactionNetwork::TotalQuantity;\n"
-		   "    using Q = TQ::Type;\n"
-		<< "    using TQA = util::Array<TQ, " << 2 * nVars << ">;\n"
-		<< "    auto ms = minSizes[id()];\n"
-		   "    auto totals = this->getTotals(conc,\n"
-		   "      TQA{TQ{Q::total, id, 1},\n"
-		   "        TQ{Q::atom, id, 1},\n"
-		   "        TQ{Q::radius, id, 1},\n"
-		   "        TQ{Q::total, id, ms},\n"
-		   "        TQ{Q::atom, id, ms},\n"
-		   "        TQ{Q::radius, id, ms}});\n"
-		<< "    totalVals[(" << 2 * nVars
-		<< " * id()) + 0] += totals[0] * fac;\n"
-		<< "    totalVals[(" << 2 * nVars
-		<< " * id()) + 1] += totals[1] * fac;\n"
-		<< "    totalVals[(" << 2 * nVars
-		<< " * id()) + 2] += totals[2] * fac;\n"
-		<< "    totalVals[(" << 2 * nVars
-		<< " * id()) + 3] += totals[3] * fac;\n"
-		<< "    totalVals[(" << 2 * nVars
-		<< " * id()) + 4] += totals[4] * fac;\n"
-		<< "    totalVals[(" << 2 * nVars
-		<< " * id()) + 5] += totals[5] * fac;\n"
-		<< "\n"
-		<< "    totalVals[(" << 2 * nVars << " * id()) + 2] *= 2.0;\n"
-		<< "    totalVals[(" << 2 * nVars << " * id()) + 5] *= 2.0;\n"
-		<< "  }\n"
-		   "}\n"
-		   "\n";
-
-	ofs << "std::size_t\n"
-		<< _reactionNetwork
-		<< "::getMonitorDataLineSize() const\n"
-		   "{\n"
-		<< "  return getSpeciesListSize() * " << 2 * nVars << ";\n"
-		<< "}\n"
-		   "\n";
-
-	ofs << "void\n"
-		<< _reactionNetwork << "::writeMonitorDataLine(\n"
-		<< "  const std::vector<double>& localData, double time)\n"
-		   "{\n"
-		   "  auto numSpecies = getSpeciesListSize();\n"
-		   "  auto globalData = std::vector<double>(localData.size(), "
-		   "0.0);\n"
-		   "  MPI_Reduce(localData.data(), globalData.data(),\n"
-		   "    localData.size(), MPI_DOUBLE, MPI_SUM, 0,\n"
-		   "    util::getMPIComm());\n"
-		   "\n"
-		   "  if (util::getMPIRank() == 0) {\n"
-		   "    for (auto i = 0; i < numSpecies; ++i) {\n"
-		<< "      auto id = [i](std::size_t n)\n"
-		<< "        { return " << 2 * nVars << " * i + n; };\n"
-		<< "      constexpr double tol = 1.0e-16;\n"
-		<< "      if (globalData[id(0)] > tol) {\n"
-		<< "        globalData[id(" << nVars - 1
-		<< ")] /= globalData[id(0)];\n"
-		   "      }\n"
-		<< "      if (globalData[id(" << nVars << ")] > tol) {\n"
-		<< "        globalData[id(" << 2 * nVars - 1 << ")] /=\n"
-		<< "          globalData[id(" << nVars << ")];\n"
-		<< "      }\n"
-		   "    }\n"
-		   "    const int outputPrecision = 5;\n"
-		   "    std::fstream outputFile;\n"
-		   "    outputFile.open(getMonitorOutputFileName(),\n"
-		   "      std::fstream::out | std::fstream::app);\n"
-		   "    outputFile << std::setprecision(outputPrecision);\n"
-		   "    outputFile << time;\n"
-		   "    for (auto i = 0; i < numSpecies; ++i) {\n"
-		   "      auto id = [i](std::size_t n)\n"
-		<< "        { return " << 2 * nVars << " * i + n; };\n";
-	for (auto di = 0; di < nVars; ++di) {
-		ofs << "      outputFile << ' ' << globalData[id(" << di << ")];\n";
-	}
-	for (auto di = 0; di < nVars; ++di) {
-		ofs << "      outputFile << ' ' << globalData[id(" << nVars + di
-			<< ")];\n";
-	}
-	ofs << "    }\n"
-		   "    outputFile << std::endl;\n"
-		   "    outputFile.close();\n"
-		   "  }\n"
-		   "}\n";
 
 	ofs << "}\n";
 }

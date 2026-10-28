@@ -148,7 +148,7 @@ PetscMonitor0D::setup(int loop)
 
 	// Set the monitor to use generic output data
 	if (flagMonitorGeneric) {
-		_solverHandler->getNetwork().writeMonitorOutputHeader();
+		_solverHandler->getNetwork().writeGenericMonitorOutputHeader();
 		PetscCallVoid(
 			TSMonitorSet(_ts, monitor::monitorGeneric, this, nullptr));
 	}
@@ -494,9 +494,9 @@ PetscMonitor0D::monitorGeneric(
 
 	auto& network = _solverHandler->getNetwork();
 
-	auto myData = network.getMonitorDataValues(concOffset, 1.0);
+	auto myData = network.getGenericMonitorDataValues(concOffset, 1.0);
 
-	network.writeMonitorDataLine(myData, time);
+	network.writeGenericMonitorDataLine(myData, time);
 
 	// Restore the PETSc solution array
 	PetscCall(DMDAVecRestoreKokkosOffsetViewDOF(da, solution, &concs));
