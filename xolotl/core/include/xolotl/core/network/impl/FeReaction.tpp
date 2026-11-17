@@ -84,6 +84,7 @@ FeDissociationReaction::computeBindingEnergy(double time)
 			if (prod1Comp.isOnAxis(Species::He) ||
 				prod2Comp.isOnAxis(Species::He)) {
 				if (comp[Species::He] == 2)
+                    // TODO: see if this is ever hit
 					be = 0.5;
 				else
 					be = 1.0;

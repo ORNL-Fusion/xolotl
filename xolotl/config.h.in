@@ -27,7 +27,7 @@ using AmountType = std::uint32_t;
 namespace detail
 {
 template <typename T, typename Enable = void>
-struct Bad : std::integral_constant<T, std::numeric_limits<T>::max()>
+struct Bad : std::integral_constant<T, std::numeric_limits<T>::max() - 1>
 {
 };
 
@@ -38,8 +38,10 @@ struct Bad<T, std::enable_if_t<std::is_signed_v<T>>> :
 };
 } // namespace detail
 
-inline constexpr auto badId = detail::Bad<IdType>();
-
 template <typename T>
 inline constexpr auto bad = detail::Bad<T>();
+
+inline constexpr auto badId = bad<IdType>;
+inline constexpr auto badAmount = bad<AmountType>;
+
 } // namespace xolotl

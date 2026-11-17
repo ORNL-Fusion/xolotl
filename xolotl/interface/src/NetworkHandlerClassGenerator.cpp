@@ -180,7 +180,9 @@ NetworkHandlerClassGenerator::readNetworkFile()
 	};
 
 	/*
-	 * species
+	 ***********
+	 * species *
+	 ***********
 	 */
 	auto spNode = tree.get_child("species");
 	for (auto&& [_, elNode] : spNode) {
@@ -263,7 +265,7 @@ NetworkHandlerClassGenerator::readNetworkFile()
 			clData.type.species = clData.type.constituents[0];
 		}
 		// cluster size range
-		clData.size = {maxAmount, maxAmount};
+		clData.size = {badAmount, badAmount};
 		if (elNode.count("size")) {
 			auto sizeNode = elNode.get_child("size");
 			if (sizeNode.empty()) {
@@ -295,7 +297,7 @@ NetworkHandlerClassGenerator::readNetworkFile()
 		if (grp.type.label.empty()) {
 			grp.type = cl.type;
 		}
-		if (cl.size[0] == maxAmount && cl.size[1] == maxAmount) {
+		if (cl.size[0] == badAmount && cl.size[1] == badAmount) {
 			if (grp.general != nullptr) {
 				XOLOTL_ERROR(std::runtime_error,
 					"multiple definitions of general case for " +
@@ -392,7 +394,7 @@ NetworkHandlerClassGenerator::readNetworkFile()
 				rnData.parts.products.push_back(_clusterGroups.at(p).type);
 			}
 		}
-		rnData.size = {maxAmount, maxAmount};
+		rnData.size = {badAmount, badAmount};
 		if (elNode.count("size")) {
 			auto sizeNode = elNode.get_child("size");
 			if (sizeNode.empty()) {
@@ -425,7 +427,7 @@ NetworkHandlerClassGenerator::readNetworkFile()
 			}
 			auto& grp = _productionReactionGroups[key];
 			grp.parts = rn.parts;
-			if (rn.size[0] == maxAmount && rn.size[1] == maxAmount) {
+			if (rn.size[0] == badAmount && rn.size[1] == badAmount) {
 				if (grp.general != nullptr) {
 					XOLOTL_ERROR(std::runtime_error,
 						"multiple definitions of general case for " + rn.type +
@@ -445,7 +447,7 @@ NetworkHandlerClassGenerator::readNetworkFile()
 			}
 			auto& grp = _dissociationReactionGroups[key];
 			grp.parts = rn.parts;
-			if (rn.size[0] == maxAmount && rn.size[1] == maxAmount) {
+			if (rn.size[0] == badAmount && rn.size[1] == badAmount) {
 				if (grp.general != nullptr) {
 					XOLOTL_ERROR(std::runtime_error,
 						"multiple definitions of general case for " + rn.type +
@@ -653,8 +655,8 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 			if (std::isnan(cl->migrationEnergy)) {
 				continue;
 			}
-			if (cl->size[0] < maxAmount) {
-				if (cl->size[1] < maxAmount) {
+			if (cl->size[0] != badAmount) {
+				if (cl->size[1] != badAmount) {
 					ofs << "      if (" << cl->size[0] << " <= amt &&\n"
 						<< "          amt <= " << cl->size[1] << ") {\n"
 						<< "        return " << cl->migrationEnergy << ";\n"
@@ -704,8 +706,8 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 			if (std::isnan(cl->diffusionFactor)) {
 				continue;
 			}
-			if (cl->size[0] < maxAmount) {
-				if (cl->size[1] < maxAmount) {
+			if (cl->size[0] != badAmount) {
+				if (cl->size[1] != badAmount) {
 					ofs << "      if (" << cl->size[0] << " <= amt &&\n"
 						<< "          amt <= " << cl->size[1] << ") {\n"
 						<< "        return " << cl->diffusionFactor << ";\n"
@@ -755,10 +757,11 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 		   "  if (reg.isSimplex()) {\n";
 	ofs << "    Composition comp(reg.getOrigin());\n";
 	for (auto&& [_, grp] : _clusterGroups) {
-		if (grp.cases.empty()) {
-			// TODO: do I need this?
-			continue;
-		}
+		// if (grp.cases.empty()) {
+		// 	// TODO: do I need this?
+		// //
+		// 	continue;
+		// }
 		if (grp.type.species == nullptr) {
 			auto s1 = grp.type.constituentLabels[0];
 			auto s2 = grp.type.constituentLabels[1];
@@ -782,7 +785,14 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 			for (auto cl : grp.cases) {
 				const auto& rExpr = cl->radiusExpr;
 				auto expr = parseRadiusExpr(rExpr);
-				ofs << "      return " << expr << ";\n";
+				ofs << "      // parsed from: " << rExpr << "\n"
+					<< "      return " << expr << ";\n";
+			}
+			if (grp.general) {
+				const auto& rExpr = grp.general->radiusExpr;
+				auto expr = parseRadiusExpr(rExpr);
+				ofs << "      // parsed from: " << rExpr << "\n"
+					<< "      return " << expr << ";\n";
 			}
 			ofs << "    }\n"
 				<< "    }\n";
@@ -794,8 +804,8 @@ NetworkHandlerClassGenerator::generateClusterGeneratorImpl()
 			for (auto cl : grp.cases) {
 				const auto& rExpr = cl->radiusExpr;
 				auto expr = parseRadiusExpr(rExpr);
-				if (cl->size[0] < maxAmount) {
-					if (cl->size[1] < maxAmount) {
+				if (cl->size[0] != badAmount) {
+					if (cl->size[1] != badAmount) {
 						ofs << "      if (" << cl->size[0] << " <= amt &&\n"
 							<< "          amt <= " << cl->size[1] << ") {\n"
 							<< "        // parsed from: " << rExpr << "\n"
@@ -1027,8 +1037,16 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 		std::stringstream oss;
 		for (auto&& rnCase : rnGroup.cases) {
 			const auto& expr = rnCase->bindingExpr;
-			oss << "    if (amt >= " << rnCase->size[0] << " &&\n"
-				<< "        amt < " << rnCase->size[1] << ") {\n"
+			if (rnCase->size[1] == badAmount) {
+				oss << "    if (amount == " << rnCase->size[0] << ") ";
+			}
+			else {
+				oss << "    if (amount >= " << rnCase->size[0] << " &&\n"
+					<< "        amount < " << rnCase->size[1] << ") ";
+			}
+			oss << "    {\n"
+				<< "      auto amt = static_cast<double>(amount);\n"
+				<< "      // parsed from: " << expr << "\n"
 				<< "      be = " << parseBindingExpr(expr) << ";\n"
 				<< "    }\n"
 				<< "    else ";
@@ -1036,7 +1054,9 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 		oss << "    {\n";
 		if (rnGroup.general) {
 			const auto& expr = rnGroup.general->bindingExpr;
-			oss << "      be = " << parseBindingExpr(expr) << ";\n";
+			oss << "      auto amt = static_cast<double>(amount);\n"
+				<< "      // parsed from: " << expr << "\n"
+				<< "      be = " << parseBindingExpr(expr) << ";\n";
 		}
 		oss << "    }\n";
 		return oss.str();
@@ -1097,9 +1117,9 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 					<< "        p2Comp.isOnAxis(" << p2SpRef << ")) ||\n"
 					<< "        (p1Comp.isOnAxis(" << p2SpRef << ") &&\n"
 					<< "        p2Comp.isOnAxis(" << p1SpRef << "))) {\n"
-					<< "      auto amt" << rSp1Label << " =\n"
+					<< "      double amt" << rSp1Label << " =\n"
 					<< "        rComp[" << rSp1Ref << "];\n"
-					<< "      auto amt" << rSp2Label << " =\n"
+					<< "      double amt" << rSp2Label << " =\n"
 					<< "        rComp[" << rSp2Ref << "];\n"
 					<< "      // parsed from: " << expr << "\n"
 					<< "      be = " << parseBindingExpr(expr) << ";\n"
@@ -1122,9 +1142,9 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 					<< "        (p2Comp.isOnAxis(" << p1SpRef << ") &&\n"
 					<< "        matchSpeciesPair(p1Comp,\n"
 					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << "))) {\n"
-					<< "      auto amt" << rSp1Label << " =\n"
+					<< "      double amt" << rSp1Label << " =\n"
 					<< "        rComp[" << rSp1Ref << "];\n"
-					<< "      auto amt" << rSp2Label << " =\n"
+					<< "      double amt" << rSp2Label << " =\n"
 					<< "        rComp[" << rSp2Ref << "];\n"
 					<< "      // parsed from: " << expr << "\n"
 					<< "      be = " << parseBindingExpr(expr) << ";\n"
@@ -1145,9 +1165,9 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 					<< "          " << p2Sp1Ref << ", " << p2Sp2Ref << ") &&\n"
 					<< "        matchSpeciesPair(p1Comp,\n"
 					<< "          " << p1Sp1Ref << ", " << p1Sp2Ref << "))) {\n"
-					<< "      auto amt" << rSp1Label << " =\n"
+					<< "      double amt" << rSp1Label << " =\n"
 					<< "        rComp[" << rSp1Ref << "];\n"
-					<< "      auto amt" << rSp2Label << " =\n"
+					<< "      double amt" << rSp2Label << " =\n"
 					<< "        rComp[" << rSp2Ref << "];\n"
 					<< "      // parsed from: " << expr << "\n"
 					<< "      be = " << parseBindingExpr(expr) << ";\n"
@@ -1172,10 +1192,8 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 				<< "        (p2Comp.isOnAxis(" << p1SpRef << ") &&\n"
 				<< "          matchSpeciesPair(p1Comp,\n"
 				<< "            " << p2Sp2Ref << ", " << p2Sp2Ref << "))) {\n"
-				<< "      auto amt = rComp[" << rSpRef << "];\n"
-				<< expressCases(rnGroup)
-				// << "      be = " << parseBindingExpr(expr) << ";\n"
-				<< "    }\n";
+				<< "      auto amount = rComp[" << rSpRef << "];\n"
+				<< expressCases(rnGroup) << "    }\n";
 			ofs << "    else";
 			continue;
 		}
@@ -1187,10 +1205,8 @@ NetworkHandlerClassGenerator::generateReactionImpl()
 			ofs << "    if (rComp.isOnAxis(" << rSpRef << ") &&\n"
 				<< "        p1Comp.isOnAxis(" << specRef << ") &&\n"
 				<< "        p2Comp.isOnAxis(" << specRef << ")) {\n"
-				<< "      auto amt = rComp[" << rSpRef << "];\n"
-				<< expressCases(rnGroup)
-				// << "      be = " << parseBindingExpr(expr) << ";\n"
-				<< "    }\n";
+				<< "      auto amount = rComp[" << rSpRef << "];\n"
+				<< expressCases(rnGroup) << "    }\n";
 			ofs << "    else";
 			continue;
 		}
