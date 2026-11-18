@@ -256,9 +256,7 @@ PSIReactionNetwork<TSpeciesEnum>::updateSSBMAndBurstingData(
 
 	// Get the SSBM DOFs on the host: [C_b, ..., <V>C_b]. The subview range is
 	// half-open, so it has to go up to vId + 1 to include the V moment.
-	// (Before, it stopped at bubbleId + 2 and read slot 1, which is the gas
-	// moment since the H/V order was swapped in 5f4bd3b1, so r_B was computed
-	// from <He> instead of <V>.)
+
 	auto dConcs =
 		Kokkos::subview(concentrations, std::make_pair(bId, vId + 1));
 	auto hConcs = create_mirror_view(dConcs);
